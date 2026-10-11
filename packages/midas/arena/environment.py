@@ -112,15 +112,27 @@ class ArenaEnv(gym.Env[Any, Any]):
             )
             self.max_drawdown = max(self.max_drawdown, float(portfolio.get("max_drawdown", 0)))
 
-    def observation(self) -> tuple[Any, bool]:
+    def decision_features(self) -> tuple[list[float], bool]:
         assert self.env is not None
         observation = self.env.observe()
         event = self.env.clock.peek()
         if event and event.kind == "decision":
             observation["time_ms"] = event.time
-        features, eligible = extract(
-            observation, self.env.scenario.account, self.env.scenario.observation_latency_ms
-        )
+        self.feature_error: str | None = None
+        try:
+            return extract(
+                observation, self.env.scenario.account, self.env.scenario.observation_latency_ms
+            )
+        except ValueError as error:
+            if not str(error).startswith("Future "):
+                raise
+            # Malformed time evidence causes deterministic abstention. The policy
+            # receives a sentinel, never future book prices or future timestamp data.
+            self.feature_error = str(error)
+            return [0.0] * len(FEATURES), False
+
+    def observation(self) -> tuple[Any, bool]:
+        features, eligible = self.decision_features()
         # Fixed documented units, no held-out fitting. CPU PPO benefits from bounded scale.
         scale = np.array(
             [
@@ -191,6 +203,7 @@ class ArenaEnv(gym.Env[Any, Any]):
                 "action": selected,
                 "requested_action": str(action),
                 "invalid": invalid,
+                "feature_error": self.feature_error,
                 "observation": observation.tolist(),
             }
         )

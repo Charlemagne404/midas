@@ -62,6 +62,7 @@ def train_rl(root: Path, spec: RLSpec, progress: Any = None) -> dict[str, Any]:
     directory = artifact_path(root, "models", identity)
     directory.mkdir(parents=True)
     began = time.monotonic()
+    execution_revision = revision()
     source_hash = research_hash()
     atomic_json(
         directory / "training.json",
@@ -150,7 +151,7 @@ def train_rl(root: Path, spec: RLSpec, progress: Any = None) -> dict[str, Any]:
         "dataset_sha256": manifest["rows_sha256"],
         "configuration": spec.model_dump(mode="json"),
         "source_hash": source_hash,
-        "code_revision": revision(),
+        "code_revision": execution_revision,
         "artifact_sha256": sha256(directory / "policy.zip"),
         "training_duration_seconds": time.monotonic() - began,
         "timesteps": model.num_timesteps,

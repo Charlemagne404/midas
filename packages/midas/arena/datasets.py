@@ -123,6 +123,7 @@ def build(root: Path, spec: DatasetSpec, progress: Any = None) -> dict[str, Any]
         return load(root, identity)[0]
     rows = []
     began = time.monotonic()
+    execution_revision = revision()
     for index in range(spec.episodes):
         checkpoint = directory / "episodes" / f"{index:06d}.json"
         if checkpoint.exists():
@@ -156,7 +157,7 @@ def build(root: Path, spec: DatasetSpec, progress: Any = None) -> dict[str, Any]
         "feature_version": FEATURE_VERSION,
         "feature_schema": list(FEATURES),
         "label_definition": "Both initial risk-admitted proposal orders finish FILLED; later proposals do not affect label",
-        "code_revision": revision(),
+        "code_revision": execution_revision,
         "source_hash": source_hash,
         "rows_sha256": sha256(directory / "rows.json"),
         "rows": len(rows),

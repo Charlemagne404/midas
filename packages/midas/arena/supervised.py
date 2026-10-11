@@ -130,6 +130,7 @@ def train(root: Path, spec: TrainingSpec, progress: Any = None) -> dict[str, Any
     directory = artifact_path(root, "models", identity)
     directory.mkdir(parents=True)
     began = time.monotonic()
+    execution_revision = revision()
     source_hash = research_hash()
     atomic_json(
         directory / "training.json",
@@ -300,7 +301,7 @@ def train(root: Path, spec: TrainingSpec, progress: Any = None) -> dict[str, Any
         "configuration": spec.model_dump(mode="json"),
         "feature_schema": list(FEATURES),
         "feature_version": FEATURE_VERSION,
-        "code_revision": revision(),
+        "code_revision": execution_revision,
         "source_hash": source_hash,
         "artifact_sha256": artifact_hash,
         "training_duration_seconds": time.monotonic() - began,

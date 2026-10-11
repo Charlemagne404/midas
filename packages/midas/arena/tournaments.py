@@ -14,7 +14,6 @@ from pydantic import Field, model_validator
 from midas.arena.artifacts import artifact_path, atomic_json, atomic_replay, sha256
 from midas.arena.datasets import DatasetSpec, load, research_hash
 from midas.arena.environment import ArenaEnv
-from midas.arena.features import extract
 from midas.arena.rl import indices
 from midas.arena.supervised import Predictor
 from midas.core.models import Model
@@ -217,6 +216,7 @@ def run_tournament(root: Path, spec: TournamentSpec, progress: Any = None) -> di
     directory = artifact_path(root, "tournaments", identity)
     rows = []
     began = time.monotonic()
+    execution_revision = revision()
     total = len(held_out) * len(spec.execution_models) * len(policies)
     source_hash = research_hash()
     for index in held_out:
@@ -245,9 +245,7 @@ def run_tournament(root: Path, spec: TournamentSpec, progress: Any = None) -> di
                 attempted = 0
                 assert env.env is not None
                 while True:
-                    features, eligible = extract(
-                        env.env.observe(), scenario.account, scenario.observation_latency_ms
-                    )
+                    features, eligible = env.decision_features()
                     decision_started = time.perf_counter()
                     if policy == "no_trade":
                         action = 0
@@ -334,7 +332,7 @@ def run_tournament(root: Path, spec: TournamentSpec, progress: Any = None) -> di
         "configuration": spec.model_dump(mode="json"),
         "dataset_sha256": manifest["rows_sha256"],
         "source_hash": source_hash,
-        "code_revision": revision(),
+        "code_revision": execution_revision,
         "model_artifact_hashes": artifacts,
         "base_episodes": len(held_out),
         "variants": len(rows),

@@ -167,3 +167,30 @@ Job supervision is independent of API restarts. Existing `midas-api.service` and
 
 Upstream interfaces: [Gymnasium environment contract](https://gymnasium.farama.org/api/env/),
 [Stable-Baselines3 PPO](https://stable-baselines3.readthedocs.io/en/v2.7.0/modules/ppo.html).
+
+## Data Foundry and adversarial follow-up
+
+The initial dataset has **1593 labeled variants from 531 eligible independent base
+identities**, out of 1000 generated episodes. Six features are constant in these
+initial states. Identical observable vectors cross partitions, and fixed family
+order ties some families to one seed parity. Partition identities are correctly
+grouped, but this does not establish realistic covariate diversity or generalization.
+`PROMETHEUS_DATA_FOUNDRY_AUDIT.json` saves feature distributions, correlations,
+label balance, duplicate/ambiguity diagnostics, shift checks and a read-only audit
+of all 162000 protected records. All deterministic variant identities, seeds,
+group coverage and the original logical hash pass. Compact old outcomes lack
+safe decision features and are not imported as training features.
+
+Stress job `job-2c71ea452f7c46cfae0ba7aa` stopped after 315 of 2100 variants because
+an adversarial timing mutation delivered a snapshot with an exchange timestamp
+later than the decision. This is an incomplete, failed research job; it does not
+count as a completed stress evaluation. Its partial replays and source snapshot
+are retained. The original extractor rejected the evidence, protecting leakage.
+
+The Arena decision boundary now deterministically abstains on that evidence,
+provides zero sentinel features and logs the validation reason. Regression
+coverage proves it submits no orders and grants no future prices to the policy.
+This strict policy observation guard is stronger than the legacy Laboratory's
+one-second source-clock tolerance; all Arena competitors receive the same guard.
+Laboratory fill, fee, settlement and accounting logic remains unchanged. A new
+stress study must complete before robustness claims are made.
