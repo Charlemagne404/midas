@@ -17,3 +17,10 @@ playwright-report/
 
 *.tsbuildinfo
 data/research/
+data/laboratory/
+data/laboratory-demonstrations/
+data/laboratory-milestone3/
+data/laboratory-final/
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal

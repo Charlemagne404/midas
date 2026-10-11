@@ -5,11 +5,17 @@ from decimal import Decimal
 from pathlib import Path
 
 import pytest
+from midas.economics.attestation import digest
 from midas.paper.broker import AccountConfig, ExecutionModel, audit, summary
 from midas.simulation.fixtures import DEMO_EPOCH, binary_fixture
 from sqlalchemy import update
 
-from apps.api.paper import PaperBroker
+from apps.api.paper import (
+    PaperBroker,
+    advance_journal_hash,
+    journal_entry,
+    journal_payload,
+)
 from apps.api.storage import PaperAccount, PaperEvent, Store
 
 
@@ -77,6 +83,95 @@ async def test_inconsistent_financial_state_fails_closed(tmp_path, target):
             )
     recovered = PaperBroker(store, "test", AccountConfig())
     with pytest.raises(ValueError):
+        await recovered.start(DEMO_EPOCH + 100)
+    assert not recovered.healthy
+    await store.close()
+
+
+async def test_large_journal_startup_restores_snapshot_without_replaying_history(
+    tmp_path, monkeypatch
+):
+    store, broker, _ = await setup(tmp_path)
+    async with store.sessions() as session:
+        account = await session.get(PaperAccount, "test")
+        assert account is not None and account.journal_hash is not None
+        state = account.payload
+        checksum = account.checksum
+        previous_hash = account.journal_hash
+        revision = account.revision
+
+    # These are valid no-op pause commands. Their persisted state and checksum remain unchanged.
+    rows = []
+    for index in range(10_000):
+        event_id = f"bulk-control:{index}"
+        command = {
+            "id": event_id,
+            "kind": "control",
+            "ts": state["last_processed_ms"],
+            "paused": False,
+        }
+        payload = journal_payload(state, state, "control")
+        revision += 1
+        entry = journal_entry("test", event_id, revision, command, payload, checksum, checksum)
+        previous_hash = advance_journal_hash(previous_hash, entry)
+        rows.append(
+            PaperEvent(
+                account_id="test",
+                event_id=event_id,
+                revision=revision,
+                command=command,
+                payload=payload,
+                checksum=checksum,
+                previous_checksum=checksum,
+            )
+        )
+
+    async with store.sessions.begin() as session:
+        session.add_all(rows)
+        await session.execute(
+            update(PaperAccount)
+            .where(PaperAccount.id == "test")
+            .values(revision=revision, journal_hash=previous_hash)
+        )
+
+    import apps.api.paper as paper_module
+
+    original_transition = paper_module.transition
+    transition_calls = 0
+
+    def counted_transition(*args, **kwargs):
+        nonlocal transition_calls
+        transition_calls += 1
+        return original_transition(*args, **kwargs)
+
+    monkeypatch.setattr(paper_module, "transition", counted_transition)
+    recovered = PaperBroker(store, "test", AccountConfig())
+    await recovered.start(DEMO_EPOCH + 500)
+    assert transition_calls == 1  # The single durable recovery event, not 10,000 history rows.
+    assert recovered.recovery_status == "CHECKPOINT_VERIFIED"
+    assert recovered.journal_event_count == 10_003
+    assert recovered.revision == 10_002
+    assert recovered.state["recovery_count"] == broker.state["recovery_count"] + 1
+
+    async with store.sessions() as session:
+        account = await session.get(PaperAccount, "test")
+        assert account is not None
+        assert account.revision == recovered.revision
+        assert digest(account.payload) == account.checksum
+        assert account.journal_hash is not None
+    assert audit(recovered.state) == []
+    await store.close()
+
+
+async def test_rolling_journal_hash_detects_command_tampering(tmp_path):
+    store, broker, _ = await setup(tmp_path)
+    await broker.apply({"id": "control", "kind": "control", "ts": DEMO_EPOCH, "paused": False})
+    async with store.sessions.begin() as session:
+        event = await session.get(PaperEvent, ("test", "control"))
+        assert event is not None
+        event.command = {**event.command, "paused": True}
+    recovered = PaperBroker(store, "test", AccountConfig())
+    with pytest.raises(ValueError, match="integrity hash"):
         await recovered.start(DEMO_EPOCH + 100)
     assert not recovered.healthy
     await store.close()

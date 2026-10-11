@@ -1,0 +1,109 @@
+{
+  "python": "3.12.3",
+  "platform": "Linux-7.0.0-38-generic-x86_64-with-glibc2.39",
+  "code_hash": "ad185a8af18bab2903de86c5746609cf335792c2cf78b3755dc287a93dfd9d18",
+  "scheduler": {
+    "events": 100000,
+    "seconds": 1.1974267239857,
+    "scheduled_and_popped_per_second": 83512.41708314691
+  },
+  "audited_episodes": {
+    "runs": 100,
+    "events": 634,
+    "seconds": 3.1524873500165995,
+    "events_per_second": 201.11103697106404,
+    "runs_per_second": 31.720983749379183
+  },
+  "campaign": {
+    "id": "e0f441090b814cfa9cfe6cb8a8bb1d3c",
+    "status": "COMPLETED",
+    "spec": {
+      "preset": "Quick",
+      "runs": 1000,
+      "seed": 20261011,
+      "families": [
+        "calm",
+        "volatile",
+        "one_sided",
+        "unresolved"
+      ],
+      "strategies": [
+        "arbitrage"
+      ],
+      "models": [
+        "standard"
+      ],
+      "dataset_id": null,
+      "dataset_hash": null,
+      "dataset_manifest_hash": null,
+      "workers": 2,
+      "memory_mb": 512,
+      "max_wall_seconds": 600,
+      "max_disk_mb": 128,
+      "retain_successes": 0,
+      "observation_latency_ms": 0,
+      "submission_latency_ms": null,
+      "liquidity_fraction": null,
+      "fee_rate": null,
+      "capital": "100",
+      "limits": {
+        "max_capital": "20",
+        "max_exposure": "80",
+        "max_market_exposure": "20",
+        "max_event_exposure": "40",
+        "max_positions": 10,
+        "max_age_ms": 15000,
+        "min_edge": "0.001",
+        "max_slippage": "0.05",
+        "max_drawdown": "0.10",
+        "max_daily_loss": "5",
+        "max_cumulative_loss": "10",
+        "max_unmatched_exposure": "100",
+        "max_unmatched_quantity": "0",
+        "emergency_stop": false
+      },
+      "costs": {
+        "version": "explicit-costs-1",
+        "operating_per_fill": "0",
+        "redemption_cost": "0",
+        "annual_financing_rate": "0",
+        "collateral_value_factor": "1",
+        "collateral_route_verified": false,
+        "assumptions": [
+          "Costs are user estimates, not observed charges",
+          "No automatic complete-set merge",
+          "Resolution and spendable proceeds are separated by configured delay",
+          "No empirically calibrated fill probability or queue priority"
+        ]
+      },
+      "adversarial": false
+    },
+    "created": 1791746073.843061,
+    "updated": 1791746145.325258,
+    "code_revision": "1afb4e9a41c6a03ae47f6d8fdfe6fd5905398497",
+    "code_hash": "ad185a8af18bab2903de86c5746609cf335792c2cf78b3755dc287a93dfd9d18",
+    "simulator_version": "laboratory-3.0",
+    "completed": 1000,
+    "episodes_completed": 1000,
+    "total": 1000,
+    "remaining": 0,
+    "passed": 1000,
+    "failed": 0,
+    "error": null,
+    "elapsed_seconds": 71.43350027597626,
+    "runs_per_second": 13.999034012565518,
+    "events": 12336,
+    "events_per_second": 172.69208357900823,
+    "worst_pnl": -10.4,
+    "best_pnl": 14.0,
+    "mean_pnl": 0.747728,
+    "process_peak_rss_mb": 80.546875,
+    "resource_note": "Coordinator lifetime peak RSS; worker limits apply separately",
+    "economically_verified": false
+  },
+  "campaign_storage_bytes": 1560576,
+  "sampled_worker_peak_rss_mb": 79.203125,
+  "coordinator_lifetime_peak_rss_mb": 80.546875,
+  "profile_50_calm_episodes": "         4808677 function calls (4207349 primitive calls) in 2.829 seconds\n\n   Ordered by: cumulative time\n   List reduced from 273 to 18 due to restriction <18>\n\n   ncalls  tottime  percall  cumtime  percall filename:lineno(function)\n       50    0.001    0.000    2.827    0.057 packages/midas/laboratory/runtime.py:427(execute)\n       50    0.008    0.000    2.800    0.056 packages/midas/laboratory/runtime.py:289(run)\n      400    0.013    0.000    2.716    0.007 packages/midas/laboratory/runtime.py:228(_step)\n      350    0.003    0.000    1.538    0.004 packages/midas/laboratory/runtime.py:108(_process)\n     1750    0.067    0.000    1.468    0.001 packages/midas/paper/broker.py:114(summary)\n      225    0.015    0.000    1.426    0.006 packages/midas/laboratory/runtime.py:91(_apply)\n      225    0.021    0.000    1.401    0.006 packages/midas/paper/broker.py:287(transition)\n451051/91701    0.393    0.000    0.769    0.000 /usr/lib/python3.12/copy.py:118(deepcopy)\n      575    0.015    0.000    0.727    0.001 packages/midas/paper/broker.py:258(audit)\n     2300    0.021    0.000    0.704    0.000 packages/midas/simulation/exchange.py:425(checkpoint)\n      900    0.007    0.000    0.667    0.001 packages/midas/laboratory/runtime.py:85(portfolio)\n    16246    0.011    0.000    0.611    0.000 /usr/lib/python3.12/dataclasses.py:1301(asdict)\n229690/16246    0.235    0.000    0.592    0.000 /usr/lib/python3.12/dataclasses.py:1325(_asdict_inner)\n26181/1225    0.104    0.000    0.586    0.000 /usr/lib/python3.12/copy.py:217(_deepcopy_dict)\n     5325    0.010    0.000    0.579    0.000 packages/midas/paper/broker.py:80(serial)\n     6500    0.018    0.000    0.337    0.000 /usr/lib/python3.12/json/__init__.py:183(dumps)\n     2025    0.123    0.000    0.332    0.000 packages/midas/simulation/exchange.py:441(restore)\n     6500    0.013    0.000    0.316    0.000 /usr/lib/python3.12/json/encoder.py:183(encode)\n\n\n",
+  "limits": "Local Linux measurements under concurrent activity; scheduler benchmark excludes strategy, risk, accounting and persistence. Worker RSS is sampled from first 200 canonical runs; process lifetime peak includes preceding scheduler/profile phases."
+}

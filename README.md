@@ -86,6 +86,34 @@ Those POSTs modify internal virtual simulation state only.
 
 ## Commands
 
+The **Laboratory** dashboard adds experiment configuration, durable campaign controls,
+paired comparisons, adversarial incidents, scenario inspection and persisted event replay.
+All Laboratory returns remain simulated and economically unverified. Recorded datasets
+are clearly distinguished from generated scenarios.
+
+```bash
+.venv/bin/python scripts/laboratory.py campaign --runs 32 --seed 7 --root data/laboratory
+.venv/bin/python scripts/laboratory.py campaign --dataset ctf-4024677 --runs 1 --compare --root data/recorded-lab
+.venv/bin/python scripts/laboratory.py search --seed 20261011 --trials 100
+.venv/bin/python scripts/laboratory.py reproduce --root data/laboratory --run <run-id>
+.venv/bin/python scripts/laboratory_demonstrations.py --root data/laboratory-final --runs 1000
+.venv/bin/python scripts/laboratory_benchmark.py --runs 1000 --workers 2
+```
+
+Linux/Python 3.12 campaign workers have configurable resource limits. Million-run
+workloads require the explicit Extreme preset and were not executed in the milestone.
+Set `MIDAS_LABORATORY_ROOT` to choose the API's campaign archive; CLI reproduction uses
+a read-only archive connection and can coexist with its writer. To expose an existing
+archive in the dashboard, close its CLI writer before starting the API with that root.
+
+See the [Milestone 3 engineering report](docs/MILESTONE_3_ENGINEERING_REPORT.md),
+[test evidence](docs/MILESTONE_3_TEST_REPORT.md) and
+[Laboratory architecture](docs/LABORATORY_ARCHITECTURE.md) for implemented functionality,
+actual experiments and explicit remaining scope.
+
+For persistent local services, interrupted campaign recovery, and remote MacBook access, see
+[recovery and service operations](docs/RELIABILITY_OPERATIONS.md).
+
 Use `uv` in place of `.venv/bin/uv` when it is on PATH.
 
 ```bash

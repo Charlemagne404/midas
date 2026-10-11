@@ -1,0 +1,60 @@
+{
+  "health": {
+    "status": "READY",
+    "mode": "demo",
+    "live_execution": false
+  },
+  "paper_before": {
+    "available": "92.400000",
+    "reserved": "0.000000",
+    "locked": "7.600000",
+    "hypothetical_fills": 2,
+    "realized_pnl": "0"
+  },
+  "paper_after": {
+    "available": "92.400000",
+    "reserved": "0.000000",
+    "locked": "7.600000",
+    "hypothetical_fills": 2,
+    "realized_pnl": "0",
+    "live_orders": 0,
+    "healthy": true
+  },
+  "campaigns": [
+    {
+      "id": "8e22161ad5554e63add487160c7d4cf6",
+      "status": "COMPLETED",
+      "completed": 108,
+      "failed": 0
+    },
+    {
+      "id": "509618849d324d159f81c5c8d1bdedc6",
+      "status": "COMPLETED",
+      "completed": 1,
+      "failed": 1
+    },
+    {
+      "id": "e486f1b65aac44febb1380d414cf761d",
+      "status": "COMPLETED",
+      "completed": 1000,
+      "failed": 0
+    },
+    {
+      "id": "82687850b9cc4c4e8427d2ad9d194732",
+      "status": "COMPLETED",
+      "completed": 3,
+      "failed": 0
+    }
+  ],
+  "incident_count": 1,
+  "dataset_validation": [
+    {
+      "id": "ctf-4024677",
+      "valid": true
+    },
+    {
+      "id": "ctf-4024680",
+      "valid": true
+    }
+  ]
+}

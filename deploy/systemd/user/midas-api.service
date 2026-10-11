@@ -1,0 +1,24 @@
+[Unit]
+Description=Midas research API and Laboratory coordinator
+After=network.target
+StartLimitIntervalSec=120
+StartLimitBurst=3
+
+[Service]
+Type=simple
+WorkingDirectory=%h/midas
+Environment=MIDAS_MODE=demo
+Environment=MIDAS_LABORATORY_ROOT=%h/midas/data/laboratory-final
+Environment=PYTHONUNBUFFERED=1
+ExecStart=%h/midas/.venv/bin/uvicorn apps.api.main:app --host 127.0.0.1 --port 8000 --timeout-graceful-shutdown 60
+Restart=on-failure
+RestartSec=5
+KillSignal=SIGINT
+KillMode=mixed
+TimeoutStopSec=90
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=midas-api
+
+[Install]
+WantedBy=default.target

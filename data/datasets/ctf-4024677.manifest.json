@@ -1,0 +1,226 @@
+{
+  "schema_version": 1,
+  "dataset_id": "ctf-4024677",
+  "dataset_version": "1",
+  "data_source": "Public Gamma/CLOB/finalized Polygon reads retained during milestone 2",
+  "provenance": "RECORDED",
+  "content_sha256": "78680ab4dbfe441c2512bbaa8ae74897419ef2ca63c41ab97b475aa5132fb138",
+  "event_count": 3,
+  "capture_start_ms": 1791742059278,
+  "capture_end_ms": 1791742059278,
+  "instrument_ids": [
+    "45771357044293249394701484141194198475871091757894999118580113740262781405581",
+    "56056672751934526125943641351839699220089479893294396205663286922097293819722"
+  ],
+  "protocols": [
+    "v1"
+  ],
+  "exchange_timestamp_coverage": 1.0,
+  "missing_intervals": [],
+  "feed_interruptions": [],
+  "completeness_limitations": [
+    "Bounded REST capture, not a continuous historical feed",
+    "Only two complementary instrument snapshots",
+    "No observed hypothetical executions or settlement",
+    "Original raw public responses preserved in tests/fixtures/milestone2"
+  ],
+  "market_metadata": [
+    {
+      "id": "4024677",
+      "event_id": "941344",
+      "question": "Lions vs. Cardinals",
+      "condition_id": "0x54ab3ea34abb0577de6b341c33c59ec75ee80df89f0135451fe63809a9588392",
+      "protocol": "v1",
+      "instruments": [
+        {
+          "asset_id": "56056672751934526125943641351839699220089479893294396205663286922097293819722",
+          "label": "Lions"
+        },
+        {
+          "asset_id": "45771357044293249394701484141194198475871091757894999118580113740262781405581",
+          "label": "Cardinals"
+        }
+      ],
+      "source": "LIVE",
+      "active": true,
+      "closed": false,
+      "accepting_orders": true,
+      "negative_risk": false,
+      "augmented_negative_risk": false,
+      "complementary_verified": true,
+      "payout_verified": true,
+      "payout_per_set": "1",
+      "payout_evidence": "For any nonnegative CTF payout vector (a,b), denominator=a+b>0; equal singleton quantities pay q collateral units",
+      "fee": {
+        "rate": "0.03",
+        "exponent": 1,
+        "verified": true,
+        "evidence": "Gamma feeSchedule, exponent 1; public Fees formula, verified 2026-10-11",
+        "verified_ts_ms": 1791742056771,
+        "expires_ts_ms": 1791742356771,
+        "rule_version": "polymarket-fees-2026-10-11"
+      },
+      "description": "In the upcoming NFL football game between Lions and Cardinals, scheduled for October 11 at 4:25PM ET:\nThis market will resolve to \"Lions\" if Lions win the game.\nThis market will resolve to \"Cardinals\" if Cardinals win the game.\nOvertime is included if played.\nIf the game ends in a tie, this market will resolve 50-50.\nIf the game is postponed, this market will remain open until the game has been completed.\nIf the game is canceled entirely, with no make-up game, this market will resolve 50-50.",
+      "resolution_source": "https://www.nfl.com/scores",
+      "resolution_metadata": {
+        "questionID": "0x1f089581d14dfbc08dfba8df0ef27ca9a95c0980664c7186272362d2eead3e42",
+        "resolutionStatus": null,
+        "umaResolutionStatus": null,
+        "umaResolutionStatuses": "[]"
+      },
+      "execution_delay_ms": 1000,
+      "attestation": {
+        "market_id": "4024677",
+        "condition_id": "0x54ab3ea34abb0577de6b341c33c59ec75ee80df89f0135451fe63809a9588392",
+        "protocol": "v1",
+        "instruments": [
+          "56056672751934526125943641351839699220089479893294396205663286922097293819722",
+          "45771357044293249394701484141194198475871091757894999118580113740262781405581"
+        ],
+        "status": "VERIFIED_STRUCTURE",
+        "relationship": "For any nonnegative CTF payout vector (a,b), denominator=a+b>0; equal singleton quantities pay q collateral units",
+        "terminal_outcomes": [
+          "FIRST: (1,0)",
+          "SECOND: (0,1)",
+          "SPLIT: (t,1-t), 0<=t<=1"
+        ],
+        "collateral": "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
+        "position_system": "0x4D97DCd97eC945f40cF65F87097ACe5EA0476045",
+        "resolution_mechanism": "CTF oracle reportPayouts; exact oracle identity unresolved",
+        "rule_version": "39e6c3cdd5ddeb8f6e349b52e71fc2ae8ff330a6af374fea5af9fed0f028c676",
+        "metadata_hash": "84b17079d408df58e7becff0ffef155e01851977b823bc363fb287688ba0c645",
+        "method": "ctf-complement-2",
+        "verified_ts_ms": 1791742059025,
+        "expires_ts_ms": 1791742359025,
+        "evidence": {
+          "rpc_url": "https://polygon-bor-rpc.publicnode.com",
+          "chain_id": 137,
+          "contract": "0x4D97DCd97eC945f40cF65F87097ACe5EA0476045",
+          "collateral": "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
+          "condition_id": "0x54ab3ea34abb0577de6b341c33c59ec75ee80df89f0135451fe63809a9588392",
+          "outcome_slot_count": 2,
+          "payout_denominator": 0,
+          "position_ids": [
+            "56056672751934526125943641351839699220089479893294396205663286922097293819722",
+            "45771357044293249394701484141194198475871091757894999118580113740262781405581"
+          ],
+          "index_sets": [
+            1,
+            2
+          ],
+          "parent_collection": "0x0000000000000000000000000000000000000000000000000000000000000000",
+          "block_hash": "0xfe51a704bdec30559e01e4d0040425b3652fae5b11922c77080abc28120453d3",
+          "block_number": "0x5af0ba1",
+          "calls": [
+            {
+              "method": "eth_chainId",
+              "params": [],
+              "result": "0x89"
+            },
+            {
+              "method": "eth_getBlockByNumber",
+              "params": [
+                "finalized",
+                false
+              ],
+              "result": {
+                "number": "0x5af0ba1",
+                "hash": "0xfe51a704bdec30559e01e4d0040425b3652fae5b11922c77080abc28120453d3",
+                "timestamp": "0x6acbd068"
+              }
+            },
+            {
+              "method": "eth_call",
+              "params": [
+                {
+                  "to": "0x4D97DCd97eC945f40cF65F87097ACe5EA0476045",
+                  "data": "0xd42dc0c254ab3ea34abb0577de6b341c33c59ec75ee80df89f0135451fe63809a9588392"
+                },
+                "0x5af0ba1"
+              ],
+              "result": "0x0000000000000000000000000000000000000000000000000000000000000002"
+            },
+            {
+              "method": "eth_call",
+              "params": [
+                {
+                  "to": "0x4D97DCd97eC945f40cF65F87097ACe5EA0476045",
+                  "data": "0xdd34de6754ab3ea34abb0577de6b341c33c59ec75ee80df89f0135451fe63809a9588392"
+                },
+                "0x5af0ba1"
+              ],
+              "result": "0x0000000000000000000000000000000000000000000000000000000000000000"
+            },
+            {
+              "method": "eth_call",
+              "params": [
+                {
+                  "to": "0x4D97DCd97eC945f40cF65F87097ACe5EA0476045",
+                  "data": "0x856296f7000000000000000000000000000000000000000000000000000000000000000054ab3ea34abb0577de6b341c33c59ec75ee80df89f0135451fe63809a95883920000000000000000000000000000000000000000000000000000000000000001"
+                },
+                "0x5af0ba1"
+              ],
+              "result": "0x46e72baeb549e36bdd5d5a411672ab40a961991736306eab0f990bd07d2a21ef"
+            },
+            {
+              "method": "eth_call",
+              "params": [
+                {
+                  "to": "0x4D97DCd97eC945f40cF65F87097ACe5EA0476045",
+                  "data": "0x39dd75300000000000000000000000002791bca1f2de4661ed88a30c99a7a9449aa8417446e72baeb549e36bdd5d5a411672ab40a961991736306eab0f990bd07d2a21ef"
+                },
+                "0x5af0ba1"
+              ],
+              "result": "0x7beef3d195e1b4a026cc0430555fd3ea8a8639f054f1e3d7cf0bc2c91d847f4a"
+            },
+            {
+              "method": "eth_call",
+              "params": [
+                {
+                  "to": "0x4D97DCd97eC945f40cF65F87097ACe5EA0476045",
+                  "data": "0x856296f7000000000000000000000000000000000000000000000000000000000000000054ab3ea34abb0577de6b341c33c59ec75ee80df89f0135451fe63809a95883920000000000000000000000000000000000000000000000000000000000000002"
+                },
+                "0x5af0ba1"
+              ],
+              "result": "0x5be1badf5a973c0753f22dbf75eee69396882a1a48a31c2ced33dc095eb4b727"
+            },
+            {
+              "method": "eth_call",
+              "params": [
+                {
+                  "to": "0x4D97DCd97eC945f40cF65F87097ACe5EA0476045",
+                  "data": "0x39dd75300000000000000000000000002791bca1f2de4661ed88a30c99a7a9449aa841745be1badf5a973c0753f22dbf75eee69396882a1a48a31c2ced33dc095eb4b727"
+                },
+                "0x5af0ba1"
+              ],
+              "result": "0x6531ab86bd72501e95124f5ab51f06ff4b0c00559d0fe5c0810acf952b0ec98d"
+            }
+          ]
+        },
+        "sources": [
+          "https://docs.polymarket.com/resources/onchain-position-data",
+          "https://docs.polymarket.com/concepts/positions-tokens",
+          "https://docs.polymarket.com/concepts/resolution",
+          "https://docs.polymarket.com/resources/contracts"
+        ],
+        "reasons": [],
+        "invalidation": [
+          "Metadata/rules/instrument/fee/state change",
+          "Evidence expiry",
+          "RPC chain or contract contradiction"
+        ],
+        "unresolved_assumptions": [
+          "RPC provider reports authentic finalized chain state",
+          "CTF implementation and collateral continue operating correctly",
+          "USDC.e backing retains value; pUSD conversion is modeled at parity, not independently attested",
+          "Natural-language resolution rules not mathematically proven or human-reviewed",
+          "Settlement timing, gas and financing costs are not established"
+        ]
+      }
+    }
+  ],
+  "economic_assumptions": [
+    "Hypothetical fills cannot be established from observed depth",
+    "Collateral adapter identity/parity and operational costs remain assumptions"
+  ]
+}

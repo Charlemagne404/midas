@@ -1,0 +1,21 @@
+[Unit]
+Description=Midas local development dashboard
+After=midas-api.service
+StartLimitIntervalSec=120
+StartLimitBurst=3
+
+[Service]
+Type=simple
+WorkingDirectory=%h/midas/apps/web
+Environment=MIDAS_API_TARGET=http://127.0.0.1:8000
+ExecStart=%h/midas/apps/web/node_modules/.bin/vite --host 127.0.0.1
+Restart=on-failure
+RestartSec=5
+KillSignal=SIGINT
+TimeoutStopSec=30
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=midas-web
+
+[Install]
+WantedBy=default.target

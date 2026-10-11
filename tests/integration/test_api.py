@@ -1,3 +1,5 @@
+import sqlite3
+
 from fastapi.testclient import TestClient
 
 from apps.api.config import Settings
@@ -53,3 +55,26 @@ def test_database_failure_halts_new_experiments(tmp_path, monkeypatch):
         response = client.post("/api/scenarios/profitable/run", json={"seed": 7})
         assert response.status_code == 409
         assert "Persistence degraded" in response.json()["detail"]
+
+
+def test_failed_startup_exposes_health_and_gates_dependent_endpoints(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    database = tmp_path / "paper.db"
+    settings = Settings(
+        database_url=f"sqlite+aiosqlite:///{database}",
+        laboratory_root=tmp_path / "laboratory",
+        refresh_seconds=300,
+    )
+    with TestClient(create_app(settings)) as client:
+        assert client.get("/api/health").status_code == 200
+
+    with sqlite3.connect(database) as connection:
+        connection.execute("UPDATE paper_accounts SET checksum='corrupt'")
+
+    with TestClient(create_app(settings)) as client:
+        health = client.get("/api/health")
+        assert health.status_code == 503
+        assert health.json()["status"] == "FAILED"
+        assert health.json()["startup_status"] == "FAILED"
+        assert client.get("/api/state").status_code == 503
+        assert client.get("/docs").status_code == 200

@@ -26,11 +26,73 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+        import asyncio
+        from pathlib import Path
+
+        from midas.laboratory.campaigns import Campaigns
+
+        laboratory: Campaigns | None = None
+        startup_failed = False
+        app.state.startup_status = "RECOVERING"
+        app.state.startup_error = None
+        app.state.campaign_recovery_ids = []
+        app.state.campaign_recovery_errors = []
+        app.state.laboratory = None
         try:
             await service.start()
+            database_path = service.store.engine.url.database
+            if config.laboratory_root is not None:
+                root = config.laboratory_root
+            else:
+                parent = (
+                    Path(database_path).parent
+                    if database_path and database_path != ":memory:"
+                    else Path("data")
+                )
+                existing = parent / "laboratory-final"
+                root = existing if existing.is_dir() else parent / "laboratory"
+            laboratory = Campaigns(root, Path(__file__).resolve().parents[2] / "data/datasets")
+            app.state.laboratory = laboratory
+            app.state.laboratory_root = str(root.resolve())
+
+            # RUNNING is converted to INTERRUPTED by Campaigns while it owns the writer lease.
+            # Resume only crash/shutdown cases. Budget and disk interruptions need review.
+            for campaign in laboratory.all():
+                if campaign["status"] != "INTERRUPTED" or campaign["error"] not in (
+                    None,
+                    "Service shutdown; committed episodes retained",
+                ):
+                    continue
+                try:
+                    laboratory.control(campaign["id"], "resume")
+                    app.state.campaign_recovery_ids.append(campaign["id"])
+                except (KeyError, ValueError) as error:
+                    app.state.campaign_recovery_errors.append(
+                        {"campaign_id": campaign["id"], "error": str(error)}
+                    )
+            app.state.startup_status = "DEGRADED" if app.state.campaign_recovery_errors else "READY"
+        except Exception as error:
+            startup_failed = True
+            app.state.startup_status = "FAILED"
+            app.state.startup_error = f"{type(error).__name__}: {error}"
+            structlog.get_logger().error("startup_failed", error=app.state.startup_error)
+            if laboratory is not None:
+                await asyncio.to_thread(laboratory.close)
+            try:
+                await service.stop()
+            except Exception as cleanup_error:
+                structlog.get_logger().error(
+                    "startup_cleanup_failed",
+                    error=f"{type(cleanup_error).__name__}: {cleanup_error}",
+                )
+
+        try:
             yield
         finally:
-            await service.stop()
+            if not startup_failed:
+                if laboratory is not None:
+                    await asyncio.to_thread(laboratory.close)
+                await service.stop()
 
     app = FastAPI(
         title="Midas Research API",
@@ -39,6 +101,27 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         description="Read-only public market data and internal virtual simulation. No trading credentials or live orders.",
     )
     app.state.service = service
+    app.state.startup_status = "RECOVERING"
+    app.state.startup_error = None
+    from apps.api.laboratory import router
+
+    app.include_router(router(lambda: app.state.laboratory))
+
+    @app.middleware("http")
+    async def gate_failed_startup(request: Request, call_next: Any) -> Any:
+        from fastapi.responses import JSONResponse
+
+        if (
+            request.url.path.startswith("/api/")
+            and request.url.path != "/api/health"
+            and app.state.startup_status == "FAILED"
+        ):
+            return JSONResponse(
+                status_code=503,
+                content={"status": "FAILED", "detail": "Midas startup or recovery failed"},
+            )
+        return await call_next(request)
+
     app.add_middleware(
         CORSMiddleware,
         allow_origins=config.cors_origins,
@@ -58,7 +141,54 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @app.get("/api/health")
     async def health() -> dict[str, Any]:
-        return {"status": service.health_status(), "mode": config.mode, "live_execution": False}
+        startup = app.state.startup_status
+        if startup == "FAILED":
+            status = "FAILED"
+        elif startup == "DEGRADED":
+            status = "DEGRADED"
+        else:
+            status = service.health_status()
+        laboratory = getattr(app.state, "laboratory", None)
+        recovery_campaigns = []
+        if laboratory is not None:
+            for campaign_id in app.state.campaign_recovery_ids:
+                try:
+                    if laboratory.get(campaign_id)["status"] == "RUNNING":
+                        recovery_campaigns.append(campaign_id)
+                except KeyError:
+                    continue
+        recovery_status = (
+            "FAILED"
+            if startup == "FAILED"
+            else "DEGRADED"
+            if app.state.campaign_recovery_errors
+            else "RECOVERING"
+            if recovery_campaigns
+            else "READY"
+        )
+        result = {
+            "status": status,
+            "startup_status": startup,
+            "startup_error": app.state.startup_error,
+            "mode": config.mode,
+            "live_execution": False,
+            "paper_recovery": {
+                "status": service.broker.recovery_status,
+                "journal_events": service.broker.journal_event_count,
+                "revision": service.broker.revision,
+            },
+            "laboratory": {
+                "status": recovery_status,
+                "root": getattr(app.state, "laboratory_root", None),
+                "recovering_campaigns": recovery_campaigns,
+                "recovery_errors": app.state.campaign_recovery_errors,
+            },
+        }
+        if status == "FAILED":
+            from fastapi.responses import JSONResponse
+
+            return JSONResponse(status_code=503, content=result)  # type: ignore[return-value]
+        return result
 
     @app.get("/api/state")
     async def state() -> dict[str, Any]:
@@ -275,6 +405,24 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @app.get("/api/incidents")
     async def incidents() -> list[dict[str, Any]]:
         rows = await service.store.recent("event", 200)
+        import asyncio
+
+        for index, incident in enumerate(await asyncio.to_thread(app.state.laboratory.incidents)):
+            observed = int(incident.get("first_observed_at", 0) * 1000)
+            rows.append(
+                {
+                    "id": -(1000 + index),
+                    "key": incident["id"],
+                    "source": "LABORATORY",
+                    "received_ts_ms": observed,
+                    "payload": {
+                        **incident,
+                        "message": f"{incident['classification']}: {incident['invariant']}",
+                        "timestamp_ms": observed,
+                        "source": "LABORATORY",
+                    },
+                }
+            )
         for index, incident in enumerate(service.broker.state["incidents"][-100:]):
             rows.insert(
                 0,

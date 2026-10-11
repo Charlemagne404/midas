@@ -1,4 +1,5 @@
 from decimal import Decimal
+from pathlib import Path
 from typing import Literal
 
 from midas.paper.broker import AccountConfig
@@ -10,6 +11,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="MIDAS_", env_file=".env", extra="ignore")
     mode: Literal["demo", "live"] = "demo"
+    laboratory_root: Path | None = None
     database_url: str = "sqlite+aiosqlite:///./data/midas.db"
     paper_capital: Decimal = Field(default=Decimal("100"), gt=0, allow_inf_nan=False)
     paper_execution_model: Literal["optimistic", "standard", "conservative"] = "standard"

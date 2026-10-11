@@ -6,9 +6,9 @@ import random
 from decimal import ROUND_FLOOR, Decimal
 from typing import Any, Literal, cast
 
-from pydantic import Field
+from pydantic import Field, SerializerFunctionWrapHandler, model_serializer
 
-from midas.arbitrage.engine import BinaryStrategy
+from midas.arbitrage.engine import BinaryStrategy, Strategy
 from midas.core.models import Book, Market, Model, Nonnegative, Source
 from midas.economics.attestation import CTF, fingerprint
 from midas.risk.engine import Limits, RiskState, assess
@@ -29,6 +29,18 @@ class ExecutionModel(Model):
     ack_delay_ms: int = Field(default=50, ge=0, le=60_000)
     taker_delay_ms: int = Field(default=0, ge=0, le=60_000)
     seed: int = Field(default=7, ge=0, le=2**32 - 1)
+    time_in_force: Literal["IOC", "FAK", "FOK"] = "IOC"
+    processing_ms: int = Field(default=1, ge=1, le=60_000)
+
+    @model_serializer(mode="wrap")
+    def compatible_serialization(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
+        data: dict[str, Any] = handler(self)
+        # Preserve the exact Milestone 2 journal representation for unchanged defaults.
+        if self.time_in_force == "IOC":
+            data.pop("time_in_force", None)
+        if self.processing_ms == 1:
+            data.pop("processing_ms", None)
+        return data
 
     @classmethod
     def preset(cls, name: str) -> "ExecutionModel":
@@ -272,7 +284,9 @@ def audit(state: dict[str, Any]) -> list[str]:
     return errors
 
 
-def transition(original: dict[str, Any], command: dict[str, Any]) -> dict[str, Any]:
+def transition(
+    original: dict[str, Any], command: dict[str, Any], strategy: Strategy | None = None
+) -> dict[str, Any]:
     """Copy-on-write transition. Commit state and event together in Store, then publish."""
     state = copy.deepcopy(original)
     config = AccountConfig.model_validate(state["config"])
@@ -336,7 +350,7 @@ def transition(original: dict[str, Any], command: dict[str, Any]) -> dict[str, A
                 existing.portfolio.mark(existing.books)
                 position["exchange"] = serial(existing.checkpoint())
         current = risk_state(state, market, ts)
-        strategy = BinaryStrategy(config.limits.max_age_ms, config.limits.min_edge)
+        strategy = strategy or BinaryStrategy(config.limits.max_age_ms, config.limits.min_edge)
         e = strategy.evaluate(market, books, ts, min(current.available, config.limits.max_capital))
         state["observations"] += 1
         state["last_evaluations"][market.id] = e.model_dump(mode="json")
@@ -417,8 +431,11 @@ def transition(original: dict[str, Any], command: dict[str, Any]) -> dict[str, A
                 limit = max(s.price for s in e.slices if s.asset_id == i.asset_id)
                 for action_kind, when in (
                     ("submit", due),
-                    ("match", due + 1),
-                    ("ack", due + config.execution.ack_delay_ms + 2),
+                    ("match", due + config.execution.processing_ms),
+                    (
+                        "ack",
+                        due + config.execution.processing_ms + config.execution.ack_delay_ms + 1,
+                    ),
                 ):
                     state["pending"].append(
                         {
@@ -487,7 +504,12 @@ def transition(original: dict[str, Any], command: dict[str, Any]) -> dict[str, A
             ex.emergency_stop = True
         if action["kind"] == "submit":
             status = ex.submit(
-                action["order"], action["asset"], D(action["quantity"]), D(action["limit"]), ts
+                action["order"],
+                action["asset"],
+                D(action["quantity"]),
+                D(action["limit"]),
+                ts,
+                tif=model.time_in_force,
             )
             if status == "REJECTED":
                 state["incidents"].append(
@@ -521,6 +543,16 @@ def transition(original: dict[str, Any], command: dict[str, Any]) -> dict[str, A
             state["used_liquidity"][action["asset"]] = consumed
         elif action["kind"] == "ack" and fault != "lost_ack":
             ex.acknowledge(action["order"])
+        elif action["kind"] in {"cancel", "expire"}:
+            if fault != "failed_cancel":
+                cancel_order = ex.orders.get(action["order"])
+                ex.cancel(action["order"], ts)
+                if (
+                    cancel_order
+                    and cancel_order.status == "CANCELLED"
+                    and action["kind"] == "expire"
+                ):
+                    cancel_order.status = "EXPIRED"
         state["pending"] = [p for p in state["pending"] if p["id"] != action["id"]]
         virtual_order = ex.orders.get(action["order"])
         item.setdefault("order_events", []).append(

@@ -82,6 +82,8 @@ class Portfolio:
 
     def post(self, entry: LedgerEntry) -> bool:
         if entry.id in self.seen:
+            if entry != next(e for e in self.ledger if e.id == entry.id):
+                raise ValueError("Conflicting financial event identity")
             return False
         if (
             self.available + entry.available_delta < 0
@@ -223,7 +225,7 @@ class Exchange:
             or quantity % D("0.01")
             or not ZERO < limit < 1
             or limit % book.tick_size
-            or tif not in {"IOC", "GTC"}
+            or tif not in {"IOC", "FAK", "FOK", "GTC"}
         ):
             return "REJECTED"
         if (
@@ -297,6 +299,9 @@ class Exchange:
         if (
             attestation_invalid
             or fee_stale
+            or not self.market.active
+            or self.market.closed
+            or not self.market.accepting_orders
             or not book.valid
             or now_ms - book.received_ts_ms > 15000
             or book.received_ts_ms > now_ms
@@ -306,6 +311,18 @@ class Exchange:
         ):
             self.release(order, now_ms, "EXPIRED")
             return []
+        if order.tif == "FOK":
+            executable = sum(
+                (
+                    (level.size * 100).to_integral_value(rounding="ROUND_FLOOR") / 100
+                    for level in book.asks
+                    if level.price <= order.limit
+                ),
+                ZERO,
+            )
+            if executable < order.remaining:
+                self.release(order, now_ms, "EXPIRED")
+                return []
         entries = []
         residual = []
         for level in sorted(book.asks, key=lambda x: x.price):
@@ -344,7 +361,7 @@ class Exchange:
         self.books[order.asset_id] = book.model_copy(update={"asks": tuple(residual)})
         if not order.remaining:
             self.release(order, now_ms, "FILLED")
-        elif order.tif == "IOC":
+        elif order.tif in {"IOC", "FAK", "FOK"}:
             self.release(order, now_ms, "EXPIRED")
         else:
             order.status = "PARTIAL" if order.remaining < order.quantity else "RESTING"

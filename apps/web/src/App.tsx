@@ -32,6 +32,7 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { api } from './api';
+import { Laboratory } from './Laboratory';
 import { PaperPage, PaperSummary, ExperimentPanel } from './Paper';
 import { chartBase } from './chart-theme';
 const LazyChart = lazy(() => import('./Chart').then((module) => ({ default: module.Chart })));
@@ -59,6 +60,7 @@ const pages = [
   ['Scanner', Search],
   ['Paper Trading', Database],
   ['Simulation Lab', FlaskConical],
+  ['Laboratory', Beaker],
   ['Analytics', Activity],
   ['Arena', Sparkles],
   ['Incidents', TriangleAlert],
@@ -229,7 +231,9 @@ export function App() {
         <main>
           <div className="page-heading">
             <div>
-              <div className="eyebrow">POLYMARKET RESEARCH / MILESTONE 002</div>
+              <div className="eyebrow">
+                POLYMARKET RESEARCH / {page === 'Laboratory' ? 'MILESTONE 003' : 'MILESTONE 002'}
+              </div>
               <h1>{page}</h1>
               <p>
                 {
@@ -241,6 +245,8 @@ export function App() {
                         'Inspect complete binary positions and every assumption behind their edge.',
                       'Simulation Lab':
                         'Reproduce the trade. Stress the execution. Reconcile every balance.',
+                      Laboratory:
+                        'Adversarial experiments. Inspectable evidence. Reproducible decisions.',
                       Analytics: 'Recorded observations and independent virtual experiments.',
                       Arena: 'A foundation for comparative strategy research.',
                       Incidents: 'An auditable record of warnings, errors, and scenario outcomes.',
@@ -314,6 +320,7 @@ export function App() {
               <ExperimentPanel />
             </>
           )}
+          {page === 'Laboratory' && <Laboratory />}
           {page === 'Analytics' && <AnalyticsPage data={analytics.data} />}
           {page === 'Arena' && <Arena />}
           {page === 'Incidents' && <Incidents />}
