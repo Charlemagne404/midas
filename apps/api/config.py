@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="MIDAS_", env_file=".env", extra="ignore")
     mode: Literal["demo", "live"] = "demo"
     laboratory_root: Path | None = None
+    arena_root: Path = Path("data/arena")
     database_url: str = "sqlite+aiosqlite:///./data/midas.db"
     paper_capital: Decimal = Field(default=Decimal("100"), gt=0, allow_inf_nan=False)
     paper_execution_model: Literal["optimistic", "standard", "conservative"] = "standard"

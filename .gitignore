@@ -21,6 +21,7 @@ data/laboratory/
 data/laboratory-demonstrations/
 data/laboratory-milestone3/
 data/laboratory-final/
+data/arena/
 *.sqlite
 *.sqlite-shm
 *.sqlite-wal

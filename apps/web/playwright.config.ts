@@ -1,7 +1,7 @@
 import { defineConfig } from '@playwright/test';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 const database = join(mkdtempSync(join(tmpdir(), 'midas-browser-')), 'paper.db');
 export default defineConfig({
   testDir: './e2e',
@@ -17,7 +17,11 @@ export default defineConfig({
       cwd: '../..',
       url: 'http://127.0.0.1:18000/api/health',
       reuseExistingServer: false,
-      env: { MIDAS_MODE: 'demo', MIDAS_DATABASE_URL: `sqlite+aiosqlite:///${database}` },
+      env: {
+        MIDAS_MODE: 'demo',
+        MIDAS_DATABASE_URL: `sqlite+aiosqlite:///${database}`,
+        MIDAS_ARENA_ROOT: join(dirname(database), 'arena'),
+      },
     },
     {
       command: 'corepack pnpm dev --port 15173',

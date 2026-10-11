@@ -170,7 +170,20 @@ class PaperBroker:
                     rolling_hash = ""
                     event_count = 0
                     async for row in result:
-                        revision, event_id, command, payload, checksum, previous_checksum = row
+                        (
+                            revision,
+                            journal_event_id,
+                            command,
+                            payload,
+                            journal_checksum,
+                            previous_checksum,
+                        ) = row
+                        if not isinstance(journal_event_id, str) or not isinstance(
+                            journal_checksum, str
+                        ):
+                            raise ValueError(
+                                "Paper journal event identity or checksum is malformed"
+                            )
                         if revision != event_count or previous_checksum != previous:
                             raise ValueError(
                                 f"Paper journal revision or checksum chain is inconsistent at {event_count}"
@@ -179,32 +192,32 @@ class PaperBroker:
                             not isinstance(command, dict)
                             or not isinstance(payload, dict)
                             or payload.get("kind") != command.get("kind")
-                            or payload.get("state_checksum") != checksum
+                            or payload.get("state_checksum") != journal_checksum
                         ):
                             raise ValueError(
                                 f"Paper journal event is malformed at revision {event_count}"
                             )
                         if event_count == 0:
-                            if event_id != "initial" or command.get("kind") != "initial":
+                            if journal_event_id != "initial" or command.get("kind") != "initial":
                                 raise ValueError("Missing initial financial journal")
                             initial_state = initial(AccountConfig.model_validate(command["config"]))
-                            if digest(initial_state) != checksum:
+                            if digest(initial_state) != journal_checksum:
                                 raise ValueError("Initial paper account checksum is inconsistent")
-                        elif command.get("id") != event_id:
+                        elif command.get("id") != journal_event_id:
                             raise ValueError(
                                 f"Paper journal command ID is inconsistent at revision {event_count}"
                             )
                         entry = journal_entry(
                             self.account_id,
-                            event_id,
+                            journal_event_id,
                             revision,
                             command,
                             payload,
-                            checksum,
+                            journal_checksum,
                             previous_checksum,
                         )
                         rolling_hash = advance_journal_hash(rolling_hash, entry)
-                        previous = checksum
+                        previous = journal_checksum
                         event_count += 1
                     await result.close()
                     if (

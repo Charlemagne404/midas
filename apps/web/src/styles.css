@@ -1606,6 +1606,83 @@ meter {
 }
 
 /* Laboratory research workstation */
+.arena-entry {
+  display: flex;
+  width: calc(100% - 40px);
+  padding: 18px 0;
+  gap: 16px;
+  align-items: center;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+.arena-entry > span:first-child {
+  flex: 1;
+  min-width: 0;
+}
+.arena-entry small,
+.arena-id {
+  display: block;
+  color: var(--muted);
+  font:
+    10px ui-monospace,
+    monospace;
+  margin-top: 8px;
+  overflow-wrap: anywhere;
+}
+.arena-dependencies {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-bottom: 20px;
+}
+.arena-table {
+  overflow-x: auto;
+}
+.arena-table table {
+  width: 100%;
+}
+.arena-facts {
+  display: grid;
+  gap: 10px;
+  margin: 18px 0;
+}
+.arena-facts > div {
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 8px;
+}
+.arena-facts dt {
+  color: var(--muted);
+}
+.arena-facts dd {
+  margin: 0;
+  font-family: ui-monospace, monospace;
+}
+.arena-conclusion {
+  border-left: 2px solid var(--gold);
+  padding: 14px 20px;
+  line-height: 1.6;
+}
+.arena-finding {
+  padding: 20px 0;
+  border-bottom: 1px solid var(--border);
+  line-height: 1.6;
+}
+.arena-workstation .lab-controls input {
+  padding: 8px;
+  border: 1px solid var(--border);
+  background: #10141b;
+  color: var(--text);
+  max-width: 150px;
+}
+.arena-workstation details {
+  padding: 16px 0;
+  color: var(--muted);
+}
+.arena-workstation code {
+  overflow-wrap: anywhere;
+}
 .laboratory {
   display: grid;
   gap: 20px;

@@ -1,0 +1,24 @@
+{
+  "checked_at": 1791759606.720045,
+  "health": {
+    "status": "READY",
+    "startup_status": "READY",
+    "startup_error": null,
+    "mode": "demo",
+    "live_execution": false,
+    "paper_recovery": {
+      "status": "CHECKPOINT_VERIFIED",
+      "journal_events": 7836,
+      "revision": 7835
+    },
+    "laboratory": {
+      "status": "READY",
+      "root": "/home/charlie/midas/data/laboratory-final",
+      "recovering_campaigns": [],
+      "recovery_errors": []
+    }
+  },
+  "arena_models": 6,
+  "arena_tournaments": 1,
+  "web_http_status": 200
+}

@@ -1,0 +1,7 @@
+# Install CPU torch first to avoid CUDA wheels:
+# .venv/bin/pip install torch==2.8.0+cpu --index-url https://download.pytorch.org/whl/cpu
+torch==2.8.0+cpu
+numpy==2.2.6
+scikit-learn==1.7.2
+gymnasium==1.2.1
+stable-baselines3==2.7.0

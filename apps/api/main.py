@@ -106,6 +106,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     from apps.api.laboratory import router
 
     app.include_router(router(lambda: app.state.laboratory))
+    from apps.api.arena import router as arena_router
+
+    app.include_router(arena_router(config.arena_root))
 
     @app.middleware("http")
     async def gate_failed_startup(request: Request, call_next: Any) -> Any:

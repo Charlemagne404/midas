@@ -33,6 +33,7 @@ import {
 import type { LucideIcon } from 'lucide-react';
 import { api } from './api';
 import { Laboratory } from './Laboratory';
+import { Arena } from './Arena';
 import { PaperPage, PaperSummary, ExperimentPanel } from './Paper';
 import { chartBase } from './chart-theme';
 const LazyChart = lazy(() => import('./Chart').then((module) => ({ default: module.Chart })));
@@ -248,7 +249,7 @@ export function App() {
                       Laboratory:
                         'Adversarial experiments. Inspectable evidence. Reproducible decisions.',
                       Analytics: 'Recorded observations and independent virtual experiments.',
-                      Arena: 'A foundation for comparative strategy research.',
+                      Arena: 'Train policies. Compare outcomes. Inspect the evidence.',
                       Incidents: 'An auditable record of warnings, errors, and scenario outcomes.',
                       Telemetry: 'Measured health of the data and research pipeline.',
                       Settings: 'Operating boundaries and conservative risk controls.',
@@ -1418,63 +1419,6 @@ function AnalyticsPage({ data }: { data: Analytics | undefined }) {
           </div>
         </Panel>
       </div>
-    </>
-  );
-}
-function Arena() {
-  const strategy = useQuery({
-    queryKey: ['strategies'],
-    queryFn: () => api<{ version: string; name: string; capabilities: string[] }>('/strategies'),
-  });
-  return (
-    <>
-      <Panel title="Strategy registry" aside={<Badge tone="purple">RESEARCH FOUNDATION</Badge>}>
-        <div className="arena-baseline">
-          <div className="arena-icon">
-            <Terminal size={30} />
-          </div>
-          <div>
-            <div className="eyebrow">DETERMINISTIC BASELINE / AVAILABLE</div>
-            <h3>{strategy.data?.name ?? 'Loading baseline…'}</h3>
-            <p>
-              Exact complementary-outcome mathematics over observed ask depth. Every proposed
-              virtual position passes an independent risk gate.
-            </p>
-            <div className="arena-tags">
-              {strategy.data?.capabilities.map((x) => (
-                <Badge key={x}>{x}</Badge>
-              ))}
-            </div>
-            <code>{strategy.data?.version}</code>
-          </div>
-          <Badge tone="green">IMPLEMENTED</Badge>
-        </div>
-      </Panel>
-      <Panel
-        title="Neural strategy experiments"
-        aside={<Badge tone="purple">FUTURE MILESTONE</Badge>}
-      >
-        <div className="arena-future">
-          <Sparkles size={33} />
-          <h3>Build the evidence before the model.</h3>
-          <p>
-            The strategy protocol and reproducible experiment artifacts provide an entry point for
-            execution-risk prediction and learning agents. Model training, rewards and comparisons
-            are not implemented.
-          </p>
-          <div className="future-grid">
-            <div>
-              <span>01</span>Execution-risk predictors
-            </div>
-            <div>
-              <span>02</span>Gymnasium environments
-            </div>
-            <div>
-              <span>03</span>Comparative strategy arena
-            </div>
-          </div>
-        </div>
-      </Panel>
     </>
   );
 }

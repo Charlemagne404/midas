@@ -1,0 +1,30 @@
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
+
+from apps.api.arena import router
+
+
+def test_api_empty_state_validation_and_missing_artifacts(tmp_path):
+    app = FastAPI()
+    app.include_router(router(tmp_path))
+    with TestClient(app) as client:
+        result = client.get("/api/arena")
+        assert result.status_code == 200
+        assert result.json()["models"] == []
+        assert "HYPOTHETICAL" in result.json()["provenance"]
+        assert client.get("/api/arena/models/unknown").status_code == 404
+        assert (
+            client.post(
+                "/api/arena/jobs/validate", json={"configuration": {"kind": "dataset"}}
+            ).status_code
+            == 409
+        )
+        assert (
+            client.post(
+                "/api/arena/jobs/validate",
+                json={"configuration": {"kind": "dataset", "dataset": {"episodes": 30}}},
+            ).status_code
+            == 200
+        )
+        assert client.get("/api/arena/models/model-a/artifacts/secrets").status_code == 404
+        assert client.get("/api/arena/tournaments/x/rows?limit=10000").status_code == 422
