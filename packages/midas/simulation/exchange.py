@@ -5,7 +5,8 @@ from dataclasses import asdict, dataclass, field
 from decimal import ROUND_CEILING, ROUND_HALF_UP, Decimal
 from typing import Any
 
-from midas.core.models import Book, Market
+from midas.core.models import Book, Market, Source
+from midas.economics.attestation import MarketEconomicAttestation
 
 D = Decimal
 ZERO = D("0")
@@ -53,6 +54,8 @@ class LedgerEntry:
     fee: Decimal = ZERO
     order_id: str | None = None
     detail: str = ""
+    payout_numerator: int = 0
+    payout_denominator: int = 0
 
 
 @dataclass
@@ -157,7 +160,7 @@ class Order:
 
 
 class Exchange:
-    version = "virtual-exchange-1"
+    version = "virtual-exchange-2"
 
     def __init__(self, market: Market, capital: Decimal, books: dict[str, Book]) -> None:
         self.market = market
@@ -180,12 +183,26 @@ class Exchange:
     ) -> str:
         if order_id in self.orders:
             return self.orders[order_id].status
+        if self.market.source != Source.SYNTHETIC and (
+            self.market.attestation is None
+            or not MarketEconomicAttestation.model_validate(self.market.attestation).valid_for(
+                self.market, now_ms
+            )
+        ):
+            return "REJECTED"
         book = self.books.get(asset_id)
         if (
             self.emergency_stop
             or self.settled
             or asset_id in self.forced_rejections
             or not book
+            or asset_id not in {i.asset_id for i in self.market.instruments}
+            or book.asset_id != asset_id
+            or book.condition_id != self.market.condition_id
+            or book.source != self.market.source
+            or not self.market.active
+            or self.market.closed
+            or not self.market.accepting_orders
             or not book.valid
         ):
             return "REJECTED"
@@ -198,14 +215,24 @@ class Exchange:
         if (
             not quantity.is_finite()
             or not limit.is_finite()
-            or quantity < book.min_order_size
+            or (
+                quantity * limit < book.min_order_size
+                if book.minimum_unit == "notional"
+                else quantity < book.min_order_size
+            )
             or quantity % D("0.01")
             or not ZERO < limit < 1
             or limit % book.tick_size
             or tif not in {"IOC", "GTC"}
         ):
             return "REJECTED"
-        if now_ms - book.received_ts_ms > 15000:
+        if (
+            now_ms - book.received_ts_ms > 15000
+            or book.received_ts_ms > now_ms
+            or book.exchange_ts_ms is None
+            or now_ms - book.exchange_ts_ms > 15000
+            or book.exchange_ts_ms > now_ms + 1000
+        ):
             return "REJECTED"
         # Max fee curve over all executable prices <= limit, with per-match reserve.
         p = min(limit, D("0.5"))
@@ -258,7 +285,25 @@ class Exchange:
             self.release(order, now_ms, "CANCELLED")
             return []
         book = self.books[order.asset_id]
-        if not book.valid or now_ms - book.received_ts_ms > 15000:
+        attestation_invalid = self.market.source != Source.SYNTHETIC and (
+            self.market.attestation is None
+            or not MarketEconomicAttestation.model_validate(self.market.attestation).valid_for(
+                self.market, now_ms
+            )
+        )
+        fee_stale = self.market.source != Source.SYNTHETIC and (
+            self.market.fee.expires_ts_ms is None or now_ms > self.market.fee.expires_ts_ms
+        )
+        if (
+            attestation_invalid
+            or fee_stale
+            or not book.valid
+            or now_ms - book.received_ts_ms > 15000
+            or book.received_ts_ms > now_ms
+            or book.exchange_ts_ms is None
+            or now_ms - book.exchange_ts_ms > 15000
+            or book.exchange_ts_ms > now_ms + 1000
+        ):
             self.release(order, now_ms, "EXPIRED")
             return []
         entries = []
@@ -310,7 +355,12 @@ class Exchange:
         if order and order.status not in {"FILLED", "CANCELLED", "EXPIRED"}:
             self.release(order, now_ms, "CANCELLED")
 
-    def settle(self, payout: dict[str, Decimal], now_ms: int) -> None:
+    def settle(
+        self,
+        payout: dict[str, Decimal],
+        now_ms: int,
+        rational: tuple[dict[str, int], int] | None = None,
+    ) -> None:
         assets = {i.asset_id for i in self.market.instruments}
         if (
             set(payout) != assets
@@ -318,6 +368,13 @@ class Exchange:
             or sum(payout.values()) != self.market.payout_per_set
         ):
             raise ValueError("Settlement must specify the complete complementary payout vector")
+        if rational is not None and (
+            set(rational[0]) != assets
+            or rational[1] <= 0
+            or any(n < 0 for n in rational[0].values())
+            or sum(rational[0].values()) != rational[1]
+        ):
+            raise ValueError("Invalid rational terminal payout")
         if self.settled:
             return
         for order_id in self.orders:
@@ -326,6 +383,11 @@ class Exchange:
             q = self.portfolio.positions.get(asset_id, ZERO)
             if q:
                 proceeds = q * payout[asset_id]
+                numerator, denominator = (
+                    (rational[0][asset_id], rational[1]) if rational else (0, 0)
+                )
+                if rational:
+                    proceeds = D(int(q * 1_000_000) * numerator // denominator) / 1_000_000
                 basis = self.asset_costs.get(asset_id, ZERO)
                 self.portfolio.post(
                     LedgerEntry(
@@ -337,6 +399,8 @@ class Exchange:
                         asset_id=asset_id,
                         quantity=q,
                         price=payout[asset_id],
+                        payout_numerator=numerator,
+                        payout_denominator=denominator,
                     )
                 )
         self.settled = True
@@ -372,6 +436,9 @@ class Exchange:
             "price",
             "fee",
         )
+        raw_ids = [entry["id"] for entry in snapshot["ledger"]]
+        if len(set(raw_ids)) != len(raw_ids):
+            raise ValueError("Duplicate financial event in checkpoint")
         for raw in snapshot["ledger"]:
             item = dict(raw)
             for name in decimal_fields:

@@ -43,7 +43,15 @@ def reconcile(exchange: Exchange) -> list[str]:
             fees += e.fee
         if e.kind == "settlement":
             assert e.asset_id is not None
-            if e.available_delta != e.quantity * e.price:
+            expected_proceeds = (
+                (
+                    D(int(e.quantity * 1_000_000) * e.payout_numerator // e.payout_denominator)
+                    / 1_000_000
+                )
+                if e.payout_denominator
+                else e.quantity * e.price
+            )
+            if e.available_delta != expected_proceeds:
                 errors.append(f"Settlement arithmetic mismatch at {e.id}")
             inventory[e.asset_id] = inventory.get(e.asset_id, D(0)) - e.quantity
             proceeds += e.available_delta

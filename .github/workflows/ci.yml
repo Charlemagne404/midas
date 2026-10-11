@@ -72,3 +72,6 @@ jobs:
       - run: uv sync --frozen
       - run: uv run alembic upgrade head
       - run: uv run python scripts/storage_smoke.py
+      - run: uv run pytest tests/integration/test_postgres_paper.py -q
+        env:
+          MIDAS_TEST_POSTGRES_URL: postgresql+asyncpg://midas:midas_local@localhost:5432/midas_ci

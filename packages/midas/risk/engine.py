@@ -19,6 +19,10 @@ class Limits(Model):
     min_edge: Nonnegative = D("0.001")
     max_slippage: Nonnegative = D("0.05")
     max_drawdown: Nonnegative = D("0.10")
+    max_daily_loss: Nonnegative = D("5")
+    max_cumulative_loss: Nonnegative = D("10")
+    max_unmatched_exposure: Nonnegative = D("100")
+    max_unmatched_quantity: Nonnegative = D("0")
     emergency_stop: bool = False
 
 
@@ -30,6 +34,9 @@ class RiskState(Model):
     positions: int = Field(default=0, ge=0)
     drawdown: Nonnegative = D("0")
     unmatched_quantity: Nonnegative = D("0")
+    unmatched_exposure: Nonnegative = D("0")
+    daily_loss: Nonnegative = D("0")
+    cumulative_loss: Nonnegative = D("0")
 
 
 class Decision(Model):
@@ -58,7 +65,18 @@ def assess(e: Evaluation, state: RiskState, limits: Limits, now_ms: int) -> Deci
         reasons.append("Market data too old or invalid")
     if e.required_capital <= 0 or e.quantity <= 0:
         reasons.append("Empty virtual position")
+    worst_leg = max(
+        (
+            sum((s.notional + s.fee for s in e.slices if s.asset_id == asset), D(0))
+            for asset in {s.asset_id for s in e.slices}
+        ),
+        default=D(0),
+    )
     checks = [
+        (
+            state.unmatched_exposure + worst_leg > limits.max_unmatched_exposure,
+            "Potential unmatched-leg capital limit",
+        ),
         (e.required_capital > limits.max_capital, "Opportunity capital limit"),
         (e.required_capital > state.available, "Insufficient virtual capital"),
         (state.exposure + e.required_capital > limits.max_exposure, "Overall exposure limit"),
@@ -74,7 +92,18 @@ def assess(e: Evaluation, state: RiskState, limits: Limits, now_ms: int) -> Deci
         (e.net_edge < limits.min_edge, "Net edge below risk floor"),
         (e.slippage > limits.max_slippage, "Modeled slippage limit"),
         (state.drawdown >= limits.max_drawdown and state.drawdown > 0, "Drawdown limit"),
-        (state.unmatched_quantity > 0, "Existing partial position requires reconciliation"),
+        (
+            state.unmatched_quantity > limits.max_unmatched_quantity,
+            "Existing partial position requires reconciliation",
+        ),
+        (
+            state.daily_loss >= limits.max_daily_loss and state.daily_loss > 0,
+            "Daily simulated loss limit",
+        ),
+        (
+            state.cumulative_loss >= limits.max_cumulative_loss and state.cumulative_loss > 0,
+            "Cumulative simulated loss limit",
+        ),
     ]
     reasons.extend(reason for failed, reason in checks if failed)
     return Decision(

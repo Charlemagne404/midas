@@ -1,0 +1,3391 @@
+{
+  "raw_market": {
+    "id": "4061337",
+    "question": "Spread: Seahawks (-3.5)",
+    "conditionId": "0xb99a2a01c57b5cb69dc6a09461885e6ffcd07ad19488b8cd9b20242d360445f2",
+    "slug": "nfl-sf-sea-2026-10-11-spread-home-3pt5",
+    "resolutionSource": "https://www.nfl.com/scores",
+    "endDate": "2026-10-11T20:25:00Z",
+    "liquidity": "1639538.4897",
+    "startDate": "2026-09-01T16:01:01Z",
+    "image": "https://polymarket-upload.s3.us-east-2.amazonaws.com/nfl.png",
+    "icon": "https://polymarket-upload.s3.us-east-2.amazonaws.com/nfl.png",
+    "description": "In the upcoming NFL football game between 49ers and Seahawks, scheduled for October 11 at 4:25 PM ET:\n\nThis market will resolve to \"Seahawks\" if the Seahawks win the game by 4 or more points.\n\nOtherwise, this market will resolve to \"49ers\".\n\nOvertime is included if played.\n\nIf the game is postponed, this market will remain open until the game has been completed. If the game is canceled entirely, with no make-up game, this market will resolve 50-50.",
+    "outcomes": "[\"Seahawks\", \"49ers\"]",
+    "outcomePrices": "[\"0.455\", \"0.545\"]",
+    "volume": "42175.708383",
+    "active": true,
+    "closed": false,
+    "marketMakerAddress": "",
+    "createdAt": "2026-09-01T16:00:17.0255Z",
+    "updatedAt": "2026-10-11T17:29:30.429452Z",
+    "new": false,
+    "featured": false,
+    "archived": false,
+    "resolvedBy": "0x65070BE91477460D8A7AeEb94ef92fe056C2f2A7",
+    "restricted": true,
+    "groupItemTitle": "Spread -3.5",
+    "groupItemThreshold": "1",
+    "questionID": "0xd7ea5f03d258a3aaf6607a2b3978f8dce35b1c74b8f137a93b5ad92c3debc6c1",
+    "enableOrderBook": true,
+    "orderPriceMinTickSize": "0.01",
+    "orderMinSize": 5,
+    "volumeNum": "42175.708383",
+    "liquidityNum": "1639538.4897",
+    "endDateIso": "2026-10-11",
+    "startDateIso": "2026-09-01",
+    "hasReviewedDates": true,
+    "volume24hr": "39699.878412",
+    "volume1wk": "42175.708383",
+    "volume1mo": "42175.708383",
+    "volume1yr": "42175.708383",
+    "gameStartTime": "2026-10-11 20:25:00+00",
+    "secondsDelay": 1,
+    "clobTokenIds": "[\"110903350962640733204851233408043458335773162018403370855794485169312539285098\", \"77446698917844976730765839126584882004894269648848404445484641136564907461373\"]",
+    "positionIds": [
+      "898997183332417400025675136309767651578997793271806111324111350840543936512",
+      "898997183332417400025675136309767651578997793271806111324111350840543936513"
+    ],
+    "comboStatus": "enabled",
+    "umaBond": "250",
+    "umaReward": "0.8",
+    "volume24hrClob": "39699.878412",
+    "volume1wkClob": "42175.708383",
+    "volume1moClob": "42175.708383",
+    "volume1yrClob": "42175.708383",
+    "volumeClob": "42175.708383",
+    "liquidityClob": "1639538.4897",
+    "makerBaseFee": 1000,
+    "takerBaseFee": 1000,
+    "customLiveness": 900,
+    "acceptingOrders": true,
+    "negRisk": false,
+    "events": [
+      {
+        "id": "941347",
+        "ticker": "nfl-sf-sea-2026-10-11",
+        "slug": "nfl-sf-sea-2026-10-11",
+        "title": "49ers vs. Seahawks",
+        "description": "In the upcoming NFL football game between 49ers and Seahawks, scheduled for October 11 at 4:25PM ET:\nThis market will resolve to \"49ers\" if 49ers win the game.\nThis market will resolve to \"Seahawks\" if Seahawks win the game.\nOvertime is included if played.\nIf the game ends in a tie, this market will resolve 50-50.\nIf the game is postponed, this market will remain open until the game has been completed.\nIf the game is canceled entirely, with no make-up game, this market will resolve 50-50.",
+        "resolutionSource": "https://www.nfl.com/scores",
+        "startDate": "2026-08-31T12:00:52Z",
+        "creationDate": "2026-10-11T20:25:00Z",
+        "endDate": "2026-10-11T20:25:00Z",
+        "image": "https://polymarket-upload.s3.us-east-2.amazonaws.com/nfl.png",
+        "icon": "https://polymarket-upload.s3.us-east-2.amazonaws.com/nfl.png",
+        "active": true,
+        "closed": false,
+        "archived": false,
+        "new": false,
+        "featured": false,
+        "restricted": true,
+        "liquidity": "9243415.92247",
+        "volume": "534889.571979",
+        "openInterest": "482538.37520800007",
+        "createdAt": "2026-08-31T12:00:40.601198Z",
+        "updatedAt": "2026-10-11T17:27:50.955982Z",
+        "competitive": "0.9999750006249843",
+        "volume24hr": "364294.415309",
+        "volume1wk": "503906.280189",
+        "volume1mo": "504102.03074200003",
+        "volume1yr": "504102.03074200003",
+        "enableOrderBook": true,
+        "liquidityClob": "9243415.92247",
+        "negRisk": false,
+        "commentCount": 0,
+        "series": [
+          {
+            "id": "12185",
+            "ticker": "nfl-2026",
+            "slug": "nfl-2026",
+            "title": "NFL 2026",
+            "seriesType": "single",
+            "recurrence": "daily",
+            "image": "",
+            "icon": "",
+            "active": true,
+            "closed": false,
+            "archived": false,
+            "restricted": true,
+            "createdAt": "2026-07-08T19:57:42.464905Z",
+            "updatedAt": "2026-10-11T17:27:59.041339Z",
+            "volume24hr": "17338576.81591",
+            "volume": "20333595.107071",
+            "liquidity": "52464724.84618",
+            "commentCount": 122
+          }
+        ],
+        "cyom": false,
+        "showAllOutcomes": true,
+        "showMarketImages": false,
+        "enableNegRisk": false,
+        "automaticallyActive": true,
+        "eventDate": "2026-10-11",
+        "startTime": "2026-10-11T20:25:00Z",
+        "eventWeek": 5,
+        "seriesSlug": "nfl-2026",
+        "period": "NS",
+        "negRiskAugmented": false,
+        "pendingDeployment": false,
+        "deploying": false,
+        "gameId": 19530,
+        "usId": "nfl-sf-sea-2026-10-11",
+        "eventMetadata": {
+          "context_requires_regen": true
+        },
+        "version": "v1"
+      }
+    ],
+    "ready": false,
+    "funded": false,
+    "acceptingOrdersTimestamp": "2026-09-01T16:01:01Z",
+    "cyom": false,
+    "competitive": "0.9979790923380155",
+    "approved": true,
+    "clobRewards": [
+      {
+        "id": "3475605",
+        "conditionId": "0xb99a2a01c57b5cb69dc6a09461885e6ffcd07ad19488b8cd9b20242d360445f2",
+        "assetAddress": "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
+        "rewardsAmount": 0,
+        "rewardsDailyRate": 400,
+        "startDate": "2026-10-10",
+        "endDate": "2500-12-31"
+      }
+    ],
+    "rewardsMinSize": 1000,
+    "rewardsMaxSpread": "2.5",
+    "spread": "0.01",
+    "oneDayPriceChange": "-0.01",
+    "oneHourPriceChange": "-0.01",
+    "oneWeekPriceChange": "-0.04",
+    "oneMonthPriceChange": "-0.14",
+    "lastTradePrice": "0.46",
+    "bestBid": "0.45",
+    "bestAsk": "0.46",
+    "automaticallyActive": true,
+    "clearBookOnStart": true,
+    "manualActivation": false,
+    "negRiskOther": false,
+    "sportsMarketType": "spreads",
+    "line": "-3.5",
+    "umaResolutionStatuses": "[]",
+    "pendingDeployment": false,
+    "deploying": false,
+    "deployingTimestamp": "2026-09-01T16:00:21.236026Z",
+    "rfqEnabled": false,
+    "holdingRewardsEnabled": false,
+    "feesEnabled": true,
+    "feeType": "sports_fees_nfl_cfb_oct26",
+    "feeSchedule": {
+      "exponent": 1,
+      "rate": "0.03",
+      "takerOnly": true,
+      "rebateRate": "0.15"
+    },
+    "version": "v1"
+  },
+  "raw_books": {
+    "110903350962640733204851233408043458335773162018403370855794485169312539285098": {
+      "market": "0xb99a2a01c57b5cb69dc6a09461885e6ffcd07ad19488b8cd9b20242d360445f2",
+      "asset_id": "110903350962640733204851233408043458335773162018403370855794485169312539285098",
+      "timestamp": "1791740001382",
+      "hash": "0b6629442ce0aab2eba5742a8120816c6b73dc4c",
+      "bids": [
+        {
+          "price": "0.01",
+          "size": "87000"
+        },
+        {
+          "price": "0.02",
+          "size": "84000"
+        },
+        {
+          "price": "0.03",
+          "size": "6000"
+        },
+        {
+          "price": "0.05",
+          "size": "26800"
+        },
+        {
+          "price": "0.1",
+          "size": "9400"
+        },
+        {
+          "price": "0.12",
+          "size": "15991.64"
+        },
+        {
+          "price": "0.14",
+          "size": "4642.84"
+        },
+        {
+          "price": "0.17",
+          "size": "6643.41"
+        },
+        {
+          "price": "0.19",
+          "size": "315.78"
+        },
+        {
+          "price": "0.25",
+          "size": "1320"
+        },
+        {
+          "price": "0.26",
+          "size": "53.84"
+        },
+        {
+          "price": "0.31",
+          "size": "32.25"
+        },
+        {
+          "price": "0.34",
+          "size": "20000"
+        },
+        {
+          "price": "0.35",
+          "size": "1006"
+        },
+        {
+          "price": "0.36",
+          "size": "16.66"
+        },
+        {
+          "price": "0.39",
+          "size": "10120"
+        },
+        {
+          "price": "0.4",
+          "size": "605"
+        },
+        {
+          "price": "0.41",
+          "size": "10995"
+        },
+        {
+          "price": "0.42",
+          "size": "29968"
+        },
+        {
+          "price": "0.43",
+          "size": "253938.54"
+        },
+        {
+          "price": "0.44",
+          "size": "268265.02"
+        },
+        {
+          "price": "0.45",
+          "size": "53288.33"
+        }
+      ],
+      "asks": [
+        {
+          "price": "0.99",
+          "size": "87429"
+        },
+        {
+          "price": "0.98",
+          "size": "79000"
+        },
+        {
+          "price": "0.97",
+          "size": "6000"
+        },
+        {
+          "price": "0.95",
+          "size": "26800"
+        },
+        {
+          "price": "0.9",
+          "size": "26090"
+        },
+        {
+          "price": "0.88",
+          "size": "8333.32"
+        },
+        {
+          "price": "0.86",
+          "size": "4642.84"
+        },
+        {
+          "price": "0.84",
+          "size": "7000"
+        },
+        {
+          "price": "0.82",
+          "size": "3333.32"
+        },
+        {
+          "price": "0.79",
+          "size": "7380.93"
+        },
+        {
+          "price": "0.76",
+          "size": "10938.16"
+        },
+        {
+          "price": "0.75",
+          "size": "3600"
+        },
+        {
+          "price": "0.71",
+          "size": "203.76"
+        },
+        {
+          "price": "0.7",
+          "size": "4230.34"
+        },
+        {
+          "price": "0.69",
+          "size": "2356.56"
+        },
+        {
+          "price": "0.67",
+          "size": "654.51"
+        },
+        {
+          "price": "0.63",
+          "size": "202.68"
+        },
+        {
+          "price": "0.58",
+          "size": "100"
+        },
+        {
+          "price": "0.57",
+          "size": "20256"
+        },
+        {
+          "price": "0.56",
+          "size": "750"
+        },
+        {
+          "price": "0.55",
+          "size": "700"
+        },
+        {
+          "price": "0.54",
+          "size": "720"
+        },
+        {
+          "price": "0.53",
+          "size": "600"
+        },
+        {
+          "price": "0.52",
+          "size": "10090"
+        },
+        {
+          "price": "0.51",
+          "size": "453"
+        },
+        {
+          "price": "0.5",
+          "size": "14865"
+        },
+        {
+          "price": "0.49",
+          "size": "2705"
+        },
+        {
+          "price": "0.48",
+          "size": "329459.37"
+        },
+        {
+          "price": "0.47",
+          "size": "1287265.12"
+        },
+        {
+          "price": "0.46",
+          "size": "842434.63"
+        }
+      ],
+      "min_order_size": "5",
+      "tick_size": "0.01",
+      "neg_risk": false,
+      "last_trade_price": "0.450"
+    },
+    "77446698917844976730765839126584882004894269648848404445484641136564907461373": {
+      "market": "0xb99a2a01c57b5cb69dc6a09461885e6ffcd07ad19488b8cd9b20242d360445f2",
+      "asset_id": "77446698917844976730765839126584882004894269648848404445484641136564907461373",
+      "timestamp": "1791740001382",
+      "hash": "e4bb3b45dd1c726557e9ccca04552e45c67fbe96",
+      "bids": [
+        {
+          "price": "0.01",
+          "size": "87429"
+        },
+        {
+          "price": "0.02",
+          "size": "79000"
+        },
+        {
+          "price": "0.03",
+          "size": "6000"
+        },
+        {
+          "price": "0.05",
+          "size": "26800"
+        },
+        {
+          "price": "0.1",
+          "size": "26090"
+        },
+        {
+          "price": "0.12",
+          "size": "8333.32"
+        },
+        {
+          "price": "0.14",
+          "size": "4642.84"
+        },
+        {
+          "price": "0.16",
+          "size": "7000"
+        },
+        {
+          "price": "0.18",
+          "size": "3333.32"
+        },
+        {
+          "price": "0.21",
+          "size": "7380.93"
+        },
+        {
+          "price": "0.24",
+          "size": "10938.16"
+        },
+        {
+          "price": "0.25",
+          "size": "3600"
+        },
+        {
+          "price": "0.29",
+          "size": "203.76"
+        },
+        {
+          "price": "0.3",
+          "size": "4230.34"
+        },
+        {
+          "price": "0.31",
+          "size": "2356.56"
+        },
+        {
+          "price": "0.33",
+          "size": "654.51"
+        },
+        {
+          "price": "0.37",
+          "size": "202.68"
+        },
+        {
+          "price": "0.42",
+          "size": "100"
+        },
+        {
+          "price": "0.43",
+          "size": "20256"
+        },
+        {
+          "price": "0.44",
+          "size": "750"
+        },
+        {
+          "price": "0.45",
+          "size": "700"
+        },
+        {
+          "price": "0.46",
+          "size": "720"
+        },
+        {
+          "price": "0.47",
+          "size": "600"
+        },
+        {
+          "price": "0.48",
+          "size": "10090"
+        },
+        {
+          "price": "0.49",
+          "size": "453"
+        },
+        {
+          "price": "0.5",
+          "size": "14865"
+        },
+        {
+          "price": "0.51",
+          "size": "2705"
+        },
+        {
+          "price": "0.52",
+          "size": "329459.37"
+        },
+        {
+          "price": "0.53",
+          "size": "1287265.12"
+        },
+        {
+          "price": "0.54",
+          "size": "842434.63"
+        }
+      ],
+      "asks": [
+        {
+          "price": "0.99",
+          "size": "87000"
+        },
+        {
+          "price": "0.98",
+          "size": "84000"
+        },
+        {
+          "price": "0.97",
+          "size": "6000"
+        },
+        {
+          "price": "0.95",
+          "size": "26800"
+        },
+        {
+          "price": "0.9",
+          "size": "9400"
+        },
+        {
+          "price": "0.88",
+          "size": "15991.64"
+        },
+        {
+          "price": "0.86",
+          "size": "4642.84"
+        },
+        {
+          "price": "0.83",
+          "size": "6643.41"
+        },
+        {
+          "price": "0.81",
+          "size": "315.78"
+        },
+        {
+          "price": "0.75",
+          "size": "1320"
+        },
+        {
+          "price": "0.74",
+          "size": "53.84"
+        },
+        {
+          "price": "0.69",
+          "size": "32.25"
+        },
+        {
+          "price": "0.66",
+          "size": "20000"
+        },
+        {
+          "price": "0.65",
+          "size": "1006"
+        },
+        {
+          "price": "0.64",
+          "size": "16.66"
+        },
+        {
+          "price": "0.61",
+          "size": "10120"
+        },
+        {
+          "price": "0.6",
+          "size": "605"
+        },
+        {
+          "price": "0.59",
+          "size": "10995"
+        },
+        {
+          "price": "0.58",
+          "size": "29968"
+        },
+        {
+          "price": "0.57",
+          "size": "253938.54"
+        },
+        {
+          "price": "0.56",
+          "size": "268265.02"
+        },
+        {
+          "price": "0.55",
+          "size": "53288.33"
+        }
+      ],
+      "min_order_size": "5",
+      "tick_size": "0.01",
+      "neg_risk": false,
+      "last_trade_price": "0.450"
+    }
+  },
+  "market": {
+    "id": "4061337",
+    "event_id": "941347",
+    "question": "Spread: Seahawks (-3.5)",
+    "condition_id": "0xb99a2a01c57b5cb69dc6a09461885e6ffcd07ad19488b8cd9b20242d360445f2",
+    "protocol": "v1",
+    "instruments": [
+      {
+        "asset_id": "110903350962640733204851233408043458335773162018403370855794485169312539285098",
+        "label": "Seahawks"
+      },
+      {
+        "asset_id": "77446698917844976730765839126584882004894269648848404445484641136564907461373",
+        "label": "49ers"
+      }
+    ],
+    "source": "LIVE",
+    "active": true,
+    "closed": false,
+    "accepting_orders": true,
+    "negative_risk": false,
+    "augmented_negative_risk": false,
+    "complementary_verified": true,
+    "payout_verified": true,
+    "payout_per_set": "1",
+    "payout_evidence": "For any nonnegative CTF payout vector (a,b), denominator=a+b>0; equal singleton quantities pay q collateral units",
+    "fee": {
+      "rate": "0.03",
+      "exponent": 1,
+      "verified": true,
+      "evidence": "Gamma feeSchedule, exponent 1; public Fees formula, verified 2026-10-11",
+      "verified_ts_ms": 1791740022780,
+      "expires_ts_ms": 1791740322780,
+      "rule_version": "polymarket-fees-2026-10-11"
+    },
+    "description": "In the upcoming NFL football game between 49ers and Seahawks, scheduled for October 11 at 4:25 PM ET:\n\nThis market will resolve to \"Seahawks\" if the Seahawks win the game by 4 or more points.\n\nOtherwise, this market will resolve to \"49ers\".\n\nOvertime is included if played.\n\nIf the game is postponed, this market will remain open until the game has been completed. If the game is canceled entirely, with no make-up game, this market will resolve 50-50.",
+    "attestation": {
+      "market_id": "4061337",
+      "condition_id": "0xb99a2a01c57b5cb69dc6a09461885e6ffcd07ad19488b8cd9b20242d360445f2",
+      "protocol": "v1",
+      "instruments": [
+        "110903350962640733204851233408043458335773162018403370855794485169312539285098",
+        "77446698917844976730765839126584882004894269648848404445484641136564907461373"
+      ],
+      "status": "VERIFIED_STRUCTURE",
+      "relationship": "For any nonnegative CTF payout vector (a,b), denominator=a+b>0; equal singleton quantities pay q collateral units",
+      "terminal_outcomes": [
+        "FIRST: (1,0)",
+        "SECOND: (0,1)",
+        "SPLIT: (t,1-t), 0<=t<=1"
+      ],
+      "collateral": "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
+      "position_system": "0x4D97DCd97eC945f40cF65F87097ACe5EA0476045",
+      "resolution_mechanism": "CTF oracle reportPayouts; exact oracle identity unresolved",
+      "rule_version": "c9976b7d9e11eb3fb08fe5764464dfab06c168ec33bd3af237f9e1856d7a9c68",
+      "metadata_hash": "138879ab2a33e9ff65354cac3f41104bc81de9b143055a84dde427260d17d71e",
+      "method": "ctf-complement-2",
+      "verified_ts_ms": 1791740024777,
+      "expires_ts_ms": 1791740324777,
+      "evidence": {
+        "rpc_url": "https://polygon-bor-rpc.publicnode.com",
+        "chain_id": 137,
+        "contract": "0x4D97DCd97eC945f40cF65F87097ACe5EA0476045",
+        "collateral": "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
+        "condition_id": "0xb99a2a01c57b5cb69dc6a09461885e6ffcd07ad19488b8cd9b20242d360445f2",
+        "outcome_slot_count": 2,
+        "payout_denominator": 0,
+        "position_ids": [
+          "110903350962640733204851233408043458335773162018403370855794485169312539285098",
+          "77446698917844976730765839126584882004894269648848404445484641136564907461373"
+        ],
+        "index_sets": [
+          1,
+          2
+        ],
+        "parent_collection": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "block_hash": "0xf0e9c877d87c6db114955e1e77dd33b0ca92863ac6be5442962d46f66c5f2952",
+        "block_number": "0x5af0654",
+        "calls": [
+          {
+            "method": "eth_chainId",
+            "params": [],
+            "result": "0x89"
+          },
+          {
+            "method": "eth_getBlockByNumber",
+            "params": [
+              "finalized",
+              false
+            ],
+            "result": {
+              "number": "0x5af0654",
+              "hash": "0xf0e9c877d87c6db114955e1e77dd33b0ca92863ac6be5442962d46f66c5f2952",
+              "timestamp": "0x6acbc874"
+            }
+          },
+          {
+            "method": "eth_call",
+            "params": [
+              {
+                "to": "0x4D97DCd97eC945f40cF65F87097ACe5EA0476045",
+                "data": "0xd42dc0c2b99a2a01c57b5cb69dc6a09461885e6ffcd07ad19488b8cd9b20242d360445f2"
+              },
+              "0x5af0654"
+            ],
+            "result": "0x0000000000000000000000000000000000000000000000000000000000000002"
+          },
+          {
+            "method": "eth_call",
+            "params": [
+              {
+                "to": "0x4D97DCd97eC945f40cF65F87097ACe5EA0476045",
+                "data": "0xdd34de67b99a2a01c57b5cb69dc6a09461885e6ffcd07ad19488b8cd9b20242d360445f2"
+              },
+              "0x5af0654"
+            ],
+            "result": "0x0000000000000000000000000000000000000000000000000000000000000000"
+          },
+          {
+            "method": "eth_call",
+            "params": [
+              {
+                "to": "0x4D97DCd97eC945f40cF65F87097ACe5EA0476045",
+                "data": "0x856296f70000000000000000000000000000000000000000000000000000000000000000b99a2a01c57b5cb69dc6a09461885e6ffcd07ad19488b8cd9b20242d360445f20000000000000000000000000000000000000000000000000000000000000001"
+              },
+              "0x5af0654"
+            ],
+            "result": "0x60ad465936c94d46617022d5c721dd5da8cb40e94c723517b09909e8e1562413"
+          },
+          {
+            "method": "eth_call",
+            "params": [
+              {
+                "to": "0x4D97DCd97eC945f40cF65F87097ACe5EA0476045",
+                "data": "0x39dd75300000000000000000000000002791bca1f2de4661ed88a30c99a7a9449aa8417460ad465936c94d46617022d5c721dd5da8cb40e94c723517b09909e8e1562413"
+              },
+              "0x5af0654"
+            ],
+            "result": "0xf531127b3987bfff4a0beedb34f6dbf87f45f1f5a9225420490e5eeb705b166a"
+          },
+          {
+            "method": "eth_call",
+            "params": [
+              {
+                "to": "0x4D97DCd97eC945f40cF65F87097ACe5EA0476045",
+                "data": "0x856296f70000000000000000000000000000000000000000000000000000000000000000b99a2a01c57b5cb69dc6a09461885e6ffcd07ad19488b8cd9b20242d360445f20000000000000000000000000000000000000000000000000000000000000002"
+              },
+              "0x5af0654"
+            ],
+            "result": "0x1d6a62815bc206a901df7c28e7ce9f8a714f4cce481f9fa0dcedd1dd6a894696"
+          },
+          {
+            "method": "eth_call",
+            "params": [
+              {
+                "to": "0x4D97DCd97eC945f40cF65F87097ACe5EA0476045",
+                "data": "0x39dd75300000000000000000000000002791bca1f2de4661ed88a30c99a7a9449aa841741d6a62815bc206a901df7c28e7ce9f8a714f4cce481f9fa0dcedd1dd6a894696"
+              },
+              "0x5af0654"
+            ],
+            "result": "0xab394737c3dbec102e351a1b6992615ce2fe172754c8a14d0b6eb2021d02cafd"
+          }
+        ]
+      },
+      "sources": [
+        "https://docs.polymarket.com/resources/onchain-position-data",
+        "https://docs.polymarket.com/concepts/positions-tokens",
+        "https://docs.polymarket.com/concepts/resolution",
+        "https://docs.polymarket.com/resources/contracts"
+      ],
+      "reasons": [],
+      "invalidation": [
+        "Metadata/rules/instrument/fee/state change",
+        "Evidence expiry",
+        "RPC chain or contract contradiction"
+      ],
+      "unresolved_assumptions": [
+        "RPC provider reports authentic finalized chain state",
+        "CTF implementation and collateral continue operating correctly",
+        "USDC.e backing retains value; pUSD conversion is modeled at parity, not independently attested",
+        "Natural-language resolution rules not mathematically proven or human-reviewed",
+        "Settlement timing, gas and financing costs are not established"
+      ]
+    }
+  },
+  "attestation": {
+    "market_id": "4061337",
+    "condition_id": "0xb99a2a01c57b5cb69dc6a09461885e6ffcd07ad19488b8cd9b20242d360445f2",
+    "protocol": "v1",
+    "instruments": [
+      "110903350962640733204851233408043458335773162018403370855794485169312539285098",
+      "77446698917844976730765839126584882004894269648848404445484641136564907461373"
+    ],
+    "status": "VERIFIED_STRUCTURE",
+    "relationship": "For any nonnegative CTF payout vector (a,b), denominator=a+b>0; equal singleton quantities pay q collateral units",
+    "terminal_outcomes": [
+      "FIRST: (1,0)",
+      "SECOND: (0,1)",
+      "SPLIT: (t,1-t), 0<=t<=1"
+    ],
+    "collateral": "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
+    "position_system": "0x4D97DCd97eC945f40cF65F87097ACe5EA0476045",
+    "resolution_mechanism": "CTF oracle reportPayouts; exact oracle identity unresolved",
+    "rule_version": "c9976b7d9e11eb3fb08fe5764464dfab06c168ec33bd3af237f9e1856d7a9c68",
+    "metadata_hash": "138879ab2a33e9ff65354cac3f41104bc81de9b143055a84dde427260d17d71e",
+    "method": "ctf-complement-2",
+    "verified_ts_ms": 1791740024777,
+    "expires_ts_ms": 1791740324777,
+    "evidence": {
+      "rpc_url": "https://polygon-bor-rpc.publicnode.com",
+      "chain_id": 137,
+      "contract": "0x4D97DCd97eC945f40cF65F87097ACe5EA0476045",
+      "collateral": "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
+      "condition_id": "0xb99a2a01c57b5cb69dc6a09461885e6ffcd07ad19488b8cd9b20242d360445f2",
+      "outcome_slot_count": 2,
+      "payout_denominator": 0,
+      "position_ids": [
+        "110903350962640733204851233408043458335773162018403370855794485169312539285098",
+        "77446698917844976730765839126584882004894269648848404445484641136564907461373"
+      ],
+      "index_sets": [
+        1,
+        2
+      ],
+      "parent_collection": "0x0000000000000000000000000000000000000000000000000000000000000000",
+      "block_hash": "0xf0e9c877d87c6db114955e1e77dd33b0ca92863ac6be5442962d46f66c5f2952",
+      "block_number": "0x5af0654",
+      "calls": [
+        {
+          "method": "eth_chainId",
+          "params": [],
+          "result": "0x89"
+        },
+        {
+          "method": "eth_getBlockByNumber",
+          "params": [
+            "finalized",
+            false
+          ],
+          "result": {
+            "number": "0x5af0654",
+            "hash": "0xf0e9c877d87c6db114955e1e77dd33b0ca92863ac6be5442962d46f66c5f2952",
+            "timestamp": "0x6acbc874"
+          }
+        },
+        {
+          "method": "eth_call",
+          "params": [
+            {
+              "to": "0x4D97DCd97eC945f40cF65F87097ACe5EA0476045",
+              "data": "0xd42dc0c2b99a2a01c57b5cb69dc6a09461885e6ffcd07ad19488b8cd9b20242d360445f2"
+            },
+            "0x5af0654"
+          ],
+          "result": "0x0000000000000000000000000000000000000000000000000000000000000002"
+        },
+        {
+          "method": "eth_call",
+          "params": [
+            {
+              "to": "0x4D97DCd97eC945f40cF65F87097ACe5EA0476045",
+              "data": "0xdd34de67b99a2a01c57b5cb69dc6a09461885e6ffcd07ad19488b8cd9b20242d360445f2"
+            },
+            "0x5af0654"
+          ],
+          "result": "0x0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        {
+          "method": "eth_call",
+          "params": [
+            {
+              "to": "0x4D97DCd97eC945f40cF65F87097ACe5EA0476045",
+              "data": "0x856296f70000000000000000000000000000000000000000000000000000000000000000b99a2a01c57b5cb69dc6a09461885e6ffcd07ad19488b8cd9b20242d360445f20000000000000000000000000000000000000000000000000000000000000001"
+            },
+            "0x5af0654"
+          ],
+          "result": "0x60ad465936c94d46617022d5c721dd5da8cb40e94c723517b09909e8e1562413"
+        },
+        {
+          "method": "eth_call",
+          "params": [
+            {
+              "to": "0x4D97DCd97eC945f40cF65F87097ACe5EA0476045",
+              "data": "0x39dd75300000000000000000000000002791bca1f2de4661ed88a30c99a7a9449aa8417460ad465936c94d46617022d5c721dd5da8cb40e94c723517b09909e8e1562413"
+            },
+            "0x5af0654"
+          ],
+          "result": "0xf531127b3987bfff4a0beedb34f6dbf87f45f1f5a9225420490e5eeb705b166a"
+        },
+        {
+          "method": "eth_call",
+          "params": [
+            {
+              "to": "0x4D97DCd97eC945f40cF65F87097ACe5EA0476045",
+              "data": "0x856296f70000000000000000000000000000000000000000000000000000000000000000b99a2a01c57b5cb69dc6a09461885e6ffcd07ad19488b8cd9b20242d360445f20000000000000000000000000000000000000000000000000000000000000002"
+            },
+            "0x5af0654"
+          ],
+          "result": "0x1d6a62815bc206a901df7c28e7ce9f8a714f4cce481f9fa0dcedd1dd6a894696"
+        },
+        {
+          "method": "eth_call",
+          "params": [
+            {
+              "to": "0x4D97DCd97eC945f40cF65F87097ACe5EA0476045",
+              "data": "0x39dd75300000000000000000000000002791bca1f2de4661ed88a30c99a7a9449aa841741d6a62815bc206a901df7c28e7ce9f8a714f4cce481f9fa0dcedd1dd6a894696"
+            },
+            "0x5af0654"
+          ],
+          "result": "0xab394737c3dbec102e351a1b6992615ce2fe172754c8a14d0b6eb2021d02cafd"
+        }
+      ]
+    },
+    "sources": [
+      "https://docs.polymarket.com/resources/onchain-position-data",
+      "https://docs.polymarket.com/concepts/positions-tokens",
+      "https://docs.polymarket.com/concepts/resolution",
+      "https://docs.polymarket.com/resources/contracts"
+    ],
+    "reasons": [],
+    "invalidation": [
+      "Metadata/rules/instrument/fee/state change",
+      "Evidence expiry",
+      "RPC chain or contract contradiction"
+    ],
+    "unresolved_assumptions": [
+      "RPC provider reports authentic finalized chain state",
+      "CTF implementation and collateral continue operating correctly",
+      "USDC.e backing retains value; pUSD conversion is modeled at parity, not independently attested",
+      "Natural-language resolution rules not mathematically proven or human-reviewed",
+      "Settlement timing, gas and financing costs are not established"
+    ]
+  },
+  "evaluation": {
+    "market_id": "4061337",
+    "question": "Spread: Seahawks (-3.5)",
+    "source": "LIVE",
+    "observed_ts_ms": 1791740025043,
+    "status": "STALE_DATA",
+    "reasons": [
+      "Missing, old, or implausibly future timestamp"
+    ],
+    "quantity": "0",
+    "available_quantity": "0",
+    "gross_cost": "0",
+    "fees": "0",
+    "required_capital": "0",
+    "minimum_payout": "0",
+    "gross_profit": "0",
+    "net_profit": "0",
+    "gross_edge": "0",
+    "net_edge": "0",
+    "capital_utilization": "0",
+    "slippage": "0",
+    "payouts": {},
+    "slices": [],
+    "assumptions": [],
+    "books": [
+      {
+        "asset_id": "110903350962640733204851233408043458335773162018403370855794485169312539285098",
+        "condition_id": "0xb99a2a01c57b5cb69dc6a09461885e6ffcd07ad19488b8cd9b20242d360445f2",
+        "asks": [
+          {
+            "price": "0.99",
+            "size": "87429"
+          },
+          {
+            "price": "0.98",
+            "size": "79000"
+          },
+          {
+            "price": "0.97",
+            "size": "6000"
+          },
+          {
+            "price": "0.95",
+            "size": "26800"
+          },
+          {
+            "price": "0.9",
+            "size": "26090"
+          },
+          {
+            "price": "0.88",
+            "size": "8333.32"
+          },
+          {
+            "price": "0.86",
+            "size": "4642.84"
+          },
+          {
+            "price": "0.84",
+            "size": "7000"
+          },
+          {
+            "price": "0.82",
+            "size": "3333.32"
+          },
+          {
+            "price": "0.79",
+            "size": "7380.93"
+          },
+          {
+            "price": "0.76",
+            "size": "10938.16"
+          },
+          {
+            "price": "0.75",
+            "size": "3600"
+          },
+          {
+            "price": "0.71",
+            "size": "203.76"
+          },
+          {
+            "price": "0.7",
+            "size": "4230.34"
+          },
+          {
+            "price": "0.69",
+            "size": "2356.56"
+          },
+          {
+            "price": "0.67",
+            "size": "654.51"
+          },
+          {
+            "price": "0.63",
+            "size": "202.68"
+          },
+          {
+            "price": "0.58",
+            "size": "100"
+          },
+          {
+            "price": "0.57",
+            "size": "20256"
+          },
+          {
+            "price": "0.56",
+            "size": "750"
+          },
+          {
+            "price": "0.55",
+            "size": "700"
+          },
+          {
+            "price": "0.54",
+            "size": "720"
+          },
+          {
+            "price": "0.53",
+            "size": "600"
+          },
+          {
+            "price": "0.52",
+            "size": "10090"
+          },
+          {
+            "price": "0.51",
+            "size": "453"
+          },
+          {
+            "price": "0.5",
+            "size": "14865"
+          },
+          {
+            "price": "0.49",
+            "size": "2705"
+          },
+          {
+            "price": "0.48",
+            "size": "329459.37"
+          },
+          {
+            "price": "0.47",
+            "size": "1287265.12"
+          },
+          {
+            "price": "0.46",
+            "size": "842434.63"
+          }
+        ],
+        "bids": [
+          {
+            "price": "0.01",
+            "size": "87000"
+          },
+          {
+            "price": "0.02",
+            "size": "84000"
+          },
+          {
+            "price": "0.03",
+            "size": "6000"
+          },
+          {
+            "price": "0.05",
+            "size": "26800"
+          },
+          {
+            "price": "0.1",
+            "size": "9400"
+          },
+          {
+            "price": "0.12",
+            "size": "15991.64"
+          },
+          {
+            "price": "0.14",
+            "size": "4642.84"
+          },
+          {
+            "price": "0.17",
+            "size": "6643.41"
+          },
+          {
+            "price": "0.19",
+            "size": "315.78"
+          },
+          {
+            "price": "0.25",
+            "size": "1320"
+          },
+          {
+            "price": "0.26",
+            "size": "53.84"
+          },
+          {
+            "price": "0.31",
+            "size": "32.25"
+          },
+          {
+            "price": "0.34",
+            "size": "20000"
+          },
+          {
+            "price": "0.35",
+            "size": "1006"
+          },
+          {
+            "price": "0.36",
+            "size": "16.66"
+          },
+          {
+            "price": "0.39",
+            "size": "10120"
+          },
+          {
+            "price": "0.4",
+            "size": "605"
+          },
+          {
+            "price": "0.41",
+            "size": "10995"
+          },
+          {
+            "price": "0.42",
+            "size": "29968"
+          },
+          {
+            "price": "0.43",
+            "size": "253938.54"
+          },
+          {
+            "price": "0.44",
+            "size": "268265.02"
+          },
+          {
+            "price": "0.45",
+            "size": "53288.33"
+          }
+        ],
+        "tick_size": "0.01",
+        "min_order_size": "5",
+        "minimum_unit": "notional",
+        "exchange_ts_ms": 1791740001382,
+        "received_ts_ms": 1791740024824,
+        "source": "LIVE",
+        "valid": true,
+        "integrity": "snapshot",
+        "hash": "0b6629442ce0aab2eba5742a8120816c6b73dc4c",
+        "invalid_reason": null
+      },
+      {
+        "asset_id": "77446698917844976730765839126584882004894269648848404445484641136564907461373",
+        "condition_id": "0xb99a2a01c57b5cb69dc6a09461885e6ffcd07ad19488b8cd9b20242d360445f2",
+        "asks": [
+          {
+            "price": "0.99",
+            "size": "87000"
+          },
+          {
+            "price": "0.98",
+            "size": "84000"
+          },
+          {
+            "price": "0.97",
+            "size": "6000"
+          },
+          {
+            "price": "0.95",
+            "size": "26800"
+          },
+          {
+            "price": "0.9",
+            "size": "9400"
+          },
+          {
+            "price": "0.88",
+            "size": "15991.64"
+          },
+          {
+            "price": "0.86",
+            "size": "4642.84"
+          },
+          {
+            "price": "0.83",
+            "size": "6643.41"
+          },
+          {
+            "price": "0.81",
+            "size": "315.78"
+          },
+          {
+            "price": "0.75",
+            "size": "1320"
+          },
+          {
+            "price": "0.74",
+            "size": "53.84"
+          },
+          {
+            "price": "0.69",
+            "size": "32.25"
+          },
+          {
+            "price": "0.66",
+            "size": "20000"
+          },
+          {
+            "price": "0.65",
+            "size": "1006"
+          },
+          {
+            "price": "0.64",
+            "size": "16.66"
+          },
+          {
+            "price": "0.61",
+            "size": "10120"
+          },
+          {
+            "price": "0.6",
+            "size": "605"
+          },
+          {
+            "price": "0.59",
+            "size": "10995"
+          },
+          {
+            "price": "0.58",
+            "size": "29968"
+          },
+          {
+            "price": "0.57",
+            "size": "253938.54"
+          },
+          {
+            "price": "0.56",
+            "size": "268265.02"
+          },
+          {
+            "price": "0.55",
+            "size": "53288.33"
+          }
+        ],
+        "bids": [
+          {
+            "price": "0.01",
+            "size": "87429"
+          },
+          {
+            "price": "0.02",
+            "size": "79000"
+          },
+          {
+            "price": "0.03",
+            "size": "6000"
+          },
+          {
+            "price": "0.05",
+            "size": "26800"
+          },
+          {
+            "price": "0.1",
+            "size": "26090"
+          },
+          {
+            "price": "0.12",
+            "size": "8333.32"
+          },
+          {
+            "price": "0.14",
+            "size": "4642.84"
+          },
+          {
+            "price": "0.16",
+            "size": "7000"
+          },
+          {
+            "price": "0.18",
+            "size": "3333.32"
+          },
+          {
+            "price": "0.21",
+            "size": "7380.93"
+          },
+          {
+            "price": "0.24",
+            "size": "10938.16"
+          },
+          {
+            "price": "0.25",
+            "size": "3600"
+          },
+          {
+            "price": "0.29",
+            "size": "203.76"
+          },
+          {
+            "price": "0.3",
+            "size": "4230.34"
+          },
+          {
+            "price": "0.31",
+            "size": "2356.56"
+          },
+          {
+            "price": "0.33",
+            "size": "654.51"
+          },
+          {
+            "price": "0.37",
+            "size": "202.68"
+          },
+          {
+            "price": "0.42",
+            "size": "100"
+          },
+          {
+            "price": "0.43",
+            "size": "20256"
+          },
+          {
+            "price": "0.44",
+            "size": "750"
+          },
+          {
+            "price": "0.45",
+            "size": "700"
+          },
+          {
+            "price": "0.46",
+            "size": "720"
+          },
+          {
+            "price": "0.47",
+            "size": "600"
+          },
+          {
+            "price": "0.48",
+            "size": "10090"
+          },
+          {
+            "price": "0.49",
+            "size": "453"
+          },
+          {
+            "price": "0.5",
+            "size": "14865"
+          },
+          {
+            "price": "0.51",
+            "size": "2705"
+          },
+          {
+            "price": "0.52",
+            "size": "329459.37"
+          },
+          {
+            "price": "0.53",
+            "size": "1287265.12"
+          },
+          {
+            "price": "0.54",
+            "size": "842434.63"
+          }
+        ],
+        "tick_size": "0.01",
+        "min_order_size": "5",
+        "minimum_unit": "notional",
+        "exchange_ts_ms": 1791740001382,
+        "received_ts_ms": 1791740025042,
+        "source": "LIVE",
+        "valid": true,
+        "integrity": "snapshot",
+        "hash": "e4bb3b45dd1c726557e9ccca04552e45c67fbe96",
+        "invalid_reason": null
+      }
+    ],
+    "market": {
+      "id": "4061337",
+      "event_id": "941347",
+      "question": "Spread: Seahawks (-3.5)",
+      "condition_id": "0xb99a2a01c57b5cb69dc6a09461885e6ffcd07ad19488b8cd9b20242d360445f2",
+      "protocol": "v1",
+      "instruments": [
+        {
+          "asset_id": "110903350962640733204851233408043458335773162018403370855794485169312539285098",
+          "label": "Seahawks"
+        },
+        {
+          "asset_id": "77446698917844976730765839126584882004894269648848404445484641136564907461373",
+          "label": "49ers"
+        }
+      ],
+      "source": "LIVE",
+      "active": true,
+      "closed": false,
+      "accepting_orders": true,
+      "negative_risk": false,
+      "augmented_negative_risk": false,
+      "complementary_verified": true,
+      "payout_verified": true,
+      "payout_per_set": "1",
+      "payout_evidence": "For any nonnegative CTF payout vector (a,b), denominator=a+b>0; equal singleton quantities pay q collateral units",
+      "fee": {
+        "rate": "0.03",
+        "exponent": 1,
+        "verified": true,
+        "evidence": "Gamma feeSchedule, exponent 1; public Fees formula, verified 2026-10-11",
+        "verified_ts_ms": 1791740022780,
+        "expires_ts_ms": 1791740322780,
+        "rule_version": "polymarket-fees-2026-10-11"
+      },
+      "description": "In the upcoming NFL football game between 49ers and Seahawks, scheduled for October 11 at 4:25 PM ET:\n\nThis market will resolve to \"Seahawks\" if the Seahawks win the game by 4 or more points.\n\nOtherwise, this market will resolve to \"49ers\".\n\nOvertime is included if played.\n\nIf the game is postponed, this market will remain open until the game has been completed. If the game is canceled entirely, with no make-up game, this market will resolve 50-50.",
+      "attestation": {
+        "market_id": "4061337",
+        "condition_id": "0xb99a2a01c57b5cb69dc6a09461885e6ffcd07ad19488b8cd9b20242d360445f2",
+        "protocol": "v1",
+        "instruments": [
+          "110903350962640733204851233408043458335773162018403370855794485169312539285098",
+          "77446698917844976730765839126584882004894269648848404445484641136564907461373"
+        ],
+        "status": "VERIFIED_STRUCTURE",
+        "relationship": "For any nonnegative CTF payout vector (a,b), denominator=a+b>0; equal singleton quantities pay q collateral units",
+        "terminal_outcomes": [
+          "FIRST: (1,0)",
+          "SECOND: (0,1)",
+          "SPLIT: (t,1-t), 0<=t<=1"
+        ],
+        "collateral": "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
+        "position_system": "0x4D97DCd97eC945f40cF65F87097ACe5EA0476045",
+        "resolution_mechanism": "CTF oracle reportPayouts; exact oracle identity unresolved",
+        "rule_version": "c9976b7d9e11eb3fb08fe5764464dfab06c168ec33bd3af237f9e1856d7a9c68",
+        "metadata_hash": "138879ab2a33e9ff65354cac3f41104bc81de9b143055a84dde427260d17d71e",
+        "method": "ctf-complement-2",
+        "verified_ts_ms": 1791740024777,
+        "expires_ts_ms": 1791740324777,
+        "evidence": {
+          "rpc_url": "https://polygon-bor-rpc.publicnode.com",
+          "chain_id": 137,
+          "contract": "0x4D97DCd97eC945f40cF65F87097ACe5EA0476045",
+          "collateral": "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
+          "condition_id": "0xb99a2a01c57b5cb69dc6a09461885e6ffcd07ad19488b8cd9b20242d360445f2",
+          "outcome_slot_count": 2,
+          "payout_denominator": 0,
+          "position_ids": [
+            "110903350962640733204851233408043458335773162018403370855794485169312539285098",
+            "77446698917844976730765839126584882004894269648848404445484641136564907461373"
+          ],
+          "index_sets": [
+            1,
+            2
+          ],
+          "parent_collection": "0x0000000000000000000000000000000000000000000000000000000000000000",
+          "block_hash": "0xf0e9c877d87c6db114955e1e77dd33b0ca92863ac6be5442962d46f66c5f2952",
+          "block_number": "0x5af0654",
+          "calls": [
+            {
+              "method": "eth_chainId",
+              "params": [],
+              "result": "0x89"
+            },
+            {
+              "method": "eth_getBlockByNumber",
+              "params": [
+                "finalized",
+                false
+              ],
+              "result": {
+                "number": "0x5af0654",
+                "hash": "0xf0e9c877d87c6db114955e1e77dd33b0ca92863ac6be5442962d46f66c5f2952",
+                "timestamp": "0x6acbc874"
+              }
+            },
+            {
+              "method": "eth_call",
+              "params": [
+                {
+                  "to": "0x4D97DCd97eC945f40cF65F87097ACe5EA0476045",
+                  "data": "0xd42dc0c2b99a2a01c57b5cb69dc6a09461885e6ffcd07ad19488b8cd9b20242d360445f2"
+                },
+                "0x5af0654"
+              ],
+              "result": "0x0000000000000000000000000000000000000000000000000000000000000002"
+            },
+            {
+              "method": "eth_call",
+              "params": [
+                {
+                  "to": "0x4D97DCd97eC945f40cF65F87097ACe5EA0476045",
+                  "data": "0xdd34de67b99a2a01c57b5cb69dc6a09461885e6ffcd07ad19488b8cd9b20242d360445f2"
+                },
+                "0x5af0654"
+              ],
+              "result": "0x0000000000000000000000000000000000000000000000000000000000000000"
+            },
+            {
+              "method": "eth_call",
+              "params": [
+                {
+                  "to": "0x4D97DCd97eC945f40cF65F87097ACe5EA0476045",
+                  "data": "0x856296f70000000000000000000000000000000000000000000000000000000000000000b99a2a01c57b5cb69dc6a09461885e6ffcd07ad19488b8cd9b20242d360445f20000000000000000000000000000000000000000000000000000000000000001"
+                },
+                "0x5af0654"
+              ],
+              "result": "0x60ad465936c94d46617022d5c721dd5da8cb40e94c723517b09909e8e1562413"
+            },
+            {
+              "method": "eth_call",
+              "params": [
+                {
+                  "to": "0x4D97DCd97eC945f40cF65F87097ACe5EA0476045",
+                  "data": "0x39dd75300000000000000000000000002791bca1f2de4661ed88a30c99a7a9449aa8417460ad465936c94d46617022d5c721dd5da8cb40e94c723517b09909e8e1562413"
+                },
+                "0x5af0654"
+              ],
+              "result": "0xf531127b3987bfff4a0beedb34f6dbf87f45f1f5a9225420490e5eeb705b166a"
+            },
+            {
+              "method": "eth_call",
+              "params": [
+                {
+                  "to": "0x4D97DCd97eC945f40cF65F87097ACe5EA0476045",
+                  "data": "0x856296f70000000000000000000000000000000000000000000000000000000000000000b99a2a01c57b5cb69dc6a09461885e6ffcd07ad19488b8cd9b20242d360445f20000000000000000000000000000000000000000000000000000000000000002"
+                },
+                "0x5af0654"
+              ],
+              "result": "0x1d6a62815bc206a901df7c28e7ce9f8a714f4cce481f9fa0dcedd1dd6a894696"
+            },
+            {
+              "method": "eth_call",
+              "params": [
+                {
+                  "to": "0x4D97DCd97eC945f40cF65F87097ACe5EA0476045",
+                  "data": "0x39dd75300000000000000000000000002791bca1f2de4661ed88a30c99a7a9449aa841741d6a62815bc206a901df7c28e7ce9f8a714f4cce481f9fa0dcedd1dd6a894696"
+                },
+                "0x5af0654"
+              ],
+              "result": "0xab394737c3dbec102e351a1b6992615ce2fe172754c8a14d0b6eb2021d02cafd"
+            }
+          ]
+        },
+        "sources": [
+          "https://docs.polymarket.com/resources/onchain-position-data",
+          "https://docs.polymarket.com/concepts/positions-tokens",
+          "https://docs.polymarket.com/concepts/resolution",
+          "https://docs.polymarket.com/resources/contracts"
+        ],
+        "reasons": [],
+        "invalidation": [
+          "Metadata/rules/instrument/fee/state change",
+          "Evidence expiry",
+          "RPC chain or contract contradiction"
+        ],
+        "unresolved_assumptions": [
+          "RPC provider reports authentic finalized chain state",
+          "CTF implementation and collateral continue operating correctly",
+          "USDC.e backing retains value; pUSD conversion is modeled at parity, not independently attested",
+          "Natural-language resolution rules not mathematically proven or human-reviewed",
+          "Settlement timing, gas and financing costs are not established"
+        ]
+      }
+    },
+    "economic_proof": {
+      "property": "Conditional complete-position minimum net payout",
+      "execution_verified": false,
+      "attestation": {
+        "market_id": "4061337",
+        "condition_id": "0xb99a2a01c57b5cb69dc6a09461885e6ffcd07ad19488b8cd9b20242d360445f2",
+        "protocol": "v1",
+        "instruments": [
+          "110903350962640733204851233408043458335773162018403370855794485169312539285098",
+          "77446698917844976730765839126584882004894269648848404445484641136564907461373"
+        ],
+        "status": "VERIFIED_STRUCTURE",
+        "relationship": "For any nonnegative CTF payout vector (a,b), denominator=a+b>0; equal singleton quantities pay q collateral units",
+        "terminal_outcomes": [
+          "FIRST: (1,0)",
+          "SECOND: (0,1)",
+          "SPLIT: (t,1-t), 0<=t<=1"
+        ],
+        "collateral": "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
+        "position_system": "0x4D97DCd97eC945f40cF65F87097ACe5EA0476045",
+        "resolution_mechanism": "CTF oracle reportPayouts; exact oracle identity unresolved",
+        "rule_version": "c9976b7d9e11eb3fb08fe5764464dfab06c168ec33bd3af237f9e1856d7a9c68",
+        "metadata_hash": "138879ab2a33e9ff65354cac3f41104bc81de9b143055a84dde427260d17d71e",
+        "method": "ctf-complement-2",
+        "verified_ts_ms": 1791740024777,
+        "expires_ts_ms": 1791740324777,
+        "evidence": {
+          "rpc_url": "https://polygon-bor-rpc.publicnode.com",
+          "chain_id": 137,
+          "contract": "0x4D97DCd97eC945f40cF65F87097ACe5EA0476045",
+          "collateral": "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
+          "condition_id": "0xb99a2a01c57b5cb69dc6a09461885e6ffcd07ad19488b8cd9b20242d360445f2",
+          "outcome_slot_count": 2,
+          "payout_denominator": 0,
+          "position_ids": [
+            "110903350962640733204851233408043458335773162018403370855794485169312539285098",
+            "77446698917844976730765839126584882004894269648848404445484641136564907461373"
+          ],
+          "index_sets": [
+            1,
+            2
+          ],
+          "parent_collection": "0x0000000000000000000000000000000000000000000000000000000000000000",
+          "block_hash": "0xf0e9c877d87c6db114955e1e77dd33b0ca92863ac6be5442962d46f66c5f2952",
+          "block_number": "0x5af0654",
+          "calls": [
+            {
+              "method": "eth_chainId",
+              "params": [],
+              "result": "0x89"
+            },
+            {
+              "method": "eth_getBlockByNumber",
+              "params": [
+                "finalized",
+                false
+              ],
+              "result": {
+                "number": "0x5af0654",
+                "hash": "0xf0e9c877d87c6db114955e1e77dd33b0ca92863ac6be5442962d46f66c5f2952",
+                "timestamp": "0x6acbc874"
+              }
+            },
+            {
+              "method": "eth_call",
+              "params": [
+                {
+                  "to": "0x4D97DCd97eC945f40cF65F87097ACe5EA0476045",
+                  "data": "0xd42dc0c2b99a2a01c57b5cb69dc6a09461885e6ffcd07ad19488b8cd9b20242d360445f2"
+                },
+                "0x5af0654"
+              ],
+              "result": "0x0000000000000000000000000000000000000000000000000000000000000002"
+            },
+            {
+              "method": "eth_call",
+              "params": [
+                {
+                  "to": "0x4D97DCd97eC945f40cF65F87097ACe5EA0476045",
+                  "data": "0xdd34de67b99a2a01c57b5cb69dc6a09461885e6ffcd07ad19488b8cd9b20242d360445f2"
+                },
+                "0x5af0654"
+              ],
+              "result": "0x0000000000000000000000000000000000000000000000000000000000000000"
+            },
+            {
+              "method": "eth_call",
+              "params": [
+                {
+                  "to": "0x4D97DCd97eC945f40cF65F87097ACe5EA0476045",
+                  "data": "0x856296f70000000000000000000000000000000000000000000000000000000000000000b99a2a01c57b5cb69dc6a09461885e6ffcd07ad19488b8cd9b20242d360445f20000000000000000000000000000000000000000000000000000000000000001"
+                },
+                "0x5af0654"
+              ],
+              "result": "0x60ad465936c94d46617022d5c721dd5da8cb40e94c723517b09909e8e1562413"
+            },
+            {
+              "method": "eth_call",
+              "params": [
+                {
+                  "to": "0x4D97DCd97eC945f40cF65F87097ACe5EA0476045",
+                  "data": "0x39dd75300000000000000000000000002791bca1f2de4661ed88a30c99a7a9449aa8417460ad465936c94d46617022d5c721dd5da8cb40e94c723517b09909e8e1562413"
+                },
+                "0x5af0654"
+              ],
+              "result": "0xf531127b3987bfff4a0beedb34f6dbf87f45f1f5a9225420490e5eeb705b166a"
+            },
+            {
+              "method": "eth_call",
+              "params": [
+                {
+                  "to": "0x4D97DCd97eC945f40cF65F87097ACe5EA0476045",
+                  "data": "0x856296f70000000000000000000000000000000000000000000000000000000000000000b99a2a01c57b5cb69dc6a09461885e6ffcd07ad19488b8cd9b20242d360445f20000000000000000000000000000000000000000000000000000000000000002"
+                },
+                "0x5af0654"
+              ],
+              "result": "0x1d6a62815bc206a901df7c28e7ce9f8a714f4cce481f9fa0dcedd1dd6a894696"
+            },
+            {
+              "method": "eth_call",
+              "params": [
+                {
+                  "to": "0x4D97DCd97eC945f40cF65F87097ACe5EA0476045",
+                  "data": "0x39dd75300000000000000000000000002791bca1f2de4661ed88a30c99a7a9449aa841741d6a62815bc206a901df7c28e7ce9f8a714f4cce481f9fa0dcedd1dd6a894696"
+                },
+                "0x5af0654"
+              ],
+              "result": "0xab394737c3dbec102e351a1b6992615ce2fe172754c8a14d0b6eb2021d02cafd"
+            }
+          ]
+        },
+        "sources": [
+          "https://docs.polymarket.com/resources/onchain-position-data",
+          "https://docs.polymarket.com/concepts/positions-tokens",
+          "https://docs.polymarket.com/concepts/resolution",
+          "https://docs.polymarket.com/resources/contracts"
+        ],
+        "reasons": [],
+        "invalidation": [
+          "Metadata/rules/instrument/fee/state change",
+          "Evidence expiry",
+          "RPC chain or contract contradiction"
+        ],
+        "unresolved_assumptions": [
+          "RPC provider reports authentic finalized chain state",
+          "CTF implementation and collateral continue operating correctly",
+          "USDC.e backing retains value; pUSD conversion is modeled at parity, not independently attested",
+          "Natural-language resolution rules not mathematically proven or human-reviewed",
+          "Settlement timing, gas and financing costs are not established"
+        ]
+      },
+      "fee_schedule": {
+        "rate": "0.03",
+        "exponent": 1,
+        "verified": true,
+        "evidence": "Gamma feeSchedule, exponent 1; public Fees formula, verified 2026-10-11",
+        "verified_ts_ms": 1791740022780,
+        "expires_ts_ms": 1791740322780,
+        "rule_version": "polymarket-fees-2026-10-11"
+      },
+      "unmodeled_costs": [
+        "gas/redemption",
+        "financing",
+        "collateral conversion"
+      ],
+      "assumptions": [
+        "All proposed shares acquired",
+        "Collateral retains value",
+        "No extra operational costs"
+      ],
+      "quantity_precision": "0.01 modeled shares; live maker fragmentation unknown",
+      "result": "REJECTED",
+      "explanation": "Missing, old, or implausibly future timestamp"
+    }
+  },
+  "paper_account": {
+    "status": "RUNNING",
+    "mode": "live_shadow",
+    "strategy_version": "binary-depth-1",
+    "broker_version": "paper-broker-2",
+    "execution": {
+      "name": "standard",
+      "latency_ms": 200,
+      "jitter_ms": 50,
+      "distribution": "uniform",
+      "liquidity_fraction": "0.8",
+      "adverse_ticks": 0,
+      "ack_delay_ms": 50,
+      "taker_delay_ms": 0,
+      "seed": 7
+    },
+    "unit": "virtual USD/pUSD (parity assumption)",
+    "initial_capital": "100",
+    "available": "100",
+    "reserved": "0",
+    "locked": "0",
+    "equity": "100",
+    "realized_pnl": "0",
+    "unrealized_pnl": "0",
+    "fees": "0",
+    "settlement_proceeds": "0",
+    "gross_exposure": "0",
+    "net_exposure_shares": "0",
+    "max_drawdown": "0",
+    "capital_utilization": "0",
+    "daily_loss": "0",
+    "cumulative_loss": "0",
+    "open_positions": 0,
+    "positions": [],
+    "pending_actions": 0,
+    "observations": 1,
+    "decisions": [
+      {
+        "id": "public:4061337",
+        "ts": 1791740025043,
+        "market_id": "4061337",
+        "source": "LIVE",
+        "evaluation": {
+          "market_id": "4061337",
+          "question": "Spread: Seahawks (-3.5)",
+          "source": "LIVE",
+          "observed_ts_ms": 1791740025043,
+          "status": "STALE_DATA",
+          "reasons": [
+            "Missing, old, or implausibly future timestamp"
+          ],
+          "quantity": "0",
+          "available_quantity": "0",
+          "gross_cost": "0",
+          "fees": "0",
+          "required_capital": "0",
+          "minimum_payout": "0",
+          "gross_profit": "0",
+          "net_profit": "0",
+          "gross_edge": "0",
+          "net_edge": "0",
+          "capital_utilization": "0",
+          "slippage": "0",
+          "payouts": {},
+          "slices": [],
+          "assumptions": [],
+          "books": [
+            {
+              "asset_id": "110903350962640733204851233408043458335773162018403370855794485169312539285098",
+              "condition_id": "0xb99a2a01c57b5cb69dc6a09461885e6ffcd07ad19488b8cd9b20242d360445f2",
+              "asks": [
+                {
+                  "price": "0.99",
+                  "size": "87429"
+                },
+                {
+                  "price": "0.98",
+                  "size": "79000"
+                },
+                {
+                  "price": "0.97",
+                  "size": "6000"
+                },
+                {
+                  "price": "0.95",
+                  "size": "26800"
+                },
+                {
+                  "price": "0.9",
+                  "size": "26090"
+                },
+                {
+                  "price": "0.88",
+                  "size": "8333.32"
+                },
+                {
+                  "price": "0.86",
+                  "size": "4642.84"
+                },
+                {
+                  "price": "0.84",
+                  "size": "7000"
+                },
+                {
+                  "price": "0.82",
+                  "size": "3333.32"
+                },
+                {
+                  "price": "0.79",
+                  "size": "7380.93"
+                },
+                {
+                  "price": "0.76",
+                  "size": "10938.16"
+                },
+                {
+                  "price": "0.75",
+                  "size": "3600"
+                },
+                {
+                  "price": "0.71",
+                  "size": "203.76"
+                },
+                {
+                  "price": "0.7",
+                  "size": "4230.34"
+                },
+                {
+                  "price": "0.69",
+                  "size": "2356.56"
+                },
+                {
+                  "price": "0.67",
+                  "size": "654.51"
+                },
+                {
+                  "price": "0.63",
+                  "size": "202.68"
+                },
+                {
+                  "price": "0.58",
+                  "size": "100"
+                },
+                {
+                  "price": "0.57",
+                  "size": "20256"
+                },
+                {
+                  "price": "0.56",
+                  "size": "750"
+                },
+                {
+                  "price": "0.55",
+                  "size": "700"
+                },
+                {
+                  "price": "0.54",
+                  "size": "720"
+                },
+                {
+                  "price": "0.53",
+                  "size": "600"
+                },
+                {
+                  "price": "0.52",
+                  "size": "10090"
+                },
+                {
+                  "price": "0.51",
+                  "size": "453"
+                },
+                {
+                  "price": "0.5",
+                  "size": "14865"
+                },
+                {
+                  "price": "0.49",
+                  "size": "2705"
+                },
+                {
+                  "price": "0.48",
+                  "size": "329459.37"
+                },
+                {
+                  "price": "0.47",
+                  "size": "1287265.12"
+                },
+                {
+                  "price": "0.46",
+                  "size": "842434.63"
+                }
+              ],
+              "bids": [
+                {
+                  "price": "0.01",
+                  "size": "87000"
+                },
+                {
+                  "price": "0.02",
+                  "size": "84000"
+                },
+                {
+                  "price": "0.03",
+                  "size": "6000"
+                },
+                {
+                  "price": "0.05",
+                  "size": "26800"
+                },
+                {
+                  "price": "0.1",
+                  "size": "9400"
+                },
+                {
+                  "price": "0.12",
+                  "size": "15991.64"
+                },
+                {
+                  "price": "0.14",
+                  "size": "4642.84"
+                },
+                {
+                  "price": "0.17",
+                  "size": "6643.41"
+                },
+                {
+                  "price": "0.19",
+                  "size": "315.78"
+                },
+                {
+                  "price": "0.25",
+                  "size": "1320"
+                },
+                {
+                  "price": "0.26",
+                  "size": "53.84"
+                },
+                {
+                  "price": "0.31",
+                  "size": "32.25"
+                },
+                {
+                  "price": "0.34",
+                  "size": "20000"
+                },
+                {
+                  "price": "0.35",
+                  "size": "1006"
+                },
+                {
+                  "price": "0.36",
+                  "size": "16.66"
+                },
+                {
+                  "price": "0.39",
+                  "size": "10120"
+                },
+                {
+                  "price": "0.4",
+                  "size": "605"
+                },
+                {
+                  "price": "0.41",
+                  "size": "10995"
+                },
+                {
+                  "price": "0.42",
+                  "size": "29968"
+                },
+                {
+                  "price": "0.43",
+                  "size": "253938.54"
+                },
+                {
+                  "price": "0.44",
+                  "size": "268265.02"
+                },
+                {
+                  "price": "0.45",
+                  "size": "53288.33"
+                }
+              ],
+              "tick_size": "0.01",
+              "min_order_size": "5",
+              "minimum_unit": "notional",
+              "exchange_ts_ms": 1791740001382,
+              "received_ts_ms": 1791740024824,
+              "source": "LIVE",
+              "valid": true,
+              "integrity": "snapshot",
+              "hash": "0b6629442ce0aab2eba5742a8120816c6b73dc4c",
+              "invalid_reason": null
+            },
+            {
+              "asset_id": "77446698917844976730765839126584882004894269648848404445484641136564907461373",
+              "condition_id": "0xb99a2a01c57b5cb69dc6a09461885e6ffcd07ad19488b8cd9b20242d360445f2",
+              "asks": [
+                {
+                  "price": "0.99",
+                  "size": "87000"
+                },
+                {
+                  "price": "0.98",
+                  "size": "84000"
+                },
+                {
+                  "price": "0.97",
+                  "size": "6000"
+                },
+                {
+                  "price": "0.95",
+                  "size": "26800"
+                },
+                {
+                  "price": "0.9",
+                  "size": "9400"
+                },
+                {
+                  "price": "0.88",
+                  "size": "15991.64"
+                },
+                {
+                  "price": "0.86",
+                  "size": "4642.84"
+                },
+                {
+                  "price": "0.83",
+                  "size": "6643.41"
+                },
+                {
+                  "price": "0.81",
+                  "size": "315.78"
+                },
+                {
+                  "price": "0.75",
+                  "size": "1320"
+                },
+                {
+                  "price": "0.74",
+                  "size": "53.84"
+                },
+                {
+                  "price": "0.69",
+                  "size": "32.25"
+                },
+                {
+                  "price": "0.66",
+                  "size": "20000"
+                },
+                {
+                  "price": "0.65",
+                  "size": "1006"
+                },
+                {
+                  "price": "0.64",
+                  "size": "16.66"
+                },
+                {
+                  "price": "0.61",
+                  "size": "10120"
+                },
+                {
+                  "price": "0.6",
+                  "size": "605"
+                },
+                {
+                  "price": "0.59",
+                  "size": "10995"
+                },
+                {
+                  "price": "0.58",
+                  "size": "29968"
+                },
+                {
+                  "price": "0.57",
+                  "size": "253938.54"
+                },
+                {
+                  "price": "0.56",
+                  "size": "268265.02"
+                },
+                {
+                  "price": "0.55",
+                  "size": "53288.33"
+                }
+              ],
+              "bids": [
+                {
+                  "price": "0.01",
+                  "size": "87429"
+                },
+                {
+                  "price": "0.02",
+                  "size": "79000"
+                },
+                {
+                  "price": "0.03",
+                  "size": "6000"
+                },
+                {
+                  "price": "0.05",
+                  "size": "26800"
+                },
+                {
+                  "price": "0.1",
+                  "size": "26090"
+                },
+                {
+                  "price": "0.12",
+                  "size": "8333.32"
+                },
+                {
+                  "price": "0.14",
+                  "size": "4642.84"
+                },
+                {
+                  "price": "0.16",
+                  "size": "7000"
+                },
+                {
+                  "price": "0.18",
+                  "size": "3333.32"
+                },
+                {
+                  "price": "0.21",
+                  "size": "7380.93"
+                },
+                {
+                  "price": "0.24",
+                  "size": "10938.16"
+                },
+                {
+                  "price": "0.25",
+                  "size": "3600"
+                },
+                {
+                  "price": "0.29",
+                  "size": "203.76"
+                },
+                {
+                  "price": "0.3",
+                  "size": "4230.34"
+                },
+                {
+                  "price": "0.31",
+                  "size": "2356.56"
+                },
+                {
+                  "price": "0.33",
+                  "size": "654.51"
+                },
+                {
+                  "price": "0.37",
+                  "size": "202.68"
+                },
+                {
+                  "price": "0.42",
+                  "size": "100"
+                },
+                {
+                  "price": "0.43",
+                  "size": "20256"
+                },
+                {
+                  "price": "0.44",
+                  "size": "750"
+                },
+                {
+                  "price": "0.45",
+                  "size": "700"
+                },
+                {
+                  "price": "0.46",
+                  "size": "720"
+                },
+                {
+                  "price": "0.47",
+                  "size": "600"
+                },
+                {
+                  "price": "0.48",
+                  "size": "10090"
+                },
+                {
+                  "price": "0.49",
+                  "size": "453"
+                },
+                {
+                  "price": "0.5",
+                  "size": "14865"
+                },
+                {
+                  "price": "0.51",
+                  "size": "2705"
+                },
+                {
+                  "price": "0.52",
+                  "size": "329459.37"
+                },
+                {
+                  "price": "0.53",
+                  "size": "1287265.12"
+                },
+                {
+                  "price": "0.54",
+                  "size": "842434.63"
+                }
+              ],
+              "tick_size": "0.01",
+              "min_order_size": "5",
+              "minimum_unit": "notional",
+              "exchange_ts_ms": 1791740001382,
+              "received_ts_ms": 1791740025042,
+              "source": "LIVE",
+              "valid": true,
+              "integrity": "snapshot",
+              "hash": "e4bb3b45dd1c726557e9ccca04552e45c67fbe96",
+              "invalid_reason": null
+            }
+          ],
+          "market": {
+            "id": "4061337",
+            "event_id": "941347",
+            "question": "Spread: Seahawks (-3.5)",
+            "condition_id": "0xb99a2a01c57b5cb69dc6a09461885e6ffcd07ad19488b8cd9b20242d360445f2",
+            "protocol": "v1",
+            "instruments": [
+              {
+                "asset_id": "110903350962640733204851233408043458335773162018403370855794485169312539285098",
+                "label": "Seahawks"
+              },
+              {
+                "asset_id": "77446698917844976730765839126584882004894269648848404445484641136564907461373",
+                "label": "49ers"
+              }
+            ],
+            "source": "LIVE",
+            "active": true,
+            "closed": false,
+            "accepting_orders": true,
+            "negative_risk": false,
+            "augmented_negative_risk": false,
+            "complementary_verified": true,
+            "payout_verified": true,
+            "payout_per_set": "1",
+            "payout_evidence": "For any nonnegative CTF payout vector (a,b), denominator=a+b>0; equal singleton quantities pay q collateral units",
+            "fee": {
+              "rate": "0.03",
+              "exponent": 1,
+              "verified": true,
+              "evidence": "Gamma feeSchedule, exponent 1; public Fees formula, verified 2026-10-11",
+              "verified_ts_ms": 1791740022780,
+              "expires_ts_ms": 1791740322780,
+              "rule_version": "polymarket-fees-2026-10-11"
+            },
+            "description": "In the upcoming NFL football game between 49ers and Seahawks, scheduled for October 11 at 4:25 PM ET:\n\nThis market will resolve to \"Seahawks\" if the Seahawks win the game by 4 or more points.\n\nOtherwise, this market will resolve to \"49ers\".\n\nOvertime is included if played.\n\nIf the game is postponed, this market will remain open until the game has been completed. If the game is canceled entirely, with no make-up game, this market will resolve 50-50.",
+            "attestation": {
+              "market_id": "4061337",
+              "condition_id": "0xb99a2a01c57b5cb69dc6a09461885e6ffcd07ad19488b8cd9b20242d360445f2",
+              "protocol": "v1",
+              "instruments": [
+                "110903350962640733204851233408043458335773162018403370855794485169312539285098",
+                "77446698917844976730765839126584882004894269648848404445484641136564907461373"
+              ],
+              "status": "VERIFIED_STRUCTURE",
+              "relationship": "For any nonnegative CTF payout vector (a,b), denominator=a+b>0; equal singleton quantities pay q collateral units",
+              "terminal_outcomes": [
+                "FIRST: (1,0)",
+                "SECOND: (0,1)",
+                "SPLIT: (t,1-t), 0<=t<=1"
+              ],
+              "collateral": "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
+              "position_system": "0x4D97DCd97eC945f40cF65F87097ACe5EA0476045",
+              "resolution_mechanism": "CTF oracle reportPayouts; exact oracle identity unresolved",
+              "rule_version": "c9976b7d9e11eb3fb08fe5764464dfab06c168ec33bd3af237f9e1856d7a9c68",
+              "metadata_hash": "138879ab2a33e9ff65354cac3f41104bc81de9b143055a84dde427260d17d71e",
+              "method": "ctf-complement-2",
+              "verified_ts_ms": 1791740024777,
+              "expires_ts_ms": 1791740324777,
+              "evidence": {
+                "rpc_url": "https://polygon-bor-rpc.publicnode.com",
+                "chain_id": 137,
+                "contract": "0x4D97DCd97eC945f40cF65F87097ACe5EA0476045",
+                "collateral": "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
+                "condition_id": "0xb99a2a01c57b5cb69dc6a09461885e6ffcd07ad19488b8cd9b20242d360445f2",
+                "outcome_slot_count": 2,
+                "payout_denominator": 0,
+                "position_ids": [
+                  "110903350962640733204851233408043458335773162018403370855794485169312539285098",
+                  "77446698917844976730765839126584882004894269648848404445484641136564907461373"
+                ],
+                "index_sets": [
+                  1,
+                  2
+                ],
+                "parent_collection": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                "block_hash": "0xf0e9c877d87c6db114955e1e77dd33b0ca92863ac6be5442962d46f66c5f2952",
+                "block_number": "0x5af0654",
+                "calls": [
+                  {
+                    "method": "eth_chainId",
+                    "params": [],
+                    "result": "0x89"
+                  },
+                  {
+                    "method": "eth_getBlockByNumber",
+                    "params": [
+                      "finalized",
+                      false
+                    ],
+                    "result": {
+                      "number": "0x5af0654",
+                      "hash": "0xf0e9c877d87c6db114955e1e77dd33b0ca92863ac6be5442962d46f66c5f2952",
+                      "timestamp": "0x6acbc874"
+                    }
+                  },
+                  {
+                    "method": "eth_call",
+                    "params": [
+                      {
+                        "to": "0x4D97DCd97eC945f40cF65F87097ACe5EA0476045",
+                        "data": "0xd42dc0c2b99a2a01c57b5cb69dc6a09461885e6ffcd07ad19488b8cd9b20242d360445f2"
+                      },
+                      "0x5af0654"
+                    ],
+                    "result": "0x0000000000000000000000000000000000000000000000000000000000000002"
+                  },
+                  {
+                    "method": "eth_call",
+                    "params": [
+                      {
+                        "to": "0x4D97DCd97eC945f40cF65F87097ACe5EA0476045",
+                        "data": "0xdd34de67b99a2a01c57b5cb69dc6a09461885e6ffcd07ad19488b8cd9b20242d360445f2"
+                      },
+                      "0x5af0654"
+                    ],
+                    "result": "0x0000000000000000000000000000000000000000000000000000000000000000"
+                  },
+                  {
+                    "method": "eth_call",
+                    "params": [
+                      {
+                        "to": "0x4D97DCd97eC945f40cF65F87097ACe5EA0476045",
+                        "data": "0x856296f70000000000000000000000000000000000000000000000000000000000000000b99a2a01c57b5cb69dc6a09461885e6ffcd07ad19488b8cd9b20242d360445f20000000000000000000000000000000000000000000000000000000000000001"
+                      },
+                      "0x5af0654"
+                    ],
+                    "result": "0x60ad465936c94d46617022d5c721dd5da8cb40e94c723517b09909e8e1562413"
+                  },
+                  {
+                    "method": "eth_call",
+                    "params": [
+                      {
+                        "to": "0x4D97DCd97eC945f40cF65F87097ACe5EA0476045",
+                        "data": "0x39dd75300000000000000000000000002791bca1f2de4661ed88a30c99a7a9449aa8417460ad465936c94d46617022d5c721dd5da8cb40e94c723517b09909e8e1562413"
+                      },
+                      "0x5af0654"
+                    ],
+                    "result": "0xf531127b3987bfff4a0beedb34f6dbf87f45f1f5a9225420490e5eeb705b166a"
+                  },
+                  {
+                    "method": "eth_call",
+                    "params": [
+                      {
+                        "to": "0x4D97DCd97eC945f40cF65F87097ACe5EA0476045",
+                        "data": "0x856296f70000000000000000000000000000000000000000000000000000000000000000b99a2a01c57b5cb69dc6a09461885e6ffcd07ad19488b8cd9b20242d360445f20000000000000000000000000000000000000000000000000000000000000002"
+                      },
+                      "0x5af0654"
+                    ],
+                    "result": "0x1d6a62815bc206a901df7c28e7ce9f8a714f4cce481f9fa0dcedd1dd6a894696"
+                  },
+                  {
+                    "method": "eth_call",
+                    "params": [
+                      {
+                        "to": "0x4D97DCd97eC945f40cF65F87097ACe5EA0476045",
+                        "data": "0x39dd75300000000000000000000000002791bca1f2de4661ed88a30c99a7a9449aa841741d6a62815bc206a901df7c28e7ce9f8a714f4cce481f9fa0dcedd1dd6a894696"
+                      },
+                      "0x5af0654"
+                    ],
+                    "result": "0xab394737c3dbec102e351a1b6992615ce2fe172754c8a14d0b6eb2021d02cafd"
+                  }
+                ]
+              },
+              "sources": [
+                "https://docs.polymarket.com/resources/onchain-position-data",
+                "https://docs.polymarket.com/concepts/positions-tokens",
+                "https://docs.polymarket.com/concepts/resolution",
+                "https://docs.polymarket.com/resources/contracts"
+              ],
+              "reasons": [],
+              "invalidation": [
+                "Metadata/rules/instrument/fee/state change",
+                "Evidence expiry",
+                "RPC chain or contract contradiction"
+              ],
+              "unresolved_assumptions": [
+                "RPC provider reports authentic finalized chain state",
+                "CTF implementation and collateral continue operating correctly",
+                "USDC.e backing retains value; pUSD conversion is modeled at parity, not independently attested",
+                "Natural-language resolution rules not mathematically proven or human-reviewed",
+                "Settlement timing, gas and financing costs are not established"
+              ]
+            }
+          },
+          "economic_proof": {
+            "property": "Conditional complete-position minimum net payout",
+            "execution_verified": false,
+            "attestation": {
+              "market_id": "4061337",
+              "condition_id": "0xb99a2a01c57b5cb69dc6a09461885e6ffcd07ad19488b8cd9b20242d360445f2",
+              "protocol": "v1",
+              "instruments": [
+                "110903350962640733204851233408043458335773162018403370855794485169312539285098",
+                "77446698917844976730765839126584882004894269648848404445484641136564907461373"
+              ],
+              "status": "VERIFIED_STRUCTURE",
+              "relationship": "For any nonnegative CTF payout vector (a,b), denominator=a+b>0; equal singleton quantities pay q collateral units",
+              "terminal_outcomes": [
+                "FIRST: (1,0)",
+                "SECOND: (0,1)",
+                "SPLIT: (t,1-t), 0<=t<=1"
+              ],
+              "collateral": "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
+              "position_system": "0x4D97DCd97eC945f40cF65F87097ACe5EA0476045",
+              "resolution_mechanism": "CTF oracle reportPayouts; exact oracle identity unresolved",
+              "rule_version": "c9976b7d9e11eb3fb08fe5764464dfab06c168ec33bd3af237f9e1856d7a9c68",
+              "metadata_hash": "138879ab2a33e9ff65354cac3f41104bc81de9b143055a84dde427260d17d71e",
+              "method": "ctf-complement-2",
+              "verified_ts_ms": 1791740024777,
+              "expires_ts_ms": 1791740324777,
+              "evidence": {
+                "rpc_url": "https://polygon-bor-rpc.publicnode.com",
+                "chain_id": 137,
+                "contract": "0x4D97DCd97eC945f40cF65F87097ACe5EA0476045",
+                "collateral": "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
+                "condition_id": "0xb99a2a01c57b5cb69dc6a09461885e6ffcd07ad19488b8cd9b20242d360445f2",
+                "outcome_slot_count": 2,
+                "payout_denominator": 0,
+                "position_ids": [
+                  "110903350962640733204851233408043458335773162018403370855794485169312539285098",
+                  "77446698917844976730765839126584882004894269648848404445484641136564907461373"
+                ],
+                "index_sets": [
+                  1,
+                  2
+                ],
+                "parent_collection": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                "block_hash": "0xf0e9c877d87c6db114955e1e77dd33b0ca92863ac6be5442962d46f66c5f2952",
+                "block_number": "0x5af0654",
+                "calls": [
+                  {
+                    "method": "eth_chainId",
+                    "params": [],
+                    "result": "0x89"
+                  },
+                  {
+                    "method": "eth_getBlockByNumber",
+                    "params": [
+                      "finalized",
+                      false
+                    ],
+                    "result": {
+                      "number": "0x5af0654",
+                      "hash": "0xf0e9c877d87c6db114955e1e77dd33b0ca92863ac6be5442962d46f66c5f2952",
+                      "timestamp": "0x6acbc874"
+                    }
+                  },
+                  {
+                    "method": "eth_call",
+                    "params": [
+                      {
+                        "to": "0x4D97DCd97eC945f40cF65F87097ACe5EA0476045",
+                        "data": "0xd42dc0c2b99a2a01c57b5cb69dc6a09461885e6ffcd07ad19488b8cd9b20242d360445f2"
+                      },
+                      "0x5af0654"
+                    ],
+                    "result": "0x0000000000000000000000000000000000000000000000000000000000000002"
+                  },
+                  {
+                    "method": "eth_call",
+                    "params": [
+                      {
+                        "to": "0x4D97DCd97eC945f40cF65F87097ACe5EA0476045",
+                        "data": "0xdd34de67b99a2a01c57b5cb69dc6a09461885e6ffcd07ad19488b8cd9b20242d360445f2"
+                      },
+                      "0x5af0654"
+                    ],
+                    "result": "0x0000000000000000000000000000000000000000000000000000000000000000"
+                  },
+                  {
+                    "method": "eth_call",
+                    "params": [
+                      {
+                        "to": "0x4D97DCd97eC945f40cF65F87097ACe5EA0476045",
+                        "data": "0x856296f70000000000000000000000000000000000000000000000000000000000000000b99a2a01c57b5cb69dc6a09461885e6ffcd07ad19488b8cd9b20242d360445f20000000000000000000000000000000000000000000000000000000000000001"
+                      },
+                      "0x5af0654"
+                    ],
+                    "result": "0x60ad465936c94d46617022d5c721dd5da8cb40e94c723517b09909e8e1562413"
+                  },
+                  {
+                    "method": "eth_call",
+                    "params": [
+                      {
+                        "to": "0x4D97DCd97eC945f40cF65F87097ACe5EA0476045",
+                        "data": "0x39dd75300000000000000000000000002791bca1f2de4661ed88a30c99a7a9449aa8417460ad465936c94d46617022d5c721dd5da8cb40e94c723517b09909e8e1562413"
+                      },
+                      "0x5af0654"
+                    ],
+                    "result": "0xf531127b3987bfff4a0beedb34f6dbf87f45f1f5a9225420490e5eeb705b166a"
+                  },
+                  {
+                    "method": "eth_call",
+                    "params": [
+                      {
+                        "to": "0x4D97DCd97eC945f40cF65F87097ACe5EA0476045",
+                        "data": "0x856296f70000000000000000000000000000000000000000000000000000000000000000b99a2a01c57b5cb69dc6a09461885e6ffcd07ad19488b8cd9b20242d360445f20000000000000000000000000000000000000000000000000000000000000002"
+                      },
+                      "0x5af0654"
+                    ],
+                    "result": "0x1d6a62815bc206a901df7c28e7ce9f8a714f4cce481f9fa0dcedd1dd6a894696"
+                  },
+                  {
+                    "method": "eth_call",
+                    "params": [
+                      {
+                        "to": "0x4D97DCd97eC945f40cF65F87097ACe5EA0476045",
+                        "data": "0x39dd75300000000000000000000000002791bca1f2de4661ed88a30c99a7a9449aa841741d6a62815bc206a901df7c28e7ce9f8a714f4cce481f9fa0dcedd1dd6a894696"
+                      },
+                      "0x5af0654"
+                    ],
+                    "result": "0xab394737c3dbec102e351a1b6992615ce2fe172754c8a14d0b6eb2021d02cafd"
+                  }
+                ]
+              },
+              "sources": [
+                "https://docs.polymarket.com/resources/onchain-position-data",
+                "https://docs.polymarket.com/concepts/positions-tokens",
+                "https://docs.polymarket.com/concepts/resolution",
+                "https://docs.polymarket.com/resources/contracts"
+              ],
+              "reasons": [],
+              "invalidation": [
+                "Metadata/rules/instrument/fee/state change",
+                "Evidence expiry",
+                "RPC chain or contract contradiction"
+              ],
+              "unresolved_assumptions": [
+                "RPC provider reports authentic finalized chain state",
+                "CTF implementation and collateral continue operating correctly",
+                "USDC.e backing retains value; pUSD conversion is modeled at parity, not independently attested",
+                "Natural-language resolution rules not mathematically proven or human-reviewed",
+                "Settlement timing, gas and financing costs are not established"
+              ]
+            },
+            "fee_schedule": {
+              "rate": "0.03",
+              "exponent": 1,
+              "verified": true,
+              "evidence": "Gamma feeSchedule, exponent 1; public Fees formula, verified 2026-10-11",
+              "verified_ts_ms": 1791740022780,
+              "expires_ts_ms": 1791740322780,
+              "rule_version": "polymarket-fees-2026-10-11"
+            },
+            "unmodeled_costs": [
+              "gas/redemption",
+              "financing",
+              "collateral conversion"
+            ],
+            "assumptions": [
+              "All proposed shares acquired",
+              "Collateral retains value",
+              "No extra operational costs"
+            ],
+            "quantity_precision": "0.01 modeled shares; live maker fragmentation unknown",
+            "result": "REJECTED",
+            "explanation": "Missing, old, or implausibly future timestamp"
+          }
+        },
+        "risk": {
+          "allowed": false,
+          "reasons": [
+            "Only mathematically verified complete positions are eligible",
+            "Market data too old or invalid",
+            "Empty virtual position",
+            "Net edge below risk floor"
+          ],
+          "limits": {
+            "max_capital": "20",
+            "max_exposure": "80",
+            "max_market_exposure": "20",
+            "max_event_exposure": "40",
+            "max_positions": 10,
+            "max_age_ms": 15000,
+            "min_edge": "0.001",
+            "max_slippage": "0.05",
+            "max_drawdown": "0.10",
+            "max_daily_loss": "5",
+            "max_cumulative_loss": "10",
+            "max_unmatched_quantity": "0",
+            "emergency_stop": false
+          }
+        },
+        "reserved_envelope": "0",
+        "execution": {
+          "name": "standard",
+          "latency_ms": 200,
+          "jitter_ms": 50,
+          "distribution": "uniform",
+          "liquidity_fraction": "0.8",
+          "adverse_ticks": 0,
+          "ack_delay_ms": 50,
+          "taker_delay_ms": 0,
+          "seed": 7
+        }
+      }
+    ],
+    "rejected": 1,
+    "paper_trades": 0,
+    "hypothetical_fills": 0,
+    "settled_positions": 0,
+    "recovery_count": 0,
+    "incidents": [],
+    "last_processed_ms": 1791740025043,
+    "risk_limits": {
+      "max_capital": "20",
+      "max_exposure": "80",
+      "max_market_exposure": "20",
+      "max_event_exposure": "40",
+      "max_positions": 10,
+      "max_age_ms": 15000,
+      "min_edge": "0.001",
+      "max_slippage": "0.05",
+      "max_drawdown": "0.10",
+      "max_daily_loss": "5",
+      "max_cumulative_loss": "10",
+      "max_unmatched_quantity": "0",
+      "emergency_stop": false
+    },
+    "live_orders": 0
+  },
+  "command": {
+    "id": "public:4061337",
+    "kind": "observe",
+    "ts": 1791740025043,
+    "market": {
+      "id": "4061337",
+      "event_id": "941347",
+      "question": "Spread: Seahawks (-3.5)",
+      "condition_id": "0xb99a2a01c57b5cb69dc6a09461885e6ffcd07ad19488b8cd9b20242d360445f2",
+      "protocol": "v1",
+      "instruments": [
+        {
+          "asset_id": "110903350962640733204851233408043458335773162018403370855794485169312539285098",
+          "label": "Seahawks"
+        },
+        {
+          "asset_id": "77446698917844976730765839126584882004894269648848404445484641136564907461373",
+          "label": "49ers"
+        }
+      ],
+      "source": "LIVE",
+      "active": true,
+      "closed": false,
+      "accepting_orders": true,
+      "negative_risk": false,
+      "augmented_negative_risk": false,
+      "complementary_verified": true,
+      "payout_verified": true,
+      "payout_per_set": "1",
+      "payout_evidence": "For any nonnegative CTF payout vector (a,b), denominator=a+b>0; equal singleton quantities pay q collateral units",
+      "fee": {
+        "rate": "0.03",
+        "exponent": 1,
+        "verified": true,
+        "evidence": "Gamma feeSchedule, exponent 1; public Fees formula, verified 2026-10-11",
+        "verified_ts_ms": 1791740022780,
+        "expires_ts_ms": 1791740322780,
+        "rule_version": "polymarket-fees-2026-10-11"
+      },
+      "description": "In the upcoming NFL football game between 49ers and Seahawks, scheduled for October 11 at 4:25 PM ET:\n\nThis market will resolve to \"Seahawks\" if the Seahawks win the game by 4 or more points.\n\nOtherwise, this market will resolve to \"49ers\".\n\nOvertime is included if played.\n\nIf the game is postponed, this market will remain open until the game has been completed. If the game is canceled entirely, with no make-up game, this market will resolve 50-50.",
+      "attestation": {
+        "market_id": "4061337",
+        "condition_id": "0xb99a2a01c57b5cb69dc6a09461885e6ffcd07ad19488b8cd9b20242d360445f2",
+        "protocol": "v1",
+        "instruments": [
+          "110903350962640733204851233408043458335773162018403370855794485169312539285098",
+          "77446698917844976730765839126584882004894269648848404445484641136564907461373"
+        ],
+        "status": "VERIFIED_STRUCTURE",
+        "relationship": "For any nonnegative CTF payout vector (a,b), denominator=a+b>0; equal singleton quantities pay q collateral units",
+        "terminal_outcomes": [
+          "FIRST: (1,0)",
+          "SECOND: (0,1)",
+          "SPLIT: (t,1-t), 0<=t<=1"
+        ],
+        "collateral": "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
+        "position_system": "0x4D97DCd97eC945f40cF65F87097ACe5EA0476045",
+        "resolution_mechanism": "CTF oracle reportPayouts; exact oracle identity unresolved",
+        "rule_version": "c9976b7d9e11eb3fb08fe5764464dfab06c168ec33bd3af237f9e1856d7a9c68",
+        "metadata_hash": "138879ab2a33e9ff65354cac3f41104bc81de9b143055a84dde427260d17d71e",
+        "method": "ctf-complement-2",
+        "verified_ts_ms": 1791740024777,
+        "expires_ts_ms": 1791740324777,
+        "evidence": {
+          "rpc_url": "https://polygon-bor-rpc.publicnode.com",
+          "chain_id": 137,
+          "contract": "0x4D97DCd97eC945f40cF65F87097ACe5EA0476045",
+          "collateral": "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
+          "condition_id": "0xb99a2a01c57b5cb69dc6a09461885e6ffcd07ad19488b8cd9b20242d360445f2",
+          "outcome_slot_count": 2,
+          "payout_denominator": 0,
+          "position_ids": [
+            "110903350962640733204851233408043458335773162018403370855794485169312539285098",
+            "77446698917844976730765839126584882004894269648848404445484641136564907461373"
+          ],
+          "index_sets": [
+            1,
+            2
+          ],
+          "parent_collection": "0x0000000000000000000000000000000000000000000000000000000000000000",
+          "block_hash": "0xf0e9c877d87c6db114955e1e77dd33b0ca92863ac6be5442962d46f66c5f2952",
+          "block_number": "0x5af0654",
+          "calls": [
+            {
+              "method": "eth_chainId",
+              "params": [],
+              "result": "0x89"
+            },
+            {
+              "method": "eth_getBlockByNumber",
+              "params": [
+                "finalized",
+                false
+              ],
+              "result": {
+                "number": "0x5af0654",
+                "hash": "0xf0e9c877d87c6db114955e1e77dd33b0ca92863ac6be5442962d46f66c5f2952",
+                "timestamp": "0x6acbc874"
+              }
+            },
+            {
+              "method": "eth_call",
+              "params": [
+                {
+                  "to": "0x4D97DCd97eC945f40cF65F87097ACe5EA0476045",
+                  "data": "0xd42dc0c2b99a2a01c57b5cb69dc6a09461885e6ffcd07ad19488b8cd9b20242d360445f2"
+                },
+                "0x5af0654"
+              ],
+              "result": "0x0000000000000000000000000000000000000000000000000000000000000002"
+            },
+            {
+              "method": "eth_call",
+              "params": [
+                {
+                  "to": "0x4D97DCd97eC945f40cF65F87097ACe5EA0476045",
+                  "data": "0xdd34de67b99a2a01c57b5cb69dc6a09461885e6ffcd07ad19488b8cd9b20242d360445f2"
+                },
+                "0x5af0654"
+              ],
+              "result": "0x0000000000000000000000000000000000000000000000000000000000000000"
+            },
+            {
+              "method": "eth_call",
+              "params": [
+                {
+                  "to": "0x4D97DCd97eC945f40cF65F87097ACe5EA0476045",
+                  "data": "0x856296f70000000000000000000000000000000000000000000000000000000000000000b99a2a01c57b5cb69dc6a09461885e6ffcd07ad19488b8cd9b20242d360445f20000000000000000000000000000000000000000000000000000000000000001"
+                },
+                "0x5af0654"
+              ],
+              "result": "0x60ad465936c94d46617022d5c721dd5da8cb40e94c723517b09909e8e1562413"
+            },
+            {
+              "method": "eth_call",
+              "params": [
+                {
+                  "to": "0x4D97DCd97eC945f40cF65F87097ACe5EA0476045",
+                  "data": "0x39dd75300000000000000000000000002791bca1f2de4661ed88a30c99a7a9449aa8417460ad465936c94d46617022d5c721dd5da8cb40e94c723517b09909e8e1562413"
+                },
+                "0x5af0654"
+              ],
+              "result": "0xf531127b3987bfff4a0beedb34f6dbf87f45f1f5a9225420490e5eeb705b166a"
+            },
+            {
+              "method": "eth_call",
+              "params": [
+                {
+                  "to": "0x4D97DCd97eC945f40cF65F87097ACe5EA0476045",
+                  "data": "0x856296f70000000000000000000000000000000000000000000000000000000000000000b99a2a01c57b5cb69dc6a09461885e6ffcd07ad19488b8cd9b20242d360445f20000000000000000000000000000000000000000000000000000000000000002"
+                },
+                "0x5af0654"
+              ],
+              "result": "0x1d6a62815bc206a901df7c28e7ce9f8a714f4cce481f9fa0dcedd1dd6a894696"
+            },
+            {
+              "method": "eth_call",
+              "params": [
+                {
+                  "to": "0x4D97DCd97eC945f40cF65F87097ACe5EA0476045",
+                  "data": "0x39dd75300000000000000000000000002791bca1f2de4661ed88a30c99a7a9449aa841741d6a62815bc206a901df7c28e7ce9f8a714f4cce481f9fa0dcedd1dd6a894696"
+                },
+                "0x5af0654"
+              ],
+              "result": "0xab394737c3dbec102e351a1b6992615ce2fe172754c8a14d0b6eb2021d02cafd"
+            }
+          ]
+        },
+        "sources": [
+          "https://docs.polymarket.com/resources/onchain-position-data",
+          "https://docs.polymarket.com/concepts/positions-tokens",
+          "https://docs.polymarket.com/concepts/resolution",
+          "https://docs.polymarket.com/resources/contracts"
+        ],
+        "reasons": [],
+        "invalidation": [
+          "Metadata/rules/instrument/fee/state change",
+          "Evidence expiry",
+          "RPC chain or contract contradiction"
+        ],
+        "unresolved_assumptions": [
+          "RPC provider reports authentic finalized chain state",
+          "CTF implementation and collateral continue operating correctly",
+          "USDC.e backing retains value; pUSD conversion is modeled at parity, not independently attested",
+          "Natural-language resolution rules not mathematically proven or human-reviewed",
+          "Settlement timing, gas and financing costs are not established"
+        ]
+      }
+    },
+    "books": {
+      "110903350962640733204851233408043458335773162018403370855794485169312539285098": {
+        "asset_id": "110903350962640733204851233408043458335773162018403370855794485169312539285098",
+        "condition_id": "0xb99a2a01c57b5cb69dc6a09461885e6ffcd07ad19488b8cd9b20242d360445f2",
+        "asks": [
+          {
+            "price": "0.99",
+            "size": "87429"
+          },
+          {
+            "price": "0.98",
+            "size": "79000"
+          },
+          {
+            "price": "0.97",
+            "size": "6000"
+          },
+          {
+            "price": "0.95",
+            "size": "26800"
+          },
+          {
+            "price": "0.9",
+            "size": "26090"
+          },
+          {
+            "price": "0.88",
+            "size": "8333.32"
+          },
+          {
+            "price": "0.86",
+            "size": "4642.84"
+          },
+          {
+            "price": "0.84",
+            "size": "7000"
+          },
+          {
+            "price": "0.82",
+            "size": "3333.32"
+          },
+          {
+            "price": "0.79",
+            "size": "7380.93"
+          },
+          {
+            "price": "0.76",
+            "size": "10938.16"
+          },
+          {
+            "price": "0.75",
+            "size": "3600"
+          },
+          {
+            "price": "0.71",
+            "size": "203.76"
+          },
+          {
+            "price": "0.7",
+            "size": "4230.34"
+          },
+          {
+            "price": "0.69",
+            "size": "2356.56"
+          },
+          {
+            "price": "0.67",
+            "size": "654.51"
+          },
+          {
+            "price": "0.63",
+            "size": "202.68"
+          },
+          {
+            "price": "0.58",
+            "size": "100"
+          },
+          {
+            "price": "0.57",
+            "size": "20256"
+          },
+          {
+            "price": "0.56",
+            "size": "750"
+          },
+          {
+            "price": "0.55",
+            "size": "700"
+          },
+          {
+            "price": "0.54",
+            "size": "720"
+          },
+          {
+            "price": "0.53",
+            "size": "600"
+          },
+          {
+            "price": "0.52",
+            "size": "10090"
+          },
+          {
+            "price": "0.51",
+            "size": "453"
+          },
+          {
+            "price": "0.5",
+            "size": "14865"
+          },
+          {
+            "price": "0.49",
+            "size": "2705"
+          },
+          {
+            "price": "0.48",
+            "size": "329459.37"
+          },
+          {
+            "price": "0.47",
+            "size": "1287265.12"
+          },
+          {
+            "price": "0.46",
+            "size": "842434.63"
+          }
+        ],
+        "bids": [
+          {
+            "price": "0.01",
+            "size": "87000"
+          },
+          {
+            "price": "0.02",
+            "size": "84000"
+          },
+          {
+            "price": "0.03",
+            "size": "6000"
+          },
+          {
+            "price": "0.05",
+            "size": "26800"
+          },
+          {
+            "price": "0.1",
+            "size": "9400"
+          },
+          {
+            "price": "0.12",
+            "size": "15991.64"
+          },
+          {
+            "price": "0.14",
+            "size": "4642.84"
+          },
+          {
+            "price": "0.17",
+            "size": "6643.41"
+          },
+          {
+            "price": "0.19",
+            "size": "315.78"
+          },
+          {
+            "price": "0.25",
+            "size": "1320"
+          },
+          {
+            "price": "0.26",
+            "size": "53.84"
+          },
+          {
+            "price": "0.31",
+            "size": "32.25"
+          },
+          {
+            "price": "0.34",
+            "size": "20000"
+          },
+          {
+            "price": "0.35",
+            "size": "1006"
+          },
+          {
+            "price": "0.36",
+            "size": "16.66"
+          },
+          {
+            "price": "0.39",
+            "size": "10120"
+          },
+          {
+            "price": "0.4",
+            "size": "605"
+          },
+          {
+            "price": "0.41",
+            "size": "10995"
+          },
+          {
+            "price": "0.42",
+            "size": "29968"
+          },
+          {
+            "price": "0.43",
+            "size": "253938.54"
+          },
+          {
+            "price": "0.44",
+            "size": "268265.02"
+          },
+          {
+            "price": "0.45",
+            "size": "53288.33"
+          }
+        ],
+        "tick_size": "0.01",
+        "min_order_size": "5",
+        "minimum_unit": "notional",
+        "exchange_ts_ms": 1791740001382,
+        "received_ts_ms": 1791740024824,
+        "source": "LIVE",
+        "valid": true,
+        "integrity": "snapshot",
+        "hash": "0b6629442ce0aab2eba5742a8120816c6b73dc4c",
+        "invalid_reason": null
+      },
+      "77446698917844976730765839126584882004894269648848404445484641136564907461373": {
+        "asset_id": "77446698917844976730765839126584882004894269648848404445484641136564907461373",
+        "condition_id": "0xb99a2a01c57b5cb69dc6a09461885e6ffcd07ad19488b8cd9b20242d360445f2",
+        "asks": [
+          {
+            "price": "0.99",
+            "size": "87000"
+          },
+          {
+            "price": "0.98",
+            "size": "84000"
+          },
+          {
+            "price": "0.97",
+            "size": "6000"
+          },
+          {
+            "price": "0.95",
+            "size": "26800"
+          },
+          {
+            "price": "0.9",
+            "size": "9400"
+          },
+          {
+            "price": "0.88",
+            "size": "15991.64"
+          },
+          {
+            "price": "0.86",
+            "size": "4642.84"
+          },
+          {
+            "price": "0.83",
+            "size": "6643.41"
+          },
+          {
+            "price": "0.81",
+            "size": "315.78"
+          },
+          {
+            "price": "0.75",
+            "size": "1320"
+          },
+          {
+            "price": "0.74",
+            "size": "53.84"
+          },
+          {
+            "price": "0.69",
+            "size": "32.25"
+          },
+          {
+            "price": "0.66",
+            "size": "20000"
+          },
+          {
+            "price": "0.65",
+            "size": "1006"
+          },
+          {
+            "price": "0.64",
+            "size": "16.66"
+          },
+          {
+            "price": "0.61",
+            "size": "10120"
+          },
+          {
+            "price": "0.6",
+            "size": "605"
+          },
+          {
+            "price": "0.59",
+            "size": "10995"
+          },
+          {
+            "price": "0.58",
+            "size": "29968"
+          },
+          {
+            "price": "0.57",
+            "size": "253938.54"
+          },
+          {
+            "price": "0.56",
+            "size": "268265.02"
+          },
+          {
+            "price": "0.55",
+            "size": "53288.33"
+          }
+        ],
+        "bids": [
+          {
+            "price": "0.01",
+            "size": "87429"
+          },
+          {
+            "price": "0.02",
+            "size": "79000"
+          },
+          {
+            "price": "0.03",
+            "size": "6000"
+          },
+          {
+            "price": "0.05",
+            "size": "26800"
+          },
+          {
+            "price": "0.1",
+            "size": "26090"
+          },
+          {
+            "price": "0.12",
+            "size": "8333.32"
+          },
+          {
+            "price": "0.14",
+            "size": "4642.84"
+          },
+          {
+            "price": "0.16",
+            "size": "7000"
+          },
+          {
+            "price": "0.18",
+            "size": "3333.32"
+          },
+          {
+            "price": "0.21",
+            "size": "7380.93"
+          },
+          {
+            "price": "0.24",
+            "size": "10938.16"
+          },
+          {
+            "price": "0.25",
+            "size": "3600"
+          },
+          {
+            "price": "0.29",
+            "size": "203.76"
+          },
+          {
+            "price": "0.3",
+            "size": "4230.34"
+          },
+          {
+            "price": "0.31",
+            "size": "2356.56"
+          },
+          {
+            "price": "0.33",
+            "size": "654.51"
+          },
+          {
+            "price": "0.37",
+            "size": "202.68"
+          },
+          {
+            "price": "0.42",
+            "size": "100"
+          },
+          {
+            "price": "0.43",
+            "size": "20256"
+          },
+          {
+            "price": "0.44",
+            "size": "750"
+          },
+          {
+            "price": "0.45",
+            "size": "700"
+          },
+          {
+            "price": "0.46",
+            "size": "720"
+          },
+          {
+            "price": "0.47",
+            "size": "600"
+          },
+          {
+            "price": "0.48",
+            "size": "10090"
+          },
+          {
+            "price": "0.49",
+            "size": "453"
+          },
+          {
+            "price": "0.5",
+            "size": "14865"
+          },
+          {
+            "price": "0.51",
+            "size": "2705"
+          },
+          {
+            "price": "0.52",
+            "size": "329459.37"
+          },
+          {
+            "price": "0.53",
+            "size": "1287265.12"
+          },
+          {
+            "price": "0.54",
+            "size": "842434.63"
+          }
+        ],
+        "tick_size": "0.01",
+        "min_order_size": "5",
+        "minimum_unit": "notional",
+        "exchange_ts_ms": 1791740001382,
+        "received_ts_ms": 1791740025042,
+        "source": "LIVE",
+        "valid": true,
+        "integrity": "snapshot",
+        "hash": "e4bb3b45dd1c726557e9ccca04552e45c67fbe96",
+        "invalid_reason": null
+      }
+    }
+  }
+}

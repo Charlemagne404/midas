@@ -5,6 +5,7 @@ from typing import Any
 import structlog
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from midas.analytics.research import feasibility
 from midas.simulation.scenarios import SCENARIOS, catalog
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -33,7 +34,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     app = FastAPI(
         title="Midas Research API",
-        version="0.1.0",
+        version="0.2.0",
         lifespan=lifespan,
         description="Read-only public market data and internal virtual simulation. No trading credentials or live orders.",
     )
@@ -57,7 +58,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @app.get("/api/health")
     async def health() -> dict[str, Any]:
-        return {"status": service.status, "mode": config.mode, "live_execution": False}
+        return {"status": service.health_status(), "mode": config.mode, "live_execution": False}
 
     @app.get("/api/state")
     async def state() -> dict[str, Any]:
@@ -81,6 +82,116 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             raise HTTPException(404, "Market observation not found")
         return {**match.model_dump(mode="json"), "risk": service.risk(match)}
 
+    @app.get("/api/paper")
+    async def paper() -> dict[str, Any]:
+        from midas.market_data.polymarket import now_ms
+        from midas.paper.broker import summary
+
+        return {**summary(service.broker.state, now_ms()), "healthy": service.broker.healthy}
+
+    class PaperControl(BaseModel):
+        model_config = ConfigDict(extra="forbid")
+        paused: bool | None = None
+        execution_model: str | None = None
+
+    @app.patch("/api/paper")
+    async def paper_control(body: PaperControl) -> dict[str, Any]:
+        from midas.market_data.polymarket import now_ms
+        from midas.paper.broker import ExecutionModel
+
+        ts = now_ms()
+        command: dict[str, Any] = {"id": f"control:{ts}", "kind": "control", "ts": ts}
+        if body.paused is not None:
+            command["paused"] = body.paused
+        if body.execution_model is not None:
+            try:
+                command["execution"] = ExecutionModel.preset(body.execution_model).model_dump(
+                    mode="json"
+                )
+            except ValueError as error:
+                raise HTTPException(422, str(error)) from error
+        await service.broker.apply(command)
+        return await paper()
+
+    class SyntheticSettlement(BaseModel):
+        model_config = ConfigDict(extra="forbid")
+        payout: dict[str, str]
+
+    @app.post("/api/paper/positions/{position_id}/settle")
+    async def synthetic_settlement(position_id: str, body: SyntheticSettlement) -> dict[str, Any]:
+        from midas.market_data.polymarket import now_ms
+
+        if service.broker.state["config"]["mode"] != "synthetic":
+            raise HTTPException(
+                409, "Synthetic outcome injection is restricted to the synthetic account"
+            )
+        if position_id not in service.broker.state["positions"]:
+            raise HTTPException(404, "Paper position not found")
+        try:
+            await service.broker.apply(
+                {
+                    "id": f"settlement:{position_id}",
+                    "kind": "settle",
+                    "ts": now_ms(),
+                    "position": position_id,
+                    "payout": body.payout,
+                }
+            )
+        except ValueError as error:
+            raise HTTPException(409, str(error)) from error
+        return await paper()
+
+    @app.get("/api/paper/decisions")
+    async def paper_decisions(
+        before_revision: int | None = None, limit: int = 50
+    ) -> list[dict[str, Any]]:
+        from sqlalchemy import select
+
+        from apps.api.storage import PaperEvent
+
+        statement = select(PaperEvent).where(
+            PaperEvent.account_id == service.broker.account_id,
+            PaperEvent.command["kind"].as_string() == "observe",
+        )
+        if before_revision is not None:
+            statement = statement.where(PaperEvent.revision < before_revision)
+        async with service.store.sessions() as session:
+            rows = await session.scalars(
+                statement.order_by(PaperEvent.revision.desc()).limit(min(max(limit, 1), 200))
+            )
+            return [
+                {"event_id": r.event_id, "revision": r.revision, "decision": r.payload["decision"]}
+                for r in rows
+                if r.payload.get("decision")
+            ]
+
+    @app.get("/api/paper/journal")
+    async def paper_journal(before_revision: int | None = None) -> list[dict[str, Any]]:
+        from sqlalchemy import select
+
+        from apps.api.storage import PaperEvent
+
+        async with service.store.sessions() as session:
+            rows = await session.scalars(
+                select(PaperEvent)
+                .where(
+                    PaperEvent.account_id == service.broker.account_id,
+                    PaperEvent.revision
+                    < (before_revision if before_revision is not None else 2**63 - 1),
+                )
+                .order_by(PaperEvent.revision.desc())
+                .limit(200)
+            )
+            return [
+                {
+                    "event_id": r.event_id,
+                    "revision": r.revision,
+                    "command": r.command,
+                    "checksum": r.checksum,
+                }
+                for r in rows
+            ]
+
     @app.get("/api/scenarios")
     async def scenarios() -> list[dict[str, str]]:
         return catalog()
@@ -102,9 +213,85 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     async def simulations() -> list[dict[str, Any]]:
         return await service.store.recent("simulation", 200)
 
+    @app.get("/api/experiments")
+    async def experiments() -> list[dict[str, Any]]:
+        return await service.store.recent("experiment", 200, "SYNTHETIC")
+
+    from midas.paper.broker import ExecutionModel
+
+    class ExperimentInput(BaseModel):
+        model_config = ConfigDict(extra="forbid")
+        seed: int = Field(default=7, ge=0, le=2**32 - 1)
+        fault: str = "none"
+        execution: ExecutionModel = ExecutionModel()
+        compare: bool = False
+
+    @app.post("/api/experiments")
+    async def experiment(body: ExperimentInput) -> dict[str, Any]:
+        import asyncio
+        import uuid
+
+        from midas.market_data.polymarket import now_ms
+        from midas.paper.experiments import FAULTS, differential, run_experiment
+
+        if body.fault not in FAULTS:
+            raise HTTPException(422, "Unknown fault")
+        if service.limits.emergency_stop or not service.store.healthy or not service.broker.healthy:
+            raise HTTPException(409, "Experiment admission halted")
+        if service.pending_simulations >= 8:
+            raise HTTPException(409, "Experiment queue full")
+        service.pending_simulations += 1
+        try:
+            async with service.simulation_slots:
+                if service.limits.emergency_stop:
+                    raise HTTPException(409, "Emergency stop active")
+                result = (
+                    await asyncio.to_thread(differential, body.seed, body.fault)
+                    if body.compare
+                    else await asyncio.to_thread(
+                        run_experiment, body.seed, body.execution, body.fault
+                    )
+                )
+                key = uuid.uuid4().hex
+                await service.store.append("experiment", key, "SYNTHETIC", now_ms(), result)
+                return {"id": key, "result": result}
+        finally:
+            service.pending_simulations -= 1
+
+    @app.get("/api/experiments/{experiment_id}")
+    async def experiment_artifact(experiment_id: str) -> Any:
+        from fastapi.responses import JSONResponse
+
+        for row in await service.store.recent("experiment", 200):
+            if row["key"] == experiment_id:
+                return JSONResponse(
+                    row["payload"],
+                    headers={
+                        "Content-Disposition": f'attachment; filename="experiment-{experiment_id}.json"'
+                    },
+                )
+        raise HTTPException(404, "Experiment artifact not found in retained window")
+
     @app.get("/api/incidents")
     async def incidents() -> list[dict[str, Any]]:
-        return await service.store.recent("event", 200)
+        rows = await service.store.recent("event", 200)
+        for index, incident in enumerate(service.broker.state["incidents"][-100:]):
+            rows.insert(
+                0,
+                {
+                    "id": -(index + 1),
+                    "key": incident["kind"],
+                    "source": "PAPER",
+                    "received_ts_ms": incident["ts"],
+                    "payload": {
+                        **incident,
+                        "message": incident.get("result", incident["kind"]),
+                        "timestamp_ms": incident["ts"],
+                        "source": "PAPER",
+                    },
+                },
+            )
+        return rows
 
     @app.get("/api/analytics")
     async def analytics() -> dict[str, Any]:
@@ -137,6 +324,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 }
                 for r in reversed(runs)
             ],
+            "paper": await paper(),
+            "feasibility": feasibility(observations, await paper()),
+            "experiment_comparisons": [
+                r["payload"].get("comparison", [])
+                for r in await service.store.recent("experiment", 200)
+            ],
             "simulation_unit": "virtual USD",
             "note": "Each simulation starts a separate portfolio. P&L is not a cumulative strategy return.",
         }
@@ -160,7 +353,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             "mode": config.mode,
             "market_limit": config.market_limit,
             "refresh_seconds": config.refresh_seconds,
-            "risk_limits": service.limits.model_dump(mode="json"),
+            "risk_limits": service.broker.config.limits.model_copy(
+                update={"emergency_stop": service.limits.emergency_stop}
+            ).model_dump(mode="json"),
+            "legacy_simulation_risk_limits": service.limits.model_dump(mode="json"),
             "execution": "SIMULATION_ONLY",
         }
 
@@ -170,6 +366,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @app.patch("/api/settings")
     async def change_settings(body: StopInput) -> dict[str, Any]:
+        from midas.market_data.polymarket import now_ms
+
+        ts = now_ms()
+        await service.broker.apply(
+            {"id": f"stop:{ts}", "kind": "control", "ts": ts, "emergency_stop": body.emergency_stop}
+        )
         service.limits = service.limits.model_copy(update={"emergency_stop": body.emergency_stop})
         await service.report(
             "WARNING" if body.emergency_stop else "INFO",

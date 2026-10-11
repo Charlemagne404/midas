@@ -29,6 +29,7 @@ export interface Market {
   source: string;
   fee: { rate: string; verified: boolean; evidence: string };
   payout_evidence: string;
+  attestation?: Record<string, unknown>;
 }
 export interface Risk {
   allowed: boolean;
@@ -59,6 +60,7 @@ export interface Evaluation {
   slices: { asset_id: string; price: string; quantity: string; notional: string; fee: string }[];
   assumptions: string[];
   risk: Risk;
+  economic_proof?: Record<string, unknown>;
 }
 export interface SystemEvent {
   severity: string;
@@ -89,6 +91,13 @@ export interface State {
   errors: number;
   events: SystemEvent[];
   telemetry: {
+    cpu_seconds?: number;
+    peak_memory_kib?: number;
+    broker_healthy?: boolean;
+    broker_pending_actions?: number;
+    broker_processing_delay_ms?: number;
+    broker_recoveries?: number;
+    scanner_markets_per_second?: number | null;
     uptime_seconds: number;
     processing_latency_ms: number;
     queue_depth: number;
@@ -168,6 +177,18 @@ export interface Analytics {
     source: string;
   }[];
   note: string;
+  feasibility?: {
+    positive_observed_candidates: number;
+    structurally_supported_observations: number;
+    passing_net_edge_samples: number;
+    hypothetical_fill_count: number;
+    modeled_settled_positions: number;
+    net_return_on_total_virtual_capital: string;
+    note: string;
+    opportunity_episodes: Record<string, unknown>[];
+    paper_trades: Record<string, unknown>[];
+    rejection_reasons: Record<string, number>;
+  };
 }
 export interface Settings {
   mode: string;
@@ -175,4 +196,51 @@ export interface Settings {
   refresh_seconds: number;
   risk_limits: Record<string, unknown>;
   execution: string;
+}
+
+export interface PaperAccount {
+  status: string;
+  healthy: boolean;
+  mode: string;
+  strategy_version: string;
+  execution: { name: string };
+  unit: string;
+  initial_capital: string;
+  available: string;
+  reserved: string;
+  locked: string;
+  equity: string;
+  realized_pnl: string;
+  unrealized_pnl: string;
+  fees: string;
+  max_drawdown: string;
+  capital_utilization: string;
+  net_exposure_shares: string;
+  paper_trades: number;
+  hypothetical_fills: number;
+  settled_positions: number;
+  rejected: number;
+  observations: number;
+  pending_actions: number;
+  recovery_count: number;
+  risk_limits: Record<string, string | number>;
+  decisions: { id: string; ts: number; market_id: string; risk: Risk; evaluation: Evaluation }[];
+  positions: {
+    id: string;
+    market_id: string;
+    source: string;
+    execution_model: { name: string };
+    fill_certainty: string;
+    settled: boolean;
+    portfolio: Portfolio;
+    orders: {
+      id: string;
+      status: string;
+      quantity: string;
+      remaining: string;
+      acknowledged: boolean;
+    }[];
+    decision: Record<string, unknown>;
+    ledger: Record<string, unknown>[];
+  }[];
 }

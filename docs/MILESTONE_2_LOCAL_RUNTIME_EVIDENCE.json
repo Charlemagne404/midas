@@ -1,0 +1,29 @@
+{
+  "api": "http://127.0.0.1:8000",
+  "frontend": "http://127.0.0.1:5173",
+  "captured_ts_ms": 1791742909714,
+  "mode": "demo",
+  "status": "READY",
+  "schema_version": "002",
+  "tables": [
+    "records",
+    "alembic_version",
+    "paper_accounts",
+    "paper_events"
+  ],
+  "records": 4892,
+  "journal_entries": 32,
+  "backup": "data/backups/midas-before-milestone2-1791742584.db",
+  "backup_integrity": "ok",
+  "portfolio": {
+    "mode": "synthetic",
+    "status": "RUNNING",
+    "initial_capital": "100",
+    "available": "92.400000",
+    "reserved": "0.000000",
+    "locked": "7.600000",
+    "paper_trades": 1,
+    "hypothetical_fills": 2,
+    "live_orders": 0
+  }
+}

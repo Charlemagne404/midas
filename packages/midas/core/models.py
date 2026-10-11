@@ -2,7 +2,7 @@
 
 from decimal import Decimal
 from enum import StrEnum
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
@@ -44,6 +44,9 @@ class Fee(Model):
     exponent: int = 1
     verified: bool = False
     evidence: str = "No verified market-specific schedule"
+    verified_ts_ms: int | None = None
+    expires_ts_ms: int | None = None
+    rule_version: str = "polymarket-fees-2026-10-11"
 
 
 class Market(Model):
@@ -65,6 +68,10 @@ class Market(Model):
     payout_evidence: str = "Not established"
     fee: Fee = Fee()
     description: str = ""
+    resolution_source: str = ""
+    resolution_metadata: dict[str, Any] = Field(default_factory=dict)
+    execution_delay_ms: int | None = None
+    attestation: dict[str, Any] | None = None
 
 
 class Level(Model):
@@ -79,6 +86,7 @@ class Book(Model):
     bids: tuple[Level, ...] = ()
     tick_size: Positive = D("0.01")
     min_order_size: Positive = D("5")
+    minimum_unit: Literal["shares", "notional"] = "shares"
     exchange_ts_ms: int | None = None
     received_ts_ms: int
     source: Source
@@ -142,6 +150,7 @@ class Evaluation(Model):
     assumptions: tuple[str, ...] = ()
     books: tuple[Book, ...] = ()
     market: Market | None = None
+    economic_proof: dict[str, Any] = Field(default_factory=dict)
 
 
 class MarketEvent(Model):

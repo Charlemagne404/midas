@@ -49,3 +49,25 @@ The websocket queue is bounded at 2,048 frames; deduplication retains 4,096 hash
 Demo startup constructs no public network client. Live mode observes public data only. Scenario portfolios are always synthetic independent experiments, including while live observation runs. The optional public Data API v2 smoke does not fetch account positions. There is no wallet, secure SDK, signature, external execution adapter, order submission/cancellation route, or credential field.
 
 HTTP endpoints are intended for a trusted local workstation. Docker publishes ports on loopback. Authentication, multi-user access and production ingress are deferred.
+
+## Milestone 2 extension (supersedes the Milestone 1 storage/payout boundary above)
+
+Public Gamma metadata + CLOB fee/delay metadata feed `CTFVerifier`; fixed-contract
+finalized Polygon reads produce `MarketEconomicAttestation`. `BinaryStrategy` consumes
+the attested structure, records complete/rejected proof traces and conservative live
+fee/terminal-rounding bounds. Public REST remains GET-only; RPC POST permits only chain
+reads, never transactions. V2 remains economically unsupported in live mode.
+
+The new domain state machine `midas.paper.broker` uses the original strategy/risk,
+virtual `Exchange` and independent auditor. `apps.api.paper.PaperBroker` persists a
+shared account and immutable journal with an atomic CAS transition. Cash envelopes,
+independent leg actions, books, orders, settlements and stop state survive restart.
+All startup paths use Alembic 001/002, including recognized legacy SQLite adoption.
+SQLite explicitly uses WAL and FULL synchronous writes. Financial tables are never
+pruned with observation records. See `RECOVERY_AND_RECONCILIATION.md` for boundaries.
+
+Synthetic, recorded and live-shadow accounts stay separate. New fault/differential
+experiments run the production broker state machine. The API and React Paper Trading
+page expose the actual durable account. Existing 43 scenarios and their interfaces
+remain intact. Historical replay can consume attested metadata and verified settlement
+observations; it does not infer missing future observations.

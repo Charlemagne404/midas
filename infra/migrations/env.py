@@ -7,7 +7,9 @@ from apps.api.config import Settings
 from apps.api.storage import Base
 
 config = context.config
-config.set_main_option("sqlalchemy.url", Settings().database_url)
+config.set_main_option(
+    "sqlalchemy.url", config.attributes.get("database_url", Settings().database_url)
+)
 
 
 def migrate(connection):

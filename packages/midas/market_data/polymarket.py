@@ -2,6 +2,7 @@
 
 import asyncio
 import json
+import re
 import time
 from decimal import Decimal
 from typing import Any
@@ -52,6 +53,7 @@ def normalize_market(raw: dict[str, Any]) -> Market:
     elif raw.get("feesEnabled") is True and isinstance(schedule, dict):
         if (
             schedule.get("exponent") == 1
+            and not isinstance(schedule.get("exponent"), bool)
             and schedule.get("takerOnly") is True
             and "rate" in schedule
         ):
@@ -61,6 +63,9 @@ def normalize_market(raw: dict[str, Any]) -> Market:
                 verified=True,
                 evidence="Gamma feeSchedule, exponent 1; public Fees formula, verified 2026-10-11",
             )
+    if fee.verified:
+        ts = now_ms()
+        fee = fee.model_copy(update={"verified_ts_ms": ts, "expires_ts_ms": ts + 300_000})
     events = raw.get("events") or []
     event_id = str(events[0]["id"]) if events and "id" in events[0] else f"market:{raw['id']}"
     return Market(
@@ -74,7 +79,7 @@ def normalize_market(raw: dict[str, Any]) -> Market:
         active=raw.get("active") is True,
         closed=raw.get("closed") is not False,
         accepting_orders=raw.get("acceptingOrders") is True,
-        negative_risk=raw.get("negRisk") is True,
+        negative_risk=raw.get("negRisk") is not False,
         augmented_negative_risk=raw.get("negRiskAugmented") is True
         or any(e.get("negRiskAugmented") for e in events),
         complementary_verified=len(instruments) == 2
@@ -83,9 +88,24 @@ def normalize_market(raw: dict[str, Any]) -> Market:
         # Gamma maps outcome IDs, but does not prove onchain redemption economics
         # for this specific condition. No positive live classification without attestation.
         payout_verified=False,
-        payout_evidence="Market-specific onchain payout attestation is not implemented",
+        payout_evidence="Awaiting deployed CTF structural verification",
         fee=fee,
         description=str(raw.get("description") or ""),
+        execution_delay_ms=raw["secondsDelay"] * 1000
+        if isinstance(raw.get("secondsDelay"), int)
+        and not isinstance(raw.get("secondsDelay"), bool)
+        and raw["secondsDelay"] >= 0
+        else None,
+        resolution_source=str(raw.get("resolutionSource") or ""),
+        resolution_metadata={
+            k: raw.get(k)
+            for k in (
+                "questionID",
+                "resolutionStatus",
+                "umaResolutionStatus",
+                "umaResolutionStatuses",
+            )
+        },
     )
 
 
@@ -113,6 +133,7 @@ def normalize_book(
         received_ts_ms=received,
         source=source,
         hash=raw.get("hash"),
+        minimum_unit="notional" if source == Source.LIVE else "shares",
     )
 
 
@@ -140,7 +161,10 @@ class PublicClient:
     async def get_wire(
         self, base: str, path: str, params: dict[str, Any] | None = None
     ) -> tuple[Any, str]:
-        if (base, path) not in {
+        details_read = (
+            base == CLOB and re.fullmatch(r"/clob-markets/0x[0-9a-fA-F]{64}", path) is not None
+        )
+        if not details_read and (base, path) not in {
             (GAMMA, "/markets"),
             (GAMMA, "/events"),
             (CLOB, "/book"),
@@ -188,6 +212,33 @@ class PublicClient:
     async def book(self, asset_id: str, condition_id: str) -> tuple[Book, dict[str, Any], str]:
         raw, wire = await self.get_wire(CLOB, "/book", {"token_id": asset_id})
         return normalize_book(raw, Source.LIVE, now_ms(), asset_id, condition_id), raw, wire
+
+    async def enrich(self, market: Market) -> tuple[Market, dict[str, Any]]:
+        raw = await self.get(CLOB, f"/clob-markets/{market.condition_id}")
+        if (
+            raw.get("c") != market.condition_id
+            or raw.get("v") != market.protocol
+            or tuple(x.get("t") for x in raw.get("t", []))
+            != tuple(i.asset_id for i in market.instruments)
+            or raw.get("ao") is not True
+        ):
+            raise ValueError("CLOB/Gamma market identity, version or trading state contradiction")
+        fee = raw.get("fd")
+        if (
+            not isinstance(fee, dict)
+            or "r" not in fee
+            or fee.get("e") != 1
+            or fee.get("to") is not True
+        ):
+            raise ValueError("Missing supported CLOB fee parameters")
+        if not market.fee.verified or D(str(fee["r"])) != market.fee.rate:
+            raise ValueError("CLOB/Gamma fee contradiction")
+        delay = market.execution_delay_ms
+        if delay is None:
+            raise ValueError("Missing or invalid market delay")
+        return market.model_copy(
+            update={"execution_delay_ms": delay + (250 if raw.get("itode") is True else 0)}
+        ), raw
 
     async def close(self) -> None:
         await self.client.aclose()

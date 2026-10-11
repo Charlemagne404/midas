@@ -32,6 +32,7 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { api } from './api';
+import { PaperPage, PaperSummary, ExperimentPanel } from './Paper';
 import { chartBase } from './chart-theme';
 const LazyChart = lazy(() => import('./Chart').then((module) => ({ default: module.Chart })));
 function Chart(props: ComponentProps<typeof LazyChart>) {
@@ -56,6 +57,7 @@ import type {
 const pages = [
   ['Mission Control', LayoutDashboard],
   ['Scanner', Search],
+  ['Paper Trading', Database],
   ['Simulation Lab', FlaskConical],
   ['Analytics', Activity],
   ['Arena', Sparkles],
@@ -202,7 +204,7 @@ export function App() {
             </div>
           </div>
           <div className="version">
-            <span>ENGINE v0.1.0</span>
+            <span>ENGINE v0.2.0</span>
             <PanelLeftClose size={14} />
           </div>
         </div>
@@ -227,7 +229,7 @@ export function App() {
         <main>
           <div className="page-heading">
             <div>
-              <div className="eyebrow">POLYMARKET RESEARCH / MILESTONE 001</div>
+              <div className="eyebrow">POLYMARKET RESEARCH / MILESTONE 002</div>
               <h1>{page}</h1>
               <p>
                 {
@@ -305,7 +307,13 @@ export function App() {
               error={opportunities.error?.message}
             />
           )}
-          {page === 'Simulation Lab' && <SimulationLab />}
+          {page === 'Paper Trading' && <PaperPage />}
+          {page === 'Simulation Lab' && (
+            <>
+              <SimulationLab />
+              <ExperimentPanel />
+            </>
+          )}
           {page === 'Analytics' && <AnalyticsPage data={analytics.data} />}
           {page === 'Arena' && <Arena />}
           {page === 'Incidents' && <Incidents />}
@@ -378,6 +386,7 @@ function Mission({
 }) {
   return (
     <>
+      <PaperSummary />
       <div className="metrics">
         <Metric
           label="Markets monitored"
@@ -393,10 +402,10 @@ function Mission({
           positive
         />
         <Metric
-          label="Potential net profit"
+          label="Observed modeled edge sum"
           value={money(state?.potential_net_profit)}
           unit={state?.unit ?? 'USD'}
-          detail={`Gross ${money(state?.potential_gross_profit)} · observed complete positions`}
+          detail={`Independent snapshots · not jointly executable · gross ${money(state?.potential_gross_profit)}`}
           icon={ArrowUpRight}
         />
         <Metric
@@ -420,6 +429,30 @@ function Mission({
         </Panel>
         <Panel title="System integrity" aside={<ShieldCheck size={16} />}>
           <div className="health-list">
+            <div>
+              <span>Paper broker pending / processing delay</span>
+              <strong>
+                {state?.telemetry.broker_pending_actions ?? '—'} /{' '}
+                {state?.telemetry.broker_processing_delay_ms ?? '—'} ms
+              </strong>
+            </div>
+            <div>
+              <span>Reconciled broker startups</span>
+              <strong>{state?.telemetry.broker_recoveries ?? '—'}</strong>
+            </div>
+            <div>
+              <span>Process CPU time / peak memory</span>
+              <strong>
+                {state?.telemetry.cpu_seconds ?? '—'} s / {state?.telemetry.peak_memory_kib ?? '—'}{' '}
+                KiB
+              </strong>
+            </div>
+            <div>
+              <span>Last scanner throughput (including persistence)</span>
+              <strong>
+                {state?.telemetry.scanner_markets_per_second?.toFixed(2) ?? '—'} markets/s
+              </strong>
+            </div>
             {[
               ['Market connection', state?.connection ?? 'Waiting'],
               [
@@ -542,15 +575,19 @@ function Scanner({
 }) {
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('all');
+  const [protocol, setProtocol] = useState('all');
+  const [reason, setReason] = useState('');
   const [sorting, setSorting] = useState<SortingState>([{ id: 'net_edge', desc: true }]);
   const data = useMemo(
     () =>
       evaluations.filter(
         (e) =>
           e.question.toLowerCase().includes(search.toLowerCase()) &&
-          (status === 'all' || e.status === status),
+          (status === 'all' || e.status === status) &&
+          (protocol === 'all' || e.market?.protocol === protocol) &&
+          e.reasons.join(' ').toLowerCase().includes(reason.toLowerCase()),
       ),
-    [evaluations, search, status],
+    [evaluations, search, status, protocol, reason],
   );
   const columns = useMemo<ColumnDef<Evaluation>[]>(
     () => [
@@ -567,7 +604,11 @@ function Scanner({
       {
         id: 'type',
         header: 'Position',
-        cell: () => <span className="muted">YES + NO</span>,
+        cell: (i) => (
+          <span className="muted">
+            {i.row.original.market?.instruments.map((x) => x.label).join(' + ')}
+          </span>
+        ),
         enableSorting: false,
       },
       {
@@ -671,6 +712,21 @@ function Scanner({
             </option>
           ))}
         </select>
+        <select
+          aria-label="Filter protocol"
+          value={protocol}
+          onChange={(e) => setProtocol(e.target.value)}
+        >
+          <option value="all">All protocols</option>
+          <option value="v1">CTF v1</option>
+          <option value="v2">Protocol V2</option>
+        </select>
+        <input
+          aria-label="Filter rejection reason"
+          placeholder="Rejection reason…"
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+        />
         <span className="toolbar-note">
           Exact arithmetic · observed ask depth · no fill guarantee
         </span>
@@ -880,6 +936,24 @@ function Details({ evaluation: e, close }: { evaluation: Evaluation; close: () =
             <strong className="mono">{money(payout, 6)}</strong>
           </div>
         ))}
+        <h3>Structural economic attestation</h3>
+        <p>
+          VERIFIED STRUCTURE establishes complementary instrument algebra under the recorded
+          protocol and collateral assumptions. It does not prove natural-language rules or
+          hypothetical fills.
+        </p>
+        <pre className="artifact-json">
+          {JSON.stringify(
+            e.market?.attestation ?? {
+              status: 'SYNTHETIC CONTRACT',
+              evidence: e.market?.payout_evidence,
+            },
+            null,
+            2,
+          )}
+        </pre>
+        <h3>Full economic calculation trace</h3>
+        <pre className="artifact-json">{JSON.stringify(e.economic_proof, null, 2)}</pre>
         <h3>Fee evidence</h3>
         <p>{e.market?.fee.evidence}</p>
         <h3>Established assumptions</h3>
@@ -1252,6 +1326,32 @@ function AnalyticsPage({ data }: { data: Analytics | undefined }) {
   );
   return (
     <>
+      {data?.feasibility && (
+        <Panel title="Observed economics and simulated feasibility">
+          <div className="portfolio-grid">
+            {Object.entries({
+              'Positive observed samples': data.feasibility.positive_observed_candidates,
+              'Structural evidence samples': data.feasibility.structurally_supported_observations,
+              'Passing net edge samples': data.feasibility.passing_net_edge_samples,
+              'Hypothetical fills': data.feasibility.hypothetical_fill_count,
+              'Modeled settlements': data.feasibility.modeled_settled_positions,
+            }).map(([label, value]) => (
+              <div key={label}>
+                <span>{label}</span>
+                <strong>{value}</strong>
+              </div>
+            ))}
+          </div>
+          <p className="panel-note">{data.feasibility.note}</p>
+          <details className="book-audit">
+            <summary>
+              Opportunity lifetimes, executable fractions, lockup and rejection reasons
+            </summary>
+            <pre className="artifact-json">{JSON.stringify(data.feasibility, null, 2)}</pre>
+          </details>
+        </Panel>
+      )}
+
       <div className="metrics">
         <Metric
           label="Recorded observations"

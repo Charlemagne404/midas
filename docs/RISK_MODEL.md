@@ -22,3 +22,25 @@ The venue independently prevents overspending, invalid quantity/tick orders, unv
 All milestone experiments are isolated portfolios. Existing correlated exposures are scenario input fixtures rather than an actual shared, continuously traded account. Risk assessment occurs for the complete proposed position; two preauthorized leg submissions then execute independently under venue checks. The current low-level Exchange class is an internal simulator primitive; future plugins must use a controlled runner/gateway, not call it directly. Enforcing that gateway against untrusted strategy code and managing a persistent multi-market paper portfolio are next-milestone work.
 
 The dashboard emergency stop blocks new scenario runs and marks risk decisions rejected. It is process-local and resets on restart. Scenarios separately inject a stop during virtual execution. No real orders exist to cancel.
+
+## Milestone 2 shared-account risk
+
+The persistent paper broker supplies actual cash, reserved envelopes, locked basis,
+market/event exposure, unmatched inventory, daily/cumulative simulated loss and drawdown
+rather than an empty default state. It allocates an envelope before either leg submits
+and uses a conservative limit/fee budget. No second signal can reuse that cash.
+
+New independent limits: potential unmatched-leg capital, existing unmatched quantity,
+daily loss and cumulative loss. The default paper preset is 100 virtual USD/pUSD:
+20 per trade, 80 total, 20 market, 40 event, 10 positions, 15 s data age, 0.1% edge,
+5% depth slippage, 10% drawdown, 5 daily loss and 10 cumulative loss. Existing unmatched
+inventory freezes new positions by default. The potential leg capital cap defaults to
+100 in the reusable risk contract; it is configurable and additional to allocation limits.
+Both loss limits use negative net realized P&L in the relevant window; unrealized losses
+also affect drawdown. Execution rechecks configured data age and attestation/fee expiry.
+
+Emergency stop is durable, cancels pending virtual actions and releases unspent
+reservations. Pause blocks new decisions while approved actions can finish. The low-level
+matcher remains a simulation primitive, not an untrusted-plugin boundary. No strategy or
+confidence score can override the independent gate. Paper accounts keep initial config;
+new-account limits accept `MIDAS_PAPER_LIMITS` JSON.

@@ -1,0 +1,10 @@
+{
+  "python": "3.12.3",
+  "platform": "Linux-7.0.0-38-generic-x86_64-with-glibc2.39",
+  "workload": "30 rejected synthetic observations with FULL-synchronous SQLite WAL, journal and account commits; one shared account; no network",
+  "samples": 30,
+  "median_ms": 24.76476549054496,
+  "p95_ms": 47.6789899985306,
+  "replay_and_reconciliation_ms": 347.02152700629085,
+  "recovered_revision": 32
+}

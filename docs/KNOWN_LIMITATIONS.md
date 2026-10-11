@@ -1,19 +1,55 @@
-# Known limitations
+# Current limitations — Milestone 2
 
-- Live market-specific payout attestation is not implemented; live observations cannot be labeled mathematically verified. The supported v1/v2 selection and public observation paths are separate from this payout gate.
-- Real live V2 discovery/books and sustained streaming deltas/reconnect campaigns were not empirically validated in this environment. V2 identification and synthetic economics are fixture-tested.
-- Only a configured liquidity-sorted active-market subset is discovered. Pagination and exhaustive event discovery are deferred; Gamma embedded associated events supply event identity.
-- No atomic cross-instrument snapshots, trustworthy websocket sequence recovery or validated book-hash reproduction. Stream deltas conservatively invalidate books until polling confirms snapshots.
-- Fee ceiling/fragmentation reserve assumes the synthetic venue's 0.01-share matching model. Real aggregate books do not establish that assumption. Unsupported exponent schedules are rejected.
-- Size optimization evaluates depth breakpoints and capital constraints; it does not prove an optimum over every financial rounding discontinuity.
-- The venue models internal BUY limits/IOC/GTC explicitly matched against asks. It lacks queue position, probabilistic fills, passive matching, sell orders, market impact, competing participants and empirical latency distributions.
-- Virtual portfolios are per experiment. There is no continuous shared paper account or persistent scheduler checkpoint recovery; exchange checkpoint scenarios serialize state within a process. Event/market existing exposures are scenario inputs.
-- The low-level simulator is not an isolation boundary for untrusted plugins. Future agents need an enforced risk-controlled broker gateway.
-- Raw writes flush but do not fsync; a truncated tail requires explicit repair. Metadata replay requires the external market contracts; raw-only book updates cannot recreate trustworthy execution.
-- Live recording/persistence degradation blocks new simulations, but there is no external alerting service or full service-level chaos campaign. Raw budget and record retention are configurable; older files require explicit pruning.
-- SQLite auto-bootstrap and PostgreSQL Alembic migration paths both exist. Migration upgrades for existing SQLite auto-created databases need a unified follow-up implementation.
-- All HTTP operations are intended for a trusted local user. No authentication/authorization, internet deployment controls or arbitrary strategy-code sandbox exists.
-- Emergency stop is process-local and resets on restart; scenario-level stop events are separate reproducibility inputs.
-- Docker socket access was denied locally. Container build/start and PostgreSQL execution must be verified in CI or on a Docker-enabled workstation; local tests use SQLite. CI includes a PostgreSQL migration and insert/read job.
-- The graphing library creates a substantial lazily loaded browser chunk. Bundle measurements and remaining warnings are reported in the engineering report.
-- No multi-outcome/neg-risk arbitrage, ML training, funded account, shadow/live execution, wallet authentication, signatures or real order management is implemented.
+- One live structure is supported: top-level non-negative-risk binary CTF singleton
+  pairs backed by USDC.e. V2 identifiers/book routing remain fixture-tested; the controlled
+  V2 discovery query returned no markets. Negative risk, augmented negative risk,
+  combinatorial positions and nonzero parent collections are unsupported.
+- Structural proof trusts a public Polygon RPC, finalized block identity and the official
+  deployed CTF implementation. Exact oracle adapter identity is unresolved in the active
+  sample. Human rule interpretation, disputes, clarifications and resolution timing are
+  not mathematically proven. These limits are explicit in every attestation.
+- pUSD/USDC.e parity, collateral value and absence of additional operational costs are
+  modeling assumptions. Gas, financing, conversion and holding rewards are not estimated
+  or booked. Mathematical labels are conditional, never unconditional real profit.
+- Book snapshots are neither atomic across legs nor proofs of executable liquidity.
+  Quantity precision, partial fills, latency, fees and liquidity withdrawal remain paper
+  assumptions. No queue model, passive maker matching, sell/unwind strategy, competing
+  traders, empirical latency calibration or endogenous market impact exists.
+- Consumed depth is conservatively retained instead of inferring replenishment. This
+  prevents repeated virtual use of unchanged liquidity but can materially undertrade.
+  No automatic unmatched-leg rescue exists; hard risk blocks further proposals.
+- Discovery is a bounded liquidity-sorted sample with supported structures prioritized,
+  not exhaustive market coverage. Streaming deltas/reconnect logic is deterministically
+  tested; public runtime coverage is a snapshot/PONG and short service lifecycle, not
+  a sustained reconnect/load campaign. Snapshot hashes are not independently reproduced.
+- Finalized CTF settlement ingestion is implemented and fixture-tested; the active public
+  sample did not resolve during testing. There is no real redemption, merging or exchange
+  execution. Historical replay requires recorded attested metadata to qualify; it cannot
+  create missing historical proofs or liquidity beyond dataset end.
+- Local SQLite atomic/recovery behavior is exercised, including physical subprocess exit.
+  PostgreSQL runtime is **not locally verified**: Docker socket permission denied; no
+  server binary. CI has a dedicated broker integration check; configured CI is not a pass
+  claim. Docker Compose configuration validates, but containers were not launched.
+- Runtime migrations assume one startup owner. Concurrent financial writes are protected
+  by CAS/unique constraints; conflicts halt admission rather than providing leader election
+  or automatic retries. Deploy as a single laboratory service.
+- Journal recovery replays all financial commands. Replay cost grows with history; scalable
+  compaction and cross-version financial replay/migration are deferred. Decisions in the
+  hot account cache are bounded; immutable SQL decision history is paginated. Observation
+  retention never removes financial journal entries. Account configuration persists and
+  environment changes do not reset existing balances or risk limits.
+- JSONL recordings flush without fsync and may have a truncated tail requiring explicit
+  repair. This is separate from the FULL-synchronous SQL financial ledger. Recording
+  degradation blocks new decisions and action processing; no external alerting service.
+- The UI adds real broker state, controls, decisions, fee/proof detail, model comparison,
+  telemetry and artifacts. It does not implement every requested specialized chart or an
+  interactive portfolio cursor for the new lab: full lab timelines are inspectable JSON,
+  while the legacy lab retains its interactive timeline. No latency sweep, distribution
+  statistics, rule-review workflow or multi-dataset experiment selector is implemented.
+- Experiments currently use the binary synthetic fixture and 15 configurable fault modes;
+  43 legacy scenarios remain intact. Physical process crashes are separate integration
+  tests, not falsely described as a simulated production-process outage.
+- HTTP access is intended for a trusted local user. Authentication, multi-user isolation,
+  public hosting and untrusted strategy-code sandboxing are outside scope. The chart
+  library still produces a large lazily loaded chunk. No ML, wallets, credentials, real
+  orders, cancellation, onchain settlement or real-money deployment controls exist.

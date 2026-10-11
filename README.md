@@ -4,7 +4,7 @@
 
 Midas evaluates complementary binary positions using exact ask-depth arithmetic, independently gates virtual risk, and tests sequential execution against an auditable simulated venue. The research system remains useful when every observed real opportunity is rejected.
 
-**Milestone 1 never submits real orders. No wallet, private key, deposited balance or trading credentials are required.** Demo mode is entirely offline after dependencies are installed. Live mode observes unauthenticated public market data; all experiments use isolated synthetic portfolios.
+**Midas never submits real orders. No wallet, private key, deposited balance or trading credentials are required.** Demo mode is entirely offline after dependencies are installed. Live mode observes unauthenticated public market data and maintains a separate virtual paper account. Lab experiments use labeled synthetic portfolios; historical replay preserves recorded data provenance.
 
 ![Midas command center](docs/mission-control.png)
 
@@ -36,7 +36,7 @@ Start the dashboard in a second terminal:
 corepack pnpm dev
 ```
 
-Open **http://127.0.0.1:5173**. API documentation: **http://127.0.0.1:8000/docs**. Default mode is `demo`; SQLite automatically initializes `data/midas.db`. The frontend uses only local assets and its `/api` proxy. Copy `.env.example` to `.env` to customize settings.
+Open **http://127.0.0.1:5173**. API documentation: **http://127.0.0.1:8000/docs**. Default mode is `demo`; Alembic migrates SQLite and automatically initializes `data/midas.db`. The frontend uses only local assets and its `/api` proxy. Copy `.env.example` to `.env` to customize settings.
 
 Optional container startup uses PostgreSQL and versioned migrations:
 
@@ -52,7 +52,13 @@ The dashboard/API ports are the same; PostgreSQL is bound to localhost:54329. De
 MIDAS_MODE=live .venv/bin/uv run uvicorn apps.api.main:app --host 127.0.0.1 --port 8000
 ```
 
-This monitors up to 20 active markets ordered by liquidity, fetches public books, refreshes metadata periodically and subscribes to the public market websocket. No public order mutation path exists. A disconnected or stale feed is visibly degraded. Real market-specific onchain payout attestation is deferred, so live observations cannot receive `VERIFIED_MATHEMATICAL`. Unknown versions, negative-risk structures, missing fees and invalid data are explicitly excluded.
+This discovers up to 100 liquid markets, prioritizes supported top-level CTF binary
+markets, monitors up to 20, and records public books and streaming observations. A
+finalized Polygon read verifies condition and complementary position identities. Live
+mathematical labels are conditional complete-position proofs with explicit collateral,
+fee and operational-cost assumptions; fills remain unverified. Unknown versions,
+negative risk, absent evidence and stale observations fail closed. Protocol V2 routing
+is fixture-tested and live economics remain unsupported. No exchange mutation path exists.
 
 Live books and demo fixtures never share a book state. Scenario results remain labeled SYNTHETIC even when live observations are enabled.
 
@@ -98,7 +104,7 @@ corepack pnpm test:e2e
 .venv/bin/uv run python scripts/benchmark.py
 ```
 
-Playwright launches the local demo API/frontend if they are not running. Its smoke covers scanner inspection, profitable simulation, rejected positions, an execution loss and event replay. It writes screenshots under `docs`. Ordinary checks never require Polymarket availability. The optional real public smoke is separate:
+Browser tests start isolated services on ports 18000/15173 with a temporary database. They cover scanner inspection, profitable simulation, rejected positions, execution loss, event replay, persistent paper controls and model comparisons. Playwright writes screenshots under `docs`. Ordinary checks never require Polymarket availability. The optional real public smoke is separate:
 
 ```bash
 .venv/bin/uv run python scripts/live_smoke.py
@@ -111,7 +117,7 @@ MIDAS_DATABASE_URL=postgresql+asyncpg://midas:midas_local@localhost:54329/midas 
   .venv/bin/uv run alembic upgrade head
 ```
 
-Do not apply the initial migration to an already auto-created SQLite database. See the architecture notes for this milestone's SQLite bootstrap limitation.
+Startup adopts a recognized legacy SQLite records-only schema at revision 001 and upgrades it. Back up existing databases before migration. Financial journals are excluded from observation retention.
 
 ## API and dashboard
 
@@ -119,12 +125,15 @@ Do not apply the initial migration to an already auto-created SQLite database. S
 | --- | --- |
 | `GET /api/state`, `/api/health` | Current mode, observation counts, freshness, integrity, real telemetry and latest independent experiment P&L |
 | `GET /api/markets`, `/api/opportunities`, `/api/opportunities/{id}` | Normalized market metadata and exact calculation evidence with independent risk decision |
+| `GET /api/paper`, `/api/paper/decisions`, `/api/paper/journal` | Durable shared virtual portfolio, decisions, and event journal |
+| `PATCH /api/paper` | Pause/resume paper decisions and select future execution assumptions |
+| `GET/POST /api/experiments` | Versioned fault experiments and three-model comparisons; downloadable artifacts |
 | `GET /api/scenarios` | 43 reproducible mathematical, execution, infrastructure and risk scenarios |
 | `POST /api/scenarios/{id}/run` | Internal scenario execution; bounded two-worker/eight-request admission; seed validation |
 | `GET /api/simulations`, `/api/analytics` | Persisted experiment artifacts and provenance-separated observation summaries |
 | `GET /api/incidents` | Persisted actual system messages and failures |
 | `GET /api/strategies` | Implemented deterministic strategy manifest |
-| `GET /api/settings`, `PATCH /api/settings` | Current configuration; toggle process-local emergency stop |
+| `GET /api/settings`, `PATCH /api/settings` | Current configuration; toggle persistent paper emergency stop |
 
 Mission Control, Scanner, Simulation Lab, Analytics, Incidents, Telemetry and Settings operate on backend data. Arena exposes the implemented baseline and an honest empty state for future learning systems. No neural training or invented metrics exist.
 
@@ -138,6 +147,35 @@ Default structured retention is 30 days. Raw recording stops at 100 MB total and
 ```
 
 Use Ctrl+C for clean local shutdown. `docker compose down` preserves named volumes; no automatic database wipe occurs. Ports are intended for local trusted access.
+
+## Milestone 2 workflows
+
+The **Paper Trading** page shows durable simulated balances, orders, risk decisions,
+ledger events and execution assumptions. The default shared account has 100 virtual
+USD/pUSD and a 20-unit trade allocation limit; no SEK conversion is asserted.
+`MIDAS_PAPER_CAPITAL` and `MIDAS_PAPER_LIMITS` configure new accounts. Existing accounts
+retain their financial configuration across restart. Emergency stop is persistent.
+
+```bash
+.venv/bin/python scripts/verify_economics.py
+.venv/bin/python scripts/live_paper_smoke.py
+.venv/bin/python scripts/paper_lab.py --seed 7 --compare
+.venv/bin/pytest tests/integration/test_paper.py -q
+.venv/bin/python scripts/paper_benchmark.py
+```
+
+The public probes produce traceable economic evaluations and a running paper broker;
+zero qualifying trades are a valid outcome. The differential lab uses a labeled synthetic
+fixture when real opportunities do not qualify. See the recovery document for a physical
+partial-position process-termination demonstration and exact restart commands.
+
+- [Milestone 2 engineering report](docs/MILESTONE_2_ENGINEERING_REPORT.md)
+- [Milestone 2 baseline](docs/MILESTONE_2_BASELINE.md)
+- [Economic attestation](docs/ECONOMIC_ATTESTATION.md)
+- [Paper broker](docs/PAPER_BROKER.md)
+- [Execution models](docs/EXECUTION_MODELS.md)
+- [Recovery and reconciliation](docs/RECOVERY_AND_RECONCILIATION.md)
+- [Milestone 2 test report](docs/MILESTONE_2_TEST_REPORT.md)
 
 ## Engineering documentation
 

@@ -1,0 +1,81 @@
+{
+  "captured_ts_ms": 1791742056484,
+  "reads_only": true,
+  "v2": {
+    "status": "UNVERIFIED",
+    "reason": "No V2 market returned by controlled Gamma version=v2 probe; fixture routing only",
+    "returned_versions": []
+  },
+  "markets": [
+    {
+      "id": "4024677",
+      "protocol": "v1",
+      "structural_attestation": "VERIFIED_STRUCTURE",
+      "evaluation": "NEGATIVE_EDGE",
+      "net_profit": "-0.571561",
+      "paper_decision": {
+        "allowed": false,
+        "reasons": [
+          "Only mathematically verified complete positions are eligible",
+          "Net edge below risk floor"
+        ],
+        "limits": {
+          "max_capital": "20",
+          "max_exposure": "80",
+          "max_market_exposure": "20",
+          "max_event_exposure": "40",
+          "max_positions": 10,
+          "max_age_ms": 15000,
+          "min_edge": "0.001",
+          "max_slippage": "0.05",
+          "max_drawdown": "0.10",
+          "max_daily_loss": "5",
+          "max_cumulative_loss": "10",
+          "max_unmatched_exposure": "100",
+          "max_unmatched_quantity": "0",
+          "emergency_stop": false
+        }
+      },
+      "fixture": "tests/fixtures/milestone2/ctf-4024677.json"
+    },
+    {
+      "id": "4024680",
+      "protocol": "v1",
+      "structural_attestation": "VERIFIED_STRUCTURE",
+      "evaluation": "NEGATIVE_EDGE",
+      "net_profit": "-0.483431",
+      "paper_decision": {
+        "allowed": false,
+        "reasons": [
+          "Only mathematically verified complete positions are eligible",
+          "Net edge below risk floor"
+        ],
+        "limits": {
+          "max_capital": "20",
+          "max_exposure": "80",
+          "max_market_exposure": "20",
+          "max_event_exposure": "40",
+          "max_positions": 10,
+          "max_age_ms": 15000,
+          "min_edge": "0.001",
+          "max_slippage": "0.05",
+          "max_drawdown": "0.10",
+          "max_daily_loss": "5",
+          "max_cumulative_loss": "10",
+          "max_unmatched_exposure": "100",
+          "max_unmatched_quantity": "0",
+          "emergency_stop": false
+        }
+      },
+      "fixture": "tests/fixtures/milestone2/ctf-4024680.json"
+    }
+  ],
+  "streaming": {
+    "status": "LIVE_PUBLIC_SUBSCRIPTION_VERIFIED",
+    "protocol": "v1",
+    "asset_id": "56056672751934526125943641351839699220089479893294396205663286922097293819722",
+    "pong": true,
+    "frame_count": 1,
+    "limits": "Snapshot/PONG probe; sustained deltas and reconnect campaign not verified"
+  }
+}

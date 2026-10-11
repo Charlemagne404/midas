@@ -1,0 +1,66 @@
+[
+  {
+    "phase": "prepare",
+    "exit_code": 0,
+    "revision": 3,
+    "reconciliation_errors": [],
+    "portfolio": {
+      "available": "90.500000",
+      "reserved": "9.500000",
+      "locked": "0",
+      "realized_pnl": "0",
+      "hypothetical_fills": 0,
+      "pending_actions": 5,
+      "net_exposure_shares": "0"
+    }
+  },
+  {
+    "phase": "partial_exit",
+    "exit_code": 92
+  },
+  {
+    "phase": "inspect",
+    "exit_code": 0,
+    "revision": 6,
+    "reconciliation_errors": [],
+    "portfolio": {
+      "available": "90.500000",
+      "reserved": "5.300000",
+      "locked": "4.200000",
+      "realized_pnl": "0",
+      "hypothetical_fills": 1,
+      "pending_actions": 4,
+      "net_exposure_shares": "10"
+    }
+  },
+  {
+    "phase": "finish",
+    "exit_code": 0,
+    "revision": 12,
+    "reconciliation_errors": [],
+    "portfolio": {
+      "available": "100.500000",
+      "reserved": "0.000000",
+      "locked": "0.000000",
+      "realized_pnl": "0.500000",
+      "hypothetical_fills": 2,
+      "pending_actions": 0,
+      "net_exposure_shares": "0"
+    }
+  },
+  {
+    "phase": "inspect",
+    "exit_code": 0,
+    "revision": 13,
+    "reconciliation_errors": [],
+    "portfolio": {
+      "available": "100.500000",
+      "reserved": "0.000000",
+      "locked": "0.000000",
+      "realized_pnl": "0.500000",
+      "hypothetical_fills": 2,
+      "pending_actions": 0,
+      "net_exposure_shares": "0"
+    }
+  }
+]

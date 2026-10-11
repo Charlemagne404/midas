@@ -1574,3 +1574,33 @@ input::placeholder {
     animation: none !important;
   }
 }
+
+.artifact-json {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 420px;
+  overflow: auto;
+  font-size: 11px;
+  line-height: 1.6;
+  color: #93a3b8;
+  padding: 16px;
+  background: #0c1017;
+}
+.toolbar label {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 12px;
+}
+.toolbar input[type='number'] {
+  width: 90px;
+}
+.book-audit summary {
+  cursor: pointer;
+  padding: 10px 0;
+  color: #c3cad5;
+}
+meter {
+  width: 170px;
+  accent-color: #d3a955;
+}

@@ -33,3 +33,22 @@ An expected virtual trading loss can pass invariants. A failed invariant creates
 ## Replay
 
 `market_data.recording.replay` processes JSONL in local receipt order through the same strategy engine. It rejects regressing receipt times and malformed/truncated tails, suppresses duplicate event IDs and exposes only already observed snapshots. Raw deltas invalidate affected books until the next normalized snapshot. It produces opportunity observations, not inferred historical fills. The bundled replay CLI demonstrates both a positive and rejected synthetic observation. Original source provenance is retained; the output explicitly states historical context.
+
+## Milestone 2 fault laboratory and persistent execution
+
+The original 43 scenarios remain. A separate `midas.paper.experiments` runner now uses
+the production shared-account state machine with 15 selectable modes: no fault,
+withdrawal, pause, lost/delayed acknowledgment, out-of-order delivery, changed fees,
+invalidated payout, restart serialization, duplicate event, conflicting metadata,
+settlement delay, corrupt ledger, malformed input and staleness. Each mode has a distinct
+input/timing/invariant; fee/rule changes alter the actual market passed to the runner.
+Malformed inputs are rejected before transition and retained in the timeline.
+
+Seeded fixed/uniform latency, availability fractions and adverse tick movement are
+explicit presets/parameters. Differential runs use identical data/strategy/seed and
+compare hypothetical fills, theoretical profit, realized virtual P&L, fees, drawdown
+and modeled lockup. Results are deterministic artifacts with configuration and input
+commands. They never infer real fills or profits. Physical before/after-commit process
+termination is tested separately against actual SQL, not represented by an in-process
+serialization scenario. Independent integer reference checks cover terminal rounding
+and fees; original independent ledger reconstruction remains in use.

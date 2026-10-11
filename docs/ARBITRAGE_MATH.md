@@ -34,3 +34,20 @@ Unsupported protocol or negative-risk structure; inactive/closed market; non-dis
 `VERIFIED_MATHEMATICAL` requires positive minimum modeled profit, a configured edge threshold, and all preceding model gates. `CANDIDATE` is positive modeled profit below that threshold. Neither label guarantees fills, atomic acquisition, redemption timing, fiat value or operational safety.
 
 Risk decisions are separate. Simulated settlement proceeds and realized P&L are journal-derived and may differ substantially from the theoretical model, including losses from unmatched execution. Rewards, rebates, external hedges, financing costs, conversion/gas costs and real redemption are excluded. No actual arbitrage profitability is established by synthetic demonstrations.
+
+## Milestone 2 live proof rules
+
+Live top-level CTF pairs require deployed helper evidence rather than the former boolean
+payout gate. Ideal fractional payouts sum to q, but independently floored base-unit
+redemptions can lose one 0.000001 collateral quantum per complete pair; live minimum
+payout is q−0.000001. First/second full-outcome payout remains q. Rational settlement
+uses integer arithmetic, avoiding repeated-decimal division for credits.
+
+Live fee bounds use twice raw fees per depth slice; nearest quantum rounding satisfies
+rounded(x)≤2x, so arbitrary unknown fragmentation is bounded without asserting a live
+minimum match size. Legacy synthetic fragmentation rules are retained. Live minima are
+conservatively treated as notional; 0.01 quantity precision remains explicitly modeled.
+Every evaluation includes a proof trace, evidence, costs, payout matrix, invalidation
+conditions and unresolved assumptions. Gas/financing/conversion costs are unmodeled;
+positive verification is conditional on their absence and collateral/pUSD parity,
+not proof of realized or unconditional exchange profit.
