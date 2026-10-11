@@ -1,0 +1,17 @@
+from typing import Literal
+
+from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_prefix="MIDAS_", env_file=".env", extra="ignore")
+    mode: Literal["demo", "live"] = "demo"
+    database_url: str = "sqlite+aiosqlite:///./data/midas.db"
+    market_limit: int = Field(default=20, ge=1, le=100)
+    refresh_seconds: int = Field(default=10, ge=2, le=300)
+    metadata_refresh_seconds: int = Field(default=300, ge=30)
+    max_data_age_ms: int = Field(default=15000, ge=1000)
+    recording_max_bytes: int = Field(default=100_000_000, ge=1000)
+    retention_days: int = Field(default=30, ge=1)
+    cors_origins: list[str] = ["http://localhost:5173", "http://127.0.0.1:5173"]

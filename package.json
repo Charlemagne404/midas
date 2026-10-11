@@ -1,0 +1,15 @@
+{
+  "name": "midas",
+  "private": true,
+  "packageManager": "pnpm@10.18.0",
+  "scripts": {
+    "dev": "corepack pnpm --dir apps/web dev",
+    "build": "corepack pnpm --dir apps/web build",
+    "typecheck": "corepack pnpm --dir apps/web typecheck",
+    "lint": "corepack pnpm --dir apps/web lint",
+    "test": "corepack pnpm --dir apps/web test",
+    "test:e2e": "corepack pnpm --dir apps/web test:e2e",
+    "format": "corepack pnpm --dir apps/web format",
+    "format:check": "corepack pnpm --dir apps/web format:check"
+  }
+}

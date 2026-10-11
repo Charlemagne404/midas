@@ -1,0 +1,74 @@
+name: Midas offline verification
+on: [push, pull_request]
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.13.0"
+      - run: uv python install 3.12
+      - run: uv sync --frozen
+      - run: uv run ruff check packages apps/api tests infra scripts
+      - run: uv run ruff format --check packages apps/api tests infra scripts
+      - run: uv run mypy packages/midas apps/api
+      - run: uv run pytest -q
+      - run: uv run python scripts/replay.py
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: corepack enable
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm format:check
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm build
+  browser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: astral-sh/setup-uv@v6
+      - run: uv python install 3.12
+      - run: uv sync --frozen
+      - run: corepack enable
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --dir apps/web exec playwright install --with-deps chromium
+      - run: pnpm test:e2e
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: browser-artifacts
+          path: |
+            apps/web/test-results
+            docs/dashboard-smoke.png
+  postgres:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: midas
+          POSTGRES_PASSWORD: midas_local
+          POSTGRES_DB: midas_ci
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U midas -d midas_ci"
+          --health-interval 5s --health-timeout 3s --health-retries 10
+    env:
+      MIDAS_DATABASE_URL: postgresql+asyncpg://midas:midas_local@localhost:5432/midas_ci
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv python install 3.12
+      - run: uv sync --frozen
+      - run: uv run alembic upgrade head
+      - run: uv run python scripts/storage_smoke.py

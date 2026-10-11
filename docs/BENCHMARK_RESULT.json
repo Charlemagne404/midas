@@ -1,0 +1,11 @@
+{
+  "python": "3.12.3",
+  "platform": "Linux-7.0.0-38-generic-x86_64-with-glibc2.39",
+  "benchmark": "Two one-level synthetic books; excludes HTTP, storage and frontend",
+  "evaluations": 1000,
+  "median_ms": 0.2055265,
+  "p95_ms": 0.22029,
+  "scenario_count": 43,
+  "scenario_suite_seconds": 0.04371930001070723,
+  "scenario_failures": 0
+}

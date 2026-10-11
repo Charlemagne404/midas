@@ -1,0 +1,11 @@
+name: Optional public data smoke
+on: workflow_dispatch
+jobs:
+  public-reads:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv python install 3.12
+      - run: uv sync --frozen
+      - run: uv run python scripts/live_smoke.py

@@ -1,0 +1,70 @@
+[
+  {
+    "id": "profitable",
+    "event_id": "event:profitable",
+    "question": "Synthetic binary \u2022 profitable",
+    "condition_id": "synthetic:profitable",
+    "protocol": "v1",
+    "instruments": [
+      {
+        "asset_id": "profitable:yes",
+        "label": "Yes"
+      },
+      {
+        "asset_id": "profitable:no",
+        "label": "No"
+      }
+    ],
+    "source": "SYNTHETIC",
+    "active": true,
+    "closed": false,
+    "accepting_orders": true,
+    "negative_risk": false,
+    "augmented_negative_risk": false,
+    "complementary_verified": true,
+    "payout_verified": true,
+    "payout_per_set": "1",
+    "payout_evidence": "Synthetic scenario contract: Yes + No pays 1 virtual USD, including split payouts",
+    "fee": {
+      "rate": "0",
+      "exponent": 1,
+      "verified": true,
+      "evidence": "Synthetic exchange configuration; zero taker fee"
+    },
+    "description": ""
+  },
+  {
+    "id": "unprofitable",
+    "event_id": "event:unprofitable",
+    "question": "Synthetic binary \u2022 unprofitable",
+    "condition_id": "synthetic:unprofitable",
+    "protocol": "v1",
+    "instruments": [
+      {
+        "asset_id": "unprofitable:yes",
+        "label": "Yes"
+      },
+      {
+        "asset_id": "unprofitable:no",
+        "label": "No"
+      }
+    ],
+    "source": "SYNTHETIC",
+    "active": true,
+    "closed": false,
+    "accepting_orders": true,
+    "negative_risk": false,
+    "augmented_negative_risk": false,
+    "complementary_verified": true,
+    "payout_verified": true,
+    "payout_per_set": "1",
+    "payout_evidence": "Synthetic scenario contract: Yes + No pays 1 virtual USD, including split payouts",
+    "fee": {
+      "rate": "0",
+      "exponent": 1,
+      "verified": true,
+      "evidence": "Synthetic exchange configuration; zero taker fee"
+    },
+    "description": ""
+  }
+]

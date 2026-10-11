@@ -1,0 +1,29 @@
+{
+  "verified_date": "2026-10-11",
+  "reads": {
+    "gamma_markets": {
+      "count": 3,
+      "protocols": [
+        "v1",
+        "v1",
+        "v1"
+      ]
+    },
+    "clob_book": {
+      "asset_id": "2213957649161627793381994368131485505647723208738124952452819345058597751695",
+      "ask_levels": 56,
+      "bid_levels": 0,
+      "tick_size": "0.001",
+      "min_order_size": "5"
+    },
+    "data_v2_status": {
+      "envelope_has_data": true
+    }
+  },
+  "websocket": {
+    "application_pong": true,
+    "event_types": [
+      "book"
+    ]
+  }
+}

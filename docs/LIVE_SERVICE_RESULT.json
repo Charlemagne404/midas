@@ -1,0 +1,43 @@
+{
+  "verified_date": "2026-10-11",
+  "mode": "live",
+  "status": "DEGRADED",
+  "connection": "CONNECTED",
+  "markets": 3,
+  "instruments": 6,
+  "books": 6,
+  "invalid_books": 5,
+  "verified_opportunities": 0,
+  "telemetry": {
+    "uptime_seconds": 1,
+    "processing_latency_ms": 45.717,
+    "queue_depth": 0,
+    "queue_capacity": 2048,
+    "reconnects": 0,
+    "pending_simulations": 0,
+    "last_stream_message_ms": 1791738840415,
+    "database_healthy": true,
+    "recording_healthy": true,
+    "last_refresh_ms": 1791738840515
+  },
+  "evaluations": [
+    {
+      "market_id": "559687",
+      "protocol": "v1",
+      "status": "UNSUPPORTED_STRUCTURE",
+      "reason": "Unknown protocol or negative-risk structure excluded"
+    },
+    {
+      "market_id": "559689",
+      "protocol": "v1",
+      "status": "UNSUPPORTED_STRUCTURE",
+      "reason": "Unknown protocol or negative-risk structure excluded"
+    },
+    {
+      "market_id": "559677",
+      "protocol": "v1",
+      "status": "UNSUPPORTED_STRUCTURE",
+      "reason": "Unknown protocol or negative-risk structure excluded"
+    }
+  ]
+}

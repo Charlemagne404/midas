@@ -1,0 +1,12 @@
+# Architectural decisions
+
+1. **Public transport rather than a trading SDK.** The official unified SDKs are documented, but explicit public GET routes plus the market websocket meet this milestone without exposing secure/execution methods. Route checks forbid adding an order endpoint through the existing transport.
+2. **Fail closed on live payout proof.** Recognize v1/v2 and observe their selected asset IDs, but do not infer a market-specific redemption attestation from Gamma. Synthetic contracts alone can establish full verification today.
+3. **Decimal end to end.** Prices, sizes, fees, collateral and P&L are Decimal in the backend and serialized as strings. Browser conversion is display-only.
+4. **Modular monolith.** One FastAPI service hosts orchestration, storage and simulations. Strategy, independent risk and the exchange live in separately importable packages. PostgreSQL is the durable container default; SQLite enables offline zero-infrastructure startup.
+5. **Immutable research records plus JSONL.** Indexed structured categories and provenance in SQL, raw events in an append-only documented recording format. No message broker or timeseries service is needed for this subset.
+6. **Conservative unsequenced feed.** Reconstruct deltas but invalidate executable trust until REST refresh. No invented sequence recovery or book-hash algorithm.
+7. **Independent exchange and accounting.** The strategy does not calculate simulated balances. The venue independently prices actual fills and the auditor rebuilds ledger arithmetic.
+8. **Isolated experiment portfolios.** Never sum independent experiment returns into a cumulative performance claim. The dashboard reports the latest scenario's P&L and per-experiment results.
+9. **Custom accessible terminal components and CSS.** React, strict TS, Vite, TanStack Query/Table, Lucide and modular ECharts are used. Purpose-built controls, native tables/selects and custom CSS provide the requested dense visual identity; Tailwind and shadcn are omitted to avoid introducing a second styling system for this small application. Dialog focus handling, keyboard navigation and reduced-motion styles are included.
+10. **Local application security scope.** Bind host ports to loopback, require no trading credentials, expose no wallet/order operations. Authentication, internet-facing deployment and untrusted plugin isolation are outside this milestone.
