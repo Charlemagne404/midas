@@ -72,6 +72,9 @@ def test_ablation_group_comparisons_recompute_and_keep_final_tests_closed(datase
     )
     report = run_sweep(root, spec)
     assert report["ablation"] == summarize_ablations(root, report["trials"], spec)
+    from scripts.verify_ablations import verify
+
+    assert verify(root, report["sweep_id"])["verified_models"] == 4
     comparison = report["ablation"]["comparisons"][0]
     _, rows = load(root, identity)
     validation = [r for r in rows if r["partition"] == "validation"]

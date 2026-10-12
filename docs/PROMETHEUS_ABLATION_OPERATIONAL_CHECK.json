@@ -1,0 +1,29 @@
+{
+  "checked_at": 1791838793.8170025,
+  "health": {
+    "status": "READY",
+    "startup_status": "READY",
+    "startup_error": null,
+    "mode": "demo",
+    "live_execution": false,
+    "paper_recovery": {
+      "status": "CHECKPOINT_VERIFIED",
+      "journal_events": 46019,
+      "revision": 46018
+    },
+    "laboratory": {
+      "status": "READY",
+      "root": "/home/charlie/midas/data/laboratory-final",
+      "recovering_campaigns": [],
+      "recovery_errors": []
+    }
+  },
+  "archive_quick_check": "ok",
+  "archive_counts": [
+    162000,
+    18000,
+    162000
+  ],
+  "exclusive_owner": true,
+  "active_research_workers": 0
+}

@@ -1,0 +1,123 @@
+{
+  "finding_id": "finding-ablation-50f66bb42ca9f9a2b12c8fd7",
+  "title": "Completion predictors depend strongly on declared synthetic execution assumptions",
+  "sweep_id": "sweep-50f66bb42ca9f9a2b12c8fd7",
+  "created_at": 1791838426.127424,
+  "research_question": "Which observable feature groups support synthetic completion predictions after refitting?",
+  "hypothesis": "Depth and execution-assumption inputs contain meaningful simulator signal",
+  "input_artifacts": {
+    "dataset_id": "dataset-d8c1593a2d281e1c9e430952",
+    "dataset_sha256": "80a75480aae4b790a1b2ace8b84a731cddad82a71c1be395caf9ec6dd58d82b9",
+    "sweep_id": "sweep-50f66bb42ca9f9a2b12c8fd7"
+  },
+  "code_revision": "9b348a45271b720ed55e92a1de15f051400afe67",
+  "source_hash": "443e4047ef3301cf481b55d3e66cc5c19476d9e923cdfb7805bdc4776ba21bc4",
+  "outcome": {
+    "comparisons": [
+      {
+        "candidate_index": 1,
+        "excluded_features": [
+          "min_ask_depth",
+          "max_ask_depth",
+          "min_top_depth"
+        ],
+        "family": "logistic",
+        "full_input_candidate_index": 0,
+        "group_bootstrap_95": [
+          0.03141824140265516,
+          0.05109456484380674
+        ],
+        "mean_group_brier_change": 0.041211620383647535,
+        "source_groups": 99,
+        "training_seeds": [
+          11,
+          29
+        ]
+      },
+      {
+        "candidate_index": 2,
+        "excluded_features": [
+          "latency_ms",
+          "jitter_ms",
+          "liquidity_fraction",
+          "adverse_ticks",
+          "ack_delay_ms",
+          "observation_latency_ms"
+        ],
+        "family": "logistic",
+        "full_input_candidate_index": 0,
+        "group_bootstrap_95": [
+          0.14507590780383461,
+          0.19408612407802678
+        ],
+        "mean_group_brier_change": 0.1710474269224666,
+        "source_groups": 99,
+        "training_seeds": [
+          11,
+          29
+        ]
+      },
+      {
+        "candidate_index": 4,
+        "excluded_features": [
+          "min_ask_depth",
+          "max_ask_depth",
+          "min_top_depth"
+        ],
+        "family": "mlp",
+        "full_input_candidate_index": 3,
+        "group_bootstrap_95": [
+          0.008745135668684281,
+          0.026103672478493586
+        ],
+        "mean_group_brier_change": 0.01676972885604817,
+        "source_groups": 99,
+        "training_seeds": [
+          11,
+          29
+        ]
+      },
+      {
+        "candidate_index": 5,
+        "excluded_features": [
+          "latency_ms",
+          "jitter_ms",
+          "liquidity_fraction",
+          "adverse_ticks",
+          "ack_delay_ms",
+          "observation_latency_ms"
+        ],
+        "family": "mlp",
+        "full_input_candidate_index": 3,
+        "group_bootstrap_95": [
+          0.14526530436376123,
+          0.1932249828216836
+        ],
+        "mean_group_brier_change": 0.17014548392434076,
+        "source_groups": 99,
+        "training_seeds": [
+          11,
+          29
+        ]
+      }
+    ],
+    "interpretation": "Positive Brier change means worse prediction after refitting without these features.",
+    "limitations": [
+      "Exploratory paired comparisons on reused validation data; no multiplicity correction.",
+      "Training seeds are optimization repeats, not independent market samples.",
+      "Removing inputs does not prove causality or policy improvement.",
+      "Held-out tests remain unopened by this study.",
+      "Removing direct depth inputs retains derived quantity and edge proxies; it is not removal of all liquidity information."
+    ],
+    "partition": "validation"
+  },
+  "interpretation": "Removing execution-assumption inputs increased validation Brier by about 0.17 for both logistic and neural families. Direct depth removal increased it by 0.0412 and 0.0168 respectively. These reused-validation diagnostics support dependence on simulator inputs, not real execution calibration or policy value.",
+  "caveats": [
+    "Exploratory paired comparisons on reused validation data; no multiplicity correction.",
+    "Training seeds are optimization repeats, not independent market samples.",
+    "Removing inputs does not prove causality or policy improvement.",
+    "Held-out tests remain unopened by this study.",
+    "Removing direct depth inputs retains derived quantity and edge proxies; it is not removal of all liquidity information."
+  ],
+  "next_experiment": "Preregister an only-edge or derived-liquidity-proxy ablation; separately test any selected policy on fresh shifted source groups without optimizing on final tests."
+}

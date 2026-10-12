@@ -1,0 +1,11 @@
+{
+  "url": "http://127.0.0.1:5173/",
+  "errors": [],
+  "summaries": [
+    "logistic without min_ask_depth, max_ask_depth, min_top_depth: Brier change 0.041, grouped 95% interval 0.031 … 0.051 across 99 validation source groups.",
+    "logistic without latency_ms, jitter_ms, liquidity_fraction, adverse_ticks, ack_delay_ms, observation_latency_ms: Brier change 0.171, grouped 95% interval 0.145 … 0.194 across 99 validation source groups.",
+    "mlp without min_ask_depth, max_ask_depth, min_top_depth: Brier change 0.017, grouped 95% interval 0.009 … 0.026 across 99 validation source groups.",
+    "mlp without latency_ms, jitter_ms, liquidity_fraction, adverse_ticks, ack_delay_ms, observation_latency_ms: Brier change 0.170, grouped 95% interval 0.145 … 0.193 across 99 validation source groups."
+  ],
+  "ablation_control_visible": true
+}

@@ -20,5 +20,13 @@
     "legacy model/dataset checks",
     "sweep and director integration"
   ],
-  "full_source_suite": "pending after production study"
+  "full_source_suite": {
+    "passed": 393,
+    "skipped": 1,
+    "warnings": 1,
+    "duration_seconds": 442.42,
+    "skip": "PostgreSQL integration unavailable",
+    "warning": "Existing Starlette httpx deprecation",
+    "log": "docs/PROMETHEUS_ABLATION_FULL_TESTS.log"
+  }
 }

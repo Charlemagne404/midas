@@ -2,13 +2,13 @@
   "active_jobs": [],
   "active_research_director": null,
   "arena_datasets": 4,
-  "arena_fitted_models": 24,
-  "arena_model_artifacts": 25,
+  "arena_fitted_models": 36,
+  "arena_model_artifacts": 37,
   "arena_performance_replays": 1,
   "arena_research_tournaments": 21,
   "arena_source_datasets": 3,
   "arena_tournaments": 22,
-  "checked_at": 1791837736.7918918,
+  "checked_at": 1791838793.1789572,
   "dataset_quality": [
     "Identical observable vectors occur across partitions. Independent scenario IDs do not guarantee covariate diversity; inspect repeated synthetic grids.",
     "Some scenario families contain one settlement seed parity only. The current generator uses seed parity for settlement; reorder families and shift seeds before making generalization claims.",
@@ -22,8 +22,8 @@
     "live_execution": false,
     "paper_recovery": {
       "status": "CHECKPOINT_VERIFIED",
-      "journal_events": 45442,
-      "revision": 45441
+      "journal_events": 46019,
+      "revision": 46018
     },
     "laboratory": {
       "status": "READY",
@@ -97,5 +97,10 @@
     }
   ],
   "arena_recovery_studies": 1,
-  "arena_recovery_variants": 540
+  "arena_recovery_variants": 540,
+  "latest_full_python_tests": {
+    "passed": 393,
+    "skipped": 1,
+    "warnings": 1
+  }
 }

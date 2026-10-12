@@ -1691,3 +1691,34 @@ preregistration: completion dataset-d8c1593a2d281e1c9e430952, 99 validation sour
 groups, two families x three feature masks x two seeds, up to 80 neural epochs.
 This is exploratory reused validation evidence; derived liquidity proxies remain.
 Full-source regression is scheduled after the bounded study.
+
+### Ablation production evidence
+
+All twelve fits completed and remained final-test-unopened. Five neural fits
+ran 80 epochs; the no-execution seed29 fit stopped at 62. Masked training-only
+scaler statistics, weight hashes, validation metrics, excluded-input invariance,
+trial coverage and paired group summaries recomputed correctly. Across 99
+validation groups, depth removal Brier changes were +0.041212 logistic and
++0.016770 MLP. Execution-input removal changes were +0.171047 and+0.170145.
+All four exploratory grouped intervals were positive; this is reused validation
+evidence without multiplicity correction, not policy/economic superiority.
+Full-input neural Brier 0.034608 versus logistic 0.036409 left logistic selected
+within the 0.002 simplicity tolerance. Native finding retains caveats and proposes
+a separately preregistered proxy/only-edge ablation.
+
+Production browser checked all four displayed grouped comparisons and found no
+page errors. Final evidence bundle verified 113 payloads, all 12 test-unopened
+model manifests, captured worker source and finding; earlier pretest snapshots
+remain preserved. Worker ended with MainPID 0; API remains READY. Full-source
+regression is running; this checkpoint makes no claim that it has passed.
+
+Full-source regression completed: 393 passed, one PostgreSQL skip, existing
+Starlette warning, 442.42 seconds. This supersedes the running-suite note above.
+The final normalization-aware verifier regression passed separately (one selected
+test, 8.94 seconds). API remained READY; protected archive quick_check, counts and
+exclusive ownership passed again. All research workers are terminal. Package
+source remains the committed ablation implementation; the broader objective is
+active. Next engineering branch is execution-cost label/regression support with
+explicit units and ledger-grounded targets, followed by fresh matched policy
+validation. Additional validation ablations must be preregistered and described as
+exploratory; do not select repeatedly against final tests.

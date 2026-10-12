@@ -1,0 +1,250 @@
+{
+  "sweep_id": "sweep-50f66bb42ca9f9a2b12c8fd7",
+  "verified_models": 12,
+  "models": [
+    {
+      "model_id": "model-2d7322c242794ab1b974dce8",
+      "family": "logistic",
+      "epochs": 0,
+      "excluded_features": [],
+      "validation_brier": 0.03640856812873934,
+      "final_test": "unopened"
+    },
+    {
+      "model_id": "model-a3e01a232be447e0b5702bb8",
+      "family": "logistic",
+      "epochs": 0,
+      "excluded_features": [],
+      "validation_brier": 0.03640856812873934,
+      "final_test": "unopened"
+    },
+    {
+      "model_id": "model-bacc8c6876c3499a8b2ba9b0",
+      "family": "logistic",
+      "epochs": 0,
+      "excluded_features": [
+        "min_ask_depth",
+        "max_ask_depth",
+        "min_top_depth"
+      ],
+      "validation_brier": 0.07762018851238411,
+      "final_test": "unopened"
+    },
+    {
+      "model_id": "model-32b385e23cf84c68a48ccc68",
+      "family": "logistic",
+      "epochs": 0,
+      "excluded_features": [
+        "min_ask_depth",
+        "max_ask_depth",
+        "min_top_depth"
+      ],
+      "validation_brier": 0.07762018851238411,
+      "final_test": "unopened"
+    },
+    {
+      "model_id": "model-02753b861c1a4b17a72a0e08",
+      "family": "logistic",
+      "epochs": 0,
+      "excluded_features": [
+        "latency_ms",
+        "jitter_ms",
+        "liquidity_fraction",
+        "adverse_ticks",
+        "ack_delay_ms",
+        "observation_latency_ms"
+      ],
+      "validation_brier": 0.20745599505120318,
+      "final_test": "unopened"
+    },
+    {
+      "model_id": "model-d8f337441e3c45d48ac63670",
+      "family": "logistic",
+      "epochs": 0,
+      "excluded_features": [
+        "latency_ms",
+        "jitter_ms",
+        "liquidity_fraction",
+        "adverse_ticks",
+        "ack_delay_ms",
+        "observation_latency_ms"
+      ],
+      "validation_brier": 0.20745599505120318,
+      "final_test": "unopened"
+    },
+    {
+      "model_id": "model-83071a76ab8f435787bdaf90",
+      "family": "mlp",
+      "epochs": 80,
+      "excluded_features": [],
+      "validation_brier": 0.0347179576703922,
+      "final_test": "unopened"
+    },
+    {
+      "model_id": "model-3c55d1d8ecae474cb574a8e2",
+      "family": "mlp",
+      "epochs": 80,
+      "excluded_features": [],
+      "validation_brier": 0.034497604208235964,
+      "final_test": "unopened"
+    },
+    {
+      "model_id": "model-d3dfdcb53b274a898600d5fb",
+      "family": "mlp",
+      "epochs": 80,
+      "excluded_features": [
+        "min_ask_depth",
+        "max_ask_depth",
+        "min_top_depth"
+      ],
+      "validation_brier": 0.05163561834984293,
+      "final_test": "unopened"
+    },
+    {
+      "model_id": "model-ab72b059dd4e4822bb91f7e2",
+      "family": "mlp",
+      "epochs": 80,
+      "excluded_features": [
+        "min_ask_depth",
+        "max_ask_depth",
+        "min_top_depth"
+      ],
+      "validation_brier": 0.051119401240883655,
+      "final_test": "unopened"
+    },
+    {
+      "model_id": "model-0c4181f1d7b341d1a90434e3",
+      "family": "mlp",
+      "epochs": 80,
+      "excluded_features": [
+        "latency_ms",
+        "jitter_ms",
+        "liquidity_fraction",
+        "adverse_ticks",
+        "ack_delay_ms",
+        "observation_latency_ms"
+      ],
+      "validation_brier": 0.20481264676816177,
+      "final_test": "unopened"
+    },
+    {
+      "model_id": "model-d899f989b3af41e984e9afde",
+      "family": "mlp",
+      "epochs": 62,
+      "excluded_features": [
+        "latency_ms",
+        "jitter_ms",
+        "liquidity_fraction",
+        "adverse_ticks",
+        "ack_delay_ms",
+        "observation_latency_ms"
+      ],
+      "validation_brier": 0.2046938829591472,
+      "final_test": "unopened"
+    }
+  ],
+  "validation_source_groups": 99,
+  "summary": {
+    "partition": "validation",
+    "comparisons": [
+      {
+        "candidate_index": 1,
+        "full_input_candidate_index": 0,
+        "family": "logistic",
+        "excluded_features": [
+          "min_ask_depth",
+          "max_ask_depth",
+          "min_top_depth"
+        ],
+        "mean_group_brier_change": 0.041211620383647535,
+        "group_bootstrap_95": [
+          0.03141824140265516,
+          0.05109456484380674
+        ],
+        "source_groups": 99,
+        "training_seeds": [
+          11,
+          29
+        ]
+      },
+      {
+        "candidate_index": 2,
+        "full_input_candidate_index": 0,
+        "family": "logistic",
+        "excluded_features": [
+          "latency_ms",
+          "jitter_ms",
+          "liquidity_fraction",
+          "adverse_ticks",
+          "ack_delay_ms",
+          "observation_latency_ms"
+        ],
+        "mean_group_brier_change": 0.1710474269224666,
+        "group_bootstrap_95": [
+          0.14507590780383461,
+          0.19408612407802678
+        ],
+        "source_groups": 99,
+        "training_seeds": [
+          11,
+          29
+        ]
+      },
+      {
+        "candidate_index": 4,
+        "full_input_candidate_index": 3,
+        "family": "mlp",
+        "excluded_features": [
+          "min_ask_depth",
+          "max_ask_depth",
+          "min_top_depth"
+        ],
+        "mean_group_brier_change": 0.01676972885604817,
+        "group_bootstrap_95": [
+          0.008745135668684281,
+          0.026103672478493586
+        ],
+        "source_groups": 99,
+        "training_seeds": [
+          11,
+          29
+        ]
+      },
+      {
+        "candidate_index": 5,
+        "full_input_candidate_index": 3,
+        "family": "mlp",
+        "excluded_features": [
+          "latency_ms",
+          "jitter_ms",
+          "liquidity_fraction",
+          "adverse_ticks",
+          "ack_delay_ms",
+          "observation_latency_ms"
+        ],
+        "mean_group_brier_change": 0.17014548392434076,
+        "group_bootstrap_95": [
+          0.14526530436376123,
+          0.1932249828216836
+        ],
+        "source_groups": 99,
+        "training_seeds": [
+          11,
+          29
+        ]
+      }
+    ],
+    "interpretation": "Positive Brier change means worse prediction after refitting without these features.",
+    "limitations": [
+      "Exploratory paired comparisons on reused validation data; no multiplicity correction.",
+      "Training seeds are optimization repeats, not independent market samples.",
+      "Removing inputs does not prove causality or policy improvement.",
+      "Held-out tests remain unopened by this study.",
+      "Removing direct depth inputs retains derived quantity and edge proxies; it is not removal of all liquidity information."
+    ]
+  },
+  "limitations": [
+    "Uses the recorded inference implementation; does not independently reimplement fitted learners.",
+    "Exploratory validation comparisons; no policy superiority or real profitability claim."
+  ]
+}

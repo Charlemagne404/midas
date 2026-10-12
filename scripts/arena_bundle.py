@@ -37,6 +37,11 @@ def export_recovery(root: Path, identity: str, output: Path) -> dict[str, Any]:
 
 
 def export_sweep(root: Path, sweep_id: str, output: Path) -> dict[str, Any]:
+    manifest = json.loads((artifact_path(root, "sweeps", sweep_id) / "manifest.json").read_text())
+    if "ablation" in manifest:
+        from scripts.verify_ablations import verify
+
+        verify(root, sweep_id)
     return export_experiment(root, "sweeps", sweep_id, output)
 
 
@@ -284,6 +289,13 @@ def export_experiment(root: Path, kind: str, identity: str, output: Path) -> dic
         "ARENA_REPRODUCIBILITY.md": Path(__file__).resolve().parents[1]
         / "docs/ARENA_REPRODUCIBILITY.md",
     }
+    if kind == "sweeps" and "ablation" in director:
+        extras["TOOLS/verify_ablations.py"] = (
+            Path(__file__).resolve().parent / "verify_ablations.py"
+        )
+        extras["ARENA_FEATURE_ABLATIONS.md"] = (
+            Path(__file__).resolve().parents[1] / "docs/ARENA_FEATURE_ABLATIONS.md"
+        )
     if kind == "recoveries":
         extras["TOOLS/verify_recovery.py"] = Path(__file__).resolve().parent / "verify_recovery.py"
         extras["ARENA_MISSING_LEG_RECOVERY.md"] = (

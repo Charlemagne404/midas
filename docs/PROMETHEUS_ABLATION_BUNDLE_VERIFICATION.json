@@ -1,0 +1,9 @@
+{
+  "sweep_id": "sweep-50f66bb42ca9f9a2b12c8fd7",
+  "verified_payloads": 113,
+  "bundle_sha256": "1c46c38d392283ee3242f3a7acf6ab6057e566e17944b03c27cb1bb2bd97666f",
+  "models": 12,
+  "all_new_final_tests_unopened": true,
+  "finding_included": true,
+  "notes": "Earlier pretest snapshots are retained; this evidence bundle includes the final finding and normalization audit tool."
+}

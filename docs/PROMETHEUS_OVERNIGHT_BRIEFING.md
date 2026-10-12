@@ -1,5 +1,36 @@
 # MIDAS — PROMETHEUS OVERNIGHT BRIEFING
 
+## Latest checkpoint — refitted ablation evidence
+
+Ablation sweep `sweep-50f66bb42ca9f9a2b12c8fd7` completed all twelve real fits:
+logistic and PyTorch MLP, full input / no direct depth / no declared execution
+inputs, seeds 11 and 29. Five neural fits ran 80 epochs, one stopped at 62.
+Inventory is now 37 artifacts / 36 fitted models. All twelve new final-test
+evaluations remain unopened. The saved normalization statistics independently
+match masked training-only rows; validation metrics and grouped summaries
+recomputed exactly. Live Research Director rendering passed without page errors.
+
+Across 99 reused validation source groups, mean Brier changes after removal:
+
+| Removed inputs | Logistic | MLP |
+|---|---:|---:|
+| Direct depth | +0.041212 [0.031418, 0.051095] | +0.016770 [0.008745, 0.026104] |
+| Declared execution | +0.171047 [0.145076, 0.194086] | +0.170145 [0.145265, 0.193225] |
+
+Intervals resample source groups after averaging training seeds; no multiplicity
+correction is applied. Removing direct depth retains quantity/edge proxies. These
+results establish dependence on simulator features in reused validation data,
+not causality, real fill calibration or economic policy improvement. Full-input
+MLP mean Brier 0.034608 versus logistic 0.036409; the preregistered 0.002 tolerance
+retained the simpler full-input logistic. No policy promotion occurred.
+
+The final evidence bundle verified 113 payload hashes, twelve models, captured
+worker source, dataset and finding. API is READY, research worker inactive.
+Full regression passed 393 tests, one PostgreSQL skip and the existing Starlette
+warning in 442.42 seconds; the frontend gate passed 11. The full Prometheus
+objective remains active.
+
+
 ## Latest checkpoint — bounded recovery study completed
 
 Recovery study `recovery-97a43fc8d0ed46e7b01f10c5` completed 60 fresh source

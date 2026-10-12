@@ -1,0 +1,106 @@
+{
+  "job_id": "job-672f94a4e06e4684922cdac4",
+  "configuration": {
+    "kind": "sweep",
+    "dataset": null,
+    "training": null,
+    "severity": null,
+    "recovery": null,
+    "model_id": null,
+    "rl": null,
+    "tournament": null,
+    "sweep": {
+      "dataset_id": "dataset-d8c1593a2d281e1c9e430952",
+      "candidates": [
+        {
+          "family": "logistic",
+          "hidden_size": 32,
+          "learning_rate": 0.001,
+          "weight_decay": 0.0001,
+          "excluded_features": []
+        },
+        {
+          "family": "logistic",
+          "hidden_size": 32,
+          "learning_rate": 0.001,
+          "weight_decay": 0.0001,
+          "excluded_features": [
+            "min_ask_depth",
+            "max_ask_depth",
+            "min_top_depth"
+          ]
+        },
+        {
+          "family": "logistic",
+          "hidden_size": 32,
+          "learning_rate": 0.001,
+          "weight_decay": 0.0001,
+          "excluded_features": [
+            "latency_ms",
+            "jitter_ms",
+            "liquidity_fraction",
+            "adverse_ticks",
+            "ack_delay_ms",
+            "observation_latency_ms"
+          ]
+        },
+        {
+          "family": "mlp",
+          "hidden_size": 32,
+          "learning_rate": 0.001,
+          "weight_decay": 0.0001,
+          "excluded_features": []
+        },
+        {
+          "family": "mlp",
+          "hidden_size": 32,
+          "learning_rate": 0.001,
+          "weight_decay": 0.0001,
+          "excluded_features": [
+            "min_ask_depth",
+            "max_ask_depth",
+            "min_top_depth"
+          ]
+        },
+        {
+          "family": "mlp",
+          "hidden_size": 32,
+          "learning_rate": 0.001,
+          "weight_decay": 0.0001,
+          "excluded_features": [
+            "latency_ms",
+            "jitter_ms",
+            "liquidity_fraction",
+            "adverse_ticks",
+            "ack_delay_ms",
+            "observation_latency_ms"
+          ]
+        }
+      ],
+      "seeds": [
+        11,
+        29
+      ],
+      "epochs": 80,
+      "practical_brier_tolerance": 0.002
+    },
+    "director": null,
+    "policy_search": null,
+    "max_wall_seconds": 1800
+  },
+  "state": "QUEUED",
+  "created_at": 1791838215.4271157,
+  "updated_at": 1791838215.427116,
+  "progress": null,
+  "error": null,
+  "result": null,
+  "unit": "midas-arena-job-672f94a4e06e4684922cdac4.service",
+  "submitted_source_hash": "443e4047ef3301cf481b55d3e66cc5c19476d9e923cdfb7805bdc4776ba21bc4",
+  "budget": {
+    "cpu_cores": 1,
+    "memory_mb": 4096,
+    "wall_seconds": 1800,
+    "minimum_available_memory_mb": 2048,
+    "max_artifact_mb": 1024
+  }
+}
