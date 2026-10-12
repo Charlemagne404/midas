@@ -307,3 +307,26 @@ including excluded configurations. The complete risk-plan bundle and all 3084
 file hashes verify. Services are healthy; the protected campaign is unchanged.
 **No research jobs remain running.** See the engineering report for exact next
 steps; the full goal remains active.
+
+## Current active experiment — threshold and sizing selection
+
+The Arena can now compare named risk gates with distinct thresholds and full/half
+sizes. Selection uses validation outcomes and paired uncertainty only, then
+freezes the chosen policy for a new-seed test. If nothing qualifies, it selects
+no-trade. Validation comparisons cannot designate an independent research champion;
+model details distinguish them from independent evaluation.
+
+The expanded browser workflow ran a genuine search end-to-end. The full gate
+passed 288 tests with one PostgreSQL skip; subsequent focused source/API/job gates
+passed 14 tests after recovery and legacy provenance fixes. Four frontend unit
+tests, build/lint and strict mypy/Ruff pass. The first production preflight failed
+on a legacy metadata field before any simulation; its record is retained and
+corrected provenance checks now pass against the actual archive.
+
+**Running:** `job-659ad7466d8d41f7b5a7f360`, search
+`search-948c67bb4c90175f0b1e0294`. It compares eight gates over 139 validation groups
+(5004 correlated variants), then tests the frozen selection on 100 new groups
+beginning seed 93071. The inspected handle was active at 223/5004, approximately
+266 MiB, one CPU worker. Its wall limit is 90 minutes; it terminates after the two
+stages. Inspect or cancel in the Arena job panel. Keep Arena Python source frozen
+while it runs. No production search winner or completion is claimed yet.

@@ -737,3 +737,34 @@ Ruff/mypy pass, and final TypeScript/ESLint pass. The failed job has no complete
 research output and consumed no validation/test scenario. Source is ready for
 replacement submission without changing the preregistered parameters or seed
 block. Historical tournament/model bytes remain unchanged.
+
+## Active production policy search — exact continuation
+
+Source `7ec440f` is frozen. Replacement job
+`job-659ad7466d8d41f7b5a7f360` is RUNNING under
+`midas-arena-job-659ad7466d8d41f7b5a7f360.service`, verified ACTIVE with MainPID
+3045736, approximately 266 MiB memory and 223/5004 validation variants at the
+last observation. Search artifact is `search-948c67bb4c90175f0b1e0294`.
+The 5004 variants are 139 matched validation groups × three execution modes ×
+eight gates plus four controls. They are not independent samples. The subsequent
+fresh test has 100 groups, four controls and at most one selected gate, so
+1200–1500 variants. A no-trade selection is valid.
+
+Budget: one serialized CPU worker, MemoryMax 4 GiB, 5400-second wall limit,
+minimum 2 GiB host available memory and 1 GiB Arena artifact cap. It stops after
+both stages, cancellation, timeout or pressure failure. Source/weights/validation
+inputs and all completed candidates remain retained. API is READY; dashboard
+is active. Job and search are visible in the Arena. Logs:
+`journalctl --user -u midas-arena-job-659ad7466d8d41f7b5a7f360.service`.
+Cancel from the job panel or POST
+`/api/arena/jobs/job-659ad7466d8d41f7b5a7f360/cancel`.
+
+Next turn must poll this exact live handle and its authoritative
+`data/arena/jobs/job-659ad7466d8d41f7b5a7f360/job.json`. Do not modify Arena Python
+source until terminal; observation timeouts do not justify restarting it.
+After completion, verify all new replays/configs, selected policy lineage and
+novel seed/group coverage; compare final downside results with no-trade and
+controls without changing the selected gate. Publish a supported finding and
+preserve all unsuccessful/tied validation candidates. Extend bundle export for
+search artifacts, then proceed to fair cross-target severity/cost comparisons
+and correctly accounted recovery actions. The overall Prometheus goal is ACTIVE.
