@@ -301,3 +301,74 @@ Validation at this checkpoint: 11 focused evolution/selection/job tests passed
 foundations/selection/tournament tests passed; the Arena browser workflow passed.
 Full regression validation and the first bounded real director campaign are the
 next gates. The protected Laboratory archive remains outside all new writers.
+
+## Completed fresh-scenario director and scientific bundle
+
+Director `director-84332caaae9c280e078a799b`, supervised job
+`job-605cdb0175c34a34bca7feff`, completed in 1028.93 seconds with exit status 0.
+Its four validation-only fits used two seeds each for logistic and MLP. Neural
+mean validation Brier was 0.02922065 versus logistic 0.03153976; the difference
+exceeded the preregistered 0.002 practical tolerance. Representative neural model
+`model-fe2d275e53ae4295adf5ab1f` was selected. New classification test metrics
+remain unopened; selection never used them.
+
+The two matched fresh challenges saved 2400 variants each over the SAME 100 new
+base identities. These identities do not overlap the original training dataset.
+The family order was changed to investigate the generator's seed/settlement
+shortcut. Warning tournament `tournament-6bfc67591b6d437085ded3b9` and abstention
+tournament `tournament-5ec7656a30614fd49d78f1cd` both found no downside-objective
+advantage over no-trade. Three classifier gates tied exactly: mean virtual P&L
+1.35026333, 5% tail loss 1.36586667, score -0.01560333. PPO scored -1.95621567.
+The neural validation gain did not improve policy P&L in this challenge.
+
+Warning versus abstention produced zero P&L differences for every paired policy
+variant. Each classifier encountered 19 unsupported decisions. Warning-mode
+logistic requested 19 trades, incumbent MLP 7, selected MLP 8 on those inputs;
+EVERY request was independently rejected by production risk admission, including
+existing-position/reconciliation rules. The unchanged outcomes are therefore
+not evidence that unsupported inference is harmless. Legitimate classifier
+losses originated from in-range initial features. Range support alone cannot
+establish calibrated completion risk. `PROMETHEUS_SUPPORT_COMPARISON.json` and
+`PROMETHEUS_FRESH_CHALLENGE_ANALYSIS.json` preserve the comparisons and loss cases.
+
+Read-only full audit verified one frozen dataset, ten model weight artifacts and
+all 12,000 completed replay variants across five tournaments. The first three
+reuse 100 original held-out identities; the last two reuse 100 fresh identities.
+Do not count these studies as 500 independent episode groups. Accounting and
+journal hashes and matched coverage passed. The recovered Laboratory logical
+hash remains `70d446f0a3833011bb150b0212c4cad3f2751c7f1c210d4c6989816d249fe4ec`;
+SQLite quick_check is OK and the API still owns its exclusive writer lease.
+
+`scripts/arena_bundle.py` exported the completed plan, four fitted candidates,
+three incumbent models, frozen dataset, both challenge replays and captured job
+source to `/home/charlie/midas-prometheus-bundles/director-84332caaae9c280e078a799b.tar.gz`.
+All 4887 manifest entries passed byte-hash verification. The bundle SHA256 is
+`25bdb83c8bd8778839e6e99b683dabde46ae079f9c66ddd9c2102d84355e4adb`.
+This is an evidence export, not a claim of clean-machine training reproduction.
+Legacy incumbent training source snapshots remain unavailable. Export refuses
+replacement, including concurrent publication. Two utility regressions pass.
+The prior complete code gate at `17e3adb` was 266 passed / one PostgreSQL skip;
+frontend four tests, typecheck, lint and build passed.
+
+## Validation diagnostics implementation
+
+A supervised diagnostic job now computes ten repeated feature permutations with
+consistent donor episodes across execution variants. It averages losses within
+base episodes before bootstrap confidence estimates. Only validation rows enter
+calculations; final test labels are excluded. Saved reports bind frozen dataset
+and model hashes and source version, preserve false-completion/missed-completion
+cases and a fixed descriptive threshold table, and are reused without rewriting
+when provenance matches. Different provenance is rejected. Permutations may
+create impossible states among correlated features; predictive dependence does
+not prove causality or economic decision value. The model page shows actual
+saved reports and exposes their download. New full-suite/browser gates and real
+registered-model diagnostic jobs are pending below.
+
+Diagnostics gate: full Python regression **272 passed / one PostgreSQL skip**,
+214.22 seconds, one Starlette deprecation warning; four frontend unit tests pass;
+TypeScript, ESLint, build, Ruff and strict mypy (59 source files) pass. The updated
+browser workflow passed in 53.8 seconds, including a genuine supervised fit,
+diagnostic job, model evidence display, independent evaluation and replay.
+The lazy ECharts chunk remains 544 KiB and triggers the existing build advisory.
+An extracted director bundle's captured source independently replayed the
+preserved partial-leg case with exactly matching financial/journal hashes.

@@ -25,6 +25,12 @@ test('build, train, inspect and evaluate genuine Arena artifacts', async ({ page
     page.getByText('Independent test not yet evaluated.', { exact: false }),
   ).toBeVisible();
   await expect(page.getByRole('img', { name: 'Persisted training metrics' })).toBeVisible();
+  await page.getByRole('button', { name: 'Inspect validation errors' }).click();
+  await expect(page.getByRole('heading', { name: 'Validation decision diagnostics' })).toBeVisible({
+    timeout: 30000,
+  });
+  await expect(page.getByText('Final test labels excluded.', { exact: false })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Saved validation diagnostics' })).toBeVisible();
   await page.getByRole('button', { name: 'Evaluate frozen test' }).click();
   await expect
     .poll(

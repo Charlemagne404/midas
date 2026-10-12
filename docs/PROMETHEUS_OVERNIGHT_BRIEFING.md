@@ -175,3 +175,53 @@ implement tie-aware selection and supported-input diagnostics. Preserve existing
 results. Use fresh episode identities and family/seed shifts for the next
 independent challenge, then implement validation-only multi-seed selection and a
 bounded research director. The full goal is still active.
+
+## Current checkpoint — fresh challenges and explainability
+
+The bounded director completed all three stages. It trained four candidates
+(two seeds each for logistic and neural), selected the neural representative
+`model-fe2d275e53ae4295adf5ab1f` using validation only, and ran two matched
+fresh-seed/family-shift challenges. Each challenge contains 2400 variants over
+the same 100 new base episodes. The earlier three tournaments reuse 100 original
+held-out episodes. Across all five studies, 12,000 variant results are correlated
+within these identities; they are not 12,000 independent market observations.
+
+**No candidate beat no-trade on the declared downside objective in either fresh
+challenge.** Logistic and both neural gates produced identical policy P&L despite
+the new neural model's modest validation Brier improvement. The classifier score
+was -0.01560333, versus zero for no-trade. This is a bounded negative finding,
+not evidence of universal policy equivalence or real-market profitability.
+
+Abstaining on unsupported states changed no outcomes. Warning-mode unsupported
+trade requests were all rejected by independent production risk admission.
+The losses began with in-range observations. Feature-range guards do not solve
+uncalibrated execution risk or guarantee a maximum loss.
+
+Open **Research director** to inspect the plan, sweep and challenge evidence.
+The next source checkpoint adds **Inspect validation errors** to supervised
+model details: actual grouped feature-permutation sensitivity, representative
+errors and descriptive threshold counts. The final test partition stays excluded
+from these diagnostics; threshold counts are not policy-profit evidence.
+
+The completed director's external evidence bundle is retained at
+`/home/charlie/midas-prometheus-bundles/director-84332caaae9c280e078a799b.tar.gz`.
+All 4887 file digests passed. Its captured source reproduced a saved -7.548 virtual
+USD partial-leg loss with exactly matching accounting and journal hashes.
+See `ARENA_REPRODUCIBILITY.md` for commands and the limits of that verification.
+
+Priority continuation:
+
+1. Run validation diagnostics on the registered logistic and selected neural
+   models; inspect whether depth/latency or execution assumptions dominate.
+2. Use retained failure cases to preregister matched sizing/rejection experiments.
+   Avoid tuning thresholds against these fresh final challenges.
+3. Extend supervised labels beyond first-decision completion to unmatched-exposure
+   severity and execution costs where the simulator actually supports them.
+4. Research bounded hedge/unwind actions through existing broker accounting;
+   compare recovery costs, failed executions and no-trade on genuinely new cases.
+5. Extend systematic economic sensitivity and the director's evidence-driven
+   follow-up rules. Maintain all source/seed/assumption lineage.
+
+The overall Prometheus goal remains active. Core Arena and the first bounded
+research loop work; wider Data Foundry ingestion, recovery policies, economic
+sensitivity and adaptive multi-day research remain incomplete.

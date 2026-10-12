@@ -24,7 +24,16 @@ from midas.core.models import Model
 
 
 class JobSpec(Model):
-    kind: Literal["dataset", "supervised", "evaluation", "rl", "tournament", "sweep", "director"]
+    kind: Literal[
+        "dataset",
+        "supervised",
+        "evaluation",
+        "rl",
+        "tournament",
+        "sweep",
+        "director",
+        "diagnostics",
+    ]
     dataset: DatasetSpec | None = None
     training: TrainingSpec | None = None
     model_id: str | None = None
@@ -40,6 +49,7 @@ class JobSpec(Model):
             "dataset": "dataset",
             "supervised": "training",
             "evaluation": "model_id",
+            "diagnostics": "model_id",
             "rl": "rl",
             "tournament": "tournament",
             "sweep": "sweep",
@@ -252,6 +262,13 @@ def _run(root: Path, identity: str) -> None:
                 assert spec.tournament is not None
                 result = run_tournament(root, spec.tournament, progress)
                 record["result"] = {"tournament_id": result["tournament_id"]}
+            elif spec.kind == "diagnostics":
+                from midas.arena.diagnostics import diagnose
+
+                assert spec.model_id is not None
+                progress.register("models", spec.model_id)
+                diagnose(root, spec.model_id, progress)
+                record["result"] = {"model_id": spec.model_id, "artifact": "diagnostics.json"}
             elif spec.kind == "director":
                 from midas.arena.director import run_director
 

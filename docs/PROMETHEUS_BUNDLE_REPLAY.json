@@ -1,0 +1,11 @@
+{
+  "tournament_id": "tournament-6bfc67591b6d437085ded3b9",
+  "row_id": "40-optimistic-model-3141334b301947499b59913d",
+  "verified": true,
+  "mode": "ACCOUNTING_REPLAY_FROM_SAVED_ACTIONS",
+  "result_hash": "730fd1140a2f804e151c9a3ba661240dd0c9720df770e223c280565adc5efdf7",
+  "journal_hash": "58a97c0529dc5b0fbcd4d81bb8c82f6a097cebb909e900f943323c05bb3e01f5",
+  "net_simulated_pnl": "-7.548000",
+  "limitation": "Verifies replay integrity and financial transitions; does not retrain models or rerun policy inference.",
+  "source": "Archived director source snapshot loaded from exported bundle"
+}

@@ -53,6 +53,24 @@ type Model = {
   timesteps?: number;
   training_episodes?: number;
   policy_evaluations?: { tournament_id: string; base_episodes: number }[];
+  diagnostics?: {
+    base_episodes: number;
+    false_completion_count: number;
+    missed_completion_count: number;
+    feature_sensitivity: {
+      feature: string;
+      mean_brier_increase: number;
+      episode_bootstrap_95: number[];
+    }[];
+    representative_errors: {
+      base_episode_id: string;
+      family: string;
+      execution_model: string;
+      error: string;
+      completion_probability: number;
+    }[];
+    limitations: string[];
+  };
 };
 type Job = {
   job_id: string;
@@ -238,7 +256,18 @@ export function Arena() {
     queryKey: ['arena-model', modelId],
     queryFn: () => api<Model>(`/arena/models/${modelId}`),
     enabled: !!modelId,
-    refetchInterval: (query) => (query.state.data?.state === 'TRAINING' ? 5000 : false),
+    refetchInterval: (query) =>
+      query.state.data?.state === 'TRAINING' ||
+      data?.jobs.some(
+        (job) =>
+          job.active_artifact?.identity === modelId &&
+          (['RUNNING', 'QUEUED'].includes(job.state) ||
+            (job.state === 'COMPLETED' &&
+              job.configuration.kind === 'diagnostics' &&
+              !query.state.data?.diagnostics)),
+      )
+        ? 5000
+        : false,
   });
   const tournament = useQuery({
     queryKey: ['arena-tournament', selectedTournament],
@@ -859,6 +888,52 @@ export function Arena() {
               <p className="lab-note">
                 Artifact SHA256: <code>{model.data.artifact_sha256}</code>
               </p>
+              {model.data.diagnostics && (
+                <div>
+                  <h3>Validation decision diagnostics</h3>
+                  <p className="lab-note">
+                    {model.data.diagnostics.base_episodes} base episodes ·{' '}
+                    {model.data.diagnostics.false_completion_count} false completion predictions ·{' '}
+                    {model.data.diagnostics.missed_completion_count} missed completions at threshold
+                    0.5. Final test labels excluded.
+                  </p>
+                  <div className="table-wrap">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Perturbed feature</th>
+                          <th>Brier increase</th>
+                          <th>Episode bootstrap 95%</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {model.data.diagnostics.feature_sensitivity.map((feature) => (
+                          <tr key={feature.feature}>
+                            <td>{feature.feature.replaceAll('_', ' ')}</td>
+                            <td>{n(feature.mean_brier_increase, 5)}</td>
+                            <td>{feature.episode_bootstrap_95.map((v) => n(v, 5)).join(' / ')}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <details>
+                    <summary>Representative prediction errors and limitations</summary>
+                    {model.data.diagnostics.representative_errors.map((error, index) => (
+                      <p key={index}>
+                        <code>{error.base_episode_id}</code> · {error.execution_model} ·{' '}
+                        {error.error.replaceAll('_', ' ')} · completion score{' '}
+                        {n(error.completion_probability, 3)}
+                      </p>
+                    ))}
+                    {model.data.diagnostics.limitations.map((limitation) => (
+                      <p className="lab-note" key={limitation}>
+                        {limitation}
+                      </p>
+                    ))}
+                  </details>
+                </div>
+              )}
               <div className="lab-controls">
                 <a href={`/api/arena/models/${modelId}`} target="_blank" rel="noreferrer">
                   Full model manifest
@@ -875,6 +950,21 @@ export function Arena() {
                     {name}
                   </a>
                 ))}
+                {model.data.family !== 'ppo' &&
+                  model.data.artifact_sha256 &&
+                  (model.data.diagnostics ? (
+                    <a href={`/api/arena/models/${modelId}/artifacts/diagnostics.json`}>
+                      Saved validation diagnostics
+                    </a>
+                  ) : (
+                    <button
+                      onClick={() =>
+                        submit.mutate({ configuration: { kind: 'diagnostics', model_id: modelId } })
+                      }
+                    >
+                      Inspect validation errors
+                    </button>
+                  ))}
                 {model.data.family !== 'ppo' &&
                   model.data.state !== 'TRAINING' &&
                   !model.data.test && (

@@ -143,7 +143,13 @@ def router(root: Path) -> APIRouter:
         def read() -> Any:
             directory = path("models", identity)
             if (directory / "manifest.json").exists():
-                return json.loads((directory / "manifest.json").read_text())
+                result = json.loads((directory / "manifest.json").read_text())
+                if (directory / "diagnostics.json").exists():
+                    diagnostics = json.loads((directory / "diagnostics.json").read_text())
+                    if diagnostics["model_artifact_sha256"] != result["artifact_sha256"]:
+                        raise ValueError("Diagnostic model hash differs from current weights")
+                    result["diagnostics"] = diagnostics
+                return result
             record = json.loads((directory / "training.json").read_text())
             owner = None
             for job_path in (root / "jobs").glob("*/job.json"):
@@ -192,6 +198,7 @@ def router(root: Path) -> APIRouter:
             "policy.zip",
             "progress.csv",
             "curves.json",
+            "diagnostics.json",
         }:
             raise HTTPException(404, "Unknown model artifact")
         artifact = await call(lambda: path("models", identity) / name)

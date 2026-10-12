@@ -1,0 +1,77 @@
+{
+  "tournament_id": "tournament-6bfc67591b6d437085ded3b9",
+  "comparisons": [
+    {
+      "model": "model-f587b98d06f34441bb040877",
+      "control": "model-3141334b301947499b59913d",
+      "paired_variants": 300,
+      "nonzero_pnl_differences": 0,
+      "mean_difference": 0.0
+    },
+    {
+      "model": "model-fe2d275e53ae4295adf5ab1f",
+      "control": "model-3141334b301947499b59913d",
+      "paired_variants": 300,
+      "nonzero_pnl_differences": 0,
+      "mean_difference": 0.0
+    }
+  ],
+  "negative_gate_variants": 9,
+  "loss_cases": [
+    {
+      "id": "40-optimistic-model-3141334b301947499b59913d",
+      "family": "disappearing",
+      "execution": "optimistic",
+      "pnl": "-7.548000"
+    },
+    {
+      "id": "40-optimistic-model-f587b98d06f34441bb040877",
+      "family": "disappearing",
+      "execution": "optimistic",
+      "pnl": "-7.548000"
+    },
+    {
+      "id": "40-optimistic-model-fe2d275e53ae4295adf5ab1f",
+      "family": "disappearing",
+      "execution": "optimistic",
+      "pnl": "-7.548000"
+    },
+    {
+      "id": "62-optimistic-model-3141334b301947499b59913d",
+      "family": "volatile",
+      "execution": "optimistic",
+      "pnl": "-4.200000"
+    },
+    {
+      "id": "62-optimistic-model-f587b98d06f34441bb040877",
+      "family": "volatile",
+      "execution": "optimistic",
+      "pnl": "-4.200000"
+    },
+    {
+      "id": "62-optimistic-model-fe2d275e53ae4295adf5ab1f",
+      "family": "volatile",
+      "execution": "optimistic",
+      "pnl": "-4.200000"
+    },
+    {
+      "id": "92-optimistic-model-3141334b301947499b59913d",
+      "family": "volatile",
+      "execution": "optimistic",
+      "pnl": "-8.740000"
+    },
+    {
+      "id": "92-optimistic-model-f587b98d06f34441bb040877",
+      "family": "volatile",
+      "execution": "optimistic",
+      "pnl": "-8.740000"
+    },
+    {
+      "id": "92-optimistic-model-fe2d275e53ae4295adf5ab1f",
+      "family": "volatile",
+      "execution": "optimistic",
+      "pnl": "-8.740000"
+    }
+  ],
+  "interpretation": "Neural validation improvement produced no paired P&L difference from logistic gating in this fresh challenge. This bounded result does not prove universal equivalence."
+}

@@ -43,3 +43,28 @@ def test_orphaned_checkpoint_is_not_presented_as_active_training(tmp_path):
         assert response.status_code == 200
         assert response.json()["state"] == "INTERRUPTED"
         assert response.json()["training_duration_seconds"] == 0
+
+
+def test_saved_diagnostics_are_bound_to_model_weights(tmp_path):
+    directory = tmp_path / "models" / "model-a"
+    atomic_json(directory / "manifest.json", {"model_id": "model-a", "artifact_sha256": "one"})
+    atomic_json(
+        directory / "diagnostics.json", {"model_artifact_sha256": "one", "test_labels_used": False}
+    )
+    app = FastAPI()
+    app.include_router(router(tmp_path))
+    with TestClient(app) as client:
+        assert (
+            client.get("/api/arena/models/model-a").json()["diagnostics"]["test_labels_used"]
+            is False
+        )
+        assert client.get("/api/arena/models/model-a/artifacts/diagnostics.json").status_code == 200
+        assert (
+            client.post(
+                "/api/arena/jobs/validate",
+                json={"configuration": {"kind": "diagnostics", "model_id": "model-a"}},
+            ).status_code
+            == 200
+        )
+        atomic_json(directory / "diagnostics.json", {"model_artifact_sha256": "two"})
+        assert client.get("/api/arena/models/model-a").status_code == 409
