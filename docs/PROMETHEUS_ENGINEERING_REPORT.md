@@ -1546,3 +1546,31 @@ All production workers are terminal. Current inventory: 25 model artifacts,
 24 fitted models, four datasets (three source datasets) and 20 tournaments.
 The next required research gate is a matched independent policy comparison; no
 persistence strategy improvement or real profitability is claimed.
+
+## Independent persistence policy study and risk-cutoff audit
+
+Preregistered a fixed 0.90 persistence probability gate using selected logistic
+model-9474cee818f04c77962966d8. Seed 193071..193170 is disjoint from registered
+training and opened challenge groups. One hundred source groups, seven families,
+three execution assumptions and four controls yield 1,500 variants per condition.
+Baseline job job-811ee6c2adc54f2688ae9cba is running; added-200ms job
+job-531bbb13a7534feea0b389fd is queued behind the exclusive worker lease. Both
+share source groups, so the maximum 3,000 variants are correlated observations
+over 100 groups. Weights, threshold and sizing remain frozen; champion promotion
+is withheld, and all final classifier tests remain unopened. Existing one-CPU,
+4-GiB, 1,800-second and 1-GiB artifact budgets apply.
+
+While financial source remains frozen, added `audit_risk_semantics.py`, a
+read-only saved-replay audit of four pre-decision counters: recorded maximum
+drawdown, daily loss, cumulative loss and unmatched shares. It verifies saved
+row/core/journal hashes and matched coverage. On the earlier 200ms adaptive
+risk-gate study, 180 correlated variants over 60 groups contain 432 decisions
+with zero admissions after an observed cutoff. Two variants exceed the initial
+drawdown trigger, one exceeds daily-loss and 48 have unmatched shares above the
+zero admission threshold after fills. These are legitimate post-admission states,
+not automatic invariant violations. Initial configured thresholds are the peak
+comparison reference; actual recorded per-decision limits are used for the
+admission checks. The scope does not reimplement all capital/overlap/timestamp
+admission rules. Three focused tests passed. This evidence addresses the
+difference between admission controls and guaranteed loss bounds without
+pretending an executable hedge or unwind already exists.

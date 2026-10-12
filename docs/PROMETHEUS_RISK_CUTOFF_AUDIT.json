@@ -1,0 +1,3988 @@
+{
+  "admissions_after_observed_cutoff": 0,
+  "analysis_version": "admission-versus-loss-bounds-1",
+  "correlated_variants": 180,
+  "decisions_checked": 432,
+  "observations": [
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 1,
+      "base_episode_id": "volatile:143071",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 7,
+      "execution_model": "optimistic",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "0-optimistic-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "volatile:143071",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 7,
+      "execution_model": "standard",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "0-standard-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "volatile:143071",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 7,
+      "execution_model": "conservative",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "0-conservative-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "disappearing:143072",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 2,
+      "execution_model": "optimistic",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "1-optimistic-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "disappearing:143072",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 2,
+      "execution_model": "standard",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "1-standard-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "disappearing:143072",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 2,
+      "execution_model": "conservative",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "1-conservative-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "calm:143073",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "optimistic",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "2-optimistic-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "calm:143073",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "standard",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "2-standard-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "calm:143073",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "conservative",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "2-conservative-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 1,
+      "base_episode_id": "deep:143074",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "optimistic",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": true
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0.004818",
+        "net_exposure_shares": "24.09"
+      },
+      "row_id": "3-optimistic-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 1,
+      "base_episode_id": "deep:143074",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "standard",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": true
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0.004818",
+        "net_exposure_shares": "24.09"
+      },
+      "row_id": "3-standard-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "deep:143074",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "conservative",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "3-conservative-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "thin:143075",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "optimistic",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "4-optimistic-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "thin:143075",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "standard",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "4-standard-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "thin:143075",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "conservative",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "4-conservative-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 1,
+      "base_episode_id": "volatile:143076",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 7,
+      "execution_model": "optimistic",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": true
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0.03171641791044776119402985075",
+        "net_exposure_shares": "20"
+      },
+      "row_id": "5-optimistic-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "volatile:143076",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 7,
+      "execution_model": "standard",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "5-standard-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "volatile:143076",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 7,
+      "execution_model": "conservative",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "5-conservative-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 1,
+      "base_episode_id": "disappearing:143077",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 2,
+      "execution_model": "optimistic",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "6-optimistic-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 1,
+      "base_episode_id": "disappearing:143077",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 2,
+      "execution_model": "standard",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "6-standard-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "disappearing:143077",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 2,
+      "execution_model": "conservative",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "6-conservative-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "calm:143078",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "optimistic",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "7-optimistic-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "calm:143078",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "standard",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "7-standard-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "calm:143078",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "conservative",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "7-conservative-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 1,
+      "base_episode_id": "deep:143079",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "optimistic",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": true
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0.005332",
+        "net_exposure_shares": "26.66"
+      },
+      "row_id": "8-optimistic-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 1,
+      "base_episode_id": "deep:143079",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "standard",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": true
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0.005332",
+        "net_exposure_shares": "26.66"
+      },
+      "row_id": "8-standard-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "deep:143079",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "conservative",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "8-conservative-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 1,
+      "base_episode_id": "thin:143080",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "optimistic",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": true
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0.004800",
+        "net_exposure_shares": "12"
+      },
+      "row_id": "9-optimistic-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "thin:143080",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "standard",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "9-standard-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "thin:143080",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "conservative",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "9-conservative-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 1,
+      "base_episode_id": "volatile:143081",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 7,
+      "execution_model": "optimistic",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "10-optimistic-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 1,
+      "base_episode_id": "volatile:143081",
+      "cutoff_rejection_reasons": {
+        "Existing partial position requires reconciliation": 2
+      },
+      "decisions_checked": 7,
+      "execution_model": "standard",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": true
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0.004304503786369071343164607413",
+        "net_exposure_shares": "7.2"
+      },
+      "row_id": "10-standard-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "volatile:143081",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 7,
+      "execution_model": "conservative",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "10-conservative-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "disappearing:143082",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 2,
+      "execution_model": "optimistic",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "11-optimistic-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "disappearing:143082",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 2,
+      "execution_model": "standard",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "11-standard-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "disappearing:143082",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 2,
+      "execution_model": "conservative",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "11-conservative-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "calm:143083",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "optimistic",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "12-optimistic-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "calm:143083",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "standard",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "12-standard-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "calm:143083",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "conservative",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "12-conservative-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 1,
+      "base_episode_id": "deep:143084",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "optimistic",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": true
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0.004122",
+        "net_exposure_shares": "20.61"
+      },
+      "row_id": "13-optimistic-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 1,
+      "base_episode_id": "deep:143084",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "standard",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": true
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0.004122",
+        "net_exposure_shares": "20.61"
+      },
+      "row_id": "13-standard-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "deep:143084",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "conservative",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "13-conservative-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 1,
+      "base_episode_id": "thin:143085",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "optimistic",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": true
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0.003200",
+        "net_exposure_shares": "8"
+      },
+      "row_id": "14-optimistic-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 1,
+      "base_episode_id": "thin:143085",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "standard",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": true
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0.002560",
+        "net_exposure_shares": "6.4"
+      },
+      "row_id": "14-standard-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "thin:143085",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "conservative",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "14-conservative-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "volatile:143086",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 7,
+      "execution_model": "optimistic",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "15-optimistic-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "volatile:143086",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 7,
+      "execution_model": "standard",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "15-standard-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "volatile:143086",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 7,
+      "execution_model": "conservative",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "15-conservative-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "disappearing:143087",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 2,
+      "execution_model": "optimistic",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "16-optimistic-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "disappearing:143087",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 2,
+      "execution_model": "standard",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "16-standard-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "disappearing:143087",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 2,
+      "execution_model": "conservative",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "16-conservative-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "calm:143088",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "optimistic",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "17-optimistic-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "calm:143088",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "standard",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "17-standard-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "calm:143088",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "conservative",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "17-conservative-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 1,
+      "base_episode_id": "deep:143089",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "optimistic",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": true
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0.006348",
+        "net_exposure_shares": "31.74"
+      },
+      "row_id": "18-optimistic-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 1,
+      "base_episode_id": "deep:143089",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "standard",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": true
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0.006348",
+        "net_exposure_shares": "31.74"
+      },
+      "row_id": "18-standard-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "deep:143089",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "conservative",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "18-conservative-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 1,
+      "base_episode_id": "thin:143090",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "optimistic",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": true
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0.004800",
+        "net_exposure_shares": "12"
+      },
+      "row_id": "19-optimistic-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "thin:143090",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "standard",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "19-standard-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "thin:143090",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "conservative",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "19-conservative-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 1,
+      "base_episode_id": "volatile:143091",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 7,
+      "execution_model": "optimistic",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "20-optimistic-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 1,
+      "base_episode_id": "volatile:143091",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 7,
+      "execution_model": "standard",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "20-standard-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "volatile:143091",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 7,
+      "execution_model": "conservative",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "20-conservative-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 1,
+      "base_episode_id": "disappearing:143092",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 2,
+      "execution_model": "optimistic",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "21-optimistic-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 1,
+      "base_episode_id": "disappearing:143092",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 2,
+      "execution_model": "standard",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "21-standard-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "disappearing:143092",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 2,
+      "execution_model": "conservative",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "21-conservative-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "calm:143093",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "optimistic",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "22-optimistic-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "calm:143093",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "standard",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "22-standard-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "calm:143093",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "conservative",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "22-conservative-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "deep:143094",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "optimistic",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "23-optimistic-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "deep:143094",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "standard",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "23-standard-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "deep:143094",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "conservative",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "23-conservative-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "thin:143095",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "optimistic",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "24-optimistic-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "thin:143095",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "standard",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "24-standard-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "thin:143095",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "conservative",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "24-conservative-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 1,
+      "base_episode_id": "volatile:143096",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 7,
+      "execution_model": "optimistic",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "25-optimistic-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "volatile:143096",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 7,
+      "execution_model": "standard",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "25-standard-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "volatile:143096",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 7,
+      "execution_model": "conservative",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "25-conservative-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "disappearing:143097",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 2,
+      "execution_model": "optimistic",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "26-optimistic-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "disappearing:143097",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 2,
+      "execution_model": "standard",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "26-standard-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "disappearing:143097",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 2,
+      "execution_model": "conservative",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "26-conservative-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 1,
+      "base_episode_id": "calm:143098",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "optimistic",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": true
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0.008000",
+        "net_exposure_shares": "20"
+      },
+      "row_id": "27-optimistic-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 1,
+      "base_episode_id": "calm:143098",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "standard",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": true
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0.006400",
+        "net_exposure_shares": "16"
+      },
+      "row_id": "27-standard-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "calm:143098",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "conservative",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "27-conservative-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 1,
+      "base_episode_id": "deep:143099",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "optimistic",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": true
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0.005554",
+        "net_exposure_shares": "27.77"
+      },
+      "row_id": "28-optimistic-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 1,
+      "base_episode_id": "deep:143099",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "standard",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": true
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0.005554",
+        "net_exposure_shares": "27.77"
+      },
+      "row_id": "28-standard-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "deep:143099",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "conservative",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "28-conservative-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "thin:143100",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "optimistic",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "29-optimistic-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "thin:143100",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "standard",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "29-standard-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "thin:143100",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "conservative",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "29-conservative-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 1,
+      "base_episode_id": "volatile:143101",
+      "cutoff_rejection_reasons": {
+        "Existing partial position requires reconciliation": 5
+      },
+      "decisions_checked": 7,
+      "execution_model": "optimistic",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": true
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0.03829416884247171453437771976",
+        "net_exposure_shares": "11"
+      },
+      "row_id": "30-optimistic-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "volatile:143101",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 7,
+      "execution_model": "standard",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "30-standard-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "volatile:143101",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 7,
+      "execution_model": "conservative",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "30-conservative-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 1,
+      "base_episode_id": "disappearing:143102",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 2,
+      "execution_model": "optimistic",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": true
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0.001200",
+        "net_exposure_shares": "12"
+      },
+      "row_id": "31-optimistic-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "disappearing:143102",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 2,
+      "execution_model": "standard",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "31-standard-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "disappearing:143102",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 2,
+      "execution_model": "conservative",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "31-conservative-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "calm:143103",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "optimistic",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "32-optimistic-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "calm:143103",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "standard",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "32-standard-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "calm:143103",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "conservative",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "32-conservative-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 1,
+      "base_episode_id": "deep:143104",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "optimistic",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": true
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0.005970",
+        "net_exposure_shares": "29.85"
+      },
+      "row_id": "33-optimistic-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 1,
+      "base_episode_id": "deep:143104",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "standard",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": true
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0.005970",
+        "net_exposure_shares": "29.85"
+      },
+      "row_id": "33-standard-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "deep:143104",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "conservative",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "33-conservative-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 1,
+      "base_episode_id": "thin:143105",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "optimistic",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": true
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0.001200",
+        "net_exposure_shares": "6"
+      },
+      "row_id": "34-optimistic-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 1,
+      "base_episode_id": "thin:143105",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "standard",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": true
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0.000960",
+        "net_exposure_shares": "4.8"
+      },
+      "row_id": "34-standard-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "thin:143105",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "conservative",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "34-conservative-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 1,
+      "base_episode_id": "volatile:143106",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 7,
+      "execution_model": "optimistic",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": true,
+        "net_exposure_shares": true
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0.1153846153846153846153846154",
+        "net_exposure_shares": "15"
+      },
+      "row_id": "35-optimistic-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "volatile:143106",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 7,
+      "execution_model": "standard",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "35-standard-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "volatile:143106",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 7,
+      "execution_model": "conservative",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "35-conservative-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "disappearing:143107",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 2,
+      "execution_model": "optimistic",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "36-optimistic-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "disappearing:143107",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 2,
+      "execution_model": "standard",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "36-standard-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "disappearing:143107",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 2,
+      "execution_model": "conservative",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "36-conservative-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "calm:143108",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "optimistic",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "37-optimistic-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "calm:143108",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "standard",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "37-standard-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "calm:143108",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "conservative",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "37-conservative-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 1,
+      "base_episode_id": "deep:143109",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "optimistic",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": true
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0.005970",
+        "net_exposure_shares": "29.85"
+      },
+      "row_id": "38-optimistic-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 1,
+      "base_episode_id": "deep:143109",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "standard",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": true
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0.005970",
+        "net_exposure_shares": "29.85"
+      },
+      "row_id": "38-standard-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "deep:143109",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "conservative",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "38-conservative-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 1,
+      "base_episode_id": "thin:143110",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "optimistic",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": true
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0.001200",
+        "net_exposure_shares": "6"
+      },
+      "row_id": "39-optimistic-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 1,
+      "base_episode_id": "thin:143110",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "standard",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": true
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0.000960",
+        "net_exposure_shares": "4.8"
+      },
+      "row_id": "39-standard-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "thin:143110",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "conservative",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "39-conservative-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 1,
+      "base_episode_id": "volatile:143111",
+      "cutoff_rejection_reasons": {
+        "Existing partial position requires reconciliation": 1
+      },
+      "decisions_checked": 7,
+      "execution_model": "optimistic",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": true,
+        "max_drawdown": true,
+        "net_exposure_shares": true
+      },
+      "peak_observed": {
+        "cumulative_loss": "6.930000",
+        "daily_loss": "6.930000",
+        "max_drawdown": "0.1414206642066420664206642066",
+        "net_exposure_shares": "21"
+      },
+      "row_id": "40-optimistic-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "volatile:143111",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 7,
+      "execution_model": "standard",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "40-standard-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "volatile:143111",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 7,
+      "execution_model": "conservative",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "40-conservative-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "disappearing:143112",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 2,
+      "execution_model": "optimistic",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "41-optimistic-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "disappearing:143112",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 2,
+      "execution_model": "standard",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "41-standard-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "disappearing:143112",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 2,
+      "execution_model": "conservative",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "41-conservative-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 1,
+      "base_episode_id": "calm:143113",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "optimistic",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": true
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0.004000",
+        "net_exposure_shares": "10"
+      },
+      "row_id": "42-optimistic-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 1,
+      "base_episode_id": "calm:143113",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "standard",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": true
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0.003200",
+        "net_exposure_shares": "8"
+      },
+      "row_id": "42-standard-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "calm:143113",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "conservative",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "42-conservative-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 1,
+      "base_episode_id": "deep:143114",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "optimistic",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": true
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0.006152",
+        "net_exposure_shares": "30.76"
+      },
+      "row_id": "43-optimistic-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 1,
+      "base_episode_id": "deep:143114",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "standard",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": true
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0.006152",
+        "net_exposure_shares": "30.76"
+      },
+      "row_id": "43-standard-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "deep:143114",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "conservative",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "43-conservative-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "thin:143115",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "optimistic",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "44-optimistic-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "thin:143115",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "standard",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "44-standard-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "thin:143115",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "conservative",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "44-conservative-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 1,
+      "base_episode_id": "volatile:143116",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 7,
+      "execution_model": "optimistic",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "45-optimistic-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 1,
+      "base_episode_id": "volatile:143116",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 7,
+      "execution_model": "standard",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "45-standard-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "volatile:143116",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 7,
+      "execution_model": "conservative",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "45-conservative-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 1,
+      "base_episode_id": "disappearing:143117",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 2,
+      "execution_model": "optimistic",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "46-optimistic-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 1,
+      "base_episode_id": "disappearing:143117",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 2,
+      "execution_model": "standard",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "46-standard-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "disappearing:143117",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 2,
+      "execution_model": "conservative",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "46-conservative-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 1,
+      "base_episode_id": "calm:143118",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "optimistic",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": true
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0.010400",
+        "net_exposure_shares": "26"
+      },
+      "row_id": "47-optimistic-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "calm:143118",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "standard",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "47-standard-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "calm:143118",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "conservative",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "47-conservative-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 1,
+      "base_episode_id": "deep:143119",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "optimistic",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": true
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0.006450",
+        "net_exposure_shares": "32.25"
+      },
+      "row_id": "48-optimistic-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 1,
+      "base_episode_id": "deep:143119",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "standard",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": true
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0.006450",
+        "net_exposure_shares": "32.25"
+      },
+      "row_id": "48-standard-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "deep:143119",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "conservative",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "48-conservative-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 1,
+      "base_episode_id": "thin:143120",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "optimistic",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": true
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0.004800",
+        "net_exposure_shares": "12"
+      },
+      "row_id": "49-optimistic-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "thin:143120",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "standard",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "49-standard-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "thin:143120",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "conservative",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "49-conservative-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 1,
+      "base_episode_id": "volatile:143121",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 7,
+      "execution_model": "optimistic",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "50-optimistic-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 1,
+      "base_episode_id": "volatile:143121",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 7,
+      "execution_model": "standard",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "50-standard-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "volatile:143121",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 7,
+      "execution_model": "conservative",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "50-conservative-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "disappearing:143122",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 2,
+      "execution_model": "optimistic",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "51-optimistic-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "disappearing:143122",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 2,
+      "execution_model": "standard",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "51-standard-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "disappearing:143122",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 2,
+      "execution_model": "conservative",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "51-conservative-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 1,
+      "base_episode_id": "calm:143123",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "optimistic",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": true
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0.005600",
+        "net_exposure_shares": "14"
+      },
+      "row_id": "52-optimistic-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 1,
+      "base_episode_id": "calm:143123",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "standard",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": true
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0.004480",
+        "net_exposure_shares": "11.2"
+      },
+      "row_id": "52-standard-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "calm:143123",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "conservative",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "52-conservative-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 1,
+      "base_episode_id": "deep:143124",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "optimistic",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": true
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0.006348",
+        "net_exposure_shares": "31.74"
+      },
+      "row_id": "53-optimistic-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 1,
+      "base_episode_id": "deep:143124",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "standard",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": true
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0.006348",
+        "net_exposure_shares": "31.74"
+      },
+      "row_id": "53-standard-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "deep:143124",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "conservative",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "53-conservative-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "thin:143125",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "optimistic",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "54-optimistic-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "thin:143125",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "standard",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "54-standard-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "thin:143125",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "conservative",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "54-conservative-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 1,
+      "base_episode_id": "volatile:143126",
+      "cutoff_rejection_reasons": {
+        "Existing partial position requires reconciliation": 4
+      },
+      "decisions_checked": 7,
+      "execution_model": "optimistic",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": true
+      },
+      "peak_observed": {
+        "cumulative_loss": "2.100000",
+        "daily_loss": "2.100000",
+        "max_drawdown": "0.05154039914745204417748498353",
+        "net_exposure_shares": "7"
+      },
+      "row_id": "55-optimistic-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 1,
+      "base_episode_id": "volatile:143126",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 7,
+      "execution_model": "standard",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "55-standard-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "volatile:143126",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 7,
+      "execution_model": "conservative",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "55-conservative-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 1,
+      "base_episode_id": "disappearing:143127",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 2,
+      "execution_model": "optimistic",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "56-optimistic-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 1,
+      "base_episode_id": "disappearing:143127",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 2,
+      "execution_model": "standard",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "56-standard-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "disappearing:143127",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 2,
+      "execution_model": "conservative",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "56-conservative-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 1,
+      "base_episode_id": "calm:143128",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "optimistic",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": true
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0.004800",
+        "net_exposure_shares": "12"
+      },
+      "row_id": "57-optimistic-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 1,
+      "base_episode_id": "calm:143128",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "standard",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": true
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0.003840",
+        "net_exposure_shares": "9.6"
+      },
+      "row_id": "57-standard-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "calm:143128",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "conservative",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "57-conservative-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 1,
+      "base_episode_id": "deep:143129",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "optimistic",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": true
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0.004650",
+        "net_exposure_shares": "23.25"
+      },
+      "row_id": "58-optimistic-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 1,
+      "base_episode_id": "deep:143129",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "standard",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": true
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0.004650",
+        "net_exposure_shares": "23.25"
+      },
+      "row_id": "58-standard-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "deep:143129",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "conservative",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "58-conservative-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 1,
+      "base_episode_id": "thin:143130",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "optimistic",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": true
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0.004800",
+        "net_exposure_shares": "12"
+      },
+      "row_id": "59-optimistic-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "thin:143130",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "standard",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "59-standard-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "admissions_after_observed_cutoff": [],
+      "admitted_decisions": 0,
+      "base_episode_id": "thin:143130",
+      "cutoff_rejection_reasons": {},
+      "decisions_checked": 1,
+      "execution_model": "conservative",
+      "interpretation": "Post-fill exposure or loss above an admission trigger is not automatically an invariant violation. These gates reject new proposals; they do not execute a hedge, unwind inventory, cancel every prior action or guarantee maximum realized loss.",
+      "observed_above_admission_trigger": {
+        "cumulative_loss": false,
+        "daily_loss": false,
+        "max_drawdown": false,
+        "net_exposure_shares": false
+      },
+      "peak_observed": {
+        "cumulative_loss": "0",
+        "daily_loss": "0",
+        "max_drawdown": "0",
+        "net_exposure_shares": "0"
+      },
+      "row_id": "59-conservative-gate-f12a4e29a05e5a4ce18f"
+    }
+  ],
+  "policy": "gate-f12a4e29a05e5a4ce18f",
+  "producer_sha256": "18a220d92ff5267bc1473c5df8bab1fc3868fc6825efdbdd5178e5ab3d200c6e",
+  "rows_sha256": "86638329c641f0878e11066615c0ddd3809247c8eeadda18fa6758d177f69a82",
+  "scope": "Checks four recorded pre-decision counters and their admission cutoffs. It does not reimplement all capital, timestamp, market-overlap or potential unmatched-leg admission rules. Counts are descriptive correlated variants, not independent risk probabilities.",
+  "source_groups": 60,
+  "tournament_id": "tournament-c66e37c024974ac3a03ea64b",
+  "variants_observed_above_trigger": {
+    "cumulative_loss": 0,
+    "daily_loss": 1,
+    "max_drawdown": 2,
+    "net_exposure_shares": 48
+  }
+}
