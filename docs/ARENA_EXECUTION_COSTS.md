@@ -45,3 +45,18 @@ The UI's cost dataset preset uses 0.01 virtual USD per fill, 0.02 per settled
 position and annual financing rate 0.05. These are explicit synthetic estimates,
 not claims about actual market charges. Real cost calibration, conditional cost
 quantiles and policy integration remain further research.
+
+## Version-one financing scope audit
+
+An audit against the broker analytical cost calculation verified a missing scope
+in 20 single-position development cases: broker reservation includes available
+allocated capital while any action is pending, in addition to venue reservations
+and locked capital. The version-one venue ledger does not record that envelope.
+Amounts were small under this study's short horizons, but the target does not
+fully reproduce broker financing. Existing artifacts are preserved and annotated
+`TARGET_REVISION_REQUIRED`; final tests remain unopened.
+
+The next version must record per-position exposure intervals, including pending
+allocation reserves, and validate them against the broker formula before rebuilding
+the dataset and retraining. Do not silently rewrite version-one data or present its
+cost-model scores as complete broker friction estimates.

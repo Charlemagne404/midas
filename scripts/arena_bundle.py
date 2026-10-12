@@ -70,6 +70,40 @@ def export_tournament(root: Path, identity: str, output: Path) -> dict[str, Any]
     return export_experiment(root, "tournaments", identity, output)
 
 
+def export_cost_study(root: Path, identity: str, output: Path) -> dict[str, Any]:
+    from scripts.verify_cost_campaign import study_path, verify
+
+    root = root.resolve()
+    verify(root, identity)
+    directory = study_path(root, identity)
+    plan = json.loads((directory / "plan.json").read_text())
+    paths = set(directory.rglob("*"))
+    paths.update(dataset_paths(root, plan["dataset_id"]))
+    for stage in plan["stages"]:
+        paths.update(artifact_path(root, "models", stage["model_id"]).rglob("*"))
+    for job_id in [plan["dataset_job_id"]] + [stage["job_id"] for stage in plan["stages"]]:
+        paths.update(artifact_path(root, "jobs", job_id).rglob("*"))
+    for finding in root.glob("findings/*/manifest.json"):
+        if json.loads(finding.read_text()).get("cost_study_id") == identity:
+            paths.update(finding.parent.rglob("*"))
+    repository = Path(__file__).resolve().parents[1]
+    extras = {
+        "TOOLS/verify_cost_campaign.py": repository / "scripts/verify_cost_campaign.py",
+        "TOOLS/run_cost_campaign.py": repository / "scripts/run_cost_campaign.py",
+        "ARENA_EXECUTION_COSTS.md": repository / "docs/ARENA_EXECUTION_COSTS.md",
+        "ENVIRONMENT/requirements-arena.txt": repository / "requirements-arena.txt",
+        "ENVIRONMENT/pyproject.toml": repository / "pyproject.toml",
+    }
+    return write_bundle(
+        root,
+        sorted(p for p in paths if p.is_file() and not p.is_symlink()),
+        extras,
+        "cost_study_id",
+        identity,
+        output,
+    )
+
+
 def dataset_paths(root: Path, identity: str) -> set[Path]:
     """Include exact derived observations, parent lineage and stored transform source."""
     paths: set[Path] = set()
@@ -301,6 +335,18 @@ def export_experiment(root: Path, kind: str, identity: str, output: Path) -> dic
         extras["ARENA_MISSING_LEG_RECOVERY.md"] = (
             Path(__file__).resolve().parents[1] / "docs/ARENA_MISSING_LEG_RECOVERY.md"
         )
+    return write_bundle(root, files, extras, reference_key, identity, output)
+
+
+def write_bundle(
+    root: Path,
+    files: list[Path],
+    extras: dict[str, Path],
+    reference_key: str,
+    identity: str,
+    output: Path,
+) -> dict[str, Any]:
+    """Publish one checksummed archive; all experiment-specific checks precede this."""
     record: dict[str, Any] = {
         "bundle_version": "arena-experiment-3",
         reference_key: identity,
@@ -375,10 +421,13 @@ if __name__ == "__main__":
     experiment.add_argument("--tournament")
     experiment.add_argument("--sweep")
     experiment.add_argument("--recovery")
+    experiment.add_argument("--cost-study")
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     result = (
-        export(args.root, args.director, args.output)
+        export_cost_study(args.root, args.cost_study, args.output)
+        if args.cost_study
+        else export(args.root, args.director, args.output)
         if args.director
         else export_search(args.root, args.search, args.output)
         if args.search

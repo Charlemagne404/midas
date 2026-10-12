@@ -245,6 +245,7 @@ type Overview = {
     caveats: string[];
     tournament_id?: string;
     director_id?: string;
+    model_id?: string;
   }[];
   sweeps?: {
     sweep_id: string;
@@ -373,6 +374,9 @@ export function Arena() {
   });
   const data = overview.data;
   const selectedDataset = datasetId || data?.datasets[0]?.dataset_id || '';
+  const costDataMissing =
+    ['cost_ridge', 'cost_mlp'].includes(family) &&
+    !data?.datasets.find((entry) => entry.dataset_id === selectedDataset)?.execution_cost_label;
   const selectedSearchModel =
     searchModelId ||
     data?.models.find(
@@ -806,6 +810,12 @@ export function Arena() {
               Transforms fit on training rows only. Neural weights are selected using validation
               loss. The final test partition remains frozen.
             </p>
+            {costDataMissing && (
+              <p className="lab-note" role="alert">
+                This dataset has no execution-cost labels. Generate an execution-cost dataset before
+                training this architecture.
+              </p>
+            )}
             <div className="lab-controls">
               <button
                 disabled={!selectedDataset || submit.isPending}
@@ -815,7 +825,7 @@ export function Arena() {
               </button>
               <button
                 className="primary"
-                disabled={!selectedDataset || submit.isPending}
+                disabled={!selectedDataset || submit.isPending || costDataMissing}
                 onClick={() => submit.mutate({ configuration: training })}
               >
                 Start training
@@ -1029,6 +1039,16 @@ export function Arena() {
                       ? 'Expected residual unmatched shares; not a probability, dollar loss or recovery cost.'
                       : `Execution ${model.data.label_target ?? 'completion'} classifier.`}
               </p>
+              {model.data.limitations.length > 0 && (
+                <details open={isCost(model.data)}>
+                  <summary>Known model limitations</summary>
+                  <ul>
+                    {model.data.limitations.map((limitation) => (
+                      <li key={limitation}>{limitation}</li>
+                    ))}
+                  </ul>
+                </details>
+              )}
               {isRegression(model.data) && (
                 <p className="lab-note">
                   {model.data.loss_definition} · Aggregate and positive-outcome errors are shown in
@@ -2303,6 +2323,16 @@ export function Arena() {
                   }}
                 >
                   Inspect supporting tournament
+                </button>
+              )}
+              {finding.model_id && (
+                <button
+                  onClick={() => {
+                    setModelId(finding.model_id ?? '');
+                    setTab('Model registry');
+                  }}
+                >
+                  Inspect supporting model
                 </button>
               )}
               {finding.director_id && (

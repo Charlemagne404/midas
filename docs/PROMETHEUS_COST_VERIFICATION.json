@@ -1,0 +1,66 @@
+{
+  "study_id": "cost-study-d8ca1f097d12f97e74d16be8",
+  "dataset_id": "dataset-2b612fa4cfab325eebc061f3",
+  "cost_rows_verified": 1746,
+  "validation_source_groups": 95,
+  "models": [
+    {
+      "model_id": "model-83932cca38da40a2b30c9024",
+      "family": "ridge",
+      "epochs": 0,
+      "rmse": 0.16240585403382335,
+      "mae": 0.09875568097203179,
+      "test": "unopened"
+    },
+    {
+      "model_id": "model-249cad7203b24a7cabc6b16a",
+      "family": "cost_mlp",
+      "epochs": 80,
+      "rmse": 0.09513520240980988,
+      "mae": 0.06340455909927732,
+      "test": "unopened"
+    },
+    {
+      "model_id": "model-9ba0fed73f464d84ad51341f",
+      "family": "cost_mlp",
+      "epochs": 80,
+      "rmse": 0.097385476441446,
+      "mae": 0.06499529262226329,
+      "test": "unopened"
+    }
+  ],
+  "selection": {
+    "criterion": "Minimum mean validation source-group RMSE by family; prefer ridge within 0.005 virtual USD RMSE. Representative seed has minimum validation RMSE. No policy promotion.",
+    "mean_neural_validation_rmse": 0.09626033942562795,
+    "model_id": "model-249cad7203b24a7cabc6b16a",
+    "partition": "validation",
+    "ridge_validation_rmse": 0.16240585403382335,
+    "test_evaluated": false
+  },
+  "validation_comparisons": [
+    {
+      "control": "ridge",
+      "rmse_change": -0.06727065162401347,
+      "group_bootstrap_95": [
+        -0.11261325503931875,
+        -0.022925076920749823
+      ],
+      "source_groups": 95
+    },
+    {
+      "control": "quoted_full_fill",
+      "rmse_change": -0.08189006957944614,
+      "group_bootstrap_95": [
+        -0.11262219316437533,
+        -0.05336653767302616
+      ],
+      "source_groups": 95
+    }
+  ],
+  "development_rows_regenerated": 20,
+  "limitations": [
+    "Exploratory synthetic validation evidence; final tests remain unopened.",
+    "Model selection reuses validation; comparison intervals do not correct selection or multiplicity.",
+    "Ledger/component arithmetic is independently checked; fitted predictions use the recorded regression implementation."
+  ]
+}

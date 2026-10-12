@@ -1,0 +1,187 @@
+{
+  "target_version": "initial-position-friction-1",
+  "verified_single_position_cases": [
+    {
+      "base_episode_id": "thin:273071",
+      "execution_model": "optimistic",
+      "venue_ledger_financing_usd": "7.013673262303399289700659564E-8",
+      "broker_analytical_financing_usd": "7.014282090309487569761542365E-8",
+      "omitted_pending_reserve_financing_usd": "6.08828006088280060882801E-12",
+      "single_position": true,
+      "result_hash_matches": true
+    },
+    {
+      "base_episode_id": "thin:273071",
+      "execution_model": "standard",
+      "venue_ledger_financing_usd": "5.451669203450025367833587012E-8",
+      "broker_analytical_financing_usd": "5.670015220700152207001522070E-8",
+      "omitted_pending_reserve_financing_usd": "2.18346017250126839167935058E-9",
+      "single_position": true,
+      "result_hash_matches": true
+    },
+    {
+      "base_episode_id": "thin:273071",
+      "execution_model": "conservative",
+      "venue_ledger_financing_usd": "1.565747082699137493658041603E-8",
+      "broker_analytical_financing_usd": "2.408878741755454084221207509E-8",
+      "omitted_pending_reserve_financing_usd": "8.43131659056316590563165906E-9",
+      "single_position": true,
+      "result_hash_matches": true
+    },
+    {
+      "base_episode_id": "calm:273073",
+      "execution_model": "optimistic",
+      "venue_ledger_financing_usd": "1.753434170471841704718417047E-7",
+      "broker_analytical_financing_usd": "1.753570522577371892440385591E-7",
+      "omitted_pending_reserve_financing_usd": "1.36352105530187721968544E-11",
+      "single_position": true,
+      "result_hash_matches": true
+    },
+    {
+      "base_episode_id": "calm:273073",
+      "execution_model": "standard",
+      "venue_ledger_financing_usd": "1.363820395738203957382039574E-7",
+      "broker_analytical_financing_usd": "1.417047184170471841704718417E-7",
+      "omitted_pending_reserve_financing_usd": "5.3226788432267884322678843E-9",
+      "single_position": true,
+      "result_hash_matches": true
+    },
+    {
+      "base_episode_id": "calm:273073",
+      "execution_model": "conservative",
+      "venue_ledger_financing_usd": "3.924467275494672754946727549E-8",
+      "broker_analytical_financing_usd": "5.963438609842719431760527649E-8",
+      "omitted_pending_reserve_financing_usd": "2.038971334348046676813800100E-8",
+      "single_position": true,
+      "result_hash_matches": true
+    },
+    {
+      "base_episode_id": "liquidity_shock:273074",
+      "execution_model": "optimistic",
+      "venue_ledger_financing_usd": "1.477888762049720953830542872E-7",
+      "broker_analytical_financing_usd": "1.478012430238457635717909691E-7",
+      "omitted_pending_reserve_financing_usd": "1.23668188736681887366819E-11",
+      "single_position": true,
+      "result_hash_matches": true
+    },
+    {
+      "base_episode_id": "liquidity_shock:273074",
+      "execution_model": "standard",
+      "venue_ledger_financing_usd": "1.934297311009639776763064434E-11",
+      "broker_analytical_financing_usd": "5.241945712836123795027904616E-9",
+      "omitted_pending_reserve_financing_usd": "5.222602739726027397260273972E-9",
+      "single_position": true,
+      "result_hash_matches": true
+    },
+    {
+      "base_episode_id": "liquidity_shock:273074",
+      "execution_model": "conservative",
+      "venue_ledger_financing_usd": "1.934297311009639776763064434E-11",
+      "broker_analytical_financing_usd": "1.698313039066463723997970572E-8",
+      "omitted_pending_reserve_financing_usd": "1.696378741755454084221207508E-8",
+      "single_position": true,
+      "result_hash_matches": true
+    },
+    {
+      "base_episode_id": "thin:273078",
+      "execution_model": "optimistic",
+      "venue_ledger_financing_usd": "1.082138508371385083713850837E-7",
+      "broker_analytical_financing_usd": "1.082203196347031963470319635E-7",
+      "omitted_pending_reserve_financing_usd": "6.4687975646879756468798E-12",
+      "single_position": true,
+      "result_hash_matches": true
+    },
+    {
+      "base_episode_id": "thin:273078",
+      "execution_model": "standard",
+      "venue_ledger_financing_usd": "8.420677321156773211567732116E-8",
+      "broker_analytical_financing_usd": "8.742716894977168949771689497E-8",
+      "omitted_pending_reserve_financing_usd": "3.22039573820395738203957381E-9",
+      "single_position": true,
+      "result_hash_matches": true
+    },
+    {
+      "base_episode_id": "thin:273078",
+      "execution_model": "conservative",
+      "venue_ledger_financing_usd": "2.427492389649923896499238965E-8",
+      "broker_analytical_financing_usd": "3.649467275494672754946727548E-8",
+      "omitted_pending_reserve_financing_usd": "1.221974885844748858447488583E-8",
+      "single_position": true,
+      "result_hash_matches": true
+    },
+    {
+      "base_episode_id": "deep:273079",
+      "execution_model": "optimistic",
+      "venue_ledger_financing_usd": "2.504165981735159817351598174E-7",
+      "broker_analytical_financing_usd": "2.504322044647387113140537798E-7",
+      "omitted_pending_reserve_financing_usd": "1.56062912227295788939624E-11",
+      "single_position": true,
+      "result_hash_matches": true
+    },
+    {
+      "base_episode_id": "deep:273079",
+      "execution_model": "standard",
+      "venue_ledger_financing_usd": "2.432620890410958904109589041E-7",
+      "broker_analytical_financing_usd": "2.504322044647387113140537798E-7",
+      "omitted_pending_reserve_financing_usd": "7.1701154236428209030948757E-9",
+      "single_position": true,
+      "result_hash_matches": true
+    },
+    {
+      "base_episode_id": "deep:273079",
+      "execution_model": "conservative",
+      "venue_ledger_financing_usd": "3.170027904616945712836123795E-11",
+      "broker_analytical_financing_usd": "3.030546676813800101471334348E-8",
+      "omitted_pending_reserve_financing_usd": "3.027376648909183155758498224E-8",
+      "single_position": true,
+      "result_hash_matches": true
+    },
+    {
+      "base_episode_id": "volatile:273082",
+      "execution_model": "optimistic",
+      "venue_ledger_financing_usd": "2.504033815322171486555048199E-7",
+      "broker_analytical_financing_usd": "2.504159214865550481988838153E-7",
+      "omitted_pending_reserve_financing_usd": "1.25399543378995433789954E-11",
+      "single_position": true,
+      "result_hash_matches": true
+    },
+    {
+      "base_episode_id": "volatile:273082",
+      "execution_model": "standard",
+      "venue_ledger_financing_usd": "6.857436691400304414003044140E-8",
+      "broker_analytical_financing_usd": "7.707750015854895991882293253E-8",
+      "omitted_pending_reserve_financing_usd": "8.50313324454591577879249113E-9",
+      "single_position": true,
+      "result_hash_matches": true
+    },
+    {
+      "base_episode_id": "volatile:273082",
+      "execution_model": "conservative",
+      "venue_ledger_financing_usd": "3.169821790969051243023845764E-11",
+      "broker_analytical_financing_usd": "2.985972127092846270928462708E-8",
+      "omitted_pending_reserve_financing_usd": "2.982802305301877219685438862E-8",
+      "single_position": true,
+      "result_hash_matches": true
+    },
+    {
+      "base_episode_id": "one_sided:273083",
+      "execution_model": "optimistic",
+      "venue_ledger_financing_usd": "1.803550703957382039573820396E-7",
+      "broker_analytical_financing_usd": "1.803652968036529680365296803E-7",
+      "omitted_pending_reserve_financing_usd": "1.02264079147640791476407E-11",
+      "single_position": true,
+      "result_hash_matches": true
+    },
+    {
+      "base_episode_id": "one_sided:273083",
+      "execution_model": "standard",
+      "venue_ledger_financing_usd": "5.544672754946727549467275495E-8",
+      "broker_analytical_financing_usd": "6.162442922374429223744292238E-8",
+      "omitted_pending_reserve_financing_usd": "6.17770167427701674277016743E-9",
+      "single_position": true,
+      "result_hash_matches": true
+    }
+  ],
+  "mechanism": "Broker summary adds available allocated capital to reserved while any action for the position is pending. This envelope hold is absent from the venue reserve/fill/release ledger.",
+  "disposition": "Preserve version-one artifacts; keep final tests unopened. Version two must retain per-position pending/locked/reserved exposure intervals, then rebuild and retrain."
+}

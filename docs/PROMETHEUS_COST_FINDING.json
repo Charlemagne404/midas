@@ -1,0 +1,84 @@
+{
+  "caveats": [
+    "Exploratory synthetic validation evidence; final tests remain unopened.",
+    "Model selection reuses validation; comparison intervals do not correct selection or multiplicity.",
+    "Ledger/component arithmetic is independently checked; fitted predictions use the recorded regression implementation.",
+    "Principal, settlement P&L and haircut are outside the friction target.",
+    "Costs are fixed synthetic estimates, not observed charges.",
+    "Version one excludes broker pending allocation reserves from financing; this is a partial venue-friction target. Final testing is on hold pending correction."
+  ],
+  "cost_study_id": "cost-study-d8ca1f097d12f97e74d16be8",
+  "created_at": 1791840148.1740086,
+  "dataset_id": "dataset-2b612fa4cfab325eebc061f3",
+  "finding_id": "finding-cost-d8ca1f097d12f97e74d16be8",
+  "interpretation": "Two cost MLP seeds ran 80 epochs. Validation RMSEs 0.09514 and 0.09739 virtual USD versus ridge 0.16241 and quoted full-fill control 0.17703 across 95 source groups. Neural seed11 was selected by the preregistered validation criterion. Final tests remain unopened; no policy/economic or real-market benefit is established.",
+  "model_id": "model-249cad7203b24a7cabc6b16a",
+  "next_experiment": "Correct financing to include broker pending allocation reserves, version the target, and rebuild/retrain before independent evaluation.",
+  "outcome": {
+    "cost_rows_verified": 1746,
+    "dataset_id": "dataset-2b612fa4cfab325eebc061f3",
+    "development_rows_regenerated": 20,
+    "limitations": [
+      "Exploratory synthetic validation evidence; final tests remain unopened.",
+      "Model selection reuses validation; comparison intervals do not correct selection or multiplicity.",
+      "Ledger/component arithmetic is independently checked; fitted predictions use the recorded regression implementation."
+    ],
+    "models": [
+      {
+        "epochs": 0,
+        "family": "ridge",
+        "mae": 0.09875568097203179,
+        "model_id": "model-83932cca38da40a2b30c9024",
+        "rmse": 0.16240585403382335,
+        "test": "unopened"
+      },
+      {
+        "epochs": 80,
+        "family": "cost_mlp",
+        "mae": 0.06340455909927732,
+        "model_id": "model-249cad7203b24a7cabc6b16a",
+        "rmse": 0.09513520240980988,
+        "test": "unopened"
+      },
+      {
+        "epochs": 80,
+        "family": "cost_mlp",
+        "mae": 0.06499529262226329,
+        "model_id": "model-9ba0fed73f464d84ad51341f",
+        "rmse": 0.097385476441446,
+        "test": "unopened"
+      }
+    ],
+    "selection": {
+      "criterion": "Minimum mean validation source-group RMSE by family; prefer ridge within 0.005 virtual USD RMSE. Representative seed has minimum validation RMSE. No policy promotion.",
+      "mean_neural_validation_rmse": 0.09626033942562795,
+      "model_id": "model-249cad7203b24a7cabc6b16a",
+      "partition": "validation",
+      "ridge_validation_rmse": 0.16240585403382335,
+      "test_evaluated": false
+    },
+    "study_id": "cost-study-d8ca1f097d12f97e74d16be8",
+    "validation_comparisons": [
+      {
+        "control": "ridge",
+        "group_bootstrap_95": [
+          -0.11261325503931875,
+          -0.022925076920749823
+        ],
+        "rmse_change": -0.06727065162401347,
+        "source_groups": 95
+      },
+      {
+        "control": "quoted_full_fill",
+        "group_bootstrap_95": [
+          -0.11262219316437533,
+          -0.05336653767302616
+        ],
+        "rmse_change": -0.08189006957944614,
+        "source_groups": 95
+      }
+    ],
+    "validation_source_groups": 95
+  },
+  "title": "Neural model reduced synthetic friction error on validation"
+}

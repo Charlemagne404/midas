@@ -1,5 +1,5 @@
 {
-  "checked_at": 1791838426.1569588,
+  "checked_at": 1791840613.6998255,
   "models": [
     {
       "artifact_sha256": "a1ddf5a19d6cb1ad942ce8fc1cc3d63ec2e2f6ddf5dfc8fc46eb052be777e565",
@@ -38227,6 +38227,1791 @@
         "rows": 297,
         "uncertainty_note": "Resampling synthetic base episodes; variants stay grouped. No inference about real market performance."
       }
+    },
+    {
+      "artifact_sha256": "bf773321c222af127e344560318b3b182905814c437bc6adbbfee1e993371ba1",
+      "baselines_validation": {
+        "quoted_full_fill": {
+          "base_episodes": 95,
+          "by_execution": {
+            "conservative": {
+              "rmse": 0.13774431766235418,
+              "rows": 95
+            },
+            "optimistic": {
+              "rmse": 0.24660943042486647,
+              "rows": 95
+            },
+            "standard": {
+              "rmse": 0.11926496780641684,
+              "rows": 95
+            }
+          },
+          "by_family": {
+            "calm": {
+              "rmse": 0.2418523355354427,
+              "rows": 24
+            },
+            "deep": {
+              "rmse": 0.011547005367248906,
+              "rows": 81
+            },
+            "fees": {
+              "rmse": 0.37404223454787494,
+              "rows": 24
+            },
+            "liquidity_shock": {
+              "rmse": 0.17040262434189232,
+              "rows": 27
+            },
+            "one_sided": {
+              "rmse": 0.2026355004521543,
+              "rows": 36
+            },
+            "thin": {
+              "rmse": 0.1615703397849124,
+              "rows": 42
+            },
+            "volatile": {
+              "rmse": 0.12526839573879198,
+              "rows": 51
+            }
+          },
+          "episode_bootstrap_rmse_95": [
+            0.148267368455627,
+            0.2065812480485201
+          ],
+          "episode_rmse": 0.17702527198925602,
+          "mae": 0.09532173954693383,
+          "mean_observed_usd": 0.14923209877112828,
+          "mean_predicted_usd": 0.08779189473684211,
+          "positive_frequency": 1.0,
+          "positive_mae": 0.09532173954693383,
+          "positive_rmse": 0.17702527198925602,
+          "rmse": 0.17702527198925602,
+          "rows": 285,
+          "uncertainty_note": "Bootstrap resamples base groups; execution variants remain grouped. Zero-heavy labels require positive-outcome errors alongside aggregate metrics. No dollar loss or empirical-fill interpretation.",
+          "units": "virtual USD"
+        },
+        "training_mean": {
+          "base_episodes": 95,
+          "by_execution": {
+            "conservative": {
+              "rmse": 0.11335332170951117,
+              "rows": 95
+            },
+            "optimistic": {
+              "rmse": 0.33655024814553186,
+              "rows": 95
+            },
+            "standard": {
+              "rmse": 0.2499413496277215,
+              "rows": 95
+            }
+          },
+          "by_family": {
+            "calm": {
+              "rmse": 0.1706236004048959,
+              "rows": 24
+            },
+            "deep": {
+              "rmse": 0.10523432066651127,
+              "rows": 81
+            },
+            "fees": {
+              "rmse": 0.7348708706354915,
+              "rows": 24
+            },
+            "liquidity_shock": {
+              "rmse": 0.17719887525997785,
+              "rows": 27
+            },
+            "one_sided": {
+              "rmse": 0.1832285984354197,
+              "rows": 36
+            },
+            "thin": {
+              "rmse": 0.0887859857183372,
+              "rows": 42
+            },
+            "volatile": {
+              "rmse": 0.1380252236399676,
+              "rows": 51
+            }
+          },
+          "episode_bootstrap_rmse_95": [
+            0.1690888765114287,
+            0.33102391852929364
+          ],
+          "episode_rmse": 0.250722770753626,
+          "mae": 0.15471530198662017,
+          "mean_observed_usd": 0.14923209877112828,
+          "mean_predicted_usd": 0.1381446192795219,
+          "positive_frequency": 1.0,
+          "positive_mae": 0.15471530198662017,
+          "positive_rmse": 0.250722770753626,
+          "rmse": 0.250722770753626,
+          "rows": 285,
+          "uncertainty_note": "Bootstrap resamples base groups; execution variants remain grouped. Zero-heavy labels require positive-outcome errors alongside aggregate metrics. No dollar loss or empirical-fill interpretation.",
+          "units": "virtual USD"
+        },
+        "zero": {
+          "base_episodes": 95,
+          "by_execution": {
+            "conservative": {
+              "rmse": 0.09988972785672605,
+              "rows": 95
+            },
+            "optimistic": {
+              "rmse": 0.40301943253497335,
+              "rows": 95
+            },
+            "standard": {
+              "rmse": 0.28744558423726074,
+              "rows": 95
+            }
+          },
+          "by_family": {
+            "calm": {
+              "rmse": 0.2756674809939062,
+              "rows": 24
+            },
+            "deep": {
+              "rmse": 0.034641206178753305,
+              "rows": 81
+            },
+            "fees": {
+              "rmse": 0.8406268957831527,
+              "rows": 24
+            },
+            "liquidity_shock": {
+              "rmse": 0.18330308343248997,
+              "rows": 27
+            },
+            "one_sided": {
+              "rmse": 0.22279795259304555,
+              "rows": 36
+            },
+            "thin": {
+              "rmse": 0.19762935148830688,
+              "rows": 42
+            },
+            "volatile": {
+              "rmse": 0.14088662320653514,
+              "rows": 51
+            }
+          },
+          "episode_bootstrap_rmse_95": [
+            0.20274250750133813,
+            0.3788100352450778
+          ],
+          "episode_rmse": 0.2915633633989948,
+          "mae": 0.14923209877112828,
+          "mean_observed_usd": 0.14923209877112828,
+          "mean_predicted_usd": 0.0,
+          "positive_frequency": 1.0,
+          "positive_mae": 0.14923209877112828,
+          "positive_rmse": 0.2915633633989948,
+          "rmse": 0.2915633633989948,
+          "rows": 285,
+          "uncertainty_note": "Bootstrap resamples base groups; execution variants remain grouped. Zero-heavy labels require positive-outcome errors alongside aggregate metrics. No dollar loss or empirical-fill interpretation.",
+          "units": "virtual USD"
+        }
+      },
+      "checkpoints": [
+        "checkpoint-last.pt",
+        "checkpoint-meta.json"
+      ],
+      "code_revision": "7b4e86f18abf73f16d33f2f7315154fc8ce3e401",
+      "configuration": {
+        "batch_size": 128,
+        "dataset_id": "dataset-2b612fa4cfab325eebc061f3",
+        "epochs": 80,
+        "family": "cost_mlp",
+        "hidden_size": 32,
+        "learning_rate": 0.001,
+        "max_wall_seconds": 600,
+        "patience": 12,
+        "resume_from": null,
+        "ridge_alpha": 1.0,
+        "seed": 11
+      },
+      "created_at": 1791839865.440592,
+      "curves": [
+        {
+          "epoch": 1,
+          "training_loss": 0.32656960523313106,
+          "validation_loss": 0.2922690212726593
+        },
+        {
+          "epoch": 2,
+          "training_loss": 0.2676870267179407,
+          "validation_loss": 0.238680899143219
+        },
+        {
+          "epoch": 3,
+          "training_loss": 0.21370134730356538,
+          "validation_loss": 0.187813401222229
+        },
+        {
+          "epoch": 4,
+          "training_loss": 0.16220620642518646,
+          "validation_loss": 0.1401229351758957
+        },
+        {
+          "epoch": 5,
+          "training_loss": 0.11581610294989482,
+          "validation_loss": 0.10047385096549988
+        },
+        {
+          "epoch": 6,
+          "training_loss": 0.07974837663619132,
+          "validation_loss": 0.07301488518714905
+        },
+        {
+          "epoch": 7,
+          "training_loss": 0.056454711800901114,
+          "validation_loss": 0.05673161521553993
+        },
+        {
+          "epoch": 8,
+          "training_loss": 0.04275415305233429,
+          "validation_loss": 0.04668951779603958
+        },
+        {
+          "epoch": 9,
+          "training_loss": 0.03410692512381825,
+          "validation_loss": 0.03850185498595238
+        },
+        {
+          "epoch": 10,
+          "training_loss": 0.02705963816533219,
+          "validation_loss": 0.030801020562648773
+        },
+        {
+          "epoch": 11,
+          "training_loss": 0.021283749667069925,
+          "validation_loss": 0.024248594418168068
+        },
+        {
+          "epoch": 12,
+          "training_loss": 0.01752854882759978,
+          "validation_loss": 0.02006993256509304
+        },
+        {
+          "epoch": 13,
+          "training_loss": 0.015256703614174543,
+          "validation_loss": 0.018444744870066643
+        },
+        {
+          "epoch": 14,
+          "training_loss": 0.014047557126029342,
+          "validation_loss": 0.017567649483680725
+        },
+        {
+          "epoch": 15,
+          "training_loss": 0.013425906518202491,
+          "validation_loss": 0.017088022083044052
+        },
+        {
+          "epoch": 16,
+          "training_loss": 0.012967437505722046,
+          "validation_loss": 0.016301533207297325
+        },
+        {
+          "epoch": 17,
+          "training_loss": 0.012647261747448253,
+          "validation_loss": 0.015651928260922432
+        },
+        {
+          "epoch": 18,
+          "training_loss": 0.012391990535689887,
+          "validation_loss": 0.015430483967065811
+        },
+        {
+          "epoch": 19,
+          "training_loss": 0.01218869291798507,
+          "validation_loss": 0.015106085687875748
+        },
+        {
+          "epoch": 20,
+          "training_loss": 0.01193396104067054,
+          "validation_loss": 0.014486312866210938
+        },
+        {
+          "epoch": 21,
+          "training_loss": 0.011816989408066678,
+          "validation_loss": 0.014307691715657711
+        },
+        {
+          "epoch": 22,
+          "training_loss": 0.011535040928717299,
+          "validation_loss": 0.014289464801549911
+        },
+        {
+          "epoch": 23,
+          "training_loss": 0.011404909317236707,
+          "validation_loss": 0.013909068889915943
+        },
+        {
+          "epoch": 24,
+          "training_loss": 0.011223801964257875,
+          "validation_loss": 0.013482227921485901
+        },
+        {
+          "epoch": 25,
+          "training_loss": 0.011083475411994824,
+          "validation_loss": 0.01328384131193161
+        },
+        {
+          "epoch": 26,
+          "training_loss": 0.011041136226254746,
+          "validation_loss": 0.013162731193006039
+        },
+        {
+          "epoch": 27,
+          "training_loss": 0.010843295413475505,
+          "validation_loss": 0.012829684652388096
+        },
+        {
+          "epoch": 28,
+          "training_loss": 0.01069240244568463,
+          "validation_loss": 0.012758891098201275
+        },
+        {
+          "epoch": 29,
+          "training_loss": 0.010629233562622065,
+          "validation_loss": 0.012434341944754124
+        },
+        {
+          "epoch": 30,
+          "training_loss": 0.010460105604706931,
+          "validation_loss": 0.012224160134792328
+        },
+        {
+          "epoch": 31,
+          "training_loss": 0.010358044816926426,
+          "validation_loss": 0.011946966871619225
+        },
+        {
+          "epoch": 32,
+          "training_loss": 0.010264760759957407,
+          "validation_loss": 0.011962302029132843
+        },
+        {
+          "epoch": 33,
+          "training_loss": 0.010184662258700326,
+          "validation_loss": 0.011685098521411419
+        },
+        {
+          "epoch": 34,
+          "training_loss": 0.010062908983737011,
+          "validation_loss": 0.01143614947795868
+        },
+        {
+          "epoch": 35,
+          "training_loss": 0.010005674245232183,
+          "validation_loss": 0.0112883560359478
+        },
+        {
+          "epoch": 36,
+          "training_loss": 0.009907389787566934,
+          "validation_loss": 0.011323006823658943
+        },
+        {
+          "epoch": 37,
+          "training_loss": 0.00989511380687101,
+          "validation_loss": 0.011326005682349205
+        },
+        {
+          "epoch": 38,
+          "training_loss": 0.009897814198308295,
+          "validation_loss": 0.010858512483537197
+        },
+        {
+          "epoch": 39,
+          "training_loss": 0.0097018825899758,
+          "validation_loss": 0.01104293018579483
+        },
+        {
+          "epoch": 40,
+          "training_loss": 0.009630706661457489,
+          "validation_loss": 0.010794539004564285
+        },
+        {
+          "epoch": 41,
+          "training_loss": 0.009576538413726613,
+          "validation_loss": 0.010659338906407356
+        },
+        {
+          "epoch": 42,
+          "training_loss": 0.009484336269714285,
+          "validation_loss": 0.010475272312760353
+        },
+        {
+          "epoch": 43,
+          "training_loss": 0.009467924197417698,
+          "validation_loss": 0.01041464600712061
+        },
+        {
+          "epoch": 44,
+          "training_loss": 0.009348158566729024,
+          "validation_loss": 0.010115578770637512
+        },
+        {
+          "epoch": 45,
+          "training_loss": 0.009287626786914995,
+          "validation_loss": 0.010134484618902206
+        },
+        {
+          "epoch": 46,
+          "training_loss": 0.009240362135133271,
+          "validation_loss": 0.01000612135976553
+        },
+        {
+          "epoch": 47,
+          "training_loss": 0.00919292222620417,
+          "validation_loss": 0.01008187048137188
+        },
+        {
+          "epoch": 48,
+          "training_loss": 0.009162125683191498,
+          "validation_loss": 0.009923797100782394
+        },
+        {
+          "epoch": 49,
+          "training_loss": 0.0091215540330854,
+          "validation_loss": 0.009932643733918667
+        },
+        {
+          "epoch": 50,
+          "training_loss": 0.009169508650680334,
+          "validation_loss": 0.00972147285938263
+        },
+        {
+          "epoch": 51,
+          "training_loss": 0.009028409754200106,
+          "validation_loss": 0.009929499588906765
+        },
+        {
+          "epoch": 52,
+          "training_loss": 0.008983670381681892,
+          "validation_loss": 0.009636533446609974
+        },
+        {
+          "epoch": 53,
+          "training_loss": 0.008988874305583105,
+          "validation_loss": 0.009803308174014091
+        },
+        {
+          "epoch": 54,
+          "training_loss": 0.008885904022484119,
+          "validation_loss": 0.009589310735464096
+        },
+        {
+          "epoch": 55,
+          "training_loss": 0.008901993119398462,
+          "validation_loss": 0.009584199637174606
+        },
+        {
+          "epoch": 56,
+          "training_loss": 0.008851871724804436,
+          "validation_loss": 0.009563861414790154
+        },
+        {
+          "epoch": 57,
+          "training_loss": 0.008837310598059554,
+          "validation_loss": 0.00954579096287489
+        },
+        {
+          "epoch": 58,
+          "training_loss": 0.008810951567642823,
+          "validation_loss": 0.009554760530591011
+        },
+        {
+          "epoch": 59,
+          "training_loss": 0.008809353642396404,
+          "validation_loss": 0.009496673941612244
+        },
+        {
+          "epoch": 60,
+          "training_loss": 0.008773127730902415,
+          "validation_loss": 0.009454116225242615
+        },
+        {
+          "epoch": 61,
+          "training_loss": 0.008765910011689622,
+          "validation_loss": 0.009499559178948402
+        },
+        {
+          "epoch": 62,
+          "training_loss": 0.008772386982961093,
+          "validation_loss": 0.009536276571452618
+        },
+        {
+          "epoch": 63,
+          "training_loss": 0.008733283619820682,
+          "validation_loss": 0.009445416741073132
+        },
+        {
+          "epoch": 64,
+          "training_loss": 0.008724744268863811,
+          "validation_loss": 0.009383151307702065
+        },
+        {
+          "epoch": 65,
+          "training_loss": 0.008702451025440185,
+          "validation_loss": 0.009395292028784752
+        },
+        {
+          "epoch": 66,
+          "training_loss": 0.00869007068993592,
+          "validation_loss": 0.009394393302500248
+        },
+        {
+          "epoch": 67,
+          "training_loss": 0.008679618283244003,
+          "validation_loss": 0.009274986572563648
+        },
+        {
+          "epoch": 68,
+          "training_loss": 0.008683950109323813,
+          "validation_loss": 0.00932302139699459
+        },
+        {
+          "epoch": 69,
+          "training_loss": 0.008651713893036097,
+          "validation_loss": 0.009313776157796383
+        },
+        {
+          "epoch": 70,
+          "training_loss": 0.008623874931464909,
+          "validation_loss": 0.009426278993487358
+        },
+        {
+          "epoch": 71,
+          "training_loss": 0.00864515393158723,
+          "validation_loss": 0.009345498867332935
+        },
+        {
+          "epoch": 72,
+          "training_loss": 0.008658553623179157,
+          "validation_loss": 0.009299974888563156
+        },
+        {
+          "epoch": 73,
+          "training_loss": 0.008608677639294272,
+          "validation_loss": 0.009321123361587524
+        },
+        {
+          "epoch": 74,
+          "training_loss": 0.008727160160989176,
+          "validation_loss": 0.009243938140571117
+        },
+        {
+          "epoch": 75,
+          "training_loss": 0.008644946730151445,
+          "validation_loss": 0.009431128390133381
+        },
+        {
+          "epoch": 76,
+          "training_loss": 0.008682788583087965,
+          "validation_loss": 0.009495365433394909
+        },
+        {
+          "epoch": 77,
+          "training_loss": 0.008641669729355641,
+          "validation_loss": 0.009050706401467323
+        },
+        {
+          "epoch": 78,
+          "training_loss": 0.008597739600631869,
+          "validation_loss": 0.009178394451737404
+        },
+        {
+          "epoch": 79,
+          "training_loss": 0.00854724757342972,
+          "validation_loss": 0.009249305352568626
+        },
+        {
+          "epoch": 80,
+          "training_loss": 0.008603055194056705,
+          "validation_loss": 0.009319369681179523
+        }
+      ],
+      "dataset_id": "dataset-2b612fa4cfab325eebc061f3",
+      "dataset_sha256": "d4a94127bd08cf3f1c81222a52d1790dad13db34f366f0e0165a2e5f7f9d4814",
+      "family": "cost_mlp",
+      "feature_schema": [
+        "ask_sum",
+        "bid_sum",
+        "min_ask_depth",
+        "max_ask_depth",
+        "min_top_depth",
+        "max_spread",
+        "max_age_ms",
+        "fee_rate",
+        "capital_available",
+        "locked_capital",
+        "unmatched_quantity",
+        "proposed_quantity",
+        "conditional_edge",
+        "latency_ms",
+        "jitter_ms",
+        "liquidity_fraction",
+        "adverse_ticks",
+        "ack_delay_ms",
+        "observation_latency_ms"
+      ],
+      "feature_version": "observable-binary-1",
+      "label_target": "initial_position_friction_usd",
+      "limitations": [
+        "Synthetic hypothetical first-position execution friction; no real cost calibration.",
+        "Adverse slippage, exchange fees, operating/redemption estimates and financing only; excludes purchase principal, settlement gains/losses and collateral haircut.",
+        "Zero fills can produce little or no friction while missing a profitable opportunity; this is not a profitability target.",
+        "Fixed declared cost assumptions within each dataset; inference under other cost regimes is unvalidated.",
+        "Train/validation evaluation only; final tests remain closed until separately requested.",
+        "Dollar predictions are not probabilities and cannot enter classifier gates.",
+        "Financing excludes the broker pending allocation envelope in target version one. Metrics describe partial venue friction; final evaluation is deferred pending target revision."
+      ],
+      "loss_definition": "Mean squared error on virtual USD normalized by train-only RMS; nonnegative Softplus output",
+      "model_id": "model-249cad7203b24a7cabc6b16a",
+      "optimizer_configuration": {
+        "algorithm": "AdamW",
+        "amsgrad": false,
+        "betas": [
+          0.9,
+          0.999
+        ],
+        "eps": 1e-08,
+        "learning_rate": 0.001,
+        "weight_decay": 0.01
+      },
+      "quoted_baseline_definition": "Two observed-best-price full fills, simulator fee curve, operating and redemption estimates; excludes financing and future slippage. Not an expected cost or loss bound.",
+      "reload_verified": true,
+      "source_hash": "b4c1de7fc2266db6507d185c1429937a43aa79ca95da8145de75f747f7469700",
+      "state": "TRAINED",
+      "task": "execution_cost_regression",
+      "test": null,
+      "training_duration_seconds": 15.521405345003586,
+      "units": "virtual USD",
+      "validation": {
+        "base_episodes": 95,
+        "by_execution": {
+          "conservative": {
+            "rmse": 0.03826469574027604,
+            "rows": 95
+          },
+          "optimistic": {
+            "rmse": 0.1285828976153382,
+            "rows": 95
+          },
+          "standard": {
+            "rmse": 0.09567848093178553,
+            "rows": 95
+          }
+        },
+        "by_family": {
+          "calm": {
+            "rmse": 0.15146418651564214,
+            "rows": 24
+          },
+          "deep": {
+            "rmse": 0.02147264364682671,
+            "rows": 81
+          },
+          "fees": {
+            "rmse": 0.12448589286427879,
+            "rows": 24
+          },
+          "liquidity_shock": {
+            "rmse": 0.10051677560172917,
+            "rows": 27
+          },
+          "one_sided": {
+            "rmse": 0.12654035715630718,
+            "rows": 36
+          },
+          "thin": {
+            "rmse": 0.053651025300654416,
+            "rows": 42
+          },
+          "volatile": {
+            "rmse": 0.11284628622383379,
+            "rows": 51
+          }
+        },
+        "episode_bootstrap_rmse_95": [
+          0.07955622028137592,
+          0.10870153195800192
+        ],
+        "episode_rmse": 0.09513520240980988,
+        "mae": 0.06340455909927732,
+        "mean_observed_usd": 0.14923209877112828,
+        "mean_predicted_usd": 0.14064438930598266,
+        "positive_frequency": 1.0,
+        "positive_mae": 0.06340455909927732,
+        "positive_rmse": 0.09513520240980988,
+        "rmse": 0.09513520240980988,
+        "rows": 285,
+        "uncertainty_note": "Bootstrap resamples base groups; execution variants remain grouped. Zero-heavy labels require positive-outcome errors alongside aggregate metrics. No dollar loss or empirical-fill interpretation.",
+        "units": "virtual USD"
+      },
+      "label_version": "initial-position-friction-1",
+      "research_status": "TARGET_REVISION_REQUIRED"
+    },
+    {
+      "artifact_sha256": "f7f520ed6ba0b369d5b32ef8e7505bd91685f96ae709ce7e8bdbee0d816e2461",
+      "baselines_validation": {
+        "quoted_full_fill": {
+          "base_episodes": 95,
+          "by_execution": {
+            "conservative": {
+              "rmse": 0.13774431766235418,
+              "rows": 95
+            },
+            "optimistic": {
+              "rmse": 0.24660943042486647,
+              "rows": 95
+            },
+            "standard": {
+              "rmse": 0.11926496780641684,
+              "rows": 95
+            }
+          },
+          "by_family": {
+            "calm": {
+              "rmse": 0.2418523355354427,
+              "rows": 24
+            },
+            "deep": {
+              "rmse": 0.011547005367248906,
+              "rows": 81
+            },
+            "fees": {
+              "rmse": 0.37404223454787494,
+              "rows": 24
+            },
+            "liquidity_shock": {
+              "rmse": 0.17040262434189232,
+              "rows": 27
+            },
+            "one_sided": {
+              "rmse": 0.2026355004521543,
+              "rows": 36
+            },
+            "thin": {
+              "rmse": 0.1615703397849124,
+              "rows": 42
+            },
+            "volatile": {
+              "rmse": 0.12526839573879198,
+              "rows": 51
+            }
+          },
+          "episode_bootstrap_rmse_95": [
+            0.148267368455627,
+            0.2065812480485201
+          ],
+          "episode_rmse": 0.17702527198925602,
+          "mae": 0.09532173954693383,
+          "mean_observed_usd": 0.14923209877112828,
+          "mean_predicted_usd": 0.08779189473684211,
+          "positive_frequency": 1.0,
+          "positive_mae": 0.09532173954693383,
+          "positive_rmse": 0.17702527198925602,
+          "rmse": 0.17702527198925602,
+          "rows": 285,
+          "uncertainty_note": "Bootstrap resamples base groups; execution variants remain grouped. Zero-heavy labels require positive-outcome errors alongside aggregate metrics. No dollar loss or empirical-fill interpretation.",
+          "units": "virtual USD"
+        },
+        "training_mean": {
+          "base_episodes": 95,
+          "by_execution": {
+            "conservative": {
+              "rmse": 0.11335332170951117,
+              "rows": 95
+            },
+            "optimistic": {
+              "rmse": 0.33655024814553186,
+              "rows": 95
+            },
+            "standard": {
+              "rmse": 0.2499413496277215,
+              "rows": 95
+            }
+          },
+          "by_family": {
+            "calm": {
+              "rmse": 0.1706236004048959,
+              "rows": 24
+            },
+            "deep": {
+              "rmse": 0.10523432066651127,
+              "rows": 81
+            },
+            "fees": {
+              "rmse": 0.7348708706354915,
+              "rows": 24
+            },
+            "liquidity_shock": {
+              "rmse": 0.17719887525997785,
+              "rows": 27
+            },
+            "one_sided": {
+              "rmse": 0.1832285984354197,
+              "rows": 36
+            },
+            "thin": {
+              "rmse": 0.0887859857183372,
+              "rows": 42
+            },
+            "volatile": {
+              "rmse": 0.1380252236399676,
+              "rows": 51
+            }
+          },
+          "episode_bootstrap_rmse_95": [
+            0.1690888765114287,
+            0.33102391852929364
+          ],
+          "episode_rmse": 0.250722770753626,
+          "mae": 0.15471530198662017,
+          "mean_observed_usd": 0.14923209877112828,
+          "mean_predicted_usd": 0.1381446192795219,
+          "positive_frequency": 1.0,
+          "positive_mae": 0.15471530198662017,
+          "positive_rmse": 0.250722770753626,
+          "rmse": 0.250722770753626,
+          "rows": 285,
+          "uncertainty_note": "Bootstrap resamples base groups; execution variants remain grouped. Zero-heavy labels require positive-outcome errors alongside aggregate metrics. No dollar loss or empirical-fill interpretation.",
+          "units": "virtual USD"
+        },
+        "zero": {
+          "base_episodes": 95,
+          "by_execution": {
+            "conservative": {
+              "rmse": 0.09988972785672605,
+              "rows": 95
+            },
+            "optimistic": {
+              "rmse": 0.40301943253497335,
+              "rows": 95
+            },
+            "standard": {
+              "rmse": 0.28744558423726074,
+              "rows": 95
+            }
+          },
+          "by_family": {
+            "calm": {
+              "rmse": 0.2756674809939062,
+              "rows": 24
+            },
+            "deep": {
+              "rmse": 0.034641206178753305,
+              "rows": 81
+            },
+            "fees": {
+              "rmse": 0.8406268957831527,
+              "rows": 24
+            },
+            "liquidity_shock": {
+              "rmse": 0.18330308343248997,
+              "rows": 27
+            },
+            "one_sided": {
+              "rmse": 0.22279795259304555,
+              "rows": 36
+            },
+            "thin": {
+              "rmse": 0.19762935148830688,
+              "rows": 42
+            },
+            "volatile": {
+              "rmse": 0.14088662320653514,
+              "rows": 51
+            }
+          },
+          "episode_bootstrap_rmse_95": [
+            0.20274250750133813,
+            0.3788100352450778
+          ],
+          "episode_rmse": 0.2915633633989948,
+          "mae": 0.14923209877112828,
+          "mean_observed_usd": 0.14923209877112828,
+          "mean_predicted_usd": 0.0,
+          "positive_frequency": 1.0,
+          "positive_mae": 0.14923209877112828,
+          "positive_rmse": 0.2915633633989948,
+          "rmse": 0.2915633633989948,
+          "rows": 285,
+          "uncertainty_note": "Bootstrap resamples base groups; execution variants remain grouped. Zero-heavy labels require positive-outcome errors alongside aggregate metrics. No dollar loss or empirical-fill interpretation.",
+          "units": "virtual USD"
+        }
+      },
+      "checkpoints": [],
+      "code_revision": "7b4e86f18abf73f16d33f2f7315154fc8ce3e401",
+      "configuration": {
+        "batch_size": 128,
+        "dataset_id": "dataset-2b612fa4cfab325eebc061f3",
+        "epochs": 80,
+        "family": "ridge",
+        "hidden_size": 32,
+        "learning_rate": 0.001,
+        "max_wall_seconds": 600,
+        "patience": 12,
+        "resume_from": null,
+        "ridge_alpha": 1.0,
+        "seed": 11
+      },
+      "created_at": 1791839843.6011827,
+      "curves": [],
+      "dataset_id": "dataset-2b612fa4cfab325eebc061f3",
+      "dataset_sha256": "d4a94127bd08cf3f1c81222a52d1790dad13db34f366f0e0165a2e5f7f9d4814",
+      "family": "ridge",
+      "feature_schema": [
+        "ask_sum",
+        "bid_sum",
+        "min_ask_depth",
+        "max_ask_depth",
+        "min_top_depth",
+        "max_spread",
+        "max_age_ms",
+        "fee_rate",
+        "capital_available",
+        "locked_capital",
+        "unmatched_quantity",
+        "proposed_quantity",
+        "conditional_edge",
+        "latency_ms",
+        "jitter_ms",
+        "liquidity_fraction",
+        "adverse_ticks",
+        "ack_delay_ms",
+        "observation_latency_ms"
+      ],
+      "feature_version": "observable-binary-1",
+      "label_target": "initial_position_friction_usd",
+      "limitations": [
+        "Synthetic hypothetical first-position execution friction; no real cost calibration.",
+        "Adverse slippage, exchange fees, operating/redemption estimates and financing only; excludes purchase principal, settlement gains/losses and collateral haircut.",
+        "Zero fills can produce little or no friction while missing a profitable opportunity; this is not a profitability target.",
+        "Fixed declared cost assumptions within each dataset; inference under other cost regimes is unvalidated.",
+        "Train/validation evaluation only; final tests remain closed until separately requested.",
+        "Dollar predictions are not probabilities and cannot enter classifier gates.",
+        "Financing excludes the broker pending allocation envelope in target version one. Metrics describe partial venue friction; final evaluation is deferred pending target revision."
+      ],
+      "loss_definition": "Squared virtual USD error plus ridge-alpha L2 coefficient penalty; nonnegative clipping at inference",
+      "model_id": "model-83932cca38da40a2b30c9024",
+      "optimizer_configuration": {
+        "algorithm": "Ridge",
+        "alpha": 1.0
+      },
+      "quoted_baseline_definition": "Two observed-best-price full fills, simulator fee curve, operating and redemption estimates; excludes financing and future slippage. Not an expected cost or loss bound.",
+      "reload_verified": true,
+      "source_hash": "b4c1de7fc2266db6507d185c1429937a43aa79ca95da8145de75f747f7469700",
+      "state": "TRAINED",
+      "task": "execution_cost_regression",
+      "test": null,
+      "training_duration_seconds": 0.17318953201174736,
+      "units": "virtual USD",
+      "validation": {
+        "base_episodes": 95,
+        "by_execution": {
+          "conservative": {
+            "rmse": 0.11270903455778443,
+            "rows": 95
+          },
+          "optimistic": {
+            "rmse": 0.21205255223576547,
+            "rows": 95
+          },
+          "standard": {
+            "rmse": 0.14648335363691228,
+            "rows": 95
+          }
+        },
+        "by_family": {
+          "calm": {
+            "rmse": 0.14777082037436243,
+            "rows": 24
+          },
+          "deep": {
+            "rmse": 0.05886181469693754,
+            "rows": 81
+          },
+          "fees": {
+            "rmse": 0.43614440634855234,
+            "rows": 24
+          },
+          "liquidity_shock": {
+            "rmse": 0.1511833217971791,
+            "rows": 27
+          },
+          "one_sided": {
+            "rmse": 0.14572032903985757,
+            "rows": 36
+          },
+          "thin": {
+            "rmse": 0.06235545706070926,
+            "rows": 42
+          },
+          "volatile": {
+            "rmse": 0.10866027056221246,
+            "rows": 51
+          }
+        },
+        "episode_bootstrap_rmse_95": [
+          0.1190429566884013,
+          0.20397155789316257
+        ],
+        "episode_rmse": 0.16240585403382335,
+        "mae": 0.09875568097203179,
+        "mean_observed_usd": 0.14923209877112828,
+        "mean_predicted_usd": 0.14090632941958411,
+        "positive_frequency": 1.0,
+        "positive_mae": 0.09875568097203179,
+        "positive_rmse": 0.16240585403382335,
+        "rmse": 0.16240585403382335,
+        "rows": 285,
+        "uncertainty_note": "Bootstrap resamples base groups; execution variants remain grouped. Zero-heavy labels require positive-outcome errors alongside aggregate metrics. No dollar loss or empirical-fill interpretation.",
+        "units": "virtual USD"
+      },
+      "label_version": "initial-position-friction-1",
+      "research_status": "TARGET_REVISION_REQUIRED"
+    },
+    {
+      "artifact_sha256": "e6fcc080df9825e6c3b919a6ee91d64aaafe9424c476708920d8e02d0cedba35",
+      "baselines_validation": {
+        "quoted_full_fill": {
+          "base_episodes": 95,
+          "by_execution": {
+            "conservative": {
+              "rmse": 0.13774431766235418,
+              "rows": 95
+            },
+            "optimistic": {
+              "rmse": 0.24660943042486647,
+              "rows": 95
+            },
+            "standard": {
+              "rmse": 0.11926496780641684,
+              "rows": 95
+            }
+          },
+          "by_family": {
+            "calm": {
+              "rmse": 0.2418523355354427,
+              "rows": 24
+            },
+            "deep": {
+              "rmse": 0.011547005367248906,
+              "rows": 81
+            },
+            "fees": {
+              "rmse": 0.37404223454787494,
+              "rows": 24
+            },
+            "liquidity_shock": {
+              "rmse": 0.17040262434189232,
+              "rows": 27
+            },
+            "one_sided": {
+              "rmse": 0.2026355004521543,
+              "rows": 36
+            },
+            "thin": {
+              "rmse": 0.1615703397849124,
+              "rows": 42
+            },
+            "volatile": {
+              "rmse": 0.12526839573879198,
+              "rows": 51
+            }
+          },
+          "episode_bootstrap_rmse_95": [
+            0.148267368455627,
+            0.2065812480485201
+          ],
+          "episode_rmse": 0.17702527198925602,
+          "mae": 0.09532173954693383,
+          "mean_observed_usd": 0.14923209877112828,
+          "mean_predicted_usd": 0.08779189473684211,
+          "positive_frequency": 1.0,
+          "positive_mae": 0.09532173954693383,
+          "positive_rmse": 0.17702527198925602,
+          "rmse": 0.17702527198925602,
+          "rows": 285,
+          "uncertainty_note": "Bootstrap resamples base groups; execution variants remain grouped. Zero-heavy labels require positive-outcome errors alongside aggregate metrics. No dollar loss or empirical-fill interpretation.",
+          "units": "virtual USD"
+        },
+        "training_mean": {
+          "base_episodes": 95,
+          "by_execution": {
+            "conservative": {
+              "rmse": 0.11335332170951117,
+              "rows": 95
+            },
+            "optimistic": {
+              "rmse": 0.33655024814553186,
+              "rows": 95
+            },
+            "standard": {
+              "rmse": 0.2499413496277215,
+              "rows": 95
+            }
+          },
+          "by_family": {
+            "calm": {
+              "rmse": 0.1706236004048959,
+              "rows": 24
+            },
+            "deep": {
+              "rmse": 0.10523432066651127,
+              "rows": 81
+            },
+            "fees": {
+              "rmse": 0.7348708706354915,
+              "rows": 24
+            },
+            "liquidity_shock": {
+              "rmse": 0.17719887525997785,
+              "rows": 27
+            },
+            "one_sided": {
+              "rmse": 0.1832285984354197,
+              "rows": 36
+            },
+            "thin": {
+              "rmse": 0.0887859857183372,
+              "rows": 42
+            },
+            "volatile": {
+              "rmse": 0.1380252236399676,
+              "rows": 51
+            }
+          },
+          "episode_bootstrap_rmse_95": [
+            0.1690888765114287,
+            0.33102391852929364
+          ],
+          "episode_rmse": 0.250722770753626,
+          "mae": 0.15471530198662017,
+          "mean_observed_usd": 0.14923209877112828,
+          "mean_predicted_usd": 0.1381446192795219,
+          "positive_frequency": 1.0,
+          "positive_mae": 0.15471530198662017,
+          "positive_rmse": 0.250722770753626,
+          "rmse": 0.250722770753626,
+          "rows": 285,
+          "uncertainty_note": "Bootstrap resamples base groups; execution variants remain grouped. Zero-heavy labels require positive-outcome errors alongside aggregate metrics. No dollar loss or empirical-fill interpretation.",
+          "units": "virtual USD"
+        },
+        "zero": {
+          "base_episodes": 95,
+          "by_execution": {
+            "conservative": {
+              "rmse": 0.09988972785672605,
+              "rows": 95
+            },
+            "optimistic": {
+              "rmse": 0.40301943253497335,
+              "rows": 95
+            },
+            "standard": {
+              "rmse": 0.28744558423726074,
+              "rows": 95
+            }
+          },
+          "by_family": {
+            "calm": {
+              "rmse": 0.2756674809939062,
+              "rows": 24
+            },
+            "deep": {
+              "rmse": 0.034641206178753305,
+              "rows": 81
+            },
+            "fees": {
+              "rmse": 0.8406268957831527,
+              "rows": 24
+            },
+            "liquidity_shock": {
+              "rmse": 0.18330308343248997,
+              "rows": 27
+            },
+            "one_sided": {
+              "rmse": 0.22279795259304555,
+              "rows": 36
+            },
+            "thin": {
+              "rmse": 0.19762935148830688,
+              "rows": 42
+            },
+            "volatile": {
+              "rmse": 0.14088662320653514,
+              "rows": 51
+            }
+          },
+          "episode_bootstrap_rmse_95": [
+            0.20274250750133813,
+            0.3788100352450778
+          ],
+          "episode_rmse": 0.2915633633989948,
+          "mae": 0.14923209877112828,
+          "mean_observed_usd": 0.14923209877112828,
+          "mean_predicted_usd": 0.0,
+          "positive_frequency": 1.0,
+          "positive_mae": 0.14923209877112828,
+          "positive_rmse": 0.2915633633989948,
+          "rmse": 0.2915633633989948,
+          "rows": 285,
+          "uncertainty_note": "Bootstrap resamples base groups; execution variants remain grouped. Zero-heavy labels require positive-outcome errors alongside aggregate metrics. No dollar loss or empirical-fill interpretation.",
+          "units": "virtual USD"
+        }
+      },
+      "checkpoints": [
+        "checkpoint-last.pt",
+        "checkpoint-meta.json"
+      ],
+      "code_revision": "7b4e86f18abf73f16d33f2f7315154fc8ce3e401",
+      "configuration": {
+        "batch_size": 128,
+        "dataset_id": "dataset-2b612fa4cfab325eebc061f3",
+        "epochs": 80,
+        "family": "cost_mlp",
+        "hidden_size": 32,
+        "learning_rate": 0.001,
+        "max_wall_seconds": 600,
+        "patience": 12,
+        "resume_from": null,
+        "ridge_alpha": 1.0,
+        "seed": 29
+      },
+      "created_at": 1791839887.1209,
+      "curves": [
+        {
+          "epoch": 1,
+          "training_loss": 0.3787466420472494,
+          "validation_loss": 0.33359435200691223
+        },
+        {
+          "epoch": 2,
+          "training_loss": 0.3009074565688089,
+          "validation_loss": 0.2625836730003357
+        },
+        {
+          "epoch": 3,
+          "training_loss": 0.23071659539128672,
+          "validation_loss": 0.19754637777805328
+        },
+        {
+          "epoch": 4,
+          "training_loss": 0.1667886431880763,
+          "validation_loss": 0.14198216795921326
+        },
+        {
+          "epoch": 5,
+          "training_loss": 0.11510089923306607,
+          "validation_loss": 0.10184308141469955
+        },
+        {
+          "epoch": 6,
+          "training_loss": 0.08004924245694836,
+          "validation_loss": 0.0783950686454773
+        },
+        {
+          "epoch": 7,
+          "training_loss": 0.0606546470562957,
+          "validation_loss": 0.06576689332723618
+        },
+        {
+          "epoch": 8,
+          "training_loss": 0.05022041296196256,
+          "validation_loss": 0.05888848006725311
+        },
+        {
+          "epoch": 9,
+          "training_loss": 0.0443595244618286,
+          "validation_loss": 0.05433996394276619
+        },
+        {
+          "epoch": 10,
+          "training_loss": 0.0404239024362772,
+          "validation_loss": 0.05032406002283096
+        },
+        {
+          "epoch": 11,
+          "training_loss": 0.03689217075899839,
+          "validation_loss": 0.046672191470861435
+        },
+        {
+          "epoch": 12,
+          "training_loss": 0.03385111056237854,
+          "validation_loss": 0.043042153120040894
+        },
+        {
+          "epoch": 13,
+          "training_loss": 0.030948774714535974,
+          "validation_loss": 0.04004126042127609
+        },
+        {
+          "epoch": 14,
+          "training_loss": 0.028457209234108456,
+          "validation_loss": 0.0374506376683712
+        },
+        {
+          "epoch": 15,
+          "training_loss": 0.026290662677771887,
+          "validation_loss": 0.03496256470680237
+        },
+        {
+          "epoch": 16,
+          "training_loss": 0.024263365517545737,
+          "validation_loss": 0.03280577436089516
+        },
+        {
+          "epoch": 17,
+          "training_loss": 0.022697077974519208,
+          "validation_loss": 0.03105463646352291
+        },
+        {
+          "epoch": 18,
+          "training_loss": 0.021443105335389102,
+          "validation_loss": 0.029635975137352943
+        },
+        {
+          "epoch": 19,
+          "training_loss": 0.020270014401850122,
+          "validation_loss": 0.028617186471819878
+        },
+        {
+          "epoch": 20,
+          "training_loss": 0.01947247649344882,
+          "validation_loss": 0.02767794206738472
+        },
+        {
+          "epoch": 21,
+          "training_loss": 0.018739612028458152,
+          "validation_loss": 0.02681083418428898
+        },
+        {
+          "epoch": 22,
+          "training_loss": 0.018126337340415837,
+          "validation_loss": 0.02605234459042549
+        },
+        {
+          "epoch": 23,
+          "training_loss": 0.017632864370104154,
+          "validation_loss": 0.025288047268986702
+        },
+        {
+          "epoch": 24,
+          "training_loss": 0.017078604732853372,
+          "validation_loss": 0.024508005008101463
+        },
+        {
+          "epoch": 25,
+          "training_loss": 0.016563351200051004,
+          "validation_loss": 0.023756084963679314
+        },
+        {
+          "epoch": 26,
+          "training_loss": 0.016084519906399107,
+          "validation_loss": 0.02305734157562256
+        },
+        {
+          "epoch": 27,
+          "training_loss": 0.015581827643369161,
+          "validation_loss": 0.02234538644552231
+        },
+        {
+          "epoch": 28,
+          "training_loss": 0.015071555181196189,
+          "validation_loss": 0.02164607122540474
+        },
+        {
+          "epoch": 29,
+          "training_loss": 0.01459053372273551,
+          "validation_loss": 0.02093818038702011
+        },
+        {
+          "epoch": 30,
+          "training_loss": 0.014056982613717432,
+          "validation_loss": 0.020105818286538124
+        },
+        {
+          "epoch": 31,
+          "training_loss": 0.01360678965394319,
+          "validation_loss": 0.019266288727521896
+        },
+        {
+          "epoch": 32,
+          "training_loss": 0.013143370960275139,
+          "validation_loss": 0.018527595326304436
+        },
+        {
+          "epoch": 33,
+          "training_loss": 0.01267533615829625,
+          "validation_loss": 0.017942804843187332
+        },
+        {
+          "epoch": 34,
+          "training_loss": 0.012305205220321669,
+          "validation_loss": 0.017382819205522537
+        },
+        {
+          "epoch": 35,
+          "training_loss": 0.011999870686903414,
+          "validation_loss": 0.01675175316631794
+        },
+        {
+          "epoch": 36,
+          "training_loss": 0.011712688808469823,
+          "validation_loss": 0.01641116850078106
+        },
+        {
+          "epoch": 37,
+          "training_loss": 0.011529562660867156,
+          "validation_loss": 0.016034167259931564
+        },
+        {
+          "epoch": 38,
+          "training_loss": 0.011252164839939217,
+          "validation_loss": 0.01541239582002163
+        },
+        {
+          "epoch": 39,
+          "training_loss": 0.01116471292607383,
+          "validation_loss": 0.014885524287819862
+        },
+        {
+          "epoch": 40,
+          "training_loss": 0.010898777654131886,
+          "validation_loss": 0.014905870892107487
+        },
+        {
+          "epoch": 41,
+          "training_loss": 0.01076123399619004,
+          "validation_loss": 0.014658123254776001
+        },
+        {
+          "epoch": 42,
+          "training_loss": 0.010627104509120903,
+          "validation_loss": 0.014090592972934246
+        },
+        {
+          "epoch": 43,
+          "training_loss": 0.010481790477787953,
+          "validation_loss": 0.013718914240598679
+        },
+        {
+          "epoch": 44,
+          "training_loss": 0.010376018895551307,
+          "validation_loss": 0.013605954125523567
+        },
+        {
+          "epoch": 45,
+          "training_loss": 0.010224890039767691,
+          "validation_loss": 0.013170668855309486
+        },
+        {
+          "epoch": 46,
+          "training_loss": 0.010169292082850683,
+          "validation_loss": 0.012845656834542751
+        },
+        {
+          "epoch": 47,
+          "training_loss": 0.010014231139892665,
+          "validation_loss": 0.012831167317926884
+        },
+        {
+          "epoch": 48,
+          "training_loss": 0.009951065560862022,
+          "validation_loss": 0.01269985269755125
+        },
+        {
+          "epoch": 49,
+          "training_loss": 0.009870030602232266,
+          "validation_loss": 0.012262891978025436
+        },
+        {
+          "epoch": 50,
+          "training_loss": 0.00979302463614319,
+          "validation_loss": 0.011963890865445137
+        },
+        {
+          "epoch": 51,
+          "training_loss": 0.009761321954216622,
+          "validation_loss": 0.012008238583803177
+        },
+        {
+          "epoch": 52,
+          "training_loss": 0.00961672164539229,
+          "validation_loss": 0.011506062000989914
+        },
+        {
+          "epoch": 53,
+          "training_loss": 0.009594910583795089,
+          "validation_loss": 0.011383621022105217
+        },
+        {
+          "epoch": 54,
+          "training_loss": 0.0094585680769424,
+          "validation_loss": 0.011628476902842522
+        },
+        {
+          "epoch": 55,
+          "training_loss": 0.00943631788650444,
+          "validation_loss": 0.011256608180701733
+        },
+        {
+          "epoch": 56,
+          "training_loss": 0.009332165730769497,
+          "validation_loss": 0.011041508987545967
+        },
+        {
+          "epoch": 57,
+          "training_loss": 0.009263031106493827,
+          "validation_loss": 0.011006026528775692
+        },
+        {
+          "epoch": 58,
+          "training_loss": 0.009223356688912797,
+          "validation_loss": 0.010817164555191994
+        },
+        {
+          "epoch": 59,
+          "training_loss": 0.009199756197251847,
+          "validation_loss": 0.010827695019543171
+        },
+        {
+          "epoch": 60,
+          "training_loss": 0.00907156518383442,
+          "validation_loss": 0.010443183593451977
+        },
+        {
+          "epoch": 61,
+          "training_loss": 0.009015442181861342,
+          "validation_loss": 0.010432913899421692
+        },
+        {
+          "epoch": 62,
+          "training_loss": 0.009020169774873429,
+          "validation_loss": 0.010469135828316212
+        },
+        {
+          "epoch": 63,
+          "training_loss": 0.0089256772938463,
+          "validation_loss": 0.010084628127515316
+        },
+        {
+          "epoch": 64,
+          "training_loss": 0.008917088083734625,
+          "validation_loss": 0.010094990953803062
+        },
+        {
+          "epoch": 65,
+          "training_loss": 0.008861537212877859,
+          "validation_loss": 0.010066933929920197
+        },
+        {
+          "epoch": 66,
+          "training_loss": 0.00882160050692773,
+          "validation_loss": 0.010122377425432205
+        },
+        {
+          "epoch": 67,
+          "training_loss": 0.008758201059667483,
+          "validation_loss": 0.009871363639831543
+        },
+        {
+          "epoch": 68,
+          "training_loss": 0.008784018753334795,
+          "validation_loss": 0.00979597494006157
+        },
+        {
+          "epoch": 69,
+          "training_loss": 0.008734330284836556,
+          "validation_loss": 0.009961702860891819
+        },
+        {
+          "epoch": 70,
+          "training_loss": 0.008685597011359514,
+          "validation_loss": 0.009794156067073345
+        },
+        {
+          "epoch": 71,
+          "training_loss": 0.008689223664198694,
+          "validation_loss": 0.009699641726911068
+        },
+        {
+          "epoch": 72,
+          "training_loss": 0.008652252624814795,
+          "validation_loss": 0.009772692807018757
+        },
+        {
+          "epoch": 73,
+          "training_loss": 0.008631371294498176,
+          "validation_loss": 0.009747548960149288
+        },
+        {
+          "epoch": 74,
+          "training_loss": 0.008661575660188459,
+          "validation_loss": 0.009712186641991138
+        },
+        {
+          "epoch": 75,
+          "training_loss": 0.008588866219865713,
+          "validation_loss": 0.009550755843520164
+        },
+        {
+          "epoch": 76,
+          "training_loss": 0.008693657783577379,
+          "validation_loss": 0.009483931586146355
+        },
+        {
+          "epoch": 77,
+          "training_loss": 0.008580451475618789,
+          "validation_loss": 0.0096205472946167
+        },
+        {
+          "epoch": 78,
+          "training_loss": 0.00857326906544825,
+          "validation_loss": 0.009528611786663532
+        },
+        {
+          "epoch": 79,
+          "training_loss": 0.008526206535713014,
+          "validation_loss": 0.00965734850615263
+        },
+        {
+          "epoch": 80,
+          "training_loss": 0.008567836408115492,
+          "validation_loss": 0.009534490294754505
+        }
+      ],
+      "dataset_id": "dataset-2b612fa4cfab325eebc061f3",
+      "dataset_sha256": "d4a94127bd08cf3f1c81222a52d1790dad13db34f366f0e0165a2e5f7f9d4814",
+      "family": "cost_mlp",
+      "feature_schema": [
+        "ask_sum",
+        "bid_sum",
+        "min_ask_depth",
+        "max_ask_depth",
+        "min_top_depth",
+        "max_spread",
+        "max_age_ms",
+        "fee_rate",
+        "capital_available",
+        "locked_capital",
+        "unmatched_quantity",
+        "proposed_quantity",
+        "conditional_edge",
+        "latency_ms",
+        "jitter_ms",
+        "liquidity_fraction",
+        "adverse_ticks",
+        "ack_delay_ms",
+        "observation_latency_ms"
+      ],
+      "feature_version": "observable-binary-1",
+      "label_target": "initial_position_friction_usd",
+      "limitations": [
+        "Synthetic hypothetical first-position execution friction; no real cost calibration.",
+        "Adverse slippage, exchange fees, operating/redemption estimates and financing only; excludes purchase principal, settlement gains/losses and collateral haircut.",
+        "Zero fills can produce little or no friction while missing a profitable opportunity; this is not a profitability target.",
+        "Fixed declared cost assumptions within each dataset; inference under other cost regimes is unvalidated.",
+        "Train/validation evaluation only; final tests remain closed until separately requested.",
+        "Dollar predictions are not probabilities and cannot enter classifier gates.",
+        "Financing excludes the broker pending allocation envelope in target version one. Metrics describe partial venue friction; final evaluation is deferred pending target revision."
+      ],
+      "loss_definition": "Mean squared error on virtual USD normalized by train-only RMS; nonnegative Softplus output",
+      "model_id": "model-9ba0fed73f464d84ad51341f",
+      "optimizer_configuration": {
+        "algorithm": "AdamW",
+        "amsgrad": false,
+        "betas": [
+          0.9,
+          0.999
+        ],
+        "eps": 1e-08,
+        "learning_rate": 0.001,
+        "weight_decay": 0.01
+      },
+      "quoted_baseline_definition": "Two observed-best-price full fills, simulator fee curve, operating and redemption estimates; excludes financing and future slippage. Not an expected cost or loss bound.",
+      "reload_verified": true,
+      "source_hash": "b4c1de7fc2266db6507d185c1429937a43aa79ca95da8145de75f747f7469700",
+      "state": "TRAINED",
+      "task": "execution_cost_regression",
+      "test": null,
+      "training_duration_seconds": 15.661032314994372,
+      "units": "virtual USD",
+      "validation": {
+        "base_episodes": 95,
+        "by_execution": {
+          "conservative": {
+            "rmse": 0.038799930991358825,
+            "rows": 95
+          },
+          "optimistic": {
+            "rmse": 0.13080007240708005,
+            "rows": 95
+          },
+          "standard": {
+            "rmse": 0.0991851777159809,
+            "rows": 95
+          }
+        },
+        "by_family": {
+          "calm": {
+            "rmse": 0.15548767134848482,
+            "rows": 24
+          },
+          "deep": {
+            "rmse": 0.024962281524777925,
+            "rows": 81
+          },
+          "fees": {
+            "rmse": 0.14736541918532647,
+            "rows": 24
+          },
+          "liquidity_shock": {
+            "rmse": 0.09872568375872488,
+            "rows": 27
+          },
+          "one_sided": {
+            "rmse": 0.12303083885981844,
+            "rows": 36
+          },
+          "thin": {
+            "rmse": 0.05776324130405209,
+            "rows": 42
+          },
+          "volatile": {
+            "rmse": 0.10871800673851124,
+            "rows": 51
+          }
+        },
+        "episode_bootstrap_rmse_95": [
+          0.08057857516522757,
+          0.11156842518068194
+        ],
+        "episode_rmse": 0.097385476441446,
+        "mae": 0.06499529262226329,
+        "mean_observed_usd": 0.14923209877112828,
+        "mean_predicted_usd": 0.13439499904368923,
+        "positive_frequency": 1.0,
+        "positive_mae": 0.06499529262226329,
+        "positive_rmse": 0.09738547644144602,
+        "rmse": 0.09738547644144602,
+        "rows": 285,
+        "uncertainty_note": "Bootstrap resamples base groups; execution variants remain grouped. Zero-heavy labels require positive-outcome errors alongside aggregate metrics. No dollar loss or empirical-fill interpretation.",
+        "units": "virtual USD"
+      },
+      "label_version": "initial-position-friction-1",
+      "research_status": "TARGET_REVISION_REQUIRED"
     }
   ],
   "datasets": [
@@ -41058,6 +42843,696 @@
         "label_target": "persistence",
         "observation_latency_ms": 100,
         "seed": 183071,
+        "split_seed": 1977,
+        "version": "synthetic-decision-1"
+      },
+      "version": "synthetic-decision-1"
+    },
+    {
+      "code_revision": "7b4e86f18abf73f16d33f2f7315154fc8ce3e401",
+      "created_at": 1791839839.1964762,
+      "dataset_id": "dataset-2b612fa4cfab325eebc061f3",
+      "decision_scope": "first_admitted",
+      "duration_seconds": 296.2490579240257,
+      "eligible_base_episodes": 582,
+      "excluded_variants": 1257,
+      "execution_cost_label": "initial-position-friction-1",
+      "feature_schema": [
+        "ask_sum",
+        "bid_sum",
+        "min_ask_depth",
+        "max_ask_depth",
+        "min_top_depth",
+        "max_spread",
+        "max_age_ms",
+        "fee_rate",
+        "capital_available",
+        "locked_capital",
+        "unmatched_quantity",
+        "proposed_quantity",
+        "conditional_edge",
+        "latency_ms",
+        "jitter_ms",
+        "liquidity_fraction",
+        "adverse_ticks",
+        "ack_delay_ms",
+        "observation_latency_ms"
+      ],
+      "feature_version": "observable-binary-1",
+      "generated_base_episodes": 1001,
+      "generator_version": "laboratory-3.0",
+      "label_definition": "Both sampled risk-admitted proposal orders finish FILLED; later proposals do not affect label",
+      "label_frequency": {
+        "test": 0.3418803418803419,
+        "train": 0.36674816625916873,
+        "validation": 0.4105263157894737
+      },
+      "label_target": "completion",
+      "label_version": "initial-proposal-outcomes-2",
+      "limitations": [
+        "Synthetic hypothetical fills; no empirical calibration or real profitability evidence",
+        "Only first_admitted decision scope is labeled; rejected and ineligible variants excluded. Later portfolio states remain outside this dataset.",
+        "Episode variants are correlated; partitions group family/seed identities",
+        "Generator settlement uses seed parity; seeds and identifiers are excluded from features",
+        "Execution configuration is an assumption available to a research policy",
+        "Residual unmatched shares are post-execution labels only; not decision features or guaranteed loss severity"
+      ],
+      "partition_identities": {
+        "test": [
+          "calm:273178",
+          "calm:273199",
+          "calm:273262",
+          "calm:273409",
+          "calm:273451",
+          "calm:273710",
+          "calm:273787",
+          "calm:273878",
+          "calm:273913",
+          "calm:274025",
+          "calm:274067",
+          "deep:273072",
+          "deep:273121",
+          "deep:273296",
+          "deep:273359",
+          "deep:273429",
+          "deep:273485",
+          "deep:273548",
+          "deep:273576",
+          "deep:273667",
+          "deep:273688",
+          "deep:273919",
+          "deep:273961",
+          "fees:273189",
+          "fees:273364",
+          "fees:273392",
+          "fees:273483",
+          "fees:273581",
+          "fees:273658",
+          "fees:273777",
+          "liquidity_shock:273081",
+          "liquidity_shock:273431",
+          "liquidity_shock:273718",
+          "liquidity_shock:273760",
+          "liquidity_shock:273788",
+          "liquidity_shock:273816",
+          "liquidity_shock:273886",
+          "liquidity_shock:273935",
+          "liquidity_shock:273942",
+          "liquidity_shock:274012",
+          "one_sided:273244",
+          "one_sided:273265",
+          "one_sided:273286",
+          "one_sided:273293",
+          "one_sided:273342",
+          "one_sided:273391",
+          "one_sided:273503",
+          "one_sided:273636",
+          "one_sided:273650",
+          "one_sided:273965",
+          "one_sided:274042",
+          "thin:273099",
+          "thin:273470",
+          "thin:273596",
+          "thin:273764",
+          "thin:273925",
+          "thin:274044",
+          "thin:274058",
+          "volatile:273166",
+          "volatile:273180",
+          "volatile:273264",
+          "volatile:273292",
+          "volatile:273320",
+          "volatile:273327",
+          "volatile:273362",
+          "volatile:273369",
+          "volatile:273376",
+          "volatile:273509",
+          "volatile:273523",
+          "volatile:273544",
+          "volatile:273551",
+          "volatile:273593",
+          "volatile:273677",
+          "volatile:273733",
+          "volatile:273761",
+          "volatile:273810",
+          "volatile:273859",
+          "volatile:273929"
+        ],
+        "train": [
+          "calm:273073",
+          "calm:273087",
+          "calm:273150",
+          "calm:273157",
+          "calm:273164",
+          "calm:273171",
+          "calm:273206",
+          "calm:273213",
+          "calm:273220",
+          "calm:273241",
+          "calm:273269",
+          "calm:273325",
+          "calm:273332",
+          "calm:273339",
+          "calm:273374",
+          "calm:273395",
+          "calm:273423",
+          "calm:273437",
+          "calm:273444",
+          "calm:273479",
+          "calm:273486",
+          "calm:273500",
+          "calm:273507",
+          "calm:273521",
+          "calm:273542",
+          "calm:273556",
+          "calm:273591",
+          "calm:273626",
+          "calm:273661",
+          "calm:273668",
+          "calm:273745",
+          "calm:273780",
+          "calm:273794",
+          "calm:273822",
+          "calm:273843",
+          "calm:273850",
+          "calm:273892",
+          "calm:273906",
+          "calm:273976",
+          "calm:273997",
+          "calm:274046",
+          "deep:273079",
+          "deep:273086",
+          "deep:273093",
+          "deep:273100",
+          "deep:273107",
+          "deep:273114",
+          "deep:273128",
+          "deep:273135",
+          "deep:273142",
+          "deep:273149",
+          "deep:273156",
+          "deep:273163",
+          "deep:273170",
+          "deep:273184",
+          "deep:273205",
+          "deep:273219",
+          "deep:273226",
+          "deep:273240",
+          "deep:273247",
+          "deep:273254",
+          "deep:273261",
+          "deep:273268",
+          "deep:273275",
+          "deep:273282",
+          "deep:273289",
+          "deep:273303",
+          "deep:273324",
+          "deep:273338",
+          "deep:273345",
+          "deep:273352",
+          "deep:273366",
+          "deep:273373",
+          "deep:273380",
+          "deep:273387",
+          "deep:273394",
+          "deep:273415",
+          "deep:273422",
+          "deep:273436",
+          "deep:273443",
+          "deep:273450",
+          "deep:273457",
+          "deep:273471",
+          "deep:273478",
+          "deep:273492",
+          "deep:273499",
+          "deep:273513",
+          "deep:273520",
+          "deep:273527",
+          "deep:273534",
+          "deep:273541",
+          "deep:273555",
+          "deep:273562",
+          "deep:273583",
+          "deep:273590",
+          "deep:273604",
+          "deep:273618",
+          "deep:273632",
+          "deep:273639",
+          "deep:273653",
+          "deep:273674",
+          "deep:273695",
+          "deep:273702",
+          "deep:273709",
+          "deep:273716",
+          "deep:273737",
+          "deep:273744",
+          "deep:273751",
+          "deep:273765",
+          "deep:273779",
+          "deep:273786",
+          "deep:273793",
+          "deep:273800",
+          "deep:273807",
+          "deep:273814",
+          "deep:273821",
+          "deep:273835",
+          "deep:273842",
+          "deep:273849",
+          "deep:273863",
+          "deep:273870",
+          "deep:273891",
+          "deep:273898",
+          "deep:273912",
+          "deep:273926",
+          "deep:273940",
+          "deep:273954",
+          "deep:273968",
+          "deep:273975",
+          "deep:273982",
+          "deep:273989",
+          "deep:273996",
+          "deep:274010",
+          "deep:274024",
+          "deep:274031",
+          "deep:274038",
+          "deep:274052",
+          "deep:274059",
+          "fees:273084",
+          "fees:273091",
+          "fees:273098",
+          "fees:273133",
+          "fees:273140",
+          "fees:273154",
+          "fees:273161",
+          "fees:273168",
+          "fees:273224",
+          "fees:273259",
+          "fees:273329",
+          "fees:273378",
+          "fees:273399",
+          "fees:273406",
+          "fees:273434",
+          "fees:273497",
+          "fees:273539",
+          "fees:273574",
+          "fees:273595",
+          "fees:273623",
+          "fees:273644",
+          "fees:273651",
+          "fees:273714",
+          "fees:273735",
+          "fees:273742",
+          "fees:273791",
+          "fees:273798",
+          "fees:273812",
+          "fees:273903",
+          "fees:273973",
+          "fees:274001",
+          "fees:274050",
+          "liquidity_shock:273074",
+          "liquidity_shock:273088",
+          "liquidity_shock:273102",
+          "liquidity_shock:273144",
+          "liquidity_shock:273158",
+          "liquidity_shock:273193",
+          "liquidity_shock:273200",
+          "liquidity_shock:273214",
+          "liquidity_shock:273235",
+          "liquidity_shock:273284",
+          "liquidity_shock:273305",
+          "liquidity_shock:273326",
+          "liquidity_shock:273333",
+          "liquidity_shock:273354",
+          "liquidity_shock:273375",
+          "liquidity_shock:273403",
+          "liquidity_shock:273424",
+          "liquidity_shock:273438",
+          "liquidity_shock:273459",
+          "liquidity_shock:273522",
+          "liquidity_shock:273536",
+          "liquidity_shock:273585",
+          "liquidity_shock:273620",
+          "liquidity_shock:273634",
+          "liquidity_shock:273655",
+          "liquidity_shock:273662",
+          "liquidity_shock:273739",
+          "liquidity_shock:273753",
+          "liquidity_shock:273767",
+          "liquidity_shock:273802",
+          "liquidity_shock:273823",
+          "liquidity_shock:273858",
+          "liquidity_shock:273872",
+          "liquidity_shock:273907",
+          "liquidity_shock:273949",
+          "liquidity_shock:273963",
+          "liquidity_shock:273970",
+          "liquidity_shock:273998",
+          "liquidity_shock:274019",
+          "liquidity_shock:274026",
+          "liquidity_shock:274033",
+          "one_sided:273083",
+          "one_sided:273146",
+          "one_sided:273153",
+          "one_sided:273181",
+          "one_sided:273195",
+          "one_sided:273237",
+          "one_sided:273258",
+          "one_sided:273272",
+          "one_sided:273279",
+          "one_sided:273321",
+          "one_sided:273349",
+          "one_sided:273356",
+          "one_sided:273377",
+          "one_sided:273398",
+          "one_sided:273412",
+          "one_sided:273426",
+          "one_sided:273447",
+          "one_sided:273496",
+          "one_sided:273524",
+          "one_sided:273538",
+          "one_sided:273580",
+          "one_sided:273587",
+          "one_sided:273608",
+          "one_sided:273615",
+          "one_sided:273629",
+          "one_sided:273643",
+          "one_sided:273657",
+          "one_sided:273734",
+          "one_sided:273762",
+          "one_sided:273776",
+          "one_sided:273804",
+          "one_sided:273874",
+          "one_sided:273881",
+          "one_sided:273979",
+          "one_sided:273986",
+          "one_sided:274000",
+          "one_sided:274007",
+          "one_sided:274021",
+          "one_sided:274063",
+          "thin:273071",
+          "thin:273078",
+          "thin:273085",
+          "thin:273106",
+          "thin:273113",
+          "thin:273127",
+          "thin:273134",
+          "thin:273155",
+          "thin:273204",
+          "thin:273211",
+          "thin:273218",
+          "thin:273232",
+          "thin:273239",
+          "thin:273253",
+          "thin:273267",
+          "thin:273274",
+          "thin:273302",
+          "thin:273330",
+          "thin:273344",
+          "thin:273365",
+          "thin:273372",
+          "thin:273393",
+          "thin:273407",
+          "thin:273414",
+          "thin:273421",
+          "thin:273428",
+          "thin:273442",
+          "thin:273449",
+          "thin:273456",
+          "thin:273463",
+          "thin:273477",
+          "thin:273498",
+          "thin:273505",
+          "thin:273519",
+          "thin:273540",
+          "thin:273547",
+          "thin:273554",
+          "thin:273575",
+          "thin:273624",
+          "thin:273694",
+          "thin:273708",
+          "thin:273722",
+          "thin:273736",
+          "thin:273743",
+          "thin:273792",
+          "thin:273799",
+          "thin:273806",
+          "thin:273827",
+          "thin:273834",
+          "thin:273848",
+          "thin:273855",
+          "thin:273862",
+          "thin:273876",
+          "thin:273911",
+          "thin:273918",
+          "thin:273932",
+          "thin:273946",
+          "thin:273960",
+          "thin:273967",
+          "thin:273988",
+          "thin:273995",
+          "thin:274023",
+          "thin:274030",
+          "thin:274037",
+          "volatile:273082",
+          "volatile:273089",
+          "volatile:273096",
+          "volatile:273103",
+          "volatile:273110",
+          "volatile:273124",
+          "volatile:273131",
+          "volatile:273138",
+          "volatile:273152",
+          "volatile:273159",
+          "volatile:273173",
+          "volatile:273187",
+          "volatile:273201",
+          "volatile:273208",
+          "volatile:273215",
+          "volatile:273222",
+          "volatile:273229",
+          "volatile:273236",
+          "volatile:273243",
+          "volatile:273250",
+          "volatile:273257",
+          "volatile:273271",
+          "volatile:273278",
+          "volatile:273285",
+          "volatile:273299",
+          "volatile:273306",
+          "volatile:273313",
+          "volatile:273334",
+          "volatile:273355",
+          "volatile:273383",
+          "volatile:273425",
+          "volatile:273432",
+          "volatile:273439",
+          "volatile:273446",
+          "volatile:273453",
+          "volatile:273460",
+          "volatile:273467",
+          "volatile:273474",
+          "volatile:273481",
+          "volatile:273495",
+          "volatile:273516",
+          "volatile:273530",
+          "volatile:273565",
+          "volatile:273572",
+          "volatile:273579",
+          "volatile:273586",
+          "volatile:273607",
+          "volatile:273614",
+          "volatile:273628",
+          "volatile:273635",
+          "volatile:273649",
+          "volatile:273684",
+          "volatile:273691",
+          "volatile:273698",
+          "volatile:273712",
+          "volatile:273719",
+          "volatile:273747",
+          "volatile:273754",
+          "volatile:273768",
+          "volatile:273775",
+          "volatile:273782",
+          "volatile:273789",
+          "volatile:273796",
+          "volatile:273803",
+          "volatile:273817",
+          "volatile:273824",
+          "volatile:273831",
+          "volatile:273845",
+          "volatile:273852",
+          "volatile:273866",
+          "volatile:273873",
+          "volatile:273880",
+          "volatile:273887",
+          "volatile:273894",
+          "volatile:273901",
+          "volatile:273915",
+          "volatile:273922",
+          "volatile:273936",
+          "volatile:273943",
+          "volatile:273950",
+          "volatile:273957",
+          "volatile:273971",
+          "volatile:273978",
+          "volatile:273985",
+          "volatile:273992",
+          "volatile:273999",
+          "volatile:274006",
+          "volatile:274020",
+          "volatile:274027",
+          "volatile:274034",
+          "volatile:274041",
+          "volatile:274048",
+          "volatile:274055",
+          "volatile:274062",
+          "volatile:274069"
+        ],
+        "validation": [
+          "calm:273108",
+          "calm:273185",
+          "calm:273283",
+          "calm:273598",
+          "calm:273640",
+          "calm:273885",
+          "calm:273948",
+          "calm:273962",
+          "deep:273177",
+          "deep:273212",
+          "deep:273233",
+          "deep:273310",
+          "deep:273317",
+          "deep:273331",
+          "deep:273408",
+          "deep:273464",
+          "deep:273506",
+          "deep:273597",
+          "deep:273611",
+          "deep:273625",
+          "deep:273646",
+          "deep:273660",
+          "deep:273681",
+          "deep:273723",
+          "deep:273730",
+          "deep:273758",
+          "deep:273772",
+          "deep:273856",
+          "deep:273877",
+          "deep:273884",
+          "deep:273905",
+          "deep:273933",
+          "deep:274003",
+          "deep:274017",
+          "deep:274066",
+          "fees:273343",
+          "fees:273357",
+          "fees:273469",
+          "fees:273553",
+          "fees:273665",
+          "fees:273700",
+          "fees:273868",
+          "fees:273924",
+          "liquidity_shock:273109",
+          "liquidity_shock:273249",
+          "liquidity_shock:273277",
+          "liquidity_shock:273382",
+          "liquidity_shock:273410",
+          "liquidity_shock:273648",
+          "liquidity_shock:273683",
+          "liquidity_shock:273781",
+          "liquidity_shock:274005",
+          "one_sided:273104",
+          "one_sided:273111",
+          "one_sided:273139",
+          "one_sided:273188",
+          "one_sided:273202",
+          "one_sided:273566",
+          "one_sided:273594",
+          "one_sided:273664",
+          "one_sided:273783",
+          "one_sided:273797",
+          "one_sided:273811",
+          "one_sided:273916",
+          "thin:273148",
+          "thin:273225",
+          "thin:273379",
+          "thin:273386",
+          "thin:273400",
+          "thin:273484",
+          "thin:273568",
+          "thin:273680",
+          "thin:273701",
+          "thin:273729",
+          "thin:273771",
+          "thin:273785",
+          "thin:273939",
+          "thin:274009",
+          "volatile:273145",
+          "volatile:273341",
+          "volatile:273348",
+          "volatile:273390",
+          "volatile:273404",
+          "volatile:273411",
+          "volatile:273488",
+          "volatile:273502",
+          "volatile:273537",
+          "volatile:273600",
+          "volatile:273642",
+          "volatile:273656",
+          "volatile:273663",
+          "volatile:273726",
+          "volatile:273740",
+          "volatile:273908",
+          "volatile:274013"
+        ]
+      },
+      "partition_rows": {
+        "test": 234,
+        "train": 1227,
+        "validation": 285
+      },
+      "provenance": "GENERATED",
+      "rows": 1746,
+      "rows_sha256": "d4a94127bd08cf3f1c81222a52d1790dad13db34f366f0e0165a2e5f7f9d4814",
+      "simulation_version": "laboratory-3.0",
+      "source": "Midas Laboratory synthetic generator",
+      "source_hash": "b4c1de7fc2266db6507d185c1429937a43aa79ca95da8145de75f747f7469700",
+      "spec": {
+        "costs": {
+          "annual_financing_rate": "0.05",
+          "assumptions": [
+            "Costs are user estimates, not observed charges",
+            "No automatic complete-set merge",
+            "Resolution and spendable proceeds are separated by configured delay",
+            "No empirically calibrated fill probability or queue priority"
+          ],
+          "collateral_route_verified": false,
+          "collateral_value_factor": "1",
+          "operating_per_fill": "0.01",
+          "redemption_cost": "0.02",
+          "version": "explicit-costs-1"
+        },
+        "decision_scope": "first_admitted",
+        "episodes": 1001,
+        "execution_models": [
+          "optimistic",
+          "standard",
+          "conservative"
+        ],
+        "families": [
+          "thin",
+          "deep",
+          "calm",
+          "liquidity_shock",
+          "volatile",
+          "one_sided",
+          "fees"
+        ],
+        "label_target": "completion",
+        "observation_latency_ms": 100,
+        "retain_execution_costs": true,
+        "seed": 273071,
         "split_seed": 1977,
         "version": "synthetic-decision-1"
       },
@@ -55406,6 +57881,291 @@
       "submitted_source_hash": "fa042d7f34126daca2620c9bc116ad4251e4a05ae08488749c821f72deb84bd0",
       "unit": "midas-arena-job-959e16cb6fc54fcf89a76691.service",
       "updated_at": 1791837675.7877162
+    },
+    {
+      "budget": {
+        "cpu_cores": 1,
+        "max_artifact_mb": 1024,
+        "memory_mb": 4096,
+        "minimum_available_memory_mb": 2048,
+        "wall_seconds": 1800
+      },
+      "completed_at": 1791839839.3913682,
+      "configuration": {
+        "cost": null,
+        "dataset": {
+          "costs": {
+            "annual_financing_rate": "0.05",
+            "assumptions": [
+              "Costs are user estimates, not observed charges",
+              "No automatic complete-set merge",
+              "Resolution and spendable proceeds are separated by configured delay",
+              "No empirically calibrated fill probability or queue priority"
+            ],
+            "collateral_route_verified": false,
+            "collateral_value_factor": "1",
+            "operating_per_fill": "0.01",
+            "redemption_cost": "0.02",
+            "version": "explicit-costs-1"
+          },
+          "decision_scope": "first_admitted",
+          "episodes": 1001,
+          "execution_models": [
+            "optimistic",
+            "standard",
+            "conservative"
+          ],
+          "families": [
+            "thin",
+            "deep",
+            "calm",
+            "liquidity_shock",
+            "volatile",
+            "one_sided",
+            "fees"
+          ],
+          "label_target": "completion",
+          "observation_latency_ms": 100,
+          "retain_execution_costs": true,
+          "seed": 273071,
+          "split_seed": 1977,
+          "version": "synthetic-decision-1"
+        },
+        "director": null,
+        "kind": "dataset",
+        "max_wall_seconds": 1800,
+        "model_id": null,
+        "policy_search": null,
+        "recovery": null,
+        "rl": null,
+        "severity": null,
+        "sweep": null,
+        "tournament": null,
+        "training": null
+      },
+      "created_at": 1791839541.275868,
+      "elapsed_seconds": 296.6187496740022,
+      "error": null,
+      "exit_status": 0,
+      "job_id": "job-98b65f7990d240ceb97a83ae",
+      "pid": 4031705,
+      "progress": {
+        "done": 1001,
+        "total": 1001
+      },
+      "result": {
+        "dataset_id": "dataset-2b612fa4cfab325eebc061f3"
+      },
+      "runtime_profile": {
+        "artifact_bytes": 671408484,
+        "artifact_files": 47438,
+        "artifact_scan_seconds": 145.66549760312773,
+        "artifact_scans": 1003,
+        "progress_publish_seconds": 10.848495393292978
+      },
+      "started_at": 1791839542.7727244,
+      "state": "COMPLETED",
+      "submitted_source_hash": "b4c1de7fc2266db6507d185c1429937a43aa79ca95da8145de75f747f7469700",
+      "unit": "midas-arena-job-98b65f7990d240ceb97a83ae.service",
+      "updated_at": 1791839839.391368
+    },
+    {
+      "active_artifact": {
+        "identity": "model-249cad7203b24a7cabc6b16a",
+        "kind": "models"
+      },
+      "budget": {
+        "cpu_cores": 1,
+        "max_artifact_mb": 1024,
+        "memory_mb": 4096,
+        "minimum_available_memory_mb": 2048,
+        "wall_seconds": 1800
+      },
+      "completed_at": 1791839865.7459147,
+      "configuration": {
+        "cost": {
+          "batch_size": 128,
+          "dataset_id": "dataset-2b612fa4cfab325eebc061f3",
+          "epochs": 80,
+          "family": "cost_mlp",
+          "hidden_size": 32,
+          "learning_rate": 0.001,
+          "max_wall_seconds": 600,
+          "patience": 12,
+          "resume_from": null,
+          "ridge_alpha": 1.0,
+          "seed": 11
+        },
+        "dataset": null,
+        "director": null,
+        "kind": "cost",
+        "max_wall_seconds": 1800,
+        "model_id": null,
+        "policy_search": null,
+        "recovery": null,
+        "rl": null,
+        "severity": null,
+        "sweep": null,
+        "tournament": null,
+        "training": null
+      },
+      "created_at": 1791839846.6856241,
+      "elapsed_seconds": 17.507562549959403,
+      "error": null,
+      "exit_status": 0,
+      "job_id": "job-b1766158110e40228b15a1ef",
+      "pid": 4040055,
+      "progress": {
+        "done": 80,
+        "total": 80
+      },
+      "result": {
+        "model_id": "model-249cad7203b24a7cabc6b16a"
+      },
+      "runtime_profile": {
+        "artifact_bytes": 672416755,
+        "artifact_files": 47561,
+        "artifact_scan_seconds": 12.094820693018846,
+        "artifact_scans": 82,
+        "progress_publish_seconds": 0.771935302123893
+      },
+      "started_at": 1791839848.2384608,
+      "state": "COMPLETED",
+      "submitted_source_hash": "b4c1de7fc2266db6507d185c1429937a43aa79ca95da8145de75f747f7469700",
+      "unit": "midas-arena-job-b1766158110e40228b15a1ef.service",
+      "updated_at": 1791839865.7459145
+    },
+    {
+      "active_artifact": {
+        "identity": "model-9ba0fed73f464d84ad51341f",
+        "kind": "models"
+      },
+      "budget": {
+        "cpu_cores": 1,
+        "max_artifact_mb": 1024,
+        "memory_mb": 4096,
+        "minimum_available_memory_mb": 2048,
+        "wall_seconds": 1800
+      },
+      "completed_at": 1791839887.4276323,
+      "configuration": {
+        "cost": {
+          "batch_size": 128,
+          "dataset_id": "dataset-2b612fa4cfab325eebc061f3",
+          "epochs": 80,
+          "family": "cost_mlp",
+          "hidden_size": 32,
+          "learning_rate": 0.001,
+          "max_wall_seconds": 600,
+          "patience": 12,
+          "resume_from": null,
+          "ridge_alpha": 1.0,
+          "seed": 29
+        },
+        "dataset": null,
+        "director": null,
+        "kind": "cost",
+        "max_wall_seconds": 1800,
+        "model_id": null,
+        "policy_search": null,
+        "recovery": null,
+        "rl": null,
+        "severity": null,
+        "sweep": null,
+        "tournament": null,
+        "training": null
+      },
+      "created_at": 1791839868.2589936,
+      "elapsed_seconds": 17.649346637015697,
+      "error": null,
+      "exit_status": 0,
+      "job_id": "job-b7830ac23dd34da2b8350aa7",
+      "pid": 4040626,
+      "progress": {
+        "done": 80,
+        "total": 80
+      },
+      "result": {
+        "model_id": "model-9ba0fed73f464d84ad51341f"
+      },
+      "runtime_profile": {
+        "artifact_bytes": 672969216,
+        "artifact_files": 47624,
+        "artifact_scan_seconds": 12.186532387160696,
+        "artifact_scans": 82,
+        "progress_publish_seconds": 0.7792769158259034
+      },
+      "started_at": 1791839869.7784514,
+      "state": "COMPLETED",
+      "submitted_source_hash": "b4c1de7fc2266db6507d185c1429937a43aa79ca95da8145de75f747f7469700",
+      "unit": "midas-arena-job-b7830ac23dd34da2b8350aa7.service",
+      "updated_at": 1791839887.4276323
+    },
+    {
+      "active_artifact": {
+        "identity": "model-83932cca38da40a2b30c9024",
+        "kind": "models"
+      },
+      "budget": {
+        "cpu_cores": 1,
+        "max_artifact_mb": 1024,
+        "memory_mb": 4096,
+        "minimum_available_memory_mb": 2048,
+        "wall_seconds": 1800
+      },
+      "completed_at": 1791839843.913626,
+      "configuration": {
+        "cost": {
+          "batch_size": 128,
+          "dataset_id": "dataset-2b612fa4cfab325eebc061f3",
+          "epochs": 80,
+          "family": "ridge",
+          "hidden_size": 32,
+          "learning_rate": 0.001,
+          "max_wall_seconds": 600,
+          "patience": 12,
+          "resume_from": null,
+          "ridge_alpha": 1.0,
+          "seed": 11
+        },
+        "dataset": null,
+        "director": null,
+        "kind": "cost",
+        "max_wall_seconds": 1800,
+        "model_id": null,
+        "policy_search": null,
+        "recovery": null,
+        "rl": null,
+        "severity": null,
+        "sweep": null,
+        "tournament": null,
+        "training": null
+      },
+      "created_at": 1791839840.2299442,
+      "elapsed_seconds": 2.1829785329755396,
+      "error": null,
+      "exit_status": 0,
+      "job_id": "job-c2b9f1c285084b71a4685fbc",
+      "pid": 4039885,
+      "progress": {
+        "done": 1,
+        "total": 1
+      },
+      "result": {
+        "model_id": "model-83932cca38da40a2b30c9024"
+      },
+      "runtime_profile": {
+        "artifact_bytes": 671864256,
+        "artifact_files": 47498,
+        "artifact_scan_seconds": 0.44167105498490855,
+        "artifact_scans": 3,
+        "progress_publish_seconds": 0.040698358905501664
+      },
+      "started_at": 1791839841.7307646,
+      "state": "COMPLETED",
+      "submitted_source_hash": "b4c1de7fc2266db6507d185c1429937a43aa79ca95da8145de75f747f7469700",
+      "unit": "midas-arena-job-c2b9f1c285084b71a4685fbc.service",
+      "updated_at": 1791839843.9136257
     }
   ],
   "provenance": "SYNTHETIC / HYPOTHETICAL / ECONOMICALLY UNVERIFIED",
@@ -57409,6 +60169,362 @@
           }
         }
       ]
+    }
+  ],
+  "cost_studies": [
+    {
+      "completed_at": 1791839889.7948241,
+      "coordinator_limits": {
+        "cpu_quota_percent": 25,
+        "memory_mb": 512,
+        "wall_seconds": 7200
+      },
+      "created_at": 1791839805.3952036,
+      "dataset_id": "dataset-2b612fa4cfab325eebc061f3",
+      "dataset_job_id": "job-98b65f7990d240ceb97a83ae",
+      "dataset_progress": {
+        "done": 994,
+        "total": 1001
+      },
+      "models": [
+        {
+          "family": "ridge",
+          "seed": 11
+        },
+        {
+          "family": "cost_mlp",
+          "seed": 11
+        },
+        {
+          "family": "cost_mlp",
+          "seed": 29
+        }
+      ],
+      "producer_sha256": "c990e9bfef8d58a718b0e870b982c0808574b44e2ba34d99a22004e7e8f5f974",
+      "selection": {
+        "criterion": "Minimum mean validation source-group RMSE by family; prefer ridge within 0.005 virtual USD RMSE. Representative seed has minimum validation RMSE. No policy promotion.",
+        "mean_neural_validation_rmse": 0.09626033942562795,
+        "model_id": "model-249cad7203b24a7cabc6b16a",
+        "partition": "validation",
+        "ridge_validation_rmse": 0.16240585403382335,
+        "test_evaluated": false
+      },
+      "selection_rule": "Minimum mean validation source-group RMSE by family; prefer ridge within 0.005 virtual USD RMSE. Representative seed has minimum validation RMSE. No policy promotion.",
+      "source_hash": "b4c1de7fc2266db6507d185c1429937a43aa79ca95da8145de75f747f7469700",
+      "stages": [
+        {
+          "artifact_sha256": "f7f520ed6ba0b369d5b32ef8e7505bd91685f96ae709ce7e8bdbee0d816e2461",
+          "configuration": {
+            "cost": {
+              "batch_size": 128,
+              "dataset_id": "dataset-2b612fa4cfab325eebc061f3",
+              "epochs": 80,
+              "family": "ridge",
+              "hidden_size": 32,
+              "learning_rate": 0.001,
+              "max_wall_seconds": 600,
+              "patience": 12,
+              "resume_from": null,
+              "ridge_alpha": 1.0,
+              "seed": 11
+            },
+            "dataset": null,
+            "director": null,
+            "kind": "cost",
+            "max_wall_seconds": 1800,
+            "model_id": null,
+            "policy_search": null,
+            "recovery": null,
+            "rl": null,
+            "severity": null,
+            "sweep": null,
+            "tournament": null,
+            "training": null
+          },
+          "intent_created": 1791839840.2090707,
+          "job_id": "job-c2b9f1c285084b71a4685fbc",
+          "model_id": "model-83932cca38da40a2b30c9024",
+          "progress": {
+            "done": 1,
+            "total": 1
+          },
+          "state": "COMPLETED",
+          "validation": {
+            "base_episodes": 95,
+            "by_execution": {
+              "conservative": {
+                "rmse": 0.11270903455778443,
+                "rows": 95
+              },
+              "optimistic": {
+                "rmse": 0.21205255223576547,
+                "rows": 95
+              },
+              "standard": {
+                "rmse": 0.14648335363691228,
+                "rows": 95
+              }
+            },
+            "by_family": {
+              "calm": {
+                "rmse": 0.14777082037436243,
+                "rows": 24
+              },
+              "deep": {
+                "rmse": 0.05886181469693754,
+                "rows": 81
+              },
+              "fees": {
+                "rmse": 0.43614440634855234,
+                "rows": 24
+              },
+              "liquidity_shock": {
+                "rmse": 0.1511833217971791,
+                "rows": 27
+              },
+              "one_sided": {
+                "rmse": 0.14572032903985757,
+                "rows": 36
+              },
+              "thin": {
+                "rmse": 0.06235545706070926,
+                "rows": 42
+              },
+              "volatile": {
+                "rmse": 0.10866027056221246,
+                "rows": 51
+              }
+            },
+            "episode_bootstrap_rmse_95": [
+              0.1190429566884013,
+              0.20397155789316257
+            ],
+            "episode_rmse": 0.16240585403382335,
+            "mae": 0.09875568097203179,
+            "mean_observed_usd": 0.14923209877112828,
+            "mean_predicted_usd": 0.14090632941958411,
+            "positive_frequency": 1.0,
+            "positive_mae": 0.09875568097203179,
+            "positive_rmse": 0.16240585403382335,
+            "rmse": 0.16240585403382335,
+            "rows": 285,
+            "uncertainty_note": "Bootstrap resamples base groups; execution variants remain grouped. Zero-heavy labels require positive-outcome errors alongside aggregate metrics. No dollar loss or empirical-fill interpretation.",
+            "units": "virtual USD"
+          }
+        },
+        {
+          "artifact_sha256": "bf773321c222af127e344560318b3b182905814c437bc6adbbfee1e993371ba1",
+          "configuration": {
+            "cost": {
+              "batch_size": 128,
+              "dataset_id": "dataset-2b612fa4cfab325eebc061f3",
+              "epochs": 80,
+              "family": "cost_mlp",
+              "hidden_size": 32,
+              "learning_rate": 0.001,
+              "max_wall_seconds": 600,
+              "patience": 12,
+              "resume_from": null,
+              "ridge_alpha": 1.0,
+              "seed": 11
+            },
+            "dataset": null,
+            "director": null,
+            "kind": "cost",
+            "max_wall_seconds": 1800,
+            "model_id": null,
+            "policy_search": null,
+            "recovery": null,
+            "rl": null,
+            "severity": null,
+            "sweep": null,
+            "tournament": null,
+            "training": null
+          },
+          "intent_created": 1791839846.6721601,
+          "job_id": "job-b1766158110e40228b15a1ef",
+          "model_id": "model-249cad7203b24a7cabc6b16a",
+          "progress": {
+            "done": 78,
+            "total": 80
+          },
+          "state": "COMPLETED",
+          "validation": {
+            "base_episodes": 95,
+            "by_execution": {
+              "conservative": {
+                "rmse": 0.03826469574027604,
+                "rows": 95
+              },
+              "optimistic": {
+                "rmse": 0.1285828976153382,
+                "rows": 95
+              },
+              "standard": {
+                "rmse": 0.09567848093178553,
+                "rows": 95
+              }
+            },
+            "by_family": {
+              "calm": {
+                "rmse": 0.15146418651564214,
+                "rows": 24
+              },
+              "deep": {
+                "rmse": 0.02147264364682671,
+                "rows": 81
+              },
+              "fees": {
+                "rmse": 0.12448589286427879,
+                "rows": 24
+              },
+              "liquidity_shock": {
+                "rmse": 0.10051677560172917,
+                "rows": 27
+              },
+              "one_sided": {
+                "rmse": 0.12654035715630718,
+                "rows": 36
+              },
+              "thin": {
+                "rmse": 0.053651025300654416,
+                "rows": 42
+              },
+              "volatile": {
+                "rmse": 0.11284628622383379,
+                "rows": 51
+              }
+            },
+            "episode_bootstrap_rmse_95": [
+              0.07955622028137592,
+              0.10870153195800192
+            ],
+            "episode_rmse": 0.09513520240980988,
+            "mae": 0.06340455909927732,
+            "mean_observed_usd": 0.14923209877112828,
+            "mean_predicted_usd": 0.14064438930598266,
+            "positive_frequency": 1.0,
+            "positive_mae": 0.06340455909927732,
+            "positive_rmse": 0.09513520240980988,
+            "rmse": 0.09513520240980988,
+            "rows": 285,
+            "uncertainty_note": "Bootstrap resamples base groups; execution variants remain grouped. Zero-heavy labels require positive-outcome errors alongside aggregate metrics. No dollar loss or empirical-fill interpretation.",
+            "units": "virtual USD"
+          }
+        },
+        {
+          "artifact_sha256": "e6fcc080df9825e6c3b919a6ee91d64aaafe9424c476708920d8e02d0cedba35",
+          "configuration": {
+            "cost": {
+              "batch_size": 128,
+              "dataset_id": "dataset-2b612fa4cfab325eebc061f3",
+              "epochs": 80,
+              "family": "cost_mlp",
+              "hidden_size": 32,
+              "learning_rate": 0.001,
+              "max_wall_seconds": 600,
+              "patience": 12,
+              "resume_from": null,
+              "ridge_alpha": 1.0,
+              "seed": 29
+            },
+            "dataset": null,
+            "director": null,
+            "kind": "cost",
+            "max_wall_seconds": 1800,
+            "model_id": null,
+            "policy_search": null,
+            "recovery": null,
+            "rl": null,
+            "severity": null,
+            "sweep": null,
+            "tournament": null,
+            "training": null
+          },
+          "intent_created": 1791839868.245301,
+          "job_id": "job-b7830ac23dd34da2b8350aa7",
+          "model_id": "model-9ba0fed73f464d84ad51341f",
+          "progress": {
+            "done": 78,
+            "total": 80
+          },
+          "state": "COMPLETED",
+          "validation": {
+            "base_episodes": 95,
+            "by_execution": {
+              "conservative": {
+                "rmse": 0.038799930991358825,
+                "rows": 95
+              },
+              "optimistic": {
+                "rmse": 0.13080007240708005,
+                "rows": 95
+              },
+              "standard": {
+                "rmse": 0.0991851777159809,
+                "rows": 95
+              }
+            },
+            "by_family": {
+              "calm": {
+                "rmse": 0.15548767134848482,
+                "rows": 24
+              },
+              "deep": {
+                "rmse": 0.024962281524777925,
+                "rows": 81
+              },
+              "fees": {
+                "rmse": 0.14736541918532647,
+                "rows": 24
+              },
+              "liquidity_shock": {
+                "rmse": 0.09872568375872488,
+                "rows": 27
+              },
+              "one_sided": {
+                "rmse": 0.12303083885981844,
+                "rows": 36
+              },
+              "thin": {
+                "rmse": 0.05776324130405209,
+                "rows": 42
+              },
+              "volatile": {
+                "rmse": 0.10871800673851124,
+                "rows": 51
+              }
+            },
+            "episode_bootstrap_rmse_95": [
+              0.08057857516522757,
+              0.11156842518068194
+            ],
+            "episode_rmse": 0.097385476441446,
+            "mae": 0.06499529262226329,
+            "mean_observed_usd": 0.14923209877112828,
+            "mean_predicted_usd": 0.13439499904368923,
+            "positive_frequency": 1.0,
+            "positive_mae": 0.06499529262226329,
+            "positive_rmse": 0.09738547644144602,
+            "rmse": 0.09738547644144602,
+            "rows": 285,
+            "uncertainty_note": "Bootstrap resamples base groups; execution variants remain grouped. Zero-heavy labels require positive-outcome errors alongside aggregate metrics. No dollar loss or empirical-fill interpretation.",
+            "units": "virtual USD"
+          }
+        }
+      ],
+      "state": "COMPLETED",
+      "study_id": "cost-study-d8ca1f097d12f97e74d16be8",
+      "training_configuration": {
+        "batch_size": 128,
+        "epochs": 80,
+        "hidden_size": 32,
+        "learning_rate": 0.001,
+        "patience": 12,
+        "ridge_alpha": 1
+      },
+      "unit": "midas-cost-campaign-273071.service",
+      "updated_at": 1791839886.7745883
     }
   ]
 }

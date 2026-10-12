@@ -1,5 +1,40 @@
 # MIDAS — PROMETHEUS OVERNIGHT BRIEFING
 
+## Latest checkpoint — cost models trained; financing target revision required
+
+A fresh cost dataset completed 1001 generated groups, 582 eligible groups and
+1746 correlated variants: train 409 groups, validation 95, test 78. One ridge and
+two PyTorch cost MLPs trained; both neural fits ran 80 epochs. Inventory is now
+40 artifacts / 39 fitted models and five datasets. All three new final tests
+remain unopened. No worker or coordinator is still running.
+
+Validation RMSEs: neural 0.095135/0.097385 virtual USD, ridge 0.162406, quoted
+full-fill control 0.177025. Neural seed 11 was selected under the frozen criterion.
+All cost ledgers, model metrics/scaling and worker source hashes were verified;
+20 development rows reproduced from the simulator. Original pretest export
+verified 256 payload hashes and retains all three unopened model manifests.
+
+An additional audit verified a target-scope omission in 20 single-position
+development cases: version-one financing includes venue locked/reserved capital
+but excludes broker pending allocation reserves. Amounts were small under these
+short horizons, yet the target does not reproduce complete broker financing.
+Models are annotated TARGET_REVISION_REQUIRED. Existing artifacts and the
+original pretest bundle remain preserved; no final test will be opened before
+the versioned target correction and retraining. This is a label-scope defect,
+not evidence of broker accounting corruption or real costs.
+
+Validation: 400 Python tests passed, one PostgreSQL skip, existing Starlette
+warning, 469.98 seconds. Eight evidence/export regression tests passed separately;
+frontend 12 tests and typecheck/lint/build passed. API remains READY.
+
+Exact next step: implement per-position financing exposure intervals in an Arena
+runner, including available allocated capital while any own action is pending.
+Record interval evidence and validate against broker._accrue on isolated-position
+cases; bump the auxiliary label version; rebuild/retrain on a preregistered cohort.
+Keep existing version-one data and models immutable apart from clear annotations.
+The full Prometheus objective remains active.
+
+
 ## Latest checkpoint — refitted ablation evidence
 
 Ablation sweep `sweep-50f66bb42ca9f9a2b12c8fd7` completed all twelve real fits:

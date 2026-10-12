@@ -1739,9 +1739,44 @@ full-fill controls are persisted. UI exposes actual task units, controls, datase
 retention and fixed synthetic cost assumptions. These are not observed charges
 or profitability forecasts.
 
-Focused Python gate19 passed in92.75s; six cost tests passed again in24.55s after
+Focused Python gate 19 passed in 92.75s; six cost tests passed again in 24.55s after
 quoted-baseline arithmetic validation. Frontend12 tests, typecheck/lint/build,
 strict typing for six changed modules and Ruff passed. Full regression pending.
-Production preregistration records1001 fresh generated groups atseed273071,
-seven families, three execution assumptions, ridge seed11 and cost MLP seeds11/29
-with up to80 epochs. All final tests stay closed pending frozen selection/export.
+Production preregistration records 1001 fresh generated groups at seed 273071,
+seven families, three execution assumptions, ridge seed 11 and cost MLP seeds 11/29
+with up to 80 epochs. All final tests stay closed pending frozen selection/export.
+
+### Execution-cost campaign and target-scope audit
+
+Durable coordinator completed the fixed dataset plus three sequential supervised
+workers. Recovery test verifies adoption after admission/recording interruption,
+with no duplicate job or final-test opening. Dataset dataset-2b612fa4cfab325eebc061f3 has
+1746 variants over 582 eligible source groups. Both cost MLP seeds ran 80 epochs,
+validation RMSE 0.095135/0.097385 vs ridge 0.162406 and quoted control 0.177025.
+Selected model model-249cad7203b24a7cabc6b16a. All final tests remain None.
+
+Verifier independently checks ledger target arithmetic, training-only scaler,
+weights, metrics/controls, source captures, selection and grouped comparisons;
+20 development rows regenerated exactly. Pretest bundle SHA
+4d3a3f5aef65b3ef44e63aa4d93960cee9026f4219ca0385589f647559806c51 verified 256
+payload hashes. Frozen snapshot is preserved even after later scope annotations.
+Eight evidence/export regressions passed in 25.95s. Full-source suite 400 passed,
+one PostgreSQL skip, existing warning, 469.98s; frontend 12 tests passed.
+
+A separate source/financial audit verified omitted financing for broker pending
+allocation envelopes in 20 single-position cases. Venue-only label financing is
+strictly lower than broker analytical financing, despite matching financial result
+hashes. Amounts are small in this short-horizon study, but scope must be corrected
+before final evaluation. Native models and findings clearly retain this limitation
+and TARGET_REVISION_REQUIRED status. Version-two work must retain per-position
+exposure intervals (venue reserved/locked plus pending envelope availability),
+verify against the broker convention, then rebuild/retrain. No final test was
+opened, no historical artifact rewritten, and no policy promotion occurred.
+
+Coordinator and all native jobs are terminal. The broader Prometheus goal remains
+active, with cost target correction ahead of cost final testing/policy integration.
+
+Final production browser check passed without page errors: the financing finding
+opens its supporting model and shows the pending-reserve caveat in plain text.
+The original pretest export remains an immutable snapshot; current native model
+manifests carry the later scope annotations.

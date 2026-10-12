@@ -1,0 +1,70 @@
+{
+  "job_id": "job-98b65f7990d240ceb97a83ae",
+  "configuration": {
+    "kind": "dataset",
+    "dataset": {
+      "version": "synthetic-decision-1",
+      "episodes": 1001,
+      "seed": 273071,
+      "split_seed": 1977,
+      "families": [
+        "thin",
+        "deep",
+        "calm",
+        "liquidity_shock",
+        "volatile",
+        "one_sided",
+        "fees"
+      ],
+      "execution_models": [
+        "optimistic",
+        "standard",
+        "conservative"
+      ],
+      "observation_latency_ms": 100,
+      "label_target": "completion",
+      "decision_scope": "first_admitted",
+      "retain_execution_costs": true,
+      "costs": {
+        "version": "explicit-costs-1",
+        "operating_per_fill": "0.01",
+        "redemption_cost": "0.02",
+        "annual_financing_rate": "0.05",
+        "collateral_value_factor": "1",
+        "collateral_route_verified": false,
+        "assumptions": [
+          "Costs are user estimates, not observed charges",
+          "No automatic complete-set merge",
+          "Resolution and spendable proceeds are separated by configured delay",
+          "No empirically calibrated fill probability or queue priority"
+        ]
+      }
+    },
+    "training": null,
+    "severity": null,
+    "cost": null,
+    "recovery": null,
+    "model_id": null,
+    "rl": null,
+    "tournament": null,
+    "sweep": null,
+    "director": null,
+    "policy_search": null,
+    "max_wall_seconds": 1800
+  },
+  "state": "QUEUED",
+  "created_at": 1791839541.275868,
+  "updated_at": 1791839541.2758682,
+  "progress": null,
+  "error": null,
+  "result": null,
+  "unit": "midas-arena-job-98b65f7990d240ceb97a83ae.service",
+  "submitted_source_hash": "b4c1de7fc2266db6507d185c1429937a43aa79ca95da8145de75f747f7469700",
+  "budget": {
+    "cpu_cores": 1,
+    "memory_mb": 4096,
+    "wall_seconds": 1800,
+    "minimum_available_memory_mb": 2048,
+    "max_artifact_mb": 1024
+  }
+}
