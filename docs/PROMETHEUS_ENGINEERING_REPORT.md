@@ -1155,3 +1155,35 @@ Three production fits are preregistered: one ridge and two MLP seeds, selected
 on validation group RMSE with 0.10 shares practical tolerance and positive-error
 controls. This is fit selection, not policy promotion or independent evidence.
 The final classifier and regression test partitions are excluded from this plan.
+
+## Severity production fits completed
+
+All three preregistered supervised jobs are terminal, exit 0:
+- `job-b0e81322ee0d40cbb443b275`: ridge `model-38a8da8c0d7a481d8d2d9771`.
+- `job-b66615ae3dae44b3a05a42f0`: neural seed 11 `model-5a0f86eceb8c4c689e85d285`, 55 real epochs (early stopped).
+- `job-f59802c1add140c8828513bf`: neural seed 29 `model-265cbcc71f6847828c959882`, 50 real epochs (early stopped).
+
+Validation RMSE: ridge 3.72768645 shares, neural 3.66792487 / 3.66050721,
+zero control 4.08255668, train-mean 3.91222962. Neural mean improvement over
+ridge was only 0.06347041 shares, below the preregistered 0.10 tolerance:
+ridge is selected. The verifier independently reloads each candidate, recomputes
+all validation metrics, and binds source/data/job specifications to the plan.
+No final test was opened. Aggregate MAE (ridge 1.80005, neural about 1.68) was
+worse than zero-control MAE 1.21391; positive-outcome errors remained about nine
+shares. Modest squared-error gains do not establish reliable tail forecasts or
+policy benefit. Finding `finding-8d31175172eab2d986a9cbf3` preserves those limits.
+
+A read-only live Chromium inspection of the actual selected model confirms
+shares-based target/metrics/controls, no probability diagnostics, and no page
+errors. The API restart restored a verified 32859-event paper snapshot and
+returned READY with the exclusive Laboratory archive still healthy. Fresh archive
+logical hash, 162000 variant / 18000 group coverage and SQLite quick_check pass.
+All model-weight and tournament-row/coverage hashes pass a fresh read-only audit;
+this coverage audit does not reread old replay journals. The new validation
+league's entire replay bundle was separately verified earlier in this checkpoint.
+
+Current registry: 21 artifacts, 20 fitted (16 supervised probability predictors,
+three severity regressors, one PPO), plus one fixed heuristic control. No research
+or public-capture workers remain running. The full Prometheus goal is ACTIVE.
+Next: freeze and evaluate the selected severity fit independently without tuning,
+then build actual fee/latency/depth economic reruns and broader data collection.

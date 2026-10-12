@@ -129,3 +129,33 @@ it does not count the same stress seed block as independent research. Derived
 parent/transform verification is included in `scripts/verify_arena.py`; recursive
 parent and stored transformer inclusion are supported by experiment bundle export,
 with parent hashes, exact paired observations and producer bytes verified.
+
+## Residual-share severity fits
+
+```bash
+OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 .venv/bin/python scripts/compare_severity_models.py --job job-b0e81322ee0d40cbb443b275 --job job-b66615ae3dae44b3a05a42f0 --job job-f59802c1add140c8828513bf
+```
+
+The verifier binds all three completed job configurations to the preregistration,
+checks source/data/weight hashes, reloads predictions and independently recomputes
+validation metrics. It refuses selection inputs whose final tests are opened.
+The saved pre-test selection is `PROMETHEUS_SEVERITY_SELECTION.json`. Before future
+independent evaluation, preserve immutable pre-test manifests and the selection
+report so historical selection remains reproducible without reselecting afterward.
+Shares forecasts are not probabilities or dollar losses, and cannot enter the
+existing probability gate API. Explicit evaluation jobs use regression metrics.
+
+## Bounded chronological public observations
+
+```bash
+.venv/bin/python scripts/capture_public_series.py --samples 12 --interval-seconds 5 --wall-seconds 180
+```
+
+This command observes public GET endpoints only and publishes a new, exclusive
+recording ID after validation. For detached operation use user systemd with the
+absolute virtualenv interpreter path (do not resolve its symlink to system Python),
+CPUQuota 25%, MemoryMax 256M and RuntimeMaxSec 240. Capture state and retained
+partials live in `data/public-captures/ID/`; completed datasets are catalogued in
+`data/datasets`. Failed captures are never catalogued as completed history.
+Repeated REST snapshots do not establish sequence completeness, observed fills,
+payout attestation or empirical execution labels.

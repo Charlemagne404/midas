@@ -1,5 +1,5 @@
 {
-  "checked_at": 1791804188.5833013,
+  "checked_at": 1791806404.105192,
   "models": [
     {
       "artifact_sha256": "a1ddf5a19d6cb1ad942ce8fc1cc3d63ec2e2f6ddf5dfc8fc46eb052be777e565",
@@ -30136,6 +30136,1315 @@
         "rows": 297,
         "uncertainty_note": "Resampling synthetic base episodes; variants stay grouped. No inference about real market performance."
       }
+    },
+    {
+      "artifact_sha256": "39af6e8c33e675de32f9aced1e0c8e9ee0f6de44f749ac5b5b7e703fc28776ac",
+      "baselines_validation": {
+        "training_mean": {
+          "base_episodes": 99,
+          "by_execution": {
+            "conservative": {
+              "rmse": 2.7272701163875697,
+              "rows": 99
+            },
+            "optimistic": {
+              "rmse": 4.2614019965268,
+              "rows": 99
+            },
+            "standard": {
+              "rmse": 4.507668205014726,
+              "rows": 99
+            }
+          },
+          "by_family": {
+            "calm": {
+              "rmse": 0.8794827586206896,
+              "rows": 27
+            },
+            "deep": {
+              "rmse": 0.8794827586206896,
+              "rows": 63
+            },
+            "disappearing": {
+              "rmse": 6.362894359908448,
+              "rows": 45
+            },
+            "liquidity_shock": {
+              "rmse": 0.8794827586206896,
+              "rows": 39
+            },
+            "one_sided": {
+              "rmse": 2.4356175693358613,
+              "rows": 42
+            },
+            "thin": {
+              "rmse": 0.8794827586206897,
+              "rows": 33
+            },
+            "volatile": {
+              "rmse": 6.996125876442826,
+              "rows": 48
+            }
+          },
+          "episode_bootstrap_rmse_95": [
+            2.478825001015013,
+            5.019685304684776
+          ],
+          "episode_rmse": 3.9122296247469905,
+          "mae": 1.8979478694995933,
+          "mean_observed_shares": 1.213905723905724,
+          "mean_predicted_shares": 0.8794827586206896,
+          "positive_frequency": 0.1111111111111111,
+          "positive_mae": 10.045668756530828,
+          "positive_rmse": 11.47004561233491,
+          "rmse": 3.912229624746991,
+          "rows": 297,
+          "uncertainty_note": "Bootstrap resamples base groups; execution variants remain grouped. Zero-heavy labels require positive-outcome errors alongside aggregate metrics. No dollar loss or empirical-fill interpretation.",
+          "units": "shares"
+        },
+        "zero": {
+          "base_episodes": 99,
+          "by_execution": {
+            "conservative": {
+              "rmse": 2.8854388878916803,
+              "rows": 99
+            },
+            "optimistic": {
+              "rmse": 4.393393686070949,
+              "rows": 99
+            },
+            "standard": {
+              "rmse": 4.730131225890188,
+              "rows": 99
+            }
+          },
+          "by_family": {
+            "calm": {
+              "rmse": 0.0,
+              "rows": 27
+            },
+            "deep": {
+              "rmse": 0.0,
+              "rows": 63
+            },
+            "disappearing": {
+              "rmse": 6.747623285276083,
+              "rows": 45
+            },
+            "liquidity_shock": {
+              "rmse": 0.0,
+              "rows": 39
+            },
+            "one_sided": {
+              "rmse": 2.550116710681148,
+              "rows": 42
+            },
+            "thin": {
+              "rmse": 0.0,
+              "rows": 33
+            },
+            "volatile": {
+              "rmse": 7.399577690652353,
+              "rows": 48
+            }
+          },
+          "episode_bootstrap_rmse_95": [
+            2.5536262785502295,
+            5.271900562062211
+          ],
+          "episode_rmse": 4.082556677324765,
+          "mae": 1.213905723905724,
+          "mean_observed_shares": 1.213905723905724,
+          "mean_predicted_shares": 0.0,
+          "positive_frequency": 0.1111111111111111,
+          "positive_mae": 10.925151515151516,
+          "positive_rmse": 12.247670031974295,
+          "rmse": 4.082556677324765,
+          "rows": 297,
+          "uncertainty_note": "Bootstrap resamples base groups; execution variants remain grouped. Zero-heavy labels require positive-outcome errors alongside aggregate metrics. No dollar loss or empirical-fill interpretation.",
+          "units": "shares"
+        }
+      },
+      "checkpoints": [
+        "checkpoint-last.pt",
+        "checkpoint-meta.json"
+      ],
+      "code_revision": "1d96fc6a56ea9e69d395943082f68fe283a59c95",
+      "configuration": {
+        "batch_size": 128,
+        "dataset_id": "dataset-f53981b7dd24c1521ce749b1",
+        "epochs": 80,
+        "family": "severity_mlp",
+        "hidden_size": 32,
+        "learning_rate": 0.001,
+        "max_wall_seconds": 600,
+        "patience": 12,
+        "resume_from": null,
+        "ridge_alpha": 1.0,
+        "seed": 29
+      },
+      "created_at": 1791805521.8098576,
+      "curves": [
+        {
+          "epoch": 1,
+          "training_loss": 1.1205971912405956,
+          "validation_loss": 1.476361870765686
+        },
+        {
+          "epoch": 2,
+          "training_loss": 1.0543709801531387,
+          "validation_loss": 1.430163025856018
+        },
+        {
+          "epoch": 3,
+          "training_loss": 0.9987904518500141,
+          "validation_loss": 1.3925620317459106
+        },
+        {
+          "epoch": 4,
+          "training_loss": 0.9472619384184651,
+          "validation_loss": 1.36580491065979
+        },
+        {
+          "epoch": 5,
+          "training_loss": 0.9103394938611437,
+          "validation_loss": 1.3522759675979614
+        },
+        {
+          "epoch": 6,
+          "training_loss": 0.8879719266946289,
+          "validation_loss": 1.3462047576904297
+        },
+        {
+          "epoch": 7,
+          "training_loss": 0.8752815072563873,
+          "validation_loss": 1.3426300287246704
+        },
+        {
+          "epoch": 8,
+          "training_loss": 0.8674000556441559,
+          "validation_loss": 1.336704969406128
+        },
+        {
+          "epoch": 9,
+          "training_loss": 0.8604294034256332,
+          "validation_loss": 1.329395055770874
+        },
+        {
+          "epoch": 10,
+          "training_loss": 0.854469658657052,
+          "validation_loss": 1.322281837463379
+        },
+        {
+          "epoch": 11,
+          "training_loss": 0.849140914007165,
+          "validation_loss": 1.3157298564910889
+        },
+        {
+          "epoch": 12,
+          "training_loss": 0.8438998762218431,
+          "validation_loss": 1.3108251094818115
+        },
+        {
+          "epoch": 13,
+          "training_loss": 0.8391516208648682,
+          "validation_loss": 1.3058847188949585
+        },
+        {
+          "epoch": 14,
+          "training_loss": 0.8353983396771311,
+          "validation_loss": 1.3022820949554443
+        },
+        {
+          "epoch": 15,
+          "training_loss": 0.8312762900330555,
+          "validation_loss": 1.294954538345337
+        },
+        {
+          "epoch": 16,
+          "training_loss": 0.8277854700198118,
+          "validation_loss": 1.2878133058547974
+        },
+        {
+          "epoch": 17,
+          "training_loss": 0.8240514781283236,
+          "validation_loss": 1.2828155755996704
+        },
+        {
+          "epoch": 18,
+          "training_loss": 0.8207145360694534,
+          "validation_loss": 1.2785576581954956
+        },
+        {
+          "epoch": 19,
+          "training_loss": 0.8168344045507496,
+          "validation_loss": 1.2719393968582153
+        },
+        {
+          "epoch": 20,
+          "training_loss": 0.814912750803191,
+          "validation_loss": 1.2702348232269287
+        },
+        {
+          "epoch": 21,
+          "training_loss": 0.8104676857761953,
+          "validation_loss": 1.262419581413269
+        },
+        {
+          "epoch": 22,
+          "training_loss": 0.8081871812371002,
+          "validation_loss": 1.2601418495178223
+        },
+        {
+          "epoch": 23,
+          "training_loss": 0.804844666486499,
+          "validation_loss": 1.2513601779937744
+        },
+        {
+          "epoch": 24,
+          "training_loss": 0.802484012883285,
+          "validation_loss": 1.2493391036987305
+        },
+        {
+          "epoch": 25,
+          "training_loss": 0.8006335469498032,
+          "validation_loss": 1.2533870935440063
+        },
+        {
+          "epoch": 26,
+          "training_loss": 0.7976409299620266,
+          "validation_loss": 1.2458635568618774
+        },
+        {
+          "epoch": 27,
+          "training_loss": 0.7956606334653394,
+          "validation_loss": 1.241152286529541
+        },
+        {
+          "epoch": 28,
+          "training_loss": 0.7941497016227108,
+          "validation_loss": 1.2389824390411377
+        },
+        {
+          "epoch": 29,
+          "training_loss": 0.7949244222421755,
+          "validation_loss": 1.2444961071014404
+        },
+        {
+          "epoch": 30,
+          "training_loss": 0.7920840416831532,
+          "validation_loss": 1.2372870445251465
+        },
+        {
+          "epoch": 31,
+          "training_loss": 0.7904345434287499,
+          "validation_loss": 1.2415225505828857
+        },
+        {
+          "epoch": 32,
+          "training_loss": 0.7901415578250227,
+          "validation_loss": 1.2367388010025024
+        },
+        {
+          "epoch": 33,
+          "training_loss": 0.7885609460973192,
+          "validation_loss": 1.2382498979568481
+        },
+        {
+          "epoch": 34,
+          "training_loss": 0.7882570590095959,
+          "validation_loss": 1.2392951250076294
+        },
+        {
+          "epoch": 35,
+          "training_loss": 0.7881030111477293,
+          "validation_loss": 1.2331557273864746
+        },
+        {
+          "epoch": 36,
+          "training_loss": 0.7877462636465313,
+          "validation_loss": 1.241705060005188
+        },
+        {
+          "epoch": 37,
+          "training_loss": 0.787616579011939,
+          "validation_loss": 1.2394706010818481
+        },
+        {
+          "epoch": 38,
+          "training_loss": 0.790624313655941,
+          "validation_loss": 1.229630708694458
+        },
+        {
+          "epoch": 39,
+          "training_loss": 0.7874535678446978,
+          "validation_loss": 1.2485767602920532
+        },
+        {
+          "epoch": 40,
+          "training_loss": 0.787651529257325,
+          "validation_loss": 1.236603021621704
+        },
+        {
+          "epoch": 41,
+          "training_loss": 0.7850046527796778,
+          "validation_loss": 1.2393437623977661
+        },
+        {
+          "epoch": 42,
+          "training_loss": 0.7877549857928835,
+          "validation_loss": 1.2435842752456665
+        },
+        {
+          "epoch": 43,
+          "training_loss": 0.7872142860259133,
+          "validation_loss": 1.231376051902771
+        },
+        {
+          "epoch": 44,
+          "training_loss": 0.7839736301323463,
+          "validation_loss": 1.2373452186584473
+        },
+        {
+          "epoch": 45,
+          "training_loss": 0.7847657422909792,
+          "validation_loss": 1.2410258054733276
+        },
+        {
+          "epoch": 46,
+          "training_loss": 0.7838384447426632,
+          "validation_loss": 1.2376012802124023
+        },
+        {
+          "epoch": 47,
+          "training_loss": 0.7839521861624443,
+          "validation_loss": 1.236947774887085
+        },
+        {
+          "epoch": 48,
+          "training_loss": 0.7853026979271023,
+          "validation_loss": 1.242824673652649
+        },
+        {
+          "epoch": 49,
+          "training_loss": 0.7848666077372671,
+          "validation_loss": 1.2322924137115479
+        },
+        {
+          "epoch": 50,
+          "training_loss": 0.7828039396768329,
+          "validation_loss": 1.236119031906128
+        }
+      ],
+      "dataset_id": "dataset-f53981b7dd24c1521ce749b1",
+      "dataset_sha256": "3c95234ffb79c51194d54f451bf0467c4d4e83cc22ad4ef6721eaabf4a20c109",
+      "family": "severity_mlp",
+      "feature_schema": [
+        "ask_sum",
+        "bid_sum",
+        "min_ask_depth",
+        "max_ask_depth",
+        "min_top_depth",
+        "max_spread",
+        "max_age_ms",
+        "fee_rate",
+        "capital_available",
+        "locked_capital",
+        "unmatched_quantity",
+        "proposed_quantity",
+        "conditional_edge",
+        "latency_ms",
+        "jitter_ms",
+        "liquidity_fraction",
+        "adverse_ticks",
+        "ack_delay_ms",
+        "observation_latency_ms"
+      ],
+      "feature_version": "observable-binary-1",
+      "label_target": "residual_unmatched_shares",
+      "limitations": [
+        "Synthetic hypothetical initial proposal fills; no empirically calibrated severity.",
+        "Residual shares are not dollar loss, exposure duration or recovery cost.",
+        "Only train/validation labels evaluated; grouped splits and train-only scaling preserved.",
+        "Regression predictions are not probabilities and are excluded from probability gates.",
+        "Predictions on later portfolio states have not been validated."
+      ],
+      "loss_definition": "Mean squared error on shares normalized by train-only RMS; nonnegative Softplus output",
+      "model_id": "model-265cbcc71f6847828c959882",
+      "optimizer_configuration": {
+        "algorithm": "AdamW",
+        "amsgrad": false,
+        "betas": [
+          0.9,
+          0.999
+        ],
+        "eps": 1e-08,
+        "learning_rate": 0.001,
+        "weight_decay": 0.01
+      },
+      "reload_verified": true,
+      "source_hash": "0558ffb748ba5412866f3f2a6c809d0124cd7c3e11d3cce115961ddec2b83358",
+      "state": "TRAINED",
+      "task": "residual_severity_regression",
+      "test": null,
+      "training_duration_seconds": 7.517769879021216,
+      "units": "shares",
+      "validation": {
+        "base_episodes": 99,
+        "by_execution": {
+          "conservative": {
+            "rmse": 2.47354004209978,
+            "rows": 99
+          },
+          "optimistic": {
+            "rmse": 4.185186309063474,
+            "rows": 99
+          },
+          "standard": {
+            "rmse": 4.069859258000152,
+            "rows": 99
+          }
+        },
+        "by_family": {
+          "calm": {
+            "rmse": 1.5214592910878055,
+            "rows": 27
+          },
+          "deep": {
+            "rmse": 0.08537676703070259,
+            "rows": 63
+          },
+          "disappearing": {
+            "rmse": 5.660912310399451,
+            "rows": 45
+          },
+          "liquidity_shock": {
+            "rmse": 1.4618389570312813,
+            "rows": 39
+          },
+          "one_sided": {
+            "rmse": 2.353593198429741,
+            "rows": 42
+          },
+          "thin": {
+            "rmse": 0.3983162801627054,
+            "rows": 33
+          },
+          "volatile": {
+            "rmse": 6.697849340891751,
+            "rows": 48
+          }
+        },
+        "episode_bootstrap_rmse_95": [
+          2.528140143234067,
+          4.614189392928617
+        ],
+        "episode_rmse": 3.660507212640204,
+        "mae": 1.6757935765152365,
+        "mean_observed_shares": 1.213905723905724,
+        "mean_predicted_shares": 0.8696735515816785,
+        "positive_frequency": 0.1111111111111111,
+        "positive_mae": 9.09011586977677,
+        "positive_rmse": 10.308842911460012,
+        "rmse": 3.660507212640204,
+        "rows": 297,
+        "uncertainty_note": "Bootstrap resamples base groups; execution variants remain grouped. Zero-heavy labels require positive-outcome errors alongside aggregate metrics. No dollar loss or empirical-fill interpretation.",
+        "units": "shares"
+      }
+    },
+    {
+      "artifact_sha256": "ca75934b9db9a8ac0dbfdf17d8a0a3ef72a4110f64bb85c698819cf70a0bbfbb",
+      "baselines_validation": {
+        "training_mean": {
+          "base_episodes": 99,
+          "by_execution": {
+            "conservative": {
+              "rmse": 2.7272701163875697,
+              "rows": 99
+            },
+            "optimistic": {
+              "rmse": 4.2614019965268,
+              "rows": 99
+            },
+            "standard": {
+              "rmse": 4.507668205014726,
+              "rows": 99
+            }
+          },
+          "by_family": {
+            "calm": {
+              "rmse": 0.8794827586206896,
+              "rows": 27
+            },
+            "deep": {
+              "rmse": 0.8794827586206896,
+              "rows": 63
+            },
+            "disappearing": {
+              "rmse": 6.362894359908448,
+              "rows": 45
+            },
+            "liquidity_shock": {
+              "rmse": 0.8794827586206896,
+              "rows": 39
+            },
+            "one_sided": {
+              "rmse": 2.4356175693358613,
+              "rows": 42
+            },
+            "thin": {
+              "rmse": 0.8794827586206897,
+              "rows": 33
+            },
+            "volatile": {
+              "rmse": 6.996125876442826,
+              "rows": 48
+            }
+          },
+          "episode_bootstrap_rmse_95": [
+            2.478825001015013,
+            5.019685304684776
+          ],
+          "episode_rmse": 3.9122296247469905,
+          "mae": 1.8979478694995933,
+          "mean_observed_shares": 1.213905723905724,
+          "mean_predicted_shares": 0.8794827586206896,
+          "positive_frequency": 0.1111111111111111,
+          "positive_mae": 10.045668756530828,
+          "positive_rmse": 11.47004561233491,
+          "rmse": 3.912229624746991,
+          "rows": 297,
+          "uncertainty_note": "Bootstrap resamples base groups; execution variants remain grouped. Zero-heavy labels require positive-outcome errors alongside aggregate metrics. No dollar loss or empirical-fill interpretation.",
+          "units": "shares"
+        },
+        "zero": {
+          "base_episodes": 99,
+          "by_execution": {
+            "conservative": {
+              "rmse": 2.8854388878916803,
+              "rows": 99
+            },
+            "optimistic": {
+              "rmse": 4.393393686070949,
+              "rows": 99
+            },
+            "standard": {
+              "rmse": 4.730131225890188,
+              "rows": 99
+            }
+          },
+          "by_family": {
+            "calm": {
+              "rmse": 0.0,
+              "rows": 27
+            },
+            "deep": {
+              "rmse": 0.0,
+              "rows": 63
+            },
+            "disappearing": {
+              "rmse": 6.747623285276083,
+              "rows": 45
+            },
+            "liquidity_shock": {
+              "rmse": 0.0,
+              "rows": 39
+            },
+            "one_sided": {
+              "rmse": 2.550116710681148,
+              "rows": 42
+            },
+            "thin": {
+              "rmse": 0.0,
+              "rows": 33
+            },
+            "volatile": {
+              "rmse": 7.399577690652353,
+              "rows": 48
+            }
+          },
+          "episode_bootstrap_rmse_95": [
+            2.5536262785502295,
+            5.271900562062211
+          ],
+          "episode_rmse": 4.082556677324765,
+          "mae": 1.213905723905724,
+          "mean_observed_shares": 1.213905723905724,
+          "mean_predicted_shares": 0.0,
+          "positive_frequency": 0.1111111111111111,
+          "positive_mae": 10.925151515151516,
+          "positive_rmse": 12.247670031974295,
+          "rmse": 4.082556677324765,
+          "rows": 297,
+          "uncertainty_note": "Bootstrap resamples base groups; execution variants remain grouped. Zero-heavy labels require positive-outcome errors alongside aggregate metrics. No dollar loss or empirical-fill interpretation.",
+          "units": "shares"
+        }
+      },
+      "checkpoints": [],
+      "code_revision": "1d96fc6a56ea9e69d395943082f68fe283a59c95",
+      "configuration": {
+        "batch_size": 128,
+        "dataset_id": "dataset-f53981b7dd24c1521ce749b1",
+        "epochs": 80,
+        "family": "ridge",
+        "hidden_size": 32,
+        "learning_rate": 0.001,
+        "max_wall_seconds": 600,
+        "patience": 12,
+        "resume_from": null,
+        "ridge_alpha": 1.0,
+        "seed": 11
+      },
+      "created_at": 1791805512.5546932,
+      "curves": [],
+      "dataset_id": "dataset-f53981b7dd24c1521ce749b1",
+      "dataset_sha256": "3c95234ffb79c51194d54f451bf0467c4d4e83cc22ad4ef6721eaabf4a20c109",
+      "family": "ridge",
+      "feature_schema": [
+        "ask_sum",
+        "bid_sum",
+        "min_ask_depth",
+        "max_ask_depth",
+        "min_top_depth",
+        "max_spread",
+        "max_age_ms",
+        "fee_rate",
+        "capital_available",
+        "locked_capital",
+        "unmatched_quantity",
+        "proposed_quantity",
+        "conditional_edge",
+        "latency_ms",
+        "jitter_ms",
+        "liquidity_fraction",
+        "adverse_ticks",
+        "ack_delay_ms",
+        "observation_latency_ms"
+      ],
+      "feature_version": "observable-binary-1",
+      "label_target": "residual_unmatched_shares",
+      "limitations": [
+        "Synthetic hypothetical initial proposal fills; no empirically calibrated severity.",
+        "Residual shares are not dollar loss, exposure duration or recovery cost.",
+        "Only train/validation labels evaluated; grouped splits and train-only scaling preserved.",
+        "Regression predictions are not probabilities and are excluded from probability gates.",
+        "Predictions on later portfolio states have not been validated."
+      ],
+      "loss_definition": "Squared shares error plus ridge-alpha L2 coefficient penalty; nonnegative clipping at inference",
+      "model_id": "model-38a8da8c0d7a481d8d2d9771",
+      "optimizer_configuration": {
+        "algorithm": "Ridge",
+        "alpha": 1.0
+      },
+      "reload_verified": true,
+      "source_hash": "0558ffb748ba5412866f3f2a6c809d0124cd7c3e11d3cce115961ddec2b83358",
+      "state": "TRAINED",
+      "task": "residual_severity_regression",
+      "test": null,
+      "training_duration_seconds": 0.12167930800933391,
+      "units": "shares",
+      "validation": {
+        "base_episodes": 99,
+        "by_execution": {
+          "conservative": {
+            "rmse": 2.5192699508612524,
+            "rows": 99
+          },
+          "optimistic": {
+            "rmse": 4.187398463328451,
+            "rows": 99
+          },
+          "standard": {
+            "rmse": 4.219705177952955,
+            "rows": 99
+          }
+        },
+        "by_family": {
+          "calm": {
+            "rmse": 1.3431790951306724,
+            "rows": 27
+          },
+          "deep": {
+            "rmse": 0.5561680706101155,
+            "rows": 63
+          },
+          "disappearing": {
+            "rmse": 5.898498327777675,
+            "rows": 45
+          },
+          "liquidity_shock": {
+            "rmse": 1.3103082656494351,
+            "rows": 39
+          },
+          "one_sided": {
+            "rmse": 2.2829679936439042,
+            "rows": 42
+          },
+          "thin": {
+            "rmse": 0.6656687817018616,
+            "rows": 33
+          },
+          "volatile": {
+            "rmse": 6.758746760151266,
+            "rows": 48
+          }
+        },
+        "episode_bootstrap_rmse_95": [
+          2.4446721601897874,
+          4.728191106587805
+        ],
+        "episode_rmse": 3.727686448046156,
+        "mae": 1.800053557154038,
+        "mean_observed_shares": 1.213905723905724,
+        "mean_predicted_shares": 0.9376324216395023,
+        "positive_frequency": 0.1111111111111111,
+        "positive_mae": 9.34347086739117,
+        "positive_rmse": 10.688652175289665,
+        "rmse": 3.7276864480461565,
+        "rows": 297,
+        "uncertainty_note": "Bootstrap resamples base groups; execution variants remain grouped. Zero-heavy labels require positive-outcome errors alongside aggregate metrics. No dollar loss or empirical-fill interpretation.",
+        "units": "shares"
+      }
+    },
+    {
+      "artifact_sha256": "98ab326cc6ebf2db708d430503b12afc92f4ce50f7c5f02a72ce8a06ce1f3689",
+      "baselines_validation": {
+        "training_mean": {
+          "base_episodes": 99,
+          "by_execution": {
+            "conservative": {
+              "rmse": 2.7272701163875697,
+              "rows": 99
+            },
+            "optimistic": {
+              "rmse": 4.2614019965268,
+              "rows": 99
+            },
+            "standard": {
+              "rmse": 4.507668205014726,
+              "rows": 99
+            }
+          },
+          "by_family": {
+            "calm": {
+              "rmse": 0.8794827586206896,
+              "rows": 27
+            },
+            "deep": {
+              "rmse": 0.8794827586206896,
+              "rows": 63
+            },
+            "disappearing": {
+              "rmse": 6.362894359908448,
+              "rows": 45
+            },
+            "liquidity_shock": {
+              "rmse": 0.8794827586206896,
+              "rows": 39
+            },
+            "one_sided": {
+              "rmse": 2.4356175693358613,
+              "rows": 42
+            },
+            "thin": {
+              "rmse": 0.8794827586206897,
+              "rows": 33
+            },
+            "volatile": {
+              "rmse": 6.996125876442826,
+              "rows": 48
+            }
+          },
+          "episode_bootstrap_rmse_95": [
+            2.478825001015013,
+            5.019685304684776
+          ],
+          "episode_rmse": 3.9122296247469905,
+          "mae": 1.8979478694995933,
+          "mean_observed_shares": 1.213905723905724,
+          "mean_predicted_shares": 0.8794827586206896,
+          "positive_frequency": 0.1111111111111111,
+          "positive_mae": 10.045668756530828,
+          "positive_rmse": 11.47004561233491,
+          "rmse": 3.912229624746991,
+          "rows": 297,
+          "uncertainty_note": "Bootstrap resamples base groups; execution variants remain grouped. Zero-heavy labels require positive-outcome errors alongside aggregate metrics. No dollar loss or empirical-fill interpretation.",
+          "units": "shares"
+        },
+        "zero": {
+          "base_episodes": 99,
+          "by_execution": {
+            "conservative": {
+              "rmse": 2.8854388878916803,
+              "rows": 99
+            },
+            "optimistic": {
+              "rmse": 4.393393686070949,
+              "rows": 99
+            },
+            "standard": {
+              "rmse": 4.730131225890188,
+              "rows": 99
+            }
+          },
+          "by_family": {
+            "calm": {
+              "rmse": 0.0,
+              "rows": 27
+            },
+            "deep": {
+              "rmse": 0.0,
+              "rows": 63
+            },
+            "disappearing": {
+              "rmse": 6.747623285276083,
+              "rows": 45
+            },
+            "liquidity_shock": {
+              "rmse": 0.0,
+              "rows": 39
+            },
+            "one_sided": {
+              "rmse": 2.550116710681148,
+              "rows": 42
+            },
+            "thin": {
+              "rmse": 0.0,
+              "rows": 33
+            },
+            "volatile": {
+              "rmse": 7.399577690652353,
+              "rows": 48
+            }
+          },
+          "episode_bootstrap_rmse_95": [
+            2.5536262785502295,
+            5.271900562062211
+          ],
+          "episode_rmse": 4.082556677324765,
+          "mae": 1.213905723905724,
+          "mean_observed_shares": 1.213905723905724,
+          "mean_predicted_shares": 0.0,
+          "positive_frequency": 0.1111111111111111,
+          "positive_mae": 10.925151515151516,
+          "positive_rmse": 12.247670031974295,
+          "rmse": 4.082556677324765,
+          "rows": 297,
+          "uncertainty_note": "Bootstrap resamples base groups; execution variants remain grouped. Zero-heavy labels require positive-outcome errors alongside aggregate metrics. No dollar loss or empirical-fill interpretation.",
+          "units": "shares"
+        }
+      },
+      "checkpoints": [
+        "checkpoint-last.pt",
+        "checkpoint-meta.json"
+      ],
+      "code_revision": "1d96fc6a56ea9e69d395943082f68fe283a59c95",
+      "configuration": {
+        "batch_size": 128,
+        "dataset_id": "dataset-f53981b7dd24c1521ce749b1",
+        "epochs": 80,
+        "family": "severity_mlp",
+        "hidden_size": 32,
+        "learning_rate": 0.001,
+        "max_wall_seconds": 600,
+        "patience": 12,
+        "resume_from": null,
+        "ridge_alpha": 1.0,
+        "seed": 11
+      },
+      "created_at": 1791805531.8740332,
+      "curves": [
+        {
+          "epoch": 1,
+          "training_loss": 1.0868884777200634,
+          "validation_loss": 1.4578676223754883
+        },
+        {
+          "epoch": 2,
+          "training_loss": 1.0361146186960155,
+          "validation_loss": 1.4205811023712158
+        },
+        {
+          "epoch": 3,
+          "training_loss": 0.9898223589206564,
+          "validation_loss": 1.387419581413269
+        },
+        {
+          "epoch": 4,
+          "training_loss": 0.9462233569430208,
+          "validation_loss": 1.3592222929000854
+        },
+        {
+          "epoch": 5,
+          "training_loss": 0.9097937948402317,
+          "validation_loss": 1.3401538133621216
+        },
+        {
+          "epoch": 6,
+          "training_loss": 0.8840608939357187,
+          "validation_loss": 1.32817804813385
+        },
+        {
+          "epoch": 7,
+          "training_loss": 0.8653007403187368,
+          "validation_loss": 1.3147441148757935
+        },
+        {
+          "epoch": 8,
+          "training_loss": 0.8498295401704723,
+          "validation_loss": 1.3010830879211426
+        },
+        {
+          "epoch": 9,
+          "training_loss": 0.8367891948798607,
+          "validation_loss": 1.289110779762268
+        },
+        {
+          "epoch": 10,
+          "training_loss": 0.8249685764312744,
+          "validation_loss": 1.2793775796890259
+        },
+        {
+          "epoch": 11,
+          "training_loss": 0.8186500003968162,
+          "validation_loss": 1.262244462966919
+        },
+        {
+          "epoch": 12,
+          "training_loss": 0.8093791103911125,
+          "validation_loss": 1.2605162858963013
+        },
+        {
+          "epoch": 13,
+          "training_loss": 0.802864763243445,
+          "validation_loss": 1.2531042098999023
+        },
+        {
+          "epoch": 14,
+          "training_loss": 0.7984618873431765,
+          "validation_loss": 1.2461459636688232
+        },
+        {
+          "epoch": 15,
+          "training_loss": 0.795401793786849,
+          "validation_loss": 1.2442845106124878
+        },
+        {
+          "epoch": 16,
+          "training_loss": 0.7936066375381645,
+          "validation_loss": 1.2462819814682007
+        },
+        {
+          "epoch": 17,
+          "training_loss": 0.794146702207368,
+          "validation_loss": 1.2418837547302246
+        },
+        {
+          "epoch": 18,
+          "training_loss": 0.7900099658417976,
+          "validation_loss": 1.2466394901275635
+        },
+        {
+          "epoch": 19,
+          "training_loss": 0.7891916002350292,
+          "validation_loss": 1.2474501132965088
+        },
+        {
+          "epoch": 20,
+          "training_loss": 0.7891239948656367,
+          "validation_loss": 1.2433490753173828
+        },
+        {
+          "epoch": 21,
+          "training_loss": 0.788327140027079,
+          "validation_loss": 1.2389788627624512
+        },
+        {
+          "epoch": 22,
+          "training_loss": 0.7871251024048904,
+          "validation_loss": 1.2448066473007202
+        },
+        {
+          "epoch": 23,
+          "training_loss": 0.7886534689486712,
+          "validation_loss": 1.2490215301513672
+        },
+        {
+          "epoch": 24,
+          "training_loss": 0.7865993596356491,
+          "validation_loss": 1.2387882471084595
+        },
+        {
+          "epoch": 25,
+          "training_loss": 0.7879720617984903,
+          "validation_loss": 1.2365168333053589
+        },
+        {
+          "epoch": 26,
+          "training_loss": 0.787460158611166,
+          "validation_loss": 1.248425841331482
+        },
+        {
+          "epoch": 27,
+          "training_loss": 0.7856670700270554,
+          "validation_loss": 1.2454437017440796
+        },
+        {
+          "epoch": 28,
+          "training_loss": 0.7847075010168141,
+          "validation_loss": 1.2383438348770142
+        },
+        {
+          "epoch": 29,
+          "training_loss": 0.7858089434689489,
+          "validation_loss": 1.2429783344268799
+        },
+        {
+          "epoch": 30,
+          "training_loss": 0.785467334862413,
+          "validation_loss": 1.2374426126480103
+        },
+        {
+          "epoch": 31,
+          "training_loss": 0.7843809545725241,
+          "validation_loss": 1.2440859079360962
+        },
+        {
+          "epoch": 32,
+          "training_loss": 0.7836231239910784,
+          "validation_loss": 1.2429932355880737
+        },
+        {
+          "epoch": 33,
+          "training_loss": 0.7846002756864175,
+          "validation_loss": 1.2357473373413086
+        },
+        {
+          "epoch": 34,
+          "training_loss": 0.7844280936252112,
+          "validation_loss": 1.2443917989730835
+        },
+        {
+          "epoch": 35,
+          "training_loss": 0.7825871007195835,
+          "validation_loss": 1.2401047945022583
+        },
+        {
+          "epoch": 36,
+          "training_loss": 0.7835395808877617,
+          "validation_loss": 1.2408413887023926
+        },
+        {
+          "epoch": 37,
+          "training_loss": 0.7823875217602171,
+          "validation_loss": 1.2383493185043335
+        },
+        {
+          "epoch": 38,
+          "training_loss": 0.7819889037088416,
+          "validation_loss": 1.2409069538116455
+        },
+        {
+          "epoch": 39,
+          "training_loss": 0.7825776838708198,
+          "validation_loss": 1.2397406101226807
+        },
+        {
+          "epoch": 40,
+          "training_loss": 0.7847981939370605,
+          "validation_loss": 1.2359422445297241
+        },
+        {
+          "epoch": 41,
+          "training_loss": 0.7813035249710083,
+          "validation_loss": 1.2473689317703247
+        },
+        {
+          "epoch": 42,
+          "training_loss": 0.7825003307441185,
+          "validation_loss": 1.244690179824829
+        },
+        {
+          "epoch": 43,
+          "training_loss": 0.7824218739038227,
+          "validation_loss": 1.234619140625
+        },
+        {
+          "epoch": 44,
+          "training_loss": 0.7823683749670269,
+          "validation_loss": 1.2425535917282104
+        },
+        {
+          "epoch": 45,
+          "training_loss": 0.780935258015819,
+          "validation_loss": 1.23855721950531
+        },
+        {
+          "epoch": 46,
+          "training_loss": 0.7815243752523401,
+          "validation_loss": 1.2393790483474731
+        },
+        {
+          "epoch": 47,
+          "training_loss": 0.7805104310485138,
+          "validation_loss": 1.2409446239471436
+        },
+        {
+          "epoch": 48,
+          "training_loss": 0.7803136151412438,
+          "validation_loss": 1.2452117204666138
+        },
+        {
+          "epoch": 49,
+          "training_loss": 0.7810387609676382,
+          "validation_loss": 1.2401564121246338
+        },
+        {
+          "epoch": 50,
+          "training_loss": 0.779894910324579,
+          "validation_loss": 1.237375020980835
+        },
+        {
+          "epoch": 51,
+          "training_loss": 0.7799390794216902,
+          "validation_loss": 1.2388502359390259
+        },
+        {
+          "epoch": 52,
+          "training_loss": 0.7807331852529241,
+          "validation_loss": 1.2436034679412842
+        },
+        {
+          "epoch": 53,
+          "training_loss": 0.7794329284251421,
+          "validation_loss": 1.2418763637542725
+        },
+        {
+          "epoch": 54,
+          "training_loss": 0.7806078866980541,
+          "validation_loss": 1.2404981851577759
+        },
+        {
+          "epoch": 55,
+          "training_loss": 0.781017378486436,
+          "validation_loss": 1.2411811351776123
+        }
+      ],
+      "dataset_id": "dataset-f53981b7dd24c1521ce749b1",
+      "dataset_sha256": "3c95234ffb79c51194d54f451bf0467c4d4e83cc22ad4ef6721eaabf4a20c109",
+      "family": "severity_mlp",
+      "feature_schema": [
+        "ask_sum",
+        "bid_sum",
+        "min_ask_depth",
+        "max_ask_depth",
+        "min_top_depth",
+        "max_spread",
+        "max_age_ms",
+        "fee_rate",
+        "capital_available",
+        "locked_capital",
+        "unmatched_quantity",
+        "proposed_quantity",
+        "conditional_edge",
+        "latency_ms",
+        "jitter_ms",
+        "liquidity_fraction",
+        "adverse_ticks",
+        "ack_delay_ms",
+        "observation_latency_ms"
+      ],
+      "feature_version": "observable-binary-1",
+      "label_target": "residual_unmatched_shares",
+      "limitations": [
+        "Synthetic hypothetical initial proposal fills; no empirically calibrated severity.",
+        "Residual shares are not dollar loss, exposure duration or recovery cost.",
+        "Only train/validation labels evaluated; grouped splits and train-only scaling preserved.",
+        "Regression predictions are not probabilities and are excluded from probability gates.",
+        "Predictions on later portfolio states have not been validated."
+      ],
+      "loss_definition": "Mean squared error on shares normalized by train-only RMS; nonnegative Softplus output",
+      "model_id": "model-5a0f86eceb8c4c689e85d285",
+      "optimizer_configuration": {
+        "algorithm": "AdamW",
+        "amsgrad": false,
+        "betas": [
+          0.9,
+          0.999
+        ],
+        "eps": 1e-08,
+        "learning_rate": 0.001,
+        "weight_decay": 0.01
+      },
+      "reload_verified": true,
+      "source_hash": "0558ffb748ba5412866f3f2a6c809d0124cd7c3e11d3cce115961ddec2b83358",
+      "state": "TRAINED",
+      "task": "residual_severity_regression",
+      "test": null,
+      "training_duration_seconds": 8.051200943009462,
+      "units": "shares",
+      "validation": {
+        "base_episodes": 99,
+        "by_execution": {
+          "conservative": {
+            "rmse": 2.476727954149499,
+            "rows": 99
+          },
+          "optimistic": {
+            "rmse": 4.187368867246987,
+            "rows": 99
+          },
+          "standard": {
+            "rmse": 4.085679763175726,
+            "rows": 99
+          }
+        },
+        "by_family": {
+          "calm": {
+            "rmse": 1.556735703214356,
+            "rows": 27
+          },
+          "deep": {
+            "rmse": 0.0952801910322872,
+            "rows": 63
+          },
+          "disappearing": {
+            "rmse": 5.610745087978237,
+            "rows": 45
+          },
+          "liquidity_shock": {
+            "rmse": 1.4498364372914463,
+            "rows": 39
+          },
+          "one_sided": {
+            "rmse": 2.3902873306508554,
+            "rows": 42
+          },
+          "thin": {
+            "rmse": 0.3645252506204293,
+            "rows": 33
+          },
+          "volatile": {
+            "rmse": 6.749669421319342,
+            "rows": 48
+          }
+        },
+        "episode_bootstrap_rmse_95": [
+          2.5449497819595943,
+          4.612037025250826
+        ],
+        "episode_rmse": 3.667924868209023,
+        "mae": 1.6811030396004207,
+        "mean_observed_shares": 1.213905723905724,
+        "mean_predicted_shares": 0.8772655380633032,
+        "positive_frequency": 0.1111111111111111,
+        "positive_mae": 9.079844514492788,
+        "positive_rmse": 10.287305554258813,
+        "rmse": 3.667924868209023,
+        "rows": 297,
+        "uncertainty_note": "Bootstrap resamples base groups; execution variants remain grouped. Zero-heavy labels require positive-outcome errors alongside aggregate metrics. No dollar loss or empirical-fill interpretation.",
+        "units": "shares"
+      }
     }
   ],
   "datasets": [
@@ -40435,6 +41744,198 @@
       "submitted_source_hash": "0a14f0ffd9b283359170598361240395b1647bee15545fd36f3770091603c522",
       "unit": "midas-arena-job-83cb1633e674433b8bb6e6c8.service",
       "updated_at": 1791803664.650746
+    },
+    {
+      "active_artifact": {
+        "identity": "model-38a8da8c0d7a481d8d2d9771",
+        "kind": "models"
+      },
+      "budget": {
+        "cpu_cores": 1,
+        "max_artifact_mb": 1024,
+        "memory_mb": 4096,
+        "minimum_available_memory_mb": 2048,
+        "wall_seconds": 600
+      },
+      "completed_at": 1791805512.7309005,
+      "configuration": {
+        "dataset": null,
+        "director": null,
+        "kind": "severity",
+        "max_wall_seconds": 600,
+        "model_id": null,
+        "policy_search": null,
+        "rl": null,
+        "severity": {
+          "batch_size": 128,
+          "dataset_id": "dataset-f53981b7dd24c1521ce749b1",
+          "epochs": 80,
+          "family": "ridge",
+          "hidden_size": 32,
+          "learning_rate": 0.001,
+          "max_wall_seconds": 600,
+          "patience": 12,
+          "resume_from": null,
+          "ridge_alpha": 1.0,
+          "seed": 11
+        },
+        "sweep": null,
+        "tournament": null,
+        "training": null
+      },
+      "created_at": 1791805509.6549184,
+      "elapsed_seconds": 1.542434911010787,
+      "error": null,
+      "exit_status": 0,
+      "job_id": "job-b0e81322ee0d40cbb443b275",
+      "pid": 3339335,
+      "progress": {
+        "done": 1,
+        "total": 1
+      },
+      "result": {
+        "model_id": "model-38a8da8c0d7a481d8d2d9771"
+      },
+      "runtime_profile": {
+        "artifact_bytes": 439660822,
+        "artifact_files": 31276,
+        "artifact_scan_seconds": 0.29095664800843224,
+        "artifact_scans": 3,
+        "progress_publish_seconds": 0.03273649298353121
+      },
+      "started_at": 1791805511.1885695,
+      "state": "COMPLETED",
+      "submitted_source_hash": "0558ffb748ba5412866f3f2a6c809d0124cd7c3e11d3cce115961ddec2b83358",
+      "unit": "midas-arena-job-b0e81322ee0d40cbb443b275.service",
+      "updated_at": 1791805512.7309003
+    },
+    {
+      "active_artifact": {
+        "identity": "model-5a0f86eceb8c4c689e85d285",
+        "kind": "models"
+      },
+      "budget": {
+        "cpu_cores": 1,
+        "max_artifact_mb": 1024,
+        "memory_mb": 4096,
+        "minimum_available_memory_mb": 2048,
+        "wall_seconds": 600
+      },
+      "completed_at": 1791805532.0526297,
+      "configuration": {
+        "dataset": null,
+        "director": null,
+        "kind": "severity",
+        "max_wall_seconds": 600,
+        "model_id": null,
+        "policy_search": null,
+        "rl": null,
+        "severity": {
+          "batch_size": 128,
+          "dataset_id": "dataset-f53981b7dd24c1521ce749b1",
+          "epochs": 80,
+          "family": "severity_mlp",
+          "hidden_size": 32,
+          "learning_rate": 0.001,
+          "max_wall_seconds": 600,
+          "patience": 12,
+          "resume_from": null,
+          "ridge_alpha": 1.0,
+          "seed": 11
+        },
+        "sweep": null,
+        "tournament": null,
+        "training": null
+      },
+      "created_at": 1791805510.0365236,
+      "elapsed_seconds": 20.48394526197808,
+      "error": null,
+      "exit_status": 0,
+      "job_id": "job-b66615ae3dae44b3a05a42f0",
+      "pid": 3339349,
+      "progress": {
+        "done": 55,
+        "total": 80
+      },
+      "result": {
+        "model_id": "model-5a0f86eceb8c4c689e85d285"
+      },
+      "runtime_profile": {
+        "artifact_bytes": 439852921,
+        "artifact_files": 31286,
+        "artifact_scan_seconds": 6.514880168309901,
+        "artifact_scans": 67,
+        "progress_publish_seconds": 0.4773542499751784
+      },
+      "started_at": 1791805522.6099694,
+      "state": "COMPLETED",
+      "submitted_source_hash": "0558ffb748ba5412866f3f2a6c809d0124cd7c3e11d3cce115961ddec2b83358",
+      "unit": "midas-arena-job-b66615ae3dae44b3a05a42f0.service",
+      "updated_at": 1791805532.0526295
+    },
+    {
+      "active_artifact": {
+        "identity": "model-265cbcc71f6847828c959882",
+        "kind": "models"
+      },
+      "budget": {
+        "cpu_cores": 1,
+        "max_artifact_mb": 1024,
+        "memory_mb": 4096,
+        "minimum_available_memory_mb": 2048,
+        "wall_seconds": 600
+      },
+      "completed_at": 1791805521.988627,
+      "configuration": {
+        "dataset": null,
+        "director": null,
+        "kind": "severity",
+        "max_wall_seconds": 600,
+        "model_id": null,
+        "policy_search": null,
+        "rl": null,
+        "severity": {
+          "batch_size": 128,
+          "dataset_id": "dataset-f53981b7dd24c1521ce749b1",
+          "epochs": 80,
+          "family": "severity_mlp",
+          "hidden_size": 32,
+          "learning_rate": 0.001,
+          "max_wall_seconds": 600,
+          "patience": 12,
+          "resume_from": null,
+          "ridge_alpha": 1.0,
+          "seed": 29
+        },
+        "sweep": null,
+        "tournament": null,
+        "training": null
+      },
+      "created_at": 1791805510.4064841,
+      "elapsed_seconds": 10.019561607972719,
+      "error": null,
+      "exit_status": 0,
+      "job_id": "job-f59802c1add140c8828513bf",
+      "pid": 3339362,
+      "progress": {
+        "done": 50,
+        "total": 80
+      },
+      "result": {
+        "model_id": "model-265cbcc71f6847828c959882"
+      },
+      "runtime_profile": {
+        "artifact_bytes": 439756334,
+        "artifact_files": 31281,
+        "artifact_scan_seconds": 5.1861565419822,
+        "artifact_scans": 53,
+        "progress_publish_seconds": 0.4284105956321582
+      },
+      "started_at": 1791805513.077864,
+      "state": "COMPLETED",
+      "submitted_source_hash": "0558ffb748ba5412866f3f2a6c809d0124cd7c3e11d3cce115961ddec2b83358",
+      "unit": "midas-arena-job-f59802c1add140c8828513bf.service",
+      "updated_at": 1791805521.9886267
     }
   ],
   "provenance": "SYNTHETIC / HYPOTHETICAL / ECONOMICALLY UNVERIFIED",

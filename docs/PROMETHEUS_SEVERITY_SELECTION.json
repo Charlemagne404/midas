@@ -1,0 +1,223 @@
+{
+  "analysis_version": "severity-selection-1",
+  "job_ids": [
+    "job-b0e81322ee0d40cbb443b275",
+    "job-b66615ae3dae44b3a05a42f0",
+    "job-f59802c1add140c8828513bf"
+  ],
+  "producer_sha256": "c5515241e3aca10e7b4a6345fc11d09623f74ec456f4b26551b62a097209f67e",
+  "source_hash": "0558ffb748ba5412866f3f2a6c809d0124cd7c3e11d3cce115961ddec2b83358",
+  "models": [
+    {
+      "model_id": "model-38a8da8c0d7a481d8d2d9771",
+      "family": "ridge",
+      "validation": {
+        "base_episodes": 99,
+        "by_execution": {
+          "conservative": {
+            "rmse": 2.5192699508612524,
+            "rows": 99
+          },
+          "optimistic": {
+            "rmse": 4.187398463328451,
+            "rows": 99
+          },
+          "standard": {
+            "rmse": 4.219705177952955,
+            "rows": 99
+          }
+        },
+        "by_family": {
+          "calm": {
+            "rmse": 1.3431790951306724,
+            "rows": 27
+          },
+          "deep": {
+            "rmse": 0.5561680706101155,
+            "rows": 63
+          },
+          "disappearing": {
+            "rmse": 5.898498327777675,
+            "rows": 45
+          },
+          "liquidity_shock": {
+            "rmse": 1.3103082656494351,
+            "rows": 39
+          },
+          "one_sided": {
+            "rmse": 2.2829679936439042,
+            "rows": 42
+          },
+          "thin": {
+            "rmse": 0.6656687817018616,
+            "rows": 33
+          },
+          "volatile": {
+            "rmse": 6.758746760151266,
+            "rows": 48
+          }
+        },
+        "episode_bootstrap_rmse_95": [
+          2.4446721601897874,
+          4.728191106587805
+        ],
+        "episode_rmse": 3.727686448046156,
+        "mae": 1.800053557154038,
+        "mean_observed_shares": 1.213905723905724,
+        "mean_predicted_shares": 0.9376324216395023,
+        "positive_frequency": 0.1111111111111111,
+        "positive_mae": 9.34347086739117,
+        "positive_rmse": 10.688652175289665,
+        "rmse": 3.7276864480461565,
+        "rows": 297,
+        "uncertainty_note": "Bootstrap resamples base groups; execution variants remain grouped. Zero-heavy labels require positive-outcome errors alongside aggregate metrics. No dollar loss or empirical-fill interpretation.",
+        "units": "shares"
+      },
+      "artifact_sha256": "ca75934b9db9a8ac0dbfdf17d8a0a3ef72a4110f64bb85c698819cf70a0bbfbb"
+    },
+    {
+      "model_id": "model-5a0f86eceb8c4c689e85d285",
+      "family": "severity_mlp",
+      "validation": {
+        "base_episodes": 99,
+        "by_execution": {
+          "conservative": {
+            "rmse": 2.476727954149499,
+            "rows": 99
+          },
+          "optimistic": {
+            "rmse": 4.187368867246987,
+            "rows": 99
+          },
+          "standard": {
+            "rmse": 4.085679763175726,
+            "rows": 99
+          }
+        },
+        "by_family": {
+          "calm": {
+            "rmse": 1.556735703214356,
+            "rows": 27
+          },
+          "deep": {
+            "rmse": 0.0952801910322872,
+            "rows": 63
+          },
+          "disappearing": {
+            "rmse": 5.610745087978237,
+            "rows": 45
+          },
+          "liquidity_shock": {
+            "rmse": 1.4498364372914463,
+            "rows": 39
+          },
+          "one_sided": {
+            "rmse": 2.3902873306508554,
+            "rows": 42
+          },
+          "thin": {
+            "rmse": 0.3645252506204293,
+            "rows": 33
+          },
+          "volatile": {
+            "rmse": 6.749669421319342,
+            "rows": 48
+          }
+        },
+        "episode_bootstrap_rmse_95": [
+          2.5449497819595943,
+          4.612037025250826
+        ],
+        "episode_rmse": 3.667924868209023,
+        "mae": 1.6811030396004207,
+        "mean_observed_shares": 1.213905723905724,
+        "mean_predicted_shares": 0.8772655380633032,
+        "positive_frequency": 0.1111111111111111,
+        "positive_mae": 9.079844514492788,
+        "positive_rmse": 10.287305554258813,
+        "rmse": 3.667924868209023,
+        "rows": 297,
+        "uncertainty_note": "Bootstrap resamples base groups; execution variants remain grouped. Zero-heavy labels require positive-outcome errors alongside aggregate metrics. No dollar loss or empirical-fill interpretation.",
+        "units": "shares"
+      },
+      "artifact_sha256": "98ab326cc6ebf2db708d430503b12afc92f4ce50f7c5f02a72ce8a06ce1f3689"
+    },
+    {
+      "model_id": "model-265cbcc71f6847828c959882",
+      "family": "severity_mlp",
+      "validation": {
+        "base_episodes": 99,
+        "by_execution": {
+          "conservative": {
+            "rmse": 2.47354004209978,
+            "rows": 99
+          },
+          "optimistic": {
+            "rmse": 4.185186309063474,
+            "rows": 99
+          },
+          "standard": {
+            "rmse": 4.069859258000152,
+            "rows": 99
+          }
+        },
+        "by_family": {
+          "calm": {
+            "rmse": 1.5214592910878055,
+            "rows": 27
+          },
+          "deep": {
+            "rmse": 0.08537676703070259,
+            "rows": 63
+          },
+          "disappearing": {
+            "rmse": 5.660912310399451,
+            "rows": 45
+          },
+          "liquidity_shock": {
+            "rmse": 1.4618389570312813,
+            "rows": 39
+          },
+          "one_sided": {
+            "rmse": 2.353593198429741,
+            "rows": 42
+          },
+          "thin": {
+            "rmse": 0.3983162801627054,
+            "rows": 33
+          },
+          "volatile": {
+            "rmse": 6.697849340891751,
+            "rows": 48
+          }
+        },
+        "episode_bootstrap_rmse_95": [
+          2.528140143234067,
+          4.614189392928617
+        ],
+        "episode_rmse": 3.660507212640204,
+        "mae": 1.6757935765152365,
+        "mean_observed_shares": 1.213905723905724,
+        "mean_predicted_shares": 0.8696735515816785,
+        "positive_frequency": 0.1111111111111111,
+        "positive_mae": 9.09011586977677,
+        "positive_rmse": 10.308842911460012,
+        "rmse": 3.660507212640204,
+        "rows": 297,
+        "uncertainty_note": "Bootstrap resamples base groups; execution variants remain grouped. Zero-heavy labels require positive-outcome errors alongside aggregate metrics. No dollar loss or empirical-fill interpretation.",
+        "units": "shares"
+      },
+      "artifact_sha256": "39af6e8c33e675de32f9aced1e0c8e9ee0f6de44f749ac5b5b7e703fc28776ac"
+    }
+  ],
+  "neural_mean_episode_rmse": 3.6642160404246136,
+  "neural_seed_rmse_range": [
+    3.660507212640204,
+    3.667924868209023
+  ],
+  "improvement_over_ridge_shares": 0.06347040762154244,
+  "practical_tolerance_shares": 0.1,
+  "selected_model_id": "model-38a8da8c0d7a481d8d2d9771",
+  "selection_partition": "validation",
+  "interpretation": "Preregistered descriptive fit selection only; final test remains unopened. Optimizer seeds share data, and arbitrary practical tolerance is not statistical significance. Shares predictions are not dollar loss or probability-gated policies."
+}

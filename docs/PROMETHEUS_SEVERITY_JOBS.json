@@ -1,0 +1,194 @@
+[
+  {
+    "active_artifact": {
+      "identity": "model-38a8da8c0d7a481d8d2d9771",
+      "kind": "models"
+    },
+    "budget": {
+      "cpu_cores": 1,
+      "max_artifact_mb": 1024,
+      "memory_mb": 4096,
+      "minimum_available_memory_mb": 2048,
+      "wall_seconds": 600
+    },
+    "completed_at": 1791805512.7309005,
+    "configuration": {
+      "dataset": null,
+      "director": null,
+      "kind": "severity",
+      "max_wall_seconds": 600,
+      "model_id": null,
+      "policy_search": null,
+      "rl": null,
+      "severity": {
+        "batch_size": 128,
+        "dataset_id": "dataset-f53981b7dd24c1521ce749b1",
+        "epochs": 80,
+        "family": "ridge",
+        "hidden_size": 32,
+        "learning_rate": 0.001,
+        "max_wall_seconds": 600,
+        "patience": 12,
+        "resume_from": null,
+        "ridge_alpha": 1.0,
+        "seed": 11
+      },
+      "sweep": null,
+      "tournament": null,
+      "training": null
+    },
+    "created_at": 1791805509.6549184,
+    "elapsed_seconds": 1.542434911010787,
+    "error": null,
+    "exit_status": 0,
+    "job_id": "job-b0e81322ee0d40cbb443b275",
+    "pid": 3339335,
+    "progress": {
+      "done": 1,
+      "total": 1
+    },
+    "result": {
+      "model_id": "model-38a8da8c0d7a481d8d2d9771"
+    },
+    "runtime_profile": {
+      "artifact_bytes": 439660822,
+      "artifact_files": 31276,
+      "artifact_scan_seconds": 0.29095664800843224,
+      "artifact_scans": 3,
+      "progress_publish_seconds": 0.03273649298353121
+    },
+    "started_at": 1791805511.1885695,
+    "state": "COMPLETED",
+    "submitted_source_hash": "0558ffb748ba5412866f3f2a6c809d0124cd7c3e11d3cce115961ddec2b83358",
+    "unit": "midas-arena-job-b0e81322ee0d40cbb443b275.service",
+    "updated_at": 1791805512.7309003
+  },
+  {
+    "active_artifact": {
+      "identity": "model-5a0f86eceb8c4c689e85d285",
+      "kind": "models"
+    },
+    "budget": {
+      "cpu_cores": 1,
+      "max_artifact_mb": 1024,
+      "memory_mb": 4096,
+      "minimum_available_memory_mb": 2048,
+      "wall_seconds": 600
+    },
+    "completed_at": 1791805532.0526297,
+    "configuration": {
+      "dataset": null,
+      "director": null,
+      "kind": "severity",
+      "max_wall_seconds": 600,
+      "model_id": null,
+      "policy_search": null,
+      "rl": null,
+      "severity": {
+        "batch_size": 128,
+        "dataset_id": "dataset-f53981b7dd24c1521ce749b1",
+        "epochs": 80,
+        "family": "severity_mlp",
+        "hidden_size": 32,
+        "learning_rate": 0.001,
+        "max_wall_seconds": 600,
+        "patience": 12,
+        "resume_from": null,
+        "ridge_alpha": 1.0,
+        "seed": 11
+      },
+      "sweep": null,
+      "tournament": null,
+      "training": null
+    },
+    "created_at": 1791805510.0365236,
+    "elapsed_seconds": 20.48394526197808,
+    "error": null,
+    "exit_status": 0,
+    "job_id": "job-b66615ae3dae44b3a05a42f0",
+    "pid": 3339349,
+    "progress": {
+      "done": 55,
+      "total": 80
+    },
+    "result": {
+      "model_id": "model-5a0f86eceb8c4c689e85d285"
+    },
+    "runtime_profile": {
+      "artifact_bytes": 439852921,
+      "artifact_files": 31286,
+      "artifact_scan_seconds": 6.514880168309901,
+      "artifact_scans": 67,
+      "progress_publish_seconds": 0.4773542499751784
+    },
+    "started_at": 1791805522.6099694,
+    "state": "COMPLETED",
+    "submitted_source_hash": "0558ffb748ba5412866f3f2a6c809d0124cd7c3e11d3cce115961ddec2b83358",
+    "unit": "midas-arena-job-b66615ae3dae44b3a05a42f0.service",
+    "updated_at": 1791805532.0526295
+  },
+  {
+    "active_artifact": {
+      "identity": "model-265cbcc71f6847828c959882",
+      "kind": "models"
+    },
+    "budget": {
+      "cpu_cores": 1,
+      "max_artifact_mb": 1024,
+      "memory_mb": 4096,
+      "minimum_available_memory_mb": 2048,
+      "wall_seconds": 600
+    },
+    "completed_at": 1791805521.988627,
+    "configuration": {
+      "dataset": null,
+      "director": null,
+      "kind": "severity",
+      "max_wall_seconds": 600,
+      "model_id": null,
+      "policy_search": null,
+      "rl": null,
+      "severity": {
+        "batch_size": 128,
+        "dataset_id": "dataset-f53981b7dd24c1521ce749b1",
+        "epochs": 80,
+        "family": "severity_mlp",
+        "hidden_size": 32,
+        "learning_rate": 0.001,
+        "max_wall_seconds": 600,
+        "patience": 12,
+        "resume_from": null,
+        "ridge_alpha": 1.0,
+        "seed": 29
+      },
+      "sweep": null,
+      "tournament": null,
+      "training": null
+    },
+    "created_at": 1791805510.4064841,
+    "elapsed_seconds": 10.019561607972719,
+    "error": null,
+    "exit_status": 0,
+    "job_id": "job-f59802c1add140c8828513bf",
+    "pid": 3339362,
+    "progress": {
+      "done": 50,
+      "total": 80
+    },
+    "result": {
+      "model_id": "model-265cbcc71f6847828c959882"
+    },
+    "runtime_profile": {
+      "artifact_bytes": 439756334,
+      "artifact_files": 31281,
+      "artifact_scan_seconds": 5.1861565419822,
+      "artifact_scans": 53,
+      "progress_publish_seconds": 0.4284105956321582
+    },
+    "started_at": 1791805513.077864,
+    "state": "COMPLETED",
+    "submitted_source_hash": "0558ffb748ba5412866f3f2a6c809d0124cd7c3e11d3cce115961ddec2b83358",
+    "unit": "midas-arena-job-f59802c1add140c8828513bf.service",
+    "updated_at": 1791805521.9886267
+  }
+]

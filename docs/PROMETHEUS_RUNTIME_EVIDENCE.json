@@ -1,5 +1,5 @@
 {
-  "checked_at": 1791804242.5696583,
+  "checked_at": 1791806404.1497831,
   "health": {
     "status": "READY",
     "startup_status": "READY",
@@ -8,8 +8,8 @@
     "live_execution": false,
     "paper_recovery": {
       "status": "CHECKPOINT_VERIFIED",
-      "journal_events": 32174,
-      "revision": 32173
+      "journal_events": 33345,
+      "revision": 33344
     },
     "laboratory": {
       "status": "READY",
@@ -18,8 +18,8 @@
       "recovery_errors": []
     }
   },
-  "arena_model_artifacts": 18,
-  "arena_fitted_models": 17,
+  "arena_model_artifacts": 21,
+  "arena_fitted_models": 20,
   "arena_tournaments": 12,
   "recorded_public_sources": [
     {

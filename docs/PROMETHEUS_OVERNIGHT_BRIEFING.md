@@ -2,6 +2,22 @@
 
 ## Current checkpoint (supersedes running-job notes below)
 
+### Latest severity checkpoint
+
+Three real residual-share regressors completed, including two PyTorch fits of
+55 and 50 epochs. Ridge was selected: the neural RMSE gain missed the declared
+0.10-share practical threshold. Positive-case errors remain about nine shares,
+and MAE is worse than the zero control. No policy benefit or tail guarantee is
+claimed, and all three regression final tests remain unopened.
+
+The registry now contains 21 artifacts / 20 fitted models. The deployed UI shows
+shares-based metrics and controls; severity forecasts are excluded from probability
+gates. Full regression passed 321 tests / one skip; focused severity and frontend
+checks pass. Live browser inspection has no page errors. API is READY, the original
+archive remains unchanged, and no research workers are active. The full goal is
+active; independent severity evaluation and real economic reruns remain next.
+
+
 ### Latest completed evidence checkpoint
 
 Both the paired league and public capture are terminal; no research jobs run.

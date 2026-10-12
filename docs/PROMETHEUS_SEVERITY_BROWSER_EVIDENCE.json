@@ -1,0 +1,11 @@
+{
+  "checked_at": 1791806404.1757853,
+  "model_id": "model-38a8da8c0d7a481d8d2d9771",
+  "url": "http://127.0.0.1:5173",
+  "target_visible": true,
+  "validation_controls_visible": true,
+  "probability_diagnostics_excluded": true,
+  "page_errors": [],
+  "screenshot": "/tmp/midas-severity-live.png",
+  "scope": "Read-only Chromium inspection of deployed model registry against real completed model artifacts."
+}
