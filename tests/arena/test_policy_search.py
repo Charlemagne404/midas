@@ -64,6 +64,16 @@ def test_fresh_test_rejects_already_registered_seeds(tmp_path):
     with pytest.raises(ValueError, match="overlaps"):
         novel_seeds(tmp_path, 100, 30)
     novel_seeds(tmp_path, 200, 30)
+    atomic_json(
+        tmp_path / "datasets" / "legacy" / "manifest.json", {"spec": {"seed": 500, "episodes": 100}}
+    )
+    atomic_json(
+        tmp_path / "tournaments" / "legacy" / "manifest.json",
+        {"configuration": {"dataset_id": "legacy"}},
+    )
+    with pytest.raises(ValueError, match="overlaps"):
+        novel_seeds(tmp_path, 510, 30)
+    novel_seeds(tmp_path, 700, 30)
 
 
 def test_real_search_preserves_models_and_freezes_selected_gate(tmp_path):

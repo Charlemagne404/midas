@@ -88,7 +88,14 @@ def novel_seeds(root: Path, seed: int, episodes: int) -> None:
     specs = [json.loads(p.read_text())["spec"] for p in root.glob("datasets/*/manifest.json")]
     for file in root.glob("tournaments/*/manifest.json"):
         record = json.loads(file.read_text())
-        specs.append(record["evaluation_generator"])
+        configuration = record["configuration"]
+        generator = record.get("evaluation_generator") or configuration.get("challenge")
+        if generator is None:
+            dataset_file = (
+                artifact_path(root, "datasets", configuration["dataset_id"]) / "manifest.json"
+            )
+            generator = json.loads(dataset_file.read_text())["spec"]
+        specs.append(generator)
     for file in root.glob("tournaments/*/preparing.json"):
         challenge = json.loads(file.read_text())["configuration"].get("challenge")
         if challenge:

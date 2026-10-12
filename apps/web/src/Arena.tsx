@@ -1628,7 +1628,7 @@ export function Arena() {
                 <p>
                   {search.selection
                     ? search.selection.gate
-                      ? `Selected maximum risk ${search.selection.gate.threshold}, ${search.selection.gate.size} sizing.`
+                      ? `Selected maximum predicted risk ${search.selection.gate.threshold}, ${search.selection.gate.size} sizing.`
                       : 'Selected no-trade.'
                     : 'Selection pending validation outcomes.'}
                 </p>

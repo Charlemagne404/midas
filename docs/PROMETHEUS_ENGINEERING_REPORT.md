@@ -718,3 +718,22 @@ change. The earlier full gate remains 288 passed / one skip; it preceded the
 ownership fix and the additional API-count regression. Final Ruff/mypy and
 frontend build/lint pass. Source and weights are ready for the preregistered
 production comparison; no production search result is claimed yet.
+
+### Legacy provenance preflight correction
+
+The first production search job `job-39b5b0c0eac945d298b5c666` failed before any
+simulation, with `KeyError: evaluation_generator`. Its supervised handle is
+terminal and its full error/source record is retained. The earliest completed
+tournament manifests predate that field. The novelty checker now derives their
+seed ranges from the referenced frozen dataset (or explicit challenge config),
+rather than skipping them or modifying historical results. A regression covers
+this legacy format and confirms reused seeds still reject. Direct preflight
+against the actual archive confirms seed block 93071–93170 remains unused.
+`PROMETHEUS_POLICY_SEARCH_FAILED_JOB.json` preserves the failure; replacement
+source gates and the new supervised job are pending below.
+
+Legacy correction gate: **14 focused search/API/job tests passed** in 82.30 seconds;
+Ruff/mypy pass, and final TypeScript/ESLint pass. The failed job has no completed
+research output and consumed no validation/test scenario. Source is ready for
+replacement submission without changing the preregistered parameters or seed
+block. Historical tournament/model bytes remain unchanged.
