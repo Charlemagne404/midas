@@ -105,6 +105,13 @@ def verify(root: Path, identity: str) -> dict:
         for p in policies.values()
     ):
         raise ValueError("Frozen model hashes changed")
+    if any(
+        p.completion_manifest is not None
+        and manifest["model_artifact_hashes"][p.completion_manifest["model_id"]]
+        != p.completion_manifest["artifact_sha256"]
+        for p in policies.values()
+    ):
+        raise ValueError("Frozen completion model hashes changed")
     return {
         "tournament_id": identity,
         "replays_verified": len(rows),

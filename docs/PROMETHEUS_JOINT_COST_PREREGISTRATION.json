@@ -1,0 +1,159 @@
+{
+  "created_at": 1791844921.0532694,
+  "source_hash": "3a811b3c9e85a8ed4a813587b4ee932188b4557ec00cf29651b0c0e33b8e93a3",
+  "configuration": {
+    "kind": "tournament",
+    "dataset": null,
+    "training": null,
+    "severity": null,
+    "cost": null,
+    "recovery": null,
+    "model_id": null,
+    "rl": null,
+    "tournament": {
+      "purpose": "research",
+      "dataset_id": "dataset-b5c3dbdac9284f292a949b65",
+      "model_ids": [],
+      "gates": [],
+      "cost_gates": [
+        {
+          "model_id": "model-a7f99c63bd4f4cd4b22c57c6",
+          "max_cost_usd": "0.30",
+          "margin_usd": "0.10",
+          "completion_model_id": null,
+          "completion_threshold": 0.9
+        },
+        {
+          "model_id": "model-a7f99c63bd4f4cd4b22c57c6",
+          "max_cost_usd": "0.30",
+          "margin_usd": "0.10",
+          "completion_model_id": "model-2d7322c242794ab1b974dce8",
+          "completion_threshold": 0.0
+        },
+        {
+          "model_id": "model-a7f99c63bd4f4cd4b22c57c6",
+          "max_cost_usd": "0.30",
+          "margin_usd": "0.10",
+          "completion_model_id": "model-2d7322c242794ab1b974dce8",
+          "completion_threshold": 0.9
+        }
+      ],
+      "execution_models": [
+        "optimistic",
+        "standard",
+        "conservative"
+      ],
+      "max_episodes": 100,
+      "threshold": 0.5,
+      "tail_loss_weight": 1.0,
+      "seed": 991,
+      "adversarial": false,
+      "minimum_champion_episodes": 2000,
+      "challenge": {
+        "version": "synthetic-decision-1",
+        "episodes": 100,
+        "seed": 363071,
+        "split_seed": 1977,
+        "families": [
+          "thin",
+          "deep",
+          "calm",
+          "liquidity_shock",
+          "volatile",
+          "one_sided"
+        ],
+        "execution_models": [
+          "optimistic",
+          "standard",
+          "conservative"
+        ],
+        "observation_latency_ms": 100,
+        "label_target": "completion",
+        "decision_scope": "first_admitted",
+        "retain_execution_costs": true,
+        "costs": {
+          "version": "explicit-costs-1",
+          "operating_per_fill": "0.01",
+          "redemption_cost": "0.02",
+          "annual_financing_rate": "0.05",
+          "collateral_value_factor": "1",
+          "collateral_route_verified": false,
+          "assumptions": [
+            "Costs are user estimates, not observed charges",
+            "No automatic complete-set merge",
+            "Resolution and spendable proceeds are separated by configured delay",
+            "No empirically calibrated fill probability or queue priority"
+          ]
+        }
+      },
+      "partition": "test",
+      "unsupported_input_policy": "abstain",
+      "economic_regime": null
+    },
+    "sweep": null,
+    "director": null,
+    "policy_search": null,
+    "max_wall_seconds": 1800
+  },
+  "source_groups": 100,
+  "correlated_variants": 3900,
+  "hypothesis": "Completion-score filtering may remove residual-loss paths that friction filtering retained; friction value is evaluated separately inside each completion condition.",
+  "controls": {
+    "plain": {
+      "forecast": "cost-forecast-7cd3b264b52c8cd8",
+      "quoted": "cost-quoted-7cd3b264b52c8cd8",
+      "scope": "cost-scope-7cd3b264b52c8cd8"
+    },
+    "completion_support_only": {
+      "forecast": "cost-forecast-cf239b4852b9b933",
+      "quoted": "cost-quoted-cf239b4852b9b933",
+      "scope": "cost-scope-cf239b4852b9b933"
+    },
+    "completion_threshold_09": {
+      "forecast": "cost-forecast-a823d06607c620b2",
+      "quoted": "cost-quoted-a823d06607c620b2",
+      "scope": "cost-scope-a823d06607c620b2"
+    }
+  },
+  "primary_comparisons": [
+    [
+      "completion_threshold_09.scope",
+      "completion_support_only.scope"
+    ],
+    [
+      "completion_threshold_09.forecast",
+      "completion_threshold_09.scope"
+    ],
+    [
+      "completion_threshold_09.forecast",
+      "completion_threshold_09.quoted"
+    ],
+    [
+      "completion_threshold_09.forecast",
+      "no_trade"
+    ]
+  ],
+  "fixed_models": {
+    "model-a7f99c63bd4f4cd4b22c57c6": {
+      "artifact_sha256": "88a2d60ba99b21c15317123836bc8183fad43b0a33586e77f1b86ea89c45208e",
+      "dataset_id": "dataset-b5c3dbdac9284f292a949b65",
+      "dataset_sha256": "7f1857d470144c6a68d5ff2f5a3e480016514e3dccb4f47a990f79e881a20179"
+    },
+    "model-2d7322c242794ab1b974dce8": {
+      "artifact_sha256": "cc13b3a802e15dbebb2cc7858efe69a5a069f25654ea4ee822c3611bc7149d06",
+      "dataset_id": "dataset-d8c1593a2d281e1c9e430952",
+      "dataset_sha256": "80a75480aae4b790a1b2ace8b84a731cddad82a71c1be395caf9ec6dd58d82b9"
+    }
+  },
+  "weights_or_threshold_changes_after_challenge": false,
+  "promotion": false,
+  "artifact_usage_bytes": 735036495,
+  "limitations": [
+    "Synthetic observations, hypothetical execution and estimated costs only.",
+    "Separate frozen cohorts; completion cohort did not train on explicit cost settings. This is a declared distribution shift, not established calibration.",
+    "Training-range intersection does not guarantee joint support.",
+    "Threshold zero preserves the same two-model input contract and isolates additional score rejection within matched support.",
+    "Different action paths may consume different random draws; bootstrap source groups.",
+    "No retuning of opened seed313071 challenge or cost-model final tests."
+  ]
+}

@@ -321,12 +321,34 @@ def run_tournament(root: Path, spec: TournamentSpec, progress: Any = None) -> di
             "rows_sha256": manifest["rows_sha256"],
             "label_target": "initial_position_friction_usd",
         }
+        if model.completion_manifest is not None:
+            completion = model.completion_manifest
+            completion_id = completion["model_id"]
+            if completion["dataset_id"] != spec.dataset_id and spec.challenge is None:
+                raise ValueError("Cross-cohort joint completion requires a fresh challenge")
+            artifacts[completion_id] = completion["artifact_sha256"]
+            model_datasets[completion_id] = {
+                **observation_lineage(root, completion["dataset_id"]),
+                "rows_sha256": completion["dataset_sha256"],
+                "label_target": "completion",
+                "evaluation_note": "Separately trained frozen cohort evaluated on a fresh common challenge",
+            }
         for kind in ("forecast", "quoted", "scope"):
             policy = gate.identity(kind)
             policies[policy] = model
             cost_bindings[policy] = {"specification": gate.model_dump(mode="json"), "kind": kind}
     referenced_models = tuple(
-        dict.fromkeys((*referenced_models, *(g.model_id for g in spec.cost_gates)))
+        dict.fromkeys(
+            (
+                *referenced_models,
+                *(g.model_id for g in spec.cost_gates),
+                *(
+                    g.completion_model_id
+                    for g in spec.cost_gates
+                    if g.completion_model_id is not None
+                ),
+            )
+        )
     )
     identity = "tournament-" + uuid.uuid4().hex[:24]
     directory = artifact_path(root, "tournaments", identity)
@@ -504,6 +526,11 @@ def run_tournament(root: Path, spec: TournamentSpec, progress: Any = None) -> di
                     "inference_latency_ms": float(np.mean(latency)),
                     "policy_version": digest(
                         [cost_bindings[policy], artifacts[model.specification.model_id]]
+                        + (
+                            [artifacts[model.specification.completion_model_id]]
+                            if model.specification.completion_model_id is not None
+                            else []
+                        )
                     )
                     if policy in cost_bindings
                     else digest(
@@ -608,7 +635,11 @@ def run_tournament(root: Path, spec: TournamentSpec, progress: Any = None) -> di
                     or (v["policy"] in bindings and bindings[v["policy"]].model_id == model_id)
                     or (
                         v["policy"] in cost_bindings
-                        and cost_bindings[v["policy"]]["specification"]["model_id"] == model_id
+                        and model_id
+                        in {
+                            cost_bindings[v["policy"]]["specification"]["model_id"],
+                            cost_bindings[v["policy"]]["specification"].get("completion_model_id"),
+                        }
                     )
                 ],
             }

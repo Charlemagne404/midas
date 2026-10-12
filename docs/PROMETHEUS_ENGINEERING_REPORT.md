@@ -1910,3 +1910,29 @@ reports and analysis tools. API overview exposes43 models,23 tournaments,
 57 terminal jobs and46 findings. Actual production browser inspection found the
 new finding in Research Findings with zero page errors. All research workers and
 the full regression process are terminal. Proceed to joint-gate research design.
+
+## Joint completion and friction preference foundation
+
+CostGateSpec now optionally binds a frozen first-admitted completion classifier.
+The supported input intersection is applied to all three cost roles. Completion
+score must meet a fixed threshold before any friction preference; mathematical
+eligibility, first-position scope and hard broker risk admission still apply.
+Legacy cost preference identities are unchanged when no completion model exists.
+Tournament provenance, policy versions and both models' registry histories bind
+both weight hashes and training datasets. Cross-cohort reuse requires a fresh
+challenge, preventing evaluation against either cohort's old partitions.
+
+The UI adds completion-model/threshold selection and an explicit threshold-zero
+control using the same input ranges. A fresh preregistered study compares plain,
+two-model support-only, and threshold0.9 preferences, each forecast/quoted/scope,
+plus four deterministic controls:100 fresh groups /3,900 correlated variants.
+Seed363071 uses six shared training-family categories, original explicit costs,
+cap0.30 and buffer0.10. Completion model is validation-selected logistic
+model-2d7322c242794ab1b974dce8; cost model remains the selected corrected MLP.
+No additional fitting, final-test opening or promotion is planned. The completion
+cohort used original costs, so this declared shift is not a calibration claim.
+
+Initial six focused policy tests passed38.27 seconds; repeat with investigation
+coverage passed eight tests in37.41 seconds. Frontend15 tests, typecheck/lint/build, strict typing and Ruff
+pass. A read-only check with the actual two production artifacts proves that
+cross-cohort evaluation without a fresh challenge rejects before simulation.

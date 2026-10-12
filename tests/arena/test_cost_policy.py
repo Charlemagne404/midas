@@ -6,6 +6,8 @@ from midas.arena.cost_policy import CostGateSpec, CostPolicy
 from midas.arena.costs import CostSpec, train
 from midas.arena.datasets import DatasetSpec, build, load
 from midas.arena.features import FEATURES
+from midas.arena.supervised import TrainingSpec
+from midas.arena.supervised import train as train_classifier
 from midas.arena.tournaments import TournamentSpec, run_tournament
 from midas.laboratory.spec import Costs, generate
 from midas.paper.broker import ExecutionModel
@@ -114,6 +116,62 @@ def test_real_cost_tournament_has_matching_scope_controls_and_replays(prepared):
                     assert decision["explanation"]["input_support"]["supported"] == [True]
     with pytest.raises(ValueError, match="Duplicate cost"):
         TournamentSpec(dataset_id=data["dataset_id"], cost_gates=(gate, gate))
+
+
+def test_joint_completion_preference_and_matched_tournament(prepared):
+    root, data, model, costs = prepared
+    completion = train_classifier(
+        root, TrainingSpec(dataset_id=data["dataset_id"], family="logistic")
+    )
+    plain = CostGateSpec(model_id=model["model_id"])
+    joint = CostGateSpec(model_id=model["model_id"], completion_model_id=completion["model_id"])
+    assert joint.identity("forecast") != plain.identity("forecast")
+    policy = CostPolicy(root, joint)
+    _, rows = load(root, data["dataset_id"])
+    row = next(r for r in rows if r["partition"] == "train")
+    scenario = generate(
+        row["family"], row["seed"], ExecutionModel.preset(row["execution_model"])
+    ).model_copy(update={"costs": costs})
+    from midas.arena.datasets import first_decision
+
+    observation = first_decision(scenario).observe()
+    policy.completion.predict = lambda _: [0.8]
+    assert policy.decide(row["features"], True, observation, scenario, False, "scope")[0] == 0
+    policy.completion.predict = lambda _: [0.95]
+    assert policy.decide(row["features"], True, observation, scenario, False, "scope")[0] == 1
+    policy.completion.support = lambda _: {"supported": [False], "violations": [["ask_sum"]]}
+    action, details = policy.decide(row["features"], True, observation, scenario, False, "scope")
+    assert action == 0 and "completion:ask_sum" in details["input_support"]["violations"][0]
+    challenge = DatasetSpec(
+        episodes=30,
+        seed=343071,
+        decision_scope="first_admitted",
+        costs=costs,
+        retain_execution_costs=True,
+    )
+    report = run_tournament(
+        root,
+        TournamentSpec(
+            dataset_id=data["dataset_id"],
+            cost_gates=(plain, joint),
+            challenge=challenge,
+            max_episodes=2,
+            minimum_champion_episodes=2000,
+        ),
+    )
+    assert report["variants"] == 2 * 3 * 10
+    assert completion["model_id"] in report["model_artifact_hashes"]
+    assert report["model_dataset_bindings"][completion["model_id"]]["label_target"] == "completion"
+    from scripts.verify_cost_policy import verify
+
+    assert verify(root, report["tournament_id"])["replays_verified"] == 60
+    updated = json.loads((root / "models" / completion["model_id"] / "manifest.json").read_text())
+    assert len(updated["policy_evaluations"][-1]["gate_metrics"]) == 3
+
+
+def test_legacy_cost_preference_identity_is_preserved():
+    gate = CostGateSpec(model_id="model-a7f99c63bd4f4cd4b22c57c6")
+    assert gate.identity("forecast") == "cost-forecast-7cd3b264b52c8cd8"
 
 
 def test_cost_preference_cannot_bypass_broker_emergency_stop(prepared):

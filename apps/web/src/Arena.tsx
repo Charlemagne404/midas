@@ -59,7 +59,12 @@ type Dataset = {
   dataset_id: string;
   label_target?: string;
   execution_cost_label?: string;
-  spec?: { costs?: Record<string, unknown>; families?: string[]; observation_latency_ms?: number };
+  spec?: {
+    costs?: Record<string, unknown>;
+    families?: string[];
+    observation_latency_ms?: number;
+    decision_scope?: string;
+  };
   decision_scope?: string;
   rows: number;
   eligible_base_episodes: number;
@@ -164,7 +169,16 @@ type Tournament = {
   policy_bindings?: Record<string, { model_id: string; threshold: number; size: string }>;
   cost_policy_bindings?: Record<
     string,
-    { kind: string; specification: { model_id: string; max_cost_usd: string; margin_usd: string } }
+    {
+      kind: string;
+      specification: {
+        model_id: string;
+        max_cost_usd: string;
+        margin_usd: string;
+        completion_model_id?: string | null;
+        completion_threshold?: number;
+      };
+    }
   >;
   model_dataset_bindings?: Record<string, { dataset_id: string; label_target: string }>;
   tournament_id: string;
@@ -378,6 +392,8 @@ export function Arena() {
   const [costPreferenceCap, setCostPreferenceCap] = useState('0.30');
   const [costPreferenceMargin, setCostPreferenceMargin] = useState('0.10');
   const [costChallengeSeed, setCostChallengeSeed] = useState(313071);
+  const [costCompletionModel, setCostCompletionModel] = useState('');
+  const [costCompletionThreshold, setCostCompletionThreshold] = useState(0.9);
   const [message, setMessage] = useState('');
   const overview = useQuery({
     queryKey: ['arena'],
@@ -1474,6 +1490,42 @@ export function Arena() {
                   onChange={(event) => setCostChallengeSeed(Number(event.target.value))}
                 />
               </label>
+              <label>
+                Completion model for joint comparison
+                <select
+                  value={costCompletionModel}
+                  onChange={(event) => setCostCompletionModel(event.target.value)}
+                >
+                  <option value="">Cost preference only</option>
+                  {data?.models
+                    .filter(
+                      (entry) =>
+                        !isRegression(entry) &&
+                        !['ppo', 'heuristic'].includes(entry.family) &&
+                        (entry.label_target ?? 'completion') === 'completion' &&
+                        data.datasets.find((dataset) => dataset.dataset_id === entry.dataset_id)
+                          ?.spec?.decision_scope === 'first_admitted',
+                    )
+                    .map((entry) => (
+                      <option key={entry.model_id} value={entry.model_id}>
+                        {entry.family} · {entry.model_id}
+                      </option>
+                    ))}
+                </select>
+              </label>
+              {costCompletionModel && (
+                <label>
+                  Minimum predicted completion
+                  <input
+                    type="number"
+                    min="0"
+                    max="1"
+                    step="0.01"
+                    value={costCompletionThreshold}
+                    onChange={(event) => setCostCompletionThreshold(Number(event.target.value))}
+                  />
+                </label>
+              )}
               <button
                 disabled={!costPolicyModel || submit.isPending}
                 onClick={() =>
@@ -1489,6 +1541,28 @@ export function Arena() {
                             max_cost_usd: costPreferenceCap,
                             margin_usd: costPreferenceMargin,
                           },
+                          ...(costCompletionModel
+                            ? [
+                                ...(costCompletionThreshold > 0
+                                  ? [
+                                      {
+                                        model_id: costPolicyModel?.model_id,
+                                        max_cost_usd: costPreferenceCap,
+                                        margin_usd: costPreferenceMargin,
+                                        completion_model_id: costCompletionModel,
+                                        completion_threshold: 0,
+                                      },
+                                    ]
+                                  : []),
+                                {
+                                  model_id: costPolicyModel?.model_id,
+                                  max_cost_usd: costPreferenceCap,
+                                  margin_usd: costPreferenceMargin,
+                                  completion_model_id: costCompletionModel,
+                                  completion_threshold: costCompletionThreshold,
+                                },
+                              ]
+                            : []),
                         ],
                         max_episodes: 100,
                         minimum_champion_episodes: 2000,
@@ -1515,7 +1589,9 @@ export function Arena() {
             <p className="lab-note">
               Cost comparisons include forecast, quoted-cost and matching first-position controls.
               The buffer is a research preference, not a calibrated confidence bound. Mathematical
-              edge and broker risk admission remain required.
+              edge and broker risk admission remain required. Joint comparisons add the same three
+              roles with a fixed completion threshold and a control using the same input ranges with
+              threshold zero; predicted completion is not a guarantee of fills or bounded loss.
             </p>
             {tournament.data && (
               <>
@@ -1573,6 +1649,29 @@ export function Arena() {
                                   tournament.data.cost_policy_bindings[entry.policy].specification
                                     .margin_usd
                                 }
+                                {tournament.data.cost_policy_bindings[entry.policy].specification
+                                  .completion_model_id && (
+                                  <>
+                                    {' '}
+                                    · completion ≥{' '}
+                                    {
+                                      tournament.data.cost_policy_bindings[entry.policy]
+                                        .specification.completion_threshold
+                                    }{' '}
+                                    <button
+                                      className="text-button"
+                                      onClick={() => {
+                                        setModelId(
+                                          tournament.data!.cost_policy_bindings![entry.policy]
+                                            .specification.completion_model_id!,
+                                        );
+                                        setTab('Model registry');
+                                      }}
+                                    >
+                                      Inspect completion model
+                                    </button>
+                                  </>
+                                )}
                               </small>
                             )}
                             {tournament.data?.policy_bindings?.[entry.policy] && (
