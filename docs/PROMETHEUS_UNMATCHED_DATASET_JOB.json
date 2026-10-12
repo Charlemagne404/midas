@@ -1,1 +1,59 @@
-{"budget":{"cpu_cores":1,"max_artifact_mb":1024,"memory_mb":4096,"minimum_available_memory_mb":2048,"wall_seconds":900},"completed_at":1791784063.3446,"configuration":{"dataset":{"episodes":1001,"execution_models":["optimistic","standard","conservative"],"families":["calm","volatile","thin","deep","one_sided","disappearing","liquidity_shock"],"label_target":"unmatched","observation_latency_ms":100,"seed":62070,"split_seed":1977,"version":"synthetic-decision-1"},"director":null,"kind":"dataset","max_wall_seconds":900,"model_id":null,"rl":null,"sweep":null,"tournament":null,"training":null},"created_at":1791783968.3443847,"elapsed_seconds":93.48426545600523,"error":"Cancellation requested; completed artifacts retained","exit_status":130,"job_id":"job-76d27de1b74f4ccd9d6b278d","pid":2977916,"progress":{"done":384,"total":1001},"result":null,"started_at":1791783969.8604364,"state":"CANCELLED","submitted_source_hash":"af269e1403b15c004500944178af4bfd00d2dcb1dd3861321d5e02f6c0759d6b","unit":"midas-arena-job-76d27de1b74f4ccd9d6b278d.service","updated_at":1791784063.3445997}
+{
+  "job_id": "job-95a47ccd32b246a982cc722f",
+  "configuration": {
+    "dataset": {
+      "decision_scope": "first_admitted",
+      "episodes": 1001,
+      "execution_models": [
+        "optimistic",
+        "standard",
+        "conservative"
+      ],
+      "families": [
+        "calm",
+        "volatile",
+        "thin",
+        "deep",
+        "one_sided",
+        "disappearing",
+        "liquidity_shock"
+      ],
+      "label_target": "unmatched",
+      "observation_latency_ms": 100,
+      "seed": 62070,
+      "split_seed": 1977,
+      "version": "synthetic-decision-1"
+    },
+    "director": null,
+    "kind": "dataset",
+    "max_wall_seconds": 900,
+    "model_id": null,
+    "rl": null,
+    "sweep": null,
+    "tournament": null,
+    "training": null
+  },
+  "state": "RUNNING",
+  "created_at": 1791784470.5588233,
+  "updated_at": 1791784521.9554102,
+  "progress": {
+    "done": 174,
+    "total": 1001
+  },
+  "error": null,
+  "result": null,
+  "unit": "midas-arena-job-95a47ccd32b246a982cc722f.service",
+  "submitted_source_hash": "2ade478673ae5b9368f97c43ed4ad5191aa517b213a7adb46dad9cd8f07f155b",
+  "budget": {
+    "cpu_cores": 1,
+    "max_artifact_mb": 1024,
+    "memory_mb": 4096,
+    "minimum_available_memory_mb": 2048,
+    "wall_seconds": 900
+  },
+  "planned_dataset_id": "dataset-f53981b7dd24c1521ce749b1",
+  "elapsed_seconds": 49.89054113300517,
+  "pid": 2986562,
+  "started_at": 1791784472.0649745,
+  "observed_at": 1791784521.9762292
+}

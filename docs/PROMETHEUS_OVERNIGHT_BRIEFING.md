@@ -263,3 +263,13 @@ families, two-seed logistic/neural selection and 100 genuinely new challenge
 identities. Selection uses validation only and the probability threshold stays
 fixed at 0.5. Actual job identities and final gates follow in the latest report;
 no campaign completion is claimed until durable artifacts prove it.
+
+Latest amended gate: **279 Python tests passed / one PostgreSQL skip**; browser
+workflow, frontend build/lint, Ruff and strict mypy pass. Source is committed as
+`4cf3079`. The revised dataset job `job-95a47ccd32b246a982cc722f` is actively
+building 1001 episodes; director `job-a9f4533b62e14baf8b8bbb1c` is supervised and
+queued behind it. The director will train four models and run two matched
+100-group challenges, then stop. Both handles were confirmed live; aggregate
+research process memory was about 220 MiB, with one serialized CPU worker.
+No new campaign result is claimed yet. Inspect/cancel from the Arena jobs panel.
+Keep Arena Python source frozen until these jobs finish.

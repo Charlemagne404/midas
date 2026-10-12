@@ -492,3 +492,44 @@ Scope-correction gate: full Python regression **279 passed / one PostgreSQL skip
 build/lint pass; updated browser workflow passed. The first-admitted sampler is
 ready for the amended bounded campaign. Source will remain frozen until its
 supervised jobs finish.
+
+## Active amended risk campaign — resumable handoff
+
+Source `4cf3079` is frozen for supervised execution. Dataset job
+`job-95a47ccd32b246a982cc722f` is producing
+`dataset-f53981b7dd24c1521ce749b1`; the inspected systemd handle was ACTIVE with
+MainPID 2986562, 174/1001 episodes, about 112 MiB memory. It stops at 1001 episodes
+or a 900-second wall budget, cancellation, pressure failure or artifact cap.
+
+Director job `job-a9f4533b62e14baf8b8bbb1c` has a verified ACTIVE queued handle
+(MainPID 2987310, about 108 MiB), waiting for the same worker lease. It refers to
+the deterministic planned dataset ID. If dataset publication fails, the director
+must fail visibly; it cannot manufacture completed data. Its 3600-second wall
+budget includes queue time. Once admitted it runs four validation-only fits and
+two 100-group/three-execution challenges, fixed threshold 0.5, then terminates.
+The two challenges share the same new identities and must not be counted as
+200 independent groups. No final outcome can alter parameters or thresholds.
+
+Both jobs use one serialized compute worker, CPUQuota 100%, per-unit MemoryMax
+4 GiB, host available-memory floor 2 GiB and Arena artifact cap 1 GiB. Both
+processes were confirmed live; no observation timeout was treated as completion.
+API remains READY after snapshot verification and web remains active. Protected
+archive logical digest and ownership were reverified unchanged earlier this turn.
+
+Inspect progress in the Arena or these JSON artifacts:
+`PROMETHEUS_UNMATCHED_DATASET_JOB.json`, `PROMETHEUS_UNMATCHED_DIRECTOR_JOB.json`.
+Authoritative current records are in `data/arena/jobs/<job-id>/job.json`; logs are
+`journalctl --user -u midas-arena-<job-id>.service`. Safe cancellation is available
+in the Arena or POST `/api/arena/jobs/<job-id>/cancel`. If cancelling the upstream
+build, also cancel the queued downstream plan. Partial checkpoints remain under
+`data/arena/datasets`; supervised job source snapshots remain in each job folder.
+
+Next turn: inspect BOTH exact supervisor handles and read authoritative records.
+Do not change Arena Python source while the plan runs. After completion, verify
+new dataset partitions/outcomes, all four weight artifacts, the selected model
+and both complete tournament replays. Interpret risk-gate policy P&L and tails
+against matched deterministic/no-trade controls; preserve negative findings.
+Then export the completed plan and investigate supported next hypotheses.
+Cross-target comparisons on the same frozen observations, severity/cost labels,
+bounded recovery actions and broader economic sensitivity remain unfinished.
+The full Prometheus goal is ACTIVE; this is not a completion claim.
