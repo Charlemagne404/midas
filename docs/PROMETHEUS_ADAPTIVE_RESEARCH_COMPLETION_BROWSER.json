@@ -1,0 +1,10 @@
+{
+  "checked_at": "2026-10-12T16:41:21.930Z",
+  "director_id": "director-followup-453650eedd036f130bc81fd8",
+  "completed_status_visible": true,
+  "active_cancellation_absent": true,
+  "aggregate_finding_visible": true,
+  "page_errors": [],
+  "screenshot": "/home/charlie/midas-prometheus-bundles/adaptive-director-completed.png",
+  "screenshot_sha256": "83387ec99fef71726c8fe9a0fbaceab961d402c1b2c03b4a698898b3851821c5"
+}
