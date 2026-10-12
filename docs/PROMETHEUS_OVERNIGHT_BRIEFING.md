@@ -25,6 +25,18 @@ After completion: verify all saved decisions and both model hashes, recompute
 grouped primary comparisons, investigate losses, export evidence and preserve
 the full regression result. No post-challenge retuning or promotion is planned.
 
+Post-study automation checkpoint8bb9612: twelve isolated finalizer/verifier/scanner
+tests pass in1.45 seconds. Supervised unit
+`midas-joint-cost-finalize-363071.service` is active and WAITING for the study.
+It will verify the exact plan/source/weights/bindings, compute the four fixed
+comparisons and nine role attributions, publish a caveated finding, and export
+and checksum the bundle without another manual launch. Source tools are captured
+and must remain frozen until the finalizer terminates. Phase state lives beside
+the native job as `post-study-state.json`; supervisor budget one CPU/4GiB/2400s.
+The finalizer and queued regression can run after the study on separate one-CPU
+processes, within host headroom. This is a bounded workflow, not general research
+planning or automatic candidate promotion. No finalization success is yet claimed.
+
 ## Latest checkpoint — fixed cost gate fails policy-value challenge
 
 The selected cost model's held-out prediction advantage did not translate to

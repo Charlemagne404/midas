@@ -1973,3 +1973,13 @@ links, broken links and unusual filenames. Live archive growth prevents claiming
 exact adjacent-count equality. This modest improvement does not solve the scan
 frequency bottleneck. The active guard and1GiB cap remain unchanged while source
 is frozen; broader efficiency work follows the study and full regression.
+
+Checkpoint8bb9612 committed and supervised finalizer
+midas-joint-cost-finalize-363071.service launched. Native process is active;
+persistent phase WAITING confirms startup and tool-source capture. Twelve isolated
+tests passed1.45 seconds. The current research worker, finalizer wait and queued
+full regression are distinct processes; after research, finalization and tests
+use at most two additional one-CPU processes, with measured host headroom. API
+continues READY. Do not edit package source or the finalizer's captured tools
+until both finalization and regression terminate. No new model training or
+completed research/finalization results are claimed during this live study.
