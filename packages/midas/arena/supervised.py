@@ -158,6 +158,7 @@ def train(root: Path, spec: TrainingSpec, progress: Any = None) -> dict[str, Any
         "mean": scaler.mean_.tolist(),
         "scale": scaler.scale_.tolist(),
         "hidden_size": spec.hidden_size,
+        "support": support_envelope(x["train"]),
     }
     if spec.family == "constant":
         parameters["probability"] = float(y["train"].mean())
@@ -223,8 +224,8 @@ def train(root: Path, spec: TrainingSpec, progress: Any = None) -> dict[str, Any
                 saved["stale"],
                 saved["best_loss"],
             )
-            if start_epoch >= spec.epochs:
-                raise ValueError("Resume epoch budget must exceed completed epochs")
+            if start_epoch > spec.epochs:
+                raise ValueError("Resume epoch budget cannot be less than completed epochs")
         for epoch in range(start_epoch, spec.epochs):
             model.train()
             indices = rng.permutation(len(tx))
@@ -320,6 +321,19 @@ def train(root: Path, spec: TrainingSpec, progress: Any = None) -> dict[str, Any
     return record
 
 
+def support_envelope(features: Any) -> dict[str, Any]:
+    x = np.asarray(features, dtype=np.float64).reshape(-1, len(FEATURES))
+    if not len(x) or not np.isfinite(x).all():
+        raise ValueError("Invalid training support data")
+    return {
+        "version": "train-range-1",
+        "minimum": x.min(axis=0).tolist(),
+        "maximum": x.max(axis=0).tolist(),
+        "rows": len(x),
+        "definition": "Training-only feature ranges; coverage is necessary, not proof of joint-distribution support or calibration.",
+    }
+
+
 class Predictor:
     def __init__(self, parameters: dict[str, Any]):
         self.parameters = parameters
@@ -344,7 +358,41 @@ class Predictor:
             or manifest["feature_version"] != FEATURE_VERSION
         ):
             raise ValueError("Unsupported model feature schema")
-        return cls(json.loads((directory / "parameters.json").read_text()))
+        parameters = json.loads((directory / "parameters.json").read_text())
+        if "support" not in parameters:
+            dataset, rows = load(root, manifest["dataset_id"])
+            if dataset["rows_sha256"] != manifest["dataset_sha256"]:
+                raise ValueError("Model training dataset changed")
+            # Legacy weights stay immutable. Derive their input contract from the
+            # frozen training rows, without consulting validation or test labels.
+            parameters["support"] = support_envelope(
+                [r["features"] for r in rows if r["partition"] == "train"]
+            )
+        return cls(parameters)
+
+    def support(self, features: Any) -> dict[str, Any]:
+        x = np.asarray(features, dtype=np.float64).reshape(-1, len(FEATURES))
+        envelope = self.parameters.get("support")
+        if envelope is None:
+            return {"known": False, "supported": [False] * len(x), "violations": [[] for _ in x]}
+        low, high = np.array(envelope["minimum"]), np.array(envelope["maximum"])
+        tolerance = 1e-5 * np.maximum(1, np.maximum(np.abs(low), np.abs(high)))
+        violations = [
+            [
+                FEATURES[i]
+                for i in range(len(FEATURES))
+                if not np.isfinite(row[i])
+                or row[i] < low[i] - tolerance[i]
+                or row[i] > high[i] + tolerance[i]
+            ]
+            for row in x
+        ]
+        return {
+            "known": True,
+            "supported": [not values for values in violations],
+            "violations": violations,
+            "definition": envelope["definition"],
+        }
 
     def predict(self, features: Any) -> Any:
         x = np.asarray(features, dtype=np.float32).reshape(-1, len(FEATURES))

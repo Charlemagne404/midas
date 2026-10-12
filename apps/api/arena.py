@@ -112,6 +112,8 @@ def router(root: Path) -> APIRouter:
             "provenance": "SYNTHETIC / HYPOTHETICAL / ECONOMICALLY UNVERIFIED",
             "root": str(root),
             "recorded_sources": recorded_sources,
+            "sweeps": catalog("sweeps"),
+            "directors": catalog("directors"),
         }
 
     @api.get("")
@@ -122,6 +124,18 @@ def router(root: Path) -> APIRouter:
     async def dataset(identity: str) -> Any:
         return await call(
             lambda: json.loads((path("datasets", identity) / "manifest.json").read_text())
+        )
+
+    @api.get("/sweeps/{identity}")
+    async def sweep(identity: str) -> Any:
+        return await call(
+            lambda: json.loads((path("sweeps", identity) / "manifest.json").read_text())
+        )
+
+    @api.get("/directors/{identity}")
+    async def director(identity: str) -> Any:
+        return await call(
+            lambda: json.loads((path("directors", identity) / "manifest.json").read_text())
         )
 
     @api.get("/models/{identity}")

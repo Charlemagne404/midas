@@ -15,6 +15,8 @@ from pydantic import Field, model_validator
 
 from midas.arena.artifacts import artifact_path, atomic_bytes, atomic_json, sha256
 from midas.arena.datasets import DatasetSpec, research_hash
+from midas.arena.director import DirectorSpec
+from midas.arena.evolution import SweepSpec
 from midas.arena.rl import RLSpec
 from midas.arena.supervised import TrainingSpec
 from midas.arena.tournaments import TournamentSpec
@@ -22,32 +24,30 @@ from midas.core.models import Model
 
 
 class JobSpec(Model):
-    kind: Literal["dataset", "supervised", "evaluation", "rl", "tournament"]
+    kind: Literal["dataset", "supervised", "evaluation", "rl", "tournament", "sweep", "director"]
     dataset: DatasetSpec | None = None
     training: TrainingSpec | None = None
     model_id: str | None = None
     rl: RLSpec | None = None
     tournament: TournamentSpec | None = None
+    sweep: SweepSpec | None = None
+    director: DirectorSpec | None = None
     max_wall_seconds: int = Field(default=1800, ge=10, le=7200)
 
     @model_validator(mode="after")
     def inputs(self) -> "JobSpec":
-        if (self.kind == "tournament") != (self.tournament is not None):
-            raise ValueError("Tournament job needs a tournament specification only")
-        if self.kind == "tournament" and (
-            self.dataset or self.training or self.model_id or self.rl
-        ):
-            raise ValueError("Tournament job needs a tournament specification only")
-        if (self.kind == "rl") != (self.rl is not None):
-            raise ValueError("RL job needs an RL specification only")
-        if self.kind == "rl" and (self.dataset or self.training or self.model_id):
-            raise ValueError("RL job needs an RL specification only")
-        if self.kind == "dataset" and (self.dataset is None or self.training or self.model_id):
-            raise ValueError("Dataset job needs only a dataset specification")
-        if self.kind == "supervised" and (self.training is None or self.dataset or self.model_id):
-            raise ValueError("Training job needs only a training specification")
-        if self.kind == "evaluation" and (self.model_id is None or self.training or self.dataset):
-            raise ValueError("Evaluation job needs only a model identity")
+        required = {
+            "dataset": "dataset",
+            "supervised": "training",
+            "evaluation": "model_id",
+            "rl": "rl",
+            "tournament": "tournament",
+            "sweep": "sweep",
+            "director": "director",
+        }[self.kind]
+        for field in ("dataset", "training", "model_id", "rl", "tournament", "sweep", "director"):
+            if (getattr(self, field) is not None) != (field == required):
+                raise ValueError(f"{self.kind} job requires only {required}")
         return self
 
 
@@ -207,6 +207,10 @@ def _run(root: Path, identity: str) -> None:
         def register(self, kind: str, artifact_id: str) -> None:
             register(kind, artifact_id)
 
+        def phase(self, name: str) -> None:
+            record["phase"] = name
+            atomic_json(directory / "job.json", record)
+
     progress = Progress()
     # All heavy Arena jobs serialize; the Laboratory's lease is never opened.
     with (root / "worker.lock").open("a+") as lease:
@@ -248,13 +252,26 @@ def _run(root: Path, identity: str) -> None:
                 assert spec.tournament is not None
                 result = run_tournament(root, spec.tournament, progress)
                 record["result"] = {"tournament_id": result["tournament_id"]}
+            elif spec.kind == "director":
+                from midas.arena.director import run_director
+
+                assert spec.director is not None
+                result = run_director(root, spec.director, progress)
+                record["result"] = {"director_id": result["director_id"]}
+            elif spec.kind == "sweep":
+                from midas.arena.evolution import run_sweep
+
+                assert spec.sweep is not None
+                result = run_sweep(root, spec.sweep, progress)
+                record["result"] = {"sweep_id": result["sweep_id"]}
             else:
                 from midas.arena.supervised import independent_test
 
                 assert spec.model_id is not None
                 result = independent_test(root, spec.model_id)
                 record["result"] = {"model_id": result["model_id"]}
-            publish(1, 1)
+            completed_progress = record.get("progress") or {"done": 1, "total": 1}
+            publish(completed_progress["done"] or 1, completed_progress["total"])
             record["state"] = "COMPLETED"
             record["exit_status"] = 0
         except Cancelled as error:

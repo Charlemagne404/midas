@@ -269,3 +269,35 @@ studies there are 7200 variants over the same 100 held-out identities, not 300
 independent samples. No research worker remains running. Further neural
 complexity is not supported by a demonstrated decision benefit in this sample.
 The continuation priorities remain active.
+
+## Evolution and director implementation checkpoint
+
+New comparisons preserve ties and require complete matched episode/execution
+coverage. Paired differences use actual control outcomes. Existing tournament
+manifests are immutable. New ranking version `episode-objective-ties-2` reports
+joint leaders and leaves the unique champion unset when scores tie.
+
+Predictors now expose training-only feature envelopes. Legacy weights stay
+unchanged; their envelopes are derived from verified frozen training rows. New
+evaluations explicitly choose warning-only or abstention behavior outside those
+ranges. Support coverage does not establish joint calibration. Every affected
+replay records the support result and reason.
+
+`evolution.py` preregisters two or more training seeds and bounded candidates.
+Selection uses mean validation Brier, a fixed practical tolerance and a declared
+simplicity preference. Test metrics are neither read by selection nor opened for
+new candidate classification. Trials, including unselected models, remain saved.
+Completed trials and a completed sweep are reused on recovery.
+
+`director.py` runs exactly three predefined stages: validation-only selection,
+fresh-seed/reordered-family warning evaluation, and matched support-abstention
+evaluation. Challenge seeds cannot overlap the original dataset, even under a
+changed family name. Final challenge outcomes cannot change fitted parameters
+or thresholds. A durable plan links each real artifact, with user-visible stage
+progress and the existing supervised CPU/memory/wall budgets.
+
+Validation at this checkpoint: 11 focused evolution/selection/job tests passed
+(including a real four-fit sweep and two 30-case challenge studies); 14 focused
+foundations/selection/tournament tests passed; the Arena browser workflow passed.
+Full regression validation and the first bounded real director campaign are the
+next gates. The protected Laboratory archive remains outside all new writers.

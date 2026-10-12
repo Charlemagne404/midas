@@ -1,5 +1,6 @@
 import json
 
+import pytest
 from midas.arena.artifacts import read_replay
 from midas.arena.datasets import DatasetSpec, build
 from midas.arena.reproduce import reproduce
@@ -37,6 +38,15 @@ def test_tournament_pairing_and_persisted_replay(tmp_path):
     verified = reproduce(tmp_path, report["tournament_id"], rows[1]["id"])
     assert verified["verified"]
     assert verified["result_hash"] == rows[1]["result_hash"]
+    with pytest.raises(ValueError, match="overlaps"):
+        run_tournament(
+            tmp_path,
+            TournamentSpec(
+                dataset_id=dataset["dataset_id"],
+                max_episodes=2,
+                challenge=DatasetSpec(episodes=30, families=("deep", "thin", "calm")),
+            ),
+        )
 
 
 def test_bootstrap_does_not_count_variants_as_independent():

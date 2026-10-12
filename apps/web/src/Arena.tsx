@@ -79,6 +79,8 @@ type Rank = {
   base_episodes: number;
   quantiles: number[];
   max_drawdown: number;
+  rank?: number;
+  unsupported_decisions?: number;
 };
 type Tournament = {
   tournament_id: string;
@@ -126,7 +128,42 @@ type Overview = {
   jobs: Job[];
   dependencies: Record<string, boolean>;
   health: { memory_mb: Record<string, number>; worker_cpu_cores: number; worker_memory_mb: number };
-  findings: { title: string; interpretation: string; caveats: string[]; tournament_id: string }[];
+  findings: {
+    title: string;
+    interpretation: string;
+    caveats: string[];
+    tournament_id?: string;
+    director_id?: string;
+  }[];
+  sweeps?: {
+    sweep_id: string;
+    state: string;
+    test_labels_used_for_selection: boolean;
+    trials: {
+      model_id: string;
+      state: string;
+      seed: number;
+      candidate_index: number;
+      validation?: Metrics;
+    }[];
+    selection?: {
+      selected_model_id: string;
+      criterion: string;
+      candidates: {
+        configuration: { family: string };
+        mean_validation_brier: number;
+        seed_brier_range: number[];
+      }[];
+    };
+  }[];
+  directors?: {
+    director_id: string;
+    state: string;
+    research_question: string;
+    planning_rule: string;
+    current_stage?: string;
+    steps: { name: string; state: string; artifact?: { kind: string; identity: string } }[];
+  }[];
   recorded_sources?: {
     dataset_id: string;
     events?: number;
@@ -143,6 +180,7 @@ const tabs = [
   'Model registry',
   'Tournaments',
   'Research findings',
+  'Research director',
 ] as const;
 const n = (value: number | null | undefined, digits = 3) =>
   value == null ? '—' : value.toFixed(digits);
@@ -940,12 +978,14 @@ export function Arena() {
                         <th>Worst outcome</th>
                         <th>No trade</th>
                         <th>Score</th>
+                        <th>Outside training support</th>
                       </tr>
                     </thead>
                     <tbody>
                       {tournament.data.leaderboard.map((entry) => (
                         <tr key={entry.policy}>
                           <td>
+                            {entry.rank != null && <span className="badge">Rank {entry.rank}</span>}{' '}
                             <button
                               disabled={!entry.policy.startsWith('model-')}
                               onClick={() => {
@@ -966,12 +1006,17 @@ export function Arena() {
                           <td>{n(entry.worst_loss)}</td>
                           <td>{n(entry.no_trade_fraction * 100, 1)}%</td>
                           <td>{n(entry.score)}</td>
+                          <td>{entry.unsupported_decisions ?? 'Not recorded'}</td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
                 <p className="lab-footnote">{tournament.data.uncertainty_note}</p>
+                <p className="lab-footnote">
+                  Input-support checks use training feature ranges only. A covered range does not
+                  establish joint-distribution support or calibrated execution probabilities.
+                </p>
                 <div className="lab-two">
                   <Suspense fallback={<p>Loading distribution…</p>}>
                     <Chart
@@ -1223,6 +1268,148 @@ export function Arena() {
           </Section>
         </>
       )}
+      {tab === 'Research director' && (
+        <>
+          <Section title="Bounded research director">
+            <p className="lab-note">
+              A preregistered rule selects candidates using validation only, then evaluates fresh
+              seeds and a reordered family schedule. Final challenge outcomes never alter training
+              or thresholds.
+            </p>
+            <div className="lab-controls">
+              <button
+                disabled={!selectedDataset || submit.isPending}
+                onClick={() =>
+                  submit.mutate({
+                    configuration: {
+                      kind: 'director',
+                      max_wall_seconds: 3600,
+                      director: {
+                        dataset_id: selectedDataset,
+                        incumbent_model_ids: data?.models
+                          .filter(
+                            (entry) =>
+                              entry.dataset_id === selectedDataset &&
+                              ['logistic', 'mlp', 'ppo'].includes(entry.family) &&
+                              entry.state === 'EVALUATED',
+                          )
+                          .map((entry) => entry.model_id)
+                          .slice(0, 8),
+                      },
+                    },
+                  })
+                }
+              >
+                Start bounded research plan
+              </button>
+              <button
+                disabled={!selectedDataset || submit.isPending}
+                onClick={() =>
+                  submit.mutate({
+                    configuration: { kind: 'sweep', sweep: { dataset_id: selectedDataset } },
+                  })
+                }
+              >
+                Run validation-only seed comparison
+              </button>
+            </div>
+            {data?.directors?.map((plan) => (
+              <article className="arena-finding" key={plan.director_id}>
+                <h3>{plan.research_question}</h3>
+                <State value={plan.state} />
+                <p>{plan.planning_rule}</p>
+                {plan.current_stage && <p>Current stage: {plan.current_stage}</p>}
+                <ol>
+                  {plan.steps.map((step) => (
+                    <li key={step.name}>
+                      {step.name} · {step.state}
+                      {step.artifact && (
+                        <a
+                          href={`/api/arena/${step.artifact.kind}/${step.artifact.identity}`}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          {' '}
+                          · Evidence ↗
+                        </a>
+                      )}
+                    </li>
+                  ))}
+                </ol>
+                <a
+                  href={`/api/arena/directors/${plan.director_id}`}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Frozen plan and lineage ↗
+                </a>
+              </article>
+            ))}
+            {!data?.directors?.length && (
+              <p className="empty">No director plan has run in this artifact root.</p>
+            )}
+          </Section>
+          <Section title="Validation-only evolution evidence">
+            {data?.sweeps?.map((sweep) => (
+              <article className="arena-finding" key={sweep.sweep_id}>
+                <h3>{sweep.sweep_id}</h3>
+                <State value={sweep.state} />
+                <p>
+                  Final-test labels used for selection:{' '}
+                  {sweep.test_labels_used_for_selection ? 'yes' : 'no'}
+                </p>
+                <p>{sweep.selection?.criterion}</p>
+                <div className="arena-table">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Candidate</th>
+                        <th>Mean validation Brier</th>
+                        <th>Across-seed range</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {sweep.selection?.candidates.map((candidate, index) => (
+                        <tr key={index}>
+                          <td>{candidate.configuration.family}</td>
+                          <td>{n(candidate.mean_validation_brier)}</td>
+                          <td>{candidate.seed_brier_range.map((value) => n(value)).join(' … ')}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <details>
+                  <summary>All training trials, including unselected candidates</summary>
+                  {sweep.trials.map((trial) => (
+                    <div className="arena-entry" key={`${trial.candidate_index}-${trial.seed}`}>
+                      <span>
+                        Candidate {trial.candidate_index + 1} · seed {trial.seed} · {trial.state}
+                      </span>
+                      {trial.model_id && (
+                        <button
+                          onClick={() => {
+                            setModelId(trial.model_id);
+                            setTab('Model registry');
+                          }}
+                        >
+                          Inspect trial
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </details>
+                <a href={`/api/arena/sweeps/${sweep.sweep_id}`} target="_blank" rel="noreferrer">
+                  Selection manifest ↗
+                </a>
+              </article>
+            ))}
+            {!data?.sweeps?.length && (
+              <p className="empty">No completed validation comparison yet.</p>
+            )}
+          </Section>
+        </>
+      )}
       {tab === 'Research findings' && (
         <Section title="Evidence-backed research findings">
           {data?.findings.map((finding) => (
@@ -1230,14 +1417,21 @@ export function Arena() {
               <h3>{finding.title}</h3>
               <p>{finding.interpretation}</p>
               <p className="lab-footnote">{finding.caveats.join(' ')}</p>
-              <button
-                onClick={() => {
-                  setTournamentId(finding.tournament_id);
-                  setTab('Tournaments');
-                }}
-              >
-                Inspect supporting tournament
-              </button>
+              {finding.tournament_id && (
+                <button
+                  onClick={() => {
+                    setTournamentId(finding.tournament_id ?? '');
+                    setTab('Tournaments');
+                  }}
+                >
+                  Inspect supporting tournament
+                </button>
+              )}
+              {finding.director_id && (
+                <button onClick={() => setTab('Research director')}>
+                  Inspect supporting research plan
+                </button>
+              )}
             </article>
           ))}
           {!data?.findings.length && (

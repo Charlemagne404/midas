@@ -44,7 +44,7 @@ def atomic_bytes(path: Path, payload: bytes) -> None:
 
 
 def artifact_path(root: Path, kind: str, identity: str) -> Path:
-    if kind not in {"datasets", "models", "jobs", "tournaments", "findings"}:
+    if kind not in {"datasets", "models", "jobs", "tournaments", "findings", "sweeps", "directors"}:
         raise ValueError("Unknown artifact kind")
     if not re.fullmatch(r"[a-zA-Z0-9_-]{1,96}", identity):
         raise ValueError("Invalid artifact identity")

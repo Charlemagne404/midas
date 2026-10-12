@@ -6,7 +6,7 @@ import time
 import uuid
 from collections import defaultdict
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import numpy as np
 from pydantic import Field, model_validator
@@ -32,6 +32,9 @@ class TournamentSpec(Model):
     seed: int = Field(default=991, ge=0)
     adversarial: bool = False
     minimum_champion_episodes: int = Field(default=30, ge=30, le=2000)
+    challenge: DatasetSpec | None = None
+    partition: Literal["validation", "test"] = "test"
+    unsupported_input_policy: Literal["warn", "abstain"] = "abstain"
 
     @model_validator(mode="after")
     def valid(self) -> "TournamentSpec":
@@ -49,9 +52,16 @@ class TournamentSpec(Model):
 
 
 def summaries(rows: list[dict[str, Any]], spec: TournamentSpec) -> dict[str, Any]:
+    if not rows or not any(r["policy"] == "no_trade" for r in rows):
+        raise ValueError("Comparison requires a no-trade control and complete observations")
     groups: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for row in rows:
         groups[row["policy"]].append(row)
+    expected = {(r["base_episode_id"], r["execution_model"]) for r in groups["no_trade"]}
+    for values in groups.values():
+        identities = [(r["base_episode_id"], r["execution_model"]) for r in values]
+        if len(set(identities)) != len(identities) or set(identities) != expected:
+            raise ValueError("Unmatched or duplicate policy episode coverage")
     leaderboard = []
     paired = []
     policy_base: dict[str, dict[str, float]] = {}
@@ -95,6 +105,7 @@ def summaries(rows: list[dict[str, Any]], spec: TournamentSpec) -> dict[str, Any
                 np.mean([v["exposure_duration_ms"] for v in values])
             ),
             "risk_interventions": sum(v["risk_interventions"] for v in values),
+            "unsupported_decisions": sum(v.get("unsupported_decisions", 0) for v in values),
             "invariant_violations": sum(not v["passed"] for v in values),
             "mean_runtime_ms": float(np.mean([v["runtime_ms"] for v in values])),
             "mean_inference_latency_ms": float(
@@ -116,27 +127,14 @@ def summaries(rows: list[dict[str, Any]], spec: TournamentSpec) -> dict[str, Any
             },
         }
         leaderboard.append(record)
-        if policy != "no_trade":
-            paired.append(
-                {
-                    "policy": policy,
-                    "control": "no_trade",
-                    "base_episodes": len(control.keys() & base.keys()),
-                    "mean_difference": float(aggregate.mean()),
-                    "bootstrap_95": ci,
-                    "conclusion": "POSITIVE_SYNTHETIC_MEAN"
-                    if ci[0] > 0
-                    else "NO_CLEAR_ADVANTAGE_OVER_ABSTENTION",
-                }
-            )
     leaderboard.sort(key=lambda r: (r["invariant_violations"] > 0, -r["score"], r["policy"]))
     # Compare learned policies directly with deterministic controls on matched
     # episode groups, averaging correlated execution variants inside each group.
     for policy in sorted(policy_base):
-        if policy in {"no_trade", "arbitrage", "conservative"}:
+        if policy == "no_trade":
             continue
-        for baseline in ("arbitrage", "conservative"):
-            if baseline not in policy_base:
+        for baseline in ("no_trade", "arbitrage", "conservative"):
+            if baseline not in policy_base or baseline == policy:
                 continue
             shared = sorted(policy_base[policy].keys() & policy_base[baseline].keys())
             differences = np.array(
@@ -166,15 +164,40 @@ def summaries(rows: list[dict[str, Any]], spec: TournamentSpec) -> dict[str, Any
         if r["policy"] != "no_trade"
         and r["base_episodes"] >= spec.minimum_champion_episodes
         and r["invariant_violations"] == 0
-        and r["mean_pnl_episode_bootstrap_95"][0] > 0
-        and r["score"] > 0
+        and next(
+            p["bootstrap_95"][0]
+            for p in paired
+            if p["policy"] == r["policy"] and p["control"] == "no_trade"
+        )
+        > 0
+        and r["score"] > next(c["score"] for c in leaderboard if c["policy"] == "no_trade")
     ]
+    leaders = (
+        [
+            r["policy"]
+            for r in eligible
+            if math.isclose(r["score"], eligible[0]["score"], rel_tol=1e-9, abs_tol=1e-9)
+        ]
+        if eligible
+        else []
+    )
+    for position, record in enumerate(leaderboard):
+        record["rank"] = next(
+            i + 1
+            for i, other in enumerate(leaderboard[: position + 1])
+            if other["invariant_violations"] == record["invariant_violations"]
+            and math.isclose(other["score"], record["score"], rel_tol=1e-9, abs_tol=1e-9)
+        )
     return {
         "leaderboard": leaderboard,
         "paired": paired,
-        "research_champion": eligible[0]["policy"] if eligible else None,
+        "research_champion": leaders[0] if len(leaders) == 1 else None,
+        "research_leaders": leaders,
+        "ranking_version": "episode-objective-ties-2",
         "conclusion": "Candidate advantage within this synthetic environment only."
-        if eligible
+        if len(leaders) == 1
+        else "Candidates tie for the strongest synthetic downside score; no unique champion."
+        if leaders
         else "Insufficient independent synthetic episodes for champion designation."
         if len(control) < spec.minimum_champion_episodes
         else "No candidate demonstrates an advantage over no-trade under the configured downside-aware objective.",
@@ -190,7 +213,28 @@ def run_tournament(root: Path, spec: TournamentSpec, progress: Any = None) -> di
     torch.set_num_threads(1)
     manifest, _ = load(root, spec.dataset_id)
     dataset_spec = DatasetSpec.model_validate(manifest["spec"])
-    held_out = indices(dataset_spec, "test")[: spec.max_episodes]
+    training_spec = dataset_spec
+    if spec.challenge:
+        dataset_spec = spec.challenge
+        held_out = list(range(min(spec.max_episodes, dataset_spec.episodes)))
+        old_ids = {
+            f"{training_spec.families[i % len(training_spec.families)]}:{training_spec.seed + i}"
+            for i in range(training_spec.episodes)
+        }
+        new_ids = {
+            f"{dataset_spec.families[i % len(dataset_spec.families)]}:{dataset_spec.seed + i}"
+            for i in held_out
+        }
+        old_seeds = set(range(training_spec.seed, training_spec.seed + training_spec.episodes))
+        new_seeds = {dataset_spec.seed + i for i in held_out}
+        if old_ids & new_ids or old_seeds & new_seeds:
+            raise ValueError("Fresh challenge overlaps the original dataset episode identities")
+        if spec.partition != "test":
+            raise ValueError(
+                "Fresh challenges are independent evaluation, not validation selection"
+            )
+    else:
+        held_out = indices(dataset_spec, spec.partition)[: spec.max_episodes]
     if not held_out:
         raise ValueError("No independent evaluation scenarios")
     policies: dict[str, Any] = {
@@ -219,6 +263,17 @@ def run_tournament(root: Path, spec: TournamentSpec, progress: Any = None) -> di
     execution_revision = revision()
     total = len(held_out) * len(spec.execution_models) * len(policies)
     source_hash = research_hash()
+    register = getattr(progress, "register", None)
+    if register:
+        register("tournaments", identity)
+    atomic_json(
+        directory / "preparing.json",
+        {
+            "configuration": spec.model_dump(mode="json"),
+            "source_hash": source_hash,
+            "dataset_sha256": manifest["rows_sha256"],
+        },
+    )
     for index in held_out:
         seed = dataset_spec.seed + index
         family = dataset_spec.families[index % len(dataset_spec.families)]
@@ -243,6 +298,7 @@ def run_tournament(root: Path, spec: TournamentSpec, progress: Any = None) -> di
                 latency = []
                 started = time.monotonic()
                 attempted = 0
+                unsupported = 0
                 assert env.env is not None
                 while True:
                     features, eligible = env.decision_features()
@@ -262,8 +318,18 @@ def run_tournament(root: Path, spec: TournamentSpec, progress: Any = None) -> di
                     elif policy == "random":
                         action = int(rng.integers(0, 3)) if eligible else 0
                     elif isinstance(model, Predictor):
-                        probability = float(model.predict([features])[0]) if eligible else None
+                        support = model.support([features]) if eligible else None
+                        out_of_support = support is not None and not support["supported"][0]
+                        unsupported += int(out_of_support)
+                        probability = (
+                            float(model.predict([features])[0])
+                            if eligible
+                            and not (out_of_support and spec.unsupported_input_policy == "abstain")
+                            else None
+                        )
                         action = int(probability is not None and probability >= spec.threshold)
+                        if out_of_support and spec.unsupported_input_policy == "abstain":
+                            action = 0
                         explanation.update(
                             completion_score=probability,
                             threshold=spec.threshold,
@@ -273,7 +339,18 @@ def run_tournament(root: Path, spec: TournamentSpec, progress: Any = None) -> di
                             reason="Request a proposal; independent risk admission remains required"
                             if action
                             else "Abstain: ineligible evidence or completion score below threshold",
+                            input_support=support,
+                            unsupported_input_policy=spec.unsupported_input_policy,
                         )
+                        if out_of_support:
+                            explanation["reason"] = (
+                                "Input lies outside training feature ranges; "
+                                + (
+                                    "abstain"
+                                    if spec.unsupported_input_policy == "abstain"
+                                    else "unvalidated extrapolation warning"
+                                )
+                            )
                     else:
                         action = int(model.predict(obs, deterministic=True)[0])
                     latency.append((time.perf_counter() - decision_started) * 1000)
@@ -313,6 +390,7 @@ def run_tournament(root: Path, spec: TournamentSpec, progress: Any = None) -> di
                     "metrics": result["metrics"],
                     "completed_two_leg_positions": complete,
                     "attempted_trades": attempted,
+                    "unsupported_decisions": unsupported,
                     "unmatched_incident": env.max_unmatched > 0,
                     "exposure_duration_ms": exposure_ms,
                     "risk_interventions": sum(
@@ -362,6 +440,11 @@ def run_tournament(root: Path, spec: TournamentSpec, progress: Any = None) -> di
         "provenance": "GENERATED",
         "economically_verified": False,
         "execution_certainty": "HYPOTHETICAL_UNCALIBRATED",
+        "evaluation_design": "FRESH_GENERATOR_CHALLENGE"
+        if spec.challenge
+        else spec.partition.upper(),
+        "evaluation_generator": dataset_spec.model_dump(mode="json"),
+        "common_random_numbers_note": "Shared seeds pair source scenarios. Action-dependent order paths and random draws do not guarantee identical execution noise.",
         **summaries(rows, spec),
     }
     atomic_json(directory / "manifest.json", report)
@@ -392,7 +475,7 @@ def publish_findings(root: Path, report: dict[str, Any]) -> dict[str, Any]:
     finding = {
         "finding_id": identity,
         "title": "No trading candidate clears the downside objective"
-        if not report["research_champion"]
+        if not (report.get("research_leaders") or report["research_champion"])
         else "A candidate clears the synthetic downside objective",
         "research_question": "Do trained policies improve matched simulated outcomes relative to deterministic controls and abstention?",
         "hypothesis": "A learned execution filter or PPO policy improves outcomes without worsening tail losses.",
@@ -403,6 +486,8 @@ def publish_findings(root: Path, report: dict[str, Any]) -> dict[str, Any]:
             "dataset_sha256": report["dataset_sha256"],
         },
         "source_hash": report["source_hash"],
+        "code_revision": report.get("code_revision"),
+        "seed": report["configuration"]["seed"],
         "created_at": time.time(),
         "interpretation": report["conclusion"],
         "outcome": report["leaderboard"],
