@@ -1780,3 +1780,21 @@ Final production browser check passed without page errors: the financing finding
 opens its supporting model and shows the pending-reserve caveat in plain text.
 The original pretest export remains an immutable snapshot; current native model
 manifests carry the later scope annotations.
+
+## Corrected cost financing target version two
+
+Added an Arena capture runner that records the first position's financing exposure
+before unchanged Laboratory transitions. Available allocated capital is included
+while any own action is pending, matching the broker envelope reservation rule.
+Intervals retain ledger counts and balances; loading checks prefix arithmetic and
+continuous horizon coverage. Per-interval Decimal charge ordering matches broker
+financing. Version-one records remain readable and protected; new training and
+final evaluation require version two.
+
+Focused cost/evidence/coordinator gate: 11 passed in 49.70 seconds. Three financing
+tests reran successfully in 11.80 seconds. Single-position tests match financing
+and locked-integral values exactly, including longer latency/acknowledgment delays,
+and preserve financial result hashes. Strict typing and Ruff pass. Fresh production
+preregistration uses 1001 groups at seed293071, original seven families and fixed
+cost/training settings, one ridge and two neural seeds. All tests stay unopened
+pending completed retraining, verification and a frozen pretest bundle.

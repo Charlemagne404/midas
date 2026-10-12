@@ -9,6 +9,7 @@ from typing import Any, Literal
 from pydantic import Field, model_validator
 
 from midas.arena.artifacts import artifact_path, atomic_json, sha256
+from midas.arena.cost_labels import VERSION as COST_LABEL_VERSION
 from midas.arena.features import FEATURE_VERSION, FEATURES, extract
 from midas.arena.persistence import LABEL_DEFINITION, LABEL_VERSION, first_arrival_label
 from midas.core.models import Model
@@ -62,8 +63,14 @@ def partition(base_episode_id: str, split_seed: int) -> str:
     return "train" if fraction < 0.7 else "validation" if fraction < 0.85 else "test"
 
 
-def first_decision(scenario: Any, retain: bool = False) -> Environment:
-    env = Environment(scenario, retain=retain)
+def first_decision(scenario: Any, retain: bool = False, cost_evidence: bool = False) -> Environment:
+    from midas.arena.cost_environment import CostEnvironment
+
+    env = (
+        CostEnvironment(scenario, retain=retain)
+        if cost_evidence
+        else Environment(scenario, retain=retain)
+    )
     while not env.finished:
         event = env.clock.peek()
         if event and event.kind == "decision":
@@ -103,7 +110,7 @@ def sample(spec: DatasetSpec, index: int, model: str) -> dict[str, Any] | None:
     )
     if spec.costs is not None:
         scenario = scenario.model_copy(update={"costs": spec.costs})
-    env = first_decision(scenario)
+    env = first_decision(scenario, cost_evidence=spec.retain_execution_costs)
     ordinal = 0
     while not env.finished:
         ordinal += 1
@@ -166,15 +173,17 @@ def sample(spec: DatasetSpec, index: int, model: str) -> dict[str, Any] | None:
         "economic_assumptions": result["economic_assumptions"],
     }
     if spec.retain_execution_costs:
+        from midas.arena.cost_environment import CostEnvironment
         from midas.arena.cost_labels import outcome as cost_outcome
 
-        assert quoted_cost is not None
+        assert quoted_cost is not None and isinstance(env, CostEnvironment)
         row["execution_cost_outcome"] = cost_outcome(
             env.state["positions"][initial_ids[0]]["exchange"],
             observation,
             scenario.costs,
-            env.clock.now,
+            env.last_ts,
             quoted_cost,
+            env.financing_trace,
         )
     if persistence is not None:
         row["persistence_outcome"] = persistence
@@ -236,9 +245,7 @@ def build(root: Path, spec: DatasetSpec, progress: Any = None) -> dict[str, Any]
         if spec.label_target == "persistence"
         else "initial-proposal-outcomes-2",
         "decision_scope": spec.decision_scope,
-        "execution_cost_label": "initial-position-friction-1"
-        if spec.retain_execution_costs
-        else None,
+        "execution_cost_label": COST_LABEL_VERSION if spec.retain_execution_costs else None,
         "label_definition": (
             LABEL_DEFINITION
             if spec.label_target == "persistence"
@@ -320,6 +327,10 @@ def load(root: Path, identity: str) -> tuple[dict[str, Any], list[dict[str, Any]
         if manifest["spec"].get("retain_execution_costs", False):
             from midas.arena.cost_labels import label as cost_label
 
+            if row.get("execution_cost_outcome", {}).get("version") != manifest.get(
+                "execution_cost_label"
+            ):
+                raise ValueError("Cost row version differs from frozen dataset manifest")
             cost_label(row)
         if row.get("decision_scope", "initial") != scope:
             raise ValueError("Row decision scope differs from manifest")

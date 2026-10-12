@@ -8,7 +8,7 @@ import numpy as np
 from pydantic import model_validator
 
 from midas.arena.artifacts import artifact_path, atomic_json
-from midas.arena.cost_labels import label
+from midas.arena.cost_labels import VERSION, label
 from midas.arena.datasets import load
 from midas.arena.severity import RegressionSpec, Regressor, train_regression
 from midas.arena.severity import evaluate as regression_evaluate
@@ -47,6 +47,8 @@ def train(root: Path, spec: CostSpec, progress: Any = None) -> dict[str, Any]:
     manifest, rows = load(root, spec.dataset_id)
     if not manifest["spec"].get("retain_execution_costs"):
         raise ValueError("Dataset lacks opt-in execution-cost ledger evidence")
+    if manifest.get("execution_cost_label") != VERSION:
+        raise ValueError("Cost training requires the corrected financing target version")
     record = train_regression(
         root,
         spec,
@@ -59,6 +61,7 @@ def train(root: Path, spec: CostSpec, progress: Any = None) -> dict[str, Any]:
         limitations=LIMITATIONS,
     )
     selected = [r for r in rows if r["partition"] == "validation"]
+    record["label_version"] = manifest.get("execution_cost_label")
     record["baselines_validation"]["quoted_full_fill"] = evaluate(
         selected,
         [float(r["execution_cost_outcome"]["quoted_full_fill_friction_usd"]) for r in selected],
@@ -77,6 +80,8 @@ def independent_test(root: Path, identity: str) -> dict[str, Any]:
     record: dict[str, Any] = json.loads((directory / "manifest.json").read_text())
     if record["task"] != TASK:
         raise ValueError("Not an execution-cost model")
+    if record.get("label_version") != VERSION:
+        raise ValueError("Target revision required before cost final evaluation")
     if record["test"] is not None:
         return record
     manifest, rows = load(root, record["dataset_id"])

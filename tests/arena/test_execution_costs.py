@@ -159,3 +159,105 @@ def test_cost_neural_checkpoint_resume_matches_uninterrupted_run(dataset):
         full["artifact_sha256"] == resumed["artifact_sha256"]
         and full["curves"] == resumed["curves"]
     )
+
+
+def test_corrected_financing_matches_broker_and_preserves_result():
+    from midas.arena.cost_environment import CostEnvironment
+    from midas.arena.cost_labels import outcome, quote_baseline
+    from midas.laboratory.runtime import Environment
+    from midas.laboratory.spec import generate
+    from midas.paper.broker import ExecutionModel
+
+    for execution in ("optimistic", "standard", "conservative"):
+        scenario = generate("volatile", 273089, ExecutionModel.preset(execution)).model_copy(
+            update={"costs": Costs(annual_financing_rate="1", operating_per_fill=".01")}
+        )
+        ordinary = Environment(scenario, retain=False).run()
+        env = CostEnvironment(scenario, retain=False)
+        while not env.state["positions"] and not env.finished:
+            observation = env.observe()
+            env.step()
+        if not env.state["positions"]:
+            continue
+        identity = next(iter(env.state["positions"]))
+        result = env.run()
+        assert result["result_hash"] == ordinary["result_hash"]
+        exchange = env.state["positions"][identity]["exchange"]
+        q = float(exchange["orders"][0]["quantity"])
+        record = outcome(
+            exchange,
+            observation,
+            scenario.costs,
+            env.last_ts,
+            quote_baseline(observation, q, scenario.costs),
+            env.financing_trace,
+        )
+        assert record["version"] == "initial-position-friction-2"
+        assert any(
+            t["pending_action_ids"] and D(t["available_usd"]) > 0 for t in env.financing_trace
+        )
+        if len(result["final_portfolio"]["positions"]) == 1:
+            assert D(record["financing_usd"]) == D(result["metrics"]["financing_cost_estimate"])
+            assert D(record["locked_reserved_integral_usd_ms"]) == env.locked_integral
+        changed = copy.deepcopy(record)
+        changed["financing_trace"][0]["available_usd"] = "999"
+        with pytest.raises(ValueError, match="capital"):
+            reconstruct(changed)
+        env.reset()
+        assert env.financing_trace == []
+        assert env.run()["result_hash"] == ordinary["result_hash"]
+
+
+def test_financing_trace_accounts_only_its_first_position_and_checks_coverage():
+    from midas.arena.cost_environment import CostEnvironment
+    from midas.arena.cost_labels import VERSION, financing_integral
+    from midas.laboratory.runtime import Environment
+    from midas.laboratory.spec import generate
+    from midas.paper.broker import ExecutionModel
+
+    checked = 0
+    for seed in range(283071, 283083):
+        for execution in ("optimistic", "standard", "conservative"):
+            scenario = generate(
+                "volatile",
+                seed,
+                ExecutionModel.preset(execution).model_copy(
+                    update={"latency_ms": 400, "ack_delay_ms": 500, "seed": seed}
+                ),
+            ).model_copy(update={"costs": Costs(annual_financing_rate="1")})
+            env = CostEnvironment(scenario, retain=False)
+            result = env.run()
+            assert result["result_hash"] == Environment(scenario, retain=False).run()["result_hash"]
+            if not env.state["positions"]:
+                continue
+            position = next(iter(env.state["positions"]))
+            exchange = env.state["positions"][position]["exchange"]
+            trace = env.financing_trace
+            record = {
+                "version": VERSION,
+                "decision_time_ms": trace[0]["start_ms"],
+                "terminal_time_ms": env.last_ts,
+                "starting_capital_usd": exchange["starting"],
+                "ledger": exchange["ledger"],
+                "financing_trace": trace,
+            }
+            integral = financing_integral(record)
+            assert {t["position_id"] for t in trace} == {position}
+            if len(env.state["positions"]) == 1:
+                assert integral == env.locked_integral
+            invalid = copy.deepcopy(record)
+            invalid["financing_trace"][-1]["end_ms"] -= 1
+            with pytest.raises(ValueError, match="cover"):
+                financing_integral(invalid)
+            checked += 1
+    assert checked >= 20
+
+
+def test_version_one_target_remains_readable_but_cannot_open_a_new_final_test(tmp_path):
+    from midas.arena.artifacts import atomic_json
+    from midas.arena.costs import independent_test
+
+    record = {"task": TASK, "label_version": "initial-position-friction-1", "test": None}
+    atomic_json(tmp_path / "models" / "legacy" / "manifest.json", record)
+    with pytest.raises(ValueError, match="revision"):
+        independent_test(tmp_path, "legacy")

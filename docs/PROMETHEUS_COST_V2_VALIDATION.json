@@ -1,0 +1,23 @@
+{
+  "focused_tests": {
+    "passed": 11,
+    "duration_seconds": 49.7
+  },
+  "financing_tests_rerun": {
+    "passed": 3,
+    "duration_seconds": 11.8
+  },
+  "mypy": "four changed Arena modules passed strict checks",
+  "ruff": "passed",
+  "coverage": [
+    "financial result identity",
+    "exact broker financing on single-position cases",
+    "pending availability reserves",
+    "longer submission/acknowledgment delays",
+    "ledger-prefix and horizon validation",
+    "reset determinism",
+    "version-one final evaluation rejection",
+    "real regression, checkpoint recovery and bundles"
+  ],
+  "full_regression": "pending after supervised retraining"
+}

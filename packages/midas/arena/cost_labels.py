@@ -6,7 +6,8 @@ from typing import Any
 from midas.laboratory.spec import Costs
 
 D = Decimal
-VERSION = "initial-position-friction-1"
+VERSION = "initial-position-friction-2"
+LEGACY_VERSION = "initial-position-friction-1"
 COMPONENTS = (
     "adverse_slippage_usd",
     "exchange_fees_usd",
@@ -62,18 +63,78 @@ def reconstruct(record: dict[str, Any]) -> dict[str, str]:
             fees += fee
             fills += 1
     integral += held * (terminal - last)
+    if record.get("version", LEGACY_VERSION) == VERSION:
+        integral = financing_integral(record)
+    financing = integral * costs.annual_financing_rate / D(365 * 86400000)
+    if record.get("version", LEGACY_VERSION) == VERSION:
+        financing = sum(
+            (
+                (
+                    D(t["locked_usd"])
+                    + D(t["reserved_usd"])
+                    + (D(t["available_usd"]) if t["pending_action_ids"] else D(0))
+                )
+                * (t["end_ms"] - t["start_ms"])
+                * costs.annual_financing_rate
+                / D(365 * 86400000)
+                for t in record["financing_trace"]
+            ),
+            D(0),
+        )
     components = {
         "adverse_slippage_usd": slippage,
         "exchange_fees_usd": fees,
         "operating_usd": fills * costs.operating_per_fill,
         "redemption_usd": int(record["settled"]) * costs.redemption_cost,
-        "financing_usd": integral * costs.annual_financing_rate / D(365 * 86400000),
+        "financing_usd": financing,
     }
     return {
         **{k: str(v) for k, v in components.items()},
         "total_usd": str(sum(components.values(), D(0))),
         "locked_reserved_integral_usd_ms": str(integral),
     }
+
+
+def financing_integral(record: dict[str, Any]) -> Decimal:
+    """Audit held capital against ledger prefixes, including pending availability."""
+    trace = record["financing_trace"]
+    ledger = record["ledger"]
+    last = record["decision_time_ms"]
+    integral = D(0)
+    for interval in trace:
+        start, end = interval["start_ms"], interval["end_ms"]
+        count = interval["ledger_count"]
+        if (
+            start != last
+            or end <= start
+            or end > record["terminal_time_ms"]
+            or not 0 <= count <= len(ledger)
+        ):
+            raise ValueError("Invalid financing interval coverage or ledger prefix")
+        prefix = ledger[:count]
+        if any(e["time_ms"] > start for e in prefix) or any(
+            e["time_ms"] < start for e in ledger[count:]
+        ):
+            raise ValueError("Financing prefix crosses interval boundary")
+        available = D(record["starting_capital_usd"]) + sum(
+            (D(e["available_delta"]) for e in prefix), D(0)
+        )
+        reserved = sum((D(e["reserved_delta"]) for e in prefix), D(0))
+        locked = sum((D(e["locked_delta"]) for e in prefix), D(0))
+        values = (available, reserved, locked)
+        if any(not v.is_finite() or v < 0 for v in values) or values != tuple(
+            D(interval[k]) for k in ("available_usd", "reserved_usd", "locked_usd")
+        ):
+            raise ValueError("Financing capital differs from monetary ledger prefix")
+        pending = interval["pending_action_ids"]
+        if len(set(pending)) != len(pending):
+            raise ValueError("Duplicate pending action evidence")
+        held = locked + reserved + (available if pending else D(0))
+        integral += held * (end - start)
+        last = end
+    if last != record["terminal_time_ms"]:
+        raise ValueError("Financing trace does not cover label horizon")
+    return integral
 
 
 def quote_baseline(observation: dict[str, Any], quantity: float, costs: Costs) -> str:
@@ -98,6 +159,7 @@ def outcome(
     costs: Costs,
     terminal_time_ms: int,
     quoted_full_fill: str,
+    financing_trace: list[dict[str, Any]],
 ) -> dict[str, Any]:
     assets = {o["asset_id"] for o in exchange["orders"]}
     if len(exchange["orders"]) != 2 or len(assets) != 2:
@@ -114,6 +176,8 @@ def outcome(
         "observed_best_asks": {a: observation["books"][a]["asks"][0]["price"] for a in assets},
         "costs": costs.model_dump(mode="json"),
         "ledger": exchange["ledger"],
+        "starting_capital_usd": exchange["starting"],
+        "financing_trace": financing_trace,
         "quoted_full_fill_friction_usd": quoted_full_fill,
     }
     record.update(reconstruct(record))
@@ -122,7 +186,11 @@ def outcome(
 
 def label(row: dict[str, Any]) -> float:
     record = row.get("execution_cost_outcome")
-    if not record or record["version"] != VERSION or record["units"] != "virtual USD":
+    if (
+        not record
+        or record["version"] not in {VERSION, LEGACY_VERSION}
+        or record["units"] != "virtual USD"
+    ):
         raise ValueError("Versioned execution-cost evidence required")
     if (
         record["decision_time_ms"] != row["decision_time_ms"]

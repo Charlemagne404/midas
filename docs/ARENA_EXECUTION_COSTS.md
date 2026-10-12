@@ -60,3 +60,20 @@ The next version must record per-position exposure intervals, including pending
 allocation reserves, and validate them against the broker formula before rebuilding
 the dataset and retraining. Do not silently rewrite version-one data or present its
 cost-model scores as complete broker friction estimates.
+
+## Corrected version two
+
+`initial-position-friction-2` captures a financing interval before each unchanged
+Laboratory transition. For the first admitted position, held capital includes its
+locked and reserved venue capital plus available allocated capital while any own
+broker action remains pending. Ledger-prefix balances validate each interval;
+coverage extends to the analytical financing horizon, even if the event clock's
+last event precedes that horizon. Charges accrue per interval with the broker's
+Decimal ordering. This also finances returned proceeds while a pending action
+still reserves them, following the existing broker convention.
+
+The capture runner reads state without altering actions, fills or accounting.
+Tests check financial result identity, exact single-position broker financing,
+longer submission/acknowledgment delays, reset behavior and tampered evidence.
+Version-one records remain readable; new training and final evaluation require
+version two. Existing version-one artifacts retain their original identities.
