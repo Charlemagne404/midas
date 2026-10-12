@@ -1,5 +1,5 @@
 {
-  "checked_at": 1791760950.8157597,
+  "checked_at": 1791783231.9601665,
   "health": {
     "status": "READY",
     "startup_status": "READY",
@@ -8,8 +8,8 @@
     "live_execution": false,
     "paper_recovery": {
       "status": "CHECKPOINT_VERIFIED",
-      "journal_events": 8569,
-      "revision": 8568
+      "journal_events": 20722,
+      "revision": 20721
     },
     "laboratory": {
       "status": "READY",
@@ -18,9 +18,9 @@
       "recovery_errors": []
     }
   },
-  "arena_model_artifacts": 6,
-  "arena_fitted_models": 5,
-  "arena_tournaments": 2,
+  "arena_model_artifacts": 10,
+  "arena_fitted_models": 9,
+  "arena_tournaments": 5,
   "recorded_public_sources": [
     {
       "dataset_id": "ctf-4024677",
@@ -62,5 +62,9 @@
     "Identical observable vectors occur across partitions. Independent scenario IDs do not guarantee covariate diversity; inspect repeated synthetic grids.",
     "Some scenario families contain one settlement seed parity only. The current generator uses seed parity for settlement; reorder families and shift seeds before making generalization claims.",
     "Execution completion is partly mechanically determined by hypothetical liquidity and adverse-tick settings. High prediction accuracy can reflect simulator assumptions."
+  ],
+  "latest_diagnostic_jobs": [
+    "job-e0a34b52cb934607a16d0609",
+    "job-68d9ecc1d8934a789cb56985"
   ]
 }

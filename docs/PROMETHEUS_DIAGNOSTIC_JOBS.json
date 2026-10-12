@@ -1,0 +1,90 @@
+[
+  {
+    "active_artifact": {
+      "identity": "model-fe2d275e53ae4295adf5ab1f",
+      "kind": "models"
+    },
+    "budget": {
+      "cpu_cores": 1,
+      "max_artifact_mb": 1024,
+      "memory_mb": 4096,
+      "minimum_available_memory_mb": 2048,
+      "wall_seconds": 600
+    },
+    "completed_at": 1791783186.5524044,
+    "configuration": {
+      "dataset": null,
+      "director": null,
+      "kind": "diagnostics",
+      "max_wall_seconds": 600,
+      "model_id": "model-fe2d275e53ae4295adf5ab1f",
+      "rl": null,
+      "sweep": null,
+      "tournament": null,
+      "training": null
+    },
+    "created_at": 1791783176.3184495,
+    "elapsed_seconds": 8.721301768993726,
+    "error": null,
+    "exit_status": 0,
+    "job_id": "job-e0a34b52cb934607a16d0609",
+    "pid": 2967455,
+    "progress": {
+      "done": 19,
+      "total": 19
+    },
+    "result": {
+      "artifact": "diagnostics.json",
+      "model_id": "model-fe2d275e53ae4295adf5ab1f"
+    },
+    "started_at": 1791783182.359978,
+    "state": "COMPLETED",
+    "submitted_source_hash": "b82d996fa757dbdf478c8e071fb88fd152281a09a2c0e82a206bd24cfd4218e8",
+    "unit": "midas-arena-job-e0a34b52cb934607a16d0609.service",
+    "updated_at": 1791783186.5524042
+  },
+  {
+    "active_artifact": {
+      "identity": "model-3141334b301947499b59913d",
+      "kind": "models"
+    },
+    "budget": {
+      "cpu_cores": 1,
+      "max_artifact_mb": 1024,
+      "memory_mb": 4096,
+      "minimum_available_memory_mb": 2048,
+      "wall_seconds": 600
+    },
+    "completed_at": 1791783181.6953018,
+    "configuration": {
+      "dataset": null,
+      "director": null,
+      "kind": "diagnostics",
+      "max_wall_seconds": 600,
+      "model_id": "model-3141334b301947499b59913d",
+      "rl": null,
+      "sweep": null,
+      "tournament": null,
+      "training": null
+    },
+    "created_at": 1791783175.9535136,
+    "elapsed_seconds": 4.22370030998718,
+    "error": null,
+    "exit_status": 0,
+    "job_id": "job-68d9ecc1d8934a789cb56985",
+    "pid": 2967449,
+    "progress": {
+      "done": 19,
+      "total": 19
+    },
+    "result": {
+      "artifact": "diagnostics.json",
+      "model_id": "model-3141334b301947499b59913d"
+    },
+    "started_at": 1791783177.4717047,
+    "state": "COMPLETED",
+    "submitted_source_hash": "b82d996fa757dbdf478c8e071fb88fd152281a09a2c0e82a206bd24cfd4218e8",
+    "unit": "midas-arena-job-68d9ecc1d8934a789cb56985.service",
+    "updated_at": 1791783181.6953015
+  }
+]

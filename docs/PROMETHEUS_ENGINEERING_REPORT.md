@@ -372,3 +372,24 @@ diagnostic job, model evidence display, independent evaluation and replay.
 The lazy ECharts chunk remains 544 KiB and triggers the existing build advisory.
 An extracted director bundle's captured source independently replayed the
 preserved partial-leg case with exactly matching financial/journal hashes.
+
+Registered-model execution: logistic diagnostic
+`job-68d9ecc1d8934a789cb56985` completed in 4.22 seconds; selected-neural diagnostic
+`job-e0a34b52cb934607a16d0609` completed in 8.72 seconds. Both exited 0 and reached
+19/19 feature stages. The model endpoint displays their hash-bound persisted
+reports. Each uses the same 69 validation groups / 207 execution variants and
+has six false-completion predictions plus one missed completion at threshold
+0.5. The three depth features dominate permutation sensitivity. Some volatile,
+disappearing and one-sided failures receive completion scores near 0.89–0.91;
+no confidence threshold is selected from this observation. Constant age/latency
+coverage prevents inference about broader latency regimes. Saved evidence is in
+`PROMETHEUS_VALIDATION_DIAGNOSTICS.json`; full lineage is in each job source
+snapshot and `PROMETHEUS_DIAGNOSTIC_JOBS.json`.
+
+Deployment after `0cfc9e2`: API verified READY after snapshot startup over 20,704
+paper journal events; web service active. No research jobs remain running.
+Runtime/model inventory evidence has been refreshed. The full goal is active.
+Next implement validation-only matched policy sizing/rejection selection or
+unmatched-exposure targets, then evaluate on a preregistered genuinely new seed
+set. Do not tune against the opened fresh challenge. Recovery actions and wider
+economic sensitivity remain higher-value unfinished research branches.

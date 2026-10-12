@@ -1,0 +1,994 @@
+[
+  {
+    "base_episodes": 69,
+    "baseline_episode_brier": 0.031539763217241785,
+    "created_at": 1791783181.5539377,
+    "dataset_sha256": "a0dd2d328f724337a7a544470c616d4d2ef887240fa9d647227aea4ddc00dc27",
+    "diagnostic_version": "validation-permutation-1",
+    "duration_seconds": 2.835776549996808,
+    "false_completion_count": 6,
+    "feature_sensitivity": [
+      {
+        "episode_bootstrap_95": [
+          0.02016723034884076,
+          0.03351102701075172
+        ],
+        "feature": "max_ask_depth",
+        "mean_brier_increase": 0.026969839451744734,
+        "repeat_range": [
+          0.029082174576001162,
+          0.02084526757285284,
+          0.021017909951757546,
+          0.031199438172433733,
+          0.03021735807584606,
+          0.027797546126961656,
+          0.03761578002429255,
+          0.029927210617734512,
+          0.012581736587454317,
+          0.02941397281211296
+        ]
+      },
+      {
+        "episode_bootstrap_95": [
+          0.020167230348840756,
+          0.03351102701075172
+        ],
+        "feature": "min_ask_depth",
+        "mean_brier_increase": 0.02696983945174473,
+        "repeat_range": [
+          0.029082174576001162,
+          0.020845267572852842,
+          0.02101790995175755,
+          0.031199438172433733,
+          0.03021735807584606,
+          0.027797546126961652,
+          0.03761578002429254,
+          0.02992721061773451,
+          0.012581736587454314,
+          0.02941397281211296
+        ]
+      },
+      {
+        "episode_bootstrap_95": [
+          0.02016723034884076,
+          0.03351102701075172
+        ],
+        "feature": "min_top_depth",
+        "mean_brier_increase": 0.026969839451744727,
+        "repeat_range": [
+          0.029082174576001162,
+          0.020845267572852842,
+          0.021017909951757546,
+          0.03119943817243374,
+          0.03021735807584606,
+          0.027797546126961656,
+          0.037615780024292535,
+          0.02992721061773451,
+          0.012581736587454317,
+          0.02941397281211296
+        ]
+      },
+      {
+        "episode_bootstrap_95": [
+          -0.0023783143034273964,
+          0.005703401429729323
+        ],
+        "feature": "conditional_edge",
+        "mean_brier_increase": 0.0017522918062355024,
+        "repeat_range": [
+          -0.0002714347968588164,
+          0.0004153444397758376,
+          0.0003785946301848727,
+          0.0010165382473190075,
+          0.00185786150189259,
+          0.001141578881184073,
+          0.0013406447564080605,
+          0.0036356012219271165,
+          0.005023702027976307,
+          0.0029844871525459785
+        ]
+      },
+      {
+        "episode_bootstrap_95": [
+          0.00016988380750370506,
+          0.0020567886008508005
+        ],
+        "feature": "proposed_quantity",
+        "mean_brier_increase": 0.0011227230768820129,
+        "repeat_range": [
+          0.0014054684977756874,
+          0.0014822357051713835,
+          0.001127576599711097,
+          0.0003878837498448969,
+          0.001570120169482256,
+          0.0021523899467726718,
+          5.381421219505534e-05,
+          0.0007386004532026348,
+          0.0015222174003013103,
+          0.0007869240343631355
+        ]
+      },
+      {
+        "episode_bootstrap_95": [
+          -0.0008088163613356531,
+          0.002473755873995235
+        ],
+        "feature": "ask_sum",
+        "mean_brier_increase": 0.0008478634180360787,
+        "repeat_range": [
+          0.0023015156617798823,
+          0.0015903952305576156,
+          0.001468511092314985,
+          0.0011229848126465005,
+          0.0006979847910108622,
+          0.0013293919849339353,
+          0.0014059784630804655,
+          -0.0007787815340576058,
+          -0.0003117731706880722,
+          -0.00034757315121778325
+        ]
+      },
+      {
+        "episode_bootstrap_95": [
+          -0.0008088170993412835,
+          0.002473739052340787
+        ],
+        "feature": "bid_sum",
+        "mean_brier_increase": 0.0008478545998599059,
+        "repeat_range": [
+          0.002301497737607558,
+          0.0015903833307934143,
+          0.0014684996572088239,
+          0.001122974646810754,
+          0.000697977208464954,
+          0.0013293804217778425,
+          0.0014059667250597944,
+          -0.000778780916999523,
+          -0.0003117774001003301,
+          -0.00034757541202422965
+        ]
+      },
+      {
+        "episode_bootstrap_95": [
+          0.0,
+          0.0
+        ],
+        "feature": "max_spread",
+        "mean_brier_increase": 0.0,
+        "repeat_range": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "episode_bootstrap_95": [
+          0.0,
+          0.0
+        ],
+        "feature": "max_age_ms",
+        "mean_brier_increase": 0.0,
+        "repeat_range": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "episode_bootstrap_95": [
+          0.0,
+          0.0
+        ],
+        "feature": "fee_rate",
+        "mean_brier_increase": 0.0,
+        "repeat_range": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "episode_bootstrap_95": [
+          0.0,
+          0.0
+        ],
+        "feature": "capital_available",
+        "mean_brier_increase": 0.0,
+        "repeat_range": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "episode_bootstrap_95": [
+          0.0,
+          0.0
+        ],
+        "feature": "locked_capital",
+        "mean_brier_increase": 0.0,
+        "repeat_range": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "episode_bootstrap_95": [
+          0.0,
+          0.0
+        ],
+        "feature": "unmatched_quantity",
+        "mean_brier_increase": 0.0,
+        "repeat_range": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "episode_bootstrap_95": [
+          0.0,
+          0.0
+        ],
+        "feature": "latency_ms",
+        "mean_brier_increase": 0.0,
+        "repeat_range": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "episode_bootstrap_95": [
+          0.0,
+          0.0
+        ],
+        "feature": "jitter_ms",
+        "mean_brier_increase": 0.0,
+        "repeat_range": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "episode_bootstrap_95": [
+          0.0,
+          0.0
+        ],
+        "feature": "liquidity_fraction",
+        "mean_brier_increase": 0.0,
+        "repeat_range": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "episode_bootstrap_95": [
+          0.0,
+          0.0
+        ],
+        "feature": "adverse_ticks",
+        "mean_brier_increase": 0.0,
+        "repeat_range": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "episode_bootstrap_95": [
+          0.0,
+          0.0
+        ],
+        "feature": "ack_delay_ms",
+        "mean_brier_increase": 0.0,
+        "repeat_range": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "episode_bootstrap_95": [
+          0.0,
+          0.0
+        ],
+        "feature": "observation_latency_ms",
+        "mean_brier_increase": 0.0,
+        "repeat_range": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    ],
+    "limitations": [
+      "Synthetic hypothetical completion labels; no observed market execution.",
+      "Permutation sensitivity is predictive dependence, not causal feature importance. Correlated features can produce impossible perturbed states.",
+      "Donor episodes preserve execution variant pairing. Bootstrap samples base episodes; intervals condition on fixed model and validation data.",
+      "Threshold table is descriptive classification sensitivity, not a policy P&L experiment or recommendation. No threshold is selected.",
+      "Final test labels are excluded from every calculation. Validation findings may guide later preregistered experiments."
+    ],
+    "missed_completion_count": 1,
+    "model_artifact_sha256": "4b40db50b245120cd47bced1267f1cdc8a39b3908058b2e38d80b493756a3451",
+    "model_id": "model-3141334b301947499b59913d",
+    "partition": "validation",
+    "permutation_repeats": 10,
+    "representative_errors": [
+      {
+        "base_episode_id": "thin:42534",
+        "completion_probability": 0.041461688970361704,
+        "error": "MISSED_COMPLETION",
+        "execution_model": "standard",
+        "family": "thin",
+        "label": 1
+      },
+      {
+        "base_episode_id": "volatile:42851",
+        "completion_probability": 0.8949272231471067,
+        "error": "FALSE_COMPLETION",
+        "execution_model": "optimistic",
+        "family": "volatile",
+        "label": 0
+      },
+      {
+        "base_episode_id": "disappearing:42327",
+        "completion_probability": 0.8872901119560559,
+        "error": "FALSE_COMPLETION",
+        "execution_model": "optimistic",
+        "family": "disappearing",
+        "label": 0
+      },
+      {
+        "base_episode_id": "one_sided:42872",
+        "completion_probability": 0.8819353678641492,
+        "error": "FALSE_COMPLETION",
+        "execution_model": "optimistic",
+        "family": "one_sided",
+        "label": 0
+      },
+      {
+        "base_episode_id": "volatile:43067",
+        "completion_probability": 0.8404115550525095,
+        "error": "FALSE_COMPLETION",
+        "execution_model": "optimistic",
+        "family": "volatile",
+        "label": 0
+      },
+      {
+        "base_episode_id": "volatile:42563",
+        "completion_probability": 0.8315088661486794,
+        "error": "FALSE_COMPLETION",
+        "execution_model": "optimistic",
+        "family": "volatile",
+        "label": 0
+      },
+      {
+        "base_episode_id": "one_sided:42074",
+        "completion_probability": 0.8091767836950141,
+        "error": "FALSE_COMPLETION",
+        "execution_model": "optimistic",
+        "family": "one_sided",
+        "label": 0
+      }
+    ],
+    "rows": 207,
+    "source_hash": "b82d996fa757dbdf478c8e071fb88fd152281a09a2c0e82a206bd24cfd4218e8",
+    "test_labels_used": false,
+    "threshold_sensitivity": [
+      {
+        "false_completion_count": 6,
+        "missed_completion_count": 1,
+        "threshold": 0.25,
+        "trade_request_fraction": 0.4106280193236715
+      },
+      {
+        "false_completion_count": 6,
+        "missed_completion_count": 1,
+        "threshold": 0.5,
+        "trade_request_fraction": 0.4106280193236715
+      },
+      {
+        "false_completion_count": 6,
+        "missed_completion_count": 3,
+        "threshold": 0.75,
+        "trade_request_fraction": 0.40096618357487923
+      },
+      {
+        "false_completion_count": 0,
+        "missed_completion_count": 46,
+        "threshold": 0.9,
+        "trade_request_fraction": 0.1642512077294686
+      },
+      {
+        "false_completion_count": 0,
+        "missed_completion_count": 53,
+        "threshold": 0.95,
+        "trade_request_fraction": 0.13043478260869565
+      }
+    ]
+  },
+  {
+    "base_episodes": 69,
+    "baseline_episode_brier": 0.029153079836865516,
+    "created_at": 1791783186.408679,
+    "dataset_sha256": "a0dd2d328f724337a7a544470c616d4d2ef887240fa9d647227aea4ddc00dc27",
+    "diagnostic_version": "validation-permutation-1",
+    "duration_seconds": 2.865163039008621,
+    "false_completion_count": 6,
+    "feature_sensitivity": [
+      {
+        "episode_bootstrap_95": [
+          0.028830766705429188,
+          0.047898464752116565
+        ],
+        "feature": "min_ask_depth",
+        "mean_brier_increase": 0.038335541300381124,
+        "repeat_range": [
+          0.04252614575966439,
+          0.02996532924378005,
+          0.03222541978104012,
+          0.04200201391722248,
+          0.04245866312973164,
+          0.033316795361548836,
+          0.05395010761937314,
+          0.0471449365805218,
+          0.0230993793452416,
+          0.03666662226568726
+        ]
+      },
+      {
+        "episode_bootstrap_95": [
+          0.019689563191138185,
+          0.035003147096779486
+        ],
+        "feature": "max_ask_depth",
+        "mean_brier_increase": 0.02744129303441213,
+        "repeat_range": [
+          0.03118042060866626,
+          0.021058247171364498,
+          0.02207272437384585,
+          0.031219860119553043,
+          0.029719706461600322,
+          0.024887910544280974,
+          0.037905659480712006,
+          0.03345069857515051,
+          0.014835595308106188,
+          0.02808210770084163
+        ]
+      },
+      {
+        "episode_bootstrap_95": [
+          0.017470157992875216,
+          0.032015546393585066
+        ],
+        "feature": "min_top_depth",
+        "mean_brier_increase": 0.02481924524607542,
+        "repeat_range": [
+          0.027977841042176658,
+          0.019126716452684826,
+          0.02152913939064449,
+          0.026475841655923225,
+          0.027101479466137533,
+          0.021973180278437462,
+          0.03440177856745667,
+          0.02967667389035976,
+          0.013130820882737046,
+          0.026798980834196497
+        ]
+      },
+      {
+        "episode_bootstrap_95": [
+          -0.0010643706808488277,
+          0.01748216113582942
+        ],
+        "feature": "conditional_edge",
+        "mean_brier_increase": 0.007848568095531255,
+        "repeat_range": [
+          0.005071639034012349,
+          0.005335739144191107,
+          0.005862995958790932,
+          0.00529099008942687,
+          0.00621153979117064,
+          0.008920022175490342,
+          0.010062037900908974,
+          0.008891936174019944,
+          0.013952354654514004,
+          0.008886426032787385
+        ]
+      },
+      {
+        "episode_bootstrap_95": [
+          0.0013860740762714713,
+          0.006519532126566427
+        ],
+        "feature": "proposed_quantity",
+        "mean_brier_increase": 0.00371453219095681,
+        "repeat_range": [
+          0.003307291084117863,
+          0.004454609691558437,
+          0.002382139905439164,
+          0.0023851660000571997,
+          0.0043924353751287415,
+          0.006246790070452201,
+          0.0031855680130107407,
+          0.003152687550436537,
+          0.0022041693103432114,
+          0.005434464909024008
+        ]
+      },
+      {
+        "episode_bootstrap_95": [
+          -0.0014266335244147168,
+          0.006082528207074723
+        ],
+        "feature": "ask_sum",
+        "mean_brier_increase": 0.0021535332409003145,
+        "repeat_range": [
+          0.004955167445517781,
+          0.0036684101089932463,
+          0.003134281757990155,
+          0.002844739663668314,
+          0.001107323597983915,
+          0.0038388400349436305,
+          0.0032238736393222717,
+          -0.0011397552166554465,
+          -9.59014574586587e-05,
+          -1.6471653020650625e-06
+        ]
+      },
+      {
+        "episode_bootstrap_95": [
+          -0.0019315679341711984,
+          0.0037446861453755047
+        ],
+        "feature": "bid_sum",
+        "mean_brier_increase": 0.0005704449407267873,
+        "repeat_range": [
+          0.0016742105358688905,
+          0.0017087188260386846,
+          0.001563985400876428,
+          0.0005586279529847834,
+          0.0007093332579458559,
+          0.0015837172055532377,
+          0.000941948130062973,
+          -0.0015895190650828239,
+          -0.0010197586999064342,
+          -0.00042681413707372154
+        ]
+      },
+      {
+        "episode_bootstrap_95": [
+          0.0,
+          0.0
+        ],
+        "feature": "max_spread",
+        "mean_brier_increase": 0.0,
+        "repeat_range": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "episode_bootstrap_95": [
+          0.0,
+          0.0
+        ],
+        "feature": "max_age_ms",
+        "mean_brier_increase": 0.0,
+        "repeat_range": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "episode_bootstrap_95": [
+          0.0,
+          0.0
+        ],
+        "feature": "fee_rate",
+        "mean_brier_increase": 0.0,
+        "repeat_range": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "episode_bootstrap_95": [
+          0.0,
+          0.0
+        ],
+        "feature": "capital_available",
+        "mean_brier_increase": 0.0,
+        "repeat_range": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "episode_bootstrap_95": [
+          0.0,
+          0.0
+        ],
+        "feature": "locked_capital",
+        "mean_brier_increase": 0.0,
+        "repeat_range": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "episode_bootstrap_95": [
+          0.0,
+          0.0
+        ],
+        "feature": "unmatched_quantity",
+        "mean_brier_increase": 0.0,
+        "repeat_range": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "episode_bootstrap_95": [
+          0.0,
+          0.0
+        ],
+        "feature": "latency_ms",
+        "mean_brier_increase": 0.0,
+        "repeat_range": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "episode_bootstrap_95": [
+          0.0,
+          0.0
+        ],
+        "feature": "jitter_ms",
+        "mean_brier_increase": 0.0,
+        "repeat_range": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "episode_bootstrap_95": [
+          0.0,
+          0.0
+        ],
+        "feature": "liquidity_fraction",
+        "mean_brier_increase": 0.0,
+        "repeat_range": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "episode_bootstrap_95": [
+          0.0,
+          0.0
+        ],
+        "feature": "adverse_ticks",
+        "mean_brier_increase": 0.0,
+        "repeat_range": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "episode_bootstrap_95": [
+          0.0,
+          0.0
+        ],
+        "feature": "ack_delay_ms",
+        "mean_brier_increase": 0.0,
+        "repeat_range": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "episode_bootstrap_95": [
+          0.0,
+          0.0
+        ],
+        "feature": "observation_latency_ms",
+        "mean_brier_increase": 0.0,
+        "repeat_range": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    ],
+    "limitations": [
+      "Synthetic hypothetical completion labels; no observed market execution.",
+      "Permutation sensitivity is predictive dependence, not causal feature importance. Correlated features can produce impossible perturbed states.",
+      "Donor episodes preserve execution variant pairing. Bootstrap samples base episodes; intervals condition on fixed model and validation data.",
+      "Threshold table is descriptive classification sensitivity, not a policy P&L experiment or recommendation. No threshold is selected.",
+      "Final test labels are excluded from every calculation. Validation findings may guide later preregistered experiments."
+    ],
+    "missed_completion_count": 1,
+    "model_artifact_sha256": "a5f50a7fa09d719ca0bd6739d3b2f3c4d493e2379ab9ce24e65147948556d02b",
+    "model_id": "model-fe2d275e53ae4295adf5ab1f",
+    "partition": "validation",
+    "permutation_repeats": 10,
+    "representative_errors": [
+      {
+        "base_episode_id": "thin:42534",
+        "completion_probability": 0.030453428626060486,
+        "error": "MISSED_COMPLETION",
+        "execution_model": "standard",
+        "family": "thin",
+        "label": 1
+      },
+      {
+        "base_episode_id": "one_sided:42872",
+        "completion_probability": 0.9059008955955505,
+        "error": "FALSE_COMPLETION",
+        "execution_model": "optimistic",
+        "family": "one_sided",
+        "label": 0
+      },
+      {
+        "base_episode_id": "volatile:42851",
+        "completion_probability": 0.8904061317443848,
+        "error": "FALSE_COMPLETION",
+        "execution_model": "optimistic",
+        "family": "volatile",
+        "label": 0
+      },
+      {
+        "base_episode_id": "disappearing:42327",
+        "completion_probability": 0.8872193098068237,
+        "error": "FALSE_COMPLETION",
+        "execution_model": "optimistic",
+        "family": "disappearing",
+        "label": 0
+      },
+      {
+        "base_episode_id": "volatile:42563",
+        "completion_probability": 0.7968802452087402,
+        "error": "FALSE_COMPLETION",
+        "execution_model": "optimistic",
+        "family": "volatile",
+        "label": 0
+      },
+      {
+        "base_episode_id": "one_sided:42074",
+        "completion_probability": 0.7300087809562683,
+        "error": "FALSE_COMPLETION",
+        "execution_model": "optimistic",
+        "family": "one_sided",
+        "label": 0
+      },
+      {
+        "base_episode_id": "volatile:43067",
+        "completion_probability": 0.7157869338989258,
+        "error": "FALSE_COMPLETION",
+        "execution_model": "optimistic",
+        "family": "volatile",
+        "label": 0
+      }
+    ],
+    "rows": 207,
+    "source_hash": "b82d996fa757dbdf478c8e071fb88fd152281a09a2c0e82a206bd24cfd4218e8",
+    "test_labels_used": false,
+    "threshold_sensitivity": [
+      {
+        "false_completion_count": 6,
+        "missed_completion_count": 1,
+        "threshold": 0.25,
+        "trade_request_fraction": 0.4106280193236715
+      },
+      {
+        "false_completion_count": 6,
+        "missed_completion_count": 1,
+        "threshold": 0.5,
+        "trade_request_fraction": 0.4106280193236715
+      },
+      {
+        "false_completion_count": 4,
+        "missed_completion_count": 4,
+        "threshold": 0.75,
+        "trade_request_fraction": 0.3864734299516908
+      },
+      {
+        "false_completion_count": 1,
+        "missed_completion_count": 27,
+        "threshold": 0.9,
+        "trade_request_fraction": 0.2608695652173913
+      },
+      {
+        "false_completion_count": 0,
+        "missed_completion_count": 45,
+        "threshold": 0.95,
+        "trade_request_fraction": 0.16908212560386474
+      }
+    ]
+  }
+]

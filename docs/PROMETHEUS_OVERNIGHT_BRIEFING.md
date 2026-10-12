@@ -225,3 +225,17 @@ Priority continuation:
 The overall Prometheus goal remains active. Core Arena and the first bounded
 research loop work; wider Data Foundry ingestion, recovery policies, economic
 sensitivity and adaptive multi-day research remain incomplete.
+
+Validation diagnostics are now executed and deployed for the logistic model and
+selected neural model. Both reports inspect 69 validation groups, with six false
+completion predictions and one missed completion at threshold 0.5. Depth features
+dominate predictive permutation sensitivity; several execution failures receive
+high completion scores. This finding supports studying unmatched-risk targets
+and policy sizing, with selection restricted to validation. It does not justify
+larger models or a final-test-selected confidence threshold.
+
+Latest gates: **272 Python tests passed / one PostgreSQL skip**, four frontend
+tests passed; typecheck, lint, build, Ruff and strict mypy passed. The updated Arena
+browser workflow passed, including actual diagnostic execution/display.
+Both production diagnostic jobs completed; **no research worker is running**.
+API and dashboard are healthy. The preserved campaign hash remains unchanged.
