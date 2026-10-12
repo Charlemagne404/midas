@@ -78,3 +78,59 @@ it('labels the distinct model targets in a paired tournament', async () => {
   expect(screen.getByText(/Threshold 0.1/)).toBeInTheDocument();
   client.clear();
 });
+
+it('shows severity errors in shares and excludes probability diagnostics', async () => {
+  const metrics = { mae: 1, rmse: 2, positive_mae: 3, positive_rmse: 4, base_episodes: 10 };
+  const model = {
+    model_id: 'model-severity',
+    family: 'ridge',
+    task: 'residual_severity_regression',
+    label_target: 'residual_unmatched_shares',
+    state: 'TRAINED',
+    dataset_id: 'parent',
+    artifact_sha256: 'weights',
+    training_duration_seconds: 1,
+    configuration: {},
+    validation: metrics,
+    test: null,
+    curves: [],
+    limitations: [],
+    checkpoints: [],
+    loss_definition: 'Train-normalized squared shares error',
+    baselines_validation: { zero: metrics },
+  };
+  const overview = {
+    datasets: [],
+    models: [model],
+    jobs: [],
+    findings: [],
+    tournaments: [],
+    dependencies: {},
+    health: { memory_mb: {}, worker_cpu_cores: 1, worker_memory_mb: 4096 },
+  };
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(
+      async (url: string) =>
+        new Response(JSON.stringify(url === '/api/arena' ? overview : model), { status: 200 }),
+    ),
+  );
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  render(
+    <QueryClientProvider client={client}>
+      <Arena />
+    </QueryClientProvider>,
+  );
+  fireEvent.click(await screen.findByRole('tab', { name: 'Model registry' }));
+  expect(screen.getAllByText('RMSE (shares)')).toHaveLength(2);
+  fireEvent.click(screen.getByRole('button', { name: 'Inspect model' }));
+  expect(await screen.findByText(/Expected residual unmatched shares/)).toBeInTheDocument();
+  expect(
+    screen.getByRole('heading', { name: 'Validation regression controls' }),
+  ).toBeInTheDocument();
+  expect(
+    screen.queryByRole('button', { name: 'Inspect validation errors' }),
+  ).not.toBeInTheDocument();
+  expect(screen.getByText('positive rmse')).toBeInTheDocument();
+  client.clear();
+});

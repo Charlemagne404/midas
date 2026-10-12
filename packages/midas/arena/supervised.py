@@ -359,6 +359,8 @@ class Predictor:
     def load(cls, root: Path, identity: str) -> "Predictor":
         directory = artifact_path(root, "models", identity)
         manifest = json.loads((directory / "manifest.json").read_text())
+        if manifest.get("task") == "residual_severity_regression":
+            raise ValueError("Severity regression predicts shares, not probability gates")
         if sha256(directory / "parameters.json") != manifest["artifact_sha256"]:
             raise ValueError("Model artifact checksum mismatch")
         if (

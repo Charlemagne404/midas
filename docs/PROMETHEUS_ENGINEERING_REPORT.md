@@ -1124,3 +1124,34 @@ while either worker was active. Both processes are terminal; API is READY.
 
 Next: residual-share severity regression, with explicit units and probability-gate
 exclusion, followed by actual economic scenario reruns. The full goal is ACTIVE.
+
+## Severity regression implementation checkpoint
+
+Added `severity` jobs for deterministic ridge and genuine PyTorch Softplus MLP
+regression of exact initial-proposal residual shares. The frozen dataset remains
+unchanged; only retained train/validation outcomes enter fitting. Features and
+RMS target scale are fit on training only. Positive-outcome MAE/RMSE, aggregate
+errors, grouped RMSE intervals, family/execution breakdowns, zero and train-mean
+controls are persisted. Shares are not probabilities, dollar losses or recovery
+costs. Probability loaders reject these models, and the tournament UI excludes
+them from probability policies. No existing gate or hard risk rule changes.
+
+MLP checkpoints retain current/best weights, optimizer, RNG, epoch, early-stop
+state and actual curves, with atomic fsync and hash metadata. Tests verify exact
+resume equivalence, training-only feature means, no probability admission,
+reload and bounded worker/evaluation dispatch. Final tests remain unopened by
+training; explicit evaluation dispatch uses continuous metrics. The UI supports
+both architectures, shares-based metrics and validation controls, with a rendered
+regression test preventing probability diagnostics from appearing.
+
+Full regression: 321 passed / one PostgreSQL skip / one existing Starlette warning
+in 368.53 seconds. Focused integration previously passed 15 tests; a later five-test
+severity gate passed after making unchanged optimizer defaults explicit and
+correcting loss descriptions (ridge uses raw squared shares plus L2; neural loss
+uses train-RMS-normalized shares). Strict mypy/Ruff pass. Frontend: six tests,
+typecheck/lint and production build pass, with the existing chunk-size warning.
+
+Three production fits are preregistered: one ridge and two MLP seeds, selected
+on validation group RMSE with 0.10 shares practical tolerance and positive-error
+controls. This is fit selection, not policy promotion or independent evidence.
+The final classifier and regression test partitions are excluded from this plan.

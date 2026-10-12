@@ -25,6 +25,10 @@ type Economics = {
   }[];
 };
 type Metrics = {
+  mae?: number;
+  rmse?: number;
+  positive_mae?: number | null;
+  positive_rmse?: number | null;
   brier: number;
   log_loss: number;
   precision: number;
@@ -52,6 +56,9 @@ type Dataset = {
   };
 };
 type Model = {
+  task?: string;
+  loss_definition?: string;
+  baselines_validation?: Record<string, Metrics>;
   independent_policy_evaluations?: number;
   validation_policy_comparisons?: number;
   model_id: string;
@@ -99,6 +106,7 @@ type Model = {
     limitations: string[];
   };
 };
+const isSeverity = (model: Model | undefined) => model?.task === 'residual_severity_regression';
 type Job = {
   job_id: string;
   state: string;
@@ -389,17 +397,29 @@ export function Arena() {
             learning_rate: learningRate,
           },
         }
-      : {
-          kind: 'supervised',
-          training: {
-            dataset_id: selectedDataset,
-            family,
-            epochs,
-            hidden_size: hiddenSize,
-            learning_rate: learningRate,
-            seed,
-          },
-        };
+      : family === 'ridge' || family === 'severity_mlp'
+        ? {
+            kind: 'severity',
+            severity: {
+              dataset_id: selectedDataset,
+              family,
+              epochs,
+              hidden_size: hiddenSize,
+              learning_rate: learningRate,
+              seed,
+            },
+          }
+        : {
+            kind: 'supervised',
+            training: {
+              dataset_id: selectedDataset,
+              family,
+              epochs,
+              hidden_size: hiddenSize,
+              learning_rate: learningRate,
+              seed,
+            },
+          };
   const running = data?.jobs.filter((job) => ['RUNNING', 'QUEUED'].includes(job.state)) ?? [];
   if (overview.isPending)
     return (
@@ -620,7 +640,16 @@ export function Arena() {
                     setLearningRate(event.target.value === 'ppo' ? 0.0003 : 0.001);
                   }}
                 >
-                  {['constant', 'heuristic', 'logistic', 'tree', 'mlp', 'ppo'].map((name) => (
+                  {[
+                    'constant',
+                    'heuristic',
+                    'logistic',
+                    'tree',
+                    'mlp',
+                    'ppo',
+                    'ridge',
+                    'severity_mlp',
+                  ].map((name) => (
                     <option key={name}>{name}</option>
                   ))}
                 </select>
@@ -824,8 +853,8 @@ export function Arena() {
                   <tr>
                     <th>Architecture / model</th>
                     <th>Lifecycle</th>
-                    <th>Validation Brier</th>
-                    <th>Held-out Brier</th>
+                    <th>Validation metric</th>
+                    <th>Held-out metric</th>
                     <th>Training</th>
                     <th>Evidence</th>
                   </tr>
@@ -845,8 +874,14 @@ export function Arena() {
                       <td>
                         <State value={entry.state} />
                       </td>
-                      <td>{n(entry.validation?.brier)}</td>
-                      <td>{n(entry.test?.brier)}</td>
+                      <td>
+                        {n(isSeverity(entry) ? entry.validation?.rmse : entry.validation?.brier)}
+                        <small>{isSeverity(entry) ? 'RMSE (shares)' : 'Brier'}</small>
+                      </td>
+                      <td>
+                        {n(isSeverity(entry) ? entry.test?.rmse : entry.test?.brier)}
+                        <small>{isSeverity(entry) ? 'RMSE (shares)' : 'Brier'}</small>
+                      </td>
                       <td>{n(entry.training_duration_seconds, 1)} s</td>
                       <td>
                         <button onClick={() => setModelId(entry.model_id)}>Inspect model</button>
@@ -873,8 +908,16 @@ export function Arena() {
                       : 'Independent test not yet evaluated.'}{' '}
                 {model.data.timesteps
                   ? `${model.data.timesteps} PPO transitions / ${model.data.training_episodes} completed training episodes.`
-                  : `Execution ${model.data.label_target ?? 'completion'} classifier.`}
+                  : isSeverity(model.data)
+                    ? 'Expected residual unmatched shares; not a probability, dollar loss or recovery cost.'
+                    : `Execution ${model.data.label_target ?? 'completion'} classifier.`}
               </p>
+              {isSeverity(model.data) && (
+                <p className="lab-note">
+                  {model.data.loss_definition} · Aggregate and positive-outcome errors are shown in
+                  shares. Severity models are excluded from probability-gated tournaments.
+                </p>
+              )}
               {model.data.label_target === 'unmatched' && (
                 <p className="lab-note">
                   Policy gate accepts predicted residual unmatched risk at or below the configured
@@ -929,15 +972,22 @@ export function Arena() {
                     <h3>{name === 'test' ? 'Independent test' : 'Validation'}</h3>
                     {model.data?.[name] ? (
                       <dl className="arena-facts">
-                        {(
-                          [
-                            'brier',
-                            'log_loss',
-                            'precision',
-                            'recall',
-                            'pr_auc',
-                            'base_episodes',
-                          ] as const
+                        {(isSeverity(model.data)
+                          ? ([
+                              'mae',
+                              'rmse',
+                              'positive_mae',
+                              'positive_rmse',
+                              'base_episodes',
+                            ] as const)
+                          : ([
+                              'brier',
+                              'log_loss',
+                              'precision',
+                              'recall',
+                              'pr_auc',
+                              'base_episodes',
+                            ] as const)
                         ).map((metric) => (
                           <div key={metric}>
                             <dt>{metric.replaceAll('_', ' ')}</dt>
@@ -953,7 +1003,18 @@ export function Arena() {
                   </div>
                 ))}
               </div>
-              {model.data.validation && (
+              {isSeverity(model.data) && model.data.baselines_validation && (
+                <div>
+                  <h3>Validation regression controls</h3>
+                  {Object.entries(model.data.baselines_validation).map(([name, metrics]) => (
+                    <p key={name}>
+                      {name.replaceAll('_', ' ')}: RMSE {n(metrics.rmse)} shares · MAE{' '}
+                      {n(metrics.mae)} shares
+                    </p>
+                  ))}
+                </div>
+              )}
+              {model.data.validation && !isSeverity(model.data) && (
                 <Suspense fallback={<p>Loading calibration…</p>}>
                   <Chart
                     label="Validation probability reliability"
@@ -1055,6 +1116,7 @@ export function Arena() {
                   </a>
                 ))}
                 {model.data.family !== 'ppo' &&
+                  !isSeverity(model.data) &&
                   model.data.artifact_sha256 &&
                   (model.data.diagnostics ? (
                     <a href={`/api/arena/models/${modelId}/artifacts/diagnostics.json`}>
@@ -1123,7 +1185,9 @@ export function Arena() {
                       tournament: {
                         dataset_id: selectedDataset,
                         model_ids: data?.models
-                          .filter((entry) => entry.dataset_id === selectedDataset)
+                          .filter(
+                            (entry) => entry.dataset_id === selectedDataset && !isSeverity(entry),
+                          )
                           .map((entry) => entry.model_id),
                         max_episodes: 100,
                       },
@@ -1142,7 +1206,9 @@ export function Arena() {
                       tournament: {
                         dataset_id: selectedDataset,
                         model_ids: data?.models
-                          .filter((entry) => entry.dataset_id === selectedDataset)
+                          .filter(
+                            (entry) => entry.dataset_id === selectedDataset && !isSeverity(entry),
+                          )
                           .map((entry) => entry.model_id),
                         max_episodes: 100,
                         adversarial: true,

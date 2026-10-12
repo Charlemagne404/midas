@@ -1,0 +1,101 @@
+{
+  "created_at": 1791805055.7383466,
+  "question": "Can decision-time observations predict expected residual initial-proposal shares beyond zero and train-mean controls?",
+  "task": "residual_severity_regression",
+  "dataset_id": "dataset-f53981b7dd24c1521ce749b1",
+  "label": "Exact absolute acquired-share difference between the two initial proposal legs; post-execution label only.",
+  "units": "shares",
+  "jobs": [
+    {
+      "kind": "severity",
+      "dataset": null,
+      "training": null,
+      "severity": {
+        "dataset_id": "dataset-f53981b7dd24c1521ce749b1",
+        "family": "ridge",
+        "seed": 11,
+        "epochs": 80,
+        "batch_size": 128,
+        "hidden_size": 32,
+        "learning_rate": 0.001,
+        "ridge_alpha": 1.0,
+        "patience": 12,
+        "max_wall_seconds": 600,
+        "resume_from": null
+      },
+      "model_id": null,
+      "rl": null,
+      "tournament": null,
+      "sweep": null,
+      "director": null,
+      "policy_search": null,
+      "max_wall_seconds": 600
+    },
+    {
+      "kind": "severity",
+      "dataset": null,
+      "training": null,
+      "severity": {
+        "dataset_id": "dataset-f53981b7dd24c1521ce749b1",
+        "family": "severity_mlp",
+        "seed": 11,
+        "epochs": 80,
+        "batch_size": 128,
+        "hidden_size": 32,
+        "learning_rate": 0.001,
+        "ridge_alpha": 1.0,
+        "patience": 12,
+        "max_wall_seconds": 600,
+        "resume_from": null
+      },
+      "model_id": null,
+      "rl": null,
+      "tournament": null,
+      "sweep": null,
+      "director": null,
+      "policy_search": null,
+      "max_wall_seconds": 600
+    },
+    {
+      "kind": "severity",
+      "dataset": null,
+      "training": null,
+      "severity": {
+        "dataset_id": "dataset-f53981b7dd24c1521ce749b1",
+        "family": "severity_mlp",
+        "seed": 29,
+        "epochs": 80,
+        "batch_size": 128,
+        "hidden_size": 32,
+        "learning_rate": 0.001,
+        "ridge_alpha": 1.0,
+        "patience": 12,
+        "max_wall_seconds": 600,
+        "resume_from": null
+      },
+      "model_id": null,
+      "rl": null,
+      "tournament": null,
+      "sweep": null,
+      "director": null,
+      "policy_search": null,
+      "max_wall_seconds": 600
+    }
+  ],
+  "selection_partition": "validation",
+  "primary_metric": "Equal-base-group validation RMSE; also retain aggregate MAE/RMSE and positive-outcome errors.",
+  "selection_rule": "Compare mean neural episode RMSE across two optimizer seeds with deterministic ridge; prefer ridge unless neural mean improves by at least 0.10 shares. This is a declared practical tolerance, not established statistical significance.",
+  "final_test": "Not opened in these training jobs.",
+  "policy_integration": "None: shares predictions are excluded from probability gates; no change to existing policies.",
+  "limitations": [
+    "Zero-heavy labels can favor underprediction; positive errors and zero/train-mean controls must accompany aggregate metrics.",
+    "Optimizer seeds reuse the same data and are not independent market observations.",
+    "Synthetic fills, initial-admission scope only; no dollar loss or empirical fill calibration."
+  ],
+  "source_hash": "0558ffb748ba5412866f3f2a6c809d0124cd7c3e11d3cce115961ddec2b83358",
+  "practical_tolerance_shares": 0.1,
+  "optimizer_configuration": {
+    "neural": "AdamW lr=0.001, betas=(0.9,0.999), eps=1e-8, weight_decay=0.01, amsgrad=False",
+    "ridge": "alpha=1; squared shares loss plus L2 penalty; output clipped nonnegative"
+  }
+}

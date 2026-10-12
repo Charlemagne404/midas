@@ -19,6 +19,7 @@ from midas.arena.director import DirectorSpec
 from midas.arena.evolution import SweepSpec
 from midas.arena.policy_search import PolicySearchSpec
 from midas.arena.rl import RLSpec
+from midas.arena.severity import SeveritySpec
 from midas.arena.supervised import TrainingSpec
 from midas.arena.tournaments import TournamentSpec
 from midas.core.models import Model
@@ -35,9 +36,11 @@ class JobSpec(Model):
         "director",
         "diagnostics",
         "policy_search",
+        "severity",
     ]
     dataset: DatasetSpec | None = None
     training: TrainingSpec | None = None
+    severity: SeveritySpec | None = None
     model_id: str | None = None
     rl: RLSpec | None = None
     tournament: TournamentSpec | None = None
@@ -51,6 +54,7 @@ class JobSpec(Model):
         required = {
             "dataset": "dataset",
             "supervised": "training",
+            "severity": "severity",
             "evaluation": "model_id",
             "diagnostics": "model_id",
             "rl": "rl",
@@ -62,6 +66,7 @@ class JobSpec(Model):
         for field in (
             "dataset",
             "training",
+            "severity",
             "model_id",
             "rl",
             "tournament",
@@ -294,6 +299,12 @@ def _run(root: Path, identity: str) -> None:
                 assert spec.training is not None
                 result = train(root, spec.training, progress)
                 record["result"] = {"model_id": result["model_id"]}
+            elif spec.kind == "severity":
+                from midas.arena.severity import train as train_severity
+
+                assert spec.severity is not None
+                result = train_severity(root, spec.severity, progress)
+                record["result"] = {"model_id": result["model_id"]}
             elif spec.kind == "rl":
                 from midas.arena.rl import train_rl
 
@@ -332,9 +343,14 @@ def _run(root: Path, identity: str) -> None:
                 result = run_sweep(root, spec.sweep, progress)
                 record["result"] = {"sweep_id": result["sweep_id"]}
             else:
-                from midas.arena.supervised import independent_test
-
                 assert spec.model_id is not None
+                model_record = json.loads(
+                    (artifact_path(root, "models", spec.model_id) / "manifest.json").read_text()
+                )
+                if model_record.get("task") == "residual_severity_regression":
+                    from midas.arena.severity import independent_test
+                else:
+                    from midas.arena.supervised import independent_test
                 result = independent_test(root, spec.model_id)
                 record["result"] = {"model_id": result["model_id"]}
             completed_progress = record.get("progress") or {"done": 1, "total": 1}
