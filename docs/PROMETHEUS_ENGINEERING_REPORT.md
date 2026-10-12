@@ -1936,3 +1936,13 @@ Initial six focused policy tests passed38.27 seconds; repeat with investigation
 coverage passed eight tests in37.41 seconds. Frontend15 tests, typecheck/lint/build, strict typing and Ruff
 pass. A read-only check with the actual two production artifacts proves that
 cross-cohort evaluation without a fresh challenge rejects before simulation.
+
+Source checkpoint86aae37 committed. Original API service restarted and returned
+READY with verified journal checkpoint. Native job-b357fcb6f3b342b7ae1817a8
+launched under its bounded systemd worker; confirmed active process and progress
+250/3,900 with no error. Tournament preparing identity
+tournament-6753c0ba48da48488b15fda2. Full regression queued after terminal research
+state; package source remains frozen. Live browser selected the actual completion
+model and threshold0.9 with zero page errors. Fresh archive quick_check, exact
+counts162000/18000/162000 and exclusive owner lease pass. No study outcomes or
+pending regression results are claimed. Native job and operational checks saved.

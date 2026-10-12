@@ -1,5 +1,30 @@
 # MIDAS — PROMETHEUS OVERNIGHT BRIEFING
 
+## Active study — completion and friction with matched support controls
+
+Source checkpoint86aae37 adds genuine two-model preference decisions and matched
+threshold-zero controls. Fresh study job-b357fcb6f3b342b7ae1817a8 is RUNNING,
+tournament-6753c0ba48da48488b15fda2,100 groups /3,900 correlated variants at
+seed363071. Nine cost roles plus four deterministic controls distinguish plain
+friction preferences, added completion input support and fixed0.9 score rejection.
+Both models were selected before this challenge; weights and thresholds are fixed.
+No additional production model training or final-test opening occurred.
+
+Worker budget:one CPU,4GiB,1,800 seconds,1GiB aggregate Arena artifacts. Last
+confirmed progress250/3,900, no error; native systemd process active. A full
+regression is queued behind the worker. Do not count pending research or tests
+as completed. Eight focused tests passed37.41 seconds; frontend15 tests,
+typecheck/lint/build, strict typing and Ruff pass. Actual production browser
+inspection selected the completion model and displayed threshold0.9 with no
+page errors. API READY; archive quick_check/counts and exclusive owner pass.
+
+Inspect `/api/arena/jobs/job-b357fcb6f3b342b7ae1817a8`, the Arena job console or
+the native job.json. Safe cancellation is available through the job console or
+POST `/api/arena/jobs/job-b357fcb6f3b342b7ae1817a8/cancel`.
+After completion: verify all saved decisions and both model hashes, recompute
+grouped primary comparisons, investigate losses, export evidence and preserve
+the full regression result. No post-challenge retuning or promotion is planned.
+
 ## Latest checkpoint — fixed cost gate fails policy-value challenge
 
 The selected cost model's held-out prediction advantage did not translate to

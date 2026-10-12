@@ -1,0 +1,50 @@
+{
+  "checked_at": 1791845025.3058493,
+  "health": {
+    "status": "READY",
+    "startup_status": "READY",
+    "startup_error": null,
+    "mode": "demo",
+    "live_execution": false,
+    "paper_recovery": {
+      "status": "CHECKPOINT_VERIFIED",
+      "journal_events": 49399,
+      "revision": 49398
+    },
+    "laboratory": {
+      "status": "READY",
+      "root": "/home/charlie/midas/data/laboratory-final",
+      "recovering_campaigns": [],
+      "recovery_errors": []
+    }
+  },
+  "archive_quick_check": [
+    [
+      "ok"
+    ]
+  ],
+  "archive_counts": [
+    162000,
+    18000,
+    162000
+  ],
+  "exclusive_archive_owner": true,
+  "active_job": {
+    "job_id": "job-b357fcb6f3b342b7ae1817a8",
+    "state": "RUNNING",
+    "progress": {
+      "done": 250,
+      "total": 3900
+    },
+    "budget": {
+      "cpu_cores": 1,
+      "max_artifact_mb": 1024,
+      "memory_mb": 4096,
+      "minimum_available_memory_mb": 2048,
+      "wall_seconds": 1800
+    },
+    "unit": "midas-arena-job-b357fcb6f3b342b7ae1817a8.service"
+  },
+  "regression_status": "Queued behind the bounded research job; latest completed full gate408 passed/one skip",
+  "source_checkpoint": "86aae37"
+}

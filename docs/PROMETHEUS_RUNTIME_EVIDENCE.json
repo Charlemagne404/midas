@@ -1,5 +1,26 @@
 {
-  "active_jobs": [],
+  "active_jobs": [
+    {
+      "job_id": "job-b357fcb6f3b342b7ae1817a8",
+      "state": "RUNNING",
+      "progress": {
+        "done": 410,
+        "total": 3900
+      },
+      "unit": "midas-arena-job-b357fcb6f3b342b7ae1817a8.service",
+      "budget": {
+        "cpu_cores": 1,
+        "max_artifact_mb": 1024,
+        "memory_mb": 4096,
+        "minimum_available_memory_mb": 2048,
+        "wall_seconds": 1800
+      },
+      "active_artifact": {
+        "identity": "tournament-6753c0ba48da48488b15fda2",
+        "kind": "tournaments"
+      }
+    }
+  ],
   "active_research_director": null,
   "arena_datasets": 6,
   "arena_fitted_models": 42,
@@ -8,7 +29,7 @@
   "arena_research_tournaments": 22,
   "arena_source_datasets": 5,
   "arena_tournaments": 23,
-  "checked_at": 1791844515.934493,
+  "checked_at": 1791845065.4124553,
   "dataset_quality": [
     "Identical observable vectors occur across partitions. Independent scenario IDs do not guarantee covariate diversity; inspect repeated synthetic grids.",
     "Some scenario families contain one settlement seed parity only. The current generator uses seed parity for settlement; reorder families and shift seeds before making generalization claims.",
@@ -115,12 +136,16 @@
     "champion_promoted": false
   },
   "current_regression": {
-    "state": "COMPLETED",
-    "log": "docs/PROMETHEUS_COST_POLICY_FULL_TESTS.log",
-    "passed": 408,
-    "skipped": 1,
-    "warnings": 1,
-    "duration_seconds": 516.57,
-    "additional_investigation_tests_passed": 2
+    "state": "QUEUED_AFTER_RESEARCH",
+    "log": "docs/PROMETHEUS_JOINT_COST_FULL_TESTS.log",
+    "latest_completed_full_gate": "408 passed, one skipped; two investigation tests additionally passed"
+  },
+  "joint_cost_study": {
+    "preregistration": "docs/PROMETHEUS_JOINT_COST_PREREGISTRATION.json",
+    "source_checkpoint": "86aae37",
+    "state": "RUNNING",
+    "job_id": "job-b357fcb6f3b342b7ae1817a8",
+    "fixed_model_artifacts": true,
+    "production_models_trained": 0
   }
 }
