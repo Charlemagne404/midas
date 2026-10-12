@@ -853,3 +853,34 @@ mutations across three execution assumptions, plus matched controls, with no
 ledger corruption, refit or threshold tuning. Proposed wall budget is 1800
 seconds. This is independent robustness evaluation, not adaptation to the opened
 93071 test. Submission status and exact handle follow below.
+
+## Active fixed-gate robustness follow-up
+
+The preregistered adversarial job is
+`job-65fcccb2fd5340c783923279`, unit
+`midas-arena-job-65fcccb2fd5340c783923279.service`. Its exact handle was verified
+ACTIVE, MainPID 3077457, about 274 MiB memory, 156/1500 variants. It uses the same
+0.10/full gate and immutable model on new seed block 113071–113170, with existing
+adverse event mutations and matched controls. No gate or weights were adapted
+from the final test. No stress result is claimed yet.
+
+Budget: one CPU worker, 4 GiB per-unit memory ceiling, 1800-second wall bound,
+2 GiB available-host-memory floor and 1 GiB Arena artifact cap. It terminates at
+1500 variants or on cancellation, timeout or pressure failure. Inspect/cancel
+in the Arena, or POST
+`/api/arena/jobs/job-65fcccb2fd5340c783923279/cancel`. Logs:
+`journalctl --user -u midas-arena-job-65fcccb2fd5340c783923279.service`.
+Authoritative job record is
+`data/arena/jobs/job-65fcccb2fd5340c783923279/job.json`; observed snapshot is
+`PROMETHEUS_FROZEN_GATE_STRESS_JOB.json`.
+
+Next turn: read the original objective, inspect the current worktree and poll
+this exact handle. Keep Arena Python/financial source frozen while it runs.
+After completion, verify every stress replay and compare its declared objective,
+loss/exposure distribution and grouped uncertainty with the fixed controls.
+Losses are legitimate unless invariant evidence shows otherwise. Publish a
+bounded finding, preserve the initial positive result and all failures, and
+export the stress evidence without replacing earlier bundles. Then instrument
+budget/progress I/O overhead and develop correctly accounted proposal-severity/
+recovery experiments. No broader profitability or guaranteed safety claim follows
+from these synthetic studies. The full Prometheus goal remains ACTIVE.

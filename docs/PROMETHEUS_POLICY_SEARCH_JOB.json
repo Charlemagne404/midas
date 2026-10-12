@@ -28,15 +28,17 @@
     "tournament": null,
     "training": null
   },
-  "state": "RUNNING",
+  "state": "COMPLETED",
   "created_at": 1791788360.1746867,
-  "updated_at": 1791788582.7734084,
+  "updated_at": 1791790345.1229818,
   "progress": {
-    "done": 832,
-    "total": 5004
+    "done": 1500,
+    "total": 1500
   },
   "error": null,
-  "result": null,
+  "result": {
+    "search_id": "search-948c67bb4c90175f0b1e0294"
+  },
   "unit": "midas-arena-job-659ad7466d8d41f7b5a7f360.service",
   "submitted_source_hash": "3e752de21c6f4dc8249b6dfd1b024e4e023fc5bb0d18cb5742f615202e92bd50",
   "budget": {
@@ -47,12 +49,14 @@
     "wall_seconds": 5400
   },
   "active_artifact": {
-    "identity": "tournament-74386f79d51b4f68b4fd2020",
+    "identity": "tournament-be94f3ab8512499ab68db300",
     "kind": "tournaments"
   },
-  "elapsed_seconds": 221.05900233698776,
-  "phase": "validation policy comparison",
+  "elapsed_seconds": 1983.4085767989745,
+  "phase": "test policy comparison",
   "pid": 3045736,
   "started_at": 1791788361.7145145,
-  "observed_at": 1791788582.9241588
+  "observed_at": 1791791087.1654844,
+  "completed_at": 1791790345.1229825,
+  "exit_status": 0
 }

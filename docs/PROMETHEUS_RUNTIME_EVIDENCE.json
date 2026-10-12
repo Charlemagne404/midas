@@ -1,5 +1,5 @@
 {
-  "checked_at": 1791788421.657617,
+  "checked_at": 1791791087.1708868,
   "health": {
     "status": "READY",
     "startup_status": "READY",
@@ -8,8 +8,8 @@
     "live_execution": false,
     "paper_recovery": {
       "status": "CHECKPOINT_VERIFIED",
-      "journal_events": 23570,
-      "revision": 23569
+      "journal_events": 25022,
+      "revision": 25021
     },
     "laboratory": {
       "status": "READY",
@@ -20,7 +20,7 @@
   },
   "arena_model_artifacts": 14,
   "arena_fitted_models": 13,
-  "arena_tournaments": 7,
+  "arena_tournaments": 9,
   "recorded_public_sources": [
     {
       "dataset_id": "ctf-4024677",
@@ -59,62 +59,98 @@
   ],
   "active_jobs": [
     {
-      "job_id": "job-659ad7466d8d41f7b5a7f360",
-      "configuration": {
-        "dataset": null,
-        "director": null,
-        "kind": "policy_search",
-        "max_wall_seconds": 5400,
-        "model_id": null,
-        "policy_search": {
-          "challenge_episodes": 100,
-          "challenge_seed": 93071,
-          "dataset_id": "dataset-f53981b7dd24c1521ce749b1",
-          "model_id": "model-131794f0434945a286163323",
-          "sizes": [
-            "full",
-            "half"
-          ],
-          "thresholds": [
-            0.05,
-            0.1,
-            0.25,
-            0.5
-          ],
-          "validation_episodes": 160
-        },
-        "rl": null,
-        "sweep": null,
-        "tournament": null,
-        "training": null
+      "active_artifact": {
+        "identity": "tournament-aa1e3d4241f044daa4eaff30",
+        "kind": "tournaments"
       },
-      "state": "RUNNING",
-      "created_at": 1791788360.1746867,
-      "updated_at": 1791788420.5384371,
-      "progress": {
-        "done": 223,
-        "total": 5004
-      },
-      "error": null,
-      "result": null,
-      "unit": "midas-arena-job-659ad7466d8d41f7b5a7f360.service",
-      "submitted_source_hash": "3e752de21c6f4dc8249b6dfd1b024e4e023fc5bb0d18cb5742f615202e92bd50",
       "budget": {
         "cpu_cores": 1,
         "max_artifact_mb": 1024,
         "memory_mb": 4096,
         "minimum_available_memory_mb": 2048,
-        "wall_seconds": 5400
+        "wall_seconds": 1800
       },
-      "active_artifact": {
-        "identity": "tournament-74386f79d51b4f68b4fd2020",
-        "kind": "tournaments"
+      "configuration": {
+        "dataset": null,
+        "director": null,
+        "kind": "tournament",
+        "max_wall_seconds": 1800,
+        "model_id": null,
+        "policy_search": null,
+        "rl": null,
+        "sweep": null,
+        "tournament": {
+          "adversarial": true,
+          "challenge": {
+            "decision_scope": "first_admitted",
+            "episodes": 100,
+            "execution_models": [
+              "optimistic",
+              "standard",
+              "conservative"
+            ],
+            "families": [
+              "calm",
+              "volatile",
+              "thin",
+              "deep",
+              "one_sided",
+              "disappearing",
+              "liquidity_shock"
+            ],
+            "label_target": "unmatched",
+            "observation_latency_ms": 100,
+            "seed": 113071,
+            "split_seed": 1977,
+            "version": "synthetic-decision-1"
+          },
+          "dataset_id": "dataset-f53981b7dd24c1521ce749b1",
+          "execution_models": [
+            "optimistic",
+            "standard",
+            "conservative"
+          ],
+          "gates": [
+            {
+              "model_id": "model-131794f0434945a286163323",
+              "size": "full",
+              "threshold": 0.1
+            }
+          ],
+          "max_episodes": 100,
+          "minimum_champion_episodes": 30,
+          "model_ids": [],
+          "partition": "test",
+          "seed": 991,
+          "tail_loss_weight": 1.0,
+          "threshold": 0.5,
+          "unsupported_input_policy": "abstain"
+        },
+        "training": null
       },
-      "elapsed_seconds": 58.8240309789544,
-      "phase": "validation policy comparison",
-      "pid": 3045736,
-      "started_at": 1791788361.7145145,
-      "observed_at": 1791788420.543935
+      "created_at": 1791791029.7617936,
+      "elapsed_seconds": 55.63384515303187,
+      "error": null,
+      "job_id": "job-65fcccb2fd5340c783923279",
+      "pid": 3077457,
+      "progress": {
+        "done": 156,
+        "total": 1500
+      },
+      "result": null,
+      "started_at": 1791791031.258523,
+      "state": "RUNNING",
+      "submitted_source_hash": "3e752de21c6f4dc8249b6dfd1b024e4e023fc5bb0d18cb5742f615202e92bd50",
+      "unit": "midas-arena-job-65fcccb2fd5340c783923279.service",
+      "updated_at": 1791791086.8922627,
+      "supervisor": {
+        "MainPID": "3077457",
+        "Result": "success",
+        "MemoryCurrent": "273735680",
+        "CPUUsageNSec": "54070722000",
+        "ActiveState": "active",
+        "SubState": "running"
+      }
     }
   ],
   "dataset_quality": [

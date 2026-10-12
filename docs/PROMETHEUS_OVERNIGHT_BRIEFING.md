@@ -330,3 +330,32 @@ beginning seed 93071. The inspected handle was active at 223/5004, approximately
 266 MiB, one CPU worker. Its wall limit is 90 minutes; it terminates after the two
 stages. Inspect or cancel in the Arena job panel. Keep Arena Python source frozen
 while it runs. No production search winner or completion is claimed yet.
+
+## Latest independent result — a bounded synthetic gate advantage
+
+The threshold/sizing search completed. Validation froze maximum **predicted**
+unmatched risk 0.10 with full sizing. On 100 new generated groups / 300 correlated
+execution variants, that gate recorded mean virtual P&L 1.17717 (group bootstrap
+interval 0.86014–1.54644), no final losing variants, and downside score +1.17717.
+Arbitrage scored -0.27072; conservative -0.64717; no-trade zero.
+
+This is a positive result for the declared downside objective in one synthetic
+sample. It is **not** demonstrated higher mean return than arbitrage, real fill
+calibration, or a loss guarantee. Maximum marked drawdown was 13.27% despite no
+final losses. Zero observed losses does not mean losses are impossible. The gate
+and weights were frozen before the new-seed test.
+
+All 6504 search-stage replays and the independently recomputed selection pass
+verification. Immutable evidence bundles preserve source/weights/data/stages;
+associated findings and cost analyses remain accessible. The latest full source
+gate is **292 passed / one PostgreSQL skip**; focused evidence/export tests,
+Ruff/mypy and prior frontend/browser gates pass. The protected archive and
+services remain healthy. Nine completed tournaments contain 21,504 correlated
+variants; validation groups are not final generalization evidence.
+
+**Running:** fixed-gate adverse-sequence job `job-65fcccb2fd5340c783923279`, 100 new
+groups starting seed 113071, 1500 matched variants, 30-minute wall bound, one CPU
+worker. Its handle was verified active at 156/1500, about 274 MiB. It tests the
+same gate under timing/fill-withdrawal/lost-ack/cancel/duplicate/pause mutations,
+with no refitting or ledger corruption. Inspect/cancel from the Arena jobs panel.
+Keep source frozen until it finishes. The full goal remains active.
