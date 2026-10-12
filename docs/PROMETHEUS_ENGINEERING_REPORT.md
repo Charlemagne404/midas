@@ -2019,3 +2019,11 @@ preserve cap enforcement and cancellation while reducing this repeated work.
 The next execution milestone is specified in ARENA_UNWIND_IMPLEMENTATION_PLAN.md:
 inventory-backed sells, separate share reservations, average basis release,
 sell-loss risk accounting and exact compatibility with existing buy-only behavior.
+
+Joint-source full regression completed424 passed/one PostgreSQL skip/existing
+Starlette warning in521.64 seconds. No research, finalizer or regression process
+remains active, so the package source freeze is lifted. Before any sell extension,
+24 buy-only cases across eight families/three execution assumptions were run
+twice: all48 financial/journal hashes matched. Scenario inputs, old result hashes,
+position checkpoint hashes and source-file hashes are preserved in
+PROMETHEUS_UNWIND_BUY_COMPATIBILITY_BASELINE.json for subsequent exact checks.

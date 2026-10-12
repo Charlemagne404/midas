@@ -8,7 +8,7 @@
   "arena_research_tournaments": 23,
   "arena_source_datasets": 5,
   "arena_tournaments": 24,
-  "checked_at": 1791846272.8658664,
+  "checked_at": 1791846557.8555632,
   "dataset_quality": [
     "Identical observable vectors occur across partitions. Independent scenario IDs do not guarantee covariate diversity; inspect repeated synthetic grids.",
     "Some scenario families contain one settlement seed parity only. The current generator uses seed parity for settlement; reorder families and shift seeds before making generalization claims.",
@@ -115,10 +115,12 @@
     "champion_promoted": false
   },
   "current_regression": {
-    "state": "RUNNING",
-    "pid": 7112,
+    "state": "COMPLETED",
     "log": "docs/PROMETHEUS_JOINT_COST_FULL_TESTS.log",
-    "latest_completed_full_gate": "408 passed, one skipped"
+    "passed": 424,
+    "skipped": 1,
+    "warnings": 1,
+    "duration_seconds": 521.64
   },
   "joint_cost_study": {
     "preregistration": "docs/PROMETHEUS_JOINT_COST_PREREGISTRATION.json",
