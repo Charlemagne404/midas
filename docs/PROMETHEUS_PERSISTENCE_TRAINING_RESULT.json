@@ -1,0 +1,105 @@
+{
+  "checked_at": 1791825143.3791828,
+  "sweep_id": "sweep-db6a3dd577071f050a46fecc",
+  "dataset_id": "dataset-c6247f1456257066f0fe8d5f",
+  "source_hash": "297f559be63868268aafce83e9b1ac5ff9fa799c3a64ac4474fcb87bcbf8bee8",
+  "rows_sha256": "78912b51f646e080a9190c406fdb3fdde7efdfe09508673b7222ad534c8fb594",
+  "validation_groups": 97,
+  "validation_variants": 291,
+  "training_base_rate_validation_brier": 0.2245383869808929,
+  "selection": {
+    "candidates": [
+      {
+        "candidate_index": 0,
+        "complexity_preference": 20,
+        "configuration": {
+          "family": "logistic",
+          "hidden_size": 32,
+          "learning_rate": 0.001,
+          "weight_decay": 0.0001
+        },
+        "mean_validation_brier": 0.14340007656187456,
+        "model_ids": [
+          "model-9474cee818f04c77962966d8",
+          "model-47e69b3d348745549167af9a"
+        ],
+        "seed_brier_range": [
+          0.14340007656187456,
+          0.14340007656187456
+        ]
+      },
+      {
+        "candidate_index": 1,
+        "complexity_preference": 1729,
+        "configuration": {
+          "family": "mlp",
+          "hidden_size": 32,
+          "learning_rate": 0.001,
+          "weight_decay": 0.0001
+        },
+        "mean_validation_brier": 0.14315412316653434,
+        "model_ids": [
+          "model-4198e06e1e3647a587bd0ef3",
+          "model-3a9c422c0e0d420ba8fd568a"
+        ],
+        "seed_brier_range": [
+          0.1421526346607037,
+          0.14415561167236499
+        ]
+      }
+    ],
+    "caveat": "Seeds repeat optimization on the same dataset; they are not independent market samples. Complexity preference is a documented selection rule, not a measured compute benchmark.",
+    "criterion": "Mean validation Brier across seeds; prefer the simpler family within the preregistered tolerance. Representative seed minimizes validation Brier.",
+    "practical_brier_tolerance": 0.002,
+    "selected_candidate_index": 0,
+    "selected_model_id": "model-9474cee818f04c77962966d8",
+    "selection_partition": "validation"
+  },
+  "models": [
+    {
+      "model_id": "model-9474cee818f04c77962966d8",
+      "family": "logistic",
+      "seed": 11,
+      "artifact_sha256": "00a936876ab893686e5ac2612a554f1266d05f260acd149c556e8977800d6a85",
+      "validation_brier": 0.14340007656187445,
+      "duration_seconds": 0.07494556298479438,
+      "saved_epochs": 0,
+      "final_test": null
+    },
+    {
+      "model_id": "model-47e69b3d348745549167af9a",
+      "family": "logistic",
+      "seed": 29,
+      "artifact_sha256": "00a936876ab893686e5ac2612a554f1266d05f260acd149c556e8977800d6a85",
+      "validation_brier": 0.14340007656187445,
+      "duration_seconds": 0.06651976599823684,
+      "saved_epochs": 0,
+      "final_test": null
+    },
+    {
+      "model_id": "model-4198e06e1e3647a587bd0ef3",
+      "family": "mlp",
+      "seed": 11,
+      "artifact_sha256": "da59eee2685a61ea843b63cedf3f30c6b84d053a9c2f81f2c9cabfd0601482d1",
+      "validation_brier": 0.14415561167236499,
+      "duration_seconds": 6.012631302000955,
+      "saved_epochs": 31,
+      "final_test": null
+    },
+    {
+      "model_id": "model-3a9c422c0e0d420ba8fd568a",
+      "family": "mlp",
+      "seed": 29,
+      "artifact_sha256": "5932d33bb160f555f3edb41e22e0a077be01c0ec112677b731c9ae92ffd17575",
+      "validation_brier": 0.1421526346607037,
+      "duration_seconds": 5.995478873024695,
+      "saved_epochs": 35,
+      "final_test": null
+    }
+  ],
+  "limitations": [
+    "Shared dataset across training seeds; no independent market replication",
+    "Quote eligibility is not actual execution completion",
+    "No independent policy comparison or final classifier evaluation yet"
+  ]
+}

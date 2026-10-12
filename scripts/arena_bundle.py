@@ -29,6 +29,10 @@ def export_search(root: Path, search_id: str, output: Path) -> dict[str, Any]:
     return export_experiment(root, "searches", search_id, output)
 
 
+def export_sweep(root: Path, sweep_id: str, output: Path) -> dict[str, Any]:
+    return export_experiment(root, "sweeps", sweep_id, output)
+
+
 def export_tournament(root: Path, identity: str, output: Path) -> dict[str, Any]:
     directory = artifact_path(root, "tournaments", identity)
     manifest = json.loads((directory / "manifest.json").read_text())
@@ -151,6 +155,13 @@ def export_experiment(root: Path, kind: str, identity: str, output: Path) -> dic
             for key in ("validation_tournament", "test_tournament")
         ]
         reference_key = "search_id"
+    elif kind == "sweeps":
+        configuration = director["configuration"]
+        if any(t["state"] != "COMPLETED" or not t.get("model_id") for t in director["trials"]):
+            raise ValueError("Sweep has incomplete fitted candidates")
+        model_ids = {trial["model_id"] for trial in director["trials"]}
+        steps = []
+        reference_key = "sweep_id"
     else:
         configuration = director["configuration"]
         model_ids = set(director["model_artifact_hashes"])
@@ -326,6 +337,7 @@ if __name__ == "__main__":
     experiment.add_argument("--director")
     experiment.add_argument("--search")
     experiment.add_argument("--tournament")
+    experiment.add_argument("--sweep")
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     result = (
@@ -333,6 +345,8 @@ if __name__ == "__main__":
         if args.director
         else export_search(args.root, args.search, args.output)
         if args.search
+        else export_sweep(args.root, args.sweep, args.output)
+        if args.sweep
         else export_tournament(args.root, args.tournament, args.output)
     )
     print(json.dumps(result, indent=2))

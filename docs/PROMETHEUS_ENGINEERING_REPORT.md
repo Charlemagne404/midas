@@ -1498,3 +1498,51 @@ three execution assumptions; first-admitted scope. A two-seed logistic/MLP sweep
 will select on validation Brier with the existing 0.002 simplicity tolerance.
 Final classifier tests remain unopened. Seed overlap and artifact-budget checks
 passed. The source will be frozen during production generation and training.
+
+### Persistence production generation started
+
+Committed source a4eb2e9; current research hash
+297f559be63868268aafce83e9b1ac5ff9fa799c3a64ac4474fcb87bcbf8bee8.
+The backend restarted READY. Dataset generation is running as
+job-d16ec5293f6b4627be6df57c under its native systemd supervisor, bounded to one
+CPU, 4 GiB, 1,800 seconds, minimum 2 GiB available host memory and 1 GiB of
+logical Arena artifacts. The preflight measured 592,671,572 logical bytes and
+41,422 files, leaving 481,070,252 bytes of headroom. Initial generation progress
+is genuine and checkpointed; source packages remain frozen. The subsequent
+validation-only sweep will resolve its dataset ID from this completed job.
+
+Inspect or cancel through Arena's job controls. Worker logs:
+`journalctl --user -u midas-arena-job-d16ec5293f6b4627be6df57c.service -f`.
+No production persistence model has yet been fitted; scratch test training does
+not increase the production model inventory.
+
+### Completed production persistence data and four-fit sweep
+
+Dataset job job-d16ec5293f6b4627be6df57c completed as
+dataset-c6247f1456257066f0fe8d5f: 1,001 generated groups, 644 admitted groups,
+1,932 variants. Train 1,365, validation 291, test 276 variants remain grouped.
+Development rows contain 1,081 persistent quotes; 456 also have incomplete
+execution, reinforcing the quote/fill distinction without opening model tests.
+
+Sweep job job-9bd2126fddf54abc935cc5cc completed as
+sweep-db6a3dd577071f050a46fecc. Logistic seeds 11/29 both have validation Brier
+0.1434000766; MLP seeds 11/29 have 0.1441556117/0.1421526347, mean
+0.1431541232. Neural improvement 0.0002459534 is below the fixed 0.002 practical
+tolerance, so logistic model-9474cee818f04c77962966d8 was selected. The neural
+models ran 31/35 epochs, with real optimizer training and saved checkpoints.
+Training-base-rate validation Brier is 0.2245383870. All four weight hashes,
+reloads and recomputed validation Brier values passed; final metrics remain None.
+These metrics do not establish independent policy benefit.
+
+The scientific exporter now supports completed sweeps, including all candidates
+and captured worker source. The actual pre-test bundle verified all 78 payloads
+and all four archived model tests remain unopened. Eight focused exporter tests
+passed after correcting a test insertion that initially misplaced a legacy test
+tail; prior full suite 371 passed before this exporter addition. Production
+browser target selection and backend configuration validation passed without
+launching duplicate jobs; an initial relative-URL inspection error was corrected.
+
+All production workers are terminal. Current inventory: 25 model artifacts,
+24 fitted models, four datasets (three source datasets) and 20 tournaments.
+The next required research gate is a matched independent policy comparison; no
+persistence strategy improvement or real profitability is claimed.

@@ -1,0 +1,74 @@
+{
+  "active_artifact": {
+    "identity": "model-3a9c422c0e0d420ba8fd568a",
+    "kind": "models"
+  },
+  "budget": {
+    "cpu_cores": 1,
+    "max_artifact_mb": 1024,
+    "memory_mb": 4096,
+    "minimum_available_memory_mb": 2048,
+    "wall_seconds": 1800
+  },
+  "completed_at": 1791824939.0935047,
+  "configuration": {
+    "dataset": null,
+    "director": null,
+    "kind": "sweep",
+    "max_wall_seconds": 1800,
+    "model_id": null,
+    "policy_search": null,
+    "rl": null,
+    "severity": null,
+    "sweep": {
+      "candidates": [
+        {
+          "family": "logistic",
+          "hidden_size": 32,
+          "learning_rate": 0.001,
+          "weight_decay": 0.0001
+        },
+        {
+          "family": "mlp",
+          "hidden_size": 32,
+          "learning_rate": 0.001,
+          "weight_decay": 0.0001
+        }
+      ],
+      "dataset_id": "dataset-c6247f1456257066f0fe8d5f",
+      "epochs": 80,
+      "practical_brier_tolerance": 0.002,
+      "seeds": [
+        11,
+        29
+      ]
+    },
+    "tournament": null,
+    "training": null
+  },
+  "created_at": 1791824923.1331224,
+  "elapsed_seconds": 14.417533416999504,
+  "error": null,
+  "exit_status": 0,
+  "job_id": "job-9bd2126fddf54abc935cc5cc",
+  "pid": 3692468,
+  "progress": {
+    "done": 4,
+    "total": 4
+  },
+  "result": {
+    "sweep_id": "sweep-db6a3dd577071f050a46fecc"
+  },
+  "runtime_profile": {
+    "artifact_bytes": 601954895,
+    "artifact_files": 42550,
+    "artifact_scan_seconds": 9.569710657175165,
+    "artifact_scans": 72,
+    "progress_publish_seconds": 0.7884322638856247
+  },
+  "started_at": 1791824924.6760824,
+  "state": "COMPLETED",
+  "submitted_source_hash": "297f559be63868268aafce83e9b1ac5ff9fa799c3a64ac4474fcb87bcbf8bee8",
+  "unit": "midas-arena-job-9bd2126fddf54abc935cc5cc.service",
+  "updated_at": 1791824939.0935047
+}

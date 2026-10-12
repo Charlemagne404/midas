@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 from midas.arena.artifacts import atomic_json, sha256
 
-from scripts.arena_bundle import export
+from scripts.arena_bundle import export, export_sweep
 from scripts.compare_arena import compare
 
 
@@ -80,4 +80,44 @@ def test_bundle_checksums_and_exclusive_publication(tmp_path):
             assert hashlib.sha256(archive.extractfile(name).read()).hexdigest() == expected
     with pytest.raises(ValueError, match="overwrite"):
         export(root, "director", output)
+    assert result["sha256"] == sha256(output)
+
+
+def test_sweep_bundle_preserves_all_fitted_candidates(tmp_path):
+    root = tmp_path / "arena"
+    atomic_json(root / "datasets/data/rows.json", [])
+    rows_hash = sha256(root / "datasets/data/rows.json")
+    atomic_json(root / "datasets/data/manifest.json", {"rows_sha256": rows_hash})
+    trials = []
+    for index in range(2):
+        identity = f"model-{index}"
+        directory = root / "models" / identity
+        atomic_json(directory / "parameters.json", {"fixture": index})
+        atomic_json(
+            directory / "manifest.json",
+            {
+                "family": "constant",
+                "dataset_id": "data",
+                "dataset_sha256": rows_hash,
+                "artifact_sha256": sha256(directory / "parameters.json"),
+                "test": None,
+            },
+        )
+        trials.append({"model_id": identity, "state": "COMPLETED"})
+    atomic_json(
+        root / "sweeps/sweep/manifest.json",
+        {"state": "COMPLETED", "configuration": {"dataset_id": "data"}, "trials": trials},
+    )
+    output = tmp_path / "sweep.tar.gz"
+    result = export_sweep(root, "sweep", output)
+    with tarfile.open(output) as archive:
+        names = archive.getnames()
+        assert all(f"models/model-{i}/parameters.json" in names for i in range(2))
+        assert "sweeps/sweep/manifest.json" in names
+    with tarfile.open(output) as archive:
+        record = json.load(archive.extractfile("BUNDLE_MANIFEST.json"))
+        for name, expected in record["files"].items():
+            assert hashlib.sha256(archive.extractfile(name).read()).hexdigest() == expected
+    with pytest.raises(ValueError, match="overwrite"):
+        export_sweep(root, "sweep", output)
     assert result["sha256"] == sha256(output)

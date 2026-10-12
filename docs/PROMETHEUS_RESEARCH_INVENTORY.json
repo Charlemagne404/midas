@@ -1,5 +1,5 @@
 {
-  "checked_at": 1791823009.4485812,
+  "checked_at": 1791825431.718873,
   "models": [
     {
       "artifact_sha256": "a1ddf5a19d6cb1ad942ce8fc1cc3d63ec2e2f6ddf5dfc8fc46eb052be777e565",
@@ -31931,6 +31931,1140 @@
         "uncertainty_note": "Bootstrap resamples base groups; execution variants remain grouped. Zero-heavy labels require positive-outcome errors alongside aggregate metrics. No dollar loss or empirical-fill interpretation.",
         "units": "shares"
       }
+    },
+    {
+      "artifact_sha256": "5932d33bb160f555f3edb41e22e0a077be01c0ec112677b731c9ae92ffd17575",
+      "checkpoints": [
+        "checkpoint.json"
+      ],
+      "code_revision": "a4eb2e9587bdc312cce279ee4eb87bfd9ab01a56",
+      "configuration": {
+        "batch_size": 128,
+        "dataset_id": "dataset-c6247f1456257066f0fe8d5f",
+        "epochs": 80,
+        "family": "mlp",
+        "hidden_size": 32,
+        "learning_rate": 0.001,
+        "max_wall_seconds": 600,
+        "patience": 12,
+        "resume_from": null,
+        "seed": 29,
+        "weight_decay": 0.0001
+      },
+      "created_at": 1791824938.7903717,
+      "curves": [
+        {
+          "epoch": 1,
+          "learning_rate": 0.001,
+          "training_loss": 0.6435554027557373,
+          "validation_loss": 0.6405301094055176
+        },
+        {
+          "epoch": 2,
+          "learning_rate": 0.001,
+          "training_loss": 0.612315833568573,
+          "validation_loss": 0.607317328453064
+        },
+        {
+          "epoch": 3,
+          "learning_rate": 0.001,
+          "training_loss": 0.5771594047546387,
+          "validation_loss": 0.5709797739982605
+        },
+        {
+          "epoch": 4,
+          "learning_rate": 0.001,
+          "training_loss": 0.541463315486908,
+          "validation_loss": 0.5362105369567871
+        },
+        {
+          "epoch": 5,
+          "learning_rate": 0.001,
+          "training_loss": 0.5106427073478699,
+          "validation_loss": 0.5077333450317383
+        },
+        {
+          "epoch": 6,
+          "learning_rate": 0.001,
+          "training_loss": 0.4867195188999176,
+          "validation_loss": 0.4869265854358673
+        },
+        {
+          "epoch": 7,
+          "learning_rate": 0.001,
+          "training_loss": 0.46747779846191406,
+          "validation_loss": 0.4718524217605591
+        },
+        {
+          "epoch": 8,
+          "learning_rate": 0.001,
+          "training_loss": 0.45147910714149475,
+          "validation_loss": 0.4588302671909332
+        },
+        {
+          "epoch": 9,
+          "learning_rate": 0.001,
+          "training_loss": 0.4388451874256134,
+          "validation_loss": 0.4486241340637207
+        },
+        {
+          "epoch": 10,
+          "learning_rate": 0.001,
+          "training_loss": 0.42861226201057434,
+          "validation_loss": 0.43984246253967285
+        },
+        {
+          "epoch": 11,
+          "learning_rate": 0.001,
+          "training_loss": 0.4202672839164734,
+          "validation_loss": 0.43429702520370483
+        },
+        {
+          "epoch": 12,
+          "learning_rate": 0.001,
+          "training_loss": 0.41427546739578247,
+          "validation_loss": 0.430677592754364
+        },
+        {
+          "epoch": 13,
+          "learning_rate": 0.001,
+          "training_loss": 0.4097002148628235,
+          "validation_loss": 0.4277704656124115
+        },
+        {
+          "epoch": 14,
+          "learning_rate": 0.001,
+          "training_loss": 0.406034916639328,
+          "validation_loss": 0.42682188749313354
+        },
+        {
+          "epoch": 15,
+          "learning_rate": 0.001,
+          "training_loss": 0.40360227227211,
+          "validation_loss": 0.4276665151119232
+        },
+        {
+          "epoch": 16,
+          "learning_rate": 0.001,
+          "training_loss": 0.4021384119987488,
+          "validation_loss": 0.42900148034095764
+        },
+        {
+          "epoch": 17,
+          "learning_rate": 0.001,
+          "training_loss": 0.40018731355667114,
+          "validation_loss": 0.4271727502346039
+        },
+        {
+          "epoch": 18,
+          "learning_rate": 0.001,
+          "training_loss": 0.39814457297325134,
+          "validation_loss": 0.4251289665699005
+        },
+        {
+          "epoch": 19,
+          "learning_rate": 0.001,
+          "training_loss": 0.39671093225479126,
+          "validation_loss": 0.424956351518631
+        },
+        {
+          "epoch": 20,
+          "learning_rate": 0.001,
+          "training_loss": 0.39546167850494385,
+          "validation_loss": 0.42599859833717346
+        },
+        {
+          "epoch": 21,
+          "learning_rate": 0.001,
+          "training_loss": 0.394270122051239,
+          "validation_loss": 0.42783722281455994
+        },
+        {
+          "epoch": 22,
+          "learning_rate": 0.001,
+          "training_loss": 0.3933466374874115,
+          "validation_loss": 0.4272952377796173
+        },
+        {
+          "epoch": 23,
+          "learning_rate": 0.001,
+          "training_loss": 0.3924112915992737,
+          "validation_loss": 0.4247267544269562
+        },
+        {
+          "epoch": 24,
+          "learning_rate": 0.001,
+          "training_loss": 0.3915417492389679,
+          "validation_loss": 0.4248582720756531
+        },
+        {
+          "epoch": 25,
+          "learning_rate": 0.001,
+          "training_loss": 0.39079079031944275,
+          "validation_loss": 0.42658621072769165
+        },
+        {
+          "epoch": 26,
+          "learning_rate": 0.001,
+          "training_loss": 0.39089128375053406,
+          "validation_loss": 0.42770662903785706
+        },
+        {
+          "epoch": 27,
+          "learning_rate": 0.001,
+          "training_loss": 0.39012983441352844,
+          "validation_loss": 0.42948681116104126
+        },
+        {
+          "epoch": 28,
+          "learning_rate": 0.001,
+          "training_loss": 0.3889172375202179,
+          "validation_loss": 0.42638999223709106
+        },
+        {
+          "epoch": 29,
+          "learning_rate": 0.001,
+          "training_loss": 0.38852834701538086,
+          "validation_loss": 0.427295058965683
+        },
+        {
+          "epoch": 30,
+          "learning_rate": 0.001,
+          "training_loss": 0.3878028094768524,
+          "validation_loss": 0.42955848574638367
+        },
+        {
+          "epoch": 31,
+          "learning_rate": 0.001,
+          "training_loss": 0.3875245153903961,
+          "validation_loss": 0.4281650483608246
+        },
+        {
+          "epoch": 32,
+          "learning_rate": 0.001,
+          "training_loss": 0.38710319995880127,
+          "validation_loss": 0.4275328516960144
+        },
+        {
+          "epoch": 33,
+          "learning_rate": 0.001,
+          "training_loss": 0.3864229619503021,
+          "validation_loss": 0.4294376075267792
+        },
+        {
+          "epoch": 34,
+          "learning_rate": 0.001,
+          "training_loss": 0.3861702084541321,
+          "validation_loss": 0.4313068985939026
+        },
+        {
+          "epoch": 35,
+          "learning_rate": 0.001,
+          "training_loss": 0.3856768012046814,
+          "validation_loss": 0.4304203987121582
+        }
+      ],
+      "dataset_id": "dataset-c6247f1456257066f0fe8d5f",
+      "dataset_sha256": "78912b51f646e080a9190c406fdb3fdde7efdfe09508673b7222ad534c8fb594",
+      "family": "mlp",
+      "feature_schema": [
+        "ask_sum",
+        "bid_sum",
+        "min_ask_depth",
+        "max_ask_depth",
+        "min_top_depth",
+        "max_spread",
+        "max_age_ms",
+        "fee_rate",
+        "capital_available",
+        "locked_capital",
+        "unmatched_quantity",
+        "proposed_quantity",
+        "conditional_edge",
+        "latency_ms",
+        "jitter_ms",
+        "liquidity_fraction",
+        "adverse_ticks",
+        "ack_delay_ms",
+        "observation_latency_ms"
+      ],
+      "feature_version": "observable-binary-1",
+      "label_target": "persistence",
+      "limitations": [
+        "Synthetic hypothetical fills; no empirical calibration or real profitability evidence",
+        "Only first_admitted decision scope is labeled; rejected and ineligible variants excluded. Later portfolio states remain outside this dataset.",
+        "Episode variants are correlated; partitions group family/seed identities",
+        "Generator settlement uses seed parity; seeds and identifiers are excluded from features",
+        "Execution configuration is an assumption available to a research policy",
+        "Residual unmatched shares are post-execution labels only; not decision features or guaranteed loss severity",
+        "Classifier quality does not establish economic policy improvement"
+      ],
+      "model_id": "model-3a9c422c0e0d420ba8fd568a",
+      "source_hash": "297f559be63868268aafce83e9b1ac5ff9fa799c3a64ac4474fcb87bcbf8bee8",
+      "state": "TRAINED",
+      "test": null,
+      "training_duration_seconds": 5.995478873024695,
+      "validation": {
+        "base_episodes": 97,
+        "brier": 0.1421526346607037,
+        "by_execution": {
+          "conservative": {
+            "brier": 0.17849366376022047,
+            "rows": 97
+          },
+          "optimistic": {
+            "brier": 0.06715565034984346,
+            "rows": 97
+          },
+          "standard": {
+            "brier": 0.18080858987204707,
+            "rows": 97
+          }
+        },
+        "by_family": {
+          "calm": {
+            "brier": 0.2852654488643217,
+            "rows": 42
+          },
+          "deep": {
+            "brier": 5.631665566111129e-05,
+            "rows": 60
+          },
+          "disappearing": {
+            "brier": 0.1728045333117108,
+            "rows": 57
+          },
+          "liquidity_shock": {
+            "brier": 0.13711610111899056,
+            "rows": 24
+          },
+          "one_sided": {
+            "brier": 0.09868771570905199,
+            "rows": 21
+          },
+          "thin": {
+            "brier": 0.12112351298392274,
+            "rows": 33
+          },
+          "volatile": {
+            "brier": 0.1883652972340881,
+            "rows": 54
+          }
+        },
+        "episode_bootstrap_brier_95": [
+          0.11743884428416783,
+          0.1692719597822017
+        ],
+        "episode_mean_brier": 0.1421526346607037,
+        "log_loss": 0.4247267892929649,
+        "positive_rate": 0.6597938144329897,
+        "pr_auc": 0.9325042097728214,
+        "precision": 0.8857142857142857,
+        "recall": 0.8072916666666666,
+        "reliability": [
+          {
+            "count": 0,
+            "lower": 0.0,
+            "observed": null,
+            "predicted": null
+          },
+          {
+            "count": 15,
+            "lower": 0.1,
+            "observed": 0.2,
+            "predicted": 0.1782587508360545
+          },
+          {
+            "count": 50,
+            "lower": 0.2,
+            "observed": 0.3,
+            "predicted": 0.254328216612339
+          },
+          {
+            "count": 22,
+            "lower": 0.30000000000000004,
+            "observed": 0.5,
+            "predicted": 0.3487589034167203
+          },
+          {
+            "count": 29,
+            "lower": 0.4,
+            "observed": 0.27586206896551724,
+            "predicted": 0.45934314871656484
+          },
+          {
+            "count": 14,
+            "lower": 0.5,
+            "observed": 0.7857142857142857,
+            "predicted": 0.5336318271500724
+          },
+          {
+            "count": 13,
+            "lower": 0.6000000000000001,
+            "observed": 0.5384615384615384,
+            "predicted": 0.640837183365455
+          },
+          {
+            "count": 10,
+            "lower": 0.7000000000000001,
+            "observed": 0.6,
+            "predicted": 0.7512691736221313
+          },
+          {
+            "count": 28,
+            "lower": 0.8,
+            "observed": 0.9285714285714286,
+            "predicted": 0.8537826452936444
+          },
+          {
+            "count": 110,
+            "lower": 0.9,
+            "observed": 0.9545454545454546,
+            "predicted": 0.9671230695464395
+          }
+        ],
+        "roc_auc": 0.8628472222222222,
+        "rows": 291,
+        "uncertainty_note": "Resampling synthetic base episodes; variants stay grouped. No inference about real market performance."
+      }
+    },
+    {
+      "artifact_sha256": "da59eee2685a61ea843b63cedf3f30c6b84d053a9c2f81f2c9cabfd0601482d1",
+      "checkpoints": [
+        "checkpoint.json"
+      ],
+      "code_revision": "a4eb2e9587bdc312cce279ee4eb87bfd9ab01a56",
+      "configuration": {
+        "batch_size": 128,
+        "dataset_id": "dataset-c6247f1456257066f0fe8d5f",
+        "epochs": 80,
+        "family": "mlp",
+        "hidden_size": 32,
+        "learning_rate": 0.001,
+        "max_wall_seconds": 600,
+        "patience": 12,
+        "resume_from": null,
+        "seed": 11,
+        "weight_decay": 0.0001
+      },
+      "created_at": 1791824932.577729,
+      "curves": [
+        {
+          "epoch": 1,
+          "learning_rate": 0.001,
+          "training_loss": 0.6724365949630737,
+          "validation_loss": 0.673385500907898
+        },
+        {
+          "epoch": 2,
+          "learning_rate": 0.001,
+          "training_loss": 0.640401303768158,
+          "validation_loss": 0.6399138569831848
+        },
+        {
+          "epoch": 3,
+          "learning_rate": 0.001,
+          "training_loss": 0.6021007895469666,
+          "validation_loss": 0.6014401316642761
+        },
+        {
+          "epoch": 4,
+          "learning_rate": 0.001,
+          "training_loss": 0.5619999766349792,
+          "validation_loss": 0.5623627305030823
+        },
+        {
+          "epoch": 5,
+          "learning_rate": 0.001,
+          "training_loss": 0.5266849994659424,
+          "validation_loss": 0.5295705795288086
+        },
+        {
+          "epoch": 6,
+          "learning_rate": 0.001,
+          "training_loss": 0.49788984656333923,
+          "validation_loss": 0.5034827589988708
+        },
+        {
+          "epoch": 7,
+          "learning_rate": 0.001,
+          "training_loss": 0.4751419126987457,
+          "validation_loss": 0.4839760661125183
+        },
+        {
+          "epoch": 8,
+          "learning_rate": 0.001,
+          "training_loss": 0.4580238163471222,
+          "validation_loss": 0.46775156259536743
+        },
+        {
+          "epoch": 9,
+          "learning_rate": 0.001,
+          "training_loss": 0.4457383453845978,
+          "validation_loss": 0.4563576579093933
+        },
+        {
+          "epoch": 10,
+          "learning_rate": 0.001,
+          "training_loss": 0.436763733625412,
+          "validation_loss": 0.4495232403278351
+        },
+        {
+          "epoch": 11,
+          "learning_rate": 0.001,
+          "training_loss": 0.42995646595954895,
+          "validation_loss": 0.44573450088500977
+        },
+        {
+          "epoch": 12,
+          "learning_rate": 0.001,
+          "training_loss": 0.4241052269935608,
+          "validation_loss": 0.4412672519683838
+        },
+        {
+          "epoch": 13,
+          "learning_rate": 0.001,
+          "training_loss": 0.4188760817050934,
+          "validation_loss": 0.43936312198638916
+        },
+        {
+          "epoch": 14,
+          "learning_rate": 0.001,
+          "training_loss": 0.4144200384616852,
+          "validation_loss": 0.4391419589519501
+        },
+        {
+          "epoch": 15,
+          "learning_rate": 0.001,
+          "training_loss": 0.4105551540851593,
+          "validation_loss": 0.43369245529174805
+        },
+        {
+          "epoch": 16,
+          "learning_rate": 0.001,
+          "training_loss": 0.407499760389328,
+          "validation_loss": 0.4324971139431
+        },
+        {
+          "epoch": 17,
+          "learning_rate": 0.001,
+          "training_loss": 0.4049346446990967,
+          "validation_loss": 0.43247973918914795
+        },
+        {
+          "epoch": 18,
+          "learning_rate": 0.001,
+          "training_loss": 0.4025972783565521,
+          "validation_loss": 0.432708203792572
+        },
+        {
+          "epoch": 19,
+          "learning_rate": 0.001,
+          "training_loss": 0.40072697401046753,
+          "validation_loss": 0.43111473321914673
+        },
+        {
+          "epoch": 20,
+          "learning_rate": 0.001,
+          "training_loss": 0.3988287150859833,
+          "validation_loss": 0.43123939633369446
+        },
+        {
+          "epoch": 21,
+          "learning_rate": 0.001,
+          "training_loss": 0.3971802294254303,
+          "validation_loss": 0.4313986003398895
+        },
+        {
+          "epoch": 22,
+          "learning_rate": 0.001,
+          "training_loss": 0.3955729305744171,
+          "validation_loss": 0.43350014090538025
+        },
+        {
+          "epoch": 23,
+          "learning_rate": 0.001,
+          "training_loss": 0.3941817581653595,
+          "validation_loss": 0.4334484040737152
+        },
+        {
+          "epoch": 24,
+          "learning_rate": 0.001,
+          "training_loss": 0.39292430877685547,
+          "validation_loss": 0.431441068649292
+        },
+        {
+          "epoch": 25,
+          "learning_rate": 0.001,
+          "training_loss": 0.3916589617729187,
+          "validation_loss": 0.4322437345981598
+        },
+        {
+          "epoch": 26,
+          "learning_rate": 0.001,
+          "training_loss": 0.39056041836738586,
+          "validation_loss": 0.4340481460094452
+        },
+        {
+          "epoch": 27,
+          "learning_rate": 0.001,
+          "training_loss": 0.38983580470085144,
+          "validation_loss": 0.4353938698768616
+        },
+        {
+          "epoch": 28,
+          "learning_rate": 0.001,
+          "training_loss": 0.3890403211116791,
+          "validation_loss": 0.4341866374015808
+        },
+        {
+          "epoch": 29,
+          "learning_rate": 0.001,
+          "training_loss": 0.3880681097507477,
+          "validation_loss": 0.4353342652320862
+        },
+        {
+          "epoch": 30,
+          "learning_rate": 0.001,
+          "training_loss": 0.3873554766178131,
+          "validation_loss": 0.4362684190273285
+        },
+        {
+          "epoch": 31,
+          "learning_rate": 0.001,
+          "training_loss": 0.3869701325893402,
+          "validation_loss": 0.43579626083374023
+        }
+      ],
+      "dataset_id": "dataset-c6247f1456257066f0fe8d5f",
+      "dataset_sha256": "78912b51f646e080a9190c406fdb3fdde7efdfe09508673b7222ad534c8fb594",
+      "family": "mlp",
+      "feature_schema": [
+        "ask_sum",
+        "bid_sum",
+        "min_ask_depth",
+        "max_ask_depth",
+        "min_top_depth",
+        "max_spread",
+        "max_age_ms",
+        "fee_rate",
+        "capital_available",
+        "locked_capital",
+        "unmatched_quantity",
+        "proposed_quantity",
+        "conditional_edge",
+        "latency_ms",
+        "jitter_ms",
+        "liquidity_fraction",
+        "adverse_ticks",
+        "ack_delay_ms",
+        "observation_latency_ms"
+      ],
+      "feature_version": "observable-binary-1",
+      "label_target": "persistence",
+      "limitations": [
+        "Synthetic hypothetical fills; no empirical calibration or real profitability evidence",
+        "Only first_admitted decision scope is labeled; rejected and ineligible variants excluded. Later portfolio states remain outside this dataset.",
+        "Episode variants are correlated; partitions group family/seed identities",
+        "Generator settlement uses seed parity; seeds and identifiers are excluded from features",
+        "Execution configuration is an assumption available to a research policy",
+        "Residual unmatched shares are post-execution labels only; not decision features or guaranteed loss severity",
+        "Classifier quality does not establish economic policy improvement"
+      ],
+      "model_id": "model-4198e06e1e3647a587bd0ef3",
+      "source_hash": "297f559be63868268aafce83e9b1ac5ff9fa799c3a64ac4474fcb87bcbf8bee8",
+      "state": "TRAINED",
+      "test": null,
+      "training_duration_seconds": 6.012631302000955,
+      "validation": {
+        "base_episodes": 97,
+        "brier": 0.14415561167236499,
+        "by_execution": {
+          "conservative": {
+            "brier": 0.18038410362169877,
+            "rows": 97
+          },
+          "optimistic": {
+            "brier": 0.06732640701806777,
+            "rows": 97
+          },
+          "standard": {
+            "brier": 0.1847563243773284,
+            "rows": 97
+          }
+        },
+        "by_family": {
+          "calm": {
+            "brier": 0.26708090150562724,
+            "rows": 42
+          },
+          "deep": {
+            "brier": 0.0002059141663008764,
+            "rows": 60
+          },
+          "disappearing": {
+            "brier": 0.17364071394950117,
+            "rows": 57
+          },
+          "liquidity_shock": {
+            "brier": 0.1503821864254509,
+            "rows": 24
+          },
+          "one_sided": {
+            "brier": 0.11856951480300286,
+            "rows": 21
+          },
+          "thin": {
+            "brier": 0.13513210428849556,
+            "rows": 33
+          },
+          "volatile": {
+            "brier": 0.19006514558755572,
+            "rows": 54
+          }
+        },
+        "episode_bootstrap_brier_95": [
+          0.12009408062731405,
+          0.16921368820582644
+        ],
+        "episode_mean_brier": 0.14415561167236496,
+        "log_loss": 0.4311147813190888,
+        "positive_rate": 0.6597938144329897,
+        "pr_auc": 0.9296461847229505,
+        "precision": 0.8837209302325582,
+        "recall": 0.7916666666666666,
+        "reliability": [
+          {
+            "count": 0,
+            "lower": 0.0,
+            "observed": null,
+            "predicted": null
+          },
+          {
+            "count": 0,
+            "lower": 0.1,
+            "observed": null,
+            "predicted": null
+          },
+          {
+            "count": 55,
+            "lower": 0.2,
+            "observed": 0.2545454545454545,
+            "predicted": 0.2585784749551253
+          },
+          {
+            "count": 29,
+            "lower": 0.30000000000000004,
+            "observed": 0.5172413793103449,
+            "predicted": 0.33972098909575366
+          },
+          {
+            "count": 35,
+            "lower": 0.4,
+            "observed": 0.3142857142857143,
+            "predicted": 0.4602430931159428
+          },
+          {
+            "count": 18,
+            "lower": 0.5,
+            "observed": 0.6666666666666666,
+            "predicted": 0.5414154330889384
+          },
+          {
+            "count": 7,
+            "lower": 0.6000000000000001,
+            "observed": 0.7142857142857143,
+            "predicted": 0.651482173374721
+          },
+          {
+            "count": 8,
+            "lower": 0.7000000000000001,
+            "observed": 0.5,
+            "predicted": 0.7453078478574753
+          },
+          {
+            "count": 43,
+            "lower": 0.8,
+            "observed": 0.8837209302325582,
+            "predicted": 0.8619456734768179
+          },
+          {
+            "count": 96,
+            "lower": 0.9,
+            "observed": 0.96875,
+            "predicted": 0.9740600741157929
+          }
+        ],
+        "roc_auc": 0.8582175925925926,
+        "rows": 291,
+        "uncertainty_note": "Resampling synthetic base episodes; variants stay grouped. No inference about real market performance."
+      }
+    },
+    {
+      "artifact_sha256": "00a936876ab893686e5ac2612a554f1266d05f260acd149c556e8977800d6a85",
+      "checkpoints": [],
+      "code_revision": "a4eb2e9587bdc312cce279ee4eb87bfd9ab01a56",
+      "configuration": {
+        "batch_size": 128,
+        "dataset_id": "dataset-c6247f1456257066f0fe8d5f",
+        "epochs": 80,
+        "family": "logistic",
+        "hidden_size": 32,
+        "learning_rate": 0.001,
+        "max_wall_seconds": 600,
+        "patience": 12,
+        "resume_from": null,
+        "seed": 29,
+        "weight_decay": 0.0001
+      },
+      "created_at": 1791824926.35374,
+      "curves": [],
+      "dataset_id": "dataset-c6247f1456257066f0fe8d5f",
+      "dataset_sha256": "78912b51f646e080a9190c406fdb3fdde7efdfe09508673b7222ad534c8fb594",
+      "family": "logistic",
+      "feature_schema": [
+        "ask_sum",
+        "bid_sum",
+        "min_ask_depth",
+        "max_ask_depth",
+        "min_top_depth",
+        "max_spread",
+        "max_age_ms",
+        "fee_rate",
+        "capital_available",
+        "locked_capital",
+        "unmatched_quantity",
+        "proposed_quantity",
+        "conditional_edge",
+        "latency_ms",
+        "jitter_ms",
+        "liquidity_fraction",
+        "adverse_ticks",
+        "ack_delay_ms",
+        "observation_latency_ms"
+      ],
+      "feature_version": "observable-binary-1",
+      "label_target": "persistence",
+      "limitations": [
+        "Synthetic hypothetical fills; no empirical calibration or real profitability evidence",
+        "Only first_admitted decision scope is labeled; rejected and ineligible variants excluded. Later portfolio states remain outside this dataset.",
+        "Episode variants are correlated; partitions group family/seed identities",
+        "Generator settlement uses seed parity; seeds and identifiers are excluded from features",
+        "Execution configuration is an assumption available to a research policy",
+        "Residual unmatched shares are post-execution labels only; not decision features or guaranteed loss severity",
+        "Classifier quality does not establish economic policy improvement"
+      ],
+      "model_id": "model-47e69b3d348745549167af9a",
+      "source_hash": "297f559be63868268aafce83e9b1ac5ff9fa799c3a64ac4474fcb87bcbf8bee8",
+      "state": "TRAINED",
+      "test": null,
+      "training_duration_seconds": 0.06651976599823684,
+      "validation": {
+        "base_episodes": 97,
+        "brier": 0.14340007656187456,
+        "by_execution": {
+          "conservative": {
+            "brier": 0.18060215035180144,
+            "rows": 97
+          },
+          "optimistic": {
+            "brier": 0.06614503291912029,
+            "rows": 97
+          },
+          "standard": {
+            "brier": 0.18345304641470198,
+            "rows": 97
+          }
+        },
+        "by_family": {
+          "calm": {
+            "brier": 0.2633628697347212,
+            "rows": 42
+          },
+          "deep": {
+            "brier": 5.6080117439090955e-05,
+            "rows": 60
+          },
+          "disappearing": {
+            "brier": 0.1652339338282567,
+            "rows": 57
+          },
+          "liquidity_shock": {
+            "brier": 0.152054520464354,
+            "rows": 24
+          },
+          "one_sided": {
+            "brier": 0.13305830739678237,
+            "rows": 21
+          },
+          "thin": {
+            "brier": 0.13917606026039467,
+            "rows": 33
+          },
+          "volatile": {
+            "brier": 0.18907666259852368,
+            "rows": 54
+          }
+        },
+        "episode_bootstrap_brier_95": [
+          0.11940159309215465,
+          0.16956686652734113
+        ],
+        "episode_mean_brier": 0.14340007656187456,
+        "log_loss": 0.42481548681855624,
+        "positive_rate": 0.6597938144329897,
+        "pr_auc": 0.9336038688755941,
+        "precision": 0.8685714285714285,
+        "recall": 0.7916666666666666,
+        "reliability": [
+          {
+            "count": 0,
+            "lower": 0.0,
+            "observed": null,
+            "predicted": null
+          },
+          {
+            "count": 4,
+            "lower": 0.1,
+            "observed": 0.25,
+            "predicted": 0.19422445890351295
+          },
+          {
+            "count": 47,
+            "lower": 0.2,
+            "observed": 0.2553191489361702,
+            "predicted": 0.23679669574965953
+          },
+          {
+            "count": 26,
+            "lower": 0.30000000000000004,
+            "observed": 0.5,
+            "predicted": 0.34918416945006514
+          },
+          {
+            "count": 39,
+            "lower": 0.4,
+            "observed": 0.358974358974359,
+            "predicted": 0.45710828224155364
+          },
+          {
+            "count": 22,
+            "lower": 0.5,
+            "observed": 0.5909090909090909,
+            "predicted": 0.5374141619117722
+          },
+          {
+            "count": 8,
+            "lower": 0.6000000000000001,
+            "observed": 0.625,
+            "predicted": 0.6495067483539327
+          },
+          {
+            "count": 11,
+            "lower": 0.7000000000000001,
+            "observed": 0.5454545454545454,
+            "predicted": 0.7618785586932845
+          },
+          {
+            "count": 31,
+            "lower": 0.8,
+            "observed": 0.9354838709677419,
+            "predicted": 0.8402038403599783
+          },
+          {
+            "count": 103,
+            "lower": 0.9,
+            "observed": 0.9611650485436893,
+            "predicted": 0.9729447205233231
+          }
+        ],
+        "roc_auc": 0.8618476430976431,
+        "rows": 291,
+        "uncertainty_note": "Resampling synthetic base episodes; variants stay grouped. No inference about real market performance."
+      }
+    },
+    {
+      "artifact_sha256": "00a936876ab893686e5ac2612a554f1266d05f260acd149c556e8977800d6a85",
+      "checkpoints": [],
+      "code_revision": "a4eb2e9587bdc312cce279ee4eb87bfd9ab01a56",
+      "configuration": {
+        "batch_size": 128,
+        "dataset_id": "dataset-c6247f1456257066f0fe8d5f",
+        "epochs": 80,
+        "family": "logistic",
+        "hidden_size": 32,
+        "learning_rate": 0.001,
+        "max_wall_seconds": 600,
+        "patience": 12,
+        "resume_from": null,
+        "seed": 11,
+        "weight_decay": 0.0001
+      },
+      "created_at": 1791824926.0728712,
+      "curves": [],
+      "dataset_id": "dataset-c6247f1456257066f0fe8d5f",
+      "dataset_sha256": "78912b51f646e080a9190c406fdb3fdde7efdfe09508673b7222ad534c8fb594",
+      "family": "logistic",
+      "feature_schema": [
+        "ask_sum",
+        "bid_sum",
+        "min_ask_depth",
+        "max_ask_depth",
+        "min_top_depth",
+        "max_spread",
+        "max_age_ms",
+        "fee_rate",
+        "capital_available",
+        "locked_capital",
+        "unmatched_quantity",
+        "proposed_quantity",
+        "conditional_edge",
+        "latency_ms",
+        "jitter_ms",
+        "liquidity_fraction",
+        "adverse_ticks",
+        "ack_delay_ms",
+        "observation_latency_ms"
+      ],
+      "feature_version": "observable-binary-1",
+      "label_target": "persistence",
+      "limitations": [
+        "Synthetic hypothetical fills; no empirical calibration or real profitability evidence",
+        "Only first_admitted decision scope is labeled; rejected and ineligible variants excluded. Later portfolio states remain outside this dataset.",
+        "Episode variants are correlated; partitions group family/seed identities",
+        "Generator settlement uses seed parity; seeds and identifiers are excluded from features",
+        "Execution configuration is an assumption available to a research policy",
+        "Residual unmatched shares are post-execution labels only; not decision features or guaranteed loss severity",
+        "Classifier quality does not establish economic policy improvement"
+      ],
+      "model_id": "model-9474cee818f04c77962966d8",
+      "source_hash": "297f559be63868268aafce83e9b1ac5ff9fa799c3a64ac4474fcb87bcbf8bee8",
+      "state": "TRAINED",
+      "test": null,
+      "training_duration_seconds": 0.07494556298479438,
+      "validation": {
+        "base_episodes": 97,
+        "brier": 0.14340007656187456,
+        "by_execution": {
+          "conservative": {
+            "brier": 0.18060215035180144,
+            "rows": 97
+          },
+          "optimistic": {
+            "brier": 0.06614503291912029,
+            "rows": 97
+          },
+          "standard": {
+            "brier": 0.18345304641470198,
+            "rows": 97
+          }
+        },
+        "by_family": {
+          "calm": {
+            "brier": 0.2633628697347212,
+            "rows": 42
+          },
+          "deep": {
+            "brier": 5.6080117439090955e-05,
+            "rows": 60
+          },
+          "disappearing": {
+            "brier": 0.1652339338282567,
+            "rows": 57
+          },
+          "liquidity_shock": {
+            "brier": 0.152054520464354,
+            "rows": 24
+          },
+          "one_sided": {
+            "brier": 0.13305830739678237,
+            "rows": 21
+          },
+          "thin": {
+            "brier": 0.13917606026039467,
+            "rows": 33
+          },
+          "volatile": {
+            "brier": 0.18907666259852368,
+            "rows": 54
+          }
+        },
+        "episode_bootstrap_brier_95": [
+          0.11940159309215465,
+          0.16956686652734113
+        ],
+        "episode_mean_brier": 0.14340007656187456,
+        "log_loss": 0.42481548681855624,
+        "positive_rate": 0.6597938144329897,
+        "pr_auc": 0.9336038688755941,
+        "precision": 0.8685714285714285,
+        "recall": 0.7916666666666666,
+        "reliability": [
+          {
+            "count": 0,
+            "lower": 0.0,
+            "observed": null,
+            "predicted": null
+          },
+          {
+            "count": 4,
+            "lower": 0.1,
+            "observed": 0.25,
+            "predicted": 0.19422445890351295
+          },
+          {
+            "count": 47,
+            "lower": 0.2,
+            "observed": 0.2553191489361702,
+            "predicted": 0.23679669574965953
+          },
+          {
+            "count": 26,
+            "lower": 0.30000000000000004,
+            "observed": 0.5,
+            "predicted": 0.34918416945006514
+          },
+          {
+            "count": 39,
+            "lower": 0.4,
+            "observed": 0.358974358974359,
+            "predicted": 0.45710828224155364
+          },
+          {
+            "count": 22,
+            "lower": 0.5,
+            "observed": 0.5909090909090909,
+            "predicted": 0.5374141619117722
+          },
+          {
+            "count": 8,
+            "lower": 0.6000000000000001,
+            "observed": 0.625,
+            "predicted": 0.6495067483539327
+          },
+          {
+            "count": 11,
+            "lower": 0.7000000000000001,
+            "observed": 0.5454545454545454,
+            "predicted": 0.7618785586932845
+          },
+          {
+            "count": 31,
+            "lower": 0.8,
+            "observed": 0.9354838709677419,
+            "predicted": 0.8402038403599783
+          },
+          {
+            "count": 103,
+            "lower": 0.9,
+            "observed": 0.9611650485436893,
+            "predicted": 0.9729447205233231
+          }
+        ],
+        "roc_auc": 0.8618476430976431,
+        "rows": 291,
+        "uncertainty_note": "Resampling synthetic base episodes; variants stay grouped. No inference about real market performance."
+      }
     }
   ],
   "datasets": [
@@ -34026,6 +35160,742 @@
         "label_target": "completion",
         "observation_latency_ms": 100,
         "seed": 62070,
+        "split_seed": 1977,
+        "version": "synthetic-decision-1"
+      },
+      "version": "synthetic-decision-1"
+    },
+    {
+      "code_revision": "a4eb2e9587bdc312cce279ee4eb87bfd9ab01a56",
+      "created_at": 1791824794.8097737,
+      "dataset_id": "dataset-c6247f1456257066f0fe8d5f",
+      "decision_scope": "first_admitted",
+      "duration_seconds": 294.52778024197323,
+      "eligible_base_episodes": 644,
+      "excluded_variants": 1071,
+      "feature_schema": [
+        "ask_sum",
+        "bid_sum",
+        "min_ask_depth",
+        "max_ask_depth",
+        "min_top_depth",
+        "max_spread",
+        "max_age_ms",
+        "fee_rate",
+        "capital_available",
+        "locked_capital",
+        "unmatched_quantity",
+        "proposed_quantity",
+        "conditional_edge",
+        "latency_ms",
+        "jitter_ms",
+        "liquidity_fraction",
+        "adverse_ticks",
+        "ack_delay_ms",
+        "observation_latency_ms"
+      ],
+      "feature_version": "observable-binary-1",
+      "generated_base_episodes": 1001,
+      "generator_version": "laboratory-3.0",
+      "label_definition": "Original risk-admitted quantity remains mathematically VERIFIED within its allocated capital and both original order limits at its earliest scheduled submission arrival. Uses private synthetic venue quotes only for the label, before any initial order submits. Neither actual fills nor later second-leg availability are guaranteed.",
+      "label_frequency": {
+        "test": 0.6413043478260869,
+        "train": 0.6512820512820513,
+        "validation": 0.6597938144329897
+      },
+      "label_target": "persistence",
+      "label_version": "original-quote-first-arrival-1",
+      "limitations": [
+        "Synthetic hypothetical fills; no empirical calibration or real profitability evidence",
+        "Only first_admitted decision scope is labeled; rejected and ineligible variants excluded. Later portfolio states remain outside this dataset.",
+        "Episode variants are correlated; partitions group family/seed identities",
+        "Generator settlement uses seed parity; seeds and identifiers are excluded from features",
+        "Execution configuration is an assumption available to a research policy",
+        "Residual unmatched shares are post-execution labels only; not decision features or guaranteed loss severity"
+      ],
+      "partition_identities": {
+        "test": [
+          "calm:183094",
+          "calm:183150",
+          "calm:183206",
+          "calm:183325",
+          "calm:183374",
+          "calm:183479",
+          "calm:183808",
+          "deep:183107",
+          "deep:183114",
+          "deep:183184",
+          "deep:183268",
+          "deep:183289",
+          "deep:183338",
+          "deep:183408",
+          "deep:183457",
+          "deep:183485",
+          "deep:183611",
+          "deep:183639",
+          "deep:183646",
+          "deep:183751",
+          "deep:183772",
+          "deep:183793",
+          "deep:183849",
+          "deep:183968",
+          "deep:183989",
+          "disappearing:183189",
+          "disappearing:183322",
+          "disappearing:183427",
+          "disappearing:183588",
+          "disappearing:183819",
+          "disappearing:183910",
+          "liquidity_shock:183193",
+          "liquidity_shock:183389",
+          "liquidity_shock:183669",
+          "liquidity_shock:183711",
+          "liquidity_shock:183718",
+          "liquidity_shock:183865",
+          "liquidity_shock:183900",
+          "liquidity_shock:184033",
+          "liquidity_shock:184040",
+          "one_sided:183132",
+          "one_sided:183160",
+          "one_sided:183188",
+          "one_sided:183293",
+          "one_sided:183314",
+          "one_sided:183503",
+          "one_sided:183510",
+          "one_sided:183587",
+          "one_sided:183594",
+          "one_sided:183643",
+          "one_sided:183762",
+          "one_sided:183769",
+          "one_sided:183895",
+          "one_sided:183965",
+          "one_sided:184042",
+          "thin:183092",
+          "thin:183120",
+          "thin:183162",
+          "thin:183218",
+          "thin:183260",
+          "thin:183421",
+          "thin:183463",
+          "thin:183477",
+          "thin:183603",
+          "thin:183631",
+          "thin:183638",
+          "thin:183673",
+          "thin:183708",
+          "thin:183715",
+          "thin:183722",
+          "thin:183757",
+          "thin:183820",
+          "thin:183834",
+          "thin:183883",
+          "thin:183995",
+          "thin:184058",
+          "volatile:183236",
+          "volatile:183264",
+          "volatile:183299",
+          "volatile:183369",
+          "volatile:183418",
+          "volatile:183593",
+          "volatile:183607",
+          "volatile:183614",
+          "volatile:183698",
+          "volatile:183803",
+          "volatile:183824",
+          "volatile:183845",
+          "volatile:183887",
+          "volatile:183985",
+          "volatile:184013",
+          "volatile:184062"
+        ],
+        "train": [
+          "calm:183087",
+          "calm:183101",
+          "calm:183108",
+          "calm:183143",
+          "calm:183164",
+          "calm:183171",
+          "calm:183213",
+          "calm:183220",
+          "calm:183234",
+          "calm:183304",
+          "calm:183311",
+          "calm:183318",
+          "calm:183353",
+          "calm:183381",
+          "calm:183395",
+          "calm:183409",
+          "calm:183437",
+          "calm:183451",
+          "calm:183486",
+          "calm:183556",
+          "calm:183584",
+          "calm:183605",
+          "calm:183633",
+          "calm:183647",
+          "calm:183668",
+          "calm:183689",
+          "calm:183710",
+          "calm:183738",
+          "calm:183752",
+          "calm:183766",
+          "calm:183780",
+          "calm:183794",
+          "calm:183836",
+          "calm:183850",
+          "calm:183857",
+          "calm:183885",
+          "calm:183920",
+          "calm:183927",
+          "calm:183934",
+          "calm:183941",
+          "calm:183948",
+          "calm:184025",
+          "deep:183072",
+          "deep:183079",
+          "deep:183086",
+          "deep:183093",
+          "deep:183100",
+          "deep:183121",
+          "deep:183135",
+          "deep:183142",
+          "deep:183149",
+          "deep:183156",
+          "deep:183163",
+          "deep:183170",
+          "deep:183191",
+          "deep:183198",
+          "deep:183212",
+          "deep:183226",
+          "deep:183233",
+          "deep:183240",
+          "deep:183247",
+          "deep:183275",
+          "deep:183282",
+          "deep:183296",
+          "deep:183303",
+          "deep:183324",
+          "deep:183331",
+          "deep:183352",
+          "deep:183366",
+          "deep:183373",
+          "deep:183380",
+          "deep:183387",
+          "deep:183394",
+          "deep:183401",
+          "deep:183415",
+          "deep:183429",
+          "deep:183436",
+          "deep:183443",
+          "deep:183478",
+          "deep:183492",
+          "deep:183499",
+          "deep:183506",
+          "deep:183513",
+          "deep:183520",
+          "deep:183527",
+          "deep:183534",
+          "deep:183541",
+          "deep:183555",
+          "deep:183562",
+          "deep:183569",
+          "deep:183576",
+          "deep:183583",
+          "deep:183590",
+          "deep:183597",
+          "deep:183604",
+          "deep:183618",
+          "deep:183625",
+          "deep:183632",
+          "deep:183660",
+          "deep:183667",
+          "deep:183674",
+          "deep:183681",
+          "deep:183688",
+          "deep:183695",
+          "deep:183702",
+          "deep:183709",
+          "deep:183716",
+          "deep:183723",
+          "deep:183730",
+          "deep:183779",
+          "deep:183807",
+          "deep:183821",
+          "deep:183828",
+          "deep:183835",
+          "deep:183856",
+          "deep:183863",
+          "deep:183877",
+          "deep:183884",
+          "deep:183898",
+          "deep:183905",
+          "deep:183912",
+          "deep:183919",
+          "deep:183926",
+          "deep:183933",
+          "deep:183940",
+          "deep:183947",
+          "deep:183954",
+          "deep:183975",
+          "deep:183982",
+          "deep:183996",
+          "deep:184003",
+          "deep:184010",
+          "deep:184017",
+          "deep:184024",
+          "deep:184031",
+          "deep:184038",
+          "deep:184045",
+          "deep:184052",
+          "deep:184059",
+          "disappearing:183077",
+          "disappearing:183105",
+          "disappearing:183119",
+          "disappearing:183147",
+          "disappearing:183154",
+          "disappearing:183175",
+          "disappearing:183182",
+          "disappearing:183224",
+          "disappearing:183231",
+          "disappearing:183252",
+          "disappearing:183266",
+          "disappearing:183273",
+          "disappearing:183329",
+          "disappearing:183350",
+          "disappearing:183357",
+          "disappearing:183364",
+          "disappearing:183392",
+          "disappearing:183441",
+          "disappearing:183455",
+          "disappearing:183469",
+          "disappearing:183476",
+          "disappearing:183483",
+          "disappearing:183490",
+          "disappearing:183504",
+          "disappearing:183525",
+          "disappearing:183539",
+          "disappearing:183546",
+          "disappearing:183567",
+          "disappearing:183581",
+          "disappearing:183602",
+          "disappearing:183630",
+          "disappearing:183644",
+          "disappearing:183651",
+          "disappearing:183693",
+          "disappearing:183700",
+          "disappearing:183707",
+          "disappearing:183728",
+          "disappearing:183756",
+          "disappearing:183763",
+          "disappearing:183770",
+          "disappearing:183784",
+          "disappearing:183798",
+          "disappearing:183805",
+          "disappearing:183833",
+          "disappearing:183847",
+          "disappearing:183882",
+          "disappearing:183903",
+          "disappearing:183931",
+          "disappearing:183938",
+          "disappearing:183973",
+          "disappearing:183987",
+          "disappearing:184001",
+          "disappearing:184008",
+          "disappearing:184036",
+          "disappearing:184043",
+          "disappearing:184050",
+          "disappearing:184071",
+          "liquidity_shock:183074",
+          "liquidity_shock:183081",
+          "liquidity_shock:183123",
+          "liquidity_shock:183158",
+          "liquidity_shock:183165",
+          "liquidity_shock:183172",
+          "liquidity_shock:183221",
+          "liquidity_shock:183228",
+          "liquidity_shock:183284",
+          "liquidity_shock:183291",
+          "liquidity_shock:183298",
+          "liquidity_shock:183305",
+          "liquidity_shock:183312",
+          "liquidity_shock:183326",
+          "liquidity_shock:183340",
+          "liquidity_shock:183368",
+          "liquidity_shock:183396",
+          "liquidity_shock:183410",
+          "liquidity_shock:183445",
+          "liquidity_shock:183466",
+          "liquidity_shock:183473",
+          "liquidity_shock:183480",
+          "liquidity_shock:183494",
+          "liquidity_shock:183501",
+          "liquidity_shock:183529",
+          "liquidity_shock:183543",
+          "liquidity_shock:183564",
+          "liquidity_shock:183571",
+          "liquidity_shock:183578",
+          "liquidity_shock:183592",
+          "liquidity_shock:183606",
+          "liquidity_shock:183613",
+          "liquidity_shock:183641",
+          "liquidity_shock:183655",
+          "liquidity_shock:183662",
+          "liquidity_shock:183683",
+          "liquidity_shock:183760",
+          "liquidity_shock:183774",
+          "liquidity_shock:183781",
+          "liquidity_shock:183788",
+          "liquidity_shock:183795",
+          "liquidity_shock:183802",
+          "liquidity_shock:183816",
+          "liquidity_shock:183837",
+          "liquidity_shock:183879",
+          "liquidity_shock:183886",
+          "liquidity_shock:183907",
+          "liquidity_shock:183914",
+          "liquidity_shock:183963",
+          "liquidity_shock:183977",
+          "liquidity_shock:183984",
+          "liquidity_shock:183998",
+          "liquidity_shock:184005",
+          "liquidity_shock:184047",
+          "liquidity_shock:184068",
+          "one_sided:183090",
+          "one_sided:183097",
+          "one_sided:183104",
+          "one_sided:183118",
+          "one_sided:183153",
+          "one_sided:183167",
+          "one_sided:183181",
+          "one_sided:183244",
+          "one_sided:183251",
+          "one_sided:183258",
+          "one_sided:183265",
+          "one_sided:183279",
+          "one_sided:183307",
+          "one_sided:183328",
+          "one_sided:183391",
+          "one_sided:183412",
+          "one_sided:183426",
+          "one_sided:183440",
+          "one_sided:183447",
+          "one_sided:183538",
+          "one_sided:183573",
+          "one_sided:183580",
+          "one_sided:183622",
+          "one_sided:183629",
+          "one_sided:183636",
+          "one_sided:183650",
+          "one_sided:183706",
+          "one_sided:183713",
+          "one_sided:183720",
+          "one_sided:183734",
+          "one_sided:183741",
+          "one_sided:183783",
+          "one_sided:183797",
+          "one_sided:183832",
+          "one_sided:183846",
+          "one_sided:183860",
+          "one_sided:183867",
+          "one_sided:183930",
+          "one_sided:183951",
+          "one_sided:183972",
+          "one_sided:183979",
+          "one_sided:183986",
+          "one_sided:184014",
+          "one_sided:184035",
+          "one_sided:184063",
+          "thin:183078",
+          "thin:183099",
+          "thin:183106",
+          "thin:183127",
+          "thin:183134",
+          "thin:183141",
+          "thin:183169",
+          "thin:183183",
+          "thin:183190",
+          "thin:183197",
+          "thin:183204",
+          "thin:183225",
+          "thin:183232",
+          "thin:183253",
+          "thin:183274",
+          "thin:183302",
+          "thin:183309",
+          "thin:183316",
+          "thin:183323",
+          "thin:183337",
+          "thin:183351",
+          "thin:183372",
+          "thin:183393",
+          "thin:183407",
+          "thin:183442",
+          "thin:183449",
+          "thin:183470",
+          "thin:183491",
+          "thin:183498",
+          "thin:183512",
+          "thin:183533",
+          "thin:183554",
+          "thin:183589",
+          "thin:183610",
+          "thin:183617",
+          "thin:183624",
+          "thin:183652",
+          "thin:183701",
+          "thin:183729",
+          "thin:183736",
+          "thin:183743",
+          "thin:183764",
+          "thin:183792",
+          "thin:183799",
+          "thin:183806",
+          "thin:183813",
+          "thin:183841",
+          "thin:183862",
+          "thin:183869",
+          "thin:183897",
+          "thin:183904",
+          "thin:183911",
+          "thin:183918",
+          "thin:183925",
+          "thin:183953",
+          "thin:183988",
+          "thin:184009",
+          "thin:184016",
+          "thin:184023",
+          "thin:184030",
+          "thin:184044",
+          "thin:184051",
+          "volatile:183075",
+          "volatile:183089",
+          "volatile:183096",
+          "volatile:183103",
+          "volatile:183124",
+          "volatile:183131",
+          "volatile:183138",
+          "volatile:183145",
+          "volatile:183159",
+          "volatile:183166",
+          "volatile:183173",
+          "volatile:183180",
+          "volatile:183187",
+          "volatile:183201",
+          "volatile:183208",
+          "volatile:183215",
+          "volatile:183222",
+          "volatile:183229",
+          "volatile:183243",
+          "volatile:183250",
+          "volatile:183257",
+          "volatile:183271",
+          "volatile:183278",
+          "volatile:183306",
+          "volatile:183320",
+          "volatile:183327",
+          "volatile:183334",
+          "volatile:183341",
+          "volatile:183355",
+          "volatile:183376",
+          "volatile:183383",
+          "volatile:183390",
+          "volatile:183397",
+          "volatile:183404",
+          "volatile:183411",
+          "volatile:183425",
+          "volatile:183432",
+          "volatile:183439",
+          "volatile:183446",
+          "volatile:183460",
+          "volatile:183467",
+          "volatile:183474",
+          "volatile:183495",
+          "volatile:183502",
+          "volatile:183509",
+          "volatile:183516",
+          "volatile:183523",
+          "volatile:183530",
+          "volatile:183544",
+          "volatile:183551",
+          "volatile:183558",
+          "volatile:183565",
+          "volatile:183586",
+          "volatile:183600",
+          "volatile:183621",
+          "volatile:183628",
+          "volatile:183635",
+          "volatile:183649",
+          "volatile:183656",
+          "volatile:183663",
+          "volatile:183677",
+          "volatile:183691",
+          "volatile:183712",
+          "volatile:183719",
+          "volatile:183726",
+          "volatile:183733",
+          "volatile:183740",
+          "volatile:183747",
+          "volatile:183754",
+          "volatile:183761",
+          "volatile:183768",
+          "volatile:183775",
+          "volatile:183782",
+          "volatile:183796",
+          "volatile:183810",
+          "volatile:183817",
+          "volatile:183831",
+          "volatile:183838",
+          "volatile:183852",
+          "volatile:183859",
+          "volatile:183873",
+          "volatile:183880",
+          "volatile:183901",
+          "volatile:183908",
+          "volatile:183915",
+          "volatile:183929",
+          "volatile:183936",
+          "volatile:183950",
+          "volatile:183957",
+          "volatile:183964",
+          "volatile:183971",
+          "volatile:183978",
+          "volatile:184006",
+          "volatile:184020",
+          "volatile:184027",
+          "volatile:184034",
+          "volatile:184041"
+        ],
+        "validation": [
+          "calm:183283",
+          "calm:183416",
+          "calm:183472",
+          "calm:183598",
+          "calm:183661",
+          "calm:183696",
+          "calm:183731",
+          "calm:183801",
+          "calm:183815",
+          "calm:183871",
+          "calm:183913",
+          "calm:183976",
+          "calm:183990",
+          "calm:184018",
+          "deep:183128",
+          "deep:183177",
+          "deep:183219",
+          "deep:183254",
+          "deep:183310",
+          "deep:183359",
+          "deep:183422",
+          "deep:183450",
+          "deep:183471",
+          "deep:183548",
+          "deep:183653",
+          "deep:183737",
+          "deep:183758",
+          "deep:183786",
+          "deep:183800",
+          "deep:183842",
+          "deep:183870",
+          "deep:183891",
+          "deep:183961",
+          "deep:184066",
+          "disappearing:183168",
+          "disappearing:183203",
+          "disappearing:183259",
+          "disappearing:183294",
+          "disappearing:183406",
+          "disappearing:183413",
+          "disappearing:183420",
+          "disappearing:183497",
+          "disappearing:183560",
+          "disappearing:183616",
+          "disappearing:183658",
+          "disappearing:183665",
+          "disappearing:183672",
+          "disappearing:183777",
+          "disappearing:183840",
+          "disappearing:183889",
+          "disappearing:183896",
+          "disappearing:183924",
+          "disappearing:184022",
+          "liquidity_shock:183151",
+          "liquidity_shock:183333",
+          "liquidity_shock:183424",
+          "liquidity_shock:183648",
+          "liquidity_shock:183676",
+          "liquidity_shock:183809",
+          "liquidity_shock:183872",
+          "liquidity_shock:183942",
+          "one_sided:183202",
+          "one_sided:183349",
+          "one_sided:183356",
+          "one_sided:183370",
+          "one_sided:183615",
+          "one_sided:183825",
+          "one_sided:183839",
+          "thin:183071",
+          "thin:183113",
+          "thin:183148",
+          "thin:183246",
+          "thin:183288",
+          "thin:183365",
+          "thin:183414",
+          "thin:183890",
+          "thin:183932",
+          "thin:183939",
+          "thin:183981",
+          "volatile:183082",
+          "volatile:183152",
+          "volatile:183194",
+          "volatile:183285",
+          "volatile:183292",
+          "volatile:183453",
+          "volatile:183481",
+          "volatile:183537",
+          "volatile:183572",
+          "volatile:183642",
+          "volatile:183670",
+          "volatile:183684",
+          "volatile:183894",
+          "volatile:183922",
+          "volatile:183943",
+          "volatile:183999",
+          "volatile:184055",
+          "volatile:184069"
+        ]
+      },
+      "partition_rows": {
+        "test": 276,
+        "train": 1365,
+        "validation": 291
+      },
+      "provenance": "GENERATED",
+      "rows": 1932,
+      "rows_sha256": "78912b51f646e080a9190c406fdb3fdde7efdfe09508673b7222ad534c8fb594",
+      "simulation_version": "laboratory-3.0",
+      "source": "Midas Laboratory synthetic generator",
+      "source_hash": "297f559be63868268aafce83e9b1ac5ff9fa799c3a64ac4474fcb87bcbf8bee8",
+      "spec": {
+        "decision_scope": "first_admitted",
+        "episodes": 1001,
+        "execution_models": [
+          "optimistic",
+          "standard",
+          "conservative"
+        ],
+        "families": [
+          "thin",
+          "deep",
+          "calm",
+          "liquidity_shock",
+          "volatile",
+          "one_sided",
+          "disappearing"
+        ],
+        "label_target": "persistence",
+        "observation_latency_ms": 100,
+        "seed": 183071,
         "split_seed": 1977,
         "version": "synthetic-decision-1"
       },
@@ -46926,6 +48796,150 @@
       "submitted_source_hash": "c18fc3259a65b07d47186736a6bc36d54f932603417cd4b908490df42769cc10",
       "unit": "midas-arena-job-d0043ac445294ceeb2abd9bf.service",
       "updated_at": 1791822483.55369
+    },
+    {
+      "active_artifact": {
+        "identity": "model-3a9c422c0e0d420ba8fd568a",
+        "kind": "models"
+      },
+      "budget": {
+        "cpu_cores": 1,
+        "max_artifact_mb": 1024,
+        "memory_mb": 4096,
+        "minimum_available_memory_mb": 2048,
+        "wall_seconds": 1800
+      },
+      "completed_at": 1791824939.0935047,
+      "configuration": {
+        "dataset": null,
+        "director": null,
+        "kind": "sweep",
+        "max_wall_seconds": 1800,
+        "model_id": null,
+        "policy_search": null,
+        "rl": null,
+        "severity": null,
+        "sweep": {
+          "candidates": [
+            {
+              "family": "logistic",
+              "hidden_size": 32,
+              "learning_rate": 0.001,
+              "weight_decay": 0.0001
+            },
+            {
+              "family": "mlp",
+              "hidden_size": 32,
+              "learning_rate": 0.001,
+              "weight_decay": 0.0001
+            }
+          ],
+          "dataset_id": "dataset-c6247f1456257066f0fe8d5f",
+          "epochs": 80,
+          "practical_brier_tolerance": 0.002,
+          "seeds": [
+            11,
+            29
+          ]
+        },
+        "tournament": null,
+        "training": null
+      },
+      "created_at": 1791824923.1331224,
+      "elapsed_seconds": 14.417533416999504,
+      "error": null,
+      "exit_status": 0,
+      "job_id": "job-9bd2126fddf54abc935cc5cc",
+      "pid": 3692468,
+      "progress": {
+        "done": 4,
+        "total": 4
+      },
+      "result": {
+        "sweep_id": "sweep-db6a3dd577071f050a46fecc"
+      },
+      "runtime_profile": {
+        "artifact_bytes": 601954895,
+        "artifact_files": 42550,
+        "artifact_scan_seconds": 9.569710657175165,
+        "artifact_scans": 72,
+        "progress_publish_seconds": 0.7884322638856247
+      },
+      "started_at": 1791824924.6760824,
+      "state": "COMPLETED",
+      "submitted_source_hash": "297f559be63868268aafce83e9b1ac5ff9fa799c3a64ac4474fcb87bcbf8bee8",
+      "unit": "midas-arena-job-9bd2126fddf54abc935cc5cc.service",
+      "updated_at": 1791824939.0935047
+    },
+    {
+      "budget": {
+        "cpu_cores": 1,
+        "max_artifact_mb": 1024,
+        "memory_mb": 4096,
+        "minimum_available_memory_mb": 2048,
+        "wall_seconds": 1800
+      },
+      "completed_at": 1791824794.9730217,
+      "configuration": {
+        "dataset": {
+          "decision_scope": "first_admitted",
+          "episodes": 1001,
+          "execution_models": [
+            "optimistic",
+            "standard",
+            "conservative"
+          ],
+          "families": [
+            "thin",
+            "deep",
+            "calm",
+            "liquidity_shock",
+            "volatile",
+            "one_sided",
+            "disappearing"
+          ],
+          "label_target": "persistence",
+          "observation_latency_ms": 100,
+          "seed": 183071,
+          "split_seed": 1977,
+          "version": "synthetic-decision-1"
+        },
+        "director": null,
+        "kind": "dataset",
+        "max_wall_seconds": 1800,
+        "model_id": null,
+        "policy_search": null,
+        "rl": null,
+        "severity": null,
+        "sweep": null,
+        "tournament": null,
+        "training": null
+      },
+      "created_at": 1791824498.4966557,
+      "elapsed_seconds": 294.8611519209808,
+      "error": null,
+      "exit_status": 0,
+      "job_id": "job-d16ec5293f6b4627be6df57c",
+      "pid": 3681138,
+      "progress": {
+        "done": 1001,
+        "total": 1001
+      },
+      "result": {
+        "dataset_id": "dataset-c6247f1456257066f0fe8d5f"
+      },
+      "runtime_profile": {
+        "artifact_bytes": 601143615,
+        "artifact_files": 42480,
+        "artifact_scan_seconds": 130.71354576706653,
+        "artifact_scans": 1003,
+        "progress_publish_seconds": 11.774926721758675
+      },
+      "started_at": 1791824500.1119766,
+      "state": "COMPLETED",
+      "submitted_source_hash": "297f559be63868268aafce83e9b1ac5ff9fa799c3a64ac4474fcb87bcbf8bee8",
+      "unit": "midas-arena-job-d16ec5293f6b4627be6df57c.service",
+      "updated_at": 1791824794.9730215
     }
   ],
   "provenance": "SYNTHETIC / HYPOTHETICAL / ECONOMICALLY UNVERIFIED",

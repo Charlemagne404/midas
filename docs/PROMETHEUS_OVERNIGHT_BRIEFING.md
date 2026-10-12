@@ -2,6 +2,32 @@
 
 ## Current checkpoint (supersedes running-job notes below)
 
+### Persistence dataset and four genuine fits completed
+
+Added first-arrival original-quote persistence labels, integrated CPU training,
+probability gates and the native target selector. Future venue quotes are labels
+only; original observable features and financial replay outcomes are unchanged.
+Full tests: 371 passed, one PostgreSQL skip; nine frontend tests and build passed.
+
+Dataset dataset-c6247f1456257066f0fe8d5f completed 1,001 generated groups,
+644 admitted groups and 1,932 correlated variants. The first-admitted scope and
+original quantity/capital/price limits are explicit. In development data, 456
+of 1,081 persistent quotes still had incomplete execution. Persistence therefore
+cannot be used as a full-fill guarantee.
+
+The two-seed logistic/MLP sweep completed four production fits. Validation Brier
+is 0.143400 for logistic, neural mean 0.143154, versus training-base-rate
+0.224538. The neural gain is below the preregistered 0.002 simplicity tolerance;
+selected logistic model-9474cee818f04c77962966d8. The MLPs trained 31/35 epochs
+with saved curves and checkpoints. Weight reload and validation recomputation
+passed for all four models. Their final classifier tests remain unopened.
+
+A pre-test bundle freezes all candidates, dataset, selection and captured sweep
+source; all 78 payload hashes verify. Total production inventory: 25 artifacts,
+24 fitted models, four datasets (three source datasets), 20 tournaments. No
+research jobs remain active. Independent policy benefit is still unproven; next
+is a preregistered matched policy comparison on unused scenario groups.
+
 ### Adaptive plan completed and stopped
 
 All four tournaments completed: 3,600 correlated variants over 120 fresh source

@@ -1,0 +1,70 @@
+{
+  "budget": {
+    "cpu_cores": 1,
+    "max_artifact_mb": 1024,
+    "memory_mb": 4096,
+    "minimum_available_memory_mb": 2048,
+    "wall_seconds": 1800
+  },
+  "completed_at": 1791824794.9730217,
+  "configuration": {
+    "dataset": {
+      "decision_scope": "first_admitted",
+      "episodes": 1001,
+      "execution_models": [
+        "optimistic",
+        "standard",
+        "conservative"
+      ],
+      "families": [
+        "thin",
+        "deep",
+        "calm",
+        "liquidity_shock",
+        "volatile",
+        "one_sided",
+        "disappearing"
+      ],
+      "label_target": "persistence",
+      "observation_latency_ms": 100,
+      "seed": 183071,
+      "split_seed": 1977,
+      "version": "synthetic-decision-1"
+    },
+    "director": null,
+    "kind": "dataset",
+    "max_wall_seconds": 1800,
+    "model_id": null,
+    "policy_search": null,
+    "rl": null,
+    "severity": null,
+    "sweep": null,
+    "tournament": null,
+    "training": null
+  },
+  "created_at": 1791824498.4966557,
+  "elapsed_seconds": 294.8611519209808,
+  "error": null,
+  "exit_status": 0,
+  "job_id": "job-d16ec5293f6b4627be6df57c",
+  "pid": 3681138,
+  "progress": {
+    "done": 1001,
+    "total": 1001
+  },
+  "result": {
+    "dataset_id": "dataset-c6247f1456257066f0fe8d5f"
+  },
+  "runtime_profile": {
+    "artifact_bytes": 601143615,
+    "artifact_files": 42480,
+    "artifact_scan_seconds": 130.71354576706653,
+    "artifact_scans": 1003,
+    "progress_publish_seconds": 11.774926721758675
+  },
+  "started_at": 1791824500.1119766,
+  "state": "COMPLETED",
+  "submitted_source_hash": "297f559be63868268aafce83e9b1ac5ff9fa799c3a64ac4474fcb87bcbf8bee8",
+  "unit": "midas-arena-job-d16ec5293f6b4627be6df57c.service",
+  "updated_at": 1791824794.9730215
+}

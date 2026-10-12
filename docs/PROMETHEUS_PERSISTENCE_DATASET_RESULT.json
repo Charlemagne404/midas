@@ -1,0 +1,18 @@
+{
+  "dataset_id": "dataset-c6247f1456257066f0fe8d5f",
+  "source_hash": "297f559be63868268aafce83e9b1ac5ff9fa799c3a64ac4474fcb87bcbf8bee8",
+  "rows_sha256": "78912b51f646e080a9190c406fdb3fdde7efdfe09508673b7222ad534c8fb594",
+  "generated_source_groups": 1001,
+  "admitted_source_groups": 644,
+  "correlated_variants": 1932,
+  "partition_rows": {
+    "test": 276,
+    "train": 1365,
+    "validation": 291
+  },
+  "label_definition": "Original risk-admitted quantity remains mathematically VERIFIED within its allocated capital and both original order limits at its earliest scheduled submission arrival. Uses private synthetic venue quotes only for the label, before any initial order submits. Neither actual fills nor later second-leg availability are guaranteed.",
+  "development_variants": 1656,
+  "development_persistent_quotes": 1081,
+  "development_persistent_but_incomplete": 456,
+  "final_classifier_metrics_opened": false
+}
