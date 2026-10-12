@@ -1,5 +1,5 @@
 {
-  "checked_at": 1791819149.6332314,
+  "checked_at": 1791821832.9130483,
   "models": [
     {
       "artifact_sha256": "a1ddf5a19d6cb1ad942ce8fc1cc3d63ec2e2f6ddf5dfc8fc46eb052be777e565",
@@ -28419,6 +28419,59 @@
           ],
           "metrics": null,
           "tournament_id": "tournament-dec3bf369483448b863e0857"
+        },
+        {
+          "adversarial": false,
+          "artifact_sha256": "fe6a3c02b4923cf7cd697638461a892f96a747743e03b4e23436fdb1e9083852",
+          "base_episodes": 60,
+          "dataset_sha256": "3c95234ffb79c51194d54f451bf0467c4d4e83cc22ad4ef6721eaabf4a20c109",
+          "gate_metrics": [
+            {
+              "attempted_trades": 135,
+              "average_exposure_duration_ms": 291.5444444444444,
+              "base_episodes": 60,
+              "by_execution": {
+                "conservative": 0.1343333333333333,
+                "optimistic": 2.7787616666666666,
+                "standard": 1.84698
+              },
+              "completed_two_leg_positions": 45,
+              "cvar_05_loss": 2.006933333333333,
+              "invariant_violations": 0,
+              "losing_fraction": 0.016666666666666666,
+              "max_drawdown": 0.1518988997518462,
+              "mean_capital_utilization": 0.07835581111111112,
+              "mean_inference_latency_ms": 0.18099731045483153,
+              "mean_pnl": 1.5866916666666668,
+              "mean_pnl_episode_bootstrap_95": [
+                1.0206446111111112,
+                2.2322192916666665
+              ],
+              "mean_runtime_ms": 89.5718353460931,
+              "median_pnl": 0.0,
+              "no_trade_fraction": 0.45555555555555555,
+              "partial_orders": 31,
+              "policy": "gate-f12a4e29a05e5a4ce18f",
+              "profitable_fraction": 0.34444444444444444,
+              "quantiles": [
+                0.0,
+                0.0,
+                0.0,
+                1.874325,
+                9.896274999999985
+              ],
+              "rank": 2,
+              "risk_interventions": 37,
+              "score": -0.4202416666666662,
+              "total_pnl": 285.60450000000003,
+              "unmatched_exposure_incidents": 65,
+              "unsupported_decisions": 30,
+              "variants": 180,
+              "worst_loss": -9.2274
+            }
+          ],
+          "metrics": null,
+          "tournament_id": "tournament-3e1ee735a43c4f66a5b87b42"
         }
       ],
       "source_hash": "2ade478673ae5b9368f97c43ed4ad5191aa517b213a7adb46dad9cd8f07f155b",
@@ -42290,6 +42343,454 @@
       "tournament_id": "tournament-dec3bf369483448b863e0857",
       "uncertainty_note": "Bootstrap resamples base episodes with all execution variants grouped. Generated uncertainty does not establish real market generalization.",
       "variants": 1500
+    },
+    {
+      "base_episodes": 60,
+      "code_revision": "9dd2e70f3b1f876568bdd1ff3e49898de545f45d",
+      "common_random_numbers_note": "Shared seeds pair source scenarios. Action-dependent order paths and random draws do not guarantee identical execution noise.",
+      "conclusion": "Insufficient independent synthetic episodes for champion designation.",
+      "configuration": {
+        "adversarial": false,
+        "challenge": {
+          "decision_scope": "first_admitted",
+          "episodes": 60,
+          "execution_models": [
+            "optimistic",
+            "standard",
+            "conservative"
+          ],
+          "families": [
+            "volatile",
+            "disappearing",
+            "calm",
+            "deep",
+            "thin"
+          ],
+          "label_target": "unmatched",
+          "observation_latency_ms": 100,
+          "seed": 143071,
+          "split_seed": 1977,
+          "version": "synthetic-decision-1"
+        },
+        "dataset_id": "dataset-f53981b7dd24c1521ce749b1",
+        "economic_regime": null,
+        "execution_models": [
+          "optimistic",
+          "standard",
+          "conservative"
+        ],
+        "gates": [
+          {
+            "model_id": "model-131794f0434945a286163323",
+            "size": "full",
+            "threshold": 0.1
+          }
+        ],
+        "max_episodes": 60,
+        "minimum_champion_episodes": 2000,
+        "model_ids": [],
+        "partition": "test",
+        "purpose": "research",
+        "seed": 991,
+        "tail_loss_weight": 1.0,
+        "threshold": 0.5,
+        "unsupported_input_policy": "abstain"
+      },
+      "created_at": 1791821699.2853327,
+      "dataset_sha256": "3c95234ffb79c51194d54f451bf0467c4d4e83cc22ad4ef6721eaabf4a20c109",
+      "duration_seconds": 213.59437486698152,
+      "economic_regime_units": {
+        "additional_submission_latency_ms": "milliseconds added to execution latency",
+        "depth_multiplier": "ratio of synthetic shares at every bid/ask level",
+        "taker_fee_rate": "hypothetical fee rate under the existing synthetic fee formula"
+      },
+      "economically_verified": false,
+      "evaluation_design": "FRESH_GENERATOR_CHALLENGE",
+      "evaluation_generator": {
+        "decision_scope": "first_admitted",
+        "episodes": 60,
+        "execution_models": [
+          "optimistic",
+          "standard",
+          "conservative"
+        ],
+        "families": [
+          "volatile",
+          "disappearing",
+          "calm",
+          "deep",
+          "thin"
+        ],
+        "label_target": "unmatched",
+        "observation_latency_ms": 100,
+        "seed": 143071,
+        "split_seed": 1977,
+        "version": "synthetic-decision-1"
+      },
+      "evaluation_observation_lineage": {
+        "dataset_id": "dataset-f53981b7dd24c1521ce749b1",
+        "observation_hash": "725ea9b7fef6128aa1d4a224d7487cf3951780200e0ae47651117caa5f31306f",
+        "source_dataset_id": "dataset-f53981b7dd24c1521ce749b1"
+      },
+      "execution_certainty": "HYPOTHETICAL_UNCALIBRATED",
+      "leaderboard": [
+        {
+          "attempted_trades": 0,
+          "average_exposure_duration_ms": 0.0,
+          "base_episodes": 60,
+          "by_execution": {
+            "conservative": 0.0,
+            "optimistic": 0.0,
+            "standard": 0.0
+          },
+          "completed_two_leg_positions": 0,
+          "cvar_05_loss": 0,
+          "invariant_violations": 0,
+          "losing_fraction": 0.0,
+          "max_drawdown": 0.0,
+          "mean_capital_utilization": 0.0,
+          "mean_inference_latency_ms": 0.0004517870062651734,
+          "mean_pnl": 0.0,
+          "mean_pnl_episode_bootstrap_95": [
+            0.0,
+            0.0
+          ],
+          "mean_runtime_ms": 42.57084440582225,
+          "median_pnl": 0.0,
+          "no_trade_fraction": 1.0,
+          "partial_orders": 0,
+          "policy": "no_trade",
+          "profitable_fraction": 0.0,
+          "quantiles": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "rank": 1,
+          "risk_interventions": 0,
+          "score": 0.0,
+          "total_pnl": 0.0,
+          "unmatched_exposure_incidents": 0,
+          "unsupported_decisions": 0,
+          "variants": 180,
+          "worst_loss": 0.0
+        },
+        {
+          "attempted_trades": 135,
+          "average_exposure_duration_ms": 291.5444444444444,
+          "base_episodes": 60,
+          "by_execution": {
+            "conservative": 0.1343333333333333,
+            "optimistic": 2.7787616666666666,
+            "standard": 1.84698
+          },
+          "completed_two_leg_positions": 45,
+          "cvar_05_loss": 2.006933333333333,
+          "invariant_violations": 0,
+          "losing_fraction": 0.016666666666666666,
+          "max_drawdown": 0.1518988997518462,
+          "mean_capital_utilization": 0.07835581111111112,
+          "mean_inference_latency_ms": 0.18099731045483153,
+          "mean_pnl": 1.5866916666666668,
+          "mean_pnl_episode_bootstrap_95": [
+            1.0206446111111112,
+            2.2322192916666665
+          ],
+          "mean_runtime_ms": 89.5718353460931,
+          "median_pnl": 0.0,
+          "no_trade_fraction": 0.45555555555555555,
+          "partial_orders": 31,
+          "policy": "gate-f12a4e29a05e5a4ce18f",
+          "profitable_fraction": 0.34444444444444444,
+          "quantiles": [
+            0.0,
+            0.0,
+            0.0,
+            1.874325,
+            9.896274999999985
+          ],
+          "rank": 2,
+          "risk_interventions": 37,
+          "score": -0.4202416666666662,
+          "total_pnl": 285.60450000000003,
+          "unmatched_exposure_incidents": 65,
+          "unsupported_decisions": 30,
+          "variants": 180,
+          "worst_loss": -9.2274
+        },
+        {
+          "attempted_trades": 222,
+          "average_exposure_duration_ms": 705.4,
+          "base_episodes": 60,
+          "by_execution": {
+            "conservative": 0.3186966666666667,
+            "optimistic": 2.579143333333333,
+            "standard": 1.704665
+          },
+          "completed_two_leg_positions": 60,
+          "cvar_05_loss": 2.3098,
+          "invariant_violations": 0,
+          "losing_fraction": 0.03333333333333333,
+          "max_drawdown": 0.09665113890620988,
+          "mean_capital_utilization": 0.06915026666666667,
+          "mean_inference_latency_ms": 0.000777629057189361,
+          "mean_pnl": 1.5341683333333334,
+          "mean_pnl_episode_bootstrap_95": [
+            1.1155555416666667,
+            2.0202436388888887
+          ],
+          "mean_runtime_ms": 114.63481047636985,
+          "median_pnl": 0.0,
+          "no_trade_fraction": 0.16666666666666666,
+          "partial_orders": 28,
+          "policy": "conservative",
+          "profitable_fraction": 0.45,
+          "quantiles": [
+            0.0,
+            0.0,
+            0.0,
+            3.004,
+            6.141819999999995
+          ],
+          "rank": 3,
+          "risk_interventions": 36,
+          "score": -0.7756316666666667,
+          "total_pnl": 276.1503,
+          "unmatched_exposure_incidents": 87,
+          "unsupported_decisions": 0,
+          "variants": 180,
+          "worst_loss": -4.6116
+        },
+        {
+          "attempted_trades": 231,
+          "average_exposure_duration_ms": 583.0277777777778,
+          "base_episodes": 60,
+          "by_execution": {
+            "conservative": 0.1718333333333333,
+            "optimistic": 2.7787616666666666,
+            "standard": 2.07258
+          },
+          "completed_two_leg_positions": 45,
+          "cvar_05_loss": 4.020377777777778,
+          "invariant_violations": 0,
+          "losing_fraction": 0.03888888888888889,
+          "max_drawdown": 0.1518988997518462,
+          "mean_capital_utilization": 0.10780536666666665,
+          "mean_inference_latency_ms": 0.0008334553318231235,
+          "mean_pnl": 1.6743916666666665,
+          "mean_pnl_episode_bootstrap_95": [
+            1.050230013888889,
+            2.363824833333333
+          ],
+          "mean_runtime_ms": 105.79113323409628,
+          "median_pnl": 0.0,
+          "no_trade_fraction": 0.2833333333333333,
+          "partial_orders": 64,
+          "policy": "arbitrage",
+          "profitable_fraction": 0.43333333333333335,
+          "quantiles": [
+            0.0,
+            0.0,
+            0.0,
+            2.295,
+            9.896274999999985
+          ],
+          "rank": 4,
+          "risk_interventions": 102,
+          "score": -2.3459861111111113,
+          "total_pnl": 301.3905,
+          "unmatched_exposure_incidents": 85,
+          "unsupported_decisions": 0,
+          "variants": 180,
+          "worst_loss": -9.2274
+        },
+        {
+          "attempted_trades": 147,
+          "average_exposure_duration_ms": 458.3666666666667,
+          "base_episodes": 60,
+          "by_execution": {
+            "conservative": 0.06219666666666667,
+            "optimistic": 1.8281566666666669,
+            "standard": 1.2901566666666668
+          },
+          "completed_two_leg_positions": 38,
+          "cvar_05_loss": 3.4619999999999997,
+          "invariant_violations": 0,
+          "losing_fraction": 0.03333333333333333,
+          "max_drawdown": 0.1518988997518462,
+          "mean_capital_utilization": 0.06378765,
+          "mean_inference_latency_ms": 0.01040892904191943,
+          "mean_pnl": 1.06017,
+          "mean_pnl_episode_bootstrap_95": [
+            0.5619847777777779,
+            1.639998111111111
+          ],
+          "mean_runtime_ms": 93.7536306543431,
+          "median_pnl": 0.0,
+          "no_trade_fraction": 0.4166666666666667,
+          "partial_orders": 35,
+          "policy": "random",
+          "profitable_fraction": 0.32222222222222224,
+          "quantiles": [
+            0.0,
+            0.0,
+            0.0,
+            1.111,
+            7.7756
+          ],
+          "rank": 5,
+          "risk_interventions": 33,
+          "score": -2.4018299999999995,
+          "total_pnl": 190.8306,
+          "unmatched_exposure_incidents": 64,
+          "unsupported_decisions": 0,
+          "variants": 180,
+          "worst_loss": -9.2274
+        }
+      ],
+      "model_artifact_hashes": {
+        "model-131794f0434945a286163323": "fe6a3c02b4923cf7cd697638461a892f96a747743e03b4e23436fdb1e9083852"
+      },
+      "model_dataset_bindings": {
+        "model-131794f0434945a286163323": {
+          "dataset_id": "dataset-f53981b7dd24c1521ce749b1",
+          "label_target": "unmatched",
+          "observation_hash": "725ea9b7fef6128aa1d4a224d7487cf3951780200e0ae47651117caa5f31306f",
+          "rows_sha256": "3c95234ffb79c51194d54f451bf0467c4d4e83cc22ad4ef6721eaabf4a20c109",
+          "source_dataset_id": "dataset-f53981b7dd24c1521ce749b1"
+        }
+      },
+      "paired": [
+        {
+          "base_episodes": 60,
+          "bootstrap_95": [
+            1.050230013888889,
+            2.363824833333333
+          ],
+          "conclusion": "POSITIVE_SYNTHETIC_MEAN",
+          "control": "no_trade",
+          "mean_difference": 1.6743916666666663,
+          "policy": "arbitrage"
+        },
+        {
+          "base_episodes": 60,
+          "bootstrap_95": [
+            -0.39549251388888884,
+            0.7266815555555549
+          ],
+          "conclusion": "NO_CLEAR_MEAN_ADVANTAGE",
+          "control": "conservative",
+          "mean_difference": 0.14022333333333334,
+          "policy": "arbitrage"
+        },
+        {
+          "base_episodes": 60,
+          "bootstrap_95": [
+            1.1155555416666667,
+            2.0202436388888887
+          ],
+          "conclusion": "POSITIVE_SYNTHETIC_MEAN",
+          "control": "no_trade",
+          "mean_difference": 1.5341683333333334,
+          "policy": "conservative"
+        },
+        {
+          "base_episodes": 60,
+          "bootstrap_95": [
+            -0.7266815555555555,
+            0.39549251388888845
+          ],
+          "conclusion": "NO_CLEAR_MEAN_ADVANTAGE",
+          "control": "arbitrage",
+          "mean_difference": -0.14022333333333334,
+          "policy": "conservative"
+        },
+        {
+          "base_episodes": 60,
+          "bootstrap_95": [
+            1.0206446111111112,
+            2.2322192916666665
+          ],
+          "conclusion": "POSITIVE_SYNTHETIC_MEAN",
+          "control": "no_trade",
+          "mean_difference": 1.5866916666666664,
+          "policy": "gate-f12a4e29a05e5a4ce18f"
+        },
+        {
+          "base_episodes": 60,
+          "bootstrap_95": [
+            -0.2782833333333334,
+            0.1276866666666665
+          ],
+          "conclusion": "NO_CLEAR_MEAN_ADVANTAGE",
+          "control": "arbitrage",
+          "mean_difference": -0.08770000000000003,
+          "policy": "gate-f12a4e29a05e5a4ce18f"
+        },
+        {
+          "base_episodes": 60,
+          "bootstrap_95": [
+            -0.5083435972222222,
+            0.6725811944444442
+          ],
+          "conclusion": "NO_CLEAR_MEAN_ADVANTAGE",
+          "control": "conservative",
+          "mean_difference": 0.05252333333333332,
+          "policy": "gate-f12a4e29a05e5a4ce18f"
+        },
+        {
+          "base_episodes": 60,
+          "bootstrap_95": [
+            0.5619847777777779,
+            1.639998111111111
+          ],
+          "conclusion": "POSITIVE_SYNTHETIC_MEAN",
+          "control": "no_trade",
+          "mean_difference": 1.0601699999999998,
+          "policy": "random"
+        },
+        {
+          "base_episodes": 60,
+          "bootstrap_95": [
+            -1.1284246249999998,
+            -0.2055114305555556
+          ],
+          "conclusion": "NO_CLEAR_MEAN_ADVANTAGE",
+          "control": "arbitrage",
+          "mean_difference": -0.6142216666666668,
+          "policy": "random"
+        },
+        {
+          "base_episodes": 60,
+          "bootstrap_95": [
+            -1.0509153333333334,
+            0.1398338055555556
+          ],
+          "conclusion": "NO_CLEAR_MEAN_ADVANTAGE",
+          "control": "conservative",
+          "mean_difference": -0.47399833333333335,
+          "policy": "random"
+        }
+      ],
+      "policy_bindings": {
+        "gate-f12a4e29a05e5a4ce18f": {
+          "model_id": "model-131794f0434945a286163323",
+          "size": "full",
+          "threshold": 0.1
+        }
+      },
+      "provenance": "GENERATED",
+      "ranking_objective": "mean virtual P&L minus 1.0 times 5% tail loss; any invariant failure disqualifies",
+      "ranking_version": "episode-objective-ties-2",
+      "research_champion": null,
+      "research_leaders": [],
+      "rows_sha256": "0066d56dea279108296870c23b8b2544809339a10f6027708c2f836a05f530ce",
+      "source_hash": "c18fc3259a65b07d47186736a6bc36d54f932603417cd4b908490df42769cc10",
+      "tournament_id": "tournament-3e1ee735a43c4f66a5b87b42",
+      "uncertainty_note": "Bootstrap resamples base episodes with all execution variants grouped. Generated uncertainty does not establish real market generalization.",
+      "variants": 900
     }
   ],
   "jobs": [
@@ -44506,6 +45007,204 @@
       "submitted_source_hash": "0558ffb748ba5412866f3f2a6c809d0124cd7c3e11d3cce115961ddec2b83358",
       "unit": "midas-arena-job-b53452014bb5434d9e8da6b6.service",
       "updated_at": 1791806785.3017077
+    },
+    {
+      "active_artifact": {
+        "identity": "tournament-3e1ee735a43c4f66a5b87b42",
+        "kind": "tournaments"
+      },
+      "budget": {
+        "cpu_cores": 1,
+        "max_artifact_mb": 1024,
+        "memory_mb": 4096,
+        "minimum_available_memory_mb": 2048,
+        "wall_seconds": 1800
+      },
+      "configuration": {
+        "dataset": null,
+        "director": null,
+        "kind": "tournament",
+        "max_wall_seconds": 1800,
+        "model_id": null,
+        "policy_search": null,
+        "rl": null,
+        "severity": null,
+        "sweep": null,
+        "tournament": {
+          "adversarial": false,
+          "challenge": {
+            "decision_scope": "first_admitted",
+            "episodes": 60,
+            "execution_models": [
+              "optimistic",
+              "standard",
+              "conservative"
+            ],
+            "families": [
+              "volatile",
+              "disappearing",
+              "calm",
+              "deep",
+              "thin"
+            ],
+            "label_target": "unmatched",
+            "observation_latency_ms": 100,
+            "seed": 143071,
+            "split_seed": 1977,
+            "version": "synthetic-decision-1"
+          },
+          "dataset_id": "dataset-f53981b7dd24c1521ce749b1",
+          "economic_regime": null,
+          "execution_models": [
+            "optimistic",
+            "standard",
+            "conservative"
+          ],
+          "gates": [
+            {
+              "model_id": "model-131794f0434945a286163323",
+              "size": "full",
+              "threshold": 0.1
+            }
+          ],
+          "max_episodes": 60,
+          "minimum_champion_episodes": 2000,
+          "model_ids": [],
+          "partition": "test",
+          "purpose": "research",
+          "seed": 991,
+          "tail_loss_weight": 1.0,
+          "threshold": 0.5,
+          "unsupported_input_policy": "abstain"
+        },
+        "training": null
+      },
+      "created_at": 1791821482.4099348,
+      "elapsed_seconds": 215.58943863702007,
+      "error": null,
+      "job_id": "job-5d88ff57521f4fc0a13d77e7",
+      "pid": 3599158,
+      "progress": {
+        "done": 900,
+        "total": 900
+      },
+      "result": {
+        "tournament_id": "tournament-3e1ee735a43c4f66a5b87b42"
+      },
+      "runtime_profile": {
+        "artifact_bytes": 546790408,
+        "artifact_files": 38545,
+        "artifact_scan_seconds": 106.37051614670781,
+        "artifact_scans": 902,
+        "progress_publish_seconds": 7.954602123470977
+      },
+      "started_at": 1791821483.9961357,
+      "state": "COMPLETED",
+      "submitted_source_hash": "c18fc3259a65b07d47186736a6bc36d54f932603417cd4b908490df42769cc10",
+      "unit": "midas-arena-job-5d88ff57521f4fc0a13d77e7.service",
+      "updated_at": 1791821699.5854692,
+      "completed_at": 1791821699.5854695,
+      "exit_status": 0
+    },
+    {
+      "active_artifact": {
+        "identity": "tournament-c66e37c024974ac3a03ea64b",
+        "kind": "tournaments"
+      },
+      "budget": {
+        "cpu_cores": 1,
+        "max_artifact_mb": 1024,
+        "memory_mb": 4096,
+        "minimum_available_memory_mb": 2048,
+        "wall_seconds": 1800
+      },
+      "configuration": {
+        "dataset": null,
+        "director": null,
+        "kind": "tournament",
+        "max_wall_seconds": 1800,
+        "model_id": null,
+        "policy_search": null,
+        "rl": null,
+        "severity": null,
+        "sweep": null,
+        "tournament": {
+          "adversarial": false,
+          "challenge": {
+            "decision_scope": "first_admitted",
+            "episodes": 60,
+            "execution_models": [
+              "optimistic",
+              "standard",
+              "conservative"
+            ],
+            "families": [
+              "volatile",
+              "disappearing",
+              "calm",
+              "deep",
+              "thin"
+            ],
+            "label_target": "unmatched",
+            "observation_latency_ms": 100,
+            "seed": 143071,
+            "split_seed": 1977,
+            "version": "synthetic-decision-1"
+          },
+          "dataset_id": "dataset-f53981b7dd24c1521ce749b1",
+          "economic_regime": {
+            "additional_submission_latency_ms": 200,
+            "costs": null,
+            "depth_multiplier": "1",
+            "taker_fee_rate": null,
+            "version": "economic-regime-1"
+          },
+          "execution_models": [
+            "optimistic",
+            "standard",
+            "conservative"
+          ],
+          "gates": [
+            {
+              "model_id": "model-131794f0434945a286163323",
+              "size": "full",
+              "threshold": 0.1
+            }
+          ],
+          "max_episodes": 60,
+          "minimum_champion_episodes": 2000,
+          "model_ids": [],
+          "partition": "test",
+          "purpose": "research",
+          "seed": 991,
+          "tail_loss_weight": 1.0,
+          "threshold": 0.5,
+          "unsupported_input_policy": "abstain"
+        },
+        "training": null
+      },
+      "created_at": 1791821708.9791014,
+      "elapsed_seconds": 122.29505348298699,
+      "error": null,
+      "job_id": "job-739176fa2338460ca19c489a",
+      "pid": 3605279,
+      "progress": {
+        "done": 510,
+        "total": 900
+      },
+      "result": null,
+      "runtime_profile": {
+        "artifact_bytes": 554727176,
+        "artifact_files": 39110,
+        "artifact_scan_seconds": 61.27091496519279,
+        "artifact_scans": 511,
+        "progress_publish_seconds": 4.554713935649488
+      },
+      "started_at": 1791821710.5161989,
+      "state": "RUNNING",
+      "submitted_source_hash": "c18fc3259a65b07d47186736a6bc36d54f932603417cd4b908490df42769cc10",
+      "unit": "midas-arena-job-739176fa2338460ca19c489a.service",
+      "updated_at": 1791821832.8111424
     }
   ],
   "provenance": "SYNTHETIC / HYPOTHETICAL / ECONOMICALLY UNVERIFIED",

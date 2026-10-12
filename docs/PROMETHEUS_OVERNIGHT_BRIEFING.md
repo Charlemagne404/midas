@@ -2,6 +2,28 @@
 
 ## Current checkpoint (supersedes running-job notes below)
 
+### Adaptive research is running
+
+The new bounded coordinator passed the full Python suite: 353 passed, one
+PostgreSQL skip, one existing warning. Nine frontend tests, typecheck, lint and
+build passed. Plan director-followup-453650eedd036f130bc81fd8 is active under systemd.
+Its first baseline tournament completed (job-5d88ff57521f4fc0a13d77e7);
+the matched delay tournament is running as job-739176fa2338460ca19c489a.
+The native Research Director view links the active job and offers cancellation.
+
+It repeats the frozen gate at 200ms added delay on fresh, directed scenarios;
+the preregistered second cycle tests 100ms if its downside score is nonpositive,
+or 400ms otherwise. The volatile/disappearing/calm/deep/thin schedule balances
+both settlement parities within every family. Maximum: four sequential jobs,
+3,600 correlated variants over 120 source groups. No model or threshold is
+retuned, and no champion is promoted from these directed challenges.
+
+Coordinator: 25% CPU, 512 MiB, 9,000 seconds; each worker: one CPU, 4 GiB,
+1,800 seconds. Stop through Arena or:
+`.venv/bin/python -m scripts.research_followup stop --director director-followup-453650eedd036f130bc81fd8`.
+Exact status and logs are in PROMETHEUS_ADAPTIVE_RESEARCH_RUNTIME.json.
+The full goal remains active; no new outcome is claimed from partial execution.
+
 ### Completed economic study and loss attribution
 
 The completed full saved-replay audit verifies all three datasets, 21 model

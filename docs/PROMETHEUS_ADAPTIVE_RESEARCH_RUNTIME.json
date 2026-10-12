@@ -1,0 +1,189 @@
+{
+  "checked_at": 1791821832.885275,
+  "director_id": "director-followup-453650eedd036f130bc81fd8",
+  "state": "RUNNING",
+  "current_stage": "cycle 1: delay",
+  "coordinator_unit": "midas-prometheus-followup-453650eedd036f130bc81fd8.service",
+  "coordinator_supervisor": {
+    "RuntimeMaxUSec": "2h 30min",
+    "MainPID": "3598903",
+    "MemoryCurrent": "111931392",
+    "CPUQuotaPerSecUSec": "250ms",
+    "MemoryMax": "536870912",
+    "ActiveState": "active"
+  },
+  "preregistration_sha256": "34ebc0b8cb5c8b03fb5dd86cb07259c1931b9731f1686611e7601acc0019f147",
+  "input_study": {
+    "path": "/home/charlie/midas/data/arena/tournaments/tournament-53f293c7fb66438ab43a6869/economic-regimes.json",
+    "selected_condition": "additional_200ms",
+    "sha256": "ec9f5034cd53674a20ca794a35521e8a8d20671f0b8cd87bfcba62d68245ce80",
+    "study_id": "economic-study-61e74c79a25ec1d63a3c39c5"
+  },
+  "budget": {
+    "coordinator_wall_seconds": 9000,
+    "groups_per_cycle": 60,
+    "job_wall_seconds": 1800,
+    "maximum_cycles": 2,
+    "maximum_jobs": 4,
+    "maximum_variants": 3600,
+    "worker_cpu_cores": 1,
+    "worker_memory_mb": 4096
+  },
+  "active_jobs": [
+    {
+      "active_artifact": {
+        "identity": "tournament-c66e37c024974ac3a03ea64b",
+        "kind": "tournaments"
+      },
+      "budget": {
+        "cpu_cores": 1,
+        "max_artifact_mb": 1024,
+        "memory_mb": 4096,
+        "minimum_available_memory_mb": 2048,
+        "wall_seconds": 1800
+      },
+      "configuration": {
+        "dataset": null,
+        "director": null,
+        "kind": "tournament",
+        "max_wall_seconds": 1800,
+        "model_id": null,
+        "policy_search": null,
+        "rl": null,
+        "severity": null,
+        "sweep": null,
+        "tournament": {
+          "adversarial": false,
+          "challenge": {
+            "decision_scope": "first_admitted",
+            "episodes": 60,
+            "execution_models": [
+              "optimistic",
+              "standard",
+              "conservative"
+            ],
+            "families": [
+              "volatile",
+              "disappearing",
+              "calm",
+              "deep",
+              "thin"
+            ],
+            "label_target": "unmatched",
+            "observation_latency_ms": 100,
+            "seed": 143071,
+            "split_seed": 1977,
+            "version": "synthetic-decision-1"
+          },
+          "dataset_id": "dataset-f53981b7dd24c1521ce749b1",
+          "economic_regime": {
+            "additional_submission_latency_ms": 200,
+            "costs": null,
+            "depth_multiplier": "1",
+            "taker_fee_rate": null,
+            "version": "economic-regime-1"
+          },
+          "execution_models": [
+            "optimistic",
+            "standard",
+            "conservative"
+          ],
+          "gates": [
+            {
+              "model_id": "model-131794f0434945a286163323",
+              "size": "full",
+              "threshold": 0.1
+            }
+          ],
+          "max_episodes": 60,
+          "minimum_champion_episodes": 2000,
+          "model_ids": [],
+          "partition": "test",
+          "purpose": "research",
+          "seed": 991,
+          "tail_loss_weight": 1.0,
+          "threshold": 0.5,
+          "unsupported_input_policy": "abstain"
+        },
+        "training": null
+      },
+      "created_at": 1791821708.9791014,
+      "elapsed_seconds": 122.29505348298699,
+      "error": null,
+      "job_id": "job-739176fa2338460ca19c489a",
+      "pid": 3605279,
+      "progress": {
+        "done": 510,
+        "total": 900
+      },
+      "result": null,
+      "runtime_profile": {
+        "artifact_bytes": 554727176,
+        "artifact_files": 39110,
+        "artifact_scan_seconds": 61.27091496519279,
+        "artifact_scans": 511,
+        "progress_publish_seconds": 4.554713935649488
+      },
+      "started_at": 1791821710.5161989,
+      "state": "RUNNING",
+      "submitted_source_hash": "c18fc3259a65b07d47186736a6bc36d54f932603417cd4b908490df42769cc10",
+      "unit": "midas-arena-job-739176fa2338460ca19c489a.service",
+      "updated_at": 1791821832.8111424,
+      "supervisor": {
+        "MainPID": "3605279",
+        "Result": "success",
+        "MemoryCurrent": "281636864",
+        "CPUUsageNSec": "115282410000",
+        "ActiveState": "active",
+        "SubState": "running"
+      }
+    }
+  ],
+  "cancel_command": ".venv/bin/python -m scripts.research_followup stop --director director-followup-453650eedd036f130bc81fd8",
+  "logs_command": "journalctl --user -u midas-prometheus-followup-453650eedd036f130bc81fd8.service -f",
+  "source_hash": "c18fc3259a65b07d47186736a6bc36d54f932603417cd4b908490df42769cc10",
+  "model_artifact_hashes": {
+    "model-131794f0434945a286163323": "fe6a3c02b4923cf7cd697638461a892f96a747743e03b4e23436fdb1e9083852"
+  },
+  "steps": [
+    {
+      "artifact": {
+        "identity": "tournament-3e1ee735a43c4f66a5b87b42",
+        "kind": "tournaments"
+      },
+      "completed_at": 1791821708.902182,
+      "job_id": "job-5d88ff57521f4fc0a13d77e7",
+      "name": "cycle 1: baseline",
+      "progress": {
+        "done": 900,
+        "total": 900
+      },
+      "state": "COMPLETED",
+      "submission_intent_at": 1791821482.389254
+    },
+    {
+      "artifact": {
+        "identity": "job-739176fa2338460ca19c489a",
+        "kind": "jobs"
+      },
+      "job_id": "job-739176fa2338460ca19c489a",
+      "name": "cycle 1: delay",
+      "progress": {
+        "done": 494,
+        "total": 900
+      },
+      "state": "RUNNING",
+      "submission_intent_at": 1791821708.9165082
+    },
+    {
+      "artifact": null,
+      "name": "cycle 2: baseline",
+      "state": "PENDING"
+    },
+    {
+      "artifact": null,
+      "name": "cycle 2: delay",
+      "state": "PENDING"
+    }
+  ]
+}

@@ -1377,3 +1377,29 @@ actual artifact preflight chose gate-f12a4e29a05e5a4ce18f, source seeds 143071..
 143130 and 143131..143190, with volatile/disappearing/calm/deep/thin families.
 Preflight submitted no jobs. See ARENA_ADAPTIVE_RESEARCH.md and the validation
 and preflight JSON reports. Production launch is the next gate.
+
+### Production adaptive plan running
+
+Committed source 9dd2e70; API restarted READY with 41,472 verified paper events
+at that restart. The preflight configuration was frozen as director-followup-453650eedd036f130bc81fd8.
+Its separate coordinator unit is midas-prometheus-followup-453650eedd036f130bc81fd8.service: CPUQuota 25%,
+MemoryMax 512 MiB, RuntimeMax 9,000 seconds, Nice 10, numerical libraries single
+thread and CUDA disabled. The first child is job-5d88ff57521f4fc0a13d77e7,
+running baseline cycle one with actual 900-variant progress. Child budgets are
+one CPU, 4 GiB and 1,800 seconds. The native Arena serves the plan and child job.
+No further stage has been submitted yet; subsequent stages are selected and
+submitted sequentially by the bounded coordinator. Runtime evidence contains
+exact current worker state, source/weight hashes and the stopping commands.
+
+Cancellation: `.venv/bin/python -m scripts.research_followup stop --director director-followup-453650eedd036f130bc81fd8`
+or **Cancel follow-up** in Arena's Research Director view. Logs:
+`journalctl --user -u midas-prometheus-followup-453650eedd036f130bc81fd8.service -f`.
+No research outcome is inferred from launch or partial progress.
+
+Production progression verified: baseline tournament-3e1ee735a43c4f66a5b87b42 completed all
+900 variants over 60 groups; frozen gate mean 1.586692, downside
+score -0.420242. No paired interpretation is available until the delay
+condition completes. The coordinator automatically submitted
+job-739176fa2338460ca19c489a for matched 200ms delay. Production browser check
+passed for the plan question, active child-job link and cancellation control,
+with no page errors. Both source and weights remain frozen.

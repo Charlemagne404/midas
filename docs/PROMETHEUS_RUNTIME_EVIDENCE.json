@@ -1,13 +1,127 @@
 {
-  "active_jobs": [],
+  "active_jobs": [
+    {
+      "active_artifact": {
+        "identity": "tournament-c66e37c024974ac3a03ea64b",
+        "kind": "tournaments"
+      },
+      "budget": {
+        "cpu_cores": 1,
+        "max_artifact_mb": 1024,
+        "memory_mb": 4096,
+        "minimum_available_memory_mb": 2048,
+        "wall_seconds": 1800
+      },
+      "configuration": {
+        "dataset": null,
+        "director": null,
+        "kind": "tournament",
+        "max_wall_seconds": 1800,
+        "model_id": null,
+        "policy_search": null,
+        "rl": null,
+        "severity": null,
+        "sweep": null,
+        "tournament": {
+          "adversarial": false,
+          "challenge": {
+            "decision_scope": "first_admitted",
+            "episodes": 60,
+            "execution_models": [
+              "optimistic",
+              "standard",
+              "conservative"
+            ],
+            "families": [
+              "volatile",
+              "disappearing",
+              "calm",
+              "deep",
+              "thin"
+            ],
+            "label_target": "unmatched",
+            "observation_latency_ms": 100,
+            "seed": 143071,
+            "split_seed": 1977,
+            "version": "synthetic-decision-1"
+          },
+          "dataset_id": "dataset-f53981b7dd24c1521ce749b1",
+          "economic_regime": {
+            "additional_submission_latency_ms": 200,
+            "costs": null,
+            "depth_multiplier": "1",
+            "taker_fee_rate": null,
+            "version": "economic-regime-1"
+          },
+          "execution_models": [
+            "optimistic",
+            "standard",
+            "conservative"
+          ],
+          "gates": [
+            {
+              "model_id": "model-131794f0434945a286163323",
+              "size": "full",
+              "threshold": 0.1
+            }
+          ],
+          "max_episodes": 60,
+          "minimum_champion_episodes": 2000,
+          "model_ids": [],
+          "partition": "test",
+          "purpose": "research",
+          "seed": 991,
+          "tail_loss_weight": 1.0,
+          "threshold": 0.5,
+          "unsupported_input_policy": "abstain"
+        },
+        "training": null
+      },
+      "created_at": 1791821708.9791014,
+      "elapsed_seconds": 122.29505348298699,
+      "error": null,
+      "job_id": "job-739176fa2338460ca19c489a",
+      "pid": 3605279,
+      "progress": {
+        "done": 510,
+        "total": 900
+      },
+      "result": null,
+      "runtime_profile": {
+        "artifact_bytes": 554727176,
+        "artifact_files": 39110,
+        "artifact_scan_seconds": 61.27091496519279,
+        "artifact_scans": 511,
+        "progress_publish_seconds": 4.554713935649488
+      },
+      "started_at": 1791821710.5161989,
+      "state": "RUNNING",
+      "submitted_source_hash": "c18fc3259a65b07d47186736a6bc36d54f932603417cd4b908490df42769cc10",
+      "supervisor": {
+        "ActiveState": "active",
+        "CPUUsageNSec": "115282410000",
+        "MainPID": "3605279",
+        "MemoryCurrent": "281636864",
+        "Result": "success",
+        "SubState": "running"
+      },
+      "unit": "midas-arena-job-739176fa2338460ca19c489a.service",
+      "updated_at": 1791821832.8111424
+    }
+  ],
+  "active_research_director": {
+    "director_id": "director-followup-453650eedd036f130bc81fd8",
+    "state": "RUNNING",
+    "unit": "midas-prometheus-followup-453650eedd036f130bc81fd8.service"
+  },
   "arena_datasets": 3,
   "arena_fitted_models": 20,
   "arena_model_artifacts": 21,
   "arena_performance_replays": 1,
-  "arena_research_tournaments": 15,
+  "arena_research_tournaments": 16,
   "arena_source_datasets": 2,
-  "arena_tournaments": 16,
-  "checked_at": 1791819850.420226,
+  "arena_tournaments": 17,
+  "checked_at": 1791821832.8856964,
   "dataset_quality": [
     "Identical observable vectors occur across partitions. Independent scenario IDs do not guarantee covariate diversity; inspect repeated synthetic grids.",
     "Some scenario families contain one settlement seed parity only. The current generator uses seed parity for settlement; reorder families and shift seeds before making generalization claims.",
@@ -23,8 +137,8 @@
     "live_execution": false,
     "mode": "demo",
     "paper_recovery": {
-      "journal_events": 40619,
-      "revision": 40618,
+      "journal_events": 41682,
+      "revision": 41681,
       "status": "CHECKPOINT_VERIFIED"
     },
     "startup_error": null,
