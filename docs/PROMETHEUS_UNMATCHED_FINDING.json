@@ -1,0 +1,24 @@
+{
+  "finding_id": "finding-d2d512b111782b1a18173562",
+  "title": "Residual-risk gate did not improve downside at threshold 0.5",
+  "created_at": 1791786375.9827676,
+  "tournament_id": "tournament-c3ded1b0589d4beab52a9eba",
+  "director_id": "director-9e54849454cbf86fd4b85db0",
+  "supporting_tournaments": [
+    "tournament-1543d15e04054c4eb4eab2e2",
+    "tournament-c3ded1b0589d4beab52a9eba"
+  ],
+  "input_row_hashes": [
+    "a358d3cd09db785192a1098a7168473509c2564d7b83bafbf61e715ebe233804",
+    "b1e8c8ac418252e7e1b62f1cc5fff8f14d4d33c45a805c7097fe7ff7f2a51ce9"
+  ],
+  "interpretation": "The validation-selected neural risk gate matched arbitrage exactly in warning mode. Both failed the downside objective against no-trade on 100 new matched groups. Range-based abstention missed one +0.02 virtual USD outcome without changing tail loss. This configuration does not demonstrate a risk-adjusted decision benefit.",
+  "caveats": [
+    "Synthetic hypothetical fills and costs; no real profitability or empirical execution claim.",
+    "The two challenges reuse the same 100 identities; 3000 variants are correlated.",
+    "Selection used validation only; new classification final tests remain unopened. The neural validation improvement only narrowly exceeded the preset tolerance.",
+    "This is a bounded negative finding for a fixed threshold, not proof that all risk forecasting or abstention policies fail."
+  ],
+  "next_experiment": "Preregister threshold and full/half sizing selection using validation-only economic outcomes, then evaluate once on a genuinely new seed block. Do not retune against opened challenges.",
+  "synthesis_method": "Human-readable synthesis from verified immutable manifests and episode-grouped paired comparison; no model promotion or parameter update."
+}

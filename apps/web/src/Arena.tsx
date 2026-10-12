@@ -1300,7 +1300,13 @@ export function Arena() {
                     label="Fixed-path cost sensitivity"
                     option={{
                       ...chartBase,
-                      legend: { type: 'scroll', textStyle: { color: '#a4aabc' } },
+                      grid: { ...chartBase.grid, top: 55, bottom: 35 },
+                      legend: {
+                        type: 'scroll',
+                        top: 0,
+                        bottom: 'auto',
+                        textStyle: { color: '#a4aabc' },
+                      },
                       xAxis: { type: 'value' },
                       yAxis: { type: 'value', name: 'Mean virtual USD' },
                       series: economics.data.policies.map((policy) => ({

@@ -17,15 +17,17 @@
     "tournament": null,
     "training": null
   },
-  "state": "QUEUED",
+  "state": "COMPLETED",
   "created_at": 1791784498.5156186,
-  "updated_at": 1791784521.834842,
+  "updated_at": 1791785608.8527138,
   "progress": {
-    "done": 0,
-    "total": 1
+    "done": 1500,
+    "total": 1500
   },
   "error": null,
-  "result": null,
+  "result": {
+    "director_id": "director-9e54849454cbf86fd4b85db0"
+  },
   "unit": "midas-arena-job-a9f4533b62e14baf8b8bbb1c.service",
   "submitted_source_hash": "2ade478673ae5b9368f97c43ed4ad5191aa517b213a7adb46dad9cd8f07f155b",
   "budget": {
@@ -37,6 +39,15 @@
   },
   "predecessor_dataset_job": "job-95a47ccd32b246a982cc722f",
   "dependency_contract": "Queued behind verified active dataset worker lease; dataset failure makes downstream plan fail visibly rather than publish partial results.",
-  "elapsed_seconds": 21.79182704500272,
-  "observed_at": 1791784521.9817364
+  "elapsed_seconds": 1108.8096994429943,
+  "observed_at": 1791785975.7133317,
+  "active_artifact": {
+    "identity": "tournament-c3ded1b0589d4beab52a9eba",
+    "kind": "tournaments"
+  },
+  "completed_at": 1791785608.852714,
+  "exit_status": 0,
+  "phase": "matched challenge with support abstention",
+  "pid": 2987310,
+  "started_at": 1791784761.6284623
 }

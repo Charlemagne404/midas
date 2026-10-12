@@ -1,0 +1,91 @@
+{
+  "control": "tournament-1543d15e04054c4eb4eab2e2",
+  "candidate": "tournament-c3ded1b0589d4beab52a9eba",
+  "row_hashes": [
+    "a358d3cd09db785192a1098a7168473509c2564d7b83bafbf61e715ebe233804",
+    "b1e8c8ac418252e7e1b62f1cc5fff8f14d4d33c45a805c7097fe7ff7f2a51ce9"
+  ],
+  "policies": [
+    {
+      "policy": "arbitrage",
+      "base_episodes": 100,
+      "paired_variants": 300,
+      "nonzero_variant_differences": 0,
+      "mean_pnl_difference": 0.0,
+      "episode_bootstrap_95": [
+        0.0,
+        0.0
+      ],
+      "control_unsupported_decisions": 0,
+      "control_unsupported_trade_requests": 0,
+      "control_unsupported_requests_rejected_by_risk": 0,
+      "risk_rejection_reasons": {}
+    },
+    {
+      "policy": "conservative",
+      "base_episodes": 100,
+      "paired_variants": 300,
+      "nonzero_variant_differences": 0,
+      "mean_pnl_difference": 0.0,
+      "episode_bootstrap_95": [
+        0.0,
+        0.0
+      ],
+      "control_unsupported_decisions": 0,
+      "control_unsupported_trade_requests": 0,
+      "control_unsupported_requests_rejected_by_risk": 0,
+      "risk_rejection_reasons": {}
+    },
+    {
+      "policy": "model-131794f0434945a286163323",
+      "base_episodes": 100,
+      "paired_variants": 300,
+      "nonzero_variant_differences": 1,
+      "mean_pnl_difference": -6.666666666666667e-05,
+      "episode_bootstrap_95": [
+        -0.0002,
+        0.0
+      ],
+      "control_unsupported_decisions": 50,
+      "control_unsupported_trade_requests": 50,
+      "control_unsupported_requests_rejected_by_risk": 47,
+      "risk_rejection_reasons": {
+        "Market exposure limit": 38,
+        "Existing position in this market; unchanged liquidity cannot be reused": 47,
+        "All hard constraints satisfied": 5,
+        "Existing partial position requires reconciliation": 11
+      }
+    },
+    {
+      "policy": "no_trade",
+      "base_episodes": 100,
+      "paired_variants": 300,
+      "nonzero_variant_differences": 0,
+      "mean_pnl_difference": 0.0,
+      "episode_bootstrap_95": [
+        0.0,
+        0.0
+      ],
+      "control_unsupported_decisions": 0,
+      "control_unsupported_trade_requests": 0,
+      "control_unsupported_requests_rejected_by_risk": 0,
+      "risk_rejection_reasons": {}
+    },
+    {
+      "policy": "random",
+      "base_episodes": 100,
+      "paired_variants": 300,
+      "nonzero_variant_differences": 0,
+      "mean_pnl_difference": 0.0,
+      "episode_bootstrap_95": [
+        0.0,
+        0.0
+      ],
+      "control_unsupported_decisions": 0,
+      "control_unsupported_trade_requests": 0,
+      "control_unsupported_requests_rejected_by_risk": 0,
+      "risk_rejection_reasons": {}
+    }
+  ],
+  "interpretation": "Post-evaluation descriptive comparison; no model fitting, threshold selection or promotion. Execution variants are averaged within each base episode before bootstrapping."
+}

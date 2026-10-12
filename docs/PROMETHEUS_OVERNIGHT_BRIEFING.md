@@ -273,3 +273,37 @@ queued behind it. The director will train four models and run two matched
 research process memory was about 220 MiB, with one serialized CPU worker.
 No new campaign result is claimed yet. Inspect/cancel from the Arena jobs panel.
 Keep Arena Python source frozen until these jobs finish.
+
+## Latest completed research — unmatched risk and economics
+
+The amended campaign completed: **four actual risk models**, then **two matched
+100-group challenges / 3000 correlated variants**. The new dataset has 1935
+variants over 645 admitted groups; 87 groups begin trading after the initial
+decision. The selected neural model had validation Brier 0.08931 versus logistic
+0.09132, narrowly exceeding the preset practical selection tolerance.
+
+**Predicting unmatched risk at the fixed 0.5 gate did not improve policy outcomes.**
+Warning-mode neural outcomes exactly matched arbitrage; range-based abstention
+missed one +0.02 virtual USD case without reducing tail loss. Both challenges
+found no advantage over no-trade on the declared downside objective. This does
+not support increasing neural complexity or tuning against the opened challenge.
+The valuable next experiment is validation-only threshold/sizing selection,
+followed by genuinely new independent scenarios and proposal-level severity work.
+
+In **Tournaments**, the new **Fixed-path economic sensitivity** section displays
+saved cost curves for the earlier warning challenge and both new risk challenges.
+Switch among extra per-fill costs, per-position redemption costs, annual financing
+and collateral retention. These are hypothetical accounting overlays: actions,
+fills and capital paths stay fixed. They do not estimate real fees or rerun a
+cost-aware policy. Positive synthetic mean break-even margins coexist with
+negative downside scores; the interface makes that distinction explicit.
+
+Latest evidence: **283 Python tests passed / one PostgreSQL skip**, four frontend
+tests and the updated browser workflow passed. Seven focused economic/API tests
+pass after utility publication/memory improvements. All 15,000 completed replays,
+14 model artifacts and two frozen datasets pass the integrity audit. A sampled
+independent regeneration reproduced 102 retained labels across 50 source indices,
+including excluded configurations. The complete risk-plan bundle and all 3084
+file hashes verify. Services are healthy; the protected campaign is unchanged.
+**No research jobs remain running.** See the engineering report for exact next
+steps; the full goal remains active.

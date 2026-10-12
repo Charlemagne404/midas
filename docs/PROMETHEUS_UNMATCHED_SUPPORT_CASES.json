@@ -1,0 +1,65 @@
+{
+  "changed_variants": [
+    {
+      "row_id": "23-optimistic-model-131794f0434945a286163323",
+      "base_episode_id": "thin:73094",
+      "warning_pnl": "0.020000",
+      "abstention_pnl": "0",
+      "unsupported_decisions": [
+        {
+          "action": 1,
+          "explanation": {
+            "completion_score": null,
+            "input_support": {
+              "definition": "Training-only feature ranges; coverage is necessary, not proof of joint-distribution support or calibration.",
+              "known": true,
+              "supported": [
+                false
+              ],
+              "violations": [
+                [
+                  "conditional_edge"
+                ]
+              ]
+            },
+            "interpretation": "Modeled unmatched probability under hypothetical execution",
+            "label_target": "unmatched",
+            "mathematically_eligible": true,
+            "policy": "model-131794f0434945a286163323",
+            "reason": "Input lies outside training feature ranges; unvalidated extrapolation warning",
+            "threshold": 0.5,
+            "unmatched_risk_score": 0.008415487594902515,
+            "unsupported_input_policy": "warn"
+          },
+          "feature_error": null,
+          "invalid": false,
+          "observation": [
+            0.9800000190734863,
+            0.9599999785423279,
+            0.05999999865889549,
+            0.05999999865889549,
+            0.029999999329447746,
+            0.009999999776482582,
+            0.006666666828095913,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.05000000074505806,
+            0.00401606410741806,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.10000000149011612,
+            1.0
+          ],
+          "requested_action": "1",
+          "time_ms": 1791720000100
+        }
+      ]
+    }
+  ],
+  "interpretation": "One missed 0.02 virtual USD outcome; bounded matched-sample evidence, not a causal or universal assessment of range guards."
+}

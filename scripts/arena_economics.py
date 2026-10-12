@@ -3,14 +3,16 @@
 import argparse
 import json
 import math
+import os
 import time
+import uuid
 from collections import defaultdict
 from decimal import Decimal
 from pathlib import Path
 from typing import Any
 
 import numpy as np
-from midas.arena.artifacts import artifact_path, atomic_json, read_replay, sha256
+from midas.arena.artifacts import artifact_path, atomic_bytes, atomic_json, read_replay, sha256
 from midas.economics.attestation import digest
 from midas.laboratory.spec import Costs
 
@@ -88,7 +90,19 @@ def analyze(root: Path, tournament: str) -> dict[str, Any]:
             reprice(result, original) - Decimal(result["metrics"]["net_simulated_pnl"])
         ) > Decimal("1e-18"):
             raise ValueError("Saved path does not reproduce original cost accounting")
-        grouped[row["policy"]].append((row, result))
+        # Integrity is checked before discarding the large journal. Subsequent
+        # overlays need only these five accounting totals, not retained traces.
+        compact = {
+            "metrics": {
+                key: result["metrics"][key]
+                for key in ("gross_settled_virtual_pnl", "capital_time_integral_ms", "fill_count")
+            },
+            "final_portfolio": {
+                key: result["final_portfolio"].get(key, 0)
+                for key in ("settled_positions", "settlement_proceeds")
+            },
+        }
+        grouped[row["policy"]].append((row, compact))
     if "no_trade" not in coverage or any(v != coverage["no_trade"] for v in coverage.values()):
         raise ValueError("Unmatched comparison coverage")
     # One-factor-at-a-time, hypothetical absolute costs. This does not vary venue fees.
@@ -163,17 +177,42 @@ def analyze(root: Path, tournament: str) -> dict[str, Any]:
     return record
 
 
+def publish(output: Path, report: dict[str, Any]) -> None:
+    """Capture producer bytes and publish exclusively, retaining complete evidence."""
+    if output.exists():
+        raise ValueError("Preserve existing economic report; choose a new output path")
+    source = Path(__file__)
+    if sha256(source) != report["analysis_source_sha256"]:
+        raise ValueError("Economic analysis source changed before publication")
+    snapshot = output.with_name(f"{output.stem}-source-{report['analysis_source_sha256']}.py")
+    if snapshot.exists() and sha256(snapshot) != report["analysis_source_sha256"]:
+        raise ValueError("Economic source snapshot has changed")
+    if not snapshot.exists():
+        atomic_bytes(snapshot, source.read_bytes())
+    temporary = output.with_name(f".economics-{uuid.uuid4().hex}.json")
+    try:
+        atomic_json(temporary, report)
+        os.link(temporary, output)
+    finally:
+        temporary.unlink(missing_ok=True)
+        directory = os.open(output.parent, os.O_DIRECTORY)
+        try:
+            os.fsync(directory)
+        finally:
+            os.close(directory)
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, default=Path("data/arena"))
     parser.add_argument("--tournament", required=True)
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
-    result = analyze(args.root, args.tournament)
     output = (
         args.output or artifact_path(args.root, "tournaments", args.tournament) / "economics.json"
     )
     if output.exists():
         raise ValueError("Preserve existing economic report; choose a new output path")
-    atomic_json(output, result)
+    result = analyze(args.root, args.tournament)
+    publish(output, result)
     print(json.dumps({"path": str(output), "report_digest": result["report_digest"]}))

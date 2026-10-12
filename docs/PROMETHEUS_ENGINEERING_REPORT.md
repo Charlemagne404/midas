@@ -583,3 +583,81 @@ mean P&L 1.217566, tail loss 5.116, score -3.898434, worst loss -8.6. Conservati
 score is -2.04887167; no-trade remains 0. No candidate demonstrates the declared
 downside advantage. The matched abstention stage is still running; its results
 must be verified separately before the plan is called complete.
+
+## Terminal unmatched-risk campaign audit
+
+Director `director-9e54849454cbf86fd4b85db0` completed all three stages under
+`job-a9f4533b62e14baf8b8bbb1c`, exit status 0, recorded elapsed 1108.81 seconds
+including worker-lease queue wait. Both supervisor handles are now terminal.
+No research worker remains active. All four risk candidate weight hashes and
+both frozen datasets load correctly. The read-only audit verified **all 15,000
+completed replay variants across seven tournaments**, matching core hashes,
+journals, stored rows, complete group coverage and valid accounting. Three
+sets of 100 disjoint evaluation identities are reused within their respective
+studies: do not count these as 700 independent episode groups.
+
+Independently regenerated 50 source episode indices / 150 candidate execution
+configurations from simulator inputs. All 102 retained labels and excluded cases
+matched their saved per-episode checkpoints. Complete grouping/outcome metadata
+was checked by dataset loading. This is a sampled regeneration, not a second
+full 1001-episode run. `PROMETHEUS_UNMATCHED_LABEL_VERIFICATION.json` preserves
+the exact selected indices and admitted counts.
+
+The abstention challenge `tournament-c3ded1b0589d4beab52a9eba` also fails the
+specified downside objective: risk gate mean 1.21749933, tail loss 5.116, score
+-3.89850067; conservative score -2.04887167; no-trade score 0. Range abstention
+changes just one of the risk gate's 300 matched variants, missing a +0.02 virtual
+USD outcome. Group mean difference is -0.00006667, bootstrap interval
+[-0.0002, 0]. Warning mode made 50 unsupported requests; 47 were rejected by
+risk admission. The three allowed requests had conditional-edge values outside
+training ranges in one thin episode; only its optimistic execution variant had
+nonzero P&L. This bounded observation neither proves range guards unnecessary
+nor demonstrates a universal adverse effect. `PROMETHEUS_UNMATCHED_SUPPORT_CASES.json`
+and the paired comparison retain the evidence. No threshold or weights were
+adapted after these challenges.
+
+Exported the completed plan at
+`/home/charlie/midas-prometheus-bundles/director-9e54849454cbf86fd4b85db0.tar.gz`.
+All 3084 manifest entries verify; bundle SHA256
+`42ca8b567410868a06348ff78e72a15430328af7f086fd9e5c73bc1062416c35`.
+Both challenge directories include verified fixed-path economics reports and
+producer source snapshots. This is an evidence export, not clean-machine
+retraining. Existing external bundles remain unchanged.
+
+Economic-overlay memory now retains five accounting totals per result instead
+of full journals after verification. Publication captures producer source bytes
+and uses an exclusive atomic link, refusing replacement even with concurrent
+exporters. Seven focused economic/API tests pass after these utility changes;
+Ruff/mypy pass. The full 283-test gate preceded this utility-only optimization.
+The deployed API returns the saved economic report, and the actual dashboard
+cost chart was inspected. Legend placement was adjusted to prevent overlap with
+the numeric axis; final frontend build/lint pass. Runtime/model inventory and
+terminal job records are refreshed. API is READY with snapshot verification;
+protected archive digest, quick_check and exclusive ownership were reverified.
+
+### Exact next work
+
+1. Preregister a bounded validation-only comparison of risk thresholds and
+   full/half sizing against no-trade, with explicit target direction and matched
+   episode-group uncertainty. Optimize the declared economic objective on
+   validation; no new decisions based on the opened seed-73071 challenge.
+2. Evaluate the selected policy once on a genuinely new seed block after source
+   gates. Preserve unsuccessful candidates and ties; a no-trade selection is
+   a valid negative result. Record that full-size risk scores do not calibrate
+   reduced-size execution unless that training data is generated separately.
+3. Add severity/cost targets only from valid proposal-level accounting. Compare
+   targets on the SAME frozen observations; legacy completion models currently
+   use different datasets and cannot support a fair target comparison.
+4. Recovery still requires execution/accounting support: the current simulated
+   exchange implements buys/cancels and settlement, not bid-side sales. Do not
+   fabricate unwind capability or assume a hedge completes. Extend the broker
+   with separate invariants/ledger proofs before policy research.
+5. Extend economic analysis from fixed paths to actually rerun fee/latency/depth/
+   lockup variations, keeping market-specific unverified schedules explicit.
+   The full Prometheus goal remains ACTIVE with these unfinished branches.
+
+The verified negative result is also published in Arena Research Findings as
+`finding-d2d512b111782b1a18173562`, with input row hashes, both tournament links,
+plan lineage, uncertainty and the preregistered follow-up recommendation.
+This synthesis does not promote or refit a model. The final deployed risk-plan
+cost chart and terminal dashboard are captured in `arena-economic-sensitivity.png`.

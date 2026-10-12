@@ -1,5 +1,5 @@
 {
-  "checked_at": 1791782570.716203,
+  "checked_at": 1791785712.7705646,
   "root": "/home/charlie/midas/data/arena",
   "datasets": [
     {
@@ -8,6 +8,13 @@
       "base_episodes": 531,
       "rows_sha256": "a0dd2d328f724337a7a544470c616d4d2ef887240fa9d647227aea4ddc00dc27",
       "verified": true
+    },
+    {
+      "dataset_id": "dataset-f53981b7dd24c1521ce749b1",
+      "variants": 1935,
+      "base_episodes": 645,
+      "rows_sha256": "3c95234ffb79c51194d54f451bf0467c4d4e83cc22ad4ef6721eaabf4a20c109",
+      "verified": true
     }
   ],
   "models": [
@@ -15,6 +22,18 @@
       "model_id": "model-006eed74ab6b411ab633c60d",
       "family": "mlp",
       "artifact_sha256": "ac4b68cc11e0fed29a9f2d6b32655d596459ec35a37398ec2ca476c368178f9e",
+      "verified": true
+    },
+    {
+      "model_id": "model-131794f0434945a286163323",
+      "family": "mlp",
+      "artifact_sha256": "fe6a3c02b4923cf7cd697638461a892f96a747743e03b4e23436fdb1e9083852",
+      "verified": true
+    },
+    {
+      "model_id": "model-2a56b683c79745bdbec64892",
+      "family": "logistic",
+      "artifact_sha256": "509a2f0db5903e6ffe0b97229f8b20942b611bbc670a68c938293ee6783a69b8",
       "verified": true
     },
     {
@@ -39,6 +58,18 @@
       "model_id": "model-5dbaecfa00a646dead13eebd",
       "family": "logistic",
       "artifact_sha256": "1792f51e5c8b0cbd1ba6e7c7fbf52c3cb893c485de8a129194b005616d5c52fe",
+      "verified": true
+    },
+    {
+      "model_id": "model-c5bcd499446147838bad7a17",
+      "family": "logistic",
+      "artifact_sha256": "509a2f0db5903e6ffe0b97229f8b20942b611bbc670a68c938293ee6783a69b8",
+      "verified": true
+    },
+    {
+      "model_id": "model-d3abc499a0de4eb98ff14ee2",
+      "family": "mlp",
+      "artifact_sha256": "6bb543e940fa54f7aeb26ef3597a0a3d0f7afcfc689e8763e185957716191239",
       "verified": true
     },
     {
@@ -74,6 +105,13 @@
   ],
   "tournaments": [
     {
+      "tournament_id": "tournament-1543d15e04054c4eb4eab2e2",
+      "variants": 1500,
+      "base_episodes": 100,
+      "rows_sha256": "a358d3cd09db785192a1098a7168473509c2564d7b83bafbf61e715ebe233804",
+      "verified": true
+    },
+    {
       "tournament_id": "tournament-5ec7656a30614fd49d78f1cd",
       "variants": 2400,
       "base_episodes": 100,
@@ -99,6 +137,13 @@
       "variants": 2100,
       "base_episodes": 100,
       "rows_sha256": "00391db830ea745d97bef77376f91cb227ca82416c016850c08d30e43f1f8055",
+      "verified": true
+    },
+    {
+      "tournament_id": "tournament-c3ded1b0589d4beab52a9eba",
+      "variants": 1500,
+      "base_episodes": 100,
+      "rows_sha256": "b1e8c8ac418252e7e1b62f1cc5fff8f14d4d33c45a805c7097fe7ff7f2a51ce9",
       "verified": true
     },
     {

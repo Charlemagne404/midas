@@ -5,7 +5,7 @@ from midas.arena.artifacts import atomic_json, atomic_replay, sha256
 from midas.laboratory.runtime import Environment
 from midas.laboratory.spec import Costs, generate
 
-from scripts.arena_economics import YEAR_MS, analyze, reprice, summarize
+from scripts.arena_economics import YEAR_MS, analyze, publish, reprice, summarize
 
 
 def test_overlay_matches_actual_laboratory_costs_and_monotonicity():
@@ -58,6 +58,14 @@ def test_real_replay_overlay_refuses_changed_source_rows(tmp_path):
     report = analyze(tmp_path, "example")
     assert len(report["policies"][0]["points"]) == 20
     assert report["policies"][0]["baseline_zero_extra_costs"]["base_episodes"] == 1
+    output = directory / "economics.json"
+    publish(output, report)
+    snapshot = directory / f"economics-source-{report['analysis_source_sha256']}.py"
+    assert sha256(snapshot) == report["analysis_source_sha256"]
+    original_hash = sha256(output)
+    with pytest.raises(ValueError, match="Preserve"):
+        publish(output, report)
+    assert sha256(output) == original_hash
     (directory / "rows.json").write_text("[]")
     with pytest.raises(ValueError, match="rows changed"):
         analyze(tmp_path, "example")

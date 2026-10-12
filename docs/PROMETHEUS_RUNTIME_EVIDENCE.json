@@ -1,5 +1,5 @@
 {
-  "checked_at": 1791784521.987784,
+  "checked_at": 1791785975.7135308,
   "health": {
     "status": "READY",
     "startup_status": "READY",
@@ -8,8 +8,8 @@
     "live_execution": false,
     "paper_recovery": {
       "status": "CHECKPOINT_VERIFIED",
-      "journal_events": 21435,
-      "revision": 21434
+      "journal_events": 22231,
+      "revision": 22230
     },
     "laboratory": {
       "status": "READY",
@@ -18,9 +18,9 @@
       "recovery_errors": []
     }
   },
-  "arena_model_artifacts": 10,
-  "arena_fitted_models": 9,
-  "arena_tournaments": 5,
+  "arena_model_artifacts": 14,
+  "arena_fitted_models": 13,
+  "arena_tournaments": 7,
   "recorded_public_sources": [
     {
       "dataset_id": "ctf-4024677",
@@ -57,104 +57,7 @@
       ]
     }
   ],
-  "active_jobs": [
-    {
-      "budget": {
-        "cpu_cores": 1,
-        "max_artifact_mb": 1024,
-        "memory_mb": 4096,
-        "minimum_available_memory_mb": 2048,
-        "wall_seconds": 900
-      },
-      "configuration": {
-        "dataset": {
-          "decision_scope": "first_admitted",
-          "episodes": 1001,
-          "execution_models": [
-            "optimistic",
-            "standard",
-            "conservative"
-          ],
-          "families": [
-            "calm",
-            "volatile",
-            "thin",
-            "deep",
-            "one_sided",
-            "disappearing",
-            "liquidity_shock"
-          ],
-          "label_target": "unmatched",
-          "observation_latency_ms": 100,
-          "seed": 62070,
-          "split_seed": 1977,
-          "version": "synthetic-decision-1"
-        },
-        "director": null,
-        "kind": "dataset",
-        "max_wall_seconds": 900,
-        "model_id": null,
-        "rl": null,
-        "sweep": null,
-        "tournament": null,
-        "training": null
-      },
-      "created_at": 1791784470.5588233,
-      "elapsed_seconds": 49.89054113300517,
-      "error": null,
-      "job_id": "job-95a47ccd32b246a982cc722f",
-      "pid": 2986562,
-      "progress": {
-        "done": 174,
-        "total": 1001
-      },
-      "result": null,
-      "started_at": 1791784472.0649745,
-      "state": "RUNNING",
-      "submitted_source_hash": "2ade478673ae5b9368f97c43ed4ad5191aa517b213a7adb46dad9cd8f07f155b",
-      "unit": "midas-arena-job-95a47ccd32b246a982cc722f.service",
-      "updated_at": 1791784521.9554102
-    },
-    {
-      "budget": {
-        "cpu_cores": 1,
-        "max_artifact_mb": 1024,
-        "memory_mb": 4096,
-        "minimum_available_memory_mb": 2048,
-        "wall_seconds": 3600
-      },
-      "configuration": {
-        "dataset": null,
-        "director": {
-          "challenge_seed": 73071,
-          "dataset_id": "dataset-f53981b7dd24c1521ce749b1",
-          "episodes": 100,
-          "incumbent_model_ids": [],
-          "training_epochs": 80
-        },
-        "kind": "director",
-        "max_wall_seconds": 3600,
-        "model_id": null,
-        "rl": null,
-        "sweep": null,
-        "tournament": null,
-        "training": null
-      },
-      "created_at": 1791784498.5156186,
-      "elapsed_seconds": 21.79182704500272,
-      "error": null,
-      "job_id": "job-a9f4533b62e14baf8b8bbb1c",
-      "progress": {
-        "done": 0,
-        "total": 1
-      },
-      "result": null,
-      "state": "QUEUED",
-      "submitted_source_hash": "2ade478673ae5b9368f97c43ed4ad5191aa517b213a7adb46dad9cd8f07f155b",
-      "unit": "midas-arena-job-a9f4533b62e14baf8b8bbb1c.service",
-      "updated_at": 1791784521.834842
-    }
-  ],
+  "active_jobs": [],
   "dataset_quality": [
     "Identical observable vectors occur across partitions. Independent scenario IDs do not guarantee covariate diversity; inspect repeated synthetic grids.",
     "Some scenario families contain one settlement seed parity only. The current generator uses seed parity for settlement; reorder families and shift seeds before making generalization claims.",

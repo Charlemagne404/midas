@@ -33,15 +33,17 @@
     "tournament": null,
     "training": null
   },
-  "state": "RUNNING",
+  "state": "COMPLETED",
   "created_at": 1791784470.5588233,
-  "updated_at": 1791784521.9554102,
+  "updated_at": 1791784760.5125587,
   "progress": {
-    "done": 174,
+    "done": 1001,
     "total": 1001
   },
   "error": null,
-  "result": null,
+  "result": {
+    "dataset_id": "dataset-f53981b7dd24c1521ce749b1"
+  },
   "unit": "midas-arena-job-95a47ccd32b246a982cc722f.service",
   "submitted_source_hash": "2ade478673ae5b9368f97c43ed4ad5191aa517b213a7adb46dad9cd8f07f155b",
   "budget": {
@@ -52,8 +54,10 @@
     "wall_seconds": 900
   },
   "planned_dataset_id": "dataset-f53981b7dd24c1521ce749b1",
-  "elapsed_seconds": 49.89054113300517,
+  "elapsed_seconds": 288.44768952499726,
   "pid": 2986562,
   "started_at": 1791784472.0649745,
-  "observed_at": 1791784521.9762292
+  "observed_at": 1791785975.7121036,
+  "completed_at": 1791784760.5125587,
+  "exit_status": 0
 }
