@@ -1090,3 +1090,37 @@ After completion, run `scripts/compare_policies.py` using the primary and
 secondary gate IDs from the preregistration; export the verified tournament
 bundle and preserve the exploratory validation caveat. Then implement
 residual-share severity regression and actual economic scenario reruns.
+
+## Completed paired policy and chronological public capture checkpoint
+
+The paired league completed 2919 variants in 542.241 seconds,
+exit 0: `tournament-3060d836ebe14825a985e59c`, VALIDATION with no champion.
+Completion 0.50/full scored 1.01501213 versus direct risk 0.10/full 0.83853114
+and completion 0.90/full 0.70177842. Risk had higher mean P&L, but larger tail
+loss. Better unmatched-label Brier than inverse completion did not establish
+policy dominance. The gate and all final tests remain unchanged. The paired
+mean differences/intervals are in the primary and secondary comparison reports;
+139 reused validation groups make these exploratory, not independent evidence.
+Finding `finding-d9df6beceec1042a0b2cddc4` preserves this qualification. All 2994
+bundle payload hashes verify; archive SHA256
+`d4950a53d8b5479b85a0cb49e37e2a51224fe65acfbe3d15f6109b6120529c85`.
+
+The public series `public-series-2d5f0b5f86f64f21a8156acc` completed 25 events
+from 12 sequential two-leg polls over 55.509 seconds, with 9 and 11 distinct
+quote books. Original responses, normalized events, both clocks, state and source
+are retained; hash/schema/clock/provenance validation passes. The API exposes the
+series as RECORDED_PUBLIC. This is one short market history, not independent
+training episodes, empirical fills, settlement or onchain payout attestation.
+
+The GET-only utility has bounded requests, a minimum five-second poll interval,
+16 MiB observation/discovery response caps, wall limits, fsynced retained partials
+and exclusive no-overwrite publication. Four tests pass, covering wire/clocks,
+no fabricated attestation, interrupted/unsupported capture and immutable publish;
+Ruff/strict mypy pass. CPUQuota 25%, MemoryMax 256 MiB, internal wall 180 seconds
+and supervisor wall 240 seconds were applied. The first startup failed because
+resolving the venv interpreter symlink selected system Python; its failed unit is
+retained, and the corrected launch completed. No Arena Python source changed
+while either worker was active. Both processes are terminal; API is READY.
+
+Next: residual-share severity regression, with explicit units and probability-gate
+exclusion, followed by actual economic scenario reruns. The full goal is ACTIVE.

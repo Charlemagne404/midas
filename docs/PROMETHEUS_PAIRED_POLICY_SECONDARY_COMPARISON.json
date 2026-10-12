@@ -1,0 +1,32 @@
+{
+  "analysis_version": "paired-policy-1",
+  "tournament_id": "tournament-3060d836ebe14825a985e59c",
+  "control": "gate-8862d6bb4e4cc5bc3bb3",
+  "candidate": "gate-f12a4e29a05e5a4ce18f",
+  "evaluation_design": "VALIDATION",
+  "rows_sha256": "2734a2d5663419f6f91a2e30e61db8c0022f79fd6b1e2e4d1939d6280ef5edef",
+  "producer_sha256": "542638cfb383c7cf3942c146c965f52e227dbc7c8ee7edf9a336b5a74bbc9bf3",
+  "base_episodes": 139,
+  "paired_variants": 417,
+  "nonzero_variant_differences": 34,
+  "mean_candidate_minus_control": 0.1123285371702638,
+  "group_bootstrap_mean_interval": [
+    0.00042511990407674864,
+    0.22226288968824937
+  ],
+  "outcomes": {
+    "gate-8862d6bb4e4cc5bc3bb3": {
+      "mean_pnl": 1.4159645083932855,
+      "cvar_05_loss": 0.40095238095238095,
+      "worst_pnl": -4.48,
+      "score": 1.0150121274409045
+    },
+    "gate-f12a4e29a05e5a4ce18f": {
+      "mean_pnl": 1.528293045563549,
+      "cvar_05_loss": 0.6897619047619048,
+      "worst_pnl": -4.48,
+      "score": 0.8385311408016443
+    }
+  },
+  "interpretation": "Descriptive paired comparison; no threshold fitting, selection or promotion. Validation comparisons are exploratory. Correlated execution variants remain inside base-episode groups. Action-dependent execution noise may differ despite common scenario seeds. Hypothetical outcomes are not observed profitability."
+}

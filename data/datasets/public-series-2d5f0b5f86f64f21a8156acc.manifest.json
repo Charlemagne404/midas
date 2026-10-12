@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "dataset_id": "public-series-2d5f0b5f86f64f21a8156acc",
+  "dataset_version": "1",
+  "data_source": "Polymarket bounded public REST book series",
+  "provenance": "RECORDED",
+  "content_sha256": "97bf05ebab489a58e3db353d6d80b303121d7dfcb992e0de17057e800b489d33",
+  "event_count": 25,
+  "capture_start_ms": 1791803651924,
+  "capture_end_ms": 1791803707433,
+  "instrument_ids": [
+    "24483563228660028121020430722896740519524131851526579619586176931221901842798",
+    "34722410608062854697106861099776685947172185964394483545370684749662285977831"
+  ],
+  "protocols": [
+    "v1"
+  ],
+  "exchange_timestamp_coverage": 1.0,
+  "missing_intervals": [],
+  "feed_interruptions": [],
+  "completeness_limitations": [
+    "Periodic REST snapshots are not a continuous or sequence-complete feed.",
+    "Two instrument requests are sequential; snapshots are not atomic across legs.",
+    "No observed fills, private order reports, settlement or empirical execution labels.",
+    "Public metadata is not an onchain payout attestation; no attested_metadata event emitted.",
+    "Single selected market and short interval; not representative independent market history."
+  ],
+  "market_metadata": [
+    {
+      "id": "562828",
+      "event_id": "32228",
+      "question": "2026 Balance of Power: D Senate, D House",
+      "condition_id": "0x16c63b7cc37f012b9f59ee164ec03877914c701d06d48291ae8d6fc08a088b0d",
+      "protocol": "v1",
+      "instruments": [
+        {
+          "asset_id": "34722410608062854697106861099776685947172185964394483545370684749662285977831",
+          "label": "Yes"
+        },
+        {
+          "asset_id": "24483563228660028121020430722896740519524131851526579619586176931221901842798",
+          "label": "No"
+        }
+      ],
+      "source": "LIVE",
+      "active": true,
+      "closed": false,
+      "accepting_orders": true,
+      "negative_risk": true,
+      "augmented_negative_risk": false,
+      "complementary_verified": true,
+      "payout_verified": false,
+      "payout_per_set": "1",
+      "payout_evidence": "Awaiting deployed CTF structural verification",
+      "fee": {
+        "rate": "0.04",
+        "exponent": 1,
+        "verified": true,
+        "evidence": "Gamma feeSchedule, exponent 1; public Fees formula, verified 2026-10-11",
+        "verified_ts_ms": 1791803651924,
+        "expires_ts_ms": 1791803951924,
+        "rule_version": "polymarket-fees-2026-10-11"
+      },
+      "description": "This market will resolve according to the party that wins control of the United States Senate and the party that wins control of the United States House of Representatives in the 2026 United States midterm election.\n\nA party wins control of the United States Senate if it wins a majority of the chamber’s voting seats. If no party wins a majority of voting seats, the party that wins control of the chamber is the party that wins half of the voting seats and holds the Vice Presidency. If the outcome remains ambiguous after applying the above criteria, the chamber will be deemed controlled by the party with which the first selected President Pro Tempore of the Congress that convenes after the specified election is affiliated.\n\nA party wins control of the United States House of Representatives if it wins a majority of the chamber’s voting seats. If no party wins a majority of voting seats, the chamber will be deemed controlled by the party with which the first elected Speaker of the House of the Congress that convenes after the 2026 midterm election is affiliated.\n\nThe following rules govern the counting of seats for determining which party wins control of the chambers.\n\nFor determining Senate control, all regular and special Senate elections that determine representation in the upcoming 120th Congress and are scheduled to take place in November 2026 as of October 31, 2026 are included. Vacant Senate seats for which no election or special election to fill the seat is scheduled to take place in November 2026 as of October 31, 2026 will be treated as held by the party affiliation of the most recent member to hold that seat. For determining House control, all House elections in the 2026 United States midterm election that elect voting members and determine representation in the upcoming 120th Congress are included. Where a Senate or House seat is decided by a runoff, the runoff result will determine attribution of that seat, even if it takes place after November 2026.\n\nFor seats contested in the specified election, seats are attributed to the party under which the member was elected. If a member-elect changes party affiliation, or vacates their seat, between election day and the formal organization of Congress, the seat is attributed to the party under which the member was elected. \n\nFor seats not contested in the specified election, seats are attributed to the party that holds the seat as of the date of the election. If a current sitting member of the U.S. Senate who is not up for election changes party affiliation or vacates their seat after the date of the election, the seat is attributed to the party under which the member was affiliated at the time of the election.\n\nSenate and House members elected as independents who formally caucus with, or, for newly elected members, who announce their intent to caucus with, a party are included in that party’s count. If the caucus decisions of members of the Senate or House elected as independents cannot be determined on the date of the election, this market may remain open until the earlier of (i) an announcement from the relevant members of their intents to caucus, or (ii) January 4th, 11:59 PM ET of the following calendar year. If no such announcement is made by January 4th, 11:59 PM ET of the following calendar year, the member will not count towards the seat count of any party.\n\nThe resolution sources for this market will be official information from relevant state electoral authorities, the United States Congress, and a consensus of credible reporting.",
+      "resolution_source": "",
+      "resolution_metadata": {
+        "questionID": "0x7b95a46fc059d27ac3404325fd6280974d96949102201de57b8595f802d7fc00",
+        "resolutionStatus": null,
+        "umaResolutionStatus": null,
+        "umaResolutionStatuses": "[]"
+      },
+      "execution_delay_ms": null,
+      "attestation": null
+    }
+  ],
+  "economic_assumptions": [
+    "Hypothetical fills cannot be established from observed depth",
+    "Collateral adapter identity/parity and operational costs remain assumptions"
+  ]
+}

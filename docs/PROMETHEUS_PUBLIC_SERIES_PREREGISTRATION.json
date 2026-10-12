@@ -1,0 +1,24 @@
+{
+  "capture_id": "public-series-2d5f0b5f86f64f21a8156acc",
+  "unit": "midas-public-series-2d5f0b5f86f64f21a8156acc-retry1.service",
+  "samples": 12,
+  "interval_seconds": 5,
+  "wall_seconds": 180,
+  "systemd_wall_seconds": 240,
+  "memory_mb": 256,
+  "cpu_quota": "25%",
+  "purpose": "Repeated real public book observations; no observed executions, settlement or payout attestation.",
+  "selection": "First supported active complementary market among 20 public discovery results.",
+  "output": "data/datasets",
+  "capture_state": "data/public-captures/public-series-2d5f0b5f86f64f21a8156acc/state.json",
+  "created_at": 1791803605.641548,
+  "startup_attempts": [
+    {
+      "unit": "midas-public-series-2d5f0b5f86f64f21a8156acc.service",
+      "state": "FAILED",
+      "cause": "Resolving the venv Python symlink selected the system interpreter. No capture directory or data was created."
+    }
+  ],
+  "interpreter": "/home/charlie/midas/.venv/bin/python",
+  "retry_at": 1791803650.9060411
+}

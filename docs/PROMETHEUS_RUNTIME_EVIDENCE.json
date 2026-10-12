@@ -1,5 +1,5 @@
 {
-  "checked_at": 1791803272.9133115,
+  "checked_at": 1791804242.5696583,
   "health": {
     "status": "READY",
     "startup_status": "READY",
@@ -8,8 +8,8 @@
     "live_execution": false,
     "paper_recovery": {
       "status": "CHECKPOINT_VERIFIED",
-      "journal_events": 31646,
-      "revision": 31645
+      "journal_events": 32174,
+      "revision": 32173
     },
     "laboratory": {
       "status": "READY",
@@ -20,7 +20,7 @@
   },
   "arena_model_artifacts": 18,
   "arena_fitted_models": 17,
-  "arena_tournaments": 11,
+  "arena_tournaments": 12,
   "recorded_public_sources": [
     {
       "dataset_id": "ctf-4024677",
@@ -55,100 +55,27 @@
         "Original raw public responses preserved in tests/fixtures/milestone2",
         "No empirically observed execution-completion labels."
       ]
-    }
-  ],
-  "active_jobs": [
+    },
     {
-      "active_artifact": {
-        "identity": "tournament-3060d836ebe14825a985e59c",
-        "kind": "tournaments"
-      },
-      "budget": {
-        "cpu_cores": 1,
-        "max_artifact_mb": 1024,
-        "memory_mb": 4096,
-        "minimum_available_memory_mb": 2048,
-        "wall_seconds": 1800
-      },
-      "configuration": {
-        "dataset": null,
-        "director": null,
-        "kind": "tournament",
-        "max_wall_seconds": 1800,
-        "model_id": null,
-        "policy_search": null,
-        "rl": null,
-        "sweep": null,
-        "tournament": {
-          "adversarial": false,
-          "challenge": null,
-          "dataset_id": "dataset-f53981b7dd24c1521ce749b1",
-          "execution_models": [
-            "optimistic",
-            "standard",
-            "conservative"
-          ],
-          "gates": [
-            {
-              "model_id": "model-131794f0434945a286163323",
-              "size": "full",
-              "threshold": 0.1
-            },
-            {
-              "model_id": "model-e8ea85c7e7fe49f7a0a2a7b9",
-              "size": "full",
-              "threshold": 0.9
-            },
-            {
-              "model_id": "model-e8ea85c7e7fe49f7a0a2a7b9",
-              "size": "full",
-              "threshold": 0.5
-            }
-          ],
-          "max_episodes": 2000,
-          "minimum_champion_episodes": 30,
-          "model_ids": [],
-          "partition": "validation",
-          "purpose": "research",
-          "seed": 991,
-          "tail_loss_weight": 1.0,
-          "threshold": 0.5,
-          "unsupported_input_policy": "abstain"
-        },
-        "training": null
-      },
-      "created_at": 1791803120.8760767,
-      "elapsed_seconds": 150.47095054900274,
-      "error": null,
-      "job_id": "job-83cb1633e674433b8bb6e6c8",
-      "pid": 3280929,
-      "progress": {
-        "done": 830,
-        "total": 2919
-      },
-      "result": null,
-      "runtime_profile": {
-        "artifact_bytes": 408057652,
-        "artifact_files": 29022,
-        "artifact_scan_seconds": 72.75448970712023,
-        "artifact_scans": 831,
-        "progress_publish_seconds": 5.808249585446902
-      },
-      "started_at": 1791803122.4093888,
-      "state": "RUNNING",
-      "submitted_source_hash": "0a14f0ffd9b283359170598361240395b1647bee15545fd36f3770091603c522",
-      "unit": "midas-arena-job-83cb1633e674433b8bb6e6c8.service",
-      "updated_at": 1791803272.8802319,
-      "supervisor": {
-        "MainPID": "3280929",
-        "Result": "success",
-        "MemoryCurrent": "286240768",
-        "CPUUsageNSec": "140232393000",
-        "ActiveState": "active",
-        "SubState": "running"
-      }
+      "dataset_id": "public-series-2d5f0b5f86f64f21a8156acc",
+      "provenance": "RECORDED_PUBLIC",
+      "content_sha256": "97bf05ebab489a58e3db353d6d80b303121d7dfcb992e0de17057e800b489d33",
+      "events": 25,
+      "capture_start_ms": 1791803651924,
+      "capture_end_ms": 1791803707433,
+      "valid": true,
+      "eligible_for_execution_training": false,
+      "limitations": [
+        "Periodic REST snapshots are not a continuous or sequence-complete feed.",
+        "Two instrument requests are sequential; snapshots are not atomic across legs.",
+        "No observed fills, private order reports, settlement or empirical execution labels.",
+        "Public metadata is not an onchain payout attestation; no attested_metadata event emitted.",
+        "Single selected market and short interval; not representative independent market history.",
+        "No empirically observed execution-completion labels."
+      ]
     }
   ],
+  "active_jobs": [],
   "dataset_quality": [
     "Identical observable vectors occur across partitions. Independent scenario IDs do not guarantee covariate diversity; inspect repeated synthetic grids.",
     "Some scenario families contain one settlement seed parity only. The current generator uses seed parity for settlement; reorder families and shift seeds before making generalization claims.",
@@ -158,7 +85,7 @@
     "job-e0a34b52cb934607a16d0609",
     "job-68d9ecc1d8934a789cb56985"
   ],
-  "arena_research_tournaments": 10,
+  "arena_research_tournaments": 11,
   "arena_performance_replays": 1,
   "arena_datasets": 3,
   "arena_source_datasets": 2

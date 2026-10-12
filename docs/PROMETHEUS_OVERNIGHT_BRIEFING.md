@@ -2,6 +2,21 @@
 
 ## Current checkpoint (supersedes running-job notes below)
 
+### Latest completed evidence checkpoint
+
+Both the paired league and public capture are terminal; no research jobs run.
+Completion 0.50/full scored 1.0150 versus direct risk 0.10/full 0.8385 on reused
+validation groups. Direct risk had higher mean return but larger tail loss.
+Prediction-score superiority did not establish policy dominance. No gate was
+promoted and no final tests opened.
+
+Data Foundry now exposes 25 genuine public events over 55.5 seconds, with changing
+books on both instruments. No fills, settlement or payout attestation are inferred.
+Source/response evidence and the verified validation bundle are preserved.
+This supersedes the running-job note below. Severity regression and actual economic
+reruns remain next; the full goal remains active.
+
+
 ### Latest paired-policy checkpoint
 
 Committed `0c13722`: tournaments can compare verified target derivatives of the
