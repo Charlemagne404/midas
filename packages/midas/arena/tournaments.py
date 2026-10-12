@@ -12,6 +12,7 @@ import numpy as np
 from pydantic import Field, model_validator
 
 from midas.arena.artifacts import artifact_path, atomic_json, atomic_replay, sha256
+from midas.arena.cost_policy import CostGateSpec, CostPolicy
 from midas.arena.datasets import DatasetSpec, load, observation_lineage, research_hash
 from midas.arena.economic_regimes import EconomicRegime
 from midas.arena.environment import ArenaEnv
@@ -39,6 +40,7 @@ class TournamentSpec(Model):
     dataset_id: str
     model_ids: tuple[str, ...] = ()
     gates: tuple[GateSpec, ...] = Field(default=(), max_length=12)
+    cost_gates: tuple[CostGateSpec, ...] = Field(default=(), max_length=4)
     execution_models: tuple[str, ...] = ("optimistic", "standard", "conservative")
     max_episodes: int = Field(default=200, ge=2, le=2000)
     threshold: float = Field(default=0.5, ge=0, le=1, allow_inf_nan=False)
@@ -65,6 +67,8 @@ class TournamentSpec(Model):
             raise ValueError("Duplicate tournament inputs")
         if len({gate.identity for gate in self.gates}) != len(self.gates):
             raise ValueError("Duplicate policy gate configuration")
+        if len({g.identity("forecast") for g in self.cost_gates}) != len(self.cost_gates):
+            raise ValueError("Duplicate cost preference configuration")
         return self
 
 
@@ -150,7 +154,13 @@ def summaries(rows: list[dict[str, Any]], spec: TournamentSpec) -> dict[str, Any
     for policy in sorted(policy_base):
         if policy == "no_trade":
             continue
-        for baseline in ("no_trade", "arbitrage", "conservative"):
+        controls = (
+            "no_trade",
+            "arbitrage",
+            "conservative",
+            *(gate.identity(kind) for gate in spec.cost_gates for kind in ("quoted", "scope")),
+        )
+        for baseline in controls:
             if baseline not in policy_base or baseline == policy:
                 continue
             shared = sorted(policy_base[policy].keys() & policy_base[baseline].keys())
@@ -300,6 +310,24 @@ def run_tournament(root: Path, spec: TournamentSpec, progress: Any = None) -> di
         if not isinstance(model, Predictor):
             raise ValueError("Probability gates require a supervised predictor")
         policies[policy] = model
+    cost_bindings: dict[str, dict[str, Any]] = {}
+    for gate in spec.cost_gates:
+        model = CostPolicy(root, gate)
+        if model.manifest["dataset_id"] != spec.dataset_id:
+            raise ValueError("Cost model must use the frozen tournament dataset")
+        artifacts[gate.model_id] = model.manifest["artifact_sha256"]
+        model_datasets[gate.model_id] = {
+            **evaluation_lineage,
+            "rows_sha256": manifest["rows_sha256"],
+            "label_target": "initial_position_friction_usd",
+        }
+        for kind in ("forecast", "quoted", "scope"):
+            policy = gate.identity(kind)
+            policies[policy] = model
+            cost_bindings[policy] = {"specification": gate.model_dump(mode="json"), "kind": kind}
+    referenced_models = tuple(
+        dict.fromkeys((*referenced_models, *(g.model_id for g in spec.cost_gates)))
+    )
     identity = "tournament-" + uuid.uuid4().hex[:24]
     directory = artifact_path(root, "tournaments", identity)
     rows = []
@@ -327,6 +355,8 @@ def run_tournament(root: Path, spec: TournamentSpec, progress: Any = None) -> di
                 seed,
                 ExecutionModel.preset(execution_name).model_copy(update={"seed": seed}),
             ).model_copy(update={"observation_latency_ms": dataset_spec.observation_latency_ms})
+            if dataset_spec.costs is not None:
+                scenario = scenario.model_copy(update={"costs": dataset_spec.costs})
             if spec.adversarial:
                 from midas.laboratory.adversarial import mutate_sequence
 
@@ -364,6 +394,19 @@ def run_tournament(root: Path, spec: TournamentSpec, progress: Any = None) -> di
                         )
                     elif policy == "random":
                         action = int(rng.integers(0, 3)) if eligible else 0
+                    elif isinstance(model, CostPolicy):
+                        action, details = model.decide(
+                            features,
+                            eligible,
+                            env.env.observe(),
+                            scenario,
+                            bool(env.env.state["positions"]),
+                            cost_bindings[policy]["kind"],
+                        )
+                        explanation.update(details)
+                        unsupported += int(
+                            eligible and not details["input_support"]["supported"][0]
+                        )
                     elif isinstance(model, Predictor):
                         binding = bindings.get(policy)
                         threshold = binding.threshold if binding else spec.threshold
@@ -460,6 +503,10 @@ def run_tournament(root: Path, spec: TournamentSpec, progress: Any = None) -> di
                     "runtime_ms": (time.monotonic() - started) * 1000,
                     "inference_latency_ms": float(np.mean(latency)),
                     "policy_version": digest(
+                        [cost_bindings[policy], artifacts[model.specification.model_id]]
+                    )
+                    if policy in cost_bindings
+                    else digest(
                         [
                             bindings[policy].model_dump(mode="json"),
                             artifacts[bindings[policy].model_id],
@@ -510,6 +557,7 @@ def run_tournament(root: Path, spec: TournamentSpec, progress: Any = None) -> di
         "policy_bindings": {
             policy: binding.model_dump(mode="json") for policy, binding in bindings.items()
         },
+        "cost_policy_bindings": cost_bindings,
         "base_episodes": len(held_out),
         "variants": len(rows),
         "rows_sha256": sha256(directory / "rows.json"),
@@ -558,6 +606,10 @@ def run_tournament(root: Path, spec: TournamentSpec, progress: Any = None) -> di
                     for v in report["leaderboard"]
                     if v["policy"] == model_id
                     or (v["policy"] in bindings and bindings[v["policy"]].model_id == model_id)
+                    or (
+                        v["policy"] in cost_bindings
+                        and cost_bindings[v["policy"]]["specification"]["model_id"] == model_id
+                    )
                 ],
             }
         )

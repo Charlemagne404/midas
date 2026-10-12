@@ -182,6 +182,8 @@ class ArenaEnv(gym.Env[Any, Any]):
             ).model_copy(
                 update={"observation_latency_ms": self.dataset_spec.observation_latency_ms}
             )
+        if self.fixed_scenario is None and self.dataset_spec.costs is not None:
+            scenario = scenario.model_copy(update={"costs": self.dataset_spec.costs})
         self.env = ControlledEnvironment(scenario, self.retain)
         self.previous_score, self.penalty = 0.0, 0.0
         self.invalid_penalty, self.max_unmatched, self.max_drawdown = 0.0, 0.0, 0.0

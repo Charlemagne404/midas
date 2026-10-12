@@ -1828,3 +1828,27 @@ This supports bounded synthetic friction prediction, not real cost calibration o
 policy/economic benefit. Next matched-policy work must account for uncertainty,
 unsupported inputs, failed-fill states and fees already present in conditional
 edge. Broader Prometheus milestones remain active and incomplete.
+
+## Matched cost-policy comparison foundation
+
+Added forecast, quoted-cost and matching scope controls for corrected cost models.
+A full proposal is requested only within first-position training ranges and the
+original fixed cost regime. A fixed buffer/cap is a research preference, not a
+calibrated upper bound. Fees are not subtracted from mathematical edge again;
+original hard broker admission remains required. An emergency-stop regression
+proves that a preference request cannot create a position under the stop.
+
+Tournaments now preserve declared dataset/challenge costs before perturbations;
+dataset-backed Arena resets do likewise. This fixes an inconsistency for explicit
+cost datasets without changing default-cost behavior or the financial broker.
+Cost bindings preserve model hashes, all three policy roles and grouped paired
+comparisons against quoted/scope controls. Model registry policy history includes
+these actual gate results. UI submits fresh bounded challenges and displays caps,
+buffers, roles and supporting models.
+
+Five focused policy/tournament tests passed in49.09 seconds; final four policy
+tests passed in23.16 seconds. Frontend14 tests, typecheck/lint/build, strict typing
+and Ruff passed. Production preregistration: seed313071,100 fresh groups, three
+execution assumptions, seven policies /2100 correlated variants, cap0.30 and
+buffer0.10 virtual USD. Selected cost-model weights are unchanged. Champion
+minimum2000 source groups prevents promotion. Full regression remains pending.

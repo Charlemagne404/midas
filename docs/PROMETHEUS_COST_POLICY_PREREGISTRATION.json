@@ -1,0 +1,108 @@
+{
+  "created_at": 1791843130.3942916,
+  "source_hash": "ed0d396a2f34bb3fb4f9562906212bea734da119270981b6571f0b9819a0587d",
+  "configuration": {
+    "kind": "tournament",
+    "dataset": null,
+    "training": null,
+    "severity": null,
+    "cost": null,
+    "recovery": null,
+    "model_id": null,
+    "rl": null,
+    "tournament": {
+      "purpose": "research",
+      "dataset_id": "dataset-b5c3dbdac9284f292a949b65",
+      "model_ids": [],
+      "gates": [],
+      "cost_gates": [
+        {
+          "model_id": "model-a7f99c63bd4f4cd4b22c57c6",
+          "max_cost_usd": "0.30",
+          "margin_usd": "0.10"
+        }
+      ],
+      "execution_models": [
+        "optimistic",
+        "standard",
+        "conservative"
+      ],
+      "max_episodes": 100,
+      "threshold": 0.5,
+      "tail_loss_weight": 1.0,
+      "seed": 991,
+      "adversarial": false,
+      "minimum_champion_episodes": 2000,
+      "challenge": {
+        "version": "synthetic-decision-1",
+        "episodes": 100,
+        "seed": 313071,
+        "split_seed": 1977,
+        "families": [
+          "thin",
+          "deep",
+          "calm",
+          "liquidity_shock",
+          "volatile",
+          "one_sided",
+          "fees"
+        ],
+        "execution_models": [
+          "optimistic",
+          "standard",
+          "conservative"
+        ],
+        "observation_latency_ms": 100,
+        "label_target": "completion",
+        "decision_scope": "first_admitted",
+        "retain_execution_costs": true,
+        "costs": {
+          "version": "explicit-costs-1",
+          "operating_per_fill": "0.01",
+          "redemption_cost": "0.02",
+          "annual_financing_rate": "0.05",
+          "collateral_value_factor": "1",
+          "collateral_route_verified": false,
+          "assumptions": [
+            "Costs are user estimates, not observed charges",
+            "No automatic complete-set merge",
+            "Resolution and spendable proceeds are separated by configured delay",
+            "No empirically calibrated fill probability or queue priority"
+          ]
+        }
+      },
+      "partition": "test",
+      "unsupported_input_policy": "abstain",
+      "economic_regime": null
+    },
+    "sweep": null,
+    "director": null,
+    "policy_search": null,
+    "max_wall_seconds": 1800
+  },
+  "model_artifact_sha256": "88a2d60ba99b21c15317123836bc8183fad43b0a33586e77f1b86ea89c45208e",
+  "training_dataset_sha256": "7f1857d470144c6a68d5ff2f5a3e480016514e3dccb4f47a990f79e881a20179",
+  "source_groups": 100,
+  "correlated_variants": 2100,
+  "cost_policies": {
+    "forecast": "cost-forecast-7cd3b264b52c8cd8",
+    "quoted": "cost-quoted-7cd3b264b52c8cd8",
+    "scope": "cost-scope-7cd3b264b52c8cd8"
+  },
+  "hypothesis": "A first-position predicted friction preference may improve downside-adjusted decisions relative to matched quoted and scope controls. Lower prediction error alone is insufficient.",
+  "cap_basis": "Fixed 0.30 virtual-USD preference with 0.10 research buffer; no fitted threshold or calibrated coverage claim.",
+  "promotion": false,
+  "primary_comparisons": [
+    "forecast-minus-quoted",
+    "forecast-minus-scope",
+    "forecast-minus-no-trade"
+  ],
+  "weights_or_threshold_changes_after_challenge": false,
+  "artifact_usage_bytes": 700969941,
+  "limitations": [
+    "Synthetic hypothetical execution and estimated costs only",
+    "Input-range support is necessary, not proof of joint-distribution support",
+    "Mean friction and a fixed buffer cannot guarantee cost or loss bounds",
+    "Action-dependent randomness may differ; variants grouped within source episodes"
+  ]
+}

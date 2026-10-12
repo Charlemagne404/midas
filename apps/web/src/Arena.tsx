@@ -59,6 +59,7 @@ type Dataset = {
   dataset_id: string;
   label_target?: string;
   execution_cost_label?: string;
+  spec?: { costs?: Record<string, unknown>; families?: string[]; observation_latency_ms?: number };
   decision_scope?: string;
   rows: number;
   eligible_base_episodes: number;
@@ -161,6 +162,10 @@ type Rank = {
 };
 type Tournament = {
   policy_bindings?: Record<string, { model_id: string; threshold: number; size: string }>;
+  cost_policy_bindings?: Record<
+    string,
+    { kind: string; specification: { model_id: string; max_cost_usd: string; margin_usd: string } }
+  >;
   model_dataset_bindings?: Record<string, { dataset_id: string; label_target: string }>;
   tournament_id: string;
   base_episodes: number;
@@ -180,7 +185,10 @@ type Tournament = {
 };
 
 function policyTarget(tournament: Tournament | undefined, policy: string) {
-  const modelId = tournament?.policy_bindings?.[policy]?.model_id ?? policy;
+  const modelId =
+    tournament?.policy_bindings?.[policy]?.model_id ??
+    tournament?.cost_policy_bindings?.[policy]?.specification.model_id ??
+    policy;
   return tournament?.model_dataset_bindings?.[modelId]?.label_target;
 }
 type Row = {
@@ -367,6 +375,9 @@ export function Arena() {
         additional_submission_latency_ms: extraSubmissionLatency,
       }
     : undefined;
+  const [costPreferenceCap, setCostPreferenceCap] = useState('0.30');
+  const [costPreferenceMargin, setCostPreferenceMargin] = useState('0.10');
+  const [costChallengeSeed, setCostChallengeSeed] = useState(313071);
   const [message, setMessage] = useState('');
   const overview = useQuery({
     queryKey: ['arena'],
@@ -379,6 +390,13 @@ export function Arena() {
     ['cost_ridge', 'cost_mlp'].includes(family) &&
     data?.datasets.find((entry) => entry.dataset_id === selectedDataset)?.execution_cost_label !==
       'initial-position-friction-2';
+  const costPolicyModel = data?.models.find(
+    (entry) =>
+      entry.dataset_id === selectedDataset &&
+      isCost(entry) &&
+      entry.label_version === 'initial-position-friction-2' &&
+      entry.state === 'EVALUATED',
+  );
   const selectedSearchModel =
     searchModelId ||
     data?.models.find(
@@ -1426,6 +1444,79 @@ export function Arena() {
                 Run adversarial suite
               </button>
             </div>
+            <div className="lab-controls">
+              <label>
+                Cost preference cap (virtual USD)
+                <input
+                  type="number"
+                  min="0.01"
+                  step="0.01"
+                  value={costPreferenceCap}
+                  onChange={(event) => setCostPreferenceCap(event.target.value)}
+                />
+              </label>
+              <label>
+                Research buffer (virtual USD)
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={costPreferenceMargin}
+                  onChange={(event) => setCostPreferenceMargin(event.target.value)}
+                />
+              </label>
+              <label>
+                Fresh cost-policy seed
+                <input
+                  type="number"
+                  min="0"
+                  value={costChallengeSeed}
+                  onChange={(event) => setCostChallengeSeed(Number(event.target.value))}
+                />
+              </label>
+              <button
+                disabled={!costPolicyModel || submit.isPending}
+                onClick={() =>
+                  submit.mutate({
+                    configuration: {
+                      kind: 'tournament',
+                      max_wall_seconds: 1800,
+                      tournament: {
+                        dataset_id: selectedDataset,
+                        cost_gates: [
+                          {
+                            model_id: costPolicyModel?.model_id,
+                            max_cost_usd: costPreferenceCap,
+                            margin_usd: costPreferenceMargin,
+                          },
+                        ],
+                        max_episodes: 100,
+                        minimum_champion_episodes: 2000,
+                        challenge: {
+                          episodes: 100,
+                          seed: costChallengeSeed,
+                          decision_scope: 'first_admitted',
+                          retain_execution_costs: true,
+                          families: data?.datasets.find(
+                            (entry) => entry.dataset_id === selectedDataset,
+                          )?.spec?.families,
+                          costs: data?.datasets.find(
+                            (entry) => entry.dataset_id === selectedDataset,
+                          )?.spec?.costs,
+                        },
+                      },
+                    },
+                  })
+                }
+              >
+                Run fresh cost-policy comparison
+              </button>
+            </div>
+            <p className="lab-note">
+              Cost comparisons include forecast, quoted-cost and matching first-position controls.
+              The buffer is a research preference, not a calibrated confidence bound. Mathematical
+              edge and broker risk admission remain required.
+            </p>
             {tournament.data && (
               <>
                 <p className="lab-note">
@@ -1455,11 +1546,14 @@ export function Arena() {
                             <button
                               disabled={
                                 !entry.policy.startsWith('model-') &&
-                                !tournament.data?.policy_bindings?.[entry.policy]
+                                !tournament.data?.policy_bindings?.[entry.policy] &&
+                                !tournament.data?.cost_policy_bindings?.[entry.policy]
                               }
                               onClick={() => {
                                 setModelId(
                                   tournament.data?.policy_bindings?.[entry.policy]?.model_id ??
+                                    tournament.data?.cost_policy_bindings?.[entry.policy]
+                                      ?.specification.model_id ??
                                     entry.policy,
                                 );
                                 setTab('Model registry');
@@ -1467,6 +1561,20 @@ export function Arena() {
                             >
                               {entry.policy}
                             </button>
+                            {tournament.data?.cost_policy_bindings?.[entry.policy] && (
+                              <small>
+                                {tournament.data.cost_policy_bindings[entry.policy].kind} · cap{' '}
+                                {
+                                  tournament.data.cost_policy_bindings[entry.policy].specification
+                                    .max_cost_usd
+                                }{' '}
+                                virtual USD · research buffer{' '}
+                                {
+                                  tournament.data.cost_policy_bindings[entry.policy].specification
+                                    .margin_usd
+                                }
+                              </small>
+                            )}
                             {tournament.data?.policy_bindings?.[entry.policy] && (
                               <small>
                                 Threshold {tournament.data.policy_bindings[entry.policy].threshold}{' '}

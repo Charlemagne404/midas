@@ -1,0 +1,27 @@
+{
+  "focused_policy_and_tournament_gate": {
+    "passed": 5,
+    "duration_seconds": 49.09
+  },
+  "final_policy_gate": {
+    "passed": 4,
+    "duration_seconds": 23.16
+  },
+  "coverage": [
+    "real fitted cost model and matched replays",
+    "same training domain for forecast/quoted/scope controls",
+    "fixed costs across every comparison",
+    "no subsequent position opening",
+    "outside-range abstention",
+    "unchanged mathematical edge",
+    "broker emergency stop still rejects requested trades",
+    "dataset-backed environment preserves explicit costs"
+  ],
+  "frontend_tests": 14,
+  "typecheck": "passed",
+  "lint": "passed",
+  "build": "passed; existing chart advisory",
+  "mypy": "three changed Arena modules passed strict checks",
+  "ruff": "passed",
+  "full_regression": "pending after production comparison"
+}

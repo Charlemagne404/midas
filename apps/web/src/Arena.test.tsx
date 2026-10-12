@@ -565,7 +565,71 @@ it('blocks cost training on legacy financing labels', async () => {
   fireEvent.change(screen.getByLabelText('Architecture'), { target: { value: 'cost_mlp' } });
   expect(await screen.findByRole('alert')).toHaveTextContent('version-two cost labels');
   expect(screen.getByRole('button', { name: 'Start training' })).toBeDisabled();
-  expect(
-    screen.getByRole('button', { name: 'Validate configuration' }),
-  ).toBeDisabled();
+  expect(screen.getByRole('button', { name: 'Validate configuration' })).toBeDisabled();
+});
+
+it('submits a fresh cost-policy challenge with matching economic assumptions', async () => {
+  const costs = {
+    operating_per_fill: '0.01',
+    redemption_cost: '0.02',
+    annual_financing_rate: '0.05',
+  };
+  const overview = {
+    datasets: [
+      {
+        dataset_id: 'cost-data',
+        rows: 3,
+        eligible_base_episodes: 1,
+        generated_base_episodes: 30,
+        partition_rows: {},
+        label_frequency: {},
+        limitations: [],
+        spec: { costs, families: ['thin', 'deep'] },
+      },
+    ],
+    models: [
+      {
+        model_id: 'cost-model',
+        family: 'cost_mlp',
+        task: 'execution_cost_regression',
+        label_version: 'initial-position-friction-2',
+        state: 'EVALUATED',
+        dataset_id: 'cost-data',
+      },
+    ],
+    jobs: [],
+    findings: [],
+    tournaments: [],
+    dependencies: {},
+    health: { memory_mb: {}, worker_cpu_cores: 1, worker_memory_mb: 4096 },
+  };
+  let submitted = false;
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (url: string, init?: RequestInit) => {
+      if (url === '/api/arena/jobs' && init?.method === 'POST') {
+        const job = JSON.parse(String(init.body));
+        const spec = job.configuration.tournament;
+        expect(spec.cost_gates).toEqual([
+          { model_id: 'cost-model', max_cost_usd: '0.30', margin_usd: '0.10' },
+        ]);
+        expect(spec.challenge.costs).toEqual(costs);
+        expect(spec.challenge.seed).toBe(313071);
+        expect(spec.minimum_champion_episodes).toBe(2000);
+        submitted = true;
+        return new Response(JSON.stringify({ job_id: 'cost-policy-job' }), { status: 201 });
+      }
+      return new Response(JSON.stringify(overview), { status: 200 });
+    }),
+  );
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  render(
+    <QueryClientProvider client={client}>
+      <Arena />
+    </QueryClientProvider>,
+  );
+  fireEvent.click(await screen.findByRole('tab', { name: 'Tournaments' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Run fresh cost-policy comparison' }));
+  await screen.findByText(/Research job admitted/);
+  expect(submitted).toBe(true);
 });
