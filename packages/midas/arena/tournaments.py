@@ -17,14 +17,26 @@ from midas.arena.environment import ArenaEnv
 from midas.arena.rl import indices
 from midas.arena.supervised import Predictor
 from midas.core.models import Model
+from midas.economics.attestation import digest
 from midas.laboratory.campaigns import revision
 from midas.laboratory.spec import generate
 from midas.paper.broker import ExecutionModel
 
 
+class GateSpec(Model):
+    model_id: str
+    threshold: float = Field(default=0.5, ge=0, le=1, allow_inf_nan=False)
+    size: Literal["full", "half"] = "full"
+
+    @property
+    def identity(self) -> str:
+        return "gate-" + digest(["gate-1", self.model_dump(mode="json")])[:20]
+
+
 class TournamentSpec(Model):
     dataset_id: str
     model_ids: tuple[str, ...] = ()
+    gates: tuple[GateSpec, ...] = Field(default=(), max_length=12)
     execution_models: tuple[str, ...] = ("optimistic", "standard", "conservative")
     max_episodes: int = Field(default=200, ge=2, le=2000)
     threshold: float = Field(default=0.5, ge=0, le=1, allow_inf_nan=False)
@@ -48,6 +60,8 @@ class TournamentSpec(Model):
             set(self.execution_models)
         ) != len(self.execution_models):
             raise ValueError("Duplicate tournament inputs")
+        if len({gate.identity for gate in self.gates}) != len(self.gates):
+            raise ValueError("Duplicate policy gate configuration")
         return self
 
 
@@ -244,7 +258,12 @@ def run_tournament(root: Path, spec: TournamentSpec, progress: Any = None) -> di
         "random": None,
     }
     artifacts = {}
-    for identity in spec.model_ids:
+    bindings = {gate.identity: gate for gate in spec.gates}
+    loaded: dict[str, Any] = {}
+    referenced_models = tuple(
+        dict.fromkeys((*spec.model_ids, *(gate.model_id for gate in spec.gates)))
+    )
+    for identity in referenced_models:
         directory = artifact_path(root, "models", identity)
         record = json.loads((directory / "manifest.json").read_text())
         if record["dataset_id"] != spec.dataset_id:
@@ -253,9 +272,16 @@ def run_tournament(root: Path, spec: TournamentSpec, progress: Any = None) -> di
         if record["family"] == "ppo":
             if sha256(directory / "policy.zip") != record["artifact_sha256"]:
                 raise ValueError("PPO checksum mismatch")
-            policies[identity] = PPO.load(directory / "policy.zip", device="cpu")
+            loaded[identity] = PPO.load(directory / "policy.zip", device="cpu")
         else:
-            policies[identity] = Predictor.load(root, identity)
+            loaded[identity] = Predictor.load(root, identity)
+        if identity in spec.model_ids:
+            policies[identity] = loaded[identity]
+    for policy, configured in bindings.items():
+        model = loaded[configured.model_id]
+        if not isinstance(model, Predictor):
+            raise ValueError("Probability gates require a supervised predictor")
+        policies[policy] = model
     identity = "tournament-" + uuid.uuid4().hex[:24]
     directory = artifact_path(root, "tournaments", identity)
     rows = []
@@ -318,6 +344,8 @@ def run_tournament(root: Path, spec: TournamentSpec, progress: Any = None) -> di
                     elif policy == "random":
                         action = int(rng.integers(0, 3)) if eligible else 0
                     elif isinstance(model, Predictor):
+                        binding = bindings.get(policy)
+                        threshold = binding.threshold if binding else spec.threshold
                         support = model.support([features]) if eligible else None
                         out_of_support = support is not None and not support["supported"][0]
                         unsupported += int(out_of_support)
@@ -329,15 +357,19 @@ def run_tournament(root: Path, spec: TournamentSpec, progress: Any = None) -> di
                         )
                         target = model.parameters.get("label_target", "completion")
                         action = int(
-                            probability is not None and model.permits(probability, spec.threshold)
+                            probability is not None and model.permits(probability, threshold)
                         )
+                        if action and binding and binding.size == "half":
+                            action = 2
                         if out_of_support and spec.unsupported_input_policy == "abstain":
                             action = 0
                         explanation.update(
                             completion_score=probability if target == "completion" else None,
                             unmatched_risk_score=probability if target == "unmatched" else None,
                             label_target=target,
-                            threshold=spec.threshold,
+                            threshold=threshold,
+                            requested_size=binding.size if binding else "full",
+                            score_size_assumption="Score refers to the full mathematical proposal; reduced-size execution is not separately calibrated",
                             interpretation="Assumption control score; not calibrated probability"
                             if model.parameters["family"] == "heuristic"
                             else f"Modeled {target} probability under hypothetical execution",
@@ -405,7 +437,14 @@ def run_tournament(root: Path, spec: TournamentSpec, progress: Any = None) -> di
                     ),
                     "runtime_ms": (time.monotonic() - started) * 1000,
                     "inference_latency_ms": float(np.mean(latency)),
-                    "policy_version": artifacts.get(
+                    "policy_version": digest(
+                        [
+                            bindings[policy].model_dump(mode="json"),
+                            artifacts[bindings[policy].model_id],
+                        ]
+                    )
+                    if policy in bindings
+                    else artifacts.get(
                         policy,
                         {
                             "arbitrage": "binary-depth-2",
@@ -438,6 +477,9 @@ def run_tournament(root: Path, spec: TournamentSpec, progress: Any = None) -> di
         "source_hash": source_hash,
         "code_revision": execution_revision,
         "model_artifact_hashes": artifacts,
+        "policy_bindings": {
+            policy: binding.model_dump(mode="json") for policy, binding in bindings.items()
+        },
         "base_episodes": len(held_out),
         "variants": len(rows),
         "rows_sha256": sha256(directory / "rows.json"),
@@ -452,9 +494,15 @@ def run_tournament(root: Path, spec: TournamentSpec, progress: Any = None) -> di
         "common_random_numbers_note": "Shared seeds pair source scenarios. Action-dependent order paths and random draws do not guarantee identical execution noise.",
         **summaries(rows, spec),
     }
+    if spec.partition == "validation" and spec.challenge is None:
+        report.update(
+            research_champion=None,
+            research_leaders=[],
+            conclusion="Validation comparison for policy selection; independent evaluation is still required.",
+        )
     atomic_json(directory / "manifest.json", report)
     publish_findings(root, report)
-    for model_id in spec.model_ids:
+    for model_id in referenced_models:
         model_directory = artifact_path(root, "models", model_id)
         model_record = json.loads((model_directory / "manifest.json").read_text())
         evaluations = model_record.setdefault("policy_evaluations", [])
@@ -465,7 +513,15 @@ def run_tournament(root: Path, spec: TournamentSpec, progress: Any = None) -> di
                 "dataset_sha256": manifest["rows_sha256"],
                 "adversarial": spec.adversarial,
                 "artifact_sha256": model_record["artifact_sha256"],
-                "metrics": next(v for v in report["leaderboard"] if v["policy"] == model_id),
+                "metrics": next(
+                    (v for v in report["leaderboard"] if v["policy"] == model_id), None
+                ),
+                "gate_metrics": [
+                    v
+                    for v in report["leaderboard"]
+                    if v["policy"] == model_id
+                    or (v["policy"] in bindings and bindings[v["policy"]].model_id == model_id)
+                ],
             }
         )
         model_record["state"] = "EVALUATED"
@@ -479,7 +535,9 @@ def publish_findings(root: Path, report: dict[str, Any]) -> dict[str, Any]:
     identity = "finding-" + digest([report["tournament_id"], "downside-objective-1"])[:24]
     finding = {
         "finding_id": identity,
-        "title": "No trading candidate clears the downside objective"
+        "title": "Validation policy comparison completed"
+        if report.get("evaluation_design") == "VALIDATION"
+        else "No trading candidate clears the downside objective"
         if not (report.get("research_leaders") or report["research_champion"])
         else "A candidate clears the synthetic downside objective",
         "research_question": "Do trained policies improve matched simulated outcomes relative to deterministic controls and abstention?",

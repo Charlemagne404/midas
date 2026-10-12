@@ -89,3 +89,24 @@ def test_economic_report_requires_frozen_inputs_and_valid_digest(tmp_path):
         report["policies"] = ["tampered"]
         atomic_json(directory / "economics.json", report)
         assert client.get("/api/arena/tournaments/example/economics").status_code == 409
+
+
+def test_validation_policy_comparison_is_not_counted_as_independent(tmp_path):
+    atomic_json(
+        tmp_path / "models" / "model-a" / "manifest.json",
+        {"policy_evaluations": [{"tournament_id": "validation"}, {"tournament_id": "fresh"}]},
+    )
+    atomic_json(
+        tmp_path / "tournaments" / "validation" / "manifest.json",
+        {"evaluation_design": "VALIDATION"},
+    )
+    atomic_json(
+        tmp_path / "tournaments" / "fresh" / "manifest.json",
+        {"evaluation_design": "FRESH_GENERATOR_CHALLENGE"},
+    )
+    app = FastAPI()
+    app.include_router(router(tmp_path))
+    with TestClient(app) as client:
+        record = client.get("/api/arena/models/model-a").json()
+        assert record["independent_policy_evaluations"] == 1
+        assert record["validation_policy_comparisons"] == 1

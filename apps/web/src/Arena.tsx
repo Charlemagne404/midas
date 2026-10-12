@@ -52,6 +52,8 @@ type Dataset = {
   };
 };
 type Model = {
+  independent_policy_evaluations?: number;
+  validation_policy_comparisons?: number;
   model_id: string;
   label_target?: string;
   family: string;
@@ -126,6 +128,7 @@ type Rank = {
   unsupported_decisions?: number;
 };
 type Tournament = {
+  policy_bindings?: Record<string, { model_id: string; threshold: number; size: string }>;
   tournament_id: string;
   base_episodes: number;
   variants: number;
@@ -165,6 +168,18 @@ type Replay = {
   decisions: unknown[];
 };
 type Overview = {
+  searches?: {
+    search_id: string;
+    state: string;
+    validation_tournament: string | null;
+    test_tournament: string | null;
+    selection: {
+      policy: string;
+      gate: { threshold: number; size: string } | null;
+      reason: string;
+    } | null;
+    limitations: string[];
+  }[];
   datasets: Dataset[];
   models: Model[];
   tournaments: Tournament[];
@@ -266,6 +281,7 @@ export function Arena() {
   const [steps, setSteps] = useState(4096);
   const [episodes, setEpisodes] = useState(1000);
   const [labelTarget, setLabelTarget] = useState('completion');
+  const [searchModelId, setSearchModelId] = useState('');
   const [economicParameter, setEconomicParameter] =
     useState<EconomicParameter>('operating_per_fill');
   const [scenarioFilter, setScenarioFilter] = useState('');
@@ -279,6 +295,12 @@ export function Arena() {
   });
   const data = overview.data;
   const selectedDataset = datasetId || data?.datasets[0]?.dataset_id || '';
+  const selectedSearchModel =
+    searchModelId ||
+    data?.models.find(
+      (entry) => entry.dataset_id === selectedDataset && entry.label_target === 'unmatched',
+    )?.model_id ||
+    '';
   const selectedTournament = tournamentId || data?.tournaments[0]?.tournament_id || '';
   const model = useQuery({
     queryKey: ['arena-model', modelId],
@@ -836,11 +858,13 @@ export function Arena() {
           {model.data && (
             <Section title={`${model.data.family.toUpperCase()} / ${model.data.model_id}`}>
               <p className="lab-note">
-                {model.data.policy_evaluations?.length
-                  ? `Policy independently evaluated in ${model.data.policy_evaluations.length} tournament(s).`
-                  : model.data.test
-                    ? 'Frozen independent test evaluated.'
-                    : 'Independent test not yet evaluated.'}{' '}
+                {model.data.independent_policy_evaluations
+                  ? `Policy independently evaluated in ${model.data.independent_policy_evaluations} tournament(s).`
+                  : model.data.validation_policy_comparisons
+                    ? 'Validation policy comparisons only; independent policy evaluation pending.'
+                    : model.data.test
+                      ? 'Frozen independent test evaluated.'
+                      : 'Independent test not yet evaluated.'}{' '}
                 {model.data.timesteps
                   ? `${model.data.timesteps} PPO transitions / ${model.data.training_episodes} completed training episodes.`
                   : `Execution ${model.data.label_target ?? 'completion'} classifier.`}
@@ -1151,14 +1175,26 @@ export function Arena() {
                           <td>
                             {entry.rank != null && <span className="badge">Rank {entry.rank}</span>}{' '}
                             <button
-                              disabled={!entry.policy.startsWith('model-')}
+                              disabled={
+                                !entry.policy.startsWith('model-') &&
+                                !tournament.data?.policy_bindings?.[entry.policy]
+                              }
                               onClick={() => {
-                                setModelId(entry.policy);
+                                setModelId(
+                                  tournament.data?.policy_bindings?.[entry.policy]?.model_id ??
+                                    entry.policy,
+                                );
                                 setTab('Model registry');
                               }}
                             >
                               {entry.policy}
                             </button>
+                            {tournament.data?.policy_bindings?.[entry.policy] && (
+                              <small>
+                                Threshold {tournament.data.policy_bindings[entry.policy].threshold}{' '}
+                                · {tournament.data.policy_bindings[entry.policy].size} size
+                              </small>
+                            )}
                           </td>
                           <td>{n(entry.mean_pnl)}</td>
                           <td>
@@ -1539,6 +1575,97 @@ export function Arena() {
       )}
       {tab === 'Research director' && (
         <>
+          <Section title="Risk threshold and sizing search">
+            <p className="lab-note">
+              Compare eight preregistered gates on validation scenarios, then evaluate the selected
+              gate once on unused seeds. No-trade is selected when no gate clears downside and
+              paired uncertainty. Scores refer to full proposals; half-size execution is not
+              separately calibrated.
+            </p>
+            <div className="lab-controls">
+              <label>
+                Risk predictor
+                <select
+                  aria-label="Risk predictor"
+                  value={selectedSearchModel}
+                  onChange={(event) => setSearchModelId(event.target.value)}
+                >
+                  {!selectedSearchModel && (
+                    <option value="">Train an unmatched-risk predictor first</option>
+                  )}
+                  {data?.models
+                    .filter(
+                      (entry) =>
+                        entry.dataset_id === selectedDataset && entry.label_target === 'unmatched',
+                    )
+                    .map((entry) => (
+                      <option key={entry.model_id} value={entry.model_id}>
+                        {entry.family} · {entry.model_id}
+                      </option>
+                    ))}
+                </select>
+              </label>
+              <button
+                disabled={!selectedSearchModel || submit.isPending}
+                onClick={() =>
+                  submit.mutate({
+                    configuration: {
+                      kind: 'policy_search',
+                      policy_search: { dataset_id: selectedDataset, model_id: selectedSearchModel },
+                      max_wall_seconds: 5400,
+                    },
+                  })
+                }
+              >
+                Run validation policy search
+              </button>
+            </div>
+            {data?.searches?.map((search) => (
+              <article className="arena-finding" key={search.search_id}>
+                <h3>
+                  {search.search_id} · <State value={search.state} />
+                </h3>
+                <p>
+                  {search.selection
+                    ? search.selection.gate
+                      ? `Selected maximum risk ${search.selection.gate.threshold}, ${search.selection.gate.size} sizing.`
+                      : 'Selected no-trade.'
+                    : 'Selection pending validation outcomes.'}
+                </p>
+                {search.selection && <p className="lab-note">{search.selection.reason}</p>}
+                <div className="lab-controls">
+                  <a
+                    href={`/api/arena/searches/${search.search_id}`}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Frozen search evidence
+                  </a>
+                  {[search.validation_tournament, search.test_tournament]
+                    .filter(Boolean)
+                    .map((id) => (
+                      <button
+                        key={id}
+                        onClick={() => {
+                          setTournamentId(id ?? '');
+                          setTab('Tournaments');
+                        }}
+                      >
+                        Inspect {id === search.validation_tournament ? 'validation' : 'fresh test'}
+                      </button>
+                    ))}
+                </div>
+                <details>
+                  <summary>Selection limits</summary>
+                  {search.limitations.map((limit) => (
+                    <p className="lab-note" key={limit}>
+                      {limit}
+                    </p>
+                  ))}
+                </details>
+              </article>
+            ))}
+          </Section>
           <Section title="Bounded research director">
             <p className="lab-note">
               A preregistered rule selects candidates using validation only, then evaluates fresh

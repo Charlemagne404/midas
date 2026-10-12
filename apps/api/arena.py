@@ -30,12 +30,34 @@ def router(root: Path) -> APIRouter:
 
         return artifact_path(root, kind, identity)
 
+    def evaluation_counts(record: dict[str, Any]) -> None:
+        independent = validation = 0
+        for evaluation in record.get("policy_evaluations", []):
+            file = path("tournaments", evaluation["tournament_id"]) / "manifest.json"
+            if file.exists():
+                design = json.loads(file.read_text()).get("evaluation_design")
+                validation += int(design == "VALIDATION")
+                independent += int(design in {"TEST", "FRESH_GENERATOR_CHALLENGE"})
+        record["independent_policy_evaluations"] = independent
+        record["validation_policy_comparisons"] = validation
+
     def catalog(kind: str) -> list[dict[str, Any]]:
         values = []
         for manifest in sorted(
             (root / kind).glob("*/manifest.json"), key=lambda p: p.stat().st_mtime, reverse=True
         )[:100]:
             record = json.loads(manifest.read_text())
+            if kind == "models":
+                evaluation_counts(record)
+            if kind == "searches" and record["state"] == "RUNNING" and record.get("owner_job_id"):
+                from midas.arena.jobs import inspect
+
+                owner = inspect(root, record["owner_job_id"])
+                if owner["state"] not in {"RUNNING", "QUEUED"}:
+                    record["state"] = (
+                        owner["state"] if owner["state"] != "COMPLETED" else "INCOMPLETE"
+                    )
+                    record["error"] = owner.get("error")
             quality_path = manifest.parent / "quality.json"
             if kind == "datasets" and quality_path.exists():
                 quality = json.loads(quality_path.read_text())
@@ -114,6 +136,7 @@ def router(root: Path) -> APIRouter:
             "recorded_sources": recorded_sources,
             "sweeps": catalog("sweeps"),
             "directors": catalog("directors"),
+            "searches": catalog("searches"),
         }
 
     @api.get("")
@@ -138,12 +161,19 @@ def router(root: Path) -> APIRouter:
             lambda: json.loads((path("directors", identity) / "manifest.json").read_text())
         )
 
+    @api.get("/searches/{identity}")
+    async def policy_search(identity: str) -> Any:
+        return await call(
+            lambda: json.loads((path("searches", identity) / "manifest.json").read_text())
+        )
+
     @api.get("/models/{identity}")
     async def model(identity: str) -> Any:
         def read() -> Any:
             directory = path("models", identity)
             if (directory / "manifest.json").exists():
                 result = json.loads((directory / "manifest.json").read_text())
+                evaluation_counts(result)
                 if (directory / "diagnostics.json").exists():
                     diagnostics = json.loads((directory / "diagnostics.json").read_text())
                     if diagnostics["model_artifact_sha256"] != result["artifact_sha256"]:

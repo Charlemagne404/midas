@@ -1,0 +1,30 @@
+{
+  "created_at": 1791787383.4897246,
+  "question": "Can validation-selected unmatched-risk thresholds and full/half sizing improve the declared downside objective?",
+  "configuration": {
+    "dataset_id": "dataset-f53981b7dd24c1521ce749b1",
+    "model_id": "model-131794f0434945a286163323",
+    "thresholds": [
+      0.05,
+      0.1,
+      0.25,
+      0.5
+    ],
+    "sizes": [
+      "full",
+      "half"
+    ],
+    "validation_episodes": 160,
+    "challenge_seed": 93071,
+    "challenge_episodes": 100
+  },
+  "known_validation_generator_groups": 139,
+  "selection": "Require positive score relative to no-trade and paired episode mean CI lower bound >0; maximize mean minus 5% tail loss. Ties prefer half sizing then lower maximum-risk threshold. If none qualify, select no-trade.",
+  "stopping_condition": "One matched validation league, freeze selection, one new-seed test; no final-test retuning.",
+  "limitations": [
+    "Synthetic hypothetical fills only.",
+    "Model was selected earlier using validation classification metrics, so validation selection has optimism.",
+    "Risk scores refer to full proposals; half-size execution is not independently calibrated.",
+    "Do not infer guaranteed loss bounds from risk thresholds or bootstrap intervals."
+  ]
+}

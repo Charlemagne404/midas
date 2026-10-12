@@ -3,7 +3,7 @@ import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 test('build, train, inspect and evaluate genuine Arena artifacts', async ({ page }) => {
-  test.setTimeout(120000);
+  test.setTimeout(300000);
   await page.goto('/');
   await page.getByRole('button', { name: 'Arena', exact: true }).click();
   await expect(
@@ -92,4 +92,15 @@ test('build, train, inspect and evaluate genuine Arena artifacts', async ({ page
   await page.getByRole('button', { name: 'Next event', exact: true }).click();
   await expect(page.getByText('Event 2 /', { exact: false })).toBeVisible();
   await page.screenshot({ path: '../../docs/arena-replay.png', fullPage: true });
+  await page.getByRole('tab', { name: 'Research director', exact: true }).click();
+  await expect(page.getByLabel('Risk predictor', { exact: true })).not.toHaveValue('');
+  await page.getByRole('button', { name: 'Run validation policy search', exact: true }).click();
+  await expect
+    .poll(async () => (await (await page.request.get('/api/arena')).json()).searches[0]?.state, {
+      timeout: 180000,
+    })
+    .toBe('COMPLETED');
+  await expect(page.getByText('Selected no-trade.', { exact: true })).toBeVisible({
+    timeout: 15000,
+  });
 });

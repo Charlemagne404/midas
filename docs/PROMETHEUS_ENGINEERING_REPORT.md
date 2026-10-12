@@ -661,3 +661,60 @@ The verified negative result is also published in Arena Research Findings as
 plan lineage, uncertainty and the preregistered follow-up recommendation.
 This synthesis does not promote or refit a model. The final deployed risk-plan
 cost chart and terminal dashboard are captured in `arena-economic-sensitivity.png`.
+
+## Validation-only threshold and sizing search implementation
+
+Tournament specifications now accept up to twelve distinct hash-identified
+supervised gates. Each gate binds one immutable model to a probability threshold
+and full/half sizing. Weights are loaded once and remain unchanged. Gate IDs,
+configs, underlying weight hashes, target direction and requested sizing are
+preserved in rows/manifests/replay explanations. Half-size proposals use the
+existing SizedStrategy and production risk admission. Scores still refer to
+full proposals; reduced-size execution is not separately calibrated.
+
+`policy_search.py` runs exactly two stages: a matched validation league, then a
+single new-seed evaluation of the frozen selected policy. It permits one to
+twelve predefined gates. Candidate eligibility requires no invariants, at least
+30 validation groups, positive downside score versus no-trade and paired mean
+bootstrap CI lower bound >0. Selection maximizes score; score ties prefer half
+size then lower maximum risk. If none qualifies, it selects no-trade. Final test
+outcomes cannot alter the gate or weights. Fresh seeds cannot overlap any frozen
+dataset or registered completed/partial challenge range. Completed stages are
+reused by recovery with config/source checks. Interrupted partial results cannot
+be treated as completed tournaments.
+
+Validation tournaments retain rankings/metrics but cannot designate an independent
+research champion. API/model detail counts distinguish validation policy
+comparisons from independent evaluations; a focused regression checks this.
+Supervised search jobs retain owner identity, phase progress, source snapshots,
+existing one-CPU worker lease, pressure/cancellation checks and wall/memory/disk
+budgets. API catalogues and `/api/arena/searches/{id}` expose real artifacts.
+The Research director tab can launch searches, show selected/no-trade decisions,
+link both stages and open frozen specifications. Gate leaderboard rows identify
+threshold/size and link the underlying model.
+
+Focused engine/search/job gate: nine passed in 89.10 seconds, including a genuine
+risk fit, four-gate validation league and fresh evaluation with immutable weights.
+Additional tests cover source-seed exclusion and deterministic tie/uncertainty
+selection. Full gate: **288 passed / one PostgreSQL skip** in 295.36 seconds, one
+existing Starlette warning. Five API tests pass after the evaluation-count
+projection change, including the newly added independence regression. Strict
+mypy (61 source files) and Ruff pass. Frontend build/lint and four unit tests pass;
+the prior Arena workflow passed. The expanded real-search browser test is still
+running and remains an explicit gate.
+
+`PROMETHEUS_POLICY_SEARCH_PREREGISTRATION.json` fixes the next production question
+before execution: current risk dataset/model, thresholds 0.05/0.1/0.25/0.5, full
+and half sizes, all 139 source-generator validation groups under the 160-group
+cap, then 100 fresh identities beginning seed 93071. No final-challenge tuning.
+Validation selection is optimistic and does not establish generalization.
+
+Expanded browser gate passed in 3.8 minutes, including a real eight-gate search,
+frozen no-trade selection on a deliberately small validation set and 1200 fresh
+control variants. Its systemd worker is verified terminal. A subsequent recovery
+fix transfers search owner identity to a resumed worker while reusing completed
+stages; **14 focused search/API/job tests passed** in 82.09 seconds after this
+change. The earlier full gate remains 288 passed / one skip; it preceded the
+ownership fix and the additional API-count regression. Final Ruff/mypy and
+frontend build/lint pass. Source and weights are ready for the preregistered
+production comparison; no production search result is claimed yet.

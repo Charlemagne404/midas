@@ -17,6 +17,7 @@ from midas.arena.artifacts import artifact_path, atomic_bytes, atomic_json, sha2
 from midas.arena.datasets import DatasetSpec, research_hash
 from midas.arena.director import DirectorSpec
 from midas.arena.evolution import SweepSpec
+from midas.arena.policy_search import PolicySearchSpec
 from midas.arena.rl import RLSpec
 from midas.arena.supervised import TrainingSpec
 from midas.arena.tournaments import TournamentSpec
@@ -33,6 +34,7 @@ class JobSpec(Model):
         "sweep",
         "director",
         "diagnostics",
+        "policy_search",
     ]
     dataset: DatasetSpec | None = None
     training: TrainingSpec | None = None
@@ -41,6 +43,7 @@ class JobSpec(Model):
     tournament: TournamentSpec | None = None
     sweep: SweepSpec | None = None
     director: DirectorSpec | None = None
+    policy_search: PolicySearchSpec | None = None
     max_wall_seconds: int = Field(default=1800, ge=10, le=7200)
 
     @model_validator(mode="after")
@@ -54,8 +57,18 @@ class JobSpec(Model):
             "tournament": "tournament",
             "sweep": "sweep",
             "director": "director",
+            "policy_search": "policy_search",
         }[self.kind]
-        for field in ("dataset", "training", "model_id", "rl", "tournament", "sweep", "director"):
+        for field in (
+            "dataset",
+            "training",
+            "model_id",
+            "rl",
+            "tournament",
+            "sweep",
+            "director",
+            "policy_search",
+        ):
             if (getattr(self, field) is not None) != (field == required):
                 raise ValueError(f"{self.kind} job requires only {required}")
         return self
@@ -211,6 +224,8 @@ def _run(root: Path, identity: str) -> None:
         atomic_json(directory / "job.json", record)
 
     class Progress:
+        job_id = identity
+
         def __call__(self, done: int, total: int) -> None:
             publish(done, total)
 
@@ -262,6 +277,12 @@ def _run(root: Path, identity: str) -> None:
                 assert spec.tournament is not None
                 result = run_tournament(root, spec.tournament, progress)
                 record["result"] = {"tournament_id": result["tournament_id"]}
+            elif spec.kind == "policy_search":
+                from midas.arena.policy_search import run_search
+
+                assert spec.policy_search is not None
+                result = run_search(root, spec.policy_search, progress)
+                record["result"] = {"search_id": result["search_id"]}
             elif spec.kind == "diagnostics":
                 from midas.arena.diagnostics import diagnose
 
