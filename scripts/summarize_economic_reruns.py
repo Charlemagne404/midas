@@ -6,7 +6,7 @@ import time
 from pathlib import Path
 from typing import Any
 
-from midas.arena.artifacts import artifact_path, sha256
+from midas.arena.artifacts import artifact_path, atomic_json, sha256
 from midas.economics.attestation import digest
 
 from scripts.capture_public_series import publish_exclusive
@@ -78,6 +78,23 @@ def summarize(root: Path, job_references: dict[str, Any], plan: dict[str, Any]) 
     }
 
 
+def attach(root: Path, report: dict[str, Any]) -> None:
+    baseline = next(c["tournament_id"] for c in report["conditions"] if c["name"] == "baseline")
+    destination = artifact_path(root, "tournaments", baseline) / "economic-regimes.json"
+    payload = json.dumps(report, sort_keys=True, indent=2, allow_nan=False).encode()
+    if destination.exists():
+        if destination.read_bytes() != payload:
+            raise ValueError("Existing frozen study differs; cannot replace")
+    else:
+        publish_exclusive(destination, payload)
+    for condition in report["conditions"]:
+        atomic_json(
+            artifact_path(root, "tournaments", condition["tournament_id"])
+            / "economic-study-reference.json",
+            {"baseline_tournament_id": baseline, "report_sha256": sha256(destination)},
+        )
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, default=Path("data/arena"))
@@ -88,6 +105,7 @@ if __name__ == "__main__":
         "--plan", type=Path, default=Path("docs/PROMETHEUS_ECONOMIC_RERUN_PREREGISTRATION.json")
     )
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--attach", action="store_true")
     args = parser.parse_args()
     report = summarize(
         args.root, json.loads(args.jobs.read_text()), json.loads(args.plan.read_text())
@@ -95,6 +113,8 @@ if __name__ == "__main__":
     publish_exclusive(
         args.output, json.dumps(report, sort_keys=True, indent=2, allow_nan=False).encode()
     )
+    if args.attach:
+        attach(args.root, report)
     print(
         json.dumps(
             {

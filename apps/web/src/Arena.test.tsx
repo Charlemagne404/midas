@@ -198,3 +198,85 @@ it('submits declared economic perturbations before a tournament rerun', async ()
   });
   client.clear();
 });
+
+it('renders a verified study with a shared group denominator and paired changes', async () => {
+  const rank = {
+    policy: 'no_trade',
+    rank: 1,
+    mean_pnl: 0,
+    score: 0,
+    cvar_05_loss: 0,
+    worst_loss: 0,
+    no_trade_fraction: 1,
+    mean_pnl_episode_bootstrap_95: [0, 0],
+    quantiles: [0, 0, 0, 0, 0],
+    max_drawdown: 0,
+    unsupported_decisions: 0,
+  };
+  const tournament = {
+    tournament_id: 'baseline',
+    base_episodes: 2,
+    variants: 6,
+    leaderboard: [rank],
+    configuration: {},
+    paired: [],
+    conclusion: 'Fixture',
+    ranking_objective: 'Downside objective',
+    uncertainty_note: 'Shared groups',
+  };
+  const overview = {
+    datasets: [],
+    models: [],
+    jobs: [],
+    findings: [],
+    tournaments: [tournament],
+    dependencies: {},
+    health: { memory_mb: {}, worker_cpu_cores: 1, worker_memory_mb: 4096 },
+  };
+  const study = {
+    study_id: 'study',
+    source_groups: 2,
+    correlated_variants: 12,
+    conditions: [
+      { name: 'baseline', tournament_id: 'baseline', leaderboard: [rank] },
+      { name: 'half_depth', tournament_id: 'depth', leaderboard: [rank] },
+    ],
+    paired_comparisons: {
+      half_depth: {
+        policies: [{ policy: 'no_trade', mean_pnl_difference: 0, episode_bootstrap_95: [0, 0] }],
+      },
+    },
+    limitations: ['Conditions share source identities'],
+    interpretation: 'Hypothetical economics only',
+  };
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (url: string) => {
+      const value =
+        url === '/api/arena'
+          ? overview
+          : url.endsWith('/economic-regimes')
+            ? study
+            : url.endsWith('/economics')
+              ? null
+              : url.includes('/rows?')
+                ? { rows: [], total: 0 }
+                : tournament;
+      return new Response(JSON.stringify(value), { status: 200 });
+    }),
+  );
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  render(
+    <QueryClientProvider client={client}>
+      <Arena />
+    </QueryClientProvider>,
+  );
+  fireEvent.click(await screen.findByRole('tab', { name: 'Tournaments' }));
+  expect(
+    await screen.findByRole('heading', { name: 'Verified economic regime reruns' }),
+  ).toBeInTheDocument();
+  expect(screen.getByText(/2 shared source groups \/ 12 correlated variants/)).toBeInTheDocument();
+  expect(screen.getByText('Conditions share source identities')).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'half depth' })).toBeInTheDocument();
+  client.clear();
+});

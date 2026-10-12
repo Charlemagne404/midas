@@ -1,3 +1,4 @@
+import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from midas.arena.artifacts import atomic_json
@@ -110,3 +111,40 @@ def test_validation_policy_comparison_is_not_counted_as_independent(tmp_path):
         record = client.get("/api/arena/models/model-a").json()
         assert record["independent_policy_evaluations"] == 1
         assert record["validation_policy_comparisons"] == 1
+
+
+def test_economic_study_endpoint_verifies_report_and_every_condition(tmp_path):
+
+    from midas.arena.artifacts import sha256
+
+    from scripts.summarize_economic_reruns import attach
+
+    for identity in ("baseline", "depth"):
+        folder = tmp_path / "tournaments" / identity
+        atomic_json(folder / "rows.json", [])
+        atomic_json(
+            folder / "manifest.json",
+            {"source_hash": "source", "rows_sha256": sha256(folder / "rows.json")},
+        )
+    report = {
+        "study_id": "study",
+        "source_hash": "source",
+        "conditions": [
+            {
+                "name": name,
+                "tournament_id": identity,
+                "rows_sha256": sha256(tmp_path / "tournaments" / identity / "rows.json"),
+            }
+            for name, identity in [("baseline", "baseline"), ("half_depth", "depth")]
+        ],
+    }
+    attach(tmp_path, report)
+    app = FastAPI()
+    app.include_router(router(tmp_path))
+    with TestClient(app) as client:
+        response = client.get("/api/arena/tournaments/depth/economic-regimes")
+        assert response.status_code == 200 and response.json()["study_id"] == "study"
+        (tmp_path / "tournaments/baseline/rows.json").write_text("[1]")
+        assert client.get("/api/arena/tournaments/depth/economic-regimes").status_code == 409
+    with pytest.raises(ValueError, match="replace"):
+        attach(tmp_path, {**report, "study_id": "changed"})

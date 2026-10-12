@@ -1,0 +1,1222 @@
+{
+  "analysis_version": "economic-reruns-1",
+  "conditions": [
+    {
+      "economic_regime": {
+        "additional_submission_latency_ms": 200,
+        "costs": null,
+        "depth_multiplier": "1",
+        "taker_fee_rate": null,
+        "version": "economic-regime-1"
+      },
+      "leaderboard": [
+        {
+          "attempted_trades": 0,
+          "average_exposure_duration_ms": 0.0,
+          "base_episodes": 100,
+          "by_execution": {
+            "conservative": 0.0,
+            "optimistic": 0.0,
+            "standard": 0.0
+          },
+          "completed_two_leg_positions": 0,
+          "cvar_05_loss": 0,
+          "invariant_violations": 0,
+          "losing_fraction": 0.0,
+          "max_drawdown": 0.0,
+          "mean_capital_utilization": 0.0,
+          "mean_inference_latency_ms": 0.00044457668471815335,
+          "mean_pnl": 0.0,
+          "mean_pnl_episode_bootstrap_95": [
+            0.0,
+            0.0
+          ],
+          "mean_runtime_ms": 33.89160710057089,
+          "median_pnl": 0.0,
+          "no_trade_fraction": 1.0,
+          "partial_orders": 0,
+          "policy": "no_trade",
+          "profitable_fraction": 0.0,
+          "quantiles": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "rank": 1,
+          "risk_interventions": 0,
+          "score": 0.0,
+          "total_pnl": 0.0,
+          "unmatched_exposure_incidents": 0,
+          "unsupported_decisions": 0,
+          "variants": 300,
+          "worst_loss": 0.0
+        },
+        {
+          "attempted_trades": 160,
+          "average_exposure_duration_ms": 199.35666666666665,
+          "base_episodes": 100,
+          "by_execution": {
+            "conservative": 0.0,
+            "optimistic": 1.3206890000000002,
+            "standard": 1.1359290000000002
+          },
+          "completed_two_leg_positions": 50,
+          "cvar_05_loss": 1.4618666666666664,
+          "invariant_violations": 0,
+          "losing_fraction": 0.02,
+          "max_drawdown": 0.11733128834355828,
+          "mean_capital_utilization": 0.04889222333333333,
+          "mean_inference_latency_ms": 0.1273264022616093,
+          "mean_pnl": 0.8188726666666666,
+          "mean_pnl_episode_bootstrap_95": [
+            0.45233093333333335,
+            1.180369583333333
+          ],
+          "mean_runtime_ms": 63.33318805360856,
+          "median_pnl": 0.0,
+          "no_trade_fraction": 0.6366666666666667,
+          "partial_orders": 34,
+          "policy": "gate-f12a4e29a05e5a4ce18f",
+          "profitable_fraction": 0.22,
+          "quantiles": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            5.664760000000005
+          ],
+          "rank": 2,
+          "risk_interventions": 51,
+          "score": -0.6429939999999998,
+          "total_pnl": 245.66179999999997,
+          "unmatched_exposure_incidents": 72,
+          "unsupported_decisions": 137,
+          "variants": 300,
+          "worst_loss": -7.92
+        },
+        {
+          "attempted_trades": 348,
+          "average_exposure_duration_ms": 436.21666666666664,
+          "base_episodes": 100,
+          "by_execution": {
+            "conservative": -0.0682,
+            "optimistic": 0.8191449999999999,
+            "standard": 0.8903319999999999
+          },
+          "completed_two_leg_positions": 52,
+          "cvar_05_loss": 1.9066,
+          "invariant_violations": 0,
+          "losing_fraction": 0.04,
+          "max_drawdown": 0.05990602975724354,
+          "mean_capital_utilization": 0.07029942,
+          "mean_inference_latency_ms": 0.0008032229656930126,
+          "mean_pnl": 0.5470923333333334,
+          "mean_pnl_episode_bootstrap_95": [
+            0.29858622500000004,
+            0.7686637833333334
+          ],
+          "mean_runtime_ms": 102.77357884818532,
+          "median_pnl": 0.0,
+          "no_trade_fraction": 0.14,
+          "partial_orders": 40,
+          "policy": "conservative",
+          "profitable_fraction": 0.24,
+          "quantiles": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            3.8864
+          ],
+          "rank": 3,
+          "risk_interventions": 48,
+          "score": -1.3595076666666666,
+          "total_pnl": 164.1277,
+          "unmatched_exposure_incidents": 84,
+          "unsupported_decisions": 0,
+          "variants": 300,
+          "worst_loss": -3.96
+        },
+        {
+          "attempted_trades": 366,
+          "average_exposure_duration_ms": 529.9766666666667,
+          "base_episodes": 100,
+          "by_execution": {
+            "conservative": 0.05804999999999999,
+            "optimistic": 1.4218889999999995,
+            "standard": 1.1947290000000002
+          },
+          "completed_two_leg_positions": 51,
+          "cvar_05_loss": 3.2796000000000007,
+          "invariant_violations": 0,
+          "losing_fraction": 0.05333333333333334,
+          "max_drawdown": 0.14396423248882265,
+          "mean_capital_utilization": 0.09632373999999999,
+          "mean_inference_latency_ms": 0.0008098919837114712,
+          "mean_pnl": 0.8915559999999999,
+          "mean_pnl_episode_bootstrap_95": [
+            0.4843885166666667,
+            1.2674184499999999
+          ],
+          "mean_runtime_ms": 88.67095581352866,
+          "median_pnl": 0.0,
+          "no_trade_fraction": 0.32,
+          "partial_orders": 99,
+          "policy": "arbitrage",
+          "profitable_fraction": 0.32,
+          "quantiles": [
+            -0.8449999999999995,
+            0.0,
+            0.0,
+            0.9624999999999999,
+            5.664760000000005
+          ],
+          "rank": 4,
+          "risk_interventions": 162,
+          "score": -2.3880440000000007,
+          "total_pnl": 267.4668,
+          "unmatched_exposure_incidents": 112,
+          "unsupported_decisions": 0,
+          "variants": 300,
+          "worst_loss": -8.096
+        },
+        {
+          "attempted_trades": 264,
+          "average_exposure_duration_ms": 380.0733333333333,
+          "base_episodes": 100,
+          "by_execution": {
+            "conservative": -0.03131000000000001,
+            "optimistic": 0.569519,
+            "standard": 0.535379
+          },
+          "completed_two_leg_positions": 35,
+          "cvar_05_loss": 2.84304,
+          "invariant_violations": 0,
+          "losing_fraction": 0.04,
+          "max_drawdown": 0.09464893287967832,
+          "mean_capital_utilization": 0.05613467,
+          "mean_inference_latency_ms": 0.009017060095045182,
+          "mean_pnl": 0.35786266666666666,
+          "mean_pnl_episode_bootstrap_95": [
+            0.09346773333333332,
+            0.5913393333333333
+          ],
+          "mean_runtime_ms": 82.02958075640102,
+          "median_pnl": 0.0,
+          "no_trade_fraction": 0.46,
+          "partial_orders": 38,
+          "policy": "random",
+          "profitable_fraction": 0.17666666666666667,
+          "quantiles": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            3.814765000000003
+          ],
+          "rank": 5,
+          "risk_interventions": 75,
+          "score": -2.485177333333333,
+          "total_pnl": 107.3588,
+          "unmatched_exposure_incidents": 65,
+          "unsupported_decisions": 0,
+          "variants": 300,
+          "worst_loss": -6.516
+        }
+      ],
+      "name": "additional_200ms",
+      "rows_sha256": "921150cad8321e15154b85494bc57698eba7b5efcc50c9b9f3bed8b0cb2b6370",
+      "tournament_id": "tournament-c2726108b16543a796b9f202"
+    },
+    {
+      "economic_regime": null,
+      "leaderboard": [
+        {
+          "attempted_trades": 219,
+          "average_exposure_duration_ms": 248.88333333333333,
+          "base_episodes": 100,
+          "by_execution": {
+            "conservative": 0.09455,
+            "optimistic": 2.4649059999999996,
+            "standard": 1.184169
+          },
+          "completed_two_leg_positions": 71,
+          "cvar_05_loss": 0.7505333333333333,
+          "invariant_violations": 0,
+          "losing_fraction": 0.016666666666666666,
+          "max_drawdown": 0.1745107552967815,
+          "mean_capital_utilization": 0.07049672,
+          "mean_inference_latency_ms": 0.1716766030516564,
+          "mean_pnl": 1.247875,
+          "mean_pnl_episode_bootstrap_95": [
+            0.9117268833333333,
+            1.5954361583333332
+          ],
+          "mean_runtime_ms": 76.4511558652157,
+          "median_pnl": 0.0,
+          "no_trade_fraction": 0.4766666666666667,
+          "partial_orders": 63,
+          "policy": "gate-f12a4e29a05e5a4ce18f",
+          "profitable_fraction": 0.3433333333333333,
+          "quantiles": [
+            0.0,
+            0.0,
+            0.0,
+            1.32125,
+            7.7756
+          ],
+          "rank": 1,
+          "risk_interventions": 62,
+          "score": 0.4973416666666668,
+          "total_pnl": 374.3625,
+          "unmatched_exposure_incidents": 108,
+          "unsupported_decisions": 37,
+          "variants": 300,
+          "worst_loss": -4.96
+        },
+        {
+          "attempted_trades": 0,
+          "average_exposure_duration_ms": 0.0,
+          "base_episodes": 100,
+          "by_execution": {
+            "conservative": 0.0,
+            "optimistic": 0.0,
+            "standard": 0.0
+          },
+          "completed_two_leg_positions": 0,
+          "cvar_05_loss": 0,
+          "invariant_violations": 0,
+          "losing_fraction": 0.0,
+          "max_drawdown": 0.0,
+          "mean_capital_utilization": 0.0,
+          "mean_inference_latency_ms": 0.00044609067983747945,
+          "mean_pnl": 0.0,
+          "mean_pnl_episode_bootstrap_95": [
+            0.0,
+            0.0
+          ],
+          "mean_runtime_ms": 34.6412142777505,
+          "median_pnl": 0.0,
+          "no_trade_fraction": 1.0,
+          "partial_orders": 0,
+          "policy": "no_trade",
+          "profitable_fraction": 0.0,
+          "quantiles": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "rank": 2,
+          "risk_interventions": 0,
+          "score": 0.0,
+          "total_pnl": 0.0,
+          "unmatched_exposure_incidents": 0,
+          "unsupported_decisions": 0,
+          "variants": 300,
+          "worst_loss": 0.0
+        },
+        {
+          "attempted_trades": 348,
+          "average_exposure_duration_ms": 269.51,
+          "base_episodes": 100,
+          "by_execution": {
+            "conservative": -0.0461,
+            "optimistic": 2.28516,
+            "standard": 0.770732
+          },
+          "completed_two_leg_positions": 89,
+          "cvar_05_loss": 1.0536666666666668,
+          "invariant_violations": 0,
+          "losing_fraction": 0.023333333333333334,
+          "max_drawdown": 0.13429241924493227,
+          "mean_capital_utilization": 0.07029942,
+          "mean_inference_latency_ms": 0.0007620452448637003,
+          "mean_pnl": 1.003264,
+          "mean_pnl_episode_bootstrap_95": [
+            0.7574941333333334,
+            1.2103467666666665
+          ],
+          "mean_runtime_ms": 103.78302616629905,
+          "median_pnl": 0.0,
+          "no_trade_fraction": 0.14,
+          "partial_orders": 36,
+          "policy": "conservative",
+          "profitable_fraction": 0.3566666666666667,
+          "quantiles": [
+            0.0,
+            0.0,
+            0.0,
+            1.6268,
+            4.709535000000001
+          ],
+          "rank": 3,
+          "risk_interventions": 48,
+          "score": -0.05040266666666682,
+          "total_pnl": 300.9792,
+          "unmatched_exposure_incidents": 114,
+          "unsupported_decisions": 0,
+          "variants": 300,
+          "worst_loss": -3.96
+        },
+        {
+          "attempted_trades": 366,
+          "average_exposure_duration_ms": 366.48,
+          "base_episodes": 100,
+          "by_execution": {
+            "conservative": 0.08014999999999999,
+            "optimistic": 2.4649059999999996,
+            "standard": 1.319849
+          },
+          "completed_two_leg_positions": 71,
+          "cvar_05_loss": 1.7115333333333331,
+          "invariant_violations": 0,
+          "losing_fraction": 0.03333333333333333,
+          "max_drawdown": 0.1745107552967815,
+          "mean_capital_utilization": 0.09632373999999999,
+          "mean_inference_latency_ms": 0.0008553232570799688,
+          "mean_pnl": 1.2883016666666667,
+          "mean_pnl_episode_bootstrap_95": [
+            0.9113120916666666,
+            1.6655048749999999
+          ],
+          "mean_runtime_ms": 90.37486560506902,
+          "median_pnl": 0.0,
+          "no_trade_fraction": 0.32,
+          "partial_orders": 92,
+          "policy": "arbitrage",
+          "profitable_fraction": 0.38333333333333336,
+          "quantiles": [
+            0.0,
+            0.0,
+            0.0,
+            1.6575,
+            7.7756
+          ],
+          "rank": 4,
+          "risk_interventions": 162,
+          "score": -0.42323166666666645,
+          "total_pnl": 386.4905,
+          "unmatched_exposure_incidents": 125,
+          "unsupported_decisions": 0,
+          "variants": 300,
+          "worst_loss": -4.96
+        },
+        {
+          "attempted_trades": 264,
+          "average_exposure_duration_ms": 238.56666666666666,
+          "base_episodes": 100,
+          "by_execution": {
+            "conservative": -0.009210000000000012,
+            "optimistic": 1.609747,
+            "standard": 0.519059
+          },
+          "completed_two_leg_positions": 58,
+          "cvar_05_loss": 1.8663733333333334,
+          "invariant_violations": 0,
+          "losing_fraction": 0.02666666666666667,
+          "max_drawdown": 0.13429241924493227,
+          "mean_capital_utilization": 0.05613467,
+          "mean_inference_latency_ms": 0.009316757385108974,
+          "mean_pnl": 0.706532,
+          "mean_pnl_episode_bootstrap_95": [
+            0.4451128916666666,
+            0.928489075
+          ],
+          "mean_runtime_ms": 82.16436886228621,
+          "median_pnl": 0.0,
+          "no_trade_fraction": 0.46,
+          "partial_orders": 34,
+          "policy": "random",
+          "profitable_fraction": 0.25,
+          "quantiles": [
+            0.0,
+            0.0,
+            0.0,
+            0.025,
+            4.704
+          ],
+          "rank": 5,
+          "risk_interventions": 75,
+          "score": -1.1598413333333335,
+          "total_pnl": 211.95960000000002,
+          "unmatched_exposure_incidents": 83,
+          "unsupported_decisions": 0,
+          "variants": 300,
+          "worst_loss": -6.516
+        }
+      ],
+      "name": "baseline",
+      "rows_sha256": "26f728786a6114cc9257e00f8a421eb9ae5fc65536c3cefb80b494765f2d8344",
+      "tournament_id": "tournament-53f293c7fb66438ab43a6869"
+    },
+    {
+      "economic_regime": {
+        "additional_submission_latency_ms": 0,
+        "costs": null,
+        "depth_multiplier": "1",
+        "taker_fee_rate": "0.01",
+        "version": "economic-regime-1"
+      },
+      "leaderboard": [
+        {
+          "attempted_trades": 0,
+          "average_exposure_duration_ms": 0.0,
+          "base_episodes": 100,
+          "by_execution": {
+            "conservative": 0.0,
+            "optimistic": 0.0,
+            "standard": 0.0
+          },
+          "completed_two_leg_positions": 0,
+          "cvar_05_loss": 0,
+          "invariant_violations": 0,
+          "losing_fraction": 0.0,
+          "max_drawdown": 0.0,
+          "mean_capital_utilization": 0.0,
+          "mean_inference_latency_ms": 0.04455677848974509,
+          "mean_pnl": 0.0,
+          "mean_pnl_episode_bootstrap_95": [
+            0.0,
+            0.0
+          ],
+          "mean_runtime_ms": 34.342725940514356,
+          "median_pnl": 0.0,
+          "no_trade_fraction": 1.0,
+          "partial_orders": 0,
+          "policy": "gate-f12a4e29a05e5a4ce18f",
+          "profitable_fraction": 0.0,
+          "quantiles": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "rank": 1,
+          "risk_interventions": 0,
+          "score": 0.0,
+          "total_pnl": 0.0,
+          "unmatched_exposure_incidents": 0,
+          "unsupported_decisions": 366,
+          "variants": 300,
+          "worst_loss": 0.0
+        },
+        {
+          "attempted_trades": 0,
+          "average_exposure_duration_ms": 0.0,
+          "base_episodes": 100,
+          "by_execution": {
+            "conservative": 0.0,
+            "optimistic": 0.0,
+            "standard": 0.0
+          },
+          "completed_two_leg_positions": 0,
+          "cvar_05_loss": 0,
+          "invariant_violations": 0,
+          "losing_fraction": 0.0,
+          "max_drawdown": 0.0,
+          "mean_capital_utilization": 0.0,
+          "mean_inference_latency_ms": 0.0006559051966871179,
+          "mean_pnl": 0.0,
+          "mean_pnl_episode_bootstrap_95": [
+            0.0,
+            0.0
+          ],
+          "mean_runtime_ms": 33.876615005040854,
+          "median_pnl": 0.0,
+          "no_trade_fraction": 1.0,
+          "partial_orders": 0,
+          "policy": "no_trade",
+          "profitable_fraction": 0.0,
+          "quantiles": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "rank": 1,
+          "risk_interventions": 0,
+          "score": 0.0,
+          "total_pnl": 0.0,
+          "unmatched_exposure_incidents": 0,
+          "unsupported_decisions": 0,
+          "variants": 300,
+          "worst_loss": 0.0
+        },
+        {
+          "attempted_trades": 348,
+          "average_exposure_duration_ms": 269.51,
+          "base_episodes": 100,
+          "by_execution": {
+            "conservative": -0.046765499999999995,
+            "optimistic": 2.2356759,
+            "standard": 0.7497087
+          },
+          "completed_two_leg_positions": 89,
+          "cvar_05_loss": 1.0604793333333333,
+          "invariant_violations": 0,
+          "losing_fraction": 0.023333333333333334,
+          "max_drawdown": 0.1331733323297082,
+          "mean_capital_utilization": 0.070575929,
+          "mean_inference_latency_ms": 0.0007519166406598829,
+          "mean_pnl": 0.9795396999999999,
+          "mean_pnl_episode_bootstrap_95": [
+            0.7387423908333334,
+            1.183019305
+          ],
+          "mean_runtime_ms": 106.21431021970541,
+          "median_pnl": 0.0,
+          "no_trade_fraction": 0.14,
+          "partial_orders": 36,
+          "policy": "conservative",
+          "profitable_fraction": 0.3566666666666667,
+          "quantiles": [
+            0.0,
+            0.0,
+            0.0,
+            1.5609275,
+            4.600164000000001
+          ],
+          "rank": 3,
+          "risk_interventions": 48,
+          "score": -0.08093963333333343,
+          "total_pnl": 293.86190999999997,
+          "unmatched_exposure_incidents": 114,
+          "unsupported_decisions": 0,
+          "variants": 300,
+          "worst_loss": -3.98218
+        },
+        {
+          "attempted_trades": 366,
+          "average_exposure_duration_ms": 365.5366666666667,
+          "base_episodes": 100,
+          "by_execution": {
+            "conservative": 0.07675900000000001,
+            "optimistic": 1.4153532000000002,
+            "standard": 0.4109396
+          },
+          "completed_two_leg_positions": 40,
+          "cvar_05_loss": 1.722372,
+          "invariant_violations": 0,
+          "losing_fraction": 0.03333333333333333,
+          "max_drawdown": 0.17466660774299175,
+          "mean_capital_utilization": 0.062850481,
+          "mean_inference_latency_ms": 0.0008462714114492495,
+          "mean_pnl": 0.6343506,
+          "mean_pnl_episode_bootstrap_95": [
+            0.40161565416666667,
+            0.8707337483333333
+          ],
+          "mean_runtime_ms": 80.69780342494293,
+          "median_pnl": 0.0,
+          "no_trade_fraction": 0.49,
+          "partial_orders": 94,
+          "policy": "arbitrage",
+          "profitable_fraction": 0.2833333333333333,
+          "quantiles": [
+            0.0,
+            0.0,
+            0.0,
+            0.3413125,
+            4.423378500000002
+          ],
+          "rank": 4,
+          "risk_interventions": 213,
+          "score": -1.0880214000000001,
+          "total_pnl": 190.30518,
+          "unmatched_exposure_incidents": 95,
+          "unsupported_decisions": 0,
+          "variants": 300,
+          "worst_loss": -4.99422
+        },
+        {
+          "attempted_trades": 264,
+          "average_exposure_duration_ms": 238.33666666666667,
+          "base_episodes": 100,
+          "by_execution": {
+            "conservative": -0.010310500000000005,
+            "optimistic": 1.5096749,
+            "standard": 0.4402366
+          },
+          "completed_two_leg_positions": 54,
+          "cvar_05_loss": 1.8703193333333332,
+          "invariant_violations": 0,
+          "losing_fraction": 0.02666666666666667,
+          "max_drawdown": 0.1331733323297082,
+          "mean_capital_utilization": 0.05242671099999999,
+          "mean_inference_latency_ms": 0.009316874728981583,
+          "mean_pnl": 0.6465336666666667,
+          "mean_pnl_episode_bootstrap_95": [
+            0.38694289916666663,
+            0.8692402375
+          ],
+          "mean_runtime_ms": 82.29284935281612,
+          "median_pnl": 0.0,
+          "no_trade_fraction": 0.48,
+          "partial_orders": 34,
+          "policy": "random",
+          "profitable_fraction": 0.23666666666666666,
+          "quantiles": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            4.59432
+          ],
+          "rank": 5,
+          "risk_interventions": 81,
+          "score": -1.2237856666666667,
+          "total_pnl": 193.9601,
+          "unmatched_exposure_incidents": 79,
+          "unsupported_decisions": 0,
+          "variants": 300,
+          "worst_loss": -6.4999
+        }
+      ],
+      "name": "fee_coefficient_001",
+      "rows_sha256": "490dc28968a3848fcce0d476992edbaa90b38464d0697b7e76c92933ab01c6bc",
+      "tournament_id": "tournament-6eabcc71619c4f2989cd072d"
+    },
+    {
+      "economic_regime": {
+        "additional_submission_latency_ms": 0,
+        "costs": null,
+        "depth_multiplier": "0.5",
+        "taker_fee_rate": null,
+        "version": "economic-regime-1"
+      },
+      "leaderboard": [
+        {
+          "attempted_trades": 315,
+          "average_exposure_duration_ms": 375.27666666666664,
+          "base_episodes": 100,
+          "by_execution": {
+            "conservative": 0.07782499999999999,
+            "optimistic": 2.8707890000000003,
+            "standard": 1.344009
+          },
+          "completed_two_leg_positions": 83,
+          "cvar_05_loss": 0.49416666666666664,
+          "invariant_violations": 0,
+          "losing_fraction": 0.02666666666666667,
+          "max_drawdown": 0.1777205408886027,
+          "mean_capital_utilization": 0.09644711,
+          "mean_inference_latency_ms": 0.0008414759733048934,
+          "mean_pnl": 1.4308743333333334,
+          "mean_pnl_episode_bootstrap_95": [
+            1.0656065166666666,
+            1.768709883333333
+          ],
+          "mean_runtime_ms": 105.94571155573551,
+          "median_pnl": 0.0,
+          "no_trade_fraction": 0.17,
+          "partial_orders": 87,
+          "policy": "arbitrage",
+          "profitable_fraction": 0.42,
+          "quantiles": [
+            0.0,
+            0.0,
+            0.0,
+            1.9124999999999999,
+            7.795140000000004
+          ],
+          "rank": 1,
+          "risk_interventions": 66,
+          "score": 0.9367076666666667,
+          "total_pnl": 429.2623,
+          "unmatched_exposure_incidents": 134,
+          "unsupported_decisions": 0,
+          "variants": 300,
+          "worst_loss": -1.485
+        },
+        {
+          "attempted_trades": 197,
+          "average_exposure_duration_ms": 241.00333333333333,
+          "base_episodes": 100,
+          "by_execution": {
+            "conservative": 0.04099999999999999,
+            "optimistic": 2.8057890000000003,
+            "standard": 1.081369
+          },
+          "completed_two_leg_positions": 78,
+          "cvar_05_loss": 0.6202666666666666,
+          "invariant_violations": 0,
+          "losing_fraction": 0.023333333333333334,
+          "max_drawdown": 0.1777205408886027,
+          "mean_capital_utilization": 0.07255677666666666,
+          "mean_inference_latency_ms": 0.14129382831188628,
+          "mean_pnl": 1.309386,
+          "mean_pnl_episode_bootstrap_95": [
+            0.9593220666666666,
+            1.6469390666666666
+          ],
+          "mean_runtime_ms": 89.26572716077014,
+          "median_pnl": 0.0,
+          "no_trade_fraction": 0.37666666666666665,
+          "partial_orders": 46,
+          "policy": "gate-f12a4e29a05e5a4ce18f",
+          "profitable_fraction": 0.33,
+          "quantiles": [
+            0.0,
+            0.0,
+            0.0,
+            1.48,
+            7.795140000000004
+          ],
+          "rank": 2,
+          "risk_interventions": 10,
+          "score": 0.6891193333333333,
+          "total_pnl": 392.81579999999997,
+          "unmatched_exposure_incidents": 106,
+          "unsupported_decisions": 51,
+          "variants": 300,
+          "worst_loss": -2.24
+        },
+        {
+          "attempted_trades": 306,
+          "average_exposure_duration_ms": 73.75666666666666,
+          "base_episodes": 100,
+          "by_execution": {
+            "conservative": -0.02105,
+            "optimistic": 1.339277,
+            "standard": 0.575405
+          },
+          "completed_two_leg_positions": 67,
+          "cvar_05_loss": 0.22566666666666665,
+          "invariant_violations": 0,
+          "losing_fraction": 0.01,
+          "max_drawdown": 0.09825560697757209,
+          "mean_capital_utilization": 0.04279223,
+          "mean_inference_latency_ms": 0.0007515714553716991,
+          "mean_pnl": 0.6312106666666667,
+          "mean_pnl_episode_bootstrap_95": [
+            0.4521903666666666,
+            0.8083671833333334
+          ],
+          "mean_runtime_ms": 80.61219695780892,
+          "median_pnl": 0.0,
+          "no_trade_fraction": 0.4,
+          "partial_orders": 19,
+          "policy": "conservative",
+          "profitable_fraction": 0.25,
+          "quantiles": [
+            0.0,
+            0.0,
+            0.0,
+            0.11,
+            3.8962400000000024
+          ],
+          "rank": 3,
+          "risk_interventions": 15,
+          "score": 0.405544,
+          "total_pnl": 189.3632,
+          "unmatched_exposure_incidents": 78,
+          "unsupported_decisions": 0,
+          "variants": 300,
+          "worst_loss": -1.28
+        },
+        {
+          "attempted_trades": 0,
+          "average_exposure_duration_ms": 0.0,
+          "base_episodes": 100,
+          "by_execution": {
+            "conservative": 0.0,
+            "optimistic": 0.0,
+            "standard": 0.0
+          },
+          "completed_two_leg_positions": 0,
+          "cvar_05_loss": 0,
+          "invariant_violations": 0,
+          "losing_fraction": 0.0,
+          "max_drawdown": 0.0,
+          "mean_capital_utilization": 0.0,
+          "mean_inference_latency_ms": 0.0004995044270929481,
+          "mean_pnl": 0.0,
+          "mean_pnl_episode_bootstrap_95": [
+            0.0,
+            0.0
+          ],
+          "mean_runtime_ms": 33.04703250352759,
+          "median_pnl": 0.0,
+          "no_trade_fraction": 1.0,
+          "partial_orders": 0,
+          "policy": "no_trade",
+          "profitable_fraction": 0.0,
+          "quantiles": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "rank": 4,
+          "risk_interventions": 0,
+          "score": 0.0,
+          "total_pnl": 0.0,
+          "unmatched_exposure_incidents": 0,
+          "unsupported_decisions": 0,
+          "variants": 300,
+          "worst_loss": 0.0
+        },
+        {
+          "attempted_trades": 231,
+          "average_exposure_duration_ms": 245.55,
+          "base_episodes": 100,
+          "by_execution": {
+            "conservative": -0.044000000000000004,
+            "optimistic": 1.431275,
+            "standard": 0.5150770000000001
+          },
+          "completed_two_leg_positions": 57,
+          "cvar_05_loss": 0.9086666666666667,
+          "invariant_violations": 0,
+          "losing_fraction": 0.023333333333333334,
+          "max_drawdown": 0.09825560697757209,
+          "mean_capital_utilization": 0.04819925,
+          "mean_inference_latency_ms": 0.008152934620046013,
+          "mean_pnl": 0.6341173333333333,
+          "mean_pnl_episode_bootstrap_95": [
+            0.4320232666666666,
+            0.8347243499999999
+          ],
+          "mean_runtime_ms": 81.36159210155408,
+          "median_pnl": 0.0,
+          "no_trade_fraction": 0.46,
+          "partial_orders": 31,
+          "policy": "random",
+          "profitable_fraction": 0.24,
+          "quantiles": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            4.4919
+          ],
+          "rank": 5,
+          "risk_interventions": 24,
+          "score": -0.2745493333333334,
+          "total_pnl": 190.2352,
+          "unmatched_exposure_incidents": 79,
+          "unsupported_decisions": 0,
+          "variants": 300,
+          "worst_loss": -3.6
+        }
+      ],
+      "name": "half_depth",
+      "rows_sha256": "9568744c633dc4b1cb3d0dbdce4292c0f8307ed2367a0131332552e04c24cbc2",
+      "tournament_id": "tournament-dec3bf369483448b863e0857"
+    }
+  ],
+  "correlated_variants": 6000,
+  "created_at": 1791810285.9207323,
+  "interpretation": "Verified declared scenario transformations, frozen policies and replay accounting. Conditions share underlying scenarios; changes in actions and execution paths can alter fills. Synthetic observations establish neither empirical calibration nor real profitability.",
+  "limitations": [
+    "Synthetic economic coefficients are not observed fees or calibrated execution.",
+    "All four conditions reuse the same 100 groups; 6000 variants are correlated, not 6000 independent samples.",
+    "Training support uses feature ranges, not joint-distribution or probability calibration. Fee changes may force abstention because the model was trained at zero synthetic fees.",
+    "Different actions and latency alter execution noise; common seeds do not guarantee common fills."
+  ],
+  "paired_comparisons": {
+    "additional_200ms": {
+      "candidate": "tournament-c2726108b16543a796b9f202",
+      "control": "tournament-53f293c7fb66438ab43a6869",
+      "economic_regime_comparison": true,
+      "economic_regimes": [
+        null,
+        {
+          "additional_submission_latency_ms": 200,
+          "costs": null,
+          "depth_multiplier": "1",
+          "taker_fee_rate": null,
+          "version": "economic-regime-1"
+        }
+      ],
+      "interpretation": "Post-evaluation descriptive comparison; no model fitting, threshold selection or promotion. Execution variants are averaged within each base episode before bootstrapping.",
+      "policies": [
+        {
+          "base_episodes": 100,
+          "control_unsupported_decisions": 0,
+          "control_unsupported_requests_rejected_by_risk": 0,
+          "control_unsupported_trade_requests": 0,
+          "episode_bootstrap_95": [
+            -0.588726725,
+            -0.23169061666666688
+          ],
+          "mean_pnl_difference": -0.3967456666666667,
+          "nonzero_variant_differences": 25,
+          "paired_variants": 300,
+          "policy": "arbitrage",
+          "risk_rejection_reasons": {}
+        },
+        {
+          "base_episodes": 100,
+          "control_unsupported_decisions": 0,
+          "control_unsupported_requests_rejected_by_risk": 0,
+          "control_unsupported_trade_requests": 0,
+          "episode_bootstrap_95": [
+            -0.61459695,
+            -0.3078215833333335
+          ],
+          "mean_pnl_difference": -0.4561716666666667,
+          "nonzero_variant_differences": 43,
+          "paired_variants": 300,
+          "policy": "conservative",
+          "risk_rejection_reasons": {}
+        },
+        {
+          "base_episodes": 100,
+          "control_unsupported_decisions": 37,
+          "control_unsupported_requests_rejected_by_risk": 0,
+          "control_unsupported_trade_requests": 0,
+          "episode_bootstrap_95": [
+            -0.6124494666666668,
+            -0.26667761666666684
+          ],
+          "mean_pnl_difference": -0.4290023333333334,
+          "nonzero_variant_differences": 39,
+          "paired_variants": 300,
+          "policy": "gate-f12a4e29a05e5a4ce18f",
+          "risk_rejection_reasons": {}
+        },
+        {
+          "base_episodes": 100,
+          "control_unsupported_decisions": 0,
+          "control_unsupported_requests_rejected_by_risk": 0,
+          "control_unsupported_trade_requests": 0,
+          "episode_bootstrap_95": [
+            0.0,
+            0.0
+          ],
+          "mean_pnl_difference": 0.0,
+          "nonzero_variant_differences": 0,
+          "paired_variants": 300,
+          "policy": "no_trade",
+          "risk_rejection_reasons": {}
+        },
+        {
+          "base_episodes": 100,
+          "control_unsupported_decisions": 0,
+          "control_unsupported_requests_rejected_by_risk": 0,
+          "control_unsupported_trade_requests": 0,
+          "episode_bootstrap_95": [
+            -0.5287096333333333,
+            -0.19204077500000005
+          ],
+          "mean_pnl_difference": -0.3486693333333333,
+          "nonzero_variant_differences": 29,
+          "paired_variants": 300,
+          "policy": "random",
+          "risk_rejection_reasons": {}
+        }
+      ],
+      "row_hashes": [
+        "26f728786a6114cc9257e00f8a421eb9ae5fc65536c3cefb80b494765f2d8344",
+        "921150cad8321e15154b85494bc57698eba7b5efcc50c9b9f3bed8b0cb2b6370"
+      ]
+    },
+    "fee_coefficient_001": {
+      "candidate": "tournament-6eabcc71619c4f2989cd072d",
+      "control": "tournament-53f293c7fb66438ab43a6869",
+      "economic_regime_comparison": true,
+      "economic_regimes": [
+        null,
+        {
+          "additional_submission_latency_ms": 0,
+          "costs": null,
+          "depth_multiplier": "1",
+          "taker_fee_rate": "0.01",
+          "version": "economic-regime-1"
+        }
+      ],
+      "interpretation": "Post-evaluation descriptive comparison; no model fitting, threshold selection or promotion. Execution variants are averaged within each base episode before bootstrapping.",
+      "policies": [
+        {
+          "base_episodes": 100,
+          "control_unsupported_decisions": 0,
+          "control_unsupported_requests_rejected_by_risk": 0,
+          "control_unsupported_trade_requests": 0,
+          "episode_bootstrap_95": [
+            -1.0007662941666666,
+            -0.34415538916666666
+          ],
+          "mean_pnl_difference": -0.6539510666666666,
+          "nonzero_variant_differences": 126,
+          "paired_variants": 300,
+          "policy": "arbitrage",
+          "risk_rejection_reasons": {}
+        },
+        {
+          "base_episodes": 100,
+          "control_unsupported_decisions": 0,
+          "control_unsupported_requests_rejected_by_risk": 0,
+          "control_unsupported_trade_requests": 0,
+          "episode_bootstrap_95": [
+            -0.02809152249999998,
+            -0.019509360833333322
+          ],
+          "mean_pnl_difference": -0.023724299999999997,
+          "nonzero_variant_differences": 114,
+          "paired_variants": 300,
+          "policy": "conservative",
+          "risk_rejection_reasons": {}
+        },
+        {
+          "base_episodes": 100,
+          "control_unsupported_decisions": 37,
+          "control_unsupported_requests_rejected_by_risk": 0,
+          "control_unsupported_trade_requests": 0,
+          "episode_bootstrap_95": [
+            -1.628919525,
+            -0.9104284083333337
+          ],
+          "mean_pnl_difference": -1.2478749999999998,
+          "nonzero_variant_differences": 108,
+          "paired_variants": 300,
+          "policy": "gate-f12a4e29a05e5a4ce18f",
+          "risk_rejection_reasons": {}
+        },
+        {
+          "base_episodes": 100,
+          "control_unsupported_decisions": 0,
+          "control_unsupported_requests_rejected_by_risk": 0,
+          "control_unsupported_trade_requests": 0,
+          "episode_bootstrap_95": [
+            0.0,
+            0.0
+          ],
+          "mean_pnl_difference": 0.0,
+          "nonzero_variant_differences": 0,
+          "paired_variants": 300,
+          "policy": "no_trade",
+          "risk_rejection_reasons": {}
+        },
+        {
+          "base_episodes": 100,
+          "control_unsupported_decisions": 0,
+          "control_unsupported_requests_rejected_by_risk": 0,
+          "control_unsupported_trade_requests": 0,
+          "episode_bootstrap_95": [
+            -0.1330936675,
+            -0.01467411916666667
+          ],
+          "mean_pnl_difference": -0.059998333333333334,
+          "nonzero_variant_differences": 83,
+          "paired_variants": 300,
+          "policy": "random",
+          "risk_rejection_reasons": {}
+        }
+      ],
+      "row_hashes": [
+        "26f728786a6114cc9257e00f8a421eb9ae5fc65536c3cefb80b494765f2d8344",
+        "490dc28968a3848fcce0d476992edbaa90b38464d0697b7e76c92933ab01c6bc"
+      ]
+    },
+    "half_depth": {
+      "candidate": "tournament-dec3bf369483448b863e0857",
+      "control": "tournament-53f293c7fb66438ab43a6869",
+      "economic_regime_comparison": true,
+      "economic_regimes": [
+        null,
+        {
+          "additional_submission_latency_ms": 0,
+          "costs": null,
+          "depth_multiplier": "0.5",
+          "taker_fee_rate": null,
+          "version": "economic-regime-1"
+        }
+      ],
+      "interpretation": "Post-evaluation descriptive comparison; no model fitting, threshold selection or promotion. Execution variants are averaged within each base episode before bootstrapping.",
+      "policies": [
+        {
+          "base_episodes": 100,
+          "control_unsupported_decisions": 0,
+          "control_unsupported_requests_rejected_by_risk": 0,
+          "control_unsupported_trade_requests": 0,
+          "episode_bootstrap_95": [
+            -0.137560775,
+            0.4306299249999998
+          ],
+          "mean_pnl_difference": 0.14257266666666663,
+          "nonzero_variant_differences": 131,
+          "paired_variants": 300,
+          "policy": "arbitrage",
+          "risk_rejection_reasons": {}
+        },
+        {
+          "base_episodes": 100,
+          "control_unsupported_decisions": 0,
+          "control_unsupported_requests_rejected_by_risk": 0,
+          "control_unsupported_trade_requests": 0,
+          "episode_bootstrap_95": [
+            -0.48620728333333335,
+            -0.258297975
+          ],
+          "mean_pnl_difference": -0.37205333333333335,
+          "nonzero_variant_differences": 84,
+          "paired_variants": 300,
+          "policy": "conservative",
+          "risk_rejection_reasons": {}
+        },
+        {
+          "base_episodes": 100,
+          "control_unsupported_decisions": 37,
+          "control_unsupported_requests_rejected_by_risk": 0,
+          "control_unsupported_trade_requests": 0,
+          "episode_bootstrap_95": [
+            -0.20279293333333331,
+            0.32814589166666636
+          ],
+          "mean_pnl_difference": 0.06151100000000003,
+          "nonzero_variant_differences": 119,
+          "paired_variants": 300,
+          "policy": "gate-f12a4e29a05e5a4ce18f",
+          "risk_rejection_reasons": {}
+        },
+        {
+          "base_episodes": 100,
+          "control_unsupported_decisions": 0,
+          "control_unsupported_requests_rejected_by_risk": 0,
+          "control_unsupported_trade_requests": 0,
+          "episode_bootstrap_95": [
+            0.0,
+            0.0
+          ],
+          "mean_pnl_difference": 0.0,
+          "nonzero_variant_differences": 0,
+          "paired_variants": 300,
+          "policy": "no_trade",
+          "risk_rejection_reasons": {}
+        },
+        {
+          "base_episodes": 100,
+          "control_unsupported_decisions": 0,
+          "control_unsupported_requests_rejected_by_risk": 0,
+          "control_unsupported_trade_requests": 0,
+          "episode_bootstrap_95": [
+            -0.235501325,
+            0.09434984999999967
+          ],
+          "mean_pnl_difference": -0.07241466666666665,
+          "nonzero_variant_differences": 71,
+          "paired_variants": 300,
+          "policy": "random",
+          "risk_rejection_reasons": {}
+        }
+      ],
+      "row_hashes": [
+        "26f728786a6114cc9257e00f8a421eb9ae5fc65536c3cefb80b494765f2d8344",
+        "9568744c633dc4b1cb3d0dbdce4292c0f8307ed2367a0131332552e04c24cbc2"
+      ]
+    }
+  },
+  "producer_sha256": "ae31cfb209f24c03c20002d544f292278d91e2127c951a69bbbb58ea635042a3",
+  "selection_or_retuning": false,
+  "source_groups": 100,
+  "source_hash": "c18fc3259a65b07d47186736a6bc36d54f932603417cd4b908490df42769cc10",
+  "study_id": "economic-study-61e74c79a25ec1d63a3c39c5"
+}

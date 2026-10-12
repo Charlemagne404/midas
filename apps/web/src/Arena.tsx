@@ -24,6 +24,24 @@ type Economics = {
     }[];
   }[];
 };
+type EconomicStudy = {
+  study_id: string;
+  source_groups: number;
+  correlated_variants: number;
+  conditions: { name: string; tournament_id: string; leaderboard: Rank[] }[];
+  paired_comparisons: Record<
+    string,
+    {
+      policies: {
+        policy: string;
+        mean_pnl_difference: number;
+        episode_bootstrap_95: number[];
+      }[];
+    }
+  >;
+  limitations: string[];
+  interpretation: string;
+};
 type Metrics = {
   mae?: number;
   rmse?: number;
@@ -352,6 +370,12 @@ export function Arena() {
   const economics = useQuery({
     queryKey: ['arena-economics', selectedTournament],
     queryFn: () => api<Economics | null>(`/arena/tournaments/${selectedTournament}/economics`),
+    enabled: !!selectedTournament && tab === 'Tournaments',
+  });
+  const economicStudy = useQuery({
+    queryKey: ['arena-economic-study', selectedTournament],
+    queryFn: () =>
+      api<EconomicStudy | null>(`/arena/tournaments/${selectedTournament}/economic-regimes`),
     enabled: !!selectedTournament && tab === 'Tournaments',
   });
   const rows = useQuery({
@@ -1444,6 +1468,90 @@ export function Arena() {
               Hypothetical extra costs applied to saved fills and capital paths. Trades stay fixed;
               this is not a cost-aware policy rerun or an observed fee schedule.
             </p>
+            {economicStudy.data?.conditions && (
+              <Section title="Verified economic regime reruns">
+                <p className="lab-note">
+                  {economicStudy.data.source_groups} shared source groups /{' '}
+                  {economicStudy.data.correlated_variants} correlated variants. Conditions change
+                  generated scenarios before execution; policies remain frozen.
+                </p>
+                <Suspense fallback={<p>Loading economic comparison…</p>}>
+                  <Chart
+                    label="Downside score by economic condition"
+                    option={{
+                      ...chartBase,
+                      legend: { textStyle: { color: '#a4aabc' } },
+                      xAxis: {
+                        ...chartBase.xAxis,
+                        data: economicStudy.data.conditions.map((c) => c.name.replaceAll('_', ' ')),
+                      },
+                      series: economicStudy.data.conditions[0].leaderboard.map((p) => ({
+                        name: p.policy,
+                        type: 'bar',
+                        data: economicStudy.data?.conditions.map(
+                          (c) => c.leaderboard.find((v) => v.policy === p.policy)?.score ?? null,
+                        ),
+                      })),
+                    }}
+                  />
+                </Suspense>
+                <div className="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Condition / policy</th>
+                        <th>Mean virtual P&amp;L</th>
+                        <th>5% tail loss</th>
+                        <th>Score</th>
+                        <th>Outside training support</th>
+                        <th>Paired mean change / 95% interval</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {economicStudy.data.conditions.flatMap((c) =>
+                        c.leaderboard.map((p) => {
+                          const paired = economicStudy.data?.paired_comparisons[
+                            c.name
+                          ]?.policies.find((v) => v.policy === p.policy);
+                          return (
+                            <tr key={`${c.name}-${p.policy}`}>
+                              <td>
+                                <button
+                                  onClick={() => {
+                                    setTournamentId(c.tournament_id);
+                                    setRowId('');
+                                    setOffset(0);
+                                  }}
+                                >
+                                  {c.name.replaceAll('_', ' ')}
+                                </button>
+                                <small>{p.policy}</small>
+                              </td>
+                              <td>{n(p.mean_pnl)}</td>
+                              <td>{n(p.cvar_05_loss)}</td>
+                              <td>{n(p.score)}</td>
+                              <td>{p.unsupported_decisions ?? 'Not recorded'}</td>
+                              <td>
+                                {paired
+                                  ? `${n(paired.mean_pnl_difference)} / ${paired.episode_bootstrap_95.map((v) => n(v)).join(' … ')}`
+                                  : 'Baseline'}
+                              </td>
+                            </tr>
+                          );
+                        }),
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+                <p className="lab-footnote">{economicStudy.data.interpretation}</p>
+                {economicStudy.data.limitations.map((limit) => (
+                  <p className="lab-footnote" key={limit}>
+                    {limit}
+                  </p>
+                ))}
+              </Section>
+            )}
+            {economicStudy.isError && <p role="alert">{economicStudy.error.message}</p>}
             {economics.isPending && selectedTournament && (
               <p role="status">Loading saved cost analysis…</p>
             )}

@@ -284,6 +284,39 @@ def router(root: Path) -> APIRouter:
 
         return await call(read)
 
+    @api.get("/tournaments/{identity}/economic-regimes")
+    async def economic_regimes(identity: str) -> Any:
+        def read() -> Any:
+            from midas.arena.artifacts import sha256
+
+            directory = path("tournaments", identity)
+            if not (directory / "manifest.json").exists():
+                raise FileNotFoundError(identity)
+            reference = directory / "economic-study-reference.json"
+            if not reference.exists():
+                return None
+            link = json.loads(reference.read_text())
+            report_path = (
+                path("tournaments", link["baseline_tournament_id"]) / "economic-regimes.json"
+            )
+            if sha256(report_path) != link["report_sha256"]:
+                raise ValueError("Economic study report hash changed")
+            report = json.loads(report_path.read_text())
+            if identity not in {c["tournament_id"] for c in report["conditions"]}:
+                raise ValueError("Tournament is not part of the referenced economic study")
+            for condition in report["conditions"]:
+                folder = path("tournaments", condition["tournament_id"])
+                manifest = json.loads((folder / "manifest.json").read_text())
+                if (
+                    manifest["rows_sha256"] != condition["rows_sha256"]
+                    or sha256(folder / "rows.json") != condition["rows_sha256"]
+                    or manifest["source_hash"] != report["source_hash"]
+                ):
+                    raise ValueError("Economic study input provenance changed")
+            return report
+
+        return await call(read)
+
     @api.get("/tournaments/{identity}/replay/{row_id}")
     async def replay(identity: str, row_id: str) -> Any:
         import re
