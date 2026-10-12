@@ -154,3 +154,24 @@ Source `83aaa54` adds the quality/source interface and saved-action accounting
 reproducer. Subsequent source work also prevents duplicate runners from writing
 the same job and ensures OS exit status matches the persisted outcome. No
 coordinator has been given permission to modify the protected Laboratory archive.
+
+## Latest terminal audit
+
+The all-artifact job completed as `tournament-f65083253fc7440d83f66bf0`.
+All 3000 core-result hashes, journal hashes, passing invariants and 100 complete
+groups were verified. The tree, logistic and neural gates produced identical
+policy outcomes. The fixed base-rate filter abstained; no-trade remained best
+under the ordinary downside objective. There is no supported neural decision
+advantage over the simpler classifiers in this sample.
+
+There are now **three completed tournaments / 7200 correlated variant results**.
+All reuse the same 100 underlying held-out identities; this is not 300 independent
+market samples. The stress suite has altered event conditions. No research worker
+remains active; the formerly active job section above is historical and its JSON
+record now reports COMPLETED. The ordinary suite still supports no broad champion.
+
+The next turn should read the current worktree and engineering report, then
+implement tie-aware selection and supported-input diagnostics. Preserve existing
+results. Use fresh episode identities and family/seed shifts for the next
+independent challenge, then implement validation-only multi-seed selection and a
+bounded research director. The full goal is still active.

@@ -52,6 +52,56 @@
         "Classifier quality does not establish economic policy improvement"
       ],
       "model_id": "model-f51ed0dcc4094f2d9cbae2f2",
+      "policy_evaluations": [
+        {
+          "adversarial": false,
+          "artifact_sha256": "a1ddf5a19d6cb1ad942ce8fc1cc3d63ec2e2f6ddf5dfc8fc46eb052be777e565",
+          "base_episodes": 100,
+          "dataset_sha256": "a0dd2d328f724337a7a544470c616d4d2ef887240fa9d647227aea4ddc00dc27",
+          "metrics": {
+            "attempted_trades": 155,
+            "average_exposure_duration_ms": 102.65666666666667,
+            "base_episodes": 100,
+            "by_execution": {
+              "conservative": 0.0,
+              "optimistic": 2.6058160000000004,
+              "standard": 1.234578
+            },
+            "completed_two_leg_positions": 88,
+            "cvar_05_loss": 1.4664133333333333,
+            "invariant_violations": 0,
+            "losing_fraction": 0.01,
+            "max_drawdown": 0.13333333333333333,
+            "mean_capital_utilization": 0.050507903333333326,
+            "mean_inference_latency_ms": 0.03625432066785704,
+            "mean_pnl": 1.2801313333333333,
+            "mean_pnl_episode_bootstrap_95": [
+              0.8630675166666667,
+              1.6799142666666667
+            ],
+            "mean_runtime_ms": 64.0951381828442,
+            "median_pnl": 0.0,
+            "no_trade_fraction": 0.6866666666666666,
+            "partial_orders": 1,
+            "policy": "model-f51ed0dcc4094f2d9cbae2f2",
+            "profitable_fraction": 0.2966666666666667,
+            "quantiles": [
+              0.0,
+              0.0,
+              0.0,
+              1.2762,
+              7.9323200000000025
+            ],
+            "risk_interventions": 61,
+            "score": -0.18628200000000006,
+            "total_pnl": 384.0394,
+            "unmatched_exposure_incidents": 92,
+            "variants": 300,
+            "worst_loss": -10.1062
+          },
+          "tournament_id": "tournament-f65083253fc7440d83f66bf0"
+        }
+      ],
       "source_hash": "494aa11ee3407bfa0bdac96f9c429543a62dd3ad81b616c26e24d4d87ccc1ec2",
       "state": "EVALUATED",
       "test": {
@@ -347,6 +397,56 @@
         "Classifier quality does not establish economic policy improvement"
       ],
       "model_id": "model-3b9a496d6fad468ba791c1b4",
+      "policy_evaluations": [
+        {
+          "adversarial": false,
+          "artifact_sha256": "20d1a07d105a2f1fdd41bd120ec2a0546b70ebe59c4ffcd31034f9abd0a3700c",
+          "base_episodes": 100,
+          "dataset_sha256": "a0dd2d328f724337a7a544470c616d4d2ef887240fa9d647227aea4ddc00dc27",
+          "metrics": {
+            "attempted_trades": 133,
+            "average_exposure_duration_ms": 101.77333333333333,
+            "base_episodes": 100,
+            "by_execution": {
+              "conservative": 0.0,
+              "optimistic": 2.6058160000000004,
+              "standard": 0.0
+            },
+            "completed_two_leg_positions": 66,
+            "cvar_05_loss": 1.4664133333333333,
+            "invariant_violations": 0,
+            "losing_fraction": 0.01,
+            "max_drawdown": 0.13333333333333333,
+            "mean_capital_utilization": 0.03584416333333333,
+            "mean_inference_latency_ms": 0.042647309213255845,
+            "mean_pnl": 0.8686053333333332,
+            "mean_pnl_episode_bootstrap_95": [
+              0.6168715416666667,
+              1.1109697749999998
+            ],
+            "mean_runtime_ms": 61.08281712270885,
+            "median_pnl": 0.0,
+            "no_trade_fraction": 0.76,
+            "partial_orders": 1,
+            "policy": "model-3b9a496d6fad468ba791c1b4",
+            "profitable_fraction": 0.22333333333333333,
+            "quantiles": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              6.264000000000006
+            ],
+            "risk_interventions": 61,
+            "score": -0.5978080000000001,
+            "total_pnl": 260.5816,
+            "unmatched_exposure_incidents": 70,
+            "variants": 300,
+            "worst_loss": -10.1062
+          },
+          "tournament_id": "tournament-f65083253fc7440d83f66bf0"
+        }
+      ],
       "source_hash": "494aa11ee3407bfa0bdac96f9c429543a62dd3ad81b616c26e24d4d87ccc1ec2",
       "state": "EVALUATED",
       "test": {
@@ -22088,6 +22188,54 @@
             "worst_loss": -6.396
           },
           "tournament_id": "tournament-6b260f31fe474f50821308c3"
+        },
+        {
+          "adversarial": false,
+          "artifact_sha256": "783262634161ecfb2eaf26a30f877b4fc8f167e0eb79b439cc87093f0f040904",
+          "base_episodes": 100,
+          "dataset_sha256": "a0dd2d328f724337a7a544470c616d4d2ef887240fa9d647227aea4ddc00dc27",
+          "metrics": {
+            "attempted_trades": 702,
+            "average_exposure_duration_ms": 641.9733333333334,
+            "base_episodes": 100,
+            "by_execution": {
+              "conservative": 0.287106,
+              "optimistic": 2.945238999999999,
+              "standard": 1.818912
+            },
+            "completed_two_leg_positions": 113,
+            "cvar_05_loss": 2.5823866666666664,
+            "invariant_violations": 0,
+            "losing_fraction": 0.03333333333333333,
+            "max_drawdown": 0.08490576474189017,
+            "mean_capital_utilization": 0.09311353666666666,
+            "mean_inference_latency_ms": 0.4257751774968624,
+            "mean_pnl": 1.6837523333333333,
+            "mean_pnl_episode_bootstrap_95": [
+              1.2948411,
+              2.067131908333333
+            ],
+            "mean_runtime_ms": 104.42405697734405,
+            "median_pnl": 0.0,
+            "no_trade_fraction": 0.20333333333333334,
+            "partial_orders": 46,
+            "policy": "model-33cddb0d92024c2bb0a3b34a",
+            "profitable_fraction": 0.48,
+            "quantiles": [
+              0.0,
+              0.0,
+              0.0,
+              2.84295,
+              7.991220000000002
+            ],
+            "risk_interventions": 116,
+            "score": -0.8986343333333331,
+            "total_pnl": 505.1257,
+            "unmatched_exposure_incidents": 154,
+            "variants": 300,
+            "worst_loss": -6.396
+          },
+          "tournament_id": "tournament-f65083253fc7440d83f66bf0"
         }
       ],
       "reward_definition": "Change in cost-adjusted realized Laboratory P&L minus 0.02*maximum unmatched shares, maximum drawdown ratio, and 0.1 per invalid action",
@@ -22152,6 +22300,56 @@
         "Classifier quality does not establish economic policy improvement"
       ],
       "model_id": "model-ff1c8c8a580944778d3eb7c0",
+      "policy_evaluations": [
+        {
+          "adversarial": false,
+          "artifact_sha256": "297c19dc829983060534f5d2684363ce08ba424d336ba057a4e57aa839f6a1c1",
+          "base_episodes": 100,
+          "dataset_sha256": "a0dd2d328f724337a7a544470c616d4d2ef887240fa9d647227aea4ddc00dc27",
+          "metrics": {
+            "attempted_trades": 0,
+            "average_exposure_duration_ms": 0.0,
+            "base_episodes": 100,
+            "by_execution": {
+              "conservative": 0.0,
+              "optimistic": 0.0,
+              "standard": 0.0
+            },
+            "completed_two_leg_positions": 0,
+            "cvar_05_loss": 0,
+            "invariant_violations": 0,
+            "losing_fraction": 0.0,
+            "max_drawdown": 0.0,
+            "mean_capital_utilization": 0.0,
+            "mean_inference_latency_ms": 0.03391555520162607,
+            "mean_pnl": 0.0,
+            "mean_pnl_episode_bootstrap_95": [
+              0.0,
+              0.0
+            ],
+            "mean_runtime_ms": 39.00514674955048,
+            "median_pnl": 0.0,
+            "no_trade_fraction": 1.0,
+            "partial_orders": 0,
+            "policy": "model-ff1c8c8a580944778d3eb7c0",
+            "profitable_fraction": 0.0,
+            "quantiles": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "risk_interventions": 0,
+            "score": 0.0,
+            "total_pnl": 0.0,
+            "unmatched_exposure_incidents": 0,
+            "variants": 300,
+            "worst_loss": 0.0
+          },
+          "tournament_id": "tournament-f65083253fc7440d83f66bf0"
+        }
+      ],
       "source_hash": "494aa11ee3407bfa0bdac96f9c429543a62dd3ad81b616c26e24d4d87ccc1ec2",
       "state": "EVALUATED",
       "test": {
@@ -23024,6 +23222,54 @@
             "worst_loss": 0.0
           },
           "tournament_id": "tournament-6b260f31fe474f50821308c3"
+        },
+        {
+          "adversarial": false,
+          "artifact_sha256": "ee31b6988f035ab90c1872c1bf32d78c985ee5a5b09d57c21fff97193d3b5c3a",
+          "base_episodes": 100,
+          "dataset_sha256": "a0dd2d328f724337a7a544470c616d4d2ef887240fa9d647227aea4ddc00dc27",
+          "metrics": {
+            "attempted_trades": 139,
+            "average_exposure_duration_ms": 102.65666666666667,
+            "base_episodes": 100,
+            "by_execution": {
+              "conservative": 0.0,
+              "optimistic": 2.6058160000000004,
+              "standard": 1.234578
+            },
+            "completed_two_leg_positions": 88,
+            "cvar_05_loss": 1.4664133333333333,
+            "invariant_violations": 0,
+            "losing_fraction": 0.01,
+            "max_drawdown": 0.13333333333333333,
+            "mean_capital_utilization": 0.050507903333333326,
+            "mean_inference_latency_ms": 0.14802455200142936,
+            "mean_pnl": 1.2801313333333333,
+            "mean_pnl_episode_bootstrap_95": [
+              0.8630675166666667,
+              1.6799142666666667
+            ],
+            "mean_runtime_ms": 64.43955375434598,
+            "median_pnl": 0.0,
+            "no_trade_fraction": 0.6866666666666666,
+            "partial_orders": 1,
+            "policy": "model-f587b98d06f34441bb040877",
+            "profitable_fraction": 0.2966666666666667,
+            "quantiles": [
+              0.0,
+              0.0,
+              0.0,
+              1.2762,
+              7.9323200000000025
+            ],
+            "risk_interventions": 45,
+            "score": -0.18628200000000006,
+            "total_pnl": 384.0394,
+            "unmatched_exposure_incidents": 92,
+            "variants": 300,
+            "worst_loss": -10.1062
+          },
+          "tournament_id": "tournament-f65083253fc7440d83f66bf0"
         }
       ],
       "source_hash": "494aa11ee3407bfa0bdac96f9c429543a62dd3ad81b616c26e24d4d87ccc1ec2",
@@ -23415,6 +23661,54 @@
             "worst_loss": 0.0
           },
           "tournament_id": "tournament-6b260f31fe474f50821308c3"
+        },
+        {
+          "adversarial": false,
+          "artifact_sha256": "4b40db50b245120cd47bced1267f1cdc8a39b3908058b2e38d80b493756a3451",
+          "base_episodes": 100,
+          "dataset_sha256": "a0dd2d328f724337a7a544470c616d4d2ef887240fa9d647227aea4ddc00dc27",
+          "metrics": {
+            "attempted_trades": 155,
+            "average_exposure_duration_ms": 102.65666666666667,
+            "base_episodes": 100,
+            "by_execution": {
+              "conservative": 0.0,
+              "optimistic": 2.6058160000000004,
+              "standard": 1.234578
+            },
+            "completed_two_leg_positions": 88,
+            "cvar_05_loss": 1.4664133333333333,
+            "invariant_violations": 0,
+            "losing_fraction": 0.01,
+            "max_drawdown": 0.13333333333333333,
+            "mean_capital_utilization": 0.050507903333333326,
+            "mean_inference_latency_ms": 0.05373012970916795,
+            "mean_pnl": 1.2801313333333333,
+            "mean_pnl_episode_bootstrap_95": [
+              0.8630675166666667,
+              1.6799142666666667
+            ],
+            "mean_runtime_ms": 63.72203206041983,
+            "median_pnl": 0.0,
+            "no_trade_fraction": 0.6866666666666666,
+            "partial_orders": 1,
+            "policy": "model-3141334b301947499b59913d",
+            "profitable_fraction": 0.2966666666666667,
+            "quantiles": [
+              0.0,
+              0.0,
+              0.0,
+              1.2762,
+              7.9323200000000025
+            ],
+            "risk_interventions": 61,
+            "score": -0.18628200000000006,
+            "total_pnl": 384.0394,
+            "unmatched_exposure_incidents": 92,
+            "variants": 300,
+            "worst_loss": -10.1062
+          },
+          "tournament_id": "tournament-f65083253fc7440d83f66bf0"
         }
       ],
       "source_hash": "494aa11ee3407bfa0bdac96f9c429543a62dd3ad81b616c26e24d4d87ccc1ec2",
@@ -24280,6 +24574,721 @@
     }
   ],
   "tournaments": [
+    {
+      "base_episodes": 100,
+      "code_revision": "83aaa54545b6af21ed7a3ab64eacafea53841bb1",
+      "conclusion": "No candidate demonstrates an advantage over no-trade under the configured downside-aware objective.",
+      "configuration": {
+        "adversarial": false,
+        "dataset_id": "dataset-38ec6e9776097d8e36693372",
+        "execution_models": [
+          "optimistic",
+          "standard",
+          "conservative"
+        ],
+        "max_episodes": 100,
+        "minimum_champion_episodes": 30,
+        "model_ids": [
+          "model-f51ed0dcc4094f2d9cbae2f2",
+          "model-3b9a496d6fad468ba791c1b4",
+          "model-33cddb0d92024c2bb0a3b34a",
+          "model-ff1c8c8a580944778d3eb7c0",
+          "model-f587b98d06f34441bb040877",
+          "model-3141334b301947499b59913d"
+        ],
+        "seed": 991,
+        "tail_loss_weight": 1.0,
+        "threshold": 0.5
+      },
+      "created_at": 1791765324.9022408,
+      "dataset_sha256": "a0dd2d328f724337a7a544470c616d4d2ef887240fa9d647227aea4ddc00dc27",
+      "duration_seconds": 490.3080365819915,
+      "economically_verified": false,
+      "execution_certainty": "HYPOTHETICAL_UNCALIBRATED",
+      "leaderboard": [
+        {
+          "attempted_trades": 0,
+          "average_exposure_duration_ms": 0.0,
+          "base_episodes": 100,
+          "by_execution": {
+            "conservative": 0.0,
+            "optimistic": 0.0,
+            "standard": 0.0
+          },
+          "completed_two_leg_positions": 0,
+          "cvar_05_loss": 0,
+          "invariant_violations": 0,
+          "losing_fraction": 0.0,
+          "max_drawdown": 0.0,
+          "mean_capital_utilization": 0.0,
+          "mean_inference_latency_ms": 0.03391555520162607,
+          "mean_pnl": 0.0,
+          "mean_pnl_episode_bootstrap_95": [
+            0.0,
+            0.0
+          ],
+          "mean_runtime_ms": 39.00514674955048,
+          "median_pnl": 0.0,
+          "no_trade_fraction": 1.0,
+          "partial_orders": 0,
+          "policy": "model-ff1c8c8a580944778d3eb7c0",
+          "profitable_fraction": 0.0,
+          "quantiles": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "risk_interventions": 0,
+          "score": 0.0,
+          "total_pnl": 0.0,
+          "unmatched_exposure_incidents": 0,
+          "variants": 300,
+          "worst_loss": 0.0
+        },
+        {
+          "attempted_trades": 0,
+          "average_exposure_duration_ms": 0.0,
+          "base_episodes": 100,
+          "by_execution": {
+            "conservative": 0.0,
+            "optimistic": 0.0,
+            "standard": 0.0
+          },
+          "completed_two_leg_positions": 0,
+          "cvar_05_loss": 0,
+          "invariant_violations": 0,
+          "losing_fraction": 0.0,
+          "max_drawdown": 0.0,
+          "mean_capital_utilization": 0.0,
+          "mean_inference_latency_ms": 0.0004295393106682847,
+          "mean_pnl": 0.0,
+          "mean_pnl_episode_bootstrap_95": [
+            0.0,
+            0.0
+          ],
+          "mean_runtime_ms": 37.71220199957801,
+          "median_pnl": 0.0,
+          "no_trade_fraction": 1.0,
+          "partial_orders": 0,
+          "policy": "no_trade",
+          "profitable_fraction": 0.0,
+          "quantiles": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "risk_interventions": 0,
+          "score": 0.0,
+          "total_pnl": 0.0,
+          "unmatched_exposure_incidents": 0,
+          "variants": 300,
+          "worst_loss": 0.0
+        },
+        {
+          "attempted_trades": 155,
+          "average_exposure_duration_ms": 102.65666666666667,
+          "base_episodes": 100,
+          "by_execution": {
+            "conservative": 0.0,
+            "optimistic": 2.6058160000000004,
+            "standard": 1.234578
+          },
+          "completed_two_leg_positions": 88,
+          "cvar_05_loss": 1.4664133333333333,
+          "invariant_violations": 0,
+          "losing_fraction": 0.01,
+          "max_drawdown": 0.13333333333333333,
+          "mean_capital_utilization": 0.050507903333333326,
+          "mean_inference_latency_ms": 0.05373012970916795,
+          "mean_pnl": 1.2801313333333333,
+          "mean_pnl_episode_bootstrap_95": [
+            0.8630675166666667,
+            1.6799142666666667
+          ],
+          "mean_runtime_ms": 63.72203206041983,
+          "median_pnl": 0.0,
+          "no_trade_fraction": 0.6866666666666666,
+          "partial_orders": 1,
+          "policy": "model-3141334b301947499b59913d",
+          "profitable_fraction": 0.2966666666666667,
+          "quantiles": [
+            0.0,
+            0.0,
+            0.0,
+            1.2762,
+            7.9323200000000025
+          ],
+          "risk_interventions": 61,
+          "score": -0.18628200000000006,
+          "total_pnl": 384.0394,
+          "unmatched_exposure_incidents": 92,
+          "variants": 300,
+          "worst_loss": -10.1062
+        },
+        {
+          "attempted_trades": 155,
+          "average_exposure_duration_ms": 102.65666666666667,
+          "base_episodes": 100,
+          "by_execution": {
+            "conservative": 0.0,
+            "optimistic": 2.6058160000000004,
+            "standard": 1.234578
+          },
+          "completed_two_leg_positions": 88,
+          "cvar_05_loss": 1.4664133333333333,
+          "invariant_violations": 0,
+          "losing_fraction": 0.01,
+          "max_drawdown": 0.13333333333333333,
+          "mean_capital_utilization": 0.050507903333333326,
+          "mean_inference_latency_ms": 0.03625432066785704,
+          "mean_pnl": 1.2801313333333333,
+          "mean_pnl_episode_bootstrap_95": [
+            0.8630675166666667,
+            1.6799142666666667
+          ],
+          "mean_runtime_ms": 64.0951381828442,
+          "median_pnl": 0.0,
+          "no_trade_fraction": 0.6866666666666666,
+          "partial_orders": 1,
+          "policy": "model-f51ed0dcc4094f2d9cbae2f2",
+          "profitable_fraction": 0.2966666666666667,
+          "quantiles": [
+            0.0,
+            0.0,
+            0.0,
+            1.2762,
+            7.9323200000000025
+          ],
+          "risk_interventions": 61,
+          "score": -0.18628200000000006,
+          "total_pnl": 384.0394,
+          "unmatched_exposure_incidents": 92,
+          "variants": 300,
+          "worst_loss": -10.1062
+        },
+        {
+          "attempted_trades": 139,
+          "average_exposure_duration_ms": 102.65666666666667,
+          "base_episodes": 100,
+          "by_execution": {
+            "conservative": 0.0,
+            "optimistic": 2.6058160000000004,
+            "standard": 1.234578
+          },
+          "completed_two_leg_positions": 88,
+          "cvar_05_loss": 1.4664133333333333,
+          "invariant_violations": 0,
+          "losing_fraction": 0.01,
+          "max_drawdown": 0.13333333333333333,
+          "mean_capital_utilization": 0.050507903333333326,
+          "mean_inference_latency_ms": 0.14802455200142936,
+          "mean_pnl": 1.2801313333333333,
+          "mean_pnl_episode_bootstrap_95": [
+            0.8630675166666667,
+            1.6799142666666667
+          ],
+          "mean_runtime_ms": 64.43955375434598,
+          "median_pnl": 0.0,
+          "no_trade_fraction": 0.6866666666666666,
+          "partial_orders": 1,
+          "policy": "model-f587b98d06f34441bb040877",
+          "profitable_fraction": 0.2966666666666667,
+          "quantiles": [
+            0.0,
+            0.0,
+            0.0,
+            1.2762,
+            7.9323200000000025
+          ],
+          "risk_interventions": 45,
+          "score": -0.18628200000000006,
+          "total_pnl": 384.0394,
+          "unmatched_exposure_incidents": 92,
+          "variants": 300,
+          "worst_loss": -10.1062
+        },
+        {
+          "attempted_trades": 133,
+          "average_exposure_duration_ms": 101.77333333333333,
+          "base_episodes": 100,
+          "by_execution": {
+            "conservative": 0.0,
+            "optimistic": 2.6058160000000004,
+            "standard": 0.0
+          },
+          "completed_two_leg_positions": 66,
+          "cvar_05_loss": 1.4664133333333333,
+          "invariant_violations": 0,
+          "losing_fraction": 0.01,
+          "max_drawdown": 0.13333333333333333,
+          "mean_capital_utilization": 0.03584416333333333,
+          "mean_inference_latency_ms": 0.042647309213255845,
+          "mean_pnl": 0.8686053333333332,
+          "mean_pnl_episode_bootstrap_95": [
+            0.6168715416666667,
+            1.1109697749999998
+          ],
+          "mean_runtime_ms": 61.08281712270885,
+          "median_pnl": 0.0,
+          "no_trade_fraction": 0.76,
+          "partial_orders": 1,
+          "policy": "model-3b9a496d6fad468ba791c1b4",
+          "profitable_fraction": 0.22333333333333333,
+          "quantiles": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            6.264000000000006
+          ],
+          "risk_interventions": 61,
+          "score": -0.5978080000000001,
+          "total_pnl": 260.5816,
+          "unmatched_exposure_incidents": 70,
+          "variants": 300,
+          "worst_loss": -10.1062
+        },
+        {
+          "attempted_trades": 702,
+          "average_exposure_duration_ms": 641.9733333333334,
+          "base_episodes": 100,
+          "by_execution": {
+            "conservative": 0.287106,
+            "optimistic": 2.945238999999999,
+            "standard": 1.818912
+          },
+          "completed_two_leg_positions": 113,
+          "cvar_05_loss": 2.5823866666666664,
+          "invariant_violations": 0,
+          "losing_fraction": 0.03333333333333333,
+          "max_drawdown": 0.08490576474189017,
+          "mean_capital_utilization": 0.09311353666666666,
+          "mean_inference_latency_ms": 0.4257751774968624,
+          "mean_pnl": 1.6837523333333333,
+          "mean_pnl_episode_bootstrap_95": [
+            1.2948411,
+            2.067131908333333
+          ],
+          "mean_runtime_ms": 104.42405697734405,
+          "median_pnl": 0.0,
+          "no_trade_fraction": 0.20333333333333334,
+          "partial_orders": 46,
+          "policy": "model-33cddb0d92024c2bb0a3b34a",
+          "profitable_fraction": 0.48,
+          "quantiles": [
+            0.0,
+            0.0,
+            0.0,
+            2.84295,
+            7.991220000000002
+          ],
+          "risk_interventions": 116,
+          "score": -0.8986343333333331,
+          "total_pnl": 505.1257,
+          "unmatched_exposure_incidents": 154,
+          "variants": 300,
+          "worst_loss": -6.396
+        },
+        {
+          "attempted_trades": 297,
+          "average_exposure_duration_ms": 617.2766666666666,
+          "base_episodes": 100,
+          "by_execution": {
+            "conservative": 0.13334,
+            "optimistic": 1.782056,
+            "standard": 1.0659560000000001
+          },
+          "completed_two_leg_positions": 71,
+          "cvar_05_loss": 2.208799999999999,
+          "invariant_violations": 0,
+          "losing_fraction": 0.03,
+          "max_drawdown": 0.13333333333333333,
+          "mean_capital_utilization": 0.06010252,
+          "mean_inference_latency_ms": 0.009754708728342805,
+          "mean_pnl": 0.9937840000000002,
+          "mean_pnl_episode_bootstrap_95": [
+            0.6583554666666667,
+            1.3735013999999994
+          ],
+          "mean_runtime_ms": 89.0430827869568,
+          "median_pnl": 0.0,
+          "no_trade_fraction": 0.41,
+          "partial_orders": 40,
+          "policy": "random",
+          "profitable_fraction": 0.32666666666666666,
+          "quantiles": [
+            0.0,
+            0.0,
+            0.0,
+            1.746,
+            5.045550000000001
+          ],
+          "risk_interventions": 102,
+          "score": -1.215015999999999,
+          "total_pnl": 298.13520000000005,
+          "unmatched_exposure_incidents": 107,
+          "variants": 300,
+          "worst_loss": -6.396
+        },
+        {
+          "attempted_trades": 375,
+          "average_exposure_duration_ms": 690.16,
+          "base_episodes": 100,
+          "by_execution": {
+            "conservative": 0.06885000000000002,
+            "optimistic": 2.3468920000000004,
+            "standard": 1.448801
+          },
+          "completed_two_leg_positions": 111,
+          "cvar_05_loss": 3.006333333333333,
+          "invariant_violations": 0,
+          "losing_fraction": 0.04,
+          "max_drawdown": 0.08490576474189017,
+          "mean_capital_utilization": 0.07357434,
+          "mean_inference_latency_ms": 0.000778817893227651,
+          "mean_pnl": 1.288181,
+          "mean_pnl_episode_bootstrap_95": [
+            0.9656699583333335,
+            1.6173847166666664
+          ],
+          "mean_runtime_ms": 107.41748805943644,
+          "median_pnl": 0.0,
+          "no_trade_fraction": 0.14,
+          "partial_orders": 39,
+          "policy": "conservative",
+          "profitable_fraction": 0.45666666666666667,
+          "quantiles": [
+            0.0,
+            0.0,
+            0.0,
+            2.2769999999999997,
+            5.52762
+          ],
+          "risk_interventions": 81,
+          "score": -1.718152333333333,
+          "total_pnl": 386.4543,
+          "unmatched_exposure_incidents": 149,
+          "variants": 300,
+          "worst_loss": -6.396
+        },
+        {
+          "attempted_trades": 399,
+          "average_exposure_duration_ms": 715.12,
+          "base_episodes": 100,
+          "by_execution": {
+            "conservative": 0.28735,
+            "optimistic": 2.6058160000000004,
+            "standard": 1.709058
+          },
+          "completed_two_leg_positions": 88,
+          "cvar_05_loss": 4.436279999999999,
+          "invariant_violations": 0,
+          "losing_fraction": 0.04666666666666667,
+          "max_drawdown": 0.13333333333333333,
+          "mean_capital_utilization": 0.10753249000000001,
+          "mean_inference_latency_ms": 0.0008002067417172448,
+          "mean_pnl": 1.5340746666666667,
+          "mean_pnl_episode_bootstrap_95": [
+            1.02673705,
+            2.0059464833333336
+          ],
+          "mean_runtime_ms": 101.18721337998674,
+          "median_pnl": 0.0,
+          "no_trade_fraction": 0.28,
+          "partial_orders": 86,
+          "policy": "arbitrage",
+          "profitable_fraction": 0.44333333333333336,
+          "quantiles": [
+            0.0,
+            0.0,
+            0.0,
+            2.877,
+            8.1664
+          ],
+          "risk_interventions": 183,
+          "score": -2.9022053333333324,
+          "total_pnl": 460.2224,
+          "unmatched_exposure_incidents": 147,
+          "variants": 300,
+          "worst_loss": -10.1062
+        }
+      ],
+      "model_artifact_hashes": {
+        "model-3141334b301947499b59913d": "4b40db50b245120cd47bced1267f1cdc8a39b3908058b2e38d80b493756a3451",
+        "model-33cddb0d92024c2bb0a3b34a": "783262634161ecfb2eaf26a30f877b4fc8f167e0eb79b439cc87093f0f040904",
+        "model-3b9a496d6fad468ba791c1b4": "20d1a07d105a2f1fdd41bd120ec2a0546b70ebe59c4ffcd31034f9abd0a3700c",
+        "model-f51ed0dcc4094f2d9cbae2f2": "a1ddf5a19d6cb1ad942ce8fc1cc3d63ec2e2f6ddf5dfc8fc46eb052be777e565",
+        "model-f587b98d06f34441bb040877": "ee31b6988f035ab90c1872c1bf32d78c985ee5a5b09d57c21fff97193d3b5c3a",
+        "model-ff1c8c8a580944778d3eb7c0": "297c19dc829983060534f5d2684363ce08ba424d336ba057a4e57aa839f6a1c1"
+      },
+      "paired": [
+        {
+          "base_episodes": 100,
+          "bootstrap_95": [
+            1.02673705,
+            2.0059464833333336
+          ],
+          "conclusion": "POSITIVE_SYNTHETIC_MEAN",
+          "control": "no_trade",
+          "mean_difference": 1.5340746666666667,
+          "policy": "arbitrage"
+        },
+        {
+          "base_episodes": 100,
+          "bootstrap_95": [
+            0.9656699583333335,
+            1.6173847166666664
+          ],
+          "conclusion": "POSITIVE_SYNTHETIC_MEAN",
+          "control": "no_trade",
+          "mean_difference": 1.2881809999999998,
+          "policy": "conservative"
+        },
+        {
+          "base_episodes": 100,
+          "bootstrap_95": [
+            0.6583554666666667,
+            1.3735013999999994
+          ],
+          "conclusion": "POSITIVE_SYNTHETIC_MEAN",
+          "control": "no_trade",
+          "mean_difference": 0.993784,
+          "policy": "random"
+        },
+        {
+          "base_episodes": 100,
+          "bootstrap_95": [
+            0.8630675166666667,
+            1.6799142666666667
+          ],
+          "conclusion": "POSITIVE_SYNTHETIC_MEAN",
+          "control": "no_trade",
+          "mean_difference": 1.2801313333333335,
+          "policy": "model-f51ed0dcc4094f2d9cbae2f2"
+        },
+        {
+          "base_episodes": 100,
+          "bootstrap_95": [
+            0.6168715416666667,
+            1.1109697749999998
+          ],
+          "conclusion": "POSITIVE_SYNTHETIC_MEAN",
+          "control": "no_trade",
+          "mean_difference": 0.8686053333333333,
+          "policy": "model-3b9a496d6fad468ba791c1b4"
+        },
+        {
+          "base_episodes": 100,
+          "bootstrap_95": [
+            1.2948411,
+            2.067131908333333
+          ],
+          "conclusion": "POSITIVE_SYNTHETIC_MEAN",
+          "control": "no_trade",
+          "mean_difference": 1.6837523333333335,
+          "policy": "model-33cddb0d92024c2bb0a3b34a"
+        },
+        {
+          "base_episodes": 100,
+          "bootstrap_95": [
+            0.0,
+            0.0
+          ],
+          "conclusion": "NO_CLEAR_ADVANTAGE_OVER_ABSTENTION",
+          "control": "no_trade",
+          "mean_difference": 0.0,
+          "policy": "model-ff1c8c8a580944778d3eb7c0"
+        },
+        {
+          "base_episodes": 100,
+          "bootstrap_95": [
+            0.8630675166666667,
+            1.6799142666666667
+          ],
+          "conclusion": "POSITIVE_SYNTHETIC_MEAN",
+          "control": "no_trade",
+          "mean_difference": 1.2801313333333335,
+          "policy": "model-f587b98d06f34441bb040877"
+        },
+        {
+          "base_episodes": 100,
+          "bootstrap_95": [
+            0.8630675166666667,
+            1.6799142666666667
+          ],
+          "conclusion": "POSITIVE_SYNTHETIC_MEAN",
+          "control": "no_trade",
+          "mean_difference": 1.2801313333333335,
+          "policy": "model-3141334b301947499b59913d"
+        },
+        {
+          "base_episodes": 100,
+          "bootstrap_95": [
+            -0.46936391666666666,
+            -0.027192583333333405
+          ],
+          "conclusion": "NO_CLEAR_MEAN_ADVANTAGE",
+          "control": "arbitrage",
+          "mean_difference": -0.2539433333333333,
+          "policy": "model-3141334b301947499b59913d"
+        },
+        {
+          "base_episodes": 100,
+          "bootstrap_95": [
+            -0.436951475,
+            0.3641374416666662
+          ],
+          "conclusion": "NO_CLEAR_MEAN_ADVANTAGE",
+          "control": "conservative",
+          "mean_difference": -0.008049666666666715,
+          "policy": "model-3141334b301947499b59913d"
+        },
+        {
+          "base_episodes": 100,
+          "bootstrap_95": [
+            -0.14610502499999997,
+            0.5007719583333333
+          ],
+          "conclusion": "NO_CLEAR_MEAN_ADVANTAGE",
+          "control": "arbitrage",
+          "mean_difference": 0.14967766666666668,
+          "policy": "model-33cddb0d92024c2bb0a3b34a"
+        },
+        {
+          "base_episodes": 100,
+          "bootstrap_95": [
+            0.16128276666666666,
+            0.6135393333333332
+          ],
+          "conclusion": "POSITIVE_SYNTHETIC_MEAN",
+          "control": "conservative",
+          "mean_difference": 0.39557133333333333,
+          "policy": "model-33cddb0d92024c2bb0a3b34a"
+        },
+        {
+          "base_episodes": 100,
+          "bootstrap_95": [
+            -0.928526325,
+            -0.3892928500000001
+          ],
+          "conclusion": "NO_CLEAR_MEAN_ADVANTAGE",
+          "control": "arbitrage",
+          "mean_difference": -0.6654693333333332,
+          "policy": "model-3b9a496d6fad468ba791c1b4"
+        },
+        {
+          "base_episodes": 100,
+          "bootstrap_95": [
+            -0.7774655500000001,
+            -0.09239636666666677
+          ],
+          "conclusion": "NO_CLEAR_MEAN_ADVANTAGE",
+          "control": "conservative",
+          "mean_difference": -0.41957566666666674,
+          "policy": "model-3b9a496d6fad468ba791c1b4"
+        },
+        {
+          "base_episodes": 100,
+          "bootstrap_95": [
+            -0.46936391666666666,
+            -0.027192583333333405
+          ],
+          "conclusion": "NO_CLEAR_MEAN_ADVANTAGE",
+          "control": "arbitrage",
+          "mean_difference": -0.2539433333333333,
+          "policy": "model-f51ed0dcc4094f2d9cbae2f2"
+        },
+        {
+          "base_episodes": 100,
+          "bootstrap_95": [
+            -0.436951475,
+            0.3641374416666662
+          ],
+          "conclusion": "NO_CLEAR_MEAN_ADVANTAGE",
+          "control": "conservative",
+          "mean_difference": -0.008049666666666715,
+          "policy": "model-f51ed0dcc4094f2d9cbae2f2"
+        },
+        {
+          "base_episodes": 100,
+          "bootstrap_95": [
+            -0.46936391666666666,
+            -0.027192583333333405
+          ],
+          "conclusion": "NO_CLEAR_MEAN_ADVANTAGE",
+          "control": "arbitrage",
+          "mean_difference": -0.2539433333333333,
+          "policy": "model-f587b98d06f34441bb040877"
+        },
+        {
+          "base_episodes": 100,
+          "bootstrap_95": [
+            -0.436951475,
+            0.3641374416666662
+          ],
+          "conclusion": "NO_CLEAR_MEAN_ADVANTAGE",
+          "control": "conservative",
+          "mean_difference": -0.008049666666666715,
+          "policy": "model-f587b98d06f34441bb040877"
+        },
+        {
+          "base_episodes": 100,
+          "bootstrap_95": [
+            -2.0059464833333336,
+            -1.02673705
+          ],
+          "conclusion": "NO_CLEAR_MEAN_ADVANTAGE",
+          "control": "arbitrage",
+          "mean_difference": -1.5340746666666667,
+          "policy": "model-ff1c8c8a580944778d3eb7c0"
+        },
+        {
+          "base_episodes": 100,
+          "bootstrap_95": [
+            -1.6173847166666666,
+            -0.9656699583333335
+          ],
+          "conclusion": "NO_CLEAR_MEAN_ADVANTAGE",
+          "control": "conservative",
+          "mean_difference": -1.2881809999999998,
+          "policy": "model-ff1c8c8a580944778d3eb7c0"
+        },
+        {
+          "base_episodes": 100,
+          "bootstrap_95": [
+            -0.9125388166666667,
+            -0.11930845000000005
+          ],
+          "conclusion": "NO_CLEAR_MEAN_ADVANTAGE",
+          "control": "arbitrage",
+          "mean_difference": -0.5402906666666667,
+          "policy": "random"
+        },
+        {
+          "base_episodes": 100,
+          "bootstrap_95": [
+            -0.6243513666666667,
+            -0.018064233333333422
+          ],
+          "conclusion": "NO_CLEAR_MEAN_ADVANTAGE",
+          "control": "conservative",
+          "mean_difference": -0.2943970000000001,
+          "policy": "random"
+        }
+      ],
+      "provenance": "GENERATED",
+      "ranking_objective": "mean virtual P&L minus 1.0 times 5% tail loss; any invariant failure disqualifies",
+      "research_champion": null,
+      "rows_sha256": "9084195802f07ee5d8216eafb997a22b2815ba21569a4b0c3b3f1ac82fcc5c9b",
+      "source_hash": "e7eb4025a2069e17b6d5e52e8b6322ba724169294e68120a97c4db163b78b5cf",
+      "tournament_id": "tournament-f65083253fc7440d83f66bf0",
+      "uncertainty_note": "Bootstrap resamples base episodes with all execution variants grouped. Generated uncertainty does not establish real market generalization.",
+      "variants": 3000
+    },
     {
       "base_episodes": 100,
       "conclusion": "No candidate demonstrates an advantage over no-trade under the configured downside-aware objective.",
@@ -25843,6 +26852,64 @@
       "state": "COMPLETED",
       "unit": "midas-arena-job-bc9318bb470642b89b455d0e.service",
       "updated_at": 1791758545.4104497
+    },
+    {
+      "budget": {
+        "cpu_cores": 1,
+        "max_artifact_mb": 1024,
+        "memory_mb": 4096,
+        "minimum_available_memory_mb": 2048,
+        "wall_seconds": 1800
+      },
+      "completed_at": 1791765325.3200448,
+      "configuration": {
+        "dataset": null,
+        "kind": "tournament",
+        "max_wall_seconds": 1800,
+        "model_id": null,
+        "rl": null,
+        "tournament": {
+          "adversarial": false,
+          "dataset_id": "dataset-38ec6e9776097d8e36693372",
+          "execution_models": [
+            "optimistic",
+            "standard",
+            "conservative"
+          ],
+          "max_episodes": 100,
+          "minimum_champion_episodes": 30,
+          "model_ids": [
+            "model-f51ed0dcc4094f2d9cbae2f2",
+            "model-3b9a496d6fad468ba791c1b4",
+            "model-33cddb0d92024c2bb0a3b34a",
+            "model-ff1c8c8a580944778d3eb7c0",
+            "model-f587b98d06f34441bb040877",
+            "model-3141334b301947499b59913d"
+          ],
+          "seed": 991,
+          "tail_loss_weight": 1.0,
+          "threshold": 0.5
+        },
+        "training": null
+      },
+      "created_at": 1791764831.0958028,
+      "elapsed_seconds": 492.7696114789869,
+      "error": null,
+      "exit_status": 0,
+      "job_id": "job-df4f313087794f65a01968a7",
+      "pid": 2647514,
+      "progress": {
+        "done": 1,
+        "total": 1
+      },
+      "result": {
+        "tournament_id": "tournament-f65083253fc7440d83f66bf0"
+      },
+      "started_at": 1791764832.5505457,
+      "state": "COMPLETED",
+      "submitted_source_hash": "e7eb4025a2069e17b6d5e52e8b6322ba724169294e68120a97c4db163b78b5cf",
+      "unit": "midas-arena-job-df4f313087794f65a01968a7.service",
+      "updated_at": 1791765325.3200443
     },
     {
       "budget": {

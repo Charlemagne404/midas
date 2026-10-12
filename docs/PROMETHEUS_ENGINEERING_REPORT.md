@@ -260,3 +260,12 @@ from updating the same job; all four job reliability tests pass. Remaining
 source changes after the last full gate are targeted by the relevant focused
 checks. The original goal remains active and the continuation queue is in the
 morning briefing.
+
+Terminal audit: the all-artifact job completed as
+`tournament-f65083253fc7440d83f66bf0`. All 3000 financial core hashes, journal
+hashes, passing results and complete 100-group coverage were verified. Tree,
+logistic and MLP policies tie exactly in ordinary policy outcomes. Across three
+studies there are 7200 variants over the same 100 held-out identities, not 300
+independent samples. No research worker remains running. Further neural
+complexity is not supported by a demonstrated decision benefit in this sample.
+The continuation priorities remain active.

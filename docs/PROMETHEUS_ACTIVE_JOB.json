@@ -6,6 +6,7 @@
     "minimum_available_memory_mb": 2048,
     "wall_seconds": 1800
   },
+  "completed_at": 1791765325.3200448,
   "configuration": {
     "dataset": null,
     "kind": "tournament",
@@ -37,20 +38,26 @@
     "training": null
   },
   "created_at": 1791764831.0958028,
-  "elapsed_seconds": 389.45484659200883,
+  "elapsed_seconds": 492.7696114789869,
   "error": null,
+  "exit_status": 0,
   "job_id": "job-df4f313087794f65a01968a7",
   "pid": 2647514,
   "progress": {
-    "done": 2380,
-    "total": 3000
+    "done": 1,
+    "total": 1
   },
-  "result": null,
+  "result": {
+    "tournament_id": "tournament-f65083253fc7440d83f66bf0"
+  },
   "started_at": 1791764832.5505457,
-  "state": "RUNNING",
+  "state": "COMPLETED",
   "submitted_source_hash": "e7eb4025a2069e17b6d5e52e8b6322ba724169294e68120a97c4db163b78b5cf",
   "unit": "midas-arena-job-df4f313087794f65a01968a7.service",
-  "updated_at": 1791765222.00528,
-  "verified_supervisor_at": 1791765222.1922119,
-  "supervisor_output": "MainPID=2647514\nMemoryCurrent=373112832\nActiveState=active\n"
+  "updated_at": 1791765325.3200443,
+  "verified_at": 1791765427.0996778,
+  "verified_variants": 3000,
+  "verified_groups": 100,
+  "verified_core_and_journal_hashes": true,
+  "supervisor_status": "inactive; MainPID=0"
 }
