@@ -2,16 +2,17 @@
 
 import argparse
 import json
+import sys
 import time
 from pathlib import Path
 from typing import Any
 
-from midas.arena.artifacts import read_replay, sha256
+from midas.arena.artifacts import atomic_json, read_replay, sha256
 from midas.arena.datasets import load
 from midas.economics.attestation import digest
 
 
-def verify(root: Path, full_replays: bool = False) -> dict[str, Any]:
+def verify(root: Path, full_replays: bool = False, progress: Any = None) -> dict[str, Any]:
     report: dict[str, Any] = {
         "checked_at": time.time(),
         "root": str(root.resolve()),
@@ -111,6 +112,8 @@ def verify(root: Path, full_replays: bool = False) -> dict[str, Any]:
                 "verified": True,
             }
         )
+        if progress:
+            progress(directory.name, len(rows))
     report["scope_note"] = (
         "Checks immutable artifact bytes and matched coverage. Passing does not establish real execution or independent samples across repeated studies."
     )
@@ -121,5 +124,23 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, default=Path("data/arena"))
     parser.add_argument("--full-replays", action="store_true")
+    parser.add_argument("--output", type=Path, help="Atomically publish only a completed audit")
+    parser.add_argument(
+        "--progress", action="store_true", help="Log verified tournaments to stderr"
+    )
     args = parser.parse_args()
-    print(json.dumps(verify(args.root, args.full_replays), indent=2))
+    callback = (
+        (
+            lambda identity, count: print(
+                f"Verified {identity}: {count} variants", file=sys.stderr, flush=True
+            )
+        )
+        if args.progress
+        else None
+    )
+    report = verify(args.root, args.full_replays, callback)
+    if args.output:
+        atomic_json(args.output, report)
+        print(json.dumps({"output": str(args.output), "tournaments": len(report["tournaments"])}))
+    else:
+        print(json.dumps(report, indent=2))

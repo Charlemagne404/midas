@@ -1,0 +1,7 @@
+{
+  "path": "/home/charlie/midas-prometheus-bundles/economic-delay-failure-corpus.json.gz",
+  "sha256": "cedff65bba87017397233a1868bd3a6645421c6a438dd776458529c71ec75b3d",
+  "corpus_id": "failure-corpus-30c87efa9620e23340fa28ed",
+  "cases": 6,
+  "source_groups": 5
+}

@@ -1265,3 +1265,71 @@ in `PROMETHEUS_ECONOMIC_RERUN_JOBS.json`; no paired economic effects are claimed
 before baseline completion. Keep Arena source frozen. After all four finish, run
 `scripts/summarize_economic_reruns.py --output docs/PROMETHEUS_ECONOMIC_STUDY.json`
 and export the remaining verified bundles. The full goal remains ACTIVE.
+
+## Completed economic publication, loss attribution and failure regressions
+
+All four preregistered economic reruns completed, giving 6,000 correlated variants
+over 100 shared source groups. The native Arena serves the frozen study on all
+four condition endpoints. Baseline and half-depth bundles each passed all 1,570
+payload hashes; prior delay/fee checks remain recorded. Runtime inventory now
+contains 21 registered artifacts (20 fitted), 16 tournaments, and 37 terminal jobs
+(33 completed, two cancelled, two failed). The tournaments contain 33,423 variants,
+including 1,500 performance-replay variants; these are not independent samples.
+
+`attribute_arena_losses.py` verifies saved rows and replay hashes, reconstructs
+binary fill quantities from ledgers, and allocates terminal cash flows between
+matched and residual shares in proportion to each asset's filled quantity. Fill
+costs include ledger fees. It reconciles position realized P&L and explicit
+operating/financing/collateral costs to episode net P&L. It rejects incomplete
+positions and inconsistent order quantities. Saved reports cover all 300 gate
+variants in baseline and delay conditions. All six delay losses have residual
+shares (five source groups, total loss 21.928 virtual USD), versus five baseline
+losses (four groups, total loss 11.258). This is descriptive accounting, not a
+causal estimate or proof that an executable hedge would avoid the loss.
+
+`replay_failure_cases.py` freezes up to 100 observed losing cases with original
+scenarios, saved actions/explanations, and expected financial/journal hashes. The
+actual six delay failures were frozen to a separate compressed corpus and rerun
+through ArenaEnv. All financial hashes, journal hashes and decision traces match
+exactly. This implements failure-driven accounting regression generation; it
+does not rerun model inference or convert failures into independent evaluation
+data. The corpus and verification report retain explicit limitations.
+
+Commands:
+
+```bash
+.venv/bin/python -m scripts.attribute_arena_losses --tournament tournament-c2726108b16543a796b9f202 --policy gate-f12a4e29a05e5a4ce18f --output /tmp/delay-attribution.json
+.venv/bin/python -m scripts.replay_failure_cases verify --corpus /home/charlie/midas-prometheus-bundles/economic-delay-failure-corpus.json.gz --output /tmp/delay-regressions.json
+```
+
+Existing destinations are not overwritten. The aggregate finding is published in
+Arena and linked to the supporting latency tournament. The full goal stays active.
+Next priorities: adaptive follow-up planning with independent challenge identities;
+uncertainty-aware severity before policy integration; economically sound recovery
+hedge/unwind semantics. No policy was retuned on the opened economic study.
+
+Validation for the new attribution and regression tools: 13 tests passed in
+10.43 seconds; Ruff checks passed. The published finding was read back from the
+production Arena API. No source package or financial engine changed in this
+checkpoint.
+
+Production browser verification passed: the baseline tournament displays the
+frozen four-condition study, 100 shared source groups / 6,000 correlated variants,
+and the downside chart. The published aggregate finding is visible in Research
+Findings. No page errors were recorded; the screenshot and browser evidence are
+linked in PROMETHEUS_ECONOMIC_STUDY_BROWSER.json. An initial browser inspection
+used an overly strict label selector and timed out before reading the tournament;
+the corrected selector passed without changing application code.
+
+The three-minute full-replay audit reached its wall limit without completing.
+The verifier now logs completed tournaments and can atomically publish its report
+with `--output`; interrupted/failed runs preserve the previous valid report. A
+ten-minute bounded rerun is in progress. Focused attribution, failure-corpus and
+derived-lineage tests: 16 passed in 11.38 seconds. Tests exercise CLI publication
+and verify a failed audit leaves its previous published report unchanged.
+
+Protected-campaign read-only verification passed again: SQLite quick_check OK,
+162,000 unique variant IDs, 18,000 groups, unchanged ordered logical hash
+70d446f0a3833011bb150b0212c4cad3f2751c7f1c210d4c6989816d249fe4ec.
+The API exclusive owner lease remains held. Evidence is recorded in
+PROMETHEUS_ECONOMIC_CHECKPOINT_ARCHIVE_VERIFICATION.json.

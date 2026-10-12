@@ -1,0 +1,11 @@
+{
+  "checked_at": "2026-10-12T15:36:15.670Z",
+  "tournament_id": "tournament-53f293c7fb66438ab43a6869",
+  "denominator": "100 shared source groups / 6000 correlated variants. Conditions change generated scenarios before execution; policies remain frozen.",
+  "verified_heading": true,
+  "downside_chart_visible": true,
+  "finding_visible": true,
+  "page_errors": [],
+  "screenshot": "/home/charlie/midas-prometheus-bundles/economic-study-ui.png",
+  "screenshot_sha256": "8dc5da74a5df69ef8151b3987d68b036f6d604178d21b7b107264dce445f83a9"
+}

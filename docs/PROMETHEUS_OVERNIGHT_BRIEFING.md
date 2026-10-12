@@ -2,6 +2,31 @@
 
 ## Current checkpoint (supersedes running-job notes below)
 
+### Completed economic study and loss attribution
+
+All four economic conditions completed: 6,000 correlated variants over the same
+100 source groups. The frozen gate's downside scores were baseline 0.497,
+added 200ms delay -0.643, half depth 0.689, and fee coefficient 0.01 zero.
+The fee result reflects unsupported-input abstention. Half depth changes venue
+capacity and subsequent decisions; it does not isolate a position-sizing effect.
+No threshold or model was changed using these challenge outcomes.
+
+The verified study is available in Arena with condition comparisons and paired
+intervals. All four API endpoints serve the same frozen study. Baseline and depth
+bundle payloads passed hash verification. Both services remain active and the
+backend reports READY. No research workers remain running or queued.
+
+Saved replay accounting attributes all six delay-condition losing gate variants
+to positions with residual leg shares (five source groups, total loss 21.928
+virtual USD). These occur in volatile/disappearing families. Baseline has five
+losing variants (four groups, total loss 11.258), also with residual shares.
+This is cash-flow decomposition, not causal identification or recovery-policy
+evidence. Thirteen attribution/regression tests passed, including corrupted row/journal
+rejection and altered action-trace checks. Six saved latency loss cases also
+reproduced exact financial/journal hashes and decision traces. Earlier validation: full suite 324 passed, one PostgreSQL skip;
+publication changes separately passed 10 focused backend tests and eight frontend
+tests. The full goal remains active.
+
 ### Latest economic condition checkpoint
 
 Added submission delay completed and the frozen gate failed the downside objective:

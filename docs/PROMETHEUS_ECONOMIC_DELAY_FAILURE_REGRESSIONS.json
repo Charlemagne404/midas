@@ -1,0 +1,44 @@
+{
+  "cases": [
+    {
+      "journal_hash": "259769dbb932a1e28048cd6928299e69ec5cd5d8748c52faadd8245e18a19294",
+      "passed": true,
+      "result_hash": "a3ff774439003c5caf68109aaee9daa3c57b7cf433701c2cda031f30f999d0b5",
+      "row_id": "60-optimistic-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "journal_hash": "7853e954b8bc5681e2f20d7df91fab854f9f03619acd25c9b595680f409a6deb",
+      "passed": true,
+      "result_hash": "49f58d9828ae7dc417ab8456d6bd7b9e3ea56feb019f17410939d606b3f82aa7",
+      "row_id": "69-optimistic-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "journal_hash": "963163d6c97ad75e3b43389fc39b4172b3414e40cfd7e20f2451e8614f3fb9a9",
+      "passed": true,
+      "result_hash": "f70fb69b67b318a14b27c9b77595cb867381eaf10b56613962859580628bdcc3",
+      "row_id": "69-standard-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "journal_hash": "8aaddb580ccd301cf4963ac44acdd59e98965b4d3568d05632074403bb273c3c",
+      "passed": true,
+      "result_hash": "0584b26f633e8601dfcfe5180cb9626bd6ebb89214815705ff75ee3246f9427a",
+      "row_id": "74-standard-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "journal_hash": "77d2c9169904d80b36d569935d0095ca444c6e2ff92a6451fd9b11429c05a306",
+      "passed": true,
+      "result_hash": "aa9f746147ca3d4555fca2d67a7066078bb086b95e63bf0f17781a78b4069106",
+      "row_id": "76-optimistic-gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "journal_hash": "df6bfa3c6c96f4c149665e23e29cf556d6f59f724dcd223276d80e00d1f0dae1",
+      "passed": true,
+      "result_hash": "0942b0d14d72ee1245d5db23e5f273f83ae900039be6f7c69b4d87a99ae4dadf",
+      "row_id": "81-optimistic-gate-f12a4e29a05e5a4ce18f"
+    }
+  ],
+  "corpus_content_sha256": "eb2de05a48ffd76fdc4a28e657cef7ef9d065f5550b6efd35080388714ed90f8",
+  "corpus_id": "failure-corpus-30c87efa9620e23340fa28ed",
+  "producer_sha256": "b439f713921ed89a4ebce544e3d62867790a07bfcb7d243f57618297dc2faf7e",
+  "scope": "Exact saved-action accounting regressions; not model inference or generalization evaluation"
+}

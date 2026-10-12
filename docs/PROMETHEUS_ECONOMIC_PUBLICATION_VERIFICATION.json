@@ -1,0 +1,40 @@
+{
+  "checked_at": 1791810763.0850918,
+  "study_id": "economic-study-61e74c79a25ec1d63a3c39c5",
+  "bundle_checks": [
+    {
+      "tournament_id": "tournament-53f293c7fb66438ab43a6869",
+      "bundle_sha256": "ca3feafba3dcd1bf25dfd3696da462ade57634c46a05dd68b35cbfacff322b5f",
+      "verified_payloads": 1570
+    },
+    {
+      "tournament_id": "tournament-dec3bf369483448b863e0857",
+      "bundle_sha256": "ac78452f95eaa122c1383910f1000aafb5b2f42a0d11bb05d5cd4e3b954eef22",
+      "verified_payloads": 1570
+    }
+  ],
+  "api_verified_tournaments": [
+    "tournament-c2726108b16543a796b9f202",
+    "tournament-53f293c7fb66438ab43a6869",
+    "tournament-6eabcc71619c4f2989cd072d",
+    "tournament-dec3bf369483448b863e0857"
+  ],
+  "backend_health": {
+    "status": "READY",
+    "startup_status": "READY",
+    "startup_error": null,
+    "mode": "demo",
+    "live_execution": false,
+    "paper_recovery": {
+      "status": "CHECKPOINT_VERIFIED",
+      "journal_events": 35705,
+      "revision": 35704
+    },
+    "laboratory": {
+      "status": "READY",
+      "root": "/home/charlie/midas/data/laboratory-final",
+      "recovering_campaigns": [],
+      "recovery_errors": []
+    }
+  }
+}

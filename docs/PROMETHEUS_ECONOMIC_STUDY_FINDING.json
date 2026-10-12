@@ -1,0 +1,57 @@
+{
+  "finding_id": "finding-26f502f9d1e28222abf6ed91",
+  "title": "Added latency exposes unmatched-leg losses in the frozen risk gate",
+  "research_question": "Does the frozen risk gate retain downside performance when submission is delayed, and where do its losses occur?",
+  "hypothesis": "The earlier fresh-seed and adversarial results would remain competitive after added submission latency.",
+  "interpretation": "The gate downside score changes from +0.497 at baseline to -0.643 with 200ms additional submission latency. All six losing delay variants contain residual executed leg shares, across five source groups in volatile/disappearing families. Their combined loss is 21.928 virtual USD; baseline has five losing variants across four groups with combined loss 11.258. These accounting components describe the observed losses without proving causation.",
+  "tournament_id": "tournament-c2726108b16543a796b9f202",
+  "study_id": "economic-study-61e74c79a25ec1d63a3c39c5",
+  "code_revision": "04492ef89335fcf0879567baf50e5d71ad8e8b0f",
+  "source_hash": "c18fc3259a65b07d47186736a6bc36d54f932603417cd4b908490df42769cc10",
+  "configuration": {
+    "policy": "gate-f12a4e29a05e5a4ce18f",
+    "selection_or_retuning": false
+  },
+  "created_at": 1791819233.6500132,
+  "outcome": {
+    "source_groups": 100,
+    "conditions": 4,
+    "correlated_variants": 6000,
+    "delay_losing_variants": 6,
+    "delay_losing_groups": 5,
+    "regression_cases_reproduced": 6
+  },
+  "input_artifacts": [
+    {
+      "path": "docs/PROMETHEUS_ECONOMIC_STUDY.json",
+      "sha256": "ec9f5034cd53674a20ca794a35521e8a8d20671f0b8cd87bfcba62d68245ce80"
+    },
+    {
+      "path": "docs/PROMETHEUS_ECONOMIC_DELAY_LOSS_ATTRIBUTION.json",
+      "sha256": "ae8309a4092995aa237e4b85590424446c871e63c89626d95973c622c6d61b0f"
+    },
+    {
+      "path": "docs/PROMETHEUS_ECONOMIC_BASELINE_LOSS_ATTRIBUTION.json",
+      "sha256": "7acba2530207fb98400e556c305ea839d47a5a0481d85b6aec5bcb9a22ee0302"
+    },
+    {
+      "path": "docs/PROMETHEUS_ECONOMIC_DELAY_FAILURE_REGRESSIONS.json",
+      "sha256": "761841558f077f040920d28ec8bf80a3f5700a0c8828721f0d1c10ded5c44bae"
+    }
+  ],
+  "caveats": [
+    "Synthetic economic coefficients are not observed fees or calibrated execution.",
+    "All four conditions reuse the same 100 groups; 6000 variants are correlated, not 6000 independent samples.",
+    "Training support uses feature ranges, not joint-distribution or probability calibration. Fee changes may force abstention because the model was trained at zero synthetic fees.",
+    "Different actions and latency alter execution noise; common seeds do not guarantee common fills.",
+    "Post-evaluation descriptive analysis; no model selection or retuning",
+    "Binary settled positions only; proportional per-asset cash-flow allocation includes fill fees",
+    "Residual shares describe executed legs before settlement, not remaining terminal inventory",
+    "Execution variants are correlated within source groups; no independent-sample inference",
+    "Attribution is accounting decomposition, not causal identification or an executable recovery policy",
+    "Synthetic hypothetical outcomes; no empirical fill calibration or real profitability claim",
+    "Fee-coefficient condition abstains on unsupported inputs; zero is not evidence of profitable fee robustness.",
+    "Half-depth condition changes capacity and decisions; it is not an isolated sizing experiment."
+  ],
+  "next_experiment": "Keep these failures as saved-action accounting regressions; preregister fresh latency/family challenges before evaluating revised policies. Do not tune on these opened cases."
+}
