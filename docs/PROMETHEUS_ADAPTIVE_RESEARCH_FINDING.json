@@ -1,0 +1,273 @@
+{
+  "finding_id": "finding-61263012d4b365eb527e0818",
+  "director_id": "director-followup-453650eedd036f130bc81fd8",
+  "tournament_id": "tournament-5dee70bd06ea494c9d18c53f",
+  "title": "Adaptive latency research completed; broad gate robustness remains unproven",
+  "research_question": "Does the observed latency reversal recur on fresh directed challenge families, and how does it change at the next preregistered delay?",
+  "hypothesis": "Residual-leg losses persist under delay on independent generated identities.",
+  "source_hash": "c18fc3259a65b07d47186736a6bc36d54f932603417cd4b908490df42769cc10",
+  "code_revision": "9dd2e70f3b1f876568bdd1ff3e49898de545f45d",
+  "created_at": 1791822764.9458554,
+  "interpretation": "Four preregistered tournaments completed over 120 fresh source groups (3,600 correlated variants). In cycle one the frozen gate scores -0.420 at baseline and +0.373 with 200ms added delay: reduced tail loss offsets lower mean P&L, but the paired mean-change interval includes zero. The positive-score rule then selected 400ms on a disjoint cohort, where the gate scores -0.079. Neither model nor threshold was changed; no champion was promoted. These directed synthetic results do not establish general latency robustness or a break-even frontier.",
+  "outcome": {
+    "source_groups": 120,
+    "correlated_variants": 3600,
+    "conditions": [
+      {
+        "cycle": 1,
+        "name": "baseline",
+        "tournament_id": "tournament-3e1ee735a43c4f66a5b87b42",
+        "job_id": "job-5d88ff57521f4fc0a13d77e7",
+        "source_groups": 60,
+        "correlated_variants": 900,
+        "rows_sha256": "0066d56dea279108296870c23b8b2544809339a10f6027708c2f836a05f530ce",
+        "additional_latency_ms": 0,
+        "gate_metrics": {
+          "attempted_trades": 135,
+          "average_exposure_duration_ms": 291.5444444444444,
+          "base_episodes": 60,
+          "by_execution": {
+            "conservative": 0.1343333333333333,
+            "optimistic": 2.7787616666666666,
+            "standard": 1.84698
+          },
+          "completed_two_leg_positions": 45,
+          "cvar_05_loss": 2.006933333333333,
+          "invariant_violations": 0,
+          "losing_fraction": 0.016666666666666666,
+          "max_drawdown": 0.1518988997518462,
+          "mean_capital_utilization": 0.07835581111111112,
+          "mean_inference_latency_ms": 0.18099731045483153,
+          "mean_pnl": 1.5866916666666668,
+          "mean_pnl_episode_bootstrap_95": [
+            1.0206446111111112,
+            2.2322192916666665
+          ],
+          "mean_runtime_ms": 89.5718353460931,
+          "median_pnl": 0.0,
+          "no_trade_fraction": 0.45555555555555555,
+          "partial_orders": 31,
+          "policy": "gate-f12a4e29a05e5a4ce18f",
+          "profitable_fraction": 0.34444444444444444,
+          "quantiles": [
+            0.0,
+            0.0,
+            0.0,
+            1.874325,
+            9.896274999999985
+          ],
+          "rank": 2,
+          "risk_interventions": 37,
+          "score": -0.4202416666666662,
+          "total_pnl": 285.60450000000003,
+          "unmatched_exposure_incidents": 65,
+          "unsupported_decisions": 30,
+          "variants": 180,
+          "worst_loss": -9.2274
+        }
+      },
+      {
+        "cycle": 1,
+        "name": "delay",
+        "tournament_id": "tournament-c66e37c024974ac3a03ea64b",
+        "job_id": "job-739176fa2338460ca19c489a",
+        "source_groups": 60,
+        "correlated_variants": 900,
+        "rows_sha256": "86638329c641f0878e11066615c0ddd3809247c8eeadda18fa6758d177f69a82",
+        "additional_latency_ms": 200,
+        "gate_metrics": {
+          "attempted_trades": 98,
+          "average_exposure_duration_ms": 209.1611111111111,
+          "base_episodes": 60,
+          "by_execution": {
+            "conservative": 0.0,
+            "optimistic": 2.2806466666666667,
+            "standard": 1.84698
+          },
+          "completed_two_leg_positions": 36,
+          "cvar_05_loss": 1.0033333333333332,
+          "invariant_violations": 0,
+          "losing_fraction": 0.011111111111111112,
+          "max_drawdown": 0.14142066420664207,
+          "mean_capital_utilization": 0.05213972222222222,
+          "mean_inference_latency_ms": 0.13911245020738405,
+          "mean_pnl": 1.3758755555555557,
+          "mean_pnl_episode_bootstrap_95": [
+            0.8136647777777778,
+            2.0405056666666668
+          ],
+          "mean_runtime_ms": 72.70082482298474,
+          "median_pnl": 0.0,
+          "no_trade_fraction": 0.6333333333333333,
+          "partial_orders": 18,
+          "policy": "gate-f12a4e29a05e5a4ce18f",
+          "profitable_fraction": 0.25555555555555554,
+          "quantiles": [
+            0.0,
+            0.0,
+            0.0,
+            0.10200000000000001,
+            9.8505
+          ],
+          "rank": 1,
+          "risk_interventions": 32,
+          "score": 0.37254222222222255,
+          "total_pnl": 247.65760000000003,
+          "unmatched_exposure_incidents": 48,
+          "unsupported_decisions": 93,
+          "variants": 180,
+          "worst_loss": -6.93
+        }
+      },
+      {
+        "cycle": 2,
+        "name": "baseline",
+        "tournament_id": "tournament-2411dffdb188440791b5760a",
+        "job_id": "job-5d49c24feb9e4c9d84f740f1",
+        "source_groups": 60,
+        "correlated_variants": 900,
+        "rows_sha256": "a16e613b1a9762b3ebd0dff48d8f6f4ee29e4c356b6d265f69a812b2e7300961",
+        "additional_latency_ms": 0,
+        "gate_metrics": {
+          "attempted_trades": 117,
+          "average_exposure_duration_ms": 164.88333333333333,
+          "base_episodes": 60,
+          "by_execution": {
+            "conservative": 0.05891666666666666,
+            "optimistic": 2.0507933333333335,
+            "standard": 1.2952749999999997
+          },
+          "completed_two_leg_positions": 40,
+          "cvar_05_loss": 1.1955555555555555,
+          "invariant_violations": 0,
+          "losing_fraction": 0.016666666666666666,
+          "max_drawdown": 0.15890850722311398,
+          "mean_capital_utilization": 0.05618929999999999,
+          "mean_inference_latency_ms": 0.16159862991318935,
+          "mean_pnl": 1.134995,
+          "mean_pnl_episode_bootstrap_95": [
+            0.7475531388888889,
+            1.5887188888888888
+          ],
+          "mean_runtime_ms": 77.94557028844591,
+          "median_pnl": 0.0,
+          "no_trade_fraction": 0.5611111111111111,
+          "partial_orders": 41,
+          "policy": "gate-f12a4e29a05e5a4ce18f",
+          "profitable_fraction": 0.3333333333333333,
+          "quantiles": [
+            0.0,
+            0.0,
+            0.0,
+            1.022,
+            6.665
+          ],
+          "rank": 3,
+          "risk_interventions": 38,
+          "score": -0.060560555555555506,
+          "total_pnl": 204.29909999999998,
+          "unmatched_exposure_incidents": 63,
+          "unsupported_decisions": 23,
+          "variants": 180,
+          "worst_loss": -6.65
+        }
+      },
+      {
+        "cycle": 2,
+        "name": "delay",
+        "tournament_id": "tournament-5dee70bd06ea494c9d18c53f",
+        "job_id": "job-d0043ac445294ceeb2abd9bf",
+        "source_groups": 60,
+        "correlated_variants": 900,
+        "rows_sha256": "b9ca149c96201f962f6a62eca1db6be4701953a1834a2cb685bce9b520bd2be7",
+        "additional_latency_ms": 400,
+        "gate_metrics": {
+          "attempted_trades": 71,
+          "average_exposure_duration_ms": 164.45,
+          "base_episodes": 60,
+          "by_execution": {
+            "conservative": 0.0,
+            "optimistic": 1.6893749999999998,
+            "standard": 1.250475
+          },
+          "completed_two_leg_positions": 32,
+          "cvar_05_loss": 1.0586666666666666,
+          "invariant_violations": 0,
+          "losing_fraction": 0.011111111111111112,
+          "max_drawdown": 0.12492955100507233,
+          "mean_capital_utilization": 0.03711472222222222,
+          "mean_inference_latency_ms": 0.12772805674190058,
+          "mean_pnl": 0.9799500000000001,
+          "mean_pnl_episode_bootstrap_95": [
+            0.5685072777777778,
+            1.4488864999999995
+          ],
+          "mean_runtime_ms": 64.30207756153929,
+          "median_pnl": 0.0,
+          "no_trade_fraction": 0.7055555555555556,
+          "partial_orders": 25,
+          "policy": "gate-f12a4e29a05e5a4ce18f",
+          "profitable_fraction": 0.25,
+          "quantiles": [
+            0.0,
+            0.0,
+            0.0,
+            0.012,
+            6.665
+          ],
+          "rank": 5,
+          "risk_interventions": 18,
+          "score": -0.07871666666666655,
+          "total_pnl": 176.39100000000002,
+          "unmatched_exposure_incidents": 47,
+          "unsupported_decisions": 85,
+          "variants": 180,
+          "worst_loss": -6.84
+        }
+      }
+    ],
+    "paired_gate_mean_changes": [
+      {
+        "base_episodes": 60,
+        "control_unsupported_decisions": 30,
+        "control_unsupported_requests_rejected_by_risk": 0,
+        "control_unsupported_trade_requests": 0,
+        "episode_bootstrap_95": [
+          -0.4499100138888889,
+          0.01437923611111101
+        ],
+        "mean_pnl_difference": -0.21081611111111112,
+        "nonzero_variant_differences": 20,
+        "paired_variants": 180,
+        "policy": "gate-f12a4e29a05e5a4ce18f",
+        "risk_rejection_reasons": {}
+      },
+      {
+        "base_episodes": 60,
+        "control_unsupported_decisions": 23,
+        "control_unsupported_requests_rejected_by_risk": 0,
+        "control_unsupported_trade_requests": 0,
+        "episode_bootstrap_95": [
+          -0.3130809444444444,
+          -0.027845305555555578
+        ],
+        "mean_pnl_difference": -0.155045,
+        "nonzero_variant_differences": 22,
+        "paired_variants": 180,
+        "policy": "gate-f12a4e29a05e5a4ce18f",
+        "risk_rejection_reasons": {}
+      }
+    ]
+  },
+  "caveats": [
+    "Directed family selection uses previously observed failures; results do not represent all synthetic families",
+    "Two conditions in each cycle share source groups; cycles use disjoint seeds",
+    "Adaptive delay assignment is exploratory; no estimated population break-even frontier",
+    "Frozen gate and weights; no selection, retraining or promotion from challenge outcomes",
+    "Synthetic hypothetical outcomes; no empirical calibration or real profitability",
+    "The cycle-one baseline already has a negative downside score; this does not replicate a positive-to-negative reversal.",
+    "Within-cycle comparisons are paired; 200ms versus 400ms belongs to different fresh cohorts.",
+    "Cycle-one mean-change interval includes zero; positive point downside score does not prove robustness."
+  ],
+  "next_experiment": "Build observable opportunity-persistence labels and audit decision-time scope before fitting a revised gate. Keep these opened adaptive challenge groups outside candidate-selection validation."
+}

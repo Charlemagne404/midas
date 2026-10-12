@@ -3,7 +3,88 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from midas.arena.artifacts import atomic_json
 
-from apps.api.arena import router
+from apps.api.arena import inspect_director, router
+
+
+@pytest.mark.parametrize(
+    "state,pid,expected",
+    [
+        ("active", "42", "RUNNING"),
+        ("inactive", "0", "INTERRUPTED"),
+        ("failed", "0", "INTERRUPTED"),
+        ("active", "0", "UNVERIFIED"),
+    ],
+)
+def test_director_state_follows_supervisor_and_does_not_rewrite_manifest(
+    tmp_path, monkeypatch, state, pid, expected
+):
+    import subprocess
+    from types import SimpleNamespace
+
+    directory = tmp_path / "directors/followup"
+    atomic_json(
+        directory / "manifest.json",
+        {
+            "director_id": "followup",
+            "director_version": "adaptive-latency-1",
+            "state": "RUNNING",
+            "steps": [],
+        },
+    )
+    original = (directory / "manifest.json").read_bytes()
+    atomic_json(
+        directory / "supervisor-reference.json", {"unit": "midas-prometheus-followup-test.service"}
+    )
+    monkeypatch.setattr(
+        subprocess,
+        "run",
+        lambda *args, **kwargs: SimpleNamespace(
+            returncode=0, stdout=f"ActiveState={state}\nMainPID={pid}\nResult=success\n"
+        ),
+    )
+    assert inspect_director(tmp_path, "followup")["state"] == expected
+    assert (directory / "manifest.json").read_bytes() == original
+
+
+def test_completed_child_shows_verification_phase_and_observation_timeout_is_not_terminal(
+    tmp_path, monkeypatch
+):
+    import subprocess
+    from types import SimpleNamespace
+
+    directory = tmp_path / "directors/followup"
+    atomic_json(
+        directory / "manifest.json",
+        {
+            "director_id": "followup",
+            "director_version": "adaptive-latency-1",
+            "state": "RUNNING",
+            "steps": [{"state": "RUNNING", "job_id": "child"}],
+        },
+    )
+    atomic_json(
+        directory / "supervisor-reference.json", {"unit": "midas-prometheus-followup-test.service"}
+    )
+    atomic_json(
+        tmp_path / "jobs/child/job.json",
+        {"state": "COMPLETED", "progress": {"done": 900, "total": 900}},
+    )
+    monkeypatch.setattr(
+        subprocess,
+        "run",
+        lambda *args, **kwargs: SimpleNamespace(
+            returncode=0, stdout="ActiveState=active\nMainPID=42\n"
+        ),
+    )
+    observed = inspect_director(tmp_path, "followup")
+    assert observed["steps"][0]["state"] == "VERIFYING"
+    assert observed["current_stage"] == "Verifying completed cycle 1 replays"
+
+    def timeout(*args, **kwargs):
+        raise subprocess.TimeoutExpired("systemctl", 3)
+
+    monkeypatch.setattr(subprocess, "run", timeout)
+    assert inspect_director(tmp_path, "followup")["state"] == "UNVERIFIED"
 
 
 def test_cancel_followup_dispatches_only_supported_director_version(tmp_path, monkeypatch):

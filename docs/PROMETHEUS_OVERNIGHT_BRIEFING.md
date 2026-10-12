@@ -2,6 +2,29 @@
 
 ## Current checkpoint (supersedes running-job notes below)
 
+### Adaptive plan completed and stopped
+
+All four tournaments completed: 3,600 correlated variants over 120 fresh source
+groups, with paired conditions within each of two cycles. Both paired replay
+audits passed; all worker and coordinator PIDs are now zero. No research jobs
+remain active. The native Research Findings view contains the cycle results
+and an aggregate interpretation.
+
+Gate downside scores: cycle-one baseline -0.420, added 200ms +0.373; cycle-two
+baseline -0.061, added 400ms -0.079. The preregistered positive-score rule
+selected 400ms, then the plan stopped at its four-job budget. Cycle-one mean
+change is -0.211 with grouped interval [-0.450, 0.014]; cycle two -0.155 with
+interval [-0.313, -0.028]. Different cycles use different cohorts. This is
+directed synthetic evidence, not a population latency frontier or broad gate
+robustness. Weights and thresholds were unchanged; no champion was promoted.
+
+The complete export includes all four child source snapshots, frozen planning
+sources and the original economic study with its four input conditions. See
+PROMETHEUS_ADAPTIVE_RESEARCH_COMPLETION.json and the bundle verification report.
+Current inventory: 20 tournaments, 37,023 completed variants, 21 model artifacts
+(20 fitted). The full Prometheus goal remains active. Next priority: observable
+opportunity-persistence labels and decision-time scope before revised policies.
+
 ### Adaptive research is running
 
 The new bounded coordinator passed the full Python suite: 353 passed, one

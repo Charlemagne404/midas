@@ -1423,3 +1423,37 @@ Model weights, threshold, sizing and all producer sources remain unchanged.
 Cycle-one paired evidence and attribution are stored in
 PROMETHEUS_ADAPTIVE_RESEARCH_CYCLE_ONE.json and the native Research Finding
 director-followup-453650eedd036f130bc81fd8-cycle-1. No champion was promoted.
+
+## Completed adaptive research and truthful coordinator observation
+
+The four-stage plan completed, both paired replay/scenario-transformation audits
+passed, and all its supervisor/worker PIDs returned to zero. It stopped without
+a fifth job. Cycle-two baseline score -0.060561, 400ms score -0.078717; paired
+mean change -0.155045, grouped interval [-0.313081, -0.027845]. Cycle-one
+positive-score rule selected this second delay on disjoint seeds. The 200ms
+positive point score does not establish robustness, and its mean-change interval
+contains zero. Cohorts differ between cycles, so this is not a population
+break-even frontier. Aggregate finding finding-61263012d4b365eb527e0818
+preserves these limitations. Model weights and thresholds were never changed.
+
+The API now checks the adaptive coordinator's authoritative systemd state without
+rewriting its owned manifest. Completed child jobs are displayed as VERIFYING
+while paired audits finish. Stopped coordinators show INTERRUPTED; transient
+observation failures show UNVERIFIED and never request a restart. Cancellation
+remains available in these observed states. Large cycle/attribution payloads are
+excluded from overview polling and remain on the detailed plan endpoint.
+
+The experiment exporter supports the adaptive schema, verifies preregistration
+and captured producer hashes, requires four distinct completed child jobs, checks
+stage source/weight/configuration lineage, and includes each child source snapshot.
+It also includes the frozen original study and its four source condition artifacts.
+Tests: 19 focused backend/export tests passed in 2.72 seconds; nine frontend
+tests, typecheck, lint and build passed. Earlier full Python suite: 353 passed,
+one PostgreSQL skip; these later observation/export changes have focused coverage.
+The existing Starlette warning and chart chunk warning remain.
+
+Current completed inventory is 20 tournaments and 37,023 correlated variants,
+including one 1,500-variant performance replay. Fitted model count remains 20;
+there are 21 registered artifacts including the untrained heuristic. The older
+full saved-replay audit covers 33,423 variants; the new coordinator separately
+verified all 3,600 follow-up variants. No broad rerun of all 37,023 is claimed.

@@ -3,11 +3,96 @@
 import asyncio
 import importlib.util
 import json
+import re
+import subprocess
 from pathlib import Path
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, ConfigDict
+
+
+def inspect_director(root: Path, identity: str) -> dict[str, Any]:
+    """Observe coordinator liveness without rewriting its owned manifest."""
+    from midas.arena.artifacts import artifact_path
+
+    directory = artifact_path(root, "directors", identity)
+    record = json.loads((directory / "manifest.json").read_text())
+    if record.get("director_version") != "adaptive-latency-1" or record["state"] != "RUNNING":
+        return record
+    reference = directory / "supervisor-reference.json"
+    if not reference.exists():
+        return {
+            **record,
+            "state": "UNVERIFIED",
+            "observation_error": "Coordinator supervisor reference is unavailable; inspect its child jobs.",
+        }
+    supervisor = json.loads(reference.read_text())
+    unit = supervisor["unit"]
+    if not isinstance(unit, str) or not re.fullmatch(
+        r"midas-prometheus-followup-[a-zA-Z0-9_-]+\.service", unit
+    ):
+        raise ValueError("Invalid research coordinator unit")
+    record["coordinator_unit"] = unit
+    try:
+        result = subprocess.run(
+            [
+                "systemctl",
+                "--user",
+                "show",
+                unit,
+                "-p",
+                "ActiveState",
+                "-p",
+                "MainPID",
+                "-p",
+                "Result",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=3,
+        )
+    except (OSError, subprocess.TimeoutExpired) as error:
+        return {
+            **record,
+            "state": "UNVERIFIED",
+            "observation_error": f"Coordinator status observation failed: {type(error).__name__}",
+        }
+    properties = dict(line.split("=", 1) for line in result.stdout.splitlines() if "=" in line)
+    record["coordinator_supervisor"] = properties
+    if result.returncode or not properties.get("ActiveState"):
+        return {
+            **record,
+            "state": "UNVERIFIED",
+            "observation_error": "Coordinator status could not be verified; no restart was requested.",
+        }
+    if properties["ActiveState"] in {"inactive", "failed"}:
+        return {
+            **record,
+            "state": "INTERRUPTED",
+            "observation_error": "Coordinator stopped before publishing completion. Child jobs retain their own supervised state.",
+        }
+    if (
+        properties["ActiveState"] != "active"
+        or not properties.get("MainPID", "0").isdigit()
+        or int(properties.get("MainPID", "0")) == 0
+    ):
+        return {
+            **record,
+            "state": "UNVERIFIED",
+            "observation_error": "Coordinator has no verified active process.",
+        }
+    for index, step in enumerate(record["steps"]):
+        if step["state"] != "RUNNING" or not step.get("job_id"):
+            continue
+        job_path = artifact_path(root, "jobs", step["job_id"]) / "job.json"
+        job = json.loads(job_path.read_text())
+        if job["state"] == "COMPLETED":
+            step["state"] = "VERIFYING"
+            step["progress"] = job.get("progress")
+            record["current_stage"] = f"Verifying completed cycle {index // 2 + 1} replays"
+        break
+    return record
 
 
 def router(root: Path) -> APIRouter:
@@ -47,6 +132,8 @@ def router(root: Path) -> APIRouter:
             (root / kind).glob("*/manifest.json"), key=lambda p: p.stat().st_mtime, reverse=True
         )[:100]:
             record = json.loads(manifest.read_text())
+            if kind == "directors":
+                record = inspect_director(root, manifest.parent.name)
             if kind == "models":
                 evaluation_counts(record)
             if kind == "searches" and record["state"] == "RUNNING" and record.get("owner_job_id"):
@@ -72,7 +159,11 @@ def router(root: Path) -> APIRouter:
                     )
                 }
             # Curves live on detail pages, not every overview poll.
-            values.append({k: v for k, v in record.items() if k != "curves"})
+            omitted = {"curves"}
+            if kind == "directors" and record.get("director_version") == "adaptive-latency-1":
+                record["completed_cycle_count"] = len(record.get("cycles", []))
+                omitted.update({"cycles", "input_attribution"})
+            values.append({k: v for k, v in record.items() if k not in omitted})
         return values
 
     def overview_data() -> dict[str, Any]:
@@ -157,9 +248,7 @@ def router(root: Path) -> APIRouter:
 
     @api.get("/directors/{identity}")
     async def director(identity: str) -> Any:
-        return await call(
-            lambda: json.loads((path("directors", identity) / "manifest.json").read_text())
-        )
+        return await call(inspect_director, root, identity)
 
     @api.post("/directors/{identity}/cancel")
     async def cancel_director(identity: str) -> Any:

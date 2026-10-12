@@ -1,0 +1,15 @@
+{
+  "checked_at": 1791822908.4423652,
+  "bundle_sha256": "01191912d4b09941412f331e9fd2e5e8d3f122cff014a0d099a0ab8b7c73d730",
+  "verified_payloads": 9870,
+  "owned_job_source_manifests": [
+    "jobs/job-5d88ff57521f4fc0a13d77e7/source-manifest.json",
+    "jobs/job-739176fa2338460ca19c489a/source-manifest.json",
+    "jobs/job-5d49c24feb9e4c9d84f740f1/source-manifest.json",
+    "jobs/job-d0043ac445294ceeb2abd9bf/source-manifest.json"
+  ],
+  "input_study_included": true,
+  "input_condition_tournaments": 4,
+  "completed_followup_tournaments": 4,
+  "scope": "Bundle bytes and linked captured inputs; the coordinator separately verified paired financial/journal replay hashes."
+}

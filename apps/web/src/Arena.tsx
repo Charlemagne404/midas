@@ -253,6 +253,7 @@ type Overview = {
     research_question: string;
     planning_rule: string;
     current_stage?: string;
+    observation_error?: string;
     steps: { name: string; state: string; artifact?: { kind: string; identity: string } }[];
   }[];
   recorded_sources?: {
@@ -1974,8 +1975,9 @@ export function Arena() {
                 <State value={plan.state} />
                 <p>{plan.planning_rule}</p>
                 {plan.current_stage && <p>Current stage: {plan.current_stage}</p>}
+                {plan.observation_error && <p className="lab-note">{plan.observation_error}</p>}
                 {plan.director_version === 'adaptive-latency-1' &&
-                  ['PLANNED', 'RUNNING'].includes(plan.state) && (
+                  ['PLANNED', 'RUNNING', 'UNVERIFIED', 'INTERRUPTED'].includes(plan.state) && (
                     <button
                       disabled={cancelDirector.isPending}
                       onClick={() => cancelDirector.mutate(plan.director_id)}

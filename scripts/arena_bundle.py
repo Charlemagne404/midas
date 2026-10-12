@@ -93,11 +93,58 @@ def export_experiment(root: Path, kind: str, identity: str, output: Path) -> dic
     if director.get("state", "COMPLETED" if kind == "tournaments" else None) != "COMPLETED":
         raise ValueError("Only completed plans can be exported as complete experiment bundles")
     paths = set(directory.rglob("*"))
+    adaptive = kind == "directors" and director.get("director_version") == "adaptive-latency-1"
     if kind == "directors":
-        model_ids = set(director["configuration"]["incumbent_model_ids"])
+        model_ids = (
+            set(director["model_artifact_hashes"])
+            if adaptive
+            else set(director["configuration"]["incumbent_model_ids"])
+        )
+        configuration = director["baseline_template"] if adaptive else director["configuration"]
+        if adaptive:
+            frozen = directory / "preregistration.json"
+            if sha256(frozen) != director["preregistration_sha256"]:
+                raise ValueError("Adaptive preregistration changed")
+            original = json.loads(frozen.read_text())
+            mutable = {"state", "cycles", "steps", "current_stage"}
+            if any(
+                director.get(key) != value for key, value in original.items() if key not in mutable
+            ):
+                raise ValueError("Adaptive configuration differs from preregistration")
+            for source, expected in director["producer_hashes"].items():
+                if sha256(directory / "source" / Path(source).name) != expected:
+                    raise ValueError("Captured adaptive producer source changed")
+            input_path = Path(director["input_study"]["path"]).resolve()
+            if (
+                not input_path.is_relative_to(root)
+                or sha256(input_path) != director["input_study"]["sha256"]
+            ):
+                raise ValueError("Adaptive input study changed or lies outside its artifact root")
+            paths.add(input_path)
+            input_study = json.loads(input_path.read_text())
+            for condition in input_study["conditions"]:
+                input_directory = artifact_path(root, "tournaments", condition["tournament_id"])
+                input_manifest = json.loads((input_directory / "manifest.json").read_text())
+                if (
+                    sha256(input_directory / "rows.json") != condition["rows_sha256"]
+                    or input_manifest["model_artifact_hashes"] != director["model_artifact_hashes"]
+                ):
+                    raise ValueError("Adaptive input condition lineage changed")
+                paths.update(input_directory.rglob("*"))
+            if len(director["steps"]) != 4 or len(director["cycles"]) != 2:
+                raise ValueError("Adaptive plan lacks its complete bounded sequence")
+            if len({step.get("job_id") for step in director["steps"]}) != 4 or any(
+                not step.get("job_id") for step in director["steps"]
+            ):
+                raise ValueError("Adaptive stages require four distinct owned jobs")
+            if [step["name"] for step in director["steps"]] != [
+                step["name"] for step in original["steps"]
+            ]:
+                raise ValueError("Adaptive step sequence changed")
         steps = director["steps"]
         reference_key = "director_id"
     elif kind == "searches":
+        configuration = director["configuration"]
         model_ids = {director["configuration"]["model_id"]}
         steps = [
             {"state": "COMPLETED", "artifact": {"kind": "tournaments", "identity": director[key]}}
@@ -105,6 +152,7 @@ def export_experiment(root: Path, kind: str, identity: str, output: Path) -> dic
         ]
         reference_key = "search_id"
     else:
+        configuration = director["configuration"]
         model_ids = set(director["model_artifact_hashes"])
         steps = [{"state": "COMPLETED", "artifact": {"kind": "tournaments", "identity": identity}}]
         reference_key = "tournament_id"
@@ -116,6 +164,11 @@ def export_experiment(root: Path, kind: str, identity: str, output: Path) -> dic
         stage = json.loads((path / "manifest.json").read_text())
         if stage.get("state", "COMPLETED") != "COMPLETED":
             raise ValueError("Referenced stage is incomplete")
+        if adaptive and (
+            stage.get("source_hash") != director["source_hash"]
+            or stage.get("model_artifact_hashes") != director["model_artifact_hashes"]
+        ):
+            raise ValueError("Adaptive stage source or weights changed")
         if artifact["kind"] == "tournaments" and sha256(path / "rows.json") != stage["rows_sha256"]:
             raise ValueError("Referenced tournament rows have changed")
         paths.update(path.rglob("*"))
@@ -137,7 +190,7 @@ def export_experiment(root: Path, kind: str, identity: str, output: Path) -> dic
         ):
             raise ValueError("Model training dataset provenance changed")
         paths.update(dataset_paths(root, model["dataset_id"]))
-    dataset = artifact_path(root, "datasets", director["configuration"]["dataset_id"])
+    dataset = artifact_path(root, "datasets", configuration["dataset_id"])
     dataset_manifest = json.loads((dataset / "manifest.json").read_text())
     if sha256(dataset / "rows.json") != dataset_manifest["rows_sha256"]:
         raise ValueError("Referenced dataset rows have changed")
@@ -147,9 +200,27 @@ def export_experiment(root: Path, kind: str, identity: str, output: Path) -> dic
     ):
         raise ValueError("Director dataset provenance differs from referenced dataset")
     paths.update(dataset_paths(root, dataset.name))
+    owned_jobs = {step.get("job_id") for step in steps} if adaptive else set()
     for job_file in root.glob("jobs/*/job.json"):
         job = json.loads(job_file.read_text())
-        if (job.get("result") or {}).get(reference_key) == identity:
+        if (job.get("result") or {}).get(reference_key) == identity or job.get(
+            "job_id"
+        ) in owned_jobs:
+            if adaptive and job.get("job_id") in owned_jobs:
+                step = next(s for s in steps if s["job_id"] == job["job_id"])
+                stage = json.loads(
+                    (
+                        artifact_path(root, "tournaments", step["artifact"]["identity"])
+                        / "manifest.json"
+                    ).read_text()
+                )
+                if (
+                    job["state"] != "COMPLETED"
+                    or job["result"]["tournament_id"] != stage["tournament_id"]
+                    or job["configuration"]["tournament"] != stage["configuration"]
+                    or job["submitted_source_hash"] != director["source_hash"]
+                ):
+                    raise ValueError("Adaptive child job differs from completed stage")
             source_manifest = json.loads((job_file.parent / "source-manifest.json").read_text())
             for relative, expected in source_manifest["files"].items():
                 relative_path = Path(relative)
@@ -158,6 +229,9 @@ def export_experiment(root: Path, kind: str, identity: str, output: Path) -> dic
                 if sha256(job_file.parent / "source" / relative_path) != expected:
                     raise ValueError("Captured source hash mismatch")
             paths.update(job_file.parent.rglob("*"))
+            owned_jobs.discard(job.get("job_id"))
+    if owned_jobs:
+        raise ValueError("Adaptive child job evidence is missing")
     tournament_ids = {
         step["artifact"]["identity"] for step in steps if step["artifact"]["kind"] == "tournaments"
     }
