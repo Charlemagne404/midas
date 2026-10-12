@@ -1,0 +1,26 @@
+{
+  "checked_at": 1791824460.669193,
+  "python": {
+    "passed": 371,
+    "skipped": 1,
+    "warnings": 1,
+    "duration_seconds": 401.81,
+    "result_line": "371 passed, 1 skipped, 1 warning in 401.81s (0:06:41)",
+    "log_sha256": "d93e881452386e10378786bf7a72fc0d5485221fe06da9205d552218f3bed089"
+  },
+  "focused_python": {
+    "passed": 29,
+    "groups": [
+      "persistence and tournament tests: 11",
+      "foundations, unmatched target and diagnostics: 18"
+    ]
+  },
+  "frontend": {
+    "passed": 9,
+    "typecheck": "passed",
+    "lint": "passed",
+    "build": "passed",
+    "warning": "Existing chart chunk exceeds 500 kB"
+  },
+  "label_version": "original-quote-first-arrival-1"
+}

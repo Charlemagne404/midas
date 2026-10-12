@@ -387,6 +387,7 @@ def run_tournament(root: Path, spec: TournamentSpec, progress: Any = None) -> di
                         explanation.update(
                             completion_score=probability if target == "completion" else None,
                             unmatched_risk_score=probability if target == "unmatched" else None,
+                            persistence_score=probability if target == "persistence" else None,
                             label_target=target,
                             threshold=threshold,
                             requested_size=binding.size if binding else "full",

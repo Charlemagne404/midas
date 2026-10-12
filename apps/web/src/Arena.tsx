@@ -783,6 +783,7 @@ export function Arena() {
                 >
                   <option value="completion">Both legs fully complete</option>
                   <option value="unmatched">Residual unmatched inventory</option>
+                  <option value="persistence">Original quote persists to first arrival</option>
                 </select>
               </label>
               <label>
@@ -805,7 +806,7 @@ export function Arena() {
                         episodes,
                         seed: 42070,
                         label_target: labelTarget,
-                        decision_scope: labelTarget === 'unmatched' ? 'first_admitted' : 'initial',
+                        decision_scope: labelTarget !== 'completion' ? 'first_admitted' : 'initial',
                       },
                     },
                   })
@@ -819,6 +820,8 @@ export function Arena() {
               is inferred.
               {labelTarget === 'unmatched' &&
                 ' Samples the first risk-admitted proposal, including later opportunities while the portfolio is still empty.'}
+              {labelTarget === 'persistence' &&
+                ' Predicts whether the original quantity remains eligible within its original budget and limits at first venue arrival. Future quotes are labels only; fills and second-leg availability are not guaranteed.'}
             </p>
           </Section>
         </>
@@ -968,6 +971,13 @@ export function Arena() {
                   Policy gate accepts predicted residual unmatched risk at or below the configured
                   maximum. No-fill outcomes are negative labels; low unmatched risk does not imply
                   profitable execution.
+                </p>
+              )}
+              {model.data.label_target === 'persistence' && (
+                <p className="lab-note">
+                  Predicts quote eligibility for the original quantity, capital budget and order
+                  limits at first venue arrival. A positive score does not establish fills or
+                  availability when the second leg arrives. Future venue quotes are labels only.
                 </p>
               )}
               {model.data.curves?.length ? (

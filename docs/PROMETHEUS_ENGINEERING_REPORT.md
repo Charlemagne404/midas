@@ -1464,3 +1464,37 @@ Production browser verification passed for the completed plan state, absence of
 active cancellation on the terminal plan, and the aggregate Research Finding,
 with no page errors. Completion browser evidence and screenshot hash are saved
 in PROMETHEUS_ADAPTIVE_RESEARCH_COMPLETION_BROWSER.json.
+
+## Opportunity-persistence labeling and integrated training support
+
+Added `persistence.py` and target `persistence` to the versioned dataset pipeline.
+The label evaluates the original admitted quantity within its allocated capital
+and original leg-price limits at the earliest actual scheduled submission arrival.
+All earlier venue events are advanced through the unchanged simulator; both
+original submits must still be pending. Private venue exchange timestamps are
+used rather than delayed observer receipt clocks, on copied label-only books.
+Future exchange timestamps invalidate quote eligibility. The raw venue hash and
+clock convention are stored with the label. No arrival within the horizon is
+negative. A positive label cannot guarantee fills or later second-leg availability.
+
+Features remain the 19 pre-admission observable values. Tests demonstrate equal
+features, decision time, initial execution outcomes, scenario hash and final
+financial result hash between persistence and completion sampling. A profitable
+quote can fail its original order-price limit, and a positive persistence label
+can accompany incomplete execution. No broker, execution or accounting semantics
+changed. Existing datasets are frozen; new source hashes produce new identities.
+
+The existing baseline/PyTorch trainers, verified predictor loader, probability
+gates and native target selector support persistence. The completion heuristic
+is excluded. Persistence gates require scores at or above threshold and still
+pass independent mathematical eligibility and risk admission. Model details
+explain the quote/fill distinction. See ARENA_OPPORTUNITY_PERSISTENCE.md.
+
+Validation: full Python suite 371 passed, one PostgreSQL skip and one existing
+Starlette warning, 401.81 seconds. Twenty-nine focused tests passed; nine frontend
+tests, typecheck, lint and build passed, with the existing chart chunk warning.
+The production plan uses 1,001 fresh groups from seed 183071, seven families and
+three execution assumptions; first-admitted scope. A two-seed logistic/MLP sweep
+will select on validation Brier with the existing 0.002 simplicity tolerance.
+Final classifier tests remain unopened. Seed overlap and artifact-budget checks
+passed. The source will be frozen during production generation and training.

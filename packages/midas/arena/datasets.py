@@ -10,6 +10,7 @@ from pydantic import Field, model_validator
 
 from midas.arena.artifacts import artifact_path, atomic_json, sha256
 from midas.arena.features import FEATURE_VERSION, FEATURES, extract
+from midas.arena.persistence import LABEL_DEFINITION, LABEL_VERSION, first_arrival_label
 from midas.core.models import Model
 from midas.economics.attestation import digest
 from midas.laboratory import VERSION as SIMULATOR_VERSION
@@ -27,7 +28,7 @@ class DatasetSpec(Model):
     families: tuple[str, ...] = ("calm", "volatile", "thin", "deep", "one_sided", "disappearing")
     execution_models: tuple[str, ...] = ("optimistic", "standard", "conservative")
     observation_latency_ms: int = Field(default=100, ge=0, le=60000)
-    label_target: Literal["completion", "unmatched"] = "completion"
+    label_target: Literal["completion", "unmatched", "persistence"] = "completion"
     decision_scope: Literal["initial", "first_admitted"] = "initial"
 
     @model_validator(mode="after")
@@ -119,13 +120,16 @@ def sample(spec: DatasetSpec, index: int, model: str) -> dict[str, Any] | None:
             env.step()
     else:
         return None
+    persistence = None
+    if spec.label_target == "persistence":
+        persistence = first_arrival_label(env, initial_ids[0])
     result = env.run()
     if not result["passed"] or not result["complete"]:
         raise ValueError(f"Invalid training simulation: {result['errors']}")
     outcome = initial_outcome(env.state["positions"][initial_ids[0]]["exchange"])
     # Base identity is shared across all execution variants. Seed stays metadata only.
     base_id = f"{family}:{seed}"
-    return {
+    row = {
         "base_episode_id": base_id,
         "index": index,
         "family": family,
@@ -135,9 +139,11 @@ def sample(spec: DatasetSpec, index: int, model: str) -> dict[str, Any] | None:
         "decision_time_ms": observation["time_ms"],
         "decision_ordinal": ordinal,
         "features": features,
-        "label": outcome[spec.label_target],
+        "label": persistence["label"] if persistence is not None else outcome[spec.label_target],
         "label_target": spec.label_target,
-        "label_version": "initial-proposal-outcomes-2",
+        "label_version": persistence["label_version"]
+        if persistence is not None
+        else "initial-proposal-outcomes-2",
         "decision_scope": spec.decision_scope,
         "initial_outcome": outcome,
         "scenario_hash": result["scenario_hash"],
@@ -146,6 +152,9 @@ def sample(spec: DatasetSpec, index: int, model: str) -> dict[str, Any] | None:
         "simulation_version": result["simulator_version"],
         "economic_assumptions": result["economic_assumptions"],
     }
+    if persistence is not None:
+        row["persistence_outcome"] = persistence
+    return row
 
 
 def research_hash() -> str:
@@ -199,10 +208,14 @@ def build(root: Path, spec: DatasetSpec, progress: Any = None) -> dict[str, Any]
         "feature_version": FEATURE_VERSION,
         "feature_schema": list(FEATURES),
         "label_target": spec.label_target,
-        "label_version": "initial-proposal-outcomes-2",
+        "label_version": LABEL_VERSION
+        if spec.label_target == "persistence"
+        else "initial-proposal-outcomes-2",
         "decision_scope": spec.decision_scope,
         "label_definition": (
-            "Both sampled risk-admitted proposal orders finish FILLED; later proposals do not affect label"
+            LABEL_DEFINITION
+            if spec.label_target == "persistence"
+            else "Both sampled risk-admitted proposal orders finish FILLED; later proposals do not affect label"
             if spec.label_target == "completion"
             else "Unequal acquired shares across sampled proposal legs after all its fills, before settlement; both zero fills and matched partial fills are negative. Later proposals do not affect label."
         ),
@@ -282,7 +295,13 @@ def load(root: Path, identity: str) -> tuple[dict[str, Any], list[dict[str, Any]
         target = manifest.get("label_target", "completion")
         if row.get("label_target", "completion") != target:
             raise ValueError("Row label target differs from manifest")
-        if "initial_outcome" in row and row["label"] != row["initial_outcome"][target]:
+        if target == "persistence":
+            if (
+                row["label"] != row["persistence_outcome"]["label"]
+                or row["label_version"] != LABEL_VERSION
+            ):
+                raise ValueError("Persistence label differs from saved venue outcome")
+        elif "initial_outcome" in row and row["label"] != row["initial_outcome"][target]:
             raise ValueError("Label differs from saved initial proposal outcome")
         if row["partition"] != partition(row["base_episode_id"], manifest["spec"]["split_seed"]):
             raise ValueError("Frozen partition assignment mismatch")

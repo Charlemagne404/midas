@@ -1,0 +1,76 @@
+{
+  "created_at": 1791824331.269143,
+  "source_hash": "297f559be63868268aafce83e9b1ac5ff9fa799c3a64ac4474fcb87bcbf8bee8",
+  "dataset_job": {
+    "kind": "dataset",
+    "dataset": {
+      "version": "synthetic-decision-1",
+      "episodes": 1001,
+      "seed": 183071,
+      "split_seed": 1977,
+      "families": [
+        "thin",
+        "deep",
+        "calm",
+        "liquidity_shock",
+        "volatile",
+        "one_sided",
+        "disappearing"
+      ],
+      "execution_models": [
+        "optimistic",
+        "standard",
+        "conservative"
+      ],
+      "observation_latency_ms": 100,
+      "label_target": "persistence",
+      "decision_scope": "first_admitted"
+    },
+    "training": null,
+    "severity": null,
+    "model_id": null,
+    "rl": null,
+    "tournament": null,
+    "sweep": null,
+    "director": null,
+    "policy_search": null,
+    "max_wall_seconds": 1800
+  },
+  "planned_sweep_template": {
+    "dataset_id": "RESOLVE_FROM_COMPLETED_DATASET_JOB",
+    "candidates": [
+      {
+        "family": "logistic",
+        "hidden_size": 32,
+        "learning_rate": 0.001,
+        "weight_decay": 0.0001
+      },
+      {
+        "family": "mlp",
+        "hidden_size": 32,
+        "learning_rate": 0.001,
+        "weight_decay": 0.0001
+      }
+    ],
+    "seeds": [
+      11,
+      29
+    ],
+    "epochs": 80,
+    "practical_brier_tolerance": 0.002
+  },
+  "sweep_wall_seconds": 1800,
+  "selection_rule": "Mean validation Brier across seeds 11 and 29; preregistered 0.002 simplicity tolerance",
+  "final_classifier_tests_opened_for_selection": false,
+  "artifact_budget_preflight": {
+    "logical_bytes": 592671572,
+    "files": 41422,
+    "limit_bytes": 1073741824
+  },
+  "limitations": [
+    "Generated private quote eligibility labels, not empirical fills",
+    "Only first-admitted full-proposal scope",
+    "First arrival says nothing about later second-leg availability",
+    "Classifier quality does not establish economic policy benefit"
+  ]
+}

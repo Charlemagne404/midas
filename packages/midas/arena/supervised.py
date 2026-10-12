@@ -342,7 +342,11 @@ def support_envelope(features: Any) -> dict[str, Any]:
 
 class Predictor:
     def __init__(self, parameters: dict[str, Any]):
-        if parameters.get("label_target", "completion") not in {"completion", "unmatched"}:
+        if parameters.get("label_target", "completion") not in {
+            "completion",
+            "unmatched",
+            "persistence",
+        }:
             raise ValueError("Unsupported predictor target")
         self.parameters = parameters
         self.model: Any = None
