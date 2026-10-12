@@ -239,3 +239,27 @@ tests passed; typecheck, lint, build, Ruff and strict mypy passed. The updated A
 browser workflow passed, including actual diagnostic execution/display.
 Both production diagnostic jobs completed; **no research worker is running**.
 API and dashboard are healthy. The preserved campaign hash remains unchanged.
+
+## Residual unmatched-risk research checkpoint
+
+A new dataset target predicts unequal acquired shares after a sampled proposal's
+fills. Unlike failed full completion, it does not classify zero fills or equally
+matched partial fills as unmatched inventory. Models persist their target, and
+unmatched-risk gates accept only probabilities <= the configured maximum.
+All proposals retain production risk admission. The UI identifies target types.
+
+Loss attribution found that two earlier volatile failures began at the second
+decision and were absent from the initial-decision training scope. The first new
+build was therefore cancelled at 384/1001 with partial checkpoints preserved.
+The preregistration was amended BEFORE training/new challenges to sample the
+first risk-admitted proposal, including later opportunities with an empty
+portfolio. Original preregistration, cancellation and reproduced loss evidence
+are retained. This does not cover later portfolio states or imply a guaranteed
+loss bound.
+
+The revised target/scope passed a real browser training/evaluation workflow.
+The intended bounded campaign uses 1001 fresh generated episodes, seven training
+families, two-seed logistic/neural selection and 100 genuinely new challenge
+identities. Selection uses validation only and the probability threshold stays
+fixed at 0.5. Actual job identities and final gates follow in the latest report;
+no campaign completion is claimed until durable artifacts prove it.

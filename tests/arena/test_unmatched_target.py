@@ -41,6 +41,21 @@ def test_target_changes_only_labels_not_observations_and_reverses_policy_gate():
         risk.permits(float("nan"), 0.5)
 
 
+def test_first_admitted_scope_captures_later_loss_case_without_future_features():
+    common = {
+        "episodes": 100,
+        "seed": 53071,
+        "families": ("one_sided", "deep", "volatile", "calm", "disappearing", "thin"),
+        "label_target": "unmatched",
+    }
+    assert sample(DatasetSpec(**common), 62, "optimistic") is None
+    row = sample(DatasetSpec(**common, decision_scope="first_admitted"), 62, "optimistic")
+    assert row is not None and row["decision_ordinal"] > 1
+    assert row["label"] == 1
+    assert row["features"][8] == 100  # No earlier acquired position or capital leak.
+    assert row["features"][9] == 0
+
+
 def test_real_unmatched_model_serialization_and_risk_gated_tournament(tmp_path):
     dataset = build(tmp_path, DatasetSpec(episodes=60, label_target="unmatched"))
     manifest, rows = load(tmp_path, dataset["dataset_id"])

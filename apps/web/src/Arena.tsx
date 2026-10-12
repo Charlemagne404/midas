@@ -18,6 +18,7 @@ type Metrics = {
 type Dataset = {
   dataset_id: string;
   label_target?: string;
+  decision_scope?: string;
   rows: number;
   eligible_base_episodes: number;
   generated_base_episodes: number;
@@ -673,7 +674,12 @@ export function Arena() {
                   submit.mutate({
                     configuration: {
                       kind: 'dataset',
-                      dataset: { episodes, seed: 42070, label_target: labelTarget },
+                      dataset: {
+                        episodes,
+                        seed: 42070,
+                        label_target: labelTarget,
+                        decision_scope: labelTarget === 'unmatched' ? 'first_admitted' : 'initial',
+                      },
                     },
                   })
                 }
@@ -684,6 +690,8 @@ export function Arena() {
             <p className="lab-note">
               Generated market behavior and simulated target labels. No real execution probability
               is inferred.
+              {labelTarget === 'unmatched' &&
+                ' Samples the first risk-admitted proposal, including later opportunities while the portfolio is still empty.'}
             </p>
           </Section>
         </>

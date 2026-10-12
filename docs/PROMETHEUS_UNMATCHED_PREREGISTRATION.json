@@ -14,7 +14,8 @@
       "liquidity_shock"
     ],
     "label_target": "unmatched",
-    "observation_latency_ms": 100
+    "observation_latency_ms": 100,
+    "decision_scope": "first_admitted"
   },
   "selection": {
     "candidates": [
@@ -51,5 +52,8 @@
     "Residual unequal filled shares is not inverse full completion and not guaranteed loss severity.",
     "Seven training families rotate seed parity; six-family challenge adds a separately reported generator-distribution shift.",
     "No comparison to legacy completion gates trained on a different dataset; cross-target policy comparison remains later work."
-  ]
+  ],
+  "amended_at": 1791784175.309172,
+  "amendment_reason": "Reproduction of opened earlier losses found initial-decision sampling excluded later first-admitted trades. Initial build cancelled at 384/1001; no training or final challenge began.",
+  "supersedes": "PROMETHEUS_UNMATCHED_INITIAL_SCOPE_PREREGISTRATION.json"
 }

@@ -447,3 +447,48 @@ Bundle v2 exports now reject changed referenced dataset rows, model weights,
 tournament rows and captured source; they include the core package specification,
 verification/comparison tools and reproducibility instructions. Existing external
 bundles remain immutable. Two utility regression tests pass after this change.
+
+### Sampling-scope correction before training
+
+Attribution of the three earlier fresh-challenge classifier losses reproduced
+20.4, 14 and 19 unmatched YES shares. The latter two volatile cases began at the
+SECOND decision. The existing initial-decision sampler returned no row for them.
+This was a documented coverage limitation, but retaining it for the new risk
+question would exclude relevant states. No final test was used to fit parameters.
+
+Stopped dataset job `job-76d27de1b74f4ccd9d6b278d` at 384/1001. The supervised
+handle is terminal (MainPID 0); persisted state is CANCELLED / exit status 130.
+Partial episode checkpoints remain retained and no complete manifest was
+published. The original preregistration and terminal cancellation record are
+preserved separately.
+
+New `decision_scope=first_admitted` advances the actual event simulator through
+rejected/ineligible decisions until the first proposal admitted by production
+risk rules. It extracts observations before that proposal, with no preceding
+acquired inventory, and labels only that proposal's fills. Decision ordinals and
+scope are persisted; scope and target must match frozen manifest/spec/rows.
+Legacy initial-decision datasets remain readable and unchanged. The UI uses this
+scope for newly requested unmatched datasets and explains it. Later portfolio
+states still require separate data; the correction does not claim comprehensive
+state coverage.
+
+Seven focused target tests pass, including the later volatile loss case and
+zero prior capital lockup. The revised campaign preregistration is recorded
+before training or new challenge execution; its amendment documents why the
+initial build was cancelled. Full source remains frozen through validation and
+subsequent jobs.
+
+The amended first-admitted browser workflow passed (53.7 seconds); frontend
+build/lint pass. Protected archive digest, SQLite quick_check and exclusive writer
+ownership were reverified unchanged. Bundle v2 was exported independently at
+`/home/charlie/midas-prometheus-bundles/director-84332caaae9c280e078a799b-v2.tar.gz`;
+all 4893 entries verify, SHA256
+`652bcffa65beb1e94a0c0d4a7fa5f81d01a6d3f09ac2ae4687e2b1e2d3f19bde`.
+The original bundle is preserved. Full regression evidence for the scope
+correction is pending below; no new training or challenge result is claimed yet.
+
+Scope-correction gate: full Python regression **279 passed / one PostgreSQL skip**,
+222.58 seconds, one existing Starlette warning. Source Ruff/mypy and frontend
+build/lint pass; updated browser workflow passed. The first-admitted sampler is
+ready for the amended bounded campaign. Source will remain frozen until its
+supervised jobs finish.

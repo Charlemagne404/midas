@@ -28,6 +28,7 @@ class DatasetSpec(Model):
     execution_models: tuple[str, ...] = ("optimistic", "standard", "conservative")
     observation_latency_ms: int = Field(default=100, ge=0, le=60000)
     label_target: Literal["completion", "unmatched"] = "completion"
+    decision_scope: Literal["initial", "first_admitted"] = "initial"
 
     @model_validator(mode="after")
     def supported(self) -> "DatasetSpec":
@@ -96,14 +97,27 @@ def sample(spec: DatasetSpec, index: int, model: str) -> dict[str, Any] | None:
         update={"observation_latency_ms": spec.observation_latency_ms}
     )
     env = first_decision(scenario)
-    observation = env.observe()
-    features, eligible = extract(observation, scenario.account, scenario.observation_latency_ms)
-    if not eligible:
-        return None
-    env.step()
-    initial_ids = tuple(env.state["positions"])
-    # A mathematical opportunity rejected by hard risk admission isn't an execution label.
-    if not initial_ids:
+    ordinal = 0
+    while not env.finished:
+        ordinal += 1
+        observation = env.observe()
+        features, eligible = extract(observation, scenario.account, scenario.observation_latency_ms)
+        if spec.decision_scope == "initial" and not eligible:
+            return None
+        env.step()
+        initial_ids = tuple(env.state["positions"])
+        # A rejected proposal isn't an execution label. First-admitted sampling
+        # advances the actual event engine without opening an earlier position.
+        if initial_ids:
+            break
+        if spec.decision_scope == "initial":
+            return None
+        while not env.finished:
+            event = env.clock.peek()
+            if event and event.kind == "decision":
+                break
+            env.step()
+    else:
         return None
     result = env.run()
     if not result["passed"] or not result["complete"]:
@@ -119,10 +133,12 @@ def sample(spec: DatasetSpec, index: int, model: str) -> dict[str, Any] | None:
         "execution_model": model,
         "partition": partition(base_id, spec.split_seed),
         "decision_time_ms": observation["time_ms"],
+        "decision_ordinal": ordinal,
         "features": features,
         "label": outcome[spec.label_target],
         "label_target": spec.label_target,
         "label_version": "initial-proposal-outcomes-2",
+        "decision_scope": spec.decision_scope,
         "initial_outcome": outcome,
         "scenario_hash": result["scenario_hash"],
         "result_hash": result["result_hash"],
@@ -184,10 +200,11 @@ def build(root: Path, spec: DatasetSpec, progress: Any = None) -> dict[str, Any]
         "feature_schema": list(FEATURES),
         "label_target": spec.label_target,
         "label_version": "initial-proposal-outcomes-2",
+        "decision_scope": spec.decision_scope,
         "label_definition": (
-            "Both initial risk-admitted proposal orders finish FILLED; later proposals do not affect label"
+            "Both sampled risk-admitted proposal orders finish FILLED; later proposals do not affect label"
             if spec.label_target == "completion"
-            else "Unequal acquired shares across initial proposal legs after all its fills, before settlement; both zero fills and matched partial fills are negative. Later proposals do not affect label."
+            else "Unequal acquired shares across sampled proposal legs after all its fills, before settlement; both zero fills and matched partial fills are negative. Later proposals do not affect label."
         ),
         "code_revision": execution_revision,
         "source_hash": source_hash,
@@ -206,7 +223,7 @@ def build(root: Path, spec: DatasetSpec, progress: Any = None) -> dict[str, Any]
         "duration_seconds": time.monotonic() - began,
         "limitations": [
             "Synthetic hypothetical fills; no empirical calibration or real profitability evidence",
-            "Only first risk-admitted decision is labeled; rejected and ineligible variants excluded",
+            f"Only {spec.decision_scope} decision scope is labeled; rejected and ineligible variants excluded. Later portfolio states remain outside this dataset.",
             "Episode variants are correlated; partitions group family/seed identities",
             "Generator settlement uses seed parity; seeds and identifiers are excluded from features",
             "Execution configuration is an assumption available to a research policy",
@@ -251,12 +268,17 @@ def load(root: Path, identity: str) -> tuple[dict[str, Any], list[dict[str, Any]
     ):
         raise ValueError("Unsupported feature schema")
     rows = json.loads((directory / "rows.json").read_text())
+    scope = manifest.get("decision_scope", "initial")
+    if scope != manifest["spec"].get("decision_scope", "initial"):
+        raise ValueError("Dataset decision scope differs from frozen specification")
     if manifest.get("label_target", "completion") != manifest["spec"].get(
         "label_target", "completion"
     ):
         raise ValueError("Dataset target differs from frozen specification")
     validate_rows(rows)
     for row in rows:
+        if row.get("decision_scope", "initial") != scope:
+            raise ValueError("Row decision scope differs from manifest")
         target = manifest.get("label_target", "completion")
         if row.get("label_target", "completion") != target:
             raise ValueError("Row label target differs from manifest")

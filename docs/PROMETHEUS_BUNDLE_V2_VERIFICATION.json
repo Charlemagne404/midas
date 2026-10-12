@@ -1,0 +1,8 @@
+{
+  "checked_at": 1791784344.619712,
+  "bundle_version": "arena-experiment-2",
+  "files_verified": 4893,
+  "bundle_sha256": "652bcffa65beb1e94a0c0d4a7fa5f81d01a6d3f09ac2ae4687e2b1e2d3f19bde",
+  "verified": true,
+  "scope": "Byte integrity and referenced-source verification; not clean-machine retraining"
+}

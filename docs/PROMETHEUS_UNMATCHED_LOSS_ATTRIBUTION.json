@@ -1,0 +1,50 @@
+{
+  "scope": "Descriptive simulator reproduction of opened earlier challenge losses; not training or threshold selection. Hypothetical fills, no empirical execution.",
+  "cases": [
+    {
+      "row_id": "40-optimistic-model-3141334b301947499b59913d",
+      "net_simulated_pnl": "-7.548000",
+      "base_episode_id": "disappearing:53111",
+      "decision_ordinal": 1,
+      "initial_outcome": {
+        "completion": 0,
+        "unmatched": 1,
+        "residual_unmatched_shares": "20.4",
+        "filled_shares_by_asset": {
+          "profitable:yes": "20.4",
+          "profitable:no": "0"
+        }
+      }
+    },
+    {
+      "row_id": "62-optimistic-model-3141334b301947499b59913d",
+      "net_simulated_pnl": "-4.200000",
+      "base_episode_id": "volatile:53133",
+      "decision_ordinal": 2,
+      "initial_outcome": {
+        "completion": 0,
+        "unmatched": 1,
+        "residual_unmatched_shares": "14",
+        "filled_shares_by_asset": {
+          "profitable:yes": "14",
+          "profitable:no": "0"
+        }
+      }
+    },
+    {
+      "row_id": "92-optimistic-model-3141334b301947499b59913d",
+      "net_simulated_pnl": "-8.740000",
+      "base_episode_id": "volatile:53163",
+      "decision_ordinal": 2,
+      "initial_outcome": {
+        "completion": 0,
+        "unmatched": 1,
+        "residual_unmatched_shares": "19",
+        "filled_shares_by_asset": {
+          "profitable:yes": "19",
+          "profitable:no": "0"
+        }
+      }
+    }
+  ]
+}
