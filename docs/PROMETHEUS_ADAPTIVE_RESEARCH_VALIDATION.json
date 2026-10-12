@@ -1,0 +1,25 @@
+{
+  "checked_at": 1791821356.4373448,
+  "full_python_suite": {
+    "passed": 353,
+    "skipped": 1,
+    "warnings": 1,
+    "duration_seconds": 387.93,
+    "result_line": "353 passed, 1 skipped, 1 warning in 387.93s (0:06:27)",
+    "command": "OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 timeout 900 nice -n 10 .venv/bin/pytest -q",
+    "log_path": "docs/PROMETHEUS_ADAPTIVE_RESEARCH_FULL_TESTS.log",
+    "log_sha256": "31c25f09781e09c74342f69fbd9fc1d327b33f534eb2ce49c3522d991453f56b"
+  },
+  "focused_backend": {
+    "passed": 34,
+    "duration_seconds": 13.75
+  },
+  "frontend": {
+    "passed": 9,
+    "typecheck": "passed",
+    "lint": "passed",
+    "build": "passed",
+    "build_warning": "Existing chart chunk exceeds 500 kB"
+  },
+  "ruff": "passed"
+}

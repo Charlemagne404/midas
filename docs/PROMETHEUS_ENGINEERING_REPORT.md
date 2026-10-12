@@ -1341,3 +1341,39 @@ coverage, financial-core and saved-journal hash verification. This checks saved
 replays; the six failure-corpus cases were separately re-executed and matched
 exactly. It does not claim all 33,423 variants were simulated again. Older
 source-reconstruction limitations remain documented. No research job is active.
+
+## Adaptive research coordinator implementation and validation
+
+`scripts/research_followup.py` inspects an attached economic study and chooses a
+pure-latency reversal using a transparent rule. It verifies saved condition row
+hashes, model weights and producer sources, then selects the two families with
+the largest observed losses and retains controls. The five-family schedule in
+the actual preflight balances both seed-parity settlements within each family
+(six of each parity per family for 60 groups). The previously opened scenarios
+are excluded from both follow-up seed ranges.
+
+The coordinator preregisters two cycles, at most four supervised Arena jobs.
+Cycle one repeats baseline/200ms added delay on fresh directed scenarios. Cycle
+two tests half that delay if the gate score is nonpositive, or double it if
+positive, on a disjoint range. It does not refit models or choose thresholds.
+Directed-challenge promotion is withheld by requiring more champion groups than
+the plan evaluates. Results remain descriptive, and two adaptively assigned
+delays cannot establish a population break-even frontier.
+
+The plan has a separate immutable preregistration and captured producer scripts.
+Source/configuration changes are rejected. Submission intents recover a child
+job created before a coordinator crash without launching a duplicate. Ambiguous
+recovery and failed workers stop the plan. The cancellation path also recovers an
+unrecorded submitted job. Active jobs and completed tournaments are linked in
+the Research Director view; native cancellation is available for these plans.
+Each completed cycle publishes actual paired uncertainty and loss attribution
+in Research Findings. Existing core job supervision and pressure/disk limits
+remain in force; the protected Laboratory archive is outside all new writers.
+
+Validation: full Python suite 353 passed, one skipped, one existing Starlette
+warning, 387.93 seconds. Focused backend checks 34 passed; frontend nine tests,
+typecheck, lint and build passed. The existing chart-chunk warning remains. The
+actual artifact preflight chose gate-f12a4e29a05e5a4ce18f, source seeds 143071..
+143130 and 143131..143190, with volatile/disappearing/calm/deep/thin families.
+Preflight submitted no jobs. See ARENA_ADAPTIVE_RESEARCH.md and the validation
+and preflight JSON reports. Production launch is the next gate.

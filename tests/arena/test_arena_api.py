@@ -6,6 +6,38 @@ from midas.arena.artifacts import atomic_json
 from apps.api.arena import router
 
 
+def test_cancel_followup_dispatches_only_supported_director_version(tmp_path, monkeypatch):
+    from scripts import research_followup
+
+    atomic_json(
+        tmp_path / "directors/adaptive/manifest.json",
+        {"director_id": "adaptive", "director_version": "adaptive-latency-1", "state": "RUNNING"},
+    )
+    atomic_json(
+        tmp_path / "directors/legacy/manifest.json", {"director_id": "legacy", "state": "RUNNING"}
+    )
+
+    def stop(root, identity):
+        assert root == tmp_path and identity == "adaptive"
+        atomic_json(
+            root / "directors" / identity / "manifest.json",
+            {
+                "director_id": identity,
+                "director_version": "adaptive-latency-1",
+                "state": "CANCELLED",
+            },
+        )
+
+    monkeypatch.setattr(research_followup, "stop", stop)
+    app = FastAPI()
+    app.include_router(router(tmp_path))
+    with TestClient(app) as client:
+        assert client.post("/api/arena/directors/legacy/cancel").status_code == 409
+        response = client.post("/api/arena/directors/adaptive/cancel")
+        assert response.status_code == 200
+        assert response.json()["state"] == "CANCELLED"
+
+
 def test_api_empty_state_validation_and_missing_artifacts(tmp_path):
     app = FastAPI()
     app.include_router(router(tmp_path))

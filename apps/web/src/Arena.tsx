@@ -248,6 +248,7 @@ type Overview = {
   }[];
   directors?: {
     director_id: string;
+    director_version?: string;
     state: string;
     research_question: string;
     planning_rule: string;
@@ -419,6 +420,14 @@ export function Arena() {
       setMessage('Cancellation requested. The worker will retain completed artifacts.');
       void cache.invalidateQueries({ queryKey: ['arena'] });
     },
+  });
+  const cancelDirector = useMutation({
+    mutationFn: (id: string) => api(`/arena/directors/${id}/cancel`, { method: 'POST' }),
+    onSuccess: () => {
+      setMessage('Follow-up cancelled. Completed evidence is retained.');
+      void cache.invalidateQueries({ queryKey: ['arena'] });
+    },
+    onError: (error) => setMessage(error.message),
   });
   const training =
     family === 'ppo'
@@ -1965,6 +1974,15 @@ export function Arena() {
                 <State value={plan.state} />
                 <p>{plan.planning_rule}</p>
                 {plan.current_stage && <p>Current stage: {plan.current_stage}</p>}
+                {plan.director_version === 'adaptive-latency-1' &&
+                  ['PLANNED', 'RUNNING'].includes(plan.state) && (
+                    <button
+                      disabled={cancelDirector.isPending}
+                      onClick={() => cancelDirector.mutate(plan.director_id)}
+                    >
+                      Cancel follow-up
+                    </button>
+                  )}
                 <ol>
                   {plan.steps.map((step) => (
                     <li key={step.name}>

@@ -10,6 +10,59 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+it('cancels an adaptive follow-up and links its active child job', async () => {
+  const plan = {
+    director_id: 'followup',
+    director_version: 'adaptive-latency-1',
+    state: 'RUNNING',
+    research_question: 'Does delay reproduce the loss?',
+    planning_rule: 'Frozen policy on fresh seeds',
+    current_stage: 'cycle 1: baseline',
+    steps: [
+      {
+        name: 'cycle 1: baseline',
+        state: 'RUNNING',
+        artifact: { kind: 'jobs', identity: 'child' },
+      },
+    ],
+  };
+  const overview = {
+    datasets: [],
+    models: [],
+    jobs: [],
+    findings: [],
+    tournaments: [],
+    directors: [plan],
+    dependencies: {},
+    health: { memory_mb: {}, worker_cpu_cores: 1, worker_memory_mb: 4096 },
+  };
+  const fetch = vi.fn(async (url: string, init?: RequestInit) => {
+    if (url === '/api/arena/directors/followup/cancel') {
+      expect(init?.method).toBe('POST');
+      plan.state = 'CANCELLED';
+      return new Response(JSON.stringify(plan), { status: 200 });
+    }
+    return new Response(JSON.stringify(overview), { status: 200 });
+  });
+  vi.stubGlobal('fetch', fetch);
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  render(
+    <QueryClientProvider client={client}>
+      <Arena />
+    </QueryClientProvider>,
+  );
+  fireEvent.click(await screen.findByRole('tab', { name: 'Research director' }));
+  const button = await screen.findByRole('button', { name: 'Cancel follow-up' });
+  expect(screen.getByRole('link', { name: /Evidence/ })).toHaveAttribute(
+    'href',
+    '/api/arena/jobs/child',
+  );
+  fireEvent.click(button);
+  expect(
+    await screen.findByText('Follow-up cancelled. Completed evidence is retained.'),
+  ).toBeInTheDocument();
+});
+
 it('labels the distinct model targets in a paired tournament', async () => {
   const rank = {
     rank: 1,

@@ -161,6 +161,20 @@ def router(root: Path) -> APIRouter:
             lambda: json.loads((path("directors", identity) / "manifest.json").read_text())
         )
 
+    @api.post("/directors/{identity}/cancel")
+    async def cancel_director(identity: str) -> Any:
+        def cancel() -> Any:
+            file = path("directors", identity) / "manifest.json"
+            record = json.loads(file.read_text())
+            if record.get("director_version") != "adaptive-latency-1":
+                raise ValueError("Use job cancellation for this research plan")
+            from scripts.research_followup import stop
+
+            stop(root, identity)
+            return json.loads(file.read_text())
+
+        return await call(cancel)
+
     @api.get("/searches/{identity}")
     async def policy_search(identity: str) -> Any:
         return await call(

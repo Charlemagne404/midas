@@ -1,0 +1,205 @@
+{
+  "director_id": "director-followup-453650eedd036f130bc81fd8",
+  "input_study": {
+    "study_id": "economic-study-61e74c79a25ec1d63a3c39c5",
+    "path": "/home/charlie/midas/data/arena/tournaments/tournament-53f293c7fb66438ab43a6869/economic-regimes.json",
+    "sha256": "ec9f5034cd53674a20ca794a35521e8a8d20671f0b8cd87bfcba62d68245ce80",
+    "selected_condition": "additional_200ms"
+  },
+  "gate": {
+    "model_id": "model-131794f0434945a286163323",
+    "threshold": 0.1,
+    "size": "full"
+  },
+  "challenge_template": {
+    "version": "synthetic-decision-1",
+    "episodes": 60,
+    "seed": 143071,
+    "split_seed": 1977,
+    "families": [
+      "volatile",
+      "disappearing",
+      "calm",
+      "deep",
+      "thin"
+    ],
+    "execution_models": [
+      "optimistic",
+      "standard",
+      "conservative"
+    ],
+    "observation_latency_ms": 100,
+    "label_target": "unmatched",
+    "decision_scope": "first_admitted"
+  },
+  "family_seed_parity_counts": {
+    "volatile": {
+      "0": 6,
+      "1": 6
+    },
+    "disappearing": {
+      "0": 6,
+      "1": 6
+    },
+    "calm": {
+      "0": 6,
+      "1": 6
+    },
+    "deep": {
+      "0": 6,
+      "1": 6
+    },
+    "thin": {
+      "0": 6,
+      "1": 6
+    }
+  },
+  "reserved_seed_ranges": [
+    [
+      143071,
+      143131
+    ],
+    [
+      143131,
+      143191
+    ]
+  ],
+  "budget": {
+    "maximum_cycles": 2,
+    "maximum_jobs": 4,
+    "groups_per_cycle": 60,
+    "maximum_variants": 3600,
+    "worker_cpu_cores": 1,
+    "worker_memory_mb": 4096,
+    "job_wall_seconds": 1800,
+    "coordinator_wall_seconds": 9000
+  },
+  "source_hash": "c18fc3259a65b07d47186736a6bc36d54f932603417cd4b908490df42769cc10",
+  "state": "PREFLIGHT_ONLY_NO_JOBS_LAUNCHED",
+  "first_cycle_specifications": {
+    "baseline": {
+      "kind": "tournament",
+      "dataset": null,
+      "training": null,
+      "severity": null,
+      "model_id": null,
+      "rl": null,
+      "tournament": {
+        "purpose": "research",
+        "dataset_id": "dataset-f53981b7dd24c1521ce749b1",
+        "model_ids": [],
+        "gates": [
+          {
+            "model_id": "model-131794f0434945a286163323",
+            "threshold": 0.1,
+            "size": "full"
+          }
+        ],
+        "execution_models": [
+          "optimistic",
+          "standard",
+          "conservative"
+        ],
+        "max_episodes": 60,
+        "threshold": 0.5,
+        "tail_loss_weight": 1.0,
+        "seed": 991,
+        "adversarial": false,
+        "minimum_champion_episodes": 2000,
+        "challenge": {
+          "version": "synthetic-decision-1",
+          "episodes": 60,
+          "seed": 143071,
+          "split_seed": 1977,
+          "families": [
+            "volatile",
+            "disappearing",
+            "calm",
+            "deep",
+            "thin"
+          ],
+          "execution_models": [
+            "optimistic",
+            "standard",
+            "conservative"
+          ],
+          "observation_latency_ms": 100,
+          "label_target": "unmatched",
+          "decision_scope": "first_admitted"
+        },
+        "partition": "test",
+        "unsupported_input_policy": "abstain",
+        "economic_regime": null
+      },
+      "sweep": null,
+      "director": null,
+      "policy_search": null,
+      "max_wall_seconds": 1800
+    },
+    "delay": {
+      "kind": "tournament",
+      "dataset": null,
+      "training": null,
+      "severity": null,
+      "model_id": null,
+      "rl": null,
+      "tournament": {
+        "purpose": "research",
+        "dataset_id": "dataset-f53981b7dd24c1521ce749b1",
+        "model_ids": [],
+        "gates": [
+          {
+            "model_id": "model-131794f0434945a286163323",
+            "threshold": 0.1,
+            "size": "full"
+          }
+        ],
+        "execution_models": [
+          "optimistic",
+          "standard",
+          "conservative"
+        ],
+        "max_episodes": 60,
+        "threshold": 0.5,
+        "tail_loss_weight": 1.0,
+        "seed": 991,
+        "adversarial": false,
+        "minimum_champion_episodes": 2000,
+        "challenge": {
+          "version": "synthetic-decision-1",
+          "episodes": 60,
+          "seed": 143071,
+          "split_seed": 1977,
+          "families": [
+            "volatile",
+            "disappearing",
+            "calm",
+            "deep",
+            "thin"
+          ],
+          "execution_models": [
+            "optimistic",
+            "standard",
+            "conservative"
+          ],
+          "observation_latency_ms": 100,
+          "label_target": "unmatched",
+          "decision_scope": "first_admitted"
+        },
+        "partition": "test",
+        "unsupported_input_policy": "abstain",
+        "economic_regime": {
+          "version": "economic-regime-1",
+          "depth_multiplier": "1",
+          "taker_fee_rate": null,
+          "additional_submission_latency_ms": 200,
+          "costs": null
+        }
+      },
+      "sweep": null,
+      "director": null,
+      "policy_search": null,
+      "max_wall_seconds": 1800
+    }
+  }
+}
