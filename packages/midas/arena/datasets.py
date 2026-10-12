@@ -293,3 +293,57 @@ def load(root: Path, identity: str) -> tuple[dict[str, Any], list[dict[str, Any]
     if actual != manifest["partition_identities"] or len(rows) != manifest["rows"]:
         raise ValueError("Partition manifest mismatch")
     return manifest, rows
+
+
+def observation_lineage(root: Path, identity: str) -> dict[str, str]:
+    """Verify target-only derivations and identify their shared frozen observations."""
+    seen: set[str] = set()
+    original_id = identity
+    while True:
+        if identity in seen:
+            raise ValueError("Cyclic dataset derivation")
+        seen.add(identity)
+        manifest, rows = load(root, identity)
+        if manifest["dataset_id"] != identity:
+            raise ValueError("Dataset manifest identity mismatch")
+        ignored = {"label", "label_target"}
+        observations = [{k: v for k, v in row.items() if k not in ignored} for row in rows]
+        lineage = manifest.get("derivation")
+        if not lineage:
+            return {
+                "dataset_id": original_id,
+                "source_dataset_id": identity,
+                "observation_hash": digest(observations),
+            }
+        parent_id = lineage["source_dataset_id"]
+        parent, parent_rows = load(root, parent_id)
+        producer = artifact_path(root, "datasets", identity) / "derivation-producer.py"
+        if (
+            lineage.get("version") != "paired-target-1"
+            or lineage["target"] != manifest["label_target"]
+            or parent["rows_sha256"] != lineage["source_rows_sha256"]
+            or sha256(producer) != lineage["producer_sha256"]
+            or any(
+                type(row["label"]) is not int
+                or row.get("initial_outcome", {}).get(manifest["label_target"]) != row["label"]
+                for row in rows
+            )
+            or any(
+                manifest.get(key) != parent.get(key)
+                for key in (
+                    "source_hash",
+                    "feature_schema",
+                    "feature_version",
+                    "decision_scope",
+                    "generator_version",
+                    "simulation_version",
+                    "provenance",
+                )
+            )
+            or observations
+            != [{k: v for k, v in row.items() if k not in ignored} for row in parent_rows]
+            or {k: v for k, v in manifest["spec"].items() if k != "label_target"}
+            != {k: v for k, v in parent["spec"].items() if k != "label_target"}
+        ):
+            raise ValueError("Target derivation changes frozen observation provenance")
+        identity = parent_id

@@ -1048,3 +1048,32 @@ weight artifacts and 3 datasets, including derivative parent/transform provenanc
 Of these variants, 23004 belong to research tournaments and 1500 to the explicit
 performance repeat. This audit verifies bytes and matched coverage, not retraining
 or every numerical leaderboard statistic.
+
+## Paired-target tournament support and validation plan
+
+Tournament admission now accepts models from verified target-only derivatives
+of the same frozen observations. Shared source identity, exact observation and
+partition content, generator specification, saved source/feature provenance,
+parent rows and stored transformation bytes must agree. Altered or unrelated
+observations are rejected even if their row hash is resigned. Every model's own
+training dataset hash is checked and persisted separately in the tournament.
+PPO retains its original single-dataset contract. No simulator or broker financial
+semantics changed; risk admission and support abstention remain intact.
+
+Bundles now include each model's training dataset and derivative ancestry, even
+when the tournament's primary dataset is the unmatched parent. The UI identifies
+completion versus exposure prediction alongside gate thresholds; its new rendered
+component test checks both target labels. Full Python regression passed 308 tests,
+one PostgreSQL skip, one existing Starlette warning in 326.48 seconds. Four
+additional comparator tests pass after full-suite collection. Frontend: five
+unit tests, typecheck, lint and production build pass (existing chunk-size warning).
+Strict mypy/Ruff pass. Earlier focused integration/export gate passed ten tests.
+
+`PROMETHEUS_PAIRED_POLICY_PREREGISTRATION.json` freezes an exploratory validation
+league: the established direct-risk 0.10/full gate versus completion 0.90/full
+(primary) and completion 0.50/full (secondary), plus all four controls and all
+three execution presets. It covers all 139 raw generator validation groups,
+including 40 without an admitted labelled proposal, for 2919 correlated variants.
+No thresholds or policies will be selected/promoted from this comparison, and no
+classifier/fresh challenge final tests are opened. Validation reuse means that
+any observed difference remains exploratory. The full goal remains ACTIVE.

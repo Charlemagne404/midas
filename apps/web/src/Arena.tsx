@@ -129,6 +129,7 @@ type Rank = {
 };
 type Tournament = {
   policy_bindings?: Record<string, { model_id: string; threshold: number; size: string }>;
+  model_dataset_bindings?: Record<string, { dataset_id: string; label_target: string }>;
   tournament_id: string;
   base_episodes: number;
   variants: number;
@@ -145,6 +146,11 @@ type Tournament = {
     base_episodes: number;
   }[];
 };
+
+function policyTarget(tournament: Tournament | undefined, policy: string) {
+  const modelId = tournament?.policy_bindings?.[policy]?.model_id ?? policy;
+  return tournament?.model_dataset_bindings?.[modelId]?.label_target;
+}
 type Row = {
   id: string;
   policy: string;
@@ -1193,6 +1199,13 @@ export function Arena() {
                               <small>
                                 Threshold {tournament.data.policy_bindings[entry.policy].threshold}{' '}
                                 · {tournament.data.policy_bindings[entry.policy].size} size
+                              </small>
+                            )}
+                            {policyTarget(tournament.data, entry.policy) && (
+                              <small>
+                                {policyTarget(tournament.data, entry.policy) === 'completion'
+                                  ? 'Predicts proposal completion'
+                                  : 'Predicts unmatched exposure'}
                               </small>
                             )}
                           </td>

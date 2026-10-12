@@ -129,6 +129,14 @@ def export_experiment(root: Path, kind: str, identity: str, output: Path) -> dic
         if sha256(weights) != model["artifact_sha256"]:
             raise ValueError("Referenced model weights have changed")
         paths.update(model_path.rglob("*"))
+        model_dataset = artifact_path(root, "datasets", model["dataset_id"])
+        model_data_manifest = json.loads((model_dataset / "manifest.json").read_text())
+        if (
+            model.get("dataset_sha256", model_data_manifest["rows_sha256"])
+            != model_data_manifest["rows_sha256"]
+        ):
+            raise ValueError("Model training dataset provenance changed")
+        paths.update(dataset_paths(root, model["dataset_id"]))
     dataset = artifact_path(root, "datasets", director["configuration"]["dataset_id"])
     dataset_manifest = json.loads((dataset / "manifest.json").read_text())
     if sha256(dataset / "rows.json") != dataset_manifest["rows_sha256"]:

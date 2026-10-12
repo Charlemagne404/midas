@@ -12,7 +12,7 @@ import numpy as np
 from pydantic import Field, model_validator
 
 from midas.arena.artifacts import artifact_path, atomic_json, atomic_replay, sha256
-from midas.arena.datasets import DatasetSpec, load, research_hash
+from midas.arena.datasets import DatasetSpec, load, observation_lineage, research_hash
 from midas.arena.environment import ArenaEnv
 from midas.arena.rl import indices
 from midas.arena.supervised import Predictor
@@ -227,6 +227,7 @@ def run_tournament(root: Path, spec: TournamentSpec, progress: Any = None) -> di
 
     torch.set_num_threads(1)
     manifest, _ = load(root, spec.dataset_id)
+    evaluation_lineage = observation_lineage(root, spec.dataset_id)
     dataset_spec = DatasetSpec.model_validate(manifest["spec"])
     training_spec = dataset_spec
     if spec.challenge:
@@ -261,14 +262,28 @@ def run_tournament(root: Path, spec: TournamentSpec, progress: Any = None) -> di
     artifacts = {}
     bindings = {gate.identity: gate for gate in spec.gates}
     loaded: dict[str, Any] = {}
+    model_datasets = {}
     referenced_models = tuple(
         dict.fromkeys((*spec.model_ids, *(gate.model_id for gate in spec.gates)))
     )
     for identity in referenced_models:
         directory = artifact_path(root, "models", identity)
         record = json.loads((directory / "manifest.json").read_text())
-        if record["dataset_id"] != spec.dataset_id:
-            raise ValueError("Model must use the frozen tournament dataset")
+        model_manifest, _ = load(root, record["dataset_id"])
+        if model_manifest["rows_sha256"] != record["dataset_sha256"]:
+            raise ValueError("Model training dataset hash differs from frozen artifact")
+        dataset_binding = observation_lineage(root, record["dataset_id"])
+        if (
+            dataset_binding["source_dataset_id"] != evaluation_lineage["source_dataset_id"]
+            or dataset_binding["observation_hash"] != evaluation_lineage["observation_hash"]
+            or (record["family"] == "ppo" and record["dataset_id"] != spec.dataset_id)
+        ):
+            raise ValueError("Model must use the frozen tournament observations and partitions")
+        model_datasets[identity] = {
+            **dataset_binding,
+            "rows_sha256": model_manifest["rows_sha256"],
+            "label_target": model_manifest.get("label_target", "completion"),
+        }
         artifacts[identity] = record["artifact_sha256"]
         if record["family"] == "ppo":
             if sha256(directory / "policy.zip") != record["artifact_sha256"]:
@@ -478,6 +493,8 @@ def run_tournament(root: Path, spec: TournamentSpec, progress: Any = None) -> di
         "source_hash": source_hash,
         "code_revision": execution_revision,
         "model_artifact_hashes": artifacts,
+        "model_dataset_bindings": model_datasets,
+        "evaluation_observation_lineage": evaluation_lineage,
         "policy_bindings": {
             policy: binding.model_dump(mode="json") for policy, binding in bindings.items()
         },

@@ -3,7 +3,7 @@ import json
 
 import pytest
 from midas.arena.artifacts import atomic_json, sha256
-from midas.arena.datasets import load, partition
+from midas.arena.datasets import load, observation_lineage, partition
 from midas.arena.features import FEATURE_VERSION, FEATURES
 
 from scripts.arena_bundle import dataset_paths
@@ -70,6 +70,10 @@ def test_derivation_preserves_every_observation_and_partition_and_is_idempotent(
     assert "test" not in manifest["label_frequency"]
     producer = tmp_path / "datasets" / result["dataset_id"] / "derivation-producer.py"
     assert sha256(producer) == manifest["derivation"]["producer_sha256"]
+    source_binding = observation_lineage(tmp_path, "parent")
+    derived_binding = observation_lineage(tmp_path, result["dataset_id"])
+    assert source_binding["observation_hash"] == derived_binding["observation_hash"]
+    assert derived_binding["source_dataset_id"] == "parent"
     included = dataset_paths(tmp_path, result["dataset_id"])
     assert producer in included
     assert tmp_path / "datasets/parent/rows.json" in included
@@ -81,6 +85,21 @@ def test_derivation_preserves_every_observation_and_partition_and_is_idempotent(
         dataset_paths(tmp_path, result["dataset_id"])
     with pytest.raises(ValueError, match="lineage"):
         derive(tmp_path, "parent", "completion")
+    with pytest.raises(ValueError, match="provenance"):
+        observation_lineage(tmp_path, result["dataset_id"])
+
+
+def test_target_lineage_rejects_changed_features_even_with_resigned_row_hash(tmp_path):
+    fixture(tmp_path)
+    result = derive(tmp_path, "parent", "completion")
+    directory = tmp_path / "datasets" / result["dataset_id"]
+    rows = json.loads((directory / "rows.json").read_text())
+    rows[0]["features"][0] = 0.1
+    atomic_json(directory / "rows.json", rows)
+    result["rows_sha256"] = sha256(directory / "rows.json")
+    atomic_json(directory / "manifest.json", result)
+    with pytest.raises(ValueError, match="provenance"):
+        observation_lineage(tmp_path, result["dataset_id"])
 
 
 def test_derivation_rejects_missing_outcomes(tmp_path):

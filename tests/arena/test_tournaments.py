@@ -4,7 +4,46 @@ import pytest
 from midas.arena.artifacts import read_replay
 from midas.arena.datasets import DatasetSpec, build
 from midas.arena.reproduce import reproduce
-from midas.arena.tournaments import TournamentSpec, run_tournament, summaries
+from midas.arena.supervised import TrainingSpec, train
+from midas.arena.tournaments import GateSpec, TournamentSpec, run_tournament, summaries
+
+from scripts.arena_bundle import export_tournament
+from scripts.derive_proposal_target import derive
+
+
+def test_paired_target_policies_retain_dataset_bindings_and_bundle_parents(tmp_path):
+    import tarfile
+
+    dataset = build(
+        tmp_path,
+        DatasetSpec(episodes=60, label_target="unmatched", decision_scope="first_admitted"),
+    )
+    completion = derive(tmp_path, dataset["dataset_id"], "completion")
+    model = train(tmp_path, TrainingSpec(dataset_id=completion["dataset_id"], family="constant"))
+    gate = GateSpec(model_id=model["model_id"], threshold=0.5)
+    report = run_tournament(
+        tmp_path,
+        TournamentSpec(
+            dataset_id=dataset["dataset_id"], gates=(gate,), partition="validation", max_episodes=2
+        ),
+    )
+    binding = report["model_dataset_bindings"][model["model_id"]]
+    assert binding["dataset_id"] == completion["dataset_id"]
+    assert binding["source_dataset_id"] == dataset["dataset_id"]
+    assert binding["label_target"] == "completion"
+    assert report["evaluation_design"] == "VALIDATION"
+    assert report["research_champion"] is None
+    output = tmp_path / "paired.tar.gz"
+    export_tournament(tmp_path, report["tournament_id"], output)
+    with tarfile.open(output) as bundle:
+        names = bundle.getnames()
+    assert any(completion["dataset_id"] + "/derivation-producer.py" in n for n in names)
+    assert any(dataset["dataset_id"] + "/rows.json" in n for n in names)
+    other = build(tmp_path, DatasetSpec(episodes=60, seed=7777))
+    with pytest.raises(ValueError, match="observations"):
+        run_tournament(
+            tmp_path, TournamentSpec(dataset_id=other["dataset_id"], gates=(gate,), max_episodes=2)
+        )
 
 
 def test_tournament_pairing_and_persisted_replay(tmp_path):
