@@ -1,0 +1,161 @@
+{
+  "created_at": 1791825565.4813783,
+  "source_hash": "297f559be63868268aafce83e9b1ac5ff9fa799c3a64ac4474fcb87bcbf8bee8",
+  "model_id": "model-9474cee818f04c77962966d8",
+  "model_weight_sha256": "00a936876ab893686e5ac2612a554f1266d05f260acd149c556e8977800d6a85",
+  "gate": {
+    "model_id": "model-9474cee818f04c77962966d8",
+    "threshold": 0.9,
+    "size": "full"
+  },
+  "gate_id": "gate-34dccb59573897d73743",
+  "groups": 100,
+  "variants_per_condition": 1500,
+  "maximum_correlated_variants": 3000,
+  "specifications": {
+    "baseline": {
+      "kind": "tournament",
+      "dataset": null,
+      "training": null,
+      "severity": null,
+      "model_id": null,
+      "rl": null,
+      "tournament": {
+        "purpose": "research",
+        "dataset_id": "dataset-c6247f1456257066f0fe8d5f",
+        "model_ids": [],
+        "gates": [
+          {
+            "model_id": "model-9474cee818f04c77962966d8",
+            "threshold": 0.9,
+            "size": "full"
+          }
+        ],
+        "execution_models": [
+          "optimistic",
+          "standard",
+          "conservative"
+        ],
+        "max_episodes": 100,
+        "threshold": 0.5,
+        "tail_loss_weight": 1.0,
+        "seed": 991,
+        "adversarial": false,
+        "minimum_champion_episodes": 2000,
+        "challenge": {
+          "version": "synthetic-decision-1",
+          "episodes": 100,
+          "seed": 193071,
+          "split_seed": 1977,
+          "families": [
+            "thin",
+            "deep",
+            "calm",
+            "liquidity_shock",
+            "volatile",
+            "one_sided",
+            "disappearing"
+          ],
+          "execution_models": [
+            "optimistic",
+            "standard",
+            "conservative"
+          ],
+          "observation_latency_ms": 100,
+          "label_target": "persistence",
+          "decision_scope": "first_admitted"
+        },
+        "partition": "test",
+        "unsupported_input_policy": "abstain",
+        "economic_regime": null
+      },
+      "sweep": null,
+      "director": null,
+      "policy_search": null,
+      "max_wall_seconds": 1800
+    },
+    "additional_200ms": {
+      "kind": "tournament",
+      "dataset": null,
+      "training": null,
+      "severity": null,
+      "model_id": null,
+      "rl": null,
+      "tournament": {
+        "purpose": "research",
+        "dataset_id": "dataset-c6247f1456257066f0fe8d5f",
+        "model_ids": [],
+        "gates": [
+          {
+            "model_id": "model-9474cee818f04c77962966d8",
+            "threshold": 0.9,
+            "size": "full"
+          }
+        ],
+        "execution_models": [
+          "optimistic",
+          "standard",
+          "conservative"
+        ],
+        "max_episodes": 100,
+        "threshold": 0.5,
+        "tail_loss_weight": 1.0,
+        "seed": 991,
+        "adversarial": false,
+        "minimum_champion_episodes": 2000,
+        "challenge": {
+          "version": "synthetic-decision-1",
+          "episodes": 100,
+          "seed": 193071,
+          "split_seed": 1977,
+          "families": [
+            "thin",
+            "deep",
+            "calm",
+            "liquidity_shock",
+            "volatile",
+            "one_sided",
+            "disappearing"
+          ],
+          "execution_models": [
+            "optimistic",
+            "standard",
+            "conservative"
+          ],
+          "observation_latency_ms": 100,
+          "label_target": "persistence",
+          "decision_scope": "first_admitted"
+        },
+        "partition": "test",
+        "unsupported_input_policy": "abstain",
+        "economic_regime": {
+          "version": "economic-regime-1",
+          "depth_multiplier": "1",
+          "taker_fee_rate": null,
+          "additional_submission_latency_ms": 200,
+          "costs": null
+        }
+      },
+      "sweep": null,
+      "director": null,
+      "policy_search": null,
+      "max_wall_seconds": 1800
+    }
+  },
+  "selection_or_retuning": false,
+  "decision_rule": "Fixed minimum predicted quote persistence 0.90; full proposal; abstain outside training ranges; no challenge outcome changes weights or threshold",
+  "evaluation_objective": "Mean simulated P&L minus 5% CVaR loss, paired source-group uncertainty, no-trade and deterministic controls",
+  "final_classifier_tests_opened": false,
+  "artifact_preflight": {
+    "logical_bytes": 601959207,
+    "files": 42551,
+    "limit_bytes": 1073741824
+  },
+  "limitations": [
+    "Quote persistence cannot establish two-leg completion",
+    "Both conditions share 100 source groups, not 3000 independent samples",
+    "Input-support ranges do not establish joint calibration",
+    "Hypothetical synthetic economics and action-dependent execution noise",
+    "Directed research evaluation; champion promotion withheld"
+  ]
+}
