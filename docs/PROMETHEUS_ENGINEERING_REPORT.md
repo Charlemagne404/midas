@@ -533,3 +533,53 @@ Then export the completed plan and investigate supported next hypotheses.
 Cross-target comparisons on the same frozen observations, severity/cost labels,
 bounded recovery actions and broader economic sensitivity remain unfinished.
 The full Prometheus goal is ACTIVE; this is not a completion claim.
+
+## Fixed-path economic sensitivity and first risk results
+
+Added `scripts/arena_economics.py`: verifies frozen row/replay financial and journal
+hashes, reproduces the original nonzero-cost Laboratory accounting formula, then
+applies 20 one-factor hypothetical cost points to unchanged actions/fills/capital
+paths. Axes are extra virtual USD per fill, virtual USD per settled position,
+annual financing fraction (365-day year), and retained collateral value.
+Exchange fees remain embedded in original gross P&L. These additional charges
+are not empirically observed fee schedules. No policy, risk admission, sizing,
+execution delay or future model training changes in this analysis.
+
+Confidence intervals group execution variants inside base episodes. The report
+preserves tail loss, downside scores and a mean break-even extra cost per fill.
+Mean break-even is not a downside margin or profitability guarantee. Financing
+uses retained reserved-plus-locked capital time; short synthetic episodes cannot
+represent prolonged real resolution delays. Source bytes are retained alongside
+the saved report, and report/input digests are checked by its API endpoint.
+
+The earlier warning challenge's classifier gate had mean P&L 1.35026333 but score
+-0.01560333 with zero extra costs. An extra 0.25 virtual USD per fill reduces mean
+to 1.15526333 and score to -0.39847; at 1.0 it reduces mean to 0.57026333 and score
+to -2.99360333. Its fixed-path mean break-even charge is about 1.73111 USD/fill.
+There was already no positive downside margin at zero. The interactive tournament
+view shows the actual saved curves, assumptions and full report/interval link.
+
+New gates: **283 Python tests passed / one PostgreSQL skip**, 220.49 seconds,
+one existing Starlette warning. Seven focused economic/API tests passed, including
+nonzero financing agreement, grouped uncertainty and tamper rejection. Strict
+mypy covers 60 source files; Ruff, frontend build/lint and four frontend tests
+pass. The updated browser workflow passed in 54.3 seconds, calculating a report
+from real isolated tournament replays, displaying its chart and switching axes.
+Arena Python source remains unchanged during the active director.
+
+Risk dataset `dataset-f53981b7dd24c1521ce749b1` completed in 288.45 seconds:
+1935 variants / 645 admitted base groups, including 87 groups admitted after the
+first decision. Train/validation/test rows are 1392/297/246 (464/99/82 groups).
+Labels and frozen partitions load with checksums; source remains matched to the
+submitted snapshot. Four actual fits completed. MLP mean validation Brier
+0.08931322 versus logistic 0.09132488 exceeds the 0.002 selection tolerance by
+only 0.00001166. This selection-rule result does not establish scientific
+superiority. Selected model is `model-131794f0434945a286163323`; new classification
+final test metrics remain unopened.
+
+Warning challenge `tournament-1543d15e04054c4eb4eab2e2` completed 1500 variants
+on 100 new groups. The selected risk gate exactly ties deterministic arbitrage:
+mean P&L 1.217566, tail loss 5.116, score -3.898434, worst loss -8.6. Conservative
+score is -2.04887167; no-trade remains 0. No candidate demonstrates the declared
+downside advantage. The matched abstention stage is still running; its results
+must be verified separately before the plan is called complete.

@@ -232,6 +232,28 @@ def router(root: Path) -> APIRouter:
 
         return await call(read)
 
+    @api.get("/tournaments/{identity}/economics")
+    async def tournament_economics(identity: str) -> Any:
+        def read() -> Any:
+            from midas.arena.artifacts import sha256
+            from midas.economics.attestation import digest
+
+            directory = path("tournaments", identity)
+            manifest = json.loads((directory / "manifest.json").read_text())
+            if not (directory / "economics.json").exists():
+                return None
+            report = json.loads((directory / "economics.json").read_text())
+            if (
+                report["rows_sha256"] != manifest["rows_sha256"]
+                or sha256(directory / "rows.json") != report["rows_sha256"]
+                or digest({k: v for k, v in report.items() if k != "report_digest"})
+                != report["report_digest"]
+            ):
+                raise ValueError("Economic report integrity or input provenance changed")
+            return report
+
+        return await call(read)
+
     @api.get("/tournaments/{identity}/replay/{row_id}")
     async def replay(identity: str, row_id: str) -> Any:
         import re

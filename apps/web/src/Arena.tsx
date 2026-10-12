@@ -6,6 +6,24 @@ import { api } from './api';
 import { chartBase } from './chart-theme';
 
 const Chart = lazy(() => import('./Chart').then((module) => ({ default: module.Chart })));
+type EconomicParameter =
+  'operating_per_fill' | 'redemption_cost' | 'annual_financing_rate' | 'collateral_value_factor';
+type Economics = {
+  units: Record<EconomicParameter, string>;
+  limitations: string[];
+  policies: {
+    policy: string;
+    baseline_downside_score: number;
+    mean_break_even_operating_per_fill: string | null;
+    points: {
+      parameter: EconomicParameter;
+      value: string;
+      mean_pnl: number;
+      cvar_05_loss: number;
+      score: number;
+    }[];
+  }[];
+};
 type Metrics = {
   brier: number;
   log_loss: number;
@@ -248,6 +266,8 @@ export function Arena() {
   const [steps, setSteps] = useState(4096);
   const [episodes, setEpisodes] = useState(1000);
   const [labelTarget, setLabelTarget] = useState('completion');
+  const [economicParameter, setEconomicParameter] =
+    useState<EconomicParameter>('operating_per_fill');
   const [scenarioFilter, setScenarioFilter] = useState('');
   const [executionFilter, setExecutionFilter] = useState('');
   const [offset, setOffset] = useState(0);
@@ -281,6 +301,11 @@ export function Arena() {
     queryKey: ['arena-tournament', selectedTournament],
     queryFn: () => api<Tournament>(`/arena/tournaments/${selectedTournament}`),
     enabled: !!selectedTournament,
+  });
+  const economics = useQuery({
+    queryKey: ['arena-economics', selectedTournament],
+    queryFn: () => api<Economics | null>(`/arena/tournaments/${selectedTournament}/economics`),
+    enabled: !!selectedTournament && tab === 'Tournaments',
   });
   const rows = useQuery({
     queryKey: ['arena-rows', selectedTournament, scenarioFilter, executionFilter, offset],
@@ -1233,6 +1258,105 @@ export function Arena() {
                     </table>
                   </div>
                 </details>
+              </>
+            )}
+          </Section>
+          <Section title="Fixed-path economic sensitivity">
+            <p className="lab-note">
+              Hypothetical extra costs applied to saved fills and capital paths. Trades stay fixed;
+              this is not a cost-aware policy rerun or an observed fee schedule.
+            </p>
+            {economics.isPending && selectedTournament && (
+              <p role="status">Loading saved cost analysis…</p>
+            )}
+            {!selectedTournament && <p className="lab-note">No completed tournament available.</p>}
+            {economics.isError && <p role="alert">{economics.error.message}</p>}
+            {economics.data === null && (
+              <p className="lab-note">No saved economic analysis for this tournament.</p>
+            )}
+            {economics.data && (
+              <>
+                <label>
+                  Economic assumption
+                  <select
+                    aria-label="Economic assumption"
+                    value={economicParameter}
+                    onChange={(event) =>
+                      setEconomicParameter(event.target.value as EconomicParameter)
+                    }
+                  >
+                    <option value="operating_per_fill">Additional cost per fill</option>
+                    <option value="redemption_cost">Cost per settled position</option>
+                    <option value="annual_financing_rate">Annual financing rate</option>
+                    <option value="collateral_value_factor">Collateral value retained</option>
+                  </select>
+                </label>
+                <p className="lab-note">
+                  Units: {economics.data.units[economicParameter]}. Other extra costs reset to zero
+                  on each axis.
+                </p>
+                <Suspense fallback={<p>Loading cost chart…</p>}>
+                  <Chart
+                    label="Fixed-path cost sensitivity"
+                    option={{
+                      ...chartBase,
+                      legend: { type: 'scroll', textStyle: { color: '#a4aabc' } },
+                      xAxis: { type: 'value' },
+                      yAxis: { type: 'value', name: 'Mean virtual USD' },
+                      series: economics.data.policies.map((policy) => ({
+                        name: policy.policy.startsWith('model-')
+                          ? `${data?.models.find((m) => m.model_id === policy.policy)?.family ?? 'model'} ${policy.policy.slice(-6)}`
+                          : policy.policy,
+                        type: 'line',
+                        data: policy.points
+                          .filter((point) => point.parameter === economicParameter)
+                          .sort((a, b) => Number(a.value) - Number(b.value))
+                          .map((point) => [Number(point.value), point.mean_pnl]),
+                      })),
+                    }}
+                  />
+                </Suspense>
+                <div className="arena-table">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Policy</th>
+                        <th>Zero-extra-cost downside score</th>
+                        <th>Mean break-even extra USD/fill</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {economics.data.policies.map((policy) => (
+                        <tr key={policy.policy}>
+                          <td>
+                            <code>{policy.policy}</code>
+                          </td>
+                          <td>{n(policy.baseline_downside_score)}</td>
+                          <td>
+                            {policy.mean_break_even_operating_per_fill === null
+                              ? 'No positive margin / no fills'
+                              : n(Number(policy.mean_break_even_operating_per_fill))}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <details>
+                  <summary>Accounting assumptions and limits</summary>
+                  {economics.data.limitations.map((limit) => (
+                    <p className="lab-note" key={limit}>
+                      {limit}
+                    </p>
+                  ))}
+                </details>
+                <a
+                  href={`/api/arena/tournaments/${selectedTournament}/economics`}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Full economic report and confidence intervals
+                </a>
               </>
             )}
           </Section>

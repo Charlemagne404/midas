@@ -68,3 +68,24 @@ def test_saved_diagnostics_are_bound_to_model_weights(tmp_path):
         )
         atomic_json(directory / "diagnostics.json", {"model_artifact_sha256": "two"})
         assert client.get("/api/arena/models/model-a").status_code == 409
+
+
+def test_economic_report_requires_frozen_inputs_and_valid_digest(tmp_path):
+    from midas.arena.artifacts import sha256
+    from midas.economics.attestation import digest
+
+    directory = tmp_path / "tournaments" / "example"
+    atomic_json(directory / "rows.json", [])
+    row_hash = sha256(directory / "rows.json")
+    atomic_json(directory / "manifest.json", {"rows_sha256": row_hash})
+    app = FastAPI()
+    app.include_router(router(tmp_path))
+    with TestClient(app) as client:
+        assert client.get("/api/arena/tournaments/example/economics").json() is None
+        report = {"rows_sha256": row_hash, "policies": []}
+        report["report_digest"] = digest(report)
+        atomic_json(directory / "economics.json", report)
+        assert client.get("/api/arena/tournaments/example/economics").status_code == 200
+        report["policies"] = ["tampered"]
+        atomic_json(directory / "economics.json", report)
+        assert client.get("/api/arena/tournaments/example/economics").status_code == 409

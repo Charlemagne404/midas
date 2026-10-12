@@ -1,4 +1,6 @@
 import { test, expect } from '@playwright/test';
+import { execFileSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 
 test('build, train, inspect and evaluate genuine Arena artifacts', async ({ page }) => {
   test.setTimeout(120000);
@@ -62,7 +64,26 @@ test('build, train, inspect and evaluate genuine Arena artifacts', async ({ page
       timeout: 30000,
     })
     .toBe(1);
+  const completed = await (await page.request.get('/api/arena')).json();
+  execFileSync(
+    fileURLToPath(new URL('../../../.venv/bin/python', import.meta.url)),
+    [
+      fileURLToPath(new URL('../../../scripts/arena_economics.py', import.meta.url)),
+      '--root',
+      completed.root,
+      '--tournament',
+      completed.tournaments[0].tournament_id,
+    ],
+    { timeout: 30000 },
+  );
   await page.getByRole('tab', { name: 'Tournaments', exact: true }).click();
+  await expect(
+    page.getByRole('img', { name: 'Fixed-path cost sensitivity', exact: true }),
+  ).toBeVisible();
+  await page
+    .getByLabel('Economic assumption', { exact: true })
+    .selectOption('annual_financing_rate');
+  await expect(page.getByText('fraction per 365-day year', { exact: false })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Replay episode' }).first()).toBeVisible({
     timeout: 15000,
   });
