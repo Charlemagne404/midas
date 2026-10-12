@@ -1239,3 +1239,29 @@ Python source frozen until terminal. After baseline and each condition complete,
 run `scripts/compare_arena.py --control BASELINE --candidate CONDITION`, export
 verified replay bundles, and interpret all four conditions as the same 100
 source groups. No results or economic robustness are claimed while they run.
+
+## Economic condition verification checkpoint
+
+Added a completed-study summarizer that reads authoritative job records, binds
+all configurations/source/weights to the preregistration, verifies each declared
+scenario transformation through paired replay comparison, and keeps the common
+100-group denominator. Four focused tests pass, including stale documentation
+state, incomplete jobs and changed source/weights; Ruff/strict mypy pass. The
+read-only live browser shows editable economic controls without page errors or
+submitting additional jobs. Financial/Arena Python source remains frozen.
+
+Added-delay condition `tournament-c2726108b16543a796b9f202` completed all 1500
+variants. Frozen gate mean +0.81887267, 5% tail loss 1.46186667, downside score
+-0.642994; no-trade wins at zero. There were 137 unsupported gate decisions.
+Its bundle verifies 1570 payload entries. Finding
+`finding-8e9cb4f1a5a3006200204520` records the failed downside objective.
+Fee coefficient 0.01 condition `tournament-6eabcc71619c4f2989cd072d` also
+completed 1500 variants: gate mean/score zero, 366 unsupported decisions.
+This is abstention under unseen fee inputs, not demonstrated profitable fee
+robustness. All trading controls scored negative. Its full bundle hashes verify.
+
+The unperturbed baseline and half-depth condition remain active/queued as recorded
+in `PROMETHEUS_ECONOMIC_RERUN_JOBS.json`; no paired economic effects are claimed
+before baseline completion. Keep Arena source frozen. After all four finish, run
+`scripts/summarize_economic_reruns.py --output docs/PROMETHEUS_ECONOMIC_STUDY.json`
+and export the remaining verified bundles. The full goal remains ACTIVE.

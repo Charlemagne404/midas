@@ -2,6 +2,17 @@
 
 ## Current checkpoint (supersedes running-job notes below)
 
+### Latest economic condition checkpoint
+
+Added submission delay completed and the frozen gate failed the downside objective:
+score -0.643 versus no-trade zero, despite positive mean return. The hypothetical
+fee condition completed with gate abstention/zero return and 366 unsupported
+decisions. This is not profitable fee robustness. Both completed-condition bundles
+verify. Baseline and half-depth remain active/queued; source is frozen, and paired
+condition effects await baseline completion. The four-condition study still has
+100 shared source groups, not 6000 independent samples. The full goal remains active.
+
+
 ### Latest economic-rerun checkpoint
 
 The selected severity ridge completed one held-out test on 82 groups: RMSE 3.186
