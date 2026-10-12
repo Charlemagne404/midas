@@ -52,6 +52,7 @@ def diagnose(root: Path, model_id: str, progress: Any = None) -> dict[str, Any]:
         raise ValueError("Model and frozen dataset hashes differ")
     rows = validation_rows(all_rows)
     predictor = Predictor.load(root, model_id)
+    target = model.get("label_target", "completion")
     if (directory / "diagnostics.json").exists():
         saved: dict[str, Any] = json.loads((directory / "diagnostics.json").read_text())
         if (
@@ -108,11 +109,16 @@ def diagnose(root: Path, model_id: str, progress: Any = None) -> dict[str, Any]:
                     "family": row["family"],
                     "execution_model": row["execution_model"],
                     "label": int(y[i]),
-                    "completion_probability": float(probability[i]),
-                    "error": "FALSE_COMPLETION" if probability[i] >= 0.5 else "MISSED_COMPLETION",
+                    "predicted_probability": float(probability[i]),
+                    "completion_probability": float(probability[i])
+                    if target == "completion"
+                    else None,
+                    "error": f"FALSE_{target.upper()}"
+                    if probability[i] >= 0.5
+                    else f"MISSED_{target.upper()}",
                 }
             )
-    error_rows.sort(key=lambda r: abs(r["completion_probability"] - r["label"]), reverse=True)
+    error_rows.sort(key=lambda r: abs(r["predicted_probability"] - r["label"]), reverse=True)
     record = {
         "diagnostic_version": "validation-permutation-1",
         "model_id": model_id,
@@ -120,6 +126,7 @@ def diagnose(root: Path, model_id: str, progress: Any = None) -> dict[str, Any]:
         "dataset_sha256": dataset["rows_sha256"],
         "source_hash": research_hash(),
         "partition": "validation",
+        "label_target": target,
         "test_labels_used": False,
         "created_at": time.time(),
         "duration_seconds": time.monotonic() - began,
@@ -130,18 +137,22 @@ def diagnose(root: Path, model_id: str, progress: Any = None) -> dict[str, Any]:
         "feature_sensitivity": sorted(sensitivity, key=lambda r: -r["mean_brier_increase"]),
         "false_completion_count": sum(r["error"] == "FALSE_COMPLETION" for r in error_rows),
         "missed_completion_count": sum(r["error"] == "MISSED_COMPLETION" for r in error_rows),
+        "false_positive_count": sum(r["error"].startswith("FALSE_") for r in error_rows),
+        "false_negative_count": sum(r["error"].startswith("MISSED_") for r in error_rows),
         "representative_errors": error_rows[:20],
         "threshold_sensitivity": [
             {
                 "threshold": threshold,
-                "trade_request_fraction": float(np.mean(probability >= threshold)),
-                "false_completion_count": int(np.sum((probability >= threshold) & (y == 0))),
-                "missed_completion_count": int(np.sum((probability < threshold) & (y == 1))),
+                "trade_request_fraction": float(
+                    np.mean([predictor.permits(float(p), threshold) for p in probability])
+                ),
+                "false_positive_count": int(np.sum((probability >= threshold) & (y == 0))),
+                "false_negative_count": int(np.sum((probability < threshold) & (y == 1))),
             }
             for threshold in (0.25, 0.5, 0.75, 0.9, 0.95)
         ],
         "limitations": [
-            "Synthetic hypothetical completion labels; no observed market execution.",
+            f"Synthetic hypothetical {target} labels; no observed market execution.",
             "Permutation sensitivity is predictive dependence, not causal feature importance. Correlated features can produce impossible perturbed states.",
             "Donor episodes preserve execution variant pairing. Bootstrap samples base episodes; intervals condition on fixed model and validation data.",
             "Threshold table is descriptive classification sensitivity, not a policy P&L experiment or recommendation. No threshold is selected.",

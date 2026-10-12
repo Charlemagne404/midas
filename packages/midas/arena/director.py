@@ -45,6 +45,7 @@ def run_director(root: Path, spec: DirectorSpec, progress: Any = None) -> dict[s
             "code_revision": revision(),
             "source_hash": source_hash,
             "dataset_sha256": dataset["rows_sha256"],
+            "label_target": dataset.get("label_target", "completion"),
             "configuration": spec.model_dump(mode="json"),
             "research_question": "Does model quality survive fresh seeds and a changed family/settlement relationship, and does input-support abstention improve downside?",
             "hypothesis": "Validation-selected simpler predictors remain competitive; unsupported-state abstention reduces extrapolation risk.",
@@ -101,6 +102,7 @@ def run_director(root: Path, spec: DirectorSpec, progress: Any = None) -> dict[s
                 seed=spec.challenge_seed,
                 families=("one_sided", "deep", "volatile", "calm", "disappearing", "thin"),
                 observation_latency_ms=dataset["spec"]["observation_latency_ms"],
+                label_target=dataset.get("label_target", "completion"),
             )
             configuration = TournamentSpec(
                 dataset_id=spec.dataset_id,

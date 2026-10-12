@@ -82,7 +82,7 @@ def analyze(root: Path, identity: str) -> dict[str, Any]:
             "Some scenario families contain one settlement seed parity only. The current generator uses seed parity for settlement; reorder families and shift seeds before making generalization claims."
         )
     warnings.append(
-        "Execution completion is partly mechanically determined by hypothetical liquidity and adverse-tick settings. High prediction accuracy can reflect simulator assumptions."
+        "Execution outcomes are partly mechanically determined by hypothetical liquidity and adverse-tick settings. High prediction accuracy can reflect simulator assumptions."
     )
     report = {
         "analysis_version": "dataset-quality-1",

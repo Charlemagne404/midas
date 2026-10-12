@@ -17,6 +17,7 @@ type Metrics = {
 };
 type Dataset = {
   dataset_id: string;
+  label_target?: string;
   rows: number;
   eligible_base_episodes: number;
   generated_base_episodes: number;
@@ -33,6 +34,7 @@ type Dataset = {
 };
 type Model = {
   model_id: string;
+  label_target?: string;
   family: string;
   state: string;
   dataset_id: string;
@@ -54,6 +56,9 @@ type Model = {
   training_episodes?: number;
   policy_evaluations?: { tournament_id: string; base_episodes: number }[];
   diagnostics?: {
+    label_target?: string;
+    false_positive_count?: number;
+    false_negative_count?: number;
     base_episodes: number;
     false_completion_count: number;
     missed_completion_count: number;
@@ -68,6 +73,7 @@ type Model = {
       execution_model: string;
       error: string;
       completion_probability: number;
+      predicted_probability?: number;
     }[];
     limitations: string[];
   };
@@ -240,6 +246,7 @@ export function Arena() {
   const [seed, setSeed] = useState(7);
   const [steps, setSteps] = useState(4096);
   const [episodes, setEpisodes] = useState(1000);
+  const [labelTarget, setLabelTarget] = useState('completion');
   const [scenarioFilter, setScenarioFilter] = useState('');
   const [executionFilter, setExecutionFilter] = useState('');
   const [offset, setOffset] = useState(0);
@@ -463,8 +470,9 @@ export function Arena() {
                 <span>
                   <b>{entry.dataset_id}</b>
                   <small>
-                    {entry.rows} labeled variants / {entry.eligible_base_episodes} base episodes
-                    from {entry.generated_base_episodes} generated episodes
+                    Target: {entry.label_target ?? 'completion'} · {entry.rows} labeled variants /{' '}
+                    {entry.eligible_base_episodes} base episodes from{' '}
+                    {entry.generated_base_episodes} generated episodes
                   </small>
                   <small>
                     {Object.entries(entry.partition_rows)
@@ -543,7 +551,9 @@ export function Arena() {
                 >
                   {!data?.datasets.length && <option value="">Build a dataset first</option>}
                   {data?.datasets.map((entry) => (
-                    <option key={entry.dataset_id}>{entry.dataset_id}</option>
+                    <option key={entry.dataset_id} value={entry.dataset_id}>
+                      {entry.dataset_id} · {entry.label_target ?? 'completion'}
+                    </option>
                   ))}
                 </select>
               </label>
@@ -637,6 +647,17 @@ export function Arena() {
           <Section title="Build a versioned dataset">
             <div className="lab-controls">
               <label>
+                Prediction target
+                <select
+                  aria-label="Prediction target"
+                  value={labelTarget}
+                  onChange={(event) => setLabelTarget(event.target.value)}
+                >
+                  <option value="completion">Both legs fully complete</option>
+                  <option value="unmatched">Residual unmatched inventory</option>
+                </select>
+              </label>
+              <label>
                 Base episodes
                 <input
                   type="number"
@@ -650,7 +671,10 @@ export function Arena() {
                 disabled={submit.isPending}
                 onClick={() =>
                   submit.mutate({
-                    configuration: { kind: 'dataset', dataset: { episodes, seed: 42070 } },
+                    configuration: {
+                      kind: 'dataset',
+                      dataset: { episodes, seed: 42070, label_target: labelTarget },
+                    },
                   })
                 }
               >
@@ -658,8 +682,8 @@ export function Arena() {
               </button>
             </div>
             <p className="lab-note">
-              Generated market behavior and simulated completion labels. No real execution
-              probability is inferred.
+              Generated market behavior and simulated target labels. No real execution probability
+              is inferred.
             </p>
           </Section>
         </>
@@ -750,6 +774,11 @@ export function Arena() {
                     <tr key={entry.model_id}>
                       <td>
                         {entry.family.toUpperCase()}
+                        <small>
+                          {entry.family === 'ppo'
+                            ? 'Reinforcement policy'
+                            : `${entry.label_target ?? 'completion'} prediction`}
+                        </small>
                         <small className="arena-id">{entry.model_id}</small>
                       </td>
                       <td>
@@ -781,8 +810,15 @@ export function Arena() {
                     : 'Independent test not yet evaluated.'}{' '}
                 {model.data.timesteps
                   ? `${model.data.timesteps} PPO transitions / ${model.data.training_episodes} completed training episodes.`
-                  : 'Execution completion classifier.'}
+                  : `Execution ${model.data.label_target ?? 'completion'} classifier.`}
               </p>
+              {model.data.label_target === 'unmatched' && (
+                <p className="lab-note">
+                  Policy gate accepts predicted residual unmatched risk at or below the configured
+                  maximum. No-fill outcomes are negative labels; low unmatched risk does not imply
+                  profitable execution.
+                </p>
+              )}
               {model.data.curves?.length ? (
                 <Suspense fallback={<p>Loading chart…</p>}>
                   <Chart
@@ -893,9 +929,14 @@ export function Arena() {
                   <h3>Validation decision diagnostics</h3>
                   <p className="lab-note">
                     {model.data.diagnostics.base_episodes} base episodes ·{' '}
-                    {model.data.diagnostics.false_completion_count} false completion predictions ·{' '}
-                    {model.data.diagnostics.missed_completion_count} missed completions at threshold
-                    0.5. Final test labels excluded.
+                    {model.data.diagnostics.false_positive_count ??
+                      model.data.diagnostics.false_completion_count}{' '}
+                    false positive predictions ·{' '}
+                    {model.data.diagnostics.false_negative_count ??
+                      model.data.diagnostics.missed_completion_count}{' '}
+                    missed positive outcomes for{' '}
+                    {model.data.diagnostics.label_target ?? 'completion'} at threshold 0.5. Final
+                    test labels excluded.
                   </p>
                   <div className="table-wrap">
                     <table>
@@ -922,8 +963,8 @@ export function Arena() {
                     {model.data.diagnostics.representative_errors.map((error, index) => (
                       <p key={index}>
                         <code>{error.base_episode_id}</code> · {error.execution_model} ·{' '}
-                        {error.error.replaceAll('_', ' ')} · completion score{' '}
-                        {n(error.completion_probability, 3)}
+                        {error.error.replaceAll('_', ' ')} · prediction score{' '}
+                        {n(error.predicted_probability ?? error.completion_probability, 3)}
                       </p>
                     ))}
                     {model.data.diagnostics.limitations.map((limitation) => (

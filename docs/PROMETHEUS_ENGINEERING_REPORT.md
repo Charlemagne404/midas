@@ -393,3 +393,57 @@ Next implement validation-only matched policy sizing/rejection selection or
 unmatched-exposure targets, then evaluate on a preregistered genuinely new seed
 set. Do not tune against the opened fresh challenge. Recovery actions and wider
 economic sensitivity remain higher-value unfinished research branches.
+
+## Residual unmatched-inventory target
+
+The next target uses the initial proposal's exchange ledger to sum acquired
+shares on each leg. A positive label means unequal acquired quantities after
+all initial fills, before settlement. Zero fills and equally sized partial fills
+are negative labels even when full completion is false. Residual quantity is
+saved in shares as outcome metadata, never fed back into decision-time features.
+It is not a predicted dollar-loss severity or a guarantee about settlement.
+
+Dataset specifications and manifests record the target and label version.
+Model parameters/manifests record the target and reject inconsistent metadata.
+Legacy artifacts default to completion without modification. Unmatched-risk
+predictors accept a proposal only when predicted risk is <= the configured
+maximum; completion predictors retain their >= minimum-completion rule. Every
+proposal still passes independent production risk admission. The fixed completion
+heuristic is rejected for unmatched labels rather than given an invented meaning.
+Replay explanations explicitly distinguish completion scores and unmatched risk.
+
+The UI exposes the prediction target during dataset creation, identifies model
+and dataset targets, and explains the reversed probability gate. Diagnostics now
+use target-specific errors and generic positive/negative counts while preserving
+old saved report display. New unit cases cover zero fills, matched partial fills,
+one-leg fills, unequal partial fills, unchanged observations across target choice,
+gate direction, a real unmatched logistic fit and a matched tournament.
+
+Focused validation: **17 passed** in 42.55 seconds. An earlier concurrent source
+edit invalidated the source-derived dataset identity during its reuse test
+(16 passed / one failed); the frozen-source rerun passed. This was a test-run
+coordination failure, not weakened artifact identity logic. Source remains frozen
+through the full gates and upcoming supervised campaign.
+
+`PROMETHEUS_UNMATCHED_PREREGISTRATION.json` fixes the next experiment before
+execution: 1001 fresh generated episodes starting seed 62070, seven scenario
+families (rotating seed parity), two-seed logistic/MLP selection on validation,
+then warning and abstention challenges on the same 100 new identities starting
+73071. The threshold stays 0.5; no final-challenge retuning is permitted. Low
+unmatched risk is not evidence of profitable execution. Comparing risk targets
+against legacy completion models trained on a different frozen dataset remains
+separate unfinished work.
+
+Target gate: full Python regression **278 passed / one PostgreSQL skip** in
+223.01 seconds (one Starlette deprecation warning). Four frontend tests, build,
+Ruff and strict mypy (59 files) pass. The browser target workflow initially
+failed to resolve the new selector's label; explicit `aria-label` fixed it.
+The rerun passed in 50.8 seconds, exercising unmatched dataset generation, real
+neural training, target-aware diagnostics, independent evaluation and replay.
+The final UI source also passes TypeScript/ESLint. Legacy frozen dataset/model
+and all five tournament row hashes still verify under the new readers.
+
+Bundle v2 exports now reject changed referenced dataset rows, model weights,
+tournament rows and captured source; they include the core package specification,
+verification/comparison tools and reproducibility instructions. Existing external
+bundles remain immutable. Two utility regression tests pass after this change.

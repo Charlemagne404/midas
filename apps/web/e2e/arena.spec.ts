@@ -8,6 +8,7 @@ test('build, train, inspect and evaluate genuine Arena artifacts', async ({ page
     page.getByText('Synthetic scenarios · Hypothetical fills · Economics unverified · Paper only'),
   ).toBeVisible();
   await page.getByRole('tab', { name: 'Training console' }).click();
+  await page.getByLabel('Prediction target', { exact: true }).selectOption('unmatched');
   await page.getByLabel('Base episodes', { exact: true }).fill('30');
   await page.getByRole('button', { name: 'Generate dataset' }).click();
   await expect(page.getByRole('combobox', { name: 'Dataset', exact: true })).not.toHaveValue('', {
@@ -21,6 +22,7 @@ test('build, train, inspect and evaluate genuine Arena artifacts', async ({ page
     timeout: 30000,
   });
   await page.getByRole('button', { name: 'Inspect model', exact: true }).click();
+  await expect(page.getByText('Execution unmatched classifier.', { exact: false })).toBeVisible();
   await expect(
     page.getByText('Independent test not yet evaluated.', { exact: false }),
   ).toBeVisible();

@@ -63,6 +63,10 @@ def test_bundle_checksums_and_exclusive_publication(tmp_path):
     directory = root / "directors" / "director"
     atomic_json(directory / "manifest.json", manifest)
     atomic_json(root / "datasets" / "dataset" / "rows.json", [])
+    atomic_json(
+        root / "datasets" / "dataset" / "manifest.json",
+        {"rows_sha256": sha256(root / "datasets" / "dataset" / "rows.json")},
+    )
     output = tmp_path / "evidence.tar.gz"
     with pytest.raises(ValueError, match="completed plans"):
         export(root, "director", output)

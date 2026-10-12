@@ -2,8 +2,9 @@
 
 import json
 import time
+from decimal import Decimal
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import Field, model_validator
 
@@ -26,6 +27,7 @@ class DatasetSpec(Model):
     families: tuple[str, ...] = ("calm", "volatile", "thin", "deep", "one_sided", "disappearing")
     execution_models: tuple[str, ...] = ("optimistic", "standard", "conservative")
     observation_latency_ms: int = Field(default=100, ge=0, le=60000)
+    label_target: Literal["completion", "unmatched"] = "completion"
 
     @model_validator(mode="after")
     def supported(self) -> "DatasetSpec":
@@ -64,6 +66,28 @@ def first_decision(scenario: Any, retain: bool = False) -> Environment:
     raise ValueError("Scenario contains no decision")
 
 
+def initial_outcome(exchange: dict[str, Any]) -> dict[str, Any]:
+    orders = exchange["orders"]
+    if len(orders) != 2 or len({o["asset_id"] for o in orders}) != 2:
+        raise ValueError("Initial proposal must contain two distinct legs")
+    quantities = {o["asset_id"]: Decimal(0) for o in orders}
+    order_ids = {o["id"] for o in orders}
+    for entry in exchange["ledger"]:
+        if entry["kind"] == "fill" and entry["order_id"] in order_ids:
+            quantity = Decimal(entry["quantity"])
+            if not quantity.is_finite() or quantity < 0:
+                raise ValueError("Invalid initial fill quantity")
+            quantities[entry["asset_id"]] += quantity
+    first, second = quantities.values()
+    unmatched = abs(first - second)
+    return {
+        "completion": int(all(o["status"] == "FILLED" for o in orders)),
+        "unmatched": int(unmatched > 0),
+        "residual_unmatched_shares": str(unmatched),
+        "filled_shares_by_asset": {asset: str(quantity) for asset, quantity in quantities.items()},
+    }
+
+
 def sample(spec: DatasetSpec, index: int, model: str) -> dict[str, Any] | None:
     seed = spec.seed + index
     family = spec.families[index % len(spec.families)]
@@ -84,8 +108,7 @@ def sample(spec: DatasetSpec, index: int, model: str) -> dict[str, Any] | None:
     result = env.run()
     if not result["passed"] or not result["complete"]:
         raise ValueError(f"Invalid training simulation: {result['errors']}")
-    orders = env.state["positions"][initial_ids[0]]["exchange"]["orders"]
-    complete = len(orders) == 2 and all(o["status"] == "FILLED" for o in orders)
+    outcome = initial_outcome(env.state["positions"][initial_ids[0]]["exchange"])
     # Base identity is shared across all execution variants. Seed stays metadata only.
     base_id = f"{family}:{seed}"
     return {
@@ -97,7 +120,10 @@ def sample(spec: DatasetSpec, index: int, model: str) -> dict[str, Any] | None:
         "partition": partition(base_id, spec.split_seed),
         "decision_time_ms": observation["time_ms"],
         "features": features,
-        "label": int(complete),
+        "label": outcome[spec.label_target],
+        "label_target": spec.label_target,
+        "label_version": "initial-proposal-outcomes-2",
+        "initial_outcome": outcome,
         "scenario_hash": result["scenario_hash"],
         "result_hash": result["result_hash"],
         "strategy_version": result["strategy_version"],
@@ -156,7 +182,13 @@ def build(root: Path, spec: DatasetSpec, progress: Any = None) -> dict[str, Any]
         "spec": spec.model_dump(mode="json"),
         "feature_version": FEATURE_VERSION,
         "feature_schema": list(FEATURES),
-        "label_definition": "Both initial risk-admitted proposal orders finish FILLED; later proposals do not affect label",
+        "label_target": spec.label_target,
+        "label_version": "initial-proposal-outcomes-2",
+        "label_definition": (
+            "Both initial risk-admitted proposal orders finish FILLED; later proposals do not affect label"
+            if spec.label_target == "completion"
+            else "Unequal acquired shares across initial proposal legs after all its fills, before settlement; both zero fills and matched partial fills are negative. Later proposals do not affect label."
+        ),
         "code_revision": execution_revision,
         "source_hash": source_hash,
         "rows_sha256": sha256(directory / "rows.json"),
@@ -178,6 +210,7 @@ def build(root: Path, spec: DatasetSpec, progress: Any = None) -> dict[str, Any]
             "Episode variants are correlated; partitions group family/seed identities",
             "Generator settlement uses seed parity; seeds and identifiers are excluded from features",
             "Execution configuration is an assumption available to a research policy",
+            "Residual unmatched shares are post-execution labels only; not decision features or guaranteed loss severity",
         ],
     }
     atomic_json(manifest_path, manifest)
@@ -218,8 +251,17 @@ def load(root: Path, identity: str) -> tuple[dict[str, Any], list[dict[str, Any]
     ):
         raise ValueError("Unsupported feature schema")
     rows = json.loads((directory / "rows.json").read_text())
+    if manifest.get("label_target", "completion") != manifest["spec"].get(
+        "label_target", "completion"
+    ):
+        raise ValueError("Dataset target differs from frozen specification")
     validate_rows(rows)
     for row in rows:
+        target = manifest.get("label_target", "completion")
+        if row.get("label_target", "completion") != target:
+            raise ValueError("Row label target differs from manifest")
+        if "initial_outcome" in row and row["label"] != row["initial_outcome"][target]:
+            raise ValueError("Label differs from saved initial proposal outcome")
         if row["partition"] != partition(row["base_episode_id"], manifest["spec"]["split_seed"]):
             raise ValueError("Frozen partition assignment mismatch")
     actual = {

@@ -1,0 +1,55 @@
+{
+  "preregistered_at": 1791783649.635723,
+  "question": "Can predicting residual unmatched inventory improve downside against deterministic and no-trade controls?",
+  "dataset": {
+    "episodes": 1001,
+    "seed": 62070,
+    "families": [
+      "calm",
+      "volatile",
+      "thin",
+      "deep",
+      "one_sided",
+      "disappearing",
+      "liquidity_shock"
+    ],
+    "label_target": "unmatched",
+    "observation_latency_ms": 100
+  },
+  "selection": {
+    "candidates": [
+      "logistic",
+      "mlp"
+    ],
+    "seeds": [
+      11,
+      29
+    ],
+    "epochs": 80,
+    "criterion": "Mean validation Brier; simplicity within 0.002 tolerance"
+  },
+  "challenge": {
+    "seed": 73071,
+    "episodes": 100,
+    "family_order": [
+      "one_sided",
+      "deep",
+      "volatile",
+      "calm",
+      "disappearing",
+      "thin"
+    ],
+    "maximum_unmatched_probability": 0.5,
+    "matched_support_behaviors": [
+      "warn",
+      "abstain"
+    ]
+  },
+  "stopping_condition": "One frozen dataset, four fits, two 100-group challenges. No retuning after challenge results.",
+  "limitations": [
+    "Synthetic hypothetical fills; risk probability is not real execution calibration.",
+    "Residual unequal filled shares is not inverse full completion and not guaranteed loss severity.",
+    "Seven training families rotate seed parity; six-family challenge adds a separately reported generator-distribution shift.",
+    "No comparison to legacy completion gates trained on a different dataset; cross-target policy comparison remains later work."
+  ]
+}

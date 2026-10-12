@@ -327,18 +327,23 @@ def run_tournament(root: Path, spec: TournamentSpec, progress: Any = None) -> di
                             and not (out_of_support and spec.unsupported_input_policy == "abstain")
                             else None
                         )
-                        action = int(probability is not None and probability >= spec.threshold)
+                        target = model.parameters.get("label_target", "completion")
+                        action = int(
+                            probability is not None and model.permits(probability, spec.threshold)
+                        )
                         if out_of_support and spec.unsupported_input_policy == "abstain":
                             action = 0
                         explanation.update(
-                            completion_score=probability,
+                            completion_score=probability if target == "completion" else None,
+                            unmatched_risk_score=probability if target == "unmatched" else None,
+                            label_target=target,
                             threshold=spec.threshold,
                             interpretation="Assumption control score; not calibrated probability"
                             if model.parameters["family"] == "heuristic"
-                            else "Modeled completion probability under hypothetical execution",
+                            else f"Modeled {target} probability under hypothetical execution",
                             reason="Request a proposal; independent risk admission remains required"
                             if action
-                            else "Abstain: ineligible evidence or completion score below threshold",
+                            else "Abstain: ineligible evidence or target-specific probability gate rejected",
                             input_support=support,
                             unsupported_input_policy=spec.unsupported_input_policy,
                         )

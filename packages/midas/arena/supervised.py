@@ -113,6 +113,9 @@ def train(root: Path, spec: TrainingSpec, progress: Any = None) -> dict[str, Any
     torch.manual_seed(spec.seed)
     torch.use_deterministic_algorithms(True)
     manifest, rows = load(root, spec.dataset_id)
+    label_target = manifest.get("label_target", "completion")
+    if label_target != "completion" and spec.family == "heuristic":
+        raise ValueError("Fixed completion heuristic has no unmatched-risk interpretation")
     split = {name: [r for r in rows if r["partition"] == name] for name in ("train", "validation")}
     x = {
         name: np.array([r["features"] for r in selected], dtype=np.float32)
@@ -139,6 +142,7 @@ def train(root: Path, spec: TrainingSpec, progress: Any = None) -> dict[str, Any
             "family": spec.family,
             "state": "TRAINING",
             "dataset_id": spec.dataset_id,
+            "label_target": label_target,
             "configuration": spec.model_dump(mode="json"),
             "created_at": time.time(),
             "validation": None,
@@ -155,6 +159,7 @@ def train(root: Path, spec: TrainingSpec, progress: Any = None) -> dict[str, Any
     curves = []
     parameters: dict[str, Any] = {
         "family": spec.family,
+        "label_target": label_target,
         "mean": scaler.mean_.tolist(),
         "scale": scaler.scale_.tolist(),
         "hidden_size": spec.hidden_size,
@@ -298,6 +303,7 @@ def train(root: Path, spec: TrainingSpec, progress: Any = None) -> dict[str, Any
         "state": "TRAINED",
         "created_at": time.time(),
         "dataset_id": spec.dataset_id,
+        "label_target": label_target,
         "dataset_sha256": manifest["rows_sha256"],
         "configuration": spec.model_dump(mode="json"),
         "feature_schema": list(FEATURES),
@@ -336,6 +342,8 @@ def support_envelope(features: Any) -> dict[str, Any]:
 
 class Predictor:
     def __init__(self, parameters: dict[str, Any]):
+        if parameters.get("label_target", "completion") not in {"completion", "unmatched"}:
+            raise ValueError("Unsupported predictor target")
         self.parameters = parameters
         self.model: Any = None
         if parameters["family"] == "mlp":
@@ -359,6 +367,10 @@ class Predictor:
         ):
             raise ValueError("Unsupported model feature schema")
         parameters = json.loads((directory / "parameters.json").read_text())
+        if parameters.get("label_target", "completion") != manifest.get(
+            "label_target", "completion"
+        ):
+            raise ValueError("Model target differs from saved parameters")
         if "support" not in parameters:
             dataset, rows = load(root, manifest["dataset_id"])
             if dataset["rows_sha256"] != manifest["dataset_sha256"]:
@@ -393,6 +405,13 @@ class Predictor:
             "violations": violations,
             "definition": envelope["definition"],
         }
+
+    def permits(self, probability: float, threshold: float) -> bool:
+        if not np.isfinite(probability) or not 0 <= probability <= 1:
+            raise ValueError("Invalid policy probability")
+        if self.parameters.get("label_target", "completion") == "unmatched":
+            return probability <= threshold
+        return probability >= threshold
 
     def predict(self, features: Any) -> Any:
         x = np.asarray(features, dtype=np.float32).reshape(-1, len(FEATURES))
