@@ -1,5 +1,16 @@
 {
-  "job_id": "job-65fcccb2fd5340c783923279",
+  "active_artifact": {
+    "identity": "tournament-aa1e3d4241f044daa4eaff30",
+    "kind": "tournaments"
+  },
+  "budget": {
+    "cpu_cores": 1,
+    "max_artifact_mb": 1024,
+    "memory_mb": 4096,
+    "minimum_available_memory_mb": 2048,
+    "wall_seconds": 1800
+  },
+  "completed_at": 1791791535.2536602,
   "configuration": {
     "dataset": null,
     "director": null,
@@ -58,38 +69,23 @@
     },
     "training": null
   },
-  "state": "RUNNING",
   "created_at": 1791791029.7617936,
-  "updated_at": 1791791086.8922627,
+  "elapsed_seconds": 503.995243056037,
+  "error": null,
+  "exit_status": 0,
+  "job_id": "job-65fcccb2fd5340c783923279",
+  "pid": 3077457,
   "progress": {
-    "done": 156,
+    "done": 1500,
     "total": 1500
   },
-  "error": null,
-  "result": null,
-  "unit": "midas-arena-job-65fcccb2fd5340c783923279.service",
-  "submitted_source_hash": "3e752de21c6f4dc8249b6dfd1b024e4e023fc5bb0d18cb5742f615202e92bd50",
-  "budget": {
-    "cpu_cores": 1,
-    "max_artifact_mb": 1024,
-    "memory_mb": 4096,
-    "minimum_available_memory_mb": 2048,
-    "wall_seconds": 1800
+  "result": {
+    "tournament_id": "tournament-aa1e3d4241f044daa4eaff30"
   },
-  "active_artifact": {
-    "identity": "tournament-aa1e3d4241f044daa4eaff30",
-    "kind": "tournaments"
-  },
-  "elapsed_seconds": 55.63384515303187,
-  "pid": 3077457,
   "started_at": 1791791031.258523,
-  "supervisor": {
-    "MainPID": "3077457",
-    "Result": "success",
-    "MemoryCurrent": "273735680",
-    "CPUUsageNSec": "54070722000",
-    "ActiveState": "active",
-    "SubState": "running"
-  },
-  "observed_at": 1791791087.1657145
+  "state": "COMPLETED",
+  "submitted_source_hash": "3e752de21c6f4dc8249b6dfd1b024e4e023fc5bb0d18cb5742f615202e92bd50",
+  "unit": "midas-arena-job-65fcccb2fd5340c783923279.service",
+  "updated_at": 1791791535.25366,
+  "observed_at": 1791801730.353408
 }

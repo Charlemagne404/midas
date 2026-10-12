@@ -1,0 +1,27 @@
+{
+  "checked_at": 1791802404.714496,
+  "full_suite": {
+    "passed": 297,
+    "skipped": 1,
+    "warnings": 1,
+    "duration_seconds": 305.79,
+    "scope": "Current financial/Arena source; collected before nine newly added target tests"
+  },
+  "final_focused_gate": {
+    "passed": 14,
+    "duration_seconds": 10.12,
+    "scope": "Derived target, paired target metrics, outcome audit, performance comparison and search/bundle export"
+  },
+  "ruff": "PASS",
+  "strict_mypy": {
+    "status": "PASS",
+    "source_files": 63
+  },
+  "api_catalog": {
+    "datasets": 3,
+    "models": 18,
+    "paired_finding_visible": true
+  },
+  "new_classifier_tests_opened": 0,
+  "active_research_workers": 0
+}

@@ -23,12 +23,25 @@ def verify(root: Path, full_replays: bool = False) -> dict[str, Any]:
     }
     for file in sorted(root.glob("datasets/*/manifest.json")):
         manifest, rows = load(root, file.parent.name)
+        lineage = manifest.get("derivation")
+        if lineage:
+            parent, source_rows = load(root, lineage["source_dataset_id"])
+            ignored = {"label", "label_target"}
+            if (
+                parent["rows_sha256"] != lineage["source_rows_sha256"]
+                or sha256(file.parent / "derivation-producer.py") != lineage["producer_sha256"]
+                or manifest["label_target"] != lineage["target"]
+                or [{k: v for k, v in r.items() if k not in ignored} for r in rows]
+                != [{k: v for k, v in r.items() if k not in ignored} for r in source_rows]
+            ):
+                raise ValueError("Derived target provenance or paired observations changed")
         report["datasets"].append(
             {
                 "dataset_id": manifest["dataset_id"],
                 "variants": len(rows),
                 "base_episodes": len({r["base_episode_id"] for r in rows}),
                 "rows_sha256": manifest["rows_sha256"],
+                "derived_from": lineage["source_dataset_id"] if lineage else None,
                 "verified": True,
             }
         )
@@ -94,6 +107,7 @@ def verify(root: Path, full_replays: bool = False) -> dict[str, Any]:
                 "variants": len(rows),
                 "base_episodes": manifest["base_episodes"],
                 "rows_sha256": manifest["rows_sha256"],
+                "evaluation_design": manifest.get("evaluation_design", "LEGACY"),
                 "verified": True,
             }
         )

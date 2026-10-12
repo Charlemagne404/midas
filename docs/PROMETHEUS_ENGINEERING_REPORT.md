@@ -929,3 +929,122 @@ financial/journal hashes with the original stress run. Its design is explicitly
 PERFORMANCE_REPLAY: it cannot count as new independent evidence or designate a
 champion. Scanner measurements alone do not establish whole-job speedup; the
 new worker counters and repeat will provide that evidence.
+
+Final optimization source is committed as `4650bd9`. Focused worker/tournament
+and scanner gates passed nine tests after explicit PERFORMANCE_REPLAY handling;
+six export/evidence tests and a comparator test pass. The full 294-test gate
+preceded the purpose annotation; that annotation is separately tested and does
+not alter financial transitions. Added direct tournament bundle export with
+replay validation for standalone stress evidence. No champion or independent
+research evidence can be designated from a performance replay.
+
+Benchmark replay job `job-6104eea7028e4f04b7233121` is supervised with the original
+stress specification, fixed gate and seed block unchanged. It was observed
+RUNNING at 1240/1500, elapsed 230.35 seconds, with 102.13 scan seconds and 8.93
+progress-publication seconds. Source remains frozen until terminal. The
+original stress run completed in 503.995 seconds. End-to-end speed and exact
+accounting equality are not claimed until the completed comparator verifies
+all 1500 financial and journal hashes. Shared-host single-run limitations apply.
+
+## Completed performance replay and paired outcome audit
+
+Replay job `job-6104eea7028e4f04b7233121` completed, exit 0, in 281.149
+supervised-job seconds. The comparator verified identical financial metrics,
+result/scenario/policy identities and actual journal hashes across all 1500
+variants. Tournament time changed from 501.999 to 279.450 seconds: observed
+1.79638× speed ratio. This is one shared-host comparison, not a repeated
+controlled benchmark or new independent strategy evidence. Worker counters
+record 124.192 seconds of full artifact scans and 10.855 seconds publishing
+progress; artifact safety checks retain their original cadence and budgets.
+
+A development-only audit now compares saved completion and residual unmatched
+outcomes on exactly the same first-admitted observations. Among 1689 variants
+from 563 train/validation groups, 1077 were incomplete, of which 915 had matched
+inventory and 162 had unmatched inventory. Only 15.04% of incomplete proposals
+were unmatched. Positive residual shares had median 8 and maximum 24.39.
+Residual shares are not dollar losses or recovery costs. The frozen final test
+partition is excluded from all reported statistics. The audit checks exact
+Decimal agreement between saved leg quantities, residual and binary risk label.
+Seven focused audit/comparator tests pass; the full regression gate is running.
+
+A separately hashed derivation utility freezes alternative binary labels from
+saved initial outcomes while preserving every observation, episode identity and
+partition. Parent records remain unchanged; the transform source is stored next
+to its artifact. Such derivatives are correlated views of the same data, never
+new independent samples. No classifier final-test evaluation is authorized by
+this derivation. Next: bounded completion fits on the risk dataset's identical
+observations, validation-only comparisons and explicitly paired target analysis.
+
+## Paired target training completed
+
+Derived completion dataset `dataset-d8c1593a2d281e1c9e430952` preserves exactly
+1935 observations / 645 eligible groups from unmatched dataset
+`dataset-f53981b7dd24c1521ce749b1`; it contributes no new independent observations.
+Both dataset identities and the transformation source are retained. The target
+frequency of the final test partition is not published by the derivation.
+
+Supervised job `job-2eb81a9086e34a8899c5e409` completed four real fits, exit 0,
+21.961 seconds, under one CPU / 4 GiB / 600-second limits. Sweep
+`sweep-7add7afb907a5801568ad8e6` used logistic and MLP with seeds 11 and 29.
+Mean validation Brier was 0.03640857 logistic and 0.03460778 MLP. The 0.00180079
+MLP improvement fell inside the preregistered 0.002 simplicity tolerance,
+so logistic `model-e8ea85c7e7fe49f7a0a2a7b9` was selected. Other artifacts:
+`model-4058f9dcf60a4dd39ef3b8ac`, `model-0994f52d25424bfeb5c91a81`,
+`model-cfe981f8ce0e48408fdf7866`. All four classifier tests remain unopened.
+
+On paired validation observations, inverse completion probability had Brier
+0.52414196 against unmatched labels, versus 0.08924986 for frozen direct-risk
+`model-131794f0434945a286163323`. Mean paired group Brier difference was
++0.43489214, exploratory bootstrap interval [0.36536208, 0.49484375]. These
+models were selected on this validation set; the interval is not independent
+selection-adjusted evidence. Separate target Brier scores cannot rank the
+underlying tasks. The finding is target mismatch, not a new policy or profitability
+claim. Saved report and Arena finding `finding-40999cbcecf28d5f75f17df0` preserve
+this distinction. Existing 0.10/full gate and prior final results remain fixed.
+
+The full regression gate passed 297 tests / one PostgreSQL skip / one existing
+Starlette warning in 305.79 seconds before the new paired-target tests were
+collected. The final focused gate passed ten tests (including the nine new target
+audit/derivation/comparison tests), and Ruff plus strict mypy pass across the
+changed scripts and 62 source files. A comparison fixture initially lacked
+family metadata required by the metrics evaluator; it was corrected and rerun.
+No Python financial/Arena source changed during the suite or production job.
+
+Current inventory: 18 registered model artifacts (17 fitted, one fixed control),
+three dataset artifacts representing two source datasets, ten research tournaments
+plus one explicitly repeated performance tournament. No research workers remain
+active. The full Prometheus objective remains ACTIVE.
+
+### Next continuation queue
+
+1. Compare completion/direct-risk policy behavior on these matched validation
+   observations without using prior final tests for selection. Any new selected
+   policy requires a preregistered fresh seed block and retained no-trade controls.
+2. Add residual-share severity regression, with zero-inflated labels and proper
+   group metrics. Residual shares cannot substitute for dollar loss or recovery
+   cost; keep future outcomes out of observable features.
+3. Use the new recursive dataset bundle support for future derived-dataset
+   tournaments. It preserves parent lineage and transform source; both exporter
+   and read-only verifier check exact paired rows and producer hashes.
+4. Perform genuine frozen-policy fee/latency/depth stress reruns; fixed-path cost
+   overlays alone do not represent changed fill behavior.
+5. Expand Data Foundry with actual public observation capture, without inventing
+   fills or settlements. Recovery hedges/unwinds require new financial accounting
+   and hard-risk invariants before policy experiments.
+
+Bundle export now includes derived dataset parents and stored transformer source,
+with lineage/hash/row verification and cycle rejection. This was added while the
+read-only replay audit ran; financial/Arena source stayed unchanged.
+
+Final export/target/evidence gate: 14 passed in 10.12 seconds. Existing export
+fixtures exposed an unnecessary feature-schema requirement for non-derived
+archives; export retains its original hash checks for those archives, while
+new derived lineage requires full observation/partition/producer verification.
+The rerun passes. API catalog directly confirms 3 datasets, 18 model artifacts,
+and the new linked finding; all four new classifier tests are still null.
+
+The completed read-only audit verifies all 24504 replay variants, 18 model
+weight artifacts and 3 datasets, including derivative parent/transform provenance.
+Of these variants, 23004 belong to research tournaments and 1500 to the explicit
+performance repeat. This audit verifies bytes and matched coverage, not retraining
+or every numerical leaderboard statistic.

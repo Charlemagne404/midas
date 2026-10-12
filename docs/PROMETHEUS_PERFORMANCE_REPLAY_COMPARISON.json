@@ -1,0 +1,20 @@
+{
+  "original_job": "job-65fcccb2fd5340c783923279",
+  "replay_job": "job-6104eea7028e4f04b7233121",
+  "matched_variants": 1500,
+  "financial_and_journal_hashes_identical": true,
+  "original_tournament_seconds": 501.99904562701704,
+  "replay_tournament_seconds": 279.450210348994,
+  "observed_speed_ratio": 1.7963809903742454,
+  "worker_runtime_profile": {
+    "artifact_bytes": 394700845,
+    "artifact_files": 28067,
+    "artifact_scan_seconds": 124.19165211287327,
+    "artifact_scans": 1502,
+    "progress_publish_seconds": 10.855250069871545
+  },
+  "limitations": [
+    "Same deterministic simulator inputs/actions under a different worker source; no new independent research samples.",
+    "Single whole-job comparison on a shared host, not a controlled repeated performance benchmark."
+  ]
+}

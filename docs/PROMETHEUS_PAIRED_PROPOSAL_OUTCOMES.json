@@ -1,0 +1,162 @@
+{
+  "analysis_version": "paired-proposal-outcomes-1",
+  "dataset_id": "dataset-f53981b7dd24c1521ce749b1",
+  "rows_sha256": "3c95234ffb79c51194d54f451bf0467c4d4e83cc22ad4ef6721eaabf4a20c109",
+  "producer_sha256": "3abffa4778f3d56e435be73077138885bc21d06f78c77ac88e685c39cbe9eb1e",
+  "decision_scope": "first_admitted",
+  "development": {
+    "variants": 1689,
+    "base_episodes": 563,
+    "paired_outcome_counts": {
+      "completed_matched": 612,
+      "completed_unmatched": 0,
+      "incomplete_matched": 915,
+      "incomplete_unmatched": 162
+    },
+    "unmatched_frequency_given_incomplete": 0.15041782729805014,
+    "group_mean_residual_shares": 0.9382889283599763,
+    "group_bootstrap_mean_interval": [
+      0.7375152457075193,
+      1.1563342214328003
+    ],
+    "positive_residual_shares_quantiles": {
+      "p05": 3.5,
+      "p50": 8.0,
+      "p95": 19.95999999999999,
+      "max": 24.39
+    },
+    "bootstrap_seed": 1977,
+    "bootstrap_replicates": 2000
+  },
+  "by_partition": {
+    "train": {
+      "variants": 1392,
+      "base_episodes": 464,
+      "paired_outcome_counts": {
+        "completed_matched": 505,
+        "completed_unmatched": 0,
+        "incomplete_matched": 758,
+        "incomplete_unmatched": 129
+      },
+      "unmatched_frequency_given_incomplete": 0.14543404735062007,
+      "group_mean_residual_shares": 0.8794827586206896,
+      "group_bootstrap_mean_interval": [
+        0.667120150862069,
+        1.1080501077586207
+      ],
+      "positive_residual_shares_quantiles": {
+        "p05": 3.5,
+        "p50": 8.0,
+        "p95": 19.2,
+        "max": 24.39
+      },
+      "bootstrap_seed": 1977,
+      "bootstrap_replicates": 2000
+    },
+    "validation": {
+      "variants": 297,
+      "base_episodes": 99,
+      "paired_outcome_counts": {
+        "completed_matched": 107,
+        "completed_unmatched": 0,
+        "incomplete_matched": 157,
+        "incomplete_unmatched": 33
+      },
+      "unmatched_frequency_given_incomplete": 0.1736842105263158,
+      "group_mean_residual_shares": 1.2139057239057238,
+      "group_bootstrap_mean_interval": [
+        0.6451010101010101,
+        1.8861893939393937
+      ],
+      "positive_residual_shares_quantiles": {
+        "p05": 4.0,
+        "p50": 10.0,
+        "p95": 20.898,
+        "max": 24.0
+      },
+      "bootstrap_seed": 1977,
+      "bootstrap_replicates": 2000
+    }
+  },
+  "by_execution_model": {
+    "conservative": {
+      "variants": 563,
+      "base_episodes": 563,
+      "paired_outcome_counts": {
+        "completed_matched": 0,
+        "completed_unmatched": 0,
+        "incomplete_matched": 498,
+        "incomplete_unmatched": 65
+      },
+      "unmatched_frequency_given_incomplete": 0.11545293072824156,
+      "group_mean_residual_shares": 0.7735346358792184,
+      "group_bootstrap_mean_interval": [
+        0.5737122557726465,
+        0.9760213143872114
+      ],
+      "positive_residual_shares_quantiles": {
+        "p05": 2.6,
+        "p50": 6.0,
+        "p95": 11.899999999999999,
+        "max": 12.5
+      },
+      "bootstrap_seed": 1977,
+      "bootstrap_replicates": 2000
+    },
+    "optimistic": {
+      "variants": 563,
+      "base_episodes": 563,
+      "paired_outcome_counts": {
+        "completed_matched": 496,
+        "completed_unmatched": 0,
+        "incomplete_matched": 46,
+        "incomplete_unmatched": 21
+      },
+      "unmatched_frequency_given_incomplete": 0.31343283582089554,
+      "group_mean_residual_shares": 0.5578507992895204,
+      "group_bootstrap_mean_interval": [
+        0.3190253108348135,
+        0.8184795737122557
+      ],
+      "positive_residual_shares_quantiles": {
+        "p05": 7.0,
+        "p50": 14.0,
+        "p95": 24.0,
+        "max": 24.39
+      },
+      "bootstrap_seed": 1977,
+      "bootstrap_replicates": 2000
+    },
+    "standard": {
+      "variants": 563,
+      "base_episodes": 563,
+      "paired_outcome_counts": {
+        "completed_matched": 116,
+        "completed_unmatched": 0,
+        "incomplete_matched": 371,
+        "incomplete_unmatched": 76
+      },
+      "unmatched_frequency_given_incomplete": 0.17002237136465326,
+      "group_mean_residual_shares": 1.48348134991119,
+      "group_bootstrap_mean_interval": [
+        1.1595026642984017,
+        1.845896980461811
+      ],
+      "positive_residual_shares_quantiles": {
+        "p05": 4.0,
+        "p50": 9.2,
+        "p95": 19.2,
+        "max": 20.0
+      },
+      "bootstrap_seed": 1977,
+      "bootstrap_replicates": 2000
+    }
+  },
+  "limitations": [
+    "Same frozen decision-time observations for both outcomes; no new simulations or fitted models.",
+    "Only training/validation outcomes summarized; frozen test partition excluded from statistics.",
+    "Residual shares measure initial proposal imbalance, not dollar loss, duration, or recovery cost.",
+    "Absent admitted proposals are excluded, so frequencies are conditional on dataset admission.",
+    "Synthetic fills are hypothetical; bootstrap measures variation within this generator sample."
+  ]
+}

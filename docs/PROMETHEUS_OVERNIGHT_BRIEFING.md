@@ -1,5 +1,41 @@
 # MIDAS — PROMETHEUS OVERNIGHT BRIEFING
 
+## Current checkpoint (supersedes running-job notes below)
+
+The frozen gate stress campaign and performance replay are both terminal;
+there are currently no active research workers. API and web services are active,
+API health is READY, and the protected 162000-result archive hash remains
+unchanged with its exclusive writer lease held.
+
+Ten research tournaments preserve 23004 correlated variants. A separately
+labelled performance replay adds 1500 repeated variants, with identical financial
+and journal hashes. Its tournament took 279.45 seconds versus 502.00 originally
+(observed 1.80× speedup in one shared-host comparison).
+
+The fixed 0.10/full unmatched-risk gate scored +0.569284 under fresh synthetic
+adverse sequences, with no final losses in this sample but 12.62% marked drawdown.
+Its mean return was lower than arbitrage. These results remain hypothetical and
+provide neither observed fill calibration nor a loss guarantee.
+
+A paired development audit shows why completion and exposure need distinct
+labels: 915 of 1077 incomplete executions had matched inventory. Only 15.0%
+were unmatched. New target derivation preserves identical decision observations
+and group splits for a fair subsequent comparison. The whole goal remains active.
+
+The paired completion training also completed: four fits, logistic selected under
+its preregistered simplicity tolerance. On shared validation observations,
+inverse completion had exposure-risk Brier 0.5241 versus 0.08925 for direct risk.
+This is exploratory evidence of target mismatch, not independent generalization.
+The registry now contains 18 artifacts (17 fitted), and three datasets represent
+two source datasets. Full regression: 297 passed / one skip; ten final focused
+tests and Ruff/mypy also pass. No research jobs are currently running.
+
+Next work: paired validation policy comparison, residual-share severity modelling,
+actual frozen-policy economic stress reruns. Bundle export now preserves derived
+parents and transformer source.
+
+### Earlier checkpoint history
+
 This briefing records an ongoing development checkpoint. The full Prometheus
 directive remains active; completion of the initial Arena is not completion of
 the whole research backlog.

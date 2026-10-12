@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Any
 
 from midas.arena.artifacts import artifact_path, read_replay, sha256
+from midas.arena.datasets import load
 from midas.economics.attestation import digest
 
 
@@ -51,6 +52,38 @@ def export_tournament(root: Path, identity: str, output: Path) -> dict[str, Any]
         ):
             raise ValueError("Tournament replay integrity failed")
     return export_experiment(root, "tournaments", identity, output)
+
+
+def dataset_paths(root: Path, identity: str) -> set[Path]:
+    """Include exact derived observations, parent lineage and stored transform source."""
+    paths: set[Path] = set()
+    seen: set[str] = set()
+    while True:
+        if identity in seen:
+            raise ValueError("Cyclic dataset derivation")
+        seen.add(identity)
+        directory = artifact_path(root, "datasets", identity)
+        manifest = json.loads((directory / "manifest.json").read_text())
+        if sha256(directory / "rows.json") != manifest["rows_sha256"]:
+            raise ValueError("Dataset content hash mismatch")
+        paths.update(directory.glob("*.json"))
+        lineage = manifest.get("derivation")
+        if not lineage:
+            return paths
+        manifest, rows = load(root, identity)
+        producer = directory / "derivation-producer.py"
+        parent, original = load(root, lineage["source_dataset_id"])
+        ignored = {"label", "label_target"}
+        if (
+            sha256(producer) != lineage["producer_sha256"]
+            or parent["rows_sha256"] != lineage["source_rows_sha256"]
+            or manifest["label_target"] != lineage["target"]
+            or [{k: v for k, v in row.items() if k not in ignored} for row in rows]
+            != [{k: v for k, v in row.items() if k not in ignored} for row in original]
+        ):
+            raise ValueError("Derived dataset lineage changed")
+        paths.add(producer)
+        identity = lineage["source_dataset_id"]
 
 
 def export_experiment(root: Path, kind: str, identity: str, output: Path) -> dict[str, Any]:
@@ -105,7 +138,7 @@ def export_experiment(root: Path, kind: str, identity: str, output: Path) -> dic
         != dataset_manifest["rows_sha256"]
     ):
         raise ValueError("Director dataset provenance differs from referenced dataset")
-    paths.update(p for p in dataset.glob("*.json"))
+    paths.update(dataset_paths(root, dataset.name))
     for job_file in root.glob("jobs/*/job.json"):
         job = json.loads(job_file.read_text())
         if (job.get("result") or {}).get(reference_key) == identity:

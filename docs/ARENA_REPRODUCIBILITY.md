@@ -110,3 +110,22 @@ the frozen weights and experiment input references remain explicit.
 No-trade can be the selected policy. A validation winner is not an independent
 research champion. Neither a mean break-even cost nor a model probability cutoff
 is a guaranteed loss bound.
+
+## Paired proposal targets and measured performance replay
+
+```bash
+.venv/bin/python scripts/compare_performance_replay.py --original-job job-65fcccb2fd5340c783923279 --replay-job job-6104eea7028e4f04b7233121
+.venv/bin/python scripts/audit_proposal_outcomes.py --dataset dataset-f53981b7dd24c1521ce749b1
+.venv/bin/python scripts/derive_proposal_target.py --source dataset-f53981b7dd24c1521ce749b1 --target completion
+.venv/bin/python scripts/compare_proposal_targets.py --completion-model model-e8ea85c7e7fe49f7a0a2a7b9 --risk-model model-131794f0434945a286163323
+```
+
+The derived target preserves observations and partitions and freezes the producer
+source. Its identity includes the producer hash, so later script revisions create
+a distinct artifact. Reuse verifies existing rows and producer bytes. Development
+reports exclude the classifier test partition and contain no refitting. The
+performance comparison verifies saved journal/results and repeated specification;
+it does not count the same stress seed block as independent research. Derived
+parent/transform verification is included in `scripts/verify_arena.py`; recursive
+parent and stored transformer inclusion are supported by experiment bundle export,
+with parent hashes, exact paired observations and producer bytes verified.

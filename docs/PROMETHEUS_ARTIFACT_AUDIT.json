@@ -1,5 +1,5 @@
 {
-  "checked_at": 1791800425.7380517,
+  "checked_at": 1791802135.1854186,
   "root": "/home/charlie/midas/data/arena",
   "datasets": [
     {
@@ -7,6 +7,15 @@
       "variants": 1593,
       "base_episodes": 531,
       "rows_sha256": "a0dd2d328f724337a7a544470c616d4d2ef887240fa9d647227aea4ddc00dc27",
+      "derived_from": null,
+      "verified": true
+    },
+    {
+      "dataset_id": "dataset-d8c1593a2d281e1c9e430952",
+      "variants": 1935,
+      "base_episodes": 645,
+      "rows_sha256": "80a75480aae4b790a1b2ace8b84a731cddad82a71c1be395caf9ec6dd58d82b9",
+      "derived_from": "dataset-f53981b7dd24c1521ce749b1",
       "verified": true
     },
     {
@@ -14,6 +23,7 @@
       "variants": 1935,
       "base_episodes": 645,
       "rows_sha256": "3c95234ffb79c51194d54f451bf0467c4d4e83cc22ad4ef6721eaabf4a20c109",
+      "derived_from": null,
       "verified": true
     }
   ],
@@ -22,6 +32,12 @@
       "model_id": "model-006eed74ab6b411ab633c60d",
       "family": "mlp",
       "artifact_sha256": "ac4b68cc11e0fed29a9f2d6b32655d596459ec35a37398ec2ca476c368178f9e",
+      "verified": true
+    },
+    {
+      "model_id": "model-0994f52d25424bfeb5c91a81",
+      "family": "mlp",
+      "artifact_sha256": "f5a02362a4db56b08cbeb2b71415adafa39e44eaa2e1be62c3a950fc613d65c6",
       "verified": true
     },
     {
@@ -55,6 +71,12 @@
       "verified": true
     },
     {
+      "model_id": "model-4058f9dcf60a4dd39ef3b8ac",
+      "family": "logistic",
+      "artifact_sha256": "35e3ab0d8b893e21a6c3e082da2f6ae8f934438ee2ee76c775e0a5f7ac7db98f",
+      "verified": true
+    },
+    {
       "model_id": "model-5dbaecfa00a646dead13eebd",
       "family": "logistic",
       "artifact_sha256": "1792f51e5c8b0cbd1ba6e7c7fbf52c3cb893c485de8a129194b005616d5c52fe",
@@ -67,9 +89,21 @@
       "verified": true
     },
     {
+      "model_id": "model-cfe981f8ce0e48408fdf7866",
+      "family": "mlp",
+      "artifact_sha256": "d82985cb4acb6a5b21f75aa019b9ffb18b4ac5a44fba3ddbd4239a04a5aaf993",
+      "verified": true
+    },
+    {
       "model_id": "model-d3abc499a0de4eb98ff14ee2",
       "family": "mlp",
       "artifact_sha256": "6bb543e940fa54f7aeb26ef3597a0a3d0f7afcfc689e8763e185957716191239",
+      "verified": true
+    },
+    {
+      "model_id": "model-e8ea85c7e7fe49f7a0a2a7b9",
+      "family": "logistic",
+      "artifact_sha256": "35e3ab0d8b893e21a6c3e082da2f6ae8f934438ee2ee76c775e0a5f7ac7db98f",
       "verified": true
     },
     {
@@ -109,6 +143,7 @@
       "variants": 1500,
       "base_episodes": 100,
       "rows_sha256": "a358d3cd09db785192a1098a7168473509c2564d7b83bafbf61e715ebe233804",
+      "evaluation_design": "FRESH_GENERATOR_CHALLENGE",
       "verified": true
     },
     {
@@ -116,6 +151,7 @@
       "variants": 2400,
       "base_episodes": 100,
       "rows_sha256": "c80e5e1ca35f33947eca8628f9160bebbfa3776c7f2579550f1135ab8d9ee62e",
+      "evaluation_design": "FRESH_GENERATOR_CHALLENGE",
       "verified": true
     },
     {
@@ -123,6 +159,7 @@
       "variants": 2100,
       "base_episodes": 100,
       "rows_sha256": "32c1906b8ec0169239f7776beab597d710d81a22eb60c0356ee13674b4681622",
+      "evaluation_design": "LEGACY",
       "verified": true
     },
     {
@@ -130,6 +167,15 @@
       "variants": 2400,
       "base_episodes": 100,
       "rows_sha256": "79c3dbabc1073f7ca91851849cefa9db5c5a5f696f0d19b93d9102e9ad72722a",
+      "evaluation_design": "FRESH_GENERATOR_CHALLENGE",
+      "verified": true
+    },
+    {
+      "tournament_id": "tournament-7364137c6ea4436f8a1581a5",
+      "variants": 1500,
+      "base_episodes": 100,
+      "rows_sha256": "edb223c72eaa724d215a836bf3095af8137ef3ad4316f128f59154ac583c69ed",
+      "evaluation_design": "PERFORMANCE_REPLAY",
       "verified": true
     },
     {
@@ -137,6 +183,7 @@
       "variants": 5004,
       "base_episodes": 139,
       "rows_sha256": "3889b4e92b02cf5b84bd781055018d70b659ade19f28df9003f4ee309b815d88",
+      "evaluation_design": "VALIDATION",
       "verified": true
     },
     {
@@ -144,6 +191,7 @@
       "variants": 2100,
       "base_episodes": 100,
       "rows_sha256": "00391db830ea745d97bef77376f91cb227ca82416c016850c08d30e43f1f8055",
+      "evaluation_design": "LEGACY",
       "verified": true
     },
     {
@@ -151,6 +199,7 @@
       "variants": 1500,
       "base_episodes": 100,
       "rows_sha256": "0711c022011bd3db5c25bce3148f5d6d224502875e209799cd04258e618ea8b7",
+      "evaluation_design": "FRESH_GENERATOR_CHALLENGE",
       "verified": true
     },
     {
@@ -158,6 +207,7 @@
       "variants": 1500,
       "base_episodes": 100,
       "rows_sha256": "ee7e66f801e43201ae90a91cf252f006c2199cfb61509ff6de30f286470a6038",
+      "evaluation_design": "FRESH_GENERATOR_CHALLENGE",
       "verified": true
     },
     {
@@ -165,6 +215,7 @@
       "variants": 1500,
       "base_episodes": 100,
       "rows_sha256": "b1e8c8ac418252e7e1b62f1cc5fff8f14d4d33c45a805c7097fe7ff7f2a51ce9",
+      "evaluation_design": "FRESH_GENERATOR_CHALLENGE",
       "verified": true
     },
     {
@@ -172,6 +223,7 @@
       "variants": 3000,
       "base_episodes": 100,
       "rows_sha256": "9084195802f07ee5d8216eafb997a22b2815ba21569a4b0c3b3f1ac82fcc5c9b",
+      "evaluation_design": "LEGACY",
       "verified": true
     }
   ],

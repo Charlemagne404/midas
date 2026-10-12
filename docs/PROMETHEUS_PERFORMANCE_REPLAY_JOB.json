@@ -1,0 +1,99 @@
+{
+  "active_artifact": {
+    "identity": "tournament-7364137c6ea4436f8a1581a5",
+    "kind": "tournaments"
+  },
+  "budget": {
+    "cpu_cores": 1,
+    "max_artifact_mb": 1024,
+    "memory_mb": 4096,
+    "minimum_available_memory_mb": 2048,
+    "wall_seconds": 1800
+  },
+  "completed_at": 1791801340.2210438,
+  "configuration": {
+    "dataset": null,
+    "director": null,
+    "kind": "tournament",
+    "max_wall_seconds": 1800,
+    "model_id": null,
+    "policy_search": null,
+    "rl": null,
+    "sweep": null,
+    "tournament": {
+      "adversarial": true,
+      "challenge": {
+        "decision_scope": "first_admitted",
+        "episodes": 100,
+        "execution_models": [
+          "optimistic",
+          "standard",
+          "conservative"
+        ],
+        "families": [
+          "calm",
+          "volatile",
+          "thin",
+          "deep",
+          "one_sided",
+          "disappearing",
+          "liquidity_shock"
+        ],
+        "label_target": "unmatched",
+        "observation_latency_ms": 100,
+        "seed": 113071,
+        "split_seed": 1977,
+        "version": "synthetic-decision-1"
+      },
+      "dataset_id": "dataset-f53981b7dd24c1521ce749b1",
+      "execution_models": [
+        "optimistic",
+        "standard",
+        "conservative"
+      ],
+      "gates": [
+        {
+          "model_id": "model-131794f0434945a286163323",
+          "size": "full",
+          "threshold": 0.1
+        }
+      ],
+      "max_episodes": 100,
+      "minimum_champion_episodes": 30,
+      "model_ids": [],
+      "partition": "test",
+      "purpose": "performance_replay",
+      "seed": 991,
+      "tail_loss_weight": 1.0,
+      "threshold": 0.5,
+      "unsupported_input_policy": "abstain"
+    },
+    "training": null
+  },
+  "created_at": 1791801057.5648453,
+  "elapsed_seconds": 281.149018755008,
+  "error": null,
+  "exit_status": 0,
+  "job_id": "job-6104eea7028e4f04b7233121",
+  "pid": 3242569,
+  "progress": {
+    "done": 1500,
+    "total": 1500
+  },
+  "result": {
+    "tournament_id": "tournament-7364137c6ea4436f8a1581a5"
+  },
+  "runtime_profile": {
+    "artifact_bytes": 394700845,
+    "artifact_files": 28067,
+    "artifact_scan_seconds": 124.19165211287327,
+    "artifact_scans": 1502,
+    "progress_publish_seconds": 10.855250069871545
+  },
+  "started_at": 1791801059.07213,
+  "state": "COMPLETED",
+  "submitted_source_hash": "a4117eb74048ee94cbbdf634a32816f8ff95ee78606c085b5183384738c2407a",
+  "unit": "midas-arena-job-6104eea7028e4f04b7233121.service",
+  "updated_at": 1791801340.2210433,
+  "observed_at": 1791801730.3537424
+}
