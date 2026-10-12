@@ -1983,3 +1983,39 @@ use at most two additional one-CPU processes, with measured host headroom. API
 continues READY. Do not edit package source or the finalizer's captured tools
 until both finalization and regression terminate. No new model training or
 completed research/finalization results are claimed during this live study.
+
+### Joint study completed and finalized autonomously
+
+Job-b357fcb6f3b342b7ae1817a8 completed3900 variants /100 source groups in about
+1042.47 seconds. The supervised finalizer completed independently with exit0,
+phase VERIFIED. It verified3900 saved replays and6183 observed-input decisions,
+1688 requests, all frozen sources/model hashes/configurations, and executed the
+four preregistered paired comparisons plus nine accounting attributions.
+
+Completion-threshold scope mean P&L0.720198, sampled tail loss0 and score0.720198;
+support-only scope mean1.466354, tail2.441467, score-0.975112. Their paired mean
+change is-0.746157, grouped95% interval[-1.032279,-0.477125]. Thus mean decreases
+while sampled downside score improves. Forecast/quoted/scope under threshold0.9
+have identical outcomes: added friction mean differences0, intervals[0,0].
+Joint forecast minus no-trade mean0.720198, interval[0.333777,1.179297].
+
+Coverage is narrow:28 filled variants from16 source groups, exclusively deep
+liquidity, out of300 variants per policy. No sample loss is not a guaranteed loss
+bound, broader robustness or real-market profitability. No champion promoted,
+models retrained, or final tests opened. Mean intervals do not provide uncertainty
+for the reported tail loss. Source groups, not variants, are bootstrap units.
+
+Final bundlecb82d89888c063590b242a34114f2f8f3941e2097bcc3a36eca13567196ea141
+contains4002 independently checksummed payloads, analysis, captured tools/source
+and the autonomously published finding. A separate root check confirms all
+payloads and required analysis/tools. The finding is visible in the production
+dashboard with zero page errors. Inventory43 artifacts/42 fitted, six datasets,
+24 tournaments/46023 correlated variants,58 native jobs. All research/finalizer
+workers terminal; full source regression remains live and is not yet passed.
+
+The actual worker spent639.20 seconds on3902 archive scans, approximately61% of
+total elapsed time, with30.07 seconds publishing progress. Efficiency work must
+preserve cap enforcement and cancellation while reducing this repeated work.
+The next execution milestone is specified in ARENA_UNWIND_IMPLEMENTATION_PLAN.md:
+inventory-backed sells, separate share reservations, average basis release,
+sell-loss risk accounting and exact compatibility with existing buy-only behavior.

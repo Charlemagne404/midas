@@ -1,35 +1,14 @@
 {
-  "active_jobs": [
-    {
-      "job_id": "job-b357fcb6f3b342b7ae1817a8",
-      "state": "RUNNING",
-      "progress": {
-        "done": 2855,
-        "total": 3900
-      },
-      "unit": "midas-arena-job-b357fcb6f3b342b7ae1817a8.service",
-      "budget": {
-        "cpu_cores": 1,
-        "max_artifact_mb": 1024,
-        "memory_mb": 4096,
-        "minimum_available_memory_mb": 2048,
-        "wall_seconds": 1800
-      },
-      "active_artifact": {
-        "identity": "tournament-6753c0ba48da48488b15fda2",
-        "kind": "tournaments"
-      }
-    }
-  ],
+  "active_jobs": [],
   "active_research_director": null,
   "arena_datasets": 6,
   "arena_fitted_models": 42,
   "arena_model_artifacts": 43,
   "arena_performance_replays": 1,
-  "arena_research_tournaments": 22,
+  "arena_research_tournaments": 23,
   "arena_source_datasets": 5,
-  "arena_tournaments": 23,
-  "checked_at": 1791845723.960514,
+  "arena_tournaments": 24,
+  "checked_at": 1791846272.8658664,
   "dataset_quality": [
     "Identical observable vectors occur across partitions. Independent scenario IDs do not guarantee covariate diversity; inspect repeated synthetic grids.",
     "Some scenario families contain one settlement seed parity only. The current generator uses seed parity for settlement; reorder families and shift seeds before making generalization claims.",
@@ -43,8 +22,8 @@
     "live_execution": false,
     "paper_recovery": {
       "status": "CHECKPOINT_VERIFIED",
-      "journal_events": 49777,
-      "revision": 49776
+      "journal_events": 50071,
+      "revision": 50070
     },
     "laboratory": {
       "status": "READY",
@@ -125,7 +104,7 @@
     "warnings": 1
   },
   "active_cost_campaign": null,
-  "arena_tournament_correlated_variants": 42123,
+  "arena_tournament_correlated_variants": 46023,
   "cost_policy_study": {
     "job_id": "job-e142c688d30a423cad5931aa",
     "tournament_id": "tournament-25f2053c416249678c76a30b",
@@ -136,26 +115,28 @@
     "champion_promoted": false
   },
   "current_regression": {
-    "state": "QUEUED_AFTER_RESEARCH",
+    "state": "RUNNING",
+    "pid": 7112,
     "log": "docs/PROMETHEUS_JOINT_COST_FULL_TESTS.log",
-    "latest_completed_full_gate": "408 passed, one skipped; two investigation tests additionally passed"
+    "latest_completed_full_gate": "408 passed, one skipped"
   },
   "joint_cost_study": {
     "preregistration": "docs/PROMETHEUS_JOINT_COST_PREREGISTRATION.json",
     "source_checkpoint": "86aae37",
-    "state": "RUNNING",
+    "state": "COMPLETED",
     "job_id": "job-b357fcb6f3b342b7ae1817a8",
     "fixed_model_artifacts": true,
     "production_models_trained": 0
   },
   "joint_cost_finalizer": {
     "unit": "midas-joint-cost-finalize-363071.service",
-    "phase": "WAITING",
+    "phase": "VERIFIED",
     "source_checkpoint": "8bb9612",
     "state_path": "data/arena/jobs/job-b357fcb6f3b342b7ae1817a8/post-study-state.json",
     "cpu_cores": 1,
     "memory_mb": 4096,
     "supervisor_wall_seconds": 2400,
-    "script_wait_seconds": 2100
+    "script_wait_seconds": 2100,
+    "payloads_verified": 4002
   }
 }

@@ -1,0 +1,181 @@
+{
+  "tournament_id": "tournament-6753c0ba48da48488b15fda2",
+  "verification": {
+    "tournament_id": "tournament-6753c0ba48da48488b15fda2",
+    "replays_verified": 3900,
+    "source_groups": 100,
+    "cost_decisions_recomputed": 6183,
+    "cost_requests": 1688,
+    "scope": "Saved financial hashes, matched coverage, first-position scope and observed-input preferences; reuses recorded inference implementation."
+  },
+  "primary_comparisons": [
+    {
+      "candidate_reference": "completion_threshold_09.scope",
+      "control_reference": "completion_support_only.scope",
+      "result": {
+        "analysis_version": "paired-policy-1",
+        "tournament_id": "tournament-6753c0ba48da48488b15fda2",
+        "control": "cost-scope-cf239b4852b9b933",
+        "candidate": "cost-scope-a823d06607c620b2",
+        "evaluation_design": "FRESH_GENERATOR_CHALLENGE",
+        "rows_sha256": "0ede79517c4cf4421c5ad8c1eeab5c6c2682c01fabf499ebcf872ba4dd2ee5ca",
+        "producer_sha256": "542638cfb383c7cf3942c146c965f52e227dbc7c8ee7edf9a336b5a74bbc9bf3",
+        "base_episodes": 100,
+        "paired_variants": 300,
+        "nonzero_variant_differences": 158,
+        "mean_candidate_minus_control": -0.7461566253930616,
+        "group_bootstrap_mean_interval": [
+          -1.0322785319716088,
+          -0.4771245629116595
+        ],
+        "outcomes": {
+          "cost-scope-cf239b4852b9b933": {
+            "mean_pnl": 1.4663542686831872,
+            "cvar_05_loss": 2.4414667156098875,
+            "worst_pnl": -8.430000103900305,
+            "score": -0.9751124469267003
+          },
+          "cost-scope-a823d06607c620b2": {
+            "mean_pnl": 0.7201976432901259,
+            "cvar_05_loss": 0,
+            "worst_pnl": 0.0,
+            "score": 0.7201976432901259
+          }
+        },
+        "interpretation": "Descriptive paired comparison; no threshold fitting, selection or promotion. Validation comparisons are exploratory. Correlated execution variants remain inside base-episode groups. Action-dependent execution noise may differ despite common scenario seeds. Hypothetical outcomes are not observed profitability."
+      }
+    },
+    {
+      "candidate_reference": "completion_threshold_09.forecast",
+      "control_reference": "completion_threshold_09.scope",
+      "result": {
+        "analysis_version": "paired-policy-1",
+        "tournament_id": "tournament-6753c0ba48da48488b15fda2",
+        "control": "cost-scope-a823d06607c620b2",
+        "candidate": "cost-forecast-a823d06607c620b2",
+        "evaluation_design": "FRESH_GENERATOR_CHALLENGE",
+        "rows_sha256": "0ede79517c4cf4421c5ad8c1eeab5c6c2682c01fabf499ebcf872ba4dd2ee5ca",
+        "producer_sha256": "542638cfb383c7cf3942c146c965f52e227dbc7c8ee7edf9a336b5a74bbc9bf3",
+        "base_episodes": 100,
+        "paired_variants": 300,
+        "nonzero_variant_differences": 0,
+        "mean_candidate_minus_control": 0.0,
+        "group_bootstrap_mean_interval": [
+          0.0,
+          0.0
+        ],
+        "outcomes": {
+          "cost-scope-a823d06607c620b2": {
+            "mean_pnl": 0.7201976432901259,
+            "cvar_05_loss": 0,
+            "worst_pnl": 0.0,
+            "score": 0.7201976432901259
+          },
+          "cost-forecast-a823d06607c620b2": {
+            "mean_pnl": 0.7201976432901259,
+            "cvar_05_loss": 0,
+            "worst_pnl": 0.0,
+            "score": 0.7201976432901259
+          }
+        },
+        "interpretation": "Descriptive paired comparison; no threshold fitting, selection or promotion. Validation comparisons are exploratory. Correlated execution variants remain inside base-episode groups. Action-dependent execution noise may differ despite common scenario seeds. Hypothetical outcomes are not observed profitability."
+      }
+    },
+    {
+      "candidate_reference": "completion_threshold_09.forecast",
+      "control_reference": "completion_threshold_09.quoted",
+      "result": {
+        "analysis_version": "paired-policy-1",
+        "tournament_id": "tournament-6753c0ba48da48488b15fda2",
+        "control": "cost-quoted-a823d06607c620b2",
+        "candidate": "cost-forecast-a823d06607c620b2",
+        "evaluation_design": "FRESH_GENERATOR_CHALLENGE",
+        "rows_sha256": "0ede79517c4cf4421c5ad8c1eeab5c6c2682c01fabf499ebcf872ba4dd2ee5ca",
+        "producer_sha256": "542638cfb383c7cf3942c146c965f52e227dbc7c8ee7edf9a336b5a74bbc9bf3",
+        "base_episodes": 100,
+        "paired_variants": 300,
+        "nonzero_variant_differences": 0,
+        "mean_candidate_minus_control": 0.0,
+        "group_bootstrap_mean_interval": [
+          0.0,
+          0.0
+        ],
+        "outcomes": {
+          "cost-quoted-a823d06607c620b2": {
+            "mean_pnl": 0.7201976432901259,
+            "cvar_05_loss": 0,
+            "worst_pnl": 0.0,
+            "score": 0.7201976432901259
+          },
+          "cost-forecast-a823d06607c620b2": {
+            "mean_pnl": 0.7201976432901259,
+            "cvar_05_loss": 0,
+            "worst_pnl": 0.0,
+            "score": 0.7201976432901259
+          }
+        },
+        "interpretation": "Descriptive paired comparison; no threshold fitting, selection or promotion. Validation comparisons are exploratory. Correlated execution variants remain inside base-episode groups. Action-dependent execution noise may differ despite common scenario seeds. Hypothetical outcomes are not observed profitability."
+      }
+    },
+    {
+      "candidate_reference": "completion_threshold_09.forecast",
+      "control_reference": "no_trade",
+      "result": {
+        "analysis_version": "paired-policy-1",
+        "tournament_id": "tournament-6753c0ba48da48488b15fda2",
+        "control": "no_trade",
+        "candidate": "cost-forecast-a823d06607c620b2",
+        "evaluation_design": "FRESH_GENERATOR_CHALLENGE",
+        "rows_sha256": "0ede79517c4cf4421c5ad8c1eeab5c6c2682c01fabf499ebcf872ba4dd2ee5ca",
+        "producer_sha256": "542638cfb383c7cf3942c146c965f52e227dbc7c8ee7edf9a336b5a74bbc9bf3",
+        "base_episodes": 100,
+        "paired_variants": 300,
+        "nonzero_variant_differences": 28,
+        "mean_candidate_minus_control": 0.7201976432901259,
+        "group_bootstrap_mean_interval": [
+          0.3337768217559058,
+          1.1792969138854863
+        ],
+        "outcomes": {
+          "no_trade": {
+            "mean_pnl": 0.0,
+            "cvar_05_loss": 0,
+            "worst_pnl": 0.0,
+            "score": 0.0
+          },
+          "cost-forecast-a823d06607c620b2": {
+            "mean_pnl": 0.7201976432901259,
+            "cvar_05_loss": 0,
+            "worst_pnl": 0.0,
+            "score": 0.7201976432901259
+          }
+        },
+        "interpretation": "Descriptive paired comparison; no threshold fitting, selection or promotion. Validation comparisons are exploratory. Correlated execution variants remain inside base-episode groups. Action-dependent execution noise may differ despite common scenario seeds. Hypothetical outcomes are not observed profitability."
+      }
+    }
+  ],
+  "limitations": [
+    "Synthetic observations, hypothetical execution and estimated costs only.",
+    "Separate frozen cohorts; completion cohort did not train on explicit cost settings. This is a declared distribution shift, not established calibration.",
+    "Training-range intersection does not guarantee joint support.",
+    "Threshold zero preserves the same two-model input contract and isolates additional score rejection within matched support.",
+    "Different action paths may consume different random draws; bootstrap source groups.",
+    "No retuning of opened seed313071 challenge or cost-model final tests.",
+    "Paired intervals describe mean P&L; sample tail metrics lack confidence intervals here.",
+    "Four preregistered comparisons; no multiplicity correction or promotion decision.",
+    "Saved inference verification reuses its implementation and is not an independent broker rerun.",
+    "Accounting decomposition is descriptive and does not identify causal effects."
+  ],
+  "coverage": {
+    "filled_variants": 28,
+    "filled_source_groups": 16,
+    "filled_families": [
+      "deep"
+    ],
+    "correlated_variants_per_policy": 300,
+    "filled_execution_variants": {
+      "optimistic": 16,
+      "standard": 12
+    }
+  }
+}

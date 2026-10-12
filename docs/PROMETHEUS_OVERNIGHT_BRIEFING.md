@@ -1,5 +1,32 @@
 # MIDAS — PROMETHEUS OVERNIGHT BRIEFING
 
+## Latest result — completion filtering helps this narrow synthetic cohort
+
+The joint study and supervised finalizer completed. All3900 saved replays,
+6183 decision-time preferences and both fixed models/source identities verified.
+Threshold0.9 policies have mean/score0.720198 and sampled tail loss0. Their
+support-only scope control has mean1.466354, tail2.441467 and score-0.975112.
+The completion filter lowers mean by0.746157 (grouped95% interval
+[-1.032279,-0.477125]) while improving the sampled downside score. Within that
+completion filter, forecast, quoted and scope outcomes are identical: there is
+no measured incremental friction-filter benefit. No champion promoted.
+
+Only28 variants filled, from16 source groups, all deep-liquidity cases. The
+positive mean-versus-no-trade interval[0.333777,1.179297] is synthetic evidence
+for this fixed challenge; no guarantee, general robustness or real profitability
+claim follows. No new training or model final-test opening occurred.
+
+Finalizer independently published the native finding and exported the evidence.
+Final bundleSHAcb82d89888c063590b242a34114f2f8f3941e2097bcc3a36eca13567196ea141,
+4002 payloads verified; production finding browser inspection has no page errors.
+Inventory43 models/42 fitted, six datasets,24 tournaments/46023 correlated
+variants. Research workers and finalizer are terminal. Full regression still
+runs; latest completed full gate remains408 passed/one skip.
+
+Next: finish the current regression, then implement the documented inventory-backed
+sell/unwind accounting and reduce the measured archive-scan overhead. The broad
+Prometheus goal remains active; this positive synthetic subset is not completion.
+
 ## Active study — completion and friction with matched support controls
 
 Source checkpoint86aae37 adds genuine two-model preference decisions and matched
