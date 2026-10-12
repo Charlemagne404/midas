@@ -1333,3 +1333,11 @@ Protected-campaign read-only verification passed again: SQLite quick_check OK,
 70d446f0a3833011bb150b0212c4cad3f2751c7f1c210d4c6989816d249fe4ec.
 The API exclusive owner lease remains held. Evidence is recorded in
 PROMETHEUS_ECONOMIC_CHECKPOINT_ARCHIVE_VERIFICATION.json.
+
+The bounded full-replay audit completed successfully and atomically published
+PROMETHEUS_ARTIFACT_AUDIT.json: all three datasets, 21 model weight artifacts,
+16 completed tournaments and 33,423 saved variants passed immutable-byte,
+coverage, financial-core and saved-journal hash verification. This checks saved
+replays; the six failure-corpus cases were separately re-executed and matched
+exactly. It does not claim all 33,423 variants were simulated again. Older
+source-reconstruction limitations remain documented. No research job is active.

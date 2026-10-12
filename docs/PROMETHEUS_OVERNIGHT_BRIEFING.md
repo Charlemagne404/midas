@@ -4,6 +4,11 @@
 
 ### Completed economic study and loss attribution
 
+The completed full saved-replay audit verifies all three datasets, 21 model
+weight artifacts and 33,423 variants across 16 tournaments. Six latency-loss
+cases were also re-executed with exact financial/journal/decision matches.
+Protected archive integrity and the ownership lease passed fresh checks.
+
 All four economic conditions completed: 6,000 correlated variants over the same
 100 source groups. The frozen gate's downside scores were baseline 0.497,
 added 200ms delay -0.643, half depth 0.689, and fee coefficient 0.01 zero.
