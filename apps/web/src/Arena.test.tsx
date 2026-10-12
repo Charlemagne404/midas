@@ -134,3 +134,67 @@ it('shows severity errors in shares and excludes probability diagnostics', async
   expect(screen.getByText('positive rmse')).toBeInTheDocument();
   client.clear();
 });
+
+it('submits declared economic perturbations before a tournament rerun', async () => {
+  const overview = {
+    datasets: [
+      {
+        dataset_id: 'parent',
+        rows: 3,
+        eligible_base_episodes: 1,
+        generated_base_episodes: 30,
+        partition_rows: {},
+        label_frequency: {},
+        limitations: [],
+      },
+    ],
+    models: [],
+    jobs: [],
+    findings: [],
+    tournaments: [],
+    dependencies: {},
+    health: { memory_mb: {}, worker_cpu_cores: 1, worker_memory_mb: 4096 },
+  };
+  const submitted: unknown[] = [];
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (_url: string, init?: RequestInit) => {
+      if (init?.method === 'POST') {
+        submitted.push(JSON.parse(String(init.body)));
+        return new Response(JSON.stringify({ job_id: 'job-fixture', state: 'QUEUED' }), {
+          status: 200,
+        });
+      }
+      return new Response(JSON.stringify(overview), { status: 200 });
+    }),
+  );
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  render(
+    <QueryClientProvider client={client}>
+      <Arena />
+    </QueryClientProvider>,
+  );
+  fireEvent.click(await screen.findByRole('tab', { name: 'Tournaments' }));
+  fireEvent.click(screen.getByRole('checkbox', { name: 'Rerun with hypothetical economics' }));
+  fireEvent.change(screen.getByLabelText('Depth multiplier'), { target: { value: '0.5' } });
+  fireEvent.change(screen.getByLabelText('Synthetic fee coefficient'), {
+    target: { value: '0.01' },
+  });
+  fireEvent.change(screen.getByLabelText('Additional submission latency (ms)'), {
+    target: { value: '200' },
+  });
+  fireEvent.click(screen.getByRole('button', { name: 'Run held-out tournament' }));
+  await screen.findByText('Research job admitted. Progress appears below.');
+  expect(submitted[0]).toMatchObject({
+    configuration: {
+      tournament: {
+        economic_regime: {
+          depth_multiplier: '0.5',
+          taker_fee_rate: '0.01',
+          additional_submission_latency_ms: 200,
+        },
+      },
+    },
+  });
+  client.clear();
+});

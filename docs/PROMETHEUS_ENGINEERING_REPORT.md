@@ -1187,3 +1187,40 @@ three severity regressors, one PPO), plus one fixed heuristic control. No resear
 or public-capture workers remain running. The full Prometheus goal is ACTIVE.
 Next: freeze and evaluate the selected severity fit independently without tuning,
 then build actual fee/latency/depth economic reruns and broader data collection.
+
+## Frozen severity holdout and actual economic-regime implementation
+
+Before opening any severity final test, the verified pre-test selection, all
+three candidate manifests/weights/checkpoints, frozen data and captured training
+sources were exported. All 177 payload hashes verify; restoring the bundle
+reproduces the original selection exactly after current registry evaluation.
+`job-b53452014bb5434d9e8da6b6` then evaluated only the selected ridge on 82
+held-out source groups / 246 correlated variants. RMSE was 3.18595732 shares
+versus 3.48544593 zero and 3.37398888 frozen train-mean controls. MAE was
+1.50882216 versus zero's 0.87439024. Weights/selection were unchanged. This
+qualifies a modest squared-error gain; it establishes no tail guarantee or policy
+advantage. Neural severity tests remain unopened, and no classifier tests changed.
+
+New bounded economic regimes modify generated scenarios before execution:
+initial and future bid/ask depth, synthetic fee coefficients, submission latency,
+and optional existing cost assumptions. Recorded observations cannot be rewritten.
+Risk admission/support abstention remain active. Each row retains its pre-regime
+scenario hash. Comparisons verify common origin/policy/configuration, both actual
+replay cores/journals, and exact declared transformation of the replay scenario.
+The native UI exposes declared coefficients and latency with explicit units.
+
+Focused economic/integration gates passed six tests; legacy comparison tests
+found one missing optional configuration-field assumption in a full run (323
+passed, one failed, one skip). That comparison-only regression was fixed, and
+five focused research/economic tests pass. A full rerun is in progress. Seven
+frontend tests, typecheck/lint/build pass. A subsequent unused fixture argument
+was corrected and frontend typecheck/lint rerun. Ruff/strict mypy pass.
+
+`PROMETHEUS_ECONOMIC_RERUN_PREREGISTRATION.json` freezes four conditions over
+100 fresh source groups beginning seed 133071: baseline, half depth, +200 ms
+submission delay, and fee coefficient 0.01. They share all source identities:
+6000 variants do not provide 6000 independent samples. The old risk 0.10/full
+policy and weights stay fixed; this experiment performs no tuning or promotion.
+
+Final full rerun passed 324 tests / one PostgreSQL skip / one existing warning
+in 374.68 seconds. All current economic source is frozen for launch.

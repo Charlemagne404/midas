@@ -8,6 +8,9 @@ from typing import Any
 
 import numpy as np
 from midas.arena.artifacts import artifact_path, read_replay, sha256
+from midas.arena.economic_regimes import EconomicRegime
+from midas.economics.attestation import digest
+from midas.laboratory.spec import Scenario
 
 
 def compare(root: Path, control: str, candidate: str) -> dict[str, Any]:
@@ -28,12 +31,55 @@ def compare(root: Path, control: str, candidate: str) -> dict[str, Any]:
         manifests.append(manifest)
     if observations[0].keys() != observations[1].keys():
         raise ValueError("Studies have different policy/scenario coverage")
+    regimes = [m.get("configuration", {}).get("economic_regime") for m in manifests]
+    economic_comparison = regimes[0] != regimes[1]
+    if economic_comparison:
+        if regimes[0] is not None or regimes[1] is None:
+            raise ValueError("Economic comparison requires an unperturbed control")
+        configurations = [
+            {k: v for k, v in m["configuration"].items() if k != "economic_regime"}
+            for m in manifests
+        ]
+        if configurations[0] != configurations[1]:
+            raise ValueError("Economic conditions must preserve policy and generator configuration")
+        regime = EconomicRegime.model_validate(regimes[1])
     grouped: dict[str, dict[str, list[float]]] = defaultdict(lambda: defaultdict(list))
     support_actions: dict[str, list[int]] = defaultdict(lambda: [0, 0, 0])
     rejection_reasons: dict[str, dict[str, int]] = defaultdict(lambda: defaultdict(int))
     for identity, first in observations[0].items():
         second = observations[1][identity]
-        if first["scenario_hash"] != second["scenario_hash"]:
+        if economic_comparison:
+            if not first.get("scenario_origin_hash") or first["scenario_origin_hash"] != second.get(
+                "scenario_origin_hash"
+            ):
+                raise ValueError("Economic conditions have different source scenarios")
+            if first["policy_version"] != second["policy_version"]:
+                raise ValueError("Economic comparison changed policy weights or thresholds")
+            replays = [
+                read_replay(d / "replays" / f"{row['id']}.json")
+                for d, row in zip(directories, (first, second), strict=True)
+            ]
+            for replay, row in zip(replays, (first, second), strict=True):
+                result = replay["result"]
+                core = {
+                    k: v
+                    for k, v in result.items()
+                    if k not in {"result_hash", "journal_hash", "journal", "runtime"}
+                }
+                if (
+                    replay["row"] != row
+                    or digest(core) != row["result_hash"]
+                    or digest(result["journal"]) != result["journal_hash"]
+                ):
+                    raise ValueError("Economic replay integrity failed")
+            expected_scenario = regime.apply(
+                Scenario.model_validate(replays[0]["result"]["scenario"])
+            )
+            if expected_scenario.model_dump(mode="json") != replays[1]["result"]["scenario"]:
+                raise ValueError(
+                    "Counterfactual scenario differs from declared economic transformation"
+                )
+        elif first["scenario_hash"] != second["scenario_hash"]:
             raise ValueError("Matched identities do not have identical scenarios")
         if not first["passed"] or not second["passed"]:
             raise ValueError("Cannot compare invalid accounting")
@@ -92,6 +138,8 @@ def compare(root: Path, control: str, candidate: str) -> dict[str, Any]:
         "control": control,
         "candidate": candidate,
         "row_hashes": [m["rows_sha256"] for m in manifests],
+        "economic_regime_comparison": economic_comparison,
+        "economic_regimes": regimes,
         "policies": policies,
         "interpretation": "Post-evaluation descriptive comparison; no model fitting, threshold selection or promotion. Execution variants are averaged within each base episode before bootstrapping.",
     }

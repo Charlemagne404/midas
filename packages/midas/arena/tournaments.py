@@ -13,6 +13,7 @@ from pydantic import Field, model_validator
 
 from midas.arena.artifacts import artifact_path, atomic_json, atomic_replay, sha256
 from midas.arena.datasets import DatasetSpec, load, observation_lineage, research_hash
+from midas.arena.economic_regimes import EconomicRegime
 from midas.arena.environment import ArenaEnv
 from midas.arena.rl import indices
 from midas.arena.supervised import Predictor
@@ -48,6 +49,7 @@ class TournamentSpec(Model):
     challenge: DatasetSpec | None = None
     partition: Literal["validation", "test"] = "test"
     unsupported_input_policy: Literal["warn", "abstain"] = "abstain"
+    economic_regime: EconomicRegime | None = None
 
     @model_validator(mode="after")
     def valid(self) -> "TournamentSpec":
@@ -333,6 +335,9 @@ def run_tournament(root: Path, spec: TournamentSpec, progress: Any = None) -> di
                     raise ValueError(
                         "Controlled accounting defects are not financial stress evaluations"
                     )
+            origin_hash = digest(scenario.model_dump(mode="json"))
+            if spec.economic_regime:
+                scenario = spec.economic_regime.apply(scenario)
             for policy, model in policies.items():
                 env = ArenaEnv(scenario=scenario, retain=True)
                 obs, _ = env.reset(seed=spec.seed)
@@ -473,6 +478,7 @@ def run_tournament(root: Path, spec: TournamentSpec, progress: Any = None) -> di
                     "initial_capital": str(scenario.account.capital),
                     "result_hash": result["result_hash"],
                     "scenario_hash": result["scenario_hash"],
+                    "scenario_origin_hash": origin_hash,
                     "risk_limits": scenario.account.limits.model_dump(mode="json"),
                     "economic_assumptions": scenario.costs.model_dump(mode="json"),
                 }
@@ -495,6 +501,11 @@ def run_tournament(root: Path, spec: TournamentSpec, progress: Any = None) -> di
         "model_artifact_hashes": artifacts,
         "model_dataset_bindings": model_datasets,
         "evaluation_observation_lineage": evaluation_lineage,
+        "economic_regime_units": {
+            "depth_multiplier": "ratio of synthetic shares at every bid/ask level",
+            "taker_fee_rate": "hypothetical fee rate under the existing synthetic fee formula",
+            "additional_submission_latency_ms": "milliseconds added to execution latency",
+        },
         "policy_bindings": {
             policy: binding.model_dump(mode="json") for policy, binding in bindings.items()
         },

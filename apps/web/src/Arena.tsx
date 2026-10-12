@@ -301,6 +301,17 @@ export function Arena() {
   const [scenarioFilter, setScenarioFilter] = useState('');
   const [executionFilter, setExecutionFilter] = useState('');
   const [offset, setOffset] = useState(0);
+  const [economicEnabled, setEconomicEnabled] = useState(false);
+  const [depthMultiplier, setDepthMultiplier] = useState('1');
+  const [feeParameter, setFeeParameter] = useState('');
+  const [extraSubmissionLatency, setExtraSubmissionLatency] = useState(0);
+  const economicRegime = economicEnabled
+    ? {
+        depth_multiplier: depthMultiplier,
+        taker_fee_rate: feeParameter === '' ? null : feeParameter,
+        additional_submission_latency_ms: extraSubmissionLatency,
+      }
+    : undefined;
   const [message, setMessage] = useState('');
   const overview = useQuery({
     queryKey: ['arena'],
@@ -1159,6 +1170,56 @@ export function Arena() {
       {tab === 'Tournaments' && (
         <>
           <Section title="Matched policy competitions">
+            <label>
+              <input
+                type="checkbox"
+                checked={economicEnabled}
+                onChange={(event) => setEconomicEnabled(event.target.checked)}
+              />
+              Rerun with hypothetical economics
+            </label>
+            {economicEnabled && (
+              <div className="lab-controls">
+                <label>
+                  Depth multiplier
+                  <input
+                    type="number"
+                    min={0}
+                    max={2}
+                    step={0.25}
+                    value={depthMultiplier}
+                    onChange={(event) => setDepthMultiplier(event.target.value)}
+                  />
+                </label>
+                <label>
+                  Synthetic fee coefficient
+                  <input
+                    type="number"
+                    min={0}
+                    max={0.25}
+                    step={0.005}
+                    value={feeParameter}
+                    onChange={(event) => setFeeParameter(event.target.value)}
+                  />
+                </label>
+                <label>
+                  Additional submission latency (ms)
+                  <input
+                    type="number"
+                    min={0}
+                    max={10000}
+                    step={100}
+                    value={extraSubmissionLatency}
+                    onChange={(event) => setExtraSubmissionLatency(Number(event.target.value))}
+                  />
+                </label>
+                <p className="lab-footnote">
+                  Inputs change generated scenarios before execution. The fee coefficient uses the
+                  existing synthetic fee formula; blank preserves it. Trained policies may abstain
+                  when inputs leave training ranges.
+                </p>
+              </div>
+            )}
             <div className="lab-controls">
               <label>
                 Tournament
@@ -1190,6 +1251,7 @@ export function Arena() {
                           )
                           .map((entry) => entry.model_id),
                         max_episodes: 100,
+                        economic_regime: economicRegime,
                       },
                     },
                   })
@@ -1212,6 +1274,7 @@ export function Arena() {
                           .map((entry) => entry.model_id),
                         max_episodes: 100,
                         adversarial: true,
+                        economic_regime: economicRegime,
                       },
                     },
                   })

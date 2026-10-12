@@ -1,0 +1,7 @@
+{
+  "path": "/home/charlie/midas-prometheus-bundles/severity-pretest-selection.tar.gz",
+  "sha256": "87ae91eeb59d040e4c8f088bc89101ed8a91bbd20e2706c8036d7d4af8f4ddf5",
+  "files": 177,
+  "selected_model_id": "model-38a8da8c0d7a481d8d2d9771",
+  "all_final_tests_unopened": true
+}
