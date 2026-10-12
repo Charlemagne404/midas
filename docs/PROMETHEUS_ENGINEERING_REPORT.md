@@ -1600,3 +1600,35 @@ variants, including the prior 1,500-variant performance replay. No new training
 was performed during this comparison: model inventory remains 25 artifacts,
 24 fitted. Protected archive verification and completion browser inspection
 are recorded separately. The broader Prometheus goal remains active.
+
+## Bounded missing-leg recovery implementation
+
+Added an isolated Arena recovery runner using the existing broker submit/match/
+acknowledgment events and exchange fee/reservation/settlement ledger. One ordinary
+first-admitted position is followed by holding or at most one missing-leg buy.
+Recovery uses observed books and known own inventory; quantity cannot exceed
+residual shares and spending uses unused original allocation only. Initial order
+outcomes must be acknowledged and terminal. Current broker emergency, loss,
+exposure and slippage limits apply. The unmatched-quantity stop has an explicit
+residual-reducing recovery exception, not permission to open a new position.
+Rejected, delayed or partial recovery remains possible. Selling is not supported.
+
+The research runner normalizes adverse-fill consumed liquidity to original venue
+price keys, avoiding reuse by a subsequent buy. Both hold and recovery controls
+apply this convention. The legacy financial broker/exchange code and historical
+archives remain unchanged; this convention is versioned and is not represented
+as a byte-identical replay of old experiments. Actual ledger reconstruction and
+original-price liquidity tests passed. Recovery can sacrifice profit when held
+inventory would win and cannot guarantee maximum net loss.
+
+Typed recovery jobs use existing source snapshots, exclusive worker lease,
+cancellation and resource guards. Full retained replays and grouped paired
+uncertainty are stored under recoveries; API and Research Director expose real
+comparison results, requests, filled shares, downside score and limitations.
+Validation: 388 Python tests passed, one PostgreSQL skip, existing Starlette
+warning, 421.63 seconds; thirteen recovery tests and ten frontend tests passed.
+Typecheck, lint and build passed with the existing chart-chunk warning.
+Preregistered production study: 60 fresh groups at seed 223071, seven families,
+three execution assumptions, no-trade/hold/missing-leg policies, 540 correlated
+variants. Default extra reservation at most five virtual units, price ceiling
+0.75; no outcome changes these settings. Production launch follows validation.

@@ -18,6 +18,7 @@ from midas.arena.datasets import DatasetSpec, research_hash
 from midas.arena.director import DirectorSpec
 from midas.arena.evolution import SweepSpec
 from midas.arena.policy_search import PolicySearchSpec
+from midas.arena.recovery import RecoveryStudySpec
 from midas.arena.rl import RLSpec
 from midas.arena.severity import SeveritySpec
 from midas.arena.supervised import TrainingSpec
@@ -37,10 +38,12 @@ class JobSpec(Model):
         "diagnostics",
         "policy_search",
         "severity",
+        "recovery",
     ]
     dataset: DatasetSpec | None = None
     training: TrainingSpec | None = None
     severity: SeveritySpec | None = None
+    recovery: RecoveryStudySpec | None = None
     model_id: str | None = None
     rl: RLSpec | None = None
     tournament: TournamentSpec | None = None
@@ -55,6 +58,7 @@ class JobSpec(Model):
             "dataset": "dataset",
             "supervised": "training",
             "severity": "severity",
+            "recovery": "recovery",
             "evaluation": "model_id",
             "diagnostics": "model_id",
             "rl": "rl",
@@ -67,6 +71,7 @@ class JobSpec(Model):
             "dataset",
             "training",
             "severity",
+            "recovery",
             "model_id",
             "rl",
             "tournament",
@@ -311,6 +316,12 @@ def _run(root: Path, identity: str) -> None:
                 assert spec.rl is not None
                 result = train_rl(root, spec.rl, progress)
                 record["result"] = {"model_id": result["model_id"]}
+            elif spec.kind == "recovery":
+                from midas.arena.recovery import run_study
+
+                assert spec.recovery is not None
+                result = run_study(root, spec.recovery, progress)
+                record["result"] = {"recovery_id": result["recovery_id"]}
             elif spec.kind == "tournament":
                 from midas.arena.tournaments import run_tournament
 

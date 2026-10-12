@@ -200,6 +200,22 @@ type Replay = {
   decisions: unknown[];
 };
 type Overview = {
+  recoveries?: {
+    recovery_id: string;
+    source_groups: number;
+    correlated_variants: number;
+    paired_recovery_minus_hold_mean: number;
+    group_bootstrap_95: number[];
+    leaderboard: {
+      policy: string;
+      mean_pnl: number;
+      score: number;
+      worst_pnl: number;
+      recovery_requests: number;
+      recovery_filled_shares: string;
+    }[];
+    limitations: string[];
+  }[];
   searches?: {
     search_id: string;
     state: string;
@@ -2024,6 +2040,81 @@ export function Arena() {
             {!data?.directors?.length && (
               <p className="empty">No director plan has run in this artifact root.</p>
             )}
+          </Section>
+          <Section title="Bounded missing-leg recovery">
+            <p className="lab-note">
+              Compare one ordinary initial admission followed by holding or one missing-leg buy.
+              Recovery uses only unused allocated capital and observed quotes. Existing loss and
+              exposure limits remain active; unknown acknowledgments or stale books can force
+              holding. No sell/unwind action or guaranteed fill is assumed.
+            </p>
+            <button
+              disabled={submit.isPending}
+              onClick={() =>
+                submit.mutate({
+                  configuration: {
+                    kind: 'recovery',
+                    recovery: { episodes: 60, seed: 213071 },
+                    max_wall_seconds: 1800,
+                  },
+                })
+              }
+            >
+              Run bounded recovery comparison
+            </button>
+            {data?.recoveries?.map((study) => (
+              <article className="arena-finding" key={study.recovery_id}>
+                <h3>{study.recovery_id}</h3>
+                <p>
+                  {study.source_groups} source groups / {study.correlated_variants} correlated
+                  variants.
+                </p>
+                <p>
+                  Mean recovery minus hold: {study.paired_recovery_minus_hold_mean.toFixed(3)} /
+                  grouped 95% interval [
+                  {study.group_bootstrap_95.map((v) => v.toFixed(3)).join(', ')}].
+                </p>
+                <table className="lab-table">
+                  <thead>
+                    <tr>
+                      <th>Policy</th>
+                      <th>Mean virtual P&amp;L</th>
+                      <th>Downside score</th>
+                      <th>Worst P&amp;L</th>
+                      <th>Recovery requests / filled shares</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {study.leaderboard.map((row) => (
+                      <tr key={row.policy}>
+                        <td>{row.policy}</td>
+                        <td>{row.mean_pnl.toFixed(3)}</td>
+                        <td>{row.score.toFixed(3)}</td>
+                        <td>{row.worst_pnl.toFixed(3)}</td>
+                        <td>
+                          {row.recovery_requests} / {row.recovery_filled_shares}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <a
+                  href={`/api/arena/recoveries/${study.recovery_id}`}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Saved recovery evidence ↗
+                </a>
+                <details>
+                  <summary>Recovery scope and limits</summary>
+                  {study.limitations.map((limit) => (
+                    <p className="lab-note" key={limit}>
+                      {limit}
+                    </p>
+                  ))}
+                </details>
+              </article>
+            ))}
           </Section>
           <Section title="Validation-only evolution evidence">
             {data?.sweeps?.map((sweep) => (

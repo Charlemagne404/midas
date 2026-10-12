@@ -1,0 +1,24 @@
+{
+  "checked_at": 1791837255.3063111,
+  "full_python": {
+    "passed": 388,
+    "skipped": 1,
+    "warnings": 1,
+    "duration_seconds": 421.63,
+    "log_sha256": "589a89594105128b25599a9c0d3085766a754e0f58a1ceb8dda123a61417c95d"
+  },
+  "focused_recovery": {
+    "passed": 13,
+    "duration_seconds": 24.87
+  },
+  "frontend": {
+    "passed": 10,
+    "typecheck": "passed",
+    "lint": "passed",
+    "build": "passed"
+  },
+  "warnings": [
+    "Existing Starlette warning",
+    "Existing chart chunk exceeds 500 kB"
+  ]
+}

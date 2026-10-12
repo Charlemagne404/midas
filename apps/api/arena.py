@@ -228,6 +228,7 @@ def router(root: Path) -> APIRouter:
             "sweeps": catalog("sweeps"),
             "directors": catalog("directors"),
             "searches": catalog("searches"),
+            "recoveries": catalog("recoveries"),
         }
 
     @api.get("")
@@ -268,6 +269,12 @@ def router(root: Path) -> APIRouter:
     async def policy_search(identity: str) -> Any:
         return await call(
             lambda: json.loads((path("searches", identity) / "manifest.json").read_text())
+        )
+
+    @api.get("/recoveries/{identity}")
+    async def recovery(identity: str) -> Any:
+        return await call(
+            lambda: json.loads((path("recoveries", identity) / "manifest.json").read_text())
         )
 
     @api.get("/models/{identity}")

@@ -10,6 +10,76 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+it('shows persisted recovery evidence and submits a bounded comparison', async () => {
+  const overview = {
+    datasets: [],
+    models: [],
+    jobs: [],
+    findings: [],
+    tournaments: [],
+    dependencies: {},
+    health: { memory_mb: {}, worker_cpu_cores: 1, worker_memory_mb: 4096 },
+    recoveries: [
+      {
+        recovery_id: 'recovery-fixture',
+        source_groups: 30,
+        correlated_variants: 270,
+        paired_recovery_minus_hold_mean: 0.1,
+        group_bootstrap_95: [-0.2, 0.3],
+        leaderboard: [
+          {
+            policy: 'complete_missing',
+            mean_pnl: 0.2,
+            score: -0.1,
+            worst_pnl: -2,
+            recovery_requests: 4,
+            recovery_filled_shares: '7.5',
+          },
+        ],
+        limitations: ['No guaranteed fills'],
+      },
+    ],
+  };
+  let submitted:
+    | {
+        configuration: {
+          kind: string;
+          recovery: { episodes: number; seed: number };
+          max_wall_seconds: number;
+        };
+      }
+    | undefined;
+  const fetch = vi.fn(async (url: string, init?: RequestInit) => {
+    if (url === '/api/arena/jobs' && init?.method === 'POST') {
+      submitted = JSON.parse(String(init.body));
+      return new Response(JSON.stringify({ job_id: 'bounded-job' }), { status: 201 });
+    }
+    return new Response(JSON.stringify(overview), { status: 200 });
+  });
+  vi.stubGlobal('fetch', fetch);
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  render(
+    <QueryClientProvider client={client}>
+      <Arena />
+    </QueryClientProvider>,
+  );
+  fireEvent.click(await screen.findByRole('tab', { name: 'Research director' }));
+  expect(
+    await screen.findByText('30 source groups / 270 correlated variants.'),
+  ).toBeInTheDocument();
+  expect(screen.getByRole('link', { name: 'Saved recovery evidence ↗' })).toHaveAttribute(
+    'href',
+    '/api/arena/recoveries/recovery-fixture',
+  );
+  fireEvent.click(screen.getByRole('button', { name: 'Run bounded recovery comparison' }));
+  await screen.findByText('Research job admitted. Progress appears below.');
+  expect(submitted?.configuration).toEqual({
+    kind: 'recovery',
+    recovery: { episodes: 60, seed: 213071 },
+    max_wall_seconds: 1800,
+  });
+});
+
 it('cancels an adaptive follow-up and links its active child job', async () => {
   const plan = {
     director_id: 'followup',

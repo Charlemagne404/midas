@@ -1,0 +1,48 @@
+{
+  "created_at": 1791828111.3744326,
+  "source_hash": "fa042d7f34126daca2620c9bc116ad4251e4a05ae08488749c821f72deb84bd0",
+  "configuration": {
+    "kind": "recovery",
+    "dataset": null,
+    "training": null,
+    "severity": null,
+    "recovery": {
+      "episodes": 60,
+      "seed": 223071,
+      "recovery": {
+        "policy": "complete_missing",
+        "max_additional_capital": "5",
+        "max_price": "0.75"
+      }
+    },
+    "model_id": null,
+    "rl": null,
+    "tournament": null,
+    "sweep": null,
+    "director": null,
+    "policy_search": null,
+    "max_wall_seconds": 1800
+  },
+  "source_groups": 60,
+  "maximum_correlated_variants": 540,
+  "policies": [
+    "no_trade",
+    "hold",
+    "complete_missing"
+  ],
+  "selection_or_retuning": false,
+  "scope": "One ordinary first-admitted initial position, then holding or one missing-leg buy from its remaining original allocation",
+  "objective": "Mean recovery-minus-hold and source-group bootstrap interval, downside score, worst loss, actual requests and fills",
+  "artifact_preflight": {
+    "logical_bytes": 646330235,
+    "files": 45674,
+    "maximum_bytes": 1073741824
+  },
+  "limitations": [
+    "No selling, external capital or guaranteed recovery execution",
+    "Uses current observed quotes and acknowledged terminal order outcomes",
+    "Drawdown/loss/exposure/slippage gates remain active; unmatched-quantity exception permits residual-reducing recovery only",
+    "Research runner normalizes adverse-fill liquidity to original venue price keys; old broker and archive remain unchanged",
+    "One cohort of generated synthetic scenarios; no real profitability or broad robustness claim"
+  ]
+}
