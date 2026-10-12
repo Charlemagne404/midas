@@ -1403,3 +1403,23 @@ condition completes. The coordinator automatically submitted
 job-739176fa2338460ca19c489a for matched 200ms delay. Production browser check
 passed for the plan question, active child-job link and cancellation control,
 with no page errors. Both source and weights remain frozen.
+
+### First adaptive branch executed from verified results
+
+Cycle one completed both 900-variant studies over the same 60 source groups.
+The coordinator verified actual financial/journal hashes and declared scenario
+transformations in the paired comparison. Gate mean P&L changed by
+-0.210816; grouped 95% interval
+[-0.4499100138888889, 0.01437923611111101]. Baseline downside score -0.420242, added
+200ms delay +0.372542: lower mean P&L, but lower realized tail loss. Thus the
+baseline already fails the downside criterion on these directed families; this
+is not replication of the earlier positive-to-negative reversal. Latency does
+not have a monotonic policy effect when it also changes actions and support.
+
+The frozen positive-score rule selected 400ms for cycle two. The coordinator
+automatically submitted job-5d49c24feb9e4c9d84f740f1 for its fresh baseline
+(seeds 143131..143190). The subsequent matched 400ms condition remains pending.
+Model weights, threshold, sizing and all producer sources remain unchanged.
+Cycle-one paired evidence and attribution are stored in
+PROMETHEUS_ADAPTIVE_RESEARCH_CYCLE_ONE.json and the native Research Finding
+director-followup-453650eedd036f130bc81fd8-cycle-1. No champion was promoted.

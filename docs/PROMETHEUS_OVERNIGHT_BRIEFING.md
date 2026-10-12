@@ -7,8 +7,9 @@
 The new bounded coordinator passed the full Python suite: 353 passed, one
 PostgreSQL skip, one existing warning. Nine frontend tests, typecheck, lint and
 build passed. Plan director-followup-453650eedd036f130bc81fd8 is active under systemd.
-Its first baseline tournament completed (job-5d88ff57521f4fc0a13d77e7);
-the matched delay tournament is running as job-739176fa2338460ca19c489a.
+Cycle one completed both 900-variant tournaments and their paired replay audit.
+Cycle two baseline is running as job-5d49c24feb9e4c9d84f740f1; its subsequent
+delay condition will use 400ms under the preregistered positive-score rule.
 The native Research Director view links the active job and offers cancellation.
 
 It repeats the frozen gate at 200ms added delay on fresh, directed scenarios;
@@ -22,6 +23,10 @@ Coordinator: 25% CPU, 512 MiB, 9,000 seconds; each worker: one CPU, 4 GiB,
 1,800 seconds. Stop through Arena or:
 `.venv/bin/python -m scripts.research_followup stop --director director-followup-453650eedd036f130bc81fd8`.
 Exact status and logs are in PROMETHEUS_ADAPTIVE_RESEARCH_RUNTIME.json.
+Cycle one: baseline gate score -0.420; 200ms-delay score +0.373. Added delay
+reduced mean P&L but also tail loss. The baseline already failed the downside
+objective, so this is not replication of a positive-to-negative reversal.
+The family-directed design and action-dependent execution paths limit claims.
 The full goal remains active; no new outcome is claimed from partial execution.
 
 ### Completed economic study and loss attribution

@@ -1,8 +1,8 @@
 {
-  "checked_at": 1791821832.885275,
+  "checked_at": 1791822154.4175448,
   "director_id": "director-followup-453650eedd036f130bc81fd8",
   "state": "RUNNING",
-  "current_stage": "cycle 1: delay",
+  "current_stage": "cycle 2: baseline",
   "coordinator_unit": "midas-prometheus-followup-453650eedd036f130bc81fd8.service",
   "coordinator_supervisor": {
     "RuntimeMaxUSec": "2h 30min",
@@ -32,7 +32,7 @@
   "active_jobs": [
     {
       "active_artifact": {
-        "identity": "tournament-c66e37c024974ac3a03ea64b",
+        "identity": "tournament-2411dffdb188440791b5760a",
         "kind": "tournaments"
       },
       "budget": {
@@ -71,18 +71,12 @@
             ],
             "label_target": "unmatched",
             "observation_latency_ms": 100,
-            "seed": 143071,
+            "seed": 143131,
             "split_seed": 1977,
             "version": "synthetic-decision-1"
           },
           "dataset_id": "dataset-f53981b7dd24c1521ce749b1",
-          "economic_regime": {
-            "additional_submission_latency_ms": 200,
-            "costs": null,
-            "depth_multiplier": "1",
-            "taker_fee_rate": null,
-            "version": "economic-regime-1"
-          },
+          "economic_regime": null,
           "execution_models": [
             "optimistic",
             "standard",
@@ -107,33 +101,33 @@
         },
         "training": null
       },
-      "created_at": 1791821708.9791014,
-      "elapsed_seconds": 122.29505348298699,
+      "created_at": 1791822039.9210234,
+      "elapsed_seconds": 112.44007920502918,
       "error": null,
-      "job_id": "job-739176fa2338460ca19c489a",
-      "pid": 3605279,
+      "job_id": "job-5d49c24feb9e4c9d84f740f1",
+      "pid": 3614050,
       "progress": {
-        "done": 510,
+        "done": 461,
         "total": 900
       },
       "result": null,
       "runtime_profile": {
-        "artifact_bytes": 554727176,
-        "artifact_files": 39110,
-        "artifact_scan_seconds": 61.27091496519279,
-        "artifact_scans": 511,
-        "progress_publish_seconds": 4.554713935649488
+        "artifact_bytes": 569489287,
+        "artifact_files": 40020,
+        "artifact_scan_seconds": 56.78298022970557,
+        "artifact_scans": 462,
+        "progress_publish_seconds": 4.255469297466334
       },
-      "started_at": 1791821710.5161989,
+      "started_at": 1791822041.531747,
       "state": "RUNNING",
       "submitted_source_hash": "c18fc3259a65b07d47186736a6bc36d54f932603417cd4b908490df42769cc10",
-      "unit": "midas-arena-job-739176fa2338460ca19c489a.service",
-      "updated_at": 1791821832.8111424,
+      "unit": "midas-arena-job-5d49c24feb9e4c9d84f740f1.service",
+      "updated_at": 1791822153.971709,
       "supervisor": {
-        "MainPID": "3605279",
+        "MainPID": "3614050",
         "Result": "success",
-        "MemoryCurrent": "281636864",
-        "CPUUsageNSec": "115282410000",
+        "MemoryCurrent": "279478272",
+        "CPUUsageNSec": "106437238000",
         "ActiveState": "active",
         "SubState": "running"
       }
@@ -163,27 +157,38 @@
     },
     {
       "artifact": {
-        "identity": "job-739176fa2338460ca19c489a",
-        "kind": "jobs"
+        "identity": "tournament-c66e37c024974ac3a03ea64b",
+        "kind": "tournaments"
       },
+      "completed_at": 1791821935.3095486,
       "job_id": "job-739176fa2338460ca19c489a",
       "name": "cycle 1: delay",
       "progress": {
-        "done": 494,
+        "done": 900,
         "total": 900
       },
-      "state": "RUNNING",
+      "state": "COMPLETED",
       "submission_intent_at": 1791821708.9165082
     },
     {
-      "artifact": null,
+      "artifact": {
+        "identity": "job-5d49c24feb9e4c9d84f740f1",
+        "kind": "jobs"
+      },
+      "job_id": "job-5d49c24feb9e4c9d84f740f1",
       "name": "cycle 2: baseline",
-      "state": "PENDING"
+      "progress": {
+        "done": 432,
+        "total": 900
+      },
+      "state": "RUNNING",
+      "submission_intent_at": 1791822039.9057631
     },
     {
       "artifact": null,
       "name": "cycle 2: delay",
       "state": "PENDING"
     }
-  ]
+  ],
+  "completed_cycles": 1
 }
