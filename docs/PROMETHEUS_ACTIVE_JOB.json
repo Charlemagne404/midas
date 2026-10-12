@@ -1,0 +1,56 @@
+{
+  "budget": {
+    "cpu_cores": 1,
+    "max_artifact_mb": 1024,
+    "memory_mb": 4096,
+    "minimum_available_memory_mb": 2048,
+    "wall_seconds": 1800
+  },
+  "configuration": {
+    "dataset": null,
+    "kind": "tournament",
+    "max_wall_seconds": 1800,
+    "model_id": null,
+    "rl": null,
+    "tournament": {
+      "adversarial": false,
+      "dataset_id": "dataset-38ec6e9776097d8e36693372",
+      "execution_models": [
+        "optimistic",
+        "standard",
+        "conservative"
+      ],
+      "max_episodes": 100,
+      "minimum_champion_episodes": 30,
+      "model_ids": [
+        "model-f51ed0dcc4094f2d9cbae2f2",
+        "model-3b9a496d6fad468ba791c1b4",
+        "model-33cddb0d92024c2bb0a3b34a",
+        "model-ff1c8c8a580944778d3eb7c0",
+        "model-f587b98d06f34441bb040877",
+        "model-3141334b301947499b59913d"
+      ],
+      "seed": 991,
+      "tail_loss_weight": 1.0,
+      "threshold": 0.5
+    },
+    "training": null
+  },
+  "created_at": 1791764831.0958028,
+  "elapsed_seconds": 389.45484659200883,
+  "error": null,
+  "job_id": "job-df4f313087794f65a01968a7",
+  "pid": 2647514,
+  "progress": {
+    "done": 2380,
+    "total": 3000
+  },
+  "result": null,
+  "started_at": 1791764832.5505457,
+  "state": "RUNNING",
+  "submitted_source_hash": "e7eb4025a2069e17b6d5e52e8b6322ba724169294e68120a97c4db163b78b5cf",
+  "unit": "midas-arena-job-df4f313087794f65a01968a7.service",
+  "updated_at": 1791765222.00528,
+  "verified_supervisor_at": 1791765222.1922119,
+  "supervisor_output": "MainPID=2647514\nMemoryCurrent=373112832\nActiveState=active\n"
+}

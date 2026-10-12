@@ -118,3 +118,39 @@ a unique best model, a broad champion or real profitability.
 Source checkpoints: `ea7c8e5` (working Arena), `9fb7525` (Data Foundry audit and
 strict timestamp guard). The living engineering report describes remaining
 features, source reconstruction limits and reproduction/operations commands.
+
+## Latest active job and exact resume point
+
+A third comparison is running after the two completed studies:
+`job-df4f313087794f65a01968a7`, supervised by
+`midas-arena-job-df4f313087794f65a01968a7.service`.
+It includes all six registered model artifacts plus four deterministic/diagnostic
+controls over 100 frozen test groups and three execution assumptions: 3000
+correlated variants. Its limits are one CPU core, 4 GiB, 1800 seconds and the
+existing disk/memory-pressure controls. Latest verified snapshot was 2380/3000,
+PID 2647514, approximately 356 MiB current cgroup memory. This is an observation
+snapshot, not a promise that the job remains active later.
+
+Progress and supervisor evidence are in `PROMETHEUS_ACTIVE_JOB.json` and
+`data/arena/jobs/job-df4f313087794f65a01968a7/job.json`. Logs:
+
+```bash
+journalctl --user -u midas-arena-job-df4f313087794f65a01968a7.service -f
+```
+
+Stop through Training console or POST
+`/api/arena/jobs/job-df4f313087794f65a01968a7/cancel`.
+The job stops after 3000 results, its wall budget, a resource gate, or cancellation.
+Its replay files are durable; its tournament manifest is published only when the
+whole comparison finishes. Existing trained weights are reused, not retrained.
+
+On continuation, inspect this exact unit and job before initiating more research.
+Verify terminal coverage and the result reference when complete; preserve any
+interruption/failed partial artifacts. Then implement tie-aware rankings and
+supported-input warnings, followed by fresh seed/family-shift challenges,
+validation-only multi-seed search and an auditable research director.
+
+Source `83aaa54` adds the quality/source interface and saved-action accounting
+reproducer. Subsequent source work also prevents duplicate runners from writing
+the same job and ensures OS exit status matches the persisted outcome. No
+coordinator has been given permission to modify the protected Laboratory archive.

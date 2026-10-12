@@ -251,3 +251,12 @@ for admission limits, stop thresholds and the absence of guaranteed loss bounds.
 Next priorities are explicit tie handling, supported inference/state coverage,
 seed/family shifts, validation-only multi-seed search, and bounded auditable
 research orchestration. The full goal remains active.
+
+The all-artifact comparison is now supervised as
+`job-df4f313087794f65a01968a7` (3000 variants, 100 matched groups). Its inspected
+handle was active at 2380/3000 and 356 MiB. `PROMETHEUS_ACTIVE_JOB.json` records
+the exact observation. A per-job execution lease now prevents duplicate runners
+from updating the same job; all four job reliability tests pass. Remaining
+source changes after the last full gate are targeted by the relevant focused
+checks. The original goal remains active and the continuation queue is in the
+morning briefing.

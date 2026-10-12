@@ -1,3 +1,4 @@
+import fcntl
 import json
 import os
 import subprocess
@@ -55,3 +56,27 @@ def test_missing_supervisor_process_is_interrupted_not_complete(tmp_path, monkey
     result = inspect(tmp_path, job["job_id"])
     assert result["state"] == "INTERRUPTED"
     assert "Supervisor terminated" in result["error"]
+
+
+def test_duplicate_runner_cannot_write_progress_while_job_lease_is_held(tmp_path):
+    job = create(tmp_path, JobSpec(kind="dataset", dataset=DatasetSpec(episodes=30)), launch=False)
+    directory = tmp_path / "jobs" / job["job_id"]
+    with (directory / "execution.lock").open("a+") as lease:
+        fcntl.flock(lease, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "midas.arena.jobs",
+                "--root",
+                str(tmp_path),
+                "--job",
+                job["job_id"],
+            ],
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=30,
+            env={**os.environ, "OMP_NUM_THREADS": "1", "OPENBLAS_NUM_THREADS": "1"},
+        )
+        assert json.loads((directory / "job.json").read_text()) == job

@@ -135,6 +135,17 @@ class Cancelled(Exception):
 
 def run(root: Path, identity: str) -> None:
     directory = artifact_path(root, "jobs", identity)
+    with (directory / "execution.lock").open("a+") as lease:
+        try:
+            fcntl.flock(lease, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            print("Duplicate research runner avoided", flush=True)
+            return
+        _run(root, identity)
+
+
+def _run(root: Path, identity: str) -> None:
+    directory = artifact_path(root, "jobs", identity)
     record = json.loads((directory / "job.json").read_text())
     if record["state"] in {"COMPLETED", "CANCELLED"}:
         return
