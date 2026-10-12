@@ -1077,3 +1077,16 @@ including 40 without an admitted labelled proposal, for 2919 correlated variants
 No thresholds or policies will be selected/promoted from this comparison, and no
 classifier/fresh challenge final tests are opened. Validation reuse means that
 any observed difference remains exploratory. The full goal remains ACTIVE.
+
+Source checkpoint `0c13722` is committed. Paired validation job `job-83cb1633e674433b8bb6e6c8`
+was confirmed RUNNING with systemd MainPID 3280929, progress
+{'done': 830, 'total': 2919}, elapsed 150.47 seconds.
+Its unit is `midas-arena-job-83cb1633e674433b8bb6e6c8.service`; budget 1800 seconds, one CPU, 4 GiB,
+1 GiB artifact cap. Inspect/cancel in Arena or call
+`POST /api/arena/jobs/job-83cb1633e674433b8bb6e6c8/cancel`; logs use
+`journalctl --user -u midas-arena-job-83cb1633e674433b8bb6e6c8.service`. Keep Arena/financial Python
+source frozen until this worker is terminal. No result or winner is claimed.
+After completion, run `scripts/compare_policies.py` using the primary and
+secondary gate IDs from the preregistration; export the verified tournament
+bundle and preserve the exploratory validation caveat. Then implement
+residual-share severity regression and actual economic scenario reruns.

@@ -2,6 +2,22 @@
 
 ## Current checkpoint (supersedes running-job notes below)
 
+### Latest paired-policy checkpoint
+
+Committed `0c13722`: tournaments can compare verified target derivatives of the
+same frozen observations, retain each model's training provenance, and export
+both datasets. The UI distinguishes completion and unmatched-exposure predictions.
+Tests: 308 Python passed / one skip; four later comparator tests passed; five
+frontend tests, typecheck, lint and build pass.
+
+**Running:** `job-83cb1633e674433b8bb6e6c8`, exploratory validation league,
+2919 variants over 139 shared generator groups, 30-minute wall limit / one CPU /
+4 GiB. Confirmed RUNNING at {'done': 830, 'total': 2919}. No final tests are opened
+and no new gate is selected. View/cancel in the Arena jobs panel. Keep Python
+research source frozen until terminal. This supersedes the older no-active-job
+notes below. The full Prometheus goal remains active.
+
+
 The frozen gate stress campaign and performance replay are both terminal;
 there are currently no active research workers. API and web services are active,
 API health is READY, and the protected 162000-result archive hash remains

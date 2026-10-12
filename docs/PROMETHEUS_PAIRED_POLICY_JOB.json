@@ -1,0 +1,90 @@
+{
+  "active_artifact": {
+    "identity": "tournament-3060d836ebe14825a985e59c",
+    "kind": "tournaments"
+  },
+  "budget": {
+    "cpu_cores": 1,
+    "max_artifact_mb": 1024,
+    "memory_mb": 4096,
+    "minimum_available_memory_mb": 2048,
+    "wall_seconds": 1800
+  },
+  "configuration": {
+    "dataset": null,
+    "director": null,
+    "kind": "tournament",
+    "max_wall_seconds": 1800,
+    "model_id": null,
+    "policy_search": null,
+    "rl": null,
+    "sweep": null,
+    "tournament": {
+      "adversarial": false,
+      "challenge": null,
+      "dataset_id": "dataset-f53981b7dd24c1521ce749b1",
+      "execution_models": [
+        "optimistic",
+        "standard",
+        "conservative"
+      ],
+      "gates": [
+        {
+          "model_id": "model-131794f0434945a286163323",
+          "size": "full",
+          "threshold": 0.1
+        },
+        {
+          "model_id": "model-e8ea85c7e7fe49f7a0a2a7b9",
+          "size": "full",
+          "threshold": 0.9
+        },
+        {
+          "model_id": "model-e8ea85c7e7fe49f7a0a2a7b9",
+          "size": "full",
+          "threshold": 0.5
+        }
+      ],
+      "max_episodes": 2000,
+      "minimum_champion_episodes": 30,
+      "model_ids": [],
+      "partition": "validation",
+      "purpose": "research",
+      "seed": 991,
+      "tail_loss_weight": 1.0,
+      "threshold": 0.5,
+      "unsupported_input_policy": "abstain"
+    },
+    "training": null
+  },
+  "created_at": 1791803120.8760767,
+  "elapsed_seconds": 150.47095054900274,
+  "error": null,
+  "job_id": "job-83cb1633e674433b8bb6e6c8",
+  "pid": 3280929,
+  "progress": {
+    "done": 830,
+    "total": 2919
+  },
+  "result": null,
+  "runtime_profile": {
+    "artifact_bytes": 408057652,
+    "artifact_files": 29022,
+    "artifact_scan_seconds": 72.75448970712023,
+    "artifact_scans": 831,
+    "progress_publish_seconds": 5.808249585446902
+  },
+  "started_at": 1791803122.4093888,
+  "state": "RUNNING",
+  "submitted_source_hash": "0a14f0ffd9b283359170598361240395b1647bee15545fd36f3770091603c522",
+  "unit": "midas-arena-job-83cb1633e674433b8bb6e6c8.service",
+  "updated_at": 1791803272.8802319,
+  "supervisor": {
+    "MainPID": "3280929",
+    "Result": "success",
+    "MemoryCurrent": "286240768",
+    "CPUUsageNSec": "140232393000",
+    "ActiveState": "active",
+    "SubState": "running"
+  }
+}
