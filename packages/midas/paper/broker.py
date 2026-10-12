@@ -13,7 +13,7 @@ from midas.core.models import Book, Market, Model, Nonnegative, Source
 from midas.economics.attestation import CTF, fingerprint
 from midas.risk.engine import Limits, RiskState, assess
 from midas.simulation.accounting import reconcile
-from midas.simulation.exchange import Exchange
+from midas.simulation.exchange import Exchange, SellOrder
 
 D = Decimal
 VERSION = "paper-broker-2"
@@ -130,7 +130,8 @@ def summary(state: dict[str, Any], now: int = 0) -> dict[str, Any]:
             e.available_delta + e.locked_delta
             for x in xs.values()
             for e in x.portfolio.ledger
-            if e.kind == "settlement" and e.time_ms // 86_400_000 == now // 86_400_000
+            if e.kind in {"settlement", "sell_fill"}
+            and e.time_ms // 86_400_000 == now // 86_400_000
         ),
         D(0),
     )
@@ -158,7 +159,7 @@ def summary(state: dict[str, Any], now: int = 0) -> dict[str, Any]:
         for k, x in xs.items()
         if not x.settled and (x.portfolio.locked or x.portfolio.reserved or k in held)
     ]
-    return cast(
+    result = cast(
         dict[str, Any],
         serial(
             {
@@ -195,7 +196,7 @@ def summary(state: dict[str, Any], now: int = 0) -> dict[str, Any]:
                 "rejected": state["rejected_total"],
                 "paper_trades": len(xs),
                 "hypothetical_fills": sum(
-                    e.kind == "fill" for x in xs.values() for e in x.portfolio.ledger
+                    e.kind in {"fill", "sell_fill"} for x in xs.values() for e in x.portfolio.ledger
                 ),
                 "settled_positions": sum(x.settled for x in xs.values()),
                 "recovery_count": state["recovery_count"],
@@ -206,6 +207,13 @@ def summary(state: dict[str, Any], now: int = 0) -> dict[str, Any]:
             }
         ),
     )
+    if any(x.sales_enabled for x in xs.values()):
+        result["sale_proceeds"] = str(sum((x.portfolio.sale_proceeds for x in xs.values()), D(0)))
+        result["redemption_positions"] = sum(
+            any(e.kind == "settlement" and e.quantity > 0 for e in x.portfolio.ledger)
+            for x in xs.values()
+        )
+    return result
 
 
 def risk_state(state: dict[str, Any], market: Market, now: int) -> RiskState:
@@ -273,7 +281,9 @@ def audit(state: dict[str, Any]) -> list[str]:
                 (
                     e.locked_delta
                     for e in x.portfolio.ledger
-                    if e.kind == "fill" and e.asset_id == a
+                    if e.kind
+                    in ({"fill", "sell_fill", "settlement"} if x.sales_enabled else {"fill"})
+                    and e.asset_id == a
                 ),
                 D(0),
             )
@@ -503,7 +513,10 @@ def transition(
         if fault in {"pause", "fee_change", "invalidate"}:
             ex.emergency_stop = True
         if action["kind"] == "submit":
-            status = ex.submit(
+            if action.get("side", "BUY") not in {"BUY", "SELL"}:
+                raise ValueError("Unknown virtual order side")
+            submit = ex.submit_sell if action.get("side") == "SELL" else ex.submit
+            status = submit(
                 action["order"],
                 action["asset"],
                 D(action["quantity"]),
@@ -525,22 +538,34 @@ def transition(
         elif action["kind"] == "match":
             book = ex.books[action["asset"]]
             levels = []
-            consumed = state["used_liquidity"].get(action["asset"], {})
+            selling = action.get("side") == "SELL" or isinstance(
+                ex.orders.get(action["order"]), SellOrder
+            )
+            liquidity = (
+                state.setdefault("used_bid_liquidity", {}) if selling else state["used_liquidity"]
+            )
+            consumed = liquidity.get(action["asset"], {})
             fraction = D(0) if fault == "withdraw" else model.liquidity_fraction
-            for level in book.asks:
-                price = level.price + model.adverse_ticks * book.tick_size
+            for level in book.bids if selling else book.asks:
+                shift = model.adverse_ticks * book.tick_size
+                price = level.price - shift if selling else level.price + shift
                 size = (
                     max(D(0), level.size - D(consumed.get(str(level.price), "0"))) * fraction
                 ).quantize(D(".01"), rounding=ROUND_FLOOR)
-                if size > 0 and price < 1:
+                if size > 0 and (0 < price < 1 if selling else price < 1):
                     levels.append(level.model_copy(update={"size": size, "price": price}))
-            ex.books[action["asset"]] = book.model_copy(update={"asks": tuple(levels)})
+            ex.books[action["asset"]] = book.model_copy(
+                update={"bids" if selling else "asks": tuple(levels)}
+            )
             fills = ex.match(action["order"], ts)
             for fill in fills:
-                consumed[str(fill.price)] = str(
-                    D(consumed.get(str(fill.price), "0")) + fill.quantity
+                venue_price = (
+                    fill.price + model.adverse_ticks * book.tick_size if selling else fill.price
                 )
-            state["used_liquidity"][action["asset"]] = consumed
+                consumed[str(venue_price)] = str(
+                    D(consumed.get(str(venue_price), "0")) + fill.quantity
+                )
+            liquidity[action["asset"]] = consumed
         elif action["kind"] == "ack" and fault != "lost_ack":
             ex.acknowledge(action["order"])
         elif action["kind"] in {"cancel", "expire"}:

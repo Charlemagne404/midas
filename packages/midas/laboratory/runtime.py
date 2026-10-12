@@ -298,7 +298,7 @@ class Environment:
     def result(self) -> dict[str, Any]:
         final = self.portfolio()
         fills = int(final.get("hypothetical_fills", 0))
-        settled = int(final.get("settled_positions", 0))
+        settled = int(final.get("redemption_positions", final.get("settled_positions", 0)))
         operating = (
             fills * self.scenario.costs.operating_per_fill
             + settled * self.scenario.costs.redemption_cost
@@ -336,6 +336,9 @@ class Environment:
             ],
             "open_positions": final.get("open_positions", 0),
         }
+        if "sale_proceeds" in final:
+            metrics["gross_realized_virtual_pnl"] = final.get("realized_pnl", "0")
+            metrics["sale_proceeds_virtual"] = final["sale_proceeds"]
         classification = (
             "CONTROLLED_MUTATION"
             if self.errors and any(e.kind == "mutate" for e in self.scenario.events)

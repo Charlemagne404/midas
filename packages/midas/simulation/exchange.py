@@ -2,7 +2,7 @@
 
 import heapq
 from dataclasses import asdict, dataclass, field
-from decimal import ROUND_CEILING, ROUND_HALF_UP, Decimal
+from decimal import ROUND_CEILING, ROUND_FLOOR, ROUND_HALF_UP, Decimal
 from typing import Any
 
 from midas.core.models import Book, Market, Source
@@ -67,6 +67,7 @@ class Portfolio:
     fees: Decimal = ZERO
     proceeds: Decimal = ZERO
     realized_pnl: Decimal = ZERO
+    sale_proceeds: Decimal = ZERO
     unrealized_pnl: Decimal = ZERO
     max_drawdown: Decimal = ZERO
     peak_equity: Decimal = field(init=False)
@@ -91,6 +92,31 @@ class Portfolio:
             or self.locked + entry.locked_delta < 0
         ):
             raise ValueError("Ledger cannot create negative collateral buckets")
+        if entry.kind == "sell_fill" and (
+            any(
+                not value.is_finite()
+                for value in (
+                    entry.quantity,
+                    entry.price,
+                    entry.fee,
+                    entry.available_delta,
+                    entry.reserved_delta,
+                    entry.locked_delta,
+                )
+            )
+            or entry.available_delta < 0
+            or entry.locked_delta > 0
+            or entry.reserved_delta != 0
+            or entry.fee < 0
+            or not ZERO < entry.price < 1
+        ):
+            raise ValueError("Invalid sell financial deltas")
+        if entry.kind == "sell_fill" and (
+            entry.asset_id is None
+            or entry.quantity <= 0
+            or self.positions.get(entry.asset_id, ZERO) < entry.quantity
+        ):
+            raise ValueError("Sell ledger cannot create negative inventory")
         self.seen.add(entry.id)
         self.available += entry.available_delta
         self.reserved += entry.reserved_delta
@@ -107,6 +133,12 @@ class Portfolio:
                 self.positions.get(entry.asset_id, ZERO) - entry.quantity
             )
             self.proceeds += entry.available_delta
+            self.realized_pnl += entry.available_delta + entry.locked_delta
+        if entry.kind == "sell_fill":
+            assert entry.asset_id is not None
+            self.positions[entry.asset_id] -= entry.quantity
+            self.fees += entry.fee
+            self.sale_proceeds += entry.available_delta
             self.realized_pnl += entry.available_delta + entry.locked_delta
         self.ledger.append(entry)
         return True
@@ -127,7 +159,7 @@ class Portfolio:
     def summary(self, market: Market) -> dict[str, Any]:
         quantities = [self.positions.get(i.asset_id, ZERO) for i in market.instruments]
         matched = min(quantities) if len(quantities) == 2 else ZERO
-        return {
+        result = {
             "starting_capital": self.starting,
             "available": self.available,
             "reserved": self.reserved,
@@ -145,6 +177,9 @@ class Portfolio:
             "unit": "virtual USD",
             "execution_estimate": True,
         }
+        if any(e.kind == "sell_fill" for e in self.ledger):
+            result["sale_proceeds"] = self.sale_proceeds
+        return result
 
 
 @dataclass
@@ -161,6 +196,12 @@ class Order:
     executions: int = 0
 
 
+@dataclass
+class SellOrder(Order):
+    side: str = "SELL"
+    inventory_reservation: Decimal = ZERO
+
+
 class Exchange:
     version = "virtual-exchange-2"
 
@@ -173,6 +214,13 @@ class Exchange:
         self.settled = False
         self.forced_rejections: set[str] = set()
         self.asset_costs: dict[str, Decimal] = {}
+        self.sales_enabled = False
+
+    def enable_sales(self) -> None:
+        """Explicit local research capability; no paper-account default changes."""
+        if self.settled:
+            raise ValueError("Cannot enable sales after settlement")
+        self.sales_enabled = True
 
     def submit(
         self,
@@ -264,7 +312,120 @@ class Exchange:
         if order_id in self.orders:
             self.orders[order_id].acknowledged = True
 
+    def submit_sell(
+        self,
+        order_id: str,
+        asset_id: str,
+        quantity: Decimal,
+        limit: Decimal,
+        now_ms: int,
+        tif: str = "IOC",
+    ) -> str:
+        existing = self.orders.get(order_id)
+        if existing is not None:
+            return (
+                existing.status
+                if (
+                    isinstance(existing, SellOrder)
+                    and existing.asset_id == asset_id
+                    and existing.quantity == quantity
+                    and existing.limit == limit
+                    and existing.tif == tif
+                )
+                else "REJECTED"
+            )
+        book = self.books.get(asset_id)
+        if (
+            not self.sales_enabled
+            or self.emergency_stop
+            or self.settled
+            or asset_id in self.forced_rejections
+            or book is None
+            or asset_id not in {i.asset_id for i in self.market.instruments}
+            or book.asset_id != asset_id
+            or book.condition_id != self.market.condition_id
+            or book.source != self.market.source
+            or not book.valid
+            or not self.market.active
+            or self.market.closed
+            or not self.market.accepting_orders
+            or not self.market.fee.verified
+            or self.market.fee.exponent != 1
+            or not self.market.payout_verified
+        ):
+            return "REJECTED"
+        if self.market.source != Source.SYNTHETIC and (
+            self.market.attestation is None
+            or not MarketEconomicAttestation.model_validate(self.market.attestation).valid_for(
+                self.market, now_ms
+            )
+        ):
+            return "REJECTED"
+        if (
+            not quantity.is_finite()
+            or not limit.is_finite()
+            or quantity <= 0
+            or not ZERO < limit < 1
+            or quantity % D("0.01")
+            or limit % book.tick_size
+            or (
+                quantity * limit < book.min_order_size
+                if book.minimum_unit == "notional"
+                else quantity < book.min_order_size
+            )
+            or tif not in {"IOC", "FAK", "FOK", "GTC"}
+            or now_ms - book.received_ts_ms > 15000
+            or book.received_ts_ms > now_ms
+            or book.exchange_ts_ms is None
+            or now_ms - book.exchange_ts_ms > 15000
+            or book.exchange_ts_ms > now_ms + 1000
+        ):
+            return "REJECTED"
+        held = sum(
+            (
+                o.inventory_reservation
+                for o in self.orders.values()
+                if isinstance(o, SellOrder) and o.asset_id == asset_id
+            ),
+            ZERO,
+        )
+        if quantity > self.portfolio.positions.get(asset_id, ZERO) - held:
+            return "REJECTED"
+        self.portfolio.post(
+            LedgerEntry(
+                f"reserve-sell:{order_id}",
+                now_ms,
+                "reserve_sell",
+                asset_id=asset_id,
+                quantity=quantity,
+                order_id=order_id,
+            )
+        )
+        self.orders[order_id] = SellOrder(
+            order_id,
+            asset_id,
+            quantity,
+            limit,
+            quantity,
+            ZERO,
+            tif=tif,
+            inventory_reservation=quantity,
+        )
+        return "SUBMITTED"
+
     def release(self, order: Order, now_ms: int, status: str) -> None:
+        if isinstance(order, SellOrder) and order.inventory_reservation:
+            self.portfolio.post(
+                LedgerEntry(
+                    f"release-sell:{order.id}:{len(self.portfolio.ledger)}",
+                    now_ms,
+                    "release_sell",
+                    asset_id=order.asset_id,
+                    quantity=order.inventory_reservation,
+                    order_id=order.id,
+                )
+            )
+            order.inventory_reservation = ZERO
         if order.reservation:
             self.portfolio.post(
                 LedgerEntry(
@@ -311,6 +472,8 @@ class Exchange:
         ):
             self.release(order, now_ms, "EXPIRED")
             return []
+        if isinstance(order, SellOrder):
+            return self._match_sell(order, now_ms)
         if order.tif == "FOK":
             executable = sum(
                 (
@@ -359,6 +522,67 @@ class Exchange:
             if level.size > q:
                 residual.append(level.model_copy(update={"size": level.size - q}))
         self.books[order.asset_id] = book.model_copy(update={"asks": tuple(residual)})
+        if not order.remaining:
+            self.release(order, now_ms, "FILLED")
+        elif order.tif in {"IOC", "FAK", "FOK"}:
+            self.release(order, now_ms, "EXPIRED")
+        else:
+            order.status = "PARTIAL" if order.remaining < order.quantity else "RESTING"
+        return entries
+
+    def _match_sell(self, order: SellOrder, now_ms: int) -> list[LedgerEntry]:
+        book = self.books[order.asset_id]
+        remaining = order.remaining
+        planned = []
+        residual = []
+        for level in sorted(book.bids, key=lambda x: x.price, reverse=True):
+            q = min(remaining, level.size) if level.price >= order.limit else ZERO
+            q = (q * 100).to_integral_value(rounding=ROUND_FLOOR) / 100
+            if q:
+                fee = (q * self.market.fee.rate * level.price * (1 - level.price)).quantize(
+                    D(".00001"), rounding=ROUND_HALF_UP
+                )
+                proceeds = (q * level.price).quantize(D(".000001"), rounding=ROUND_FLOOR) - fee
+                if proceeds < 0:
+                    self.release(order, now_ms, "EXPIRED")
+                    return []
+                planned.append((q, level.price, fee, proceeds))
+                remaining -= q
+            if level.size > q:
+                residual.append(level.model_copy(update={"size": level.size - q}))
+        if order.tif == "FOK" and remaining:
+            self.release(order, now_ms, "EXPIRED")
+            return []
+        entries: list[LedgerEntry] = []
+        for q, price, fee, proceeds in planned:
+            owned = self.portfolio.positions.get(order.asset_id, ZERO)
+            if q > owned or q > order.inventory_reservation:
+                raise ValueError("Sell fill exceeds owned reserved shares")
+            basis = self.asset_costs.get(order.asset_id, ZERO)
+            released = (
+                basis
+                if q == owned
+                else (basis * q / owned).quantize(D(".000001"), rounding=ROUND_FLOOR)
+            )
+            order.executions += 1
+            entry = LedgerEntry(
+                f"sell-fill:{order.id}:{order.executions}",
+                now_ms,
+                "sell_fill",
+                available_delta=proceeds,
+                locked_delta=-released,
+                asset_id=order.asset_id,
+                quantity=q,
+                price=price,
+                fee=fee,
+                order_id=order.id,
+            )
+            self.portfolio.post(entry)
+            order.remaining -= q
+            order.inventory_reservation -= q
+            self.asset_costs[order.asset_id] = basis - released
+            entries.append(entry)
+        self.books[order.asset_id] = book.model_copy(update={"bids": tuple(residual)})
         if not order.remaining:
             self.release(order, now_ms, "FILLED")
         elif order.tif in {"IOC", "FAK", "FOK"}:
@@ -420,11 +644,13 @@ class Exchange:
                         payout_denominator=denominator,
                     )
                 )
+                if self.sales_enabled:
+                    self.asset_costs[asset_id] = ZERO
         self.settled = True
 
     def checkpoint(self) -> dict[str, Any]:
         # Serializable complete state; scheduler and strategy stay owned by the runner.
-        return {
+        result = {
             "market": self.market.model_dump(mode="json"),
             "books": {a: b.model_dump(mode="json") for a, b in self.books.items()},
             "starting": str(self.portfolio.starting),
@@ -437,6 +663,9 @@ class Exchange:
             "peak_equity": self.portfolio.peak_equity,
             "max_drawdown": self.portfolio.max_drawdown,
         }
+        if self.sales_enabled:
+            result["sales_contract"] = "inventory-backed-sales-1"
+        return result
 
     @classmethod
     def restore(cls, snapshot: dict[str, Any]) -> "Exchange":
@@ -445,6 +674,10 @@ class Exchange:
             D(snapshot["starting"]),
             {a: Book.model_validate(b) for a, b in snapshot["books"].items()},
         )
+        if "sales_contract" in snapshot:
+            if snapshot["sales_contract"] != "inventory-backed-sales-1":
+                raise ValueError("Unsupported sales checkpoint contract")
+            exchange.sales_enabled = True
         decimal_fields = (
             "available_delta",
             "reserved_delta",
@@ -458,14 +691,28 @@ class Exchange:
             raise ValueError("Duplicate financial event in checkpoint")
         for raw in snapshot["ledger"]:
             item = dict(raw)
+            if (
+                item["kind"] in {"sell_fill", "reserve_sell", "release_sell"}
+                and not exchange.sales_enabled
+            ):
+                raise ValueError("Sell ledger lacks its checkpoint contract")
             for name in decimal_fields:
                 item[name] = D(str(item[name]))
             exchange.portfolio.post(LedgerEntry(**item))
         for raw in snapshot["orders"]:
             item = dict(raw)
-            for name in ("quantity", "limit", "remaining", "reservation"):
+            for name in ("quantity", "limit", "remaining", "reservation", "inventory_reservation"):
+                if name not in item:
+                    continue
                 item[name] = D(str(item[name]))
-            order = Order(**item)
+            if item.get("side") == "SELL":
+                if not exchange.sales_enabled:
+                    raise ValueError("Sell order lacks its checkpoint contract")
+                order: Order = SellOrder(**item)
+            else:
+                if "side" in item:
+                    raise ValueError("Unsupported order side in checkpoint")
+                order = Order(**item)
             exchange.orders[order.id] = order
         exchange.asset_costs = {a: D(str(v)) for a, v in snapshot["asset_costs"].items()}
         exchange.emergency_stop = snapshot["emergency_stop"]
@@ -474,4 +721,10 @@ class Exchange:
         exchange.portfolio.peak_equity = D(str(snapshot["peak_equity"]))
         exchange.portfolio.max_drawdown = D(str(snapshot["max_drawdown"]))
         exchange.portfolio.mark(exchange.books)
+        if exchange.sales_enabled:
+            from midas.simulation.accounting import reconcile
+
+            errors = reconcile(exchange)
+            if errors:
+                raise ValueError("Invalid sales checkpoint: " + "; ".join(errors))
         return exchange

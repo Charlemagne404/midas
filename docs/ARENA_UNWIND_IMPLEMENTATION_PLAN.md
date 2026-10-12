@@ -1,7 +1,8 @@
 # Bounded sell/unwind implementation plan
 
-Status: design based on the current source; sell execution is not implemented.
-Package source is frozen during the joint-cost worker and its regression gate.
+Status: exchange/broker sell foundation implemented and covered by focused tests.
+The observable residual-only research policy and production study remain pending.
+The prior joint-cost source freeze lifted after its full regression passed.
 
 ## Scope and decision contract
 

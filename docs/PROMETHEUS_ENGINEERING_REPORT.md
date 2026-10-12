@@ -2027,3 +2027,31 @@ remains active, so the package source freeze is lifted. Before any sell extensio
 twice: all48 financial/journal hashes matched. Scenario inputs, old result hashes,
 position checkpoint hashes and source-file hashes are preserved in
 PROMETHEUS_UNWIND_BUY_COMPATIBILITY_BASELINE.json for subsequent exact checks.
+
+## Inventory-backed sell foundation
+
+The virtual exchange now has explicitly enabled sales, a distinct SellOrder type
+and share reservations separate from monetary collateral. Sell matching consumes
+bids from best price downward, applies IOC/FAK/FOK/GTC semantics, rejects negative
+net proceeds without consuming depth, allocates remaining cost basis with exact
+full-close dust release, and posts realized P&L and fees through the actual ledger.
+Sell checkpoints carry a versioned contract and undergo independent restoration
+audit. Original buy Order fields/serialization and disabled-sale defaults remain
+unchanged; no persistent account configuration/schema was altered.
+
+Independent accounting reconstructs sell fees/proceeds/basis, inventory and share
+reservations, cash and order conservation. Broker scheduled actions route explicit
+SELL submissions to the same local venue. Sell adversity lowers bids, bid capacity
+is tracked independently using original venue prices, and unchanged depth cannot
+be reused. Broker daily/cumulative losses include realized sell losses and fill
+counts include sells. A sale-capable position incurs redemption charges only when
+inventory actually settles; sales and settlement proceeds remain distinct.
+
+Focused simulation, sales and persistent-paper integration suite:77 passed in
+13.84 seconds after final input guards; final rerun is recorded in
+PROMETHEUS_SALES_FOUNDATION_TESTS.log. Four changed financial modules pass strict
+typing and Ruff. All24 pre-extension buy financial, journal and position-checkpoint
+hashes remain identical after the changes. This is an execution/accounting
+foundation, not a completed unwind research policy or demonstrated economic
+improvement. Next: bounded observable residual-only policy, matched hold/buy/sell
+replays, loss-cutoff admission tests, a new full gate and fresh preregistered study.
