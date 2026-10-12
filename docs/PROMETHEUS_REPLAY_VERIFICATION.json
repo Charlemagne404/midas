@@ -1,0 +1,10 @@
+{
+  "tournament_id": "tournament-8129ac44cebf4c198b5e3a97",
+  "row_id": "109-optimistic-arbitrage",
+  "verified": true,
+  "mode": "ACCOUNTING_REPLAY_FROM_SAVED_ACTIONS",
+  "result_hash": "884f40320b1fe5aa3eb318d01fffc043feae729428258a67a8efe78daa5c373c",
+  "journal_hash": "98fcf9bfe43066527c4d4e5c25cc5c5804c02934b283f357728af392e0e707f9",
+  "net_simulated_pnl": "-10.106200",
+  "limitation": "Verifies replay integrity and financial transitions; does not retrain models or rerun policy inference."
+}

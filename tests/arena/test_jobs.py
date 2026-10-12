@@ -10,15 +10,17 @@ from midas.arena.jobs import JobSpec, create, inspect
 
 
 def worker(root, identity):
-    subprocess.run(
+    process = subprocess.run(
         [sys.executable, "-m", "midas.arena.jobs", "--root", str(root), "--job", identity],
-        check=True,
+        check=False,
         capture_output=True,
         text=True,
         timeout=30,
         env={**os.environ, "OMP_NUM_THREADS": "1", "OPENBLAS_NUM_THREADS": "1"},
     )
-    return json.loads((root / "jobs" / identity / "job.json").read_text())
+    record = json.loads((root / "jobs" / identity / "job.json").read_text())
+    assert process.returncode == record["exit_status"]
+    return record
 
 
 def test_cancelled_worker_keeps_terminal_state_and_source_snapshot(tmp_path):

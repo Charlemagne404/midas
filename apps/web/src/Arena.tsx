@@ -23,6 +23,13 @@ type Dataset = {
   partition_rows: Record<string, number>;
   label_frequency: Record<string, number>;
   limitations: string[];
+  quality?: {
+    warnings: string[];
+    constant_features: string[];
+    duplicate_vector_groups: number;
+    cross_partition_duplicate_vector_groups: number;
+    ambiguous_observable_vectors: number;
+  };
 };
 type Model = {
   model_id: string;
@@ -120,6 +127,15 @@ type Overview = {
   dependencies: Record<string, boolean>;
   health: { memory_mb: Record<string, number>; worker_cpu_cores: number; worker_memory_mb: number };
   findings: { title: string; interpretation: string; caveats: string[]; tournament_id: string }[];
+  recorded_sources?: {
+    dataset_id: string;
+    events?: number;
+    capture_start_ms?: number;
+    capture_end_ms?: number;
+    valid: boolean;
+    limitations?: string[];
+    error?: string;
+  }[];
 };
 const tabs = [
   'Overview',
@@ -304,7 +320,11 @@ export function Arena() {
         <>
           <div className="metrics-grid">
             {[
-              [data?.models.length, 'Trained models', 'Persisted weights and provenance'],
+              [
+                data?.models.filter((model) => model.family !== 'heuristic').length,
+                'Fitted models',
+                'Plus a documented fixed heuristic control',
+              ],
               [running.length, 'Active / queued jobs', 'One bounded worker at a time'],
               [
                 data?.tournaments.length,
@@ -384,6 +404,29 @@ export function Arena() {
                       .map(([name, count]) => `${name}: ${count}`)
                       .join(' · ')}
                   </small>
+                  {entry.quality && (
+                    <details>
+                      <summary>Data quality diagnostics</summary>
+                      <p>
+                        {entry.quality.constant_features.length} constant features ·{' '}
+                        {entry.quality.cross_partition_duplicate_vector_groups} identical-vector
+                        groups cross partitions · {entry.quality.ambiguous_observable_vectors}{' '}
+                        vectors have conflicting labels
+                      </p>
+                      {entry.quality.warnings.map((warning) => (
+                        <p className="lab-footnote" key={warning}>
+                          {warning}
+                        </p>
+                      ))}
+                      <a
+                        href={`/api/arena/datasets/${entry.dataset_id}/quality`}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        Full quality report ↗
+                      </a>
+                    </details>
+                  )}
                 </span>
                 <a
                   href={`/api/arena/datasets/${entry.dataset_id}`}
@@ -397,6 +440,29 @@ export function Arena() {
             {!data?.datasets.length && <p className="empty">No frozen research datasets yet.</p>}
           </Section>
         </>
+      )}
+      {tab === 'Overview' && (
+        <Section title="Recorded public source coverage">
+          <p className="lab-note">
+            These public observations are separate from generated training data. No empirical fill
+            labels or continuous historical coverage are inferred.
+          </p>
+          {data?.recorded_sources?.map((source) => (
+            <article className="arena-finding" key={source.dataset_id}>
+              <h3>{source.dataset_id} / RECORDED PUBLIC</h3>
+              <p>
+                {source.events ?? 0} recorded events ·{' '}
+                {source.valid ? 'Content and provenance verified' : 'Quarantined'} · No execution
+                training labels
+              </p>
+              {source.error && <p role="alert">{source.error}</p>}
+              <p className="lab-footnote">{source.limitations?.join(' ')}</p>
+            </article>
+          ))}
+          {!data?.recorded_sources?.length && (
+            <p className="empty">No verified public source collections in this artifact root.</p>
+          )}
+        </Section>
       )}
       {tab === 'Training console' && (
         <>
@@ -759,6 +825,13 @@ export function Arena() {
                 <a href={`/api/arena/models/${modelId}`} target="_blank" rel="noreferrer">
                   Full model manifest
                 </a>
+                {model.data.artifact_sha256 && (
+                  <a
+                    href={`/api/arena/models/${modelId}/artifacts/${model.data.family === 'ppo' ? 'policy.zip' : 'parameters.json'}`}
+                  >
+                    Inference parameters / weights
+                  </a>
+                )}
                 {model.data.checkpoints.map((name) => (
                   <a key={name} href={`/api/arena/models/${modelId}/artifacts/${name}`}>
                     {name}

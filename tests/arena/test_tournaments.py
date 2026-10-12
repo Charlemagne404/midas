@@ -2,6 +2,7 @@ import json
 
 from midas.arena.artifacts import read_replay
 from midas.arena.datasets import DatasetSpec, build
+from midas.arena.reproduce import reproduce
 from midas.arena.tournaments import TournamentSpec, run_tournament, summaries
 
 
@@ -33,6 +34,9 @@ def test_tournament_pairing_and_persisted_replay(tmp_path):
         assert saved["result"]["result_hash"] == row["result_hash"]
         assert saved["result"]["journal"]
         assert saved["decisions"]
+    verified = reproduce(tmp_path, report["tournament_id"], rows[1]["id"])
+    assert verified["verified"]
+    assert verified["result_hash"] == rows[1]["result_hash"]
 
 
 def test_bootstrap_does_not_count_variants_as_independent():

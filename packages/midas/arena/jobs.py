@@ -309,3 +309,7 @@ if __name__ == "__main__":
     parser.add_argument("--job", required=True)
     arguments = parser.parse_args()
     run(arguments.root, arguments.job)
+    terminal = json.loads(
+        (artifact_path(arguments.root, "jobs", arguments.job) / "job.json").read_text()
+    )
+    raise SystemExit(int(terminal.get("exit_status", 0)))

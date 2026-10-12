@@ -105,8 +105,8 @@ need distribution-shift investigation.
 ## Validation checkpoints
 
 - Before changes: 233 Python passed, one PostgreSQL skip.
-- Latest full integration gate: 255 Python passed, zero failed, one PostgreSQL
-  skip, existing Starlette deprecation warning (94.14 seconds). Compression and
+- Latest full integration gate: 258 Python passed, zero failed, one PostgreSQL
+  skip, existing Starlette deprecation warning (99.36 seconds). Compression and
   exact optimizer/RNG resumption are included in this count.
 - Frontend: four unit tests passed; TypeScript, ESLint and production build pass.
 - Browser: all five workflows passed, including actual dataset generation,
@@ -194,3 +194,60 @@ This strict policy observation guard is stronger than the legacy Laboratory's
 one-second source-clock tolerance; all Arena competitors receive the same guard.
 Laboratory fill, fee, settlement and accounting logic remains unchanged. A new
 stress study must complete before robustness claims are made.
+
+The replacement stress job `job-6b59348cd5af4d948dc13a6b` completed as
+`tournament-6b260f31fe474f50821308c3`: 100 base identities, 2100 variants,
+zero invariant failures. All replay/result links, complete group coverage and
+frozen row hashes passed verification. Logistic and MLP gates tied at mean P&L
+0.8632 with zero sampled 5% tail loss. Their advantage is confined to this
+synthetic stress suite; the ordinary held-out study still rejects all trading
+candidates under the downside objective. No broad or real-market champion is
+supported. Future ranking should explicitly preserve ties instead of choosing a
+representative model by ID. No Arena research unit remained running at this
+checkpoint.
+
+## Reproducibility and visibility checkpoint
+
+The saved-action replay verifier reproduced the ordinary tournament's worst
+outcome, -10.106200 virtual USD, with exactly matching financial result and
+journal hashes. `PROMETHEUS_REPLAY_VERIFICATION.json` records this bounded
+verification. It replays saved actions and accounting; it does not claim to
+retrain models or rerun policy inference.
+
+```bash
+.venv/bin/python scripts/arena_reproduce.py \
+  --tournament tournament-8129ac44cebf4c198b5e3a97 \
+  --row 109-optimistic-arbitrage
+```
+
+New replays now retain actual classifier scores, thresholds and policy-specific
+explanations. New worker processes return OS exit codes matching their persisted
+outcomes. Orphaned/interrupted model checkpoints are not presented as active
+training. Model weights, quality diagnostics and verified public-source coverage
+are accessible through the interface. Focused environment/tournament/job checks
+passed 13 tests after the last full 258-pass gate; the replay verifier's two
+focused tests also passed.
+
+The supervised dataset labels only initial proposals. Constant portfolio features
+in this dataset do not establish calibration in later portfolio states. Future
+work must add support warnings or broaden state coverage before making claims
+about those predictions. The paper ledger exposes fills immediately on matching;
+delayed private fill notifications are not separately modeled. See RISK_MODEL.md
+for admission limits, stop thresholds and the absence of guaranteed loss bounds.
+
+| Milestone | Current status |
+| --- | --- |
+| Safety/reliability preservation | Verified; protected archive unchanged |
+| Core datasets and supervised prediction | Working and trained; completion target only |
+| Gymnasium/PPO | Working and trained; limited actions/observation assumptions |
+| Matched and adversarial comparisons | Two completed studies with preserved evidence |
+| Arena interface and durable jobs | Working; cancellation/interruption/CPU budgets verified |
+| Data Foundry | Quality/grouping audits and public-source catalog; broader ingestion partial |
+| Evolution Laboratory | Not started |
+| Research Director | Not started |
+| Interpretability | Calibration/traces/diagnostics partial; permutation/threshold studies pending |
+| Recovery policies and sensitivity suite | Not started in Arena |
+
+Next priorities are explicit tie handling, supported inference/state coverage,
+seed/family shifts, validation-only multi-seed search, and bounded auditable
+research orchestration. The full goal remains active.

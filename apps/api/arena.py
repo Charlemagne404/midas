@@ -36,6 +36,19 @@ def router(root: Path) -> APIRouter:
             (root / kind).glob("*/manifest.json"), key=lambda p: p.stat().st_mtime, reverse=True
         )[:100]:
             record = json.loads(manifest.read_text())
+            quality_path = manifest.parent / "quality.json"
+            if kind == "datasets" and quality_path.exists():
+                quality = json.loads(quality_path.read_text())
+                record["quality"] = {
+                    key: quality[key]
+                    for key in (
+                        "warnings",
+                        "constant_features",
+                        "duplicate_vector_groups",
+                        "cross_partition_duplicate_vector_groups",
+                        "ambiguous_observable_vectors",
+                    )
+                }
             # Curves live on detail pages, not every overview poll.
             values.append({k: v for k, v in record.items() if k != "curves"})
         return values
@@ -57,6 +70,32 @@ def router(root: Path) -> APIRouter:
             else:
                 jobs.append(json.loads(file.read_text()))
         memory = {}
+        recorded_sources = []
+        from midas.laboratory.datasets import load_dataset, validate
+
+        for manifest_path in sorted((root.parent / "datasets").glob("*.manifest.json"))[:100]:
+            identity = manifest_path.name.removesuffix(".manifest.json")
+            try:
+                recording, manifest = load_dataset(root.parent / "datasets", identity)
+                validation = validate(recording, manifest)
+                recorded_sources.append(
+                    {
+                        "dataset_id": identity,
+                        "provenance": "RECORDED_PUBLIC",
+                        "content_sha256": manifest.content_sha256,
+                        "events": manifest.event_count,
+                        "capture_start_ms": manifest.capture_start_ms,
+                        "capture_end_ms": manifest.capture_end_ms,
+                        "valid": validation["valid"],
+                        "eligible_for_execution_training": False,
+                        "limitations": list(manifest.completeness_limitations)
+                        + ["No empirically observed execution-completion labels."],
+                    }
+                )
+            except (ValueError, FileNotFoundError) as error:
+                recorded_sources.append(
+                    {"dataset_id": identity, "valid": False, "error": str(error)}
+                )
         for line in Path("/proc/meminfo").read_text().splitlines():
             if line.startswith(("MemTotal:", "MemAvailable:", "SwapFree:")):
                 name, value, *_ = line.split()
@@ -72,6 +111,7 @@ def router(root: Path) -> APIRouter:
             "registered_strategies": ["arbitrage", "conservative", "no_trade", "random"],
             "provenance": "SYNTHETIC / HYPOTHETICAL / ECONOMICALLY UNVERIFIED",
             "root": str(root),
+            "recorded_sources": recorded_sources,
         }
 
     @api.get("")
@@ -91,6 +131,19 @@ def router(root: Path) -> APIRouter:
             if (directory / "manifest.json").exists():
                 return json.loads((directory / "manifest.json").read_text())
             record = json.loads((directory / "training.json").read_text())
+            owner = None
+            for job_path in (root / "jobs").glob("*/job.json"):
+                job_record = json.loads(job_path.read_text())
+                if job_record.get("active_artifact", {}).get("identity") == identity:
+                    from midas.arena.jobs import inspect
+
+                    owner = inspect(root, job_path.parent.name)
+                    break
+            if owner is None or owner["state"] not in {"RUNNING", "QUEUED"}:
+                record["state"] = owner["state"] if owner else "INTERRUPTED"
+                record["training_duration_seconds"] = (
+                    owner.get("elapsed_seconds", 0) if owner else 0
+                )
             if (directory / "checkpoint.json").exists():
                 checkpoint = json.loads((directory / "checkpoint.json").read_text())
                 record["curves"] = checkpoint["curves"]
@@ -100,12 +153,19 @@ def router(root: Path) -> APIRouter:
                 record["checkpoints"] = (
                     ["checkpoint.zip"] if (directory / "checkpoint.zip").exists() else []
                 )
-            record["training_duration_seconds"] = max(
-                0, __import__("time").time() - record["created_at"]
-            )
+            if record["state"] == "TRAINING":
+                record["training_duration_seconds"] = max(
+                    0, __import__("time").time() - record["created_at"]
+                )
             return record
 
         return await call(read)
+
+    @api.get("/datasets/{identity}/quality")
+    async def dataset_quality(identity: str) -> Any:
+        return await call(
+            lambda: json.loads((path("datasets", identity) / "quality.json").read_text())
+        )
 
     @api.get("/models/{identity}/artifacts/{name}")
     async def model_artifact(identity: str, name: str) -> Any:

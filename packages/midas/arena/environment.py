@@ -94,6 +94,7 @@ class ArenaEnv(gym.Env[Any, Any]):
         self.max_unmatched = 0.0
         self.max_drawdown = 0.0
         self.action_count = [0, 0, 0]
+        self.action_explanation: dict[str, Any] = {}
 
     def _advance(self) -> None:
         assert self.env is not None
@@ -185,6 +186,7 @@ class ArenaEnv(gym.Env[Any, Any]):
         self.previous_score, self.penalty = 0.0, 0.0
         self.invalid_penalty, self.max_unmatched, self.max_drawdown = 0.0, 0.0, 0.0
         self.action_count = [0, 0, 0]
+        self.action_explanation = {}
         self._advance()
         observation, eligible = self.observation()
         return observation, {"eligible": eligible}
@@ -204,6 +206,7 @@ class ArenaEnv(gym.Env[Any, Any]):
                 "requested_action": str(action),
                 "invalid": invalid,
                 "feature_error": self.feature_error,
+                "explanation": dict(self.action_explanation),
                 "observation": observation.tolist(),
             }
         )

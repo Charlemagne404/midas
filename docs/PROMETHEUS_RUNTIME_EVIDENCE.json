@@ -1,5 +1,5 @@
 {
-  "checked_at": 1791759606.720045,
+  "checked_at": 1791760950.8157597,
   "health": {
     "status": "READY",
     "startup_status": "READY",
@@ -8,8 +8,8 @@
     "live_execution": false,
     "paper_recovery": {
       "status": "CHECKPOINT_VERIFIED",
-      "journal_events": 7836,
-      "revision": 7835
+      "journal_events": 8569,
+      "revision": 8568
     },
     "laboratory": {
       "status": "READY",
@@ -18,7 +18,49 @@
       "recovery_errors": []
     }
   },
-  "arena_models": 6,
-  "arena_tournaments": 1,
-  "web_http_status": 200
+  "arena_model_artifacts": 6,
+  "arena_fitted_models": 5,
+  "arena_tournaments": 2,
+  "recorded_public_sources": [
+    {
+      "dataset_id": "ctf-4024677",
+      "provenance": "RECORDED_PUBLIC",
+      "content_sha256": "78680ab4dbfe441c2512bbaa8ae74897419ef2ca63c41ab97b475aa5132fb138",
+      "events": 3,
+      "capture_start_ms": 1791742059278,
+      "capture_end_ms": 1791742059278,
+      "valid": true,
+      "eligible_for_execution_training": false,
+      "limitations": [
+        "Bounded REST capture, not a continuous historical feed",
+        "Only two complementary instrument snapshots",
+        "No observed hypothetical executions or settlement",
+        "Original raw public responses preserved in tests/fixtures/milestone2",
+        "No empirically observed execution-completion labels."
+      ]
+    },
+    {
+      "dataset_id": "ctf-4024680",
+      "provenance": "RECORDED_PUBLIC",
+      "content_sha256": "44394b76bd4ea45d42ad18a66bafc19cf2e3f46c53b454ac4b1a18f09cedf97f",
+      "events": 3,
+      "capture_start_ms": 1791742061748,
+      "capture_end_ms": 1791742061748,
+      "valid": true,
+      "eligible_for_execution_training": false,
+      "limitations": [
+        "Bounded REST capture, not a continuous historical feed",
+        "Only two complementary instrument snapshots",
+        "No observed hypothetical executions or settlement",
+        "Original raw public responses preserved in tests/fixtures/milestone2",
+        "No empirically observed execution-completion labels."
+      ]
+    }
+  ],
+  "active_jobs": [],
+  "dataset_quality": [
+    "Identical observable vectors occur across partitions. Independent scenario IDs do not guarantee covariate diversity; inspect repeated synthetic grids.",
+    "Some scenario families contain one settlement seed parity only. The current generator uses seed parity for settlement; reorder families and shift seeds before making generalization claims.",
+    "Execution completion is partly mechanically determined by hypothetical liquidity and adverse-tick settings. High prediction accuracy can reflect simulator assumptions."
+  ]
 }

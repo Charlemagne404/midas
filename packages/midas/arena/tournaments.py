@@ -246,6 +246,10 @@ def run_tournament(root: Path, spec: TournamentSpec, progress: Any = None) -> di
                 assert env.env is not None
                 while True:
                     features, eligible = env.decision_features()
+                    explanation: dict[str, Any] = {
+                        "policy": policy,
+                        "mathematically_eligible": eligible,
+                    }
                     decision_started = time.perf_counter()
                     if policy == "no_trade":
                         action = 0
@@ -258,12 +262,29 @@ def run_tournament(root: Path, spec: TournamentSpec, progress: Any = None) -> di
                     elif policy == "random":
                         action = int(rng.integers(0, 3)) if eligible else 0
                     elif isinstance(model, Predictor):
-                        action = int(
-                            eligible and float(model.predict([features])[0]) >= spec.threshold
+                        probability = float(model.predict([features])[0]) if eligible else None
+                        action = int(probability is not None and probability >= spec.threshold)
+                        explanation.update(
+                            completion_score=probability,
+                            threshold=spec.threshold,
+                            interpretation="Assumption control score; not calibrated probability"
+                            if model.parameters["family"] == "heuristic"
+                            else "Modeled completion probability under hypothetical execution",
+                            reason="Request a proposal; independent risk admission remains required"
+                            if action
+                            else "Abstain: ineligible evidence or completion score below threshold",
                         )
                     else:
                         action = int(model.predict(obs, deterministic=True)[0])
                     latency.append((time.perf_counter() - decision_started) * 1000)
+                    if "reason" not in explanation:
+                        explanation["reason"] = {
+                            "no_trade": "Configured no-trade control",
+                            "arbitrage": "Submit a full mathematical proposal only when eligible",
+                            "conservative": "Half-size proposal requires edge >= 0.03 and age <= 1000 ms",
+                            "random": "Seeded diagnostic control; no learned intelligence",
+                        }.get(policy, "Saved PPO policy selected this action deterministically")
+                    env.action_explanation = explanation
                     attempted += int(action != 0)
                     obs, _, done, _, info = env.step(action)
                     if done:

@@ -44,3 +44,22 @@ reservations. Pause blocks new decisions while approved actions can finish. The 
 matcher remains a simulation primitive, not an untrusted-plugin boundary. No strategy or
 confidence score can override the independent gate. Paper accounts keep initial config;
 new-account limits accept `MIDAS_PAPER_LIMITS` JSON.
+
+## Arena enforcement semantics
+
+Arena policies request actions through the production broker's independent
+admission gate. A learned score cannot override it. The limits control admission
+and allocation; a drawdown or daily-loss stop blocks subsequent risk after the
+threshold is observed. It does not guarantee that an already admitted pair of
+independent legs cannot lose more when one leg fails or prices move.
+
+Reserved envelopes and the venue's ledger prevent virtual cash overspending.
+They do not guarantee a profitable exit, completion of the missing leg, or an
+upper bound on all analytical financing/redemption estimates. Those estimates
+remain separate from spendable paper-broker balances. Arena currently supports
+abstention and initial sizing; it has no hedge or unwind action.
+
+The local paper ledger exposes fills when the simulator commits a match.
+Order acknowledgment can be delayed independently. Delayed private fill reports
+are not separately modeled, so portfolio visibility is an explicit hypothetical
+assumption rather than an empirically calibrated account feed.
