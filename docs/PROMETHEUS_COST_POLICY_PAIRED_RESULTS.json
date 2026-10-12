@@ -1,0 +1,98 @@
+{
+  "quoted": {
+    "analysis_version": "paired-policy-1",
+    "tournament_id": "tournament-25f2053c416249678c76a30b",
+    "control": "cost-quoted-7cd3b264b52c8cd8",
+    "candidate": "cost-forecast-7cd3b264b52c8cd8",
+    "evaluation_design": "FRESH_GENERATOR_CHALLENGE",
+    "rows_sha256": "99baf3d8f16b673d0ab69547eee6b433527f59c7f32bad614c9b7c09145da679",
+    "producer_sha256": "542638cfb383c7cf3942c146c965f52e227dbc7c8ee7edf9a336b5a74bbc9bf3",
+    "base_episodes": 100,
+    "paired_variants": 300,
+    "nonzero_variant_differences": 22,
+    "mean_candidate_minus_control": -0.23340366026412065,
+    "group_bootstrap_mean_interval": [
+      -0.36919619344544735,
+      -0.11209828834176933
+    ],
+    "outcomes": {
+      "cost-quoted-7cd3b264b52c8cd8": {
+        "mean_pnl": 1.068243949514445,
+        "cvar_05_loss": 4.013100065416857,
+        "worst_pnl": -10.953300129639553,
+        "score": -2.9448561159024127
+      },
+      "cost-forecast-7cd3b264b52c8cd8": {
+        "mean_pnl": 0.8348402892503242,
+        "cvar_05_loss": 4.013100065416857,
+        "worst_pnl": -10.953300129639553,
+        "score": -3.1782597761665334
+      }
+    },
+    "interpretation": "Descriptive paired comparison; no threshold fitting, selection or promotion. Validation comparisons are exploratory. Correlated execution variants remain inside base-episode groups. Action-dependent execution noise may differ despite common scenario seeds. Hypothetical outcomes are not observed profitability."
+  },
+  "scope": {
+    "analysis_version": "paired-policy-1",
+    "tournament_id": "tournament-25f2053c416249678c76a30b",
+    "control": "cost-scope-7cd3b264b52c8cd8",
+    "candidate": "cost-forecast-7cd3b264b52c8cd8",
+    "evaluation_design": "FRESH_GENERATOR_CHALLENGE",
+    "rows_sha256": "99baf3d8f16b673d0ab69547eee6b433527f59c7f32bad614c9b7c09145da679",
+    "producer_sha256": "542638cfb383c7cf3942c146c965f52e227dbc7c8ee7edf9a336b5a74bbc9bf3",
+    "base_episodes": 100,
+    "paired_variants": 300,
+    "nonzero_variant_differences": 34,
+    "mean_candidate_minus_control": -0.36551702114884144,
+    "group_bootstrap_mean_interval": [
+      -0.541842354232835,
+      -0.20589799500535244
+    ],
+    "outcomes": {
+      "cost-scope-7cd3b264b52c8cd8": {
+        "mean_pnl": 1.2003573103991654,
+        "cvar_05_loss": 4.013100065416857,
+        "worst_pnl": -10.953300129639553,
+        "score": -2.812742755017692
+      },
+      "cost-forecast-7cd3b264b52c8cd8": {
+        "mean_pnl": 0.8348402892503242,
+        "cvar_05_loss": 4.013100065416857,
+        "worst_pnl": -10.953300129639553,
+        "score": -3.1782597761665334
+      }
+    },
+    "interpretation": "Descriptive paired comparison; no threshold fitting, selection or promotion. Validation comparisons are exploratory. Correlated execution variants remain inside base-episode groups. Action-dependent execution noise may differ despite common scenario seeds. Hypothetical outcomes are not observed profitability."
+  },
+  "no_trade": {
+    "analysis_version": "paired-policy-1",
+    "tournament_id": "tournament-25f2053c416249678c76a30b",
+    "control": "no_trade",
+    "candidate": "cost-forecast-7cd3b264b52c8cd8",
+    "evaluation_design": "FRESH_GENERATOR_CHALLENGE",
+    "rows_sha256": "99baf3d8f16b673d0ab69547eee6b433527f59c7f32bad614c9b7c09145da679",
+    "producer_sha256": "542638cfb383c7cf3942c146c965f52e227dbc7c8ee7edf9a336b5a74bbc9bf3",
+    "base_episodes": 100,
+    "paired_variants": 300,
+    "nonzero_variant_differences": 144,
+    "mean_candidate_minus_control": 0.8348402892503242,
+    "group_bootstrap_mean_interval": [
+      0.3269672028205731,
+      1.3921520908581158
+    ],
+    "outcomes": {
+      "no_trade": {
+        "mean_pnl": 0.0,
+        "cvar_05_loss": 0,
+        "worst_pnl": 0.0,
+        "score": 0.0
+      },
+      "cost-forecast-7cd3b264b52c8cd8": {
+        "mean_pnl": 0.8348402892503242,
+        "cvar_05_loss": 4.013100065416857,
+        "worst_pnl": -10.953300129639553,
+        "score": -3.1782597761665334
+      }
+    },
+    "interpretation": "Descriptive paired comparison; no threshold fitting, selection or promotion. Validation comparisons are exploratory. Correlated execution variants remain inside base-episode groups. Action-dependent execution noise may differ despite common scenario seeds. Hypothetical outcomes are not observed profitability."
+  }
+}

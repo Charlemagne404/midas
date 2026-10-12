@@ -5,10 +5,10 @@
   "arena_fitted_models": 42,
   "arena_model_artifacts": 43,
   "arena_performance_replays": 1,
-  "arena_research_tournaments": 21,
+  "arena_research_tournaments": 22,
   "arena_source_datasets": 5,
-  "arena_tournaments": 22,
-  "checked_at": 1791842559.1681159,
+  "arena_tournaments": 23,
+  "checked_at": 1791844515.934493,
   "dataset_quality": [
     "Identical observable vectors occur across partitions. Independent scenario IDs do not guarantee covariate diversity; inspect repeated synthetic grids.",
     "Some scenario families contain one settlement seed parity only. The current generator uses seed parity for settlement; reorder families and shift seeds before making generalization claims.",
@@ -22,8 +22,8 @@
     "live_execution": false,
     "paper_recovery": {
       "status": "CHECKPOINT_VERIFIED",
-      "journal_events": 48061,
-      "revision": 48060
+      "journal_events": 49098,
+      "revision": 49097
     },
     "laboratory": {
       "status": "READY",
@@ -103,5 +103,24 @@
     "skipped": 1,
     "warnings": 1
   },
-  "active_cost_campaign": null
+  "active_cost_campaign": null,
+  "arena_tournament_correlated_variants": 42123,
+  "cost_policy_study": {
+    "job_id": "job-e142c688d30a423cad5931aa",
+    "tournament_id": "tournament-25f2053c416249678c76a30b",
+    "state": "COMPLETED",
+    "source_groups": 100,
+    "correlated_variants": 2100,
+    "finding": "finding-cost-policy-313071",
+    "champion_promoted": false
+  },
+  "current_regression": {
+    "state": "COMPLETED",
+    "log": "docs/PROMETHEUS_COST_POLICY_FULL_TESTS.log",
+    "passed": 408,
+    "skipped": 1,
+    "warnings": 1,
+    "duration_seconds": 516.57,
+    "additional_investigation_tests_passed": 2
+  }
 }

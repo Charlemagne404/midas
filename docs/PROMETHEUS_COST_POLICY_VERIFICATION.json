@@ -1,0 +1,8 @@
+{
+  "tournament_id": "tournament-25f2053c416249678c76a30b",
+  "replays_verified": 2100,
+  "source_groups": 100,
+  "cost_decisions_recomputed": 1908,
+  "cost_requests": 716,
+  "scope": "Saved financial hashes, matched coverage, first-position scope and observed-input preferences; reuses recorded inference implementation."
+}

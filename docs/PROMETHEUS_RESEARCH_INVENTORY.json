@@ -1,5 +1,5 @@
 {
-  "checked_at": 1791842559.0915868,
+  "checked_at": 1791844405.160906,
   "models": [
     {
       "artifact_sha256": "a1ddf5a19d6cb1ad942ce8fc1cc3d63ec2e2f6ddf5dfc8fc46eb052be777e565",
@@ -32938,6 +32938,114 @@
         "Classifier quality does not establish economic policy improvement"
       ],
       "model_id": "model-9474cee818f04c77962966d8",
+      "policy_evaluations": [
+        {
+          "adversarial": false,
+          "artifact_sha256": "00a936876ab893686e5ac2612a554f1266d05f260acd149c556e8977800d6a85",
+          "base_episodes": 100,
+          "dataset_sha256": "78912b51f646e080a9190c406fdb3fdde7efdfe09508673b7222ad534c8fb594",
+          "gate_metrics": [
+            {
+              "attempted_trades": 75,
+              "average_exposure_duration_ms": 52.13,
+              "base_episodes": 100,
+              "by_execution": {
+                "conservative": 0.0,
+                "optimistic": 2.0192520000000003,
+                "standard": 1.1728519999999998
+              },
+              "completed_two_leg_positions": 53,
+              "cvar_05_loss": 0.16,
+              "invariant_violations": 0,
+              "losing_fraction": 0.0033333333333333335,
+              "max_drawdown": 0.09278350515463918,
+              "mean_capital_utilization": 0.03818414666666667,
+              "mean_inference_latency_ms": 0.08339616713956709,
+              "mean_pnl": 1.064034666666667,
+              "mean_pnl_episode_bootstrap_95": [
+                0.6665718166666668,
+                1.5774591999999998
+              ],
+              "mean_runtime_ms": 53.3734717319021,
+              "median_pnl": 0.0,
+              "no_trade_fraction": 0.7533333333333333,
+              "partial_orders": 1,
+              "policy": "gate-34dccb59573897d73743",
+              "profitable_fraction": 0.18,
+              "quantiles": [
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                6.683010000000004
+              ],
+              "rank": 1,
+              "risk_interventions": 1,
+              "score": 0.9040346666666669,
+              "total_pnl": 319.21040000000005,
+              "unmatched_exposure_incidents": 55,
+              "unsupported_decisions": 10,
+              "variants": 300,
+              "worst_loss": -2.4
+            }
+          ],
+          "metrics": null,
+          "tournament_id": "tournament-1dccdb172d154c1690e4befd"
+        },
+        {
+          "adversarial": false,
+          "artifact_sha256": "00a936876ab893686e5ac2612a554f1266d05f260acd149c556e8977800d6a85",
+          "base_episodes": 100,
+          "dataset_sha256": "78912b51f646e080a9190c406fdb3fdde7efdfe09508673b7222ad534c8fb594",
+          "gate_metrics": [
+            {
+              "attempted_trades": 59,
+              "average_exposure_duration_ms": 52.416666666666664,
+              "base_episodes": 100,
+              "by_execution": {
+                "conservative": 0.0,
+                "optimistic": 1.6016520000000003,
+                "standard": 1.1728519999999998
+              },
+              "completed_two_leg_positions": 42,
+              "cvar_05_loss": 0.16,
+              "invariant_violations": 0,
+              "losing_fraction": 0.0033333333333333335,
+              "max_drawdown": 0.05426356589147287,
+              "mean_capital_utilization": 0.02752532,
+              "mean_inference_latency_ms": 0.0723357362827907,
+              "mean_pnl": 0.9248346666666665,
+              "mean_pnl_episode_bootstrap_95": [
+                0.5247311333333333,
+                1.4418722499999996
+              ],
+              "mean_runtime_ms": 49.30162913010766,
+              "median_pnl": 0.0,
+              "no_trade_fraction": 0.81,
+              "partial_orders": 2,
+              "policy": "gate-34dccb59573897d73743",
+              "profitable_fraction": 0.14333333333333334,
+              "quantiles": [
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                6.665
+              ],
+              "rank": 1,
+              "risk_interventions": 2,
+              "score": 0.7648346666666664,
+              "total_pnl": 277.45039999999995,
+              "unmatched_exposure_incidents": 44,
+              "unsupported_decisions": 126,
+              "variants": 300,
+              "worst_loss": -2.4
+            }
+          ],
+          "metrics": null,
+          "tournament_id": "tournament-3fd13acd5775434fa7070473"
+        }
+      ],
       "source_hash": "297f559be63868268aafce83e9b1ac5ff9fa799c3a64ac4474fcb87bcbf8bee8",
       "state": "EVALUATED",
       "test": null,
@@ -33064,115 +33172,7 @@
         "roc_auc": 0.8618476430976431,
         "rows": 291,
         "uncertainty_note": "Resampling synthetic base episodes; variants stay grouped. No inference about real market performance."
-      },
-      "policy_evaluations": [
-        {
-          "adversarial": false,
-          "artifact_sha256": "00a936876ab893686e5ac2612a554f1266d05f260acd149c556e8977800d6a85",
-          "base_episodes": 100,
-          "dataset_sha256": "78912b51f646e080a9190c406fdb3fdde7efdfe09508673b7222ad534c8fb594",
-          "gate_metrics": [
-            {
-              "attempted_trades": 75,
-              "average_exposure_duration_ms": 52.13,
-              "base_episodes": 100,
-              "by_execution": {
-                "conservative": 0.0,
-                "optimistic": 2.0192520000000003,
-                "standard": 1.1728519999999998
-              },
-              "completed_two_leg_positions": 53,
-              "cvar_05_loss": 0.16,
-              "invariant_violations": 0,
-              "losing_fraction": 0.0033333333333333335,
-              "max_drawdown": 0.09278350515463918,
-              "mean_capital_utilization": 0.03818414666666667,
-              "mean_inference_latency_ms": 0.08339616713956709,
-              "mean_pnl": 1.064034666666667,
-              "mean_pnl_episode_bootstrap_95": [
-                0.6665718166666668,
-                1.5774591999999998
-              ],
-              "mean_runtime_ms": 53.3734717319021,
-              "median_pnl": 0.0,
-              "no_trade_fraction": 0.7533333333333333,
-              "partial_orders": 1,
-              "policy": "gate-34dccb59573897d73743",
-              "profitable_fraction": 0.18,
-              "quantiles": [
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                6.683010000000004
-              ],
-              "rank": 1,
-              "risk_interventions": 1,
-              "score": 0.9040346666666669,
-              "total_pnl": 319.21040000000005,
-              "unmatched_exposure_incidents": 55,
-              "unsupported_decisions": 10,
-              "variants": 300,
-              "worst_loss": -2.4
-            }
-          ],
-          "metrics": null,
-          "tournament_id": "tournament-1dccdb172d154c1690e4befd"
-        },
-        {
-          "adversarial": false,
-          "artifact_sha256": "00a936876ab893686e5ac2612a554f1266d05f260acd149c556e8977800d6a85",
-          "base_episodes": 100,
-          "dataset_sha256": "78912b51f646e080a9190c406fdb3fdde7efdfe09508673b7222ad534c8fb594",
-          "gate_metrics": [
-            {
-              "attempted_trades": 59,
-              "average_exposure_duration_ms": 52.416666666666664,
-              "base_episodes": 100,
-              "by_execution": {
-                "conservative": 0.0,
-                "optimistic": 1.6016520000000003,
-                "standard": 1.1728519999999998
-              },
-              "completed_two_leg_positions": 42,
-              "cvar_05_loss": 0.16,
-              "invariant_violations": 0,
-              "losing_fraction": 0.0033333333333333335,
-              "max_drawdown": 0.05426356589147287,
-              "mean_capital_utilization": 0.02752532,
-              "mean_inference_latency_ms": 0.0723357362827907,
-              "mean_pnl": 0.9248346666666665,
-              "mean_pnl_episode_bootstrap_95": [
-                0.5247311333333333,
-                1.4418722499999996
-              ],
-              "mean_runtime_ms": 49.30162913010766,
-              "median_pnl": 0.0,
-              "no_trade_fraction": 0.81,
-              "partial_orders": 2,
-              "policy": "gate-34dccb59573897d73743",
-              "profitable_fraction": 0.14333333333333334,
-              "quantiles": [
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                6.665
-              ],
-              "rank": 1,
-              "risk_interventions": 2,
-              "score": 0.7648346666666664,
-              "total_pnl": 277.45039999999995,
-              "unmatched_exposure_incidents": 44,
-              "unsupported_decisions": 126,
-              "variants": 300,
-              "worst_loss": -2.4
-            }
-          ],
-          "metrics": null,
-          "tournament_id": "tournament-3fd13acd5775434fa7070473"
-        }
-      ]
+      }
     },
     {
       "artifact_sha256": "2fd1ef6e83c55b9bf5e1acb2cb87e9c4c4d78f73ba148d72dcaa663e7173fb20",
@@ -38865,6 +38865,7 @@
       ],
       "feature_version": "observable-binary-1",
       "label_target": "initial_position_friction_usd",
+      "label_version": "initial-position-friction-1",
       "limitations": [
         "Synthetic hypothetical first-position execution friction; no real cost calibration.",
         "Adverse slippage, exchange fees, operating/redemption estimates and financing only; excludes purchase principal, settlement gains/losses and collateral haircut.",
@@ -38889,6 +38890,7 @@
       },
       "quoted_baseline_definition": "Two observed-best-price full fills, simulator fee curve, operating and redemption estimates; excludes financing and future slippage. Not an expected cost or loss bound.",
       "reload_verified": true,
+      "research_status": "TARGET_REVISION_REQUIRED",
       "source_hash": "b4c1de7fc2266db6507d185c1429937a43aa79ca95da8145de75f747f7469700",
       "state": "TRAINED",
       "task": "execution_cost_regression",
@@ -38956,9 +38958,7 @@
         "rows": 285,
         "uncertainty_note": "Bootstrap resamples base groups; execution variants remain grouped. Zero-heavy labels require positive-outcome errors alongside aggregate metrics. No dollar loss or empirical-fill interpretation.",
         "units": "virtual USD"
-      },
-      "label_version": "initial-position-friction-1",
-      "research_status": "TARGET_REVISION_REQUIRED"
+      }
     },
     {
       "artifact_sha256": "f7f520ed6ba0b369d5b32ef8e7505bd91685f96ae709ce7e8bdbee0d816e2461",
@@ -39193,6 +39193,7 @@
       ],
       "feature_version": "observable-binary-1",
       "label_target": "initial_position_friction_usd",
+      "label_version": "initial-position-friction-1",
       "limitations": [
         "Synthetic hypothetical first-position execution friction; no real cost calibration.",
         "Adverse slippage, exchange fees, operating/redemption estimates and financing only; excludes purchase principal, settlement gains/losses and collateral haircut.",
@@ -39210,6 +39211,7 @@
       },
       "quoted_baseline_definition": "Two observed-best-price full fills, simulator fee curve, operating and redemption estimates; excludes financing and future slippage. Not an expected cost or loss bound.",
       "reload_verified": true,
+      "research_status": "TARGET_REVISION_REQUIRED",
       "source_hash": "b4c1de7fc2266db6507d185c1429937a43aa79ca95da8145de75f747f7469700",
       "state": "TRAINED",
       "task": "execution_cost_regression",
@@ -39277,9 +39279,7 @@
         "rows": 285,
         "uncertainty_note": "Bootstrap resamples base groups; execution variants remain grouped. Zero-heavy labels require positive-outcome errors alongside aggregate metrics. No dollar loss or empirical-fill interpretation.",
         "units": "virtual USD"
-      },
-      "label_version": "initial-position-friction-1",
-      "research_status": "TARGET_REVISION_REQUIRED"
+      }
     },
     {
       "artifact_sha256": "e6fcc080df9825e6c3b919a6ee91d64aaafe9424c476708920d8e02d0cedba35",
@@ -39918,6 +39918,7 @@
       ],
       "feature_version": "observable-binary-1",
       "label_target": "initial_position_friction_usd",
+      "label_version": "initial-position-friction-1",
       "limitations": [
         "Synthetic hypothetical first-position execution friction; no real cost calibration.",
         "Adverse slippage, exchange fees, operating/redemption estimates and financing only; excludes purchase principal, settlement gains/losses and collateral haircut.",
@@ -39942,6 +39943,7 @@
       },
       "quoted_baseline_definition": "Two observed-best-price full fills, simulator fee curve, operating and redemption estimates; excludes financing and future slippage. Not an expected cost or loss bound.",
       "reload_verified": true,
+      "research_status": "TARGET_REVISION_REQUIRED",
       "source_hash": "b4c1de7fc2266db6507d185c1429937a43aa79ca95da8145de75f747f7469700",
       "state": "TRAINED",
       "task": "execution_cost_regression",
@@ -40009,9 +40011,7 @@
         "rows": 285,
         "uncertainty_note": "Bootstrap resamples base groups; execution variants remain grouped. Zero-heavy labels require positive-outcome errors alongside aggregate metrics. No dollar loss or empirical-fill interpretation.",
         "units": "virtual USD"
-      },
-      "label_version": "initial-position-friction-1",
-      "research_status": "TARGET_REVISION_REQUIRED"
+      }
     },
     {
       "artifact_sha256": "bfb60b03e51ac1c9781aef61ac42de4b0ca9adf9f2eda516bdde5f6edc683dda",
@@ -40745,6 +40745,194 @@
     },
     {
       "artifact_sha256": "88a2d60ba99b21c15317123836bc8183fad43b0a33586e77f1b86ea89c45208e",
+      "baselines_test": {
+        "quoted_full_fill": {
+          "base_episodes": 92,
+          "by_execution": {
+            "conservative": {
+              "rmse": 0.09664304602352099,
+              "rows": 92
+            },
+            "optimistic": {
+              "rmse": 0.2565735694044102,
+              "rows": 92
+            },
+            "standard": {
+              "rmse": 0.1159364835761307,
+              "rows": 92
+            }
+          },
+          "by_family": {
+            "calm": {
+              "rmse": 0.25236955526336247,
+              "rows": 24
+            },
+            "deep": {
+              "rmse": 0.011546987936201365,
+              "rows": 66
+            },
+            "fees": {
+              "rmse": 0.3396213450050028,
+              "rows": 15
+            },
+            "liquidity_shock": {
+              "rmse": 0.2508169402075676,
+              "rows": 33
+            },
+            "one_sided": {
+              "rmse": 0.18635100160490947,
+              "rows": 30
+            },
+            "thin": {
+              "rmse": 0.15694349075283126,
+              "rows": 42
+            },
+            "volatile": {
+              "rmse": 0.10534219859184556,
+              "rows": 66
+            }
+          },
+          "episode_bootstrap_rmse_95": [
+            0.1461834336398461,
+            0.19541324642112654
+          ],
+          "episode_rmse": 0.17186345654387236,
+          "mae": 0.09192576852326646,
+          "mean_observed_usd": 0.13333919588897483,
+          "mean_predicted_usd": 0.06760347826086954,
+          "positive_frequency": 1.0,
+          "positive_mae": 0.09192576852326646,
+          "positive_rmse": 0.17186345654387233,
+          "rmse": 0.17186345654387233,
+          "rows": 276,
+          "uncertainty_note": "Bootstrap resamples base groups; execution variants remain grouped. Zero-heavy labels require positive-outcome errors alongside aggregate metrics. No dollar loss or empirical-fill interpretation.",
+          "units": "virtual USD"
+        },
+        "training_mean": {
+          "base_episodes": 92,
+          "by_execution": {
+            "conservative": {
+              "rmse": 0.11874716962720057,
+              "rows": 92
+            },
+            "optimistic": {
+              "rmse": 0.2788601582692131,
+              "rows": 92
+            },
+            "standard": {
+              "rmse": 0.1987884421691827,
+              "rows": 92
+            }
+          },
+          "by_family": {
+            "calm": {
+              "rmse": 0.18186129904908646,
+              "rows": 24
+            },
+            "deep": {
+              "rmse": 0.1188320734234507,
+              "rows": 66
+            },
+            "fees": {
+              "rmse": 0.6442323138223046,
+              "rows": 15
+            },
+            "liquidity_shock": {
+              "rmse": 0.2258662995111033,
+              "rows": 33
+            },
+            "one_sided": {
+              "rmse": 0.17684756614613506,
+              "rows": 30
+            },
+            "thin": {
+              "rmse": 0.07880531558505956,
+              "rows": 42
+            },
+            "volatile": {
+              "rmse": 0.13779347330555677,
+              "rows": 66
+            }
+          },
+          "episode_bootstrap_rmse_95": [
+            0.15387119809489447,
+            0.2637960456517555
+          ],
+          "episode_rmse": 0.20926914321391027,
+          "mae": 0.15162582409451938,
+          "mean_observed_usd": 0.13333919588897483,
+          "mean_predicted_usd": 0.15179097459054336,
+          "positive_frequency": 1.0,
+          "positive_mae": 0.15162582409451938,
+          "positive_rmse": 0.20926914321391027,
+          "rmse": 0.20926914321391027,
+          "rows": 276,
+          "uncertainty_note": "Bootstrap resamples base groups; execution variants remain grouped. Zero-heavy labels require positive-outcome errors alongside aggregate metrics. No dollar loss or empirical-fill interpretation.",
+          "units": "virtual USD"
+        },
+        "zero": {
+          "base_episodes": 92,
+          "by_execution": {
+            "conservative": {
+              "rmse": 0.08231012922034898,
+              "rows": 92
+            },
+            "optimistic": {
+              "rmse": 0.35446451062295864,
+              "rows": 92
+            },
+            "standard": {
+              "rmse": 0.2264449056839398,
+              "rows": 92
+            }
+          },
+          "by_family": {
+            "calm": {
+              "rmse": 0.28410749682574643,
+              "rows": 24
+            },
+            "deep": {
+              "rmse": 0.034641214768872754,
+              "rows": 66
+            },
+            "fees": {
+              "rmse": 0.7612615879114331,
+              "rows": 15
+            },
+            "liquidity_shock": {
+              "rmse": 0.2706222755062245,
+              "rows": 33
+            },
+            "one_sided": {
+              "rmse": 0.20502040435284175,
+              "rows": 30
+            },
+            "thin": {
+              "rmse": 0.19311685953114824,
+              "rows": 42
+            },
+            "volatile": {
+              "rmse": 0.11977257404459257,
+              "rows": 66
+            }
+          },
+          "episode_bootstrap_rmse_95": [
+            0.18140206835605832,
+            0.31182497704068635
+          ],
+          "episode_rmse": 0.247451909114783,
+          "mae": 0.13333919588897483,
+          "mean_observed_usd": 0.13333919588897483,
+          "mean_predicted_usd": 0.0,
+          "positive_frequency": 1.0,
+          "positive_mae": 0.13333919588897483,
+          "positive_rmse": 0.24745190911478301,
+          "rmse": 0.24745190911478301,
+          "rows": 276,
+          "uncertainty_note": "Bootstrap resamples base groups; execution variants remain grouped. Zero-heavy labels require positive-outcome errors alongside aggregate metrics. No dollar loss or empirical-fill interpretation.",
+          "units": "virtual USD"
+        }
+      },
       "baselines_validation": {
         "quoted_full_fill": {
           "base_episodes": 91,
@@ -41379,348 +41567,6 @@
         "observation_latency_ms"
       ],
       "feature_version": "observable-binary-1",
-      "label_target": "initial_position_friction_usd",
-      "label_version": "initial-position-friction-2",
-      "limitations": [
-        "Synthetic hypothetical first-position execution friction; no real cost calibration.",
-        "Adverse slippage, exchange fees, operating/redemption estimates and financing only; excludes purchase principal, settlement gains/losses and collateral haircut.",
-        "Zero fills can produce little or no friction while missing a profitable opportunity; this is not a profitability target.",
-        "Fixed declared cost assumptions within each dataset; inference under other cost regimes is unvalidated.",
-        "Train/validation evaluation only; final tests remain closed until separately requested.",
-        "Dollar predictions are not probabilities and cannot enter classifier gates."
-      ],
-      "loss_definition": "Mean squared error on virtual USD normalized by train-only RMS; nonnegative Softplus output",
-      "model_id": "model-a7f99c63bd4f4cd4b22c57c6",
-      "optimizer_configuration": {
-        "algorithm": "AdamW",
-        "amsgrad": false,
-        "betas": [
-          0.9,
-          0.999
-        ],
-        "eps": 1e-08,
-        "learning_rate": 0.001,
-        "weight_decay": 0.01
-      },
-      "quoted_baseline_definition": "Two observed-best-price full fills, simulator fee curve, operating and redemption estimates; excludes financing and future slippage. Not an expected cost or loss bound.",
-      "reload_verified": true,
-      "source_hash": "2e5894ddfb4c9a91cd1b5fce480642b5e1da1d02adaf0e08632859c5d11289a4",
-      "state": "EVALUATED",
-      "task": "execution_cost_regression",
-      "test": {
-        "base_episodes": 92,
-        "by_execution": {
-          "conservative": {
-            "rmse": 0.03676384267198838,
-            "rows": 92
-          },
-          "optimistic": {
-            "rmse": 0.10970702962253924,
-            "rows": 92
-          },
-          "standard": {
-            "rmse": 0.09621359825733355,
-            "rows": 92
-          }
-        },
-        "by_family": {
-          "calm": {
-            "rmse": 0.15263258762738646,
-            "rows": 24
-          },
-          "deep": {
-            "rmse": 0.027038277118570143,
-            "rows": 66
-          },
-          "fees": {
-            "rmse": 0.10282519122308967,
-            "rows": 15
-          },
-          "liquidity_shock": {
-            "rmse": 0.08717824892561778,
-            "rows": 33
-          },
-          "one_sided": {
-            "rmse": 0.10260781804637518,
-            "rows": 30
-          },
-          "thin": {
-            "rmse": 0.05294151991317131,
-            "rows": 42
-          },
-          "volatile": {
-            "rmse": 0.09792821211931445,
-            "rows": 66
-          }
-        },
-        "episode_bootstrap_rmse_95": [
-          0.07489508388374275,
-          0.09782022395197082
-        ],
-        "episode_rmse": 0.08687974249162841,
-        "mae": 0.06032067226646412,
-        "mean_observed_usd": 0.13333919588897483,
-        "mean_predicted_usd": 0.12493576670923452,
-        "positive_frequency": 1.0,
-        "positive_mae": 0.06032067226646412,
-        "positive_rmse": 0.08687974249162843,
-        "rmse": 0.08687974249162843,
-        "rows": 276,
-        "uncertainty_note": "Bootstrap resamples base groups; execution variants remain grouped. Zero-heavy labels require positive-outcome errors alongside aggregate metrics. No dollar loss or empirical-fill interpretation.",
-        "units": "virtual USD"
-      },
-      "training_duration_seconds": 15.911629790032748,
-      "units": "virtual USD",
-      "validation": {
-        "base_episodes": 91,
-        "by_execution": {
-          "conservative": {
-            "rmse": 0.04064421256662248,
-            "rows": 91
-          },
-          "optimistic": {
-            "rmse": 0.14966789282281018,
-            "rows": 91
-          },
-          "standard": {
-            "rmse": 0.11658296298013594,
-            "rows": 91
-          }
-        },
-        "by_family": {
-          "calm": {
-            "rmse": 0.17773249629693033,
-            "rows": 39
-          },
-          "deep": {
-            "rmse": 0.028512642040762048,
-            "rows": 54
-          },
-          "fees": {
-            "rmse": 0.0988226074425169,
-            "rows": 15
-          },
-          "liquidity_shock": {
-            "rmse": 0.13746283918595523,
-            "rows": 24
-          },
-          "one_sided": {
-            "rmse": 0.11695252031472497,
-            "rows": 33
-          },
-          "thin": {
-            "rmse": 0.05033840816210836,
-            "rows": 54
-          },
-          "volatile": {
-            "rmse": 0.13344044185435217,
-            "rows": 54
-          }
-        },
-        "episode_bootstrap_rmse_95": [
-          0.09259443965380965,
-          0.13205668204515328
-        ],
-        "episode_rmse": 0.11201788162968851,
-        "mae": 0.0724267955991556,
-        "mean_observed_usd": 0.1484522237197063,
-        "mean_predicted_usd": 0.13686155200289432,
-        "positive_frequency": 1.0,
-        "positive_mae": 0.0724267955991556,
-        "positive_rmse": 0.11201788162968852,
-        "rmse": 0.11201788162968852,
-        "rows": 273,
-        "uncertainty_note": "Bootstrap resamples base groups; execution variants remain grouped. Zero-heavy labels require positive-outcome errors alongside aggregate metrics. No dollar loss or empirical-fill interpretation.",
-        "units": "virtual USD"
-      },
-      "baselines_test": {
-        "quoted_full_fill": {
-          "base_episodes": 92,
-          "by_execution": {
-            "conservative": {
-              "rmse": 0.09664304602352099,
-              "rows": 92
-            },
-            "optimistic": {
-              "rmse": 0.2565735694044102,
-              "rows": 92
-            },
-            "standard": {
-              "rmse": 0.1159364835761307,
-              "rows": 92
-            }
-          },
-          "by_family": {
-            "calm": {
-              "rmse": 0.25236955526336247,
-              "rows": 24
-            },
-            "deep": {
-              "rmse": 0.011546987936201365,
-              "rows": 66
-            },
-            "fees": {
-              "rmse": 0.3396213450050028,
-              "rows": 15
-            },
-            "liquidity_shock": {
-              "rmse": 0.2508169402075676,
-              "rows": 33
-            },
-            "one_sided": {
-              "rmse": 0.18635100160490947,
-              "rows": 30
-            },
-            "thin": {
-              "rmse": 0.15694349075283126,
-              "rows": 42
-            },
-            "volatile": {
-              "rmse": 0.10534219859184556,
-              "rows": 66
-            }
-          },
-          "episode_bootstrap_rmse_95": [
-            0.1461834336398461,
-            0.19541324642112654
-          ],
-          "episode_rmse": 0.17186345654387236,
-          "mae": 0.09192576852326646,
-          "mean_observed_usd": 0.13333919588897483,
-          "mean_predicted_usd": 0.06760347826086954,
-          "positive_frequency": 1.0,
-          "positive_mae": 0.09192576852326646,
-          "positive_rmse": 0.17186345654387233,
-          "rmse": 0.17186345654387233,
-          "rows": 276,
-          "uncertainty_note": "Bootstrap resamples base groups; execution variants remain grouped. Zero-heavy labels require positive-outcome errors alongside aggregate metrics. No dollar loss or empirical-fill interpretation.",
-          "units": "virtual USD"
-        },
-        "training_mean": {
-          "base_episodes": 92,
-          "by_execution": {
-            "conservative": {
-              "rmse": 0.11874716962720057,
-              "rows": 92
-            },
-            "optimistic": {
-              "rmse": 0.2788601582692131,
-              "rows": 92
-            },
-            "standard": {
-              "rmse": 0.1987884421691827,
-              "rows": 92
-            }
-          },
-          "by_family": {
-            "calm": {
-              "rmse": 0.18186129904908646,
-              "rows": 24
-            },
-            "deep": {
-              "rmse": 0.1188320734234507,
-              "rows": 66
-            },
-            "fees": {
-              "rmse": 0.6442323138223046,
-              "rows": 15
-            },
-            "liquidity_shock": {
-              "rmse": 0.2258662995111033,
-              "rows": 33
-            },
-            "one_sided": {
-              "rmse": 0.17684756614613506,
-              "rows": 30
-            },
-            "thin": {
-              "rmse": 0.07880531558505956,
-              "rows": 42
-            },
-            "volatile": {
-              "rmse": 0.13779347330555677,
-              "rows": 66
-            }
-          },
-          "episode_bootstrap_rmse_95": [
-            0.15387119809489447,
-            0.2637960456517555
-          ],
-          "episode_rmse": 0.20926914321391027,
-          "mae": 0.15162582409451938,
-          "mean_observed_usd": 0.13333919588897483,
-          "mean_predicted_usd": 0.15179097459054336,
-          "positive_frequency": 1.0,
-          "positive_mae": 0.15162582409451938,
-          "positive_rmse": 0.20926914321391027,
-          "rmse": 0.20926914321391027,
-          "rows": 276,
-          "uncertainty_note": "Bootstrap resamples base groups; execution variants remain grouped. Zero-heavy labels require positive-outcome errors alongside aggregate metrics. No dollar loss or empirical-fill interpretation.",
-          "units": "virtual USD"
-        },
-        "zero": {
-          "base_episodes": 92,
-          "by_execution": {
-            "conservative": {
-              "rmse": 0.08231012922034898,
-              "rows": 92
-            },
-            "optimistic": {
-              "rmse": 0.35446451062295864,
-              "rows": 92
-            },
-            "standard": {
-              "rmse": 0.2264449056839398,
-              "rows": 92
-            }
-          },
-          "by_family": {
-            "calm": {
-              "rmse": 0.28410749682574643,
-              "rows": 24
-            },
-            "deep": {
-              "rmse": 0.034641214768872754,
-              "rows": 66
-            },
-            "fees": {
-              "rmse": 0.7612615879114331,
-              "rows": 15
-            },
-            "liquidity_shock": {
-              "rmse": 0.2706222755062245,
-              "rows": 33
-            },
-            "one_sided": {
-              "rmse": 0.20502040435284175,
-              "rows": 30
-            },
-            "thin": {
-              "rmse": 0.19311685953114824,
-              "rows": 42
-            },
-            "volatile": {
-              "rmse": 0.11977257404459257,
-              "rows": 66
-            }
-          },
-          "episode_bootstrap_rmse_95": [
-            0.18140206835605832,
-            0.31182497704068635
-          ],
-          "episode_rmse": 0.247451909114783,
-          "mae": 0.13333919588897483,
-          "mean_observed_usd": 0.13333919588897483,
-          "mean_predicted_usd": 0.0,
-          "positive_frequency": 1.0,
-          "positive_mae": 0.13333919588897483,
-          "positive_rmse": 0.24745190911478301,
-          "rmse": 0.24745190911478301,
-          "rows": 276,
-          "uncertainty_note": "Bootstrap resamples base groups; execution variants remain grouped. Zero-heavy labels require positive-outcome errors alongside aggregate metrics. No dollar loss or empirical-fill interpretation.",
-          "units": "virtual USD"
-        }
-      },
       "independent_cost_evaluation": {
         "baseline_metrics": {
           "quoted_full_fill": {
@@ -42010,7 +41856,302 @@
         "test_correlated_variants": 276,
         "test_source_groups": 92
       },
-      "test_evaluated_at": 1791842387.9805942
+      "label_target": "initial_position_friction_usd",
+      "label_version": "initial-position-friction-2",
+      "limitations": [
+        "Synthetic hypothetical first-position execution friction; no real cost calibration.",
+        "Adverse slippage, exchange fees, operating/redemption estimates and financing only; excludes purchase principal, settlement gains/losses and collateral haircut.",
+        "Zero fills can produce little or no friction while missing a profitable opportunity; this is not a profitability target.",
+        "Fixed declared cost assumptions within each dataset; inference under other cost regimes is unvalidated.",
+        "Train/validation evaluation only; final tests remain closed until separately requested.",
+        "Dollar predictions are not probabilities and cannot enter classifier gates."
+      ],
+      "loss_definition": "Mean squared error on virtual USD normalized by train-only RMS; nonnegative Softplus output",
+      "model_id": "model-a7f99c63bd4f4cd4b22c57c6",
+      "optimizer_configuration": {
+        "algorithm": "AdamW",
+        "amsgrad": false,
+        "betas": [
+          0.9,
+          0.999
+        ],
+        "eps": 1e-08,
+        "learning_rate": 0.001,
+        "weight_decay": 0.01
+      },
+      "policy_evaluations": [
+        {
+          "adversarial": false,
+          "artifact_sha256": "88a2d60ba99b21c15317123836bc8183fad43b0a33586e77f1b86ea89c45208e",
+          "base_episodes": 100,
+          "dataset_sha256": "7f1857d470144c6a68d5ff2f5a3e480016514e3dccb4f47a990f79e881a20179",
+          "gate_metrics": [
+            {
+              "attempted_trades": 273,
+              "average_exposure_duration_ms": 275.88,
+              "base_episodes": 100,
+              "by_execution": {
+                "conservative": 0.06802198215024347,
+                "optimistic": 2.1048814061716445,
+                "standard": 1.4281685428756092
+              },
+              "completed_two_leg_positions": 64,
+              "cvar_05_loss": 4.013100065416857,
+              "invariant_violations": 0,
+              "losing_fraction": 0.24666666666666667,
+              "max_drawdown": 0.17041546311542818,
+              "mean_capital_utilization": 0.08554625,
+              "mean_inference_latency_ms": 0.32973229377863134,
+              "mean_pnl": 1.2003573103991656,
+              "mean_pnl_episode_bootstrap_95": [
+                0.6345831143925168,
+                1.8160031486966797
+              ],
+              "mean_runtime_ms": 85.47477805094483,
+              "median_pnl": 0.0,
+              "no_trade_fraction": 0.42,
+              "partial_orders": 76,
+              "policy": "cost-scope-7cd3b264b52c8cd8",
+              "profitable_fraction": 0.3333333333333333,
+              "quantiles": [
+                -0.020000032569612112,
+                0.0,
+                0.0,
+                0.8999999368715753,
+                9.303559884665537
+              ],
+              "rank": 4,
+              "risk_interventions": 99,
+              "score": -2.812742755017692,
+              "total_pnl": 360.1071931197497,
+              "unmatched_exposure_incidents": 109,
+              "unsupported_decisions": 31,
+              "variants": 300,
+              "worst_loss": -10.953300129639553
+            },
+            {
+              "attempted_trades": 237,
+              "average_exposure_duration_ms": 274.22,
+              "base_episodes": 100,
+              "by_execution": {
+                "conservative": 0.021199984728381027,
+                "optimistic": 1.910326914338854,
+                "standard": 1.2732049494760995
+              },
+              "completed_two_leg_positions": 58,
+              "cvar_05_loss": 4.013100065416857,
+              "invariant_violations": 0,
+              "losing_fraction": 0.24333333333333335,
+              "max_drawdown": 0.17041546311542818,
+              "mean_capital_utilization": 0.07881525,
+              "mean_inference_latency_ms": 0.3375272467244594,
+              "mean_pnl": 1.068243949514445,
+              "mean_pnl_episode_bootstrap_95": [
+                0.5235622575768936,
+                1.6926428429137343
+              ],
+              "mean_runtime_ms": 82.46591047616675,
+              "median_pnl": 0.0,
+              "no_trade_fraction": 0.48,
+              "partial_orders": 54,
+              "policy": "cost-quoted-7cd3b264b52c8cd8",
+              "profitable_fraction": 0.27666666666666667,
+              "quantiles": [
+                -0.020000032569612112,
+                0.0,
+                0.0,
+                0.20874997426109249,
+                9.303559884665537
+              ],
+              "rank": 6,
+              "risk_interventions": 81,
+              "score": -2.9448561159024127,
+              "total_pnl": 320.47318485433345,
+              "unmatched_exposure_incidents": 92,
+              "unsupported_decisions": 31,
+              "variants": 300,
+              "worst_loss": -10.953300129639553
+            },
+            {
+              "attempted_trades": 206,
+              "average_exposure_duration_ms": 274.8833333333333,
+              "base_episodes": 100,
+              "by_execution": {
+                "conservative": 0.030563983553869224,
+                "optimistic": 1.2007519347210038,
+                "standard": 1.2732049494760995
+              },
+              "completed_two_leg_positions": 46,
+              "cvar_05_loss": 4.013100065416857,
+              "invariant_violations": 0,
+              "losing_fraction": 0.23666666666666666,
+              "max_drawdown": 0.17041546311542818,
+              "mean_capital_utilization": 0.07303630000000001,
+              "mean_inference_latency_ms": 0.4647607743113656,
+              "mean_pnl": 0.8348402892503242,
+              "mean_pnl_episode_bootstrap_95": [
+                0.24188481579263857,
+                1.4290640475959955
+              ],
+              "mean_runtime_ms": 76.2106204314235,
+              "median_pnl": 0.0,
+              "no_trade_fraction": 0.52,
+              "partial_orders": 58,
+              "policy": "cost-forecast-7cd3b264b52c8cd8",
+              "profitable_fraction": 0.24333333333333335,
+              "quantiles": [
+                -0.020000032569612112,
+                0.0,
+                0.0,
+                0.0,
+                7.735599749562786
+              ],
+              "rank": 7,
+              "risk_interventions": 62,
+              "score": -3.1782597761665334,
+              "total_pnl": 250.45208677509726,
+              "unmatched_exposure_incidents": 82,
+              "unsupported_decisions": 25,
+              "variants": 300,
+              "worst_loss": -10.953300129639553
+            }
+          ],
+          "metrics": null,
+          "tournament_id": "tournament-25f2053c416249678c76a30b"
+        }
+      ],
+      "quoted_baseline_definition": "Two observed-best-price full fills, simulator fee curve, operating and redemption estimates; excludes financing and future slippage. Not an expected cost or loss bound.",
+      "reload_verified": true,
+      "source_hash": "2e5894ddfb4c9a91cd1b5fce480642b5e1da1d02adaf0e08632859c5d11289a4",
+      "state": "EVALUATED",
+      "task": "execution_cost_regression",
+      "test": {
+        "base_episodes": 92,
+        "by_execution": {
+          "conservative": {
+            "rmse": 0.03676384267198838,
+            "rows": 92
+          },
+          "optimistic": {
+            "rmse": 0.10970702962253924,
+            "rows": 92
+          },
+          "standard": {
+            "rmse": 0.09621359825733355,
+            "rows": 92
+          }
+        },
+        "by_family": {
+          "calm": {
+            "rmse": 0.15263258762738646,
+            "rows": 24
+          },
+          "deep": {
+            "rmse": 0.027038277118570143,
+            "rows": 66
+          },
+          "fees": {
+            "rmse": 0.10282519122308967,
+            "rows": 15
+          },
+          "liquidity_shock": {
+            "rmse": 0.08717824892561778,
+            "rows": 33
+          },
+          "one_sided": {
+            "rmse": 0.10260781804637518,
+            "rows": 30
+          },
+          "thin": {
+            "rmse": 0.05294151991317131,
+            "rows": 42
+          },
+          "volatile": {
+            "rmse": 0.09792821211931445,
+            "rows": 66
+          }
+        },
+        "episode_bootstrap_rmse_95": [
+          0.07489508388374275,
+          0.09782022395197082
+        ],
+        "episode_rmse": 0.08687974249162841,
+        "mae": 0.06032067226646412,
+        "mean_observed_usd": 0.13333919588897483,
+        "mean_predicted_usd": 0.12493576670923452,
+        "positive_frequency": 1.0,
+        "positive_mae": 0.06032067226646412,
+        "positive_rmse": 0.08687974249162843,
+        "rmse": 0.08687974249162843,
+        "rows": 276,
+        "uncertainty_note": "Bootstrap resamples base groups; execution variants remain grouped. Zero-heavy labels require positive-outcome errors alongside aggregate metrics. No dollar loss or empirical-fill interpretation.",
+        "units": "virtual USD"
+      },
+      "test_evaluated_at": 1791842387.9805942,
+      "training_duration_seconds": 15.911629790032748,
+      "units": "virtual USD",
+      "validation": {
+        "base_episodes": 91,
+        "by_execution": {
+          "conservative": {
+            "rmse": 0.04064421256662248,
+            "rows": 91
+          },
+          "optimistic": {
+            "rmse": 0.14966789282281018,
+            "rows": 91
+          },
+          "standard": {
+            "rmse": 0.11658296298013594,
+            "rows": 91
+          }
+        },
+        "by_family": {
+          "calm": {
+            "rmse": 0.17773249629693033,
+            "rows": 39
+          },
+          "deep": {
+            "rmse": 0.028512642040762048,
+            "rows": 54
+          },
+          "fees": {
+            "rmse": 0.0988226074425169,
+            "rows": 15
+          },
+          "liquidity_shock": {
+            "rmse": 0.13746283918595523,
+            "rows": 24
+          },
+          "one_sided": {
+            "rmse": 0.11695252031472497,
+            "rows": 33
+          },
+          "thin": {
+            "rmse": 0.05033840816210836,
+            "rows": 54
+          },
+          "volatile": {
+            "rmse": 0.13344044185435217,
+            "rows": 54
+          }
+        },
+        "episode_bootstrap_rmse_95": [
+          0.09259443965380965,
+          0.13205668204515328
+        ],
+        "episode_rmse": 0.11201788162968851,
+        "mae": 0.0724267955991556,
+        "mean_observed_usd": 0.1484522237197063,
+        "mean_predicted_usd": 0.13686155200289432,
+        "positive_frequency": 1.0,
+        "positive_mae": 0.0724267955991556,
+        "positive_rmse": 0.11201788162968852,
+        "rmse": 0.11201788162968852,
+        "rows": 273,
+        "uncertainty_note": "Bootstrap resamples base groups; execution variants remain grouped. Zero-heavy labels require positive-outcome errors alongside aggregate metrics. No dollar loss or empirical-fill interpretation.",
+        "units": "virtual USD"
+      }
     },
     {
       "artifact_sha256": "71164ecef391081006bc401232b2dc903219d0a79995de07691636ea6195d161",
@@ -57733,6 +57874,771 @@
       "tournament_id": "tournament-3fd13acd5775434fa7070473",
       "uncertainty_note": "Bootstrap resamples base episodes with all execution variants grouped. Generated uncertainty does not establish real market generalization.",
       "variants": 1500
+    },
+    {
+      "base_episodes": 100,
+      "code_revision": "5e09b87cac0d6fd6a828fe0c0c6440d878f6817e",
+      "common_random_numbers_note": "Shared seeds pair source scenarios. Action-dependent order paths and random draws do not guarantee identical execution noise.",
+      "conclusion": "Insufficient independent synthetic episodes for champion designation.",
+      "configuration": {
+        "adversarial": false,
+        "challenge": {
+          "costs": {
+            "annual_financing_rate": "0.05",
+            "assumptions": [
+              "Costs are user estimates, not observed charges",
+              "No automatic complete-set merge",
+              "Resolution and spendable proceeds are separated by configured delay",
+              "No empirically calibrated fill probability or queue priority"
+            ],
+            "collateral_route_verified": false,
+            "collateral_value_factor": "1",
+            "operating_per_fill": "0.01",
+            "redemption_cost": "0.02",
+            "version": "explicit-costs-1"
+          },
+          "decision_scope": "first_admitted",
+          "episodes": 100,
+          "execution_models": [
+            "optimistic",
+            "standard",
+            "conservative"
+          ],
+          "families": [
+            "thin",
+            "deep",
+            "calm",
+            "liquidity_shock",
+            "volatile",
+            "one_sided",
+            "fees"
+          ],
+          "label_target": "completion",
+          "observation_latency_ms": 100,
+          "retain_execution_costs": true,
+          "seed": 313071,
+          "split_seed": 1977,
+          "version": "synthetic-decision-1"
+        },
+        "cost_gates": [
+          {
+            "margin_usd": "0.10",
+            "max_cost_usd": "0.30",
+            "model_id": "model-a7f99c63bd4f4cd4b22c57c6"
+          }
+        ],
+        "dataset_id": "dataset-b5c3dbdac9284f292a949b65",
+        "economic_regime": null,
+        "execution_models": [
+          "optimistic",
+          "standard",
+          "conservative"
+        ],
+        "gates": [],
+        "max_episodes": 100,
+        "minimum_champion_episodes": 2000,
+        "model_ids": [],
+        "partition": "test",
+        "purpose": "research",
+        "seed": 991,
+        "tail_loss_weight": 1.0,
+        "threshold": 0.5,
+        "unsupported_input_policy": "abstain"
+      },
+      "cost_policy_bindings": {
+        "cost-forecast-7cd3b264b52c8cd8": {
+          "kind": "forecast",
+          "specification": {
+            "margin_usd": "0.10",
+            "max_cost_usd": "0.30",
+            "model_id": "model-a7f99c63bd4f4cd4b22c57c6"
+          }
+        },
+        "cost-quoted-7cd3b264b52c8cd8": {
+          "kind": "quoted",
+          "specification": {
+            "margin_usd": "0.10",
+            "max_cost_usd": "0.30",
+            "model_id": "model-a7f99c63bd4f4cd4b22c57c6"
+          }
+        },
+        "cost-scope-7cd3b264b52c8cd8": {
+          "kind": "scope",
+          "specification": {
+            "margin_usd": "0.10",
+            "max_cost_usd": "0.30",
+            "model_id": "model-a7f99c63bd4f4cd4b22c57c6"
+          }
+        }
+      },
+      "created_at": 1791843952.203417,
+      "dataset_sha256": "7f1857d470144c6a68d5ff2f5a3e480016514e3dccb4f47a990f79e881a20179",
+      "duration_seconds": 545.1001591540407,
+      "economic_regime_units": {
+        "additional_submission_latency_ms": "milliseconds added to execution latency",
+        "depth_multiplier": "ratio of synthetic shares at every bid/ask level",
+        "taker_fee_rate": "hypothetical fee rate under the existing synthetic fee formula"
+      },
+      "economically_verified": false,
+      "evaluation_design": "FRESH_GENERATOR_CHALLENGE",
+      "evaluation_generator": {
+        "costs": {
+          "annual_financing_rate": "0.05",
+          "assumptions": [
+            "Costs are user estimates, not observed charges",
+            "No automatic complete-set merge",
+            "Resolution and spendable proceeds are separated by configured delay",
+            "No empirically calibrated fill probability or queue priority"
+          ],
+          "collateral_route_verified": false,
+          "collateral_value_factor": "1",
+          "operating_per_fill": "0.01",
+          "redemption_cost": "0.02",
+          "version": "explicit-costs-1"
+        },
+        "decision_scope": "first_admitted",
+        "episodes": 100,
+        "execution_models": [
+          "optimistic",
+          "standard",
+          "conservative"
+        ],
+        "families": [
+          "thin",
+          "deep",
+          "calm",
+          "liquidity_shock",
+          "volatile",
+          "one_sided",
+          "fees"
+        ],
+        "label_target": "completion",
+        "observation_latency_ms": 100,
+        "retain_execution_costs": true,
+        "seed": 313071,
+        "split_seed": 1977,
+        "version": "synthetic-decision-1"
+      },
+      "evaluation_observation_lineage": {
+        "dataset_id": "dataset-b5c3dbdac9284f292a949b65",
+        "observation_hash": "7d5f5e23f9e0b1ff17545205eed73b1f5a292a6b1e50c29482825eb3f0b75656",
+        "source_dataset_id": "dataset-b5c3dbdac9284f292a949b65"
+      },
+      "execution_certainty": "HYPOTHETICAL_UNCALIBRATED",
+      "leaderboard": [
+        {
+          "attempted_trades": 0,
+          "average_exposure_duration_ms": 0.0,
+          "base_episodes": 100,
+          "by_execution": {
+            "conservative": 0.0,
+            "optimistic": 0.0,
+            "standard": 0.0
+          },
+          "completed_two_leg_positions": 0,
+          "cvar_05_loss": 0,
+          "invariant_violations": 0,
+          "losing_fraction": 0.0,
+          "max_drawdown": 0.0,
+          "mean_capital_utilization": 0.0,
+          "mean_inference_latency_ms": 0.0004531062136049426,
+          "mean_pnl": 0.0,
+          "mean_pnl_episode_bootstrap_95": [
+            0.0,
+            0.0
+          ],
+          "mean_runtime_ms": 33.14052938561266,
+          "median_pnl": 0.0,
+          "no_trade_fraction": 1.0,
+          "partial_orders": 0,
+          "policy": "no_trade",
+          "profitable_fraction": 0.0,
+          "quantiles": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "rank": 1,
+          "risk_interventions": 0,
+          "score": 0.0,
+          "total_pnl": 0.0,
+          "unmatched_exposure_incidents": 0,
+          "unsupported_decisions": 0,
+          "variants": 300,
+          "worst_loss": 0.0
+        },
+        {
+          "attempted_trades": 207,
+          "average_exposure_duration_ms": 217.49,
+          "base_episodes": 100,
+          "by_execution": {
+            "conservative": 0.10347638891829458,
+            "optimistic": 1.5655271371586081,
+            "standard": 1.1244025635894757
+          },
+          "completed_two_leg_positions": 60,
+          "cvar_05_loss": 1.8060867097385918,
+          "invariant_violations": 0,
+          "losing_fraction": 0.21,
+          "max_drawdown": 0.15121719277650306,
+          "mean_capital_utilization": 0.05429678,
+          "mean_inference_latency_ms": 0.008785547037231958,
+          "mean_pnl": 0.9311353632221261,
+          "mean_pnl_episode_bootstrap_95": [
+            0.5521130978756325,
+            1.341466062969529
+          ],
+          "mean_runtime_ms": 75.42916126568646,
+          "median_pnl": 0.0,
+          "no_trade_fraction": 0.51,
+          "partial_orders": 43,
+          "policy": "random",
+          "profitable_fraction": 0.28,
+          "quantiles": [
+            -0.02000001751969971,
+            0.0,
+            0.0,
+            0.7079999489826485,
+            5.865904874876656
+          ],
+          "rank": 2,
+          "risk_interventions": 51,
+          "score": -0.8749513465164657,
+          "total_pnl": 279.34060896663783,
+          "unmatched_exposure_incidents": 88,
+          "unsupported_decisions": 0,
+          "variants": 300,
+          "worst_loss": -10.953300129639553
+        },
+        {
+          "attempted_trades": 309,
+          "average_exposure_duration_ms": 370.33,
+          "base_episodes": 100,
+          "by_execution": {
+            "conservative": 0.04834998836363281,
+            "optimistic": 2.207557422429245,
+            "standard": 1.2476387543521978
+          },
+          "completed_two_leg_positions": 99,
+          "cvar_05_loss": 2.2836667040924232,
+          "invariant_violations": 0,
+          "losing_fraction": 0.37333333333333335,
+          "max_drawdown": 0.08276021945753806,
+          "mean_capital_utilization": 0.065408332,
+          "mean_inference_latency_ms": 0.0007431035295927098,
+          "mean_pnl": 1.167848721715025,
+          "mean_pnl_episode_bootstrap_95": [
+            0.8426915968840368,
+            1.505133301712652
+          ],
+          "mean_runtime_ms": 96.97416372150958,
+          "median_pnl": 0.0,
+          "no_trade_fraction": 0.24,
+          "partial_orders": 32,
+          "policy": "conservative",
+          "profitable_fraction": 0.38666666666666666,
+          "quantiles": [
+            -0.020000016279363465,
+            -0.020000005133556174,
+            0.0,
+            1.8996274116831764,
+            5.83189987477012
+          ],
+          "rank": 3,
+          "risk_interventions": 51,
+          "score": -1.1158179823773982,
+          "total_pnl": 350.35461651450754,
+          "unmatched_exposure_incidents": 125,
+          "unsupported_decisions": 0,
+          "variants": 300,
+          "worst_loss": -5.4890000668146195
+        },
+        {
+          "attempted_trades": 318,
+          "average_exposure_duration_ms": 275.88,
+          "base_episodes": 100,
+          "by_execution": {
+            "conservative": 0.06802198215024347,
+            "optimistic": 2.1048814061716445,
+            "standard": 1.4281685428756092
+          },
+          "completed_two_leg_positions": 64,
+          "cvar_05_loss": 4.013100065416857,
+          "invariant_violations": 0,
+          "losing_fraction": 0.24666666666666667,
+          "max_drawdown": 0.17041546311542818,
+          "mean_capital_utilization": 0.08554625,
+          "mean_inference_latency_ms": 0.0008570063593132157,
+          "mean_pnl": 1.2003573103991656,
+          "mean_pnl_episode_bootstrap_95": [
+            0.6345831143925168,
+            1.8160031486966797
+          ],
+          "mean_runtime_ms": 84.28678228228819,
+          "median_pnl": 0.0,
+          "no_trade_fraction": 0.42,
+          "partial_orders": 76,
+          "policy": "arbitrage",
+          "profitable_fraction": 0.3333333333333333,
+          "quantiles": [
+            -0.020000032569612112,
+            0.0,
+            0.0,
+            0.8999999368715753,
+            9.303559884665537
+          ],
+          "rank": 4,
+          "risk_interventions": 144,
+          "score": -2.812742755017692,
+          "total_pnl": 360.1071931197497,
+          "unmatched_exposure_incidents": 109,
+          "unsupported_decisions": 0,
+          "variants": 300,
+          "worst_loss": -10.953300129639553
+        },
+        {
+          "attempted_trades": 273,
+          "average_exposure_duration_ms": 275.88,
+          "base_episodes": 100,
+          "by_execution": {
+            "conservative": 0.06802198215024347,
+            "optimistic": 2.1048814061716445,
+            "standard": 1.4281685428756092
+          },
+          "completed_two_leg_positions": 64,
+          "cvar_05_loss": 4.013100065416857,
+          "invariant_violations": 0,
+          "losing_fraction": 0.24666666666666667,
+          "max_drawdown": 0.17041546311542818,
+          "mean_capital_utilization": 0.08554625,
+          "mean_inference_latency_ms": 0.32973229377863134,
+          "mean_pnl": 1.2003573103991656,
+          "mean_pnl_episode_bootstrap_95": [
+            0.6345831143925168,
+            1.8160031486966797
+          ],
+          "mean_runtime_ms": 85.47477805094483,
+          "median_pnl": 0.0,
+          "no_trade_fraction": 0.42,
+          "partial_orders": 76,
+          "policy": "cost-scope-7cd3b264b52c8cd8",
+          "profitable_fraction": 0.3333333333333333,
+          "quantiles": [
+            -0.020000032569612112,
+            0.0,
+            0.0,
+            0.8999999368715753,
+            9.303559884665537
+          ],
+          "rank": 4,
+          "risk_interventions": 99,
+          "score": -2.812742755017692,
+          "total_pnl": 360.1071931197497,
+          "unmatched_exposure_incidents": 109,
+          "unsupported_decisions": 31,
+          "variants": 300,
+          "worst_loss": -10.953300129639553
+        },
+        {
+          "attempted_trades": 237,
+          "average_exposure_duration_ms": 274.22,
+          "base_episodes": 100,
+          "by_execution": {
+            "conservative": 0.021199984728381027,
+            "optimistic": 1.910326914338854,
+            "standard": 1.2732049494760995
+          },
+          "completed_two_leg_positions": 58,
+          "cvar_05_loss": 4.013100065416857,
+          "invariant_violations": 0,
+          "losing_fraction": 0.24333333333333335,
+          "max_drawdown": 0.17041546311542818,
+          "mean_capital_utilization": 0.07881525,
+          "mean_inference_latency_ms": 0.3375272467244594,
+          "mean_pnl": 1.068243949514445,
+          "mean_pnl_episode_bootstrap_95": [
+            0.5235622575768936,
+            1.6926428429137343
+          ],
+          "mean_runtime_ms": 82.46591047616675,
+          "median_pnl": 0.0,
+          "no_trade_fraction": 0.48,
+          "partial_orders": 54,
+          "policy": "cost-quoted-7cd3b264b52c8cd8",
+          "profitable_fraction": 0.27666666666666667,
+          "quantiles": [
+            -0.020000032569612112,
+            0.0,
+            0.0,
+            0.20874997426109249,
+            9.303559884665537
+          ],
+          "rank": 6,
+          "risk_interventions": 81,
+          "score": -2.9448561159024127,
+          "total_pnl": 320.47318485433345,
+          "unmatched_exposure_incidents": 92,
+          "unsupported_decisions": 31,
+          "variants": 300,
+          "worst_loss": -10.953300129639553
+        },
+        {
+          "attempted_trades": 206,
+          "average_exposure_duration_ms": 274.8833333333333,
+          "base_episodes": 100,
+          "by_execution": {
+            "conservative": 0.030563983553869224,
+            "optimistic": 1.2007519347210038,
+            "standard": 1.2732049494760995
+          },
+          "completed_two_leg_positions": 46,
+          "cvar_05_loss": 4.013100065416857,
+          "invariant_violations": 0,
+          "losing_fraction": 0.23666666666666666,
+          "max_drawdown": 0.17041546311542818,
+          "mean_capital_utilization": 0.07303630000000001,
+          "mean_inference_latency_ms": 0.4647607743113656,
+          "mean_pnl": 0.8348402892503242,
+          "mean_pnl_episode_bootstrap_95": [
+            0.24188481579263857,
+            1.4290640475959955
+          ],
+          "mean_runtime_ms": 76.2106204314235,
+          "median_pnl": 0.0,
+          "no_trade_fraction": 0.52,
+          "partial_orders": 58,
+          "policy": "cost-forecast-7cd3b264b52c8cd8",
+          "profitable_fraction": 0.24333333333333335,
+          "quantiles": [
+            -0.020000032569612112,
+            0.0,
+            0.0,
+            0.0,
+            7.735599749562786
+          ],
+          "rank": 7,
+          "risk_interventions": 62,
+          "score": -3.1782597761665334,
+          "total_pnl": 250.45208677509726,
+          "unmatched_exposure_incidents": 82,
+          "unsupported_decisions": 25,
+          "variants": 300,
+          "worst_loss": -10.953300129639553
+        }
+      ],
+      "model_artifact_hashes": {
+        "model-a7f99c63bd4f4cd4b22c57c6": "88a2d60ba99b21c15317123836bc8183fad43b0a33586e77f1b86ea89c45208e"
+      },
+      "model_dataset_bindings": {
+        "model-a7f99c63bd4f4cd4b22c57c6": {
+          "dataset_id": "dataset-b5c3dbdac9284f292a949b65",
+          "label_target": "initial_position_friction_usd",
+          "observation_hash": "7d5f5e23f9e0b1ff17545205eed73b1f5a292a6b1e50c29482825eb3f0b75656",
+          "rows_sha256": "7f1857d470144c6a68d5ff2f5a3e480016514e3dccb4f47a990f79e881a20179",
+          "source_dataset_id": "dataset-b5c3dbdac9284f292a949b65"
+        }
+      },
+      "paired": [
+        {
+          "base_episodes": 100,
+          "bootstrap_95": [
+            0.6345831143925168,
+            1.8160031486966797
+          ],
+          "conclusion": "POSITIVE_SYNTHETIC_MEAN",
+          "control": "no_trade",
+          "mean_difference": 1.2003573103991654,
+          "policy": "arbitrage"
+        },
+        {
+          "base_episodes": 100,
+          "bootstrap_95": [
+            -0.4269520429520036,
+            0.45348026295943017
+          ],
+          "conclusion": "NO_CLEAR_MEAN_ADVANTAGE",
+          "control": "conservative",
+          "mean_difference": 0.0325085886841403,
+          "policy": "arbitrage"
+        },
+        {
+          "base_episodes": 100,
+          "bootstrap_95": [
+            0.02677991048074245,
+            0.2645890097574048
+          ],
+          "conclusion": "POSITIVE_SYNTHETIC_MEAN",
+          "control": "cost-quoted-7cd3b264b52c8cd8",
+          "mean_difference": 0.13211336088472073,
+          "policy": "arbitrage"
+        },
+        {
+          "base_episodes": 100,
+          "bootstrap_95": [
+            0.0,
+            0.0
+          ],
+          "conclusion": "NO_CLEAR_MEAN_ADVANTAGE",
+          "control": "cost-scope-7cd3b264b52c8cd8",
+          "mean_difference": 0.0,
+          "policy": "arbitrage"
+        },
+        {
+          "base_episodes": 100,
+          "bootstrap_95": [
+            0.8426915968840368,
+            1.505133301712652
+          ],
+          "conclusion": "POSITIVE_SYNTHETIC_MEAN",
+          "control": "no_trade",
+          "mean_difference": 1.1678487217150255,
+          "policy": "conservative"
+        },
+        {
+          "base_episodes": 100,
+          "bootstrap_95": [
+            -0.45348026295943067,
+            0.4269520429520034
+          ],
+          "conclusion": "NO_CLEAR_MEAN_ADVANTAGE",
+          "control": "arbitrage",
+          "mean_difference": -0.0325085886841403,
+          "policy": "conservative"
+        },
+        {
+          "base_episodes": 100,
+          "bootstrap_95": [
+            -0.3329100882480117,
+            0.5488915614380567
+          ],
+          "conclusion": "NO_CLEAR_MEAN_ADVANTAGE",
+          "control": "cost-quoted-7cd3b264b52c8cd8",
+          "mean_difference": 0.09960477220058042,
+          "policy": "conservative"
+        },
+        {
+          "base_episodes": 100,
+          "bootstrap_95": [
+            -0.45348026295943067,
+            0.4269520429520034
+          ],
+          "conclusion": "NO_CLEAR_MEAN_ADVANTAGE",
+          "control": "cost-scope-7cd3b264b52c8cd8",
+          "mean_difference": -0.0325085886841403,
+          "policy": "conservative"
+        },
+        {
+          "base_episodes": 100,
+          "bootstrap_95": [
+            0.24188481579263857,
+            1.4290640475959955
+          ],
+          "conclusion": "POSITIVE_SYNTHETIC_MEAN",
+          "control": "no_trade",
+          "mean_difference": 0.8348402892503242,
+          "policy": "cost-forecast-7cd3b264b52c8cd8"
+        },
+        {
+          "base_episodes": 100,
+          "bootstrap_95": [
+            -0.5209212201468177,
+            -0.21310805071180042
+          ],
+          "conclusion": "NO_CLEAR_MEAN_ADVANTAGE",
+          "control": "arbitrage",
+          "mean_difference": -0.36551702114884144,
+          "policy": "cost-forecast-7cd3b264b52c8cd8"
+        },
+        {
+          "base_episodes": 100,
+          "bootstrap_95": [
+            -0.7497542203603474,
+            0.07427301540778686
+          ],
+          "conclusion": "NO_CLEAR_MEAN_ADVANTAGE",
+          "control": "conservative",
+          "mean_difference": -0.3330084324647011,
+          "policy": "cost-forecast-7cd3b264b52c8cd8"
+        },
+        {
+          "base_episodes": 100,
+          "bootstrap_95": [
+            -0.3557208557640005,
+            -0.11477859813238331
+          ],
+          "conclusion": "NO_CLEAR_MEAN_ADVANTAGE",
+          "control": "cost-quoted-7cd3b264b52c8cd8",
+          "mean_difference": -0.23340366026412065,
+          "policy": "cost-forecast-7cd3b264b52c8cd8"
+        },
+        {
+          "base_episodes": 100,
+          "bootstrap_95": [
+            -0.5209212201468177,
+            -0.21310805071180042
+          ],
+          "conclusion": "NO_CLEAR_MEAN_ADVANTAGE",
+          "control": "cost-scope-7cd3b264b52c8cd8",
+          "mean_difference": -0.36551702114884144,
+          "policy": "cost-forecast-7cd3b264b52c8cd8"
+        },
+        {
+          "base_episodes": 100,
+          "bootstrap_95": [
+            0.5235622575768936,
+            1.6926428429137343
+          ],
+          "conclusion": "POSITIVE_SYNTHETIC_MEAN",
+          "control": "no_trade",
+          "mean_difference": 1.0682439495144447,
+          "policy": "cost-quoted-7cd3b264b52c8cd8"
+        },
+        {
+          "base_episodes": 100,
+          "bootstrap_95": [
+            -0.26458900975740485,
+            -0.02677991048074248
+          ],
+          "conclusion": "NO_CLEAR_MEAN_ADVANTAGE",
+          "control": "arbitrage",
+          "mean_difference": -0.13211336088472073,
+          "policy": "cost-quoted-7cd3b264b52c8cd8"
+        },
+        {
+          "base_episodes": 100,
+          "bootstrap_95": [
+            -0.5488915614380568,
+            0.3329100882480114
+          ],
+          "conclusion": "NO_CLEAR_MEAN_ADVANTAGE",
+          "control": "conservative",
+          "mean_difference": -0.09960477220058042,
+          "policy": "cost-quoted-7cd3b264b52c8cd8"
+        },
+        {
+          "base_episodes": 100,
+          "bootstrap_95": [
+            -0.26458900975740485,
+            -0.02677991048074248
+          ],
+          "conclusion": "NO_CLEAR_MEAN_ADVANTAGE",
+          "control": "cost-scope-7cd3b264b52c8cd8",
+          "mean_difference": -0.13211336088472073,
+          "policy": "cost-quoted-7cd3b264b52c8cd8"
+        },
+        {
+          "base_episodes": 100,
+          "bootstrap_95": [
+            0.6345831143925168,
+            1.8160031486966797
+          ],
+          "conclusion": "POSITIVE_SYNTHETIC_MEAN",
+          "control": "no_trade",
+          "mean_difference": 1.2003573103991654,
+          "policy": "cost-scope-7cd3b264b52c8cd8"
+        },
+        {
+          "base_episodes": 100,
+          "bootstrap_95": [
+            0.0,
+            0.0
+          ],
+          "conclusion": "NO_CLEAR_MEAN_ADVANTAGE",
+          "control": "arbitrage",
+          "mean_difference": 0.0,
+          "policy": "cost-scope-7cd3b264b52c8cd8"
+        },
+        {
+          "base_episodes": 100,
+          "bootstrap_95": [
+            -0.4269520429520036,
+            0.45348026295943017
+          ],
+          "conclusion": "NO_CLEAR_MEAN_ADVANTAGE",
+          "control": "conservative",
+          "mean_difference": 0.0325085886841403,
+          "policy": "cost-scope-7cd3b264b52c8cd8"
+        },
+        {
+          "base_episodes": 100,
+          "bootstrap_95": [
+            0.02677991048074245,
+            0.2645890097574048
+          ],
+          "conclusion": "POSITIVE_SYNTHETIC_MEAN",
+          "control": "cost-quoted-7cd3b264b52c8cd8",
+          "mean_difference": 0.13211336088472073,
+          "policy": "cost-scope-7cd3b264b52c8cd8"
+        },
+        {
+          "base_episodes": 100,
+          "bootstrap_95": [
+            0.5521130978756325,
+            1.341466062969529
+          ],
+          "conclusion": "POSITIVE_SYNTHETIC_MEAN",
+          "control": "no_trade",
+          "mean_difference": 0.9311353632221261,
+          "policy": "random"
+        },
+        {
+          "base_episodes": 100,
+          "bootstrap_95": [
+            -0.6331462166804784,
+            0.09825864579162774
+          ],
+          "conclusion": "NO_CLEAR_MEAN_ADVANTAGE",
+          "control": "arbitrage",
+          "mean_difference": -0.26922194717703946,
+          "policy": "random"
+        },
+        {
+          "base_episodes": 100,
+          "bootstrap_95": [
+            -0.5585276635214886,
+            0.06666221956413666
+          ],
+          "conclusion": "NO_CLEAR_MEAN_ADVANTAGE",
+          "control": "conservative",
+          "mean_difference": -0.23671335849289915,
+          "policy": "random"
+        },
+        {
+          "base_episodes": 100,
+          "bootstrap_95": [
+            -0.5237771993938594,
+            0.2630976738720748
+          ],
+          "conclusion": "NO_CLEAR_MEAN_ADVANTAGE",
+          "control": "cost-quoted-7cd3b264b52c8cd8",
+          "mean_difference": -0.13710858629231867,
+          "policy": "random"
+        },
+        {
+          "base_episodes": 100,
+          "bootstrap_95": [
+            -0.6331462166804784,
+            0.09825864579162774
+          ],
+          "conclusion": "NO_CLEAR_MEAN_ADVANTAGE",
+          "control": "cost-scope-7cd3b264b52c8cd8",
+          "mean_difference": -0.26922194717703946,
+          "policy": "random"
+        }
+      ],
+      "policy_bindings": {},
+      "provenance": "GENERATED",
+      "ranking_objective": "mean virtual P&L minus 1.0 times 5% tail loss; any invariant failure disqualifies",
+      "ranking_version": "episode-objective-ties-2",
+      "research_champion": null,
+      "research_leaders": [],
+      "rows_sha256": "99baf3d8f16b673d0ab69547eee6b433527f59c7f32bad614c9b7c09145da679",
+      "source_hash": "ed0d396a2f34bb3fb4f9562906212bea734da119270981b6571f0b9819a0587d",
+      "tournament_id": "tournament-25f2053c416249678c76a30b",
+      "uncertainty_note": "Bootstrap resamples base episodes with all execution variants grouped. Generated uncertainty does not establish real market generalization.",
+      "variants": 2100
     }
   ],
   "jobs": [
@@ -59962,6 +60868,7 @@
         "minimum_available_memory_mb": 2048,
         "wall_seconds": 1800
       },
+      "completed_at": 1791821699.5854695,
       "configuration": {
         "dataset": null,
         "director": null,
@@ -60024,6 +60931,7 @@
       "created_at": 1791821482.4099348,
       "elapsed_seconds": 215.58943863702007,
       "error": null,
+      "exit_status": 0,
       "job_id": "job-5d88ff57521f4fc0a13d77e7",
       "pid": 3599158,
       "progress": {
@@ -60044,9 +60952,7 @@
       "state": "COMPLETED",
       "submitted_source_hash": "c18fc3259a65b07d47186736a6bc36d54f932603417cd4b908490df42769cc10",
       "unit": "midas-arena-job-5d88ff57521f4fc0a13d77e7.service",
-      "updated_at": 1791821699.5854692,
-      "completed_at": 1791821699.5854695,
-      "exit_status": 0
+      "updated_at": 1791821699.5854692
     },
     {
       "active_artifact": {
@@ -60060,6 +60966,7 @@
         "minimum_available_memory_mb": 2048,
         "wall_seconds": 1800
       },
+      "completed_at": 1791821924.3262627,
       "configuration": {
         "dataset": null,
         "director": null,
@@ -60128,6 +61035,7 @@
       "created_at": 1791821708.9791014,
       "elapsed_seconds": 213.81017432099907,
       "error": null,
+      "exit_status": 0,
       "job_id": "job-739176fa2338460ca19c489a",
       "pid": 3605279,
       "progress": {
@@ -60148,9 +61056,7 @@
       "state": "COMPLETED",
       "submitted_source_hash": "c18fc3259a65b07d47186736a6bc36d54f932603417cd4b908490df42769cc10",
       "unit": "midas-arena-job-739176fa2338460ca19c489a.service",
-      "updated_at": 1791821924.3262625,
-      "completed_at": 1791821924.3262627,
-      "exit_status": 0
+      "updated_at": 1791821924.3262625
     },
     {
       "active_artifact": {
@@ -60164,6 +61070,7 @@
         "minimum_available_memory_mb": 2048,
         "wall_seconds": 1800
       },
+      "completed_at": 1791822255.9247649,
       "configuration": {
         "dataset": null,
         "director": null,
@@ -60226,6 +61133,7 @@
       "created_at": 1791822039.9210234,
       "elapsed_seconds": 214.39313521399163,
       "error": null,
+      "exit_status": 0,
       "job_id": "job-5d49c24feb9e4c9d84f740f1",
       "pid": 3614050,
       "progress": {
@@ -60246,9 +61154,7 @@
       "state": "COMPLETED",
       "submitted_source_hash": "c18fc3259a65b07d47186736a6bc36d54f932603417cd4b908490df42769cc10",
       "unit": "midas-arena-job-5d49c24feb9e4c9d84f740f1.service",
-      "updated_at": 1791822255.9247649,
-      "completed_at": 1791822255.9247649,
-      "exit_status": 0
+      "updated_at": 1791822255.9247649
     },
     {
       "active_artifact": {
@@ -61511,6 +62417,124 @@
       "submitted_source_hash": "2e5894ddfb4c9a91cd1b5fce480642b5e1da1d02adaf0e08632859c5d11289a4",
       "unit": "midas-arena-job-da6bdb876a154d0f8c6d829c.service",
       "updated_at": 1791842388.1725633
+    },
+    {
+      "active_artifact": {
+        "identity": "tournament-25f2053c416249678c76a30b",
+        "kind": "tournaments"
+      },
+      "budget": {
+        "cpu_cores": 1,
+        "max_artifact_mb": 1024,
+        "memory_mb": 4096,
+        "minimum_available_memory_mb": 2048,
+        "wall_seconds": 1800
+      },
+      "completed_at": 1791843952.7426164,
+      "configuration": {
+        "cost": null,
+        "dataset": null,
+        "director": null,
+        "kind": "tournament",
+        "max_wall_seconds": 1800,
+        "model_id": null,
+        "policy_search": null,
+        "recovery": null,
+        "rl": null,
+        "severity": null,
+        "sweep": null,
+        "tournament": {
+          "adversarial": false,
+          "challenge": {
+            "costs": {
+              "annual_financing_rate": "0.05",
+              "assumptions": [
+                "Costs are user estimates, not observed charges",
+                "No automatic complete-set merge",
+                "Resolution and spendable proceeds are separated by configured delay",
+                "No empirically calibrated fill probability or queue priority"
+              ],
+              "collateral_route_verified": false,
+              "collateral_value_factor": "1",
+              "operating_per_fill": "0.01",
+              "redemption_cost": "0.02",
+              "version": "explicit-costs-1"
+            },
+            "decision_scope": "first_admitted",
+            "episodes": 100,
+            "execution_models": [
+              "optimistic",
+              "standard",
+              "conservative"
+            ],
+            "families": [
+              "thin",
+              "deep",
+              "calm",
+              "liquidity_shock",
+              "volatile",
+              "one_sided",
+              "fees"
+            ],
+            "label_target": "completion",
+            "observation_latency_ms": 100,
+            "retain_execution_costs": true,
+            "seed": 313071,
+            "split_seed": 1977,
+            "version": "synthetic-decision-1"
+          },
+          "cost_gates": [
+            {
+              "margin_usd": "0.10",
+              "max_cost_usd": "0.30",
+              "model_id": "model-a7f99c63bd4f4cd4b22c57c6"
+            }
+          ],
+          "dataset_id": "dataset-b5c3dbdac9284f292a949b65",
+          "economic_regime": null,
+          "execution_models": [
+            "optimistic",
+            "standard",
+            "conservative"
+          ],
+          "gates": [],
+          "max_episodes": 100,
+          "minimum_champion_episodes": 2000,
+          "model_ids": [],
+          "partition": "test",
+          "purpose": "research",
+          "seed": 991,
+          "tail_loss_weight": 1.0,
+          "threshold": 0.5,
+          "unsupported_input_policy": "abstain"
+        },
+        "training": null
+      },
+      "created_at": 1791843402.6530032,
+      "elapsed_seconds": 548.5767858810141,
+      "error": null,
+      "exit_status": 0,
+      "job_id": "job-e142c688d30a423cad5931aa",
+      "pid": 4138192,
+      "progress": {
+        "done": 2100,
+        "total": 2100
+      },
+      "result": {
+        "tournament_id": "tournament-25f2053c416249678c76a30b"
+      },
+      "runtime_profile": {
+        "artifact_bytes": 734136126,
+        "artifact_files": 51107,
+        "artifact_scan_seconds": 327.80538644606713,
+        "artifact_scans": 2102,
+        "progress_publish_seconds": 17.361533000366762
+      },
+      "started_at": 1791843404.1659412,
+      "state": "COMPLETED",
+      "submitted_source_hash": "ed0d396a2f34bb3fb4f9562906212bea734da119270981b6571f0b9819a0587d",
+      "unit": "midas-arena-job-e142c688d30a423cad5931aa.service",
+      "updated_at": 1791843952.7426162
     }
   ],
   "provenance": "SYNTHETIC / HYPOTHETICAL / ECONOMICALLY UNVERIFIED",

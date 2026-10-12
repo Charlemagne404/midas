@@ -1,0 +1,97 @@
+{
+  "job_id": "job-e142c688d30a423cad5931aa",
+  "configuration": {
+    "kind": "tournament",
+    "dataset": null,
+    "training": null,
+    "severity": null,
+    "cost": null,
+    "recovery": null,
+    "model_id": null,
+    "rl": null,
+    "tournament": {
+      "purpose": "research",
+      "dataset_id": "dataset-b5c3dbdac9284f292a949b65",
+      "model_ids": [],
+      "gates": [],
+      "cost_gates": [
+        {
+          "model_id": "model-a7f99c63bd4f4cd4b22c57c6",
+          "max_cost_usd": "0.30",
+          "margin_usd": "0.10"
+        }
+      ],
+      "execution_models": [
+        "optimistic",
+        "standard",
+        "conservative"
+      ],
+      "max_episodes": 100,
+      "threshold": 0.5,
+      "tail_loss_weight": 1.0,
+      "seed": 991,
+      "adversarial": false,
+      "minimum_champion_episodes": 2000,
+      "challenge": {
+        "version": "synthetic-decision-1",
+        "episodes": 100,
+        "seed": 313071,
+        "split_seed": 1977,
+        "families": [
+          "thin",
+          "deep",
+          "calm",
+          "liquidity_shock",
+          "volatile",
+          "one_sided",
+          "fees"
+        ],
+        "execution_models": [
+          "optimistic",
+          "standard",
+          "conservative"
+        ],
+        "observation_latency_ms": 100,
+        "label_target": "completion",
+        "decision_scope": "first_admitted",
+        "retain_execution_costs": true,
+        "costs": {
+          "version": "explicit-costs-1",
+          "operating_per_fill": "0.01",
+          "redemption_cost": "0.02",
+          "annual_financing_rate": "0.05",
+          "collateral_value_factor": "1",
+          "collateral_route_verified": false,
+          "assumptions": [
+            "Costs are user estimates, not observed charges",
+            "No automatic complete-set merge",
+            "Resolution and spendable proceeds are separated by configured delay",
+            "No empirically calibrated fill probability or queue priority"
+          ]
+        }
+      },
+      "partition": "test",
+      "unsupported_input_policy": "abstain",
+      "economic_regime": null
+    },
+    "sweep": null,
+    "director": null,
+    "policy_search": null,
+    "max_wall_seconds": 1800
+  },
+  "state": "QUEUED",
+  "created_at": 1791843402.6530032,
+  "updated_at": 1791843402.6530032,
+  "progress": null,
+  "error": null,
+  "result": null,
+  "unit": "midas-arena-job-e142c688d30a423cad5931aa.service",
+  "submitted_source_hash": "ed0d396a2f34bb3fb4f9562906212bea734da119270981b6571f0b9819a0587d",
+  "budget": {
+    "cpu_cores": 1,
+    "memory_mb": 4096,
+    "wall_seconds": 1800,
+    "minimum_available_memory_mb": 2048,
+    "max_artifact_mb": 1024
+  }
+}

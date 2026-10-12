@@ -1852,3 +1852,61 @@ and Ruff passed. Production preregistration: seed313071,100 fresh groups, three
 execution assumptions, seven policies /2100 correlated variants, cap0.30 and
 buffer0.10 virtual USD. Selected cost-model weights are unchanged. Champion
 minimum2000 source groups prevents promotion. Full regression remains pending.
+
+### Matched cost-policy result: negative policy-value evidence
+
+Production job job-e142c688d30a423cad5931aa completed tournament
+tournament-25f2053c416249678c76a30b: 100 fresh source groups, seven policies,
+three execution assumptions, 2,100 correlated variants. No model weights,
+thresholds or buffers were changed after this challenge. No champion promoted.
+
+Forecast-minus-quoted mean P&L was -0.233404 virtual USD, source-group bootstrap
+95% interval [-0.369196,-0.112098]. Forecast-minus-scope was -0.365517,
+interval [-0.541842,-0.205898]. Forecast mean was 0.834840 but its 5% tail loss
+was 4.013100, unchanged from both controls; mean-minus-tail score -3.178260.
+No-trade score zero ranked highest. Improved held-out friction prediction did
+not translate into policy benefit under this fixed preference and challenge.
+This does not establish that every possible cost-aware policy fails.
+
+Read-only verification checked all 2,100 saved financial/journal hashes and
+matched scenario coverage, reconstructed 1,908 cost decisions from saved public
+observations and predecision inventory, and checked 716 requests. Inference
+recomputation reuses the frozen implementation; this is not an independent
+broker reexecution or observed economic evidence. Paired analysis independently
+rechecks hashes and keeps execution variants within source-group resampling.
+
+At the 12.5-hour checkpoint, native inventory is 43 model artifacts (42 fitted
+and one heuristic), six datasets, 23 tournaments /42,123 correlated variants,
+and one separate 540-variant recovery study. All 57 research jobs are terminal:
+53 completed, two cancelled, two failed. Seven models have opened final tests.
+The API is READY and dashboard HTTP200. Fresh protected archive quick_check is
+ok with 162,000 results /18,000 groups /162,000 distinct IDs. Full current-source
+regression continues; latest completed full gate remains 404 passed/one skip.
+Whole-scope engineering estimate is approximately 65-70% complete, 30-35%
+remaining, with substantial uncertainty; this is an engineering judgment, not
+a percentage of validated scientific hypotheses or real-market readiness.
+
+Full matched cost-policy source regression completed: 408 passed, one PostgreSQL
+skip, one existing Starlette warning in516.57 seconds. Two new investigation-tool
+tests passed in0.27 seconds afterward; Ruff and formatting pass. No Arena or financial package source
+changes occurred during production or full regression. The exporter now includes
+cost verification/investigation tools in cost-policy bundles.
+
+Post-challenge accounting attribution independently reconciles all900 cost-role
+variant ledgers with reported net P&L. All three roles have identical aggregate
+residual-position P&L -51.9315 virtual USD and nine losing residual variants.
+Forecast matched-position gains total307.1936 versus quoted377.9147 and
+scope418.44871. Explicit costs total4.810013 versus5.510015 and6.410017.
+Thus this filter removed matched gains while retaining residual losses.
+Forecast abstained while scope requested in60 variants (42 distinct source
+groups):27 positive scope outcomes and three negative. Requested actions are
+not fills; conditional categories overlap groups and are descriptive only.
+The native finding is finding-cost-policy-313071. Verified reports are preserved
+under the tournament's analyses directory and included in its final bundle.
+
+Final bundle60c2c91515b62f02f97d12542d3e0cfdd8211ef521eae5f9bb71d6679a97abb3
+verified2,186 payloads including native finding, paired/decision/attribution
+reports and analysis tools. API overview exposes43 models,23 tournaments,
+57 terminal jobs and46 findings. Actual production browser inspection found the
+new finding in Research Findings with zero page errors. All research workers and
+the full regression process are terminal. Proceed to joint-gate research design.

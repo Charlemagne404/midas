@@ -1,5 +1,40 @@
 # MIDAS — PROMETHEUS OVERNIGHT BRIEFING
 
+## Latest checkpoint — fixed cost gate fails policy-value challenge
+
+The selected cost model's held-out prediction advantage did not translate to
+better decisions. Fresh seed313071 challenge: 100 source groups, seven policies,
+three execution assumptions /2,100 correlated variants. Forecast-minus-quoted
+mean P&L -0.233404, grouped 95% interval [-0.369196,-0.112098]; forecast-minus-scope
+-0.365517, interval [-0.541842,-0.205898]. All three cost policies have sampled
+tail loss4.013100; no-trade has the highest downside score. No champion promoted.
+
+Accounting decomposition shows identical aggregate residual-position P&L
+-51.9315 virtual USD across all three cost roles. Forecast filtering removed
+matched-leg gains. It abstained while scope requested in60 variants:27 positive
+scope outcomes and three negative. This is descriptive post-challenge analysis,
+not causal proof or threshold fitting. Worst forecast loss -10.953300 includes
+-10.923300 residual-position P&L and0.030000 estimated operating/financing costs.
+
+All2,100 saved replays and1,908 observed-input preferences verified. Tournament
+bundle SHA05d424323ac07f029e289a29d619700c6194c93d42a3d5b185a90a25a7292858
+verified2,177 payloads. Inventory43 artifacts /42 fitted, six datasets,
+23 tournaments /42,123 correlated variants; separate540-variant recovery study.
+All57 research jobs terminal. API READY, dashboard responds, protected archive
+quick_check/counts pass. Current full regression continues; do not treat pending
+results as passed. Latest completed full gate remains404 passed/one skip.
+
+Next: finish evidence checkpoint and test gate; preregister fresh joint completion,
+exposure and friction research. Do not retune the opened challenge. Prometheus
+remains active, with approximately30-35% of the broad engineering scope remaining.
+
+Final checkpoint update: full source regression408 passed/one PostgreSQL skip,
+existing warning in516.57 seconds; two additional investigation tests pass.
+Published finding is visible in the live Research Findings tab with no browser
+page errors. Final bundle includes analyses, finding and reproduction tools:
+SHA60c2c91515b62f02f97d12542d3e0cfdd8211ef521eae5f9bb71d6679a97abb3,
+2,186 payloads independently checksummed. No research workers remain active.
+
 ## Latest checkpoint — corrected financing and held-out cost evaluation
 
 Version-two cost labels include broker pending allocation reserves. Twenty

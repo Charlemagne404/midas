@@ -91,6 +91,10 @@ def test_real_cost_tournament_has_matching_scope_controls_and_replays(prepared):
     directory = root / "tournaments" / report["tournament_id"]
     rows = json.loads((directory / "rows.json").read_text())
     assert len(rows) == 3 * 3 * 7 and len(report["cost_policy_bindings"]) == 3
+    from scripts.verify_cost_policy import verify
+
+    assert verify(root, report["tournament_id"])["replays_verified"] == 63
+
     forecast = gate.identity("forecast")
     quoted = gate.identity("quoted")
     scope = gate.identity("scope")

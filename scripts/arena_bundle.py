@@ -335,6 +335,15 @@ def export_experiment(root: Path, kind: str, identity: str, output: Path) -> dic
         extras["ARENA_MISSING_LEG_RECOVERY.md"] = (
             Path(__file__).resolve().parents[1] / "docs/ARENA_MISSING_LEG_RECOVERY.md"
         )
+    if kind == "tournaments" and director.get("cost_policy_bindings"):
+        for tool in (
+            "verify_cost_policy.py",
+            "analyze_cost_policy_losses.py",
+            "attribute_arena_losses.py",
+            "capture_public_series.py",
+            "compare_policies.py",
+        ):
+            extras["TOOLS/" + tool] = Path(__file__).resolve().parent / tool
     return write_bundle(root, files, extras, reference_key, identity, output)
 
 
