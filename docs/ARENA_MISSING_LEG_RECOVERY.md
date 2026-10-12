@@ -52,3 +52,16 @@ bounded comparison and displays persisted mean, downside score, worst outcome,
 actual recovery requests, filled shares and grouped uncertainty. Findings keep
 execution caveats visible. Overlap with registered datasets or opened studies
 is rejected.
+
+## Saved evidence verification and export
+
+Run `.venv/bin/python scripts/verify_recovery.py RECOVERY_ID --output report.json`
+to check every saved core and journal hash, complete matched coverage, actual
+orders against residual/price/reservation bounds, equal initial order ledgers,
+leaderboard arithmetic and the source-group bootstrap interval. This audits saved
+evidence; it does not independently reexecute every broker transition.
+
+Export a completed study with `.venv/bin/python scripts/arena_bundle.py --recovery
+RECOVERY_ID --output /path/to/new-bundle.tar.gz`. The exporter first verifies the
+study, then includes replays, findings, captured worker source and checksummed
+payloads. It refuses to overwrite an existing bundle.

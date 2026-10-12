@@ -158,6 +158,37 @@ def test_matched_study_preserves_all_policy_replays_and_grouped_uncertainty(tmp_
     assert all(
         read_replay(directory / "replays" / (r["id"] + ".json"))["result"]["passed"] for r in rows
     )
+    from scripts.verify_recovery import verify
+
+    verified = verify(tmp_path, report["recovery_id"])
+    assert verified["verified_replays"] == 270 and verified["source_groups"] == 30
+    import hashlib
+    import tarfile
+
+    from scripts.arena_bundle import export_recovery
+
+    bundle = tmp_path / "recovery-bundle.tar.gz"
+    export_recovery(tmp_path, report["recovery_id"], bundle)
+    with tarfile.open(bundle) as archive:
+        index = json.load(archive.extractfile("BUNDLE_MANIFEST.json"))
+        assert index["recovery_id"] == report["recovery_id"]
+        assert "TOOLS/verify_recovery.py" in index["files"]
+        for name, expected in index["files"].items():
+            assert hashlib.sha256(archive.extractfile(name).read()).hexdigest() == expected
+    with pytest.raises(ValueError, match="overwrite"):
+        export_recovery(tmp_path, report["recovery_id"], bundle)
+    original_rows = (directory / "rows.json").read_bytes()
+    (directory / "rows.json").write_bytes(original_rows + b" ")
+    with pytest.raises(ValueError, match="Rows hash"):
+        verify(tmp_path, report["recovery_id"])
+    (directory / "rows.json").write_bytes(original_rows)
+    original_manifest = (directory / "manifest.json").read_text()
+    altered = json.loads(original_manifest)
+    altered["group_bootstrap_95"] = [99, 100]
+    (directory / "manifest.json").write_text(json.dumps(altered))
+    with pytest.raises(ValueError, match="Grouped comparison"):
+        verify(tmp_path, report["recovery_id"])
+    (directory / "manifest.json").write_text(original_manifest)
     with pytest.raises(ValueError, match="overlap"):
         run_study(tmp_path, RecoveryStudySpec(episodes=30, seed=233071))
 

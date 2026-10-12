@@ -76,3 +76,14 @@ The API holds the exclusive Laboratory writer lease. Do not run a CLI campaign w
 The pre-repair data snapshot is stored at an operator-managed recovery location. Its manifest records file hashes and successful SQLite integrity checks. The repaired campaign remains in `data/laboratory-final/laboratory.sqlite` under its original ID.
 
 A second SQLite-consistent snapshot was taken after campaign completion and before the reliability changes.
+
+## Recording capacity during Prometheus
+
+Continuous demo recordings exhausted the original 100 MB append budget on
+2026-10-12. A user-service drop-in at
+`~/.config/systemd/user/midas-api.service.d/recording-budget.conf` now sets
+`MIDAS_RECORDING_MAX_BYTES=1000000000` (1 GB). Existing JSONL recordings were
+preserved. Disk headroom was 210 GB at the change; API health returned READY
+through the original service. This remains a hard cap. Monitor `du -sh
+data/recordings` and rotate preserved recordings explicitly before the new cap
+is reached; this change does not implement automatic archival or retention.

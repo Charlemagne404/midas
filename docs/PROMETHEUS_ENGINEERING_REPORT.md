@@ -1632,3 +1632,42 @@ Preregistered production study: 60 fresh groups at seed 223071, seven families,
 three execution assumptions, no-trade/hold/missing-leg policies, 540 correlated
 variants. Default extra reservation at most five virtual units, price ceiling
 0.75; no outcome changes these settings. Production launch follows validation.
+
+### Recovery launch and recording capacity repair
+
+The production study initially could not launch because `/api/health` reported
+DEGRADED. Continuous demo recording reached its original 100,000,000-byte cap;
+broker checkpoint and Laboratory readiness remained verified. With 210 GB disk
+headroom, a user-service drop-in now sets MIDAS_RECORDING_MAX_BYTES=1000000000.
+No recording was removed or rewritten. The existing API service restarted and
+returned READY. This is a bounded capacity increase, not an automatic retention
+policy; durable rotation remains operational work.
+
+Job job-959e16cb6fc54fcf89a76691 launched with the exact preregistered source and
+configuration, supervised at one CPU, 4 GB, 1800 seconds. Its native source capture
+preserves the implementation. New independent saved-evidence verification checks
+matched coverage, proposal/order bounds, initial ledgers and grouped uncertainty;
+its focused 30-group test passed and detects rows/interval tampering. Recovery
+bundle export is now supported without requiring a fictitious training dataset.
+
+### Verified recovery result
+
+All 540 saved variants / 60 source groups passed the independent evidence audit.
+Three recovery orders filled 27.52 total shares. One reduced a losing held position
+(-6.336 to -2.4398); two sacrificed settlement gains (8.04 to 4.4364 and 8.064 to
+3.0684). Mean paired recovery-minus-hold -0.026128, grouped interval [-0.109388,
+0.043332]. Tail loss fell from 1.904333 to 1.471422; downside score improved from
+-0.426472 to -0.019689 but remained below no-trade zero. Only three actual attempts
+provide narrow recovery coverage; this does not establish a mean benefit or broad
+robustness. The fixed configuration was not adjusted after results opened.
+
+External export SHA 5052b9f60a79c3fdfe3c081978ccf945c8ecb1a8ddec16b4636a23f4135853af
+verified 608 payload hashes. Native API endpoint returned the same recovery ID;
+worker MainPID zero/inactive, API READY. Archive quick_check, 162000 rows / 18000
+groups and exclusive owner lease passed after the service restart. No archive
+rewrite or new training occurred. Full source regression evidence remains the
+388-test gate; a focused verifier/export regression gate is recorded separately.
+
+Focused recovery/verifier/bundle/search/director/tournament regression gate: 28
+passed in 74.34 seconds. Ruff passed. Package source remained frozen throughout
+the production job and this evidence checkpoint.

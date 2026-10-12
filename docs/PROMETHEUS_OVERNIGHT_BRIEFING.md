@@ -1,5 +1,33 @@
 # MIDAS — PROMETHEUS OVERNIGHT BRIEFING
 
+## Latest checkpoint — bounded recovery study completed
+
+Recovery study `recovery-97a43fc8d0ed46e7b01f10c5` completed 60 fresh source
+groups, three execution assumptions and three policies (540 correlated variants).
+Every saved replay, paired scenario, initial order ledger, bounded recovery order,
+leaderboard and grouped bootstrap interval was verified. Three variants attempted
+recovery, all filled, totaling 27.52 shares. One reduced loss; two sacrificed gains.
+
+Mean recovery-minus-hold: -0.026128 virtual units; grouped 95% interval
+[-0.109388, +0.043332]. Hold mean/tail/score: 1.477861/1.904333/-0.426472.
+Recovery: 1.451733/1.471422/-0.019689. Worst loss improved from -6.336 to -5.568,
+but no-trade still scored zero. No promotion or mean-benefit claim is supported.
+The policy only attempts a missing-leg buy from unused original allocation; sell
+or unwind execution is unfinished. These are synthetic hypothetical outcomes.
+
+The external bundle verified all 608 payload hashes, including worker source,
+replays and findings. Source and model inventories remain 25 model artifacts,
+24 fitted, four datasets, 22 tournaments/40,023 correlated variants. Recovery is
+listed separately. No research worker remains active. API health is READY after
+a bounded recording-cap increase from 100 MB to 1 GB; all recordings were kept.
+Protected archive quick_check, counts and exclusive ownership passed again.
+
+Next: inspect broader recovery eligibility and independently preregister any
+further comparison; implement sell-ledger semantics before claiming unwind;
+continue execution-cost prediction, feature ablations and durable research
+scheduling. The full Prometheus objective remains active.
+
+
 ## Current checkpoint (supersedes running-job notes below)
 
 ### Independent persistence policy evidence completed

@@ -1,5 +1,5 @@
 {
-  "checked_at": 1791826670.0302284,
+  "checked_at": 1791837736.8014357,
   "models": [
     {
       "artifact_sha256": "a1ddf5a19d6cb1ad942ce8fc1cc3d63ec2e2f6ddf5dfc8fc46eb052be777e565",
@@ -50167,5 +50167,70 @@
     }
   ],
   "provenance": "SYNTHETIC / HYPOTHETICAL / ECONOMICALLY UNVERIFIED",
-  "evaluation_identity_note": "Eleven research tournaments plus one performance replay. Repeated validation leagues and the performance replay reuse existing base episode identities; no additional independent observations arise from their variant counts. The completion derivative shares all 645 eligible groups with its unmatched parent."
+  "evaluation_identity_note": "Eleven research tournaments plus one performance replay. Repeated validation leagues and the performance replay reuse existing base episode identities; no additional independent observations arise from their variant counts. The completion derivative shares all 645 eligible groups with its unmatched parent.",
+  "recoveries": [
+    {
+      "configuration": {
+        "episodes": 60,
+        "recovery": {
+          "max_additional_capital": "5",
+          "max_price": "0.75",
+          "policy": "complete_missing"
+        },
+        "seed": 223071
+      },
+      "correlated_variants": 540,
+      "created_at": 1791837675.6046233,
+      "group_bootstrap_95": [
+        -0.10938777777777776,
+        0.04333174999999979
+      ],
+      "leaderboard": [
+        {
+          "cvar_05_loss": 0,
+          "mean_pnl": 0.0,
+          "policy": "no_trade",
+          "recovery_filled_shares": "0",
+          "recovery_requests": 0,
+          "score": 0.0,
+          "worst_pnl": 0.0
+        },
+        {
+          "cvar_05_loss": 1.9043333333333332,
+          "mean_pnl": 1.477861111111111,
+          "policy": "hold",
+          "recovery_filled_shares": "0",
+          "recovery_requests": 0,
+          "score": -0.42647222222222214,
+          "worst_pnl": -6.336
+        },
+        {
+          "cvar_05_loss": 1.4714222222222222,
+          "mean_pnl": 1.4517333333333333,
+          "policy": "complete_missing",
+          "recovery_filled_shares": "27.52",
+          "recovery_requests": 3,
+          "score": -0.019688888888888867,
+          "worst_pnl": -5.568
+        }
+      ],
+      "limitations": [
+        "One initial risk-admitted position; no subsequent new-position strategy",
+        "One observed missing-leg recovery decision at most; no selling or external capital",
+        "Unknown acknowledgments, stale books, loss/exposure cutoffs can force holding",
+        "Recovery orders experience the same latency, liquidity fraction, adverse ticks, fee formula and settlement constraints as initial orders",
+        "Recovery can lower realized profit when held inventory would have won; no realized loss guarantee",
+        "Observed quote depth does not guarantee future execution",
+        "Research runner normalizes adverse-fill consumption to unadjusted venue prices; legacy broker and archive bytes remain unchanged",
+        "Synthetic hypothetical results; execution variants remain correlated within source groups"
+      ],
+      "paired_recovery_minus_hold_mean": -0.026127777777777767,
+      "recovery_id": "recovery-97a43fc8d0ed46e7b01f10c5",
+      "rows_sha256": "fd4a13c9edca211e43a23e988d168d9c3e35469b9a266fc5846de15bf6d29e54",
+      "runner_version": "bounded-missing-leg-1",
+      "source_groups": 60,
+      "source_hash": "fa042d7f34126daca2620c9bc116ad4251e4a05ae08488749c821f72deb84bd0",
+      "state": "COMPLETED"
+    }
+  ]
 }

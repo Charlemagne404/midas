@@ -8,29 +8,29 @@
   "arena_research_tournaments": 21,
   "arena_source_datasets": 3,
   "arena_tournaments": 22,
-  "checked_at": 1791826670.0707617,
+  "checked_at": 1791837736.7918918,
   "dataset_quality": [
     "Identical observable vectors occur across partitions. Independent scenario IDs do not guarantee covariate diversity; inspect repeated synthetic grids.",
     "Some scenario families contain one settlement seed parity only. The current generator uses seed parity for settlement; reorder families and shift seeds before making generalization claims.",
     "Execution completion is partly mechanically determined by hypothetical liquidity and adverse-tick settings. High prediction accuracy can reflect simulator assumptions."
   ],
   "health": {
-    "laboratory": {
-      "recovering_campaigns": [],
-      "recovery_errors": [],
-      "root": "/home/charlie/midas/data/laboratory-final",
-      "status": "READY"
-    },
-    "live_execution": false,
-    "mode": "demo",
-    "paper_recovery": {
-      "journal_events": 44294,
-      "revision": 44293,
-      "status": "CHECKPOINT_VERIFIED"
-    },
-    "startup_error": null,
+    "status": "READY",
     "startup_status": "READY",
-    "status": "READY"
+    "startup_error": null,
+    "mode": "demo",
+    "live_execution": false,
+    "paper_recovery": {
+      "status": "CHECKPOINT_VERIFIED",
+      "journal_events": 45442,
+      "revision": 45441
+    },
+    "laboratory": {
+      "status": "READY",
+      "root": "/home/charlie/midas/data/laboratory-final",
+      "recovering_campaigns": [],
+      "recovery_errors": []
+    }
   },
   "latest_diagnostic_jobs": [
     "job-e0a34b52cb934607a16d0609",
@@ -95,5 +95,7 @@
       "provenance": "RECORDED_PUBLIC",
       "valid": true
     }
-  ]
+  ],
+  "arena_recovery_studies": 1,
+  "arena_recovery_variants": 540
 }

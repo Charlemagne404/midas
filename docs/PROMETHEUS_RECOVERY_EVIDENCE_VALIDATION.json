@@ -1,0 +1,18 @@
+{
+  "checked_at": 1791837817.0220523,
+  "focused_tests": {
+    "passed": 28,
+    "duration_seconds": 74.34,
+    "files": [
+      "tests/arena/test_recovery.py",
+      "tests/arena/test_research_tools.py",
+      "tests/arena/test_search_evidence.py",
+      "tests/arena/test_adaptive_bundle.py",
+      "tests/arena/test_tournaments.py"
+    ]
+  },
+  "ruff": "passed",
+  "full_source_regression": "Prior committed 388 passed / 1 skipped gate; package source unchanged in this evidence checkpoint",
+  "research_state": "COMPLETED",
+  "active_workers": 0
+}

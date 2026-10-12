@@ -1,0 +1,13 @@
+{
+  "checked_at": 1791837761.4928634,
+  "archive_quick_check": "ok",
+  "archive_counts": [
+    162000,
+    18000,
+    162000
+  ],
+  "exclusive_owner": true,
+  "recording_budget_bytes": 1000000000,
+  "recordings_preserved": true,
+  "note": "Counts and quick_check; earlier logical SHA audit is retained separately"
+}

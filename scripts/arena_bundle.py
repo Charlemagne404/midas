@@ -29,6 +29,13 @@ def export_search(root: Path, search_id: str, output: Path) -> dict[str, Any]:
     return export_experiment(root, "searches", search_id, output)
 
 
+def export_recovery(root: Path, identity: str, output: Path) -> dict[str, Any]:
+    from scripts.verify_recovery import verify
+
+    verify(root, identity)
+    return export_experiment(root, "recoveries", identity, output)
+
+
 def export_sweep(root: Path, sweep_id: str, output: Path) -> dict[str, Any]:
     return export_experiment(root, "sweeps", sweep_id, output)
 
@@ -155,6 +162,11 @@ def export_experiment(root: Path, kind: str, identity: str, output: Path) -> dic
             for key in ("validation_tournament", "test_tournament")
         ]
         reference_key = "search_id"
+    elif kind == "recoveries":
+        configuration = director["configuration"]
+        model_ids = set()
+        steps = []
+        reference_key = "recovery_id"
     elif kind == "sweeps":
         configuration = director["configuration"]
         if any(t["state"] != "COMPLETED" or not t.get("model_id") for t in director["trials"]):
@@ -201,16 +213,17 @@ def export_experiment(root: Path, kind: str, identity: str, output: Path) -> dic
         ):
             raise ValueError("Model training dataset provenance changed")
         paths.update(dataset_paths(root, model["dataset_id"]))
-    dataset = artifact_path(root, "datasets", configuration["dataset_id"])
-    dataset_manifest = json.loads((dataset / "manifest.json").read_text())
-    if sha256(dataset / "rows.json") != dataset_manifest["rows_sha256"]:
-        raise ValueError("Referenced dataset rows have changed")
-    if (
-        director.get("dataset_sha256", dataset_manifest["rows_sha256"])
-        != dataset_manifest["rows_sha256"]
-    ):
-        raise ValueError("Director dataset provenance differs from referenced dataset")
-    paths.update(dataset_paths(root, dataset.name))
+    if kind != "recoveries":
+        dataset = artifact_path(root, "datasets", configuration["dataset_id"])
+        dataset_manifest = json.loads((dataset / "manifest.json").read_text())
+        if sha256(dataset / "rows.json") != dataset_manifest["rows_sha256"]:
+            raise ValueError("Referenced dataset rows have changed")
+        if (
+            director.get("dataset_sha256", dataset_manifest["rows_sha256"])
+            != dataset_manifest["rows_sha256"]
+        ):
+            raise ValueError("Director dataset provenance differs from referenced dataset")
+        paths.update(dataset_paths(root, dataset.name))
     owned_jobs = {step.get("job_id") for step in steps} if adaptive else set()
     for job_file in root.glob("jobs/*/job.json"):
         job = json.loads(job_file.read_text())
@@ -232,6 +245,12 @@ def export_experiment(root: Path, kind: str, identity: str, output: Path) -> dic
                     or job["submitted_source_hash"] != director["source_hash"]
                 ):
                     raise ValueError("Adaptive child job differs from completed stage")
+            if kind == "recoveries" and (
+                job["state"] != "COMPLETED"
+                or job["configuration"]["recovery"] != director["configuration"]
+                or job["submitted_source_hash"] != director["source_hash"]
+            ):
+                raise ValueError("Recovery worker differs from completed study")
             source_manifest = json.loads((job_file.parent / "source-manifest.json").read_text())
             for relative, expected in source_manifest["files"].items():
                 relative_path = Path(relative)
@@ -265,6 +284,11 @@ def export_experiment(root: Path, kind: str, identity: str, output: Path) -> dic
         "ARENA_REPRODUCIBILITY.md": Path(__file__).resolve().parents[1]
         / "docs/ARENA_REPRODUCIBILITY.md",
     }
+    if kind == "recoveries":
+        extras["TOOLS/verify_recovery.py"] = Path(__file__).resolve().parent / "verify_recovery.py"
+        extras["ARENA_MISSING_LEG_RECOVERY.md"] = (
+            Path(__file__).resolve().parents[1] / "docs/ARENA_MISSING_LEG_RECOVERY.md"
+        )
     record: dict[str, Any] = {
         "bundle_version": "arena-experiment-3",
         reference_key: identity,
@@ -338,6 +362,7 @@ if __name__ == "__main__":
     experiment.add_argument("--search")
     experiment.add_argument("--tournament")
     experiment.add_argument("--sweep")
+    experiment.add_argument("--recovery")
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     result = (
@@ -347,6 +372,8 @@ if __name__ == "__main__":
         if args.search
         else export_sweep(args.root, args.sweep, args.output)
         if args.sweep
+        else export_recovery(args.root, args.recovery, args.output)
+        if args.recovery
         else export_tournament(args.root, args.tournament, args.output)
     )
     print(json.dumps(result, indent=2))

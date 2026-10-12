@@ -1,0 +1,13 @@
+{
+  "recovery_id": "recovery-97a43fc8d0ed46e7b01f10c5",
+  "verified_replays": 540,
+  "source_groups": 60,
+  "actual_requests": 3,
+  "variants_with_recovery_fills": 3,
+  "paired_mean": -0.026127777777777767,
+  "group_bootstrap_95": [
+    -0.10938777777777776,
+    0.04333174999999979
+  ],
+  "scope": "Saved hashes, matched coverage, bounded proposals/orders, metrics and grouped uncertainty; does not independently replay the broker"
+}

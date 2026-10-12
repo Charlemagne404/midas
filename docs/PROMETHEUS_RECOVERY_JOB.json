@@ -1,0 +1,40 @@
+{
+  "job_id": "job-959e16cb6fc54fcf89a76691",
+  "configuration": {
+    "kind": "recovery",
+    "dataset": null,
+    "training": null,
+    "severity": null,
+    "recovery": {
+      "episodes": 60,
+      "seed": 223071,
+      "recovery": {
+        "policy": "complete_missing",
+        "max_additional_capital": "5",
+        "max_price": "0.75"
+      }
+    },
+    "model_id": null,
+    "rl": null,
+    "tournament": null,
+    "sweep": null,
+    "director": null,
+    "policy_search": null,
+    "max_wall_seconds": 1800
+  },
+  "state": "QUEUED",
+  "created_at": 1791837561.0794015,
+  "updated_at": 1791837561.0794017,
+  "progress": null,
+  "error": null,
+  "result": null,
+  "unit": "midas-arena-job-959e16cb6fc54fcf89a76691.service",
+  "submitted_source_hash": "fa042d7f34126daca2620c9bc116ad4251e4a05ae08488749c821f72deb84bd0",
+  "budget": {
+    "cpu_cores": 1,
+    "memory_mb": 4096,
+    "wall_seconds": 1800,
+    "minimum_available_memory_mb": 2048,
+    "max_artifact_mb": 1024
+  }
+}
