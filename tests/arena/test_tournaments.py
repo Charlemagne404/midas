@@ -10,7 +10,10 @@ from midas.arena.tournaments import TournamentSpec, run_tournament, summaries
 def test_tournament_pairing_and_persisted_replay(tmp_path):
     dataset = build(tmp_path, DatasetSpec(episodes=60))
     report = run_tournament(
-        tmp_path, TournamentSpec(dataset_id=dataset["dataset_id"], max_episodes=2)
+        tmp_path,
+        TournamentSpec(
+            dataset_id=dataset["dataset_id"], max_episodes=2, purpose="performance_replay"
+        ),
     )
     directory = tmp_path / "tournaments" / report["tournament_id"]
     rows = json.loads((directory / "rows.json").read_text())
@@ -30,6 +33,9 @@ def test_tournament_pairing_and_persisted_replay(tmp_path):
     assert all(r["passed"] for r in rows)
     assert next(r for r in report["leaderboard"] if r["policy"] == "no_trade")["mean_pnl"] == 0
     assert report["base_episodes"] == 2
+    assert report["evaluation_design"] == "PERFORMANCE_REPLAY"
+    assert report["research_champion"] is None
+    assert not report["research_leaders"]
     for row in rows:
         saved = read_replay(directory / "replays" / f"{row['id']}.json")
         assert saved["result"]["result_hash"] == row["result_hash"]

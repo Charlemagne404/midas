@@ -1,0 +1,71 @@
+{
+  "checked_at": 1791791319.520277,
+  "root": "/home/charlie/midas/data/arena",
+  "measurements": [
+    {
+      "method": "pathlib",
+      "bytes": 360183322,
+      "files": 25866,
+      "seconds": 0.21837882796535268
+    },
+    {
+      "method": "scandir",
+      "bytes": 360236229,
+      "files": 25867,
+      "seconds": 0.07286513596773148
+    },
+    {
+      "method": "scandir",
+      "bytes": 360236229,
+      "files": 25867,
+      "seconds": 0.07277216797228903
+    },
+    {
+      "method": "pathlib",
+      "bytes": 360236229,
+      "files": 25867,
+      "seconds": 0.21848248998867348
+    },
+    {
+      "method": "pathlib",
+      "bytes": 360236229,
+      "files": 25867,
+      "seconds": 0.2144902820000425
+    },
+    {
+      "method": "scandir",
+      "bytes": 360276402,
+      "files": 25868,
+      "seconds": 0.07268055895110592
+    },
+    {
+      "method": "scandir",
+      "bytes": 360276402,
+      "files": 25868,
+      "seconds": 0.07405090203974396
+    },
+    {
+      "method": "pathlib",
+      "bytes": 360276402,
+      "files": 25868,
+      "seconds": 0.216546744981315
+    },
+    {
+      "method": "pathlib",
+      "bytes": 360276402,
+      "files": 25868,
+      "seconds": 0.21898293099366128
+    },
+    {
+      "method": "scandir",
+      "bytes": 360276402,
+      "files": 25868,
+      "seconds": 0.07340842898702249
+    }
+  ],
+  "median_seconds": {
+    "pathlib": 0.21837882796535268,
+    "scandir": 0.07286513596773148
+  },
+  "scope": "Current-tree read-only scan benchmark, not a measured whole-job speedup. Active writers can change totals between scans; correctness parity must be checked on a quiescent fixture."
+}

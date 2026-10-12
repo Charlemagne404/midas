@@ -34,6 +34,7 @@ class GateSpec(Model):
 
 
 class TournamentSpec(Model):
+    purpose: Literal["research", "performance_replay"] = "research"
     dataset_id: str
     model_ids: tuple[str, ...] = ()
     gates: tuple[GateSpec, ...] = Field(default=(), max_length=12)
@@ -500,6 +501,13 @@ def run_tournament(root: Path, spec: TournamentSpec, progress: Any = None) -> di
             research_leaders=[],
             conclusion="Validation comparison for policy selection; independent evaluation is still required.",
         )
+    if spec.purpose == "performance_replay":
+        report.update(
+            evaluation_design="PERFORMANCE_REPLAY",
+            research_champion=None,
+            research_leaders=[],
+            conclusion="Saved-specification replay for performance measurement; no new independent research evidence.",
+        )
     atomic_json(directory / "manifest.json", report)
     publish_findings(root, report)
     for model_id in referenced_models:
@@ -535,7 +543,9 @@ def publish_findings(root: Path, report: dict[str, Any]) -> dict[str, Any]:
     identity = "finding-" + digest([report["tournament_id"], "downside-objective-1"])[:24]
     finding = {
         "finding_id": identity,
-        "title": "Validation policy comparison completed"
+        "title": "Performance replay completed"
+        if report.get("evaluation_design") == "PERFORMANCE_REPLAY"
+        else "Validation policy comparison completed"
         if report.get("evaluation_design") == "VALIDATION"
         else "No trading candidate clears the downside objective"
         if not (report.get("research_leaders") or report["research_champion"])

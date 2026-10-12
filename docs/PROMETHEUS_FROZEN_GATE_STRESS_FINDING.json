@@ -1,0 +1,127 @@
+{
+  "finding_id": "finding-6b9227ecd27b4c54620c6350",
+  "title": "Frozen risk gate retains downside advantage in one adverse-sequence test",
+  "created_at": 1791801042.7067022,
+  "tournament_id": "tournament-aa1e3d4241f044daa4eaff30",
+  "input_row_hash": "0711c022011bd3db5c25bce3148f5d6d224502875e209799cd04258e618ea8b7",
+  "interpretation": "On 100 new synthetic adverse-sequence groups, the unchanged 0.10/full gate scored +0.569284 with no final losses. Arbitrage scored +0.050455 and conservative -1.814215. The gate had lower mean P&L than arbitrage; the benefit is the declared downside objective in this sample.",
+  "uncertainty": [
+    {
+      "base_episodes": 100,
+      "bootstrap_95": [
+        0.4633091666666667,
+        1.193703191666666
+      ],
+      "conclusion": "POSITIVE_SYNTHETIC_MEAN",
+      "control": "no_trade",
+      "mean_difference": 0.8017883333333333,
+      "policy": "arbitrage"
+    },
+    {
+      "base_episodes": 100,
+      "bootstrap_95": [
+        -0.20566427499999995,
+        0.4306771916666666
+      ],
+      "conclusion": "NO_CLEAR_MEAN_ADVANTAGE",
+      "control": "conservative",
+      "mean_difference": 0.11594366666666672,
+      "policy": "arbitrage"
+    },
+    {
+      "base_episodes": 100,
+      "bootstrap_95": [
+        0.38759321666666663,
+        0.9731270416666666
+      ],
+      "conclusion": "POSITIVE_SYNTHETIC_MEAN",
+      "control": "no_trade",
+      "mean_difference": 0.6858446666666665,
+      "policy": "conservative"
+    },
+    {
+      "base_episodes": 100,
+      "bootstrap_95": [
+        -0.43067719166666674,
+        0.20566427499999992
+      ],
+      "conclusion": "NO_CLEAR_MEAN_ADVANTAGE",
+      "control": "arbitrage",
+      "mean_difference": -0.11594366666666672,
+      "policy": "conservative"
+    },
+    {
+      "base_episodes": 100,
+      "bootstrap_95": [
+        0.33078328333333334,
+        0.809128033333333
+      ],
+      "conclusion": "POSITIVE_SYNTHETIC_MEAN",
+      "control": "no_trade",
+      "mean_difference": 0.569284,
+      "policy": "gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "base_episodes": 100,
+      "bootstrap_95": [
+        -0.59613125,
+        -0.0019421416666666842
+      ],
+      "conclusion": "NO_CLEAR_MEAN_ADVANTAGE",
+      "control": "arbitrage",
+      "mean_difference": -0.23250433333333337,
+      "policy": "gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "base_episodes": 100,
+      "bootstrap_95": [
+        -0.4324787416666666,
+        0.19678292499999978
+      ],
+      "conclusion": "NO_CLEAR_MEAN_ADVANTAGE",
+      "control": "conservative",
+      "mean_difference": -0.11656066666666665,
+      "policy": "gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "base_episodes": 100,
+      "bootstrap_95": [
+        0.1728434166666666,
+        0.6902221333333333
+      ],
+      "conclusion": "POSITIVE_SYNTHETIC_MEAN",
+      "control": "no_trade",
+      "mean_difference": 0.41157666666666665,
+      "policy": "random"
+    },
+    {
+      "base_episodes": 100,
+      "bootstrap_95": [
+        -0.6461104583333334,
+        -0.13081380000000015
+      ],
+      "conclusion": "NO_CLEAR_MEAN_ADVANTAGE",
+      "control": "arbitrage",
+      "mean_difference": -0.39021166666666673,
+      "policy": "random"
+    },
+    {
+      "base_episodes": 100,
+      "bootstrap_95": [
+        -0.4918833749999999,
+        -0.0820887416666667
+      ],
+      "conclusion": "NO_CLEAR_MEAN_ADVANTAGE",
+      "control": "conservative",
+      "mean_difference": -0.27426799999999996,
+      "policy": "random"
+    }
+  ],
+  "caveats": [
+    "Hypothetical fills and generated timing/fault sequences, not real execution calibration.",
+    "Zero losses in 300 correlated execution variants is not a zero-loss guarantee; there are 100 source groups.",
+    "Marked drawdown reached 12.62%; pre-trade risk stops do not enforce a guaranteed drawdown ceiling.",
+    "The two positive test blocks remain samples from the same generator, not real-market validation."
+  ],
+  "next_experiment": "Test additional cost/latency/liquidity regimes with the gate frozen; investigate proposal-level severity and recovery without tuning on opened tests."
+}

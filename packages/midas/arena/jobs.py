@@ -156,6 +156,28 @@ class Cancelled(Exception):
     pass
 
 
+def artifact_usage(root: Path) -> tuple[int, int]:
+    """Count logical file bytes without following directory symlinks or caching totals."""
+    total = count = 0
+    pending = [str(root)]
+    while pending:
+        directory = pending.pop()
+        try:
+            with os.scandir(directory) as entries:
+                for entry in entries:
+                    try:
+                        if entry.is_dir(follow_symlinks=False):
+                            pending.append(entry.path)
+                        elif entry.is_file():
+                            total += entry.stat().st_size
+                            count += 1
+                    except FileNotFoundError:
+                        continue
+        except FileNotFoundError:
+            continue
+    return total, count
+
+
 def run(root: Path, identity: str) -> None:
     directory = artifact_path(root, "jobs", identity)
     with (directory / "execution.lock").open("a+") as lease:
@@ -176,6 +198,13 @@ def _run(root: Path, identity: str) -> None:
     began = time.monotonic()
     stop = False
     signalled = False
+    overhead: dict[str, float | int] = {
+        "artifact_scan_seconds": 0.0,
+        "progress_publish_seconds": 0.0,
+        "artifact_scans": 0,
+        "artifact_files": 0,
+        "artifact_bytes": 0,
+    }
 
     def stopped(signum: int, frame: Any) -> None:
         nonlocal stop
@@ -200,22 +229,22 @@ def _run(root: Path, identity: str) -> None:
         )
         if available < 2048 * 1024:
             raise RuntimeError("Host memory pressure: less than 2 GiB available")
-        total_bytes = 0
-        for path in root.rglob("*"):
-            try:
-                if path.is_file():
-                    total_bytes += path.stat().st_size
-            except FileNotFoundError:
-                # Immutable replays can be losslessly compressed while a job runs.
-                continue
+        scan_began = time.perf_counter()
+        total_bytes, file_count = artifact_usage(root)
+        overhead["artifact_scan_seconds"] += time.perf_counter() - scan_began
+        overhead["artifact_scans"] += 1
+        overhead.update(artifact_files=file_count, artifact_bytes=total_bytes)
         if total_bytes > 1024**3:
             raise RuntimeError("Arena artifact budget exceeded 1 GiB; evidence retained")
         record.update(
             progress={"done": done, "total": total},
             updated_at=time.time(),
             elapsed_seconds=time.monotonic() - began,
+            runtime_profile=dict(overhead),
         )
+        write_began = time.perf_counter()
         atomic_json(directory / "job.json", record)
+        overhead["progress_publish_seconds"] += time.perf_counter() - write_began
 
     root.mkdir(parents=True, exist_ok=True)
 
@@ -320,6 +349,7 @@ def _run(root: Path, identity: str) -> None:
             record.update(state="FAILED", error=f"{type(error).__name__}: {error}", exit_status=1)
         finally:
             record.update(
+                runtime_profile=dict(overhead),
                 updated_at=time.time(),
                 completed_at=time.time(),
                 elapsed_seconds=time.monotonic() - began,

@@ -1,0 +1,8 @@
+{
+  "checked_at": 1791800980.5605643,
+  "path": "/home/charlie/midas-prometheus-bundles/frozen-gate-stress-aa1e3d4241f044daa4eaff30.tar.gz",
+  "files_verified": 1570,
+  "sha256": "717568d07e451d0271280e6e0a0f55e28e101066416888f9f58a6d7fb78dc39d",
+  "verified": true,
+  "scope": "Retained stress evidence bytes; not empirical execution or clean-machine retraining."
+}

@@ -13,7 +13,8 @@ import time
 from pathlib import Path
 from typing import Any
 
-from midas.arena.artifacts import artifact_path, sha256
+from midas.arena.artifacts import artifact_path, read_replay, sha256
+from midas.economics.attestation import digest
 
 
 def export(root: Path, director_id: str, output: Path) -> dict[str, Any]:
@@ -27,24 +28,53 @@ def export_search(root: Path, search_id: str, output: Path) -> dict[str, Any]:
     return export_experiment(root, "searches", search_id, output)
 
 
+def export_tournament(root: Path, identity: str, output: Path) -> dict[str, Any]:
+    directory = artifact_path(root, "tournaments", identity)
+    manifest = json.loads((directory / "manifest.json").read_text())
+    if sha256(directory / "rows.json") != manifest["rows_sha256"]:
+        raise ValueError("Tournament rows changed")
+    rows = json.loads((directory / "rows.json").read_text())
+    if len(rows) != manifest["variants"]:
+        raise ValueError("Tournament is incomplete")
+    for row in rows:
+        replay = read_replay(directory / "replays" / f"{row['id']}.json")
+        result = replay["result"]
+        core = {
+            k: v
+            for k, v in result.items()
+            if k not in {"result_hash", "journal_hash", "journal", "runtime"}
+        }
+        if (
+            replay["row"] != row
+            or digest(core) != row["result_hash"]
+            or digest(result["journal"]) != result["journal_hash"]
+        ):
+            raise ValueError("Tournament replay integrity failed")
+    return export_experiment(root, "tournaments", identity, output)
+
+
 def export_experiment(root: Path, kind: str, identity: str, output: Path) -> dict[str, Any]:
     root = root.resolve()
     directory = artifact_path(root, kind, identity)
     director = json.loads((directory / "manifest.json").read_text())
-    if director["state"] != "COMPLETED":
+    if director.get("state", "COMPLETED" if kind == "tournaments" else None) != "COMPLETED":
         raise ValueError("Only completed plans can be exported as complete experiment bundles")
     paths = set(directory.rglob("*"))
     if kind == "directors":
         model_ids = set(director["configuration"]["incumbent_model_ids"])
         steps = director["steps"]
         reference_key = "director_id"
-    else:
+    elif kind == "searches":
         model_ids = {director["configuration"]["model_id"]}
         steps = [
             {"state": "COMPLETED", "artifact": {"kind": "tournaments", "identity": director[key]}}
             for key in ("validation_tournament", "test_tournament")
         ]
         reference_key = "search_id"
+    else:
+        model_ids = set(director["model_artifact_hashes"])
+        steps = [{"state": "COMPLETED", "artifact": {"kind": "tournaments", "identity": identity}}]
+        reference_key = "tournament_id"
     for step in steps:
         if step["state"] != "COMPLETED":
             raise ValueError("Director contains an incomplete stage")
@@ -180,11 +210,14 @@ if __name__ == "__main__":
     experiment = parser.add_mutually_exclusive_group(required=True)
     experiment.add_argument("--director")
     experiment.add_argument("--search")
+    experiment.add_argument("--tournament")
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     result = (
         export(args.root, args.director, args.output)
         if args.director
         else export_search(args.root, args.search, args.output)
+        if args.search
+        else export_tournament(args.root, args.tournament, args.output)
     )
     print(json.dumps(result, indent=2))

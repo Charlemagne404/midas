@@ -44,6 +44,18 @@ def test_stale_source_is_not_silently_executed(tmp_path):
     assert "source changed" in result["error"]
 
 
+def test_artifact_cap_still_stops_worker_and_retains_scan_profile(tmp_path):
+    job = create(tmp_path, JobSpec(kind="dataset", dataset=DatasetSpec(episodes=30)), launch=False)
+    with (tmp_path / "oversized-sparse-artifact").open("wb") as artifact:
+        artifact.truncate(1024**3 + 1)
+    result = worker(tmp_path, job["job_id"])
+    assert result["state"] == "FAILED"
+    assert "artifact budget exceeded" in result["error"]
+    assert result["runtime_profile"]["artifact_scans"] >= 1
+    assert result["runtime_profile"]["artifact_bytes"] > 1024**3
+    assert result["runtime_profile"]["artifact_scan_seconds"] >= 0
+
+
 def test_missing_supervisor_process_is_interrupted_not_complete(tmp_path, monkeypatch):
     job = create(tmp_path, JobSpec(kind="dataset", dataset=DatasetSpec(episodes=30)), launch=False)
     monkeypatch.setattr(

@@ -884,3 +884,48 @@ export the stress evidence without replacing earlier bundles. Then instrument
 budget/progress I/O overhead and develop correctly accounted proposal-severity/
 recovery experiments. No broader profitability or guaranteed safety claim follows
 from these synthetic studies. The full Prometheus goal remains ACTIVE.
+
+## Worker overhead profiling checkpoint
+
+During the frozen stress campaign, a read-only artifact-size benchmark compared
+existing `Path.rglob`/per-file stat checks with an iterative `os.scandir` walk.
+Five alternating-order measurements gave medians 0.21838 seconds versus 0.07287
+seconds on the current tree. Active writes can change totals between scans;
+correctness parity was tested on a quiescent fixture including regular files,
+file symlinks, skipped directory symlinks and broken links. The fixture test
+passes, as do Ruff/mypy. `PROMETHEUS_BUDGET_SCAN_PROFILE.json` preserves actual
+measurements. This does not yet establish a whole-job speedup or assign the
+previous runtime residual to a single cause. The active worker remains unchanged.
+
+## Audited stress result and measured scan optimization
+
+Stress `tournament-aa1e3d4241f044daa4eaff30` completed 1500 matched variants over
+100 new groups in 503.995 seconds, exit 0, no invariant failures. The fixed
+0.10/full gate scored +0.569284, with mean interval [0.33078328, 0.80912803],
+no final losing variants and marked drawdown 12.62%. Arbitrage scored +0.050455;
+conservative -1.814215. The gate's paired mean difference versus arbitrage was
+-0.23250433 with interval [-0.59613125, -0.00194214], so the lower mean return
+must not be described as an improvement. It retains the declared downside
+advantage in this sample, with all synthetic/uncalibrated limitations intact.
+
+The full read-only audit verified 23,004 replay variants, 14 model artifacts and
+two datasets. The standalone stress bundle's 1570 file entries verify, SHA256
+`717568d07e451d0271280e6e0a0f55e28e101066416888f9f58a6d7fb78dc39d`.
+A linked finding and fixed-path cost report preserve the conclusion and caveats.
+
+After the stress worker became terminal, artifact budget scans switched to the
+benchmarked iterative scandir walk. There is no cached byte total or reduced
+check cadence: every progress callback still checks cancellation/signals, wall
+budget, available memory and the complete logical artifact-byte total. Job records
+now retain cumulative artifact-scan/progress-publication timing counters. Tests
+prove scanner parity and that a sparse over-budget artifact still stops a real
+worker with FAILED state and retained timing evidence. Full regression passed
+294 tests / one PostgreSQL skip in 303.14 seconds, one existing Starlette warning.
+Subsequent focused gates cover explicit performance-replay metadata and direct
+standalone tournament export.
+
+A saved-specification performance replay will compare end-to-end time and all
+financial/journal hashes with the original stress run. Its design is explicitly
+PERFORMANCE_REPLAY: it cannot count as new independent evidence or designate a
+champion. Scanner measurements alone do not establish whole-job speedup; the
+new worker counters and repeat will provide that evidence.

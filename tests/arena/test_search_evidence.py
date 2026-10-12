@@ -6,7 +6,7 @@ import pytest
 from midas.arena.artifacts import atomic_json, atomic_replay, sha256
 from midas.economics.attestation import digest
 
-from scripts.arena_bundle import export_search
+from scripts.arena_bundle import export_search, export_tournament
 from scripts.verify_policy_search import verify_search
 
 
@@ -64,12 +64,14 @@ def fixture_search(root):
         atomic_json(
             directory / "manifest.json",
             {
+                "model_artifact_hashes": {"model": weight},
                 "variants": len(rows),
                 "rows_sha256": sha256(directory / "rows.json"),
                 "source_hash": "source",
                 "dataset_sha256": data_hash,
                 "policy_bindings": bound,
                 "configuration": {
+                    "dataset_id": "dataset",
                     "partition": "validation" if stage == "validation" else "test",
                     "seed": 991,
                     "tail_loss_weight": 1,
@@ -137,3 +139,13 @@ def test_search_export_refuses_missing_replays(tmp_path):
     with pytest.raises(FileNotFoundError):
         export_search(tmp_path, "search", tmp_path / "broken.tar.gz")
     assert not (tmp_path / "broken.tar.gz").exists()
+
+
+def test_standalone_tournament_export_preserves_replay_evidence(tmp_path):
+    fixture_search(tmp_path)
+    output = tmp_path / "tournament.tar.gz"
+    record = export_tournament(tmp_path, "test", output)
+    assert record["tournament_id"] == "test"
+    with tarfile.open(output) as archive:
+        manifest = json.load(archive.extractfile("BUNDLE_MANIFEST.json"))
+        assert "tournaments/test/replays/0.json.gz" in manifest["files"]

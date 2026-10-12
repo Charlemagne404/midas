@@ -1,5 +1,5 @@
 {
-  "checked_at": 1791785712.7705646,
+  "checked_at": 1791800425.7380517,
   "root": "/home/charlie/midas/data/arena",
   "datasets": [
     {
@@ -133,10 +133,31 @@
       "verified": true
     },
     {
+      "tournament_id": "tournament-74386f79d51b4f68b4fd2020",
+      "variants": 5004,
+      "base_episodes": 139,
+      "rows_sha256": "3889b4e92b02cf5b84bd781055018d70b659ade19f28df9003f4ee309b815d88",
+      "verified": true
+    },
+    {
       "tournament_id": "tournament-8129ac44cebf4c198b5e3a97",
       "variants": 2100,
       "base_episodes": 100,
       "rows_sha256": "00391db830ea745d97bef77376f91cb227ca82416c016850c08d30e43f1f8055",
+      "verified": true
+    },
+    {
+      "tournament_id": "tournament-aa1e3d4241f044daa4eaff30",
+      "variants": 1500,
+      "base_episodes": 100,
+      "rows_sha256": "0711c022011bd3db5c25bce3148f5d6d224502875e209799cd04258e618ea8b7",
+      "verified": true
+    },
+    {
+      "tournament_id": "tournament-be94f3ab8512499ab68db300",
+      "variants": 1500,
+      "base_episodes": 100,
+      "rows_sha256": "ee7e66f801e43201ae90a91cf252f006c2199cfb61509ff6de30f286470a6038",
       "verified": true
     },
     {
