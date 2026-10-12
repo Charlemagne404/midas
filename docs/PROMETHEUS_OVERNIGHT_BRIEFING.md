@@ -2,6 +2,27 @@
 
 ## Current checkpoint (supersedes running-job notes below)
 
+### Latest economic-rerun checkpoint
+
+The selected severity ridge completed one held-out test on 82 groups: RMSE 3.186
+shares versus zero 3.485, but MAE 1.509 versus zero 0.874. Selection/weights stay
+frozen; no policy promotion follows. The pre-test bundle reproduces the original
+selection after evaluation. Neural severity tests remain unopened.
+
+Economic reruns are now implemented before execution, with native UI controls
+and exact scenario-transformation/replay verification. Full tests: 324 passed,
+one skip; seven frontend tests and build/typecheck/lint pass. API is READY after
+verified snapshot restoration. Source is committed as `c9d2341`.
+
+**Running/queued:** four 1500-variant conditions (baseline, half depth, +200 ms
+submission latency, hypothetical fee coefficient 0.01). They reuse the same 100
+fresh source groups starting seed 133071, so 6000 correlated variants are not
+6000 independent samples. Each is bounded to 30 minutes / one CPU / 4 GiB, with
+serialized worker ownership. View/cancel in Arena; job IDs and units are in
+`PROMETHEUS_ECONOMIC_RERUN_JOBS.json`. Keep Python source frozen until terminal.
+This supersedes no-active-job notes below. The full Prometheus goal stays active.
+
+
 ### Latest severity checkpoint
 
 Three real residual-share regressors completed, including two PyTorch fits of

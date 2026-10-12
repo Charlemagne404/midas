@@ -1224,3 +1224,18 @@ policy and weights stay fixed; this experiment performs no tuning or promotion.
 
 Final full rerun passed 324 tests / one PostgreSQL skip / one existing warning
 in 374.68 seconds. All current economic source is frozen for launch.
+
+Economic source committed as `c9d2341`. API restored a verified 34686-event
+paper snapshot and is READY. Four bounded jobs are admitted and inspected under
+user systemd; one serialized research worker is active at a time.
+- additional_200ms: `job-750f79877bd943fea3feccfc`, RUNNING, {'done': 671, 'total': 1500}, unit `midas-arena-job-750f79877bd943fea3feccfc.service`.
+- baseline: `job-881058f3ba194aaf89780a6b`, QUEUED, {'done': 0, 'total': 1}, unit `midas-arena-job-881058f3ba194aaf89780a6b.service`.
+- fee_coefficient_001: `job-b239042b57814feb95a04563`, QUEUED, {'done': 0, 'total': 1}, unit `midas-arena-job-b239042b57814feb95a04563.service`.
+- half_depth: `job-85004834f3a746ec941d4401`, QUEUED, {'done': 0, 'total': 1}, unit `midas-arena-job-85004834f3a746ec941d4401.service`.
+Each has CPUQuota 100%, MemoryMax 4 GiB and 1800-second wall bound, plus
+1 GiB artifact and host-memory pressure guards. View/cancel in Arena or POST
+`/api/arena/jobs/ID/cancel`; logs use `journalctl --user -u UNIT`. Keep all Arena
+Python source frozen until terminal. After baseline and each condition complete,
+run `scripts/compare_arena.py --control BASELINE --candidate CONDITION`, export
+verified replay bundles, and interpret all four conditions as the same 100
+source groups. No results or economic robustness are claimed while they run.
