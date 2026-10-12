@@ -58,6 +58,7 @@ type Metrics = {
 type Dataset = {
   dataset_id: string;
   label_target?: string;
+  execution_cost_label?: string;
   decision_scope?: string;
   rows: number;
   eligible_base_episodes: number;
@@ -76,6 +77,7 @@ type Dataset = {
 type Model = {
   task?: string;
   loss_definition?: string;
+  quoted_baseline_definition?: string;
   baselines_validation?: Record<string, Metrics>;
   independent_policy_evaluations?: number;
   validation_policy_comparisons?: number;
@@ -125,6 +127,9 @@ type Model = {
   };
 };
 const isSeverity = (model: Model | undefined) => model?.task === 'residual_severity_regression';
+const isCost = (model: Model | undefined) => model?.task === 'execution_cost_regression';
+const isRegression = (model: Model | undefined) => isSeverity(model) || isCost(model);
+const regressionUnits = (model: Model | undefined) => (isCost(model) ? 'virtual USD' : 'shares');
 type Job = {
   job_id: string;
   state: string;
@@ -470,29 +475,41 @@ export function Arena() {
             learning_rate: learningRate,
           },
         }
-      : family === 'ridge' || family === 'severity_mlp'
+      : family === 'cost_ridge' || family === 'cost_mlp'
         ? {
-            kind: 'severity',
-            severity: {
+            kind: 'cost',
+            cost: {
               dataset_id: selectedDataset,
-              family,
+              family: family === 'cost_ridge' ? 'ridge' : 'cost_mlp',
               epochs,
               hidden_size: hiddenSize,
               learning_rate: learningRate,
               seed,
             },
           }
-        : {
-            kind: 'supervised',
-            training: {
-              dataset_id: selectedDataset,
-              family,
-              epochs,
-              hidden_size: hiddenSize,
-              learning_rate: learningRate,
-              seed,
-            },
-          };
+        : family === 'ridge' || family === 'severity_mlp'
+          ? {
+              kind: 'severity',
+              severity: {
+                dataset_id: selectedDataset,
+                family,
+                epochs,
+                hidden_size: hiddenSize,
+                learning_rate: learningRate,
+                seed,
+              },
+            }
+          : {
+              kind: 'supervised',
+              training: {
+                dataset_id: selectedDataset,
+                family,
+                epochs,
+                hidden_size: hiddenSize,
+                learning_rate: learningRate,
+                seed,
+              },
+            };
   const running = data?.jobs.filter((job) => ['RUNNING', 'QUEUED'].includes(job.state)) ?? [];
   if (overview.isPending)
     return (
@@ -699,7 +716,10 @@ export function Arena() {
                   {!data?.datasets.length && <option value="">Build a dataset first</option>}
                   {data?.datasets.map((entry) => (
                     <option key={entry.dataset_id} value={entry.dataset_id}>
-                      {entry.dataset_id} · {entry.label_target ?? 'completion'}
+                      {entry.dataset_id} ·{' '}
+                      {entry.execution_cost_label
+                        ? 'execution costs available'
+                        : (entry.label_target ?? 'completion')}
                     </option>
                   ))}
                 </select>
@@ -722,6 +742,8 @@ export function Arena() {
                     'ppo',
                     'ridge',
                     'severity_mlp',
+                    'cost_ridge',
+                    'cost_mlp',
                   ].map((name) => (
                     <option key={name}>{name}</option>
                   ))}
@@ -811,6 +833,7 @@ export function Arena() {
                 >
                   <option value="completion">Both legs fully complete</option>
                   <option value="unmatched">Residual unmatched inventory</option>
+                  <option value="cost">Execution cost (virtual USD)</option>
                   <option value="persistence">Original quote persists to first arrival</option>
                 </select>
               </label>
@@ -833,7 +856,17 @@ export function Arena() {
                       dataset: {
                         episodes,
                         seed: 42070,
-                        label_target: labelTarget,
+                        label_target: labelTarget === 'cost' ? 'completion' : labelTarget,
+                        retain_execution_costs: labelTarget === 'cost',
+                        ...(labelTarget === 'cost'
+                          ? {
+                              costs: {
+                                operating_per_fill: '0.01',
+                                redemption_cost: '0.02',
+                                annual_financing_rate: '0.05',
+                              },
+                            }
+                          : {}),
                         decision_scope: labelTarget !== 'completion' ? 'first_admitted' : 'initial',
                       },
                     },
@@ -846,6 +879,8 @@ export function Arena() {
             <p className="lab-note">
               Generated market behavior and simulated target labels. No real execution probability
               is inferred.
+              {labelTarget === 'cost' &&
+                ' First admitted position; operating estimate 0.01 virtual USD per fill, redemption 0.02 per settled position, annual financing rate 0.05. Settlement gains/losses and principal are excluded.'}
               {labelTarget === 'unmatched' &&
                 ' Samples the first risk-admitted proposal, including later opportunities while the portfolio is still empty.'}
               {labelTarget === 'persistence' &&
@@ -951,12 +986,16 @@ export function Arena() {
                         <State value={entry.state} />
                       </td>
                       <td>
-                        {n(isSeverity(entry) ? entry.validation?.rmse : entry.validation?.brier)}
-                        <small>{isSeverity(entry) ? 'RMSE (shares)' : 'Brier'}</small>
+                        {n(isRegression(entry) ? entry.validation?.rmse : entry.validation?.brier)}
+                        <small>
+                          {isRegression(entry) ? `RMSE (${regressionUnits(entry)})` : 'Brier'}
+                        </small>
                       </td>
                       <td>
-                        {n(isSeverity(entry) ? entry.test?.rmse : entry.test?.brier)}
-                        <small>{isSeverity(entry) ? 'RMSE (shares)' : 'Brier'}</small>
+                        {n(isRegression(entry) ? entry.test?.rmse : entry.test?.brier)}
+                        <small>
+                          {isRegression(entry) ? `RMSE (${regressionUnits(entry)})` : 'Brier'}
+                        </small>
                       </td>
                       <td>{n(entry.training_duration_seconds, 1)} s</td>
                       <td>
@@ -984,11 +1023,13 @@ export function Arena() {
                       : 'Independent test not yet evaluated.'}{' '}
                 {model.data.timesteps
                   ? `${model.data.timesteps} PPO transitions / ${model.data.training_episodes} completed training episodes.`
-                  : isSeverity(model.data)
-                    ? 'Expected residual unmatched shares; not a probability, dollar loss or recovery cost.'
-                    : `Execution ${model.data.label_target ?? 'completion'} classifier.`}
+                  : isCost(model.data)
+                    ? 'Expected first-position execution friction in virtual USD; excludes settlement gains/losses and purchase principal.'
+                    : isRegression(model.data)
+                      ? 'Expected residual unmatched shares; not a probability, dollar loss or recovery cost.'
+                      : `Execution ${model.data.label_target ?? 'completion'} classifier.`}
               </p>
-              {isSeverity(model.data) && (
+              {isRegression(model.data) && (
                 <p className="lab-note">
                   {model.data.loss_definition} · Aggregate and positive-outcome errors are shown in
                   shares. Severity models are excluded from probability-gated tournaments.
@@ -1055,7 +1096,7 @@ export function Arena() {
                     <h3>{name === 'test' ? 'Independent test' : 'Validation'}</h3>
                     {model.data?.[name] ? (
                       <dl className="arena-facts">
-                        {(isSeverity(model.data)
+                        {(isRegression(model.data)
                           ? ([
                               'mae',
                               'rmse',
@@ -1086,18 +1127,22 @@ export function Arena() {
                   </div>
                 ))}
               </div>
-              {isSeverity(model.data) && model.data.baselines_validation && (
+              {isRegression(model.data) && model.data.baselines_validation && (
                 <div>
                   <h3>Validation regression controls</h3>
+                  {model.data.quoted_baseline_definition && (
+                    <p className="lab-note">{model.data.quoted_baseline_definition}</p>
+                  )}
                   {Object.entries(model.data.baselines_validation).map(([name, metrics]) => (
                     <p key={name}>
-                      {name.replaceAll('_', ' ')}: RMSE {n(metrics.rmse)} shares · MAE{' '}
-                      {n(metrics.mae)} shares
+                      {name.replaceAll('_', ' ')}: RMSE {n(metrics.rmse)}{' '}
+                      {regressionUnits(model.data)} · MAE {n(metrics.mae)}{' '}
+                      {regressionUnits(model.data)}
                     </p>
                   ))}
                 </div>
               )}
-              {model.data.validation && !isSeverity(model.data) && (
+              {model.data.validation && !isRegression(model.data) && (
                 <Suspense fallback={<p>Loading calibration…</p>}>
                   <Chart
                     label="Validation probability reliability"
@@ -1199,7 +1244,7 @@ export function Arena() {
                   </a>
                 ))}
                 {model.data.family !== 'ppo' &&
-                  !isSeverity(model.data) &&
+                  !isRegression(model.data) &&
                   model.data.artifact_sha256 &&
                   (model.data.diagnostics ? (
                     <a href={`/api/arena/models/${modelId}/artifacts/diagnostics.json`}>
@@ -1319,7 +1364,7 @@ export function Arena() {
                         dataset_id: selectedDataset,
                         model_ids: data?.models
                           .filter(
-                            (entry) => entry.dataset_id === selectedDataset && !isSeverity(entry),
+                            (entry) => entry.dataset_id === selectedDataset && !isRegression(entry),
                           )
                           .map((entry) => entry.model_id),
                         max_episodes: 100,
@@ -1341,7 +1386,7 @@ export function Arena() {
                         dataset_id: selectedDataset,
                         model_ids: data?.models
                           .filter(
-                            (entry) => entry.dataset_id === selectedDataset && !isSeverity(entry),
+                            (entry) => entry.dataset_id === selectedDataset && !isRegression(entry),
                           )
                           .map((entry) => entry.model_id),
                         max_episodes: 100,

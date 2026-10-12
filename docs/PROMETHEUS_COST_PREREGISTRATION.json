@@ -1,0 +1,94 @@
+{
+  "created_at": 1791839471.2033608,
+  "source_hash": "b4c1de7fc2266db6507d185c1429937a43aa79ca95da8145de75f747f7469700",
+  "dataset_job": {
+    "kind": "dataset",
+    "dataset": {
+      "version": "synthetic-decision-1",
+      "episodes": 1001,
+      "seed": 273071,
+      "split_seed": 1977,
+      "families": [
+        "thin",
+        "deep",
+        "calm",
+        "liquidity_shock",
+        "volatile",
+        "one_sided",
+        "fees"
+      ],
+      "execution_models": [
+        "optimistic",
+        "standard",
+        "conservative"
+      ],
+      "observation_latency_ms": 100,
+      "label_target": "completion",
+      "decision_scope": "first_admitted",
+      "retain_execution_costs": true,
+      "costs": {
+        "version": "explicit-costs-1",
+        "operating_per_fill": "0.01",
+        "redemption_cost": "0.02",
+        "annual_financing_rate": "0.05",
+        "collateral_value_factor": "1",
+        "collateral_route_verified": false,
+        "assumptions": [
+          "Costs are user estimates, not observed charges",
+          "No automatic complete-set merge",
+          "Resolution and spendable proceeds are separated by configured delay",
+          "No empirically calibrated fill probability or queue priority"
+        ]
+      }
+    },
+    "training": null,
+    "severity": null,
+    "cost": null,
+    "recovery": null,
+    "model_id": null,
+    "rl": null,
+    "tournament": null,
+    "sweep": null,
+    "director": null,
+    "policy_search": null,
+    "max_wall_seconds": 1800
+  },
+  "models": [
+    {
+      "family": "ridge",
+      "seed": 11
+    },
+    {
+      "family": "cost_mlp",
+      "seed": 11
+    },
+    {
+      "family": "cost_mlp",
+      "seed": 29
+    }
+  ],
+  "training_configuration": {
+    "epochs": 80,
+    "hidden_size": 32,
+    "learning_rate": 0.001,
+    "patience": 12,
+    "batch_size": 128,
+    "ridge_alpha": 1
+  },
+  "selection": "Minimum mean validation source-group RMSE by family; prefer ridge within 0.005 virtual USD RMSE. Representative seed has minimum validation RMSE. No policy promotion.",
+  "final_test": "Keep all new tests unopened until weights and validation selection are frozen and exported. Any later evaluation requires a separate recorded plan.",
+  "limits": {
+    "cpu_cores": 1,
+    "memory_mb": 4096,
+    "wall_seconds_per_job": 1800,
+    "arena_cap_bytes": 1073741824,
+    "minimum_available_memory_mb": 2048
+  },
+  "artifact_usage_bytes": 655336896,
+  "hypothesis": "Decision-time observations may predict initial-position simulated friction more accurately than constant and quoted full-fill estimates.",
+  "limitations": [
+    "Synthetic estimated frictions only; not settlement loss or real fee calibration",
+    "Fixed declared costs within cohort; later portfolio states and recovery orders excluded",
+    "Generated scenario variants are correlated; confidence denominators use source groups"
+  ]
+}

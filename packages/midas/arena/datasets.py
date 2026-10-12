@@ -16,7 +16,7 @@ from midas.economics.attestation import digest
 from midas.laboratory import VERSION as SIMULATOR_VERSION
 from midas.laboratory.campaigns import code_hash, revision
 from midas.laboratory.runtime import Environment
-from midas.laboratory.spec import FAMILIES, generate
+from midas.laboratory.spec import FAMILIES, Costs, generate
 from midas.paper.broker import ExecutionModel
 
 
@@ -30,9 +30,13 @@ class DatasetSpec(Model):
     observation_latency_ms: int = Field(default=100, ge=0, le=60000)
     label_target: Literal["completion", "unmatched", "persistence"] = "completion"
     decision_scope: Literal["initial", "first_admitted"] = "initial"
+    retain_execution_costs: bool = False
+    costs: Costs | None = None
 
     @model_validator(mode="after")
     def supported(self) -> "DatasetSpec":
+        if self.costs is not None and not self.retain_execution_costs:
+            raise ValueError("Explicit dataset costs require execution-cost evidence retention")
         if (
             not self.families
             or set(self.families) - set(FAMILIES)
@@ -97,6 +101,8 @@ def sample(spec: DatasetSpec, index: int, model: str) -> dict[str, Any] | None:
     scenario = generate(family, seed, execution).model_copy(
         update={"observation_latency_ms": spec.observation_latency_ms}
     )
+    if spec.costs is not None:
+        scenario = scenario.model_copy(update={"costs": spec.costs})
     env = first_decision(scenario)
     ordinal = 0
     while not env.finished:
@@ -123,6 +129,13 @@ def sample(spec: DatasetSpec, index: int, model: str) -> dict[str, Any] | None:
     persistence = None
     if spec.label_target == "persistence":
         persistence = first_arrival_label(env, initial_ids[0])
+    quoted_cost = None
+    if spec.retain_execution_costs:
+        from midas.arena.cost_labels import quote_baseline
+
+        quoted_cost = quote_baseline(
+            observation, features[FEATURES.index("proposed_quantity")], scenario.costs
+        )
     result = env.run()
     if not result["passed"] or not result["complete"]:
         raise ValueError(f"Invalid training simulation: {result['errors']}")
@@ -152,6 +165,17 @@ def sample(spec: DatasetSpec, index: int, model: str) -> dict[str, Any] | None:
         "simulation_version": result["simulator_version"],
         "economic_assumptions": result["economic_assumptions"],
     }
+    if spec.retain_execution_costs:
+        from midas.arena.cost_labels import outcome as cost_outcome
+
+        assert quoted_cost is not None
+        row["execution_cost_outcome"] = cost_outcome(
+            env.state["positions"][initial_ids[0]]["exchange"],
+            observation,
+            scenario.costs,
+            env.clock.now,
+            quoted_cost,
+        )
     if persistence is not None:
         row["persistence_outcome"] = persistence
     return row
@@ -212,6 +236,9 @@ def build(root: Path, spec: DatasetSpec, progress: Any = None) -> dict[str, Any]
         if spec.label_target == "persistence"
         else "initial-proposal-outcomes-2",
         "decision_scope": spec.decision_scope,
+        "execution_cost_label": "initial-position-friction-1"
+        if spec.retain_execution_costs
+        else None,
         "label_definition": (
             LABEL_DEFINITION
             if spec.label_target == "persistence"
@@ -290,6 +317,10 @@ def load(root: Path, identity: str) -> tuple[dict[str, Any], list[dict[str, Any]
         raise ValueError("Dataset target differs from frozen specification")
     validate_rows(rows)
     for row in rows:
+        if manifest["spec"].get("retain_execution_costs", False):
+            from midas.arena.cost_labels import label as cost_label
+
+            cost_label(row)
         if row.get("decision_scope", "initial") != scope:
             raise ValueError("Row decision scope differs from manifest")
         target = manifest.get("label_target", "completion")

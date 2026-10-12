@@ -1,0 +1,20 @@
+{
+  "focused_python_tests": {
+    "passed": 19,
+    "duration_seconds": 92.75
+  },
+  "cost_label_regression_tests": {
+    "passed": 6,
+    "duration_seconds": 24.55
+  },
+  "frontend_tests": {
+    "passed": 12
+  },
+  "typecheck": "passed",
+  "eslint": "passed",
+  "build": "passed; existing chart-chunk advisory",
+  "mypy": "six changed Arena modules passed strict checking",
+  "ruff": "passed",
+  "full_suite": "pending after production jobs",
+  "scope": "Ledger components, unchanged features/financial hashes when capturing default costs, actual fits/reload, unit isolation, typed job input and exact checkpoint recovery"
+}

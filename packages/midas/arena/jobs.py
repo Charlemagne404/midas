@@ -14,6 +14,7 @@ from typing import Any, Literal
 from pydantic import Field, model_validator
 
 from midas.arena.artifacts import artifact_path, atomic_bytes, atomic_json, sha256
+from midas.arena.costs import CostSpec
 from midas.arena.datasets import DatasetSpec, research_hash
 from midas.arena.director import DirectorSpec
 from midas.arena.evolution import SweepSpec
@@ -38,11 +39,13 @@ class JobSpec(Model):
         "diagnostics",
         "policy_search",
         "severity",
+        "cost",
         "recovery",
     ]
     dataset: DatasetSpec | None = None
     training: TrainingSpec | None = None
     severity: SeveritySpec | None = None
+    cost: CostSpec | None = None
     recovery: RecoveryStudySpec | None = None
     model_id: str | None = None
     rl: RLSpec | None = None
@@ -58,6 +61,7 @@ class JobSpec(Model):
             "dataset": "dataset",
             "supervised": "training",
             "severity": "severity",
+            "cost": "cost",
             "recovery": "recovery",
             "evaluation": "model_id",
             "diagnostics": "model_id",
@@ -71,6 +75,7 @@ class JobSpec(Model):
             "dataset",
             "training",
             "severity",
+            "cost",
             "recovery",
             "model_id",
             "rl",
@@ -310,6 +315,12 @@ def _run(root: Path, identity: str) -> None:
                 assert spec.severity is not None
                 result = train_severity(root, spec.severity, progress)
                 record["result"] = {"model_id": result["model_id"]}
+            elif spec.kind == "cost":
+                from midas.arena.costs import train as train_cost
+
+                assert spec.cost is not None
+                result = train_cost(root, spec.cost, progress)
+                record["result"] = {"model_id": result["model_id"]}
             elif spec.kind == "rl":
                 from midas.arena.rl import train_rl
 
@@ -360,6 +371,8 @@ def _run(root: Path, identity: str) -> None:
                 )
                 if model_record.get("task") == "residual_severity_regression":
                     from midas.arena.severity import independent_test
+                elif model_record.get("task") == "execution_cost_regression":
+                    from midas.arena.costs import independent_test
                 else:
                     from midas.arena.supervised import independent_test
                 result = independent_test(root, spec.model_id)

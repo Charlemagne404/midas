@@ -1722,3 +1722,26 @@ active. Next engineering branch is execution-cost label/regression support with
 explicit units and ledger-grounded targets, followed by fresh matched policy
 validation. Additional validation ablations must be preregistered and described as
 exploratory; do not select repeatedly against final tests.
+
+## Execution-cost label and regression foundation
+
+Opt-in datasets retain first-position friction ledgers, decision-time best-ask
+benchmarks, exact Decimal component totals, explicit costs and horizons. Target
+includes adverse slippage, charged exchange fees, per-fill/settled-position cost
+estimates and reserved/locked capital financing; principal, settlement gains/losses
+and haircut are excluded. Other positions' expenses do not enter the label.
+Capturing evidence without changing costs preserves features and financial hashes.
+
+Shared checkpointed regression machinery now supports a separate virtual-USD cost
+task and cost_mlp family alongside unchanged residual-share severity semantics.
+Dollar models cannot enter probability gates. Zero, training mean and quoted
+full-fill controls are persisted. UI exposes actual task units, controls, dataset
+retention and fixed synthetic cost assumptions. These are not observed charges
+or profitability forecasts.
+
+Focused Python gate19 passed in92.75s; six cost tests passed again in24.55s after
+quoted-baseline arithmetic validation. Frontend12 tests, typecheck/lint/build,
+strict typing for six changed modules and Ruff passed. Full regression pending.
+Production preregistration records1001 fresh generated groups atseed273071,
+seven families, three execution assumptions, ridge seed11 and cost MLP seeds11/29
+with up to80 epochs. All final tests stay closed pending frozen selection/export.

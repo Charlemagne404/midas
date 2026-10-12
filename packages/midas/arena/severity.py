@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any, Literal
 
 import numpy as np
-from pydantic import Field
+from pydantic import Field, model_validator
 from sklearn.linear_model import Ridge
 from sklearn.preprocessing import StandardScaler
 
@@ -24,9 +24,9 @@ from midas.laboratory.campaigns import revision
 TASK = "residual_severity_regression"
 
 
-class SeveritySpec(Model):
+class RegressionSpec(Model):
     dataset_id: str
-    family: Literal["ridge", "severity_mlp"] = "ridge"
+    family: Literal["ridge", "severity_mlp", "cost_mlp"] = "ridge"
     seed: int = Field(default=11, ge=0, le=2**32 - 1)
     epochs: int = Field(default=80, ge=5, le=200)
     batch_size: int = Field(default=128, ge=8, le=4096)
@@ -36,6 +36,14 @@ class SeveritySpec(Model):
     patience: int = Field(default=12, ge=2, le=100)
     max_wall_seconds: int = Field(default=600, ge=10, le=7200)
     resume_from: str | None = None
+
+
+class SeveritySpec(RegressionSpec):
+    @model_validator(mode="after")
+    def severity_family(self) -> "SeveritySpec":
+        if self.family == "cost_mlp":
+            raise ValueError("Cost models require the execution-cost task")
+        return self
 
 
 def labels(rows: list[dict[str, Any]]) -> np.ndarray[Any, Any]:
@@ -62,8 +70,10 @@ def labels(rows: list[dict[str, Any]]) -> np.ndarray[Any, Any]:
     return result
 
 
-def evaluate(rows: list[dict[str, Any]], predictions: Any) -> dict[str, Any]:
-    y = labels(rows)
+def evaluate(
+    rows: list[dict[str, Any]], predictions: Any, *, labeler: Any = labels, units: str = "shares"
+) -> dict[str, Any]:
+    y = labeler(rows)
     p = np.asarray(predictions, dtype=float)
     if not len(y) or p.shape != y.shape or not np.isfinite(p).all() or (p < 0).any():
         raise ValueError("Finite nonnegative predictions with complete coverage required")
@@ -80,11 +90,11 @@ def evaluate(rows: list[dict[str, Any]], predictions: Any) -> dict[str, Any]:
     return {
         "rows": len(y),
         "base_episodes": len(groups),
-        "units": "shares",
+        "units": units,
         "mae": float(np.mean(abs(error))),
         "rmse": float(np.sqrt(np.mean(error**2))),
-        "mean_predicted_shares": float(p.mean()),
-        "mean_observed_shares": float(y.mean()),
+        "mean_predicted_shares" if units == "shares" else "mean_predicted_usd": float(p.mean()),
+        "mean_observed_shares" if units == "shares" else "mean_observed_usd": float(y.mean()),
         "positive_frequency": float(positive.mean()),
         "positive_mae": float(np.mean(abs(error[positive]))) if positive.any() else None,
         "positive_rmse": float(np.sqrt(np.mean(error[positive] ** 2))) if positive.any() else None,
@@ -114,7 +124,7 @@ class Regressor:
     def __init__(self, parameters: dict[str, Any]) -> None:
         self.parameters = parameters
         self.model: Any = None
-        if parameters["family"] == "severity_mlp":
+        if parameters["family"] in {"severity_mlp", "cost_mlp"}:
             import torch
 
             self.model = torch.nn.Sequential(
@@ -126,17 +136,17 @@ class Regressor:
             self.model.eval()
 
     @classmethod
-    def load(cls, root: Path, identity: str) -> "Regressor":
+    def load(cls, root: Path, identity: str, expected_task: str = TASK) -> "Regressor":
         directory = artifact_path(root, "models", identity)
         manifest = json.loads((directory / "manifest.json").read_text())
         if (
-            manifest.get("task") != TASK
+            manifest.get("task") != expected_task
             or sha256(directory / "parameters.json") != manifest["artifact_sha256"]
         ):
             raise ValueError("Severity model type or weight checksum mismatch")
         parameters = json.loads((directory / "parameters.json").read_text())
         if (
-            parameters["task"] != TASK
+            parameters["task"] != expected_task
             or parameters["family"] != manifest["family"]
             or parameters["feature_version"] != FEATURE_VERSION
         ):
@@ -165,6 +175,21 @@ class Regressor:
 
 
 def train(root: Path, spec: SeveritySpec, progress: Any = None) -> dict[str, Any]:
+    return train_regression(root, spec, progress)
+
+
+def train_regression(
+    root: Path,
+    spec: RegressionSpec,
+    progress: Any = None,
+    *,
+    task: str = TASK,
+    labeler: Any = labels,
+    evaluator: Any = evaluate,
+    target: str = "residual_unmatched_shares",
+    units: str = "shares",
+    limitations: list[str] | None = None,
+) -> dict[str, Any]:
     import torch
 
     torch.set_num_threads(1)
@@ -172,7 +197,7 @@ def train(root: Path, spec: SeveritySpec, progress: Any = None) -> dict[str, Any
     torch.use_deterministic_algorithms(True)
     manifest, rows = load(root, spec.dataset_id)
     split = {p: [r for r in rows if r["partition"] == p] for p in ("train", "validation")}
-    y, vy = labels(split["train"]), labels(split["validation"])
+    y, vy = labeler(split["train"]), labeler(split["validation"])
     scaler = StandardScaler().fit([r["features"] for r in split["train"]])
     x = scaler.transform([r["features"] for r in split["train"]])
     vx = scaler.transform([r["features"] for r in split["validation"]])
@@ -186,7 +211,7 @@ def train(root: Path, spec: SeveritySpec, progress: Any = None) -> dict[str, Any
     config = spec.model_dump(mode="json", exclude={"resume_from"})
     target_scale = max(1, float(np.sqrt(np.mean(y**2))))
     parameters: dict[str, Any] = {
-        "task": TASK,
+        "task": task,
         "family": spec.family,
         "feature_version": FEATURE_VERSION,
         "mean": scaler.mean_.tolist(),
@@ -309,9 +334,9 @@ def train(root: Path, spec: SeveritySpec, progress: Any = None) -> dict[str, Any
     record = {
         "model_id": identity,
         "family": spec.family,
-        "task": TASK,
-        "label_target": "residual_unmatched_shares",
-        "units": "shares",
+        "task": task,
+        "label_target": target,
+        "units": units,
         "state": "TRAINED",
         "created_at": time.time(),
         "configuration": spec.model_dump(mode="json"),
@@ -325,11 +350,11 @@ def train(root: Path, spec: SeveritySpec, progress: Any = None) -> dict[str, Any
         "training_duration_seconds": time.monotonic() - began,
         "curves": curves,
         "checkpoints": checkpoints,
-        "validation": evaluate(split["validation"], predicted),
+        "validation": evaluator(split["validation"], predicted),
         "test": None,
         "baselines_validation": {
-            "zero": evaluate(split["validation"], np.zeros(len(vy))),
-            "training_mean": evaluate(split["validation"], np.full(len(vy), float(y.mean()))),
+            "zero": evaluator(split["validation"], np.zeros(len(vy))),
+            "training_mean": evaluator(split["validation"], np.full(len(vy), float(y.mean()))),
         },
         "optimizer_configuration": (
             {
@@ -340,15 +365,16 @@ def train(root: Path, spec: SeveritySpec, progress: Any = None) -> dict[str, Any
                 "eps": 1e-8,
                 "amsgrad": False,
             }
-            if spec.family == "severity_mlp"
+            if spec.family != "ridge"
             else {"algorithm": "Ridge", "alpha": spec.ridge_alpha}
         ),
         "loss_definition": (
-            "Mean squared error on shares normalized by train-only RMS; nonnegative Softplus output"
-            if spec.family == "severity_mlp"
-            else "Squared shares error plus ridge-alpha L2 coefficient penalty; nonnegative clipping at inference"
+            f"Mean squared error on {units} normalized by train-only RMS; nonnegative Softplus output"
+            if spec.family != "ridge"
+            else f"Squared {units} error plus ridge-alpha L2 coefficient penalty; nonnegative clipping at inference"
         ),
-        "limitations": [
+        "limitations": limitations
+        or [
             "Synthetic hypothetical initial proposal fills; no empirically calibrated severity.",
             "Residual shares are not dollar loss, exposure duration or recovery cost.",
             "Only train/validation labels evaluated; grouped splits and train-only scaling preserved.",
