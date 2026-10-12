@@ -1574,3 +1574,29 @@ admission checks. The scope does not reimplement all capital/overlap/timestamp
 admission rules. Three focused tests passed. This evidence addresses the
 difference between admission controls and guaranteed loss bounds without
 pretending an executable hedge or unwind already exists.
+
+### Completed independent persistence policy result
+
+Both preregistered jobs completed successfully, and the paired replay/declared
+economic scenario transformation audit verified all 3,000 variants over 100
+shared source groups. Baseline tournament-1dccdb172d154c1690e4befd gate score
+0.904035, mean 1.064035, 5% CVaR loss 0.16, worst -2.4. Delayed
+tournament-3fd13acd5775434fa7070473 score 0.764835, mean 0.924835, tail loss
+0.16, worst -2.4. Baseline arbitrage score 0.280859 and mean 1.641725; gate
+mean minus arbitrage -0.577691, grouped interval [-0.844715, -0.319046].
+Gate mean versus no-trade intervals are [0.625235, 1.537803] at baseline and
+[0.501929, 1.407108] with delay. Paired delay-minus-baseline mean -0.1392,
+interval [-0.255403, -0.045696]. This is a risk/return trade-off under the
+declared synthetic objective, not higher mean return or real profitability.
+Unsupported-input abstentions increased from 10 to 126. No champion promotion
+or post-challenge threshold adjustment occurred. Classifier final tests remain
+None. Aggregate finding finding-39385e5d25b67a7aa3044610 preserves these caveats.
+
+The paired study is attached to both Arena tournaments. Baseline/delay exports
+verified all 1,572/1,571 payload hashes and both API study endpoints return the
+same frozen study. Both worker units are inactive with MainPID zero; API and
+web remain active. Current completed tournament inventory is 22 / 40,023
+variants, including the prior 1,500-variant performance replay. No new training
+was performed during this comparison: model inventory remains 25 artifacts,
+24 fitted. Protected archive verification and completion browser inspection
+are recorded separately. The broader Prometheus goal remains active.

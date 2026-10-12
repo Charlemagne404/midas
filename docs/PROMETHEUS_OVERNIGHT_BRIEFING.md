@@ -2,6 +2,33 @@
 
 ## Current checkpoint (supersedes running-job notes below)
 
+### Independent persistence policy evidence completed
+
+The fixed 0.90 logistic gate completed 3,000 correlated variants over 100 new
+source groups, paired across baseline and added-200ms conditions. All replay and
+declared scenario-transformation checks passed. Baseline downside score 0.904
+versus arbitrage 0.281 and no-trade zero; delayed gate score 0.765. Gate worst
+loss is -2.4 in both conditions. Lower mean versus arbitrage is the cost of the
+observed tail-loss reduction: paired mean difference -0.578, interval
+[-0.845, -0.319]. Both gate means remain positive versus no-trade; under delay
+the grouped interval is [0.502, 1.407]. Delay reduces gate mean by 0.139, interval
+[-0.255, -0.046]. Unsupported decisions increase from 10 to 126.
+
+This is a bounded synthetic decision-policy benefit, not real profitability or
+broad robustness. No weights or thresholds changed; no champion was promoted.
+All four persistence classifier final tests remain unopened. The native Arena
+serves the paired study and its aggregate finding. Two exported bundles passed
+1,572/1,571 payload hashes respectively. No research workers remain active.
+
+A separate read-only risk audit found zero admissions after four recorded
+cutoffs in 432 saved decisions, while some subsequent states still exceeded
+drawdown, daily-loss or unmatched-inventory triggers. Its finding explains why
+admission controls are not guaranteed post-fill loss bounds. Full recovery
+hedge/unwind semantics still require implementation and realistic execution.
+
+Current completed inventory: 22 tournaments, 40,023 correlated variants,
+25 model artifacts (24 fitted). The full goal remains active.
+
 ### Persistence dataset and four genuine fits completed
 
 Added first-arrival original-quote persistence labels, integrated CPU training,

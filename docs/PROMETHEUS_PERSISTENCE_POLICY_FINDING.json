@@ -1,0 +1,39 @@
+{
+  "finding_id": "finding-39385e5d25b67a7aa3044610",
+  "title": "Frozen persistence gate improves sampled downside score under both latency conditions",
+  "research_question": "Does a fixed minimum predicted quote persistence of 0.90 improve the downside objective against deterministic and no-trade controls on unused source groups?",
+  "hypothesis": "Quote-persistence filtering reduces execution-risk tail losses despite missing some profitable opportunities.",
+  "created_at": 1791826506.7832575,
+  "tournament_id": "tournament-1dccdb172d154c1690e4befd",
+  "study_id": "economic-study-2497a1cbce5ac9bfb35e97ad",
+  "source_hash": "297f559be63868268aafce83e9b1ac5ff9fa799c3a64ac4474fcb87bcbf8bee8",
+  "configuration": {
+    "model_id": "model-9474cee818f04c77962966d8",
+    "threshold": 0.9,
+    "size": "full"
+  },
+  "interpretation": "The frozen logistic persistence gate scores 0.904 at baseline versus arbitrage 0.281 and no-trade zero. Added 200ms delay lowers its score to 0.765, still above the sampled controls. Mean P&L is lower than arbitrage at baseline (paired difference -0.578, grouped 95% interval [-0.845, -0.319]); the higher downside score reflects smaller observed tail loss, not higher mean return. Paired mean versus no-trade remains positive under delay (0.925, interval [0.502, 1.407]). Delay reduces gate mean by 0.139, interval [-0.255, -0.046]. Worst gate loss is -2.4 in both conditions. This supports a bounded synthetic decision-policy benefit, not real profitability or broad robustness.",
+  "outcome": {
+    "source_groups": 100,
+    "correlated_variants": 3000,
+    "selection_or_retuning": false,
+    "baseline_score": 0.9040346666666669,
+    "delay_score": 0.7648346666666664,
+    "worst_gate_loss": -2.4,
+    "baseline_unsupported_decisions": 10,
+    "delay_unsupported_decisions": 126,
+    "final_classifier_test": null
+  },
+  "caveats": [
+    "Quote persistence cannot establish two-leg completion",
+    "Both conditions share 100 source groups, not 3000 independent samples",
+    "Input-support ranges do not establish joint calibration",
+    "Hypothetical synthetic economics and action-dependent execution noise",
+    "Directed research evaluation; champion promotion withheld",
+    "Both conditions share the same 100 independent source groups.",
+    "Input support abstention increased under delay; this is not evidence of calibrated fill probability.",
+    "Champion promotion was withheld by preregistration; challenge outcomes changed no weights or thresholds.",
+    "These two conditions do not establish fee, financing, distribution-shift or recovery robustness."
+  ],
+  "next_experiment": "Preserve this frozen policy evidence, then examine risk/cost labels and recovery semantics on separately preregistered scenarios. Do not retune this gate on the opened challenge."
+}

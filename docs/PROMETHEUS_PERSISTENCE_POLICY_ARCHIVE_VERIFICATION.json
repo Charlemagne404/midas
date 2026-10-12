@@ -1,0 +1,11 @@
+{
+  "checked_at": 1791826611.260044,
+  "campaign_id": "07edb15a09a541dcb090a3b566e209d7",
+  "variants": 162000,
+  "source_groups": 18000,
+  "unique_variant_ids": 162000,
+  "ordered_logical_sha256": "70d446f0a3833011bb150b0212c4cad3f2751c7f1c210d4c6989816d249fe4ec",
+  "sqlite_quick_check": "ok",
+  "owner_lease_held": true,
+  "access": "read-only"
+}

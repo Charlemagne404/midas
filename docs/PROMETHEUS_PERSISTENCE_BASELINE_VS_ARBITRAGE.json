@@ -1,0 +1,32 @@
+{
+  "analysis_version": "paired-policy-1",
+  "tournament_id": "tournament-1dccdb172d154c1690e4befd",
+  "control": "arbitrage",
+  "candidate": "gate-34dccb59573897d73743",
+  "evaluation_design": "FRESH_GENERATOR_CHALLENGE",
+  "rows_sha256": "8d3d50ffeef2298b9bbdfa0c54c0cd4446b3716354466950378fc88066235fd1",
+  "producer_sha256": "542638cfb383c7cf3942c146c965f52e227dbc7c8ee7edf9a336b5a74bbc9bf3",
+  "base_episodes": 100,
+  "paired_variants": 300,
+  "nonzero_variant_differences": 67,
+  "mean_candidate_minus_control": -0.5776906666666668,
+  "group_bootstrap_mean_interval": [
+    -0.8447149666666666,
+    -0.31904616666666674
+  ],
+  "outcomes": {
+    "arbitrage": {
+      "mean_pnl": 1.6417253333333335,
+      "cvar_05_loss": 1.3608666666666667,
+      "worst_pnl": -4.92,
+      "score": 0.2808586666666668
+    },
+    "gate-34dccb59573897d73743": {
+      "mean_pnl": 1.0640346666666665,
+      "cvar_05_loss": 0.16,
+      "worst_pnl": -2.4,
+      "score": 0.9040346666666664
+    }
+  },
+  "interpretation": "Descriptive paired comparison; no threshold fitting, selection or promotion. Validation comparisons are exploratory. Correlated execution variants remain inside base-episode groups. Action-dependent execution noise may differ despite common scenario seeds. Hypothetical outcomes are not observed profitability."
+}

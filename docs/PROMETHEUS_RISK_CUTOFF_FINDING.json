@@ -1,0 +1,29 @@
+{
+  "finding_id": "finding-ca2da5075a06370f4666f6af",
+  "title": "Admission controls are not guaranteed post-fill loss bounds",
+  "tournament_id": "tournament-c66e37c024974ac3a03ea64b",
+  "created_at": 1791826118.0824914,
+  "research_question": "Do drawdown, loss and unmatched-inventory gates prevent new admissions or guarantee every subsequent state stays below their thresholds?",
+  "hypothesis": "Recorded pre-decision cutoffs block new proposals while existing fills and market movement can still create exposure or losses above a trigger.",
+  "interpretation": "The saved risk-gate challenge contains 432 checked decisions across 60 source groups and 180 correlated variants. No new admission occurred after the four observed pre-decision cutoffs. Yet two variants exceeded the configured drawdown trigger, one exceeded daily loss and 48 held unmatched shares above the zero admission threshold after fills. This separates enforced admission checks from guarantees the system cannot provide through them.",
+  "outcome": {
+    "source_groups": 60,
+    "correlated_variants": 180,
+    "decisions_checked": 432,
+    "admissions_after_observed_cutoff": 0,
+    "variants_observed_above_trigger": {
+      "cumulative_loss": 0,
+      "daily_loss": 1,
+      "max_drawdown": 2,
+      "net_exposure_shares": 48
+    },
+    "rows_sha256": "86638329c641f0878e11066615c0ddd3809247c8eeadda18fa6758d177f69a82"
+  },
+  "caveats": [
+    "Checks four recorded pre-decision counters and their admission cutoffs. It does not reimplement all capital, timestamp, market-overlap or potential unmatched-leg admission rules. Counts are descriptive correlated variants, not independent risk probabilities.",
+    "Peak comparisons use the initial configured limits. New-admission checks use each recorded decision\u2019s own limits.",
+    "Post-fill exposure above a trigger is not automatically an accounting or invariant defect.",
+    "No executable recovery hedge or unwind is implemented by this audit."
+  ],
+  "next_experiment": "Specify bounded hedge/unwind orders, fee accounting and admission rules before comparing real simulated recovery policies."
+}
