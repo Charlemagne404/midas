@@ -1,0 +1,18 @@
+{
+  "checked_at": 1791845213.717913,
+  "job_id": "job-b357fcb6f3b342b7ae1817a8",
+  "state": "RUNNING",
+  "progress": {
+    "done": 963,
+    "total": 3900
+  },
+  "elapsed_seconds": 254.80057465302525,
+  "runtime_profile": {
+    "artifact_bytes": 747925771,
+    "artifact_files": 52135,
+    "artifact_scan_seconds": 154.31271279143402,
+    "artifact_scans": 964,
+    "progress_publish_seconds": 7.509780326392502
+  },
+  "next_engineering_action": "After the frozen study and regression, replace per-result complete archive scans with a guard retaining enforceable byte limits and explicit reconciliation. No runtime source change made."
+}

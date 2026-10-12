@@ -1946,3 +1946,30 @@ state; package source remains frozen. Live browser selected the actual completio
 model and threshold0.9 with zero page errors. Fresh archive quick_check, exact
 counts162000/18000/162000 and exclusive owner lease pass. No study outcomes or
 pending regression results are claimed. Native job and operational checks saved.
+
+### Autonomous post-study verification and worker efficiency measurement
+
+Added a bounded finalization workflow for the joint study. It checks completed
+worker configuration and source capture against preregistration, both frozen
+model weights/datasets, exact policy identities/parameters and complete saved
+decisions before executing the four declared paired comparisons. All nine cost
+roles receive reconciled matched/residual/explicit-cost accounting attribution.
+The workflow preserves analysis, publishes a caveated native finding, exports
+the tournament with tools and captured sources, and checks every bundle payload.
+Persistent phases and tool-source snapshots survive session detachment. Failed
+or interrupted finalization requires inspection; no blind duplicate publication.
+It performs no model fitting, threshold selection, promotion or follow-up launch.
+
+Twelve focused finalizer/verifier/scanner tests passed; these use isolated small
+fixtures and do not claim production completion. Five verifier cases reject
+changed weights, source, configuration and bindings. Bundle cases cover altered,
+missing and duplicate payloads, and a successful publication fixture.
+
+At452/3900 variants, full archive scans consumed72.19 of120.76 elapsed seconds.
+An exact GNU-find candidate measured median0.1280 seconds versus Python0.1565
+on the growing live archive, approximately18% faster. Stable fixture checks match
+logical per-path hard-link bytes, symlink-file targets, untraversed directory
+links, broken links and unusual filenames. Live archive growth prevents claiming
+exact adjacent-count equality. This modest improvement does not solve the scan
+frequency bottleneck. The active guard and1GiB cap remain unchanged while source
+is frozen; broader efficiency work follows the study and full regression.

@@ -1,0 +1,45 @@
+{
+  "measurements": [
+    {
+      "scanner": "python",
+      "seconds": 0.15254492696840316,
+      "bytes": 753848164,
+      "files": 52545
+    },
+    {
+      "scanner": "find",
+      "seconds": 0.12905437900917605,
+      "bytes": 753848164,
+      "files": 52545
+    },
+    {
+      "scanner": "python",
+      "seconds": 0.15748339798301458,
+      "bytes": 753864273,
+      "files": 52547
+    },
+    {
+      "scanner": "find",
+      "seconds": 0.12802040996029973,
+      "bytes": 753861614,
+      "files": 52546
+    },
+    {
+      "scanner": "python",
+      "seconds": 0.1564651969820261,
+      "bytes": 753875052,
+      "files": 52547
+    },
+    {
+      "scanner": "find",
+      "seconds": 0.1275917369639501,
+      "bytes": 753881309,
+      "files": 52548
+    }
+  ],
+  "limitations": [
+    "Live archive growth means adjacent counts can differ.",
+    "Warm-cache measurements under current worker load.",
+    "No production guard changes or cap relaxation."
+  ]
+}

@@ -342,6 +342,8 @@ def export_experiment(root: Path, kind: str, identity: str, output: Path) -> dic
             "attribute_arena_losses.py",
             "capture_public_series.py",
             "compare_policies.py",
+            "verify_joint_cost_study.py",
+            "finalize_joint_cost_study.py",
         ):
             extras["TOOLS/" + tool] = Path(__file__).resolve().parent / tool
     return write_bundle(root, files, extras, reference_key, identity, output)
