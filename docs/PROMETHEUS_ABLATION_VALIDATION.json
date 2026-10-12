@@ -1,0 +1,24 @@
+{
+  "focused_python_tests": {
+    "passed": 20,
+    "duration_seconds": 140.64
+  },
+  "frontend_tests": {
+    "passed": 11
+  },
+  "frontend_typecheck": "passed",
+  "frontend_lint": "passed",
+  "frontend_build": "passed; existing >500k chart chunk advisory",
+  "ruff": "passed",
+  "coverage": [
+    "mask schema validation",
+    "real logistic/tree/neural refits",
+    "serialization mask equality",
+    "prediction and support invariance to excluded finite input values",
+    "validation source-group denominator",
+    "test-label integrity rejection",
+    "legacy model/dataset checks",
+    "sweep and director integration"
+  ],
+  "full_source_suite": "pending after production study"
+}

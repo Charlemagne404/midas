@@ -256,9 +256,21 @@ type Overview = {
       selected_model_id: string;
       criterion: string;
       candidates: {
-        configuration: { family: string };
+        configuration: { family: string; excluded_features?: string[] };
         mean_validation_brier: number;
         seed_brier_range: number[];
+      }[];
+    };
+    ablation?: {
+      interpretation: string;
+      limitations: string[];
+      comparisons: {
+        candidate_index: number;
+        family: string;
+        excluded_features: string[];
+        mean_group_brier_change: number;
+        group_bootstrap_95: number[];
+        source_groups: number;
       }[];
     };
   }[];
@@ -1994,6 +2006,38 @@ export function Arena() {
               >
                 Run validation-only seed comparison
               </button>
+              <button
+                disabled={!selectedDataset || submit.isPending}
+                onClick={() =>
+                  submit.mutate({
+                    configuration: {
+                      kind: 'sweep',
+                      max_wall_seconds: 1800,
+                      sweep: {
+                        dataset_id: selectedDataset,
+                        seeds: [11, 29],
+                        epochs: 80,
+                        candidates: ['logistic', 'mlp'].flatMap((family) =>
+                          [
+                            [],
+                            ['min_ask_depth', 'max_ask_depth', 'min_top_depth'],
+                            [
+                              'latency_ms',
+                              'jitter_ms',
+                              'liquidity_fraction',
+                              'adverse_ticks',
+                              'ack_delay_ms',
+                              'observation_latency_ms',
+                            ],
+                          ].map((excluded_features) => ({ family, excluded_features })),
+                        ),
+                      },
+                    },
+                  })
+                }
+              >
+                Run feature ablations (12 fits)
+              </button>
             </div>
             {data?.directors?.map((plan) => (
               <article className="arena-finding" key={plan.director_id}>
@@ -2138,7 +2182,10 @@ export function Arena() {
                     <tbody>
                       {sweep.selection?.candidates.map((candidate, index) => (
                         <tr key={index}>
-                          <td>{candidate.configuration.family}</td>
+                          <td>
+                            {candidate.configuration.family} · removed:{' '}
+                            {candidate.configuration.excluded_features?.join(', ') || 'none'}
+                          </td>
                           <td>{n(candidate.mean_validation_brier)}</td>
                           <td>{candidate.seed_brier_range.map((value) => n(value)).join(' … ')}</td>
                         </tr>
@@ -2146,6 +2193,25 @@ export function Arena() {
                     </tbody>
                   </table>
                 </div>
+                {sweep.ablation && (
+                  <div>
+                    <h4>Refitted feature comparisons</h4>
+                    <p>{sweep.ablation.interpretation}</p>
+                    {sweep.ablation.comparisons.map((comparison) => (
+                      <p key={comparison.candidate_index}>
+                        {comparison.family} without {comparison.excluded_features.join(', ')}: Brier
+                        change {n(comparison.mean_group_brier_change)}, grouped 95% interval{' '}
+                        {comparison.group_bootstrap_95.map((value) => n(value)).join(' … ')} across{' '}
+                        {comparison.source_groups} validation source groups.
+                      </p>
+                    ))}
+                    {sweep.ablation.limitations.map((limitation) => (
+                      <p className="lab-note" key={limitation}>
+                        {limitation}
+                      </p>
+                    ))}
+                  </div>
+                )}
                 <details>
                   <summary>All training trials, including unselected candidates</summary>
                   {sweep.trials.map((trial) => (

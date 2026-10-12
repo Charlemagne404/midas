@@ -1671,3 +1671,23 @@ rewrite or new training occurred. Full source regression evidence remains the
 Focused recovery/verifier/bundle/search/director/tournament regression gate: 28
 passed in 74.34 seconds. Ruff passed. Package source remained frozen throughout
 the production job and this evidence checkpoint.
+
+## Refitted feature ablations
+
+Added typed excluded-feature masks to supervised training and sweep candidates.
+Zeroing before training-only normalization is identical at inference/support
+checks and recorded in weights, configuration and checkpoints. Legacy models
+default to no exclusions. Reload checks the saved contract. Masked columns retain
+fixed network dimensions but convey no information.
+
+The Evolution comparison now reports refitted validation Brier differences against
+the same family's full-input candidate, averaging optimization seeds before
+resampling source groups. No final tests or policy promotion are requested. UI
+controls submit a real bounded twelve-fit study and show uncertainty/limitations.
+
+Twenty focused Python tests passed in 140.64 seconds. Frontend eleven tests,
+typecheck/lint/build passed, existing chart-chunk advisory retained. Production
+preregistration: completion dataset-d8c1593a2d281e1c9e430952, 99 validation source
+groups, two families x three feature masks x two seeds, up to 80 neural epochs.
+This is exploratory reused validation evidence; derived liquidity proxies remain.
+Full-source regression is scheduled after the bounded study.

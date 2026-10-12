@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any, Literal
 
 import numpy as np
-from pydantic import Field
+from pydantic import Field, field_validator, model_validator
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (
     average_precision_score,
@@ -28,6 +28,24 @@ from midas.core.models import Model
 from midas.laboratory.campaigns import revision
 
 
+def validate_exclusions(names: tuple[str, ...]) -> tuple[str, ...]:
+    if len(set(names)) != len(names) or set(names) - set(FEATURES) or len(names) == len(FEATURES):
+        raise ValueError(
+            "Excluded features must be unique schema names and retain at least one input"
+        )
+    return tuple(name for name in FEATURES if name in names)
+
+
+def masked_features(features: Any, names: tuple[str, ...], dtype: Any = np.float32) -> Any:
+    x = np.asarray(features, dtype=dtype).reshape(-1, len(FEATURES)).copy()
+    if not np.isfinite(x).all():
+        raise ValueError("Invalid inference features")
+    names = validate_exclusions(names)
+    for name in names:
+        x[:, FEATURES.index(name)] = 0
+    return x
+
+
 class TrainingSpec(Model):
     dataset_id: str
     family: Literal["constant", "heuristic", "logistic", "tree", "mlp"] = "mlp"
@@ -40,6 +58,18 @@ class TrainingSpec(Model):
     weight_decay: float = Field(default=0.0001, ge=0, le=1, allow_inf_nan=False)
     max_wall_seconds: int = Field(default=600, ge=10, le=7200)
     resume_from: str | None = None
+    excluded_features: tuple[str, ...] = ()
+
+    @field_validator("excluded_features")
+    @classmethod
+    def exclusions(cls, value: tuple[str, ...]) -> tuple[str, ...]:
+        return validate_exclusions(value)
+
+    @model_validator(mode="after")
+    def learned_ablation(self) -> "TrainingSpec":
+        if self.excluded_features and self.family in {"constant", "heuristic"}:
+            raise ValueError("Feature ablation requires a fitted feature-dependent family")
+        return self
 
 
 def network(hidden: int) -> Any:
@@ -118,7 +148,7 @@ def train(root: Path, spec: TrainingSpec, progress: Any = None) -> dict[str, Any
         raise ValueError("Fixed completion heuristic has no unmatched-risk interpretation")
     split = {name: [r for r in rows if r["partition"] == name] for name in ("train", "validation")}
     x = {
-        name: np.array([r["features"] for r in selected], dtype=np.float32)
+        name: masked_features([r["features"] for r in selected], spec.excluded_features)
         for name, selected in split.items()
     }
     y = {
@@ -164,6 +194,7 @@ def train(root: Path, spec: TrainingSpec, progress: Any = None) -> dict[str, Any
         "scale": scaler.scale_.tolist(),
         "hidden_size": spec.hidden_size,
         "support": support_envelope(x["train"]),
+        "excluded_features": list(spec.excluded_features),
     }
     if spec.family == "constant":
         parameters["probability"] = float(y["train"].mean())
@@ -377,6 +408,10 @@ class Predictor:
             "label_target", "completion"
         ):
             raise ValueError("Model target differs from saved parameters")
+        if tuple(parameters.get("excluded_features", ())) != tuple(
+            manifest["configuration"].get("excluded_features", ())
+        ):
+            raise ValueError("Model feature exclusions differ from saved parameters")
         if "support" not in parameters:
             dataset, rows = load(root, manifest["dataset_id"])
             if dataset["rows_sha256"] != manifest["dataset_sha256"]:
@@ -389,7 +424,9 @@ class Predictor:
         return cls(parameters)
 
     def support(self, features: Any) -> dict[str, Any]:
-        x = np.asarray(features, dtype=np.float64).reshape(-1, len(FEATURES))
+        x = masked_features(
+            features, tuple(self.parameters.get("excluded_features", ())), dtype=np.float64
+        )
         envelope = self.parameters.get("support")
         if envelope is None:
             return {"known": False, "supported": [False] * len(x), "violations": [[] for _ in x]}
@@ -420,9 +457,7 @@ class Predictor:
         return probability >= threshold
 
     def predict(self, features: Any) -> Any:
-        x = np.asarray(features, dtype=np.float32).reshape(-1, len(FEATURES))
-        if not np.isfinite(x).all():
-            raise ValueError("Invalid inference features")
+        x = masked_features(features, tuple(self.parameters.get("excluded_features", ())))
         p = self.parameters
         z = ((x - np.array(p["mean"])) / np.array(p["scale"])).astype(np.float32)
         if p["family"] == "constant":

@@ -1,0 +1,108 @@
+{
+  "created_at": 1791838118.9714606,
+  "research_question": "How much does synthetic completion prediction depend on direct depth inputs and declared execution assumptions after refitting?",
+  "source_hash": "443e4047ef3301cf481b55d3e66cc5c19476d9e923cdfb7805bdc4776ba21bc4",
+  "dataset_id": "dataset-d8c1593a2d281e1c9e430952",
+  "dataset_sha256": "80a75480aae4b790a1b2ace8b84a731cddad82a71c1be395caf9ec6dd58d82b9",
+  "configuration": {
+    "kind": "sweep",
+    "dataset": null,
+    "training": null,
+    "severity": null,
+    "recovery": null,
+    "model_id": null,
+    "rl": null,
+    "tournament": null,
+    "sweep": {
+      "dataset_id": "dataset-d8c1593a2d281e1c9e430952",
+      "candidates": [
+        {
+          "family": "logistic",
+          "hidden_size": 32,
+          "learning_rate": 0.001,
+          "weight_decay": 0.0001,
+          "excluded_features": []
+        },
+        {
+          "family": "logistic",
+          "hidden_size": 32,
+          "learning_rate": 0.001,
+          "weight_decay": 0.0001,
+          "excluded_features": [
+            "min_ask_depth",
+            "max_ask_depth",
+            "min_top_depth"
+          ]
+        },
+        {
+          "family": "logistic",
+          "hidden_size": 32,
+          "learning_rate": 0.001,
+          "weight_decay": 0.0001,
+          "excluded_features": [
+            "latency_ms",
+            "jitter_ms",
+            "liquidity_fraction",
+            "adverse_ticks",
+            "ack_delay_ms",
+            "observation_latency_ms"
+          ]
+        },
+        {
+          "family": "mlp",
+          "hidden_size": 32,
+          "learning_rate": 0.001,
+          "weight_decay": 0.0001,
+          "excluded_features": []
+        },
+        {
+          "family": "mlp",
+          "hidden_size": 32,
+          "learning_rate": 0.001,
+          "weight_decay": 0.0001,
+          "excluded_features": [
+            "min_ask_depth",
+            "max_ask_depth",
+            "min_top_depth"
+          ]
+        },
+        {
+          "family": "mlp",
+          "hidden_size": 32,
+          "learning_rate": 0.001,
+          "weight_decay": 0.0001,
+          "excluded_features": [
+            "latency_ms",
+            "jitter_ms",
+            "liquidity_fraction",
+            "adverse_ticks",
+            "ack_delay_ms",
+            "observation_latency_ms"
+          ]
+        }
+      ],
+      "seeds": [
+        11,
+        29
+      ],
+      "epochs": 80,
+      "practical_brier_tolerance": 0.002
+    },
+    "director": null,
+    "policy_search": null,
+    "max_wall_seconds": 1800
+  },
+  "training_trials": 12,
+  "validation_source_groups": 99,
+  "bootstrap": "Matched group mean squared-error differences, average optimization seeds first, 2000 source-group bootstrap replicates seed991",
+  "promotion": false,
+  "test_evaluation": false,
+  "artifact_usage_bytes": 653646614,
+  "interpretation": [
+    "Exploratory reuse of existing validation cohort, no confirmatory generalization claim",
+    "Direct depth removal retains proposed quantity and edge proxies",
+    "Declared execution inputs are hypothetical simulator assumptions, not empirically calibrated parameters",
+    "Positive paired Brier change means prediction worsened after removal",
+    "No policy or recovery budgets are adjusted from this study"
+  ]
+}

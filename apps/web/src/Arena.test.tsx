@@ -403,3 +403,72 @@ it('renders a verified study with a shared group denominator and paired changes'
   expect(screen.getByRole('button', { name: 'half depth' })).toBeInTheDocument();
   client.clear();
 });
+
+it('submits twelve bounded ablation fits and shows grouped validation evidence', async () => {
+  const overview = {
+    datasets: [
+      { dataset_id: 'frozen', spec: {}, partitions: {}, partition_rows: {}, feature_schema: [] },
+    ],
+    models: [],
+    jobs: [],
+    findings: [],
+    tournaments: [],
+    dependencies: {},
+    health: { memory_mb: {}, worker_cpu_cores: 1, worker_memory_mb: 4096 },
+    sweeps: [
+      {
+        sweep_id: 'ablation-fixture',
+        state: 'COMPLETED',
+        test_labels_used_for_selection: false,
+        trials: [],
+        ablation: {
+          interpretation: 'Positive Brier change means worse prediction.',
+          limitations: ['Exploratory validation evidence'],
+          comparisons: [
+            {
+              candidate_index: 1,
+              family: 'logistic',
+              excluded_features: ['min_ask_depth'],
+              mean_group_brier_change: 0.02,
+              group_bootstrap_95: [-0.01, 0.04],
+              source_groups: 97,
+            },
+          ],
+        },
+      },
+    ],
+  };
+  const fetch = vi.fn(async (url: string, init?: RequestInit) => {
+    if (url === '/api/arena/jobs' && init?.method === 'POST') {
+      const job = JSON.parse(String(init.body));
+      expect(job.configuration.kind).toBe('sweep');
+      const spec = job.configuration.sweep;
+      expect(spec.dataset_id).toBe('frozen');
+      expect(spec.seeds).toEqual([11, 29]);
+      expect(spec.candidates).toHaveLength(6);
+      expect(
+        spec.candidates.filter(
+          (c: { excluded_features: string[] }) => c.excluded_features.length === 0,
+        ),
+      ).toHaveLength(2);
+      expect(
+        spec.candidates.some((c: { excluded_features: string[] }) =>
+          c.excluded_features.includes('liquidity_fraction'),
+        ),
+      ).toBe(true);
+      return new Response(JSON.stringify({ job_id: 'ablation-job' }), { status: 201 });
+    }
+    return new Response(JSON.stringify(overview), { status: 200 });
+  });
+  vi.stubGlobal('fetch', fetch);
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  render(
+    <QueryClientProvider client={client}>
+      <Arena />
+    </QueryClientProvider>,
+  );
+  fireEvent.click(await screen.findByRole('tab', { name: 'Research director' }));
+  expect(await screen.findByText(/across 97 validation source groups/)).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Run feature ablations (12 fits)' }));
+  await screen.findByText(/Research job admitted/);
+});
