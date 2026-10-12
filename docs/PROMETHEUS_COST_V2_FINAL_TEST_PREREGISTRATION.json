@@ -1,0 +1,39 @@
+{
+  "created_at": 1791842040.8741658,
+  "configuration": {
+    "kind": "evaluation",
+    "dataset": null,
+    "training": null,
+    "severity": null,
+    "cost": null,
+    "recovery": null,
+    "model_id": "model-a7f99c63bd4f4cd4b22c57c6",
+    "rl": null,
+    "tournament": null,
+    "sweep": null,
+    "director": null,
+    "policy_search": null,
+    "max_wall_seconds": 600
+  },
+  "source_hash": "2e5894ddfb4c9a91cd1b5fce480642b5e1da1d02adaf0e08632859c5d11289a4",
+  "model_artifact_sha256": "88a2d60ba99b21c15317123836bc8183fad43b0a33586e77f1b86ea89c45208e",
+  "dataset_id": "dataset-b5c3dbdac9284f292a949b65",
+  "dataset_sha256": "7f1857d470144c6a68d5ff2f5a3e480016514e3dccb4f47a990f79e881a20179",
+  "test_source_groups": 92,
+  "pretest_bundle_sha256": "7bbb31bc4975e941d5b252bdeaee0dc203490c719754ea88843cc33ddb223342",
+  "selection": {
+    "criterion": "Minimum mean validation source-group RMSE by family; prefer ridge within 0.005 virtual USD RMSE. Representative seed has minimum validation RMSE. No policy promotion.",
+    "mean_neural_validation_rmse": 0.11336055528896452,
+    "model_id": "model-a7f99c63bd4f4cd4b22c57c6",
+    "partition": "validation",
+    "ridge_validation_rmse": 0.1398206452843785,
+    "test_evaluated": false
+  },
+  "baseline_definitions": [
+    "zero",
+    "training-only mean friction",
+    "observed quoted full-fill friction"
+  ],
+  "acceptance": "Evaluate fixed selected predictions once; report group RMSE/MAE, intervals, family/execution strata and paired baseline changes. This is not a policy promotion or real-cost claim.",
+  "launch_gate": "Current version-two full regression must pass before evaluation is admitted."
+}

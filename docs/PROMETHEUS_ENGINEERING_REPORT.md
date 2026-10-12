@@ -1798,3 +1798,33 @@ and preserve financial result hashes. Strict typing and Ruff pass. Fresh product
 preregistration uses 1001 groups at seed293071, original seven families and fixed
 cost/training settings, one ridge and two neural seeds. All tests stay unopened
 pending completed retraining, verification and a frozen pretest bundle.
+
+### Corrected cost production checkpoint and independent evaluation
+
+Version-two cohort completed 1,752 variants / 584 eligible source groups from
+1,001 generated groups. Both MLP seeds trained 80 epochs; validation family mean
+RMSE 0.113361 versus ridge 0.139821 retained neural seed 29. Selected model
+model-a7f99c63bd4f4cd4b22c57c6. All saved ledger labels, scaling, validation
+controls and worker source hashes verified; twenty development rows regenerated
+and matched exact broker financing/financial hashes in single-position cases.
+
+Pretest export SHA 7bbb31bc4975e941d5b252bdeaee0dc203490c719754ea88843cc33ddb223342
+verified 260 payloads and three unopened models. A separate fixed evaluation plan
+then admitted only the selected model after the full regression gate passed.
+Held-out 92 groups / 276 variants: RMSE 0.086880, MAE 0.060321 virtual USD. Quoted
+control RMSE 0.171863; paired RMSE change -0.084984 with source-group interval
+[-0.107434,-0.061656]. Weights and dataset hashes remained unchanged. Other two
+new model final tests remain unopened. No retraining or policy promotion occurred.
+
+Final export SHA ba8597dbdf188ceed3c13f6fbdd6f508a033d3e4af6ce95ecec022736bde2f6f
+verified 322 payloads, one evaluated model and two unopened. Full source gate
+404 passed / one PostgreSQL skip / existing warning in 491.02 seconds. Frontend 13
+tests, typecheck/lint/build passed. Current-version evidence test passed in 16.81
+seconds. New UI guards block legacy cost training and evaluation; corrected
+model browser inspection passed without page errors. API remains READY; all
+workers/coordinator terminal; archive quick_check/counts/owner lease verified.
+
+This supports bounded synthetic friction prediction, not real cost calibration or
+policy/economic benefit. Next matched-policy work must account for uncertainty,
+unsupported inputs, failed-fill states and fees already present in conditional
+edge. Broader Prometheus milestones remain active and incomplete.

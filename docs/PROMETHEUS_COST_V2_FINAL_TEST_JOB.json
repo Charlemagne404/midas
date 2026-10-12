@@ -1,0 +1,33 @@
+{
+  "job_id": "job-da6bdb876a154d0f8c6d829c",
+  "configuration": {
+    "kind": "evaluation",
+    "dataset": null,
+    "training": null,
+    "severity": null,
+    "cost": null,
+    "recovery": null,
+    "model_id": "model-a7f99c63bd4f4cd4b22c57c6",
+    "rl": null,
+    "tournament": null,
+    "sweep": null,
+    "director": null,
+    "policy_search": null,
+    "max_wall_seconds": 600
+  },
+  "state": "QUEUED",
+  "created_at": 1791842384.7416227,
+  "updated_at": 1791842384.741623,
+  "progress": null,
+  "error": null,
+  "result": null,
+  "unit": "midas-arena-job-da6bdb876a154d0f8c6d829c.service",
+  "submitted_source_hash": "2e5894ddfb4c9a91cd1b5fce480642b5e1da1d02adaf0e08632859c5d11289a4",
+  "budget": {
+    "cpu_cores": 1,
+    "memory_mb": 4096,
+    "wall_seconds": 600,
+    "minimum_available_memory_mb": 2048,
+    "max_artifact_mb": 1024
+  }
+}

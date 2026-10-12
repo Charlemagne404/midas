@@ -1,0 +1,5 @@
+{
+  "legacy_dataset_load": "passed",
+  "legacy_final_evaluation": "rejected before dataset/test evaluation",
+  "legacy_model_manifest_unchanged": true
+}

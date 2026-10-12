@@ -1,0 +1,82 @@
+{
+  "finding_id": "finding-cost-v2-b22e743b5b58debcaf5a544f",
+  "title": "Corrected cost target matches broker financing; neural validation error lower",
+  "created_at": 1791841946.5069945,
+  "cost_study_id": "cost-study-b22e743b5b58debcaf5a544f",
+  "model_id": "model-a7f99c63bd4f4cd4b22c57c6",
+  "interpretation": "Version-two target includes pending allocation financing. Twenty development replays retain identical financial result hashes, with exact broker financing in isolated-position cases. Neural validation RMSEs 0.11470 and 0.11202 virtual USD versus ridge 0.13982 and quoted control 0.18733 across 91 source groups. Selected seed29 remains final-test-unopened. These are synthetic hypothetical cost estimates, not policy/economic value.",
+  "outcome": {
+    "study_id": "cost-study-b22e743b5b58debcaf5a544f",
+    "dataset_id": "dataset-b5c3dbdac9284f292a949b65",
+    "cost_rows_verified": 1752,
+    "validation_source_groups": 91,
+    "models": [
+      {
+        "model_id": "model-d085fe2fe8e443b580285509",
+        "family": "ridge",
+        "epochs": 0,
+        "rmse": 0.1398206452843785,
+        "mae": 0.1020487055723088,
+        "test": "unopened"
+      },
+      {
+        "model_id": "model-5eb01f1d328a4d29bc0166fc",
+        "family": "cost_mlp",
+        "epochs": 80,
+        "rmse": 0.11470322894824052,
+        "mae": 0.07668860792169356,
+        "test": "unopened"
+      },
+      {
+        "model_id": "model-a7f99c63bd4f4cd4b22c57c6",
+        "family": "cost_mlp",
+        "epochs": 80,
+        "rmse": 0.11201788162968851,
+        "mae": 0.0724267955991556,
+        "test": "unopened"
+      }
+    ],
+    "selection": {
+      "criterion": "Minimum mean validation source-group RMSE by family; prefer ridge within 0.005 virtual USD RMSE. Representative seed has minimum validation RMSE. No policy promotion.",
+      "mean_neural_validation_rmse": 0.11336055528896452,
+      "model_id": "model-a7f99c63bd4f4cd4b22c57c6",
+      "partition": "validation",
+      "ridge_validation_rmse": 0.1398206452843785,
+      "test_evaluated": false
+    },
+    "validation_comparisons": [
+      {
+        "control": "ridge",
+        "rmse_change": -0.027802763654689977,
+        "group_bootstrap_95": [
+          -0.05216702678630028,
+          -0.006279496390855271
+        ],
+        "source_groups": 91
+      },
+      {
+        "control": "quoted_full_fill",
+        "rmse_change": -0.07531348446598585,
+        "group_bootstrap_95": [
+          -0.10285201081650303,
+          -0.04458614834996855
+        ],
+        "source_groups": 91
+      }
+    ],
+    "development_rows_regenerated": 20,
+    "limitations": [
+      "Exploratory synthetic validation evidence; final tests remain unopened.",
+      "Model selection reuses validation; comparison intervals do not correct selection or multiplicity.",
+      "Ledger/component arithmetic is independently checked; fitted predictions use the recorded regression implementation."
+    ]
+  },
+  "caveats": [
+    "Exploratory synthetic validation evidence; final tests remain unopened.",
+    "Model selection reuses validation; comparison intervals do not correct selection or multiplicity.",
+    "Ledger/component arithmetic is independently checked; fitted predictions use the recorded regression implementation.",
+    "First-position friction excludes principal, settlement gains/losses and collateral haircut.",
+    "Declared costs are synthetic estimates; inference under other cost regimes is unvalidated."
+  ],
+  "next_experiment": "Freeze and verify the pretest bundle, then preregister one selected-model final evaluation without retraining or policy promotion."
+}

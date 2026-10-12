@@ -1,0 +1,127 @@
+{
+  "label_version": "initial-position-friction-2",
+  "development_cases_replayed": 20,
+  "single_position_matches": [
+    {
+      "base_episode_id": "thin:293071",
+      "execution_model": "optimistic",
+      "financing_usd": "7.615499746321664129883307966E-8",
+      "exact_broker_match": true
+    },
+    {
+      "base_episode_id": "thin:293071",
+      "execution_model": "standard",
+      "financing_usd": "6.154951801116184677828513445E-8",
+      "exact_broker_match": true
+    },
+    {
+      "base_episode_id": "thin:293071",
+      "execution_model": "conservative",
+      "financing_usd": "2.666425672247590055809233891E-8",
+      "exact_broker_match": true
+    },
+    {
+      "base_episode_id": "deep:293072",
+      "execution_model": "optimistic",
+      "financing_usd": "2.504322044647387113140537798E-7",
+      "exact_broker_match": true
+    },
+    {
+      "base_episode_id": "deep:293072",
+      "execution_model": "standard",
+      "financing_usd": "2.504322044647387113140537798E-7",
+      "exact_broker_match": true
+    },
+    {
+      "base_episode_id": "deep:293072",
+      "execution_model": "conservative",
+      "financing_usd": "2.875215309487569761542364282E-8",
+      "exact_broker_match": true
+    },
+    {
+      "base_episode_id": "calm:293073",
+      "execution_model": "optimistic",
+      "financing_usd": "1.214970192795535261288685946E-7",
+      "exact_broker_match": true
+    },
+    {
+      "base_episode_id": "calm:293073",
+      "execution_model": "standard",
+      "financing_usd": "9.822491755454084221207508879E-8",
+      "exact_broker_match": true
+    },
+    {
+      "base_episode_id": "calm:293073",
+      "execution_model": "conservative",
+      "financing_usd": "4.229666095890410958904109588E-8",
+      "exact_broker_match": true
+    },
+    {
+      "base_episode_id": "one_sided:293076",
+      "execution_model": "optimistic",
+      "financing_usd": "2.504823059360730593607305936E-7",
+      "exact_broker_match": true
+    },
+    {
+      "base_episode_id": "one_sided:293076",
+      "execution_model": "standard",
+      "financing_usd": "1.004895547945205479452054795E-7",
+      "exact_broker_match": true
+    },
+    {
+      "base_episode_id": "one_sided:293076",
+      "execution_model": "conservative",
+      "financing_usd": "8.380072298325722983257229832E-8",
+      "exact_broker_match": true
+    },
+    {
+      "base_episode_id": "thin:293078",
+      "execution_model": "optimistic",
+      "financing_usd": "9.469292237442922374429223744E-8",
+      "exact_broker_match": true
+    },
+    {
+      "base_episode_id": "thin:293078",
+      "execution_model": "standard",
+      "financing_usd": "7.650342465753424657534246575E-8",
+      "exact_broker_match": true
+    },
+    {
+      "base_episode_id": "thin:293078",
+      "execution_model": "conservative",
+      "financing_usd": "3.185316780821917808219178083E-8",
+      "exact_broker_match": true
+    },
+    {
+      "base_episode_id": "deep:293079",
+      "execution_model": "optimistic",
+      "financing_usd": "2.504071537290715372907153729E-7",
+      "exact_broker_match": true
+    },
+    {
+      "base_episode_id": "deep:293079",
+      "execution_model": "standard",
+      "financing_usd": "2.504071537290715372907153729E-7",
+      "exact_broker_match": true
+    },
+    {
+      "base_episode_id": "deep:293079",
+      "execution_model": "conservative",
+      "financing_usd": "3.245783866057838660578386607E-8",
+      "exact_broker_match": true
+    },
+    {
+      "base_episode_id": "one_sided:293083",
+      "execution_model": "optimistic",
+      "financing_usd": "1.853773465246067985794013191E-7",
+      "exact_broker_match": true
+    },
+    {
+      "base_episode_id": "one_sided:293083",
+      "execution_model": "standard",
+      "financing_usd": "7.085235920852359208523592085E-9",
+      "exact_broker_match": true
+    }
+  ],
+  "financial_hashes_unchanged": true
+}

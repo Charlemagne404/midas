@@ -1,5 +1,37 @@
 # MIDAS — PROMETHEUS OVERNIGHT BRIEFING
 
+## Latest checkpoint — corrected financing and held-out cost evaluation
+
+Version-two cost labels include broker pending allocation reserves. Twenty
+development replays matched original financial result hashes and exact isolated
+broker financing. Version-one data remains preserved; legacy training and final
+evaluation are blocked until its target is revised.
+
+Fresh dataset `dataset-b5c3dbdac9284f292a949b65`: 1,001 generated groups, 584
+eligible groups / 1,752 correlated variants; train 401, validation 91, test 92
+source groups. One ridge and two cost MLPs fitted; both neural seeds ran 80 epochs.
+Inventory is now 43 model artifacts / 42 fitted and six datasets.
+
+Validation selected neural seed 29 under the original fixed criterion. Its one
+preregistered final evaluation used unchanged weights and 92 groups / 276 variants.
+Test RMSE 0.086880 virtual USD, MAE 0.060321; quoted full-fill RMSE 0.171863,
+training mean 0.209269, zero 0.247452. Paired model-minus-quoted RMSE change
+-0.084984, grouped 95% interval [-0.107434, -0.061656]. Other two new final tests
+remain unopened. No policy promotion or real-cost calibration claim follows.
+
+Pretest bundle verified 260 payloads; final bundle verified 322 and exactly one
+evaluated model. Full Python gate: 404 passed, one PostgreSQL skip, existing
+Starlette warning, 491.02 seconds. Frontend 13 tests, typecheck/lint/build and
+production browser checks passed; final evidence-tool test also passed. API READY,
+all research workers terminal, archive quick_check/counts/ownership verified.
+
+Next: design and preregister a matched policy study using cost forecasts with
+explicit uncertainty, support checks and original hard risk gates. Avoid double
+counting fees already included in mathematical edge. Low friction can accompany
+failed fills; compare mean P&L, downside and no-trade, rather than assuming lower
+cost error implies policy benefit. The full Prometheus goal remains active.
+
+
 ## Latest checkpoint — cost models trained; financing target revision required
 
 A fresh cost dataset completed 1001 generated groups, 582 eligible groups and

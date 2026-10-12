@@ -76,6 +76,7 @@ type Dataset = {
 };
 type Model = {
   task?: string;
+  label_version?: string;
   loss_definition?: string;
   quoted_baseline_definition?: string;
   baselines_validation?: Record<string, Metrics>;
@@ -376,7 +377,8 @@ export function Arena() {
   const selectedDataset = datasetId || data?.datasets[0]?.dataset_id || '';
   const costDataMissing =
     ['cost_ridge', 'cost_mlp'].includes(family) &&
-    !data?.datasets.find((entry) => entry.dataset_id === selectedDataset)?.execution_cost_label;
+    data?.datasets.find((entry) => entry.dataset_id === selectedDataset)?.execution_cost_label !==
+      'initial-position-friction-2';
   const selectedSearchModel =
     searchModelId ||
     data?.models.find(
@@ -812,13 +814,13 @@ export function Arena() {
             </p>
             {costDataMissing && (
               <p className="lab-note" role="alert">
-                This dataset has no execution-cost labels. Generate an execution-cost dataset before
-                training this architecture.
+                This architecture requires version-two cost labels, including pending allocation
+                reserves. Generate a new execution-cost dataset before training.
               </p>
             )}
             <div className="lab-controls">
               <button
-                disabled={!selectedDataset || submit.isPending}
+                disabled={!selectedDataset || submit.isPending || costDataMissing}
                 onClick={() => submit.mutate({ configuration: training, validate: true })}
               >
                 Validate configuration
@@ -1283,6 +1285,10 @@ export function Arena() {
                   model.data.state !== 'TRAINING' &&
                   !model.data.test && (
                     <button
+                      disabled={
+                        isCost(model.data) &&
+                        model.data.label_version !== 'initial-position-friction-2'
+                      }
                       onClick={() =>
                         submit.mutate({ configuration: { kind: 'evaluation', model_id: modelId } })
                       }

@@ -1,0 +1,289 @@
+{
+  "model_id": "model-a7f99c63bd4f4cd4b22c57c6",
+  "label_version": "initial-position-friction-2",
+  "test": {
+    "base_episodes": 92,
+    "by_execution": {
+      "conservative": {
+        "rmse": 0.03676384267198838,
+        "rows": 92
+      },
+      "optimistic": {
+        "rmse": 0.10970702962253924,
+        "rows": 92
+      },
+      "standard": {
+        "rmse": 0.09621359825733355,
+        "rows": 92
+      }
+    },
+    "by_family": {
+      "calm": {
+        "rmse": 0.15263258762738646,
+        "rows": 24
+      },
+      "deep": {
+        "rmse": 0.027038277118570143,
+        "rows": 66
+      },
+      "fees": {
+        "rmse": 0.10282519122308967,
+        "rows": 15
+      },
+      "liquidity_shock": {
+        "rmse": 0.08717824892561778,
+        "rows": 33
+      },
+      "one_sided": {
+        "rmse": 0.10260781804637518,
+        "rows": 30
+      },
+      "thin": {
+        "rmse": 0.05294151991317131,
+        "rows": 42
+      },
+      "volatile": {
+        "rmse": 0.09792821211931445,
+        "rows": 66
+      }
+    },
+    "episode_bootstrap_rmse_95": [
+      0.07489508388374275,
+      0.09782022395197082
+    ],
+    "episode_rmse": 0.08687974249162841,
+    "mae": 0.06032067226646412,
+    "mean_observed_usd": 0.13333919588897483,
+    "mean_predicted_usd": 0.12493576670923452,
+    "positive_frequency": 1.0,
+    "positive_mae": 0.06032067226646412,
+    "positive_rmse": 0.08687974249162843,
+    "rmse": 0.08687974249162843,
+    "rows": 276,
+    "uncertainty_note": "Bootstrap resamples base groups; execution variants remain grouped. Zero-heavy labels require positive-outcome errors alongside aggregate metrics. No dollar loss or empirical-fill interpretation.",
+    "units": "virtual USD"
+  },
+  "baseline_metrics": {
+    "zero": {
+      "rows": 276,
+      "base_episodes": 92,
+      "units": "virtual USD",
+      "mae": 0.13333919588897483,
+      "rmse": 0.24745190911478301,
+      "mean_predicted_usd": 0.0,
+      "mean_observed_usd": 0.13333919588897483,
+      "positive_frequency": 1.0,
+      "positive_mae": 0.13333919588897483,
+      "positive_rmse": 0.24745190911478301,
+      "episode_rmse": 0.247451909114783,
+      "episode_bootstrap_rmse_95": [
+        0.18140206835605832,
+        0.31182497704068635
+      ],
+      "by_family": {
+        "calm": {
+          "rows": 24,
+          "rmse": 0.28410749682574643
+        },
+        "deep": {
+          "rows": 66,
+          "rmse": 0.034641214768872754
+        },
+        "fees": {
+          "rows": 15,
+          "rmse": 0.7612615879114331
+        },
+        "liquidity_shock": {
+          "rows": 33,
+          "rmse": 0.2706222755062245
+        },
+        "one_sided": {
+          "rows": 30,
+          "rmse": 0.20502040435284175
+        },
+        "thin": {
+          "rows": 42,
+          "rmse": 0.19311685953114824
+        },
+        "volatile": {
+          "rows": 66,
+          "rmse": 0.11977257404459257
+        }
+      },
+      "by_execution": {
+        "conservative": {
+          "rows": 92,
+          "rmse": 0.08231012922034898
+        },
+        "optimistic": {
+          "rows": 92,
+          "rmse": 0.35446451062295864
+        },
+        "standard": {
+          "rows": 92,
+          "rmse": 0.2264449056839398
+        }
+      },
+      "uncertainty_note": "Bootstrap resamples base groups; execution variants remain grouped. Zero-heavy labels require positive-outcome errors alongside aggregate metrics. No dollar loss or empirical-fill interpretation."
+    },
+    "training_mean": {
+      "rows": 276,
+      "base_episodes": 92,
+      "units": "virtual USD",
+      "mae": 0.15162582409451938,
+      "rmse": 0.20926914321391027,
+      "mean_predicted_usd": 0.15179097459054336,
+      "mean_observed_usd": 0.13333919588897483,
+      "positive_frequency": 1.0,
+      "positive_mae": 0.15162582409451938,
+      "positive_rmse": 0.20926914321391027,
+      "episode_rmse": 0.20926914321391027,
+      "episode_bootstrap_rmse_95": [
+        0.15387119809489447,
+        0.2637960456517555
+      ],
+      "by_family": {
+        "calm": {
+          "rows": 24,
+          "rmse": 0.18186129904908646
+        },
+        "deep": {
+          "rows": 66,
+          "rmse": 0.1188320734234507
+        },
+        "fees": {
+          "rows": 15,
+          "rmse": 0.6442323138223046
+        },
+        "liquidity_shock": {
+          "rows": 33,
+          "rmse": 0.2258662995111033
+        },
+        "one_sided": {
+          "rows": 30,
+          "rmse": 0.17684756614613506
+        },
+        "thin": {
+          "rows": 42,
+          "rmse": 0.07880531558505956
+        },
+        "volatile": {
+          "rows": 66,
+          "rmse": 0.13779347330555677
+        }
+      },
+      "by_execution": {
+        "conservative": {
+          "rows": 92,
+          "rmse": 0.11874716962720057
+        },
+        "optimistic": {
+          "rows": 92,
+          "rmse": 0.2788601582692131
+        },
+        "standard": {
+          "rows": 92,
+          "rmse": 0.1987884421691827
+        }
+      },
+      "uncertainty_note": "Bootstrap resamples base groups; execution variants remain grouped. Zero-heavy labels require positive-outcome errors alongside aggregate metrics. No dollar loss or empirical-fill interpretation."
+    },
+    "quoted_full_fill": {
+      "rows": 276,
+      "base_episodes": 92,
+      "units": "virtual USD",
+      "mae": 0.09192576852326646,
+      "rmse": 0.17186345654387233,
+      "mean_predicted_usd": 0.06760347826086954,
+      "mean_observed_usd": 0.13333919588897483,
+      "positive_frequency": 1.0,
+      "positive_mae": 0.09192576852326646,
+      "positive_rmse": 0.17186345654387233,
+      "episode_rmse": 0.17186345654387236,
+      "episode_bootstrap_rmse_95": [
+        0.1461834336398461,
+        0.19541324642112654
+      ],
+      "by_family": {
+        "calm": {
+          "rows": 24,
+          "rmse": 0.25236955526336247
+        },
+        "deep": {
+          "rows": 66,
+          "rmse": 0.011546987936201365
+        },
+        "fees": {
+          "rows": 15,
+          "rmse": 0.3396213450050028
+        },
+        "liquidity_shock": {
+          "rows": 33,
+          "rmse": 0.2508169402075676
+        },
+        "one_sided": {
+          "rows": 30,
+          "rmse": 0.18635100160490947
+        },
+        "thin": {
+          "rows": 42,
+          "rmse": 0.15694349075283126
+        },
+        "volatile": {
+          "rows": 66,
+          "rmse": 0.10534219859184556
+        }
+      },
+      "by_execution": {
+        "conservative": {
+          "rows": 92,
+          "rmse": 0.09664304602352099
+        },
+        "optimistic": {
+          "rows": 92,
+          "rmse": 0.2565735694044102
+        },
+        "standard": {
+          "rows": 92,
+          "rmse": 0.1159364835761307
+        }
+      },
+      "uncertainty_note": "Bootstrap resamples base groups; execution variants remain grouped. Zero-heavy labels require positive-outcome errors alongside aggregate metrics. No dollar loss or empirical-fill interpretation."
+    }
+  },
+  "paired_baseline_comparisons": [
+    {
+      "control": "zero",
+      "group_rmse_change": -0.16057216662315457,
+      "paired_group_bootstrap_95": [
+        -0.227942046679608,
+        -0.09641316751324637
+      ]
+    },
+    {
+      "control": "training_mean",
+      "group_rmse_change": -0.12238940072228185,
+      "paired_group_bootstrap_95": [
+        -0.17995185322688978,
+        -0.06830312675527289
+      ]
+    },
+    {
+      "control": "quoted_full_fill",
+      "group_rmse_change": -0.08498371405224395,
+      "paired_group_bootstrap_95": [
+        -0.1074340601659964,
+        -0.061656169749274285
+      ]
+    }
+  ],
+  "test_source_groups": 92,
+  "test_correlated_variants": 276,
+  "frozen_weights_verified": true,
+  "other_two_tests_unopened": true,
+  "limitations": [
+    "One synthetic held-out cohort under fixed declared costs; no real-cost calibration.",
+    "Selected by validation before test; no post-test retraining or policy promotion.",
+    "Friction prediction improvement is not evidence of profit or downside-risk improvement."
+  ]
+}

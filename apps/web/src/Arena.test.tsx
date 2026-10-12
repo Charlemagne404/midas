@@ -478,6 +478,7 @@ it('shows execution-cost errors in virtual USD and excludes probability diagnost
     model_id: 'model-cost',
     family: 'ridge',
     task: 'execution_cost_regression',
+    label_version: 'initial-position-friction-1',
     label_target: 'initial_position_friction_usd',
     state: 'TRAINED',
     dataset_id: 'parent',
@@ -518,6 +519,7 @@ it('shows execution-cost errors in virtual USD and excludes probability diagnost
   expect(screen.getAllByText('RMSE (virtual USD)')).toHaveLength(2);
   fireEvent.click(screen.getByRole('button', { name: 'Inspect model' }));
   expect(await screen.findByText(/Expected first-position execution friction/)).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Evaluate frozen test' })).toBeDisabled();
   expect(
     screen.getByRole('heading', { name: 'Validation regression controls' }),
   ).toBeInTheDocument();
@@ -526,4 +528,44 @@ it('shows execution-cost errors in virtual USD and excludes probability diagnost
   ).not.toBeInTheDocument();
   expect(screen.getByText('positive rmse')).toBeInTheDocument();
   client.clear();
+});
+
+it('blocks cost training on legacy financing labels', async () => {
+  const overview = {
+    datasets: [
+      {
+        dataset_id: 'legacy-cost',
+        execution_cost_label: 'initial-position-friction-1',
+        rows: 3,
+        eligible_base_episodes: 1,
+        generated_base_episodes: 30,
+        partition_rows: {},
+        label_frequency: {},
+        limitations: [],
+      },
+    ],
+    models: [],
+    jobs: [],
+    findings: [],
+    tournaments: [],
+    dependencies: {},
+    health: { memory_mb: {}, worker_cpu_cores: 1, worker_memory_mb: 4096 },
+  };
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async () => new Response(JSON.stringify(overview), { status: 200 })),
+  );
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  render(
+    <QueryClientProvider client={client}>
+      <Arena />
+    </QueryClientProvider>,
+  );
+  fireEvent.click(await screen.findByRole('tab', { name: 'Training console' }));
+  fireEvent.change(screen.getByLabelText('Architecture'), { target: { value: 'cost_mlp' } });
+  expect(await screen.findByRole('alert')).toHaveTextContent('version-two cost labels');
+  expect(screen.getByRole('button', { name: 'Start training' })).toBeDisabled();
+  expect(
+    screen.getByRole('button', { name: 'Validate configuration' }),
+  ).toBeDisabled();
 });

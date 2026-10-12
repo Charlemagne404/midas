@@ -19,5 +19,17 @@
     "version-one final evaluation rejection",
     "real regression, checkpoint recovery and bundles"
   ],
-  "full_regression": "pending after supervised retraining"
+  "full_regression": {
+    "passed": 404,
+    "skipped": 1,
+    "warnings": 1,
+    "duration_seconds": 491.02
+  },
+  "frontend": {
+    "tests": 13,
+    "typecheck": "passed",
+    "lint": "passed",
+    "build": "passed; existing chart-chunk advisory"
+  },
+  "final_evaluation": "Selected model only, frozen hashes verified; other two remain unopened"
 }

@@ -62,6 +62,7 @@ def verify(root: Path, identity: str, regenerate: int = 0) -> dict:
             or job["state"] != "COMPLETED"
             or job["result"]["model_id"] != stage["model_id"]
             or model["task"] != TASK
+            or model.get("label_version") != dataset["execution_cost_label"]
             or model["source_hash"] != plan["source_hash"]
             or model["dataset_sha256"] != dataset["rows_sha256"]
             or model["test"] is not None
