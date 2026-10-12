@@ -768,3 +768,88 @@ controls without changing the selected gate. Publish a supported finding and
 preserve all unsuccessful/tied validation candidates. Extend bundle export for
 search artifacts, then proceed to fair cross-target severity/cost comparisons
 and correctly accounted recovery actions. The overall Prometheus goal is ACTIVE.
+
+## Independent search evidence verification and export
+
+The live source remains frozen. Added standalone `verify_policy_search.py` to
+recompute policy selection directly from frozen validation row outcomes, using
+an independent implementation of the fixed score, grouped paired bootstrap,
+minimum sample rule and tie preference. It checks preregistered gate configs,
+weights/dataset/stage hashes, control coverage, finite outcomes, final selection
+bindings and disjoint source seeds. `--full-replays` verifies every retained
+core/journal hash and replay-row identity. It does not repeat policy inference
+or establish real fill probabilities.
+
+Bundle exporter v3 accepts completed searches as well as directors. It refuses
+incomplete searches and invokes full replay verification before search export.
+It includes both stages, model weights, frozen dataset, captured job source,
+associated findings and verification tools. Each archived payload is hashed
+from the exact bytes written, with one payload held in RAM, preventing later
+model annotations from invalidating the bundle manifest. Existing output still
+uses exclusive publication and cannot be overwritten.
+
+Five focused export/evidence tests pass, including independently recomputed
+selection, altered final bindings and missing replay rejection. The completed
+browser search was audited against its actual 180 validation / 1200 final
+variants and exported as a clearly labelled smoke artifact. All 1452 exported
+file digests verify (SHA256
+`ada5461da53f11b11a95f849e68ff7d5fd460dfd9b2fa830a94574d2d9192614`).
+This smoke bundle is not the production campaign. Source Ruff/mypy pass; full
+regression **292 passed / one PostgreSQL skip** in 298.05 seconds, one existing
+Starlette warning. `ARENA_REPRODUCIBILITY.md` documents the new commands.
+
+Production validation completed as `tournament-74386f79d51b4f68b4fd2020`:
+5004 variants / 139 matched source groups. Independent selection recomputation
+agrees with the frozen decision: `gate-f12a4e29a05e5a4ce18f`, maximum predicted
+unmatched risk 0.10, full sizing. Validation mean P&L 1.52829305, 5% tail loss
+0.68976190, score +0.83853114; arbitrage score +0.67038863; no-trade 0. Worst
+validation loss is -4.48. This is selection evidence subject to optimism, not
+an independent champion designation. The final new-seed stage is running.
+
+Runtime accounting also identifies a performance question: validation wall
+1491.85 seconds versus 398.91 seconds summed episode-reported runtime. The
+1092.94-second residual includes artifact/progress I/O, setup and repeated budget
+checks; it cannot be attributed to one cause without instrumentation. Profile
+these costs after the source-frozen campaign finishes before changing throughput
+or safety check behavior. `PROMETHEUS_POLICY_VALIDATION_SELECTION_AUDIT.json`
+preserves this observation and the independent decision check.
+
+## Completed policy search — independently audited fresh result
+
+Production search `search-948c67bb4c90175f0b1e0294` completed under
+`job-659ad7466d8d41f7b5a7f360`, exit 0, recorded elapsed 1983.41 seconds.
+The supervisor is terminal (MainPID 0). Independent auditing confirms the exact
+validation-selected 0.10/full gate and verifies all **6504** search-stage replays
+(5004 validation + 1500 final variants), including financial/journal hashes,
+preregistered candidates, final bindings and unused test seeds.
+
+Fresh final tournament `tournament-be94f3ab8512499ab68db300` contains 100 generated
+base groups / three execution variants for each of five matched policies.
+The frozen gate's mean virtual P&L is 1.17716567, mean bootstrap interval
+[0.86014168, 1.54643986], tail loss 0, worst final loss 0, downside score
++1.17716567. No-trade scores 0; arbitrage -0.27071933; conservative -0.64717067;
+random -0.27137667. The gate abstains in 55.33% of variants. Its mean by execution
+is optimistic 2.439206, standard 1.000991, conservative 0.0913.
+
+The paired mean difference versus arbitrage is -0.20238167 with interval
+[-0.45172317, 0.02642033], so this is not a demonstrated mean-return improvement.
+It clears the declared downside objective in this bounded synthetic sample.
+Zero observed losses do not imply zero loss probability. Maximum mark-to-market
+drawdown was 13.27%, despite zero final losses; pre-trade thresholds do not
+provide a drawdown guarantee. Synthetic fills, zero base extra costs and generator
+structure remain material limitations. No live promotion or weight update occurs.
+
+A supported finding is published as `finding-d6fceea037935d437cd31128`, with paired
+uncertainty and these caveats. The final tournament now has a verified fixed-path
+cost report. Export tooling also collects findings attached to either stage, so
+an additional immutable bundle preserves the completed plan plus its final
+interpretation. Original smoke and production bundles remain untouched.
+
+The promising fixed policy warrants a LIMITED preregistered follow-up:
+`PROMETHEUS_FROZEN_GATE_STRESS_PREREGISTRATION.json` uses the same model, 0.10
+threshold and full size on 100 new groups beginning seed 113071. It applies the
+existing event-sequence timing/withdrawal/lost-ack/cancellation/duplicate/pause
+mutations across three execution assumptions, plus matched controls, with no
+ledger corruption, refit or threshold tuning. Proposed wall budget is 1800
+seconds. This is independent robustness evaluation, not adaptation to the opened
+93071 test. Submission status and exact handle follow below.

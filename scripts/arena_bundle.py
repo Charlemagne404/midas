@@ -1,6 +1,7 @@
-"""Export a completed director's evidence with a checksummed file manifest."""
+"""Export completed directors or policy searches with checksummed evidence."""
 
 import argparse
+import hashlib
 import importlib.metadata
 import io
 import json
@@ -16,14 +17,35 @@ from midas.arena.artifacts import artifact_path, sha256
 
 
 def export(root: Path, director_id: str, output: Path) -> dict[str, Any]:
+    return export_experiment(root, "directors", director_id, output)
+
+
+def export_search(root: Path, search_id: str, output: Path) -> dict[str, Any]:
+    from scripts.verify_policy_search import verify_search
+
+    verify_search(root, search_id, full_replays=True)
+    return export_experiment(root, "searches", search_id, output)
+
+
+def export_experiment(root: Path, kind: str, identity: str, output: Path) -> dict[str, Any]:
     root = root.resolve()
-    directory = artifact_path(root, "directors", director_id)
+    directory = artifact_path(root, kind, identity)
     director = json.loads((directory / "manifest.json").read_text())
     if director["state"] != "COMPLETED":
         raise ValueError("Only completed plans can be exported as complete experiment bundles")
     paths = set(directory.rglob("*"))
-    model_ids = set(director["configuration"]["incumbent_model_ids"])
-    for step in director["steps"]:
+    if kind == "directors":
+        model_ids = set(director["configuration"]["incumbent_model_ids"])
+        steps = director["steps"]
+        reference_key = "director_id"
+    else:
+        model_ids = {director["configuration"]["model_id"]}
+        steps = [
+            {"state": "COMPLETED", "artifact": {"kind": "tournaments", "identity": director[key]}}
+            for key in ("validation_tournament", "test_tournament")
+        ]
+        reference_key = "search_id"
+    for step in steps:
         if step["state"] != "COMPLETED":
             raise ValueError("Director contains an incomplete stage")
         artifact = step["artifact"]
@@ -56,7 +78,7 @@ def export(root: Path, director_id: str, output: Path) -> dict[str, Any]:
     paths.update(p for p in dataset.glob("*.json"))
     for job_file in root.glob("jobs/*/job.json"):
         job = json.loads(job_file.read_text())
-        if (job.get("result") or {}).get("director_id") == director_id:
+        if (job.get("result") or {}).get(reference_key) == identity:
             source_manifest = json.loads((job_file.parent / "source-manifest.json").read_text())
             for relative, expected in source_manifest["files"].items():
                 relative_path = Path(relative)
@@ -65,6 +87,16 @@ def export(root: Path, director_id: str, output: Path) -> dict[str, Any]:
                 if sha256(job_file.parent / "source" / relative_path) != expected:
                     raise ValueError("Captured source hash mismatch")
             paths.update(job_file.parent.rglob("*"))
+    tournament_ids = {
+        step["artifact"]["identity"] for step in steps if step["artifact"]["kind"] == "tournaments"
+    }
+    for finding in root.glob("findings/*/manifest.json"):
+        finding_record = json.loads(finding.read_text())
+        if (
+            finding_record.get(reference_key) == identity
+            or finding_record.get("tournament_id") in tournament_ids
+        ):
+            paths.update(finding.parent.rglob("*"))
     files = sorted(p for p in paths if p.is_file() and not p.is_symlink())
     extras = {
         "ENVIRONMENT/requirements-arena.txt": Path(__file__).resolve().parents[1]
@@ -72,14 +104,16 @@ def export(root: Path, director_id: str, output: Path) -> dict[str, Any]:
         "ENVIRONMENT/pyproject.toml": Path(__file__).resolve().parents[1] / "pyproject.toml",
         "TOOLS/verify_arena.py": Path(__file__).resolve().parent / "verify_arena.py",
         "TOOLS/compare_arena.py": Path(__file__).resolve().parent / "compare_arena.py",
+        "TOOLS/verify_policy_search.py": Path(__file__).resolve().parent
+        / "verify_policy_search.py",
         "ARENA_REPRODUCIBILITY.md": Path(__file__).resolve().parents[1]
         / "docs/ARENA_REPRODUCIBILITY.md",
     }
     record: dict[str, Any] = {
-        "bundle_version": "arena-experiment-2",
-        "director_id": director_id,
+        "bundle_version": "arena-experiment-3",
+        reference_key: identity,
         "created_at": time.time(),
-        "files": {str(p.relative_to(root)): sha256(p) for p in files},
+        "files": {},
         "environment": {
             "python": platform.python_version(),
             "libraries": {
@@ -101,7 +135,6 @@ def export(root: Path, director_id: str, output: Path) -> dict[str, Any]:
             "Native PPO archives require trusted loading and compatible pinned dependencies.",
         ],
     }
-    record["files"].update({name: sha256(path) for name, path in extras.items()})
     if output.exists():
         raise ValueError("Refuse to overwrite an existing scientific bundle")
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -109,10 +142,14 @@ def export(root: Path, director_id: str, output: Path) -> dict[str, Any]:
     os.close(fd)
     try:
         with tarfile.open(temporary, "w:gz") as archive:
-            for path in files:
-                archive.add(path, arcname=str(path.relative_to(root)), recursive=False)
-            for name, path in extras.items():
-                archive.add(path, arcname=name, recursive=False)
+            # Hash and archive the same bytes even if later annotations replace a
+            # model manifest concurrently. Only one file payload is held in RAM.
+            for name, path in [(str(p.relative_to(root)), p) for p in files] + list(extras.items()):
+                payload = path.read_bytes()
+                record["files"][name] = hashlib.sha256(payload).hexdigest()
+                entry = tarfile.TarInfo(name)
+                entry.size = len(payload)
+                archive.addfile(entry, io.BytesIO(payload))
             metadata = json.dumps(record, sort_keys=True, indent=2).encode()
             entry = tarfile.TarInfo("BUNDLE_MANIFEST.json")
             entry.size = len(metadata)
@@ -133,14 +170,21 @@ def export(root: Path, director_id: str, output: Path) -> dict[str, Any]:
         "path": str(output.resolve()),
         "sha256": sha256(output),
         "files": len(files),
-        "director_id": director_id,
+        reference_key: identity,
     }
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, default=Path("data/arena"))
-    parser.add_argument("--director", required=True)
+    experiment = parser.add_mutually_exclusive_group(required=True)
+    experiment.add_argument("--director")
+    experiment.add_argument("--search")
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
-    print(json.dumps(export(args.root, args.director, args.output), indent=2))
+    result = (
+        export(args.root, args.director, args.output)
+        if args.director
+        else export_search(args.root, args.search, args.output)
+    )
+    print(json.dumps(result, indent=2))

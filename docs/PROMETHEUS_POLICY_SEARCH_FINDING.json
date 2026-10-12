@@ -1,0 +1,134 @@
+{
+  "finding_id": "finding-d6fceea037935d437cd31128",
+  "title": "Validation-selected risk gate clears one fresh synthetic downside test",
+  "search_id": "search-948c67bb4c90175f0b1e0294",
+  "tournament_id": "tournament-be94f3ab8512499ab68db300",
+  "created_at": 1791790650.5411124,
+  "input_row_hash": "ee7e66f801e43201ae90a91cf252f006c2199cfb61509ff6de30f286470a6038",
+  "selected_gate": {
+    "model_id": "model-131794f0434945a286163323",
+    "threshold": 0.1,
+    "size": "full"
+  },
+  "interpretation": "The gate frozen by validation recorded mean virtual P&L 1.17717 and zero losing variants on 100 new generated groups. Its downside score exceeds no-trade and deterministic controls in this sample. Its mean difference versus arbitrage is not clearly positive; the gain is the declared downside objective, not highest mean return.",
+  "caveats": [
+    "Synthetic hypothetical fills; zero observed losses does not imply a zero loss probability or a guaranteed loss bound.",
+    "Execution variants are correlated; 300 outcomes represent 100 source groups.",
+    "The fixed predictor was not refit after validation. Full-proposal risk scores are not real-market calibration.",
+    "Maximum mark-to-market drawdown was 13.27% despite no final losses; pre-trade drawdown stops cannot guarantee a drawdown ceiling."
+  ],
+  "uncertainty": [
+    {
+      "base_episodes": 100,
+      "bootstrap_95": [
+        0.9813396083333336,
+        1.8641171833333332
+      ],
+      "conclusion": "POSITIVE_SYNTHETIC_MEAN",
+      "control": "no_trade",
+      "mean_difference": 1.3795473333333335,
+      "policy": "arbitrage"
+    },
+    {
+      "base_episodes": 100,
+      "bootstrap_95": [
+        -0.0021453249999999827,
+        0.7161966916666661
+      ],
+      "conclusion": "NO_CLEAR_MEAN_ADVANTAGE",
+      "control": "conservative",
+      "mean_difference": 0.34545133333333333,
+      "policy": "arbitrage"
+    },
+    {
+      "base_episodes": 100,
+      "bootstrap_95": [
+        0.8046220833333335,
+        1.2903839500000003
+      ],
+      "conclusion": "POSITIVE_SYNTHETIC_MEAN",
+      "control": "no_trade",
+      "mean_difference": 1.0340960000000001,
+      "policy": "conservative"
+    },
+    {
+      "base_episodes": 100,
+      "bootstrap_95": [
+        -0.7161966916666667,
+        0.002145324999999895
+      ],
+      "conclusion": "NO_CLEAR_MEAN_ADVANTAGE",
+      "control": "arbitrage",
+      "mean_difference": -0.34545133333333333,
+      "policy": "conservative"
+    },
+    {
+      "base_episodes": 100,
+      "bootstrap_95": [
+        0.8601416833333334,
+        1.5464398583333328
+      ],
+      "conclusion": "POSITIVE_SYNTHETIC_MEAN",
+      "control": "no_trade",
+      "mean_difference": 1.177165666666667,
+      "policy": "gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "base_episodes": 100,
+      "bootstrap_95": [
+        -0.4517231666666667,
+        0.026420333333333296
+      ],
+      "conclusion": "NO_CLEAR_MEAN_ADVANTAGE",
+      "control": "arbitrage",
+      "mean_difference": -0.20238166666666665,
+      "policy": "gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "base_episodes": 100,
+      "bootstrap_95": [
+        -0.13092539166666667,
+        0.4200974583333333
+      ],
+      "conclusion": "NO_CLEAR_MEAN_ADVANTAGE",
+      "control": "conservative",
+      "mean_difference": 0.14306966666666668,
+      "policy": "gate-f12a4e29a05e5a4ce18f"
+    },
+    {
+      "base_episodes": 100,
+      "bootstrap_95": [
+        0.6265263333333334,
+        1.2577833999999999
+      ],
+      "conclusion": "POSITIVE_SYNTHETIC_MEAN",
+      "control": "no_trade",
+      "mean_difference": 0.9191566666666665,
+      "policy": "random"
+    },
+    {
+      "base_episodes": 100,
+      "bootstrap_95": [
+        -0.8236750166666669,
+        -0.1584867
+      ],
+      "conclusion": "NO_CLEAR_MEAN_ADVANTAGE",
+      "control": "arbitrage",
+      "mean_difference": -0.4603906666666667,
+      "policy": "random"
+    },
+    {
+      "base_episodes": 100,
+      "bootstrap_95": [
+        -0.3898888499999999,
+        0.14255998333333317
+      ],
+      "conclusion": "NO_CLEAR_MEAN_ADVANTAGE",
+      "control": "conservative",
+      "mean_difference": -0.11493933333333332,
+      "policy": "random"
+    }
+  ],
+  "next_experiment": "Freeze the same gate for an independent adversarial seed block; do not tune against the opened final challenge.",
+  "synthesis_method": "Verified frozen manifests and independently audited selection; no automatic live promotion."
+}

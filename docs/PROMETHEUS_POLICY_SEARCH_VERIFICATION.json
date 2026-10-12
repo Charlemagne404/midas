@@ -1,0 +1,9 @@
+{
+  "search_id": "search-948c67bb4c90175f0b1e0294",
+  "selected_policy": "gate-f12a4e29a05e5a4ce18f",
+  "validation_variants": 5004,
+  "test_variants": 1500,
+  "verified": true,
+  "full_replay_verification": true,
+  "scope": "Frozen lineage and independent validation selection recomputation; full replay audit remains separate."
+}

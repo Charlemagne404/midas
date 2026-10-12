@@ -1,0 +1,9 @@
+{
+  "search_id": "search-c4e47a5c99c34821d99b0664",
+  "selected_policy": "no_trade",
+  "validation_variants": 180,
+  "test_variants": 1200,
+  "verified": true,
+  "full_replay_verification": true,
+  "scope": "Frozen lineage and independent validation selection recomputation; full replay audit remains separate."
+}

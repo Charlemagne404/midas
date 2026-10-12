@@ -77,3 +77,36 @@ checks as training. Inspect or cancel from the Arena job panel. Cancellation
 retains finished artifacts; a partial diagnostic report is not published.
 Completed reports are reused when provenance matches; changed provenance is
 rejected to preserve the saved evidence.
+
+## Policy-search evidence
+
+The current supervised search is `search-948c67bb4c90175f0b1e0294`. Its validation
+league and fresh test are separate artifacts. Wait for its authoritative job to
+be terminal and its search manifest to say `COMPLETED` before these commands:
+
+```bash
+.venv/bin/python scripts/verify_policy_search.py \
+  --search search-948c67bb4c90175f0b1e0294 --full-replays
+.venv/bin/python scripts/arena_bundle.py \
+  --search search-948c67bb4c90175f0b1e0294 \
+  --output /home/charlie/midas-prometheus-bundles/policy-search-evidence.tar.gz
+```
+
+The search auditor independently recomputes the choice from frozen validation
+rows. It checks matched controls, every preregistered gate, underlying weight
+hashes, finite outcomes, the fixed downside score, grouped paired uncertainty and
+the documented tie rule. It rejects changed selection or final policy bindings.
+`--full-replays` additionally verifies every saved financial core/journal hash
+and replay row. It does not rerun model inference or prove real fill probabilities.
+
+Search export invokes the full replay audit before publication and rejects
+incomplete/missing evidence. It includes the model, dataset, both tournaments,
+saved source snapshots and findings associated with the search. Exported file
+hashes are calculated from the exact bytes written, one file at a time, so later
+model annotations cannot invalidate the bundle's checksum manifest. Existing
+bundles are never replaced. Metadata snapshots can include later annotations;
+the frozen weights and experiment input references remain explicit.
+
+No-trade can be the selected policy. A validation winner is not an independent
+research champion. Neither a mean break-even cost nor a model probability cutoff
+is a guaranteed loss bound.

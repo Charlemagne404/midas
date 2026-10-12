@@ -1,0 +1,21 @@
+{
+  "checked_at": 1791790014.6034966,
+  "search_id": "search-948c67bb4c90175f0b1e0294",
+  "validation_tournament": "tournament-74386f79d51b4f68b4fd2020",
+  "selected_policy": "gate-f12a4e29a05e5a4ce18f",
+  "gate": {
+    "model_id": "model-131794f0434945a286163323",
+    "size": "full",
+    "threshold": 0.1
+  },
+  "variants": 5004,
+  "base_episodes": 139,
+  "verified": true,
+  "scope": "Independent recomputation of validation-only policy selection. Final test is still running; no independent winner claim.",
+  "runtime_accounting": {
+    "recorded_wall_seconds": 1491.8506344410125,
+    "sum_episode_reported_seconds": 398.9068985549384,
+    "residual_seconds": 1092.9437358860741,
+    "limitations": "Residual includes artifact I/O, source/setup and budget/progress checks. It is not attributed causally without profiling."
+  }
+}

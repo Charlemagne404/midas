@@ -1,0 +1,38 @@
+{
+  "created_at": 1791790753.4490573,
+  "question": "Does the frozen validation-selected 0.10/full gate survive independent adverse event sequences?",
+  "gate": {
+    "model_id": "model-131794f0434945a286163323",
+    "threshold": 0.1,
+    "size": "full"
+  },
+  "dataset_id": "dataset-f53981b7dd24c1521ce749b1",
+  "challenge": {
+    "seed": 113071,
+    "episodes": 100,
+    "families": [
+      "calm",
+      "volatile",
+      "thin",
+      "deep",
+      "one_sided",
+      "disappearing",
+      "liquidity_shock"
+    ],
+    "label_target": "unmatched",
+    "decision_scope": "first_admitted",
+    "observation_latency_ms": 100
+  },
+  "adversarial": true,
+  "execution_models": [
+    "optimistic",
+    "standard",
+    "conservative"
+  ],
+  "stopping_condition": "Exactly 100 matched base groups, 1500 policy/execution variants, 1800-second wall bound; no threshold or weight adaptation.",
+  "caveats": [
+    "Synthetic timing/fill-withdrawal/lost-ack/cancellation/duplicate/pause stress; no empirical execution guarantee.",
+    "Generated sequence mutations may alter evidence timing; existing future-timestamp abstention and hard risk admission remain in force.",
+    "No controlled ledger corruption is included. Legitimate losses must not be labelled software defects."
+  ]
+}
