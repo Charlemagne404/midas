@@ -2656,3 +2656,23 @@ model inference and self-contained export verification. Browser remains a final
 root check. Packages and listed tools frozen until both units terminal. No
 production copy removed yet. Do not restart the pilot if observation times out.
 Prometheus remains active.
+
+## Cold retention pilot completed with original evidence intact
+
+Full gate545 passed,one skipped,one existing warning in645.74s. Both full-gate
+and pilot units terminal/inactive exit0. Pilot VERIFIED. Before937246863hotbytes
+→907421226hotbytes; coldSQLite29827072bytes under separate1GiB tier cap.
+This frees active-tier capacity, not total disk space. Exact original backup
+2195payloads preserved. Every2100coldreplay compared against original bytes
+and financial/journal hashes before and after hot duplicate removal.
+2100original files restored in temporary workspace; seven API replay policies
+pass. Actual captured-source PPO/logistic/MLP inference reexecutions pass.
+Self-contained scientific exportSHAcbb6c4e0c054ebc65ad4d7169bc9a391682484539aa1d5e5edf79941ccf34f6f,
+97payloads rootverified. Actual browser archived usage28.4MiB,zero missing stores;
+saved replay and Next event work,zero pageerrors. Initial browser selector was
+corrected to select by actual option identity; no application change required.
+Fresh API READY,84324paper events verified,protected campaign162000/18000/162000,
+SQLitequick_checkOK,ownerlockheld.43modelweight hashes verified during gate.
+No new scientific samples/models or improvement claims. Source freeze lifted.
+Next: PPO resumption contract, preserving existing supervised resumption.
+Full remaining stretch scope stays active.

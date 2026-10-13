@@ -1,0 +1,244 @@
+{
+  "checked_at": 1791909493.15702,
+  "registered_artifacts_hash_verified": [
+    {
+      "model_id": "model-f51ed0dcc4094f2d9cbae2f2",
+      "family": "tree",
+      "artifact_sha256": "a1ddf5a19d6cb1ad942ce8fc1cc3d63ec2e2f6ddf5dfc8fc46eb052be777e565"
+    },
+    {
+      "model_id": "model-3b9a496d6fad468ba791c1b4",
+      "family": "heuristic",
+      "artifact_sha256": "20d1a07d105a2f1fdd41bd120ec2a0546b70ebe59c4ffcd31034f9abd0a3700c"
+    },
+    {
+      "model_id": "model-4198e06e1e3647a587bd0ef3",
+      "family": "mlp",
+      "artifact_sha256": "da59eee2685a61ea843b63cedf3f30c6b84d053a9c2f81f2c9cabfd0601482d1"
+    },
+    {
+      "model_id": "model-33cddb0d92024c2bb0a3b34a",
+      "family": "ppo",
+      "artifact_sha256": "783262634161ecfb2eaf26a30f877b4fc8f167e0eb79b439cc87093f0f040904"
+    },
+    {
+      "model_id": "model-cfe981f8ce0e48408fdf7866",
+      "family": "mlp",
+      "artifact_sha256": "d82985cb4acb6a5b21f75aa019b9ffb18b4ac5a44fba3ddbd4239a04a5aaf993"
+    },
+    {
+      "model_id": "model-ff1c8c8a580944778d3eb7c0",
+      "family": "constant",
+      "artifact_sha256": "297c19dc829983060534f5d2684363ce08ba424d336ba057a4e57aa839f6a1c1"
+    },
+    {
+      "model_id": "model-a7f99c63bd4f4cd4b22c57c6",
+      "family": "cost_mlp",
+      "artifact_sha256": "88a2d60ba99b21c15317123836bc8183fad43b0a33586e77f1b86ea89c45208e"
+    },
+    {
+      "model_id": "model-0c4181f1d7b341d1a90434e3",
+      "family": "mlp",
+      "artifact_sha256": "747ab9b40dc7b9fc74a40c5e886c582b37ef16615b048e73a01645b58b8a2f32"
+    },
+    {
+      "model_id": "model-83071a76ab8f435787bdaf90",
+      "family": "mlp",
+      "artifact_sha256": "f2e33b4905529e43f20d1ef35614583688bdf95542abeed3e32e49ed948ac89d"
+    },
+    {
+      "model_id": "model-d3abc499a0de4eb98ff14ee2",
+      "family": "mlp",
+      "artifact_sha256": "6bb543e940fa54f7aeb26ef3597a0a3d0f7afcfc689e8763e185957716191239"
+    },
+    {
+      "model_id": "model-d899f989b3af41e984e9afde",
+      "family": "mlp",
+      "artifact_sha256": "9c178c240e93edd227910a87da04374e0ea0d7de404fc03ae1dd9c02e7429e28"
+    },
+    {
+      "model_id": "model-ef77bbbd7d1f4be78c41c0b6",
+      "family": "logistic",
+      "artifact_sha256": "1792f51e5c8b0cbd1ba6e7c7fbf52c3cb893c485de8a129194b005616d5c52fe"
+    },
+    {
+      "model_id": "model-a3e01a232be447e0b5702bb8",
+      "family": "logistic",
+      "artifact_sha256": "cc13b3a802e15dbebb2cc7858efe69a5a069f25654ea4ee822c3611bc7149d06"
+    },
+    {
+      "model_id": "model-5dbaecfa00a646dead13eebd",
+      "family": "logistic",
+      "artifact_sha256": "1792f51e5c8b0cbd1ba6e7c7fbf52c3cb893c485de8a129194b005616d5c52fe"
+    },
+    {
+      "model_id": "model-83932cca38da40a2b30c9024",
+      "family": "ridge",
+      "artifact_sha256": "f7f520ed6ba0b369d5b32ef8e7505bd91685f96ae709ce7e8bdbee0d816e2461"
+    },
+    {
+      "model_id": "model-249cad7203b24a7cabc6b16a",
+      "family": "cost_mlp",
+      "artifact_sha256": "bf773321c222af127e344560318b3b182905814c437bc6adbbfee1e993371ba1"
+    },
+    {
+      "model_id": "model-3a9c422c0e0d420ba8fd568a",
+      "family": "mlp",
+      "artifact_sha256": "5932d33bb160f555f3edb41e22e0a077be01c0ec112677b731c9ae92ffd17575"
+    },
+    {
+      "model_id": "model-4058f9dcf60a4dd39ef3b8ac",
+      "family": "logistic",
+      "artifact_sha256": "35e3ab0d8b893e21a6c3e082da2f6ae8f934438ee2ee76c775e0a5f7ac7db98f"
+    },
+    {
+      "model_id": "model-5a0f86eceb8c4c689e85d285",
+      "family": "severity_mlp",
+      "artifact_sha256": "98ab326cc6ebf2db708d430503b12afc92f4ce50f7c5f02a72ce8a06ce1f3689"
+    },
+    {
+      "model_id": "model-265cbcc71f6847828c959882",
+      "family": "severity_mlp",
+      "artifact_sha256": "39af6e8c33e675de32f9aced1e0c8e9ee0f6de44f749ac5b5b7e703fc28776ac"
+    },
+    {
+      "model_id": "model-2a56b683c79745bdbec64892",
+      "family": "logistic",
+      "artifact_sha256": "509a2f0db5903e6ffe0b97229f8b20942b611bbc670a68c938293ee6783a69b8"
+    },
+    {
+      "model_id": "model-006eed74ab6b411ab633c60d",
+      "family": "mlp",
+      "artifact_sha256": "ac4b68cc11e0fed29a9f2d6b32655d596459ec35a37398ec2ca476c368178f9e"
+    },
+    {
+      "model_id": "model-02753b861c1a4b17a72a0e08",
+      "family": "logistic",
+      "artifact_sha256": "2fd1ef6e83c55b9bf5e1acb2cb87e9c4c4d78f73ba148d72dcaa663e7173fb20"
+    },
+    {
+      "model_id": "model-fe2d275e53ae4295adf5ab1f",
+      "family": "mlp",
+      "artifact_sha256": "a5f50a7fa09d719ca0bd6739d3b2f3c4d493e2379ab9ce24e65147948556d02b"
+    },
+    {
+      "model_id": "model-ab72b059dd4e4822bb91f7e2",
+      "family": "mlp",
+      "artifact_sha256": "05cac6e1a6cecf7e15c6e56fe7d35ede0c811d4bd12b9ab520d627c67cf2a151"
+    },
+    {
+      "model_id": "model-3c55d1d8ecae474cb574a8e2",
+      "family": "mlp",
+      "artifact_sha256": "daf5ce83b27d9e061ccc2f8c133d29e160ef279c48ada1f0007af013739b9882"
+    },
+    {
+      "model_id": "model-2d7322c242794ab1b974dce8",
+      "family": "logistic",
+      "artifact_sha256": "cc13b3a802e15dbebb2cc7858efe69a5a069f25654ea4ee822c3611bc7149d06"
+    },
+    {
+      "model_id": "model-f587b98d06f34441bb040877",
+      "family": "mlp",
+      "artifact_sha256": "ee31b6988f035ab90c1872c1bf32d78c985ee5a5b09d57c21fff97193d3b5c3a"
+    },
+    {
+      "model_id": "model-bacc8c6876c3499a8b2ba9b0",
+      "family": "logistic",
+      "artifact_sha256": "07419a98954a7923312c9c5ba5055136d747c7bbd3e70757e003e376e089dbcb"
+    },
+    {
+      "model_id": "model-c5bcd499446147838bad7a17",
+      "family": "logistic",
+      "artifact_sha256": "509a2f0db5903e6ffe0b97229f8b20942b611bbc670a68c938293ee6783a69b8"
+    },
+    {
+      "model_id": "model-5eb01f1d328a4d29bc0166fc",
+      "family": "cost_mlp",
+      "artifact_sha256": "bfb60b03e51ac1c9781aef61ac42de4b0ca9adf9f2eda516bdde5f6edc683dda"
+    },
+    {
+      "model_id": "model-0994f52d25424bfeb5c91a81",
+      "family": "mlp",
+      "artifact_sha256": "f5a02362a4db56b08cbeb2b71415adafa39e44eaa2e1be62c3a950fc613d65c6"
+    },
+    {
+      "model_id": "model-d8f337441e3c45d48ac63670",
+      "family": "logistic",
+      "artifact_sha256": "2fd1ef6e83c55b9bf5e1acb2cb87e9c4c4d78f73ba148d72dcaa663e7173fb20"
+    },
+    {
+      "model_id": "model-9474cee818f04c77962966d8",
+      "family": "logistic",
+      "artifact_sha256": "00a936876ab893686e5ac2612a554f1266d05f260acd149c556e8977800d6a85"
+    },
+    {
+      "model_id": "model-3141334b301947499b59913d",
+      "family": "logistic",
+      "artifact_sha256": "4b40db50b245120cd47bced1267f1cdc8a39b3908058b2e38d80b493756a3451"
+    },
+    {
+      "model_id": "model-47e69b3d348745549167af9a",
+      "family": "logistic",
+      "artifact_sha256": "00a936876ab893686e5ac2612a554f1266d05f260acd149c556e8977800d6a85"
+    },
+    {
+      "model_id": "model-d085fe2fe8e443b580285509",
+      "family": "ridge",
+      "artifact_sha256": "71164ecef391081006bc401232b2dc903219d0a79995de07691636ea6195d161"
+    },
+    {
+      "model_id": "model-131794f0434945a286163323",
+      "family": "mlp",
+      "artifact_sha256": "fe6a3c02b4923cf7cd697638461a892f96a747743e03b4e23436fdb1e9083852"
+    },
+    {
+      "model_id": "model-32b385e23cf84c68a48ccc68",
+      "family": "logistic",
+      "artifact_sha256": "07419a98954a7923312c9c5ba5055136d747c7bbd3e70757e003e376e089dbcb"
+    },
+    {
+      "model_id": "model-9ba0fed73f464d84ad51341f",
+      "family": "cost_mlp",
+      "artifact_sha256": "e6fcc080df9825e6c3b919a6ee91d64aaafe9424c476708920d8e02d0cedba35"
+    },
+    {
+      "model_id": "model-38a8da8c0d7a481d8d2d9771",
+      "family": "ridge",
+      "artifact_sha256": "ca75934b9db9a8ac0dbfdf17d8a0a3ef72a4110f64bb85c698819cf70a0bbfbb"
+    },
+    {
+      "model_id": "model-e8ea85c7e7fe49f7a0a2a7b9",
+      "family": "logistic",
+      "artifact_sha256": "35e3ab0d8b893e21a6c3e082da2f6ae8f934438ee2ee76c775e0a5f7ac7db98f"
+    },
+    {
+      "model_id": "model-d3dfdcb53b274a898600d5fb",
+      "family": "mlp",
+      "artifact_sha256": "ff922fad09797b5480455564f3b42999ca64d6c70eae54604e5ccd170b159dbd"
+    }
+  ],
+  "protected_campaign_counts": [
+    162000,
+    18000,
+    162000
+  ],
+  "health": {
+    "status": "READY",
+    "startup_status": "READY",
+    "startup_error": null,
+    "mode": "demo",
+    "live_execution": false,
+    "paper_recovery": {
+      "status": "CHECKPOINT_VERIFIED",
+      "journal_events": 84221,
+      "revision": 84220
+    },
+    "laboratory": {
+      "status": "READY",
+      "root": "/home/charlie/midas/data/laboratory-final",
+      "recovering_campaigns": [],
+      "recovery_errors": []
+    }
+  },
+  "scope": "Weight-byte checks and protected archive health during live gate; not new model evaluation."
+}

@@ -1,0 +1,7 @@
+{"state": "WAITING_GATE"}
+{"state": "DEPLOYING_READER", "backup_payloads": 2195}
+{"state": "PREPARING"}
+{"state": "REMOVING_VERIFIED_HOT_DUPLICATE", "prepared_verification": {"kind": "tournaments", "identity": "tournament-244c26f362d3434084c7f3f3", "database_sha256": "fcb50deecc40b18358f8ca12ccbd02152ae53f67f227cee67554d0428797bd97", "backup_sha256": "6d1d7665c4f0a46072c6d0448ae18c9c158eeae97b802ada93afb1c2b5378128", "original_byte_replays_verified": 2100, "hot_copy_present": true, "producer_sha256": "fdfb3309a5b6372cd8478be51dd50167dbac50a55038d29556af9be9e7cc974d", "scope": "Independent SQLite reads, complete original-byte backup comparison and financial/journal hash checks; no new simulations or scientific samples."}}
+{"state": "RESTORING_AND_REPRODUCING", "verification": {"kind": "tournaments", "identity": "tournament-244c26f362d3434084c7f3f3", "database_sha256": "fcb50deecc40b18358f8ca12ccbd02152ae53f67f227cee67554d0428797bd97", "backup_sha256": "6d1d7665c4f0a46072c6d0448ae18c9c158eeae97b802ada93afb1c2b5378128", "original_byte_replays_verified": 2100, "hot_copy_present": false, "producer_sha256": "fdfb3309a5b6372cd8478be51dd50167dbac50a55038d29556af9be9e7cc974d", "scope": "Independent SQLite reads, complete original-byte backup comparison and financial/journal hash checks; no new simulations or scientific samples."}}
+{"state": "EXPORTING"}
+{"state": "VERIFIED", "report": "docs/PROMETHEUS_COLD_RETENTION_RESULT.json"}

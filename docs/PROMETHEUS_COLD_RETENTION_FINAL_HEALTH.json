@@ -1,0 +1,39 @@
+{
+  "checked_at": 1791909686.6026003,
+  "health": {
+    "status": "READY",
+    "startup_status": "READY",
+    "startup_error": null,
+    "mode": "demo",
+    "live_execution": false,
+    "paper_recovery": {
+      "status": "CHECKPOINT_VERIFIED",
+      "journal_events": 84324,
+      "revision": 84323
+    },
+    "laboratory": {
+      "status": "READY",
+      "root": "/home/charlie/midas/data/laboratory-final",
+      "recovering_campaigns": [],
+      "recovery_errors": []
+    }
+  },
+  "protected_campaign_counts": [
+    162000,
+    18000,
+    162000
+  ],
+  "owner_lock_held": true,
+  "hot_usage": [
+    907421279,
+    62151
+  ],
+  "cold_storage": {
+    "bytes": 29827072,
+    "limit_bytes": 1073741824,
+    "stores": 1,
+    "references": 1,
+    "missing_stores": 0,
+    "scope": "Separate bounded replay tier; file availability only, not a full checksum audit."
+  }
+}

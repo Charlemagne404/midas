@@ -8,7 +8,7 @@
   "arena_research_tournaments": 25,
   "arena_source_datasets": 5,
   "arena_tournaments": 26,
-  "checked_at": 1791909187.4537632,
+  "checked_at": 1791909715.845311,
   "dataset_quality": [
     "Identical observable vectors occur across partitions. Independent scenario IDs do not guarantee covariate diversity; inspect repeated synthetic grids.",
     "Some scenario families contain one settlement seed parity only. The current generator uses seed parity for settlement; reorder families and shift seeds before making generalization claims.",
@@ -22,8 +22,8 @@
     "live_execution": false,
     "paper_recovery": {
       "status": "CHECKPOINT_VERIFIED",
-      "journal_events": 83627,
-      "revision": 83626
+      "journal_events": 84324,
+      "revision": 84323
     },
     "laboratory": {
       "status": "READY",
@@ -10873,42 +10873,39 @@
     "actual_multiday_tested": false
   },
   "latest_full_gate": {
-    "passed": 529,
+    "passed": 545,
     "skipped": 1,
-    "seconds": 632.38
+    "seconds": 645.74,
+    "log": "docs/PROMETHEUS_COLD_RETENTION_FULL_TESTS.log"
   },
   "installer_and_schedule_verifier_gate": {
     "passed": 9,
     "seconds": 1.61
   },
-  "active_engineering_gate": {
-    "unit": "midas-cold-retention-full-gate.service",
-    "pid": 829759,
-    "cpu_cores": 1,
-    "memory_mb": 4096,
-    "wall_seconds": 1200,
-    "log": "docs/PROMETHEUS_COLD_RETENTION_FULL_TESTS.log",
-    "stop": "systemctl --user stop midas-cold-retention-full-gate.service",
-    "source_frozen": true
-  },
+  "active_engineering_gate": null,
   "cold_retention": {
-    "state": "IMPLEMENTED_GATE_RUNNING",
-    "focused_tests_passed": 13,
-    "frontend_tests_passed": 19,
+    "state": "VERIFIED",
     "cold_cap_bytes": 1073741824,
-    "production_copies_removed": false,
-    "independent_verifier_and_coordinator_tests": 7
+    "hot_usage": [
+      907421279,
+      62151
+    ],
+    "cold_storage": {
+      "bytes": 29827072,
+      "limit_bytes": 1073741824,
+      "stores": 1,
+      "references": 1,
+      "missing_stores": 0,
+      "scope": "Separate bounded replay tier; file availability only, not a full checksum audit."
+    },
+    "replays_original_bytes_verified": 2100,
+    "restored_original_files": 2100,
+    "api_replays": 7,
+    "captured_source_inference_checks": 3,
+    "export_payloads_verified": 97,
+    "browser_page_errors": 0,
+    "production_hot_duplicate_removed": true,
+    "total_disk_savings_claimed": false
   },
-  "active_retention_pilot": {
-    "unit": "midas-cold-retention-pilot.service",
-    "pid": 837845,
-    "cpu_cores": 1,
-    "memory_mb": 4096,
-    "wall_seconds": 1800,
-    "state": "WAITING_GATE",
-    "state_path": "data/arena/retention-pilots/finite-pilot-1/state.json",
-    "log": "docs/PROMETHEUS_COLD_RETENTION_PILOT.log",
-    "stop": "systemctl --user stop midas-cold-retention-pilot.service",
-    "source_frozen": true
-  }
+  "active_retention_pilot": null
 }

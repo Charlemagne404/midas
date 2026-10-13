@@ -1,5 +1,17 @@
 # MIDAS — PROMETHEUS OVERNIGHT BRIEFING
 
+## Latest result — verified cold replay retention
+
+Full gate545passed/oneskip; actual pilot VERIFIED, both units terminal.
+Moved29.8MB exact packed replay database into explicit bounded cold tier, freeing
+active Arena budget while retaining total evidence. All2100original replay bytes
+compare against preserved backup; restoration,7APIreplays,3captured-source model
+inference checks and97exportpayloads verify. Actual browser replay/event navigation
+passes withzero errors;28.4MiB archived,zero missing stores. API/archive healthy.
+No new models or economic evidence. Prior running-pilot notes below superseded.
+Next: implement and validate PPO resumption. Classification/severity/cost MLP
+resumption already exists; do not restart that completed work. Prometheus active.
+
 ## Cold-retention pilot waiting on actual full regression
 
 Independent exact-backup verifier4tests and coordinator refusal3tests pass.
