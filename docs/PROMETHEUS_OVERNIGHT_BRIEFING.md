@@ -1,5 +1,19 @@
 # MIDAS — PROMETHEUS OVERNIGHT BRIEFING
 
+## Storage pilot completed with exact evidence preservation
+
+Full gate511 passed/one skip. A2100-replay study is now packed, reducing file
+count by2098 while adding1.9MB storage overhead. Original-byte restoration,
+all financial/journal hashes and seven API replays pass. Actual original-source
+PPO/logistic/MLP inference still reproduces after restoration. Browser replay
+and event navigation work. Kernel/storage caps unchanged; backups retained.
+
+Index observations now0.02288ms median withzero fallbacks; replay reads
+3.364ms packed versus3.087ms restored in a warm-cache sample. No whole-job
+speedup or economic improvement claimed. API/archive healthy; pilot/test
+workers terminal. Next: bounded retention and durable scheduling. Goal active.
+Previous pending migration notes below superseded.
+
 ## Current engineering — reversible replay packing full gate
 
 Observation gate504 passed/one skip. Replay packing now has six focused passing

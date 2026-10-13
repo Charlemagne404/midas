@@ -2501,3 +2501,26 @@ PID756132 and pilotPID760009 confirmed active; forty-second bounded observation
 shows gate still running and pilot WAITING_GATE. Frozen package/producer source
 unchanged. Next: after verified migration, measure the real replay store and
 index mode, inspect actual API/browser access, then continue the broad backlog.
+
+## Replay storage pilot verified; original source remains reproducible
+
+Full regression511 passed/one PostgreSQL skip/existing warning in628.18s.
+Pilot terminal VERIFIED/exit0:backup2195 payloads checked;2100 loose replay
+files byte-restored and packed-only compared before pruning. All2100 financial/
+journal hashes and seven policy worst-case API replays pass after migration.
+Files64095→61997 (-2098); logical bytes931771768→933681738 (+1909970).
+This reduces file/watch pressure and adds about1.9MB SQLite overhead, not disk
+space savings. Admission/worker leases and unchanged1GiB cap enforced.
+
+Actual50-read matched warm-cache sample:median packed3.364ms/restored3.087ms.
+Budget index initialization2.990s,median observation0.02288ms,zero fallbacks or
+errors after compaction. Not a whole-job speedup claim. New source-aware command
+restores one replay into isolated temporary storage and uses exact checked
+captured packages, current frozen weights and no bytecode writes. Two refusal
+tests pass; actual PPO/logistic/MLP episodes reproduce exact inference/accounting
+under their original captured source after migration. Original backups intact;
+packed replay/browser event navigation has no page errors. API READY; protected
+archive quick_check/counts162000/18000/162000 and exclusive owner pass.
+Migration source freeze lifted after all verification. No models trained or
+scientific results changed. Next: explicit bounded cold retention/storage policy
+and durable research scheduling; broad Prometheus goal remains active.

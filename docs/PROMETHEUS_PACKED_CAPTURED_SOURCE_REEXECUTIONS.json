@@ -1,0 +1,56 @@
+{
+  "reexecutions": [
+    {
+      "tournament_id": "tournament-244c26f362d3434084c7f3f3",
+      "row_id": "85-standard-model-33cddb0d92024c2bb0a3b34a",
+      "verified": true,
+      "mode": "FROZEN_INFERENCE_AND_ACCOUNTING_REEXECUTION",
+      "result_hash": "2f1db0498402372ecdc0862dea728e371fcf2c8ad9574bd7df2402b6749f0198",
+      "journal_hash": "3a2b5c0ef765bd6590f465e1bbad261e6eda305cf68908b2db0c9f085850270b",
+      "net_simulated_pnl": "-4.420000",
+      "limitation": "Reuses frozen inference and broker implementations; independent arithmetic audits are separate. No retraining or empirical economics.",
+      "source_hash": "28e368608f998b94c85738de89dcc55374c3aa9129be45ca841081f77ba6b2b4",
+      "policy": "model-33cddb0d92024c2bb0a3b34a",
+      "decisions_recomputed": 7,
+      "producer_sha256": "38da351fe329d68c8bded6b199e5975dfd204b64ba0b59f16b923077b3e6e39b",
+      "captured_source_used": true,
+      "restored_bytes_workspace": "Temporary isolated directory removed after reexecution",
+      "orchestrator_sha256": "ee30612e31e4f1a4402374b599d4b81abd65fd4fa939289f81fba94cf52d301f"
+    },
+    {
+      "tournament_id": "tournament-244c26f362d3434084c7f3f3",
+      "row_id": "0-optimistic-model-ef77bbbd7d1f4be78c41c0b6",
+      "verified": true,
+      "mode": "FROZEN_INFERENCE_AND_ACCOUNTING_REEXECUTION",
+      "result_hash": "40ce172c40164d7fcb89566d761ad158cb33a3f5bfa14160ee0798a531569b66",
+      "journal_hash": "5cc53451e60ff76552893080efc3af453975e4055d83dbbdf8ba709770dca67b",
+      "net_simulated_pnl": "0",
+      "limitation": "Reuses frozen inference and broker implementations; independent arithmetic audits are separate. No retraining or empirical economics.",
+      "source_hash": "28e368608f998b94c85738de89dcc55374c3aa9129be45ca841081f77ba6b2b4",
+      "policy": "model-ef77bbbd7d1f4be78c41c0b6",
+      "decisions_recomputed": 1,
+      "producer_sha256": "38da351fe329d68c8bded6b199e5975dfd204b64ba0b59f16b923077b3e6e39b",
+      "captured_source_used": true,
+      "restored_bytes_workspace": "Temporary isolated directory removed after reexecution",
+      "orchestrator_sha256": "ee30612e31e4f1a4402374b599d4b81abd65fd4fa939289f81fba94cf52d301f"
+    },
+    {
+      "tournament_id": "tournament-244c26f362d3434084c7f3f3",
+      "row_id": "0-optimistic-model-f587b98d06f34441bb040877",
+      "verified": true,
+      "mode": "FROZEN_INFERENCE_AND_ACCOUNTING_REEXECUTION",
+      "result_hash": "40ce172c40164d7fcb89566d761ad158cb33a3f5bfa14160ee0798a531569b66",
+      "journal_hash": "5cc53451e60ff76552893080efc3af453975e4055d83dbbdf8ba709770dca67b",
+      "net_simulated_pnl": "0",
+      "limitation": "Reuses frozen inference and broker implementations; independent arithmetic audits are separate. No retraining or empirical economics.",
+      "source_hash": "28e368608f998b94c85738de89dcc55374c3aa9129be45ca841081f77ba6b2b4",
+      "policy": "model-f587b98d06f34441bb040877",
+      "decisions_recomputed": 1,
+      "producer_sha256": "38da351fe329d68c8bded6b199e5975dfd204b64ba0b59f16b923077b3e6e39b",
+      "captured_source_used": true,
+      "restored_bytes_workspace": "Temporary isolated directory removed after reexecution",
+      "orchestrator_sha256": "ee30612e31e4f1a4402374b599d4b81abd65fd4fa939289f81fba94cf52d301f"
+    }
+  ],
+  "scope": "Actual fixed PPO/logistic/MLP requests and accounting under their original captured package source, after byte restoration from migrated store"
+}

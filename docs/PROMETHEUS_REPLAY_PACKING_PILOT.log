@@ -1,0 +1,7 @@
+{"phase": "WAITING_GATE", "unit": "midas-replay-packing-full-gate.service"}
+{"phase": "VERIFYING_BACKUP", "gate": {"unit": "midas-replay-packing-full-gate.service", "passed": 511, "skipped": 1, "seconds": 628.18, "log_sha256": "ecc768f843b4eedd3f1da45994cf18bcde99930a128befefe1f0c97290db13da"}}
+{"phase": "PREPARING_STORE", "health": {"status": "READY", "startup_status": "READY", "startup_error": null, "mode": "demo", "live_execution": false, "paper_recovery": {"status": "CHECKPOINT_VERIFIED", "journal_events": 82093, "revision": 82092}, "laboratory": {"status": "READY", "root": "/home/charlie/midas/data/laboratory-final", "recovering_campaigns": [], "recovery_errors": []}}}
+{"phase": "VERIFYING_RESTORATION", "replays": 2100}
+{"phase": "PRUNING_VERIFIED_LOOSE_FILES"}
+{"phase": "VERIFYING_FINAL_READS"}
+{"phase": "VERIFIED", "report": "docs/PROMETHEUS_REPLAY_PACKING_PILOT_RESULT.json", "before_usage": [931771768, 64095], "after_usage": [933681738, 61997]}
