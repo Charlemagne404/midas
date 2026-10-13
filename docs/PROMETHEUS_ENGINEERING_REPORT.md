@@ -2192,3 +2192,12 @@ artifact, cancellation and stale-source cases remain covered. The publication
 benchmark matches full-scanner byte/file totals after every synthetic publication
 and exact cleanup; it modifies no financial or research artifact. Whole-job/full
 regression evidence is still pending and no production speedup is yet claimed.
+
+Final publication benchmark:807588056 bytes/55879 logical file paths;2.798-second
+index initialization, median0.000206-second indexed observation versus0.166247
+full scan. All20 changing-file observations and cleanup matched reference totals;
+no fallbacks. This is measured guard latency on this host, not a whole-job result.
+Checkpointcc48383 committed. Supervised midas-usage-index-full-gate.service is
+confirmed active with one CPU/4GiB/1200s limits, writing
+PROMETHEUS_USAGE_INDEX_FULL_TESTS.log. Package source remains frozen during the
+gate. Latest completed full suite remains449 passed/one skip until this finishes.

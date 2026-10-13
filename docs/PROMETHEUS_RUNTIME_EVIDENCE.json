@@ -8,7 +8,7 @@
   "arena_research_tournaments": 23,
   "arena_source_datasets": 5,
   "arena_tournaments": 24,
-  "checked_at": 1791850771.527678,
+  "checked_at": 1791880697.8188405,
   "dataset_quality": [
     "Identical observable vectors occur across partitions. Independent scenario IDs do not guarantee covariate diversity; inspect repeated synthetic grids.",
     "Some scenario families contain one settlement seed parity only. The current generator uses seed parity for settlement; reorder families and shift seeds before making generalization claims.",
@@ -115,13 +115,11 @@
     "champion_promoted": false
   },
   "current_regression": {
-    "state": "COMPLETED",
-    "log": "docs/PROMETHEUS_UNWIND_FULL_TESTS.log",
-    "passed": 449,
-    "skipped": 1,
-    "warnings": 1,
-    "duration_seconds": 565.14,
-    "additional_reexecution_tests_passed": 3
+    "state": "RUNNING_SUPERVISED",
+    "unit": "midas-usage-index-full-gate.service",
+    "log": "docs/PROMETHEUS_USAGE_INDEX_FULL_TESTS.log",
+    "source_checkpoint": "cc48383",
+    "latest_completed_full_gate": "449 passed, one skipped"
   },
   "joint_cost_study": {
     "preregistration": "docs/PROMETHEUS_JOINT_COST_PREREGISTRATION.json",
@@ -157,5 +155,11 @@
     "unwind_id": "unwind-2f909c9b1005402c8797a79a"
   },
   "arena_unwind_studies": 1,
-  "arena_unwind_correlated_variants": 720
+  "arena_unwind_correlated_variants": 720,
+  "artifact_guard_index": {
+    "state": "FULL_GATE_PENDING",
+    "focused_tests_passed": 13,
+    "benchmark": "docs/PROMETHEUS_USAGE_INDEX_BENCHMARK.json",
+    "max_artifact_bytes": 1073741824
+  }
 }
