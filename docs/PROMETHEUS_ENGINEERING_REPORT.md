@@ -2761,3 +2761,12 @@ protectedarchive162000/18000/162000 andownerlockverified. Watchquotafallback
 Read-only packingheadroom checkpasses for31,858,127loose replaybytes; original
 bytes preserved inverifiedexport. Nextcompactcompletedstudy,thendatasetmigration.
 Detailedscientificfinding:PROMETHEUS_PPO_RESUMPTION_FINDING.md. Prometheusactive.
+
+Bounded PPO replay packing actually launched under midas-ppo-replay-packing.service
+PID1024092,1CPU/4GiB/600s. Uses unchanged tested pilot/helper code and exact
+package hash from564-test gate; verified2366payload originalbundle/backupSHA
+bound inPROMETHEUS_PPO_REPLAY_PACKING_PLAN.json. It verifies all restorations and
+packed-only reads before loose-file pruning, then all2100financial/journal hashes
+and7API policy replays. No cold relocation, kernel or budget change in this phase.
+Package/tool source frozen until packing terminal. Goalactive;nextactualpacking
+result/browser/headroomcheck,then dataset-schema migration work.

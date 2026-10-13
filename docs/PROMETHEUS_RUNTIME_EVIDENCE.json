@@ -8,7 +8,7 @@
   "arena_research_tournaments": 26,
   "arena_source_datasets": 5,
   "arena_tournaments": 27,
-  "checked_at": 1791922427.2071726,
+  "checked_at": 1791922566.304157,
   "dataset_quality": [
     "Identical observable vectors occur across partitions. Independent scenario IDs do not guarantee covariate diversity; inspect repeated synthetic grids.",
     "Some scenario families contain one settlement seed parity only. The current generator uses seed parity for settlement; reorder families and shift seeds before making generalization claims.",
@@ -10933,5 +10933,16 @@
       }
     ]
   },
-  "active_ppo_resumption_study": null
+  "active_ppo_resumption_study": null,
+  "active_replay_packing": {
+    "unit": "midas-ppo-replay-packing.service",
+    "pid": 1024092,
+    "cpu_cores": 1,
+    "memory_mb": 4096,
+    "wall_seconds": 600,
+    "log": "docs/PROMETHEUS_PPO_REPLAY_PACKING.log",
+    "state_path": "data/arena/packing-pilots/tournament-999cf9ee983249599d1dccb8/state.json",
+    "stop": "systemctl --user stop midas-ppo-replay-packing.service",
+    "source_frozen": true
+  }
 }
