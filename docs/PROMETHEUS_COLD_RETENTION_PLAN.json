@@ -5,7 +5,9 @@
     "archive_replays.py": "949cac62495fb935a8baa51ba36faa5ed59ba7f1bfa84b9a40df83825cda247f",
     "pack_replays.py": "8556365bc65872317b9eb428175269eeeac9bc4c237466dd122380b28073aede",
     "arena_bundle.py": "51b73af9e71a0cfb60b3e3beb8608b5430429a81e19fcb9edfecfe097c1afbdd",
-    "reproduce_archived_policy.py": "6d8f1fe1dc4c43bf47ab244b79e3946414ed780aa5a62890a6609f13d1ea9f46"
+    "reproduce_archived_policy.py": "6d8f1fe1dc4c43bf47ab244b79e3946414ed780aa5a62890a6609f13d1ea9f46",
+    "verify_cold_retention.py": "fdfb3309a5b6372cd8478be51dd50167dbac50a55038d29556af9be9e7cc974d",
+    "run_cold_retention_pilot.py": "a68a61224a79ed26cd23d5df4cc730b652691a36932c71337887dcb50c6b2c6c"
   },
   "full_gate_unit": "midas-cold-retention-full-gate.service",
   "pilot_tournament": "tournament-244c26f362d3434084c7f3f3",
@@ -28,5 +30,8 @@
     "exact source inference",
     "original byte restoration",
     "self-contained export verification"
-  ]
+  ],
+  "pilot_unit": "midas-cold-retention-pilot.service",
+  "pilot_state": "data/arena/retention-pilots/finite-pilot-1/state.json",
+  "pilot_result": "docs/PROMETHEUS_COLD_RETENTION_RESULT.json"
 }
