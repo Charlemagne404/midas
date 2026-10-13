@@ -8,7 +8,7 @@
   "arena_research_tournaments": 26,
   "arena_source_datasets": 5,
   "arena_tournaments": 27,
-  "checked_at": 1791923550.9955962,
+  "checked_at": 1791924101.325697,
   "dataset_quality": [
     "Identical observable vectors occur across partitions. Independent scenario IDs do not guarantee covariate diversity; inspect repeated synthetic grids.",
     "Some scenario families contain one settlement seed parity only. The current generator uses seed parity for settlement; reorder families and shift seeds before making generalization claims.",
@@ -10959,6 +10959,20 @@
     "frontend_tests_passed": 21,
     "legacy_datasets_validated": 6,
     "production_migrations": 0,
-    "plan": "docs/PROMETHEUS_DATASET_MIGRATION_PILOT_PLAN.json"
+    "plan": "docs/PROMETHEUS_DATASET_MIGRATION_PILOT_PLAN.json",
+    "independent_verifier_coordinator_tests_passed": 6
+  },
+  "active_dataset_migration_pilot": {
+    "unit": "midas-dataset-migration-pilot.service",
+    "pid": 1043717,
+    "cpu_cores": 1,
+    "memory_mb": 4096,
+    "wall_seconds": 2400,
+    "state": "WAITING_GATE",
+    "state_path": "data/arena/migration-pilots/schema-pilot-1/state.json",
+    "log": "docs/PROMETHEUS_DATASET_MIGRATION_PILOT.log",
+    "stop": "systemctl --user stop midas-dataset-migration-pilot.service",
+    "source_frozen": true,
+    "native_children_admitted": 0
   }
 }

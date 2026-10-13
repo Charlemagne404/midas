@@ -2802,3 +2802,20 @@ parentfileSHA snapshots preserved. Nextindependentverifier/coordinator then
 actualnativepilotonlyafterthisgate; source/canonicalrows/prediction/API/browser
 checks andlineageexport. No newindependent samples ormodel fits frommigration.
 Prometheus retainsfulloriginalscope andremainsactive.
+
+## Independent migration oracle and actual gate-bound pilot waiting
+
+Commit4ed1cca adds separate raw JSON canonicaldecoder, all-field/metadata/source
+checks andfrozenprediction equality (nofitting/evaluationmetrics). Six tests pass
+7.19s,includingrealnativeworker/fullcoordinator/export withmockedHTTPdeployment,
+sourcepins/corruption/duplicate/source-driftrefusal. Addedafterfullcollection and
+validated separately. Actual productionplanpins tree/logistic/MLP parameterSHA
+andoriginaldatasetfiles. Coordinator captures7producer/helperfiles, snapshots
+allsourcefiles before/after, stableadmissionkey, exactfullgatewait, native
+1CPU/4GiB/300s migration, exactAPI25canonicalrows comparison andportableexport.
+Actual midas-dataset-migration-pilot.servicePID1043717 isactiveWAITING_GATE,
+1CPU/4GiB/2400souterlimit. Fullgate stillactive;no nativeproductionchild admitted.
+Packages/declaredtools/sourcefiles nowfrozen untilpilotterminal. Originaldata
+not rewritten,independentdata/models added0. Nextactualgate/pilotverifications,
+rootbundle/API/browser/archive checks andhoneststorage equivalence report.
+Prometheus remainsactive acrossfulloriginalscope.

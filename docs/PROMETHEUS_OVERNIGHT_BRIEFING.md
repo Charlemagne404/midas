@@ -1,5 +1,15 @@
 # MIDAS — PROMETHEUS OVERNIGHT BRIEFING
 
+## Current activity — native migration pilot waiting on full regression
+
+Independent raw-storage/prediction verifier andcoordinator6tests pass,including
+actuallocalworker andportableexport. Productioncoordinator isactiveWAITING_GATE
+on midas-dataset-migration-full-gate.service. Onefinite native migration of
+originalcore dataset follows onlyaftergate. Pins3frozenpredictors, allsource
+bytes/canonicalrows, APIresponses andcapturedcode; nofit/newindependentdata.
+Source/toolfreeze continues. Nextfullgate/nativepilot thenrootbrowser/archive
+checks. Earlier implementation-only notes superseded. Prometheusactive.
+
 ## Current engineering — dataset storage migration full gate
 
 Ordered↔named feature storage migrations implemented asnewartifacts withidentical
