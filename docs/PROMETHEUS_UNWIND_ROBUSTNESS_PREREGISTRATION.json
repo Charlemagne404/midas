@@ -1,0 +1,102 @@
+{
+  "created_at": 1791881507.1973374,
+  "state": "PREREGISTERED_NOT_LAUNCHED",
+  "source_hash": "53d813bd3a18c44c7d4819f7df11cd3fd5db25b27825e463adbe51ebea5cf2e1",
+  "question": "Does the unchanged residual-only sell policy retain measurable benefit on two fresh unselected seed cohorts?",
+  "prior_unwind": "unwind-2f909c9b1005402c8797a79a",
+  "cohorts": [
+    {
+      "kind": "unwind",
+      "dataset": null,
+      "training": null,
+      "severity": null,
+      "cost": null,
+      "recovery": null,
+      "unwind": {
+        "version": "bounded-inventory-unwind-1",
+        "episodes": 150,
+        "seed": 423071,
+        "unwind": {
+          "policy": "sell_residual",
+          "min_bid": "0.05",
+          "max_shares": "20",
+          "repair": {
+            "policy": "complete_missing",
+            "max_additional_capital": "5",
+            "max_price": "0.75"
+          }
+        }
+      },
+      "model_id": null,
+      "rl": null,
+      "tournament": null,
+      "sweep": null,
+      "director": null,
+      "policy_search": null,
+      "max_wall_seconds": 1200
+    },
+    {
+      "kind": "unwind",
+      "dataset": null,
+      "training": null,
+      "severity": null,
+      "cost": null,
+      "recovery": null,
+      "unwind": {
+        "version": "bounded-inventory-unwind-1",
+        "episodes": 150,
+        "seed": 453071,
+        "unwind": {
+          "policy": "sell_residual",
+          "min_bid": "0.05",
+          "max_shares": "20",
+          "repair": {
+            "policy": "complete_missing",
+            "max_additional_capital": "5",
+            "max_price": "0.75"
+          }
+        }
+      },
+      "model_id": null,
+      "rl": null,
+      "tournament": null,
+      "sweep": null,
+      "director": null,
+      "policy_search": null,
+      "max_wall_seconds": 1200
+    }
+  ],
+  "source_groups": 300,
+  "correlated_variants": 3600,
+  "primary_comparison": "sell-minus-hold grouped mean P&L, reported separately for both cohorts",
+  "secondary_comparisons": [
+    "sell-minus-complete-missing",
+    "sell-minus-no-trade"
+  ],
+  "coverage_reports": [
+    "source groups with residual inventory",
+    "groups with allowed proposal",
+    "requests and filled groups by policy and execution",
+    "blocked-reason frequencies",
+    "family and execution results"
+  ],
+  "selection_or_retuning": false,
+  "models_trained": 0,
+  "promotion": false,
+  "stop_conditions": [
+    "Failed worker performance/equality validation",
+    "Changed captured package or verifier source",
+    "Failed independent accounting/replay verification",
+    "Insufficient headroom under unchanged 1GiB Arena cap",
+    "Native cancellation or CPU/memory/wall limits"
+  ],
+  "artifact_usage_bytes": 808176649,
+  "limitations": [
+    "Same generator version; fresh seeds do not establish generator-revision generalization.",
+    "Three execution variants remain correlated within a source group.",
+    "No conditioning the primary comparison on observed fills or selecting seeds after outcome inspection.",
+    "Sparse intervention coverage makes benefit inconclusive; report it without another post-hoc favorable-seed search.",
+    "Group intervals and tail metrics do not guarantee risk bounds.",
+    "Synthetic hypothetical fills and costs; no empirical profitability evidence."
+  ]
+}

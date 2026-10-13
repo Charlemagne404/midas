@@ -71,6 +71,7 @@ def benchmark(root: Path, baseline_job: str, reference_id: str, output: Path) ->
                 "OPENBLAS_NUM_THREADS": "1",
                 "MKL_NUM_THREADS": "1",
                 "CUDA_VISIBLE_DEVICES": "",
+                "PYTHONDONTWRITEBYTECODE": "1",
             }
             began = time.monotonic()
             with (working / "worker.log").open("w") as stream:
@@ -83,6 +84,7 @@ def benchmark(root: Path, baseline_job: str, reference_id: str, output: Path) ->
                         "-c",
                         "0",
                         sys.executable,
+                        "-B",
                         "-c",
                         CHILD,
                         str(working),
