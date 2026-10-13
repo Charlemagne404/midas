@@ -2162,3 +2162,12 @@ owner pass. Package/campaign source freeze is lifted after terminal success.
 Next: preserve this checkpoint, then reduce the measured per-result archive-scan
 cost while retaining bounded storage and cancellation; broader robustness and
 general automation objectives remain unfinished.
+
+Paged production browser check reached the actually filled sell episode
+39-standard-sell_residual through four result pages, scrubbed to sell event23,
+and displayed11.20 filled shares with zero page errors. Actual worker profile:
+177.88 seconds elapsed,122.71 seconds/722 full archive scans and4.96 seconds
+publishing progress. Roughly69% of elapsed time is scan overhead. The next
+efficiency experiment will test event-driven file-size indexing with exact
+logical-byte semantics, overflow/error reconciliation and full-scan fallback;
+the existing budget guard remains unchanged until those cases are verified.
