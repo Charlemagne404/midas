@@ -1,0 +1,9 @@
+{
+  "child": "model-27006372c7ea4b7d850c0b9c",
+  "lineage": "Parent: model-8b05e3b3a9a24008981398e6 · 2048 prior transitions",
+  "checkpointStatus": 200,
+  "checkpointTimesteps": 4096,
+  "checkpointOptimizerUpdates": 320,
+  "parentControlVisible": true,
+  "pageErrors": []
+}

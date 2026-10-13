@@ -1,0 +1,48 @@
+{
+  "checked_at": 1791922309.2499673,
+  "export_payloads_verified": 2366,
+  "export_sha256": "9fd34901b55892f50aca2c4c1b5a16eecbdeaa1ba798d5127592649a5608ba61",
+  "source_gaps": [
+    {
+      "job_id": "job-1b9b6c8fd8134593b5345706",
+      "model_id": "model-33cddb0d92024c2bb0a3b34a",
+      "reason": "Legacy training predates native source capture; saved weights/provenance included, original training source unavailable."
+    }
+  ],
+  "protected_campaign_counts": [
+    162000,
+    18000,
+    162000
+  ],
+  "health": {
+    "status": "READY",
+    "startup_status": "READY",
+    "startup_error": null,
+    "mode": "demo",
+    "live_execution": false,
+    "paper_recovery": {
+      "status": "CHECKPOINT_VERIFIED",
+      "journal_events": 91177,
+      "revision": 91176
+    },
+    "laboratory": {
+      "status": "READY",
+      "root": "/home/charlie/midas/data/laboratory-final",
+      "recovering_campaigns": [],
+      "recovery_errors": []
+    }
+  },
+  "hot_usage": [
+    948059887,
+    64518
+  ],
+  "cold_storage": {
+    "bytes": 29827072,
+    "limit_bytes": 1073741824,
+    "stores": 1,
+    "references": 1,
+    "missing_stores": 0,
+    "scope": "Separate bounded replay tier; file availability only, not a full checksum audit."
+  },
+  "fitted_artifact_count": 44
+}

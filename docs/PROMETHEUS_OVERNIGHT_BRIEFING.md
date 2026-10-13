@@ -1,5 +1,18 @@
 # MIDAS — PROMETHEUS OVERNIGHT BRIEFING
 
+## Latest finding — PPO resumption works; policy unchanged on fresh groups
+
+Actualparent2048→child4096cumulative training verified,Adamsteps320→640,
+12parametertensorschanged. Yet300pairedvariants and702decisiontracechecks
+showzero parent-child outcome/action changes. Downside score-2.1682 below
+noTrade0; oldPPOdifferenceinconclusive.100freshgroups/2100variants and25128
+independentjournalchecks,6capturedsourceinference reexecutions,actualbrowser pass.
+Exportrecovered fromexplicit legacy-source gap withoutretraining;2366payloads
+verify andoriginalfailurepreserved.45artifacts/44fitted;3PPOsame-seedlineage.
+API/archivehealthy;all69nativejobs terminal. Watch-limit fallback wascorrectbut
+slower. Nextverifiedreplaypacking/coldretention,then schemamigration.
+Earlier active-training/waiting notes superseded. Prometheus remainsactive.
+
 ## Current activity — PPO native parent training after564-test gate
 
 Full gate564passed/oneskip in726.72s. Original API deployed; native parent

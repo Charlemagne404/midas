@@ -1,0 +1,20 @@
+[
+  {
+    "model_id": "model-8b05e3b3a9a24008981398e6",
+    "archive_timesteps": 2048,
+    "archive_optimizer_updates": 160,
+    "adam_step_counts": [
+      320
+    ],
+    "artifact_sha256": "1ececb765ebc420fbec73d5175b07bb8890940abbc62228806b89eb7417454b9"
+  },
+  {
+    "model_id": "model-27006372c7ea4b7d850c0b9c",
+    "archive_timesteps": 4096,
+    "archive_optimizer_updates": 320,
+    "adam_step_counts": [
+      640
+    ],
+    "artifact_sha256": "91584be7bed11c174bc392b581b9f86fd479d6920256e27afd34f8134072dece"
+  }
+]

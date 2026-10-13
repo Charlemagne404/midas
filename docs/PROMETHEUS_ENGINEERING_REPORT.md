@@ -2735,3 +2735,29 @@ continues. Do not duplicate/replace this coordinator or child on observation
 timeouts. Next: verify parent/child actual counters/immutability, frozen challenge
 and independent accounting/export, then root API/browser/source inference checks.
 Prometheus remains active; no policy improvement inferred from training progress.
+
+## Actual PPO continuation study completed; negative policy result preserved
+
+Parentmodel8b05e3b3a9a24008981398e6 trained2048transitions/160updateiterations/
+909episodes. Childmodel27006372c7ea4b7d850c0b9c continued to4096total/320updates/
+1818cumulativeepisodes; new2048transitions/160updates. Original parent bytes
+unchanged duringcontinuation. Actual archives Adamsteps320→640,12tensorschanged.
+Fresh tournament999cf9ee983249599d1dccb8 completed100groups/2100variants,
+25,128independent Decimal/Fraction journalchecks. Parent-child300pairedvariants
+havezero P&L differences,CI[0,0]. Separate702decisiontracechecks/300pairs show
+zero changed actions/requests. MeanP&L1.305014,tail3.473227,score-2.168213 below
+noTrade0. AgainstoldPPOmean+.001782CI[-.048434,.065739] inconclusive.
+No promotion/retuning. One seed/architecture, syntheticonly. Six actual captured-
+source inference reexecutions and browserlineage/download/control checks pass.
+Original coordinator failed only at export: oldPPO legacytraining job predates
+sourcecapture. Fixedexport explicitlylabelslegacygaps; missingmodernsource rejects.
+Focusednativeexporttest1pass27.95s andfinalizerrefusal2pass2.83s. Separatefinalizer
+VERIFIED withoutanynewtraining/evaluation. Originalfailure/source retained inside
+bundle.2,366payloadsverifySHA9fd34901b55892f50aca2c4c1b5a16eecbdeaa1ba798d5127592649a5608ba61.
+Currentmodels45artifacts/44fitted,3PPO (parent/childsame lineagenot3seeds).
+Nativejobs69terminal:65completed,2cancelled,2failed. API READY91177paper events,
+protectedarchive162000/18000/162000 andownerlockverified. Watchquotafallback
+517times added103.38sscaninside368.53sjob;disk207.4GiBfree,capunchanged.
+Read-only packingheadroom checkpasses for31,858,127loose replaybytes; original
+bytes preserved inverifiedexport. Nextcompactcompletedstudy,thendatasetmigration.
+Detailedscientificfinding:PROMETHEUS_PPO_RESUMPTION_FINDING.md. Prometheusactive.

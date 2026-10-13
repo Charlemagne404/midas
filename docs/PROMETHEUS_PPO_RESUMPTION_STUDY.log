@@ -1,0 +1,32 @@
+{"phase": "WAITING_GATE"}
+{"phase": "DEPLOYING_API"}
+{"phase": "ADMITTING", "stage": "parent"}
+{"phase": "RESEARCHING", "job_id": "job-0860d48702604139875b4e37"}
+{"phase": "STAGE_COMPLETED", "stage": "parent", "result": {"model_id": "model-8b05e3b3a9a24008981398e6"}}
+{"phase": "ADMITTING", "stage": "child"}
+{"phase": "RESEARCHING", "job_id": "job-d2ddbd0aea214ddcac33d099"}
+{"phase": "STAGE_COMPLETED", "stage": "child", "result": {"model_id": "model-27006372c7ea4b7d850c0b9c"}}
+{"phase": "ADMITTING", "stage": "challenge"}
+{"phase": "RESEARCHING", "job_id": "job-d3badfbbcb584913b7e2af4e"}
+{"phase": "STAGE_COMPLETED", "stage": "challenge", "result": {"tournament_id": "tournament-999cf9ee983249599d1dccb8"}}
+{"phase": "VERIFYING", "tournament_id": "tournament-999cf9ee983249599d1dccb8"}
+{"phase": "FAILED", "error": "FileNotFoundError: [Errno 2] No such file or directory: '/home/charlie/midas/data/arena/jobs/job-1b9b6c8fd8134593b5345706/source-manifest.json'"}
+Traceback (most recent call last):
+  File "/home/charlie/midas/scripts/run_ppo_resumption_study.py", line 190, in <module>
+    run(args.root, args.plan, args.output)
+  File "/home/charlie/midas/scripts/run_ppo_resumption_study.py", line 172, in run
+    exported = export_tournament(root, tournament_id, export_path)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/charlie/midas/scripts/arena_bundle.py", line 78, in export_tournament
+    return export_experiment(root, "tournaments", identity, output)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/charlie/midas/scripts/arena_bundle.py", line 338, in export_experiment
+    source_manifest = json.loads((job_file.parent / "source-manifest.json").read_text())
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/pathlib.py", line 1029, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/pathlib.py", line 1015, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/charlie/midas/data/arena/jobs/job-1b9b6c8fd8134593b5345706/source-manifest.json'

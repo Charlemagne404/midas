@@ -1,0 +1,6 @@
+{
+  "scenario_execution_pairs": 300,
+  "parent_decisions_compared": 702,
+  "pairs_with_changed_requests_or_actions": 0,
+  "scope": "Stored decision time/request/action/invalid traces; model explanation identities excluded. No new scenarios or fitting."
+}
