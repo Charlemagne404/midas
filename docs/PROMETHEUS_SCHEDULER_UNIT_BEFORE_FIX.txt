@@ -1,0 +1,17 @@
+# Managed by Midas finite research scheduling
+[Unit]
+Description=Midas finite research schedule dispatcher
+
+[Service]
+Type=oneshot
+WorkingDirectory="/home/charlie/midas"
+ExecStart="/home/charlie/midas/.venv/bin/python" -B -m scripts.dispatch_schedules --root "/home/charlie/midas/data/arena"
+CPUQuota=25%
+MemoryMax=512M
+Nice=10
+RuntimeMaxSec=60
+Environment=PYTHONDONTWRITEBYTECODE=1
+Environment=OMP_NUM_THREADS=1
+Environment=MKL_NUM_THREADS=1
+Environment=OPENBLAS_NUM_THREADS=1
+Environment=CUDA_VISIBLE_DEVICES=

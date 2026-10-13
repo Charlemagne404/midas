@@ -2588,3 +2588,25 @@ observation shows same gate still running and demoWAITING_GATE, no error.
 Package/captured deployment tools remain frozen. Next: allow timer deployment
 and real plan execution only after gate success, then run this independent
 verifier on both completed/expired plans and inspect timer/API/dashboard.
+
+## Scheduling gate passed; actual unit parsing defect corrected in place
+
+Full regression529 passed/one PostgreSQL skip/existing warning in632.38s.
+Deployment exposed WorkingDirectory quoting unsupported by systemd path parsing;
+service unit was rejected and timer did not start. No schedules recreated.
+Corrected only the generated managed unit to an unquoted absolute working path,
+reloaded user daemon and started the same timer; active/waiting now confirmed.
+Installer code remains captured/frozen during live demo and must be corrected
+with systemd-analyze validation after terminal state. This was a real deployment
+defect missed by mocked installer tests; do not report the initial install as
+successful. Original API/web unit definitions unchanged.
+
+Timer actually admitted and completed first childjob-863b6a79ed87481abb544450
+for schedule-09e238867b30464983008945. Demo is observing API restart before
+second due admission. Expiry planschedule-3c8b667280bd414b86a5f560 is EXPIRED,
+no child, actual pause interval/deadline; local alert to independently verify.
+Six independent schedule-verifier tests passed1.53s (after gate collection).
+Existing gate/demo handles were revalidated and same live demo observed for40s.
+Source and captured tools still frozen; no completed demo or multi-day/reboot
+run claimed. Next: complete real plan verification, fix installer/parser tests,
+inspect actual UI/timer and preserve bounded operational state.
