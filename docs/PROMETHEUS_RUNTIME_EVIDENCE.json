@@ -8,7 +8,7 @@
   "arena_research_tournaments": 25,
   "arena_source_datasets": 5,
   "arena_tournaments": 26,
-  "checked_at": 1791904962.8738024,
+  "checked_at": 1791905242.37309,
   "dataset_quality": [
     "Identical observable vectors occur across partitions. Independent scenario IDs do not guarantee covariate diversity; inspect repeated synthetic grids.",
     "Some scenario families contain one settlement seed parity only. The current generator uses seed parity for settlement; reorder families and shift seeds before making generalization claims.",
@@ -179,7 +179,7 @@
     "benchmark": "docs/PROMETHEUS_USAGE_INDEX_BENCHMARK.json",
     "max_artifact_bytes": 1073741824
   },
-  "current_engineering_activity": "Verified reversible replay-store packing implemented; production migration waits for full gate and reader deployment",
+  "current_engineering_activity": "Captured replay packing pilot waits for full regression, then verifies existing backup, restoration and deployed API before pruning",
   "active_performance_benchmark": {
     "unit": "midas-guard-worker-benchmark-v2.service",
     "state": "COMPLETED",
@@ -290,5 +290,12 @@
     "guard_mode": "FULL_SCAN_FALLBACK",
     "watch_quota": 65536,
     "disk_free_gib_approx": 208
+  },
+  "active_storage_pilot": {
+    "unit": "midas-replay-packing-pilot.service",
+    "phase": "WAITING_GATE",
+    "state_path": "data/arena/packing-pilots/tournament-244c26f362d3434084c7f3f3/state.json",
+    "wall_seconds": 2400,
+    "stop": "systemctl --user stop midas-replay-packing-pilot.service; inspect persisted phase before resuming, never blindly duplicate"
   }
 }

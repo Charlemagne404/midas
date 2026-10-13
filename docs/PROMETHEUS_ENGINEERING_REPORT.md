@@ -2471,3 +2471,20 @@ New supervised midas-replay-packing-full-gate.service confirmed active,
 oneCPU/4GiB/1200s. Package source frozen during gate. Native scientific results
 and models unchanged; goal active. SQLite can add byte overhead: this milestone
 reduces file/watch pressure and does not claim increased disk headroom.
+
+## Captured storage pilot waits for the same live full gate
+
+Added scripts/run_replay_packing_pilot.py, three refusal tests pass1.39 seconds.
+It checks source/plan/tool identity while observing the existing gate, verifies
+scientific backup SHA/payloads, deploys original API and waits for READY, packs
+without deleting, restores every original byte into isolated temporary storage,
+compares every packed-only read to loose evidence, then prunes and rechecks all
+financial/journal hashes plus each policy worst-case API replay. Final report
+records logical bytes/file counts before/after and flags SQLite byte overhead.
+
+Unitmidas-replay-packing-pilot.service is confirmed active WAITING_GATE,
+oneCPU/4GiB/2400s. Original gate remains live; no production packing/pruning
+claimed. State:data/arena/packing-pilots/tournament-244c26f362d3434084c7f3f3/state.json.
+Captured migration tools and packages frozen until terminal. Refuse blind
+duplicate execution; inspect phase and recover through verified restore/prune
+commands if interrupted. Existing backups and protected Laboratory untouched.
