@@ -1,0 +1,102 @@
+{
+  "configuration": {
+    "episodes": 60,
+    "seed": 393071,
+    "unwind": {
+      "max_shares": "20",
+      "min_bid": "0.05",
+      "policy": "sell_residual",
+      "repair": {
+        "max_additional_capital": "5",
+        "max_price": "0.75",
+        "policy": "complete_missing"
+      }
+    },
+    "version": "bounded-inventory-unwind-1"
+  },
+  "correlated_variants": 720,
+  "created_at": 1791850498.1565392,
+  "leaderboard": [
+    {
+      "cvar_05_loss": 0,
+      "intervention_filled_shares": "0",
+      "intervention_requests": 0,
+      "mean_pnl": 0.0,
+      "policy": "no_trade",
+      "score": 0.0,
+      "worst_pnl": 0.0
+    },
+    {
+      "cvar_05_loss": 1.412888888888889,
+      "intervention_filled_shares": "0",
+      "intervention_requests": 0,
+      "mean_pnl": 1.312966111111111,
+      "policy": "hold",
+      "score": -0.09992277777777803,
+      "worst_pnl": -5.1
+    },
+    {
+      "cvar_05_loss": 0.8777777777777778,
+      "intervention_filled_shares": "10.20",
+      "intervention_requests": 2,
+      "mean_pnl": 1.3418661111111112,
+      "policy": "complete_missing",
+      "score": 0.46408833333333344,
+      "worst_pnl": -5.1
+    },
+    {
+      "cvar_05_loss": 0.8777777777777778,
+      "intervention_filled_shares": "11.20",
+      "intervention_requests": 2,
+      "mean_pnl": 1.3446994444444444,
+      "policy": "sell_residual",
+      "score": 0.4669216666666667,
+      "worst_pnl": -5.1
+    }
+  ],
+  "limitations": [
+    "Synthetic hypothetical execution and estimated costs only; no real-market profitability evidence.",
+    "One initial risk-admitted position and at most one confirmed-terminal intervention.",
+    "Current stop/loss/exposure limits can require holding; no forced liquidation exception.",
+    "Sale quantity preserves matched shares if filled, not a guaranteed P&L or dollar-loss bound.",
+    "Hold, repair and sell use the same sale-capable ledger and actual-settlement redemption semantics.",
+    "Different actions can consume different random draws; bootstrap source groups, not variants.",
+    "Initial-buy cost predictors are not reused as unwind-cost predictions."
+  ],
+  "paired_comparisons": [
+    {
+      "candidate": "sell_residual",
+      "control": "hold",
+      "group_bootstrap_95": [
+        0.0,
+        0.09519999999999999
+      ],
+      "mean_change": 0.03173333333333333
+    },
+    {
+      "candidate": "sell_residual",
+      "control": "complete_missing",
+      "group_bootstrap_95": [
+        0.0,
+        0.0085
+      ],
+      "mean_change": 0.0028333333333333335
+    },
+    {
+      "candidate": "sell_residual",
+      "control": "no_trade",
+      "group_bootstrap_95": [
+        0.7396794861111111,
+        2.0502000833333334
+      ],
+      "mean_change": 1.3446994444444447
+    }
+  ],
+  "promotion": false,
+  "rows_sha256": "b026db07ef21c171575f93fbedf561f8ad518dbe0117d8df2b1042a6b1e8f2b5",
+  "runner_version": "bounded-inventory-unwind-1",
+  "source_groups": 60,
+  "source_hash": "552f0f8de28d749afa80e6593b60bc8e5db194ad42ea2294b7c278e4fd709542",
+  "state": "COMPLETED",
+  "unwind_id": "unwind-2f909c9b1005402c8797a79a"
+}

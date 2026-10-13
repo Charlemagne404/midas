@@ -1,0 +1,61 @@
+{
+  "scope": "All intervention-filled scenario variants, with matched hold/no-trade controls",
+  "reexecutions": [
+    {
+      "unwind_id": "unwind-2f909c9b1005402c8797a79a",
+      "row_id": "39-standard-no_trade",
+      "verified": true,
+      "mode": "EXACT_SCENARIO_AND_OBSERVABLE_POLICY_REEXECUTION",
+      "source_hash": "552f0f8de28d749afa80e6593b60bc8e5db194ad42ea2294b7c278e4fd709542",
+      "result_hash": "0900d9bafb8c438724a231ced16d574a889c3ad8e9c41a5cae0399a0d8956840",
+      "journal_hash": "b01e9a45f8c93a671ab1f6176da042f548c6daee4392694c9b33655514e5d912",
+      "producer_sha256": "85949ebb22821baa7048d7486b3b12503f7a663c18cb253c95ee12e3bccea096",
+      "limitations": [
+        "Reuses the broker and policy implementation; independent rational/Decimal audits are separate.",
+        "Exact synthetic reproducibility is not observed execution or economic validation."
+      ]
+    },
+    {
+      "unwind_id": "unwind-2f909c9b1005402c8797a79a",
+      "row_id": "39-standard-hold",
+      "verified": true,
+      "mode": "EXACT_SCENARIO_AND_OBSERVABLE_POLICY_REEXECUTION",
+      "source_hash": "552f0f8de28d749afa80e6593b60bc8e5db194ad42ea2294b7c278e4fd709542",
+      "result_hash": "8c5d9fadd163b80dd2c499b952934503c3af85aa5949346cddb07215cf40be48",
+      "journal_hash": "94f90cfe3c68bcdac1871ff110a29937fd07db8c11063cb932ac9223699f60d6",
+      "producer_sha256": "85949ebb22821baa7048d7486b3b12503f7a663c18cb253c95ee12e3bccea096",
+      "limitations": [
+        "Reuses the broker and policy implementation; independent rational/Decimal audits are separate.",
+        "Exact synthetic reproducibility is not observed execution or economic validation."
+      ]
+    },
+    {
+      "unwind_id": "unwind-2f909c9b1005402c8797a79a",
+      "row_id": "39-standard-complete_missing",
+      "verified": true,
+      "mode": "EXACT_SCENARIO_AND_OBSERVABLE_POLICY_REEXECUTION",
+      "source_hash": "552f0f8de28d749afa80e6593b60bc8e5db194ad42ea2294b7c278e4fd709542",
+      "result_hash": "11be332682ac3ded5a192158b33072819d3e55f34ae21f62ef9f1ac03e8fed51",
+      "journal_hash": "28a7994aa13ae89469618aaf59ba90382718703a8c982020190b3810606e7376",
+      "producer_sha256": "85949ebb22821baa7048d7486b3b12503f7a663c18cb253c95ee12e3bccea096",
+      "limitations": [
+        "Reuses the broker and policy implementation; independent rational/Decimal audits are separate.",
+        "Exact synthetic reproducibility is not observed execution or economic validation."
+      ]
+    },
+    {
+      "unwind_id": "unwind-2f909c9b1005402c8797a79a",
+      "row_id": "39-standard-sell_residual",
+      "verified": true,
+      "mode": "EXACT_SCENARIO_AND_OBSERVABLE_POLICY_REEXECUTION",
+      "source_hash": "552f0f8de28d749afa80e6593b60bc8e5db194ad42ea2294b7c278e4fd709542",
+      "result_hash": "cdfa3bd68c77b2a9fbdc1fcc9dbd5dad6c3d2c161abec9aea92ad7e8910fced3",
+      "journal_hash": "75b0a352bd51c744ee98884f9b87a5f2b2634d7841aad0c82c55392e54271c12",
+      "producer_sha256": "85949ebb22821baa7048d7486b3b12503f7a663c18cb253c95ee12e3bccea096",
+      "limitations": [
+        "Reuses the broker and policy implementation; independent rational/Decimal audits are separate.",
+        "Exact synthetic reproducibility is not observed execution or economic validation."
+      ]
+    }
+  ]
+}

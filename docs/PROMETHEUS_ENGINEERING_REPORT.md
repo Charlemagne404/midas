@@ -2128,3 +2128,37 @@ tool and documentation were attached to the study's analysis-tools directory
 before export; this changes no package source, financial replay or intervention.
 No production outcomes are yet claimed. Preserve captured campaign tools and
 package source until both worker and campaign terminate.
+
+## Production unwind campaign completed: narrow positive synthetic outcome
+
+Native job-0eac68ccf36a43fb9afdcc6c completed720 variants /60 source groups.
+The supervised campaign completed with no error after verification and export;
+both native processes are inactive. Verification checked720 financial/journal
+hashes,62 observed-input proposals,4 total requests, independent rational/Decimal
+ledgers, identical initial buys, orders and all grouped/leaderboard claims.
+
+Hold mean1.312966, tail1.412889, score-0.099923, worst-5.1 virtual USD. Repair
+mean1.341866, tail0.877778, score0.464088. Sell mean1.344699, tail0.877778,
+score0.466922. Both interventions have the same worst loss-5.1 as hold.
+Sell-minus-hold mean0.031733, grouped95% interval[0,0.0952]; sell-minus-repair
+0.002833, interval[0,0.0085]. These intervals include zero: a robust mean benefit
+over the intervention controls is not established. Sell-minus-no-trade mean
+1.344699, interval[0.739679,2.050200], under these synthetic assumptions only.
+
+Each intervention policy requested twice but filled once. Both filled in the
+same source group volatile:393110, standard execution: repair10.20 shares,
+sell11.20. Thus the incremental changes come from one affected source group;
+720 variants are not720 independent observations. Sample tail improvement and
+positive mean here do not establish loss guarantees, real profitability or
+general recovery robustness. No model training or policy promotion occurred.
+
+Bundle8348e07e7e91ea8f59cbc2ac6b2a6fa1e9e4e153c87e76af5b95c916f8ec9b5c
+verified796 payloads, including exact-reexecution tool/instructions attached
+before export. Independent root checksum verification passed. Four production
+episodes (filled sell/buy plus matched hold/no-trade) reexecuted with identical
+hashes/proposals. Live result and replay browser inspection has no page errors.
+Fresh API READY, archive quick_check/counts162000/18000/162000 and exclusive
+owner pass. Package/campaign source freeze is lifted after terminal success.
+Next: preserve this checkpoint, then reduce the measured per-result archive-scan
+cost while retaining bounded storage and cancellation; broader robustness and
+general automation objectives remain unfinished.

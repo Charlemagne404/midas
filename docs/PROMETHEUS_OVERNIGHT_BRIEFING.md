@@ -1,5 +1,32 @@
 # MIDAS — PROMETHEUS OVERNIGHT BRIEFING
 
+## Latest result — bounded unwind executed; evidence is concentrated in one group
+
+Full gate449 passed/one PostgreSQL skip/existing warning in565.14 seconds.
+The supervised campaign then completed the fixed60-group/720-variant study,
+verified all ledgers,62 proposals and paired results, and exported796 checksummed
+payloads. Worker and campaign are terminal. The API is READY; protected archive
+integrity/counts and exclusive ownership passed fresh checks.
+
+Sell mean1.344699 virtual USD and downside score0.466922 versus hold mean1.312966
+and score-0.099923. Sample tail loss improves1.412889→0.877778; worst loss stays
+-5.1. Sell-minus-hold mean0.031733, grouped95% interval[0,0.0952]; sell-minus-buy
+0.002833, interval[0,0.0085]. Intervals include zero. Each policy made two
+requests but filled once, in the same volatile:393110 standard-execution group.
+This establishes working mechanics and a narrow synthetic outcome, not robust
+mean benefit, real profitability, calibrated fills or guaranteed loss bounds.
+
+Final bundleSHA8348e07e7e91ea8f59cbc2ac6b2a6fa1e9e4e153c87e76af5b95c916f8ec9b5c.
+Independent root checks confirmed all796 payloads. Four affected production
+episodes reexecuted exactly; the actual saved study/replay is visible in the
+dashboard without page errors. No new models were fitted: inventory remains
+43 artifacts/42 fitted, six datasets and24 tournaments/46023 correlated variants,
+plus the separate recovery540 and unwind720 variant studies.
+
+Next: worker efficiency with maintained storage/cancellation guards, then fresh
+recovery robustness and the remaining research-platform backlog. Prometheus
+remains active. Older active-campaign notes below describe superseded states.
+
 ## Active campaign — residual-only sell versus hold and missing-leg repair
 
 Source checkpoint198fdf2 adds the observable one-attempt policy, actual sell

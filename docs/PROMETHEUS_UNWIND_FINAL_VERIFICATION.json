@@ -1,0 +1,21 @@
+{
+  "checked_at": 1791850623.2097583,
+  "unwind_id": "unwind-2f909c9b1005402c8797a79a",
+  "bundle": {
+    "files": 788,
+    "path": "/home/charlie/midas/data/exports/prometheus-unwind-393071-final.tar.gz",
+    "sha256": "8348e07e7e91ea8f59cbc2ac6b2a6fa1e9e4e153c87e76af5b95c916f8ec9b5c",
+    "unwind_id": "unwind-2f909c9b1005402c8797a79a"
+  },
+  "payloads_verified": 796,
+  "exact_production_reexecutions": 4,
+  "filled_source_groups": 1,
+  "verification": {
+    "decisions_recomputed": 62,
+    "requests": 4,
+    "scope": "Financial/journal hashes, independent rational and decimal ledger audits, matched initial buys and observed-input admission; no independent broker rerun.",
+    "source_groups": 60,
+    "unwind_id": "unwind-2f909c9b1005402c8797a79a",
+    "verified_replays": 720
+  }
+}
