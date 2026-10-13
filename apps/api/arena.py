@@ -17,7 +17,7 @@ def inspect_director(root: Path, identity: str) -> dict[str, Any]:
     from midas.arena.artifacts import artifact_path
 
     directory = artifact_path(root, "directors", identity)
-    record = json.loads((directory / "manifest.json").read_text())
+    record: dict[str, Any] = json.loads((directory / "manifest.json").read_text())
     if record.get("director_version") != "adaptive-latency-1" or record["state"] != "RUNNING":
         return record
     reference = directory / "supervisor-reference.json"
@@ -229,6 +229,7 @@ def router(root: Path) -> APIRouter:
             "directors": catalog("directors"),
             "searches": catalog("searches"),
             "recoveries": catalog("recoveries"),
+            "unwinds": catalog("unwinds"),
         }
 
     @api.get("")
@@ -276,6 +277,36 @@ def router(root: Path) -> APIRouter:
         return await call(
             lambda: json.loads((path("recoveries", identity) / "manifest.json").read_text())
         )
+
+    @api.get("/unwinds/{identity}")
+    async def unwind(identity: str) -> Any:
+        return await call(
+            lambda: json.loads((path("unwinds", identity) / "manifest.json").read_text())
+        )
+
+    @api.get("/unwinds/{identity}/rows")
+    async def unwind_rows(
+        identity: str, offset: int = Query(0, ge=0), limit: int = Query(50, ge=1, le=200)
+    ) -> Any:
+        return await call(
+            lambda: json.loads((path("unwinds", identity) / "rows.json").read_text())[
+                offset : offset + limit
+            ]
+        )
+
+    @api.get("/unwinds/{identity}/replay/{row_id}")
+    async def unwind_replay(identity: str, row_id: str) -> Any:
+        from midas.arena.artifacts import read_replay
+
+        def read() -> Any:
+            directory = path("unwinds", identity)
+            if not any(
+                r["id"] == row_id for r in json.loads((directory / "rows.json").read_text())
+            ):
+                raise HTTPException(404, "Unwind row not found")
+            return read_replay(directory / "replays" / (row_id + ".json"))
+
+        return await call(read)
 
     @api.get("/models/{identity}")
     async def model(identity: str) -> Any:

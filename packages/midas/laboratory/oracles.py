@@ -13,6 +13,10 @@ def ceil_units(value: Fraction, scale: int) -> Fraction:
     return Fraction(-(-scaled.numerator // scaled.denominator), scale)
 
 
+def floor_units(value: Fraction, scale: int) -> Fraction:
+    return Fraction((value * scale).numerator // (value * scale).denominator, scale)
+
+
 def fee(quantity: Any, price: Any, rate: Any) -> Fraction:
     q, p, r = rational(quantity), rational(price), rational(rate)
     scaled = q * r * p * (1 - p) * 100_000
@@ -36,6 +40,9 @@ def verify(state: dict[str, Any]) -> list[str]:
         x = position["exchange"]
         cash = rational(x["starting"])
         reserved = basis = proceeds = spent = Fraction(0)
+        sales = Fraction(0)
+        share_reservations: dict[str, Fraction] = {}
+        orders = {o["id"]: o for o in x["orders"]}
         quantities: dict[str, Fraction] = {}
         order_fills: dict[str, Fraction] = {}
         asset_basis: dict[str, Fraction] = {}
@@ -64,6 +71,42 @@ def verify(state: dict[str, Any]) -> list[str]:
                 order_fills[e["order_id"]] = order_fills.get(e["order_id"], Fraction(0)) + q
                 asset_basis[asset] = asset_basis.get(asset, Fraction(0)) + charge
                 spent += charge
+            if e["kind"] in {"reserve_sell", "release_sell"}:
+                order_id = e["order_id"]
+                if (
+                    q <= 0
+                    or any((a, r, b, rational(e["fee"])))
+                    or orders.get(order_id, {}).get("side") != "SELL"
+                    or orders.get(order_id, {}).get("asset_id") != asset
+                ):
+                    errors.append(f"independent_ledger: invalid share reservation {label}")
+                share_reservations[order_id] = share_reservations.get(order_id, Fraction(0)) + (
+                    q if e["kind"] == "reserve_sell" else -q
+                )
+            if e["kind"] == "sell_fill":
+                owned = quantities.get(asset, Fraction(0))
+                cost = asset_basis.get(asset, Fraction(0))
+                if not 0 < q <= owned:
+                    errors.append(f"independent_ledger: invalid sell quantity {label}")
+                    released = Fraction(0)
+                else:
+                    released = cost if q == owned else floor_units(cost * q / owned, 1_000_000)
+                expected_fee = fee(q, e["price"], x["market"]["fee"]["rate"])
+                net = floor_units(q * rational(e["price"]), 1_000_000) - expected_fee
+                if net < 0 or (a, r, b, rational(e["fee"])) != (
+                    net,
+                    Fraction(0),
+                    -released,
+                    expected_fee,
+                ):
+                    errors.append(f"independent_ledger: sell charge mismatch {label}")
+                quantities[asset] = owned - q
+                asset_basis[asset] = cost - released
+                order_fills[e["order_id"]] = order_fills.get(e["order_id"], Fraction(0)) + q
+                share_reservations[e["order_id"]] = (
+                    share_reservations.get(e["order_id"], Fraction(0)) - q
+                )
+                sales += net
             if e["kind"] == "settlement":
                 expected = (
                     payout(q, e["payout_numerator"], e["payout_denominator"])
@@ -74,21 +117,40 @@ def verify(state: dict[str, Any]) -> list[str]:
                     errors.append(f"independent_ledger: settlement mismatch {label}")
                 quantities[asset] = quantities.get(asset, Fraction(0)) - q
                 proceeds += expected
+                if x.get("sales_contract"):
+                    asset_basis[asset] = Fraction(0)
             if any(qty < 0 for qty in quantities.values()):
                 errors.append(f"independent_ledger: negative inventory {label}")
-        if cash + reserved != rational(x["starting"]) - spent + proceeds:
+            if any(qty < 0 for qty in share_reservations.values()):
+                errors.append(f"independent_ledger: negative share reservation {label}")
+            for asset, qty in quantities.items():
+                held = sum(
+                    (
+                        value
+                        for key, value in share_reservations.items()
+                        if orders.get(key, {}).get("asset_id") == asset
+                    ),
+                    Fraction(0),
+                )
+                if held > qty:
+                    errors.append(f"independent_ledger: shares reserved twice {label}")
+        if cash + reserved != rational(x["starting"]) - spent + proceeds + sales:
             errors.append(f"capital_conservation: {position_id}")
         if reserved != sum((rational(o["reservation"]) for o in x["orders"]), Fraction(0)):
             errors.append(f"independent_ledger: reservations {position_id}")
         for o in x["orders"]:
             if order_fills.get(o["id"], 0) + rational(o["remaining"]) != rational(o["quantity"]):
                 errors.append(f"independent_ledger: order quantity {o['id']}")
+            if o.get("side") == "SELL" and share_reservations.get(o["id"], 0) != rational(
+                o["inventory_reservation"]
+            ):
+                errors.append(f"independent_ledger: share reservation {o['id']}")
         if asset_basis != {a: rational(v) for a, v in x["asset_costs"].items()}:
             errors.append(f"independent_ledger: position basis {position_id}")
         total_cash += cash - rational(x["starting"])
         total_reserved += reserved
         total_basis += basis
-        total_pnl += proceeds - spent + basis
+        total_pnl += proceeds + sales - spent + basis
     if min(total_cash, total_reserved, total_basis) < 0:
         errors.append("capital_conservation: negative shared bucket")
     if (

@@ -36,6 +36,13 @@ def export_recovery(root: Path, identity: str, output: Path) -> dict[str, Any]:
     return export_experiment(root, "recoveries", identity, output)
 
 
+def export_unwind(root: Path, identity: str, output: Path) -> dict[str, Any]:
+    from scripts.verify_unwind import verify
+
+    verify(root, identity)
+    return export_experiment(root, "unwinds", identity, output)
+
+
 def export_sweep(root: Path, sweep_id: str, output: Path) -> dict[str, Any]:
     manifest = json.loads((artifact_path(root, "sweeps", sweep_id) / "manifest.json").read_text())
     if "ablation" in manifest:
@@ -201,11 +208,11 @@ def export_experiment(root: Path, kind: str, identity: str, output: Path) -> dic
             for key in ("validation_tournament", "test_tournament")
         ]
         reference_key = "search_id"
-    elif kind == "recoveries":
+    elif kind in {"recoveries", "unwinds"}:
         configuration = director["configuration"]
         model_ids = set()
         steps = []
-        reference_key = "recovery_id"
+        reference_key = "recovery_id" if kind == "recoveries" else "unwind_id"
     elif kind == "sweeps":
         configuration = director["configuration"]
         if any(t["state"] != "COMPLETED" or not t.get("model_id") for t in director["trials"]):
@@ -252,7 +259,7 @@ def export_experiment(root: Path, kind: str, identity: str, output: Path) -> dic
         ):
             raise ValueError("Model training dataset provenance changed")
         paths.update(dataset_paths(root, model["dataset_id"]))
-    if kind != "recoveries":
+    if kind not in {"recoveries", "unwinds"}:
         dataset = artifact_path(root, "datasets", configuration["dataset_id"])
         dataset_manifest = json.loads((dataset / "manifest.json").read_text())
         if sha256(dataset / "rows.json") != dataset_manifest["rows_sha256"]:
@@ -284,9 +291,10 @@ def export_experiment(root: Path, kind: str, identity: str, output: Path) -> dic
                     or job["submitted_source_hash"] != director["source_hash"]
                 ):
                     raise ValueError("Adaptive child job differs from completed stage")
-            if kind == "recoveries" and (
+            if kind in {"recoveries", "unwinds"} and (
                 job["state"] != "COMPLETED"
-                or job["configuration"]["recovery"] != director["configuration"]
+                or job["configuration"]["recovery" if kind == "recoveries" else "unwind"]
+                != director["configuration"]
                 or job["submitted_source_hash"] != director["source_hash"]
             ):
                 raise ValueError("Recovery worker differs from completed study")
@@ -334,6 +342,11 @@ def export_experiment(root: Path, kind: str, identity: str, output: Path) -> dic
         extras["TOOLS/verify_recovery.py"] = Path(__file__).resolve().parent / "verify_recovery.py"
         extras["ARENA_MISSING_LEG_RECOVERY.md"] = (
             Path(__file__).resolve().parents[1] / "docs/ARENA_MISSING_LEG_RECOVERY.md"
+        )
+    if kind == "unwinds":
+        extras["TOOLS/verify_unwind.py"] = Path(__file__).resolve().parent / "verify_unwind.py"
+        extras["ARENA_UNWIND_IMPLEMENTATION_PLAN.md"] = (
+            Path(__file__).resolve().parents[1] / "docs/ARENA_UNWIND_IMPLEMENTATION_PLAN.md"
         )
     if kind == "tournaments" and director.get("cost_policy_bindings"):
         for tool in (
@@ -432,11 +445,14 @@ if __name__ == "__main__":
     experiment.add_argument("--tournament")
     experiment.add_argument("--sweep")
     experiment.add_argument("--recovery")
+    experiment.add_argument("--unwind")
     experiment.add_argument("--cost-study")
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     result = (
-        export_cost_study(args.root, args.cost_study, args.output)
+        export_unwind(args.root, args.unwind, args.output)
+        if args.unwind
+        else export_cost_study(args.root, args.cost_study, args.output)
         if args.cost_study
         else export(args.root, args.director, args.output)
         if args.director

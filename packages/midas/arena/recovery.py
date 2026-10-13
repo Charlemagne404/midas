@@ -207,7 +207,7 @@ class RecoveryEnvironment(Environment):
         )
         before = None
         ledger_size = 0
-        if action and action["kind"] == "match":
+        if action and action["kind"] == "match" and action.get("side", "BUY") == "BUY":
             before = copy.deepcopy(self.state["used_liquidity"].get(action["asset"], {}))
             ledger_size = len(self.state["positions"][action["position"]]["exchange"]["ledger"])
         self.state = transition(self.state, command, strategy)

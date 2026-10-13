@@ -228,6 +228,27 @@ type Replay = {
   decisions: unknown[];
 };
 type Overview = {
+  unwinds?: {
+    unwind_id: string;
+    source_groups: number;
+    correlated_variants: number;
+    paired_comparisons: {
+      candidate: string;
+      control: string;
+      mean_change: number;
+      group_bootstrap_95: number[];
+    }[];
+    leaderboard: {
+      policy: string;
+      mean_pnl: number;
+      cvar_05_loss: number;
+      score: number;
+      worst_pnl: number;
+      intervention_requests: number;
+      intervention_filled_shares: string;
+    }[];
+    limitations: string[];
+  }[];
   recoveries?: {
     recovery_id: string;
     source_groups: number;
@@ -394,6 +415,13 @@ export function Arena() {
   const [costChallengeSeed, setCostChallengeSeed] = useState(313071);
   const [costCompletionModel, setCostCompletionModel] = useState('');
   const [costCompletionThreshold, setCostCompletionThreshold] = useState(0.9);
+  const [unwindSeed, setUnwindSeed] = useState(393071);
+  const [unwindMinBid, setUnwindMinBid] = useState('0.05');
+  const [unwindMaxShares, setUnwindMaxShares] = useState('20');
+  const [unwindId, setUnwindId] = useState('');
+  const [unwindRow, setUnwindRow] = useState('');
+  const [unwindEvent, setUnwindEvent] = useState(0);
+  const [unwindOffset, setUnwindOffset] = useState(0);
   const [message, setMessage] = useState('');
   const overview = useQuery({
     queryKey: ['arena'],
@@ -465,6 +493,21 @@ export function Arena() {
     queryKey: ['arena-replay', selectedTournament, rowId],
     queryFn: () => api<Replay>(`/arena/tournaments/${selectedTournament}/replay/${rowId}`),
     enabled: !!rowId,
+  });
+  const selectedUnwind = unwindId || data?.unwinds?.[0]?.unwind_id || '';
+  const unwindRows = useQuery({
+    queryKey: ['arena-unwind-rows', selectedUnwind, unwindOffset],
+    queryFn: () =>
+      api<Row[]>(`/arena/unwinds/${selectedUnwind}/rows?offset=${unwindOffset}&limit=100`),
+    enabled: !!selectedUnwind && tab === 'Research director',
+  });
+  const unwindReplay = useQuery({
+    queryKey: ['arena-unwind-replay', selectedUnwind, unwindRow],
+    queryFn: () =>
+      api<Omit<Replay, 'decisions'> & { intervention_decisions: Record<string, unknown>[] }>(
+        `/arena/unwinds/${selectedUnwind}/replay/${unwindRow}`,
+      ),
+    enabled: !!selectedUnwind && !!unwindRow && tab === 'Research director',
   });
   const submit = useMutation({
     mutationFn: async ({
@@ -2437,6 +2480,244 @@ export function Arena() {
                 </details>
               </article>
             ))}
+          </Section>
+          <Section title="Residual sell, hold and repair">
+            <p className="lab-note">
+              Compare holding, buying the missing leg, and one inventory-backed sale of excess
+              shares. Matched shares are protected. Current stop and loss limits can prevent an
+              unwind; observed bids do not guarantee execution. Synthetic research only.
+            </p>
+            <div className="lab-controls">
+              <label>
+                Fresh unwind seed
+                <input
+                  type="number"
+                  min="0"
+                  value={unwindSeed}
+                  onChange={(event) => setUnwindSeed(Number(event.target.value))}
+                />
+              </label>
+              <label>
+                Minimum unwind bid
+                <input
+                  type="number"
+                  min="0.01"
+                  max="0.99"
+                  step="0.01"
+                  value={unwindMinBid}
+                  onChange={(event) => setUnwindMinBid(event.target.value)}
+                />
+              </label>
+              <label>
+                Maximum residual sale shares
+                <input
+                  type="number"
+                  min="0.01"
+                  max="1000"
+                  step="0.01"
+                  value={unwindMaxShares}
+                  onChange={(event) => setUnwindMaxShares(event.target.value)}
+                />
+              </label>
+              <button
+                disabled={submit.isPending}
+                onClick={() =>
+                  submit.mutate({
+                    configuration: {
+                      kind: 'unwind',
+                      max_wall_seconds: 1800,
+                      unwind: {
+                        episodes: 60,
+                        seed: unwindSeed,
+                        unwind: {
+                          policy: 'sell_residual',
+                          min_bid: unwindMinBid,
+                          max_shares: unwindMaxShares,
+                        },
+                      },
+                    },
+                  })
+                }
+              >
+                Run bounded unwind comparison
+              </button>
+            </div>
+            {data?.unwinds?.map((study) => (
+              <article className="arena-finding" key={study.unwind_id}>
+                <h3>{study.unwind_id}</h3>
+                <p>
+                  {study.source_groups} source groups / {study.correlated_variants} correlated
+                  variants.
+                </p>
+                <table className="lab-table">
+                  <thead>
+                    <tr>
+                      <th>Policy</th>
+                      <th>Mean virtual P&amp;L</th>
+                      <th>Sample tail loss</th>
+                      <th>Downside score</th>
+                      <th>Requests / filled shares</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {study.leaderboard.map((entry) => (
+                      <tr key={entry.policy}>
+                        <td>{entry.policy}</td>
+                        <td>{entry.mean_pnl.toFixed(3)}</td>
+                        <td>{entry.cvar_05_loss.toFixed(3)}</td>
+                        <td>{entry.score.toFixed(3)}</td>
+                        <td>
+                          {entry.intervention_requests} / {entry.intervention_filled_shares}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {study.paired_comparisons.map((comparison) => (
+                  <p key={comparison.control}>
+                    {comparison.candidate} minus {comparison.control}:{' '}
+                    {comparison.mean_change.toFixed(3)}; grouped 95% interval [
+                    {comparison.group_bootstrap_95.map((value) => value.toFixed(3)).join(', ')}].
+                  </p>
+                ))}
+                <a href={`/api/arena/unwinds/${study.unwind_id}`} target="_blank" rel="noreferrer">
+                  Saved unwind evidence ↗
+                </a>
+                <details>
+                  <summary>Unwind scope and limits</summary>
+                  {study.limitations.map((limit) => (
+                    <p className="lab-note" key={limit}>
+                      {limit}
+                    </p>
+                  ))}
+                </details>
+              </article>
+            ))}
+            {!!data?.unwinds?.length && (
+              <>
+                <div className="lab-controls">
+                  <label>
+                    Unwind study
+                    <select
+                      value={selectedUnwind}
+                      onChange={(event) => {
+                        setUnwindId(event.target.value);
+                        setUnwindRow('');
+                        setUnwindEvent(0);
+                        setUnwindOffset(0);
+                      }}
+                    >
+                      {data.unwinds.map((study) => (
+                        <option key={study.unwind_id} value={study.unwind_id}>
+                          {study.unwind_id}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    Unwind episode
+                    <select
+                      value={unwindRow}
+                      onChange={(event) => {
+                        setUnwindId(selectedUnwind);
+                        setUnwindRow(event.target.value);
+                        setUnwindEvent(0);
+                      }}
+                    >
+                      <option value="">Select saved episode</option>
+                      {unwindRows.data?.map((entry) => (
+                        <option key={entry.id} value={entry.id}>
+                          {entry.policy} · {entry.family} · {entry.execution_model} ·{' '}
+                          {entry.metrics.net_simulated_pnl}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <button
+                    disabled={unwindOffset === 0 || unwindRows.isFetching}
+                    onClick={() => {
+                      setUnwindOffset(Math.max(0, unwindOffset - 100));
+                      setUnwindRow('');
+                      setUnwindEvent(0);
+                    }}
+                  >
+                    Previous unwind episodes
+                  </button>
+                  <button
+                    disabled={
+                      unwindRows.isFetching ||
+                      !unwindRows.data ||
+                      unwindOffset + 100 >=
+                        (data.unwinds.find((study) => study.unwind_id === selectedUnwind)
+                          ?.correlated_variants ?? 0)
+                    }
+                    onClick={() => {
+                      setUnwindOffset(unwindOffset + 100);
+                      setUnwindRow('');
+                      setUnwindEvent(0);
+                    }}
+                  >
+                    Next unwind episodes
+                  </button>
+                </div>
+                {unwindReplay.data && (
+                  <>
+                    <label>
+                      Unwind replay event
+                      <input
+                        type="range"
+                        min="0"
+                        max={Math.max(0, unwindReplay.data.result.journal.length - 1)}
+                        value={unwindEvent}
+                        onChange={(event) => setUnwindEvent(Number(event.target.value))}
+                      />
+                    </label>
+                    <p>
+                      Event {unwindEvent + 1} / {unwindReplay.data.result.journal.length} ·{' '}
+                      {unwindReplay.data.result.journal[unwindEvent]?.kind}
+                    </p>
+                    <dl className="arena-replay-ledger">
+                      {[
+                        'available',
+                        'reserved',
+                        'locked',
+                        'realized_pnl',
+                        'net_exposure_shares',
+                        'sale_proceeds',
+                        'reserved_sale_shares',
+                      ].map((name) => (
+                        <div key={name}>
+                          <dt>{name.replaceAll('_', ' ')}</dt>
+                          <dd>
+                            {String(
+                              unwindReplay.data?.result.journal[unwindEvent]?.after[name] ?? '—',
+                            )}
+                          </dd>
+                        </div>
+                      ))}
+                    </dl>
+                    <details>
+                      <summary>Observed unwind decision</summary>
+                      <Json
+                        value={unwindReplay.data.intervention_decisions.map((decision) => ({
+                          side: decision.side,
+                          allowed: decision.allowed,
+                          reasons: decision.reasons,
+                          quantity: decision.quantity,
+                          limit: decision.limit,
+                          residual_before: decision.residual_before,
+                        }))}
+                      />
+                    </details>
+                    <details>
+                      <summary>Saved unwind event and orders</summary>
+                      <Json value={unwindReplay.data.result.journal[unwindEvent]} />
+                      <Json value={unwindReplay.data.result.final_portfolio} />
+                    </details>
+                  </>
+                )}
+              </>
+            )}
           </Section>
           <Section title="Validation-only evolution evidence">
             {data?.sweeps?.map((sweep) => (

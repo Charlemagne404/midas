@@ -24,6 +24,7 @@ from midas.arena.rl import RLSpec
 from midas.arena.severity import SeveritySpec
 from midas.arena.supervised import TrainingSpec
 from midas.arena.tournaments import TournamentSpec
+from midas.arena.unwind import UnwindStudySpec
 from midas.core.models import Model
 
 
@@ -41,12 +42,14 @@ class JobSpec(Model):
         "severity",
         "cost",
         "recovery",
+        "unwind",
     ]
     dataset: DatasetSpec | None = None
     training: TrainingSpec | None = None
     severity: SeveritySpec | None = None
     cost: CostSpec | None = None
     recovery: RecoveryStudySpec | None = None
+    unwind: UnwindStudySpec | None = None
     model_id: str | None = None
     rl: RLSpec | None = None
     tournament: TournamentSpec | None = None
@@ -63,6 +66,7 @@ class JobSpec(Model):
             "severity": "severity",
             "cost": "cost",
             "recovery": "recovery",
+            "unwind": "unwind",
             "evaluation": "model_id",
             "diagnostics": "model_id",
             "rl": "rl",
@@ -77,6 +81,7 @@ class JobSpec(Model):
             "severity",
             "cost",
             "recovery",
+            "unwind",
             "model_id",
             "rl",
             "tournament",
@@ -333,6 +338,12 @@ def _run(root: Path, identity: str) -> None:
                 assert spec.recovery is not None
                 result = run_study(root, spec.recovery, progress)
                 record["result"] = {"recovery_id": result["recovery_id"]}
+            elif spec.kind == "unwind":
+                from midas.arena.unwind import run_study as run_unwind_study
+
+                assert spec.unwind is not None
+                result = run_unwind_study(root, spec.unwind, progress)
+                record["result"] = {"unwind_id": result["unwind_id"]}
             elif spec.kind == "tournament":
                 from midas.arena.tournaments import run_tournament
 

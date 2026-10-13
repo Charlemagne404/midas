@@ -1,8 +1,9 @@
 # Bounded sell/unwind implementation plan
 
-Status: exchange/broker sell foundation implemented and covered by focused tests.
-The observable residual-only research policy and production study remain pending.
-The prior joint-cost source freeze lifted after its full regression passed.
+Status: exchange/broker foundation, observable residual-only policy, typed jobs,
+matched study producer, independent verifier, export and dashboard implemented.
+Production study remains gated behind the next full regression. The campaign
+will preserve its source while testing and running the fixed preregistration.
 
 ## Scope and decision contract
 

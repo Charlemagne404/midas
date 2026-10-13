@@ -10,6 +10,106 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+it('submits bounded unwind controls and opens actual saved episode data', async () => {
+  const study = {
+    unwind_id: 'unwind-test',
+    source_groups: 30,
+    correlated_variants: 360,
+    leaderboard: [
+      {
+        policy: 'sell_residual',
+        mean_pnl: 0.1,
+        cvar_05_loss: 0.2,
+        score: -0.1,
+        worst_pnl: -1,
+        intervention_requests: 3,
+        intervention_filled_shares: '10',
+      },
+    ],
+    paired_comparisons: [
+      {
+        candidate: 'sell_residual',
+        control: 'hold',
+        mean_change: 0.1,
+        group_bootstrap_95: [-0.1, 0.2],
+      },
+    ],
+    limitations: ['Synthetic only'],
+  };
+  const row = {
+    id: '0-standard-sell_residual',
+    policy: 'sell_residual',
+    family: 'volatile',
+    execution_model: 'standard',
+    metrics: { net_simulated_pnl: '1.0' },
+    passed: true,
+  };
+  const overview = {
+    datasets: [],
+    models: [],
+    jobs: [],
+    findings: [],
+    tournaments: [],
+    unwinds: [study],
+    dependencies: {},
+    health: { memory_mb: {}, worker_cpu_cores: 1, worker_memory_mb: 4096 },
+  };
+  let submitted = false;
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (url: string, init?: RequestInit) => {
+      if (url === '/api/arena/jobs' && init?.method === 'POST') {
+        const spec = JSON.parse(String(init.body)).configuration;
+        expect(spec.kind).toBe('unwind');
+        expect(spec.unwind).toEqual({
+          episodes: 60,
+          seed: 393071,
+          unwind: { policy: 'sell_residual', min_bid: '0.05', max_shares: '20' },
+        });
+        submitted = true;
+        return new Response(JSON.stringify({ job_id: 'unwind-job' }), { status: 201 });
+      }
+      if (url.includes('/unwinds/unwind-test/rows'))
+        return new Response(JSON.stringify([row]), { status: 200 });
+      if (url.includes('/unwinds/unwind-test/replay/'))
+        return new Response(
+          JSON.stringify({
+            result: {
+              journal: [{ kind: 'action', time_ms: 1, after: { realized_pnl: '1' }, before: {} }],
+              metrics: {},
+              final_portfolio: {},
+            },
+            intervention_decisions: [
+              {
+                side: 'SELL',
+                allowed: true,
+                quantity: '5',
+                limit: '.4',
+                reasons: ['Residual only'],
+              },
+            ],
+          }),
+          { status: 200 },
+        );
+      return new Response(JSON.stringify(overview), { status: 200 });
+    }),
+  );
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  render(
+    <QueryClientProvider client={client}>
+      <Arena />
+    </QueryClientProvider>,
+  );
+  fireEvent.click(await screen.findByRole('tab', { name: 'Research director' }));
+  expect(await screen.findByRole('heading', { name: 'unwind-test' })).toBeVisible();
+  await screen.findByRole('option', { name: /sell_residual · volatile · standard/ });
+  fireEvent.change(screen.getByLabelText('Unwind episode'), { target: { value: row.id } });
+  expect(await screen.findByText(/Event 1 \/ 1 · action/)).toBeVisible();
+  fireEvent.click(screen.getByRole('button', { name: 'Run bounded unwind comparison' }));
+  await screen.findByText(/Research job admitted/);
+  expect(submitted).toBe(true);
+});
+
 it('shows persisted recovery evidence and submits a bounded comparison', async () => {
   const overview = {
     datasets: [],

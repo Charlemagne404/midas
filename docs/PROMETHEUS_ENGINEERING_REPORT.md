@@ -2055,3 +2055,42 @@ hashes remain identical after the changes. This is an execution/accounting
 foundation, not a completed unwind research policy or demonstrated economic
 improvement. Next: bounded observable residual-only policy, matched hold/buy/sell
 replays, loss-cutoff admission tests, a new full gate and fresh preregistered study.
+
+## Residual-only unwind policy and matched campaign
+
+Implemented UnwindEnvironment using one ordinarily admitted position, followed
+by hold, missing-leg buy or one residual-only sell. All trading controls use the
+same sale-capable accounting. Observable admission protects matched shares,
+uses confirmed terminal acknowledgments and current risk limits, and checks
+fresh bid identity/depth, minimums, price floor, share cap and slippage. Stop/loss
+and exposure cutoffs are checked again at intervention submit/match. Rejected
+arrival admission cancels the intervention; no forced-liquidation exception.
+Saved proposal evidence includes the observed quote, own ledger/checkpoint and
+actual decision portfolio. Resolution changes do not change the proposal.
+
+Extended the separate Laboratory rational-integer oracle for sells, basis dust,
+inventory reservations and remaining-basis settlement. A smoke run exposed this
+previously missing independent check; it is now exercised alongside the venue's
+Decimal audit. No initial-buy result semantics were intentionally changed.
+
+Added typed unwind jobs, API catalog/detail/rows/replay, paged dashboard episode
+selection with ledger scrubbing, grouped comparisons and scientific bundles.
+The verifier checks all saved hashes, independent rational/Decimal ledger audits,
+identical initial buy ledgers, observed-input proposal recomputation, orders and
+recomputed leaderboard/group-bootstrap claims. It reuses admission logic and
+does not independently rerun the whole broker.
+
+Focused unwind/recovery/sell suite36 passed with the existing warning in79.77
+seconds. This includes an isolated30-group/360-variant study, API pagination and
+replay checks, and complete bundle verification; these are not production results.
+Additional matched-share execution test passed0.26 seconds and failed-gate
+campaign test passed1.33 seconds. Frontend16 tests, typecheck/lint/build pass;
+five changed backend modules pass strict typing and Ruff.
+
+Fresh production preregistration:60 groups at seed393071, four policies and three
+execution assumptions /720 correlated variants. Fixed min bid0.05, share cap20,
+repair budget5/price ceiling0.75. No training, threshold selection or promotion.
+Supervised campaign will run the full regression first, restart the original API
+only on success, admit exactly one source-frozen bounded worker, then verify and
+export its results. Failed gates or ambiguous prior artifacts require inspection,
+not automatic duplicate admission. No production unwind outcomes are yet claimed.

@@ -208,6 +208,17 @@ def summary(state: dict[str, Any], now: int = 0) -> dict[str, Any]:
         ),
     )
     if any(x.sales_enabled for x in xs.values()):
+        result["reserved_sale_shares"] = str(
+            sum(
+                (
+                    o.inventory_reservation
+                    for x in xs.values()
+                    for o in x.orders.values()
+                    if isinstance(o, SellOrder)
+                ),
+                D(0),
+            )
+        )
         result["sale_proceeds"] = str(sum((x.portfolio.sale_proceeds for x in xs.values()), D(0)))
         result["redemption_positions"] = sum(
             any(e.kind == "settlement" and e.quantity > 0 for e in x.portfolio.ledger)

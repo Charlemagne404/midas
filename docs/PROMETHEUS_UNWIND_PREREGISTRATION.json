@@ -1,0 +1,55 @@
+{
+  "created_at": 1791849611.1995137,
+  "source_hash": "552f0f8de28d749afa80e6593b60bc8e5db194ad42ea2294b7c278e4fd709542",
+  "configuration": {
+    "kind": "unwind",
+    "dataset": null,
+    "training": null,
+    "severity": null,
+    "cost": null,
+    "recovery": null,
+    "unwind": {
+      "version": "bounded-inventory-unwind-1",
+      "episodes": 60,
+      "seed": 393071,
+      "unwind": {
+        "policy": "sell_residual",
+        "min_bid": "0.05",
+        "max_shares": "20",
+        "repair": {
+          "policy": "complete_missing",
+          "max_additional_capital": "5",
+          "max_price": "0.75"
+        }
+      }
+    },
+    "model_id": null,
+    "rl": null,
+    "tournament": null,
+    "sweep": null,
+    "director": null,
+    "policy_search": null,
+    "max_wall_seconds": 1200
+  },
+  "source_groups": 60,
+  "correlated_variants": 720,
+  "hypothesis": "One observable residual-only sale may improve downside outcomes relative to holding and bounded missing-leg buying; selling can also sacrifice winning inventory.",
+  "primary_comparisons": [
+    "sell-minus-hold",
+    "sell-minus-complete-missing",
+    "sell-minus-no-trade"
+  ],
+  "weights_or_threshold_selection": false,
+  "models_trained": 0,
+  "promotion": false,
+  "artifact_usage_bytes": 797220698,
+  "limits": [
+    "One initially admitted position; one intervention only after initial acknowledgments are confirmed terminal.",
+    "Min bid0.05 virtual USD; at most20 residual shares; matched shares protected.",
+    "Current stop/loss/exposure cutoffs remain active at proposal and arrival.",
+    "All trading controls use sale-capable accounting and actual-settlement redemption charges.",
+    "Fresh synthetic episodes only; grouping is by source episode, not execution variant.",
+    "Estimated costs and hypothetical execution; no real profitability or fill calibration.",
+    "Three comparisons; no multiplicity correction. Tail metrics are descriptive; mean intervals do not bound loss."
+  ]
+}
