@@ -1,5 +1,15 @@
 # MIDAS — PROMETHEUS OVERNIGHT BRIEFING
 
+## Current activity — source-bound PPO study waiting on regression
+
+Coordinator/verifier7tests pass, including real small PPO continuation and
+42matched replay/accounting checks. Actual study supervisor is active WAITING_GATE
+on midas-ppo-resumption-full-gate.service; no production native child admitted.
+Finite plan: parent2048transitions,new child4096total,100freshgroups/2100variants
+with oldPPO and deterministic controls. Stable admission keys,parent preservation,
+source capture, independent accounting and export included. Packages/tools frozen.
+No improvement claim or new production model yet. Prometheus active.
+
 ## Current engineering — PPO checkpoint continuation
 
 Optimizer-preserving continuation implemented with explicit environment/rollout

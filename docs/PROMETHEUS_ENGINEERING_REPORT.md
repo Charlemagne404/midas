@@ -2702,3 +2702,24 @@ Packages and arena_bundle.py frozen while gate runs. Latest completed full suite
 remains545passed/oneskip until this new gate terminates. API READY; no production
 PPO training admitted. Next build source-bound study coordinator/verifier without
 changing captured packages, then execute only after this exact gate passes.
+
+## PPO continuation finite study admitted to wait for actual full gate
+
+Independent verifier loads checksummed PPO archives, checks counter/Adamstep
+continuation and changed parameter tensors, validates retained curves/lineage,
+checks exact frozen fresh policy grid, then full replay hashes and independent
+Decimal/Fraction journal accounting. Paired comparisons againstparent,oldPPO,
+noTrade,arbitrage use sourcegroup-level uncertainty. No winner assumed/promoted.
+Coordinator uses stable native admission keys, original captured package/tool
+bytes, before/after parent-file hashes, original native budgets and exact-gate
+wait. Three refusal tests and four actual small-study verifier tests pass:
+7passed54.36s. Added after full-gate collection; separately validated.
+Commit752d5db. Actual supervisor midas-ppo-resumption-573071.servicePID1005435
+is active WAITING_GATE,1CPU/4GiB/7200s. Parent2048,newchild4096,fresh100group
+challenge2100correlatedvariants follow only after full gate success. Eight
+producer/helper files and exact plan captured; packages/tools now frozen until
+coordinator terminal. Current nativechildren0;43models unchanged. Stop study
+coordinator separately from admitted native children; no blind restart if an
+observation times out. API READY. Next: verify actualgate/studies, root exports/
+inference/browser/archive checks, then scientific report and further backlog.
+Prometheus remains active.
