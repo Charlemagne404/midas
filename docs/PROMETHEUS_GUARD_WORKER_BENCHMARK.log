@@ -1,0 +1,7 @@
+Traceback (most recent call last):
+  File "/home/charlie/midas/scripts/benchmark_worker_guard.py", line 147, in <module>
+    json.dumps(benchmark(args.root, args.baseline_job, args.reference, args.output), indent=2)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/charlie/midas/scripts/benchmark_worker_guard.py", line 66, in benchmark
+    raise ValueError("Archive changed while preparing matched ballast")
+ValueError: Archive changed while preparing matched ballast

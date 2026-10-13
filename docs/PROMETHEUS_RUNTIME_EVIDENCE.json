@@ -8,7 +8,7 @@
   "arena_research_tournaments": 23,
   "arena_source_datasets": 5,
   "arena_tournaments": 24,
-  "checked_at": 1791880697.8188405,
+  "checked_at": 1791881576.8051145,
   "dataset_quality": [
     "Identical observable vectors occur across partitions. Independent scenario IDs do not guarantee covariate diversity; inspect repeated synthetic grids.",
     "Some scenario families contain one settlement seed parity only. The current generator uses seed parity for settlement; reorder families and shift seeds before making generalization claims.",
@@ -22,8 +22,8 @@
     "live_execution": false,
     "paper_recovery": {
       "status": "CHECKPOINT_VERIFIED",
-      "journal_events": 52298,
-      "revision": 52297
+      "journal_events": 69098,
+      "revision": 69097
     },
     "laboratory": {
       "status": "READY",
@@ -161,5 +161,32 @@
     "focused_tests_passed": 13,
     "benchmark": "docs/PROMETHEUS_USAGE_INDEX_BENCHMARK.json",
     "max_artifact_bytes": 1073741824
+  },
+  "current_engineering_activity": "Matched pre-index/current worker performance replay; no new training or independent economic cohort",
+  "active_performance_benchmark": {
+    "unit": "midas-guard-worker-benchmark-v2.service",
+    "state": "RUNNING",
+    "cpu_cores": 1,
+    "memory_mb": 4096,
+    "outer_wall_seconds": 3000
+  },
+  "latest_full_tests": {
+    "passed": 460,
+    "skipped": 1,
+    "seconds": 565.93,
+    "log": "docs/PROMETHEUS_USAGE_INDEX_FULL_TESTS.log"
+  },
+  "engineering_completion_estimate": {
+    "completed_percent": 70,
+    "remaining_percent": 30,
+    "uncertainty_complete_percent": [
+      65,
+      75
+    ]
+  },
+  "performance_benchmark_initial_attempt": {
+    "state": "FAILED",
+    "reason": "Captured-source import created bytecode caches and changed archive byte counts; fixed with -B and PYTHONDONTWRITEBYTECODE",
+    "financial_or_source_payload_changes": false
   }
 }
