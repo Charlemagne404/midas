@@ -1,5 +1,5 @@
 {
-  "checked_at": 1791850771.4683402,
+  "checked_at": 1791882511.7146885,
   "models": [
     {
       "artifact_sha256": "a1ddf5a19d6cb1ad942ce8fc1cc3d63ec2e2f6ddf5dfc8fc46eb052be777e565",
@@ -65330,6 +65330,162 @@
       "submitted_source_hash": "552f0f8de28d749afa80e6593b60bc8e5db194ad42ea2294b7c278e4fd709542",
       "unit": "midas-arena-job-0eac68ccf36a43fb9afdcc6c.service",
       "updated_at": 1791850498.3500364
+    },
+    {
+      "active_artifact": {
+        "identity": "unwind-f54c1746a2834cb1a27cf53d",
+        "kind": "unwinds"
+      },
+      "artifact_guard": {
+        "last_error": null,
+        "mode": "EVENT_INDEX",
+        "watch_count": 58660
+      },
+      "budget": {
+        "cpu_cores": 1,
+        "max_artifact_mb": 1024,
+        "memory_mb": 4096,
+        "minimum_available_memory_mb": 2048,
+        "wall_seconds": 1200
+      },
+      "completed_at": 1791881998.4811194,
+      "configuration": {
+        "cost": null,
+        "dataset": null,
+        "director": null,
+        "kind": "unwind",
+        "max_wall_seconds": 1200,
+        "model_id": null,
+        "policy_search": null,
+        "recovery": null,
+        "rl": null,
+        "severity": null,
+        "sweep": null,
+        "tournament": null,
+        "training": null,
+        "unwind": {
+          "episodes": 150,
+          "seed": 423071,
+          "unwind": {
+            "max_shares": "20",
+            "min_bid": "0.05",
+            "policy": "sell_residual",
+            "repair": {
+              "max_additional_capital": "5",
+              "max_price": "0.75",
+              "policy": "complete_missing"
+            }
+          },
+          "version": "bounded-inventory-unwind-1"
+        }
+      },
+      "created_at": 1791881843.7276325,
+      "elapsed_seconds": 153.23769956995966,
+      "error": null,
+      "exit_status": 0,
+      "job_id": "job-0e9441b18a0a40fab2a1e5d6",
+      "pid": 470563,
+      "progress": {
+        "done": 1800,
+        "total": 1800
+      },
+      "result": {
+        "unwind_id": "unwind-f54c1746a2834cb1a27cf53d"
+      },
+      "runtime_profile": {
+        "artifact_bytes": 834979829,
+        "artifact_files": 57796,
+        "artifact_index_fallbacks": 0,
+        "artifact_index_init_seconds": 2.714982584991958,
+        "artifact_index_reconciliations": 1,
+        "artifact_observations": 1802,
+        "artifact_scan_seconds": 0.5228762086480856,
+        "artifact_scans": 1,
+        "progress_publish_seconds": 11.45484744431451
+      },
+      "started_at": 1791881847.9585047,
+      "state": "COMPLETED",
+      "submitted_source_hash": "53d813bd3a18c44c7d4819f7df11cd3fd5db25b27825e463adbe51ebea5cf2e1",
+      "unit": "midas-arena-job-0e9441b18a0a40fab2a1e5d6.service",
+      "updated_at": 1791881998.4811194
+    },
+    {
+      "active_artifact": {
+        "identity": "unwind-d2e7f69513f14ea0bd1a94f8",
+        "kind": "unwinds"
+      },
+      "artifact_guard": {
+        "last_error": null,
+        "mode": "EVENT_INDEX",
+        "watch_count": 60545
+      },
+      "budget": {
+        "cpu_cores": 1,
+        "max_artifact_mb": 1024,
+        "memory_mb": 4096,
+        "minimum_available_memory_mb": 2048,
+        "wall_seconds": 1200
+      },
+      "completed_at": 1791882218.8555815,
+      "configuration": {
+        "cost": null,
+        "dataset": null,
+        "director": null,
+        "kind": "unwind",
+        "max_wall_seconds": 1200,
+        "model_id": null,
+        "policy_search": null,
+        "recovery": null,
+        "rl": null,
+        "severity": null,
+        "sweep": null,
+        "tournament": null,
+        "training": null,
+        "unwind": {
+          "episodes": 150,
+          "seed": 453071,
+          "unwind": {
+            "max_shares": "20",
+            "min_bid": "0.05",
+            "policy": "sell_residual",
+            "repair": {
+              "max_additional_capital": "5",
+              "max_price": "0.75",
+              "policy": "complete_missing"
+            }
+          },
+          "version": "bounded-inventory-unwind-1"
+        }
+      },
+      "created_at": 1791882065.844226,
+      "elapsed_seconds": 151.47254764300305,
+      "error": null,
+      "exit_status": 0,
+      "job_id": "job-fa62d7a6ecbc4bfeae0b9450",
+      "pid": 476347,
+      "progress": {
+        "done": 1800,
+        "total": 1800
+      },
+      "result": {
+        "unwind_id": "unwind-d2e7f69513f14ea0bd1a94f8"
+      },
+      "runtime_profile": {
+        "artifact_bytes": 862138951,
+        "artifact_files": 59664,
+        "artifact_index_fallbacks": 0,
+        "artifact_index_init_seconds": 2.77688154601492,
+        "artifact_index_reconciliations": 1,
+        "artifact_observations": 1802,
+        "artifact_scan_seconds": 0.5269920027931221,
+        "artifact_scans": 1,
+        "progress_publish_seconds": 11.425220560922753
+      },
+      "started_at": 1791882070.1600251,
+      "state": "COMPLETED",
+      "submitted_source_hash": "53d813bd3a18c44c7d4819f7df11cd3fd5db25b27825e463adbe51ebea5cf2e1",
+      "unit": "midas-arena-job-fa62d7a6ecbc4bfeae0b9450.service",
+      "updated_at": 1791882218.8555813
     }
   ],
   "provenance": "SYNTHETIC / HYPOTHETICAL / ECONOMICALLY UNVERIFIED",
@@ -68147,6 +68303,210 @@
       "source_hash": "552f0f8de28d749afa80e6593b60bc8e5db194ad42ea2294b7c278e4fd709542",
       "state": "COMPLETED",
       "unwind_id": "unwind-2f909c9b1005402c8797a79a"
+    },
+    {
+      "configuration": {
+        "episodes": 150,
+        "seed": 453071,
+        "unwind": {
+          "max_shares": "20",
+          "min_bid": "0.05",
+          "policy": "sell_residual",
+          "repair": {
+            "max_additional_capital": "5",
+            "max_price": "0.75",
+            "policy": "complete_missing"
+          }
+        },
+        "version": "bounded-inventory-unwind-1"
+      },
+      "correlated_variants": 1800,
+      "created_at": 1791882218.829652,
+      "leaderboard": [
+        {
+          "cvar_05_loss": 0,
+          "intervention_filled_shares": "0",
+          "intervention_requests": 0,
+          "mean_pnl": 0.0,
+          "policy": "no_trade",
+          "score": 0.0,
+          "worst_pnl": 0.0
+        },
+        {
+          "cvar_05_loss": 2.5349565217391303,
+          "intervention_filled_shares": "0",
+          "intervention_requests": 0,
+          "mean_pnl": 1.6004320000000003,
+          "policy": "hold",
+          "score": -0.93452452173913,
+          "worst_pnl": -8.832
+        },
+        {
+          "cvar_05_loss": 2.2499130434782613,
+          "intervention_filled_shares": "33.72",
+          "intervention_requests": 9,
+          "mean_pnl": 1.5987171111111114,
+          "policy": "complete_missing",
+          "score": -0.6511959323671499,
+          "worst_pnl": -8.832
+        },
+        {
+          "cvar_05_loss": 1.984695652173913,
+          "intervention_filled_shares": "60.00",
+          "intervention_requests": 13,
+          "mean_pnl": 1.623063111111111,
+          "policy": "sell_residual",
+          "score": -0.36163254106280207,
+          "worst_pnl": -8.832
+        }
+      ],
+      "limitations": [
+        "Synthetic hypothetical execution and estimated costs only; no real-market profitability evidence.",
+        "One initial risk-admitted position and at most one confirmed-terminal intervention.",
+        "Current stop/loss/exposure limits can require holding; no forced liquidation exception.",
+        "Sale quantity preserves matched shares if filled, not a guaranteed P&L or dollar-loss bound.",
+        "Hold, repair and sell use the same sale-capable ledger and actual-settlement redemption semantics.",
+        "Different actions can consume different random draws; bootstrap source groups, not variants.",
+        "Initial-buy cost predictors are not reused as unwind-cost predictions."
+      ],
+      "paired_comparisons": [
+        {
+          "candidate": "sell_residual",
+          "control": "hold",
+          "group_bootstrap_95": [
+            -0.038933333333333334,
+            0.09973333333333334
+          ],
+          "mean_change": 0.02263111111111111
+        },
+        {
+          "candidate": "sell_residual",
+          "control": "complete_missing",
+          "group_bootstrap_95": [
+            -0.02065911111111111,
+            0.08811613333333325
+          ],
+          "mean_change": 0.024346000000000007
+        },
+        {
+          "candidate": "sell_residual",
+          "control": "no_trade",
+          "group_bootstrap_95": [
+            1.268490116666667,
+            1.9955736277777771
+          ],
+          "mean_change": 1.6230631111111113
+        }
+      ],
+      "promotion": false,
+      "rows_sha256": "991fa82d7d3be2dc25f426989b5bb1408c88b69f8203176397b35ca159065ae6",
+      "runner_version": "bounded-inventory-unwind-1",
+      "source_groups": 150,
+      "source_hash": "53d813bd3a18c44c7d4819f7df11cd3fd5db25b27825e463adbe51ebea5cf2e1",
+      "state": "COMPLETED",
+      "unwind_id": "unwind-d2e7f69513f14ea0bd1a94f8"
+    },
+    {
+      "configuration": {
+        "episodes": 150,
+        "seed": 423071,
+        "unwind": {
+          "max_shares": "20",
+          "min_bid": "0.05",
+          "policy": "sell_residual",
+          "repair": {
+            "max_additional_capital": "5",
+            "max_price": "0.75",
+            "policy": "complete_missing"
+          }
+        },
+        "version": "bounded-inventory-unwind-1"
+      },
+      "correlated_variants": 1800,
+      "created_at": 1791881998.456401,
+      "leaderboard": [
+        {
+          "cvar_05_loss": 0,
+          "intervention_filled_shares": "0",
+          "intervention_requests": 0,
+          "mean_pnl": 0.0,
+          "policy": "no_trade",
+          "score": 0.0,
+          "worst_pnl": 0.0
+        },
+        {
+          "cvar_05_loss": 0.924304347826087,
+          "intervention_filled_shares": "0",
+          "intervention_requests": 0,
+          "mean_pnl": 1.6675468888888887,
+          "policy": "hold",
+          "score": 0.7432425410628017,
+          "worst_pnl": -5.304
+        },
+        {
+          "cvar_05_loss": 0.8512608695652174,
+          "intervention_filled_shares": "5.60",
+          "intervention_requests": 5,
+          "mean_pnl": 1.674018,
+          "policy": "complete_missing",
+          "score": 0.8227571304347826,
+          "worst_pnl": -5.304
+        },
+        {
+          "cvar_05_loss": 0.6206521739130434,
+          "intervention_filled_shares": "19.20",
+          "intervention_requests": 6,
+          "mean_pnl": 1.6997068888888889,
+          "policy": "sell_residual",
+          "score": 1.0790547149758454,
+          "worst_pnl": -3.99
+        }
+      ],
+      "limitations": [
+        "Synthetic hypothetical execution and estimated costs only; no real-market profitability evidence.",
+        "One initial risk-admitted position and at most one confirmed-terminal intervention.",
+        "Current stop/loss/exposure limits can require holding; no forced liquidation exception.",
+        "Sale quantity preserves matched shares if filled, not a guaranteed P&L or dollar-loss bound.",
+        "Hold, repair and sell use the same sale-capable ledger and actual-settlement redemption semantics.",
+        "Different actions can consume different random draws; bootstrap source groups, not variants.",
+        "Initial-buy cost predictors are not reused as unwind-cost predictions."
+      ],
+      "paired_comparisons": [
+        {
+          "candidate": "sell_residual",
+          "control": "hold",
+          "group_bootstrap_95": [
+            0.0,
+            0.08789333333333332
+          ],
+          "mean_change": 0.03216
+        },
+        {
+          "candidate": "sell_residual",
+          "control": "complete_missing",
+          "group_bootstrap_95": [
+            0.0,
+            0.07495111111111111
+          ],
+          "mean_change": 0.02568888888888889
+        },
+        {
+          "candidate": "sell_residual",
+          "control": "no_trade",
+          "group_bootstrap_95": [
+            1.3473958833333333,
+            2.075566822222222
+          ],
+          "mean_change": 1.699706888888889
+        }
+      ],
+      "promotion": false,
+      "rows_sha256": "be4d4a497d3b982eca285ea968b80b1a87780ae1404f5946575983c703c0ddd4",
+      "runner_version": "bounded-inventory-unwind-1",
+      "source_groups": 150,
+      "source_hash": "53d813bd3a18c44c7d4819f7df11cd3fd5db25b27825e463adbe51ebea5cf2e1",
+      "state": "COMPLETED",
+      "unwind_id": "unwind-f54c1746a2834cb1a27cf53d"
     }
   ]
 }

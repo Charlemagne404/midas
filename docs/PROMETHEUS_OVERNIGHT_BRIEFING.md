@@ -1,5 +1,18 @@
 # MIDAS — PROMETHEUS OVERNIGHT BRIEFING
 
+## Latest finding — fresh recovery benefit remains inconclusive
+
+Two fixed150-group cohorts verified3600 variants. Sell-minus-hold means
+0.032160 and0.022631; both group intervals include zero. Two/five standard
+groups filled; no conservative fill despite eight requests. No retuning or
+promotion. Root checks verified3752 bundle payloads and28 exact reexecutions.
+Both actual study/replay views opened without page errors. A valid-1.755
+virtual USD loss reduced8-to3 events with exact repeatability; not a defect.
+All61 native jobs are terminal, API READY, protected archive healthy.
+No new models (43 artifacts/42 fitted). Three unwind studies now contain
+4320 correlated variants. Next priority: generator-revision generalization.
+Prometheus remains active; prior running-campaign entries are superseded.
+
 ## Current activity — fresh recovery robustness after verified worker speedup
 
 Whole-worker comparison preserved all720 financial/journal hashes per run.

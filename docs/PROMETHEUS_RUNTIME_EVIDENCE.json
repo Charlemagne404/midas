@@ -1,16 +1,6 @@
 {
-  "active_jobs": [
-    "job-0e9441b18a0a40fab2a1e5d6"
-  ],
-  "active_research_director": {
-    "unit": "midas-unwind-robustness-423071-453071.service",
-    "phase": "RESEARCHING",
-    "state_path": "data/arena/unwind-campaigns/robustness-423071-453071/state.json",
-    "configuration": "docs/PROMETHEUS_UNWIND_ROBUSTNESS_PREREGISTRATION.json",
-    "outer_wall_seconds": 3600,
-    "stop_coordinator": "systemctl --user stop midas-unwind-robustness-423071-453071.service",
-    "stop_child": "Cancel the active native Arena job separately if already admitted"
-  },
+  "active_jobs": [],
+  "active_research_director": null,
   "arena_datasets": 6,
   "arena_fitted_models": 42,
   "arena_model_artifacts": 43,
@@ -18,7 +8,7 @@
   "arena_research_tournaments": 23,
   "arena_source_datasets": 5,
   "arena_tournaments": 24,
-  "checked_at": 1791881885.6267307,
+  "checked_at": 1791882512.4006846,
   "dataset_quality": [
     "Identical observable vectors occur across partitions. Independent scenario IDs do not guarantee covariate diversity; inspect repeated synthetic grids.",
     "Some scenario families contain one settlement seed parity only. The current generator uses seed parity for settlement; reorder families and shift seeds before making generalization claims.",
@@ -32,8 +22,8 @@
     "live_execution": false,
     "paper_recovery": {
       "status": "CHECKPOINT_VERIFIED",
-      "journal_events": 69320,
-      "revision": 69319
+      "journal_events": 69656,
+      "revision": 69655
     },
     "laboratory": {
       "status": "READY",
@@ -164,7 +154,7 @@
     "job_id": "job-0eac68ccf36a43fb9afdcc6c",
     "unwind_id": "unwind-2f909c9b1005402c8797a79a"
   },
-  "arena_unwind_studies": 1,
+  "arena_unwind_studies": 3,
   "arena_unwind_correlated_variants": 720,
   "artifact_guard_index": {
     "state": "FULL_GATE_PENDING",
@@ -172,7 +162,7 @@
     "benchmark": "docs/PROMETHEUS_USAGE_INDEX_BENCHMARK.json",
     "max_artifact_bytes": 1073741824
   },
-  "current_engineering_activity": "Two fixed recovery robustness cohorts; unchanged policy; independent verification and export before next admission",
+  "current_engineering_activity": "Recovery robustness verified; economic counterexample minimized; next priority generator generalization audit",
   "active_performance_benchmark": {
     "unit": "midas-guard-worker-benchmark-v2.service",
     "state": "COMPLETED",
@@ -199,5 +189,16 @@
     "state": "FAILED",
     "reason": "Captured-source import created bytecode caches and changed archive byte counts; fixed with -B and PYTHONDONTWRITEBYTECODE",
     "financial_or_source_payload_changes": false
+  },
+  "arena_unwind_variants": 4320,
+  "latest_recovery_robustness": {
+    "source_groups": 300,
+    "correlated_variants": 3600,
+    "studies": [
+      "unwind-f54c1746a2834cb1a27cf53d",
+      "unwind-d2e7f69513f14ea0bd1a94f8"
+    ],
+    "verification": "3600 saved replay/ledger checks,28 exact policy reexecutions,3752 root bundle payload checks",
+    "conclusion": "Both sell-minus-hold mean intervals include zero; intervention coverage remains sparse"
   }
 }

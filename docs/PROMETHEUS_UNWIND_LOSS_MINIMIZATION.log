@@ -1,0 +1,8 @@
+{
+  "classification": "VALID_SYNTHETIC_ECONOMIC_LOSS",
+  "original_events": 8,
+  "minimized_events": 3,
+  "original_pnl": "-1.755000",
+  "minimized_pnl": "-1.755000",
+  "attempts": 10
+}

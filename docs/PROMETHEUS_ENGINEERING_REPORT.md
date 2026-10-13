@@ -2249,3 +2249,29 @@ job-0e9441b18a0a40fab2a1e5d6 is admitted,1800 variants,1200-second wall cap.
 Each study is verified and exported before the next job is admitted. Package
 and captured coordinator/verifier source remain frozen until terminal state.
 No training, threshold selection, or promotion. Completion is not yet claimed.
+
+## Fresh recovery robustness and economic counterexample reduction
+
+Both fixed150-group cohorts completed, verified and exported (3600 correlated
+variants). Seed423071 sell-minus-hold mean0.032160 CI[0,0.087893333];
+seed453071 mean0.022631111 CI[-0.038933333,0.099733333]. All hold/repair
+comparison intervals include zero: robust mean benefit remains unestablished.
+Selling filled in two/five standard groups; eight conservative requests produced
+zero fills. Tail losses improve descriptively; worst loss improves only in the
+first cohort (-5.304 to-3.99), remaining-8.832 in the second. No promotion.
+
+Producer verification:3600 saved replays,308 proposals,33 requests, independent
+rational/Decimal accounting. Separate root checks:3752 bundle payloads and28
+exact reexecutions covering all four controls for all intervention-filled pairs.
+Actual dashboard inspected both studies/replays with zero page errors. Initial
+browser selector attempts used incorrect button/exact label selectors; corrected
+test selectors required no product change. Protected archive quick_check/counts
+and owner lock pass; original API READY. All61 native jobs terminal.
+
+Added descriptive coverage investigator and bounded economic loss minimizer;
+five focused tests pass. A valid conservative sell loss selected from the first
+cohort retains-1.755 virtual USD after8-to3 event reduction,10 trials, exact
+repeatability and single optional-deletion minimality. This is legitimate loss,
+not a software defect or independent generalization evidence. Existing invariant
+minimization remains separate. Source freeze lifted after terminal coordinator,
+minimizer and root reexecution. Next: generator-revision generalization audit.

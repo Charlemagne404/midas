@@ -1,0 +1,127 @@
+{
+  "unwind_id": "unwind-d2e7f69513f14ea0bd1a94f8",
+  "rows_sha256": "991fa82d7d3be2dc25f426989b5bb1408c88b69f8203176397b35ca159065ae6",
+  "source_groups": 150,
+  "correlated_variants": 1800,
+  "coverage": {
+    "complete_missing/conservative": {
+      "source_groups": 150,
+      "groups_with_proposals": 11,
+      "groups_with_residual_at_proposal": 6,
+      "groups_with_allowed_request": 3,
+      "groups_with_intervention_fill": 0,
+      "blocked_reason_counts": {
+        "Residual, observed depth or remaining allocated budget is insufficient": 8,
+        "No residual inventory": 5
+      }
+    },
+    "complete_missing/optimistic": {
+      "source_groups": 150,
+      "groups_with_proposals": 45,
+      "groups_with_residual_at_proposal": 0,
+      "groups_with_allowed_request": 0,
+      "groups_with_intervention_fill": 0,
+      "blocked_reason_counts": {
+        "Residual, observed depth or remaining allocated budget is insufficient": 45,
+        "No residual inventory": 45
+      }
+    },
+    "complete_missing/standard": {
+      "source_groups": 150,
+      "groups_with_proposals": 17,
+      "groups_with_residual_at_proposal": 8,
+      "groups_with_allowed_request": 6,
+      "groups_with_intervention_fill": 4,
+      "blocked_reason_counts": {
+        "Residual, observed depth or remaining allocated budget is insufficient": 11,
+        "No residual inventory": 9
+      }
+    },
+    "hold/conservative": {
+      "source_groups": 150,
+      "groups_with_proposals": 0,
+      "groups_with_residual_at_proposal": 0,
+      "groups_with_allowed_request": 0,
+      "groups_with_intervention_fill": 0,
+      "blocked_reason_counts": {}
+    },
+    "hold/optimistic": {
+      "source_groups": 150,
+      "groups_with_proposals": 0,
+      "groups_with_residual_at_proposal": 0,
+      "groups_with_allowed_request": 0,
+      "groups_with_intervention_fill": 0,
+      "blocked_reason_counts": {}
+    },
+    "hold/standard": {
+      "source_groups": 150,
+      "groups_with_proposals": 0,
+      "groups_with_residual_at_proposal": 0,
+      "groups_with_allowed_request": 0,
+      "groups_with_intervention_fill": 0,
+      "blocked_reason_counts": {}
+    },
+    "no_trade/conservative": {
+      "source_groups": 150,
+      "groups_with_proposals": 0,
+      "groups_with_residual_at_proposal": 0,
+      "groups_with_allowed_request": 0,
+      "groups_with_intervention_fill": 0,
+      "blocked_reason_counts": {}
+    },
+    "no_trade/optimistic": {
+      "source_groups": 150,
+      "groups_with_proposals": 0,
+      "groups_with_residual_at_proposal": 0,
+      "groups_with_allowed_request": 0,
+      "groups_with_intervention_fill": 0,
+      "blocked_reason_counts": {}
+    },
+    "no_trade/standard": {
+      "source_groups": 150,
+      "groups_with_proposals": 0,
+      "groups_with_residual_at_proposal": 0,
+      "groups_with_allowed_request": 0,
+      "groups_with_intervention_fill": 0,
+      "blocked_reason_counts": {}
+    },
+    "sell_residual/conservative": {
+      "source_groups": 150,
+      "groups_with_proposals": 11,
+      "groups_with_residual_at_proposal": 6,
+      "groups_with_allowed_request": 5,
+      "groups_with_intervention_fill": 0,
+      "blocked_reason_counts": {
+        "Residual inventory or eligible observed bid depth is insufficient": 6
+      }
+    },
+    "sell_residual/optimistic": {
+      "source_groups": 150,
+      "groups_with_proposals": 45,
+      "groups_with_residual_at_proposal": 0,
+      "groups_with_allowed_request": 0,
+      "groups_with_intervention_fill": 0,
+      "blocked_reason_counts": {
+        "Residual inventory or eligible observed bid depth is insufficient": 45
+      }
+    },
+    "sell_residual/standard": {
+      "source_groups": 150,
+      "groups_with_proposals": 17,
+      "groups_with_residual_at_proposal": 8,
+      "groups_with_allowed_request": 8,
+      "groups_with_intervention_fill": 5,
+      "blocked_reason_counts": {
+        "Residual inventory or eligible observed bid depth is insufficient": 9
+      }
+    }
+  },
+  "producer_sha256": "083a55fc730558d7014215495c7e298a6126c75df68b98bf5feab36ba220ae80",
+  "limitations": [
+    "Descriptive coverage only; primary comparisons retain every source group.",
+    "Residual is measured at saved proposal time, not throughout all episodes.",
+    "Reasons can overlap; counts are not mutually exclusive.",
+    "No proposal can mean no initial trade, no decision callback, or a hold/no-trade control.",
+    "Synthetic fills; not empirical exit liquidity or execution probability."
+  ]
+}

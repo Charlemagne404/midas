@@ -1,0 +1,878 @@
+{
+  "classification": "VALID_SYNTHETIC_ECONOMIC_LOSS",
+  "software_defect": false,
+  "source_hash": "53d813bd3a18c44c7d4819f7df11cd3fd5db25b27825e463adbe51ebea5cf2e1",
+  "policy": {
+    "policy": "sell_residual",
+    "min_bid": "0.05",
+    "max_shares": "20",
+    "repair": {
+      "policy": "complete_missing",
+      "max_additional_capital": "5",
+      "max_price": "0.75"
+    }
+  },
+  "loss_threshold": "1",
+  "attempts": 10,
+  "budget_exhausted": false,
+  "single_optional_event_deletion_minimal": true,
+  "original_scenario": {
+    "schema_version": 1,
+    "id": "volatile:423103",
+    "family": "volatile",
+    "provenance": "GENERATED",
+    "seed": 423103,
+    "market": {
+      "id": "profitable",
+      "event_id": "event:profitable",
+      "question": "Synthetic binary \u2022 profitable",
+      "condition_id": "synthetic:profitable",
+      "protocol": "v1",
+      "instruments": [
+        {
+          "asset_id": "profitable:yes",
+          "label": "Yes"
+        },
+        {
+          "asset_id": "profitable:no",
+          "label": "No"
+        }
+      ],
+      "source": "SYNTHETIC",
+      "active": true,
+      "closed": false,
+      "accepting_orders": true,
+      "negative_risk": false,
+      "augmented_negative_risk": false,
+      "complementary_verified": true,
+      "payout_verified": true,
+      "payout_per_set": "1",
+      "payout_evidence": "Synthetic scenario contract: Yes + No pays 1 virtual USD, including split payouts",
+      "fee": {
+        "rate": "0",
+        "exponent": 1,
+        "verified": true,
+        "evidence": "Synthetic exchange configuration; zero taker fee",
+        "verified_ts_ms": null,
+        "expires_ts_ms": null,
+        "rule_version": "polymarket-fees-2026-10-11"
+      },
+      "description": "",
+      "resolution_source": "",
+      "resolution_metadata": {},
+      "execution_delay_ms": null,
+      "attestation": null
+    },
+    "books": {
+      "profitable:no": {
+        "asset_id": "profitable:no",
+        "condition_id": "synthetic:profitable",
+        "asks": [
+          {
+            "price": "0.49",
+            "size": "9"
+          },
+          {
+            "price": "0.51",
+            "size": "9"
+          }
+        ],
+        "bids": [
+          {
+            "price": "0.48",
+            "size": "9"
+          }
+        ],
+        "tick_size": "0.01",
+        "min_order_size": "5",
+        "minimum_unit": "shares",
+        "exchange_ts_ms": 1791720000000,
+        "received_ts_ms": 1791720000000,
+        "source": "SYNTHETIC",
+        "valid": true,
+        "integrity": "snapshot",
+        "hash": null,
+        "invalid_reason": null
+      },
+      "profitable:yes": {
+        "asset_id": "profitable:yes",
+        "condition_id": "synthetic:profitable",
+        "asks": [
+          {
+            "price": "0.37",
+            "size": "9"
+          },
+          {
+            "price": "0.39",
+            "size": "9"
+          }
+        ],
+        "bids": [
+          {
+            "price": "0.36",
+            "size": "9"
+          }
+        ],
+        "tick_size": "0.01",
+        "min_order_size": "5",
+        "minimum_unit": "shares",
+        "exchange_ts_ms": 1791720000000,
+        "received_ts_ms": 1791720000000,
+        "source": "SYNTHETIC",
+        "valid": true,
+        "integrity": "snapshot",
+        "hash": null,
+        "invalid_reason": null
+      }
+    },
+    "account": {
+      "capital": "100",
+      "mode": "synthetic",
+      "execution": {
+        "name": "conservative",
+        "latency_ms": 750,
+        "jitter_ms": 250,
+        "distribution": "uniform",
+        "liquidity_fraction": "0.5",
+        "adverse_ticks": 1,
+        "ack_delay_ms": 50,
+        "taker_delay_ms": 0,
+        "seed": 423103
+      },
+      "limits": {
+        "max_capital": "20",
+        "max_exposure": "80",
+        "max_market_exposure": "20",
+        "max_event_exposure": "40",
+        "max_positions": 10,
+        "max_age_ms": 15000,
+        "min_edge": "0.001",
+        "max_slippage": "0.05",
+        "max_drawdown": "0.10",
+        "max_daily_loss": "5",
+        "max_cumulative_loss": "10",
+        "max_unmatched_exposure": "100",
+        "max_unmatched_quantity": "0",
+        "emergency_stop": false
+      }
+    },
+    "strategy": "arbitrage",
+    "observation_latency_ms": 0,
+    "strategy_latency_ms": 0,
+    "epoch_ms": 1791720000000,
+    "horizon_ms": 10000,
+    "events": [
+      {
+        "id": "initial",
+        "time_ms": 0,
+        "priority": 0,
+        "kind": "observe",
+        "payload": {}
+      },
+      {
+        "id": "market:0",
+        "time_ms": 89,
+        "priority": 0,
+        "kind": "market",
+        "payload": {
+          "books": {
+            "profitable:no": {
+              "asks": [
+                {
+                  "price": "0.67",
+                  "size": "9"
+                }
+              ],
+              "asset_id": "profitable:no",
+              "bids": [
+                {
+                  "price": "0.66",
+                  "size": "9"
+                }
+              ],
+              "condition_id": "synthetic:profitable",
+              "exchange_ts_ms": 1791720000089,
+              "hash": null,
+              "integrity": "snapshot",
+              "invalid_reason": null,
+              "min_order_size": "5",
+              "minimum_unit": "shares",
+              "received_ts_ms": 1791720000089,
+              "source": "SYNTHETIC",
+              "tick_size": "0.01",
+              "valid": true
+            },
+            "profitable:yes": {
+              "asks": [
+                {
+                  "price": "0.8",
+                  "size": "9"
+                }
+              ],
+              "asset_id": "profitable:yes",
+              "bids": [
+                {
+                  "price": "0.79",
+                  "size": "9"
+                }
+              ],
+              "condition_id": "synthetic:profitable",
+              "exchange_ts_ms": 1791720000089,
+              "hash": null,
+              "integrity": "snapshot",
+              "invalid_reason": null,
+              "min_order_size": "5",
+              "minimum_unit": "shares",
+              "received_ts_ms": 1791720000089,
+              "source": "SYNTHETIC",
+              "tick_size": "0.01",
+              "valid": true
+            }
+          }
+        }
+      },
+      {
+        "id": "market:1",
+        "time_ms": 418,
+        "priority": 0,
+        "kind": "market",
+        "payload": {
+          "books": {
+            "profitable:no": {
+              "asks": [
+                {
+                  "price": "0.74",
+                  "size": "9"
+                }
+              ],
+              "asset_id": "profitable:no",
+              "bids": [
+                {
+                  "price": "0.73",
+                  "size": "9"
+                }
+              ],
+              "condition_id": "synthetic:profitable",
+              "exchange_ts_ms": 1791720000418,
+              "hash": null,
+              "integrity": "snapshot",
+              "invalid_reason": null,
+              "min_order_size": "5",
+              "minimum_unit": "shares",
+              "received_ts_ms": 1791720000418,
+              "source": "SYNTHETIC",
+              "tick_size": "0.01",
+              "valid": true
+            },
+            "profitable:yes": {
+              "asks": [
+                {
+                  "price": "0.38",
+                  "size": "9"
+                }
+              ],
+              "asset_id": "profitable:yes",
+              "bids": [
+                {
+                  "price": "0.37",
+                  "size": "9"
+                }
+              ],
+              "condition_id": "synthetic:profitable",
+              "exchange_ts_ms": 1791720000418,
+              "hash": null,
+              "integrity": "snapshot",
+              "invalid_reason": null,
+              "min_order_size": "5",
+              "minimum_unit": "shares",
+              "received_ts_ms": 1791720000418,
+              "source": "SYNTHETIC",
+              "tick_size": "0.01",
+              "valid": true
+            }
+          }
+        }
+      },
+      {
+        "id": "market:2",
+        "time_ms": 291,
+        "priority": 0,
+        "kind": "market",
+        "payload": {
+          "books": {
+            "profitable:no": {
+              "asks": [
+                {
+                  "price": "0.57",
+                  "size": "9"
+                }
+              ],
+              "asset_id": "profitable:no",
+              "bids": [
+                {
+                  "price": "0.56",
+                  "size": "9"
+                }
+              ],
+              "condition_id": "synthetic:profitable",
+              "exchange_ts_ms": 1791720000291,
+              "hash": null,
+              "integrity": "snapshot",
+              "invalid_reason": null,
+              "min_order_size": "5",
+              "minimum_unit": "shares",
+              "received_ts_ms": 1791720000291,
+              "source": "SYNTHETIC",
+              "tick_size": "0.01",
+              "valid": true
+            },
+            "profitable:yes": {
+              "asks": [
+                {
+                  "price": "0.58",
+                  "size": "9"
+                }
+              ],
+              "asset_id": "profitable:yes",
+              "bids": [
+                {
+                  "price": "0.57",
+                  "size": "9"
+                }
+              ],
+              "condition_id": "synthetic:profitable",
+              "exchange_ts_ms": 1791720000291,
+              "hash": null,
+              "integrity": "snapshot",
+              "invalid_reason": null,
+              "min_order_size": "5",
+              "minimum_unit": "shares",
+              "received_ts_ms": 1791720000291,
+              "source": "SYNTHETIC",
+              "tick_size": "0.01",
+              "valid": true
+            }
+          }
+        }
+      },
+      {
+        "id": "market:3",
+        "time_ms": 1164,
+        "priority": 0,
+        "kind": "market",
+        "payload": {
+          "books": {
+            "profitable:no": {
+              "asks": [
+                {
+                  "price": "0.4",
+                  "size": "9"
+                }
+              ],
+              "asset_id": "profitable:no",
+              "bids": [
+                {
+                  "price": "0.39",
+                  "size": "9"
+                }
+              ],
+              "condition_id": "synthetic:profitable",
+              "exchange_ts_ms": 1791720001164,
+              "hash": null,
+              "integrity": "snapshot",
+              "invalid_reason": null,
+              "min_order_size": "5",
+              "minimum_unit": "shares",
+              "received_ts_ms": 1791720001164,
+              "source": "SYNTHETIC",
+              "tick_size": "0.01",
+              "valid": true
+            },
+            "profitable:yes": {
+              "asks": [
+                {
+                  "price": "0.41",
+                  "size": "9"
+                }
+              ],
+              "asset_id": "profitable:yes",
+              "bids": [
+                {
+                  "price": "0.40",
+                  "size": "9"
+                }
+              ],
+              "condition_id": "synthetic:profitable",
+              "exchange_ts_ms": 1791720001164,
+              "hash": null,
+              "integrity": "snapshot",
+              "invalid_reason": null,
+              "min_order_size": "5",
+              "minimum_unit": "shares",
+              "received_ts_ms": 1791720001164,
+              "source": "SYNTHETIC",
+              "tick_size": "0.01",
+              "valid": true
+            }
+          }
+        }
+      },
+      {
+        "id": "market:4",
+        "time_ms": 1200,
+        "priority": 0,
+        "kind": "market",
+        "payload": {
+          "books": {
+            "profitable:no": {
+              "asks": [
+                {
+                  "price": "0.48",
+                  "size": "9"
+                }
+              ],
+              "asset_id": "profitable:no",
+              "bids": [
+                {
+                  "price": "0.47",
+                  "size": "9"
+                }
+              ],
+              "condition_id": "synthetic:profitable",
+              "exchange_ts_ms": 1791720001200,
+              "hash": null,
+              "integrity": "snapshot",
+              "invalid_reason": null,
+              "min_order_size": "5",
+              "minimum_unit": "shares",
+              "received_ts_ms": 1791720001200,
+              "source": "SYNTHETIC",
+              "tick_size": "0.01",
+              "valid": true
+            },
+            "profitable:yes": {
+              "asks": [
+                {
+                  "price": "0.39",
+                  "size": "9"
+                }
+              ],
+              "asset_id": "profitable:yes",
+              "bids": [
+                {
+                  "price": "0.38",
+                  "size": "9"
+                }
+              ],
+              "condition_id": "synthetic:profitable",
+              "exchange_ts_ms": 1791720001200,
+              "hash": null,
+              "integrity": "snapshot",
+              "invalid_reason": null,
+              "min_order_size": "5",
+              "minimum_unit": "shares",
+              "received_ts_ms": 1791720001200,
+              "source": "SYNTHETIC",
+              "tick_size": "0.01",
+              "valid": true
+            }
+          }
+        }
+      },
+      {
+        "id": "market:5",
+        "time_ms": 1662,
+        "priority": 0,
+        "kind": "market",
+        "payload": {
+          "books": {
+            "profitable:no": {
+              "asks": [
+                {
+                  "price": "0.6",
+                  "size": "9"
+                }
+              ],
+              "asset_id": "profitable:no",
+              "bids": [
+                {
+                  "price": "0.59",
+                  "size": "9"
+                }
+              ],
+              "condition_id": "synthetic:profitable",
+              "exchange_ts_ms": 1791720001662,
+              "hash": null,
+              "integrity": "snapshot",
+              "invalid_reason": null,
+              "min_order_size": "5",
+              "minimum_unit": "shares",
+              "received_ts_ms": 1791720001662,
+              "source": "SYNTHETIC",
+              "tick_size": "0.01",
+              "valid": true
+            },
+            "profitable:yes": {
+              "asks": [
+                {
+                  "price": "0.63",
+                  "size": "9"
+                }
+              ],
+              "asset_id": "profitable:yes",
+              "bids": [
+                {
+                  "price": "0.62",
+                  "size": "9"
+                }
+              ],
+              "condition_id": "synthetic:profitable",
+              "exchange_ts_ms": 1791720001662,
+              "hash": null,
+              "integrity": "snapshot",
+              "invalid_reason": null,
+              "min_order_size": "5",
+              "minimum_unit": "shares",
+              "received_ts_ms": 1791720001662,
+              "source": "SYNTHETIC",
+              "tick_size": "0.01",
+              "valid": true
+            }
+          }
+        }
+      },
+      {
+        "id": "settlement-confirmed",
+        "time_ms": 8000,
+        "priority": 0,
+        "kind": "settle",
+        "payload": {
+          "payout": {
+            "profitable:no": "1",
+            "profitable:yes": "0"
+          }
+        }
+      }
+    ],
+    "costs": {
+      "version": "explicit-costs-1",
+      "operating_per_fill": "0",
+      "redemption_cost": "0",
+      "annual_financing_rate": "0",
+      "collateral_value_factor": "1",
+      "collateral_route_verified": false,
+      "assumptions": [
+        "Costs are user estimates, not observed charges",
+        "No automatic complete-set merge",
+        "Resolution and spendable proceeds are separated by configured delay",
+        "No empirically calibrated fill probability or queue priority"
+      ]
+    },
+    "dataset_id": null,
+    "dataset_hash": null,
+    "warnings": [
+      "Synthetic behavior; not a sample of real fill probability"
+    ],
+    "expected_invariants": [
+      "capital_conservation",
+      "independent_ledger",
+      "no_future_observation",
+      "risk_admission",
+      "idempotency"
+    ]
+  },
+  "minimized_scenario": {
+    "schema_version": 1,
+    "id": "volatile:423103",
+    "family": "volatile",
+    "provenance": "GENERATED",
+    "seed": 423103,
+    "market": {
+      "id": "profitable",
+      "event_id": "event:profitable",
+      "question": "Synthetic binary \u2022 profitable",
+      "condition_id": "synthetic:profitable",
+      "protocol": "v1",
+      "instruments": [
+        {
+          "asset_id": "profitable:yes",
+          "label": "Yes"
+        },
+        {
+          "asset_id": "profitable:no",
+          "label": "No"
+        }
+      ],
+      "source": "SYNTHETIC",
+      "active": true,
+      "closed": false,
+      "accepting_orders": true,
+      "negative_risk": false,
+      "augmented_negative_risk": false,
+      "complementary_verified": true,
+      "payout_verified": true,
+      "payout_per_set": "1",
+      "payout_evidence": "Synthetic scenario contract: Yes + No pays 1 virtual USD, including split payouts",
+      "fee": {
+        "rate": "0",
+        "exponent": 1,
+        "verified": true,
+        "evidence": "Synthetic exchange configuration; zero taker fee",
+        "verified_ts_ms": null,
+        "expires_ts_ms": null,
+        "rule_version": "polymarket-fees-2026-10-11"
+      },
+      "description": "",
+      "resolution_source": "",
+      "resolution_metadata": {},
+      "execution_delay_ms": null,
+      "attestation": null
+    },
+    "books": {
+      "profitable:no": {
+        "asset_id": "profitable:no",
+        "condition_id": "synthetic:profitable",
+        "asks": [
+          {
+            "price": "0.49",
+            "size": "9"
+          },
+          {
+            "price": "0.51",
+            "size": "9"
+          }
+        ],
+        "bids": [
+          {
+            "price": "0.48",
+            "size": "9"
+          }
+        ],
+        "tick_size": "0.01",
+        "min_order_size": "5",
+        "minimum_unit": "shares",
+        "exchange_ts_ms": 1791720000000,
+        "received_ts_ms": 1791720000000,
+        "source": "SYNTHETIC",
+        "valid": true,
+        "integrity": "snapshot",
+        "hash": null,
+        "invalid_reason": null
+      },
+      "profitable:yes": {
+        "asset_id": "profitable:yes",
+        "condition_id": "synthetic:profitable",
+        "asks": [
+          {
+            "price": "0.37",
+            "size": "9"
+          },
+          {
+            "price": "0.39",
+            "size": "9"
+          }
+        ],
+        "bids": [
+          {
+            "price": "0.36",
+            "size": "9"
+          }
+        ],
+        "tick_size": "0.01",
+        "min_order_size": "5",
+        "minimum_unit": "shares",
+        "exchange_ts_ms": 1791720000000,
+        "received_ts_ms": 1791720000000,
+        "source": "SYNTHETIC",
+        "valid": true,
+        "integrity": "snapshot",
+        "hash": null,
+        "invalid_reason": null
+      }
+    },
+    "account": {
+      "capital": "100",
+      "mode": "synthetic",
+      "execution": {
+        "name": "conservative",
+        "latency_ms": 750,
+        "jitter_ms": 250,
+        "distribution": "uniform",
+        "liquidity_fraction": "0.5",
+        "adverse_ticks": 1,
+        "ack_delay_ms": 50,
+        "taker_delay_ms": 0,
+        "seed": 423103
+      },
+      "limits": {
+        "max_capital": "20",
+        "max_exposure": "80",
+        "max_market_exposure": "20",
+        "max_event_exposure": "40",
+        "max_positions": 10,
+        "max_age_ms": 15000,
+        "min_edge": "0.001",
+        "max_slippage": "0.05",
+        "max_drawdown": "0.10",
+        "max_daily_loss": "5",
+        "max_cumulative_loss": "10",
+        "max_unmatched_exposure": "100",
+        "max_unmatched_quantity": "0",
+        "emergency_stop": false
+      }
+    },
+    "strategy": "arbitrage",
+    "observation_latency_ms": 0,
+    "strategy_latency_ms": 0,
+    "epoch_ms": 1791720000000,
+    "horizon_ms": 10000,
+    "events": [
+      {
+        "id": "initial",
+        "time_ms": 0,
+        "priority": 0,
+        "kind": "observe",
+        "payload": {}
+      },
+      {
+        "id": "market:1",
+        "time_ms": 418,
+        "priority": 0,
+        "kind": "market",
+        "payload": {
+          "books": {
+            "profitable:no": {
+              "asks": [
+                {
+                  "price": "0.74",
+                  "size": "9"
+                }
+              ],
+              "asset_id": "profitable:no",
+              "bids": [
+                {
+                  "price": "0.73",
+                  "size": "9"
+                }
+              ],
+              "condition_id": "synthetic:profitable",
+              "exchange_ts_ms": 1791720000418,
+              "hash": null,
+              "integrity": "snapshot",
+              "invalid_reason": null,
+              "min_order_size": "5",
+              "minimum_unit": "shares",
+              "received_ts_ms": 1791720000418,
+              "source": "SYNTHETIC",
+              "tick_size": "0.01",
+              "valid": true
+            },
+            "profitable:yes": {
+              "asks": [
+                {
+                  "price": "0.38",
+                  "size": "9"
+                }
+              ],
+              "asset_id": "profitable:yes",
+              "bids": [
+                {
+                  "price": "0.37",
+                  "size": "9"
+                }
+              ],
+              "condition_id": "synthetic:profitable",
+              "exchange_ts_ms": 1791720000418,
+              "hash": null,
+              "integrity": "snapshot",
+              "invalid_reason": null,
+              "min_order_size": "5",
+              "minimum_unit": "shares",
+              "received_ts_ms": 1791720000418,
+              "source": "SYNTHETIC",
+              "tick_size": "0.01",
+              "valid": true
+            }
+          }
+        }
+      },
+      {
+        "id": "settlement-confirmed",
+        "time_ms": 8000,
+        "priority": 0,
+        "kind": "settle",
+        "payload": {
+          "payout": {
+            "profitable:no": "1",
+            "profitable:yes": "0"
+          }
+        }
+      }
+    ],
+    "costs": {
+      "version": "explicit-costs-1",
+      "operating_per_fill": "0",
+      "redemption_cost": "0",
+      "annual_financing_rate": "0",
+      "collateral_value_factor": "1",
+      "collateral_route_verified": false,
+      "assumptions": [
+        "Costs are user estimates, not observed charges",
+        "No automatic complete-set merge",
+        "Resolution and spendable proceeds are separated by configured delay",
+        "No empirically calibrated fill probability or queue priority"
+      ]
+    },
+    "dataset_id": null,
+    "dataset_hash": null,
+    "warnings": [
+      "Synthetic behavior; not a sample of real fill probability"
+    ],
+    "expected_invariants": [
+      "capital_conservation",
+      "independent_ledger",
+      "no_future_observation",
+      "risk_admission",
+      "idempotency"
+    ]
+  },
+  "original_events": 8,
+  "minimized_events": 3,
+  "removed_event_ids": [
+    "market:0",
+    "market:2",
+    "market:3",
+    "market:4",
+    "market:5"
+  ],
+  "original_result_hash": "9438444814841a38b504ac71e3beba3fc1fed684ce7dc0c62ee4175206592f83",
+  "reproduction_result_hash": "99c15effe37aeca42d3f31a36e48d541f58280f817270c835e14254c698b3895",
+  "reproduction_journal_hash": "40e04181b191bab028106b91cad4d87227e057e601ac4c40655ba1fbcb67862a",
+  "original_pnl": "-1.755000",
+  "minimized_pnl": "-1.755000",
+  "producer_sha256": "e41a438b09487c0beda090c7219a9abfb418948c37a0050b86290cb69880a7a3",
+  "elapsed_seconds": 1.7028035779949278,
+  "limitations": [
+    "Exploratory event deletion, not an independent cohort or a globally minimal scenario.",
+    "Initial books, policy, account, seed, horizon, observations and settlement are fixed.",
+    "A valid loss is not a software defect; no profitability or guaranteed loss bound follows.",
+    "Wall budget is checked between executions; each finite simulator execution must finish."
+  ],
+  "unwind_id": "unwind-f54c1746a2834cb1a27cf53d",
+  "row_id": "32-conservative-sell_residual",
+  "original_reexecution": {
+    "unwind_id": "unwind-f54c1746a2834cb1a27cf53d",
+    "row_id": "32-conservative-sell_residual",
+    "verified": true,
+    "mode": "EXACT_SCENARIO_AND_OBSERVABLE_POLICY_REEXECUTION",
+    "source_hash": "53d813bd3a18c44c7d4819f7df11cd3fd5db25b27825e463adbe51ebea5cf2e1",
+    "result_hash": "9438444814841a38b504ac71e3beba3fc1fed684ce7dc0c62ee4175206592f83",
+    "journal_hash": "cfd5f4534e1163738d3f52f03bb7ef8816c8905833571a5126def5cdea9730a9",
+    "producer_sha256": "85949ebb22821baa7048d7486b3b12503f7a663c18cb253c95ee12e3bccea096",
+    "limitations": [
+      "Reuses the broker and policy implementation; independent rational/Decimal audits are separate.",
+      "Exact synthetic reproducibility is not observed execution or economic validation."
+    ]
+  },
+  "artifact_hash": "ce1e3f818a5c4a15f125b5119894307bb923e832bbe9af220dcb7003196c6146"
+}

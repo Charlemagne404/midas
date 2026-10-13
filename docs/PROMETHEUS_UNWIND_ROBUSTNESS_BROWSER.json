@@ -1,0 +1,16 @@
+{
+  "inspected": [
+    {
+      "unwind_id": "unwind-f54c1746a2834cb1a27cf53d",
+      "row_id": "0-optimistic-sell_residual",
+      "replay_max_event": 9
+    },
+    {
+      "unwind_id": "unwind-d2e7f69513f14ea0bd1a94f8",
+      "row_id": "0-optimistic-sell_residual",
+      "replay_max_event": 9
+    }
+  ],
+  "page_errors": [],
+  "initial_attempts": "Corrected test tab role and label-with-option-text selectors; no product edit"
+}

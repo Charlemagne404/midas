@@ -1,0 +1,322 @@
+{
+  "benchmark_sha256": "a0c1f0d2b7cbb299de89fa4256e948819c82d04cc1045b0baff23aa94ab34c40",
+  "cohorts": [
+    {
+      "bundle": {
+        "files": 1868,
+        "path": "/home/charlie/midas/data/exports/unwind-robustness-423071-453071/unwind-f54c1746a2834cb1a27cf53d.tar.gz",
+        "sha256": "c486411e90895fee20c84921f6d12071f34fe00603e572e122322ce1d1650505",
+        "unwind_id": "unwind-f54c1746a2834cb1a27cf53d"
+      },
+      "coverage": {
+        "complete_missing/conservative": {
+          "filled_groups": 0,
+          "filled_variants": 0,
+          "requests": 2
+        },
+        "complete_missing/optimistic": {
+          "filled_groups": 0,
+          "filled_variants": 0,
+          "requests": 0
+        },
+        "complete_missing/standard": {
+          "filled_groups": 1,
+          "filled_variants": 1,
+          "requests": 3
+        },
+        "hold/conservative": {
+          "filled_groups": 0,
+          "filled_variants": 0,
+          "requests": 0
+        },
+        "hold/optimistic": {
+          "filled_groups": 0,
+          "filled_variants": 0,
+          "requests": 0
+        },
+        "hold/standard": {
+          "filled_groups": 0,
+          "filled_variants": 0,
+          "requests": 0
+        },
+        "no_trade/conservative": {
+          "filled_groups": 0,
+          "filled_variants": 0,
+          "requests": 0
+        },
+        "no_trade/optimistic": {
+          "filled_groups": 0,
+          "filled_variants": 0,
+          "requests": 0
+        },
+        "no_trade/standard": {
+          "filled_groups": 0,
+          "filled_variants": 0,
+          "requests": 0
+        },
+        "sell_residual/conservative": {
+          "filled_groups": 0,
+          "filled_variants": 0,
+          "requests": 3
+        },
+        "sell_residual/optimistic": {
+          "filled_groups": 0,
+          "filled_variants": 0,
+          "requests": 0
+        },
+        "sell_residual/standard": {
+          "filled_groups": 2,
+          "filled_variants": 2,
+          "requests": 3
+        }
+      },
+      "job_id": "job-0e9441b18a0a40fab2a1e5d6",
+      "leaderboard": [
+        {
+          "cvar_05_loss": 0,
+          "intervention_filled_shares": "0",
+          "intervention_requests": 0,
+          "mean_pnl": 0.0,
+          "policy": "no_trade",
+          "score": 0.0,
+          "worst_pnl": 0.0
+        },
+        {
+          "cvar_05_loss": 0.924304347826087,
+          "intervention_filled_shares": "0",
+          "intervention_requests": 0,
+          "mean_pnl": 1.6675468888888887,
+          "policy": "hold",
+          "score": 0.7432425410628017,
+          "worst_pnl": -5.304
+        },
+        {
+          "cvar_05_loss": 0.8512608695652174,
+          "intervention_filled_shares": "5.60",
+          "intervention_requests": 5,
+          "mean_pnl": 1.674018,
+          "policy": "complete_missing",
+          "score": 0.8227571304347826,
+          "worst_pnl": -5.304
+        },
+        {
+          "cvar_05_loss": 0.6206521739130434,
+          "intervention_filled_shares": "19.20",
+          "intervention_requests": 6,
+          "mean_pnl": 1.6997068888888889,
+          "policy": "sell_residual",
+          "score": 1.0790547149758454,
+          "worst_pnl": -3.99
+        }
+      ],
+      "paired_comparisons": [
+        {
+          "candidate": "sell_residual",
+          "control": "hold",
+          "group_bootstrap_95": [
+            0.0,
+            0.08789333333333332
+          ],
+          "mean_change": 0.03216
+        },
+        {
+          "candidate": "sell_residual",
+          "control": "complete_missing",
+          "group_bootstrap_95": [
+            0.0,
+            0.07495111111111111
+          ],
+          "mean_change": 0.02568888888888889
+        },
+        {
+          "candidate": "sell_residual",
+          "control": "no_trade",
+          "group_bootstrap_95": [
+            1.3473958833333333,
+            2.075566822222222
+          ],
+          "mean_change": 1.699706888888889
+        }
+      ],
+      "payloads_verified": 1876,
+      "seed": 423071,
+      "unit": "midas-arena-job-0e9441b18a0a40fab2a1e5d6.service",
+      "unwind_id": "unwind-f54c1746a2834cb1a27cf53d",
+      "verification": {
+        "decisions_recomputed": 162,
+        "requests": 11,
+        "scope": "Financial/journal hashes, independent rational and decimal ledger audits, matched initial buys and observed-input admission; no independent broker rerun.",
+        "source_groups": 150,
+        "unwind_id": "unwind-f54c1746a2834cb1a27cf53d",
+        "verified_replays": 1800
+      }
+    },
+    {
+      "bundle": {
+        "files": 1868,
+        "path": "/home/charlie/midas/data/exports/unwind-robustness-423071-453071/unwind-d2e7f69513f14ea0bd1a94f8.tar.gz",
+        "sha256": "65b745d9820f4670bfcc316a15a51d002ae76e1faab7236cb85de03572bfea25",
+        "unwind_id": "unwind-d2e7f69513f14ea0bd1a94f8"
+      },
+      "coverage": {
+        "complete_missing/conservative": {
+          "filled_groups": 0,
+          "filled_variants": 0,
+          "requests": 3
+        },
+        "complete_missing/optimistic": {
+          "filled_groups": 0,
+          "filled_variants": 0,
+          "requests": 0
+        },
+        "complete_missing/standard": {
+          "filled_groups": 4,
+          "filled_variants": 4,
+          "requests": 6
+        },
+        "hold/conservative": {
+          "filled_groups": 0,
+          "filled_variants": 0,
+          "requests": 0
+        },
+        "hold/optimistic": {
+          "filled_groups": 0,
+          "filled_variants": 0,
+          "requests": 0
+        },
+        "hold/standard": {
+          "filled_groups": 0,
+          "filled_variants": 0,
+          "requests": 0
+        },
+        "no_trade/conservative": {
+          "filled_groups": 0,
+          "filled_variants": 0,
+          "requests": 0
+        },
+        "no_trade/optimistic": {
+          "filled_groups": 0,
+          "filled_variants": 0,
+          "requests": 0
+        },
+        "no_trade/standard": {
+          "filled_groups": 0,
+          "filled_variants": 0,
+          "requests": 0
+        },
+        "sell_residual/conservative": {
+          "filled_groups": 0,
+          "filled_variants": 0,
+          "requests": 5
+        },
+        "sell_residual/optimistic": {
+          "filled_groups": 0,
+          "filled_variants": 0,
+          "requests": 0
+        },
+        "sell_residual/standard": {
+          "filled_groups": 5,
+          "filled_variants": 5,
+          "requests": 8
+        }
+      },
+      "job_id": "job-fa62d7a6ecbc4bfeae0b9450",
+      "leaderboard": [
+        {
+          "cvar_05_loss": 0,
+          "intervention_filled_shares": "0",
+          "intervention_requests": 0,
+          "mean_pnl": 0.0,
+          "policy": "no_trade",
+          "score": 0.0,
+          "worst_pnl": 0.0
+        },
+        {
+          "cvar_05_loss": 2.5349565217391303,
+          "intervention_filled_shares": "0",
+          "intervention_requests": 0,
+          "mean_pnl": 1.6004320000000003,
+          "policy": "hold",
+          "score": -0.93452452173913,
+          "worst_pnl": -8.832
+        },
+        {
+          "cvar_05_loss": 2.2499130434782613,
+          "intervention_filled_shares": "33.72",
+          "intervention_requests": 9,
+          "mean_pnl": 1.5987171111111114,
+          "policy": "complete_missing",
+          "score": -0.6511959323671499,
+          "worst_pnl": -8.832
+        },
+        {
+          "cvar_05_loss": 1.984695652173913,
+          "intervention_filled_shares": "60.00",
+          "intervention_requests": 13,
+          "mean_pnl": 1.623063111111111,
+          "policy": "sell_residual",
+          "score": -0.36163254106280207,
+          "worst_pnl": -8.832
+        }
+      ],
+      "paired_comparisons": [
+        {
+          "candidate": "sell_residual",
+          "control": "hold",
+          "group_bootstrap_95": [
+            -0.038933333333333334,
+            0.09973333333333334
+          ],
+          "mean_change": 0.02263111111111111
+        },
+        {
+          "candidate": "sell_residual",
+          "control": "complete_missing",
+          "group_bootstrap_95": [
+            -0.02065911111111111,
+            0.08811613333333325
+          ],
+          "mean_change": 0.024346000000000007
+        },
+        {
+          "candidate": "sell_residual",
+          "control": "no_trade",
+          "group_bootstrap_95": [
+            1.268490116666667,
+            1.9955736277777771
+          ],
+          "mean_change": 1.6230631111111113
+        }
+      ],
+      "payloads_verified": 1876,
+      "seed": 453071,
+      "unit": "midas-arena-job-fa62d7a6ecbc4bfeae0b9450.service",
+      "unwind_id": "unwind-d2e7f69513f14ea0bd1a94f8",
+      "verification": {
+        "decisions_recomputed": 146,
+        "requests": 22,
+        "scope": "Financial/journal hashes, independent rational and decimal ledger audits, matched initial buys and observed-input admission; no independent broker rerun.",
+        "source_groups": 150,
+        "unwind_id": "unwind-d2e7f69513f14ea0bd1a94f8",
+        "verified_replays": 1800
+      }
+    }
+  ],
+  "created_at": 1791881843.4699907,
+  "elapsed_seconds": 440.7747141700238,
+  "job_id": "job-fa62d7a6ecbc4bfeae0b9450",
+  "output": "data/exports/unwind-robustness-423071-453071/report.json",
+  "phase": "VERIFIED",
+  "plan_sha256": "9b3b3f88d43ddb68a02c89745a95be1e9a3d08a811a6d0180cd06fcecdf6a0a7",
+  "seed": 453071,
+  "source_hash": "53d813bd3a18c44c7d4819f7df11cd3fd5db25b27825e463adbe51ebea5cf2e1",
+  "tool_hashes": {
+    "arena_bundle.py": "053f379c6d8f6651f3cc325645e5b73309a88114607adac6bed5afece3707e3d",
+    "capture_public_series.py": "a2ebba53492d2c9907a05973c55121028b3a60a9fffaad35e06cfbb9871ee0cd",
+    "finalize_joint_cost_study.py": "9448ccad718209cd76eb3d0f6f7f37f5f26dac8228e6aa1bd2a54263ba89b1d4",
+    "run_unwind_robustness.py": "aae28b6710ff32875b657a4ac421b0ec1bc2739c48dd2b6e836d3c639ca7e3f8",
+    "verify_unwind.py": "1374dfd91eb0d2c367e16e84a2e0d2b72ea79055e8fdb3789e8fbe0bc0310824"
+  },
+  "unwind_id": "unwind-d2e7f69513f14ea0bd1a94f8",
+  "updated_at": 1791882284.2915978
+}
