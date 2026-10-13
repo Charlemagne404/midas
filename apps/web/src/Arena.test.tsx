@@ -10,6 +10,73 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+it('keeps chronological public windows separate from execution training', async () => {
+  const overview = {
+    datasets: [],
+    models: [],
+    jobs: [],
+    findings: [],
+    tournaments: [],
+    dependencies: {},
+    health: { memory_mb: {}, worker_cpu_cores: 1, worker_memory_mb: 4096 },
+    recorded_sources: [
+      { dataset_id: 'public-series-fixture', valid: true, events: 41, capture_end_ms: 100 },
+    ],
+    observations: [
+      {
+        observation_id: 'observations-fixture',
+        source_dataset_id: 'public-series-fixture',
+        state: 'COMPLETED',
+        eligible_for_execution_training: false,
+        limitations: ['Observed quotes only'],
+        quality: {
+          source_polls: 20,
+          valid_paired_polls: 20,
+          partition_windows: { train: 14, validation: 1, test: 1, embargo: 4 },
+          quarantine_reasons: {},
+          unique_quote_shapes: 1,
+          cross_partition_repeated_quote_shapes: 1,
+        },
+      },
+    ],
+  };
+  let submitted = false;
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (_url: string, init?: RequestInit) => {
+      if (init?.method === 'POST') {
+        expect(JSON.parse(String(init.body)).configuration).toEqual({
+          kind: 'observations',
+          observations: {
+            source_id: 'public-series-fixture',
+            embargo_ms: 15000,
+          },
+        });
+        submitted = true;
+        return new Response(JSON.stringify({ job_id: 'job-fixture' }), { status: 201 });
+      }
+      return new Response(JSON.stringify(overview), { status: 200 });
+    }),
+  );
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  render(
+    <QueryClientProvider client={client}>
+      <Arena />
+    </QueryClientProvider>,
+  );
+  await screen.findByRole('heading', { name: 'observations-fixture' });
+  expect(screen.getByText(/1 unique quote shapes/)).toBeVisible();
+  expect(screen.getByRole('link', { name: 'Observation manifest ↗' })).toHaveAttribute(
+    'href',
+    '/api/arena/observations/observations-fixture',
+  );
+  fireEvent.change(screen.getByLabelText('Partition embargo (ms)'), { target: { value: '15000' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Build observation windows' }));
+  await screen.findByText('Research job admitted. Progress appears below.');
+  expect(submitted).toBe(true);
+  client.clear();
+});
+
 it('submits a fresh generator challenge without model promotion', async () => {
   const overview = {
     datasets: [

@@ -1,0 +1,33 @@
+{
+  "created_at": 1791903467.805929,
+  "source_hash": "07d2adaccbee6af654e3b110aa4ed37c6a26c417739bc42aaf9276277c949173",
+  "configuration": {
+    "kind": "observations",
+    "dataset": null,
+    "training": null,
+    "severity": null,
+    "cost": null,
+    "recovery": null,
+    "unwind": null,
+    "observations": {
+      "version": "public-poll-windows-1",
+      "source_id": "public-series-ee6885c09fba4bc98ef5a8cb",
+      "train_percent": 70,
+      "validation_percent": 15,
+      "embargo_ms": 10000,
+      "max_pair_skew_ms": 1000,
+      "max_book_age_ms": 10000
+    },
+    "model_id": null,
+    "rl": null,
+    "tournament": null,
+    "sweep": null,
+    "director": null,
+    "policy_search": null,
+    "max_wall_seconds": 300
+  },
+  "purpose": "Observed-only chronological windows; no empirical execution labels or model training",
+  "source_content_sha256": "9dd36f170e6f6d3b9729db8a6d5747e8fe704e56c08741d092f82fdf4a75632f",
+  "threshold_selection": "Fixed defaults: ten-second book age and embargo, one-second pair skew; no optimization against economic outcomes",
+  "models_trained": 0
+}

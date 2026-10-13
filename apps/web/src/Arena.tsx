@@ -343,6 +343,21 @@ type Overview = {
     limitations?: string[];
     error?: string;
   }[];
+  observations?: {
+    observation_id: string;
+    source_dataset_id: string;
+    state: string;
+    eligible_for_execution_training: boolean;
+    quality: {
+      source_polls: number;
+      valid_paired_polls: number;
+      partition_windows: Record<string, number>;
+      quarantine_reasons: Record<string, number>;
+      unique_quote_shapes: number;
+      cross_partition_repeated_quote_shapes: number;
+    };
+    limitations: string[];
+  }[];
 };
 const tabs = [
   'Overview',
@@ -403,6 +418,8 @@ export function Arena() {
   const [depthMultiplier, setDepthMultiplier] = useState('1');
   const [feeParameter, setFeeParameter] = useState('');
   const [extraSubmissionLatency, setExtraSubmissionLatency] = useState(0);
+  const [observationSource, setObservationSource] = useState('');
+  const [observationEmbargo, setObservationEmbargo] = useState(10000);
   const [generatorChallengeSeed, setGeneratorChallengeSeed] = useState(483071);
   const [hashedSettlement, setHashedSettlement] = useState(true);
   const economicRegime = economicEnabled
@@ -431,6 +448,10 @@ export function Arena() {
     refetchInterval: 10000,
   });
   const data = overview.data;
+  const observationSources = [...(data?.recorded_sources ?? [])]
+    .filter((source) => source.valid && source.dataset_id.startsWith('public-series-'))
+    .sort((a, b) => (b.capture_end_ms ?? 0) - (a.capture_end_ms ?? 0));
+  const selectedObservationSource = observationSource || observationSources[0]?.dataset_id || '';
   const selectedDataset = datasetId || data?.datasets[0]?.dataset_id || '';
   const costDataMissing =
     ['cost_ridge', 'cost_mlp'].includes(family) &&
@@ -785,6 +806,98 @@ export function Arena() {
           ))}
           {!data?.recorded_sources?.length && (
             <p className="empty">No verified public source collections in this artifact root.</p>
+          )}
+        </Section>
+      )}
+      {tab === 'Overview' && (
+        <Section title="Chronological public observation windows">
+          <p className="lab-note">
+            Each window keeps both sequential book snapshots together and becomes available after
+            the second arrives. Chronological partitions include an embargo. These datasets have no
+            execution labels and are excluded from model training.
+          </p>
+          <div className="lab-controls">
+            <label>
+              Observation source
+              <select
+                value={selectedObservationSource}
+                onChange={(event) => setObservationSource(event.target.value)}
+              >
+                {!observationSources.length && <option value="">No verified public series</option>}
+                {observationSources.map((source) => (
+                  <option key={source.dataset_id} value={source.dataset_id}>
+                    {source.dataset_id} · {source.events} events
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Partition embargo (ms)
+              <input
+                type="number"
+                min={0}
+                max={3600000}
+                value={observationEmbargo}
+                onChange={(event) => setObservationEmbargo(Number(event.target.value))}
+              />
+            </label>
+            <button
+              disabled={!selectedObservationSource || submit.isPending}
+              onClick={() =>
+                submit.mutate({
+                  configuration: {
+                    kind: 'observations',
+                    observations: {
+                      source_id: selectedObservationSource,
+                      embargo_ms: observationEmbargo,
+                    },
+                  },
+                })
+              }
+            >
+              Build observation windows
+            </button>
+          </div>
+          {data?.observations?.map((record) => (
+            <article className="arena-finding" key={record.observation_id}>
+              <h3>{record.observation_id}</h3>
+              <p>
+                {record.source_dataset_id} · {record.quality.valid_paired_polls} valid paired polls
+                / {record.quality.source_polls} source polls
+              </p>
+              <p>
+                {Object.entries(record.quality.partition_windows)
+                  .map(([key, value]) => `${key}: ${value}`)
+                  .join(' · ')}
+              </p>
+              <p>
+                {record.quality.unique_quote_shapes} unique quote shapes ·{' '}
+                {record.quality.cross_partition_repeated_quote_shapes} repeated across partitions
+              </p>
+              <p className="lab-footnote">{record.limitations.join(' ')}</p>
+              <a
+                href={`/api/arena/observations/${record.observation_id}`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Observation manifest ↗
+              </a>
+              {' · '}
+              <a
+                href={`/api/arena/observations/${record.observation_id}/rows?limit=100`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Window rows ↗
+              </a>
+              <details>
+                <summary>Quarantine reasons</summary>
+                <Json value={record.quality.quarantine_reasons} />
+              </details>
+            </article>
+          ))}
+          {!data?.observations?.length && (
+            <p className="empty">No chronological observation windows built yet.</p>
           )}
         </Section>
       )}

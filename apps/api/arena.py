@@ -230,6 +230,7 @@ def router(root: Path) -> APIRouter:
             "searches": catalog("searches"),
             "recoveries": catalog("recoveries"),
             "unwinds": catalog("unwinds"),
+            "observations": catalog("observations"),
         }
 
     @api.get("")
@@ -247,6 +248,23 @@ def router(root: Path) -> APIRouter:
         return await call(
             lambda: json.loads((path("sweeps", identity) / "manifest.json").read_text())
         )
+
+    @api.get("/observations/{identity}")
+    async def observation_dataset(identity: str) -> Any:
+        from midas.arena.observations import load
+
+        return await call(lambda: load(root, identity)[0])
+
+    @api.get("/observations/{identity}/rows")
+    async def observation_rows(
+        identity: str, offset: int = Query(0, ge=0), limit: int = Query(50, ge=1, le=200)
+    ) -> Any:
+        def read() -> Any:
+            from midas.arena.observations import load
+
+            return load(root, identity)[1][offset : offset + limit]
+
+        return await call(read)
 
     @api.get("/directors/{identity}")
     async def director(identity: str) -> Any:

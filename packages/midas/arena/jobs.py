@@ -18,6 +18,7 @@ from midas.arena.costs import CostSpec
 from midas.arena.datasets import DatasetSpec, research_hash
 from midas.arena.director import DirectorSpec
 from midas.arena.evolution import SweepSpec
+from midas.arena.observations import ObservationSpec
 from midas.arena.policy_search import PolicySearchSpec
 from midas.arena.recovery import RecoveryStudySpec
 from midas.arena.rl import RLSpec
@@ -44,6 +45,7 @@ class JobSpec(Model):
         "cost",
         "recovery",
         "unwind",
+        "observations",
     ]
     dataset: DatasetSpec | None = None
     training: TrainingSpec | None = None
@@ -51,6 +53,7 @@ class JobSpec(Model):
     cost: CostSpec | None = None
     recovery: RecoveryStudySpec | None = None
     unwind: UnwindStudySpec | None = None
+    observations: ObservationSpec | None = None
     model_id: str | None = None
     rl: RLSpec | None = None
     tournament: TournamentSpec | None = None
@@ -68,6 +71,7 @@ class JobSpec(Model):
             "cost": "cost",
             "recovery": "recovery",
             "unwind": "unwind",
+            "observations": "observations",
             "evaluation": "model_id",
             "diagnostics": "model_id",
             "rl": "rl",
@@ -83,6 +87,7 @@ class JobSpec(Model):
             "cost",
             "recovery",
             "unwind",
+            "observations",
             "model_id",
             "rl",
             "tournament",
@@ -327,6 +332,12 @@ def _run(root: Path, identity: str) -> None:
                 assert spec.dataset is not None
                 result = build(root, spec.dataset, progress)
                 record["result"] = {"dataset_id": result["dataset_id"]}
+            elif spec.kind == "observations":
+                from midas.arena.observations import build as build_observations
+
+                assert spec.observations is not None
+                result = build_observations(root, spec.observations, progress)
+                record["result"] = {"observation_id": result["observation_id"]}
             elif spec.kind == "supervised":
                 from midas.arena.supervised import train
 

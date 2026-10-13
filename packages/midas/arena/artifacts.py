@@ -55,6 +55,7 @@ def artifact_path(root: Path, kind: str, identity: str) -> Path:
         "searches",
         "recoveries",
         "unwinds",
+        "observations",
     }:
         raise ValueError("Unknown artifact kind")
     if not re.fullmatch(r"[a-zA-Z0-9_-]{1,96}", identity):
