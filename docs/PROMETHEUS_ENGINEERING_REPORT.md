@@ -2610,3 +2610,16 @@ Existing gate/demo handles were revalidated and same live demo observed for40s.
 Source and captured tools still frozen; no completed demo or multi-day/reboot
 run claimed. Next: complete real plan verification, fix installer/parser tests,
 inspect actual UI/timer and preserve bounded operational state.
+
+## Checkpoint and actual scheduler reliability correction
+
+Full gate529 passed,one skipped in632.38s. Real schedule demonstration VERIFIED:
+two native children completed across API restart; real pause/expiry admitted no
+child and saved alert. Both independent schedule verifications and observation
+recomputation passed. Corrected installer WorkingDirectory parsing and oneshot
+timeout to TimeoutStartSec=60; added actual systemd parser test with spaces.
+Real installation now checks parser and active timer, preserves differing units.
+Installer+schedule-verifier tests9 passed1.61s. Whole suite not rerun after this
+installer-only change. Comprehensive checkpoint records70%/30% estimate, actual
+43 artifacts/42 fitted,66 terminal jobs and full stretch backlog. Prometheus
+active; continue cold-retention research without retraining completed models.

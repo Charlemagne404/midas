@@ -1,0 +1,10 @@
+{
+  "schedule_id": "schedule-3c8b667280bd414b86a5f560",
+  "state": "EXPIRED",
+  "source_hash": "cbc2b35aafdd44a66232cfe3d37beed568e22633ea46109d03334559030b1afa",
+  "steps_declared": 1,
+  "unique_completed_children": [],
+  "admission_window_seconds": 60,
+  "producer_sha256": "c9a046c5df1c349bb9dbaade634a8904bd0201d678296ff3e14ae3a8c18c39c5",
+  "scope": "Persisted due/expiry timing, exact native admission keys/configuration/source/budgets and terminal results; no reboot or economic claim."
+}

@@ -1,0 +1,40 @@
+{
+  "observation_id": "observations-24d31913b760218f963be45a",
+  "source_content_sha256": "9dd36f170e6f6d3b9729db8a6d5747e8fe704e56c08741d092f82fdf4a75632f",
+  "rows_sha256": "e5cab52070e309b43537948a66d2a87929e435a38758bfd111a570bef739ed05",
+  "windows_verified": 103,
+  "quality": {
+    "source_polls": 120,
+    "missing_poll_numbers": 0,
+    "valid_paired_polls": 103,
+    "quarantine_reasons": {
+      "stale_book_at_pair_availability": 17
+    },
+    "partition_windows": {
+      "train": 72,
+      "embargo": 4,
+      "validation": 13,
+      "test": 14
+    },
+    "unique_quote_shapes": 60,
+    "cross_partition_repeated_quote_shapes": 2,
+    "missing_feature_values": {},
+    "partition_bounds": {
+      "train": {
+        "first_received_ms": 1791884792789,
+        "last_available_ms": 1791885194733
+      },
+      "validation": {
+        "first_received_ms": 1791885209602,
+        "last_available_ms": 1791885285158
+      },
+      "test": {
+        "first_received_ms": 1791885300024,
+        "last_available_ms": 1791885390635
+      }
+    }
+  },
+  "execution_labels": 0,
+  "producer_sha256": "d10ed60cb751d1f9ea833481cbcdfcbcf42dc69d903ddc5646a9727ae4a3e59f",
+  "scope": "Source/row hashes, full builder recomputation and separate receipt/metadata/embargo checks; no empirical executions or model training."
+}

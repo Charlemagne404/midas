@@ -1,0 +1,13 @@
+{
+  "schedule_id": "schedule-09e238867b30464983008945",
+  "state": "COMPLETED",
+  "source_hash": "cbc2b35aafdd44a66232cfe3d37beed568e22633ea46109d03334559030b1afa",
+  "steps_declared": 2,
+  "unique_completed_children": [
+    "job-863b6a79ed87481abb544450",
+    "job-63a84642012843f5a774012f"
+  ],
+  "admission_window_seconds": 900,
+  "producer_sha256": "c9a046c5df1c349bb9dbaade634a8904bd0201d678296ff3e14ae3a8c18c39c5",
+  "scope": "Persisted due/expiry timing, exact native admission keys/configuration/source/budgets and terminal results; no reboot or economic claim."
+}

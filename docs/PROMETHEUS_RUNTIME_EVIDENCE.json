@@ -8,7 +8,7 @@
   "arena_research_tournaments": 25,
   "arena_source_datasets": 5,
   "arena_tournaments": 26,
-  "checked_at": 1791907796.1982892,
+  "checked_at": 1791908397.1645267,
   "dataset_quality": [
     "Identical observable vectors occur across partitions. Independent scenario IDs do not guarantee covariate diversity; inspect repeated synthetic grids.",
     "Some scenario families contain one settlement seed parity only. The current generator uses seed parity for settlement; reorder families and shift seeds before making generalization claims.",
@@ -22,8 +22,8 @@
     "live_execution": false,
     "paper_recovery": {
       "status": "CHECKPOINT_VERIFIED",
-      "journal_events": 82263,
-      "revision": 82262
+      "journal_events": 83627,
+      "revision": 83626
     },
     "laboratory": {
       "status": "READY",
@@ -10857,5 +10857,28 @@
     "service": "midas-arena-scheduler.service",
     "service_limits": "25%CPU/512MiB/60s",
     "configuration_fix": "WorkingDirectory quotes removed in deployed managed unit; installer code correction pending captured-demo completion"
+  },
+  "native_job_counts": {
+    "COMPLETED": 62,
+    "CANCELLED": 2,
+    "FAILED": 2
+  },
+  "schedule_demonstration": {
+    "state": "VERIFIED",
+    "completed_plan": "schedule-09e238867b30464983008945",
+    "expired_plan": "schedule-3c8b667280bd414b86a5f560",
+    "timer": "active",
+    "timeout_seconds": 60,
+    "actual_reboot_tested": false,
+    "actual_multiday_tested": false
+  },
+  "latest_full_gate": {
+    "passed": 529,
+    "skipped": 1,
+    "seconds": 632.38
+  },
+  "installer_and_schedule_verifier_gate": {
+    "passed": 9,
+    "seconds": 1.61
   }
 }

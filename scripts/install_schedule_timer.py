@@ -5,9 +5,7 @@ import subprocess
 from pathlib import Path
 
 
-def install(repository: Path) -> dict:
-    units = Path.home() / ".config/systemd/user"
-    units.mkdir(parents=True, exist_ok=True)
+def unit_contents(repository: Path) -> dict[str, str]:
     python = repository / ".venv/bin/python"
     root = repository / "data/arena"
 
@@ -20,12 +18,12 @@ Description=Midas finite research schedule dispatcher
 
 [Service]
 Type=oneshot
-WorkingDirectory={argument(repository)}
+WorkingDirectory={str(repository).replace("%", "%%")}
 ExecStart={argument(python)} -B -m scripts.dispatch_schedules --root {argument(root)}
 CPUQuota=25%
 MemoryMax=512M
 Nice=10
-RuntimeMaxSec=60
+TimeoutStartSec=60
 Environment=PYTHONDONTWRITEBYTECODE=1
 Environment=OMP_NUM_THREADS=1
 Environment=MKL_NUM_THREADS=1
@@ -46,10 +44,13 @@ Unit=midas-arena-scheduler.service
 [Install]
 WantedBy=timers.target
 """
-    for name, payload in [
-        ("midas-arena-scheduler.service", service),
-        ("midas-arena-scheduler.timer", timer),
-    ]:
+    return {"midas-arena-scheduler.service": service, "midas-arena-scheduler.timer": timer}
+
+
+def install(repository: Path) -> dict:
+    units = Path.home() / ".config/systemd/user"
+    units.mkdir(parents=True, exist_ok=True)
+    for name, payload in unit_contents(repository).items():
         path = units / name
         if path.exists() and path.read_text() != payload:
             raise ValueError("Existing scheduler unit differs; inspect before replacing it")
@@ -57,10 +58,27 @@ WantedBy=timers.target
             path.write_text(payload)
     subprocess.run(["systemctl", "--user", "daemon-reload"], check=True, timeout=15)
     subprocess.run(
+        [
+            "systemd-analyze",
+            "--user",
+            "verify",
+            *[str(units / name) for name in unit_contents(repository)],
+        ],
+        check=True,
+        timeout=15,
+    )
+    subprocess.run(
         ["systemctl", "--user", "enable", "--now", "midas-arena-scheduler.timer"],
         check=True,
         timeout=15,
     )
+    subprocess.run(
+        ["systemctl", "--user", "is-active", "--quiet", "midas-arena-scheduler.timer"],
+        check=True,
+        timeout=15,
+    )
+    python = repository / ".venv/bin/python"
+    root = repository / "data/arena"
     return {
         "timer": "midas-arena-scheduler.timer",
         "service": "midas-arena-scheduler.service",

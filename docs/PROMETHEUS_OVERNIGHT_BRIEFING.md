@@ -1,5 +1,20 @@
 # MIDAS — PROMETHEUS OVERNIGHT BRIEFING
 
+## Latest checkpoint — scheduler demonstrated and corrected
+
+Prometheus remains active, estimated70% complete/30% remaining across original
+scope. Full gate529 passed/one skip; focused installer/verifier gate9 passed.
+Actual finite schedule completed two ingestion children across an API restart;
+paused second plan expired without admission and produced a local alert. Timer
+active, real systemd parser verified and effective oneshot timeout60seconds.
+Quoted WorkingDirectory and ineffective RuntimeMaxSec bugs corrected.
+Independent plan/103-window checks pass. No reboot/multi-day run claim.
+43 model artifacts/42 fitted;66 native jobs terminal, none running.
+No new models or independent economic samples from operational demonstration.
+Next: bounded cold retention and further reliability/model-quality backlog.
+Comprehensive assessment: docs/PROMETHEUS_12_5_HOUR_CHECKPOINT.md.
+Earlier running-gate/uninstalled-timer notes below are superseded.
+
 ## Current engineering — finite durable schedule full gate
 
 Finite plans now support due times, resource waits, stable native admission
