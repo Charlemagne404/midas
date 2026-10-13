@@ -1,0 +1,11 @@
+{
+  "created_at": 1791922534.872299,
+  "source_hash": "58f4072d195c210d6e94386774bf460034129facc2d6515e12eb72615165be12",
+  "kind": "tournaments",
+  "identity": "tournament-999cf9ee983249599d1dccb8",
+  "backup": "data/exports/ppo-resumption-573071/tournament-999cf9ee983249599d1dccb8.tar.gz",
+  "backup_sha256": "9fd34901b55892f50aca2c4c1b5a16eecbdeaa1ba798d5127592649a5608ba61",
+  "purpose": "Restore watch headroom while preserving exact completed PPO evidence",
+  "cap_bytes": 1073741824,
+  "kernel_changes": false
+}
