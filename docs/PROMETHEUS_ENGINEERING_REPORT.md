@@ -2638,3 +2638,21 @@ midas-cold-retention-full-gate.service,1CPU/4GiB/1200s; source frozen. Backup
 6d1d7665c4f0a46072c6d0448ae18c9c158eeae97b802ada93afb1c2b5378128 and2195
 payloads verified. API/archive/owner healthy. Production remains untouched.
 Exact next steps and gate source hashes: PROMETHEUS_COLD_RETENTION_PLAN.json.
+
+## Cold-retention independent audit and bounded pilot admission
+
+Separate verifier compares every cold SQLite payload against exact original
+backup bytes, plus row coverage, financial/journal hashes and frozen metadata.
+Four tests pass, including recompressed-identical JSON rejection. Coordinator
+refuses prior state, failed gate and source drift; three refusal tests pass.
+Combined seven tests pass1.95s. These tests were added after full-gate collection
+and are validated separately, not claimed as part of that full gate.
+Commitc594974 includes gate-bound coordinator and extended tool hash plan.
+Six producer scripts and exact plan copied to retained pilot source directory.
+Actual midas-cold-retention-pilot.service PID837845 is active, WAITING_GATE,
+1CPU/4GiB/1800s. It will only deploy/prepare/audit/remove a verified hot duplicate
+after the exact full gate succeeds. Then API replay, restoration, original-source
+model inference and self-contained export verification. Browser remains a final
+root check. Packages and listed tools frozen until both units terminal. No
+production copy removed yet. Do not restart the pilot if observation times out.
+Prometheus remains active.

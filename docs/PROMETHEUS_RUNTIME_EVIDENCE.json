@@ -8,7 +8,7 @@
   "arena_research_tournaments": 25,
   "arena_source_datasets": 5,
   "arena_tournaments": 26,
-  "checked_at": 1791908907.8891513,
+  "checked_at": 1791909187.4537632,
   "dataset_quality": [
     "Identical observable vectors occur across partitions. Independent scenario IDs do not guarantee covariate diversity; inspect repeated synthetic grids.",
     "Some scenario families contain one settlement seed parity only. The current generator uses seed parity for settlement; reorder families and shift seeds before making generalization claims.",
@@ -10896,6 +10896,19 @@
     "focused_tests_passed": 13,
     "frontend_tests_passed": 19,
     "cold_cap_bytes": 1073741824,
-    "production_copies_removed": false
+    "production_copies_removed": false,
+    "independent_verifier_and_coordinator_tests": 7
+  },
+  "active_retention_pilot": {
+    "unit": "midas-cold-retention-pilot.service",
+    "pid": 837845,
+    "cpu_cores": 1,
+    "memory_mb": 4096,
+    "wall_seconds": 1800,
+    "state": "WAITING_GATE",
+    "state_path": "data/arena/retention-pilots/finite-pilot-1/state.json",
+    "log": "docs/PROMETHEUS_COLD_RETENTION_PILOT.log",
+    "stop": "systemctl --user stop midas-cold-retention-pilot.service",
+    "source_frozen": true
   }
 }

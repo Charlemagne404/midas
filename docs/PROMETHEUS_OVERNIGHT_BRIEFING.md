@@ -1,5 +1,15 @@
 # MIDAS — PROMETHEUS OVERNIGHT BRIEFING
 
+## Cold-retention pilot waiting on actual full regression
+
+Independent exact-backup verifier4tests and coordinator refusal3tests pass.
+Native supervised pilot midas-cold-retention-pilot.service is active,waiting
+on midas-cold-retention-full-gate.service. Finite plan preserves original backup,
+checks all cold replay bytes before removal, then API/restoration/captured-source
+inference/export. Browser remains a separate final check. Both source/tool sets
+frozen; no production copy removed yet. Stop pilot separately through systemctl;
+never blindly duplicate it after an observation timeout. Prometheus active.
+
 ## Current engineering — bounded cold retention full gate
 
 Exact packed replay cold retention implemented, not yet applied to production.
