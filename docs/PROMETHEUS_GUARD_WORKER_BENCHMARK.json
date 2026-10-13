@@ -1,0 +1,52 @@
+{
+  "purpose": "PERFORMANCE_REPLAY_OF_OPENED_WORKLOAD",
+  "reference_unwind": "unwind-2f909c9b1005402c8797a79a",
+  "ballast_bytes": 808176649,
+  "ballast_files": 55923,
+  "results": [
+    {
+      "worker": "captured_full_scan",
+      "wall_seconds": 173.8696041830117,
+      "worker_elapsed_seconds": 171.9388186049764,
+      "runtime_profile": {
+        "artifact_bytes": 818477721,
+        "artifact_files": 56711,
+        "artifact_scan_seconds": 116.76950463984394,
+        "artifact_scans": 722,
+        "progress_publish_seconds": 4.890051294292789
+      },
+      "artifact_guard": null,
+      "source_hash": "552f0f8de28d749afa80e6593b60bc8e5db194ad42ea2294b7c278e4fd709542",
+      "identical_variants": 720
+    },
+    {
+      "worker": "event_index",
+      "wall_seconds": 60.26960194396088,
+      "worker_elapsed_seconds": 58.28975714097032,
+      "runtime_profile": {
+        "artifact_bytes": 818489371,
+        "artifact_files": 56712,
+        "artifact_index_fallbacks": 0,
+        "artifact_index_init_seconds": 2.6728371189674363,
+        "artifact_index_reconciliations": 1,
+        "artifact_observations": 722,
+        "artifact_scan_seconds": 0.2027566921315156,
+        "artifact_scans": 1,
+        "progress_publish_seconds": 4.6315388603834435
+      },
+      "artifact_guard": {
+        "last_error": null,
+        "mode": "EVENT_INDEX",
+        "watch_count": 57578
+      },
+      "source_hash": "53d813bd3a18c44c7d4819f7df11cd3fd5db25b27825e463adbe51ebea5cf2e1",
+      "identical_variants": 720
+    }
+  ],
+  "limitations": [
+    "One sequential old/new pair on this host; cache/order and load effects remain.",
+    "No new independent economic evidence, training, selection or promotion.",
+    "All financial/journal hashes match the original opened cohort.",
+    "Temporary copied workspaces removed; original research artifacts untouched."
+  ]
+}
