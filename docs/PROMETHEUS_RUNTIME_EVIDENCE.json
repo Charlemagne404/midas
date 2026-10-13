@@ -1,5 +1,26 @@
 {
-  "active_jobs": [],
+  "active_jobs": [
+    {
+      "job_id": "job-0eac68ccf36a43fb9afdcc6c",
+      "state": "RUNNING",
+      "progress": {
+        "done": 314,
+        "total": 720
+      },
+      "unit": "midas-arena-job-0eac68ccf36a43fb9afdcc6c.service",
+      "budget": {
+        "cpu_cores": 1,
+        "max_artifact_mb": 1024,
+        "memory_mb": 4096,
+        "minimum_available_memory_mb": 2048,
+        "wall_seconds": 1200
+      },
+      "active_artifact": {
+        "identity": "unwind-2f909c9b1005402c8797a79a",
+        "kind": "unwinds"
+      }
+    }
+  ],
   "active_research_director": null,
   "arena_datasets": 6,
   "arena_fitted_models": 42,
@@ -8,7 +29,7 @@
   "arena_research_tournaments": 23,
   "arena_source_datasets": 5,
   "arena_tournaments": 24,
-  "checked_at": 1791849797.5958133,
+  "checked_at": 1791850398.6194456,
   "dataset_quality": [
     "Identical observable vectors occur across partitions. Independent scenario IDs do not guarantee covariate diversity; inspect repeated synthetic grids.",
     "Some scenario families contain one settlement seed parity only. The current generator uses seed parity for settlement; reorder families and shift seeds before making generalization claims.",
@@ -22,8 +43,8 @@
     "live_execution": false,
     "paper_recovery": {
       "status": "CHECKPOINT_VERIFIED",
-      "journal_events": 51973,
-      "revision": 51972
+      "journal_events": 52298,
+      "revision": 52297
     },
     "laboratory": {
       "status": "READY",
@@ -115,10 +136,13 @@
     "champion_promoted": false
   },
   "current_regression": {
-    "state": "RUNNING_SUPERVISED",
+    "state": "COMPLETED",
     "log": "docs/PROMETHEUS_UNWIND_FULL_TESTS.log",
-    "unit": "midas-unwind-campaign-393071.service",
-    "latest_completed_full_gate": "424 passed, one skipped on prior joint-study source"
+    "passed": 449,
+    "skipped": 1,
+    "warnings": 1,
+    "duration_seconds": 565.14,
+    "additional_reexecution_tests_passed": 3
   },
   "joint_cost_study": {
     "preregistration": "docs/PROMETHEUS_JOINT_COST_PREREGISTRATION.json",
@@ -140,15 +164,17 @@
     "payloads_verified": 4002
   },
   "unwind_campaign": {
-    "phase": "FULL_GATE",
+    "phase": "RESEARCHING",
     "unit": "midas-unwind-campaign-393071.service",
     "state_path": "data/arena/unwind-campaigns/campaign-393071/state.json",
     "source_checkpoint": "198fdf2",
     "source_groups": 60,
     "planned_correlated_variants": 720,
-    "study_admitted": false,
+    "study_admitted": true,
     "cpu_cores": 1,
     "memory_mb": 4096,
-    "supervisor_wall_seconds": 3600
+    "supervisor_wall_seconds": 3600,
+    "job_id": "job-0eac68ccf36a43fb9afdcc6c",
+    "unwind_id": "unwind-2f909c9b1005402c8797a79a"
   }
 }

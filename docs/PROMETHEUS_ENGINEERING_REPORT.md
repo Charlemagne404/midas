@@ -2111,3 +2111,20 @@ no-trade reexecution and rejection of source drift/changed row bytes. They ran
 separately after the supervised suite had collected its tests and are not included
 in that pending full-gate count. Campaign process59831 and its pytest child59852
 were confirmed live; source and captured tool checksums remain frozen.
+
+## Unwind full gate passed and production worker admitted
+
+Supervised source regression449 passed/one PostgreSQL skip/existing Starlette
+warning in565.14 seconds; three separately executed reexecution tests are outside
+this collected full-suite count. The campaign recorded exit0, restarted the
+original API and confirmed READY with CHECKPOINT_VERIFIED52262 journal events.
+No startup/Laboratory recovery errors were observed.
+
+Exactly one native job-0eac68ccf36a43fb9afdcc6c was admitted and confirmed RUNNING,
+unwind-2f909c9b1005402c8797a79a,60 source groups /720 correlated variants.
+The one-CPU/4GiB/1200s worker remains bounded and source-frozen. Independent
+verification/export follows only after completed research. Exact-reexecution
+tool and documentation were attached to the study's analysis-tools directory
+before export; this changes no package source, financial replay or intervention.
+No production outcomes are yet claimed. Preserve captured campaign tools and
+package source until both worker and campaign terminate.
