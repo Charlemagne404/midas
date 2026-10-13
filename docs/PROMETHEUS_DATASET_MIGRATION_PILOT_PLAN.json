@@ -30,5 +30,22 @@
     "parent/producer lineage and portable export",
     "actual API/browser rows/labels",
     "protected archive health"
-  ]
+  ],
+  "model_parameters": {
+    "model-f51ed0dcc4094f2d9cbae2f2": "a1ddf5a19d6cb1ad942ce8fc1cc3d63ec2e2f6ddf5dfc8fc46eb052be777e565",
+    "model-ef77bbbd7d1f4be78c41c0b6": "1792f51e5c8b0cbd1ba6e7c7fbf52c3cb893c485de8a129194b005616d5c52fe",
+    "model-f587b98d06f34441bb040877": "ee31b6988f035ab90c1872c1bf32d78c985ee5a5b09d57c21fff97193d3b5c3a"
+  },
+  "tool_hashes": {
+    "run_dataset_migration_pilot.py": "ed4317653c686e5fc179b7469134205006903876a08aa5da052e56ba7a0e3a23",
+    "verify_dataset_migration.py": "6ab0afaf3ad88571b1b428c03936d65026ec2cdcfdb18f3a53fda6d17974350d",
+    "arena_bundle.py": "537012b6608d80c7f3c705a2f7062b5a166908b4aad2b96909f1b1bbfaa1f70b",
+    "finalize_joint_cost_study.py": "9448ccad718209cd76eb3d0f6f7f37f5f26dac8228e6aa1bd2a54263ba89b1d4",
+    "run_generator_audit.py": "396306cd82bc29c3b92028674ef5e3b0b56982e4ea04094cbad4d8f384310682",
+    "verify_generator_pair.py": "06e17ec0a4489769bd3f953c078a7fa2321c773282e7c3cb3357e4957dfaaddb",
+    "capture_public_series.py": "a2ebba53492d2c9907a05973c55121028b3a60a9fffaad35e06cfbb9871ee0cd"
+  },
+  "coordinator_unit": "midas-dataset-migration-pilot.service",
+  "state_path": "data/arena/migration-pilots/schema-pilot-1/state.json",
+  "result_path": "docs/PROMETHEUS_DATASET_MIGRATION_RESULT.json"
 }
