@@ -282,6 +282,14 @@ type Overview = {
   tournaments: Tournament[];
   jobs: Job[];
   dependencies: Record<string, boolean>;
+  cold_storage?: {
+    bytes: number;
+    limit_bytes: number;
+    stores: number;
+    references: number;
+    missing_stores: number;
+    scope: string;
+  };
   health: { memory_mb: Record<string, number>; worker_cpu_cores: number; worker_memory_mb: number };
   findings: {
     title: string;
@@ -731,6 +739,14 @@ export function Arena() {
               </div>
             ))}
           </div>
+          {data?.cold_storage && (
+            <p className="lab-note">
+              Archived replays: {(data.cold_storage.bytes / 1024 ** 2).toFixed(1)} MiB /{' '}
+              {(data.cold_storage.limit_bytes / 1024 ** 2).toFixed(0)} MiB ·{' '}
+              {data.cold_storage.references} study references · {data.cold_storage.missing_stores}{' '}
+              unavailable stores. Availability checked; checksum audits run separately.
+            </p>
+          )}
           <div className="lab-two">
             <Section title="Research evidence">
               <p className="lab-note">

@@ -11,6 +11,28 @@ from contextlib import closing
 from pathlib import Path
 from typing import Any
 
+COLD_REPLAY_LIMIT = 1024**3
+
+
+def cold_storage_status(root: Path) -> dict[str, Any]:
+    cold = root.parent / (root.name + "-cold")
+    if cold.is_symlink():
+        raise ValueError("Cold replay symlinks are not supported")
+    stores = list(cold.glob("*/replays.sqlite"))
+    total = sum(p.stat().st_size for p in stores)
+    references = []
+    for kind in ("tournaments", "recoveries", "unwinds"):
+        references.extend((root / kind).glob("*/replays/cold.json"))
+    missing = sum(not replay_database(p.parent).is_file() for p in references)
+    return {
+        "bytes": total,
+        "limit_bytes": COLD_REPLAY_LIMIT,
+        "stores": len(stores),
+        "references": len(references),
+        "missing_stores": missing,
+        "scope": "Separate bounded replay tier; file availability only, not a full checksum audit.",
+    }
+
 
 def sha256(path: Path) -> str:
     h = hashlib.sha256()
@@ -67,6 +89,39 @@ def artifact_path(root: Path, kind: str, identity: str) -> Path:
     return root / kind / identity
 
 
+def replay_database(directory: Path) -> Path:
+    """Resolve a packed store, including a confined content-addressed cold copy."""
+    local = directory / "replays.sqlite"
+    if local.is_file():
+        return local
+    marker = directory / "cold.json"
+    if not marker.exists():
+        return local
+    record = json.loads(marker.read_text())
+    study = directory.parent
+    root = study.parent.parent
+    checksum = record.get("database_sha256", "")
+    if (
+        record.get("version") != "cold-replays-1"
+        or study.parent.name not in {"tournaments", "recoveries", "unwinds"}
+        or directory.name != "replays"
+        or record.get("identity") != study.name
+        or record.get("kind") != study.parent.name
+        or not re.fullmatch(r"[a-f0-9]{64}", checksum)
+    ):
+        raise ValueError("Invalid cold replay reference")
+    cold = root.parent / (root.name + "-cold")
+    target = cold / checksum / "replays.sqlite"
+    if cold.is_symlink() or target.parent.is_symlink() or target.is_symlink():
+        raise ValueError("Cold replay symlinks are not supported")
+    packing = json.loads((directory / "packing.json").read_text())
+    if packing["database_sha256"] != checksum or packing["rows_sha256"] != record.get(
+        "rows_sha256"
+    ):
+        raise ValueError("Cold replay provenance differs")
+    return target
+
+
 def read_replay(path: Path) -> dict[str, Any]:
     try:
         result: dict[str, Any] = json.loads(path.read_text())
@@ -79,10 +134,20 @@ def read_replay(path: Path) -> dict[str, Any]:
             return result
     except FileNotFoundError:
         pass
-    database = path.parent / "replays.sqlite"
+    database = replay_database(path.parent)
     if not database.is_file():
-        raise FileNotFoundError(path)
-    with closing(sqlite3.connect(database.resolve().as_uri() + "?mode=ro", uri=True)) as connection:
+        database = replay_database(path.parent)
+        if not database.is_file():
+            raise FileNotFoundError(path)
+    try:
+        opened = sqlite3.connect(database.resolve().as_uri() + "?mode=ro", uri=True)
+    except sqlite3.OperationalError:
+        # A verified archive operation can unlink the local store after lookup.
+        if database.exists():
+            raise
+        database = replay_database(path.parent)
+        opened = sqlite3.connect(database.resolve().as_uri() + "?mode=ro", uri=True)
+    with closing(opened) as connection:
         if connection.execute("pragma user_version").fetchone()[0] != 1:
             raise ValueError("Unsupported packed replay schema")
         row = connection.execute(

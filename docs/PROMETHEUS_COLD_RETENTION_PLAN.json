@@ -1,0 +1,32 @@
+{
+  "created_at": 1791908860.1672716,
+  "source_hash": "806a3b62949cf048a97340699951f4882830e02315702a26efa1b75f4893b4bc",
+  "tools": {
+    "archive_replays.py": "949cac62495fb935a8baa51ba36faa5ed59ba7f1bfa84b9a40df83825cda247f",
+    "pack_replays.py": "8556365bc65872317b9eb428175269eeeac9bc4c237466dd122380b28073aede",
+    "arena_bundle.py": "51b73af9e71a0cfb60b3e3beb8608b5430429a81e19fcb9edfecfe097c1afbdd",
+    "reproduce_archived_policy.py": "6d8f1fe1dc4c43bf47ab244b79e3946414ed780aa5a62890a6609f13d1ea9f46"
+  },
+  "full_gate_unit": "midas-cold-retention-full-gate.service",
+  "pilot_tournament": "tournament-244c26f362d3434084c7f3f3",
+  "backup": "data/exports/generator-audit-483071/tournament-244c26f362d3434084c7f3f3.tar.gz",
+  "backup_expected_sha256": "6d1d7665c4f0a46072c6d0448ae18c9c158eeae97b802ada93afb1c2b5378128",
+  "hot_usage_before": [
+    937184825,
+    62143
+  ],
+  "cold_limit_bytes": 1073741824,
+  "production_copies_removed": false,
+  "required_checks": [
+    "full backend gate",
+    "backup full payload verification",
+    "API reader deployment",
+    "prepare cold copy",
+    "independent all replay verification",
+    "hot removal",
+    "API/browser replay",
+    "exact source inference",
+    "original byte restoration",
+    "self-contained export verification"
+  ]
+}

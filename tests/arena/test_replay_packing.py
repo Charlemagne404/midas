@@ -147,3 +147,184 @@ def test_real_tournament_reproduces_and_exports_from_packed_store(tmp_path):
     output = tmp_path.parent / (identity + ".tar.gz")
     export_tournament(tmp_path, identity, output)
     assert verify_bundle(output) > 8
+
+
+def test_cold_retention_is_exact_idempotent_and_api_compatible(tmp_path):
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+
+    from apps.api.arena import router
+    from scripts.archive_replays import archive
+
+    root = tmp_path / "arena"
+    root.mkdir()
+    directory, expected = fixture(root)
+    originals = {p.name: p.read_bytes() for p in (directory / "replays").iterdir()}
+    pack(root, "tournaments", "tournament-test")
+    prune(root, "tournaments", "tournament-test")
+    prepared = archive(root, "tournaments", "tournament-test")
+    assert prepared["hot_copy_present"]
+    result = archive(root, "tournaments", "tournament-test", prune=True)
+    assert not result["hot_copy_present"]
+    assert result == archive(root, "tournaments", "tournament-test", prune=True)
+    assert restore(directory / "replays", tmp_path / "restored") == 3
+    assert {p.name: p.read_bytes() for p in (tmp_path / "restored").iterdir()} == originals
+    for name, replay in expected.items():
+        assert read_replay(directory / "replays" / (name + ".json")) == replay
+    app = FastAPI()
+    app.include_router(router(root))
+    with TestClient(app) as client:
+        assert client.get("/api/arena/tournaments/tournament-test/replay/1").json() == expected["1"]
+        status = client.get("/api/arena").json()["cold_storage"]
+        assert status["references"] == 1 and status["stores"] == 1
+        assert status["missing_stores"] == 0 and status["bytes"] > 0
+
+
+def test_cold_budget_and_corruption_never_remove_hot_evidence(tmp_path, monkeypatch):
+    from scripts import archive_replays as tool
+
+    root = tmp_path / "arena"
+    root.mkdir()
+    directory, _ = fixture(root)
+    pack(root, "tournaments", "tournament-test")
+    prune(root, "tournaments", "tournament-test")
+    monkeypatch.setattr(tool, "COLD_LIMIT", 1)
+    with pytest.raises(ValueError, match="budget"):
+        tool.archive(root, "tournaments", "tournament-test", prune=True)
+    assert (directory / "replays/replays.sqlite").exists()
+    monkeypatch.setattr(tool, "COLD_LIMIT", 1024**3)
+    record = tool.archive(root, "tournaments", "tournament-test")
+    cold = tmp_path / "arena-cold" / record["database_sha256"] / "replays.sqlite"
+    cold.write_bytes(b"corrupt")
+    with pytest.raises(ValueError, match="checksum"):
+        tool.archive(root, "tournaments", "tournament-test", prune=True)
+    assert (directory / "replays/replays.sqlite").exists()
+
+
+def test_cold_publication_failure_is_recoverable_without_duplicate_copy(tmp_path, monkeypatch):
+    from scripts import archive_replays as tool
+
+    root = tmp_path / "arena"
+    root.mkdir()
+    directory, expected = fixture(root)
+    pack(root, "tournaments", "tournament-test")
+    prune(root, "tournaments", "tournament-test")
+    publish = tool.atomic_json
+    monkeypatch.setattr(
+        tool, "atomic_json", lambda *args: (_ for _ in ()).throw(OSError("crash before marker"))
+    )
+    with pytest.raises(OSError, match="crash"):
+        tool.archive(root, "tournaments", "tournament-test", prune=True)
+    assert (directory / "replays/replays.sqlite").exists()
+    assert not (directory / "replays/cold.json").exists()
+    monkeypatch.setattr(tool, "atomic_json", publish)
+    tool.archive(root, "tournaments", "tournament-test", prune=True)
+    assert len(list((tmp_path / "arena-cold").glob("*/replays.sqlite"))) == 1
+    assert read_replay(directory / "replays/1.json") == expected["1"]
+
+
+def test_replay_read_retries_when_hot_store_disappears_after_lookup(tmp_path, monkeypatch):
+    from midas.arena import artifacts
+
+    from scripts.archive_replays import archive
+
+    root = tmp_path / "arena"
+    root.mkdir()
+    directory, expected = fixture(root)
+    pack(root, "tournaments", "tournament-test")
+    prune(root, "tournaments", "tournament-test")
+    archive(root, "tournaments", "tournament-test")
+    connect = artifacts.sqlite3.connect
+
+    def race(source_uri, **kwargs):
+        local = directory / "replays/replays.sqlite"
+        if local.exists():
+            local.unlink()
+        return connect(source_uri, **kwargs)
+
+    monkeypatch.setattr(artifacts.sqlite3, "connect", race)
+    assert read_replay(directory / "replays/1.json") == expected["1"]
+
+
+def test_invalid_cold_reference_and_symlink_are_rejected(tmp_path):
+    from scripts.archive_replays import archive
+
+    root = tmp_path / "arena"
+    root.mkdir()
+    directory, _ = fixture(root)
+    pack(root, "tournaments", "tournament-test")
+    prune(root, "tournaments", "tournament-test")
+    record = archive(root, "tournaments", "tournament-test", prune=True)
+    marker = directory / "replays/cold.json"
+    saved = marker.read_text()
+    changed = json.loads(saved)
+    changed["database_sha256"] = "../../escape"
+    atomic_json(marker, changed)
+    with pytest.raises(ValueError, match="reference"):
+        read_replay(directory / "replays/1.json")
+    marker.write_text(saved)
+    cold = tmp_path / "arena-cold" / record["database_sha256"] / "replays.sqlite"
+    moved = cold.with_suffix(".saved")
+    cold.rename(moved)
+    cold.symlink_to(moved)
+    with pytest.raises(ValueError, match="symlink"):
+        read_replay(directory / "replays/1.json")
+
+
+def test_cold_missing_payload_and_active_job_are_visible(tmp_path):
+    from scripts.archive_replays import archive
+
+    root = tmp_path / "arena"
+    root.mkdir()
+    directory, _ = fixture(root)
+    pack(root, "tournaments", "tournament-test")
+    prune(root, "tournaments", "tournament-test")
+    atomic_json(root / "jobs/job-test/job.json", {"state": "RUNNING"})
+    with pytest.raises(ValueError, match="active"):
+        archive(root, "tournaments", "tournament-test", prune=True)
+    atomic_json(root / "jobs/job-test/job.json", {"state": "COMPLETED"})
+    record = archive(root, "tournaments", "tournament-test", prune=True)
+    (tmp_path / "arena-cold" / record["database_sha256"] / "replays.sqlite").unlink()
+    with pytest.raises(FileNotFoundError):
+        read_replay(directory / "replays/1.json")
+
+
+def test_real_cold_tournament_exports_self_contained_and_reproduces(tmp_path):
+    import tarfile
+
+    from midas.arena.datasets import DatasetSpec, build
+    from midas.arena.reproduce import reproduce
+    from midas.arena.tournaments import TournamentSpec, run_tournament
+
+    from scripts.archive_replays import archive
+    from scripts.arena_bundle import export_tournament
+    from scripts.finalize_joint_cost_study import verify_bundle
+
+    root = tmp_path / "arena"
+    root.mkdir()
+    data = build(root, DatasetSpec(episodes=30, seed=1717))
+    study = run_tournament(
+        root,
+        TournamentSpec(
+            dataset_id=data["dataset_id"],
+            challenge=DatasetSpec(episodes=30, seed=483071),
+            max_episodes=2,
+            execution_models=("standard",),
+        ),
+    )
+    identity = study["tournament_id"]
+    pack(root, "tournaments", identity)
+    prune(root, "tournaments", identity)
+    archive(root, "tournaments", identity, prune=True)
+    rows = json.loads((root / "tournaments" / identity / "rows.json").read_text())
+    for row in rows:
+        assert reproduce(root, identity, row["id"])["verified"]
+    output = tmp_path / "bundle.tar.gz"
+    export_tournament(root, identity, output)
+    assert verify_bundle(output) > 8
+    extracted = tmp_path / "extracted"
+    with tarfile.open(output) as bundle:
+        assert not any(p.name.endswith("cold.json") for p in bundle)
+        bundle.extractall(extracted, filter="data")
+    for row in rows:
+        assert reproduce(extracted, identity, row["id"])["verified"]

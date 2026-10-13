@@ -13,7 +13,7 @@ import time
 from pathlib import Path
 from typing import Any
 
-from midas.arena.artifacts import artifact_path, read_replay, sha256
+from midas.arena.artifacts import artifact_path, read_replay, replay_database, sha256
 from midas.arena.datasets import load
 from midas.economics.attestation import digest
 
@@ -371,6 +371,21 @@ def write_bundle(
     output: Path,
 ) -> dict[str, Any]:
     """Publish one checksummed archive; all experiment-specific checks precede this."""
+    extras = dict(extras)
+    for marker in [
+        path for path in files if path.name == "cold.json" and path.parent.name == "replays"
+    ]:
+        database = replay_database(marker.parent)
+        packing = json.loads((marker.parent / "packing.json").read_text())
+        if sha256(database) != packing["database_sha256"]:
+            raise ValueError("Cold export database checksum differs")
+        local = marker.parent / "replays.sqlite"
+        if local not in files:
+            extras[local.relative_to(root).as_posix()] = database
+    # Bundles restore normal local replay stores and have no external-tier dependency.
+    files = [
+        path for path in files if not (path.name == "cold.json" and path.parent.name == "replays")
+    ]
     record: dict[str, Any] = {
         "bundle_version": "arena-experiment-3",
         reference_key: identity,

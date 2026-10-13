@@ -213,7 +213,10 @@ def router(root: Path) -> APIRouter:
             if line.startswith(("MemTotal:", "MemAvailable:", "SwapFree:")):
                 name, value, *_ = line.split()
                 memory[name.rstrip(":")] = int(value) // 1024
+        from midas.arena.artifacts import cold_storage_status
+
         return {
+            "cold_storage": cold_storage_status(root),
             "datasets": catalog("datasets"),
             "models": catalog("models"),
             "tournaments": catalog("tournaments"),

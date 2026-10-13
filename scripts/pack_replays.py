@@ -11,7 +11,7 @@ import tempfile
 from contextlib import closing, contextmanager
 from pathlib import Path
 
-from midas.arena.artifacts import artifact_path, atomic_json, read_replay, sha256
+from midas.arena.artifacts import artifact_path, atomic_json, read_replay, replay_database, sha256
 from midas.arena.jobs import artifact_usage
 from midas.economics.attestation import digest
 
@@ -195,13 +195,12 @@ def prune(root: Path, kind: str, identity: str) -> dict:
 
 def restore(directory: Path, destination: Path) -> int:
     record = json.loads((directory / "packing.json").read_text())
-    if sha256(directory / "replays.sqlite") != record["database_sha256"]:
+    database = replay_database(directory)
+    if sha256(database) != record["database_sha256"]:
         raise ValueError("Packed database changed")
     destination.mkdir(parents=True, exist_ok=True)
     count = 0
-    with closing(
-        sqlite3.connect((directory / "replays.sqlite").resolve().as_uri() + "?mode=ro", uri=True)
-    ) as connection:
+    with closing(sqlite3.connect(database.resolve().as_uri() + "?mode=ro", uri=True)) as connection:
         for filename, info in record["files"].items():
             if Path(filename).name != filename:
                 raise ValueError("Invalid restoration filename")

@@ -9,7 +9,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-from midas.arena.artifacts import artifact_path, read_replay, sha256
+from midas.arena.artifacts import artifact_path, read_replay, replay_database, sha256
 
 CHILD = """
 import json,sys
@@ -88,7 +88,7 @@ def reproduce(root: Path, identity: str, row_id: str) -> dict:
             )
             with closing(
                 sqlite3.connect(
-                    (study / "replays/replays.sqlite").resolve().as_uri() + "?mode=ro", uri=True
+                    replay_database(study / "replays").resolve().as_uri() + "?mode=ro", uri=True
                 )
             ) as connection:
                 payload = connection.execute(

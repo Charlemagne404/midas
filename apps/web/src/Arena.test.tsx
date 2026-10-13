@@ -18,6 +18,14 @@ it('creates a finite schedule and shows persisted failure alerts', async () => {
     findings: [],
     tournaments: [],
     dependencies: {},
+    cold_storage: {
+      bytes: 1048576,
+      limit_bytes: 1073741824,
+      stores: 1,
+      references: 2,
+      missing_stores: 1,
+      scope: 'Availability only',
+    },
     health: { memory_mb: {}, worker_cpu_cores: 1, worker_memory_mb: 4096 },
     schedules: [
       {
@@ -59,6 +67,9 @@ it('creates a finite schedule and shows persisted failure alerts', async () => {
     <QueryClientProvider client={client}>
       <Arena />
     </QueryClientProvider>,
+  );
+  expect(await screen.findByText(/Archived replays: 1.0 MiB/)).toHaveTextContent(
+    '1 unavailable stores',
   );
   fireEvent.click(await screen.findByRole('tab', { name: 'Research director' }));
   expect(await screen.findByText('Fixture interrupted child')).toBeVisible();
