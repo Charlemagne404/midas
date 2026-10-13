@@ -1,0 +1,5 @@
+{"phase": "WAITING_GATE"}
+{"phase": "DEPLOYING_API"}
+{"phase": "MIGRATING", "job_id": "job-15b63fe257c849aa8b796701", "unit": "midas-arena-job-15b63fe257c849aa8b796701.service"}
+{"phase": "VERIFYING", "dataset_id": "dataset-86acfda4bc54dc0bf99bf987"}
+{"phase": "VERIFIED", "report": "docs/PROMETHEUS_DATASET_MIGRATION_RESULT.json"}

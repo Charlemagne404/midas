@@ -1,14 +1,14 @@
 {
   "active_jobs": [],
   "active_research_director": null,
-  "arena_datasets": 6,
+  "arena_datasets": 7,
   "arena_fitted_models": 44,
   "arena_model_artifacts": 45,
   "arena_performance_replays": 1,
   "arena_research_tournaments": 26,
   "arena_source_datasets": 5,
   "arena_tournaments": 27,
-  "checked_at": 1791924101.325697,
+  "checked_at": 1791924599.6195252,
   "dataset_quality": [
     "Identical observable vectors occur across partitions. Independent scenario IDs do not guarantee covariate diversity; inspect repeated synthetic grids.",
     "Some scenario families contain one settlement seed parity only. The current generator uses seed parity for settlement; reorder families and shift seeds before making generalization claims.",
@@ -22,8 +22,8 @@
     "live_execution": false,
     "paper_recovery": {
       "status": "CHECKPOINT_VERIFIED",
-      "journal_events": 91177,
-      "revision": 91176
+      "journal_events": 92319,
+      "revision": 92318
     },
     "laboratory": {
       "status": "READY",
@@ -10873,25 +10873,16 @@
     "actual_multiday_tested": false
   },
   "latest_full_gate": {
-    "passed": 564,
+    "passed": 582,
     "skipped": 1,
-    "seconds": 726.72,
-    "log": "docs/PROMETHEUS_PPO_RESUMPTION_FULL_TESTS.log"
+    "seconds": 809.78,
+    "log": "docs/PROMETHEUS_DATASET_MIGRATION_FULL_TESTS.log"
   },
   "installer_and_schedule_verifier_gate": {
     "passed": 9,
     "seconds": 1.61
   },
-  "active_engineering_gate": {
-    "unit": "midas-dataset-migration-full-gate.service",
-    "pid": 1036523,
-    "cpu_cores": 1,
-    "memory_mb": 4096,
-    "wall_seconds": 1500,
-    "log": "docs/PROMETHEUS_DATASET_MIGRATION_FULL_TESTS.log",
-    "stop": "systemctl --user stop midas-dataset-migration-full-gate.service",
-    "source_frozen": true
-  },
+  "active_engineering_gate": null,
   "cold_retention": {
     "state": "VERIFIED",
     "cold_cap_bytes": 1073741824,
@@ -10954,25 +10945,17 @@
     "index_fallbacks": 0
   },
   "dataset_migration": {
-    "state": "IMPLEMENTED_GATE_RUNNING",
-    "focused_tests_passed": 17,
-    "frontend_tests_passed": 21,
-    "legacy_datasets_validated": 6,
-    "production_migrations": 0,
-    "plan": "docs/PROMETHEUS_DATASET_MIGRATION_PILOT_PLAN.json",
-    "independent_verifier_coordinator_tests_passed": 6
+    "state": "VERIFIED",
+    "source_dataset_id": "dataset-38ec6e9776097d8e36693372",
+    "dataset_id": "dataset-86acfda4bc54dc0bf99bf987",
+    "canonical_rows": 1593,
+    "predictors_equivalent": 3,
+    "source_files_unchanged": true,
+    "export_payloads": 95,
+    "isolated_export_verified": true,
+    "browser_page_errors": 0,
+    "scientific_samples_added": 0,
+    "models_trained": 0
   },
-  "active_dataset_migration_pilot": {
-    "unit": "midas-dataset-migration-pilot.service",
-    "pid": 1043717,
-    "cpu_cores": 1,
-    "memory_mb": 4096,
-    "wall_seconds": 2400,
-    "state": "WAITING_GATE",
-    "state_path": "data/arena/migration-pilots/schema-pilot-1/state.json",
-    "log": "docs/PROMETHEUS_DATASET_MIGRATION_PILOT.log",
-    "stop": "systemctl --user stop midas-dataset-migration-pilot.service",
-    "source_frozen": true,
-    "native_children_admitted": 0
-  }
+  "active_dataset_migration_pilot": null
 }

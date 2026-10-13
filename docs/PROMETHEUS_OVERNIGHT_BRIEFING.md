@@ -1,5 +1,16 @@
 # MIDAS — PROMETHEUS OVERNIGHT BRIEFING
 
+## Latest engineering — named-feature storage migration verified
+
+Fullgate582passed/oneskip;actualnativepilot completed.1593canonicalrows/source
+bytes/partitions/labels preserved;3frozenpredictors exactlyequivalent.95export
+payloads andisolatedextractedrows/predictors/lineageverify. Actualbrowser
+labels/controls/canonicalrow API pass,noerrors. API/archivehealthy.
+Sevenstoredsyntheticdatasetidentities,stillfivesourcecollections;no new
+independentdata/model fitting.45artifacts/44fitted unchanged. Bothunits terminal,
+sourcefreeze lifted. Earlier waiting/pilot notes superseded. Prometheusactive;
+next evidence-driven planning/modelquality andbroader remainingbacklog.
+
 ## Current activity — native migration pilot waiting on full regression
 
 Independent raw-storage/prediction verifier andcoordinator6tests pass,including

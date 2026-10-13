@@ -2819,3 +2819,23 @@ Packages/declaredtools/sourcefiles nowfrozen untilpilotterminal. Originaldata
 not rewritten,independentdata/models added0. Nextactualgate/pilotverifications,
 rootbundle/API/browser/archive checks andhoneststorage equivalence report.
 Prometheus remainsactive acrossfulloriginalscope.
+
+## Actual dataset migration and isolated export fully verified
+
+Full gate582passed/oneskip/one existing warning in809.78s. Bothgate/pilotunits
+terminal/inactiveexit0. Nativejob15b63fe257c849aa8b796701 completed3.69s under
+1CPU/4GiB/300s,zeroindexfallbacks. Originaldataset38ec6e9776097d8e36693372→
+namedstoredataset86acfda4bc54dc0bf99bf987.1593allfieldcanonicalrows andoriginal
+sourcefiletree identical;3frozenpredictors/tree/logistic/MLP outputs identical
+onall1593inputs. Portablebundle95payloadsverifySHA
+ed11c39c613a61fa040dcbd75b8630cccae546e5c20d2addb392c61f522afc59.
+Rootisolatedextraction independentlyverifiesallrows/predictors/lineage/normal
+loader. Actualbrowsermigrationlabel/control and25canonicalrows/19feature names
+pass,zeroerrors. API READY92319journalcheckpoint,protectedarchive162000/18000/
+162000,quickcheckOK,ownerlockheld. Catalog7storageidentities:5source,1target
+derivative,1storage migration;not7independentdata. Modelartifacts45/44fitted
+unchanged;scientificsamples/modelsadded0. Frozenproducers/original source retained.
+Sourcefreeze lifted. Datasetstoragecontractcomplete;broader DataFoundry/
+Prometheusstillactive. Next evidence-driven ResearchDirector/modelquality and
+remaining leagues/robustness/real-data objectives,without rerunningcompletedwork.
+Detailedresult:PROMETHEUS_DATASET_MIGRATION_RESULT.md.

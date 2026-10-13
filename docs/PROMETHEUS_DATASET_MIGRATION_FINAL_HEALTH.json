@@ -1,0 +1,40 @@
+{
+  "checked_at": 1791924435.602977,
+  "export_payloads_verified": 95,
+  "isolated_export_rows_verified": 1593,
+  "isolated_predictors_verified": 3,
+  "isolated_lineage": {
+    "dataset_id": "dataset-86acfda4bc54dc0bf99bf987",
+    "source_dataset_id": "dataset-38ec6e9776097d8e36693372",
+    "observation_hash": "9d4453c6ec5d665de20e2c06de42e31b3cf527b1064b65e9e952b736d6ece09c"
+  },
+  "health": {
+    "status": "READY",
+    "startup_status": "READY",
+    "startup_error": null,
+    "mode": "demo",
+    "live_execution": false,
+    "paper_recovery": {
+      "status": "CHECKPOINT_VERIFIED",
+      "journal_events": 92319,
+      "revision": 92318
+    },
+    "laboratory": {
+      "status": "READY",
+      "root": "/home/charlie/midas/data/laboratory-final",
+      "recovering_campaigns": [],
+      "recovery_errors": []
+    }
+  },
+  "protected_campaign_counts": [
+    162000,
+    18000,
+    162000
+  ],
+  "hot_usage": [
+    952764029,
+    62509
+  ],
+  "scientific_samples_added": 0,
+  "models_trained": 0
+}

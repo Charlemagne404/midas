@@ -1,0 +1,31 @@
+{
+  "dataset": "dataset-86acfda4bc54dc0bf99bf987",
+  "migrationLabelVisible": true,
+  "canonicalRowsStatus": 200,
+  "canonicalRowsTotal": 1593,
+  "pageRows": 25,
+  "featureSchema": [
+    "ask_sum",
+    "bid_sum",
+    "min_ask_depth",
+    "max_ask_depth",
+    "min_top_depth",
+    "max_spread",
+    "max_age_ms",
+    "fee_rate",
+    "capital_available",
+    "locked_capital",
+    "unmatched_quantity",
+    "proposed_quantity",
+    "conditional_edge",
+    "latency_ms",
+    "jitter_ms",
+    "liquidity_fraction",
+    "adverse_ticks",
+    "ack_delay_ms",
+    "observation_latency_ms"
+  ],
+  "canonicalVectors": true,
+  "migrationControlVisible": true,
+  "pageErrors": []
+}
