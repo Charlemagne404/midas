@@ -2347,3 +2347,21 @@ Corrected-source fullgatePID502070 and coordinatorPID502073 confirmed live;
 coordinator WAITING_GATE. Packages and captured tools remain frozen. Next:
 observe same gate, allow bounded pair after success, then root verification
 including reexecution from actual fixed logistic/MLP/PPO weights.
+
+## Corrected full gate passed; legacy revision study admitted automatically
+
+Exact corrected-source full regression489 passed/one PostgreSQL skip/existing
+warning in583.00 seconds. Coordinator observed its terminal success and admitted
+job-f61b7015fb224067b4b3f3ef,100 sourcegroups/2100 correlated variants under
+oneCPU/4GiB/1200s/unchanged1GiB Arena cap. Revised study remains waiting for
+the legacy job to complete. Packages and captured coordinator/verifier tools
+remain frozen; no pending result is claimed. API READY with70723 journal events
+verified. Native model inventory remains43 artifacts/42 fitted.
+
+Extended standalone inference reexecution tests5 passed43.50 seconds, now
+including actual isolated PPO training/archive reload and fitted cost forecast/
+quoted/scope requests, alongside classifier/half-size gate and all deterministic
+controls. These are smoke fixtures, not production training accomplishments.
+The extra five tests were introduced after full-gate collection and are reported
+separately. Next: observe exact native jobs, verify paired archived evidence,
+then root reexecute actual fixed logistic/MLP/PPO decisions and inspect UI.

@@ -1,5 +1,16 @@
 # MIDAS — PROMETHEUS OVERNIGHT BRIEFING
 
+## Current research — fixed generator pair admitted after489-test gate
+
+Corrected full regression489 passed/one skip in583 seconds. Coordinator
+`midas-generator-audit-483071.service` admitted legacy study
+`job-f61b7015fb224067b4b3f3ef` (100groups/2100 variants; oneCPU/4GiB/1200s).
+The revised study follows only after completion. Paired verification and exports
+remain pending. Package/captured producer source frozen; API READY.
+Five separate inference tests pass including actual isolated PPO/cost reloads.
+No production training or scientific improvement claimed. Native job cancellation
+is in Arena; stop the coordinator separately through systemctl. Prometheus active.
+
 ## Current activity — corrected generator audit waits for full gate
 
 First gate480 passed/one skip. A stronger verifier caught an asset-order

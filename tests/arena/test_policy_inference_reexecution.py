@@ -55,3 +55,78 @@ def test_rejects_different_inference_request(study, monkeypatch):
     row = next(row for row in rows if row["policy"] == "no_trade")
     with pytest.raises(ValueError, match="Frozen inference"):
         tool.reproduce(root, manifest["tournament_id"], row["id"])
+
+
+def test_reloads_actual_ppo_archive_and_recomputes_requests(study):
+    from midas.arena.rl import RLSpec, train_rl
+
+    root, existing, _ = study
+    model = train_rl(
+        root,
+        RLSpec(
+            dataset_id=existing["configuration"]["dataset_id"],
+            timesteps=512,
+            rollout_steps=64,
+            max_wall_seconds=120,
+        ),
+    )
+    report = run_tournament(
+        root,
+        TournamentSpec(
+            dataset_id=model["dataset_id"],
+            model_ids=(model["model_id"],),
+            challenge=DatasetSpec(episodes=30, seed=513071),
+            max_episodes=2,
+            execution_models=("standard",),
+            generator_revision=GeneratorRevision(),
+        ),
+    )
+    rows = json.loads((root / "tournaments" / report["tournament_id"] / "rows.json").read_text())
+    for row in rows:
+        if row["policy"] == model["model_id"]:
+            proof = tool.reproduce(root, report["tournament_id"], row["id"])
+            assert proof["verified"] and proof["decisions_recomputed"] > 0
+
+
+def test_reloads_actual_cost_model_and_recomputes_all_preferences(tmp_path):
+    from midas.arena.cost_policy import CostGateSpec
+    from midas.arena.costs import CostSpec
+    from midas.arena.costs import train as train_cost
+    from midas.laboratory.spec import Costs
+
+    costs = Costs(operating_per_fill=".01", redemption_cost=".02", annual_financing_rate=".05")
+    data = build(
+        tmp_path,
+        DatasetSpec(
+            episodes=60,
+            seed=323071,
+            decision_scope="first_admitted",
+            retain_execution_costs=True,
+            costs=costs,
+        ),
+    )
+    model = train_cost(tmp_path, CostSpec(dataset_id=data["dataset_id"], family="ridge"))
+    gate = CostGateSpec(model_id=model["model_id"])
+    report = run_tournament(
+        tmp_path,
+        TournamentSpec(
+            dataset_id=data["dataset_id"],
+            cost_gates=(gate,),
+            max_episodes=2,
+            challenge=DatasetSpec(
+                episodes=30,
+                seed=333071,
+                decision_scope="first_admitted",
+                retain_execution_costs=True,
+                costs=costs,
+            ),
+            execution_models=("standard",),
+        ),
+    )
+    rows = json.loads(
+        (tmp_path / "tournaments" / report["tournament_id"] / "rows.json").read_text()
+    )
+    for row in rows:
+        if row["policy"] in report["cost_policy_bindings"]:
+            proof = tool.reproduce(tmp_path, report["tournament_id"], row["id"])
+            assert proof["verified"] and proof["decisions_recomputed"] > 0
