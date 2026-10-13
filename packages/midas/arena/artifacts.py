@@ -5,7 +5,9 @@ import hashlib
 import json
 import os
 import re
+import sqlite3
 import tempfile
+from contextlib import closing
 from pathlib import Path
 from typing import Any
 
@@ -64,11 +66,32 @@ def artifact_path(root: Path, kind: str, identity: str) -> Path:
 
 
 def read_replay(path: Path) -> dict[str, Any]:
-    if path.exists():
+    try:
         result: dict[str, Any] = json.loads(path.read_text())
-    else:
+        return result
+    except FileNotFoundError:
+        pass
+    try:
         with gzip.open(path.with_suffix(".json.gz"), "rt") as f:
             result = json.load(f)
+            return result
+    except FileNotFoundError:
+        pass
+    database = path.parent / "replays.sqlite"
+    if not database.is_file():
+        raise FileNotFoundError(path)
+    with closing(sqlite3.connect(database.resolve().as_uri() + "?mode=ro", uri=True)) as connection:
+        if connection.execute("pragma user_version").fetchone()[0] != 1:
+            raise ValueError("Unsupported packed replay schema")
+        row = connection.execute(
+            "select payload, sha256 from replays where name=?", (path.name,)
+        ).fetchone()
+    if row is None:
+        raise FileNotFoundError(path)
+    payload, expected = row
+    if hashlib.sha256(payload).hexdigest() != expected:
+        raise ValueError("Packed replay checksum differs")
+    result = json.loads(gzip.decompress(payload))
     return result
 
 

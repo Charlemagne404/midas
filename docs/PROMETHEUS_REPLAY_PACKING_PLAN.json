@@ -1,0 +1,22 @@
+{
+  "created_at": 1791904897.3535318,
+  "source_hash": "5372633ef884936d09da1bad6c6b2167481a06e9755f312c1232e012f992913b",
+  "kind": "tournaments",
+  "identity": "tournament-244c26f362d3434084c7f3f3",
+  "phase": "PLANNED_NOT_EXECUTED",
+  "backup": "data/exports/generator-audit-483071/tournament-244c26f362d3434084c7f3f3.tar.gz",
+  "backup_sha256": "6d1d7665c4f0a46072c6d0448ae18c9c158eeae97b802ada93afb1c2b5378128",
+  "requirements": [
+    "Successful full regression and updated original API reader",
+    "No queued/active research jobs; admission and worker leases held",
+    "Verified backup payloads and existing row hash",
+    "Pack without removing loose files; check SQLite integrity and exact byte restoration",
+    "Prune only after packed reader/restore verification; interrupted pruning remains readable",
+    "Verify all financial/journal hashes and representative API replays after pruning"
+  ],
+  "safety": [
+    "Protected Laboratory archive is outside allowed packing kinds",
+    "Arena logical cap remains1GiB; temporary headroom checked",
+    "No model fitting, policy selection or economic outcome modification"
+  ]
+}
