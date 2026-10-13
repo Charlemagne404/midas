@@ -8,7 +8,7 @@
   "arena_research_tournaments": 26,
   "arena_source_datasets": 5,
   "arena_tournaments": 27,
-  "checked_at": 1791924599.6195252,
+  "checked_at": 1791926206.411517,
   "dataset_quality": [
     "Identical observable vectors occur across partitions. Independent scenario IDs do not guarantee covariate diversity; inspect repeated synthetic grids.",
     "Some scenario families contain one settlement seed parity only. The current generator uses seed parity for settlement; reorder families and shift seeds before making generalization claims.",
@@ -10882,7 +10882,15 @@
     "passed": 9,
     "seconds": 1.61
   },
-  "active_engineering_gate": null,
+  "active_engineering_gate": {
+    "unit": "midas-evidence-planning-full-gate.service",
+    "cpu_cores": 1,
+    "memory_mb": 4096,
+    "wall_seconds": 1800,
+    "log": "docs/PROMETHEUS_EVIDENCE_PLANNING_FULL_TESTS.log",
+    "stop": "systemctl --user stop midas-evidence-planning-full-gate.service",
+    "source_frozen": true
+  },
   "cold_retention": {
     "state": "VERIFIED",
     "cold_cap_bytes": 1073741824,
@@ -10957,5 +10965,13 @@
     "scientific_samples_added": 0,
     "models_trained": 0
   },
-  "active_dataset_migration_pilot": null
+  "active_dataset_migration_pilot": null,
+  "evidence_planning": {
+    "state": "IMPLEMENTED_GATE_RUNNING",
+    "plan_id": "plan-42eee9132b78af48420aa748",
+    "focused_backend_passed": 23,
+    "frontend_passed": 22,
+    "production_job_admitted": false,
+    "new_models_trained": 0
+  }
 }

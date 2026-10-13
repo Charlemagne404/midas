@@ -1,5 +1,16 @@
 # MIDAS — PROMETHEUS OVERNIGHT BRIEFING
 
+## Current engineering — evidence-selected capacity question full gate
+
+Planner validates actualcompleted PPOplateau pluscomparableclassifier evidence
+and proposesbounded width16/64,two-seed,validation-only followup onfreshgroups.
+Nativeexecution,source/evidencebinding,stableadmission,owner liveness andportable
+selection snapshots implemented.23focused backend and22frontend tests pass,
+typing/lint/buildpass. Actualplan42eee9132b78af48420aa748 PROPOSED,notexecuted.
+Fullregression midas-evidence-planning-full-gate.service active;sourcefrozen.
+No newmodels orpolicyimprovementclaim. One automaticquestiontemplate,broader
+planning stillunfinished. Nextexactgate/independentnativeplanstudy. Prometheusactive.
+
 ## Latest engineering — named-feature storage migration verified
 
 Fullgate582passed/oneskip;actualnativepilot completed.1593canonicalrows/source

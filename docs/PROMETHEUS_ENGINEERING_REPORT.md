@@ -2839,3 +2839,27 @@ Sourcefreeze lifted. Datasetstoragecontractcomplete;broader DataFoundry/
 Prometheusstillactive. Next evidence-driven ResearchDirector/modelquality and
 remaining leagues/robustness/real-data objectives,without rerunningcompletedwork.
 Detailedresult:PROMETHEUS_DATASET_MIGRATION_RESULT.md.
+
+## Evidence-selected finite research planning implemented and proposed
+
+Automatic rule checks completed PPO plateau againstactualpairedrows over>=30
+sourcegroups,comparable same-observation classifier validation/weights, and
+existing MLP widths limited32. Selects a different bounded hypothesis:16/64width
+MLPs×seeds11/29 (fourfits),validation-only representative/simplicityselection,
+100freshsourcegroups withmatched supportwarning/abstention (atmost4200variants).
+Freshness rejects previouslyusedseeds evenif familiesreordered,includingprior
+declaredjobs. Source/data/evidenceSHA andimmutableinputsnapshots bound into
+frozen executableplan. Nativeplankind retainsbudgets,96MiBheadroomguard,stable
+admissionkey,owner liveness andexplicitfailure recovery. Noautomaticpromotion.
+Planexport includesselection snapshots andfull Director/stage/model/dataset/source
+evidence. One supported automaticquestionfamily,notgeneralLLMscientificreasoning.
+Backend23tests pass250.85s includingrealnativefourfit/three-stage/export;
+frontend22tests andtyping/lint/buildpass. Read-onlyactualregistrycheck6comparable
+completionpredictors,widths32. Actual proposalplan42eee9132b78af48420aa748
+binds completedfindingppo-resumption573071 andmigrateddataset86acfda4bc54dc0bf99bf987;
+source/evidencecaptured,productionexecutionnotadmitted. Full gate
+midas-evidence-planning-full-gate.service nowactive,1CPU/4GiB/1800s. Package/
+arena_bundle sourcefrozen. Latestcompletefullgate582passed/oneskip. Next
+independentstudyverifier/coordinator,exactgate thenone nativeplan execution,
+validationselection/accounting/freshpairs/rootexports/browser/health checks.
+No newproductionmodels fromimplementation/proposal. Prometheusremainsactive.
