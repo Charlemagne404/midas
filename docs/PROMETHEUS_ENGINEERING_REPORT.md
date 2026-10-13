@@ -2723,3 +2723,15 @@ coordinator separately from admitted native children; no blind restart if an
 observation times out. API READY. Next: verify actualgate/studies, root exports/
 inference/browser/archive checks, then scientific report and further backlog.
 Prometheus remains active.
+
+## Actual PPO full gate passed; first native parent admitted
+
+Full suite564passed,oneskip,one existing warning in726.72s. Original gateunit
+terminal/inactiveexit0. Coordinator deployed API and admitted actual native parent
+job-0860d48702604139875b4e37,2048transitions,seed7,1CPU/4GiB/1800s. Child4096total
+and100freshgroups follow from the fixed source-bound plan. Parent training is
+active; do not count it as a completed fitted artifact yet. Source/tool freeze
+continues. Do not duplicate/replace this coordinator or child on observation
+timeouts. Next: verify parent/child actual counters/immutability, frozen challenge
+and independent accounting/export, then root API/browser/source inference checks.
+Prometheus remains active; no policy improvement inferred from training progress.

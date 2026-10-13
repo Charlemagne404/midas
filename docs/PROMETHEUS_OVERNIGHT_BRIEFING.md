@@ -1,5 +1,14 @@
 # MIDAS — PROMETHEUS OVERNIGHT BRIEFING
 
+## Current activity — PPO native parent training after564-test gate
+
+Full gate564passed/oneskip in726.72s. Original API deployed; native parent
+job-0860d48702604139875b4e37 is active,2048transitions,1CPU/4GiB/1800s.
+Source-bound coordinator proceeds to4096total continuation and100freshgroups
+only after completed stages. Models not yet counted as completed; no improvement
+claim. Packages/tools frozen. Earlier waiting-gate notes superseded.
+Prometheus active; do not restart this actual job after observation timeouts.
+
 ## Current activity — source-bound PPO study waiting on regression
 
 Coordinator/verifier7tests pass, including real small PPO continuation and

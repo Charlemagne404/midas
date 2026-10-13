@@ -1,5 +1,77 @@
 {
-  "active_jobs": [],
+  "active_jobs": [
+    {
+      "active_artifact": {
+        "identity": "model-8b05e3b3a9a24008981398e6",
+        "kind": "models"
+      },
+      "admission_key": "ppo-resumption-573071-parent",
+      "artifact_guard": {
+        "last_error": null,
+        "mode": "EVENT_INDEX",
+        "watch_count": 63238
+      },
+      "budget": {
+        "cpu_cores": 1,
+        "max_artifact_mb": 1024,
+        "memory_mb": 4096,
+        "minimum_available_memory_mb": 2048,
+        "wall_seconds": 1800
+      },
+      "configuration": {
+        "cost": null,
+        "dataset": null,
+        "director": null,
+        "kind": "rl",
+        "max_wall_seconds": 1800,
+        "model_id": null,
+        "observations": null,
+        "policy_search": null,
+        "recovery": null,
+        "rl": {
+          "dataset_id": "dataset-38ec6e9776097d8e36693372",
+          "hidden_size": 32,
+          "learning_rate": 0.0003,
+          "max_wall_seconds": 1800,
+          "resume_from": null,
+          "rollout_steps": 128,
+          "seed": 7,
+          "timesteps": 2048
+        },
+        "severity": null,
+        "sweep": null,
+        "tournament": null,
+        "training": null,
+        "unwind": null
+      },
+      "created_at": 1791921369.3512828,
+      "elapsed_seconds": 49.871651166002266,
+      "error": null,
+      "job_id": "job-0860d48702604139875b4e37",
+      "pid": 1010526,
+      "progress": {
+        "done": 1728,
+        "total": 2048
+      },
+      "result": null,
+      "runtime_profile": {
+        "artifact_bytes": 908743160,
+        "artifact_files": 62238,
+        "artifact_index_fallbacks": 0,
+        "artifact_index_init_seconds": 2.9974018349894322,
+        "artifact_index_reconciliations": 1,
+        "artifact_observations": 28,
+        "artifact_scan_seconds": 0.01033581217052415,
+        "artifact_scans": 1,
+        "progress_publish_seconds": 0.17749465280212462
+      },
+      "started_at": 1791921373.8874154,
+      "state": "RUNNING",
+      "submitted_source_hash": "58f4072d195c210d6e94386774bf460034129facc2d6515e12eb72615165be12",
+      "unit": "midas-arena-job-0860d48702604139875b4e37.service",
+      "updated_at": 1791921420.7615573
+    }
+  ],
   "active_research_director": null,
   "arena_datasets": 6,
   "arena_fitted_models": 42,
@@ -8,7 +80,7 @@
   "arena_research_tournaments": 25,
   "arena_source_datasets": 5,
   "arena_tournaments": 26,
-  "checked_at": 1791920982.7315981,
+  "checked_at": 1791921422.4413867,
   "dataset_quality": [
     "Identical observable vectors occur across partitions. Independent scenario IDs do not guarantee covariate diversity; inspect repeated synthetic grids.",
     "Some scenario families contain one settlement seed parity only. The current generator uses seed parity for settlement; reorder families and shift seeds before making generalization claims.",
@@ -22,8 +94,8 @@
     "live_execution": false,
     "paper_recovery": {
       "status": "CHECKPOINT_VERIFIED",
-      "journal_events": 90462,
-      "revision": 90461
+      "journal_events": 90691,
+      "revision": 90690
     },
     "laboratory": {
       "status": "READY",
@@ -10873,25 +10945,16 @@
     "actual_multiday_tested": false
   },
   "latest_full_gate": {
-    "passed": 545,
+    "passed": 564,
     "skipped": 1,
-    "seconds": 645.74,
-    "log": "docs/PROMETHEUS_COLD_RETENTION_FULL_TESTS.log"
+    "seconds": 726.72,
+    "log": "docs/PROMETHEUS_PPO_RESUMPTION_FULL_TESTS.log"
   },
   "installer_and_schedule_verifier_gate": {
     "passed": 9,
     "seconds": 1.61
   },
-  "active_engineering_gate": {
-    "unit": "midas-ppo-resumption-full-gate.service",
-    "pid": 1001568,
-    "cpu_cores": 1,
-    "memory_mb": 4096,
-    "wall_seconds": 1500,
-    "log": "docs/PROMETHEUS_PPO_RESUMPTION_FULL_TESTS.log",
-    "stop": "systemctl --user stop midas-ppo-resumption-full-gate.service",
-    "source_frozen": true
-  },
+  "active_engineering_gate": null,
   "cold_retention": {
     "state": "VERIFIED",
     "cold_cap_bytes": 1073741824,
@@ -10931,11 +10994,11 @@
     "cpu_cores": 1,
     "memory_mb": 4096,
     "wall_seconds": 7200,
-    "state": "WAITING_GATE",
+    "state": "RESEARCHING",
     "state_path": "data/arena/ppo-resumption-studies/study-573071/state.json",
     "log": "docs/PROMETHEUS_PPO_RESUMPTION_STUDY.log",
     "stop": "systemctl --user stop midas-ppo-resumption-573071.service",
     "source_frozen": true,
-    "native_children_admitted": 0
+    "native_children_admitted": 1
   }
 }
