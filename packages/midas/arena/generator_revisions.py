@@ -13,8 +13,8 @@ class GeneratorRevision(Model):
     def apply(self, scenario: Scenario) -> Scenario:
         if scenario.provenance != "GENERATED" or scenario.market.source != Source.SYNTHETIC:
             raise ValueError("Generator revisions require synthetic generated scenarios")
-        assets = tuple(scenario.books)
-        if len(assets) != 2:
+        assets = tuple(instrument.asset_id for instrument in scenario.market.instruments)
+        if len(assets) != 2 or len(set(assets)) != 2 or set(assets) != set(scenario.books):
             raise ValueError("Settlement revision requires binary scenarios")
         winner = int(digest([self.version, "settlement", scenario.seed])[:16], 16) % 2
         events = []

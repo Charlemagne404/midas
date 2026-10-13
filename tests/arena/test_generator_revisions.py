@@ -36,6 +36,23 @@ def test_revision_breaks_family_parity_coupling_in_fixed_sample():
     assert all(len(values) == 2 for values in new.values())
 
 
+def test_settlement_revision_survives_sorted_json_round_trip():
+    import json
+
+    from midas.laboratory.spec import Scenario
+
+    original = generate("calm", 483071)
+    loaded = Scenario.model_validate(
+        json.loads(json.dumps(original.model_dump(mode="json"), sort_keys=True))
+    )
+    revised = [GeneratorRevision().apply(scenario) for scenario in (original, loaded)]
+    payouts = [
+        next(e.payload["payout"] for e in scenario.events if e.kind == "settle")
+        for scenario in revised
+    ]
+    assert payouts[0] == payouts[1]
+
+
 def test_rejects_recorded_and_frozen_dataset_rewrites():
     with pytest.raises(ValueError, match="generated"):
         GeneratorRevision().apply(generate("calm", 7).model_copy(update={"provenance": "RECORDED"}))

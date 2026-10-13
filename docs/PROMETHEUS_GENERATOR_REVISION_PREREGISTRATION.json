@@ -1,6 +1,6 @@
 {
   "created_at": 1791883090.2404623,
-  "source_hash": "e83654c6f78b8e9690653b8fa8850315e33b7e87fae2cf0af7b5dee2403154fc",
+  "source_hash": "28e368608f998b94c85738de89dcc55374c3aa9129be45ca841081f77ba6b2b4",
   "state": "PREREGISTERED_NOT_LAUNCHED",
   "question": "How sensitive are fixed logistic, MLP, PPO and deterministic policies to removing direct seed-parity settlement?",
   "configurations": [
@@ -163,5 +163,8 @@
     "Multiple policy comparisons without multiplicity correction",
     "Observed economics remain synthetic; no profitability evidence",
     "Completion classifier accuracy is not expected to change when only terminal payout changes"
-  ]
+  ],
+  "superseded_unlaunched_source_hash": "e83654c6f78b8e9690653b8fa8850315e33b7e87fae2cf0af7b5dee2403154fc",
+  "source_revision_note": "Before production admission, fix hashed settlement asset order to declared instruments and verify sorted JSON round-trip stability. Seeds, models and hypotheses unchanged.",
+  "updated_at": 1791883808.7444072
 }
