@@ -1,0 +1,110 @@
+{
+  "created_at": 1791907261.5393322,
+  "source_hash": "cbc2b35aafdd44a66232cfe3d37beed568e22633ea46109d03334559030b1afa",
+  "schedule": {
+    "version": "finite-research-schedule-1",
+    "question": "Operational demonstration: finite scheduled public-window ingestion with API restart; no new economic evidence",
+    "steps": [
+      {
+        "name": "First bounded ingestion",
+        "after_seconds": 0,
+        "configuration": {
+          "kind": "observations",
+          "dataset": null,
+          "training": null,
+          "severity": null,
+          "cost": null,
+          "recovery": null,
+          "unwind": null,
+          "observations": {
+            "version": "public-poll-windows-1",
+            "source_id": "public-series-ee6885c09fba4bc98ef5a8cb",
+            "train_percent": 70,
+            "validation_percent": 15,
+            "embargo_ms": 10000,
+            "max_pair_skew_ms": 1000,
+            "max_book_age_ms": 10000
+          },
+          "model_id": null,
+          "rl": null,
+          "tournament": null,
+          "sweep": null,
+          "director": null,
+          "policy_search": null,
+          "max_wall_seconds": 300
+        }
+      },
+      {
+        "name": "Reuse same immutable recording after API restart",
+        "after_seconds": 180,
+        "configuration": {
+          "kind": "observations",
+          "dataset": null,
+          "training": null,
+          "severity": null,
+          "cost": null,
+          "recovery": null,
+          "unwind": null,
+          "observations": {
+            "version": "public-poll-windows-1",
+            "source_id": "public-series-ee6885c09fba4bc98ef5a8cb",
+            "train_percent": 70,
+            "validation_percent": 15,
+            "embargo_ms": 10000,
+            "max_pair_skew_ms": 1000,
+            "max_book_age_ms": 10000
+          },
+          "model_id": null,
+          "rl": null,
+          "tournament": null,
+          "sweep": null,
+          "director": null,
+          "policy_search": null,
+          "max_wall_seconds": 300
+        }
+      }
+    ],
+    "admission_window_seconds": 900
+  },
+  "expiry_schedule": {
+    "version": "finite-research-schedule-1",
+    "question": "Operational demonstration: real admission expiry after pause, no child admitted",
+    "steps": [
+      {
+        "name": "Must expire before admission",
+        "after_seconds": 30,
+        "configuration": {
+          "kind": "observations",
+          "dataset": null,
+          "training": null,
+          "severity": null,
+          "cost": null,
+          "recovery": null,
+          "unwind": null,
+          "observations": {
+            "version": "public-poll-windows-1",
+            "source_id": "public-series-ee6885c09fba4bc98ef5a8cb",
+            "train_percent": 70,
+            "validation_percent": 15,
+            "embargo_ms": 10000,
+            "max_pair_skew_ms": 1000,
+            "max_book_age_ms": 10000
+          },
+          "model_id": null,
+          "rl": null,
+          "tournament": null,
+          "sweep": null,
+          "director": null,
+          "policy_search": null,
+          "max_wall_seconds": 300
+        }
+      }
+    ],
+    "admission_window_seconds": 60
+  },
+  "models_trained": 0,
+  "new_independent_data": false,
+  "reboot_tested": false,
+  "multi_day_elapsed_run": false,
+  "purpose": "Prove actual timer admission, persisted results, API restart survival, unique admission keys, cache reuse and local expiry alert"
+}
