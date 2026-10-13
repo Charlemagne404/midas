@@ -2553,3 +2553,22 @@ package source frozen. Next: observe same gate, deploy original API/timer after
 success, execute a short bounded real schedule and inspect persisted behavior
 and local alert evidence. Multi-day/reboot semantics are implemented and tested,
 not yet claimed as a completed multi-day run or arbitrary training resumption.
+
+## Real finite schedule demonstration preregistered and supervised
+
+Added captured gate/deployment coordinator;two refusal tests pass1.37 seconds.
+After successful full gate it deploys original API, installs bounded persistent
+minute timer, then creates a two-step observations plan due0/180 seconds.
+It verifies original API restart occurs after first child completes and before
+second child is admitted, distinct native admission keys/job IDs, identical
+immutable dataset reuse and source/receipt/embargo checks. No production model
+training, independent-data count or profitability claim.
+
+A second real plan is paused beyond its60-second admission window, then resumed
+after65 seconds. Actual expiry must produce one persisted local alert and no
+child. Timestamps are not backdated or fabricated. Host reboot and elapsed
+multi-day operation are explicitly not claimed by this short demonstration.
+Unitmidas-schedule-demo.service confirmed active WAITING_GATE,oneCPU/4GiB/
+2400s, state:data/arena/schedule-demonstrations/finite-demo-1/state.json.
+SamefullgatePID781039live. Captured tools and packages frozen until terminal.
+Timer still not deployed; no scheduled scientific output claimed.
