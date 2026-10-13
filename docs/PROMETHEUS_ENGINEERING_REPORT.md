@@ -2781,3 +2781,24 @@ replay/eventnavigation pass withzeroerrors. Warm50samplepacked reads3.2633ms
 versusrestored3.0198ms. UsageIndexinit2.9853s,medianobserve.02404ms,zero
 fallbacks; no whole-job speedup claim. Originalkernel/storagecaps retained.
 Sourcefreeze lifted. Nowimplementing bounded schema migration;no new models.
+
+## Bounded immutable dataset migrations implemented; full gate active
+
+Commit53f8a34. Explicit semantic/version-1 legacy defaults with unknownversion
+rejection. Separate ordered/named storage versions canonicalize to unchanged
+feature order. Native migration jobs create new identity,serializedpublication,
+parentmanifest/rows/producer/codehashes,canonicalallrowchecks and completionlast.
+Original source files unchanged,64MiB/60000row input bounds,existing budgets.
+Roundtrip1→2→1,corruption/cycles/incompletepublication,actualnativejob,original
+predictionequivalence,APIpagination,quality andexports tested. Derivation after
+migration correctly encodesstorage andretainssemantic observation ancestry.
+17focused backend pass45.16s;21frontend pass withtyping/lint/build. Legacyfixture
+default restored; actualall6legacydatasets andlineagesverify withoutmutation.
+Fullgate midas-dataset-migration-full-gate.servicePID1036523,1CPU/4GiB/1500s
+is active; packages andarena_bundle/derive_proposal_target frozen. Latestcomplete
+fullgate remains564passed/oneskip untilnewgate finishes. No productionmigration
+ortraining. Pilotpreregistered onoriginaldataset38ec6e9776097d8e36693372,
+parentfileSHA snapshots preserved. Nextindependentverifier/coordinator then
+actualnativepilotonlyafterthisgate; source/canonicalrows/prediction/API/browser
+checks andlineageexport. No newindependent samples ormodel fits frommigration.
+Prometheus retainsfulloriginalscope andremainsactive.

@@ -1,5 +1,16 @@
 # MIDAS — PROMETHEUS OVERNIGHT BRIEFING
 
+## Current engineering — dataset storage migration full gate
+
+Ordered↔named feature storage migrations implemented asnewartifacts withidentical
+canonical observations/labels/partitions. Parent evidence preserved,unknownversions
+reject,legacy defaults supported,ancestry/exports/API/UI wired.17focusedbackend
+and21frontend tests pass;6reallegacydatasets validateunchanged. Fullregression
+midas-dataset-migration-full-gate.service runs; package/toolsourcefrozen.
+Productionpilot not admitted. No newmodels orindependentdata fromthiswork.
+PPO replaypackingverified:2098fewerfiles,zeroindexfallbacks;bytes+1.8MB.
+Nextgate/nativepilot/independentcanonicalpredictionchecks. Prometheusactive.
+
 ## Latest finding — PPO resumption works; policy unchanged on fresh groups
 
 Actualparent2048→child4096cumulative training verified,Adamsteps320→640,
