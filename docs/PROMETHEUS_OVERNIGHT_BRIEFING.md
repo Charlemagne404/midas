@@ -1,5 +1,16 @@
 # MIDAS — PROMETHEUS OVERNIGHT BRIEFING
 
+## Current activity — corrected generator audit waits for full gate
+
+First gate480 passed/one skip. A stronger verifier caught an asset-order
+serialization bug before any production study. Fixed revision uses declared
+instrument order;14 focused tests now pass. Seeds/models remain fixed.
+New full gate `midas-generator-audit-full-gate.service` runs; coordinator
+`midas-generator-audit-483071.service` waits, then will execute the pair,
+verify it and export evidence automatically. Package and captured tool source
+are frozen. State/cancellation details are in runtime evidence. No new
+scientific outcome or model training claimed. Prior gate status below superseded.
+
 ## Current engineering — generator-revision full gate
 
 Challenge-only hashed settlement removes the direct seed-parity outcome rule

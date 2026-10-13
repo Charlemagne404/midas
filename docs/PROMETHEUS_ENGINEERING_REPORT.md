@@ -2304,3 +2304,27 @@ Next: after full gate, execute/verify paired fixed-policy revision studies,
 including equal pre-settlement decisions and source/model hashes, then export
 caveated findings. Settlement-only evidence does not imply broader market-path
 generalization, calibrated fills or observed economic value.
+
+## Captured generator audit: serialization bug caught before admission
+
+The first full gate passed480 tests/one PostgreSQL skip in573.54 seconds.
+Stronger pair-verifier testing then exposed payout assignment depending on
+books dict insertion order after sorted JSON serialization. No production
+challenge was admitted. Corrected revision uses declared market instrument
+order and checks exact binary book coverage. A round-trip regression first
+failed on old source, then passed on the fix. Seeds, selected models and
+hypotheses are unchanged; preregistration retains the superseded unlaunched
+source identity. Current source28e368608f998b94c85738de89dcc55374c3aa9129be45ca841081f77ba6b2b4.
+
+Fourteen focused tests now pass16.66 seconds, including native financial and
+rational/Decimal ledger verification, equal pre-settlement policy evidence,
+financial mutation rejection and success/failure/incomplete full-gate handling.
+Strict typing/Ruff pass. Exact fixed logistic/MLP/PPO weights verified.
+Supervised midas-generator-audit-full-gate.service runs oneCPU/4GiB/1200s.
+Captured midas-generator-audit-483071.service waits for its successful log/unit
+result, then runs the fixed pair sequentially, verifies all replay/ledger and
+pre-settlement inputs/decisions, publishes a native finding and exports both.
+Coordinator boundoneCPU/4GiB/4800s; native children1200s/1GiB Arena each.
+Captured scripts and packages frozen until coordinator terminal. State is
+data/arena/generator-audits/audit-483071/state.json; no native research child
+is admitted yet. Original API remains READY. Goal remains active.
