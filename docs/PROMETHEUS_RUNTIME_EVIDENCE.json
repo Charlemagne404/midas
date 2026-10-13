@@ -8,7 +8,7 @@
   "arena_research_tournaments": 25,
   "arena_source_datasets": 5,
   "arena_tournaments": 26,
-  "checked_at": 1791885569.7486625,
+  "checked_at": 1791904189.1797416,
   "dataset_quality": [
     "Identical observable vectors occur across partitions. Independent scenario IDs do not guarantee covariate diversity; inspect repeated synthetic grids.",
     "Some scenario families contain one settlement seed parity only. The current generator uses seed parity for settlement; reorder families and shift seeds before making generalization claims.",
@@ -22,8 +22,8 @@
     "live_execution": false,
     "paper_recovery": {
       "status": "CHECKPOINT_VERIFIED",
-      "journal_events": 71161,
-      "revision": 71160
+      "journal_events": 81356,
+      "revision": 81355
     },
     "laboratory": {
       "status": "READY",
@@ -179,7 +179,7 @@
     "benchmark": "docs/PROMETHEUS_USAGE_INDEX_BENCHMARK.json",
     "max_artifact_bytes": 1073741824
   },
-  "current_engineering_activity": "Generator audit and bounded public capture complete; next chronological observation-window ingestion",
+  "current_engineering_activity": "Chronological observation ingestion complete and independently checked; full regression running",
   "active_performance_benchmark": {
     "unit": "midas-guard-worker-benchmark-v2.service",
     "state": "COMPLETED",
@@ -220,15 +220,15 @@
     "conclusion": "Both sell-minus-hold mean intervals include zero; intervention coverage remains sparse"
   },
   "active_test_gate": {
-    "unit": "midas-generator-audit-full-gate.service",
-    "state": "COMPLETED",
-    "source_hash": "28e368608f998b94c85738de89dcc55374c3aa9129be45ca841081f77ba6b2b4",
-    "log": "docs/PROMETHEUS_GENERATOR_AUDIT_FULL_TESTS.log",
+    "unit": "midas-observations-full-gate.service",
+    "state": "RUNNING",
+    "log": "docs/PROMETHEUS_OBSERVATIONS_FULL_TESTS.log",
+    "source_hash": "07d2adaccbee6af654e3b110aa4ed37c6a26c417739bc42aaf9276277c949173",
     "wall_seconds": 1200
   },
   "latest_frontend_tests": {
-    "passed": 17,
-    "log": "docs/PROMETHEUS_GENERATOR_REVISION_FRONTEND_TESTS.log"
+    "passed": 18,
+    "log": "docs/PROMETHEUS_OBSERVATIONS_FRONTEND_TESTS.log"
   },
   "latest_inference_reexecution_tests": {
     "passed": 5,
@@ -251,5 +251,46 @@
     "events": 241,
     "span_seconds": 597.994,
     "eligible_for_execution_training": false
+  },
+  "observation_window_datasets": 1,
+  "observation_windows": 103,
+  "latest_observation_ingestion": {
+    "observation_id": "observations-47e77bb826717b0ce6abfcf3",
+    "quality": {
+      "cross_partition_repeated_quote_shapes": 2,
+      "missing_feature_values": {},
+      "missing_poll_numbers": 0,
+      "partition_bounds": {
+        "test": {
+          "first_received_ms": 1791885300024,
+          "last_available_ms": 1791885390635
+        },
+        "train": {
+          "first_received_ms": 1791884792789,
+          "last_available_ms": 1791885194733
+        },
+        "validation": {
+          "first_received_ms": 1791885209602,
+          "last_available_ms": 1791885285158
+        }
+      },
+      "partition_windows": {
+        "embargo": 4,
+        "test": 14,
+        "train": 72,
+        "validation": 13
+      },
+      "quarantine_reasons": {
+        "stale_book_at_pair_availability": 17
+      },
+      "source_polls": 120,
+      "unique_quote_shapes": 60,
+      "valid_paired_polls": 103
+    },
+    "execution_labels": 0,
+    "models_trained": 0,
+    "guard_mode": "FULL_SCAN_FALLBACK",
+    "watch_quota": 65536,
+    "disk_free_gib_approx": 208
   }
 }

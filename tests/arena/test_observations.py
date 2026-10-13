@@ -196,3 +196,22 @@ def test_observation_api_catalog_paging_and_frozen_source(tmp_path):
         path = root / "observations" / identity / "source.jsonl"
         path.write_text("{}\n")
         assert client.get(f"/api/arena/observations/{identity}").status_code == 409
+
+
+def test_standalone_verifier_recomputes_windows_and_rejects_changed_availability(tmp_path):
+    from midas.arena.artifacts import atomic_json, sha256
+
+    from scripts.verify_observation_windows import verify
+
+    root, _ = recording(tmp_path)
+    record = build(root, ObservationSpec(source_id="public-test"))
+    identity = record["observation_id"]
+    assert verify(root, identity)["windows_verified"] == 20
+    directory = root / "observations" / identity
+    rows = json.loads((directory / "rows.json").read_text())
+    rows[0]["available_at_ms"] = 0
+    atomic_json(directory / "rows.json", rows)
+    record["rows_sha256"] = sha256(directory / "rows.json")
+    atomic_json(directory / "manifest.json", record)
+    with pytest.raises(ValueError, match="differ"):
+        verify(root, identity)

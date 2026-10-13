@@ -1,5 +1,20 @@
 # MIDAS — PROMETHEUS OVERNIGHT BRIEFING
 
+## Latest Data Foundry result — observed-only chronological windows
+
+Real public recording produced103 valid paired windows;17 snapshots excluded
+by fixed freshness limit.72 train/13 validation/14 test/four embargo.60 unique
+quote shapes, two repeated across partitions. Source hashes, exact window
+recomputation and independent receipt/embargo checks pass. Actual dataset and
+rows visible in Arena Overview without page errors. No execution labels or
+model training. Backend15 focused tests and frontend18 pass.
+
+API/archive healthy;64 native jobs terminal. Full regression runs under
+`midas-observations-full-gate.service`; packages frozen. Host watch quota was
+reached and exact full-scan fallback worked (slower); disk208GiB free. No cap
+or kernel changes. Next priority: verified retention and storage scalability.
+Prometheus remains active; earlier capture-status notes are superseded.
+
 ## Public observation extension completed
 
 120 polls/241 public events span597.994 seconds. Root validation passes;

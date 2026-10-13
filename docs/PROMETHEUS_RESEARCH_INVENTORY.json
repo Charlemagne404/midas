@@ -1,5 +1,5 @@
 {
-  "checked_at": 1791885284.0274773,
+  "checked_at": 1791904189.111311,
   "models": [
     {
       "artifact_sha256": "a1ddf5a19d6cb1ad942ce8fc1cc3d63ec2e2f6ddf5dfc8fc46eb052be777e565",
@@ -67528,6 +67528,79 @@
       "submitted_source_hash": "28e368608f998b94c85738de89dcc55374c3aa9129be45ca841081f77ba6b2b4",
       "unit": "midas-arena-job-f61b7015fb224067b4b3f3ef.service",
       "updated_at": 1791884625.8133814
+    },
+    {
+      "active_artifact": {
+        "identity": "observations-47e77bb826717b0ce6abfcf3",
+        "kind": "observations"
+      },
+      "artifact_guard": {
+        "last_error": "[Errno 28] No space left on device: '/proc/self/fd/7'",
+        "mode": "FULL_SCAN_FALLBACK",
+        "watch_count": 65007
+      },
+      "budget": {
+        "cpu_cores": 1,
+        "max_artifact_mb": 1024,
+        "memory_mb": 4096,
+        "minimum_available_memory_mb": 2048,
+        "wall_seconds": 300
+      },
+      "completed_at": 1791903521.3982594,
+      "configuration": {
+        "cost": null,
+        "dataset": null,
+        "director": null,
+        "kind": "observations",
+        "max_wall_seconds": 300,
+        "model_id": null,
+        "observations": {
+          "embargo_ms": 10000,
+          "max_book_age_ms": 10000,
+          "max_pair_skew_ms": 1000,
+          "source_id": "public-series-ee6885c09fba4bc98ef5a8cb",
+          "train_percent": 70,
+          "validation_percent": 15,
+          "version": "public-poll-windows-1"
+        },
+        "policy_search": null,
+        "recovery": null,
+        "rl": null,
+        "severity": null,
+        "sweep": null,
+        "tournament": null,
+        "training": null,
+        "unwind": null
+      },
+      "created_at": 1791903491.046823,
+      "elapsed_seconds": 28.787850104970858,
+      "error": null,
+      "exit_status": 0,
+      "job_id": "job-616564374f03434ca1846cf3",
+      "pid": 738847,
+      "progress": {
+        "done": 120,
+        "total": 120
+      },
+      "result": {
+        "observation_id": "observations-47e77bb826717b0ce6abfcf3"
+      },
+      "runtime_profile": {
+        "artifact_bytes": 931736049,
+        "artifact_files": 64090,
+        "artifact_index_fallbacks": 123,
+        "artifact_index_init_seconds": 3.164235651958734,
+        "artifact_index_reconciliations": 1,
+        "artifact_observations": 123,
+        "artifact_scan_seconds": 24.303254833910614,
+        "artifact_scans": 124,
+        "progress_publish_seconds": 0.8795321711222641
+      },
+      "started_at": 1791903495.7747617,
+      "state": "COMPLETED",
+      "submitted_source_hash": "07d2adaccbee6af654e3b110aa4ed37c6a26c417739bc42aaf9276277c949173",
+      "unit": "midas-arena-job-616564374f03434ca1846cf3.service",
+      "updated_at": 1791903521.3982592
     }
   ],
   "provenance": "SYNTHETIC / HYPOTHETICAL / ECONOMICALLY UNVERIFIED",
@@ -70549,6 +70622,102 @@
       "source_hash": "53d813bd3a18c44c7d4819f7df11cd3fd5db25b27825e463adbe51ebea5cf2e1",
       "state": "COMPLETED",
       "unwind_id": "unwind-f54c1746a2834cb1a27cf53d"
+    }
+  ],
+  "observations": [
+    {
+      "configuration": {
+        "embargo_ms": 10000,
+        "max_book_age_ms": 10000,
+        "max_pair_skew_ms": 1000,
+        "source_id": "public-series-ee6885c09fba4bc98ef5a8cb",
+        "train_percent": 70,
+        "validation_percent": 15,
+        "version": "public-poll-windows-1"
+      },
+      "created_at": 1791903521.1883433,
+      "eligible_for_execution_training": false,
+      "feature_schema": [
+        "ask_sum",
+        "bid_sum",
+        "min_best_ask_depth",
+        "pair_receipt_skew_ms",
+        "max_book_age_ms"
+      ],
+      "feature_units": {
+        "ask_sum": "Sum of sequential observed best ask quotes; collateral route unverified",
+        "bid_sum": "Sum of sequential observed best bid quotes; collateral route unverified",
+        "max_book_age_ms": "Maximum exchange timestamp age when both snapshots are available",
+        "min_best_ask_depth": "Observed shares at the smaller best ask; not fillable quantity",
+        "pair_receipt_skew_ms": "Milliseconds between the two snapshot receipts"
+      },
+      "feature_version": "public-quote-summary-1",
+      "label_definition": null,
+      "limitations": [
+        "Periodic REST snapshots are not a continuous or sequence-complete feed.",
+        "Two instrument requests are sequential; snapshots are not atomic across legs.",
+        "No observed fills, private order reports, settlement or empirical execution labels.",
+        "Public metadata is not an onchain payout attestation; no attested_metadata event emitted.",
+        "Single selected market and short interval; not representative independent market history.",
+        "Windows become available only after both sequential snapshots arrive.",
+        "Chronological partitions with embargo are observational research partitions; no empirical execution labels.",
+        "Repeated quote shapes across partitions are reported, not independent market samples.",
+        "Quote sums and depth are observations, not verified economic profit or fill probability."
+      ],
+      "observation_id": "observations-47e77bb826717b0ce6abfcf3",
+      "provenance": "RECORDED_PUBLIC",
+      "quality": {
+        "cross_partition_repeated_quote_shapes": 2,
+        "missing_feature_values": {},
+        "missing_poll_numbers": 0,
+        "partition_bounds": {
+          "test": {
+            "first_received_ms": 1791885300024,
+            "last_available_ms": 1791885390635
+          },
+          "train": {
+            "first_received_ms": 1791884792789,
+            "last_available_ms": 1791885194733
+          },
+          "validation": {
+            "first_received_ms": 1791885209602,
+            "last_available_ms": 1791885285158
+          }
+        },
+        "partition_windows": {
+          "embargo": 4,
+          "test": 14,
+          "train": 72,
+          "validation": 13
+        },
+        "quarantine_reasons": {
+          "stale_book_at_pair_availability": 17
+        },
+        "source_polls": 120,
+        "unique_quote_shapes": 60,
+        "valid_paired_polls": 103
+      },
+      "rows_sha256": "e5cab52070e309b43537948a66d2a87929e435a38758bfd111a570bef739ed05",
+      "source_content_sha256": "9dd36f170e6f6d3b9729db8a6d5747e8fe704e56c08741d092f82fdf4a75632f",
+      "source_dataset_id": "public-series-ee6885c09fba4bc98ef5a8cb",
+      "source_hash": "07d2adaccbee6af654e3b110aa4ed37c6a26c417739bc42aaf9276277c949173",
+      "source_manifest_sha256": "53ff2393209aecf2aeedcb159e554c09cc262719852f9c99d8043104184edad6",
+      "source_validation": {
+        "content_sha256": "9dd36f170e6f6d3b9729db8a6d5747e8fe704e56c08741d092f82fdf4a75632f",
+        "duplicates": 0,
+        "event_count": 241,
+        "late_exchange_snapshots": 0,
+        "receipt_out_of_order": false,
+        "valid": true,
+        "warnings": [
+          "Periodic REST snapshots are not a continuous or sequence-complete feed.",
+          "Two instrument requests are sequential; snapshots are not atomic across legs.",
+          "No observed fills, private order reports, settlement or empirical execution labels.",
+          "Public metadata is not an onchain payout attestation; no attested_metadata event emitted.",
+          "Single selected market and short interval; not representative independent market history."
+        ]
+      },
+      "state": "COMPLETED"
     }
   ]
 }

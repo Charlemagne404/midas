@@ -1,0 +1,12 @@
+
+ RUN  v3.2.7 /home/charlie/midas/apps/web
+
+ ✓ src/App.test.tsx (2 tests) 168ms
+ ✓ src/Laboratory.test.tsx (2 tests) 266ms
+ ✓ src/Arena.test.tsx (14 tests) 1102ms
+
+ Test Files  3 passed (3)
+      Tests  18 passed (18)
+   Start at  17:04:02
+   Duration  2.40s (transform 670ms, setup 453ms, collect 1.42s, tests 1.54s, environment 1.08s, prepare 283ms)
+

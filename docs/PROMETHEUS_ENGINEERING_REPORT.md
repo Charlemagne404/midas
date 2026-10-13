@@ -2410,3 +2410,39 @@ No empirical fills, private orders, settlement or payout attestation; execution
 training remains ineligible. No research/recorder process remains active.
 Next: chronological observation-window datasets with explicit non-atomic pair
 timing, embargo, repeated-book checks and preserved observed-only provenance.
+
+## Chronological public observation ingestion implemented and executed
+
+Checkpoint0f4d922 adds versioned public-poll-windows-1, separate observations
+namespace, typed bounded jobs, API catalog/manifest/paged rows and dashboard
+controls/quality display. Source/row/metadata hashes checked; related book
+snapshots stay grouped and become available only after both receipts. Future
+exchange timestamps, excessive pair skew and stale snapshots are quarantined.
+Source event/poll order and unique identities enforced; decimal-equivalent
+quote shapes compare canonically. Train/validation/test use declared temporal
+fractions and embargo; observation windows have no execution labels and are
+excluded from training catalog. Progress measures actual source polls processed.
+
+Focused backend15 passed10.72 seconds; strict typing/Ruff pass. Frontend18
+tests, typecheck/lint/build pass (existing large-chart chunk warning). Additional
+standalone verifier regression passes separately; introduced after full collection.
+Actual native jobjob-616564374f03434ca1846cf3 completed in28.79 seconds,120
+source polls processed. Resultobservations-47e77bb826717b0ce6abfcf3:103 valid
+windows,17 stale exclusions,72 train/13 validation/14 test/four embargo,60
+unique shapes/two repeated across partitions. Thresholds remain fixed defaults.
+Source and rows immutable; separate recomputation/receipt/metadata/embargo
+verification passes all103. Browser shows actual manifest/counts/100 paged rows
+with zero page errors. Partition display ordered chronologically. No models
+trained, no fills, economic validation or independent-market sample claim.
+
+Native index reached host watch quota65536 (65007 own watches plus other
+user watches) and safely used123 full-scan fallbacks;24.30s guard overhead.
+Disk208GiB free; not filesystem exhaustion. Cap remains1GiB and kernel settings
+unchanged. Original API briefly unavailable during restart, then READY. Fresh
+protected archive quick_check/counts and owner pass;64 native jobs terminal.
+Supervised midas-observations-full-gate.service (PID738855,oneCPU/4GiB/1200s)
+remains active. Package source frozen at07d2adaccbee6af654e3b110aa4ed37c6a26c417739bc42aaf9276277c949173;
+latest completed full suite remains489passed/oneskip until the new gate finishes.
+Next priority: verified retention/storage and scalable guard behavior without
+relaxing safety; chronological source quality remains observational, not suitable
+for empirical execution training.

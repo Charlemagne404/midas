@@ -866,8 +866,8 @@ export function Arena() {
                 / {record.quality.source_polls} source polls
               </p>
               <p>
-                {Object.entries(record.quality.partition_windows)
-                  .map(([key, value]) => `${key}: ${value}`)
+                {['train', 'validation', 'test', 'embargo']
+                  .map((key) => `${key}: ${record.quality.partition_windows[key] ?? 0}`)
                   .join(' · ')}
               </p>
               <p>

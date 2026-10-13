@@ -1,0 +1,73 @@
+{
+  "active_artifact": {
+    "identity": "observations-47e77bb826717b0ce6abfcf3",
+    "kind": "observations"
+  },
+  "artifact_guard": {
+    "last_error": "[Errno 28] No space left on device: '/proc/self/fd/7'",
+    "mode": "FULL_SCAN_FALLBACK",
+    "watch_count": 65007
+  },
+  "budget": {
+    "cpu_cores": 1,
+    "max_artifact_mb": 1024,
+    "memory_mb": 4096,
+    "minimum_available_memory_mb": 2048,
+    "wall_seconds": 300
+  },
+  "completed_at": 1791903521.3982594,
+  "configuration": {
+    "cost": null,
+    "dataset": null,
+    "director": null,
+    "kind": "observations",
+    "max_wall_seconds": 300,
+    "model_id": null,
+    "observations": {
+      "embargo_ms": 10000,
+      "max_book_age_ms": 10000,
+      "max_pair_skew_ms": 1000,
+      "source_id": "public-series-ee6885c09fba4bc98ef5a8cb",
+      "train_percent": 70,
+      "validation_percent": 15,
+      "version": "public-poll-windows-1"
+    },
+    "policy_search": null,
+    "recovery": null,
+    "rl": null,
+    "severity": null,
+    "sweep": null,
+    "tournament": null,
+    "training": null,
+    "unwind": null
+  },
+  "created_at": 1791903491.046823,
+  "elapsed_seconds": 28.787850104970858,
+  "error": null,
+  "exit_status": 0,
+  "job_id": "job-616564374f03434ca1846cf3",
+  "pid": 738847,
+  "progress": {
+    "done": 120,
+    "total": 120
+  },
+  "result": {
+    "observation_id": "observations-47e77bb826717b0ce6abfcf3"
+  },
+  "runtime_profile": {
+    "artifact_bytes": 931736049,
+    "artifact_files": 64090,
+    "artifact_index_fallbacks": 123,
+    "artifact_index_init_seconds": 3.164235651958734,
+    "artifact_index_reconciliations": 1,
+    "artifact_observations": 123,
+    "artifact_scan_seconds": 24.303254833910614,
+    "artifact_scans": 124,
+    "progress_publish_seconds": 0.8795321711222641
+  },
+  "started_at": 1791903495.7747617,
+  "state": "COMPLETED",
+  "submitted_source_hash": "07d2adaccbee6af654e3b110aa4ed37c6a26c417739bc42aaf9276277c949173",
+  "unit": "midas-arena-job-616564374f03434ca1846cf3.service",
+  "updated_at": 1791903521.3982592
+}
