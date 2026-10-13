@@ -2695,3 +2695,10 @@ Prepared finite parent2048→child4096 study with oldPPO plus deterministiccontr
 100freshgroups seed573071/2100correlatedvariants; no presumed improvement/promotion.
 Next full gate, then source-bound native training/evaluation and independentchecks.
 Prometheus remains active, all remaining stretch objectives retained.
+
+PPO full gate actually launched after commitaf4afa8: unit
+midas-ppo-resumption-full-gate.service PID1001568,1CPU/4GiB/1500s.
+Packages and arena_bundle.py frozen while gate runs. Latest completed full suite
+remains545passed/oneskip until this new gate terminates. API READY; no production
+PPO training admitted. Next build source-bound study coordinator/verifier without
+changing captured packages, then execute only after this exact gate passes.

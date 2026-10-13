@@ -8,7 +8,7 @@
   "arena_research_tournaments": 25,
   "arena_source_datasets": 5,
   "arena_tournaments": 26,
-  "checked_at": 1791909715.845311,
+  "checked_at": 1791920625.3094969,
   "dataset_quality": [
     "Identical observable vectors occur across partitions. Independent scenario IDs do not guarantee covariate diversity; inspect repeated synthetic grids.",
     "Some scenario families contain one settlement seed parity only. The current generator uses seed parity for settlement; reorder families and shift seeds before making generalization claims.",
@@ -22,8 +22,8 @@
     "live_execution": false,
     "paper_recovery": {
       "status": "CHECKPOINT_VERIFIED",
-      "journal_events": 84324,
-      "revision": 84323
+      "journal_events": 90264,
+      "revision": 90263
     },
     "laboratory": {
       "status": "READY",
@@ -10882,7 +10882,16 @@
     "passed": 9,
     "seconds": 1.61
   },
-  "active_engineering_gate": null,
+  "active_engineering_gate": {
+    "unit": "midas-ppo-resumption-full-gate.service",
+    "pid": 1001568,
+    "cpu_cores": 1,
+    "memory_mb": 4096,
+    "wall_seconds": 1500,
+    "log": "docs/PROMETHEUS_PPO_RESUMPTION_FULL_TESTS.log",
+    "stop": "systemctl --user stop midas-ppo-resumption-full-gate.service",
+    "source_frozen": true
+  },
   "cold_retention": {
     "state": "VERIFIED",
     "cold_cap_bytes": 1073741824,
@@ -10907,5 +10916,12 @@
     "production_hot_duplicate_removed": true,
     "total_disk_savings_claimed": false
   },
-  "active_retention_pilot": null
+  "active_retention_pilot": null,
+  "ppo_resumption": {
+    "state": "IMPLEMENTED_FULL_GATE_RUNNING",
+    "focused_tests_passed": 26,
+    "frontend_tests_passed": 20,
+    "production_models_added": 0,
+    "study_plan": "docs/PROMETHEUS_PPO_RESUMPTION_STUDY_PLAN.json"
+  }
 }
