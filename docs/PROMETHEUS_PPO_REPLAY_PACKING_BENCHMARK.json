@@ -1,0 +1,16 @@
+{
+  "directory": "data/arena/tournaments/tournament-999cf9ee983249599d1dccb8/replays",
+  "matched_reads": 50,
+  "median_packed_read_seconds": 0.0032632680085953325,
+  "median_restored_read_seconds": 0.003019807511009276,
+  "artifact_bytes": 949895761,
+  "artifact_files": 62425,
+  "budget_index_initialization_seconds": 2.9853324159630574,
+  "budget_index_median_observation_seconds": 2.4038483388721943e-05,
+  "budget_index_fallbacks": 0,
+  "budget_index_error": null,
+  "limitations": [
+    "Warm-cache host-specific read sample with alternating order; not a whole-job speedup claim.",
+    "Temporary original-byte restoration removed after verification; research unchanged."
+  ]
+}

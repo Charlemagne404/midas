@@ -2770,3 +2770,14 @@ packed-only reads before loose-file pruning, then all2100financial/journal hashe
 and7API policy replays. No cold relocation, kernel or budget change in this phase.
 Package/tool source frozen until packing terminal. Goalactive;nextactualpacking
 result/browser/headroomcheck,then dataset-schema migration work.
+
+## PPO replay packing completed; watch headroom measured
+
+Actual pilot VERIFIED,unitinactiveexit0.2100exactoriginalbyte restorations,
+packed-only reads,financial/journalhashes and7API policyreads pass; original
+2366payloadexport preserved. Files64523→62425 (2098fewer),bytes948097018→
+949895650 (+1798632); filepressure improvement,not disk savings. Actual browser
+replay/eventnavigation pass withzeroerrors. Warm50samplepacked reads3.2633ms
+versusrestored3.0198ms. UsageIndexinit2.9853s,medianobserve.02404ms,zero
+fallbacks; no whole-job speedup claim. Originalkernel/storagecaps retained.
+Sourcefreeze lifted. Nowimplementing bounded schema migration;no new models.
