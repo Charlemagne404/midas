@@ -2446,3 +2446,28 @@ latest completed full suite remains489passed/oneskip until the new gate finishes
 Next priority: verified retention/storage and scalable guard behavior without
 relaxing safety; chronological source quality remains observational, not suitable
 for empirical execution training.
+
+## Completed observation gate; verified replay packing preparation
+
+Observation full regression504 passed/one PostgreSQL skip/existing dependency
+warning in619.03 seconds. New replay packing checkpointffe9b09 adds schema1
+SQLite payload lookup as a fallback to existing JSON/gzip readers. Stores exact
+compressed bytes and per-payload checksums, explicitly closes connections and
+handles loose-file removal races by falling back to the published store.
+Maintenance CLI acquires admission/worker leases, rejects queued/active jobs,
+validates row/financial/journal hashes, checks temporary headroom under unchanged
+1GiB cap, publishes atomically and verifies byte-identical restoration. Pruning
+prechecks all payloads and loose files; partial pruning is recoverable. No
+protected Laboratory kinds supported.
+
+Six focused tests pass9.92 seconds including original-byte restoration, schema/
+checksum rejection, active-job refusal, changed-loose-file protection, idempotent
+pruning, actual API lookup and native tournament reproduction/export after packing.
+Strict typing/Ruff pass. Production replays remain untouched. First candidate
+tournament-244c26f362d3434084c7f3f3 already has a verified scientific backup.
+After full gate and reader deployment: prepare, restore/verify, prune, recheck
+all evidence and representative API replays, then measure watch/size behavior.
+New supervised midas-replay-packing-full-gate.service confirmed active,
+oneCPU/4GiB/1200s. Package source frozen during gate. Native scientific results
+and models unchanged; goal active. SQLite can add byte overhead: this milestone
+reduces file/watch pressure and does not claim increased disk headroom.

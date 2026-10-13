@@ -1,5 +1,15 @@
 # MIDAS — PROMETHEUS OVERNIGHT BRIEFING
 
+## Current engineering — reversible replay packing full gate
+
+Observation gate504 passed/one skip. Replay packing now has six focused passing
+tests, including native replay reproduction/export and byte-identical restoration.
+Production replays remain untouched. New full gate runs under
+`midas-replay-packing-full-gate.service`; package source frozen. The pilot requires
+a verified existing backup, reader deployment and full evidence checks before
+removing any loose files. Aim: reduce watch/file pressure while preserving
+reproducibility. Storage cap and kernel settings unchanged. Prometheus active.
+
 ## Latest Data Foundry result — observed-only chronological windows
 
 Real public recording produced103 valid paired windows;17 snapshots excluded

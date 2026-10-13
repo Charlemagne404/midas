@@ -8,7 +8,7 @@
   "arena_research_tournaments": 25,
   "arena_source_datasets": 5,
   "arena_tournaments": 26,
-  "checked_at": 1791904189.1797416,
+  "checked_at": 1791904962.8738024,
   "dataset_quality": [
     "Identical observable vectors occur across partitions. Independent scenario IDs do not guarantee covariate diversity; inspect repeated synthetic grids.",
     "Some scenario families contain one settlement seed parity only. The current generator uses seed parity for settlement; reorder families and shift seeds before making generalization claims.",
@@ -179,7 +179,7 @@
     "benchmark": "docs/PROMETHEUS_USAGE_INDEX_BENCHMARK.json",
     "max_artifact_bytes": 1073741824
   },
-  "current_engineering_activity": "Chronological observation ingestion complete and independently checked; full regression running",
+  "current_engineering_activity": "Verified reversible replay-store packing implemented; production migration waits for full gate and reader deployment",
   "active_performance_benchmark": {
     "unit": "midas-guard-worker-benchmark-v2.service",
     "state": "COMPLETED",
@@ -189,11 +189,10 @@
     "limitations": "One sequential pair; cache/order effects remain"
   },
   "latest_full_tests": {
-    "passed": 489,
+    "passed": 504,
     "skipped": 1,
-    "seconds": 583.0,
-    "source_hash": "28e368608f998b94c85738de89dcc55374c3aa9129be45ca841081f77ba6b2b4",
-    "log": "docs/PROMETHEUS_GENERATOR_AUDIT_FULL_TESTS.log"
+    "seconds": 619.03,
+    "log": "docs/PROMETHEUS_OBSERVATIONS_FULL_TESTS.log"
   },
   "engineering_completion_estimate": {
     "completed_percent": 70,
@@ -220,10 +219,9 @@
     "conclusion": "Both sell-minus-hold mean intervals include zero; intervention coverage remains sparse"
   },
   "active_test_gate": {
-    "unit": "midas-observations-full-gate.service",
+    "unit": "midas-replay-packing-full-gate.service",
     "state": "RUNNING",
-    "log": "docs/PROMETHEUS_OBSERVATIONS_FULL_TESTS.log",
-    "source_hash": "07d2adaccbee6af654e3b110aa4ed37c6a26c417739bc42aaf9276277c949173",
+    "log": "docs/PROMETHEUS_REPLAY_PACKING_FULL_TESTS.log",
     "wall_seconds": 1200
   },
   "latest_frontend_tests": {
