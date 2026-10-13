@@ -2572,3 +2572,19 @@ Unitmidas-schedule-demo.service confirmed active WAITING_GATE,oneCPU/4GiB/
 2400s, state:data/arena/schedule-demonstrations/finite-demo-1/state.json.
 SamefullgatePID781039live. Captured tools and packages frozen until terminal.
 Timer still not deployed; no scheduled scientific output claimed.
+
+## Independent schedule execution verifier prepared during live gate
+
+Added read-only verification of terminal completed/expired plan identity, finite
+step count and window, exact due/admission times, unique native key bindings,
+configuration/source identity, child budgets/exit status/results and absence of
+unbound completed children. Six tests pass1.53s and reject early/late admission,
+duplicate keys, source drift and changed budgets. Introduced after full-gate
+collection; counts are separate. No production verification claimed before
+the real demo completes.
+
+Confirmed original gatePID781039 and demoPID787937 live. Forty-second bounded
+observation shows same gate still running and demoWAITING_GATE, no error.
+Package/captured deployment tools remain frozen. Next: allow timer deployment
+and real plan execution only after gate success, then run this independent
+verifier on both completed/expired plans and inspect timer/API/dashboard.
