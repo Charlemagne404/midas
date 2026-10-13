@@ -25,6 +25,7 @@ from midas.arena.severity import SeveritySpec
 from midas.arena.supervised import TrainingSpec
 from midas.arena.tournaments import TournamentSpec
 from midas.arena.unwind import UnwindStudySpec
+from midas.arena.usage import UsageIndex
 from midas.core.models import Model
 
 
@@ -224,7 +225,11 @@ def _run(root: Path, identity: str) -> None:
         "artifact_scans": 0,
         "artifact_files": 0,
         "artifact_bytes": 0,
+        "artifact_observations": 0,
+        "artifact_index_reconciliations": 0,
+        "artifact_index_fallbacks": 0,
     }
+    usage_index: UsageIndex | None = None
 
     def stopped(signum: int, frame: Any) -> None:
         nonlocal stop
@@ -250,9 +255,20 @@ def _run(root: Path, identity: str) -> None:
         if available < 2048 * 1024:
             raise RuntimeError("Host memory pressure: less than 2 GiB available")
         scan_began = time.perf_counter()
-        total_bytes, file_count = artifact_usage(root)
+        total_bytes, file_count = usage_index.usage() if usage_index else artifact_usage(root)
         overhead["artifact_scan_seconds"] += time.perf_counter() - scan_began
-        overhead["artifact_scans"] += 1
+        overhead["artifact_observations"] += 1
+        if usage_index:
+            overhead["artifact_index_reconciliations"] = usage_index.reconciliations
+            overhead["artifact_index_fallbacks"] = usage_index.fallbacks
+            overhead["artifact_scans"] = usage_index.reconciliations + usage_index.fallbacks
+            record["artifact_guard"] = {
+                "mode": "EVENT_INDEX" if usage_index.fd >= 0 else "FULL_SCAN_FALLBACK",
+                "last_error": usage_index.last_error,
+                "watch_count": len(usage_index.watches),
+            }
+        else:
+            overhead["artifact_scans"] += 1
         overhead.update(artifact_files=file_count, artifact_bytes=total_bytes)
         if total_bytes > 1024**3:
             raise RuntimeError("Arena artifact budget exceeded 1 GiB; evidence retained")
@@ -296,6 +312,9 @@ def _run(root: Path, identity: str) -> None:
                 except BlockingIOError:
                     publish(0, 1)
                     time.sleep(1)
+            index_began = time.perf_counter()
+            usage_index = UsageIndex(root, artifact_usage)
+            overhead["artifact_index_init_seconds"] = time.perf_counter() - index_began
             record.update(state="RUNNING", started_at=time.time(), pid=os.getpid())
             publish(0, 1)
             if record.get("submitted_source_hash") != research_hash():
@@ -405,7 +424,11 @@ def _run(root: Path, identity: str) -> None:
                 completed_at=time.time(),
                 elapsed_seconds=time.monotonic() - began,
             )
-            atomic_json(directory / "job.json", record)
+            try:
+                atomic_json(directory / "job.json", record)
+            finally:
+                if usage_index:
+                    usage_index.close()
             print(json.dumps(record), flush=True)
 
 

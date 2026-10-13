@@ -1,0 +1,137 @@
+{
+  "initial_bytes": 807588056,
+  "initial_files": 55879,
+  "initialization_seconds": 2.7979846610105596,
+  "observations": [
+    {
+      "index_seconds": 0.00018635200103744864,
+      "full_scan_seconds": 0.1657507970230654,
+      "bytes": 807589056,
+      "files": 55880
+    },
+    {
+      "index_seconds": 0.00023278099251911044,
+      "full_scan_seconds": 0.16454767499817535,
+      "bytes": 807589057,
+      "files": 55880
+    },
+    {
+      "index_seconds": 0.00021299102809280157,
+      "full_scan_seconds": 0.16516605898505077,
+      "bytes": 807589058,
+      "files": 55880
+    },
+    {
+      "index_seconds": 0.00020603399025276303,
+      "full_scan_seconds": 0.16513872100040317,
+      "bytes": 807589059,
+      "files": 55880
+    },
+    {
+      "index_seconds": 0.00022537499899044633,
+      "full_scan_seconds": 0.16674140997929499,
+      "bytes": 807589060,
+      "files": 55880
+    },
+    {
+      "index_seconds": 0.00020415399922057986,
+      "full_scan_seconds": 0.16692923795199022,
+      "bytes": 807589061,
+      "files": 55880
+    },
+    {
+      "index_seconds": 0.00019805599004030228,
+      "full_scan_seconds": 0.16583617095602676,
+      "bytes": 807589062,
+      "files": 55880
+    },
+    {
+      "index_seconds": 0.0002662999904714525,
+      "full_scan_seconds": 0.1673195009934716,
+      "bytes": 807589063,
+      "files": 55880
+    },
+    {
+      "index_seconds": 0.00020172796212136745,
+      "full_scan_seconds": 0.1657541490276344,
+      "bytes": 807589064,
+      "files": 55880
+    },
+    {
+      "index_seconds": 0.00019846000941470265,
+      "full_scan_seconds": 0.1662312289699912,
+      "bytes": 807589065,
+      "files": 55880
+    },
+    {
+      "index_seconds": 0.0002273980062454939,
+      "full_scan_seconds": 0.16545433102874085,
+      "bytes": 807589066,
+      "files": 55880
+    },
+    {
+      "index_seconds": 0.00020635599503293633,
+      "full_scan_seconds": 0.16548365697963163,
+      "bytes": 807589067,
+      "files": 55880
+    },
+    {
+      "index_seconds": 0.00019764096941798925,
+      "full_scan_seconds": 0.1676798149710521,
+      "bytes": 807589068,
+      "files": 55880
+    },
+    {
+      "index_seconds": 0.0001999249798245728,
+      "full_scan_seconds": 0.16524593095527962,
+      "bytes": 807589069,
+      "files": 55880
+    },
+    {
+      "index_seconds": 0.00021182099590077996,
+      "full_scan_seconds": 0.16656797396717593,
+      "bytes": 807589070,
+      "files": 55880
+    },
+    {
+      "index_seconds": 0.00020427099661901593,
+      "full_scan_seconds": 0.1662630210048519,
+      "bytes": 807589071,
+      "files": 55880
+    },
+    {
+      "index_seconds": 0.0001998639781959355,
+      "full_scan_seconds": 0.16719818400451913,
+      "bytes": 807589072,
+      "files": 55880
+    },
+    {
+      "index_seconds": 0.00021102698519825935,
+      "full_scan_seconds": 0.16742399404756725,
+      "bytes": 807589073,
+      "files": 55880
+    },
+    {
+      "index_seconds": 0.00022427894873544574,
+      "full_scan_seconds": 0.16803717496804893,
+      "bytes": 807589074,
+      "files": 55880
+    },
+    {
+      "index_seconds": 0.00020853296155110002,
+      "full_scan_seconds": 0.1668201590073295,
+      "bytes": 807589075,
+      "files": 55880
+    }
+  ],
+  "median_index_seconds": 0.00020619499264284968,
+  "median_full_scan_seconds": 0.16624712498742156,
+  "reconciliations": 2,
+  "fallbacks": 0,
+  "last_error": null,
+  "limits": [
+    "Warm-cache host-specific benchmark; not a whole-job speedup claim.",
+    "All observed file sizes/counts match the original scanner; cleanup also checked.",
+    "No financial artifact, model, archive or existing research result modified."
+  ]
+}

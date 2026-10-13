@@ -2171,3 +2171,24 @@ publishing progress. Roughly69% of elapsed time is scan overhead. The next
 efficiency experiment will test event-driven file-size indexing with exact
 logical-byte semantics, overflow/error reconciliation and full-scan fallback;
 the existing budget guard remains unchanged until those cases are verified.
+
+## Event-driven artifact budget observations
+
+Implemented a worker-local filesystem size index with per-inode notifications,
+per-path logical bytes, external symlink restats, hard-link alias propagation,
+watch-before-enumeration, inode-bound registration and conservative reconciliation.
+An early external-hard-link deletion test exposed stale alias tracking; file
+notifications now refresh all remaining aliases. Late external hard-link creation
+also requires regular-inode watches. Atomic replacement does not force a full
+archive scan; directory topology uncertainty and queue overflow do reconcile.
+Watch quotas/platform errors fall back to the original scanner, without changing
+kernel settings or weakening the1GiB threshold. Cancellation/memory/wall checks
+remain per callback. No persistent cached totals survive process interruption.
+
+Worker integration reports actual observations, reconciliation/fallback counts,
+guard mode and errors, and closes descriptors on terminal paths. Thirteen focused
+index/job tests passed9.93 seconds; strict typing and Ruff pass. Existing oversized
+artifact, cancellation and stale-source cases remain covered. The publication
+benchmark matches full-scanner byte/file totals after every synthetic publication
+and exact cleanup; it modifies no financial or research artifact. Whole-job/full
+regression evidence is still pending and no production speedup is yet claimed.
