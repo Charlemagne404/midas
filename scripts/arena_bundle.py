@@ -125,6 +125,14 @@ def dataset_paths(root: Path, identity: str) -> set[Path]:
         if sha256(directory / "rows.json") != manifest["rows_sha256"]:
             raise ValueError("Dataset content hash mismatch")
         paths.update(directory.glob("*.json"))
+        if manifest.get("migration"):
+            manifest, rows = load(root, identity)
+            producer = directory / "migration-producer.py"
+            if sha256(producer) != manifest["migration"]["producer_sha256"]:
+                raise ValueError("Dataset migration producer changed")
+            paths.add(producer)
+            identity = manifest["migration"]["source_dataset_id"]
+            continue
         lineage = manifest.get("derivation")
         if not lineage:
             return paths

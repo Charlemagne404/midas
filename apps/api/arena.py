@@ -248,6 +248,27 @@ def router(root: Path) -> APIRouter:
             lambda: json.loads((path("datasets", identity) / "manifest.json").read_text())
         )
 
+    @api.get("/datasets/{identity}/rows")
+    async def dataset_rows(identity: str, offset: int = 0, limit: int = 100) -> Any:
+        from midas.arena.datasets import load
+
+        if offset < 0 or limit < 1 or limit > 200:
+            raise HTTPException(422, "Use nonnegative offset and limit 1-200")
+
+        def read():
+            manifest, rows = load(root, identity)
+            return {
+                "dataset_id": identity,
+                "storage_version": manifest.get("storage_version", "decision-storage-1"),
+                "representation": "canonical ordered feature vectors",
+                "feature_schema": manifest["feature_schema"],
+                "total": len(rows),
+                "offset": offset,
+                "rows": rows[offset : offset + limit],
+            }
+
+        return await call(read)
+
     @api.get("/sweeps/{identity}")
     async def sweep(identity: str) -> Any:
         return await call(

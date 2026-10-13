@@ -1,0 +1,34 @@
+{
+  "created_at": 1791923501.4167929,
+  "source_hash": "edd09a4e8e1455a2412ca34666f919da9cdfd9d99bc1ed1611643e498cb775ea",
+  "full_gate_unit": "midas-dataset-migration-full-gate.service",
+  "full_gate_log": "docs/PROMETHEUS_DATASET_MIGRATION_FULL_TESTS.log",
+  "configuration": {
+    "kind": "migration",
+    "migration": {
+      "source_dataset_id": "dataset-38ec6e9776097d8e36693372",
+      "target_storage_version": "decision-storage-2"
+    },
+    "max_wall_seconds": 300
+  },
+  "source_rows_sha256": "a0dd2d328f724337a7a544470c616d4d2ef887240fa9d647227aea4ddc00dc27",
+  "source_manifest_sha256": "f1ee044979a662c7991d5f429ae62f8bdd6a71ccfcf54a1978fe30c328e83717",
+  "source_file_hashes": {
+    "rows.json": "a0dd2d328f724337a7a544470c616d4d2ef887240fa9d647227aea4ddc00dc27",
+    "quality.json": "ab37b29855f0650828fcae32e2a5f408eb109ae22b3a3290987de948800efdd2",
+    "manifest.json": "f1ee044979a662c7991d5f429ae62f8bdd6a71ccfcf54a1978fe30c328e83717"
+  },
+  "scientific_samples_added": 0,
+  "models_trained": 0,
+  "production_admitted": false,
+  "required_checks": [
+    "full regression success",
+    "native migration with original CPU/memory/storage bounds",
+    "independent all-row canonical equivalence",
+    "source bytes unchanged",
+    "original model predictions identical",
+    "parent/producer lineage and portable export",
+    "actual API/browser rows/labels",
+    "protected archive health"
+  ]
+}

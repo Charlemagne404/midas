@@ -22,7 +22,7 @@ from midas.paper.broker import ExecutionModel
 
 
 class DatasetSpec(Model):
-    version: str = "synthetic-decision-1"
+    version: Literal["synthetic-decision-1"] = "synthetic-decision-1"
     episodes: int = Field(default=1000, ge=30, le=20000)
     seed: int = Field(default=42070, ge=0, le=2**32 - 20000)
     split_seed: int = Field(default=1977, ge=0)
@@ -232,6 +232,8 @@ def build(root: Path, spec: DatasetSpec, progress: Any = None) -> dict[str, Any]
     manifest = {
         "dataset_id": identity,
         "version": spec.version,
+        "storage_version": "decision-storage-1",
+        "row_encoding": "ordered-features-1",
         "created_at": time.time(),
         "provenance": "GENERATED",
         "source": "Midas Laboratory synthetic generator",
@@ -304,9 +306,23 @@ def validate_rows(rows: list[dict[str, Any]]) -> None:
         raise ValueError("Dataset needs nonempty independent partitions")
 
 
-def load(root: Path, identity: str) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+def load(
+    root: Path, identity: str, _ancestors: set[str] | None = None
+) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    ancestors = set() if _ancestors is None else set(_ancestors)
+    if identity in ancestors:
+        raise ValueError("Cyclic dataset storage migration")
+    ancestors.add(identity)
+    if len(ancestors) > 16:
+        raise ValueError("Dataset migration ancestry exceeds bounded depth")
     directory = artifact_path(root, "datasets", identity)
     manifest = json.loads((directory / "manifest.json").read_text())
+    if (
+        manifest.get("dataset_id") != identity
+        or manifest.get("version", "synthetic-decision-1") != "synthetic-decision-1"
+        or manifest["spec"].get("version", "synthetic-decision-1") != "synthetic-decision-1"
+    ):
+        raise ValueError("Unsupported dataset identity or semantic version")
     if sha256(directory / "rows.json") != manifest["rows_sha256"]:
         raise ValueError("Dataset content hash mismatch")
     if (
@@ -314,7 +330,9 @@ def load(root: Path, identity: str) -> tuple[dict[str, Any], list[dict[str, Any]
         or manifest["feature_version"] != FEATURE_VERSION
     ):
         raise ValueError("Unsupported feature schema")
-    rows = json.loads((directory / "rows.json").read_text())
+    from midas.arena.dataset_storage import decode_rows
+
+    rows = decode_rows((directory / "rows.json").read_text(), manifest)
     scope = manifest.get("decision_scope", "initial")
     if scope != manifest["spec"].get("decision_scope", "initial"):
         raise ValueError("Dataset decision scope differs from frozen specification")
@@ -353,6 +371,12 @@ def load(root: Path, identity: str) -> tuple[dict[str, Any], list[dict[str, Any]
     }
     if actual != manifest["partition_identities"] or len(rows) != manifest["rows"]:
         raise ValueError("Partition manifest mismatch")
+    if manifest.get("migration"):
+        from midas.arena.dataset_storage import verify_migration
+
+        parent_id = manifest["migration"]["source_dataset_id"]
+        parent, parent_rows = load(root, parent_id, ancestors)
+        verify_migration(root, identity, manifest, rows, parent, parent_rows)
     return manifest, rows
 
 
@@ -369,6 +393,9 @@ def observation_lineage(root: Path, identity: str) -> dict[str, str]:
             raise ValueError("Dataset manifest identity mismatch")
         ignored = {"label", "label_target"}
         observations = [{k: v for k, v in row.items() if k not in ignored} for row in rows]
+        if manifest.get("migration"):
+            identity = manifest["migration"]["source_dataset_id"]
+            continue
         lineage = manifest.get("derivation")
         if not lineage:
             return {

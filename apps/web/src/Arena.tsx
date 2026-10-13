@@ -57,6 +57,13 @@ type Metrics = {
 };
 type Dataset = {
   dataset_id: string;
+  storage_version?: string;
+  row_encoding?: string;
+  migration?: {
+    source_dataset_id: string;
+    target_storage_version: string;
+    canonical_rows_sha256: string;
+  };
   label_target?: string;
   execution_cost_label?: string;
   spec?: {
@@ -432,6 +439,7 @@ export function Arena() {
   const [eventIndex, setEventIndex] = useState(0);
   const [family, setFamily] = useState('mlp');
   const [ppoParent, setPpoParent] = useState('');
+  const [migrationTarget, setMigrationTarget] = useState('decision-storage-2');
   const [epochs, setEpochs] = useState(80);
   const [learningRate, setLearningRate] = useState(0.001);
   const [hiddenSize, setHiddenSize] = useState(32);
@@ -814,6 +822,23 @@ export function Arena() {
                     {entry.generated_base_episodes} generated episodes
                   </small>
                   <small>
+                    Storage: {entry.storage_version ?? 'decision-storage-1'} ·{' '}
+                    {entry.row_encoding ?? 'ordered-features-1'}
+                  </small>
+                  {entry.migration && (
+                    <small>
+                      Storage migration of {entry.migration.source_dataset_id}; same observations,
+                      labels and partitions.
+                    </small>
+                  )}
+                  <a
+                    href={`/api/arena/datasets/${entry.dataset_id}/rows?limit=25`}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Inspect canonical rows ↗
+                  </a>
+                  <small>
                     {Object.entries(entry.partition_rows)
                       .map(([name, count]) => `${name}: ${count}`)
                       .join(' · ')}
@@ -972,6 +997,44 @@ export function Arena() {
       )}
       {tab === 'Training console' && (
         <>
+          <Section title="Dataset storage migration">
+            <label>
+              Target storage schema
+              <select
+                value={migrationTarget}
+                onChange={(event) => setMigrationTarget(event.target.value)}
+              >
+                <option value="decision-storage-2">Named features (version 2)</option>
+                <option value="decision-storage-1">Ordered features (version 1)</option>
+              </select>
+            </label>
+            <p className="lab-note">
+              Uses the dataset selected below. Creates a new artifact with identical observations,
+              labels and partitions; no new independent data or model fitting. Original evidence is
+              retained.
+            </p>
+            <button
+              disabled={
+                !selectedDataset ||
+                submit.isPending ||
+                (data?.datasets.find((entry) => entry.dataset_id === selectedDataset)
+                  ?.storage_version ?? 'decision-storage-1') === migrationTarget
+              }
+              onClick={() =>
+                submit.mutate({
+                  configuration: {
+                    kind: 'migration',
+                    migration: {
+                      source_dataset_id: selectedDataset,
+                      target_storage_version: migrationTarget,
+                    },
+                  },
+                })
+              }
+            >
+              Migrate selected dataset
+            </button>
+          </Section>
           {family === 'ppo' && (
             <Section title="Continue PPO training">
               <label>

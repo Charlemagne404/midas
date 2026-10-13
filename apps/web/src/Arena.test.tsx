@@ -10,6 +10,58 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+it('requests a storage migration and labels reused observations', async () => {
+  const overview = {
+    datasets: [
+      {
+        dataset_id: 'dataset-original',
+        storage_version: 'decision-storage-1',
+        label_target: 'completion',
+        partition_rows: {},
+        limitations: [],
+        rows: 12,
+        generated_base_episodes: 4,
+        eligible_base_episodes: 4,
+      },
+    ],
+    models: [],
+    jobs: [],
+    findings: [],
+    tournaments: [],
+    dependencies: {},
+    health: { memory_mb: {}, worker_cpu_cores: 1, worker_memory_mb: 4096 },
+  };
+  let submitted: unknown;
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (url: string, init?: RequestInit) => {
+      if (url === '/api/arena/jobs' && init?.method === 'POST') {
+        submitted = JSON.parse(String(init.body)).configuration;
+        return new Response(JSON.stringify({ job_id: 'job-migration' }), { status: 201 });
+      }
+      return new Response(JSON.stringify(overview), { status: 200 });
+    }),
+  );
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  render(
+    <QueryClientProvider client={client}>
+      <Arena />
+    </QueryClientProvider>,
+  );
+  fireEvent.click(await screen.findByRole('tab', { name: 'Training console' }));
+  expect(screen.getByText(/no new independent data or model fitting/)).toBeVisible();
+  fireEvent.click(screen.getByRole('button', { name: 'Migrate selected dataset' }));
+  await screen.findByText(/Research job admitted/);
+  expect(submitted).toMatchObject({
+    kind: 'migration',
+    migration: {
+      source_dataset_id: 'dataset-original',
+      target_storage_version: 'decision-storage-2',
+    },
+  });
+  client.clear();
+});
+
 it('submits an explicit PPO parent without replacing its evidence', async () => {
   const overview = {
     datasets: [

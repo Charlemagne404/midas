@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from midas.arena.artifacts import artifact_path, atomic_bytes, atomic_json, sha256
+from midas.arena.dataset_storage import encode_rows
 from midas.arena.datasets import load
 from midas.economics.attestation import digest
 
@@ -49,6 +50,9 @@ def derive(root: Path, source_id: str, target: str) -> dict[str, Any]:
                 raise ValueError("Existing derivation lineage mismatch")
             return manifest
         manifest = copy.deepcopy(source)
+        # A target change is a derivation from the complete source artifact,
+        # rather than a storage-only migration from the source's own parent.
+        manifest.pop("migration", None)
         manifest.update(
             dataset_id=identity,
             created_at=time.time(),
@@ -72,7 +76,12 @@ def derive(root: Path, source_id: str, target: str) -> dict[str, Any]:
             "Shares observations, episode identities and frozen partitions with parent; not independent data. Test target frequency intentionally omitted. Generator source_hash/code_revision inherited; derivation source is separately preserved."
         )
         atomic_bytes(directory / "derivation-producer.py", producer)
-        atomic_json(directory / "rows.json", rows)
+        if "canonical_rows_sha256" in manifest:
+            manifest["canonical_rows_sha256"] = digest(rows)
+        atomic_json(
+            directory / "rows.json",
+            encode_rows(rows, manifest.get("storage_version", "decision-storage-1")),
+        )
         manifest["rows_sha256"] = sha256(directory / "rows.json")
         atomic_json(directory / "manifest.json", manifest)
         return load(root, identity)[0]

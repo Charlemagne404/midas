@@ -1,0 +1,42 @@
+{
+  "checked_at": 1791923501.416586,
+  "datasets": [
+    {
+      "dataset_id": "dataset-c6247f1456257066f0fe8d5f",
+      "rows": 1932,
+      "rows_sha256": "78912b51f646e080a9190c406fdb3fdde7efdfe09508673b7222ad534c8fb594",
+      "source_dataset_id": "dataset-c6247f1456257066f0fe8d5f"
+    },
+    {
+      "dataset_id": "dataset-b5c3dbdac9284f292a949b65",
+      "rows": 1752,
+      "rows_sha256": "7f1857d470144c6a68d5ff2f5a3e480016514e3dccb4f47a990f79e881a20179",
+      "source_dataset_id": "dataset-b5c3dbdac9284f292a949b65"
+    },
+    {
+      "dataset_id": "dataset-f53981b7dd24c1521ce749b1",
+      "rows": 1935,
+      "rows_sha256": "3c95234ffb79c51194d54f451bf0467c4d4e83cc22ad4ef6721eaabf4a20c109",
+      "source_dataset_id": "dataset-f53981b7dd24c1521ce749b1"
+    },
+    {
+      "dataset_id": "dataset-38ec6e9776097d8e36693372",
+      "rows": 1593,
+      "rows_sha256": "a0dd2d328f724337a7a544470c616d4d2ef887240fa9d647227aea4ddc00dc27",
+      "source_dataset_id": "dataset-38ec6e9776097d8e36693372"
+    },
+    {
+      "dataset_id": "dataset-d8c1593a2d281e1c9e430952",
+      "rows": 1935,
+      "rows_sha256": "80a75480aae4b790a1b2ace8b84a731cddad82a71c1be395caf9ec6dd58d82b9",
+      "source_dataset_id": "dataset-f53981b7dd24c1521ce749b1"
+    },
+    {
+      "dataset_id": "dataset-2b612fa4cfab325eebc061f3",
+      "rows": 1746,
+      "rows_sha256": "d4a94127bd08cf3f1c81222a52d1790dad13db34f366f0e0165a2e5f7f9d4814",
+      "source_dataset_id": "dataset-2b612fa4cfab325eebc061f3"
+    }
+  ],
+  "scope": "Actual six legacy artifacts loaded and lineage validated; no production migration or fitting."
+}
