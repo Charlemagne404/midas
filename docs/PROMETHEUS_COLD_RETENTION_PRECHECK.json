@@ -1,0 +1,30 @@
+{
+  "checked_at": 1791908878.1747773,
+  "backup": "data/exports/generator-audit-483071/tournament-244c26f362d3434084c7f3f3.tar.gz",
+  "sha256": "6d1d7665c4f0a46072c6d0448ae18c9c158eeae97b802ada93afb1c2b5378128",
+  "payloads_verified": 2195,
+  "protected_campaign_counts": [
+    162000,
+    18000,
+    162000
+  ],
+  "health": {
+    "status": "READY",
+    "startup_status": "READY",
+    "startup_error": null,
+    "mode": "demo",
+    "live_execution": false,
+    "paper_recovery": {
+      "status": "CHECKPOINT_VERIFIED",
+      "journal_events": 83885,
+      "revision": 83884
+    },
+    "laboratory": {
+      "status": "READY",
+      "root": "/home/charlie/midas/data/laboratory-final",
+      "recovering_campaigns": [],
+      "recovery_errors": []
+    }
+  },
+  "production_copies_removed": false
+}

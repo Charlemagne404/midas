@@ -2623,3 +2623,18 @@ Installer+schedule-verifier tests9 passed1.61s. Whole suite not rerun after this
 installer-only change. Comprehensive checkpoint records70%/30% estimate, actual
 43 artifacts/42 fitted,66 terminal jobs and full stretch backlog. Prometheus
 active; continue cold-retention research without retraining completed models.
+
+## Bounded cold retention implementation and regression gate
+
+Commit877bb56 adds content-addressed exact SQLite cold copies, explicit1GiB cold
+cap,2GiB disk reserve, native/cold maintenance locks and durable reference-before-
+unlink ordering. Active Arena cap stays1GiB; additional tier explicitly expands
+bounded retention, not disk savings. Readers/API, original-byte restoration,
+source-aware inference and portable bundles support cold stores. Overview
+reports separate storage availability.13focused tests include actual8-replay
+tournament and extracted-bundle reproduction; crash and read-race coverage.
+Frontend19pass/typecheck/lint/buildpass. Full backend gate activePID829759 under
+midas-cold-retention-full-gate.service,1CPU/4GiB/1200s; source frozen. Backup
+6d1d7665c4f0a46072c6d0448ae18c9c158eeae97b802ada93afb1c2b5378128 and2195
+payloads verified. API/archive/owner healthy. Production remains untouched.
+Exact next steps and gate source hashes: PROMETHEUS_COLD_RETENTION_PLAN.json.

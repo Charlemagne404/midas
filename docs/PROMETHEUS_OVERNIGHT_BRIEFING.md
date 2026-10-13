@@ -1,5 +1,19 @@
 # MIDAS — PROMETHEUS OVERNIGHT BRIEFING
 
+## Current engineering — bounded cold retention full gate
+
+Exact packed replay cold retention implemented, not yet applied to production.
+Active Arena cap1GiB preserved; additional explicit cold tier1GiB, diskreserve2GiB.
+13 focused backend and19 frontend tests pass; typecheck/lint/build pass.
+Self-contained cold-store exports reproduce after isolated extraction. Actual
+crash-publication and hot-unlink read-race cases tested; hot evidence preserved.
+Full gate midas-cold-retention-full-gate.service currently active,1CPU/4GiB/1200s.
+Relevant source frozen. Existing pilot backupSHA and2195 payloads verified.
+API READY; protected campaign162000variants/18000groups and owner lock verified.
+Next after gate: deploy reader, prepare and independently verify cold copy, then
+controlled hot-duplicate removal and API/browser/source reproduction checks.
+Prometheus active; no new models or economic finding from retention work.
+
 ## Latest checkpoint — scheduler demonstrated and corrected
 
 Prometheus remains active, estimated70% complete/30% remaining across original
