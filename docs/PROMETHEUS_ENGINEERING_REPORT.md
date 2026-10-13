@@ -2328,3 +2328,22 @@ Coordinator boundoneCPU/4GiB/4800s; native children1200s/1GiB Arena each.
 Captured scripts and packages frozen until coordinator terminal. State is
 data/arena/generator-audits/audit-483071/state.json; no native research child
 is admitted yet. Original API remains READY. Goal remains active.
+
+## Frozen policy inference reexecution while full gate remains live
+
+Added standalone scripts/reproduce_policy_inference.py without changing frozen
+packages or captured coordinator tools. It requires exact research source and
+all referenced weight hashes, reloads deterministic/Predictor/PPO/CostPolicy
+paths, recomputes each request and relevant model score from current observed
+inputs, compares observations/decision traces and verifies exact financial and
+journal results. Existing Arena accounting replayer remains explicitly saved-
+action replay. Three focused tests pass11.91 seconds using a temporary fitted
+logistic model, half-size gate and every deterministic control; source drift
+and changed inference requests are rejected. No production models trained or
+new independent economic cohort. Actual PPO/cost reexecution coverage remains
+to be demonstrated on saved production artifacts, not inferred from these tests.
+
+Corrected-source fullgatePID502070 and coordinatorPID502073 confirmed live;
+coordinator WAITING_GATE. Packages and captured tools remain frozen. Next:
+observe same gate, allow bounded pair after success, then root verification
+including reexecution from actual fixed logistic/MLP/PPO weights.
