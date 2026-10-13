@@ -1,5 +1,22 @@
 # MIDAS — PROMETHEUS OVERNIGHT BRIEFING
 
+## Latest finding — generator outcome assumptions affect sampled downside
+
+Two fixed studies verified4200 replays/45696 journal states. All2100 pairs
+have identical pre-settlement evidence;48 groups change terminal payout.
+Classifier tail loss0→0.476, score1.3530→0.8237. Its mean-change interval
+includes zero, as do all other policies. PPO mean change-0.03853 is inconclusive.
+No promotion. Root checks4391 bundle payloads and24 exact model-inference
+reexecutions; live finding/tournament views have no page errors. API/archive
+healthy;63 native jobs terminal. Models remain43 artifacts/42 fitted.
+
+A bounded120-poll public-book recorder is live under
+`midas-public-series-extended.service`;25%CPU/256MiB/1000s outer bound.
+It preserves observations without fills or execution labels. State:
+data/public-captures/public-series-ee6885c09fba4bc98ef5a8cb/state.json.
+Stop through systemctl. Next: chronological observation-window ingestion and
+quality analysis. Prometheus remains active; prior research statuses superseded.
+
 ## Current research — fixed generator pair admitted after489-test gate
 
 Corrected full regression489 passed/one skip in583 seconds. Coordinator

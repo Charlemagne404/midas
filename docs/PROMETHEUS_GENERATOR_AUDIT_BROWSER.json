@@ -1,0 +1,20 @@
+{
+  "finding_visible": true,
+  "inspected": [
+    {
+      "tournament_id": "tournament-244c26f362d3434084c7f3f3",
+      "base_episodes": 100,
+      "variants": 2100,
+      "generator_revision": null
+    },
+    {
+      "tournament_id": "tournament-e86559c1a23d42e79420d2ea",
+      "base_episodes": 100,
+      "variants": 2100,
+      "generator_revision": {
+        "version": "hashed-settlement-1"
+      }
+    }
+  ],
+  "page_errors": []
+}

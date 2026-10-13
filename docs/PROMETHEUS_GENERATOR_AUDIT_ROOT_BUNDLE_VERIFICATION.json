@@ -1,0 +1,13 @@
+{
+  "checks": [
+    {
+      "tournament_id": "tournament-244c26f362d3434084c7f3f3",
+      "payloads": 2195
+    },
+    {
+      "tournament_id": "tournament-e86559c1a23d42e79420d2ea",
+      "payloads": 2196
+    }
+  ],
+  "scope": "Root rechecks after producer export; all declared payload hashes"
+}

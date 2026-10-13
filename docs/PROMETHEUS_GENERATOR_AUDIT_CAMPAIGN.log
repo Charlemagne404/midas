@@ -1,0 +1,12 @@
+{"phase": "WAITING_GATE", "gate_unit": "midas-generator-audit-full-gate.service"}
+{"phase": "GATE_PASSED", "gate": {"unit": "midas-generator-audit-full-gate.service", "passed": 489, "skipped": 1, "seconds": 583.0, "log_sha256": "e2dbdd116d2d9fb5aa93055ca4369223339b3760a199f8ebd2408ad32c488f9f"}}
+{"phase": "ADMITTING", "revision": 0}
+{"phase": "RESEARCHING", "job_id": "job-f61b7015fb224067b4b3f3ef"}
+{"phase": "STUDY_COMPLETED", "tournament_id": "tournament-244c26f362d3434084c7f3f3"}
+{"phase": "ADMITTING", "revision": 1}
+{"phase": "RESEARCHING", "job_id": "job-a59aeed3eb8349d6b20cc2fe"}
+{"phase": "STUDY_COMPLETED", "tournament_id": "tournament-e86559c1a23d42e79420d2ea"}
+{"phase": "VERIFYING", "tournaments": ["tournament-244c26f362d3434084c7f3f3", "tournament-e86559c1a23d42e79420d2ea"]}
+{"phase": "EXPORTING", "tournament_id": "tournament-244c26f362d3434084c7f3f3"}
+{"phase": "EXPORTING", "tournament_id": "tournament-e86559c1a23d42e79420d2ea"}
+{"phase": "VERIFIED", "finding_id": "finding-generator-483071", "output": "data/exports/generator-audit-483071/report.json"}

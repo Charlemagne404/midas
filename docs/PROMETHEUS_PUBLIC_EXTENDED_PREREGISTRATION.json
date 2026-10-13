@@ -1,0 +1,18 @@
+{
+  "capture_id": "public-series-ee6885c09fba4bc98ef5a8cb",
+  "unit": "midas-public-series-extended.service",
+  "samples": 120,
+  "interval_seconds": 5,
+  "wall_seconds": 900,
+  "systemd_wall_seconds": 1000,
+  "memory_mb": 256,
+  "cpu_quota": "25%",
+  "observation_byte_cap": 16777216,
+  "selection": "First supported active complementary market among 20 public discovery results; no selection on observed subsequent outcomes",
+  "purpose": "Longer public observation series for chronological quality and ingestion research; no fills, execution labels, payout attestation or profitability claim",
+  "output": "data/datasets",
+  "capture_state": "data/public-captures/public-series-ee6885c09fba4bc98ef5a8cb/state.json",
+  "producer_sha256": "a2ebba53492d2c9907a05973c55121028b3a60a9fffaad35e06cfbb9871ee0cd",
+  "created_at": 1791884776.9414241,
+  "interpreter": "/home/charlie/midas/.venv/bin/python"
+}

@@ -2365,3 +2365,37 @@ controls. These are smoke fixtures, not production training accomplishments.
 The extra five tests were introduced after full-gate collection and are reported
 separately. Next: observe exact native jobs, verify paired archived evidence,
 then root reexecute actual fixed logistic/MLP/PPO decisions and inspect UI.
+
+## Fixed-policy generator revision audit completed
+
+Coordinator terminal VERIFIED/exit0 after two2100-variant studies,100 paired
+source groups. Verified4200 financial replays,45696 rational/Decimal journal
+states,2100 equal pre-settlement journal/decision pairs;48 groups change payout.
+Logistic and MLP mean change-0.053333 CI[-0.136667,0], equal aggregate outcomes;
+sampled tail loss0→0.476 and downside score1.353024→0.823690. PPO mean change
+-0.038533 CI[-0.280745,0.21384]. Every reported mean-change interval includes
+zero; no promotion or neural policy advantage established. Market paths and
+execution remain unchanged; this is settlement-only synthetic sensitivity.
+
+Root checks4391 bundle payloads,24 exact frozen-inference/accounting reruns
+across seven policies and both studies. Actual finding and both tournament
+selectors inspected with zero page errors. Original API READY and protected
+archive quick_check/counts/exclusive owner pass. Inventory43 artifacts/42 fitted,
+26 tournaments/50223 correlated variants,63 native jobs all terminal, plus
+separate540 recovery and4320 unwind variants. Last full suite489passed/oneskip;
+five subsequent inference fixtures passed separately. Source freeze for the
+research coordinator is lifted. Worker guards stayed EVENT_INDEX with zero
+fallbacks; durations225.48/225.20 seconds. Arena now928821176bytes/64022 paths;
+64925 watches near native65536 quota. Future quota failures must retain exact
+full-scan fallback; review retention/headroom before larger campaigns. No kernel
+quota change or storage-cap relaxation.
+
+Separately launched public-series-ee6885c09fba4bc98ef5a8cb under
+midas-public-series-extended.service:120 polls/5-second interval/900-second
+inner and1000-second supervisor bounds,25%CPU/256MiB,16MiB observation cap.
+Public GET-only capture preserves raw responses and no execution labels.
+Capture source payloads62 recorded during unchanged package freeze; provenance
+notes distinguish file snapshots from process memory. Recorder remains live;
+no completion/data-publication claim yet. Stop with systemctl--user stop
+midas-public-series-extended.service. Next: chronological public-observation
+windows and quality/duplicate/coverage checks; no unsupported real-market training.

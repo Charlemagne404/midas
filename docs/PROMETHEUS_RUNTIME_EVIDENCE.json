@@ -1,22 +1,14 @@
 {
-  "active_jobs": [
-    "job-f61b7015fb224067b4b3f3ef"
-  ],
-  "active_research_director": {
-    "unit": "midas-generator-audit-483071.service",
-    "phase": "RESEARCHING",
-    "state_path": "data/arena/generator-audits/audit-483071/state.json",
-    "wall_seconds": 4800,
-    "stop": "systemctl --user stop midas-generator-audit-483071.service; cancel any admitted native child separately in Arena"
-  },
+  "active_jobs": [],
+  "active_research_director": null,
   "arena_datasets": 6,
   "arena_fitted_models": 42,
   "arena_model_artifacts": 43,
   "arena_performance_replays": 1,
-  "arena_research_tournaments": 23,
+  "arena_research_tournaments": 25,
   "arena_source_datasets": 5,
-  "arena_tournaments": 24,
-  "checked_at": 1791884555.271743,
+  "arena_tournaments": 26,
+  "checked_at": 1791885284.0950913,
   "dataset_quality": [
     "Identical observable vectors occur across partitions. Independent scenario IDs do not guarantee covariate diversity; inspect repeated synthetic grids.",
     "Some scenario families contain one settlement seed parity only. The current generator uses seed parity for settlement; reorder families and shift seeds before making generalization claims.",
@@ -30,8 +22,8 @@
     "live_execution": false,
     "paper_recovery": {
       "status": "CHECKPOINT_VERIFIED",
-      "journal_events": 70765,
-      "revision": 70764
+      "journal_events": 71161,
+      "revision": 71160
     },
     "laboratory": {
       "status": "READY",
@@ -170,7 +162,7 @@
     "benchmark": "docs/PROMETHEUS_USAGE_INDEX_BENCHMARK.json",
     "max_artifact_bytes": 1073741824
   },
-  "current_engineering_activity": "Matched legacy/hashed settlement audit: legacy study active, revised study waits; source and producer tools frozen",
+  "current_engineering_activity": "Generator audit verified; bounded public observation capture remains active; next chronological Data Foundry ingestion",
   "active_performance_benchmark": {
     "unit": "midas-guard-worker-benchmark-v2.service",
     "state": "COMPLETED",
@@ -227,5 +219,29 @@
     "scope": "Isolated actual classifier, half-size gate, PPO archive, fitted cost preferences and deterministic controls; rejects source drift and request mismatch",
     "production_models_trained": 0,
     "log": "docs/PROMETHEUS_POLICY_INFERENCE_EXTENDED_TESTS.log"
+  },
+  "active_public_capture": {
+    "capture_id": "public-series-ee6885c09fba4bc98ef5a8cb",
+    "unit": "midas-public-series-extended.service",
+    "samples": 120,
+    "interval_seconds": 5,
+    "wall_seconds": 900,
+    "systemd_wall_seconds": 1000,
+    "memory_mb": 256,
+    "cpu_quota": "25%",
+    "observation_byte_cap": 16777216,
+    "selection": "First supported active complementary market among 20 public discovery results; no selection on observed subsequent outcomes",
+    "purpose": "Longer public observation series for chronological quality and ingestion research; no fills, execution labels, payout attestation or profitability claim",
+    "output": "data/datasets",
+    "capture_state": "data/public-captures/public-series-ee6885c09fba4bc98ef5a8cb/state.json",
+    "producer_sha256": "a2ebba53492d2c9907a05973c55121028b3a60a9fffaad35e06cfbb9871ee0cd",
+    "created_at": 1791884776.9414241,
+    "interpreter": "/home/charlie/midas/.venv/bin/python"
+  },
+  "latest_generator_audit": {
+    "verified_replays": 4200,
+    "journal_states_independently_audited": 45696,
+    "pairs_with_identical_pre_settlement_evidence": 2100,
+    "changed_settlement_groups": 48
   }
 }
