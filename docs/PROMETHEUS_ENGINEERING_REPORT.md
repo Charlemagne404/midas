@@ -2105,3 +2105,9 @@ repair/filled sell) matched exactly, recorded in
 PROMETHEUS_UNWIND_REEXECUTION_SMOKE.json. This uses the same broker implementation;
 the rational/Decimal ledger audits remain the independent arithmetic evidence.
 Current supervised full gate remains live; no captured campaign source was edited.
+
+Three additional reexecution tests passed0.48 seconds, covering an actual saved
+no-trade reexecution and rejection of source drift/changed row bytes. They ran
+separately after the supervised suite had collected its tests and are not included
+in that pending full-gate count. Campaign process59831 and its pytest child59852
+were confirmed live; source and captured tool checksums remain frozen.
