@@ -48,6 +48,7 @@ class JobSpec(Model):
         "unwind",
         "observations",
         "migration",
+        "plan",
     ]
     dataset: DatasetSpec | None = None
     training: TrainingSpec | None = None
@@ -57,6 +58,7 @@ class JobSpec(Model):
     unwind: UnwindStudySpec | None = None
     observations: ObservationSpec | None = None
     migration: MigrationSpec | None = None
+    plan_id: str | None = Field(default=None, pattern=r"^plan-[a-zA-Z0-9_-]{1,80}$")
     model_id: str | None = None
     rl: RLSpec | None = None
     tournament: TournamentSpec | None = None
@@ -76,6 +78,7 @@ class JobSpec(Model):
             "unwind": "unwind",
             "observations": "observations",
             "migration": "migration",
+            "plan": "plan_id",
             "evaluation": "model_id",
             "diagnostics": "model_id",
             "rl": "rl",
@@ -93,6 +96,7 @@ class JobSpec(Model):
             "unwind",
             "observations",
             "migration",
+            "plan_id",
             "model_id",
             "rl",
             "tournament",
@@ -108,6 +112,8 @@ class JobSpec(Model):
 def create(
     root: Path, spec: JobSpec, launch: bool = True, admission_key: str | None = None
 ) -> dict[str, Any]:
+    if spec.kind == "plan" and admission_key is None:
+        admission_key = spec.plan_id + "-execute"
     root.mkdir(parents=True, exist_ok=True)
     with (root / "admission.lock").open("a+") as lease:
         fcntl.flock(lease, fcntl.LOCK_EX)
@@ -370,6 +376,15 @@ def _run(root: Path, identity: str) -> None:
                 assert spec.migration is not None
                 result = migrate(root, spec.migration, progress)
                 record["result"] = {"dataset_id": result["dataset_id"]}
+            elif spec.kind == "plan":
+                from midas.arena.planning import execute
+
+                assert spec.plan_id is not None
+                result = execute(root, spec.plan_id, progress)
+                record["result"] = {
+                    "plan_id": result["plan_id"],
+                    "director_id": result["director_id"],
+                }
             elif spec.kind == "supervised":
                 from midas.arena.supervised import train
 

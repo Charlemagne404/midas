@@ -10,6 +10,72 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+it('proposes an evidence-bound question and launches only its frozen plan', async () => {
+  const plan = {
+    plan_id: 'plan-fixture',
+    state: 'PROPOSED',
+    frozen: {
+      question: 'Capacity question',
+      planning_rule: 'Fixture plateau rule',
+      observed_classifier_widths: [32],
+      plateau_findings: ['finding-fixture'],
+      configuration: { challenge_seed: 603071 },
+    },
+    budget: {
+      training_trials: 4,
+      tournaments: 2,
+      source_groups: 100,
+      correlated_variants_max: 4200,
+    },
+    limitations: ['No automatic promotion'],
+  };
+  const overview = {
+    datasets: [{ dataset_id: 'dataset-fixture', partition_rows: {}, limitations: [] }],
+    models: [],
+    jobs: [],
+    findings: [],
+    tournaments: [],
+    dependencies: {},
+    health: { memory_mb: {}, worker_cpu_cores: 1, worker_memory_mb: 4096 },
+    plans: [plan],
+  };
+  let proposed = false;
+  let launched: unknown;
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (url: string, init?: RequestInit) => {
+      if (url === '/api/arena/plans/propose') {
+        const input = JSON.parse(String(init?.body));
+        expect(input.mode).toBe('auto');
+        expect(input.challenge_seed).toBe(603071);
+        proposed = true;
+        return new Response(JSON.stringify(plan), { status: 201 });
+      }
+      if (url === '/api/arena/jobs' && init?.method === 'POST') {
+        launched = JSON.parse(String(init.body)).configuration;
+        return new Response('{}', { status: 201 });
+      }
+      return new Response(JSON.stringify(overview), { status: 200 });
+    }),
+  );
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  render(
+    <QueryClientProvider client={client}>
+      <Arena />
+    </QueryClientProvider>,
+  );
+  fireEvent.click(await screen.findByRole('tab', { name: 'Research director' }));
+  expect(await screen.findByText('Fixture plateau rule')).toBeVisible();
+  expect(screen.getByText(/4 training trials/)).toHaveTextContent('100 shared source groups');
+  fireEvent.click(screen.getByRole('button', { name: 'Propose from saved evidence' }));
+  await screen.findByText(/Evidence-bound research plan proposed/);
+  expect(proposed).toBe(true);
+  fireEvent.click(screen.getByRole('button', { name: 'Run frozen research plan' }));
+  await screen.findByText(/Research job admitted/);
+  expect(launched).toMatchObject({ kind: 'plan', plan_id: 'plan-fixture', max_wall_seconds: 7200 });
+  client.clear();
+});
+
 it('requests a storage migration and labels reused observations', async () => {
   const overview = {
     datasets: [

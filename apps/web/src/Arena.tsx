@@ -292,6 +292,26 @@ type Overview = {
     limitations: string[];
   }[];
   datasets: Dataset[];
+  plans?: {
+    plan_id: string;
+    state: string;
+    frozen: {
+      question: string;
+      planning_rule: string;
+      observed_classifier_widths: number[];
+      plateau_findings: string[];
+      configuration: { challenge_seed: number };
+    };
+    budget: {
+      training_trials: number;
+      tournaments: number;
+      source_groups: number;
+      correlated_variants_max: number;
+    };
+    director_id?: string;
+    error?: string;
+    limitations: string[];
+  }[];
   models: Model[];
   tournaments: Tournament[];
   jobs: Job[];
@@ -440,6 +460,7 @@ export function Arena() {
   const [family, setFamily] = useState('mlp');
   const [ppoParent, setPpoParent] = useState('');
   const [migrationTarget, setMigrationTarget] = useState('decision-storage-2');
+  const [planningSeed, setPlanningSeed] = useState(603071);
   const [epochs, setEpochs] = useState(80);
   const [learningRate, setLearningRate] = useState(0.001);
   const [hiddenSize, setHiddenSize] = useState(32);
@@ -521,6 +542,24 @@ export function Arena() {
     .sort((a, b) => (b.capture_end_ms ?? 0) - (a.capture_end_ms ?? 0));
   const selectedObservationSource = observationSource || observationSources[0]?.dataset_id || '';
   const selectedDataset = datasetId || data?.datasets[0]?.dataset_id || '';
+  const proposeResearch = useMutation({
+    mutationFn: () =>
+      api('/arena/plans/propose', {
+        method: 'POST',
+        body: JSON.stringify({
+          dataset_id: selectedDataset,
+          mode: 'auto',
+          challenge_seed: planningSeed,
+          episodes: 100,
+          epochs: 80,
+        }),
+      }),
+    onSuccess: () => {
+      void cache.invalidateQueries({ queryKey: ['arena'] });
+      setMessage('Evidence-bound research plan proposed. Rules, inputs and budgets are saved.');
+    },
+    onError: (error: Error) => setMessage(error.message),
+  });
   const costDataMissing =
     ['cost_ridge', 'cost_mlp'].includes(family) &&
     data?.datasets.find((entry) => entry.dataset_id === selectedDataset)?.execution_cost_label !==
@@ -2529,6 +2568,77 @@ export function Arena() {
       )}
       {tab === 'Research director' && (
         <>
+          <Section title="Evidence-driven research planning">
+            <p className="lab-note">
+              Inspect completed findings and comparable validation evidence, then select a bounded
+              follow-up using a saved rule. Current template changes hypothesis from an optimization
+              plateau to a preregistered neural-capacity comparison. No automatic promotion.
+            </p>
+            <label>
+              Fresh planning challenge seed
+              <input
+                type="number"
+                min={0}
+                max={4294947295}
+                value={planningSeed}
+                onChange={(event) => setPlanningSeed(Number(event.target.value))}
+              />
+            </label>
+            <button
+              disabled={!selectedDataset || proposeResearch.isPending}
+              onClick={() => proposeResearch.mutate()}
+            >
+              Propose from saved evidence
+            </button>
+            {data?.plans?.map((plan) => (
+              <article className="arena-finding" key={plan.plan_id}>
+                <h3>{plan.frozen.question}</h3>
+                <State value={plan.state} />
+                <p>{plan.frozen.planning_rule}</p>
+                <p>
+                  {plan.budget.training_trials} training trials · {plan.budget.tournaments}{' '}
+                  tournaments · {plan.budget.source_groups} shared source groups · at most{' '}
+                  {plan.budget.correlated_variants_max} correlated variants
+                </p>
+                <p>
+                  Observed classifier widths: {plan.frozen.observed_classifier_widths.join(', ')} ·
+                  fresh seed {plan.frozen.configuration.challenge_seed}
+                </p>
+                <p>Input findings: {plan.frozen.plateau_findings.join(', ')}</p>
+                <a href={`/api/arena/plans/${plan.plan_id}`} target="_blank" rel="noreferrer">
+                  Frozen plan and evidence ↗
+                </a>
+                <button
+                  disabled={plan.state !== 'PROPOSED' || submit.isPending}
+                  onClick={() =>
+                    submit.mutate({
+                      configuration: {
+                        kind: 'plan',
+                        plan_id: plan.plan_id,
+                        max_wall_seconds: 7200,
+                      },
+                    })
+                  }
+                >
+                  Run frozen research plan
+                </button>
+                {plan.director_id && (
+                  <a
+                    href={`/api/arena/directors/${plan.director_id}`}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Completed research sequence ↗
+                  </a>
+                )}
+                {plan.error && <p role="alert">{plan.error}</p>}
+                <details>
+                  <summary>Planning limitations</summary>
+                  <Json value={plan.limitations} />
+                </details>
+              </article>
+            ))}
+          </Section>
           <Section title="Finite research schedules">
             <p className="lab-note">
               Plans admit at most 32 ordered jobs within a declared window. Source changes stop

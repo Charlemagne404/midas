@@ -23,6 +23,20 @@ def export(root: Path, director_id: str, output: Path) -> dict[str, Any]:
     return export_experiment(root, "directors", director_id, output)
 
 
+def export_plan(root: Path, identity: str, output: Path) -> dict[str, Any]:
+    directory = artifact_path(root, "plans", identity)
+    record = json.loads((directory / "manifest.json").read_text())
+    if record["state"] != "COMPLETED":
+        raise ValueError("Only completed research plans can be exported")
+    for item in record["frozen"]["evidence"]:
+        snapshot = directory / "inputs" / item["kind"] / item["identity"] / "manifest.json"
+        if sha256(snapshot) != item["manifest_sha256"]:
+            raise ValueError("Captured plan selection evidence differs")
+    return export_experiment(
+        root, "directors", record["director_id"], output, extra_paths=set(directory.rglob("*"))
+    )
+
+
 def export_search(root: Path, search_id: str, output: Path) -> dict[str, Any]:
     from scripts.verify_policy_search import verify_search
 
@@ -152,13 +166,16 @@ def dataset_paths(root: Path, identity: str) -> set[Path]:
         identity = lineage["source_dataset_id"]
 
 
-def export_experiment(root: Path, kind: str, identity: str, output: Path) -> dict[str, Any]:
+def export_experiment(
+    root: Path, kind: str, identity: str, output: Path, extra_paths: set[Path] | None = None
+) -> dict[str, Any]:
     root = root.resolve()
     directory = artifact_path(root, kind, identity)
     director = json.loads((directory / "manifest.json").read_text())
     if director.get("state", "COMPLETED" if kind == "tournaments" else None) != "COMPLETED":
         raise ValueError("Only completed plans can be exported as complete experiment bundles")
     paths = set(directory.rglob("*"))
+    paths.update(extra_paths or set())
     source_gaps = []
     adaptive = kind == "directors" and director.get("director_version") == "adaptive-latency-1"
     if kind == "directors":
@@ -522,6 +539,7 @@ if __name__ == "__main__":
     parser.add_argument("--root", type=Path, default=Path("data/arena"))
     experiment = parser.add_mutually_exclusive_group(required=True)
     experiment.add_argument("--director")
+    experiment.add_argument("--plan")
     experiment.add_argument("--search")
     experiment.add_argument("--tournament")
     experiment.add_argument("--sweep")
@@ -531,7 +549,9 @@ if __name__ == "__main__":
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     result = (
-        export_unwind(args.root, args.unwind, args.output)
+        export_plan(args.root, args.plan, args.output)
+        if args.plan
+        else export_unwind(args.root, args.unwind, args.output)
         if args.unwind
         else export_cost_study(args.root, args.cost_study, args.output)
         if args.cost_study

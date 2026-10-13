@@ -136,6 +136,15 @@ def router(root: Path) -> APIRouter:
                 record = inspect_director(root, manifest.parent.name)
             if kind == "models":
                 evaluation_counts(record)
+            if kind == "plans" and record["state"] == "RUNNING" and record.get("owner_job_id"):
+                from midas.arena.jobs import inspect
+
+                owner = inspect(root, record["owner_job_id"])
+                if owner["state"] not in {"RUNNING", "QUEUED"}:
+                    record["state"] = "INTERRUPTED"
+                    record["error"] = (
+                        "Native plan worker stopped before terminal plan publication; explicit recovery required."
+                    )
             if kind == "searches" and record["state"] == "RUNNING" and record.get("owner_job_id"):
                 from midas.arena.jobs import inspect
 
@@ -165,6 +174,19 @@ def router(root: Path) -> APIRouter:
                 omitted.update({"cycles", "input_attribution"})
             values.append({k: v for k, v in record.items() if k not in omitted})
         return values
+
+    def inspect_plan(identity: str) -> dict[str, Any]:
+        record = json.loads((path("plans", identity) / "manifest.json").read_text())
+        if record["state"] == "RUNNING" and record.get("owner_job_id"):
+            from midas.arena.jobs import inspect
+
+            owner = inspect(root, record["owner_job_id"])
+            if owner["state"] not in {"RUNNING", "QUEUED"}:
+                record.update(
+                    state="INTERRUPTED",
+                    error="Native plan worker stopped before terminal publication; explicit recovery required.",
+                )
+        return record
 
     def overview_data() -> dict[str, Any]:
         dependencies = {
@@ -218,6 +240,7 @@ def router(root: Path) -> APIRouter:
         return {
             "cold_storage": cold_storage_status(root),
             "datasets": catalog("datasets"),
+            "plans": catalog("plans"),
             "models": catalog("models"),
             "tournaments": catalog("tournaments"),
             "jobs": jobs,
@@ -247,6 +270,20 @@ def router(root: Path) -> APIRouter:
         return await call(
             lambda: json.loads((path("datasets", identity) / "manifest.json").read_text())
         )
+
+    @api.post("/plans/propose", status_code=201)
+    async def propose_plan(payload: dict[str, Any]) -> Any:
+        from midas.arena.planning import PlanningSpec, propose
+
+        try:
+            spec = PlanningSpec.model_validate(payload)
+        except ValueError as error:
+            raise HTTPException(422, str(error)) from error
+        return await call(propose, root, spec)
+
+    @api.get("/plans/{identity}")
+    async def research_plan(identity: str) -> Any:
+        return await call(inspect_plan, identity)
 
     @api.get("/datasets/{identity}/rows")
     async def dataset_rows(identity: str, offset: int = 0, limit: int = 100) -> Any:

@@ -5,11 +5,11 @@ import time
 from pathlib import Path
 from typing import Any
 
-from pydantic import Field
+from pydantic import Field, model_validator
 
 from midas.arena.artifacts import artifact_path, atomic_json
 from midas.arena.datasets import DatasetSpec, load, research_hash
-from midas.arena.evolution import SweepSpec, run_sweep
+from midas.arena.evolution import Candidate, SweepSpec, run_sweep
 from midas.arena.tournaments import TournamentSpec, run_tournament
 from midas.core.models import Model
 from midas.economics.attestation import digest
@@ -22,6 +22,21 @@ class DirectorSpec(Model):
     challenge_seed: int = Field(default=53071, ge=0, le=2**32 - 20000)
     episodes: int = Field(default=100, ge=30, le=300)
     training_epochs: int = Field(default=80, ge=5, le=200)
+    research_question: str | None = Field(default=None, max_length=500)
+    sweep_candidates: tuple[Candidate, ...] | None = None
+    sweep_seeds: tuple[int, ...] = (11, 29)
+
+    @model_validator(mode="after")
+    def bounded_sweep(self):
+        arguments = {
+            "dataset_id": self.dataset_id,
+            "epochs": self.training_epochs,
+            "seeds": self.sweep_seeds,
+        }
+        if self.sweep_candidates is not None:
+            arguments["candidates"] = self.sweep_candidates
+        SweepSpec(**arguments)
+        return self
 
 
 def run_director(root: Path, spec: DirectorSpec, progress: Any = None) -> dict[str, Any]:
@@ -47,7 +62,8 @@ def run_director(root: Path, spec: DirectorSpec, progress: Any = None) -> dict[s
             "dataset_sha256": dataset["rows_sha256"],
             "label_target": dataset.get("label_target", "completion"),
             "configuration": spec.model_dump(mode="json"),
-            "research_question": "Does model quality survive fresh seeds and a changed family/settlement relationship, and does input-support abstention improve downside?",
+            "research_question": spec.research_question
+            or "Does model quality survive fresh seeds and a changed family/settlement relationship, and does input-support abstention improve downside?",
             "hypothesis": "Validation-selected simpler predictors remain competitive; unsupported-state abstention reduces extrapolation risk.",
             "planning_rule": "Initial data quality showed family/seed shortcuts and initial-state constants; select on validation, then test independent identities with reordered families.",
             "steps": [
@@ -88,9 +104,14 @@ def run_director(root: Path, spec: DirectorSpec, progress: Any = None) -> dict[s
 
         callback = Progress(step)
         if index == 0:
-            result = run_sweep(
-                root, SweepSpec(dataset_id=spec.dataset_id, epochs=spec.training_epochs), callback
-            )
+            sweep_args = {
+                "dataset_id": spec.dataset_id,
+                "epochs": spec.training_epochs,
+                "seeds": spec.sweep_seeds,
+            }
+            if spec.sweep_candidates is not None:
+                sweep_args["candidates"] = spec.sweep_candidates
+            result = run_sweep(root, SweepSpec(**sweep_args), callback)
             step["artifact"] = {"kind": "sweeps", "identity": result["sweep_id"]}
             record["selected_model_id"] = result["selection"]["selected_model_id"]
         else:
