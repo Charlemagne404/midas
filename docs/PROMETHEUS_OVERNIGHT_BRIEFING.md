@@ -1,5 +1,28 @@
 # MIDAS — PROMETHEUS OVERNIGHT BRIEFING
 
+## Active campaign — residual-only sell versus hold and missing-leg repair
+
+Source checkpoint198fdf2 adds the observable one-attempt policy, actual sell
+execution, rational/Decimal accounting checks, typed durable jobs, saved-proposal
+verification, scientific export and dashboard replays. Matched shares are
+protected; current risk cutoffs can prevent liquidation. Future resolution changes
+do not change proposals. No initial-buy cost predictor is reused for sell costs.
+
+The supervised `midas-unwind-campaign-393071.service` is in FULL_GATE. Only after
+the full regression succeeds will it restart the original API, wait for READY,
+admit one bounded60-group/720-variant study at fresh seed393071, verify its saved
+decisions/ledgers/comparisons, and export a checksummed bundle. All package and
+captured campaign tool source must remain frozen until the campaign terminates.
+Supervisor bounds:one CPU/4GiB/3600s; study bounds:one CPU/4GiB/1200s/1GiB Arena.
+Persistent phase state is `data/arena/unwind-campaigns/campaign-393071/state.json`.
+Stop the coordinator with `systemctl --user stop midas-unwind-campaign-393071.service`;
+if a child study was already admitted, cancel its native job separately in Arena.
+
+Focused suite36 passed with the existing warning; additional matched-share and
+failed-gate tests passed. Frontend16 tests, typecheck/lint/build and strict backend
+typing pass. An isolated30-group study and bundle were checked as test fixtures;
+no production unwind outcome or completed new full gate is yet claimed.
+
 ## Latest result — completion filtering helps this narrow synthetic cohort
 
 The joint study and supervised finalizer completed. All3900 saved replays,
