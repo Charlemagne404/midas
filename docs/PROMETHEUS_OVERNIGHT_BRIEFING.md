@@ -1,5 +1,18 @@
 # MIDAS — PROMETHEUS OVERNIGHT BRIEFING
 
+## Current activity — fresh recovery robustness after verified worker speedup
+
+Whole-worker comparison preserved all720 financial/journal hashes per run.
+Worker171.94→58.29 seconds (~66% less time),one index reconciliation,zero
+fallbacks; one sequential pair with cache/order limitations. No new models.
+Two fixed150-group recovery cohorts are now supervised sequentially by
+`midas-unwind-robustness-423071-453071.service`; first job
+`job-0e9441b18a0a40fab2a1e5d6` is researching1800 correlated variants.
+Each must pass independent verification/export before next admission. Source
+is frozen during the campaign. State/log references are in runtime evidence.
+Stop the coordinator through systemctl; cancel an already admitted child through
+Arena separately. No research outcome or promotion is yet claimed.
+
 ## Latest engineering checkpoint — artifact index regression passed
 
 Full backend suite460 passed/one PostgreSQL skip in565.93 seconds. API READY,

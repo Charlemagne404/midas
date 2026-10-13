@@ -1,6 +1,16 @@
 {
-  "active_jobs": [],
-  "active_research_director": null,
+  "active_jobs": [
+    "job-0e9441b18a0a40fab2a1e5d6"
+  ],
+  "active_research_director": {
+    "unit": "midas-unwind-robustness-423071-453071.service",
+    "phase": "RESEARCHING",
+    "state_path": "data/arena/unwind-campaigns/robustness-423071-453071/state.json",
+    "configuration": "docs/PROMETHEUS_UNWIND_ROBUSTNESS_PREREGISTRATION.json",
+    "outer_wall_seconds": 3600,
+    "stop_coordinator": "systemctl --user stop midas-unwind-robustness-423071-453071.service",
+    "stop_child": "Cancel the active native Arena job separately if already admitted"
+  },
   "arena_datasets": 6,
   "arena_fitted_models": 42,
   "arena_model_artifacts": 43,
@@ -8,7 +18,7 @@
   "arena_research_tournaments": 23,
   "arena_source_datasets": 5,
   "arena_tournaments": 24,
-  "checked_at": 1791881576.8051145,
+  "checked_at": 1791881885.6267307,
   "dataset_quality": [
     "Identical observable vectors occur across partitions. Independent scenario IDs do not guarantee covariate diversity; inspect repeated synthetic grids.",
     "Some scenario families contain one settlement seed parity only. The current generator uses seed parity for settlement; reorder families and shift seeds before making generalization claims.",
@@ -22,8 +32,8 @@
     "live_execution": false,
     "paper_recovery": {
       "status": "CHECKPOINT_VERIFIED",
-      "journal_events": 69098,
-      "revision": 69097
+      "journal_events": 69320,
+      "revision": 69319
     },
     "laboratory": {
       "status": "READY",
@@ -162,13 +172,14 @@
     "benchmark": "docs/PROMETHEUS_USAGE_INDEX_BENCHMARK.json",
     "max_artifact_bytes": 1073741824
   },
-  "current_engineering_activity": "Matched pre-index/current worker performance replay; no new training or independent economic cohort",
+  "current_engineering_activity": "Two fixed recovery robustness cohorts; unchanged policy; independent verification and export before next admission",
   "active_performance_benchmark": {
     "unit": "midas-guard-worker-benchmark-v2.service",
-    "state": "RUNNING",
-    "cpu_cores": 1,
-    "memory_mb": 4096,
-    "outer_wall_seconds": 3000
+    "state": "COMPLETED",
+    "old_worker_seconds": 171.9388186049764,
+    "indexed_worker_seconds": 58.28975714097032,
+    "identical_variants_per_worker": 720,
+    "limitations": "One sequential pair; cache/order effects remain"
   },
   "latest_full_tests": {
     "passed": 460,

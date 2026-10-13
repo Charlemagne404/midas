@@ -2231,3 +2231,21 @@ PYTHONDONTWRITEBYTECODE. A fresh bounded attempt runs as
 `midas-guard-worker-benchmark-v2.service`; measured whole-worker result pending.
 Two unchanged-policy cohorts (150 groups each, seeds423071 and453071) are
 preregistered, not launched, for recovery robustness after performance validation.
+
+## Whole-worker equivalence passed; fresh recovery robustness admitted
+
+Matched copied-archive comparison completed with exact financial/journal hashes
+for all720 variants in both workers. Old worker171.9388 seconds vs indexed
+58.2898 seconds (~66.1% less time),722 full scans vs one reconciliation,
+zero fallbacks. This is one sequential host comparison with cache/order limits,
+not a new independent economic cohort. Benchmark source hash53d813bd3a18c44c7d4819f7df11cd3fd5db25b27825e463adbe51ebea5cf2e1.
+
+Two fresh150-group cohorts, seeds423071 and453071, are preregistered with
+unchanged policy thresholds. Coordinatordb433c8 passed10 focused tool tests
+including duplicate refusal, invalid gate rejection and verification failure
+preventing second admission. Unitmidas-unwind-robustness-423071-453071.service
+is active with one CPU/4GiB/3600-second bounds. First native job
+job-0e9441b18a0a40fab2a1e5d6 is admitted,1800 variants,1200-second wall cap.
+Each study is verified and exported before the next job is admitted. Package
+and captured coordinator/verifier source remain frozen until terminal state.
+No training, threshold selection, or promotion. Completion is not yet claimed.
