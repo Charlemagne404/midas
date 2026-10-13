@@ -2201,3 +2201,23 @@ Checkpointcc48383 committed. Supervised midas-usage-index-full-gate.service is
 confirmed active with one CPU/4GiB/1200s limits, writing
 PROMETHEUS_USAGE_INDEX_FULL_TESTS.log. Package source remains frozen during the
 gate. Latest completed full suite remains449 passed/one skip until this finishes.
+
+## Artifact index full regression and continuing performance validation
+
+Supervised full gate completed successfully:460 passed, one PostgreSQL skip,
+one existing dependency warning in565.93 seconds. Source remains frozen for
+the bounded old/current worker comparison now running under
+`midas-guard-worker-benchmark.service` (one CPU,4GiB,3000-second outer limit).
+The comparison copies the current archive into isolated temporary workspaces,
+uses the captured pre-index source and current source, and replays the already
+opened60-group/720-variant unwind workload. It requires all financial/journal
+hashes to match. No new independent economic evidence or model training is
+claimed. Whole-worker speedup remains pending.
+
+Checkpoint estimate:about70% of the entire original engineering scope complete,
+about30% remaining, with65-75% uncertainty. Broad synthetic-platform backlog
+remains approximately15-30 focused engineering hours; empirical market evidence
+requires a separate collection/calibration program. All59 native research jobs
+are terminal;42 fitted artifacts plus one heuristic remain registered.
+Fresh API READY, dashboard200, archive quick_check and protected campaign
+162000/18000/162000 counts pass; exclusive owner lock is held.

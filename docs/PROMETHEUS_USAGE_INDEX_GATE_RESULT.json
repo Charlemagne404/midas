@@ -1,0 +1,11 @@
+{
+  "checked_at": 1791881440.3903332,
+  "unit": "midas-usage-index-full-gate.service",
+  "exit_status": 0,
+  "passed": 460,
+  "skipped": 1,
+  "seconds": 565.93,
+  "log": "PROMETHEUS_USAGE_INDEX_FULL_TESTS.log",
+  "performance_benchmark_state": "RUNNING",
+  "goal_state": "ACTIVE"
+}

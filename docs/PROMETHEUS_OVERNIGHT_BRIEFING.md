@@ -1,5 +1,14 @@
 # MIDAS — PROMETHEUS OVERNIGHT BRIEFING
 
+## Latest engineering checkpoint — artifact index regression passed
+
+Full backend suite460 passed/one PostgreSQL skip in565.93 seconds. API READY,
+dashboard200 and protected archive checks pass. No new fitted models or economic
+cohorts. Whole-worker old/current performance replay is now supervised by
+`midas-guard-worker-benchmark.service`; no end-to-end speedup is yet claimed.
+Original goal remains active, approximately70% complete/30% engineering remaining.
+Earlier active-test/campaign notes below are historical and superseded.
+
 ## Latest result — bounded unwind executed; evidence is concentrated in one group
 
 Full gate449 passed/one PostgreSQL skip/existing warning in565.14 seconds.
