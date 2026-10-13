@@ -10,6 +10,77 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+it('creates a finite schedule and shows persisted failure alerts', async () => {
+  const overview = {
+    datasets: [],
+    models: [],
+    jobs: [],
+    findings: [],
+    tournaments: [],
+    dependencies: {},
+    health: { memory_mb: {}, worker_cpu_cores: 1, worker_memory_mb: 4096 },
+    schedules: [
+      {
+        schedule_id: 'schedule-fixture',
+        state: 'PENDING',
+        admission_expires_at: 2000,
+        configuration: { question: 'Fixture plan' },
+        steps: [{ name: 'one', due_at: 1000, state: 'PENDING' }],
+      },
+    ],
+    alerts: [
+      {
+        alert_id: 'alert-fixture',
+        schedule_id: 'schedule-fixture',
+        state: 'OPEN',
+        reason: 'Fixture interrupted child',
+        action: 'Inspect before explicit recovery',
+      },
+    ],
+  };
+  let created = false;
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (url: string, init?: RequestInit) => {
+      if (url === '/api/arena/schedules' && init?.method === 'POST') {
+        const body = JSON.parse(String(init.body));
+        expect(body.admission_window_seconds).toBe(86400);
+        expect(body.steps[0].configuration.kind).toBe('diagnostics');
+        created = true;
+        return new Response(JSON.stringify({ schedule_id: 'new' }), { status: 201 });
+      }
+      if (url.includes('/schedules/schedule-fixture/pause'))
+        return new Response('{}', { status: 200 });
+      return new Response(JSON.stringify(overview), { status: 200 });
+    }),
+  );
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  render(
+    <QueryClientProvider client={client}>
+      <Arena />
+    </QueryClientProvider>,
+  );
+  fireEvent.click(await screen.findByRole('tab', { name: 'Research director' }));
+  expect(await screen.findByText('Fixture interrupted child')).toBeVisible();
+  fireEvent.change(screen.getByLabelText('Scheduled steps (JSON)'), {
+    target: {
+      value: JSON.stringify([
+        {
+          name: 'inspect',
+          after_seconds: 60,
+          configuration: { kind: 'diagnostics', model_id: 'model-fixture' },
+        },
+      ]),
+    },
+  });
+  fireEvent.click(screen.getByRole('button', { name: 'Save finite schedule' }));
+  await screen.findByText(/Finite schedule saved/);
+  expect(created).toBe(true);
+  fireEvent.click(screen.getByRole('button', { name: 'Pause plan' }));
+  await screen.findByText(/Schedule updated/);
+  client.clear();
+});
+
 it('keeps chronological public windows separate from execution training', async () => {
   const overview = {
     datasets: [],

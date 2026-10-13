@@ -358,6 +358,21 @@ type Overview = {
     };
     limitations: string[];
   }[];
+  schedules?: {
+    schedule_id: string;
+    state: string;
+    admission_expires_at: number;
+    current_job_id?: string;
+    configuration: { question: string };
+    steps: { name: string; due_at: number; state: string; job_id?: string | null }[];
+  }[];
+  alerts?: {
+    alert_id: string;
+    schedule_id: string;
+    reason: string;
+    action: string;
+    state: string;
+  }[];
 };
 const tabs = [
   'Overview',
@@ -442,12 +457,41 @@ export function Arena() {
   const [unwindEvent, setUnwindEvent] = useState(0);
   const [unwindOffset, setUnwindOffset] = useState(0);
   const [message, setMessage] = useState('');
+  const [scheduleQuestion, setScheduleQuestion] = useState('Run a bounded research plan');
+  const [scheduleSteps, setScheduleSteps] = useState('[]');
   const overview = useQuery({
     queryKey: ['arena'],
     queryFn: () => api<Overview>('/arena'),
     refetchInterval: 10000,
   });
   const data = overview.data;
+  const scheduleAction = useMutation({
+    mutationFn: ({ identity, action }: { identity: string; action: string }) =>
+      api(`/arena/schedules/${identity}/${action}`, { method: 'POST' }),
+    onSuccess: () => {
+      cache.invalidateQueries({ queryKey: ['arena'] });
+      setMessage(
+        'Schedule updated. Admitted children keep their own limits; cancel them separately if needed.',
+      );
+    },
+    onError: (error: Error) => setMessage(error.message),
+  });
+  const scheduleCreate = useMutation({
+    mutationFn: (steps: unknown) =>
+      api('/arena/schedules', {
+        method: 'POST',
+        body: JSON.stringify({
+          question: scheduleQuestion,
+          steps,
+          admission_window_seconds: 86400,
+        }),
+      }),
+    onSuccess: () => {
+      cache.invalidateQueries({ queryKey: ['arena'] });
+      setMessage('Finite schedule saved. The dispatcher admits due jobs when resources permit.');
+    },
+    onError: (error: Error) => setMessage(error.message),
+  });
   const observationSources = [...(data?.recorded_sources ?? [])]
     .filter((source) => source.valid && source.dataset_id.startsWith('public-series-'))
     .sort((a, b) => (b.capture_end_ms ?? 0) - (a.capture_end_ms ?? 0));
@@ -2360,6 +2404,117 @@ export function Arena() {
       )}
       {tab === 'Research director' && (
         <>
+          <Section title="Finite research schedules">
+            <p className="lab-note">
+              Plans admit at most 32 ordered jobs within a declared window. Source changes stop
+              admission; failures are recorded locally. Pausing or cancelling a plan does not cancel
+              an already admitted child.
+            </p>
+            <label>
+              Scheduled research question
+              <input
+                value={scheduleQuestion}
+                onChange={(event) => setScheduleQuestion(event.target.value)}
+              />
+            </label>
+            <label>
+              Scheduled steps (JSON)
+              <textarea
+                value={scheduleSteps}
+                onChange={(event) => setScheduleSteps(event.target.value)}
+                rows={6}
+              />
+            </label>
+            <p className="lab-footnote">
+              Each step needs name, after_seconds and configuration using the same validated job
+              fields as the training console. This form uses a 24-hour admission window; offsets are
+              seconds after plan creation.
+            </p>
+            <button
+              disabled={scheduleCreate.isPending}
+              onClick={() => {
+                try {
+                  scheduleCreate.mutate(JSON.parse(scheduleSteps));
+                } catch {
+                  setMessage('Scheduled steps must be valid JSON.');
+                }
+              }}
+            >
+              Save finite schedule
+            </button>
+            {data?.schedules?.map((plan) => (
+              <article className="arena-finding" key={plan.schedule_id}>
+                <h3>{plan.configuration.question}</h3>
+                <State value={plan.state} />
+                <p>Admission ends {new Date(plan.admission_expires_at * 1000).toLocaleString()}</p>
+                {plan.steps.map((step, index) => (
+                  <p key={index}>
+                    {step.name} · {step.state} · due {new Date(step.due_at * 1000).toLocaleString()}
+                    {step.job_id && (
+                      <>
+                        {' '}
+                        ·{' '}
+                        <a href={`/api/arena/jobs/${step.job_id}`} target="_blank" rel="noreferrer">
+                          Child job ↗
+                        </a>
+                      </>
+                    )}
+                  </p>
+                ))}
+                <button
+                  disabled={[
+                    'COMPLETED',
+                    'FAILED',
+                    'CANCELLED',
+                    'EXPIRED',
+                    'STALE_SOURCE',
+                    'PAUSED',
+                  ].includes(plan.state)}
+                  onClick={() =>
+                    scheduleAction.mutate({ identity: plan.schedule_id, action: 'pause' })
+                  }
+                >
+                  Pause plan
+                </button>
+                <button
+                  disabled={plan.state !== 'PAUSED'}
+                  onClick={() =>
+                    scheduleAction.mutate({ identity: plan.schedule_id, action: 'resume' })
+                  }
+                >
+                  Resume plan
+                </button>
+                <button
+                  disabled={[
+                    'COMPLETED',
+                    'FAILED',
+                    'CANCELLED',
+                    'EXPIRED',
+                    'STALE_SOURCE',
+                  ].includes(plan.state)}
+                  onClick={() =>
+                    scheduleAction.mutate({ identity: plan.schedule_id, action: 'cancel' })
+                  }
+                >
+                  Cancel plan
+                </button>
+              </article>
+            ))}
+            {data?.alerts?.map((alert) => (
+              <article className="arena-finding" key={alert.alert_id}>
+                <h3>Research alert · {alert.state}</h3>
+                <p>{alert.reason}</p>
+                <p>{alert.action}</p>
+                <a
+                  href={`/api/arena/schedules/${alert.schedule_id}`}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Schedule evidence ↗
+                </a>
+              </article>
+            ))}
+          </Section>
           <Section title="Risk threshold and sizing search">
             <p className="lab-note">
               Compare eight preregistered gates on validation scenarios, then evaluate the selected

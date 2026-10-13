@@ -100,14 +100,33 @@ class JobSpec(Model):
         return self
 
 
-def create(root: Path, spec: JobSpec, launch: bool = True) -> dict[str, Any]:
+def create(
+    root: Path, spec: JobSpec, launch: bool = True, admission_key: str | None = None
+) -> dict[str, Any]:
     root.mkdir(parents=True, exist_ok=True)
     with (root / "admission.lock").open("a+") as lease:
         fcntl.flock(lease, fcntl.LOCK_EX)
-        return _create(root, spec, launch)
+        if admission_key is not None:
+            if not admission_key or len(admission_key) > 96:
+                raise ValueError("Admission key must contain 1-96 characters")
+            matches: list[dict[str, Any]] = []
+            for path in root.glob("jobs/*/job.json"):
+                candidate: dict[str, Any] = json.loads(path.read_text())
+                if candidate.get("admission_key") == admission_key:
+                    matches.append(candidate)
+            if len(matches) > 1:
+                raise ValueError("Duplicate durable admission keys require inspection")
+            if matches:
+                existing = matches[0]
+                if existing["configuration"] != spec.model_dump(mode="json"):
+                    raise ValueError("Admission key was already bound to another configuration")
+                return existing
+        return _create(root, spec, launch, admission_key)
 
 
-def _create(root: Path, spec: JobSpec, launch: bool) -> dict[str, Any]:
+def _create(
+    root: Path, spec: JobSpec, launch: bool, admission_key: str | None = None
+) -> dict[str, Any]:
     active = sum(
         inspect(root, p.parent.name)["state"] in {"RUNNING", "QUEUED"}
         for p in (root / "jobs").glob("*/job.json")
@@ -135,6 +154,8 @@ def _create(root: Path, spec: JobSpec, launch: bool) -> dict[str, Any]:
             "max_artifact_mb": 1024,
         },
     }
+    if admission_key is not None:
+        record["admission_key"] = admission_key
     atomic_json(directory / "job.json", record)
     repository = Path(__file__).resolve().parents[3]
     sources = {}

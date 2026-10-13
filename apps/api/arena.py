@@ -231,6 +231,8 @@ def router(root: Path) -> APIRouter:
             "recoveries": catalog("recoveries"),
             "unwinds": catalog("unwinds"),
             "observations": catalog("observations"),
+            "schedules": catalog("schedules"),
+            "alerts": catalog("alerts"),
         }
 
     @api.get("")
@@ -254,6 +256,32 @@ def router(root: Path) -> APIRouter:
         from midas.arena.observations import load
 
         return await call(lambda: load(root, identity)[0])
+
+    @api.post("/schedules")
+    async def create_schedule(payload: dict[str, Any]) -> Any:
+        def admit() -> Any:
+            from midas.arena.scheduling import ScheduleSpec, create
+
+            return create(root, ScheduleSpec.model_validate(payload))
+
+        return await call(admit)
+
+    @api.get("/schedules/{identity}")
+    async def schedule_detail(identity: str) -> Any:
+        return await call(
+            lambda: json.loads((path("schedules", identity) / "manifest.json").read_text())
+        )
+
+    @api.post("/schedules/{identity}/{action}")
+    async def schedule_control(identity: str, action: str) -> Any:
+        def change() -> Any:
+            from midas.arena.scheduling import control
+
+            if action not in {"pause", "resume", "cancel"}:
+                raise ValueError("Unknown schedule control")
+            return control(root, identity, action)
+
+        return await call(change)
 
     @api.get("/observations/{identity}/rows")
     async def observation_rows(
