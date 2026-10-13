@@ -8,7 +8,7 @@
   "arena_research_tournaments": 23,
   "arena_source_datasets": 5,
   "arena_tournaments": 24,
-  "checked_at": 1791882512.4006846,
+  "checked_at": 1791883191.370328,
   "dataset_quality": [
     "Identical observable vectors occur across partitions. Independent scenario IDs do not guarantee covariate diversity; inspect repeated synthetic grids.",
     "Some scenario families contain one settlement seed parity only. The current generator uses seed parity for settlement; reorder families and shift seeds before making generalization claims.",
@@ -22,8 +22,8 @@
     "live_execution": false,
     "paper_recovery": {
       "status": "CHECKPOINT_VERIFIED",
-      "journal_events": 69656,
-      "revision": 69655
+      "journal_events": 70027,
+      "revision": 70026
     },
     "laboratory": {
       "status": "READY",
@@ -162,7 +162,7 @@
     "benchmark": "docs/PROMETHEUS_USAGE_INDEX_BENCHMARK.json",
     "max_artifact_bytes": 1073741824
   },
-  "current_engineering_activity": "Recovery robustness verified; economic counterexample minimized; next priority generator generalization audit",
+  "current_engineering_activity": "Generator-revision full regression running; fixed-policy legacy/hashed challenge preregistered but not admitted",
   "active_performance_benchmark": {
     "unit": "midas-guard-worker-benchmark-v2.service",
     "state": "COMPLETED",
@@ -200,5 +200,18 @@
     ],
     "verification": "3600 saved replay/ledger checks,28 exact policy reexecutions,3752 root bundle payload checks",
     "conclusion": "Both sell-minus-hold mean intervals include zero; intervention coverage remains sparse"
+  },
+  "active_test_gate": {
+    "unit": "midas-generator-revision-full-gate.service",
+    "state": "RUNNING",
+    "cpu_cores": 1,
+    "memory_mb": 4096,
+    "wall_seconds": 1200,
+    "source_hash": "e83654c6f78b8e9690653b8fa8850315e33b7e87fae2cf0af7b5dee2403154fc",
+    "log": "docs/PROMETHEUS_GENERATOR_REVISION_FULL_TESTS.log"
+  },
+  "latest_frontend_tests": {
+    "passed": 17,
+    "log": "docs/PROMETHEUS_GENERATOR_REVISION_FRONTEND_TESTS.log"
   }
 }

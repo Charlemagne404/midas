@@ -2275,3 +2275,32 @@ repeatability and single optional-deletion minimality. This is legitimate loss,
 not a software defect or independent generalization evidence. Existing invariant
 minimization remains separate. Source freeze lifted after terminal coordinator,
 minimizer and root reexecution. Next: generator-revision generalization audit.
+
+## Generator-revision generalization: explicit settlement isolation
+
+Checkpoint15edb77 adds challenge-only hashed-settlement-1, leaving legacy
+generate unchanged. Only terminal payout and explicit warnings differ; books,
+account, market, observations and execution inputs remain fixed. Recorded data
+is rejected. TournamentSpec requires a fresh challenge when revision is used;
+manifest explicitly captures revision and limitation. Actual dashboard control
+submits a fresh challenge with promotion prevented by2000-group minimum.
+
+Five new tests establish immutability, deterministic revision, both outcomes
+within every family of a fixed120-scenario sample (legacy eachfamilyhasone),
+recorded/frozen-input rejection, accounting/reexecution and pre-settlement
+journal equality across native tournaments. Combined generator/tournament/
+economic tests11 pass43.24 seconds. Strict typing/Ruff pass; frontend17 tests,
+typecheck/lint and production build pass (existing large-chart chunk warning).
+
+Preregistered fixed original-validation-selected logistic/MLP and sole PPO plus
+four deterministic controls on100 freshgroups/2100 variants per settlement rule.
+No new training, threshold fitting or promotion. Freshseed483071. Package source
+hashe83654c6f78b8e9690653b8fa8850315e33b7e87fae2cf0af7b5dee2403154fc
+is frozen whilemidas-generator-revision-full-gate.service runs (oneCPU/4GiB/
+1200seconds). GatePID493761confirmedlive. Latest completed fullsuite remains
+460passed/oneskip; pending suite is not counted. Original API restarted and READY
+with69997 journal events verified. Native research jobs remain terminal.
+Next: after full gate, execute/verify paired fixed-policy revision studies,
+including equal pre-settlement decisions and source/model hashes, then export
+caveated findings. Settlement-only evidence does not imply broader market-path
+generalization, calibrated fills or observed economic value.

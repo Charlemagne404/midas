@@ -1,5 +1,17 @@
 # MIDAS — PROMETHEUS OVERNIGHT BRIEFING
 
+## Current engineering — generator-revision full gate
+
+Challenge-only hashed settlement removes the direct seed-parity outcome rule
+while preserving initial and future books, market and execution inputs. Eleven
+focused backend tests and17 frontend tests pass; typing/lint/build pass. Original
+API READY after restart. Full regression runs under
+`midas-generator-revision-full-gate.service`; package source frozen.
+Fixed logistic/MLP/PPO and deterministic controls are preregistered for a matched
+100-group legacy/revised challenge. No production challenge job admitted yet;
+no new outcome or model improvement claimed. Prior source-gate entries below
+are historical. Prometheus remains active.
+
 ## Latest finding — fresh recovery benefit remains inconclusive
 
 Two fixed150-group cohorts verified3600 variants. Sell-minus-hold means
