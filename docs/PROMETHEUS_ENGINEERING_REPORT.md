@@ -2094,3 +2094,14 @@ Supervised campaign will run the full regression first, restart the original API
 only on success, admit exactly one source-frozen bounded worker, then verify and
 export its results. Failed gates or ambiguous prior artifacts require inspection,
 not automatic duplicate admission. No production unwind outcomes are yet claimed.
+
+### Exact unwind reexecution tooling
+
+Added a separate source-hash-gated reexecution command. It validates saved row,
+financial and journal identities, runs the frozen scenario/policy, and requires
+equal final hashes and intervention proposals. It refuses source drift and
+separate report overwrite. Four isolated test-study cases (no-trade/hold/filled
+repair/filled sell) matched exactly, recorded in
+PROMETHEUS_UNWIND_REEXECUTION_SMOKE.json. This uses the same broker implementation;
+the rational/Decimal ledger audits remain the independent arithmetic evidence.
+Current supervised full gate remains live; no captured campaign source was edited.
