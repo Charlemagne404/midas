@@ -1,5 +1,14 @@
 # MIDAS — PROMETHEUS OVERNIGHT BRIEFING
 
+## Current engineering — PPO checkpoint continuation
+
+Optimizer-preserving continuation implemented with explicit environment/rollout
+reset, RNG/counter restoration, immutable checkpoint publication and new lineage
+artifacts.26focused backend tests and20frontend tests pass; typing/lint/buildpass.
+No production models added. Fresh parent2048→child4096 and100group challenge
+preregistered for after full regression. Existing supervised resumption preserved.
+Prometheus active; retention pilot remainsverified and archives intact.
+
 ## Latest result — verified cold replay retention
 
 Full gate545passed/oneskip; actual pilot VERIFIED, both units terminal.

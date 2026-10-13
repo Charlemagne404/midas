@@ -7,6 +7,7 @@ import io
 import json
 import os
 import platform
+import re
 import tarfile
 import tempfile
 import time
@@ -244,13 +245,46 @@ def export_experiment(root: Path, kind: str, identity: str, output: Path) -> dic
         if artifact["kind"] == "sweeps":
             sweep = json.loads((path / "manifest.json").read_text())
             model_ids.update(t["model_id"] for t in sweep["trials"] if t["model_id"])
-    for model_id in model_ids:
+    pending_models = list(model_ids)
+    included_models = set()
+    ancestry = {}
+    while pending_models:
+        model_id = pending_models.pop()
+        if model_id in included_models:
+            continue
+        included_models.add(model_id)
         model_path = artifact_path(root, "models", model_id)
-        model = json.loads((model_path / "manifest.json").read_text())
-        weights = model_path / ("policy.zip" if model["family"] == "ppo" else "parameters.json")
-        if sha256(weights) != model["artifact_sha256"]:
-            raise ValueError("Referenced model weights have changed")
+        model_record = model_path / "manifest.json"
+        if not model_record.exists() and model_id not in model_ids:
+            model_record = model_path / "training.json"
+        model = json.loads(model_record.read_text())
+        if model_id in model_ids or model.get("artifact_sha256"):
+            weights = model_path / ("policy.zip" if model["family"] == "ppo" else "parameters.json")
+            if sha256(weights) != model["artifact_sha256"]:
+                raise ValueError("Referenced model weights have changed")
         paths.update(model_path.rglob("*"))
+        lineage = model.get("lineage")
+        if lineage:
+            parent_id = lineage["parent_model_id"]
+            ancestry[model_id] = parent_id
+            cursor, visited = model_id, set()
+            while cursor in ancestry:
+                if cursor in visited:
+                    raise ValueError("Cyclic model resumption lineage")
+                visited.add(cursor)
+                cursor = ancestry[cursor]
+            parent = artifact_path(root, "models", parent_id)
+            checkpoint = json.loads((parent / "checkpoint-manifest.json").read_text())
+            filename = checkpoint.get("filename", "checkpoint.zip")
+            if not re.fullmatch(r"checkpoint(?:-[a-f0-9]{64})?\.zip", filename):
+                raise ValueError("Invalid parent checkpoint filename")
+            checkpoint_path = parent / filename
+            if (
+                checkpoint["artifact_sha256"] != lineage["checkpoint_sha256"]
+                or sha256(checkpoint_path) != lineage["checkpoint_sha256"]
+            ):
+                raise ValueError("Parent resumption checkpoint differs")
+            pending_models.append(parent_id)
         model_dataset = artifact_path(root, "datasets", model["dataset_id"])
         model_data_manifest = json.loads((model_dataset / "manifest.json").read_text())
         if (
@@ -273,9 +307,12 @@ def export_experiment(root: Path, kind: str, identity: str, output: Path) -> dic
     owned_jobs = {step.get("job_id") for step in steps} if adaptive else set()
     for job_file in root.glob("jobs/*/job.json"):
         job = json.loads(job_file.read_text())
-        if (job.get("result") or {}).get(reference_key) == identity or job.get(
-            "job_id"
-        ) in owned_jobs:
+        if (
+            (job.get("result") or {}).get(reference_key) == identity
+            or job.get("job_id") in owned_jobs
+            or (job.get("result") or {}).get("model_id") in included_models
+            or (job.get("active_artifact") or {}).get("identity") in included_models
+        ):
             if adaptive and job.get("job_id") in owned_jobs:
                 step = next(s for s in steps if s["job_id"] == job["job_id"])
                 stage = json.loads(

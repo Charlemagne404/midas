@@ -10,6 +10,58 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+it('submits an explicit PPO parent without replacing its evidence', async () => {
+  const overview = {
+    datasets: [
+      {
+        dataset_id: 'dataset-fixture',
+        label_target: 'completion',
+        partition_rows: {},
+        limitations: [],
+        rows: 0,
+        generated_base_episodes: 0,
+        eligible_base_episodes: 0,
+      },
+    ],
+    models: [],
+    jobs: [],
+    findings: [],
+    tournaments: [],
+    dependencies: {},
+    health: { memory_mb: {}, worker_cpu_cores: 1, worker_memory_mb: 4096 },
+  };
+  let configuration: Record<string, unknown> | undefined;
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (url: string, init?: RequestInit) => {
+      if (url === '/api/arena/jobs' && init?.method === 'POST') {
+        configuration = JSON.parse(String(init.body)).configuration;
+        return new Response(JSON.stringify({ job_id: 'job-fixture' }), { status: 201 });
+      }
+      return new Response(JSON.stringify(overview), { status: 200 });
+    }),
+  );
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  render(
+    <QueryClientProvider client={client}>
+      <Arena />
+    </QueryClientProvider>,
+  );
+  fireEvent.click(await screen.findByRole('tab', { name: 'Training console' }));
+  fireEvent.change(screen.getByLabelText('Architecture'), { target: { value: 'ppo' } });
+  fireEvent.change(screen.getByLabelText('Parent PPO model ID (optional)'), {
+    target: { value: 'model-parent' },
+  });
+  expect(screen.getByText(/environment and rollout reset/)).toBeVisible();
+  fireEvent.click(screen.getByRole('button', { name: 'Start training' }));
+  await screen.findByText(/Research job admitted/);
+  expect(configuration).toMatchObject({
+    kind: 'rl',
+    rl: { resume_from: 'model-parent', dataset_id: 'dataset-fixture' },
+  });
+  client.clear();
+});
+
 it('creates a finite schedule and shows persisted failure alerts', async () => {
   const overview = {
     datasets: [],

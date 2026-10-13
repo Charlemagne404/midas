@@ -95,6 +95,13 @@ type Model = {
   dataset_id: string;
   artifact_sha256: string;
   training_duration_seconds: number;
+  lineage?: {
+    parent_model_id: string;
+    checkpoint_sha256: string;
+    parent_timesteps: number;
+    continuation_mode: string;
+    global_rng_restored: boolean;
+  } | null;
   configuration: Record<string, unknown>;
   validation: Metrics | null;
   test: Metrics | null;
@@ -424,6 +431,7 @@ export function Arena() {
   const [rowId, setRowId] = useState('');
   const [eventIndex, setEventIndex] = useState(0);
   const [family, setFamily] = useState('mlp');
+  const [ppoParent, setPpoParent] = useState('');
   const [epochs, setEpochs] = useState(80);
   const [learningRate, setLearningRate] = useState(0.001);
   const [hiddenSize, setHiddenSize] = useState(32);
@@ -631,6 +639,7 @@ export function Arena() {
             timesteps: steps,
             hidden_size: hiddenSize,
             learning_rate: learningRate,
+            resume_from: ppoParent || null,
           },
         }
       : family === 'cost_ridge' || family === 'cost_mlp'
@@ -963,6 +972,23 @@ export function Arena() {
       )}
       {tab === 'Training console' && (
         <>
+          {family === 'ppo' && (
+            <Section title="Continue PPO training">
+              <label>
+                Parent PPO model ID (optional)
+                <input
+                  value={ppoParent}
+                  onChange={(event) => setPpoParent(event.target.value)}
+                  placeholder="model-…"
+                />
+              </label>
+              <p className="lab-note">
+                The timestep budget is the total across parent and child. Compatible checkpoint
+                weights, optimizer and global RNG are restored; environment and rollout reset. A new
+                artifact preserves parent evidence.
+              </p>
+            </Section>
+          )}
           <Section title="Training configuration">
             <div className="lab-builder">
               <label>
@@ -1414,6 +1440,26 @@ export function Arena() {
                       {regressionUnits(model.data)}
                     </p>
                   ))}
+                </div>
+              )}
+              {model.data.lineage && (
+                <div>
+                  <h3>PPO training lineage</h3>
+                  <p>
+                    Parent: {model.data.lineage.parent_model_id} ·{' '}
+                    {model.data.lineage.parent_timesteps} prior transitions
+                  </p>
+                  <p>
+                    Continuation: {model.data.lineage.continuation_mode}. Global RNG restored:{' '}
+                    {model.data.lineage.global_rng_restored ? 'yes' : 'no'}.
+                  </p>
+                  <a
+                    href={`/api/arena/models/${model.data.lineage.parent_model_id}`}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Parent evidence ↗
+                  </a>
                 </div>
               )}
               {model.data.validation && !isRegression(model.data) && (

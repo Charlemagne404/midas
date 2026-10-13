@@ -390,9 +390,15 @@ def router(root: Path) -> APIRouter:
                 record["checkpoints"] = ["checkpoint.json"]
             elif (directory / "curves.json").exists():
                 record["curves"] = json.loads((directory / "curves.json").read_text())
-                record["checkpoints"] = (
-                    ["checkpoint.zip"] if (directory / "checkpoint.zip").exists() else []
-                )
+                checkpoint_metadata = directory / "checkpoint-manifest.json"
+                if checkpoint_metadata.exists():
+                    checkpoint = json.loads(checkpoint_metadata.read_text())
+                    record["checkpoints"] = [
+                        checkpoint.get("filename", "checkpoint.zip"),
+                        "checkpoint-manifest.json",
+                    ]
+                else:
+                    record["checkpoints"] = []
             if record["state"] == "TRAINING":
                 record["training_duration_seconds"] = max(
                     0, __import__("time").time() - record["created_at"]
@@ -415,11 +421,13 @@ def router(root: Path) -> APIRouter:
             "parameters.json",
             "checkpoint.json",
             "checkpoint.zip",
+            "checkpoint-manifest.json",
+            "lineage.json",
             "policy.zip",
             "progress.csv",
             "curves.json",
             "diagnostics.json",
-        }:
+        } and not re.fullmatch(r"checkpoint-[a-f0-9]{64}\.zip", name):
             raise HTTPException(404, "Unknown model artifact")
         artifact = await call(lambda: path("models", identity) / name)
         if not artifact.is_file():

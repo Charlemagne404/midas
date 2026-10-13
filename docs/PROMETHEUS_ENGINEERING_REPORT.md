@@ -2676,3 +2676,22 @@ SQLitequick_checkOK,ownerlockheld.43modelweight hashes verified during gate.
 No new scientific samples/models or improvement claims. Source freeze lifted.
 Next: PPO resumption contract, preserving existing supervised resumption.
 Full remaining stretch scope stays active.
+
+## PPO optimizer-preserving resumption implemented
+
+RLSpec now accepts a parent artifact; source/data/configuration/checkpoint hashes
+validate before trusted loading. New artifact restores policy/optimizer/counters
+and Python/NumPy/Torch RNG; environment and rollout explicitly reset. No exact
+trajectory equivalence claimed. Checkpoints publish immutable archives before
+atomic metadata, at completed update boundaries. Requested cumulative timestep
+budget rounds down to complete rollouts, never overshoots; insufficient budget
+rejects. Zero-new-update wall stop fails rather than publishing a trained clone;
+successful records report stop reason/discarded partial collection. Parent bytes
+remain unchanged. Model/UI/API show lineage/downloads; bundles include finished
+and interrupted parent artifacts and native source evidence, reject cyclic lineage.
+Expanded PPO/API/source focused gate26passed88.67s; frontend20passed,typing/lint/
+buildpass. Existing Starlette/chart warnings remain. No production fits admitted.
+Prepared finite parent2048→child4096 study with oldPPO plus deterministiccontrols,
+100freshgroups seed573071/2100correlatedvariants; no presumed improvement/promotion.
+Next full gate, then source-bound native training/evaluation and independentchecks.
+Prometheus remains active, all remaining stretch objectives retained.

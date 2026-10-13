@@ -1,0 +1,41 @@
+{
+  "created_at": 1791920445.7730436,
+  "source_hash": "58f4072d195c210d6e94386774bf460034129facc2d6515e12eb72615165be12",
+  "purpose": "Real PPO optimizer-preserving continuation and frozen fresh evaluation; not presumed policy improvement",
+  "full_gate_unit": "midas-ppo-resumption-full-gate.service",
+  "parent_training": {
+    "dataset_id": "dataset-38ec6e9776097d8e36693372",
+    "seed": 7,
+    "timesteps": 2048,
+    "learning_rate": 0.0003,
+    "rollout_steps": 128,
+    "hidden_size": 32,
+    "max_wall_seconds": 1800,
+    "resume_from": null
+  },
+  "child_total_timesteps": 4096,
+  "old_ppo_control": "model-33cddb0d92024c2bb0a3b34a",
+  "challenge": {
+    "episodes": 100,
+    "seed": 573071
+  },
+  "minimum_champion_episodes": 2000,
+  "evaluation_source_groups": 100,
+  "correlated_variants_expected": 2100,
+  "steps": [
+    "full regression success",
+    "native parent training",
+    "native child continuation with parent checkpoint binding",
+    "verify optimizer/counters/parent immutable hashes",
+    "fresh matched parent/child/old-PPO/control tournament",
+    "independent replay and grouped comparison verification",
+    "portable lineage export",
+    "API/browser and protected archive checks"
+  ],
+  "production_training_admitted": false,
+  "old_ppo_sha256": "783262634161ecfb2eaf26a30f877b4fc8f167e0eb79b439cc87093f0f040904",
+  "tool_hashes": {
+    "arena_bundle.py": "cc1e5408c1f410d3cfb26aed3771dd2c227423b06e8709d58fc927aab0ad7e94"
+  },
+  "full_gate_log": "docs/PROMETHEUS_PPO_RESUMPTION_FULL_TESTS.log"
+}
