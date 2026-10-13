@@ -2488,3 +2488,16 @@ claimed. State:data/arena/packing-pilots/tournament-244c26f362d3434084c7f3f3/sta
 Captured migration tools and packages frozen until terminal. Refuse blind
 duplicate execution; inspect phase and recover through verified restore/prune
 commands if interrupted. Existing backups and protected Laboratory untouched.
+
+## Packed read and guard measurement prepared during verified wait
+
+Standalone benchmark compares up to200 packed/restored replay reads, alternating
+order and requiring identical decoded evidence. Restores exact originals only
+in an isolated temporary directory and removes them after checks. It measures
+actual UsageIndex initialization, ten exact byte/count observations, fallback
+count and error after compaction. Two focused tests pass1.33 seconds. No
+production benchmark or performance improvement claimed yet. Same full gate
+PID756132 and pilotPID760009 confirmed active; forty-second bounded observation
+shows gate still running and pilot WAITING_GATE. Frozen package/producer source
+unchanged. Next: after verified migration, measure the real replay store and
+index mode, inspect actual API/browser access, then continue the broad backlog.
