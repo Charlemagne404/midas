@@ -2524,3 +2524,32 @@ archive quick_check/counts162000/18000/162000 and exclusive owner pass.
 Migration source freeze lifted after all verification. No models trained or
 scientific results changed. Next: explicit bounded cold retention/storage policy
 and durable research scheduling; broad Prometheus goal remains active.
+
+## Finite persistent scheduling and local alerts implemented
+
+Checkpointac8dce4 adds1-32 ordered validated native jobs per plan, finite
+1-minute to7-day admission windows, due-time/resource waits, source-drift
+stopping, pause/resume/cancel controls, persisted child references and local
+failure alerts. Native admission keys publish before launch and reuse the same
+job across a crash between child admission and plan update. Interrupted or
+partially admitted children are not silently duplicated/retried. Expired crash
+intents cannot start new jobs. Terminal evidence cannot be cancelled away.
+Existing native CPU/memory/wall/1GiB guards and worker serialization unchanged.
+
+API exposes typed plan creation/detail/controls and alerts in overview. Research
+Director offers machine-readable step creation, due times, child links and
+controls; admitted children are explicitly cancelled separately. Dispatcher
+performs one bounded pass; user service25%CPU/512MiB/60s with persistent minute
+timer. Host Linger=yes. No external notification, infinite experiment generator
+or unattended retuning added. Installer preserves differing existing units and
+venv executable path (including spaces); original API/web units untouched.
+
+Backend14 focused tests passed12.09s including native-key crash recovery,
+expiry, resource wait, child interruption and API controls. Two installer tests
+pass0.14s. Strict typing/Ruff pass; frontend19 tests, typecheck/lint/build pass.
+Timer not installed and no scheduled production job admitted yet. New full
+regressionmidas-scheduling-full-gate.service is active oneCPU/4GiB/1200s;
+package source frozen. Next: observe same gate, deploy original API/timer after
+success, execute a short bounded real schedule and inspect persisted behavior
+and local alert evidence. Multi-day/reboot semantics are implemented and tested,
+not yet claimed as a completed multi-day run or arbitrary training resumption.

@@ -1,5 +1,15 @@
 # MIDAS — PROMETHEUS OVERNIGHT BRIEFING
 
+## Current engineering — finite durable schedule full gate
+
+Finite plans now support due times, resource waits, stable native admission
+keys, source-change stops, controls and local failure alerts.14 backend tests,
+two installer tests and19 frontend tests pass; typing/lint/build pass. Full gate
+`midas-scheduling-full-gate.service` runs; packages frozen. Timer not installed
+yet and no scheduled production job admitted. After success: deploy the bounded
+minute dispatcher and demonstrate a short real plan. Existing budgets preserved;
+no external messages or unbounded experiment loop. Prometheus remains active.
+
 ## Storage pilot completed with exact evidence preservation
 
 Full gate511 passed/one skip. A2100-replay study is now packed, reducing file

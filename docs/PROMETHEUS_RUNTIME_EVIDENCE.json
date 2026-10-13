@@ -8,7 +8,7 @@
   "arena_research_tournaments": 25,
   "arena_source_datasets": 5,
   "arena_tournaments": 26,
-  "checked_at": 1791905875.1755922,
+  "checked_at": 1791907035.9425018,
   "dataset_quality": [
     "Identical observable vectors occur across partitions. Independent scenario IDs do not guarantee covariate diversity; inspect repeated synthetic grids.",
     "Some scenario families contain one settlement seed parity only. The current generator uses seed parity for settlement; reorder families and shift seeds before making generalization claims.",
@@ -179,7 +179,7 @@
     "benchmark": "docs/PROMETHEUS_USAGE_INDEX_BENCHMARK.json",
     "max_artifact_bytes": 1073741824
   },
-  "current_engineering_activity": "Replay migration verified; file pressure reduced and original captured policies reexecuted; next bounded retention and scheduling backlog",
+  "current_engineering_activity": "Finite persistent scheduling implemented; timer deployment and real bounded demonstration await full regression",
   "active_performance_benchmark": {
     "unit": "midas-guard-worker-benchmark-v2.service",
     "state": "COMPLETED",
@@ -218,10 +218,16 @@
     "verification": "3600 saved replay/ledger checks,28 exact policy reexecutions,3752 root bundle payload checks",
     "conclusion": "Both sell-minus-hold mean intervals include zero; intervention coverage remains sparse"
   },
-  "active_test_gate": null,
+  "active_test_gate": {
+    "unit": "midas-scheduling-full-gate.service",
+    "state": "RUNNING",
+    "source_hash": "cbc2b35aafdd44a66232cfe3d37beed568e22633ea46109d03334559030b1afa",
+    "log": "docs/PROMETHEUS_SCHEDULING_FULL_TESTS.log",
+    "wall_seconds": 1200
+  },
   "latest_frontend_tests": {
-    "passed": 18,
-    "log": "docs/PROMETHEUS_OBSERVATIONS_FRONTEND_TESTS.log"
+    "passed": 19,
+    "log": "docs/PROMETHEUS_SCHEDULING_FRONTEND_TESTS.log"
   },
   "latest_inference_reexecution_tests": {
     "passed": 5,
