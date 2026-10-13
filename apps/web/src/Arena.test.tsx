@@ -10,6 +10,58 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+it('submits a fresh generator challenge without model promotion', async () => {
+  const overview = {
+    datasets: [
+      {
+        dataset_id: 'parent',
+        rows: 3,
+        eligible_base_episodes: 1,
+        generated_base_episodes: 30,
+        partition_rows: {},
+        label_frequency: {},
+        limitations: [],
+      },
+    ],
+    models: [],
+    jobs: [],
+    findings: [],
+    tournaments: [],
+    dependencies: {},
+    health: { memory_mb: {}, worker_cpu_cores: 1, worker_memory_mb: 4096 },
+  };
+  let submitted: Record<string, unknown> | undefined;
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (_url: string, init?: RequestInit) => {
+      if (init?.method === 'POST') {
+        submitted = JSON.parse(String(init.body)).configuration.tournament;
+        return new Response(JSON.stringify({ job_id: 'job-fixture' }), { status: 201 });
+      }
+      return new Response(JSON.stringify(overview), { status: 200 });
+    }),
+  );
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  render(
+    <QueryClientProvider client={client}>
+      <Arena />
+    </QueryClientProvider>,
+  );
+  fireEvent.click(await screen.findByRole('tab', { name: 'Tournaments' }));
+  fireEvent.change(screen.getByLabelText('Generator challenge seed'), {
+    target: { value: '513071' },
+  });
+  fireEvent.click(screen.getByRole('button', { name: 'Run generator challenge' }));
+  await screen.findByText('Research job admitted. Progress appears below.');
+  expect(submitted).toMatchObject({
+    dataset_id: 'parent',
+    challenge: { episodes: 100, seed: 513071 },
+    generator_revision: { version: 'hashed-settlement-1' },
+    minimum_champion_episodes: 2000,
+  });
+  client.clear();
+});
+
 it('submits bounded unwind controls and opens actual saved episode data', async () => {
   const study = {
     unwind_id: 'unwind-test',

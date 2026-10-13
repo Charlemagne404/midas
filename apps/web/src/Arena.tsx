@@ -403,6 +403,8 @@ export function Arena() {
   const [depthMultiplier, setDepthMultiplier] = useState('1');
   const [feeParameter, setFeeParameter] = useState('');
   const [extraSubmissionLatency, setExtraSubmissionLatency] = useState(0);
+  const [generatorChallengeSeed, setGeneratorChallengeSeed] = useState(483071);
+  const [hashedSettlement, setHashedSettlement] = useState(true);
   const economicRegime = economicEnabled
     ? {
         depth_multiplier: depthMultiplier,
@@ -1502,6 +1504,57 @@ export function Arena() {
               >
                 Run adversarial suite
               </button>
+            </div>
+            <div className="lab-controls">
+              <label>
+                Generator challenge seed
+                <input
+                  type="number"
+                  min={0}
+                  max={4294947295}
+                  value={generatorChallengeSeed}
+                  onChange={(event) => setGeneratorChallengeSeed(Number(event.target.value))}
+                />
+              </label>
+              <label>
+                <input
+                  type="checkbox"
+                  checked={hashedSettlement}
+                  onChange={(event) => setHashedSettlement(event.target.checked)}
+                />
+                Use hashed settlement outcomes
+              </label>
+              <button
+                disabled={!selectedDataset || submit.isPending}
+                onClick={() =>
+                  submit.mutate({
+                    configuration: {
+                      kind: 'tournament',
+                      tournament: {
+                        dataset_id: selectedDataset,
+                        model_ids: data?.models
+                          .filter(
+                            (entry) => entry.dataset_id === selectedDataset && !isRegression(entry),
+                          )
+                          .map((entry) => entry.model_id),
+                        max_episodes: 100,
+                        challenge: { episodes: 100, seed: generatorChallengeSeed },
+                        generator_revision: hashedSettlement
+                          ? { version: 'hashed-settlement-1' }
+                          : null,
+                        minimum_champion_episodes: 2000,
+                      },
+                    },
+                  })
+                }
+              >
+                Run generator challenge
+              </button>
+              <p className="lab-footnote">
+                Compare fixed policies on fresh synthetic scenarios. Hashed outcomes remove the
+                direct seed-parity settlement rule while preserving books and execution inputs. They
+                do not represent observed market outcomes. This challenge does not promote a model.
+              </p>
             </div>
             <div className="lab-controls">
               <label>

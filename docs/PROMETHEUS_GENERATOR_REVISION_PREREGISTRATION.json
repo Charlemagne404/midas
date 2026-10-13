@@ -1,0 +1,167 @@
+{
+  "created_at": 1791883090.2404623,
+  "source_hash": "e83654c6f78b8e9690653b8fa8850315e33b7e87fae2cf0af7b5dee2403154fc",
+  "state": "PREREGISTERED_NOT_LAUNCHED",
+  "question": "How sensitive are fixed logistic, MLP, PPO and deterministic policies to removing direct seed-parity settlement?",
+  "configurations": [
+    {
+      "kind": "tournament",
+      "dataset": null,
+      "training": null,
+      "severity": null,
+      "cost": null,
+      "recovery": null,
+      "unwind": null,
+      "model_id": null,
+      "rl": null,
+      "tournament": {
+        "purpose": "research",
+        "dataset_id": "dataset-38ec6e9776097d8e36693372",
+        "model_ids": [
+          "model-ef77bbbd7d1f4be78c41c0b6",
+          "model-f587b98d06f34441bb040877",
+          "model-33cddb0d92024c2bb0a3b34a"
+        ],
+        "gates": [],
+        "cost_gates": [],
+        "execution_models": [
+          "optimistic",
+          "standard",
+          "conservative"
+        ],
+        "max_episodes": 100,
+        "threshold": 0.5,
+        "tail_loss_weight": 1.0,
+        "seed": 991,
+        "adversarial": false,
+        "minimum_champion_episodes": 2000,
+        "challenge": {
+          "version": "synthetic-decision-1",
+          "episodes": 100,
+          "seed": 483071,
+          "split_seed": 1977,
+          "families": [
+            "calm",
+            "volatile",
+            "thin",
+            "deep",
+            "one_sided",
+            "disappearing"
+          ],
+          "execution_models": [
+            "optimistic",
+            "standard",
+            "conservative"
+          ],
+          "observation_latency_ms": 100,
+          "label_target": "completion",
+          "decision_scope": "initial",
+          "retain_execution_costs": false,
+          "costs": null
+        },
+        "partition": "test",
+        "unsupported_input_policy": "abstain",
+        "economic_regime": null,
+        "generator_revision": null
+      },
+      "sweep": null,
+      "director": null,
+      "policy_search": null,
+      "max_wall_seconds": 1200
+    },
+    {
+      "kind": "tournament",
+      "dataset": null,
+      "training": null,
+      "severity": null,
+      "cost": null,
+      "recovery": null,
+      "unwind": null,
+      "model_id": null,
+      "rl": null,
+      "tournament": {
+        "purpose": "research",
+        "dataset_id": "dataset-38ec6e9776097d8e36693372",
+        "model_ids": [
+          "model-ef77bbbd7d1f4be78c41c0b6",
+          "model-f587b98d06f34441bb040877",
+          "model-33cddb0d92024c2bb0a3b34a"
+        ],
+        "gates": [],
+        "cost_gates": [],
+        "execution_models": [
+          "optimistic",
+          "standard",
+          "conservative"
+        ],
+        "max_episodes": 100,
+        "threshold": 0.5,
+        "tail_loss_weight": 1.0,
+        "seed": 991,
+        "adversarial": false,
+        "minimum_champion_episodes": 2000,
+        "challenge": {
+          "version": "synthetic-decision-1",
+          "episodes": 100,
+          "seed": 483071,
+          "split_seed": 1977,
+          "families": [
+            "calm",
+            "volatile",
+            "thin",
+            "deep",
+            "one_sided",
+            "disappearing"
+          ],
+          "execution_models": [
+            "optimistic",
+            "standard",
+            "conservative"
+          ],
+          "observation_latency_ms": 100,
+          "label_target": "completion",
+          "decision_scope": "initial",
+          "retain_execution_costs": false,
+          "costs": null
+        },
+        "partition": "test",
+        "unsupported_input_policy": "abstain",
+        "economic_regime": null,
+        "generator_revision": {
+          "version": "hashed-settlement-1"
+        }
+      },
+      "sweep": null,
+      "director": null,
+      "policy_search": null,
+      "max_wall_seconds": 1200
+    }
+  ],
+  "weights": {
+    "model-ef77bbbd7d1f4be78c41c0b6": "1792f51e5c8b0cbd1ba6e7c7fbf52c3cb893c485de8a129194b005616d5c52fe",
+    "model-f587b98d06f34441bb040877": "ee31b6988f035ab90c1872c1bf32d78c985ee5a5b09d57c21fff97193d3b5c3a",
+    "model-33cddb0d92024c2bb0a3b34a": "783262634161ecfb2eaf26a30f877b4fc8f167e0eb79b439cc87093f0f040904"
+  },
+  "model_selection": "Best original validation Brier MLP and tied logistic representative; sole already-trained PPO. No challenge outcomes inspected for selection.",
+  "source_groups": 100,
+  "correlated_variants_per_revision": 2100,
+  "primary_comparison": "Per-policy revised-minus-legacy mean P&L, with all execution variants grouped by base episode",
+  "models_trained": 0,
+  "promotion": false,
+  "retuning": false,
+  "required_verification": [
+    "Matched original scenario hashes, identical books/account/market/non-settlement events",
+    "Exact journals and policy decisions before settlement",
+    "Declared hashed payout matches revised terminal events",
+    "All saved financial/journal hashes and independent accounting",
+    "Fixed weights and source identity",
+    "Both no-trade controls included"
+  ],
+  "limitations": [
+    "Settlement-only distribution shift, not market-path or fill-calibration generalization",
+    "One seed cohort and one deterministic hash revision",
+    "Multiple policy comparisons without multiplicity correction",
+    "Observed economics remain synthetic; no profitability evidence",
+    "Completion classifier accuracy is not expected to change when only terminal payout changes"
+  ]
+}

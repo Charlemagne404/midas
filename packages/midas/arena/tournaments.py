@@ -16,6 +16,7 @@ from midas.arena.cost_policy import CostGateSpec, CostPolicy
 from midas.arena.datasets import DatasetSpec, load, observation_lineage, research_hash
 from midas.arena.economic_regimes import EconomicRegime
 from midas.arena.environment import ArenaEnv
+from midas.arena.generator_revisions import GeneratorRevision
 from midas.arena.rl import indices
 from midas.arena.supervised import Predictor
 from midas.core.models import Model
@@ -52,9 +53,12 @@ class TournamentSpec(Model):
     partition: Literal["validation", "test"] = "test"
     unsupported_input_policy: Literal["warn", "abstain"] = "abstain"
     economic_regime: EconomicRegime | None = None
+    generator_revision: GeneratorRevision | None = None
 
     @model_validator(mode="after")
     def valid(self) -> "TournamentSpec":
+        if self.generator_revision is not None and self.challenge is None:
+            raise ValueError("Generator revision requires a fresh challenge, not frozen dataset reuse")
         if not self.execution_models or set(self.execution_models) - {
             "optimistic",
             "standard",
@@ -388,6 +392,8 @@ def run_tournament(root: Path, spec: TournamentSpec, progress: Any = None) -> di
                         "Controlled accounting defects are not financial stress evaluations"
                     )
             origin_hash = digest(scenario.model_dump(mode="json"))
+            if spec.generator_revision:
+                scenario = spec.generator_revision.apply(scenario)
             if spec.economic_regime:
                 scenario = spec.economic_regime.apply(scenario)
             for policy, model in policies.items():
@@ -596,6 +602,12 @@ def run_tournament(root: Path, spec: TournamentSpec, progress: Any = None) -> di
         if spec.challenge
         else spec.partition.upper(),
         "evaluation_generator": dataset_spec.model_dump(mode="json"),
+        "generator_revision": spec.generator_revision.model_dump(mode="json")
+        if spec.generator_revision
+        else None,
+        "generator_revision_note": "Challenge-only synthetic settlement change; fixed policies and no empirical outcome calibration."
+        if spec.generator_revision
+        else "Legacy generated settlement rules.",
         "common_random_numbers_note": "Shared seeds pair source scenarios. Action-dependent order paths and random draws do not guarantee identical execution noise.",
         **summaries(rows, spec),
     }
