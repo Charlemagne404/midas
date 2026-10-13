@@ -1,0 +1,61 @@
+{
+  "capture_id": "public-series-ee6885c09fba4bc98ef5a8cb",
+  "state": {
+    "byte_cap": 16777216,
+    "capture_end_ms": 1791885390635,
+    "capture_id": "public-series-ee6885c09fba4bc98ef5a8cb",
+    "capture_start_ms": 1791884792641,
+    "completed_at": 1791885391.5517886,
+    "content_sha256": "9dd36f170e6f6d3b9729db8a6d5747e8fe704e56c08741d092f82fdf4a75632f",
+    "created_at": 1791884792.3229852,
+    "dataset_id": "public-series-ee6885c09fba4bc98ef5a8cb",
+    "elapsed_seconds": 599.0328996549943,
+    "events": 241,
+    "execution_labels_available": false,
+    "interval_seconds": 5.0,
+    "market_id": "562828",
+    "pid": 514984,
+    "producer_sha256": "a2ebba53492d2c9907a05973c55121028b3a60a9fffaad35e06cfbb9871ee0cd",
+    "samples_completed": 120,
+    "samples_requested": 120,
+    "state": "COMPLETED",
+    "unique_quote_books_by_asset": {
+      "24483563228660028121020430722896740519524131851526579619586176931221901842798": 58,
+      "34722410608062854697106861099776685947172185964394483545370684749662285977831": 58
+    },
+    "validation": {
+      "content_sha256": "9dd36f170e6f6d3b9729db8a6d5747e8fe704e56c08741d092f82fdf4a75632f",
+      "duplicates": 0,
+      "event_count": 241,
+      "late_exchange_snapshots": 0,
+      "receipt_out_of_order": false,
+      "valid": true,
+      "warnings": [
+        "Periodic REST snapshots are not a continuous or sequence-complete feed.",
+        "Two instrument requests are sequential; snapshots are not atomic across legs.",
+        "No observed fills, private order reports, settlement or empirical execution labels.",
+        "Public metadata is not an onchain payout attestation; no attested_metadata event emitted.",
+        "Single selected market and short interval; not representative independent market history."
+      ]
+    },
+    "wall_seconds": 900
+  },
+  "root_validation": {
+    "valid": true,
+    "event_count": 241,
+    "duplicates": 0,
+    "late_exchange_snapshots": 0,
+    "receipt_out_of_order": false,
+    "warnings": [
+      "Periodic REST snapshots are not a continuous or sequence-complete feed.",
+      "Two instrument requests are sequential; snapshots are not atomic across legs.",
+      "No observed fills, private order reports, settlement or empirical execution labels.",
+      "Public metadata is not an onchain payout attestation; no attested_metadata event emitted.",
+      "Single selected market and short interval; not representative independent market history."
+    ],
+    "content_sha256": "9dd36f170e6f6d3b9729db8a6d5747e8fe704e56c08741d092f82fdf4a75632f"
+  },
+  "captured_source_payloads_verified": 62,
+  "observed_span_seconds": 597.994,
+  "eligible_for_execution_training": false
+}

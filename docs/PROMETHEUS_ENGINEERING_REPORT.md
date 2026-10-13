@@ -2399,3 +2399,14 @@ notes distinguish file snapshots from process memory. Recorder remains live;
 no completion/data-publication claim yet. Stop with systemctl--user stop
 midas-public-series-extended.service. Next: chronological public-observation
 windows and quality/duplicate/coverage checks; no unsupported real-market training.
+
+Public observation extension now terminal COMPLETED/exit0:120 polls,241 real
+public events spanning597.994 seconds. Root validation passes:zero duplicate
+event IDs,zero late exchange snapshots,receipt order preserved. Each asset
+has58 distinct saved book hashes (not necessarily58 distinct economic states).
+All62 captured source/dependency payload hashes verify. Published recording
+SHA9dd36f170e6f6d3b9729db8a6d5747e8fe704e56c08741d092f82fdf4a75632f.
+No empirical fills, private orders, settlement or payout attestation; execution
+training remains ineligible. No research/recorder process remains active.
+Next: chronological observation-window datasets with explicit non-atomic pair
+timing, embargo, repeated-book checks and preserved observed-only provenance.

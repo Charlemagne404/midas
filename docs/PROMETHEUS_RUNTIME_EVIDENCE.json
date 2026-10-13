@@ -8,7 +8,7 @@
   "arena_research_tournaments": 25,
   "arena_source_datasets": 5,
   "arena_tournaments": 26,
-  "checked_at": 1791885284.0950913,
+  "checked_at": 1791885569.7486625,
   "dataset_quality": [
     "Identical observable vectors occur across partitions. Independent scenario IDs do not guarantee covariate diversity; inspect repeated synthetic grids.",
     "Some scenario families contain one settlement seed parity only. The current generator uses seed parity for settlement; reorder families and shift seeds before making generalization claims.",
@@ -94,6 +94,23 @@
       ],
       "provenance": "RECORDED_PUBLIC",
       "valid": true
+    },
+    {
+      "dataset_id": "public-series-ee6885c09fba4bc98ef5a8cb",
+      "provenance": "RECORDED_PUBLIC",
+      "events": 241,
+      "capture_start_ms": 1791884792641,
+      "capture_end_ms": 1791885390635,
+      "content_sha256": "9dd36f170e6f6d3b9729db8a6d5747e8fe704e56c08741d092f82fdf4a75632f",
+      "valid": true,
+      "eligible_for_execution_training": false,
+      "limitations": [
+        "Periodic REST snapshots are not a continuous or sequence-complete feed.",
+        "Two instrument requests are sequential; snapshots are not atomic across legs.",
+        "No observed fills, private order reports, settlement or empirical execution labels.",
+        "Public metadata is not an onchain payout attestation; no attested_metadata event emitted.",
+        "Single selected market and short interval; not representative independent market history."
+      ]
     }
   ],
   "arena_recovery_studies": 1,
@@ -162,7 +179,7 @@
     "benchmark": "docs/PROMETHEUS_USAGE_INDEX_BENCHMARK.json",
     "max_artifact_bytes": 1073741824
   },
-  "current_engineering_activity": "Generator audit verified; bounded public observation capture remains active; next chronological Data Foundry ingestion",
+  "current_engineering_activity": "Generator audit and bounded public capture complete; next chronological observation-window ingestion",
   "active_performance_benchmark": {
     "unit": "midas-guard-worker-benchmark-v2.service",
     "state": "COMPLETED",
@@ -220,28 +237,19 @@
     "production_models_trained": 0,
     "log": "docs/PROMETHEUS_POLICY_INFERENCE_EXTENDED_TESTS.log"
   },
-  "active_public_capture": {
-    "capture_id": "public-series-ee6885c09fba4bc98ef5a8cb",
-    "unit": "midas-public-series-extended.service",
-    "samples": 120,
-    "interval_seconds": 5,
-    "wall_seconds": 900,
-    "systemd_wall_seconds": 1000,
-    "memory_mb": 256,
-    "cpu_quota": "25%",
-    "observation_byte_cap": 16777216,
-    "selection": "First supported active complementary market among 20 public discovery results; no selection on observed subsequent outcomes",
-    "purpose": "Longer public observation series for chronological quality and ingestion research; no fills, execution labels, payout attestation or profitability claim",
-    "output": "data/datasets",
-    "capture_state": "data/public-captures/public-series-ee6885c09fba4bc98ef5a8cb/state.json",
-    "producer_sha256": "a2ebba53492d2c9907a05973c55121028b3a60a9fffaad35e06cfbb9871ee0cd",
-    "created_at": 1791884776.9414241,
-    "interpreter": "/home/charlie/midas/.venv/bin/python"
-  },
+  "active_public_capture": null,
   "latest_generator_audit": {
     "verified_replays": 4200,
     "journal_states_independently_audited": 45696,
     "pairs_with_identical_pre_settlement_evidence": 2100,
     "changed_settlement_groups": 48
+  },
+  "latest_public_capture": {
+    "capture_id": "public-series-ee6885c09fba4bc98ef5a8cb",
+    "state": "COMPLETED",
+    "polls": 120,
+    "events": 241,
+    "span_seconds": 597.994,
+    "eligible_for_execution_training": false
   }
 }

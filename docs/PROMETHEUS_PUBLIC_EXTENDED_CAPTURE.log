@@ -1,0 +1,40 @@
+{
+  "capture_id": "public-series-ee6885c09fba4bc98ef5a8cb",
+  "state": "COMPLETED",
+  "created_at": 1791884792.3229852,
+  "samples_requested": 120,
+  "samples_completed": 120,
+  "events": 241,
+  "interval_seconds": 5.0,
+  "wall_seconds": 900,
+  "byte_cap": 16777216,
+  "producer_sha256": "a2ebba53492d2c9907a05973c55121028b3a60a9fffaad35e06cfbb9871ee0cd",
+  "execution_labels_available": false,
+  "pid": 514984,
+  "market_id": "562828",
+  "elapsed_seconds": 599.0328996549943,
+  "completed_at": 1791885391.5517886,
+  "validation": {
+    "valid": true,
+    "event_count": 241,
+    "duplicates": 0,
+    "late_exchange_snapshots": 0,
+    "receipt_out_of_order": false,
+    "warnings": [
+      "Periodic REST snapshots are not a continuous or sequence-complete feed.",
+      "Two instrument requests are sequential; snapshots are not atomic across legs.",
+      "No observed fills, private order reports, settlement or empirical execution labels.",
+      "Public metadata is not an onchain payout attestation; no attested_metadata event emitted.",
+      "Single selected market and short interval; not representative independent market history."
+    ],
+    "content_sha256": "9dd36f170e6f6d3b9729db8a6d5747e8fe704e56c08741d092f82fdf4a75632f"
+  },
+  "dataset_id": "public-series-ee6885c09fba4bc98ef5a8cb",
+  "content_sha256": "9dd36f170e6f6d3b9729db8a6d5747e8fe704e56c08741d092f82fdf4a75632f",
+  "unique_quote_books_by_asset": {
+    "34722410608062854697106861099776685947172185964394483545370684749662285977831": 58,
+    "24483563228660028121020430722896740519524131851526579619586176931221901842798": 58
+  },
+  "capture_start_ms": 1791884792641,
+  "capture_end_ms": 1791885390635
+}

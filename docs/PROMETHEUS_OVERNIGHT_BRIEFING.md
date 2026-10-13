@@ -1,5 +1,13 @@
 # MIDAS — PROMETHEUS OVERNIGHT BRIEFING
 
+## Public observation extension completed
+
+120 polls/241 public events span597.994 seconds. Root validation passes;
+all62 captured source/dependency payloads verify. Observation-only recording
+is published in data/datasets; no fills, execution labels or payout attestation.
+No research/recorder worker remains active. Next: chronological observation
+windows and quality analysis. Previous running-recorder note below superseded.
+
 ## Latest finding — generator outcome assumptions affect sampled downside
 
 Two fixed studies verified4200 replays/45696 journal states. All2100 pairs
