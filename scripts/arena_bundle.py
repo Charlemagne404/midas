@@ -151,6 +151,7 @@ def export_experiment(root: Path, kind: str, identity: str, output: Path) -> dic
     if director.get("state", "COMPLETED" if kind == "tournaments" else None) != "COMPLETED":
         raise ValueError("Only completed plans can be exported as complete experiment bundles")
     paths = set(directory.rglob("*"))
+    source_gaps = []
     adaptive = kind == "directors" and director.get("director_version") == "adaptive-latency-1"
     if kind == "directors":
         model_ids = (
@@ -335,13 +336,29 @@ def export_experiment(root: Path, kind: str, identity: str, output: Path) -> dic
                 or job["submitted_source_hash"] != director["source_hash"]
             ):
                 raise ValueError("Recovery worker differs from completed study")
-            source_manifest = json.loads((job_file.parent / "source-manifest.json").read_text())
-            for relative, expected in source_manifest["files"].items():
-                relative_path = Path(relative)
-                if relative_path.is_absolute() or ".." in relative_path.parts:
-                    raise ValueError("Invalid captured source path")
-                if sha256(job_file.parent / "source" / relative_path) != expected:
-                    raise ValueError("Captured source hash mismatch")
+            source_file = job_file.parent / "source-manifest.json"
+            legacy_model_id = (job.get("result") or {}).get("model_id")
+            if (
+                not source_file.exists()
+                and legacy_model_id in included_models
+                and "submitted_source_hash" not in job
+                and not (job_file.parent / "source").exists()
+            ):
+                source_gaps.append(
+                    {
+                        "job_id": job["job_id"],
+                        "model_id": legacy_model_id,
+                        "reason": "Legacy training predates native source capture; saved weights/provenance included, original training source unavailable.",
+                    }
+                )
+            else:
+                source_manifest = json.loads(source_file.read_text())
+                for relative, expected in source_manifest["files"].items():
+                    relative_path = Path(relative)
+                    if relative_path.is_absolute() or ".." in relative_path.parts:
+                        raise ValueError("Invalid captured source path")
+                    if sha256(job_file.parent / "source" / relative_path) != expected:
+                        raise ValueError("Captured source hash mismatch")
             paths.update(job_file.parent.rglob("*"))
             owned_jobs.discard(job.get("job_id"))
     if owned_jobs:
@@ -396,7 +413,9 @@ def export_experiment(root: Path, kind: str, identity: str, output: Path) -> dic
             "finalize_joint_cost_study.py",
         ):
             extras["TOOLS/" + tool] = Path(__file__).resolve().parent / tool
-    return write_bundle(root, files, extras, reference_key, identity, output)
+    return write_bundle(
+        root, files, extras, reference_key, identity, output, source_gaps=source_gaps
+    )
 
 
 def write_bundle(
@@ -406,6 +425,7 @@ def write_bundle(
     reference_key: str,
     identity: str,
     output: Path,
+    source_gaps: list[dict] | None = None,
 ) -> dict[str, Any]:
     """Publish one checksummed archive; all experiment-specific checks precede this."""
     extras = dict(extras)
@@ -427,6 +447,7 @@ def write_bundle(
         "bundle_version": "arena-experiment-3",
         reference_key: identity,
         "created_at": time.time(),
+        "source_gaps": source_gaps or [],
         "files": {},
         "environment": {
             "python": platform.python_version(),

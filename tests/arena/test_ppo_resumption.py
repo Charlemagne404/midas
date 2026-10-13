@@ -201,12 +201,40 @@ def test_resumed_models_expose_checkpoints_and_export_parent_evidence(parent, tm
         ),
     )
     output = tmp_path / "lineage.tar.gz"
+    legacy_job = root / "jobs/job-legacy/job.json"
+    legacy_job.parent.mkdir(parents=True, exist_ok=True)
+    legacy_job.write_text(
+        json.dumps(
+            {
+                "job_id": "job-legacy",
+                "state": "COMPLETED",
+                "result": {"model_id": original["model_id"]},
+            }
+        )
+    )
     export_tournament(root, study["tournament_id"], output)
     assert verify_bundle(output) > 12
     with tarfile.open(output) as bundle:
         names = set(bundle.getnames())
         assert f"models/{original['model_id']}/checkpoint-manifest.json" in names
         assert f"models/{child['model_id']}/lineage.json" in names
+        metadata = json.load(bundle.extractfile("BUNDLE_MANIFEST.json"))
+        assert metadata["source_gaps"][0]["model_id"] == original["model_id"]
+    legacy_job.write_text(
+        json.dumps(
+            {
+                "job_id": "job-legacy",
+                "submitted_source_hash": "modern",
+                "state": "COMPLETED",
+                "result": {"model_id": original["model_id"]},
+            }
+        )
+    )
+    try:
+        with pytest.raises(FileNotFoundError):
+            export_tournament(root, study["tournament_id"], tmp_path / "must-refuse.tar.gz")
+    finally:
+        legacy_job.unlink()
 
 
 def test_export_retains_interrupted_parent_without_finished_weights(parent, tmp_path):
