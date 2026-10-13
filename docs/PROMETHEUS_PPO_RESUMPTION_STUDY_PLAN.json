@@ -35,7 +35,17 @@
   "production_training_admitted": false,
   "old_ppo_sha256": "783262634161ecfb2eaf26a30f877b4fc8f167e0eb79b439cc87093f0f040904",
   "tool_hashes": {
-    "arena_bundle.py": "cc1e5408c1f410d3cfb26aed3771dd2c227423b06e8709d58fc927aab0ad7e94"
+    "run_ppo_resumption_study.py": "60e72881baa565f7662b2acd6002629e033f108c5a3b30de1d1abfd762ed9eb2",
+    "verify_ppo_resumption_study.py": "e56172b0146c6a096feb9f2f02ba033ffca2a0bfd738ab27ae89912a9bb8cf32",
+    "arena_bundle.py": "cc1e5408c1f410d3cfb26aed3771dd2c227423b06e8709d58fc927aab0ad7e94",
+    "finalize_joint_cost_study.py": "9448ccad718209cd76eb3d0f6f7f37f5f26dac8228e6aa1bd2a54263ba89b1d4",
+    "run_generator_audit.py": "396306cd82bc29c3b92028674ef5e3b0b56982e4ea04094cbad4d8f384310682",
+    "verify_generator_pair.py": "06e17ec0a4489769bd3f953c078a7fa2321c773282e7c3cb3357e4957dfaaddb",
+    "compare_policies.py": "542638cfb383c7cf3942c146c965f52e227dbc7c8ee7edf9a336b5a74bbc9bf3",
+    "capture_public_series.py": "a2ebba53492d2c9907a05973c55121028b3a60a9fffaad35e06cfbb9871ee0cd"
   },
-  "full_gate_log": "docs/PROMETHEUS_PPO_RESUMPTION_FULL_TESTS.log"
+  "full_gate_log": "docs/PROMETHEUS_PPO_RESUMPTION_FULL_TESTS.log",
+  "coordinator_unit": "midas-ppo-resumption-573071.service",
+  "state_path": "data/arena/ppo-resumption-studies/study-573071/state.json",
+  "result_path": "docs/PROMETHEUS_PPO_RESUMPTION_RESULT.json"
 }
