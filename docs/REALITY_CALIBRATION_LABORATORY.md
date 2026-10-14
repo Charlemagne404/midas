@@ -1016,3 +1016,67 @@ Arena identity remains `bac445c2bb79877e6484cc395820a36dba69b7b03712e8ed1caf1a7a
 reproduction, coverage, eligibility failures, current services, raw catalog,
 capacity and protection evidence. These are timestamped checkpoint facts rather
 than continuously guaranteed frontend values.
+
+## Gate E — prospective shadow engineering (in verification)
+
+The shadow reader, frozen campaign, append-only evidence journal and live worker
+are implemented in separate Reality modules. The first genuine canary failed
+before any decisions because the reader rejected a legal empty rotated segment.
+That evidence is retained. The corrected reader verifies empty catalogs without
+resetting global ordinal continuity; a fixture regression now covers the case.
+A second frozen canary has started accumulating genuine decisions and follow-ups.
+The main fourteen-day campaign is frozen separately, with its start after the
+canary period. Acceptance and measured evidence will be recorded after audit.
+
+The raw reader opens source files read-only, validates framing/record checksums,
+tracks exact offsets and ordinals, and verifies finalized segment hashes and
+online reconstruction checkpoints. Partial open-file writes are retried; no raw
+writer or collector restart is required. Warm-up never creates retrospective
+decisions. Sampling requires actual current decision time, a compatible frozen
+producer/reconstructor and a source-frame lag no greater than 250 ms.
+
+The compressed SQLite journal uses full-synchronous WAL transactions and an
+append-only SHA-256 event chain. Decision bodies, follow-ups, source seals and
+worker transitions remain immutable. Query indexes and recoverable runtime state
+are separate derived tables. A durable decision-commit marker precedes any
+qualifying future receipt. Cursor, engine books/counters/recent hashes, metadata,
+rolling history, pending decisions and sampling state support recovery without
+reinterpreting decisions under a changed implementation.
+
+Policies include no trade, a mathematical discrepancy filter, original Prometheus
+recorded-source mathematics, conservative risk, an eligibility-gated prediction
+policy and a recovery guard. Experimental prediction probes do not activate an
+ineligible policy. Original attestation/negative-risk restrictions are retained;
+the adapter never fabricates live execution attestations. Proposed capital is
+explicitly hypothetical, bounded by position/market/family/overall limits and
+not recycled during the campaign without evidence of execution or settlement.
+No wallet, authenticated trading API, order router or actual order submission is
+implemented.
+
+Each qualified decision retains exact public features/full baseline books,
+source lineage, actual decision/computation/commit times, processing lag, model
+IDs/weight hashes, policy reasons, proposed size/limits and declared assumptions.
+All-market sampling is thirty seconds; an additional qualified discrepancy can
+trigger a five-second sample. This extra sampling bias is explicit in the plan.
+An observatory captures five-second public book points with quality flags.
+Invalid/stale states record abstentions rather than fabricated features.
+
+Follow-ups use 100/300/1,000/5,000 ms receiver horizons and declared tolerances,
+requiring new sufficiently synchronized depth observations for both legs.
+Unavailable futures, gaps, timing ambiguity and source/market/tick changes are
+censored. A two-second availability grace completes quiet-source unknowns;
+absence is never converted into a negative price/fill outcome. Four frozen
+execution families produce per-trial hypothetical bounds. Unmatched inventory
+and quoted-bid unwind assumptions are explicit; a below-minimum or unsupported
+recovery cannot be reported as successful. None of these quantities are actual
+fills, realized money or private queue/latency measurements.
+
+The main `midas-reality-shadow.service` uses immutable campaign code, pinned
+model/report hashes, one worker lock, a 4 GiB evidence budget, 20 GiB host reserve,
+512 MiB memory cap, low scheduling/idle-I/O priority and bounded failure restarts.
+Its configured steady CPU cap is 10% of one core. Temporary warm-up quotas are
+operational changes, not changes to frozen decision/measurement thresholds.
+`PrivateNetwork=true` was requested, but this host's user service manager reports
+network namespaces unavailable; that OS isolation is not enforced. The worker
+itself only reads local raw data/models and has no networking or order-submission
+path. This limitation must not be described as proven network isolation.

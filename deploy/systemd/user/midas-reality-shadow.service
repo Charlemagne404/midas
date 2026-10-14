@@ -1,0 +1,28 @@
+[Unit]
+Description=MIDAS Reality frozen prospective public shadow research (no orders)
+StartLimitIntervalSec=900
+StartLimitBurst=3
+
+[Service]
+Type=simple
+WorkingDirectory=%h/midas-reality
+ExecStart=%h/midas-reality/.venv/bin/python %h/midas-reality/scripts/reality_shadow.py --campaign %h/midas-reality/data/research/reality/forward/mission2/campaign.json
+Environment=OMP_NUM_THREADS=1
+Environment=OPENBLAS_NUM_THREADS=1
+Environment=MKL_NUM_THREADS=1
+MemoryMax=512M
+CPUQuota=10%
+Nice=15
+IOSchedulingClass=idle
+UMask=0077
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=%h/midas-reality/data/research/reality/forward/mission2
+PrivateTmp=true
+PrivateNetwork=true
+Restart=on-failure
+RestartSec=30
+
+[Install]
+WantedBy=default.target

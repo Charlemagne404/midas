@@ -1,0 +1,778 @@
+{
+  "campaigns": {
+    "canary-20261014": {
+      "plan": {
+        "campaign_id": "eaa761d7d4e7fa1f4561a5f61e350ce5c3f4a98420b414821a0ca9eb70b9cc14",
+        "identity": {
+          "allowed_producer_hashes": [
+            "9231e11c969cc95af607d847c7d5aa32418a91c21152b214cf9f170d517c0c9f"
+          ],
+          "allowed_reconstruction_versions": [
+            4
+          ],
+          "analysis": {
+            "eligibility": "Experimental probes do not authorize a policy; no champion manufactured",
+            "grouping": "Connected event/condition/negative-risk families and UTC time blocks; shared feed remains correlated",
+            "paired_on": "Same recorded source/decision across controls and scenarios",
+            "promotion": false,
+            "recovery": "Declared quoted-bid unwind only where later observed depth supports quantity/minimum; otherwise retain unmatched bounds",
+            "reported": "Decision behavior, censoring, public persistence/depth/price changes and per-trial hypothetical bounds; no summed realized P&L",
+            "threshold_retuning": false,
+            "version": "reality-prospective-analysis-v1"
+          },
+          "baseline_stride_ms": 30000,
+          "capital": "100",
+          "code": {
+            "arbitrage/engine.py": "5b16c78fc4664b780d7bf899573f2bb15cce83f055fe573eea3e3ea353a29526",
+            "core/models.py": "9fe2eb524ee305d20fb31df70a4239f2b6504efc67d6c16afc22090410b1c528",
+            "economics/attestation.py": "5f614a422158aab5052faecf8064b57c5e04cff0c289b78cc7feb453e1f29899",
+            "economics/fees.py": "2735401e5988468582222a262a1e4f9fa28db2f1e549cf7492fb26fc85bdeb7a",
+            "reality/execution_research.py": "99aaf3d1f1d00a3440392f373db8b661c8420ab1bb4713fc9e4fe2340831e5c1",
+            "reality/foundry.py": "b0559c041e870196ef95fb17f9c0e6e39d541214e3a9b4f5c4e0c70c4e22ee62",
+            "reality/model_features.py": "976a0b529ef28250ba6fba3be3b0c8d1c48039975a183b36a359cd1ff88b6634",
+            "reality/model_fitting.py": "8f1aa262cc96430180e8d2357ec75ed5449cd940c5e956419a762f2f72302580",
+            "reality/model_metrics.py": "a7221014903176b4b1b7927a001081c3d88403b1ca991c565ea40253c0b8a9ba",
+            "reality/model_registry.py": "a1807cc5183a4612172ea8664b5df646de5c7f2940192757d018f7b0207ab3e5",
+            "reality/reconstruction.py": "ed7ca007f8fdb62c00aa25ebf4692e0c54eb0a9c0b06c9712e092a87c28c30cb",
+            "reality/research_measurements.py": "35200c42beef6c169b7244d56d93b30229c1394217faf4dd072853814f05b084",
+            "reality/research_schema.py": "fa31024164ae1e20b579403e79417c1eaa8fc2670d154153aae247546d8f9f33",
+            "reality/shadow_campaign.py": "fbca040df77c90182fa7b94375590f89e95289b21e31a8990da390d1241c9aed",
+            "reality/shadow_policy.py": "f0a3b1920c7bb5c22ce9153dabe967be24d2210b6a8801808269734d13c3e0dc",
+            "reality/shadow_source.py": "eed00214749e77f0fe96df6746412a806c0784b81b18317d8d1b14eb7763010e",
+            "reality/shadow_store.py": "75e6c208013ee859a39d0463a12660b521d1c631af6517e1cfd5008a6c42ff00",
+            "reality/shadow_worker.py": "0b745947399dc33898bdba41df4f0b183ba87477f5dcddecb7ae2d26f29e3c6d",
+            "reality/storage.py": "551966d10c2494dd6fcb50988bf32c26558ff6a02d6bd68617f8593b1f5ec3cc",
+            "risk/engine.py": "6e91317dd0e1fb3ad1e1b601af5c753202947c6ae7953fb0a0af53b34e5ba8e6"
+          },
+          "controls": [
+            "no_trade",
+            "mathematical_filter",
+            "prometheus_control",
+            "conservative_risk",
+            "prediction_gate",
+            "recovery_guard"
+          ],
+          "eligibility_at_freeze": {
+            "adverse_ask_movement": false,
+            "depth_retention": false,
+            "market_disruption": false,
+            "quote_persistence": false
+          },
+          "end_ns": 1792004040822433345,
+          "evidence_budget_bytes": 4294967296,
+          "feature_version": "reality-decision-features-v1",
+          "followup_availability_grace_ms": 2000,
+          "frozen_ns": 1792003738822433345,
+          "future_tolerance_ms": 500,
+          "horizons_ms": [
+            100,
+            300,
+            1000,
+            5000
+          ],
+          "label_version": "reality-observable-labels-v1",
+          "market_selection": {
+            "discovery_limit": 50,
+            "markets": 8,
+            "near_expiry_tag_id": 2,
+            "refresh_seconds": 600,
+            "selection_mode": "stratified-v1",
+            "selection_seed": 20261014
+          },
+          "max_decision_input_lag_ms": 250,
+          "max_decisions": 400000,
+          "max_freshness_ms": 5000,
+          "max_observations": 4000000,
+          "max_skew_ms": 250,
+          "models": {
+            "adverse_ask_movement": {
+              "metadata_sha256": "021304a720d28d9202a1271f33bcced3896feb4f4598d8659d746491b2a44e56",
+              "model_id": "d4d5e52dbea1b0c50cea4d811ecebdcbc4ee33f4fb3248f3e731f99b948014c6",
+              "weights_sha256": "78ef2c080d0e80b18a4cb8bdcac98bb8205043d36a80daa3ed170784bc38c59d"
+            },
+            "depth_retention": {
+              "metadata_sha256": "f32e7d5a890cbeba02e1398529d913db6ce2ab9470aa7b6cb694fe591fc117f8",
+              "model_id": "0ea9c3a6a655b780b0be20195ab5239a3a40127df9c3120a75cd3a88d8d3f637",
+              "weights_sha256": "a3da65f1304adf97390c85c8461842e0fb2faf2f435b4b549a2e58eddd5383bb"
+            },
+            "market_disruption": {
+              "metadata_sha256": "fb6209a001aa966c2917ee9c48a2f75698a1ae3501b8d02c82f56dccc1fc44fd",
+              "model_id": "a078817697fbd329d29b9d7adcb6eafd5dab0436e31847b1b88cc11d07941ecf",
+              "weights_sha256": "b336624e45e0a8201e3b9f6cb7672974ec65b3dcc8ba43498ab2b5dce4222330"
+            },
+            "quote_persistence": {
+              "metadata_sha256": "d24fa836223e696c9fec706faa675f98d44476c0d036219dcefc3d1ea2078c58",
+              "model_id": "de47e1b273ff62b7fd4953ec03845ebfe7c52b78e97172f22da45a33c0474f17",
+              "weights_sha256": "14b3a98fde69658607f836e9ded65ccd594576df2fcfb991e6be7a6dc24ae3c3"
+            }
+          },
+          "observatory_stride_ms": 5000,
+          "opportunity_stride_ms": 5000,
+          "quantity": "5",
+          "raw_root": "/home/charlie/midas-reality/data/recordings/reality",
+          "reserve_bytes": 21474836480,
+          "risk": {
+            "disruption_threshold": 0.1,
+            "max_family_exposure": "50",
+            "max_market_exposure": "25",
+            "max_opportunity_capital": "25",
+            "max_positions": 5,
+            "max_total_exposure": "50",
+            "persistence_threshold": 0.9
+          },
+          "risk_objective": "Avoid unsupported hypothetical risk; reserve worst-case acquisition capital for declared seven-day lock; no inferred settlement proceeds",
+          "scenarios": [
+            {
+              "annual_financing_rate": "0.10",
+              "assumption_id": "0a4e39e24db6a8e33a23d91815038a639d3414cd7c9a30f4cac0179b7c5089f4",
+              "collateral_value_factor": "1",
+              "delay_ms": 100,
+              "depth_fraction": "1",
+              "fee_formula": "declared-taker-curve-2026-10-14",
+              "friction_per_share": "0",
+              "future_required": false,
+              "max_age_ms": 5000,
+              "max_skew_ms": 250,
+              "name": "optimistic",
+              "one_leg_loss": false,
+              "recovery": "none; unmatched terminal payoff bounded by [0, quantity]",
+              "redemption_cost": "0.01",
+              "settlement_days": "7",
+              "version": "reality-observational-execution-v1"
+            },
+            {
+              "annual_financing_rate": "0.10",
+              "assumption_id": "25321aa9cc6137f867af300aac072cbea1554ce69c9687739cb1bba7238801d3",
+              "collateral_value_factor": "1",
+              "delay_ms": 300,
+              "depth_fraction": "0.8",
+              "fee_formula": "declared-taker-curve-2026-10-14",
+              "friction_per_share": "0.001",
+              "future_required": true,
+              "max_age_ms": 1000,
+              "max_skew_ms": 100,
+              "name": "intermediate",
+              "one_leg_loss": false,
+              "recovery": "none; unmatched terminal payoff bounded by [0, quantity]",
+              "redemption_cost": "0.01",
+              "settlement_days": "7",
+              "version": "reality-observational-execution-v1"
+            },
+            {
+              "annual_financing_rate": "0.10",
+              "assumption_id": "556261912f0141efc4313765c36f712af67d41626c72de074c91e05f3d2ed6f7",
+              "collateral_value_factor": "1",
+              "delay_ms": 1000,
+              "depth_fraction": "0.5",
+              "fee_formula": "declared-taker-curve-2026-10-14",
+              "friction_per_share": "0.005",
+              "future_required": true,
+              "max_age_ms": 300,
+              "max_skew_ms": 25,
+              "name": "conservative",
+              "one_leg_loss": false,
+              "recovery": "none; unmatched terminal payoff bounded by [0, quantity]",
+              "redemption_cost": "0.01",
+              "settlement_days": "7",
+              "version": "reality-observational-execution-v1"
+            },
+            {
+              "annual_financing_rate": "0.10",
+              "assumption_id": "7209a906d06230d011ea8ecf05c80066a96171fc9741a58dbcaa3be2d619071c",
+              "collateral_value_factor": "1",
+              "delay_ms": 5000,
+              "depth_fraction": "0.25",
+              "fee_formula": "declared-taker-curve-2026-10-14",
+              "friction_per_share": "0.02",
+              "future_required": true,
+              "max_age_ms": 5000,
+              "max_skew_ms": 250,
+              "name": "stress",
+              "one_leg_loss": true,
+              "recovery": "assumed recovery failure; second leg disappears",
+              "redemption_cost": "0.01",
+              "settlement_days": "7",
+              "version": "reality-observational-execution-v1"
+            }
+          ],
+          "settlement_lock_days": 7,
+          "source_kind": "genuine_public_recording",
+          "start_ns": 1792003740822433345,
+          "toolchain": {
+            "numpy": "2.2.6",
+            "scikit-learn": "1.7.2"
+          },
+          "training_report_sha256": "e366212b44e8823bc4fc2dc867f735783c9d56a03327ee081963987c37ff6bab",
+          "training_root": "/home/charlie/midas-reality/data/research/reality/training",
+          "training_run_id": "9f593b0e68c61c5a8eabf3b01b7ad38c9e1df27436bd041a55a505c995a0a9f9",
+          "version": "reality-forward-campaign-v1"
+        },
+        "limitations": [
+          "Public quotes/depth do not identify hypothetical fills, private queue position or own market impact.",
+          "Receipt-order reconstruction is unsequenced and may not contain every venue event.",
+          "Labels use the first sufficiently synchronized later depth observations within declared tolerance, not sub-event interpolation.",
+          "Aggregate depth at a price does not identify survival of the same constituent orders.",
+          "Prices/costs use collateral units before fees, conversion and settlement assumptions.",
+          "Correlated snapshots are grouped; row count is not independent sample coverage."
+        ]
+      },
+      "status": {
+        "actual_orders_submitted": 0,
+        "budget_bytes": 4294967296,
+        "campaign_id": "eaa761d7d4e7fa1f4561a5f61e350ce5c3f4a98420b414821a0ca9eb70b9cc14",
+        "counters": {
+          "lagged_frames_skipped": 0,
+          "records": 847,
+          "source_checkpoints": 15
+        },
+        "days": [],
+        "decisions": 0,
+        "events": 17,
+        "evidence_bytes": 764797,
+        "families": 0,
+        "followups": {},
+        "last_decision_ns": null,
+        "markets": 0,
+        "observations": 0,
+        "pending_horizons": 0,
+        "producer_hash": null,
+        "scientific_state": "insufficient_forward_evidence",
+        "source_last_received_ns": 1791965731314396943,
+        "source_ordinal": 847,
+        "state": "FAILED",
+        "updated_ns": 1792003754408438241
+      }
+    },
+    "canary-empty-segments-v2": {
+      "plan": {
+        "campaign_id": "1155ccf52418d8f4658fc7d6ea66ec8c20b85e7eec271b6806725660d58f660f",
+        "identity": {
+          "allowed_producer_hashes": [
+            "9231e11c969cc95af607d847c7d5aa32418a91c21152b214cf9f170d517c0c9f"
+          ],
+          "allowed_reconstruction_versions": [
+            4
+          ],
+          "analysis": {
+            "eligibility": "Experimental probes do not authorize a policy; no champion manufactured",
+            "grouping": "Connected event/condition/negative-risk families and UTC time blocks; shared feed remains correlated",
+            "paired_on": "Same recorded source/decision across controls and scenarios",
+            "promotion": false,
+            "recovery": "Declared quoted-bid unwind only where later observed depth supports quantity/minimum; otherwise retain unmatched bounds",
+            "reported": "Decision behavior, censoring, public persistence/depth/price changes and per-trial hypothetical bounds; no summed realized P&L",
+            "threshold_retuning": false,
+            "version": "reality-prospective-analysis-v1"
+          },
+          "baseline_stride_ms": 30000,
+          "capital": "100",
+          "code": {
+            "arbitrage/engine.py": "5b16c78fc4664b780d7bf899573f2bb15cce83f055fe573eea3e3ea353a29526",
+            "core/models.py": "9fe2eb524ee305d20fb31df70a4239f2b6504efc67d6c16afc22090410b1c528",
+            "economics/attestation.py": "5f614a422158aab5052faecf8064b57c5e04cff0c289b78cc7feb453e1f29899",
+            "economics/fees.py": "2735401e5988468582222a262a1e4f9fa28db2f1e549cf7492fb26fc85bdeb7a",
+            "reality/execution_research.py": "99aaf3d1f1d00a3440392f373db8b661c8420ab1bb4713fc9e4fe2340831e5c1",
+            "reality/foundry.py": "b0559c041e870196ef95fb17f9c0e6e39d541214e3a9b4f5c4e0c70c4e22ee62",
+            "reality/model_features.py": "976a0b529ef28250ba6fba3be3b0c8d1c48039975a183b36a359cd1ff88b6634",
+            "reality/model_fitting.py": "8f1aa262cc96430180e8d2357ec75ed5449cd940c5e956419a762f2f72302580",
+            "reality/model_metrics.py": "a7221014903176b4b1b7927a001081c3d88403b1ca991c565ea40253c0b8a9ba",
+            "reality/model_registry.py": "a1807cc5183a4612172ea8664b5df646de5c7f2940192757d018f7b0207ab3e5",
+            "reality/reconstruction.py": "ed7ca007f8fdb62c00aa25ebf4692e0c54eb0a9c0b06c9712e092a87c28c30cb",
+            "reality/research_measurements.py": "35200c42beef6c169b7244d56d93b30229c1394217faf4dd072853814f05b084",
+            "reality/research_schema.py": "fa31024164ae1e20b579403e79417c1eaa8fc2670d154153aae247546d8f9f33",
+            "reality/shadow_campaign.py": "fbca040df77c90182fa7b94375590f89e95289b21e31a8990da390d1241c9aed",
+            "reality/shadow_policy.py": "f0a3b1920c7bb5c22ce9153dabe967be24d2210b6a8801808269734d13c3e0dc",
+            "reality/shadow_source.py": "9f04fffac5ddd47eb71325b62651cb8bf1615224e9fda22c56d92a2e12949033",
+            "reality/shadow_store.py": "75e6c208013ee859a39d0463a12660b521d1c631af6517e1cfd5008a6c42ff00",
+            "reality/shadow_worker.py": "0b745947399dc33898bdba41df4f0b183ba87477f5dcddecb7ae2d26f29e3c6d",
+            "reality/storage.py": "551966d10c2494dd6fcb50988bf32c26558ff6a02d6bd68617f8593b1f5ec3cc",
+            "risk/engine.py": "6e91317dd0e1fb3ad1e1b601af5c753202947c6ae7953fb0a0af53b34e5ba8e6"
+          },
+          "controls": [
+            "no_trade",
+            "mathematical_filter",
+            "prometheus_control",
+            "conservative_risk",
+            "prediction_gate",
+            "recovery_guard"
+          ],
+          "eligibility_at_freeze": {
+            "adverse_ask_movement": false,
+            "depth_retention": false,
+            "market_disruption": false,
+            "quote_persistence": false
+          },
+          "end_ns": 1792012077642600351,
+          "evidence_budget_bytes": 4294967296,
+          "feature_version": "reality-decision-features-v1",
+          "followup_availability_grace_ms": 2000,
+          "frozen_ns": 1792010275642600351,
+          "future_tolerance_ms": 500,
+          "horizons_ms": [
+            100,
+            300,
+            1000,
+            5000
+          ],
+          "label_version": "reality-observable-labels-v1",
+          "market_selection": {
+            "discovery_limit": 50,
+            "markets": 8,
+            "near_expiry_tag_id": 2,
+            "refresh_seconds": 600,
+            "selection_mode": "stratified-v1",
+            "selection_seed": 20261014
+          },
+          "max_decision_input_lag_ms": 250,
+          "max_decisions": 400000,
+          "max_freshness_ms": 5000,
+          "max_observations": 4000000,
+          "max_skew_ms": 250,
+          "models": {
+            "adverse_ask_movement": {
+              "metadata_sha256": "021304a720d28d9202a1271f33bcced3896feb4f4598d8659d746491b2a44e56",
+              "model_id": "d4d5e52dbea1b0c50cea4d811ecebdcbc4ee33f4fb3248f3e731f99b948014c6",
+              "weights_sha256": "78ef2c080d0e80b18a4cb8bdcac98bb8205043d36a80daa3ed170784bc38c59d"
+            },
+            "depth_retention": {
+              "metadata_sha256": "f32e7d5a890cbeba02e1398529d913db6ce2ab9470aa7b6cb694fe591fc117f8",
+              "model_id": "0ea9c3a6a655b780b0be20195ab5239a3a40127df9c3120a75cd3a88d8d3f637",
+              "weights_sha256": "a3da65f1304adf97390c85c8461842e0fb2faf2f435b4b549a2e58eddd5383bb"
+            },
+            "market_disruption": {
+              "metadata_sha256": "fb6209a001aa966c2917ee9c48a2f75698a1ae3501b8d02c82f56dccc1fc44fd",
+              "model_id": "a078817697fbd329d29b9d7adcb6eafd5dab0436e31847b1b88cc11d07941ecf",
+              "weights_sha256": "b336624e45e0a8201e3b9f6cb7672974ec65b3dcc8ba43498ab2b5dce4222330"
+            },
+            "quote_persistence": {
+              "metadata_sha256": "d24fa836223e696c9fec706faa675f98d44476c0d036219dcefc3d1ea2078c58",
+              "model_id": "de47e1b273ff62b7fd4953ec03845ebfe7c52b78e97172f22da45a33c0474f17",
+              "weights_sha256": "14b3a98fde69658607f836e9ded65ccd594576df2fcfb991e6be7a6dc24ae3c3"
+            }
+          },
+          "observatory_stride_ms": 5000,
+          "opportunity_stride_ms": 5000,
+          "quantity": "5",
+          "raw_root": "/home/charlie/midas-reality/data/recordings/reality",
+          "reserve_bytes": 21474836480,
+          "risk": {
+            "disruption_threshold": 0.1,
+            "max_family_exposure": "50",
+            "max_market_exposure": "25",
+            "max_opportunity_capital": "25",
+            "max_positions": 5,
+            "max_total_exposure": "50",
+            "persistence_threshold": 0.9
+          },
+          "risk_objective": "Avoid unsupported hypothetical risk; reserve worst-case acquisition capital for declared seven-day lock; no inferred settlement proceeds",
+          "scenarios": [
+            {
+              "annual_financing_rate": "0.10",
+              "assumption_id": "0a4e39e24db6a8e33a23d91815038a639d3414cd7c9a30f4cac0179b7c5089f4",
+              "collateral_value_factor": "1",
+              "delay_ms": 100,
+              "depth_fraction": "1",
+              "fee_formula": "declared-taker-curve-2026-10-14",
+              "friction_per_share": "0",
+              "future_required": false,
+              "max_age_ms": 5000,
+              "max_skew_ms": 250,
+              "name": "optimistic",
+              "one_leg_loss": false,
+              "recovery": "none; unmatched terminal payoff bounded by [0, quantity]",
+              "redemption_cost": "0.01",
+              "settlement_days": "7",
+              "version": "reality-observational-execution-v1"
+            },
+            {
+              "annual_financing_rate": "0.10",
+              "assumption_id": "25321aa9cc6137f867af300aac072cbea1554ce69c9687739cb1bba7238801d3",
+              "collateral_value_factor": "1",
+              "delay_ms": 300,
+              "depth_fraction": "0.8",
+              "fee_formula": "declared-taker-curve-2026-10-14",
+              "friction_per_share": "0.001",
+              "future_required": true,
+              "max_age_ms": 1000,
+              "max_skew_ms": 100,
+              "name": "intermediate",
+              "one_leg_loss": false,
+              "recovery": "none; unmatched terminal payoff bounded by [0, quantity]",
+              "redemption_cost": "0.01",
+              "settlement_days": "7",
+              "version": "reality-observational-execution-v1"
+            },
+            {
+              "annual_financing_rate": "0.10",
+              "assumption_id": "556261912f0141efc4313765c36f712af67d41626c72de074c91e05f3d2ed6f7",
+              "collateral_value_factor": "1",
+              "delay_ms": 1000,
+              "depth_fraction": "0.5",
+              "fee_formula": "declared-taker-curve-2026-10-14",
+              "friction_per_share": "0.005",
+              "future_required": true,
+              "max_age_ms": 300,
+              "max_skew_ms": 25,
+              "name": "conservative",
+              "one_leg_loss": false,
+              "recovery": "none; unmatched terminal payoff bounded by [0, quantity]",
+              "redemption_cost": "0.01",
+              "settlement_days": "7",
+              "version": "reality-observational-execution-v1"
+            },
+            {
+              "annual_financing_rate": "0.10",
+              "assumption_id": "7209a906d06230d011ea8ecf05c80066a96171fc9741a58dbcaa3be2d619071c",
+              "collateral_value_factor": "1",
+              "delay_ms": 5000,
+              "depth_fraction": "0.25",
+              "fee_formula": "declared-taker-curve-2026-10-14",
+              "friction_per_share": "0.02",
+              "future_required": true,
+              "max_age_ms": 5000,
+              "max_skew_ms": 250,
+              "name": "stress",
+              "one_leg_loss": true,
+              "recovery": "assumed recovery failure; second leg disappears",
+              "redemption_cost": "0.01",
+              "settlement_days": "7",
+              "version": "reality-observational-execution-v1"
+            }
+          ],
+          "settlement_lock_days": 7,
+          "source_kind": "genuine_public_recording",
+          "start_ns": 1792010277642600351,
+          "toolchain": {
+            "numpy": "2.2.6",
+            "scikit-learn": "1.7.2"
+          },
+          "training_report_sha256": "e366212b44e8823bc4fc2dc867f735783c9d56a03327ee081963987c37ff6bab",
+          "training_root": "/home/charlie/midas-reality/data/research/reality/training",
+          "training_run_id": "9f593b0e68c61c5a8eabf3b01b7ad38c9e1df27436bd041a55a505c995a0a9f9",
+          "version": "reality-forward-campaign-v1"
+        },
+        "limitations": [
+          "Public quotes/depth do not identify hypothetical fills, private queue position or own market impact.",
+          "Receipt-order reconstruction is unsequenced and may not contain every venue event.",
+          "Labels use the first sufficiently synchronized later depth observations within declared tolerance, not sub-event interpolation.",
+          "Aggregate depth at a price does not identify survival of the same constituent orders.",
+          "Prices/costs use collateral units before fees, conversion and settlement assumptions.",
+          "Correlated snapshots are grouped; row count is not independent sample coverage."
+        ]
+      },
+      "status": {
+        "actual_orders_submitted": 0,
+        "budget_bytes": 4294967296,
+        "campaign_id": "1155ccf52418d8f4658fc7d6ea66ec8c20b85e7eec271b6806725660d58f660f",
+        "counters": {
+          "lagged_frames_skipped": 862,
+          "records": 173264,
+          "source_checkpoints": 1495
+        },
+        "days": [
+          "2026-10-14"
+        ],
+        "decisions": 72,
+        "events": 2268,
+        "evidence_bytes": 13807156,
+        "families": 6,
+        "followups": {
+          "censored": 287,
+          "observed_public_measurement": 1
+        },
+        "last_decision_ns": 1792011002921118978,
+        "markets": 8,
+        "observations": 336,
+        "pending_horizons": 0,
+        "producer_hash": "9231e11c969cc95af607d847c7d5aa32418a91c21152b214cf9f170d517c0c9f",
+        "scientific_state": "insufficient_forward_evidence",
+        "source_last_received_ns": 1792011022176208973,
+        "source_ordinal": 173264,
+        "state": "FORWARD_EVALUATING_EXPERIMENTAL",
+        "updated_ns": 1792011022721324345
+      }
+    },
+    "mission2": {
+      "plan": {
+        "campaign_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
+        "identity": {
+          "allowed_producer_hashes": [
+            "9231e11c969cc95af607d847c7d5aa32418a91c21152b214cf9f170d517c0c9f"
+          ],
+          "allowed_reconstruction_versions": [
+            4
+          ],
+          "analysis": {
+            "eligibility": "Experimental probes do not authorize a policy; no champion manufactured",
+            "grouping": "Connected event/condition/negative-risk families and UTC time blocks; shared feed remains correlated",
+            "paired_on": "Same recorded source/decision across controls and scenarios",
+            "promotion": false,
+            "recovery": "Declared quoted-bid unwind only where later observed depth supports quantity/minimum; otherwise retain unmatched bounds",
+            "reported": "Decision behavior, censoring, public persistence/depth/price changes and per-trial hypothetical bounds; no summed realized P&L",
+            "threshold_retuning": false,
+            "version": "reality-prospective-analysis-v1"
+          },
+          "baseline_stride_ms": 30000,
+          "capital": "100",
+          "code": {
+            "arbitrage/engine.py": "5b16c78fc4664b780d7bf899573f2bb15cce83f055fe573eea3e3ea353a29526",
+            "core/models.py": "9fe2eb524ee305d20fb31df70a4239f2b6504efc67d6c16afc22090410b1c528",
+            "economics/attestation.py": "5f614a422158aab5052faecf8064b57c5e04cff0c289b78cc7feb453e1f29899",
+            "economics/fees.py": "2735401e5988468582222a262a1e4f9fa28db2f1e549cf7492fb26fc85bdeb7a",
+            "reality/execution_research.py": "99aaf3d1f1d00a3440392f373db8b661c8420ab1bb4713fc9e4fe2340831e5c1",
+            "reality/foundry.py": "b0559c041e870196ef95fb17f9c0e6e39d541214e3a9b4f5c4e0c70c4e22ee62",
+            "reality/model_features.py": "976a0b529ef28250ba6fba3be3b0c8d1c48039975a183b36a359cd1ff88b6634",
+            "reality/model_fitting.py": "8f1aa262cc96430180e8d2357ec75ed5449cd940c5e956419a762f2f72302580",
+            "reality/model_metrics.py": "a7221014903176b4b1b7927a001081c3d88403b1ca991c565ea40253c0b8a9ba",
+            "reality/model_registry.py": "a1807cc5183a4612172ea8664b5df646de5c7f2940192757d018f7b0207ab3e5",
+            "reality/reconstruction.py": "ed7ca007f8fdb62c00aa25ebf4692e0c54eb0a9c0b06c9712e092a87c28c30cb",
+            "reality/research_measurements.py": "35200c42beef6c169b7244d56d93b30229c1394217faf4dd072853814f05b084",
+            "reality/research_schema.py": "fa31024164ae1e20b579403e79417c1eaa8fc2670d154153aae247546d8f9f33",
+            "reality/shadow_campaign.py": "fbca040df77c90182fa7b94375590f89e95289b21e31a8990da390d1241c9aed",
+            "reality/shadow_policy.py": "f0a3b1920c7bb5c22ce9153dabe967be24d2210b6a8801808269734d13c3e0dc",
+            "reality/shadow_source.py": "6e0cb3811a8e32a81e9003a79de0ab778eccc28ff9e725f2163d58decf31b327",
+            "reality/shadow_store.py": "75e6c208013ee859a39d0463a12660b521d1c631af6517e1cfd5008a6c42ff00",
+            "reality/shadow_worker.py": "0b745947399dc33898bdba41df4f0b183ba87477f5dcddecb7ae2d26f29e3c6d",
+            "reality/storage.py": "551966d10c2494dd6fcb50988bf32c26558ff6a02d6bd68617f8593b1f5ec3cc",
+            "risk/engine.py": "6e91317dd0e1fb3ad1e1b601af5c753202947c6ae7953fb0a0af53b34e5ba8e6"
+          },
+          "controls": [
+            "no_trade",
+            "mathematical_filter",
+            "prometheus_control",
+            "conservative_risk",
+            "prediction_gate",
+            "recovery_guard"
+          ],
+          "eligibility_at_freeze": {
+            "adverse_ask_movement": false,
+            "depth_retention": false,
+            "market_disruption": false,
+            "quote_persistence": false
+          },
+          "end_ns": 1793221678642600351,
+          "evidence_budget_bytes": 4294967296,
+          "feature_version": "reality-decision-features-v1",
+          "followup_availability_grace_ms": 2000,
+          "frozen_ns": 1792010631978337784,
+          "future_tolerance_ms": 500,
+          "horizons_ms": [
+            100,
+            300,
+            1000,
+            5000
+          ],
+          "label_version": "reality-observable-labels-v1",
+          "market_selection": {
+            "discovery_limit": 50,
+            "markets": 8,
+            "near_expiry_tag_id": 2,
+            "refresh_seconds": 600,
+            "selection_mode": "stratified-v1",
+            "selection_seed": 20261014
+          },
+          "max_decision_input_lag_ms": 250,
+          "max_decisions": 400000,
+          "max_freshness_ms": 5000,
+          "max_observations": 4000000,
+          "max_skew_ms": 250,
+          "models": {
+            "adverse_ask_movement": {
+              "metadata_sha256": "021304a720d28d9202a1271f33bcced3896feb4f4598d8659d746491b2a44e56",
+              "model_id": "d4d5e52dbea1b0c50cea4d811ecebdcbc4ee33f4fb3248f3e731f99b948014c6",
+              "weights_sha256": "78ef2c080d0e80b18a4cb8bdcac98bb8205043d36a80daa3ed170784bc38c59d"
+            },
+            "depth_retention": {
+              "metadata_sha256": "f32e7d5a890cbeba02e1398529d913db6ce2ab9470aa7b6cb694fe591fc117f8",
+              "model_id": "0ea9c3a6a655b780b0be20195ab5239a3a40127df9c3120a75cd3a88d8d3f637",
+              "weights_sha256": "a3da65f1304adf97390c85c8461842e0fb2faf2f435b4b549a2e58eddd5383bb"
+            },
+            "market_disruption": {
+              "metadata_sha256": "fb6209a001aa966c2917ee9c48a2f75698a1ae3501b8d02c82f56dccc1fc44fd",
+              "model_id": "a078817697fbd329d29b9d7adcb6eafd5dab0436e31847b1b88cc11d07941ecf",
+              "weights_sha256": "b336624e45e0a8201e3b9f6cb7672974ec65b3dcc8ba43498ab2b5dce4222330"
+            },
+            "quote_persistence": {
+              "metadata_sha256": "d24fa836223e696c9fec706faa675f98d44476c0d036219dcefc3d1ea2078c58",
+              "model_id": "de47e1b273ff62b7fd4953ec03845ebfe7c52b78e97172f22da45a33c0474f17",
+              "weights_sha256": "14b3a98fde69658607f836e9ded65ccd594576df2fcfb991e6be7a6dc24ae3c3"
+            }
+          },
+          "observatory_stride_ms": 5000,
+          "opportunity_stride_ms": 5000,
+          "quantity": "5",
+          "raw_root": "/home/charlie/midas-reality/data/recordings/reality",
+          "reserve_bytes": 21474836480,
+          "risk": {
+            "disruption_threshold": 0.1,
+            "max_family_exposure": "50",
+            "max_market_exposure": "25",
+            "max_opportunity_capital": "25",
+            "max_positions": 5,
+            "max_total_exposure": "50",
+            "persistence_threshold": 0.9
+          },
+          "risk_objective": "Avoid unsupported hypothetical risk; reserve worst-case acquisition capital for declared seven-day lock; no inferred settlement proceeds",
+          "scenarios": [
+            {
+              "annual_financing_rate": "0.10",
+              "assumption_id": "0a4e39e24db6a8e33a23d91815038a639d3414cd7c9a30f4cac0179b7c5089f4",
+              "collateral_value_factor": "1",
+              "delay_ms": 100,
+              "depth_fraction": "1",
+              "fee_formula": "declared-taker-curve-2026-10-14",
+              "friction_per_share": "0",
+              "future_required": false,
+              "max_age_ms": 5000,
+              "max_skew_ms": 250,
+              "name": "optimistic",
+              "one_leg_loss": false,
+              "recovery": "none; unmatched terminal payoff bounded by [0, quantity]",
+              "redemption_cost": "0.01",
+              "settlement_days": "7",
+              "version": "reality-observational-execution-v1"
+            },
+            {
+              "annual_financing_rate": "0.10",
+              "assumption_id": "25321aa9cc6137f867af300aac072cbea1554ce69c9687739cb1bba7238801d3",
+              "collateral_value_factor": "1",
+              "delay_ms": 300,
+              "depth_fraction": "0.8",
+              "fee_formula": "declared-taker-curve-2026-10-14",
+              "friction_per_share": "0.001",
+              "future_required": true,
+              "max_age_ms": 1000,
+              "max_skew_ms": 100,
+              "name": "intermediate",
+              "one_leg_loss": false,
+              "recovery": "none; unmatched terminal payoff bounded by [0, quantity]",
+              "redemption_cost": "0.01",
+              "settlement_days": "7",
+              "version": "reality-observational-execution-v1"
+            },
+            {
+              "annual_financing_rate": "0.10",
+              "assumption_id": "556261912f0141efc4313765c36f712af67d41626c72de074c91e05f3d2ed6f7",
+              "collateral_value_factor": "1",
+              "delay_ms": 1000,
+              "depth_fraction": "0.5",
+              "fee_formula": "declared-taker-curve-2026-10-14",
+              "friction_per_share": "0.005",
+              "future_required": true,
+              "max_age_ms": 300,
+              "max_skew_ms": 25,
+              "name": "conservative",
+              "one_leg_loss": false,
+              "recovery": "none; unmatched terminal payoff bounded by [0, quantity]",
+              "redemption_cost": "0.01",
+              "settlement_days": "7",
+              "version": "reality-observational-execution-v1"
+            },
+            {
+              "annual_financing_rate": "0.10",
+              "assumption_id": "7209a906d06230d011ea8ecf05c80066a96171fc9741a58dbcaa3be2d619071c",
+              "collateral_value_factor": "1",
+              "delay_ms": 5000,
+              "depth_fraction": "0.25",
+              "fee_formula": "declared-taker-curve-2026-10-14",
+              "friction_per_share": "0.02",
+              "future_required": true,
+              "max_age_ms": 5000,
+              "max_skew_ms": 250,
+              "name": "stress",
+              "one_leg_loss": true,
+              "recovery": "assumed recovery failure; second leg disappears",
+              "redemption_cost": "0.01",
+              "settlement_days": "7",
+              "version": "reality-observational-execution-v1"
+            }
+          ],
+          "settlement_lock_days": 7,
+          "source_kind": "genuine_public_recording",
+          "start_ns": 1792012078642600351,
+          "toolchain": {
+            "numpy": "2.2.6",
+            "scikit-learn": "1.7.2"
+          },
+          "training_report_sha256": "e366212b44e8823bc4fc2dc867f735783c9d56a03327ee081963987c37ff6bab",
+          "training_root": "/home/charlie/midas-reality/data/research/reality/training",
+          "training_run_id": "9f593b0e68c61c5a8eabf3b01b7ad38c9e1df27436bd041a55a505c995a0a9f9",
+          "version": "reality-forward-campaign-v1"
+        },
+        "limitations": [
+          "Public quotes/depth do not identify hypothetical fills, private queue position or own market impact.",
+          "Receipt-order reconstruction is unsequenced and may not contain every venue event.",
+          "Labels use the first sufficiently synchronized later depth observations within declared tolerance, not sub-event interpolation.",
+          "Aggregate depth at a price does not identify survival of the same constituent orders.",
+          "Prices/costs use collateral units before fees, conversion and settlement assumptions.",
+          "Correlated snapshots are grouped; row count is not independent sample coverage."
+        ]
+      },
+      "status": {
+        "actual_orders_submitted": 0,
+        "budget_bytes": 4294967296,
+        "campaign_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
+        "counters": {
+          "lagged_frames_skipped": 0,
+          "records": 95825,
+          "source_checkpoints": 918
+        },
+        "days": [],
+        "decisions": 0,
+        "events": 923,
+        "evidence_bytes": 5988411,
+        "families": 0,
+        "followups": {},
+        "last_decision_ns": null,
+        "markets": 0,
+        "observations": 0,
+        "pending_horizons": 0,
+        "producer_hash": "9231e11c969cc95af607d847c7d5aa32418a91c21152b214cf9f170d517c0c9f",
+        "scientific_state": "insufficient_forward_evidence",
+        "source_last_received_ns": 1791993449842612407,
+        "source_ordinal": 95825,
+        "state": "FROZEN_WAITING_START",
+        "updated_ns": 1792011025212184460
+      }
+    }
+  },
+  "checked_ns": 1792011027450468518,
+  "gate": "E",
+  "services": {
+    "midas-reality-shadow-canary-audit.service": {
+      "ActiveState": "active",
+      "MainPID": "2827106",
+      "MemoryCurrent": "69177344",
+      "NRestarts": "0",
+      "Result": "success"
+    },
+    "midas-reality-shadow-canary-v2.service": {
+      "ActiveState": "active",
+      "MainPID": "2811218",
+      "MemoryCurrent": "133410816",
+      "NRestarts": "0",
+      "Result": "success"
+    },
+    "midas-reality-shadow.service": {
+      "ActiveState": "active",
+      "MainPID": "2820914",
+      "MemoryCurrent": "124219392",
+      "NRestarts": "0",
+      "Result": "success"
+    },
+    "midas-reality.service": {
+      "ActiveState": "active",
+      "MainPID": "2288376",
+      "MemoryCurrent": "376283136",
+      "NRestarts": "0",
+      "Result": "success"
+    }
+  },
+  "state": "in_verification_not_accepted",
+  "validation": {
+    "independent_genuine_audit": "running",
+    "main_campaign_prospective_accumulation": "pending_frozen_start",
+    "reality_tests": 123,
+    "ruff": "passed",
+    "strict_mypy_sources": 35
+  }
+}
