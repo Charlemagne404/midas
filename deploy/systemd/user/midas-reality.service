@@ -1,0 +1,32 @@
+[Unit]
+Description=MIDAS Reality public read-only market recorder
+After=network-online.target
+StartLimitIntervalSec=300
+StartLimitBurst=5
+
+[Service]
+Type=simple
+WorkingDirectory=%h/midas-reality
+Environment=PYTHONUNBUFFERED=1
+ExecStart=%h/midas-reality/.venv/bin/python -m midas.reality record --config %h/midas-reality/deploy/reality.json
+Restart=on-failure
+RestartSec=10
+KillSignal=SIGTERM
+TimeoutStopSec=45
+MemoryMax=512M
+MemoryHigh=384M
+CPUQuota=25%
+TasksMax=32
+LimitNOFILE=128
+Nice=10
+UMask=0077
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=%h/midas-reality/data/recordings
+PrivateTmp=true
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=default.target

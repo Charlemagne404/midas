@@ -1,0 +1,14 @@
+{
+  "root": "/home/charlie/midas-reality/data/recordings/reality",
+  "markets": 3,
+  "discovery_limit": 50,
+  "refresh_seconds": 600,
+  "resync_seconds": 300,
+  "stale_seconds": 60,
+  "queue_size": 256,
+  "budget_bytes": 2147483648,
+  "reserve_bytes": 5368709120,
+  "segment_bytes": 8388608,
+  "segment_seconds": 300,
+  "retention_days": 30
+}
