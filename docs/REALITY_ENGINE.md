@@ -181,3 +181,19 @@ span, 42 live/replay checkpoint matches and 2.13 MB of finalized segments.
 The broader regression remains live and has reported one failure; an isolated
 rerun of the test at that position passed. Final acceptance awaits the complete
 traceback, failure resolution or baseline comparison, and terminal test results.
+
+The first full regression completed with 615 passes, one skip and one failure.
+The failing search's idempotent reread saw a different research source hash:
+Laboratory's broad package scan included the new independent Reality modules,
+which were being edited during that test. Reality is now excluded from the
+simulation identity alongside Arena. This restores the exact Prometheus
+Laboratory hash `c14738f8468a8103a98c2704dc5454e85e867a5e3d5b7174cc7383342aa5ebd8`
+and Arena research hash `bac445c2bb79877e6484cc395820a36dba69b7b03712e8ed1caf1a7ac160a681`.
+A regression test proves independent recorder additions leave that identity
+unchanged while financial-domain additions still invalidate it. No simulation
+or financial behavior changed. The full suite will be repeated with source held
+fixed. The initial failed run is preserved in `REALITY_INITIAL_REGRESSION.log`.
+
+Operational audits stream raw records rather than retaining the archive in
+memory. Exports fsync copied segments and independently verify their contents
+before publishing the input manifest.

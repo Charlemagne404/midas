@@ -100,13 +100,13 @@ def revision() -> str:
 def code_hash() -> str:
     root = Path(__file__).resolve().parents[3]
     paths = sorted((root / "packages/midas").rglob("*.py"))
-    # Arena training modules cannot affect Laboratory execution. Keep research-only
-    # additions out of old campaign identities so their reproduction remains valid.
+    # Arena training and the isolated Reality recorder cannot affect Laboratory
+    # execution. Preserve campaign identities when these subsystems change.
     paths = [
         p
         for p in paths
         if p.resolve() != Path(__file__).resolve()
-        and "arena" not in p.relative_to(root / "packages/midas").parts
+        and not {"arena", "reality"}.intersection(p.relative_to(root / "packages/midas").parts)
     ]
     campaign_logic = [
         (name, digest(inspect.getsource(value)))

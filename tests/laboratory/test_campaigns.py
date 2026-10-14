@@ -231,3 +231,24 @@ def test_low_capital_family_and_invalid_financial_results_not_aggregated(tmp_pat
         assert compare(lab.runs(campaign["id"]))["excluded_invariant_failures"] == 1
     finally:
         lab.close()
+
+
+def test_isolated_recorder_does_not_change_simulation_identity(tmp_path, monkeypatch):
+    from midas.laboratory import campaigns
+
+    source_root = Path(campaigns.__file__).resolve().parents[3]
+    for path in (source_root / "packages/midas").rglob("*.py"):
+        destination = tmp_path / path.relative_to(source_root)
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_bytes(path.read_bytes())
+    monkeypatch.setattr(
+        campaigns, "__file__", str(tmp_path / "packages/midas/laboratory/campaigns.py")
+    )
+    baseline = campaigns.code_hash()
+    recorder = tmp_path / "packages/midas/reality/recorder_extension.py"
+    recorder.write_text("# independent read-only recorder extension\n")
+    assert campaigns.code_hash() == baseline
+    # Financial-domain changes must still invalidate the simulation identity.
+    contract = tmp_path / "packages/midas/core/contract_extension.py"
+    contract.write_text("# financial contract change\n")
+    assert campaigns.code_hash() != baseline

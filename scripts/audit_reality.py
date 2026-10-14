@@ -21,27 +21,35 @@ def audit(config: Config, archive: Path) -> dict:
     repeated, _ = replay(root, value)
     if engine.digest() != repeated.digest():
         raise ValueError("Repeat replay differs")
-    rows = list(read_manifest(root, value))
-    frames = [r for r in rows if r["kind"] == "frame"]
-    gap_counts = Counter(r["payload"]["reason"] for r in rows if r["kind"] == "gap")
-    corrections = {
-        r["payload"]["record_ordinal"]: r["payload"]
-        for r in rows
-        if r["kind"] == "metadata_correction"
-    }
+    del repeated
+    # Scan records without retaining the raw archive in memory.
+    corrections = {}
+    for record in read_manifest(root, value):
+        if record["kind"] == "metadata_correction":
+            if len(corrections) >= 10000:
+                raise ValueError("Too many provenance corrections for bounded audit")
+            corrections[record["payload"]["record_ordinal"]] = record["payload"]
     latest_frame = None
-    corrected = 0
-    for r in rows:
-        if r["kind"] == "frame":
+    first_received = last_received = None
+    frame_count = raw_bytes = corrected = 0
+    gap_counts = Counter()
+    for r in read_manifest(root, value):
+        if r["kind"] == "gap":
+            gap_counts[r["payload"]["reason"]] += 1
+        elif r["kind"] == "frame":
             latest_frame = r["ordinal"]
-        if r["kind"] == "snapshot_constraints" and r["payload"]["raw_ordinal"] != latest_frame:
+            if first_received is None:
+                first_received = r["received_ns"]
+            last_received = r["received_ns"]
+            frame_count += 1
+            raw_bytes += len(r["payload"].encode())
+        elif r["kind"] == "snapshot_constraints" and r["payload"]["raw_ordinal"] != latest_frame:
             repair = corrections.get(r["ordinal"])
             if not repair or repair["corrected"] != latest_frame:
                 raise ValueError(f"Unresolved constraint provenance: {r['ordinal']}")
             corrected += 1
-    seconds = (frames[-1]["received_ns"] - frames[0]["received_ns"]) / 1e9 if len(frames) > 1 else 0
+    seconds = (last_received - first_received) / 1e9 if frame_count > 1 else 0
     recorded_bytes = sum(s["bytes"] for s in value["segments"])
-    raw_bytes = sum(len(r["payload"].encode()) for r in frames)
     services = {}
     for unit in (
         "midas-reality.service",
@@ -95,15 +103,15 @@ def audit(config: Config, archive: Path) -> dict:
         status=json.loads((root / "status.json").read_text()),
         services=services,
         recording=dict(
-            raw_frames=len(frames),
+            raw_frames=frame_count,
             events=engine.counts,
-            first_received_ns=frames[0]["received_ns"] if frames else None,
-            last_received_ns=frames[-1]["received_ns"] if frames else None,
+            first_received_ns=first_received,
+            last_received_ns=last_received,
             elapsed_seconds=seconds,
             gaps=dict(gap_counts),
             compressed_segment_bytes=recorded_bytes,
             raw_frame_bytes=raw_bytes,
-            frames_per_second=len(frames) / seconds if seconds else 0,
+            frames_per_second=frame_count / seconds if seconds else 0,
             compressed_bytes_per_second=recorded_bytes / seconds if seconds else 0,
             estimated_compressed_bytes_per_day=recorded_bytes / seconds * 86400 if seconds else 0,
             budget_bytes=config.budget_bytes,

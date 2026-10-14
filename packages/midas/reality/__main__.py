@@ -3,6 +3,7 @@
 import argparse
 import asyncio
 import json
+import os
 import shutil
 import time
 from pathlib import Path
@@ -40,7 +41,11 @@ def main() -> None:
         replay(root, value)  # validate integrity before copying
         args.output.mkdir(parents=True, exist_ok=False)
         for segment in value["segments"]:
-            shutil.copy2(root / segment["file"], args.output / segment["file"])
+            destination = args.output / segment["file"]
+            shutil.copy2(root / segment["file"], destination)
+            with destination.open("rb") as stream:
+                os.fsync(stream.fileno())
+        replay(args.output, value)  # verify copied bytes before publishing their manifest
         atomic_json(args.output / "manifest.json", value)
         print(json.dumps(value, indent=2))
     else:
