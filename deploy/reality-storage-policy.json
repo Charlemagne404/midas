@@ -7,7 +7,7 @@
   "archive_destination": "/home/charlie/midas-reality/data/recordings/reality-archive-mission2",
   "archive_frequency": "daily at 04:00 UTC, maximum five-minute jitter",
   "raw_pruning": "prohibited",
-  "derivative_pruning": "disabled until separately configured disposable derivatives exist",
+  "derivative_pruning": "Only deploy/reality-research.json scheduled completed example caches and unpublished builder scratch are disposable. Keep immutable manifests/code/source references and visible pruning receipts. Raw roots, accepted Gate B/C/D artifacts and protected Prometheus evidence are excluded.",
   "capacity_action_threshold_days": 7,
   "offloading": "Use verified archive CLI with an explicitly chosen mounted/off-host destination before the alert deadline. Never delete originals automatically. Off-host destination is not configured on this host.",
   "rollover": "A new raw root requires an intentional collector stop, finalized verified archive, retained old-root manifest, and reviewed disk commitments. Keep the original root recoverable; new root identity/ordinals must remain distinct. No automatic rollover is configured.",

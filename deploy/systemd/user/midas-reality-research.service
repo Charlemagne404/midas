@@ -1,0 +1,23 @@
+[Unit]
+Description=MIDAS Reality bounded dataset, audit and offline training schedule
+
+[Service]
+Type=oneshot
+WorkingDirectory=%h/midas-reality
+ExecStart=%h/midas-reality/.venv/bin/python -m midas.reality.research_schedule --config %h/midas-reality/deploy/reality-research.json
+Environment=OMP_NUM_THREADS=1
+Environment=OPENBLAS_NUM_THREADS=1
+Environment=MKL_NUM_THREADS=1
+MemoryMax=768M
+CPUQuota=20%
+Nice=15
+IOSchedulingClass=idle
+UMask=0077
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=%h/midas-reality/data/research/reality
+PrivateTmp=true
+PrivateNetwork=true
+TimeoutStartSec=12h
+

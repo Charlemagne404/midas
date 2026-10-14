@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "enabled": true,
+  "raw_root": "/home/charlie/midas-reality/data/recordings/reality",
+  "state_root": "/home/charlie/midas-reality/data/research/reality/scheduled",
+  "training_root": "/home/charlie/midas-reality/data/research/reality/training",
+  "evaluation_ledger": "/home/charlie/midas-reality/data/research/reality/evaluation-ledger",
+  "minimum_recorded_days": 7,
+  "window_days": 7,
+  "max_retries_per_week": 1,
+  "dataset_budget_bytes": 2147483648,
+  "training_budget_bytes": 536870912,
+  "reserve_bytes": 21474836480,
+  "disposable_example_cache_pruning": true,
+  "completed_caches_to_keep": 1,
+  "unpublished_builder_scratch_pruning": true
+}

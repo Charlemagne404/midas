@@ -804,3 +804,215 @@ baseline, and Laboratory/Arena code identities remain unchanged. Full protected
 archive verification remains part of Gate G, not a claim newly made by Gate C.
 Current service, raw-prefix, capacity and protection evidence is recorded in
 `docs/REALITY_GATE_C_CHECKPOINT.json`.
+
+## Gate D — genuine observation-target training
+
+Reality now has a separate Arena adapter for genuine Foundry datasets. It reuses
+Arena's two-hidden-layer PyTorch architecture with a 25-input Reality schema;
+it does not reinterpret historical synthetic completion labels or reuse their
+weights as observation-trained models. Protected Arena/Laboratory code and
+archives are unchanged. Inputs include prices, logarithmic displayed quantities,
+spread/missingness, receiver age/skew, quote age, update intensity, imbalance,
+causal lookback changes, tick, reported expiry/liquidity, quantity and horizon.
+Market/family identities and future measurements are excluded from inputs.
+Categories, selection roles, families, markets, horizons and days are evaluation
+slices. Day coverage must match the actual decision timestamp.
+
+The model target version is `reality-model-targets-v1`:
+
+- `quote_persistence`: original-price presence at the declared future horizon.
+- `depth_retention`: minimum across legs of retained original-price quantity
+  divided by initial top-ask quantity, bounded to [0,1].
+- `adverse_ask_movement`: measured adverse change in the paired best asks.
+- `opportunity_persistence`: applies only to an initially supported theoretical
+  discrepancy; other decisions are not applicable, not unknown or negative.
+- `market_disruption`: known public-data freshness/connectivity/reconstruction
+  deterioration within the horizon. This is a data-quality target, not a private
+  execution, monetary-loss or fill target. Known deterioration can be measured
+  even when price futures are censored; otherwise missing targets remain unknown.
+
+Preprocessing uses the intersection of chronological and family-held-out
+training partitions only. Standardization and support envelopes use training
+inputs; fitting assigns equal total weight to each training family/time block.
+Validation alone selects fixed candidate families and MLP checkpoints. Constant
+controls use a declared smoothed training base rate for classifications or a
+weighted training mean for regression. Fixed heuristics are explicitly unfitted.
+Learned classifiers/regressors require target variation. Logistic regression,
+Ridge and a shallow tree precede any MLP. An MLP is considered only after a
+lightweight learner improves the validation control by at least 2%, with at
+least 100 known training and 50 validation targets. The fixed small network has
+16 hidden units per layer, a fixed seed, at most 40 epochs and early stopping.
+No larger architecture or hyperparameter sweep was added.
+
+Portable JSON parameters preserve preprocessing, supported ranges, native
+estimator coefficients/tree/MLP weights, curves, seeds, configuration, input and
+target versions, numeric-library versions and source/dataset identities. Native
+and portable estimator predictions are independently compared before publication.
+Weight and metadata hashes bind each model ID. Loading detects weight, registry,
+metadata, version and support corruption; inference rejects incompatible
+protocol/horizon/quantity or inputs outside the training envelope. Experimental
+predictions explicitly condition on measurable public targets, expose no actual
+fill probability and do not activate a decision policy.
+
+### Frozen development and final-test evidence
+
+Accepted genuine run:
+`9f593b0e68c61c5a8eabf3b01b7ad38c9e1df27436bd041a55a505c995a0a9f9`.
+It uses the independently audited Gate B dataset at the 1,000 ms horizon,
+with 1,993 accepted training anchors, 476 validation anchors and 786 final-test
+anchors. All are from one UTC day. Price/depth targets have 146 known training,
+30 validation and 45 test observations. Disruption has 335 known training
+(146 negative/189 positive), 95 validation (30/65) and 226 test (45/181) targets.
+The remaining eligible outcomes are unknown. Quote persistence is one-class;
+adverse movement is constant zero; opportunity persistence has no applicable
+examples. Those targets cannot support discriminative learned models here.
+
+The run publishes **13 artifacts: eight controls and five learned models**.
+The learned models are logistic/tree/MLP for disruption and Ridge/tree for depth
+retention. The MLP passed the pre-test validation trigger but did not win
+validation. No additional network was fitted for model-count purposes.
+
+| Supported target | Validation-selected development candidate | Frozen-test metric | Relevant controls/learners |
+| --- | --- | ---: | --- |
+| Disruption | Shallow tree | Brier 0.30910 | Constant 0.19821; logistic 0.41306; MLP 0.25121 |
+| Depth retention | Fixed unchanged-depth heuristic | MAE 0.00490 | Constant 0.01905; Ridge 0.05657; tree 0.03071 |
+| Quote persistence | Smoothed constant control | Brier 0.0000457 on 45 positive-only targets | No evidence of discrimination or population calibration |
+| Adverse movement | Zero constant control | MAE 0 on 45 zero-only targets | No learned variation or generalization claim |
+| Opportunity persistence | None | Not applicable | No supported initial discrepancy |
+
+The disruption tree's validation Brier was 0.08373, but its frozen-test Brier
+is worse than the constant control. Learned depth models also lose to the fixed
+heuristic. These are negative development findings, not grounds to select a
+new candidate using the opened test. Full Brier/log loss/calibration, regression
+residual/tail errors, matched baseline skill, training-support coverage and
+market/family/category/role/day slices are in `docs/REALITY_GATE_D_TRAINING.json`.
+Intervals resample family/time blocks and are explicitly exploratory and
+conditional; shared feed/venue dependence, one-day coverage and informative
+missingness prevent independent population claims. Regression prediction
+intervals remain unsupported. Prediction accuracy is not economic usefulness.
+
+All candidate weights, controls, validation selections, target definitions,
+threshold 0.5 and the analysis plan were frozen before test access. Evaluation
+`fc18c7493b427fba2856cd33c3149ce26694ca62ddb83a8e4ec53dd34a4e2415`
+is consumed in the shared `data/research/reality/evaluation-ledger`. No test
+threshold retuning or subsequent promotion against that period is allowed.
+Known test observations from entirely held-out families are separately reported.
+Cross-day generalization is unavailable. There is **no scientific champion and
+no eligible decision-policy model**.
+
+Eligibility requires seven UTC days, sufficient measured family/time blocks and
+families, both classes when applicable, at most 30% unknown targets, meaningful
+validation/control improvement, positive frozen-test improvement with grouped
+paired uncertainty, acceptable conditional calibration, compatible reproducible
+inference and matched hypothetical decision usefulness. Current candidates fail
+several gates, including missingness and temporal coverage. Technically usable
+experimental probes are distinct from policy eligibility; forward assessment
+must retain that distinction.
+
+The genuine run took 58.90 seconds overall, 13.27 CPU seconds and 297.7 MiB peak
+memory with CPU capped at 20% and numerical libraries restricted to one thread.
+Its v1 scaler emitted floating-roundoff warnings on constant columns. Published
+scales/parameters remain finite and were verified. Future training uses adapter
+v2, detecting constant columns using training only before standardization. This
+versioned correction does not rewrite v1 weights, curves or test results.
+
+### Reproduction and interrupted work
+
+The run retains an exact frozen source bundle, including the imported Arena
+network/input sources, under `training/runs/<run-id>/code`. Reproduction explicitly
+uses that bundle and the pinned numeric toolchain. A bounded independent refit
+used train/validation only and reproduced all 13 weight checksums and curves.
+It published zero new models and did not reopen the consumed final test.
+Measured refitting took 9.30 seconds after development loading; total CPU use
+was 6.55 seconds. Proof: `docs/REALITY_GATE_D_REPRODUCIBILITY.json`.
+
+```bash
+# Use the accepted run's v1 source, not the future v2 fitting implementation.
+PYTHONPATH=data/research/reality/training/runs/9f593b0e68c61c5a8eabf3b01b7ad38c9e1df27436bd041a55a505c995a0a9f9/code:packages \
+  .venv/bin/python -m midas.reality.model_reproduce \
+  --dataset data/research/reality/datasets/23201960592577e4cb280c5f3dc1fb64d75e3b12bacb45d347cc2ae32472242c \
+  --root data/research/reality/training \
+  --run-id 9f593b0e68c61c5a8eabf3b01b7ad38c9e1df27436bd041a55a505c995a0a9f9 \
+  --output data/research/reality/reproduction-check.json
+```
+
+Training owns a derivative-root lock, publishes immutable models incrementally,
+and records actual verification/loading/fitting/freeze/test/finalization phases.
+Interrupted identical work reuses verified artifacts and an exact opened plan;
+result-publication/ledger-consumption recovery does not create a new promotion.
+A different code/specification against a consumed period is rejected. Failure,
+corruption, budget or reserve breaches have visible terminal states and leave
+raw recordings intact. The accepted run's frozen implementation can resume its
+exact result even after future-version development.
+
+### Durable future research
+
+`deploy/reality-research.json` configures a daily coverage check and at most one
+frozen offline plan per UTC week. `midas-reality-research.timer` is enabled, using
+02:30 UTC plus up to ten minutes of jitter. Its oneshot service has a 20% CPU
+quota, 768 MiB memory cap, low scheduling/idle I/O priority, no network, isolated
+temporary storage and a twelve-hour ceiling. It does not modify collection or
+active forward campaigns, activate models, retune their thresholds or promote
+new candidates automatically.
+
+After seven days of raw span, the job freezes a seven-day input window, builds a
+versioned 1,000 ms dataset at two-minute sampling stride, independently audits
+public labels, then runs the fixed training/validation/final-test protocol.
+Actual measured coverage still determines eligibility. Failed explicit jobs do
+not self-trigger new experiments; interrupted identical work has at most one
+bounded recovery attempt. The new scheduled dataset tier is capped at 2 GiB;
+the model/job tier is capped at 512 MiB, with a 20 GiB host reserve. Cold replay
+and independent auditing still scale with the preserved source prefix; timeout,
+capacity and interruption states require inspection rather than assuming success.
+
+Only this new schedule's explicitly marked completed JSONL example caches are
+prunable, retaining the latest complete cache. Earlier cache pruning verifies
+completed model/report provenance and row checksums, preserves immutable
+manifests/code/source references and writes an availability notice. Original raw
+records and the accepted Gate B/C/D evidence are outside that retention class.
+Unpublished `.building-*` scratch is disposable only in the scheduled namespace
+while its builder lock proves no live writer owns it. Regenerate pruned rows
+with retained frozen Foundry source/spec/manifest in a separate root. This is
+reversible derivative-cache management, not removal of original observations.
+
+The first real scheduled check succeeded with `WAITING_FOR_COVERAGE` at roughly
+0.41 recorded days. It fitted nothing and left the timer enabled. Models trained
+above are retrospective development evidence; prospective decisions have not
+started yet. Gate E is next: freeze a shadow campaign before future observations,
+start recording genuine decisions/follow-ups without orders, and verify durable
+prospective accumulation. The native dashboard and final broad verification remain
+outstanding.
+
+### Gate D verification and operations checkpoint
+
+Focused verification passes **114 tests**; additional registry-metadata and UTC
+day-corruption assertions were rechecked in the 19-test training suite. Ruff
+passes and strict mypy passes across 28 Reality sources. Tests include native/
+portable classifier and regressor agreement, deterministic MLP/linear/tree fits,
+train-only scaling, one-class refusal, independently computed metric arithmetic,
+unknown-target exclusion, feature/future isolation, model and metadata corruption,
+chronological frozen-test access/resume, period-overlap rejection, budget safety,
+coverage waiting, bounded weekly triggering and explicit disposable-cache/scratch
+retention with raw/code/manifest preservation. No fixture performance is counted
+as genuine market evidence. Full backend/frontend/browser and protected archive
+checks remain for Gate G.
+
+At the checkpoint, collection remains PID 2288376 with zero automatic restarts
+and no Gate D restart. Its active epoch has 69,822 frames, eight monitored markets,
+16/16 fresh books, no timing-uncertain books and zero connection failures. The
+finalized raw catalog has 1,182 segments and 136,690 records; the live ordinal
+is 136,776. Storage is approximately 241 MiB, with roughly 232 MiB cgroup memory,
+within the 512 MiB cap. Capacity has no alerts: recent growth is about 0.70 GB/day,
+with an estimated 36.5 days to the 24 GiB raw budget and approximately 202 GiB
+filesystem free. Forecast variation remains material; capacity/archival monitors
+must stay enabled. The daily research timer is active; its check and both
+Gate D jobs have successful terminal states. No prospective shadow service or
+eligible policy is running yet.
+
+The main checkout is clean at `8acab2298632eb04fbe5183fbe54f8e6f97a8fdb`.
+Laboratory identity remains `c14738f8468a8103a98c2704dc5454e85e867a5e3d5b7174cc7383342aa5ebd8`;
+Arena identity remains `bac445c2bb79877e6484cc395820a36dba69b7b03712e8ed1caf1a7ac160a681`.
+`docs/REALITY_GATE_D_CHECKPOINT.json` pins model/report hashes, consumed test,
+reproduction, coverage, eligibility failures, current services, raw catalog,
+capacity and protection evidence. These are timestamped checkpoint facts rather
+than continuously guaranteed frontend values.

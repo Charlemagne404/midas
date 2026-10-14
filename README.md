@@ -16,8 +16,10 @@ verified daily archival, explicit feed uncertainty and gated recorder deployment
 See [Reality Calibration Laboratory](docs/REALITY_CALIBRATION_LABORATORY.md).
 Gate B adds versioned datasets, observable labels, explicit censoring and
 chronological validation. Gate C adds training-only public distributions, explicit
-execution bounds and preserved-simulator comparisons. Training, prospective
-shadow research and the native dashboard remain outstanding.
+execution bounds and preserved-simulator comparisons. Gate D adds real-observation
+Arena workflows and frozen chronological tests; current evidence supports no
+eligible policy model. Prospective shadow research and the native dashboard
+remain outstanding.
 
 ## Install and run
 

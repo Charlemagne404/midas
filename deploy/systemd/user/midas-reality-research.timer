@@ -1,0 +1,11 @@
+[Unit]
+Description=MIDAS Reality daily coverage check, at most one frozen plan per UTC week
+
+[Timer]
+OnCalendar=*-*-* 02:30:00 UTC
+RandomizedDelaySec=10min
+Persistent=true
+Unit=midas-reality-research.service
+
+[Install]
+WantedBy=timers.target

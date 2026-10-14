@@ -26,7 +26,9 @@ archival, versioned reconstruction, timing evidence and controlled deployment.
 Gate B is accepted with reproducible public-observation datasets, measured/censored
 labels, chronological embargoes, family grouping and independent raw audits.
 Gate C adds observational calibration, explicit execution-uncertainty scenarios
-and preserved-simulator comparisons. Gate D real-observation training is next. See the
+and preserved-simulator comparisons. Gate D adds genuine observation-target
+training, consumed frozen tests and explicit insufficient-evidence eligibility.
+Gate E prospective shadow research is next. See the
 [Calibration Laboratory progress and operations](REALITY_CALIBRATION_LABORATORY.md).
 
 ## Deferred: Project Atlas

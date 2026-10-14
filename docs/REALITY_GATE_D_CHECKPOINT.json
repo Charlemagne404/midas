@@ -1,0 +1,775 @@
+{
+  "capacity": {
+    "alerts": [],
+    "available_headroom_bytes": 25519730418,
+    "budget_bytes": 25769803776,
+    "capacity_builder_sha256": "ab145f0a001508b2cd1ca849bd381ebf988ccf49fdcb6465753ddbe0b36fb5a5",
+    "capacity_builder_version": "receipt-aware-capacity-v2",
+    "collector_state": "RECORDING_UNSEQUENCED",
+    "collector_status_age_seconds": 2.831622501,
+    "compressed_bytes_per_second": 8098.637114595207,
+    "estimated_action_deadline_ns": 1795152218062932992,
+    "estimated_bytes_per_day": 699722246.7010258,
+    "estimated_storage_seconds_remaining": 3151114.2006855495,
+    "filesystem_free_bytes": 217435758592,
+    "free_disk_reserve_bytes": 21474836480,
+    "limitations": [
+      "Recent finalized-segment rate includes gaps and metadata; future rates vary.",
+      "Active segment excluded from rate, included in root usage.",
+      "Raw originals never pruned. Retention horizon stops collection.",
+      "Local archive copies consume additional disk; off-host offloading is separate."
+    ],
+    "measured_ns": 1792001103862247426,
+    "raw_root_bytes": 250073358,
+    "recording_root": "/home/charlie/midas-reality/data/recordings/reality",
+    "retention_seconds_remaining": 7739980.848698739,
+    "sample": {
+      "clock_assessment_basis": "sequential WebSocket dequeue frames; deferred HTTP timestamps remain separate",
+      "clock_regressions": 0,
+      "compressed_and_catalog_bytes": 29610069,
+      "first_received_ns": 1791997416465390851,
+      "last_received_ns": 1792001072644644350,
+      "raw_frame_payload_bytes": 16070003,
+      "raw_frames": 10993,
+      "record_receipt_regressions": 145,
+      "seconds": 3656.179253499,
+      "segments": 120,
+      "source_sha256": "f3947cbbebcc2c64f03da86bdf6495a0a01ee5edf25cda284747481c7e40beb2"
+    },
+    "schema_version": 1
+  },
+  "checked_ns": 1792001357824314328,
+  "collector": {
+    "expected_books": 16,
+    "failures": 0,
+    "frames": 69822,
+    "fresh_books": 16,
+    "gaps": 1907,
+    "markets": 8,
+    "ordinal": 136776,
+    "started_ns": 1791988496384329613,
+    "state": "RECORDING_UNSEQUENCED",
+    "storage_bytes": 252540980,
+    "timing_uncertain_books": 0,
+    "updated_ns": 1792001356485024463
+  },
+  "controls": 8,
+  "eligibility": {
+    "adverse_ask_movement": {
+      "coverage": {
+        "test": {
+          "candidate_decisions": 786,
+          "class_counts": {
+            "0.0": 45
+          },
+          "days": [
+            "2026-10-14"
+          ],
+          "eligible_decisions": 786,
+          "families": 5,
+          "family_time_blocks": 33,
+          "markets": 8,
+          "measured_targets": 45,
+          "not_applicable_decisions": 0,
+          "unknown_targets": 741
+        },
+        "train": {
+          "candidate_decisions": 1993,
+          "class_counts": {
+            "0.0": 146
+          },
+          "days": [
+            "2026-10-14"
+          ],
+          "eligible_decisions": 1993,
+          "families": 5,
+          "family_time_blocks": 111,
+          "markets": 6,
+          "measured_targets": 146,
+          "not_applicable_decisions": 0,
+          "unknown_targets": 1847
+        },
+        "validation": {
+          "candidate_decisions": 476,
+          "class_counts": {
+            "0.0": 30
+          },
+          "days": [
+            "2026-10-14"
+          ],
+          "eligible_decisions": 476,
+          "families": 4,
+          "family_time_blocks": 25,
+          "markets": 4,
+          "measured_targets": 30,
+          "not_applicable_decisions": 0,
+          "unknown_targets": 446
+        }
+      },
+      "forward_mode": "experimental_prediction_probe_only",
+      "gate_version": "reality-eligibility-v1",
+      "note": "Development inference can be technically reproducible without scientific or economic validation.",
+      "policy_eligible": false,
+      "promotion": false,
+      "reasons": [
+        "fewer_than_seven_utc_days",
+        "train_excessive_unknown_target_fraction",
+        "validation_excessive_unknown_target_fraction",
+        "validation_insufficient_family_time_coverage",
+        "test_excessive_unknown_target_fraction",
+        "test_insufficient_family_time_coverage",
+        "no_meaningful_validation_control_improvement",
+        "no_frozen_test_control_improvement",
+        "paired_grouped_improvement_not_established",
+        "matched_economic_decision_usefulness_not_established"
+      ],
+      "state": "insufficient_evidence"
+    },
+    "depth_retention": {
+      "coverage": {
+        "test": {
+          "candidate_decisions": 786,
+          "class_counts": null,
+          "days": [
+            "2026-10-14"
+          ],
+          "eligible_decisions": 786,
+          "families": 5,
+          "family_time_blocks": 33,
+          "markets": 8,
+          "measured_targets": 45,
+          "not_applicable_decisions": 0,
+          "unknown_targets": 741
+        },
+        "train": {
+          "candidate_decisions": 1993,
+          "class_counts": null,
+          "days": [
+            "2026-10-14"
+          ],
+          "eligible_decisions": 1993,
+          "families": 5,
+          "family_time_blocks": 111,
+          "markets": 6,
+          "measured_targets": 146,
+          "not_applicable_decisions": 0,
+          "unknown_targets": 1847
+        },
+        "validation": {
+          "candidate_decisions": 476,
+          "class_counts": null,
+          "days": [
+            "2026-10-14"
+          ],
+          "eligible_decisions": 476,
+          "families": 4,
+          "family_time_blocks": 25,
+          "markets": 4,
+          "measured_targets": 30,
+          "not_applicable_decisions": 0,
+          "unknown_targets": 446
+        }
+      },
+      "forward_mode": "experimental_prediction_probe_only",
+      "gate_version": "reality-eligibility-v1",
+      "note": "Development inference can be technically reproducible without scientific or economic validation.",
+      "policy_eligible": false,
+      "promotion": false,
+      "reasons": [
+        "fewer_than_seven_utc_days",
+        "train_excessive_unknown_target_fraction",
+        "validation_excessive_unknown_target_fraction",
+        "validation_insufficient_family_time_coverage",
+        "test_excessive_unknown_target_fraction",
+        "test_insufficient_family_time_coverage",
+        "matched_economic_decision_usefulness_not_established"
+      ],
+      "state": "insufficient_evidence"
+    },
+    "market_disruption": {
+      "coverage": {
+        "test": {
+          "candidate_decisions": 786,
+          "class_counts": {
+            "0.0": 45,
+            "1.0": 181
+          },
+          "days": [
+            "2026-10-14"
+          ],
+          "eligible_decisions": 786,
+          "families": 7,
+          "family_time_blocks": 102,
+          "markets": 10,
+          "measured_targets": 226,
+          "not_applicable_decisions": 0,
+          "unknown_targets": 560
+        },
+        "train": {
+          "candidate_decisions": 1993,
+          "class_counts": {
+            "0.0": 146,
+            "1.0": 189
+          },
+          "days": [
+            "2026-10-14"
+          ],
+          "eligible_decisions": 1993,
+          "families": 5,
+          "family_time_blocks": 225,
+          "markets": 6,
+          "measured_targets": 335,
+          "not_applicable_decisions": 0,
+          "unknown_targets": 1658
+        },
+        "validation": {
+          "candidate_decisions": 476,
+          "class_counts": {
+            "0.0": 30,
+            "1.0": 65
+          },
+          "days": [
+            "2026-10-14"
+          ],
+          "eligible_decisions": 476,
+          "families": 6,
+          "family_time_blocks": 76,
+          "markets": 6,
+          "measured_targets": 95,
+          "not_applicable_decisions": 0,
+          "unknown_targets": 381
+        }
+      },
+      "forward_mode": "experimental_prediction_probe_only",
+      "gate_version": "reality-eligibility-v1",
+      "note": "Development inference can be technically reproducible without scientific or economic validation.",
+      "policy_eligible": false,
+      "promotion": false,
+      "reasons": [
+        "fewer_than_seven_utc_days",
+        "train_excessive_unknown_target_fraction",
+        "validation_excessive_unknown_target_fraction",
+        "test_excessive_unknown_target_fraction",
+        "no_frozen_test_control_improvement",
+        "paired_grouped_improvement_not_established",
+        "conditional_calibration_gate_failed",
+        "matched_economic_decision_usefulness_not_established"
+      ],
+      "state": "insufficient_evidence"
+    },
+    "quote_persistence": {
+      "coverage": {
+        "test": {
+          "candidate_decisions": 786,
+          "class_counts": {
+            "1.0": 45
+          },
+          "days": [
+            "2026-10-14"
+          ],
+          "eligible_decisions": 786,
+          "families": 5,
+          "family_time_blocks": 33,
+          "markets": 8,
+          "measured_targets": 45,
+          "not_applicable_decisions": 0,
+          "unknown_targets": 741
+        },
+        "train": {
+          "candidate_decisions": 1993,
+          "class_counts": {
+            "1.0": 146
+          },
+          "days": [
+            "2026-10-14"
+          ],
+          "eligible_decisions": 1993,
+          "families": 5,
+          "family_time_blocks": 111,
+          "markets": 6,
+          "measured_targets": 146,
+          "not_applicable_decisions": 0,
+          "unknown_targets": 1847
+        },
+        "validation": {
+          "candidate_decisions": 476,
+          "class_counts": {
+            "1.0": 30
+          },
+          "days": [
+            "2026-10-14"
+          ],
+          "eligible_decisions": 476,
+          "families": 4,
+          "family_time_blocks": 25,
+          "markets": 4,
+          "measured_targets": 30,
+          "not_applicable_decisions": 0,
+          "unknown_targets": 446
+        }
+      },
+      "forward_mode": "experimental_prediction_probe_only",
+      "gate_version": "reality-eligibility-v1",
+      "note": "Development inference can be technically reproducible without scientific or economic validation.",
+      "policy_eligible": false,
+      "promotion": false,
+      "reasons": [
+        "fewer_than_seven_utc_days",
+        "train_excessive_unknown_target_fraction",
+        "train_insufficient_class_support",
+        "validation_excessive_unknown_target_fraction",
+        "validation_insufficient_family_time_coverage",
+        "validation_insufficient_class_support",
+        "test_excessive_unknown_target_fraction",
+        "test_insufficient_family_time_coverage",
+        "test_insufficient_class_support",
+        "no_meaningful_validation_control_improvement",
+        "no_frozen_test_control_improvement",
+        "paired_grouped_improvement_not_established",
+        "matched_economic_decision_usefulness_not_established"
+      ],
+      "state": "insufficient_evidence"
+    }
+  },
+  "evaluation": {
+    "id": "fc18c7493b427fba2856cd33c3149ce26694ca62ddb83a8e4ec53dd34a4e2415",
+    "plan_sha256": "c79f6e0e2bae7b5871c36b8ab37b0a0ea8766f12fc09fabd2ecb1012839fd783",
+    "result_sha256": "e366212b44e8823bc4fc2dc867f735783c9d56a03327ee081963987c37ff6bab",
+    "state": "consumed"
+  },
+  "finalized_raw": {
+    "records": 136690,
+    "segments": 1182
+  },
+  "gate": "D",
+  "learned_models": 5,
+  "limitations": [
+    "Public quotes/depth do not identify hypothetical fills, private queue position or own market impact.",
+    "Receipt-order reconstruction is unsequenced and may not contain every venue event.",
+    "Labels use the first sufficiently synchronized later depth observations within declared tolerance, not sub-event interpolation.",
+    "Aggregate depth at a price does not identify survival of the same constituent orders.",
+    "Prices/costs use collateral units before fees, conversion and settlement assumptions.",
+    "Correlated snapshots are grouped; row count is not independent sample coverage.",
+    "Targets are conditional on observable futures; missingness is informative.",
+    "Sparse single-day coverage cannot establish generalization or policy usefulness.",
+    "Validation selection is development-only; frozen test outcomes cannot retune weights or thresholds."
+  ],
+  "model_count": 13,
+  "protection": {
+    "arena_code_sha256": "bac445c2bb79877e6484cc395820a36dba69b7b03712e8ed1caf1a7ac160a681",
+    "laboratory_code_sha256": "c14738f8468a8103a98c2704dc5454e85e867a5e3d5b7174cc7383342aa5ebd8",
+    "main_head": "8acab2298632eb04fbe5183fbe54f8e6f97a8fdb",
+    "main_status": ""
+  },
+  "remaining": [
+    "E prospective shadow and frozen future campaigns",
+    "F native Reality dashboard",
+    "G full backend/frontend/browser/archive/operational audit"
+  ],
+  "report_path": "/home/charlie/midas-reality/data/research/reality/training/runs/9f593b0e68c61c5a8eabf3b01b7ad38c9e1df27436bd041a55a505c995a0a9f9/report.json",
+  "report_sha256": "e366212b44e8823bc4fc2dc867f735783c9d56a03327ee081963987c37ff6bab",
+  "reproduction": {
+    "models": [
+      {
+        "identical_curves": true,
+        "identical_weights": true,
+        "model_id": "d4d5e52dbea1b0c50cea4d811ecebdcbc4ee33f4fb3248f3e731f99b948014c6",
+        "weights_sha256": "78ef2c080d0e80b18a4cb8bdcac98bb8205043d36a80daa3ed170784bc38c59d"
+      },
+      {
+        "identical_curves": true,
+        "identical_weights": true,
+        "model_id": "1dcccca868998edc390813780979dc023ec560cf785d2bfc7bb05a7c5995ed3a",
+        "weights_sha256": "96008160ff84538ec49b872c3a811dd735ec21b6463fc144c3b96299c8e9872d"
+      },
+      {
+        "identical_curves": true,
+        "identical_weights": true,
+        "model_id": "e5e548d37b28c33052b63d7cee4e59d7f902ed1e997b5fc2cfbb827bf90e47cc",
+        "weights_sha256": "c42016f9b89c45d76de1cefd597ae9e717c1fa5ff319c966c7d3316ddc168896"
+      },
+      {
+        "identical_curves": true,
+        "identical_weights": true,
+        "model_id": "0ea9c3a6a655b780b0be20195ab5239a3a40127df9c3120a75cd3a88d8d3f637",
+        "weights_sha256": "a3da65f1304adf97390c85c8461842e0fb2faf2f435b4b549a2e58eddd5383bb"
+      },
+      {
+        "identical_curves": true,
+        "identical_weights": true,
+        "model_id": "fda9ba8d776a2dd564ac6fe6436093282b5363c00fa3e9da37041258bdc424e9",
+        "weights_sha256": "cafcdff2d95beea16a326d8ce565f6a5e21032146ba5311f90ddd41ff2080e5f"
+      },
+      {
+        "identical_curves": true,
+        "identical_weights": true,
+        "model_id": "93a2409d254c4d0b499fd815428afd215cbbb068ec03f0445c7ce60af81a496c",
+        "weights_sha256": "84cd7fa34c8318bd87dcfba06900368e782d517633b2551c4d772fe31c627d1b"
+      },
+      {
+        "identical_curves": true,
+        "identical_weights": true,
+        "model_id": "0120cad9ea1c7ad920a1638f06b34b3ddcf263d85e65da394e9bf08819767a0e",
+        "weights_sha256": "a11812be7f62e9ab56655da315956dd5b93a4afb2527e87392b565fe69db33c4"
+      },
+      {
+        "identical_curves": true,
+        "identical_weights": true,
+        "model_id": "771b7736ec1e6600058c404c0e781f4c2117a40f1f11cb69b2f15bac675b0a23",
+        "weights_sha256": "b7888d9e93dc809eae47a3b722b5cf245d7614132f1e33cedbd3580fc1ac2984"
+      },
+      {
+        "identical_curves": true,
+        "identical_weights": true,
+        "model_id": "dad705799d6f8cf3c1abe5d6b6ca50eac3c5e3f0f82d75b69dab3cdb470a42f0",
+        "weights_sha256": "c94b5a8a114be82ddf80400568944809111c65d7fc706056c46abe734010f096"
+      },
+      {
+        "identical_curves": true,
+        "identical_weights": true,
+        "model_id": "a078817697fbd329d29b9d7adcb6eafd5dab0436e31847b1b88cc11d07941ecf",
+        "weights_sha256": "b336624e45e0a8201e3b9f6cb7672974ec65b3dcc8ba43498ab2b5dce4222330"
+      },
+      {
+        "identical_curves": true,
+        "identical_weights": true,
+        "model_id": "ded11788a1f6979563778afae5def77329050aecb9907c231fdaac5785739308",
+        "weights_sha256": "982e3b5d96b2b0f92d788d236be96444d196601bf9f9ebec53236cced7b1f72e"
+      },
+      {
+        "identical_curves": true,
+        "identical_weights": true,
+        "model_id": "de47e1b273ff62b7fd4953ec03845ebfe7c52b78e97172f22da45a33c0474f17",
+        "weights_sha256": "14b3a98fde69658607f836e9ded65ccd594576df2fcfb991e6be7a6dc24ae3c3"
+      },
+      {
+        "identical_curves": true,
+        "identical_weights": true,
+        "model_id": "966ce0c3853a348e132e9e6413b3d994363f141527c1209feaed03aaf23bc385",
+        "weights_sha256": "3ee82f1168b6373c73179efc457361ad5a672b551e9d4ce87f24830c287373bb"
+      }
+    ],
+    "new_models_published": 0,
+    "reopened_final_test": false,
+    "run_id": "9f593b0e68c61c5a8eabf3b01b7ad38c9e1df27436bd041a55a505c995a0a9f9",
+    "seconds": 9.299145579047035,
+    "state": "reproduced_frozen_development_plan"
+  },
+  "run_id": "9f593b0e68c61c5a8eabf3b01b7ad38c9e1df27436bd041a55a505c995a0a9f9",
+  "scheduled_research": {
+    "active_forward_campaigns_modified": false,
+    "automatic_promotion": false,
+    "checked_ns": 1792000766564333815,
+    "collector_dependency": "none; read-only finalized catalogs",
+    "config_sha256": "7f1c57da2378a45ea1c7167d42ae161c1369dde437640e2732207c9483bebaed",
+    "explanation": "Raw span is only a trigger; training still checks actual target/family/time coverage.",
+    "minimum_recorded_days": 7,
+    "next_eligible_ns": 1792569884710946165,
+    "recorded_span_days": 0.412984414208912,
+    "state": "WAITING_FOR_COVERAGE",
+    "week": "2026-W42"
+  },
+  "scientific_champion": null,
+  "services": {
+    "midas-reality-archive.timer": {
+      "ActiveState": "active",
+      "NextElapseUSecRealtime": "Thu 2026-10-15 06:03:37 CEST",
+      "Result": "success"
+    },
+    "midas-reality-capacity.timer": {
+      "ActiveState": "active",
+      "NextElapseUSecRealtime": "",
+      "Result": "success"
+    },
+    "midas-reality-gate-d-reproduction.service": {
+      "ActiveState": "inactive",
+      "MainPID": "0",
+      "MemoryCurrent": "[not set]",
+      "NRestarts": "0",
+      "Result": "success"
+    },
+    "midas-reality-gate-d-training.service": {
+      "ActiveState": "inactive",
+      "MainPID": "0",
+      "MemoryCurrent": "[not set]",
+      "NRestarts": "0",
+      "Result": "success"
+    },
+    "midas-reality-research.service": {
+      "ActiveState": "inactive",
+      "MainPID": "0",
+      "MemoryCurrent": "[not set]",
+      "NRestarts": "0",
+      "Result": "success"
+    },
+    "midas-reality-research.timer": {
+      "ActiveState": "active",
+      "NextElapseUSecRealtime": "Thu 2026-10-15 04:34:38 CEST",
+      "Result": "success"
+    },
+    "midas-reality.service": {
+      "ActiveState": "active",
+      "MainPID": "2288376",
+      "MemoryCurrent": "242765824",
+      "NRestarts": "0",
+      "Result": "success"
+    }
+  },
+  "source_versions": {
+    "accepted_models": "reality-arena-adapter-v1; retained frozen code",
+    "future_fits": "reality-arena-adapter-v2; training-only constant-column fix"
+  },
+  "state": "engineering_checkpoint",
+  "target_coverage": {
+    "adverse_ask_movement": {
+      "test": {
+        "candidate_decisions": 786,
+        "class_counts": {
+          "0.0": 45
+        },
+        "days": [
+          "2026-10-14"
+        ],
+        "eligible_decisions": 786,
+        "families": 5,
+        "family_time_blocks": 33,
+        "markets": 8,
+        "measured_targets": 45,
+        "not_applicable_decisions": 0,
+        "unknown_targets": 741
+      },
+      "train": {
+        "candidate_decisions": 1993,
+        "class_counts": {
+          "0.0": 146
+        },
+        "days": [
+          "2026-10-14"
+        ],
+        "eligible_decisions": 1993,
+        "families": 5,
+        "family_time_blocks": 111,
+        "markets": 6,
+        "measured_targets": 146,
+        "not_applicable_decisions": 0,
+        "unknown_targets": 1847
+      },
+      "validation": {
+        "candidate_decisions": 476,
+        "class_counts": {
+          "0.0": 30
+        },
+        "days": [
+          "2026-10-14"
+        ],
+        "eligible_decisions": 476,
+        "families": 4,
+        "family_time_blocks": 25,
+        "markets": 4,
+        "measured_targets": 30,
+        "not_applicable_decisions": 0,
+        "unknown_targets": 446
+      }
+    },
+    "depth_retention": {
+      "test": {
+        "candidate_decisions": 786,
+        "class_counts": null,
+        "days": [
+          "2026-10-14"
+        ],
+        "eligible_decisions": 786,
+        "families": 5,
+        "family_time_blocks": 33,
+        "markets": 8,
+        "measured_targets": 45,
+        "not_applicable_decisions": 0,
+        "unknown_targets": 741
+      },
+      "train": {
+        "candidate_decisions": 1993,
+        "class_counts": null,
+        "days": [
+          "2026-10-14"
+        ],
+        "eligible_decisions": 1993,
+        "families": 5,
+        "family_time_blocks": 111,
+        "markets": 6,
+        "measured_targets": 146,
+        "not_applicable_decisions": 0,
+        "unknown_targets": 1847
+      },
+      "validation": {
+        "candidate_decisions": 476,
+        "class_counts": null,
+        "days": [
+          "2026-10-14"
+        ],
+        "eligible_decisions": 476,
+        "families": 4,
+        "family_time_blocks": 25,
+        "markets": 4,
+        "measured_targets": 30,
+        "not_applicable_decisions": 0,
+        "unknown_targets": 446
+      }
+    },
+    "market_disruption": {
+      "test": {
+        "candidate_decisions": 786,
+        "class_counts": {
+          "0.0": 45,
+          "1.0": 181
+        },
+        "days": [
+          "2026-10-14"
+        ],
+        "eligible_decisions": 786,
+        "families": 7,
+        "family_time_blocks": 102,
+        "markets": 10,
+        "measured_targets": 226,
+        "not_applicable_decisions": 0,
+        "unknown_targets": 560
+      },
+      "train": {
+        "candidate_decisions": 1993,
+        "class_counts": {
+          "0.0": 146,
+          "1.0": 189
+        },
+        "days": [
+          "2026-10-14"
+        ],
+        "eligible_decisions": 1993,
+        "families": 5,
+        "family_time_blocks": 225,
+        "markets": 6,
+        "measured_targets": 335,
+        "not_applicable_decisions": 0,
+        "unknown_targets": 1658
+      },
+      "validation": {
+        "candidate_decisions": 476,
+        "class_counts": {
+          "0.0": 30,
+          "1.0": 65
+        },
+        "days": [
+          "2026-10-14"
+        ],
+        "eligible_decisions": 476,
+        "families": 6,
+        "family_time_blocks": 76,
+        "markets": 6,
+        "measured_targets": 95,
+        "not_applicable_decisions": 0,
+        "unknown_targets": 381
+      }
+    },
+    "opportunity_persistence": {
+      "test": {
+        "candidate_decisions": 786,
+        "class_counts": null,
+        "days": [],
+        "eligible_decisions": 0,
+        "families": 0,
+        "family_time_blocks": 0,
+        "markets": 0,
+        "measured_targets": 0,
+        "not_applicable_decisions": 786,
+        "unknown_targets": 0
+      },
+      "train": {
+        "candidate_decisions": 1993,
+        "class_counts": null,
+        "days": [],
+        "eligible_decisions": 0,
+        "families": 0,
+        "family_time_blocks": 0,
+        "markets": 0,
+        "measured_targets": 0,
+        "not_applicable_decisions": 1993,
+        "unknown_targets": 0
+      },
+      "validation": {
+        "candidate_decisions": 476,
+        "class_counts": null,
+        "days": [],
+        "eligible_decisions": 0,
+        "families": 0,
+        "family_time_blocks": 0,
+        "markets": 0,
+        "measured_targets": 0,
+        "not_applicable_decisions": 476,
+        "unknown_targets": 0
+      }
+    },
+    "quote_persistence": {
+      "test": {
+        "candidate_decisions": 786,
+        "class_counts": {
+          "1.0": 45
+        },
+        "days": [
+          "2026-10-14"
+        ],
+        "eligible_decisions": 786,
+        "families": 5,
+        "family_time_blocks": 33,
+        "markets": 8,
+        "measured_targets": 45,
+        "not_applicable_decisions": 0,
+        "unknown_targets": 741
+      },
+      "train": {
+        "candidate_decisions": 1993,
+        "class_counts": {
+          "1.0": 146
+        },
+        "days": [
+          "2026-10-14"
+        ],
+        "eligible_decisions": 1993,
+        "families": 5,
+        "family_time_blocks": 111,
+        "markets": 6,
+        "measured_targets": 146,
+        "not_applicable_decisions": 0,
+        "unknown_targets": 1847
+      },
+      "validation": {
+        "candidate_decisions": 476,
+        "class_counts": {
+          "1.0": 30
+        },
+        "days": [
+          "2026-10-14"
+        ],
+        "eligible_decisions": 476,
+        "families": 4,
+        "family_time_blocks": 25,
+        "markets": 4,
+        "measured_targets": 30,
+        "not_applicable_decisions": 0,
+        "unknown_targets": 446
+      }
+    }
+  },
+  "verified_models": [
+    "d4d5e52dbea1b0c50cea4d811ecebdcbc4ee33f4fb3248f3e731f99b948014c6",
+    "1dcccca868998edc390813780979dc023ec560cf785d2bfc7bb05a7c5995ed3a",
+    "e5e548d37b28c33052b63d7cee4e59d7f902ed1e997b5fc2cfbb827bf90e47cc",
+    "0ea9c3a6a655b780b0be20195ab5239a3a40127df9c3120a75cd3a88d8d3f637",
+    "fda9ba8d776a2dd564ac6fe6436093282b5363c00fa3e9da37041258bdc424e9",
+    "93a2409d254c4d0b499fd815428afd215cbbb068ec03f0445c7ce60af81a496c",
+    "0120cad9ea1c7ad920a1638f06b34b3ddcf263d85e65da394e9bf08819767a0e",
+    "771b7736ec1e6600058c404c0e781f4c2117a40f1f11cb69b2f15bac675b0a23",
+    "dad705799d6f8cf3c1abe5d6b6ca50eac3c5e3f0f82d75b69dab3cdb470a42f0",
+    "a078817697fbd329d29b9d7adcb6eafd5dab0436e31847b1b88cc11d07941ecf",
+    "ded11788a1f6979563778afae5def77329050aecb9907c231fdaac5785739308",
+    "de47e1b273ff62b7fd4953ec03845ebfe7c52b78e97172f22da45a33c0474f17",
+    "966ce0c3853a348e132e9e6413b3d994363f141527c1209feaed03aaf23bc385"
+  ]
+}
