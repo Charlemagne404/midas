@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-14T23:27:08.178011+00:00",
+  "updated_at_utc": "2026-10-14T23:34:37.391618+00:00",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -422,6 +422,63 @@
         "Public observations and displayed depth do not establish hypothetical fills, private queue position, market impact, or profitability."
       ],
       "decision": "Keep the protected campaign unchanged. Align source activity and gap events to five-minute time blocks and scheduled decisions before proposing a separate cadence or any recorder change.",
+      "status": "continue"
+    },
+    {
+      "hypothesis_id": "VERITAS-H009",
+      "title": "Resynchronization gap issue entries are predominantly labeled stale",
+      "mechanism": "If source gap records repeatedly include stale issue labels, freshness state is a major correlate of recorded book_resynchronization events, although the aggregate affected-assets map does not identify the market or asset that triggered each reconnect.",
+      "experiment_id": "VERITAS-GATE-A-TIMEBLOCK-20261014-001",
+      "dataset_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
+      "success_metric": "Align finalized-source book updates, scheduled decision freshness, five-minute time blocks, and normalized issue labels from gap records without exporting asset identifiers or raw payloads.",
+      "result": {
+        "status": "completed_snapshot_stale_issue_labels_dominate",
+        "journal_event_tail_sequence": 26165,
+        "decision_rows_sampled": 2232,
+        "decisions_reproduced": 2224,
+        "decisions_uncovered_after_finalized_prefix": 8,
+        "sample_truncated": false,
+        "mismatches": {},
+        "lineage_references_expected": 12795,
+        "lineage_references_resolved": 12795,
+        "source_segments": 1820,
+        "source_bytes": 423095903,
+        "last_finalized_ordinal": 219065,
+        "verified_source_checkpoints": 1816,
+        "decision_input_lag_p50_ms": "41.567653",
+        "decision_input_lag_p95_ms": "220.232379",
+        "decision_input_lag_max_ms": "248.865611",
+        "freshness_limit_ms": 5000,
+        "freshness_violation_decisions": 1429,
+        "freshness_violation_fraction": "0.642356",
+        "maximum_leg_age_p50_ms": "10054.329255",
+        "maximum_leg_age_p95_ms": "50890.207941",
+        "maximum_leg_age_max_ms": "62407.484423",
+        "campaign_window_market_book_update_frames": 23743,
+        "five_minute_family_groups": 170,
+        "five_minute_blocks_with_gaps": 30,
+        "resynchronization_gaps": 144,
+        "affected_issue_entries": 879,
+        "affected_issue_labels": {
+          "stale": 840,
+          "top_divergence": 33,
+          "advertised_top_pending": 6
+        },
+        "five_minute_freshness_violation_fraction_range": [
+          "0.361111",
+          "0.863014"
+        ],
+        "source_manifest_sha256": "fb91b43fe1a4c0d017c3e2bfda5f9caf84f0a46026c3e8d73b503c4ac9023156",
+        "evidence": "docs/VERITAS_GATE_A_TIMEBLOCK_001.json"
+      },
+      "limitations": [
+        "This is one bounded source and campaign snapshot; repeated decisions and source events are correlated and do not represent venue-wide behavior.",
+        "Affected issue counts are entries across gap records, not unique assets; the same asset can recur.",
+        "The affected_assets map includes issue-bearing books and does not identify which issue triggered a particular reconnect.",
+        "The five-minute freshness rate and gap count are descriptive and do not establish causation.",
+        "Frame-receiver timestamps do not identify upstream venue timing, and public source data do not establish fills or profitability."
+      ],
+      "decision": "Do not change the collector, campaign, or decision cadence from this aggregate result. Map gap issue entries to market IDs and time blocks, then compare those markets with update activity and inspect the recorded collector trigger settings.",
       "status": "continue"
     }
   ],

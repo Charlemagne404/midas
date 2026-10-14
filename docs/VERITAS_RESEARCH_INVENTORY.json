@@ -4,7 +4,7 @@
   "status": "in_progress",
   "baseline_commit": "f968095feb9c591de38fe12d7493224425f62f3a",
   "branch": "project/veritas",
-  "last_checkpoint": "docs/VERITAS_GATE_A_CHECKPOINT_005.md",
+  "last_checkpoint": "docs/VERITAS_GATE_A_CHECKPOINT_006.md",
   "datasets": [
     {
       "dataset_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
@@ -121,6 +121,24 @@
       "freshness_violation_decisions": 1380,
       "mismatches": 0,
       "promotion": "diagnostic only; no cadence, recorder, strategy, or profitability promotion"
+    },
+    {
+      "experiment_id": "VERITAS-GATE-A-TIMEBLOCK-20261014-001",
+      "type": "five_minute_activity_freshness_and_gap_issue_alignment",
+      "status": "completed_snapshot_stale_issue_labels_dominate",
+      "source_dataset_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
+      "evidence": "docs/VERITAS_GATE_A_TIMEBLOCK_001.json",
+      "analysis_version": "veritas-source-replay-v4",
+      "journal_event_tail_sequence": 26165,
+      "decision_rows_sampled": 2232,
+      "decisions_reproduced": 2224,
+      "active_segment_decisions_uncovered": 8,
+      "book_update_frames": 23743,
+      "book_resynchronization_gaps": 144,
+      "affected_issue_entries": 879,
+      "freshness_violation_decisions": 1429,
+      "mismatches": 0,
+      "promotion": "diagnostic only; no campaign, cadence, collector, strategy, or profitability promotion"
     }
   ],
   "models": [],

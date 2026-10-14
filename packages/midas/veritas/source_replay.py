@@ -38,6 +38,21 @@ _UPDATE_INTERVAL_BUCKETS = (
     ("30_to_60_s", 60 * 10**9),
     ("60_s_or_more", None),
 )
+_CAMPAIGN_ACTIVITY_BLOCK_NS = 300 * 10**9
+_KNOWN_GAP_ISSUES = frozenset(
+    {
+        "top_divergence",
+        "malformed_event",
+        "unknown_event",
+        "timestamp_regression",
+        "market_resolved",
+        "stale",
+        "gap:malformed_constraints",
+        "crossed_or_locked",
+        "malformed_frame",
+        "advertised_top_pending",
+    }
+)
 _REF_FIELDS = (
     "segment",
     "ordinal",
@@ -314,6 +329,122 @@ def _finish_source_activity(state: dict[str, Any], family_id: str | None) -> dic
     }
 
 
+def _new_source_activity_block(market: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "market_id": str(market["id"]),
+        "book_update_frames": 0,
+        "frames_by_updated_outcome_count": Counter(),
+        "quality_reason_counts": Counter(),
+    }
+
+
+def _new_decision_activity_block(market: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "market_id": str(market["id"]),
+        "decisions": 0,
+        "quality_reason_counts": Counter(),
+        "freshness_violation_decisions": 0,
+        "market_outcomes_updated_in_source_frame": Counter(),
+        "maximum_leg_age_buckets": Counter(),
+    }
+
+
+def _new_family_activity_block() -> dict[str, Any]:
+    return {
+        "source_market_ids": set(),
+        "source_book_update_frames": 0,
+        "source_update_frames_by_outcome_count": Counter(),
+        "source_quality_reason_counts": Counter(),
+        "source_book_update_frames_by_market": Counter(),
+        "scheduled_market_ids": set(),
+        "scheduled_decisions": 0,
+        "freshness_violation_decisions": 0,
+        "decision_quality_reason_counts": Counter(),
+        "decision_market_outcomes_updated_in_source_frame": Counter(),
+        "decision_maximum_leg_age_buckets": Counter(),
+        "scheduled_decisions_by_market": Counter(),
+        "freshness_violations_by_market": Counter(),
+    }
+
+
+def _gap_issue_label(issue: Any) -> str:
+    return issue if isinstance(issue, str) and issue in _KNOWN_GAP_ISSUES else "other"
+
+
+def _finish_family_activity_blocks(
+    source_blocks: dict[tuple[str, int], dict[str, Any]],
+    decision_blocks: dict[tuple[str, int], dict[str, Any]],
+    family_by_condition: dict[str, str],
+) -> list[dict[str, Any]]:
+    blocks: defaultdict[tuple[str, int], dict[str, Any]] = defaultdict(_new_family_activity_block)
+    for (condition, block_start_ns), data in source_blocks.items():
+        family_id = family_by_condition.get(condition, "unassigned")
+        aggregate = blocks[(family_id, block_start_ns)]
+        market_id = data["market_id"]
+        aggregate["source_market_ids"].add(market_id)
+        aggregate["source_book_update_frames"] += data["book_update_frames"]
+        aggregate["source_update_frames_by_outcome_count"].update(
+            data["frames_by_updated_outcome_count"]
+        )
+        aggregate["source_quality_reason_counts"].update(data["quality_reason_counts"])
+        aggregate["source_book_update_frames_by_market"][market_id] += data["book_update_frames"]
+    for (condition, block_start_ns), data in decision_blocks.items():
+        family_id = family_by_condition.get(condition, "unassigned")
+        aggregate = blocks[(family_id, block_start_ns)]
+        market_id = data["market_id"]
+        aggregate["scheduled_market_ids"].add(market_id)
+        aggregate["scheduled_decisions"] += data["decisions"]
+        aggregate["freshness_violation_decisions"] += data["freshness_violation_decisions"]
+        aggregate["decision_quality_reason_counts"].update(data["quality_reason_counts"])
+        aggregate["decision_market_outcomes_updated_in_source_frame"].update(
+            data["market_outcomes_updated_in_source_frame"]
+        )
+        aggregate["decision_maximum_leg_age_buckets"].update(data["maximum_leg_age_buckets"])
+        aggregate["scheduled_decisions_by_market"][market_id] += data["decisions"]
+        aggregate["freshness_violations_by_market"][market_id] += data[
+            "freshness_violation_decisions"
+        ]
+
+    result = []
+    for (family_id, block_start_ns), data in sorted(blocks.items()):
+        result.append(
+            {
+                "family_id": family_id,
+                "block_start_ns": block_start_ns,
+                "source_markets_with_updates": len(data["source_market_ids"]),
+                "source_book_update_frames": data["source_book_update_frames"],
+                "source_update_frames_by_outcome_count": dict(
+                    sorted(data["source_update_frames_by_outcome_count"].items())
+                ),
+                "source_quality_reason_counts": dict(
+                    sorted(data["source_quality_reason_counts"].items())
+                ),
+                "source_book_update_frames_by_market": dict(
+                    sorted(data["source_book_update_frames_by_market"].items())
+                ),
+                "scheduled_markets": len(data["scheduled_market_ids"]),
+                "scheduled_decisions": data["scheduled_decisions"],
+                "freshness_violation_decisions": data["freshness_violation_decisions"],
+                "decision_quality_reason_counts": dict(
+                    sorted(data["decision_quality_reason_counts"].items())
+                ),
+                "decision_market_outcomes_updated_in_source_frame": dict(
+                    sorted(data["decision_market_outcomes_updated_in_source_frame"].items())
+                ),
+                "decision_maximum_leg_age_buckets": dict(
+                    sorted(data["decision_maximum_leg_age_buckets"].items())
+                ),
+                "scheduled_decisions_by_market": dict(
+                    sorted(data["scheduled_decisions_by_market"].items())
+                ),
+                "freshness_violations_by_market": dict(
+                    sorted(data["freshness_violations_by_market"].items())
+                ),
+            }
+        )
+    return result
+
+
 def _finish_timing_bucket(bucket: dict[str, Any]) -> dict[str, Any]:
     return {
         "decisions": bucket["decisions"],
@@ -369,6 +500,7 @@ def _observe_source_activity_frame(
     context: Context,
     record: dict[str, Any],
     activity_by_condition: dict[str, dict[str, Any]],
+    activity_blocks: dict[tuple[str, int], dict[str, Any]],
     gap_epoch: int,
     spec: Any,
 ) -> None:
@@ -397,7 +529,18 @@ def _observe_source_activity_frame(
         reason = pair_quality(market, context.engine.books, now_ns, spec)
         if reason is None and any(token in context.bad for token in market["tokens"]):
             reason = "independent_book_divergence"
-        activity["quality_reason_counts"][reason or "eligible"] += 1
+        quality_reason = reason or "eligible"
+        activity["quality_reason_counts"][quality_reason] += 1
+
+        block_start_ns = (now_ns // _CAMPAIGN_ACTIVITY_BLOCK_NS) * _CAMPAIGN_ACTIVITY_BLOCK_NS
+        block_key = (condition, block_start_ns)
+        block = activity_blocks.get(block_key)
+        if block is None:
+            block = _new_source_activity_block(market)
+            activity_blocks[block_key] = block
+        block["book_update_frames"] += 1
+        block["frames_by_updated_outcome_count"][str(len(distinct_outcomes))] += 1
+        block["quality_reason_counts"][quality_reason] += 1
 
         _record_interval(activity["pair_touch_interval"], now_ns, gap_epoch)
         for outcome in distinct_outcomes:
@@ -639,7 +782,12 @@ def reconcile_forward_sources(
     timing_by_market: defaultdict[str, dict[str, Any]] = defaultdict(_new_timing_bucket)
     timing_market_families: dict[str, str | None] = {}
     activity_by_condition: dict[str, dict[str, Any]] = {}
+    source_activity_blocks: dict[tuple[str, int], dict[str, Any]] = {}
+    decision_activity_blocks: dict[tuple[str, int], dict[str, Any]] = {}
+    source_gap_blocks: dict[int, dict[str, Any]] = {}
     source_gap_reasons: Counter[str] = Counter()
+    source_gap_affected_asset_counts: Counter[str] = Counter()
+    source_gap_affected_issue_counts: defaultdict[str, Counter[str]] = defaultdict(Counter)
     activity_discontinuities: Counter[str] = Counter()
     activity_gap_epoch = 0
     expected_refs: set[tuple[Any, ...]] = set()
@@ -672,6 +820,27 @@ def reconcile_forward_sources(
                 reason = record["payload"].get("reason", "unknown")
                 source_gap_reasons[reason] += 1
                 activity_discontinuities[reason] += 1
+                block_start_ns = (
+                    now_ns // _CAMPAIGN_ACTIVITY_BLOCK_NS
+                ) * _CAMPAIGN_ACTIVITY_BLOCK_NS
+                gap_block = source_gap_blocks.setdefault(
+                    block_start_ns,
+                    {
+                        "gap_reasons": Counter(),
+                        "affected_asset_counts_by_reason": Counter(),
+                        "affected_issue_counts_by_reason": defaultdict(Counter),
+                    },
+                )
+                gap_block["gap_reasons"][reason] += 1
+                affected = record["payload"].get("affected_assets")
+                if isinstance(affected, dict):
+                    count = len(affected)
+                    gap_block["affected_asset_counts_by_reason"][reason] += count
+                    source_gap_affected_asset_counts[reason] += count
+                    for issue in affected.values():
+                        label = _gap_issue_label(issue)
+                        gap_block["affected_issue_counts_by_reason"][reason][label] += 1
+                        source_gap_affected_issue_counts[reason][label] += 1
         barrier = context.consume(record, ref)
         ref_key = _reference_key(ref)
         if ref_key in expected_refs:
@@ -697,7 +866,12 @@ def reconcile_forward_sources(
                 activity_discontinuities["receiver_clock_regression"] += 1
             else:
                 _observe_source_activity_frame(
-                    context, record, activity_by_condition, activity_gap_epoch, spec
+                    context,
+                    record,
+                    activity_by_condition,
+                    source_activity_blocks,
+                    activity_gap_epoch,
+                    spec,
                 )
         at_ordinal = targets.get(record["ordinal"], [])
         if at_ordinal:
@@ -723,6 +897,26 @@ def reconcile_forward_sources(
                     _record_timing(timing_by_reason[timing["quality_reason"]], timing, lag_limit_ns)
                     _record_timing(timing_by_market[timing["market_id"]], timing, lag_limit_ns)
                     timing_market_families[timing["market_id"]] = timing["family_id"]
+                    market = context.cohort.get(target["condition"])
+                    if market is not None:
+                        block_start_ns = (
+                            target["decision_ns"] // _CAMPAIGN_ACTIVITY_BLOCK_NS
+                        ) * _CAMPAIGN_ACTIVITY_BLOCK_NS
+                        block_key = (target["condition"], block_start_ns)
+                        block = decision_activity_blocks.get(block_key)
+                        if block is None:
+                            block = _new_decision_activity_block(market)
+                            decision_activity_blocks[block_key] = block
+                        block["decisions"] += 1
+                        block["quality_reason_counts"][timing["quality_reason"]] += 1
+                        if timing["freshness_violating_legs"]:
+                            block["freshness_violation_decisions"] += 1
+                        block["market_outcomes_updated_in_source_frame"][
+                            str(timing["market_outcomes_updated_in_source_frame"])
+                        ] += 1
+                        if timing["max_pair_age_ns"] is not None:
+                            age_bucket = _interval_band(timing["max_pair_age_ns"])
+                            block["maximum_leg_age_buckets"][age_bucket] += 1
         _prune_context_refs(context)
 
     missing_inside_prefix = [
@@ -753,6 +947,11 @@ def reconcile_forward_sources(
         },
     }
     final_families = context.families.identities()
+    family_by_condition = {
+        condition_key.removeprefix("condition:"): family_id
+        for condition_key, family_id in final_families.items()
+        if condition_key.startswith("condition:")
+    }
     source_activity = [
         _finish_source_activity(
             activity,
@@ -762,9 +961,26 @@ def reconcile_forward_sources(
             activity_by_condition.items(), key=lambda item: (item[1]["market_id"], item[0])
         )
     ]
+    source_activity_by_family_block = _finish_family_activity_blocks(
+        source_activity_blocks, decision_activity_blocks, family_by_condition
+    )
+    source_gaps_by_block = [
+        {
+            "block_start_ns": block_start_ns,
+            "gap_reasons": dict(sorted(block["gap_reasons"].items())),
+            "affected_asset_counts_by_reason": dict(
+                sorted(block["affected_asset_counts_by_reason"].items())
+            ),
+            "affected_issue_counts_by_reason": {
+                reason: dict(sorted(issues.items()))
+                for reason, issues in sorted(block["affected_issue_counts_by_reason"].items())
+            },
+        }
+        for block_start_ns, block in sorted(source_gap_blocks.items())
+    ]
     # Keep only aggregate mismatch categories; no raw market or event payloads are exported.
     return {
-        "analysis_version": "veritas-source-replay-v3",
+        "analysis_version": "veritas-source-replay-v4",
         "captured_ns": time.time_ns(),
         "campaign_id": campaign_id,
         "campaign_root": str(campaign_root),
@@ -794,6 +1010,15 @@ def reconcile_forward_sources(
         "source_activity_discontinuities_in_campaign_window": dict(
             sorted(activity_discontinuities.items())
         ),
+        "source_gap_affected_asset_counts_by_reason": dict(
+            sorted(source_gap_affected_asset_counts.items())
+        ),
+        "source_gap_affected_issue_counts_by_reason": {
+            reason: dict(sorted(issues.items()))
+            for reason, issues in sorted(source_gap_affected_issue_counts.items())
+        },
+        "source_gaps_by_5min_block": source_gaps_by_block,
+        "source_activity_by_family_5min_block": source_activity_by_family_block,
         "source_activity_by_market": source_activity,
         "passed_for_finalized_prefix": bool(compared and not mismatches),
         "scope": (
@@ -801,6 +1026,8 @@ def reconcile_forward_sources(
             "features, baseline, and source lineage for the sampled decisions whose source "
             "ordinals are in the captured finalized segment prefix. It also summarizes campaign "
             "window book-update intervals by market, excluding intervals that span a recorded "
-            "gap or unsupported source frame. It does not infer omitted decisions, fills, or outcomes."
+            "gap or unsupported source frame; aligns market updates, scheduled decisions, and "
+            "aggregated gap issue labels by five-minute family block. It does not infer omitted "
+            "decisions, fills, or outcomes."
         ),
     }

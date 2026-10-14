@@ -52,11 +52,13 @@ when needed rather than as a frequent poll. The committed result is
 
 The current replay also reports decision-to-frame input lag, paired-book age,
 cross-outcome receiver-time skew, per-market book-update intervals, recorded
-source gaps, and freshness counts by quality reason and market. Input lag starts
-at the recorded frame receiver timestamp; zero skew is not evidence of
-venue-level simultaneity. The latest combined snapshot is
-`docs/VERITAS_GATE_A_SOURCE_CADENCE_001.json`, documented in
-[Gate A checkpoint 005](VERITAS_GATE_A_CHECKPOINT_005.md). Intervals spanning
+source gaps, and freshness counts by quality reason and market. The v4 report
+adds five-minute family activity groups and normalized issue labels from gap
+records, without exporting asset identifiers. Input lag starts at the recorded
+frame receiver timestamp; zero skew is not evidence of venue-level simultaneity.
+The latest combined snapshot is
+[VERITAS_GATE_A_TIMEBLOCK_001.json](VERITAS_GATE_A_TIMEBLOCK_001.json), documented in
+[Gate A checkpoint 006](VERITAS_GATE_A_CHECKPOINT_006.md). Intervals spanning
 source discontinuities are censored. These measurements are diagnostic and do
 not modify the frozen campaign or establish fills.
 

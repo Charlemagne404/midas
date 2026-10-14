@@ -124,6 +124,12 @@ def _fixture(tmp_path: Path) -> tuple[Path, Path, dict[str, Any]]:
         monotonic_ns=0,
         cohort=[_market(), _market("2", CONDITION_TWO, "21", "22")],
     )
+    store.append(
+        "gap",
+        dict(reason="book_resynchronization", affected_assets={"11": "stale"}),
+        received_ns=START + 500_000,
+        monotonic_ns=500_000,
+    )
     frame = store.append("frame", _frame(), received_ns=START + 10**6, monotonic_ns=10**6)
     store.close()
     source = manifest(raw)
@@ -256,11 +262,31 @@ def test_reconciles_finalized_records_and_ignores_active_segment(tmp_path):
     assert report["decision_timing"]["by_market"]["1"][
         "market_outcomes_updated_in_source_frame"
     ] == {"2": 1}
-    assert report["analysis_version"] == "veritas-source-replay-v3"
+    assert report["analysis_version"] == "veritas-source-replay-v4"
     activity = report["source_activity_by_market"][0]
     assert activity["touched_book_update_frames"] == 1
     assert activity["both_outcome_update_frames"] == 1
     assert activity["pair_touch_intervals_ms"] is None
+    assert report["source_gap_affected_issue_counts_by_reason"] == {
+        "book_resynchronization": {"stale": 1}
+    }
+    assert sum(
+        block["scheduled_decisions"] for block in report["source_activity_by_family_5min_block"]
+    ) == len(rows)
+    assert (
+        sum(
+            block["source_book_update_frames"]
+            for block in report["source_activity_by_family_5min_block"]
+        )
+        == 2
+    )
+    assert (
+        sum(
+            item["gap_reasons"].get("book_resynchronization", 0)
+            for item in report["source_gaps_by_5min_block"]
+        )
+        == 1
+    )
 
 
 def test_reports_source_state_divergence(tmp_path):
