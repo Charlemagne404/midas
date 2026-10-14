@@ -1,0 +1,210 @@
+{
+  "calibration_id": "8e29bed2af533d3e2ee1640c5c9e876d3323480d8b2d579b454b6c9768aa2500",
+  "capacity": {
+    "alerts": [],
+    "available_headroom_bytes": 25552644878,
+    "budget_bytes": 25769803776,
+    "capacity_builder_sha256": "ab145f0a001508b2cd1ca849bd381ebf988ccf49fdcb6465753ddbe0b36fb5a5",
+    "capacity_builder_version": "receipt-aware-capacity-v2",
+    "collector_state": "RECORDING_UNSEQUENCED",
+    "collector_status_age_seconds": 1.787103113,
+    "compressed_bytes_per_second": 8609.223503467945,
+    "estimated_action_deadline_ns": 1794965234485477632,
+    "estimated_bytes_per_day": 743836910.6996305,
+    "estimated_storage_seconds_remaining": 2968054.5368240178,
+    "filesystem_free_bytes": 217557282816,
+    "free_disk_reserve_bytes": 21474836480,
+    "limitations": [
+      "Recent finalized-segment rate includes gaps and metadata; future rates vary.",
+      "Active segment excluded from rate, included in root usage.",
+      "Raw originals never pruned. Retention horizon stops collection.",
+      "Local archive copies consume additional disk; off-host offloading is separate."
+    ],
+    "measured_ns": 1791997179948653690,
+    "raw_root_bytes": 217158898,
+    "recording_root": "/home/charlie/midas-reality/data/recordings/reality",
+    "retention_seconds_remaining": 7743904.762292475,
+    "sample": {
+      "clock_assessment_basis": "sequential WebSocket dequeue frames; deferred HTTP timestamps remain separate",
+      "clock_regressions": 0,
+      "compressed_and_catalog_bytes": 31468940,
+      "first_received_ns": 1791993486290656711,
+      "last_received_ns": 1791997141549459938,
+      "raw_frame_payload_bytes": 16022443,
+      "raw_frames": 13423,
+      "record_receipt_regressions": 155,
+      "seconds": 3655.258803227,
+      "segments": 120,
+      "source_sha256": "a0018014fbf315ed87f2f793ba320924f8a0f1ef8d4beb0eaa33c2ae2812c290"
+    },
+    "schema_version": 1
+  },
+  "checked_ns": 1791997182625788556,
+  "collector": {
+    "book_comparisons": {
+      "concurrent_updates_ambiguous": 13,
+      "stable_local_lineage_divergence": 5,
+      "stable_local_lineage_match_unsequenced": 532,
+      "stale_local_state": 3
+    },
+    "expected_books": 16,
+    "failures": 0,
+    "frames": 56663,
+    "fresh_books": 16,
+    "gaps": 1841,
+    "markets": 8,
+    "ordinal": 119245,
+    "started_ns": 1791988496384329613,
+    "state": "RECORDING_UNSEQUENCED",
+    "storage_bytes": 217148183,
+    "timing_uncertain_books": 0,
+    "updated_ns": 1791997182378672153
+  },
+  "coverage": {
+    "anchors": 1993,
+    "censor_reasons": {
+      "book_issue:advertised_top_pending": 162,
+      "future_observation_unavailable": 6327,
+      "independent_book_divergence": 1,
+      "recorded_gap:book_resynchronization": 165,
+      "recorded_gap:process_stop": 1,
+      "stale_book": 814
+    },
+    "days": [
+      "2026-10-14"
+    ],
+    "displayed_quantity_supported": {
+      "conditional_measured_rate": 1.0,
+      "eligible": 7970,
+      "exploratory_cluster_bootstrap_95": [
+        1.0,
+        1.0
+      ],
+      "family_count": 5,
+      "interval_notice": "Exploratory family/time-block resampling; single-day coverage, informative missingness and unsequenced feed prevent population confidence or fill inference.",
+      "measured": 500,
+      "missing_outcome_identification_bounds": [
+        0.06273525721455459,
+        1.0
+      ],
+      "successes": 500,
+      "time_block_count": 224,
+      "unknown": 7470
+    },
+    "families": 7,
+    "markets": 8,
+    "opportunity_persistence": {
+      "conditional_measured_rate": null,
+      "eligible": 0,
+      "exploratory_cluster_bootstrap_95": null,
+      "family_count": 0,
+      "interval_notice": "Exploratory family/time-block resampling; single-day coverage, informative missingness and unsequenced feed prevent population confidence or fill inference.",
+      "measured": 0,
+      "missing_outcome_identification_bounds": null,
+      "successes": 0,
+      "time_block_count": 0,
+      "unknown": 0
+    },
+    "quote_persistence": {
+      "conditional_measured_rate": 1.0,
+      "eligible": 7970,
+      "exploratory_cluster_bootstrap_95": [
+        1.0,
+        1.0
+      ],
+      "family_count": 5,
+      "interval_notice": "Exploratory family/time-block resampling; single-day coverage, informative missingness and unsequenced feed prevent population confidence or fill inference.",
+      "measured": 500,
+      "missing_outcome_identification_bounds": [
+        0.06273525721455459,
+        1.0
+      ],
+      "successes": 500,
+      "time_block_count": 224,
+      "unknown": 7470
+    },
+    "rows": 7970,
+    "statuses": {
+      "censored": 7470,
+      "observed_public_measurement": 500
+    },
+    "time_blocks": 725
+  },
+  "gate": "C",
+  "limitations": [
+    "Public quotes/depth do not identify hypothetical fills, private queue position or own market impact.",
+    "Receipt-order reconstruction is unsequenced and may not contain every venue event.",
+    "Labels use the first sufficiently synchronized later depth observations within declared tolerance, not sub-event interpolation.",
+    "Aggregate depth at a price does not identify survival of the same constituent orders.",
+    "Prices/costs use collateral units before fees, conversion and settlement assumptions.",
+    "Correlated snapshots are grouped; row count is not independent sample coverage.",
+    "Calibration excludes validation/final-test and held-out families.",
+    "Pointwise original-price presence can include disappearance/reappearance; it is not continuous quote lifetime or survival of an order.",
+    "Quote age is receiver-observed and snapshot-reset, not a venue lifetime distribution.",
+    "Kernel is conditional on observed futures, not a population execution law; missingness bounds must accompany sampling.",
+    "Spread and depth changes use causal lookback features; future labels measure original-price depth, paired ask and exit changes.",
+    "Position-size cost premium is displayed depth walking, not causal impact of an unsubmitted order."
+  ],
+  "next_gate": "D: real-observation training, baseline comparisons, chronological evaluation and eligibility",
+  "protected_code": {
+    "arena": "bac445c2bb79877e6484cc395820a36dba69b7b03712e8ed1caf1a7ac160a681",
+    "laboratory": "c14738f8468a8103a98c2704dc5454e85e867a5e3d5b7174cc7383342aa5ebd8",
+    "main_head": "8acab2298632eb04fbe5183fbe54f8e6f97a8fdb",
+    "main_status": ""
+  },
+  "raw_finalized": {
+    "records": 119203,
+    "segments": 1045
+  },
+  "report_path": "/home/charlie/midas-reality/data/research/reality/calibration/8e29bed2af533d3e2ee1640c5c9e876d3323480d8b2d579b454b6c9768aa2500.json",
+  "report_sha256": "44ce108636b9ba543f395f1387f650a048f536eca0d7c7d9e9a6ccbd41ef4adb",
+  "reproduction": {
+    "calibration_id": "8e29bed2af533d3e2ee1640c5c9e876d3323480d8b2d579b454b6c9768aa2500",
+    "checked_ns": 1791997182567944369,
+    "generation_seconds": 167.49586083099712,
+    "identical_semantic_report": true,
+    "nonidentity_difference": "generated_seconds only",
+    "original_file_sha256": "44ce108636b9ba543f395f1387f650a048f536eca0d7c7d9e9a6ccbd41ef4adb",
+    "regenerated_file_sha256": "c021b5046181e9d2fcf33d1fcfb972f656069b397e585cdd635dad278fb2bd6e",
+    "regeneration_seconds": 167.70440789597342,
+    "semantic_report_sha256": "1b02e6ef92f3350b718149ab094ed079ed77569ea34fc41195306671740f19f7"
+  },
+  "services": {
+    "midas-reality-archive.timer": {
+      "ActiveState": "active",
+      "Result": "success"
+    },
+    "midas-reality-capacity.timer": {
+      "ActiveState": "active",
+      "Result": "success"
+    },
+    "midas-reality-gate-c-calibration-v3.service": {
+      "ActiveState": "inactive",
+      "MainPID": "0",
+      "MemoryCurrent": "[not set]",
+      "NRestarts": "0",
+      "Result": "success"
+    },
+    "midas-reality-gate-c-regeneration.service": {
+      "ActiveState": "inactive",
+      "MainPID": "0",
+      "MemoryCurrent": "[not set]",
+      "NRestarts": "0",
+      "Result": "success"
+    },
+    "midas-reality.service": {
+      "ActiveState": "active",
+      "MainPID": "2288376",
+      "MemoryCurrent": "188121088",
+      "NRestarts": "0",
+      "Result": "success"
+    }
+  },
+  "state": "engineering_checkpoint",
+  "validation": {
+    "full_backend_frontend_browser": "deferred to Gate G",
+    "reality_tests": 91,
+    "ruff": "passed",
+    "strict_mypy_sources": 21
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "calibration_id": "8e29bed2af533d3e2ee1640c5c9e876d3323480d8b2d579b454b6c9768aa2500",
+  "checked_ns": 1791997182567944369,
+  "generation_seconds": 167.49586083099712,
+  "identical_semantic_report": true,
+  "nonidentity_difference": "generated_seconds only",
+  "original_file_sha256": "44ce108636b9ba543f395f1387f650a048f536eca0d7c7d9e9a6ccbd41ef4adb",
+  "regenerated_file_sha256": "c021b5046181e9d2fcf33d1fcfb972f656069b397e585cdd635dad278fb2bd6e",
+  "regeneration_seconds": 167.70440789597342,
+  "semantic_report_sha256": "1b02e6ef92f3350b718149ab094ed079ed77569ea34fc41195306671740f19f7"
+}

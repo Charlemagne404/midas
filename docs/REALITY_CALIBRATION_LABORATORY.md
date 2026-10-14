@@ -600,3 +600,207 @@ identity, no private execution evidence and no cross-day generalization. Code
 bundles and raw-record references make later scientific review reproducible.
 Gate C is next: observed distribution calibration, multiple explicit execution
 assumptions, uncertainty bounds and preserved-simulator comparisons.
+
+## Gate C — observational calibration and execution uncertainty
+
+The calibration layer is separate from the Prometheus simulator and protected
+experiments. `midas.reality.calibration` accepts a checksum-verified Foundry
+artifact and uses only the intersection of chronological training and
+market-generalization training. Validation, final-test and held-out families
+cannot contribute to its empirical kernel or economic sensitivity calculations.
+Its identity includes the dataset/row hashes, critical decoder and measurement
+code, the preserved synthetic generator code, fixed resampling seed and explicit
+execution assumption manifests. A 32 MiB report limit, 256 MiB derivative-root
+budget and 20 GiB host reserve bound publication.
+
+Run a bounded worker, separately from collection:
+
+```bash
+systemd-run --user --unit=midas-reality-calibration-example \
+  --property=WorkingDirectory=/home/charlie/midas-reality \
+  --property=CPUQuota=20% --property=MemoryMax=768M \
+  --property=Nice=15 --property=IOSchedulingClass=idle \
+  /home/charlie/midas-reality/.venv/bin/python -m midas.reality.calibration \
+  --dataset data/research/reality/datasets/23201960592577e4cb280c5f3dc1fb64d75e3b12bacb45d347cc2ae32472242c \
+  --output data/research/reality/calibration
+```
+
+The report includes horizon and selection-role distributions, receiver quote
+age, spread, displayed depth, update intensity, skew, causal lookback changes,
+public future measurements, grouped sample coverage and missingness. Initial
+metrics count each decision anchor once, rather than once per horizon variant.
+Persistence means original-price presence at a later observation point. A price
+can disappear and reappear; these measurements are not continuous survival.
+
+An additional checksum-verified raw-prefix pass measures best-ask spells and
+spread/depth changes inside valid receiver-observed lineages. Gaps, stale limits,
+independent divergences, snapshot/tick resets, clock regressions and uncertain
+books right-censor spells. Empty-ask intervals are not quote lifetimes. All
+within-frame changes remain unresolved, and the unsequenced stream may omit
+venue events. Completed and censored durations are reported separately; a
+completed-only distribution must not be interpreted as the population lifetime
+law. Deferred HTTP timestamps are separate from sequential WebSocket clock
+checks. Raw online checkpoints are verified during this pass.
+
+Each horizon reports measured persistence, unknown counts, and worst-case
+missing-outcome identification bounds. Exploratory bootstrap intervals resample
+families then time blocks, preserving variants in each block. These intervals
+cannot correct informative missingness, selection bias, unobserved events or
+single-day coverage. Degenerate measured intervals such as [1,1] therefore do
+not imply certainty. The joint observational kernel retains matched public
+labels and their dependence groups. `calibrated_kernel.load` requires an
+externally pinned artifact hash. `sample` keeps censored draws unknown and
+rejects unsupported horizons; it cannot interpolate a private execution process.
+
+### Explicit scenario contract
+
+All scenarios use original observed ask limits and a causal initial filter.
+Future evidence changes only follow-up measurements, never the initial decision.
+No scenario estimates actual fill probability, order queue position, submitted
+order latency or private acknowledgment behavior.
+
+| Family | Requested delay | Displayed-depth fraction imposed | Friction per acquired share | Initial age / skew limits | Follow-up and stress assumptions |
+| --- | ---: | ---: | ---: | ---: | --- |
+| Optimistic | 100 ms | 1 | 0 | 5,000 / 250 ms | Initial liquidity assumed available; future evidence not required |
+| Intermediate | 300 ms | 0.8 | 0.001 collateral unit | 1,000 / 100 ms | Qualifying public future required; original-price retained aggregate depth bounds support |
+| Conservative | 1,000 ms | 0.5 | 0.005 collateral unit | 300 / 25 ms | Stronger timing and liquidity haircut; unknown follow-up remains unknown |
+| Stress | 5,000 ms | 0.25 | 0.02 collateral unit | 5,000 / 250 ms | Qualifying future required; impose disappearance of the cheaper leg and recovery failure |
+
+Each configuration has a separate SHA-256 identity. These delays and fractions
+are imposed research choices, not calibrated submission or fill distributions.
+Fractional partial inventory is permitted after a request satisfying the reported
+minimum. One leg can have more imposed inventory than its complement; matched
+payout and unmatched terminal-payoff ranges are accounted separately. The stress
+case deliberately retains the more expensive leg. Recovery failure is explicit,
+not an inferred real liquidation. Preserved Prometheus broker/recovery machinery
+continues to exist unchanged alongside this bounded observational contract.
+
+Economic sensitivity compares identical initial candidates across the four
+families at quantities 5, 10 and 25, and capital budgets 10, 100 and 1,000
+collateral units. Same-anchor horizon variants must have identical feature hashes.
+Unknown fees/minimums, unsupported protocols, insufficient initial depth, timing
+violations and capital failures abstain. Future book absence remains unknown.
+Fees are applied once, and empty imposed inventory incurs no redemption charge.
+No order is submitted and no hypothetical outcome is reported as realized money.
+
+The declared fee curve version uses the recorded market schedule only when its
+exponent is 1, taker-only flag is true and rate is bounded. Disabled fees are
+explicitly zero. The separately recorded legacy `base_fee` field is never
+reinterpreted as basis points. The public curve is shares × rate × price ×
+(1 − price), with a conservative 0.00001 reserve per nonzero leg. This is a
+hypothetical cost convention, not an invoice or proof of protocol interoperability.
+Source checked 2026-10-14: [official Polymarket fees](https://docs.polymarket.com/trading/fees).
+No maker rebate is assumed. Common sensitivity defaults impose seven settlement
+days, 10% annual financing, 0.01 redemption cost and a collateral-value factor
+of one. These are editable assumption fields; neither settlement delay nor
+collateral conversion value is established by the feed.
+
+### Preserved simulator comparison
+
+The comparison regenerates all 19 original Laboratory families at seeds 0–15
+(304 synthetic controls) without reading or writing historical experiment files.
+The report pins their complete scenario-bundle hash and unchanged original
+execution presets. Equal family weighting is disclosed; this is not the weighted
+historical distribution of every Prometheus run. It compares original-price
+persistence, discrepancy presence, disappearance, initial spread and top depth.
+Original simultaneous leg updates, exact synthetic future states, imposed
+settlement, private matching and acknowledgments are described as non-equivalent
+to qualified real receiver observations. Real-source and synthetic evidence are
+separate fields throughout.
+
+### Gate C findings and evidence limits
+
+Accepted calibration `8e29bed2af533d3e2ee1640c5c9e876d3323480d8b2d579b454b6c9768aa2500`
+uses 7,970 training horizon rows at 1,993 anchors, eight markets, seven connected
+families, 725 family/time blocks and one UTC day. Five families and 224 blocks
+have measured futures: 500 measurements and 7,470 unknown outcomes. Every
+measured original-price persistence target is true. The measured subset rate
+of 100% has an all-outcome identification range of **6.27%–100%**. Horizon-specific
+ranges are 4.11%–100% at 100 ms (82 measured), 4.52%–100% at 300 ms (90),
+7.33%–100% at 1,000 ms (146), and 9.14%–100% at 5,000 ms (182). These are
+missing-outcome bounds, not confidence in an execution probability.
+
+The accepted training cohort contains no initially supported positive theoretical
+pair discrepancy, even before fee deductions. All 1,993 matched candidate
+anchors abstain in each of the four scenario families at quantity five/capital
+100; the larger sensitivity grid also exposes reasons and coverage. There are
+no real-data hypothetical positive-position outcomes to report. Fixture arithmetic
+proves partial positions, fee accounting, stress loss and unknown follow-up;
+fixtures are explicitly artificial and never counted as market evidence.
+
+The receiver-prefix pass processed 63,916 raw records and verified 841 online
+checkpoints. It found 4,339 right-censored spells and zero trustworthy completed
+best-ask spells. Therefore the available prefix does not identify a completed
+quote-lifetime distribution. There are 38,571 valid aggregate-depth transitions;
+retained original-price depth has mean ratio 0.9838 across 1,000 leg measurements,
+with minimum 0.002836 and median one. Observed quality barriers and missingness
+prevent extrapolating this to continuous order survival or fill rates.
+
+In the 304 regenerated synthetic controls, apparent discrepancy prevalence is
+83.55% at 100 ms and 69.41% at 1,000 ms, versus no initial discrepancy in accepted
+real training anchors. Median initial top-ask depth is 16 synthetic shares versus
+1,691 observed shares. Both median spreads are approximately 0.01, but observed
+spread support ranges from 0.001 to 0.09; synthetic initial spreads are concentrated
+at 0.01 (with the rounding family at 0.0001). These expose generator/cohort
+mismatches. They do not establish venue-wide prevalence or causal execution
+advantage; the real panel and equal-weighted synthetic families are selected
+populations.
+
+`docs/REALITY_GATE_C_CALIBRATION.json` contains the published report summary,
+artifact hash, exact assumptions and economic grid. The full derivative report
+retains 500 joint observable kernel rows with source example IDs. A pinned-hash
+smoke run sampled 100 draws at 300 ms: 97 censored and three observational,
+with approximately 7.0 ms mean Python inference time including report hashing.
+That is an engineering check, not a new experiment or probability validation.
+Modified artifact bytes were rejected. Recorder operation was unaffected.
+
+The first research run was intentionally stopped before publication after review
+caught that deferred HTTP timestamps must not trigger sequential WebSocket clock
+regression. A fixture now checks this distinction. The second completed artifact
+was superseded after zero-inventory redemption accounting was tightened; that
+version remains an explicitly superseded derivative. The accepted build took
+167.50 seconds, 33.75 CPU seconds and 183.5 MiB peak memory under a 20% CPU quota
+and 768 MiB memory cap. No raw observations were deleted or rewritten.
+
+Focused Reality verification passes **91 tests**. Ruff passes and strict mypy
+passes across 21 Reality sources. Independent fixture assertions cover receiver
+spells, empty asks, gap censoring, missingness bounds, grouped coverage, fee
+rounding, no double charging, partial terminal-payoff bounds, zero-inventory
+accounting, capital/minimum checks, stress recovery failure, causal decision
+isolation, matched horizons, deterministic kernels and unsupported interpolation.
+The full backend/frontend/browser checks remain for Gate G.
+
+The final-test access ledger remains unopened. Gate C does not validate a model,
+a population execution law, any private fill mechanism or profitability. Gate D
+is next: train supported observation targets with training-only preprocessing,
+chronological evaluation and simple controls, while explicitly rejecting
+scientifically unsupported promotion. Prospective shadow campaigns and the
+native Reality dashboard remain outstanding.
+
+A separate bounded regeneration completed in 167.70 seconds (33.80 CPU seconds,
+184.5 MiB peak memory). Calibration identity, all measurements, assumptions,
+bootstrap results, synthetic comparison, joint kernel and economic sensitivity
+are identical. Only the measured build duration differs; file hashes and the
+stable semantic report hash are recorded separately in
+`docs/REALITY_GATE_C_REPRODUCIBILITY.json`.
+
+At the Gate C operations checkpoint, the recorder remained PID 2288376 with no
+Gate C restart and zero automatic restarts, eight markets, 16/16 fresh books,
+zero timing-uncertain books and zero connection failures in its active epoch.
+Its 56,663 frames are active-epoch frames, not the entire preserved archive.
+Raw ordinal was 119,245 and storage approximately 207 MiB. Five independently
+observed divergences remain in the evidence alongside 532 qualified agreements;
+agreement does not prove sequencing or full continuity. A brief cohort-refresh
+`AWAITING_DATA` state recovered to 16 fresh books without restarting collection.
+
+Capacity monitoring and daily verified archive timers remain active. Recent
+capacity forecasts are variable (about 1.3 GB/day at the checkpoint, approximately
+19 days to the 24 GiB raw allocation); alerts and explicit stops remain in force,
+with a separate 24 GiB archive allocation and 20 GiB host reserve. The filesystem
+has approximately 200 GiB free and the host approximately 10 GiB available RAM.
+Both accepted calibration jobs are terminal successful; no training or shadow
+worker is running yet. The protected main worktree is clean at the Prometheus
+baseline, and Laboratory/Arena code identities remain unchanged. Full protected
+archive verification remains part of Gate G, not a claim newly made by Gate C.
+Current service, raw-prefix, capacity and protection evidence is recorded in
+`docs/REALITY_GATE_C_CHECKPOINT.json`.

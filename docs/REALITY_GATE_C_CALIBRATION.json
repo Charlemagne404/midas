@@ -1,0 +1,5784 @@
+{
+  "artifact_path": "/home/charlie/midas-reality/data/research/reality/calibration/8e29bed2af533d3e2ee1640c5c9e876d3323480d8b2d579b454b6c9768aa2500.json",
+  "artifact_sha256": "44ce108636b9ba543f395f1387f650a048f536eca0d7c7d9e9a6ccbd41ef4adb",
+  "assumptions": [
+    {
+      "annual_financing_rate": "0.10",
+      "assumption_id": "0a4e39e24db6a8e33a23d91815038a639d3414cd7c9a30f4cac0179b7c5089f4",
+      "collateral_value_factor": "1",
+      "delay_ms": 100,
+      "depth_fraction": "1",
+      "fee_formula": "declared-taker-curve-2026-10-14",
+      "friction_per_share": "0",
+      "future_required": false,
+      "max_age_ms": 5000,
+      "max_skew_ms": 250,
+      "name": "optimistic",
+      "one_leg_loss": false,
+      "recovery": "none; unmatched terminal payoff bounded by [0, quantity]",
+      "redemption_cost": "0.01",
+      "settlement_days": "7",
+      "version": "reality-observational-execution-v1"
+    },
+    {
+      "annual_financing_rate": "0.10",
+      "assumption_id": "25321aa9cc6137f867af300aac072cbea1554ce69c9687739cb1bba7238801d3",
+      "collateral_value_factor": "1",
+      "delay_ms": 300,
+      "depth_fraction": "0.8",
+      "fee_formula": "declared-taker-curve-2026-10-14",
+      "friction_per_share": "0.001",
+      "future_required": true,
+      "max_age_ms": 1000,
+      "max_skew_ms": 100,
+      "name": "intermediate",
+      "one_leg_loss": false,
+      "recovery": "none; unmatched terminal payoff bounded by [0, quantity]",
+      "redemption_cost": "0.01",
+      "settlement_days": "7",
+      "version": "reality-observational-execution-v1"
+    },
+    {
+      "annual_financing_rate": "0.10",
+      "assumption_id": "556261912f0141efc4313765c36f712af67d41626c72de074c91e05f3d2ed6f7",
+      "collateral_value_factor": "1",
+      "delay_ms": 1000,
+      "depth_fraction": "0.5",
+      "fee_formula": "declared-taker-curve-2026-10-14",
+      "friction_per_share": "0.005",
+      "future_required": true,
+      "max_age_ms": 300,
+      "max_skew_ms": 25,
+      "name": "conservative",
+      "one_leg_loss": false,
+      "recovery": "none; unmatched terminal payoff bounded by [0, quantity]",
+      "redemption_cost": "0.01",
+      "settlement_days": "7",
+      "version": "reality-observational-execution-v1"
+    },
+    {
+      "annual_financing_rate": "0.10",
+      "assumption_id": "7209a906d06230d011ea8ecf05c80066a96171fc9741a58dbcaa3be2d619071c",
+      "collateral_value_factor": "1",
+      "delay_ms": 5000,
+      "depth_fraction": "0.25",
+      "fee_formula": "declared-taker-curve-2026-10-14",
+      "friction_per_share": "0.02",
+      "future_required": true,
+      "max_age_ms": 5000,
+      "max_skew_ms": 250,
+      "name": "stress",
+      "one_leg_loss": true,
+      "recovery": "assumed recovery failure; second leg disappears",
+      "redemption_cost": "0.01",
+      "settlement_days": "7",
+      "version": "reality-observational-execution-v1"
+    }
+  ],
+  "calibration_id": "8e29bed2af533d3e2ee1640c5c9e876d3323480d8b2d579b454b6c9768aa2500",
+  "economic_sensitivity": {
+    "actual_profitability": "unknown_counterfactual",
+    "capital_grid": [
+      10,
+      100,
+      1000
+    ],
+    "evidence_kind": "hypothetical_assumptions",
+    "experiments": {
+      "quantity=10;capital=10": {
+        "conservative": {
+          "causal_decisions": {
+            "abstain": 1993
+          },
+          "examples": [
+            {
+              "actual_fills": "unknown_counterfactual",
+              "assumption_id": "556261912f0141efc4313765c36f712af67d41626c72de074c91e05f3d2ed6f7",
+              "capital_budget": "10",
+              "decision": "abstain",
+              "delay_ms": 1000,
+              "evidence_kind": "hypothetical_execution_bounds",
+              "example_id": "52a5ecb2d45843a83d18608b4ad93dcd57f4ad04bd7fd7c6af2bb8833ae8cc98",
+              "fill_probability": null,
+              "future_evidence_used": false,
+              "hypothetical_pnl_bounds": null,
+              "orders_submitted": false,
+              "quantity_requested": "10",
+              "reason": "initial_depth_or_capital",
+              "scenario": "conservative",
+              "status": "abstain",
+              "unit": "collateral_unit"
+            },
+            {
+              "actual_fills": "unknown_counterfactual",
+              "assumption_id": "556261912f0141efc4313765c36f712af67d41626c72de074c91e05f3d2ed6f7",
+              "capital_budget": "10",
+              "decision": "abstain",
+              "delay_ms": 1000,
+              "evidence_kind": "hypothetical_execution_bounds",
+              "example_id": "5de39baac868cbf214b12840964271eef793029c9cf8ab4da7d6f0cb51edae94",
+              "fill_probability": null,
+              "future_evidence_used": false,
+              "hypothetical_pnl_bounds": null,
+              "orders_submitted": false,
+              "quantity_requested": "10",
+              "reason": "initial_depth_or_capital",
+              "scenario": "conservative",
+              "status": "abstain",
+              "unit": "collateral_unit"
+            }
+          ],
+          "followup_statuses": {
+            "abstain": 1993
+          },
+          "hypothetical_lower_pnl": {
+            "count": 0,
+            "quantiles": null
+          },
+          "hypothetical_upper_pnl": {
+            "count": 0,
+            "quantiles": null
+          },
+          "matched_decisions": 1993,
+          "reasons": {
+            "initial_depth_or_capital": 1107,
+            "timing_limit": 886
+          },
+          "unmatched_quantity": {
+            "count": 0,
+            "quantiles": null
+          }
+        },
+        "intermediate": {
+          "causal_decisions": {
+            "abstain": 1993
+          },
+          "examples": [
+            {
+              "actual_fills": "unknown_counterfactual",
+              "assumption_id": "25321aa9cc6137f867af300aac072cbea1554ce69c9687739cb1bba7238801d3",
+              "capital_budget": "10",
+              "decision": "abstain",
+              "delay_ms": 300,
+              "evidence_kind": "hypothetical_execution_bounds",
+              "example_id": "a618fac7071c28cba626c8403750b453307dbe83123db7a4b0a23bfe6eb798be",
+              "fill_probability": null,
+              "future_evidence_used": false,
+              "hypothetical_pnl_bounds": null,
+              "orders_submitted": false,
+              "quantity_requested": "10",
+              "reason": "initial_depth_or_capital",
+              "scenario": "intermediate",
+              "status": "abstain",
+              "unit": "collateral_unit"
+            },
+            {
+              "actual_fills": "unknown_counterfactual",
+              "assumption_id": "25321aa9cc6137f867af300aac072cbea1554ce69c9687739cb1bba7238801d3",
+              "capital_budget": "10",
+              "decision": "abstain",
+              "delay_ms": 300,
+              "evidence_kind": "hypothetical_execution_bounds",
+              "example_id": "b68f81224a1e8881e8198b0a90185c12bec67539937b37246f3ea4137ce4fc95",
+              "fill_probability": null,
+              "future_evidence_used": false,
+              "hypothetical_pnl_bounds": null,
+              "orders_submitted": false,
+              "quantity_requested": "10",
+              "reason": "initial_depth_or_capital",
+              "scenario": "intermediate",
+              "status": "abstain",
+              "unit": "collateral_unit"
+            }
+          ],
+          "followup_statuses": {
+            "abstain": 1993
+          },
+          "hypothetical_lower_pnl": {
+            "count": 0,
+            "quantiles": null
+          },
+          "hypothetical_upper_pnl": {
+            "count": 0,
+            "quantiles": null
+          },
+          "matched_decisions": 1993,
+          "reasons": {
+            "initial_depth_or_capital": 1238,
+            "timing_limit": 755
+          },
+          "unmatched_quantity": {
+            "count": 0,
+            "quantiles": null
+          }
+        },
+        "optimistic": {
+          "causal_decisions": {
+            "abstain": 1993
+          },
+          "examples": [
+            {
+              "actual_fills": "unknown_counterfactual",
+              "assumption_id": "0a4e39e24db6a8e33a23d91815038a639d3414cd7c9a30f4cac0179b7c5089f4",
+              "capital_budget": "10",
+              "decision": "abstain",
+              "delay_ms": 100,
+              "evidence_kind": "hypothetical_execution_bounds",
+              "example_id": "06d7b591ac85d3f1e95eb2baaf4b1b6d89a03f1da83ff15010321a7cd94bbbab",
+              "fill_probability": null,
+              "future_evidence_used": false,
+              "hypothetical_pnl_bounds": null,
+              "orders_submitted": false,
+              "quantity_requested": "10",
+              "reason": "initial_depth_or_capital",
+              "scenario": "optimistic",
+              "status": "abstain",
+              "unit": "collateral_unit"
+            },
+            {
+              "actual_fills": "unknown_counterfactual",
+              "assumption_id": "0a4e39e24db6a8e33a23d91815038a639d3414cd7c9a30f4cac0179b7c5089f4",
+              "capital_budget": "10",
+              "decision": "abstain",
+              "delay_ms": 100,
+              "evidence_kind": "hypothetical_execution_bounds",
+              "example_id": "eb452aed2cac384a7698343febee68ea069a9a943e84db9b338aaf9cff0cd0ef",
+              "fill_probability": null,
+              "future_evidence_used": false,
+              "hypothetical_pnl_bounds": null,
+              "orders_submitted": false,
+              "quantity_requested": "10",
+              "reason": "initial_depth_or_capital",
+              "scenario": "optimistic",
+              "status": "abstain",
+              "unit": "collateral_unit"
+            }
+          ],
+          "followup_statuses": {
+            "abstain": 1993
+          },
+          "hypothetical_lower_pnl": {
+            "count": 0,
+            "quantiles": null
+          },
+          "hypothetical_upper_pnl": {
+            "count": 0,
+            "quantiles": null
+          },
+          "matched_decisions": 1993,
+          "reasons": {
+            "initial_depth_or_capital": 1993
+          },
+          "unmatched_quantity": {
+            "count": 0,
+            "quantiles": null
+          }
+        },
+        "stress": {
+          "causal_decisions": {
+            "abstain": 1993
+          },
+          "examples": [
+            {
+              "actual_fills": "unknown_counterfactual",
+              "assumption_id": "7209a906d06230d011ea8ecf05c80066a96171fc9741a58dbcaa3be2d619071c",
+              "capital_budget": "10",
+              "decision": "abstain",
+              "delay_ms": 5000,
+              "evidence_kind": "hypothetical_execution_bounds",
+              "example_id": "61d74c0e5891cc5ca8560b99eb37370aaa777222b0107aced056a55a1bda91fb",
+              "fill_probability": null,
+              "future_evidence_used": false,
+              "hypothetical_pnl_bounds": null,
+              "orders_submitted": false,
+              "quantity_requested": "10",
+              "reason": "initial_depth_or_capital",
+              "scenario": "stress",
+              "status": "abstain",
+              "unit": "collateral_unit"
+            },
+            {
+              "actual_fills": "unknown_counterfactual",
+              "assumption_id": "7209a906d06230d011ea8ecf05c80066a96171fc9741a58dbcaa3be2d619071c",
+              "capital_budget": "10",
+              "decision": "abstain",
+              "delay_ms": 5000,
+              "evidence_kind": "hypothetical_execution_bounds",
+              "example_id": "e8e8a2379804ee696be3b60e744eb54406f69ea86587b1e719e83d0355df1cfc",
+              "fill_probability": null,
+              "future_evidence_used": false,
+              "hypothetical_pnl_bounds": null,
+              "orders_submitted": false,
+              "quantity_requested": "10",
+              "reason": "initial_depth_or_capital",
+              "scenario": "stress",
+              "status": "abstain",
+              "unit": "collateral_unit"
+            }
+          ],
+          "followup_statuses": {
+            "abstain": 1993
+          },
+          "hypothetical_lower_pnl": {
+            "count": 0,
+            "quantiles": null
+          },
+          "hypothetical_upper_pnl": {
+            "count": 0,
+            "quantiles": null
+          },
+          "matched_decisions": 1993,
+          "reasons": {
+            "initial_depth_or_capital": 1993
+          },
+          "unmatched_quantity": {
+            "count": 0,
+            "quantiles": null
+          }
+        }
+      },
+      "quantity=10;capital=100": {
+        "conservative": {
+          "causal_decisions": {
+            "abstain": 1993
+          },
+          "examples": [
+            {
+              "actual_fills": "unknown_counterfactual",
+              "assumption_id": "556261912f0141efc4313765c36f712af67d41626c72de074c91e05f3d2ed6f7",
+              "capital_budget": "100",
+              "decision": "abstain",
+              "delay_ms": 1000,
+              "evidence_kind": "hypothetical_execution_bounds",
+              "example_id": "52a5ecb2d45843a83d18608b4ad93dcd57f4ad04bd7fd7c6af2bb8833ae8cc98",
+              "fill_probability": null,
+              "future_evidence_used": false,
+              "hypothetical_pnl_bounds": null,
+              "orders_submitted": false,
+              "quantity_requested": "10",
+              "reason": "no_positive_declared_edge",
+              "scenario": "conservative",
+              "status": "abstain",
+              "unit": "collateral_unit"
+            },
+            {
+              "actual_fills": "unknown_counterfactual",
+              "assumption_id": "556261912f0141efc4313765c36f712af67d41626c72de074c91e05f3d2ed6f7",
+              "capital_budget": "100",
+              "decision": "abstain",
+              "delay_ms": 1000,
+              "evidence_kind": "hypothetical_execution_bounds",
+              "example_id": "5de39baac868cbf214b12840964271eef793029c9cf8ab4da7d6f0cb51edae94",
+              "fill_probability": null,
+              "future_evidence_used": false,
+              "hypothetical_pnl_bounds": null,
+              "orders_submitted": false,
+              "quantity_requested": "10",
+              "reason": "no_positive_declared_edge",
+              "scenario": "conservative",
+              "status": "abstain",
+              "unit": "collateral_unit"
+            }
+          ],
+          "followup_statuses": {
+            "abstain": 1993
+          },
+          "hypothetical_lower_pnl": {
+            "count": 0,
+            "quantiles": null
+          },
+          "hypothetical_upper_pnl": {
+            "count": 0,
+            "quantiles": null
+          },
+          "matched_decisions": 1993,
+          "reasons": {
+            "initial_depth_or_capital": 83,
+            "no_positive_declared_edge": 1024,
+            "timing_limit": 886
+          },
+          "unmatched_quantity": {
+            "count": 0,
+            "quantiles": null
+          }
+        },
+        "intermediate": {
+          "causal_decisions": {
+            "abstain": 1993
+          },
+          "examples": [
+            {
+              "actual_fills": "unknown_counterfactual",
+              "assumption_id": "25321aa9cc6137f867af300aac072cbea1554ce69c9687739cb1bba7238801d3",
+              "capital_budget": "100",
+              "decision": "abstain",
+              "delay_ms": 300,
+              "evidence_kind": "hypothetical_execution_bounds",
+              "example_id": "a618fac7071c28cba626c8403750b453307dbe83123db7a4b0a23bfe6eb798be",
+              "fill_probability": null,
+              "future_evidence_used": false,
+              "hypothetical_pnl_bounds": null,
+              "orders_submitted": false,
+              "quantity_requested": "10",
+              "reason": "no_positive_declared_edge",
+              "scenario": "intermediate",
+              "status": "abstain",
+              "unit": "collateral_unit"
+            },
+            {
+              "actual_fills": "unknown_counterfactual",
+              "assumption_id": "25321aa9cc6137f867af300aac072cbea1554ce69c9687739cb1bba7238801d3",
+              "capital_budget": "100",
+              "decision": "abstain",
+              "delay_ms": 300,
+              "evidence_kind": "hypothetical_execution_bounds",
+              "example_id": "b68f81224a1e8881e8198b0a90185c12bec67539937b37246f3ea4137ce4fc95",
+              "fill_probability": null,
+              "future_evidence_used": false,
+              "hypothetical_pnl_bounds": null,
+              "orders_submitted": false,
+              "quantity_requested": "10",
+              "reason": "no_positive_declared_edge",
+              "scenario": "intermediate",
+              "status": "abstain",
+              "unit": "collateral_unit"
+            }
+          ],
+          "followup_statuses": {
+            "abstain": 1993
+          },
+          "hypothetical_lower_pnl": {
+            "count": 0,
+            "quantiles": null
+          },
+          "hypothetical_upper_pnl": {
+            "count": 0,
+            "quantiles": null
+          },
+          "matched_decisions": 1993,
+          "reasons": {
+            "initial_depth_or_capital": 107,
+            "no_positive_declared_edge": 1131,
+            "timing_limit": 755
+          },
+          "unmatched_quantity": {
+            "count": 0,
+            "quantiles": null
+          }
+        },
+        "optimistic": {
+          "causal_decisions": {
+            "abstain": 1993
+          },
+          "examples": [
+            {
+              "actual_fills": "unknown_counterfactual",
+              "assumption_id": "0a4e39e24db6a8e33a23d91815038a639d3414cd7c9a30f4cac0179b7c5089f4",
+              "capital_budget": "100",
+              "decision": "abstain",
+              "delay_ms": 100,
+              "evidence_kind": "hypothetical_execution_bounds",
+              "example_id": "06d7b591ac85d3f1e95eb2baaf4b1b6d89a03f1da83ff15010321a7cd94bbbab",
+              "fill_probability": null,
+              "future_evidence_used": false,
+              "hypothetical_pnl_bounds": null,
+              "orders_submitted": false,
+              "quantity_requested": "10",
+              "reason": "no_positive_declared_edge",
+              "scenario": "optimistic",
+              "status": "abstain",
+              "unit": "collateral_unit"
+            },
+            {
+              "actual_fills": "unknown_counterfactual",
+              "assumption_id": "0a4e39e24db6a8e33a23d91815038a639d3414cd7c9a30f4cac0179b7c5089f4",
+              "capital_budget": "100",
+              "decision": "abstain",
+              "delay_ms": 100,
+              "evidence_kind": "hypothetical_execution_bounds",
+              "example_id": "eb452aed2cac384a7698343febee68ea069a9a943e84db9b338aaf9cff0cd0ef",
+              "fill_probability": null,
+              "future_evidence_used": false,
+              "hypothetical_pnl_bounds": null,
+              "orders_submitted": false,
+              "quantity_requested": "10",
+              "reason": "no_positive_declared_edge",
+              "scenario": "optimistic",
+              "status": "abstain",
+              "unit": "collateral_unit"
+            }
+          ],
+          "followup_statuses": {
+            "abstain": 1993
+          },
+          "hypothetical_lower_pnl": {
+            "count": 0,
+            "quantiles": null
+          },
+          "hypothetical_upper_pnl": {
+            "count": 0,
+            "quantiles": null
+          },
+          "matched_decisions": 1993,
+          "reasons": {
+            "initial_depth_or_capital": 161,
+            "no_positive_declared_edge": 1832
+          },
+          "unmatched_quantity": {
+            "count": 0,
+            "quantiles": null
+          }
+        },
+        "stress": {
+          "causal_decisions": {
+            "abstain": 1993
+          },
+          "examples": [
+            {
+              "actual_fills": "unknown_counterfactual",
+              "assumption_id": "7209a906d06230d011ea8ecf05c80066a96171fc9741a58dbcaa3be2d619071c",
+              "capital_budget": "100",
+              "decision": "abstain",
+              "delay_ms": 5000,
+              "evidence_kind": "hypothetical_execution_bounds",
+              "example_id": "61d74c0e5891cc5ca8560b99eb37370aaa777222b0107aced056a55a1bda91fb",
+              "fill_probability": null,
+              "future_evidence_used": false,
+              "hypothetical_pnl_bounds": null,
+              "orders_submitted": false,
+              "quantity_requested": "10",
+              "reason": "no_positive_declared_edge",
+              "scenario": "stress",
+              "status": "abstain",
+              "unit": "collateral_unit"
+            },
+            {
+              "actual_fills": "unknown_counterfactual",
+              "assumption_id": "7209a906d06230d011ea8ecf05c80066a96171fc9741a58dbcaa3be2d619071c",
+              "capital_budget": "100",
+              "decision": "abstain",
+              "delay_ms": 5000,
+              "evidence_kind": "hypothetical_execution_bounds",
+              "example_id": "e8e8a2379804ee696be3b60e744eb54406f69ea86587b1e719e83d0355df1cfc",
+              "fill_probability": null,
+              "future_evidence_used": false,
+              "hypothetical_pnl_bounds": null,
+              "orders_submitted": false,
+              "quantity_requested": "10",
+              "reason": "no_positive_declared_edge",
+              "scenario": "stress",
+              "status": "abstain",
+              "unit": "collateral_unit"
+            }
+          ],
+          "followup_statuses": {
+            "abstain": 1993
+          },
+          "hypothetical_lower_pnl": {
+            "count": 0,
+            "quantiles": null
+          },
+          "hypothetical_upper_pnl": {
+            "count": 0,
+            "quantiles": null
+          },
+          "matched_decisions": 1993,
+          "reasons": {
+            "initial_depth_or_capital": 161,
+            "no_positive_declared_edge": 1832
+          },
+          "unmatched_quantity": {
+            "count": 0,
+            "quantiles": null
+          }
+        }
+      },
+      "quantity=10;capital=1000": {
+        "conservative": {
+          "causal_decisions": {
+            "abstain": 1993
+          },
+          "examples": [
+            {
+              "actual_fills": "unknown_counterfactual",
+              "assumption_id": "556261912f0141efc4313765c36f712af67d41626c72de074c91e05f3d2ed6f7",
+              "capital_budget": "1000",
+              "decision": "abstain",
+              "delay_ms": 1000,
+              "evidence_kind": "hypothetical_execution_bounds",
+              "example_id": "52a5ecb2d45843a83d18608b4ad93dcd57f4ad04bd7fd7c6af2bb8833ae8cc98",
+              "fill_probability": null,
+              "future_evidence_used": false,
+              "hypothetical_pnl_bounds": null,
+              "orders_submitted": false,
+              "quantity_requested": "10",
+              "reason": "no_positive_declared_edge",
+              "scenario": "conservative",
+              "status": "abstain",
+              "unit": "collateral_unit"
+            },
+            {
+              "actual_fills": "unknown_counterfactual",
+              "assumption_id": "556261912f0141efc4313765c36f712af67d41626c72de074c91e05f3d2ed6f7",
+              "capital_budget": "1000",
+              "decision": "abstain",
+              "delay_ms": 1000,
+              "evidence_kind": "hypothetical_execution_bounds",
+              "example_id": "5de39baac868cbf214b12840964271eef793029c9cf8ab4da7d6f0cb51edae94",
+              "fill_probability": null,
+              "future_evidence_used": false,
+              "hypothetical_pnl_bounds": null,
+              "orders_submitted": false,
+              "quantity_requested": "10",
+              "reason": "no_positive_declared_edge",
+              "scenario": "conservative",
+              "status": "abstain",
+              "unit": "collateral_unit"
+            }
+          ],
+          "followup_statuses": {
+            "abstain": 1993
+          },
+          "hypothetical_lower_pnl": {
+            "count": 0,
+            "quantiles": null
+          },
+          "hypothetical_upper_pnl": {
+            "count": 0,
+            "quantiles": null
+          },
+          "matched_decisions": 1993,
+          "reasons": {
+            "initial_depth_or_capital": 83,
+            "no_positive_declared_edge": 1024,
+            "timing_limit": 886
+          },
+          "unmatched_quantity": {
+            "count": 0,
+            "quantiles": null
+          }
+        },
+        "intermediate": {
+          "causal_decisions": {
+            "abstain": 1993
+          },
+          "examples": [
+            {
+              "actual_fills": "unknown_counterfactual",
+              "assumption_id": "25321aa9cc6137f867af300aac072cbea1554ce69c9687739cb1bba7238801d3",
+              "capital_budget": "1000",
+              "decision": "abstain",
+              "delay_ms": 300,
+              "evidence_kind": "hypothetical_execution_bounds",
+              "example_id": "a618fac7071c28cba626c8403750b453307dbe83123db7a4b0a23bfe6eb798be",
+              "fill_probability": null,
+              "future_evidence_used": false,
+              "hypothetical_pnl_bounds": null,
+              "orders_submitted": false,
+              "quantity_requested": "10",
+              "reason": "no_positive_declared_edge",
+              "scenario": "intermediate",
+              "status": "abstain",
+              "unit": "collateral_unit"
+            },
+            {
+              "actual_fills": "unknown_counterfactual",
+              "assumption_id": "25321aa9cc6137f867af300aac072cbea1554ce69c9687739cb1bba7238801d3",
+              "capital_budget": "1000",
+              "decision": "abstain",
+              "delay_ms": 300,
+              "evidence_kind": "hypothetical_execution_bounds",
+              "example_id": "b68f81224a1e8881e8198b0a90185c12bec67539937b37246f3ea4137ce4fc95",
+              "fill_probability": null,
+              "future_evidence_used": false,
+              "hypothetical_pnl_bounds": null,
+              "orders_submitted": false,
+              "quantity_requested": "10",
+              "reason": "no_positive_declared_edge",
+              "scenario": "intermediate",
+              "status": "abstain",
+              "unit": "collateral_unit"
+            }
+          ],
+          "followup_statuses": {
+            "abstain": 1993
+          },
+          "hypothetical_lower_pnl": {
+            "count": 0,
+            "quantiles": null
+          },
+          "hypothetical_upper_pnl": {
+            "count": 0,
+            "quantiles": null
+          },
+          "matched_decisions": 1993,
+          "reasons": {
+            "initial_depth_or_capital": 107,
+            "no_positive_declared_edge": 1131,
+            "timing_limit": 755
+          },
+          "unmatched_quantity": {
+            "count": 0,
+            "quantiles": null
+          }
+        },
+        "optimistic": {
+          "causal_decisions": {
+            "abstain": 1993
+          },
+          "examples": [
+            {
+              "actual_fills": "unknown_counterfactual",
+              "assumption_id": "0a4e39e24db6a8e33a23d91815038a639d3414cd7c9a30f4cac0179b7c5089f4",
+              "capital_budget": "1000",
+              "decision": "abstain",
+              "delay_ms": 100,
+              "evidence_kind": "hypothetical_execution_bounds",
+              "example_id": "06d7b591ac85d3f1e95eb2baaf4b1b6d89a03f1da83ff15010321a7cd94bbbab",
+              "fill_probability": null,
+              "future_evidence_used": false,
+              "hypothetical_pnl_bounds": null,
+              "orders_submitted": false,
+              "quantity_requested": "10",
+              "reason": "no_positive_declared_edge",
+              "scenario": "optimistic",
+              "status": "abstain",
+              "unit": "collateral_unit"
+            },
+            {
+              "actual_fills": "unknown_counterfactual",
+              "assumption_id": "0a4e39e24db6a8e33a23d91815038a639d3414cd7c9a30f4cac0179b7c5089f4",
+              "capital_budget": "1000",
+              "decision": "abstain",
+              "delay_ms": 100,
+              "evidence_kind": "hypothetical_execution_bounds",
+              "example_id": "eb452aed2cac384a7698343febee68ea069a9a943e84db9b338aaf9cff0cd0ef",
+              "fill_probability": null,
+              "future_evidence_used": false,
+              "hypothetical_pnl_bounds": null,
+              "orders_submitted": false,
+              "quantity_requested": "10",
+              "reason": "no_positive_declared_edge",
+              "scenario": "optimistic",
+              "status": "abstain",
+              "unit": "collateral_unit"
+            }
+          ],
+          "followup_statuses": {
+            "abstain": 1993
+          },
+          "hypothetical_lower_pnl": {
+            "count": 0,
+            "quantiles": null
+          },
+          "hypothetical_upper_pnl": {
+            "count": 0,
+            "quantiles": null
+          },
+          "matched_decisions": 1993,
+          "reasons": {
+            "initial_depth_or_capital": 161,
+            "no_positive_declared_edge": 1832
+          },
+          "unmatched_quantity": {
+            "count": 0,
+            "quantiles": null
+          }
+        },
+        "stress": {
+          "causal_decisions": {
+            "abstain": 1993
+          },
+          "examples": [
+            {
+              "actual_fills": "unknown_counterfactual",
+              "assumption_id": "7209a906d06230d011ea8ecf05c80066a96171fc9741a58dbcaa3be2d619071c",
+              "capital_budget": "1000",
+              "decision": "abstain",
+              "delay_ms": 5000,
+              "evidence_kind": "hypothetical_execution_bounds",
+              "example_id": "61d74c0e5891cc5ca8560b99eb37370aaa777222b0107aced056a55a1bda91fb",
+              "fill_probability": null,
+              "future_evidence_used": false,
+              "hypothetical_pnl_bounds": null,
+              "orders_submitted": false,
+              "quantity_requested": "10",
+              "reason": "no_positive_declared_edge",
+              "scenario": "stress",
+              "status": "abstain",
+              "unit": "collateral_unit"
+            },
+            {
+              "actual_fills": "unknown_counterfactual",
+              "assumption_id": "7209a906d06230d011ea8ecf05c80066a96171fc9741a58dbcaa3be2d619071c",
+              "capital_budget": "1000",
+              "decision": "abstain",
+              "delay_ms": 5000,
+              "evidence_kind": "hypothetical_execution_bounds",
+              "example_id": "e8e8a2379804ee696be3b60e744eb54406f69ea86587b1e719e83d0355df1cfc",
+              "fill_probability": null,
+              "future_evidence_used": false,
+              "hypothetical_pnl_bounds": null,
+              "orders_submitted": false,
+              "quantity_requested": "10",
+              "reason": "no_positive_declared_edge",
+              "scenario": "stress",
+              "status": "abstain",
+              "unit": "collateral_unit"
+            }
+          ],
+          "followup_statuses": {
+            "abstain": 1993
+          },
+          "hypothetical_lower_pnl": {
+            "count": 0,
+            "quantiles": null
+          },
+          "hypothetical_upper_pnl": {
+            "count": 0,
+            "quantiles": null
+          },
+          "matched_decisions": 1993,
+          "reasons": {
+            "initial_depth_or_capital": 161,
+            "no_positive_declared_edge": 1832
+          },
+          "unmatched_quantity": {
+            "count": 0,
+            "quantiles": null
+          }
+        }
+      },
+      "quantity=25;capital=10": {
+        "conservative": {
+          "causal_decisions": {
+            "abstain": 1993
+          },
+          "examples": [
+            {
+              "actual_fills": "unknown_counterfactual",
+              "assumption_id": "556261912f0141efc4313765c36f712af67d41626c72de074c91e05f3d2ed6f7",
+              "capital_budget": "10",
+              "decision": "abstain",
+              "delay_ms": 1000,
+              "evidence_kind": "hypothetical_execution_bounds",
+              "example_id": "52a5ecb2d45843a83d18608b4ad93dcd57f4ad04bd7fd7c6af2bb8833ae8cc98",
+              "fill_probability": null,
+              "future_evidence_used": false,
+              "hypothetical_pnl_bounds": null,
+              "orders_submitted": false,
+              "quantity_requested": "25",
+              "reason": "initial_depth_or_capital",
+              "scenario": "conservative",
+              "status": "abstain",
+              "unit": "collateral_unit"
+            },
+            {
+              "actual_fills": "unknown_counterfactual",
+              "assumption_id": "556261912f0141efc4313765c36f712af67d41626c72de074c91e05f3d2ed6f7",
+              "capital_budget": "10",
+              "decision": "abstain",
+              "delay_ms": 1000,
+              "evidence_kind": "hypothetical_execution_bounds",
+              "example_id": "5de39baac868cbf214b12840964271eef793029c9cf8ab4da7d6f0cb51edae94",
+              "fill_probability": null,
+              "future_evidence_used": false,
+              "hypothetical_pnl_bounds": null,
+              "orders_submitted": false,
+              "quantity_requested": "25",
+              "reason": "initial_depth_or_capital",
+              "scenario": "conservative",
+              "status": "abstain",
+              "unit": "collateral_unit"
+            }
+          ],
+          "followup_statuses": {
+            "abstain": 1993
+          },
+          "hypothetical_lower_pnl": {
+            "count": 0,
+            "quantiles": null
+          },
+          "hypothetical_upper_pnl": {
+            "count": 0,
+            "quantiles": null
+          },
+          "matched_decisions": 1993,
+          "reasons": {
+            "initial_depth_or_capital": 1107,
+            "timing_limit": 886
+          },
+          "unmatched_quantity": {
+            "count": 0,
+            "quantiles": null
+          }
+        },
+        "intermediate": {
+          "causal_decisions": {
+            "abstain": 1993
+          },
+          "examples": [
+            {
+              "actual_fills": "unknown_counterfactual",
+              "assumption_id": "25321aa9cc6137f867af300aac072cbea1554ce69c9687739cb1bba7238801d3",
+              "capital_budget": "10",
+              "decision": "abstain",
+              "delay_ms": 300,
+              "evidence_kind": "hypothetical_execution_bounds",
+              "example_id": "a618fac7071c28cba626c8403750b453307dbe83123db7a4b0a23bfe6eb798be",
+              "fill_probability": null,
+              "future_evidence_used": false,
+              "hypothetical_pnl_bounds": null,
+              "orders_submitted": false,
+              "quantity_requested": "25",
+              "reason": "initial_depth_or_capital",
+              "scenario": "intermediate",
+              "status": "abstain",
+              "unit": "collateral_unit"
+            },
+            {
+              "actual_fills": "unknown_counterfactual",
+              "assumption_id": "25321aa9cc6137f867af300aac072cbea1554ce69c9687739cb1bba7238801d3",
+              "capital_budget": "10",
+              "decision": "abstain",
+              "delay_ms": 300,
+              "evidence_kind": "hypothetical_execution_bounds",
+              "example_id": "b68f81224a1e8881e8198b0a90185c12bec67539937b37246f3ea4137ce4fc95",
+              "fill_probability": null,
+              "future_evidence_used": false,
+              "hypothetical_pnl_bounds": null,
+              "orders_submitted": false,
+              "quantity_requested": "25",
+              "reason": "initial_depth_or_capital",
+              "scenario": "intermediate",
+              "status": "abstain",
+              "unit": "collateral_unit"
+            }
+          ],
+          "followup_statuses": {
+            "abstain": 1993
+          },
+          "hypothetical_lower_pnl": {
+            "count": 0,
+            "quantiles": null
+          },
+          "hypothetical_upper_pnl": {
+            "count": 0,
+            "quantiles": null
+          },
+          "matched_decisions": 1993,
+          "reasons": {
+            "initial_depth_or_capital": 1238,
+            "timing_limit": 755
+          },
+          "unmatched_quantity": {
+            "count": 0,
+            "quantiles": null
+          }
+        },
+        "optimistic": {
+          "causal_decisions": {
+            "abstain": 1993
+          },
+          "examples": [
+            {
+              "actual_fills": "unknown_counterfactual",
+              "assumption_id": "0a4e39e24db6a8e33a23d91815038a639d3414cd7c9a30f4cac0179b7c5089f4",
+              "capital_budget": "10",
+              "decision": "abstain",
+              "delay_ms": 100,
+              "evidence_kind": "hypothetical_execution_bounds",
+              "example_id": "06d7b591ac85d3f1e95eb2baaf4b1b6d89a03f1da83ff15010321a7cd94bbbab",
+              "fill_probability": null,
+              "future_evidence_used": false,
+              "hypothetical_pnl_bounds": null,
+              "orders_submitted": false,
+              "quantity_requested": "25",
+              "reason": "initial_depth_or_capital",
+              "scenario": "optimistic",
+              "status": "abstain",
+              "unit": "collateral_unit"
+            },
+            {
+              "actual_fills": "unknown_counterfactual",
+              "assumption_id": "0a4e39e24db6a8e33a23d91815038a639d3414cd7c9a30f4cac0179b7c5089f4",
+              "capital_budget": "10",
+              "decision": "abstain",
+              "delay_ms": 100,
+              "evidence_kind": "hypothetical_execution_bounds",
+              "example_id": "eb452aed2cac384a7698343febee68ea069a9a943e84db9b338aaf9cff0cd0ef",
+              "fill_probability": null,
+              "future_evidence_used": false,
+              "hypothetical_pnl_bounds": null,
+              "orders_submitted": false,
+              "quantity_requested": "25",
+              "reason": "initial_depth_or_capital",
+              "scenario": "optimistic",
+              "status": "abstain",
+              "unit": "collateral_unit"
+            }
+          ],
+          "followup_statuses": {
+            "abstain": 1993
+          },
+          "hypothetical_lower_pnl": {
+            "count": 0,
+            "quantiles": null
+          },
+          "hypothetical_upper_pnl": {
+            "count": 0,
+            "quantiles": null
+          },
+          "matched_decisions": 1993,
+          "reasons": {
+            "initial_depth_or_capital": 1993
+          },
+          "unmatched_quantity": {
+            "count": 0,
+            "quantiles": null
+          }
+        },
+        "stress": {
+          "causal_decisions": {
+            "abstain": 1993
+          },
+          "examples": [
+            {
+              "actual_fills": "unknown_counterfactual",
+              "assumption_id": "7209a906d06230d011ea8ecf05c80066a96171fc9741a58dbcaa3be2d619071c",
+              "capital_budget": "10",
+              "decision": "abstain",
+              "delay_ms": 5000,
+              "evidence_kind": "hypothetical_execution_bounds",
+              "example_id": "61d74c0e5891cc5ca8560b99eb37370aaa777222b0107aced056a55a1bda91fb",
+              "fill_probability": null,
+              "future_evidence_used": false,
+              "hypothetical_pnl_bounds": null,
+              "orders_submitted": false,
+              "quantity_requested": "25",
+              "reason": "initial_depth_or_capital",
+              "scenario": "stress",
+              "status": "abstain",
+              "unit": "collateral_unit"
+            },
+            {
+              "actual_fills": "unknown_counterfactual",
+              "assumption_id": "7209a906d06230d011ea8ecf05c80066a96171fc9741a58dbcaa3be2d619071c",
+              "capital_budget": "10",
+              "decision": "abstain",
+              "delay_ms": 5000,
+              "evidence_kind": "hypothetical_execution_bounds",
+              "example_id": "e8e8a2379804ee696be3b60e744eb54406f69ea86587b1e719e83d0355df1cfc",
+              "fill_probability": null,
+              "future_evidence_used": false,
+              "hypothetical_pnl_bounds": null,
+              "orders_submitted": false,
+              "quantity_requested": "25",
+              "reason": "initial_depth_or_capital",
+              "scenario": "stress",
+              "status": "abstain",
+              "unit": "collateral_unit"
+            }
+          ],
+          "followup_statuses": {
+            "abstain": 1993
+          },
+          "hypothetical_lower_pnl": {
+            "count": 0,
+            "quantiles": null
+          },
+          "hypothetical_upper_pnl": {
+            "count": 0,
+            "quantiles": null
+          },
+          "matched_decisions": 1993,
+          "reasons": {
+            "initial_depth_or_capital": 1993
+          },
+          "unmatched_quantity": {
+            "count": 0,
+            "quantiles": null
+          }
+        }
+      },
+      "quantity=25;capital=100": {
+        "conservative": {
+          "causal_decisions": {
+            "abstain": 1993
+          },
+          "examples": [
+            {
+              "actual_fills": "unknown_counterfactual",
+              "assumption_id": "556261912f0141efc4313765c36f712af67d41626c72de074c91e05f3d2ed6f7",
+              "capital_budget": "100",
+              "decision": "abstain",
+              "delay_ms": 1000,
+              "evidence_kind": "hypothetical_execution_bounds",
+              "example_id": "52a5ecb2d45843a83d18608b4ad93dcd57f4ad04bd7fd7c6af2bb8833ae8cc98",
+              "fill_probability": null,
+              "future_evidence_used": false,
+              "hypothetical_pnl_bounds": null,
+              "orders_submitted": false,
+              "quantity_requested": "25",
+              "reason": "no_positive_declared_edge",
+              "scenario": "conservative",
+              "status": "abstain",
+              "unit": "collateral_unit"
+            },
+            {
+              "actual_fills": "unknown_counterfactual",
+              "assumption_id": "556261912f0141efc4313765c36f712af67d41626c72de074c91e05f3d2ed6f7",
+              "capital_budget": "100",
+              "decision": "abstain",
+              "delay_ms": 1000,
+              "evidence_kind": "hypothetical_execution_bounds",
+              "example_id": "5de39baac868cbf214b12840964271eef793029c9cf8ab4da7d6f0cb51edae94",
+              "fill_probability": null,
+              "future_evidence_used": false,
+              "hypothetical_pnl_bounds": null,
+              "orders_submitted": false,
+              "quantity_requested": "25",
+              "reason": "no_positive_declared_edge",
+              "scenario": "conservative",
+              "status": "abstain",
+              "unit": "collateral_unit"
+            }
+          ],
+          "followup_statuses": {
+            "abstain": 1993
+          },
+          "hypothetical_lower_pnl": {
+            "count": 0,
+            "quantiles": null
+          },
+          "hypothetical_upper_pnl": {
+            "count": 0,
+            "quantiles": null
+          },
+          "matched_decisions": 1993,
+          "reasons": {
+            "initial_depth_or_capital": 145,
+            "no_positive_declared_edge": 962,
+            "timing_limit": 886
+          },
+          "unmatched_quantity": {
+            "count": 0,
+            "quantiles": null
+          }
+        },
+        "intermediate": {
+          "causal_decisions": {
+            "abstain": 1993
+          },
+          "examples": [
+            {
+              "actual_fills": "unknown_counterfactual",
+              "assumption_id": "25321aa9cc6137f867af300aac072cbea1554ce69c9687739cb1bba7238801d3",
+              "capital_budget": "100",
+              "decision": "abstain",
+              "delay_ms": 300,
+              "evidence_kind": "hypothetical_execution_bounds",
+              "example_id": "a618fac7071c28cba626c8403750b453307dbe83123db7a4b0a23bfe6eb798be",
+              "fill_probability": null,
+              "future_evidence_used": false,
+              "hypothetical_pnl_bounds": null,
+              "orders_submitted": false,
+              "quantity_requested": "25",
+              "reason": "no_positive_declared_edge",
+              "scenario": "intermediate",
+              "status": "abstain",
+              "unit": "collateral_unit"
+            },
+            {
+              "actual_fills": "unknown_counterfactual",
+              "assumption_id": "25321aa9cc6137f867af300aac072cbea1554ce69c9687739cb1bba7238801d3",
+              "capital_budget": "100",
+              "decision": "abstain",
+              "delay_ms": 300,
+              "evidence_kind": "hypothetical_execution_bounds",
+              "example_id": "b68f81224a1e8881e8198b0a90185c12bec67539937b37246f3ea4137ce4fc95",
+              "fill_probability": null,
+              "future_evidence_used": false,
+              "hypothetical_pnl_bounds": null,
+              "orders_submitted": false,
+              "quantity_requested": "25",
+              "reason": "no_positive_declared_edge",
+              "scenario": "intermediate",
+              "status": "abstain",
+              "unit": "collateral_unit"
+            }
+          ],
+          "followup_statuses": {
+            "abstain": 1993
+          },
+          "hypothetical_lower_pnl": {
+            "count": 0,
+            "quantiles": null
+          },
+          "hypothetical_upper_pnl": {
+            "count": 0,
+            "quantiles": null
+          },
+          "matched_decisions": 1993,
+          "reasons": {
+            "initial_depth_or_capital": 174,
+            "no_positive_declared_edge": 1064,
+            "timing_limit": 755
+          },
+          "unmatched_quantity": {
+            "count": 0,
+            "quantiles": null
+          }
+        },
+        "optimistic": {
+          "causal_decisions": {
+            "abstain": 1993
+          },
+          "examples": [
+            {
+              "actual_fills": "unknown_counterfactual",
+              "assumption_id": "0a4e39e24db6a8e33a23d91815038a639d3414cd7c9a30f4cac0179b7c5089f4",
+              "capital_budget": "100",
+              "decision": "abstain",
+              "delay_ms": 100,
+              "evidence_kind": "hypothetical_execution_bounds",
+              "example_id": "06d7b591ac85d3f1e95eb2baaf4b1b6d89a03f1da83ff15010321a7cd94bbbab",
+              "fill_probability": null,
+              "future_evidence_used": false,
+              "hypothetical_pnl_bounds": null,
+              "orders_submitted": false,
+              "quantity_requested": "25",
+              "reason": "no_positive_declared_edge",
+              "scenario": "optimistic",
+              "status": "abstain",
+              "unit": "collateral_unit"
+            },
+            {
+              "actual_fills": "unknown_counterfactual",
+              "assumption_id": "0a4e39e24db6a8e33a23d91815038a639d3414cd7c9a30f4cac0179b7c5089f4",
+              "capital_budget": "100",
+              "decision": "abstain",
+              "delay_ms": 100,
+              "evidence_kind": "hypothetical_execution_bounds",
+              "example_id": "eb452aed2cac384a7698343febee68ea069a9a943e84db9b338aaf9cff0cd0ef",
+              "fill_probability": null,
+              "future_evidence_used": false,
+              "hypothetical_pnl_bounds": null,
+              "orders_submitted": false,
+              "quantity_requested": "25",
+              "reason": "no_positive_declared_edge",
+              "scenario": "optimistic",
+              "status": "abstain",
+              "unit": "collateral_unit"
+            }
+          ],
+          "followup_statuses": {
+            "abstain": 1993
+          },
+          "hypothetical_lower_pnl": {
+            "count": 0,
+            "quantiles": null
+          },
+          "hypothetical_upper_pnl": {
+            "count": 0,
+            "quantiles": null
+          },
+          "matched_decisions": 1993,
+          "reasons": {
+            "initial_depth_or_capital": 259,
+            "no_positive_declared_edge": 1734
+          },
+          "unmatched_quantity": {
+            "count": 0,
+            "quantiles": null
+          }
+        },
+        "stress": {
+          "causal_decisions": {
+            "abstain": 1993
+          },
+          "examples": [
+            {
+              "actual_fills": "unknown_counterfactual",
+              "assumption_id": "7209a906d06230d011ea8ecf05c80066a96171fc9741a58dbcaa3be2d619071c",
+              "capital_budget": "100",
+              "decision": "abstain",
+              "delay_ms": 5000,
+              "evidence_kind": "hypothetical_execution_bounds",
+              "example_id": "61d74c0e5891cc5ca8560b99eb37370aaa777222b0107aced056a55a1bda91fb",
+              "fill_probability": null,
+              "future_evidence_used": false,
+              "hypothetical_pnl_bounds": null,
+              "orders_submitted": false,
+              "quantity_requested": "25",
+              "reason": "no_positive_declared_edge",
+              "scenario": "stress",
+              "status": "abstain",
+              "unit": "collateral_unit"
+            },
+            {
+              "actual_fills": "unknown_counterfactual",
+              "assumption_id": "7209a906d06230d011ea8ecf05c80066a96171fc9741a58dbcaa3be2d619071c",
+              "capital_budget": "100",
+              "decision": "abstain",
+              "delay_ms": 5000,
+              "evidence_kind": "hypothetical_execution_bounds",
+              "example_id": "e8e8a2379804ee696be3b60e744eb54406f69ea86587b1e719e83d0355df1cfc",
+              "fill_probability": null,
+              "future_evidence_used": false,
+              "hypothetical_pnl_bounds": null,
+              "orders_submitted": false,
+              "quantity_requested": "25",
+              "reason": "no_positive_declared_edge",
+              "scenario": "stress",
+              "status": "abstain",
+              "unit": "collateral_unit"
+            }
+          ],
+          "followup_statuses": {
+            "abstain": 1993
+          },
+          "hypothetical_lower_pnl": {
+            "count": 0,
+            "quantiles": null
+          },
+          "hypothetical_upper_pnl": {
+            "count": 0,
+            "quantiles": null
+          },
+          "matched_decisions": 1993,
+          "reasons": {
+            "initial_depth_or_capital": 259,
+            "no_positive_declared_edge": 1734
+          },
+          "unmatched_quantity": {
+            "count": 0,
+            "quantiles": null
+          }
+        }
+      },
+      "quantity=25;capital=1000": {
+        "conservative": {
+          "causal_decisions": {
+            "abstain": 1993
+          },
+          "examples": [
+            {
+              "actual_fills": "unknown_counterfactual",
+              "assumption_id": "556261912f0141efc4313765c36f712af67d41626c72de074c91e05f3d2ed6f7",
+              "capital_budget": "1000",
+              "decision": "abstain",
+              "delay_ms": 1000,
+              "evidence_kind": "hypothetical_execution_bounds",
+              "example_id": "52a5ecb2d45843a83d18608b4ad93dcd57f4ad04bd7fd7c6af2bb8833ae8cc98",
+              "fill_probability": null,
+              "future_evidence_used": false,
+              "hypothetical_pnl_bounds": null,
+              "orders_submitted": false,
+              "quantity_requested": "25",
+              "reason": "no_positive_declared_edge",
+              "scenario": "conservative",
+              "status": "abstain",
+              "unit": "collateral_unit"
+            },
+            {
+              "actual_fills": "unknown_counterfactual",
+              "assumption_id": "556261912f0141efc4313765c36f712af67d41626c72de074c91e05f3d2ed6f7",
+              "capital_budget": "1000",
+              "decision": "abstain",
+              "delay_ms": 1000,
+              "evidence_kind": "hypothetical_execution_bounds",
+              "example_id": "5de39baac868cbf214b12840964271eef793029c9cf8ab4da7d6f0cb51edae94",
+              "fill_probability": null,
+              "future_evidence_used": false,
+              "hypothetical_pnl_bounds": null,
+              "orders_submitted": false,
+              "quantity_requested": "25",
+              "reason": "no_positive_declared_edge",
+              "scenario": "conservative",
+              "status": "abstain",
+              "unit": "collateral_unit"
+            }
+          ],
+          "followup_statuses": {
+            "abstain": 1993
+          },
+          "hypothetical_lower_pnl": {
+            "count": 0,
+            "quantiles": null
+          },
+          "hypothetical_upper_pnl": {
+            "count": 0,
+            "quantiles": null
+          },
+          "matched_decisions": 1993,
+          "reasons": {
+            "initial_depth_or_capital": 145,
+            "no_positive_declared_edge": 962,
+            "timing_limit": 886
+          },
+          "unmatched_quantity": {
+            "count": 0,
+            "quantiles": null
+          }
+        },
+        "intermediate": {
+          "causal_decisions": {
+            "abstain": 1993
+          },
+          "examples": [
+            {
+              "actual_fills": "unknown_counterfactual",
+              "assumption_id": "25321aa9cc6137f867af300aac072cbea1554ce69c9687739cb1bba7238801d3",
+              "capital_budget": "1000",
+              "decision": "abstain",
+              "delay_ms": 300,
+              "evidence_kind": "hypothetical_execution_bounds",
+              "example_id": "a618fac7071c28cba626c8403750b453307dbe83123db7a4b0a23bfe6eb798be",
+              "fill_probability": null,
+              "future_evidence_used": false,
+              "hypothetical_pnl_bounds": null,
+              "orders_submitted": false,
+              "quantity_requested": "25",
+              "reason": "no_positive_declared_edge",
+              "scenario": "intermediate",
+              "status": "abstain",
+              "unit": "collateral_unit"
+            },
+            {
+              "actual_fills": "unknown_counterfactual",
+              "assumption_id": "25321aa9cc6137f867af300aac072cbea1554ce69c9687739cb1bba7238801d3",
+              "capital_budget": "1000",
+              "decision": "abstain",
+              "delay_ms": 300,
+              "evidence_kind": "hypothetical_execution_bounds",
+              "example_id": "b68f81224a1e8881e8198b0a90185c12bec67539937b37246f3ea4137ce4fc95",
+              "fill_probability": null,
+              "future_evidence_used": false,
+              "hypothetical_pnl_bounds": null,
+              "orders_submitted": false,
+              "quantity_requested": "25",
+              "reason": "no_positive_declared_edge",
+              "scenario": "intermediate",
+              "status": "abstain",
+              "unit": "collateral_unit"
+            }
+          ],
+          "followup_statuses": {
+            "abstain": 1993
+          },
+          "hypothetical_lower_pnl": {
+            "count": 0,
+            "quantiles": null
+          },
+          "hypothetical_upper_pnl": {
+            "count": 0,
+            "quantiles": null
+          },
+          "matched_decisions": 1993,
+          "reasons": {
+            "initial_depth_or_capital": 174,
+            "no_positive_declared_edge": 1064,
+            "timing_limit": 755
+          },
+          "unmatched_quantity": {
+            "count": 0,
+            "quantiles": null
+          }
+        },
+        "optimistic": {
+          "causal_decisions": {
+            "abstain": 1993
+          },
+          "examples": [
+            {
+              "actual_fills": "unknown_counterfactual",
+              "assumption_id": "0a4e39e24db6a8e33a23d91815038a639d3414cd7c9a30f4cac0179b7c5089f4",
+              "capital_budget": "1000",
+              "decision": "abstain",
+              "delay_ms": 100,
+              "evidence_kind": "hypothetical_execution_bounds",
+              "example_id": "06d7b591ac85d3f1e95eb2baaf4b1b6d89a03f1da83ff15010321a7cd94bbbab",
+              "fill_probability": null,
+              "future_evidence_used": false,
+              "hypothetical_pnl_bounds": null,
+              "orders_submitted": false,
+              "quantity_requested": "25",
+              "reason": "no_positive_declared_edge",
+              "scenario": "optimistic",
+              "status": "abstain",
+              "unit": "collateral_unit"
+            },
+            {
+              "actual_fills": "unknown_counterfactual",
+              "assumption_id": "0a4e39e24db6a8e33a23d91815038a639d3414cd7c9a30f4cac0179b7c5089f4",
+              "capital_budget": "1000",
+              "decision": "abstain",
+              "delay_ms": 100,
+              "evidence_kind": "hypothetical_execution_bounds",
+              "example_id": "eb452aed2cac384a7698343febee68ea069a9a943e84db9b338aaf9cff0cd0ef",
+              "fill_probability": null,
+              "future_evidence_used": false,
+              "hypothetical_pnl_bounds": null,
+              "orders_submitted": false,
+              "quantity_requested": "25",
+              "reason": "no_positive_declared_edge",
+              "scenario": "optimistic",
+              "status": "abstain",
+              "unit": "collateral_unit"
+            }
+          ],
+          "followup_statuses": {
+            "abstain": 1993
+          },
+          "hypothetical_lower_pnl": {
+            "count": 0,
+            "quantiles": null
+          },
+          "hypothetical_upper_pnl": {
+            "count": 0,
+            "quantiles": null
+          },
+          "matched_decisions": 1993,
+          "reasons": {
+            "initial_depth_or_capital": 259,
+            "no_positive_declared_edge": 1734
+          },
+          "unmatched_quantity": {
+            "count": 0,
+            "quantiles": null
+          }
+        },
+        "stress": {
+          "causal_decisions": {
+            "abstain": 1993
+          },
+          "examples": [
+            {
+              "actual_fills": "unknown_counterfactual",
+              "assumption_id": "7209a906d06230d011ea8ecf05c80066a96171fc9741a58dbcaa3be2d619071c",
+              "capital_budget": "1000",
+              "decision": "abstain",
+              "delay_ms": 5000,
+              "evidence_kind": "hypothetical_execution_bounds",
+              "example_id": "61d74c0e5891cc5ca8560b99eb37370aaa777222b0107aced056a55a1bda91fb",
+              "fill_probability": null,
+              "future_evidence_used": false,
+              "hypothetical_pnl_bounds": null,
+              "orders_submitted": false,
+              "quantity_requested": "25",
+              "reason": "no_positive_declared_edge",
+              "scenario": "stress",
+              "status": "abstain",
+              "unit": "collateral_unit"
+            },
+            {
+              "actual_fills": "unknown_counterfactual",
+              "assumption_id": "7209a906d06230d011ea8ecf05c80066a96171fc9741a58dbcaa3be2d619071c",
+              "capital_budget": "1000",
+              "decision": "abstain",
+              "delay_ms": 5000,
+              "evidence_kind": "hypothetical_execution_bounds",
+              "example_id": "e8e8a2379804ee696be3b60e744eb54406f69ea86587b1e719e83d0355df1cfc",
+              "fill_probability": null,
+              "future_evidence_used": false,
+              "hypothetical_pnl_bounds": null,
+              "orders_submitted": false,
+              "quantity_requested": "25",
+              "reason": "no_positive_declared_edge",
+              "scenario": "stress",
+              "status": "abstain",
+              "unit": "collateral_unit"
+            }
+          ],
+          "followup_statuses": {
+            "abstain": 1993
+          },
+          "hypothetical_lower_pnl": {
+            "count": 0,
+            "quantiles": null
+          },
+          "hypothetical_upper_pnl": {
+            "count": 0,
+            "quantiles": null
+          },
+          "matched_decisions": 1993,
+          "reasons": {
+            "initial_depth_or_capital": 259,
+            "no_positive_declared_edge": 1734
+          },
+          "unmatched_quantity": {
+            "count": 0,
+            "quantiles": null
+          }
+        }
+      },
+      "quantity=5;capital=10": {
+        "conservative": {
+          "causal_decisions": {
+            "abstain": 1993
+          },
+          "examples": [
+            {
+              "actual_fills": "unknown_counterfactual",
+              "assumption_id": "556261912f0141efc4313765c36f712af67d41626c72de074c91e05f3d2ed6f7",
+              "capital_budget": "10",
+              "decision": "abstain",
+              "delay_ms": 1000,
+              "evidence_kind": "hypothetical_execution_bounds",
+              "example_id": "52a5ecb2d45843a83d18608b4ad93dcd57f4ad04bd7fd7c6af2bb8833ae8cc98",
+              "fill_probability": null,
+              "future_evidence_used": false,
+              "hypothetical_pnl_bounds": null,
+              "orders_submitted": false,
+              "quantity_requested": "5",
+              "reason": "no_positive_declared_edge",
+              "scenario": "conservative",
+              "status": "abstain",
+              "unit": "collateral_unit"
+            },
+            {
+              "actual_fills": "unknown_counterfactual",
+              "assumption_id": "556261912f0141efc4313765c36f712af67d41626c72de074c91e05f3d2ed6f7",
+              "capital_budget": "10",
+              "decision": "abstain",
+              "delay_ms": 1000,
+              "evidence_kind": "hypothetical_execution_bounds",
+              "example_id": "5de39baac868cbf214b12840964271eef793029c9cf8ab4da7d6f0cb51edae94",
+              "fill_probability": null,
+              "future_evidence_used": false,
+              "hypothetical_pnl_bounds": null,
+              "orders_submitted": false,
+              "quantity_requested": "5",
+              "reason": "no_positive_declared_edge",
+              "scenario": "conservative",
+              "status": "abstain",
+              "unit": "collateral_unit"
+            }
+          ],
+          "followup_statuses": {
+            "abstain": 1993
+          },
+          "hypothetical_lower_pnl": {
+            "count": 0,
+            "quantiles": null
+          },
+          "hypothetical_upper_pnl": {
+            "count": 0,
+            "quantiles": null
+          },
+          "matched_decisions": 1993,
+          "reasons": {
+            "initial_depth_or_capital": 4,
+            "no_positive_declared_edge": 1103,
+            "timing_limit": 886
+          },
+          "unmatched_quantity": {
+            "count": 0,
+            "quantiles": null
+          }
+        },
+        "intermediate": {
+          "causal_decisions": {
+            "abstain": 1993
+          },
+          "examples": [
+            {
+              "actual_fills": "unknown_counterfactual",
+              "assumption_id": "25321aa9cc6137f867af300aac072cbea1554ce69c9687739cb1bba7238801d3",
+              "capital_budget": "10",
+              "decision": "abstain",
+              "delay_ms": 300,
+              "evidence_kind": "hypothetical_execution_bounds",
+              "example_id": "a618fac7071c28cba626c8403750b453307dbe83123db7a4b0a23bfe6eb798be",
+              "fill_probability": null,
+              "future_evidence_used": false,
+              "hypothetical_pnl_bounds": null,
+              "orders_submitted": false,
+              "quantity_requested": "5",
+              "reason": "no_positive_declared_edge",
+              "scenario": "intermediate",
+              "status": "abstain",
+              "unit": "collateral_unit"
+            },
+            {
+              "actual_fills": "unknown_counterfactual",
+              "assumption_id": "25321aa9cc6137f867af300aac072cbea1554ce69c9687739cb1bba7238801d3",
+              "capital_budget": "10",
+              "decision": "abstain",
+              "delay_ms": 300,
+              "evidence_kind": "hypothetical_execution_bounds",
+              "example_id": "b68f81224a1e8881e8198b0a90185c12bec67539937b37246f3ea4137ce4fc95",
+              "fill_probability": null,
+              "future_evidence_used": false,
+              "hypothetical_pnl_bounds": null,
+              "orders_submitted": false,
+              "quantity_requested": "5",
+              "reason": "no_positive_declared_edge",
+              "scenario": "intermediate",
+              "status": "abstain",
+              "unit": "collateral_unit"
+            }
+          ],
+          "followup_statuses": {
+            "abstain": 1993
+          },
+          "hypothetical_lower_pnl": {
+            "count": 0,
+            "quantiles": null
+          },
+          "hypothetical_upper_pnl": {
+            "count": 0,
+            "quantiles": null
+          },
+          "matched_decisions": 1993,
+          "reasons": {
+            "initial_depth_or_capital": 5,
+            "no_positive_declared_edge": 1233,
+            "timing_limit": 755
+          },
+          "unmatched_quantity": {
+            "count": 0,
+            "quantiles": null
+          }
+        },
+        "optimistic": {
+          "causal_decisions": {
+            "abstain": 1993
+          },
+          "examples": [
+            {
+              "actual_fills": "unknown_counterfactual",
+              "assumption_id": "0a4e39e24db6a8e33a23d91815038a639d3414cd7c9a30f4cac0179b7c5089f4",
+              "capital_budget": "10",
+              "decision": "abstain",
+              "delay_ms": 100,
+              "evidence_kind": "hypothetical_execution_bounds",
+              "example_id": "06d7b591ac85d3f1e95eb2baaf4b1b6d89a03f1da83ff15010321a7cd94bbbab",
+              "fill_probability": null,
+              "future_evidence_used": false,
+              "hypothetical_pnl_bounds": null,
+              "orders_submitted": false,
+              "quantity_requested": "5",
+              "reason": "no_positive_declared_edge",
+              "scenario": "optimistic",
+              "status": "abstain",
+              "unit": "collateral_unit"
+            },
+            {
+              "actual_fills": "unknown_counterfactual",
+              "assumption_id": "0a4e39e24db6a8e33a23d91815038a639d3414cd7c9a30f4cac0179b7c5089f4",
+              "capital_budget": "10",
+              "decision": "abstain",
+              "delay_ms": 100,
+              "evidence_kind": "hypothetical_execution_bounds",
+              "example_id": "eb452aed2cac384a7698343febee68ea069a9a943e84db9b338aaf9cff0cd0ef",
+              "fill_probability": null,
+              "future_evidence_used": false,
+              "hypothetical_pnl_bounds": null,
+              "orders_submitted": false,
+              "quantity_requested": "5",
+              "reason": "no_positive_declared_edge",
+              "scenario": "optimistic",
+              "status": "abstain",
+              "unit": "collateral_unit"
+            }
+          ],
+          "followup_statuses": {
+            "abstain": 1993
+          },
+          "hypothetical_lower_pnl": {
+            "count": 0,
+            "quantiles": null
+          },
+          "hypothetical_upper_pnl": {
+            "count": 0,
+            "quantiles": null
+          },
+          "matched_decisions": 1993,
+          "reasons": {
+            "initial_depth_or_capital": 8,
+            "no_positive_declared_edge": 1985
+          },
+          "unmatched_quantity": {
+            "count": 0,
+            "quantiles": null
+          }
+        },
+        "stress": {
+          "causal_decisions": {
+            "abstain": 1993
+          },
+          "examples": [
+            {
+              "actual_fills": "unknown_counterfactual",
+              "assumption_id": "7209a906d06230d011ea8ecf05c80066a96171fc9741a58dbcaa3be2d619071c",
+              "capital_budget": "10",
+              "decision": "abstain",
+              "delay_ms": 5000,
+              "evidence_kind": "hypothetical_execution_bounds",
+              "example_id": "61d74c0e5891cc5ca8560b99eb37370aaa777222b0107aced056a55a1bda91fb",
+              "fill_probability": null,
+              "future_evidence_used": false,
+              "hypothetical_pnl_bounds": null,
+              "orders_submitted": false,
+              "quantity_requested": "5",
+              "reason": "no_positive_declared_edge",
+              "scenario": "stress",
+              "status": "abstain",
+              "unit": "collateral_unit"
+            },
+            {
+              "actual_fills": "unknown_counterfactual",
+              "assumption_id": "7209a906d06230d011ea8ecf05c80066a96171fc9741a58dbcaa3be2d619071c",
+              "capital_budget": "10",
+              "decision": "abstain",
+              "delay_ms": 5000,
+              "evidence_kind": "hypothetical_execution_bounds",
+              "example_id": "e8e8a2379804ee696be3b60e744eb54406f69ea86587b1e719e83d0355df1cfc",
+              "fill_probability": null,
+              "future_evidence_used": false,
+              "hypothetical_pnl_bounds": null,
+              "orders_submitted": false,
+              "quantity_requested": "5",
+              "reason": "no_positive_declared_edge",
+              "scenario": "stress",
+              "status": "abstain",
+              "unit": "collateral_unit"
+            }
+          ],
+          "followup_statuses": {
+            "abstain": 1993
+          },
+          "hypothetical_lower_pnl": {
+            "count": 0,
+            "quantiles": null
+          },
+          "hypothetical_upper_pnl": {
+            "count": 0,
+            "quantiles": null
+          },
+          "matched_decisions": 1993,
+          "reasons": {
+            "initial_depth_or_capital": 8,
+            "no_positive_declared_edge": 1985
+          },
+          "unmatched_quantity": {
+            "count": 0,
+            "quantiles": null
+          }
+        }
+      },
+      "quantity=5;capital=100": {
+        "conservative": {
+          "causal_decisions": {
+            "abstain": 1993
+          },
+          "examples": [
+            {
+              "actual_fills": "unknown_counterfactual",
+              "assumption_id": "556261912f0141efc4313765c36f712af67d41626c72de074c91e05f3d2ed6f7",
+              "capital_budget": "100",
+              "decision": "abstain",
+              "delay_ms": 1000,
+              "evidence_kind": "hypothetical_execution_bounds",
+              "example_id": "52a5ecb2d45843a83d18608b4ad93dcd57f4ad04bd7fd7c6af2bb8833ae8cc98",
+              "fill_probability": null,
+              "future_evidence_used": false,
+              "hypothetical_pnl_bounds": null,
+              "orders_submitted": false,
+              "quantity_requested": "5",
+              "reason": "no_positive_declared_edge",
+              "scenario": "conservative",
+              "status": "abstain",
+              "unit": "collateral_unit"
+            },
+            {
+              "actual_fills": "unknown_counterfactual",
+              "assumption_id": "556261912f0141efc4313765c36f712af67d41626c72de074c91e05f3d2ed6f7",
+              "capital_budget": "100",
+              "decision": "abstain",
+              "delay_ms": 1000,
+              "evidence_kind": "hypothetical_execution_bounds",
+              "example_id": "5de39baac868cbf214b12840964271eef793029c9cf8ab4da7d6f0cb51edae94",
+              "fill_probability": null,
+              "future_evidence_used": false,
+              "hypothetical_pnl_bounds": null,
+              "orders_submitted": false,
+              "quantity_requested": "5",
+              "reason": "no_positive_declared_edge",
+              "scenario": "conservative",
+              "status": "abstain",
+              "unit": "collateral_unit"
+            }
+          ],
+          "followup_statuses": {
+            "abstain": 1993
+          },
+          "hypothetical_lower_pnl": {
+            "count": 0,
+            "quantiles": null
+          },
+          "hypothetical_upper_pnl": {
+            "count": 0,
+            "quantiles": null
+          },
+          "matched_decisions": 1993,
+          "reasons": {
+            "initial_depth_or_capital": 4,
+            "no_positive_declared_edge": 1103,
+            "timing_limit": 886
+          },
+          "unmatched_quantity": {
+            "count": 0,
+            "quantiles": null
+          }
+        },
+        "intermediate": {
+          "causal_decisions": {
+            "abstain": 1993
+          },
+          "examples": [
+            {
+              "actual_fills": "unknown_counterfactual",
+              "assumption_id": "25321aa9cc6137f867af300aac072cbea1554ce69c9687739cb1bba7238801d3",
+              "capital_budget": "100",
+              "decision": "abstain",
+              "delay_ms": 300,
+              "evidence_kind": "hypothetical_execution_bounds",
+              "example_id": "a618fac7071c28cba626c8403750b453307dbe83123db7a4b0a23bfe6eb798be",
+              "fill_probability": null,
+              "future_evidence_used": false,
+              "hypothetical_pnl_bounds": null,
+              "orders_submitted": false,
+              "quantity_requested": "5",
+              "reason": "no_positive_declared_edge",
+              "scenario": "intermediate",
+              "status": "abstain",
+              "unit": "collateral_unit"
+            },
+            {
+              "actual_fills": "unknown_counterfactual",
+              "assumption_id": "25321aa9cc6137f867af300aac072cbea1554ce69c9687739cb1bba7238801d3",
+              "capital_budget": "100",
+              "decision": "abstain",
+              "delay_ms": 300,
+              "evidence_kind": "hypothetical_execution_bounds",
+              "example_id": "b68f81224a1e8881e8198b0a90185c12bec67539937b37246f3ea4137ce4fc95",
+              "fill_probability": null,
+              "future_evidence_used": false,
+              "hypothetical_pnl_bounds": null,
+              "orders_submitted": false,
+              "quantity_requested": "5",
+              "reason": "no_positive_declared_edge",
+              "scenario": "intermediate",
+              "status": "abstain",
+              "unit": "collateral_unit"
+            }
+          ],
+          "followup_statuses": {
+            "abstain": 1993
+          },
+          "hypothetical_lower_pnl": {
+            "count": 0,
+            "quantiles": null
+          },
+          "hypothetical_upper_pnl": {
+            "count": 0,
+            "quantiles": null
+          },
+          "matched_decisions": 1993,
+          "reasons": {
+            "initial_depth_or_capital": 5,
+            "no_positive_declared_edge": 1233,
+            "timing_limit": 755
+          },
+          "unmatched_quantity": {
+            "count": 0,
+            "quantiles": null
+          }
+        },
+        "optimistic": {
+          "causal_decisions": {
+            "abstain": 1993
+          },
+          "examples": [
+            {
+              "actual_fills": "unknown_counterfactual",
+              "assumption_id": "0a4e39e24db6a8e33a23d91815038a639d3414cd7c9a30f4cac0179b7c5089f4",
+              "capital_budget": "100",
+              "decision": "abstain",
+              "delay_ms": 100,
+              "evidence_kind": "hypothetical_execution_bounds",
+              "example_id": "06d7b591ac85d3f1e95eb2baaf4b1b6d89a03f1da83ff15010321a7cd94bbbab",
+              "fill_probability": null,
+              "future_evidence_used": false,
+              "hypothetical_pnl_bounds": null,
+              "orders_submitted": false,
+              "quantity_requested": "5",
+              "reason": "no_positive_declared_edge",
+              "scenario": "optimistic",
+              "status": "abstain",
+              "unit": "collateral_unit"
+            },
+            {
+              "actual_fills": "unknown_counterfactual",
+              "assumption_id": "0a4e39e24db6a8e33a23d91815038a639d3414cd7c9a30f4cac0179b7c5089f4",
+              "capital_budget": "100",
+              "decision": "abstain",
+              "delay_ms": 100,
+              "evidence_kind": "hypothetical_execution_bounds",
+              "example_id": "eb452aed2cac384a7698343febee68ea069a9a943e84db9b338aaf9cff0cd0ef",
+              "fill_probability": null,
+              "future_evidence_used": false,
+              "hypothetical_pnl_bounds": null,
+              "orders_submitted": false,
+              "quantity_requested": "5",
+              "reason": "no_positive_declared_edge",
+              "scenario": "optimistic",
+              "status": "abstain",
+              "unit": "collateral_unit"
+            }
+          ],
+          "followup_statuses": {
+            "abstain": 1993
+          },
+          "hypothetical_lower_pnl": {
+            "count": 0,
+            "quantiles": null
+          },
+          "hypothetical_upper_pnl": {
+            "count": 0,
+            "quantiles": null
+          },
+          "matched_decisions": 1993,
+          "reasons": {
+            "initial_depth_or_capital": 8,
+            "no_positive_declared_edge": 1985
+          },
+          "unmatched_quantity": {
+            "count": 0,
+            "quantiles": null
+          }
+        },
+        "stress": {
+          "causal_decisions": {
+            "abstain": 1993
+          },
+          "examples": [
+            {
+              "actual_fills": "unknown_counterfactual",
+              "assumption_id": "7209a906d06230d011ea8ecf05c80066a96171fc9741a58dbcaa3be2d619071c",
+              "capital_budget": "100",
+              "decision": "abstain",
+              "delay_ms": 5000,
+              "evidence_kind": "hypothetical_execution_bounds",
+              "example_id": "61d74c0e5891cc5ca8560b99eb37370aaa777222b0107aced056a55a1bda91fb",
+              "fill_probability": null,
+              "future_evidence_used": false,
+              "hypothetical_pnl_bounds": null,
+              "orders_submitted": false,
+              "quantity_requested": "5",
+              "reason": "no_positive_declared_edge",
+              "scenario": "stress",
+              "status": "abstain",
+              "unit": "collateral_unit"
+            },
+            {
+              "actual_fills": "unknown_counterfactual",
+              "assumption_id": "7209a906d06230d011ea8ecf05c80066a96171fc9741a58dbcaa3be2d619071c",
+              "capital_budget": "100",
+              "decision": "abstain",
+              "delay_ms": 5000,
+              "evidence_kind": "hypothetical_execution_bounds",
+              "example_id": "e8e8a2379804ee696be3b60e744eb54406f69ea86587b1e719e83d0355df1cfc",
+              "fill_probability": null,
+              "future_evidence_used": false,
+              "hypothetical_pnl_bounds": null,
+              "orders_submitted": false,
+              "quantity_requested": "5",
+              "reason": "no_positive_declared_edge",
+              "scenario": "stress",
+              "status": "abstain",
+              "unit": "collateral_unit"
+            }
+          ],
+          "followup_statuses": {
+            "abstain": 1993
+          },
+          "hypothetical_lower_pnl": {
+            "count": 0,
+            "quantiles": null
+          },
+          "hypothetical_upper_pnl": {
+            "count": 0,
+            "quantiles": null
+          },
+          "matched_decisions": 1993,
+          "reasons": {
+            "initial_depth_or_capital": 8,
+            "no_positive_declared_edge": 1985
+          },
+          "unmatched_quantity": {
+            "count": 0,
+            "quantiles": null
+          }
+        }
+      },
+      "quantity=5;capital=1000": {
+        "conservative": {
+          "causal_decisions": {
+            "abstain": 1993
+          },
+          "examples": [
+            {
+              "actual_fills": "unknown_counterfactual",
+              "assumption_id": "556261912f0141efc4313765c36f712af67d41626c72de074c91e05f3d2ed6f7",
+              "capital_budget": "1000",
+              "decision": "abstain",
+              "delay_ms": 1000,
+              "evidence_kind": "hypothetical_execution_bounds",
+              "example_id": "52a5ecb2d45843a83d18608b4ad93dcd57f4ad04bd7fd7c6af2bb8833ae8cc98",
+              "fill_probability": null,
+              "future_evidence_used": false,
+              "hypothetical_pnl_bounds": null,
+              "orders_submitted": false,
+              "quantity_requested": "5",
+              "reason": "no_positive_declared_edge",
+              "scenario": "conservative",
+              "status": "abstain",
+              "unit": "collateral_unit"
+            },
+            {
+              "actual_fills": "unknown_counterfactual",
+              "assumption_id": "556261912f0141efc4313765c36f712af67d41626c72de074c91e05f3d2ed6f7",
+              "capital_budget": "1000",
+              "decision": "abstain",
+              "delay_ms": 1000,
+              "evidence_kind": "hypothetical_execution_bounds",
+              "example_id": "5de39baac868cbf214b12840964271eef793029c9cf8ab4da7d6f0cb51edae94",
+              "fill_probability": null,
+              "future_evidence_used": false,
+              "hypothetical_pnl_bounds": null,
+              "orders_submitted": false,
+              "quantity_requested": "5",
+              "reason": "no_positive_declared_edge",
+              "scenario": "conservative",
+              "status": "abstain",
+              "unit": "collateral_unit"
+            }
+          ],
+          "followup_statuses": {
+            "abstain": 1993
+          },
+          "hypothetical_lower_pnl": {
+            "count": 0,
+            "quantiles": null
+          },
+          "hypothetical_upper_pnl": {
+            "count": 0,
+            "quantiles": null
+          },
+          "matched_decisions": 1993,
+          "reasons": {
+            "initial_depth_or_capital": 4,
+            "no_positive_declared_edge": 1103,
+            "timing_limit": 886
+          },
+          "unmatched_quantity": {
+            "count": 0,
+            "quantiles": null
+          }
+        },
+        "intermediate": {
+          "causal_decisions": {
+            "abstain": 1993
+          },
+          "examples": [
+            {
+              "actual_fills": "unknown_counterfactual",
+              "assumption_id": "25321aa9cc6137f867af300aac072cbea1554ce69c9687739cb1bba7238801d3",
+              "capital_budget": "1000",
+              "decision": "abstain",
+              "delay_ms": 300,
+              "evidence_kind": "hypothetical_execution_bounds",
+              "example_id": "a618fac7071c28cba626c8403750b453307dbe83123db7a4b0a23bfe6eb798be",
+              "fill_probability": null,
+              "future_evidence_used": false,
+              "hypothetical_pnl_bounds": null,
+              "orders_submitted": false,
+              "quantity_requested": "5",
+              "reason": "no_positive_declared_edge",
+              "scenario": "intermediate",
+              "status": "abstain",
+              "unit": "collateral_unit"
+            },
+            {
+              "actual_fills": "unknown_counterfactual",
+              "assumption_id": "25321aa9cc6137f867af300aac072cbea1554ce69c9687739cb1bba7238801d3",
+              "capital_budget": "1000",
+              "decision": "abstain",
+              "delay_ms": 300,
+              "evidence_kind": "hypothetical_execution_bounds",
+              "example_id": "b68f81224a1e8881e8198b0a90185c12bec67539937b37246f3ea4137ce4fc95",
+              "fill_probability": null,
+              "future_evidence_used": false,
+              "hypothetical_pnl_bounds": null,
+              "orders_submitted": false,
+              "quantity_requested": "5",
+              "reason": "no_positive_declared_edge",
+              "scenario": "intermediate",
+              "status": "abstain",
+              "unit": "collateral_unit"
+            }
+          ],
+          "followup_statuses": {
+            "abstain": 1993
+          },
+          "hypothetical_lower_pnl": {
+            "count": 0,
+            "quantiles": null
+          },
+          "hypothetical_upper_pnl": {
+            "count": 0,
+            "quantiles": null
+          },
+          "matched_decisions": 1993,
+          "reasons": {
+            "initial_depth_or_capital": 5,
+            "no_positive_declared_edge": 1233,
+            "timing_limit": 755
+          },
+          "unmatched_quantity": {
+            "count": 0,
+            "quantiles": null
+          }
+        },
+        "optimistic": {
+          "causal_decisions": {
+            "abstain": 1993
+          },
+          "examples": [
+            {
+              "actual_fills": "unknown_counterfactual",
+              "assumption_id": "0a4e39e24db6a8e33a23d91815038a639d3414cd7c9a30f4cac0179b7c5089f4",
+              "capital_budget": "1000",
+              "decision": "abstain",
+              "delay_ms": 100,
+              "evidence_kind": "hypothetical_execution_bounds",
+              "example_id": "06d7b591ac85d3f1e95eb2baaf4b1b6d89a03f1da83ff15010321a7cd94bbbab",
+              "fill_probability": null,
+              "future_evidence_used": false,
+              "hypothetical_pnl_bounds": null,
+              "orders_submitted": false,
+              "quantity_requested": "5",
+              "reason": "no_positive_declared_edge",
+              "scenario": "optimistic",
+              "status": "abstain",
+              "unit": "collateral_unit"
+            },
+            {
+              "actual_fills": "unknown_counterfactual",
+              "assumption_id": "0a4e39e24db6a8e33a23d91815038a639d3414cd7c9a30f4cac0179b7c5089f4",
+              "capital_budget": "1000",
+              "decision": "abstain",
+              "delay_ms": 100,
+              "evidence_kind": "hypothetical_execution_bounds",
+              "example_id": "eb452aed2cac384a7698343febee68ea069a9a943e84db9b338aaf9cff0cd0ef",
+              "fill_probability": null,
+              "future_evidence_used": false,
+              "hypothetical_pnl_bounds": null,
+              "orders_submitted": false,
+              "quantity_requested": "5",
+              "reason": "no_positive_declared_edge",
+              "scenario": "optimistic",
+              "status": "abstain",
+              "unit": "collateral_unit"
+            }
+          ],
+          "followup_statuses": {
+            "abstain": 1993
+          },
+          "hypothetical_lower_pnl": {
+            "count": 0,
+            "quantiles": null
+          },
+          "hypothetical_upper_pnl": {
+            "count": 0,
+            "quantiles": null
+          },
+          "matched_decisions": 1993,
+          "reasons": {
+            "initial_depth_or_capital": 8,
+            "no_positive_declared_edge": 1985
+          },
+          "unmatched_quantity": {
+            "count": 0,
+            "quantiles": null
+          }
+        },
+        "stress": {
+          "causal_decisions": {
+            "abstain": 1993
+          },
+          "examples": [
+            {
+              "actual_fills": "unknown_counterfactual",
+              "assumption_id": "7209a906d06230d011ea8ecf05c80066a96171fc9741a58dbcaa3be2d619071c",
+              "capital_budget": "1000",
+              "decision": "abstain",
+              "delay_ms": 5000,
+              "evidence_kind": "hypothetical_execution_bounds",
+              "example_id": "61d74c0e5891cc5ca8560b99eb37370aaa777222b0107aced056a55a1bda91fb",
+              "fill_probability": null,
+              "future_evidence_used": false,
+              "hypothetical_pnl_bounds": null,
+              "orders_submitted": false,
+              "quantity_requested": "5",
+              "reason": "no_positive_declared_edge",
+              "scenario": "stress",
+              "status": "abstain",
+              "unit": "collateral_unit"
+            },
+            {
+              "actual_fills": "unknown_counterfactual",
+              "assumption_id": "7209a906d06230d011ea8ecf05c80066a96171fc9741a58dbcaa3be2d619071c",
+              "capital_budget": "1000",
+              "decision": "abstain",
+              "delay_ms": 5000,
+              "evidence_kind": "hypothetical_execution_bounds",
+              "example_id": "e8e8a2379804ee696be3b60e744eb54406f69ea86587b1e719e83d0355df1cfc",
+              "fill_probability": null,
+              "future_evidence_used": false,
+              "hypothetical_pnl_bounds": null,
+              "orders_submitted": false,
+              "quantity_requested": "5",
+              "reason": "no_positive_declared_edge",
+              "scenario": "stress",
+              "status": "abstain",
+              "unit": "collateral_unit"
+            }
+          ],
+          "followup_statuses": {
+            "abstain": 1993
+          },
+          "hypothetical_lower_pnl": {
+            "count": 0,
+            "quantiles": null
+          },
+          "hypothetical_upper_pnl": {
+            "count": 0,
+            "quantiles": null
+          },
+          "matched_decisions": 1993,
+          "reasons": {
+            "initial_depth_or_capital": 8,
+            "no_positive_declared_edge": 1985
+          },
+          "unmatched_quantity": {
+            "count": 0,
+            "quantiles": null
+          }
+        }
+      }
+    },
+    "fee_source": "https://docs.polymarket.com/trading/fees",
+    "paired_on": "Same causal anchor and initial features; each family uses its matching requested followup horizon",
+    "quantity_grid": [
+      5,
+      10,
+      25
+    ],
+    "unit": "collateral_unit"
+  },
+  "empirical_kernel_rows": 500,
+  "generated_seconds": 167.49586083099712,
+  "horizons": {
+    "100": {
+      "anchors": 1993,
+      "censor_reasons": {
+        "book_issue:advertised_top_pending": 6,
+        "future_observation_unavailable": 1879,
+        "recorded_gap:book_resynchronization": 17,
+        "stale_book": 9
+      },
+      "days": [
+        "2026-10-14"
+      ],
+      "displayed_quantity_supported": {
+        "conditional_measured_rate": 1.0,
+        "eligible": 1993,
+        "exploratory_cluster_bootstrap_95": [
+          1.0,
+          1.0
+        ],
+        "family_count": 5,
+        "interval_notice": "Exploratory family/time-block resampling; single-day coverage, informative missingness and unsequenced feed prevent population confidence or fill inference.",
+        "measured": 82,
+        "missing_outcome_identification_bounds": [
+          0.04114400401404917,
+          1.0
+        ],
+        "successes": 82,
+        "time_block_count": 65,
+        "unknown": 1911
+      },
+      "families": 7,
+      "markets": 8,
+      "metrics": {
+        "adverse_ask_movement": {
+          "count": 82,
+          "mean": 0.0,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 0.0
+          }
+        },
+        "best_ask_pair_movement": {
+          "count": 82,
+          "mean": 0.0,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 0.0
+          }
+        },
+        "cross_outcome_skew_ms": {
+          "count": 1993,
+          "mean": 0.0018140612142498746,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 3.615424
+          }
+        },
+        "displayed_cost_change": {
+          "count": 82,
+          "mean": 0.0,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 0.0
+          }
+        },
+        "displayed_cost_premium_per_share": {
+          "count": 1993,
+          "mean": 9.883592574019056e-06,
+          "quantiles": {
+            "0": -2.220446049250313e-16,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 0.006566000000000072
+          }
+        },
+        "effective_delay_ms": {
+          "count": 164,
+          "mean": 112.94689648780486,
+          "quantiles": {
+            "0": 100.464823,
+            "0.05": 101.942126,
+            "0.5": 113.066202,
+            "0.95": 124.113165,
+            "1": 124.689565
+          }
+        },
+        "freshness_ms": {
+          "count": 3986,
+          "mean": 1160.660401362268,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 4511.736732,
+            "1": 4991.995469
+          }
+        },
+        "lookback_ask_quantity_change": {
+          "count": 3986,
+          "mean": 25.480561966884096,
+          "quantiles": {
+            "0": -36813.0,
+            "0.05": -927.0,
+            "0.5": 0.0,
+            "0.95": 1009.0,
+            "1": 38333.0
+          }
+        },
+        "lookback_best_ask_change": {
+          "count": 3986,
+          "mean": -4.691419969894631e-05,
+          "quantiles": {
+            "0": -0.02,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 0.014
+          }
+        },
+        "original_quote_depth_retention": {
+          "count": 164,
+          "mean": 0.9912331293610427,
+          "quantiles": {
+            "0": 0.13480885311871227,
+            "0.05": 1.0,
+            "0.5": 1.0,
+            "0.95": 1.0,
+            "1": 1.0
+          }
+        },
+        "quote_age_ms": {
+          "count": 3986,
+          "mean": 19478.339675104617,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 13771.669951,
+            "0.95": 54850.990078,
+            "1": 97889.598433
+          }
+        },
+        "quoted_exit_value_change": {
+          "count": 82,
+          "mean": 0.0,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 0.0
+          }
+        },
+        "spread": {
+          "count": 3986,
+          "mean": 0.009465629703963875,
+          "quantiles": {
+            "0": 0.001,
+            "0.05": 0.001,
+            "0.5": 0.01,
+            "0.95": 0.04,
+            "1": 0.09
+          }
+        },
+        "top_ask_quantity": {
+          "count": 3986,
+          "mean": 47112.27047165078,
+          "quantiles": {
+            "0": 0.31,
+            "0.05": 11.7,
+            "0.5": 1691.0,
+            "0.95": 184102.21,
+            "1": 186406.98
+          }
+        },
+        "total_ask_quantity": {
+          "count": 3986,
+          "mean": 2494160.282574009,
+          "quantiles": {
+            "0": 265.99,
+            "0.05": 1895.09,
+            "0.5": 57667.58,
+            "0.95": 12286809.67,
+            "1": 12292620.67
+          }
+        },
+        "update_frames_per_second": {
+          "count": 3986,
+          "mean": 0.9690416457601605,
+          "quantiles": {
+            "0": 0.1,
+            "0.05": 0.1,
+            "0.5": 0.3,
+            "0.95": 3.8,
+            "1": 43.6
+          }
+        }
+      },
+      "opportunity_persistence": {
+        "conditional_measured_rate": null,
+        "eligible": 0,
+        "exploratory_cluster_bootstrap_95": null,
+        "family_count": 0,
+        "interval_notice": "Exploratory family/time-block resampling; single-day coverage, informative missingness and unsequenced feed prevent population confidence or fill inference.",
+        "measured": 0,
+        "missing_outcome_identification_bounds": null,
+        "successes": 0,
+        "time_block_count": 0,
+        "unknown": 0
+      },
+      "quote_persistence": {
+        "conditional_measured_rate": 1.0,
+        "eligible": 1993,
+        "exploratory_cluster_bootstrap_95": [
+          1.0,
+          1.0
+        ],
+        "family_count": 5,
+        "interval_notice": "Exploratory family/time-block resampling; single-day coverage, informative missingness and unsequenced feed prevent population confidence or fill inference.",
+        "measured": 82,
+        "missing_outcome_identification_bounds": [
+          0.04114400401404917,
+          1.0
+        ],
+        "successes": 82,
+        "time_block_count": 65,
+        "unknown": 1911
+      },
+      "rows": 1993,
+      "statuses": {
+        "censored": 1911,
+        "observed_public_measurement": 82
+      },
+      "time_blocks": 725
+    },
+    "1000": {
+      "anchors": 1993,
+      "censor_reasons": {
+        "book_issue:advertised_top_pending": 42,
+        "future_observation_unavailable": 1658,
+        "recorded_gap:book_resynchronization": 35,
+        "stale_book": 112
+      },
+      "days": [
+        "2026-10-14"
+      ],
+      "displayed_quantity_supported": {
+        "conditional_measured_rate": 1.0,
+        "eligible": 1993,
+        "exploratory_cluster_bootstrap_95": [
+          1.0,
+          1.0
+        ],
+        "family_count": 5,
+        "interval_notice": "Exploratory family/time-block resampling; single-day coverage, informative missingness and unsequenced feed prevent population confidence or fill inference.",
+        "measured": 146,
+        "missing_outcome_identification_bounds": [
+          0.07325639739086803,
+          1.0
+        ],
+        "successes": 146,
+        "time_block_count": 111,
+        "unknown": 1847
+      },
+      "families": 7,
+      "markets": 8,
+      "metrics": {
+        "adverse_ask_movement": {
+          "count": 146,
+          "mean": 0.0,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 0.0
+          }
+        },
+        "best_ask_pair_movement": {
+          "count": 146,
+          "mean": 0.0,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 0.0
+          }
+        },
+        "cross_outcome_skew_ms": {
+          "count": 1993,
+          "mean": 0.0018140612142498746,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 3.615424
+          }
+        },
+        "displayed_cost_change": {
+          "count": 146,
+          "mean": 0.0,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 0.0
+          }
+        },
+        "displayed_cost_premium_per_share": {
+          "count": 1993,
+          "mean": 9.883592574019056e-06,
+          "quantiles": {
+            "0": -2.220446049250313e-16,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 0.006566000000000072
+          }
+        },
+        "effective_delay_ms": {
+          "count": 292,
+          "mean": 1098.6184755000002,
+          "quantiles": {
+            "0": 1000.203763,
+            "0.05": 1004.659965,
+            "0.5": 1084.454566,
+            "0.95": 1229.9657,
+            "1": 1249.496744
+          }
+        },
+        "freshness_ms": {
+          "count": 3986,
+          "mean": 1160.660401362268,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 4511.736732,
+            "1": 4991.995469
+          }
+        },
+        "lookback_ask_quantity_change": {
+          "count": 3986,
+          "mean": 25.480561966884096,
+          "quantiles": {
+            "0": -36813.0,
+            "0.05": -927.0,
+            "0.5": 0.0,
+            "0.95": 1009.0,
+            "1": 38333.0
+          }
+        },
+        "lookback_best_ask_change": {
+          "count": 3986,
+          "mean": -4.691419969894631e-05,
+          "quantiles": {
+            "0": -0.02,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 0.014
+          }
+        },
+        "original_quote_depth_retention": {
+          "count": 292,
+          "mean": 0.9916944558594076,
+          "quantiles": {
+            "0": 0.25431377754181045,
+            "0.05": 1.0,
+            "0.5": 1.0,
+            "0.95": 1.0,
+            "1": 1.0
+          }
+        },
+        "quote_age_ms": {
+          "count": 3986,
+          "mean": 19478.339675104617,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 13771.669951,
+            "0.95": 54850.990078,
+            "1": 97889.598433
+          }
+        },
+        "quoted_exit_value_change": {
+          "count": 146,
+          "mean": 0.0,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 0.0
+          }
+        },
+        "spread": {
+          "count": 3986,
+          "mean": 0.009465629703963875,
+          "quantiles": {
+            "0": 0.001,
+            "0.05": 0.001,
+            "0.5": 0.01,
+            "0.95": 0.04,
+            "1": 0.09
+          }
+        },
+        "top_ask_quantity": {
+          "count": 3986,
+          "mean": 47112.27047165078,
+          "quantiles": {
+            "0": 0.31,
+            "0.05": 11.7,
+            "0.5": 1691.0,
+            "0.95": 184102.21,
+            "1": 186406.98
+          }
+        },
+        "total_ask_quantity": {
+          "count": 3986,
+          "mean": 2494160.282574009,
+          "quantiles": {
+            "0": 265.99,
+            "0.05": 1895.09,
+            "0.5": 57667.58,
+            "0.95": 12286809.67,
+            "1": 12292620.67
+          }
+        },
+        "update_frames_per_second": {
+          "count": 3986,
+          "mean": 0.9690416457601605,
+          "quantiles": {
+            "0": 0.1,
+            "0.05": 0.1,
+            "0.5": 0.3,
+            "0.95": 3.8,
+            "1": 43.6
+          }
+        }
+      },
+      "opportunity_persistence": {
+        "conditional_measured_rate": null,
+        "eligible": 0,
+        "exploratory_cluster_bootstrap_95": null,
+        "family_count": 0,
+        "interval_notice": "Exploratory family/time-block resampling; single-day coverage, informative missingness and unsequenced feed prevent population confidence or fill inference.",
+        "measured": 0,
+        "missing_outcome_identification_bounds": null,
+        "successes": 0,
+        "time_block_count": 0,
+        "unknown": 0
+      },
+      "quote_persistence": {
+        "conditional_measured_rate": 1.0,
+        "eligible": 1993,
+        "exploratory_cluster_bootstrap_95": [
+          1.0,
+          1.0
+        ],
+        "family_count": 5,
+        "interval_notice": "Exploratory family/time-block resampling; single-day coverage, informative missingness and unsequenced feed prevent population confidence or fill inference.",
+        "measured": 146,
+        "missing_outcome_identification_bounds": [
+          0.07325639739086803,
+          1.0
+        ],
+        "successes": 146,
+        "time_block_count": 111,
+        "unknown": 1847
+      },
+      "rows": 1993,
+      "statuses": {
+        "censored": 1847,
+        "observed_public_measurement": 146
+      },
+      "time_blocks": 725
+    },
+    "300": {
+      "anchors": 1993,
+      "censor_reasons": {
+        "book_issue:advertised_top_pending": 17,
+        "future_observation_unavailable": 1837,
+        "recorded_gap:book_resynchronization": 20,
+        "stale_book": 29
+      },
+      "days": [
+        "2026-10-14"
+      ],
+      "displayed_quantity_supported": {
+        "conditional_measured_rate": 1.0,
+        "eligible": 1993,
+        "exploratory_cluster_bootstrap_95": [
+          1.0,
+          1.0
+        ],
+        "family_count": 5,
+        "interval_notice": "Exploratory family/time-block resampling; single-day coverage, informative missingness and unsequenced feed prevent population confidence or fill inference.",
+        "measured": 90,
+        "missing_outcome_identification_bounds": [
+          0.04515805318615153,
+          1.0
+        ],
+        "successes": 90,
+        "time_block_count": 71,
+        "unknown": 1903
+      },
+      "families": 7,
+      "markets": 8,
+      "metrics": {
+        "adverse_ask_movement": {
+          "count": 90,
+          "mean": 0.0,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 0.0
+          }
+        },
+        "best_ask_pair_movement": {
+          "count": 90,
+          "mean": 0.0,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 0.0
+          }
+        },
+        "cross_outcome_skew_ms": {
+          "count": 1993,
+          "mean": 0.0018140612142498746,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 3.615424
+          }
+        },
+        "displayed_cost_change": {
+          "count": 90,
+          "mean": 0.00021955555555555308,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 0.018760000000000332
+          }
+        },
+        "displayed_cost_premium_per_share": {
+          "count": 1993,
+          "mean": 9.883592574019056e-06,
+          "quantiles": {
+            "0": -2.220446049250313e-16,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 0.006566000000000072
+          }
+        },
+        "effective_delay_ms": {
+          "count": 180,
+          "mean": 333.7294199666667,
+          "quantiles": {
+            "0": 300.913139,
+            "0.05": 302.726209,
+            "0.5": 333.109567,
+            "0.95": 367.511204,
+            "1": 373.883217
+          }
+        },
+        "freshness_ms": {
+          "count": 3986,
+          "mean": 1160.660401362268,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 4511.736732,
+            "1": 4991.995469
+          }
+        },
+        "lookback_ask_quantity_change": {
+          "count": 3986,
+          "mean": 25.480561966884096,
+          "quantiles": {
+            "0": -36813.0,
+            "0.05": -927.0,
+            "0.5": 0.0,
+            "0.95": 1009.0,
+            "1": 38333.0
+          }
+        },
+        "lookback_best_ask_change": {
+          "count": 3986,
+          "mean": -4.691419969894631e-05,
+          "quantiles": {
+            "0": -0.02,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 0.014
+          }
+        },
+        "original_quote_depth_retention": {
+          "count": 180,
+          "mean": 0.9765692181447359,
+          "quantiles": {
+            "0": 0.0028359710913914552,
+            "0.05": 1.0,
+            "0.5": 1.0,
+            "0.95": 1.0,
+            "1": 1.0
+          }
+        },
+        "quote_age_ms": {
+          "count": 3986,
+          "mean": 19478.339675104617,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 13771.669951,
+            "0.95": 54850.990078,
+            "1": 97889.598433
+          }
+        },
+        "quoted_exit_value_change": {
+          "count": 90,
+          "mean": -0.00021955555555555555,
+          "quantiles": {
+            "0": -0.01876,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 0.0
+          }
+        },
+        "spread": {
+          "count": 3986,
+          "mean": 0.009465629703963875,
+          "quantiles": {
+            "0": 0.001,
+            "0.05": 0.001,
+            "0.5": 0.01,
+            "0.95": 0.04,
+            "1": 0.09
+          }
+        },
+        "top_ask_quantity": {
+          "count": 3986,
+          "mean": 47112.27047165078,
+          "quantiles": {
+            "0": 0.31,
+            "0.05": 11.7,
+            "0.5": 1691.0,
+            "0.95": 184102.21,
+            "1": 186406.98
+          }
+        },
+        "total_ask_quantity": {
+          "count": 3986,
+          "mean": 2494160.282574009,
+          "quantiles": {
+            "0": 265.99,
+            "0.05": 1895.09,
+            "0.5": 57667.58,
+            "0.95": 12286809.67,
+            "1": 12292620.67
+          }
+        },
+        "update_frames_per_second": {
+          "count": 3986,
+          "mean": 0.9690416457601605,
+          "quantiles": {
+            "0": 0.1,
+            "0.05": 0.1,
+            "0.5": 0.3,
+            "0.95": 3.8,
+            "1": 43.6
+          }
+        }
+      },
+      "opportunity_persistence": {
+        "conditional_measured_rate": null,
+        "eligible": 0,
+        "exploratory_cluster_bootstrap_95": null,
+        "family_count": 0,
+        "interval_notice": "Exploratory family/time-block resampling; single-day coverage, informative missingness and unsequenced feed prevent population confidence or fill inference.",
+        "measured": 0,
+        "missing_outcome_identification_bounds": null,
+        "successes": 0,
+        "time_block_count": 0,
+        "unknown": 0
+      },
+      "quote_persistence": {
+        "conditional_measured_rate": 1.0,
+        "eligible": 1993,
+        "exploratory_cluster_bootstrap_95": [
+          1.0,
+          1.0
+        ],
+        "family_count": 5,
+        "interval_notice": "Exploratory family/time-block resampling; single-day coverage, informative missingness and unsequenced feed prevent population confidence or fill inference.",
+        "measured": 90,
+        "missing_outcome_identification_bounds": [
+          0.04515805318615153,
+          1.0
+        ],
+        "successes": 90,
+        "time_block_count": 71,
+        "unknown": 1903
+      },
+      "rows": 1993,
+      "statuses": {
+        "censored": 1903,
+        "observed_public_measurement": 90
+      },
+      "time_blocks": 725
+    },
+    "5000": {
+      "anchors": 1991,
+      "censor_reasons": {
+        "book_issue:advertised_top_pending": 97,
+        "future_observation_unavailable": 953,
+        "independent_book_divergence": 1,
+        "recorded_gap:book_resynchronization": 93,
+        "recorded_gap:process_stop": 1,
+        "stale_book": 664
+      },
+      "days": [
+        "2026-10-14"
+      ],
+      "displayed_quantity_supported": {
+        "conditional_measured_rate": 1.0,
+        "eligible": 1991,
+        "exploratory_cluster_bootstrap_95": [
+          1.0,
+          1.0
+        ],
+        "family_count": 5,
+        "interval_notice": "Exploratory family/time-block resampling; single-day coverage, informative missingness and unsequenced feed prevent population confidence or fill inference.",
+        "measured": 182,
+        "missing_outcome_identification_bounds": [
+          0.09141135107985937,
+          1.0
+        ],
+        "successes": 182,
+        "time_block_count": 116,
+        "unknown": 1809
+      },
+      "families": 7,
+      "markets": 8,
+      "metrics": {
+        "adverse_ask_movement": {
+          "count": 182,
+          "mean": 0.0,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 0.0
+          }
+        },
+        "best_ask_pair_movement": {
+          "count": 182,
+          "mean": 0.0,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 0.0
+          }
+        },
+        "cross_outcome_skew_ms": {
+          "count": 1991,
+          "mean": 0.0018158834756403818,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 3.615424
+          }
+        },
+        "displayed_cost_change": {
+          "count": 182,
+          "mean": 0.0,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 0.0
+          }
+        },
+        "displayed_cost_premium_per_share": {
+          "count": 1991,
+          "mean": 9.893520843807121e-06,
+          "quantiles": {
+            "0": -2.220446049250313e-16,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 0.006566000000000072
+          }
+        },
+        "effective_delay_ms": {
+          "count": 364,
+          "mean": 5211.895697313187,
+          "quantiles": {
+            "0": 5000.598982,
+            "0.05": 5011.023938,
+            "0.5": 5207.069926,
+            "0.95": 5464.258353,
+            "1": 5496.96512
+          }
+        },
+        "freshness_ms": {
+          "count": 3982,
+          "mean": 1159.8798503194375,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 4511.736732,
+            "1": 4991.995469
+          }
+        },
+        "lookback_ask_quantity_change": {
+          "count": 3982,
+          "mean": 22.393400301356102,
+          "quantiles": {
+            "0": -36813.0,
+            "0.05": -927.0,
+            "0.5": 0.0,
+            "0.95": 1008.0,
+            "1": 38333.0
+          }
+        },
+        "lookback_best_ask_change": {
+          "count": 3982,
+          "mean": -4.696132596685083e-05,
+          "quantiles": {
+            "0": -0.02,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 0.014
+          }
+        },
+        "original_quote_depth_retention": {
+          "count": 364,
+          "mean": 0.9777319777961228,
+          "quantiles": {
+            "0": 0.06235129477565583,
+            "0.05": 0.9102106510286655,
+            "0.5": 1.0,
+            "0.95": 1.0,
+            "1": 1.0
+          }
+        },
+        "quote_age_ms": {
+          "count": 3982,
+          "mean": 19432.53146007509,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 13732.361778,
+            "0.95": 54744.207579,
+            "1": 97889.598433
+          }
+        },
+        "quoted_exit_value_change": {
+          "count": 182,
+          "mean": 0.0,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 0.0
+          }
+        },
+        "spread": {
+          "count": 3982,
+          "mean": 0.009460070316423907,
+          "quantiles": {
+            "0": 0.001,
+            "0.05": 0.001,
+            "0.5": 0.01,
+            "0.95": 0.04,
+            "1": 0.09
+          }
+        },
+        "top_ask_quantity": {
+          "count": 3982,
+          "mean": 47082.21302862883,
+          "quantiles": {
+            "0": 0.31,
+            "0.05": 11.7,
+            "0.5": 1691.0,
+            "0.95": 184102.21,
+            "1": 186406.98
+          }
+        },
+        "total_ask_quantity": {
+          "count": 3982,
+          "mean": 2493962.2716675038,
+          "quantiles": {
+            "0": 265.99,
+            "0.05": 1895.09,
+            "0.5": 57667.58,
+            "0.95": 12286809.67,
+            "1": 12292620.67
+          }
+        },
+        "update_frames_per_second": {
+          "count": 3982,
+          "mean": 0.9688096433952788,
+          "quantiles": {
+            "0": 0.1,
+            "0.05": 0.1,
+            "0.5": 0.3,
+            "0.95": 3.8,
+            "1": 43.6
+          }
+        }
+      },
+      "opportunity_persistence": {
+        "conditional_measured_rate": null,
+        "eligible": 0,
+        "exploratory_cluster_bootstrap_95": null,
+        "family_count": 0,
+        "interval_notice": "Exploratory family/time-block resampling; single-day coverage, informative missingness and unsequenced feed prevent population confidence or fill inference.",
+        "measured": 0,
+        "missing_outcome_identification_bounds": null,
+        "successes": 0,
+        "time_block_count": 0,
+        "unknown": 0
+      },
+      "quote_persistence": {
+        "conditional_measured_rate": 1.0,
+        "eligible": 1991,
+        "exploratory_cluster_bootstrap_95": [
+          1.0,
+          1.0
+        ],
+        "family_count": 5,
+        "interval_notice": "Exploratory family/time-block resampling; single-day coverage, informative missingness and unsequenced feed prevent population confidence or fill inference.",
+        "measured": 182,
+        "missing_outcome_identification_bounds": [
+          0.09141135107985937,
+          1.0
+        ],
+        "successes": 182,
+        "time_block_count": 116,
+        "unknown": 1809
+      },
+      "rows": 1991,
+      "statuses": {
+        "censored": 1809,
+        "observed_public_measurement": 182
+      },
+      "time_blocks": 725
+    }
+  },
+  "identity": {
+    "assumptions": [
+      {
+        "annual_financing_rate": "0.10",
+        "assumption_id": "0a4e39e24db6a8e33a23d91815038a639d3414cd7c9a30f4cac0179b7c5089f4",
+        "collateral_value_factor": "1",
+        "delay_ms": 100,
+        "depth_fraction": "1",
+        "fee_formula": "declared-taker-curve-2026-10-14",
+        "friction_per_share": "0",
+        "future_required": false,
+        "max_age_ms": 5000,
+        "max_skew_ms": 250,
+        "name": "optimistic",
+        "one_leg_loss": false,
+        "recovery": "none; unmatched terminal payoff bounded by [0, quantity]",
+        "redemption_cost": "0.01",
+        "settlement_days": "7",
+        "version": "reality-observational-execution-v1"
+      },
+      {
+        "annual_financing_rate": "0.10",
+        "assumption_id": "25321aa9cc6137f867af300aac072cbea1554ce69c9687739cb1bba7238801d3",
+        "collateral_value_factor": "1",
+        "delay_ms": 300,
+        "depth_fraction": "0.8",
+        "fee_formula": "declared-taker-curve-2026-10-14",
+        "friction_per_share": "0.001",
+        "future_required": true,
+        "max_age_ms": 1000,
+        "max_skew_ms": 100,
+        "name": "intermediate",
+        "one_leg_loss": false,
+        "recovery": "none; unmatched terminal payoff bounded by [0, quantity]",
+        "redemption_cost": "0.01",
+        "settlement_days": "7",
+        "version": "reality-observational-execution-v1"
+      },
+      {
+        "annual_financing_rate": "0.10",
+        "assumption_id": "556261912f0141efc4313765c36f712af67d41626c72de074c91e05f3d2ed6f7",
+        "collateral_value_factor": "1",
+        "delay_ms": 1000,
+        "depth_fraction": "0.5",
+        "fee_formula": "declared-taker-curve-2026-10-14",
+        "friction_per_share": "0.005",
+        "future_required": true,
+        "max_age_ms": 300,
+        "max_skew_ms": 25,
+        "name": "conservative",
+        "one_leg_loss": false,
+        "recovery": "none; unmatched terminal payoff bounded by [0, quantity]",
+        "redemption_cost": "0.01",
+        "settlement_days": "7",
+        "version": "reality-observational-execution-v1"
+      },
+      {
+        "annual_financing_rate": "0.10",
+        "assumption_id": "7209a906d06230d011ea8ecf05c80066a96171fc9741a58dbcaa3be2d619071c",
+        "collateral_value_factor": "1",
+        "delay_ms": 5000,
+        "depth_fraction": "0.25",
+        "fee_formula": "declared-taker-curve-2026-10-14",
+        "friction_per_share": "0.02",
+        "future_required": true,
+        "max_age_ms": 5000,
+        "max_skew_ms": 250,
+        "name": "stress",
+        "one_leg_loss": true,
+        "recovery": "assumed recovery failure; second leg disappears",
+        "redemption_cost": "0.01",
+        "settlement_days": "7",
+        "version": "reality-observational-execution-v1"
+      }
+    ],
+    "bootstrap_draws": 200,
+    "bootstrap_seed": 19,
+    "code": {
+      "broker.py": "5cb14f28613d666b157e2fe697fbbca22f78237b4928863c83ba621fa2ea1a5a",
+      "calibration.py": "5a5ccda4c518b38e5a3540aa8b4f5eed3905abfc19f36d1758239ae5df8b572d",
+      "execution_research.py": "99aaf3d1f1d00a3440392f373db8b661c8420ab1bb4713fc9e4fe2340831e5c1",
+      "fixtures.py": "5704f0a1e446e819f0be6d8a8b413009a383ba4128d59a9c0f1a498e385b3fc0",
+      "foundry.py": "b0559c041e870196ef95fb17f9c0e6e39d541214e3a9b4f5c4e0c70c4e22ee62",
+      "quote_dynamics.py": "74bf01a896b800c5fe711ad6f2e6ba706c996bb6081045cdce7f1dad46a298ae",
+      "reconstruction.py": "ed7ca007f8fdb62c00aa25ebf4692e0c54eb0a9c0b06c9712e092a87c28c30cb",
+      "research_measurements.py": "35200c42beef6c169b7244d56d93b30229c1394217faf4dd072853814f05b084",
+      "research_schema.py": "fa31024164ae1e20b579403e79417c1eaa8fc2670d154153aae247546d8f9f33",
+      "research_validation.py": "5eaeba6cf0326440c31b2459ffe70db3d7f58bc5346f5b9e5b2f79a79d67b97c",
+      "spec.py": "2c17803b9ba2422fe3eceacee65fa3223f1bc40ec288aee0374efb4b82b53f8e",
+      "storage.py": "551966d10c2494dd6fcb50988bf32c26558ff6a02d6bd68617f8593b1f5ec3cc"
+    },
+    "dataset_id": "23201960592577e4cb280c5f3dc1fb64d75e3b12bacb45d347cc2ae32472242c",
+    "execution_version": "reality-observational-execution-v1",
+    "partition": "chronological train AND market-generalization train",
+    "rows_sha256": "02aa58f54fa19472ac803fb5a314bc179de46552e29995b730c7fd096c4e7c22",
+    "version": "reality-training-calibration-v1"
+  },
+  "kernel_smoke": {
+    "artifact_corruption_detected": true,
+    "draws": 100,
+    "mean_milliseconds": 7.044744190061465,
+    "seconds": 0.7044744190061465,
+    "statuses": {
+      "censored_draw": 97,
+      "observational_draw": 3
+    }
+  },
+  "limitations": [
+    "Public quotes/depth do not identify hypothetical fills, private queue position or own market impact.",
+    "Receipt-order reconstruction is unsequenced and may not contain every venue event.",
+    "Labels use the first sufficiently synchronized later depth observations within declared tolerance, not sub-event interpolation.",
+    "Aggregate depth at a price does not identify survival of the same constituent orders.",
+    "Prices/costs use collateral units before fees, conversion and settlement assumptions.",
+    "Correlated snapshots are grouped; row count is not independent sample coverage.",
+    "Calibration excludes validation/final-test and held-out families.",
+    "Pointwise original-price presence can include disappearance/reappearance; it is not continuous quote lifetime or survival of an order.",
+    "Quote age is receiver-observed and snapshot-reset, not a venue lifetime distribution.",
+    "Kernel is conditional on observed futures, not a population execution law; missingness bounds must accompany sampling.",
+    "Spread and depth changes use causal lookback features; future labels measure original-price depth, paired ask and exit changes.",
+    "Position-size cost premium is displayed depth walking, not causal impact of an unsubmitted order."
+  ],
+  "overall": {
+    "anchors": 1993,
+    "censor_reasons": {
+      "book_issue:advertised_top_pending": 162,
+      "future_observation_unavailable": 6327,
+      "independent_book_divergence": 1,
+      "recorded_gap:book_resynchronization": 165,
+      "recorded_gap:process_stop": 1,
+      "stale_book": 814
+    },
+    "days": [
+      "2026-10-14"
+    ],
+    "displayed_quantity_supported": {
+      "conditional_measured_rate": 1.0,
+      "eligible": 7970,
+      "exploratory_cluster_bootstrap_95": [
+        1.0,
+        1.0
+      ],
+      "family_count": 5,
+      "interval_notice": "Exploratory family/time-block resampling; single-day coverage, informative missingness and unsequenced feed prevent population confidence or fill inference.",
+      "measured": 500,
+      "missing_outcome_identification_bounds": [
+        0.06273525721455459,
+        1.0
+      ],
+      "successes": 500,
+      "time_block_count": 224,
+      "unknown": 7470
+    },
+    "families": 7,
+    "markets": 8,
+    "metrics": {
+      "adverse_ask_movement": {
+        "count": 183,
+        "mean": 0.0,
+        "quantiles": {
+          "0": 0.0,
+          "0.05": 0.0,
+          "0.5": 0.0,
+          "0.95": 0.0,
+          "1": 0.0
+        }
+      },
+      "best_ask_pair_movement": {
+        "count": 500,
+        "mean": 0.0,
+        "quantiles": {
+          "0": 0.0,
+          "0.05": 0.0,
+          "0.5": 0.0,
+          "0.95": 0.0,
+          "1": 0.0
+        }
+      },
+      "cross_outcome_skew_ms": {
+        "count": 1993,
+        "mean": 0.0018140612142498746,
+        "quantiles": {
+          "0": 0.0,
+          "0.05": 0.0,
+          "0.5": 0.0,
+          "0.95": 0.0,
+          "1": 3.615424
+        }
+      },
+      "displayed_cost_change": {
+        "count": 500,
+        "mean": 3.9519999999999554e-05,
+        "quantiles": {
+          "0": 0.0,
+          "0.05": 0.0,
+          "0.5": 0.0,
+          "0.95": 0.0,
+          "1": 0.018760000000000332
+        }
+      },
+      "displayed_cost_premium_per_share": {
+        "count": 1993,
+        "mean": 9.883592574019056e-06,
+        "quantiles": {
+          "0": -2.220446049250313e-16,
+          "0.05": 0.0,
+          "0.5": 0.0,
+          "0.95": 0.0,
+          "1": 0.006566000000000072
+        }
+      },
+      "effective_delay_ms": {
+        "count": 1000,
+        "mean": 2296.5212152860004,
+        "quantiles": {
+          "0": 100.464823,
+          "0.05": 107.522296,
+          "0.5": 1096.794065,
+          "0.95": 5412.376148,
+          "1": 5496.96512
+        }
+      },
+      "freshness_ms": {
+        "count": 3986,
+        "mean": 1160.660401362268,
+        "quantiles": {
+          "0": 0.0,
+          "0.05": 0.0,
+          "0.5": 0.0,
+          "0.95": 4511.736732,
+          "1": 4991.995469
+        }
+      },
+      "lookback_ask_quantity_change": {
+        "count": 3986,
+        "mean": 25.480561966884096,
+        "quantiles": {
+          "0": -36813.0,
+          "0.05": -927.0,
+          "0.5": 0.0,
+          "0.95": 1009.0,
+          "1": 38333.0
+        }
+      },
+      "lookback_best_ask_change": {
+        "count": 3986,
+        "mean": -4.691419969894631e-05,
+        "quantiles": {
+          "0": -0.02,
+          "0.05": 0.0,
+          "0.5": 0.0,
+          "0.95": 0.0,
+          "1": 0.014
+        }
+      },
+      "original_quote_depth_retention": {
+        "count": 1000,
+        "mean": 0.9838139135099991,
+        "quantiles": {
+          "0": 0.0028359710913914552,
+          "0.05": 1.0,
+          "0.5": 1.0,
+          "0.95": 1.0,
+          "1": 1.0
+        }
+      },
+      "quote_age_ms": {
+        "count": 3986,
+        "mean": 19478.339675104617,
+        "quantiles": {
+          "0": 0.0,
+          "0.05": 0.0,
+          "0.5": 13771.669951,
+          "0.95": 54850.990078,
+          "1": 97889.598433
+        }
+      },
+      "quoted_exit_value_change": {
+        "count": 500,
+        "mean": -3.952e-05,
+        "quantiles": {
+          "0": -0.01876,
+          "0.05": 0.0,
+          "0.5": 0.0,
+          "0.95": 0.0,
+          "1": 0.0
+        }
+      },
+      "spread": {
+        "count": 3986,
+        "mean": 0.009465629703963875,
+        "quantiles": {
+          "0": 0.001,
+          "0.05": 0.001,
+          "0.5": 0.01,
+          "0.95": 0.04,
+          "1": 0.09
+        }
+      },
+      "top_ask_quantity": {
+        "count": 3986,
+        "mean": 47112.27047165078,
+        "quantiles": {
+          "0": 0.31,
+          "0.05": 11.7,
+          "0.5": 1691.0,
+          "0.95": 184102.21,
+          "1": 186406.98
+        }
+      },
+      "total_ask_quantity": {
+        "count": 3986,
+        "mean": 2494160.282574009,
+        "quantiles": {
+          "0": 265.99,
+          "0.05": 1895.09,
+          "0.5": 57667.58,
+          "0.95": 12286809.67,
+          "1": 12292620.67
+        }
+      },
+      "update_frames_per_second": {
+        "count": 3986,
+        "mean": 0.9690416457601605,
+        "quantiles": {
+          "0": 0.1,
+          "0.05": 0.1,
+          "0.5": 0.3,
+          "0.95": 3.8,
+          "1": 43.6
+        }
+      }
+    },
+    "opportunity_persistence": {
+      "conditional_measured_rate": null,
+      "eligible": 0,
+      "exploratory_cluster_bootstrap_95": null,
+      "family_count": 0,
+      "interval_notice": "Exploratory family/time-block resampling; single-day coverage, informative missingness and unsequenced feed prevent population confidence or fill inference.",
+      "measured": 0,
+      "missing_outcome_identification_bounds": null,
+      "successes": 0,
+      "time_block_count": 0,
+      "unknown": 0
+    },
+    "quote_persistence": {
+      "conditional_measured_rate": 1.0,
+      "eligible": 7970,
+      "exploratory_cluster_bootstrap_95": [
+        1.0,
+        1.0
+      ],
+      "family_count": 5,
+      "interval_notice": "Exploratory family/time-block resampling; single-day coverage, informative missingness and unsequenced feed prevent population confidence or fill inference.",
+      "measured": 500,
+      "missing_outcome_identification_bounds": [
+        0.06273525721455459,
+        1.0
+      ],
+      "successes": 500,
+      "time_block_count": 224,
+      "unknown": 7470
+    },
+    "rows": 7970,
+    "statuses": {
+      "censored": 7470,
+      "observed_public_measurement": 500
+    },
+    "time_blocks": 725
+  },
+  "receipt_observed_dynamics": {
+    "aggregate_ask_depth_changes": {
+      "count": 38571,
+      "mean": 6.747410749008143,
+      "quantiles": {
+        "0": -26002.000000000466,
+        "0.05": -400.0,
+        "0.5": 0.0,
+        "0.95": 201.0,
+        "1": 166666.0
+      }
+    },
+    "censor_reasons": {
+      "book_quality_or_comparison": 650,
+      "recorded_gap": 305,
+      "snapshot_or_tick_reset": 165,
+      "stale": 3209,
+      "training_boundary": 10
+    },
+    "completed_quote_spells_ms": {
+      "count": 0,
+      "quantiles": null
+    },
+    "conditions": 8,
+    "definition": "Receiver-observed best-ask spells within valid unsequenced lineage; snapshot/tick/gap/quality/staleness barriers censor. Changes within one raw frame are unresolved. Not venue lifetimes or same-order survival.",
+    "records": 63916,
+    "right_censored_quote_spells_ms": {
+      "count": 4339,
+      "mean": 6948.101514847661,
+      "quantiles": {
+        "0": 3.044528,
+        "0.05": 31.188781,
+        "0.5": 5046.105799,
+        "0.95": 18481.86753,
+        "1": 254895.846876
+      }
+    },
+    "spread_changes": {
+      "count": 38451,
+      "mean": 0.0,
+      "quantiles": {
+        "0": 0.0,
+        "0.05": 0.0,
+        "0.5": 0.0,
+        "0.95": 0.0,
+        "1": 0.0
+      }
+    },
+    "update_intervals_ms": {
+      "count": 38571,
+      "mean": 344.1302398026756,
+      "quantiles": {
+        "0": 2.425083,
+        "0.05": 3.186467,
+        "0.5": 21.878407,
+        "0.95": 2300.689291,
+        "1": 4999.749005
+      }
+    },
+    "verified_checkpoints": 841
+  },
+  "state": "insufficient_population_evidence",
+  "strata": {
+    "category": {
+      "anchors": 13,
+      "censor_reasons": {
+        "future_observation_unavailable": 43,
+        "stale_book": 7
+      },
+      "days": [
+        "2026-10-14"
+      ],
+      "displayed_quantity_supported": {
+        "conditional_measured_rate": 1.0,
+        "eligible": 52,
+        "exploratory_cluster_bootstrap_95": null,
+        "family_count": 1,
+        "interval_notice": "Exploratory family/time-block resampling; single-day coverage, informative missingness and unsequenced feed prevent population confidence or fill inference.",
+        "measured": 2,
+        "missing_outcome_identification_bounds": [
+          0.038461538461538464,
+          1.0
+        ],
+        "successes": 2,
+        "time_block_count": 2,
+        "unknown": 50
+      },
+      "families": 1,
+      "markets": 1,
+      "metrics": {
+        "adverse_ask_movement": {
+          "count": 1,
+          "mean": 0.0,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 0.0
+          }
+        },
+        "best_ask_pair_movement": {
+          "count": 2,
+          "mean": 0.0,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 0.0
+          }
+        },
+        "cross_outcome_skew_ms": {
+          "count": 13,
+          "mean": 0.0,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 0.0
+          }
+        },
+        "displayed_cost_change": {
+          "count": 2,
+          "mean": 0.0,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 0.0
+          }
+        },
+        "displayed_cost_premium_per_share": {
+          "count": 13,
+          "mean": 0.0,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 0.0
+          }
+        },
+        "effective_delay_ms": {
+          "count": 4,
+          "mean": 2560.2061865,
+          "quantiles": {
+            "0": 115.059423,
+            "0.05": 115.059423,
+            "0.5": 5005.35295,
+            "0.95": 5005.35295,
+            "1": 5005.35295
+          }
+        },
+        "freshness_ms": {
+          "count": 26,
+          "mean": 1445.9726562307694,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 4904.171429,
+            "1": 4904.171429
+          }
+        },
+        "lookback_ask_quantity_change": {
+          "count": 26,
+          "mean": 1614.8038461538463,
+          "quantiles": {
+            "0": -19683.0,
+            "0.05": -3846.0,
+            "0.5": 0.0,
+            "0.95": 23333.0,
+            "1": 38333.0
+          }
+        },
+        "lookback_best_ask_change": {
+          "count": 26,
+          "mean": 0.0,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 0.0
+          }
+        },
+        "original_quote_depth_retention": {
+          "count": 4,
+          "mean": 1.0,
+          "quantiles": {
+            "0": 1.0,
+            "0.05": 1.0,
+            "0.5": 1.0,
+            "0.95": 1.0,
+            "1": 1.0
+          }
+        },
+        "quote_age_ms": {
+          "count": 26,
+          "mean": 16459.709372076923,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 12142.450121,
+            "0.95": 44088.47084,
+            "1": 44088.47084
+          }
+        },
+        "quoted_exit_value_change": {
+          "count": 2,
+          "mean": 0.0,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 0.0
+          }
+        },
+        "spread": {
+          "count": 26,
+          "mean": 0.001,
+          "quantiles": {
+            "0": 0.001,
+            "0.05": 0.001,
+            "0.5": 0.001,
+            "0.95": 0.001,
+            "1": 0.001
+          }
+        },
+        "top_ask_quantity": {
+          "count": 26,
+          "mean": 40888.63615384616,
+          "quantiles": {
+            "0": 1350.0,
+            "0.05": 1350.0,
+            "0.5": 2350.0,
+            "0.95": 79889.58,
+            "1": 79889.58
+          }
+        },
+        "total_ask_quantity": {
+          "count": 26,
+          "mean": 6408970.357307692,
+          "quantiles": {
+            "0": 536070.59,
+            "0.05": 536070.59,
+            "0.5": 536080.59,
+            "0.95": 12290555.9,
+            "1": 12291470.67
+          }
+        },
+        "update_frames_per_second": {
+          "count": 26,
+          "mean": 0.2076923076923077,
+          "quantiles": {
+            "0": 0.1,
+            "0.05": 0.1,
+            "0.5": 0.2,
+            "0.95": 0.5,
+            "1": 0.5
+          }
+        }
+      },
+      "opportunity_persistence": {
+        "conditional_measured_rate": null,
+        "eligible": 0,
+        "exploratory_cluster_bootstrap_95": null,
+        "family_count": 0,
+        "interval_notice": "Exploratory family/time-block resampling; single-day coverage, informative missingness and unsequenced feed prevent population confidence or fill inference.",
+        "measured": 0,
+        "missing_outcome_identification_bounds": null,
+        "successes": 0,
+        "time_block_count": 0,
+        "unknown": 0
+      },
+      "quote_persistence": {
+        "conditional_measured_rate": 1.0,
+        "eligible": 52,
+        "exploratory_cluster_bootstrap_95": null,
+        "family_count": 1,
+        "interval_notice": "Exploratory family/time-block resampling; single-day coverage, informative missingness and unsequenced feed prevent population confidence or fill inference.",
+        "measured": 2,
+        "missing_outcome_identification_bounds": [
+          0.038461538461538464,
+          1.0
+        ],
+        "successes": 2,
+        "time_block_count": 2,
+        "unknown": 50
+      },
+      "rows": 52,
+      "statuses": {
+        "censored": 50,
+        "observed_public_measurement": 2
+      },
+      "time_blocks": 7
+    },
+    "fast": {
+      "anchors": 407,
+      "censor_reasons": {
+        "book_issue:advertised_top_pending": 75,
+        "future_observation_unavailable": 1228,
+        "independent_book_divergence": 1,
+        "recorded_gap:book_resynchronization": 22,
+        "stale_book": 167
+      },
+      "days": [
+        "2026-10-14"
+      ],
+      "displayed_quantity_supported": {
+        "conditional_measured_rate": 1.0,
+        "eligible": 1628,
+        "exploratory_cluster_bootstrap_95": null,
+        "family_count": 1,
+        "interval_notice": "Exploratory family/time-block resampling; single-day coverage, informative missingness and unsequenced feed prevent population confidence or fill inference.",
+        "measured": 135,
+        "missing_outcome_identification_bounds": [
+          0.08292383292383293,
+          1.0
+        ],
+        "successes": 135,
+        "time_block_count": 63,
+        "unknown": 1493
+      },
+      "families": 1,
+      "markets": 2,
+      "metrics": {
+        "adverse_ask_movement": {
+          "count": 36,
+          "mean": 0.0,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 0.0
+          }
+        },
+        "best_ask_pair_movement": {
+          "count": 135,
+          "mean": 0.0,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 0.0
+          }
+        },
+        "cross_outcome_skew_ms": {
+          "count": 407,
+          "mean": 0.0,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 0.0
+          }
+        },
+        "displayed_cost_change": {
+          "count": 135,
+          "mean": 7.407407407403302e-06,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 0.0009999999999994458
+          }
+        },
+        "displayed_cost_premium_per_share": {
+          "count": 407,
+          "mean": 3.928061807027581e-17,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 2.220446049250313e-16,
+            "1": 2.220446049250313e-16
+          }
+        },
+        "effective_delay_ms": {
+          "count": 270,
+          "mean": 1770.9748072518519,
+          "quantiles": {
+            "0": 101.942126,
+            "0.05": 107.421804,
+            "0.5": 1015.225594,
+            "0.95": 5360.185399,
+            "1": 5486.241342
+          }
+        },
+        "freshness_ms": {
+          "count": 814,
+          "mean": 1260.8111408599507,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 4679.675168,
+            "1": 4987.693648
+          }
+        },
+        "lookback_ask_quantity_change": {
+          "count": 814,
+          "mean": -24.032665847665847,
+          "quantiles": {
+            "0": -8253.03,
+            "0.05": -200.0,
+            "0.5": 0.0,
+            "0.95": 154.98,
+            "1": 10364.0
+          }
+        },
+        "lookback_best_ask_change": {
+          "count": 814,
+          "mean": -2.5798525798525802e-05,
+          "quantiles": {
+            "0": -0.008,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 0.01
+          }
+        },
+        "original_quote_depth_retention": {
+          "count": 270,
+          "mean": 0.9666162824277423,
+          "quantiles": {
+            "0": 0.06235129477565583,
+            "0.05": 0.8305247294149883,
+            "0.5": 1.0,
+            "0.95": 1.0,
+            "1": 1.0
+          }
+        },
+        "quote_age_ms": {
+          "count": 814,
+          "mean": 18243.512577592137,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 11848.584936,
+            "0.95": 52661.074296,
+            "1": 70717.053363
+          }
+        },
+        "quoted_exit_value_change": {
+          "count": 135,
+          "mean": -7.4074074074074075e-06,
+          "quantiles": {
+            "0": -0.001,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 0.0
+          }
+        },
+        "spread": {
+          "count": 814,
+          "mean": 0.003474201474201474,
+          "quantiles": {
+            "0": 0.001,
+            "0.05": 0.001,
+            "0.5": 0.002,
+            "0.95": 0.008,
+            "1": 0.022
+          }
+        },
+        "top_ask_quantity": {
+          "count": 814,
+          "mean": 1755.7742997542998,
+          "quantiles": {
+            "0": 5.0,
+            "0.05": 15.0,
+            "0.5": 392.04,
+            "0.95": 8519.34,
+            "1": 13500.0
+          }
+        },
+        "total_ask_quantity": {
+          "count": 814,
+          "mean": 32100.98713759214,
+          "quantiles": {
+            "0": 265.99,
+            "0.05": 6618.12,
+            "0.5": 11922.92,
+            "0.95": 58277.5,
+            "1": 61684.61
+          }
+        },
+        "update_frames_per_second": {
+          "count": 814,
+          "mean": 1.7714987714987716,
+          "quantiles": {
+            "0": 0.1,
+            "0.05": 0.1,
+            "0.5": 0.5,
+            "0.95": 6.0,
+            "1": 43.6
+          }
+        }
+      },
+      "opportunity_persistence": {
+        "conditional_measured_rate": null,
+        "eligible": 0,
+        "exploratory_cluster_bootstrap_95": null,
+        "family_count": 0,
+        "interval_notice": "Exploratory family/time-block resampling; single-day coverage, informative missingness and unsequenced feed prevent population confidence or fill inference.",
+        "measured": 0,
+        "missing_outcome_identification_bounds": null,
+        "successes": 0,
+        "time_block_count": 0,
+        "unknown": 0
+      },
+      "quote_persistence": {
+        "conditional_measured_rate": 1.0,
+        "eligible": 1628,
+        "exploratory_cluster_bootstrap_95": null,
+        "family_count": 1,
+        "interval_notice": "Exploratory family/time-block resampling; single-day coverage, informative missingness and unsequenced feed prevent population confidence or fill inference.",
+        "measured": 135,
+        "missing_outcome_identification_bounds": [
+          0.08292383292383293,
+          1.0
+        ],
+        "successes": 135,
+        "time_block_count": 63,
+        "unknown": 1493
+      },
+      "rows": 1628,
+      "statuses": {
+        "censored": 1493,
+        "observed_public_measurement": 135
+      },
+      "time_blocks": 144
+    },
+    "high": {
+      "anchors": 508,
+      "censor_reasons": {
+        "future_observation_unavailable": 1620,
+        "recorded_gap:book_resynchronization": 57,
+        "recorded_gap:process_stop": 1,
+        "stale_book": 173
+      },
+      "days": [
+        "2026-10-14"
+      ],
+      "displayed_quantity_supported": {
+        "conditional_measured_rate": 1.0,
+        "eligible": 2031,
+        "exploratory_cluster_bootstrap_95": null,
+        "family_count": 1,
+        "interval_notice": "Exploratory family/time-block resampling; single-day coverage, informative missingness and unsequenced feed prevent population confidence or fill inference.",
+        "measured": 180,
+        "missing_outcome_identification_bounds": [
+          0.08862629246676514,
+          1.0
+        ],
+        "successes": 180,
+        "time_block_count": 73,
+        "unknown": 1851
+      },
+      "families": 1,
+      "markets": 1,
+      "metrics": {
+        "adverse_ask_movement": {
+          "count": 77,
+          "mean": 0.0,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 0.0
+          }
+        },
+        "best_ask_pair_movement": {
+          "count": 180,
+          "mean": 0.0,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 0.0
+          }
+        },
+        "cross_outcome_skew_ms": {
+          "count": 508,
+          "mean": 0.0,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 0.0
+          }
+        },
+        "displayed_cost_change": {
+          "count": 180,
+          "mean": 0.0,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 0.0
+          }
+        },
+        "displayed_cost_premium_per_share": {
+          "count": 508,
+          "mean": 0.0,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 0.0
+          }
+        },
+        "effective_delay_ms": {
+          "count": 360,
+          "mean": 2617.975177388889,
+          "quantiles": {
+            "0": 101.070848,
+            "0.05": 109.953115,
+            "0.5": 1160.457286,
+            "0.95": 5428.820316,
+            "1": 5496.96512
+          }
+        },
+        "freshness_ms": {
+          "count": 1016,
+          "mean": 1197.6930954350394,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 4558.551306,
+            "1": 4991.995469
+          }
+        },
+        "lookback_ask_quantity_change": {
+          "count": 1016,
+          "mean": -71.02812992125985,
+          "quantiles": {
+            "0": -36813.0,
+            "0.05": -5213.0,
+            "0.5": 0.0,
+            "0.95": 5213.0,
+            "1": 30501.03
+          }
+        },
+        "lookback_best_ask_change": {
+          "count": 1016,
+          "mean": 0.0,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 0.0
+          }
+        },
+        "original_quote_depth_retention": {
+          "count": 360,
+          "mean": 0.9998427705194565,
+          "quantiles": {
+            "0": 0.9866485872830936,
+            "0.05": 1.0,
+            "0.5": 1.0,
+            "0.95": 1.0,
+            "1": 1.0
+          }
+        },
+        "quote_age_ms": {
+          "count": 1016,
+          "mean": 25361.06512195866,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 23827.634459,
+            "0.95": 57319.205841,
+            "1": 82783.457499
+          }
+        },
+        "quoted_exit_value_change": {
+          "count": 180,
+          "mean": 0.0,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 0.0
+          }
+        },
+        "spread": {
+          "count": 1016,
+          "mean": 0.01,
+          "quantiles": {
+            "0": 0.01,
+            "0.05": 0.01,
+            "0.5": 0.01,
+            "0.95": 0.01,
+            "1": 0.01
+          }
+        },
+        "top_ask_quantity": {
+          "count": 1016,
+          "mean": 154734.4380019685,
+          "quantiles": {
+            "0": 123493.17,
+            "0.05": 124853.61,
+            "0.5": 180651.38,
+            "0.95": 186406.98,
+            "1": 186406.98
+          }
+        },
+        "total_ask_quantity": {
+          "count": 1016,
+          "mean": 5395019.629744094,
+          "quantiles": {
+            "0": 4152028.92,
+            "0.05": 4194960.92,
+            "0.5": 6555457.0,
+            "0.95": 6588656.5,
+            "1": 6591439.83
+          }
+        },
+        "update_frames_per_second": {
+          "count": 1016,
+          "mean": 0.7114173228346456,
+          "quantiles": {
+            "0": 0.1,
+            "0.05": 0.1,
+            "0.5": 0.3,
+            "0.95": 2.9,
+            "1": 6.6
+          }
+        }
+      },
+      "opportunity_persistence": {
+        "conditional_measured_rate": null,
+        "eligible": 0,
+        "exploratory_cluster_bootstrap_95": null,
+        "family_count": 0,
+        "interval_notice": "Exploratory family/time-block resampling; single-day coverage, informative missingness and unsequenced feed prevent population confidence or fill inference.",
+        "measured": 0,
+        "missing_outcome_identification_bounds": null,
+        "successes": 0,
+        "time_block_count": 0,
+        "unknown": 0
+      },
+      "quote_persistence": {
+        "conditional_measured_rate": 1.0,
+        "eligible": 2031,
+        "exploratory_cluster_bootstrap_95": null,
+        "family_count": 1,
+        "interval_notice": "Exploratory family/time-block resampling; single-day coverage, informative missingness and unsequenced feed prevent population confidence or fill inference.",
+        "measured": 180,
+        "missing_outcome_identification_bounds": [
+          0.08862629246676514,
+          1.0
+        ],
+        "successes": 180,
+        "time_block_count": 73,
+        "unknown": 1851
+      },
+      "rows": 2031,
+      "statuses": {
+        "censored": 1851,
+        "observed_public_measurement": 180
+      },
+      "time_blocks": 153
+    },
+    "medium": {
+      "anchors": 114,
+      "censor_reasons": {
+        "book_issue:advertised_top_pending": 7,
+        "future_observation_unavailable": 386,
+        "stale_book": 57
+      },
+      "days": [
+        "2026-10-14"
+      ],
+      "displayed_quantity_supported": {
+        "conditional_measured_rate": 1.0,
+        "eligible": 456,
+        "exploratory_cluster_bootstrap_95": null,
+        "family_count": 1,
+        "interval_notice": "Exploratory family/time-block resampling; single-day coverage, informative missingness and unsequenced feed prevent population confidence or fill inference.",
+        "measured": 6,
+        "missing_outcome_identification_bounds": [
+          0.013157894736842105,
+          1.0
+        ],
+        "successes": 6,
+        "time_block_count": 5,
+        "unknown": 450
+      },
+      "families": 2,
+      "markets": 2,
+      "metrics": {
+        "adverse_ask_movement": {
+          "count": 1,
+          "mean": 0.0,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 0.0
+          }
+        },
+        "best_ask_pair_movement": {
+          "count": 6,
+          "mean": 0.0,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 0.0
+          }
+        },
+        "cross_outcome_skew_ms": {
+          "count": 114,
+          "mean": 0.0,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 0.0
+          }
+        },
+        "displayed_cost_change": {
+          "count": 6,
+          "mean": 0.0,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 0.0
+          }
+        },
+        "displayed_cost_premium_per_share": {
+          "count": 114,
+          "mean": 0.0,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 0.0
+          }
+        },
+        "effective_delay_ms": {
+          "count": 12,
+          "mean": 1184.7441136666666,
+          "quantiles": {
+            "0": 113.755746,
+            "0.05": 113.755746,
+            "0.5": 328.923428,
+            "0.95": 5009.464922,
+            "1": 5009.464922
+          }
+        },
+        "freshness_ms": {
+          "count": 228,
+          "mean": 472.3680054473684,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 3456.425781,
+            "1": 4970.596395
+          }
+        },
+        "lookback_ask_quantity_change": {
+          "count": 228,
+          "mean": 1.2326315789473683,
+          "quantiles": {
+            "0": -400.0,
+            "0.05": -33.5,
+            "0.5": 0.0,
+            "0.95": 101.1,
+            "1": 500.0
+          }
+        },
+        "lookback_best_ask_change": {
+          "count": 228,
+          "mean": 4.385964912280702e-05,
+          "quantiles": {
+            "0": -0.01,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 0.01
+          }
+        },
+        "original_quote_depth_retention": {
+          "count": 12,
+          "mean": 1.0,
+          "quantiles": {
+            "0": 1.0,
+            "0.05": 1.0,
+            "0.5": 1.0,
+            "0.95": 1.0,
+            "1": 1.0
+          }
+        },
+        "quote_age_ms": {
+          "count": 228,
+          "mean": 8631.337800324562,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 50892.531909,
+            "1": 60073.086262
+          }
+        },
+        "quoted_exit_value_change": {
+          "count": 6,
+          "mean": 0.0,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 0.0
+          }
+        },
+        "spread": {
+          "count": 228,
+          "mean": 0.04342105263157895,
+          "quantiles": {
+            "0": 0.03,
+            "0.05": 0.03,
+            "0.5": 0.04,
+            "0.95": 0.05,
+            "1": 0.09
+          }
+        },
+        "top_ask_quantity": {
+          "count": 228,
+          "mean": 182.98635964912282,
+          "quantiles": {
+            "0": 10.16,
+            "0.05": 14.11,
+            "0.5": 100.0,
+            "0.95": 300.0,
+            "1": 1448.66
+          }
+        },
+        "total_ask_quantity": {
+          "count": 228,
+          "mean": 6064.154473684211,
+          "quantiles": {
+            "0": 1129.56,
+            "0.05": 3147.21,
+            "0.5": 4021.53,
+            "0.95": 4789.81,
+            "1": 59606.15
+          }
+        },
+        "update_frames_per_second": {
+          "count": 228,
+          "mean": 0.30701754385964913,
+          "quantiles": {
+            "0": 0.1,
+            "0.05": 0.1,
+            "0.5": 0.1,
+            "0.95": 1.1,
+            "1": 4.8
+          }
+        }
+      },
+      "opportunity_persistence": {
+        "conditional_measured_rate": null,
+        "eligible": 0,
+        "exploratory_cluster_bootstrap_95": null,
+        "family_count": 0,
+        "interval_notice": "Exploratory family/time-block resampling; single-day coverage, informative missingness and unsequenced feed prevent population confidence or fill inference.",
+        "measured": 0,
+        "missing_outcome_identification_bounds": null,
+        "successes": 0,
+        "time_block_count": 0,
+        "unknown": 0
+      },
+      "quote_persistence": {
+        "conditional_measured_rate": 1.0,
+        "eligible": 456,
+        "exploratory_cluster_bootstrap_95": null,
+        "family_count": 1,
+        "interval_notice": "Exploratory family/time-block resampling; single-day coverage, informative missingness and unsequenced feed prevent population confidence or fill inference.",
+        "measured": 6,
+        "missing_outcome_identification_bounds": [
+          0.013157894736842105,
+          1.0
+        ],
+        "successes": 6,
+        "time_block_count": 5,
+        "unknown": 450
+      },
+      "rows": 456,
+      "statuses": {
+        "censored": 450,
+        "observed_public_measurement": 6
+      },
+      "time_blocks": 92
+    },
+    "near_expiry": {
+      "anchors": 247,
+      "censor_reasons": {
+        "book_issue:advertised_top_pending": 32,
+        "future_observation_unavailable": 768,
+        "recorded_gap:book_resynchronization": 22,
+        "stale_book": 105
+      },
+      "days": [
+        "2026-10-14"
+      ],
+      "displayed_quantity_supported": {
+        "conditional_measured_rate": 1.0,
+        "eligible": 988,
+        "exploratory_cluster_bootstrap_95": null,
+        "family_count": 1,
+        "interval_notice": "Exploratory family/time-block resampling; single-day coverage, informative missingness and unsequenced feed prevent population confidence or fill inference.",
+        "measured": 61,
+        "missing_outcome_identification_bounds": [
+          0.06174089068825911,
+          1.0
+        ],
+        "successes": 61,
+        "time_block_count": 35,
+        "unknown": 927
+      },
+      "families": 1,
+      "markets": 2,
+      "metrics": {
+        "adverse_ask_movement": {
+          "count": 15,
+          "mean": 0.0,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 0.0
+          }
+        },
+        "best_ask_pair_movement": {
+          "count": 61,
+          "mean": 0.0,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 0.0
+          }
+        },
+        "cross_outcome_skew_ms": {
+          "count": 247,
+          "mean": 0.014637344129554655,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 3.615424
+          }
+        },
+        "displayed_cost_change": {
+          "count": 61,
+          "mean": 0.0003075409836065628,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 0.018760000000000332
+          }
+        },
+        "displayed_cost_premium_per_share": {
+          "count": 247,
+          "mean": 7.974898785426807e-05,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 2.220446049250313e-16,
+            "1": 0.006566000000000072
+          }
+        },
+        "effective_delay_ms": {
+          "count": 122,
+          "mean": 1681.3447018032787,
+          "quantiles": {
+            "0": 100.464823,
+            "0.05": 105.633097,
+            "0.5": 1003.45247,
+            "0.95": 5359.554757,
+            "1": 5417.872904
+          }
+        },
+        "freshness_ms": {
+          "count": 494,
+          "mean": 1413.9330593279353,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 789.839773,
+            "0.95": 4392.620603,
+            "1": 4955.519657
+          }
+        },
+        "lookback_ask_quantity_change": {
+          "count": 494,
+          "mean": 19.651680161943318,
+          "quantiles": {
+            "0": -10000.0,
+            "0.05": -161.93,
+            "0.5": 0.0,
+            "0.95": 125.0,
+            "1": 9778.23
+          }
+        },
+        "lookback_best_ask_change": {
+          "count": 494,
+          "mean": -1.214574898785425e-05,
+          "quantiles": {
+            "0": -0.015,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 0.014
+          }
+        },
+        "original_quote_depth_retention": {
+          "count": 122,
+          "mean": 0.978610661230995,
+          "quantiles": {
+            "0": 0.0028359710913914552,
+            "0.05": 1.0,
+            "0.5": 1.0,
+            "0.95": 1.0,
+            "1": 1.0
+          }
+        },
+        "quote_age_ms": {
+          "count": 494,
+          "mean": 17627.34289677935,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 11455.355091,
+            "0.95": 54309.3281,
+            "1": 70717.053363
+          }
+        },
+        "quoted_exit_value_change": {
+          "count": 61,
+          "mean": -0.00030754098360655734,
+          "quantiles": {
+            "0": -0.01876,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 0.0
+          }
+        },
+        "spread": {
+          "count": 494,
+          "mean": 0.0033967611336032386,
+          "quantiles": {
+            "0": 0.001,
+            "0.05": 0.001,
+            "0.5": 0.002,
+            "0.95": 0.01,
+            "1": 0.02
+          }
+        },
+        "top_ask_quantity": {
+          "count": 494,
+          "mean": 1520.8993927125507,
+          "quantiles": {
+            "0": 0.31,
+            "0.05": 20.0,
+            "0.5": 258.39,
+            "0.95": 10247.35,
+            "1": 11006.35
+          }
+        },
+        "total_ask_quantity": {
+          "count": 494,
+          "mean": 28290.26289473684,
+          "quantiles": {
+            "0": 446.3,
+            "0.05": 2337.69,
+            "0.5": 13284.58,
+            "0.95": 56118.61,
+            "1": 56450.78
+          }
+        },
+        "update_frames_per_second": {
+          "count": 494,
+          "mean": 1.7299595141700406,
+          "quantiles": {
+            "0": 0.1,
+            "0.05": 0.1,
+            "0.5": 0.6,
+            "0.95": 5.3,
+            "1": 41.1
+          }
+        }
+      },
+      "opportunity_persistence": {
+        "conditional_measured_rate": null,
+        "eligible": 0,
+        "exploratory_cluster_bootstrap_95": null,
+        "family_count": 0,
+        "interval_notice": "Exploratory family/time-block resampling; single-day coverage, informative missingness and unsequenced feed prevent population confidence or fill inference.",
+        "measured": 0,
+        "missing_outcome_identification_bounds": null,
+        "successes": 0,
+        "time_block_count": 0,
+        "unknown": 0
+      },
+      "quote_persistence": {
+        "conditional_measured_rate": 1.0,
+        "eligible": 988,
+        "exploratory_cluster_bootstrap_95": null,
+        "family_count": 1,
+        "interval_notice": "Exploratory family/time-block resampling; single-day coverage, informative missingness and unsequenced feed prevent population confidence or fill inference.",
+        "measured": 61,
+        "missing_outcome_identification_bounds": [
+          0.06174089068825911,
+          1.0
+        ],
+        "successes": 61,
+        "time_block_count": 35,
+        "unknown": 927
+      },
+      "rows": 988,
+      "statuses": {
+        "censored": 927,
+        "observed_public_measurement": 61
+      },
+      "time_blocks": 86
+    },
+    "random": {
+      "anchors": 335,
+      "censor_reasons": {
+        "future_observation_unavailable": 1069,
+        "recorded_gap:book_resynchronization": 35,
+        "stale_book": 205
+      },
+      "days": [
+        "2026-10-14"
+      ],
+      "displayed_quantity_supported": {
+        "conditional_measured_rate": 1.0,
+        "eligible": 1340,
+        "exploratory_cluster_bootstrap_95": null,
+        "family_count": 1,
+        "interval_notice": "Exploratory family/time-block resampling; single-day coverage, informative missingness and unsequenced feed prevent population confidence or fill inference.",
+        "measured": 31,
+        "missing_outcome_identification_bounds": [
+          0.023134328358208955,
+          1.0
+        ],
+        "successes": 31,
+        "time_block_count": 24,
+        "unknown": 1309
+      },
+      "families": 2,
+      "markets": 2,
+      "metrics": {
+        "adverse_ask_movement": {
+          "count": 10,
+          "mean": 0.0,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 0.0
+          }
+        },
+        "best_ask_pair_movement": {
+          "count": 31,
+          "mean": 0.0,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 0.0
+          }
+        },
+        "cross_outcome_skew_ms": {
+          "count": 335,
+          "mean": 0.0,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 0.0
+          }
+        },
+        "displayed_cost_change": {
+          "count": 31,
+          "mean": 0.0,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 0.0
+          }
+        },
+        "displayed_cost_premium_per_share": {
+          "count": 335,
+          "mean": 0.0,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 0.0
+          }
+        },
+        "effective_delay_ms": {
+          "count": 62,
+          "mean": 2356.5243396129035,
+          "quantiles": {
+            "0": 302.102415,
+            "0.05": 312.64335,
+            "0.5": 1167.181897,
+            "0.95": 5466.972652,
+            "1": 5479.013753
+          }
+        },
+        "freshness_ms": {
+          "count": 670,
+          "mean": 1548.9449205791045,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 749.527859,
+            "0.95": 4597.12512,
+            "1": 4976.099846
+          }
+        },
+        "lookback_ask_quantity_change": {
+          "count": 670,
+          "mean": 213.7787313432836,
+          "quantiles": {
+            "0": -36083.0,
+            "0.05": -3432.0,
+            "0.5": 0.0,
+            "0.95": 9000.0,
+            "1": 34216.0
+          }
+        },
+        "lookback_best_ask_change": {
+          "count": 670,
+          "mean": 0.0,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 0.0
+          }
+        },
+        "original_quote_depth_retention": {
+          "count": 62,
+          "mean": 1.0,
+          "quantiles": {
+            "0": 1.0,
+            "0.05": 1.0,
+            "0.5": 1.0,
+            "0.95": 1.0,
+            "1": 1.0
+          }
+        },
+        "quote_age_ms": {
+          "count": 670,
+          "mean": 23715.60711178209,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 20834.897741,
+            "0.95": 57512.76761,
+            "1": 97889.598433
+          }
+        },
+        "quoted_exit_value_change": {
+          "count": 31,
+          "mean": 0.0,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 0.0
+          }
+        },
+        "spread": {
+          "count": 670,
+          "mean": 0.0013462686567164179,
+          "quantiles": {
+            "0": 0.001,
+            "0.05": 0.001,
+            "0.5": 0.001,
+            "0.95": 0.001,
+            "1": 0.03
+          }
+        },
+        "top_ask_quantity": {
+          "count": 670,
+          "mean": 40548.50241791045,
+          "quantiles": {
+            "0": 25.5,
+            "0.05": 1350.0,
+            "0.5": 2350.0,
+            "0.95": 79889.58,
+            "1": 79889.58
+          }
+        },
+        "total_ask_quantity": {
+          "count": 670,
+          "mean": 6333145.220283582,
+          "quantiles": {
+            "0": 57667.58,
+            "0.05": 536070.59,
+            "0.5": 536080.59,
+            "0.95": 12291470.67,
+            "1": 12292620.67
+          }
+        },
+        "update_frames_per_second": {
+          "count": 670,
+          "mean": 0.24059701492537316,
+          "quantiles": {
+            "0": 0.1,
+            "0.05": 0.1,
+            "0.5": 0.2,
+            "0.95": 0.6,
+            "1": 3.4
+          }
+        }
+      },
+      "opportunity_persistence": {
+        "conditional_measured_rate": null,
+        "eligible": 0,
+        "exploratory_cluster_bootstrap_95": null,
+        "family_count": 0,
+        "interval_notice": "Exploratory family/time-block resampling; single-day coverage, informative missingness and unsequenced feed prevent population confidence or fill inference.",
+        "measured": 0,
+        "missing_outcome_identification_bounds": null,
+        "successes": 0,
+        "time_block_count": 0,
+        "unknown": 0
+      },
+      "quote_persistence": {
+        "conditional_measured_rate": 1.0,
+        "eligible": 1340,
+        "exploratory_cluster_bootstrap_95": null,
+        "family_count": 1,
+        "interval_notice": "Exploratory family/time-block resampling; single-day coverage, informative missingness and unsequenced feed prevent population confidence or fill inference.",
+        "measured": 31,
+        "missing_outcome_identification_bounds": [
+          0.023134328358208955,
+          1.0
+        ],
+        "successes": 31,
+        "time_block_count": 24,
+        "unknown": 1309
+      },
+      "rows": 1340,
+      "statuses": {
+        "censored": 1309,
+        "observed_public_measurement": 31
+      },
+      "time_blocks": 145
+    },
+    "stable": {
+      "anchors": 72,
+      "censor_reasons": {
+        "future_observation_unavailable": 248,
+        "stale_book": 40
+      },
+      "days": [
+        "2026-10-14"
+      ],
+      "displayed_quantity_supported": {
+        "conditional_measured_rate": null,
+        "eligible": 288,
+        "exploratory_cluster_bootstrap_95": null,
+        "family_count": 0,
+        "interval_notice": "Exploratory family/time-block resampling; single-day coverage, informative missingness and unsequenced feed prevent population confidence or fill inference.",
+        "measured": 0,
+        "missing_outcome_identification_bounds": [
+          0.0,
+          1.0
+        ],
+        "successes": 0,
+        "time_block_count": 0,
+        "unknown": 288
+      },
+      "families": 2,
+      "markets": 2,
+      "metrics": {
+        "adverse_ask_movement": {
+          "count": 0,
+          "quantiles": null
+        },
+        "best_ask_pair_movement": {
+          "count": 0,
+          "quantiles": null
+        },
+        "cross_outcome_skew_ms": {
+          "count": 72,
+          "mean": 0.0,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 0.0
+          }
+        },
+        "displayed_cost_change": {
+          "count": 0,
+          "quantiles": null
+        },
+        "displayed_cost_premium_per_share": {
+          "count": 72,
+          "mean": 0.0,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 0.0
+          }
+        },
+        "effective_delay_ms": {
+          "count": 0,
+          "quantiles": null
+        },
+        "freshness_ms": {
+          "count": 144,
+          "mean": 440.5786833888889,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 2986.288882,
+            "1": 4682.73985
+          }
+        },
+        "lookback_ask_quantity_change": {
+          "count": 144,
+          "mean": -12.294652777777777,
+          "quantiles": {
+            "0": -1678.89,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 1123.35
+          }
+        },
+        "lookback_best_ask_change": {
+          "count": 144,
+          "mean": 0.0,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 0.0
+          }
+        },
+        "original_quote_depth_retention": {
+          "count": 0,
+          "quantiles": null
+        },
+        "quote_age_ms": {
+          "count": 144,
+          "mean": 5099.214148083333,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 34031.226471,
+            "1": 54465.212596
+          }
+        },
+        "quoted_exit_value_change": {
+          "count": 0,
+          "quantiles": null
+        },
+        "spread": {
+          "count": 144,
+          "mean": 0.027777777777777776,
+          "quantiles": {
+            "0": 0.01,
+            "0.05": 0.01,
+            "0.5": 0.03,
+            "0.95": 0.03,
+            "1": 0.03
+          }
+        },
+        "top_ask_quantity": {
+          "count": 144,
+          "mean": 664.6822222222222,
+          "quantiles": {
+            "0": 25.5,
+            "0.05": 25.5,
+            "0.5": 100.0,
+            "0.95": 1448.66,
+            "1": 1448.66
+          }
+        },
+        "total_ask_quantity": {
+          "count": 144,
+          "mean": 52773.681597222225,
+          "quantiles": {
+            "0": 1555.21,
+            "0.05": 1561.39,
+            "0.5": 57667.58,
+            "0.95": 61285.04,
+            "1": 61285.04
+          }
+        },
+        "update_frames_per_second": {
+          "count": 144,
+          "mean": 0.11944444444444444,
+          "quantiles": {
+            "0": 0.1,
+            "0.05": 0.1,
+            "0.5": 0.1,
+            "0.95": 0.2,
+            "1": 0.3
+          }
+        }
+      },
+      "opportunity_persistence": {
+        "conditional_measured_rate": null,
+        "eligible": 0,
+        "exploratory_cluster_bootstrap_95": null,
+        "family_count": 0,
+        "interval_notice": "Exploratory family/time-block resampling; single-day coverage, informative missingness and unsequenced feed prevent population confidence or fill inference.",
+        "measured": 0,
+        "missing_outcome_identification_bounds": null,
+        "successes": 0,
+        "time_block_count": 0,
+        "unknown": 0
+      },
+      "quote_persistence": {
+        "conditional_measured_rate": null,
+        "eligible": 288,
+        "exploratory_cluster_bootstrap_95": null,
+        "family_count": 0,
+        "interval_notice": "Exploratory family/time-block resampling; single-day coverage, informative missingness and unsequenced feed prevent population confidence or fill inference.",
+        "measured": 0,
+        "missing_outcome_identification_bounds": [
+          0.0,
+          1.0
+        ],
+        "successes": 0,
+        "time_block_count": 0,
+        "unknown": 288
+      },
+      "rows": 288,
+      "statuses": {
+        "censored": 288
+      },
+      "time_blocks": 64
+    },
+    "thin": {
+      "anchors": 297,
+      "censor_reasons": {
+        "book_issue:advertised_top_pending": 48,
+        "future_observation_unavailable": 965,
+        "recorded_gap:book_resynchronization": 29,
+        "stale_book": 60
+      },
+      "days": [
+        "2026-10-14"
+      ],
+      "displayed_quantity_supported": {
+        "conditional_measured_rate": 1.0,
+        "eligible": 1187,
+        "exploratory_cluster_bootstrap_95": null,
+        "family_count": 1,
+        "interval_notice": "Exploratory family/time-block resampling; single-day coverage, informative missingness and unsequenced feed prevent population confidence or fill inference.",
+        "measured": 85,
+        "missing_outcome_identification_bounds": [
+          0.07160909856781802,
+          1.0
+        ],
+        "successes": 85,
+        "time_block_count": 41,
+        "unknown": 1102
+      },
+      "families": 3,
+      "markets": 3,
+      "metrics": {
+        "adverse_ask_movement": {
+          "count": 43,
+          "mean": 0.0,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 0.0
+          }
+        },
+        "best_ask_pair_movement": {
+          "count": 85,
+          "mean": 0.0,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 0.0
+          }
+        },
+        "cross_outcome_skew_ms": {
+          "count": 297,
+          "mean": 0.0,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 0.0
+          }
+        },
+        "displayed_cost_change": {
+          "count": 85,
+          "mean": 0.0,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 0.0
+          }
+        },
+        "displayed_cost_premium_per_share": {
+          "count": 297,
+          "mean": -7.476249324075128e-19,
+          "quantiles": {
+            "0": -2.220446049250313e-16,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 0.0
+          }
+        },
+        "effective_delay_ms": {
+          "count": 170,
+          "mean": 2942.356686364706,
+          "quantiles": {
+            "0": 101.743235,
+            "0.05": 104.99498,
+            "0.5": 1241.080776,
+            "0.95": 5403.883607,
+            "1": 5472.666076
+          }
+        },
+        "freshness_ms": {
+          "count": 594,
+          "mean": 737.7463861952863,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 3431.251749,
+            "1": 4966.048618
+          }
+        },
+        "lookback_ask_quantity_change": {
+          "count": 594,
+          "mean": -0.23989898989898947,
+          "quantiles": {
+            "0": -1000.0,
+            "0.05": -388.02,
+            "0.5": 0.0,
+            "0.95": 345.95,
+            "1": 700.0
+          }
+        },
+        "lookback_best_ask_change": {
+          "count": 594,
+          "mean": -0.0002861952861952862,
+          "quantiles": {
+            "0": -0.02,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 0.01
+          }
+        },
+        "original_quote_depth_retention": {
+          "count": 170,
+          "mean": 0.9734918776313116,
+          "quantiles": {
+            "0": 0.11704312114989733,
+            "0.05": 1.0,
+            "0.5": 1.0,
+            "0.95": 1.0,
+            "1": 1.0
+          }
+        },
+        "quote_age_ms": {
+          "count": 594,
+          "mean": 15649.919339262626,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 9968.956248,
+            "0.95": 49312.779124,
+            "1": 92114.642158
+          }
+        },
+        "quoted_exit_value_change": {
+          "count": 85,
+          "mean": 0.0,
+          "quantiles": {
+            "0": 0.0,
+            "0.05": 0.0,
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "1": 0.0
+          }
+        },
+        "spread": {
+          "count": 594,
+          "mean": 0.013865319865319867,
+          "quantiles": {
+            "0": 0.01,
+            "0.05": 0.01,
+            "0.5": 0.01,
+            "0.95": 0.02,
+            "1": 0.07
+          }
+        },
+        "top_ask_quantity": {
+          "count": 594,
+          "mean": 51.784882154882155,
+          "quantiles": {
+            "0": 5.7,
+            "0.05": 6.7,
+            "0.5": 41.0,
+            "0.95": 145.72,
+            "1": 264.72
+          }
+        },
+        "total_ask_quantity": {
+          "count": 594,
+          "mean": 2449.132777777778,
+          "quantiles": {
+            "0": 1147.21,
+            "0.05": 1561.39,
+            "0.5": 2371.84,
+            "0.95": 3264.54,
+            "1": 14751.35
+          }
+        },
+        "update_frames_per_second": {
+          "count": 594,
+          "mean": 0.9922558922558922,
+          "quantiles": {
+            "0": 0.1,
+            "0.05": 0.1,
+            "0.5": 0.8,
+            "0.95": 2.5,
+            "1": 5.4
+          }
+        }
+      },
+      "opportunity_persistence": {
+        "conditional_measured_rate": null,
+        "eligible": 0,
+        "exploratory_cluster_bootstrap_95": null,
+        "family_count": 0,
+        "interval_notice": "Exploratory family/time-block resampling; single-day coverage, informative missingness and unsequenced feed prevent population confidence or fill inference.",
+        "measured": 0,
+        "missing_outcome_identification_bounds": null,
+        "successes": 0,
+        "time_block_count": 0,
+        "unknown": 0
+      },
+      "quote_persistence": {
+        "conditional_measured_rate": 1.0,
+        "eligible": 1187,
+        "exploratory_cluster_bootstrap_95": null,
+        "family_count": 1,
+        "interval_notice": "Exploratory family/time-block resampling; single-day coverage, informative missingness and unsequenced feed prevent population confidence or fill inference.",
+        "measured": 85,
+        "missing_outcome_identification_bounds": [
+          0.07160909856781802,
+          1.0
+        ],
+        "successes": 85,
+        "time_block_count": 41,
+        "unknown": 1102
+      },
+      "rows": 1187,
+      "statuses": {
+        "censored": 1102,
+        "observed_public_measurement": 85
+      },
+      "time_blocks": 118
+    }
+  },
+  "synthetic_comparison": {
+    "generator": "midas.laboratory.spec.generate",
+    "horizons": {
+      "100": {
+        "apparent_discrepancy": 0.8355263157894737,
+        "liquidity_disappearance": 0.02631578947368421,
+        "quote_persistence": 0.9342105263157895
+      },
+      "1000": {
+        "apparent_discrepancy": 0.694078947368421,
+        "liquidity_disappearance": 0.10526315789473684,
+        "quote_persistence": 0.7368421052631579
+      },
+      "300": {
+        "apparent_discrepancy": 0.7138157894736842,
+        "liquidity_disappearance": 0.10526315789473684,
+        "quote_persistence": 0.7368421052631579
+      },
+      "5000": {
+        "apparent_discrepancy": 0.694078947368421,
+        "liquidity_disappearance": 0.10526315789473684,
+        "quote_persistence": 0.7368421052631579
+      }
+    },
+    "incomparable_components": [
+      "Private matching/queue/acknowledgment and submission latency have no public execution counterpart.",
+      "Synthetic future state is known at exact schedule time; real futures require new synchronized observations.",
+      "Original generated market legs update synchronously; observed arrival skew is measured separately.",
+      "Synthetic resolution at 2/8 seconds or absent is imposed; real capital settlement is unmeasured."
+    ],
+    "metrics": {
+      "spread": {
+        "count": 608,
+        "mean": 0.009478947368421056,
+        "quantiles": {
+          "0": 9.999999999998899e-05,
+          "0.05": 9.999999999998899e-05,
+          "0.5": 0.010000000000000009,
+          "0.95": 0.010000000000000009,
+          "1": 0.010000000000000009
+        }
+      },
+      "top_ask_quantity": {
+        "count": 608,
+        "mean": 80.36842105263158,
+        "quantiles": {
+          "0": 1.0,
+          "0.05": 6.0,
+          "0.5": 16.0,
+          "0.95": 574.0,
+          "1": 1977.0
+        }
+      }
+    },
+    "original_execution_presets": {
+      "conservative": {
+        "ack_delay_ms": 50,
+        "adverse_ticks": 1,
+        "distribution": "uniform",
+        "jitter_ms": 250,
+        "latency_ms": 750,
+        "liquidity_fraction": "0.5",
+        "name": "conservative",
+        "seed": 7,
+        "taker_delay_ms": 0
+      },
+      "optimistic": {
+        "ack_delay_ms": 0,
+        "adverse_ticks": 0,
+        "distribution": "uniform",
+        "jitter_ms": 0,
+        "latency_ms": 0,
+        "liquidity_fraction": "1",
+        "name": "optimistic",
+        "seed": 7,
+        "taker_delay_ms": 0
+      },
+      "standard": {
+        "ack_delay_ms": 50,
+        "adverse_ticks": 0,
+        "distribution": "uniform",
+        "jitter_ms": 50,
+        "latency_ms": 200,
+        "liquidity_fraction": "0.8",
+        "name": "standard",
+        "seed": 7,
+        "taker_delay_ms": 0
+      }
+    },
+    "protected_historical_artifacts_modified": false,
+    "scenario_bundle_sha256": "3e2dd9003aba6aef9d64cf7a994a6d4d31b6e26005911e9aff60458dcf45dfd1",
+    "scenarios": 304,
+    "selection": "All 19 families, seeds 0..15; equal family weighting, not historical result weighting",
+    "source": "SYNTHETIC_REGENERATED_CONTROLS"
+  }
+}
