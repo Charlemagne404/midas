@@ -28,7 +28,8 @@ labels, chronological embargoes, family grouping and independent raw audits.
 Gate C adds observational calibration, explicit execution-uncertainty scenarios
 and preserved-simulator comparisons. Gate D adds genuine observation-target
 training, consumed frozen tests and explicit insufficient-evidence eligibility.
-Gate E prospective shadow research is next. See the
+Gate E is accepted with a live frozen prospective campaign, independently audited
+canary and durable integrity monitoring. Gate F's native Reality interface is next. See the
 [Calibration Laboratory progress and operations](REALITY_CALIBRATION_LABORATORY.md).
 
 ## Deferred: Project Atlas

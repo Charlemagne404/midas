@@ -1,0 +1,18 @@
+[Unit]
+Description=MIDAS Reality frozen forward artifact and journal integrity
+
+[Service]
+Type=oneshot
+WorkingDirectory=%h/midas-reality
+ExecStart=%h/midas-reality/.venv/bin/python -m midas.reality.shadow_integrity --root %h/midas-reality/data/research/reality/forward/mission2 --output %h/midas-reality/data/research/reality/forward/mission2/integrity.json
+MemoryMax=256M
+CPUQuota=10%
+Nice=15
+IOSchedulingClass=idle
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=%h/midas-reality/data/research/reality/forward/mission2
+PrivateTmp=true
+NoNewPrivileges=true
+TimeoutStartSec=15min
+

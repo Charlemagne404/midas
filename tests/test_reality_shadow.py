@@ -9,6 +9,7 @@ import pytest
 from midas.reality.research_schema import digest
 from midas.reality.shadow_audit import audit
 from midas.reality.shadow_campaign import freeze, verify
+from midas.reality.shadow_integrity import check
 from midas.reality.shadow_report import report
 from midas.reality.shadow_source import Context, Tail
 from midas.reality.shadow_store import Journal
@@ -17,9 +18,9 @@ from midas.reality.storage import MAGIC, atomic_json, canonical, describe, file_
 from test_reality_foundry import START, tape
 
 
-def setup(tmp_path, monkeypatch, *, gap=None, times=(0, 110, 310, 1010, 5010)):
+def setup(tmp_path, monkeypatch, *, gap=None, times=(0, 110, 310, 1010, 5010), only_yes=None):
     raw = tmp_path / "raw"
-    tape(raw, times=times, gap_at=gap)
+    tape(raw, times=times, gap_at=gap, only_yes_at=only_yes)
     training = tmp_path / "training"
     directory = training / "runs" / ("b" * 64)
     directory.mkdir(parents=True)
@@ -150,6 +151,33 @@ def test_gap_and_partial_future_are_unknown_not_negative(tmp_path, monkeypatch):
     assert result["labels"]["quote_persistence"] is None
     assert result["labels"]["market_disruption"] is True
     close(worker)
+
+
+def test_partial_complementary_update_cannot_confirm_both_legs(tmp_path, monkeypatch):
+    worker, clock, _ = setup(tmp_path, monkeypatch, only_yes=110)
+    advance(worker, clock)
+    seq = worker.journal.db.execute("select event_seq from outcomes where horizon=100").fetchone()[
+        0
+    ]
+    result = worker.journal.event(seq)
+    assert result["labels"]["status"] == "censored"
+    assert result["labels"]["quote_persistence"] is None
+    assert result["future_views"] is None
+    close(worker)
+
+
+def test_restored_cursor_rejects_a_changed_campaign(tmp_path, monkeypatch):
+    worker, clock, plan = setup(tmp_path, monkeypatch)
+    advance(worker, clock, until=4)
+    worker.save()
+    root = worker.root
+    assert check(root)["state"] == "INTEGRITY_VERIFIED"
+    close(worker)
+    changed = copy.deepcopy(plan)
+    changed["identity"]["risk"]["disruption_threshold"] = 0.9
+    changed["campaign_id"] = digest(changed["identity"])
+    with pytest.raises(ValueError, match="different campaign"):
+        Shadow(root, changed)
 
 
 def test_restart_preserves_exact_source_cursor_pending_and_no_duplicate_decision(

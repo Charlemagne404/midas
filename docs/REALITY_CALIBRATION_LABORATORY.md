@@ -1080,3 +1080,89 @@ operational changes, not changes to frozen decision/measurement thresholds.
 network namespaces unavailable; that OS isolation is not enforced. The worker
 itself only reads local raw data/models and has no networking or order-submission
 path. This limitation must not be described as proven network isolation.
+
+The retained failed canary is `eaa761d7d4e7fa1f4561a5f61e350ce5c3f4a98420b414821a0ca9eb70b9cc14`
+(zero decisions). Corrected canary `1155ccf52418d8f4658fc7d6ea66ec8c20b85e7eec271b6806725660d58f660f`
+uses a separate bounded period and has genuine prospective decision/follow-up
+receipts. Main campaign `adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46`
+is a distinct, non-overlapping fourteen-day period. Both run pinned models and
+immutable implementations. Historical warm-up uses no decisions; source checkpoints
+are verified before live sampling. The independent audit is an additional
+bounded reader, not a recorder replacement or competing writer.
+
+The first independent genuine canary audit completed successfully: 1,831 immutable
+journal events, 32 prospective decisions, eight quality-eligible initial books
+replayed against raw source, and one independently measured future checked against
+recorded depth. It reconstructed through raw ordinal 172,877. All actual-order
+counts are zero and private execution ground truth remains unknown. This is the
+audit's consistent SQLite snapshot; the live canary continued accumulating afterward.
+The audit used 117.44 CPU seconds and 148.3 MiB peak memory under its 20% CPU cap.
+Proof: `docs/REALITY_GATE_E_CANARY_AUDIT.json`.
+
+Collector cgroup memory includes raw-file page cache charged to the writer. At
+one audit checkpoint it was approximately 369 MiB while process RSS was roughly
+161 MiB; both remain below the configured 512 MiB ceiling. No collector restart
+was required for source-reader development, journal auditing or campaign launch.
+
+Additional shadow regressions verify that a one-leg future update cannot confirm
+both complementary outcomes and that a checkpoint cannot resume under a rehashed
+but different campaign. The focused shadow suite now has eleven passing tests.
+Campaign implementation, thresholds, model hashes and source eligibility were
+not altered during these checks. The main reader has caught up and remains idle
+at its frozen start boundary; no old observations are relabeled prospective.
+
+Daily `midas-reality-shadow-integrity.timer` runs at 03:00 UTC plus up to five
+minutes of jitter. It verifies frozen code/model hashes, SQLite integrity, the
+complete event hash chain and runtime/campaign identity using a read transaction.
+The worker continues independently. This lightweight scheduled check has a 10%
+CPU quota, 256 MiB memory cap and fifteen-minute ceiling. It does not replace the
+independent raw-state/public-label replay audit or claim independent market
+validation. A fixture checks its integration with an actual saved shadow cursor.
+
+Gate E focused validation passes 125 tests, Ruff and strict mypy across 36 Reality
+sources. The initial scheduled integrity check completed successfully, validating
+20 frozen implementation files and four selected model artifacts. Both live
+readers reached the current raw source without restarting collection. Warm-up
+caps were temporarily raised within host headroom and restored to 10% of one
+core for steady operation. No frozen model, threshold or analysis plan changed.
+
+### Gate E acceptance checkpoint
+
+Gate E is accepted as engineering infrastructure, not as a scientific performance
+conclusion. The corrected canary completed its frozen period normally with 346
+prospective decisions, 11 observed public follow-ups and 1,373 censored follow-ups.
+The independent audit above covers its earlier consistent 32-decision snapshot.
+The canary's complete summary is `docs/REALITY_GATE_E_CANARY_REPORT.json`.
+
+The main fourteen-day campaign has now started under the unchanged frozen plan.
+At the acceptance snapshot it has 16 prospective decisions, one measured public
+future and 59 censored follow-ups. Every initial decision and durable commit is
+later than its frozen start, which itself is later than the model/plan freeze.
+The remaining few horizons can be pending in a live snapshot. No retrospective
+warm-up records became decisions. All six policies abstained in the sampled
+main/canary summaries; there is no actual-fill or realized-money evidence and
+no model was promoted. Full current source lineage, models, timing, scenario
+assumptions and public data remain available through the journal and raw archive.
+
+`midas-reality-shadow.service` remains active, enabled across user-session service
+restarts, at its configured 10% CPU/512 MiB ceiling. Its PID is 2820914 with zero
+automatic restarts. The daily integrity timer, weekly-bounded research schedule,
+capacity monitor and raw archive timer remain enabled. The canary and audit have
+successful terminal states. Collection remains PID 2288376, zero automatic
+restarts and no Gate E restart. The collector checkpoint has eight markets,
+16/16 fresh books, zero timing-uncertain books, 100,386 active-epoch frames and
+zero connection failures. Recorded resynchronization/quality gaps remain visible.
+Raw storage is approximately 330 MiB at ordinal 178,855. Capacity is bounded and
+its timestamped forecast/alerts are retained in `docs/REALITY_GATE_E_CHECKPOINT.json`.
+
+Protected main is clean at the Prometheus baseline and Laboratory/Arena code
+identities remain unchanged. Full historical artifact verification remains Gate G.
+The one-day main/canary samples remain small and correlated, with high missingness;
+measured persistence does not establish a private fill probability, population
+accuracy or profitability. No weeks-long conclusion is implied by acceptance.
+
+Gate F is next: the native near-black/gold Reality interface covering overview,
+market explorer, historical/opportunity observatories, calibration, models,
+shadow, forward validation and collector operations. Gate G then runs full
+backend/frontend/browser, storage, research integrity and operational handoff
+checks. The Mission 2 goal remains active until these deliverables are verified.

@@ -1,0 +1,439 @@
+{
+  "actual_fills": "unknown_counterfactual",
+  "actual_orders_submitted": 0,
+  "analysis_plan": {
+    "eligibility": "Experimental probes do not authorize a policy; no champion manufactured",
+    "grouping": "Connected event/condition/negative-risk families and UTC time blocks; shared feed remains correlated",
+    "paired_on": "Same recorded source/decision across controls and scenarios",
+    "promotion": false,
+    "recovery": "Declared quoted-bid unwind only where later observed depth supports quantity/minimum; otherwise retain unmatched bounds",
+    "reported": "Decision behavior, censoring, public persistence/depth/price changes and per-trial hypothetical bounds; no summed realized P&L",
+    "threshold_retuning": false,
+    "version": "reality-prospective-analysis-v1"
+  },
+  "campaign_id": "1155ccf52418d8f4658fc7d6ea66ec8c20b85e7eec271b6806725660d58f660f",
+  "coverage": {
+    "connected_families": 7,
+    "decisions": 346,
+    "duplicate_variants_are_independent": false,
+    "markets": 11,
+    "shared_feed_time_blocks": 44,
+    "utc_days": [
+      "2026-10-14"
+    ]
+  },
+  "economic_conclusion": "Not established. Per-trial hypothetical bounds are not summed portfolio returns or actual money.",
+  "end_ns": 1792012077642600351,
+  "execution_scenarios": {
+    "conservative": {
+      "assumption_id": "556261912f0141efc4313765c36f712af67d41626c72de074c91e05f3d2ed6f7",
+      "policies": {
+        "conservative_risk": {
+          "bounded_trials": 0,
+          "matched_followups": 93,
+          "max_imposed_unmatched_quantity": "0",
+          "per_trial_hypothetical_lower_range": null,
+          "per_trial_hypothetical_upper_range": null,
+          "policy_abstentions": 93,
+          "recovery_states": {},
+          "unknown_execution": 0
+        },
+        "mathematical_filter": {
+          "bounded_trials": 0,
+          "matched_followups": 93,
+          "max_imposed_unmatched_quantity": "0",
+          "per_trial_hypothetical_lower_range": null,
+          "per_trial_hypothetical_upper_range": null,
+          "policy_abstentions": 93,
+          "recovery_states": {},
+          "unknown_execution": 0
+        },
+        "no_trade": {
+          "bounded_trials": 0,
+          "matched_followups": 93,
+          "max_imposed_unmatched_quantity": "0",
+          "per_trial_hypothetical_lower_range": null,
+          "per_trial_hypothetical_upper_range": null,
+          "policy_abstentions": 93,
+          "recovery_states": {},
+          "unknown_execution": 0
+        },
+        "prediction_gate": {
+          "bounded_trials": 0,
+          "matched_followups": 93,
+          "max_imposed_unmatched_quantity": "0",
+          "per_trial_hypothetical_lower_range": null,
+          "per_trial_hypothetical_upper_range": null,
+          "policy_abstentions": 93,
+          "recovery_states": {},
+          "unknown_execution": 0
+        },
+        "prometheus_control": {
+          "bounded_trials": 0,
+          "matched_followups": 93,
+          "max_imposed_unmatched_quantity": "0",
+          "per_trial_hypothetical_lower_range": null,
+          "per_trial_hypothetical_upper_range": null,
+          "policy_abstentions": 93,
+          "recovery_states": {},
+          "unknown_execution": 0
+        },
+        "recovery_guard": {
+          "bounded_trials": 0,
+          "matched_followups": 93,
+          "max_imposed_unmatched_quantity": "0",
+          "per_trial_hypothetical_lower_range": null,
+          "per_trial_hypothetical_upper_range": null,
+          "policy_abstentions": 93,
+          "recovery_states": {},
+          "unknown_execution": 0
+        }
+      }
+    },
+    "intermediate": {
+      "assumption_id": "25321aa9cc6137f867af300aac072cbea1554ce69c9687739cb1bba7238801d3",
+      "policies": {
+        "conservative_risk": {
+          "bounded_trials": 0,
+          "matched_followups": 93,
+          "max_imposed_unmatched_quantity": "0",
+          "per_trial_hypothetical_lower_range": null,
+          "per_trial_hypothetical_upper_range": null,
+          "policy_abstentions": 93,
+          "recovery_states": {},
+          "unknown_execution": 0
+        },
+        "mathematical_filter": {
+          "bounded_trials": 0,
+          "matched_followups": 93,
+          "max_imposed_unmatched_quantity": "0",
+          "per_trial_hypothetical_lower_range": null,
+          "per_trial_hypothetical_upper_range": null,
+          "policy_abstentions": 93,
+          "recovery_states": {},
+          "unknown_execution": 0
+        },
+        "no_trade": {
+          "bounded_trials": 0,
+          "matched_followups": 93,
+          "max_imposed_unmatched_quantity": "0",
+          "per_trial_hypothetical_lower_range": null,
+          "per_trial_hypothetical_upper_range": null,
+          "policy_abstentions": 93,
+          "recovery_states": {},
+          "unknown_execution": 0
+        },
+        "prediction_gate": {
+          "bounded_trials": 0,
+          "matched_followups": 93,
+          "max_imposed_unmatched_quantity": "0",
+          "per_trial_hypothetical_lower_range": null,
+          "per_trial_hypothetical_upper_range": null,
+          "policy_abstentions": 93,
+          "recovery_states": {},
+          "unknown_execution": 0
+        },
+        "prometheus_control": {
+          "bounded_trials": 0,
+          "matched_followups": 93,
+          "max_imposed_unmatched_quantity": "0",
+          "per_trial_hypothetical_lower_range": null,
+          "per_trial_hypothetical_upper_range": null,
+          "policy_abstentions": 93,
+          "recovery_states": {},
+          "unknown_execution": 0
+        },
+        "recovery_guard": {
+          "bounded_trials": 0,
+          "matched_followups": 93,
+          "max_imposed_unmatched_quantity": "0",
+          "per_trial_hypothetical_lower_range": null,
+          "per_trial_hypothetical_upper_range": null,
+          "policy_abstentions": 93,
+          "recovery_states": {},
+          "unknown_execution": 0
+        }
+      }
+    },
+    "optimistic": {
+      "assumption_id": "0a4e39e24db6a8e33a23d91815038a639d3414cd7c9a30f4cac0179b7c5089f4",
+      "policies": {
+        "conservative_risk": {
+          "bounded_trials": 0,
+          "matched_followups": 93,
+          "max_imposed_unmatched_quantity": "0",
+          "per_trial_hypothetical_lower_range": null,
+          "per_trial_hypothetical_upper_range": null,
+          "policy_abstentions": 93,
+          "recovery_states": {},
+          "unknown_execution": 0
+        },
+        "mathematical_filter": {
+          "bounded_trials": 0,
+          "matched_followups": 93,
+          "max_imposed_unmatched_quantity": "0",
+          "per_trial_hypothetical_lower_range": null,
+          "per_trial_hypothetical_upper_range": null,
+          "policy_abstentions": 93,
+          "recovery_states": {},
+          "unknown_execution": 0
+        },
+        "no_trade": {
+          "bounded_trials": 0,
+          "matched_followups": 93,
+          "max_imposed_unmatched_quantity": "0",
+          "per_trial_hypothetical_lower_range": null,
+          "per_trial_hypothetical_upper_range": null,
+          "policy_abstentions": 93,
+          "recovery_states": {},
+          "unknown_execution": 0
+        },
+        "prediction_gate": {
+          "bounded_trials": 0,
+          "matched_followups": 93,
+          "max_imposed_unmatched_quantity": "0",
+          "per_trial_hypothetical_lower_range": null,
+          "per_trial_hypothetical_upper_range": null,
+          "policy_abstentions": 93,
+          "recovery_states": {},
+          "unknown_execution": 0
+        },
+        "prometheus_control": {
+          "bounded_trials": 0,
+          "matched_followups": 93,
+          "max_imposed_unmatched_quantity": "0",
+          "per_trial_hypothetical_lower_range": null,
+          "per_trial_hypothetical_upper_range": null,
+          "policy_abstentions": 93,
+          "recovery_states": {},
+          "unknown_execution": 0
+        },
+        "recovery_guard": {
+          "bounded_trials": 0,
+          "matched_followups": 93,
+          "max_imposed_unmatched_quantity": "0",
+          "per_trial_hypothetical_lower_range": null,
+          "per_trial_hypothetical_upper_range": null,
+          "policy_abstentions": 93,
+          "recovery_states": {},
+          "unknown_execution": 0
+        }
+      }
+    },
+    "stress": {
+      "assumption_id": "7209a906d06230d011ea8ecf05c80066a96171fc9741a58dbcaa3be2d619071c",
+      "policies": {
+        "conservative_risk": {
+          "bounded_trials": 0,
+          "matched_followups": 93,
+          "max_imposed_unmatched_quantity": "0",
+          "per_trial_hypothetical_lower_range": null,
+          "per_trial_hypothetical_upper_range": null,
+          "policy_abstentions": 93,
+          "recovery_states": {},
+          "unknown_execution": 0
+        },
+        "mathematical_filter": {
+          "bounded_trials": 0,
+          "matched_followups": 93,
+          "max_imposed_unmatched_quantity": "0",
+          "per_trial_hypothetical_lower_range": null,
+          "per_trial_hypothetical_upper_range": null,
+          "policy_abstentions": 93,
+          "recovery_states": {},
+          "unknown_execution": 0
+        },
+        "no_trade": {
+          "bounded_trials": 0,
+          "matched_followups": 93,
+          "max_imposed_unmatched_quantity": "0",
+          "per_trial_hypothetical_lower_range": null,
+          "per_trial_hypothetical_upper_range": null,
+          "policy_abstentions": 93,
+          "recovery_states": {},
+          "unknown_execution": 0
+        },
+        "prediction_gate": {
+          "bounded_trials": 0,
+          "matched_followups": 93,
+          "max_imposed_unmatched_quantity": "0",
+          "per_trial_hypothetical_lower_range": null,
+          "per_trial_hypothetical_upper_range": null,
+          "policy_abstentions": 93,
+          "recovery_states": {},
+          "unknown_execution": 0
+        },
+        "prometheus_control": {
+          "bounded_trials": 0,
+          "matched_followups": 93,
+          "max_imposed_unmatched_quantity": "0",
+          "per_trial_hypothetical_lower_range": null,
+          "per_trial_hypothetical_upper_range": null,
+          "policy_abstentions": 93,
+          "recovery_states": {},
+          "unknown_execution": 0
+        },
+        "recovery_guard": {
+          "bounded_trials": 0,
+          "matched_followups": 93,
+          "max_imposed_unmatched_quantity": "0",
+          "per_trial_hypothetical_lower_range": null,
+          "per_trial_hypothetical_upper_range": null,
+          "policy_abstentions": 93,
+          "recovery_states": {},
+          "unknown_execution": 0
+        }
+      }
+    }
+  },
+  "frozen_ns": 1792010275642600351,
+  "horizons": {
+    "100": {
+      "conditional_persistence": 1.0,
+      "eligible_decisions": 93,
+      "measured": 1,
+      "missingness_bounds": [
+        0.010752688172043012,
+        1.0
+      ],
+      "reasons": {
+        "future_observation_unavailable": 86,
+        "invalid_at_decision": 253,
+        "source_followup_availability_timeout": 6
+      },
+      "unknown": 92
+    },
+    "1000": {
+      "conditional_persistence": 1.0,
+      "eligible_decisions": 93,
+      "measured": 3,
+      "missingness_bounds": [
+        0.03225806451612903,
+        1.0
+      ],
+      "reasons": {
+        "book_issue:advertised_top_pending": 2,
+        "future_observation_unavailable": 74,
+        "invalid_at_decision": 253,
+        "source_followup_availability_timeout": 7,
+        "stale_book": 7
+      },
+      "unknown": 90
+    },
+    "300": {
+      "conditional_persistence": null,
+      "eligible_decisions": 93,
+      "measured": 0,
+      "missingness_bounds": [
+        0.0,
+        1.0
+      ],
+      "reasons": {
+        "future_observation_unavailable": 80,
+        "invalid_at_decision": 253,
+        "source_followup_availability_timeout": 11,
+        "stale_book": 2
+      },
+      "unknown": 93
+    },
+    "5000": {
+      "conditional_persistence": 1.0,
+      "eligible_decisions": 93,
+      "measured": 7,
+      "missingness_bounds": [
+        0.07526881720430108,
+        1.0
+      ],
+      "reasons": {
+        "book_issue:advertised_top_pending": 7,
+        "future_observation_unavailable": 44,
+        "invalid_at_decision": 253,
+        "recorded_gap:book_resynchronization": 2,
+        "source_followup_availability_timeout": 2,
+        "stale_book": 31
+      },
+      "unknown": 86
+    }
+  },
+  "policy_actions": {
+    "conservative_risk": {
+      "abstain": 346
+    },
+    "mathematical_filter": {
+      "abstain": 346
+    },
+    "no_trade": {
+      "abstain": 346
+    },
+    "prediction_gate": {
+      "abstain": 346
+    },
+    "prometheus_control": {
+      "abstain": 346
+    },
+    "recovery_guard": {
+      "abstain": 346
+    }
+  },
+  "policy_reasons": {
+    "conservative_risk": {
+      "book_issue:advertised_top_pending": 1,
+      "book_issue:stale": 1,
+      "conservative_liquidity_timing_fee_or_recovery_gate": 93,
+      "empty_ask_side": 8,
+      "independent_book_divergence": 1,
+      "stale_book": 242
+    },
+    "mathematical_filter": {
+      "book_issue:advertised_top_pending": 1,
+      "book_issue:stale": 1,
+      "empty_ask_side": 8,
+      "independent_book_divergence": 1,
+      "no_initial_supported_discrepancy": 93,
+      "stale_book": 242
+    },
+    "no_trade": {
+      "book_issue:advertised_top_pending": 1,
+      "book_issue:stale": 1,
+      "empty_ask_side": 8,
+      "frozen_no_trade_control": 93,
+      "independent_book_divergence": 1,
+      "stale_book": 242
+    },
+    "prediction_gate": {
+      "book_issue:advertised_top_pending": 1,
+      "book_issue:stale": 1,
+      "empty_ask_side": 8,
+      "independent_book_divergence": 1,
+      "insufficient_model_evidence": 93,
+      "stale_book": 242
+    },
+    "prometheus_control": {
+      "STALE_DATA": 32,
+      "UNSUPPORTED_STRUCTURE": 61,
+      "book_issue:advertised_top_pending": 1,
+      "book_issue:stale": 1,
+      "empty_ask_side": 8,
+      "independent_book_divergence": 1,
+      "stale_book": 242
+    },
+    "recovery_guard": {
+      "book_issue:advertised_top_pending": 1,
+      "book_issue:stale": 1,
+      "conservative_liquidity_timing_fee_or_recovery_gate": 93,
+      "empty_ask_side": 8,
+      "independent_book_divergence": 1,
+      "stale_book": 242
+    }
+  },
+  "query": {
+    "bounded": true,
+    "limit": 5000,
+    "since_ns": 0
+  },
+  "realized_money": null,
+  "source_kind": "genuine_public_recording",
+  "start_ns": 1792010277642600351,
+  "state": "insufficient_forward_evidence",
+  "uncertainty": "Connected families and shared UTC/feed blocks remain correlated; no independent-sample confidence or champion claimed."
+}

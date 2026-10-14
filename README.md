@@ -18,8 +18,9 @@ Gate B adds versioned datasets, observable labels, explicit censoring and
 chronological validation. Gate C adds training-only public distributions, explicit
 execution bounds and preserved-simulator comparisons. Gate D adds real-observation
 Arena workflows and frozen chronological tests; current evidence supports no
-eligible policy model. Prospective shadow research and the native dashboard
-remain outstanding.
+eligible policy model. Gate E now runs a frozen fourteen-day prospective shadow
+campaign with public follow-ups and explicit unknown execution outcomes.
+The native dashboard and final broad verification remain outstanding.
 
 ## Install and run
 

@@ -1,0 +1,1088 @@
+{
+  "audit": {
+    "actual_orders_submitted": 0,
+    "campaign_id": "1155ccf52418d8f4658fc7d6ea66ec8c20b85e7eec271b6806725660d58f660f",
+    "journal": {
+      "events": 1831,
+      "sqlite_integrity": "ok",
+      "tail_sha256": "03a80d0273a4ed2524e17ea6aa12048309b67367aab7665d5b327c59cb7b639a"
+    },
+    "observed_followups_independently_checked": 1,
+    "private_execution_ground_truth": "unknown_counterfactual",
+    "prospective_decisions": 32,
+    "raw_records": 172877,
+    "source_kind": "genuine_public_recording",
+    "valid_decisions_raw_replayed": 8
+  },
+  "campaigns": {
+    "canary-empty-segments-v2": {
+      "campaign_id": "1155ccf52418d8f4658fc7d6ea66ec8c20b85e7eec271b6806725660d58f660f",
+      "earliest_durable_commit_ns": 1792010743954522867,
+      "first_decision_ns": 1792010743942896766,
+      "period": {
+        "end_ns": 1792012077642600351,
+        "frozen_ns": 1792010275642600351,
+        "start_ns": 1792010277642600351
+      },
+      "plan_sha256": "bbbb0978e63abc7f30980abb6aa25cbb21e9ce94ca1410dcfdd65714318f9782",
+      "report": {
+        "actual_fills": "unknown_counterfactual",
+        "actual_orders_submitted": 0,
+        "analysis_plan": {
+          "eligibility": "Experimental probes do not authorize a policy; no champion manufactured",
+          "grouping": "Connected event/condition/negative-risk families and UTC time blocks; shared feed remains correlated",
+          "paired_on": "Same recorded source/decision across controls and scenarios",
+          "promotion": false,
+          "recovery": "Declared quoted-bid unwind only where later observed depth supports quantity/minimum; otherwise retain unmatched bounds",
+          "reported": "Decision behavior, censoring, public persistence/depth/price changes and per-trial hypothetical bounds; no summed realized P&L",
+          "threshold_retuning": false,
+          "version": "reality-prospective-analysis-v1"
+        },
+        "campaign_id": "1155ccf52418d8f4658fc7d6ea66ec8c20b85e7eec271b6806725660d58f660f",
+        "coverage": {
+          "connected_families": 7,
+          "decisions": 346,
+          "duplicate_variants_are_independent": false,
+          "markets": 11,
+          "shared_feed_time_blocks": 44,
+          "utc_days": [
+            "2026-10-14"
+          ]
+        },
+        "economic_conclusion": "Not established. Per-trial hypothetical bounds are not summed portfolio returns or actual money.",
+        "end_ns": 1792012077642600351,
+        "execution_scenarios": {
+          "conservative": {
+            "assumption_id": "556261912f0141efc4313765c36f712af67d41626c72de074c91e05f3d2ed6f7",
+            "policies": {
+              "conservative_risk": {
+                "bounded_trials": 0,
+                "matched_followups": 93,
+                "max_imposed_unmatched_quantity": "0",
+                "per_trial_hypothetical_lower_range": null,
+                "per_trial_hypothetical_upper_range": null,
+                "policy_abstentions": 93,
+                "recovery_states": {},
+                "unknown_execution": 0
+              },
+              "mathematical_filter": {
+                "bounded_trials": 0,
+                "matched_followups": 93,
+                "max_imposed_unmatched_quantity": "0",
+                "per_trial_hypothetical_lower_range": null,
+                "per_trial_hypothetical_upper_range": null,
+                "policy_abstentions": 93,
+                "recovery_states": {},
+                "unknown_execution": 0
+              },
+              "no_trade": {
+                "bounded_trials": 0,
+                "matched_followups": 93,
+                "max_imposed_unmatched_quantity": "0",
+                "per_trial_hypothetical_lower_range": null,
+                "per_trial_hypothetical_upper_range": null,
+                "policy_abstentions": 93,
+                "recovery_states": {},
+                "unknown_execution": 0
+              },
+              "prediction_gate": {
+                "bounded_trials": 0,
+                "matched_followups": 93,
+                "max_imposed_unmatched_quantity": "0",
+                "per_trial_hypothetical_lower_range": null,
+                "per_trial_hypothetical_upper_range": null,
+                "policy_abstentions": 93,
+                "recovery_states": {},
+                "unknown_execution": 0
+              },
+              "prometheus_control": {
+                "bounded_trials": 0,
+                "matched_followups": 93,
+                "max_imposed_unmatched_quantity": "0",
+                "per_trial_hypothetical_lower_range": null,
+                "per_trial_hypothetical_upper_range": null,
+                "policy_abstentions": 93,
+                "recovery_states": {},
+                "unknown_execution": 0
+              },
+              "recovery_guard": {
+                "bounded_trials": 0,
+                "matched_followups": 93,
+                "max_imposed_unmatched_quantity": "0",
+                "per_trial_hypothetical_lower_range": null,
+                "per_trial_hypothetical_upper_range": null,
+                "policy_abstentions": 93,
+                "recovery_states": {},
+                "unknown_execution": 0
+              }
+            }
+          },
+          "intermediate": {
+            "assumption_id": "25321aa9cc6137f867af300aac072cbea1554ce69c9687739cb1bba7238801d3",
+            "policies": {
+              "conservative_risk": {
+                "bounded_trials": 0,
+                "matched_followups": 93,
+                "max_imposed_unmatched_quantity": "0",
+                "per_trial_hypothetical_lower_range": null,
+                "per_trial_hypothetical_upper_range": null,
+                "policy_abstentions": 93,
+                "recovery_states": {},
+                "unknown_execution": 0
+              },
+              "mathematical_filter": {
+                "bounded_trials": 0,
+                "matched_followups": 93,
+                "max_imposed_unmatched_quantity": "0",
+                "per_trial_hypothetical_lower_range": null,
+                "per_trial_hypothetical_upper_range": null,
+                "policy_abstentions": 93,
+                "recovery_states": {},
+                "unknown_execution": 0
+              },
+              "no_trade": {
+                "bounded_trials": 0,
+                "matched_followups": 93,
+                "max_imposed_unmatched_quantity": "0",
+                "per_trial_hypothetical_lower_range": null,
+                "per_trial_hypothetical_upper_range": null,
+                "policy_abstentions": 93,
+                "recovery_states": {},
+                "unknown_execution": 0
+              },
+              "prediction_gate": {
+                "bounded_trials": 0,
+                "matched_followups": 93,
+                "max_imposed_unmatched_quantity": "0",
+                "per_trial_hypothetical_lower_range": null,
+                "per_trial_hypothetical_upper_range": null,
+                "policy_abstentions": 93,
+                "recovery_states": {},
+                "unknown_execution": 0
+              },
+              "prometheus_control": {
+                "bounded_trials": 0,
+                "matched_followups": 93,
+                "max_imposed_unmatched_quantity": "0",
+                "per_trial_hypothetical_lower_range": null,
+                "per_trial_hypothetical_upper_range": null,
+                "policy_abstentions": 93,
+                "recovery_states": {},
+                "unknown_execution": 0
+              },
+              "recovery_guard": {
+                "bounded_trials": 0,
+                "matched_followups": 93,
+                "max_imposed_unmatched_quantity": "0",
+                "per_trial_hypothetical_lower_range": null,
+                "per_trial_hypothetical_upper_range": null,
+                "policy_abstentions": 93,
+                "recovery_states": {},
+                "unknown_execution": 0
+              }
+            }
+          },
+          "optimistic": {
+            "assumption_id": "0a4e39e24db6a8e33a23d91815038a639d3414cd7c9a30f4cac0179b7c5089f4",
+            "policies": {
+              "conservative_risk": {
+                "bounded_trials": 0,
+                "matched_followups": 93,
+                "max_imposed_unmatched_quantity": "0",
+                "per_trial_hypothetical_lower_range": null,
+                "per_trial_hypothetical_upper_range": null,
+                "policy_abstentions": 93,
+                "recovery_states": {},
+                "unknown_execution": 0
+              },
+              "mathematical_filter": {
+                "bounded_trials": 0,
+                "matched_followups": 93,
+                "max_imposed_unmatched_quantity": "0",
+                "per_trial_hypothetical_lower_range": null,
+                "per_trial_hypothetical_upper_range": null,
+                "policy_abstentions": 93,
+                "recovery_states": {},
+                "unknown_execution": 0
+              },
+              "no_trade": {
+                "bounded_trials": 0,
+                "matched_followups": 93,
+                "max_imposed_unmatched_quantity": "0",
+                "per_trial_hypothetical_lower_range": null,
+                "per_trial_hypothetical_upper_range": null,
+                "policy_abstentions": 93,
+                "recovery_states": {},
+                "unknown_execution": 0
+              },
+              "prediction_gate": {
+                "bounded_trials": 0,
+                "matched_followups": 93,
+                "max_imposed_unmatched_quantity": "0",
+                "per_trial_hypothetical_lower_range": null,
+                "per_trial_hypothetical_upper_range": null,
+                "policy_abstentions": 93,
+                "recovery_states": {},
+                "unknown_execution": 0
+              },
+              "prometheus_control": {
+                "bounded_trials": 0,
+                "matched_followups": 93,
+                "max_imposed_unmatched_quantity": "0",
+                "per_trial_hypothetical_lower_range": null,
+                "per_trial_hypothetical_upper_range": null,
+                "policy_abstentions": 93,
+                "recovery_states": {},
+                "unknown_execution": 0
+              },
+              "recovery_guard": {
+                "bounded_trials": 0,
+                "matched_followups": 93,
+                "max_imposed_unmatched_quantity": "0",
+                "per_trial_hypothetical_lower_range": null,
+                "per_trial_hypothetical_upper_range": null,
+                "policy_abstentions": 93,
+                "recovery_states": {},
+                "unknown_execution": 0
+              }
+            }
+          },
+          "stress": {
+            "assumption_id": "7209a906d06230d011ea8ecf05c80066a96171fc9741a58dbcaa3be2d619071c",
+            "policies": {
+              "conservative_risk": {
+                "bounded_trials": 0,
+                "matched_followups": 93,
+                "max_imposed_unmatched_quantity": "0",
+                "per_trial_hypothetical_lower_range": null,
+                "per_trial_hypothetical_upper_range": null,
+                "policy_abstentions": 93,
+                "recovery_states": {},
+                "unknown_execution": 0
+              },
+              "mathematical_filter": {
+                "bounded_trials": 0,
+                "matched_followups": 93,
+                "max_imposed_unmatched_quantity": "0",
+                "per_trial_hypothetical_lower_range": null,
+                "per_trial_hypothetical_upper_range": null,
+                "policy_abstentions": 93,
+                "recovery_states": {},
+                "unknown_execution": 0
+              },
+              "no_trade": {
+                "bounded_trials": 0,
+                "matched_followups": 93,
+                "max_imposed_unmatched_quantity": "0",
+                "per_trial_hypothetical_lower_range": null,
+                "per_trial_hypothetical_upper_range": null,
+                "policy_abstentions": 93,
+                "recovery_states": {},
+                "unknown_execution": 0
+              },
+              "prediction_gate": {
+                "bounded_trials": 0,
+                "matched_followups": 93,
+                "max_imposed_unmatched_quantity": "0",
+                "per_trial_hypothetical_lower_range": null,
+                "per_trial_hypothetical_upper_range": null,
+                "policy_abstentions": 93,
+                "recovery_states": {},
+                "unknown_execution": 0
+              },
+              "prometheus_control": {
+                "bounded_trials": 0,
+                "matched_followups": 93,
+                "max_imposed_unmatched_quantity": "0",
+                "per_trial_hypothetical_lower_range": null,
+                "per_trial_hypothetical_upper_range": null,
+                "policy_abstentions": 93,
+                "recovery_states": {},
+                "unknown_execution": 0
+              },
+              "recovery_guard": {
+                "bounded_trials": 0,
+                "matched_followups": 93,
+                "max_imposed_unmatched_quantity": "0",
+                "per_trial_hypothetical_lower_range": null,
+                "per_trial_hypothetical_upper_range": null,
+                "policy_abstentions": 93,
+                "recovery_states": {},
+                "unknown_execution": 0
+              }
+            }
+          }
+        },
+        "frozen_ns": 1792010275642600351,
+        "horizons": {
+          "100": {
+            "conditional_persistence": 1.0,
+            "eligible_decisions": 93,
+            "measured": 1,
+            "missingness_bounds": [
+              0.010752688172043012,
+              1.0
+            ],
+            "reasons": {
+              "future_observation_unavailable": 86,
+              "invalid_at_decision": 253,
+              "source_followup_availability_timeout": 6
+            },
+            "unknown": 92
+          },
+          "1000": {
+            "conditional_persistence": 1.0,
+            "eligible_decisions": 93,
+            "measured": 3,
+            "missingness_bounds": [
+              0.03225806451612903,
+              1.0
+            ],
+            "reasons": {
+              "book_issue:advertised_top_pending": 2,
+              "future_observation_unavailable": 74,
+              "invalid_at_decision": 253,
+              "source_followup_availability_timeout": 7,
+              "stale_book": 7
+            },
+            "unknown": 90
+          },
+          "300": {
+            "conditional_persistence": null,
+            "eligible_decisions": 93,
+            "measured": 0,
+            "missingness_bounds": [
+              0.0,
+              1.0
+            ],
+            "reasons": {
+              "future_observation_unavailable": 80,
+              "invalid_at_decision": 253,
+              "source_followup_availability_timeout": 11,
+              "stale_book": 2
+            },
+            "unknown": 93
+          },
+          "5000": {
+            "conditional_persistence": 1.0,
+            "eligible_decisions": 93,
+            "measured": 7,
+            "missingness_bounds": [
+              0.07526881720430108,
+              1.0
+            ],
+            "reasons": {
+              "book_issue:advertised_top_pending": 7,
+              "future_observation_unavailable": 44,
+              "invalid_at_decision": 253,
+              "recorded_gap:book_resynchronization": 2,
+              "source_followup_availability_timeout": 2,
+              "stale_book": 31
+            },
+            "unknown": 86
+          }
+        },
+        "policy_actions": {
+          "conservative_risk": {
+            "abstain": 346
+          },
+          "mathematical_filter": {
+            "abstain": 346
+          },
+          "no_trade": {
+            "abstain": 346
+          },
+          "prediction_gate": {
+            "abstain": 346
+          },
+          "prometheus_control": {
+            "abstain": 346
+          },
+          "recovery_guard": {
+            "abstain": 346
+          }
+        },
+        "policy_reasons": {
+          "conservative_risk": {
+            "book_issue:advertised_top_pending": 1,
+            "book_issue:stale": 1,
+            "conservative_liquidity_timing_fee_or_recovery_gate": 93,
+            "empty_ask_side": 8,
+            "independent_book_divergence": 1,
+            "stale_book": 242
+          },
+          "mathematical_filter": {
+            "book_issue:advertised_top_pending": 1,
+            "book_issue:stale": 1,
+            "empty_ask_side": 8,
+            "independent_book_divergence": 1,
+            "no_initial_supported_discrepancy": 93,
+            "stale_book": 242
+          },
+          "no_trade": {
+            "book_issue:advertised_top_pending": 1,
+            "book_issue:stale": 1,
+            "empty_ask_side": 8,
+            "frozen_no_trade_control": 93,
+            "independent_book_divergence": 1,
+            "stale_book": 242
+          },
+          "prediction_gate": {
+            "book_issue:advertised_top_pending": 1,
+            "book_issue:stale": 1,
+            "empty_ask_side": 8,
+            "independent_book_divergence": 1,
+            "insufficient_model_evidence": 93,
+            "stale_book": 242
+          },
+          "prometheus_control": {
+            "STALE_DATA": 32,
+            "UNSUPPORTED_STRUCTURE": 61,
+            "book_issue:advertised_top_pending": 1,
+            "book_issue:stale": 1,
+            "empty_ask_side": 8,
+            "independent_book_divergence": 1,
+            "stale_book": 242
+          },
+          "recovery_guard": {
+            "book_issue:advertised_top_pending": 1,
+            "book_issue:stale": 1,
+            "conservative_liquidity_timing_fee_or_recovery_gate": 93,
+            "empty_ask_side": 8,
+            "independent_book_divergence": 1,
+            "stale_book": 242
+          }
+        },
+        "query": {
+          "bounded": true,
+          "limit": 5000,
+          "since_ns": 0
+        },
+        "realized_money": null,
+        "source_kind": "genuine_public_recording",
+        "start_ns": 1792010277642600351,
+        "state": "insufficient_forward_evidence",
+        "uncertainty": "Connected families and shared UTC/feed blocks remain correlated; no independent-sample confidence or champion claimed."
+      },
+      "status": {
+        "actual_orders_submitted": 0,
+        "budget_bytes": 4294967296,
+        "campaign_id": "1155ccf52418d8f4658fc7d6ea66ec8c20b85e7eec271b6806725660d58f660f",
+        "counters": {
+          "lagged_frames_skipped": 1418,
+          "records": 178493,
+          "source_checkpoints": 1530
+        },
+        "days": [
+          "2026-10-14"
+        ],
+        "decisions": 346,
+        "events": 5331,
+        "evidence_bytes": 50361347,
+        "families": 7,
+        "followups": {
+          "censored": 1373,
+          "observed_public_measurement": 11
+        },
+        "last_decision_ns": 1792012066792220953,
+        "markets": 11,
+        "observations": 1720,
+        "pending_horizons": 0,
+        "producer_hash": "9231e11c969cc95af607d847c7d5aa32418a91c21152b214cf9f170d517c0c9f",
+        "scientific_state": "insufficient_forward_evidence",
+        "source_last_received_ns": 1792012085030653976,
+        "source_ordinal": 178493,
+        "state": "COMPLETED_PERIOD",
+        "updated_ns": 1792012085738125688
+      }
+    },
+    "mission2": {
+      "campaign_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
+      "earliest_durable_commit_ns": 1792012079808607635,
+      "first_decision_ns": 1792012079760393613,
+      "period": {
+        "end_ns": 1793221678642600351,
+        "frozen_ns": 1792010631978337784,
+        "start_ns": 1792012078642600351
+      },
+      "plan_sha256": "aa8acb2b46823c1a1e3ac5d01a57dde917746c2c7471098ae2a4598875e322f5",
+      "report": {
+        "actual_fills": "unknown_counterfactual",
+        "actual_orders_submitted": 0,
+        "analysis_plan": {
+          "eligibility": "Experimental probes do not authorize a policy; no champion manufactured",
+          "grouping": "Connected event/condition/negative-risk families and UTC time blocks; shared feed remains correlated",
+          "paired_on": "Same recorded source/decision across controls and scenarios",
+          "promotion": false,
+          "recovery": "Declared quoted-bid unwind only where later observed depth supports quantity/minimum; otherwise retain unmatched bounds",
+          "reported": "Decision behavior, censoring, public persistence/depth/price changes and per-trial hypothetical bounds; no summed realized P&L",
+          "threshold_retuning": false,
+          "version": "reality-prospective-analysis-v1"
+        },
+        "campaign_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
+        "coverage": {
+          "connected_families": 6,
+          "decisions": 16,
+          "duplicate_variants_are_independent": false,
+          "markets": 8,
+          "shared_feed_time_blocks": 2,
+          "utc_days": [
+            "2026-10-14"
+          ]
+        },
+        "economic_conclusion": "Not established. Per-trial hypothetical bounds are not summed portfolio returns or actual money.",
+        "end_ns": 1793221678642600351,
+        "execution_scenarios": {
+          "conservative": {
+            "assumption_id": "556261912f0141efc4313765c36f712af67d41626c72de074c91e05f3d2ed6f7",
+            "policies": {
+              "conservative_risk": {
+                "bounded_trials": 0,
+                "matched_followups": 5,
+                "max_imposed_unmatched_quantity": "0",
+                "per_trial_hypothetical_lower_range": null,
+                "per_trial_hypothetical_upper_range": null,
+                "policy_abstentions": 5,
+                "recovery_states": {},
+                "unknown_execution": 0
+              },
+              "mathematical_filter": {
+                "bounded_trials": 0,
+                "matched_followups": 5,
+                "max_imposed_unmatched_quantity": "0",
+                "per_trial_hypothetical_lower_range": null,
+                "per_trial_hypothetical_upper_range": null,
+                "policy_abstentions": 5,
+                "recovery_states": {},
+                "unknown_execution": 0
+              },
+              "no_trade": {
+                "bounded_trials": 0,
+                "matched_followups": 5,
+                "max_imposed_unmatched_quantity": "0",
+                "per_trial_hypothetical_lower_range": null,
+                "per_trial_hypothetical_upper_range": null,
+                "policy_abstentions": 5,
+                "recovery_states": {},
+                "unknown_execution": 0
+              },
+              "prediction_gate": {
+                "bounded_trials": 0,
+                "matched_followups": 5,
+                "max_imposed_unmatched_quantity": "0",
+                "per_trial_hypothetical_lower_range": null,
+                "per_trial_hypothetical_upper_range": null,
+                "policy_abstentions": 5,
+                "recovery_states": {},
+                "unknown_execution": 0
+              },
+              "prometheus_control": {
+                "bounded_trials": 0,
+                "matched_followups": 5,
+                "max_imposed_unmatched_quantity": "0",
+                "per_trial_hypothetical_lower_range": null,
+                "per_trial_hypothetical_upper_range": null,
+                "policy_abstentions": 5,
+                "recovery_states": {},
+                "unknown_execution": 0
+              },
+              "recovery_guard": {
+                "bounded_trials": 0,
+                "matched_followups": 5,
+                "max_imposed_unmatched_quantity": "0",
+                "per_trial_hypothetical_lower_range": null,
+                "per_trial_hypothetical_upper_range": null,
+                "policy_abstentions": 5,
+                "recovery_states": {},
+                "unknown_execution": 0
+              }
+            }
+          },
+          "intermediate": {
+            "assumption_id": "25321aa9cc6137f867af300aac072cbea1554ce69c9687739cb1bba7238801d3",
+            "policies": {
+              "conservative_risk": {
+                "bounded_trials": 0,
+                "matched_followups": 5,
+                "max_imposed_unmatched_quantity": "0",
+                "per_trial_hypothetical_lower_range": null,
+                "per_trial_hypothetical_upper_range": null,
+                "policy_abstentions": 5,
+                "recovery_states": {},
+                "unknown_execution": 0
+              },
+              "mathematical_filter": {
+                "bounded_trials": 0,
+                "matched_followups": 5,
+                "max_imposed_unmatched_quantity": "0",
+                "per_trial_hypothetical_lower_range": null,
+                "per_trial_hypothetical_upper_range": null,
+                "policy_abstentions": 5,
+                "recovery_states": {},
+                "unknown_execution": 0
+              },
+              "no_trade": {
+                "bounded_trials": 0,
+                "matched_followups": 5,
+                "max_imposed_unmatched_quantity": "0",
+                "per_trial_hypothetical_lower_range": null,
+                "per_trial_hypothetical_upper_range": null,
+                "policy_abstentions": 5,
+                "recovery_states": {},
+                "unknown_execution": 0
+              },
+              "prediction_gate": {
+                "bounded_trials": 0,
+                "matched_followups": 5,
+                "max_imposed_unmatched_quantity": "0",
+                "per_trial_hypothetical_lower_range": null,
+                "per_trial_hypothetical_upper_range": null,
+                "policy_abstentions": 5,
+                "recovery_states": {},
+                "unknown_execution": 0
+              },
+              "prometheus_control": {
+                "bounded_trials": 0,
+                "matched_followups": 5,
+                "max_imposed_unmatched_quantity": "0",
+                "per_trial_hypothetical_lower_range": null,
+                "per_trial_hypothetical_upper_range": null,
+                "policy_abstentions": 5,
+                "recovery_states": {},
+                "unknown_execution": 0
+              },
+              "recovery_guard": {
+                "bounded_trials": 0,
+                "matched_followups": 5,
+                "max_imposed_unmatched_quantity": "0",
+                "per_trial_hypothetical_lower_range": null,
+                "per_trial_hypothetical_upper_range": null,
+                "policy_abstentions": 5,
+                "recovery_states": {},
+                "unknown_execution": 0
+              }
+            }
+          },
+          "optimistic": {
+            "assumption_id": "0a4e39e24db6a8e33a23d91815038a639d3414cd7c9a30f4cac0179b7c5089f4",
+            "policies": {
+              "conservative_risk": {
+                "bounded_trials": 0,
+                "matched_followups": 5,
+                "max_imposed_unmatched_quantity": "0",
+                "per_trial_hypothetical_lower_range": null,
+                "per_trial_hypothetical_upper_range": null,
+                "policy_abstentions": 5,
+                "recovery_states": {},
+                "unknown_execution": 0
+              },
+              "mathematical_filter": {
+                "bounded_trials": 0,
+                "matched_followups": 5,
+                "max_imposed_unmatched_quantity": "0",
+                "per_trial_hypothetical_lower_range": null,
+                "per_trial_hypothetical_upper_range": null,
+                "policy_abstentions": 5,
+                "recovery_states": {},
+                "unknown_execution": 0
+              },
+              "no_trade": {
+                "bounded_trials": 0,
+                "matched_followups": 5,
+                "max_imposed_unmatched_quantity": "0",
+                "per_trial_hypothetical_lower_range": null,
+                "per_trial_hypothetical_upper_range": null,
+                "policy_abstentions": 5,
+                "recovery_states": {},
+                "unknown_execution": 0
+              },
+              "prediction_gate": {
+                "bounded_trials": 0,
+                "matched_followups": 5,
+                "max_imposed_unmatched_quantity": "0",
+                "per_trial_hypothetical_lower_range": null,
+                "per_trial_hypothetical_upper_range": null,
+                "policy_abstentions": 5,
+                "recovery_states": {},
+                "unknown_execution": 0
+              },
+              "prometheus_control": {
+                "bounded_trials": 0,
+                "matched_followups": 5,
+                "max_imposed_unmatched_quantity": "0",
+                "per_trial_hypothetical_lower_range": null,
+                "per_trial_hypothetical_upper_range": null,
+                "policy_abstentions": 5,
+                "recovery_states": {},
+                "unknown_execution": 0
+              },
+              "recovery_guard": {
+                "bounded_trials": 0,
+                "matched_followups": 5,
+                "max_imposed_unmatched_quantity": "0",
+                "per_trial_hypothetical_lower_range": null,
+                "per_trial_hypothetical_upper_range": null,
+                "policy_abstentions": 5,
+                "recovery_states": {},
+                "unknown_execution": 0
+              }
+            }
+          },
+          "stress": {
+            "assumption_id": "7209a906d06230d011ea8ecf05c80066a96171fc9741a58dbcaa3be2d619071c",
+            "policies": {
+              "conservative_risk": {
+                "bounded_trials": 0,
+                "matched_followups": 5,
+                "max_imposed_unmatched_quantity": "0",
+                "per_trial_hypothetical_lower_range": null,
+                "per_trial_hypothetical_upper_range": null,
+                "policy_abstentions": 5,
+                "recovery_states": {},
+                "unknown_execution": 0
+              },
+              "mathematical_filter": {
+                "bounded_trials": 0,
+                "matched_followups": 5,
+                "max_imposed_unmatched_quantity": "0",
+                "per_trial_hypothetical_lower_range": null,
+                "per_trial_hypothetical_upper_range": null,
+                "policy_abstentions": 5,
+                "recovery_states": {},
+                "unknown_execution": 0
+              },
+              "no_trade": {
+                "bounded_trials": 0,
+                "matched_followups": 5,
+                "max_imposed_unmatched_quantity": "0",
+                "per_trial_hypothetical_lower_range": null,
+                "per_trial_hypothetical_upper_range": null,
+                "policy_abstentions": 5,
+                "recovery_states": {},
+                "unknown_execution": 0
+              },
+              "prediction_gate": {
+                "bounded_trials": 0,
+                "matched_followups": 5,
+                "max_imposed_unmatched_quantity": "0",
+                "per_trial_hypothetical_lower_range": null,
+                "per_trial_hypothetical_upper_range": null,
+                "policy_abstentions": 5,
+                "recovery_states": {},
+                "unknown_execution": 0
+              },
+              "prometheus_control": {
+                "bounded_trials": 0,
+                "matched_followups": 5,
+                "max_imposed_unmatched_quantity": "0",
+                "per_trial_hypothetical_lower_range": null,
+                "per_trial_hypothetical_upper_range": null,
+                "policy_abstentions": 5,
+                "recovery_states": {},
+                "unknown_execution": 0
+              },
+              "recovery_guard": {
+                "bounded_trials": 0,
+                "matched_followups": 5,
+                "max_imposed_unmatched_quantity": "0",
+                "per_trial_hypothetical_lower_range": null,
+                "per_trial_hypothetical_upper_range": null,
+                "policy_abstentions": 5,
+                "recovery_states": {},
+                "unknown_execution": 0
+              }
+            }
+          }
+        },
+        "frozen_ns": 1792010631978337784,
+        "horizons": {
+          "100": {
+            "conditional_persistence": null,
+            "eligible_decisions": 5,
+            "measured": 0,
+            "missingness_bounds": [
+              0.0,
+              1.0
+            ],
+            "reasons": {
+              "future_observation_unavailable": 5,
+              "invalid_at_decision": 11
+            },
+            "unknown": 5
+          },
+          "1000": {
+            "conditional_persistence": null,
+            "eligible_decisions": 5,
+            "measured": 0,
+            "missingness_bounds": [
+              0.0,
+              1.0
+            ],
+            "reasons": {
+              "future_observation_unavailable": 4,
+              "invalid_at_decision": 11,
+              "stale_book": 1
+            },
+            "unknown": 5
+          },
+          "300": {
+            "conditional_persistence": 1.0,
+            "eligible_decisions": 5,
+            "measured": 1,
+            "missingness_bounds": [
+              0.2,
+              1.0
+            ],
+            "reasons": {
+              "future_observation_unavailable": 4,
+              "invalid_at_decision": 11
+            },
+            "unknown": 4
+          },
+          "5000": {
+            "conditional_persistence": 1.0,
+            "eligible_decisions": 5,
+            "measured": 1,
+            "missingness_bounds": [
+              0.2,
+              1.0
+            ],
+            "reasons": {
+              "book_issue:advertised_top_pending": 1,
+              "future_observation_unavailable": 1,
+              "invalid_at_decision": 11,
+              "stale_book": 2
+            },
+            "unknown": 4
+          }
+        },
+        "policy_actions": {
+          "conservative_risk": {
+            "abstain": 16
+          },
+          "mathematical_filter": {
+            "abstain": 16
+          },
+          "no_trade": {
+            "abstain": 16
+          },
+          "prediction_gate": {
+            "abstain": 16
+          },
+          "prometheus_control": {
+            "abstain": 16
+          },
+          "recovery_guard": {
+            "abstain": 16
+          }
+        },
+        "policy_reasons": {
+          "conservative_risk": {
+            "conservative_liquidity_timing_fee_or_recovery_gate": 5,
+            "stale_book": 11
+          },
+          "mathematical_filter": {
+            "no_initial_supported_discrepancy": 5,
+            "stale_book": 11
+          },
+          "no_trade": {
+            "frozen_no_trade_control": 5,
+            "stale_book": 11
+          },
+          "prediction_gate": {
+            "insufficient_model_evidence": 5,
+            "stale_book": 11
+          },
+          "prometheus_control": {
+            "STALE_DATA": 2,
+            "UNSUPPORTED_STRUCTURE": 3,
+            "stale_book": 11
+          },
+          "recovery_guard": {
+            "conservative_liquidity_timing_fee_or_recovery_gate": 5,
+            "stale_book": 11
+          }
+        },
+        "query": {
+          "bounded": true,
+          "limit": 5000,
+          "since_ns": 0
+        },
+        "realized_money": null,
+        "source_kind": "genuine_public_recording",
+        "start_ns": 1792012078642600351,
+        "state": "insufficient_forward_evidence",
+        "uncertainty": "Connected families and shared UTC/feed blocks remain correlated; no independent-sample confidence or champion claimed."
+      },
+      "status": {
+        "actual_orders_submitted": 0,
+        "budget_bytes": 4294967296,
+        "campaign_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
+        "counters": {
+          "lagged_frames_skipped": 62,
+          "records": 178778,
+          "source_checkpoints": 1531
+        },
+        "days": [
+          "2026-10-14"
+        ],
+        "decisions": 16,
+        "events": 1684,
+        "evidence_bytes": 6436191,
+        "families": 6,
+        "followups": {
+          "censored": 59,
+          "observed_public_measurement": 1
+        },
+        "last_decision_ns": 1792012110258733058,
+        "markets": 8,
+        "observations": 56,
+        "pending_horizons": 4,
+        "producer_hash": "9231e11c969cc95af607d847c7d5aa32418a91c21152b214cf9f170d517c0c9f",
+        "scientific_state": "insufficient_forward_evidence",
+        "source_last_received_ns": 1792012111425127892,
+        "source_ordinal": 178778,
+        "state": "FORWARD_EVALUATING_EXPERIMENTAL",
+        "updated_ns": 1792012111906887458
+      }
+    }
+  },
+  "capacity": {
+    "alerts": [],
+    "available_headroom_bytes": 25425889803,
+    "budget_bytes": 25769803776,
+    "capacity_builder_sha256": "ab145f0a001508b2cd1ca849bd381ebf988ccf49fdcb6465753ddbe0b36fb5a5",
+    "capacity_builder_version": "receipt-aware-capacity-v2",
+    "collector_state": "RECORDING_UNSEQUENCED",
+    "collector_status_age_seconds": 0.19661182,
+    "compressed_bytes_per_second": 9891.795349546595,
+    "estimated_action_deadline_ns": 1794582346342745856,
+    "estimated_bytes_per_day": 854651118.2008258,
+    "estimated_storage_seconds_remaining": 2570401.9244762715,
+    "filesystem_free_bytes": 217187270656,
+    "free_disk_reserve_bytes": 21474836480,
+    "limitations": [
+      "Recent finalized-segment rate includes gaps and metadata; future rates vary.",
+      "Active segment excluded from rate, included in root usage.",
+      "Raw originals never pruned. Retention horizon stops collection.",
+      "Local archive copies consume additional disk; off-host offloading is separate."
+    ],
+    "measured_ns": 1792011944418269600,
+    "raw_root_bytes": 343913973,
+    "recording_root": "/home/charlie/midas-reality/data/recordings/reality",
+    "retention_seconds_remaining": 7729140.292676565,
+    "sample": {
+      "clock_assessment_basis": "sequential WebSocket dequeue frames; deferred HTTP timestamps remain separate",
+      "clock_regressions": 0,
+      "compressed_and_catalog_bytes": 36149655,
+      "first_received_ns": 1792008229491069272,
+      "last_received_ns": 1792011884000056021,
+      "raw_frame_payload_bytes": 24285646,
+      "raw_frames": 12842,
+      "record_receipt_regressions": 159,
+      "seconds": 3654.508986749,
+      "segments": 120,
+      "source_sha256": "bab853efb54a6bd2591300ae677bf2d47389d633028735e377d497853b0efb9b"
+    },
+    "schema_version": 1
+  },
+  "checked_ns": 1792012116791022657,
+  "collector": {
+    "expected_books": 16,
+    "failures": 0,
+    "frames": 100386,
+    "fresh_books": 16,
+    "gaps": 2082,
+    "markets": 8,
+    "ordinal": 178855,
+    "state": "RECORDING_UNSEQUENCED",
+    "storage_bytes": 346019645,
+    "timing_uncertain_books": 0
+  },
+  "gate": "E",
+  "integrity": {
+    "campaign_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
+    "checked_ns": 1792011774681538337,
+    "code_files": 20,
+    "journal": {
+      "events": 1525,
+      "sqlite_integrity": "ok",
+      "tail_sha256": "2b6cbbf50ec97be5e0a564fda7842684fd90e9c08bac666c2350fc1c73c54f9e"
+    },
+    "models": 4,
+    "scope": "Artifact hashes, SQLite/event chain and runtime identity; full raw/public-label replay is a separate audit",
+    "state": "INTEGRITY_VERIFIED"
+  },
+  "limitations": [
+    "Sparse one-day prospective observations; no performance conclusion or champion.",
+    "Censored futures are unknown.",
+    "All economics are declared hypothetical scenarios, never actual fills or money.",
+    "OS network namespaces unavailable for user services; worker has no networking/order submission path."
+  ],
+  "next_gate": "F native Reality interface; G final broad verification",
+  "protection": {
+    "arena_code": "bac445c2bb79877e6484cc395820a36dba69b7b03712e8ed1caf1a7ac160a681",
+    "laboratory_code": "c14738f8468a8103a98c2704dc5454e85e867a5e3d5b7174cc7383342aa5ebd8",
+    "main_head": "8acab2298632eb04fbe5183fbe54f8e6f97a8fdb",
+    "main_status": ""
+  },
+  "services": {
+    "midas-reality-archive.timer": {
+      "ActiveState": "active",
+      "Result": "success"
+    },
+    "midas-reality-capacity.timer": {
+      "ActiveState": "active",
+      "Result": "success"
+    },
+    "midas-reality-research.timer": {
+      "ActiveState": "active",
+      "Result": "success"
+    },
+    "midas-reality-shadow-canary-audit.service": {
+      "ActiveState": "inactive",
+      "MainPID": "0",
+      "MemoryCurrent": "[not set]",
+      "NRestarts": "0",
+      "Result": "success"
+    },
+    "midas-reality-shadow-canary-v2.service": {
+      "ActiveState": "inactive",
+      "MainPID": "0",
+      "MemoryCurrent": "[not set]",
+      "NRestarts": "0",
+      "Result": "success"
+    },
+    "midas-reality-shadow-integrity.service": {
+      "ActiveState": "inactive",
+      "MainPID": "0",
+      "MemoryCurrent": "[not set]",
+      "NRestarts": "0",
+      "Result": "success"
+    },
+    "midas-reality-shadow-integrity.timer": {
+      "ActiveState": "active",
+      "Result": "success"
+    },
+    "midas-reality-shadow.service": {
+      "ActiveState": "active",
+      "MainPID": "2820914",
+      "MemoryCurrent": "127328256",
+      "NRestarts": "0",
+      "Result": "success"
+    },
+    "midas-reality.service": {
+      "ActiveState": "active",
+      "MainPID": "2288376",
+      "MemoryCurrent": "400809984",
+      "NRestarts": "0",
+      "Result": "success"
+    }
+  },
+  "state": "accepted_engineering_checkpoint",
+  "validation": {
+    "reality_tests": 125,
+    "ruff": "passed",
+    "strict_mypy_sources": 36
+  }
+}

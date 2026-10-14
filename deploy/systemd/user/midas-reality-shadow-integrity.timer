@@ -1,0 +1,11 @@
+[Unit]
+Description=MIDAS Reality daily frozen forward integrity verification
+
+[Timer]
+OnCalendar=*-*-* 03:00:00 UTC
+Persistent=true
+RandomizedDelaySec=5min
+Unit=midas-reality-shadow-integrity.service
+
+[Install]
+WantedBy=timers.target
