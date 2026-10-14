@@ -18,7 +18,14 @@ def dispatch(root: Path) -> dict:
         results = []
         for path in sorted(root.glob("schedules/*/manifest.json")):
             record = json.loads(path.read_text())
-            if record["state"] in {"COMPLETED", "FAILED", "CANCELLED", "EXPIRED", "STALE_SOURCE", "PAUSED"}:
+            if record["state"] in {
+                "COMPLETED",
+                "FAILED",
+                "CANCELLED",
+                "EXPIRED",
+                "STALE_SOURCE",
+                "PAUSED",
+            }:
                 continue
             if len(results) >= 100:
                 break
@@ -29,7 +36,9 @@ def dispatch(root: Path) -> dict:
                 results.append({"schedule_id": path.parent.name, "state": "BUSY"})
             except (ValueError, OSError, KeyError) as error:
                 alert(root, record, f"Dispatcher failure: {type(error).__name__}: {error}")
-                results.append({"schedule_id": path.parent.name, "state": "ERROR", "error": str(error)})
+                results.append(
+                    {"schedule_id": path.parent.name, "state": "ERROR", "error": str(error)}
+                )
         return {"state": "COMPLETE", "schedules": results}
 
 

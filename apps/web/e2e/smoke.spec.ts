@@ -5,7 +5,7 @@ test('discover, inspect, simulate, replay and expose execution failure', async (
   await expect(page.getByText('DEMO · SYNTHETIC')).toBeVisible();
   await expect(page.getByText('API DISCONNECTED')).toHaveCount(0);
   await expect(page.locator('.chart svg')).toBeVisible();
-  await page.screenshot({ path: '../../docs/mission-control.png', fullPage: true });
+  await page.screenshot({ path: test.info().outputPath('mission-control.png'), fullPage: true });
   await page.getByRole('button', { name: 'Scanner', exact: false }).first().click();
   await page.getByRole('button', { name: /Synthetic binary • profitable/ }).click();
   await expect(page.getByRole('dialog')).toBeVisible();
@@ -29,7 +29,7 @@ test('discover, inspect, simulate, replay and expose execution failure', async (
     .click();
   await page.getByRole('button', { name: 'Run scenario', exact: true }).click();
   await expect(page.locator('.audit-summary').getByText('negative edge')).toBeVisible();
-  await page.screenshot({ path: '../../docs/dashboard-smoke.png', fullPage: true });
+  await page.screenshot({ path: test.info().outputPath('dashboard-smoke.png'), fullPage: true });
   for (const name of ['Analytics', 'Arena', 'Incidents', 'Telemetry', 'Settings']) {
     await page.getByRole('button', { name, exact: true }).click();
     await expect(page.getByRole('heading', { name, exact: true })).toBeVisible();
@@ -43,5 +43,8 @@ test('discover, inspect, simulate, replay and expose execution failure', async (
   await page.setViewportSize({ width: 390, height: 844 });
   await page.getByRole('button', { name: 'Mission Control', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Mission Control', exact: true })).toBeVisible();
-  await page.screenshot({ path: '../../docs/mission-control-mobile.png', fullPage: true });
+  await page.screenshot({
+    path: test.info().outputPath('mission-control-mobile.png'),
+    fullPage: true,
+  });
 });

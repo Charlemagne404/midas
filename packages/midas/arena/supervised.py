@@ -395,7 +395,9 @@ class Predictor:
         directory = artifact_path(root, "models", identity)
         manifest = json.loads((directory / "manifest.json").read_text())
         if manifest.get("task") in {"residual_severity_regression", "execution_cost_regression"}:
-            raise ValueError("Regression predicts quantities or dollar costs, not probability gates")
+            raise ValueError(
+                "Regression predicts quantities or dollar costs, not probability gates"
+            )
         if sha256(directory / "parameters.json") != manifest["artifact_sha256"]:
             raise ValueError("Model artifact checksum mismatch")
         if (

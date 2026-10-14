@@ -58,7 +58,9 @@ class TournamentSpec(Model):
     @model_validator(mode="after")
     def valid(self) -> "TournamentSpec":
         if self.generator_revision is not None and self.challenge is None:
-            raise ValueError("Generator revision requires a fresh challenge, not frozen dataset reuse")
+            raise ValueError(
+                "Generator revision requires a fresh challenge, not frozen dataset reuse"
+            )
         if not self.execution_models or set(self.execution_models) - {
             "optimistic",
             "standard",

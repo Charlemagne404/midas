@@ -6,6 +6,9 @@ __pycache__/
 .mypy_cache/
 node_modules/
 dist/
+.coverage
+coverage/
+htmlcov/
 *.db
 *.db-shm
 *.db-wal
@@ -22,6 +25,13 @@ data/laboratory-demonstrations/
 data/laboratory-milestone3/
 data/laboratory-final/
 data/arena/
+data/arena-cold/
+data/exports/
+data/backups/
+# Local generated archives; tracked curated captures remain versioned.
+data/public-captures/
+data/datasets/public-series-*.jsonl
+data/datasets/public-series-*.manifest.json
 *.sqlite
 *.sqlite-shm
 *.sqlite-wal

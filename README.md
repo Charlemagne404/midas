@@ -132,7 +132,7 @@ corepack pnpm test:e2e
 .venv/bin/uv run python scripts/benchmark.py
 ```
 
-Browser tests start isolated services on ports 18000/15173 with a temporary database. They cover scanner inspection, profitable simulation, rejected positions, execution loss, event replay, persistent paper controls and model comparisons. Playwright writes screenshots under `docs`. Ordinary checks never require Polymarket availability. The optional real public smoke is separate:
+Browser tests start isolated services on ports 18000/15173 with a temporary database and Arena root. They cover dashboard and paper flows, Laboratory replay and adversarial handling, and Arena evaluation and replay. Their screenshots and outputs stay under the ignored `apps/web/test-results` directory, leaving curated documentation images unchanged. Ordinary checks never require Polymarket availability. The optional real public smoke is separate:
 
 ```bash
 .venv/bin/uv run python scripts/live_smoke.py
@@ -163,7 +163,7 @@ Startup adopts a recognized legacy SQLite records-only schema at revision 001 an
 | `GET /api/strategies` | Implemented deterministic strategy manifest |
 | `GET /api/settings`, `PATCH /api/settings` | Current configuration; toggle persistent paper emergency stop |
 
-Mission Control, Scanner, Simulation Lab, Analytics, Incidents, Telemetry and Settings operate on backend data. Arena exposes the implemented baseline and an honest empty state for future learning systems. No neural training or invented metrics exist.
+Mission Control, Scanner, Simulation Lab, Analytics, Incidents, Telemetry and Settings operate on backend data. Arena exposes registered research datasets and models, bounded evaluations, tournaments and replay evidence. Arena models are research artifacts evaluated on synthetic scenarios; they do not control live execution or establish real-market profitability.
 
 ## Storage and shutdown
 
@@ -207,6 +207,8 @@ partial-position process-termination demonstration and exact restart commands.
 
 ## Engineering documentation
 
+- [Documentation index](docs/README.md)
+- [Development and verification guide](docs/DEVELOPMENT.md)
 - [Engineering report](docs/ENGINEERING_REPORT.md)
 - [Architecture and data flow](docs/ARCHITECTURE.md)
 - [Current Polymarket research](docs/POLYMARKET_RESEARCH.md)
@@ -217,3 +219,4 @@ partial-position process-termination demonstration and exact restart commands.
 - [Architectural decisions](docs/DECISIONS.md)
 - [Known limitations](docs/KNOWN_LIMITATIONS.md)
 - [Next milestones](docs/ROADMAP.md)
+- [Prometheus final report](docs/PROMETHEUS_FINAL_REPORT.md)

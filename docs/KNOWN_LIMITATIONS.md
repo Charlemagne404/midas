@@ -1,4 +1,29 @@
-# Current limitations — Milestone 2
+# Current limitations
+
+MIDAS remains paper-only. Public observations, synthetic results, estimated
+execution, and model outputs are research evidence; none demonstrates real
+orders or real-market profitability.
+
+## Prometheus and Arena
+
+- Arena training, evaluation, recovery, and comparison results use synthetic
+  scenarios. There are no empirical fill labels or calibrated real-market
+  execution costs. Public history is short: the longest retained recording has
+  241 events (about 598 seconds), with 103 usable paired windows and 17 stale
+  exclusions. Reused identities are not independent samples.
+- No learned policy establishes a general advantage under conservative
+  execution, scenario changes, and generator revisions. Positive mean simulated
+  returns do not prove an advantage over no-trade or support deployment.
+- Native workers are bounded and durable, but interrupted jobs require explicit
+  recovery. Arbitrary pause/resume of an admitted worker and multi-day or reboot
+  operation are not verified.
+- Historical model/source gaps and failed, cancelled, or partial studies remain
+  visible in the evidence. They are not silently repaired or counted as passing.
+
+See [the Prometheus final report](PROMETHEUS_FINAL_REPORT.md) for the complete
+findings and scope exceptions.
+
+## Foundation and paper-service limits
 
 - One live structure is supported: top-level non-negative-risk binary CTF singleton
   pairs backed by USDC.e. V2 identifiers/book routing remain fixture-tested; the controlled
@@ -51,5 +76,6 @@
   tests, not falsely described as a simulated production-process outage.
 - HTTP access is intended for a trusted local user. Authentication, multi-user isolation,
   public hosting and untrusted strategy-code sandboxing are outside scope. The chart
-  library still produces a large lazily loaded chunk. No ML, wallets, credentials, real
-  orders, cancellation, onchain settlement or real-money deployment controls exist.
+  library still produces a large lazily loaded chunk. Arena includes research-only
+  learned models; no model controls live execution. Wallets, private trading keys,
+  real orders, onchain settlement, and real-money deployment controls do not exist.

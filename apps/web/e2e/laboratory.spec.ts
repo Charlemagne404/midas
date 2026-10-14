@@ -40,7 +40,7 @@ test('configure, launch, compare and replay a persisted laboratory experiment', 
   const artifact = await exported.json();
   expect(artifact.result.journal.length).toBeGreaterThan(5);
   expect(artifact.result.economically_verified).toBe(false);
-  await page.screenshot({ path: '../../docs/laboratory-replay.png', fullPage: true });
+  await page.screenshot({ path: test.info().outputPath('laboratory-replay.png'), fullPage: true });
 });
 
 test('controlled adversarial violation preserves minimized incident and replay', async ({

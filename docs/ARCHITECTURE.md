@@ -22,6 +22,9 @@ flowchart LR
   API --> UI[React command center]
   Journal --> Replay[Receipt-ordered replay]
   Replay --> Math
+  Sim --> Research[Arena training and evaluation]
+  Research --> Artifacts[Versioned local artifacts and replays]
+  Artifacts --> API
 ```
 
 ## Responsibilities
@@ -71,3 +74,19 @@ experiments run the production broker state machine. The API and React Paper Tra
 page expose the actual durable account. Existing 43 scenarios and their interfaces
 remain intact. Historical replay can consume attested metadata and verified settlement
 observations; it does not infer missing future observations.
+
+## Project Prometheus extension
+
+Arena research code lives under `packages/midas/arena` and is exposed through the
+`/api/arena` routes in `apps/api/arena.py`. It reuses the Laboratory simulator and
+accounting checks while keeping datasets, model weights, jobs, tournaments, and replay
+payloads in a separate artifact store rooted at `MIDAS_ARENA_ROOT` (default
+`data/arena`). Manifests record source and artifact identities; bounded native jobs
+capture their source and write durable job state. `apps/web/src/Arena.tsx` presents
+those registries and their evaluation evidence.
+
+Arena policies are research artifacts over synthetic scenarios. They do not enter
+the live observation or paper-broker decision path. Preserve the distinction between
+public observations, synthetic scenarios, modeled execution, and measured findings.
+The [Prometheus final report](PROMETHEUS_FINAL_REPORT.md) describes the current
+evaluation design and its exceptions.

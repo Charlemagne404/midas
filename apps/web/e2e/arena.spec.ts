@@ -91,7 +91,7 @@ test('build, train, inspect and evaluate genuine Arena artifacts', async ({ page
   await expect(page.getByRole('heading', { name: 'Saved event replay' })).toBeVisible();
   await page.getByRole('button', { name: 'Next event', exact: true }).click();
   await expect(page.getByText('Event 2 /', { exact: false })).toBeVisible();
-  await page.screenshot({ path: '../../docs/arena-replay.png', fullPage: true });
+  await page.screenshot({ path: test.info().outputPath('arena-replay.png'), fullPage: true });
   await page.getByRole('tab', { name: 'Research director', exact: true }).click();
   await expect(page.getByLabel('Risk predictor', { exact: true })).not.toHaveValue('');
   await page.getByRole('button', { name: 'Run validation policy search', exact: true }).click();

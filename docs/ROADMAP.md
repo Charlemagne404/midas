@@ -1,17 +1,52 @@
-# Next engineering milestones
+# Project roadmap
 
-## Directive 002: audited live observations and persistent paper execution
+## Completed
 
-Highest priority: implement and independently test market-specific payout attestations for eligible v1/v2 binary conditions; verify protocol-specific fee rounding/fragmentation and resolution behavior against current contracts. Capture longer real public websocket campaigns, exercise reconnects/lifecycle updates, and measure reliable snapshot/delta reconciliation.
+- **Foundation:** the read-only market-data path, deterministic evaluation,
+  independent risk checks, virtual exchange, paper ledger, API, and dashboard.
+- **Laboratory:** reproducible synthetic campaigns, recording and replay,
+  adversarial tests, paper-account recovery, and accounting verification.
+- **Prometheus:** the bounded model research system, Arena, evidence registry,
+  replay and recovery workflows, and verified handoff. The
+  [final report](PROMETHEUS_FINAL_REPORT.md) records results, exceptions, and
+  known limitations.
 
-Build a persistent multi-market virtual broker that accepts strategy intents only through the independent risk gateway, derives actual event/market exposure from one portfolio, journals scheduler state and safely resumes after a process crash. Add full end-to-end recorded-event ingestion with honest estimated fills, input dataset manifests/hashes and migration management for both SQLite and PostgreSQL.
+## Next: Project Reality
 
-## Subsequent directions
+Build continuous observation of real public markets, durable recordings,
+chronological datasets, execution calibration, and forward validation. Research
+should measure what the system observed and what a conservative paper execution
+model could have done. Keep observations, estimated fills, and synthetic results
+distinct, and preserve chronological ordering and source provenance throughout
+dataset creation and evaluation.
 
-- Better fill models: explicit queue assumptions, stochastic latency, competing liquidity, sell/exit orders and impact sensitivity. Compare them on fixed recorded datasets.
-- Campaign runner: bounded Monte Carlo jobs, strategy/dataset registries, invariant failure minimization, differential accounting, mutation and chaos testing.
-- Advanced mathematical sets: complete multi-outcome and neg-risk models only after verified outcome closure/conversion/payout mechanics; capital lockup analysis and portfolio optimization.
-- Learning laboratory: execution-risk predictors first, then versioned Gymnasium environments and agent interfaces, PyTorch training, held-out evaluation, model registry and head-to-head arena.
-- Operational work: authentication, metrics export, incident drilldowns, monitored disk pressure, partitioned storage, load testing and deployment hardening.
+## Parallel next project: Project Atlas
 
-Real execution remains a separate explicit future directive and independent audit. Its implementation is not implied by any milestone above.
+Build secure distributed research computing across multiple machines, with
+easy-install Windows workers and centralized orchestration. Atlas should give
+operators clear worker enrollment, bounded task execution, durable job states,
+and verifiable result transfer.
+
+Reality and Atlas are intended to be architecturally compatible and developed
+concurrently. Reality should produce immutable, checksummed dataset manifests
+and bounded replay or evaluation tasks that Atlas can dispatch. Atlas should
+return portable artifacts and provenance that Reality can validate without
+sharing a mutable database or research directory between machines.
+
+## Shared constraints
+
+- Keep MIDAS paper-only. Do not add wallet handling, private trading keys, or an
+  exchange order-submission path.
+- Preserve the existing module boundary: domain and simulation logic belongs in
+  `packages/midas`; API lifecycle and persistence belong in `apps/api`; the
+  dashboard remains an API client.
+- Keep observations, synthetic data, estimated execution, and research findings
+  separately labeled. Do not present model scores or historical paper results
+  as evidence of real profitability.
+- Treat source revisions and input datasets as explicit artifact provenance.
+  Workers should receive bounded, reviewable jobs and return verifiable results;
+  concurrent worktrees and machines must not depend on a shared mutable local
+  database or artifact directory.
+- Develop Reality and Atlas in separate branches or worktrees rooted at the
+  Prometheus baseline. Do not begin either program as part of repository
+  maintenance.

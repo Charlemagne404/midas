@@ -11,5 +11,13 @@
 data/recordings
 data/failures
 data/*.db*
+data/arena
+data/arena-cold
+data/backups
+data/datasets
+data/exports
+data/laboratory*
+data/public-captures
+data/research
 .env
 docs/research
