@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-14T23:34:37.391618+00:00",
+  "updated_at_utc": "2026-10-14T23:41:53.195266+00:00",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -479,6 +479,162 @@
         "Frame-receiver timestamps do not identify upstream venue timing, and public source data do not establish fills or profitability."
       ],
       "decision": "Do not change the collector, campaign, or decision cadence from this aggregate result. Map gap issue entries to market IDs and time blocks, then compare those markets with update activity and inspect the recorded collector trigger settings.",
+      "status": "continue"
+    },
+    {
+      "hypothesis_id": "VERITAS-H010",
+      "title": "Resynchronization issue entries concentrate in several stale-prone markets",
+      "mechanism": "If gap issue entries map repeatedly to a subset of campaign markets whose scheduled decisions also violate freshness, inactivity or market-specific source behavior may contribute to reconnects; the all-issues map still does not identify the exact trigger.",
+      "experiment_id": "VERITAS-GATE-A-GAP-MARKET-20261014-001",
+      "dataset_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
+      "success_metric": "Map normalized affected issue entries in finalized source gap records to campaign market IDs and five-minute blocks, and compare issue-bearing markets with source update volume and scheduled freshness without exporting token identifiers.",
+      "result": {
+        "status": "completed_snapshot_issues_cluster_across_five_markets",
+        "journal_event_tail_sequence": 27362,
+        "decision_rows_sampled": 2344,
+        "decisions_reproduced": 2344,
+        "decisions_uncovered_after_finalized_prefix": 0,
+        "mismatches": {},
+        "lineage_references_expected": 13321,
+        "lineage_references_resolved": 13321,
+        "freshness_violation_decisions": 1503,
+        "freshness_violation_fraction": "0.641212",
+        "source_input_lag_p95_ms": "219.469165",
+        "maximum_leg_age_p95_ms": "51784.905655",
+        "campaign_window_market_book_update_frames": 24744,
+        "book_resynchronization_gaps": 152,
+        "affected_issue_entries": 908,
+        "affected_issue_labels": {
+          "stale": 868,
+          "top_divergence": 33,
+          "advertised_top_pending": 6,
+          "timestamp_regression": 1
+        },
+        "markets_with_mapped_issue_entries": 8,
+        "unmapped_issue_entries": 0,
+        "market_gap_appearances_across_records": 458,
+        "stale_entries_in_five_markets": 822,
+        "stale_entries_in_five_markets_fraction": "0.947005",
+        "source_manifest_sha256": "d8a8522b09a71584bd8bc0c8661a9939dbb1deb1d823c7a5d579ab8c87e1e958",
+        "evidence": "docs/VERITAS_GATE_A_GAP_MARKET_001.json"
+      },
+      "market_summary": {
+        "559687": {
+          "decisions": 293,
+          "freshness_violations": 230,
+          "book_update_frames": 316,
+          "gap_records_with_market_issues": 69,
+          "affected_issue_counts": {
+            "stale": 138
+          }
+        },
+        "561251": {
+          "decisions": 293,
+          "freshness_violations": 223,
+          "book_update_frames": 309,
+          "gap_records_with_market_issues": 69,
+          "affected_issue_counts": {
+            "stale": 138
+          }
+        },
+        "562828": {
+          "decisions": 179,
+          "freshness_violations": 10,
+          "book_update_frames": 8765,
+          "gap_records_with_market_issues": 1,
+          "affected_issue_counts": {
+            "timestamp_regression": 1
+          }
+        },
+        "665205": {
+          "decisions": 293,
+          "freshness_violations": 238,
+          "book_update_frames": 199,
+          "gap_records_with_market_issues": 110,
+          "affected_issue_counts": {
+            "stale": 220
+          }
+        },
+        "679026": {
+          "decisions": 293,
+          "freshness_violations": 158,
+          "book_update_frames": 1228,
+          "gap_records_with_market_issues": 0,
+          "affected_issue_counts": {}
+        },
+        "679055": {
+          "decisions": 69,
+          "freshness_violations": 22,
+          "book_update_frames": 743,
+          "gap_records_with_market_issues": 0,
+          "affected_issue_counts": {}
+        },
+        "4853873": {
+          "decisions": 10,
+          "freshness_violations": 5,
+          "book_update_frames": 30,
+          "gap_records_with_market_issues": 0,
+          "affected_issue_counts": {}
+        },
+        "4869262": {
+          "decisions": 9,
+          "freshness_violations": 5,
+          "book_update_frames": 37,
+          "gap_records_with_market_issues": 0,
+          "affected_issue_counts": {}
+        },
+        "5674900": {
+          "decisions": 293,
+          "freshness_violations": 230,
+          "book_update_frames": 380,
+          "gap_records_with_market_issues": 90,
+          "affected_issue_counts": {
+            "stale": 174,
+            "top_divergence": 4,
+            "advertised_top_pending": 1
+          }
+        },
+        "5674902": {
+          "decisions": 45,
+          "freshness_violations": 33,
+          "book_update_frames": 104,
+          "gap_records_with_market_issues": 15,
+          "affected_issue_counts": {
+            "stale": 28,
+            "top_divergence": 2
+          }
+        },
+        "5674915": {
+          "decisions": 274,
+          "freshness_violations": 215,
+          "book_update_frames": 660,
+          "gap_records_with_market_issues": 81,
+          "affected_issue_counts": {
+            "stale": 152,
+            "top_divergence": 9
+          }
+        },
+        "5675021": {
+          "decisions": 293,
+          "freshness_violations": 134,
+          "book_update_frames": 11973,
+          "gap_records_with_market_issues": 23,
+          "affected_issue_counts": {
+            "stale": 18,
+            "top_divergence": 18,
+            "advertised_top_pending": 5
+          }
+        }
+      },
+      "limitations": [
+        "This is one selected source and campaign snapshot; decisions and source events are correlated.",
+        "Gap records can list multiple campaign markets, so market-gap appearance counts overlap.",
+        "The affected_assets map lists all issue-bearing books and does not prove which market or issue triggered a reconnect.",
+        "Four markets had no mapped gap issue entries but their scheduled freshness rates varied; gap labels do not explain all stale decisions.",
+        "The currently loaded configuration is context and does not prove settings for every historical source gap.",
+        "Public observations do not establish fills or profitability."
+      ],
+      "decision": "Do not change the collector or campaign. Inspect per-outcome issue patterns and configuration stored in finalized process-start records before considering any separate source or cadence experiment.",
       "status": "continue"
     }
   ],

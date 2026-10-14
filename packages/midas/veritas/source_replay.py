@@ -371,6 +371,52 @@ def _gap_issue_label(issue: Any) -> str:
     return issue if isinstance(issue, str) and issue in _KNOWN_GAP_ISSUES else "other"
 
 
+def _record_gap_issue_market_activity(
+    context: Context,
+    reason: str,
+    block_start_ns: int,
+    affected_assets: Any,
+    total_by_market: dict[tuple[str, str], dict[str, Any]],
+    block_by_market: dict[tuple[int, str, str], dict[str, Any]],
+    unmapped_total: defaultdict[str, Counter[str]],
+    unmapped_by_block: dict[tuple[int, str], Counter[str]],
+) -> None:
+    if not isinstance(affected_assets, dict):
+        return
+
+    token_to_market = {
+        str(token): str(market["id"])
+        for market in context.cohort.values()
+        for token in market["tokens"]
+    }
+    issues_by_market: defaultdict[str, Counter[str]] = defaultdict(Counter)
+    unmapped_issues: Counter[str] = Counter()
+    for token, issue in affected_assets.items():
+        issue_label = _gap_issue_label(issue)
+        market_id = token_to_market.get(token) if isinstance(token, str) else None
+        if market_id is None:
+            unmapped_issues[issue_label] += 1
+        else:
+            issues_by_market[market_id][issue_label] += 1
+
+    for market_id, issue_counts in issues_by_market.items():
+        total_entry = total_by_market.setdefault(
+            (reason, market_id),
+            {"gap_records_with_market_issues": 0, "affected_issue_counts": Counter()},
+        )
+        block_entry = block_by_market.setdefault(
+            (block_start_ns, reason, market_id),
+            {"gap_records_with_market_issues": 0, "affected_issue_counts": Counter()},
+        )
+        for entry in (total_entry, block_entry):
+            entry["gap_records_with_market_issues"] += 1
+            entry["affected_issue_counts"].update(issue_counts)
+
+    if unmapped_issues:
+        unmapped_total[reason].update(unmapped_issues)
+        unmapped_by_block.setdefault((block_start_ns, reason), Counter()).update(unmapped_issues)
+
+
 def _finish_family_activity_blocks(
     source_blocks: dict[tuple[str, int], dict[str, Any]],
     decision_blocks: dict[tuple[str, int], dict[str, Any]],
@@ -785,6 +831,10 @@ def reconcile_forward_sources(
     source_activity_blocks: dict[tuple[str, int], dict[str, Any]] = {}
     decision_activity_blocks: dict[tuple[str, int], dict[str, Any]] = {}
     source_gap_blocks: dict[int, dict[str, Any]] = {}
+    source_gap_issue_by_market: dict[tuple[str, str], dict[str, Any]] = {}
+    source_gap_issue_by_market_block: dict[tuple[int, str, str], dict[str, Any]] = {}
+    source_gap_unmapped_issue_counts: defaultdict[str, Counter[str]] = defaultdict(Counter)
+    source_gap_unmapped_issue_blocks: dict[tuple[int, str], Counter[str]] = {}
     source_gap_reasons: Counter[str] = Counter()
     source_gap_affected_asset_counts: Counter[str] = Counter()
     source_gap_affected_issue_counts: defaultdict[str, Counter[str]] = defaultdict(Counter)
@@ -841,6 +891,16 @@ def reconcile_forward_sources(
                         label = _gap_issue_label(issue)
                         gap_block["affected_issue_counts_by_reason"][reason][label] += 1
                         source_gap_affected_issue_counts[reason][label] += 1
+                _record_gap_issue_market_activity(
+                    context,
+                    reason,
+                    block_start_ns,
+                    affected,
+                    source_gap_issue_by_market,
+                    source_gap_issue_by_market_block,
+                    source_gap_unmapped_issue_counts,
+                    source_gap_unmapped_issue_blocks,
+                )
         barrier = context.consume(record, ref)
         ref_key = _reference_key(ref)
         if ref_key in expected_refs:
@@ -978,9 +1038,38 @@ def reconcile_forward_sources(
         }
         for block_start_ns, block in sorted(source_gap_blocks.items())
     ]
+    source_gap_issue_activity_by_market = [
+        {
+            "gap_reason": reason,
+            "market_id": market_id,
+            "gap_records_with_market_issues": data["gap_records_with_market_issues"],
+            "affected_issue_counts": dict(sorted(data["affected_issue_counts"].items())),
+        }
+        for (reason, market_id), data in sorted(source_gap_issue_by_market.items())
+    ]
+    source_gap_issue_activity_by_market_block = [
+        {
+            "block_start_ns": block_start_ns,
+            "gap_reason": reason,
+            "market_id": market_id,
+            "gap_records_with_market_issues": data["gap_records_with_market_issues"],
+            "affected_issue_counts": dict(sorted(data["affected_issue_counts"].items())),
+        }
+        for (block_start_ns, reason, market_id), data in sorted(
+            source_gap_issue_by_market_block.items()
+        )
+    ]
+    source_gap_unmapped_issue_activity_by_block = [
+        {
+            "block_start_ns": block_start_ns,
+            "gap_reason": reason,
+            "affected_issue_counts": dict(sorted(counts.items())),
+        }
+        for (block_start_ns, reason), counts in sorted(source_gap_unmapped_issue_blocks.items())
+    ]
     # Keep only aggregate mismatch categories; no raw market or event payloads are exported.
     return {
-        "analysis_version": "veritas-source-replay-v4",
+        "analysis_version": "veritas-source-replay-v5",
         "captured_ns": time.time_ns(),
         "campaign_id": campaign_id,
         "campaign_root": str(campaign_root),
@@ -1017,6 +1106,17 @@ def reconcile_forward_sources(
             reason: dict(sorted(issues.items()))
             for reason, issues in sorted(source_gap_affected_issue_counts.items())
         },
+        "source_gap_issue_activity_by_market": source_gap_issue_activity_by_market,
+        "source_gap_issue_activity_by_market_5min_block": (
+            source_gap_issue_activity_by_market_block
+        ),
+        "source_gap_unmapped_issue_counts_by_reason": {
+            reason: dict(sorted(issues.items()))
+            for reason, issues in sorted(source_gap_unmapped_issue_counts.items())
+        },
+        "source_gap_unmapped_issue_activity_by_5min_block": (
+            source_gap_unmapped_issue_activity_by_block
+        ),
         "source_gaps_by_5min_block": source_gaps_by_block,
         "source_activity_by_family_5min_block": source_activity_by_family_block,
         "source_activity_by_market": source_activity,
@@ -1027,7 +1127,8 @@ def reconcile_forward_sources(
             "ordinals are in the captured finalized segment prefix. It also summarizes campaign "
             "window book-update intervals by market, excluding intervals that span a recorded "
             "gap or unsupported source frame; aligns market updates, scheduled decisions, and "
-            "aggregated gap issue labels by five-minute family block. It does not infer omitted "
+            "aggregated gap issue labels by five-minute family block, mapping issue entries to "
+            "campaign market IDs without exporting asset identifiers. It does not infer omitted "
             "decisions, fills, or outcomes."
         ),
     }

@@ -262,7 +262,7 @@ def test_reconciles_finalized_records_and_ignores_active_segment(tmp_path):
     assert report["decision_timing"]["by_market"]["1"][
         "market_outcomes_updated_in_source_frame"
     ] == {"2": 1}
-    assert report["analysis_version"] == "veritas-source-replay-v4"
+    assert report["analysis_version"] == "veritas-source-replay-v5"
     activity = report["source_activity_by_market"][0]
     assert activity["touched_book_update_frames"] == 1
     assert activity["both_outcome_update_frames"] == 1

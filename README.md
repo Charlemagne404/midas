@@ -28,14 +28,15 @@ the third counts raw campaign-period quality and pre-fee opportunity states;
 the fourth measures decision lag and paired-book freshness; the fifth measures
 per-market update intervals and their alignment with scheduled decisions; the
 sixth aligns freshness, activity and resynchronization issue labels by five-minute
-blocks. The original Reality campaign remains in its operational worktree and
-unchanged.
+blocks; the seventh maps those issue entries to campaign markets. The original
+Reality campaign remains in its operational worktree and unchanged.
 See [checkpoint 001](docs/VERITAS_GATE_A_CHECKPOINT_001.md),
 [checkpoint 002](docs/VERITAS_GATE_A_CHECKPOINT_002.md),
 [checkpoint 003](docs/VERITAS_GATE_A_CHECKPOINT_003.md),
 [checkpoint 004](docs/VERITAS_GATE_A_CHECKPOINT_004.md),
 [checkpoint 005](docs/VERITAS_GATE_A_CHECKPOINT_005.md),
 [checkpoint 006](docs/VERITAS_GATE_A_CHECKPOINT_006.md),
+[checkpoint 007](docs/VERITAS_GATE_A_CHECKPOINT_007.md),
 [research ledger](docs/VERITAS_RESEARCH_LEDGER.json), and
 [operations instructions](docs/VERITAS_OPERATIONS.md).
 
