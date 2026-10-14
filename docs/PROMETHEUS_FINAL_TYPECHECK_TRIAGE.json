@@ -1,0 +1,314 @@
+{
+  "status": "REQUIRES_CORRECTION_AFTER_CURRENT_GATE",
+  "errors": [
+    {
+      "file": "packages/midas/arena/artifacts.py",
+      "line": 23,
+      "error": "Need type annotation for \"references\" (hint: \"references: list[<type>] = ...\")  [var-annotated]"
+    },
+    {
+      "file": "packages/midas/arena/artifacts.py",
+      "line": 123,
+      "error": "Returning Any from function declared to return \"Path\"  [no-any-return]"
+    },
+    {
+      "file": "packages/midas/arena/rl_checkpoints.py",
+      "line": 16,
+      "error": "Missing type arguments for generic type \"dict\"  [type-arg]"
+    },
+    {
+      "file": "packages/midas/arena/rl_checkpoints.py",
+      "line": 52,
+      "error": "Invalid index type \"int\" for \"dict[str, Any]\"; expected type \"str\"  [index]"
+    },
+    {
+      "file": "packages/midas/arena/rl_checkpoints.py",
+      "line": 52,
+      "error": "Invalid index type \"slice[int, None, None]\" for \"dict[str, Any]\"; expected type \"str\"  [index]"
+    },
+    {
+      "file": "packages/midas/arena/rl_checkpoints.py",
+      "line": 63,
+      "error": "Missing type arguments for generic type \"dict\"  [type-arg]"
+    },
+    {
+      "file": "packages/midas/arena/rl_checkpoints.py",
+      "line": 64,
+      "error": "Missing type arguments for generic type \"dict\"  [type-arg]"
+    },
+    {
+      "file": "packages/midas/arena/rl_checkpoints.py",
+      "line": 105,
+      "error": "Missing type arguments for generic type \"dict\"  [type-arg]"
+    },
+    {
+      "file": "packages/midas/arena/rl_checkpoints.py",
+      "line": 112,
+      "error": "Function is missing a type annotation  [no-untyped-def]"
+    },
+    {
+      "file": "packages/midas/arena/rl_checkpoints.py",
+      "line": 113,
+      "error": "Call to untyped function \"tuples\" in typed context  [no-untyped-call]"
+    },
+    {
+      "file": "packages/midas/arena/rl_checkpoints.py",
+      "line": 115,
+      "error": "Call to untyped function \"tuples\" in typed context  [no-untyped-call]"
+    },
+    {
+      "file": "packages/midas/arena/dataset_storage.py",
+      "line": 13,
+      "error": "Function is missing a type annotation  [no-untyped-def]"
+    },
+    {
+      "file": "packages/midas/arena/dataset_storage.py",
+      "line": 22,
+      "error": "Missing type arguments for generic type \"dict\"  [type-arg]"
+    },
+    {
+      "file": "packages/midas/arena/dataset_storage.py",
+      "line": 47,
+      "error": "Missing type arguments for generic type \"dict\"  [type-arg]"
+    },
+    {
+      "file": "packages/midas/arena/dataset_storage.py",
+      "line": 64,
+      "error": "Missing type arguments for generic type \"dict\"  [type-arg]"
+    },
+    {
+      "file": "packages/midas/arena/dataset_storage.py",
+      "line": 65,
+      "error": "Missing type arguments for generic type \"dict\"  [type-arg]"
+    },
+    {
+      "file": "packages/midas/arena/dataset_storage.py",
+      "line": 66,
+      "error": "Missing type arguments for generic type \"dict\"  [type-arg]"
+    },
+    {
+      "file": "packages/midas/arena/dataset_storage.py",
+      "line": 67,
+      "error": "Missing type arguments for generic type \"dict\"  [type-arg]"
+    },
+    {
+      "file": "packages/midas/arena/persistence.py",
+      "line": 84,
+      "error": "Item \"None\" of \"Evaluation | None\" has no attribute \"status\"  [union-attr]"
+    },
+    {
+      "file": "packages/midas/arena/recovery.py",
+      "line": 216,
+      "error": "Value of type \"Any | None\" is not indexable  [index]"
+    },
+    {
+      "file": "packages/midas/arena/recovery.py",
+      "line": 218,
+      "error": "Value of type \"Any | None\" is not indexable  [index]"
+    },
+    {
+      "file": "packages/midas/arena/recovery.py",
+      "line": 219,
+      "error": "Value of type \"Any | None\" is not indexable  [index]"
+    },
+    {
+      "file": "packages/midas/arena/recovery.py",
+      "line": 226,
+      "error": "Value of type \"Any | None\" is not indexable  [index]"
+    },
+    {
+      "file": "packages/midas/arena/recovery.py",
+      "line": 387,
+      "error": "Incompatible types in assignment (expression has type \"Collection[str]\", variable has type \"dict[str, Any]\")  [assignment]"
+    },
+    {
+      "file": "packages/midas/arena/recovery.py",
+      "line": 390,
+      "error": "Invalid index type \"str\" for \"str\"; expected type \"SupportsIndex | slice[SupportsIndex | None, SupportsIndex | None, SupportsIndex | None]\"  [index]"
+    },
+    {
+      "file": "packages/midas/arena/recovery.py",
+      "line": 428,
+      "error": "Incompatible types in assignment (expression has type \"list[float]\", variable has type \"dict[str, float]\")  [assignment]"
+    },
+    {
+      "file": "packages/midas/arena/recovery.py",
+      "line": 429,
+      "error": "Argument 1 to \"mean\" has incompatible type \"list[str]\"; expected \"_SupportsArray[dtype[numpy.bool[builtins.bool]] | dtype[integer[Any]] | dtype[floating[Any]]] | _NestedSequence[_SupportsArray[dtype[numpy.bool[builtins.bool]] | dtype[integer[Any]] | dtype[floating[Any]]]] | builtins.bool | int | float | _NestedSequence[builtins.bool | int | float]\"  [arg-type]"
+    },
+    {
+      "file": "packages/midas/arena/recovery.py",
+      "line": 433,
+      "error": "No overload variant of \"mean\" matches argument type \"dict[str, float]\"  [call-overload]"
+    },
+    {
+      "file": "packages/midas/arena/recovery.py",
+      "line": 435,
+      "error": "No overload variant of \"mean\" matches argument type \"dict[str, float]\"  [call-overload]"
+    },
+    {
+      "file": "packages/midas/arena/rl.py",
+      "line": 122,
+      "error": "Function is missing a type annotation  [no-untyped-def]"
+    },
+    {
+      "file": "packages/midas/arena/rl.py",
+      "line": 141,
+      "error": "Call to untyped function \"checkpoint\" in typed context  [no-untyped-call]"
+    },
+    {
+      "file": "packages/midas/arena/rl.py",
+      "line": 164,
+      "error": "Argument 1 to \"load\" of \"BaseAlgorithm\" has incompatible type \"Path | None\"; expected \"str | Path | BufferedIOBase\"  [arg-type]"
+    },
+    {
+      "file": "packages/midas/arena/rl.py",
+      "line": 214,
+      "error": "Call to untyped function \"checkpoint\" in typed context  [no-untyped-call]"
+    },
+    {
+      "file": "packages/midas/arena/director.py",
+      "line": 31,
+      "error": "Function is missing a return type annotation  [no-untyped-def]"
+    },
+    {
+      "file": "packages/midas/arena/director.py",
+      "line": 39,
+      "error": "Argument 1 to \"SweepSpec\" has incompatible type \"**dict[str, object]\"; expected \"str\"  [arg-type]"
+    },
+    {
+      "file": "packages/midas/arena/director.py",
+      "line": 39,
+      "error": "Argument 1 to \"SweepSpec\" has incompatible type \"**dict[str, object]\"; expected \"tuple[Candidate, ...]\"  [arg-type]"
+    },
+    {
+      "file": "packages/midas/arena/director.py",
+      "line": 39,
+      "error": "Argument 1 to \"SweepSpec\" has incompatible type \"**dict[str, object]\"; expected \"tuple[int, ...]\"  [arg-type]"
+    },
+    {
+      "file": "packages/midas/arena/director.py",
+      "line": 39,
+      "error": "Argument 1 to \"SweepSpec\" has incompatible type \"**dict[str, object]\"; expected \"int\"  [arg-type]"
+    },
+    {
+      "file": "packages/midas/arena/director.py",
+      "line": 39,
+      "error": "Argument 1 to \"SweepSpec\" has incompatible type \"**dict[str, object]\"; expected \"float\"  [arg-type]"
+    },
+    {
+      "file": "packages/midas/arena/director.py",
+      "line": 115,
+      "error": "Argument 1 to \"SweepSpec\" has incompatible type \"**dict[str, object]\"; expected \"str\"  [arg-type]"
+    },
+    {
+      "file": "packages/midas/arena/director.py",
+      "line": 115,
+      "error": "Argument 1 to \"SweepSpec\" has incompatible type \"**dict[str, object]\"; expected \"tuple[Candidate, ...]\"  [arg-type]"
+    },
+    {
+      "file": "packages/midas/arena/director.py",
+      "line": 115,
+      "error": "Argument 1 to \"SweepSpec\" has incompatible type \"**dict[str, object]\"; expected \"tuple[int, ...]\"  [arg-type]"
+    },
+    {
+      "file": "packages/midas/arena/director.py",
+      "line": 115,
+      "error": "Argument 1 to \"SweepSpec\" has incompatible type \"**dict[str, object]\"; expected \"int\"  [arg-type]"
+    },
+    {
+      "file": "packages/midas/arena/director.py",
+      "line": 115,
+      "error": "Argument 1 to \"SweepSpec\" has incompatible type \"**dict[str, object]\"; expected \"float\"  [arg-type]"
+    },
+    {
+      "file": "packages/midas/arena/planning.py",
+      "line": 27,
+      "error": "Missing type arguments for generic type \"dict\"  [type-arg]"
+    },
+    {
+      "file": "packages/midas/arena/planning.py",
+      "line": 68,
+      "error": "Missing type arguments for generic type \"dict\"  [type-arg]"
+    },
+    {
+      "file": "packages/midas/arena/planning.py",
+      "line": 223,
+      "error": "Returning Any from function declared to return \"dict[Any, Any]\"  [no-any-return]"
+    },
+    {
+      "file": "packages/midas/arena/planning.py",
+      "line": 256,
+      "error": "Function is missing a type annotation for one or more parameters  [no-untyped-def]"
+    },
+    {
+      "file": "packages/midas/arena/planning.py",
+      "line": 256,
+      "error": "Missing type arguments for generic type \"dict\"  [type-arg]"
+    },
+    {
+      "file": "packages/midas/arena/planning.py",
+      "line": 261,
+      "error": "Returning Any from function declared to return \"dict[Any, Any]\"  [no-any-return]"
+    },
+    {
+      "file": "packages/midas/arena/planning.py",
+      "line": 304,
+      "error": "Returning Any from function declared to return \"dict[Any, Any]\"  [no-any-return]"
+    },
+    {
+      "file": "packages/midas/arena/migrations.py",
+      "line": 25,
+      "error": "Function is missing a type annotation for one or more parameters  [no-untyped-def]"
+    },
+    {
+      "file": "packages/midas/arena/migrations.py",
+      "line": 25,
+      "error": "Missing type arguments for generic type \"dict\"  [type-arg]"
+    },
+    {
+      "file": "packages/midas/arena/migrations.py",
+      "line": 32,
+      "error": "Function is missing a type annotation for one or more parameters  [no-untyped-def]"
+    },
+    {
+      "file": "packages/midas/arena/migrations.py",
+      "line": 32,
+      "error": "Missing type arguments for generic type \"dict\"  [type-arg]"
+    },
+    {
+      "file": "packages/midas/arena/jobs.py",
+      "line": 116,
+      "error": "Unsupported left operand type for + (\"None\")  [operator]"
+    },
+    {
+      "file": "apps/api/arena.py",
+      "line": 189,
+      "error": "Returning Any from function declared to return \"dict[str, Any]\"  [no-any-return]"
+    },
+    {
+      "file": "apps/api/arena.py",
+      "line": 295,
+      "error": "Function is missing a return type annotation  [no-untyped-def]"
+    },
+    {
+      "file": "apps/api/arena.py",
+      "line": 343,
+      "error": "Argument 3 to \"control\" has incompatible type \"str\"; expected \"Literal['pause', 'resume', 'cancel']\"  [arg-type]"
+    }
+  ],
+  "file_counts": {
+    "packages/midas/arena/artifacts.py": 2,
+    "packages/midas/arena/rl_checkpoints.py": 9,
+    "packages/midas/arena/dataset_storage.py": 7,
+    "packages/midas/arena/persistence.py": 1,
+    "packages/midas/arena/recovery.py": 10,
+    "packages/midas/arena/rl.py": 4,
+    "packages/midas/arena/director.py": 11,
+    "packages/midas/arena/planning.py": 7,
+    "packages/midas/arena/migrations.py": 4,
+    "packages/midas/arena/jobs.py": 1,
+    "apps/api/arena.py": 3
+  },
+  "constraint": "Do not modify packages until live gate1713804 is terminal; preserve historical artifact source and model weights. Correct annotations, ambiguous variable types and nullable boundary checks without blanket ignores."
+}

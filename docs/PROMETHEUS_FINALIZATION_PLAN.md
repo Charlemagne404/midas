@@ -68,3 +68,14 @@ supported, production path unchanged.19focused tests pass16.03s;execution hash
 c14738f8468a8103a98c2704dc5454e85e867a5e3d5b7174cc7383342aa5ebd8 unchanged.
 Full read-only audit completed:7datasets/45models/27tournaments/52323replays,
 with2historical partial tournaments reported separately. New final gates required.
+
+## Current remaining type verification
+
+Final strict mypy run found59errors in11newer research/API files (74source files
+checked). Exact diagnostics preserved in PROMETHEUS_FINAL_BACKEND_TYPES.log and
+PROMETHEUS_FINAL_TYPECHECK_TRIAGE.json. Fix missing generic annotations, return
+types, reused variable types and nullable boundaries after current backend gate
+PID1713804 is terminal. Do not blanket-ignore errors or modify frozen source
+while the gate runs. Reverify affected behavior and final regression afterward.
+Corrected browser suite5passed;recovery audit4860variants passed;production
+inventory/source/replays preserved. Final deployment/health/report sign-off pending.
