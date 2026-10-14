@@ -1,0 +1,66 @@
+Gate F verification logs. API bounds/control/checksum tests use labeled fixtures; browser reads genuine live evidence.
+
+/tmp/reality-focused-tests.log
+........................................................................ [ 55%]
+..........................................................               [100%]
+=============================== warnings summary ===============================
+.venv/lib/python3.12/site-packages/fastapi/testclient.py:1
+  /home/charlie/midas-reality/.venv/lib/python3.12/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+130 passed, 1 warning in 26.33s
+
+/tmp/reality-ui-tests.log
+
+> @midas/command-center@0.1.0 test
+> vitest run
+
+
+ RUN  v3.2.7 /home/charlie/midas-reality/apps/web
+
+ ✓ src/App.test.tsx (2 tests) 216ms
+ ✓ src/Laboratory.test.tsx (2 tests) 314ms
+ ✓ src/Reality.test.tsx (3 tests) 1220ms
+   ✓ reports unavailable genuine evidence without inventing observations  1119ms
+ ✓ src/Arena.test.tsx (18 tests) 1674ms
+
+ Test Files  4 passed (4)
+      Tests  25 passed (25)
+   Start at  23:27:18
+   Duration  3.45s (transform 1.37s, setup 859ms, collect 2.85s, tests 3.42s, environment 1.94s, prepare 463ms)
+
+
+/tmp/reality-build.log
+
+> @midas/command-center@0.1.0 build
+> tsc -b && vite build
+
+vite v7.3.7 building client environment for production...
+transforming...
+✓ 2222 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.42 kB │ gzip:   0.30 kB
+dist/assets/index-vj_kxqWo.css   39.59 kB │ gzip:   9.25 kB
+dist/assets/index-DgfCbPMh.js   498.73 kB │ gzip: 143.77 kB
+dist/assets/Chart-CdU_CtFM.js   544.41 kB │ gzip: 186.76 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 4.73s
+
+/tmp/reality-browser-tests.log
+
+Running 1 test using 1 worker
+
+(node:2894007) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 e2e/reality.spec.ts:3:1 › native Reality exposes genuine evidence and frozen replay without synthetic labeling (7.4s)
+
+  1 passed (8.0s)
+
+Additional checks: npm run typecheck; npm run lint; ruff check changed Python files; strict mypy apps/api/reality.py apps/api/config.py passed.
+A wider three-file mypy invocation included an existing scenarios/catalog Any-return diagnostic in apps/api/main.py; full-package typing is reviewed in Gate G. No scientific worker was restarted.

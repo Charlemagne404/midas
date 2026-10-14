@@ -1,0 +1,133 @@
+{
+  "measured_ns": 1792013252554796215,
+  "collector": {
+    "expected_books": 16,
+    "failures": 0,
+    "frames": 105354,
+    "fresh_books": 16,
+    "gaps": 2101,
+    "markets": 8,
+    "ordinal": 185065,
+    "started_ns": 1791988496384329613,
+    "state": "RECORDING_UNSEQUENCED",
+    "storage_bytes": 357528046,
+    "timing_uncertain_books": 0,
+    "updated_ns": 1792013251822584204
+  },
+  "forward": {
+    "actual_orders_submitted": 0,
+    "budget_bytes": 4294967296,
+    "campaign_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
+    "counters": {
+      "lagged_frames_skipped": 1003,
+      "records": 185065,
+      "source_checkpoints": 1568
+    },
+    "days": [
+      "2026-10-14"
+    ],
+    "decisions": 296,
+    "events": 4669,
+    "evidence_bytes": 10077569,
+    "families": 6,
+    "followups": {
+      "censored": 1176,
+      "observed_public_measurement": 8
+    },
+    "last_decision_ns": 1792013235706165157,
+    "markets": 9,
+    "observations": 1320,
+    "pending_horizons": 0,
+    "producer_hash": "9231e11c969cc95af607d847c7d5aa32418a91c21152b214cf9f170d517c0c9f",
+    "scientific_state": "insufficient_forward_evidence",
+    "source_last_received_ns": 1792013249807428192,
+    "source_ordinal": 185065,
+    "state": "WARMING_OR_LAGGED_SOURCE",
+    "updated_ns": 1792013250413594436
+  },
+  "capacity": {
+    "alerts": [],
+    "available_headroom_bytes": 25412626853,
+    "budget_bytes": 25769803776,
+    "capacity_builder_sha256": "ab145f0a001508b2cd1ca849bd381ebf988ccf49fdcb6465753ddbe0b36fb5a5",
+    "capacity_builder_version": "receipt-aware-capacity-v2",
+    "collector_state": "RECORDING_UNSEQUENCED",
+    "collector_status_age_seconds": 1.814655979,
+    "compressed_bytes_per_second": 9446.908372203341,
+    "estimated_action_deadline_ns": 1794703244092068096,
+    "estimated_bytes_per_day": 816212883.3583686,
+    "estimated_storage_seconds_remaining": 2690046.9287681794,
+    "filesystem_free_bytes": 217179308032,
+    "free_disk_reserve_bytes": 21474836480,
+    "limitations": [
+      "Recent finalized-segment rate includes gaps and metadata; future rates vary.",
+      "Active segment excluded from rate, included in root usage.",
+      "Raw originals never pruned. Retention horizon stops collection.",
+      "Local archive copies consume additional disk; off-host offloading is separate."
+    ],
+    "measured_ns": 1792013197163299907,
+    "raw_root_bytes": 357176923,
+    "recording_root": "/home/charlie/midas-reality/data/recordings/reality",
+    "retention_seconds_remaining": 7727887.547646258,
+    "sample": {
+      "clock_assessment_basis": "sequential WebSocket dequeue frames; deferred HTTP timestamps remain separate",
+      "clock_regressions": 0,
+      "compressed_and_catalog_bytes": 34507737,
+      "first_received_ns": 1792009507163855353,
+      "last_received_ns": 1792013159971275560,
+      "raw_frame_payload_bytes": 19271213,
+      "raw_frames": 12461,
+      "record_receipt_regressions": 137,
+      "seconds": 3652.807420207,
+      "segments": 120,
+      "source_sha256": "6a3b3417625eaee6fc31887dd3bfef390f11289ce060f90ea6be35a2f3080160"
+    },
+    "schema_version": 1
+  },
+  "api_benchmarks": {
+    "/overview": {
+      "requests": 5,
+      "median_ms": 2.8901639743708074,
+      "max_ms": 259.3497789930552,
+      "response_bytes": 41355,
+      "cache_notice": "15-second forward report / 10-second service cache may be warm"
+    },
+    "/decisions?limit=40": {
+      "requests": 5,
+      "median_ms": 8.61338002141565,
+      "max_ms": 87.39451097790152,
+      "response_bytes": 65085,
+      "cache_notice": "15-second forward report / 10-second service cache may be warm"
+    },
+    "/artifacts/calibration": {
+      "requests": 5,
+      "median_ms": 7.479678955860436,
+      "max_ms": 86.15594200091437,
+      "response_bytes": 110207,
+      "cache_notice": "15-second forward report / 10-second service cache may be warm"
+    },
+    "/artifacts/training": {
+      "requests": 5,
+      "median_ms": 4.717500996775925,
+      "max_ms": 81.5600750502199,
+      "response_bytes": 140575,
+      "cache_notice": "15-second forward report / 10-second service cache may be warm"
+    },
+    "/forward?limit=500": {
+      "requests": 5,
+      "median_ms": 1.6005199868232012,
+      "max_ms": 406.925635994412,
+      "response_bytes": 10394,
+      "cache_notice": "15-second forward report / 10-second service cache may be warm"
+    },
+    "/operations": {
+      "requests": 5,
+      "median_ms": 1.3182690017856658,
+      "max_ms": 102.38224099157378,
+      "response_bytes": 3815,
+      "cache_notice": "15-second forward report / 10-second service cache may be warm"
+    }
+  },
+  "services": "MainPID=2288376\nNRestarts=0\nMemoryCurrent=401485824\nCPUUsageNSec=210312196000\nId=midas-reality.service\nActiveState=active\n\nMainPID=2820914\nNRestarts=0\nMemoryCurrent=130199552\nCPUUsageNSec=254107770000\nId=midas-reality-shadow.service\nActiveState=active\n\nMainPID=2889327\nNRestarts=0\nMemoryCurrent=129568768\nCPUUsageNSec=12307771000\nId=midas-reality-api.service\nActiveState=active\n\nMainPID=2890819\nNRestarts=0\nMemoryCurrent=94625792\nCPUUsageNSec=2587185000\nId=midas-reality-web.service\nActiveState=active\n",
+  "protected_main": ""
+}

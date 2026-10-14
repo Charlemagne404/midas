@@ -29,7 +29,9 @@ Gate C adds observational calibration, explicit execution-uncertainty scenarios
 and preserved-simulator comparisons. Gate D adds genuine observation-target
 training, consumed frozen tests and explicit insufficient-evidence eligibility.
 Gate E is accepted with a live frozen prospective campaign, independently audited
-canary and durable integrity monitoring. Gate F's native Reality interface is next. See the
+canary and durable integrity monitoring. Gate F is accepted with the nine-area
+native Reality dashboard, bounded evidence API and source replay. Gate G's final
+regression, protected-evidence integrity and operational handoff remain. See the
 [Calibration Laboratory progress and operations](REALITY_CALIBRATION_LABORATORY.md).
 
 ## Deferred: Project Atlas

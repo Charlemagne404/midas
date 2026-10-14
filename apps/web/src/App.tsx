@@ -34,6 +34,7 @@ import type { LucideIcon } from 'lucide-react';
 import { api } from './api';
 import { Laboratory } from './Laboratory';
 import { Arena } from './Arena';
+import { Reality } from './Reality';
 import { PaperPage, PaperSummary, ExperimentPanel } from './Paper';
 import { chartBase } from './chart-theme';
 const LazyChart = lazy(() => import('./Chart').then((module) => ({ default: module.Chart })));
@@ -58,6 +59,7 @@ import type {
 
 const pages = [
   ['Mission Control', LayoutDashboard],
+  ['Reality', Radio],
   ['Scanner', Search],
   ['Paper Trading', Database],
   ['Simulation Lab', FlaskConical],
@@ -178,7 +180,8 @@ export function App() {
           <span className="tiny-label">RESEARCH WORKSPACE</span>
           <div>
             <Beaker size={15} />
-            Foundation lab <Badge tone="gold">M1</Badge>
+            {page === 'Reality' ? 'Reality lab' : 'Foundation lab'}{' '}
+            <Badge tone="gold">{page === 'Reality' ? 'M2' : 'M1'}</Badge>
           </div>
         </div>
         <nav aria-label="Main navigation">
@@ -221,7 +224,11 @@ export function App() {
           </div>
           <div className="topbar-right">
             <Badge tone={state?.mode === 'live' ? 'cyan' : 'gold'}>
-              {state?.mode === 'live' ? 'LIVE OBSERVATION' : 'DEMO · SYNTHETIC'}
+              {page === 'Reality'
+                ? 'REALITY · PUBLIC OBSERVATIONS'
+                : state?.mode === 'live'
+                  ? 'LIVE OBSERVATION'
+                  : 'DEMO · SYNTHETIC'}
             </Badge>
             <span className="topbar-boundary">
               <ShieldCheck size={13} />
@@ -230,43 +237,46 @@ export function App() {
           </div>
         </header>
         <main>
-          <div className="page-heading">
-            <div>
-              <div className="eyebrow">
-                POLYMARKET RESEARCH / {page === 'Laboratory' ? 'MILESTONE 003' : 'MILESTONE 002'}
+          {page !== 'Reality' && (
+            <div className="page-heading">
+              <div>
+                <div className="eyebrow">
+                  POLYMARKET RESEARCH / {page === 'Laboratory' ? 'MILESTONE 003' : 'MILESTONE 002'}
+                </div>
+                <h1>{page}</h1>
+                <p>
+                  {
+                    (
+                      {
+                        'Mission Control':
+                          'Market intelligence. Verified mathematics. Measurable uncertainty.',
+                        Scanner:
+                          'Inspect complete binary positions and every assumption behind their edge.',
+                        'Simulation Lab':
+                          'Reproduce the trade. Stress the execution. Reconcile every balance.',
+                        Laboratory:
+                          'Adversarial experiments. Inspectable evidence. Reproducible decisions.',
+                        Analytics: 'Recorded observations and independent virtual experiments.',
+                        Arena: 'Train policies. Compare outcomes. Inspect the evidence.',
+                        Incidents:
+                          'An auditable record of warnings, errors, and scenario outcomes.',
+                        Telemetry: 'Measured health of the data and research pipeline.',
+                        Settings: 'Operating boundaries and conservative risk controls.',
+                      } as Record<string, string>
+                    )[page]
+                  }
+                </p>
               </div>
-              <h1>{page}</h1>
-              <p>
-                {
-                  (
-                    {
-                      'Mission Control':
-                        'Market intelligence. Verified mathematics. Measurable uncertainty.',
-                      Scanner:
-                        'Inspect complete binary positions and every assumption behind their edge.',
-                      'Simulation Lab':
-                        'Reproduce the trade. Stress the execution. Reconcile every balance.',
-                      Laboratory:
-                        'Adversarial experiments. Inspectable evidence. Reproducible decisions.',
-                      Analytics: 'Recorded observations and independent virtual experiments.',
-                      Arena: 'Train policies. Compare outcomes. Inspect the evidence.',
-                      Incidents: 'An auditable record of warnings, errors, and scenario outcomes.',
-                      Telemetry: 'Measured health of the data and research pipeline.',
-                      Settings: 'Operating boundaries and conservative risk controls.',
-                    } as Record<string, string>
-                  )[page]
-                }
-              </p>
+              <div className="heading-status">
+                <span
+                  className={`status-dot ${disconnected || state?.status === 'DEGRADED' ? 'red' : ''}`}
+                />
+                {disconnected ? 'API DISCONNECTED' : (state?.status ?? 'CONNECTING')}
+                <span className="heading-time">{date(state?.timestamp_ms)} LOCAL</span>
+              </div>
             </div>
-            <div className="heading-status">
-              <span
-                className={`status-dot ${disconnected || state?.status === 'DEGRADED' ? 'red' : ''}`}
-              />
-              {disconnected ? 'API DISCONNECTED' : (state?.status ?? 'CONNECTING')}
-              <span className="heading-time">{date(state?.timestamp_ms)} LOCAL</span>
-            </div>
-          </div>
-          {disconnected && (
+          )}
+          {page !== 'Reality' && disconnected && (
             <div className="alert danger">
               <TriangleAlert size={17} />
               <div>
@@ -276,7 +286,7 @@ export function App() {
               <button onClick={() => void stateQuery.refetch()}>Retry connection</button>
             </div>
           )}
-          {state?.mode === 'demo' && (
+          {page !== 'Reality' && state?.mode === 'demo' && (
             <div className="demo-strip">
               <FlaskConical size={14} />
               <strong>SYNTHETIC DATA</strong>
@@ -284,14 +294,14 @@ export function App() {
               <span className="strip-end">No deposited funds</span>
             </div>
           )}
-          {state?.status === 'DEGRADED' && !disconnected && (
+          {page !== 'Reality' && state?.status === 'DEGRADED' && !disconnected && (
             <div className="alert danger">
               <TriangleAlert size={17} />
               Data quality is degraded. Inspect book timestamps and Telemetry before interpreting
               observations.
             </div>
           )}
-          {state?.safety.emergency_stop && (
+          {page !== 'Reality' && state?.safety.emergency_stop && (
             <div className="alert danger" role="alert">
               <ShieldX size={17} />
               Emergency stop active. New virtual proposals and scenario runs are blocked.
@@ -324,6 +334,7 @@ export function App() {
           {page === 'Laboratory' && <Laboratory />}
           {page === 'Analytics' && <AnalyticsPage data={analytics.data} />}
           {page === 'Arena' && <Arena />}
+          {page === 'Reality' && <Reality />}
           {page === 'Incidents' && <Incidents />}
           {page === 'Telemetry' && <Telemetry state={state} />}
           {page === 'Settings' && <SettingsPage />}

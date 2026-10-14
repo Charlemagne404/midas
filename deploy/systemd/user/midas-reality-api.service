@@ -1,0 +1,21 @@
+[Unit]
+Description=MIDAS Reality interface API (isolated development state)
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/midas-reality
+Environment=MIDAS_MODE=demo
+Environment=MIDAS_DATABASE_URL=sqlite+aiosqlite:///%h/midas-reality/data/research/reality/interface/preview.db
+Environment=MIDAS_LABORATORY_ROOT=%h/midas-reality/data/research/reality/interface/laboratory
+Environment=MIDAS_ARENA_ROOT=%h/midas-reality/data/research/reality/interface/arena
+Environment=MIDAS_REALITY_WORKSPACE=%h/midas-reality
+ExecStart=%h/midas-reality/.venv/bin/uvicorn apps.api.main:app --host 127.0.0.1 --port 8010
+Restart=on-failure
+RestartSec=10
+MemoryMax=512M
+CPUQuota=20%
+Nice=15
+
+[Install]
+WantedBy=default.target

@@ -1166,3 +1166,148 @@ market explorer, historical/opportunity observatories, calibration, models,
 shadow, forward validation and collector operations. Gate G then runs full
 backend/frontend/browser, storage, research integrity and operational handoff
 checks. The Mission 2 goal remains active until these deliverables are verified.
+
+## Gate F — Native Reality research interface
+
+The existing React command center now includes **Reality** in its main navigation,
+with nine integrated research areas. The near-black palette, restrained gold,
+monospace quantitative typography and existing ECharts renderer remain native to
+MIDAS. Screenshots are in `docs/reality-interface/`. All source timestamps are UTC;
+quantities are shares and values are collateral units. Reality has its own public
+observation badge and does not inherit the demo engine's synthetic-data banner.
+The original Prometheus pages remain available in the same application.
+
+### Access and isolated operation
+
+On this host, open `http://127.0.0.1:5180` and select **Reality**. The supporting
+API listens on `127.0.0.1:8010`. The existing main-worktree API and web services
+were not replaced. Port 5174 was already occupied and was left alone.
+
+`midas-reality-api.service` uses this branch but owns only the disposable preview
+SQLite/Laboratory/Arena state under `data/research/reality/interface/`. It reads
+collector and research evidence without acquiring their writer locks. The demo
+engine continues to supply the original pages; it supplies no Reality measurements.
+`midas-reality-web.service` proxies to that API. Both units are enabled and bounded
+at 512 MiB, respectively 20% and 25% of one CPU, with Nice 15. The current Vite
+preview reuses already-installed locked dependency versions from the main
+worktree through a local, untracked node_modules symlink. Normal installations
+should install the repository's locked dependencies; the symlink is not required
+by the code. Closing or rebuilding the interface does not stop recording,
+prospective decisions, integrity checks or scheduled research.
+
+The frontend proxy explicitly preserves the browser's host header. This is
+necessary for the API's same-origin operational-control check. The browser test
+caught and corrected the initial proxy rewrite rejection. No origin whitelist
+bypass was added.
+
+### Research areas
+
+- **Overview:** raw-record/frame counts, storage, cohort, collector process epoch,
+  quality gaps, timing uncertainty, experimental forward counters and evidence
+  limitations. Collector freshness uses the recorder's 60-second threshold;
+  the explorer separately shows the stricter five-second research threshold.
+- **Live explorer:** search and selection-role filters, both complementary outcomes,
+  actual bid/ask/spread, displayed ask depth, quantity-dependent pre-fee displayed
+  acquisition cost, receipt age, producer-epoch book-update rate and protocol,
+  tick, fee, minimum-size, payoff and lifecycle metadata. A 50-level truncated
+  window never becomes a false claim of insufficient complete-book liquidity.
+- **Historical:** market/time-window selection (one, six or 24 hours), UTC end
+  selection, ask/spread/liquidity/receipt-age charts, quality bands, sampled event
+  inspection and a replay cursor. This is a nominal five-second observation index
+  from the prospective campaign, not an invented tick-complete archive. Invalid
+  samples and missing intervals longer than ten seconds break chart lines.
+  Historical raw data preceding this index remains available through the source
+  replay tools; the UI does not load the raw archive into the browser.
+- **Opportunities:** paginated genuine initial decisions, with a default filter
+  for positive theoretical discrepancies. An empty page explicitly says so;
+  users can reveal abstentions and page backward. Initial displayed costs are
+  not executable profits.
+- **Calibration:** measured persistence and missing-outcome bounds by horizon,
+  real-versus-synthetic spread/depth comparison, sample coverage, censored quote
+  lifetimes, four declared execution scenarios, sizing/capital sensitivities
+  and exact calibration artifact hashes.
+- **Models:** genuine-observation dataset manifest and source audit, chronological
+  target coverage (measured and unknown), baseline/learner final-test scores,
+  grouped exploratory intervals, calibration plots/bin counts, slices and frozen
+  model identities. Negative results and no scientific champion remain prominent.
+- **Shadow:** live prospective decision journal with exact frozen-decision replay,
+  separate later labels, experimental predictions, policy actions, hypothetical
+  scenario/P&L bounds, unmatched positions and source lineage. The input source
+  record can be verified against its stored compressed hash and displayed with
+  its canonical content hash, ordinal, segment and offset.
+- **Forward:** immutable freeze/start/end timestamps, exact campaign identity,
+  controls, model/code hashes, risk/analysis plan, full live counters and bounded
+  matched reports with missingness and dependence-aware coverage. At most the
+  latest 500 report decisions are shown by default; full campaign counters are
+  labeled separately. Per-trial hypothetical ranges are not aggregated into
+  realized portfolio money.
+- **Operations:** authoritative systemd properties, configured budgets/retention,
+  storage forecast/alerts, public comparisons, clock evidence and research status.
+  Fixed controls request a capacity check, frozen-integrity check, or pause/resume
+  of the *future research timer*. Pausing does not terminate an already-running
+  job. No UI control replaces the collector or changes a frozen campaign.
+
+### API and evidence bounds
+
+`apps/api/reality.py` mounts `/api/reality` in the existing API. Reads use SQLite
+`mode=ro`, `query_only`, parameter binding, bounded result counts and a two-second
+query-progress deadline. History is limited to 24 hours/1,500 rows; decision pages
+are at most 100. Lists omit full initial depth, while one decision can expose its
+full frozen input. Forward summaries are capped at 5,000 decisions and cached for
+15 seconds. Service properties are cached for ten seconds. Research artifact
+routes use a fixed allowlist and preserve exact original on-disk file hashes;
+the large empirical joint kernel is omitted from the browser response.
+
+Raw-record inspection accepts only a strict source-segment basename, bounded
+ordinal offset and an eight-MB compressed/expanded record limit. It validates
+framing, checksum and ordinal. Payloads above 100 KB are replaced by an explicit
+browser-limit notice while retaining their exact content hash. No arbitrary file
+path, shell command, unit name or artifact filename is accepted. Operational POSTs
+require the same browser origin and use fixed subprocess argv. Results append to
+`interface/operations.jsonl`, outside immutable scientific evidence.
+
+### Verification and engineering measurements
+
+All 130 focused Reality backend tests pass in 26.33 seconds. Logs are retained
+in `docs/REALITY_GATE_F_TESTS.log`. The five new API tests cover missing/stale evidence, bounded windows/pages,
+separate list/detail evidence, immutable raw-record hashes, corruption, traversal,
+unknown operations, cross-origin rejection and exact fixed command invocation.
+The three new UI tests exercise missing evidence, unknown future values, chart
+breaks across gaps and explicit empty opportunities. All 25 frontend unit tests,
+TypeScript checks and ESLint pass. Production build succeeds; ECharts remains a
+separate ~544 KB uncompressed / ~187 KB gzip chunk, with Vite's >500 KB advisory
+reported rather than hidden. Full backend regression and historical archive
+verification remain Gate G.
+
+The real-browser scenario traverses all nine areas, checks the absence of the
+synthetic banner, inspects raw-source replay, exercises keyboard Escape/modal
+focus handling, queries history metrics/replay, and verifies a 390-pixel mobile
+layout without document overflow. It successfully requests the read-only capacity
+check through the actual Vite/API proxy. Screenshots cover desktop, mobile,
+calibration, models, shadow, replay, forward and operations. No pause/resume action
+or collector restart was used in browser verification.
+
+The timestamped checkpoint is `docs/REALITY_GATE_F_CHECKPOINT.json`. Five local
+requests per main route measured median response times approximately 1.3–8.6 ms,
+with quota/scheduling/cold-query maxima 81–407 ms; forward/service cache warmth is
+explicitly disclosed. Responses were about 10–141 KB, not raw archive downloads.
+These are small engineering samples, not throughput or tail-latency guarantees.
+The collector remained PID 2288376 and main shadow PID 2820914, both zero automatic
+restarts, throughout Gate F. API-only restarts were intentional during development.
+
+At the checkpoint, the collector had eight markets, 16 fresh books, zero failures,
+zero timing-uncertain books, 105,354 active-epoch frames and 185,065 total source
+records using about 341 MiB. The frozen main campaign had 296 decisions across
+nine accumulated markets, six connected families and one UTC day, eight measured
+public follow-ups and 1,176 censored follow-ups. Cohort rotation means accumulated
+forward-market count can exceed the current eight-market panel. The exact worker
+snapshot was `WARMING_OR_LAGGED_SOURCE`: transient source-lag states remain visible,
+not converted into healthy or observed outcomes. Models remain experimental and
+ineligible; no hypothetical fills, population performance or profitability are
+identified. Current raw capacity is bounded by 24 GiB with a separate archive tier
+and 20 GiB filesystem reserve. See the checkpoint for timestamped growth forecasts.
+
+Gate F is accepted as the native interface deliverable. Gate G remains: complete
+backend/frontend/browser regression, raw/archive and research integrity checks,
+protected historical evidence verification, operational recovery review and final
+handoff against all twelve completion conditions. Mission 2 remains active.

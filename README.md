@@ -20,7 +20,9 @@ execution bounds and preserved-simulator comparisons. Gate D adds real-observati
 Arena workflows and frozen chronological tests; current evidence supports no
 eligible policy model. Gate E now runs a frozen fourteen-day prospective shadow
 campaign with public follow-ups and explicit unknown execution outcomes.
-The native dashboard and final broad verification remain outstanding.
+Gate F exposes live collection, bounded history, calibration, models, shadow and
+forward evidence in the native Reality dashboard (`http://127.0.0.1:5180` on this
+host). Final broad verification and protected-evidence audit remain Gate G.
 
 ## Install and run
 
