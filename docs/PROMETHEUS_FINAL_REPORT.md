@@ -203,7 +203,7 @@ legacy incumbent source gaps remain a limitation rather than invented provenance
 
 ## 8. Final tests and operational evidence
 
-**Pending:** the final full backend regression and deployed UI/service/archive
+**Pending:** strict Python typing corrections, the final full backend regression and deployed UI/service/archive
 checks. The production inventory is complete. No production capacity campaign
 is required for wrap-up.
 
@@ -213,6 +213,10 @@ Completed checks:
 - **Current Python source:** Ruff passed for packages, API, scripts and tests.
   A broader scan found three import-order issues in immutable historical source
   captures. Their original evidence bytes are preserved.
+- **Strict Python typing:** 59 errors in 11 files were found across 74 checked
+  source files. Diagnostics are preserved in `PROMETHEUS_FINAL_BACKEND_TYPES.log`.
+  These are pending correction after the live gate is terminal; typing is not
+  claimed to pass. Frontend TypeScript verification passed separately.
 - **Previous full backend gate:** 582 passed and one skipped. The subsequent
   gate finished with 599 passed, one failed and one skipped in 1,154.11 seconds.
   The failure was a transient SQLite SHM file disappearing during archive disk
