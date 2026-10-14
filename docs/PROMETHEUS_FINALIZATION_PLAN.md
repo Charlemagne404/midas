@@ -35,8 +35,11 @@ Do not prolong Prometheus to pursue these optional objectives.
 
 ## Current live handle
 
-- `midas-prometheus-final-backend-gate.service`, PID 1713804: one CPU,
-  4 GiB, 1,800-second limit. Current source remains frozen while it runs.
+- Focused post-typing behavior check: exec session 52873, pytest PID 1734476.
+  It exercises persistence, recovery, migration, PPO continuation, jobs, planning
+  and API behavior. Current corrected source remains unchanged while it runs.
+- Original pre-typing full gate is terminal: 608 passed, one skipped in
+  1,125.74 seconds. A full post-typing gate follows the focused check.
 - Corrected browser suite is terminal with five passes. Artifact and recovery
   audits are terminal with successful reports.
 - Original planning coordinator is terminal FAILED before admission. Its frozen
@@ -90,3 +93,12 @@ in PROMETHEUS_FINAL_TYPING_PATCH.diff and PROMETHEUS_FINAL_TYPING_PATCH_PLAN.jso
 It has not been applied to the frozen worktree. After the original gate becomes
 terminal, verify base hashes, apply, recheck current-source typing and affected
 behavior, then run the final regression. Preserve old artifacts and captured source.
+
+## Applied typing correction
+
+Prepared patch applied after the original gate became terminal; base/prepared
+hashes verified. Commit7e71ab8 passes current strict mypy across74files and Ruff.
+Laboratory execution identity unchanged;all155production manifest snapshots
+match the final inventory. Current decoder,weights andmatched coverage validate.
+Affected behavior check is running;final full gate and deployed acceptance follow.
+See PROMETHEUS_FINAL_TYPING_APPLIED.json and typed artifact compatibility report.
