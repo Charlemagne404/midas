@@ -6,8 +6,10 @@ import json
 import sqlite3
 import time
 import zlib
-from collections import Counter
+from collections import Counter, defaultdict
 from collections.abc import Iterator
+from decimal import ROUND_CEILING
+from decimal import Decimal as D
 from pathlib import Path
 from typing import Any
 
@@ -135,6 +137,111 @@ def _prune_context_refs(context: Context) -> None:
     context.refs = {ordinal: ref for ordinal, ref in context.refs.items() if ordinal in needed}
 
 
+def _new_timing_bucket() -> dict[str, Any]:
+    return {
+        "decisions": 0,
+        "source_input_lag_ns": [],
+        "source_input_lag_bands": Counter(),
+        "pair_books_available": Counter(),
+        "max_pair_age_ns": [],
+        "cross_outcome_skew_ns": [],
+        "freshness_violation_decisions": 0,
+    }
+
+
+def _lag_band(lag_ns: int, limit_ns: int) -> str:
+    if lag_ns < 0:
+        return "negative"
+    if lag_ns > limit_ns:
+        return "above_frozen_limit"
+    if lag_ns <= 25 * 10**6:
+        return "0_to_25_ms"
+    if lag_ns <= 50 * 10**6:
+        return "25_to_50_ms"
+    if lag_ns <= 100 * 10**6:
+        return "50_to_100_ms"
+    return "100_ms_to_limit"
+
+
+def _record_timing(bucket: dict[str, Any], sample: dict[str, Any], limit_ns: int) -> None:
+    bucket["decisions"] += 1
+    lag_ns = sample["source_input_lag_ns"]
+    if lag_ns is not None:
+        bucket["source_input_lag_ns"].append(lag_ns)
+        bucket["source_input_lag_bands"][_lag_band(lag_ns, limit_ns)] += 1
+    bucket["pair_books_available"][str(sample["pair_books_available"])] += 1
+    if sample["freshness_violating_legs"]:
+        bucket["freshness_violation_decisions"] += 1
+    if sample["max_pair_age_ns"] is not None:
+        bucket["max_pair_age_ns"].append(sample["max_pair_age_ns"])
+    if sample["cross_outcome_skew_ns"] is not None:
+        bucket["cross_outcome_skew_ns"].append(sample["cross_outcome_skew_ns"])
+
+
+def _timing_distribution(values: list[int]) -> dict[str, Any] | None:
+    if not values:
+        return None
+    ordered = sorted(values)
+
+    def nearest_rank(fraction: D) -> str:
+        index = max(
+            0,
+            int((fraction * len(ordered)).to_integral_value(rounding=ROUND_CEILING)) - 1,
+        )
+        return str(D(ordered[min(index, len(ordered) - 1)]) / D(1_000_000))
+
+    return {
+        "count": len(ordered),
+        "minimum_ms": str(D(ordered[0]) / D(1_000_000)),
+        "p50_nearest_rank_ms": nearest_rank(D("0.50")),
+        "p90_nearest_rank_ms": nearest_rank(D("0.90")),
+        "p95_nearest_rank_ms": nearest_rank(D("0.95")),
+        "maximum_ms": str(D(ordered[-1]) / D(1_000_000)),
+    }
+
+
+def _finish_timing_bucket(bucket: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "decisions": bucket["decisions"],
+        "source_input_lag_ms": _timing_distribution(bucket["source_input_lag_ns"]),
+        "source_input_lag_bands": dict(sorted(bucket["source_input_lag_bands"].items())),
+        "pair_books_available": dict(sorted(bucket["pair_books_available"].items())),
+        "maximum_leg_age_ms": _timing_distribution(bucket["max_pair_age_ns"]),
+        "cross_outcome_skew_ms": _timing_distribution(bucket["cross_outcome_skew_ns"]),
+        "freshness_violation_decisions": bucket["freshness_violation_decisions"],
+    }
+
+
+def _decision_timing(
+    event: dict[str, Any],
+    context: Context,
+    source_ref: dict[str, Any],
+    max_freshness_ns: int,
+) -> dict[str, Any]:
+    now = event["decision_ns"]
+    market = context.cohort.get(event["condition"])
+    books = []
+    if market is not None:
+        books = [
+            context.engine.books[token]
+            for token in market["tokens"]
+            if token in context.engine.books
+        ]
+    ages = [now - book["received_ns"] for book in books]
+    times = [book["received_ns"] for book in books]
+    lag_ns = now - source_ref["received_ns"]
+    return {
+        "source_input_lag_ns": lag_ns,
+        "quality_reason": event.get("quality_reason") or "eligible",
+        "market_id": str(event.get("market_id", "unknown")),
+        "family_id": event.get("family_id"),
+        "pair_books_available": len(books),
+        "max_pair_age_ns": max(ages) if len(books) == 2 else None,
+        "cross_outcome_skew_ns": max(times) - min(times) if len(times) == 2 else None,
+        "freshness_violating_legs": sum(age > max_freshness_ns for age in ages),
+    }
+
+
 def _load_decisions(root: Path, limit: int) -> tuple[list[dict[str, Any]], int | None, int, bool]:
     journal = root / "shadow.sqlite"
     if not journal.is_file() or journal.is_symlink():
@@ -218,6 +325,8 @@ def _compare_decision(
     stored_ref = event.get("source_record_ref")
     if not isinstance(stored_ref, dict) or _stable(stored_ref) != _stable(source_ref):
         mismatches["source_reference"] += 1
+    if event.get("source_input_lag_ns") != now - source_ref["received_ns"]:
+        mismatches["source_input_lag_ns"] += 1
     if event.get("producer_implementation_sha256") != context.producer_hash:
         mismatches["producer_identity"] += 1
     if event.get("reconstruction_version") != context.engine.reconstruction_version:
@@ -355,9 +464,16 @@ def reconcile_forward_sources(
 
     context = Context()
     spec = spec_for(plan)
+    lag_limit_ms = identity["max_decision_input_lag_ms"]
+    lag_limit_ns = int(lag_limit_ms) * 10**6
+    max_freshness_ns = int(identity["max_freshness_ms"]) * 10**6
     mismatches: Counter[str] = Counter()
     difference_paths: Counter[str] = Counter()
     history_variance: Counter[str] = Counter()
+    timing_all = _new_timing_bucket()
+    timing_by_reason: defaultdict[str, dict[str, Any]] = defaultdict(_new_timing_bucket)
+    timing_by_market: defaultdict[str, dict[str, Any]] = defaultdict(_new_timing_bucket)
+    timing_market_families: dict[str, str | None] = {}
     expected_refs: set[tuple[Any, ...]] = set()
     for event in decisions:
         if event["decision_ordinal"] > last_ordinal:
@@ -405,6 +521,11 @@ def reconcile_forward_sources(
                             history_variance,
                         )
                     )
+                    timing = _decision_timing(target, context, ref, max_freshness_ns)
+                    _record_timing(timing_all, timing, lag_limit_ns)
+                    _record_timing(timing_by_reason[timing["quality_reason"]], timing, lag_limit_ns)
+                    _record_timing(timing_by_market[timing["market_id"]], timing, lag_limit_ns)
+                    timing_market_families[timing["market_id"]] = timing["family_id"]
         _prune_context_refs(context)
 
     missing_inside_prefix = [
@@ -419,9 +540,24 @@ def reconcile_forward_sources(
     if unresolved_refs:
         mismatches["source_lineage_reference_unresolved"] += unresolved_refs
     compared = len(target_ids_found)
+    timing_report = {
+        "covered_decisions": timing_all["decisions"],
+        "frozen_input_lag_limit_ms": lag_limit_ms,
+        "all": _finish_timing_bucket(timing_all),
+        "by_quality_reason": {
+            name: _finish_timing_bucket(bucket) for name, bucket in sorted(timing_by_reason.items())
+        },
+        "by_market": {
+            market_id: {
+                "family_id": timing_market_families[market_id],
+                **_finish_timing_bucket(bucket),
+            }
+            for market_id, bucket in sorted(timing_by_market.items())
+        },
+    }
     # Keep only aggregate mismatch categories; no raw market or event payloads are exported.
     return {
-        "analysis_version": "veritas-source-replay-v1",
+        "analysis_version": "veritas-source-replay-v2",
         "captured_ns": time.time_ns(),
         "campaign_id": campaign_id,
         "campaign_root": str(campaign_root),
@@ -446,6 +582,7 @@ def reconcile_forward_sources(
         "mismatches": dict(sorted(mismatches.items())),
         "difference_paths": dict(sorted(difference_paths.items())),
         "history_lineage_variance": dict(sorted(history_variance.items())),
+        "decision_timing": timing_report,
         "passed_for_finalized_prefix": bool(compared and not mismatches),
         "scope": (
             "Reproduces campaign source state, producer/reconstruction identity, quality reason, "

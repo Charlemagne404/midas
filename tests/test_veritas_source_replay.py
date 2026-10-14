@@ -16,11 +16,17 @@ from midas.reality.shadow_campaign import source_files
 from midas.reality.shadow_source import Context
 from midas.reality.shadow_worker import spec_for
 from midas.reality.storage import Store, canonical, file_hash, manifest
-from midas.veritas.source_replay import MAX_DECISIONS, reconcile_forward_sources
+from midas.veritas.source_replay import MAX_DECISIONS, _lag_band, reconcile_forward_sources
 
 START = 1_792_000_000_000_000_000
 CONDITION = "0x" + "1" * 64
 CONDITION_TWO = "0x" + "2" * 64
+
+
+def test_lag_bands_respect_the_frozen_limit():
+    assert _lag_band(250 * 10**6, 250 * 10**6) == "100_ms_to_limit"
+    assert _lag_band(251 * 10**6, 250 * 10**6) == "above_frozen_limit"
+    assert _lag_band(51 * 10**6, 50 * 10**6) == "above_frozen_limit"
 
 
 def _market(
@@ -117,6 +123,7 @@ def _fixture(tmp_path: Path) -> tuple[Path, Path, dict[str, Any]]:
         future_tolerance_ms=500,
         max_freshness_ms=5000,
         max_skew_ms=250,
+        max_decision_input_lag_ms=250,
         quantity="5",
         capital="100",
         code={name: _hash(path) for name, path in source_files().items()},
@@ -152,6 +159,7 @@ def _fixture(tmp_path: Path) -> tuple[Path, Path, dict[str, Any]]:
                     condition=condition,
                     market_id=market["id"],
                     decision_ns=decision_ns,
+                    source_input_lag_ns=decision_ns - record["received_ns"],
                     decision_ordinal=record["ordinal"],
                     source_record_ref={
                         **ref,
@@ -216,6 +224,15 @@ def test_reconciles_finalized_records_and_ignores_active_segment(tmp_path):
         report["source_lineage_references_resolved"] == report["source_lineage_references_expected"]
     )
     assert report["mismatches"] == {}
+    timing = report["decision_timing"]["all"]
+    assert timing["decisions"] == len(rows)
+    assert timing["source_input_lag_ms"]["p50_nearest_rank_ms"] == "1"
+    assert timing["maximum_leg_age_ms"]["maximum_ms"] == "1"
+    assert timing["cross_outcome_skew_ms"]["maximum_ms"] == "0"
+    assert report["decision_timing"]["by_quality_reason"]["eligible"]["decisions"] == len(rows)
+    assert report["decision_timing"]["by_market"]["1"]["decisions"] == 1
+    assert report["decision_timing"]["by_market"]["2"]["decisions"] == 1
+    assert report["analysis_version"] == "veritas-source-replay-v2"
 
 
 def test_reports_source_state_divergence(tmp_path):

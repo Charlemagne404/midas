@@ -4,7 +4,7 @@
   "status": "in_progress",
   "baseline_commit": "f968095feb9c591de38fe12d7493224425f62f3a",
   "branch": "project/veritas",
-  "last_checkpoint": "docs/VERITAS_GATE_A_CHECKPOINT_003.md",
+  "last_checkpoint": "docs/VERITAS_GATE_A_CHECKPOINT_004.md",
   "datasets": [
     {
       "dataset_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
@@ -87,6 +87,23 @@
       "positive_full_depth_pre_fee_states": 0,
       "active_segment_read": false,
       "promotion": "no policy, strategy, or profitability promotion"
+    },
+    {
+      "experiment_id": "VERITAS-GATE-A-DECISION-TIMING-20261014-001",
+      "type": "finalized_source_reconciled_decision_input_lag_and_pair_freshness",
+      "status": "completed_snapshot_freshness_dominates",
+      "source_dataset_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
+      "evidence": "docs/VERITAS_GATE_A_DECISION_TIMING_001.json",
+      "analysis_version": "veritas-source-replay-v2",
+      "journal_event_tail_sequence": 23697,
+      "decision_rows_sampled": 2008,
+      "decisions_reproduced": 2008,
+      "active_segment_decisions_uncovered": 0,
+      "decision_input_lag_p95_ms": "220.232379",
+      "maximum_leg_age_p50_ms": "10459.76248",
+      "freshness_violation_decisions": 1337,
+      "mismatches": 0,
+      "promotion": "diagnostic only; no campaign, cadence, strategy, or profitability promotion"
     }
   ],
   "models": [],
@@ -111,6 +128,7 @@
   "limitations": [
     "The current live journal and status snapshots advance continuously and are not transactionally synchronized.",
     "The database integrity check passed; this snapshot did not reverify the full event hash chain or raw-source replay.",
-    "No private execution, hypothetical fill, market impact, or real profitability target is identified."
+    "No private execution, hypothetical fill, market impact, or real profitability target is identified.",
+    "Decision-time freshness is derived from source frame receiver timestamps; it does not identify upstream quote age or venue-level synchronization."
   ]
 }

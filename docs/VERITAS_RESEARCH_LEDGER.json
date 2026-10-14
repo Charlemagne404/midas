@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-14T23:08:03.112457+00:00",
+  "updated_at_utc": "2026-10-14T23:19:56.595651+00:00",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -211,10 +211,96 @@
       ],
       "decision": "Keep all policies at abstention for this evidence. Measure decision input lag and update cadence before drafting a separate future sampling design.",
       "status": "continue"
+    },
+    {
+      "hypothesis_id": "VERITAS-H007",
+      "title": "Paired-book freshness constrains more decisions than worker input lag",
+      "mechanism": "If decision-to-source-frame lag stays within the frozen limit while the maximum age of either reconstructed outcome book often exceeds frozen freshness, data age at decision time is the leading measured quality constraint.",
+      "experiment_id": "VERITAS-GATE-A-DECISION-TIMING-20261014-001",
+      "dataset_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
+      "success_metric": "Measure decision-to-frame input lag, maximum paired-book age, cross-outcome receiver-time skew, freshness violations, and quality reason by market for every sampled decision covered by a finalized source prefix.",
+      "result": {
+        "status": "completed_snapshot_freshness_dominates",
+        "journal_event_tail_sequence": 23697,
+        "decision_rows_sampled": 2008,
+        "decisions_reproduced": 2008,
+        "decisions_uncovered_in_active_segment": 0,
+        "sample_truncated": false,
+        "source_input_lag_limit_ms": 250,
+        "source_input_lag_ms": {
+          "count": 2008,
+          "p50_nearest_rank": "41.990889",
+          "p95_nearest_rank": "220.232379",
+          "maximum": "248.865611",
+          "decisions_above_limit": 0
+        },
+        "max_pair_book_age_limit_ms": 5000,
+        "maximum_leg_age_ms": {
+          "count": 2008,
+          "p50_nearest_rank": "10459.76248",
+          "p95_nearest_rank": "52349.935021",
+          "maximum": "62407.484423"
+        },
+        "freshness_violation_decisions": 1337,
+        "freshness_violation_fraction": "0.665837",
+        "quality_reason_decisions": {
+          "book_issue:advertised_top_pending": 11,
+          "book_issue:stale": 22,
+          "eligible": 555,
+          "empty_ask_side": 100,
+          "independent_book_divergence": 4,
+          "source_timing_uncertainty": 22,
+          "stale_book": 1294
+        },
+        "pair_books_available": {
+          "2": 2008
+        },
+        "cross_outcome_skew_ms": {
+          "count": 2008,
+          "p50_nearest_rank": "0",
+          "p95_nearest_rank": "0",
+          "maximum": "0"
+        },
+        "market_decisions": {
+          "559687": 251,
+          "561251": 251,
+          "562828": 137,
+          "5674900": 251,
+          "5674902": 45,
+          "5674915": 251,
+          "5675021": 251,
+          "665205": 251,
+          "679026": 251,
+          "679055": 69
+        },
+        "freshness_violations_by_market": {
+          "559687": 205,
+          "561251": 197,
+          "562828": 6,
+          "5674900": 203,
+          "5674902": 33,
+          "5674915": 202,
+          "5675021": 113,
+          "665205": 211,
+          "679026": 145,
+          "679055": 22
+        },
+        "source_manifest_sha256": "cafdee622901ee882f7bd7f351f0fb5ac51583acd6d3a588d2f87139d22a6971",
+        "evidence": "docs/VERITAS_GATE_A_DECISION_TIMING_001.json"
+      },
+      "limitations": [
+        "This is one bounded campaign snapshot; repeated decisions by market are correlated and are not independent observations or venue-wide estimates.",
+        "Input lag is decision time minus the receiver timestamp of the cited raw frame; it does not measure upstream venue, network, or collector delay before that receipt.",
+        "Cross-outcome skew uses per-book source frame receiver timestamps. A zero difference can mean both outcomes were carried by one timestamped frame and does not establish venue-level simultaneity.",
+        "The timing scan identifies the age constraint but does not by itself determine whether it comes from market inactivity, source gaps, or decision scheduling.",
+        "Public depth and timing do not establish hypothetical fills, private queue position, market impact, or profitability."
+      ],
+      "decision": "Keep the protected campaign unchanged. Measure per-market paired-book update intervals and compare source activity with the scheduled-decision denominator before designing any separate sampling cadence.",
+      "status": "continue"
     }
   ],
   "next_research_questions": [
-    "Which source timing, event activity, pair-quality, and worker input-lag states explain the raw-versus-scheduled decision quality mix?",
+    "By market and activity block, how do paired-book update intervals, recorded gaps, and decision scheduling explain the large difference between raw-frame freshness and scheduled-decision freshness?",
     "How do displayed complementary costs change across complete depth, fees, minimums, ticks, delays, settlement, and capital levels?",
     "Which future horizons have enough synchronized public observations without changing frozen Reality labels?",
     "Does the official fee schedule and per-market fee metadata map exactly to every supported observed market category?",

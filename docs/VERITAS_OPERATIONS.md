@@ -50,6 +50,14 @@ reads each finalized segment for both integrity and reconstruction, so use it
 when needed rather than as a frequent poll. The committed result is
 `docs/VERITAS_GATE_A_SOURCE_REPLAY_001.json`.
 
+The current replay also reports decision-to-frame input lag, paired-book age,
+cross-outcome receiver-time skew, and freshness counts by quality reason and
+market. Input lag starts at the recorded frame receiver timestamp; zero skew is
+not evidence of venue-level simultaneity. The latest snapshot is
+`docs/VERITAS_GATE_A_DECISION_TIMING_001.json`, documented in
+[Gate A checkpoint 004](VERITAS_GATE_A_CHECKPOINT_004.md). These measurements
+are diagnostic and do not modify the frozen campaign or establish fills.
+
 ## Count raw market-frame quality and opportunity states
 
 ```bash
