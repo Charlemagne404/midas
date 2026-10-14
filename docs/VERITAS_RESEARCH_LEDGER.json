@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-14T22:40:02.303642+00:00",
+  "updated_at_utc": "2026-10-14T23:08:03.112457+00:00",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -18,7 +18,8 @@
     "Do not edit the frozen Reality campaign, its plan, pinned code, labels, assumptions, or journal.",
     "Keep public observations, derived measurements, estimated quantities, hypothetical execution, and unknown fills separate.",
     "Do not promote candidates from a single selected panel or repeatedly reused confirmation data.",
-    "All source and campaign reads in the initial audit were read-only; no orders were submitted."
+    "All source and campaign reads in the initial audit were read-only; no orders were submitted.",
+    "Source replay uses finalized cataloged segments only and never reads the active .open segment."
   ],
   "hypotheses": [
     {
@@ -127,10 +128,93 @@
       ],
       "decision": "Derive and preregister a distinct campaign only after inspecting decision scheduling, source activity, and the full raw opportunity funnel.",
       "status": "planned"
+    },
+    {
+      "hypothesis_id": "VERITAS-H005",
+      "title": "Sampled campaign decisions reproduce from finalized public source records",
+      "mechanism": "If the frozen decision journal is consistent with its immutable source prefix, its indexed decisions should reproduce state, quality, features, baseline, and core lineage at the referenced source ordinal.",
+      "experiment_id": "VERITAS-GATE-A-SOURCE-REPLAY-20261014-001",
+      "dataset_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
+      "success_metric": "Exact reproduction for every sampled decision covered by the finalized source prefix, plus resolution of each cited source reference against a verified segment record.",
+      "result": {
+        "status": "passed_for_finalized_prefix",
+        "database_event_tail_sequence": 20152,
+        "sample_rows": 1696,
+        "sample_truncated": false,
+        "decisions_reproduced": 1688,
+        "decisions_uncovered_in_active_segment": 8,
+        "finalized_segments": 1752,
+        "finalized_bytes": 404829765,
+        "last_finalized_ordinal": 210322,
+        "verified_source_checkpoints": 1748,
+        "lineage_references_resolved": 9838,
+        "lineage_references_unresolved": 0,
+        "mismatches": {},
+        "runtime_history_reference_window_variance_decisions": 1254,
+        "source_manifest_sha256": "2b28b87c7edb3fcabd199142e605d915f11ca0c31d71550e0f85f8f7747558a8",
+        "evidence": "docs/VERITAS_GATE_A_SOURCE_REPLAY_001.json"
+      },
+      "limitations": [
+        "Eight sampled decisions were beyond the captured finalized prefix and remain uncovered because their source segment was active.",
+        "Rolling history reference lists can differ when the offline replay does not reproduce the worker's runtime snapshot timing; every cited reference in the covered sample resolved to a source record.",
+        "The replay does not establish decision omissions, public fills, private queue position, market impact, or profitability."
+      ],
+      "decision": "Accept source reproducibility for the sampled finalized prefix. Continue to the market-quality and opportunity funnel; keep the protected campaign unchanged.",
+      "status": "continue"
+    },
+    {
+      "hypothesis_id": "VERITAS-H006",
+      "title": "The observed raw campaign-window states contain no positive displayed complement",
+      "mechanism": "If a source-receipt-time scan of every touched pair state shows no positive best-ask or full-depth pre-fee edge after quality filtering, the current sampled cohort has no observed gross opportunity to promote.",
+      "experiment_id": "VERITAS-GATE-A-RAW-FUNNEL-20261014-001",
+      "dataset_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
+      "success_metric": "Verify finalized source provenance; count touched market-frame states, quality reasons, full-depth quantity-five support, fee metadata coverage, and pre-fee edge distribution without exporting raw observations.",
+      "result": {
+        "status": "completed_snapshot_no_positive_candidate",
+        "raw_source_records": 213679,
+        "period_frame_records": 27489,
+        "touched_market_frame_states": 20125,
+        "quality_valid_states": 19501,
+        "quality_invalid_reason_counts": {
+          "book_issue:top_divergence": 17,
+          "empty_ask_side": 479,
+          "independent_book_divergence": 94,
+          "source_timing_uncertainty": 34
+        },
+        "quantity_requested": "5",
+        "quantity_depth_complete_states": 19501,
+        "pre_fee_top_edge_distribution": {
+          "count": 19501,
+          "minimum": "-0.58",
+          "p25_nearest_rank": "-0.11",
+          "median_nearest_rank": "-0.06",
+          "p75_nearest_rank": "-0.01",
+          "maximum": "-0.001",
+          "positive_count": 0
+        },
+        "positive_full_depth_pre_fee_states": 0,
+        "fee_regime_available_states": 19501,
+        "fee_regime_unavailable_states": 0,
+        "finalized_segments": 1768,
+        "source_bytes": 411096328,
+        "last_finalized_ordinal": 213679,
+        "verified_source_checkpoints": 1764,
+        "source_manifest_sha256": "df23dedd8a27d08aaf5b25925a12d32007a8266068d8f7048ac47c00abfa3d4d",
+        "evidence": "docs/VERITAS_GATE_A_RAW_FUNNEL_001.json"
+      },
+      "limitations": [
+        "The captured source receipt window covered about 1 hour 58 minutes of the frozen fourteen-day campaign period.",
+        "Market-frame counts are repeated correlated observations and are not independent opportunity counts or venue-wide prevalence.",
+        "The scan uses source receipt time rather than replaying worker processing lag at every frame; its denominator differs from scheduled decision rows.",
+        "Displayed depth does not establish fills, and the scan did not apply fees, settlement, capital, or unmatched-position costs.",
+        "The active .open segment was excluded."
+      ],
+      "decision": "Keep all policies at abstention for this evidence. Measure decision input lag and update cadence before drafting a separate future sampling design.",
+      "status": "continue"
     }
   ],
   "next_research_questions": [
-    "Which exact source timing and pair-quality states account for stale initial decisions by market and market family?",
+    "Which source timing, event activity, pair-quality, and worker input-lag states explain the raw-versus-scheduled decision quality mix?",
     "How do displayed complementary costs change across complete depth, fees, minimums, ticks, delays, settlement, and capital levels?",
     "Which future horizons have enough synchronized public observations without changing frozen Reality labels?",
     "Does the official fee schedule and per-market fee metadata map exactly to every supported observed market category?",

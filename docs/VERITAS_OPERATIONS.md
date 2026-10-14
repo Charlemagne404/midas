@@ -1,4 +1,4 @@
-# Veritas operations — initial procedures
+# Veritas operations — research procedures
 
 Veritas work runs in `/home/charlie/midas-veritas` on `project/veritas`, based
 on release commit `f968095feb9c591de38fe12d7493224425f62f3a`. Reality collection
@@ -28,6 +28,46 @@ separate snapshots and can lag the journal by a few outcomes.
 period because scan time and disk reads grow with the journal archive. The
 default forensic query does not scan the full database or event hash chain.
 
+## Reproduce sampled decisions from finalized raw segments
+
+Use the source replay when journal decisions need independent source verification:
+
+```bash
+cd /home/charlie/midas-veritas
+PYTHONPATH=packages /home/charlie/midas/.venv/bin/python \
+  scripts/veritas_reconcile_sources.py \
+  --campaign-root /home/charlie/midas-reality/data/research/reality/forward/mission2 \
+  --limit 5000
+```
+
+The command verifies the frozen campaign code, takes a short read-only journal
+snapshot, and replays only cataloged finalized `.seg` files. It does not read an
+active `.open` segment, write into Reality, or copy raw observations to its
+aggregate report. Decisions at source ordinals beyond the captured finalized
+prefix are reported as uncovered. The default source bound is 20 GiB; use a
+smaller `--max-source-gib` value when limiting disk reads. Full-prefix replay
+reads each finalized segment for both integrity and reconstruction, so use it
+when needed rather than as a frequent poll. The committed result is
+`docs/VERITAS_GATE_A_SOURCE_REPLAY_001.json`.
+
+## Count raw market-frame quality and opportunity states
+
+```bash
+cd /home/charlie/midas-veritas
+PYTHONPATH=packages /home/charlie/midas/.venv/bin/python \
+  scripts/veritas_raw_funnel.py \
+  --campaign-root /home/charlie/midas-reality/data/research/reality/forward/mission2 \
+  --max-source-gib 20
+```
+
+This replays the finalized prefix to rebuild books and verify online
+reconstruction checkpoints, but aggregates only campaign-period frames that
+touch a paired market. It uses recorded receiver time, not shadow-worker
+processing time. Counts are repeated correlated observations, distinct from
+the scheduled decision denominator. It reports public ask-depth support before
+fees and never claims a fill. Its bounded, raw-free output is
+`docs/VERITAS_GATE_A_RAW_FUNNEL_001.json`.
+
 Read-only service evidence is available from:
 
 ```bash
@@ -47,10 +87,13 @@ Focused economic and forensic checks:
 ```bash
 cd /home/charlie/midas-veritas
 PYTHONPATH=packages /home/charlie/midas/.venv/bin/pytest -q \
-  tests/test_veritas_economics.py tests/test_veritas_forensics.py
+  tests/test_veritas_economics.py tests/test_veritas_forensics.py \
+  tests/test_veritas_source_replay.py tests/test_veritas_raw_funnel.py
 /home/charlie/midas/.venv/bin/ruff check \
   packages/midas/veritas scripts/veritas_forward_audit.py \
-  tests/test_veritas_economics.py tests/test_veritas_forensics.py
+  scripts/veritas_reconcile_sources.py scripts/veritas_raw_funnel.py \
+  tests/test_veritas_economics.py tests/test_veritas_forensics.py \
+  tests/test_veritas_source_replay.py tests/test_veritas_raw_funnel.py
 MYPYPATH=packages /home/charlie/midas/.venv/bin/mypy packages/midas/veritas
 ```
 

@@ -4,7 +4,7 @@
   "status": "in_progress",
   "baseline_commit": "f968095feb9c591de38fe12d7493224425f62f3a",
   "branch": "project/veritas",
-  "last_checkpoint": "docs/VERITAS_GATE_A_CHECKPOINT_001.md",
+  "last_checkpoint": "docs/VERITAS_GATE_A_CHECKPOINT_003.md",
   "datasets": [
     {
       "dataset_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
@@ -57,6 +57,36 @@
       "tests": "tests/test_veritas_economics.py",
       "hypothetical_execution_probability": null,
       "promotion": "not_promoted"
+    },
+    {
+      "experiment_id": "VERITAS-GATE-A-SOURCE-REPLAY-20261014-001",
+      "type": "bounded_finalized_source_replay_and_decision_reconciliation",
+      "status": "passed_for_finalized_prefix",
+      "source_dataset_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
+      "evidence": "docs/VERITAS_GATE_A_SOURCE_REPLAY_001.json",
+      "analysis_version": "veritas-source-replay-v1",
+      "journal_event_tail_sequence": 20152,
+      "decision_rows_sampled": 1696,
+      "decisions_reproduced": 1688,
+      "active_segment_decisions_uncovered": 8,
+      "lineage_references_resolved": 9838,
+      "mismatches": 0,
+      "promotion": "source consistency only; no strategy or profitability promotion"
+    },
+    {
+      "experiment_id": "VERITAS-GATE-A-RAW-FUNNEL-20261014-001",
+      "type": "source_receipt_time_raw_market_frame_quality_and_opportunity_funnel",
+      "status": "completed_snapshot_no_positive_candidate",
+      "source_dataset_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
+      "evidence": "docs/VERITAS_GATE_A_RAW_FUNNEL_001.json",
+      "analysis_version": "veritas-raw-opportunity-funnel-v1",
+      "period_frame_records": 27489,
+      "touched_market_frame_states": 20125,
+      "quality_valid_states": 19501,
+      "positive_top_ask_pair_states": 0,
+      "positive_full_depth_pre_fee_states": 0,
+      "active_segment_read": false,
+      "promotion": "no policy, strategy, or profitability promotion"
     }
   ],
   "models": [],
