@@ -103,6 +103,7 @@ async def run(config: Config, duration: float | None = None) -> None:
             b["internally_consistent"] and now - b["received_ns"] < config.stale_seconds * 1e9
             for b in books.values()
         )
+        timing_uncertain = sum(bool(b.get("timing_uncertainty")) for b in books.values())
         atomic_json(
             root / "status.json",
             dict(
@@ -110,8 +111,11 @@ async def run(config: Config, duration: float | None = None) -> None:
                 state=(
                     "DEGRADED_BOOKS"
                     if status["state"] == "RECORDING_UNSEQUENCED" and fresh != status["markets"] * 2
+                    else "DEGRADED_SOURCE_TIMING"
+                    if status["state"] == "RECORDING_UNSEQUENCED" and timing_uncertain
                     else status["state"]
                 ),
+                timing_uncertain_books=timing_uncertain,
                 updated_ns=now,
                 ordinal=store.ordinal,
                 storage_bytes=store.used,
@@ -173,7 +177,7 @@ async def run(config: Config, duration: float | None = None) -> None:
             "gap",
             dict(
                 reason="process_start",
-                reconstruction_version=3,
+                reconstruction_version=4,
                 clock_health=clock_health(),
                 recovered=store.recovered,
                 stale_ns=int(config.stale_seconds * 1e9),
@@ -273,7 +277,7 @@ async def run(config: Config, duration: float | None = None) -> None:
                             )
                         )
                         await ws.send(frame)
-                        append(
+                        subscription_record = append(
                             "subscription", frame, connection=connection, subscription=subscription
                         )
                         connected = last_ping = last_frame = time.monotonic()
@@ -501,7 +505,7 @@ async def run(config: Config, duration: float | None = None) -> None:
                                 book = engine.books.get(asset)
                                 if (
                                     book
-                                    and book["snapshot"][0] == original_frame_ordinal
+                                    and book["snapshot"][0] > subscription_record["ordinal"]
                                     and book["issue"] is None
                                 ):
                                     pending_snapshots.remove(asset)

@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "checked_ns": 1791988421771430950,
+  "source_sha256": "9231e11c969cc95af607d847c7d5aa32418a91c21152b214cf9f170d517c0c9f",
+  "candidate": {
+    "root": "/home/charlie/midas-reality/data/recordings/reality",
+    "markets": 8,
+    "discovery_limit": 50,
+    "refresh_seconds": 600,
+    "resync_seconds": 300,
+    "stale_seconds": 60,
+    "queue_size": 32,
+    "budget_bytes": 25769803776,
+    "reserve_bytes": 21474836480,
+    "segment_bytes": 8388608,
+    "segment_seconds": 300,
+    "retention_days": 90,
+    "selection_mode": "stratified-v1",
+    "selection_seed": 20261014,
+    "near_expiry_tag_id": 2,
+    "comparison_seconds": 15,
+    "comparison_timeout_seconds": 5
+  },
+  "canary": {
+    "root": "/home/charlie/midas-reality/data/recordings/gate-a-cached-snapshot-canary-20261014",
+    "markets": 8,
+    "discovery_limit": 50,
+    "refresh_seconds": 600,
+    "resync_seconds": 300,
+    "stale_seconds": 60,
+    "queue_size": 32,
+    "budget_bytes": 268435456,
+    "reserve_bytes": 21474836480,
+    "segment_bytes": 8388608,
+    "segment_seconds": 300,
+    "retention_days": 30,
+    "selection_mode": "stratified-v1",
+    "selection_seed": 20261014,
+    "near_expiry_tag_id": 2,
+    "comparison_seconds": 15,
+    "comparison_timeout_seconds": 5
+  },
+  "canary_replay_sha256": "748daf80264902e881d21083fa00891190551c12ebc1d864dcc1159ceb614ad3",
+  "canary_manifest_sha256": "1c1b1d556f2e74fe3e0c682bca4a68925f3a303bf36ee54d0457a2ef7025147c",
+  "canary_checkpoints": 12,
+  "canary_fresh_books": 16,
+  "canary_frames": 796,
+  "canary_duration_seconds": 362.002134169,
+  "maximum_resynchronizations_for_duration": 10,
+  "gaps": {
+    "process_start": 1,
+    "book_resynchronization": 5,
+    "process_stop": 1
+  },
+  "comparisons": {
+    "stable_local_lineage_match_unsequenced": 23,
+    "stale_local_state": 1
+  },
+  "canary_bytes_per_second": 7456.944987898266,
+  "conservative_pilot_runway_days": 39.809711392187374,
+  "allocated_raw_and_archive_bytes": 51539607552,
+  "free_disk_bytes": 218380795904,
+  "protected_disk_reserve_bytes": 21474836480,
+  "production_before": {
+    "MainPID": "2232952",
+    "NRestarts": "0",
+    "ActiveState": "active"
+  },
+  "cached_snapshot_repair": {
+    "requested": true,
+    "confirmed": false,
+    "prior_error": "TimeoutError: Initial snapshots incomplete; reconnect for fresh books",
+    "affected_assets": []
+  },
+  "passed": true,
+  "limitations": [
+    "Pilot includes startup/discovery overhead, not a stable long-term rate estimate.",
+    "Two-minute canary is an engineering gate, not scientific validation.",
+    "Rollback restores previous network configuration under tested revision; no raw bytes are removed."
+  ]
+}

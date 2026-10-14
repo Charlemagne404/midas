@@ -1,0 +1,22 @@
+{
+  "state_sha256": "d0d18f54794491f72a809578245136c36ea150548bed8f0d7976b635067d5f9f",
+  "checkpoints_verified": 772,
+  "schema_version": 1,
+  "reconstruction_version": 4,
+  "last_gap_ordinal": 53505,
+  "counts": {
+    "advertised_top_disagreement": 562,
+    "best_bid_ask": 787,
+    "book": 1414,
+    "duplicate": 52,
+    "last_trade_price": 127,
+    "new_market": 5703,
+    "price_change": 36043,
+    "snapshot_divergence": 285,
+    "snapshot_source_time_regression_after_gap": 1,
+    "timestamp_regression": 13,
+    "top_divergence": 24
+  },
+  "gaps": 1691,
+  "ordinal": 53645
+}

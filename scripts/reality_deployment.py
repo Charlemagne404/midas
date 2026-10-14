@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 import shutil
 import subprocess
 import sys
@@ -112,6 +113,8 @@ def preflight(
     receipt: dict[str, Any],
     archive_budget: int,
     disk_reserve: int,
+    *,
+    repair_cached_snapshots: bool = False,
 ) -> dict[str, Any]:
     if not receipt.get("passed") or receipt.get("source_sha256") != source_hash():
         raise ValueError("Checks missing, failed or source changed since verification")
@@ -148,8 +151,12 @@ def preflight(
             comparison_counts[r["payload"]["assessment"]] += 1
     if start is None or end is None or last_checkpoint is None or end - start < 60 * 10**9:
         raise ValueError("Canary duration insufficient")
-    if gaps["book_resynchronization"] + gaps["unconfirmed_top_advertisement"] > 3:
-        raise ValueError("Canary repeatedly lost book consistency")
+    elapsed = (end - start) / 1e9
+    permitted_resync = max(3, math.ceil(elapsed / 120 * 3))
+    if gaps["book_resynchronization"] + gaps["unconfirmed_top_advertisement"] > permitted_resync:
+        raise ValueError(
+            "Canary repeatedly lost book consistency (more than 1.5 resynchronizations/minute)"
+        )
     if (
         comparison_counts["stable_local_lineage_divergence"]
         or comparison_counts["invalid_public_comparison"]
@@ -184,13 +191,32 @@ def preflight(
         raise ValueError("Pilot growth offers less than fourteen days storage runway")
     production_status = json.loads((Path(candidate.root) / "status.json").read_text())
     current = service()
+    fresh_production = (
+        production_status["state"] == "RECORDING_UNSEQUENCED"
+        and production_status["fresh_books"] == production_status["expected_books"]
+    )
+    bad_books = {
+        t: b
+        for t, b in production_status.get("books", {}).items()
+        if not b["internally_consistent"]
+    }
+    repair_confirmed = (
+        repair_cached_snapshots
+        and not fresh_production
+        and "Initial snapshots incomplete" in production_status.get("error", "")
+        and bool(bad_books)
+        and all(b["issue"] in {"stale", "timestamp_regression"} for b in bad_books.values())
+        and engine.counts["snapshot_source_time_regression_after_gap"] >= 1
+        and production_status["config"] == candidate.dump()
+    )
     if (
         current["ActiveState"] != "active"
-        or production_status["state"] != "RECORDING_UNSEQUENCED"
         or time.time_ns() - production_status["updated_ns"] > 10 * 10**9
-        or production_status["fresh_books"] != production_status["expected_books"]
+        or not (fresh_production or repair_confirmed)
     ):
-        raise ValueError("Production is not healthy before planned deployment")
+        raise ValueError(
+            "Production is not healthy before deployment, and a cached-snapshot repair is not confirmed"
+        )
     return dict(
         schema_version=1,
         checked_ns=time.time_ns(),
@@ -202,6 +228,8 @@ def preflight(
         canary_checkpoints=checkpoints,
         canary_fresh_books=fresh,
         canary_frames=status["frames"],
+        canary_duration_seconds=elapsed,
+        maximum_resynchronizations_for_duration=permitted_resync,
         gaps=dict(gaps),
         comparisons=dict(comparison_counts),
         canary_bytes_per_second=rate,
@@ -210,10 +238,16 @@ def preflight(
         free_disk_bytes=free,
         protected_disk_reserve_bytes=disk_reserve,
         production_before=current,
+        cached_snapshot_repair=dict(
+            requested=repair_cached_snapshots,
+            confirmed=repair_confirmed,
+            prior_error=production_status.get("error"),
+            affected_assets=list(bad_books),
+        ),
         passed=True,
         limitations=[
             "Pilot includes startup/discovery overhead, not a stable long-term rate estimate.",
-            "Two-minute canary is an engineering gate, not scientific validation.",
+            "Bounded canary is an engineering gate, not scientific validation.",
             "Rollback restores previous network configuration under tested revision; no raw bytes are removed.",
         ],
     )
@@ -302,6 +336,7 @@ def main() -> None:
         "--output", type=Path, default=WORKSPACE / "docs/REALITY_GATE_A_DEPLOYMENT.json"
     )
     parser.add_argument("--archive-budget", type=int, default=24 * 1024**3)
+    parser.add_argument("--repair-cached-snapshots", action="store_true")
     args = parser.parse_args()
     if args.command == "verify":
         verify(args.receipt)
@@ -312,6 +347,7 @@ def main() -> None:
             json.loads(args.receipt.read_text()),
             args.archive_budget,
             20 * 1024**3,
+            repair_cached_snapshots=args.repair_cached_snapshots,
         )
         atomic_json(args.gate, gate)
         print(json.dumps(gate, indent=2))

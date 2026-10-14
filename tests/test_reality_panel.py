@@ -390,3 +390,95 @@ def test_revision_three_advertisement_needs_confirming_depth_and_keeps_uncertain
         )
     )
     assert book["issue"] == "top_divergence"
+
+
+def test_cached_snapshot_after_gap_is_observed_with_timing_qualifier_until_confirmation():
+    engine = Engine()
+    engine.reconstruction_version = 4
+    engine.tokens = {"2": "0x1"}
+    book = local_book()
+    book.update(
+        exchange_ms=2000,
+        quote_since_ns=NOW,
+        quote_lifetimes=dict(count=0, total_ns=0),
+        hash="old",
+        continuity="unsequenced_observed_lineage",
+        tick=".01",
+    )
+    engine.books["2"] = book
+    engine.consume(dict(ordinal=10, kind="gap", received_ns=NOW, payload=dict(reason="disconnect")))
+    snapshot = dict(
+        event_type="book",
+        asset_id="2",
+        market="0x1",
+        timestamp="1000",
+        hash="new",
+        bids=[dict(price=".3", size="10")],
+        asks=[dict(price=".4", size="12")],
+    )
+    engine.consume(
+        dict(ordinal=11, kind="frame", received_ns=NOW + 1, payload=json.dumps(snapshot))
+    )
+    updated = engine.books["2"]
+    assert updated["snapshot"] == [11, 0]
+    assert updated["issue"] is None
+    assert updated["source_timestamp_floor_ms"] == 2000
+    assert updated["timing_uncertainty"] == "snapshot_source_timestamp_regressed_after_gap"
+    # A later but still historically older snapshot cannot erase the qualification.
+    engine.consume(
+        dict(
+            ordinal=12,
+            kind="frame",
+            received_ns=NOW + 2,
+            payload=json.dumps(dict(snapshot, timestamp="1500")),
+        )
+    )
+    updated = engine.books["2"]
+    assert updated["source_timestamp_floor_ms"] == 2000
+    change = dict(
+        event_type="price_change",
+        market="0x1",
+        timestamp="2500",
+        price_changes=[
+            dict(asset_id="2", price=".3", size="11", side="BUY", best_bid=".3", best_ask=".4")
+        ],
+    )
+    engine.consume(dict(ordinal=13, kind="frame", received_ns=NOW + 3, payload=json.dumps(change)))
+    assert "timing_uncertainty" not in updated
+    assert "source_timestamp_floor_ms" not in updated
+    # Regressing a snapshot within uninterrupted observed lineage remains a failure.
+    engine.consume(
+        dict(ordinal=14, kind="frame", received_ns=NOW + 4, payload=json.dumps(snapshot))
+    )
+    assert updated["issue"] == "timestamp_regression"
+
+
+def test_genuine_cached_snapshot_can_start_qualified_lineage_without_rewriting_legacy():
+    from pathlib import Path
+
+    fixture = json.loads(
+        (Path(__file__).parent / "fixtures/reality/observed-cached-snapshot.json").read_text()
+    )
+    prior = fixture["prior_derived_book"]
+    target = next(t for m in fixture["cohort"] for t in m["tokens"] if t.startswith("115563279943"))
+    for revision in (3, 4):
+        engine = Engine()
+        engine.reconstruction_version = revision
+        engine.tokens = {t: m["condition"] for m in fixture["cohort"] for t in m["tokens"]}
+        engine.books[target] = dict(
+            prior,
+            bids={Decimal(p): Decimal(q) for p, q in prior["bids"]},
+            asks={Decimal(p): Decimal(q) for p, q in prior["asks"]},
+        )
+        engine.consume(fixture["gap_record"])
+        engine.consume(fixture["snapshot_record"])
+        book = engine.books[target]
+        if revision == 3:
+            assert book["snapshot"] == prior["snapshot"]
+            assert engine.counts["timestamp_regression"] >= 1
+            assert book["issue"] in {"timestamp_regression", "stale"}
+        else:
+            assert book["snapshot"][0] == fixture["snapshot_record"]["ordinal"]
+            assert book["source_timestamp_floor_ms"] == prior["exchange_ms"]
+            assert book["timing_uncertainty"] == "snapshot_source_timestamp_regressed_after_gap"
+            assert book["issue"] is None

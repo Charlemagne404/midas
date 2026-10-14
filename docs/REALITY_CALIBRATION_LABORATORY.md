@@ -1,7 +1,7 @@
 # Reality Calibration Laboratory — Mission 2
 
 Mission 2 is active on `project/reality` in `/home/charlie/midas-reality`.
-**Gate A engineering checkpoint is accepted; Gates B–G remain outstanding.
+**Gate A is reopened for cached-snapshot timing validation; Gates B–G remain outstanding.
 Mission 2 is not ready for handoff.**
 Prometheus remains at `8acab2298632eb04fbe5183fbe54f8e6f97a8fdb` in the separate
 `/home/charlie/midas` checkout. Atlas is deferred. No trading capability is authorized.
@@ -357,3 +357,31 @@ commit `74b1dea`; this separate operations-worker correction required no restart
 Gate B is next: reproducible decision-time datasets, observable labels, censoring,
 chronological partitions and independent leakage checks. There are no Mission 2
 trained-model scores, execution-ground-truth claims or shadow P&L findings yet.
+
+
+## Extended live validation — Gate A reopened
+
+After the initial checkpoint, the live collector reported four initial-snapshot
+timeouts. Inspection of exact source intervals found cached snapshots for the
+quiet Bitcoin-reserve market with source timestamps older than preceding observed
+updates. Revision 3 rejected those snapshots, so initialization could not complete,
+even though the responses were genuine public observations. The original collector
+continued recording and repeatedly recovered fresh books; the failures and gaps
+are retained. Initial short-canary acceptance was therefore insufficient for this
+longer-run condition.
+
+Revision 4 allows a new received snapshot after an explicit gap to establish an
+observed lineage, while retaining `timing_uncertainty` and the prior source-time
+floor. It does not claim that a regressing source timestamp proves venue freshness.
+The qualifier survives further older snapshots and clears only on sufficiently
+new, matching depth evidence. Snapshots regressing within uninterrupted lineage
+remain invalid. Status reports `DEGRADED_SOURCE_TIMING` while such qualifiers exist;
+datasets must exclude or explicitly qualify these decisions. Initialization also
+accepts confirmation of a current-connection snapshot on a later frame, never
+reusing a prior connection's snapshot.
+
+Genuine captured regression fixtures preserve raw ordinals, segment hashes and
+the explicitly derived prior book. An isolated six-minute canary now exercises
+scheduled refresh and quiet-market behavior before a further gated deployment.
+The running recorder remains on the committed revision 3 implementation until
+that canary finishes and the gate passes. Gate B has not started.

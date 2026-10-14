@@ -43,6 +43,7 @@ class Engine:
         self.now_ns = 0
         self.stale_ns = stale_ns
         self.reconstruction_version = 1
+        self.last_gap_ordinal = 0
 
     def invalidate(self, reason: str, assets: list[str] | None = None) -> None:
         for asset in assets if assets is not None else self.books:
@@ -56,11 +57,12 @@ class Engine:
         if kind == "gap":
             if record["payload"].get("reason") == "process_start":
                 version = record["payload"].get("reconstruction_version", 1)
-                if version not in (1, 2, 3):
+                if version not in (1, 2, 3, 4):
                     raise ValueError("Unsupported reconstruction revision")
                 self.reconstruction_version = version
             if "stale_ns" in record["payload"]:
                 self.stale_ns = record["payload"]["stale_ns"]
+            self.last_gap_ordinal = record["ordinal"]
             self.gaps += 1
             self.invalidate("gap:" + record["payload"]["reason"])
             self.seen.clear()
@@ -159,10 +161,19 @@ class Engine:
                 if asset not in self.tokens or raw["market"] != self.tokens[asset]:
                     raise ValueError("Unexpected asset or condition")
                 prior = self.books.get(asset)
-                if prior and ts < prior["exchange_ms"]:
+                regressed_snapshot = bool(
+                    prior
+                    and ts < prior["exchange_ms"]
+                    and kind == "book"
+                    and self.reconstruction_version >= 4
+                    and prior["snapshot"][0] < self.last_gap_ordinal
+                )
+                if prior and ts < prior["exchange_ms"] and not regressed_snapshot:
                     self.counts["timestamp_regression"] += 1
                     self.invalidate("timestamp_regression", [asset])
                     continue
+                if regressed_snapshot:
+                    self.counts["snapshot_source_time_regression_after_gap"] += 1
                 lineage = [record["ordinal"], index]
                 if kind == "book":
                     levels: dict[str, dict[Decimal, Decimal]] = {}
@@ -193,6 +204,19 @@ class Engine:
                         hash=raw.get("hash"),
                         continuity="unsequenced_observed_lineage",
                     )
+                    if prior and (
+                        regressed_snapshot
+                        or (
+                            prior.get("source_timestamp_floor_ms") is not None
+                            and ts < prior["source_timestamp_floor_ms"]
+                        )
+                    ):
+                        self.books[asset]["source_timestamp_floor_ms"] = max(
+                            prior["exchange_ms"], prior.get("source_timestamp_floor_ms", 0)
+                        )
+                        self.books[asset]["timing_uncertainty"] = (
+                            "snapshot_source_timestamp_regressed_after_gap"
+                        )
                 elif not prior:
                     self.counts["update_without_snapshot"] += 1
                     continue
@@ -260,7 +284,18 @@ class Engine:
             if kind == "price_change":
                 for change in changes:
                     if change["asset_id"] in self.books:
-                        self.check_top(self.books[change["asset_id"]], change)
+                        updated_book = self.books[change["asset_id"]]
+                        self.check_top(updated_book, change)
+                        if (
+                            self.reconstruction_version >= 4
+                            and updated_book.get("source_timestamp_floor_ms") is not None
+                            and ts >= updated_book["source_timestamp_floor_ms"]
+                            and updated_book["issue"] is None
+                            and "best_bid" in change
+                            and "best_ask" in change
+                        ):
+                            updated_book.pop("source_timestamp_floor_ms", None)
+                            updated_book.pop("timing_uncertainty", None)
         except (ValueError, KeyError, TypeError, DecimalException):
             self.counts["malformed_event"] += 1
             self.invalidate("malformed_event", touched or None)
@@ -314,6 +349,11 @@ class Engine:
             **(
                 dict(reconstruction_version=self.reconstruction_version)
                 if self.reconstruction_version != 1
+                else {}
+            ),
+            **(
+                dict(last_gap_ordinal=self.last_gap_ordinal)
+                if self.reconstruction_version >= 4
                 else {}
             ),
             books=books,
