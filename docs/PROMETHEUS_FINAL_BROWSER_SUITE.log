@@ -1,0 +1,43 @@
+[WebServer] INFO:     Started server process [1707450]
+[WebServer] INFO:     Waiting for application startup.
+[WebServer] INFO:     Application startup complete.
+[WebServer] INFO:     Uvicorn running on http://127.0.0.1:18000 (Press CTRL+C to quit)
+
+Running 5 tests using 1 worker
+
+
+  ✓  1 e2e/arena.spec.ts:5:1 › build, train, inspect and evaluate genuine Arena artifacts (3.6m)
+  ✓  2 e2e/laboratory.spec.ts:3:1 › configure, launch, compare and replay a persisted laboratory experiment (3.8s)
+  ✓  3 e2e/laboratory.spec.ts:46:1 › controlled adversarial violation preserves minimized incident and replay (3.5s)
+  ✓  4 e2e/paper.spec.ts:3:1 › persistent paper account, decision audit and execution comparison (1.6s)
+  ✘  5 e2e/smoke.spec.ts:2:1 › discover, inspect, simulate, replay and expose execution failure (6.5s)
+
+
+  1) e2e/smoke.spec.ts:2:1 › discover, inspect, simulate, replay and expose execution failure ──────
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByText('INVARIANTS PASSED')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" getByText('INVARIANTS PASSED') with timeout 5000ms
+      - waiting for getByText('INVARIANTS PASSED')
+
+
+      14 |   await page.getByRole('button', { name: 'Simulation Lab', exact: true }).click();
+      15 |   await page.getByRole('button', { name: 'Run scenario', exact: true }).click();
+    > 16 |   await expect(page.getByText('INVARIANTS PASSED')).toBeVisible();
+         |                                                     ^
+      17 |   await expect(page.locator('.portfolio-grid').getByText('0.5000', { exact: true })).toBeVisible();
+      18 |   await page.getByLabel('Replay event timeline').fill('4');
+      19 |   await expect(page.locator('.timeline-row.current')).toBeVisible();
+        at /home/charlie/midas/apps/web/e2e/smoke.spec.ts:16:53
+
+    Error Context: test-results/smoke-discover-inspect-sim-a50f6-nd-expose-execution-failure/error-context.md
+
+  1 failed
+    e2e/smoke.spec.ts:2:1 › discover, inspect, simulate, replay and expose execution failure ───────
+  4 passed (3.9m)

@@ -87,3 +87,16 @@ preserved. Disk headroom was 210 GB at the change; API health returned READY
 through the original service. This remains a hard cap. Monitor `du -sh
 data/recordings` and rotate preserved recordings explicitly before the new cap
 is reached; this change does not implement automatic archival or retention.
+
+### Recording isolation
+
+Recording storage defaults to a `recordings` directory beside the configured
+SQLite database. The production `data/midas.db` therefore retains its existing
+`data/recordings` location. Temporary test/API databases get separate directories.
+Set `MIDAS_RECORDING_ROOT` to choose an explicit location; non-SQLite or in-memory
+databases retain the `data/recordings` fallback unless overridden. Each directory
+has the configured append cap. This is isolation, not automatic rotation.
+
+Laboratory archive disk scans tolerate files that disappear during enumeration
+(including transient SQLite WAL/SHM sidecars). Other filesystem errors remain
+visible failures; budgets still include all present regular archive files.

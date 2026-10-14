@@ -53,3 +53,18 @@ genuine regressions or evidence inconsistencies. This is not a deadline promise.
 - Full artifact/replay audit running in midas-prometheus-final-artifact-audit.service,
   oneCPU/2GiB/1200seconds, output PROMETHEUS_FINAL_ARTIFACT_AUDIT.json when complete.
 - Current corrected backend full gate remains authoritative, not yet complete.
+
+## Stabilization after completed gates
+
+Original corrected backend gate finished599passed/1failed/1skipped1154.11s.
+Failure: SQLite SHM sidecar vanished during Laboratory disk scan. Coordinator
+refused admission and is terminal FAILED; production plan cancelled/deferred
+under owner's finalization priorities, with no new production fits.
+Isolated browser suite4passed/1failed: Arena/Laboratory/paper workflows passed;
+smoke scenario blocked because temporary APIs shared capped production recordings.
+Both defects corrected: one-stat file scan tolerates FileNotFoundError only;
+recording default follows configured SQLite database parent, explicit override
+supported, production path unchanged.19focused tests pass16.03s;execution hash
+c14738f8468a8103a98c2704dc5454e85e867a5e3d5b7174cc7383342aa5ebd8 unchanged.
+Full read-only audit completed:7datasets/45models/27tournaments/52323replays,
+with2historical partial tournaments reported separately. New final gates required.

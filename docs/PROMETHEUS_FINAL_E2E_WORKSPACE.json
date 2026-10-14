@@ -1,0 +1,11 @@
+{
+  "workspace": "/tmp/prometheus-final-e2e-l36t76id",
+  "isolated_laboratory_root": "/tmp/prometheus-final-e2e-l36t76id/laboratory",
+  "screenshots_preserved": [
+    "mission-control.png",
+    "dashboard-smoke.png",
+    "mission-control-mobile.png",
+    "arena-replay.png",
+    "laboratory-replay.png"
+  ]
+}

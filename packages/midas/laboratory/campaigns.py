@@ -9,6 +9,7 @@ import json
 import multiprocessing
 import resource
 import sqlite3
+import stat
 import subprocess
 import threading
 import time
@@ -32,6 +33,19 @@ from midas.paper.broker import AccountConfig, ExecutionModel
 from midas.risk.engine import Limits
 
 PRESETS = {"Quick": 32, "Standard": 1000, "Deep": 10_000, "Extreme": 1_000_000}
+
+
+def archive_bytes(root: Path) -> int:
+    """Count present files, allowing SQLite sidecars to vanish during a scan."""
+    total = 0
+    for path in root.rglob("*"):
+        try:
+            metadata = path.stat()
+        except FileNotFoundError:
+            continue
+        if stat.S_ISREG(metadata.st_mode):
+            total += metadata.st_size
+    return total
 
 
 class CampaignSpec(Model):
@@ -338,10 +352,7 @@ class Campaigns:
                         self._status(id, "INTERRUPTED", "Wall-clock resource budget reached")
                         break
                     # Include DB, WAL and all detailed artifacts in the explicit disk budget.
-                    if (
-                        sum(p.stat().st_size for p in self.root.rglob("*") if p.is_file())
-                        > spec.max_disk_mb * 1024**2
-                    ):
+                    if archive_bytes(self.root) > spec.max_disk_mb * 1024**2:
                         self._status(id, "INTERRUPTED", "Laboratory disk budget reached")
                         break
                     batch = []

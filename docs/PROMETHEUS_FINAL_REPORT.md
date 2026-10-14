@@ -46,7 +46,7 @@ be represented as implemented.
 | Evolution / search / ablation | Implemented bounded subset | Validation selection and saved trials; broad search deferred |
 | Adversarial stress and counterexamples | Implemented bounded subset | Saved failures, minimization and generator revision audit; broad robust optimization deferred |
 | Recovery research | Implemented bounded subset | One-intervention missing-leg BUY/SELL/hold controls; broad recovery optimization deferred |
-| Research Director | Implemented bounded subset | Configured sequences, rule-based follow-ups, finite timer and one evidence-selected template; production template study pending |
+| Research Director | Implemented bounded subset | Configured sequences, rule-based follow-ups, finite timer and one evidence-selected template; production campaign deferred after prerequisite gate failure |
 | Explainability | Partially implemented | Supervised validation diagnostics and policy traces; richer RL attribution deferred |
 | Economic sensitivity | Partially implemented | Synthetic execution/cost/latency/settlement analyses; empirical calibration and broad frontiers deferred |
 | Mandatory training/evaluation/report campaigns | Implemented and executed | Initial baselines, neural model, PPO, competition and stress evidence exist |
@@ -115,8 +115,10 @@ Identity uniqueness does not establish independent realistic samples; generator
 shortcuts, repeated shapes and repeated cohorts are documented limitations.
 The protected Laboratory retains162,000variants over18,000underlying groups.
 
-The pending production capacity plan may add four genuine fits and two studies.
-They are not counted before successful artifact publication and verification.
+The production capacity plan was cancelled before native admission during
+controlled finalization. Its coordinator failed the prerequisite regression gate.
+Genuine fixture fits and verification remain preserved; no production models
+or studies were added by this campaign.
 
 ## 5. Research findings
 
@@ -198,15 +200,19 @@ legacy incumbent source gaps remain a limitation rather than invented provenance
 
 ## 8. Final tests and operational evidence
 
-**Pending:**current corrected full backend gate, full artifact audit, production
-planning result, final UI/service/archive checks and refreshed inventory.
+**Pending:**correct Laboratory transient-file disk-scan race, then final full
+backend regression, full artifact audit, final UI/service/archive checks and
+refreshed inventory. No production planning campaign is required for wrap-up.
 
 Completed finalization checks so far:
 
 - Frontend22tests pass;TypeScript build checking,ESLint and production build pass.
 - Current packages/API/scripts/tests Ruff passes. A broader scan found three
   import-order issues in immutable historical captures; those bytes are preserved.
-- Latest prior full backend gate582passed/1skipped. Current gate is not yet counted.
+- Latest prior passing full backend gate582passed/1skipped. New gate finished
+ 599passed/1failed/1skipped in1154.11s. Failure: a transient SQLite SHM file
+ vanished during archive disk accounting, causing restart recovery to fail.
+ Correction and new complete regression are required; this gate is not passing.
 - Corrected planning verifier4passed;inference refusal coverage3passed separately.
 - Pre-admission protected SQLite quick_checkOK;counts162000/18000/162000;
   exclusive original owner lock held;API READY,paper-only.

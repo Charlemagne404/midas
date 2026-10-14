@@ -24,5 +24,6 @@ class Settings(BaseSettings):
     metadata_refresh_seconds: int = Field(default=300, ge=30)
     max_data_age_ms: int = Field(default=15000, ge=1000)
     recording_max_bytes: int = Field(default=100_000_000, ge=1000)
+    recording_root: Path | None = None
     retention_days: int = Field(default=30, ge=1)
     cors_origins: list[str] = ["http://localhost:5173", "http://127.0.0.1:5173"]

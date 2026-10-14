@@ -28,7 +28,18 @@ class Service:
     def __init__(self, settings: Settings) -> None:
         self.settings = settings
         self.store = Store(settings.database_url)
-        self.recorder = Recorder(Path("data/recordings"), settings.recording_max_bytes)
+        database_path = self.store.engine.url.database
+        database_parent = (
+            Path(database_path).parent
+            if self.store.engine.url.get_backend_name() == "sqlite"
+            and database_path
+            and database_path != ":memory:"
+            else Path("data")
+        )
+        self.recorder = Recorder(
+            settings.recording_root or database_parent / "recordings",
+            settings.recording_max_bytes,
+        )
         self.broker = PaperBroker(
             self.store,
             f"paper-{settings.mode}",
