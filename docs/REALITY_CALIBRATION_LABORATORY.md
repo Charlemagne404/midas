@@ -1,7 +1,7 @@
 # Reality Calibration Laboratory — Mission 2
 
 Mission 2 is active on `project/reality` in `/home/charlie/midas-reality`.
-**Gate A is reopened for cached-snapshot timing validation; Gates B–G remain outstanding.
+**Gate A is accepted after extended revision 4 validation; Gates B–G remain outstanding.
 Mission 2 is not ready for handoff.**
 Prometheus remains at `8acab2298632eb04fbe5183fbe54f8e6f97a8fdb` in the separate
 `/home/charlie/midas` checkout. Atlas is deferred. No trading capability is authorized.
@@ -359,7 +359,7 @@ chronological partitions and independent leakage checks. There are no Mission 2
 trained-model scores, execution-ground-truth claims or shadow P&L findings yet.
 
 
-## Extended live validation — Gate A reopened
+## Extended live validation — initial Gate A acceptance reopened
 
 After the initial checkpoint, the live collector reported four initial-snapshot
 timeouts. Inspection of exact source intervals found cached snapshots for the
@@ -385,3 +385,67 @@ the explicitly derived prior book. An isolated six-minute canary now exercises
 scheduled refresh and quiet-market behavior before a further gated deployment.
 The running recorder remains on the committed revision 3 implementation until
 that canary finishes and the gate passes. Gate B has not started.
+
+
+## Revised Gate A acceptance — reconstruction revision 4
+
+The longer pilot and gated production repair are complete. See
+[revision 4 checks](REALITY_GATE_A_R4_CHECKS.json),
+[preflight](REALITY_GATE_A_R4_PREFLIGHT.json),
+[deployment](REALITY_GATE_A_R4_DEPLOYMENT.json), and
+[current checkpoint](REALITY_GATE_A_R4_CHECKPOINT.json).
+This supersedes the earlier acceptance for startup timing behavior; earlier
+snapshots and failed attempts remain preserved.
+
+The 362-second canary captured 796 genuine frames, verified twelve replay
+checkpoints, observed two cross-gap snapshot source-time regressions, and finished
+with sixteen fresh books and zero connection failures. It recorded 23 independent
+book agreements, one stale-local comparison and five book resynchronizations.
+Resynchronization limits use the original engineering intensity bound of 1.5 per
+minute, scaled to the longer duration; the earlier nine-in-two-minutes pilot still
+fails that bound. These are bounded operational tests, not scientific performance
+validation or sequencing proof.
+
+A snapshot timestamp earlier than a preceding update is directly observed;
+"cached snapshot" is operational shorthand. Caching or publisher timing differences
+could explain it, but exact venue ordering is not verified. The four-millisecond
+captured example is sufficient to break an overly strict initialization rule;
+it does not identify one-way latency or private execution behavior.
+
+The deployment gate supports an explicitly requested cached-snapshot repair
+only when the isolated canary actually observed the regression case, production
+has the same reviewed config, and its only inconsistent books are stale or
+source-timestamp regressed with the matching initialization error. Other degraded
+conditions remain blocked. The final attempt happened during a healthy production
+snapshot and required no exception to the healthy-state gate. All restart intent,
+source hashes and prior config are retained. Fresh-book acceptance took 77.3 seconds.
+
+Production now runs the sealed recorder implementation `9231e11c…` from commit
+`82e9fa4`. At the revision 4 checkpoint, it has zero connection failures, sixteen
+fresh books, and seventy current-process independent book agreements. It has also
+encountered and correctly qualified a cross-gap source-time regression in real
+operation. Timing-uncertain intervals remain visible and require dataset exclusion
+or explicit qualification; this does not remove uncertainty to improve model scores.
+
+The revised finalized catalog contains 44,244 genuine frames across fifteen
+historically selected market IDs over 6.80 hours, including gaps and related market
+families. The current cohort remains eight markets. Mixed-revision replay verified
+772 checkpoints at its captured cutoff. Final focused verification reports 55
+passes; strict typing and lint pass. The revised checkpoint command supports explicit
+deployment/check receipt paths so it cannot silently associate a new PID with an
+old rollout receipt.
+
+Storage is roughly 128 MB at measurement. The monitor's recent mixed sample now
+estimates about 586 MB/day, up from the earlier sample, with no capacity alerts;
+its changing forecast must be monitored. Raw and archival budgets remain 24 GiB
+each with twenty GiB disk reserve and ninety-day retention stop. The six-minute
+startup/refresh-heavy pilot offers a stricter estimated runway of about forty days.
+Daily archival is still a bounded, non-destructive local replication job; off-host
+redundancy and indefinite local retention are not claimed.
+
+Gate A's scoped engineering requirements are now verified. Gate B starts next,
+with source-time qualifiers, missing historical producer identity, gaps, stale
+states, partial complementary observations and future-observation missingness
+explicitly incorporated into data acceptance and labels. No Mission 2 real-data
+model, shadow campaign, economic conclusion or native Reality dashboard is claimed
+to be delivered by this collection checkpoint.

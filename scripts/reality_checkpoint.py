@@ -1,5 +1,6 @@
 """Read-only Gate A evidence snapshot; finalized segments only."""
 
+import argparse
 import hashlib
 import json
 import subprocess
@@ -11,6 +12,16 @@ from midas.reality.storage import atomic_json, canonical, manifest, read_manifes
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--deployment", type=Path, default=Path("docs/REALITY_GATE_A_DEPLOYMENT.json")
+    )
+    parser.add_argument(
+        "--checks", type=Path, default=Path("docs/REALITY_GATE_A_FINAL_CHECKS.json")
+    )
+    parser.add_argument("--output", type=Path, default=Path("docs/REALITY_GATE_A_CHECKPOINT.json"))
+    parser.add_argument("--collector-release", default="74b1dea")
+    args = parser.parse_args()
     root = Path("data/recordings/reality")
     value = manifest(root)
     counts: Counter[str] = Counter()
@@ -93,8 +104,8 @@ def main() -> None:
         )
         services[unit] = dict(line.split("=", 1) for line in result.stdout.splitlines())
     archive = json.loads(Path("data/recordings/reality-archive-mission2/manifest.json").read_text())
-    deployment = json.loads(Path("docs/REALITY_GATE_A_DEPLOYMENT.json").read_text())
-    checks = json.loads(Path("docs/REALITY_GATE_A_FINAL_CHECKS.json").read_text())
+    deployment = json.loads(args.deployment.read_text())
+    checks = json.loads(args.checks.read_text())
     if not (
         deployment["deployed"]
         and checks["passed"]
@@ -154,7 +165,7 @@ def main() -> None:
             source_sha256=checks["source_sha256"],
             summary=checks["checks"][0]["output"].splitlines()[-1],
         ),
-        collector_source_release_commit="74b1dea",
+        collector_source_release_commit=args.collector_release,
         capacity_worker_changed_without_recorder_restart=True,
         limitations=[
             "V2, Up/Down and augmented Other contracts excluded.",
@@ -174,7 +185,7 @@ def main() -> None:
             "G: final broad verification",
         ],
     )
-    atomic_json(Path("docs/REALITY_GATE_A_CHECKPOINT.json"), snapshot)
+    atomic_json(args.output, snapshot)
     print(
         json.dumps(
             dict(
