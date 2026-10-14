@@ -1,0 +1,54 @@
+{
+  "created_at": 1791958185.476239,
+  "stage": "/tmp/prometheus-final-types-yrkqtpc2",
+  "state": "PREPARED_NOT_APPLIED",
+  "live_gate_pid": 1713804,
+  "staged_typecheck": "Success: no issues found in 74 source files",
+  "files": {
+    "packages/midas/arena/artifacts.py": {
+      "before": "1663128de4ddcd718a2872ccaac82e4354d452e31400a4ca1330783fb94daab9",
+      "prepared": "c960f6a5ac80ad4055af742d9e3fdb409783755e6dcb8cb9371bfaf7baf49c7a"
+    },
+    "packages/midas/arena/rl_checkpoints.py": {
+      "before": "879d9a896ae4d21bf20d3dee20f48af23edb98ba658b5c06746b095e66c394f9",
+      "prepared": "c9c52281ef6ba6bd3abb49354a7a1b0edcd5a7fe816ca1f5b25bbbfd340406e0"
+    },
+    "packages/midas/arena/dataset_storage.py": {
+      "before": "f38fbf857f51e7b4c77912a29d7db64553e3c11cfd4ce1fe84158b01924b1a74",
+      "prepared": "5333b5e160ccfbe59a9588af369d1ca4f22be6df8d50b5f351c30ba4ad4b701f"
+    },
+    "packages/midas/arena/planning.py": {
+      "before": "29d93832000042cc55cfa6e54145d199b105c25d1be84ece37c609158c535c23",
+      "prepared": "a259c2aba7abbf8200b982279559dd189c4ec10a5932ab5410db3fbf1193fa99"
+    },
+    "packages/midas/arena/migrations.py": {
+      "before": "d2ef1702889de10f395843c5e07a7f3cfc8d2833d8313b551983b2379b171bd7",
+      "prepared": "c3b0a1046664d2833bf4d09c97ae3fe91119bfac63573aa07b148eb7401a15d0"
+    },
+    "packages/midas/arena/director.py": {
+      "before": "c160028bea4c1f262e6624c7ebb5b44a7c813325d9d94fc4a4592f619a299786",
+      "prepared": "2f71ee30e2277cbd97b26159342c45a7acf00cc33fd2acff1984e694786ba900"
+    },
+    "packages/midas/arena/rl.py": {
+      "before": "53e00a4c689348f4a7d53698baa7a3dbbe4f43abcbf389ebd7d53f003348e46f",
+      "prepared": "d9b07238711d237e3184277bfb2d8e4c2509e1a9ccff22bf3a04a1c6829be7bf"
+    },
+    "packages/midas/arena/persistence.py": {
+      "before": "cfde023c84e8bedf33b5d4e4489af3ea8e0959e51d1945a00efa2a198d655b4e",
+      "prepared": "a8eeccfe410af082ee66596539aa9bbeb8c94c81de46c42153da30d40d4e81c7"
+    },
+    "packages/midas/arena/recovery.py": {
+      "before": "77ba6992a368214008ff154ea8a4e9a8c66ea594de8561aa704af79ffc5bebb9",
+      "prepared": "8af607eeefa23a2021ca21a8535a527632b55b72898368abc03ae275bedf510f"
+    },
+    "packages/midas/arena/jobs.py": {
+      "before": "dfc3033db9659c87336ee9565870ea3b594ed83577d532133e3fd265f9aadc3f",
+      "prepared": "bbe31334aae51bda8cb2fd459f457b950e6346a79ce8abeff568f6b75c063c4b"
+    },
+    "apps/api/arena.py": {
+      "before": "6a93e22f80f89a1b8158151d1b9737710e76ced33fd39b4fdaa616915852ebf9",
+      "prepared": "188bd1ad2a650ebeceace2902f675843d28bdc8051699eba7cb8aed4903dfd9f"
+    }
+  },
+  "constraint": "Apply only after original gate terminal; verify current before hashes; preserve old model/source artifacts; run current-source typing and relevant tests afterward."
+}

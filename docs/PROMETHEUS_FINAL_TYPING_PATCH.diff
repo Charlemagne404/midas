@@ -1,0 +1,383 @@
+--- a/packages/midas/arena/artifacts.py
++++ b/packages/midas/arena/artifacts.py
+@@ -20,7 +20,7 @@
+         raise ValueError("Cold replay symlinks are not supported")
+     stores = list(cold.glob("*/replays.sqlite"))
+     total = sum(p.stat().st_size for p in stores)
+-    references = []
++    references: list[Path] = []
+     for kind in ("tournaments", "recoveries", "unwinds"):
+         references.extend((root / kind).glob("*/replays/cold.json"))
+     missing = sum(not replay_database(p.parent).is_file() for p in references)
+@@ -101,7 +101,7 @@
+     record = json.loads(marker.read_text())
+     study = directory.parent
+     root = study.parent.parent
+-    checksum = record.get("database_sha256", "")
++    checksum: str = record.get("database_sha256", "")
+     if (
+         record.get("version") != "cold-replays-1"
+         or study.parent.name not in {"tournaments", "recoveries", "unwinds"}
+--- a/packages/midas/arena/rl_checkpoints.py
++++ b/packages/midas/arena/rl_checkpoints.py
+@@ -6,14 +6,14 @@
+ import re
+ import tempfile
+ from pathlib import Path
+-from typing import Any
++from typing import Any, cast
+ 
+ from midas.arena.artifacts import artifact_path, atomic_json, sha256
+ 
+ CONTINUATION = "optimizer-preserving-environment-reset"
+ 
+ 
+-def publish(model: Any, directory: Path, metadata: dict) -> dict:
++def publish(model: Any, directory: Path, metadata: dict[str, Any]) -> dict[str, Any]:
+     import numpy as np
+     import torch
+ 
+@@ -37,7 +37,7 @@
+             os.fsync(fd)
+         finally:
+             os.close(fd)
+-        numpy_state = np.random.get_state()
++        numpy_state = cast(tuple[Any, ...], np.random.get_state())
+         record = {
+             **metadata,
+             "checkpoint_version": "ppo-checkpoint-2",
+@@ -60,8 +60,8 @@
+ 
+ 
+ def parent_checkpoint(
+-    root: Path, identity: str, configuration: dict, dataset_hash: str, source_hash: str
+-) -> tuple[Path, dict]:
++    root: Path, identity: str, configuration: dict[str, Any], dataset_hash: str, source_hash: str
++) -> tuple[Path, dict[str, Any]]:
+     directory = artifact_path(root, "models", identity)
+     record_path = directory / "manifest.json"
+     if not record_path.exists():
+@@ -102,14 +102,14 @@
+     return path, saved
+ 
+ 
+-def restore_rng(saved: dict) -> None:
++def restore_rng(saved: dict[str, Any]) -> None:
+     import numpy as np
+     import torch
+ 
+     if "rng" not in saved:
+         return
+ 
+-    def tuples(value):
++    def tuples(value: Any) -> Any:
+         return tuple(tuples(v) for v in value) if isinstance(value, list) else value
+ 
+     random.setstate(tuples(saved["rng"]["python"]))
+--- a/packages/midas/arena/dataset_storage.py
++++ b/packages/midas/arena/dataset_storage.py
+@@ -2,6 +2,7 @@
+ 
+ import json
+ from pathlib import Path
++from typing import Any
+ 
+ from midas.arena.artifacts import artifact_path, sha256
+ from midas.arena.features import FEATURES
+@@ -10,7 +11,7 @@
+ VERSIONS = {"decision-storage-1": "ordered-features-1", "decision-storage-2": "named-features-1"}
+ 
+ 
+-def unique_object(pairs):
++def unique_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+     result = {}
+     for key, value in pairs:
+         if key in result:
+@@ -19,14 +20,14 @@
+     return result
+ 
+ 
+-def decode_rows(payload: str, manifest: dict) -> list[dict]:
++def decode_rows(payload: str, manifest: dict[str, Any]) -> list[dict[str, Any]]:
+     version = manifest.get("storage_version", "decision-storage-1")
+     if (
+         version not in VERSIONS
+         or manifest.get("row_encoding", "ordered-features-1") != VERSIONS[version]
+     ):
+         raise ValueError("Unsupported dataset storage schema/encoding")
+-    rows = json.loads(payload, object_pairs_hook=unique_object)
++    rows: list[dict[str, Any]] = json.loads(payload, object_pairs_hook=unique_object)
+     if not isinstance(rows, list):
+         raise ValueError("Stored dataset rows must be a list")
+     for row in rows:
+@@ -44,7 +45,7 @@
+     return rows
+ 
+ 
+-def encode_rows(rows: list[dict], version: str) -> list[dict]:
++def encode_rows(rows: list[dict[str, Any]], version: str) -> list[dict[str, Any]]:
+     if version not in VERSIONS:
+         raise ValueError("Unsupported migration target storage schema")
+     return [
+@@ -61,10 +62,10 @@
+ def verify_migration(
+     root: Path,
+     identity: str,
+-    manifest: dict,
+-    rows: list[dict],
+-    parent: dict,
+-    parent_rows: list[dict],
++    manifest: dict[str, Any],
++    rows: list[dict[str, Any]],
++    parent: dict[str, Any],
++    parent_rows: list[dict[str, Any]],
+ ) -> None:
+     migration = manifest["migration"]
+     directory = artifact_path(root, "datasets", identity)
+--- a/packages/midas/arena/planning.py
++++ b/packages/midas/arena/planning.py
+@@ -3,7 +3,7 @@
+ import json
+ import time
+ from pathlib import Path
+-from typing import Literal
++from typing import Any, Literal
+ 
+ from pydantic import Field
+ 
+@@ -24,7 +24,7 @@
+     epochs: int = Field(default=80, ge=5, le=200)
+ 
+ 
+-def fresh_groups(root: Path, spec: PlanningSpec, dataset: dict) -> list[str]:
++def fresh_groups(root: Path, spec: PlanningSpec, dataset: dict[str, Any]) -> list[str]:
+     families = ("one_sided", "deep", "volatile", "calm", "disappearing", "thin")
+     wanted = {
+         f"{families[i % len(families)]}:{spec.challenge_seed + i}" for i in range(spec.episodes)
+@@ -65,7 +65,7 @@
+     return sorted(wanted)
+ 
+ 
+-def propose(root: Path, spec: PlanningSpec) -> dict:
++def propose(root: Path, spec: PlanningSpec) -> dict[str, Any]:
+     dataset, _ = load(root, spec.dataset_id)
+     if dataset.get("label_target", "completion") != "completion":
+         raise ValueError("Capacity question requires a completion dataset")
+@@ -217,7 +217,7 @@
+     identity = "plan-" + digest(frozen)[:24]
+     path = artifact_path(root, "plans", identity) / "manifest.json"
+     if path.exists():
+-        record = json.loads(path.read_text())
++        record: dict[str, Any] = json.loads(path.read_text())
+         if record["frozen"] != frozen:
+             raise ValueError("Existing research plan differs")
+         return record
+@@ -253,9 +253,9 @@
+     return record
+ 
+ 
+-def execute(root: Path, identity: str, progress=None) -> dict:
++def execute(root: Path, identity: str, progress: Any = None) -> dict[str, Any]:
+     path = artifact_path(root, "plans", identity) / "manifest.json"
+-    record = json.loads(path.read_text())
++    record: dict[str, Any] = json.loads(path.read_text())
+     frozen = record["frozen"]
+     if record["state"] == "COMPLETED":
+         return record
+--- a/packages/midas/arena/migrations.py
++++ b/packages/midas/arena/migrations.py
+@@ -4,7 +4,7 @@
+ import json
+ import time
+ from pathlib import Path
+-from typing import Literal
++from typing import Any, Literal
+ 
+ from pydantic import Field
+ 
+@@ -22,14 +22,14 @@
+     )
+ 
+ 
+-def migrate(root: Path, spec: MigrationSpec, progress=None) -> dict:
++def migrate(root: Path, spec: MigrationSpec, progress: Any = None) -> dict[str, Any]:
+     root.mkdir(parents=True, exist_ok=True)
+     with (root / "migration.lock").open("a+") as lease:
+         fcntl.flock(lease, fcntl.LOCK_EX)
+         return _migrate(root, spec, progress)
+ 
+ 
+-def _migrate(root: Path, spec: MigrationSpec, progress=None) -> dict:
++def _migrate(root: Path, spec: MigrationSpec, progress: Any = None) -> dict[str, Any]:
+     from midas.arena.jobs import artifact_usage
+ 
+     parent_directory = artifact_path(root, "datasets", spec.source_dataset_id)
+--- a/packages/midas/arena/director.py
++++ b/packages/midas/arena/director.py
+@@ -3,7 +3,7 @@
+ import json
+ import time
+ from pathlib import Path
+-from typing import Any
++from typing import Any, Self
+ 
+ from pydantic import Field, model_validator
+ 
+@@ -28,8 +28,8 @@
+     sweep_seeds: tuple[int, ...] = (11, 29)
+ 
+     @model_validator(mode="after")
+-    def bounded_sweep(self):
+-        arguments = {
++    def bounded_sweep(self) -> Self:
++        arguments: dict[str, Any] = {
+             "dataset_id": self.dataset_id,
+             "epochs": self.training_epochs,
+             "seeds": self.sweep_seeds,
+@@ -105,7 +105,7 @@
+ 
+         callback = Progress(step)
+         if index == 0:
+-            sweep_args = {
++            sweep_args: dict[str, Any] = {
+                 "dataset_id": spec.dataset_id,
+                 "epochs": spec.training_epochs,
+                 "seeds": spec.sweep_seeds,
+--- a/packages/midas/arena/rl.py
++++ b/packages/midas/arena/rl.py
+@@ -4,7 +4,7 @@
+ import time
+ import uuid
+ from pathlib import Path
+-from typing import Any
++from typing import Any, cast
+ 
+ from pydantic import Field
+ 
+@@ -119,7 +119,7 @@
+         }
+     checkpoint_record = None
+ 
+-    def checkpoint(model):
++    def checkpoint(model: Any) -> None:
+         nonlocal checkpoint_record
+         checkpoint_record = publish(
+             model,
+@@ -161,7 +161,7 @@
+ 
+     try:
+         model = (
+-            PPO.load(checkpoint_path, env=environment, device="cpu", force_reset=True)
++            PPO.load(cast(Path, checkpoint_path), env=environment, device="cpu", force_reset=True)
+             if saved
+             else PPO(
+                 "MlpPolicy",
+--- a/packages/midas/arena/persistence.py
++++ b/packages/midas/arena/persistence.py
+@@ -81,7 +81,9 @@
+         "quantity": str(quantity),
+         "allocated_capital": str(budget),
+         "original_limits": {a: str(v) for a, v in limits.items()},
+-        "quote_status": "INVALID_FUTURE_VENUE_TIMESTAMP" if future else result.status.value,
++        "quote_status": result.status.value
++        if result is not None
++        else "INVALID_FUTURE_VENUE_TIMESTAMP",
+         "within_original_limits": within_limits,
+         "venue_state_sha256": digest([env.market, env.books]),
+         "venue_clock_basis": "exchange timestamp; delayed observer receipt is not a venue timestamp",
+--- a/packages/midas/arena/recovery.py
++++ b/packages/midas/arena/recovery.py
+@@ -211,7 +211,7 @@
+             before = copy.deepcopy(self.state["used_liquidity"].get(action["asset"], {}))
+             ledger_size = len(self.state["positions"][action["position"]]["exchange"]["ledger"])
+         self.state = transition(self.state, command, strategy)
+-        if before is not None:
++        if before is not None and action is not None:
+             model = ExecutionModel.model_validate(
+                 self.state["positions"][action["position"]]["execution_model"]
+             )
+@@ -374,14 +374,18 @@
+                     update={"seed": spec.seed + index}
+                 ),
+             )
+-            values = {}
++            policy_values: dict[str, float] = {}
+             for policy in ("no_trade", "hold", "complete_missing"):
+                 started = time.monotonic()
+                 if policy == "no_trade":
+                     result = Environment(
+                         scenario.model_copy(update={"strategy": "no_trade"}), retain=True
+                     ).run()
+-                    report = {"runner_version": VERSION, "recovery_decisions": [], "result": result}
++                    report: dict[str, Any] = {
++                        "runner_version": VERSION,
++                        "recovery_decisions": [],
++                        "result": result,
++                    }
+                 else:
+                     report = execute(scenario, policies[policy])
+                     result = report["result"]
+@@ -410,12 +414,12 @@
+                     "runtime_seconds": time.monotonic() - started,
+                 }
+                 rows.append(row)
+-                values[policy] = float(result["metrics"]["net_simulated_pnl"])
++                policy_values[policy] = float(result["metrics"]["net_simulated_pnl"])
+                 atomic_replay(directory / "replays" / (row["id"] + ".json"), {"row": row, **report})
+                 if progress:
+                     progress(len(rows), spec.episodes * 9)
+             grouped[f"{families[index % len(families)]}:{spec.seed + index}"].append(
+-                values["complete_missing"] - values["hold"]
++                policy_values["complete_missing"] - policy_values["hold"]
+             )
+     means = np.array([np.mean(grouped[g]) for g in sorted(grouped)])
+     rng = np.random.default_rng(991)
+--- a/packages/midas/arena/jobs.py
++++ b/packages/midas/arena/jobs.py
+@@ -113,6 +113,8 @@
+     root: Path, spec: JobSpec, launch: bool = True, admission_key: str | None = None
+ ) -> dict[str, Any]:
+     if spec.kind == "plan" and admission_key is None:
++        if spec.plan_id is None:
++            raise ValueError("Plan job requires a plan identity")
+         admission_key = spec.plan_id + "-execute"
+     root.mkdir(parents=True, exist_ok=True)
+     with (root / "admission.lock").open("a+") as lease:
+--- a/apps/api/arena.py
++++ b/apps/api/arena.py
+@@ -6,7 +6,7 @@
+ import re
+ import subprocess
+ from pathlib import Path
+-from typing import Any
++from typing import Any, Literal, cast
+ 
+ from fastapi import APIRouter, HTTPException, Query
+ from pydantic import BaseModel, ConfigDict
+@@ -176,7 +176,7 @@
+         return values
+ 
+     def inspect_plan(identity: str) -> dict[str, Any]:
+-        record = json.loads((path("plans", identity) / "manifest.json").read_text())
++        record: dict[str, Any] = json.loads((path("plans", identity) / "manifest.json").read_text())
+         if record["state"] == "RUNNING" and record.get("owner_job_id"):
+             from midas.arena.jobs import inspect
+ 
+@@ -292,7 +292,7 @@
+         if offset < 0 or limit < 1 or limit > 200:
+             raise HTTPException(422, "Use nonnegative offset and limit 1-200")
+ 
+-        def read():
++        def read() -> dict[str, Any]:
+             manifest, rows = load(root, identity)
+             return {
+                 "dataset_id": identity,
+@@ -340,7 +340,7 @@
+ 
+             if action not in {"pause", "resume", "cancel"}:
+                 raise ValueError("Unknown schedule control")
+-            return control(root, identity, action)
++            return control(root, identity, cast(Literal["pause", "resume", "cancel"], action))
+ 
+         return await call(change)
+ 
