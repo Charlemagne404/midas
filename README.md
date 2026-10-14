@@ -11,9 +11,10 @@ Midas evaluates complementary binary positions using exact ask-depth arithmetic,
 ## Reality research
 
 Mission 1 recording is operational in the isolated Reality worktree. Mission 2
-is active; its initial capacity monitor and verified archival tooling are
-documented in [Reality Calibration Laboratory](docs/REALITY_CALIBRATION_LABORATORY.md).
-The dataset, calibration, shadow and dashboard gates remain in development.
+is active: Gate A expands the live panel to eight markets, with bounded storage,
+verified daily archival, explicit feed uncertainty and gated recorder deployment.
+See [Reality Calibration Laboratory](docs/REALITY_CALIBRATION_LABORATORY.md).
+The dataset, calibration, training, shadow and native dashboard gates remain outstanding.
 
 ## Install and run
 

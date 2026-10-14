@@ -195,3 +195,22 @@ def test_partial_storage_failure_remains_recoverable_open_tail(tmp_path):
     assert recovered.recovered[0]["discarded_partial_bytes"] == 10
     recovered.close()
     assert list(tmp_path.glob("*.tail"))
+
+
+def test_deferred_http_arrival_does_not_suppress_storage_forecast(tmp_path):
+    store = Store(tmp_path, reserve=1)
+    for kind, stamp in [
+        ("frame", 1_000_000_000),
+        ("frame", 121_000_000_000),
+        ("independent_book", 120_000_000_000),
+        ("frame", 181_000_000_000),
+    ]:
+        store.append(kind, "PONG", received_ns=stamp)
+        store.rotate()
+    store.close()
+    result = capacity(config(tmp_path))
+    assert result["sample"]["clock_regressions"] == 0
+    assert result["sample"]["record_receipt_regressions"] == 1
+    assert result["sample"]["seconds"] == 180
+    assert result["compressed_bytes_per_second"] > 0
+    assert "RATE_INSUFFICIENT_EVIDENCE" not in result["alerts"]

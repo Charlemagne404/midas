@@ -1,7 +1,8 @@
 # Reality Calibration Laboratory — Mission 2
 
 Mission 2 is active on `project/reality` in `/home/charlie/midas-reality`.
-**Gate A is in progress; Mission 2 is not ready for handoff.**
+**Gate A engineering checkpoint is accepted; Gates B–G remain outstanding.
+Mission 2 is not ready for handoff.**
 Prometheus remains at `8acab2298632eb04fbe5183fbe54f8e6f97a8fdb` in the separate
 `/home/charlie/midas` checkout. Atlas is deferred. No trading capability is authorized.
 
@@ -99,9 +100,10 @@ Focused validation: [test output](REALITY_MISSION2_STORAGE_TESTS.log).
 
 ## Remaining stages and acceptance evidence
 
-Gate A still needs sustainable bounded capacity/rollover and offloading policy,
-collector deployment gates, representative discovery with selection provenance,
-verified protocol metadata, timing quality and independent book comparisons.
+Gate A now has bounded capacity and archival/offloading policy, deployment gates,
+stratified discovery with selection provenance, verified V1 public metadata,
+timing measurements and independent book comparisons. Its accepted engineering
+checkpoint and operational limitations appear below.
 Changes to the running collector require intentional documented deployment;
 frontend work must not restart it. Original observations must remain recoverable.
 
@@ -136,8 +138,8 @@ claimed complete by this initial storage checkpoint.
 
 ## Gate A implementation and deployment evidence
 
-This section supersedes the initial 2 GiB storage plan only once the deployment
-receipt reports `deployed: true` and fresh runtime status confirms its config.
+This section supersedes the initial 2 GiB storage plan. The successful deployment
+receipt reports `deployed: true`, and live status confirms the expanded config.
 [Verification receipt](REALITY_GATE_A_CHECKS.json),
 [preflight](REALITY_GATE_A_PREFLIGHT.json),
 [deployment](REALITY_GATE_A_DEPLOYMENT.json) and
@@ -288,3 +290,70 @@ replay are verified, Gate B will build decision-time datasets and observable
 labels with explicit gap, stale-state, pending-advertisement and ordering censoring.
 No Mission 2 prediction model, shadow decision engine or Reality UI is delivered
 by Gate A alone. The remaining stages above remain authoritative.
+
+
+## Gate A checkpoint — accepted engineering scope
+
+[Authoritative runtime and coverage snapshot](REALITY_GATE_A_CHECKPOINT.json)
+was produced by `scripts/reality_checkpoint.py` after rollout. The snapshot
+contains 39,408 genuine finalized raw frames across twelve historically selected
+markets over a 6.09-hour observation span. The active panel has eight V1 markets
+and sixteen outcome books. This span includes recorded interruptions and must
+not be called continuous coverage. The current process has zero connection
+failures; books may be temporarily degraded by stale or pending advertisements.
+At the snapshot fourteen of sixteen books were eligible/fresh, with all sixteen
+tracked; subsequent healthy snapshots restore sixteen. Reliability here means
+preserved ingestion and visible uncertainty, not uninterrupted eligibility.
+
+There are 22 independent stable-local-lineage book agreements and two concurrent
+update ambiguities in production's finalized evidence. All remain unsequenced.
+The local timing evidence covers 5,890 sampled frames, with maximum measured
+persistence 13.75 ms and reconstruction 6.44 ms in that subset. These are local
+processing measurements, not submission or venue latency. The successful rollout
+needed 66.6 seconds from recorded restart intent to fresh-book acceptance under
+the CPU limit. The failed short-window attempt and rollback remain documented.
+
+The five-minute capacity monitor completed successfully with no alerts. Its recent
+mixed-panel sample estimates about 283 MB/day and about ninety days storage
+runway, capped sooner by the ninety-day retention horizon. This includes pre-rollout
+traffic and is not the steady expanded-panel rate. The stricter startup-heavy
+pilot projected only 22.5 days; operators must follow changing five-minute forecasts.
+Root storage is about 109 MB at measurement, with roughly 218 GB filesystem free.
+The live recorder uses about 55 MiB of cgroup memory at the later service check,
+well below 512 MiB. Other MIDAS API and frontend services remain running.
+
+The first daily archive job completed successfully: 686 finalized segments,
+101,941,399 bytes, verified without deleting originals. Capacity and archival
+timers are enabled; no training, dataset or shadow job has been started yet.
+The archive intentionally trails the still-growing raw root until its next run.
+
+[Final focused checks](REALITY_GATE_A_FINAL_CHECKS.json) report 53 passes, with
+Ruff and strict typing passing. The final broad backend/frontend/browser and
+protected-artifact checks belong to Gate G and have not been claimed here.
+[Legacy replay](REALITY_GATE_A_LEGACY_REPLAY.log) and
+[mixed-revision replay](REALITY_GATE_A_MIXED_REPLAY.log) pass, the latter verifying
+691 online checkpoints at that captured interval. Earlier producer records include
+six process-start epochs without a complete implementation identity. Their bytes
+remain preserved; research must qualify or exclude those epochs rather than
+invent source provenance.
+
+[Protected code identities](REALITY_GATE_A_BASELINE_IDENTITIES.json) match the
+Prometheus baseline for both Laboratory and Arena. The separate Prometheus
+checkout is clean. [Read-only protected audit](REALITY_GATE_A_PROTECTED_AUDIT.json)
+confirms Laboratory integrity, its protected 162,000 results over 18,000 groups,
+and its active owner lock. The comprehensive protected research-artifact hash audit
+is still required at final handoff.
+
+The capacity forecast initially treated deferred HTTP reception timestamps as
+clock regressions. The corrected worker separates general receipt reordering from
+regressions in synchronously persisted WebSocket frames and measures time bounds
+across the whole sample. True sequential frame clock regressions still make the
+forecast unavailable. The receipt-order fixture independently covers this behavior.
+A transient monitor run failed during that correction; it recovered successfully,
+while the recorder PID stayed unchanged. Builder version/hash are now included
+in the capacity artifact. Recorder implementation `3b00e8fe…` is reproducible from
+commit `74b1dea`; this separate operations-worker correction required no restart.
+
+Gate B is next: reproducible decision-time datasets, observable labels, censoring,
+chronological partitions and independent leakage checks. There are no Mission 2
+trained-model scores, execution-ground-truth claims or shadow P&L findings yet.

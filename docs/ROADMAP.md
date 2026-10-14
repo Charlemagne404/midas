@@ -21,7 +21,9 @@ distinct, and preserve chronological ordering and source provenance throughout
 dataset creation and evaluation.
 
 Mission 1 recording is complete. Mission 2 is executing Gates A–G in order;
-Gate A capacity monitoring and non-destructive archival have begun. See the
+Gate A is accepted with eight-market observation, bounded storage, verified daily
+archival, versioned reconstruction, timing evidence and controlled deployment.
+Gate B decision-time datasets and observable labels are next. See the
 [Calibration Laboratory progress and operations](REALITY_CALIBRATION_LABORATORY.md).
 
 ## Deferred: Project Atlas

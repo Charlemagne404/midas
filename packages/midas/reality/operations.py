@@ -18,7 +18,7 @@ from typing import Any
 
 from .config import Config
 from .replay import replay
-from .storage import atomic_json, canonical, describe, manifest, records, sync_dir
+from .storage import atomic_json, canonical, describe, file_hash, manifest, records, sync_dir
 
 
 def capacity(
@@ -29,9 +29,9 @@ def capacity(
     root = Path(config.root)
     source = manifest(root)
     sample = source["segments"][-window_segments:]
-    first = last = previous_ns = None
+    first = last = previous_ns = previous_frame_ns = None
     raw_bytes = frames = sampled_bytes = 0
-    clock_regressions = 0
+    clock_regressions = receipt_regressions = 0
     oldest = None
     if source["segments"]:
         name = source["segments"][0]["file"]
@@ -49,12 +49,18 @@ def capacity(
         sampled_bytes += info["bytes"] + path.with_suffix(".json").stat().st_size
         for record, _ in records(path):
             received = record["received_ns"]
-            if first is None:
-                first = received
+            first = received if first is None else min(first, received)
+            last = received if last is None else max(last, received)
             if previous_ns is not None and received < previous_ns:
-                clock_regressions += 1
-            previous_ns = last = received
+                receipt_regressions += 1
+            previous_ns = received
             if record["kind"] == "frame":
+                # WS dequeue frames are persisted synchronously and retain their arrival
+                # order. Asynchronous independent HTTP results may be persisted later
+                # than newer WS arrivals; that is not itself a UTC clock regression.
+                if previous_frame_ns is not None and received < previous_frame_ns:
+                    clock_regressions += 1
+                previous_frame_ns = received
                 frames += 1
                 raw_bytes += len(record["payload"].encode())
     seconds = (last - first) / 1e9 if first is not None and last is not None else 0
@@ -91,6 +97,8 @@ def capacity(
         alerts.append("COLLECTOR_STATUS_STALE")
     return dict(
         schema_version=1,
+        capacity_builder_version="receipt-aware-capacity-v2",
+        capacity_builder_sha256=file_hash(Path(__file__)),
         measured_ns=now,
         recording_root=str(root),
         raw_root_bytes=used,
@@ -107,6 +115,8 @@ def capacity(
             raw_frame_payload_bytes=raw_bytes,
             raw_frames=frames,
             clock_regressions=clock_regressions,
+            record_receipt_regressions=receipt_regressions,
+            clock_assessment_basis="sequential WebSocket dequeue frames; deferred HTTP timestamps remain separate",
             source_sha256=file_hash_list(sample),
         ),
         compressed_bytes_per_second=rate,
