@@ -1,10 +1,13 @@
 # Reality Mission 2 — requirement and completion audit
 
-Status: **in final verification; not yet accepted for handoff**. Gates A–F are
-accepted. Gate G has completed artifact, typing, frontend and prospective source
-checks, while full regression and the protected Arena semantic replay check remain live. This
-ledger preserves the original request's scope; scientific adequacy is not inferred
-from engineering completion.
+Status: **accepted for engineering handoff**. Gates A–G and all twelve hard
+completion conditions are verified within the public-observation scope below.
+Scientific model eligibility and multi-week performance remain insufficient;
+those are explicitly later evidence milestones, not invented completion claims.
+Final authoritative snapshots are in `REALITY_GATE_G_CHECKPOINT.json`. The full
+backend run had two shared fixture timeouts under CPU throttling; the unchanged
+four-test module passed at one CPU. Every non-skipped case is covered by a passing
+run, and original failures are retained alongside their rechecks.
 
 ## Request sections 1–28
 
@@ -33,11 +36,11 @@ from engineering completion.
 | 21 | Economic feasibility and sensitivity | Declared fee curve/rounding reserve, depth/minimum size, quantity/capital grids, finance/settlement/redemption assumptions and unmatched recovery bounds. No actual profitability is identified. |
 | 22 | Nine native dashboard areas | `Reality.tsx`, bounded `/api/reality`, overview/explorer/history/opportunities/calibration/models/shadow/forward/operations. Real data, frozen artifacts, evidence drill-downs, UTC, no synthetic banner on Reality. |
 | 23 | Usable, bounded interface | Explanations, responsive desktop/390-pixel layouts, loading/error/empty states, search/filters, sampled replay, bounded windows/pages, artifact hashes and raw offsets. Historical update-rate lower bounds are explicitly sampled, not venue message intensity. |
-| 24 | Independent scientific verification | 130 focused backend passes at Gate F, source arithmetic/regeneration, corruption/leakage/grouping/period-reuse tests, current immutable artifact checks and independent prospective raw replay. Full 740-test regression is still running and has fixture errors requiring diagnosis. |
+| 24 | Independent scientific verification | 130 focused backend passes at Gate F, source arithmetic/regeneration, corruption/leakage/grouping/period-reuse tests, current immutable artifact checks and independent prospective raw replay. Full 740-test regression completed: 737 passed, one optional PostgreSQL skip, two shared fixture timeouts. The unchanged four-test module passed at one CPU. All 739 non-skipped cases have passing coverage across the full run and resolved recheck. |
 | 25 | Stress coverage | Numeric labeled fixtures prove gaps, missing legs, closure/ticks, thin depth, partial positions, large sizes and recovery failure. Real calibration records depth retention down to ~0.003 and real gap/resync dynamics. Rare public stresses are not evidence of hypothetical execution or general stress performance. |
 | 26 | Engineering/research measurements | Gate B dataset build/audit/reproduction timings, Gate C calibration timings, Gate D fitting/reproduction/resource evidence, Gate F bounded API latency/bytes, Gate G recorded inference/support-gate timing and shadow/raw audit counts. No extra heavy fitting solely for benchmarking. |
 | 27 | Continuous durable operation | Enabled collector, shadow and capacity/archive/research/integrity timers; user lingering enabled. File-only workers, disk bounds, writer exclusion, recovery/checkpoints, terminal states and alerts. PrivateNetwork isolation is requested but unsupported by this host's user namespace; code contains no shadow order/network path. |
-| 28 | Comprehensive documentation | `REALITY_CALIBRATION_LABORATORY.md`, README and roadmap cover architecture, semantics, methods, findings, operations, UI and future coverage. This ledger and Gate G final evidence remain in progress. |
+| 28 | Comprehensive documentation | `REALITY_CALIBRATION_LABORATORY.md`, README and roadmap cover architecture, semantics, methods, findings, operations, UI and future coverage. This ledger and the completed Gate G checkpoint disclose actual scope, outcomes, warnings and future evidence needs. |
 
 ## Hard completion boundary
 
@@ -53,9 +56,11 @@ from engineering completion.
 | 8. Live shadow without orders | Verified | Active original shadow PID, frozen code and actual order count zero. |
 | 9. Genuine prospective accumulation | Verified | Independent current campaign chronology/raw/follow-up audit. |
 | 10. Meaningful native interface | Verified | Nine areas, frontend/browser evidence and corrected active-segment inspection. |
-| 11. Passing full tests and integrity with disclosures | **Pending** | Long regression has not finished; two fixture errors must be diagnosed and resolved. The full Arena audit must also reach a successful terminal state. |
-| 12. Protected historical evidence unchanged | Verified census; final semantic comparison pending | All payload metadata predates Mission 2, entire content census, 63 retained Laboratory replay hashes, protected 162k/18k counts and baseline code identity; full Arena tournament hash audit still running. |
+| 11. Passing tests and integrity with disclosures | Verified across full run and targeted rechecks | 739 unique backend cases passed, one optional PostgreSQL skip; initial two fixture timeouts resolved by unchanged four-test recheck at one CPU. All 27 frontend tests, typing/lint/build, five legacy browser scenarios and corrected Reality rechecks pass. Source, shadow, model/dataset, archive and protected Arena audits pass. Initial failures/warnings remain disclosed. |
+| 12. Protected historical evidence unchanged | Verified | All payload metadata predates Mission 2, entire content census, 63 retained Laboratory replay hashes, protected 162k/18k counts and baseline code identity. Full 52,323-row Arena replay verification exactly matches seven datasets, 45 models, 27 completed tournaments and the two pre-existing partial tournaments in the preservation baseline. |
 
-No final acceptance or completion claim is made until all pending checks are
-resolved against current authoritative state. Multi-week population conclusions
-are a later scientific milestone, as required by the request.
+All twelve conditions are accepted against the cited current-state evidence.
+No required engineering work remains in Mission 2. Multi-week population
+conclusions, wider protocol support, adequate cross-day target coverage and
+independent decision usefulness remain later scientific milestones. No model
+promotion, main-branch merge, external push or real trading was performed.

@@ -11,7 +11,8 @@ Midas evaluates complementary binary positions using exact ask-depth arithmetic,
 ## Reality research
 
 Mission 1 recording is operational in the isolated Reality worktree. Mission 2
-is active: Gate A expands the live panel to eight markets, with bounded storage,
+engineering is complete through Gate G. Gate A expands the live panel to eight
+markets, with bounded storage,
 verified daily archival, explicit feed uncertainty and gated recorder deployment.
 See [Reality Calibration Laboratory](docs/REALITY_CALIBRATION_LABORATORY.md).
 Gate B adds versioned datasets, observable labels, explicit censoring and
@@ -22,7 +23,11 @@ eligible policy model. Gate E now runs a frozen fourteen-day prospective shadow
 campaign with public follow-ups and explicit unknown execution outcomes.
 Gate F exposes live collection, bounded history, calibration, models, shadow and
 forward evidence in the native Reality dashboard (`http://127.0.0.1:5180` on this
-host). Final broad verification and protected-evidence audit remain Gate G.
+host). Gate G verifies source replay, protected evidence, research integrity and
+regression coverage, with initial timeout/recheck and PostgreSQL-skip disclosures.
+See the [requirement-by-requirement acceptance record](docs/REALITY_MISSION2_ACCEPTANCE.md).
+Recording and the frozen prospective campaign remain running; scientific model
+eligibility and multi-week conclusions remain insufficient.
 
 ## Install and run
 

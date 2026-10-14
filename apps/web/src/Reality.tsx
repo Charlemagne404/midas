@@ -25,7 +25,7 @@ function Chart(props: ComponentProps<typeof LazyChart>) {
 }
 import { chartBase } from './chart-theme';
 import './reality.css';
-import { historySeries } from './reality-history';
+import { historyBarrier, historySeries } from './reality-history';
 import type { HistorySample } from './reality-history';
 
 type Json = null | boolean | number | string | Json[] | { [key: string]: Json };
@@ -404,6 +404,7 @@ function MarketExplorer({
     30000,
   );
   const rows = arr(history.data?.rows).map(obj);
+  const samples = rows as unknown as HistorySample[];
   const books = obj(collector.books);
   return (
     <div className="r-explorer">
@@ -664,14 +665,15 @@ function MarketExplorer({
                     {rows.map((r, i) => (
                       <i
                         key={i}
-                        className={r.quality_reason ? 'gap' : ''}
-                        title={`${utc(r.ns)} · ${r.quality_reason ? txt(r.quality_reason) : 'eligible'}`}
+                        className={historyBarrier(samples[i], samples[i - 1]) ? 'gap' : ''}
+                        title={`${utc(r.ns)} · ${historyBarrier(samples[i], samples[i - 1]) ?? 'eligible sampled state'}`}
                       />
                     ))}
                   </div>
                   <small>
-                    Gold: stale / quality barrier · green: eligible sampled state. Nothing between
-                    samples is implied.
+                    Gold: quality barrier, missing interval or snapshot resynchronization between
+                    samples; exact interruption time inside that interval is unresolved. Green:
+                    eligible sampled state. Nothing between samples is implied.
                   </small>
                   <div className="r-replay">
                     <label>

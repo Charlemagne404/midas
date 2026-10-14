@@ -1,0 +1,116 @@
+........................................................................ [  9%]
+........EE.............................................................. [ 19%]
+........................................................................ [ 29%]
+........................................................................ [ 38%]
+........................................................................ [ 48%]
+......................s................................................. [ 58%]
+........................................................................ [ 68%]
+........................................................................ [ 77%]
+........................................................................ [ 87%]
+........................................................................ [ 97%]
+....................                                                     [100%]
+==================================== ERRORS ====================================
+_ ERROR at setup of test_independent_selection_grid_accounting_and_uncertainty _
+
+tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=<pluggy._tracing.TagTracerSub object at 0x7e90d7dca840>, _basetemp=PosixPath('/tmp/pytest-of-charlie/pytest-368'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def completed_plan(tmp_path_factory):
+        # The native plan fixture uses genuine fitted classifiers and bounded studies;
+        # its prior plateau is explicitly a small test evidence fixture.
+        from test_research_planning import (
+            evidence,
+            test_native_plan_runs_four_fits_and_matched_fresh_studies,
+        )
+
+        fixture = evidence.__wrapped__(tmp_path_factory)
+>       test_native_plan_runs_four_fits_and_matched_fresh_studies(fixture)
+
+tests/arena/test_evidence_study_verification.py:20:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests/arena/test_research_planning.py:188: in test_native_plan_runs_four_fits_and_matched_fresh_studies
+    process = subprocess.run(
+/usr/lib/python3.12/subprocess.py:550: in run
+    stdout, stderr = process.communicate(input, timeout=timeout)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.12/subprocess.py:1209: in communicate
+    stdout, stderr = self._communicate(input, endtime, timeout)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.12/subprocess.py:2116: in _communicate
+    self._check_timeout(endtime, orig_timeout, stdout, stderr)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <Popen: returncode: -9 args: ['/home/charlie/midas-reality/.venv/bin/python'...>
+endtime = 490927.618329872, orig_timeout = 180, stdout_seq = [], stderr_seq = []
+skip_check_and_raise = False
+
+    def _check_timeout(self, endtime, orig_timeout, stdout_seq, stderr_seq,
+                       skip_check_and_raise=False):
+        """Convenience for checking if a timeout has expired."""
+        if endtime is None:
+            return
+        if skip_check_and_raise or _time() > endtime:
+>           raise TimeoutExpired(
+                    self.args, orig_timeout,
+                    output=b''.join(stdout_seq) if stdout_seq else None,
+                    stderr=b''.join(stderr_seq) if stderr_seq else None)
+E           subprocess.TimeoutExpired: Command '['/home/charlie/midas-reality/.venv/bin/python', '-B', '-m', 'midas.arena.jobs', '--root', '/tmp/pytest-of-charlie/pytest-368/planning-evidence0', '--job', 'job-de5771fb7fbb46849bcd5665']' timed out after 180 seconds
+
+/usr/lib/python3.12/subprocess.py:1253: TimeoutExpired
+__________ ERROR at setup of test_changed_selected_identity_rejected ___________
+
+tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=<pluggy._tracing.TagTracerSub object at 0x7e90d7dca840>, _basetemp=PosixPath('/tmp/pytest-of-charlie/pytest-368'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def completed_plan(tmp_path_factory):
+        # The native plan fixture uses genuine fitted classifiers and bounded studies;
+        # its prior plateau is explicitly a small test evidence fixture.
+        from test_research_planning import (
+            evidence,
+            test_native_plan_runs_four_fits_and_matched_fresh_studies,
+        )
+
+        fixture = evidence.__wrapped__(tmp_path_factory)
+>       test_native_plan_runs_four_fits_and_matched_fresh_studies(fixture)
+
+tests/arena/test_evidence_study_verification.py:20:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests/arena/test_research_planning.py:188: in test_native_plan_runs_four_fits_and_matched_fresh_studies
+    process = subprocess.run(
+/usr/lib/python3.12/subprocess.py:550: in run
+    stdout, stderr = process.communicate(input, timeout=timeout)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.12/subprocess.py:1209: in communicate
+    stdout, stderr = self._communicate(input, endtime, timeout)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.12/subprocess.py:2116: in _communicate
+    self._check_timeout(endtime, orig_timeout, stdout, stderr)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <Popen: returncode: -9 args: ['/home/charlie/midas-reality/.venv/bin/python'...>
+endtime = 490927.618329872, orig_timeout = 180, stdout_seq = [], stderr_seq = []
+skip_check_and_raise = False
+
+    def _check_timeout(self, endtime, orig_timeout, stdout_seq, stderr_seq,
+                       skip_check_and_raise=False):
+        """Convenience for checking if a timeout has expired."""
+        if endtime is None:
+            return
+        if skip_check_and_raise or _time() > endtime:
+>           raise TimeoutExpired(
+                    self.args, orig_timeout,
+                    output=b''.join(stdout_seq) if stdout_seq else None,
+                    stderr=b''.join(stderr_seq) if stderr_seq else None)
+E           subprocess.TimeoutExpired: Command '['/home/charlie/midas-reality/.venv/bin/python', '-B', '-m', 'midas.arena.jobs', '--root', '/tmp/pytest-of-charlie/pytest-368/planning-evidence0', '--job', 'job-de5771fb7fbb46849bcd5665']' timed out after 180 seconds
+
+/usr/lib/python3.12/subprocess.py:1253: TimeoutExpired
+=============================== warnings summary ===============================
+.venv/lib/python3.12/site-packages/fastapi/testclient.py:1
+  /home/charlie/midas-reality/.venv/lib/python3.12/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+ERROR tests/arena/test_evidence_study_verification.py::test_independent_selection_grid_accounting_and_uncertainty
+ERROR tests/arena/test_evidence_study_verification.py::test_changed_selected_identity_rejected
+737 passed, 1 skipped, 1 warning, 2 errors in 1443.80s (0:24:03)

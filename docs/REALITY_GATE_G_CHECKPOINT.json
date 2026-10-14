@@ -1,0 +1,1312 @@
+{
+  "checked_ns": 1792015833443992255,
+  "gate": "G",
+  "state": "VERIFICATION_COMPLETE",
+  "collector": {
+    "book_comparisons": {
+      "concurrent_updates_ambiguous": 38,
+      "stable_local_lineage_divergence": 18,
+      "stable_local_lineage_match_unsequenced": 1673,
+      "stale_local_state": 7
+    },
+    "clock_health": {
+      "checked_ns": 1792015831681257138,
+      "estimated_error_us": 0,
+      "kernel_state": 0,
+      "limitation": "Kernel-reported clock health; not independently measured venue clock skew.",
+      "maximum_error_us": 622000,
+      "status": "kernel_synchronized"
+    },
+    "cohort": [
+      {
+        "activity_selection_basis": null,
+        "categories": [
+          "Earn 3.25%",
+          "Elections",
+          "Politics",
+          "Primaries",
+          "US Election",
+          "United States",
+          "World Elections"
+        ],
+        "condition": "0xe06a7e94cf2fa8dc2085b7610fe16e9be1cde6654f34d365c13da1149b276c61",
+        "end_ns": 1857272340000000000,
+        "event_ids": [
+          "30829"
+        ],
+        "fee_regime": {
+          "enabled": true,
+          "public_base_fee_evidence": {
+            "2213957649161627793381994368131485505647723208738124952452819345058597751695": {
+              "base_fee": 1000,
+              "raw_ordinal": 195619
+            },
+            "44046525152074436753629616217525652949736205933417533647338274649282385796755": {
+              "base_fee": 1000,
+              "raw_ordinal": 195620
+            }
+          },
+          "schedule": {
+            "exponent": 1,
+            "rate": 0.04,
+            "rebateRate": 0.25,
+            "takerOnly": true
+          },
+          "status": "public_parameters_recorded_formula_requires_declared_version"
+        },
+        "id": "559687",
+        "lifecycle": {
+          "accepting_orders": true,
+          "active": true,
+          "closed": false,
+          "resolution_status": null
+        },
+        "liquidity": "2886281.59327",
+        "metadata_ordinal": 195618,
+        "minimum_order_size": "5",
+        "negative_risk": true,
+        "negative_risk_group": "0x2c3d7e0eee6f058be3006baabf0d54a07da254ba47fe6e3e095e7990c7814700",
+        "one_day_price_change": "0",
+        "payoff": {
+          "combined_terminal_claim": "1",
+          "currency_conversion_assumed": false,
+          "limitation": "Before fees, redemption costs and settlement assumptions; not a fill.",
+          "pair": "same_condition_yes_no_ctf",
+          "unit": "collateral_unit"
+        },
+        "prior_observed_updates_per_second": 0.029302362336782004,
+        "protocol": "v1",
+        "public_market_constraints": {
+          "end_date_iso": "2028-11-08T00:00:00Z",
+          "minimum_order_size": 5,
+          "minimum_tick_size": 0.001,
+          "seconds_delay": 0
+        },
+        "question": "Will Oprah Winfrey win the 2028 Democratic presidential nomination?",
+        "resolution_source": "",
+        "selection_role": "high",
+        "tick_size": "0.001",
+        "tokens": {
+          "2213957649161627793381994368131485505647723208738124952452819345058597751695": "Yes",
+          "44046525152074436753629616217525652949736205933417533647338274649282385796755": "No"
+        },
+        "volume24hr": "7.8999999999999995"
+      },
+      {
+        "activity_selection_basis": null,
+        "categories": [
+          "Bitcoin",
+          "Crypto",
+          "Finance",
+          "Gov Reserve",
+          "Politics",
+          "Recurring"
+        ],
+        "condition": "0x953b1439569eef0a0e639566acd35d32ebadee8ab70dbb2f8e00bb936a277aa2",
+        "end_ns": 1798779540000000000,
+        "event_ids": [
+          "73040"
+        ],
+        "fee_regime": {
+          "enabled": true,
+          "public_base_fee_evidence": {
+            "115563279943088574368475763566308524191598627607680105838058505260056381768939": {
+              "base_fee": 1000,
+              "raw_ordinal": 195622
+            },
+            "30455770425041126193569940063234142577691408508440512817158696601142733755169": {
+              "base_fee": 1000,
+              "raw_ordinal": 195623
+            }
+          },
+          "schedule": {
+            "exponent": 1,
+            "rate": 0.07,
+            "rebateRate": 0.2,
+            "takerOnly": true
+          },
+          "status": "public_parameters_recorded_formula_requires_declared_version"
+        },
+        "id": "665205",
+        "lifecycle": {
+          "accepting_orders": true,
+          "active": true,
+          "closed": false,
+          "resolution_status": null
+        },
+        "liquidity": "5824.165",
+        "metadata_ordinal": 195621,
+        "minimum_order_size": "5",
+        "negative_risk": false,
+        "negative_risk_group": null,
+        "one_day_price_change": "0",
+        "payoff": {
+          "combined_terminal_claim": "1",
+          "currency_conversion_assumed": false,
+          "limitation": "Before fees, redemption costs and settlement assumptions; not a fill.",
+          "pair": "same_condition_yes_no_ctf",
+          "unit": "collateral_unit"
+        },
+        "prior_observed_updates_per_second": 0.03557721823965621,
+        "protocol": "v1",
+        "public_market_constraints": {
+          "end_date_iso": "2027-01-01T00:00:00Z",
+          "minimum_order_size": 5,
+          "minimum_tick_size": 0.01,
+          "seconds_delay": 0
+        },
+        "question": "US national Bitcoin reserve before 2027?",
+        "resolution_source": "",
+        "selection_role": "medium",
+        "tick_size": "0.01",
+        "tokens": {
+          "115563279943088574368475763566308524191598627607680105838058505260056381768939": "Yes",
+          "30455770425041126193569940063234142577691408508440512817158696601142733755169": "No"
+        },
+        "volume24hr": "39.55"
+      },
+      {
+        "activity_selection_basis": null,
+        "categories": [
+          "Culture",
+          "Mentions",
+          "Midterms",
+          "Politics",
+          "Trump",
+          "Trump Speech"
+        ],
+        "condition": "0x48ee6920ecb2d0a588b11219813b4e5534e8c92d3d09773e58ba489e60b83694",
+        "end_ns": 1792023600000000000,
+        "event_ids": [
+          "1185506"
+        ],
+        "fee_regime": {
+          "enabled": true,
+          "public_base_fee_evidence": {
+            "106325489568995553368953866885783725856804247236547265896114155785283104075916": {
+              "base_fee": 1000,
+              "raw_ordinal": 195625
+            },
+            "37460835336280571773633752659000210757568015281825315639253940628536334322299": {
+              "base_fee": 1000,
+              "raw_ordinal": 195626
+            }
+          },
+          "schedule": {
+            "exponent": 1,
+            "rate": 0.04,
+            "rebateRate": 0.25,
+            "takerOnly": true
+          },
+          "status": "public_parameters_recorded_formula_requires_declared_version"
+        },
+        "id": "5674900",
+        "lifecycle": {
+          "accepting_orders": true,
+          "active": true,
+          "closed": false,
+          "resolution_status": null
+        },
+        "liquidity": "543.8327",
+        "metadata_ordinal": 195624,
+        "minimum_order_size": "5",
+        "negative_risk": false,
+        "negative_risk_group": null,
+        "one_day_price_change": "0",
+        "payoff": {
+          "combined_terminal_claim": "1",
+          "currency_conversion_assumed": false,
+          "limitation": "Before fees, redemption costs and settlement assumptions; not a fill.",
+          "pair": "same_condition_yes_no_ctf",
+          "unit": "collateral_unit"
+        },
+        "prior_observed_updates_per_second": 0.3109712408751337,
+        "protocol": "v1",
+        "public_market_constraints": {
+          "end_date_iso": "2026-10-15T00:00:00Z",
+          "minimum_order_size": 5,
+          "minimum_tick_size": 0.01,
+          "seconds_delay": 0
+        },
+        "question": "Will Trump say \"Tariff\" 7+ times during his Midterm Rally in Montana?",
+        "resolution_source": "",
+        "selection_role": "thin",
+        "tick_size": "0.01",
+        "tokens": {
+          "106325489568995553368953866885783725856804247236547265896114155785283104075916": "Yes",
+          "37460835336280571773633752659000210757568015281825315639253940628536334322299": "No"
+        },
+        "volume24hr": "280.62120300000004"
+      },
+      {
+        "activity_selection_basis": "prior_observed_book_updates_per_second",
+        "categories": [
+          "Culture",
+          "Mentions",
+          "Midterms",
+          "Politics",
+          "Trump",
+          "Trump Speech"
+        ],
+        "condition": "0x41afd61acafb6d2cd0ae4fe581a5a06c2c3d962e6e7dd9bda76196d4e6c8a5ae",
+        "end_ns": 1792023600000000000,
+        "event_ids": [
+          "1185506"
+        ],
+        "fee_regime": {
+          "enabled": true,
+          "public_base_fee_evidence": {
+            "47838417603954968835073422846932184614947834601555940608081428455392875086778": {
+              "base_fee": 1000,
+              "raw_ordinal": 195629
+            },
+            "84368544751886095997192373082336804366656064051574442505080287528968388420763": {
+              "base_fee": 1000,
+              "raw_ordinal": 195628
+            }
+          },
+          "schedule": {
+            "exponent": 1,
+            "rate": 0.04,
+            "rebateRate": 0.25,
+            "takerOnly": true
+          },
+          "status": "public_parameters_recorded_formula_requires_declared_version"
+        },
+        "id": "5675021",
+        "lifecycle": {
+          "accepting_orders": true,
+          "active": true,
+          "closed": false,
+          "resolution_status": null
+        },
+        "liquidity": "667.6916",
+        "metadata_ordinal": 195627,
+        "minimum_order_size": "5",
+        "negative_risk": false,
+        "negative_risk_group": null,
+        "one_day_price_change": "0",
+        "payoff": {
+          "combined_terminal_claim": "1",
+          "currency_conversion_assumed": false,
+          "limitation": "Before fees, redemption costs and settlement assumptions; not a fill.",
+          "pair": "same_condition_yes_no_ctf",
+          "unit": "collateral_unit"
+        },
+        "prior_observed_updates_per_second": 2.143839775934094,
+        "protocol": "v1",
+        "public_market_constraints": {
+          "end_date_iso": "2026-10-15T00:00:00Z",
+          "minimum_order_size": 5,
+          "minimum_tick_size": 0.01,
+          "seconds_delay": 0
+        },
+        "question": "Will Trump say \"Hormuz\" during his Midterm Rally in Montana?",
+        "resolution_source": "",
+        "selection_role": "fast",
+        "tick_size": "0.01",
+        "tokens": {
+          "47838417603954968835073422846932184614947834601555940608081428455392875086778": "No",
+          "84368544751886095997192373082336804366656064051574442505080287528968388420763": "Yes"
+        },
+        "volume24hr": "2209.70783"
+      },
+      {
+        "activity_selection_basis": "prior_observed_book_updates_per_second",
+        "categories": [
+          "Earn 3.25%",
+          "Elections",
+          "Global Elections",
+          "Main Election",
+          "Politics",
+          "President",
+          "US Election",
+          "United States",
+          "World Elections"
+        ],
+        "condition": "0x836b850fc838195374862551a36f1c8691d96ff01e58b0a071f0fc1a0e357fb1",
+        "end_ns": 1857272340000000000,
+        "event_ids": [
+          "31552"
+        ],
+        "fee_regime": {
+          "enabled": true,
+          "public_base_fee_evidence": {
+            "39223330966352513418907732239455948906399882924787587183466504819170775983376": {
+              "base_fee": 1000,
+              "raw_ordinal": 195631
+            },
+            "50862799703982327636174441241062907649998751737045006653560124656563256528691": {
+              "base_fee": 1000,
+              "raw_ordinal": 195632
+            }
+          },
+          "schedule": {
+            "exponent": 1,
+            "rate": 0.04,
+            "rebateRate": 0.25,
+            "takerOnly": true
+          },
+          "status": "public_parameters_recorded_formula_requires_declared_version"
+        },
+        "id": "561251",
+        "lifecycle": {
+          "accepting_orders": true,
+          "active": true,
+          "closed": false,
+          "resolution_status": null
+        },
+        "liquidity": "2468570.74513",
+        "metadata_ordinal": 195630,
+        "minimum_order_size": "5",
+        "negative_risk": true,
+        "negative_risk_group": "0xb9aa4595bbe8ca1ecceeb16d24fb5df6d27d4e2116787ad874ff31f682bdb400",
+        "one_day_price_change": "0",
+        "payoff": {
+          "combined_terminal_claim": "1",
+          "currency_conversion_assumed": false,
+          "limitation": "Before fees, redemption costs and settlement assumptions; not a fill.",
+          "pair": "same_condition_yes_no_ctf",
+          "unit": "collateral_unit"
+        },
+        "prior_observed_updates_per_second": 0.09355490719469299,
+        "protocol": "v1",
+        "public_market_constraints": {
+          "end_date_iso": "2028-11-08T00:00:00Z",
+          "minimum_order_size": 5,
+          "minimum_tick_size": 0.001,
+          "seconds_delay": 0
+        },
+        "question": "Will LeBron James win the 2028 US Presidential Election?",
+        "resolution_source": "",
+        "selection_role": "stable",
+        "tick_size": "0.001",
+        "tokens": {
+          "39223330966352513418907732239455948906399882924787587183466504819170775983376": "Yes",
+          "50862799703982327636174441241062907649998751737045006653560124656563256528691": "No"
+        },
+        "volume24hr": "157.57000000000008"
+      },
+      {
+        "activity_selection_basis": null,
+        "categories": [
+          "Culture",
+          "Mentions",
+          "Midterms",
+          "Politics",
+          "Trump",
+          "Trump Speech"
+        ],
+        "condition": "0x588f57f6d10aa26e4d943f88f2b0131bae3c7eaefbaa2d9c9bf02ad0a7126e7f",
+        "end_ns": 1792023600000000000,
+        "event_ids": [
+          "1185506"
+        ],
+        "fee_regime": {
+          "enabled": true,
+          "public_base_fee_evidence": {
+            "40272631382295851765029753411587598332164311963250116446699242072459099717224": {
+              "base_fee": 1000,
+              "raw_ordinal": 195634
+            },
+            "77661678108838846467305252533246958514332548652447229182424346175668429245338": {
+              "base_fee": 1000,
+              "raw_ordinal": 195635
+            }
+          },
+          "schedule": {
+            "exponent": 1,
+            "rate": 0.04,
+            "rebateRate": 0.25,
+            "takerOnly": true
+          },
+          "status": "public_parameters_recorded_formula_requires_declared_version"
+        },
+        "id": "5674915",
+        "lifecycle": {
+          "accepting_orders": true,
+          "active": true,
+          "closed": false,
+          "resolution_status": null
+        },
+        "liquidity": "173.3624",
+        "metadata_ordinal": 195633,
+        "minimum_order_size": "5",
+        "negative_risk": false,
+        "negative_risk_group": null,
+        "one_day_price_change": "0",
+        "payoff": {
+          "combined_terminal_claim": "1",
+          "currency_conversion_assumed": false,
+          "limitation": "Before fees, redemption costs and settlement assumptions; not a fill.",
+          "pair": "same_condition_yes_no_ctf",
+          "unit": "collateral_unit"
+        },
+        "prior_observed_updates_per_second": 0.22914621830264326,
+        "protocol": "v1",
+        "public_market_constraints": {
+          "end_date_iso": "2026-10-15T00:00:00Z",
+          "minimum_order_size": 5,
+          "minimum_tick_size": 0.01,
+          "seconds_delay": 0
+        },
+        "question": "Will Trump say \"Suicide\" during his Midterm Rally in Montana?",
+        "resolution_source": "",
+        "selection_role": "near_expiry",
+        "tick_size": "0.01",
+        "tokens": {
+          "40272631382295851765029753411587598332164311963250116446699242072459099717224": "Yes",
+          "77661678108838846467305252533246958514332548652447229182424346175668429245338": "No"
+        },
+        "volume24hr": "1300.32188"
+      },
+      {
+        "activity_selection_basis": null,
+        "categories": [
+          "Elections",
+          "France",
+          "French Election",
+          "French Elections",
+          "Global Elections",
+          "Main Election",
+          "Politics",
+          "World"
+        ],
+        "condition": "0x6189539ff1b08bc4052607d89921663ca0de0f0cd70b79c9993d7f9f3211ec3e",
+        "end_ns": 1808107140000000000,
+        "event_ids": [
+          "79987"
+        ],
+        "fee_regime": {
+          "enabled": true,
+          "public_base_fee_evidence": {
+            "39040993339692011893931540077322383339631602451525460031216774971808386681386": {
+              "base_fee": 1000,
+              "raw_ordinal": 195637
+            },
+            "47856683996156403009428090210889176913147998278019471610295491486371570337691": {
+              "base_fee": 1000,
+              "raw_ordinal": 195638
+            }
+          },
+          "schedule": {
+            "exponent": 1,
+            "rate": 0.04,
+            "rebateRate": 0.25,
+            "takerOnly": true
+          },
+          "status": "public_parameters_recorded_formula_requires_declared_version"
+        },
+        "id": "679026",
+        "lifecycle": {
+          "accepting_orders": true,
+          "active": true,
+          "closed": false,
+          "resolution_status": null
+        },
+        "liquidity": "256266.14177",
+        "metadata_ordinal": 195636,
+        "minimum_order_size": "5",
+        "negative_risk": true,
+        "negative_risk_group": "0xdb7fd06931d5f8cec574bc6423d97f0c3a77e814e9b45119084f90e5a1632200",
+        "one_day_price_change": "0",
+        "payoff": {
+          "combined_terminal_claim": "1",
+          "currency_conversion_assumed": false,
+          "limitation": "Before fees, redemption costs and settlement assumptions; not a fill.",
+          "pair": "same_condition_yes_no_ctf",
+          "unit": "collateral_unit"
+        },
+        "prior_observed_updates_per_second": 0.30218674242958893,
+        "protocol": "v1",
+        "public_market_constraints": {
+          "end_date_iso": "2027-04-19T00:00:00Z",
+          "minimum_order_size": 5,
+          "minimum_tick_size": 0.001,
+          "seconds_delay": 0
+        },
+        "question": "Will Gabriel Attal win the 2027 French presidential election?",
+        "resolution_source": "https://www.interieur.gouv.fr/",
+        "selection_role": "category",
+        "tick_size": "0.001",
+        "tokens": {
+          "39040993339692011893931540077322383339631602451525460031216774971808386681386": "Yes",
+          "47856683996156403009428090210889176913147998278019471610295491486371570337691": "No"
+        },
+        "volume24hr": "25116.084266"
+      },
+      {
+        "activity_selection_basis": null,
+        "categories": [
+          "Elections",
+          "France",
+          "French Election",
+          "French Elections",
+          "Global Elections",
+          "Main Election",
+          "Politics",
+          "World"
+        ],
+        "condition": "0x53e78cfec087a9bc8d1336c16a2da9db577cacedb5569c36e776711b264351a6",
+        "end_ns": 1808107140000000000,
+        "event_ids": [
+          "79987"
+        ],
+        "fee_regime": {
+          "enabled": true,
+          "public_base_fee_evidence": {
+            "65798294507987312276643818583202416276939957254836998308855036749104874776050": {
+              "base_fee": 1000,
+              "raw_ordinal": 195641
+            },
+            "80444250591000346031053171380243612904016851519226250274769734418106954626247": {
+              "base_fee": 1000,
+              "raw_ordinal": 195640
+            }
+          },
+          "schedule": {
+            "exponent": 1,
+            "rate": 0.04,
+            "rebateRate": 0.25,
+            "takerOnly": true
+          },
+          "status": "public_parameters_recorded_formula_requires_declared_version"
+        },
+        "id": "679055",
+        "lifecycle": {
+          "accepting_orders": true,
+          "active": true,
+          "closed": false,
+          "resolution_status": null
+        },
+        "liquidity": "1002087.6118",
+        "metadata_ordinal": 195639,
+        "minimum_order_size": "5",
+        "negative_risk": true,
+        "negative_risk_group": "0xdb7fd06931d5f8cec574bc6423d97f0c3a77e814e9b45119084f90e5a1632200",
+        "one_day_price_change": "0",
+        "payoff": {
+          "combined_terminal_claim": "1",
+          "currency_conversion_assumed": false,
+          "limitation": "Before fees, redemption costs and settlement assumptions; not a fill.",
+          "pair": "same_condition_yes_no_ctf",
+          "unit": "collateral_unit"
+        },
+        "prior_observed_updates_per_second": 0.6441009545170973,
+        "protocol": "v1",
+        "public_market_constraints": {
+          "end_date_iso": "2027-04-19T00:00:00Z",
+          "minimum_order_size": 5,
+          "minimum_tick_size": 0.001,
+          "seconds_delay": 0
+        },
+        "question": "Will Karim Bouamrane win the 2027 French presidential election?",
+        "resolution_source": "https://www.interieur.gouv.fr/",
+        "selection_role": "random",
+        "tick_size": "0.001",
+        "tokens": {
+          "65798294507987312276643818583202416276939957254836998308855036749104874776050": "No",
+          "80444250591000346031053171380243612904016851519226250274769734418106954626247": "Yes"
+        },
+        "volume24hr": "13911.116"
+      }
+    ],
+    "config": {
+      "budget_bytes": 25769803776,
+      "comparison_seconds": 15,
+      "comparison_timeout_seconds": 5,
+      "discovery_limit": 50,
+      "markets": 8,
+      "near_expiry_tag_id": 2,
+      "queue_size": 32,
+      "refresh_seconds": 600,
+      "reserve_bytes": 21474836480,
+      "resync_seconds": 300,
+      "retention_days": 90,
+      "root": "/home/charlie/midas-reality/data/recordings/reality",
+      "segment_bytes": 8388608,
+      "segment_seconds": 300,
+      "selection_mode": "stratified-v1",
+      "selection_seed": 20261014,
+      "stale_seconds": 60
+    },
+    "counts": {
+      "advertised_top_disagreement": 8900,
+      "best_bid_ask": 9415,
+      "book": 8966,
+      "crossed": 12,
+      "duplicate": 54,
+      "last_trade_price": 281,
+      "new_market": 26480,
+      "price_change": 118260,
+      "snapshot_divergence": 1690,
+      "snapshot_source_time_regression_after_gap": 57,
+      "timestamp_regression": 17,
+      "top_divergence": 117
+    },
+    "cross_outcome_skew_ns": {
+      "559687": 0,
+      "561251": 0,
+      "5674900": 0,
+      "5674915": 0,
+      "5675021": 0,
+      "665205": 0,
+      "679026": 0,
+      "679055": 0
+    },
+    "expected_books": 16,
+    "failures": 0,
+    "frames": 113188,
+    "fresh_books": 16,
+    "gaps": 2144,
+    "last_book_comparison": {
+      "after_lineage": [
+        195644,
+        5
+      ],
+      "assessment": "stable_local_lineage_match_unsequenced",
+      "asset_id": "106325489568995553368953866885783725856804247236547265896114155785283104075916",
+      "before_lineage": [
+        195644,
+        5
+      ],
+      "condition": "0x48ee6920ecb2d0a588b11219813b4e5534e8c92d3d09773e58ba489e60b83694",
+      "independent_depth_sha256": "28c9b4e9b409aa6ebe4f8194d1e1022a95a983a9390fc1806db7029db0973230",
+      "limitation": "HTTP round trip is not submission/one-way latency; agreement cannot prove no missed events.",
+      "raw_ordinal": 195706,
+      "request_ns": 1792015827185995144,
+      "response_ns": 1792015827253701827,
+      "round_trip_ns": 67706683,
+      "sequence_verified": false,
+      "source_native_hash": "713b685a38b4f2206043483728e9170e1660e58a",
+      "source_timestamp_ms": 1792015520670
+    },
+    "last_observation_ns": 1792015831675177317,
+    "markets": 8,
+    "max_append_seconds": 0.08547133504180238,
+    "ordinal": 195714,
+    "sequence_verified": false,
+    "started_ns": 1791988496384329613,
+    "state": "RECORDING_UNSEQUENCED",
+    "state_sha256": "d6d1fa6c8973be0473cca60e7e3617ee571641826d2466bf14a175852d1aec67",
+    "storage_bytes": 378621234,
+    "timing_uncertain_books": 0,
+    "transport_queue_bound": 32,
+    "updated_ns": 1792015831680133302
+  },
+  "forward": {
+    "actual_orders_submitted": 0,
+    "budget_bytes": 4294967296,
+    "campaign_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
+    "counters": {
+      "lagged_frames_skipped": 2641,
+      "records": 195706,
+      "source_checkpoints": 1653
+    },
+    "days": [
+      "2026-10-14"
+    ],
+    "decisions": 944,
+    "events": 11658,
+    "evidence_bytes": 51047547,
+    "families": 6,
+    "followups": {
+      "censored": 3754,
+      "observed_public_measurement": 22
+    },
+    "last_decision_ns": 1792015800713822421,
+    "markets": 10,
+    "observations": 4336,
+    "pending_horizons": 0,
+    "producer_hash": "9231e11c969cc95af607d847c7d5aa32418a91c21152b214cf9f170d517c0c9f",
+    "scientific_state": "insufficient_forward_evidence",
+    "source_last_received_ns": 1792015827253701827,
+    "source_ordinal": 195706,
+    "state": "FORWARD_EVALUATING_EXPERIMENTAL",
+    "updated_ns": 1792015828318496359
+  },
+  "forward_integrity": {
+    "campaign_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
+    "checked_ns": 1792015833125594332,
+    "state": "INTEGRITY_VERIFIED",
+    "journal": {
+      "events": 11713,
+      "tail_sha256": "2394e918b53c517ac0afd20046a7e365c6d5add61e6490cbd0fbd5e61becc430",
+      "sqlite_integrity": "ok"
+    },
+    "code_files": 20,
+    "models": 4,
+    "scope": "Artifact hashes, SQLite/event chain and runtime identity; full raw/public-label replay is a separate audit"
+  },
+  "forward_report": {
+    "campaign_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
+    "state": "insufficient_forward_evidence",
+    "source_kind": "genuine_public_recording",
+    "frozen_ns": 1792010631978337784,
+    "start_ns": 1792012078642600351,
+    "end_ns": 1793221678642600351,
+    "query": {
+      "limit": 5000,
+      "since_ns": 0,
+      "bounded": true
+    },
+    "coverage": {
+      "decisions": 952,
+      "markets": 10,
+      "connected_families": 6,
+      "utc_days": [
+        "2026-10-14"
+      ],
+      "shared_feed_time_blocks": 121,
+      "duplicate_variants_are_independent": false
+    },
+    "policy_actions": {
+      "no_trade": {
+        "abstain": 952
+      },
+      "mathematical_filter": {
+        "abstain": 952
+      },
+      "prometheus_control": {
+        "abstain": 952
+      },
+      "conservative_risk": {
+        "abstain": 952
+      },
+      "prediction_gate": {
+        "abstain": 952
+      },
+      "recovery_guard": {
+        "abstain": 952
+      }
+    },
+    "policy_reasons": {
+      "no_trade": {
+        "stale_book": 616,
+        "frozen_no_trade_control": 237,
+        "book_issue:advertised_top_pending": 11,
+        "empty_ask_side": 46,
+        "source_timing_uncertainty": 20,
+        "book_issue:stale": 19,
+        "independent_book_divergence": 3
+      },
+      "mathematical_filter": {
+        "stale_book": 616,
+        "no_initial_supported_discrepancy": 237,
+        "book_issue:advertised_top_pending": 11,
+        "empty_ask_side": 46,
+        "source_timing_uncertainty": 20,
+        "book_issue:stale": 19,
+        "independent_book_divergence": 3
+      },
+      "prometheus_control": {
+        "stale_book": 616,
+        "STALE_DATA": 132,
+        "UNSUPPORTED_STRUCTURE": 105,
+        "book_issue:advertised_top_pending": 11,
+        "empty_ask_side": 46,
+        "source_timing_uncertainty": 20,
+        "book_issue:stale": 19,
+        "independent_book_divergence": 3
+      },
+      "conservative_risk": {
+        "stale_book": 616,
+        "conservative_liquidity_timing_fee_or_recovery_gate": 237,
+        "book_issue:advertised_top_pending": 11,
+        "empty_ask_side": 46,
+        "source_timing_uncertainty": 20,
+        "book_issue:stale": 19,
+        "independent_book_divergence": 3
+      },
+      "prediction_gate": {
+        "stale_book": 616,
+        "insufficient_model_evidence": 237,
+        "book_issue:advertised_top_pending": 11,
+        "empty_ask_side": 46,
+        "source_timing_uncertainty": 20,
+        "book_issue:stale": 19,
+        "independent_book_divergence": 3
+      },
+      "recovery_guard": {
+        "stale_book": 616,
+        "conservative_liquidity_timing_fee_or_recovery_gate": 237,
+        "book_issue:advertised_top_pending": 11,
+        "empty_ask_side": 46,
+        "source_timing_uncertainty": 20,
+        "book_issue:stale": 19,
+        "independent_book_divergence": 3
+      }
+    },
+    "horizons": {
+      "100": {
+        "eligible_decisions": 237,
+        "measured": 0,
+        "unknown": 237,
+        "conditional_persistence": null,
+        "missingness_bounds": [
+          0.0,
+          1.0
+        ],
+        "reasons": {
+          "invalid_at_decision": 715,
+          "future_observation_unavailable": 191,
+          "source_followup_availability_timeout": 45,
+          "book_issue:gap:book_resynchronization": 1
+        }
+      },
+      "300": {
+        "eligible_decisions": 237,
+        "measured": 4,
+        "unknown": 233,
+        "conditional_persistence": 1.0,
+        "missingness_bounds": [
+          0.016877637130801686,
+          1.0
+        ],
+        "reasons": {
+          "invalid_at_decision": 715,
+          "future_observation_unavailable": 191,
+          "source_followup_availability_timeout": 38,
+          "book_issue:gap:book_resynchronization": 2,
+          "recorded_gap:book_resynchronization": 1,
+          "stale_book": 1
+        }
+      },
+      "1000": {
+        "eligible_decisions": 237,
+        "measured": 12,
+        "unknown": 225,
+        "conditional_persistence": 0.9166666666666666,
+        "missingness_bounds": [
+          0.046413502109704644,
+          0.9957805907172996
+        ],
+        "reasons": {
+          "invalid_at_decision": 715,
+          "source_followup_availability_timeout": 50,
+          "future_observation_unavailable": 143,
+          "stale_book": 14,
+          "book_issue:advertised_top_pending": 5,
+          "book_issue:gap:book_resynchronization": 11,
+          "recorded_gap:book_resynchronization": 2
+        }
+      },
+      "5000": {
+        "eligible_decisions": 237,
+        "measured": 7,
+        "unknown": 230,
+        "conditional_persistence": 1.0,
+        "missingness_bounds": [
+          0.029535864978902954,
+          1.0
+        ],
+        "reasons": {
+          "invalid_at_decision": 715,
+          "future_observation_unavailable": 52,
+          "book_issue:advertised_top_pending": 19,
+          "stale_book": 98,
+          "recorded_gap:book_resynchronization": 15,
+          "source_followup_availability_timeout": 34,
+          "book_issue:gap:book_resynchronization": 11
+        }
+      }
+    },
+    "execution_scenarios": {
+      "optimistic": {
+        "assumption_id": "0a4e39e24db6a8e33a23d91815038a639d3414cd7c9a30f4cac0179b7c5089f4",
+        "policies": {
+          "no_trade": {
+            "matched_followups": 237,
+            "unknown_execution": 0,
+            "policy_abstentions": 237,
+            "recovery_states": {},
+            "bounded_trials": 0,
+            "per_trial_hypothetical_lower_range": null,
+            "per_trial_hypothetical_upper_range": null,
+            "max_imposed_unmatched_quantity": "0"
+          },
+          "mathematical_filter": {
+            "matched_followups": 237,
+            "unknown_execution": 0,
+            "policy_abstentions": 237,
+            "recovery_states": {},
+            "bounded_trials": 0,
+            "per_trial_hypothetical_lower_range": null,
+            "per_trial_hypothetical_upper_range": null,
+            "max_imposed_unmatched_quantity": "0"
+          },
+          "prometheus_control": {
+            "matched_followups": 237,
+            "unknown_execution": 0,
+            "policy_abstentions": 237,
+            "recovery_states": {},
+            "bounded_trials": 0,
+            "per_trial_hypothetical_lower_range": null,
+            "per_trial_hypothetical_upper_range": null,
+            "max_imposed_unmatched_quantity": "0"
+          },
+          "conservative_risk": {
+            "matched_followups": 237,
+            "unknown_execution": 0,
+            "policy_abstentions": 237,
+            "recovery_states": {},
+            "bounded_trials": 0,
+            "per_trial_hypothetical_lower_range": null,
+            "per_trial_hypothetical_upper_range": null,
+            "max_imposed_unmatched_quantity": "0"
+          },
+          "prediction_gate": {
+            "matched_followups": 237,
+            "unknown_execution": 0,
+            "policy_abstentions": 237,
+            "recovery_states": {},
+            "bounded_trials": 0,
+            "per_trial_hypothetical_lower_range": null,
+            "per_trial_hypothetical_upper_range": null,
+            "max_imposed_unmatched_quantity": "0"
+          },
+          "recovery_guard": {
+            "matched_followups": 237,
+            "unknown_execution": 0,
+            "policy_abstentions": 237,
+            "recovery_states": {},
+            "bounded_trials": 0,
+            "per_trial_hypothetical_lower_range": null,
+            "per_trial_hypothetical_upper_range": null,
+            "max_imposed_unmatched_quantity": "0"
+          }
+        }
+      },
+      "intermediate": {
+        "assumption_id": "25321aa9cc6137f867af300aac072cbea1554ce69c9687739cb1bba7238801d3",
+        "policies": {
+          "no_trade": {
+            "matched_followups": 237,
+            "unknown_execution": 0,
+            "policy_abstentions": 237,
+            "recovery_states": {},
+            "bounded_trials": 0,
+            "per_trial_hypothetical_lower_range": null,
+            "per_trial_hypothetical_upper_range": null,
+            "max_imposed_unmatched_quantity": "0"
+          },
+          "mathematical_filter": {
+            "matched_followups": 237,
+            "unknown_execution": 0,
+            "policy_abstentions": 237,
+            "recovery_states": {},
+            "bounded_trials": 0,
+            "per_trial_hypothetical_lower_range": null,
+            "per_trial_hypothetical_upper_range": null,
+            "max_imposed_unmatched_quantity": "0"
+          },
+          "prometheus_control": {
+            "matched_followups": 237,
+            "unknown_execution": 0,
+            "policy_abstentions": 237,
+            "recovery_states": {},
+            "bounded_trials": 0,
+            "per_trial_hypothetical_lower_range": null,
+            "per_trial_hypothetical_upper_range": null,
+            "max_imposed_unmatched_quantity": "0"
+          },
+          "conservative_risk": {
+            "matched_followups": 237,
+            "unknown_execution": 0,
+            "policy_abstentions": 237,
+            "recovery_states": {},
+            "bounded_trials": 0,
+            "per_trial_hypothetical_lower_range": null,
+            "per_trial_hypothetical_upper_range": null,
+            "max_imposed_unmatched_quantity": "0"
+          },
+          "prediction_gate": {
+            "matched_followups": 237,
+            "unknown_execution": 0,
+            "policy_abstentions": 237,
+            "recovery_states": {},
+            "bounded_trials": 0,
+            "per_trial_hypothetical_lower_range": null,
+            "per_trial_hypothetical_upper_range": null,
+            "max_imposed_unmatched_quantity": "0"
+          },
+          "recovery_guard": {
+            "matched_followups": 237,
+            "unknown_execution": 0,
+            "policy_abstentions": 237,
+            "recovery_states": {},
+            "bounded_trials": 0,
+            "per_trial_hypothetical_lower_range": null,
+            "per_trial_hypothetical_upper_range": null,
+            "max_imposed_unmatched_quantity": "0"
+          }
+        }
+      },
+      "conservative": {
+        "assumption_id": "556261912f0141efc4313765c36f712af67d41626c72de074c91e05f3d2ed6f7",
+        "policies": {
+          "no_trade": {
+            "matched_followups": 237,
+            "unknown_execution": 0,
+            "policy_abstentions": 237,
+            "recovery_states": {},
+            "bounded_trials": 0,
+            "per_trial_hypothetical_lower_range": null,
+            "per_trial_hypothetical_upper_range": null,
+            "max_imposed_unmatched_quantity": "0"
+          },
+          "mathematical_filter": {
+            "matched_followups": 237,
+            "unknown_execution": 0,
+            "policy_abstentions": 237,
+            "recovery_states": {},
+            "bounded_trials": 0,
+            "per_trial_hypothetical_lower_range": null,
+            "per_trial_hypothetical_upper_range": null,
+            "max_imposed_unmatched_quantity": "0"
+          },
+          "prometheus_control": {
+            "matched_followups": 237,
+            "unknown_execution": 0,
+            "policy_abstentions": 237,
+            "recovery_states": {},
+            "bounded_trials": 0,
+            "per_trial_hypothetical_lower_range": null,
+            "per_trial_hypothetical_upper_range": null,
+            "max_imposed_unmatched_quantity": "0"
+          },
+          "conservative_risk": {
+            "matched_followups": 237,
+            "unknown_execution": 0,
+            "policy_abstentions": 237,
+            "recovery_states": {},
+            "bounded_trials": 0,
+            "per_trial_hypothetical_lower_range": null,
+            "per_trial_hypothetical_upper_range": null,
+            "max_imposed_unmatched_quantity": "0"
+          },
+          "prediction_gate": {
+            "matched_followups": 237,
+            "unknown_execution": 0,
+            "policy_abstentions": 237,
+            "recovery_states": {},
+            "bounded_trials": 0,
+            "per_trial_hypothetical_lower_range": null,
+            "per_trial_hypothetical_upper_range": null,
+            "max_imposed_unmatched_quantity": "0"
+          },
+          "recovery_guard": {
+            "matched_followups": 237,
+            "unknown_execution": 0,
+            "policy_abstentions": 237,
+            "recovery_states": {},
+            "bounded_trials": 0,
+            "per_trial_hypothetical_lower_range": null,
+            "per_trial_hypothetical_upper_range": null,
+            "max_imposed_unmatched_quantity": "0"
+          }
+        }
+      },
+      "stress": {
+        "assumption_id": "7209a906d06230d011ea8ecf05c80066a96171fc9741a58dbcaa3be2d619071c",
+        "policies": {
+          "no_trade": {
+            "matched_followups": 236,
+            "unknown_execution": 0,
+            "policy_abstentions": 236,
+            "recovery_states": {},
+            "bounded_trials": 0,
+            "per_trial_hypothetical_lower_range": null,
+            "per_trial_hypothetical_upper_range": null,
+            "max_imposed_unmatched_quantity": "0"
+          },
+          "mathematical_filter": {
+            "matched_followups": 236,
+            "unknown_execution": 0,
+            "policy_abstentions": 236,
+            "recovery_states": {},
+            "bounded_trials": 0,
+            "per_trial_hypothetical_lower_range": null,
+            "per_trial_hypothetical_upper_range": null,
+            "max_imposed_unmatched_quantity": "0"
+          },
+          "prometheus_control": {
+            "matched_followups": 236,
+            "unknown_execution": 0,
+            "policy_abstentions": 236,
+            "recovery_states": {},
+            "bounded_trials": 0,
+            "per_trial_hypothetical_lower_range": null,
+            "per_trial_hypothetical_upper_range": null,
+            "max_imposed_unmatched_quantity": "0"
+          },
+          "conservative_risk": {
+            "matched_followups": 236,
+            "unknown_execution": 0,
+            "policy_abstentions": 236,
+            "recovery_states": {},
+            "bounded_trials": 0,
+            "per_trial_hypothetical_lower_range": null,
+            "per_trial_hypothetical_upper_range": null,
+            "max_imposed_unmatched_quantity": "0"
+          },
+          "prediction_gate": {
+            "matched_followups": 236,
+            "unknown_execution": 0,
+            "policy_abstentions": 236,
+            "recovery_states": {},
+            "bounded_trials": 0,
+            "per_trial_hypothetical_lower_range": null,
+            "per_trial_hypothetical_upper_range": null,
+            "max_imposed_unmatched_quantity": "0"
+          },
+          "recovery_guard": {
+            "matched_followups": 236,
+            "unknown_execution": 0,
+            "policy_abstentions": 236,
+            "recovery_states": {},
+            "bounded_trials": 0,
+            "per_trial_hypothetical_lower_range": null,
+            "per_trial_hypothetical_upper_range": null,
+            "max_imposed_unmatched_quantity": "0"
+          }
+        }
+      }
+    },
+    "actual_orders_submitted": 0,
+    "actual_fills": "unknown_counterfactual",
+    "realized_money": null,
+    "economic_conclusion": "Not established. Per-trial hypothetical bounds are not summed portfolio returns or actual money.",
+    "uncertainty": "Connected families and shared UTC/feed blocks remain correlated; no independent-sample confidence or champion claimed.",
+    "analysis_plan": {
+      "eligibility": "Experimental probes do not authorize a policy; no champion manufactured",
+      "grouping": "Connected event/condition/negative-risk families and UTC time blocks; shared feed remains correlated",
+      "paired_on": "Same recorded source/decision across controls and scenarios",
+      "promotion": false,
+      "recovery": "Declared quoted-bid unwind only where later observed depth supports quantity/minimum; otherwise retain unmatched bounds",
+      "reported": "Decision behavior, censoring, public persistence/depth/price changes and per-trial hypothetical bounds; no summed realized P&L",
+      "threshold_retuning": false,
+      "version": "reality-prospective-analysis-v1"
+    }
+  },
+  "capacity": {
+    "alerts": [],
+    "available_headroom_bytes": 25393105414,
+    "budget_bytes": 25769803776,
+    "capacity_builder_sha256": "ab145f0a001508b2cd1ca849bd381ebf988ccf49fdcb6465753ddbe0b36fb5a5",
+    "capacity_builder_version": "receipt-aware-capacity-v2",
+    "collector_state": "DEGRADED_SOURCE_TIMING",
+    "collector_status_age_seconds": 0.910096694,
+    "compressed_bytes_per_second": 8974.990885505506,
+    "estimated_action_deadline_ns": 1794844973194455296,
+    "estimated_bytes_per_day": 775439212.5076756,
+    "estimated_storage_seconds_remaining": 2829318.2397554894,
+    "filesystem_free_bytes": 216754257920,
+    "free_disk_reserve_bytes": 21474836480,
+    "limitations": [
+      "Recent finalized-segment rate includes gaps and metadata; future rates vary.",
+      "Active segment excluded from rate, included in root usage.",
+      "Raw originals never pruned. Retention horizon stops collection.",
+      "Local archive copies consume additional disk; off-host offloading is separate."
+    ],
+    "measured_ns": 1792015654954699781,
+    "raw_root_bytes": 376698362,
+    "recording_root": "/home/charlie/midas-reality/data/recordings/reality",
+    "retention_seconds_remaining": 7725429.756246384,
+    "sample": {
+      "clock_assessment_basis": "sequential WebSocket dequeue frames; deferred HTTP timestamps remain separate",
+      "clock_regressions": 0,
+      "compressed_and_catalog_bytes": 32736370,
+      "first_received_ns": 1792011976972040425,
+      "last_received_ns": 1792015624482151312,
+      "raw_frame_payload_bytes": 14774830,
+      "raw_frames": 12993,
+      "record_receipt_regressions": 126,
+      "seconds": 3647.510110887,
+      "segments": 120,
+      "source_sha256": "9618acc01c50e964819f5a41c4076924d5f1fe3abcfccdae7791fafd35200113"
+    },
+    "schema_version": 1
+  },
+  "current_filesystem_free_bytes": 216736157696,
+  "services": "MainPID=2288376\nResult=success\nNRestarts=0\nExecMainStatus=0\nMemoryCurrent=398790656\nCPUQuotaPerSecUSec=250ms\nId=midas-reality.service\nActiveState=active\nSubState=running\n\nMainPID=2820914\nResult=success\nNRestarts=0\nExecMainStatus=0\nMemoryCurrent=172515328\nCPUQuotaPerSecUSec=100ms\nId=midas-reality-shadow.service\nActiveState=active\nSubState=running\n\nMainPID=2910426\nResult=success\nNRestarts=0\nExecMainStatus=0\nMemoryCurrent=152330240\nCPUQuotaPerSecUSec=200ms\nId=midas-reality-api.service\nActiveState=active\nSubState=running\n\nMainPID=2890819\nResult=success\nNRestarts=0\nExecMainStatus=0\nMemoryCurrent=89694208\nCPUQuotaPerSecUSec=250ms\nId=midas-reality-web.service\nActiveState=active\nSubState=running\n\nResult=success\nId=midas-reality-capacity.timer\nActiveState=active\nSubState=waiting\n\nResult=success\nId=midas-reality-archive.timer\nActiveState=active\nSubState=waiting\n\nResult=success\nId=midas-reality-research.timer\nActiveState=active\nSubState=waiting\n\nResult=success\nId=midas-reality-shadow-integrity.timer\nActiveState=active\nSubState=waiting\n\nMainPID=0\nResult=success\nNRestarts=0\nExecMainStatus=0\nMemoryCurrent=[not set]\nCPUQuotaPerSecUSec=100ms\nId=midas-reality-capacity.service\nActiveState=inactive\nSubState=dead\n\nMainPID=0\nResult=success\nNRestarts=0\nExecMainStatus=0\nMemoryCurrent=[not set]\nCPUQuotaPerSecUSec=100ms\nId=midas-reality-archive.service\nActiveState=inactive\nSubState=dead\n\nMainPID=0\nResult=success\nNRestarts=0\nExecMainStatus=0\nMemoryCurrent=[not set]\nCPUQuotaPerSecUSec=200ms\nId=midas-reality-research.service\nActiveState=inactive\nSubState=dead\n\nMainPID=0\nResult=success\nNRestarts=0\nExecMainStatus=0\nMemoryCurrent=[not set]\nCPUQuotaPerSecUSec=100ms\nId=midas-reality-shadow-integrity.service\nActiveState=inactive\nSubState=dead\n",
+  "enabled": [
+    "enabled",
+    "enabled",
+    "enabled",
+    "enabled",
+    "enabled",
+    "enabled",
+    "enabled",
+    "enabled"
+  ],
+  "linger": "Linger=yes",
+  "code_identities": {
+    "laboratory": "c14738f8468a8103a98c2704dc5454e85e867a5e3d5b7174cc7383342aa5ebd8",
+    "arena": "bac445c2bb79877e6484cc395820a36dba69b7b03712e8ed1caf1a7ac160a681"
+  },
+  "main_release": "8acab2298632eb04fbe5183fbe54f8e6f97a8fdb",
+  "main_status": "",
+  "tests": {
+    "full_run": {
+      "passed": 737,
+      "skipped": 1,
+      "setup_errors": 2,
+      "seconds": 1443.8
+    },
+    "resolved_module": {
+      "passed": 4,
+      "seconds": 167.58,
+      "source_or_assertions_changed": false
+    },
+    "unique_backend_cases_passed": 739,
+    "frontend_unit": 27,
+    "typing_files": 114,
+    "browser": "Five legacy scenarios passed in full run; Reality failed active-segment lookup then passed isolated rechecks after the fix. Latest Reality browser scenario passes after history lineage-gap refinement.",
+    "skip": "tests/integration/test_postgres_paper.py::test_postgres_paper_atomic_recovery: MIDAS_TEST_POSTGRES_URL not supplied.",
+    "setup_error_resolution": "Both errors are the same module-scoped 180-second subprocess timeout while the full run was CPU-throttled. The unchanged four-test module passed with a full CPU allowance. Original failure and recheck logs retained; 739 unique backend cases passed across these runs, one explicit optional PostgreSQL skip."
+  },
+  "limitations": [
+    "One UTC day of accepted training/forward evidence; no scientific champion or policy-eligible model.",
+    "Unknown futures remain censored. Public data cannot identify actual hypothetical fills, private queue position, impact or profitability.",
+    "V1 same-condition CTF only; ambiguous V2/UpDown excluded.",
+    "Unsequenced feed, current timing/quality flags and sampling limits remain explicit.",
+    "Daily archive is local replication of the published prefix, not off-host redundancy.",
+    "PrivateNetwork requested but host user namespaces do not enforce it; shadow code is file-only and has no order/network path.",
+    "ECharts bundle-size advisory and Starlette test-client deprecation are disclosed."
+  ],
+  "consistent_counter_snapshot": {
+    "checked_ns": 1792015881384161474,
+    "decisions": 960,
+    "outcomes": {
+      "censored": 3817,
+      "observed_public_measurement": 23
+    },
+    "pending_followups": 0,
+    "markets": 10,
+    "first_decision_ns": 1792012079760393613,
+    "last_decision_ns": 1792015865513404415,
+    "chronology_violations": 0,
+    "policy_actions": {
+      "no_trade": {
+        "abstain": 960
+      },
+      "mathematical_filter": {
+        "abstain": 960
+      },
+      "prometheus_control": {
+        "abstain": 960
+      },
+      "conservative_risk": {
+        "abstain": 960
+      },
+      "prediction_gate": {
+        "abstain": 960
+      },
+      "recovery_guard": {
+        "abstain": 960
+      }
+    }
+  },
+  "snapshot_notice": "Collector status, worker status, journal integrity and matched report are separate live snapshots. Consistent counter snapshot is one read transaction; do not combine independently captured numerators/denominators."
+}

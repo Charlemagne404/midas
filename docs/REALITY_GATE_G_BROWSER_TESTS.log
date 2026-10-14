@@ -18,7 +18,7 @@ Running 6 tests using 1 worker
   ✓  6 e2e/smoke.spec.ts:2:1 › discover, inspect, simulate, replay and expose execution failure (18.5s)
 
 
-  1) e2e/reality.spec.ts:3:1 › native Reality exposes genuine evidence and frozen replay without synthetic labeling 
+  1) e2e/reality.spec.ts:3:1 › native Reality exposes genuine evidence and frozen replay without synthetic labeling
 
     Error: expect(locator).toBeVisible() failed
 
@@ -44,5 +44,5 @@ Running 6 tests using 1 worker
     Error Context: test-results/reality-native-Reality-exp-b2450--without-synthetic-labeling/error-context.md
 
   1 failed
-    e2e/reality.spec.ts:3:1 › native Reality exposes genuine evidence and frozen replay without synthetic labeling 
+    e2e/reality.spec.ts:3:1 › native Reality exposes genuine evidence and frozen replay without synthetic labeling
   5 passed (5.1m)

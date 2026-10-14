@@ -1,13 +1,9 @@
 {
-  "checked_ns": 1792014177841076171,
-  "state": "GATE_G_IN_PROGRESS",
+  "checked_ns": 1792015980819730705,
+  "state": "GATE_G_ACCEPTED",
   "previous_goal_turn": "progress",
-  "services": "MainPID=2897444\nNRestarts=0\nExecMainStatus=0\nMemoryCurrent=461836288\nCPUUsageNSec=389897962000\nId=midas-reality-final-regression.service\nActiveState=active\nSubState=running\n\nMainPID=2897862\nNRestarts=0\nExecMainStatus=0\nMemoryCurrent=311787520\nCPUUsageNSec=292504164000\nId=midas-reality-final-arena-audit.service\nActiveState=active\nSubState=running\n\nMainPID=0\nNRestarts=0\nExecMainStatus=0\nMemoryCurrent=[not set]\nCPUUsageNSec=[not set]\nId=midas-reality-final-source-audit.service\nActiveState=inactive\nSubState=dead\n\nMainPID=2916578\nNRestarts=0\nExecMainStatus=0\nMemoryCurrent=648212480\nCPUUsageNSec=108487109000\nId=midas-reality-final-planning-recheck.service\nActiveState=active\nSubState=running\n\nMainPID=2288376\nNRestarts=0\nExecMainStatus=0\nMemoryCurrent=375013376\nCPUUsageNSec=216422697000\nId=midas-reality.service\nActiveState=active\nSubState=running\n\nMainPID=2820914\nNRestarts=0\nExecMainStatus=0\nMemoryCurrent=166305792\nCPUUsageNSec=316611242000\nId=midas-reality-shadow.service\nActiveState=active\nSubState=running\n",
-  "remaining": [
-    "Finish full backend regression and resolve two fixture errors",
-    "Finish full protected Arena replay comparison",
-    "Publish final operational snapshot and update twelve-condition acceptance ledger"
-  ],
+  "services": "MainPID=0\nNRestarts=0\nExecMainStatus=1\nId=midas-reality-final-regression.service\nActiveState=failed\nSubState=failed\n\nMainPID=0\nNRestarts=0\nExecMainStatus=0\nId=midas-reality-final-arena-audit.service\nActiveState=inactive\nSubState=dead\n\nMainPID=0\nNRestarts=0\nExecMainStatus=0\nId=midas-reality-final-planning-recheck.service\nActiveState=inactive\nSubState=dead\n\nMainPID=2288376\nNRestarts=0\nExecMainStatus=0\nId=midas-reality.service\nActiveState=active\nSubState=running\n\nMainPID=2820914\nNRestarts=0\nExecMainStatus=0\nId=midas-reality-shadow.service\nActiveState=active\nSubState=running\n",
+  "remaining": [],
   "completed_source_audit": {
     "scope": "Finalized segments only; active segment excluded",
     "replay": {
@@ -25,5 +21,15 @@
       "integrity": "ok",
       "owner_lock_held": true
     }
-  }
+  },
+  "planning_recheck": {
+    "state": "PASSED",
+    "tests": 4,
+    "elapsed_seconds": 167.58,
+    "cpu_percent": 100,
+    "source_changed": false
+  },
+  "regression_resolution": "737 full-run passes + two fixture cases resolved in unchanged four-test module: 739 unique passing cases; one explicit optional PostgreSQL skip.",
+  "acceptance": "docs/REALITY_MISSION2_ACCEPTANCE.md",
+  "checkpoint": "docs/REALITY_GATE_G_CHECKPOINT.json"
 }

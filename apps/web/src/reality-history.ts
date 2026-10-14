@@ -4,6 +4,20 @@ export type HistorySample = {
   quality_reason?: unknown;
   legs?: Record<string, Record<string, unknown>>;
 };
+export function historyDiscontinuity(row: HistorySample, previous?: HistorySample): string | null {
+  if (!previous) return null;
+  if (row.ns - previous.ns > 10_000_000_000) return 'missing_observations_between_samples';
+  for (const leg of ['yes', 'no']) {
+    const current = row.legs?.[leg]?.snapshot,
+      prior = previous.legs?.[leg]?.snapshot;
+    if (current && prior && JSON.stringify(current) !== JSON.stringify(prior))
+      return 'snapshot_resynchronization_between_samples';
+  }
+  return null;
+}
+export function historyBarrier(row: HistorySample, previous?: HistorySample): string | null {
+  return row.quality_reason ? String(row.quality_reason) : historyDiscontinuity(row, previous);
+}
 export function historySeries(
   rows: HistorySample[],
   leg: string,
@@ -11,8 +25,8 @@ export function historySeries(
 ): [number, number | null][] {
   const result: [number, number | null][] = [];
   rows.forEach((row, i) => {
-    if (i && row.ns - rows[i - 1].ns > 10_000_000_000)
-      result.push([(rows[i - 1].ns + row.ns) / 2e6, null]);
+    const discontinuity = historyDiscontinuity(row, rows[i - 1]);
+    if (i && discontinuity) result.push([(rows[i - 1].ns + row.ns) / 2e6, null]);
     const previous = rows[i - 1];
     const elapsed = previous ? (row.ns - previous.ns) / 1e9 : 0;
     let value = row.legs?.[leg]?.[field];
@@ -24,6 +38,7 @@ export function historySeries(
         previous?.quality_reason ||
         elapsed <= 0 ||
         elapsed > 10 ||
+        discontinuity ||
         !lineage ||
         !prior
           ? null

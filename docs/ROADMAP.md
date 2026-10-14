@@ -20,7 +20,7 @@ model could have done. Keep observations, estimated fills, and synthetic results
 distinct, and preserve chronological ordering and source provenance throughout
 dataset creation and evaluation.
 
-Mission 1 recording is complete. Mission 2 is executing Gates A–G in order;
+Mission 1 recording is complete. Mission 2 engineering is complete through Gates A–G;
 Gate A is accepted with eight-market observation, bounded storage, verified daily
 archival, versioned reconstruction, timing evidence and controlled deployment.
 Gate B is accepted with reproducible public-observation datasets, measured/censored
@@ -30,8 +30,10 @@ and preserved-simulator comparisons. Gate D adds genuine observation-target
 training, consumed frozen tests and explicit insufficient-evidence eligibility.
 Gate E is accepted with a live frozen prospective campaign, independently audited
 canary and durable integrity monitoring. Gate F is accepted with the nine-area
-native Reality dashboard, bounded evidence API and source replay. Gate G's final
-regression, protected-evidence integrity and operational handoff remain. See the
+native Reality dashboard, bounded evidence API and source replay. Gate G is
+accepted with full regression coverage plus disclosed targeted timeout rechecks,
+protected-evidence integrity, prospective source audit and durable operations.
+Scientific eligibility and multi-week conclusions remain future evidence milestones. See the
 [Calibration Laboratory progress and operations](REALITY_CALIBRATION_LABORATORY.md).
 
 ## Deferred: Project Atlas

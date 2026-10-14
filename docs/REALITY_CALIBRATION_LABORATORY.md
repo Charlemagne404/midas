@@ -1,5 +1,12 @@
 # Reality Calibration Laboratory — Mission 2
 
+**Engineering status: Gates A–G accepted for handoff.** The frozen prospective
+campaign and recorder remain running. No scientific champion or policy-eligible
+model is established. See the final Gate G acceptance section and
+[the complete requirements audit](REALITY_MISSION2_ACCEPTANCE.md). Earlier gate
+checkpoints below are chronological evidence, including superseded failures.
+
+
 Mission 2 is active on `project/reality` in `/home/charlie/midas-reality`.
 **Gates A and B are accepted engineering checkpoints; Gates C–G remain outstanding.
 Mission 2 is not ready for handoff.**
@@ -1393,3 +1400,115 @@ confused with the current collector epoch's zero-failure counter. The protected
 Laboratory SQLite check, 162k/18k counts and live owner lock also passed. Current
 remaining work is full regression/error diagnosis, complete Arena semantic replay
 comparison, and the final operational/acceptance snapshot.
+
+The full protected Arena replay verification has completed: 52,323 replay rows
+across all 27 completed tournaments verify their result and journal hashes, and
+the seven datasets, 45 models, 27 completed tournaments and two pre-existing
+partial tournaments exactly match `REALITY_ARENA_PRESERVATION.json`. See
+`REALITY_GATE_G_ARENA_AUDIT.json` and `REALITY_GATE_G_ARENA_COMPARISON.json`.
+No protected research artifact was rewritten.
+
+The four-test planning-module recheck passed in 167.58 seconds at one CPU, with
+no source or assertion changes. The original full regression remains live; its
+final tracebacks will be correlated before acceptance. The UI additionally marks
+snapshot lineage changes as resynchronization windows between samples, even if
+both endpoints are individually healthy. No precise interruption instant inside
+that window is invented. Its five focused component tests bring the frontend
+total to 27 passes, and the real-browser Reality scenario passes again.
+
+
+## Gate G acceptance and operational handoff
+
+Gate G is accepted after inspection of all 28 request sections and all twelve
+hard completion conditions in `REALITY_MISSION2_ACCEPTANCE.md`. No required
+Mission 2 engineering work remains. The latest operational evidence is
+`REALITY_GATE_G_CHECKPOINT.json`; future live counters naturally advance beyond
+that snapshot. Main remains clean at `8acab2298632eb04fbe5183fbe54f8e6f97a8fdb`.
+No merge, force-push, authenticated venue call or real order was performed.
+Atlas remains deferred.
+
+The full 740-case backend command completed in 1,443.80 seconds: 737 passed,
+one skipped and two setup errors from the same planning fixture. Both tracebacks
+are `subprocess.TimeoutExpired` at the existing 180-second wall deadline while
+the process group was initially CPU-throttled. The unchanged four-test module
+passed in 167.58 seconds at one full CPU. Thus all 739 non-skipped backend cases
+have passing coverage across the full run and its targeted recheck. The original
+failure log is retained; this is not described as one clean full-suite run. No
+Arena source or test assertion was changed to obtain the recheck. The skipped
+PostgreSQL atomic-recovery test requires an explicit `MIDAS_TEST_POSTGRES_URL`,
+which was not supplied. SQLite persistence/recovery tests ran normally. A
+Starlette/httpx test-client deprecation warning remains disclosed.
+
+All 27 frontend unit tests, TypeScript, ESLint, production build and strict typing
+across 114 backend/audit source files pass. Five original Prometheus browser
+scenarios passed; the Reality active-segment bug found in that run was corrected
+and the Reality browser scenario passed repeatedly afterward, including the final
+history-lineage refinement. Initial failure and successful recheck logs are
+retained separately. ECharts produces the disclosed Vite >500-KB chunk advisory.
+No warning was hidden or converted into an unearned pass.
+
+All verification jobs have terminal states. The original throttled regression
+unit remains recorded as failed, with its targeted recheck successful; the failed
+first canary and first audit-verifier attempt also remain historical evidence.
+These are not active stalled workers. Source replay, archive/source matching,
+protected Arena replay comparison, protected payload census, accepted research
+integrity and the prospective public-source audit all completed successfully.
+The full Arena output exactly matches the preservation baseline: seven datasets,
+45 models, 27 complete tournaments, 52,323 replay rows and the same two previously
+partial tournaments. Laboratory retains its 162,000 successful protected results
+and 18,000 groups, all 63 retained full journals verify, and missing historical
+full journals remain explicitly missing rather than manufactured.
+
+At the final consistent journal snapshot there were 960 prospective decisions,
+23 observed public follow-ups, 3,817 censored follow-ups, no pending follow-ups,
+ten accumulated markets and zero start/end/commit chronology violations. The
+campaign's status/summary snapshots cover six connected families and one UTC day;
+all six controls abstain. Current collector status had eight monitored markets,
+16/16 fresh books, zero timing-uncertain books, zero current-epoch failures,
+113,188 current-epoch frames, ordinal 195,714 and 378,621,234 raw bytes (~361 MiB).
+Source timing/quality degradation can recur; it is surfaced and censored rather
+than erased. Full historical recording includes earlier gaps and outages.
+
+The scientific conclusion remains insufficient evidence. Accepted training has
+13,216 horizon rows, only 767 measured futures and 12,449 censored futures;
+these are correlated observations, not independent trials. Risk-tree validation
+gains did not survive the frozen final test (Brier ~0.3091 versus ~0.1982 for the
+constant control). The unchanged-depth heuristic beat learned depth alternatives.
+Quote targets were positive-only in measured samples, adverse movement was zero,
+and no applicable initial positive discrepancy supported an opportunity learner.
+No policy-eligible model, actual private fill probability or real profitability
+claim is justified. Genuine observations and labeled synthetic controls remain
+separate throughout the reports and interface.
+
+The recorder (PID 2288376) and main shadow worker (PID 2820914) retain zero
+automatic restarts and were not restarted for UI work or final verification.
+Both are enabled, user lingering is enabled, and all four recurring timers remain
+enabled: capacity every five minutes, daily archival at 04:00 UTC, research coverage
+checks at 02:30 UTC (at most one bounded plan/week after seven days' coverage),
+and frozen forward integrity at 03:00 UTC, with their declared jitter. The
+fourteen-day campaign ends under its already frozen contract; no thresholds or
+weights are retuned against it. Research can generate future evidence without
+Codex remaining active and cannot automatically promote a model.
+
+Raw and local archive allocations remain separately bounded at 24 GiB each, with
+a 20-GiB filesystem reserve and explicit finite retention stop. The latest capacity
+snapshot has no alerts, roughly 32 days' raw headroom at its measured recent rate
+and about 202 GiB free. Growth can change. Operators should inspect capacity and
+arrange verified off-host offloading before the alert deadline; no off-host
+destination is configured and local duplication is not redundancy against host
+loss. Original observations are never automatically deleted. Only explicitly
+marked scheduled derivative caches/scratch can be pruned, with receipts.
+
+For day-to-day use, open `http://127.0.0.1:5180` and select Reality. The supporting
+API is `127.0.0.1:8010` and owns only isolated preview state. Read current quality
+flags before interpreting a book or label. Use Operations for fixed capacity or
+integrity checks and future research-timer controls. Use the documented gated
+collector-deployment workflow for a source/config replacement; a frontend update
+does not require one. The host does not enforce requested user-service network
+namespaces, as documented, but the shadow implementation is file-only with no
+venue order/network client. Public quote presence never identifies hypothetical
+execution, queue position or own impact.
+
+The next scientific milestone is adequate multi-day, multi-market, conditionally
+measurable coverage and frozen matched decision-usefulness evidence. It is not a
+reason to fabricate a champion or keep the engineering mission open for weeks.

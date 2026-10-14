@@ -2,7 +2,7 @@ import { afterEach, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Reality } from './Reality';
-import { historySeries } from './reality-history';
+import { historyBarrier, historySeries } from './reality-history';
 vi.mock('./Chart', () => ({ Chart: () => <div>Chart</div> }));
 afterEach(() => {
   cleanup();
@@ -79,4 +79,18 @@ it('counts only confirmed sampled updates and refuses a gap-spanning update rate
     null,
     null,
   ]);
+});
+
+it('breaks healthy-looking history across a recorded snapshot lineage reset', () => {
+  const samples = [
+    { ns: 1e12, legs: { yes: { snapshot: [1, 0], best_ask: '0.4', last: [2, 0] } } },
+    { ns: 1e12 + 5e9, legs: { yes: { snapshot: [9, 0], best_ask: '0.5', last: [9, 0] } } },
+  ];
+  expect(historyBarrier(samples[1], samples[0])).toBe('snapshot_resynchronization_between_samples');
+  expect(historySeries(samples, 'yes', 'best_ask')).toEqual([
+    [1e6, 0.4],
+    [1002500, null],
+    [1005000, 0.5],
+  ]);
+  expect(historySeries(samples, 'yes', 'sampled_update_rate').at(-1)?.[1]).toBeNull();
 });
