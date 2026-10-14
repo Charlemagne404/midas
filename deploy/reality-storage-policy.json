@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "raw_budget_bytes": 25769803776,
+  "archive_budget_bytes": 25769803776,
+  "free_disk_reserve_bytes": 21474836480,
+  "retention_stop_days": 90,
+  "archive_destination": "/home/charlie/midas-reality/data/recordings/reality-archive-mission2",
+  "archive_frequency": "daily at 04:00 UTC, maximum five-minute jitter",
+  "raw_pruning": "prohibited",
+  "derivative_pruning": "disabled until separately configured disposable derivatives exist",
+  "capacity_action_threshold_days": 7,
+  "offloading": "Use verified archive CLI with an explicitly chosen mounted/off-host destination before the alert deadline. Never delete originals automatically. Off-host destination is not configured on this host.",
+  "rollover": "A new raw root requires an intentional collector stop, finalized verified archive, retained old-root manifest, and reviewed disk commitments. Keep the original root recoverable; new root identity/ordinals must remain distinct. No automatic rollover is configured.",
+  "on_exhaustion": "Fail closed, publish FAILED status if disk permits, retain complete checksummed observations, require operator capacity action. Do not drop frames or erase observations to maintain an apparently healthy state.",
+  "headroom_basis": "Preflight budgets the full remaining raw allocation plus the full archive allocation while preserving 20 GiB. This is a bounded approximately 48 GiB local commitment, not all free disk.",
+  "research_priority": "Collector: 512 MiB maximum, 25% of one CPU. Capacity: 128 MiB, 10% CPU. Archive: 256 MiB, 10% CPU, idle I/O and lower scheduling priority. Both operations workers are independent of collector and frontend.",
+  "limits": ["Local replication is not off-host redundancy.", "Growth forecasts vary; the five-minute capacity monitor must remain enabled.", "A retention stop or budget stop is intentional; finite local disks cannot preserve unlimited original observations.", "Full archival verification and collector cold-start replay scale with archive size; bounded archival jobs may fail at their timeout and must be inspected."]
+}

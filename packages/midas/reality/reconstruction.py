@@ -42,6 +42,7 @@ class Engine:
         self.last_ordinal = 0
         self.now_ns = 0
         self.stale_ns = stale_ns
+        self.reconstruction_version = 1
 
     def invalidate(self, reason: str, assets: list[str] | None = None) -> None:
         for asset in assets if assets is not None else self.books:
@@ -53,6 +54,11 @@ class Engine:
         self.now_ns = max(self.now_ns, record["received_ns"])
         kind = record["kind"]
         if kind == "gap":
+            if record["payload"].get("reason") == "process_start":
+                version = record["payload"].get("reconstruction_version", 1)
+                if version not in (1, 2, 3):
+                    raise ValueError("Unsupported reconstruction revision")
+                self.reconstruction_version = version
             if "stale_ns" in record["payload"]:
                 self.stale_ns = record["payload"]["stale_ns"]
             self.gaps += 1
@@ -221,7 +227,30 @@ class Engine:
                     prior["tick"] = str(tick)
                     prior["last"] = lineage
                 elif kind == "best_bid_ask":
-                    self.check_top(prior, raw)
+                    if self.reconstruction_version >= 3:
+                        matches = all(
+                            key not in raw
+                            or self.top(prior)[index] == number(raw[key], price=True)
+                            or (
+                                self.top(prior)[index] is None
+                                and number(raw[key], price=True) == Decimal(index)
+                            )
+                            for index, key in enumerate(("best_bid", "best_ask"))
+                        )
+                        if not matches:
+                            self.counts["advertised_top_disagreement"] += 1
+                            if prior["issue"] in (None, "advertised_top_pending"):
+                                prior["issue"] = "advertised_top_pending"
+                                prior.setdefault(
+                                    "pending_top_advertisement",
+                                    dict(
+                                        ordinal=record["ordinal"], received_ns=record["received_ns"]
+                                    ),
+                                )
+                        # An advertisement is not depth. A matching subsequent advertisement
+                        # alone cannot clear uncertainty without a confirming depth update.
+                    else:
+                        self.check_top(prior, raw)
                 book = self.books.get(asset)
                 if book:
                     bid, ask = self.top(book)
@@ -243,9 +272,27 @@ class Engine:
     def check_top(self, book: dict[str, Any], raw: dict[str, Any]) -> None:
         top = self.top(book)
         for index, key in enumerate(("best_bid", "best_ask")):
-            if key in raw and top[index] != number(raw[key], price=True):
-                book["issue"] = "top_divergence"
-                self.counts["top_divergence"] += 1
+            if key in raw:
+                advertised = number(raw[key], price=True)
+                # Revision 2 recognizes observed empty-side boundary advertisements.
+                # No depth is created: best price remains None for an empty side.
+                if (
+                    self.reconstruction_version >= 2
+                    and top[index] is None
+                    and advertised == Decimal(index)
+                ):
+                    continue
+                if top[index] != advertised:
+                    book["issue"] = "top_divergence"
+                    self.counts["top_divergence"] += 1
+        if (
+            self.reconstruction_version >= 3
+            and book["issue"] == "advertised_top_pending"
+            and "best_bid" in raw
+            and "best_ask" in raw
+        ):
+            book["issue"] = None
+            book.pop("pending_top_advertisement", None)
 
     def state(self) -> dict[str, Any]:
         books = {}
@@ -264,6 +311,11 @@ class Engine:
             }
         return dict(
             schema_version=1,
+            **(
+                dict(reconstruction_version=self.reconstruction_version)
+                if self.reconstruction_version != 1
+                else {}
+            ),
             books=books,
             counts=dict(sorted(self.counts.items())),
             gaps=self.gaps,

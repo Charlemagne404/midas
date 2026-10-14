@@ -1,0 +1,11 @@
+[Unit]
+Description=Verify and archive MIDAS Reality finalized segments daily
+
+[Timer]
+OnCalendar=*-*-* 04:00:00 UTC
+RandomizedDelaySec=5min
+Persistent=true
+Unit=midas-reality-archive.service
+
+[Install]
+WantedBy=timers.target

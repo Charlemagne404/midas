@@ -166,3 +166,32 @@ def test_capacity_status_clock_is_read_after_slow_sampling(tmp_path):
         result = capacity(config(tmp_path))
     assert result["collector_status_age_seconds"] == 0
     assert "COLLECTOR_STATUS_STALE" not in result["alerts"]
+
+
+def test_partial_storage_failure_remains_recoverable_open_tail(tmp_path):
+    store = Store(tmp_path, reserve=1)
+    store.append("frame", "PONG")
+    original = store.file
+
+    class FailingFile:
+        def write(self, value):
+            original.write(value[:10])
+            original.flush()
+            raise OSError("injected partial device write")
+
+        def close(self):
+            original.close()
+
+    store.file = FailingFile()
+    with pytest.raises(OSError, match="partial device"):
+        store.append("frame", "never fully persisted")
+    with pytest.raises(OSError, match="previously failed"):
+        store.append("frame", "must not continue")
+    store.close()
+    assert list(tmp_path.glob("*.open"))
+    assert not list(tmp_path.glob("*.seg"))
+    recovered = Store(tmp_path, reserve=1)
+    assert recovered.ordinal == 1
+    assert recovered.recovered[0]["discarded_partial_bytes"] == 10
+    recovered.close()
+    assert list(tmp_path.glob("*.tail"))

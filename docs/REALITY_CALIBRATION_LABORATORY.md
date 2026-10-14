@@ -32,7 +32,7 @@ From the Reality worktree:
 .venv/bin/python -m midas.reality.operations archive \
   --config deploy/reality.json \
   --output data/recordings/reality-archive-mission2 \
-  --budget-bytes 2147483648 --reserve-bytes 21474836480
+  --budget-bytes 25769803776 --reserve-bytes 21474836480
 
 systemctl --user status midas-reality-capacity.timer
 journalctl --user -u midas-reality-capacity.service -n 50 --no-pager
@@ -62,8 +62,10 @@ Use SIGUSR1 only when an intentional rotation is needed before archival.
 
 Archive destinations have explicit budgets and free-disk reserves. A local copy
 consumes additional host disk and is not off-host redundancy. Current operations
-provide no automatic raw pruning, raw-root rollover, or removal of the recorder's
-2 GiB budget or thirty-day stop horizon. Do not mistake a successful archive for
+provide no automatic raw pruning or raw-root rollover. The Gate A candidate
+uses a 24 GiB raw budget, 24 GiB archive budget, twenty GiB free-disk reserve
+and ninety-day stop horizon; deployment and runtime evidence below determine
+whether the candidate is active. Do not mistake a successful archive for
 reclaimed collector headroom. Disposable derived data will have separate roots
 and reproducible source manifests; no derivative retention job is implemented yet.
 
@@ -130,3 +132,159 @@ branch. Comprehensive architecture, labels, calibration, training, economics,
 scientific findings, dashboard instructions and future coverage requirements will
 be documented here as implemented and verified. None of those later gates is
 claimed complete by this initial storage checkpoint.
+
+
+## Gate A implementation and deployment evidence
+
+This section supersedes the initial 2 GiB storage plan only once the deployment
+receipt reports `deployed: true` and fresh runtime status confirms its config.
+[Verification receipt](REALITY_GATE_A_CHECKS.json),
+[preflight](REALITY_GATE_A_PREFLIGHT.json),
+[deployment](REALITY_GATE_A_DEPLOYMENT.json) and
+[recorded pilot findings](REALITY_GATE_A_PILOT_FINDINGS.json) retain the evidence.
+
+### Panel and protocol contract
+
+`stratified-observation-v1` requests six bounded Gamma pages: high liquidity,
+medium liquidity, thin liquidity, unfiltered near-expiry, tagged near-expiry and
+a rotating bounded ID page. All responses, request parameters, reception times,
+HTTP statuses and raw ordinals are recorded before selection. Each response
+candidate gets an eligibility/selection/exclusion decision, including duplicates.
+The universe is all responses to those explicit queries, not the entire venue.
+
+Up to eight pilot slots cover high/medium/thin liquidity, fast/stable activity,
+near expiry, category diversity and a seeded random eligible control. No apparent
+edge or arbitrage filter influences selection. Controls are random within the
+bounded recorded universe, not uniform global controls. Activity uses previously
+observed update rates when at least two candidates have coverage; otherwise it
+uses a labeled daily price-change proxy. Missing measured rates never become zero.
+The seed and prior-rate inputs are attached to the decision audit. Unavailable
+strata remain unfilled and visible. The pilot is not broad scientific validation;
+event identities and correlated market families remain attached to the cohort.
+
+[Gamma market query documentation](https://docs.polymarket.com/api-reference/markets/list-markets)
+provides liquidity, expiry and tag filters. The Politics tag (`2`) was independently
+queried by slug on 14 October; it supplements the unfiltered expiry page because
+that page was dominated by Up/Down markets outside the current Yes/No contract.
+Tagged expiry coverage is therefore biased and explicitly recorded. The selection
+system permits a different configured tag; expanding category coverage requires
+continued measurement, not a claim that eight slots represent the whole venue.
+
+[Official outcome identifier documentation](https://docs.polymarket.com/market-data/prices-order-books)
+distinguishes CTF token IDs from V2 position IDs. V2 reconstruction remains excluded:
+the public migration-guide route could not be retrieved, and full V2 lifecycle,
+payoff and wire behavior have not been independently verified. V1 candidates with
+mixed identifiers, ambiguous pairs, missing negative-risk semantics, augmented
+other outcomes, invalid ticks/minimum sizes or unknown fee schedules are excluded.
+
+Each selected V1 condition is verified against the unauthenticated CLOB market
+response's protocol, tokens, outcome names, condition, lifecycle and negative-risk
+flag. Both outcome fee-rate responses are retained. Negative-risk and event-group
+identities remain explicit; no cross-condition pairing is introduced. Gamma and
+CLOB constraints and lifecycle fields stay separately sourced. Payoff is one
+combined collateral-unit claim for the same-condition Yes/No pair before fees,
+redemption, settlement and conversion assumptions, not a confirmed dollar profit.
+
+[Published fee guidance](https://docs.polymarket.com/trading/fees) and genuine
+responses contain fee-schedule parameters alongside legacy base-fee fields.
+These quantities are not blindly interchangeable basis-point rates. The recorder
+retains both with provenance; economic research must name the applicable fee
+formula/version and exclusions. No fill or private fee execution is observed.
+
+### Timing, reconstruction and independent comparisons
+
+Raw records preserve venue milliseconds, local UTC and monotonic receipt times.
+Receipt is application WebSocket dequeue, not hardware network arrival; transport
+queue delay cannot be precisely inferred. Immutable timing measurements retain
+up to 1,024 recent frame ordinals with persistence begin/completion and reconstruction
+completion monotonic times. Clock health is preserved at process start and in those
+measurements using Linux kernel synchronization status and reported error bounds;
+it is not independent proof of absolute venue clock alignment.
+
+Status exposes bounded live depth (first fifty levels per side, explicit truncation),
+source hashes, freshness, both-leg skew, gap counts, per-outcome observed update
+coverage, kernel clock health and the latest independent comparison. The full raw
+books remain available for reproducible reconstruction; bounded status depth is
+not the full archive. HTTP comparisons use one asynchronous public GET every
+fifteen seconds, round-robin over the cohort, with a five-second timeout. They do
+not pause WebSocket ingestion or submit orders.
+
+A separately implemented REST level parser validates exact decimal prices and
+quantities, identities and duplicates. Comparisons distinguish stable local
+lineage agreement, divergence, concurrent-update ambiguity, stale/ineligible
+state and unavailable/invalid responses. Native hashes and independent depth
+hashes are retained. Agreement cannot establish absence of missed messages.
+HTTP round trips are not one-way or order-submission latency.
+
+Pilot 1 found empty-side boundary advertisements: zero for no bids, one for no
+asks. Independent REST reads confirm empty depth, and the official
+[market-channel example](https://docs.polymarket.com/api-reference/wss/market)
+shows the ask boundary value. Reconstruction revision 2 accepts those advertisements
+without creating any price or liquidity. Revision 1 keeps its historical behavior
+and original checkpoint hashes. Genuine captured fixtures retain ordinal/segment
+hash provenance for the regression, with artificial controls separately labeled.
+
+Pilot 2 failed deployment: fast markets advertised a new top before matching
+public depth changes. Revision 3 marks that interval `advertised_top_pending`;
+it is uncertain and ineligible for fully consistent observations. A matching
+advertisement alone cannot repair depth. Confirming depth clears uncertainty;
+a two-second deadline requests an explicit resynchronization if it remains
+unconfirmed. True depth/advertised disagreement still invalidates reconstruction.
+The reconstruction revision is recorded at each process start; old revisions
+remain replayable rather than rewriting original observations.
+
+A device-write failure now leaves the uncertain segment in `.open` format for
+checksummed tail recovery. Further writes fail closed; a partially persisted frame
+is never finalized as an immutable segment. The injected partial-write regression
+verifies preservation of the preceding complete record and explicit tail evidence.
+
+### Sustainable bounded operations and deployment
+
+[Storage policy](../deploy/reality-storage-policy.json) specifies 24 GiB raw,
+24 GiB archive, twenty GiB free-space reserve, ninety-day stop horizon, a daily
+verified archival timer and the existing five-minute capacity monitor. Preflight
+requires the full remaining raw allocation plus full archive allocation to fit
+without consuming the protected disk reserve. At the measured host capacity this
+is roughly a 48 GiB commitment, not allocation of all available disk.
+
+There is no automatic raw pruning. Local replication adds a recoverable verified
+copy, not off-host redundancy. Before a seven-day capacity alert deadline, use the
+archive CLI with an explicitly chosen mounted/off-host destination and verify its
+manifest. A new recorder root requires intentional stop, verified finalized history,
+retained old-root identity/manifest and reviewed host commitments. Root/ordinal
+identities must not be conflated. No off-host destination is configured here.
+Finite capacity/retention exhaustion stops safely and requires operator action.
+
+The daily archive service is limited to 256 MiB, ten percent of one CPU, idle I/O
+and lower scheduling priority; timeout is thirty minutes. Jobs are exclusive and
+resumable. Full integrity/replay verification scales with archive size: a timeout
+must be investigated, never presented as a successful archive. The raw collector
+runs independently under its existing 512 MiB and 25% CPU limits. Dashboard,
+training and archival failures do not own its writer lock.
+
+`scripts/reality_deployment.py verify` freezes the tested recorder source hash.
+`preflight` requires an isolated completed canary with exact network settings,
+full fresh outcome coverage, matching replay checkpoints, independent agreements,
+no repeated consistency loss, sufficient projected storage runway and healthy
+production. `apply` rejects changed/expired gates and changed production PIDs,
+records restart intent, backs up config, and requires fresh books after restart.
+It restores the previous configuration under the tested implementation on failure.
+
+The first deployment rolled back because a forty-five-second health window was
+too short for cold replay of the genuine archive under the service's CPU limit.
+That failed attempt is retained in
+[failed deployment receipt](REALITY_GATE_A_DEPLOYMENT_FAILED.json). Recovery took
+roughly sixty seconds before collector initialization; no raw observations were
+removed. The corrected deployment window is bounded at 180 seconds (permitted
+range sixty to three hundred), with all mutations still guarded. This is a real
+operational limitation: cold-start replay time grows with retained history and
+must be measured before future large-archive deployments. Recorder restart gaps
+are preserved, not claimed as continuous coverage.
+
+### Next gate
+
+After live expanded collection, scheduled archival and mixed-revision historical
+replay are verified, Gate B will build decision-time datasets and observable
+labels with explicit gap, stale-state, pending-advertisement and ordering censoring.
+No Mission 2 prediction model, shadow decision engine or Reality UI is delivered
+by Gate A alone. The remaining stages above remain authoritative.

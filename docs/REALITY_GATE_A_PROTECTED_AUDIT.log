@@ -1,0 +1,87 @@
+{
+  "checked_ns": 1791985642176601802,
+  "scope": "Finalized segments only; active segment excluded",
+  "source_commit": "0565c4aab2a31d4288e0c8d9d702fde4bf41fbeb",
+  "services": {
+    "midas-reality.service": {
+      "MainPID": "2033047",
+      "NRestarts": "0",
+      "MemoryCurrent": "74997760",
+      "CPUUsageNSec": "33225766000",
+      "ActiveState": "active"
+    },
+    "midas-api.service": {
+      "MainPID": "1768349",
+      "NRestarts": "0",
+      "MemoryCurrent": "1305022464",
+      "CPUUsageNSec": "2239347025000",
+      "ActiveState": "active"
+    },
+    "midas-web.service": {
+      "MainPID": "2513652",
+      "NRestarts": "0",
+      "MemoryCurrent": "94498816",
+      "CPUUsageNSec": "130323052000",
+      "ActiveState": "active"
+    },
+    "roadreach.service": {
+      "MainPID": "1746",
+      "NRestarts": "0",
+      "MemoryCurrent": "17252352",
+      "CPUUsageNSec": "1528104000",
+      "ActiveState": "active"
+    },
+    "vanguard-ai.service": {
+      "MainPID": "1749",
+      "NRestarts": "0",
+      "MemoryCurrent": "20951040",
+      "CPUUsageNSec": "2390773000",
+      "ActiveState": "active"
+    }
+  },
+  "recording": {
+    "raw_frames": 32531,
+    "events": {
+      "book": 628,
+      "price_change": 27087,
+      "new_market": 4950,
+      "snapshot_divergence": 110,
+      "duplicate": 52,
+      "best_bid_ask": 167,
+      "last_trade_price": 84,
+      "top_divergence": 2
+    },
+    "first_received_ns": 1791965085336998453,
+    "last_received_ns": 1791985562007596818,
+    "elapsed_seconds": 20476.670598365,
+    "gaps": {
+      "process_start": 12,
+      "process_stop": 10,
+      "malformed_constraints": 5,
+      "book_resynchronization": 1560,
+      "scheduled_refresh": 56
+    },
+    "compressed_segment_bytes": 101458728,
+    "raw_frame_bytes": 36784319,
+    "frames_per_second": 1.5886860045791578,
+    "compressed_bytes_per_second": 4954.844954535782,
+    "estimated_compressed_bytes_per_day": 428098604.07189155,
+    "budget_bytes": 2147483648,
+    "root_bytes": 101686468
+  },
+  "replay": {
+    "state_sha256": "31e8db6adc295cd8db65e64dee75b82caccb52f0e6f023e347851ffb5adcc906",
+    "repeat_identical": true,
+    "online_checkpoints_verified": 666,
+    "provenance_corrections_verified": 5
+  },
+  "protected_archive": {
+    "integrity": "ok",
+    "counts": [
+      162000,
+      18000,
+      162000
+    ],
+    "owner_lock_held": true
+  }
+}

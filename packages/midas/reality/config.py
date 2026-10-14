@@ -20,12 +20,34 @@ class Config:
     reserve_bytes: int = 5 * 1024**3
     segment_bytes: int = 8 * 1024**2
     segment_seconds: float = 300
-    retention_days: int = 30  # stop at the budget; explicit export/prune only
+    retention_days: int = 30  # stop at the budget; never prune original observations
+    selection_mode: str = "legacy"
+    selection_seed: int = 20261014
+    near_expiry_tag_id: int = 2  # verified Politics tag; unfiltered expiry page is also retained
+    comparison_seconds: float = 0  # opt-in; no network work added to legacy fixtures
+    comparison_timeout_seconds: float = 5
 
     def __post_init__(self) -> None:
-        for name in ("refresh_seconds", "resync_seconds", "stale_seconds", "segment_seconds"):
+        for name in (
+            "refresh_seconds",
+            "resync_seconds",
+            "stale_seconds",
+            "segment_seconds",
+            "comparison_seconds",
+            "comparison_timeout_seconds",
+        ):
             if not math.isfinite(getattr(self, name)):
                 raise ValueError("Timing values must be finite")
+        if not isinstance(self.near_expiry_tag_id, int) or self.near_expiry_tag_id < 1:
+            raise ValueError("Near-expiry tag ID must be positive")
+        if self.selection_mode not in {"legacy", "stratified-v1"}:
+            raise ValueError("Unsupported selection mode")
+        if self.comparison_seconds != 0 and self.comparison_seconds < 10:
+            raise ValueError("Independent comparison interval must be >=10 seconds")
+        if not 1 <= self.comparison_timeout_seconds <= 10:
+            raise ValueError("Comparison timeout must be 1..10 seconds")
+        if not isinstance(self.selection_seed, int) or not 0 <= self.selection_seed < 2**32:
+            raise ValueError("Selection seed must be uint32")
         if not 1 <= self.markets <= 10 or not self.markets <= self.discovery_limit <= 200:
             raise ValueError("Cohort must contain 1..10 markets, discovery <=200")
         if (

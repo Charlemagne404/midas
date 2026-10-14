@@ -123,6 +123,7 @@ class Store:
         self.ordinal = 0
         self.recovered: list[dict[str, Any]] = []
         self.file: Any = None
+        self.write_failed = False
         try:
             for path in sorted(self.root.glob("*.open")):
                 if path.stat().st_size < len(MAGIC):
@@ -196,6 +197,8 @@ class Store:
         monotonic_ns: int | None = None,
         **metadata: Any,
     ) -> dict[str, Any]:
+        if self.write_failed:
+            raise OSError("Recorder persistence previously failed; restart/recovery required")
         record = dict(
             schema_version=1,
             ordinal=self.ordinal + 1,
@@ -218,9 +221,15 @@ class Store:
             self.root
         ).free < self.reserve + len(frame):
             raise OSError("Reality storage budget or free-space reserve reached")
-        self.file.write(frame)
-        self.file.flush()
-        os.fsync(self.file.fileno())
+        try:
+            self.file.write(frame)
+            self.file.flush()
+            os.fsync(self.file.fileno())
+        except OSError:
+            self.write_failed = True
+            # Keep an uncertain tail open-format for checksum-based recovery. Never
+            # finalize a partially persisted frame as a supposedly immutable segment.
+            raise
         self.ordinal += 1
         self.count += 1
         self.used += len(frame)
@@ -249,7 +258,12 @@ class Store:
 
     def close(self) -> None:
         try:
-            self.rotate(reopen=False)
+            if self.write_failed:
+                if self.file is not None:
+                    self.file.close()
+                    self.file = None
+            else:
+                self.rotate(reopen=False)
         finally:
             self.lock.close()
 

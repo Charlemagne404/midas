@@ -7,6 +7,7 @@ import logging
 import signal
 import time
 import uuid
+from collections import Counter, deque
 from decimal import DecimalException
 from pathlib import Path
 from typing import Any
@@ -17,6 +18,8 @@ from websockets.exceptions import WebSocketException
 
 from .config import Config
 from .discovery import GAMMA, WS, select
+from .observation import discover, independent_book
+from .quality import clock_health, compare
 from .replay import replay
 from .storage import Store, atomic_json, manifest
 
@@ -52,15 +55,41 @@ async def run(config: Config, duration: float | None = None) -> None:
                 "Retention horizon reached; export/archive this root and configure a new root"
             )
 
+    append_samples: deque[dict[str, int]] = deque(maxlen=1024)
+    book_updates: Counter[str] = Counter()
+    coverage_started: dict[str, int] = {}
+    coverage_last: dict[str, int] = {}
+    comparison_task: asyncio.Task[dict[str, Any]] | None = None
+    last_comparison = 0.0
+    comparison_index = 0
+
     def append(kind: str, payload: Any, **metadata: Any) -> dict[str, Any]:
         if time.time_ns() - oldest_ns > config.retention_days * 86400 * 1e9:
-            raise OSError("Retention horizon reached; archive recording root")
+            raise StorageFailure("Retention horizon reached; archive recording root")
         began = time.monotonic()
+        began_ns = time.monotonic_ns()
         try:
             record = store.append(kind, payload, **metadata)
         except OSError as error:
             raise StorageFailure(str(error)) from error
+        persisted_ns = time.monotonic_ns()
         engine.consume(record)
+        processed_ns = time.monotonic_ns()
+        if kind == "frame":
+            append_samples.append(
+                dict(
+                    ordinal=record["ordinal"],
+                    received_monotonic_ns=record["monotonic_ns"],
+                    persistence_begin_monotonic_ns=began_ns,
+                    persistence_completed_monotonic_ns=persisted_ns,
+                    reconstruction_completed_monotonic_ns=processed_ns,
+                )
+            )
+            for asset, book in engine.books.items():
+                if book["last"][0] == record["ordinal"]:
+                    book_updates[asset] += 1
+                    coverage_started.setdefault(asset, record["received_ns"])
+                    coverage_last[asset] = record["received_ns"]
         status["max_append_seconds"] = max(
             status.get("max_append_seconds", 0), time.monotonic() - began
         )
@@ -92,6 +121,31 @@ async def run(config: Config, duration: float | None = None) -> None:
                 expected_books=status["markets"] * 2,
                 state_sha256=engine.digest(),
                 sequence_verified=False,
+                clock_health=clock_health(),
+                books={
+                    asset: dict(
+                        book,
+                        bids=book["bids"][:50],
+                        asks=book["asks"][:50],
+                        depth_truncated=len(book["bids"]) > 50 or len(book["asks"]) > 50,
+                    )
+                    for asset, book in books.items()
+                },
+                observation_coverage={
+                    asset: dict(
+                        book_update_frames=book_updates[asset],
+                        first_received_ns=coverage_started.get(asset),
+                        last_received_ns=coverage_last.get(asset),
+                    )
+                    for asset in engine.tokens
+                },
+                cross_outcome_skew_ns={
+                    m["id"]: max(engine.books[t]["received_ns"] for t in m["tokens"])
+                    - min(engine.books[t]["received_ns"] for t in m["tokens"])
+                    for m in status.get("cohort", [])
+                    if all(t in engine.books for t in m["tokens"])
+                },
+                transport_queue_bound=config.queue_size,
             ),
         )
 
@@ -119,6 +173,8 @@ async def run(config: Config, duration: float | None = None) -> None:
             "gap",
             dict(
                 reason="process_start",
+                reconstruction_version=3,
+                clock_health=clock_health(),
                 recovered=store.recovered,
                 stale_ns=int(config.stale_seconds * 1e9),
                 config=config.dump(),
@@ -134,42 +190,68 @@ async def run(config: Config, duration: float | None = None) -> None:
             while not stop.is_set() and (duration is None or time.monotonic() - started < duration):
                 connection, subscription = uuid.uuid4().hex, uuid.uuid4().hex
                 try:
-                    response = await client.get(
-                        GAMMA + "/markets",
-                        params=dict(
-                            active="true",
-                            closed="false",
-                            limit=config.discovery_limit,
-                            order="liquidityNum",
-                            ascending="false",
-                        ),
-                    )
-                    try:
-                        response.raise_for_status()
-                        raw_markets = response.json()
-                        if not isinstance(raw_markets, list) or any(
-                            not isinstance(m, dict) for m in raw_markets
-                        ):
-                            raise ValueError("Discovery response must be a market array")
-                        cohort, rejected = select(raw_markets, config.markets)
-                    except (httpx.HTTPError, ValueError, TypeError):
+                    if config.selection_mode == "stratified-v1":
+                        update_rates = {}
+                        for market in status.get("cohort", []):
+                            assets = list(market["tokens"])
+                            if all(t in coverage_started for t in assets):
+                                seconds = (
+                                    time.time_ns() - min(coverage_started[t] for t in assets)
+                                ) / 1e9
+                                if seconds >= 60:
+                                    update_rates[market["id"]] = (
+                                        sum(book_updates[t] for t in assets) / seconds
+                                    )
+                        cohort, selection_audit = await discover(
+                            client, config, append, update_rates=update_rates
+                        )
                         append(
-                            "discovery_error",
-                            response.text,
-                            status_code=response.status_code,
+                            "discovery",
+                            json.dumps(dict(page_ordinals=selection_audit["page_ordinals"])),
+                            cohort=cohort,
+                            selection_audit=selection_audit,
+                            selection=selection_audit["version"],
                             connection=connection,
                             subscription=subscription,
                         )
-                        raise
-                    append(
-                        "discovery",
-                        response.text,
-                        cohort=cohort,
-                        rejected=rejected,
-                        selection="liquidity-page/volume24hr/id",
-                        connection=connection,
-                        subscription=subscription,
-                    )
+                        status["selection_audit"] = selection_audit
+                    else:
+                        response = await client.get(
+                            GAMMA + "/markets",
+                            params=dict(
+                                active="true",
+                                closed="false",
+                                limit=config.discovery_limit,
+                                order="liquidityNum",
+                                ascending="false",
+                            ),
+                        )
+                        try:
+                            response.raise_for_status()
+                            raw_markets = response.json()
+                            if not isinstance(raw_markets, list) or any(
+                                not isinstance(m, dict) for m in raw_markets
+                            ):
+                                raise ValueError("Discovery response must be a market array")
+                            cohort, rejected = select(raw_markets, config.markets)
+                        except (httpx.HTTPError, ValueError, TypeError):
+                            append(
+                                "discovery_error",
+                                response.text,
+                                status_code=response.status_code,
+                                connection=connection,
+                                subscription=subscription,
+                            )
+                            raise
+                        append(
+                            "discovery",
+                            response.text,
+                            cohort=cohort,
+                            rejected=rejected,
+                            selection="liquidity-page/volume24hr/id",
+                            connection=connection,
+                            subscription=subscription,
+                        )
                     if not cohort:
                         raise ValueError("No supported active markets discovered")
                     tokens = [token for market in cohort for token in market["tokens"]]
@@ -203,10 +285,99 @@ async def run(config: Config, duration: float | None = None) -> None:
                                 report()
                                 last_report = now
                             if now - last_checkpoint >= 30 or rotate.is_set():
+                                if append_samples:
+                                    append(
+                                        "timing_measurement",
+                                        dict(
+                                            samples=list(append_samples),
+                                            clock_health=clock_health(),
+                                            coverage="last <=1024 persisted frames; local process timings only",
+                                        ),
+                                    )
+                                    append_samples.clear()
                                 append("checkpoint", dict(state_sha256=engine.digest()))
                                 store.rotate()
                                 rotate.clear()
                                 last_checkpoint = now
+                            if comparison_task is not None and comparison_task.done():
+                                result = comparison_task.result()
+                                comparison_task = None
+                                raw_record = append(
+                                    "independent_book",
+                                    result["payload"],
+                                    received_ns=result["response_ns"],
+                                    **{
+                                        k: v
+                                        for k, v in result.items()
+                                        if k not in {"payload", "before", "after", "response_ns"}
+                                    },
+                                )
+                                try:
+                                    if result.get("error") or result.get("status_code") != 200:
+                                        assessment = dict(
+                                            assessment="public_comparison_unavailable",
+                                            error=result.get("error"),
+                                        )
+                                    else:
+                                        assessment = compare(
+                                            json.loads(result["payload"]),
+                                            asset=result["asset"],
+                                            condition=result["condition"],
+                                            before=result["before"],
+                                            after=result["after"],
+                                            request_ns=result["request_ns"],
+                                            response_ns=result["response_ns"],
+                                            stale_ns=int(config.stale_seconds * 1e9),
+                                        )
+                                    assessment["raw_ordinal"] = raw_record["ordinal"]
+                                except (ValueError, TypeError, KeyError, DecimalException) as error:
+                                    assessment = dict(
+                                        assessment="invalid_public_comparison",
+                                        raw_ordinal=raw_record["ordinal"],
+                                        error=str(error),
+                                    )
+                                append("book_comparison", assessment)
+                                status["last_book_comparison"] = assessment
+                                counts = status.setdefault("book_comparisons", {})
+                                label = assessment["assessment"]
+                                counts[label] = counts.get(label, 0) + 1
+                            if (
+                                config.comparison_seconds
+                                and comparison_task is None
+                                and not pending_snapshots
+                                and now - last_comparison >= config.comparison_seconds
+                            ):
+                                asset = tokens[comparison_index % len(tokens)]
+                                comparison_index += 1
+                                comparison_task = asyncio.create_task(
+                                    independent_book(
+                                        client,
+                                        engine,
+                                        asset,
+                                        engine.tokens[asset],
+                                        config.comparison_timeout_seconds,
+                                    )
+                                )
+                                last_comparison = now
+                            if any(
+                                b["issue"] == "advertised_top_pending"
+                                and time.time_ns() - b["pending_top_advertisement"]["received_ns"]
+                                > 2_000_000_000
+                                for b in engine.books.values()
+                            ):
+                                append(
+                                    "gap",
+                                    dict(
+                                        reason="unconfirmed_top_advertisement",
+                                        affected_assets={
+                                            t: b["pending_top_advertisement"]
+                                            for t, b in engine.books.items()
+                                            if b["issue"] == "advertised_top_pending"
+                                        },
+                                    ),
+                                    connection=connection,
+                                )
+                                break
                             if any(
                                 b["issue"]
                                 in {
@@ -225,7 +396,14 @@ async def run(config: Config, duration: float | None = None) -> None:
                             ):
                                 append(
                                     "gap",
-                                    dict(reason="book_resynchronization"),
+                                    dict(
+                                        reason="book_resynchronization",
+                                        affected_assets={
+                                            t: b["issue"]
+                                            for t, b in engine.books.items()
+                                            if b["issue"]
+                                        },
+                                    ),
                                     connection=connection,
                                 )
                                 break
@@ -287,6 +465,7 @@ async def run(config: Config, duration: float | None = None) -> None:
                                 monotonic_ns=monotonic,
                                 encoding=encoding,
                                 normalized=normalized,
+                                receive_semantics="application_websocket_dequeue_not_hardware_network_arrival",
                             )
                             original_frame_ordinal = store.ordinal
                             if encoding == "utf8" and payload != "PONG":
@@ -335,6 +514,10 @@ async def run(config: Config, duration: float | None = None) -> None:
                                 )
                                 if not pending_snapshots:
                                     backoff = 1
+                    if comparison_task is not None:
+                        comparison_task.cancel()
+                        await asyncio.gather(comparison_task, return_exceptions=True)
+                        comparison_task = None
                 except (
                     httpx.HTTPError,
                     WebSocketException,
@@ -342,6 +525,10 @@ async def run(config: Config, duration: float | None = None) -> None:
                     OSError,
                     TimeoutError,
                 ) as error:
+                    if comparison_task is not None:
+                        comparison_task.cancel()
+                        await asyncio.gather(comparison_task, return_exceptions=True)
+                        comparison_task = None
                     status.update(
                         state="DEGRADED",
                         failures=status["failures"] + 1,
@@ -364,6 +551,9 @@ async def run(config: Config, duration: float | None = None) -> None:
         report()
         raise
     finally:
+        if comparison_task is not None:
+            comparison_task.cancel()
+            await asyncio.gather(comparison_task, return_exceptions=True)
         try:
             append("checkpoint", dict(state_sha256=engine.digest()))
             append("gap", dict(reason="process_stop"))

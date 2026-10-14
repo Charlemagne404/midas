@@ -1,0 +1,17 @@
+{
+  "state_sha256": "4e619bc58df72b46c64f6d0f2bd7fb92c39f4cf5d82e3c7e51306727174192d1",
+  "checkpoints_verified": 624,
+  "schema_version": 1,
+  "counts": {
+    "best_bid_ask": 141,
+    "book": 572,
+    "duplicate": 51,
+    "last_trade_price": 71,
+    "new_market": 4449,
+    "price_change": 25062,
+    "snapshot_divergence": 110,
+    "top_divergence": 2
+  },
+  "gaps": 1638,
+  "ordinal": 37491
+}
