@@ -13,8 +13,16 @@ htmlcov/
 *.db-shm
 *.db-wal
 data/recordings/
+**/recordings/
 data/failures/
 .env
+.env.*
+!.env.example
+**/secrets/
+*.pem
+*.key
+*.p12
+*.pfx
 test-results/
 playwright-report/
 
@@ -28,6 +36,18 @@ data/arena/
 data/arena-cold/
 data/exports/
 data/backups/
+data/runtime/
+data/models/
+data/checkpoints/
+data/cache/
+*.pt
+*.pth
+*.onnx
+*.safetensors
+*.ckpt
+*.joblib
+*.pkl
+*.pickle
 # Local generated archives; tracked curated captures remain versioned.
 data/public-captures/
 data/datasets/public-series-*.jsonl

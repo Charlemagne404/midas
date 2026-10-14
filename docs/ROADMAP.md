@@ -10,31 +10,19 @@
   replay and recovery workflows, and verified handoff. The
   [final report](PROMETHEUS_FINAL_REPORT.md) records results, exceptions, and
   known limitations.
+- **Reality:** public observation, bounded recording, chronological research,
+  calibrated execution assumptions, the frozen shadow campaign, and its native
+  dashboard. Mission 2 is accepted for engineering handoff. Scientific model
+  eligibility and multi-week conclusions remain open evidence questions; see the
+  [acceptance record](REALITY_MISSION2_ACCEPTANCE.md).
 
-## Active: Project Reality
+## Next: Project Veritas
 
-Build continuous observation of real public markets, durable recordings,
-chronological datasets, execution calibration, and forward validation. Research
-should measure what the system observed and what a conservative paper execution
-model could have done. Keep observations, estimated fills, and synthetic results
-distinct, and preserve chronological ordering and source provenance throughout
-dataset creation and evaluation.
-
-Mission 1 recording is complete. Mission 2 engineering is complete through Gates A–G;
-Gate A is accepted with eight-market observation, bounded storage, verified daily
-archival, versioned reconstruction, timing evidence and controlled deployment.
-Gate B is accepted with reproducible public-observation datasets, measured/censored
-labels, chronological embargoes, family grouping and independent raw audits.
-Gate C adds observational calibration, explicit execution-uncertainty scenarios
-and preserved-simulator comparisons. Gate D adds genuine observation-target
-training, consumed frozen tests and explicit insufficient-evidence eligibility.
-Gate E is accepted with a live frozen prospective campaign, independently audited
-canary and durable integrity monitoring. Gate F is accepted with the nine-area
-native Reality dashboard, bounded evidence API and source replay. Gate G is
-accepted with full regression coverage plus disclosed targeted timeout rechecks,
-protected-evidence integrity, prospective source audit and durable operations.
-Scientific eligibility and multi-week conclusions remain future evidence milestones. See the
-[Calibration Laboratory progress and operations](REALITY_CALIBRATION_LABORATORY.md).
+Project Veritas is the next project; its requirements and implementation scope
+have not been set. Start with the [handoff](VERITAS_HANDOFF.md) to review the
+current architecture, evidence limits, active campaign, and preservation rules.
+Reality's collector and frozen fourteen-day campaign continue in their isolated
+operational worktree while Veritas is scoped.
 
 ## Deferred: Project Atlas
 
@@ -43,11 +31,9 @@ easy-install Windows workers and centralized orchestration. Atlas should give
 operators clear worker enrollment, bounded task execution, durable job states,
 and verifiable result transfer.
 
-Atlas remains deferred while Reality Mission 2 is implemented. The future
-systems should remain architecturally compatible. Reality should produce immutable, checksummed dataset manifests
-and bounded replay or evaluation tasks that Atlas can dispatch. Atlas should
-return portable artifacts and provenance that Reality can validate without
-sharing a mutable database or research directory between machines.
+Atlas remains deferred. If resumed later, its workers should receive bounded,
+reviewable jobs and return portable artifacts with provenance. They should not
+share mutable databases or research directories across machines.
 
 ## Shared constraints
 
@@ -63,6 +49,6 @@ sharing a mutable database or research directory between machines.
   Workers should receive bounded, reviewable jobs and return verifiable results;
   concurrent worktrees and machines must not depend on a shared mutable local
   database or artifact directory.
-- Develop Reality and Atlas in separate branches or worktrees rooted at the
-  Prometheus baseline. Do not begin either program as part of repository
-  maintenance.
+- Keep the operational Reality worktree in place while its frozen campaign runs.
+  Scope Veritas separately before implementing it; do not alter Reality evidence
+  or runtime data during project setup.

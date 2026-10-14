@@ -10,24 +10,15 @@ Midas evaluates complementary binary positions using exact ask-depth arithmetic,
 
 ## Reality research
 
-Mission 1 recording is operational in the isolated Reality worktree. Mission 2
-engineering is complete through Gate G. Gate A expands the live panel to eight
-markets, with bounded storage,
-verified daily archival, explicit feed uncertainty and gated recorder deployment.
-See [Reality Calibration Laboratory](docs/REALITY_CALIBRATION_LABORATORY.md).
-Gate B adds versioned datasets, observable labels, explicit censoring and
-chronological validation. Gate C adds training-only public distributions, explicit
-execution bounds and preserved-simulator comparisons. Gate D adds real-observation
-Arena workflows and frozen chronological tests; current evidence supports no
-eligible policy model. Gate E now runs a frozen fourteen-day prospective shadow
-campaign with public follow-ups and explicit unknown execution outcomes.
-Gate F exposes live collection, bounded history, calibration, models, shadow and
-forward evidence in the native Reality dashboard (`http://127.0.0.1:5180` on this
-host). Gate G verifies source replay, protected evidence, research integrity and
-regression coverage, with initial timeout/recheck and PostgreSQL-skip disclosures.
-See the [requirement-by-requirement acceptance record](docs/REALITY_MISSION2_ACCEPTANCE.md).
-Recording and the frozen prospective campaign remain running; scientific model
-eligibility and multi-week conclusions remain insufficient.
+Project Reality Mission 2 is complete and merged into `main` at `714f824`.
+Its bounded public-market collector and frozen fourteen-day shadow campaign
+continue from the separate `/home/charlie/midas-reality` operational worktree.
+Current evidence does not establish an eligible policy model, real fills, or
+profitability. See the [Reality acceptance record](docs/REALITY_MISSION2_ACCEPTANCE.md)
+and [Calibration Laboratory](docs/REALITY_CALIBRATION_LABORATORY.md).
+
+Project Veritas is next. Its scope is not yet defined; begin with the
+[Veritas handoff](docs/VERITAS_HANDOFF.md) before implementation.
 
 ## Install and run
 
