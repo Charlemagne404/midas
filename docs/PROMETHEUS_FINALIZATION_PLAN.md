@@ -33,13 +33,15 @@ planning, robust optimization, broader real-market execution calibration and
 actual multi-day/reboot demonstrations are deferred or future initiatives.
 Do not prolong Prometheus to pursue these optional objectives.
 
-## Current original handles
+## Current live handle
 
-- midas-evidence-planning-corrected-full-gate.service: PID1678039;1CPU/4GiB/1800s.
-- midas-evidence-planning-study.service: PID1678050;1CPU/4GiB/10800s;WAITING_GATE.
-- Frozen plan plan-1058dec1077e493834f60346; four bounded fits, two matched
- 100-group evaluations; no automatic champion promotion.
-- Current package/captured tools remain frozen while those handles are live.
+- `midas-prometheus-final-backend-gate.service`, PID 1713804: one CPU,
+  4 GiB, 1,800-second limit. Current source remains frozen while it runs.
+- Corrected browser suite is terminal with five passes. Artifact and recovery
+  audits are terminal with successful reports.
+- Original planning coordinator is terminal FAILED before admission. Its frozen
+  production plan is CANCELLED under controlled finalization; no capacity fits
+  were added. Historical gate/coordinator logs and source snapshots are retained.
 
 Planning effort estimate:4–8 focused hours plus study elapsed time, subject to
 genuine regressions or evidence inconsistencies. This is not a deadline promise.
@@ -50,8 +52,8 @@ genuine regressions or evidence inconsistencies. This is not a deadline promise.
 - Current application/backend/scripts/tests Ruff check passes. Repository-wide
   lint also traversed immutable historical captured source and reported three
   old import-order findings there; those evidence bytes are preserved unchanged.
-- Full artifact/replay audit running in midas-prometheus-final-artifact-audit.service,
-  oneCPU/2GiB/1200seconds, output PROMETHEUS_FINAL_ARTIFACT_AUDIT.json when complete.
+- Full artifact/replay audit completed successfully; output is
+  PROMETHEUS_FINAL_ARTIFACT_AUDIT.json. Its historical unit is terminal.
 - Current corrected backend full gate remains authoritative, not yet complete.
 
 ## Stabilization after completed gates
@@ -79,3 +81,12 @@ PID1713804 is terminal. Do not blanket-ignore errors or modify frozen source
 while the gate runs. Reverify affected behavior and final regression afterward.
 Corrected browser suite5passed;recovery audit4860variants passed;production
 inventory/source/replays preserved. Final deployment/health/report sign-off pending.
+
+## Prepared typing correction
+
+The isolated source copy passes strict mypy across 74 files, Ruff, and 21
+persistence/recovery tests. Patch and exact base/prepared file hashes are stored
+in PROMETHEUS_FINAL_TYPING_PATCH.diff and PROMETHEUS_FINAL_TYPING_PATCH_PLAN.json.
+It has not been applied to the frozen worktree. After the original gate becomes
+terminal, verify base hashes, apply, recheck current-source typing and affected
+behavior, then run the final regression. Preserve old artifacts and captured source.
