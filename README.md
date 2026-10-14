@@ -8,6 +8,13 @@ Midas evaluates complementary binary positions using exact ask-depth arithmetic,
 
 ![Midas command center](docs/mission-control.png)
 
+## Reality research
+
+Mission 1 recording is operational in the isolated Reality worktree. Mission 2
+is active; its initial capacity monitor and verified archival tooling are
+documented in [Reality Calibration Laboratory](docs/REALITY_CALIBRATION_LABORATORY.md).
+The dataset, calibration, shadow and dashboard gates remain in development.
+
 ## Install and run
 
 Requirements: Python 3.12+, Node 22+, Corepack, and uv. Dependencies are locked. If uv is unavailable, bootstrap it locally:

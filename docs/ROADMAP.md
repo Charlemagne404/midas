@@ -11,7 +11,7 @@
   [final report](PROMETHEUS_FINAL_REPORT.md) records results, exceptions, and
   known limitations.
 
-## Next: Project Reality
+## Active: Project Reality
 
 Build continuous observation of real public markets, durable recordings,
 chronological datasets, execution calibration, and forward validation. Research
@@ -20,15 +20,19 @@ model could have done. Keep observations, estimated fills, and synthetic results
 distinct, and preserve chronological ordering and source provenance throughout
 dataset creation and evaluation.
 
-## Parallel next project: Project Atlas
+Mission 1 recording is complete. Mission 2 is executing Gates A–G in order;
+Gate A capacity monitoring and non-destructive archival have begun. See the
+[Calibration Laboratory progress and operations](REALITY_CALIBRATION_LABORATORY.md).
+
+## Deferred: Project Atlas
 
 Build secure distributed research computing across multiple machines, with
 easy-install Windows workers and centralized orchestration. Atlas should give
 operators clear worker enrollment, bounded task execution, durable job states,
 and verifiable result transfer.
 
-Reality and Atlas are intended to be architecturally compatible and developed
-concurrently. Reality should produce immutable, checksummed dataset manifests
+Atlas remains deferred while Reality Mission 2 is implemented. The future
+systems should remain architecturally compatible. Reality should produce immutable, checksummed dataset manifests
 and bounded replay or evaluation tasks that Atlas can dispatch. Atlas should
 return portable artifacts and provenance that Reality can validate without
 sharing a mutable database or research directory between machines.

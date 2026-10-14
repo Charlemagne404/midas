@@ -1,0 +1,11 @@
+[Unit]
+Description=Inspect MIDAS Reality capacity every five minutes
+
+[Timer]
+OnBootSec=1min
+OnUnitActiveSec=5min
+Persistent=true
+Unit=midas-reality-capacity.service
+
+[Install]
+WantedBy=timers.target

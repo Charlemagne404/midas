@@ -1,0 +1,18 @@
+[Unit]
+Description=MIDAS Reality recording capacity and reserve monitor
+
+[Service]
+Type=oneshot
+WorkingDirectory=%h/midas-reality
+ExecStart=%h/midas-reality/.venv/bin/python -m midas.reality.operations capacity --config %h/midas-reality/deploy/reality.json --output %h/midas-reality/data/recordings/capacity.json
+MemoryMax=128M
+CPUQuota=10%
+Nice=15
+IOSchedulingClass=idle
+UMask=0077
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=%h/midas-reality/data/recordings
+PrivateTmp=true
+TimeoutStartSec=60
