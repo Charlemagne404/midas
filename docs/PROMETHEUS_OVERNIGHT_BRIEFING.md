@@ -1,5 +1,24 @@
 # MIDAS — PROMETHEUS OVERNIGHT BRIEFING
 
+## Current priority — controlled finalization, optional expansion deferred
+
+Owner requested finish on2026-10-14. Final report draft and acceptance plan exist.
+Original corrected gate599passed/1failed/1skip;coordinator terminal failed before
+admission. Production capacity plan cancelled/deferred;zero new production fits.
+Fixed transient SQLite sidecar disk-scan race and temporary API recording isolation;
+19focused tests pass,original Laboratory execution hash unchanged;commit89d0132.
+Full artifact audit7datasets/45models/27tournaments/52323replays passes;2historical
+partials retained. Final frontend22tests/typing/lint/buildpass. Initial isolated
+browser4pass/1fail;Arena genuine generation/training/evaluation/search/replay passes,
+recording-cap isolation caused smoke failure and is now corrected.
+Final backend gate midas-prometheus-final-backend-gate.servicePID1713804 and
+corrected browser suite midas-prometheus-final-corrected-browser-suite.service
+PID1713811 active. Packages frozen;do not duplicate jobs. Next exact final gates,
+deploy original API,major UI/health/archive checks,inventory/report/repository cleanup,
+terminal research confirmation,then responsible completion under revised scope.
+No optional model expansion;no profitability claim. Prometheus not yet complete.
+
+
 ## Current engineering — corrected planning gate and supervised coordinator
 
 Correction committed2273a59. Independent real-worker study verifier4tests pass

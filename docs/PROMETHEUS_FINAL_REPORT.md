@@ -200,9 +200,10 @@ legacy incumbent source gaps remain a limitation rather than invented provenance
 
 ## 8. Final tests and operational evidence
 
-**Pending:**correct Laboratory transient-file disk-scan race, then final full
-backend regression, full artifact audit, final UI/service/archive checks and
-refreshed inventory. No production planning campaign is required for wrap-up.
+**Pending:**final full backend regression and corrected browser suite, deployed
+UI/service/archive checks and refreshed inventory. The disk-scan and recording
+isolation corrections pass focused verification. No production capacity campaign
+is required for wrap-up.
 
 Completed finalization checks so far:
 
@@ -214,6 +215,12 @@ Completed finalization checks so far:
  vanished during archive disk accounting, causing restart recovery to fail.
  Correction and new complete regression are required; this gate is not passing.
 - Corrected planning verifier4passed;inference refusal coverage3passed separately.
+- Stabilization19tests passed16.03s,including actual API shutdown/restart recovery.
+ Laboratory execution identity unchanged; fixes committed89d0132.
+- Full artifact audit:7datasets,45model artifacts,27completed tournaments and
+ 52,323replay variants pass;2partial historical tournaments identified separately.
+- Initial final browser suite4passed/1failed;isolated Arena generation/training/
+ evaluation/search/replay passed. Recording isolation failure corrected;rerun pending.
 - Pre-admission protected SQLite quick_checkOK;counts162000/18000/162000;
   exclusive original owner lock held;API READY,paper-only.
 
