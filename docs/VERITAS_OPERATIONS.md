@@ -1,0 +1,75 @@
+# Veritas operations — initial procedures
+
+Veritas work runs in `/home/charlie/midas-veritas` on `project/veritas`, based
+on release commit `f968095feb9c591de38fe12d7493224425f62f3a`. Reality collection
+and its frozen prospective worker continue from the separate
+`/home/charlie/midas-reality` worktree.
+
+## Read the Reality baseline without taking writer ownership
+
+The bounded forensic command opens the campaign journal with SQLite read-only
+mode and does not write to the campaign directory:
+
+```bash
+cd /home/charlie/midas-veritas
+PYTHONPATH=packages /home/charlie/midas/.venv/bin/python \
+  scripts/veritas_forward_audit.py \
+  --root /home/charlie/midas-reality/data/research/reality/forward/mission2 \
+  --limit 50000
+```
+
+The command validates the frozen campaign identity and limits the indexed
+decision query to at most 50,000 records. Its output summarizes reasons and
+provenance; it never exports raw observations. A live writer may append while
+the read transaction is open. Operational status JSON and service health are
+separate snapshots and can lag the journal by a few outcomes.
+
+`--check-integrity` adds a full read-only SQLite scan. Use it during a low-load
+period because scan time and disk reads grow with the journal archive. The
+default forensic query does not scan the full database or event hash chain.
+
+Read-only service evidence is available from:
+
+```bash
+curl --fail --silent http://127.0.0.1:8010/api/health
+curl --fail --silent http://127.0.0.1:8010/api/reality/overview
+curl --fail --silent http://127.0.0.1:8010/api/reality/operations
+curl --fail --silent 'http://127.0.0.1:8010/api/reality/forward?limit=5000'
+```
+
+The `overview` and `operations` endpoints include bounded status and resource
+summaries. Do not use dashboard requests to modify campaign state.
+
+## Verify Veritas code
+
+Focused economic and forensic checks:
+
+```bash
+cd /home/charlie/midas-veritas
+PYTHONPATH=packages /home/charlie/midas/.venv/bin/pytest -q \
+  tests/test_veritas_economics.py tests/test_veritas_forensics.py
+/home/charlie/midas/.venv/bin/ruff check \
+  packages/midas/veritas scripts/veritas_forward_audit.py \
+  tests/test_veritas_economics.py tests/test_veritas_forensics.py
+MYPYPATH=packages /home/charlie/midas/.venv/bin/mypy packages/midas/veritas
+```
+
+Full project verification remains a later Gate H task. No long-running Veritas
+job is currently scheduled.
+
+## Preserve service and evidence ownership
+
+- Never edit `campaign.json`, frozen models, pinned source, labels, plan,
+  `shadow.sqlite`, collector status, raw recording segments, or integrity files
+  in `/home/charlie/midas-reality`.
+- Do not restart, stop, pause, or launch a second process against the Reality
+  campaign. Inspect user-service status and bounded API evidence first.
+- Do not claim a fill from displayed depth or public quote persistence. All
+  Veritas economics are hypothetical, all orders remain disabled, and no wallet
+  or trading credentials are used.
+- Keep experiments bounded and checkpointed. Use no paid services or external
+  compute. Preserve raw, model, Laboratory, Arena, Prometheus, and campaign
+  artifacts.
+- Save new evidence in this worktree and commit coherent checkpoints on
+  `project/veritas`; do not merge into `main` without a separate integration
+  request.

@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "project": "MIDAS Project Veritas",
+  "status": "in_progress",
+  "baseline_commit": "f968095feb9c591de38fe12d7493224425f62f3a",
+  "branch": "project/veritas",
+  "last_checkpoint": "docs/VERITAS_GATE_A_CHECKPOINT_001.md",
+  "datasets": [
+    {
+      "dataset_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
+      "kind": "frozen_prospective_campaign",
+      "source_kind": "genuine_public_recording",
+      "role": "protected Reality baseline",
+      "campaign_plan_sha256": "aa8acb2b46823c1a1e3ac5d01a57dde917746c2c7471098ae2a4598875e322f5",
+      "path": "/home/charlie/midas-reality/data/research/reality/forward/mission2",
+      "mutated": false,
+      "raw_observations_embedded": false
+    },
+    {
+      "dataset_id": "23201960592577e4cb280c5f3dc1fb64d75e3b12bacb45d347cc2ae32472242c",
+      "kind": "immutable_reality_training_dataset",
+      "source_kind": "genuine_public_recording_with_derived_public_labels",
+      "role": "protected historical training and audit reference",
+      "source": "Reality API bounded artifact endpoint",
+      "mutated": false,
+      "raw_observations_embedded": false
+    },
+    {
+      "dataset_id": "controlled_decimal_fixtures_only",
+      "kind": "unit_test_fixtures",
+      "source_kind": "synthetic_controlled_inputs",
+      "role": "economic arithmetic implementation checks",
+      "mutated": false,
+      "raw_observations_embedded": false
+    }
+  ],
+  "experiments": [
+    {
+      "experiment_id": "VERITAS-GATE-A-BASELINE-20261015-001",
+      "type": "read_only_forward_journal_forensics",
+      "status": "completed_initial_snapshot",
+      "source_dataset_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
+      "evidence": "docs/VERITAS_GATE_A_BASELINE.json",
+      "analysis_version": "veritas-forward-forensics-v1",
+      "decision_count": 1408,
+      "eligible_initial_count": 381,
+      "observed_public_followups": 62,
+      "censored_followups": 5570,
+      "promotion": "not_applicable"
+    },
+    {
+      "experiment_id": "VERITAS-ECONOMIC-FEASIBILITY-V1",
+      "type": "versioned_economic_engine_and_partial_position_accounting",
+      "status": "exploratory_candidate_implemented",
+      "source_dataset_id": "controlled_decimal_fixtures_only",
+      "code": "packages/midas/veritas/economics.py",
+      "tests": "tests/test_veritas_economics.py",
+      "hypothetical_execution_probability": null,
+      "promotion": "not_promoted"
+    }
+  ],
+  "models": [],
+  "policies": [
+    {
+      "policy_set_id": "reality-shadow-policies-v1",
+      "source_campaign_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
+      "names": [
+        "no_trade",
+        "mathematical_filter",
+        "prometheus_control",
+        "conservative_risk",
+        "prediction_gate",
+        "recovery_guard"
+      ],
+      "source_kind": "frozen_prospective_hypothetical_decisions",
+      "observed_actions": "all abstained in the recorded initial snapshot",
+      "promoted": false
+    }
+  ],
+  "candidates": [],
+  "limitations": [
+    "The current live journal and status snapshots advance continuously and are not transactionally synchronized.",
+    "The database integrity check passed; this snapshot did not reverify the full event hash chain or raw-source replay.",
+    "No private execution, hypothetical fill, market impact, or real profitability target is identified."
+  ]
+}

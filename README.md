@@ -10,15 +10,23 @@ Midas evaluates complementary binary positions using exact ask-depth arithmetic,
 
 ## Reality research
 
-Project Reality Mission 2 is complete and merged into `main` at `714f824`.
+Project Reality Mission 2 was completed on `project/reality` at `714f824` and
+integrated into the verified `reality-final-2026-10-14` release at
+`f968095feb9c591de38fe12d7493224425f62f3a`.
 Its bounded public-market collector and frozen fourteen-day shadow campaign
 continue from the separate `/home/charlie/midas-reality` operational worktree.
 Current evidence does not establish an eligible policy model, real fills, or
 profitability. See the [Reality acceptance record](docs/REALITY_MISSION2_ACCEPTANCE.md)
 and [Calibration Laboratory](docs/REALITY_CALIBRATION_LABORATORY.md).
 
-Project Veritas is next. Its scope is not yet defined; begin with the
-[Veritas handoff](docs/VERITAS_HANDOFF.md) before implementation.
+Project Veritas is active on `project/veritas` in the separate
+`/home/charlie/midas-veritas` worktree, based on the verified Reality release.
+The first checkpoint diagnoses the frozen campaign's opportunity, quality, and
+censoring funnel and adds a versioned hypothetical economics engine. The
+original Reality campaign remains in its operational worktree and unchanged.
+See the [Veritas research checkpoint](docs/VERITAS_GATE_A_CHECKPOINT_001.md),
+[research ledger](docs/VERITAS_RESEARCH_LEDGER.json), and
+[operations instructions](docs/VERITAS_OPERATIONS.md).
 
 ## Install and run
 

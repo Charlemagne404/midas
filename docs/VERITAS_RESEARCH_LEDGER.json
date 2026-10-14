@@ -1,0 +1,139 @@
+{
+  "schema_version": 1,
+  "project": "MIDAS Project Veritas",
+  "updated_at_utc": "2026-10-14T22:40:02.303642+00:00",
+  "status": "active",
+  "baseline": {
+    "release_tag": "reality-final-2026-10-14",
+    "release_commit": "f968095feb9c591de38fe12d7493224425f62f3a",
+    "origin_main_commit": "f968095feb9c591de38fe12d7493224425f62f3a",
+    "veritas_branch": "project/veritas",
+    "veritas_worktree": "/home/charlie/midas-veritas",
+    "protected_reality_worktree": "/home/charlie/midas-reality",
+    "protected_campaign_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
+    "protected_campaign_plan_sha256": "aa8acb2b46823c1a1e3ac5d01a57dde917746c2c7471098ae2a4598875e322f5",
+    "baseline_evidence": "docs/VERITAS_GATE_A_BASELINE.json"
+  },
+  "integrity_rules": [
+    "Do not edit the frozen Reality campaign, its plan, pinned code, labels, assumptions, or journal.",
+    "Keep public observations, derived measurements, estimated quantities, hypothetical execution, and unknown fills separate.",
+    "Do not promote candidates from a single selected panel or repeatedly reused confirmation data.",
+    "All source and campaign reads in the initial audit were read-only; no orders were submitted."
+  ],
+  "hypotheses": [
+    {
+      "hypothesis_id": "VERITAS-H001",
+      "title": "Separate invalid initial decisions from later follow-up censoring",
+      "mechanism": "The reported censored total combines outcomes for invalid initial books with outcomes that had a valid initial state but lacked a synchronized qualifying future book.",
+      "experiment_id": "VERITAS-GATE-A-BASELINE-20261015-001",
+      "dataset_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
+      "success_metric": "Classify every selected follow-up by frozen initial-state quality, outcome horizon, public censor reason, and pending status without changing source records.",
+      "result": {
+        "status": "completed",
+        "journal_event_seq": 16852,
+        "decisions": 1408,
+        "valid_initial_decisions": 381,
+        "invalid_initial_decisions": 1027,
+        "followups": 5632,
+        "censored": 5570,
+        "observed_public_measurements": 62,
+        "invalid_at_decision_censors": 4108,
+        "valid_initial_state_censors": 1462,
+        "valid_state_missing_future_observation_or_timeout": 1183,
+        "valid_state_later_book_or_recording_quality_censors": 279
+      },
+      "limitations": [
+        "The original campaign is one prospective selected cohort and one UTC day at this snapshot.",
+        "A synchronized public observation is not an execution or fill label.",
+        "No historical label or campaign rule was changed."
+      ],
+      "decision": "Continue source-level diagnosis. Consider alternative predeclared horizons and quality-aware decision sampling only in a new campaign.",
+      "status": "continue"
+    },
+    {
+      "hypothesis_id": "VERITAS-H002",
+      "title": "Universal abstention is supported by the observed decision-time funnel",
+      "mechanism": "If eligible initial states have no positive top-of-book complementary discrepancy, relaxing policy thresholds or adding model complexity cannot create a supported same-condition arbitrage.",
+      "experiment_id": "VERITAS-GATE-A-BASELINE-20261015-001",
+      "dataset_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
+      "success_metric": "Report the full valid-state pre-fee edge distribution and matched action/reason counts for all frozen policies.",
+      "result": {
+        "status": "completed",
+        "quality_eligible_decisions": 381,
+        "pre_fee_edge_per_unit": {
+          "minimum": "-0.51",
+          "p25_nearest_rank": "-0.12",
+          "median_nearest_rank": "-0.03",
+          "p75_nearest_rank": "-0.001",
+          "maximum": "-0.001",
+          "positive_count": 0
+        },
+        "policies": [
+          "no_trade",
+          "mathematical_filter",
+          "prometheus_control",
+          "conservative_risk",
+          "prediction_gate",
+          "recovery_guard"
+        ],
+        "all_policies_abstained": true
+      },
+      "limitations": [
+        "The panel is bounded and not representative of the entire venue.",
+        "The distribution is pre-fee and does not identify an execution result.",
+        "No evidence supports relaxing timing, quality, fee, or risk gates."
+      ],
+      "decision": "Keep no-trade as the honest current decision. Investigate market coverage and sampling before considering strategy threshold changes.",
+      "status": "continue"
+    },
+    {
+      "hypothesis_id": "VERITAS-H003",
+      "title": "A single fee-rounding quantum per leg does not bound unknown match fragmentation",
+      "mechanism": "The Reality scenario reserve adds one 0.00001 quantum to an unrounded fee per leg. With unknown match fragmentation, individually rounded match fees can exceed that reserve.",
+      "experiment_id": "VERITAS-ECONOMIC-FEASIBILITY-V1",
+      "dataset_id": "controlled_decimal_fixtures_only",
+      "success_metric": "Use exact displayed price-level costs, preserve market-specific fee inputs, and ensure the unknown-fragmentation fee upper bound dominates tested rounded partitions without claiming fills.",
+      "result": {
+        "status": "exploratory_candidate_implemented",
+        "legacy_fee_reserve_example": "1.00001",
+        "fragmentation_safe_upper_example": "2.00000",
+        "example_inputs": {
+          "quantity": "100",
+          "price": "0.5",
+          "fee_rate": "0.04"
+        },
+        "tests": 14,
+        "promotion": "not promoted; requires independent economic review and live evidence remains unavailable"
+      },
+      "limitations": [
+        "The fee rate and quantity in this example are controlled inputs, not a market observation.",
+        "The upper bound is deliberately conservative and does not estimate actual fee fragmentation.",
+        "The Reality campaign and legacy economic function were not modified."
+      ],
+      "decision": "Retain the new engine as a versioned Veritas research candidate. Compare its arithmetic independently before downstream strategy use.",
+      "status": "continue"
+    },
+    {
+      "hypothesis_id": "VERITAS-H004",
+      "title": "Activity-aware, quality-aware sampling can improve future public label coverage",
+      "mechanism": "A frozen cadence conditioned on independently measured market activity and synchronized book quality may yield more valid future public measurements per decision without loosening original campaign gates.",
+      "experiment_id": null,
+      "dataset_id": null,
+      "success_metric": "Compare eligible-state fraction and measured follow-up fraction by market family and predeclared activity stratum; retain an all-market control and no-trade baseline.",
+      "result": null,
+      "limitations": [
+        "Selection on activity changes the target population and must remain visible.",
+        "A larger observed-label fraction does not establish better execution or profitability."
+      ],
+      "decision": "Derive and preregister a distinct campaign only after inspecting decision scheduling, source activity, and the full raw opportunity funnel.",
+      "status": "planned"
+    }
+  ],
+  "next_research_questions": [
+    "Which exact source timing and pair-quality states account for stale initial decisions by market and market family?",
+    "How do displayed complementary costs change across complete depth, fees, minimums, ticks, delays, settlement, and capital levels?",
+    "Which future horizons have enough synchronized public observations without changing frozen Reality labels?",
+    "Does the official fee schedule and per-market fee metadata map exactly to every supported observed market category?",
+    "What independent test evidence is needed before the new Veritas cost engine can be used in a frozen campaign?"
+  ]
+}
