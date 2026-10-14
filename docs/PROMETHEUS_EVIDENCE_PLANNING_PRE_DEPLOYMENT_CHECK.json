@@ -1,0 +1,13 @@
+{
+  "checked_at": 1791956064.495208,
+  "plan_id": "plan-1058dec1077e493834f60346",
+  "api_plan_status": 404,
+  "api_deployment": "pre-planning",
+  "browser_check": "DEFERRED_UNTIL_GATE_AND_DEPLOYMENT",
+  "initial_selector_error": "Research director is a tab role; selector corrected",
+  "corrected_browser_result": "Proposed plan card absent on pre-planning backend; no execution action clicked",
+  "full_gate_pid": 1678039,
+  "coordinator_pid": 1678050,
+  "coordinator_phase": "WAITING_GATE",
+  "production_models_added": 0
+}

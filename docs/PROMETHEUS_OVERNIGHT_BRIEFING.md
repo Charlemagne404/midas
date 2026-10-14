@@ -1,5 +1,21 @@
 # MIDAS — PROMETHEUS OVERNIGHT BRIEFING
 
+## Current engineering — corrected planning gate and supervised coordinator
+
+Correction committed2273a59. Independent real-worker study verifier4tests pass
+164.36s; prior inherited promotion threshold defect fixed. Original incomplete
+full gate stopped and preserved, not counted as passing. New frozen proposal
+plan-1058dec1077e493834f60346, threshold2000, four MLP fits and two matched
+100-group support studies. Superseded proposal retained STALE_SOURCE.
+Corrected gate midas-evidence-planning-corrected-full-gate.service and coordinator
+midas-evidence-planning-study.service are active; coordinator WAITING_GATE.
+Original API remains healthy on pre-planning deployment, so plan endpoint404
+and proposed-plan browser verification is deferred until exact gate/deployment.
+No production training admitted. Source/tools frozen. Latest full successful
+backend582pass/1skip; frontend22pass. Status checkpoint saved2026-10-14,
+whole-scope estimate70%;45artifacts/44fitted. Prometheus remains active.
+
+
 ## Current engineering — evidence-selected capacity question full gate
 
 Planner validates actualcompleted PPOplateau pluscomparableclassifier evidence
