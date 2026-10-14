@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-14T23:19:56.595651+00:00",
+  "updated_at_utc": "2026-10-14T23:27:08.178011+00:00",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -297,10 +297,136 @@
       ],
       "decision": "Keep the protected campaign unchanged. Measure per-market paired-book update intervals and compare source activity with the scheduled-decision denominator before designing any separate sampling cadence.",
       "status": "continue"
+    },
+    {
+      "hypothesis_id": "VERITAS-H008",
+      "title": "Scheduled stale decisions often cite frames with no update to their market",
+      "mechanism": "If stale decisions usually reference a recent global frame that did not update the target market, freshness loss reflects asynchronous market activity and schedule alignment rather than worker processing lag alone.",
+      "experiment_id": "VERITAS-GATE-A-SOURCE-CADENCE-20261014-001",
+      "dataset_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
+      "success_metric": "On one verified finalized-source snapshot, compare per-market outcome update intervals and discontinuities with the market outcomes updated in each scheduled decision frame and with paired-book freshness.",
+      "result": {
+        "status": "completed_snapshot_market_activity_is_asynchronous",
+        "journal_event_tail_sequence": 24919,
+        "decision_rows_sampled": 2120,
+        "decisions_reproduced": 2120,
+        "decisions_uncovered_in_active_segment": 0,
+        "sample_truncated": false,
+        "source_input_lag_p95_ms": "219.469165",
+        "freshness_violation_decisions": 1380,
+        "decision_source_frame_market_outcome_update_counts": {
+          "0": 1761,
+          "2": 359
+        },
+        "stale_book_decisions": 1334,
+        "stale_book_decisions_with_market_update_in_same_source_frame": 0,
+        "campaign_window_market_book_update_frames": 22780,
+        "source_update_frames_updating_both_outcomes": 22738,
+        "source_update_frames_updating_one_outcome": 42,
+        "source_gap_reasons": {
+          "book_resynchronization": 138
+        },
+        "pair_touch_intervals_censored_by_discontinuity_by_market": {
+          "559687": 137,
+          "561251": 137,
+          "562828": 78,
+          "5674900": 137,
+          "5674902": 23,
+          "5674915": 137,
+          "5675021": 138,
+          "665205": 137,
+          "679026": 137,
+          "679055": 35
+        },
+        "market_update_and_decision_freshness_summary": {
+          "559687": {
+            "book_update_frames": 274,
+            "pair_touch_interval_p50_bucket": "10_to_30_s",
+            "pair_touch_interval_p95_bucket": "30_to_60_s",
+            "decisions": 265,
+            "freshness_violation_decisions": 212
+          },
+          "561251": {
+            "book_update_frames": 279,
+            "pair_touch_interval_p50_bucket": "5_to_10_s",
+            "pair_touch_interval_p95_bucket": "30_to_60_s",
+            "decisions": 265,
+            "freshness_violation_decisions": 204
+          },
+          "562828": {
+            "book_update_frames": 7450,
+            "pair_touch_interval_p50_bucket": "0_to_250_ms",
+            "pair_touch_interval_p95_bucket": "2_to_5_s",
+            "decisions": 151,
+            "freshness_violation_decisions": 6
+          },
+          "5674900": {
+            "book_update_frames": 355,
+            "pair_touch_interval_p50_bucket": "0_to_250_ms",
+            "pair_touch_interval_p95_bucket": "30_to_60_s",
+            "decisions": 265,
+            "freshness_violation_decisions": 210
+          },
+          "5674902": {
+            "book_update_frames": 104,
+            "pair_touch_interval_p50_bucket": "0_to_250_ms",
+            "pair_touch_interval_p95_bucket": "30_to_60_s",
+            "decisions": 45,
+            "freshness_violation_decisions": 33
+          },
+          "5674915": {
+            "book_update_frames": 648,
+            "pair_touch_interval_p50_bucket": "0_to_250_ms",
+            "pair_touch_interval_p95_bucket": "10_to_30_s",
+            "decisions": 265,
+            "freshness_violation_decisions": 209
+          },
+          "5675021": {
+            "book_update_frames": 11637,
+            "pair_touch_interval_p50_bucket": "0_to_250_ms",
+            "pair_touch_interval_p95_bucket": "1_to_2_s",
+            "decisions": 265,
+            "freshness_violation_decisions": 118
+          },
+          "665205": {
+            "book_update_frames": 177,
+            "pair_touch_interval_p50_bucket": "10_to_30_s",
+            "pair_touch_interval_p95_bucket": "30_to_60_s",
+            "decisions": 265,
+            "freshness_violation_decisions": 217
+          },
+          "679026": {
+            "book_update_frames": 1113,
+            "pair_touch_interval_p50_bucket": "2_to_5_s",
+            "pair_touch_interval_p95_bucket": "10_to_30_s",
+            "decisions": 265,
+            "freshness_violation_decisions": 149
+          },
+          "679055": {
+            "book_update_frames": 743,
+            "pair_touch_interval_p50_bucket": "1_to_2_s",
+            "pair_touch_interval_p95_bucket": "5_to_10_s",
+            "decisions": 69,
+            "freshness_violation_decisions": 22
+          }
+        },
+        "source_manifest_sha256": "1c9ead2717035a8b9fa22ac12fa4f8ec2c10728cb8fcf2cea9df72453562f319",
+        "evidence": "docs/VERITAS_GATE_A_SOURCE_CADENCE_001.json"
+      },
+      "limitations": [
+        "This is one bounded source and campaign snapshot; repeated decisions are correlated and do not represent venue-wide behavior.",
+        "Update interval quantiles are fixed-width bucket summaries. Intervals spanning a recorded source discontinuity, unsupported producer/reconstruction frame, or receiver-clock regression are censored and excluded from those summaries.",
+        "A decision-frame update count refers only to outcomes updated in the exact cited source frame; zero does not mean there was no update within the preceding freshness window.",
+        "Pooled per-market interval buckets do not retain time-block clustering; a high update count can coexist with stale scheduled decisions.",
+        "The 138 recorded book_resynchronization gaps were counted, but their affected issue labels have not yet been decomposed.",
+        "Public observations and displayed depth do not establish hypothetical fills, private queue position, market impact, or profitability."
+      ],
+      "decision": "Keep the protected campaign unchanged. Align source activity and gap events to five-minute time blocks and scheduled decisions before proposing a separate cadence or any recorder change.",
+      "status": "continue"
     }
   ],
   "next_research_questions": [
-    "By market and activity block, how do paired-book update intervals, recorded gaps, and decision scheduling explain the large difference between raw-frame freshness and scheduled-decision freshness?",
+    "Within five-minute blocks, how do update bursts and book_resynchronization issue types align with scheduled decisions and stale-book periods, especially for high-volume but stale market slices?",
     "How do displayed complementary costs change across complete depth, fees, minimums, ticks, delays, settlement, and capital levels?",
     "Which future horizons have enough synchronized public observations without changing frozen Reality labels?",
     "Does the official fee schedule and per-market fee metadata map exactly to every supported observed market category?",

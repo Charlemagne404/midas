@@ -16,7 +16,15 @@ from midas.reality.shadow_campaign import source_files
 from midas.reality.shadow_source import Context
 from midas.reality.shadow_worker import spec_for
 from midas.reality.storage import Store, canonical, file_hash, manifest
-from midas.veritas.source_replay import MAX_DECISIONS, _lag_band, reconcile_forward_sources
+from midas.veritas.source_replay import (
+    MAX_DECISIONS,
+    _interval_band,
+    _interval_distribution,
+    _lag_band,
+    _new_interval_state,
+    _record_interval,
+    reconcile_forward_sources,
+)
 
 START = 1_792_000_000_000_000_000
 CONDITION = "0x" + "1" * 64
@@ -27,6 +35,19 @@ def test_lag_bands_respect_the_frozen_limit():
     assert _lag_band(250 * 10**6, 250 * 10**6) == "100_ms_to_limit"
     assert _lag_band(251 * 10**6, 250 * 10**6) == "above_frozen_limit"
     assert _lag_band(51 * 10**6, 50 * 10**6) == "above_frozen_limit"
+
+
+def test_source_activity_intervals_are_binned_and_censor_discontinuities():
+    intervals = _new_interval_state()
+    _record_interval(intervals, 1_000_000_000, gap_epoch=0)
+    _record_interval(intervals, 3_000_000_000, gap_epoch=0)
+    _record_interval(intervals, 4_000_000_000, gap_epoch=1)
+
+    assert _interval_band(250 * 10**6) == "0_to_250_ms"
+    assert _interval_band(500 * 10**6 + 1) == "500_ms_to_1_s"
+    assert intervals["interval_count"] == 1
+    assert intervals["intervals_censored_by_discontinuity"] == 1
+    assert _interval_distribution(intervals)["nearest_rank_p50_bucket"] == "1_to_2_s"
 
 
 def _market(
@@ -232,7 +253,14 @@ def test_reconciles_finalized_records_and_ignores_active_segment(tmp_path):
     assert report["decision_timing"]["by_quality_reason"]["eligible"]["decisions"] == len(rows)
     assert report["decision_timing"]["by_market"]["1"]["decisions"] == 1
     assert report["decision_timing"]["by_market"]["2"]["decisions"] == 1
-    assert report["analysis_version"] == "veritas-source-replay-v2"
+    assert report["decision_timing"]["by_market"]["1"][
+        "market_outcomes_updated_in_source_frame"
+    ] == {"2": 1}
+    assert report["analysis_version"] == "veritas-source-replay-v3"
+    activity = report["source_activity_by_market"][0]
+    assert activity["touched_book_update_frames"] == 1
+    assert activity["both_outcome_update_frames"] == 1
+    assert activity["pair_touch_intervals_ms"] is None
 
 
 def test_reports_source_state_divergence(tmp_path):

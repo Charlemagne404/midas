@@ -25,12 +25,14 @@ The initial checkpoint diagnoses the frozen campaign's opportunity, quality,
 and censoring funnel and adds a versioned hypothetical economics engine. A
 second checkpoint reproduces sampled decisions from finalized raw segments;
 the third counts raw campaign-period quality and pre-fee opportunity states;
-the fourth measures decision lag and paired-book freshness. The original Reality
-campaign remains in its operational worktree and unchanged.
+the fourth measures decision lag and paired-book freshness; the fifth measures
+per-market update intervals and their alignment with scheduled decisions. The
+original Reality campaign remains in its operational worktree and unchanged.
 See [checkpoint 001](docs/VERITAS_GATE_A_CHECKPOINT_001.md),
 [checkpoint 002](docs/VERITAS_GATE_A_CHECKPOINT_002.md),
 [checkpoint 003](docs/VERITAS_GATE_A_CHECKPOINT_003.md),
 [checkpoint 004](docs/VERITAS_GATE_A_CHECKPOINT_004.md),
+[checkpoint 005](docs/VERITAS_GATE_A_CHECKPOINT_005.md),
 [research ledger](docs/VERITAS_RESEARCH_LEDGER.json), and
 [operations instructions](docs/VERITAS_OPERATIONS.md).
 

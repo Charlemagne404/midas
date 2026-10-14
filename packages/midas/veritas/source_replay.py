@@ -27,6 +27,17 @@ MAX_DECISION_SAMPLE_COMPRESSED_BYTES = 128 * 1024**2
 MAX_DECISION_SAMPLE_DECOMPRESSED_BYTES = 512 * 1024**2
 MAX_SOURCE_BYTES = 20 * 1024**3
 MAX_LINEAGE_REFERENCES = 1_000_000
+_UPDATE_INTERVAL_BUCKETS = (
+    ("0_to_250_ms", 250 * 10**6),
+    ("250_to_500_ms", 500 * 10**6),
+    ("500_ms_to_1_s", 10**9),
+    ("1_to_2_s", 2 * 10**9),
+    ("2_to_5_s", 5 * 10**9),
+    ("5_to_10_s", 10 * 10**9),
+    ("10_to_30_s", 30 * 10**9),
+    ("30_to_60_s", 60 * 10**9),
+    ("60_s_or_more", None),
+)
 _REF_FIELDS = (
     "segment",
     "ordinal",
@@ -143,6 +154,7 @@ def _new_timing_bucket() -> dict[str, Any]:
         "source_input_lag_ns": [],
         "source_input_lag_bands": Counter(),
         "pair_books_available": Counter(),
+        "market_outcomes_updated_in_source_frame": Counter(),
         "max_pair_age_ns": [],
         "cross_outcome_skew_ns": [],
         "freshness_violation_decisions": 0,
@@ -170,6 +182,9 @@ def _record_timing(bucket: dict[str, Any], sample: dict[str, Any], limit_ns: int
         bucket["source_input_lag_ns"].append(lag_ns)
         bucket["source_input_lag_bands"][_lag_band(lag_ns, limit_ns)] += 1
     bucket["pair_books_available"][str(sample["pair_books_available"])] += 1
+    bucket["market_outcomes_updated_in_source_frame"][
+        str(sample["market_outcomes_updated_in_source_frame"])
+    ] += 1
     if sample["freshness_violating_legs"]:
         bucket["freshness_violation_decisions"] += 1
     if sample["max_pair_age_ns"] is not None:
@@ -200,12 +215,114 @@ def _timing_distribution(values: list[int]) -> dict[str, Any] | None:
     }
 
 
+def _interval_band(interval_ns: int) -> str:
+    for label, upper_ns in _UPDATE_INTERVAL_BUCKETS:
+        if upper_ns is None or interval_ns <= upper_ns:
+            return label
+    raise AssertionError("An interval did not match a configured bucket")
+
+
+def _new_interval_state() -> dict[str, Any]:
+    return {
+        "interval_count": 0,
+        "interval_buckets": Counter(),
+        "intervals_censored_by_discontinuity": 0,
+        "nonmonotonic_intervals": 0,
+        "last_update": None,
+    }
+
+
+def _new_source_activity(market: dict[str, Any]) -> dict[str, Any]:
+    outcomes = sorted(set(str(outcome) for outcome in market["tokens"].values()))
+    return {
+        "market_id": str(market["id"]),
+        "condition": market["condition"],
+        "touched_book_update_frames": 0,
+        "one_outcome_update_frames": 0,
+        "both_outcome_update_frames": 0,
+        "frames_by_updated_outcome_count": Counter(),
+        "outcome_update_frames": Counter(),
+        "quality_reason_counts": Counter(),
+        "pair_touch_interval": _new_interval_state(),
+        "outcomes": {outcome: _new_interval_state() for outcome in outcomes},
+    }
+
+
+def _record_interval(state: dict[str, Any], now_ns: int, gap_epoch: int) -> None:
+    previous = state["last_update"]
+    if previous is not None:
+        prior_ns, prior_epoch = previous
+        if prior_epoch != gap_epoch:
+            state["intervals_censored_by_discontinuity"] += 1
+        elif now_ns < prior_ns:
+            state["nonmonotonic_intervals"] += 1
+        else:
+            state["interval_count"] += 1
+            state["interval_buckets"][_interval_band(now_ns - prior_ns)] += 1
+    state["last_update"] = (now_ns, gap_epoch)
+
+
+def _interval_distribution(state: dict[str, Any]) -> dict[str, Any] | None:
+    count = state["interval_count"]
+    if not count:
+        return None
+
+    def nearest_rank_bucket(fraction: D) -> str:
+        rank = int((fraction * count).to_integral_value(rounding=ROUND_CEILING))
+        cumulative = 0
+        for label, _ in _UPDATE_INTERVAL_BUCKETS:
+            cumulative += state["interval_buckets"][label]
+            if cumulative >= rank:
+                return label
+        raise AssertionError("Interval bucket count is inconsistent")
+
+    return {
+        "count": count,
+        "nearest_rank_p50_bucket": nearest_rank_bucket(D("0.50")),
+        "nearest_rank_p95_bucket": nearest_rank_bucket(D("0.95")),
+        "bucket_counts": {
+            label: state["interval_buckets"][label] for label, _ in _UPDATE_INTERVAL_BUCKETS
+        },
+    }
+
+
+def _finish_source_activity(state: dict[str, Any], family_id: str | None) -> dict[str, Any]:
+    return {
+        "market_id": state["market_id"],
+        "family_id": family_id,
+        "touched_book_update_frames": state["touched_book_update_frames"],
+        "one_outcome_update_frames": state["one_outcome_update_frames"],
+        "both_outcome_update_frames": state["both_outcome_update_frames"],
+        "frames_by_updated_outcome_count": dict(
+            sorted(state["frames_by_updated_outcome_count"].items())
+        ),
+        "outcome_update_frames": dict(sorted(state["outcome_update_frames"].items())),
+        "quality_reason_counts": dict(sorted(state["quality_reason_counts"].items())),
+        "pair_touch_intervals_ms": _interval_distribution(state["pair_touch_interval"]),
+        "pair_touch_intervals_censored_by_discontinuity": state["pair_touch_interval"][
+            "intervals_censored_by_discontinuity"
+        ],
+        "outcome_update_intervals_ms": {
+            outcome: _interval_distribution(interval)
+            for outcome, interval in sorted(state["outcomes"].items())
+        },
+        "outcome_update_intervals_censored_by_discontinuity": {
+            outcome: interval["intervals_censored_by_discontinuity"]
+            for outcome, interval in sorted(state["outcomes"].items())
+        },
+        "nonmonotonic_pair_intervals": state["pair_touch_interval"]["nonmonotonic_intervals"],
+    }
+
+
 def _finish_timing_bucket(bucket: dict[str, Any]) -> dict[str, Any]:
     return {
         "decisions": bucket["decisions"],
         "source_input_lag_ms": _timing_distribution(bucket["source_input_lag_ns"]),
         "source_input_lag_bands": dict(sorted(bucket["source_input_lag_bands"].items())),
         "pair_books_available": dict(sorted(bucket["pair_books_available"].items())),
+        "market_outcomes_updated_in_source_frame": dict(
+            sorted(bucket["market_outcomes_updated_in_source_frame"].items())
+        ),
         "maximum_leg_age_ms": _timing_distribution(bucket["max_pair_age_ns"]),
         "cross_outcome_skew_ms": _timing_distribution(bucket["cross_outcome_skew_ns"]),
         "freshness_violation_decisions": bucket["freshness_violation_decisions"],
@@ -227,6 +344,11 @@ def _decision_timing(
             for token in market["tokens"]
             if token in context.engine.books
         ]
+    market_updates_in_frame = sum(
+        book["last"][0] == source_ref["ordinal"]
+        and book["received_ns"] == source_ref["received_ns"]
+        for book in books
+    )
     ages = [now - book["received_ns"] for book in books]
     times = [book["received_ns"] for book in books]
     lag_ns = now - source_ref["received_ns"]
@@ -236,10 +358,52 @@ def _decision_timing(
         "market_id": str(event.get("market_id", "unknown")),
         "family_id": event.get("family_id"),
         "pair_books_available": len(books),
+        "market_outcomes_updated_in_source_frame": market_updates_in_frame,
         "max_pair_age_ns": max(ages) if len(books) == 2 else None,
         "cross_outcome_skew_ns": max(times) - min(times) if len(times) == 2 else None,
         "freshness_violating_legs": sum(age > max_freshness_ns for age in ages),
     }
+
+
+def _observe_source_activity_frame(
+    context: Context,
+    record: dict[str, Any],
+    activity_by_condition: dict[str, dict[str, Any]],
+    gap_epoch: int,
+    spec: Any,
+) -> None:
+    now_ns = record["received_ns"]
+    ordinal = record["ordinal"]
+    for condition, market in context.cohort.items():
+        updated_outcomes = []
+        for token, outcome in market["tokens"].items():
+            book = context.engine.books.get(token)
+            if book is not None and book["last"][0] == ordinal and book["received_ns"] == now_ns:
+                updated_outcomes.append(str(outcome))
+        if not updated_outcomes:
+            continue
+
+        activity = activity_by_condition.get(condition)
+        if activity is None:
+            activity = _new_source_activity(market)
+            activity_by_condition[condition] = activity
+        activity["touched_book_update_frames"] += 1
+        distinct_outcomes = sorted(set(updated_outcomes))
+        if len(distinct_outcomes) > 1:
+            activity["both_outcome_update_frames"] += 1
+        else:
+            activity["one_outcome_update_frames"] += 1
+        activity["frames_by_updated_outcome_count"][str(len(distinct_outcomes))] += 1
+        reason = pair_quality(market, context.engine.books, now_ns, spec)
+        if reason is None and any(token in context.bad for token in market["tokens"]):
+            reason = "independent_book_divergence"
+        activity["quality_reason_counts"][reason or "eligible"] += 1
+
+        _record_interval(activity["pair_touch_interval"], now_ns, gap_epoch)
+        for outcome in distinct_outcomes:
+            interval = activity["outcomes"].setdefault(outcome, _new_interval_state())
+            _record_interval(interval, now_ns, gap_epoch)
+            activity["outcome_update_frames"][outcome] += 1
 
 
 def _load_decisions(root: Path, limit: int) -> tuple[list[dict[str, Any]], int | None, int, bool]:
@@ -474,6 +638,10 @@ def reconcile_forward_sources(
     timing_by_reason: defaultdict[str, dict[str, Any]] = defaultdict(_new_timing_bucket)
     timing_by_market: defaultdict[str, dict[str, Any]] = defaultdict(_new_timing_bucket)
     timing_market_families: dict[str, str | None] = {}
+    activity_by_condition: dict[str, dict[str, Any]] = {}
+    source_gap_reasons: Counter[str] = Counter()
+    activity_discontinuities: Counter[str] = Counter()
+    activity_gap_epoch = 0
     expected_refs: set[tuple[Any, ...]] = set()
     for event in decisions:
         if event["decision_ordinal"] > last_ordinal:
@@ -496,12 +664,41 @@ def reconcile_forward_sources(
     verified_checkpoints = 0
     for record, ref in source_records(raw_root, source_manifest):
         source_records_seen += 1
-        context.consume(record, ref)
+        now_ns = record["received_ns"]
+        in_campaign_window = identity["start_ns"] <= now_ns < identity["end_ns"]
+        if record["kind"] == "gap":
+            activity_gap_epoch += 1
+            if in_campaign_window:
+                reason = record["payload"].get("reason", "unknown")
+                source_gap_reasons[reason] += 1
+                activity_discontinuities[reason] += 1
+        barrier = context.consume(record, ref)
         ref_key = _reference_key(ref)
         if ref_key in expected_refs:
             resolved_refs.add(ref_key)
         if record["kind"] == "checkpoint":
             verified_checkpoints += 1
+        if record["kind"] == "frame" and in_campaign_window:
+            producer_supported = context.producer_hash in identity["allowed_producer_hashes"]
+            reconstruction_supported = (
+                context.engine.reconstruction_version in identity["allowed_reconstruction_versions"]
+            )
+            if not producer_supported or not reconstruction_supported:
+                activity_gap_epoch += 1
+                if in_campaign_window:
+                    reason = (
+                        "unsupported_producer_frame"
+                        if not producer_supported
+                        else "unsupported_reconstruction_frame"
+                    )
+                    activity_discontinuities[reason] += 1
+            elif barrier == "receiver_clock_regression":
+                activity_gap_epoch += 1
+                activity_discontinuities["receiver_clock_regression"] += 1
+            else:
+                _observe_source_activity_frame(
+                    context, record, activity_by_condition, activity_gap_epoch, spec
+                )
         at_ordinal = targets.get(record["ordinal"], [])
         if at_ordinal:
             target_ids_found.update(target["id"] for target in at_ordinal)
@@ -555,9 +752,19 @@ def reconcile_forward_sources(
             for market_id, bucket in sorted(timing_by_market.items())
         },
     }
+    final_families = context.families.identities()
+    source_activity = [
+        _finish_source_activity(
+            activity,
+            final_families.get("condition:" + condition),
+        )
+        for condition, activity in sorted(
+            activity_by_condition.items(), key=lambda item: (item[1]["market_id"], item[0])
+        )
+    ]
     # Keep only aggregate mismatch categories; no raw market or event payloads are exported.
     return {
-        "analysis_version": "veritas-source-replay-v2",
+        "analysis_version": "veritas-source-replay-v3",
         "captured_ns": time.time_ns(),
         "campaign_id": campaign_id,
         "campaign_root": str(campaign_root),
@@ -583,11 +790,17 @@ def reconcile_forward_sources(
         "difference_paths": dict(sorted(difference_paths.items())),
         "history_lineage_variance": dict(sorted(history_variance.items())),
         "decision_timing": timing_report,
+        "source_gap_reasons_in_campaign_window": dict(sorted(source_gap_reasons.items())),
+        "source_activity_discontinuities_in_campaign_window": dict(
+            sorted(activity_discontinuities.items())
+        ),
+        "source_activity_by_market": source_activity,
         "passed_for_finalized_prefix": bool(compared and not mismatches),
         "scope": (
             "Reproduces campaign source state, producer/reconstruction identity, quality reason, "
             "features, baseline, and source lineage for the sampled decisions whose source "
-            "ordinals are in the captured finalized segment prefix. It does not infer omitted "
-            "decisions, fills, or outcomes."
+            "ordinals are in the captured finalized segment prefix. It also summarizes campaign "
+            "window book-update intervals by market, excluding intervals that span a recorded "
+            "gap or unsupported source frame. It does not infer omitted decisions, fills, or outcomes."
         ),
     }

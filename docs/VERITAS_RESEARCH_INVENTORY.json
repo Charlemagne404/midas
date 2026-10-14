@@ -4,7 +4,7 @@
   "status": "in_progress",
   "baseline_commit": "f968095feb9c591de38fe12d7493224425f62f3a",
   "branch": "project/veritas",
-  "last_checkpoint": "docs/VERITAS_GATE_A_CHECKPOINT_004.md",
+  "last_checkpoint": "docs/VERITAS_GATE_A_CHECKPOINT_005.md",
   "datasets": [
     {
       "dataset_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
@@ -104,6 +104,23 @@
       "freshness_violation_decisions": 1337,
       "mismatches": 0,
       "promotion": "diagnostic only; no campaign, cadence, strategy, or profitability promotion"
+    },
+    {
+      "experiment_id": "VERITAS-GATE-A-SOURCE-CADENCE-20261014-001",
+      "type": "source_update_interval_and_scheduled_decision_alignment",
+      "status": "completed_snapshot_market_activity_is_asynchronous",
+      "source_dataset_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
+      "evidence": "docs/VERITAS_GATE_A_SOURCE_CADENCE_001.json",
+      "analysis_version": "veritas-source-replay-v3",
+      "journal_event_tail_sequence": 24919,
+      "decision_rows_sampled": 2120,
+      "decisions_reproduced": 2120,
+      "active_segment_decisions_uncovered": 0,
+      "book_update_frames": 22780,
+      "book_resynchronization_gaps": 138,
+      "freshness_violation_decisions": 1380,
+      "mismatches": 0,
+      "promotion": "diagnostic only; no cadence, recorder, strategy, or profitability promotion"
     }
   ],
   "models": [],
@@ -129,6 +146,7 @@
     "The current live journal and status snapshots advance continuously and are not transactionally synchronized.",
     "The database integrity check passed; this snapshot did not reverify the full event hash chain or raw-source replay.",
     "No private execution, hypothetical fill, market impact, or real profitability target is identified.",
-    "Decision-time freshness is derived from source frame receiver timestamps; it does not identify upstream quote age or venue-level synchronization."
+    "Decision-time freshness is derived from source frame receiver timestamps; it does not identify upstream quote age or venue-level synchronization.",
+    "Pooled source update intervals hide time-block clustering and exclude intervals across discontinuities; they do not independently explain every stale decision."
   ]
 }
