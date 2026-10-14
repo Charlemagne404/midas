@@ -21,7 +21,7 @@ fills and public quote observations remain explicitly distinct. No wallet,
 private key, real-money order submission or live execution is introduced.
 
 Before final verification, estimates against the original full directive were
-95% mandatory functionality,55–65% stretch goals and70% overall engineering.
+95% mandatory functionality, 55–65% stretch goals and 70% overall engineering.
 These estimates are judgment, not measured task counts. Final acceptance will
 follow the owner's revised completion criteria; deferred stretch work will not
 be represented as implemented.
@@ -85,7 +85,7 @@ creates a new dataset identity while preserving canonical observations/labels.
 
 ## 4. Verified training and research inventory
 
-**Pre-final-study inventory:**45registered artifacts;44fitted plus one heuristic.
+**Pre-final-study inventory:**45 registered artifacts; 44 fitted plus one heuristic.
 
 | Family | Artifacts | Interpretation |
 |---|---:|---|
@@ -105,18 +105,18 @@ A readable [per-model table](PROMETHEUS_FINAL_MODEL_INVENTORY.md) records every 
 Unopened test metrics remain unopened; lack of a final-test metric is explicit.
 
 Seven synthetic dataset identities represent five source collections, a target
-derivative and a storage migration.27tournament artifacts include one performance
-study and52,323correlated variants.70native jobs:66completed,2cancelled,2failed.
+derivative and a storage migration.27 tournament artifacts include one performance
+study and52,323 correlated variants.70 native jobs: 66 completed, two cancelled and two failed.
 
 Dataset/tournament manifests contain4,185distinct synthetic episode identities:
-2,986dataset identities,1,359tournament identities,160overlap. This excludes
+2,986 dataset identities,1,359 tournament identities,160 overlap. This excludes
 separate recovery/unwind collections and the protected Laboratory campaign.
 Identity uniqueness does not establish independent realistic samples; generator
 shortcuts, repeated shapes and repeated cohorts are documented limitations.
-The protected Laboratory retains162,000variants over18,000underlying groups.
-Recovery adds540variants over60identities;three unwind studies contain4,320variants
-over360identities. The union across Arena datasets,tournaments,recovery and unwind
-is4,605distinct synthetic identities,still not4,605independent real-market samples.
+The protected Laboratory retains162,000 variants over 18,000 underlying groups.
+Recovery adds 540 variants over 60 identities; three unwind studies contain4,320 variants
+over 360 identities. The union across Arena datasets,tournaments,recovery and unwind
+is 4,605 distinct synthetic identities,still not 4,605 independent real-market samples.
 
 The production capacity plan was cancelled before native admission during
 controlled finalization. Its coordinator failed the prerequisite regression gate.
@@ -203,41 +203,45 @@ legacy incumbent source gaps remain a limitation rather than invented provenance
 
 ## 8. Final tests and operational evidence
 
-**Pending:**final full backend regression, deployed
-UI/service/archive checks and refreshed inventory. The disk-scan and recording
-isolation corrections pass focused verification. No production capacity campaign
+**Pending:** the final full backend regression and deployed UI/service/archive
+checks. The production inventory is complete. No production capacity campaign
 is required for wrap-up.
 
-Completed finalization checks so far:
+Completed checks:
 
-- Frontend22tests pass;TypeScript build checking,ESLint and production build pass.
-- Current packages/API/scripts/tests Ruff passes. A broader scan found three
-  import-order issues in immutable historical captures; those bytes are preserved.
-- Latest prior passing full backend gate582passed/1skipped. New gate finished
- 599passed/1failed/1skipped in1154.11s. Failure: a transient SQLite SHM file
- vanished during archive disk accounting, causing restart recovery to fail.
- Correction and new complete regression are required; this gate is not passing.
-- Corrected planning verifier4passed;inference refusal coverage3passed separately.
-- Stabilization19tests passed16.03s,including actual API shutdown/restart recovery.
- Laboratory execution identity unchanged; fixes committed89d0132.
-- Full artifact audit:7datasets,45model artifacts,27completed tournaments and
- 52,323replay variants pass;2partial historical tournaments identified separately.
-- Initial final browser suite4passed/1failed;isolated Arena generation/training/
- evaluation/search/replay passed. Recording isolation failure corrected;corrected
- suite subsequently passed all5workflows in4.0minutes.
-- Pre-admission protected SQLite quick_checkOK;counts162000/18000/162000;
-  exclusive original owner lock held;API READY,paper-only.
+- **Frontend:** 22 tests passed; TypeScript, ESLint and production build passed.
+- **Current Python source:** Ruff passed for packages, API, scripts and tests.
+  A broader scan found three import-order issues in immutable historical source
+  captures. Their original evidence bytes are preserved.
+- **Previous full backend gate:** 582 passed and one skipped. The subsequent
+  gate finished with 599 passed, one failed and one skipped in 1,154.11 seconds.
+  The failure was a transient SQLite SHM file disappearing during archive disk
+  accounting. That failed gate is retained and never counted as passing.
+- **Stabilization:** 19 tests passed in 16.03 seconds, including API shutdown and
+  restart recovery. The Laboratory execution identity is unchanged. Corrections
+  were committed as `89d0132`; a complete regression is now running.
+- **Planning verification:** four tests passed; three inference refusal tests
+  passed separately. Fixture inference and export checks are described above.
+- **Full artifact audit:** seven datasets, 45 model artifacts, 27 completed
+  tournaments and all 52,323 replay variants passed. Two historical partial
+  tournaments were identified separately and preserved.
+- **Recovery audit:** all 4,860 variants passed verification: 540 missing-leg BUY
+  variants and 4,320 unwind variants. Each study's verification scope is recorded
+  in `PROMETHEUS_FINAL_RECOVERY_AUDIT.json`.
+- **Browser suite:** the initial run had four passes and one failure caused by
+  temporary APIs sharing capped production recordings. After recording isolation
+  was corrected, **all five workflows passed in 4.0 minutes**, including genuine
+  Arena generation, training, evaluation, search and replay.
+- **Protected archive:** SQLite quick_check passed; counts remained 162,000
+  variants, 18,000 indices and 162,000 unique result IDs. The original exclusive
+  owner lock was held and API health was READY in paper-only mode.
 
-Final recovery audit reverified540missing-leg BUY variants and4,320unwind
-variants (4,860total),including bounded observable decisions,matched controls
-and per-study accounting verification. See PROMETHEUS_FINAL_RECOVERY_AUDIT.json.
-Corrected browser suite:5passed;final screenshots preserved separately under
-PROMETHEUS_FINAL_BROWSER_IMAGES while previous documentation images were restored.
-Unrelated RoadReach/Vanguard user services remain active with original processes;
-no configuration,installation or restart of those services was performed.
+Final screenshots are preserved under `PROMETHEUS_FINAL_BROWSER_IMAGES`; prior
+published documentation images were restored. RoadReach and Vanguard remain
+active with their original processes. Neither service was restarted or modified.
 
-The chart chunk remains544kB with a production-build warning. This is not a build
-failure. Final evidence files use the PROMETHEUS_FINAL_* prefix.
+The chart chunk remains 544 kB and produces a build-size warning; the build
+passes. Final evidence files use the `PROMETHEUS_FINAL_*` prefix.
 
 ## 9. Known limitations and historical failures
 
