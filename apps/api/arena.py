@@ -6,7 +6,7 @@ import json
 import re
 import subprocess
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal, cast
 
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, ConfigDict
@@ -176,7 +176,7 @@ def router(root: Path) -> APIRouter:
         return values
 
     def inspect_plan(identity: str) -> dict[str, Any]:
-        record = json.loads((path("plans", identity) / "manifest.json").read_text())
+        record: dict[str, Any] = json.loads((path("plans", identity) / "manifest.json").read_text())
         if record["state"] == "RUNNING" and record.get("owner_job_id"):
             from midas.arena.jobs import inspect
 
@@ -292,7 +292,7 @@ def router(root: Path) -> APIRouter:
         if offset < 0 or limit < 1 or limit > 200:
             raise HTTPException(422, "Use nonnegative offset and limit 1-200")
 
-        def read():
+        def read() -> dict[str, Any]:
             manifest, rows = load(root, identity)
             return {
                 "dataset_id": identity,
@@ -340,7 +340,7 @@ def router(root: Path) -> APIRouter:
 
             if action not in {"pause", "resume", "cancel"}:
                 raise ValueError("Unknown schedule control")
-            return control(root, identity, action)
+            return control(root, identity, cast(Literal["pause", "resume", "cancel"], action))
 
         return await call(change)
 

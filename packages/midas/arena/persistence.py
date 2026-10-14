@@ -81,7 +81,9 @@ def quote_label(env: Environment, position_id: str, arrival_ms: int) -> dict[str
         "quantity": str(quantity),
         "allocated_capital": str(budget),
         "original_limits": {a: str(v) for a, v in limits.items()},
-        "quote_status": "INVALID_FUTURE_VENUE_TIMESTAMP" if future else result.status.value,
+        "quote_status": result.status.value
+        if result is not None
+        else "INVALID_FUTURE_VENUE_TIMESTAMP",
         "within_original_limits": within_limits,
         "venue_state_sha256": digest([env.market, env.books]),
         "venue_clock_basis": "exchange timestamp; delayed observer receipt is not a venue timestamp",

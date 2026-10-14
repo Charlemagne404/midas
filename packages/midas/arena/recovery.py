@@ -211,7 +211,7 @@ class RecoveryEnvironment(Environment):
             before = copy.deepcopy(self.state["used_liquidity"].get(action["asset"], {}))
             ledger_size = len(self.state["positions"][action["position"]]["exchange"]["ledger"])
         self.state = transition(self.state, command, strategy)
-        if before is not None:
+        if before is not None and action is not None:
             model = ExecutionModel.model_validate(
                 self.state["positions"][action["position"]]["execution_model"]
             )
@@ -374,14 +374,18 @@ def run_study(root: Any, spec: RecoveryStudySpec, progress: Any = None) -> dict[
                     update={"seed": spec.seed + index}
                 ),
             )
-            values = {}
+            policy_values: dict[str, float] = {}
             for policy in ("no_trade", "hold", "complete_missing"):
                 started = time.monotonic()
                 if policy == "no_trade":
                     result = Environment(
                         scenario.model_copy(update={"strategy": "no_trade"}), retain=True
                     ).run()
-                    report = {"runner_version": VERSION, "recovery_decisions": [], "result": result}
+                    report: dict[str, Any] = {
+                        "runner_version": VERSION,
+                        "recovery_decisions": [],
+                        "result": result,
+                    }
                 else:
                     report = execute(scenario, policies[policy])
                     result = report["result"]
@@ -410,12 +414,12 @@ def run_study(root: Any, spec: RecoveryStudySpec, progress: Any = None) -> dict[
                     "runtime_seconds": time.monotonic() - started,
                 }
                 rows.append(row)
-                values[policy] = float(result["metrics"]["net_simulated_pnl"])
+                policy_values[policy] = float(result["metrics"]["net_simulated_pnl"])
                 atomic_replay(directory / "replays" / (row["id"] + ".json"), {"row": row, **report})
                 if progress:
                     progress(len(rows), spec.episodes * 9)
             grouped[f"{families[index % len(families)]}:{spec.seed + index}"].append(
-                values["complete_missing"] - values["hold"]
+                policy_values["complete_missing"] - policy_values["hold"]
             )
     means = np.array([np.mean(grouped[g]) for g in sorted(grouped)])
     rng = np.random.default_rng(991)

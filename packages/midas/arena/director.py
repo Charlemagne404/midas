@@ -3,7 +3,7 @@
 import json
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, Self
 
 from pydantic import Field, model_validator
 
@@ -28,8 +28,8 @@ class DirectorSpec(Model):
     sweep_seeds: tuple[int, ...] = (11, 29)
 
     @model_validator(mode="after")
-    def bounded_sweep(self):
-        arguments = {
+    def bounded_sweep(self) -> Self:
+        arguments: dict[str, Any] = {
             "dataset_id": self.dataset_id,
             "epochs": self.training_epochs,
             "seeds": self.sweep_seeds,
@@ -105,7 +105,7 @@ def run_director(root: Path, spec: DirectorSpec, progress: Any = None) -> dict[s
 
         callback = Progress(step)
         if index == 0:
-            sweep_args = {
+            sweep_args: dict[str, Any] = {
                 "dataset_id": spec.dataset_id,
                 "epochs": spec.training_epochs,
                 "seeds": spec.sweep_seeds,

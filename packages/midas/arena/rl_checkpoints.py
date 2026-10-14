@@ -6,14 +6,14 @@ import random
 import re
 import tempfile
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from midas.arena.artifacts import artifact_path, atomic_json, sha256
 
 CONTINUATION = "optimizer-preserving-environment-reset"
 
 
-def publish(model: Any, directory: Path, metadata: dict) -> dict:
+def publish(model: Any, directory: Path, metadata: dict[str, Any]) -> dict[str, Any]:
     import numpy as np
     import torch
 
@@ -37,7 +37,7 @@ def publish(model: Any, directory: Path, metadata: dict) -> dict:
             os.fsync(fd)
         finally:
             os.close(fd)
-        numpy_state = np.random.get_state()
+        numpy_state = cast(tuple[Any, ...], np.random.get_state())
         record = {
             **metadata,
             "checkpoint_version": "ppo-checkpoint-2",
@@ -60,8 +60,8 @@ def publish(model: Any, directory: Path, metadata: dict) -> dict:
 
 
 def parent_checkpoint(
-    root: Path, identity: str, configuration: dict, dataset_hash: str, source_hash: str
-) -> tuple[Path, dict]:
+    root: Path, identity: str, configuration: dict[str, Any], dataset_hash: str, source_hash: str
+) -> tuple[Path, dict[str, Any]]:
     directory = artifact_path(root, "models", identity)
     record_path = directory / "manifest.json"
     if not record_path.exists():
@@ -102,14 +102,14 @@ def parent_checkpoint(
     return path, saved
 
 
-def restore_rng(saved: dict) -> None:
+def restore_rng(saved: dict[str, Any]) -> None:
     import numpy as np
     import torch
 
     if "rng" not in saved:
         return
 
-    def tuples(value):
+    def tuples(value: Any) -> Any:
         return tuple(tuples(v) for v in value) if isinstance(value, list) else value
 
     random.setstate(tuples(saved["rng"]["python"]))

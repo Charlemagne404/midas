@@ -4,7 +4,7 @@ import fcntl
 import json
 import time
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import Field
 
@@ -22,14 +22,14 @@ class MigrationSpec(Model):
     )
 
 
-def migrate(root: Path, spec: MigrationSpec, progress=None) -> dict:
+def migrate(root: Path, spec: MigrationSpec, progress: Any = None) -> dict[str, Any]:
     root.mkdir(parents=True, exist_ok=True)
     with (root / "migration.lock").open("a+") as lease:
         fcntl.flock(lease, fcntl.LOCK_EX)
         return _migrate(root, spec, progress)
 
 
-def _migrate(root: Path, spec: MigrationSpec, progress=None) -> dict:
+def _migrate(root: Path, spec: MigrationSpec, progress: Any = None) -> dict[str, Any]:
     from midas.arena.jobs import artifact_usage
 
     parent_directory = artifact_path(root, "datasets", spec.source_dataset_id)

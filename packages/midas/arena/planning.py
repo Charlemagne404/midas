@@ -3,7 +3,7 @@
 import json
 import time
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import Field
 
@@ -24,7 +24,7 @@ class PlanningSpec(Model):
     epochs: int = Field(default=80, ge=5, le=200)
 
 
-def fresh_groups(root: Path, spec: PlanningSpec, dataset: dict) -> list[str]:
+def fresh_groups(root: Path, spec: PlanningSpec, dataset: dict[str, Any]) -> list[str]:
     families = ("one_sided", "deep", "volatile", "calm", "disappearing", "thin")
     wanted = {
         f"{families[i % len(families)]}:{spec.challenge_seed + i}" for i in range(spec.episodes)
@@ -65,7 +65,7 @@ def fresh_groups(root: Path, spec: PlanningSpec, dataset: dict) -> list[str]:
     return sorted(wanted)
 
 
-def propose(root: Path, spec: PlanningSpec) -> dict:
+def propose(root: Path, spec: PlanningSpec) -> dict[str, Any]:
     dataset, _ = load(root, spec.dataset_id)
     if dataset.get("label_target", "completion") != "completion":
         raise ValueError("Capacity question requires a completion dataset")
@@ -217,7 +217,7 @@ def propose(root: Path, spec: PlanningSpec) -> dict:
     identity = "plan-" + digest(frozen)[:24]
     path = artifact_path(root, "plans", identity) / "manifest.json"
     if path.exists():
-        record = json.loads(path.read_text())
+        record: dict[str, Any] = json.loads(path.read_text())
         if record["frozen"] != frozen:
             raise ValueError("Existing research plan differs")
         return record
@@ -253,9 +253,9 @@ def propose(root: Path, spec: PlanningSpec) -> dict:
     return record
 
 
-def execute(root: Path, identity: str, progress=None) -> dict:
+def execute(root: Path, identity: str, progress: Any = None) -> dict[str, Any]:
     path = artifact_path(root, "plans", identity) / "manifest.json"
-    record = json.loads(path.read_text())
+    record: dict[str, Any] = json.loads(path.read_text())
     frozen = record["frozen"]
     if record["state"] == "COMPLETED":
         return record

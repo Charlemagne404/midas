@@ -203,7 +203,7 @@ legacy incumbent source gaps remain a limitation rather than invented provenance
 
 ## 8. Final tests and operational evidence
 
-**Pending:** strict Python typing corrections, the final full backend regression and deployed UI/service/archive
+**Pending:** post-typing full backend regression and deployed UI/service/archive
 checks. The production inventory is complete. No production capacity campaign
 is required for wrap-up.
 
@@ -215,15 +215,18 @@ Completed checks:
   captures. Their original evidence bytes are preserved.
 - **Strict Python typing:** 59 errors in 11 files were found across 74 checked
   source files. Diagnostics are preserved in `PROMETHEUS_FINAL_BACKEND_TYPES.log`.
-  These are pending correction after the live gate is terminal; typing is not
-  claimed to pass. Frontend TypeScript verification passed separately.
+  The prepared correction was applied after the original gate became terminal.
+  **Current strict mypy passes all 74 files**, and current Ruff passes. Frontend
+  TypeScript verification passed separately; affected behavior is being rechecked.
 - **Previous full backend gate:** 582 passed and one skipped. The subsequent
   gate finished with 599 passed, one failed and one skipped in 1,154.11 seconds.
   The failure was a transient SQLite SHM file disappearing during archive disk
   accounting. That failed gate is retained and never counted as passing.
 - **Stabilization:** 19 tests passed in 16.03 seconds, including API shutdown and
   restart recovery. The Laboratory execution identity is unchanged. Corrections
-  were committed as `89d0132`; a complete regression is now running.
+  were committed as `89d0132`. The complete pre-typing regression passed
+  **608 tests with one skipped in 1,125.74 seconds**. A post-typing regression
+  is required before final deployment acceptance.
 - **Planning verification:** four tests passed; three inference refusal tests
   passed separately. Fixture inference and export checks are described above.
 - **Full artifact audit:** seven datasets, 45 model artifacts, 27 completed

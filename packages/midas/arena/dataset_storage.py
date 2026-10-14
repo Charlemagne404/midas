@@ -2,6 +2,7 @@
 
 import json
 from pathlib import Path
+from typing import Any
 
 from midas.arena.artifacts import artifact_path, sha256
 from midas.arena.features import FEATURES
@@ -10,7 +11,7 @@ from midas.economics.attestation import digest
 VERSIONS = {"decision-storage-1": "ordered-features-1", "decision-storage-2": "named-features-1"}
 
 
-def unique_object(pairs):
+def unique_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
     result = {}
     for key, value in pairs:
         if key in result:
@@ -19,14 +20,14 @@ def unique_object(pairs):
     return result
 
 
-def decode_rows(payload: str, manifest: dict) -> list[dict]:
+def decode_rows(payload: str, manifest: dict[str, Any]) -> list[dict[str, Any]]:
     version = manifest.get("storage_version", "decision-storage-1")
     if (
         version not in VERSIONS
         or manifest.get("row_encoding", "ordered-features-1") != VERSIONS[version]
     ):
         raise ValueError("Unsupported dataset storage schema/encoding")
-    rows = json.loads(payload, object_pairs_hook=unique_object)
+    rows: list[dict[str, Any]] = json.loads(payload, object_pairs_hook=unique_object)
     if not isinstance(rows, list):
         raise ValueError("Stored dataset rows must be a list")
     for row in rows:
@@ -44,7 +45,7 @@ def decode_rows(payload: str, manifest: dict) -> list[dict]:
     return rows
 
 
-def encode_rows(rows: list[dict], version: str) -> list[dict]:
+def encode_rows(rows: list[dict[str, Any]], version: str) -> list[dict[str, Any]]:
     if version not in VERSIONS:
         raise ValueError("Unsupported migration target storage schema")
     return [
@@ -61,10 +62,10 @@ def encode_rows(rows: list[dict], version: str) -> list[dict]:
 def verify_migration(
     root: Path,
     identity: str,
-    manifest: dict,
-    rows: list[dict],
-    parent: dict,
-    parent_rows: list[dict],
+    manifest: dict[str, Any],
+    rows: list[dict[str, Any]],
+    parent: dict[str, Any],
+    parent_rows: list[dict[str, Any]],
 ) -> None:
     migration = manifest["migration"]
     directory = artifact_path(root, "datasets", identity)

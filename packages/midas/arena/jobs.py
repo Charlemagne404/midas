@@ -113,6 +113,8 @@ def create(
     root: Path, spec: JobSpec, launch: bool = True, admission_key: str | None = None
 ) -> dict[str, Any]:
     if spec.kind == "plan" and admission_key is None:
+        if spec.plan_id is None:
+            raise ValueError("Plan job requires a plan identity")
         admission_key = spec.plan_id + "-execute"
     root.mkdir(parents=True, exist_ok=True)
     with (root / "admission.lock").open("a+") as lease:

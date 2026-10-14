@@ -20,7 +20,7 @@ def cold_storage_status(root: Path) -> dict[str, Any]:
         raise ValueError("Cold replay symlinks are not supported")
     stores = list(cold.glob("*/replays.sqlite"))
     total = sum(p.stat().st_size for p in stores)
-    references = []
+    references: list[Path] = []
     for kind in ("tournaments", "recoveries", "unwinds"):
         references.extend((root / kind).glob("*/replays/cold.json"))
     missing = sum(not replay_database(p.parent).is_file() for p in references)
@@ -101,7 +101,7 @@ def replay_database(directory: Path) -> Path:
     record = json.loads(marker.read_text())
     study = directory.parent
     root = study.parent.parent
-    checksum = record.get("database_sha256", "")
+    checksum: str = record.get("database_sha256", "")
     if (
         record.get("version") != "cold-replays-1"
         or study.parent.name not in {"tournaments", "recoveries", "unwinds"}

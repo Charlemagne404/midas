@@ -4,7 +4,7 @@ import os
 import time
 import uuid
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from pydantic import Field
 
@@ -119,7 +119,7 @@ def train_rl(root: Path, spec: RLSpec, progress: Any = None) -> dict[str, Any]:
         }
     checkpoint_record = None
 
-    def checkpoint(model):
+    def checkpoint(model: Any) -> None:
         nonlocal checkpoint_record
         checkpoint_record = publish(
             model,
@@ -161,7 +161,7 @@ def train_rl(root: Path, spec: RLSpec, progress: Any = None) -> dict[str, Any]:
 
     try:
         model = (
-            PPO.load(checkpoint_path, env=environment, device="cpu", force_reset=True)
+            PPO.load(cast(Path, checkpoint_path), env=environment, device="cpu", force_reset=True)
             if saved
             else PPO(
                 "MlpPolicy",
