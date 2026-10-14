@@ -40,7 +40,7 @@ async def run(config: Config, duration: float | None = None) -> None:
         store.close()
         raise
     oldest_ns = time.time_ns()
-    oldest = next(iter(manifest(root)["segments"]), None)
+    oldest = next((s for s in manifest(root)["segments"] if s["count"]), None)
     if oldest:
         from .storage import records
 

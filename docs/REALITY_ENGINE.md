@@ -147,3 +147,24 @@ book snapshot lineage was correct, values were unchanged, and checkpoint hashes
 remain reproducible. Both recorder defects are fixed; no continuous coverage is
 claimed for those reconnect intervals. Metadata corrections are provenance
 annotations, not future market observations used in earlier reconstructed states.
+
+At the first audit (16.2-minute capture span), 1,197 genuine frames contained
+80 book events, 1,104 price-change events, 75 venue-wide new-market events,
+two best-bid/ask events and one last-trade event. Twenty-seven online checkpoints
+matched repeat replay. The finalized segments occupied 1.48 MB; the observed
+initial growth rate, including development reconnect metadata, projected about
+132 MB/day. That projects roughly sixteen days to the 2 GiB budget; actual rates
+vary. Plan export/archive before the budget threshold. Peak recorder memory was
+about 31 MB, well below its 512 MiB cap. The protected archive remained intact
+with its owner lock held, and the existing services kept their original PIDs.
+These are measured early-production checks, not proof of multi-day operation.
+
+The final regression suite is running in the isolated worktree with the pinned
+CPU Arena dependencies and one BLAS/OpenMP thread. Focused Reality tests, Ruff
+and strict typing pass. Mission acceptance remains pending until the broader
+regression and the final runtime audit finish. Read-only evidence generation:
+
+```bash
+systemctl --user kill -s SIGUSR1 midas-reality.service
+.venv/bin/python scripts/audit_reality.py
+```

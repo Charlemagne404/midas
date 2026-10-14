@@ -3,7 +3,7 @@
 import hashlib
 import json
 from collections import Counter, deque
-from decimal import Decimal, DecimalException
+from decimal import Decimal, DecimalException, localcontext
 from typing import Any
 
 from .storage import canonical
@@ -21,6 +21,14 @@ def number(value: Any, *, price: bool = False) -> Decimal:
     ):
         raise ValueError("Invalid decimal range")
     return result
+
+
+def spread(bid: Decimal | None, ask: Decimal | None) -> str | None:
+    if bid is None or ask is None:
+        return None
+    with localcontext() as context:
+        context.prec = 160  # exceeds validated wire coefficient/exponent bounds
+        return str(ask - bid)
 
 
 class Engine:
@@ -88,7 +96,20 @@ class Engine:
         kind = raw.get("event_type", "unknown")
         if not isinstance(kind, str):
             raise ValueError("Invalid event type")
-        self.counts[kind] += 1
+        self.counts[
+            kind
+            if kind
+            in {
+                "book",
+                "price_change",
+                "tick_size_change",
+                "best_bid_ask",
+                "last_trade_price",
+                "market_resolved",
+                "new_market",
+            }
+            else "unsupported_event"
+        ] += 1
         digest = hashlib.sha256(canonical(raw)).hexdigest()
         # Repeated observations remain in raw storage; state updates are idempotent.
         # Do not skip duplicates: repeating level assignments may restore state.
@@ -99,7 +120,10 @@ class Engine:
         self.recent.append(digest)
         self.seen.add(digest)
         if kind == "market_resolved":
-            self.invalidate("market_resolved", raw.get("assets_ids", []))
+            assets = raw.get("assets_ids")
+            if not isinstance(assets, list) or any(not isinstance(asset, str) for asset in assets):
+                raise ValueError("Malformed lifecycle assets")
+            self.invalidate("market_resolved", assets)
             return
         if kind == "new_market":
             return
@@ -233,7 +257,7 @@ class Engine:
                 "asks": [[str(p), str(q)] for p, q in sorted(book["asks"].items())],
                 "best_bid": str(bid) if bid is not None else None,
                 "best_ask": str(ask) if ask is not None else None,
-                "spread": str(ask - bid) if ask is not None and bid is not None else None,
+                "spread": spread(bid, ask),
                 "age_ns": self.now_ns - book["received_ns"],
                 "internally_consistent": book["issue"] is None,
                 "sequence_verified": False,

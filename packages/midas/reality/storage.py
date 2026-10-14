@@ -125,6 +125,20 @@ class Store:
         self.file: Any = None
         try:
             for path in sorted(self.root.glob("*.open")):
+                if path.stat().st_size < len(MAGIC):
+                    prefix = path.read_bytes()
+                    if not MAGIC.startswith(prefix):
+                        raise ValueError(f"Corrupt partial segment header: {path}")
+                    os.replace(path, path.with_suffix(".tail"))
+                    sync_dir(self.root)
+                    self.recovered.append(
+                        dict(
+                            segment=path.name,
+                            discarded_partial_bytes=len(prefix),
+                            reason="incomplete_header",
+                        )
+                    )
+                    continue
                 end = len(MAGIC)
                 for _, position in records(path, incomplete=True):
                     end = position

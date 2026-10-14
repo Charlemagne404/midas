@@ -209,6 +209,12 @@ async def test_network_interruption_reconnect_and_safe_stop(tmp_path, monkeypatc
     assert not any(
         r["kind"] == "gap" and r["payload"]["reason"] == "malformed_constraints" for r in rows
     )
+    latest_frame = None
+    for row in rows:
+        if row["kind"] == "frame":
+            latest_frame = row["ordinal"]
+        if row["kind"] == "snapshot_constraints":
+            assert row["payload"]["raw_ordinal"] == latest_frame
     engine, checkpoints = replay(tmp_path, manifest(tmp_path))
     assert engine.counts["book"] >= 12 and checkpoints >= 1
     assert json.loads((tmp_path / "status.json").read_text())["state"] == "STOPPED"
@@ -238,3 +244,30 @@ def test_config_isolation_and_bounds():
         Config(markets=11)
     with pytest.raises(ValueError):
         Config(queue_size=1000)
+
+
+def test_exact_spread_and_malformed_identifier():
+    from decimal import Decimal
+
+    from midas.reality.reconstruction import spread
+
+    assert (
+        spread(Decimal("0.0000000000000000000000000000000000000001"), Decimal("1"))
+        == "0.9999999999999999999999999999999999999999"
+    )
+    e = ready()
+    raw = json.loads(FIXTURE["frames"][1]["payload"])
+    raw["price_changes"][0]["asset_id"] = []
+    e.consume(event_record(raw))
+    assert e.counts["malformed_event"] == 1
+
+
+def test_crash_before_segment_header_is_complete(tmp_path):
+    path = tmp_path / "00000000000000000001-header.open"
+    path.write_bytes(MAGIC[:3])
+    s = Store(tmp_path, reserve=1)
+    assert s.recovered[0]["reason"] == "incomplete_header"
+    assert path.with_suffix(".tail").read_bytes() == MAGIC[:3]
+    s.append("gap", dict(reason="recovered_header"))
+    s.close()
+    assert list(read_manifest(tmp_path, manifest(tmp_path)))[0]["ordinal"] == 1
