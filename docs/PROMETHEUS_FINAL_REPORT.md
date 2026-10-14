@@ -113,10 +113,10 @@ Dataset/tournament manifests contain4,185distinct synthetic episode identities:
 separate recovery/unwind collections and the protected Laboratory campaign.
 Identity uniqueness does not establish independent realistic samples; generator
 shortcuts, repeated shapes and repeated cohorts are documented limitations.
-The protected Laboratory retains162,000 variants over 18,000 underlying groups.
-Recovery adds 540 variants over 60 identities; three unwind studies contain4,320 variants
-over 360 identities. The union across Arena datasets,tournaments,recovery and unwind
-is 4,605 distinct synthetic identities,still not 4,605 independent real-market samples.
+The protected Laboratory retains 162,000 variants over 18,000 underlying groups.
+Recovery adds 540 variants over 60 identities; three unwind studies contain 4,320 variants
+over 360 identities. The union across Arena datasets, tournaments, recovery and unwind
+is 4,605 distinct synthetic identities, still not 4,605 independent real-market samples.
 
 The production capacity plan was cancelled before native admission during
 controlled finalization. Its coordinator failed the prerequisite regression gate.
@@ -125,42 +125,50 @@ or studies were added by this campaign.
 
 ## 5. Research findings
 
-All P&L is virtual synthetic P&L. Confidence intervals use episode groups rather
-than correlated variant rows. Separate verifier implementations and source-bound
-reruns are independent engineering checks, not external scientific replication.
+All P&L is virtual synthetic P&L. Confidence intervals use underlying episode
+groups rather than correlated variant rows. Separate verifiers and source-bound
+reruns are engineering checks, not external scientific replication.
 
 ### Positive evidence and its boundaries
 
-- Cost-v2 MLP held-out RMSE0.08688 versus quote baseline0.17186 across92groups;
-  paired RMSE-change95%CI[-0.10743,-0.06166]. This is prediction improvement on
-  a synthetic target, not empirically calibrated cost forecasting.
-- A preregistered fixed classifier gate on100fresh stress groups achieved
-  downside score0.569284 versus arbitrage0.050455. Mean virtual return was lower
-  by0.232504,paired95%CI[-0.596131,-0.001942]. This restricted risk/return trade-off
-  does not prove broad superiority or a statistically established score difference.
-- A bounded two-seed Director found MLP validation Brier0.02922065 versus
-  logistic0.03153976,exceeding its0.002practical tolerance. On fresh policy
-  challenges, classifier policies tied; the validation gain did not improve P&L.
+- Cost-v2 MLP held-out RMSE was **0.08688 versus 0.17186** for the quote baseline
+  across 92 groups. The paired RMSE-change 95% interval was
+  **[−0.10743, −0.06166]**. This improves a synthetic target; it does not establish
+  empirically calibrated execution forecasting.
+- A preregistered fixed classifier gate on 100 fresh stress groups achieved
+  downside score **0.569284 versus arbitrage 0.050455**. Its mean virtual return
+  was lower by **0.232504**, with paired 95% interval **[−0.596131, −0.001942]**.
+  This restricted risk/return trade-off does not prove broad superiority or a
+  statistically established score difference.
+- A bounded two-seed Director found MLP validation Brier **0.02922065 versus
+  logistic 0.03153976**, exceeding its 0.002 practical tolerance. The classifiers
+  tied on fresh policy challenges: validation improvement did not improve P&L.
 
 ### Negative findings
 
-- Cost forecast gating lost0.23340mean versus quote gating,
-  CI[-0.36920,-0.11210]; joint cost/completion gating added no measured benefit.
-- Persistence is not trade completion:456incomplete executions despite
-  persistence; gating lost0.57769versus arbitrage,CI[-0.84472,-0.31905].
-- Severity ridge improved RMSE3.485→3.186but worsened MAE0.874→1.509.
-- Missing-leg hedge mean versus hold−0.0261,CI[-0.1094,0.0433]; benefit unproven.
-- SELL-minus-hold means+0.03216and+0.02263on two fresh150-group cohorts had
-  intervals touching/including zero. Eight conservative requests had zero fills.
-- Settlement revision held2,100pre-settlement pairs identical, changed payouts
-  in48groups,raised classifier tail loss0→0.476and reduced score1.3530→0.8237.
-- PPO parent2,048transitions→child4,096cumulative;Adamsteps320→640and12tensors
-  changed. All300paired outcomes and702decision checks were unchanged.
-  Downside score−2.1682was below no-trade0. More optimization was not a benefit.
+- Cost forecast gating reduced mean P&L by **0.23340** versus quote gating,
+  interval **[−0.36920, −0.11210]**. Joint cost/completion gating added no measured
+  benefit.
+- Persistence is not trade completion: **456 incomplete executions** occurred
+  despite persistence. Gating lost **0.57769** versus arbitrage, interval
+  **[−0.84472, −0.31905]**.
+- Severity ridge improved RMSE **3.485→3.186**, but worsened MAE **0.874→1.509**.
+- Missing-leg hedge mean difference versus hold was **−0.0261**, interval
+  **[−0.1094, 0.0433]**. Benefit remains unproven.
+- SELL-minus-hold means were **+0.03216 and +0.02263** on two fresh 150-group
+  cohorts. Intervals touched or included zero; eight conservative requests had
+  zero fills.
+- A settlement revision held **2,100 pre-settlement pairs identical** while
+  changing payouts in 48 groups. Classifier tail loss rose **0→0.476**, and its
+  score fell **1.3530→0.8237**.
+- PPO continued from **2,048 to 4,096 cumulative transitions**. Adam steps
+  advanced **320→640**, and 12 parameter tensors changed. All 300 paired outcomes
+  and 702 decision comparisons were unchanged. Downside score **−2.1682** was
+  below no-trade's zero; additional optimization demonstrated no sampled benefit.
 
 No learned policy establishes a general advantage across conservative execution,
-scenario distributions and generator revisions. Positive mean P&L alone does
-not defeat no-trade under the declared downside objective.
+scenario distributions and generator revisions. Positive mean P&L alone does not
+beat no-trade under the declared downside objective.
 
 ## 6. Recovery, execution and risk semantics
 
@@ -188,13 +196,13 @@ checks, frozen-policy inference reruns and grouped paired uncertainty.
 
 Recent examples:
 
-- PPO study:2,100replays,25,128journal states,captured-source inference checks.
-- Generator audit:4,200replays,45,696journal states,24exact inference reruns.
-- Unwind robustness:3,600replays and28frozen-policy reruns.
-- Dataset migration:1,593canonical rows preserved;4,779existing predictor outputs
-  identical;95export payloads and isolated reconstruction verified.
-- Completed planning fixture:1,375export payloads;1,260replay variants;
-  13,104journal states;26inference reruns under66captured source files.
+- PPO study:2,100 replays,25,128 journal states, captured-source inference checks.
+- Generator audit:4,200 replays,45,696 journal states,24exact inference reruns.
+- Unwind robustness:3,600 replays and28frozen-policy reruns.
+- Dataset migration:1,593 canonical rows preserved;4,779 existing predictor outputs
+  identical;95 export payloads and isolated reconstruction verified.
+- Completed planning fixture:1,375 export payloads;1,260replay variants;
+  13,104 journal states;26 inference reruns under 66 captured source files.
 
 Fixture checks do not add production research samples. Some portable artifact
 checks invoke workspace verifier scripts; a fresh dependency installation is
@@ -217,7 +225,8 @@ Completed checks:
   source files. Diagnostics are preserved in `PROMETHEUS_FINAL_BACKEND_TYPES.log`.
   The prepared correction was applied after the original gate became terminal.
   **Current strict mypy passes all 74 files**, and current Ruff passes. Frontend
-  TypeScript verification passed separately; affected behavior is being rechecked.
+  TypeScript verification passed separately. **71 affected-behavior tests passed**
+  in 477.84 seconds; the final corrected full regression is now running.
 - **Previous full backend gate:** 582 passed and one skipped. The subsequent
   gate finished with 599 passed, one failed and one skipped in 1,154.11 seconds.
   The failure was a transient SQLite SHM file disappearing during archive disk
@@ -253,8 +262,8 @@ passes. Final evidence files use the `PROMETHEUS_FINAL_*` prefix.
 ## 9. Known limitations and historical failures
 
 - No empirical execution calibration, observed fill labels or real profitability.
-- Public coverage is four short recordings; longest241events/~598seconds,
-  103usable paired windows and17stale exclusions. Reused artifact identities are
+- Public coverage is four short recordings; longest241events/~598 seconds,
+  103 usable paired windows and17stale exclusions. Reused artifact identities are
   not independent public samples.
 - Generator seed/settlement shortcuts and duplicated quote shapes limit realism.
 - Watch quota fallback preserves correctness but can substantially slow research.
@@ -270,28 +279,28 @@ passes. Final evidence files use the `PROMETHEUS_FINAL_*` prefix.
 
 ## 10. Deferred and intentionally excluded work
 
-Valuable deferred work:more independent seeds/calibration,conservative recovery
-coverage,broader monitoring,feature caching,richer RL explanations,more planning
+Valuable deferred work:more independent seeds/calibration, conservative recovery
+coverage, broader monitoring, feature caching, richer RL explanations, more planning
 templates and longer unattended operation. These are not silently declared done.
 
-Future initiatives:new RL/sequence families,validated ensembles,seasonal leagues,
-general question-to-experiment planning,broad robust optimization and extensive
+Future initiatives:new RL/sequence families, validated ensembles, seasonal leagues,
+general question-to-experiment planning, broad robust optimization and extensive
 empirical economics. They would materially expand this project's scope.
 
-Intentionally excluded:live trading,wallets/private keys,real deposits/orders,
+Intentionally excluded:live trading, wallets/private keys, real deposits/orders,
 privileged host changes and unrelated infrastructure rewrites.
 
 ## 11. Operating and extending Midas
 
-From `/home/charlie/midas`,inspect local service health:
+From `/home/charlie/midas`, inspect local service health:
 
 ```bash
 systemctl --user status midas-api.service midas-web.service
 curl --fail http://127.0.0.1:8000/api/health
 ```
 
-Dashboard:`http://127.0.0.1:5173`;API docs:`http://127.0.0.1:8000/docs`.
-Use the Arena tabs for dataset provenance,training/models,competitions/replays,
+Dashboard:`http://127.0.0.1:5173`; API docs:`http://127.0.0.1:8000/docs`.
+Use the Arena tabs for dataset provenance, training/models, competitions/replays,
 Director schedules and findings. Inspect job configuration/budget before starting.
 Cancel native jobs through the existing Arena job controls; cancellation retains
 partial evidence. Do not blindly resubmit interrupted or failed jobs.
@@ -303,13 +312,13 @@ journalctl --user -u midas-api.service -n 50 --no-pager
 ```
 
 Stop schedule polling if desired with `systemctl --user disable --now
-midas-arena-scheduler.timer`;cancel an admitted child separately. The timer admits
-only finite plans,under resource/source guards. Never start a competing Laboratory
+midas-arena-scheduler.timer`; cancel an admitted child separately. The timer admits
+only finite plans, under resource/source guards. Never start a competing Laboratory
 writer while the API owns `data/laboratory-final`.
 
-Preserve `data/arena`, `data/arena-cold`, `data/exports`,public captures/datasets,
-the Laboratory archive,and the protected pre/post-recovery backups. Large research
-data is intentionally outside Git;source commits are not a backup of that data.
+Preserve `data/arena`, `data/arena-cold`, `data/exports`, public captures/datasets,
+the Laboratory archive, and the protected pre/post-recovery backups. Large research
+data is intentionally outside Git; source commits are not a backup of that data.
 Do not remove SQLite WAL/SHM files manually or regenerate data under old identities.
 
 Further instructions:
@@ -322,26 +331,26 @@ Further instructions:
 [migration](ARENA_DATASET_MIGRATIONS.md),
 [unwind reproduction](ARENA_UNWIND_REPRODUCIBILITY.md).
 
-Extend schemas with new identities and compatibility tests;keep train/validation/
+Extend schemas with new identities and compatibility tests; keep train/validation/
 test boundaries and grouped pairing intact. Do not promote models from exploratory
 challenge tuning. Report null/negative outcomes and economic assumptions explicitly.
 
 ## 12. Next projects: Reality and Atlas
 
-**Reality:**establish representative chronological public observations,verified
+**Reality:**establish representative chronological public observations, verified
 market-specific economic assumptions and defensible execution calibration where
 lawful observable evidence permits. Separate hypothetical execution from empirical
-labels. Start with measurement/provenance;software readiness is not profitability.
+labels. Start with measurement/provenance; software readiness is not profitability.
 
 **Atlas:**define a separately bounded roadmap for broader research navigation,
-experiment catalogs,question templates,comparative evidence and coordination.
+experiment catalogs, question templates, comparative evidence and coordination.
 Reuse Prometheus's artifact/worker contracts rather than restarting completed work.
-Its precise scope should be agreed as a new project,not silently added here.
+Its precise scope should be agreed as a new project, not silently added here.
 
 ## Final acceptance record
 
 Not yet signed off. Remaining essentials are tracked in
 [controlled finalization plan](PROMETHEUS_FINALIZATION_PLAN.md). All running
 research must finish or be safely preserved in documented terminal states before
-the goal is marked complete. This section will record exact final tests,inventory,
-service/archive evidence,repository commit/state and justified exceptions.
+the goal is marked complete. This section will record exact final tests, inventory,
+service/archive evidence, repository commit/state and justified exceptions.

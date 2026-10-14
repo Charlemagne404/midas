@@ -35,16 +35,14 @@ Do not prolong Prometheus to pursue these optional objectives.
 
 ## Current live handle
 
-- Focused post-typing behavior check: exec session 52873, pytest PID 1734476.
-  It exercises persistence, recovery, migration, PPO continuation, jobs, planning
-  and API behavior. Current corrected source remains unchanged while it runs.
-- Original pre-typing full gate is terminal: 608 passed, one skipped in
-  1,125.74 seconds. A full post-typing gate follows the focused check.
-- Corrected browser suite is terminal with five passes. Artifact and recovery
-  audits are terminal with successful reports.
-- Original planning coordinator is terminal FAILED before admission. Its frozen
-  production plan is CANCELLED under controlled finalization; no capacity fits
-  were added. Historical gate/coordinator logs and source snapshots are retained.
+- `midas-prometheus-final-typed-backend-gate.service`: one CPU, 4 GiB,
+  1,800-second limit. Final corrected package source is frozen while it runs.
+- Focused post-typing behavior check is terminal: **71 passed** in 477.84 seconds.
+- Pre-typing full gate is terminal: **608 passed, one skipped** in 1,125.74 seconds.
+- Strict mypy passes all 74 source files; Ruff passes. Corrected browser suite
+  has five passes; artifact and recovery audits completed successfully.
+- Original planning coordinator failed before admission. The frozen production
+  plan is cancelled/deferred; no production capacity fits were added.
 
 Planning effort estimate:4–8 focused hours plus study elapsed time, subject to
 genuine regressions or evidence inconsistencies. This is not a deadline promise.
