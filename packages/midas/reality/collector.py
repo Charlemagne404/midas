@@ -195,6 +195,7 @@ async def run(config: Config, duration: float | None = None) -> None:
                             "subscription", frame, connection=connection, subscription=subscription
                         )
                         connected = last_ping = last_frame = time.monotonic()
+                        pending_snapshots = set(tokens)
                         status["state"] = "AWAITING_DATA"
                         while not stop.is_set():
                             now = time.monotonic()
@@ -216,8 +217,11 @@ async def run(config: Config, duration: float | None = None) -> None:
                                     "market_resolved",
                                     "stale",
                                     "gap:malformed_constraints",
+                                    "crossed_or_locked",
+                                    "malformed_frame",
                                 }
-                                for b in engine.books.values()
+                                for asset, b in engine.books.items()
+                                if asset not in pending_snapshots
                             ):
                                 append(
                                     "gap",
@@ -238,6 +242,10 @@ async def run(config: Config, duration: float | None = None) -> None:
                             if now - last_ping >= 10:
                                 await ws.send("PING")
                                 last_ping = now
+                            if pending_snapshots and now - connected > config.stale_seconds:
+                                raise TimeoutError(
+                                    "Initial snapshots incomplete; reconnect for fresh books"
+                                )
                             if now - last_frame > config.stale_seconds:
                                 raise TimeoutError(
                                     "Market observations stale; reconnect for fresh snapshots"
@@ -310,6 +318,14 @@ async def run(config: Config, duration: float | None = None) -> None:
                                         dict(reason="malformed_constraints"),
                                         connection=connection,
                                     )
+                            for asset in tuple(pending_snapshots):
+                                book = engine.books.get(asset)
+                                if (
+                                    book
+                                    and book["snapshot"][0] == original_frame_ordinal
+                                    and book["issue"] is None
+                                ):
+                                    pending_snapshots.remove(asset)
                             if payload != "PONG":
                                 last_frame = time.monotonic()
                                 status.update(
@@ -317,7 +333,8 @@ async def run(config: Config, duration: float | None = None) -> None:
                                     last_observation_ns=received,
                                     state="RECORDING_UNSEQUENCED",
                                 )
-                                backoff = 1
+                                if not pending_snapshots:
+                                    backoff = 1
                 except (
                     httpx.HTTPError,
                     WebSocketException,

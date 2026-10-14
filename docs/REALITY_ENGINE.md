@@ -197,3 +197,22 @@ fixed. The initial failed run is preserved in `REALITY_INITIAL_REGRESSION.log`.
 Operational audits stream raw records rather than retaining the archive in
 memory. Exports fsync copied segments and independently verify their contents
 before publishing the input manifest.
+
+The terminal fixed-source regression passed: 621 tests passed and one PostgreSQL
+runtime test was skipped because PostgreSQL is not configured. The read-only
+Arena preservation audit verified all 52,323 retained replays, including result
+and journal hashes, and exactly matched the seven datasets, 45 models and 27
+completed tournaments in the Prometheus baseline inventory.
+
+Final live acceptance exposed a stale-book reconnect loop: an old stale book
+could trigger another reconnect before the new connection read its initial
+snapshots. This caused a recorded observation outage and many explicit gap and
+discovery records. The collector now tracks pending initial snapshots separately,
+allows the new connection to receive them, and enforces a bounded snapshot
+arrival deadline even if unrelated updates arrive. Backoff resets only after all
+initial snapshots are available. Crossed and malformed books also request resync.
+The current collector and simulation-hash boundary checks pass 15 focused tests,
+including stale-book restart recovery and missing-snapshot timeout. Original raw
+records and the outage remain preserved; they are not presented as continuous
+coverage. The regression suite's unrelated financial modules remain unchanged
+by this final collector fix, and the exact Prometheus hashes remain restored.

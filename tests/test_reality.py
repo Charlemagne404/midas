@@ -369,3 +369,92 @@ def test_market_closure_and_metadata_turnover():
     engine.consume(refreshed)
     assert not set(closed_assets) & set(engine.tokens)
     assert not set(closed_assets) & set(engine.books)
+
+
+async def test_restart_with_stale_books_waits_for_initial_snapshots(tmp_path, monkeypatch):
+    import time
+
+    import httpx
+    from midas.reality import collector
+    from midas.reality.config import Config
+    from websockets.asyncio.server import serve
+
+    store = Store(tmp_path, reserve=1)
+    old_ns = time.time_ns() - 120_000_000_000
+    discovery = FIXTURE["discovery"]
+    store.append("discovery", discovery["payload"], cohort=discovery["cohort"], received_ns=old_ns)
+    store.append("frame", FIXTURE["frames"][0]["payload"], received_ns=old_ns)
+    store.close()
+    connections = []
+
+    async def handler(ws):
+        connections.append(json.loads(await ws.recv()))
+        await ws.send(FIXTURE["frames"][0]["payload"])
+        await ws.wait_closed()
+
+    client = httpx.AsyncClient(
+        transport=httpx.MockTransport(
+            lambda request: httpx.Response(200, text=discovery["payload"])
+        )
+    )
+    monkeypatch.setattr(collector.httpx, "AsyncClient", lambda **kwargs: client)
+
+    class TestConfig(Config):
+        def __post_init__(self):
+            pass
+
+    async with serve(handler, "127.0.0.1", 0) as server:
+        monkeypatch.setattr(collector, "WS", f"ws://127.0.0.1:{server.sockets[0].getsockname()[1]}")
+        await collector.run(
+            TestConfig(root=str(tmp_path), reserve_bytes=1, stale_seconds=10), duration=2
+        )
+    rows = list(read_manifest(tmp_path, manifest(tmp_path)))
+    assert len(connections) == 1
+    assert len([r for r in rows if r["kind"] == "frame"]) == 2
+    assert not any(
+        r["kind"] == "gap" and r["payload"]["reason"] == "book_resynchronization" for r in rows
+    )
+    engine, checkpoints = replay(tmp_path, manifest(tmp_path))
+    assert engine.counts["book"] == 12 and checkpoints >= 1
+
+
+async def test_missing_initial_snapshots_timeout_even_with_updates(tmp_path, monkeypatch):
+
+    import httpx
+    from midas.reality import collector
+    from midas.reality.config import Config
+    from websockets.asyncio.server import serve
+
+    connections = []
+
+    async def handler(ws):
+        connections.append(await ws.recv())
+        await ws.send(FIXTURE["frames"][1]["payload"])
+        await ws.wait_closed()
+
+    client = httpx.AsyncClient(
+        transport=httpx.MockTransport(
+            lambda request: httpx.Response(200, text=FIXTURE["discovery"]["payload"])
+        )
+    )
+    monkeypatch.setattr(collector.httpx, "AsyncClient", lambda **kwargs: client)
+
+    class TestConfig(Config):
+        def __post_init__(self):
+            pass
+
+    async with serve(handler, "127.0.0.1", 0) as server:
+        monkeypatch.setattr(collector, "WS", f"ws://127.0.0.1:{server.sockets[0].getsockname()[1]}")
+        await collector.run(
+            TestConfig(root=str(tmp_path), reserve_bytes=1, stale_seconds=0.05), duration=3
+        )
+    rows = list(read_manifest(tmp_path, manifest(tmp_path)))
+    assert 1 <= len(connections) <= 2
+    errors = [
+        r["payload"]["error"]
+        for r in rows
+        if r["kind"] == "gap" and r["payload"]["reason"] == "connection_failure"
+    ]
+    assert errors and all("Initial snapshots incomplete" in error for error in errors)
+    engine, _ = replay(tmp_path, manifest(tmp_path))
+    assert not engine.books and engine.counts["update_without_snapshot"] >= 2
