@@ -1,0 +1,87 @@
+I001 [*] Import block is un-sorted or un-formatted
+  --> data/public-captures/public-series-2d5f0b5f86f64f21a8156acc/source/packages/midas/laboratory/datasets.py:3:1
+   |
+ 1 |   """Content-addressed recording manifests; receipt time controls observation access."""
+ 2 |
+ 3 | / import hashlib
+ 4 | | from pathlib import Path
+ 5 | | from typing import Any
+ 6 | |
+ 7 | | from pydantic import Field
+ 8 | |
+ 9 | | from midas.core.models import Market, MarketEvent, Model, Source
+10 | | from midas.economics.attestation import digest
+11 | | from midas.laboratory.spec import Scenario, ScenarioEvent
+12 | | from midas.paper.broker import AccountConfig
+   | |____________________________________________^
+help: Organize imports
+   |
+6  |
+   - from pydantic import Field
+   -
+7  | from midas.core.models import Market, MarketEvent, Model, Source
+8  | from midas.economics.attestation import digest
+9  | from midas.laboratory.spec import Scenario, ScenarioEvent
+10 | from midas.paper.broker import AccountConfig
+11 + from pydantic import Field
+12 |
+   |
+
+I001 [*] Import block is un-sorted or un-formatted
+  --> data/public-captures/public-series-2d5f0b5f86f64f21a8156acc/source/packages/midas/laboratory/spec.py:3:1
+   |
+ 1 |   """Immutable declarative inputs and reproducible scenario families."""
+ 2 |
+ 3 | / import random
+ 4 | | from decimal import Decimal
+ 5 | | from typing import Any, Literal
+ 6 | |
+ 7 | | from pydantic import Field, model_validator
+ 8 | |
+ 9 | | from midas.core.models import Book, Level, Market, Model, Nonnegative
+10 | | from midas.paper.broker import AccountConfig, ExecutionModel
+11 | | from midas.simulation.fixtures import DEMO_EPOCH, binary_fixture
+   | |________________________________________________________________^
+12 |
+13 |   D = Decimal
+   |
+help: Organize imports
+   |
+6  |
+   - from pydantic import Field, model_validator
+   -
+7  | from midas.core.models import Book, Level, Market, Model, Nonnegative
+8  | from midas.paper.broker import AccountConfig, ExecutionModel
+9  | from midas.simulation.fixtures import DEMO_EPOCH, binary_fixture
+10 + from pydantic import Field, model_validator
+11 |
+   |
+
+I001 [*] Import block is un-sorted or un-formatted
+  --> data/public-captures/public-series-2d5f0b5f86f64f21a8156acc/source/packages/midas/market_data/polymarket.py:3:1
+   |
+ 1 |   """Public GET-only transport and strict version-aware normalization."""
+ 2 |
+ 3 | / import asyncio
+ 4 | | import json
+ 5 | | import re
+ 6 | | import time
+ 7 | | from decimal import Decimal
+ 8 | | from typing import Any
+ 9 | |
+10 | | import httpx
+11 | |
+12 | | from midas.core.models import Book, Fee, Instrument, Level, Market, Source
+   | |__________________________________________________________________________^
+13 |
+14 |   D = Decimal
+   |
+help: Organize imports
+   |
+10 | import httpx
+   -
+11 | from midas.core.models import Book, Fee, Instrument, Level, Market, Source
+   |
+
+Found 3 errors.
+[*] 3 fixable with `--fix`.

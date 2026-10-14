@@ -1,0 +1,14 @@
+
+ RUN  v3.2.7 /home/charlie/midas/apps/web
+
+ ✓ src/App.test.tsx (2 tests) 231ms
+ ✓ src/Laboratory.test.tsx (2 tests) 370ms
+   ✓ builder sends exact seeded comparison settings and surfaces backend validation  342ms
+ ✓ src/Arena.test.tsx (18 tests) 2012ms
+   ✓ proposes an evidence-bound question and launches only its frozen plan  368ms
+
+ Test Files  3 passed (3)
+      Tests  22 passed (22)
+   Start at  07:44:18
+   Duration  3.73s (transform 1.04s, setup 554ms, collect 2.20s, tests 2.61s, environment 1.32s, prepare 377ms)
+
