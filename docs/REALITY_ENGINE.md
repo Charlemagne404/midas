@@ -168,3 +168,16 @@ regression and the final runtime audit finish. Read-only evidence generation:
 systemctl --user kill -s SIGUSR1 midas-reality.service
 .venv/bin/python scripts/audit_reality.py
 ```
+
+Follow-up acceptance checks passed: a real localhost burst of 100 labeled fixture
+frames was persisted without loss through a ten-frame transport queue while
+writes were deliberately delayed. Shutdown waited for the complete burst, rather
+than treating a fixed smoke-test deadline as proof of loss. Closure invalidates
+the affected outcome books, and refreshed metadata removes retired tokens and
+books. The focused suite now has 12 passing tests. A real scheduled five-minute
+refresh has also produced an explicit gap and a renewed snapshot subscription.
+The updated saved audit verifies 2,027 genuine frames over a 23.2-minute capture
+span, 42 live/replay checkpoint matches and 2.13 MB of finalized segments.
+The broader regression remains live and has reported one failure; an isolated
+rerun of the test at that position passed. Final acceptance awaits the complete
+traceback, failure resolution or baseline comparison, and terminal test results.

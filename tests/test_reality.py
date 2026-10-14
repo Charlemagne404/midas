@@ -271,3 +271,101 @@ def test_crash_before_segment_header_is_complete(tmp_path):
     s.append("gap", dict(reason="recovered_header"))
     s.close()
     assert list(read_manifest(tmp_path, manifest(tmp_path)))[0]["ordinal"] == 1
+
+
+async def test_bounded_transport_burst_is_preserved_under_slow_writes(tmp_path, monkeypatch):
+    import asyncio
+    import os
+    import signal
+    import time
+
+    import httpx
+    from midas.reality import collector
+    from midas.reality.config import Config
+    from websockets.asyncio.server import serve
+
+    # Real localhost transport using labeled captured fixtures, not venue observations.
+    total = 100
+
+    async def handler(ws):
+        await ws.recv()
+        for _ in range(total):
+            await ws.send(FIXTURE["frames"][0]["payload"])
+        await ws.wait_closed()
+
+    client = httpx.AsyncClient(
+        transport=httpx.MockTransport(
+            lambda request: httpx.Response(200, text=FIXTURE["discovery"]["payload"])
+        )
+    )
+    monkeypatch.setattr(collector.httpx, "AsyncClient", lambda **kwargs: client)
+    finished = asyncio.Event()
+    persisted = 0
+    original_append = collector.Store.append
+
+    def slow_append(self, kind, payload, **metadata):
+        nonlocal persisted
+        if kind == "frame":
+            time.sleep(0.005)
+        record = original_append(self, kind, payload, **metadata)
+        if kind == "frame":
+            persisted += 1
+            if persisted == total:
+                finished.set()
+        return record
+
+    monkeypatch.setattr(collector.Store, "append", slow_append)
+    settings = []
+    original_connect = collector.connect
+
+    def bounded_connect(uri, **kwargs):
+        settings.append(kwargs)
+        return original_connect(uri, **kwargs)
+
+    monkeypatch.setattr(collector, "connect", bounded_connect)
+
+    class TestConfig(Config):
+        def __post_init__(self):
+            pass
+
+    async with serve(handler, "127.0.0.1", 0) as server:
+        monkeypatch.setattr(collector, "WS", f"ws://127.0.0.1:{server.sockets[0].getsockname()[1]}")
+        task = asyncio.create_task(
+            collector.run(
+                TestConfig(root=str(tmp_path), reserve_bytes=1, queue_size=10), duration=30
+            )
+        )
+        try:
+            await asyncio.wait_for(finished.wait(), timeout=20)
+        finally:
+            os.kill(os.getpid(), signal.SIGTERM)
+            await asyncio.wait_for(task, timeout=5)
+    rows = list(read_manifest(tmp_path, manifest(tmp_path)))
+    frames = [r for r in rows if r["kind"] == "frame"]
+    assert len(frames) == total
+    assert all(r["payload"] == FIXTURE["frames"][0]["payload"] for r in frames)
+    assert settings[0]["max_queue"] == 10 and settings[0]["max_size"] == 1024**2
+    engine, checkpoints = replay(tmp_path, manifest(tmp_path))
+    assert engine.counts["book"] == total * 6 and checkpoints >= 1
+
+
+def test_market_closure_and_metadata_turnover():
+    engine = ready()
+    first_market = FIXTURE["discovery"]["cohort"][0]
+    closed_assets = list(first_market["tokens"])
+    engine.consume(
+        event_record(
+            dict(
+                event_type="market_resolved",
+                assets_ids=closed_assets,
+                market=first_market["condition"],
+                timestamp="1791965112318",
+            )
+        )
+    )
+    assert all(engine.books[a]["issue"] == "market_resolved" for a in closed_assets)
+    assert all(b["issue"] is None for a, b in engine.books.items() if a not in closed_assets)
+    refreshed = dict(FIXTURE["discovery"], ordinal=101, cohort=FIXTURE["discovery"]["cohort"][1:])
+    engine.consume(refreshed)
+    assert not set(closed_assets) & set(engine.tokens)
+    assert not set(closed_assets) & set(engine.books)
