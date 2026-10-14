@@ -1,0 +1,532 @@
+{
+  "plan_id": "plan-da4ceb40a893e4b385af9bbc",
+  "owner_job_id": "job-eecf5910cdf64c238d384382",
+  "source_hash": "9f6c5d1b89310f80b85b88b54d8c68332908ff46bf07685a7018e294fb19237f",
+  "captured_package_files_verified": 66,
+  "inference_rows_verified": 26,
+  "reports": [
+    {
+      "tournament_id": "tournament-1246fbae0214448c96569ab8",
+      "row_id": "19-standard-arbitrage",
+      "policy": "arbitrage",
+      "execution_model": "standard",
+      "proof": {
+        "tournament_id": "tournament-1246fbae0214448c96569ab8",
+        "row_id": "19-standard-arbitrage",
+        "verified": true,
+        "mode": "FROZEN_INFERENCE_AND_ACCOUNTING_REEXECUTION",
+        "result_hash": "ba443fc13aaa12075cbba65e3a42701e5a70d9a855fa1205ec80a72ae344c1aa",
+        "journal_hash": "2e71488d27e21ec0b97da83294ec7c6cf02c9dd2a512706cfef2ecdf904eed6b",
+        "net_simulated_pnl": "13.332000",
+        "limitation": "Reuses frozen inference and broker implementations; independent arithmetic audits are separate. No retraining or empirical economics.",
+        "source_hash": "9f6c5d1b89310f80b85b88b54d8c68332908ff46bf07685a7018e294fb19237f",
+        "policy": "arbitrage",
+        "decisions_recomputed": 1,
+        "producer_sha256": "38da351fe329d68c8bded6b199e5975dfd204b64ba0b59f16b923077b3e6e39b"
+      }
+    },
+    {
+      "tournament_id": "tournament-1246fbae0214448c96569ab8",
+      "row_id": "14-standard-conservative",
+      "policy": "conservative",
+      "execution_model": "standard",
+      "proof": {
+        "tournament_id": "tournament-1246fbae0214448c96569ab8",
+        "row_id": "14-standard-conservative",
+        "verified": true,
+        "mode": "FROZEN_INFERENCE_AND_ACCOUNTING_REEXECUTION",
+        "result_hash": "056abe1cf4e0ebb6419e49dfcd3e59f1e95c2b43b28d42684c58bf05ba24a6bf",
+        "journal_hash": "371cfa171d451f12fac2cf5c52551db98f20fc6dafddfca5402c727f80bd2bf9",
+        "net_simulated_pnl": "8.160000",
+        "limitation": "Reuses frozen inference and broker implementations; independent arithmetic audits are separate. No retraining or empirical economics.",
+        "source_hash": "9f6c5d1b89310f80b85b88b54d8c68332908ff46bf07685a7018e294fb19237f",
+        "policy": "conservative",
+        "decisions_recomputed": 7,
+        "producer_sha256": "38da351fe329d68c8bded6b199e5975dfd204b64ba0b59f16b923077b3e6e39b"
+      }
+    },
+    {
+      "tournament_id": "tournament-1246fbae0214448c96569ab8",
+      "row_id": "19-optimistic-model-1c9919f6b72f4a91bbb2e1ff",
+      "policy": "model-1c9919f6b72f4a91bbb2e1ff",
+      "execution_model": "optimistic",
+      "proof": {
+        "tournament_id": "tournament-1246fbae0214448c96569ab8",
+        "row_id": "19-optimistic-model-1c9919f6b72f4a91bbb2e1ff",
+        "verified": true,
+        "mode": "FROZEN_INFERENCE_AND_ACCOUNTING_REEXECUTION",
+        "result_hash": "f2bd3290ee2f774217bd3096c77d94794a6de896e355dfa1ee497e8524580e49",
+        "journal_hash": "91108fab3eded10e364aee8ea4b14fcba107328264c8b5f2c2d13a39cb1e92ed",
+        "net_simulated_pnl": "13.332000",
+        "limitation": "Reuses frozen inference and broker implementations; independent arithmetic audits are separate. No retraining or empirical economics.",
+        "source_hash": "9f6c5d1b89310f80b85b88b54d8c68332908ff46bf07685a7018e294fb19237f",
+        "policy": "model-1c9919f6b72f4a91bbb2e1ff",
+        "decisions_recomputed": 1,
+        "producer_sha256": "38da351fe329d68c8bded6b199e5975dfd204b64ba0b59f16b923077b3e6e39b"
+      }
+    },
+    {
+      "tournament_id": "tournament-1246fbae0214448c96569ab8",
+      "row_id": "19-standard-model-1c9919f6b72f4a91bbb2e1ff",
+      "policy": "model-1c9919f6b72f4a91bbb2e1ff",
+      "execution_model": "standard",
+      "proof": {
+        "tournament_id": "tournament-1246fbae0214448c96569ab8",
+        "row_id": "19-standard-model-1c9919f6b72f4a91bbb2e1ff",
+        "verified": true,
+        "mode": "FROZEN_INFERENCE_AND_ACCOUNTING_REEXECUTION",
+        "result_hash": "ba443fc13aaa12075cbba65e3a42701e5a70d9a855fa1205ec80a72ae344c1aa",
+        "journal_hash": "2e71488d27e21ec0b97da83294ec7c6cf02c9dd2a512706cfef2ecdf904eed6b",
+        "net_simulated_pnl": "13.332000",
+        "limitation": "Reuses frozen inference and broker implementations; independent arithmetic audits are separate. No retraining or empirical economics.",
+        "source_hash": "9f6c5d1b89310f80b85b88b54d8c68332908ff46bf07685a7018e294fb19237f",
+        "policy": "model-1c9919f6b72f4a91bbb2e1ff",
+        "decisions_recomputed": 1,
+        "producer_sha256": "38da351fe329d68c8bded6b199e5975dfd204b64ba0b59f16b923077b3e6e39b"
+      }
+    },
+    {
+      "tournament_id": "tournament-1246fbae0214448c96569ab8",
+      "row_id": "0-conservative-model-1c9919f6b72f4a91bbb2e1ff",
+      "policy": "model-1c9919f6b72f4a91bbb2e1ff",
+      "execution_model": "conservative",
+      "proof": {
+        "tournament_id": "tournament-1246fbae0214448c96569ab8",
+        "row_id": "0-conservative-model-1c9919f6b72f4a91bbb2e1ff",
+        "verified": true,
+        "mode": "FROZEN_INFERENCE_AND_ACCOUNTING_REEXECUTION",
+        "result_hash": "b83539230af11f5af45da5e27ad0a93ffac4c3e96f93fb2c9df85743b903e1e5",
+        "journal_hash": "0588f1e3ebaeedd41a4b2fa0f415549f180fccb7084cddebcefa1dcacb1ba64a",
+        "net_simulated_pnl": "0",
+        "limitation": "Reuses frozen inference and broker implementations; independent arithmetic audits are separate. No retraining or empirical economics.",
+        "source_hash": "9f6c5d1b89310f80b85b88b54d8c68332908ff46bf07685a7018e294fb19237f",
+        "policy": "model-1c9919f6b72f4a91bbb2e1ff",
+        "decisions_recomputed": 2,
+        "producer_sha256": "38da351fe329d68c8bded6b199e5975dfd204b64ba0b59f16b923077b3e6e39b"
+      }
+    },
+    {
+      "tournament_id": "tournament-1246fbae0214448c96569ab8",
+      "row_id": "19-optimistic-model-6e33ca80ce7b449cae02872c",
+      "policy": "model-6e33ca80ce7b449cae02872c",
+      "execution_model": "optimistic",
+      "proof": {
+        "tournament_id": "tournament-1246fbae0214448c96569ab8",
+        "row_id": "19-optimistic-model-6e33ca80ce7b449cae02872c",
+        "verified": true,
+        "mode": "FROZEN_INFERENCE_AND_ACCOUNTING_REEXECUTION",
+        "result_hash": "f2bd3290ee2f774217bd3096c77d94794a6de896e355dfa1ee497e8524580e49",
+        "journal_hash": "91108fab3eded10e364aee8ea4b14fcba107328264c8b5f2c2d13a39cb1e92ed",
+        "net_simulated_pnl": "13.332000",
+        "limitation": "Reuses frozen inference and broker implementations; independent arithmetic audits are separate. No retraining or empirical economics.",
+        "source_hash": "9f6c5d1b89310f80b85b88b54d8c68332908ff46bf07685a7018e294fb19237f",
+        "policy": "model-6e33ca80ce7b449cae02872c",
+        "decisions_recomputed": 1,
+        "producer_sha256": "38da351fe329d68c8bded6b199e5975dfd204b64ba0b59f16b923077b3e6e39b"
+      }
+    },
+    {
+      "tournament_id": "tournament-1246fbae0214448c96569ab8",
+      "row_id": "19-standard-model-6e33ca80ce7b449cae02872c",
+      "policy": "model-6e33ca80ce7b449cae02872c",
+      "execution_model": "standard",
+      "proof": {
+        "tournament_id": "tournament-1246fbae0214448c96569ab8",
+        "row_id": "19-standard-model-6e33ca80ce7b449cae02872c",
+        "verified": true,
+        "mode": "FROZEN_INFERENCE_AND_ACCOUNTING_REEXECUTION",
+        "result_hash": "ba443fc13aaa12075cbba65e3a42701e5a70d9a855fa1205ec80a72ae344c1aa",
+        "journal_hash": "2e71488d27e21ec0b97da83294ec7c6cf02c9dd2a512706cfef2ecdf904eed6b",
+        "net_simulated_pnl": "13.332000",
+        "limitation": "Reuses frozen inference and broker implementations; independent arithmetic audits are separate. No retraining or empirical economics.",
+        "source_hash": "9f6c5d1b89310f80b85b88b54d8c68332908ff46bf07685a7018e294fb19237f",
+        "policy": "model-6e33ca80ce7b449cae02872c",
+        "decisions_recomputed": 1,
+        "producer_sha256": "38da351fe329d68c8bded6b199e5975dfd204b64ba0b59f16b923077b3e6e39b"
+      }
+    },
+    {
+      "tournament_id": "tournament-1246fbae0214448c96569ab8",
+      "row_id": "2-conservative-model-6e33ca80ce7b449cae02872c",
+      "policy": "model-6e33ca80ce7b449cae02872c",
+      "execution_model": "conservative",
+      "proof": {
+        "tournament_id": "tournament-1246fbae0214448c96569ab8",
+        "row_id": "2-conservative-model-6e33ca80ce7b449cae02872c",
+        "verified": true,
+        "mode": "FROZEN_INFERENCE_AND_ACCOUNTING_REEXECUTION",
+        "result_hash": "cfadad4a728d80fed05f87739e15f9f3e1b3fbbec9ea44cf19c7c930f2cc95ab",
+        "journal_hash": "ffcb5572e6238751d2eda4ca51fc27cf542c0966945c22f86acc0d5da22f308b",
+        "net_simulated_pnl": "3.000000",
+        "limitation": "Reuses frozen inference and broker implementations; independent arithmetic audits are separate. No retraining or empirical economics.",
+        "source_hash": "9f6c5d1b89310f80b85b88b54d8c68332908ff46bf07685a7018e294fb19237f",
+        "policy": "model-6e33ca80ce7b449cae02872c",
+        "decisions_recomputed": 7,
+        "producer_sha256": "38da351fe329d68c8bded6b199e5975dfd204b64ba0b59f16b923077b3e6e39b"
+      }
+    },
+    {
+      "tournament_id": "tournament-1246fbae0214448c96569ab8",
+      "row_id": "19-optimistic-model-dd491bd5b88f48cca9f12a3d",
+      "policy": "model-dd491bd5b88f48cca9f12a3d",
+      "execution_model": "optimistic",
+      "proof": {
+        "tournament_id": "tournament-1246fbae0214448c96569ab8",
+        "row_id": "19-optimistic-model-dd491bd5b88f48cca9f12a3d",
+        "verified": true,
+        "mode": "FROZEN_INFERENCE_AND_ACCOUNTING_REEXECUTION",
+        "result_hash": "f2bd3290ee2f774217bd3096c77d94794a6de896e355dfa1ee497e8524580e49",
+        "journal_hash": "91108fab3eded10e364aee8ea4b14fcba107328264c8b5f2c2d13a39cb1e92ed",
+        "net_simulated_pnl": "13.332000",
+        "limitation": "Reuses frozen inference and broker implementations; independent arithmetic audits are separate. No retraining or empirical economics.",
+        "source_hash": "9f6c5d1b89310f80b85b88b54d8c68332908ff46bf07685a7018e294fb19237f",
+        "policy": "model-dd491bd5b88f48cca9f12a3d",
+        "decisions_recomputed": 1,
+        "producer_sha256": "38da351fe329d68c8bded6b199e5975dfd204b64ba0b59f16b923077b3e6e39b"
+      }
+    },
+    {
+      "tournament_id": "tournament-1246fbae0214448c96569ab8",
+      "row_id": "19-standard-model-dd491bd5b88f48cca9f12a3d",
+      "policy": "model-dd491bd5b88f48cca9f12a3d",
+      "execution_model": "standard",
+      "proof": {
+        "tournament_id": "tournament-1246fbae0214448c96569ab8",
+        "row_id": "19-standard-model-dd491bd5b88f48cca9f12a3d",
+        "verified": true,
+        "mode": "FROZEN_INFERENCE_AND_ACCOUNTING_REEXECUTION",
+        "result_hash": "ba443fc13aaa12075cbba65e3a42701e5a70d9a855fa1205ec80a72ae344c1aa",
+        "journal_hash": "2e71488d27e21ec0b97da83294ec7c6cf02c9dd2a512706cfef2ecdf904eed6b",
+        "net_simulated_pnl": "13.332000",
+        "limitation": "Reuses frozen inference and broker implementations; independent arithmetic audits are separate. No retraining or empirical economics.",
+        "source_hash": "9f6c5d1b89310f80b85b88b54d8c68332908ff46bf07685a7018e294fb19237f",
+        "policy": "model-dd491bd5b88f48cca9f12a3d",
+        "decisions_recomputed": 1,
+        "producer_sha256": "38da351fe329d68c8bded6b199e5975dfd204b64ba0b59f16b923077b3e6e39b"
+      }
+    },
+    {
+      "tournament_id": "tournament-1246fbae0214448c96569ab8",
+      "row_id": "0-conservative-model-dd491bd5b88f48cca9f12a3d",
+      "policy": "model-dd491bd5b88f48cca9f12a3d",
+      "execution_model": "conservative",
+      "proof": {
+        "tournament_id": "tournament-1246fbae0214448c96569ab8",
+        "row_id": "0-conservative-model-dd491bd5b88f48cca9f12a3d",
+        "verified": true,
+        "mode": "FROZEN_INFERENCE_AND_ACCOUNTING_REEXECUTION",
+        "result_hash": "b83539230af11f5af45da5e27ad0a93ffac4c3e96f93fb2c9df85743b903e1e5",
+        "journal_hash": "0588f1e3ebaeedd41a4b2fa0f415549f180fccb7084cddebcefa1dcacb1ba64a",
+        "net_simulated_pnl": "0",
+        "limitation": "Reuses frozen inference and broker implementations; independent arithmetic audits are separate. No retraining or empirical economics.",
+        "source_hash": "9f6c5d1b89310f80b85b88b54d8c68332908ff46bf07685a7018e294fb19237f",
+        "policy": "model-dd491bd5b88f48cca9f12a3d",
+        "decisions_recomputed": 2,
+        "producer_sha256": "38da351fe329d68c8bded6b199e5975dfd204b64ba0b59f16b923077b3e6e39b"
+      }
+    },
+    {
+      "tournament_id": "tournament-1246fbae0214448c96569ab8",
+      "row_id": "0-standard-no_trade",
+      "policy": "no_trade",
+      "execution_model": "standard",
+      "proof": {
+        "tournament_id": "tournament-1246fbae0214448c96569ab8",
+        "row_id": "0-standard-no_trade",
+        "verified": true,
+        "mode": "FROZEN_INFERENCE_AND_ACCOUNTING_REEXECUTION",
+        "result_hash": "00a2e38985d557f7731f34abc089a09887d749b2074b8770b37632197dd153d0",
+        "journal_hash": "0e80d5dba8ee74bcc8cfc854c9a999ea68e79936b31a151ed79a5121f4134803",
+        "net_simulated_pnl": "0",
+        "limitation": "Reuses frozen inference and broker implementations; independent arithmetic audits are separate. No retraining or empirical economics.",
+        "source_hash": "9f6c5d1b89310f80b85b88b54d8c68332908ff46bf07685a7018e294fb19237f",
+        "policy": "no_trade",
+        "decisions_recomputed": 2,
+        "producer_sha256": "38da351fe329d68c8bded6b199e5975dfd204b64ba0b59f16b923077b3e6e39b"
+      }
+    },
+    {
+      "tournament_id": "tournament-1246fbae0214448c96569ab8",
+      "row_id": "14-standard-random",
+      "policy": "random",
+      "execution_model": "standard",
+      "proof": {
+        "tournament_id": "tournament-1246fbae0214448c96569ab8",
+        "row_id": "14-standard-random",
+        "verified": true,
+        "mode": "FROZEN_INFERENCE_AND_ACCOUNTING_REEXECUTION",
+        "result_hash": "71d12130f84779637faee1da3c50adef12da897220b97ddb104e54fe0749ba2f",
+        "journal_hash": "f7b98f727d3eecc69af76183febea3b1b8dde208d8b39fdd2b87628997e17f2d",
+        "net_simulated_pnl": "7.480000",
+        "limitation": "Reuses frozen inference and broker implementations; independent arithmetic audits are separate. No retraining or empirical economics.",
+        "source_hash": "9f6c5d1b89310f80b85b88b54d8c68332908ff46bf07685a7018e294fb19237f",
+        "policy": "random",
+        "decisions_recomputed": 7,
+        "producer_sha256": "38da351fe329d68c8bded6b199e5975dfd204b64ba0b59f16b923077b3e6e39b"
+      }
+    },
+    {
+      "tournament_id": "tournament-8ffd508e92b64949aa819edd",
+      "row_id": "19-standard-arbitrage",
+      "policy": "arbitrage",
+      "execution_model": "standard",
+      "proof": {
+        "tournament_id": "tournament-8ffd508e92b64949aa819edd",
+        "row_id": "19-standard-arbitrage",
+        "verified": true,
+        "mode": "FROZEN_INFERENCE_AND_ACCOUNTING_REEXECUTION",
+        "result_hash": "ba443fc13aaa12075cbba65e3a42701e5a70d9a855fa1205ec80a72ae344c1aa",
+        "journal_hash": "2e71488d27e21ec0b97da83294ec7c6cf02c9dd2a512706cfef2ecdf904eed6b",
+        "net_simulated_pnl": "13.332000",
+        "limitation": "Reuses frozen inference and broker implementations; independent arithmetic audits are separate. No retraining or empirical economics.",
+        "source_hash": "9f6c5d1b89310f80b85b88b54d8c68332908ff46bf07685a7018e294fb19237f",
+        "policy": "arbitrage",
+        "decisions_recomputed": 1,
+        "producer_sha256": "38da351fe329d68c8bded6b199e5975dfd204b64ba0b59f16b923077b3e6e39b"
+      }
+    },
+    {
+      "tournament_id": "tournament-8ffd508e92b64949aa819edd",
+      "row_id": "14-standard-conservative",
+      "policy": "conservative",
+      "execution_model": "standard",
+      "proof": {
+        "tournament_id": "tournament-8ffd508e92b64949aa819edd",
+        "row_id": "14-standard-conservative",
+        "verified": true,
+        "mode": "FROZEN_INFERENCE_AND_ACCOUNTING_REEXECUTION",
+        "result_hash": "056abe1cf4e0ebb6419e49dfcd3e59f1e95c2b43b28d42684c58bf05ba24a6bf",
+        "journal_hash": "371cfa171d451f12fac2cf5c52551db98f20fc6dafddfca5402c727f80bd2bf9",
+        "net_simulated_pnl": "8.160000",
+        "limitation": "Reuses frozen inference and broker implementations; independent arithmetic audits are separate. No retraining or empirical economics.",
+        "source_hash": "9f6c5d1b89310f80b85b88b54d8c68332908ff46bf07685a7018e294fb19237f",
+        "policy": "conservative",
+        "decisions_recomputed": 7,
+        "producer_sha256": "38da351fe329d68c8bded6b199e5975dfd204b64ba0b59f16b923077b3e6e39b"
+      }
+    },
+    {
+      "tournament_id": "tournament-8ffd508e92b64949aa819edd",
+      "row_id": "19-optimistic-model-1c9919f6b72f4a91bbb2e1ff",
+      "policy": "model-1c9919f6b72f4a91bbb2e1ff",
+      "execution_model": "optimistic",
+      "proof": {
+        "tournament_id": "tournament-8ffd508e92b64949aa819edd",
+        "row_id": "19-optimistic-model-1c9919f6b72f4a91bbb2e1ff",
+        "verified": true,
+        "mode": "FROZEN_INFERENCE_AND_ACCOUNTING_REEXECUTION",
+        "result_hash": "f2bd3290ee2f774217bd3096c77d94794a6de896e355dfa1ee497e8524580e49",
+        "journal_hash": "91108fab3eded10e364aee8ea4b14fcba107328264c8b5f2c2d13a39cb1e92ed",
+        "net_simulated_pnl": "13.332000",
+        "limitation": "Reuses frozen inference and broker implementations; independent arithmetic audits are separate. No retraining or empirical economics.",
+        "source_hash": "9f6c5d1b89310f80b85b88b54d8c68332908ff46bf07685a7018e294fb19237f",
+        "policy": "model-1c9919f6b72f4a91bbb2e1ff",
+        "decisions_recomputed": 1,
+        "producer_sha256": "38da351fe329d68c8bded6b199e5975dfd204b64ba0b59f16b923077b3e6e39b"
+      }
+    },
+    {
+      "tournament_id": "tournament-8ffd508e92b64949aa819edd",
+      "row_id": "19-standard-model-1c9919f6b72f4a91bbb2e1ff",
+      "policy": "model-1c9919f6b72f4a91bbb2e1ff",
+      "execution_model": "standard",
+      "proof": {
+        "tournament_id": "tournament-8ffd508e92b64949aa819edd",
+        "row_id": "19-standard-model-1c9919f6b72f4a91bbb2e1ff",
+        "verified": true,
+        "mode": "FROZEN_INFERENCE_AND_ACCOUNTING_REEXECUTION",
+        "result_hash": "ba443fc13aaa12075cbba65e3a42701e5a70d9a855fa1205ec80a72ae344c1aa",
+        "journal_hash": "2e71488d27e21ec0b97da83294ec7c6cf02c9dd2a512706cfef2ecdf904eed6b",
+        "net_simulated_pnl": "13.332000",
+        "limitation": "Reuses frozen inference and broker implementations; independent arithmetic audits are separate. No retraining or empirical economics.",
+        "source_hash": "9f6c5d1b89310f80b85b88b54d8c68332908ff46bf07685a7018e294fb19237f",
+        "policy": "model-1c9919f6b72f4a91bbb2e1ff",
+        "decisions_recomputed": 1,
+        "producer_sha256": "38da351fe329d68c8bded6b199e5975dfd204b64ba0b59f16b923077b3e6e39b"
+      }
+    },
+    {
+      "tournament_id": "tournament-8ffd508e92b64949aa819edd",
+      "row_id": "0-conservative-model-1c9919f6b72f4a91bbb2e1ff",
+      "policy": "model-1c9919f6b72f4a91bbb2e1ff",
+      "execution_model": "conservative",
+      "proof": {
+        "tournament_id": "tournament-8ffd508e92b64949aa819edd",
+        "row_id": "0-conservative-model-1c9919f6b72f4a91bbb2e1ff",
+        "verified": true,
+        "mode": "FROZEN_INFERENCE_AND_ACCOUNTING_REEXECUTION",
+        "result_hash": "b83539230af11f5af45da5e27ad0a93ffac4c3e96f93fb2c9df85743b903e1e5",
+        "journal_hash": "0588f1e3ebaeedd41a4b2fa0f415549f180fccb7084cddebcefa1dcacb1ba64a",
+        "net_simulated_pnl": "0",
+        "limitation": "Reuses frozen inference and broker implementations; independent arithmetic audits are separate. No retraining or empirical economics.",
+        "source_hash": "9f6c5d1b89310f80b85b88b54d8c68332908ff46bf07685a7018e294fb19237f",
+        "policy": "model-1c9919f6b72f4a91bbb2e1ff",
+        "decisions_recomputed": 2,
+        "producer_sha256": "38da351fe329d68c8bded6b199e5975dfd204b64ba0b59f16b923077b3e6e39b"
+      }
+    },
+    {
+      "tournament_id": "tournament-8ffd508e92b64949aa819edd",
+      "row_id": "19-optimistic-model-6e33ca80ce7b449cae02872c",
+      "policy": "model-6e33ca80ce7b449cae02872c",
+      "execution_model": "optimistic",
+      "proof": {
+        "tournament_id": "tournament-8ffd508e92b64949aa819edd",
+        "row_id": "19-optimistic-model-6e33ca80ce7b449cae02872c",
+        "verified": true,
+        "mode": "FROZEN_INFERENCE_AND_ACCOUNTING_REEXECUTION",
+        "result_hash": "f2bd3290ee2f774217bd3096c77d94794a6de896e355dfa1ee497e8524580e49",
+        "journal_hash": "91108fab3eded10e364aee8ea4b14fcba107328264c8b5f2c2d13a39cb1e92ed",
+        "net_simulated_pnl": "13.332000",
+        "limitation": "Reuses frozen inference and broker implementations; independent arithmetic audits are separate. No retraining or empirical economics.",
+        "source_hash": "9f6c5d1b89310f80b85b88b54d8c68332908ff46bf07685a7018e294fb19237f",
+        "policy": "model-6e33ca80ce7b449cae02872c",
+        "decisions_recomputed": 1,
+        "producer_sha256": "38da351fe329d68c8bded6b199e5975dfd204b64ba0b59f16b923077b3e6e39b"
+      }
+    },
+    {
+      "tournament_id": "tournament-8ffd508e92b64949aa819edd",
+      "row_id": "19-standard-model-6e33ca80ce7b449cae02872c",
+      "policy": "model-6e33ca80ce7b449cae02872c",
+      "execution_model": "standard",
+      "proof": {
+        "tournament_id": "tournament-8ffd508e92b64949aa819edd",
+        "row_id": "19-standard-model-6e33ca80ce7b449cae02872c",
+        "verified": true,
+        "mode": "FROZEN_INFERENCE_AND_ACCOUNTING_REEXECUTION",
+        "result_hash": "ba443fc13aaa12075cbba65e3a42701e5a70d9a855fa1205ec80a72ae344c1aa",
+        "journal_hash": "2e71488d27e21ec0b97da83294ec7c6cf02c9dd2a512706cfef2ecdf904eed6b",
+        "net_simulated_pnl": "13.332000",
+        "limitation": "Reuses frozen inference and broker implementations; independent arithmetic audits are separate. No retraining or empirical economics.",
+        "source_hash": "9f6c5d1b89310f80b85b88b54d8c68332908ff46bf07685a7018e294fb19237f",
+        "policy": "model-6e33ca80ce7b449cae02872c",
+        "decisions_recomputed": 1,
+        "producer_sha256": "38da351fe329d68c8bded6b199e5975dfd204b64ba0b59f16b923077b3e6e39b"
+      }
+    },
+    {
+      "tournament_id": "tournament-8ffd508e92b64949aa819edd",
+      "row_id": "2-conservative-model-6e33ca80ce7b449cae02872c",
+      "policy": "model-6e33ca80ce7b449cae02872c",
+      "execution_model": "conservative",
+      "proof": {
+        "tournament_id": "tournament-8ffd508e92b64949aa819edd",
+        "row_id": "2-conservative-model-6e33ca80ce7b449cae02872c",
+        "verified": true,
+        "mode": "FROZEN_INFERENCE_AND_ACCOUNTING_REEXECUTION",
+        "result_hash": "cfadad4a728d80fed05f87739e15f9f3e1b3fbbec9ea44cf19c7c930f2cc95ab",
+        "journal_hash": "ffcb5572e6238751d2eda4ca51fc27cf542c0966945c22f86acc0d5da22f308b",
+        "net_simulated_pnl": "3.000000",
+        "limitation": "Reuses frozen inference and broker implementations; independent arithmetic audits are separate. No retraining or empirical economics.",
+        "source_hash": "9f6c5d1b89310f80b85b88b54d8c68332908ff46bf07685a7018e294fb19237f",
+        "policy": "model-6e33ca80ce7b449cae02872c",
+        "decisions_recomputed": 7,
+        "producer_sha256": "38da351fe329d68c8bded6b199e5975dfd204b64ba0b59f16b923077b3e6e39b"
+      }
+    },
+    {
+      "tournament_id": "tournament-8ffd508e92b64949aa819edd",
+      "row_id": "19-optimistic-model-dd491bd5b88f48cca9f12a3d",
+      "policy": "model-dd491bd5b88f48cca9f12a3d",
+      "execution_model": "optimistic",
+      "proof": {
+        "tournament_id": "tournament-8ffd508e92b64949aa819edd",
+        "row_id": "19-optimistic-model-dd491bd5b88f48cca9f12a3d",
+        "verified": true,
+        "mode": "FROZEN_INFERENCE_AND_ACCOUNTING_REEXECUTION",
+        "result_hash": "f2bd3290ee2f774217bd3096c77d94794a6de896e355dfa1ee497e8524580e49",
+        "journal_hash": "91108fab3eded10e364aee8ea4b14fcba107328264c8b5f2c2d13a39cb1e92ed",
+        "net_simulated_pnl": "13.332000",
+        "limitation": "Reuses frozen inference and broker implementations; independent arithmetic audits are separate. No retraining or empirical economics.",
+        "source_hash": "9f6c5d1b89310f80b85b88b54d8c68332908ff46bf07685a7018e294fb19237f",
+        "policy": "model-dd491bd5b88f48cca9f12a3d",
+        "decisions_recomputed": 1,
+        "producer_sha256": "38da351fe329d68c8bded6b199e5975dfd204b64ba0b59f16b923077b3e6e39b"
+      }
+    },
+    {
+      "tournament_id": "tournament-8ffd508e92b64949aa819edd",
+      "row_id": "19-standard-model-dd491bd5b88f48cca9f12a3d",
+      "policy": "model-dd491bd5b88f48cca9f12a3d",
+      "execution_model": "standard",
+      "proof": {
+        "tournament_id": "tournament-8ffd508e92b64949aa819edd",
+        "row_id": "19-standard-model-dd491bd5b88f48cca9f12a3d",
+        "verified": true,
+        "mode": "FROZEN_INFERENCE_AND_ACCOUNTING_REEXECUTION",
+        "result_hash": "ba443fc13aaa12075cbba65e3a42701e5a70d9a855fa1205ec80a72ae344c1aa",
+        "journal_hash": "2e71488d27e21ec0b97da83294ec7c6cf02c9dd2a512706cfef2ecdf904eed6b",
+        "net_simulated_pnl": "13.332000",
+        "limitation": "Reuses frozen inference and broker implementations; independent arithmetic audits are separate. No retraining or empirical economics.",
+        "source_hash": "9f6c5d1b89310f80b85b88b54d8c68332908ff46bf07685a7018e294fb19237f",
+        "policy": "model-dd491bd5b88f48cca9f12a3d",
+        "decisions_recomputed": 1,
+        "producer_sha256": "38da351fe329d68c8bded6b199e5975dfd204b64ba0b59f16b923077b3e6e39b"
+      }
+    },
+    {
+      "tournament_id": "tournament-8ffd508e92b64949aa819edd",
+      "row_id": "0-conservative-model-dd491bd5b88f48cca9f12a3d",
+      "policy": "model-dd491bd5b88f48cca9f12a3d",
+      "execution_model": "conservative",
+      "proof": {
+        "tournament_id": "tournament-8ffd508e92b64949aa819edd",
+        "row_id": "0-conservative-model-dd491bd5b88f48cca9f12a3d",
+        "verified": true,
+        "mode": "FROZEN_INFERENCE_AND_ACCOUNTING_REEXECUTION",
+        "result_hash": "b83539230af11f5af45da5e27ad0a93ffac4c3e96f93fb2c9df85743b903e1e5",
+        "journal_hash": "0588f1e3ebaeedd41a4b2fa0f415549f180fccb7084cddebcefa1dcacb1ba64a",
+        "net_simulated_pnl": "0",
+        "limitation": "Reuses frozen inference and broker implementations; independent arithmetic audits are separate. No retraining or empirical economics.",
+        "source_hash": "9f6c5d1b89310f80b85b88b54d8c68332908ff46bf07685a7018e294fb19237f",
+        "policy": "model-dd491bd5b88f48cca9f12a3d",
+        "decisions_recomputed": 2,
+        "producer_sha256": "38da351fe329d68c8bded6b199e5975dfd204b64ba0b59f16b923077b3e6e39b"
+      }
+    },
+    {
+      "tournament_id": "tournament-8ffd508e92b64949aa819edd",
+      "row_id": "0-standard-no_trade",
+      "policy": "no_trade",
+      "execution_model": "standard",
+      "proof": {
+        "tournament_id": "tournament-8ffd508e92b64949aa819edd",
+        "row_id": "0-standard-no_trade",
+        "verified": true,
+        "mode": "FROZEN_INFERENCE_AND_ACCOUNTING_REEXECUTION",
+        "result_hash": "00a2e38985d557f7731f34abc089a09887d749b2074b8770b37632197dd153d0",
+        "journal_hash": "0e80d5dba8ee74bcc8cfc854c9a999ea68e79936b31a151ed79a5121f4134803",
+        "net_simulated_pnl": "0",
+        "limitation": "Reuses frozen inference and broker implementations; independent arithmetic audits are separate. No retraining or empirical economics.",
+        "source_hash": "9f6c5d1b89310f80b85b88b54d8c68332908ff46bf07685a7018e294fb19237f",
+        "policy": "no_trade",
+        "decisions_recomputed": 2,
+        "producer_sha256": "38da351fe329d68c8bded6b199e5975dfd204b64ba0b59f16b923077b3e6e39b"
+      }
+    },
+    {
+      "tournament_id": "tournament-8ffd508e92b64949aa819edd",
+      "row_id": "14-standard-random",
+      "policy": "random",
+      "execution_model": "standard",
+      "proof": {
+        "tournament_id": "tournament-8ffd508e92b64949aa819edd",
+        "row_id": "14-standard-random",
+        "verified": true,
+        "mode": "FROZEN_INFERENCE_AND_ACCOUNTING_REEXECUTION",
+        "result_hash": "71d12130f84779637faee1da3c50adef12da897220b97ddb104e54fe0749ba2f",
+        "journal_hash": "f7b98f727d3eecc69af76183febea3b1b8dde208d8b39fdd2b87628997e17f2d",
+        "net_simulated_pnl": "7.480000",
+        "limitation": "Reuses frozen inference and broker implementations; independent arithmetic audits are separate. No retraining or empirical economics.",
+        "source_hash": "9f6c5d1b89310f80b85b88b54d8c68332908ff46bf07685a7018e294fb19237f",
+        "policy": "random",
+        "decisions_recomputed": 7,
+        "producer_sha256": "38da351fe329d68c8bded6b199e5975dfd204b64ba0b59f16b923077b3e6e39b"
+      }
+    }
+  ],
+  "orchestrator_sha256": "a12305d2e94e4f968b1808b371a0e3b579e7d4742837eb5c2c986850a9d7c42a",
+  "inference_producer_sha256": "38da351fe329d68c8bded6b199e5975dfd204b64ba0b59f16b923077b3e6e39b",
+  "scope": "Selected archived decisions and accounting reproduced under captured worker packages; no new evaluation cohort, fitting, promotion or profitability evidence."
+}

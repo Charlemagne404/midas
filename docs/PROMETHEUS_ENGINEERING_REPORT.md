@@ -2884,3 +2884,20 @@ Producer/verifier transitive script dependencies are checksummed in preregistrat
 Current status report: PROMETHEUS_CHECKPOINT_2026_10_14.md. Completion estimate
 remains70%; model inventory45/44 fitted, no capacity-plan production fit yet.
 Prometheus remains active; proceed corrected gate and bounded production study.
+
+## Captured-plan inference verification prepared while corrected gate runs
+
+Separate verify_planning_inference.py validates completed native plan owner and
+all captured package hashes, then reexecutes selected archived policies with
+those captured packages in an isolated interpreter. Checks three execution
+models for each learned predictor and standard controls in both support studies.
+The completed30-group native fixture reproduces26rows exactly, including policy
+observations, requests, decision traces and final accounting;66captured files
+verify. This reuses the inference/broker implementation and adds no independent
+cohort, fitting, promotion or empirical economics. Separate independent arithmetic
+verification remains in verify_evidence_planning_study.py.
+Three incomplete-plan/changed-owner/changed-source refusal tests pass0.15s;
+ruff passes. These new tests were added after current full-gate collection and
+are not included in that pending gate's count. Source-bound research packages
+and captured coordinator dependencies remain unchanged. Next use this checker
+on actual production plan only after original gate/coordinator complete.
