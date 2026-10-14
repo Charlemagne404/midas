@@ -1,0 +1,32 @@
+{
+  "checked_at": 1791957642.6382556,
+  "corrected_suite_passed": 5,
+  "final_image_directory": "docs/PROMETHEUS_FINAL_BROWSER_IMAGES",
+  "screenshots": [
+    {
+      "file": "mission-control.png",
+      "final_image_sha256": "c54f2fe341fe7789a2c644f10e629954aa112409035af0df5d076f44ca675d42",
+      "original_restored": true
+    },
+    {
+      "file": "dashboard-smoke.png",
+      "final_image_sha256": "88dde97e51a05f36615728e31fbe588c59e745e768d788935f011808929e1497",
+      "original_restored": true
+    },
+    {
+      "file": "mission-control-mobile.png",
+      "final_image_sha256": "966a0a01ee9c3a28e79e1e39a8dddd4c2d13495cd5bdf92b0afaaa49a542db96",
+      "original_restored": true
+    },
+    {
+      "file": "arena-replay.png",
+      "final_image_sha256": "63e422ea5d2d1d8774c88c5452f120704ece31e347c963c78f962ac0d2066973",
+      "original_restored": true
+    },
+    {
+      "file": "laboratory-replay.png",
+      "final_image_sha256": "c56e2cdc7a987bb9659db2aba26b8878f57d7eb50a7cd9a51e3f943abbb58ecf",
+      "original_restored": true
+    }
+  ]
+}

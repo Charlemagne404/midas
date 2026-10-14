@@ -99,9 +99,9 @@ creates a new dataset identity while preserving canonical observations/labels.
 | PPO | 3 | Older proof plus same-seed parent/child lineage |
 | Deterministic heuristic | 1 | Not counted as fitted |
 
-The machine-readable [research inventory](PROMETHEUS_RESEARCH_INVENTORY.json)
+The machine-readable [final research inventory](PROMETHEUS_FINAL_RESEARCH_INVENTORY.json)
 contains model IDs, configurations, datasets, curves, metrics and limitations.
-It must be refreshed after the current study reaches a terminal state.
+A readable [per-model table](PROMETHEUS_FINAL_MODEL_INVENTORY.md) records every artifact. Temporary browser/test roots are excluded; the production capacity campaign was never admitted.
 Unopened test metrics remain unopened; lack of a final-test metric is explicit.
 
 Seven synthetic dataset identities represent five source collections, a target
@@ -114,6 +114,9 @@ separate recovery/unwind collections and the protected Laboratory campaign.
 Identity uniqueness does not establish independent realistic samples; generator
 shortcuts, repeated shapes and repeated cohorts are documented limitations.
 The protected Laboratory retains162,000variants over18,000underlying groups.
+Recovery adds540variants over60identities;three unwind studies contain4,320variants
+over360identities. The union across Arena datasets,tournaments,recovery and unwind
+is4,605distinct synthetic identities,still not4,605independent real-market samples.
 
 The production capacity plan was cancelled before native admission during
 controlled finalization. Its coordinator failed the prerequisite regression gate.
@@ -200,7 +203,7 @@ legacy incumbent source gaps remain a limitation rather than invented provenance
 
 ## 8. Final tests and operational evidence
 
-**Pending:**final full backend regression and corrected browser suite, deployed
+**Pending:**final full backend regression, deployed
 UI/service/archive checks and refreshed inventory. The disk-scan and recording
 isolation corrections pass focused verification. No production capacity campaign
 is required for wrap-up.
@@ -220,9 +223,18 @@ Completed finalization checks so far:
 - Full artifact audit:7datasets,45model artifacts,27completed tournaments and
  52,323replay variants pass;2partial historical tournaments identified separately.
 - Initial final browser suite4passed/1failed;isolated Arena generation/training/
- evaluation/search/replay passed. Recording isolation failure corrected;rerun pending.
+ evaluation/search/replay passed. Recording isolation failure corrected;corrected
+ suite subsequently passed all5workflows in4.0minutes.
 - Pre-admission protected SQLite quick_checkOK;counts162000/18000/162000;
   exclusive original owner lock held;API READY,paper-only.
+
+Final recovery audit reverified540missing-leg BUY variants and4,320unwind
+variants (4,860total),including bounded observable decisions,matched controls
+and per-study accounting verification. See PROMETHEUS_FINAL_RECOVERY_AUDIT.json.
+Corrected browser suite:5passed;final screenshots preserved separately under
+PROMETHEUS_FINAL_BROWSER_IMAGES while previous documentation images were restored.
+Unrelated RoadReach/Vanguard user services remain active with original processes;
+no configuration,installation or restart of those services was performed.
 
 The chart chunk remains544kB with a production-build warning. This is not a build
 failure. Final evidence files use the PROMETHEUS_FINAL_* prefix.

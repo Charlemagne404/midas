@@ -1,0 +1,15 @@
+[WebServer] INFO:     Started server process [1713835]
+[WebServer] INFO:     Waiting for application startup.
+[WebServer] INFO:     Application startup complete.
+[WebServer] INFO:     Uvicorn running on http://127.0.0.1:18000 (Press CTRL+C to quit)
+
+Running 5 tests using 1 worker
+
+
+  ✓  1 e2e/arena.spec.ts:5:1 › build, train, inspect and evaluate genuine Arena artifacts (3.6m)
+  ✓  2 e2e/laboratory.spec.ts:3:1 › configure, launch, compare and replay a persisted laboratory experiment (4.3s)
+  ✓  3 e2e/laboratory.spec.ts:46:1 › controlled adversarial violation preserves minimized incident and replay (3.6s)
+  ✓  4 e2e/paper.spec.ts:3:1 › persistent paper account, decision audit and execution comparison (2.7s)
+  ✓  5 e2e/smoke.spec.ts:2:1 › discover, inspect, simulate, replay and expose execution failure (5.4s)
+
+  5 passed (4.0m)
