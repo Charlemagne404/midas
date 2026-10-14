@@ -2901,3 +2901,15 @@ ruff passes. These new tests were added after current full-gate collection and
 are not included in that pending gate's count. Source-bound research packages
 and captured coordinator dependencies remain unchanged. Next use this checker
 on actual production plan only after original gate/coordinator complete.
+
+## Isolated completed-plan export fixture verification
+
+Extracted the genuine completed native fixture bundle into a temporary directory.
+All1375payload checksums pass; independent validation selection,1260replay
+variants and13104journal states verify from extracted artifacts.26selected
+inference runs reproduce under the extracted owner's captured packages.
+Standalone verifier scripts came from the current workspace; this demonstrates
+portable artifact references and package-source reproduction, not a fully
+self-contained verification command yet. Fixture evidence only: zero new
+production models/cohorts. Evidence saved PROMETHEUS_EVIDENCE_PLANNING_EXPORT_FIXTURE.json.
+Original corrected full gate and coordinator remain active; no duplicate run.

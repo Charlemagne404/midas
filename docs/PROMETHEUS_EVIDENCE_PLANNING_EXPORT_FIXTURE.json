@@ -1,0 +1,11 @@
+{
+  "checked_at": 1791956515.108247,
+  "fixture_only": true,
+  "plan_id": "plan-da4ceb40a893e4b385af9bbc",
+  "export_payloads_verified": 1375,
+  "isolated_selection_verified": true,
+  "isolated_replay_variants_verified": 1260,
+  "isolated_journal_states_audited": 13104,
+  "isolated_captured_inference_rows_verified": 26,
+  "verification_tool_origin": "Current standalone verifier scripts; captured worker packages used for inference. No retraining or new production model."
+}
