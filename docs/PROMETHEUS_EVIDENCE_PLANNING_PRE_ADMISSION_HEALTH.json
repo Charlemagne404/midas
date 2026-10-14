@@ -1,0 +1,36 @@
+{
+  "checked_at": 1791956210.914579,
+  "plan_id": "plan-1058dec1077e493834f60346",
+  "source_hash_verified": "9f6c5d1b89310f80b85b88b54d8c68332908ff46bf07685a7018e294fb19237f",
+  "captured_tool_files_verified": 16,
+  "unchanged_proposed_manifest_sha256": "26081169809b90f6f6d4184751af49b62736eaaadd1a789088a12ebac7b41e59",
+  "protected_archive_integrity": "ok",
+  "protected_campaign_counts": [
+    162000,
+    18000,
+    162000
+  ],
+  "original_owner_lock_held": true,
+  "hot_bytes": 953107861,
+  "hot_files": 62544,
+  "hot_headroom_bytes": 120633963,
+  "health": {
+    "status": "READY",
+    "startup_status": "READY",
+    "startup_error": null,
+    "mode": "demo",
+    "live_execution": false,
+    "paper_recovery": {
+      "status": "CHECKPOINT_VERIFIED",
+      "journal_events": 109581,
+      "revision": 109580
+    },
+    "laboratory": {
+      "status": "READY",
+      "root": "/home/charlie/midas/data/laboratory-final",
+      "recovering_campaigns": [],
+      "recovery_errors": []
+    }
+  },
+  "production_models_added": 0
+}
