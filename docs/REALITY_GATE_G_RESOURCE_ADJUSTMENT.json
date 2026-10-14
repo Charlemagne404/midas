@@ -1,0 +1,20 @@
+{
+  "changed_ns": 1792013888206077758,
+  "units": {
+    "midas-reality-final-regression.service": {
+      "from_cpu_percent": 30,
+      "to_cpu_percent": 75
+    },
+    "midas-reality-final-arena-audit.service": {
+      "from_cpu_percent": 15,
+      "to_cpu_percent": 75
+    }
+  },
+  "host_cpus": 6,
+  "available_memory_mib": 9160,
+  "reason": "Bound finite verification latency with measured headroom; one-shot jobs remain Nice15 and memory bounded. No scientific service restart/configuration change.",
+  "collector_pid": 2288376,
+  "shadow_pid": 2820914,
+  "subsequent_regression_cpu_percent": 100,
+  "subsequent_reason": "Original planning fixtures enforce a 180-second subprocess wall deadline; verification has one full CPU with Nice15, bounded memory, and six host CPUs. Initial throttled errors are being separately rechecked without changing assertions."
+}

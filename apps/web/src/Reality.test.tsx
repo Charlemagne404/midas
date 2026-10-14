@@ -64,3 +64,19 @@ it('shows empty prospective candidates without treating them as profit', async (
   ).toBeInTheDocument();
   expect(screen.getByRole('checkbox')).toBeChecked();
 });
+
+it('counts only confirmed sampled updates and refuses a gap-spanning update rate', () => {
+  const samples = [
+    { ns: 1e12, legs: { yes: { last: [10, 0] } } },
+    { ns: 1e12 + 5e9, legs: { yes: { last: [20, 0] } } },
+    { ns: 1e12 + 10e9, legs: { yes: { last: [20, 0] } } },
+    { ns: 1e12 + 30e9, legs: { yes: { last: [30, 0] } } },
+  ];
+  expect(historySeries(samples, 'yes', 'sampled_update_rate').map((r) => r[1])).toEqual([
+    null,
+    0.2,
+    0,
+    null,
+    null,
+  ]);
+});

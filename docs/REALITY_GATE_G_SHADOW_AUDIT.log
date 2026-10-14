@@ -1,0 +1,15 @@
+{
+  "campaign_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
+  "source_kind": "genuine_public_recording",
+  "journal": {
+    "events": 5172,
+    "tail_sha256": "0d4b586d6607f86bd334ac404179478ca23daa512148b497b4e31bb8ad706696",
+    "sqlite_integrity": "ok"
+  },
+  "prospective_decisions": 344,
+  "valid_decisions_raw_replayed": 102,
+  "observed_followups_independently_checked": 8,
+  "raw_records": 185708,
+  "actual_orders_submitted": 0,
+  "private_execution_ground_truth": "unknown_counterfactual"
+}

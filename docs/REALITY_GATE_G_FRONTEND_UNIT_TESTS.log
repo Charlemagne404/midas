@@ -1,0 +1,19 @@
+
+> @midas/command-center@0.1.0 test
+> vitest run
+
+
+ RUN  v3.2.7 /home/charlie/midas-reality/apps/web
+
+ ✓ src/Laboratory.test.tsx (2 tests) 291ms
+ ✓ src/App.test.tsx (2 tests) 179ms
+ ✓ src/Reality.test.tsx (4 tests) 1251ms
+   ✓ reports unavailable genuine evidence without inventing observations  1129ms
+ ✓ src/Arena.test.tsx (18 tests) 1626ms
+   ✓ proposes an evidence-bound question and launches only its frozen plan  309ms
+
+ Test Files  4 passed (4)
+      Tests  26 passed (26)
+   Start at  23:35:50
+   Duration  3.71s (transform 1.22s, setup 821ms, collect 2.90s, tests 3.35s, environment 2.74s, prepare 650ms)
+

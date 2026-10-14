@@ -1,0 +1,19 @@
+
+> @midas/command-center@0.1.0 build
+> tsc -b && vite build
+
+vite v7.3.7 building client environment for production...
+transforming...
+✓ 2222 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.42 kB │ gzip:   0.30 kB
+dist/assets/index-vj_kxqWo.css   39.59 kB │ gzip:   9.25 kB
+dist/assets/index-CYp2s-bM.js   500.50 kB │ gzip: 144.24 kB
+dist/assets/Chart-BW-EOjoy.js   544.41 kB │ gzip: 186.76 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 5.26s

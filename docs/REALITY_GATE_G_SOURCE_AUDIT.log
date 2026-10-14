@@ -1,0 +1,92 @@
+{
+  "checked_ns": 1792014102197956067,
+  "scope": "Finalized segments only; active segment excluded",
+  "source_commit": "e7aa30e71c680cc42af89f3a4cb079c0fa60584d",
+  "services": {
+    "midas-reality.service": {
+      "MainPID": "2288376",
+      "NRestarts": "0",
+      "MemoryCurrent": "374419456",
+      "CPUUsageNSec": "215976234000",
+      "ActiveState": "active"
+    },
+    "midas-api.service": {
+      "MainPID": "1768349",
+      "NRestarts": "0",
+      "MemoryCurrent": "2106986496",
+      "CPUUsageNSec": "6946795115000",
+      "ActiveState": "active"
+    },
+    "midas-web.service": {
+      "MainPID": "2513652",
+      "NRestarts": "0",
+      "MemoryCurrent": "94515200",
+      "CPUUsageNSec": "143418130000",
+      "ActiveState": "active"
+    },
+    "roadreach.service": {
+      "MainPID": "1746",
+      "NRestarts": "0",
+      "MemoryCurrent": "17338368",
+      "CPUUsageNSec": "1599429000",
+      "ActiveState": "active"
+    },
+    "vanguard-ai.service": {
+      "MainPID": "1749",
+      "NRestarts": "0",
+      "MemoryCurrent": "21897216",
+      "CPUUsageNSec": "2518050000",
+      "ActiveState": "active"
+    }
+  },
+  "recording": {
+    "raw_frames": 148180,
+    "events": {
+      "book": 8310,
+      "price_change": 113073,
+      "new_market": 26136,
+      "snapshot_divergence": 1597,
+      "duplicate": 53,
+      "best_bid_ask": 7623,
+      "last_trade_price": 273,
+      "top_divergence": 107,
+      "advertised_top_disagreement": 7124,
+      "timestamp_regression": 17,
+      "snapshot_source_time_regression_after_gap": 50,
+      "crossed": 12
+    },
+    "first_received_ns": 1791965085336998453,
+    "last_received_ns": 1792013431468697419,
+    "elapsed_seconds": 48346.131698966,
+    "gaps": {
+      "process_start": 15,
+      "process_stop": 13,
+      "malformed_constraints": 5,
+      "book_resynchronization": 2010,
+      "scheduled_refresh": 57,
+      "connection_failure": 4
+    },
+    "compressed_segment_bytes": 358363737,
+    "raw_frame_bytes": 180794110,
+    "frames_per_second": 3.0649815154325823,
+    "compressed_bytes_per_second": 7412.459371752891,
+    "estimated_compressed_bytes_per_day": 640436489.7194498,
+    "budget_bytes": 25769803776,
+    "root_bytes": 363906462
+  },
+  "replay": {
+    "state_sha256": "d3fd0fc9479cf1694f28d307edbf5cdbdddf6bec8fa01397299095977e9eb093",
+    "repeat_identical": true,
+    "online_checkpoints_verified": 1575,
+    "provenance_corrections_verified": 5
+  },
+  "protected_archive": {
+    "integrity": "ok",
+    "counts": [
+      162000,
+      18000,
+      162000
+    ],
+    "owner_lock_held": true
+  }
+}

@@ -13,7 +13,24 @@ export function historySeries(
   rows.forEach((row, i) => {
     if (i && row.ns - rows[i - 1].ns > 10_000_000_000)
       result.push([(rows[i - 1].ns + row.ns) / 2e6, null]);
-    const value = row.legs?.[leg]?.[field];
+    const previous = rows[i - 1];
+    const elapsed = previous ? (row.ns - previous.ns) / 1e9 : 0;
+    let value = row.legs?.[leg]?.[field];
+    if (field === 'sampled_update_rate') {
+      const lineage = row.legs?.[leg]?.last,
+        prior = previous?.legs?.[leg]?.last;
+      value =
+        row.quality_reason ||
+        previous?.quality_reason ||
+        elapsed <= 0 ||
+        elapsed > 10 ||
+        !lineage ||
+        !prior
+          ? null
+          : JSON.stringify(lineage) === JSON.stringify(prior)
+            ? 0
+            : 1 / elapsed;
+    }
     result.push([
       row.ns / 1e6,
       row.quality_reason || value === null || value === undefined ? null : Number(value),

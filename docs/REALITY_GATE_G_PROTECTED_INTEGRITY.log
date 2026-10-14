@@ -1,0 +1,45 @@
+Traceback (most recent call last):
+  File "/home/charlie/midas-reality/scripts/reality_protected_integrity.py", line 115, in <module>
+    result = audit(args.root, args.mission_start_ns)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/charlie/midas-reality/scripts/reality_protected_integrity.py", line 67, in audit
+    or len(result["journal_hash"]) != 64
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: object of type 'NoneType' has no len()
+{
+  "checked_ns": 1792013736439263849,
+  "state": "VERIFIED",
+  "laboratory": {
+    "root": "/home/charlie/midas/data/laboratory-final",
+    "files": 3,
+    "bytes": 300579920,
+    "sorted_content_census_sha256": "59ef4018d09a62cbadf3e2b8bacd85fd89f0df619e15ab314bd55b2b4d6aed22",
+    "latest_mtime_ns": 1791961254985352943,
+    "latest_ctime_ns": 1791961254985352943,
+    "all_predate_mission_ns": 1791984030000000000,
+    "exclusions": "SQLite transient WAL/SHM and owner locks; immutable payload files are included"
+  },
+  "arena": {
+    "root": "/home/charlie/midas/data/arena",
+    "files": 62480,
+    "bytes": 953108182,
+    "sorted_content_census_sha256": "aab2904fc6da28cbfbb6e14fec99b2ece4921a476656dad706a5a9576b4f832c",
+    "latest_mtime_ns": 1791957123506734060,
+    "latest_ctime_ns": 1791957123508879917,
+    "all_predate_mission_ns": 1791984030000000000,
+    "exclusions": "SQLite transient WAL/SHM and owner locks; immutable payload files are included"
+  },
+  "laboratory_integrity": "ok",
+  "protected_campaign_counts": [
+    162000,
+    18000,
+    162000
+  ],
+  "compact_rows": 164112,
+  "compact_rows_without_retained_journal_hash": 164049,
+  "preserved_adversarial_failure_rows": 1,
+  "retained_full_replays": 63,
+  "compact_rows_sha256": "881a6cdb21da594061c2f0642e0ae845a12ef1b750783ec3f3b638f12c8a7c9b",
+  "scope": "All immutable payload file content census and metadata predate Mission 2; every retained Laboratory replay hash verified. Non-retained historical full journals are not manufactured or regenerated.",
+  "elapsed_seconds": 134.80200963496463
+}

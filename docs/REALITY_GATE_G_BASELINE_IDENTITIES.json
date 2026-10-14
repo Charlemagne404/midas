@@ -1,0 +1,14 @@
+{
+  "checked_ns": 1792013852195656565,
+  "baseline": {
+    "arena": "bac445c2bb79877e6484cc395820a36dba69b7b03712e8ed1caf1a7ac160a681",
+    "laboratory": "c14738f8468a8103a98c2704dc5454e85e867a5e3d5b7174cc7383342aa5ebd8"
+  },
+  "current": {
+    "laboratory": "c14738f8468a8103a98c2704dc5454e85e867a5e3d5b7174cc7383342aa5ebd8",
+    "arena": "bac445c2bb79877e6484cc395820a36dba69b7b03712e8ed1caf1a7ac160a681"
+  },
+  "identical": true,
+  "main_clean": true,
+  "main_release": "8acab2298632eb04fbe5183fbe54f8e6f97a8fdb"
+}

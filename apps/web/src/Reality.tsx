@@ -591,6 +591,7 @@ function MarketExplorer({
                   <option value="spread">Spread</option>
                   <option value="total_ask_quantity">Displayed ask liquidity (shares)</option>
                   <option value="age_ns">Receipt age (nanoseconds)</option>
+                  <option value="sampled_update_rate">Observed update-rate lower bound (/s)</option>
                 </select>
                 {historical && (
                   <label>
@@ -608,6 +609,12 @@ function MarketExplorer({
                 )}
                 <button onClick={() => setEnd(Date.now() * 1e6)}>Latest interval</button>
                 <span>{rows.length} sampled states</span>
+                {field === 'sampled_update_rate' && (
+                  <small>
+                    One confirmed lineage change per interval is counted. Multiple updates between
+                    samples are unresolved; this is a lower bound, not venue message intensity.
+                  </small>
+                )}
               </div>
               {history.isError ? (
                 <Empty>{history.error.message}</Empty>
@@ -637,9 +644,11 @@ function MarketExplorer({
                         name:
                           field === 'total_ask_quantity'
                             ? 'shares'
-                            : field === 'age_ns'
-                              ? 'nanoseconds'
-                              : 'collateral / share',
+                            : field === 'sampled_update_rate'
+                              ? 'updates / s (lower bound)'
+                              : field === 'age_ns'
+                                ? 'nanoseconds'
+                                : 'collateral / share',
                       },
                       series: ['yes', 'no'].map((leg, i) => ({
                         name: `${leg.toUpperCase()} ${field.replaceAll('_', ' ')}`,
@@ -1183,6 +1192,55 @@ function Calibration() {
           />
         </Panel>
       </div>
+      <Panel
+        title="Displayed depth retention and adverse quotes"
+        note="Means among measurable public futures; unavailable horizons stay unknown. Depth is displayed quantity, never hypothetical fills."
+      >
+        <Chart
+          label="Measured depth retention and adverse quote movement by horizon"
+          option={{
+            ...chartBase,
+            legend: { top: 8, textStyle: { color: '#a1a9b8', fontSize: 9 } },
+            grid: { left: 55, right: 70, top: 50, bottom: 35 },
+            xAxis: { ...chartBase.xAxis, data: Object.keys(horizons).map((h) => `${h} ms`) },
+            yAxis: [
+              { ...chartBase.yAxis, min: 0, max: 1, name: 'depth fraction' },
+              { ...chartBase.yAxis, name: 'adverse collateral/share', position: 'right', min: 0 },
+            ],
+            series: [
+              {
+                name: 'Mean original-quote depth retention',
+                type: 'line',
+                data: Object.values(horizons).map(
+                  (v) => obj(obj(obj(v).metrics).original_quote_depth_retention).mean ?? null,
+                ),
+                itemStyle: { color: '#75b6c8' },
+              },
+              {
+                name: 'Mean adverse ask movement',
+                type: 'bar',
+                yAxisIndex: 1,
+                data: Object.values(horizons).map(
+                  (v) => obj(obj(obj(v).metrics).adverse_ask_movement).mean ?? null,
+                ),
+                itemStyle: { color: '#d3ab61' },
+              },
+            ],
+          }}
+        />
+        <Evidence
+          data={Object.fromEntries(
+            Object.entries(horizons).map(([h, v]) => [
+              h,
+              {
+                depth: obj(obj(v).metrics).original_quote_depth_retention ?? null,
+                adverse: obj(obj(v).metrics).adverse_ask_movement ?? null,
+              },
+            ]),
+          )}
+          label="Per-horizon distributions, tail quantiles and sample counts"
+        />
+      </Panel>
       <Panel
         title="Four execution scenarios"
         note="Imposed counterfactual assumptions, not identified execution probabilities."

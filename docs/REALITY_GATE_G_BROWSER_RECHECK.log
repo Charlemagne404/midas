@@ -1,0 +1,10 @@
+[WebServer] INFO:     Started server process [2911185]
+[WebServer] INFO:     Waiting for application startup.
+[WebServer] INFO:     Application startup complete.
+[WebServer] INFO:     Uvicorn running on http://127.0.0.1:18000 (Press CTRL+C to quit)
+
+Running 1 test using 1 worker
+
+  ✓  1 e2e/reality.spec.ts:3:1 › native Reality exposes genuine evidence and frozen replay without synthetic labeling (17.1s)
+
+  1 passed (26.8s)

@@ -1,0 +1,48 @@
+
+> @midas/command-center@0.1.0 test:e2e
+> playwright test
+
+[WebServer] INFO:     Started server process [2899631]
+[WebServer] INFO:     Waiting for application startup.
+[WebServer] INFO:     Application startup complete.
+[WebServer] INFO:     Uvicorn running on http://127.0.0.1:18000 (Press CTRL+C to quit)
+
+Running 6 tests using 1 worker
+
+
+  ✓  1 e2e/arena.spec.ts:5:1 › build, train, inspect and evaluate genuine Arena artifacts (3.9m)
+  ✓  2 e2e/laboratory.spec.ts:3:1 › configure, launch, compare and replay a persisted laboratory experiment (11.0s)
+  ✓  3 e2e/laboratory.spec.ts:46:1 › controlled adversarial violation preserves minimized incident and replay (8.3s)
+  ✓  4 e2e/paper.spec.ts:3:1 › persistent paper account, decision audit and execution comparison (8.6s)
+  ✘  5 e2e/reality.spec.ts:3:1 › native Reality exposes genuine evidence and frozen replay without synthetic labeling (11.5s)
+  ✓  6 e2e/smoke.spec.ts:2:1 › discover, inspect, simulate, replay and expose execution failure (18.5s)
+
+
+  1) e2e/reality.spec.ts:3:1 › native Reality exposes genuine evidence and frozen replay without synthetic labeling 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByText('Checksum-verified raw input record', { exact: true })
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" getByText('Checksum-verified raw input record', { exact: true }) with timeout 5000ms
+      - waiting for getByText('Checksum-verified raw input record', { exact: true })
+
+
+      49 |   ).toBeVisible();
+      50 |   await page.getByRole('button', { name: 'Verify exact input source record' }).click();
+    > 51 |   await expect(page.getByText('Checksum-verified raw input record', { exact: true })).toBeVisible();
+         |                                                                                       ^
+      52 |   await page.screenshot({ path: test.info().outputPath('reality-replay.png'), fullPage: true });
+      53 |   await page.keyboard.press('Escape');
+      54 |   await expect(page.getByRole('dialog')).toHaveCount(0);
+        at /home/charlie/midas-reality/apps/web/e2e/reality.spec.ts:51:87
+
+    Error Context: test-results/reality-native-Reality-exp-b2450--without-synthetic-labeling/error-context.md
+
+  1 failed
+    e2e/reality.spec.ts:3:1 › native Reality exposes genuine evidence and frozen replay without synthetic labeling 
+  5 passed (5.1m)

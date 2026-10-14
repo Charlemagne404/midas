@@ -1311,3 +1311,85 @@ Gate F is accepted as the native interface deliverable. Gate G remains: complete
 backend/frontend/browser regression, raw/archive and research integrity checks,
 protected historical evidence verification, operational recovery review and final
 handoff against all twelve completion conditions. Mission 2 remains active.
+
+## Gate G — final verification in progress
+
+The complete 740-test backend regression, full protected Arena tournament replay
+verification and finalized raw repeat-replay audit run as bounded one-shot user
+services. Their exact handles are `midas-reality-final-regression`,
+`midas-reality-final-arena-audit` and `midas-reality-final-source-audit`. A resource
+adjustment uses measured six-CPU/~9-GiB available headroom to increase finite
+verification speed while preserving Nice 15 and fixed memory ceilings. Collection
+remains at Nice 10 with its original 25% CPU/512-MiB bounds and unchanged PID.
+The regression was initially capped at 30%, then raised to 75% and finally one
+CPU because original planning tests have finite wall-clock budgets. Two fixture
+errors occurred during the throttled run and remain under investigation; a
+separate one-CPU isolated planning recheck is live. No test assertion or historical
+scientific code was weakened. The original run is still active and was not
+restarted merely because its observation took time.
+
+Full-package typing passes over 111 source files, and repository Ruff is clean.
+The broader browser run passed all five original Prometheus scenarios and found
+an actual Reality defect: a recent journal source reference can name its eventual
+`.seg` while the writer still owns `.open`. The API now handles either name and a
+rotation race without accepting arbitrary paths. A focused regression verifies
+inspection before/after rotation; the failed Reality browser scenario passes on
+an isolated fresh server after the fix. The initial failed browser log is retained
+alongside the successful recheck, rather than represented as one clean run.
+
+The UI requirement audit added a historical sampled update-rate lower-bound plot
+and direct per-horizon depth-retention/adverse-quote charts. Multiple updates
+between observations are unresolved and explicitly not claimed as venue intensity.
+All 26 frontend unit tests pass. TypeScript, ESLint and production build pass; the
+existing ECharts bundle-size advisory remains disclosed.
+
+Current accepted research integrity verifies all 13,216 rows, frozen builder and
+training bundles, 13 model artifact identities/weights, the externally pinned
+calibration report and the consumed final-test ledger. No refitting, final-test
+reopening or promotion occurred. `REALITY_GATE_G_RESEARCH_INTEGRITY.json` preserves
+these checks. Portable inference on one genuine supported frozen vector matches
+all four original online predictions; 20 calls per model took median ~0.031–0.043
+ms here. Separately measured out-of-support abstention paths took ~0.017 ms.
+These small host-specific timings are not general latency or throughput claims.
+
+The main prospective audit completed independently against a consistent snapshot:
+344 actual-clock decisions, 102 valid initial decision states raw-replayed,
+eight measured public follow-ups independently checked and 5,172 hash-chained
+journal events. It replayed 185,708 raw records, verified chronology and confirmed
+zero actual orders. See `REALITY_GATE_G_SHADOW_AUDIT.json`. Collection and the
+forward campaign continue beyond that snapshot; these are audit counts, not a
+current live counter or an independent population sample.
+
+The protected payload census verified every Arena file (62,480 payload files)
+and Laboratory payload file metadata predates the Mission 2 start. It also
+hashed the entire payload tree, checked SQLite integrity, preserved the target
+campaign's 162,000 successful results/18,000 groups, and verified all 63 retained
+Laboratory full replay and journal hashes. There are 164,112 compact rows;
+164,049 legitimately lack retained full journal hashes, and the single controlled
+adversarial failure remains intact. The first version of the verifier incorrectly
+assumed every compact row had a journal hash; its failed log and corrected success
+are retained. It never changed the archive or manufactured missing full journals.
+`REALITY_GATE_G_PROTECTED_INTEGRITY.json` records the exact scope and hashes.
+Main remains clean at the protected release, and Laboratory/Arena code identities
+match Gate A and the Prometheus baseline.
+
+The last published daily archive prefix has also been independently revalidated:
+686 segments, 101,941,399 bytes and 683 online replay checkpoints match the original
+raw files and published provenance hash. The archive publication timestamp remains
+visible; newer observations are retained in the recorder root for the next daily
+archive. Local archive replication is not off-host redundancy.
+
+`REALITY_MISSION2_ACCEPTANCE.md` maps all 28 request sections and all twelve hard
+completion conditions to actual evidence and remaining checks. Gate G is not
+accepted until the full regression errors, remaining live audits and final
+operational snapshot have been resolved. The Mission 2 goal remains active.
+
+The finalized source audit has now completed successfully. Two full replays of
+1,579 finalized segments produced identical state; 1,575 online checkpoints and
+all five historical constraint-provenance corrections verified. This prefix
+contains 148,180 raw frames over 13.43 hours, including earlier Mission 1/A process
+and reconnect history. Its four historical connection-failure gaps must not be
+confused with the current collector epoch's zero-failure counter. The protected
+Laboratory SQLite check, 162k/18k counts and live owner lock also passed. Current
+remaining work is full regression/error diagnosis, complete Arena semantic replay
+comparison, and the final operational/acceptance snapshot.

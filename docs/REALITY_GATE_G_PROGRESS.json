@@ -1,0 +1,29 @@
+{
+  "checked_ns": 1792014177841076171,
+  "state": "GATE_G_IN_PROGRESS",
+  "previous_goal_turn": "progress",
+  "services": "MainPID=2897444\nNRestarts=0\nExecMainStatus=0\nMemoryCurrent=461836288\nCPUUsageNSec=389897962000\nId=midas-reality-final-regression.service\nActiveState=active\nSubState=running\n\nMainPID=2897862\nNRestarts=0\nExecMainStatus=0\nMemoryCurrent=311787520\nCPUUsageNSec=292504164000\nId=midas-reality-final-arena-audit.service\nActiveState=active\nSubState=running\n\nMainPID=0\nNRestarts=0\nExecMainStatus=0\nMemoryCurrent=[not set]\nCPUUsageNSec=[not set]\nId=midas-reality-final-source-audit.service\nActiveState=inactive\nSubState=dead\n\nMainPID=2916578\nNRestarts=0\nExecMainStatus=0\nMemoryCurrent=648212480\nCPUUsageNSec=108487109000\nId=midas-reality-final-planning-recheck.service\nActiveState=active\nSubState=running\n\nMainPID=2288376\nNRestarts=0\nExecMainStatus=0\nMemoryCurrent=375013376\nCPUUsageNSec=216422697000\nId=midas-reality.service\nActiveState=active\nSubState=running\n\nMainPID=2820914\nNRestarts=0\nExecMainStatus=0\nMemoryCurrent=166305792\nCPUUsageNSec=316611242000\nId=midas-reality-shadow.service\nActiveState=active\nSubState=running\n",
+  "remaining": [
+    "Finish full backend regression and resolve two fixture errors",
+    "Finish full protected Arena replay comparison",
+    "Publish final operational snapshot and update twelve-condition acceptance ledger"
+  ],
+  "completed_source_audit": {
+    "scope": "Finalized segments only; active segment excluded",
+    "replay": {
+      "online_checkpoints_verified": 1575,
+      "provenance_corrections_verified": 5,
+      "repeat_identical": true,
+      "state_sha256": "d3fd0fc9479cf1694f28d307edbf5cdbdddf6bec8fa01397299095977e9eb093"
+    },
+    "protected_archive": {
+      "counts": [
+        162000,
+        18000,
+        162000
+      ],
+      "integrity": "ok",
+      "owner_lock_held": true
+    }
+  }
+}

@@ -1,0 +1,74 @@
+{
+  "checked_ns": 1792013962822239658,
+  "decision_id": "def636e2beb1f4be1f560f7a6e22b161fd7c074bd8a3c8c2b2680785412362a9",
+  "source_ordinal": 187827,
+  "timings": {
+    "adverse_ask_movement": {
+      "model_id": "d4d5e52dbea1b0c50cea4d811ecebdcbc4ee33f4fb3248f3e731f99b948014c6",
+      "calls": 20,
+      "median_ms": 0.016716500000000002,
+      "max_ms": 0.039427,
+      "state": "outside_training_support",
+      "matches_frozen_online_prediction": true
+    },
+    "depth_retention": {
+      "model_id": "0ea9c3a6a655b780b0be20195ab5239a3a40127df9c3120a75cd3a88d8d3f637",
+      "calls": 20,
+      "median_ms": 0.0164825,
+      "max_ms": 0.027881,
+      "state": "outside_training_support",
+      "matches_frozen_online_prediction": true
+    },
+    "market_disruption": {
+      "model_id": "a078817697fbd329d29b9d7adcb6eafd5dab0436e31847b1b88cc11d07941ecf",
+      "calls": 20,
+      "median_ms": 0.016508500000000002,
+      "max_ms": 0.026394,
+      "state": "outside_training_support",
+      "matches_frozen_online_prediction": true
+    },
+    "quote_persistence": {
+      "model_id": "de47e1b273ff62b7fd4953ec03845ebfe7c52b78e97172f22da45a33c0474f17",
+      "calls": 20,
+      "median_ms": 0.016598500000000002,
+      "max_ms": 0.026581,
+      "state": "outside_training_support",
+      "matches_frozen_online_prediction": true
+    }
+  },
+  "scope": "Support-abstention and numerical inference paths on genuine frozen decision-time vectors, at most 20 calls per model/path; first 500 decisions searched for supported inputs. No fitting, threshold selection or future-outcome use. Small host-specific timings are not throughput guarantees.",
+  "supported_recorded_paths": {
+    "adverse_ask_movement": {
+      "decision_id": "4f4c1964e9ef88b45d06eb3d17afab893e3a0baa17c956d5bd59e3a884493d5e",
+      "model_id": "d4d5e52dbea1b0c50cea4d811ecebdcbc4ee33f4fb3248f3e731f99b948014c6",
+      "calls": 20,
+      "median_ms": 0.036846000000000004,
+      "max_ms": 0.08056,
+      "matches_frozen_online_prediction": true
+    },
+    "depth_retention": {
+      "decision_id": "4f4c1964e9ef88b45d06eb3d17afab893e3a0baa17c956d5bd59e3a884493d5e",
+      "model_id": "0ea9c3a6a655b780b0be20195ab5239a3a40127df9c3120a75cd3a88d8d3f637",
+      "calls": 20,
+      "median_ms": 0.0430795,
+      "max_ms": 0.070098,
+      "matches_frozen_online_prediction": true
+    },
+    "market_disruption": {
+      "decision_id": "4f4c1964e9ef88b45d06eb3d17afab893e3a0baa17c956d5bd59e3a884493d5e",
+      "model_id": "a078817697fbd329d29b9d7adcb6eafd5dab0436e31847b1b88cc11d07941ecf",
+      "calls": 20,
+      "median_ms": 0.034792000000000003,
+      "max_ms": 0.057155,
+      "matches_frozen_online_prediction": true
+    },
+    "quote_persistence": {
+      "decision_id": "4f4c1964e9ef88b45d06eb3d17afab893e3a0baa17c956d5bd59e3a884493d5e",
+      "model_id": "de47e1b273ff62b7fd4953ec03845ebfe7c52b78e97172f22da45a33c0474f17",
+      "calls": 20,
+      "median_ms": 0.031480999999999995,
+      "max_ms": 0.054232,
+      "matches_frozen_online_prediction": true
+    }
+  }
+}

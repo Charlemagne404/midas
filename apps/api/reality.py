@@ -116,7 +116,7 @@ def router(workspace: Path) -> APIRouter:
             raise HTTPException(404, "No prospective journal available yet")
         result = report(forward, limit=limit)
         cache[key] = (time.monotonic(), result)
-        return result  # type: ignore[no-any-return]
+        return result
 
     @routes.get("/history")
     def history(
@@ -220,12 +220,22 @@ def router(workspace: Path) -> APIRouter:
         segment: str = Query(pattern=r"^[0-9]{20}-[a-f0-9]{32}\.(seg|open)$"),
         offset: int = Query(ge=8, le=16_777_216),
     ) -> dict[str, Any]:
-        path = raw / segment
-        if not path.exists():
-            path = path.with_suffix(".seg")
-        if not path.is_file() or path.is_symlink():
+        requested = raw / segment
+        handle = None
+        for path in (
+            requested,
+            requested.with_suffix(".open" if requested.suffix == ".seg" else ".seg"),
+        ):
+            if path.is_symlink():
+                raise HTTPException(404, "Source segment unavailable")
+            try:
+                handle = path.open("rb")
+                break
+            except FileNotFoundError:
+                continue
+        if handle is None:
             raise HTTPException(404, "Source segment unavailable")
-        with path.open("rb") as handle:
+        with handle:
             if handle.read(len(MAGIC)) != MAGIC:
                 raise HTTPException(409, "Source framing mismatch")
             handle.seek(offset)

@@ -122,8 +122,13 @@ def test_raw_input_offsets_hashes_and_traversal(dashboard):
         + compressed
     )
     url = f"/api/reality/records/42?segment={segment}&offset=8"
+    # Shadow references retain the eventual .seg identity while the writer still owns .open.
+    active = path.with_suffix(".open")
+    path.rename(active)
     r = c.get(url)
-    assert r.status_code == 200
+    assert r.status_code == 200 and r.json()["segment"].endswith(".open")
+    active.rename(path)
+    assert c.get(url.replace(".seg&offset", ".open&offset")).status_code == 200
     assert r.json()["canonical_record_sha256"] == hashlib.sha256(body).hexdigest()
     assert c.get(url.replace("/42?", "/43?")).status_code == 409
     assert c.get("/api/reality/records/42?segment=../../status.json&offset=8").status_code == 422
