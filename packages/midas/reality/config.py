@@ -1,6 +1,7 @@
 """Persisted bounded recorder configuration."""
 
 import json
+import math
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
@@ -14,7 +15,7 @@ class Config:
     refresh_seconds: float = 600
     resync_seconds: float = 300
     stale_seconds: float = 60
-    queue_size: int = 256
+    queue_size: int = 32
     budget_bytes: int = 2 * 1024**3
     reserve_bytes: int = 5 * 1024**3
     segment_bytes: int = 8 * 1024**2
@@ -22,10 +23,13 @@ class Config:
     retention_days: int = 30  # stop at the budget; explicit export/prune only
 
     def __post_init__(self) -> None:
+        for name in ("refresh_seconds", "resync_seconds", "stale_seconds", "segment_seconds"):
+            if not math.isfinite(getattr(self, name)):
+                raise ValueError("Timing values must be finite")
         if not 1 <= self.markets <= 10 or not self.markets <= self.discovery_limit <= 200:
             raise ValueError("Cohort must contain 1..10 markets, discovery <=200")
         if (
-            not 10 <= self.queue_size <= 1024
+            not 10 <= self.queue_size <= 64
             or min(self.refresh_seconds, self.resync_seconds, self.stale_seconds) < 10
         ):
             raise ValueError("Unsafe queue or refresh configuration")

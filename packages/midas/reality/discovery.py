@@ -2,7 +2,7 @@
 
 import json
 import re
-from decimal import Decimal
+from decimal import Decimal, DecimalException
 from typing import Any
 
 GAMMA = "https://gamma-api.polymarket.com"
@@ -36,6 +36,11 @@ def candidate(raw: dict[str, Any]) -> dict[str, Any]:
     ids, outcomes = array(raw.get("clobTokenIds")), array(raw.get("outcomes"))
     if len(ids) != 2 or len(outcomes) != 2 or len(set(ids)) != 2 or len(set(outcomes)) != 2:
         raise ValueError("Invalid outcome relationship")
+    if any(not isinstance(x, str) for x in outcomes) or {x.lower() for x in outcomes} != {
+        "yes",
+        "no",
+    }:
+        raise ValueError("Expected distinct Yes/No outcomes")
     if any(not isinstance(x, str) or not x.isdecimal() or int(x) <= 0 for x in ids):
         raise ValueError("Invalid CTF token identifier")
     volume = Decimal(str(raw.get("volume24hr", 0)))
@@ -59,7 +64,7 @@ def select(
     for market in raw:
         try:
             candidates.append(candidate(market))
-        except (ValueError, TypeError, KeyError) as e:
+        except (ValueError, TypeError, KeyError, DecimalException) as e:
             rejected.append(dict(id=market.get("id"), reason=str(e)))
     chosen = []
     for market in sorted(candidates, key=lambda m: (-Decimal(m["volume24hr"]), m["id"])):

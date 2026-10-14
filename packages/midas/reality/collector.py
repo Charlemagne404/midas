@@ -1,11 +1,13 @@
 """Bounded public capture independent of the API and research stores."""
 
 import asyncio
+import hashlib
 import json
 import logging
 import signal
 import time
 import uuid
+from decimal import DecimalException
 from pathlib import Path
 from typing import Any
 
@@ -19,6 +21,10 @@ from .replay import replay
 from .storage import Store, atomic_json, manifest
 
 
+class StorageFailure(RuntimeError):
+    """Persistence failure is terminal; never continue an unrecorded stream."""
+
+
 async def run(config: Config, duration: float | None = None) -> None:
     root = Path(config.root)
     store = Store(
@@ -28,7 +34,11 @@ async def run(config: Config, duration: float | None = None) -> None:
         segment_bytes=config.segment_bytes,
         segment_seconds=config.segment_seconds,
     )
-    engine, _ = replay(root, manifest(root))
+    try:
+        engine, _ = replay(root, manifest(root))
+    except BaseException:
+        store.close()
+        raise
     oldest_ns = time.time_ns()
     oldest = next(iter(manifest(root)["segments"]), None)
     if oldest:
@@ -46,7 +56,10 @@ async def run(config: Config, duration: float | None = None) -> None:
         if time.time_ns() - oldest_ns > config.retention_days * 86400 * 1e9:
             raise OSError("Retention horizon reached; archive recording root")
         began = time.monotonic()
-        record = store.append(kind, payload, **metadata)
+        try:
+            record = store.append(kind, payload, **metadata)
+        except OSError as error:
+            raise StorageFailure(str(error)) from error
         engine.consume(record)
         status["max_append_seconds"] = max(
             status.get("max_append_seconds", 0), time.monotonic() - began
@@ -65,6 +78,11 @@ async def run(config: Config, duration: float | None = None) -> None:
             root / "status.json",
             dict(
                 status,
+                state=(
+                    "DEGRADED_BOOKS"
+                    if status["state"] == "RECORDING_UNSEQUENCED" and fresh != status["markets"] * 2
+                    else status["state"]
+                ),
                 updated_ns=now,
                 ordinal=store.ordinal,
                 storage_bytes=store.used,
@@ -103,6 +121,13 @@ async def run(config: Config, duration: float | None = None) -> None:
                 reason="process_start",
                 recovered=store.recovered,
                 stale_ns=int(config.stale_seconds * 1e9),
+                config=config.dump(),
+                implementation_sha256=hashlib.sha256(
+                    b"".join(
+                        p.name.encode() + p.read_bytes()
+                        for p in sorted(Path(__file__).parent.glob("*.py"))
+                    )
+                ).hexdigest(),
             ),
         )
         async with httpx.AsyncClient(timeout=20, follow_redirects=False) as client:
@@ -119,8 +144,23 @@ async def run(config: Config, duration: float | None = None) -> None:
                             ascending="false",
                         ),
                     )
-                    response.raise_for_status()
-                    cohort, rejected = select(response.json(), config.markets)
+                    try:
+                        response.raise_for_status()
+                        raw_markets = response.json()
+                        if not isinstance(raw_markets, list) or any(
+                            not isinstance(m, dict) for m in raw_markets
+                        ):
+                            raise ValueError("Discovery response must be a market array")
+                        cohort, rejected = select(raw_markets, config.markets)
+                    except (httpx.HTTPError, ValueError, TypeError):
+                        append(
+                            "discovery_error",
+                            response.text,
+                            status_code=response.status_code,
+                            connection=connection,
+                            subscription=subscription,
+                        )
+                        raise
                     append(
                         "discovery",
                         response.text,
@@ -136,14 +176,19 @@ async def run(config: Config, duration: float | None = None) -> None:
                     status.update(markets=len(cohort), cohort=cohort, state="CONNECTING")
                     async with connect(
                         WS,
-                        max_size=4 * 1024**2,
+                        max_size=1024**2,
                         max_queue=config.queue_size,
                         open_timeout=20,
                         close_timeout=5,
                         ping_interval=None,
                     ) as ws:
                         frame = json.dumps(
-                            dict(type="market", assets_ids=tokens, custom_feature_enabled=True)
+                            dict(
+                                type="market",
+                                assets_ids=tokens,
+                                custom_feature_enabled=True,
+                                initial_dump=True,
+                            )
                         )
                         await ws.send(frame)
                         append(
@@ -170,6 +215,7 @@ async def run(config: Config, duration: float | None = None) -> None:
                                     "timestamp_regression",
                                     "market_resolved",
                                     "stale",
+                                    "gap:malformed_constraints",
                                 }
                                 for b in engine.books.values()
                             ):
@@ -234,6 +280,36 @@ async def run(config: Config, duration: float | None = None) -> None:
                                 encoding=encoding,
                                 normalized=normalized,
                             )
+                            original_frame_ordinal = store.ordinal
+                            if encoding == "utf8" and payload != "PONG":
+                                try:
+                                    events = json.loads(payload)
+                                    for event in events if isinstance(events, list) else [events]:
+                                        if (
+                                            isinstance(event, dict)
+                                            and event.get("event_type") == "book"
+                                            and "tick_size" in event
+                                        ):
+                                            from .reconstruction import number
+
+                                            tick = number(event["tick_size"], price=True)
+                                            if tick > 0:
+                                                append(
+                                                    "snapshot_constraints",
+                                                    dict(
+                                                        asset_id=event["asset_id"],
+                                                        tick_size=str(tick),
+                                                        raw_ordinal=original_frame_ordinal,
+                                                    ),
+                                                    connection=connection,
+                                                    subscription=subscription,
+                                                )
+                                except (ValueError, TypeError, KeyError, DecimalException):
+                                    append(
+                                        "gap",
+                                        dict(reason="malformed_constraints"),
+                                        connection=connection,
+                                    )
                             if payload != "PONG":
                                 last_frame = time.monotonic()
                                 status.update(
@@ -242,7 +318,13 @@ async def run(config: Config, duration: float | None = None) -> None:
                                     state="RECORDING_UNSEQUENCED",
                                 )
                                 backoff = 1
-                except (httpx.HTTPError, WebSocketException, ValueError, TimeoutError) as error:
+                except (
+                    httpx.HTTPError,
+                    WebSocketException,
+                    ValueError,
+                    OSError,
+                    TimeoutError,
+                ) as error:
                     status.update(
                         state="DEGRADED",
                         failures=status["failures"] + 1,

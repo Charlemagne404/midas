@@ -5,7 +5,7 @@
   "refresh_seconds": 600,
   "resync_seconds": 300,
   "stale_seconds": 60,
-  "queue_size": 256,
+  "queue_size": 32,
   "budget_bytes": 2147483648,
   "reserve_bytes": 5368709120,
   "segment_bytes": 8388608,

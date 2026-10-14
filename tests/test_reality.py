@@ -162,3 +162,79 @@ def test_crash_tail_recovery_preserves_complete_records(tmp_path):
     rows = list(read_manifest(tmp_path, manifest(tmp_path)))
     assert rows[0]["payload"] == {"raw": "original"} and rows[1]["ordinal"] == 2
     assert MAGIC == b"MIDASR1\n"
+
+
+async def test_network_interruption_reconnect_and_safe_stop(tmp_path, monkeypatch):
+    import asyncio
+
+    import httpx
+    from midas.reality import collector
+    from midas.reality.config import Config
+    from midas.reality.storage import Store
+    from websockets.asyncio.server import serve
+
+    connections = []
+
+    async def handler(ws):
+        subscription = json.loads(await ws.recv())
+        connections.append(subscription)
+        await ws.send(FIXTURE["frames"][0]["payload"])
+        await ws.send("PONG")
+        if len(connections) == 1:
+            await ws.close()
+        else:
+            await asyncio.sleep(2)
+
+    client = httpx.AsyncClient(
+        transport=httpx.MockTransport(
+            lambda request: httpx.Response(200, text=FIXTURE["discovery"]["payload"])
+        )
+    )
+    monkeypatch.setattr(collector.httpx, "AsyncClient", lambda **kwargs: client)
+    async with serve(handler, "127.0.0.1", 0) as server:
+        port = server.sockets[0].getsockname()[1]
+        monkeypatch.setattr(collector, "WS", f"ws://127.0.0.1:{port}")
+
+        # Config confines production paths; this explicit test subclass uses pytest's root.
+        class TestConfig(Config):
+            def __post_init__(self):
+                pass
+
+        config = TestConfig(root=str(tmp_path), reserve_bytes=1)
+        await collector.run(config, duration=2)
+    assert len(connections) == 2
+    assert connections[0]["assets_ids"] == connections[1]["assets_ids"]
+    rows = list(read_manifest(tmp_path, manifest(tmp_path)))
+    assert any(r["kind"] == "gap" and r["payload"]["reason"] == "connection_failure" for r in rows)
+    assert not any(
+        r["kind"] == "gap" and r["payload"]["reason"] == "malformed_constraints" for r in rows
+    )
+    engine, checkpoints = replay(tmp_path, manifest(tmp_path))
+    assert engine.counts["book"] >= 12 and checkpoints >= 1
+    assert json.loads((tmp_path / "status.json").read_text())["state"] == "STOPPED"
+    resumed = Store(tmp_path, reserve=1)
+    resumed.close()
+
+
+def test_checkpoint_mismatch_and_no_future_state(tmp_path):
+    store = Store(tmp_path, reserve=1)
+    d = FIXTURE["discovery"]
+    store.append("discovery", d["payload"], cohort=d["cohort"])
+    store.append("frame", FIXTURE["frames"][0]["payload"])
+    store.append("checkpoint", dict(state_sha256="bad"))
+    store.close()
+    earlier, _ = replay(tmp_path, manifest(tmp_path), through=1)
+    assert earlier.books == {}
+    with pytest.raises(ValueError, match="Online/replay"):
+        replay(tmp_path, manifest(tmp_path))
+
+
+def test_config_isolation_and_bounds():
+    from midas.reality.config import Config
+
+    with pytest.raises(ValueError):
+        Config(root="/home/charlie/midas/data/laboratory-final")
+    with pytest.raises(ValueError):
+        Config(markets=11)
+    with pytest.raises(ValueError):
+        Config(queue_size=1000)

@@ -37,7 +37,7 @@ class Engine:
 
     def invalidate(self, reason: str, assets: list[str] | None = None) -> None:
         for asset in assets if assets is not None else self.books:
-            if asset in self.books:
+            if isinstance(asset, str) and asset in self.books:
                 self.books[asset]["issue"] = reason
 
     def consume(self, record: dict[str, Any]) -> None:
@@ -51,6 +51,10 @@ class Engine:
             self.invalidate("gap:" + record["payload"]["reason"])
             self.seen.clear()
             self.recent.clear()
+        elif kind == "snapshot_constraints":
+            asset = record["payload"]["asset_id"]
+            if isinstance(asset, str) and asset in self.books:
+                self.books[asset]["tick"] = str(number(record["payload"]["tick_size"], price=True))
         elif kind == "discovery":
             self.tokens = {
                 token: market["condition"]
@@ -119,6 +123,8 @@ class Engine:
                 raise ValueError("Invalid timestamp")
             for change in changes:
                 asset = change["asset_id"]
+                if not isinstance(asset, str):
+                    raise ValueError("Invalid asset identifier type")
                 touched.append(asset)
                 if asset not in self.tokens or raw["market"] != self.tokens[asset]:
                     raise ValueError("Unexpected asset or condition")
@@ -134,6 +140,8 @@ class Engine:
                         levels[side] = {}
                         for level in raw[side]:
                             p, q = number(level["price"], price=True), number(level["size"])
+                            if len(levels[side]) >= 10000:
+                                raise ValueError("Book depth limit exceeded")
                             if p in levels[side]:
                                 raise ValueError("Duplicate snapshot level")
                             if q:
@@ -165,6 +173,8 @@ class Engine:
                     p, q = number(change["price"], price=True), number(change["size"])
                     before = self.top(prior)
                     if q:
+                        if p not in prior[side] and len(prior[side]) >= 10000:
+                            raise ValueError("Book depth limit exceeded")
                         prior[side][p] = q
                     else:
                         prior[side].pop(p, None)
@@ -179,7 +189,7 @@ class Engine:
                         life["count"] += 1
                         life["total_ns"] += max(0, record["received_ns"] - prior["quote_since_ns"])
                         prior["quote_since_ns"] = record["received_ns"]
-                    self.check_top(prior, change)
+                    # Compare advertised final top only after all changes in this batch.
                 elif kind == "tick_size_change":
                     tick = number(raw["new_tick_size"], price=True)
                     if tick <= 0:
@@ -194,6 +204,10 @@ class Engine:
                     if bid is not None and ask is not None and bid >= ask:
                         book["issue"] = "crossed_or_locked"
                         self.counts["crossed"] += 1
+            if kind == "price_change":
+                for change in changes:
+                    if change["asset_id"] in self.books:
+                        self.check_top(self.books[change["asset_id"]], change)
         except (ValueError, KeyError, TypeError, DecimalException):
             self.counts["malformed_event"] += 1
             self.invalidate("malformed_event", touched or None)
