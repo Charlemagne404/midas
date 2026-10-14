@@ -1,7 +1,8 @@
 # Project Prometheus — final engineering report
 
-**Status: controlled finalization in progress, 2026-10-14. This document is not
-yet a completion declaration.** Pending acceptance evidence is identified below.
+**Status: final acceptance verified, 2026-10-14. Prometheus is concluded under
+the owner’s controlled wrap-up criteria.** Deferred stretch objectives and
+operational exceptions remain explicitly identified; they are not claimed complete.
 The owner ended open-ended stretch expansion and authorized a verified handoff
 of mandatory functionality with explicit, justified exceptions.
 
@@ -22,23 +23,24 @@ private key, real-money order submission or live execution is introduced.
 
 Before final verification, estimates against the original full directive were
 95% mandatory functionality, 55–65% stretch goals and 70% overall engineering.
-These estimates are judgment, not measured task counts. Final acceptance will
-follow the owner's revised completion criteria; deferred stretch work will not
-be represented as implemented.
+These estimates are judgment, not measured task counts. Final acceptance follows
+the owner’s revised completion criteria. Core Arena acceptance is complete with
+the documented exceptions below; optional stretch work remains deferred. The
+expansive original scope is still approximately 70% implemented, not 100%.
 
 ## 2. Original requirements and implementation status
 
 | Original requirement | Implementation status | Final acceptance / exception |
 |---|---|---|
-| Existing infrastructure and protected campaign | Implemented | Current integrity/counts/owner checks pass; final health recheck pending |
-| Training architecture and versioned provenance | Implemented | Dataset/feature/training/evaluation/registry boundaries; final full audit pending |
-| Grouped splits, leakage controls, training-only transforms | Implemented | Grouped identities, frozen tests, timestamp guards, validation-only selection; current regression pending |
+| Existing infrastructure and protected campaign | Implemented | Final integrity/counts/owner and post-restart health checks pass |
+| Training architecture and versioned provenance | Implemented | Final audit verifies seven datasets, 45 models and 52,323 replays |
+| Grouped splits, leakage controls, training-only transforms | Implemented | Grouped identities, frozen tests, timestamp guards, validation-only selection; final regression passes |
 | Constant/logistic/tree/heuristic and PyTorch models | Implemented and trained | Actual artifacts, calibration/error diagnostics and policy evaluation |
 | Persistence, unmatched severity and cost research | Implemented and evaluated | Mixed/negative results preserved; empirical targets absent |
 | Learned-policy integration and hard admission rules | Implemented | Deterministic/no-trade controls; no bypass or hard post-fill loss guarantee |
 | Midas-compatible RL environment and PPO | Implemented and trained | Real simulator/accounting; checkpoint reload and continuation verified |
 | Matched tournaments, rankings, uncertainty and replay | Implemented | Episode-group uncertainty; explicit downside objective and ties |
-| Arena dashboard and actual research data | Implemented | Final major-browser-workflow verification pending |
+| Arena dashboard and actual research data | Implemented | Five isolated browser workflows and deployed acceptance pass |
 | Durable bounded research jobs | Implemented | Source capture, logs, resource caps, cancellation and terminal records |
 | Crash recovery / checkpoint continuation | Implemented with limits | Interrupted jobs require explicit recovery; no arbitrary automatic replay of partial jobs |
 | Native worker pause/resume states | Partially implemented | Schedule admission pause/resume and model checkpoint continuation exist; arbitrary running-worker pause/resume deferred |
@@ -50,7 +52,7 @@ be represented as implemented.
 | Explainability | Partially implemented | Supervised validation diagnostics and policy traces; richer RL attribution deferred |
 | Economic sensitivity | Partially implemented | Synthetic execution/cost/latency/settlement analyses; empirical calibration and broad frontiers deferred |
 | Mandatory training/evaluation/report campaigns | Implemented and executed | Initial baselines, neural model, PPO, competition and stress evidence exist |
-| Operational handoff and complete final evidence | In progress | This report, final regression/audit/UI/service checks and terminal jobs required |
+| Operational handoff and complete final evidence | Completed | Report, inventories, final tests, deployed UI/health checks and terminal jobs verified |
 
 Existing transient workers are not claimed to resume automatically after reboot.
 Actual API-restart scheduling evidence exists; actual reboot/multi-day unattended
@@ -211,9 +213,9 @@ legacy incumbent source gaps remain a limitation rather than invented provenance
 
 ## 8. Final tests and operational evidence
 
-**Pending:** post-typing full backend regression and deployed UI/service/archive
-checks. The production inventory is complete. No production capacity campaign
-is required for wrap-up.
+**Final acceptance passed.** No production capacity campaign was required for
+wrap-up; its failed prerequisite and cancellation are preserved. All production
+research jobs are terminal.
 
 Completed checks:
 
@@ -226,7 +228,8 @@ Completed checks:
   The prepared correction was applied after the original gate became terminal.
   **Current strict mypy passes all 74 files**, and current Ruff passes. Frontend
   TypeScript verification passed separately. **71 affected-behavior tests passed**
-  in 477.84 seconds; the final corrected full regression is now running.
+  in 477.84 seconds. The final corrected full regression passed **608 tests,
+  one skipped**, in **1,113.72 seconds**.
 - **Previous full backend gate:** 582 passed and one skipped. The subsequent
   gate finished with 599 passed, one failed and one skipped in 1,154.11 seconds.
   The failure was a transient SQLite SHM file disappearing during archive disk
@@ -234,8 +237,8 @@ Completed checks:
 - **Stabilization:** 19 tests passed in 16.03 seconds, including API shutdown and
   restart recovery. The Laboratory execution identity is unchanged. Corrections
   were committed as `89d0132`. The complete pre-typing regression passed
-  **608 tests with one skipped in 1,125.74 seconds**. A post-typing regression
-  is required before final deployment acceptance.
+  **608 tests with one skipped in 1,125.74 seconds**. The post-typing gate
+  subsequently passed, and deployment acceptance completed.
 - **Planning verification:** four tests passed; three inference refusal tests
   passed separately. Fixture inference and export checks are described above.
 - **Full artifact audit:** seven datasets, 45 model artifacts, 27 completed
@@ -273,7 +276,7 @@ passes. Final evidence files use the `PROMETHEUS_FINAL_*` prefix.
 - Legacy model source gaps are explicit. Source/model compatibility cannot be
   assumed across arbitrary revisions.
 - A planning promotion-threshold defect was found and corrected; the stopped
-  pre-fix gate and stale proposal are retained. Deployment/final verification pending.
+  pre-fix gate and stale proposal are retained. Corrected deployment and final verification completed.
 - Historical failed/cancelled/partial studies remain visible and do not count as
   completed experiments. Legitimate simulated losses are not software defects.
 
@@ -349,8 +352,47 @@ Its precise scope should be agreed as a new project, not silently added here.
 
 ## Final acceptance record
 
-Not yet signed off. Remaining essentials are tracked in
-[controlled finalization plan](PROMETHEUS_FINALIZATION_PLAN.md). All running
-research must finish or be safely preserved in documented terminal states before
-the goal is marked complete. This section will record exact final tests, inventory,
-service/archive evidence, repository commit/state and justified exceptions.
+Acceptance was verified against the owner’s controlled completion criteria:
+
+| Criterion | Final evidence |
+|---|---|
+| Mandatory Arena functionality and justified exceptions | Requirements table above; per-model inventory; actual completed training and competitions |
+| No known critical accounting or corruption defect | Full 52,323-replay artifact audit; 4,860 recovery/unwind checks; protected archive integrity and ownership |
+| Major user workflows work | Five isolated browser workflows pass; deployed UI check has zero page errors and only a configuration-validation POST |
+| Evidence is traceable and preserved | Model/dataset/source hashes, 155 unchanged production manifest snapshots, export/reexecution evidence, historical failures retained |
+| Research work is terminal | 70 native jobs: 66 completed, two cancelled, two failed; no running native worker |
+| Current implementation validated | 608 backend tests pass, one skipped; 22 frontend tests; five browser workflows; mypy 74 files; lint/type/build pass |
+| Stable operating state | API READY after local restart, web active, original archive lease held, zero missing cold stores, unrelated services retain original processes |
+| Complete handoff | This report, final model/research inventories, operational instructions, deferred scope and Reality/Atlas proposals |
+
+The skipped test is PostgreSQL runtime recovery: no `MIDAS_TEST_POSTGRES_URL`
+was supplied. SQLite runtime recovery is verified. One existing Starlette
+deprecation warning and the chart-size build advisory remain noncritical.
+No fresh dependency installation, actual host reboot or multi-day unattended
+trial is claimed.
+
+Deployed acceptance checked 1,593 canonical dataset rows (25 paged rows, 19
+features), a 75,089-byte PPO model download, saved replay/event navigation,
+recovery and unwind views, all 57 findings, terminal-plan execution controls and
+mobile overview. No production training was submitted or test metric opened.
+
+Final operational evidence preserves the protected campaign’s 162,000 results,
+18,000 indices and 162,000 unique IDs; `quick_check` passes and exclusive ownership
+is held. All 155 final production manifest snapshots remain unchanged. API
+health reports paper-only mode and verified checkpoint recovery.
+
+### Evidence index
+
+- [Final backend regression](PROMETHEUS_FINAL_TYPED_BACKEND_TESTS.log)
+- [Frontend tests](PROMETHEUS_FINAL_FRONTEND_TESTS.log) and [build](PROMETHEUS_FINAL_FRONTEND_BUILD.log)
+- [Strict Python typing](PROMETHEUS_FINAL_CORRECTED_BACKEND_TYPES.log) and [lint](PROMETHEUS_FINAL_CORRECTED_BACKEND_LINT.log)
+- [Browser suite](PROMETHEUS_FINAL_CORRECTED_BROWSER_SUITE.log) and [deployed UI](PROMETHEUS_FINAL_DEPLOYED_UI.json)
+- [Artifact audit](PROMETHEUS_FINAL_ARTIFACT_AUDIT.json), [typed compatibility](PROMETHEUS_FINAL_TYPED_ARTIFACT_COMPATIBILITY.json), and [recovery audit](PROMETHEUS_FINAL_RECOVERY_AUDIT.json)
+- [Final operational evidence](PROMETHEUS_FINAL_OPERATIONAL_EVIDENCE.json)
+- [Per-model inventory](PROMETHEUS_FINAL_MODEL_INVENTORY.md) and [full research inventory](PROMETHEUS_FINAL_RESEARCH_INVENTORY.json)
+
+Source and evidence are committed locally; no external deployment or push occurred.
+Large research data remains intentionally outside Git at the locations listed
+above. Repository state and the final documentation commit are recorded in the
+handoff response. Software readiness supports beginning Reality and Atlas; it
+does not establish real-market profitability.

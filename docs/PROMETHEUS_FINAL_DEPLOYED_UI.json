@@ -1,0 +1,66 @@
+{
+  "checkedAt": "2026-10-14T07:06:40.205Z",
+  "dataset": "dataset-86acfda4bc54dc0bf99bf987",
+  "model": "model-27006372c7ea4b7d850c0b9c",
+  "tournament": "tournament-999cf9ee983249599d1dccb8",
+  "health": {
+    "status": "READY",
+    "startup_status": "READY",
+    "startup_error": null,
+    "mode": "demo",
+    "live_execution": false,
+    "paper_recovery": {
+      "status": "CHECKPOINT_VERIFIED",
+      "journal_events": 112498,
+      "revision": 112497
+    },
+    "laboratory": {
+      "status": "READY",
+      "root": "/home/charlie/midas/data/laboratory-final",
+      "recovering_campaigns": [],
+      "recovery_errors": []
+    }
+  },
+  "registry": {
+    "models": 45,
+    "datasets": 7,
+    "tournaments": 27,
+    "jobs": 70
+  },
+  "trainingConfigurationValidated": true,
+  "canonicalDatasetRows": {
+    "total": 1593,
+    "pageRows": 25,
+    "featureCount": 19
+  },
+  "modelWeightsBytes": 75089,
+  "replay": {
+    "rowId": "0-optimistic-no_trade",
+    "journalStates": 4,
+    "resultHash": "9e9cffc5f6fa70815318cfb121a7bfd0481e232babf518e139e54107b3e30688"
+  },
+  "plans": [
+    {
+      "planId": "plan-1058dec1077e493834f60346",
+      "state": "CANCELLED",
+      "runDisabled": true
+    },
+    {
+      "planId": "plan-42eee9132b78af48420aa748",
+      "state": "STALE_SOURCE",
+      "runDisabled": true
+    }
+  ],
+  "recoveryStudies": 1,
+  "unwindStudies": 3,
+  "findingsVisible": 57,
+  "mobileOverviewVisible": true,
+  "pageErrors": [],
+  "mutationRequests": [
+    {
+      "method": "POST",
+      "url": "http://127.0.0.1:5173/api/arena/jobs/validate"
+    }
+  ],
+  "scope": "Deployed saved-artifact workflows plus schema validation; no production job submitted, test metric opened, fitting or new economic evidence."
+}

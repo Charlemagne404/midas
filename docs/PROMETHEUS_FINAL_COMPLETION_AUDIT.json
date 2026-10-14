@@ -1,0 +1,34 @@
+{
+  "checked_at": 1791961776.3708131,
+  "acceptance_scope": "Owner controlled finalization directive of2026-10-14; mandatory implementation and documented exceptions, no optional scope expansion",
+  "criteria": {
+    "mandatory_and_exceptions_documented": true,
+    "critical_accounting_or_data_corruption_defect_known": false,
+    "major_browser_workflows_verified": true,
+    "evidence_preserved_and_traceable": true,
+    "native_jobs_terminal": 70,
+    "backend_passed": 608,
+    "backend_skipped": 1,
+    "postgres_runtime_not_configured": true,
+    "frontend_passed": 22,
+    "browser_passed": 5,
+    "strict_types_files": 74,
+    "deployed_ui_passed": true,
+    "protected_campaign_counts": [
+      162000,
+      18000,
+      162000
+    ],
+    "unrelated_services_original_processes_active": true,
+    "report_complete": true
+  },
+  "deferred_requirements": [
+    "Arbitrary native pause/resume",
+    "Actual reboot/multi-day operation",
+    "General scientific planning",
+    "Additional model families/leagues/robust optimization",
+    "Empirical execution and real-market economic evidence"
+  ],
+  "original_full_scope_estimate_percent": 70,
+  "no_external_push_or_deployment": true
+}
