@@ -1,0 +1,27 @@
+{
+  "dataset_id": "8f018da385b00f78faaae1502a714351b81c5e4ffdb6c144242a3a365b25920f",
+  "counts": {
+    "raw_records": 1190,
+    "excluded:empty_ask_side": 37,
+    "examples": 1712,
+    "label:censored": 1604,
+    "censor:future_observation_unavailable": 1321,
+    "censor:stale_book": 206,
+    "excluded:stale_book": 803,
+    "label:observed_public_measurement": 108,
+    "censor:book_issue:advertised_top_pending": 33,
+    "excluded:book_issue:advertised_top_pending": 3,
+    "verified_checkpoints": 12,
+    "excluded:book_issue:stale": 8,
+    "censor:recorded_gap:book_resynchronization": 42,
+    "excluded:source_timing_uncertainty": 9,
+    "censor:recorded_gap:process_stop": 2
+  },
+  "partition_counts": {
+    "train": 1181,
+    "embargoed": 206,
+    "validation": 193,
+    "test": 132
+  },
+  "generated_seconds": 2.043716139975004
+}

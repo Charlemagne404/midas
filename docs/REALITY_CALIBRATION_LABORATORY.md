@@ -1,7 +1,7 @@
 # Reality Calibration Laboratory — Mission 2
 
 Mission 2 is active on `project/reality` in `/home/charlie/midas-reality`.
-**Gate A is accepted after extended revision 4 validation; Gates B–G remain outstanding.
+**Gates A and B are accepted engineering checkpoints; Gates C–G remain outstanding.
 Mission 2 is not ready for handoff.**
 Prometheus remains at `8acab2298632eb04fbe5183fbe54f8e6f97a8fdb` in the separate
 `/home/charlie/midas` checkout. Atlas is deferred. No trading capability is authorized.
@@ -449,3 +449,154 @@ states, partial complementary observations and future-observation missingness
 explicitly incorporated into data acceptance and labels. No Mission 2 real-data
 model, shadow campaign, economic conclusion or native Reality dashboard is claimed
 to be delivered by this collection checkpoint.
+
+## Gate B — foundry implementation in progress
+
+The recorder continues on its sealed revision 4 code, independently of the new
+research modules. No recorder restart was performed for dataset development.
+Raw inputs are finalized, immutable segment prefixes; the active `.open` file is
+excluded. Research owns a separate derivative root and builder lock.
+
+`midas.reality.foundry` builds content-addressed datasets from a frozen source
+manifest, versioned specification and builder/reconstruction code hashes. Each
+example contains segment SHA256, raw compressed-record SHA256, canonical-record
+SHA256, byte offsets, ordinal, source producer identity, parser revision, decision
+UTC/monotonic times, feature references, label references and actual future delays.
+Builder source is copied into the artifact for later reproduction. Complete
+source ordering, record/file/catalog integrity and all online checkpoints are
+verified before publication; partial derivatives are not research datasets.
+
+Features include both-leg best prices, spread, bounded displayed depth, total depth,
+quantity-dependent full-book acquisition cost, imbalance, freshness, quote age,
+recent observed updates, price/depth changes, public trades, categories/event IDs,
+reported expiry, tick/minimum-size/fee metadata and cross-outcome reception skew.
+Hypothetical quantity and capital are separately labeled assumptions. Displayed
+cost excludes fees and conversion; the fee parameters are not silently applied
+as verified private execution charges.
+
+Labels are versioned public measurements: pointwise original-price presence,
+aggregate depth at original quotes, adverse ask movement, discrepancy persistence,
+displayed acquisition cost, data/rule disruption and quoted exit-value change.
+They never represent an actual or hypothetical confirmed fill. Constituent orders
+and our hypothetical queue position remain unidentified. If there was no initial
+discrepancy, opportunity persistence is not applicable, not a negative example.
+
+A later label requires both outcome depth observations at/after the requested
+horizon, within the smaller of configured tolerance and 25% of that horizon, with
+bounded skew and valid freshness. Actual delays are attached to each leg. There
+is no interpolation between events or carrying an old quiet leg forward as proof
+of a new observation. Missing future data, gaps, stale/inconsistent books,
+source-time qualifiers, independent-comparison divergence, tick changes and
+reported expiry cause explicit censoring. A known empty future ask side instead
+supports an observed negative quote-presence label and zero aggregate depth;
+undefined movement/acquisition targets stay unavailable.
+
+Partitions are chronological train/validation/test, with embargoes covering label
+horizons and tolerance. Their windows include dynamic book/snapshot and rolling
+feature inputs. Related event/condition/negative-risk aliases are merged into
+connected families; horizon variants and family/time dependence groups cannot
+straddle partitions. Conflicting boundary groups become embargoed. A separate
+held-out-family view excludes entire held-out families from training/validation.
+Cross-day generalization is explicitly unavailable when only one day is present.
+Static, already-known protocol metadata can be shared across temporal partitions;
+it does not stand for independent market observations.
+
+The final-test ledger requires a frozen validation-selected candidate/weight list
+and baseline controls before opening a period. Exact interrupted evaluations may
+resume; altered plans, overlapping opened periods and repeated consumed-period
+promotion are rejected. Structural/source integrity audits do not fit models or
+select hyperparameters on test outcomes. Model-training integration follows in
+Gate D; no fitted real-data model is claimed at this stage.
+
+The independent verifier checks chronology, references, versions, censoring,
+market-pair semantics, effective timing, unknown execution truth and grouped
+partition separation. A second implementation reconstructs the raw prefix and
+checks quote/depth/cost/movement labels using independent arithmetic, including
+rehashed label corruption and skipped/selectively censored future observations.
+
+### Initial real-data development results
+
+A six-minute genuine recording produced 1,712 examples, with 108 observed public
+measurements and 1,604 censored. The independent raw-source audit passed all 108
+observed labels and 964 unique record references. This small development artifact
+has no performance or economic validation claim.
+
+The primary frozen recording prefix produced 13,216 examples in 333.5 seconds
+under a 20% CPU limit: 767 observed public measurements and 12,449 censored.
+Partitions contain 8,086 training, 1,902 validation, 3,144 test and 84 embargoed
+rows. They cover one UTC day. Test coverage includes ten market IDs, seven related
+families and 236 family/time groups; these counts do not establish independent
+multi-day validation. Most censorship reflects unavailable qualifying future
+observations, followed by freshness failures and recorded resynchronizations.
+
+The primary-source independent audit and a second generation using the artifact's
+frozen code bundle are running as bounded user services:
+`midas-reality-gate-b-audit.service` and
+`midas-reality-gate-b-regeneration.service`. Gate B acceptance remains open until
+those finish and their evidence is inspected. Dataset generation itself completed
+successfully. Current recorder PID remains 2288376; ingestion was not stopped.
+
+Example commands:
+
+```bash
+.venv/bin/python -m midas.reality.foundry build \
+  --root data/recordings/reality --output data/research/reality/datasets \
+  --spec data/research/reality/gate-b-spec.json \
+  --source-manifest data/research/reality/gate-b-source-manifest.json
+.venv/bin/python -m midas.reality.foundry verify --root <dataset-directory>
+```
+
+`verify` performs the structural/contract audit. `audit_public_labels` additionally
+reads the frozen raw prefix and independently checks observed measurements.
+Raw originals are never pruned or changed by either operation. Budget/reserve
+failure removes only the builder's unpublished disposable temporary directory;
+interrupted published artifacts remain immutable and checksum-verifiable.
+
+
+## Gate B acceptance — source audit and frozen-code regeneration
+
+Gate B is accepted. [Dataset evidence](REALITY_GATE_B_DATASET.json),
+[independent source audit](REALITY_GATE_B_SOURCE_AUDIT.json),
+[reproducibility proof](REALITY_GATE_B_REPRODUCIBILITY.json),
+[operational checkpoint](REALITY_GATE_B_CHECKPOINT.json) and
+[test output](REALITY_GATE_B_TESTS.log) record the current evidence.
+
+The independent implementation checked all 767 observed public measurements
+and 46,638 distinct raw references. It verifies exact decision-time prices,
+quantities, cost and exit-value arithmetic, producer provenance, uncertainty
+intervals and first qualifying future observations. It completed in 570.1 seconds
+under a 20% CPU quota, with about 366 MiB peak memory. This is a research worker,
+not part of the ingestion path.
+
+A second build used the artifact's own frozen source bundle, identical raw prefix
+and spec. It reproduced dataset ID, example-file SHA256, chronological partitions
+and effective coverage exactly. Generation took 334.5 seconds, compared with
+333.5 seconds for the original run. Generated timestamps and elapsed times are
+operational metadata, not mutable scientific inputs to the dataset identity.
+
+The full focused suite reports 73 passes; lint and strict typing pass. Raw
+observations and catalogs were not changed. Collector PID 2288376 remained active
+through construction, audit and regeneration. The dataset, audit and regeneration
+services have terminal successful states. Continuous capture, capacity monitoring
+and daily raw archival remain enabled. No training or prospective shadow campaign
+is active yet.
+
+The 13,216 rows are not 13,216 independent successful observations. Only 767 have
+qualifying measured futures; 12,449 are censored. Observed test measurements by
+requested horizon are 44 at 100 ms, 37 at 300 ms, 45 at 1,000 ms and 48 at 5,000 ms.
+This is small, dependent, single-day evidence. Model eligibility and confidence
+must reflect these counts; Gate B does not establish prediction skill or economic
+usefulness.
+
+The final-test access ledger is implemented but no model-evaluation period has
+been opened. Frozen validation-selected weights and controls are required before
+Gate D opens a final test; consumed or overlapping periods cannot be reused for
+new promotion. The structural and source-integrity audits above do not select
+models or tune thresholds on held-out outcomes.
+
+Known limits remain: unsequenced public feed, qualified source timestamps,
+unsupported V2/Up-Down/augmented Other contracts, incomplete early producer
+identity, no private execution evidence and no cross-day generalization. Code
+bundles and raw-record references make later scientific review reproducible.
+Gate C is next: observed distribution calibration, multiple explicit execution
+assumptions, uncertainty bounds and preserved-simulator comparisons.

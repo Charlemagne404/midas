@@ -23,7 +23,9 @@ dataset creation and evaluation.
 Mission 1 recording is complete. Mission 2 is executing Gates A–G in order;
 Gate A is accepted with eight-market observation, bounded storage, verified daily
 archival, versioned reconstruction, timing evidence and controlled deployment.
-Gate B decision-time datasets and observable labels are next. See the
+Gate B is accepted with reproducible public-observation datasets, measured/censored
+labels, chronological embargoes, family grouping and independent raw audits.
+Gate C observational calibration and simulator comparisons are next. See the
 [Calibration Laboratory progress and operations](REALITY_CALIBRATION_LABORATORY.md).
 
 ## Deferred: Project Atlas
