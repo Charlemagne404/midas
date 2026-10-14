@@ -22,6 +22,7 @@ class DirectorSpec(Model):
     challenge_seed: int = Field(default=53071, ge=0, le=2**32 - 20000)
     episodes: int = Field(default=100, ge=30, le=300)
     training_epochs: int = Field(default=80, ge=5, le=200)
+    minimum_champion_episodes: int = Field(default=30, ge=30, le=2000)
     research_question: str | None = Field(default=None, max_length=500)
     sweep_candidates: tuple[Candidate, ...] | None = None
     sweep_seeds: tuple[int, ...] = (11, 29)
@@ -131,6 +132,7 @@ def run_director(root: Path, spec: DirectorSpec, progress: Any = None) -> dict[s
                 challenge=challenge,
                 max_episodes=spec.episodes,
                 unsupported_input_policy="warn" if index == 1 else "abstain",
+                minimum_champion_episodes=spec.minimum_champion_episodes,
             )
             previous = step.get("artifact")
             previous_file = (

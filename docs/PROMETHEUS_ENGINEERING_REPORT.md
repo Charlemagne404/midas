@@ -2863,3 +2863,24 @@ arena_bundle sourcefrozen. Latestcompletefullgate582passed/oneskip. Next
 independentstudyverifier/coordinator,exactgate thenone nativeplan execution,
 validationselection/accounting/freshpairs/rootexports/browser/health checks.
 No newproductionmodels fromimplementation/proposal. Prometheusremainsactive.
+
+## Corrected planning promotion contract and status checkpoint
+
+Independent study verification initially failed: the inherited 30-group champion
+threshold allowed deterministic arbitrage promotion in the fixture, contradicting
+the evaluation-only planning contract. The incomplete full gate was stopped;
+its timeout/killed state and partial log are retained, not counted as passing.
+Director now exposes the existing tournament threshold (historical default30),
+and evidence-selected plans freeze2000, above their bounded cohort sizes.
+Independent verifier checks this frozen threshold and absence of a champion.
+Corrected four-test verifier passes164.36s, including actual native four fits and
+1260 replay variants. Ruff passes. Full corrected regression remains required.
+
+Superseded proposal42eee9132b78af48420aa748 is STALE_SOURCE with reason; its
+frozen evidence remains preserved. New proposal1058dec1077e493834f60346 binds
+corrected source9f6c5d1b89310f80b85b88b54d8c68332908ff46bf07685a7018e294fb19237f,
+four fits and two matched100-group studies. Production job not yet admitted.
+Producer/verifier transitive script dependencies are checksummed in preregistration.
+Current status report: PROMETHEUS_CHECKPOINT_2026_10_14.md. Completion estimate
+remains70%; model inventory45/44 fitted, no capacity-plan production fit yet.
+Prometheus remains active; proceed corrected gate and bounded production study.

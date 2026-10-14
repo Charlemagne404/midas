@@ -196,6 +196,7 @@ def propose(root: Path, spec: PlanningSpec) -> dict:
         research_question=question,
         sweep_candidates=candidates,
         sweep_seeds=(11, 29),
+        minimum_champion_episodes=2000,
     )
     groups = fresh_groups(root, spec, dataset)
     frozen = {

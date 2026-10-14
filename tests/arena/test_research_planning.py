@@ -74,6 +74,7 @@ def test_evidence_selects_capacity_question_with_frozen_budgets(evidence):
     assert [x["hidden_size"] for x in result["frozen"]["director"]["sweep_candidates"]] == [16, 64]
     assert propose(root, spec) == result
     assert len(result["frozen"]["challenge_identities"]) == 30
+    assert result["frozen"]["director"]["minimum_champion_episodes"] == 2000
 
 
 def test_previous_declared_challenge_is_not_reused(evidence):
