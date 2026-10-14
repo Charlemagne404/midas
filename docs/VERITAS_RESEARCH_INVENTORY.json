@@ -157,7 +157,9 @@
       "markets_with_mapped_issue_entries": 8,
       "freshness_violation_decisions": 1503,
       "mismatches": 0,
-      "promotion": "diagnostic only; no campaign, cadence, collector, strategy, or profitability promotion"
+      "promotion": "diagnostic only; no campaign, cadence, collector, strategy, or profitability promotion",
+      "focused_source_replay_tests": 5,
+      "static_checks": "ruff, format, and mypy passed"
     }
   ],
   "models": [],

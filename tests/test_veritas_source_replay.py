@@ -270,6 +270,15 @@ def test_reconciles_finalized_records_and_ignores_active_segment(tmp_path):
     assert report["source_gap_affected_issue_counts_by_reason"] == {
         "book_resynchronization": {"stale": 1}
     }
+    market_gap = report["source_gap_issue_activity_by_market"]
+    assert len(market_gap) == 1
+    assert market_gap[0]["market_id"] == "1"
+    assert market_gap[0]["gap_records_with_market_issues"] == 1
+    assert market_gap[0]["affected_issue_counts"] == {"stale": 1}
+    market_gap_block = report["source_gap_issue_activity_by_market_5min_block"]
+    assert len(market_gap_block) == 1
+    assert market_gap_block[0]["market_id"] == "1"
+    assert report["source_gap_unmapped_issue_counts_by_reason"] == {}
     assert sum(
         block["scheduled_decisions"] for block in report["source_activity_by_family_5min_block"]
     ) == len(rows)

@@ -98,5 +98,5 @@ campaign identity and predeclared rules.
 
 The replay and aggregate cross-sums reconcile: 2,344 decisions, 1,503 freshness
 violations, 24,744 update frames, 152 gaps, and 908 issue entries in the
-overall, by-market, and by-block groupings. No test suite was run for this
-incremental analysis change.
+overall, by-market, and by-block groupings. The focused source replay suite
+passed (5 tests); Ruff check, Ruff formatting, and strict mypy also passed.

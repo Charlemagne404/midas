@@ -516,7 +516,11 @@
         "stale_entries_in_five_markets": 822,
         "stale_entries_in_five_markets_fraction": "0.947005",
         "source_manifest_sha256": "d8a8522b09a71584bd8bc0c8661a9939dbb1deb1d823c7a5d579ab8c87e1e958",
-        "evidence": "docs/VERITAS_GATE_A_GAP_MARKET_001.json"
+        "evidence": "docs/VERITAS_GATE_A_GAP_MARKET_001.json",
+        "focused_source_replay_tests": 5,
+        "ruff_check": "passed",
+        "ruff_format": "passed",
+        "mypy": "passed"
       },
       "market_summary": {
         "559687": {
