@@ -11,7 +11,7 @@ from fastapi import APIRouter, HTTPException
 
 ARTIFACTS = {
     "baseline": "VERITAS_GATE_A_BASELINE.json",
-    "raw-funnel": "VERITAS_GATE_A_RAW_FUNNEL_003.json",
+    "raw-funnel": "VERITAS_GATE_A_RAW_FUNNEL_004.json",
     "capacity": "VERITAS_GATE_B_CAPACITY_001.json",
     "break-even": "VERITAS_GATE_B_EXECUTION_BREAK_EVEN_001.json",
     "ledger": "VERITAS_RESEARCH_LEDGER.json",

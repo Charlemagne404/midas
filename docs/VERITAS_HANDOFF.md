@@ -130,7 +130,7 @@ contents disposable; preserve the existing operational data in place.
 1. Read the [research backlog](VERITAS_RESEARCH_BACKLOG.md), [research
    ledger](VERITAS_RESEARCH_LEDGER.json), [operations
    procedures](VERITAS_OPERATIONS.md), [Gate A checkpoint
-   011](VERITAS_GATE_A_CHECKPOINT_011.md), [follow-up design draft
+   012](VERITAS_GATE_A_CHECKPOINT_012.md), [follow-up design draft
    002](VERITAS_GATE_A_FOLLOWUP_DESIGN_002.md), and [Gate B checkpoint
    001](VERITAS_GATE_B_CHECKPOINT_001.md).
 2. Review the protected campaign's immutable identity and service health

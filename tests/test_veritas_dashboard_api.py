@@ -47,7 +47,7 @@ def fixture_client(tmp_path: Path) -> TestClient:
     )
     write_artifact(
         tmp_path,
-        "VERITAS_GATE_A_RAW_FUNNEL_003.json",
+        "VERITAS_GATE_A_RAW_FUNNEL_004.json",
         {
             "captured_at_utc": "2026-10-15T00:00:00+00:00",
             "campaign_id": "campaign-fixture",
@@ -157,13 +157,13 @@ def test_artifact_allowlist_hash_and_size_bound(tmp_path):
     response = client.get("/api/veritas/artifacts/raw-funnel")
     assert response.status_code == 200
     digest = hashlib.sha256(
-        (tmp_path / "docs/VERITAS_GATE_A_RAW_FUNNEL_003.json").read_bytes()
+        (tmp_path / "docs/VERITAS_GATE_A_RAW_FUNNEL_004.json").read_bytes()
     ).hexdigest()
     assert response.json()["file_sha256"] == digest
     assert client.get("/api/veritas/artifacts/../../secret").status_code == 404
     assert client.get("/api/veritas/artifacts/unknown").status_code == 404
 
-    oversized = tmp_path / "docs/VERITAS_GATE_A_RAW_FUNNEL_003.json"
+    oversized = tmp_path / "docs/VERITAS_GATE_A_RAW_FUNNEL_004.json"
     oversized.write_text(" " * (MAX_ARTIFACT_BYTES + 1))
     assert client.get("/api/veritas/artifacts/raw-funnel").status_code == 413
 

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-15T01:01:21.119127+00:00",
+  "updated_at_utc": "2026-10-15T01:26:02.972672+00:00",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -1247,6 +1247,53 @@
       ],
       "decision": "Keep the protocol design-only. Do not freeze or start a separate campaign until finalized multi-day data establish the coverage gate and a design-specific power simulation fits the 14-day cap; retain the no-trade control and all existing quality gates.",
       "status": "continue"
+    },
+    {
+      "hypothesis_id": "VERITAS-H023",
+      "title": "Does a later finalized source prefix change the gross opportunity conclusion?",
+      "mechanism": "A materially larger finalized public source prefix could reveal a quality-valid positive complementary edge that was absent in the preceding selected panel; repeated market-frame observations remain correlated and do not establish executable fills.",
+      "experiment_id": "VERITAS-GATE-A-RAW-FUNNEL-20261015-002",
+      "dataset_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
+      "success_metric": "Re-run the bounded version 2 opportunity funnel on a later finalized prefix and report source integrity, paired-book quality, five-share depth, per-leg USDC minimums, and top/full-depth pre-fee positive counts.",
+      "result": {
+        "status": "completed_later_snapshot_no_positive_candidate",
+        "evidence": "docs/VERITAS_GATE_A_RAW_FUNNEL_004.json",
+        "checkpoint": "docs/VERITAS_GATE_A_CHECKPOINT_012.md",
+        "analysis_version": "veritas-raw-opportunity-funnel-v2",
+        "source_manifest_sha256": "67673b47d41166894f97c5ef8ec694705d83230c52d53156084156452ab8d756",
+        "finalized_segments": 2040,
+        "source_bytes": 483718250,
+        "source_last_finalized_ordinal": 251887,
+        "verified_source_checkpoints": 2036,
+        "receipt_window_hours": "4.271135",
+        "campaign_market_ids_observed": 16,
+        "period_frame_records": 56912,
+        "touched_market_frame_states": 46298,
+        "quality_valid_states": 44981,
+        "quality_invalid_states": 1317,
+        "quantity_requested_shares": "5",
+        "quantity_depth_complete_states": 44981,
+        "fee_regime_available_states": 44981,
+        "fee_regime_unavailable_states": 0,
+        "positive_top_ask_pair_states": 0,
+        "positive_top_with_quantity_depth_states": 0,
+        "positive_full_depth_pre_fee_states": 0,
+        "positive_full_depth_minimum_notional_satisfied_states": 0,
+        "maximum_pre_fee_top_edge_per_share": "-0.001",
+        "median_pre_fee_top_edge_per_share": "-0.01",
+        "added_quality_valid_states_over_previous_snapshot": 15049,
+        "active_segment_read": false,
+        "orders_submitted": false,
+        "campaign_created_or_started": false,
+        "promotion": "diagnostic only; no opportunity, strategy, or profitability promotion"
+      },
+      "limitations": [
+        "This remains one selected monitored panel rather than a venue-wide sample.",
+        "Repeated market-frame states are correlated and are not independent opportunities.",
+        "Displayed depth does not establish order arrival, queue priority, fills, or profitability."
+      ],
+      "decision": "The later finalized prefix did not change the gross opportunity conclusion. Preserve the no-trade decision and existing quality gates; wait for a materially larger interval before the next funnel replay and require multi-day evidence before considering a separate follow-up campaign.",
+      "status": "completed"
     }
   ],
   "next_research_questions": [
