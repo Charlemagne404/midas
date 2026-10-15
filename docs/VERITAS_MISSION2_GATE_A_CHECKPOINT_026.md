@@ -1,6 +1,6 @@
 # Gate A checkpoint 026 — scan 29 market discovery
 
-**Captured:** 2026-10-15T18:04:20Z  
+**Captured:** 2026-10-15T18:04:20Z
 **Mission status:** active; the collector continues on its scheduled timer.
 
 ## Discovery and selection
