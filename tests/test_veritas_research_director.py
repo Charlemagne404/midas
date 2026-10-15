@@ -185,7 +185,7 @@ def test_director_admits_one_idempotent_scan_pinned_job_and_publishes_readiness(
     assert completed["state"] == "CURRENT"
     assert completed["last_qualified_scan_id"] == SCAN_ID
     assert completed["strategy_readiness"] == "NOT_READY_NO_QUALIFIED_GROSS_CANDIDATE"
-    assert completed["model_readiness"] == "NOT_READY_NO_PUBLIC_OUTCOME_LABELS"
+    assert completed["model_readiness"] == "NOT_READY_NO_CANDIDATE_RELEVANT_TARGET"
     assert "Keep no-trade" in completed["recommendation"]
     assert (
         len(

@@ -475,7 +475,7 @@ def _manifest(root: Path) -> tuple[Path, Path, dict[str, Any]]:
             "research_question": RESEARCH_QUESTION,
             "current_stage": "Waiting for a finalized v2 public scan",
             "strategy_readiness": "NOT_READY_NO_QUALIFIED_GROSS_CANDIDATE",
-            "model_readiness": "NOT_READY_NO_PUBLIC_OUTCOME_LABELS",
+            "model_readiness": "NOT_READY_NO_CANDIDATE_RELEVANT_TARGET",
             "independent_confirmation_readiness": "NOT_READY_LESS_THAN_48_HOURS_OR_NO_INDEPENDENT_SEQUENCE",
             "recommendation": "Keep no-trade and continue the bounded observation pilot.",
             "last_qualified_scan_id": None,
@@ -632,8 +632,8 @@ def tick(
                 if status == "no_positive_gross_candidate_observed":
                     record.update(
                         strategy_readiness="NOT_READY_NO_QUALIFIED_GROSS_CANDIDATE",
-                        model_readiness="NOT_READY_NO_PUBLIC_OUTCOME_LABELS",
-                        recommendation="Keep no-trade; continue bounded collection and qualify only when a new finalized scan arrives. Do not train or run a strategy tournament without an eligible gross candidate and suitable outcome labels.",
+                        model_readiness="NOT_READY_NO_CANDIDATE_RELEVANT_TARGET",
+                        recommendation="Keep no-trade; continue bounded collection and qualify only when a new finalized scan arrives. Do not train or run a strategy tournament without an eligible gross candidate and candidate-relevant target labels.",
                     )
                 elif status == "candidate_requires_independent_replay":
                     record.update(
@@ -786,8 +786,8 @@ def tick(
             if summary.get("status") == "no_positive_gross_candidate_observed":
                 record.update(
                     strategy_readiness="NOT_READY_NO_QUALIFIED_GROSS_CANDIDATE",
-                    model_readiness="NOT_READY_NO_PUBLIC_OUTCOME_LABELS",
-                    recommendation="Keep no-trade; continue bounded collection and qualify only when a new finalized scan arrives. Do not train or run a strategy tournament without an eligible gross candidate and suitable outcome labels.",
+                    model_readiness="NOT_READY_NO_CANDIDATE_RELEVANT_TARGET",
+                    recommendation="Keep no-trade; continue bounded collection and qualify only when a new finalized scan arrives. Do not train or run a strategy tournament without an eligible gross candidate and candidate-relevant target labels.",
                 )
             elif summary.get("status") == "candidate_requires_independent_replay":
                 record.update(
