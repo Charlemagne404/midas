@@ -8,6 +8,14 @@ test('shows the bounded discovery cohort and links its finalized evidence', asyn
     page.getByRole('heading', { level: 1, name: /Evidence before conviction/ }),
   ).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Market discovery and coverage' })).toBeVisible();
+  await expect(page.getByText('stratified-gamma-page-rotation-v2')).toBeVisible();
+  await expect(page.getByText(/40 target · 50 markets max/)).toBeVisible();
+  await expect(page.getByLabel('Current collector limits')).toBeVisible();
+  await expect(
+    page.getByRole('button', { name: 'Run bounded qualification in Arena' }),
+  ).toBeVisible();
+  await page.getByText(/Inspect latest per-market selection probabilities/).click();
+  await expect(page.getByText(/Inclusion probability/).first()).toBeVisible();
   await expect(
     page.getByRole('heading', { name: 'Opportunity observatory and data quality' }),
   ).toBeVisible();

@@ -44,3 +44,39 @@ Mission 2 is not complete. Continue safe observation; seek independent source co
 No Reality campaign rule, observation, historical result, or service writer was changed. Existing Veritas, Prometheus, Arena, and Laboratory evidence remains preserved. No orders, wallets, deposits, credentials, authenticated trading APIs, or real-money activity were used.
 
 Detailed implementation and evidence: [engineering checkpoint](VERITAS_MISSION2_ENGINEERING.md), [Gate A 008](VERITAS_MISSION2_GATE_A_CHECKPOINT_008.md), [Gate A 009](VERITAS_MISSION2_GATE_A_CHECKPOINT_009.md), [Gate A 010](VERITAS_MISSION2_GATE_A_CHECKPOINT_010.md), [Gate C 001](VERITAS_MISSION2_GATE_C_CHECKPOINT_001.md), [Gate G 002](VERITAS_MISSION2_GATE_G_CHECKPOINT_002.md), [Gate G 003](VERITAS_MISSION2_GATE_G_CHECKPOINT_003.md), [measurement comparison 002](VERITAS_MISSION2_MEASUREMENT_COMPARISON_002.md), [research inventory 010](VERITAS_MISSION2_RESEARCH_INVENTORY_010.json), and [current research inventory 011](VERITAS_MISSION2_RESEARCH_INVENTORY_011.json).
+
+## Checkpoint addendum — 2026-10-15
+
+The next scheduled discovery cycle completed with the v2 rotating query-frame
+protocol. Scan `scan-20261015T100116Z-7d135306c470` returned 300 bounded query
+IDs, 132 supported binary pairs, and 168 explicit exclusions; 40 markets were
+selected and 38 pairs passed the common quality checks. It found zero positive
+gross candidates. The v4 analyzer indexed all 13 snapshots (469 valid pairs,
+186 distinct IDs), with 347 more valid pairs than the prior reported-age/skew
+gate. This remains selected intermittent coverage, not a venue census or
+independent sequence-freshness result.
+
+A bounded Arena worker consumed the 13 finalized v4 events, processed 237,821
+source bytes, and completed in about 2.11 seconds. Its 20-share qualification
+found no positive states across the gross, depth, minimum-notional, and fee
+gates. The result is stored as
+`veritas-qualification-v1-f56acbc2267455d2`; repeat admission for the same
+scan returned the existing job. The new browser workflow passed with the live
+v2 and v4 artifacts.
+
+The Veritas and Arena backend regression group passed 132 tests; the frontend
+passed 29 tests, with Ruff, strict Mypy, formatting, lint, typecheck, build,
+and browser verification also passing. The frozen control record kept its
+original hash. No Reality, campaign, Laboratory, Prometheus, or historical
+Arena evidence was altered, and no orders or authenticated requests were
+made. The observer and source-analysis timers remain active.
+
+The 10:10 UTC source replay completed within bounds at 944/3,077 finalized
+segments, with 2,133 pending and zero campaign-window frames. All 944 event
+hashes and the rolling chain were reverified against sealed state.
+
+Mission 2 remains active. Independent freshness evidence, the 24-hour pilot
+review, the 48-hour follow-up and dependence gates, continued source replay,
+the full Director workflow, and any strategy/model comparison remain open.
+See [Gate A checkpoint 011](VERITAS_MISSION2_GATE_A_CHECKPOINT_011.md) and
+[research inventory 012](VERITAS_MISSION2_RESEARCH_INVENTORY_012.json).

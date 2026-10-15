@@ -1,0 +1,878 @@
+{
+  "schema_version": 1,
+  "mission": "PROJECT-VERITAS-MISSION-2",
+  "inventory_id": "VERITAS-M2-INVENTORY-20261015-012",
+  "captured_at_utc": "2026-10-15T10:15:39Z",
+  "repository": {
+    "path": "/home/charlie/midas-veritas",
+    "branch": "project/veritas",
+    "starting_commit": "9a857cc56804bec6b7129171ba090d338e263aa3",
+    "commit_at_inventory_creation": "0c9e35c",
+    "mission_status": "active_rotating_discovery_arena_qualification_and_source_replay_continues",
+    "checkpoint_base_commit": "0c9e35c",
+    "worktree_changes_pending_commit": true
+  },
+  "discovery_protocol": {
+    "version": "veritas-public-observatory-v2",
+    "bounded_gamma_query_frames": 6,
+    "query_candidate_records_latest": 300,
+    "unique_market_ids_latest": 300,
+    "eligible_same_condition_v1_binary_pairs_latest": 167,
+    "excluded_market_ids_latest": 168,
+    "exclusion_reasons_latest": {
+      "augmented_negative_risk_semantics_unverified": 109,
+      "unsupported_outcome_relationship": 59
+    },
+    "selected_markets_latest": 40,
+    "stable_controls_target": 8,
+    "stable_controls_available_latest": 3,
+    "rotating_markets_latest": 37,
+    "latest_selected_by_liquidity": {
+      "high": 14,
+      "low": 17,
+      "medium": 9
+    },
+    "latest_selected_by_expiry": {
+      "long": 5,
+      "medium_90d": 14,
+      "near_7d": 16,
+      "unknown": 5
+    },
+    "latest_selected_by_spread": {
+      "medium_le_0.05": 15,
+      "tight_le_0.01": 12,
+      "wide_gt_0.05": 13
+    },
+    "selection_probability_scope": "conditional on the bounded query-response union and frozen stable control IDs",
+    "coverage_kind": "intermittent_public_snapshots",
+    "latest_scan_id": "scan-20261015T100116Z-7d135306c470",
+    "latest_scan_captured_at_utc": "2026-10-15T10:01:16.209949+00:00",
+    "latest_selected_by_category": {
+      "AI": 1,
+      "Big Tech": 1,
+      "Bitcoin": 1,
+      "Blockade": 1,
+      "Brazil": 1,
+      "CNN": 1,
+      "Congress": 4,
+      "Crypto": 4,
+      "Culture": 3,
+      "Debate": 1,
+      "EPL": 1,
+      "Elections": 1,
+      "Europa Conference League": 1,
+      "Geopolitics": 2,
+      "Lid": 1,
+      "MLB": 1,
+      "Politics": 15
+    },
+    "latest_query_candidate_records": 300,
+    "latest_unique_market_ids": 300,
+    "frame_protocol": "stratified-gamma-page-rotation-v2",
+    "gamma_page_limit": 50,
+    "eligible_pair_markets_latest": 132,
+    "latest_selection_phase": "expiry",
+    "latest_rotating_page_offsets": {
+      "high_liquidity": 571,
+      "medium_liquidity": 842,
+      "low_liquidity": 113,
+      "near_expiry": null,
+      "tagged_near_expiry": null,
+      "rotating_id_control_frame": 384
+    },
+    "latest_query_frames": [
+      {
+        "query_id": "high_liquidity",
+        "offset": 571,
+        "candidate_count": 50,
+        "request_attempts": 1,
+        "response_bytes": 394708
+      },
+      {
+        "query_id": "medium_liquidity",
+        "offset": 842,
+        "candidate_count": 50,
+        "request_attempts": 1,
+        "response_bytes": 326991
+      },
+      {
+        "query_id": "low_liquidity",
+        "offset": 113,
+        "candidate_count": 50,
+        "request_attempts": 1,
+        "response_bytes": 302214
+      },
+      {
+        "query_id": "near_expiry",
+        "offset": null,
+        "candidate_count": 50,
+        "request_attempts": 1,
+        "response_bytes": 318432
+      },
+      {
+        "query_id": "tagged_near_expiry",
+        "offset": null,
+        "candidate_count": 50,
+        "request_attempts": 1,
+        "response_bytes": 397284
+      },
+      {
+        "query_id": "rotating_id_control_frame",
+        "offset": 384,
+        "candidate_count": 50,
+        "request_attempts": 1,
+        "response_bytes": 376009
+      }
+    ],
+    "latest_primary_category_sources": {
+      "tag.label": 40
+    },
+    "latest_public_http_attempts": 7,
+    "control_cohort_sha256": "9578217e20dcc7d1c65fa110f0ed7c689b55483b61191f1aae8d30c9b7300d9a",
+    "control_cohort_file_version": "veritas-public-observatory-v1",
+    "collection_bounds": {
+      "gamma_page_limit": 50,
+      "gamma_queries_per_scan": 6,
+      "maximum_markets": 50,
+      "maximum_public_http_attempts_per_scan": 14,
+      "maximum_public_read_calls_per_scan": 7,
+      "maximum_response_bytes": 50331648,
+      "maximum_retries_per_public_read": 1,
+      "maximum_root_bytes": 1073741824,
+      "minimum_request_interval_seconds": 1.0,
+      "quantity_grid": [
+        "5",
+        "10",
+        "20",
+        "50",
+        "100"
+      ],
+      "request_timeout_seconds": 15.0,
+      "target_markets": 40
+    }
+  },
+  "finalized_snapshots": [
+    {
+      "scan_id": "scan-20261015T055928Z-c9777c1cc300",
+      "captured_at_utc": "2026-10-15T05:59:28.204111+00:00",
+      "path": "data/veritas-observatory/snapshots/scan-20261015T055928Z-c9777c1cc300.json.gz",
+      "evidence_sha256": "c9777c1cc30036411ffd05d2b1188b0a15134193543360844c0f989641a7249e",
+      "analysis_event_sha256": "bc9e3b0a127eabb533f47dd23e8b7494a341b7a4f02026d60901cdaa4e598bb1",
+      "analysis_event_file_sha256": "d95c33694447b649a64c2dface7a90ea906ad41511f114400c0648739af35a8e",
+      "scanner_source_sha256": "1c25a275c6ee39930b3da499a1c4cdfce41a204ad64a9d014cd534d2d4cb2c45",
+      "attempted_pairs": 40,
+      "quality_valid_pairs_v4": 32,
+      "legacy_freshness_valid_pairs_v4": 5
+    },
+    {
+      "scan_id": "scan-20261015T060201Z-517641164ed1",
+      "captured_at_utc": "2026-10-15T06:02:01.355134+00:00",
+      "path": "data/veritas-observatory/snapshots/scan-20261015T060201Z-517641164ed1.json.gz",
+      "evidence_sha256": "517641164ed193b7819deda4ac84f586d5b177044bb1a5d052795d4a020d9074",
+      "analysis_event_sha256": "06e1feecbd7e1fcfc8b208fd586dfa05c434958e97876c7eb2be988f0a29487e",
+      "analysis_event_file_sha256": "638f01ebf9ec9a07bb9d0692860174c06797c06dad71fc35f55ddf5225152cd5",
+      "scanner_source_sha256": "ffa1ee7a3dd9a110e4815b7bae1f86f98012da94bb4e6b514ec0d04690b0e9ca",
+      "attempted_pairs": 40,
+      "quality_valid_pairs_v4": 35,
+      "legacy_freshness_valid_pairs_v4": 10
+    },
+    {
+      "scan_id": "scan-20261015T061102Z-b5cc69db8c89",
+      "captured_at_utc": "2026-10-15T06:11:02.292012+00:00",
+      "path": "data/veritas-observatory/snapshots/scan-20261015T061102Z-b5cc69db8c89.json.gz",
+      "evidence_sha256": "b5cc69db8c895c57fc506f05ce464ac082f88de4bee63b886b7bea8ad37013ad",
+      "analysis_event_sha256": "5a828adec9c6d802ec28f848f05a88220045c630c5027db95fecf478f8d3f9ee",
+      "analysis_event_file_sha256": "906690e10ead2e27d1e362d79d01a2221a35a32181cc0f93774e4b8ef62c0a7d",
+      "scanner_source_sha256": "14978d5e8b15b03245cfd212eab82f092f37dac4ec82080f19aa1aefdd02ff80",
+      "attempted_pairs": 40,
+      "quality_valid_pairs_v4": 37,
+      "legacy_freshness_valid_pairs_v4": 11
+    },
+    {
+      "scan_id": "scan-20261015T061158Z-cd78f8558de3",
+      "captured_at_utc": "2026-10-15T06:11:58.715241+00:00",
+      "path": "data/veritas-observatory/snapshots/scan-20261015T061158Z-cd78f8558de3.json.gz",
+      "evidence_sha256": "cd78f8558de3225f53dd137c0becefb68ba49ec68ddda3d56ac5a296339c82fa",
+      "analysis_event_sha256": "87c8395a9fb8dd41e530b74f1d878e135ef3da65fbc7be8de4f2a0edc4f7694d",
+      "analysis_event_file_sha256": "7204d1c6a1931c534cfae25101d30f577d1b91ee2c4a8b1216030eb5e80f4929",
+      "scanner_source_sha256": "00e5cba5243bd9d9c49c7d45a528e05a31f37dcc8560a0eb8d8299d936e830e1",
+      "attempted_pairs": 40,
+      "quality_valid_pairs_v4": 37,
+      "legacy_freshness_valid_pairs_v4": 6
+    },
+    {
+      "scan_id": "scan-20261015T061520Z-1e4273fa897f",
+      "captured_at_utc": "2026-10-15T06:15:20.978596+00:00",
+      "path": "data/veritas-observatory/snapshots/scan-20261015T061520Z-1e4273fa897f.json.gz",
+      "evidence_sha256": "1e4273fa897f048f559d6601fa69371e258c4059cb9ba0feee41526b4f6ce532",
+      "analysis_event_sha256": "22824db69c58810c1e91f9fa900341f5e2f90031f425dcbfba3024961ecc52af",
+      "analysis_event_file_sha256": "8355d27637bfde12ad7c28f76a0da6c29533ac9b082256f7b78c6edab865dd94",
+      "scanner_source_sha256": "f1fe2ee9876267e4e1271b58136c1a5c9422fe900ff143f8ccfc97344fb5c607",
+      "attempted_pairs": 40,
+      "quality_valid_pairs_v4": 35,
+      "legacy_freshness_valid_pairs_v4": 12
+    },
+    {
+      "scan_id": "scan-20261015T062259Z-f060bd25dec4",
+      "captured_at_utc": "2026-10-15T06:22:59.339473+00:00",
+      "path": "data/veritas-observatory/snapshots/scan-20261015T062259Z-f060bd25dec4.json.gz",
+      "evidence_sha256": "f060bd25dec45ce5688fa8efbd7918b27c3e35e3173c90f403ca2bc13da7c4f0",
+      "analysis_event_sha256": "f522d06c04efcba3442e97c25ecce16f07a7060dfabfbf807a0eda323deaac5c",
+      "analysis_event_file_sha256": "06f8d166eb97495288fa83cfbb186bec5454f92c2c19d066263d311125fb11f2",
+      "scanner_source_sha256": "712d65a8698e3b6a3d9ec5362c12322559cf7359d874ea281eab0740569f08e1",
+      "attempted_pairs": 40,
+      "quality_valid_pairs_v4": 35,
+      "legacy_freshness_valid_pairs_v4": 8
+    },
+    {
+      "scan_id": "scan-20261015T063103Z-12947c8cef0a",
+      "captured_at_utc": "2026-10-15T06:31:03.668803+00:00",
+      "path": "data/veritas-observatory/snapshots/scan-20261015T063103Z-12947c8cef0a.json.gz",
+      "evidence_sha256": "12947c8cef0a838589bb74461250020597a1ca153701802ae2f3af4581be7bd0",
+      "analysis_event_sha256": "a1640f6e79ad0e0449edd56e2923414f87c7d81954a0e130656c4a0841e32cad",
+      "analysis_event_file_sha256": "99b68e68bbe7108cd79c4a54677270b0eaa849552c03dc440256512d95b8feef",
+      "scanner_source_sha256": "712d65a8698e3b6a3d9ec5362c12322559cf7359d874ea281eab0740569f08e1",
+      "attempted_pairs": 40,
+      "quality_valid_pairs_v4": 37,
+      "legacy_freshness_valid_pairs_v4": 14
+    },
+    {
+      "scan_id": "scan-20261015T070035Z-12f2eac522c9",
+      "captured_at_utc": "2026-10-15T07:00:35.664751+00:00",
+      "path": "data/veritas-observatory/snapshots/scan-20261015T070035Z-12f2eac522c9.json.gz",
+      "evidence_sha256": "12f2eac522c954839d6a9f6b8c85d012e73fafb5af580aa274c15c3e1d89afe1",
+      "analysis_event_sha256": "03df38a4abe1d1d3580748cf0beca562cca02a941ddd00b850f47047f0c02791",
+      "analysis_event_file_sha256": "a2d40e4b786b635c7b69fa21db73df5723d3ebe013f55bc9898616fbda1183c6",
+      "scanner_source_sha256": "712d65a8698e3b6a3d9ec5362c12322559cf7359d874ea281eab0740569f08e1",
+      "attempted_pairs": 40,
+      "quality_valid_pairs_v4": 38,
+      "legacy_freshness_valid_pairs_v4": 9
+    },
+    {
+      "scan_id": "scan-20261015T073110Z-783cc56c1c57",
+      "captured_at_utc": "2026-10-15T07:31:10.745540+00:00",
+      "path": "data/veritas-observatory/snapshots/scan-20261015T073110Z-783cc56c1c57.json.gz",
+      "evidence_sha256": "783cc56c1c57a96e532b8b9beae35de408f2e5cbba2e522ea3ebb36b29c539f4",
+      "analysis_event_sha256": "5cd7eceb04c807d0f035a96001c88424b9e2625c4dcf91e8dccfceaec6c48d7d",
+      "analysis_event_file_sha256": "27f373b18ac8c03ecd21d483618fb4b8504c4b343477a7e199a3ebb8030a4b80",
+      "scanner_source_sha256": "712d65a8698e3b6a3d9ec5362c12322559cf7359d874ea281eab0740569f08e1",
+      "attempted_pairs": 40,
+      "quality_valid_pairs_v4": 36,
+      "legacy_freshness_valid_pairs_v4": 8
+    },
+    {
+      "scan_id": "scan-20261015T080114Z-b735749c3847",
+      "captured_at_utc": "2026-10-15T08:01:14.047108+00:00",
+      "path": "data/veritas-observatory/snapshots/scan-20261015T080114Z-b735749c3847.json.gz",
+      "evidence_sha256": "b735749c3847fe2db02fb2bc078dd7a36d20be339ff8fdc7dbceb3fa77765344",
+      "analysis_event_sha256": "375bf39255f08992b38a00003347e5a5fdd50e519e62cfb751dc7b01f119ea4b",
+      "analysis_event_file_sha256": "d6de449ac8731be6fd4c51c7fc93a33070f57ce5c0d5e69a320c46e8c902d76b",
+      "scanner_source_sha256": "712d65a8698e3b6a3d9ec5362c12322559cf7359d874ea281eab0740569f08e1",
+      "attempted_pairs": 40,
+      "quality_valid_pairs_v4": 37,
+      "legacy_freshness_valid_pairs_v4": 8
+    },
+    {
+      "scan_id": "scan-20261015T083153Z-1d45d1808d34",
+      "captured_at_utc": "2026-10-15T08:31:53.996015+00:00",
+      "path": "data/veritas-observatory/snapshots/scan-20261015T083153Z-1d45d1808d34.json.gz",
+      "evidence_sha256": "1d45d1808d346290bcd1f0ca29eb06c90a22b7677de1e1f5f54a83fcb816d11b",
+      "analysis_event_sha256": "c0221ab3bd5f7fc53e1876ed4c4057f1433e0cd9e26ba38ffb4c74a6e4a8054a",
+      "analysis_event_file_sha256": "fcdebddc4a5596b2ad28b8847e1e714e734ebc9a670608fba5385b0d50618306",
+      "scanner_source_sha256": "6130e85b833c9bf4968b49e50443cc363f066dc7eef36d47edb316920f615585",
+      "attempted_pairs": 40,
+      "quality_valid_pairs_v4": 37,
+      "legacy_freshness_valid_pairs_v4": 7
+    },
+    {
+      "scan_id": "scan-20261015T090047Z-6f98ffeaecab",
+      "captured_at_utc": "2026-10-15T09:00:47.046491+00:00",
+      "path": "data/veritas-observatory/snapshots/scan-20261015T090047Z-6f98ffeaecab.json.gz",
+      "evidence_sha256": "6f98ffeaecab0ca8bbc1dc3f571d0d5f0c06ffe485233595e28bca5d2d358c57",
+      "analysis_event_sha256": "b6106f55bd4f4f7d29503d02519da97acb22aea06996ff3716ee33a17f10e4af",
+      "analysis_event_file_sha256": "7b37da2738fb8a2e298004ed671276ca271d6a32488aac0fce063968043afe98",
+      "scanner_source_sha256": "6130e85b833c9bf4968b49e50443cc363f066dc7eef36d47edb316920f615585",
+      "attempted_pairs": 40,
+      "quality_valid_pairs_v4": 35,
+      "legacy_freshness_valid_pairs_v4": 9
+    },
+    {
+      "scan_id": "scan-20261015T100116Z-7d135306c470",
+      "captured_at_utc": "2026-10-15T10:01:16.209949+00:00",
+      "path": "data/veritas-observatory/snapshots/scan-20261015T100116Z-7d135306c470.json.gz",
+      "evidence_sha256": "7d135306c470b7d95f1e83025263b2968d8b17265d29a4b54a0cc0ad3ff9539a",
+      "snapshot_file_sha256": "a12fb9906c04c7a7cf697dbb46484d732a02d5c423ecaf8378137b2d4d1276d7",
+      "analysis_event_sha256": "53a69dbf92f7cafff9f869808b7e9637fe8591875dc1f7bcbcaf27cf81544162",
+      "analysis_event_file_sha256": "6fd5c54cd219dec9cff5e9898c530171315f2a86643f4d22db46470a9942f71f",
+      "scanner_source_sha256": "a8a867c91c2dc5d8648df2e8fae5b5d913936676177cd322124393d2834a17f9",
+      "attempted_pairs": 40,
+      "quality_valid_pairs_v4": 38,
+      "legacy_freshness_valid_pairs_v4": 15,
+      "public_http_attempts": 7
+    }
+  ],
+  "measurement_gate_comparison": {
+    "protocol_id": "VERITAS-M2-MEASURE-COMPARE-002",
+    "analysis_version": "veritas-finalized-snapshot-analysis-v4",
+    "analysis_summary_path": "data/veritas-observatory/research-summary.json",
+    "analysis_summary_sha256": "91a9f0ca03f4b601e0319acb49060080eca4f52c95d0013a5f964c2c9ee85bb0",
+    "analysis_summary_file_sha256": "d06b91798765091c4ea46de24eec30af8383315bad6014ae99a20a136d234bfd",
+    "initial_snapshots_reclassified_retrospectively": 10,
+    "scheduled_snapshots_processed_after_v4_deployment": 3,
+    "denominator_selected_market_observations": 520,
+    "legacy_gate_definition": "both reported ages <=5s and reported cross-outcome timestamp skew <=250ms, with common pair/book validity checks",
+    "corrected_gate_definition": "bounded request-to-receipt duration with common pair/book validity checks; reported ages/skew remain diagnostics",
+    "legacy_valid_pairs": 122,
+    "corrected_valid_pairs": 469,
+    "legacy_valid_percent": 23.46,
+    "corrected_valid_percent": 90.19,
+    "recovered_pairs": 347,
+    "recovered_percentage_points": 66.73,
+    "legacy_invalid_reasons": {
+      "no_empty_ask_side": 49,
+      "reported_update_age_above_5s": 347,
+      "yes_empty_ask_side": 2
+    },
+    "corrected_invalid_reasons": {
+      "no_empty_ask_side": 49,
+      "yes_empty_ask_side": 2
+    },
+    "batch_atomicity_verified": false,
+    "sequence_verified": false,
+    "upstream_queue_age_verified": false
+  },
+  "economic_experiment": {
+    "experiment_id": "VERITAS-M2-ECO-QUAL-001",
+    "experiment_run_id": "VERITAS-M2-ECO-QUAL-001-RUN-0baa4d74b95c",
+    "version": "veritas-finalized-snapshot-analysis-v4",
+    "path": "data/arena/findings/veritas-qualification-v1-f56acbc2267455d2/manifest.json",
+    "file_sha256": "794de33531287125dfee52de9d87f7c7c04ce4f05bade69c8d3673025267f7ee",
+    "experiment_sha256": "f518dda322a3010c8b5e4e2ba0568a480aa3b4a7d7d789a955e32b87fd2eac57",
+    "dataset_sha256": "0baa4d74b95c3fe3cc12ed624848e712b0b8083161c7759d8161b33e90a8b619",
+    "input_analysis_version": "veritas-finalized-snapshot-analysis-v4",
+    "quantity_shares_per_leg": "20",
+    "snapshot_count": 13,
+    "attempted_market_pairs": 520,
+    "quality_valid_pairs": 469,
+    "invalid_pairs": 51,
+    "unique_market_ids": 186,
+    "edge_per_share": {
+      "count": 469,
+      "maximum_per_share": "-0.001",
+      "median_nearest_rank_per_share": "-0.028",
+      "minimum_per_share": "-0.984",
+      "positive_count": 0
+    },
+    "qualification_funnel": [
+      {
+        "criterion": "unchanged_top_ask_gross_sign",
+        "positive_states": 0,
+        "valid_state_rate": 0.0
+      },
+      {
+        "criterion": "full_displayed_depth_gross",
+        "positive_states": 0,
+        "valid_state_rate": 0.0
+      },
+      {
+        "criterion": "full_depth_and_per_leg_minimum_notional",
+        "positive_states": 0,
+        "valid_state_rate": 0.0
+      },
+      {
+        "criterion": "single_match_fee_sensitivity_positive",
+        "positive_states": 0,
+        "valid_state_rate": 0.0
+      },
+      {
+        "criterion": "fragmentation_safe_fee_sensitivity_positive",
+        "positive_states": 0,
+        "valid_state_rate": 0.0
+      }
+    ],
+    "status": "no_positive_gross_candidate_observed",
+    "orders_submitted": false,
+    "authenticated_requests": false,
+    "strategy_pnl_test": false,
+    "previous_inventory_011_run_id": "VERITAS-M2-ECO-QUAL-001-RUN-b401cd384481"
+  },
+  "operations": {
+    "timer": "midas-veritas-observatory.timer",
+    "timer_active": true,
+    "schedule": "every 30 minutes UTC with up to 2 minutes randomized delay",
+    "service_last_exit": "success",
+    "service_last_cpu_ms": 624,
+    "service_elapsed_seconds_approx": 16,
+    "service_limits": {
+      "max_markets": 40,
+      "request_interval_seconds": 1,
+      "planned_requests_per_scan": 7,
+      "cpu_quota_percent": 5,
+      "memory_max_bytes": 268435456,
+      "observatory_root_max_bytes": 1073741824,
+      "current_root_bytes": 11240631,
+      "maximum_public_http_attempts_per_scan": 14,
+      "maximum_response_bytes": 50331648,
+      "maximum_request_retries_per_read": 1
+    },
+    "pending_analysis_snapshots": 0,
+    "latest_scan_id": "scan-20261015T100116Z-7d135306c470",
+    "latest_scan_captured_at_utc": "2026-10-15T10:01:16.209949+00:00",
+    "latest_scan_quality_valid_pairs": 38,
+    "current_root_bytes": 11240631,
+    "next_timer_utc": "2026-10-15T10:31:00Z",
+    "source_analysis": {
+      "analysis_version": "veritas-finalized-reality-source-analysis-v1",
+      "campaign_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
+      "campaign_file_sha256": "aa8acb2b46823c1a1e3ac5d01a57dde917746c2c7471098ae2a4598875e322f5",
+      "analysis_code_sha256": "9f9e2249b49dd1cb10c11713aa2683567aa9cf0914c3ed2b08cf8e3fea25ebf8",
+      "source_access": "numeric finalized catalogs and .seg files only; .open files are never opened",
+      "segment_event_count": 944,
+      "replayable_catalog_segments": 3077,
+      "empty_finalized_headers_skipped": 2,
+      "pending_segments": 2133,
+      "pending_bytes": 571624064,
+      "processed_through_ordinal": 108963,
+      "campaign_window_frame_records": 0,
+      "readiness": "catching_up_finalized_source",
+      "state_path": "data/veritas-observatory/source-analysis-state-v1.json",
+      "summary_path": "data/veritas-observatory/source-research-summary.json",
+      "events_path": "data/veritas-observatory/source-analysis-events/v1/",
+      "processed_source_bytes": 193950001,
+      "prefix_catalog_sha256": "6edf9fa1ac04556ecde5dce0245b780fcfeac9a95438cf0a10ba0d3f5e73a861",
+      "last_event_sha256": "0563e6b67ee8a31074dad661b4afd8af213be5a20e3b19ba6146acbe38865994",
+      "summary_sha256": "7619c06e32356fd560e9bd4fb014b6b5afba594a0c07be1bd132452b8bcf7fc4",
+      "timer_catchup_run": {
+        "trigger": "persistent_timer_catchup",
+        "start_utc": "2026-10-15T06:55:44Z",
+        "exit_utc": "2026-10-15T06:57:40Z",
+        "exit_status": 0,
+        "cpu_ms": 5826,
+        "memory_peak_bytes": 116342784,
+        "batch_segments": 128,
+        "batch_source_bytes": 23084308
+      },
+      "last_event_chain_sha256": "29b7a68aed1eb7890c6cb23ea927801ec86903b421a3acb60f3dca19b9d0c0b5",
+      "last_event_file_sha256": "eb154698935dce68415216290c53983901ecc58c1fe259841817ac94d8c91578",
+      "summary_file_sha256": "363d262dd781354c40fc7331aef48d0b1eb5feca09f7895222815e7560b0a48a",
+      "scheduled_recurrence": {
+        "trigger": "scheduled_calendar_timer",
+        "service_start_utc": "2026-10-15T09:10:54Z",
+        "service_exit_utc": "2026-10-15T09:13:32Z",
+        "service_exit_status": 0,
+        "elapsed_seconds": 158,
+        "cpu_ms": 7937,
+        "memory_peak_bytes": 118931456,
+        "batch_processed_segments": 128,
+        "batch_processed_source_bytes": 26555999
+      },
+      "state_sha256": "5eb99ecf90ae7a6c508351af0b3084da42d6a743ba7b49da5af82fdb0fc5b85b",
+      "campaign_window_quality_valid_states": 0,
+      "batch_processed_segments": 36,
+      "batch_source_bytes": 33314216,
+      "latest_recurrence_started_utc": "2026-10-15T10:10:33Z",
+      "latest_recurrence_exited_utc": "2026-10-15T10:13:32Z",
+      "latest_recurrence_elapsed_seconds": 179,
+      "latest_recurrence_cpu_ms": 8962,
+      "latest_recurrence_memory_peak_bytes": 149655552,
+      "active_segment_read": false,
+      "event_chain_sha256": "0563e6b67ee8a31074dad661b4afd8af213be5a20e3b19ba6146acbe38865994",
+      "state_file_sha256": "1ba37adc1b6c5714178a2ef1da4cd6460bf67b1e62075210b7429718a829ece4",
+      "events_reverified": 944,
+      "event_chain_reverified": true,
+      "next_calendar_event_utc": "2026-10-15T10:40:31Z",
+      "scheduled_recurrence_history": [
+        {
+          "trigger": "scheduled_calendar_timer",
+          "service_start_utc": "2026-10-15T09:40:48Z",
+          "service_exit_utc": "2026-10-15T09:43:47Z",
+          "service_exit_status": 0,
+          "elapsed_seconds": 179,
+          "cpu_ms": 8962,
+          "memory_peak_bytes": null,
+          "batch_processed_segments": 122,
+          "batch_processed_source_bytes": 32990517
+        },
+        {
+          "trigger": "scheduled_calendar_timer",
+          "service_start_utc": "2026-10-15T10:10:33Z",
+          "service_exit_utc": "2026-10-15T10:13:32Z",
+          "service_exit_status": 0,
+          "elapsed_seconds": 179,
+          "cpu_ms": 8962,
+          "memory_peak_bytes": 149655552,
+          "batch_processed_segments": 36,
+          "batch_processed_source_bytes": 33314216
+        }
+      ]
+    },
+    "analysis_version": "veritas-finalized-snapshot-analysis-v4",
+    "processed_snapshots": 11,
+    "latest_scan_snapshot_evidence_sha256": "1d45d1808d346290bcd1f0ca29eb06c90a22b7677de1e1f5f54a83fcb816d11b",
+    "latest_analysis_summary_sha256": "4be7df782c5acbbc57f7c1c3d9491219eaf4161aace4089b1d3183e2bd040970",
+    "latest_analysis_summary_file_sha256": "45a1cc1975b07ba2aabb058df47ec04e788c11a45d7d0582474041fce4d03f80",
+    "latest_scan_observation_is_intermittent": true,
+    "next_observer_timer_utc": "2026-10-15T09:30:26Z",
+    "runtime_checked_utc": "2026-10-15T09:16:43Z",
+    "service_memory_peak_bytes": 29822976,
+    "latest_scan_public_http_attempts": 7,
+    "arena_qualification_job_id": "job-13280ea8cb2d427c938f0a3e",
+    "arena_qualification_job_state": "COMPLETED",
+    "arena_qualification_finding_id": "veritas-qualification-v1-f56acbc2267455d2"
+  },
+  "verification": {
+    "targeted_python_api_tests": "34 passed",
+    "ruff": "passed on all modified Python source and tests",
+    "mypy": "passed on changed API, Arena, and Veritas modules",
+    "frontend_unit_tests": "29 passed",
+    "frontend_typecheck_lint_build": "passed; Vite large-chunk advisory remains",
+    "veritas_browser_e2e": "passed; v2 bounded discovery, conditional selection probabilities, no-candidate result, and finalized evidence verified",
+    "broad_browser_e2e": "6 passed, 1 failed on Reality exact Yes heading assertion",
+    "all_new_real_world_candidates": 0,
+    "full_veritas_backend_tests": "132 passed; one existing Starlette/httpx deprecation warning",
+    "economic_experiment_run_identity": "passed; deterministic ID changes when the finalized input set changes",
+    "focused_v4_backend_tests": "12 passed in the previous source-code verification pass",
+    "frontend_typecheck_lint_format_build": "passed; existing Vite large-chunk advisory",
+    "source-integrity-empty-header-regression": "fixed; full Veritas suite passed",
+    "focused_censoring_backend_tests": "16 passed; one Starlette/httpx deprecation warning",
+    "censoring_artifact_identity_and_counts": "passed; campaign identity, source hash, dimensions, and per-horizon count reconciliation validated",
+    "latest_economic_experiment_run": "VERITAS-M2-ECO-QUAL-001-RUN-0baa4d74b95c",
+    "latest_economic_experiment_result": "13 finalized v4 snapshots; 520 attempted, 469 valid, 186 markets; zero positive states at every qualification gate",
+    "arena_qualification_job": "completed; 13/13 finalized v4 events; source bounds, deterministic finding, and idempotent readmission verified",
+    "source_analysis_event_chain": "944/944 event files and sealed state/summary digests verified; rolling chain matches current state",
+    "frozen_control_file": "unchanged; SHA256 9578217e20dcc7d1c65fa110f0ed7c689b55483b61191f1aae8d30c9b7300d9a"
+  },
+  "preservation": {
+    "reality_checkout": "/home/charlie/midas-reality",
+    "reality_commit": "714f824",
+    "reality_worktree_clean": true,
+    "reality_services_restarted": false,
+    "protected_source_or_campaign_records_modified": false,
+    "arena_laboratory_prometheus_data_modified": false,
+    "notes": "The bounded qualification wrote a new finding and completed job record under this Veritas checkout’s isolated data/arena root. Existing Arena, Laboratory, Prometheus, and Reality evidence was not overwritten. Three unrelated Reality test/canary user units show exit-code statuses dated 2026-10-14 and remain untouched.",
+    "reality_user_service_active": true,
+    "veritas_control_cohort_sha256": "9578217e20dcc7d1c65fa110f0ed7c689b55483b61191f1aae8d30c9b7300d9a",
+    "veritas_control_cohort_rewritten": false
+  },
+  "limitations": [
+    "The bounded six-frame query union is not a venue-wide market census.",
+    "Snapshots are intermittent and repeated market/time observations are dependent.",
+    "The v4 paired-gate estimate initially reclassifies ten existing snapshots; one new scan has since been captured prospectively under v4.",
+    "A batch response does not prove atomicity, sequence freshness, or upstream queue age.",
+    "Sampled book-state changes do not measure venue update rates.",
+    "Displayed depth and fee sensitivities do not prove quote persistence, order arrival, fills, or profitability.",
+    "The original prospective follow-up design retains its coverage and dependence gates.",
+    "No model or strategy comparison is justified without positive gross candidates and suitable outcome labels.",
+    "The Gate C artifact is a bounded 08:44 UTC read-only SQL snapshot of an active prospective campaign; zero pending rows describes this transaction only.",
+    "The complete campaign event hash chain and full SQLite integrity check were not run for the censoring artifact.",
+    "The frozen worker does not distinguish quiet-venue behavior from every feed or cohort-coverage cause inside future_observation_unavailable.",
+    "The read-only dashboard reports public follow-up measurements and censoring, not execution fills or economic results.",
+    "The latest economic qualification run checks public snapshot states only and is not a strategy PnL test.",
+    "The v2 rotating query frames remain bounded and do not imply venue-wide inclusion probabilities.",
+    "The 13-snapshot v4 panel spans 241.80 minutes and remains intermittent and dependent; it does not meet the 24-hour pilot review or original 48-hour follow-up and dependence requirements.",
+    "The actual Arena qualification checks candidate states, not fills, strategy PnL, or profitability.",
+    "The latest finalized-source replay processed 944/3,077 segments with 2,133 pending; its prefix contains no campaign-window frames."
+  ],
+  "indexed_observation_summary": {
+    "analysis_version": "veritas-finalized-snapshot-analysis-v4",
+    "processed_snapshots": 13,
+    "pending_snapshots": 0,
+    "first_captured_at_utc": "2026-10-15T05:59:28.204111+00:00",
+    "last_captured_at_utc": "2026-10-15T10:01:16.209949+00:00",
+    "window_minutes": 241.8,
+    "selected_market_observations": 520,
+    "quality_valid_pairs": 469,
+    "quality_valid_yield": 0.9019230769230769,
+    "legacy_freshness_valid_pairs": 122,
+    "legacy_freshness_valid_yield": 0.23461538461538461,
+    "paired_recovered_pairs": 347,
+    "paired_recovered_percentage_points": 66.73,
+    "invalid_pairs": 51,
+    "invalid_reasons": {
+      "no_empty_ask_side": 49,
+      "yes_empty_ask_side": 2
+    },
+    "legacy_freshness_invalid_reasons": {
+      "no_empty_ask_side": 49,
+      "reported_update_age_above_5s": 347,
+      "yes_empty_ask_side": 2
+    },
+    "unique_market_ids": 186,
+    "sampled_state_comparisons": 334,
+    "sampled_state_changes": 319,
+    "sampled_state_change_fraction": 0.9550898203592815,
+    "sampled_activity_bands": {
+      "no_sampled_changes": 0,
+      "higher_sampled_change": 53,
+      "lower_sampled_change": 17,
+      "unclassified": 116
+    },
+    "positive_top_gross_pairs": 0,
+    "positive_full_depth_gross_by_quantity": {
+      "10": 0,
+      "100": 0,
+      "20": 0,
+      "5": 0,
+      "50": 0
+    },
+    "positive_minimum_notional_by_quantity": {
+      "10": 0,
+      "100": 0,
+      "20": 0,
+      "5": 0,
+      "50": 0
+    },
+    "positive_single_match_by_quantity": {
+      "10": 0,
+      "100": 0,
+      "20": 0,
+      "5": 0,
+      "50": 0
+    },
+    "positive_fragmentation_safe_by_quantity": {
+      "10": 0,
+      "100": 0,
+      "20": 0,
+      "5": 0,
+      "50": 0
+    },
+    "minimum_top_edge_per_share": "-0.984",
+    "maximum_top_edge_per_share": "-0.001",
+    "analysis_summary_sha256": "91a9f0ca03f4b601e0319acb49060080eca4f52c95d0013a5f964c2c9ee85bb0"
+  },
+  "source_segment_analysis": {
+    "analysis_version": "veritas-finalized-reality-source-analysis-v1",
+    "campaign_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
+    "campaign_file_sha256": "aa8acb2b46823c1a1e3ac5d01a57dde917746c2c7471098ae2a4598875e322f5",
+    "analysis_code_sha256": "9f9e2249b49dd1cb10c11713aa2683567aa9cf0914c3ed2b08cf8e3fea25ebf8",
+    "source_access": "numeric finalized catalogs and .seg files only; .open files are never opened",
+    "segment_event_count": 944,
+    "replayable_catalog_segments": 3077,
+    "empty_finalized_headers_skipped": 2,
+    "pending_segments": 2133,
+    "pending_bytes": 571624064,
+    "processed_through_ordinal": 108963,
+    "campaign_window_frame_records": 0,
+    "readiness": "catching_up_finalized_source",
+    "state_path": "data/veritas-observatory/source-analysis-state-v1.json",
+    "summary_path": "data/veritas-observatory/source-research-summary.json",
+    "events_path": "data/veritas-observatory/source-analysis-events/v1/",
+    "processed_source_bytes": 193950001,
+    "prefix_catalog_sha256": "6edf9fa1ac04556ecde5dce0245b780fcfeac9a95438cf0a10ba0d3f5e73a861",
+    "last_event_sha256": "0563e6b67ee8a31074dad661b4afd8af213be5a20e3b19ba6146acbe38865994",
+    "summary_sha256": "7619c06e32356fd560e9bd4fb014b6b5afba594a0c07be1bd132452b8bcf7fc4",
+    "timer_catchup_run": {
+      "trigger": "persistent_timer_catchup",
+      "start_utc": "2026-10-15T06:55:44Z",
+      "exit_utc": "2026-10-15T06:57:40Z",
+      "exit_status": 0,
+      "cpu_ms": 5826,
+      "memory_peak_bytes": 116342784,
+      "batch_segments": 128,
+      "batch_source_bytes": 23084308
+    },
+    "last_event_chain_sha256": "29b7a68aed1eb7890c6cb23ea927801ec86903b421a3acb60f3dca19b9d0c0b5",
+    "last_event_file_sha256": "eb154698935dce68415216290c53983901ecc58c1fe259841817ac94d8c91578",
+    "summary_file_sha256": "363d262dd781354c40fc7331aef48d0b1eb5feca09f7895222815e7560b0a48a",
+    "scheduled_recurrence": {
+      "trigger": "scheduled_calendar_timer",
+      "service_start_utc": "2026-10-15T09:10:54Z",
+      "service_exit_utc": "2026-10-15T09:13:32Z",
+      "service_exit_status": 0,
+      "elapsed_seconds": 158,
+      "cpu_ms": 7937,
+      "memory_peak_bytes": 118931456,
+      "batch_processed_segments": 128,
+      "batch_processed_source_bytes": 26555999
+    },
+    "state_sha256": "5eb99ecf90ae7a6c508351af0b3084da42d6a743ba7b49da5af82fdb0fc5b85b",
+    "campaign_window_quality_valid_states": 0,
+    "batch_processed_segments": 36,
+    "batch_source_bytes": 33314216,
+    "latest_recurrence_started_utc": "2026-10-15T10:10:33Z",
+    "latest_recurrence_exited_utc": "2026-10-15T10:13:32Z",
+    "latest_recurrence_elapsed_seconds": 179,
+    "latest_recurrence_cpu_ms": 8962,
+    "latest_recurrence_memory_peak_bytes": 149655552,
+    "active_segment_read": false,
+    "event_chain_sha256": "0563e6b67ee8a31074dad661b4afd8af213be5a20e3b19ba6146acbe38865994",
+    "state_file_sha256": "1ba37adc1b6c5714178a2ef1da4cd6460bf67b1e62075210b7429718a829ece4",
+    "events_reverified": 944,
+    "event_chain_reverified": true,
+    "next_calendar_event_utc": "2026-10-15T10:40:31Z",
+    "scheduled_recurrence_history": [
+      {
+        "trigger": "scheduled_calendar_timer",
+        "service_start_utc": "2026-10-15T09:40:48Z",
+        "service_exit_utc": "2026-10-15T09:43:47Z",
+        "service_exit_status": 0,
+        "elapsed_seconds": 179,
+        "cpu_ms": 8962,
+        "memory_peak_bytes": null,
+        "batch_processed_segments": 122,
+        "batch_processed_source_bytes": 32990517
+      },
+      {
+        "trigger": "scheduled_calendar_timer",
+        "service_start_utc": "2026-10-15T10:10:33Z",
+        "service_exit_utc": "2026-10-15T10:13:32Z",
+        "service_exit_status": 0,
+        "elapsed_seconds": 179,
+        "cpu_ms": 8962,
+        "memory_peak_bytes": 149655552,
+        "batch_processed_segments": 36,
+        "batch_processed_source_bytes": 33314216
+      }
+    ]
+  },
+  "dashboard_checkpoint": {
+    "checkpoint": "VERITAS-M2-GATE-G-003",
+    "api_read_only": true,
+    "features": [
+      "current follow-up yield from campaign-matched v1.3 censoring report",
+      "market and UTC-hour rows at the longest frozen horizon",
+      "censor mechanism counts by frozen horizon",
+      "pending outcomes distinguished from censors",
+      "bounded full-artifact link and unresolved-future caveat",
+      "current v2 discovery frame protocol, request attempts, and collector limits",
+      "per-market conditional selection probabilities and primary category source",
+      "bounded Arena jobs, Director, schedule, and alert activity projection",
+      "deliberate admission of a deterministic finalized-v4 qualification job"
+    ],
+    "market_rows_shown": 20,
+    "tracked_market_count": 42,
+    "utc_hour_rows_available": 12,
+    "maximum_utc_hour_rows_exposed": 24,
+    "not_yet_implemented": [
+      "Director activity and job controls",
+      "model/strategy tournament reporting"
+    ],
+    "arena_qualification_job_completed": true,
+    "research_director_workflow_complete": false
+  },
+  "censoring_analysis": {
+    "analysis_version": "veritas-forward-forensics-v1.3",
+    "capture_utc": "2026-10-15T08:44:25Z",
+    "artifact_path": "docs/VERITAS_GATE_A_CENSORING_003.json",
+    "artifact_sha256": "4e7d8d2bde0cda1afdc5876de2fbc31c3a54219b95d9baba0bfbfeed454b9b72",
+    "artifact_bytes": 348795,
+    "analysis_source_file": "packages/midas/veritas/forensics.py",
+    "analysis_source_sha256": "0b055a21c4b423bbf02cc9c240f26f18263fb8342cd72dec686705d2601a420c",
+    "campaign_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
+    "campaign_plan_sha256": "aa8acb2b46823c1a1e3ac5d01a57dde917746c2c7471098ae2a4598875e322f5",
+    "read_only_sqlite_mode": true,
+    "sqlite_query_only": true,
+    "raw_observations_copied": false,
+    "decision_query_limit": 50000,
+    "query_truncated": false,
+    "journal_tail_event_seq": 111571,
+    "journal_tail_event_sha256": "cb5f6962e9c23ea5166da11f9f22fc1231747a240fa334e32e70a1c596c72661",
+    "full_event_hash_chain_reverified": false,
+    "sqlite_integrity_scan_performed": false,
+    "decision_count": 10165,
+    "markets": 42,
+    "connected_families": 36,
+    "utc_days": [
+      "2026-10-14",
+      "2026-10-15"
+    ],
+    "valid_initial_decisions": 3481,
+    "invalid_initial_decisions": 6684,
+    "horizons_ms": [
+      100,
+      300,
+      1000,
+      5000
+    ],
+    "followup_slots": 40660,
+    "observed_public_measurements": 930,
+    "censored_followups": 39730,
+    "pending_outcome_rows": 0,
+    "valid_initial_yield_by_horizon": {
+      "100": {
+        "observed": 29,
+        "scheduled_valid_initial": 3481,
+        "yield_percent": 0.83
+      },
+      "300": {
+        "observed": 94,
+        "scheduled_valid_initial": 3481,
+        "yield_percent": 2.7
+      },
+      "1000": {
+        "observed": 337,
+        "scheduled_valid_initial": 3481,
+        "yield_percent": 9.68
+      },
+      "5000": {
+        "observed": 470,
+        "scheduled_valid_initial": 3481,
+        "yield_percent": 13.5
+      }
+    },
+    "valid_initial_censor_reasons": {
+      "book_issue:advertised_top_pending": 67,
+      "book_issue:gap:book_resynchronization": 160,
+      "book_issue:timestamp_regression": 2,
+      "future_observation_unavailable": 10184,
+      "future_preceded_durable_decision": 2,
+      "independent_book_divergence": 1,
+      "recorded_gap:book_resynchronization": 176,
+      "source_followup_availability_timeout": 954,
+      "stale_book": 1448
+    },
+    "groups": {
+      "market_by_horizon": 168,
+      "utc_hour_by_horizon": 48,
+      "initial_quality_by_horizon": 32,
+      "censor_mechanism_by_horizon": 26
+    },
+    "interpretation": "future_observation_unavailable remains an unresolved mixture of venue inactivity, feed availability/selection, and cohort coverage; all observations are selected and correlated."
+  },
+  "arena_qualification": {
+    "artifact_type": "veritas_public_opportunity_qualification",
+    "artifact_version": "veritas-arena-qualification-v1",
+    "job_id": "job-13280ea8cb2d427c938f0a3e",
+    "job_state": "COMPLETED",
+    "job_admission_key": "veritas-qualification-v1-scan-20261015T100116Z-7d135306c470",
+    "job_phase": "Validating finalized Veritas snapshot events",
+    "job_progress": {
+      "done": 13,
+      "total": 13
+    },
+    "job_elapsed_seconds": 2.112,
+    "job_budget": {
+      "cpu_cores": 1,
+      "max_artifact_mb": 1024,
+      "memory_mb": 4096,
+      "minimum_available_memory_mb": 2048,
+      "wall_seconds": 300
+    },
+    "expected_latest_scan_id": "scan-20261015T100116Z-7d135306c470",
+    "source_event_count": 13,
+    "source_bytes": 237821,
+    "source_root": "data/veritas-observatory/analysis-events/v4",
+    "finding_id": "veritas-qualification-v1-f56acbc2267455d2",
+    "finding_path": "data/arena/findings/veritas-qualification-v1-f56acbc2267455d2/manifest.json",
+    "finding_sha256": "794de33531287125dfee52de9d87f7c7c04ce4f05bade69c8d3673025267f7ee",
+    "dataset_sha256": "0baa4d74b95c3fe3cc12ed624848e712b0b8083161c7759d8161b33e90a8b619",
+    "experiment_sha256": "f518dda322a3010c8b5e4e2ba0568a480aa3b4a7d7d789a955e32b87fd2eac57",
+    "same_scan_readmission_returned_existing_job": true,
+    "research_activity": {
+      "active_job_count": 0,
+      "queued_job_count": 0,
+      "invalid_artifact_count": 0
+    },
+    "bounds": {
+      "maximum_events": 512,
+      "maximum_source_bytes": 67108864,
+      "maximum_event_bytes": 2097152,
+      "quantity_shares_per_leg": 20,
+      "maximum_wall_seconds": 300
+    },
+    "result_status": "no_positive_gross_candidate_observed",
+    "positive_states_at_all_gates": 0,
+    "orders_submitted": false,
+    "authenticated_requests": false
+  }
+}

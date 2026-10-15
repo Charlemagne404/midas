@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowUpRight, BarChart3, Database, ShieldCheck, TrendingDown } from 'lucide-react';
 import { api } from './api';
 import './veritas.css';
@@ -93,6 +93,36 @@ type Observatory = {
     latest_by_expiry: Record<string, number>;
     latest_by_spread: Record<string, number>;
     latest_exclusions: Record<string, number>;
+    latest_frame_protocol: string | null;
+    latest_offset_bucket_seconds: number | null;
+    latest_query_count: number;
+    latest_query_candidate_records: number;
+    latest_unique_market_ids: number;
+    latest_http_attempts: number;
+    latest_target_markets: number;
+    latest_selected_market_rows: Array<{
+      market_id: string;
+      primary_category: string | null;
+      primary_category_source: string | null;
+      cohort_role: string;
+      selection_probability: string;
+      selection_probability_basis: string;
+      selection_stratum: string | null;
+    }>;
+    collection_bounds: {
+      target_markets: number;
+      maximum_markets: number;
+      gamma_queries_per_scan: number;
+      gamma_page_limit: number;
+      maximum_public_read_calls_per_scan: number;
+      maximum_public_http_attempts_per_scan: number;
+      maximum_retries_per_public_read: number;
+      request_timeout_seconds: number;
+      maximum_response_bytes: number;
+      minimum_request_interval_seconds: number;
+      maximum_root_bytes: number;
+      quantity_grid: string[];
+    } | null;
     latest_snapshot_invalid_reasons: Record<string, number>;
   };
   opportunity: {
@@ -270,6 +300,48 @@ type Overview = {
   limitations: string[];
 };
 
+type ArenaResearchActivity = {
+  status: string;
+  state_source: string;
+  active_job_count: number;
+  queued_job_count: number;
+  jobs: Array<{
+    job_id: string | null;
+    kind: string | null;
+    source_scan_id: string | null;
+    state: string | null;
+    phase: string | null;
+    progress: { done?: number; total?: number } | null;
+    error: string | null;
+  }>;
+  active_director_count: number;
+  directors: Array<{
+    director_id: string | null;
+    state: string | null;
+    research_question: string | null;
+    current_stage: string | null;
+  }>;
+  active_schedule_count: number;
+  schedules: Array<{
+    schedule_id: string | null;
+    state: string | null;
+    question: string | null;
+    steps: Array<{ name: string | null; state: string | null; job_id: string | null }>;
+  }>;
+  alerts: Array<{
+    alert_id: string | null;
+    state: string | null;
+    reason: string | null;
+    schedule_id: string | null;
+  }>;
+  invalid_artifact_count: number;
+};
+
+type ArenaActivityJob = {
+  job_id: string;
+  state: string;
+};
+
 const fmt = (value: number) => value.toLocaleString('en-US');
 const usdc = (value: string) => `${Number(value) >= 0 ? '+' : ''}${Number(value).toFixed(2)} USDC`;
 const rate = (value: number, denominator: number) =>
@@ -324,6 +396,7 @@ function Panel({
 }
 
 export function Veritas() {
+  const queryClient = useQueryClient();
   const query = useQuery({
     queryKey: ['veritas', 'overview'],
     queryFn: () => api<Overview>('/veritas/overview'),
@@ -331,7 +404,26 @@ export function Veritas() {
     staleTime: 30_000,
     retry: 1,
   });
+  const arenaActivityQuery = useQuery({
+    queryKey: ['arena', 'research-activity'],
+    queryFn: () => api<ArenaResearchActivity>('/arena/research-activity'),
+    refetchInterval: 60_000,
+    staleTime: 30_000,
+    retry: 1,
+  });
+  const qualificationJobMutation = useMutation({
+    mutationFn: () =>
+      api<ArenaActivityJob>('/arena/jobs/veritas-qualification', { method: 'POST' }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['arena', 'research-activity'] });
+    },
+  });
   const data = query.data;
+  const arenaActivity = arenaActivityQuery.data;
+  const arenaJobs = Array.isArray(arenaActivity?.jobs) ? arenaActivity.jobs : [];
+  const arenaDirectors = Array.isArray(arenaActivity?.directors) ? arenaActivity.directors : [];
+  const arenaSchedules = Array.isArray(arenaActivity?.schedules) ? arenaActivity.schedules : [];
+  const arenaAlerts = Array.isArray(arenaActivity?.alerts) ? arenaActivity.alerts : [];
 
   if (query.isPending) {
     return <div className="veritas-loading">Loading versioned Veritas evidence…</div>;
@@ -354,6 +446,11 @@ export function Veritas() {
   const observatory = data.opportunity_observatory;
   const finalizedSource = data.finalized_reality_source;
   const observatoryDiscovery = observatory.discovery;
+  const existingQualificationJob = arenaJobs.find(
+    (job) =>
+      job.kind === 'veritas_qualification' &&
+      job.source_scan_id === observatoryDiscovery.latest_scan_id,
+  );
   const observatoryOpportunity = observatory.opportunity;
   const observatoryQuality = observatory.data_quality;
   const followupCensoring = data.followup_censoring ?? null;
@@ -363,6 +460,12 @@ export function Veritas() {
     (left, right) => right[1] - left[1] || left[0].localeCompare(right[0]),
   );
   const latestCategoryMaximum = Math.max(1, ...latestCategories.map(([, count]) => count));
+  const latestExcludedMarkets = Object.values(observatoryDiscovery.latest_exclusions).reduce(
+    (sum, count) => sum + count,
+    0,
+  );
+  const latestSelectedMarketRows = observatoryDiscovery.latest_selected_market_rows ?? [];
+  const collectionBounds = observatoryDiscovery.collection_bounds ?? null;
   const latestStrata = [
     ['Liquidity', observatoryDiscovery.latest_by_liquidity],
     ['Expiry', observatoryDiscovery.latest_by_expiry],
@@ -526,12 +629,18 @@ export function Veritas() {
         <Panel
           eyebrow="CONTINUOUS PUBLIC DISCOVERY"
           title="Market discovery and coverage"
-          note="Six bounded public market frames feed a rotating stratified panel and a frozen random control. Snapshots run every 30 minutes; they are not continuous quotes."
+          note="Six bounded public market frames use seeded half-hour page offsets across liquidity and ID strata, then feed a rotating stratified panel and a frozen random control. The frame is conditional on those query responses; snapshots are not continuous quotes."
         >
           <div className="ve-observatory-stats">
             <div>
-              <span>Latest eligible pair markets</span>
-              <strong>{fmt(observatoryDiscovery.current_bounded_eligible_markets)}</strong>
+              <span>Latest bounded query frame</span>
+              <strong>{fmt(observatoryDiscovery.latest_unique_market_ids)} IDs</strong>
+              <small>
+                {fmt(observatoryDiscovery.latest_query_candidate_records)} returned rows ·{' '}
+                {fmt(observatoryDiscovery.current_bounded_eligible_markets)} eligible ·{' '}
+                {fmt(latestExcludedMarkets)} excluded across{' '}
+                {fmt(observatoryDiscovery.latest_query_count)} pages
+              </small>
             </div>
             <div>
               <span>Latest monitored cohort</span>
@@ -557,6 +666,10 @@ export function Veritas() {
           <div className="ve-observatory-meta">
             <span>
               Latest phase <b>{observatoryDiscovery.latest_phase ?? 'awaiting scan'}</b>
+            </span>
+            <span>
+              Frame protocol{' '}
+              <b>{observatoryDiscovery.latest_frame_protocol ?? 'awaiting versioned scan'}</b>
             </span>
             <span>
               Stable controls <b>{fmt(observatoryDiscovery.latest_stable_control_markets)}</b>
@@ -606,6 +719,78 @@ export function Veritas() {
               </div>
             ))}
           </div>
+          {collectionBounds && (
+            <div className="ve-strata-grid" aria-label="Current collector limits">
+              <div>
+                <span className="ve-subhead">Collector limits</span>
+                <span className="ve-strata-item">
+                  {fmt(collectionBounds.target_markets)} target ·{' '}
+                  {fmt(collectionBounds.maximum_markets)} markets max
+                </span>
+              </div>
+              <div>
+                <span className="ve-subhead">Public discovery</span>
+                <span className="ve-strata-item">
+                  {fmt(collectionBounds.gamma_queries_per_scan)} pages ×{' '}
+                  {fmt(collectionBounds.gamma_page_limit)} rows
+                </span>
+                <span className="ve-strata-item">
+                  {fmt(collectionBounds.maximum_public_read_calls_per_scan)} reads ·{' '}
+                  {fmt(collectionBounds.maximum_public_http_attempts_per_scan)} HTTP attempts max
+                </span>
+                <span className="ve-strata-item">
+                  {fmt(collectionBounds.maximum_retries_per_public_read)} retry max per read ·{' '}
+                  {collectionBounds.minimum_request_interval_seconds.toFixed(1)}s pacing ·{' '}
+                  {collectionBounds.request_timeout_seconds.toFixed(0)}s timeout
+                </span>
+                <span className="ve-strata-item">
+                  {fmt(observatoryDiscovery.latest_http_attempts)} HTTP attempts used in latest scan
+                </span>
+              </div>
+              <div>
+                <span className="ve-subhead">Storage and quantities</span>
+                <span className="ve-strata-item">
+                  {bytes(collectionBounds.maximum_response_bytes)} response cap ·{' '}
+                  {bytes(collectionBounds.maximum_root_bytes)} root cap
+                </span>
+                <span className="ve-strata-item">
+                  {collectionBounds.quantity_grid.join(', ')} shares per leg
+                </span>
+              </div>
+            </div>
+          )}
+          {latestSelectedMarketRows.length > 0 && (
+            <details className="ve-censor-details">
+              <summary>
+                Inspect latest per-market selection probabilities ·{' '}
+                {fmt(latestSelectedMarketRows.length)} selected
+              </summary>
+              <p className="ve-observatory-note">
+                Probabilities are conditional on the bounded query-response union and frozen stable
+                control cohort. Rotating page offsets broaden the observed frame but do not provide
+                venue-wide inclusion probabilities.
+              </p>
+              <div className="ve-censor-list">
+                {latestSelectedMarketRows.map((market) => (
+                  <div key={market.market_id}>
+                    <strong>{market.market_id}</strong>
+                    <span>
+                      {market.primary_category ?? 'Category unknown'}
+                      {market.primary_category_source
+                        ? ` (${market.primary_category_source.replaceAll('.', ' ')})`
+                        : ''}{' '}
+                      · {market.cohort_role.replaceAll('_', ' ')} ·{' '}
+                      {market.selection_stratum?.replaceAll('_', ' ') ?? 'no rotating stratum'}
+                    </span>
+                    <span>
+                      Inclusion probability {market.selection_probability} ·{' '}
+                      {market.selection_probability_basis.replaceAll('_', ' ')}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </details>
+          )}
           {Object.keys(observatoryDiscovery.latest_exclusions).length > 0 && (
             <p className="ve-observatory-note">
               Latest discovery exclusions:{' '}
@@ -1079,6 +1264,124 @@ export function Veritas() {
               </article>
             ))}
           </div>
+        </Panel>
+
+        <Panel
+          eyebrow="ARENA / RESEARCH DIRECTOR"
+          title="Bounded research activity"
+          note="Read-only Arena manifest status for jobs, schedules, Directors, and alerts; supervisor liveness remains on Arena job detail views."
+        >
+          {arenaActivityQuery.isPending ? (
+            <p className="ve-observatory-note">Loading bounded Arena activity…</p>
+          ) : arenaActivityQuery.isError || arenaActivity?.status !== 'available' ? (
+            <p className="ve-observatory-note">Arena activity is unavailable.</p>
+          ) : (
+            <>
+              <div className="ve-observatory-stats">
+                <div>
+                  <span>Active / queued jobs</span>
+                  <strong>{fmt(arenaActivity.active_job_count)}</strong>
+                  <small>{fmt(arenaActivity.queued_job_count)} queued in the bounded catalog</small>
+                </div>
+                <div>
+                  <span>Active Director workflows</span>
+                  <strong>{fmt(arenaActivity.active_director_count)}</strong>
+                </div>
+                <div>
+                  <span>Active finite schedules</span>
+                  <strong>{fmt(arenaActivity.active_schedule_count)}</strong>
+                </div>
+              </div>
+              {arenaJobs.length + arenaDirectors.length + arenaSchedules.length === 0 ? (
+                <p className="ve-observatory-note">
+                  No Arena jobs, schedules, or Director activity is recorded.
+                </p>
+              ) : (
+                <div className="ve-hypotheses">
+                  {arenaJobs.slice(0, 5).map((job) => (
+                    <article key={job.job_id ?? `${job.kind}-${job.state}`}>
+                      <div>
+                        <span>{job.kind?.replaceAll('_', ' ') ?? 'Arena job'}</span>
+                        <b>{job.state ?? 'unknown'}</b>
+                      </div>
+                      <p>
+                        {job.phase ?? job.job_id ?? 'No phase published'}
+                        {job.progress && typeof job.progress.done === 'number'
+                          ? ` · ${fmt(job.progress.done)} / ${fmt(job.progress.total ?? 0)}`
+                          : ''}
+                      </p>
+                    </article>
+                  ))}
+                  {arenaDirectors.slice(0, 3).map((director) => (
+                    <article key={director.director_id ?? director.current_stage ?? 'director'}>
+                      <div>
+                        <span>Research Director</span>
+                        <b>{director.state ?? 'unknown'}</b>
+                      </div>
+                      <h4>
+                        {director.current_stage ??
+                          director.research_question ??
+                          'No stage published'}
+                      </h4>
+                      {director.research_question && <p>{director.research_question}</p>}
+                    </article>
+                  ))}
+                  {arenaSchedules.slice(0, 3).map((schedule) => (
+                    <article key={schedule.schedule_id ?? schedule.question ?? 'schedule'}>
+                      <div>
+                        <span>Finite research schedule</span>
+                        <b>{schedule.state ?? 'unknown'}</b>
+                      </div>
+                      <h4>{schedule.question ?? 'No research question published'}</h4>
+                      <p>
+                        {fmt(schedule.steps.filter((step) => step.state !== 'COMPLETED').length)}{' '}
+                        steps remain
+                      </p>
+                    </article>
+                  ))}
+                </div>
+              )}
+              {arenaAlerts.length > 0 && (
+                <p className="ve-observatory-note">
+                  Latest schedule alert:{' '}
+                  {arenaAlerts[0].reason ?? 'Review the persisted Arena alert'}
+                </p>
+              )}
+              {arenaActivity.invalid_artifact_count > 0 && (
+                <p className="ve-observatory-note">
+                  {fmt(arenaActivity.invalid_artifact_count)} malformed Arena activity artifacts
+                  were omitted from this bounded view.
+                </p>
+              )}
+              <div className="ve-research-action-row">
+                <button
+                  className="ve-research-action"
+                  disabled={
+                    observatoryDiscovery.latest_frame_protocol !==
+                      'stratified-gamma-page-rotation-v2' ||
+                    !observatoryDiscovery.latest_scan_id ||
+                    !!existingQualificationJob ||
+                    qualificationJobMutation.isPending
+                  }
+                  onClick={() => qualificationJobMutation.mutate()}
+                >
+                  {qualificationJobMutation.isPending
+                    ? 'Queueing bounded qualification…'
+                    : existingQualificationJob
+                      ? `Qualification already ${existingQualificationJob.state ?? 'queued'}`
+                      : 'Run bounded qualification in Arena'}
+                </button>
+                {qualificationJobMutation.error && (
+                  <span role="status">{qualificationJobMutation.error.message}</span>
+                )}
+              </div>
+              <p className="ve-observatory-note">
+                The job reads finalized v4 public-snapshot events only, up to 512 events / 64 MiB,
+                and writes an idempotent Arena finding. It makes no market requests and cannot
+                modify collector, Reality, or campaign records.
+              </p>
+            </>
+          )}
         </Panel>
       </div>
 

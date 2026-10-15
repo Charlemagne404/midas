@@ -875,6 +875,39 @@
   font-size: 9px;
   line-height: 1.5;
 }
+.ve-research-action-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+.ve-research-action {
+  border: 1px solid #a7854f;
+  border-radius: 5px;
+  padding: 8px 12px;
+  background: #302719;
+  color: #f2d39b;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 650;
+  cursor: pointer;
+}
+.ve-research-action:hover:not(:disabled) {
+  background: #3c3020;
+}
+.ve-research-action:focus-visible {
+  outline: 2px solid var(--ve-gold);
+  outline-offset: 2px;
+}
+.ve-research-action:disabled {
+  opacity: 0.58;
+  cursor: not-allowed;
+}
+.ve-research-action-row [role='status'] {
+  color: var(--ve-red);
+  font-size: 11px;
+}
 .ve-artifacts {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

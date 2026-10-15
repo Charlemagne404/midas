@@ -84,12 +84,8 @@ def write_censoring_artifact(root: Path, *, campaign_id: str = "campaign-fixture
                                         "observed_public_measurement": 1,
                                         "censored": 3,
                                     },
-                                    "censor_reasons": {
-                                        "future_observation_unavailable": 3
-                                    },
-                                    "initial_quality_regimes": {
-                                        "valid_initial_observation": 4
-                                    },
+                                    "censor_reasons": {"future_observation_unavailable": 3},
+                                    "initial_quality_regimes": {"valid_initial_observation": 4},
                                 }
                             ]
                         },
@@ -116,9 +112,7 @@ def write_censoring_artifact(root: Path, *, campaign_id: str = "campaign-fixture
                                 }
                             ]
                         },
-                        "by_censoring_regime_horizon": {
-                            "1000": {"items": []}
-                        },
+                        "by_censoring_regime_horizon": {"1000": {"items": []}},
                     },
                 },
             },
@@ -327,12 +321,13 @@ def test_overview_uses_versioned_censoring_by_market_hour_and_quality(tmp_path):
     assert data["followup_censoring"]["market_group_count"] == 1
     assert data["followup_censoring"]["utc_hour_group_count"] == 1
     assert data["followup_censoring"]["by_market_at_longest_horizon"][0]["market_id"] == "market-a"
-    assert data["followup_censoring"]["by_market_at_longest_horizon"][0][
-        "valid_initial_censored"
-    ] == 3
-    assert data["followup_censoring"]["by_utc_hour_at_longest_horizon"][0][
-        "utc_hour"
-    ] == "2026-10-15T08:00:00Z"
+    assert (
+        data["followup_censoring"]["by_market_at_longest_horizon"][0]["valid_initial_censored"] == 3
+    )
+    assert (
+        data["followup_censoring"]["by_utc_hour_at_longest_horizon"][0]["utc_hour"]
+        == "2026-10-15T08:00:00Z"
+    )
     assert any(item["id"] == "censoring" for item in data["artifacts"])
     assert client.get("/api/veritas/artifacts/censoring").status_code == 200
 
@@ -370,9 +365,7 @@ def test_overview_exposes_incremental_public_observatory_summary(tmp_path):
                     "quality_valid_pairs": 2,
                     "legacy_freshness_valid_pairs": 1,
                     "invalid_reasons": {},
-                    "legacy_freshness_invalid_reasons": {
-                        "reported_update_age_above_5s": 1
-                    },
+                    "legacy_freshness_invalid_reasons": {"reported_update_age_above_5s": 1},
                     "categories": ["Politics"],
                     "cohort_roles": {"stable_random_control": 2},
                     "first_observed_at_utc": "2026-10-15T05:30:00+00:00",
@@ -411,9 +404,18 @@ def test_overview_exposes_incremental_public_observatory_summary(tmp_path):
     (data_dir / "latest-summary.json").write_text(
         json.dumps(
             {
-                "discovery": {"exclusion_reasons": {"unsupported_protocol": 4}},
+                "source_http_attempts": 7,
+                "discovery": {
+                    "query_count": 6,
+                    "query_candidate_records": 300,
+                    "unique_market_ids": 280,
+                    "exclusion_reasons": {"unsupported_protocol": 4},
+                    "frame_protocol": "stratified-gamma-page-rotation-v2",
+                    "offset_bucket_seconds": 1800,
+                },
                 "selection": {
                     "phase": "expiry",
+                    "target_markets": 40,
                     "selected_markets": 40,
                     "stable_control_markets": 8,
                     "rotating_markets": 32,
@@ -421,6 +423,31 @@ def test_overview_exposes_incremental_public_observatory_summary(tmp_path):
                     "selected_by_liquidity": {"unknown": 40},
                     "selected_by_expiry": {"unknown": 40},
                     "selected_by_spread": {"unknown": 40},
+                    "sampled_markets": [
+                        {
+                            "market_id": "market-1",
+                            "primary_category": "Politics",
+                            "primary_category_source": "market.category",
+                            "cohort_role": "stable_random_control",
+                            "selection_probability": "0.16",
+                            "selection_probability_basis": "sample from bounded union",
+                            "selection_stratum": None,
+                        }
+                    ],
+                },
+                "collection_bounds": {
+                    "target_markets": 40,
+                    "maximum_markets": 50,
+                    "gamma_queries_per_scan": 6,
+                    "gamma_page_limit": 50,
+                    "maximum_public_read_calls_per_scan": 7,
+                    "maximum_public_http_attempts_per_scan": 14,
+                    "maximum_retries_per_public_read": 1,
+                    "request_timeout_seconds": 15,
+                    "maximum_response_bytes": 50_331_648,
+                    "minimum_request_interval_seconds": 1.0,
+                    "maximum_root_bytes": 1_073_741_824,
+                    "quantity_grid": ["5", "10", "20", "50", "100"],
                 },
                 "observation": {"invalid_reasons": {"no_empty_ask_side": 5}},
             }
@@ -435,6 +462,19 @@ def test_overview_exposes_incremental_public_observatory_summary(tmp_path):
     assert panel["readiness"] == "collecting_repeated_temporal_coverage"
     assert panel["discovery"]["unique_market_ids_observed"] == 1
     assert panel["discovery"]["latest_phase"] == "expiry"
+    assert panel["discovery"]["latest_frame_protocol"] == "stratified-gamma-page-rotation-v2"
+    assert panel["discovery"]["latest_offset_bucket_seconds"] == 1800
+    assert panel["discovery"]["latest_query_count"] == 6
+    assert panel["discovery"]["latest_query_candidate_records"] == 300
+    assert panel["discovery"]["latest_unique_market_ids"] == 280
+    assert panel["discovery"]["latest_http_attempts"] == 7
+    assert panel["discovery"]["latest_target_markets"] == 40
+    assert panel["discovery"]["latest_selected_market_rows"][0]["selection_probability"] == "0.16"
+    assert panel["discovery"]["latest_selected_market_rows"][0]["primary_category_source"] == (
+        "market.category"
+    )
+    assert panel["discovery"]["collection_bounds"]["maximum_markets"] == 50
+    assert panel["discovery"]["collection_bounds"]["maximum_public_http_attempts_per_scan"] == 14
     assert panel["opportunity"]["quality_valid_pairs"] == 70
     assert panel["opportunity"]["positive_full_depth_gross_by_quantity"] == {"20": 0}
     assert panel["data_quality"]["latest_invalid_reasons"] == {"no_empty_ask_side": 5}

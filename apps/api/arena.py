@@ -11,6 +11,187 @@ from typing import Any, Literal, cast
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, ConfigDict
 
+MAX_RESEARCH_ACTIVITY_RECORD_BYTES = 256 * 1024
+MAX_VERITAS_LATEST_SUMMARY_BYTES = 2 * 1024**2
+MAX_VERITAS_ANALYSIS_EVENT_BYTES = 2 * 1024**2
+
+
+def veritas_repository_root() -> Path:
+    return Path(__file__).resolve().parents[2]
+
+
+def create_veritas_qualification_job(arena_root: Path, repository: Path) -> dict[str, Any]:
+    data_root = repository / "data" / "veritas-observatory"
+    latest_path = data_root / "latest-summary.json"
+    if data_root.is_symlink() or latest_path.is_symlink() or not latest_path.is_file():
+        raise ValueError("Latest bounded Veritas public scan is unavailable")
+    if latest_path.stat().st_size > MAX_VERITAS_LATEST_SUMMARY_BYTES:
+        raise ValueError("Latest Veritas public scan summary exceeds the read bound")
+    latest = json.loads(latest_path.read_text())
+    if not isinstance(latest, dict) or latest.get("analysis_version") != (
+        "veritas-public-observatory-v2"
+    ):
+        raise ValueError("A finalized v2 Veritas scan is required before qualification")
+    scan_id = latest.get("scan_id")
+    if not isinstance(scan_id, str) or not re.fullmatch(r"scan-\d{8}T\d{6}Z-[0-9a-f]{12}", scan_id):
+        raise ValueError("Latest Veritas scan identity is invalid")
+    analysis_events_root = data_root / "analysis-events"
+    version_root = analysis_events_root / "v4"
+    source_event = version_root / f"{scan_id}.json"
+    if (
+        analysis_events_root.is_symlink()
+        or version_root.is_symlink()
+        or source_event.is_symlink()
+        or not source_event.is_file()
+    ):
+        raise ValueError("Latest Veritas scan has not reached finalized v4 analysis")
+    if source_event.stat().st_size > MAX_VERITAS_ANALYSIS_EVENT_BYTES:
+        raise ValueError("Latest Veritas analysis event exceeds the job admission bound")
+    from midas.arena.jobs import JobSpec, create
+    from midas.veritas.arena_qualification import VeritasQualificationSpec
+
+    spec = JobSpec(
+        kind="veritas_qualification",
+        veritas_qualification=VeritasQualificationSpec(expected_latest_scan_id=scan_id),
+        max_wall_seconds=300,
+    )
+    return create(
+        arena_root,
+        spec,
+        admission_key=f"veritas-qualification-v1-{scan_id}",
+    )
+
+
+def _qualification_source_scan_id(row: dict[str, Any]) -> str | None:
+    configuration = row.get("configuration")
+    if not isinstance(configuration, dict):
+        return None
+    veritas_spec = configuration.get("veritas_qualification")
+    if not isinstance(veritas_spec, dict):
+        return None
+    scan_id = veritas_spec.get("expected_latest_scan_id")
+    return scan_id if isinstance(scan_id, str) else None
+
+
+def _bounded_string(value: object, limit: int) -> str | None:
+    return value[:limit] if isinstance(value, str) else None
+
+
+def research_activity(root: Path) -> dict[str, Any]:
+    """Return a small read-only summary of Arena's durable research activity."""
+    invalid_records = 0
+
+    def records(kind: str, filename: str, limit: int) -> list[dict[str, Any]]:
+        nonlocal invalid_records
+        directory = root / kind
+        if directory.is_symlink():
+            invalid_records += 1
+            return []
+        paths = []
+        for path in directory.glob(f"*/{filename}") if directory.is_dir() else []:
+            if path.is_symlink() or path.parent.is_symlink():
+                invalid_records += 1
+                continue
+            try:
+                paths.append((path.stat().st_mtime, path))
+            except OSError:
+                invalid_records += 1
+        values: list[dict[str, Any]] = []
+        for _, path in sorted(paths, key=lambda item: item[0], reverse=True)[:limit]:
+            try:
+                if path.stat().st_size > MAX_RESEARCH_ACTIVITY_RECORD_BYTES:
+                    invalid_records += 1
+                    continue
+                value = json.loads(path.read_text())
+                if isinstance(value, dict):
+                    values.append(value)
+                else:
+                    invalid_records += 1
+            except (OSError, ValueError):
+                invalid_records += 1
+        return values
+
+    jobs = records("jobs", "job.json", 25)
+    directors = records("directors", "manifest.json", 10)
+    schedules = records("schedules", "manifest.json", 10)
+    alerts = records("alerts", "manifest.json", 10)
+    active_states = {"RUNNING", "QUEUED"}
+    active_jobs = [job for job in jobs if job.get("state") in active_states]
+    queued_jobs = sum(job.get("state") == "QUEUED" for job in jobs)
+    return {
+        "status": "available",
+        "state_source": "persisted Arena manifests; supervisor liveness remains on Arena detail views",
+        "active_job_count": len(active_jobs),
+        "queued_job_count": queued_jobs,
+        "jobs": [
+            {
+                "job_id": row.get("job_id"),
+                "kind": row.get("configuration", {}).get("kind")
+                if isinstance(row.get("configuration"), dict)
+                else None,
+                "source_scan_id": _qualification_source_scan_id(row),
+                "state": row.get("state"),
+                "created_at": row.get("created_at"),
+                "updated_at": row.get("updated_at"),
+                "phase": row.get("phase"),
+                "progress": row.get("progress") if isinstance(row.get("progress"), dict) else None,
+                "error": _bounded_string(row.get("error"), 300),
+            }
+            for row in jobs[:10]
+        ],
+        "active_director_count": sum(row.get("state") == "RUNNING" for row in directors),
+        "directors": [
+            {
+                "director_id": row.get("director_id"),
+                "state": row.get("state"),
+                "research_question": row.get("research_question"),
+                "current_stage": row.get("current_stage"),
+            }
+            for row in directors[:5]
+        ],
+        "active_schedule_count": sum(
+            row.get("state") in {"PENDING", "RUNNING"} for row in schedules
+        ),
+        "schedules": [
+            {
+                "schedule_id": row.get("schedule_id"),
+                "state": row.get("state"),
+                "question": row.get("configuration", {}).get("question")
+                if isinstance(row.get("configuration"), dict)
+                else None,
+                "steps": [
+                    {
+                        "name": step.get("name"),
+                        "state": step.get("state"),
+                        "job_id": step.get("job_id"),
+                    }
+                    for step in row.get("steps", [])[:8]
+                    if isinstance(step, dict)
+                ]
+                if isinstance(row.get("steps"), list)
+                else [],
+            }
+            for row in schedules[:5]
+        ],
+        "alerts": [
+            {
+                "alert_id": row.get("alert_id"),
+                "state": row.get("state"),
+                "reason": row.get("reason"),
+                "schedule_id": row.get("schedule_id"),
+            }
+            for row in alerts[:5]
+        ],
+        "invalid_artifact_count": invalid_records,
+        "limits": {
+            "maximum_record_bytes": MAX_RESEARCH_ACTIVITY_RECORD_BYTES,
+            "maximum_jobs_read": 25,
+            "maximum_directors_read": 10,
+            "maximum_schedules_read": 10,
+            "maximum_alerts_read": 10,
+        },
+    }
+
 
 def inspect_director(root: Path, identity: str) -> dict[str, Any]:
     """Observe coordinator liveness without rewriting its owned manifest."""
@@ -264,6 +445,10 @@ def router(root: Path) -> APIRouter:
     @api.get("")
     async def overview() -> Any:
         return await call(overview_data)
+
+    @api.get("/research-activity")
+    async def get_research_activity() -> Any:
+        return await call(research_activity, root)
 
     @api.get("/datasets/{identity}")
     async def dataset(identity: str) -> Any:
@@ -606,6 +791,10 @@ def router(root: Path) -> APIRouter:
             return create(root, JobSpec.model_validate(body.configuration))
 
         return await call(create)
+
+    @api.post("/jobs/veritas-qualification", status_code=201)
+    async def create_veritas_qualification() -> Any:
+        return await call(create_veritas_qualification_job, root, veritas_repository_root())
 
     @api.get("/jobs/{identity}")
     async def job(identity: str) -> Any:

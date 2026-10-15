@@ -1,6 +1,25 @@
 # Veritas Mission 2 Engineering Checkpoint
 
-## Current delta: paired measurement, censoring, and dashboard checkpoints
+## Latest status — Gate A checkpoint 011
+
+The 10:01 UTC scheduled v2 discovery scan (`scan-20261015T100116Z-7d135306c470`)
+indexed as the 13th finalized snapshot. The 300-ID bounded union contained 132
+eligible binary pairs; 38 of 40 selected pairs were quality-valid, with zero
+positive gross candidates. A bounded Arena qualification job consumed the 13
+finalized v4 events and persisted an idempotent zero-positive finding. The
+dashboard browser workflow passed. Full evidence and current limits are in
+[Gate A checkpoint 011](VERITAS_MISSION2_GATE_A_CHECKPOINT_011.md).
+
+The 10:10 UTC source-analysis recurrence also completed within its limits.
+The finalized prefix is now 944/3,077 segments, with 2,133 pending and no
+campaign-window frames. Reverification of all 944 sealed events matched the
+rolling chain in state.
+
+## Earlier checkpoint: paired measurement, censoring, and dashboard
+
+The details below describe the 12-snapshot state at 09:16 UTC. The 13-snapshot
+discovery and source-replay continuation is recorded at the top of this report
+and in Gate A checkpoint 011.
 
 The incremental snapshot analyzer is now at `veritas-finalized-snapshot-analysis-v4`;
 v1–v3 state, summaries, and event histories are retained separately. v4 adds
@@ -210,7 +229,8 @@ and [`VERITAS_MISSION2_GATE_A_CHECKPOINT_010.md`](VERITAS_MISSION2_GATE_A_CHECKP
 [`VERITAS_MISSION2_RESEARCH_INVENTORY_008.json`](VERITAS_MISSION2_RESEARCH_INVENTORY_008.json),
 [`VERITAS_MISSION2_RESEARCH_INVENTORY_009.json`](VERITAS_MISSION2_RESEARCH_INVENTORY_009.json),
 [`VERITAS_MISSION2_RESEARCH_INVENTORY_010.json`](VERITAS_MISSION2_RESEARCH_INVENTORY_010.json), and
-[`VERITAS_MISSION2_RESEARCH_INVENTORY_011.json`](VERITAS_MISSION2_RESEARCH_INVENTORY_011.json).
+[`VERITAS_MISSION2_RESEARCH_INVENTORY_011.json`](VERITAS_MISSION2_RESEARCH_INVENTORY_011.json), and
+[`VERITAS_MISSION2_RESEARCH_INVENTORY_012.json`](VERITAS_MISSION2_RESEARCH_INVENTORY_012.json).
 
 ## Verification
 
@@ -243,3 +263,33 @@ modified.
   a separate bounded alternative, not a silent waiver.
 - No model was trained and no strategy policy promoted. The observed gross
   candidate count is zero.
+
+## Gate A continuation: rotating discovery and Arena qualification
+
+Checkpoint 011 introduces `veritas-public-observatory-v2` with deterministic
+half-hour Gamma page offsets, preserved frozen controls, source-aware category
+labels, explicit per-market conditional selection probabilities, response
+size limits, and actual HTTP attempt counts. The scheduled 10:01 UTC scan
+successfully processed six discovery frames and one CLOB batch, indexed a
+13th snapshot, and left zero pending v4 analysis events.
+
+The scan union contained 300 IDs and 132 supported binary pairs. The selected
+40-market panel had 38 valid pairs, zero positive gross candidates, and no
+orders. The bounded Arena qualification job replayed the immutable 13-event
+v4 prefix and persisted its idempotent result as an Arena finding. It found no
+positive state at the unchanged top-ask, full-depth, minimum-notional, or fee
+gates. The Veritas dashboard exposes the collector limits and persisted Arena
+activity; the browser workflow passed against the new finalized evidence.
+
+The expanded checkpoint validation passed 132 related backend tests and 29
+frontend tests, strict Mypy, Ruff, Python formatting, frontend lint/typecheck/
+formatting, production build, and the Veritas discovery Playwright workflow.
+See [Gate A checkpoint 011](VERITAS_MISSION2_GATE_A_CHECKPOINT_011.md) and
+[research inventory 012](VERITAS_MISSION2_RESEARCH_INVENTORY_012.json).
+
+The probabilities remain conditional on a bounded query-response union and
+frozen controls; half-hour offsets do not make the frame representative of the
+venue. Quote sequence freshness, a 24-hour pilot review, the 48-hour
+follow-up/dependence gates, a complete Research Director workflow, and
+independent economic confirmation remain open. The full source replay is still
+catching up and contains no campaign-window frames in its processed prefix.

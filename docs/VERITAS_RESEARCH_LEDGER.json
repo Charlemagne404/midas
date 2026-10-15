@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-15T09:16:43Z",
+  "updated_at_utc": "2026-10-15T10:14:00Z",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -2170,6 +2170,121 @@
       ],
       "decision": "Keep the bounded source timer active and report replay progress separately from the public panel; do not treat bootstrap counts as economic evidence.",
       "status": "continue"
+    },
+    {
+      "hypothesis_id": "VERITAS-H047",
+      "title": "Half-hour rotating Gamma frames broaden the bounded discovery frame without exceeding the public-read budget",
+      "mechanism": "Deterministic offsets on high-, medium-, low-liquidity, and rotating-ID pages sample different portions of public query results; per-market selection probabilities and category-source metadata make the selected panel auditable.",
+      "experiment_id": "VERITAS-M2-GATE-A-DISCOVERY-FRAME-013",
+      "dataset_id": "7d135306c470b7d95f1e83025263b2968d8b17265d29a4b54a0cc0ad3ff9539a",
+      "success_metric": "Run the scheduled v2 scanner at 30-50 markets, record a bounded union and explicit exclusions, preserve frozen controls, count actual requests, and index the snapshot under v4.",
+      "result": {
+        "status": "scheduled_v2_scan_and_v4_index_succeeded",
+        "scan_id": "scan-20261015T100116Z-7d135306c470",
+        "captured_at_utc": "2026-10-15T10:01:16.209949Z",
+        "frame_protocol": "stratified-gamma-page-rotation-v2",
+        "query_candidate_records": 300,
+        "unique_market_ids": 300,
+        "eligible_pair_markets": 132,
+        "excluded_market_ids": 168,
+        "selected_markets": 40,
+        "available_frozen_controls": 3,
+        "rotating_markets": 37,
+        "quality_valid_pairs": 38,
+        "positive_top_gross_pairs": 0,
+        "public_http_attempts": 7,
+        "maximum_public_http_attempts": 14,
+        "analysis_event_sha256": "53a69dbf92f7cafff9f869808b7e9637fe8591875dc1f7bcbcaf27cf81544162",
+        "orders_submitted": false
+      },
+      "limitations": [
+        "Gamma query results are bounded and are not a venue-wide census.",
+        "Selection probabilities condition on the observed query union and frozen controls; page offsets do not establish venue-wide inclusion probabilities.",
+        "The 40-market snapshot is intermittent and does not prove quote lifetime, sequence freshness, fills, or profitability."
+      ],
+      "decision": "Keep the scheduled observer running within its current request, CPU, memory, and storage limits; retain all exclusions and controls.",
+      "status": "continue"
+    },
+    {
+      "hypothesis_id": "VERITAS-H048",
+      "title": "A bounded Arena worker can reproducibly qualify the finalized public snapshot prefix without collector access",
+      "mechanism": "An idempotently admitted Arena job reads a pinned v4 event prefix, applies the unchanged economic qualification rules, and writes a deterministic finding without network or Reality access.",
+      "experiment_id": "VERITAS-M2-ECO-QUAL-ARENA-001",
+      "dataset_id": "0baa4d74b95c3fe3cc12ed624848e712b0b8083161c7759d8161b33e90a8b619",
+      "success_metric": "Complete within the 512-event, 64 MiB, 300-second, and fixed 20-share bounds; verify source evidence, deterministic output, repeat admission idempotence, and no market requests.",
+      "result": {
+        "status": "completed_no_positive_gross_candidate_observed",
+        "job_id": "job-13280ea8cb2d427c938f0a3e",
+        "job_state": "COMPLETED",
+        "source_scan_id": "scan-20261015T100116Z-7d135306c470",
+        "source_event_count": 13,
+        "source_bytes": 237821,
+        "elapsed_seconds": 2.1115260124206543,
+        "finding_id": "veritas-qualification-v1-f56acbc2267455d2",
+        "finding_sha256": "794de33531287125dfee52de9d87f7c7c04ce4f05bade69c8d3673025267f7ee",
+        "experiment_run_id": "VERITAS-M2-ECO-QUAL-001-RUN-0baa4d74b95c",
+        "valid_pairs": 469,
+        "markets": 186,
+        "median_top_edge_per_share": "-0.028",
+        "maximum_top_edge_per_share": "-0.001",
+        "positive_states_at_all_gates": 0,
+        "same_scan_readmission_returned_existing_job": true,
+        "orders_submitted": false,
+        "authenticated_requests": false
+      },
+      "limitations": [
+        "Repeated observations are selected and correlated; the panel is short and intermittent.",
+        "The job qualifies candidate states and does not estimate execution fills or strategy PnL.",
+        "A full Research Director cycle and independent freshness source remain unimplemented."
+      ],
+      "decision": "Keep the no-trade policy; repeat only when a new finalized v4 snapshot is available and retain every deterministic finding.",
+      "status": "continue"
+    },
+    {
+      "hypothesis_id": "VERITAS-H049",
+      "title": "The finalized Reality source replay advances within its byte limit while the live catalog continues to grow",
+      "mechanism": "A persistent offset timer resumes from the sealed state, reads only finalized cataloged segments, and records prefix/event/state lineage while leaving the active campaign writer untouched.",
+      "experiment_id": "VERITAS-M2-GATE-A-SOURCE-REPLAY-012",
+      "dataset_id": "6edf9fa1ac04556ecde5dce0245b780fcfeac9a95438cf0a10ba0d3f5e73a861",
+      "success_metric": "Advance within the 128-segment or 32 MiB per-run limit; verify sealed summary/state/event-chain identities, campaign-window coverage, and no active-segment reads.",
+      "result": {
+        "status": "advanced_within_bounds_campaign_window_unobserved",
+        "latest_service_start_utc": "2026-10-15T10:10:33Z",
+        "latest_service_exit_utc": "2026-10-15T10:13:32Z",
+        "latest_exit_status": 0,
+        "latest_elapsed_seconds": 179,
+        "latest_cpu_ms": 8962,
+        "latest_memory_peak_bytes": 149655552,
+        "latest_memory_swap_peak_bytes": 0,
+        "batch_processed_segments": 36,
+        "batch_source_bytes": 33314216,
+        "processed_segments": 944,
+        "replayable_catalog_segments": 3077,
+        "pending_segments": 2133,
+        "pending_source_bytes": 571624064,
+        "processed_source_bytes": 193950001,
+        "last_processed_ordinal": 108963,
+        "campaign_window_frame_records": 0,
+        "active_segment_read": false,
+        "prefix_catalog_sha256": "6edf9fa1ac04556ecde5dce0245b780fcfeac9a95438cf0a10ba0d3f5e73a861",
+        "summary_sha256": "7619c06e32356fd560e9bd4fb014b6b5afba594a0c07be1bd132452b8bcf7fc4",
+        "event_chain_sha256": "0563e6b67ee8a31074dad661b4afd8af213be5a20e3b19ba6146acbe38865994",
+        "reverified_event_count": 944,
+        "event_chain_matches_state": true,
+        "preceding_0940_recurrence": {
+          "segments": 122,
+          "source_bytes": 32990517,
+          "processed_total_after_run": 908,
+          "pending_segments_after_run": 2110
+        }
+      },
+      "limitations": [
+        "The source catalog grew while replay progressed; 2,133 finalized segments remain pending.",
+        "The processed prefix still contains no campaign-window frames and adds no economic candidate evidence.",
+        "The public snapshot panel is independent from this source replay and has its own intermittent coverage limitations."
+      ],
+      "decision": "Keep the timer active, preserve the source prefix and campaign identity checks, and report progress separately from public snapshot evidence.",
+      "status": "continue"
     }
   ],
   "next_research_questions": [
@@ -2177,6 +2292,9 @@
     "Can Arena provide a typed, bounded Veritas Director job that consumes immutable source manifests without duplicating collector writes or creating unbounded copied artifacts?",
     "Do multi-day public coverage and independent freshness evidence change the measured gross-opportunity distribution?",
     "What temporal dependence and coverage evidence is needed before the original follow-up design is ready?",
-    "Can the expanded read-only dashboard expose source gaps, censoring, readiness, and Director activity with evidence-linked values?"
+    "Can the expanded read-only dashboard expose source gaps, censoring, readiness, and Director activity with evidence-linked values?",
+    "Can independent sequence evidence quantify freshness and coverage for the rotating public query frames?",
+    "What market/time dependence and coverage evidence will satisfy the 24-hour pilot review and original 48-hour follow-up gates?",
+    "Can the Research Director orchestrate bounded snapshot qualification and source replay with typed dependencies while preserving the collector timer?"
   ]
 }

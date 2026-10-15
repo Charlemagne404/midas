@@ -29,11 +29,20 @@ from .opportunity_audit import audit_pair_snapshot, normalize_market
 
 GAMMA = "https://gamma-api.polymarket.com"
 CLOB = "https://clob.polymarket.com"
-VERSION = "veritas-public-observatory-v1"
+VERSION = "veritas-public-observatory-v2"
+DISCOVERY_FRAME_PROTOCOL = "stratified-gamma-page-rotation-v2"
+CONTROL_COHORT_VERSION = "veritas-control-cohort-v1"
+LEGACY_CONTROL_COHORT_VERSION = "veritas-public-observatory-v1"
 DISCOVERY_LIMIT = 50
 DISCOVERY_QUERIES = 6
+DISCOVERY_OFFSET_RANGE = 1_000
+DISCOVERY_OFFSET_BUCKET_SECONDS = 30 * 60
+DISCOVERY_OFFSET_BUCKET_NS = DISCOVERY_OFFSET_BUCKET_SECONDS * 1_000_000_000
 MAX_RESPONSE_BYTES = 48 * 1024**2
 MAX_REQUESTS_PER_SCAN = DISCOVERY_QUERIES + 1
+MAX_RETRIES_PER_PUBLIC_READ = 1
+MAX_PUBLIC_HTTP_ATTEMPTS_PER_SCAN = MAX_REQUESTS_PER_SCAN * (MAX_RETRIES_PER_PUBLIC_READ + 1)
+REQUEST_TIMEOUT_SECONDS = 15.0
 MAX_MARKETS = 50
 DEFAULT_MARKETS = 40
 DEFAULT_CONTROL_MARKETS = 8
@@ -112,23 +121,57 @@ def _timestamp_ns(value: Any) -> int | None:
     return int(parsed.timestamp() * 1_000_000_000)
 
 
+def _category_labels(value: Any) -> list[str]:
+    if isinstance(value, str):
+        candidates = [value]
+    elif isinstance(value, list):
+        candidates = [item for item in value if isinstance(item, str)]
+    elif isinstance(value, dict):
+        label = value.get("label")
+        candidates = [label] if isinstance(label, str) else []
+    else:
+        candidates = []
+    return list(dict.fromkeys(label.strip()[:100] for label in candidates if label.strip()))
+
+
+def _category_metadata(raw: dict[str, Any]) -> tuple[list[str], str, str]:
+    market_categories = _category_labels(raw.get("category"))
+    event_categories: list[str] = []
+    tag_categories: list[str] = []
+    tags = raw.get("tags", [])
+    if isinstance(tags, list):
+        tag_categories.extend(
+            label
+            for item in tags
+            if isinstance(item, dict)
+            for label in _category_labels(item.get("label"))
+        )
+    events = raw.get("events", [])
+    if isinstance(events, list):
+        for item in events:
+            if not isinstance(item, dict):
+                continue
+            event_categories.extend(_category_labels(item.get("category")))
+            event_tags = item.get("tags", [])
+            if isinstance(event_tags, list):
+                tag_categories.extend(
+                    label
+                    for tag in event_tags
+                    if isinstance(tag, dict)
+                    for label in _category_labels(tag.get("label"))
+                )
+    all_categories = sorted(set(market_categories) | set(event_categories) | set(tag_categories))
+    if market_categories:
+        return all_categories, market_categories[0], "market.category"
+    if event_categories:
+        return all_categories, event_categories[0], "event.category"
+    if tag_categories:
+        return all_categories, sorted(set(tag_categories))[0], "tag.label"
+    return all_categories, "unknown", "unavailable"
+
+
 def _categories(raw: dict[str, Any]) -> list[str]:
-    values: set[str] = set()
-    for item in raw.get("tags", []) if isinstance(raw.get("tags"), list) else []:
-        if isinstance(item, dict) and item.get("label"):
-            values.add(str(item["label"]).strip())
-    for item in raw.get("events", []) if isinstance(raw.get("events"), list) else []:
-        if isinstance(item, dict) and item.get("category"):
-            values.add(str(item["category"]).strip())
-        if isinstance(item, dict) and isinstance(item.get("tags"), list):
-            values.update(
-                str(tag["label"]).strip()
-                for tag in item["tags"]
-                if isinstance(tag, dict) and tag.get("label")
-            )
-    if raw.get("category"):
-        values.add(str(raw["category"]).strip())
-    return sorted(value for value in values if value)
+    return _category_metadata(raw)[0]
 
 
 def _enrich_candidate(
@@ -139,7 +182,7 @@ def _enrich_candidate(
     spread = _number(raw.get("spread"))
     if spread is None and best_bid is not None and best_ask is not None and best_ask >= best_bid:
         spread = best_ask - best_bid
-    categories = _categories(raw)
+    categories, primary_category, primary_category_source = _category_metadata(raw)
     liquidity = _number(raw.get("liquidityNum", raw.get("liquidity")))
     volume_24h = _number(raw.get("volume24hr"))
     end_ns = _timestamp_ns(raw.get("endDate"))
@@ -159,7 +202,8 @@ def _enrich_candidate(
         "question": str(raw.get("question") or "")[:500],
         "slug": str(raw.get("slug") or "")[:250],
         "categories": categories,
-        "primary_category": categories[0] if categories else "unknown",
+        "primary_category": primary_category,
+        "primary_category_source": primary_category_source,
         "liquidity_usdc": str(liquidity) if liquidity is not None else None,
         "liquidity_band": (
             "unknown"
@@ -209,11 +253,24 @@ def _query_plan(now_ns: int, seed: int) -> list[tuple[str, dict[str, Any]]]:
         "limit": DISCOVERY_LIMIT,
         "include_tag": "true",
     }
-    offset = (seed + now_ns // 86_400_000_000_000) % 1000
+    half_hour_bucket = now_ns // DISCOVERY_OFFSET_BUCKET_NS
+    base_offset = (seed + half_hour_bucket * 137) % DISCOVERY_OFFSET_RANGE
+    offsets = {
+        "high_liquidity": base_offset,
+        "medium_liquidity": (base_offset + 271) % DISCOVERY_OFFSET_RANGE,
+        "low_liquidity": (base_offset + 542) % DISCOVERY_OFFSET_RANGE,
+        "rotating_id_control_frame": (base_offset + 813) % DISCOVERY_OFFSET_RANGE,
+    }
     return [
         (
             "high_liquidity",
-            {**common, "order": "liquidityNum", "ascending": "false", "liquidity_num_min": 10_000},
+            {
+                **common,
+                "order": "liquidityNum",
+                "ascending": "false",
+                "liquidity_num_min": 10_000,
+                "offset": offsets["high_liquidity"],
+            },
         ),
         (
             "medium_liquidity",
@@ -223,6 +280,7 @@ def _query_plan(now_ns: int, seed: int) -> list[tuple[str, dict[str, Any]]]:
                 "ascending": "true",
                 "liquidity_num_min": 1_000,
                 "liquidity_num_max": 10_000,
+                "offset": offsets["medium_liquidity"],
             },
         ),
         (
@@ -233,6 +291,7 @@ def _query_plan(now_ns: int, seed: int) -> list[tuple[str, dict[str, Any]]]:
                 "ascending": "true",
                 "liquidity_num_min": 1,
                 "liquidity_num_max": 1_000,
+                "offset": offsets["low_liquidity"],
             },
         ),
         (
@@ -258,7 +317,12 @@ def _query_plan(now_ns: int, seed: int) -> list[tuple[str, dict[str, Any]]]:
         ),
         (
             "rotating_id_control_frame",
-            {**common, "order": "id", "ascending": "true", "offset": offset},
+            {
+                **common,
+                "order": "id",
+                "ascending": "true",
+                "offset": offsets["rotating_id_control_frame"],
+            },
         ),
     ]
 
@@ -276,7 +340,7 @@ class PublicReadClient:
         if min_interval_seconds < 0.2 or max_requests > MAX_REQUESTS_PER_SCAN:
             raise ValueError("Public research client exceeds its request bounds")
         self.client = httpx.AsyncClient(
-            timeout=httpx.Timeout(15.0),
+            timeout=httpx.Timeout(REQUEST_TIMEOUT_SECONDS),
             headers={"User-Agent": "MIDAS-Veritas-readonly-observatory/1.0"},
             transport=transport,
             limits=httpx.Limits(max_connections=2, max_keepalive_connections=2),
@@ -285,6 +349,7 @@ class PublicReadClient:
         self.max_requests = max_requests
         self.last_request = 0.0
         self.requests = 0
+        self.request_attempts = 0
         self.lock = asyncio.Lock()
 
     async def _send(
@@ -295,7 +360,7 @@ class PublicReadClient:
         *,
         params: dict[str, Any] | None = None,
         json_body: Any | None = None,
-    ) -> tuple[Any, bytes, int, int]:
+    ) -> tuple[Any, bytes, int, int, int]:
         allowed = (base == GAMMA and path == "/markets" and method == "GET") or (
             base == CLOB and path == "/books" and method == "POST"
         )
@@ -310,31 +375,42 @@ class PublicReadClient:
             self.last_request = time.monotonic()
             self.requests += 1
         last_error: Exception | None = None
-        for attempt in range(2):
+        first_started_ns: int | None = None
+        for attempt in range(MAX_RETRIES_PER_PUBLIC_READ + 1):
             started_ns = time.time_ns()
+            if first_started_ns is None:
+                first_started_ns = started_ns
+            self.request_attempts += 1
             try:
-                response = await self.client.request(
+                async with self.client.stream(
                     method,
                     base + path,
                     params=params,
                     json=json_body,
-                )
-                received_ns = time.time_ns()
-                if len(response.content) > MAX_RESPONSE_BYTES:
-                    raise ValueError("Public response exceeds its byte bound")
-                if response.status_code in {429, 500, 502, 503, 504} and attempt == 0:
-                    try:
-                        delay = float(response.headers.get("Retry-After", "1"))
-                    except ValueError:
-                        delay = 1.0
-                    await asyncio.sleep(min(MAX_RETRY_DELAY_SECONDS, max(0.2, delay)))
-                    last_error = RuntimeError(
-                        f"Public endpoint returned HTTP {response.status_code}"
-                    )
-                    continue
-                response.raise_for_status()
-                parsed = json.loads(response.content)
-                return parsed, response.content, started_ns, received_ns
+                ) as response:
+                    if response.status_code in {429, 500, 502, 503, 504} and attempt == 0:
+                        try:
+                            delay = float(response.headers.get("Retry-After", "1"))
+                        except ValueError:
+                            delay = 1.0
+                        await response.aclose()
+                        await asyncio.sleep(min(MAX_RETRY_DELAY_SECONDS, max(0.2, delay)))
+                        last_error = RuntimeError(
+                            f"Public endpoint returned HTTP {response.status_code}"
+                        )
+                        continue
+                    chunks: list[bytes] = []
+                    response_bytes = 0
+                    async for chunk in response.aiter_bytes():
+                        response_bytes += len(chunk)
+                        if response_bytes > MAX_RESPONSE_BYTES:
+                            raise ValueError("Public response exceeds its byte bound")
+                        chunks.append(chunk)
+                    body = b"".join(chunks)
+                    response.raise_for_status()
+                    parsed = json.loads(body)
+                    received_ns = time.time_ns()
+                    return parsed, body, first_started_ns, received_ns, attempt + 1
             except (httpx.HTTPError, json.JSONDecodeError) as error:
                 last_error = error
                 if attempt == 0:
@@ -342,7 +418,7 @@ class PublicReadClient:
         raise RuntimeError("Public read retry budget exhausted") from last_error
 
     async def discover(self, params: dict[str, Any]) -> tuple[list[dict[str, Any]], dict[str, Any]]:
-        value, body, started_ns, received_ns = await self._send(
+        value, body, started_ns, received_ns, attempt_count = await self._send(
             "GET", GAMMA, "/markets", params=params
         )
         if not isinstance(value, list) or len(value) > DISCOVERY_LIMIT:
@@ -352,6 +428,7 @@ class PublicReadClient:
         return value, {
             "requested_at_ns": started_ns,
             "received_at_ns": received_ns,
+            "request_attempts": attempt_count,
             "response_sha256": _sha256(body),
             "response_bytes": len(body),
             "response_payload": body.decode("utf-8"),
@@ -365,7 +442,7 @@ class PublicReadClient:
         ):
             raise ValueError("Invalid or oversized paired-book request")
         body = [{"token_id": asset_id} for asset_id in asset_ids]
-        value, wire, started_ns, received_ns = await self._send(
+        value, wire, started_ns, received_ns, attempt_count = await self._send(
             "POST", CLOB, "/books", json_body=body
         )
         if not isinstance(value, list) or len(value) > len(asset_ids):
@@ -375,6 +452,7 @@ class PublicReadClient:
         return value, {
             "requested_at_ns": started_ns,
             "received_at_ns": received_ns,
+            "request_attempts": attempt_count,
             "request_asset_count": len(asset_ids),
             "response_book_count": len(value),
             "request_sha256": _sha256(_canonical(body)),
@@ -468,6 +546,8 @@ async def discover_universe(
 
     report = {
         "query_count": len(query_reports),
+        "frame_protocol": DISCOVERY_FRAME_PROTOCOL,
+        "offset_bucket_seconds": DISCOVERY_OFFSET_BUCKET_SECONDS,
         "query_candidate_records": response_candidate_count,
         "unique_market_ids": len(candidates),
         "duplicate_records_across_queries": duplicate_count,
@@ -480,6 +560,7 @@ async def discover_universe(
         "limitations": [
             "The discovered universe is the union of six bounded Gamma response pages, not the venue-wide universe.",
             "The pages overlap and their upstream ranking is not a probability sample of all markets.",
+            "Seeded half-hour page offsets broaden the repeated frame but do not provide known inclusion probabilities for the venue universe.",
             "Protocol V2, multi-outcome, augmented negative-risk and ambiguous binary relationships are recorded as excluded from pair economics.",
         ],
     }
@@ -776,12 +857,15 @@ def _summary(report: dict[str, Any]) -> dict[str, Any]:
         "scan_id": report["scan_id"],
         "captured_at_utc": report["captured_at_utc"],
         "captured_ns": report["captured_ns"],
+        "source_http_attempts": report["source_requests"]["public_http_attempts"],
         "snapshot_file": report["snapshot_file"],
         "snapshot_evidence_sha256": report["snapshot_evidence_sha256"],
         "source_code_sha256": report["source_code_sha256"],
         "discovery": {
             key: report["discovery"][key]
             for key in (
+                "frame_protocol",
+                "offset_bucket_seconds",
                 "query_count",
                 "query_candidate_records",
                 "unique_market_ids",
@@ -814,6 +898,37 @@ def _summary(report: dict[str, Any]) -> dict[str, Any]:
             "selected_by_spread": dict(
                 sorted(Counter(row.get("spread_band", "unknown") for row in selected).items())
             ),
+            "sampled_markets": [
+                {
+                    key: row.get(key)
+                    for key in (
+                        "market_id",
+                        "primary_category",
+                        "primary_category_source",
+                        "cohort_role",
+                        "selection_probability",
+                        "selection_probability_basis",
+                        "selection_stratum",
+                    )
+                }
+                for row in selected
+            ],
+        },
+        "collection_bounds": {
+            "target_markets": report["selection"]["plan"]["target_markets"],
+            "maximum_markets": MAX_MARKETS,
+            "gamma_queries_per_scan": DISCOVERY_QUERIES,
+            "gamma_page_limit": DISCOVERY_LIMIT,
+            "maximum_public_read_calls_per_scan": MAX_REQUESTS_PER_SCAN,
+            "maximum_public_http_attempts_per_scan": MAX_PUBLIC_HTTP_ATTEMPTS_PER_SCAN,
+            "maximum_retries_per_public_read": MAX_RETRIES_PER_PUBLIC_READ,
+            "request_timeout_seconds": REQUEST_TIMEOUT_SECONDS,
+            "maximum_response_bytes": MAX_RESPONSE_BYTES,
+            "minimum_request_interval_seconds": report["collection_bounds"][
+                "minimum_request_interval_seconds"
+            ],
+            "maximum_root_bytes": MAX_ROOT_BYTES,
+            "quantity_grid": report["quantity_grid"],
         },
         "observation": {
             "attempted_market_pairs": len(report["market_observations"]),
@@ -919,6 +1034,19 @@ async def run_scan(
         if not isinstance(history, dict):
             raise ValueError("Malformed activity-proxy history")
 
+        control_path = root / "control-cohort.json"
+        control_record = (
+            _safe_json(control_path, max_bytes=1_000_000) if control_path.exists() else None
+        )
+        frozen_control_ids: list[str] | None = None
+        if control_record:
+            if control_record.get("version") not in {
+                CONTROL_COHORT_VERSION,
+                LEGACY_CONTROL_COHORT_VERSION,
+            } or not isinstance(control_record.get("market_ids"), list):
+                raise ValueError("Invalid frozen control cohort")
+            frozen_control_ids = [str(item) for item in control_record["market_ids"]]
+
         client = PublicReadClient(
             transport=transport, min_interval_seconds=request_interval_seconds
         )
@@ -929,17 +1057,6 @@ async def run_scan(
                 raise RuntimeError(
                     "No eligible V1 binary markets were found in the bounded query union"
                 )
-            control_path = root / "control-cohort.json"
-            control_record = (
-                _safe_json(control_path, max_bytes=1_000_000) if control_path.exists() else None
-            )
-            frozen_control_ids: list[str] | None = None
-            if control_record:
-                if control_record.get("version") != VERSION or not isinstance(
-                    control_record.get("market_ids"), list
-                ):
-                    raise ValueError("Invalid frozen control cohort")
-                frozen_control_ids = [str(item) for item in control_record["market_ids"]]
             selected, selection_plan, control_ids = select_cohort(
                 eligible,
                 target=target_markets,
@@ -958,7 +1075,7 @@ async def run_scan(
                 _atomic_json(
                     control_path,
                     {
-                        "version": VERSION,
+                        "version": CONTROL_COHORT_VERSION,
                         "created_at_ns": time.time_ns(),
                         "seed": seed,
                         "discovery_population": selection_plan[
@@ -1150,10 +1267,24 @@ async def run_scan(
             report: dict[str, Any] = {
                 "schema_version": 1,
                 "analysis_version": VERSION,
+                "discovery_frame_protocol": DISCOVERY_FRAME_PROTOCOL,
                 "quantity_grid": list(quantity_grid),
                 "captured_at_utc": captured.isoformat(),
                 "captured_ns": captured_ns,
                 "coverage_kind": "intermittent_public_snapshots",
+                "collection_bounds": {
+                    "target_markets": target_markets,
+                    "maximum_markets": MAX_MARKETS,
+                    "gamma_queries_per_scan": DISCOVERY_QUERIES,
+                    "gamma_page_limit": DISCOVERY_LIMIT,
+                    "maximum_public_read_calls_per_scan": MAX_REQUESTS_PER_SCAN,
+                    "maximum_public_http_attempts_per_scan": MAX_PUBLIC_HTTP_ATTEMPTS_PER_SCAN,
+                    "maximum_retries_per_public_read": MAX_RETRIES_PER_PUBLIC_READ,
+                    "request_timeout_seconds": REQUEST_TIMEOUT_SECONDS,
+                    "maximum_response_bytes": MAX_RESPONSE_BYTES,
+                    "minimum_request_interval_seconds": request_interval_seconds,
+                    "maximum_root_bytes": MAX_ROOT_BYTES,
+                },
                 "source_code_sha256": source_code_hash,
                 "discovery": discovery,
                 "selection": {
@@ -1175,6 +1306,7 @@ async def run_scan(
                                 "spread_per_share",
                                 "spread_band",
                                 "primary_category",
+                                "primary_category_source",
                                 "selection_probability",
                                 "selection_probability_basis",
                                 "selection_stratum",
@@ -1185,6 +1317,7 @@ async def run_scan(
                     ],
                 },
                 "source_requests": {
+                    "public_http_attempts": client.request_attempts,
                     "gamma_pages": discovery["queries"],
                     "clob_books": book_receipt,
                 },

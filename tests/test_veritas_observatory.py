@@ -7,7 +7,13 @@ from pathlib import Path
 from typing import Any
 
 import httpx
-from midas.veritas.observatory import DEFAULT_SEED, VERSION, run_scan
+from midas.veritas.observatory import (
+    DEFAULT_SEED,
+    VERSION,
+    PublicReadClient,
+    _query_plan,
+    run_scan,
+)
 
 
 def _market(index: int) -> dict[str, Any]:
@@ -121,13 +127,21 @@ def test_stratified_observatory_is_bounded_reproducible_and_keeps_controls(tmp_p
 
     first = __import__("asyncio").run(_scan(tmp_path, transport))
     first_controls = json.loads((tmp_path / "control-cohort.json").read_text())["market_ids"]
+    control_record = json.loads((tmp_path / "control-cohort.json").read_text())
+    assert control_record["version"] == "veritas-control-cohort-v1"
+    control_record["version"] = "veritas-public-observatory-v1"
+    (tmp_path / "control-cohort.json").write_text(json.dumps(control_record))
     second = __import__("asyncio").run(_scan(tmp_path, transport))
     second_controls = json.loads((tmp_path / "control-cohort.json").read_text())["market_ids"]
 
     assert first["analysis_version"] == VERSION
+    assert first["discovery_frame_protocol"] == "stratified-gamma-page-rotation-v2"
     assert first["selection"]["plan"]["phase"] == "liquidity"
     assert second["selection"]["plan"]["phase"] == "expiry"
     assert first_controls == second_controls
+    assert json.loads((tmp_path / "control-cohort.json").read_text())["version"] == (
+        "veritas-public-observatory-v1"
+    )
     assert len(first_controls) == 4
     assert len(first["selection"]["selected_markets"]) == 30
     assert len(second["selection"]["selected_markets"]) == 30
@@ -171,6 +185,17 @@ def test_stratified_observatory_is_bounded_reproducible_and_keeps_controls(tmp_p
     latest = json.loads((tmp_path / "latest-summary.json").read_text())
     assert latest["scan_id"] == second["scan_id"]
     assert latest["coverage_kind"] == "intermittent_public_snapshots"
+    assert latest["discovery"]["frame_protocol"] == "stratified-gamma-page-rotation-v2"
+    assert latest["discovery"]["offset_bucket_seconds"] == 30 * 60
+    assert latest["collection_bounds"]["target_markets"] == 30
+    assert latest["collection_bounds"]["maximum_public_read_calls_per_scan"] == 7
+    assert latest["collection_bounds"]["maximum_public_http_attempts_per_scan"] == 14
+    assert latest["collection_bounds"]["maximum_retries_per_public_read"] == 1
+    assert latest["collection_bounds"]["maximum_response_bytes"] == 48 * 1024**2
+    assert latest["source_http_attempts"] == 7
+    assert len(latest["selection"]["sampled_markets"]) == 30
+    assert all("selection_probability" in row for row in latest["selection"]["sampled_markets"])
+    assert all("primary_category_source" in row for row in latest["selection"]["sampled_markets"])
     assert "unknown" not in latest["selection"]["selected_by_liquidity"]
 
 
@@ -186,3 +211,117 @@ def test_snapshot_change_stratum_requires_repeated_snapshot_evidence():
         ]
     }
     assert _snapshot_change_bucket("m1", history) == "higher_snapshot_change"
+
+
+def test_discovery_offsets_rotate_across_liquidity_and_id_frames():
+    from datetime import UTC, datetime
+
+    from midas.veritas.observatory import DISCOVERY_OFFSET_BUCKET_NS
+
+    start_ns = int(datetime(2026, 10, 15, 9, 0, tzinfo=UTC).timestamp() * 1_000_000_000)
+    first = dict(_query_plan(start_ns, DEFAULT_SEED))
+    repeated = dict(_query_plan(start_ns + 10_000_000_000, DEFAULT_SEED))
+    following = dict(_query_plan(start_ns + DISCOVERY_OFFSET_BUCKET_NS, DEFAULT_SEED))
+    rotating_ids = (
+        "high_liquidity",
+        "medium_liquidity",
+        "low_liquidity",
+        "rotating_id_control_frame",
+    )
+
+    first_offsets = {query_id: first[query_id]["offset"] for query_id in rotating_ids}
+    repeated_offsets = {query_id: repeated[query_id]["offset"] for query_id in rotating_ids}
+    next_offsets = {query_id: following[query_id]["offset"] for query_id in rotating_ids}
+    assert len(set(first_offsets.values())) == len(rotating_ids)
+    assert all(0 <= offset < 1_000 for offset in first_offsets.values())
+    assert repeated_offsets == first_offsets
+    assert all(first_offsets[key] != next_offsets[key] for key in rotating_ids)
+    assert "offset" not in first["near_expiry"]
+    assert "offset" not in first["tagged_near_expiry"]
+
+
+def test_market_category_prefers_market_category_to_alphabetical_tags():
+    from midas.veritas.observatory import _category_metadata
+
+    raw = {
+        "category": ["Economics", "Macro"],
+        "events": [
+            {
+                "category": "Geopolitics",
+                "tags": [{"label": "Elections"}, {"label": "Politics"}],
+            }
+        ],
+        "tags": [{"label": "Crypto"}],
+    }
+
+    categories, primary, source = _category_metadata(raw)
+    assert categories == ["Crypto", "Economics", "Elections", "Geopolitics", "Macro", "Politics"]
+    assert primary == "Economics"
+    assert source == "market.category"
+
+
+def test_market_category_falls_back_to_event_then_tags():
+    from midas.veritas.observatory import _category_metadata
+
+    categories, primary, source = _category_metadata(
+        {"events": [{"category": "Sports", "tags": [{"label": "Baseball"}]}]}
+    )
+    assert categories == ["Baseball", "Sports"]
+    assert (primary, source) == ("Sports", "event.category")
+
+    categories, primary, source = _category_metadata({"tags": [{"label": "Crypto"}]})
+    assert categories == ["Crypto"]
+    assert (primary, source) == ("Crypto", "tag.label")
+
+
+def test_public_read_receipt_counts_retry_attempts_and_includes_retry_delay():
+    import asyncio
+
+    attempts = 0
+
+    def respond(request: httpx.Request) -> httpx.Response:
+        nonlocal attempts
+        attempts += 1
+        if attempts == 1:
+            return httpx.Response(503, headers={"Retry-After": "0"})
+        return httpx.Response(200, json=[])
+
+    async def exercise() -> tuple[dict[str, Any], int]:
+        client = PublicReadClient(transport=httpx.MockTransport(respond), min_interval_seconds=0.2)
+        try:
+            _, receipt = await client.discover({"limit": 50})
+            return receipt, client.request_attempts
+        finally:
+            await client.close()
+
+    receipt, request_attempts = asyncio.run(exercise())
+    assert attempts == 2
+    assert request_attempts == 2
+    assert receipt["request_attempts"] == 2
+    assert receipt["received_at_ns"] >= receipt["requested_at_ns"]
+
+
+def test_public_read_enforces_response_byte_bound_while_streaming(monkeypatch):
+    import asyncio
+
+    import midas.veritas.observatory as observatory
+    import pytest
+
+    monkeypatch.setattr(observatory, "MAX_RESPONSE_BYTES", 4)
+    attempts = 0
+
+    def respond(request: httpx.Request) -> httpx.Response:
+        nonlocal attempts
+        attempts += 1
+        return httpx.Response(200, content=b"12345")
+
+    async def exercise() -> None:
+        client = PublicReadClient(transport=httpx.MockTransport(respond))
+        try:
+            await client.discover({"limit": 50})
+        finally:
+            await client.close()
+
+    with pytest.raises(ValueError, match="response exceeds its byte bound"):
+        asyncio.run(exercise())
+    assert attempts == 1

@@ -30,6 +30,7 @@ export default defineConfig({
         MIDAS_MODE: 'demo',
         MIDAS_DATABASE_URL: `sqlite+aiosqlite:///${database}`,
         MIDAS_ARENA_ROOT: join(dirname(database), 'arena'),
+        PYTHONPATH: join(repository, 'packages'),
       },
     },
     {

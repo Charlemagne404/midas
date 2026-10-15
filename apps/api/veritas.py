@@ -93,14 +93,17 @@ def followup_censoring_overview(
     market_rows = detail.get("by_market_horizon", {}).get("items")
     hour_rows = detail.get("by_utc_hour_horizon", {}).get("items")
     regimes = detail.get("by_censoring_regime_horizon")
-    if not all(isinstance(rows, list) for rows in (quality_rows, market_rows, hour_rows)) or not isinstance(regimes, dict):
+    if not all(
+        isinstance(rows, list) for rows in (quality_rows, market_rows, hour_rows)
+    ) or not isinstance(regimes, dict):
         raise HTTPException(503, "Follow-up censoring dimensions are invalid")
     if len(quality_rows) > 2_000 or len(market_rows) > 2_000 or len(hour_rows) > 2_000:
         raise HTTPException(503, "Follow-up censoring dimension bound is invalid")
     valid_by_horizon = {
         int(row["horizon_ms"]): row
         for row in quality_rows
-        if isinstance(row, dict) and row.get("initial_quality_regime") == "valid_initial_observation"
+        if isinstance(row, dict)
+        and row.get("initial_quality_regime") == "valid_initial_observation"
     }
     followups: list[dict[str, Any]] = []
     for horizon, item in sorted(horizon_counts.items(), key=lambda pair: int(pair[0])):
@@ -115,10 +118,14 @@ def followup_censoring_overview(
         observed = valid_status.get("observed_public_measurement", 0)
         censored = valid_status.get("censored", 0)
         pending = valid_row.get("pending_followups", 0)
-        if any(
-            not isinstance(value, int) or isinstance(value, bool) or value < 0
-            for value in (total_censored, invalid_censored, observed, censored, pending)
-        ) or censored + invalid_censored != total_censored or observed + censored + pending != valid_initial:
+        if (
+            any(
+                not isinstance(value, int) or isinstance(value, bool) or value < 0
+                for value in (total_censored, invalid_censored, observed, censored, pending)
+            )
+            or censored + invalid_censored != total_censored
+            or observed + censored + pending != valid_initial
+        ):
             raise HTTPException(503, "Follow-up horizon counts do not reconcile")
         followups.append(
             {
@@ -144,18 +151,29 @@ def followup_censoring_overview(
             or not isinstance(row.get("initial_quality_regimes"), dict)
         ):
             return False
-        counts = [
-            row.get("scheduled_followups"),
-            row.get("resolved_followups"),
-            row.get("pending_followups"),
-        ] + list(row["counts_by_status"].values()) + list(row["censor_reasons"].values())
-        return all(isinstance(value, int) and not isinstance(value, bool) and value >= 0 for value in counts)
+        counts = (
+            [
+                row.get("scheduled_followups"),
+                row.get("resolved_followups"),
+                row.get("pending_followups"),
+            ]
+            + list(row["counts_by_status"].values())
+            + list(row["censor_reasons"].values())
+        )
+        return all(
+            isinstance(value, int) and not isinstance(value, bool) and value >= 0
+            for value in counts
+        )
 
     market_rows_at_horizon = [
-        row for row in market_rows if isinstance(row, dict) and row.get("horizon_ms") == longest_horizon
+        row
+        for row in market_rows
+        if isinstance(row, dict) and row.get("horizon_ms") == longest_horizon
     ]
     hour_rows_at_horizon = [
-        row for row in hour_rows if isinstance(row, dict) and row.get("horizon_ms") == longest_horizon
+        row
+        for row in hour_rows
+        if isinstance(row, dict) and row.get("horizon_ms") == longest_horizon
     ]
     if any(not validate_dimension_row(row, "market_id") for row in market_rows_at_horizon) or any(
         not validate_dimension_row(row, "utc_hour") for row in hour_rows_at_horizon
@@ -439,6 +457,15 @@ def observatory_overview(repository: Path) -> dict[str, Any]:
                 "latest_by_expiry": {},
                 "latest_by_spread": {},
                 "latest_exclusions": {},
+                "latest_frame_protocol": None,
+                "latest_offset_bucket_seconds": None,
+                "latest_query_count": 0,
+                "latest_query_candidate_records": 0,
+                "latest_unique_market_ids": 0,
+                "latest_http_attempts": 0,
+                "latest_target_markets": 0,
+                "latest_selected_market_rows": [],
+                "collection_bounds": None,
                 "latest_snapshot_invalid_reasons": {},
             },
             "opportunity": {
@@ -516,6 +543,12 @@ def observatory_overview(repository: Path) -> dict[str, Any]:
     latest = _read_latest_observatory_scan(repository) or {}
     latest_discovery = latest.get("discovery", {})
     latest_selection = latest.get("selection", {})
+    latest_collection_bounds = latest.get("collection_bounds")
+    if not isinstance(latest_collection_bounds, dict):
+        latest_collection_bounds = None
+    latest_selected_rows = latest_selection.get("sampled_markets", [])
+    if not isinstance(latest_selected_rows, list) or len(latest_selected_rows) > 50:
+        latest_selected_rows = []
     latest_scan_id = latest.get("scan_id")
     latest_snapshot_url = (
         f"/api/veritas/observatory/snapshots/{latest_scan_id}"
@@ -589,9 +622,7 @@ def observatory_overview(repository: Path) -> dict[str, Any]:
                 "quality_valid_percent": round(100 * quality_valid / selected, 1)
                 if selected
                 else None,
-                "legacy_freshness_valid_pairs": int(
-                    values.get("legacy_freshness_valid_pairs", 0)
-                ),
+                "legacy_freshness_valid_pairs": int(values.get("legacy_freshness_valid_pairs", 0)),
                 "legacy_quality_valid_percent": round(
                     100 * int(values.get("legacy_freshness_valid_pairs", 0)) / selected, 1
                 )
@@ -605,9 +636,7 @@ def observatory_overview(repository: Path) -> dict[str, Any]:
                 "cohort_roles": values.get("cohort_roles", {}),
                 "first_observed_at_utc": first_observed,
                 "last_observed_at_utc": last_observed,
-                "sampled_state_fingerprints": int(
-                    values.get("sampled_state_fingerprint_count", 0)
-                ),
+                "sampled_state_fingerprints": int(values.get("sampled_state_fingerprint_count", 0)),
                 "sampled_state_comparisons": comparisons,
                 "sampled_state_changes": changes,
                 "sampled_state_change_fraction": round(changes / comparisons, 4)
@@ -663,6 +692,17 @@ def observatory_overview(repository: Path) -> dict[str, Any]:
             "latest_by_expiry": latest_selection.get("selected_by_expiry", {}),
             "latest_by_spread": latest_selection.get("selected_by_spread", {}),
             "latest_exclusions": latest_discovery.get("exclusion_reasons", {}),
+            "latest_frame_protocol": latest_discovery.get("frame_protocol"),
+            "latest_offset_bucket_seconds": latest_discovery.get("offset_bucket_seconds"),
+            "latest_query_count": int(latest_discovery.get("query_count", 0)),
+            "latest_query_candidate_records": int(
+                latest_discovery.get("query_candidate_records", 0)
+            ),
+            "latest_unique_market_ids": int(latest_discovery.get("unique_market_ids", 0)),
+            "latest_http_attempts": int(latest.get("source_http_attempts", 0)),
+            "latest_target_markets": int(latest_selection.get("target_markets", 0)),
+            "latest_selected_market_rows": latest_selected_rows,
+            "collection_bounds": latest_collection_bounds,
             "latest_snapshot_invalid_reasons": latest.get("observation", {}).get(
                 "invalid_reasons", {}
             ),
@@ -692,9 +732,7 @@ def observatory_overview(repository: Path) -> dict[str, Any]:
             "denominator_selected_market_observations": int(
                 cumulative.get("selected_market_observations", 0)
             ),
-            "legacy_freshness_valid_pairs": int(
-                cumulative.get("legacy_freshness_valid_pairs", 0)
-            ),
+            "legacy_freshness_valid_pairs": int(cumulative.get("legacy_freshness_valid_pairs", 0)),
             "corrected_freshness_valid_pairs": int(cumulative.get("quality_valid_pairs", 0)),
             "recovered_valid_pairs": max(
                 0,
@@ -728,9 +766,7 @@ def observatory_overview(repository: Path) -> dict[str, Any]:
             )
             if int(cumulative.get("selected_market_observations", 0))
             else None,
-            "legacy_invalid_reasons": cumulative.get(
-                "legacy_freshness_invalid_reasons", {}
-            ),
+            "legacy_invalid_reasons": cumulative.get("legacy_freshness_invalid_reasons", {}),
         },
         "data_quality": {
             "invalid_reasons": cumulative.get("invalid_reasons", {}),

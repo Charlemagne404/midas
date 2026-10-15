@@ -145,6 +145,134 @@ def test_api_empty_state_validation_and_missing_artifacts(tmp_path):
         assert client.get("/api/arena/tournaments/x/rows?limit=10000").status_code == 422
 
 
+def test_research_activity_returns_bounded_job_director_schedule_and_alert_status(tmp_path):
+    atomic_json(
+        tmp_path / "jobs/job-a/job.json",
+        {
+            "job_id": "job-a",
+            "configuration": {
+                "kind": "veritas_qualification",
+                "veritas_qualification": {
+                    "expected_latest_scan_id": "scan-20261015T090047Z-6f98ffeaecab"
+                },
+            },
+            "state": "RUNNING",
+            "created_at": 1,
+            "phase": "checking finalized evidence",
+            "progress": {"done": 2, "total": 5},
+        },
+    )
+    atomic_json(
+        tmp_path / "directors/director-a/manifest.json",
+        {
+            "director_id": "director-a",
+            "state": "RUNNING",
+            "research_question": "Does the frozen challenge repeat?",
+            "current_stage": "independent challenge",
+        },
+    )
+    atomic_json(
+        tmp_path / "schedules/schedule-a/manifest.json",
+        {
+            "schedule_id": "schedule-a",
+            "state": "PENDING",
+            "configuration": {"question": "Run bounded comparison"},
+            "steps": [{"name": "replay", "state": "PENDING", "job_id": None}],
+        },
+    )
+    atomic_json(
+        tmp_path / "alerts/alert-a/manifest.json",
+        {
+            "alert_id": "alert-a",
+            "state": "OPEN",
+            "reason": "Source changed before admission",
+            "schedule_id": "schedule-a",
+        },
+    )
+    app = FastAPI()
+    app.include_router(router(tmp_path))
+
+    with TestClient(app) as client:
+        response = client.get("/api/arena/research-activity")
+
+    assert response.status_code == 200
+    activity = response.json()
+    assert activity["active_job_count"] == 1
+    assert activity["queued_job_count"] == 0
+    assert activity["jobs"][0]["kind"] == "veritas_qualification"
+    assert activity["jobs"][0]["source_scan_id"] == "scan-20261015T090047Z-6f98ffeaecab"
+    assert activity["jobs"][0]["progress"] == {"done": 2, "total": 5}
+    assert activity["active_director_count"] == 1
+    assert activity["directors"][0]["current_stage"] == "independent challenge"
+    assert activity["active_schedule_count"] == 1
+    assert activity["schedules"][0]["steps"][0]["name"] == "replay"
+    assert activity["alerts"][0]["reason"] == "Source changed before admission"
+    assert activity["limits"]["maximum_jobs_read"] == 25
+
+
+def test_veritas_qualification_admission_requires_finalized_v2_scan_and_is_idempotent(
+    tmp_path, monkeypatch
+):
+    from midas.arena import jobs
+
+    from apps.api import arena as arena_api
+
+    repository = tmp_path / "repository"
+    scan_id = "scan-20261015T090047Z-6f98ffeaecab"
+    data_root = repository / "data" / "veritas-observatory"
+    atomic_json(
+        data_root / "latest-summary.json",
+        {"analysis_version": "veritas-public-observatory-v2", "scan_id": scan_id},
+    )
+    atomic_json(data_root / "analysis-events/v4" / f"{scan_id}.json", {"scan_id": scan_id})
+    monkeypatch.setattr(arena_api, "veritas_repository_root", lambda: repository)
+
+    original_create = jobs.create
+
+    def create_without_launch(root, spec, launch=True, admission_key=None):
+        return original_create(root, spec, launch=False, admission_key=admission_key)
+
+    monkeypatch.setattr(jobs, "create", create_without_launch)
+    app = FastAPI()
+    app.include_router(router(tmp_path / "arena"))
+
+    with TestClient(app) as client:
+        first = client.post("/api/arena/jobs/veritas-qualification")
+        second = client.post("/api/arena/jobs/veritas-qualification")
+
+    assert first.status_code == 201
+    assert second.status_code == 201
+    assert first.json()["job_id"] == second.json()["job_id"]
+    assert first.json()["admission_key"] == f"veritas-qualification-v1-{scan_id}"
+    assert first.json()["configuration"]["kind"] == "veritas_qualification"
+    assert (
+        first.json()["configuration"]["veritas_qualification"]["expected_latest_scan_id"] == scan_id
+    )
+
+
+def test_veritas_qualification_admission_rejects_v1_latest_scan(tmp_path, monkeypatch):
+    from apps.api import arena as arena_api
+
+    repository = tmp_path / "repository"
+    data_root = repository / "data" / "veritas-observatory"
+    atomic_json(
+        data_root / "latest-summary.json",
+        {
+            "analysis_version": "veritas-public-observatory-v1",
+            "scan_id": "scan-20261015T090047Z-6f98ffeaecab",
+        },
+    )
+    monkeypatch.setattr(arena_api, "veritas_repository_root", lambda: repository)
+    app = FastAPI()
+    app.include_router(router(tmp_path / "arena"))
+
+    with TestClient(app) as client:
+        response = client.post("/api/arena/jobs/veritas-qualification")
+
+    assert response.status_code == 409
+    assert "v2 Veritas scan" in response.json()["detail"]
+
+
 def test_orphaned_checkpoint_is_not_presented_as_active_training(tmp_path):
     atomic_json(
         tmp_path / "models/model-orphan/training.json",
