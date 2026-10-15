@@ -182,12 +182,13 @@ experiment.
 ### Finalized source replay extension
 
 The source analyzer's first batch, persistent catch-up, and scheduled
-recurrences are recorded in checkpoints 003–007. The latest scheduled run processed 128 segments / 8,585,088 bytes in 87
-seconds, using 4.347 seconds of CPU. Cumulative progress is 658 of 2,899
-replayable segments, through ordinal 39,776, with 2,241 segments
-(610,777,450 bytes) pending. Readiness remains
-`catching_up_finalized_source`; the prefix contains no campaign-window frames.
-The source timer is active and the Reality checkout remains clean at
+recurrences are recorded in checkpoints 003–010. The latest scheduled run
+processed 128 segments / 26,555,999 bytes in 158 seconds, using 7.937 seconds
+of CPU and 113.4 MiB peak memory. Cumulative progress is 786 of 2,959
+replayable segments, through ordinal 55,101, with 2,173 segments
+(602,349,214 bytes) pending. Readiness remains
+`catching_up_finalized_source`; the processed prefix has no campaign-window
+frames. The source timer is active and the Reality checkout remains clean at
 `714f824`.
 
 The full scan results and immutable source identities are in
@@ -199,15 +200,17 @@ The full scan results and immutable source identities are in
 [`VERITAS_MISSION2_GATE_A_CHECKPOINT_006.md`](VERITAS_MISSION2_GATE_A_CHECKPOINT_006.md),
 [`VERITAS_MISSION2_GATE_A_CHECKPOINT_007.md`](VERITAS_MISSION2_GATE_A_CHECKPOINT_007.md),
 [`VERITAS_MISSION2_GATE_A_CHECKPOINT_008.md`](VERITAS_MISSION2_GATE_A_CHECKPOINT_008.md),
-and [`VERITAS_MISSION2_GATE_A_CHECKPOINT_009.md`](VERITAS_MISSION2_GATE_A_CHECKPOINT_009.md). Historical and current evidence inventories are
+[`VERITAS_MISSION2_GATE_A_CHECKPOINT_009.md`](VERITAS_MISSION2_GATE_A_CHECKPOINT_009.md),
+and [`VERITAS_MISSION2_GATE_A_CHECKPOINT_010.md`](VERITAS_MISSION2_GATE_A_CHECKPOINT_010.md). Historical and current evidence inventories are
 [`VERITAS_MISSION2_RESEARCH_INVENTORY_003.json`](VERITAS_MISSION2_RESEARCH_INVENTORY_003.json),
 [`VERITAS_MISSION2_RESEARCH_INVENTORY_004.json`](VERITAS_MISSION2_RESEARCH_INVENTORY_004.json),
 [`VERITAS_MISSION2_RESEARCH_INVENTORY_005.json`](VERITAS_MISSION2_RESEARCH_INVENTORY_005.json),
 [`VERITAS_MISSION2_RESEARCH_INVENTORY_006.json`](VERITAS_MISSION2_RESEARCH_INVENTORY_006.json),
 [`VERITAS_MISSION2_RESEARCH_INVENTORY_007.json`](VERITAS_MISSION2_RESEARCH_INVENTORY_007.json),
 [`VERITAS_MISSION2_RESEARCH_INVENTORY_008.json`](VERITAS_MISSION2_RESEARCH_INVENTORY_008.json),
-[`VERITAS_MISSION2_RESEARCH_INVENTORY_009.json`](VERITAS_MISSION2_RESEARCH_INVENTORY_009.json), and
-[`VERITAS_MISSION2_RESEARCH_INVENTORY_010.json`](VERITAS_MISSION2_RESEARCH_INVENTORY_010.json).
+[`VERITAS_MISSION2_RESEARCH_INVENTORY_009.json`](VERITAS_MISSION2_RESEARCH_INVENTORY_009.json),
+[`VERITAS_MISSION2_RESEARCH_INVENTORY_010.json`](VERITAS_MISSION2_RESEARCH_INVENTORY_010.json), and
+[`VERITAS_MISSION2_RESEARCH_INVENTORY_011.json`](VERITAS_MISSION2_RESEARCH_INVENTORY_011.json).
 
 ## Verification
 

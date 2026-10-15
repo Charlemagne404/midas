@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-15T09:02:33Z",
+  "updated_at_utc": "2026-10-15T09:16:43Z",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -2132,6 +2132,43 @@
         "Displayed public depth and hypothetical fee sensitivities do not establish persistence, fills, or PnL."
       ],
       "decision": "Keep no-trade and repeat the deterministic qualification only when another finalized snapshot is indexed.",
+      "status": "continue"
+    },
+    {
+      "hypothesis_id": "VERITAS-H046",
+      "title": "The fifth scheduled source-analysis recurrence advances a bounded finalized prefix",
+      "mechanism": "A persistent offset timer should resume from sealed analyzer state and append finalized source segments within the per-run limits.",
+      "experiment_id": "VERITAS-M2-GATE-A-SOURCE-REPLAY-010",
+      "dataset_id": "ec7ae9b6ff983f517c5e2d62ecb15831b4bd6fa6b9141aa251b4210a5f6aa3d9",
+      "success_metric": "Advance the finalized prefix within 128 segments or 32 MiB, preserve source/prefix/event/state identities, report campaign-window coverage, and avoid Reality writer access.",
+      "result": {
+        "status": "advanced_within_bounds",
+        "service_start_utc": "2026-10-15T09:10:54Z",
+        "service_exit_utc": "2026-10-15T09:13:32Z",
+        "exit_status": 0,
+        "elapsed_seconds": 158,
+        "cpu_ms": 7937,
+        "memory_peak_bytes": 118931456,
+        "batch_segments": 128,
+        "batch_source_bytes": 26555999,
+        "processed_segments": 786,
+        "replayable_catalog_segments": 2959,
+        "pending_segments": 2173,
+        "pending_bytes": 602349214,
+        "processed_source_bytes": 127645268,
+        "last_processed_ordinal": 55101,
+        "campaign_window_frame_records": 0,
+        "prefix_catalog_sha256": "ec7ae9b6ff983f517c5e2d62ecb15831b4bd6fa6b9141aa251b4210a5f6aa3d9",
+        "last_event_sha256": "177eef647887a4d4a91ffc04d9b5d428d7c8049dd4607b4dcf786e32d2207c54",
+        "event_chain_sha256": "29b7a68aed1eb7890c6cb23ea927801ec86903b421a3acb60f3dca19b9d0c0b5",
+        "state_sha256": "b7ef8decd2c7ec6443ea30117332f9bc04f9f69184df0229f0ed46416681a999"
+      },
+      "limitations": [
+        "Only the 786-segment finalized prefix has been processed; 2,173 replayable segments remain pending.",
+        "No campaign-window frames occur in the processed prefix, so this recurrence adds no campaign economic evidence.",
+        "The public snapshot panel remains a separate measurement with its own sampling and economic limitations."
+      ],
+      "decision": "Keep the bounded source timer active and report replay progress separately from the public panel; do not treat bootstrap counts as economic evidence.",
       "status": "continue"
     }
   ],
