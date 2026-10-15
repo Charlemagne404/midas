@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-15T00:57:46.003596+00:00",
+  "updated_at_utc": "2026-10-15T01:01:21.119127+00:00",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -1157,11 +1157,58 @@
       },
       "limitations": [
         "The full 737-test Gate G backend suite has not been rerun; only the bounded plan fixture and its verification tests were repeated after the timeout correction.",
-        "The browser failure likely came from a .seg/.open rotation lookup gap fixed in c96a031, but the original API response was not captured.",
-        "The separate shadow-canary final-segment continuity failure remains unclassified."
+        "The browser failure likely came from a .seg/.open rotation lookup gap fixed in c96a031, but the original API response was not captured."
       ],
-      "decision": "Give the backend test its declared worker budget plus a shutdown margin. Treat the browser issue as likely fixed by the release source-segment lookup change, while keeping Gate G provisional until bounded verification is complete. Classify the shadow-canary failure independently without modifying Reality stores.",
+      "decision": "Give the backend test its declared worker budget plus a shutdown margin. Treat the browser issue as likely fixed by the release source-segment lookup change, while keeping Gate G provisional until bounded verification is complete.",
       "status": "continue"
+    },
+    {
+      "hypothesis_id": "VERITAS-H021",
+      "title": "Was the 2026-10-14 shadow-canary failure caused by an empty finalized source segment?",
+      "mechanism": "The frozen canary reader compared the last ordinal of a zero-record segment to the nonzero global source cursor after a populated segment with the same ordinal prefix.",
+      "experiment_id": "VERITAS-GATE-G-SHADOW-CANARY-FORENSICS-20261015-001",
+      "dataset_id": "eaa761d7d4e7fa1f4561a5f61e350ce5c3f4a98420b414821a0ca9eb70b9cc14",
+      "success_metric": "Match the failed worker source snapshot, exact cursor and catalog condition, identify a pre-release correction and regression, and verify that regression without replaying or modifying the failed campaign.",
+      "result": {
+        "status": "historical_root_cause_confirmed_fixed_in_release",
+        "evidence": "docs/VERITAS_SHADOW_CANARY_FAILURE_FORENSICS_001.md",
+        "failed_campaign_id": "eaa761d7d4e7fa1f4561a5f61e350ce5c3f4a98420b414821a0ca9eb70b9cc14",
+        "campaign_frozen_ns": 1792003738822433345,
+        "worker_failure_time": "2026-10-14T20:49:15+02:00",
+        "captured_shadow_source_sha256": "eed00214749e77f0fe96df6746412a806c0784b81b18317d8d1b14eb7763010e",
+        "worker_cursor_ordinal": 847,
+        "populated_segment": {
+          "ordinal_prefix": 776,
+          "first": 776,
+          "last": 847,
+          "count": 72
+        },
+        "empty_segment": {
+          "ordinal_prefix": 776,
+          "first": 0,
+          "last": 0,
+          "count": 0,
+          "bytes": 8,
+          "sha256_matches_catalog": true
+        },
+        "failing_condition": "empty segment last=0 compared to global cursor=847",
+        "release_fix_commit": "8775bdaa9f6a6116ba89ac5c436a133998582ceb",
+        "fix_is_ancestor_of_release_baseline": true,
+        "regression_test": "tests/test_reality_shadow.py::test_verified_empty_rotated_segments_do_not_reset_global_ordinal",
+        "focused_regression_tests_passed": 1,
+        "focused_regression_runtime_seconds": "1.25",
+        "failed_campaign_restarted": false,
+        "failed_campaign_mutated": false,
+        "raw_open_segment_read": false,
+        "orders_submitted": false,
+        "promotion": "historical root cause only; fixed before release, no campaign repair or strategy promotion"
+      },
+      "limitations": [
+        "The failed immutable canary was not restarted or replayed; the failure is classified from its journal trace, frozen source, status cursor, and matching segment catalog metadata.",
+        "Only the empty segment 8-byte framing header was hashed to rule out its checksum branch; populated raw segment record contents were not read."
+      ],
+      "decision": "Keep the failed canary artifact and status unchanged. The released source skips last-ordinal comparison for empty segments, and its regression passes. Do not rerun the old frozen campaign to apply the fix.",
+      "status": "completed"
     }
   ],
   "next_research_questions": [
@@ -1170,6 +1217,6 @@
     "What independent verification is required before a positive candidate can enter a matched hypothetical strategy comparison?",
     "Can existing Arena scheduling and Research Director interfaces support bounded Veritas hypotheses without duplicating job control?",
     "What Veritas evidence should be exposed in the native dashboard after the data contracts stabilize?",
-    "Can the shadow-canary final source-segment continuity failure be attributed without writing to the protected Reality campaign or raw store?"
+    "Which remaining Gate G and Gate H one-shot service outcomes require source-level classification before final handoff?"
   ]
 }

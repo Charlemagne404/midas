@@ -59,8 +59,8 @@ The backend reproduction used a temporary `/tmp` artifact root from the Veritas
 checkout. No Reality campaign, raw source, journal, or service was modified or
 restarted. No orders were submitted.
 
-This does not make Gate G green. Re-run the backend fixture after the timeout
-correction as part of a bounded Veritas verification pass. Separately classify
-the failed shadow-canary service, which reported
-`Final source segment integrity/continuity mismatch`; do not repair it by
-writing to the protected Reality store.
+This does not make Gate G green. The isolated backend fixture passed after the
+timeout correction, but the full Gate G suite still needs a bounded Veritas
+verification pass. The separate shadow-canary failure has been classified as
+a pre-release empty-segment continuity bug; see
+[shadow-canary forensics 001](VERITAS_SHADOW_CANARY_FAILURE_FORENSICS_001.md).

@@ -4,7 +4,7 @@
   "status": "in_progress",
   "baseline_commit": "f968095feb9c591de38fe12d7493224425f62f3a",
   "branch": "project/veritas",
-  "last_checkpoint": "docs/VERITAS_GATE_G_TEST_FAILURE_FORENSICS_001.md",
+  "last_checkpoint": "docs/VERITAS_SHADOW_CANARY_FAILURE_FORENSICS_001.md",
   "datasets": [
     {
       "dataset_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
@@ -389,6 +389,26 @@
       "browser_focused_regression_runtime_seconds": "0.73",
       "browser_root_cause_assessment": "likely .seg/.open segment-rotation lookup gap; original API response unavailable",
       "backend_fixture_rerun_after_change_passed": 4
+    },
+    {
+      "experiment_id": "VERITAS-GATE-G-SHADOW-CANARY-FORENSICS-20261015-001",
+      "type": "read_only_shadow_canary_source_failure_classification",
+      "status": "historical_root_cause_confirmed_fixed_in_release",
+      "source_dataset_id": "eaa761d7d4e7fa1f4561a5f61e350ce5c3f4a98420b414821a0ca9eb70b9cc14",
+      "evidence": "docs/VERITAS_SHADOW_CANARY_FAILURE_FORENSICS_001.md",
+      "analysis_version": "veritas-shadow-canary-forensics-v1",
+      "captured_source_sha256": "eed00214749e77f0fe96df6746412a806c0784b81b18317d8d1b14eb7763010e",
+      "failure_cursor_ordinal": 847,
+      "matching_empty_segment_catalogs": 1,
+      "release_fix_commit": "8775bdaa9f6a6116ba89ac5c436a133998582ceb",
+      "fix_in_release_baseline": true,
+      "regression_test": "tests/test_reality_shadow.py::test_verified_empty_rotated_segments_do_not_reset_global_ordinal",
+      "focused_regression_tests_passed": 1,
+      "failed_campaign_restarted": false,
+      "failed_campaign_mutated": false,
+      "raw_open_segment_read": false,
+      "orders_submitted": false,
+      "promotion": "historical forensic classification only; no campaign repair or strategy promotion"
     }
   ],
   "models": [],

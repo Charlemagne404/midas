@@ -53,6 +53,11 @@ added lookup across both segment forms and its focused regression plus browser
 recheck passed. The original API response was not captured, so that attribution
 remains an inference. See the
 [Gate G failure forensics](VERITAS_GATE_G_TEST_FAILURE_FORENSICS_001.md).
+The separate 2026-10-14 canary failure was caused by its frozen reader treating
+an empty finalized source segment as a continuity break. Release commit
+`8775bda` added the zero-count guard and regression test; the canary artifact
+was left failed and unchanged. See the
+[shadow-canary forensics](VERITAS_SHADOW_CANARY_FAILURE_FORENSICS_001.md).
 
 ## Active campaigns and services
 
