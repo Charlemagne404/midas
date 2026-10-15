@@ -177,7 +177,7 @@
     "source_bytes": 551636,
     "source_event_count": 30
   },
-  "captured_at_utc": "2026-10-15T23:12:18Z",
+  "captured_at_utc": "2026-10-15T23:21:48.799843+00:00",
   "censoring_analysis": {
     "analysis_source_file": "packages/midas/veritas/forensics.py",
     "analysis_source_sha256": "0b055a21c4b423bbf02cc9c240f26f18263fb8342cd72dec686705d2601a420c",
@@ -305,6 +305,12 @@
     "This is a single Gamma response, not an independent source or a longitudinal retrieval study.",
     "No books, prices, depth, fees, or economic outcomes were measured.",
     "A scheduled successor must fit the explicit lookup inside the existing seven-call bound and measure the effect of one fewer rotating discovery frame."
+  ],
+  "checkpoint_044_limitations": [
+    "Historical marginal counts describe the existing six-frame query protocol, not venue-wide coverage.",
+    "The direct-control response was captured after its comparison snapshot; the combined results are a sensitivity, not a scan observation.",
+    "The analysis measures metadata eligibility counts, not book quality, prices, depth, fees, or arbitrage.",
+    "The historical snapshots are repeated and dependent observations."
   ],
   "control_retrieval_probe_001": {
     "analysis_version": "veritas-control-retrieval-probe-v1",
@@ -1746,6 +1752,117 @@
     "service_exit_status": 0,
     "source": "completed scan-28 v2 result predates the replay manifest; v3-only validation rejected it"
   },
+  "discovery_frame_marginal_001": {
+    "all_gamma_response_hashes_verified": true,
+    "analysis_module_path": "packages/midas/veritas/discovery_frame_analysis.py",
+    "analysis_module_sha256": "472d2a43000bc9ef70e1970ff3455c17a93e1dd26ef17fb38521d9cf9d7a484b",
+    "analysis_runner_path": "scripts/analyze_veritas_discovery_frame_marginal.py",
+    "analysis_runner_sha256": "21b905539a7e2c2e905ef19e132c34f65f1a102a3931f837659a56d37aa2d4a3",
+    "analysis_version": "veritas-discovery-frame-marginal-v1",
+    "artifact_bytes": 21190,
+    "artifact_path": "docs/VERITAS_MISSION2_DISCOVERY_FRAME_MARGINAL_001.json",
+    "artifact_sha256": "70d42ef9e8577765fe58e8838b2ad487ef2054d909c4d3f73f4d49ec25b0bffa",
+    "authenticated_requests": false,
+    "captured_at_utc": "2026-10-15T23:21:48.799843+00:00",
+    "compressed_snapshot_bytes": 25651744,
+    "control_probe_artifact_path": "data/veritas-observatory/control-retrieval-probes/control-retrieval-1792105904766378861.json.gz",
+    "control_probe_artifact_sha256": "c8cce3e392be98e99b66214c267740822ea79742cda6a9b54ab8e99c2fb98fc2",
+    "control_probe_http_attempt_count": 1,
+    "control_probe_request_count": 1,
+    "control_probe_response_bytes": 47860,
+    "control_probe_response_sha256": "9ef0c6d9d652837d95a681d4435b5434b43a9e32cc84df32260cd1c7bcd89f7c",
+    "control_probe_returned": 8,
+    "control_probe_scan39_counterfactual_eligible_delta_by_removed_frame": {
+      "high_liquidity": -3,
+      "low_liquidity": -19,
+      "medium_liquidity": -43,
+      "near_expiry": 3,
+      "rotating_id_control_frame": -47,
+      "tagged_near_expiry": -44
+    },
+    "control_probe_time_separation_seconds": 649.826,
+    "control_probe_v1_eligible": 6,
+    "economic_outcome": false,
+    "experiment_id": "VERITAS-M2-DISCOVERY-FRAME-MARGINAL-001",
+    "frame_marginals": [
+      {
+        "frame": "high_liquidity",
+        "mean_eligible_ids_lost_if_removed": 11.08,
+        "mean_response_rows": 50,
+        "mean_unique_ids_lost_if_removed": 49.23,
+        "median_eligible_ids_lost_if_removed": 11,
+        "p90_eligible_ids_lost_if_removed": 21,
+        "scans": 39,
+        "scans_with_zero_eligible_ids_lost": 0
+      },
+      {
+        "frame": "low_liquidity",
+        "mean_eligible_ids_lost_if_removed": 39.26,
+        "mean_response_rows": 50,
+        "mean_unique_ids_lost_if_removed": 49.95,
+        "median_eligible_ids_lost_if_removed": 48,
+        "p90_eligible_ids_lost_if_removed": 50,
+        "scans": 39,
+        "scans_with_zero_eligible_ids_lost": 1
+      },
+      {
+        "frame": "medium_liquidity",
+        "mean_eligible_ids_lost_if_removed": 33.44,
+        "mean_response_rows": 50,
+        "mean_unique_ids_lost_if_removed": 49.85,
+        "median_eligible_ids_lost_if_removed": 42,
+        "p90_eligible_ids_lost_if_removed": 50,
+        "scans": 39,
+        "scans_with_zero_eligible_ids_lost": 3
+      },
+      {
+        "frame": "near_expiry",
+        "mean_eligible_ids_lost_if_removed": 5.77,
+        "mean_response_rows": 50,
+        "mean_unique_ids_lost_if_removed": 49.72,
+        "median_eligible_ids_lost_if_removed": 0,
+        "p90_eligible_ids_lost_if_removed": 34,
+        "scans": 39,
+        "scans_with_zero_eligible_ids_lost": 24
+      },
+      {
+        "frame": "rotating_id_control_frame",
+        "mean_eligible_ids_lost_if_removed": 24.23,
+        "mean_response_rows": 50,
+        "mean_unique_ids_lost_if_removed": 49.41,
+        "median_eligible_ids_lost_if_removed": 16,
+        "p90_eligible_ids_lost_if_removed": 50,
+        "scans": 39,
+        "scans_with_zero_eligible_ids_lost": 4
+      },
+      {
+        "frame": "tagged_near_expiry",
+        "mean_eligible_ids_lost_if_removed": 49.95,
+        "mean_response_rows": 50,
+        "mean_unique_ids_lost_if_removed": 49.95,
+        "median_eligible_ids_lost_if_removed": 50,
+        "p90_eligible_ids_lost_if_removed": 50,
+        "scans": 39,
+        "scans_with_zero_eligible_ids_lost": 0
+      }
+    ],
+    "gamma_response_count": 234,
+    "gamma_response_manifest_sha256": "5be68e091f2b99ded2fae7d80a4d378c69fe19f95712f21d49a656b7cbf3f8e2",
+    "limitations": [
+      "Historical marginal counts describe the existing six-frame query protocol, not venue-wide coverage.",
+      "The direct-control response was captured after its comparison snapshot; the combined results are a sensitivity, not a scan observation.",
+      "The analysis measures metadata eligibility counts, not book quality, prices, depth, fees, or arbitrage.",
+      "The historical snapshots are repeated and dependent observations."
+    ],
+    "live_requests_by_analysis": 0,
+    "mean_six_frame_eligible_union": 164.26,
+    "mean_six_frame_unique_union": 299.05,
+    "orders_submitted": false,
+    "projected_extra_raw_response_bytes_at_48_scans": 2297280,
+    "projection_assumption": "Observed control response size repeated across 48 daily scans; excludes record metadata and compression effects.",
+    "snapshot_count": 39,
+    "snapshot_manifest_sha256": "96d0c75f585041359a7c6a06a4f90dd8b008b738417bf11c03e99991a36007f1"
+  },
   "discovery_protocol": {
     "bounded_gamma_query_frames": 6,
     "collection_bounds": {
@@ -2740,7 +2857,7 @@
     "unique_market_ids": 558,
     "window_minutes": 751.53
   },
-  "inventory_id": "VERITAS-M2-RESEARCH-INVENTORY-043",
+  "inventory_id": "VERITAS-M2-RESEARCH-INVENTORY-044",
   "latest_scan_captured_at_utc": "2026-10-15T23:00:55.112847+00:00",
   "latest_scan_id": "scan-20261015T230055Z-ff1f8c3dbcd8",
   "latest_source_analysis_checkpoint": {
@@ -4098,14 +4215,14 @@
     "veritas_control_cohort_rewritten": false,
     "veritas_control_cohort_sha256": "9578217e20dcc7d1c65fa110f0ed7c689b55483b61191f1aae8d30c9b7300d9a"
   },
-  "previous_inventory": "VERITAS_MISSION2_RESEARCH_INVENTORY_042.json",
+  "previous_inventory": "VERITAS_MISSION2_RESEARCH_INVENTORY_043.json",
   "repository": {
     "branch": "project/veritas",
-    "checkpoint_base_commit": "cbb37b4",
+    "checkpoint_base_commit": "69340e3",
     "code_changes_after_pilot_activation": true,
-    "commit_at_inventory_creation": "cbb37b4",
+    "commit_at_inventory_creation": "69340e3",
     "documentation_and_ledger_checkpoint_pending_commit": true,
-    "head_commit": "cbb37b4",
+    "head_commit": "69340e3",
     "mission_status": "active_scheduled_discovery_source_analysis_gap_detail_and_research",
     "path": "/home/charlie/midas-veritas",
     "starting_commit": "9a857cc56804bec6b7129171ba090d338e263aa3",
@@ -4927,6 +5044,9 @@
     "coverage_pilot_dashboard_code_quality": "Ruff lint/format, strict Mypy on changed API module, TypeScript, ESLint, Prettier, and Vite production build passed; existing large-chunk advisory remains.",
     "coverage_pilot_dashboard_ui_test": "1 targeted Veritas UI test passed.",
     "coverage_pilot_live_artifact_validation": "Read-only projection of the live two-scan pilot summary passed; no service restart or deployment.",
+    "discovery_frame_marginal_integrity": "All 234 retained Gamma response digests verified; source snapshot and response manifests are recorded; control response and cohort digests verified; output contains no control market IDs.",
+    "discovery_frame_marginal_interpretation": "Historical frame counts are conditional on the six bounded query pages. The direct-control combination is a later-response sensitivity, not a merged scan or a venue-wide coverage estimate.",
+    "discovery_frame_marginal_tests": "3 focused analyzer tests and 3 focused control-retrieval tests passed; Ruff check/format and strict Mypy passed for the changed analysis paths.",
     "focused_veritas_and_affected_arena_backend_tests": "48 passed across neg-risk audit, economics, and opportunity-audit suites",
     "frontend_lint_typecheck_format_build": "TypeScript typecheck, Prettier, and production build passed; Vite emitted the existing large-chunk advisory",
     "frontend_tests": "targeted Veritas UI test: 1 passed; the prior 29-test full group is recorded in inventory 013",
@@ -4961,9 +5081,10 @@
     },
     "research_inventory_039": "Preserved unchanged as the preceding numbered checkpoint inventory.",
     "research_inventory_043": "Current numbered inventory for the one-request direct frozen-control lookup; previous inventory 042 is preserved unchanged.",
+    "research_inventory_044": "Current numbered inventory for the 39-scan discovery-frame marginal replay and bounded control-lookup sensitivity.",
     "research_ledger": "JSON parsed; current ledger includes H068 timestamp/hash audit and H069 scan-30 v3 qualification.",
-    "research_ledger_current": "JSON parsed; updated through H081 (one-request frozen-control retrieval diagnostic).",
-    "research_ledger_sha256": "2b6b3080d376826b9a39d5a8a621a9e6d92cf037503ca38d86c3420a7315076a",
+    "research_ledger_current": "JSON parsed; updated through H082 (historical discovery-frame marginal analysis and successor request-budget decision).",
+    "research_ledger_sha256": "d1efdc7fb2769460ac51c53e01ccd59da08a627757b565aade7b0fcfcabf9163",
     "ruff_format_mypy_changed_python": "Ruff check, Ruff format check, and strict Mypy passed for the NegRisk audit module and collector",
     "runtime_director": "16:45:04 UTC scheduled Director cycle reconciled scan 25 completion at 16:45:29 and admitted scan 26 at 16:45:31 using the 16:43:46 sealed source summary. Arena completed scan 26 at 16:45:44 with all 26 events and zero-positive gates. The manifest still projects QUEUED and scan 25 as last qualified until the 17:15:09 UTC cycle. No manual poll or retry was started.",
     "runtime_director_027": "Scheduled 17:15:09Z cycle admitted scan 27; Arena completed 27/27 at 17:15:51Z with zero-positive gates. Director manifest reconciliation remains scheduled for 17:45:25Z; no manual poll was run.",
@@ -5004,5 +5125,17 @@
     "reality_campaign_or_services_changed": false,
     "ruff_check": "passed for the new module, runner, and tests",
     "ruff_format": "passed for the new module, runner, and tests"
+  },
+  "verification_checkpoint_044": {
+    "artifact_response_hashes": "234/234 Gamma payload hashes verified; probe and cohort source hashes verified",
+    "captured_at_utc": "2026-10-15T23:21:48.799843+00:00",
+    "code_commit_at_capture": "69340e3",
+    "focused_tests": "6 passed across control-retrieval and discovery-frame-analysis tests",
+    "full_mission_regression": "not run; no broad suite was started",
+    "live_requests_made": 0,
+    "pilot_implementation_changed": false,
+    "reality_campaign_or_services_changed": false,
+    "ruff_check_and_format": "passed for the new analysis module, runner, and tests",
+    "strict_mypy": "passed for the new analysis module and runner"
   }
 }

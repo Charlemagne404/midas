@@ -1,5 +1,17 @@
 # Veritas Mission 2 Engineering Checkpoint
 
+## Latest engineering checkpoint — discovery-frame marginal value
+
+An offline replay verified all 234 Gamma response hashes across 39 saved scans.
+The six frames average 299.05 unique IDs and 164.26 V1-eligible markets.
+Removing a frame loses about 49–50 unique IDs on average, so I am not cutting
+one to fund control lookup. The new successor design tests one additional
+bounded request while preserving all six discovery frames. See [Gate A
+checkpoint 036](VERITAS_MISSION2_GATE_A_CHECKPOINT_036.md), the [frame-marginal
+artifact](VERITAS_MISSION2_DISCOVERY_FRAME_MARGINAL_001.json), [research ledger
+H082](VERITAS_RESEARCH_LEDGER.json), and [inventory
+044](VERITAS_MISSION2_RESEARCH_INVENTORY_044.json).
+
 ## Latest engineering checkpoint — direct control retrieval
 
 A one-request explicit-ID Gamma diagnostic returned all eight frozen controls

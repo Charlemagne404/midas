@@ -68,6 +68,22 @@ orders. The pilot and its pinned code were not changed. See [Gate A checkpoint
 035](VERITAS_MISSION2_GATE_A_CHECKPOINT_035.md) and [inventory
 043](VERITAS_MISSION2_RESEARCH_INVENTORY_043.json).
 
+## Discovery-frame replay — 2026-10-15 23:21 UTC
+
+The offline frame analyzer verified 234 retained Gamma payload hashes over
+39 finalized snapshots, using 25.7 MB of compressed snapshot files. The six
+frames averaged 299.05 unique IDs and 164.26 V1-eligible markets. Each frame
+contributed about 49–50 unique IDs exclusively; mean eligible contribution
+ranged from 5.77 for the near-expiry frame to 49.95 for the tagged near-expiry
+frame. A one-snapshot sensitivity found that a direct control lookup cannot
+offset removal of five of the six frames. The run made no live requests and
+did not touch the active observers, analyzers, pilot, or Reality campaign. The
+control response was 47,860 bytes; at 48 scans per day, this would add about
+2.3 MB/day of raw payload if its size remained similar. See
+[Gate A checkpoint 036](VERITAS_MISSION2_GATE_A_CHECKPOINT_036.md), the
+[frame-marginal artifact](VERITAS_MISSION2_DISCOVERY_FRAME_MARGINAL_001.json),
+and [inventory 044](VERITAS_MISSION2_RESEARCH_INVENTORY_044.json).
+
 ## Previous runtime state — 2026-10-15 20:49 UTC
 
 - Scan 34 completed at 20:31:54 UTC with 35/40 request/receipt-valid pairs

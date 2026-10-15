@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-15T23:12:18Z",
+  "updated_at_utc": "2026-10-15T23:21:48.799843Z",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -4715,6 +4715,48 @@
       "status": "continue",
       "success_metric": "A versioned successor classifies every frozen control from a direct ID lookup within the existing call budget, preserves the cohort, and quantifies any rotating-frame coverage change against the completed v1 pilot.",
       "title": "Can one bounded direct-ID lookup resolve frozen controls omitted from the discovery frame?"
+    },
+    {
+      "dataset_id": "70d42ef9e8577765fe58e8838b2ad487ef2054d909c4d3f73f4d49ec25b0bffa",
+      "decision": "Keep the seven-call v1 plan untouched through its fixed stop. After that pilot completes, test an eight-call successor that retains all six discovery frames, adds the direct-control lookup, and keeps the batched book request. The extra 30-minute request is a cleaner research tradeoff than dropping a high-marginal-value frame, subject to request, byte, pacing, and storage checks.",
+      "experiment_id": "VERITAS-M2-DISCOVERY-FRAME-MARGINAL-001",
+      "hypothesis_id": "VERITAS-H082",
+      "limitations": [
+        "The 39 snapshots are repeated, selected observations from six bounded query frames, not a venue census.",
+        "The control response was captured 649.826 seconds after scan 39; the frame-removal comparison is a sensitivity, not an observed combined scan.",
+        "Eligibility is current V1 market metadata classification; this replay does not measure books, depth, fees, or economic candidates.",
+        "One additional request succeeded once; rate-limit tolerance and cumulative service/resource impact require prospective monitoring."
+      ],
+      "mechanism": "Verify all retained Gamma response digests across the 39 saved snapshots, compute unique and V1-eligible IDs lost by removing each frame, then compare a one-scan leave-one-frame-out sensitivity with the later explicit-ID control response.",
+      "result": {
+        "analysis_artifact_path": "docs/VERITAS_MISSION2_DISCOVERY_FRAME_MARGINAL_001.json",
+        "analysis_artifact_sha256": "70d42ef9e8577765fe58e8838b2ad487ef2054d909c4d3f73f4d49ec25b0bffa",
+        "analysis_code_version": "veritas-discovery-frame-marginal-v1",
+        "captured_at_utc": "2026-10-15T23:21:48.799843+00:00",
+        "control_probe_http_attempts": 1,
+        "control_probe_response_bytes": 47860,
+        "control_probe_returned": 8,
+        "control_probe_v1_eligible": 6,
+        "control_probe_closed": 2,
+        "projected_extra_raw_response_bytes_at_48_scans": 2297280,
+        "direct_response_separation_seconds": 649.826,
+        "gamma_response_count": 234,
+        "mean_six_frame_eligible_union": 164.26,
+        "mean_six_frame_unique_union": 299.05,
+        "scan_count": 39,
+        "scan39_counterfactual_eligible_delta_by_removed_frame": {
+          "high_liquidity": -3,
+          "low_liquidity": -19,
+          "medium_liquidity": -43,
+          "near_expiry": 3,
+          "rotating_id_control_frame": -47,
+          "tagged_near_expiry": -44
+        },
+        "status": "all_234_gamma_response_hashes_verified"
+      },
+      "status": "continue",
+      "success_metric": "After the fixed v1 pilot stops, a versioned eight-call scan retains all six query frames and the direct control lookup, meets explicit response and resource bounds, and demonstrates comparable or improved control availability without a material loss in rotating quality yield.",
+      "title": "Is one additional bounded control lookup preferable to dropping a discovery frame?"
     }
   ],
   "next_research_questions": [
@@ -4732,7 +4774,7 @@
     "When the gap-detail prefix reaches the frozen campaign window, which gap reasons, timestamps, and explicitly reported markets account for the 1,090 campaign-window resynchronization/failure markers?",
     "Can book_issue:gap censors be linked to a specific preceding same-market gap using finalized receiver-time evidence?",
     "Can the frozen shadow worker process new recorder ordinals faster than the live input while keeping frames within its decision-input lag bound?",
-    "Does reserving one direct-ID request while reducing discovery to five rotating frames preserve acceptable rotating coverage after the fixed pilot ends?",
+    "Can an eight-call successor preserve all six discovery frames and resolve the frozen controls while meeting request, response, and resource bounds after the fixed pilot ends?",
     "What versioned successor worker can process the measured source rate with margin while preserving the 250 ms decision-input lag and bounded resource use?"
   ]
 }
