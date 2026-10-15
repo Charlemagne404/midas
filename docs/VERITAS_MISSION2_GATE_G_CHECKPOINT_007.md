@@ -1,6 +1,6 @@
 # Gate G checkpoint 007 — finalized-source gap evidence
 
-**Captured:** 2026-10-15 22:02 UTC  
+**Captured:** 2026-10-15 22:08 UTC
 **Mission status:** active; the dashboard update is read-only and the existing collectors remain on their schedules.
 
 ## Implemented
@@ -50,6 +50,7 @@ segment.
 
 - `tests/test_veritas_dashboard_api.py`: **18 passed**, including campaign and digest rejection, reconciliation checks, active-segment rejection, and both artifact endpoints.
 - `apps/web/src/Veritas.test.tsx`: **1 passed**, including the explicit/indirect distinction and incomplete-prefix warning.
+- `apps/web/e2e/veritas.spec.ts`: **1 passed** with the new artifact links and attribution copy checked in Chromium against an isolated demo API/database. The temporary test servers exited after the run.
 - Ruff check and format check passed; strict Mypy for `apps/api/veritas.py` passed.
 - Prettier check and TypeScript typecheck passed.
 - A read-only TestClient request against the current repository returned **200** for `/api/veritas/overview` and both new artifact routes. The production artifacts produced the same counts recorded above.

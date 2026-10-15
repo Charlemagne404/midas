@@ -122,4 +122,20 @@ test('shows the bounded discovery cohort and links its finalized evidence', asyn
   expect(censoringArtifact.data.analysis.coverage.decisions).toBeGreaterThan(1_000);
   await page.getByText(/Inspect censoring by market and UTC hour/).click();
   await expect(page.getByText('future observation not recorded').first()).toBeVisible();
+
+  await expect(page.getByText('Frozen campaign censor attribution')).toBeVisible();
+  await expect(page.getByText(/179 → 97 verified gap records/)).toBeVisible();
+  await expect(page.getByText(/160 → 60 later source records/)).toBeVisible();
+  await expect(
+    page.getByText(/direct causal link to the original gap was not verified/),
+  ).toBeVisible();
+  await expect(page.getByText('Incremental finalized-source gap detail')).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Inspect source audit' })).toHaveAttribute(
+    'href',
+    '/api/veritas/artifacts/censor-gap-audit',
+  );
+  await expect(page.getByRole('link', { name: 'Inspect verified prefix' })).toHaveAttribute(
+    'href',
+    '/api/veritas/artifacts/gap-detail-current',
+  );
 });

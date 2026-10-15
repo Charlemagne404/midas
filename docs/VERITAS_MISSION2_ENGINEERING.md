@@ -9,8 +9,9 @@ The UI distinguishes direct `recorded_gap` source references from indirect
 partial while the prefix is catching up. Both API views validate campaign
 identity and sealed digests; the prefix endpoint reads only the bounded
 summary and never opens an active segment. The live repository read returned
-HTTP 200 for the overview and both artifact links; focused API/UI checks,
-Ruff, strict Mypy, Prettier, and TypeScript passed. See [Gate G checkpoint
+HTTP 200 for the overview and both artifact links; focused API/UI checks and
+an isolated Playwright browser workflow passed, along with Ruff, strict Mypy,
+Prettier, TypeScript, and the production build. See [Gate G checkpoint
 007](VERITAS_MISSION2_GATE_G_CHECKPOINT_007.md) for counts and caveats. Gate G
 and Mission 2 remain active.
 
