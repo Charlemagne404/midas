@@ -523,3 +523,17 @@ batch atomicity, or upstream queue age. The panel remains selected, repeated,
 and correlated, with zero positive gross candidates. See [Gate A checkpoint
 026](VERITAS_MISSION2_GATE_A_CHECKPOINT_026.md) and [inventory
 033](VERITAS_MISSION2_RESEARCH_INVENTORY_033.json).
+
+
+## Gate A checkpoint 027 addendum — OpenAI IPO REST recapture
+
+A bounded 18:25 UTC REST recapture returned all fourteen books for the pinned
+seven-market OpenAI IPO group in 91 ms, but the source timestamps were 31.404
+seconds old at worst with 24.598 seconds of cross-market skew. It failed the
+5-second age and 250-millisecond skew limits. The complete Yes/No top baskets
+were -$0.012 and -$0.021 gross per set; full-depth 5/20/100-share scenarios
+were all negative after fees. The sealed result replays, but no candidate
+qualified. This is a single stale observation, and the REST payload has no
+sequence field. Keep no-trade and prioritize independent freshness evidence.
+See [Gate A checkpoint 027](VERITAS_MISSION2_GATE_A_CHECKPOINT_027.md) and
+[inventory 034](VERITAS_MISSION2_RESEARCH_INVENTORY_034.json).

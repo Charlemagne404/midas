@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-15T18:01:28Z",
+  "updated_at_utc": "2026-10-15T18:27:52Z",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -3481,6 +3481,76 @@
         "The v3 comparison is read-only and has not yet been persisted by a scheduled Director run."
       ],
       "decision": "Keep no-trade. Commit v3 and let the next scheduled observer and Director cycles qualify and persist it; do not treat synthetic fixture success as evidence of market opportunity.",
+      "status": "continue"
+    },
+    {
+      "hypothesis_id": "VERITAS-H067",
+      "title": "Can a bounded REST recapture deliver fresh, economically favorable books for the complete OpenAI IPO outcome group?",
+      "mechanism": "A single unauthenticated CLOB books request captures all fourteen tokens for the previously verified seven-market NegRisk group; sealed replay checks source timestamps, complete books, basket depth, minimums, and fee-envelope economics.",
+      "experiment_id": "VERITAS-M2-OPENAI-IPO-REST-REFRESH-20261015-002",
+      "dataset_id": "867272ede02f571c3f26c402f03ecd96de7a189f0c63765eee4dfc1954048330",
+      "success_metric": "Receive all fourteen books, pass the five-second maximum source-age and 250-millisecond cross-book-skew bounds, and reproduce positive full-depth net economics at one of the fixed 5/20/100-share quantities.",
+      "result": {
+        "status": "complete_book_capture_stale_nonpositive_replay_verified",
+        "analysis_version": "veritas-openai-ipo-complete-outcome-basket-study-v1",
+        "study_id": "VERITAS-M2-OPENAI-IPO-BASKET-2026-10-15T18:25:58.861568+00:00",
+        "captured_at_utc": "2026-10-15T18:25:58.861568+00:00",
+        "artifact_path": "data/veritas-observatory/structure-studies/1792088758861568141-openai-ipo-basket-study.json",
+        "artifact_sha256": "867272ede02f571c3f26c402f03ecd96de7a189f0c63765eee4dfc1954048330",
+        "artifact_file_sha256": "572a1c9b96a43dfe3491bcdb3d26cd4a551518ee94b8278482561965d5eea111",
+        "artifact_bytes": 283103,
+        "result_sha256": "0580611cea37aad99ec4d35e0a70f11a9301f1ba3eb5a8dc66697fe00557c350",
+        "response_sha256": "00acf7e35bbd08454d3d88b5631d8bdff8cfeb48777336da5cd1a9c4450b1211",
+        "response_bytes": 38708,
+        "runner_path": "scripts/veritas_openai_ipo_basket_study.py",
+        "runner_sha256": "f9ba8ae3a24b8dd94cdffd474d0515a8e128451a4239a62373720e7efdb223af",
+        "complete_14_token_response": true,
+        "batch_duration_ms": 91,
+        "maximum_source_timestamp_age_ms": 31404,
+        "source_timestamp_skew_ms": 24598,
+        "source_age_bound_ms": 5000,
+        "source_skew_bound_ms": 250,
+        "sequence_field_present": false,
+        "yes_top_ask_cost_usdc": "1.012",
+        "yes_conditional_payout_per_set_usdc": "1",
+        "yes_top_gross_edge_usdc": "-0.012",
+        "no_top_ask_cost_usdc": "6.021",
+        "no_protocol_minimum_payout_per_set_usdc": "6",
+        "no_top_gross_edge_usdc": "-0.021",
+        "yes_gross_edges_by_shares": {
+          "5": "-0.060",
+          "20": "-0.25760",
+          "100": "-1.50916"
+        },
+        "yes_fee_safe_net_edges_by_shares": {
+          "5": "-0.08911",
+          "20": "-0.37532",
+          "100": "-2.11498"
+        },
+        "no_gross_edges_by_shares": {
+          "5": "-0.105",
+          "20": "-0.420",
+          "100": "-2.100"
+        },
+        "no_fee_safe_net_edges_by_shares": {
+          "5": "-0.12718",
+          "20": "-0.50866",
+          "100": "-2.54317"
+        },
+        "all_books_have_complete_depth_and_minimums_at_5_20_100": true,
+        "candidate_qualified": false,
+        "replay_verified": true,
+        "orders_submitted": false,
+        "authenticated_requests": false
+      },
+      "limitations": [
+        "Every source timestamp failed the five-second age limit and the cross-book skew exceeded 250 milliseconds; the 91-millisecond HTTP duration does not make the underlying books fresh.",
+        "The REST capture has no sequence field or equivalent continuity evidence and is one observation, not a frequency estimate.",
+        "The previously sealed seven-market membership and on-chain count evidence were reused; this recapture did not repeat membership discovery.",
+        "Displayed depth and fee-envelope results are hypothetical and do not establish order arrival, fills, settlement timing, or realized returns.",
+        "The raw study artifact is stored under the local gitignored observatory data directory; its digests are recorded here, but the raw payload is not in the commit."
+      ],
+      "decision": "Keep no-trade. Do not repeat REST-only recaptures until an independent freshness or sequence source is available; all tested baskets are negative and fail quality.",
       "status": "continue"
     }
   ],
