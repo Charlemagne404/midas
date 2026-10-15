@@ -31,6 +31,24 @@ it('labels measured evidence and keeps synthetic execution separate from actual 
                     error: null,
                   },
                 ],
+                latest_veritas_qualification: {
+                  job_id: 'job-qualified-1',
+                  source_scan_id: 'scan-20261015T083047Z-6f98ffeaecab',
+                  finding_id: 'veritas-qualification-v1-0123456789abcdef',
+                  experiment_run_id: 'VERITAS-M2-ECO-QUAL-001-V3-RUN-test',
+                  snapshot_count: 11,
+                  attempted_market_pairs: 440,
+                  quality_valid_pairs: 381,
+                  unique_market_ids: 155,
+                  top_pair_edge_per_share: {
+                    count: 381,
+                    minimum_per_share: '-0.996',
+                    median_nearest_rank_per_share: '-0.020',
+                    maximum_per_share: '-0.001',
+                    positive_count: 0,
+                  },
+                  finding_url: '/api/arena/findings/veritas-qualification-v1-0123456789abcdef',
+                },
                 active_director_count: 1,
                 directors: [
                   {
@@ -701,6 +719,12 @@ it('labels measured evidence and keeps synthetic execution separate from actual 
   expect(screen.getAllByText('1,027').length).toBeGreaterThan(0);
   expect(screen.getByText('-1.03 USDC')).toBeInTheDocument();
   expect(screen.getByText('stratified-gamma-page-rotation-v2')).toBeInTheDocument();
+  expect(screen.getByText('Latest completed qualification edge distribution')).toBeInTheDocument();
+  expect(screen.getByText('-0.020')).toBeInTheDocument();
+  expect(screen.getByRole('link', { name: 'Open sealed finding' })).toHaveAttribute(
+    'href',
+    '/api/arena/findings/veritas-qualification-v1-0123456789abcdef',
+  );
   expect(screen.getByText(/40 target · 50 markets max/)).toBeInTheDocument();
   expect(screen.getByText(/7 HTTP attempts used in latest scan/)).toBeInTheDocument();
   expect(await screen.findByText(/validating finalized observations/)).toBeInTheDocument();

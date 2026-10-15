@@ -314,6 +314,63 @@
   font-size: 8px;
   line-height: 1.5;
 }
+.ve-qualified-edge {
+  padding: 10px 15px;
+  border-bottom: 1px solid #252a32;
+}
+.ve-qualified-edge-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+.ve-qualified-edge-heading > div {
+  display: grid;
+  gap: 3px;
+}
+.ve-qualified-edge-heading small {
+  color: #778394;
+  font-size: 8px;
+  overflow-wrap: anywhere;
+}
+.ve-qualified-edge-heading a {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: 0 0 auto;
+  color: var(--ve-gold);
+  font-size: 8px;
+}
+.ve-qualified-edge-values {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+}
+.ve-qualified-edge-values > div {
+  display: grid;
+  gap: 4px;
+}
+.ve-qualified-edge-values span {
+  color: #778394;
+  font-size: 7px;
+  text-transform: uppercase;
+}
+.ve-qualified-edge-values b {
+  color: var(--ve-red);
+  font:
+    9px ui-monospace,
+    'SFMono-Regular',
+    Consolas,
+    monospace;
+  overflow-wrap: anywhere;
+}
+.ve-qualified-edge > p {
+  margin: 9px 0 0;
+  color: #7d8999;
+  font-size: 8px;
+  line-height: 1.5;
+}
 .ve-pilot-breakdown {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

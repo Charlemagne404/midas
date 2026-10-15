@@ -6,6 +6,7 @@ import importlib.util
 import json
 import re
 import subprocess
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any, Literal, cast
 
@@ -130,6 +131,129 @@ def read_veritas_qualification_finding(root: Path, identity: str) -> dict[str, A
     ):
         raise ValueError("Veritas qualification finding violates its read-only boundary")
     return manifest
+
+
+def _latest_veritas_qualification_distribution(
+    root: Path, jobs: list[dict[str, Any]]
+) -> dict[str, Any] | None:
+    """Project a bounded edge distribution from the newest completed sealed finding."""
+    scan_pattern = re.compile(r"scan-\d{8}T\d{6}Z-[0-9a-f]{12}")
+    for job in jobs:
+        configuration = job.get("configuration")
+        result_ref = job.get("result")
+        exit_status = job.get("exit_status")
+        if (
+            job.get("state") != "COMPLETED"
+            or not isinstance(exit_status, int)
+            or isinstance(exit_status, bool)
+            or exit_status != 0
+            or not isinstance(configuration, dict)
+            or configuration.get("kind") != "veritas_qualification"
+            or not isinstance(result_ref, dict)
+        ):
+            continue
+        source_scan_id = _qualification_source_scan_id(job)
+        finding_id = result_ref.get("finding_id")
+        if (
+            not isinstance(source_scan_id, str)
+            or not scan_pattern.fullmatch(source_scan_id)
+            or not isinstance(finding_id, str)
+        ):
+            return None
+        try:
+            manifest = read_veritas_qualification_finding(root, finding_id)
+        except (FileNotFoundError, OSError, ValueError):
+            return None
+        result = manifest.get("result")
+        if (
+            not isinstance(result, dict)
+            or manifest.get("expected_latest_scan_id") != source_scan_id
+            or result.get("analysis_version") != "veritas-economic-qualification-comparison-v3"
+            or result.get("experiment_sha256") != result_ref.get("experiment_sha256")
+            or result.get("experiment_run_id") != result_ref.get("experiment_run_id")
+            or result.get("status") != result_ref.get("status")
+        ):
+            return None
+        sample = result.get("sample")
+        source_snapshots = result.get("source_snapshots")
+        funnel = result.get("economic_qualification_funnel")
+        if (
+            not isinstance(sample, dict)
+            or not isinstance(source_snapshots, list)
+            or not isinstance(funnel, list)
+        ):
+            return None
+        edge = sample.get("top_pair_edge_per_share")
+        if not isinstance(edge, dict):
+            return None
+        count = edge.get("count")
+        positive_count = edge.get("positive_count")
+        quality_valid_pairs = sample.get("quality_valid_pairs")
+        snapshot_count = sample.get("snapshot_count")
+        attempted_market_pairs = sample.get("attempted_market_pairs")
+        unique_market_ids = sample.get("unique_market_ids")
+        minimum = edge.get("minimum_per_share")
+        median = edge.get("median_nearest_rank_per_share")
+        maximum = edge.get("maximum_per_share")
+        numeric_fields = (minimum, median, maximum)
+        if (
+            any(
+                not isinstance(value, int) or isinstance(value, bool) or value < 0
+                for value in (
+                    count,
+                    positive_count,
+                    quality_valid_pairs,
+                    snapshot_count,
+                    attempted_market_pairs,
+                    unique_market_ids,
+                )
+            )
+            or count != quality_valid_pairs
+            or positive_count > count
+            or snapshot_count < 1
+            or snapshot_count != len(source_snapshots)
+            or not source_snapshots
+            or not isinstance(source_snapshots[-1], dict)
+            or source_snapshots[-1].get("scan_id") != source_scan_id
+            or any(not isinstance(value, str) or len(value) > 64 for value in numeric_fields)
+        ):
+            return None
+        baseline_rows = [
+            row
+            for row in funnel
+            if isinstance(row, dict) and row.get("criterion") == "unchanged_top_ask_gross_sign"
+        ]
+        if len(baseline_rows) != 1 or baseline_rows[0].get("positive_states") != positive_count:
+            return None
+        try:
+            minimum_value, median_value, maximum_value = map(Decimal, numeric_fields)
+        except (InvalidOperation, ValueError):
+            return None
+        if (
+            not all(value.is_finite() for value in (minimum_value, median_value, maximum_value))
+            or minimum_value > median_value
+            or median_value > maximum_value
+        ):
+            return None
+        return {
+            "job_id": _bounded_string(job.get("job_id"), 100),
+            "source_scan_id": source_scan_id,
+            "finding_id": finding_id,
+            "experiment_run_id": result["experiment_run_id"],
+            "snapshot_count": snapshot_count,
+            "attempted_market_pairs": attempted_market_pairs,
+            "quality_valid_pairs": quality_valid_pairs,
+            "unique_market_ids": unique_market_ids,
+            "top_pair_edge_per_share": {
+                "count": count,
+                "minimum_per_share": minimum,
+                "median_nearest_rank_per_share": median,
+                "maximum_per_share": maximum,
+                "positive_count": positive_count,
+            },
+            "finding_url": f"/api/arena/findings/{finding_id}",
+        }
+    return None
 
 
 def _director_event_history(
@@ -257,6 +381,7 @@ def research_activity(root: Path) -> dict[str, Any]:
         return values
 
     jobs = records("jobs", "job.json", 25)
+    latest_veritas_qualification = _latest_veritas_qualification_distribution(root, jobs)
     directors = records("directors", "manifest.json", 10)
     schedules = records("schedules", "manifest.json", 10)
     alerts = records("alerts", "manifest.json", 10)
@@ -289,6 +414,7 @@ def research_activity(root: Path) -> dict[str, Any]:
             }
             for row in jobs[:10]
         ],
+        "latest_veritas_qualification": latest_veritas_qualification,
         "active_director_count": sum(row.get("state") == "RUNNING" for row in directors),
         "directors": [
             {

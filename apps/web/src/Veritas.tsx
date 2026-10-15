@@ -484,6 +484,24 @@ type ArenaResearchActivity = {
     progress: { done?: number; total?: number } | null;
     error: string | null;
   }>;
+  latest_veritas_qualification?: {
+    job_id: string | null;
+    source_scan_id: string;
+    finding_id: string;
+    experiment_run_id: string;
+    snapshot_count: number;
+    attempted_market_pairs: number;
+    quality_valid_pairs: number;
+    unique_market_ids: number;
+    top_pair_edge_per_share: {
+      count: number;
+      minimum_per_share: string;
+      median_nearest_rank_per_share: string;
+      maximum_per_share: string;
+      positive_count: number;
+    };
+    finding_url: string;
+  } | null;
   active_director_count: number;
   directors: Array<{
     director_id: string | null;
@@ -650,6 +668,7 @@ export function Veritas() {
   const data = query.data;
   const arenaActivity = arenaActivityQuery.data;
   const arenaJobs = Array.isArray(arenaActivity?.jobs) ? arenaActivity.jobs : [];
+  const latestVeritasQualification = arenaActivity?.latest_veritas_qualification ?? null;
   const arenaDirectors = Array.isArray(arenaActivity?.directors) ? arenaActivity.directors : [];
   const arenaSchedules = Array.isArray(arenaActivity?.schedules) ? arenaActivity.schedules : [];
   const arenaAlerts = Array.isArray(arenaActivity?.alerts) ? arenaActivity.alerts : [];
@@ -1305,6 +1324,56 @@ export function Veritas() {
               fills.
             </p>
           </div>
+          {latestVeritasQualification && (
+            <div className="ve-qualified-edge">
+              <div className="ve-qualified-edge-heading">
+                <div>
+                  <span className="ve-subhead">
+                    Latest completed qualification edge distribution
+                  </span>
+                  <small>
+                    {fmt(latestVeritasQualification.quality_valid_pairs)} quality-valid states ·{' '}
+                    {fmt(latestVeritasQualification.snapshot_count)} snapshots · through{' '}
+                    {latestVeritasQualification.source_scan_id}
+                  </small>
+                </div>
+                <a href={latestVeritasQualification.finding_url} target="_blank" rel="noreferrer">
+                  Open sealed finding <ArrowUpRight size={13} />
+                </a>
+              </div>
+              <div className="ve-qualified-edge-values">
+                <div>
+                  <span>Minimum</span>
+                  <b>{latestVeritasQualification.top_pair_edge_per_share.minimum_per_share}</b>
+                </div>
+                <div>
+                  <span>Median nearest rank</span>
+                  <b>
+                    {
+                      latestVeritasQualification.top_pair_edge_per_share
+                        .median_nearest_rank_per_share
+                    }
+                  </b>
+                </div>
+                <div>
+                  <span>Maximum</span>
+                  <b>{latestVeritasQualification.top_pair_edge_per_share.maximum_per_share}</b>
+                </div>
+                <div>
+                  <span>Positive gross states</span>
+                  <b>
+                    {fmt(latestVeritasQualification.top_pair_edge_per_share.positive_count)} /{' '}
+                    {fmt(latestVeritasQualification.top_pair_edge_per_share.count)}
+                  </b>
+                </div>
+              </div>
+              <p>
+                Collateral per share from quality-valid paired top asks. This sealed qualification
+                may trail the latest observer scan; repeated states are correlated measurements, not
+                independent opportunities or fills.
+              </p>
+            </div>
+          )}
           <div className="ve-quality-diagnostics">
             <div>
               <span>Reported timestamp age &gt; 5 s</span>

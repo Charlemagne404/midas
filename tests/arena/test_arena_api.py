@@ -241,6 +241,7 @@ def test_research_activity_returns_bounded_job_director_schedule_and_alert_statu
     assert activity["jobs"][0]["kind"] == "veritas_qualification"
     assert activity["jobs"][0]["source_scan_id"] == "scan-20261015T090047Z-6f98ffeaecab"
     assert activity["jobs"][0]["progress"] == {"done": 2, "total": 5}
+    assert activity["latest_veritas_qualification"] is None
     assert activity["active_director_count"] == 1
     assert activity["directors"][0]["current_stage"] == "independent challenge"
     assert activity["directors"][0]["source_scan_id"] == "scan-20261015T090047Z-6f98ffeaecab"
@@ -261,6 +262,103 @@ def test_research_activity_returns_bounded_job_director_schedule_and_alert_statu
     assert activity["schedules"][0]["steps"][0]["name"] == "replay"
     assert activity["alerts"][0]["reason"] == "Source changed before admission"
     assert activity["limits"]["maximum_jobs_read"] == 25
+
+
+def test_research_activity_projects_only_a_digest_verified_completed_edge_distribution(tmp_path):
+    import hashlib
+    import json
+
+    scan_id = "scan-20261015T093047Z-6f98ffeaecab"
+    finding_id = "veritas-qualification-v1-0123456789abcdef"
+    run_id = "VERITAS-M2-ECO-QUAL-001-V3-RUN-example"
+    result = {
+        "analysis_version": "veritas-economic-qualification-comparison-v3",
+        "experiment_run_id": run_id,
+        "status": "no_positive_gross_candidate_observed",
+        "orders_submitted": False,
+        "authenticated_requests": False,
+        "sample": {
+            "snapshot_count": 2,
+            "attempted_market_pairs": 3,
+            "quality_valid_pairs": 2,
+            "unique_market_ids": 2,
+            "top_pair_edge_per_share": {
+                "count": 2,
+                "minimum_per_share": "-0.2",
+                "median_nearest_rank_per_share": "-0.1",
+                "maximum_per_share": "-0.01",
+                "positive_count": 0,
+            },
+        },
+        "economic_qualification_funnel": [
+            {"criterion": "unchanged_top_ask_gross_sign", "positive_states": 0}
+        ],
+        "source_snapshots": [
+            {"scan_id": "scan-20261015T090047Z-6f98ffeaecab"},
+            {"scan_id": scan_id},
+        ],
+    }
+    result["experiment_sha256"] = hashlib.sha256(
+        json.dumps(result, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
+    ).hexdigest()
+    atomic_json(
+        tmp_path / f"findings/{finding_id}/manifest.json",
+        {
+            "artifact_id": finding_id,
+            "artifact_type": "veritas_public_opportunity_qualification",
+            "expected_latest_scan_id": scan_id,
+            "experiment_sha256": result["experiment_sha256"],
+            "orders_submitted": False,
+            "authenticated_requests": False,
+            "result": result,
+        },
+    )
+    atomic_json(
+        tmp_path / "jobs/job-qualification/job.json",
+        {
+            "job_id": "job-qualification",
+            "configuration": {
+                "kind": "veritas_qualification",
+                "veritas_qualification": {"expected_latest_scan_id": scan_id},
+            },
+            "state": "COMPLETED",
+            "exit_status": 0,
+            "result": {
+                "finding_id": finding_id,
+                "experiment_run_id": run_id,
+                "experiment_sha256": result["experiment_sha256"],
+                "status": result["status"],
+            },
+        },
+    )
+
+    activity = research_activity(tmp_path)
+
+    assert activity["latest_veritas_qualification"] == {
+        "job_id": "job-qualification",
+        "source_scan_id": scan_id,
+        "finding_id": finding_id,
+        "experiment_run_id": run_id,
+        "snapshot_count": 2,
+        "attempted_market_pairs": 3,
+        "quality_valid_pairs": 2,
+        "unique_market_ids": 2,
+        "top_pair_edge_per_share": {
+            "count": 2,
+            "minimum_per_share": "-0.2",
+            "median_nearest_rank_per_share": "-0.1",
+            "maximum_per_share": "-0.01",
+            "positive_count": 0,
+        },
+        "finding_url": f"/api/arena/findings/{finding_id}",
+    }
+    job_path = tmp_path / "jobs/job-qualification/job.json"
+    job = json.loads(job_path.read_text())
+    job["configuration"]["veritas_qualification"]["expected_latest_scan_id"] = (
+        "scan-20261015T090047Z-6f98ffeaecab"
+    )
+    atomic_json(job_path, job)
+    assert research_activity(tmp_path)["latest_veritas_qualification"] is None
 
 
 def test_veritas_finding_endpoint_returns_only_digest_verified_read_only_artifact(tmp_path):

@@ -818,3 +818,25 @@ model is promoted. Focused opportunity-audit and candidate-replay verification
 passed 23 tests. The new gap-detail implementation's three isolated tests,
 Ruff, strict Mypy, formatting, and systemd unit checks passed before its first
 scheduled runs; those runs have since completed with no restart or swap.
+
+## Gate G — sealed scan-level edge distribution
+
+At 22:37 UTC, a read-only projection was added to Arena research activity for
+the newest completed, successful v3 Veritas qualification. The API accepts the
+distribution only when the completed job, expected source scan, digest-verified
+finding, experiment run, sample counts, and unchanged top-ask gross count
+reconcile. The dashboard shows the minimum, nearest-rank median, maximum, and
+positive-state count, links to the sealed finding, and labels its source scan.
+It also explains that the qualification may trail the live observer and that
+repeated states are correlated measurements.
+
+The live observatory is at scan 38 (`scan-20261015T223101Z-62913d43b3c1`),
+with 1,341 quality-valid states across 38 intermittent snapshots. Its
+maximum top-pair edge remains -$0.001 per share, with zero positive states at
+all recorded economic gates. The newest completed sealed qualification is
+still scan 37 (`scan-20261015T220039Z-1bcb8753082e`): 1,307 quality-valid
+states across 37 snapshots, minimum -$0.996, nearest-rank median -$0.020,
+maximum -$0.001 per share, and zero positive gross states. The dashboard
+preserves that scan-37 boundary instead of presenting it as scan-38 evidence.
+No experiment, collector, service, frozen campaign, or pilot-pinned analyzer
+was changed or restarted. See [Gate G checkpoint 009](VERITAS_MISSION2_GATE_G_CHECKPOINT_009.md).
