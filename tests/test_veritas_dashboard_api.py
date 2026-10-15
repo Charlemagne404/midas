@@ -130,6 +130,85 @@ def write_label_feasibility_artifact(root: Path, *, campaign_id: str = "campaign
     write_artifact(root, "VERITAS_MISSION2_LABEL_FEASIBILITY_001.json", artifact)
 
 
+def canonical_json(value: dict) -> bytes:
+    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
+
+
+def write_censor_gap_audit_fixture(root: Path, *, campaign_id: str = "campaign-fixture") -> Path:
+    artifact = {
+        "schema_version": 1,
+        "artifact_id": "VERITAS-M2-CENSOR-GAP-AUDIT-001",
+        "analysis_version": "veritas-censor-gap-reference-audit-v1",
+        "status": "verified",
+        "captured_at_utc": "2026-10-15T21:52:08Z",
+        "campaign": {"campaign_id": campaign_id, "campaign_plan_sha256": "a" * 64},
+        "gap_censors": {
+            "outcome_rows": 5,
+            "explicit_recorded_gap_outcomes": 3,
+            "book_issue_gap_outcomes": 2,
+            "unique_explicit_gap_records_by_reason": {"book_resynchronization": 2},
+            "unique_explicit_gap_records_verified": 2,
+            "unique_termination_records": 4,
+            "unique_book_issue_termination_records_by_source_kind": {"discovery_page": 2},
+            "unique_termination_record_kinds": {"gap": 2, "discovery_page": 2},
+            "book_issue_direct_gap_causality_verified": False,
+        },
+        "source_verification": {
+            "unique_source_records_verified": 4,
+            "unique_finalized_segments_verified": 3,
+            "record_offsets_and_hashes_verified": True,
+            "active_open_segments_read": False,
+        },
+        "journal_snapshot": {"read_only": True, "hash_chain_reverified": False},
+        "query": {"truncated": False},
+        "limitations": ["The SQLite event hash chain was not reverified."],
+    }
+    artifact["artifact_sha256"] = hashlib.sha256(canonical_json(artifact)).hexdigest()
+    write_artifact(root, "VERITAS_MISSION2_CENSOR_GAP_AUDIT_001.json", artifact)
+    return root / "docs" / "VERITAS_MISSION2_CENSOR_GAP_AUDIT_001.json"
+
+
+def write_gap_detail_fixture(root: Path, *, campaign_id: str = "campaign-fixture") -> Path:
+    summary = {
+        "schema_version": 1,
+        "analysis_version": "veritas-finalized-reality-gap-detail-v1",
+        "status": "catching_up",
+        "generated_at_utc": "2026-10-15T21:51:20+00:00",
+        "campaign_id": campaign_id,
+        "campaign_sha256": "b" * 64,
+        "active_segment_read": False,
+        "campaign_window_ns": {"start": 100, "end_exclusive": 200},
+        "all_period_gap_event_count": 2,
+        "all_period_gap_counts_by_reason": {"book_resynchronization": 2},
+        "campaign_window_gap_event_count": 0,
+        "campaign_window_gap_counts_by_reason": {},
+        "campaign_window_gap_events_without_reported_assets": 0,
+        "campaign_window_unmapped_affected_asset_count": 0,
+        "catalog_segment_count": 3,
+        "replayable_catalog_segment_count": 2,
+        "empty_finalized_segment_count": 1,
+        "processed_segment_count": 1,
+        "pending_segment_count": 1,
+        "pending_source_bytes": 512,
+        "processed_source_bytes": 256,
+        "last_processed_ordinal": 30,
+        "recent_gap_events": [
+            {
+                "reason": "book_resynchronization",
+                "received_at_utc": "2026-10-14T10:24:24Z",
+                "in_campaign_window": False,
+                "received_ns": 90,
+            }
+        ],
+        "limitations": ["Only finalized source segments were read."],
+    }
+    summary["summary_sha256"] = hashlib.sha256(canonical_json(summary)).hexdigest()
+    path = root / "data" / "veritas-observatory" / "gap-detail-summary-v1.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(canonical_json(summary))
+    return path
+
+
 def fixture_client(tmp_path: Path) -> TestClient:
     write_artifact(
         tmp_path,
@@ -406,6 +485,95 @@ def test_overview_uses_bounded_versioned_evidence_without_raw_paths(tmp_path):
     assert data["opportunity_observatory"]["status"] == "not_started"
     assert data["finalized_reality_source"]["status"] == "not_started"
     assert "source_root" not in response.text
+
+
+def test_overview_exposes_hash_verified_gap_censor_and_prefix_evidence(tmp_path):
+    client = fixture_client(tmp_path)
+    audit_path = write_censor_gap_audit_fixture(tmp_path)
+    summary_path = write_gap_detail_fixture(tmp_path)
+
+    response = client.get("/api/veritas/overview")
+
+    assert response.status_code == 200
+    data = response.json()
+    audit = data["gap_censor_audit"]
+    assert audit["outcome_rows"] == 5
+    assert audit["explicit_recorded_gap_outcomes"] == 3
+    assert audit["book_issue_gap_outcomes"] == 2
+    assert audit["unique_explicit_gap_records_verified"] == 2
+    assert audit["book_issue_direct_gap_causality_verified"] is False
+    assert audit["source_verification"]["active_open_segments_read"] is False
+    assert audit["artifact"]["file_sha256"] == hashlib.sha256(audit_path.read_bytes()).hexdigest()
+
+    detail = data["finalized_gap_detail"]
+    assert detail["processed_segment_count"] == 1
+    assert detail["replayable_catalog_segment_count"] == 2
+    assert detail["pending_segment_count"] == 1
+    assert detail["readiness"] == "catching_up"
+    assert detail["all_period_gap_event_count"] == 2
+    assert detail["campaign_window_gap_event_count"] == 0
+    assert detail["active_segment_read"] is False
+    assert (
+        detail["summary_artifact"]["file_sha256"]
+        == hashlib.sha256(summary_path.read_bytes()).hexdigest()
+    )
+    assert {item["id"] for item in data["artifacts"]} >= {
+        "censor-gap-audit",
+        "gap-detail-current",
+    }
+
+    audit_artifact = client.get("/api/veritas/artifacts/censor-gap-audit")
+    detail_artifact = client.get("/api/veritas/artifacts/gap-detail-current")
+    assert audit_artifact.status_code == 200
+    assert audit_artifact.json()["data"]["artifact_id"] == "VERITAS-M2-CENSOR-GAP-AUDIT-001"
+    assert detail_artifact.status_code == 200
+    assert detail_artifact.json()["data"]["summary_sha256"]
+
+
+def test_gap_evidence_rejects_campaign_mismatch_and_digest_tampering(tmp_path):
+    client = fixture_client(tmp_path)
+    audit_path = write_censor_gap_audit_fixture(tmp_path)
+    audit = json.loads(audit_path.read_text())
+    audit["campaign"]["campaign_id"] = "other-campaign"
+    audit["artifact_sha256"] = hashlib.sha256(
+        canonical_json({key: value for key, value in audit.items() if key != "artifact_sha256"})
+    ).hexdigest()
+    audit_path.write_bytes(canonical_json(audit))
+    assert client.get("/api/veritas/overview").status_code == 503
+
+    audit["campaign"]["campaign_id"] = "campaign-fixture"
+    audit_path.write_bytes(canonical_json(audit))
+    assert client.get("/api/veritas/overview").status_code == 503
+
+    audit["gap_censors"]["outcome_rows"] = 6
+    audit["artifact_sha256"] = hashlib.sha256(
+        canonical_json({key: value for key, value in audit.items() if key != "artifact_sha256"})
+    ).hexdigest()
+    audit_path.write_bytes(canonical_json(audit))
+    assert client.get("/api/veritas/overview").status_code == 503
+
+
+def test_gap_detail_rejects_bad_digest_campaign_or_active_segment(tmp_path):
+    client = fixture_client(tmp_path)
+    summary_path = write_gap_detail_fixture(tmp_path)
+    summary = json.loads(summary_path.read_text())
+    summary["campaign_id"] = "other-campaign"
+    summary["summary_sha256"] = hashlib.sha256(
+        canonical_json({key: value for key, value in summary.items() if key != "summary_sha256"})
+    ).hexdigest()
+    summary_path.write_bytes(canonical_json(summary))
+    assert client.get("/api/veritas/overview").status_code == 503
+
+    summary["campaign_id"] = "campaign-fixture"
+    summary_path.write_bytes(canonical_json(summary))
+    assert client.get("/api/veritas/overview").status_code == 503
+
+    summary["active_segment_read"] = True
+    summary["summary_sha256"] = hashlib.sha256(
+        canonical_json({key: value for key, value in summary.items() if key != "summary_sha256"})
+    ).hexdigest()
+    summary_path.write_bytes(canonical_json(summary))
+    assert client.get("/api/veritas/overview").status_code == 503
 
 
 def test_overview_accepts_legacy_hypotheses_without_top_level_status(tmp_path):

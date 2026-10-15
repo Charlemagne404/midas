@@ -554,11 +554,81 @@ it('labels measured evidence and keeps synthetic execution separate from actual 
                   summary_artifact: null,
                   limitations: ['No finalized Reality source segments have been indexed yet.'],
                 },
+                gap_censor_audit: {
+                  status: 'verified',
+                  analysis_version: 'veritas-censor-gap-reference-audit-v1',
+                  captured_at_utc: '2026-10-15T21:52:08Z',
+                  campaign_id: 'campaign-fixture',
+                  outcome_rows: 5,
+                  explicit_recorded_gap_outcomes: 3,
+                  book_issue_gap_outcomes: 2,
+                  unique_explicit_gap_records_verified: 2,
+                  unique_termination_records: 4,
+                  unique_book_issue_termination_records_by_source_kind: { discovery_page: 2 },
+                  book_issue_direct_gap_causality_verified: false,
+                  source_verification: {
+                    unique_source_records_verified: 4,
+                    unique_finalized_segments_verified: 3,
+                    record_offsets_and_hashes_verified: true,
+                    active_open_segments_read: false,
+                  },
+                  journal_hash_chain_reverified: false,
+                  artifact: {
+                    id: 'censor-gap-audit',
+                    label: 'Verified finalized-source gap-censor attribution',
+                    file_sha256: 'b'.repeat(64),
+                    url: '/api/veritas/artifacts/censor-gap-audit',
+                  },
+                  limitations: ['The SQLite event hash chain was not reverified.'],
+                },
+                finalized_gap_detail: {
+                  status: 'catching_up',
+                  analysis_version: 'veritas-finalized-reality-gap-detail-v1',
+                  generated_at_utc: '2026-10-15T21:51:20+00:00',
+                  campaign_id: 'campaign-fixture',
+                  processed_segment_count: 1,
+                  replayable_catalog_segment_count: 2,
+                  catalog_segment_count: 3,
+                  empty_finalized_segment_count: 1,
+                  pending_segment_count: 1,
+                  pending_source_bytes: 512,
+                  processed_source_bytes: 256,
+                  last_processed_ordinal: 30,
+                  readiness: 'catching_up_finalized_source',
+                  campaign_window_ns: { start: 100, end_exclusive: 200 },
+                  active_segment_read: false,
+                  all_period_gap_event_count: 2,
+                  all_period_gap_counts_by_reason: { book_resynchronization: 2 },
+                  campaign_window_gap_event_count: 0,
+                  campaign_window_gap_counts_by_reason: {},
+                  campaign_window_gap_events_without_reported_assets: 0,
+                  campaign_window_unmapped_affected_asset_count: 0,
+                  latest_gap_event: {
+                    reason: 'book_resynchronization',
+                    received_at_utc: '2026-10-14T10:24:24Z',
+                    in_campaign_window: false,
+                  },
+                  summary_artifact: {
+                    id: 'gap-detail-current',
+                    label: 'Hash-verified finalized Reality gap-detail prefix',
+                    file_sha256: 'c'.repeat(64),
+                    url: '/api/veritas/artifacts/gap-detail-current',
+                  },
+                  limitations: ['Only finalized source segments were read.'],
+                },
                 artifacts: [
                   { id: 'raw-funnel', label: 'Observed raw opportunity funnel' },
                   {
                     id: 'censoring',
                     label: 'Read-only censoring by market, time, horizon and quality',
+                  },
+                  {
+                    id: 'censor-gap-audit',
+                    label: 'Verified finalized-source gap-censor attribution',
+                  },
+                  {
+                    id: 'gap-detail-current',
+                    label: 'Hash-verified finalized Reality gap-detail prefix',
                   },
                 ],
                 limitations: ['Displayed liquidity is not guaranteed executable quantity.'],
@@ -648,5 +718,24 @@ it('labels measured evidence and keeps synthetic execution separate from actual 
   expect(screen.getByRole('link', { name: /Read-only censoring by market/ })).toHaveAttribute(
     'href',
     '/api/veritas/artifacts/censoring',
+  );
+  expect(screen.getByText('Frozen campaign censor attribution')).toBeInTheDocument();
+  expect(screen.getByText('3 → 2 verified gap records')).toBeInTheDocument();
+  expect(screen.getByText('2 → 2 later source records')).toBeInTheDocument();
+  expect(
+    screen.getByText(/direct causal link to the original gap was not verified/),
+  ).toBeInTheDocument();
+  expect(screen.getByText('Incremental finalized-source gap detail')).toBeInTheDocument();
+  expect(screen.getByText('Campaign-window events in processed prefix')).toBeInTheDocument();
+  expect(
+    screen.getByText(/zero is not evidence that the campaign had no gaps/),
+  ).toBeInTheDocument();
+  expect(screen.getByRole('link', { name: 'Inspect source audit' })).toHaveAttribute(
+    'href',
+    '/api/veritas/artifacts/censor-gap-audit',
+  );
+  expect(screen.getByRole('link', { name: 'Inspect verified prefix' })).toHaveAttribute(
+    'href',
+    '/api/veritas/artifacts/gap-detail-current',
   );
 });

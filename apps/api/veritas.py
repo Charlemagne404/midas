@@ -22,12 +22,14 @@ ARTIFACTS = {
     "inventory": "VERITAS_RESEARCH_INVENTORY.json",
     "censoring": "VERITAS_GATE_A_CENSORING_003.json",
     "label-feasibility": "VERITAS_MISSION2_LABEL_FEASIBILITY_001.json",
+    "censor-gap-audit": "VERITAS_MISSION2_CENSOR_GAP_AUDIT_001.json",
 }
 MAX_ARTIFACT_BYTES = 512 * 1024
 MAX_OBSERVATORY_SUMMARY_BYTES = 2 * 1024**2
 MAX_OBSERVATORY_SNAPSHOT_COMPRESSED_BYTES = 4 * 1024**2
 MAX_OBSERVATORY_SNAPSHOT_BYTES = 16 * 1024**2
 MAX_SOURCE_ANALYSIS_SUMMARY_BYTES = 4 * 1024**2
+MAX_GAP_DETAIL_SUMMARY_BYTES = 512 * 1024
 MAX_COVERAGE_PILOT_SUMMARY_BYTES = 2 * 1024**2
 MAX_COVERAGE_PILOT_EVENT_BYTES = 256 * 1024
 MAX_COVERAGE_PILOT_SCANS = 48
@@ -590,6 +592,307 @@ def read_finalized_source_summary(repository: Path) -> tuple[dict[str, Any], Pat
     ):
         raise HTTPException(503, "Finalized Reality source summary digest is invalid")
     return value, path
+
+
+def read_censor_gap_audit(
+    repository: Path, expected_campaign_id: str
+) -> tuple[dict[str, Any], Path] | None:
+    path = repository / "docs" / ARTIFACTS["censor-gap-audit"]
+    if path.is_symlink():
+        raise HTTPException(404, "Veritas gap-censor audit is unavailable")
+    if not path.exists():
+        return None
+    value, path = read_artifact(repository, "censor-gap-audit")
+    payload = dict(value)
+    stored_digest = payload.pop("artifact_sha256", None)
+    calculated_digest = hashlib.sha256(
+        json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
+    ).hexdigest()
+    campaign = value.get("campaign")
+    gap_censors = value.get("gap_censors")
+    source_verification = value.get("source_verification")
+    journal_snapshot = value.get("journal_snapshot")
+    query = value.get("query")
+    if (
+        value.get("schema_version") != 1
+        or value.get("artifact_id") != "VERITAS-M2-CENSOR-GAP-AUDIT-001"
+        or value.get("analysis_version") != "veritas-censor-gap-reference-audit-v1"
+        or value.get("status") != "verified"
+        or not isinstance(stored_digest, str)
+        or stored_digest != calculated_digest
+        or not isinstance(campaign, dict)
+        or campaign.get("campaign_id") != expected_campaign_id
+        or not isinstance(gap_censors, dict)
+        or not isinstance(source_verification, dict)
+        or not isinstance(journal_snapshot, dict)
+        or not isinstance(query, dict)
+    ):
+        raise HTTPException(503, "Veritas gap-censor audit identity or digest is invalid")
+
+    def count(mapping: dict[str, Any], field: str) -> int:
+        number = mapping.get(field)
+        if not isinstance(number, int) or isinstance(number, bool) or number < 0:
+            raise HTTPException(503, f"Veritas gap-censor audit count {field} is invalid")
+        return number
+
+    outcome_rows = count(gap_censors, "outcome_rows")
+    direct_outcomes = count(gap_censors, "explicit_recorded_gap_outcomes")
+    indirect_outcomes = count(gap_censors, "book_issue_gap_outcomes")
+    verified_records = count(gap_censors, "unique_explicit_gap_records_verified")
+    unique_records = count(gap_censors, "unique_termination_records")
+    unique_source_records = count(source_verification, "unique_source_records_verified")
+    unique_segments = count(source_verification, "unique_finalized_segments_verified")
+
+    def count_map(value: Any) -> dict[str, int] | None:
+        if not isinstance(value, dict):
+            return None
+        validated: dict[str, int] = {}
+        for reason, number in value.items():
+            if (
+                not isinstance(reason, str)
+                or not isinstance(number, int)
+                or isinstance(number, bool)
+                or number < 0
+            ):
+                return None
+            validated[reason] = number
+        return validated
+
+    explicit_records_by_reason = count_map(gap_censors.get("unique_explicit_gap_records_by_reason"))
+    indirect_terminations = count_map(
+        gap_censors.get("unique_book_issue_termination_records_by_source_kind")
+    )
+    termination_records_by_kind = count_map(gap_censors.get("unique_termination_record_kinds"))
+
+    if (
+        outcome_rows != direct_outcomes + indirect_outcomes
+        or explicit_records_by_reason is None
+        or sum(explicit_records_by_reason.values()) != verified_records
+        or indirect_terminations is None
+        or termination_records_by_kind is None
+        or termination_records_by_kind.get("gap") != verified_records
+        or {kind: number for kind, number in termination_records_by_kind.items() if kind != "gap"}
+        != indirect_terminations
+        or sum(indirect_terminations.values()) != unique_records - verified_records
+        or sum(termination_records_by_kind.values()) != unique_records
+        or unique_records != unique_source_records
+        or unique_segments < 1
+        or not isinstance(gap_censors.get("book_issue_direct_gap_causality_verified"), bool)
+        or gap_censors["book_issue_direct_gap_causality_verified"]
+        or source_verification.get("record_offsets_and_hashes_verified") is not True
+        or source_verification.get("active_open_segments_read") is not False
+        or journal_snapshot.get("read_only") is not True
+        or not isinstance(journal_snapshot.get("hash_chain_reverified"), bool)
+        or query.get("truncated") is not False
+        or not isinstance(value.get("captured_at_utc"), str)
+    ):
+        raise HTTPException(503, "Veritas gap-censor audit evidence does not reconcile")
+    return value, path
+
+
+def censor_gap_audit_overview(repository: Path, expected_campaign_id: str) -> dict[str, Any] | None:
+    stored = read_censor_gap_audit(repository, expected_campaign_id)
+    if stored is None:
+        return None
+    value, path = stored
+    gaps = value["gap_censors"]
+    source = value["source_verification"]
+    return {
+        "status": value["status"],
+        "analysis_version": value["analysis_version"],
+        "captured_at_utc": value["captured_at_utc"],
+        "campaign_id": value["campaign"]["campaign_id"],
+        "outcome_rows": gaps["outcome_rows"],
+        "explicit_recorded_gap_outcomes": gaps["explicit_recorded_gap_outcomes"],
+        "book_issue_gap_outcomes": gaps["book_issue_gap_outcomes"],
+        "unique_explicit_gap_records_verified": gaps["unique_explicit_gap_records_verified"],
+        "unique_termination_records": gaps["unique_termination_records"],
+        "unique_book_issue_termination_records_by_source_kind": gaps[
+            "unique_book_issue_termination_records_by_source_kind"
+        ],
+        "book_issue_direct_gap_causality_verified": gaps[
+            "book_issue_direct_gap_causality_verified"
+        ],
+        "source_verification": {
+            "unique_source_records_verified": source["unique_source_records_verified"],
+            "unique_finalized_segments_verified": source["unique_finalized_segments_verified"],
+            "record_offsets_and_hashes_verified": source["record_offsets_and_hashes_verified"],
+            "active_open_segments_read": source["active_open_segments_read"],
+        },
+        "journal_hash_chain_reverified": value["journal_snapshot"].get("hash_chain_reverified"),
+        "artifact": {
+            "id": "censor-gap-audit",
+            "label": "Verified finalized-source gap-censor attribution",
+            "file_sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+            "url": "/api/veritas/artifacts/censor-gap-audit",
+        },
+        "limitations": value.get("limitations", []),
+    }
+
+
+def read_gap_detail_summary(repository: Path) -> tuple[dict[str, Any], Path] | None:
+    path = repository / "data" / "veritas-observatory" / "gap-detail-summary-v1.json"
+    if path.parent.is_symlink() or path.is_symlink():
+        raise HTTPException(404, "Finalized Reality gap-detail summary is unavailable")
+    if not path.exists():
+        return None
+    if not path.is_file() or path.stat().st_size > MAX_GAP_DETAIL_SUMMARY_BYTES:
+        raise HTTPException(503, "Finalized Reality gap-detail summary exceeds the interface bound")
+    try:
+        value = json.loads(path.read_text())
+    except (OSError, ValueError) as error:
+        raise HTTPException(
+            503, "Finalized Reality gap-detail summary could not be read"
+        ) from error
+    if not isinstance(value, dict):
+        raise HTTPException(503, "Finalized Reality gap-detail summary has an invalid format")
+    stored_digest = value.get("summary_sha256")
+    payload = dict(value)
+    payload.pop("summary_sha256", None)
+    calculated_digest = hashlib.sha256(
+        json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
+    ).hexdigest()
+    if (
+        value.get("schema_version") != 1
+        or value.get("analysis_version") != "veritas-finalized-reality-gap-detail-v1"
+        or not isinstance(stored_digest, str)
+        or stored_digest != calculated_digest
+    ):
+        raise HTTPException(
+            503, "Finalized Reality gap-detail summary identity or digest is invalid"
+        )
+    return value, path
+
+
+def finalized_gap_detail_overview(
+    repository: Path, expected_campaign_id: str
+) -> dict[str, Any] | None:
+    stored = read_gap_detail_summary(repository)
+    if stored is None:
+        return None
+    summary, path = stored
+    integer_fields = (
+        "all_period_gap_event_count",
+        "campaign_window_gap_event_count",
+        "campaign_window_gap_events_without_reported_assets",
+        "campaign_window_unmapped_affected_asset_count",
+        "catalog_segment_count",
+        "replayable_catalog_segment_count",
+        "empty_finalized_segment_count",
+        "processed_segment_count",
+        "pending_segment_count",
+        "processed_source_bytes",
+        "pending_source_bytes",
+        "last_processed_ordinal",
+    )
+    if any(
+        not isinstance(summary.get(field), int)
+        or isinstance(summary.get(field), bool)
+        or summary[field] < 0
+        for field in integer_fields
+    ):
+        raise HTTPException(503, "Finalized Reality gap-detail counters are invalid")
+    if (
+        summary.get("campaign_id") != expected_campaign_id
+        or not isinstance(summary.get("campaign_sha256"), str)
+        or not isinstance(summary.get("generated_at_utc"), str)
+        or not isinstance(summary.get("status"), str)
+        or not isinstance(summary.get("readiness", summary["status"]), str)
+        or summary.get("active_segment_read") is not False
+        or summary["processed_segment_count"] + summary["pending_segment_count"]
+        != summary["replayable_catalog_segment_count"]
+        or summary["replayable_catalog_segment_count"] + summary["empty_finalized_segment_count"]
+        != summary["catalog_segment_count"]
+    ):
+        raise HTTPException(503, "Finalized Reality gap-detail identity or progress is invalid")
+    window = summary.get("campaign_window_ns")
+    if (
+        not isinstance(window, dict)
+        or not isinstance(window.get("start"), int)
+        or isinstance(window.get("start"), bool)
+        or not isinstance(window.get("end_exclusive"), int)
+        or isinstance(window.get("end_exclusive"), bool)
+        or window["start"] >= window["end_exclusive"]
+    ):
+        raise HTTPException(503, "Finalized Reality gap-detail campaign window is invalid")
+
+    def count_map(field: str, expected_total: int) -> dict[str, int]:
+        raw = summary.get(field)
+        if not isinstance(raw, dict) or any(
+            not isinstance(reason, str)
+            or not isinstance(number, int)
+            or isinstance(number, bool)
+            or number < 0
+            for reason, number in raw.items()
+        ):
+            raise HTTPException(503, f"Finalized Reality {field} is invalid")
+        if sum(raw.values()) != expected_total:
+            raise HTTPException(503, f"Finalized Reality {field} does not reconcile")
+        return raw
+
+    all_period = count_map("all_period_gap_counts_by_reason", summary["all_period_gap_event_count"])
+    campaign_window = count_map(
+        "campaign_window_gap_counts_by_reason", summary["campaign_window_gap_event_count"]
+    )
+    recent = summary.get("recent_gap_events")
+    if (
+        not isinstance(recent, list)
+        or len(recent) > 100
+        or any(
+            not isinstance(event, dict)
+            or not isinstance(event.get("received_at_utc"), str)
+            or not isinstance(event.get("reason"), str)
+            or not isinstance(event.get("in_campaign_window"), bool)
+            or not isinstance(event.get("received_ns"), int)
+            or isinstance(event.get("received_ns"), bool)
+            for event in recent
+        )
+    ):
+        raise HTTPException(503, "Finalized Reality recent gap events are invalid")
+    latest_gap = max(recent, key=lambda event: event["received_ns"]) if recent else None
+    return {
+        "status": summary["status"],
+        "analysis_version": summary["analysis_version"],
+        "generated_at_utc": summary["generated_at_utc"],
+        "campaign_id": summary["campaign_id"],
+        "processed_segment_count": summary["processed_segment_count"],
+        "replayable_catalog_segment_count": summary["replayable_catalog_segment_count"],
+        "catalog_segment_count": summary["catalog_segment_count"],
+        "empty_finalized_segment_count": summary["empty_finalized_segment_count"],
+        "pending_segment_count": summary["pending_segment_count"],
+        "pending_source_bytes": summary["pending_source_bytes"],
+        "processed_source_bytes": summary["processed_source_bytes"],
+        "last_processed_ordinal": summary["last_processed_ordinal"],
+        "readiness": summary.get("readiness", summary["status"]),
+        "campaign_window_ns": window,
+        "active_segment_read": summary["active_segment_read"],
+        "all_period_gap_event_count": summary["all_period_gap_event_count"],
+        "all_period_gap_counts_by_reason": all_period,
+        "campaign_window_gap_event_count": summary["campaign_window_gap_event_count"],
+        "campaign_window_gap_counts_by_reason": campaign_window,
+        "campaign_window_gap_events_without_reported_assets": summary[
+            "campaign_window_gap_events_without_reported_assets"
+        ],
+        "campaign_window_unmapped_affected_asset_count": summary[
+            "campaign_window_unmapped_affected_asset_count"
+        ],
+        "latest_gap_event": (
+            {
+                "reason": latest_gap["reason"],
+                "received_at_utc": latest_gap["received_at_utc"],
+                "in_campaign_window": latest_gap["in_campaign_window"],
+            }
+            if latest_gap is not None
+            else None
+        ),
+        "summary_artifact": {
+            "id": "gap-detail-current",
+            "label": "Hash-verified finalized Reality gap-detail prefix",
+            "file_sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+            "url": "/api/veritas/artifacts/gap-detail-current",
+        },
+        "limitations": summary.get("limitations", []),
+    }
 
 
 def finalized_source_overview(repository: Path) -> dict[str, Any]:
@@ -1589,6 +1892,8 @@ def overview(repository: Path) -> dict[str, Any]:
     outcomes = frozen["outcomes"]["by_horizon"]
     current_censoring = followup_censoring_overview(repository, str(funnel["campaign_id"]))
     label_feasibility = label_feasibility_overview(repository, str(funnel["campaign_id"]))
+    gap_censor_audit = censor_gap_audit_overview(repository, str(funnel["campaign_id"]))
+    gap_detail = finalized_gap_detail_overview(repository, str(funnel["campaign_id"]))
     quantity = "100"
     full_depth = next(
         row
@@ -1677,6 +1982,10 @@ def overview(repository: Path) -> dict[str, Any]:
         artifacts.append(current_censoring["artifact"])
     if label_feasibility is not None:
         artifacts.append(label_feasibility["artifact"])
+    if gap_censor_audit is not None:
+        artifacts.append(gap_censor_audit["artifact"])
+    if gap_detail is not None:
+        artifacts.append(gap_detail["summary_artifact"])
 
     return {
         "status": "insufficient_independent_evidence",
@@ -1725,6 +2034,8 @@ def overview(repository: Path) -> dict[str, Any]:
         },
         "followup_censoring": current_censoring,
         "label_feasibility": label_feasibility,
+        "gap_censor_audit": gap_censor_audit,
+        "finalized_gap_detail": gap_detail,
         "baseline_policies": {
             "count": len(frozen["policy_actions"]),
             "all_abstained": all(
@@ -1790,6 +2101,38 @@ def router(repository: Path) -> APIRouter:
 
     @routes.get("/artifacts/{identity}")
     def get_artifact(identity: str) -> dict[str, Any]:
+        if identity == "gap-detail-current":
+            raw_funnel, _ = read_artifact(repository, "raw-funnel")
+            validated = finalized_gap_detail_overview(repository, str(raw_funnel["campaign_id"]))
+            if validated is None:
+                raise HTTPException(
+                    404, "Finalized Reality gap-detail summary has not been generated"
+                )
+            stored = read_gap_detail_summary(repository)
+            if stored is None:
+                raise HTTPException(
+                    404, "Finalized Reality gap-detail summary has not been generated"
+                )
+            data, path = stored
+            file_sha256 = hashlib.sha256(path.read_bytes()).hexdigest()
+            if file_sha256 != validated["summary_artifact"]["file_sha256"]:
+                raise HTTPException(503, "Finalized Reality gap-detail summary changed during read")
+            return {
+                "artifact": identity,
+                "file_sha256": file_sha256,
+                "data": data,
+            }
+        if identity == "censor-gap-audit":
+            raw_funnel, _ = read_artifact(repository, "raw-funnel")
+            stored = read_censor_gap_audit(repository, str(raw_funnel["campaign_id"]))
+            if stored is None:
+                raise HTTPException(404, "Veritas gap-censor audit has not been generated")
+            data, path = stored
+            return {
+                "artifact": identity,
+                "file_sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+                "data": data,
+            }
         if identity == "coverage-pilot":
             pilot_result = read_coverage_pilot(repository)
             if pilot_result is None:

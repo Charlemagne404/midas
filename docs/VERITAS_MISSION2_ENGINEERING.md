@@ -1,5 +1,19 @@
 # Veritas Mission 2 Engineering Checkpoint
 
+## Latest dashboard update — Gate G checkpoint 007
+
+The dashboard now exposes the frozen campaign's verified gap-censor
+attribution and the separately maintained finalized-source gap-detail prefix.
+The UI distinguishes direct `recorded_gap` source references from indirect
+`book_issue:gap` terminations and labels the current campaign-window count as
+partial while the prefix is catching up. Both API views validate campaign
+identity and sealed digests; the prefix endpoint reads only the bounded
+summary and never opens an active segment. The live repository read returned
+HTTP 200 for the overview and both artifact links; focused API/UI checks,
+Ruff, strict Mypy, Prettier, and TypeScript passed. See [Gate G checkpoint
+007](VERITAS_MISSION2_GATE_G_CHECKPOINT_007.md) for counts and caveats. Gate G
+and Mission 2 remain active.
+
 ## Latest engineering checkpoint — Gate C censoring and exact source audit
 
 The current bounded v1.4 read-only forensic snapshot covers 10,253 decisions,

@@ -57,6 +57,60 @@ type FollowupCensoring = {
 
 type Artifact = { id: string; label: string };
 
+type GapCensorAudit = {
+  status: string;
+  analysis_version: string;
+  captured_at_utc: string;
+  campaign_id: string;
+  outcome_rows: number;
+  explicit_recorded_gap_outcomes: number;
+  book_issue_gap_outcomes: number;
+  unique_explicit_gap_records_verified: number;
+  unique_termination_records: number;
+  unique_book_issue_termination_records_by_source_kind: Record<string, number>;
+  book_issue_direct_gap_causality_verified: boolean;
+  source_verification: {
+    unique_source_records_verified: number;
+    unique_finalized_segments_verified: number;
+    record_offsets_and_hashes_verified: boolean;
+    active_open_segments_read: boolean;
+  };
+  journal_hash_chain_reverified: boolean | null;
+  artifact: Artifact & { file_sha256: string; url: string };
+  limitations: string[];
+};
+
+type FinalizedGapDetail = {
+  status: string;
+  analysis_version: string;
+  generated_at_utc: string;
+  campaign_id: string;
+  processed_segment_count: number;
+  replayable_catalog_segment_count: number;
+  catalog_segment_count: number;
+  empty_finalized_segment_count: number;
+  pending_segment_count: number;
+  pending_source_bytes: number;
+  processed_source_bytes: number;
+  last_processed_ordinal: number;
+  readiness: string;
+  campaign_window_ns: { start: number; end_exclusive: number };
+  active_segment_read: boolean;
+  all_period_gap_event_count: number;
+  all_period_gap_counts_by_reason: Record<string, number>;
+  campaign_window_gap_event_count: number;
+  campaign_window_gap_counts_by_reason: Record<string, number>;
+  campaign_window_gap_events_without_reported_assets: number;
+  campaign_window_unmapped_affected_asset_count: number;
+  latest_gap_event: {
+    reason: string;
+    received_at_utc: string;
+    in_campaign_window: boolean;
+  } | null;
+  summary_artifact: Artifact & { file_sha256: string; url: string };
+  limitations: string[];
+};
+
 type LabelFeasibilityHorizon = {
   horizon_ms: number;
   scheduled_followups: number;
@@ -381,6 +435,8 @@ type Overview = {
   };
   followup_censoring: FollowupCensoring | null;
   label_feasibility: LabelFeasibility | null;
+  gap_censor_audit: GapCensorAudit | null;
+  finalized_gap_detail: FinalizedGapDetail | null;
   baseline_policies: { count: number; all_abstained: boolean };
   execution_sensitivity: {
     quantity_shares_per_leg: string;
@@ -629,6 +685,19 @@ export function Veritas() {
   const observatoryQuality = observatory.data_quality;
   const followupCensoring = data.followup_censoring ?? null;
   const labelFeasibility = data.label_feasibility ?? null;
+  const gapCensorAudit = data.gap_censor_audit ?? null;
+  const finalizedGapDetail = data.finalized_gap_detail ?? null;
+  const indirectGapTerminationCount = gapCensorAudit
+    ? Object.values(gapCensorAudit.unique_book_issue_termination_records_by_source_kind).reduce(
+        (sum, count) => sum + count,
+        0,
+      )
+    : 0;
+  const indirectGapTerminationSources = gapCensorAudit
+    ? Object.entries(gapCensorAudit.unique_book_issue_termination_records_by_source_kind)
+        .map(([kind, count]) => `${kind.replaceAll('_', ' ')} ${fmt(count)}`)
+        .join(' · ')
+    : '';
   const positiveFullDepthAt20 =
     observatoryOpportunity.positive_minimum_notional_by_quantity['20'] ?? 0;
   const latestCategories = Object.entries(observatoryDiscovery.latest_by_category).sort(
@@ -1319,6 +1388,104 @@ export function Veritas() {
               No quality-valid positive full-depth gross candidate has been recorded. The detector
               remains active.
             </p>
+          )}
+          {(gapCensorAudit || finalizedGapDetail) && (
+            <div className="ve-gap-evidence" aria-label="Gap attribution and source continuity">
+              {gapCensorAudit && (
+                <section>
+                  <div className="ve-gap-evidence-heading">
+                    <div>
+                      <span className="ve-subhead">Frozen campaign censor attribution</span>
+                      <small>
+                        Hash-verified outcome references · {time(gapCensorAudit.captured_at_utc)}
+                      </small>
+                    </div>
+                    <a href={gapCensorAudit.artifact.url} target="_blank" rel="noreferrer">
+                      Inspect source audit <ArrowUpRight size={13} />
+                    </a>
+                  </div>
+                  <div className="ve-gap-evidence-stats">
+                    <div>
+                      <span>Explicit recorded-gap outcomes</span>
+                      <b>
+                        {fmt(gapCensorAudit.explicit_recorded_gap_outcomes)} →{' '}
+                        {fmt(gapCensorAudit.unique_explicit_gap_records_verified)} verified gap
+                        records
+                      </b>
+                    </div>
+                    <div>
+                      <span>Indirect book-issue outcomes</span>
+                      <b>
+                        {fmt(gapCensorAudit.book_issue_gap_outcomes)} →{' '}
+                        {fmt(indirectGapTerminationCount)} later source records
+                      </b>
+                    </div>
+                    <div>
+                      <span>Source records independently checked</span>
+                      <b>
+                        {fmt(gapCensorAudit.source_verification.unique_source_records_verified)}{' '}
+                        across{' '}
+                        {fmt(gapCensorAudit.source_verification.unique_finalized_segments_verified)}{' '}
+                        finalized segments
+                      </b>
+                    </div>
+                  </div>
+                  <p>
+                    Record offsets and hashes were verified; no active segment was read. The later
+                    records behind book-issue labels are{' '}
+                    {indirectGapTerminationSources || 'not listed'}. Their direct causal link to the
+                    original gap was not verified. The SQLite event hash chain{' '}
+                    {gapCensorAudit.journal_hash_chain_reverified ? 'was' : 'was not'} reverified.
+                  </p>
+                </section>
+              )}
+              {finalizedGapDetail && (
+                <section>
+                  <div className="ve-gap-evidence-heading">
+                    <div>
+                      <span className="ve-subhead">Incremental finalized-source gap detail</span>
+                      <small>
+                        {finalizedGapDetail.readiness.replaceAll('_', ' ')} · as of{' '}
+                        {time(finalizedGapDetail.generated_at_utc)}
+                      </small>
+                    </div>
+                    <a
+                      href={finalizedGapDetail.summary_artifact.url}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Inspect verified prefix <ArrowUpRight size={13} />
+                    </a>
+                  </div>
+                  <div className="ve-gap-evidence-stats">
+                    <div>
+                      <span>All-period finalized gap events</span>
+                      <b>{fmt(finalizedGapDetail.all_period_gap_event_count)}</b>
+                    </div>
+                    <div>
+                      <span>Campaign-window events in processed prefix</span>
+                      <b>{fmt(finalizedGapDetail.campaign_window_gap_event_count)}</b>
+                    </div>
+                    <div>
+                      <span>Replayable finalized segments</span>
+                      <b>
+                        {fmt(finalizedGapDetail.processed_segment_count)} /{' '}
+                        {fmt(finalizedGapDetail.replayable_catalog_segment_count)} ·{' '}
+                        {bytes(finalizedGapDetail.pending_source_bytes)} pending
+                      </b>
+                    </div>
+                  </div>
+                  <p>
+                    The campaign-window count covers the processed prefix only; while the source
+                    analysis is catching up, zero is not evidence that the campaign had no gaps.
+                    {finalizedGapDetail.latest_gap_event
+                      ? ` Latest gap in the prefix: ${finalizedGapDetail.latest_gap_event.reason.replaceAll('_', ' ')} at ${time(finalizedGapDetail.latest_gap_event.received_at_utc)}${finalizedGapDetail.latest_gap_event.in_campaign_window ? ' (inside the campaign window).' : ' (outside the campaign window).'}`
+                      : ' No gap event has been indexed in the current prefix.'}{' '}
+                    The analyzer read no active segment.
+                  </p>
+                </section>
+              )}
+            </div>
           )}
         </Panel>
       </div>
