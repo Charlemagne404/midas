@@ -1,5 +1,6 @@
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import Any
 
 import structlog
@@ -112,6 +113,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     from apps.api.reality import router as reality_router
 
     app.include_router(reality_router(config.reality_workspace.resolve()))
+    from apps.api.veritas import router as veritas_router
+
+    app.include_router(veritas_router(Path(__file__).resolve().parents[2]))
 
     @app.middleware("http")
     async def gate_failed_startup(request: Request, call_next: Any) -> Any:

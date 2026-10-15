@@ -138,6 +138,36 @@ curl --fail --silent 'http://127.0.0.1:8010/api/reality/forward?limit=5000'
 The `overview` and `operations` endpoints include bounded status and resource
 summaries. Do not use dashboard requests to modify campaign state.
 
+## Read-only Veritas dashboard
+
+The native **Veritas** page reads `GET /api/veritas/overview`. It summarizes
+committed Gate A/B evidence, the current hypothesis ledger, and the research
+inventory. Individual provenance links use
+`GET /api/veritas/artifacts/{identity}` and return the JSON object plus its
+SHA256 digest. Supported identities are `baseline`, `raw-funnel`, `capacity`,
+`break-even`, `ledger`, and `inventory`.
+
+The interface reads only those six repository artifacts. It rejects unknown
+identities, symlinked files, invalid JSON objects, and files larger than 512
+KiB. The overview omits raw market records and repository paths. These routes
+are read-only; they cannot change campaign state or submit orders. The page
+refreshes its overview every 60 seconds.
+
+Run focused verification from `/home/charlie/midas-veritas`:
+
+```bash
+/home/charlie/midas/.venv/bin/pytest -q tests/test_veritas_dashboard_api.py
+/home/charlie/midas/.venv/bin/ruff check \
+  apps/api/veritas.py apps/api/main.py tests/test_veritas_dashboard_api.py
+corepack pnpm --dir apps/web test
+corepack pnpm --dir apps/web lint
+corepack pnpm --dir apps/web format:check
+corepack pnpm --dir apps/web build
+```
+
+See [dashboard checkpoint 001](VERITAS_DASHBOARD_CHECKPOINT_001.md) for the
+displayed evidence and latest verification result.
+
 ## Verify Veritas code
 
 Focused economic and forensic checks:

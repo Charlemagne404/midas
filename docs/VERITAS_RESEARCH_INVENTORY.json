@@ -4,7 +4,7 @@
   "status": "in_progress",
   "baseline_commit": "f968095feb9c591de38fe12d7493224425f62f3a",
   "branch": "project/veritas",
-  "last_checkpoint": "docs/VERITAS_SHADOW_CANARY_FAILURE_FORENSICS_001.md",
+  "last_checkpoint": "docs/VERITAS_DASHBOARD_CHECKPOINT_001.md",
   "datasets": [
     {
       "dataset_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
@@ -409,6 +409,34 @@
       "raw_open_segment_read": false,
       "orders_submitted": false,
       "promotion": "historical forensic classification only; no campaign repair or strategy promotion"
+    },
+    {
+      "experiment_id": "VERITAS-GATE-I-DASHBOARD-20261015-001",
+      "type": "bounded_read_only_research_evidence_dashboard",
+      "status": "implemented_and_verified",
+      "source_dataset_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
+      "evidence": "docs/VERITAS_DASHBOARD_CHECKPOINT_001.md",
+      "analysis_version": "veritas-dashboard-v1",
+      "overview_endpoint": "GET /api/veritas/overview",
+      "artifact_endpoint": "GET /api/veritas/artifacts/{identity}",
+      "artifact_allowlist": [
+        "baseline",
+        "raw-funnel",
+        "capacity",
+        "break-even",
+        "ledger",
+        "inventory"
+      ],
+      "max_artifact_bytes": 524288,
+      "api_tests_passed": 3,
+      "web_tests_passed": 29,
+      "web_test_files_passed": 5,
+      "web_lint_passed": true,
+      "web_format_passed": true,
+      "web_build_passed": true,
+      "protected_campaign_mutated": false,
+      "orders_submitted": false,
+      "promotion": "bounded evidence presentation only; no model, policy, or strategy promotion"
     }
   ],
   "models": [],

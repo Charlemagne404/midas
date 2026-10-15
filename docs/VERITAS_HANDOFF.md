@@ -18,6 +18,8 @@ state of the work.
   operations, and forward-research interfaces.
 - `apps/web/` is the API-backed dashboard. Reality's native view is
   `apps/web/src/Reality.tsx`, with styles and history helpers beside it.
+  Veritas has its own native page at `apps/web/src/Veritas.tsx`; its read-only,
+  artifact-backed API is in `apps/api/veritas.py`.
 - `deploy/reality*.json` defines collector and research settings.
   `deploy/systemd/user/` contains the recorder, shadow worker, API, web, archive,
   capacity, scheduled-research, and integrity units and timers.
@@ -58,6 +60,15 @@ an empty finalized source segment as a continuity break. Release commit
 `8775bda` added the zero-count guard and regression test; the canary artifact
 was left failed and unchanged. See the
 [shadow-canary forensics](VERITAS_SHADOW_CANARY_FAILURE_FORENSICS_001.md).
+
+The native Veritas dashboard is implemented and available from the main
+navigation. It exposes bounded summaries from versioned Gate A/B artifacts,
+the hypothesis ledger, and the research inventory. Its API only returns
+allowlisted JSON artifacts with SHA256 digests; it does not expose raw market
+records or campaign controls. The overview omits source paths; a full artifact
+response retains any provenance path fields present in that versioned JSON. See
+[dashboard checkpoint 001](VERITAS_DASHBOARD_CHECKPOINT_001.md) and the
+[dashboard API procedures](VERITAS_OPERATIONS.md#read-only-veritas-dashboard).
 
 ## Active campaigns and services
 
