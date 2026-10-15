@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-15T00:07:43.468875+00:00",
+  "updated_at_utc": "2026-10-15T00:21:58.731649+00:00",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -673,8 +673,8 @@
         "The currently loaded configuration is context and does not prove settings for every historical source gap.",
         "Public observations do not establish fills or profitability."
       ],
-      "decision": "The v6 outcome/config audit (H014) found the stale issue entries were pair-wide and the last captured pre-campaign settings were consistent with the frozen thresholds. Do not change the collector or campaign; align individual stale events to preceding updates before considering a separate cadence study.",
-      "status": "continue"
+      "decision": "The v6/v7 follow-up mapped the affected outcomes and found stale issue age just above the active 60-second source threshold. This diagnostic is complete; do not change the collector or campaign.",
+      "status": "completed"
     },
     {
       "hypothesis_id": "VERITAS-H011",
@@ -883,15 +883,82 @@
         "The last captured configured process start predates the campaign; it does not prove settings for every process state or identify causal behavior.",
         "Public source measurements do not establish fills or profitability."
       ],
-      "decision": "The stale entries were pair-wide in this snapshot, and the preceding captured startup settings were consistent with the frozen campaign. Keep Reality unchanged. Align stale issues and scheduled decisions to their preceding updates before designing any separate source or cadence study.",
-      "status": "continue"
+      "decision": "The v7 event-age audit found no one-sided stale pattern or startup-threshold mismatch in this snapshot. Keep the frozen campaign and collector unchanged.",
+      "status": "completed"
+    },
+    {
+      "hypothesis_id": "VERITAS-H015",
+      "title": "Do scheduled stale decisions fall between the campaign freshness gate and the source stale threshold?",
+      "mechanism": "The frozen campaign rejects paired decisions when either book is older than five seconds, while the collector labels a source outcome stale after sixty seconds. Quantifying event-aligned outcome ages can distinguish quality-gate abstentions from source stale events.",
+      "experiment_id": "VERITAS-GATE-A-GAP-AGE-20261015-001",
+      "dataset_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
+      "success_metric": "Measure same-recorded-gap-epoch receiver-time age from the previous outcome update to each stale gap entry and scheduled decision; compare with both frozen thresholds and retain missing, cross-gap, and nonmonotonic counts.",
+      "result": {
+        "status": "completed_snapshot_freshness_failures_below_collector_stale_threshold",
+        "analysis_version": "veritas-source-replay-v7",
+        "evidence": "docs/VERITAS_GATE_A_GAP_AGE_001.json",
+        "source_manifest_sha256": "2d437b886055d05022d95bd61818d7f15b91e7a548b61607ffe6cb0da832bed6",
+        "finalized_segments": 1914,
+        "source_bytes": 448390042,
+        "source_last_finalized_ordinal": 231059,
+        "journal_event_tail_sequence": 33924,
+        "decision_rows_sampled": 2945,
+        "decisions_reproduced": 2945,
+        "decisions_uncovered_after_finalized_prefix": 0,
+        "mismatches": 0,
+        "active_segment_read": false,
+        "book_resynchronization_gaps": 191,
+        "affected_issue_entries": 1108,
+        "affected_issue_entries_by_reason": {
+          "stale": 1062,
+          "top_divergence": 39,
+          "advertised_top_pending": 6,
+          "timestamp_regression": 1
+        },
+        "stale_issue_entries_above_active_threshold": 1062,
+        "stale_issue_entries_at_or_below_active_threshold": 0,
+        "active_source_stale_threshold_ms": 60000,
+        "stale_issue_age_ms_range": {
+          "minimum": "60008.304232",
+          "maximum": "64341.91235"
+        },
+        "gap_issue_ages_missing_or_censored": 0,
+        "scheduled_decisions": 2945,
+        "scheduled_decisions_with_both_books": 2945,
+        "frozen_decision_freshness_limit_ms": 5000,
+        "freshness_violation_decisions": 1895,
+        "freshness_violation_fraction": "0.643463",
+        "freshness_violating_legs": 3790,
+        "freshness_violating_leg_count_by_decision": {
+          "0": 1050,
+          "2": 1895
+        },
+        "legs_above_5s_and_at_or_below_60s": 3732,
+        "legs_above_60s": 58,
+        "decisions_with_both_legs_above_60s": 29,
+        "decision_markets_with_matching_yes_no_age_distributions": 14,
+        "decision_age_missing_cross_gap_or_negative": 0,
+        "process_start_epochs_scanned": 15,
+        "process_start_epochs_with_allowlisted_config": 9,
+        "process_start_epochs_in_campaign_window": 0,
+        "orders_submitted": false,
+        "promotion": "diagnostic only; no campaign, collector, cadence, policy, strategy, or profitability promotion"
+      },
+      "limitations": [
+        "This is one bounded finalized source and selected campaign snapshot; repeated decisions and issue entries are correlated.",
+        "Elapsed ages use recorder receiver timestamps and do not measure upstream venue quote age or prove that a source update could have arrived sooner.",
+        "The source stale threshold and campaign decision freshness gate serve different purposes; this analysis does not establish that either setting should change.",
+        "The source gap record does not identify a counterfactual trigger or establish fills or profitability."
+      ],
+      "decision": "The reconstructed stale issue timing matches the active 60-second source threshold. Most frozen 5-second freshness failures occurred below that threshold, with both outcomes aged together. Keep Reality unchanged and prioritize a separate, predeclared sampling/horizon study.",
+      "status": "completed"
     }
   ],
   "next_research_questions": [
-    "Does event-aligned time since the last per-outcome update explain finalized stale issues and scheduled freshness violations relative to the recorded 60-second threshold?",
-    "Which predeclared future horizons and quality-aware sampling strata improve synchronized public follow-up coverage in a separate campaign?",
+    "Which predeclared future horizons and activity-aware sampling strata improve synchronized public follow-up coverage in a separate campaign?",
     "Does a broader, longer source panel produce any positive quantity-specific gross complement before modeling fees or execution?",
     "What independent verification is required before a positive candidate can enter a matched hypothetical strategy comparison?",
-    "Can existing Arena scheduling and Research Director interfaces support bounded Veritas hypotheses without duplicating job control?"
+    "Can existing Arena scheduling and Research Director interfaces support bounded Veritas hypotheses without duplicating job control?",
+    "What Veritas evidence should be exposed in the native dashboard after the data contracts stabilize?"
   ]
 }

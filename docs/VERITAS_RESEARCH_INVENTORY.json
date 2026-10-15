@@ -4,7 +4,7 @@
   "status": "in_progress",
   "baseline_commit": "f968095feb9c591de38fe12d7493224425f62f3a",
   "branch": "project/veritas",
-  "last_checkpoint": "docs/VERITAS_GATE_A_CHECKPOINT_009.md",
+  "last_checkpoint": "docs/VERITAS_GATE_A_CHECKPOINT_010.md",
   "datasets": [
     {
       "dataset_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
@@ -267,6 +267,44 @@
       "active_segment_read": false,
       "orders_submitted": false,
       "promotion": "diagnostic only; no collector, cadence, campaign, strategy, or profitability promotion"
+    },
+    {
+      "experiment_id": "VERITAS-GATE-A-GAP-AGE-20261015-001",
+      "type": "event_aligned_resynchronization_and_scheduled_outcome_age",
+      "status": "completed_snapshot_freshness_failures_below_collector_stale_threshold",
+      "source_dataset_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
+      "evidence": "docs/VERITAS_GATE_A_GAP_AGE_001.json",
+      "analysis_version": "veritas-source-replay-v7",
+      "source_manifest_sha256": "2d437b886055d05022d95bd61818d7f15b91e7a548b61607ffe6cb0da832bed6",
+      "finalized_segments": 1914,
+      "source_bytes": 448390042,
+      "source_last_finalized_ordinal": 231059,
+      "decision_rows_sampled": 2945,
+      "decisions_reproduced": 2945,
+      "decisions_uncovered_after_finalized_prefix": 0,
+      "mismatches": 0,
+      "active_segment_read": false,
+      "book_resynchronization_gaps": 191,
+      "affected_issue_entries": 1108,
+      "stale_issue_entries": 1062,
+      "stale_issue_entries_above_active_threshold": 1062,
+      "stale_issue_entries_at_or_below_active_threshold": 0,
+      "stale_issue_age_ms_range": {
+        "minimum": "60008.304232",
+        "maximum": "64341.91235"
+      },
+      "frozen_decision_freshness_limit_ms": 5000,
+      "active_source_stale_threshold_ms": 60000,
+      "freshness_violation_decisions": 1895,
+      "scheduled_decisions": 2945,
+      "freshness_violating_leg_count_by_decision": {
+        "0": 1050,
+        "2": 1895
+      },
+      "legs_above_5s_and_at_or_below_60s": 3732,
+      "legs_above_60s": 58,
+      "orders_submitted": false,
+      "promotion": "diagnostic only; no campaign, collector, cadence, policy, strategy, or profitability promotion"
     }
   ],
   "models": [],

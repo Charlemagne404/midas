@@ -1,9 +1,12 @@
 # Project Veritas handoff
 
-Reality Mission 2 is complete at `714f824` and merged into `main`. This document
-records the current system and research state so Veritas can begin with an
-evidence-based review. Veritas requirements and implementation scope have not
-been defined, and no Veritas implementation has started.
+Reality Mission 2 is complete at `714f824` and merged into `main`. Project
+Veritas is now active on the separate `project/veritas` branch, based on the
+release checkout. Its current work covers read-only source replay, decision
+freshness, market opportunity, and hypothetical economics. It has not changed
+the Reality campaign and does not include orders, wallets, credentials, or
+live execution. Use the research backlog, ledger, and Gate A checkpoints as
+the current state of the work.
 
 ## Current architecture
 
@@ -89,11 +92,12 @@ contents disposable; preserve the existing operational data in place.
 
 ## Recommended starting points
 
-1. Read [Reality Mission 2 acceptance](REALITY_MISSION2_ACCEPTANCE.md),
-   [Reality architecture](REALITY_ENGINE.md), and the
-   [Calibration Laboratory report](REALITY_CALIBRATION_LABORATORY.md).
-2. Review the active campaign's immutable identity and current status through
-   read-only inspection; do not launch a second worker against its store.
-3. Define Veritas' question, evidence requirements, and boundaries before
-   implementation. Start in a separate branch or worktree from the integrated
-   `main`, leaving the Reality operations worktree untouched.
+1. Read the [research backlog](VERITAS_RESEARCH_BACKLOG.md), [research
+   ledger](VERITAS_RESEARCH_LEDGER.json), [operations
+   procedures](VERITAS_OPERATIONS.md), and latest
+   [Gate A checkpoint 010](VERITAS_GATE_A_CHECKPOINT_010.md).
+2. Review the protected campaign's immutable identity and service health
+   through read-only checks; do not launch a second worker against its store.
+3. Continue research changes in the `project/veritas` worktree. Keep Reality
+   operations untouched and do not merge into `main` without a separate
+   integration request.

@@ -57,12 +57,15 @@ market. Version 5 adds five-minute family activity groups, normalized issue
 labels mapped to campaign market IDs, and unmapped-entry counts. Version 6
 maps finalized gap issue entries to campaign market and YES/NO outcome and
 records allowlisted fields from process-start configuration records. It omits
-outcome asset identifiers and startup storage paths. Input lag starts at the
-recorded frame receiver timestamp; zero skew is not evidence of venue-level
-simultaneity.
+outcome asset identifiers and startup storage paths. Version 7 also measures
+receiver-time elapsed from preceding same-gap-epoch outcome updates to
+resynchronization issues and scheduled decisions. It reports counts against
+the frozen decision freshness gate and the source engine's active stale
+threshold. Input lag starts at the recorded frame receiver timestamp; zero
+skew is not evidence of venue-level simultaneity.
 The latest combined snapshot is
-[VERITAS_GATE_A_GAP_OUTCOME_001.json](VERITAS_GATE_A_GAP_OUTCOME_001.json),
-documented in [Gate A checkpoint 009](VERITAS_GATE_A_CHECKPOINT_009.md).
+[VERITAS_GATE_A_GAP_AGE_001.json](VERITAS_GATE_A_GAP_AGE_001.json),
+documented in [Gate A checkpoint 010](VERITAS_GATE_A_CHECKPOINT_010.md).
 Intervals spanning source discontinuities are censored. These measurements
 are diagnostic and do not modify the frozen campaign or establish fills.
 

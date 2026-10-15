@@ -189,6 +189,12 @@ def _new_timing_bucket() -> dict[str, Any]:
         "max_pair_age_ns": [],
         "cross_outcome_skew_ns": [],
         "freshness_violation_decisions": 0,
+        "freshness_violating_legs": 0,
+        "freshness_violating_leg_count_by_decision": Counter(),
+        "collector_stale_threshold_violating_legs": 0,
+        "collector_stale_threshold_violating_leg_count_by_decision": Counter(),
+        "freshness_violating_legs_at_or_below_collector_stale_threshold": 0,
+        "active_stale_threshold_ms_counts": Counter(),
     }
 
 
@@ -216,8 +222,20 @@ def _record_timing(bucket: dict[str, Any], sample: dict[str, Any], limit_ns: int
     bucket["market_outcomes_updated_in_source_frame"][
         str(sample["market_outcomes_updated_in_source_frame"])
     ] += 1
-    if sample["freshness_violating_legs"]:
+    freshness_violating_legs = sample["freshness_violating_legs"]
+    stale_threshold_violating_legs = sample["collector_stale_threshold_violating_legs"]
+    if freshness_violating_legs:
         bucket["freshness_violation_decisions"] += 1
+    bucket["freshness_violating_legs"] += freshness_violating_legs
+    bucket["freshness_violating_leg_count_by_decision"][str(freshness_violating_legs)] += 1
+    bucket["collector_stale_threshold_violating_legs"] += stale_threshold_violating_legs
+    bucket["collector_stale_threshold_violating_leg_count_by_decision"][
+        str(stale_threshold_violating_legs)
+    ] += 1
+    bucket["freshness_violating_legs_at_or_below_collector_stale_threshold"] += sample[
+        "freshness_violating_legs_at_or_below_collector_stale_threshold"
+    ]
+    bucket["active_stale_threshold_ms_counts"][str(sample["active_stale_threshold_ms"])] += 1
     if sample["max_pair_age_ns"] is not None:
         bucket["max_pair_age_ns"].append(sample["max_pair_age_ns"])
     if sample["cross_outcome_skew_ns"] is not None:
@@ -477,6 +495,114 @@ def _record_gap_issue_market_activity(
         unmapped_by_block.setdefault((block_start_ns, reason), Counter()).update(unmapped_issues)
 
 
+def _new_gap_issue_age_bucket() -> dict[str, Any]:
+    return {
+        "issue_entries": 0,
+        "age_ns": [],
+        "missing_prior_book_update": 0,
+        "prior_update_before_latest_gap": 0,
+        "negative_receiver_elapsed": 0,
+        "active_stale_threshold_ns": Counter(),
+        "stale_issue_above_threshold": 0,
+        "stale_issue_at_or_below_threshold": 0,
+    }
+
+
+def _record_gap_issue_update_ages(
+    context: Context,
+    received_ns: int,
+    affected_assets: Any,
+    age_by_market_outcome: dict[tuple[str, str, str, str], dict[str, Any]],
+) -> None:
+    if not isinstance(affected_assets, dict):
+        return
+    token_to_market_outcome = {
+        str(token): (str(market["id"]), _gap_outcome_label(outcome))
+        for market in context.cohort.values()
+        for token, outcome in market["tokens"].items()
+    }
+    for token, issue in affected_assets.items():
+        mapping = token_to_market_outcome.get(token) if isinstance(token, str) else None
+        if mapping is None:
+            continue
+        market_id, outcome = mapping
+        issue_label = _gap_issue_label(issue)
+        key = ("book_resynchronization", market_id, outcome, issue_label)
+        bucket = age_by_market_outcome.setdefault(key, _new_gap_issue_age_bucket())
+        bucket["issue_entries"] += 1
+        book = context.engine.books.get(token)
+        if book is None:
+            bucket["missing_prior_book_update"] += 1
+            continue
+        if book["last"][0] <= context.engine.last_gap_ordinal:
+            bucket["prior_update_before_latest_gap"] += 1
+            continue
+        elapsed_ns = received_ns - book["received_ns"]
+        if elapsed_ns < 0:
+            bucket["negative_receiver_elapsed"] += 1
+            continue
+        bucket["age_ns"].append(elapsed_ns)
+        threshold_ns = context.engine.stale_ns
+        bucket["active_stale_threshold_ns"][threshold_ns] += 1
+        if issue_label == "stale":
+            if elapsed_ns > threshold_ns:
+                bucket["stale_issue_above_threshold"] += 1
+            else:
+                bucket["stale_issue_at_or_below_threshold"] += 1
+
+
+def _new_decision_outcome_age_bucket() -> dict[str, Any]:
+    return {
+        "scheduled_legs": 0,
+        "age_ns": [],
+        "age_buckets": Counter(),
+        "missing_book": 0,
+        "prior_update_before_latest_gap": 0,
+        "negative_receiver_elapsed": 0,
+        "freshness_violating_legs": 0,
+        "active_stale_threshold_ns": Counter(),
+        "age_above_active_stale_threshold_legs": 0,
+    }
+
+
+def _record_decision_outcome_ages(
+    event: dict[str, Any],
+    context: Context,
+    max_freshness_ns: int,
+    age_by_market_outcome: dict[tuple[str, str], dict[str, Any]],
+) -> None:
+    market = context.cohort.get(event["condition"])
+    if market is None:
+        return
+    now_ns = event["decision_ns"]
+    market_id = str(market["id"])
+    for token, raw_outcome in market["tokens"].items():
+        outcome = _gap_outcome_label(raw_outcome)
+        bucket = age_by_market_outcome.setdefault(
+            (market_id, outcome), _new_decision_outcome_age_bucket()
+        )
+        bucket["scheduled_legs"] += 1
+        book = context.engine.books.get(token)
+        if book is None:
+            bucket["missing_book"] += 1
+            continue
+        if book["last"][0] <= context.engine.last_gap_ordinal:
+            bucket["prior_update_before_latest_gap"] += 1
+            continue
+        elapsed_ns = now_ns - book["received_ns"]
+        if elapsed_ns < 0:
+            bucket["negative_receiver_elapsed"] += 1
+            continue
+        bucket["age_ns"].append(elapsed_ns)
+        bucket["age_buckets"][_interval_band(elapsed_ns)] += 1
+        if elapsed_ns > max_freshness_ns:
+            bucket["freshness_violating_legs"] += 1
+        threshold_ns = context.engine.stale_ns
+        bucket["active_stale_threshold_ns"][threshold_ns] += 1
+        if elapsed_ns > threshold_ns:
+            bucket["age_above_active_stale_threshold_legs"] += 1
+
+
 def _finish_family_activity_blocks(
     source_blocks: dict[tuple[str, int], dict[str, Any]],
     decision_blocks: dict[tuple[str, int], dict[str, Any]],
@@ -563,6 +689,22 @@ def _finish_timing_bucket(bucket: dict[str, Any]) -> dict[str, Any]:
         "maximum_leg_age_ms": _timing_distribution(bucket["max_pair_age_ns"]),
         "cross_outcome_skew_ms": _timing_distribution(bucket["cross_outcome_skew_ns"]),
         "freshness_violation_decisions": bucket["freshness_violation_decisions"],
+        "freshness_violating_legs": bucket["freshness_violating_legs"],
+        "freshness_violating_leg_count_by_decision": dict(
+            sorted(bucket["freshness_violating_leg_count_by_decision"].items())
+        ),
+        "collector_stale_threshold_violating_legs": (
+            bucket["collector_stale_threshold_violating_legs"]
+        ),
+        "collector_stale_threshold_violating_leg_count_by_decision": dict(
+            sorted(bucket["collector_stale_threshold_violating_leg_count_by_decision"].items())
+        ),
+        "freshness_violating_legs_at_or_below_collector_stale_threshold": (
+            bucket["freshness_violating_legs_at_or_below_collector_stale_threshold"]
+        ),
+        "active_stale_threshold_ms_counts": dict(
+            sorted(bucket["active_stale_threshold_ms_counts"].items())
+        ),
     }
 
 
@@ -589,6 +731,9 @@ def _decision_timing(
     ages = [now - book["received_ns"] for book in books]
     times = [book["received_ns"] for book in books]
     lag_ns = now - source_ref["received_ns"]
+    freshness_violating_legs = sum(age > max_freshness_ns for age in ages)
+    stale_threshold_ns = context.engine.stale_ns
+    collector_stale_threshold_violating_legs = sum(age > stale_threshold_ns for age in ages)
     return {
         "source_input_lag_ns": lag_ns,
         "quality_reason": event.get("quality_reason") or "eligible",
@@ -598,7 +743,12 @@ def _decision_timing(
         "market_outcomes_updated_in_source_frame": market_updates_in_frame,
         "max_pair_age_ns": max(ages) if len(books) == 2 else None,
         "cross_outcome_skew_ns": max(times) - min(times) if len(times) == 2 else None,
-        "freshness_violating_legs": sum(age > max_freshness_ns for age in ages),
+        "freshness_violating_legs": freshness_violating_legs,
+        "collector_stale_threshold_violating_legs": collector_stale_threshold_violating_legs,
+        "freshness_violating_legs_at_or_below_collector_stale_threshold": sum(
+            max_freshness_ns < age <= stale_threshold_ns for age in ages
+        ),
+        "active_stale_threshold_ms": int(stale_threshold_ns // 1_000_000),
     }
 
 
@@ -898,6 +1048,8 @@ def reconcile_forward_sources(
     source_gap_reasons: Counter[str] = Counter()
     source_gap_affected_asset_counts: Counter[str] = Counter()
     source_gap_affected_issue_counts: defaultdict[str, Counter[str]] = defaultdict(Counter)
+    source_gap_issue_update_age: dict[tuple[str, str, str, str], dict[str, Any]] = {}
+    decision_age_by_market_outcome: dict[tuple[str, str], dict[str, Any]] = {}
     activity_discontinuities: Counter[str] = Counter()
     collector_process_start_epochs: list[dict[str, Any]] = []
     activity_gap_epoch = 0
@@ -978,6 +1130,13 @@ def reconcile_forward_sources(
                         label = _gap_issue_label(issue)
                         gap_block["affected_issue_counts_by_reason"][reason][label] += 1
                         source_gap_affected_issue_counts[reason][label] += 1
+                    if reason == "book_resynchronization":
+                        _record_gap_issue_update_ages(
+                            context,
+                            now_ns,
+                            affected,
+                            source_gap_issue_update_age,
+                        )
                 _record_gap_issue_market_activity(
                     context,
                     reason,
@@ -1040,6 +1199,12 @@ def reconcile_forward_sources(
                         )
                     )
                     timing = _decision_timing(target, context, ref, max_freshness_ns)
+                    _record_decision_outcome_ages(
+                        target,
+                        context,
+                        max_freshness_ns,
+                        decision_age_by_market_outcome,
+                    )
                     _record_timing(timing_all, timing, lag_limit_ns)
                     _record_timing(timing_by_reason[timing["quality_reason"]], timing, lag_limit_ns)
                     _record_timing(timing_by_market[timing["market_id"]], timing, lag_limit_ns)
@@ -1092,6 +1257,33 @@ def reconcile_forward_sources(
             }
             for market_id, bucket in sorted(timing_by_market.items())
         },
+        "by_market_outcome_age": [
+            {
+                "market_id": market_id,
+                "outcome": outcome,
+                "scheduled_legs": data["scheduled_legs"],
+                "same_recorded_gap_epoch_age_observations": len(data["age_ns"]),
+                "age_ms": _timing_distribution(data["age_ns"]),
+                "age_interval_buckets": {
+                    label: data["age_buckets"][label] for label, _ in _UPDATE_INTERVAL_BUCKETS
+                },
+                "missing_book": data["missing_book"],
+                "prior_update_before_latest_gap": data["prior_update_before_latest_gap"],
+                "negative_receiver_elapsed": data["negative_receiver_elapsed"],
+                "freshness_violating_legs_same_recorded_gap_epoch": (
+                    data["freshness_violating_legs"]
+                ),
+                "active_stale_threshold_counts_ms": {
+                    str(int(threshold_ns // 1_000_000)): count
+                    for threshold_ns, count in sorted(data["active_stale_threshold_ns"].items())
+                },
+                "age_above_active_stale_threshold_legs": (
+                    data["age_above_active_stale_threshold_legs"]
+                ),
+                "frozen_max_freshness_ms": identity["max_freshness_ms"],
+            }
+            for (market_id, outcome), data in sorted(decision_age_by_market_outcome.items())
+        ],
     }
     final_families = context.families.identities()
     family_by_condition = {
@@ -1160,6 +1352,27 @@ def reconcile_forward_sources(
             source_gap_issue_by_market_block.items()
         )
     ]
+    source_gap_issue_update_age_by_market_outcome = [
+        {
+            "gap_reason": reason,
+            "market_id": market_id,
+            "outcome": outcome,
+            "issue": issue,
+            "issue_entries": data["issue_entries"],
+            "same_recorded_gap_epoch_age_observations": len(data["age_ns"]),
+            "age_ms": _timing_distribution(data["age_ns"]),
+            "missing_prior_book_update": data["missing_prior_book_update"],
+            "prior_update_before_latest_gap": data["prior_update_before_latest_gap"],
+            "negative_receiver_elapsed": data["negative_receiver_elapsed"],
+            "active_stale_threshold_counts_ms": {
+                str(int(threshold_ns // 1_000_000)): count
+                for threshold_ns, count in sorted(data["active_stale_threshold_ns"].items())
+            },
+            "stale_issue_above_threshold": data["stale_issue_above_threshold"],
+            "stale_issue_at_or_below_threshold": data["stale_issue_at_or_below_threshold"],
+        }
+        for (reason, market_id, outcome, issue), data in sorted(source_gap_issue_update_age.items())
+    ]
     source_gap_unmapped_issue_activity_by_block = [
         {
             "block_start_ns": block_start_ns,
@@ -1170,7 +1383,7 @@ def reconcile_forward_sources(
     ]
     # Keep only aggregate mismatch categories; no raw market or event payloads are exported.
     return {
-        "analysis_version": "veritas-source-replay-v6",
+        "analysis_version": "veritas-source-replay-v7",
         "captured_ns": time.time_ns(),
         "campaign_id": campaign_id,
         "campaign_root": str(campaign_root),
@@ -1208,6 +1421,9 @@ def reconcile_forward_sources(
             for reason, issues in sorted(source_gap_affected_issue_counts.items())
         },
         "source_gap_issue_activity_by_market": source_gap_issue_activity_by_market,
+        "source_gap_issue_age_from_last_update_by_market_outcome": (
+            source_gap_issue_update_age_by_market_outcome
+        ),
         "source_gap_issue_activity_by_market_5min_block": (
             source_gap_issue_activity_by_market_block
         ),
@@ -1245,7 +1461,8 @@ def reconcile_forward_sources(
             "aggregated gap issue labels by five-minute family block, mapping issue entries to "
             "campaign market IDs and YES/NO outcomes without exporting asset identifiers. It also "
             "reports allowlisted configuration fields from finalized collector process-start "
-            "records, excluding storage paths. It does not infer omitted decisions, fills, or "
-            "outcomes."
+            "records, excluding storage paths. It also compares campaign gap issue ages and "
+            "scheduled per-outcome ages with preceding same-gap-epoch book updates, censoring "
+            "missing or pre-gap updates. It does not infer omitted decisions, fills, or outcomes."
         ),
     }

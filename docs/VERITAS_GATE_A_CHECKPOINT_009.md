@@ -7,24 +7,24 @@ process-start records. It does not accept Gate A or change the Reality campaign.
 ## Protected-state check
 
 - The protected campaign remains
-  \`adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46\`.
+  `adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46`.
   Its campaign configuration SHA256 remains
-  \`aa8acb2b46823c1a1e3ac5d01a57dde917746c2c7471098ae2a4598875e322f5\`.
-- The Reality recorder (\`midas-reality.service\`) and shadow worker
-  (\`midas-reality-shadow.service\`) remained active, each with
-  \`NRestarts=0\`, after the replay.
-- The replay read finalized cataloged \`.seg\` files only. It did not read the
-  active \`.open\` segment or write to the Reality worktree. No order was
+  `aa8acb2b46823c1a1e3ac5d01a57dde917746c2c7471098ae2a4598875e322f5`.
+- The Reality recorder (`midas-reality.service`) and shadow worker
+  (`midas-reality-shadow.service`) remained active, each with
+  `NRestarts=0`, after the replay.
+- The replay read finalized cataloged `.seg` files only. It did not read the
+  active `.open` segment or write to the Reality worktree. No order was
   submitted, and no wallet or trading credential was used.
 
 ## Finalized-source replay
 
 The reproducible aggregate is
 [VERITAS_GATE_A_GAP_OUTCOME_001.json](VERITAS_GATE_A_GAP_OUTCOME_001.json),
-analysis version \`veritas-source-replay-v6\`. It covers 1,886 finalized
+analysis version `veritas-source-replay-v6`. It covers 1,886 finalized
 segments (442,295,829 bytes) through ordinal 228,329 and verified 1,882 source
 checkpoints. The source manifest SHA256 is
-\`960fa420cb69c5d9dad8d5d4738cc16ef0db5b86823b8fc54f85a3402dddb542\`.
+`960fa420cb69c5d9dad8d5d4738cc16ef0db5b86823b8fc54f85a3402dddb542`.
 All 2,729 sampled decisions reproduced, with zero mismatches and none beyond
 the finalized prefix.
 
@@ -86,7 +86,7 @@ Its recorded configuration was:
 - Queue size 32, segment duration 300 seconds, and near-expiry tag 2.
 - Comparison window 15 seconds and timeout 5 seconds.
 - Reconstruction version 4 and implementation SHA256
-  \`9231e11c969cc95af607d847c7d5aa32418a91c21152b214cf9f170d517c0c9f\`.
+  `9231e11c969cc95af607d847c7d5aa32418a91c21152b214cf9f170d517c0c9f`.
 
 This captured configuration is consistent with the campaign's eight-market
 selection and recorded freshness/resync thresholds. It is context from the
@@ -97,7 +97,7 @@ individual gap or that they fully describe every live process state.
 
 - Focused source replay tests: **5 passed**.
 - Ruff check and format: passed.
-- Strict mypy for \`packages/midas/veritas\`: passed.
+- Strict mypy for `packages/midas/veritas`: passed.
 - The v6 artifact contains aggregate market and outcome labels only; it does
   not export outcome asset identifiers or startup storage paths.
 - No campaign or collector setting was changed. No future campaign, training

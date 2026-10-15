@@ -136,16 +136,16 @@ def _fixture(tmp_path: Path) -> tuple[Path, Path, dict[str, Any]]:
         monotonic_ns=0,
         cohort=[_market(), _market("2", CONDITION_TWO, "21", "22")],
     )
+    frame = store.append("frame", _frame(), received_ns=START + 10**6, monotonic_ns=10**6)
     store.append(
         "gap",
         dict(
             reason="book_resynchronization",
             affected_assets={"11": "stale", "22": "top_divergence"},
         ),
-        received_ns=START + 500_000,
-        monotonic_ns=500_000,
+        received_ns=START + 2 * 10**6,
+        monotonic_ns=2 * 10**6,
     )
-    frame = store.append("frame", _frame(), received_ns=START + 10**6, monotonic_ns=10**6)
     store.close()
     source = manifest(raw)
 
@@ -271,13 +271,17 @@ def test_reconciles_finalized_records_and_ignores_active_segment(tmp_path):
     assert timing["source_input_lag_ms"]["p50_nearest_rank_ms"] == "1"
     assert timing["maximum_leg_age_ms"]["maximum_ms"] == "1"
     assert timing["cross_outcome_skew_ms"]["maximum_ms"] == "0"
+    assert timing["freshness_violating_leg_count_by_decision"] == {"0": len(rows)}
+    assert timing["collector_stale_threshold_violating_legs"] == 0
+    assert timing["collector_stale_threshold_violating_leg_count_by_decision"] == {"0": len(rows)}
+    assert timing["freshness_violating_legs_at_or_below_collector_stale_threshold"] == 0
     assert report["decision_timing"]["by_quality_reason"]["eligible"]["decisions"] == len(rows)
     assert report["decision_timing"]["by_market"]["1"]["decisions"] == 1
     assert report["decision_timing"]["by_market"]["2"]["decisions"] == 1
     assert report["decision_timing"]["by_market"]["1"][
         "market_outcomes_updated_in_source_frame"
     ] == {"2": 1}
-    assert report["analysis_version"] == "veritas-source-replay-v6"
+    assert report["analysis_version"] == "veritas-source-replay-v7"
     activity = report["source_activity_by_market"][0]
     assert activity["touched_book_update_frames"] == 1
     assert activity["both_outcome_update_frames"] == 1
@@ -298,6 +302,28 @@ def test_reconciles_finalized_records_and_ignores_active_segment(tmp_path):
     assert market_gap_by_id["2"]["gap_records_by_outcome_count"] == {"1": 1}
     market_gap_block = report["source_gap_issue_activity_by_market_5min_block"]
     assert len(market_gap_block) == 2
+    gap_ages = {
+        (row["market_id"], row["outcome"], row["issue"]): row
+        for row in report["source_gap_issue_age_from_last_update_by_market_outcome"]
+    }
+    stale_gap_age = gap_ages[("1", "yes", "stale")]
+    assert stale_gap_age["same_recorded_gap_epoch_age_observations"] == 1
+    assert stale_gap_age["age_ms"]["p50_nearest_rank_ms"] == "1"
+    assert stale_gap_age["active_stale_threshold_counts_ms"] == {"60000": 1}
+    assert stale_gap_age["stale_issue_above_threshold"] == 0
+    assert stale_gap_age["stale_issue_at_or_below_threshold"] == 1
+    decision_ages = {
+        (row["market_id"], row["outcome"]): row
+        for row in report["decision_timing"]["by_market_outcome_age"]
+    }
+    yes_age = decision_ages[("1", "yes")]
+    assert yes_age["same_recorded_gap_epoch_age_observations"] == 1
+    assert yes_age["age_ms"]["p50_nearest_rank_ms"] == "1"
+    assert yes_age["age_interval_buckets"]["0_to_250_ms"] == 1
+    assert yes_age["freshness_violating_legs_same_recorded_gap_epoch"] == 0
+    assert yes_age["active_stale_threshold_counts_ms"] == {"60000": 1}
+    assert yes_age["age_above_active_stale_threshold_legs"] == 0
+    assert yes_age["frozen_max_freshness_ms"] == 5000
     assert report["source_gap_unmapped_issue_counts_by_reason"] == {}
     process_starts = report["collector_process_start_configuration"]
     assert process_starts["epochs_scanned"] == 1
