@@ -1,6 +1,7 @@
 import gzip
 import hashlib
 import json
+import shutil
 from pathlib import Path
 
 from fastapi import FastAPI
@@ -238,6 +239,144 @@ def fixture_client(tmp_path: Path) -> TestClient:
     return TestClient(app)
 
 
+def write_coverage_pilot_fixture(root: Path) -> Path:
+    source_root = Path(__file__).resolve().parents[1] / "packages" / "midas" / "veritas"
+    module_dir = root / "packages" / "midas" / "veritas"
+    module_dir.mkdir(parents=True)
+    source_names = (
+        "coverage_pilot.py",
+        "observatory.py",
+        "continuous_analysis.py",
+        "opportunity_audit.py",
+    )
+    implementation = hashlib.sha256()
+    for name in source_names:
+        shutil.copyfile(source_root / name, module_dir / name)
+        implementation.update(name.encode())
+        implementation.update((module_dir / name).read_bytes())
+    implementation_sha256 = implementation.hexdigest()
+
+    observatory_root = root / "data" / "veritas-observatory"
+    pilot_root = observatory_root / "measurement-pilots" / "VERITAS-M2-COVERAGE-PILOT-001"
+    events_dir = pilot_root / "events"
+    events_dir.mkdir(parents=True)
+    control = observatory_root / "control-cohort.json"
+    control.parent.mkdir(parents=True, exist_ok=True)
+    control.write_bytes(b'{"cohort":"fixture"}')
+    control_sha256 = hashlib.sha256(control.read_bytes()).hexdigest()
+
+    def canonical(value):
+        return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
+
+    plan = json.loads(
+        (
+            Path(__file__).resolve().parents[1] / "docs/VERITAS_MISSION2_COVERAGE_PILOT_001.json"
+        ).read_text()
+    )
+    plan_sha256 = hashlib.sha256(canonical(plan)).hexdigest()
+    (pilot_root / "plan.json").write_bytes(canonical({**plan, "plan_sha256": plan_sha256}))
+
+    scan_id = "scan-20261015T190055Z-7799523b9d87"
+    captured_at = "2026-10-15T19:00:55.062293+00:00"
+    market_rows = [
+        {
+            "market_id": "market-rotating",
+            "cohort_role": "rotating_stratified",
+            "selection_stratum": "high_liquidity",
+            "quality_valid": True,
+            "invalid_reason": None,
+        },
+        {
+            "market_id": "market-control",
+            "cohort_role": "stable_random_control",
+            "selection_stratum": "low_liquidity",
+            "quality_valid": False,
+            "invalid_reason": "no_empty_ask_side",
+        },
+    ]
+    event = {
+        "schema_version": 1,
+        "study_id": "VERITAS-M2-COVERAGE-PILOT-001",
+        "protocol_version": "veritas-coverage-pilot-v1",
+        "plan_sha256": plan_sha256,
+        "implementation_sha256": implementation_sha256,
+        "scan_id": scan_id,
+        "captured_at_utc": captured_at,
+        "phase": "snapshot_change",
+        "selection_sequence": 30,
+        "bounded_eligible_markets": 12,
+        "discovered_unique_market_ids": 30,
+        "excluded_market_ids": 18,
+        "selected_market_pairs": 2,
+        "quality_valid_pairs": 1,
+        "invalid_reasons": {"no_empty_ask_side": 1},
+        "stable_control_available": 1,
+        "stable_control_missing": [],
+        "positive_top_gross_pairs": 0,
+        "orders_submitted": False,
+        "authenticated_requests": False,
+        "previous_event_sha256": None,
+        "market_rows": market_rows,
+    }
+    event["event_sha256"] = hashlib.sha256(canonical(event)).hexdigest()
+    (events_dir / f"{scan_id}.json").write_bytes(canonical(event))
+
+    scan_summary = {
+        "scan_id": scan_id,
+        "captured_at_utc": captured_at,
+        "selection_sequence": 30,
+        "phase": "snapshot_change",
+        "selected_market_pairs": 2,
+        "quality_valid_pairs": 1,
+        "stable_control_available": 1,
+        "stable_control_missing_count": 0,
+        "discovered_unique_market_ids": 30,
+        "bounded_eligible_markets": 12,
+        "positive_top_gross_pairs": 0,
+    }
+    summary = {
+        "schema_version": 1,
+        "study_id": "VERITAS-M2-COVERAGE-PILOT-001",
+        "protocol_version": "veritas-coverage-pilot-v1",
+        "status": "running",
+        "completion_reason": None,
+        "started_at_utc": captured_at,
+        "ends_at_utc": "2026-10-16T19:00:55.062293+00:00",
+        "maximum_elapsed_hours": 24,
+        "maximum_completed_scans": 48,
+        "completed_scans": 1,
+        "selected_market_pair_slots": 2,
+        "quality_valid_pairs": 1,
+        "invalid_pairs": 1,
+        "quality_valid_yield": 0.5,
+        "distinct_selected_market_ids": 2,
+        "by_cohort_role": {},
+        "by_selection_stratum": {},
+        "by_phase": {},
+        "skipped_scan_sequences": 0,
+        "scans": [scan_summary],
+        "source_lineage": {
+            "first_scan_id": scan_id,
+            "last_scan_id": scan_id,
+            "plan_sha256": plan_sha256,
+            "implementation_sha256": implementation_sha256,
+            "control_cohort_sha256": control_sha256,
+        },
+        "orders_submitted": False,
+        "authenticated_requests": False,
+        "limitations": ["Same-scan cohort yields are descriptive."],
+    }
+    summary["summary_sha256"] = hashlib.sha256(canonical(summary)).hexdigest()
+    summary_path = pilot_root / "summary.json"
+    summary_path.write_bytes(canonical(summary))
+    snapshot_dir = observatory_root / "snapshots"
+    snapshot_dir.mkdir(parents=True)
+    (snapshot_dir / f"{scan_id}.json.gz").write_bytes(
+        gzip.compress(canonical({"scan_id": scan_id, "orders_submitted": False}))
+    )
+    return summary_path
+
+
 def test_overview_uses_bounded_versioned_evidence_without_raw_paths(tmp_path):
     client = fixture_client(tmp_path)
 
@@ -253,6 +392,7 @@ def test_overview_uses_bounded_versioned_evidence_without_raw_paths(tmp_path):
     assert data["followup_yield"]["by_horizon"][0]["invalid_initial"] == 6
     assert data["baseline_policies"]["all_abstained"] is True
     assert data["execution_sensitivity"]["actual_fills"] == "unknown_counterfactual"
+    assert data["opportunity_observatory"]["measurement_pilot"]["status"] == "not_started"
     assert data["execution_sensitivity"]["break_even_at_5pct_unmatched_feasible"] is False
     assert data["opportunity_observatory"]["status"] == "not_started"
     assert data["finalized_reality_source"]["status"] == "not_started"
@@ -528,6 +668,54 @@ def test_overview_exposes_incremental_public_observatory_summary(tmp_path):
     assert market["sampled_state_change_fraction"] == 1.0
     assert market["sampled_activity_band"] == "unclassified"
     assert any(item["id"] == "continuous-analysis" for item in response.json()["artifacts"])
+
+
+def test_overview_exposes_hash_verified_coverage_pilot_and_artifact(tmp_path):
+    client = fixture_client(tmp_path)
+    summary_path = write_coverage_pilot_fixture(tmp_path)
+
+    response = client.get("/api/veritas/overview")
+
+    assert response.status_code == 200
+    pilot = response.json()["opportunity_observatory"]["measurement_pilot"]
+    assert pilot["study_id"] == "VERITAS-M2-COVERAGE-PILOT-001"
+    assert pilot["status"] == "running"
+    assert pilot["completed_scans"] == 1
+    assert pilot["selected_market_pair_slots"] == 2
+    assert pilot["quality_valid_pairs"] == 1
+    assert pilot["quality_valid_yield"] == 0.5
+    assert pilot["skipped_scan_sequences"] == 0
+    assert pilot["by_cohort_role"]["rotating_stratified"]["quality_valid"] == 1
+    assert pilot["by_cohort_role"]["stable_random_control"]["invalid_reasons"] == {
+        "no_empty_ask_side": 1
+    }
+    assert pilot["latest_scan"]["snapshot_url"] == (
+        "/api/veritas/observatory/snapshots/scan-20261015T190055Z-7799523b9d87"
+    )
+    assert any(item["id"] == "coverage-pilot" for item in response.json()["artifacts"])
+
+    artifact = client.get("/api/veritas/artifacts/coverage-pilot")
+    assert artifact.status_code == 200
+    assert artifact.json()["data"]["summary_sha256"]
+    assert artifact.json()["file_sha256"] == hashlib.sha256(summary_path.read_bytes()).hexdigest()
+
+    snapshot = client.get(pilot["latest_scan"]["snapshot_url"])
+    assert snapshot.status_code == 200
+    assert snapshot.json()["scan_id"] == "scan-20261015T190055Z-7799523b9d87"
+
+
+def test_coverage_pilot_rejects_tampered_event(tmp_path):
+    client = fixture_client(tmp_path)
+    summary_path = write_coverage_pilot_fixture(tmp_path)
+    scan_id = "scan-20261015T190055Z-7799523b9d87"
+    event_path = summary_path.parent / "events" / f"{scan_id}.json"
+    event = json.loads(event_path.read_text())
+    event["market_rows"][0]["quality_valid"] = False
+    event_path.write_text(json.dumps(event))
+
+    response = client.get("/api/veritas/overview")
+
+    assert response.status_code == 503
 
 
 def test_overview_exposes_bounded_finalized_reality_source_analysis(tmp_path):

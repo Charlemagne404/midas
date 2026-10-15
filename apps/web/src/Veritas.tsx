@@ -67,6 +67,56 @@ type ObservatoryCandidate = {
   snapshot_url: string;
 };
 
+type CoveragePilotCohort = {
+  selected: number;
+  quality_valid: number;
+  invalid_pairs: number;
+  quality_valid_yield: number | null;
+  invalid_reasons?: Record<string, number>;
+};
+
+type CoveragePilotScan = {
+  scan_id: string;
+  snapshot_url: string;
+  captured_at_utc: string;
+  selection_sequence: number;
+  phase: string;
+  selected_market_pairs: number;
+  quality_valid_pairs: number;
+  quality_valid_yield: number | null;
+  stable_control_available: number;
+  stable_control_missing_count: number;
+  discovered_unique_market_ids: number;
+  bounded_eligible_markets: number;
+  excluded_market_ids: number;
+  positive_top_gross_pairs: number;
+  role_counts: Record<string, { selected: number; quality_valid: number }>;
+};
+
+type CoveragePilot = {
+  study_id: string;
+  protocol_version: string;
+  status: string;
+  started_at_utc: string | null;
+  ends_at_utc: string | null;
+  maximum_elapsed_hours: number;
+  maximum_completed_scans: number;
+  completed_scans: number;
+  selected_market_pair_slots: number;
+  quality_valid_pairs: number;
+  invalid_pairs: number;
+  quality_valid_yield: number | null;
+  distinct_selected_market_ids: number;
+  skipped_scan_sequences: number;
+  invalid_reasons: Record<string, number>;
+  by_cohort_role: Record<string, CoveragePilotCohort>;
+  by_selection_stratum: Record<string, CoveragePilotCohort & { distinct_market_count: number }>;
+  scans: CoveragePilotScan[];
+  latest_scan: CoveragePilotScan | null;
+  summary_artifact: (Artifact & { file_sha256: string; url: string }) | null;
+  limitations: string[];
+};
+
 type Observatory = {
   status: string;
   analysis_version: string | null;
@@ -195,6 +245,7 @@ type Observatory = {
   category_coverage: Array<{ category: string; selected_market_observations: number }>;
   recent_candidates: ObservatoryCandidate[];
   summary_artifact: Artifact | null;
+  measurement_pilot: CoveragePilot;
   limitations: string[];
 };
 
@@ -503,6 +554,7 @@ export function Veritas() {
   const denominator = data.followup_yield.valid_initial_decisions;
   const funnelMaximum = Math.max(data.coverage.period_frame_records, 1);
   const observatory = data.opportunity_observatory;
+  const measurementPilot = observatory.measurement_pilot;
   const finalizedSource = data.finalized_reality_source;
   const observatoryDiscovery = observatory.discovery;
   const existingQualificationJob = arenaJobs.find(
@@ -681,6 +733,152 @@ export function Veritas() {
             The active Reality segment is never read. A missing or changed catalog prefix stops
             resume; quote counts remain correlated observations and do not establish fills.
           </p>
+        </Panel>
+        <Panel
+          eyebrow="PROSPECTIVE MEASUREMENT · READ ONLY"
+          title="24-hour coverage pilot"
+          note="Tracks quality-valid paired-book yield over scheduled snapshots. This is a measurement study, not a strategy or fill outcome."
+        >
+          <div className="ve-observatory-stats compact">
+            <div>
+              <span>Pilot status</span>
+              <strong className="ve-readiness">
+                {measurementPilot.status.replaceAll('_', ' ')}
+              </strong>
+            </div>
+            <div>
+              <span>Completed scans</span>
+              <strong>
+                {fmt(measurementPilot.completed_scans)} /{' '}
+                {fmt(measurementPilot.maximum_completed_scans)}
+              </strong>
+            </div>
+            <div>
+              <span>Quality-valid pair slots</span>
+              <strong>
+                {fmt(measurementPilot.quality_valid_pairs)} /{' '}
+                {fmt(measurementPilot.selected_market_pair_slots)}
+              </strong>
+            </div>
+            <div>
+              <span>Overall quality yield</span>
+              <strong>
+                {measurementPilot.quality_valid_yield === null
+                  ? '—'
+                  : rate(
+                      measurementPilot.quality_valid_pairs,
+                      measurementPilot.selected_market_pair_slots,
+                    )}
+              </strong>
+              <small>{fmt(measurementPilot.invalid_pairs)} invalid selected slots</small>
+            </div>
+          </div>
+
+          <div className="ve-pilot-breakdown">
+            <div>
+              <span>Yield by cohort</span>
+              {Object.entries(measurementPilot.by_cohort_role).length ? (
+                Object.entries(measurementPilot.by_cohort_role).map(([role, cohort]) => (
+                  <p key={role}>
+                    <b>{role.replaceAll('_', ' ')}</b>
+                    <strong>
+                      {fmt(cohort.quality_valid)} / {fmt(cohort.selected)} ·{' '}
+                      {rate(cohort.quality_valid, cohort.selected)}
+                    </strong>
+                  </p>
+                ))
+              ) : (
+                <small>No pilot scans recorded yet.</small>
+              )}
+            </div>
+            <div>
+              <span>Yield by selection stratum</span>
+              {Object.entries(measurementPilot.by_selection_stratum).length ? (
+                Object.entries(measurementPilot.by_selection_stratum).map(([stratum, cohort]) => (
+                  <p key={stratum}>
+                    <b>{stratum.replaceAll('_', ' ')}</b>
+                    <strong>
+                      {fmt(cohort.quality_valid)} / {fmt(cohort.selected)} ·{' '}
+                      {rate(cohort.quality_valid, cohort.selected)}
+                    </strong>
+                  </p>
+                ))
+              ) : (
+                <small>No pilot scans recorded yet.</small>
+              )}
+            </div>
+          </div>
+
+          <div className="ve-observatory-meta">
+            <span>
+              Selected markets <b>{fmt(measurementPilot.distinct_selected_market_ids)}</b>
+            </span>
+            <span>
+              Missed scan sequences <b>{fmt(measurementPilot.skipped_scan_sequences)}</b>
+            </span>
+            {measurementPilot.started_at_utc && (
+              <span>
+                Started <b>{time(measurementPilot.started_at_utc)}</b>
+              </span>
+            )}
+            {measurementPilot.ends_at_utc && (
+              <span>
+                Fixed end <b>{time(measurementPilot.ends_at_utc)}</b>
+              </span>
+            )}
+          </div>
+
+          {measurementPilot.latest_scan && (
+            <>
+              <div className="ve-pilot-latest">
+                <span>Latest scan · {measurementPilot.latest_scan.phase.replaceAll('_', ' ')}</span>
+                <strong>
+                  {fmt(measurementPilot.latest_scan.quality_valid_pairs)} /{' '}
+                  {fmt(measurementPilot.latest_scan.selected_market_pairs)} quality-valid ·{' '}
+                  {fmt(measurementPilot.latest_scan.positive_top_gross_pairs)} positive gross
+                </strong>
+                <small>
+                  {time(measurementPilot.latest_scan.captured_at_utc)} ·{' '}
+                  {fmt(measurementPilot.latest_scan.bounded_eligible_markets)} eligible in the
+                  bounded query frame · {fmt(measurementPilot.latest_scan.excluded_market_ids)}{' '}
+                  excluded
+                </small>
+              </div>
+              <a
+                className="ve-latest-snapshot"
+                href={measurementPilot.latest_scan.snapshot_url}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Inspect latest pilot snapshot <ArrowUpRight size={13} />
+              </a>
+            </>
+          )}
+          {measurementPilot.summary_artifact && (
+            <a
+              className="ve-latest-snapshot"
+              href={measurementPilot.summary_artifact.url}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Inspect hash-verified pilot summary <ArrowUpRight size={13} />
+            </a>
+          )}
+          <p className="ve-observatory-note">
+            Cohort yields are descriptive; stable controls are not randomized against rotating
+            markets. Intermittent snapshots do not establish venue-wide coverage, quote lifetime,
+            sequence freshness, fills, or profitability.
+          </p>
+          {measurementPilot.limitations.length > 0 && (
+            <details className="ve-pilot-limitations">
+              <summary>Protocol limitations ({measurementPilot.limitations.length})</summary>
+              <ul>
+                {measurementPilot.limitations.map((limitation) => (
+                  <li key={limitation}>{limitation}</li>
+                ))}
+              </ul>
+            </details>
+          )}
         </Panel>
       </div>
 

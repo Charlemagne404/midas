@@ -368,6 +368,99 @@ it('labels measured evidence and keeps synthetic execution separate from actual 
                   category_coverage: [],
                   recent_candidates: [],
                   summary_artifact: null,
+                  measurement_pilot: {
+                    study_id: 'VERITAS-M2-COVERAGE-PILOT-001',
+                    protocol_version: 'veritas-coverage-pilot-v1',
+                    status: 'running',
+                    started_at_utc: '2026-10-15T19:00:55.062293+00:00',
+                    ends_at_utc: '2026-10-16T19:00:55.062293+00:00',
+                    maximum_elapsed_hours: 24,
+                    maximum_completed_scans: 48,
+                    completed_scans: 1,
+                    selected_market_pair_slots: 40,
+                    quality_valid_pairs: 32,
+                    invalid_pairs: 8,
+                    quality_valid_yield: 0.8,
+                    distinct_selected_market_ids: 40,
+                    skipped_scan_sequences: 0,
+                    invalid_reasons: { no_empty_ask_side: 8 },
+                    by_cohort_role: {
+                      rotating_stratified: {
+                        selected: 37,
+                        quality_valid: 31,
+                        invalid_pairs: 6,
+                        quality_valid_yield: 31 / 37,
+                        invalid_reasons: { no_empty_ask_side: 6 },
+                      },
+                      stable_random_control: {
+                        selected: 3,
+                        quality_valid: 1,
+                        invalid_pairs: 2,
+                        quality_valid_yield: 1 / 3,
+                        invalid_reasons: { no_empty_ask_side: 2 },
+                      },
+                    },
+                    by_selection_stratum: {
+                      higher_snapshot_change: {
+                        selected: 1,
+                        quality_valid: 1,
+                        invalid_pairs: 0,
+                        distinct_market_count: 1,
+                        quality_valid_yield: 1,
+                      },
+                    },
+                    scans: [
+                      {
+                        scan_id: 'scan-20261015T190055Z-7799523b9d87',
+                        snapshot_url:
+                          '/api/veritas/observatory/snapshots/scan-20261015T190055Z-7799523b9d87',
+                        captured_at_utc: '2026-10-15T19:00:55.062293+00:00',
+                        selection_sequence: 30,
+                        phase: 'snapshot_change',
+                        selected_market_pairs: 40,
+                        quality_valid_pairs: 32,
+                        quality_valid_yield: 0.8,
+                        stable_control_available: 3,
+                        stable_control_missing_count: 5,
+                        discovered_unique_market_ids: 300,
+                        bounded_eligible_markets: 122,
+                        excluded_market_ids: 178,
+                        positive_top_gross_pairs: 0,
+                        role_counts: {
+                          rotating_stratified: { selected: 37, quality_valid: 31 },
+                          stable_random_control: { selected: 3, quality_valid: 1 },
+                        },
+                      },
+                    ],
+                    latest_scan: {
+                      scan_id: 'scan-20261015T190055Z-7799523b9d87',
+                      snapshot_url:
+                        '/api/veritas/observatory/snapshots/scan-20261015T190055Z-7799523b9d87',
+                      captured_at_utc: '2026-10-15T19:00:55.062293+00:00',
+                      selection_sequence: 30,
+                      phase: 'snapshot_change',
+                      selected_market_pairs: 40,
+                      quality_valid_pairs: 32,
+                      quality_valid_yield: 0.8,
+                      stable_control_available: 3,
+                      stable_control_missing_count: 5,
+                      discovered_unique_market_ids: 300,
+                      bounded_eligible_markets: 122,
+                      excluded_market_ids: 178,
+                      positive_top_gross_pairs: 0,
+                      role_counts: {
+                        rotating_stratified: { selected: 37, quality_valid: 31 },
+                        stable_random_control: { selected: 3, quality_valid: 1 },
+                      },
+                    },
+                    summary_artifact: {
+                      id: 'coverage-pilot',
+                      label: 'Verified prospective coverage-pilot summary',
+                      file_sha256: 'a'.repeat(64),
+                      url: '/api/veritas/artifacts/coverage-pilot',
+                    },
+                    limitations: ['Same-scan role comparison is descriptive.'],
+                  },
                   limitations: ['No public snapshots yet.'],
                 },
                 finalized_reality_source: {
@@ -420,6 +513,20 @@ it('labels measured evidence and keeps synthetic execution separate from actual 
   expect(
     screen.getByRole('heading', { level: 3, name: /Incremental Mission 2 campaign replay/ }),
   ).toBeInTheDocument();
+  expect(
+    screen.getByRole('heading', { level: 3, name: '24-hour coverage pilot' }),
+  ).toBeInTheDocument();
+  expect(screen.getByText('31 / 37 · 83.8%')).toBeInTheDocument();
+  expect(screen.getByText('1 / 3 · 33.3%')).toBeInTheDocument();
+  expect(screen.getByText(/Cohort yields are descriptive/)).toBeInTheDocument();
+  expect(screen.getByRole('link', { name: 'Inspect latest pilot snapshot' })).toHaveAttribute(
+    'href',
+    '/api/veritas/observatory/snapshots/scan-20261015T190055Z-7799523b9d87',
+  );
+  expect(screen.getByRole('link', { name: 'Inspect hash-verified pilot summary' })).toHaveAttribute(
+    'href',
+    '/api/veritas/artifacts/coverage-pilot',
+  );
   expect(screen.getByText('7.1% qualifying measurements')).toBeInTheDocument();
   expect(screen.getByText('354')).toBeInTheDocument();
   expect(screen.getAllByText('1,027').length).toBeGreaterThan(0);

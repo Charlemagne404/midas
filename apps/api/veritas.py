@@ -27,7 +27,13 @@ MAX_OBSERVATORY_SUMMARY_BYTES = 2 * 1024**2
 MAX_OBSERVATORY_SNAPSHOT_COMPRESSED_BYTES = 4 * 1024**2
 MAX_OBSERVATORY_SNAPSHOT_BYTES = 16 * 1024**2
 MAX_SOURCE_ANALYSIS_SUMMARY_BYTES = 4 * 1024**2
+MAX_COVERAGE_PILOT_SUMMARY_BYTES = 2 * 1024**2
+MAX_COVERAGE_PILOT_EVENT_BYTES = 256 * 1024
+MAX_COVERAGE_PILOT_SCANS = 48
 SNAPSHOT_ID = re.compile(r"scan-\d{8}T\d{6}Z-[0-9a-f]{12}\Z")
+COVERAGE_PILOT_ID = "VERITAS-M2-COVERAGE-PILOT-001"
+COVERAGE_PILOT_VERSION = "veritas-coverage-pilot-v1"
+COVERAGE_PILOT_PLAN_SHA256 = "d35f25ef84037f3e9cabf4343e9a01db381b73e8fa6cae0fd0b5fc6e07e279ba"
 
 
 def read_artifact(repository: Path, identity: str) -> tuple[dict[str, Any], Path]:
@@ -406,6 +412,445 @@ def finalized_source_overview(repository: Path) -> dict[str, Any]:
             "label": "Incremental finalized Reality source analysis",
             "file_sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
             "url": "/api/veritas/artifacts/finalized-source-analysis",
+        },
+        "limitations": summary.get("limitations", []),
+    }
+
+
+def _coverage_pilot_json(path: Path, maximum_bytes: int) -> dict[str, Any]:
+    if path.is_symlink() or not path.is_file():
+        raise HTTPException(503, "Coverage pilot evidence is missing or unsafe")
+    if path.stat().st_size > maximum_bytes:
+        raise HTTPException(503, "Coverage pilot evidence exceeds the interface bound")
+    try:
+        value = json.loads(path.read_text())
+    except (OSError, ValueError) as error:
+        raise HTTPException(503, "Coverage pilot evidence could not be read") from error
+    if not isinstance(value, dict):
+        raise HTTPException(503, "Coverage pilot evidence has an invalid format")
+    return value
+
+
+def _coverage_pilot_digest(value: dict[str, Any], field: str) -> str:
+    stored_digest = value.get(field)
+    payload = dict(value)
+    payload.pop(field, None)
+    calculated_digest = hashlib.sha256(
+        json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
+    ).hexdigest()
+    if not isinstance(stored_digest, str) or stored_digest != calculated_digest:
+        raise HTTPException(503, f"Coverage pilot {field} is invalid")
+    return stored_digest
+
+
+def _coverage_pilot_source_digest(repository: Path) -> str:
+    module_dir = repository / "packages" / "midas" / "veritas"
+    source_names = (
+        "coverage_pilot.py",
+        "observatory.py",
+        "continuous_analysis.py",
+        "opportunity_audit.py",
+    )
+    digest = hashlib.sha256()
+    for name in source_names:
+        path = module_dir / name
+        if path.is_symlink() or not path.is_file():
+            raise HTTPException(503, "Pinned coverage pilot source is unavailable")
+        digest.update(name.encode())
+        try:
+            digest.update(path.read_bytes())
+        except OSError as error:
+            raise HTTPException(503, "Pinned coverage pilot source could not be read") from error
+    return digest.hexdigest()
+
+
+def _coverage_pilot_timestamp(value: Any, field: str) -> datetime:
+    if not isinstance(value, str):
+        raise HTTPException(503, f"Coverage pilot {field} is invalid")
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError as error:
+        raise HTTPException(503, f"Coverage pilot {field} is invalid") from error
+    if parsed.tzinfo is None:
+        raise HTTPException(503, f"Coverage pilot {field} must include a timezone")
+    return parsed
+
+
+def read_coverage_pilot(
+    repository: Path,
+) -> tuple[dict[str, Any], list[dict[str, Any]], Path] | None:
+    observatory_root = repository / "data" / "veritas-observatory"
+    pilot_parent = observatory_root / "measurement-pilots"
+    pilot_root = pilot_parent / COVERAGE_PILOT_ID
+    events_dir = pilot_root / "events"
+    summary_path = pilot_root / "summary.json"
+    for path in (observatory_root, pilot_parent, pilot_root, events_dir):
+        if path.is_symlink():
+            raise HTTPException(404, "Coverage pilot evidence is unavailable")
+    if summary_path.is_symlink():
+        raise HTTPException(404, "Coverage pilot evidence is unavailable")
+    if not summary_path.exists():
+        return None
+
+    summary = _coverage_pilot_json(summary_path, MAX_COVERAGE_PILOT_SUMMARY_BYTES)
+    if (
+        summary.get("schema_version") != 1
+        or summary.get("study_id") != COVERAGE_PILOT_ID
+        or summary.get("protocol_version") != COVERAGE_PILOT_VERSION
+        or summary.get("status") not in {"running", "completed"}
+        or summary.get("orders_submitted") is not False
+        or summary.get("authenticated_requests") is not False
+    ):
+        raise HTTPException(503, "Coverage pilot identity or safety fields are invalid")
+    _coverage_pilot_digest(summary, "summary_sha256")
+
+    plan_path = pilot_root / "plan.json"
+    plan_record = _coverage_pilot_json(plan_path, MAX_COVERAGE_PILOT_EVENT_BYTES)
+    plan_digest = _coverage_pilot_digest(plan_record, "plan_sha256")
+    plan = dict(plan_record)
+    plan.pop("plan_sha256", None)
+    if (
+        plan.get("study_id") != COVERAGE_PILOT_ID
+        or plan.get("protocol_version") != COVERAGE_PILOT_VERSION
+        or plan_digest != COVERAGE_PILOT_PLAN_SHA256
+    ):
+        raise HTTPException(503, "Coverage pilot plan identity is invalid")
+
+    source_lineage = summary.get("source_lineage")
+    if not isinstance(source_lineage, dict) or source_lineage.get("plan_sha256") != plan_digest:
+        raise HTTPException(503, "Coverage pilot plan lineage is invalid")
+    implementation_digest = _coverage_pilot_source_digest(repository)
+    if source_lineage.get("implementation_sha256") != implementation_digest:
+        raise HTTPException(503, "Coverage pilot implementation lineage is invalid")
+    control_digest = source_lineage.get("control_cohort_sha256")
+    if control_digest is not None:
+        control_path = observatory_root / "control-cohort.json"
+        if (
+            control_path.is_symlink()
+            or not control_path.is_file()
+            or hashlib.sha256(control_path.read_bytes()).hexdigest() != control_digest
+        ):
+            raise HTTPException(503, "Coverage pilot control cohort lineage is invalid")
+
+    scan_summaries = summary.get("scans")
+    if not isinstance(scan_summaries, list) or len(scan_summaries) > MAX_COVERAGE_PILOT_SCANS:
+        raise HTTPException(503, "Coverage pilot scan count is invalid")
+    if not scan_summaries:
+        raise HTTPException(503, "Coverage pilot summary has no source events")
+    if summary.get("completed_scans") != len(scan_summaries):
+        raise HTTPException(503, "Coverage pilot scan count does not reconcile")
+
+    selected_total = 0
+    valid_total = 0
+    skipped_sequences = 0
+    previous_sequence: int | None = None
+    previous_digest: str | None = None
+    previous_captured_at: datetime | None = None
+    market_ids: set[str] = set()
+    roles: dict[str, dict[str, Any]] = {}
+    strata: dict[str, dict[str, Any]] = {}
+    invalid_reasons: Counter[str] = Counter()
+    verified_events: list[dict[str, Any]] = []
+    event_ids: set[str] = set()
+
+    for scan_summary in scan_summaries:
+        if not isinstance(scan_summary, dict):
+            raise HTTPException(503, "Coverage pilot scan summary is invalid")
+        scan_id = scan_summary.get("scan_id")
+        if (
+            not isinstance(scan_id, str)
+            or not SNAPSHOT_ID.fullmatch(scan_id)
+            or scan_id in event_ids
+        ):
+            raise HTTPException(503, "Coverage pilot scan identity is invalid")
+        event_ids.add(scan_id)
+        event_path = events_dir / f"{scan_id}.json"
+        event = _coverage_pilot_json(event_path, MAX_COVERAGE_PILOT_EVENT_BYTES)
+        event_digest = _coverage_pilot_digest(event, "event_sha256")
+        if (
+            event.get("schema_version") != 1
+            or event.get("study_id") != COVERAGE_PILOT_ID
+            or event.get("protocol_version") != COVERAGE_PILOT_VERSION
+            or event.get("scan_id") != scan_id
+            or event.get("plan_sha256") != plan_digest
+            or event.get("implementation_sha256") != implementation_digest
+            or event.get("previous_event_sha256") != previous_digest
+            or event.get("orders_submitted") is not False
+            or event.get("authenticated_requests") is not False
+        ):
+            raise HTTPException(503, "Coverage pilot event lineage is invalid")
+
+        sequence = event.get("selection_sequence")
+        if not isinstance(sequence, int) or isinstance(sequence, bool) or sequence < 0:
+            raise HTTPException(503, "Coverage pilot selection sequence is invalid")
+        if previous_sequence is not None:
+            if sequence <= previous_sequence:
+                raise HTTPException(503, "Coverage pilot selection sequence is not increasing")
+            skipped_sequences += max(0, sequence - previous_sequence - 1)
+        previous_sequence = sequence
+
+        captured_at = _coverage_pilot_timestamp(event.get("captured_at_utc"), "capture time")
+        if previous_captured_at is not None and captured_at < previous_captured_at:
+            raise HTTPException(503, "Coverage pilot event times are not ordered")
+        previous_captured_at = captured_at
+
+        market_rows = event.get("market_rows")
+        if not isinstance(market_rows, list) or len(market_rows) > 50:
+            raise HTTPException(503, "Coverage pilot market rows exceed their bound")
+        missing_controls = event.get("stable_control_missing")
+        if (
+            not isinstance(missing_controls, list)
+            or len(missing_controls) > 50
+            or not all(isinstance(value, str) for value in missing_controls)
+        ):
+            raise HTTPException(503, "Coverage pilot stable-control coverage is invalid")
+        for field in (
+            "selected_market_pairs",
+            "quality_valid_pairs",
+            "stable_control_available",
+            "discovered_unique_market_ids",
+            "bounded_eligible_markets",
+            "excluded_market_ids",
+            "positive_top_gross_pairs",
+        ):
+            value = event.get(field)
+            if not isinstance(value, int) or isinstance(value, bool) or value < 0:
+                raise HTTPException(503, "Coverage pilot event counters are invalid")
+        event_roles: dict[str, dict[str, Any]] = {}
+        event_selected = 0
+        event_valid = 0
+        for row in market_rows:
+            if not isinstance(row, dict):
+                raise HTTPException(503, "Coverage pilot market row is invalid")
+            market_id = row.get("market_id")
+            role = row.get("cohort_role")
+            stratum = row.get("selection_stratum")
+            quality_valid = row.get("quality_valid")
+            if (
+                not isinstance(market_id, str)
+                or not market_id
+                or len(market_id) > 64
+                or role not in {"rotating_stratified", "stable_random_control"}
+                or not isinstance(stratum, str)
+                or not isinstance(quality_valid, bool)
+            ):
+                raise HTTPException(503, "Coverage pilot market row fields are invalid")
+            event_selected += 1
+            event_valid += int(quality_valid)
+            market_ids.add(market_id)
+            role_row = roles.setdefault(
+                role, {"selected": 0, "quality_valid": 0, "invalid_reasons": Counter()}
+            )
+            role_row["selected"] += 1
+            role_row["quality_valid"] += int(quality_valid)
+            scan_role = event_roles.setdefault(role, {"selected": 0, "quality_valid": 0})
+            scan_role["selected"] += 1
+            scan_role["quality_valid"] += int(quality_valid)
+            stratum_row = strata.setdefault(
+                stratum, {"selected": 0, "quality_valid": 0, "market_ids": set()}
+            )
+            stratum_row["selected"] += 1
+            stratum_row["quality_valid"] += int(quality_valid)
+            stratum_row["market_ids"].add(market_id)
+            if not quality_valid:
+                reason = row.get("invalid_reason")
+                if not isinstance(reason, str) or not reason:
+                    reason = "unknown_invalidity"
+                invalid_reasons[reason] += 1
+                role_row["invalid_reasons"][reason] += 1
+
+        if (
+            event.get("selected_market_pairs") != event_selected
+            or event.get("quality_valid_pairs") != event_valid
+        ):
+            raise HTTPException(503, "Coverage pilot event counts do not reconcile")
+        expected_scan_values = {
+            "captured_at_utc": event.get("captured_at_utc"),
+            "selection_sequence": sequence,
+            "phase": event.get("phase"),
+            "selected_market_pairs": event_selected,
+            "quality_valid_pairs": event_valid,
+            "stable_control_available": event.get("stable_control_available"),
+            "stable_control_missing_count": len(event.get("stable_control_missing", []))
+            if isinstance(event.get("stable_control_missing"), list)
+            else None,
+            "discovered_unique_market_ids": event.get("discovered_unique_market_ids"),
+            "bounded_eligible_markets": event.get("bounded_eligible_markets"),
+            "positive_top_gross_pairs": event.get("positive_top_gross_pairs"),
+        }
+        if any(scan_summary.get(key) != value for key, value in expected_scan_values.items()):
+            raise HTTPException(503, "Coverage pilot summary scan differs from its event")
+        if not isinstance(event.get("phase"), str):
+            raise HTTPException(503, "Coverage pilot phase is invalid")
+
+        selected_total += event_selected
+        valid_total += event_valid
+        verified_events.append(
+            {
+                "scan_id": scan_id,
+                "snapshot_url": f"/api/veritas/observatory/snapshots/{scan_id}",
+                "captured_at_utc": event["captured_at_utc"],
+                "selection_sequence": sequence,
+                "phase": event["phase"],
+                "selected_market_pairs": event_selected,
+                "quality_valid_pairs": event_valid,
+                "quality_valid_yield": event_valid / event_selected if event_selected else None,
+                "stable_control_available": int(event.get("stable_control_available", 0)),
+                "stable_control_missing_count": len(event.get("stable_control_missing", [])),
+                "discovered_unique_market_ids": int(event.get("discovered_unique_market_ids", 0)),
+                "bounded_eligible_markets": int(event.get("bounded_eligible_markets", 0)),
+                "excluded_market_ids": int(event.get("excluded_market_ids", 0)),
+                "positive_top_gross_pairs": int(event["positive_top_gross_pairs"]),
+                "role_counts": event_roles,
+                "_market_rows": market_rows,
+            }
+        )
+        previous_digest = event_digest
+
+    summary_counts = (
+        summary.get("selected_market_pair_slots"),
+        summary.get("quality_valid_pairs"),
+        summary.get("invalid_pairs"),
+        summary.get("distinct_selected_market_ids"),
+        summary.get("skipped_scan_sequences"),
+    )
+    if any(
+        not isinstance(value, int) or isinstance(value, bool) or value < 0
+        for value in summary_counts
+    ):
+        raise HTTPException(503, "Coverage pilot aggregate counters are invalid")
+    if summary_counts != (
+        selected_total,
+        valid_total,
+        selected_total - valid_total,
+        len(market_ids),
+        skipped_sequences,
+    ):
+        raise HTTPException(503, "Coverage pilot aggregate counts do not reconcile")
+    first_scan_id = verified_events[0]["scan_id"] if verified_events else None
+    if source_lineage.get("first_scan_id") != first_scan_id:
+        raise HTTPException(503, "Coverage pilot first scan lineage is invalid")
+    if source_lineage.get("last_scan_id") != (
+        verified_events[-1]["scan_id"] if verified_events else None
+    ):
+        raise HTTPException(503, "Coverage pilot last scan lineage is invalid")
+    if source_lineage.get("last_event_sha256") not in (None, previous_digest):
+        raise HTTPException(503, "Coverage pilot last event lineage is invalid")
+    if summary.get("maximum_elapsed_hours") != 24 or summary.get("maximum_completed_scans") != 48:
+        raise HTTPException(503, "Coverage pilot bounds do not match the frozen protocol")
+    start_at = _coverage_pilot_timestamp(summary.get("started_at_utc"), "start time")
+    end_at = _coverage_pilot_timestamp(summary.get("ends_at_utc"), "end time")
+    if (end_at - start_at).total_seconds() != 24 * 60 * 60:
+        raise HTTPException(503, "Coverage pilot time window differs from the frozen protocol")
+    return summary, verified_events, summary_path
+
+
+def coverage_pilot_overview(repository: Path) -> dict[str, Any]:
+    stored = read_coverage_pilot(repository)
+    if stored is None:
+        return {
+            "study_id": COVERAGE_PILOT_ID,
+            "protocol_version": COVERAGE_PILOT_VERSION,
+            "status": "not_started",
+            "started_at_utc": None,
+            "ends_at_utc": None,
+            "maximum_elapsed_hours": 24,
+            "maximum_completed_scans": MAX_COVERAGE_PILOT_SCANS,
+            "completed_scans": 0,
+            "selected_market_pair_slots": 0,
+            "quality_valid_pairs": 0,
+            "invalid_pairs": 0,
+            "quality_valid_yield": None,
+            "distinct_selected_market_ids": 0,
+            "skipped_scan_sequences": 0,
+            "invalid_reasons": {},
+            "by_cohort_role": {},
+            "by_selection_stratum": {},
+            "scans": [],
+            "latest_scan": None,
+            "summary_artifact": None,
+            "limitations": [],
+        }
+
+    summary, scans, path = stored
+    selected = int(summary["selected_market_pair_slots"])
+    valid = int(summary["quality_valid_pairs"])
+    # Derive role and stratum values from the verified event rows used to validate the chain.
+    verified_roles: dict[str, dict[str, Any]] = {}
+    verified_strata: dict[str, dict[str, Any]] = {}
+    for scan in scans:
+        for row in scan["_market_rows"]:
+            role = row["cohort_role"]
+            target = verified_roles.setdefault(
+                role, {"selected": 0, "quality_valid": 0, "invalid_reasons": Counter()}
+            )
+            target["selected"] += 1
+            target["quality_valid"] += int(row["quality_valid"])
+            if not row["quality_valid"]:
+                reason = row.get("invalid_reason") or "unknown_invalidity"
+                target["invalid_reasons"][str(reason)] += 1
+            stratum = row["selection_stratum"]
+            stratum_target = verified_strata.setdefault(
+                stratum, {"selected": 0, "quality_valid": 0, "market_ids": set()}
+            )
+            stratum_target["selected"] += 1
+            stratum_target["quality_valid"] += int(row["quality_valid"])
+            stratum_target["market_ids"].add(row["market_id"])
+    cohort_projection = {
+        role: {
+            "selected": values["selected"],
+            "quality_valid": values["quality_valid"],
+            "invalid_pairs": values["selected"] - values["quality_valid"],
+            "quality_valid_yield": values["quality_valid"] / values["selected"]
+            if values["selected"]
+            else None,
+            "invalid_reasons": dict(sorted(values["invalid_reasons"].items())),
+        }
+        for role, values in sorted(verified_roles.items())
+    }
+    stratum_projection = {
+        stratum: {
+            "selected": values["selected"],
+            "quality_valid": values["quality_valid"],
+            "invalid_pairs": values["selected"] - values["quality_valid"],
+            "distinct_market_count": len(values["market_ids"]),
+            "quality_valid_yield": values["quality_valid"] / values["selected"]
+            if values["selected"]
+            else None,
+        }
+        for stratum, values in sorted(verified_strata.items())
+    }
+    invalid_reasons: Counter[str] = Counter()
+    for values in cohort_projection.values():
+        invalid_reasons.update(values["invalid_reasons"])
+    scan_projection = [
+        {key: value for key, value in scan.items() if key != "_market_rows"} for scan in scans
+    ]
+    return {
+        "study_id": COVERAGE_PILOT_ID,
+        "protocol_version": COVERAGE_PILOT_VERSION,
+        "status": summary["status"],
+        "started_at_utc": summary["started_at_utc"],
+        "ends_at_utc": summary["ends_at_utc"],
+        "maximum_elapsed_hours": 24,
+        "maximum_completed_scans": MAX_COVERAGE_PILOT_SCANS,
+        "completed_scans": len(scans),
+        "selected_market_pair_slots": selected,
+        "quality_valid_pairs": valid,
+        "invalid_pairs": selected - valid,
+        "quality_valid_yield": valid / selected if selected else None,
+        "distinct_selected_market_ids": int(summary["distinct_selected_market_ids"]),
+        "skipped_scan_sequences": int(summary["skipped_scan_sequences"]),
+        "invalid_reasons": dict(sorted(invalid_reasons.items())),
+        "by_cohort_role": cohort_projection,
+        "by_selection_stratum": stratum_projection,
+        "scans": scan_projection[-8:],
+        "latest_scan": scan_projection[-1] if scan_projection else None,
+        "summary_artifact": {
+            "id": "coverage-pilot",
+            "label": "Verified prospective coverage-pilot summary",
+            "file_sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+            "url": "/api/veritas/artifacts/coverage-pilot",
         },
         "limitations": summary.get("limitations", []),
     }
@@ -870,6 +1315,7 @@ def overview(repository: Path) -> dict[str, Any]:
     ledger, _ = read_artifact(repository, "ledger")
     inventory, _ = read_artifact(repository, "inventory")
     public_observatory = observatory_overview(repository)
+    public_observatory["measurement_pilot"] = coverage_pilot_overview(repository)
     finalized_source = finalized_source_overview(repository)
 
     frozen = baseline["frozen_campaign_forensics"]
@@ -956,6 +1402,8 @@ def overview(repository: Path) -> dict[str, Any]:
     ]
     if public_observatory["summary_artifact"]:
         artifacts.append(public_observatory["summary_artifact"])
+    if public_observatory["measurement_pilot"]["summary_artifact"]:
+        artifacts.append(public_observatory["measurement_pilot"]["summary_artifact"])
     if finalized_source["summary_artifact"]:
         artifacts.append(finalized_source["summary_artifact"])
     if current_censoring is not None:
@@ -1072,23 +1520,33 @@ def router(repository: Path) -> APIRouter:
 
     @routes.get("/artifacts/{identity}")
     def get_artifact(identity: str) -> dict[str, Any]:
+        if identity == "coverage-pilot":
+            pilot_result = read_coverage_pilot(repository)
+            if pilot_result is None:
+                raise HTTPException(404, "Veritas coverage pilot has not been generated")
+            data, _, path = pilot_result
+            return {
+                "artifact": identity,
+                "file_sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+                "data": data,
+            }
         if identity == "finalized-source-analysis":
-            result = read_finalized_source_summary(repository)
-            if result is None:
+            source_result = read_finalized_source_summary(repository)
+            if source_result is None:
                 raise HTTPException(404, "Finalized Reality source analysis has not been generated")
-            data, path = result
+            data, path = source_result
             return {
                 "artifact": identity,
                 "file_sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
                 "data": data,
             }
         if identity == "continuous-analysis":
-            result = read_observatory_summary(repository)
-            if result is None:
+            observatory_result = read_observatory_summary(repository)
+            if observatory_result is None:
                 raise HTTPException(
                     404, "Veritas public observatory analysis has not been generated"
                 )
-            data, path = result
+            data, path = observatory_result
             return {
                 "artifact": identity,
                 "file_sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
