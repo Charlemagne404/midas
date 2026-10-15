@@ -88,10 +88,26 @@ def write_campaign(root: Path) -> None:
         (invalid["id"], 300, "censored", "invalid_at_decision"),
     ]
     for uid, horizon, status, reason in followups:
+        labels = {"status": status, "reason": reason}
+        if status == "observed_public_measurement":
+            labels.update(
+                {
+                    "quote_persistence": True,
+                    "opportunity_persistence": None,
+                    "opportunity_target_status": "no_initial_discrepancy",
+                    "execution_ground_truth": "unknown_counterfactual",
+                    "displayed_quantity_supported": True,
+                    "market_disruption": False,
+                    "per_leg_quote_persistence": {"yes": True, "no": True},
+                    "best_ask_pair_movement": "0.00",
+                    "adverse_ask_movement": "0",
+                    "quoted_exit_value_change": "0.00",
+                }
+            )
         event = {
             "decision_id": uid,
             "horizon_ms": horizon,
-            "labels": {"status": status, "reason": reason},
+            "labels": labels,
         }
         event_seq = append("followup", event, 3000 + horizon)
         db.execute("insert into outcomes values(?,?,?,?)", (uid, horizon, status, event_seq))
@@ -104,7 +120,7 @@ def test_forward_forensics_separates_initial_invalid_from_future_censoring(tmp_p
 
     report = analyze_forward_campaign(tmp_path)
 
-    assert report["analysis_version"] == "veritas-forward-forensics-v1.3"
+    assert report["analysis_version"] == "veritas-forward-forensics-v1.4"
     assert report["coverage"]["decisions"] == 2
     assert report["coverage"]["valid_initial_decisions"] == 1
     assert report["coverage"]["invalid_initial_decisions"] == 1
@@ -117,10 +133,34 @@ def test_forward_forensics_separates_initial_invalid_from_future_censoring(tmp_p
         "valid_initial_state": {"future_observation_unavailable": 1},
         "invalid_initial_state": {"invalid_at_decision": 2},
     }
+    public_labels = report["outcomes"]["by_horizon"]["100"]["observed_public_label_support"]
+    assert public_labels["observed_public_measurements"] == 1
+    assert public_labels["valid_initial_decisions"] == 1
+    assert public_labels["observed_yield_per_valid_initial_decision"] == 1
+    assert public_labels["categorical_counts"] == {
+        "displayed_quantity_supported": {"true": 1},
+        "execution_ground_truth": {"unknown_counterfactual": 1},
+        "market_disruption": {"false": 1},
+        "opportunity_persistence": {"null": 1},
+        "opportunity_target_status": {"no_initial_discrepancy": 1},
+        "quote_persistence": {"true": 1},
+    }
+    assert public_labels["per_leg_quote_persistence"] == {
+        "no": {"true": 1},
+        "yes": {"true": 1},
+    }
+    assert public_labels["numeric_distributions"]["best_ask_pair_movement"] == {
+        "count": 1,
+        "minimum": "0.00",
+        "p25_nearest_rank": "0.00",
+        "median_nearest_rank": "0.00",
+        "p75_nearest_rank": "0.00",
+        "maximum": "0.00",
+        "positive_count": 0,
+    }
     detail = report["outcomes"]["censoring_detail"]
     by_market_horizon = {
-        (row["market_id"], row["horizon_ms"]): row
-        for row in detail["by_market_horizon"]["items"]
+        (row["market_id"], row["horizon_ms"]): row for row in detail["by_market_horizon"]["items"]
     }
     assert by_market_horizon[("market-a", 300)]["censor_reasons"] == {
         "future_observation_unavailable": 1
@@ -129,8 +169,7 @@ def test_forward_forensics_separates_initial_invalid_from_future_censoring(tmp_p
         "invalid_initial:stale_book": 1
     }
     by_hour_horizon = {
-        (row["utc_hour"], row["horizon_ms"]): row
-        for row in detail["by_utc_hour_horizon"]["items"]
+        (row["utc_hour"], row["horizon_ms"]): row for row in detail["by_utc_hour_horizon"]["items"]
     }
     assert by_hour_horizon[("1970-01-01T00:00:00Z", 100)]["counts_by_status"] == {
         "observed_public_measurement": 1,
@@ -165,6 +204,26 @@ def test_forward_forensics_counts_missing_outcome_rows_as_pending_per_market(tmp
     assert pending["resolved_followups"] == 0
     assert pending["pending_followups"] == 1
     assert report["outcomes"]["by_horizon"]["300"]["pending"] == 1
+
+
+def test_forward_forensics_rejects_nonfinite_observed_movement_label(tmp_path):
+    write_campaign(tmp_path)
+    db = sqlite3.connect(tmp_path / "shadow.sqlite")
+    row = db.execute(
+        "select e.seq,e.body from outcomes o join events e on e.seq=o.event_seq "
+        "where o.status='observed_public_measurement'"
+    ).fetchone()
+    event = json.loads(zlib.decompress(row[1]))
+    event["labels"]["best_ask_pair_movement"] = "NaN"
+    db.execute(
+        "update events set body=? where seq=?",
+        (zlib.compress(canonical(event)), row[0]),
+    )
+    db.commit()
+    db.close()
+
+    with pytest.raises(ValueError, match="not finite"):
+        analyze_forward_campaign(tmp_path)
 
 
 def test_forward_forensics_reads_sqlite_without_changing_it(tmp_path):

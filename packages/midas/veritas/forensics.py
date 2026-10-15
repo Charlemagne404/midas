@@ -15,6 +15,7 @@ from typing import Any
 from midas.reality.research_schema import digest
 
 MAX_DECISIONS = 50_000
+ANALYSIS_VERSION = "veritas-forward-forensics-v1.4"
 _OUTCOME_REASONS = ("invalid_at_decision",)
 _CENSORING_REGIMES = {
     "invalid_at_decision": "invalid_initial_observation",
@@ -78,9 +79,7 @@ def _serialize_censor_bucket(bucket: dict[str, Any]) -> dict[str, Any]:
         "censor_reasons": dict(bucket["censor_reasons"]),
         "censoring_regimes": dict(bucket["censoring_regimes"]),
         "initial_quality_regimes": dict(bucket["initial_quality_regimes"]),
-        "censors_by_initial_quality_regime": dict(
-            bucket["censors_by_initial_quality_regime"]
-        ),
+        "censors_by_initial_quality_regime": dict(bucket["censors_by_initial_quality_regime"]),
     }
 
 
@@ -236,6 +235,35 @@ def analyze_forward_campaign(
                 policy_reasons[name][str(policy.get("reason", "unknown"))] += 1
 
         outcomes: list[dict[str, Any]] = []
+        observed_labels_by_horizon: dict[str, dict[str, Any]] = {
+            str(horizon): {
+                "observed_rows": 0,
+                "categorical_counts": {
+                    name: Counter()
+                    for name in (
+                        "quote_persistence",
+                        "opportunity_persistence",
+                        "opportunity_target_status",
+                        "execution_ground_truth",
+                        "displayed_quantity_supported",
+                        "market_disruption",
+                    )
+                },
+                "per_leg_quote_persistence": {
+                    "yes": Counter(),
+                    "no": Counter(),
+                },
+                "numeric_values": {
+                    name: []
+                    for name in (
+                        "best_ask_pair_movement",
+                        "adverse_ask_movement",
+                        "quoted_exit_value_change",
+                    )
+                },
+            }
+            for horizon in horizons
+        }
         for start in range(0, len(selected_ids), 500):
             ids = selected_ids[start : start + 500]
             if not ids:
@@ -252,6 +280,8 @@ def analyze_forward_campaign(
                     raise ValueError("Outcome index points to a non-followup event")
                 item = _decode_event(body)
                 label = item.get("labels", {})
+                if not isinstance(label, dict):
+                    raise ValueError("Follow-up labels must contain an object")
                 if (
                     item.get("decision_id") != uid
                     or item.get("horizon_ms") != horizon
@@ -260,6 +290,40 @@ def analyze_forward_campaign(
                     raise ValueError("Outcome event does not match its indexed identity")
                 if horizon not in horizons:
                     raise ValueError("Outcome uses an unfrozen evaluation horizon")
+                if status == "observed_public_measurement":
+                    support = observed_labels_by_horizon[str(horizon)]
+                    support["observed_rows"] += 1
+                    for name, counts in support["categorical_counts"].items():
+                        value = label.get(name)
+                        if isinstance(value, bool):
+                            token = str(value).lower()
+                        else:
+                            token = "null" if value is None else str(value)
+                        counts[token] += 1
+                    per_leg = label.get("per_leg_quote_persistence")
+                    if isinstance(per_leg, dict):
+                        for leg in ("yes", "no"):
+                            value = per_leg.get(leg)
+                            token = (
+                                str(value).lower()
+                                if isinstance(value, bool)
+                                else "null"
+                                if value is None
+                                else str(value)
+                            )
+                            support["per_leg_quote_persistence"][leg][token] += 1
+                    for name, values in support["numeric_values"].items():
+                        value = label.get(name)
+                        if value is not None:
+                            try:
+                                parsed = Decimal(str(value))
+                            except (ArithmeticError, TypeError, ValueError) as error:
+                                raise ValueError(
+                                    f"Observed follow-up label {name} is not numeric"
+                                ) from error
+                            if not parsed.is_finite():
+                                raise ValueError(f"Observed follow-up label {name} is not finite")
+                            values.append(parsed)
                 outcomes.append(
                     {
                         "decision_id": uid,
@@ -338,6 +402,30 @@ def analyze_forward_campaign(
                 if (uid, horizon) not in covered:
                     pending_by_horizon[str(horizon)] += 1
 
+        valid_initial_decisions = sum(decision["valid"] for decision in decision_by_id.values())
+        public_label_support: dict[str, Any] = {}
+        for horizon, support in observed_labels_by_horizon.items():
+            observed_rows = int(support["observed_rows"])
+            public_label_support[horizon] = {
+                "observed_public_measurements": observed_rows,
+                "valid_initial_decisions": valid_initial_decisions,
+                "observed_yield_per_valid_initial_decision": (
+                    observed_rows / valid_initial_decisions if valid_initial_decisions else None
+                ),
+                "categorical_counts": {
+                    name: dict(sorted(counts.items()))
+                    for name, counts in support["categorical_counts"].items()
+                },
+                "per_leg_quote_persistence": {
+                    leg: dict(sorted(counts.items()))
+                    for leg, counts in support["per_leg_quote_persistence"].items()
+                },
+                "numeric_distributions": {
+                    name: _distribution(values)
+                    for name, values in support["numeric_values"].items()
+                },
+            }
+
         def serialize_dimension(
             grouped: dict[tuple[str, int], dict[str, Any]],
             key_name: str,
@@ -360,7 +448,10 @@ def analyze_forward_campaign(
                 )
             else:
                 rows.sort(key=lambda row: (str(row[key_name]), int(row["horizon_ms"])))
-            return {"items": rows[:limit_rows], "truncated_group_count": max(0, len(rows) - limit_rows)}
+            return {
+                "items": rows[:limit_rows],
+                "truncated_group_count": max(0, len(rows) - limit_rows),
+            }
 
         censoring_regime_by_horizon: dict[str, dict[str, Any]] = {}
         for horizon in horizons:
@@ -405,7 +496,7 @@ def analyze_forward_campaign(
 
     return {
         "schema_version": 1,
-        "analysis_version": "veritas-forward-forensics-v1.3",
+        "analysis_version": ANALYSIS_VERSION,
         "campaign_id": campaign_id,
         "campaign_plan_sha256": hashlib.sha256(plan_path.read_bytes()).hexdigest(),
         "source_kind": identity.get("source_kind"),
@@ -446,6 +537,7 @@ def analyze_forward_campaign(
                     "counts_by_status": dict(counts),
                     "censor_reasons": dict(horizon_censors[horizon]),
                     "pending": pending_by_horizon[horizon],
+                    "observed_public_label_support": public_label_support[horizon],
                 }
                 for horizon, counts in horizon_outcomes.items()
             },
