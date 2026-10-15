@@ -834,6 +834,35 @@ def read_public_snapshot(repository: Path, scan_id: str) -> tuple[dict[str, Any]
     return value, hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def _hypothesis_status(item: dict[str, Any]) -> str:
+    status = item.get("status")
+    if isinstance(status, str) and status:
+        return status
+    decision = item.get("decision")
+    if isinstance(decision, str) and decision:
+        return decision
+    result = item.get("result")
+    if isinstance(result, dict):
+        result_status = result.get("status")
+        if isinstance(result_status, str) and result_status:
+            return result_status
+    return "unknown"
+
+
+def _hypothesis_decision(item: dict[str, Any]) -> str:
+    decision = item.get("decision")
+    return decision if isinstance(decision, str) and decision else "No decision recorded."
+
+
+def _hypothesis_result_status(item: dict[str, Any]) -> str:
+    result = item.get("result")
+    if isinstance(result, dict):
+        status = result.get("status")
+        if isinstance(status, str) and status:
+            return status
+    return "unknown"
+
+
 def overview(repository: Path) -> dict[str, Any]:
     baseline, _ = read_artifact(repository, "baseline")
     funnel, _ = read_artifact(repository, "raw-funnel")
@@ -880,9 +909,9 @@ def overview(repository: Path) -> dict[str, Any]:
         {
             "id": item["hypothesis_id"],
             "title": item["title"],
-            "status": item["status"],
-            "result_status": item["result"]["status"],
-            "decision": item["decision"],
+            "status": _hypothesis_status(item),
+            "result_status": _hypothesis_result_status(item),
+            "decision": _hypothesis_decision(item),
         }
         for item in ledger["hypotheses"][-6:]
     ]

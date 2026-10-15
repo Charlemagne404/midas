@@ -347,42 +347,59 @@ def _finding_summary(root: Path, job: dict[str, Any], expected_scan_id: str) -> 
     candidate_evidence = experiment.get("gross_candidate_evidence")
     candidate_count = experiment.get("gross_candidate_evidence_count")
     replay = experiment.get("gross_candidate_replay")
+    analysis_version = experiment.get("analysis_version")
+    legacy_v2 = analysis_version == "veritas-economic-qualification-comparison-v2"
+    if analysis_version not in {
+        "veritas-economic-qualification-comparison-v2",
+        "veritas-economic-qualification-comparison-v3",
+    }:
+        raise ValueError("Qualification result has an unsupported comparison version")
     if (
         not isinstance(candidate_evidence, list)
         or not isinstance(candidate_count, int)
         or isinstance(candidate_count, bool)
         or candidate_count != len(candidate_evidence)
         or experiment.get("gross_candidate_evidence_complete") is not True
-        or not isinstance(replay, dict)
-        or replay.get("candidate_count") != candidate_count
-        or not isinstance(replay.get("replayed_candidate_count"), int)
-        or isinstance(replay.get("replayed_candidate_count"), bool)
-        or not isinstance(replay.get("complete"), bool)
-        or replay.get("status")
-        not in {
-            "NO_POSITIVE_CANDIDATES_TO_REPLAY",
-            "ALL_GROSS_CANDIDATES_REPLAYED",
-            "SOURCE_REPLAY_FAILED",
-            "SOURCE_ROOT_REQUIRED",
-            "REPLAY_LIMIT_EXCEEDED",
-        }
     ):
-        raise ValueError("Qualification result has invalid gross-candidate replay evidence")
-    replayed_count = replay["replayed_candidate_count"]
-    if replayed_count < 0 or replayed_count > candidate_count:
-        raise ValueError("Qualification result has invalid gross-candidate replay counts")
-    if candidate_count == 0 and (
-        replay.get("status") != "NO_POSITIVE_CANDIDATES_TO_REPLAY"
-        or replay.get("complete") is not True
-        or replayed_count != 0
-    ):
-        raise ValueError("Empty candidate replay status does not reconcile")
-    if candidate_count > 0:
-        if replay.get("status") == "ALL_GROSS_CANDIDATES_REPLAYED":
-            if replay.get("complete") is not True or replayed_count != candidate_count:
-                raise ValueError("Completed candidate replay counts do not reconcile")
-        elif replay.get("complete") is not False:
-            raise ValueError("Incomplete candidate replay is incorrectly marked complete")
+        raise ValueError("Qualification result has invalid gross-candidate evidence")
+    if legacy_v2:
+        replay_status = "REPLAY_NOT_AVAILABLE_LEGACY_V2"
+        replayed_count = 0
+        replay_complete = False
+    else:
+        if (
+            not isinstance(replay, dict)
+            or replay.get("candidate_count") != candidate_count
+            or not isinstance(replay.get("replayed_candidate_count"), int)
+            or isinstance(replay.get("replayed_candidate_count"), bool)
+            or not isinstance(replay.get("complete"), bool)
+            or replay.get("status")
+            not in {
+                "NO_POSITIVE_CANDIDATES_TO_REPLAY",
+                "ALL_GROSS_CANDIDATES_REPLAYED",
+                "SOURCE_REPLAY_FAILED",
+                "SOURCE_ROOT_REQUIRED",
+                "REPLAY_LIMIT_EXCEEDED",
+            }
+        ):
+            raise ValueError("Qualification result has invalid gross-candidate replay evidence")
+        replayed_count = replay["replayed_candidate_count"]
+        replay_status = replay["status"]
+        replay_complete = replay["complete"]
+        if replayed_count < 0 or replayed_count > candidate_count:
+            raise ValueError("Qualification result has invalid gross-candidate replay counts")
+        if candidate_count == 0 and (
+            replay_status != "NO_POSITIVE_CANDIDATES_TO_REPLAY"
+            or replay_complete is not True
+            or replayed_count != 0
+        ):
+            raise ValueError("Empty candidate replay status does not reconcile")
+        if candidate_count > 0:
+            if replay_status == "ALL_GROSS_CANDIDATES_REPLAYED":
+                if replay_complete is not True or replayed_count != candidate_count:
+                    raise ValueError("Completed candidate replay counts do not reconcile")
+            elif replay_complete is not False:
+                raise ValueError("Incomplete candidate replay is incorrectly marked complete")
     return {
         "finding_id": finding_id,
         "job_source_revision_sha256": job.get("submitted_source_hash"),
@@ -399,9 +416,9 @@ def _finding_summary(root: Path, job: dict[str, Any], expected_scan_id: str) -> 
         "last_captured_at_utc": sample.get("last_captured_at_utc"),
         "positive_states_by_gate": funnel_counts,
         "gross_candidate_evidence_count": candidate_count,
-        "gross_candidate_replay_status": replay.get("status"),
+        "gross_candidate_replay_status": replay_status,
         "gross_candidate_replayed_count": replayed_count,
-        "gross_candidate_replay_complete": replay.get("complete"),
+        "gross_candidate_replay_complete": replay_complete,
         "decision": experiment.get("decision"),
         "orders_submitted": experiment.get("orders_submitted"),
         "authenticated_requests": experiment.get("authenticated_requests"),

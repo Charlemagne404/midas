@@ -139,6 +139,7 @@ def test_director_admits_one_idempotent_scan_pinned_job_and_publishes_readiness(
     atomic_json(job_path, job)
     experiment = {
         "experiment_run_id": "VERITAS-M2-ECO-QUAL-001-RUN-test",
+        "analysis_version": "veritas-economic-qualification-comparison-v3",
         "dataset_sha256": "d" * 64,
         "status": "no_positive_gross_candidate_observed",
         "gross_candidate_evidence_count": 0,
@@ -293,3 +294,52 @@ def test_director_records_failed_admission_without_automatic_retry(tmp_path, mon
     assert first["failed_admission_scan_id"] == SCAN_ID
     assert calls == [SCAN_ID]
     assert len(list(arena_root.glob("alerts/*/manifest.json"))) == 1
+
+
+def test_finding_summary_accepts_persisted_v2_without_replay_field(tmp_path):
+    arena_root = tmp_path / "arena"
+    finding_id = "veritas-qualification-v1-0123456789abcdef"
+    experiment = {
+        "experiment_run_id": "VERITAS-M2-ECO-QUAL-001-V2-RUN-legacy",
+        "analysis_version": "veritas-economic-qualification-comparison-v2",
+        "dataset_sha256": "d" * 64,
+        "status": "no_positive_gross_candidate_observed",
+        "gross_candidate_evidence_count": 0,
+        "gross_candidate_evidence_complete": True,
+        "gross_candidate_evidence": [],
+        "sample": {
+            "snapshot_count": 28,
+            "attempted_market_pairs": 1120,
+            "quality_valid_pairs": 996,
+            "unique_market_ids": 513,
+        },
+        "source_snapshots": [{"scan_id": SCAN_ID}],
+        "economic_qualification_funnel": [
+            {"criterion": "unchanged_top_ask_gross_sign", "positive_states": 0}
+        ],
+        "orders_submitted": False,
+        "authenticated_requests": False,
+    }
+    experiment["experiment_sha256"] = hashlib.sha256(
+        json.dumps(experiment, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
+    ).hexdigest()
+    atomic_json(
+        arena_root / "findings" / finding_id / "manifest.json",
+        {
+            "artifact_id": finding_id,
+            "expected_latest_scan_id": SCAN_ID,
+            "experiment_sha256": experiment["experiment_sha256"],
+            "result": experiment,
+        },
+    )
+
+    summary = research_director._finding_summary(
+        arena_root,
+        {"result": {"finding_id": finding_id}, "submitted_source_hash": "a" * 64},
+        SCAN_ID,
+    )
+
+    assert summary["gross_candidate_evidence_count"] == 0
+    assert summary["gross_candidate_replay_status"] == "REPLAY_NOT_AVAILABLE_LEGACY_V2"
+    assert summary["gross_candidate_replayed_count"] == 0
+    assert summary["gross_candidate_replay_complete"] is False

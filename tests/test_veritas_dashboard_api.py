@@ -259,6 +259,42 @@ def test_overview_uses_bounded_versioned_evidence_without_raw_paths(tmp_path):
     assert "source_root" not in response.text
 
 
+def test_overview_accepts_legacy_hypotheses_without_top_level_status(tmp_path):
+    client = fixture_client(tmp_path)
+    ledger_path = tmp_path / "docs" / "VERITAS_RESEARCH_LEDGER.json"
+    ledger = json.loads(ledger_path.read_text())
+    ledger["hypotheses"][0].pop("status")
+    ledger["hypotheses"][0].pop("decision")
+    ledger_path.write_text(json.dumps(ledger))
+
+    response = client.get("/api/veritas/overview")
+
+    assert response.status_code == 200
+    hypothesis = response.json()["research_status"]["recent_hypotheses"][0]
+    assert hypothesis["status"] == "completed"
+    assert hypothesis["result_status"] == "completed"
+    assert hypothesis["decision"] == "No decision recorded."
+
+
+def test_overview_tolerates_hypotheses_without_any_status_fields(tmp_path):
+    client = fixture_client(tmp_path)
+    ledger_path = tmp_path / "docs" / "VERITAS_RESEARCH_LEDGER.json"
+    ledger = json.loads(ledger_path.read_text())
+    hypothesis = ledger["hypotheses"][0]
+    hypothesis.pop("status")
+    hypothesis.pop("decision")
+    hypothesis["result"].pop("status")
+    ledger_path.write_text(json.dumps(ledger))
+
+    response = client.get("/api/veritas/overview")
+
+    assert response.status_code == 200
+    hypothesis = response.json()["research_status"]["recent_hypotheses"][0]
+    assert hypothesis["status"] == "unknown"
+    assert hypothesis["result_status"] == "unknown"
+    assert hypothesis["decision"] == "No decision recorded."
+
+
 def test_artifact_allowlist_hash_and_size_bound(tmp_path):
     client = fixture_client(tmp_path)
 
