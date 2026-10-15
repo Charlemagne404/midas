@@ -1,46 +1,66 @@
 # Veritas Mission 2 Operations
 
-**Latest read-only runtime check:** 2026-10-15 19:57 UTC
+**Latest read-only runtime check:** 2026-10-15 20:16 UTC
 **Services:** `midas-veritas-observatory.service`, `midas-veritas-source-analysis.service`, `midas-veritas-research-director.service`
 **Timers:** `midas-veritas-observatory.timer`, `midas-veritas-source-analysis.timer`, `midas-veritas-research-director.timer`
 
-## Latest runtime state — 2026-10-15 19:57 UTC
+## Latest runtime state — 2026-10-15 20:16 UTC
 
-- The observer timer completed scan 32 at 19:30:35 UTC and is next due at
-  20:00:38 UTC. The fixed coverage pilot has two scans / 80 selected slots /
-  66 quality-valid pairs / 14 invalid pairs / zero skipped sequences. Its
-  fixed stop is 2026-10-16 19:00:55 UTC.
-- The finalized-source analysis timer completed its 19:40:47 UTC run at
-  19:44:07 UTC. It processed 128 segments / 29,884,557 bytes in that batch;
-  cumulative progress is 3,260/4,200 segments / 810,685,070 bytes, with 940
-  segments / 284,210,238 bytes pending. The campaign window has 201,162 frame
-  records, 182,797 touched states, and 177,123 quality-valid states across 47
-  markets; positive top-ask and full-depth state counts remain zero. The next
-  source-analysis timer is due at 20:10:56 UTC.
-- The 19:45:44 UTC Director cycle admitted
-  `job-c69b64f69f314dd89ad80b39` for
-  `scan-20261015T193035Z-7597bbb981fa`. Arena’s authoritative job record
-  completed all 32 events at 19:46:25 UTC with exit status 0 and no error.
-  Finding `veritas-qualification-v1-473344bb0e11e07a` reports zero positives
-  at all five economic gates. The Director manifest still projects `RUNNING`
-  and has not incorporated the completion; the scheduled 20:15:17 UTC cycle
-  is the reconciliation point. No manual poll or retry was started.
-- The Reality recorder service is active with zero restarts, but its latest
-  logged condition is `DEGRADED` after a DNS name-resolution failure. The
-  warning reports eight configured markets and last observation at 04:57:26
-  UTC; no later recorder journal line appeared in the checked interval. The
-  frozen Reality shadow service remains active after one automatic restart
-  following a source integrity/continuity mismatch. Neither service nor its
-  campaign was restarted or modified during this check.
-- Midas API and Reality API health endpoints and both local web interfaces
-  returned HTTP 200. Host memory available was 8.9 GiB; swap use was 3.5/4 GiB.
-  The filesystem had 199 GiB free. Reality recordings occupied about 1.1 GiB,
-  the frozen campaign directory 152 MiB, and the Veritas observatory 38 MiB.
-- A bounded read-only v1.4 campaign audit is recorded in [Gate C checkpoint
-  003](VERITAS_MISSION2_GATE_C_CHECKPOINT_003.md). It found public markouts
-  but no suitable strategy target or execution/P&L labels. The current
-  Director readiness field remains scoped to the separate snapshot
-  qualification dataset and has not ingested this report.
+- The observer timer completed scan 33 at 20:00:54 UTC and is next due at
+  20:31:39 UTC. The fixed coverage pilot has three scans / 120 selected slots
+  / 97 quality-valid pairs / 23 invalid pairs / zero skipped sequences. Its
+  fixed stop is 2026-10-16 19:00:55 UTC. The cumulative 33-scan panel has
+  1,167/1,320 valid pairs across 616 IDs; all five economic gates remain
+  zero-positive and the best top edge is -$0.001/share.
+- The finalized-source timer completed at 20:14:36 UTC. It processed 128
+  segments / 31,477,866 bytes in 212 seconds, using 10.618 CPU seconds and
+  147.7 MiB peak memory with no swap. The current summary is
+  `catching_up_finalized_source`: 3,388/4,260 segments / 842,162,936 bytes
+  processed, with 872 segments / 269,424,035 bytes pending. Its campaign
+  window has 212,048 frame records, 192,293 touched states, and 186,344
+  quality-valid states across 47 markets; positive top-ask and full-depth
+  counts remain zero. The 912 campaign-window gap markers comprise 911
+  `book_resynchronization` and one `connection_failure`; the aggregate provides
+  no event timestamps or outage durations. The next timer is due at 20:40:16
+  UTC. Summary digest: `c32f8e0796c9c8c814e7fc5eb0538042667a908b0d90ad6b589af551d05608e4`;
+  summary-file SHA-256: `f3517dc2950bb5a6436e40d5605ac4ff492ae3e4c70477e982a6be572eee351f`.
+- The 20:15:44 UTC Director cycle admitted
+  `job-16d651741d304fa098f87cc9` for scan 33. Arena completed all 33 events at
+  20:16:26 UTC with exit status 0; finding
+  `veritas-qualification-v1-010c9e464077e301` reports zero positives at all
+  five economic gates and a complete zero-row candidate replay. The Director
+  manifest was last updated before job completion and still projects
+  `QUEUED`; the 20:45:05 UTC cycle is the reconciliation point. No manual
+  poll or retry was started. See [Gate F checkpoint
+  019](VERITAS_MISSION2_GATE_F_CHECKPOINT_019.md).
+- At 20:02 UTC, the Reality recorder service was active with zero restarts and
+  both configured market-data DNS names resolved. Its last journal warning
+  remains `DEGRADED` at 04:57:26 UTC, but a read-only metadata audit found
+  1,790 finalized segment files mtime-stamped at or after that warning. The
+  first followed within about eight seconds, the largest adjacent mtime gap
+  was 36.51 seconds, and the newest was at 20:05:04 UTC. This rules against a
+  prolonged recording-output outage in the audited interval. However, the
+  20:14 source summary counted 911 `book_resynchronization` markers and one
+  `connection_failure` in its campaign window. The analyzer treats gap records
+  as reconstruction barriers, but the aggregate does not measure outage
+  duration or give event timestamps. This does not prove gap-free frames or
+  upstream feed completeness. See [continuity audit
+  001](VERITAS_MISSION2_RECORDER_CONTINUITY_001.json). The frozen Reality
+  shadow service was observed active after one automatic restart at the prior
+  19:57 check; no campaign or service was restarted or changed for this audit.
+- Host memory available was 8.9 GiB; swap use was 3.5/4 GiB, a resource
+  pressure indicator to watch during another long session. The filesystem
+  had 199 GiB free (56% used). Reality recordings occupied about 1.1 GiB at
+  the audited count; the Veritas observatory runtime directory was about 38
+  MiB at the previous size check. Midas and Reality API health endpoints and
+  both local web interfaces returned HTTP 200 at 19:57 UTC; no newer health
+  probe was run here.
+- The frozen-campaign v1.4 audit found public markouts but no suitable
+  strategy target or execution/P&L labels. The 20:16 Director manifest now
+  reports `NOT_READY_NO_CANDIDATE_RELEVANT_TARGET`; this remains readiness for
+  its separate snapshot dataset and does not ingest the frozen-campaign
+  report. See [Gate C checkpoint
+  003](VERITAS_MISSION2_GATE_C_CHECKPOINT_003.md).
 
 The one-shot Veritas services are inactive between scheduled runs by design.
 The recurring timers remain active; do not manually invoke overlapping runs.

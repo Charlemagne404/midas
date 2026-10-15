@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-15T19:58:10Z",
+  "updated_at_utc": "2026-10-15T20:18:42Z",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -4024,6 +4024,61 @@
       "status": "continue",
       "success_metric": "A model or policy study is eligible only after a predeclared candidate-related target has sufficient non-degenerate quality-valid support and independent timing, with execution ground truth kept separate from public markout measurements.",
       "title": "Do frozen forward public markouts support a useful strategy or model target?"
+    },
+    {
+      "hypothesis_id": "VERITAS-H072",
+      "title": "Did the 04:57 DNS warning correspond to a prolonged Reality recorder output outage?",
+      "mechanism": "Read finalized Reality segment filenames, sizes, and mtimes and compare them with the recorded warning time; separately check current recorder service state and public market-data DNS resolution without reading or changing segment payloads.",
+      "experiment_id": "VERITAS-M2-RECORDER-CONTINUITY-001",
+      "dataset_id": "33befadc02911746db97b5527efa09a0dd5f3412da1871e0fdc3713f958efa13",
+      "success_metric": "Determine whether finalized-file output continued after the warning while explicitly keeping market-frame continuity, feed completeness, and payload integrity unproven unless independently evidenced.",
+      "result": {
+        "status": "finalized_output_progress_after_dns_warning_feed_completeness_unverified",
+        "artifact_path": "docs/VERITAS_MISSION2_RECORDER_CONTINUITY_001.json",
+        "artifact_sha256": "33befadc02911746db97b5527efa09a0dd5f3412da1871e0fdc3713f958efa13",
+        "warning_time_utc": "2026-10-15T04:57:26Z",
+        "finalized_segment_count": 4250,
+        "finalized_segment_bytes": 1108797851,
+        "segments_mtime_at_or_after_warning": 1790,
+        "first_segment_after_warning_utc": "2026-10-15T04:57:34.667760Z",
+        "largest_adjacent_mtime_gap_seconds": 36.509951401,
+        "latest_segment_mtime_utc": "2026-10-15T20:05:04.348315Z",
+        "recorder_service": "active_running_zero_restarts_at_2026-10-15T20:02:28Z",
+        "configured_market_data_dns_resolved": true,
+        "source_analysis_at_capture": "catching_up_finalized_source; generated 2026-10-15T19:44:07Z; 3260/4200 cataloged segments processed; 940 pending",
+        "source_analysis_summary_sha256": "24e3750c48c6dbb614ab6acff94cf70db4258dac369b55a502aace63f778ba51",
+        "campaign_window_gap_reasons": {
+          "book_resynchronization": 850,
+          "connection_failure": 1
+        },
+        "followup_source_analysis": {
+          "generated_at_utc": "2026-10-15T20:14:33Z",
+          "summary_sha256": "c32f8e0796c9c8c814e7fc5eb0538042667a908b0d90ad6b589af551d05608e4",
+          "summary_file_sha256": "f3517dc2950bb5a6436e40d5605ac4ff492ae3e4c70477e982a6be572eee351f",
+          "processed_segments": 3388,
+          "catalog_segments": 4260,
+          "pending_segments": 872,
+          "pending_source_bytes": 269424035,
+          "period_frame_records": 212048,
+          "quality_valid_states": 186344,
+          "campaign_window_gap_reasons": {
+            "book_resynchronization": 911,
+            "connection_failure": 1
+          },
+          "positive_top_ask_pair_states": 0,
+          "positive_full_depth_pre_fee_states": 0
+        }
+      },
+      "limitations": [
+        "Filesystem metadata establishes finalized-file output timing only; no segment content, frame sequence, or payload hash was checked in this audit.",
+        "The audit does not prove that every market frame was captured, that venue sequence continuity exists, or that the upstream feed was complete.",
+        "The service state and DNS checks were point observations; the earlier logged DNS warning and its cause remain unresolved in the recorder journal.",
+        "At capture, the scheduled source analyzer had not yet processed the newest finalized segments.",
+        "The 19:44 UTC source summary reports aggregate campaign-window gap reasons but not timestamps, so the connection_failure cannot be matched to the 04:57 warning and book_resynchronization markers cannot be mapped to individual market or timing intervals.",
+        "The 20:14 UTC follow-up summary increased the aggregate book_resynchronization count to 911 while connection_failure remained one; it still has no per-gap event times or outage durations."
+      ],
+      "decision": "Do not restart the recorder or alter the frozen campaign. Allow the scheduled source analyzer to ingest recent files; report recording-output progress separately from market-feed continuity.",
+      "status": "continue"
     }
   ],
   "next_research_questions": [

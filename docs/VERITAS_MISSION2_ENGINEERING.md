@@ -1,35 +1,51 @@
 # Veritas Mission 2 Engineering Checkpoint
 
-## Latest checkpoint — Gate C label feasibility and scan 32 qualification
+## Latest checkpoint — Gate A scan 33 and recorder continuity audit
 
-At 19:58 UTC, the bounded v1.4 frozen-campaign audit confirms that 937 public
-markout measurements exist across 41,012 follow-up slots; 40,075 are censored.
-At five seconds, 473/3,503 valid initial decisions have an observed markout,
-but all 473 report no initial discrepancy, null opportunity persistence, and
-unknown-counterfactual execution ground truth. This is not a usable strategy
-or P&L target. The summary-only artifact and limitations are in [Gate C
-checkpoint 003](VERITAS_MISSION2_GATE_C_CHECKPOINT_003.md).
+At 20:05 UTC, scan 33 completed with 31/40 selected pairs quality-valid. The
+cumulative panel has 1,167/1,320 valid pairs across 616 selected market IDs,
+153 invalid pairs, and zero positive top-gross pairs; the best edge remains
+-$0.001/share. The 24-hour rotating-coverage pilot has three scans, 97/120
+valid pairs, and no skipped scan sequences. Its comparison remains descriptive
+because only three of nine selected control slots were available. See [Gate A
+checkpoint 029](VERITAS_MISSION2_GATE_A_CHECKPOINT_029.md).
 
-The scan-32 Arena job completed all 32 events at 19:46:25 UTC with exit status
-0. Its persisted finding reports 1,136/1,280 valid pairs across 598 selected
-IDs and zero positives at all five gross/depth/minimum/fee gates. The Director
-manifest still projects `RUNNING`; its scheduled reconciliation remains
-pending (see [Gate F checkpoint 018](VERITAS_MISSION2_GATE_F_CHECKPOINT_018.md)).
-The current 24-hour coverage pilot has two scans / 80 slots / 66
-valid / zero missed sequences.
+A read-only segment metadata audit found 1,790 finalized Reality `.seg` files
+with mtimes at or after the 04:57:26 UTC DNS warning. The first followed the
+warning by about eight seconds; the largest adjacent mtime gap was 36.51
+seconds, and the latest file was written at 20:05:04 UTC. At 20:02 UTC the
+recorder was active with zero restarts and DNS resolved. This argues against
+a prolonged recording-output outage. The 20:14 source summary counted 911
+`book_resynchronization` markers and one `connection_failure`; these are
+reconstruction barriers, but their aggregate contains no event times or
+outage durations. Feed continuity is therefore not established. See
+[continuity artifact 001](VERITAS_MISSION2_RECORDER_CONTINUITY_001.json) and
+[research ledger H072](VERITAS_RESEARCH_LEDGER.json).
 
-The 19:40 UTC source replay completed 128 segments / 29,884,557 bytes. The
-prefix is 3,260/4,200 segments, with 940 / 284,210,238 bytes pending; its
-campaign window has 177,123 quality-valid states across 47 markets and zero
-positive top-ask/full-depth states. The eight-market Reality recorder remains
-active but its latest logged state is degraded after a DNS failure, with last
-observation at 04:57 UTC. See [operations](VERITAS_MISSION2_OPERATIONS.md),
-[label artifact](VERITAS_MISSION2_LABEL_FEASIBILITY_001.json), and [research
-ledger H071](VERITAS_RESEARCH_LEDGER.json).
+The scheduled 20:14:36 UTC source-analysis run processed 128 segments / 31.48
+MB in 212 seconds, using 10.618 CPU seconds and 147.7 MiB peak memory with no
+swap. It is catching up at 3,388/4,260 segments, with 872 / 269,424,035 bytes
+pending. The partial campaign window has 186,344 quality-valid states across
+47 markets, with zero positive top-ask/full-depth states. The next source
+timer is 20:40:16 UTC.
 
-The v1.4 forensic change passed 9 focused tests, Ruff, formatting, and strict
-Mypy. It remains a separate artifact; the dashboard’s frozen-campaign API
-still accepts its pinned v1.3 schema. Mission 2 remains active.
+Scan 33's Arena qualification completed all 33 events successfully at
+20:16:26 UTC and found zero positives at all five gates. The authoritative
+job is complete, while the Director manifest still projects it as queued; the
+20:45:05 UTC cycle is the reconciliation point. The manifest now reports the
+corrected `NOT_READY_NO_CANDIDATE_RELEVANT_TARGET` model readiness. See [Gate
+F checkpoint 019](VERITAS_MISSION2_GATE_F_CHECKPOINT_019.md). No manual poll or
+restart was used.
+
+The frozen-campaign v1.4 audit found 937 public markouts across 41,012
+follow-up slots, with 40,075 censored. At five seconds, 473/3,503 valid initial
+decisions have an observed markout, but all report no initial discrepancy,
+null opportunity persistence, and unknown-counterfactual execution ground
+truth. These are not strategy or P&L labels. The v1.4 code passed 9 focused
+tests, Ruff, formatting, and strict Mypy; the artifact remains separate from
+the dashboard's pinned v1.3 schema. See [Gate C checkpoint
+003](VERITAS_MISSION2_GATE_C_CHECKPOINT_003.md) and [label artifact
+001](VERITAS_MISSION2_LABEL_FEASIBILITY_001.json). Mission 2 remains active.
 
 ## Gate G checkpoint 005 — coverage dashboard and scan 32
 

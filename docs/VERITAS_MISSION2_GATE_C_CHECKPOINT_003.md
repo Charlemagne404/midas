@@ -49,12 +49,14 @@ comparison: no valid initial discrepancy occurred, the five-second
 opportunity target is unsupported, censoring is high, and fills/P&L remain
 unknown. Keep no-trade and do not train on this evidence.
 
-The Research Director’s current `NOT_READY_NO_PUBLIC_OUTCOME_LABELS` value is
-emitted by the separate snapshot-qualification workflow, which has not
-ingested this frozen-campaign report. Treat it as readiness for that snapshot
-dataset, not as a global claim that no public markout rows exist. A future
-readiness change should name the missing requirement precisely and only after
-the data sources are explicitly joined.
+The Research Director’s snapshot-qualification code was corrected in commit
+`5795676` to emit `NOT_READY_NO_CANDIDATE_RELEVANT_TARGET`, with a
+candidate-relevant target recommendation. The 20:15 UTC Director cycle
+persisted this more precise label in its manifest. That readiness remains
+scoped to its separate snapshot dataset and has not ingested this
+frozen-campaign report; do not treat it as a global claim about all available
+public markouts. The scan-33 qualification job has completed, but its manifest
+projection remains queued until the next scheduled reconciliation.
 
 The Arena qualification job for scan 32 independently completed all 32 events
 at 19:46:25 UTC with exit status 0. Finding

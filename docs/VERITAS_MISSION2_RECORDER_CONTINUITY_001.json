@@ -1,0 +1,106 @@
+{
+  "artifact_id": "VERITAS-M2-RECORDER-CONTINUITY-001",
+  "assessment": {
+    "interpretation": "The first finalized segment mtime after the DEGRADED warning is within seconds, and the segment metadata sequence continues through the capture time. This argues against a prolonged recording-output outage after that warning.",
+    "not_proven": [
+      "Every market frame was captured without gaps.",
+      "Venue sequence continuity or upstream feed completeness.",
+      "Segment contents or event hashes are intact; the scheduled source-analysis job has not yet processed the newest files."
+    ]
+  },
+  "captured_at_utc": "2026-10-15T20:05:30Z",
+  "method": "Read-only filesystem metadata audit of finalized .seg filenames, sizes, and mtimes; segment contents were not read or modified.",
+  "recorder": {
+    "dns_resolution_check": {
+      "checked_at_utc": "2026-10-15T20:02:28Z",
+      "clob_ipv4": [
+        "104.18.34.205",
+        "172.64.153.51"
+      ],
+      "gamma_api_ipv4": [
+        "104.18.34.205",
+        "172.64.153.51"
+      ]
+    },
+    "finalized_segment_mtime_audit": {
+      "first_after_warning": {
+        "file": "00000000000000309646-f2a1b2ee15654bb295cdc43634774090.seg",
+        "mtime_utc": "2026-10-15T04:57:34.667760Z"
+      },
+      "largest_adjacent_mtime_gap_seconds": 36.509951401,
+      "largest_gap_after": {
+        "file": "00000000000000540959-4e15582e47164b6f8ce6fe01f88ccd60.seg",
+        "mtime_utc": "2026-10-15T17:47:47.731873Z"
+      },
+      "largest_gap_before": {
+        "file": "00000000000000540824-e3f4bbb6ced24ce79e031cc12b2c3166.seg",
+        "mtime_utc": "2026-10-15T17:47:11.221921Z"
+      },
+      "latest": {
+        "bytes": 600558,
+        "file": "00000000000000598090-c891645cd0a344ddbe4ac65807ad5d4d.seg",
+        "mtime_utc": "2026-10-15T20:05:04.348315Z"
+      },
+      "metadata_manifest_sha256": "8ab12b7fffdcf5bc53435f2a910e1ef9e048335a0430c513ee91e1cb1f2e85bc",
+      "segment_count": 4250,
+      "segments_with_mtime_at_or_after_warning": 1790,
+      "total_segment_bytes": 1108797851
+    },
+    "logged_connection_warning": {
+      "error": "ConnectError: [Errno -3] Temporary failure in name resolution",
+      "failure_count": 1,
+      "reported_last_observation_ns": 1792040246428479977,
+      "state": "DEGRADED",
+      "time_utc": "2026-10-15T04:57:26Z"
+    },
+    "root": "/home/charlie/midas-reality/data/recordings/reality",
+    "service_observation": {
+      "active_state": "active",
+      "checked_at_utc": "2026-10-15T20:02:28Z",
+      "restart_count": 0,
+      "sub_state": "running"
+    }
+  },
+  "schema_version": 1,
+  "source_analysis": {
+    "catalog_segments": 4200,
+    "campaign_window_gap_reasons": {
+      "book_resynchronization": 850,
+      "connection_failure": 1
+    },
+    "summary_file_sha256": "efc33b300cbb9a18b83ccbc2b63434b39476e29aa9918f3188513175741eb89c",
+    "summary_sha256": "24e3750c48c6dbb614ab6acff94cf70db4258dac369b55a502aace63f778ba51",
+    "pending_segments": 940,
+    "pending_source_bytes": 284210238,
+    "processed_segments": 3260,
+    "readiness": "catching_up_finalized_source",
+    "summary_generated_at_utc": "2026-10-15T19:44:07+00:00"
+  },
+  "veritas_observer": {
+    "captured_at_utc": "2026-10-15T20:00:54.868388+00:00",
+    "coverage_pilot": {
+      "completed_scans": 3,
+      "distinct_ids": 98,
+      "ends_at_utc": "2026-10-16T19:00:55.062293+00:00",
+      "invalid": 23,
+      "quality_valid": 97,
+      "selected_slots": 120,
+      "skipped_sequences": 0,
+      "status": "running"
+    },
+    "cumulative_distinct_market_ids": 616,
+    "cumulative_invalid_pairs": 153,
+    "cumulative_positive_top_gross_pairs": 0,
+    "cumulative_quality_valid_pairs": 1167,
+    "cumulative_selected_pairs": 1320,
+    "cumulative_snapshots": 33,
+    "discovery_unique_ids": 300,
+    "latest_scan_positive_top_gross_pairs": 0,
+    "latest_scan_quality_valid_pairs": 31,
+    "latest_scan_selected_pairs": 40,
+    "scan_id": "scan-20261015T200054Z-85952cd7142b",
+    "snapshot_evidence_sha256": "85952cd7142b013dc86f34a108ba9125e192513bccc83e227a2e77ad82cbd36a",
+    "snapshot_file": "snapshots/scan-20261015T200054Z-85952cd7142b.json.gz",
+    "snapshot_file_sha256": "f014dc087a2628a5f35e625ba67386d5a0e70ac293d173df17d3e742d55af706"
+  }
+}
