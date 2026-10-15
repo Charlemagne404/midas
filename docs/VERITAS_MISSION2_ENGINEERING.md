@@ -1,19 +1,19 @@
 # Veritas Mission 2 Engineering Checkpoint
 
-## Latest dashboard update — Gate G checkpoint 007
+## Latest dashboard update — Gate G checkpoint 008
 
-The dashboard now exposes the frozen campaign's verified gap-censor
-attribution and the separately maintained finalized-source gap-detail prefix.
-The UI distinguishes direct `recorded_gap` source references from indirect
-`book_issue:gap` terminations and labels the current campaign-window count as
-partial while the prefix is catching up. Both API views validate campaign
-identity and sealed digests; the prefix endpoint reads only the bounded
-summary and never opens an active segment. The live repository read returned
-HTTP 200 for the overview and both artifact links; focused API/UI checks and
-an isolated Playwright browser workflow passed, along with Ruff, strict Mypy,
-Prettier, TypeScript, and the production build. See [Gate G checkpoint
-007](VERITAS_MISSION2_GATE_G_CHECKPOINT_007.md) for counts and caveats. Gate G
-and Mission 2 remain active.
+The opportunity observatory now shows candidate events per elapsed panel
+hour, explicitly describing its snapshots as intermittent, and exposes a
+size-by-gate table for 5, 10, 20, 50, and 100 shares per leg. The table keeps
+full-depth gross, per-leg minimum, single-match fee, and fragmentation-safe
+fee counts separate and labels repeated observations as correlated states,
+not opportunities or fills. For the latest 37-snapshot artifact, all five
+quantities remain zero at every displayed gate. The UI test, TypeScript,
+Prettier, production build, and isolated Playwright workflow passed. Vite
+reported its existing large-chunk advisory. See [Gate G checkpoint
+008](VERITAS_MISSION2_GATE_G_CHECKPOINT_008.md) and the prior [gap evidence
+checkpoint 007](VERITAS_MISSION2_GATE_G_CHECKPOINT_007.md). Gate G and Mission
+2 remain active.
 
 ## Latest engineering checkpoint — Gate C censoring and exact source audit
 

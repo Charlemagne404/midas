@@ -257,6 +257,63 @@
   font-weight: 500;
   text-transform: capitalize;
 }
+.ve-candidate-frequency > span:first-child {
+  color: #9b8a65;
+  text-transform: uppercase;
+}
+.ve-candidate-frequency > span:first-child b {
+  color: #c7ccd6;
+}
+.ve-economic-gates {
+  border-bottom: 1px solid #252a32;
+}
+.ve-economic-gates-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 15px 8px;
+}
+.ve-economic-gates-heading small {
+  color: #778394;
+  font-size: 8px;
+}
+.ve-economic-gates-table {
+  overflow-x: auto;
+  padding: 0 15px;
+}
+.ve-economic-gates-row {
+  display: grid;
+  grid-template-columns: minmax(80px, 0.62fr) repeat(4, minmax(104px, 1fr));
+  gap: 8px;
+  min-width: 545px;
+  padding: 8px 0;
+  border-top: 1px solid #20252c;
+  color: #b6bfcb;
+  font-size: 8px;
+}
+.ve-economic-gates-row.header {
+  color: #778395;
+  font-size: 7px;
+  letter-spacing: 0.45px;
+  text-transform: uppercase;
+}
+.ve-economic-gates-row > span,
+.ve-economic-gates-row > strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.ve-economic-gates-row > strong {
+  color: #d6dbe4;
+  font-family: ui-monospace, 'SFMono-Regular', Consolas, monospace;
+}
+.ve-economic-gates > p {
+  margin: 0;
+  padding: 7px 15px 10px;
+  color: #7d8999;
+  font-size: 8px;
+  line-height: 1.5;
+}
 .ve-pilot-breakdown {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1287,6 +1344,10 @@
   }
   .ve-gap-evidence-stats {
     grid-template-columns: 1fr;
+  }
+  .ve-economic-gates-heading {
+    align-items: flex-start;
+    flex-direction: column;
   }
   .ve-quality-diagnostics b {
     text-align: left;

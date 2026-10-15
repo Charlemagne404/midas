@@ -700,6 +700,13 @@ export function Veritas() {
     : '';
   const positiveFullDepthAt20 =
     observatoryOpportunity.positive_minimum_notional_by_quantity['20'] ?? 0;
+  const economicGateQuantities = Object.keys(
+    observatoryOpportunity.positive_full_depth_gross_by_quantity,
+  ).sort((left, right) => Number(left) - Number(right));
+  const candidateEventsPerPanelHour =
+    observatory.coverage_window_hours > 0
+      ? observatoryOpportunity.candidate_event_count / observatory.coverage_window_hours
+      : null;
   const latestCategories = Object.entries(observatoryDiscovery.latest_by_category).sort(
     (left, right) => right[1] - left[1] || left[0].localeCompare(right[0]),
   );
@@ -1233,6 +1240,70 @@ export function Veritas() {
                 {fmt(observatoryOpportunity.candidate_event_count)}
               </strong>
             </div>
+          </div>
+          <div className="ve-observatory-meta ve-candidate-frequency">
+            <span>
+              Recorded candidate frequency
+              <b>
+                {candidateEventsPerPanelHour === null
+                  ? 'Not enough elapsed panel time'
+                  : `${candidateEventsPerPanelHour.toFixed(3)} events / panel hour`}
+              </b>
+            </span>
+            <span>
+              {fmt(observatoryOpportunity.candidate_event_count)} candidate events across a{' '}
+              {observatory.coverage_window_hours.toFixed(1)} h panel window. Snapshots are
+              intermittent, not continuous observations.
+            </span>
+          </div>
+          <div className="ve-economic-gates">
+            <div className="ve-economic-gates-heading">
+              <span className="ve-subhead">Positive economic states by requested size</span>
+              <small>
+                Observed paired-book states after each gross, depth, minimum, and fee gate
+              </small>
+            </div>
+            <div
+              className="ve-economic-gates-table"
+              role="table"
+              aria-label="Positive economic states by quantity and gate"
+            >
+              <div className="ve-economic-gates-row header" role="row">
+                <span role="columnheader">Shares / leg</span>
+                <span role="columnheader">Full-depth gross</span>
+                <span role="columnheader">+ Per-leg minimum</span>
+                <span role="columnheader">Single-match fees</span>
+                <span role="columnheader">Fragmentation-safe fees</span>
+              </div>
+              {economicGateQuantities.map((quantity) => (
+                <div className="ve-economic-gates-row" role="row" key={quantity}>
+                  <strong role="cell">{quantity}</strong>
+                  <span role="cell">
+                    {fmt(
+                      observatoryOpportunity.positive_full_depth_gross_by_quantity[quantity] ?? 0,
+                    )}
+                  </span>
+                  <span role="cell">
+                    {fmt(
+                      observatoryOpportunity.positive_minimum_notional_by_quantity[quantity] ?? 0,
+                    )}
+                  </span>
+                  <span role="cell">
+                    {fmt(observatoryOpportunity.positive_single_match_by_quantity[quantity] ?? 0)}
+                  </span>
+                  <span role="cell">
+                    {fmt(
+                      observatoryOpportunity.positive_fragmentation_safe_by_quantity[quantity] ?? 0,
+                    )}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <p>
+              The per-leg minimum and fee columns show where a positive gross state fails later
+              checks. Repeated states are correlated observations, not independent opportunities or
+              fills.
+            </p>
           </div>
           <div className="ve-quality-diagnostics">
             <div>

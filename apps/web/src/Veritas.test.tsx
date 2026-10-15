@@ -1,5 +1,5 @@
 import { afterEach, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Veritas } from './Veritas';
 
@@ -392,10 +392,34 @@ it('labels measured evidence and keeps synthetic execution separate from actual 
                     quality_valid_pairs: 0,
                     invalid_pairs: 0,
                     positive_top_gross_pairs: 0,
-                    positive_full_depth_gross_by_quantity: {},
-                    positive_minimum_notional_by_quantity: {},
-                    positive_single_match_by_quantity: {},
-                    positive_fragmentation_safe_by_quantity: {},
+                    positive_full_depth_gross_by_quantity: {
+                      '5': 0,
+                      '10': 0,
+                      '20': 0,
+                      '50': 0,
+                      '100': 0,
+                    },
+                    positive_minimum_notional_by_quantity: {
+                      '5': 0,
+                      '10': 0,
+                      '20': 0,
+                      '50': 0,
+                      '100': 0,
+                    },
+                    positive_single_match_by_quantity: {
+                      '5': 0,
+                      '10': 0,
+                      '20': 0,
+                      '50': 0,
+                      '100': 0,
+                    },
+                    positive_fragmentation_safe_by_quantity: {
+                      '5': 0,
+                      '10': 0,
+                      '20': 0,
+                      '50': 0,
+                      '100': 0,
+                    },
                     candidate_event_count: 0,
                     candidate_market_count: 0,
                     minimum_top_edge_per_share: null,
@@ -738,4 +762,9 @@ it('labels measured evidence and keeps synthetic execution separate from actual 
     'href',
     '/api/veritas/artifacts/gap-detail-current',
   );
+  expect(screen.getByText(/0.000 events \/ panel hour/)).toBeInTheDocument();
+  const economicGateTable = screen.getByRole('table', {
+    name: 'Positive economic states by quantity and gate',
+  });
+  expect(within(economicGateTable).getByRole('row', { name: '20 0 0 0 0' })).toBeInTheDocument();
 });

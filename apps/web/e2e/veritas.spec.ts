@@ -91,6 +91,11 @@ test('shows the bounded discovery cohort and links its finalized evidence', asyn
   await expect(
     page.getByRole('heading', { name: 'Opportunity observatory and data quality' }),
   ).toBeVisible();
+  await expect(page.getByText(/0.000 events \/ panel hour/)).toBeVisible();
+  const economicGateTable = page.getByRole('table', {
+    name: 'Positive economic states by quantity and gate',
+  });
+  await expect(economicGateTable.getByRole('row', { name: '20 0 0 0 0' })).toBeVisible();
   await expect(
     page.getByText(/No quality-valid positive full-depth gross candidate has been recorded/),
   ).toBeVisible();
