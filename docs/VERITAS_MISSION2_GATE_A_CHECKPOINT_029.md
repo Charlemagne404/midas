@@ -1,6 +1,7 @@
 # Gate A checkpoint 029 — scan 33 and recorder continuity
 
-**Updated through:** 2026-10-15T20:16:34Z  
+**Updated through:** 2026-10-15T20:20:20Z
+
 **Mission status:** active; no economic candidate qualified.
 
 ## Scan 33: bounded discovery and observation
@@ -62,6 +63,25 @@ machine-readable audit is [recorder continuity artifact
 `33befadc02911746db97b5527efa09a0dd5f3412da1871e0fdc3713f958efa13`. The
 source-summary digest is
 `24e3750c48c6dbb614ab6acff94cf70db4258dac369b55a502aace63f778ba51`.
+
+## Targeted connection-failure timing
+
+A bounded follow-up decoded one 405,703-byte finalized segment containing 92
+records. All per-record integrity checks passed, and the segment SHA-256
+matched its catalog sidecar. The segment contains the preceding frame at
+04:57:26.428480 UTC, a `book_resynchronization` at 04:57:26.438753, and the
+DNS `connection_failure` at 04:57:26.717847. This matches the sole
+`connection_failure` in the 20:14 source summary and the logged 04:57 warning.
+The first later frame was recorded at 04:57:29.162854, 2.445 seconds after the
+failure event.
+
+That is receiver-time evidence for a later frame record, not proof that all
+eight market books had recovered, were synchronized, or were fresh. This
+single-segment check does not characterize the other hundreds of
+resynchronization events. Its summary-only artifact is [recorder gap-timing
+artifact 001](VERITAS_MISSION2_RECORDER_GAP_TIMING_001.json), SHA-256
+`c038f26e037eff5e75bce707d0842c628592e76c4d6c211931f9433c2028e586`; the
+related hypothesis is [H073](VERITAS_RESEARCH_LEDGER.json).
 
 ## Scheduled source-analysis follow-up
 

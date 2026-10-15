@@ -1,10 +1,10 @@
 # Veritas Mission 2 Operations
 
-**Latest read-only runtime check:** 2026-10-15 20:16 UTC
+**Latest read-only runtime check:** 2026-10-15 20:20 UTC
 **Services:** `midas-veritas-observatory.service`, `midas-veritas-source-analysis.service`, `midas-veritas-research-director.service`
 **Timers:** `midas-veritas-observatory.timer`, `midas-veritas-source-analysis.timer`, `midas-veritas-research-director.timer`
 
-## Latest runtime state — 2026-10-15 20:16 UTC
+## Latest runtime state — 2026-10-15 20:20 UTC
 
 - The observer timer completed scan 33 at 20:00:54 UTC and is next due at
   20:31:39 UTC. The fixed coverage pilot has three scans / 120 selected slots
@@ -48,8 +48,15 @@
   001](VERITAS_MISSION2_RECORDER_CONTINUITY_001.json). The frozen Reality
   shadow service was observed active after one automatic restart at the prior
   19:57 check; no campaign or service was restarted or changed for this audit.
+- A targeted read of the finalized segment covering the connection failure
+  verified all 92 records and matched the segment SHA-256 to its catalog
+  sidecar. The `connection_failure` at 04:57:26.717847 UTC matches the DNS
+  warning; the first later receiver frame was at 04:57:29.162854, 2.445
+  seconds later. This does not prove all eight market books recovered or were
+  fresh. See [gap-timing artifact
+  001](VERITAS_MISSION2_RECORDER_GAP_TIMING_001.json).
 - Host memory available was 8.9 GiB; swap use was 3.5/4 GiB, a resource
-  pressure indicator to watch during another long session. The filesystem
+  pressure indicator in the 20:16 host snapshot. The filesystem
   had 199 GiB free (56% used). Reality recordings occupied about 1.1 GiB at
   the audited count; the Veritas observatory runtime directory was about 38
   MiB at the previous size check. Midas and Reality API health endpoints and

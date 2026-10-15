@@ -22,6 +22,14 @@ outage durations. Feed continuity is therefore not established. See
 [continuity artifact 001](VERITAS_MISSION2_RECORDER_CONTINUITY_001.json) and
 [research ledger H072](VERITAS_RESEARCH_LEDGER.json).
 
+A targeted read of the finalized segment spanning the warning matched the
+single source-summary `connection_failure` to the 04:57:26.718 UTC DNS error.
+The first later receiver frame appeared 2.445 seconds afterward. All 92
+records in that segment passed integrity checks and its file hash matched the
+catalog sidecar. This does not establish full-cohort recovery or quote
+freshness; see [gap-timing artifact
+001](VERITAS_MISSION2_RECORDER_GAP_TIMING_001.json) and ledger H073.
+
 The scheduled 20:14:36 UTC source-analysis run processed 128 segments / 31.48
 MB in 212 seconds, using 10.618 CPU seconds and 147.7 MiB peak memory with no
 swap. It is catching up at 3,388/4,260 segments, with 872 / 269,424,035 bytes

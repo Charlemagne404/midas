@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-15T20:18:42Z",
+  "updated_at_utc": "2026-10-15T20:20:45Z",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -4078,6 +4078,37 @@
         "The 20:14 UTC follow-up summary increased the aggregate book_resynchronization count to 911 while connection_failure remained one; it still has no per-gap event times or outage durations."
       ],
       "decision": "Do not restart the recorder or alter the frozen campaign. Allow the scheduled source analyzer to ingest recent files; report recording-output progress separately from market-feed continuity.",
+      "status": "continue"
+    },
+    {
+      "hypothesis_id": "VERITAS-H073",
+      "title": "Does the recorded 04:57 connection failure match the DNS warning, and when does the next receiver frame appear?",
+      "mechanism": "Read the single finalized source segment spanning the warning, verify every decoded record and the segment hash against its catalog sidecar, then compare the failure record with the warning time and first later frame.",
+      "experiment_id": "VERITAS-M2-RECORDER-GAP-TIMING-001",
+      "dataset_id": "c038f26e037eff5e75bce707d0842c628592e76c4d6c211931f9433c2028e586",
+      "success_metric": "Establish whether the summary connection_failure corresponds to the logged DNS warning and bound time to the first later recorded frame while keeping complete feed recovery unproven.",
+      "result": {
+        "status": "single_connection_failure_matches_warning_first_frame_2_445_seconds_later",
+        "artifact_path": "docs/VERITAS_MISSION2_RECORDER_GAP_TIMING_001.json",
+        "artifact_sha256": "c038f26e037eff5e75bce707d0842c628592e76c4d6c211931f9433c2028e586",
+        "segment_file": "00000000000000309646-f2a1b2ee15654bb295cdc43634774090.seg",
+        "segment_sha256": "63d8fb314df20ed753916b61251cd9cdad59a237b94ded9bbab73f2d95e41112",
+        "catalog_sidecar_hash_match": true,
+        "records_integrity_checked": 92,
+        "book_resynchronization_ordinal": 309681,
+        "book_resynchronization_received_at_utc": "2026-10-15T04:57:26.438753Z",
+        "connection_failure_ordinal": 309682,
+        "connection_failure_received_at_utc": "2026-10-15T04:57:26.717847Z",
+        "first_following_frame_ordinal": 309715,
+        "first_following_frame_received_at_utc": "2026-10-15T04:57:29.162854Z",
+        "seconds_to_first_following_frame": 2.445007193
+      },
+      "limitations": [
+        "This is one finalized segment around one connection failure, not a comprehensive feed-continuity study.",
+        "The first later frame does not prove that all eight markets had complete or synchronized books.",
+        "Receiver timestamps do not equal exchange quote times and do not establish freshness, fills, or economic opportunities."
+      ],
+      "decision": "The connection failure matches the logged warning and a later frame was recorded 2.445 seconds afterward. Keep the full-feed continuity claim unresolved, preserve the campaign, and continue scheduled observation.",
       "status": "continue"
     }
   ],
