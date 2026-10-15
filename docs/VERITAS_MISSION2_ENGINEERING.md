@@ -1,28 +1,28 @@
 # Veritas Mission 2 Engineering Checkpoint
 
-## Latest operational and discovery update — Gate A checkpoint 019 / Gate F checkpoint 009
+## Latest operational and discovery update — Gate A checkpoint 020 / Gate F checkpoint 010
 
-The 14:01 scheduled scan is snapshot 21. The cumulative panel has 840
-selected observations, 751 request/receipt-valid pairs, 89 invalid pairs, and
-367 distinct markets. The legacy reported-age/skew gate accepts 176 pairs,
-for a paired recovery of 575/840 (+68.45 percentage points). All five
+The 14:31 scheduled scan is snapshot 22. The cumulative panel has 880
+selected observations, 789 request/receipt-valid pairs, 91 invalid pairs, and
+392 distinct markets. The legacy reported-age/skew gate accepts 183 pairs,
+for a paired recovery of 606/880 (+68.86 percentage points). All five
 economic qualification gates remain zero-positive.
 
-The 14:10 finalized-source replay processed 128 segments / 32,886,676 bytes.
-Its partial prefix now covers 1,919/3,549 finalized segments and contains
-40,459 campaign-window frame records, 30,809 touched states, and 29,749
-quality-valid states. There are 1,630 segments / 430,839,649 bytes pending;
+The 14:40 finalized-source replay processed 118 segments / 33,526,838 bytes.
+Its partial prefix now covers 2,037/3,608 finalized segments and contains
+56,771 campaign-window frame records, 46,152 touched states, and 44,837
+quality-valid states. There are 1,571 segments / 413,665,338 bytes pending;
 positive top-ask and full-depth states remain zero. The earlier source-window
 interpretation correction remains documented in checkpoint 017.
 
-The 14:15 Director cycle recorded scan 20 completion, admitted scan 21, and
-Arena completed the 21-event qualification at 14:16:20 UTC. The finding
-remains zero-positive. At this checkpoint the Director manifest still showed
-`QUEUED` for scan 21 and scan 20 as last qualified; the next scheduled poll at
-14:45:16 UTC is the reconciliation point. No manual poll or retry was started.
-See [Gate A checkpoint 019](VERITAS_MISSION2_GATE_A_CHECKPOINT_019.md), [Gate F
-checkpoint 009](VERITAS_MISSION2_GATE_F_CHECKPOINT_009.md), [operations](VERITAS_MISSION2_OPERATIONS.md),
-and [research inventory 022](VERITAS_MISSION2_RESEARCH_INVENTORY_022.json).
+The 14:45 Director cycle recorded scan 21 completion, admitted scan 22, and
+Arena completed the 22-event qualification at 14:46:23 UTC. The finding
+remains zero-positive. The manifest last updated at 14:46:07 UTC projects
+`QUEUED` for scan 22 and retains scan 21's finding; the next scheduled poll at
+15:15:07 UTC is the reconciliation point. No manual poll or retry was started.
+See [Gate A checkpoint 020](VERITAS_MISSION2_GATE_A_CHECKPOINT_020.md), [Gate F
+checkpoint 010](VERITAS_MISSION2_GATE_F_CHECKPOINT_010.md), [operations](VERITAS_MISSION2_OPERATIONS.md),
+and [research inventory 023](VERITAS_MISSION2_RESEARCH_INVENTORY_023.json).
 
 ## Latest dashboard update — Gate G checkpoint 004
 
