@@ -57,6 +57,68 @@ type FollowupCensoring = {
 
 type Artifact = { id: string; label: string };
 
+type LabelFeasibilityHorizon = {
+  horizon_ms: number;
+  scheduled_followups: number;
+  valid_initial_decisions: number;
+  observed: number;
+  observed_yield_per_valid_initial: number | null;
+  censored: number;
+  pending: number;
+  opportunity_target_status: Record<string, number>;
+  opportunity_persistence: Record<string, number>;
+  execution_ground_truth: Record<string, number>;
+  markouts: Record<
+    string,
+    {
+      count: number;
+      minimum: string;
+      median_nearest_rank: string;
+      maximum: string;
+      positive_count: number;
+    }
+  >;
+};
+
+type LabelFeasibility = {
+  status: string;
+  analysis_version: string;
+  source_kind: string;
+  captured_at_utc: string;
+  campaign_id: string;
+  decision_count: number;
+  market_count: number;
+  connected_family_count: number;
+  valid_initial_decisions: number;
+  invalid_initial_decisions: number;
+  horizons: LabelFeasibilityHorizon[];
+  five_second: {
+    observed: number;
+    opportunity_target_status: Record<string, number>;
+    opportunity_persistence: Record<string, number>;
+    execution_ground_truth: Record<string, number>;
+  };
+  economic_observations: {
+    pre_fee_positive_count: number;
+    pre_fee_edge_per_unit: {
+      count: number;
+      minimum: string;
+      p25_nearest_rank: string;
+      median_nearest_rank: string;
+      p75_nearest_rank: string;
+      maximum: string;
+    };
+    actual_orders_submitted: number;
+    actual_fills: string;
+    realized_money: null;
+  };
+  suitable_strategy_target_support: boolean;
+  assessment: string | null;
+  censor_reasons: Record<string, number>;
+  artifact: Artifact & { file_sha256: string; url: string };
+  limitations: string[];
+};
+
 type ObservatoryCandidate = {
   scan_id: string;
   market_id: string;
@@ -318,6 +380,7 @@ type Overview = {
     source_analysis_version?: string;
   };
   followup_censoring: FollowupCensoring | null;
+  label_feasibility: LabelFeasibility | null;
   baseline_policies: { count: number; all_abstained: boolean };
   execution_sensitivity: {
     quantity_shares_per_leg: string;
@@ -565,6 +628,7 @@ export function Veritas() {
   const observatoryOpportunity = observatory.opportunity;
   const observatoryQuality = observatory.data_quality;
   const followupCensoring = data.followup_censoring ?? null;
+  const labelFeasibility = data.label_feasibility ?? null;
   const positiveFullDepthAt20 =
     observatoryOpportunity.positive_minimum_notional_by_quantity['20'] ?? 0;
   const latestCategories = Object.entries(observatoryDiscovery.latest_by_category).sort(
@@ -1432,6 +1496,88 @@ export function Veritas() {
                 </p>
               </div>
             </details>
+          )}
+          {labelFeasibility && (
+            <div className="ve-label-feasibility" aria-label="Frozen Mission 2 label feasibility">
+              <div className="ve-label-heading">
+                <strong>Frozen Mission 2 campaign · public markouts</strong>
+                <span>
+                  {labelFeasibility.analysis_version} ·{' '}
+                  {labelFeasibility.source_kind.replaceAll('_', ' ')} · as of{' '}
+                  {time(labelFeasibility.captured_at_utc)}
+                </span>
+              </div>
+              <div className="ve-observatory-stats compact">
+                <div>
+                  <span>Decisions / markets</span>
+                  <strong>
+                    {fmt(labelFeasibility.decision_count)} / {fmt(labelFeasibility.market_count)}
+                  </strong>
+                </div>
+                <div>
+                  <span>Valid initial states</span>
+                  <strong>{fmt(labelFeasibility.valid_initial_decisions)}</strong>
+                </div>
+                <div>
+                  <span>Five-second observed</span>
+                  <strong>
+                    {fmt(labelFeasibility.five_second.observed)} /{' '}
+                    {fmt(labelFeasibility.valid_initial_decisions)} ·{' '}
+                    {rate(
+                      labelFeasibility.five_second.observed,
+                      labelFeasibility.valid_initial_decisions,
+                    )}
+                  </strong>
+                </div>
+                <div>
+                  <span>Positive pre-fee starts / suitable target</span>
+                  <strong className="none">
+                    {fmt(labelFeasibility.economic_observations.pre_fee_positive_count)} /{' '}
+                    {labelFeasibility.suitable_strategy_target_support
+                      ? 'supported'
+                      : 'unsupported'}
+                  </strong>
+                </div>
+              </div>
+              <div className="ve-label-table">
+                <div className="ve-table-head">
+                  <span>Horizon</span>
+                  <span>Observed</span>
+                  <span>Yield</span>
+                  <span>No initial discrepancy</span>
+                  <span>Execution unknown</span>
+                </div>
+                {labelFeasibility.horizons.map((row) => (
+                  <div className="ve-table-row" key={row.horizon_ms}>
+                    <strong>
+                      {row.horizon_ms >= 1000
+                        ? `${row.horizon_ms / 1000} s`
+                        : `${row.horizon_ms} ms`}
+                    </strong>
+                    <span>{fmt(row.observed)}</span>
+                    <span className="ve-yield">
+                      {rate(row.observed, row.valid_initial_decisions)}
+                    </span>
+                    <span>{fmt(row.opportunity_target_status.no_initial_discrepancy ?? 0)}</span>
+                    <span>{fmt(row.execution_ground_truth.unknown_counterfactual ?? 0)}</span>
+                  </div>
+                ))}
+              </div>
+              <p className="ve-label-note">
+                At five seconds, all {fmt(labelFeasibility.five_second.observed)} observed starts
+                had no initial discrepancy, undefined opportunity persistence, and unknown
+                counterfactual execution outcomes. No orders were submitted; realized P&amp;L is
+                absent. {labelFeasibility.assessment}
+              </p>
+              <a
+                className="ve-latest-snapshot"
+                href={labelFeasibility.artifact.url}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Inspect hash-verified frozen label analysis <ArrowUpRight size={13} />
+              </a>
+            </div>
           )}
         </Panel>
       </div>

@@ -1,6 +1,24 @@
 # Veritas Mission 2 Engineering Checkpoint
 
-## Latest checkpoint — Gate A scan 33 and recorder continuity audit
+## Latest checkpoint — Gate G frozen label-feasibility visibility
+
+The dashboard now exposes the frozen-campaign v1.4 label-feasibility report
+as a digest-verified, campaign-matched API projection, separate from the
+existing v1.3 follow-up summary. The UI shows per-horizon markout counts and
+the five-second target and execution support, preserving the finding that
+these data do not support strategy training or establish fills/P&L. The
+report covers 10,253 decisions; 473 of 3,503 valid starts have a five-second
+public markout, all with no initial discrepancy, undefined opportunity
+persistence, and unknown counterfactual execution. See [Gate G checkpoint
+006](VERITAS_MISSION2_GATE_G_CHECKPOINT_006.md).
+
+Focused verification passed: 15 dashboard API tests, one Veritas UI test,
+Ruff, strict Mypy for the API module, Ruff formatting, Prettier, and TypeScript
+typecheck. The API test runner emitted one Starlette/httpx deprecation warning.
+No full regression suite, deployment, or service restart was run. Mission 2
+remains active.
+
+## Previous evidence checkpoint — Gate A scan 33 and recorder continuity audit
 
 At 20:05 UTC, scan 33 completed with 31/40 selected pairs quality-valid. The
 cumulative panel has 1,167/1,320 valid pairs across 616 selected market IDs,

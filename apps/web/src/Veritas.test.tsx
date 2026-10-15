@@ -241,6 +241,72 @@ it('labels measured evidence and keeps synthetic execution separate from actual 
                   artifact: { id: 'censoring', label: 'Read-only censoring analysis' },
                   limitations: ['Interim correlated evidence.'],
                 },
+                label_feasibility: {
+                  status: 'available',
+                  analysis_version: 'veritas-forward-forensics-v1.4',
+                  source_kind: 'genuine_public_recording',
+                  captured_at_utc: '2026-10-15T19:58:10Z',
+                  campaign_id: 'campaign-fixture',
+                  decision_count: 10253,
+                  market_count: 43,
+                  connected_family_count: 37,
+                  valid_initial_decisions: 3503,
+                  invalid_initial_decisions: 6750,
+                  horizons: [
+                    {
+                      horizon_ms: 5000,
+                      scheduled_followups: 10253,
+                      valid_initial_decisions: 3503,
+                      observed: 473,
+                      observed_yield_per_valid_initial: 473 / 3503,
+                      censored: 9780,
+                      pending: 0,
+                      opportunity_target_status: { no_initial_discrepancy: 473 },
+                      opportunity_persistence: { null: 473 },
+                      execution_ground_truth: { unknown_counterfactual: 473 },
+                      markouts: {
+                        quoted_exit_value_change: {
+                          count: 473,
+                          minimum: '0.00',
+                          median_nearest_rank: '0.00',
+                          maximum: '0.00',
+                          positive_count: 0,
+                        },
+                      },
+                    },
+                  ],
+                  five_second: {
+                    observed: 473,
+                    opportunity_target_status: { no_initial_discrepancy: 473 },
+                    opportunity_persistence: { null: 473 },
+                    execution_ground_truth: { unknown_counterfactual: 473 },
+                  },
+                  economic_observations: {
+                    pre_fee_positive_count: 0,
+                    pre_fee_edge_per_unit: {
+                      count: 3503,
+                      minimum: '-0.997',
+                      p25_nearest_rank: '-0.015',
+                      median_nearest_rank: '-0.01',
+                      p75_nearest_rank: '-0.005',
+                      maximum: '-0.001',
+                    },
+                    actual_orders_submitted: 0,
+                    actual_fills: 'unknown_counterfactual',
+                    realized_money: null,
+                  },
+                  suitable_strategy_target_support: false,
+                  assessment:
+                    'Do not train or compare strategy policies on these labels; they are markouts and execution remains unknown.',
+                  censor_reasons: { future_observation_unavailable: 10233 },
+                  artifact: {
+                    id: 'label-feasibility',
+                    label: 'Frozen Mission 2 public markout label feasibility',
+                    file_sha256: 'a'.repeat(64),
+                    url: '/api/veritas/artifacts/label-feasibility',
+                  },
+                  limitations: ['Public quote survival does not identify hypothetical fills.'],
+                },
                 baseline_policies: { count: 6, all_abstained: true },
                 execution_sensitivity: {
                   quantity_shares_per_leg: '100',
@@ -528,6 +594,15 @@ it('labels measured evidence and keeps synthetic execution separate from actual 
     '/api/veritas/artifacts/coverage-pilot',
   );
   expect(screen.getByText('7.1% qualifying measurements')).toBeInTheDocument();
+  expect(screen.getByText('Frozen Mission 2 campaign · public markouts')).toBeInTheDocument();
+  expect(screen.getByText(/genuine public recording/)).toBeInTheDocument();
+  expect(screen.getByText(/473 \/ 3,503/)).toBeInTheDocument();
+  expect(
+    screen.getByText(/all 473 observed starts had no initial discrepancy/),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByRole('link', { name: /Inspect hash-verified frozen label analysis/ }),
+  ).toHaveAttribute('href', '/api/veritas/artifacts/label-feasibility');
   expect(screen.getByText('354')).toBeInTheDocument();
   expect(screen.getAllByText('1,027').length).toBeGreaterThan(0);
   expect(screen.getByText('-1.03 USDC')).toBeInTheDocument();

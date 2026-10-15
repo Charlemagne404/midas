@@ -21,6 +21,7 @@ ARTIFACTS = {
     "ledger": "VERITAS_RESEARCH_LEDGER.json",
     "inventory": "VERITAS_RESEARCH_INVENTORY.json",
     "censoring": "VERITAS_GATE_A_CENSORING_003.json",
+    "label-feasibility": "VERITAS_MISSION2_LABEL_FEASIBILITY_001.json",
 }
 MAX_ARTIFACT_BYTES = 512 * 1024
 MAX_OBSERVATORY_SUMMARY_BYTES = 2 * 1024**2
@@ -252,6 +253,271 @@ def followup_censoring_overview(
             "label": "Read-only censoring by market, time, horizon and quality",
             "file_sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
             "url": "/api/veritas/artifacts/censoring",
+        },
+        "limitations": artifact.get("limitations", []),
+    }
+
+
+def label_feasibility_overview(
+    repository: Path, expected_campaign_id: str
+) -> dict[str, Any] | None:
+    path = repository / "docs" / ARTIFACTS["label-feasibility"]
+    if path.is_symlink():
+        raise HTTPException(404, "Veritas label-feasibility evidence is unavailable")
+    if not path.exists():
+        return None
+    artifact, path = read_artifact(repository, "label-feasibility")
+    analysis = artifact.get("analysis")
+    campaign = artifact.get("campaign")
+    assessment = artifact.get("assessment")
+    economics = artifact.get("economic_observations")
+    support = artifact.get("followup_label_support")
+    if (
+        artifact.get("artifact_id") != "VERITAS-M2-LABEL-FEASIBILITY-001"
+        or artifact.get("schema_version") != 1
+        or not isinstance(analysis, dict)
+        or analysis.get("version") != "veritas-forward-forensics-v1.4"
+        or analysis.get("source_kind") != "genuine_public_recording"
+        or not isinstance(campaign, dict)
+        or campaign.get("campaign_id") != expected_campaign_id
+        or not isinstance(assessment, dict)
+        or not isinstance(economics, dict)
+        or not isinstance(support, dict)
+    ):
+        raise HTTPException(503, "Mission 2 label-feasibility artifact identity is invalid")
+
+    def nonnegative_int(value: Any) -> bool:
+        return isinstance(value, int) and not isinstance(value, bool) and value >= 0
+
+    def require_count(value: Any, description: str) -> int:
+        if not nonnegative_int(value):
+            raise HTTPException(503, description)
+        return int(value)
+
+    decision_count = require_count(campaign.get("decisions"), "Mission 2 decision count is invalid")
+    market_count = require_count(campaign.get("markets"), "Mission 2 market count is invalid")
+    family_count = require_count(
+        campaign.get("connected_families"), "Mission 2 connected-family count is invalid"
+    )
+    valid_initial = require_count(
+        campaign.get("valid_initial_decisions"), "Mission 2 valid-initial count is invalid"
+    )
+    invalid_initial = require_count(
+        campaign.get("invalid_initial_decisions"), "Mission 2 invalid-initial count is invalid"
+    )
+    if valid_initial + invalid_initial != decision_count:
+        raise HTTPException(503, "Mission 2 label-feasibility coverage counts are invalid")
+
+    horizon_data = support.get("by_horizon")
+    if (
+        not isinstance(horizon_data, dict)
+        or not 1 <= len(horizon_data) <= 16
+        or any(
+            not isinstance(key, str) or not key.isdigit() or int(key) <= 0 or str(int(key)) != key
+            for key in horizon_data
+        )
+    ):
+        raise HTTPException(503, "Mission 2 label-feasibility horizons are invalid")
+    horizons: list[dict[str, Any]] = []
+    observed_total = 0
+    censored_total = 0
+    pending_total = 0
+    for horizon_key, item in sorted(horizon_data.items(), key=lambda pair: int(pair[0])):
+        if not isinstance(item, dict):
+            raise HTTPException(503, "Mission 2 label-feasibility horizon identity is invalid")
+        horizon_ms = int(horizon_key)
+        scheduled = require_count(
+            item.get("scheduled_followups"), "Mission 2 scheduled-followup count is invalid"
+        )
+        item_valid_initial = require_count(
+            item.get("valid_initial_decisions"), "Mission 2 horizon valid-initial count is invalid"
+        )
+        observed = require_count(
+            item.get("observed_public_measurements"), "Mission 2 observed-markout count is invalid"
+        )
+        censored = require_count(item.get("censored"), "Mission 2 censored count is invalid")
+        pending = require_count(item.get("pending"), "Mission 2 pending count is invalid")
+        if (
+            scheduled != decision_count
+            or item_valid_initial != valid_initial
+            or observed + censored + pending != scheduled
+            or observed > valid_initial
+        ):
+            raise HTTPException(503, "Mission 2 label-feasibility horizon counts do not reconcile")
+        categorical = item.get("categorical_counts")
+        if not isinstance(categorical, dict):
+            raise HTTPException(503, "Mission 2 label-feasibility categorical support is missing")
+        for dimension in (
+            "opportunity_target_status",
+            "opportunity_persistence",
+            "execution_ground_truth",
+        ):
+            counts = categorical.get(dimension)
+            if (
+                not isinstance(counts, dict)
+                or not all(nonnegative_int(count) for count in counts.values())
+                or sum(counts.values()) != observed
+            ):
+                raise HTTPException(
+                    503, "Mission 2 label-feasibility target counts do not reconcile"
+                )
+        numeric_distributions = item.get("numeric_distributions")
+        if not isinstance(numeric_distributions, dict):
+            raise HTTPException(
+                503, "Mission 2 label-feasibility markout distributions are missing"
+            )
+        markouts: dict[str, dict[str, Any]] = {}
+        for metric in (
+            "best_ask_pair_movement",
+            "quoted_exit_value_change",
+            "adverse_ask_movement",
+        ):
+            distribution = numeric_distributions.get(metric)
+            if (
+                not isinstance(distribution, dict)
+                or not nonnegative_int(distribution.get("count"))
+                or distribution["count"] != observed
+                or any(
+                    not isinstance(distribution.get(key), str)
+                    for key in ("minimum", "median_nearest_rank", "maximum")
+                )
+                or not nonnegative_int(distribution.get("positive_count"))
+                or distribution["positive_count"] > observed
+            ):
+                raise HTTPException(
+                    503, "Mission 2 label-feasibility markout counts do not reconcile"
+                )
+            markouts[metric] = {
+                key: distribution.get(key)
+                for key in ("count", "minimum", "median_nearest_rank", "maximum", "positive_count")
+            }
+            if not nonnegative_int(markouts[metric]["positive_count"]):
+                raise HTTPException(503, "Mission 2 label-feasibility markout summary is invalid")
+        horizons.append(
+            {
+                "horizon_ms": horizon_ms,
+                "scheduled_followups": scheduled,
+                "valid_initial_decisions": item_valid_initial,
+                "observed": observed,
+                "observed_yield_per_valid_initial": (
+                    observed / valid_initial if valid_initial else None
+                ),
+                "censored": censored,
+                "pending": pending,
+                "opportunity_target_status": categorical["opportunity_target_status"],
+                "opportunity_persistence": categorical["opportunity_persistence"],
+                "execution_ground_truth": categorical["execution_ground_truth"],
+                "markouts": markouts,
+            }
+        )
+        observed_total += observed
+        censored_total += censored
+        pending_total += pending
+
+    total_observed = require_count(
+        support.get("total_observed_public_measurements"),
+        "Mission 2 aggregate observed count is invalid",
+    )
+    total_censored = require_count(
+        support.get("total_censored"), "Mission 2 aggregate censored count is invalid"
+    )
+    total_pending = require_count(
+        support.get("total_pending"), "Mission 2 aggregate pending count is invalid"
+    )
+    censor_reasons = support.get("censor_reasons")
+    if (
+        (observed_total, censored_total, pending_total)
+        != (total_observed, total_censored, total_pending)
+        or not isinstance(censor_reasons, dict)
+        or not all(nonnegative_int(count) for count in censor_reasons.values())
+        or sum(censor_reasons.values()) != total_censored
+    ):
+        raise HTTPException(503, "Mission 2 label-feasibility aggregate counts do not reconcile")
+
+    edge = economics.get("pre_fee_edge_per_unit")
+    actual_fills = economics.get("actual_fills")
+    orders_submitted = economics.get("actual_orders_submitted")
+    if (
+        not isinstance(edge, dict)
+        or not nonnegative_int(edge.get("count"))
+        or edge.get("count") != valid_initial
+        or not nonnegative_int(edge.get("positive_count"))
+        or edge.get("positive_count") > edge["count"]
+        or actual_fills != "unknown_counterfactual"
+        or not nonnegative_int(orders_submitted)
+        or orders_submitted != 0
+        or economics.get("realized_money") is not None
+    ):
+        raise HTTPException(503, "Mission 2 label-feasibility economic evidence is invalid")
+    five_second = next((row for row in horizons if row["horizon_ms"] == 5000), None)
+    if five_second is None:
+        raise HTTPException(503, "Mission 2 five-second label support is missing")
+    five_second_assessment = assessment.get("five_second_execution_ground_truth")
+    if (
+        assessment.get("suitable_strategy_target_support") is not False
+        or assessment.get("five_second_opportunity_persistence_all_null") is not True
+        or assessment.get("five_second_target_status_no_initial_discrepancy") is not True
+        or assessment.get("five_second_quote_persistence_constant_true") is not True
+        or five_second["opportunity_target_status"].get("no_initial_discrepancy")
+        != five_second["observed"]
+        or five_second["opportunity_persistence"].get("null") != five_second["observed"]
+        or five_second["execution_ground_truth"].get("unknown_counterfactual")
+        != five_second["observed"]
+        or not isinstance(five_second_assessment, dict)
+        or five_second_assessment.get("unknown_counterfactual") != five_second["observed"]
+    ):
+        raise HTTPException(503, "Mission 2 five-second label assessment is inconsistent")
+    quote_persistence = (
+        support["by_horizon"]["5000"].get("categorical_counts", {}).get("quote_persistence")
+    )
+    if quote_persistence != {"true": five_second["observed"]}:
+        raise HTTPException(503, "Mission 2 five-second quote-persistence summary is inconsistent")
+    if not isinstance(assessment.get("decision"), str):
+        raise HTTPException(503, "Mission 2 label-feasibility assessment text is missing")
+
+    return {
+        "status": "available",
+        "analysis_version": analysis["version"],
+        "source_kind": analysis["source_kind"],
+        "captured_at_utc": artifact.get("captured_at_utc"),
+        "campaign_id": campaign["campaign_id"],
+        "decision_count": decision_count,
+        "market_count": market_count,
+        "connected_family_count": family_count,
+        "valid_initial_decisions": valid_initial,
+        "invalid_initial_decisions": invalid_initial,
+        "horizons": horizons,
+        "five_second": {
+            "observed": five_second["observed"],
+            "opportunity_target_status": five_second["opportunity_target_status"],
+            "opportunity_persistence": five_second["opportunity_persistence"],
+            "execution_ground_truth": five_second["execution_ground_truth"],
+        },
+        "economic_observations": {
+            "pre_fee_positive_count": edge["positive_count"],
+            "pre_fee_edge_per_unit": {
+                key: edge.get(key)
+                for key in (
+                    "count",
+                    "minimum",
+                    "p25_nearest_rank",
+                    "median_nearest_rank",
+                    "p75_nearest_rank",
+                    "maximum",
+                )
+            },
+            "actual_orders_submitted": orders_submitted,
+            "actual_fills": actual_fills,
+            "realized_money": None,
+        },
+        "suitable_strategy_target_support": False,
+        "assessment": assessment["decision"],
+        "censor_reasons": censor_reasons,
+        "artifact": {
+            "id": "label-feasibility",
+            "label": "Frozen Mission 2 public markout label feasibility",
+            "file_sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+            "url": "/api/veritas/artifacts/label-feasibility",
         },
         "limitations": artifact.get("limitations", []),
     }
@@ -1322,6 +1588,7 @@ def overview(repository: Path) -> dict[str, Any]:
     coverage = frozen["coverage"]
     outcomes = frozen["outcomes"]["by_horizon"]
     current_censoring = followup_censoring_overview(repository, str(funnel["campaign_id"]))
+    label_feasibility = label_feasibility_overview(repository, str(funnel["campaign_id"]))
     quantity = "100"
     full_depth = next(
         row
@@ -1408,6 +1675,8 @@ def overview(repository: Path) -> dict[str, Any]:
         artifacts.append(finalized_source["summary_artifact"])
     if current_censoring is not None:
         artifacts.append(current_censoring["artifact"])
+    if label_feasibility is not None:
+        artifacts.append(label_feasibility["artifact"])
 
     return {
         "status": "insufficient_independent_evidence",
@@ -1455,6 +1724,7 @@ def overview(repository: Path) -> dict[str, Any]:
             ),
         },
         "followup_censoring": current_censoring,
+        "label_feasibility": label_feasibility,
         "baseline_policies": {
             "count": len(frozen["policy_actions"]),
             "all_abstained": all(

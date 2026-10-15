@@ -79,6 +79,8 @@ reconciliation; no manual poll or retry was run.
 - SQLite integrity scan: not performed.
 - Focused forensic tests: **9 passed**. Ruff, Ruff format check, and strict Mypy passed.
 
-The analyzer change is in `packages/midas/veritas/forensics.py`; the dashboard
-continues to consume its pinned v1.3 artifact schema. This v1.4 result remains
-a separate forensic artifact pending any deliberate API integration.
+The v1.4 result remains distinct from the dashboard's pinned v1.3 censoring
+summary. It is now available through a separately validated read-only API
+projection and dashboard panel; see [Gate G checkpoint
+006](VERITAS_MISSION2_GATE_G_CHECKPOINT_006.md). The integration preserves the
+markout-only and unknown-execution limitations recorded above.

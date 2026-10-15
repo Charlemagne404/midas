@@ -121,6 +121,15 @@ def write_censoring_artifact(root: Path, *, campaign_id: str = "campaign-fixture
     )
 
 
+def write_label_feasibility_artifact(root: Path, *, campaign_id: str = "campaign-fixture") -> None:
+    source = (
+        Path(__file__).resolve().parents[1] / "docs/VERITAS_MISSION2_LABEL_FEASIBILITY_001.json"
+    )
+    artifact = json.loads(source.read_text())
+    artifact["campaign"]["campaign_id"] = campaign_id
+    write_artifact(root, "VERITAS_MISSION2_LABEL_FEASIBILITY_001.json", artifact)
+
+
 def fixture_client(tmp_path: Path) -> TestClient:
     write_artifact(
         tmp_path,
@@ -506,6 +515,55 @@ def test_overview_uses_versioned_censoring_by_market_hour_and_quality(tmp_path):
     )
     assert any(item["id"] == "censoring" for item in data["artifacts"])
     assert client.get("/api/veritas/artifacts/censoring").status_code == 200
+
+
+def test_overview_exposes_frozen_campaign_markout_feasibility_separately(tmp_path):
+    client = fixture_client(tmp_path)
+    write_label_feasibility_artifact(tmp_path)
+
+    response = client.get("/api/veritas/overview")
+
+    assert response.status_code == 200
+    data = response.json()
+    feasibility = data["label_feasibility"]
+    assert feasibility["analysis_version"] == "veritas-forward-forensics-v1.4"
+    assert feasibility["campaign_id"] == "campaign-fixture"
+    assert feasibility["decision_count"] == 10253
+    assert feasibility["valid_initial_decisions"] == 3503
+    assert feasibility["five_second"]["observed"] == 473
+    assert feasibility["five_second"]["opportunity_target_status"] == {
+        "no_initial_discrepancy": 473
+    }
+    assert feasibility["five_second"]["opportunity_persistence"] == {"null": 473}
+    assert feasibility["five_second"]["execution_ground_truth"] == {"unknown_counterfactual": 473}
+    assert feasibility["economic_observations"]["pre_fee_positive_count"] == 0
+    assert feasibility["economic_observations"]["actual_orders_submitted"] == 0
+    assert feasibility["economic_observations"]["realized_money"] is None
+    assert feasibility["suitable_strategy_target_support"] is False
+    assert any(item["id"] == "label-feasibility" for item in data["artifacts"])
+    artifact_response = client.get("/api/veritas/artifacts/label-feasibility")
+    expected_hash = hashlib.sha256(
+        (tmp_path / "docs/VERITAS_MISSION2_LABEL_FEASIBILITY_001.json").read_bytes()
+    ).hexdigest()
+    assert artifact_response.json()["file_sha256"] == expected_hash
+
+
+def test_overview_rejects_label_feasibility_artifact_from_another_campaign(tmp_path):
+    client = fixture_client(tmp_path)
+    write_label_feasibility_artifact(tmp_path, campaign_id="different-campaign")
+
+    assert client.get("/api/veritas/overview").status_code == 503
+
+
+def test_overview_rejects_unreconciled_label_feasibility_horizon(tmp_path):
+    client = fixture_client(tmp_path)
+    write_label_feasibility_artifact(tmp_path)
+    artifact_path = tmp_path / "docs/VERITAS_MISSION2_LABEL_FEASIBILITY_001.json"
+    artifact = json.loads(artifact_path.read_text())
+    artifact["followup_label_support"]["by_horizon"]["5000"]["observed_public_measurements"] += 1
+    artifact_path.write_text(json.dumps(artifact))
+
+    assert client.get("/api/veritas/overview").status_code == 503
 
 
 def test_overview_rejects_censoring_artifact_from_another_campaign(tmp_path):
