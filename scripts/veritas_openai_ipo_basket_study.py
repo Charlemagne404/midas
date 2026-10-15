@@ -25,6 +25,7 @@ MARKET_IDS = tuple(str(value) for value in range(608_362, 608_369))
 ADAPTER_ADDRESS = "0xd91e80cf2e7be2e162c6513ced06f1dd0da35296"
 RPC_URL = "https://polygon-bor-rpc.publicnode.com"
 BOOKS_URL = "https://clob.polymarket.com/books"
+MARKET_WS_URL = "wss://ws-subscriptions-clob.polymarket.com/ws/market"
 MAX_RESPONSE_BYTES = 2_000_000
 MAX_GROUP_MARKETS = 16
 MAX_BOOK_AGE_MS = 5_000
@@ -728,6 +729,182 @@ def replay_study(path: Path) -> dict[str, Any]:
     }
 
 
+def replay_market_stream(path: Path) -> dict[str, Any]:
+    """Replay a bounded public market-stream capture against its REST group reference."""
+    if path.is_symlink():
+        raise ValueError("Market-stream artifact must not be a symbolic link")
+    resolved = path.expanduser().resolve()
+    if not resolved.is_relative_to(STUDY_ROOT.resolve()) or not resolved.is_file():
+        raise ValueError("Market-stream artifact must be a regular file under the study root")
+    if resolved.stat().st_size > MAX_RESPONSE_BYTES:
+        raise ValueError("Stored market-stream artifact exceeds its 2,000,000-byte bound")
+    artifact = json.loads(resolved.read_text())
+    if (
+        not isinstance(artifact, dict)
+        or artifact.get("schema_version") != 1
+        or artifact.get("capture_kind") != "public_market_websocket_initial_books"
+    ):
+        raise ValueError("Unsupported public market-stream artifact")
+    sealed = dict(artifact)
+    claimed_artifact_sha = sealed.pop("artifact_sha256", None)
+    if claimed_artifact_sha != _sha256(_canonical(sealed)):
+        raise ValueError("Stored market-stream artifact digest does not match")
+    if (
+        artifact.get("url") != MARKET_WS_URL
+        or artifact.get("authenticated_requests") is not False
+        or artifact.get("orders_submitted") is not False
+        or artifact.get("sequence_field_present") is not False
+    ):
+        raise ValueError("Market-stream artifact does not match the pinned read-only capture")
+
+    reference_path = Path(str(artifact.get("rest_reference_path") or ""))
+    if not reference_path.is_absolute():
+        reference_path = REPOSITORY / reference_path
+    reference_path = reference_path.expanduser()
+    if reference_path.is_symlink():
+        raise ValueError("REST reference must be a regular study artifact")
+    reference_path = reference_path.resolve()
+    if not reference_path.is_relative_to(STUDY_ROOT.resolve()) or not reference_path.is_file():
+        raise ValueError("REST reference must be a regular study artifact")
+    rest_replay = replay_study(reference_path)
+    rest_artifact = json.loads(reference_path.read_text())
+    if rest_replay["artifact_sha256"] != artifact.get("rest_reference_artifact_sha256"):
+        raise ValueError("Market-stream REST reference digest does not match")
+    markets = rest_artifact.get("normalized_markets")
+    if not isinstance(markets, list) or len(markets) != 7:
+        raise ValueError(
+            "Market-stream REST reference does not contain the verified seven-market set"
+        )
+    expected_tokens = [
+        token
+        for market in markets
+        for token in (market["yes_token_id"], market["no_token_id"])
+    ]
+    if artifact.get("subscription_asset_ids") != expected_tokens:
+        raise ValueError("Market-stream subscription differs from the verified token set")
+
+    frames = artifact.get("frames")
+    if not isinstance(frames, list) or artifact.get("frame_count") != len(frames) or not frames:
+        raise ValueError("Market-stream frame count is invalid")
+    frame_bytes = 0
+    books: list[dict[str, Any]] = []
+    sequence_fields = {"seq", "sequence", "sequence_id", "sequence_number"}
+    for frame in frames:
+        if not isinstance(frame, dict) or not isinstance(frame.get("payload"), str):
+            raise ValueError("Market-stream frame payload is malformed")
+        payload = frame["payload"].encode()
+        frame_bytes += len(payload)
+        decoded = json.loads(payload)
+        events = decoded if isinstance(decoded, list) else [decoded]
+        if any(not isinstance(event, dict) for event in events):
+            raise ValueError("Market-stream frame contains a non-object event")
+        if any(sequence_fields.intersection(event) for event in events):
+            raise ValueError("Market-stream event unexpectedly contains a sequence field")
+        if any(event.get("event_type") != "book" for event in events):
+            raise ValueError("Market-stream capture contains a non-book event")
+        books.extend(events)
+    if (
+        frame_bytes != artifact.get("frame_bytes")
+        or len(books) != artifact.get("book_event_count")
+        or artifact.get("matched_verified_book_count") != len(expected_tokens)
+    ):
+        raise ValueError("Market-stream frame or book-event counts do not match")
+    observed_tokens = [str(book.get("asset_id")) for book in books]
+    if (
+        len(observed_tokens) != len(set(observed_tokens))
+        or set(observed_tokens) != set(expected_tokens)
+    ):
+        raise ValueError("Market-stream books do not match the complete unique token set")
+
+    metadata_by_asset = {
+        token: market
+        for market in markets
+        for token in (market["yes_token_id"], market["no_token_id"])
+    }
+    for book in books:
+        market = metadata_by_asset[str(book["asset_id"])]
+        if (
+            str(book.get("market", "")).casefold() != market["condition_id"]
+            or Decimal(str(book.get("tick_size")))
+            != Decimal(market["tick_size"])
+        ):
+            raise ValueError("Market-stream book identity or tick differs from verified metadata")
+        # The public book event omits NegRisk and minimum-size fields; bind those
+        # constraints from the digest-verified REST/Gamma reference before audit.
+        book["neg_risk"] = True
+        book["min_order_size"] = market["minimum_order_shares"]
+
+    started_ns = int(artifact["subscription_started_ns"])
+    ended_ns = int(artifact["capture_ended_ns"])
+    if ended_ns < started_ns or (ended_ns - started_ns) // 1_000_000 != artifact.get("duration_ms"):
+        raise ValueError("Market-stream capture duration does not match its timestamps")
+    result = _analyze_baskets(
+        markets,
+        books,
+        captured_ns=ended_ns,
+        batch_started_ns=started_ns,
+    )
+    if result.get("complete_14_token_response") is not artifact.get("complete_14_token_response"):
+        raise ValueError("Replayed market-stream completeness differs from the stored result")
+
+    stored_analysis = artifact.get("analysis")
+    if not isinstance(stored_analysis, dict) or set(stored_analysis) != {"yes", "no"}:
+        raise ValueError("Market-stream analysis is missing a basket result")
+    replayed_analysis: dict[str, dict[str, Any]] = {}
+    payoff_descriptions = {
+        "yes": "one payout share conditional on exactly one Yes",
+        "no": "minimum six payout shares if at most one of seven outcomes is Yes",
+    }
+    for side, result_key in (("yes", "yes_basket"), ("no", "no_basket")):
+        stored = stored_analysis[side]
+        if (
+            not isinstance(stored, dict)
+            or stored.get("quantity_payoff_usdc") != payoff_descriptions[side]
+        ):
+            raise ValueError("Market-stream payout description differs from the pinned study")
+        replayed = dict(result[result_key])
+        # Keep the capture's concise wording while comparing every stored
+        # calculation and quality field against the deterministic replay.
+        replayed["quantity_payoff_usdc"] = payoff_descriptions[side]
+        if replayed != stored:
+            raise ValueError(f"Replayed {side} basket calculations differ from the stored analysis")
+        replayed_analysis[side] = replayed
+    analysis_sha = _sha256(_canonical(replayed_analysis))
+
+    def basket_summary(basket: dict[str, Any]) -> dict[str, Any]:
+        return {
+            "quality": basket["quality"],
+            "top_of_book": basket["top_of_book"],
+            "quantity_scenarios": [
+                {
+                    "quantity_per_outcome_shares": scenario["quantity_per_outcome_shares"],
+                    "complete_depth": scenario["complete_depth"],
+                    "displayed_gross_edge_usdc": scenario["displayed_gross_edge_usdc"],
+                    "fragmentation_safe_net_edge_usdc": scenario[
+                        "fragmentation_safe_net_edge_usdc"
+                    ],
+                    "all_minimum_share_sizes_satisfied": scenario[
+                        "all_minimum_share_sizes_satisfied"
+                    ],
+                }
+                for scenario in basket["quantity_scenarios"]
+            ],
+        }
+
+    return {
+        "artifact_path": resolved.relative_to(REPOSITORY).as_posix(),
+        "artifact_sha256": claimed_artifact_sha,
+        "analysis_sha256": analysis_sha,
+        "rest_reference_path": reference_path.relative_to(REPOSITORY).as_posix(),
+        "rest_reference_artifact_sha256": rest_replay["artifact_sha256"],
+        "complete_14_token_response": result["complete_14_token_response"],
+        "book_event_count": len(books),
+        "sequence_field_present": False,
+        "yes": basket_summary(replayed_analysis["yes"]),
+        "no": basket_summary(replayed_analysis["no"]),
+    }
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     source = parser.add_mutually_exclusive_group(required=True)
@@ -740,11 +917,18 @@ def main() -> None:
         help="Build a sealed study from a previously captured response and metadata",
     )
     source.add_argument("--replay", type=Path, help="Replay a sealed study artifact")
+    source.add_argument(
+        "--replay-market-stream",
+        type=Path,
+        help="Replay a sealed public market-stream capture and its REST reference",
+    )
     args = parser.parse_args()
     if args.fetch_public:
         result = fetch_study()
     elif args.capture_metadata:
         result = build_from_capture(args.capture_metadata)
+    elif args.replay_market_stream:
+        result = replay_market_stream(args.replay_market_stream)
     else:
         result = replay_study(args.replay)
     print(json.dumps(result, sort_keys=True, separators=(",", ":")))

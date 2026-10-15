@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-15T12:35:09Z",
+  "updated_at_utc": "2026-10-15T12:55:42Z",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -2548,6 +2548,78 @@
         "The Yes payout requires exactly one Yes under event rules; the protocol only provides an at-most-one-Yes rule. The No basket uses six as a minimum payout floor."
       ],
       "status": "continue"
+    },
+    {
+      "hypothesis_id": "VERITAS-H055",
+      "experiment_id": "VERITAS-M2-WS-CROSS-CHECK-20261015-001",
+      "dataset_id": "e48110ef0be269aae364fd34589f8fe792e0924c2cf0e8bd6a8a1625c8757ad7",
+      "title": "The public market stream independently confirms fresh books for a complete outcome group",
+      "mechanism": "Subscribe to the official public market WebSocket for the verified seven-market group, compare all token books with a pinned REST capture, and validate source timestamps, sequence evidence, and the same complete-basket economics.",
+      "success_metric": "Receive all 14 books, verify market and asset identity, find documented sequence or equivalent continuity evidence, pass the 5-second age and 250 ms skew limits, and independently reproduce positive fee-safe full-depth economics against the zero-exposure baseline.",
+      "result": {
+        "status": "complete_cross_channel_top_quote_match_but_sequence_and_freshness_unverified",
+        "analysis_version": "veritas-openai-ipo-market-stream-cross-check-v1",
+        "artifact_path": "data/veritas-observatory/structure-studies/1792068256146934167-openai-ipo-market-stream.json",
+        "artifact_sha256": "e48110ef0be269aae364fd34589f8fe792e0924c2cf0e8bd6a8a1625c8757ad7",
+        "artifact_file_sha256": "dc56f342f43b4b04b64156c8d57e49890dabff48747d90f2b526108fa65206e4",
+        "analysis_sha256": "a7f121e6f88fb004e2741273469fa342c9e9c797d6968878186ed9122b78d9d6",
+        "rest_reference_path": "data/veritas-observatory/structure-studies/1792067895890897143-openai-ipo-basket-study.json",
+        "rest_reference_artifact_sha256": "053b11c30356b29cb022f7b018a15915f2a4dea85043b8cb9ed4dc5d26da740f",
+        "endpoint": "wss://ws-subscriptions-clob.polymarket.com/ws/market",
+        "official_documentation": "https://docs.polymarket.com/market-data/realtime-data",
+        "frame_count": 1,
+        "book_event_count": 14,
+        "complete_14_token_response": true,
+        "capture_duration_ms": 84,
+        "sequence_field_present": false,
+        "maximum_source_age_ms": 17781,
+        "source_age_bound_ms": 5000,
+        "source_timestamp_skew_ms": 11977,
+        "source_skew_bound_ms": 250,
+        "best_bid_exact_matches": 14,
+        "best_ask_exact_matches": 14,
+        "last_trade_exact_matches": 14,
+        "full_bid_depth_exact_matches": 6,
+        "full_ask_depth_exact_matches": 6,
+        "yes_top_gross_edge_usdc": "0.000",
+        "no_top_gross_edge_usdc": "-0.035",
+        "yes_gross_edges_by_shares": {
+          "5": "0.000",
+          "20": "-0.01344",
+          "100": "-0.30500"
+        },
+        "no_gross_edges_by_shares": {
+          "5": "-0.175",
+          "20": "-0.700",
+          "100": "-3.500"
+        },
+        "yes_fee_safe_net_edges_by_shares": {
+          "5": "-0.03356",
+          "20": "-0.14861",
+          "100": "-0.99938"
+        },
+        "no_fee_safe_net_edges_by_shares": {
+          "5": "-0.20301",
+          "20": "-0.81201",
+          "100": "-4.05988"
+        },
+        "replay_verified": true,
+        "runner_path": "scripts/veritas_openai_ipo_basket_study.py",
+        "runner_sha256": "f9ba8ae3a24b8dd94cdffd474d0515a8e128451a4239a62373720e7efdb223af",
+        "candidate_qualified": false,
+        "orders_submitted": false,
+        "authenticated_requests": false,
+        "source_timestamps_newer_than_rest_matches": 14,
+        "rest_to_stream_capture_spacing_seconds": 360.256037024
+      },
+      "decision": "Treat the cross-channel top-of-book match as a descriptive consistency check only. Do not promote freshness or a basket candidate without sequence or equivalent source continuity evidence and passing age/skew limits.",
+      "limitations": [
+        "The REST and WebSocket captures are separated by about six minutes; matching top quotes do not establish simultaneous books.",
+        "The official market WebSocket schema has no documented sequence field; the captured payloads have no sequence field.",
+        "Every stream book failed the configured source-age limit and the cross-book skew exceeded its bound.",
+        "Full displayed depth changed between captures; neither displayed liquidity nor hypothetical fees establishes fills.",
+        "The sample covers one pinned group and does not establish venue-wide coverage or sequence quality for other streams."
+      ]
     }
   ],
   "next_research_questions": [

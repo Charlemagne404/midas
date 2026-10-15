@@ -408,3 +408,29 @@ runner compiles and replay validation passes; no broader suite was run for this
 documentation and artifact checkpoint. See [Gate A checkpoint
 015](VERITAS_MISSION2_GATE_A_CHECKPOINT_015.md) and [inventory
 018](VERITAS_MISSION2_RESEARCH_INVENTORY_018.json).
+
+## Gate A checkpoint 016 addendum — public stream replay
+
+The second REST capture and the official public market WebSocket cross-check
+both returned the complete 14-token group, but failed source age and timestamp
+skew limits. Their best bid, best ask, and last-trade prices matched exactly
+for all 14 tokens; full bid and ask depth matched for six tokens each. The
+WebSocket frame contains no sequence field. Its complete-set Yes top gross
+edge is $0, while the No set is -$0.035; all tested full-depth and fee-safe
+edges are non-positive.
+
+The replay runner now accepts `--replay-market-stream`. It verifies the
+WebSocket artifact digest, referenced REST study, complete token set, frame
+bytes, timestamps, tick sizes, and basket calculations. The stream schema omits
+NegRisk and minimum-size fields, so replay binds those two constraints from
+the digest-verified REST/Gamma metadata. The bounded saved capture replayed
+successfully; no test suite was run for this documentation and artifact update.
+See [Gate A checkpoint 016](VERITAS_MISSION2_GATE_A_CHECKPOINT_016.md), [Gate
+F checkpoint 006](VERITAS_MISSION2_GATE_F_CHECKPOINT_006.md), and [research
+inventory 019](VERITAS_MISSION2_RESEARCH_INVENTORY_019.json).
+
+The 12:45 Arena qualification completed 18/18 finalized events and returned
+zero-positive results at all five gates. Its finding is complete in Arena,
+while the Director manifest retains a queued state pending the next scheduled
+poll. The finalized-source analyzer advanced to 1,548/3,373 segments and still
+has no campaign-window frames in its processed prefix.

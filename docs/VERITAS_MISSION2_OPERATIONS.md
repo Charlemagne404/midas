@@ -74,32 +74,44 @@ The observer uses public Gamma GET discovery and unauthenticated public CLOB rea
 The scanner writes exclusive, content-hashed compressed snapshots. `continuous_analysis.py` verifies finalized snapshot identities and immutable event digests, then atomically updates analyzer state and summary. It accepts at most 100 pending snapshots per run and rejects malformed, oversized, digest-mismatched, or unsafe inputs. v4 records paired legacy/current gate outcomes and per-market sample coverage. Snapshot fingerprint changes are sampled inter-scan changes, not true venue update rates.
 
 The one-shot NegRisk studies cover the complete nine-outcome Strava set and a
-second seven-market OpenAI IPO group. The latter was enumerated by seven direct
-Gamma market reads and checked against the adapter's on-chain question count;
-the Gamma group filter returned 20 unrelated rows and no matching members. Its
-single 14-token CLOB batch returned all books with depth at 5/20/100 shares,
-but timestamps were up to 33.546 seconds old with 20.962 seconds of skew. No
-positive qualified edge appears in either study; the OpenAI Yes set is flat
-before fees at top of book, while its No set is negative. Both captures fail
-freshness qualification. The sealed source and replay artifacts are under
-`data/veritas-observatory/structure-studies/`; these studies are separate from
-the recurring observer timer. See [Gate A checkpoint
-015](VERITAS_MISSION2_GATE_A_CHECKPOINT_015.md).
+second seven-market OpenAI IPO group. The OpenAI group was enumerated by seven
+direct Gamma market reads and checked against the adapter's on-chain question
+count; the Gamma group filter returned 20 unrelated rows and no matching
+members. A second CLOB refresh and a public WebSocket cross-check each returned
+all 14 books. Both source captures failed the 5-second age and 250 ms skew
+rules. The WebSocket top prices and last-trade prices matched the REST response
+for all tokens, while full displayed depth changed and the stream supplied no
+sequence field. The new stream replay runner verifies the saved frame and its
+REST reference. These fixed-group reads remain separate from the recurring
+observer timer. See [Gate A checkpoint
+016](VERITAS_MISSION2_GATE_A_CHECKPOINT_016.md).
 
-The first v4 pass reindexed ten already finalized immutable snapshots. The 08:31, 09:00, 10:01, and 10:31 UTC scheduled scans were captured and classified under v4 prospectively. The latest completed 17-snapshot economic qualification remains zero-positive; the 12:31 scan has not yet reached its 12:45 Director cycle. Protocol 002 documents the paired series; it does not alter a Reality campaign or waive the original follow-up design's gates. The latest source-replay progress and sealed digests are recorded in [research inventory 018](VERITAS_MISSION2_RESEARCH_INVENTORY_018.json).
+The prospective v4 panel now contains 18 snapshots, 720 selected observations,
+645 quality-valid pairs, and zero-positive economic gates. The 12:45 UTC
+Director cycle admitted and completed the 18-event scan 18 qualification. The
+Arena job and finding are complete, while the Director manifest still shows a
+queued admission; the next scheduled Director cycle is 13:15 UTC. The 12:43
+finalized-source summary is at 1,548/3,373 cataloged segments, with 1,825
+segments / 487,084,989 bytes pending and no campaign-window frames in the
+processed prefix. See [research inventory
+019](VERITAS_MISSION2_RESEARCH_INVENTORY_019.json).
 
-## Gate A checkpoint 015 — current evidence
+## Gate A checkpoint 016 — current evidence
 
-The 12:31 UTC observer scan is finalized and indexed as snapshot 18. It has 32
-quality-valid pairs, eight empty-ask invalid pairs, and no positive economic
-states. Cumulative current/legacy freshness counts and all hashes are in
-[research inventory 018](VERITAS_MISSION2_RESEARCH_INVENTORY_018.json).
+The 12:31 UTC observer scan remains finalized as snapshot 18. It has 32
+quality-valid pairs and eight empty-ask invalid pairs; the cumulative panel has
+645/720 quality-valid pairs across 304 distinct markets. All five economic
+qualification gates remain zero-positive. The 12:45 Arena qualification
+completed all 18 analysis events and found no positive gross state.
 
-The OpenAI IPO structure study is a separate fixed-group read. Its 14-book
-capture has complete displayed depth at 5/20/100 shares but fails the 5-second
-age and 250 ms skew rules. Use the replay runner or one bounded public refresh;
-the study does not run on the recurring observer timer. See [Gate A checkpoint
-015](VERITAS_MISSION2_GATE_A_CHECKPOINT_015.md).
+The OpenAI IPO stream capture returned a complete 14-token book set in 84 ms,
+but its source age reached 17.781 seconds and source timestamp skew was 11.977
+seconds. Best bid, best ask, and last-trade prices matched the REST refresh for
+14/14 tokens. The current stream schema provides no sequence field, so the
+capture does not establish independent sequence freshness. See [Gate A
+checkpoint 016](VERITAS_MISSION2_GATE_A_CHECKPOINT_016.md), [Gate F checkpoint
+006](VERITAS_MISSION2_GATE_F_CHECKPOINT_006.md), and [inventory
+019](VERITAS_MISSION2_RESEARCH_INVENTORY_019.json).
 
 The independent Reality source analyzer validates the frozen campaign identity and reads only cataloged finalized `.seg` inputs. It never opens `.open` files. Per run it is limited to 128 segments or 32 MiB of new segment data; each segment is capped at 16 MiB. Catalog scans are bounded. Source state and events retain campaign/code/prefix digests and stop on identity drift. Resource bounds remain CPU 5%, memory 256 MiB, low priority, ten-minute timeout, and Veritas-only writes.
 

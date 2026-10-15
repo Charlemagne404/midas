@@ -297,3 +297,33 @@ runner](../scripts/veritas_openai_ipo_basket_study.py).
 Mission 2 remains active. The next evidence gate is a fresh complete book
 capture with independently supported source freshness, while the scheduled
 scan and source-replay workflows continue.
+
+## Gate A checkpoint 016 addendum — stream cross-check and scan 18
+
+A second bounded REST capture still failed freshness at 95.353 seconds maximum
+source age and 90.247 seconds of skew. The official Polymarket market WebSocket
+returned the complete 14-token book set in 84 ms, but the source data remained
+17.781 seconds old at worst with 11.977 seconds of cross-book skew. The stream
+schema has no sequence field. REST and WebSocket best bids, best asks, and
+last-trade prices matched for all 14 tokens; the full displayed depth changed
+for eight tokens on each side. Basket gross and fee-safe edges remain
+non-positive at 5, 20, and 100 shares per outcome. The no-position baseline
+remains $0 exposure and $0 P&L.
+
+The saved WebSocket frame and its REST reference now replay through the study
+runner's `--replay-market-stream` path. Replay verifies the digests, group
+token set, source book fields, age/skew gate, and basket arithmetic. This
+cross-channel match does not establish sequence continuity, upstream queue
+age, or executable fills. The [official stream documentation](https://docs.polymarket.com/market-data/realtime-data)
+describes the book event fields used here.
+
+The 12:45 Director admission completed its 18-event Arena qualification with
+zero positive states at all five economic gates. The Arena finding is
+completed, although the Director manifest still showed the admission as queued
+at checkpoint time; the 13:15 UTC scheduled cycle is the next reconciliation
+point. Finalized-source replay advanced to 1,548/3,373 segments with 1,825
+segments / 487.08 MB pending and no campaign-window frames in the processed
+prefix. Mission 2 remains active. See [Gate A checkpoint
+016](VERITAS_MISSION2_GATE_A_CHECKPOINT_016.md), [Gate F checkpoint
+006](VERITAS_MISSION2_GATE_F_CHECKPOINT_006.md), and [research inventory
+019](VERITAS_MISSION2_RESEARCH_INVENTORY_019.json).
