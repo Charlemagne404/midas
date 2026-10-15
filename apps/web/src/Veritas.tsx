@@ -326,6 +326,24 @@ type ArenaResearchActivity = {
     model_readiness?: string | null;
     independent_confirmation_readiness?: string | null;
     source_revision_sha256?: string | null;
+    finalized_source_analysis?: {
+      state: string | null;
+      readiness: string | null;
+      status: string | null;
+      campaign_id: string | null;
+      summary_sha256: string | null;
+      processed_segment_count: number | null;
+      catalog_segment_count: number | null;
+      pending_segment_count: number | null;
+      pending_source_bytes: number | null;
+      processed_source_bytes: number | null;
+      last_processed_ordinal: number | null;
+      period_frame_records: number | null;
+      touched_market_frame_states: number | null;
+      quality_valid_states: number | null;
+      positive_top_ask_pair_states: number | null;
+      positive_full_depth_pre_fee_states: number | null;
+    } | null;
     recommendation?: string | null;
     updated_at_utc?: string | null;
     latest_finding?: {
@@ -1361,6 +1379,26 @@ export function Veritas() {
                         <p>
                           Confirmation:{' '}
                           {director.independent_confirmation_readiness.replaceAll('_', ' ')}
+                        </p>
+                      )}
+                      {director.finalized_source_analysis && (
+                        <p>
+                          Finalized source:{' '}
+                          {director.finalized_source_analysis.readiness?.replaceAll('_', ' ') ??
+                            director.finalized_source_analysis.state?.replaceAll('_', ' ') ??
+                            'unknown'}
+                          {' · '}
+                          {fmt(
+                            director.finalized_source_analysis.processed_segment_count ?? 0,
+                          )} / {fmt(director.finalized_source_analysis.catalog_segment_count ?? 0)}
+                          {' segments · '}
+                          {fmt(director.finalized_source_analysis.quality_valid_states ?? 0)}
+                          {' quality-valid · '}
+                          {fmt(
+                            director.finalized_source_analysis.positive_full_depth_pre_fee_states ??
+                              0,
+                          )}
+                          {' positive full-depth pre-fee'}
                         </p>
                       )}
                       {director.latest_finding && (

@@ -152,6 +152,31 @@ def research_activity(root: Path) -> dict[str, Any]:
                 "model_readiness": row.get("model_readiness"),
                 "independent_confirmation_readiness": row.get("independent_confirmation_readiness"),
                 "source_revision_sha256": row.get("source_revision_sha256"),
+                "finalized_source_analysis": (
+                    {
+                        key: row["finalized_source_analysis"].get(key)
+                        for key in (
+                            "state",
+                            "readiness",
+                            "status",
+                            "campaign_id",
+                            "summary_sha256",
+                            "processed_segment_count",
+                            "catalog_segment_count",
+                            "pending_segment_count",
+                            "pending_source_bytes",
+                            "processed_source_bytes",
+                            "last_processed_ordinal",
+                            "period_frame_records",
+                            "touched_market_frame_states",
+                            "quality_valid_states",
+                            "positive_top_ask_pair_states",
+                            "positive_full_depth_pre_fee_states",
+                        )
+                    }
+                    if isinstance(row.get("finalized_source_analysis"), dict)
+                    else None
+                ),
                 "recommendation": _bounded_string(row.get("recommendation"), 600),
                 "updated_at_utc": row.get("updated_at_utc"),
                 "latest_finding": (

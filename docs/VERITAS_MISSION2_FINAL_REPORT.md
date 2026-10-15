@@ -1,6 +1,6 @@
 # Project Veritas Mission 2 — Current Engineering Report
 
-**Status:** Mission 2 remains active. Discovery, independent binary-pair arithmetic, bounded public observation, continuous finalized-snapshot analysis, candidate qualification, paired measurement comparison, market/time censoring analysis, and the read-only dashboard are implemented. A recurring scan-pinned Veritas Research Director now qualifies new finalized scans and reports readiness. Source-replay coordination, strategy/model experiments, the broader dashboard scope, and longer independent validation remain open.
+**Status:** Mission 2 remains active. Discovery, independent binary-pair arithmetic, bounded public observation, continuous finalized-snapshot analysis, candidate qualification, paired measurement comparison, market/time censoring analysis, and the read-only dashboard are implemented. The recurring scan-pinned Veritas Research Director now consumes the independently maintained finalized-source summary alongside public-scan qualification. Strategy/model experiments, broader dashboard scope, and longer independent validation remain open.
 
 **Date:** 2026-10-15
 **Branch:** `project/veritas`
@@ -129,7 +129,7 @@ the next two scheduled observations succeeded.
 
 Mission 2 remains active. The 24-hour measurement-pilot review, original
 48-hour follow-up and dependence gates, independent sequence freshness, source
-replay coordination, full strategy/model readiness workflow, and broader
+replay continuation, full strategy/model readiness workflow, and broader
 dashboard work remain open. Details are in [Gate F checkpoint
-001](VERITAS_MISSION2_GATE_F_CHECKPOINT_001.md), [operations](VERITAS_MISSION2_OPERATIONS.md),
-and [research inventory 013](VERITAS_MISSION2_RESEARCH_INVENTORY_013.json).
+002](VERITAS_MISSION2_GATE_F_CHECKPOINT_002.md), [operations](VERITAS_MISSION2_OPERATIONS.md),
+and [research inventory 014](VERITAS_MISSION2_RESEARCH_INVENTORY_014.json).

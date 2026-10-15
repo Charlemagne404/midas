@@ -173,6 +173,27 @@ def test_research_activity_returns_bounded_job_director_schedule_and_alert_statu
             "last_qualified_scan_id": "scan-20261015T083047Z-6f98ffeaecab",
             "strategy_readiness": "NOT_READY_NO_QUALIFIED_GROSS_CANDIDATE",
             "model_readiness": "NOT_READY_NO_PUBLIC_OUTCOME_LABELS",
+            "finalized_source_analysis": {
+                "state": "READY",
+                "readiness": "awaiting_finalized_campaign_window_end",
+                "status": "current",
+                "campaign_id": "c" * 64,
+                "summary_sha256": "d" * 64,
+                "processed_segment_count": 128,
+                "catalog_segment_count": 132,
+                "pending_segment_count": 4,
+                "pending_source_bytes": 12_345,
+                "processed_source_bytes": 1_234_567,
+                "last_processed_ordinal": 12_759,
+                "period_frame_records": 40_000,
+                "touched_market_frame_states": 30_000,
+                "quality_valid_states": 29_000,
+                "positive_top_ask_pair_states": 0,
+                "positive_full_depth_pre_fee_states": 0,
+                "campaign_sha256": "a" * 64,
+                "analysis_code_sha256": "b" * 64,
+                "campaign_window_ns": {"start": 1, "end_exclusive": 2},
+            },
             "recommendation": "Keep no-trade and continue bounded collection.",
             "latest_finding": {
                 "finding_id": "veritas-qualification-v1-0123456789abcdef",
@@ -221,6 +242,11 @@ def test_research_activity_returns_bounded_job_director_schedule_and_alert_statu
     assert activity["directors"][0]["source_scan_id"] == "scan-20261015T090047Z-6f98ffeaecab"
     assert activity["directors"][0]["strategy_readiness"] == (
         "NOT_READY_NO_QUALIFIED_GROSS_CANDIDATE"
+    )
+    assert activity["directors"][0]["finalized_source_analysis"]["pending_segment_count"] == 4
+    assert (
+        activity["directors"][0]["finalized_source_analysis"]["positive_full_depth_pre_fee_states"]
+        == 0
     )
     assert activity["directors"][0]["latest_finding"]["quality_valid_pairs"] == 469
     assert activity["active_schedule_count"] == 1

@@ -8,6 +8,7 @@ from midas.arena import jobs
 from midas.arena.artifacts import atomic_json
 from midas.veritas import research_director
 from midas.veritas.continuous_analysis import VERSION
+from midas.veritas.finalized_source_analysis import VERSION as SOURCE_VERSION
 
 SCAN_ID = "scan-20261015T100000Z-6f98ffeaecab"
 
@@ -63,10 +64,46 @@ def _source(tmp_path, *, age_seconds: int = 30, valid_digest: bool = True):
     return repository, now
 
 
+def _write_source_analysis(repository, *, valid_digest: bool = True):
+    data_root = repository / "data" / "veritas-observatory"
+    summary = {
+        "schema_version": 1,
+        "analysis_version": SOURCE_VERSION,
+        "campaign_id": "c" * 64,
+        "campaign_sha256": "a" * 64,
+        "analysis_code_sha256": "d" * 64,
+        "active_segment_read": False,
+        "catalog_segment_count": 4,
+        "empty_finalized_segment_count": 0,
+        "processed_segment_count": 3,
+        "pending_segment_count": 1,
+        "pending_source_bytes": 2048,
+        "processed_source_bytes": 8192,
+        "last_processed_ordinal": 123,
+        "campaign_window_ns": {"start": 1_000, "end_exclusive": 2_000},
+        "readiness": "catching_up_finalized_source",
+        "status": "catching_up",
+        "generated_at_utc": "2026-10-15T10:30:00+00:00",
+        "cumulative": {
+            "period_frame_records": 100,
+            "touched_market_frame_states": 80,
+            "quality_valid_states": 70,
+            "positive_top_ask_pair_states": 0,
+            "positive_full_depth_pre_fee_states": 0,
+        },
+    }
+    payload = json.dumps(summary, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    summary["summary_sha256"] = hashlib.sha256(payload.encode()).hexdigest()
+    if not valid_digest:
+        summary["summary_sha256"] = "0" * 64
+    atomic_json(data_root / "source-research-summary.json", summary)
+
+
 def test_director_admits_one_idempotent_scan_pinned_job_and_publishes_readiness(
     tmp_path, monkeypatch
 ):
     repository, now = _source(tmp_path)
+    _write_source_analysis(repository)
     arena_root = tmp_path / "arena"
     monkeypatch.setattr(research_director, "resources_ready", lambda root: True)
     monkeypatch.setattr(
@@ -80,6 +117,10 @@ def test_director_admits_one_idempotent_scan_pinned_job_and_publishes_readiness(
     assert first["current_scan_id"] == SCAN_ID
     assert first["current_admission_key"] == f"veritas-qualification-v1-{SCAN_ID}"
     assert first["source_revision_sha256"]
+    assert first["source_analysis_evidence_state"] == "READY"
+    assert first["finalized_source_analysis"]["summary_sha256"]
+    assert first["finalized_source_analysis"]["readiness"] == "catching_up_finalized_source"
+    assert first["finalized_source_analysis"]["positive_full_depth_pre_fee_states"] == 0
     assert len(list(arena_root.glob("jobs/*/job.json"))) == 1
 
     second = research_director.tick(repository, arena_root, now=now + 30, launch_jobs=False)
@@ -141,6 +182,22 @@ def test_director_admits_one_idempotent_scan_pinned_job_and_publishes_readiness(
         )
         >= 2
     )
+    assert len(list(arena_root.glob("jobs/*/job.json"))) == 1
+
+
+def test_invalid_source_summary_is_reported_without_blocking_public_qualification(
+    tmp_path, monkeypatch
+):
+    repository, now = _source(tmp_path)
+    _write_source_analysis(repository, valid_digest=False)
+    arena_root = tmp_path / "arena"
+    monkeypatch.setattr(research_director, "resources_ready", lambda root: True)
+
+    result = research_director.tick(repository, arena_root, now=now, launch_jobs=False)
+
+    assert result["state"] == "RUNNING"
+    assert result["source_analysis_evidence_state"] == "BLOCKED_INVALID_SOURCE_ANALYSIS"
+    assert result["finalized_source_analysis"]["state"] == "BLOCKED_INVALID_SOURCE_ANALYSIS"
     assert len(list(arena_root.glob("jobs/*/job.json"))) == 1
 
 

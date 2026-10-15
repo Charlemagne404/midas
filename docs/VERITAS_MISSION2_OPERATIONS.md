@@ -1,18 +1,18 @@
 # Veritas Mission 2 Operations
 
-**Runtime checked:** 2026-10-15 10:46 UTC
+**Runtime checked:** 2026-10-15 10:56 UTC
 **Services:** `midas-veritas-observatory.service`, `midas-veritas-source-analysis.service`, `midas-veritas-research-director.service`
 **Timers:** `midas-veritas-observatory.timer`, `midas-veritas-source-analysis.timer`, `midas-veritas-research-director.timer`
 
 ## Current state
 
-- All three Veritas user timers are active. The observer's 10:31 UTC run succeeded; its next event is 11:01 UTC. Source replay last succeeded at 10:40 UTC; its next run is about 11:10 UTC. The Director timer is active and continues at :15 and :45 UTC. The oneshot services are inactive between runs as expected.
+- All three Veritas user timers are active. The observer's 10:31 UTC run succeeded; its next event is 11:01 UTC. Source replay last succeeded at 10:40 UTC; its next run is about 11:10 UTC. The Director timer is active and continues at :15 and :45 UTC. At capture, the next local runs were 13:01:31, 13:10:21, and 13:15:00 CEST, respectively. The oneshot services are inactive between runs as expected.
 - Latest scan: `scan-20261015T103110Z-b077f9c3d7be`, captured at 10:31:10 UTC and finalized under v4. The analyzer has 14 processed snapshots and no pending snapshots.
 - Cumulative panel: 560 selected observations, 507 request/receipt-valid pairs, 53 invalid pairs, and 210 distinct market IDs. The previous reported-age/skew gate accepts 128/560. The paired increase is 379 observations (+67.68 percentage points).
 - The latest bounded discovery union contains 300 IDs: 184 supported same-condition V1 binary pairs and 116 explicit exclusions. The selected panel has 40 markets, 36 rotating and four available frozen controls; unavailable frozen IDs were reported without outcome replacement.
 - Runtime data uses 12,179,395 bytes under `data/veritas-observatory/`, below the 1 GiB hard cap. Snapshots and derived runtime artifacts are ignored by Git; versioned docs record identities and hashes. Do not prune or raise the cap without a separate retention review.
 - The v2 scan used seven HTTP attempts (six Gamma frames and one CLOB batch) out of a 14-attempt maximum. Its observer service used 629 ms CPU and completed in 16 seconds. The frozen control file hash remains `9578217e20dcc7d1c65fa110f0ed7c689b55483b61191f1aae8d30c9b7300d9a`.
-- The finalized Reality source analyzer remains `catching_up_finalized_source`: 1,072 of 3,136 replayable segments processed, 2,064 segments (557,814,406 bytes) pending through ordinal 122,759. The processed prefix has no campaign-window frames. The 10:40 UTC run processed 128 segments / 30,283,274 bytes in 155 seconds, using 7.737 CPU seconds, 132.1 MiB peak memory, and no swap. The current state and summary digests are recorded in [research inventory 013](VERITAS_MISSION2_RESEARCH_INVENTORY_013.json).
+- The finalized Reality source analyzer remains `catching_up_finalized_source`: 1,072 of 3,136 replayable segments processed, 2,064 segments (557,814,406 bytes) pending through ordinal 122,759. The processed prefix has no campaign-window frames. The 10:40 UTC run processed 128 segments / 30,283,274 bytes in 155 seconds, using 7.737 CPU seconds, 132.1 MiB peak memory, and no swap. Its sealed summary digest is `42c477ea02173bd2ed52b16248d2cca0e5b3e7e154edfcc273a8553331a1e4cb`; the Research Director validated and stored it separately from public-scan readiness. See [research inventory 014](VERITAS_MISSION2_RESEARCH_INVENTORY_014.json).
 - The protected Reality user services `midas-reality.service`, `midas-reality-shadow.service`, and `midas-reality-api.service` were active during the read-only check. The separate Reality worktree is clean. No service was restarted or modified by Veritas.
 
 The bounded Arena qualification `job-1bb0f47d56374e1385503362` completed
@@ -22,6 +22,9 @@ found zero positive states at each of five qualification gates. The checkout's
 isolated `data/arena` root contains the Director manifest, append-only events,
 job, and finding. No jobs are active, and the activity projection reports zero
 invalid artifacts. A repeat Director poll reused the same job and finding.
+The 10:56 and 10:59 UTC no-launch polls refreshed the Director's source-analysis
+projection without admitting a new job; the read-only API returned the source
+digest and replay counters, zero active jobs, and zero invalid artifacts.
 
 At 11:30 CEST, an observer run failed with `Invalid frozen control cohort`
 because the deployed scanner version rejected the file's legacy version tag.
@@ -58,7 +61,7 @@ The first v4 pass reindexed ten already finalized immutable snapshots. The 08:31
 
 The independent Reality source analyzer validates the frozen campaign identity and reads only cataloged finalized `.seg` inputs. It never opens `.open` files. Per run it is limited to 128 segments or 32 MiB of new segment data; each segment is capped at 16 MiB. Catalog scans are bounded. Source state and events retain campaign/code/prefix digests and stop on identity drift. Resource bounds remain CPU 5%, memory 256 MiB, low priority, ten-minute timeout, and Veritas-only writes.
 
-Arena's existing job worker supports a pinned, bounded Veritas qualification task. The recurring Director detects each new finalized v4 scan, checks readiness, admits one idempotent job, verifies the finding digest and source lineage, and reports an evidence-based recommendation. It does not coordinate source replay, start strategy/model experiments, or promote a model. See [Gate F checkpoint 001](VERITAS_MISSION2_GATE_F_CHECKPOINT_001.md).
+Arena's existing job worker supports a pinned, bounded Veritas qualification task. The recurring Director detects each new finalized v4 scan, checks readiness, admits one idempotent job, verifies the finding digest and source lineage, and reports an evidence-based recommendation. It also validates and records the separate finalized-source summary; it does not coordinate or launch source replay, start strategy/model experiments, or promote a model. See [Gate F checkpoints 001](VERITAS_MISSION2_GATE_F_CHECKPOINT_001.md) and [002](VERITAS_MISSION2_GATE_F_CHECKPOINT_002.md).
 
 ## Frozen campaign censoring snapshot
 

@@ -1,5 +1,17 @@
 # Veritas Mission 2 Engineering Checkpoint
 
+## Latest status — Gate F checkpoint 002
+
+The Research Director now validates and stores the separately maintained
+finalized-source summary on each cycle, including its sealed digest, campaign
+identity, replay counters, and economic counters. The API and Veritas activity
+panel expose source readiness alongside public-snapshot qualification. A
+10:56 UTC no-launch poll reused the existing completed finding, created no job,
+and reported 1,072/3,136 source segments processed with no campaign-window
+frames yet. See [Gate F checkpoint 002](VERITAS_MISSION2_GATE_F_CHECKPOINT_002.md),
+[operations](VERITAS_MISSION2_OPERATIONS.md), and [research inventory
+014](VERITAS_MISSION2_RESEARCH_INVENTORY_014.json).
+
 ## Latest status — Gate F checkpoint 001
 
 The recurring Veritas Research Director is enabled at :15 and :45 UTC. It

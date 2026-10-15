@@ -51,6 +51,24 @@ it('labels measured evidence and keeps synthetic execution separate from actual 
                     model_readiness: 'NOT_READY_NO_PUBLIC_OUTCOME_LABELS',
                     independent_confirmation_readiness:
                       'NOT_READY_LESS_THAN_48_HOURS_OR_NO_INDEPENDENT_SEQUENCE',
+                    finalized_source_analysis: {
+                      state: 'READY',
+                      readiness: 'catching_up_finalized_source',
+                      status: 'catching_up',
+                      campaign_id: 'c'.repeat(64),
+                      summary_sha256: 'd'.repeat(64),
+                      processed_segment_count: 1072,
+                      catalog_segment_count: 3136,
+                      pending_segment_count: 2064,
+                      pending_source_bytes: 557814406,
+                      processed_source_bytes: 224233275,
+                      last_processed_ordinal: 122759,
+                      period_frame_records: 0,
+                      touched_market_frame_states: 0,
+                      quality_valid_states: 0,
+                      positive_top_ask_pair_states: 0,
+                      positive_full_depth_pre_fee_states: 0,
+                    },
                     recommendation: 'Keep no-trade; continue bounded collection.',
                     latest_finding: {
                       finding_id: 'veritas-qualification-v1-0123456789abcdef',
@@ -370,6 +388,9 @@ it('labels measured evidence and keeps synthetic execution separate from actual 
   expect(screen.getByText(/7 HTTP attempts used in latest scan/)).toBeInTheDocument();
   expect(await screen.findByText(/validating finalized observations/)).toBeInTheDocument();
   expect(await screen.findByText(/Does the independent challenge repeat/)).toBeInTheDocument();
+  expect(
+    await screen.findByText(/Finalized source: catching up finalized source/),
+  ).toBeInTheDocument();
   expect(await screen.findByText(/Keep no-trade; continue bounded collection/)).toBeInTheDocument();
   expect(screen.getByText(/469 quality-valid pairs across 186 markets/)).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Run bounded qualification in Arena' })).toBeEnabled();

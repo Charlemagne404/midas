@@ -25,11 +25,13 @@ RESEARCH_QUESTION = "Do new finalized public snapshots contain quality-valid eco
 MAX_LATEST_BYTES = 2 * 1024**2
 MAX_EVENT_BYTES = 2 * 1024**2
 MAX_FINDING_BYTES = 2 * 1024**2
+MAX_SOURCE_SUMMARY_BYTES = 4 * 1024**2
 MAX_JOB_CATALOG = 10_000
 MAX_EVIDENCE_AGE_SECONDS = 2 * 60 * 60
 FUTURE_CLOCK_SKEW_SECONDS = 5 * 60
 SCAN_ID = re.compile(r"scan-\d{8}T\d{6}Z-[0-9a-f]{12}\Z")
 FINDING_ID = re.compile(r"veritas-qualification-v1-[0-9a-f]{16}\Z")
+SHA256 = re.compile(r"[0-9a-f]{64}\Z")
 
 
 def _canonical(value: Any) -> bytes:
@@ -117,6 +119,125 @@ def _evidence(repository: Path, now: float) -> tuple[dict[str, Any] | None, str,
         "READY",
         "Newest v2 scan and its v4 analysis event agree and pass digest validation",
     )
+
+
+def _source_analysis_evidence(
+    repository: Path,
+) -> tuple[dict[str, Any] | None, str, str]:
+    """Read the separately owned, sealed finalized-source analysis summary."""
+    data_directory = repository / "data"
+    data_root = data_directory / "veritas-observatory"
+    summary_path = data_root / "source-research-summary.json"
+    if data_directory.is_symlink() or data_root.is_symlink():
+        return None, "BLOCKED_INVALID_SOURCE_ANALYSIS", "Veritas data directory is a symlink"
+    if summary_path.is_symlink():
+        return None, "BLOCKED_INVALID_SOURCE_ANALYSIS", "Source analysis summary is a symlink"
+    try:
+        if not summary_path.exists():
+            return None, "WAITING_FOR_SOURCE_ANALYSIS", "No finalized-source summary is available"
+        if not summary_path.is_file() or summary_path.stat().st_size > MAX_SOURCE_SUMMARY_BYTES:
+            raise ValueError("Finalized-source summary exceeds its read bound or is not a file")
+    except (OSError, ValueError) as error:
+        return (
+            None,
+            "BLOCKED_INVALID_SOURCE_ANALYSIS",
+            f"Could not inspect finalized-source summary: {error}",
+        )
+    try:
+        from midas.veritas.finalized_source_analysis import (
+            VERSION as SOURCE_ANALYSIS_VERSION,
+        )
+        from midas.veritas.finalized_source_analysis import (
+            read_finalized_source_summary,
+        )
+
+        summary = read_finalized_source_summary(data_root)
+        if summary is None:
+            raise ValueError("Finalized-source summary disappeared during validation")
+        if summary.get("analysis_version") != SOURCE_ANALYSIS_VERSION:
+            raise ValueError("Finalized-source analysis version is unsupported")
+        cumulative = summary.get("cumulative")
+        if not isinstance(cumulative, dict):
+            raise ValueError("Finalized-source cumulative counters are missing")
+        count_names = (
+            "period_frame_records",
+            "touched_market_frame_states",
+            "quality_valid_states",
+            "positive_top_ask_pair_states",
+            "positive_full_depth_pre_fee_states",
+        )
+        progress_names = (
+            "processed_segment_count",
+            "catalog_segment_count",
+            "empty_finalized_segment_count",
+            "pending_segment_count",
+            "pending_source_bytes",
+            "processed_source_bytes",
+            "last_processed_ordinal",
+        )
+        if any(
+            not isinstance(cumulative.get(name), int)
+            or isinstance(cumulative.get(name), bool)
+            or cumulative[name] < 0
+            for name in count_names
+        ):
+            raise ValueError("Finalized-source economic counters are invalid")
+        if any(
+            not isinstance(summary.get(name), int)
+            or isinstance(summary.get(name), bool)
+            or summary[name] < 0
+            for name in progress_names
+        ):
+            raise ValueError("Finalized-source progress counters are invalid")
+        campaign_id = summary.get("campaign_id")
+        campaign_sha256 = summary.get("campaign_sha256")
+        summary_sha256 = summary.get("summary_sha256")
+        code_sha256 = summary.get("analysis_code_sha256")
+        if not all(
+            isinstance(value, str) and SHA256.fullmatch(value)
+            for value in (campaign_id, campaign_sha256, summary_sha256, code_sha256)
+        ):
+            raise ValueError("Finalized-source identity or digest is invalid")
+        readiness = summary.get("readiness")
+        status = summary.get("status")
+        window = summary.get("campaign_window_ns")
+        if (
+            not isinstance(readiness, str)
+            or not isinstance(status, str)
+            or summary.get("active_segment_read") is not False
+            or not isinstance(window, dict)
+            or not isinstance(window.get("start"), int)
+            or isinstance(window.get("start"), bool)
+            or not isinstance(window.get("end_exclusive"), int)
+            or isinstance(window.get("end_exclusive"), bool)
+            or window["end_exclusive"] <= window["start"]
+        ):
+            raise ValueError("Finalized-source readiness or campaign window is invalid")
+        result = {
+            "state": "READY",
+            "readiness": readiness,
+            "status": status,
+            "campaign_id": campaign_id,
+            "campaign_sha256": campaign_sha256,
+            "summary_sha256": summary_sha256,
+            "analysis_code_sha256": code_sha256,
+            "generated_at_utc": summary.get("generated_at_utc"),
+            "processed_segment_count": summary["processed_segment_count"],
+            "catalog_segment_count": summary["catalog_segment_count"],
+            "pending_segment_count": summary["pending_segment_count"],
+            "pending_source_bytes": summary["pending_source_bytes"],
+            "processed_source_bytes": summary["processed_source_bytes"],
+            "last_processed_ordinal": summary["last_processed_ordinal"],
+            "campaign_window_ns": window,
+            "period_frame_records": cumulative["period_frame_records"],
+            "touched_market_frame_states": cumulative["touched_market_frame_states"],
+            "quality_valid_states": cumulative["quality_valid_states"],
+            "positive_top_ask_pair_states": cumulative["positive_top_ask_pair_states"],
+            "positive_full_depth_pre_fee_states": cumulative["positive_full_depth_pre_fee_states"],
+        }
+    except (OSError, ValueError, json.JSONDecodeError) as error:
+        return None, "BLOCKED_INVALID_SOURCE_ANALYSIS", f"Source summary failed validation: {error}"
+    return result, "READY", "Sealed finalized-source summary and cumulative counters validated"
 
 
 def _job_by_admission_key(root: Path, key: str) -> dict[str, Any] | None:
@@ -301,6 +422,10 @@ def _manifest(root: Path) -> tuple[Path, Path, dict[str, Any]]:
             "current_scan_id": None,
             "current_job_id": None,
             "latest_finding": None,
+            "finalized_source_analysis": {
+                "state": "WAITING_FOR_SOURCE_ANALYSIS",
+                "readiness": "waiting_for_finalized_source",
+            },
             "limitations": [
                 "Recurring qualification summarizes finalized intermittent snapshots and is not independent confirmation.",
                 "No strategy or model is promoted; no orders or authenticated requests are permitted.",
@@ -333,12 +458,24 @@ def tick(
         directory, manifest_path, record = _manifest(arena_root)
         timestamp_text = datetime.fromtimestamp(timestamp, UTC).isoformat(timespec="seconds")
         latest, evidence_state, evidence_note = _evidence(repository, timestamp)
+        source_summary, source_state, source_note = _source_analysis_evidence(repository)
         source_revision = research_hash()
         record.update(
             updated_at_utc=timestamp_text,
             source_revision_sha256=source_revision,
             latest_evidence_state=evidence_state,
             latest_evidence_note=evidence_note,
+            source_analysis_evidence_state=source_state,
+            source_analysis_evidence_note=source_note,
+            finalized_source_analysis=(
+                source_summary
+                if source_summary is not None
+                else {
+                    "state": source_state,
+                    "readiness": source_state.lower(),
+                    "note": source_note,
+                }
+            ),
         )
         if latest:
             record.update(
@@ -371,6 +508,12 @@ def tick(
                     "model_readiness": record.get("model_readiness"),
                     "recommendation": record.get("recommendation"),
                     "source_revision_sha256": source_revision,
+                    "source_analysis_summary_sha256": (
+                        source_summary.get("summary_sha256") if source_summary else None
+                    ),
+                    "source_analysis_readiness": (
+                        source_summary.get("readiness") if source_summary else source_state
+                    ),
                 },
             )
             return record
