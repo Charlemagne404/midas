@@ -101,34 +101,34 @@ experiment.
 
 ## Runtime and evidence at checkpoint
 
-- Latest scan: `scan-20261015T070035Z-12f2eac522c9`, captured 07:00:35 UTC.
+- Latest scan: `scan-20261015T073110Z-783cc56c1c57`, captured 07:31:10 UTC.
 - Latest discovery union: 300 unique IDs, 167 supported pair markets, 133
   explicit exclusions.
 - Latest selected panel: 40 markets (six available stable controls, 34
-  rotating); 38 quality-valid pairs.
-- Indexed panel: eight snapshots, 320 selected observations, 286 quality-valid,
-  34 empty-ask invalids, 142 distinct markets, zero pending snapshots.
-- Observation window: about 61 minutes; current API readiness is
+  rotating); 36 quality-valid pairs.
+- Indexed panel: nine snapshots, 360 selected observations, 322 quality-valid,
+  38 empty-ask invalids, 149 distinct markets, zero pending snapshots.
+- Observation window: about 92 minutes; current API readiness is
   `collecting_repeated_temporal_coverage`.
-- Data root: 5,859,151 bytes, below the 1 GiB cap.
+- Data root: 6,731,472 bytes, below the 1 GiB cap.
 - Service configuration: 40 markets, one-second request pacing, seven planned
   network requests per scan, `CPUQuota=5%`, `MemoryMax=256M`, low CPU/IO
   priority, no new privileges, and writes limited to the observatory data root.
-- Latest scheduled scan completed successfully at 07:00:41 UTC, using about
-  620 ms of CPU. The independent economic qualification run over eight
-  snapshots found zero positive states at all gates (286 quality-valid pairs,
-  142 distinct markets; top-edge median -0.029, maximum -0.001).
+- Latest scheduled scan completed successfully at 07:31:16 UTC, using about
+  576 ms of CPU. The independent economic qualification run over nine
+  snapshots found zero positive states at all gates (322 quality-valid pairs,
+  149 distinct markets; top-edge median -0.025, maximum -0.001).
 
 ### Finalized source replay extension
 
-The source analyzer's first batch, persistent catch-up, and first scheduled
-recurrence are recorded in checkpoints 003–005. The latest scheduled run
-processed 18 segments / 31,822,927 bytes in 126 seconds, using 6.318 seconds of
-CPU and 111.2 MiB peak memory. Cumulative progress is 274 of 2,722 replayable
-segments, through ordinal 15,189, with 2,448 segments (604,079,176 bytes)
-pending. Readiness remains `catching_up_finalized_source`; the prefix contains
-no campaign-window frames. The source timer is active and the Reality checkout
-remains clean at `714f824`.
+The source analyzer's first batch, persistent catch-up, and scheduled
+recurrences are recorded in checkpoints 003–006. The latest scheduled run
+processed 128 segments / 25,719,771 bytes in 125 seconds, using 6.265 seconds
+of CPU and 125.9 MiB peak memory. Cumulative progress is 402 of 2,780
+replayable segments, through ordinal 22,352, with 2,378 segments
+(594,257,808 bytes) pending. Readiness remains `catching_up_finalized_source`;
+the prefix contains no campaign-window frames. The source timer is active and
+the Reality checkout remains clean at `714f824`.
 
 The full scan results and immutable source identities are in
 [`VERITAS_MISSION2_GATE_A_CHECKPOINT_001.md`](VERITAS_MISSION2_GATE_A_CHECKPOINT_001.md),
@@ -136,9 +136,11 @@ The full scan results and immutable source identities are in
 [`VERITAS_MISSION2_GATE_A_CHECKPOINT_003.md`](VERITAS_MISSION2_GATE_A_CHECKPOINT_003.md),
 [`VERITAS_MISSION2_GATE_A_CHECKPOINT_004.md`](VERITAS_MISSION2_GATE_A_CHECKPOINT_004.md),
 [`VERITAS_MISSION2_GATE_A_CHECKPOINT_005.md`](VERITAS_MISSION2_GATE_A_CHECKPOINT_005.md),
+[`VERITAS_MISSION2_GATE_A_CHECKPOINT_006.md`](VERITAS_MISSION2_GATE_A_CHECKPOINT_006.md),
 [`VERITAS_MISSION2_RESEARCH_INVENTORY_003.json`](VERITAS_MISSION2_RESEARCH_INVENTORY_003.json),
 [`VERITAS_MISSION2_RESEARCH_INVENTORY_004.json`](VERITAS_MISSION2_RESEARCH_INVENTORY_004.json),
-and [`VERITAS_MISSION2_RESEARCH_INVENTORY_005.json`](VERITAS_MISSION2_RESEARCH_INVENTORY_005.json).
+[`VERITAS_MISSION2_RESEARCH_INVENTORY_005.json`](VERITAS_MISSION2_RESEARCH_INVENTORY_005.json),
+and [`VERITAS_MISSION2_RESEARCH_INVENTORY_006.json`](VERITAS_MISSION2_RESEARCH_INVENTORY_006.json).
 
 ## Verification
 

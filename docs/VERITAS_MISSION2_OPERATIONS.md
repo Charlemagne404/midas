@@ -1,6 +1,6 @@
 # Veritas Mission 2 Operations
 
-**Runtime checked:** 2026-10-15 07:13 UTC
+**Runtime checked:** 2026-10-15 07:42 UTC
 **Services:** `midas-veritas-observatory.service`, `midas-veritas-source-analysis.service`
 **Timers:** `midas-veritas-observatory.timer`, `midas-veritas-source-analysis.timer`
 
@@ -8,25 +8,25 @@
 
 - The user timer is active and waiting. It is scheduled every 30 minutes in
   UTC, with up to two minutes randomized delay and persistent catch-up behavior.
-- The latest scan (`scan-20261015T070035Z-12f2eac522c9`) completed successfully
-  at 07:00:35 UTC. Analysis v2 indexed it by 07:00:41, with exit status 0 and
-  about 620 ms CPU time.
-- The next scheduled snapshot timer event is 07:30:58 UTC.
+- The latest scan (`scan-20261015T073110Z-783cc56c1c57`) completed successfully
+  at 07:31:10 UTC. Analysis v2 indexed it by 07:31:15, with exit status 0 and
+  about 576 ms CPU time.
+- The next scheduled snapshot timer event is 08:01:02 UTC.
 - The service is inactive between runs, as expected for a oneshot. The timer
   is the active unit.
 - The loaded unit files match the deploy definitions in this checkout.
-- The analysis index has eight processed snapshots and zero pending snapshots.
-- Runtime data uses 5,859,151 bytes under `data/veritas-observatory/`; the
+- The analysis index has nine processed snapshots and zero pending snapshots.
+- Runtime data uses 6,731,472 bytes under `data/veritas-observatory/`; the
   configured hard root limit is 1 GiB. Source snapshots are immutable and
   ignored by Git; docs and experiment artifacts record their paths and hashes.
 - The finalized Reality source timer is active and offset from the snapshot
-  timer. Its first scheduled recurrence completed at 07:13:05 UTC after 126
-  seconds, using 6.318 seconds CPU and 111.2 MiB peak memory. It processed 18
-  segments / 31,822,927 bytes before reaching the 32 MiB batch bound.
-- The source analyzer has processed 274 of 2,722 replayable segments, leaving
-  2,448 segments (604,079,176 bytes) pending through ordinal 15,189. Readiness
+  timer. Its latest scheduled recurrence completed at 07:42:08 UTC after 125
+  seconds, using 6.265 seconds CPU and 125.9 MiB peak memory. It processed 128
+  segments / 25,719,771 bytes at the per-run segment bound.
+- The source analyzer has processed 402 of 2,780 replayable segments, leaving
+  2,378 segments (594,257,808 bytes) pending through ordinal 22,352. Readiness
   is `catching_up_finalized_source`; no campaign-window frames have appeared.
-  The next source timer event is 07:40:01 UTC.
+  The next source timer event is 08:10:03 UTC.
 
 ## Resource and network bounds
 
