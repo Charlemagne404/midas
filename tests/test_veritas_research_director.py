@@ -141,6 +141,18 @@ def test_director_admits_one_idempotent_scan_pinned_job_and_publishes_readiness(
         "experiment_run_id": "VERITAS-M2-ECO-QUAL-001-RUN-test",
         "dataset_sha256": "d" * 64,
         "status": "no_positive_gross_candidate_observed",
+        "gross_candidate_evidence_count": 0,
+        "gross_candidate_evidence_complete": True,
+        "gross_candidate_evidence": [],
+        "gross_candidate_replay": {
+            "version": "veritas-gross-candidate-source-replay-v1",
+            "source_code_sha256": "e" * 64,
+            "candidate_count": 0,
+            "replayed_candidate_count": 0,
+            "complete": True,
+            "status": "NO_POSITIVE_CANDIDATES_TO_REPLAY",
+            "candidates": [],
+        },
         "sample": {
             "snapshot_count": 14,
             "attempted_market_pairs": 560,

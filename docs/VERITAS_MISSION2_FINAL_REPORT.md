@@ -487,3 +487,16 @@ positive top-ask rows; no result artifact was written by this check. The
 scheduled Arena qualification remains responsible for persisting the next
 versioned result. See [Gate D checkpoint
 001](VERITAS_MISSION2_GATE_D_CHECKPOINT_001.md).
+
+## Gate D checkpoint 002 addendum — independent source replay
+
+The v3 economic comparison now performs bounded source verification and
+independent gross/depth arithmetic for every positive gross candidate, with
+fail-closed handling and explicit execution-evidence limitations. A read-only
+run over the current 29-snapshot panel found 1,034 quality-valid pairs across 536
+markets and no positive top-ask, depth, minimum, or fee state. The scheduled
+scan-28 finding remains v2; v3 has passed focused backend, frontend, lint,
+format, and strict type checks and awaits a later scheduled persisted run.
+Mission 2 remains active. See [Gate D checkpoint
+002](VERITAS_MISSION2_GATE_D_CHECKPOINT_002.md) and [inventory
+029](VERITAS_MISSION2_RESEARCH_INVENTORY_029.json).

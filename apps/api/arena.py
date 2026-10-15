@@ -18,6 +18,7 @@ MAX_DIRECTOR_EVENT_FILES_SCANNED = 128
 MAX_DIRECTOR_HISTORY_EVENTS = 8
 MAX_VERITAS_LATEST_SUMMARY_BYTES = 2 * 1024**2
 MAX_VERITAS_ANALYSIS_EVENT_BYTES = 2 * 1024**2
+MAX_VERITAS_QUALIFICATION_FINDING_BYTES = 2 * 1024**2
 
 
 def veritas_repository_root() -> Path:
@@ -59,13 +60,10 @@ def create_veritas_qualification_job(arena_root: Path, repository: Path) -> dict
         veritas_qualification=VeritasQualificationSpec(expected_latest_scan_id=scan_id),
         max_wall_seconds=300,
     )
-    return cast(
-        dict[str, Any],
-        create(
-            arena_root,
-            spec,
-            admission_key=f"veritas-qualification-v1-{scan_id}",
-        ),
+    return create(
+        arena_root,
+        spec,
+        admission_key=f"veritas-qualification-v1-{scan_id}",
     )
 
 
@@ -82,6 +80,56 @@ def _qualification_source_scan_id(row: dict[str, Any]) -> str | None:
 
 def _bounded_string(value: object, limit: int) -> str | None:
     return value[:limit] if isinstance(value, str) else None
+
+
+def read_veritas_qualification_finding(root: Path, identity: str) -> dict[str, Any]:
+    """Read one bounded, digest-verified immutable Veritas qualification finding."""
+    if not re.fullmatch(r"veritas-qualification-v1-[0-9a-f]{16}", identity):
+        raise ValueError("Invalid Veritas qualification finding identity")
+    findings_root = root / "findings"
+    directory = findings_root / identity
+    manifest_path = directory / "manifest.json"
+    if root.is_symlink() or findings_root.is_symlink() or directory.is_symlink():
+        raise ValueError("Veritas qualification finding path is unsafe")
+    if (
+        manifest_path.is_symlink()
+        or not manifest_path.is_file()
+        or manifest_path.stat().st_size > MAX_VERITAS_QUALIFICATION_FINDING_BYTES
+    ):
+        raise FileNotFoundError(
+            "Veritas qualification finding is missing or exceeds its read bound"
+        )
+    try:
+        manifest = json.loads(manifest_path.read_text())
+    except (OSError, json.JSONDecodeError) as error:
+        raise ValueError("Veritas qualification finding is unreadable") from error
+    if (
+        not isinstance(manifest, dict)
+        or manifest.get("artifact_id") != identity
+        or manifest.get("artifact_type") != "veritas_public_opportunity_qualification"
+    ):
+        raise ValueError("Veritas qualification finding identity does not match")
+    result = manifest.get("result")
+    if not isinstance(result, dict):
+        raise ValueError("Veritas qualification finding has no result")
+    claimed = result.get("experiment_sha256")
+    payload = dict(result)
+    payload.pop("experiment_sha256", None)
+    calculated = hashlib.sha256(
+        json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
+    ).hexdigest()
+    if (
+        not isinstance(claimed, str)
+        or claimed != calculated
+        or manifest.get("experiment_sha256") != claimed
+    ):
+        raise ValueError("Veritas qualification finding result digest does not match")
+    if (
+        result.get("orders_submitted") is not False
+        or result.get("authenticated_requests") is not False
+    ):
+        raise ValueError("Veritas qualification finding violates its read-only boundary")
+    return manifest
 
 
 def _director_event_history(
@@ -291,6 +339,18 @@ def research_activity(root: Path) -> dict[str, Any]:
                         "snapshot_count": row["latest_finding"].get("snapshot_count"),
                         "quality_valid_pairs": row["latest_finding"].get("quality_valid_pairs"),
                         "unique_market_ids": row["latest_finding"].get("unique_market_ids"),
+                        "gross_candidate_evidence_count": row["latest_finding"].get(
+                            "gross_candidate_evidence_count"
+                        ),
+                        "gross_candidate_replay_status": row["latest_finding"].get(
+                            "gross_candidate_replay_status"
+                        ),
+                        "gross_candidate_replayed_count": row["latest_finding"].get(
+                            "gross_candidate_replayed_count"
+                        ),
+                        "gross_candidate_replay_complete": row["latest_finding"].get(
+                            "gross_candidate_replay_complete"
+                        ),
                         "positive_states_by_gate": row["latest_finding"].get(
                             "positive_states_by_gate"
                         ),
@@ -454,7 +514,7 @@ def router(root: Path) -> APIRouter:
     def path(kind: str, identity: str) -> Path:
         from midas.arena.artifacts import artifact_path
 
-        return cast(Path, artifact_path(root, kind, identity))
+        return artifact_path(root, kind, identity)
 
     def evaluation_counts(record: dict[str, Any]) -> None:
         independent = validation = 0
@@ -703,6 +763,10 @@ def router(root: Path) -> APIRouter:
     @api.get("/directors/{identity}")
     async def director(identity: str) -> Any:
         return await call(inspect_director, root, identity)
+
+    @api.get("/findings/{identity}")
+    async def veritas_qualification_finding(identity: str) -> Any:
+        return await call(read_veritas_qualification_finding, root, identity)
 
     @api.post("/directors/{identity}/cancel")
     async def cancel_director(identity: str) -> Any:

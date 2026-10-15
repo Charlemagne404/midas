@@ -558,3 +558,22 @@ written by that comparison. Twenty-one targeted backend tests passed, with
 Ruff, strict Mypy, and formatting checks. The positive evidence branch is
 covered by a synthetic fixture and awaits a genuine candidate. Details are
 in [Gate D checkpoint 001](VERITAS_MISSION2_GATE_D_CHECKPOINT_001.md).
+
+## Gate D improvement — version 3 bounded candidate replay
+
+Gate D now independently reopens the immutable source snapshot for each
+positive gross candidate, checks source and event lineage, re-derives the
+same-condition market and books from the embedded Gamma/CLOB payloads, and
+recomputes best asks, quantity depth, minimums, and fee sensitivities under
+explicit read bounds. The Director validates the replay summary; Arena exposes
+the digest-checked finding through a read-only API, and the dashboard links to
+the evidence. Replay is capped and fails closed. It records that request/receipt
+timing does not establish venue sequence, atomicity, order arrival, or fills.
+
+The current 29-snapshot read-only v3 comparison remains negative: 1,034 valid
+pairs across 536 markets, maximum top-pair edge -0.001 per share, and zero
+positive states at every gross or economic gate. The persisted scan-28 finding
+is still v2; v3 was exercised with synthetic positive and tampered-source
+fixtures and is awaiting the next scheduled persisted qualification. See
+[Gate D checkpoint 002](VERITAS_MISSION2_GATE_D_CHECKPOINT_002.md) and
+[inventory 029](VERITAS_MISSION2_RESEARCH_INVENTORY_029.json).

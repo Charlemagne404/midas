@@ -8,11 +8,13 @@ from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any
 
+from .candidate_replay import VERSION as CANDIDATE_REPLAY_VERSION
+from .candidate_replay import replay_gross_candidate_evidence
 from .continuous_analysis import VERSION as SNAPSHOT_ANALYSIS_VERSION
 
-VERSION = "veritas-economic-qualification-comparison-v2"
+VERSION = "veritas-economic-qualification-comparison-v3"
 EXPERIMENT_ID = "VERITAS-M2-ECO-QUAL-001"
-MAX_GROSS_CANDIDATE_EVIDENCE = 1024
+MAX_GROSS_CANDIDATE_EVIDENCE = 256
 
 
 def _sha256(value: bytes) -> str:
@@ -32,7 +34,7 @@ def _is_sha256(value: Any) -> bool:
 
 
 def compare_qualification_rules(
-    events: list[dict[str, Any]], *, quantity: str = "20"
+    events: list[dict[str, Any]], *, quantity: str = "20", source_root: Path | None = None
 ) -> dict[str, Any]:
     """Compare a simple top-ask baseline with depth, minimum, and fee gates."""
     if not events or len(events) > 10_000:
@@ -68,7 +70,7 @@ def compare_qualification_rules(
         for event in ordered
     ]
     dataset_sha256 = _sha256(_canonical(dataset_manifest))
-    run_id = f"{EXPERIMENT_ID}-V2-RUN-{dataset_sha256[:12]}"
+    run_id = f"{EXPERIMENT_ID}-V3-RUN-{dataset_sha256[:12]}"
 
     attempted = sum(int(event.get("attempted_market_pairs", 0)) for event in ordered)
     valid = sum(int(event.get("valid_quality_pairs", 0)) for event in ordered)
@@ -146,6 +148,9 @@ def compare_qualification_rules(
                                 "captured_ns": event.get("captured_ns"),
                                 "snapshot_file": event["snapshot_file"],
                                 "snapshot_evidence_sha256": snapshot_digest,
+                                "snapshot_source_code_sha256": event.get(
+                                    "snapshot_source_code_sha256"
+                                ),
                                 "analysis_event_sha256": event["analysis_event_sha256"],
                                 "sampled_book_state_hash": row.get("sampled_book_state_hash"),
                             },
@@ -215,6 +220,47 @@ def compare_qualification_rules(
         ("single_match_fee_sensitivity_positive", single_match_positive),
         ("fragmentation_safe_fee_sensitivity_positive", fragmentation_safe_positive),
     ]
+    if source_root is None and gross_candidate_evidence:
+        gross_candidate_replay = {
+            "version": CANDIDATE_REPLAY_VERSION,
+            "source_code_sha256": _sha256(
+                Path(__file__).with_name("candidate_replay.py").read_bytes()
+            ),
+            "candidate_count": len(gross_candidate_evidence),
+            "replayed_candidate_count": 0,
+            "complete": False,
+            "status": "SOURCE_ROOT_REQUIRED",
+            "candidates": [],
+        }
+    else:
+        gross_candidate_replay = replay_gross_candidate_evidence(
+            source_root or Path("."), gross_candidate_evidence, quantity=quantity
+        )
+    replay_rows = gross_candidate_replay.get("candidates")
+    replay_by_identity = (
+        {
+            (row.get("scan_id"), row.get("market_id")): row
+            for row in replay_rows
+            if isinstance(row, dict)
+        }
+        if isinstance(replay_rows, list)
+        else {}
+    )
+    for candidate in gross_candidate_evidence:
+        interval = candidate.get("source_interval", {})
+        replay = replay_by_identity.get((interval.get("scan_id"), candidate.get("market_id")))
+        if replay is None:
+            candidate["source_replay_status"] = gross_candidate_replay.get("status")
+            continue
+        candidate["source_replay_status"] = replay.get("status")
+        if replay.get("status") == "SOURCE_REPLAY_FAILED":
+            candidate["verification_status"] = "SOURCE_REPLAY_FAILED"
+        else:
+            candidate["verification_status"] = "GROSS_EDGE_SOURCE_REPLAYED"
+            candidate["next_step"] = (
+                "Source and gross arithmetic were replayed. The candidate remains hypothetical; "
+                "sequence freshness, order arrival, and execution are unverified."
+            )
     result = {
         "schema_version": 1,
         "experiment_id": EXPERIMENT_ID,
@@ -249,6 +295,7 @@ def compare_qualification_rules(
         "gross_candidate_evidence_complete": True,
         "gross_candidate_evidence_limit": MAX_GROSS_CANDIDATE_EVIDENCE,
         "gross_candidate_evidence": gross_candidate_evidence,
+        "gross_candidate_replay": gross_candidate_replay,
         "sample": {
             "snapshot_count": len(ordered),
             "attempted_market_pairs": attempted,
@@ -298,4 +345,4 @@ def run_finalized_experiment(root: Path, *, quantity: str = "20") -> dict[str, A
         if not isinstance(value, dict):
             raise ValueError(f"Invalid analysis event: {path.name}")
         events.append(value)
-    return compare_qualification_rules(events, quantity=quantity)
+    return compare_qualification_rules(events, quantity=quantity, source_root=root)

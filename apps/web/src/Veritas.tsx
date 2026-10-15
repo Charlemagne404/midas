@@ -355,6 +355,10 @@ type ArenaResearchActivity = {
       snapshot_count: number | null;
       quality_valid_pairs: number | null;
       unique_market_ids: number | null;
+      gross_candidate_evidence_count?: number | null;
+      gross_candidate_replay_status?: string | null;
+      gross_candidate_replayed_count?: number | null;
+      gross_candidate_replay_complete?: boolean | null;
       positive_states_by_gate: Record<string, number> | null;
     } | null;
     recent_events?: Array<{
@@ -1420,12 +1424,43 @@ export function Veritas() {
                         </p>
                       )}
                       {director.latest_finding && (
-                        <p>
-                          {fmt(director.latest_finding.quality_valid_pairs ?? 0)} quality-valid
-                          pairs across {fmt(director.latest_finding.unique_market_ids ?? 0)} markets
-                          {' · '}
-                          {director.latest_finding.status?.replaceAll('_', ' ') ?? 'finding'}
-                        </p>
+                        <>
+                          <p>
+                            {fmt(director.latest_finding.quality_valid_pairs ?? 0)} quality-valid
+                            pairs across {fmt(director.latest_finding.unique_market_ids ?? 0)}{' '}
+                            markets
+                            {' · '}
+                            {director.latest_finding.status?.replaceAll('_', ' ') ?? 'finding'}
+                          </p>
+                          {director.latest_finding.gross_candidate_evidence_count != null && (
+                            <p>
+                              Gross candidates:{' '}
+                              {fmt(director.latest_finding.gross_candidate_evidence_count)}
+                              {' · Source replay: '}
+                              {director.latest_finding.gross_candidate_replay_status?.replaceAll(
+                                '_',
+                                ' ',
+                              ) ?? 'unknown'}
+                              {' · '}
+                              {fmt(director.latest_finding.gross_candidate_replayed_count ?? 0)}
+                              {' / '}
+                              {fmt(director.latest_finding.gross_candidate_evidence_count)}
+                              {' replayed'}
+                              {director.latest_finding.gross_candidate_replay_complete === false
+                                ? ' · incomplete'
+                                : ''}
+                            </p>
+                          )}
+                          {director.latest_finding.finding_id && (
+                            <a
+                              href={`/api/arena/findings/${encodeURIComponent(director.latest_finding.finding_id)}`}
+                              target="_blank"
+                              rel="noreferrer"
+                            >
+                              Open source and replay evidence
+                            </a>
+                          )}
+                        </>
                       )}
                       {director.recommendation && <p>{director.recommendation}</p>}
                       {director.research_question && <p>{director.research_question}</p>}

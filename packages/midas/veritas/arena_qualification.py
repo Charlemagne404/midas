@@ -89,7 +89,7 @@ def run_qualification(
         if progress:
             progress(index, len(selected_paths))
 
-    result = compare_qualification_rules(events, quantity=spec.quantity)
+    result = compare_qualification_rules(events, quantity=spec.quantity, source_root=data_root)
     source_code_sha256 = result["experiment_source_code_sha256"]
     identity_hash = hashlib.sha256(
         f"{result['dataset_sha256']}:{source_code_sha256}".encode()

@@ -206,3 +206,36 @@ See [Gate A checkpoint 024](VERITAS_MISSION2_GATE_A_CHECKPOINT_024.md) and [Gate
 The 17:32:11 observer scan finalized with 40 selected markets, 35 quality-valid pairs, five empty No ask sides, and zero positive top, depth, minimum, or fee gates. Its six-frame union contained 300 unique IDs; 190 passed same-condition V1 eligibility and 110 were explicitly excluded. The cumulative v4 panel now has 28 snapshots, 1,120 selected pairs, 996 quality-valid pairs, 513 distinct market IDs, and no positive top-ask state. The read-only economic-comparison v2 function accepted all 28 event files and returned complete candidate evidence with zero candidate rows; it did not write a finding or replace the next scheduled Arena run.
 
 At 17:33 UTC the observer service had completed; its timer, the source-analysis timer, and the Research Director timer were active. The next scheduled runs were 18:00:31, 17:40:03, and 17:45:25 UTC respectively. The Director manifest still reflects its 17:15 admission of scan 27; Arena completed that job at 17:15:51. The next Director cycle is the reconciliation point. No manual poll, retry, or service restart was run. Gate D implementation and tests are recorded in [checkpoint 001](VERITAS_MISSION2_GATE_D_CHECKPOINT_001.md).
+
+## 2026-10-15 17:59 UTC checkpoint — v3 replay ready
+
+The 17:44:13 finalized-source summary processed 119 segments / 32 MiB in its
+bounded batch. Cumulative progress is 2,780/3,962 replayable finalized
+segments, with 1,182 segments / 327,830,232 bytes pending through ordinal
+360,067. The source prefix remains incomplete and reports zero positive
+top-ask and full-depth pre-fee states.
+
+The 17:45:31 Director cycle reconciled scan 27 and admitted scan 28. Arena
+completed the scan-pinned v2 qualification at 17:46:13 with all 28 events;
+the persisted finding has zero positive states across all five gates. A
+read-only v3 comparison of those same 28 events produced the same zero-positive
+result and a complete empty replay, but did not write a finding. The next
+observer, source-analysis, and Director timer runs were scheduled for
+18:00:31, 18:10:37, and 18:15:12 UTC. All three timers were active and their
+one-shot services idle at inspection. No service was restarted and no manual
+run was launched.
+
+See [Gate D checkpoint 002](VERITAS_MISSION2_GATE_D_CHECKPOINT_002.md) for
+implementation, exact hashes, synthetic-path coverage, and verification.
+
+## 2026-10-15 18:02 UTC observer scan 29
+
+The scheduled observer completed scan 29 at 18:00:52 UTC with 40 selected
+markets, 38 quality-valid pairs, seven public HTTP attempts, and zero positive
+gross, full-depth, minimum, or fee states. The read-only v3 comparison now spans
+29 snapshots / 1,160 selected pairs / 1,034 quality-valid pairs / 536 unique
+markets. Its maximum top-pair edge remains -0.001 per share, with zero positive
+states at every economic gate. The observer timer's next run is scheduled for
+18:30:45 UTC. The 18:10:37 source-analysis and 18:15:12 Director runs remain
+scheduled; the latter will reconcile scan 28 and can admit scan 29. No manual
+run, retry, or service restart was used.

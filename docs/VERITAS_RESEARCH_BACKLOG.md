@@ -81,3 +81,16 @@ The 26-snapshot observatory panel has 928/1,040 quality-valid pairs across 480 m
 ## Mission 2 current evidence — scan 28 and Gate D provenance
 
 The 28-snapshot observatory panel has 996/1,120 quality-valid pairs across 513 markets and zero positive gross or qualified states in the read-only v2 comparison. Scan 28 recorded 300 unique discovery IDs, 190 eligible same-condition V1 pairs, 110 explicit exclusions, and 35/40 quality-valid books; its scheduled Arena qualification is due at the 17:45 UTC Director cycle. The 17:15 qualification completed scan 27 with zero positive states at all five gates. The v2 economic comparison now preserves bounded snapshot/event pointers for every positive top-ask row and rejects count/row mismatches. Twenty-one relevant tests, Ruff, formatting, and strict Mypy passed; a synthetic positive fixture exercised the pointer path. No real positive candidate has appeared, and candidate pointers still require independent replay before any hypothetical strategy comparison. Keep bounded collection running while the finalized source prefix catches up. See [Gate D checkpoint 001](VERITAS_MISSION2_GATE_D_CHECKPOINT_001.md), [Gate A checkpoint 025](VERITAS_MISSION2_GATE_A_CHECKPOINT_025.md), [Gate F checkpoint 015](VERITAS_MISSION2_GATE_F_CHECKPOINT_015.md), and [inventory 028](VERITAS_MISSION2_RESEARCH_INVENTORY_028.json).
+
+## Mission 2 current evidence — scan 28 and candidate source replay
+
+The v3 read-only qualification over 29 finalized snapshots contains 1,034
+quality-valid pairs across 536 markets and no positive gross or economic gate.
+Its maximum observed top-pair gross edge is -0.001 per share. Candidate source
+replay is implemented and verified on synthetic positive and tampered-source
+fixtures; the scan-28 persisted finding remains v2. Keep the no-trade policy,
+allow the scheduled collector and source-prefix replay to continue, and let a
+later scheduled Director run persist v3 before considering further strategy
+work. Outcome labels, independent venue sequence, order arrival, and fills
+remain unavailable. Current checkpoint: [Gate D 002](VERITAS_MISSION2_GATE_D_CHECKPOINT_002.md),
+[inventory 029](VERITAS_MISSION2_RESEARCH_INVENTORY_029.json).

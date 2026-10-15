@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-15T17:36:49Z",
+  "updated_at_utc": "2026-10-15T18:01:28Z",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -3448,6 +3448,40 @@
         "The evidence bound is 1,024 rows; an overflow fails the qualification instead of silently truncating."
       ],
       "decision": "Use v2 for the next scheduled Arena qualification. Keep no-trade. Do not promote any row until independent replay and economic review complete."
+    },
+    {
+      "hypothesis_id": "VERITAS-H066",
+      "title": "Can a quality-valid positive top-ask record be independently replayed from immutable source evidence?",
+      "mechanism": "A bounded replay verifies snapshot and event lineage, re-derives same-condition market identity and books from embedded source payloads, and recomputes gross pair/depth arithmetic before a candidate can be considered for further economic review.",
+      "experiment_id": "VERITAS-M2-GROSS-CANDIDATE-REPLAY-001",
+      "dataset_id": "fd9b0c1cdc0624555237fb7fe891bbe43ab2bef5e20fd343e24f4bdf69e4f777",
+      "success_metric": "Reproduce candidate arithmetic from immutable payloads, reject tampered source or saved books, enforce read bounds, and retain execution-evidence limitations.",
+      "result": {
+        "status": "synthetic_fixture_verified_live_candidate_absent",
+        "analysis_version": "veritas-economic-qualification-comparison-v3",
+        "experiment_run_id": "VERITAS-M2-ECO-QUAL-001-V3-RUN-fd9b0c1cdc06",
+        "experiment_sha256": "e927ea7eecf94823b098d51746021f0e1915c55006de0de7118b51a6d6528e0b",
+        "candidate_count_in_genuine_panel": 0,
+        "genuine_panel_replay_status": "NO_POSITIVE_CANDIDATES_TO_REPLAY",
+        "synthetic_positive_fixture_passed": true,
+        "synthetic_tampered_source_fixture_rejected": true,
+        "targeted_backend_tests_passed": 40,
+        "targeted_frontend_tests_passed": 1,
+        "ruff_passed": true,
+        "formatting_passed": true,
+        "strict_mypy_passed": true,
+        "persisted_finding_uses_version": "veritas-economic-qualification-comparison-v2",
+        "orders_submitted": false,
+        "authenticated_requests": false
+      },
+      "limitations": [
+        "No genuine positive candidate has exercised the replay path.",
+        "A public snapshot and request/receipt times do not verify venue sequence, atomicity, order arrival, or fills.",
+        "Fee sensitivity uses the shared versioned fee model and remains hypothetical.",
+        "The v3 comparison is read-only and has not yet been persisted by a scheduled Director run."
+      ],
+      "decision": "Keep no-trade. Commit v3 and let the next scheduled observer and Director cycles qualify and persist it; do not treat synthetic fixture success as evidence of market opportunity.",
+      "status": "continue"
     }
   ],
   "next_research_questions": [

@@ -77,6 +77,10 @@ it('labels measured evidence and keeps synthetic execution separate from actual 
                       snapshot_count: 13,
                       quality_valid_pairs: 469,
                       unique_market_ids: 186,
+                      gross_candidate_evidence_count: 0,
+                      gross_candidate_replay_status: 'NO_POSITIVE_CANDIDATES_TO_REPLAY',
+                      gross_candidate_replayed_count: 0,
+                      gross_candidate_replay_complete: true,
                       positive_states_by_gate: { unchanged_top_ask_gross_sign: 0 },
                     },
                     recent_events: [
@@ -432,6 +436,13 @@ it('labels measured evidence and keeps synthetic execution separate from actual 
     (await screen.findAllByText(/Keep no-trade; continue bounded collection/)).length,
   ).toBeGreaterThan(0);
   expect(screen.getByText(/469 quality-valid pairs across 186 markets/)).toBeInTheDocument();
+  expect(
+    screen.getByText(/Gross candidates: 0 · Source replay: NO POSITIVE CANDIDATES TO REPLAY/),
+  ).toBeInTheDocument();
+  expect(screen.getByRole('link', { name: 'Open source and replay evidence' })).toHaveAttribute(
+    'href',
+    '/api/arena/findings/veritas-qualification-v1-0123456789abcdef',
+  );
   fireEvent.click(screen.getByText(/Recent Director history/));
   expect(screen.getByText(/Source revision changed while the job was queued/)).toBeInTheDocument();
   expect(screen.getByText(/VERITAS-M2-ECO-QUAL-001-RUN-b3fc19f69680/)).toBeInTheDocument();

@@ -202,6 +202,10 @@ def test_research_activity_returns_bounded_job_director_schedule_and_alert_statu
                 "snapshot_count": 13,
                 "quality_valid_pairs": 469,
                 "unique_market_ids": 186,
+                "gross_candidate_evidence_count": 0,
+                "gross_candidate_replay_status": "NO_POSITIVE_CANDIDATES_TO_REPLAY",
+                "gross_candidate_replayed_count": 0,
+                "gross_candidate_replay_complete": True,
                 "positive_states_by_gate": {"top_ask": 0},
             },
         },
@@ -249,10 +253,60 @@ def test_research_activity_returns_bounded_job_director_schedule_and_alert_statu
         == 0
     )
     assert activity["directors"][0]["latest_finding"]["quality_valid_pairs"] == 469
+    assert (
+        activity["directors"][0]["latest_finding"]["gross_candidate_replay_status"]
+        == "NO_POSITIVE_CANDIDATES_TO_REPLAY"
+    )
     assert activity["active_schedule_count"] == 1
     assert activity["schedules"][0]["steps"][0]["name"] == "replay"
     assert activity["alerts"][0]["reason"] == "Source changed before admission"
     assert activity["limits"]["maximum_jobs_read"] == 25
+
+
+def test_veritas_finding_endpoint_returns_only_digest_verified_read_only_artifact(tmp_path):
+    import hashlib
+    import json
+
+    identity = "veritas-qualification-v1-0123456789abcdef"
+    result = {
+        "experiment_run_id": "VERITAS-M2-ECO-QUAL-001-V3-RUN-example",
+        "orders_submitted": False,
+        "authenticated_requests": False,
+        "gross_candidate_evidence_count": 0,
+        "gross_candidate_evidence_complete": True,
+        "gross_candidate_evidence": [],
+        "gross_candidate_replay": {
+            "candidate_count": 0,
+            "replayed_candidate_count": 0,
+            "complete": True,
+            "status": "NO_POSITIVE_CANDIDATES_TO_REPLAY",
+        },
+    }
+    result["experiment_sha256"] = hashlib.sha256(
+        json.dumps(result, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
+    ).hexdigest()
+    manifest = {
+        "artifact_id": identity,
+        "artifact_type": "veritas_public_opportunity_qualification",
+        "artifact_version": "veritas-arena-qualification-v1",
+        "orders_submitted": False,
+        "authenticated_requests": False,
+        "experiment_sha256": result["experiment_sha256"],
+        "result": result,
+    }
+    atomic_json(tmp_path / f"findings/{identity}/manifest.json", manifest)
+    app = FastAPI()
+    app.include_router(router(tmp_path))
+
+    with TestClient(app) as client:
+        response = client.get(f"/api/arena/findings/{identity}")
+        assert response.status_code == 200
+        assert response.json()["result"]["gross_candidate_replay"]["status"] == (
+            "NO_POSITIVE_CANDIDATES_TO_REPLAY"
+        )
+        manifest["result"]["gross_candidate_evidence_count"] = 1
+        atomic_json(tmp_path / f"findings/{identity}/manifest.json", manifest)
+        assert client.get(f"/api/arena/findings/{identity}").status_code == 409
 
 
 def test_research_activity_returns_only_digest_named_director_history(tmp_path):
