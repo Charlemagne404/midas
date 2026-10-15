@@ -4,7 +4,7 @@
   "status": "in_progress",
   "baseline_commit": "f968095feb9c591de38fe12d7493224425f62f3a",
   "branch": "project/veritas",
-  "last_checkpoint": "docs/VERITAS_DASHBOARD_CHECKPOINT_001.md",
+  "last_checkpoint": "docs/VERITAS_GATE_A_FOLLOWUP_DESIGN_002.md",
   "datasets": [
     {
       "dataset_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
@@ -437,6 +437,34 @@
       "protected_campaign_mutated": false,
       "orders_submitted": false,
       "promotion": "bounded evidence presentation only; no model, policy, or strategy promotion"
+    },
+    {
+      "experiment_id": "VERITAS-GATE-A-FOLLOWUP-POWER-20261015-001",
+      "type": "one_second_public_followup_power_and_cluster_sensitivity",
+      "status": "planning_sensitivity_complete_cluster_feasibility_unresolved",
+      "source_dataset_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
+      "evidence": "docs/VERITAS_GATE_A_FOLLOWUP_POWER_001.json",
+      "protocol": "docs/VERITAS_GATE_A_FOLLOWUP_DESIGN_002.md",
+      "analysis_version": "veritas-followup-power-v1",
+      "code": "packages/midas/veritas/followup_power.py",
+      "generator": "scripts/veritas_followup_power.py",
+      "tests": "tests/test_veritas_followup_power.py",
+      "primary_baseline_successes": 27,
+      "primary_baseline_scheduled_slots": 1408,
+      "primary_baseline_yield": "0.0191761364",
+      "relative_minimum_detectable_lift": "0.50",
+      "independent_slots_per_arm": 3994,
+      "expected_14_day_slots_at_baseline_volume": 19712,
+      "maximum_supported_design_effect_by_slot_count": "2.4677",
+      "empirical_cluster_correlation_estimated": false,
+      "focused_tests_passed": 3,
+      "ruff_passed": true,
+      "mypy_passed": true,
+      "active_segment_read": false,
+      "protected_campaign_mutated": false,
+      "campaign_created_or_started": false,
+      "orders_submitted": false,
+      "promotion": "planning sensitivity only; no campaign or strategy promotion"
     }
   ],
   "models": [],

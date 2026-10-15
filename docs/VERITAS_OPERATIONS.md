@@ -168,6 +168,27 @@ corepack pnpm --dir apps/web build
 See [dashboard checkpoint 001](VERITAS_DASHBOARD_CHECKPOINT_001.md) for the
 displayed evidence and latest verification result.
 
+## Follow-up power sensitivity
+
+The activity-aware sampling proposal has a reproducible planning-only power
+calculation. It reads the committed Gate A baseline artifact and writes a
+derived sensitivity JSON; it does not read Reality runtime stores or change a
+campaign.
+
+```bash
+cd /home/charlie/midas-veritas
+PYTHONPATH=packages /home/charlie/midas/.venv/bin/python \
+  scripts/veritas_followup_power.py \
+  > docs/VERITAS_GATE_A_FOLLOWUP_POWER_001.json
+PYTHONPATH=packages /home/charlie/midas/.venv/bin/pytest -q \
+  tests/test_veritas_followup_power.py
+```
+
+The design and its launch-readiness decision are in
+[follow-up design draft 002](VERITAS_GATE_A_FOLLOWUP_DESIGN_002.md). The
+cluster grid is a sensitivity, not an empirical correlation estimate or a
+campaign power claim.
+
 ## Verify Veritas code
 
 Focused economic and forensic checks:
@@ -177,19 +198,21 @@ cd /home/charlie/midas-veritas
 PYTHONPATH=packages /home/charlie/midas/.venv/bin/pytest -q \
   tests/test_veritas_economics.py tests/test_veritas_forensics.py \
   tests/test_veritas_source_replay.py tests/test_veritas_raw_funnel.py \
-  tests/test_veritas_economic_scenario_study.py tests/test_veritas_execution_break_even.py
+  tests/test_veritas_economic_scenario_study.py tests/test_veritas_execution_break_even.py \
+  tests/test_veritas_followup_power.py
 /home/charlie/midas/.venv/bin/ruff check \
   packages/midas/veritas scripts/veritas_forward_audit.py \
   scripts/veritas_reconcile_sources.py scripts/veritas_raw_funnel.py \
   scripts/veritas_economic_scenario_study.py \
-  scripts/veritas_execution_break_even.py \
+  scripts/veritas_execution_break_even.py scripts/veritas_followup_power.py \
   tests/test_veritas_economics.py tests/test_veritas_forensics.py \
   tests/test_veritas_source_replay.py tests/test_veritas_raw_funnel.py \
-  tests/test_veritas_economic_scenario_study.py tests/test_veritas_execution_break_even.py
+  tests/test_veritas_economic_scenario_study.py tests/test_veritas_execution_break_even.py \
+  tests/test_veritas_followup_power.py
 MYPYPATH=packages /home/charlie/midas/.venv/bin/mypy packages/midas/veritas
 ```
 
-The focused Veritas suite now passes 40 tests, including synthetic execution
+The focused Veritas suite now passes 43 tests, including synthetic execution
 break-even thresholds. Ruff, format, and mypy passed for the Veritas package and
 new generator. Full project verification remains a later Gate H task. No
 long-running Veritas job is currently scheduled.

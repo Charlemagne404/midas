@@ -1003,10 +1003,12 @@
       "mechanism": "Pre-period paired-book update activity may identify market strata with different public follow-up availability. Comparing a balanced activity-stratified sampler with a uniform random-market control may improve qualifying measurement yield per valid initial decision without relaxing source-quality rules.",
       "experiment_id": null,
       "dataset_id": null,
-      "success_metric": "In a separately identified prospective study, compare the qualifying synchronized public measurement proportion at a candidate one-second horizon among valid initial decisions; also report all-scheduled-decision yield, eligibility, horizon censor reasons, and cluster-aware uncertainty.",
+      "success_metric": "As refined in design draft 002, compare qualifying one-second public measurements per scheduled slot as the primary estimand; report yield among valid initial states as secondary, with eligibility, censor reasons, and cluster-aware uncertainty.",
       "result": {
-        "status": "design_draft_only",
-        "evidence": "docs/VERITAS_GATE_A_FOLLOWUP_DESIGN_001.md",
+        "status": "design_refined_power_sensitivity_not_campaign_ready",
+        "initial_draft_evidence": "docs/VERITAS_GATE_A_FOLLOWUP_DESIGN_001.md",
+        "evidence": "docs/VERITAS_GATE_A_FOLLOWUP_DESIGN_002.md",
+        "power_sensitivity": "docs/VERITAS_GATE_A_FOLLOWUP_POWER_001.json",
         "baseline_valid_initial_decisions": 381,
         "baseline_observed_measurements": {
           "100ms": 3,
@@ -1037,7 +1039,7 @@
         "Repeated observations are correlated and require cluster-aware planning and analysis.",
         "A synchronized public measurement does not establish an execution or fill."
       ],
-      "decision": "Continue design refinement only. Freeze the eligible universe, pre-period coverage rule, assignment schedule, cluster-power calculation, and analysis before any separately authorized prospective campaign; keep the no-trade control and all existing quality gates.",
+      "decision": "Continue design refinement only. Use all scheduled slots for the primary yield and conditional valid-start yield only as secondary; freeze the eligible universe, coverage rule, assignment schedule, cluster-power calculation, and analysis before any separate campaign. Keep the no-trade control and all existing quality gates.",
       "status": "continue"
     },
     {
@@ -1209,14 +1211,49 @@
       ],
       "decision": "Keep the failed canary artifact and status unchanged. The released source skips last-ordinal comparison for empty segments, and its regression passes. Do not rerun the old frozen campaign to apply the fix.",
       "status": "completed"
+    },
+    {
+      "hypothesis_id": "VERITAS-H022",
+      "title": "Can the activity-aware follow-up comparison detect a meaningful yield improvement within 14 days?",
+      "mechanism": "The earlier design used conditional yield among valid initial states as its primary measure. Activity-based market selection may also change initial-state validity, so the primary estimand should count qualifying one-second measurements per scheduled slot and preserve invalid starts as non-successes.",
+      "experiment_id": "VERITAS-GATE-A-FOLLOWUP-POWER-20261015-001",
+      "dataset_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
+      "success_metric": "Refine the primary estimand, calculate a declared relative minimum detectable lift, and determine whether a 14-day slot cap supports it under explicit cluster-dependence sensitivities without creating or starting a campaign.",
+      "result": {
+        "status": "planning_sensitivity_complete_cluster_feasibility_unresolved",
+        "evidence": "docs/VERITAS_GATE_A_FOLLOWUP_DESIGN_002.md",
+        "power_sensitivity": "docs/VERITAS_GATE_A_FOLLOWUP_POWER_001.json",
+        "baseline_scheduled_decisions": 1408,
+        "baseline_valid_initial_decisions": 381,
+        "baseline_one_second_public_measurements": 27,
+        "primary_baseline_yield_per_scheduled_slot": "0.0191761364",
+        "secondary_baseline_yield_per_valid_start": "0.0708661417",
+        "relative_minimum_detectable_lift": "0.50",
+        "two_sided_alpha": "0.05",
+        "power": "0.80",
+        "independent_slots_per_arm_normal_approximation": 3994,
+        "14_day_expected_slots_at_baseline_volume": 19712,
+        "maximum_design_effect_supported_by_slot_count": "2.4677",
+        "market_time_dependence_estimated": false,
+        "campaign_created_or_started": false,
+        "orders_submitted": false,
+        "promotion": "planning sensitivity only; no prospective campaign or strategy promotion"
+      },
+      "limitations": [
+        "The event rate is from one selected snapshot and may not remain stable.",
+        "No empirical market, time-block, family, or repeated-measure correlation is available in the current artifact set.",
+        "The single design-effect grid is not a substitute for exact schedule simulation under crossed dependence.",
+        "Higher public follow-up yield does not establish executable fills or profitability."
+      ],
+      "decision": "Keep the protocol design-only. Do not freeze or start a separate campaign until finalized multi-day data establish the coverage gate and a design-specific power simulation fits the 14-day cap; retain the no-trade control and all existing quality gates.",
+      "status": "continue"
     }
   ],
   "next_research_questions": [
-    "Which predeclared future horizons and activity-aware sampling strata improve synchronized public follow-up coverage in a separate campaign?",
+    "Can finalized multi-day evidence validate the coverage gate and crossed-dependence power analysis for a separate activity-aware follow-up campaign?",
     "Does a broader, longer source panel produce any positive quantity-specific gross complement before modeling fees or execution?",
     "What independent verification is required before a positive candidate can enter a matched hypothetical strategy comparison?",
     "Can existing Arena scheduling and Research Director interfaces support bounded Veritas hypotheses without duplicating job control?",
-    "What Veritas evidence should be exposed in the native dashboard after the data contracts stabilize?",
     "Which remaining Gate G and Gate H one-shot service outcomes require source-level classification before final handoff?"
   ]
 }

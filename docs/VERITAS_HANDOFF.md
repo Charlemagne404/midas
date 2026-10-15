@@ -70,6 +70,12 @@ response retains any provenance path fields present in that versioned JSON. See
 [dashboard checkpoint 001](VERITAS_DASHBOARD_CHECKPOINT_001.md) and the
 [dashboard API procedures](VERITAS_OPERATIONS.md#read-only-veritas-dashboard).
 
+The activity-aware follow-up proposal now uses all scheduled slots for its
+primary one-second yield and includes a reproducible power sensitivity. It is
+still design-only: market/time dependence and the proposed coverage gate are
+not yet validated, so no separate campaign is frozen or started. See
+[follow-up design draft 002](VERITAS_GATE_A_FOLLOWUP_DESIGN_002.md).
+
 ## Active campaigns and services
 
 The frozen Mission 2 prospective campaign is active. Its immutable identity is
@@ -124,7 +130,8 @@ contents disposable; preserve the existing operational data in place.
 1. Read the [research backlog](VERITAS_RESEARCH_BACKLOG.md), [research
    ledger](VERITAS_RESEARCH_LEDGER.json), [operations
    procedures](VERITAS_OPERATIONS.md), [Gate A checkpoint
-   011](VERITAS_GATE_A_CHECKPOINT_011.md), and [Gate B checkpoint
+   011](VERITAS_GATE_A_CHECKPOINT_011.md), [follow-up design draft
+   002](VERITAS_GATE_A_FOLLOWUP_DESIGN_002.md), and [Gate B checkpoint
    001](VERITAS_GATE_B_CHECKPOINT_001.md).
 2. Review the protected campaign's immutable identity and service health
    through read-only checks; do not launch a second worker against its store.
