@@ -85,6 +85,39 @@ type Observatory = {
   limitations: string[];
 };
 
+type FinalizedRealitySource = {
+  status: string;
+  analysis_version: string | null;
+  campaign_id?: string | null;
+  processed_segment_count: number;
+  catalog_segment_count: number;
+  empty_finalized_segment_count: number;
+  pending_segment_count: number;
+  pending_source_bytes: number;
+  processed_source_bytes: number;
+  last_processed_ordinal: number;
+  readiness: string;
+  campaign_window_ns: { start: number; end_exclusive: number } | null;
+  active_segment_read: boolean;
+  cumulative: {
+    period_frame_records: number;
+    touched_market_frame_states: number;
+    quality_valid_states: number;
+    quality_invalid_reason_counts: Record<string, number>;
+    positive_top_ask_pair_states: number;
+    positive_full_depth_pre_fee_states: number;
+    top_edge_distribution: {
+      count: number;
+      minimum: string;
+      median_nearest_rank: string;
+      maximum: string;
+      positive_count: number;
+    } | null;
+  };
+  summary_artifact: (Artifact & { file_sha256: string; url: string }) | null;
+  limitations: string[];
+};
+
 type Overview = {
   status: string;
   captured_at_utc: string;
@@ -144,6 +177,7 @@ type Overview = {
     }>;
   };
   opportunity_observatory: Observatory;
+  finalized_reality_source: FinalizedRealitySource;
   artifacts: Artifact[];
   limitations: string[];
 };
@@ -230,6 +264,7 @@ export function Veritas() {
   const denominator = data.followup_yield.valid_initial_decisions;
   const funnelMaximum = Math.max(data.coverage.period_frame_records, 1);
   const observatory = data.opportunity_observatory;
+  const finalizedSource = data.finalized_reality_source;
   const observatoryDiscovery = observatory.discovery;
   const observatoryOpportunity = observatory.opportunity;
   const observatoryQuality = observatory.data_quality;
@@ -325,6 +360,70 @@ export function Veritas() {
           detail={`${data.research_status.candidates} research candidates · no real execution labels`}
           tone="purple"
         />
+      </div>
+
+      <div className="ve-grid ve-grid-wide">
+        <Panel
+          eyebrow="FINALIZED REALITY SOURCE · READ ONLY"
+          title="Incremental Mission 2 campaign replay"
+          note="This panel advances through hash-verified finalized Reality segments in bounded batches. It is separate from the recurring public discovery snapshots."
+        >
+          <div className="ve-observatory-stats compact">
+            <div>
+              <span>Finalized segments indexed</span>
+              <strong>
+                {fmt(finalizedSource.processed_segment_count)} /{' '}
+                {fmt(finalizedSource.catalog_segment_count)}
+              </strong>
+            </div>
+            <div>
+              <span>Remaining finalized data</span>
+              <strong>
+                {fmt(finalizedSource.pending_segment_count)} segments ·{' '}
+                {bytes(finalizedSource.pending_source_bytes)}
+              </strong>
+            </div>
+            <div>
+              <span>Campaign frame records</span>
+              <strong>{fmt(finalizedSource.cumulative.period_frame_records)}</strong>
+            </div>
+            <div>
+              <span>Quality-valid paired states</span>
+              <strong>{fmt(finalizedSource.cumulative.quality_valid_states)}</strong>
+            </div>
+          </div>
+          <div className="ve-observatory-meta">
+            <span>
+              Analysis status <b>{finalizedSource.status.replaceAll('_', ' ')}</b>
+            </span>
+            <span>
+              Readiness <b>{finalizedSource.readiness.replaceAll('_', ' ')}</b>
+            </span>
+            <span>
+              Last source ordinal <b>{fmt(finalizedSource.last_processed_ordinal)}</b>
+            </span>
+            <span>
+              Positive top / full depth <b>
+                {fmt(finalizedSource.cumulative.positive_top_ask_pair_states)} /{' '}
+                {fmt(finalizedSource.cumulative.positive_full_depth_pre_fee_states)}
+              </b>
+            </span>
+          </div>
+          {finalizedSource.summary_artifact && (
+            <a
+              className="ve-latest-snapshot"
+              href={finalizedSource.summary_artifact.url}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Inspect versioned source-analysis summary <ArrowUpRight size={13} />
+            </a>
+          )}
+          <p className="ve-observatory-note">
+            The active Reality segment is never read. A missing or changed catalog prefix stops
+            resume; quote counts remain correlated observations and do not establish fills.
+          </p>
+        </Panel>
       </div>
 
       <div className="ve-grid ve-grid-wide">

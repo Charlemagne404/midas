@@ -24,6 +24,7 @@ MAX_ARTIFACT_BYTES = 512 * 1024
 MAX_OBSERVATORY_SUMMARY_BYTES = 2 * 1024**2
 MAX_OBSERVATORY_SNAPSHOT_COMPRESSED_BYTES = 4 * 1024**2
 MAX_OBSERVATORY_SNAPSHOT_BYTES = 16 * 1024**2
+MAX_SOURCE_ANALYSIS_SUMMARY_BYTES = 4 * 1024**2
 SNAPSHOT_ID = re.compile(r"scan-\d{8}T\d{6}Z-[0-9a-f]{12}\Z")
 
 
@@ -79,6 +80,130 @@ def read_observatory_summary(repository: Path) -> tuple[dict[str, Any], Path] | 
         ):
             raise HTTPException(503, "Veritas public observatory summary digest is invalid")
     return value, path
+
+
+def read_finalized_source_summary(repository: Path) -> tuple[dict[str, Any], Path] | None:
+    path = repository / "data" / "veritas-observatory" / "source-research-summary.json"
+    if path.parent.is_symlink() or path.is_symlink():
+        raise HTTPException(404, "Finalized Reality source summary is unavailable")
+    if not path.exists():
+        return None
+    if not path.is_file() or path.stat().st_size > MAX_SOURCE_ANALYSIS_SUMMARY_BYTES:
+        raise HTTPException(503, "Finalized Reality source summary exceeds the interface bound")
+    try:
+        value = json.loads(path.read_text())
+    except (OSError, ValueError) as error:
+        raise HTTPException(503, "Finalized Reality source summary could not be read") from error
+    if (
+        not isinstance(value, dict)
+        or value.get("schema_version") != 1
+        or value.get("analysis_version") != "veritas-finalized-reality-source-analysis-v1"
+        or not isinstance(value.get("cumulative"), dict)
+    ):
+        raise HTTPException(503, "Finalized Reality source summary has an invalid format")
+    stored_digest = value.get("summary_sha256")
+    payload = dict(value)
+    payload.pop("summary_sha256", None)
+    if (
+        not isinstance(stored_digest, str)
+        or stored_digest
+        != hashlib.sha256(
+            json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
+        ).hexdigest()
+    ):
+        raise HTTPException(503, "Finalized Reality source summary digest is invalid")
+    return value, path
+
+
+def finalized_source_overview(repository: Path) -> dict[str, Any]:
+    stored = read_finalized_source_summary(repository)
+    if stored is None:
+        return {
+            "status": "not_started",
+            "analysis_version": None,
+            "processed_segment_count": 0,
+            "catalog_segment_count": 0,
+            "empty_finalized_segment_count": 0,
+            "pending_segment_count": 0,
+            "pending_source_bytes": 0,
+            "processed_source_bytes": 0,
+            "last_processed_ordinal": 0,
+            "readiness": "waiting_for_finalized_source",
+            "campaign_window_ns": None,
+            "active_segment_read": False,
+            "cumulative": {
+                "period_frame_records": 0,
+                "touched_market_frame_states": 0,
+                "quality_valid_states": 0,
+                "quality_invalid_reason_counts": {},
+                "positive_top_ask_pair_states": 0,
+                "positive_full_depth_pre_fee_states": 0,
+                "top_edge_distribution": None,
+            },
+            "summary_artifact": None,
+            "limitations": ["No finalized Reality source segments have been indexed yet."],
+        }
+    summary, path = stored
+    cumulative = summary["cumulative"]
+    required_counts = (
+        "period_frame_records",
+        "touched_market_frame_states",
+        "quality_valid_states",
+        "positive_top_ask_pair_states",
+        "positive_full_depth_pre_fee_states",
+    )
+    if any(not isinstance(cumulative.get(name), int) for name in required_counts):
+        raise HTTPException(503, "Finalized Reality source counters are invalid")
+    integer_fields = (
+        "processed_segment_count",
+        "catalog_segment_count",
+        "empty_finalized_segment_count",
+        "pending_segment_count",
+        "pending_source_bytes",
+        "processed_source_bytes",
+        "last_processed_ordinal",
+    )
+    if any(
+        not isinstance(summary.get(name), int)
+        or isinstance(summary.get(name), bool)
+        or summary[name] < 0
+        for name in integer_fields
+    ):
+        raise HTTPException(503, "Finalized Reality source progress counters are invalid")
+    if (
+        not isinstance(summary.get("status"), str)
+        or not isinstance(summary.get("readiness"), str)
+        or not isinstance(summary.get("active_segment_read"), bool)
+        or not isinstance(cumulative.get("quality_invalid_reason_counts"), dict)
+    ):
+        raise HTTPException(503, "Finalized Reality source readiness is invalid")
+    return {
+        "status": summary.get("status", "unknown"),
+        "analysis_version": summary["analysis_version"],
+        "campaign_id": summary.get("campaign_id"),
+        "processed_segment_count": int(summary.get("processed_segment_count", 0)),
+        "catalog_segment_count": int(summary.get("catalog_segment_count", 0)),
+        "empty_finalized_segment_count": int(summary.get("empty_finalized_segment_count", 0)),
+        "pending_segment_count": int(summary.get("pending_segment_count", 0)),
+        "pending_source_bytes": int(summary.get("pending_source_bytes", 0)),
+        "processed_source_bytes": int(summary.get("processed_source_bytes", 0)),
+        "last_processed_ordinal": int(summary.get("last_processed_ordinal", 0)),
+        "readiness": summary.get("readiness", "unknown"),
+        "campaign_window_ns": summary.get("campaign_window_ns"),
+        "active_segment_read": summary["active_segment_read"],
+        "cumulative": {name: cumulative.get(name) for name in required_counts}
+        | {
+            "quality_invalid_reason_counts": cumulative.get("quality_invalid_reason_counts", {}),
+            "top_edge_distribution": cumulative.get("top_edge_distribution"),
+        },
+        "summary_artifact": {
+            "id": "finalized-source-analysis",
+            "label": "Incremental finalized Reality source analysis",
+            "file_sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+            "url": "/api/veritas/artifacts/finalized-source-analysis",
+        },
+        "limitations": summary.get("limitations", []),
+    }
 
 
 def _read_latest_observatory_scan(repository: Path) -> dict[str, Any] | None:
@@ -335,6 +460,7 @@ def overview(repository: Path) -> dict[str, Any]:
     ledger, _ = read_artifact(repository, "ledger")
     inventory, _ = read_artifact(repository, "inventory")
     public_observatory = observatory_overview(repository)
+    finalized_source = finalized_source_overview(repository)
 
     frozen = baseline["frozen_campaign_forensics"]
     coverage = frozen["coverage"]
@@ -416,6 +542,8 @@ def overview(repository: Path) -> dict[str, Any]:
     ]
     if public_observatory["summary_artifact"]:
         artifacts.append(public_observatory["summary_artifact"])
+    if finalized_source["summary_artifact"]:
+        artifacts.append(finalized_source["summary_artifact"])
 
     return {
         "status": "insufficient_independent_evidence",
@@ -498,6 +626,7 @@ def overview(repository: Path) -> dict[str, Any]:
             "recent_hypotheses": recent_hypotheses,
         },
         "opportunity_observatory": public_observatory,
+        "finalized_reality_source": finalized_source,
         "artifacts": artifacts,
         "limitations": [
             "The public panel is selected, finite, and not venue-wide.",
@@ -517,6 +646,16 @@ def router(repository: Path) -> APIRouter:
 
     @routes.get("/artifacts/{identity}")
     def get_artifact(identity: str) -> dict[str, Any]:
+        if identity == "finalized-source-analysis":
+            result = read_finalized_source_summary(repository)
+            if result is None:
+                raise HTTPException(404, "Finalized Reality source analysis has not been generated")
+            data, path = result
+            return {
+                "artifact": identity,
+                "file_sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+                "data": data,
+            }
         if identity == "continuous-analysis":
             result = read_observatory_summary(repository)
             if result is None:

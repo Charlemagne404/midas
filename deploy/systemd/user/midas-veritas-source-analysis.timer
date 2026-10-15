@@ -1,0 +1,11 @@
+[Unit]
+Description=Advance the bounded Veritas finalized-source replay every 30 minutes
+
+[Timer]
+OnCalendar=*-*-* *:10,40:00 UTC
+RandomizedDelaySec=60
+Persistent=true
+Unit=midas-veritas-source-analysis.service
+
+[Install]
+WantedBy=timers.target

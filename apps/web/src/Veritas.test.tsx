@@ -132,6 +132,31 @@ it('labels measured evidence and keeps synthetic execution separate from actual 
           summary_artifact: null,
           limitations: ['No public snapshots yet.'],
         },
+        finalized_reality_source: {
+          status: 'not_started',
+          analysis_version: null,
+          processed_segment_count: 0,
+          catalog_segment_count: 0,
+          empty_finalized_segment_count: 0,
+          pending_segment_count: 0,
+          pending_source_bytes: 0,
+          processed_source_bytes: 0,
+          last_processed_ordinal: 0,
+          readiness: 'waiting_for_finalized_source',
+          campaign_window_ns: null,
+          active_segment_read: false,
+          cumulative: {
+            period_frame_records: 0,
+            touched_market_frame_states: 0,
+            quality_valid_states: 0,
+            quality_invalid_reason_counts: {},
+            positive_top_ask_pair_states: 0,
+            positive_full_depth_pre_fee_states: 0,
+            top_edge_distribution: null,
+          },
+          summary_artifact: null,
+          limitations: ['No finalized Reality source segments have been indexed yet.'],
+        },
         artifacts: [{ id: 'raw-funnel', label: 'Observed raw opportunity funnel' }],
         limitations: ['Displayed liquidity is not guaranteed executable quantity.'],
       }),
@@ -146,6 +171,9 @@ it('labels measured evidence and keeps synthetic execution separate from actual 
 
   expect(
     await screen.findByRole('heading', { level: 1, name: /Evidence before conviction/ }),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByRole('heading', { level: 3, name: /Incremental Mission 2 campaign replay/ }),
   ).toBeInTheDocument();
   expect(screen.getByText('7.1% qualifying measurements')).toBeInTheDocument();
   expect(screen.getByText('354')).toBeInTheDocument();

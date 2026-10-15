@@ -150,6 +150,7 @@ def test_overview_uses_bounded_versioned_evidence_without_raw_paths(tmp_path):
     assert data["execution_sensitivity"]["actual_fills"] == "unknown_counterfactual"
     assert data["execution_sensitivity"]["break_even_at_5pct_unmatched_feasible"] is False
     assert data["opportunity_observatory"]["status"] == "not_started"
+    assert data["finalized_reality_source"]["status"] == "not_started"
     assert "source_root" not in response.text
 
 
@@ -271,6 +272,69 @@ def test_overview_exposes_incremental_public_observatory_summary(tmp_path):
     assert panel["opportunity"]["positive_full_depth_gross_by_quantity"] == {"20": 0}
     assert panel["data_quality"]["latest_invalid_reasons"] == {"no_empty_ask_side": 5}
     assert any(item["id"] == "continuous-analysis" for item in response.json()["artifacts"])
+
+
+def test_overview_exposes_bounded_finalized_reality_source_analysis(tmp_path):
+    client = fixture_client(tmp_path)
+    data_dir = tmp_path / "data" / "veritas-observatory"
+    data_dir.mkdir(parents=True)
+    summary = {
+        "schema_version": 1,
+        "analysis_version": "veritas-finalized-reality-source-analysis-v1",
+        "campaign_id": "campaign-fixture",
+        "campaign_sha256": "a" * 64,
+        "analysis_code_sha256": "b" * 64,
+        "source_root": "/private/reality/source",
+        "active_segment_read": False,
+        "catalog_segment_count": 4,
+        "empty_finalized_segment_count": 1,
+        "processed_segment_count": 3,
+        "pending_segment_count": 1,
+        "pending_source_bytes": 512,
+        "processed_source_bytes": 1536,
+        "last_processed_ordinal": 30,
+        "last_processed_segment_file": "segment.seg",
+        "prefix_catalog_sha256": "c" * 64,
+        "batch_processed_segment_count": 1,
+        "batch_processed_source_bytes": 512,
+        "campaign_window_ns": {"start": 1, "end_exclusive": 2},
+        "readiness": "catching_up_finalized_source",
+        "status": "catching_up",
+        "cumulative": {
+            "period_frame_records": 20,
+            "touched_market_frame_states": 12,
+            "quality_valid_states": 10,
+            "quality_invalid_reason_counts": {"stale_book": 2},
+            "positive_top_ask_pair_states": 0,
+            "positive_full_depth_pre_fee_states": 0,
+            "top_edge_distribution": {"count": 10, "minimum": "-0.5"},
+            "raw_records_replayed": 30,
+        },
+        "most_observed_markets": [],
+        "limitations": ["Repeated source records are dependent."],
+        "generated_at_utc": "2026-10-15T06:00:00+00:00",
+    }
+    summary["summary_sha256"] = hashlib.sha256(
+        json.dumps(summary, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
+    ).hexdigest()
+    summary_path = data_dir / "source-research-summary.json"
+    summary_path.write_text(json.dumps(summary))
+
+    response = client.get("/api/veritas/overview")
+
+    assert response.status_code == 200
+    panel = response.json()["finalized_reality_source"]
+    assert panel["processed_segment_count"] == 3
+    assert panel["pending_segment_count"] == 1
+    assert panel["readiness"] == "catching_up_finalized_source"
+    assert panel["cumulative"]["quality_valid_states"] == 10
+    assert "source_root" not in response.text
+    assert any(item["id"] == "finalized-source-analysis" for item in response.json()["artifacts"])
+
+    artifact = client.get("/api/veritas/artifacts/finalized-source-analysis")
+    assert artifact.status_code == 200
+    assert artifact.json()["data"]["campaign_id"] == "campaign-fixture"
+    assert artifact.json()["file_sha256"] == hashlib.sha256(summary_path.read_bytes()).hexdigest()
 
 
 def test_finalized_snapshot_download_is_bounded_and_identity_checked(tmp_path):
