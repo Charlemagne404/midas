@@ -1,8 +1,8 @@
 # Veritas Mission 2 Gate A Checkpoint 003 — Finalized Source Replay
 
-**Captured:** 2026-10-15 06:51 UTC  
-**Branch:** `project/veritas`  
-**Protected Reality commit:** `714f824`  
+- **Captured:** 2026-10-15 06:51 UTC
+- **Branch:** `project/veritas`
+- **Protected Reality commit:** `714f824`
 **Status:** Initial bounded source batch passed; catch-up continues.
 
 ## Scope and safeguards
