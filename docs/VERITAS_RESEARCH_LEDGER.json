@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-15T18:27:52Z",
+  "updated_at_utc": "2026-10-15T18:31:26Z",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -2539,7 +2539,7 @@
         "orders_submitted": false,
         "authenticated_requests": false
       },
-      "decision": "Keep no-trade. The second group is structurally complete, but this single book capture is stale and skewed; no basket is positive on the displayed gross and fee-safe arithmetic. Require a fresh, independently sequenced capture before any promotion.",
+      "decision": "Keep no-trade. The single capture fails the configured age/skew bounds and no basket is positive on displayed gross or fee-safe arithmetic. Require timestamp semantics or independent freshness evidence before promotion.",
       "limitations": [
         "The membership conclusion is specific to this Gamma snapshot and the captured Polygon block; it does not establish venue-wide NegRisk coverage.",
         "The Gamma group-filter query returned unrelated records, so direct market reads and on-chain question count supplied the completeness checks.",
@@ -3491,7 +3491,7 @@
       "dataset_id": "867272ede02f571c3f26c402f03ecd96de7a189f0c63765eee4dfc1954048330",
       "success_metric": "Receive all fourteen books, pass the five-second maximum source-age and 250-millisecond cross-book-skew bounds, and reproduce positive full-depth net economics at one of the fixed 5/20/100-share quantities.",
       "result": {
-        "status": "complete_book_capture_stale_nonpositive_replay_verified",
+        "status": "complete_book_capture_timestamp_gate_failed_nonpositive_replay_verified",
         "analysis_version": "veritas-openai-ipo-complete-outcome-basket-study-v1",
         "study_id": "VERITAS-M2-OPENAI-IPO-BASKET-2026-10-15T18:25:58.861568+00:00",
         "captured_at_utc": "2026-10-15T18:25:58.861568+00:00",
@@ -3541,16 +3541,21 @@
         "candidate_qualified": false,
         "replay_verified": true,
         "orders_submitted": false,
-        "authenticated_requests": false
+        "authenticated_requests": false,
+        "official_market_book_documentation": [
+          "https://docs.polymarket.com/market-data/prices-order-books",
+          "https://docs.polymarket.com/market-data/realtime-data"
+        ]
       },
       "limitations": [
-        "Every source timestamp failed the five-second age limit and the cross-book skew exceeded 250 milliseconds; the 91-millisecond HTTP duration does not make the underlying books fresh.",
+        "Every source timestamp failed the configured five-second age limit and cross-book skew exceeded 250 milliseconds; the 91-millisecond HTTP duration does not make the source timestamps pass those bounds.",
+        "The official public schema lists timestamp and optional order-book hash, and says the hash can identify a state change between reads; it does not define timestamp age as proof that returned contents are stale or document a sequence field for market-book events. Treat this as a configured gate failure, not independent proof of obsolete contents.",
         "The REST capture has no sequence field or equivalent continuity evidence and is one observation, not a frequency estimate.",
         "The previously sealed seven-market membership and on-chain count evidence were reused; this recapture did not repeat membership discovery.",
         "Displayed depth and fee-envelope results are hypothetical and do not establish order arrival, fills, settlement timing, or realized returns.",
         "The raw study artifact is stored under the local gitignored observatory data directory; its digests are recorded here, but the raw payload is not in the commit."
       ],
-      "decision": "Keep no-trade. Do not repeat REST-only recaptures until an independent freshness or sequence source is available; all tested baskets are negative and fail quality.",
+      "decision": "Keep no-trade. Before another recapture, establish the meaning of source timestamps or obtain independent freshness/continuity evidence; all tested baskets remain negative.",
       "status": "continue"
     }
   ],

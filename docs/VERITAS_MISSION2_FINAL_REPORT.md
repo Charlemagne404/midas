@@ -289,7 +289,7 @@ All 14 Yes/No books returned with depth at 5/20/100 shares, but the oldest
 source timestamp was 33.546 seconds old and cross-book skew was 20.962 seconds.
 The Yes top ask equals its conditional $1 payout; the No top ask costs $6.035
 against the $6 protocol minimum. Every tested full-depth basket is gross
-non-positive, before fees. The stale capture is descriptive and does not
+non-positive, before fees. The capture failed the configured timestamp checks and does not
 qualify a candidate. No orders or authenticated requests were made. See
 [Gate A checkpoint 015](VERITAS_MISSION2_GATE_A_CHECKPOINT_015.md), [inventory
 018](VERITAS_MISSION2_RESEARCH_INVENTORY_018.json), and the [replayable study
@@ -533,7 +533,10 @@ seconds old at worst with 24.598 seconds of cross-market skew. It failed the
 5-second age and 250-millisecond skew limits. The complete Yes/No top baskets
 were -$0.012 and -$0.021 gross per set; full-depth 5/20/100-share scenarios
 were all negative after fees. The sealed result replays, but no candidate
-qualified. This is a single stale observation, and the REST payload has no
-sequence field. Keep no-trade and prioritize independent freshness evidence.
+qualified. This is a single observation that fails the configured timestamp
+checks. The official book schema exposes a timestamp and state hash, but does not define
+timestamp age as proof of stale contents; the published market-book event has
+no sequence field. Keep no-trade and prioritize independent freshness or
+continuity evidence.
 See [Gate A checkpoint 027](VERITAS_MISSION2_GATE_A_CHECKPOINT_027.md) and
 [inventory 034](VERITAS_MISSION2_RESEARCH_INVENTORY_034.json).

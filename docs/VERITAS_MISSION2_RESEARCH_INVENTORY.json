@@ -2314,7 +2314,12 @@
     "authenticated_requests": false,
     "membership_evidence_reused": true,
     "raw_payload_in_git": false,
-    "note": "Complete but stale single capture; source quality fails and all gross/net basket scenarios are negative."
+    "note": "Complete 14-token response; configured timestamp age/skew bounds failed and all gross/net scenarios are negative. Timestamp semantics are not independently established.",
+    "status": "complete_book_capture_timestamp_gate_failed_nonpositive_replay_verified",
+    "official_market_book_documentation": [
+      "https://docs.polymarket.com/market-data/prices-order-books",
+      "https://docs.polymarket.com/market-data/realtime-data"
+    ]
   },
   "operations_followup_034": {
     "captured_at_utc": "2026-10-15T18:27:52Z",

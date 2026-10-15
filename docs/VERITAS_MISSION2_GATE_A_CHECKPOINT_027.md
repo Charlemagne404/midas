@@ -18,10 +18,16 @@ authenticated request was made.
 - Result SHA-256: `0580611cea37aad99ec4d35e0a70f11a9301f1ba3eb5a8dc66697fe00557c350`
 - Response SHA-256: `00acf7e35bbd08454d3d88b5631d8bdff8cfeb48777336da5cd1a9c4450b1211`
 
-The response was complete, but its source timestamps were not fresh: maximum
-source age was 31,404 ms against a 5,000 ms limit, and cross-market skew was
-24,598 ms against a 250 ms limit. The REST response has no sequence field. The
-short HTTP duration therefore does not establish fresh venue state.
+The response was complete, but it failed the configured timestamp checks:
+maximum source timestamp age was 31,404 ms against a 5,000 ms limit, and
+cross-market skew was 24,598 ms against a 250 ms limit. The official [book
+schema](https://docs.polymarket.com/market-data/prices-order-books) lists a
+timestamp and a state hash, and says the hash can show whether the book changed
+between reads; it does not define timestamp age as proof that the returned
+contents are stale. The documented [market-book event
+schema](https://docs.polymarket.com/market-data/realtime-data) has no sequence
+field. Thus this capture fails our configured age/skew gate, but that alone does
+not establish that the books were obsolete when returned.
 
 ## Economics
 
@@ -37,8 +43,9 @@ basket remained negative gross and after the fragmentation-safe fee envelope:
 | 20 | -$0.25760 | -$0.37532 | -$0.420 | -$0.50866 |
 | 100 | -$1.50916 | -$2.11498 | -$2.100 | -$2.54317 |
 
-This is one stale market observation. It does not estimate opportunity
-frequency, prove executable fills, or support any strategy or model comparison.
+This is one market observation that fails our configured timestamp age/skew
+checks. It does not estimate opportunity frequency, prove executable fills, or
+support any strategy or model comparison.
 The no-trade baseline remains. The raw response is in the local gitignored
 observatory directory; versioned lineage and limitations are in [inventory
 034](VERITAS_MISSION2_RESEARCH_INVENTORY_034.json) and [research ledger H067](VERITAS_RESEARCH_LEDGER.json).
