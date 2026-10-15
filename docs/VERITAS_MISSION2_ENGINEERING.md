@@ -1,6 +1,34 @@
 # Veritas Mission 2 Engineering Checkpoint
 
-## Latest engineering checkpoint — discovery-frame marginal value
+## Latest engineering checkpoint — Director recovery and scan 40
+
+The scheduled observer completed scan 40 at 23:32:05 UTC with 30/40
+request/receipt-quality-valid pairs, 291 unique IDs in the bounded discovery
+union, 77 eligible markets, and no positive top-gross pair. The measurement
+pilot has 10/48 scans, 335/400 valid selected slots, 271 selected IDs, and no
+missed scan sequences. Arena completed the scan-39 qualification with all
+39/39 events, 1,375 quality-valid pairs across 732 IDs, and zero positives at
+all five economic gates. The Director manifest awaits its scheduled
+reconciliation. See [Gate A checkpoint
+037](VERITAS_MISSION2_GATE_A_CHECKPOINT_037.md) and [Gate F checkpoint
+023](VERITAS_MISSION2_GATE_F_CHECKPOINT_023.md).
+
+The Research Director now recovers a missing job pointer only when its
+canonical scan-keyed admission resolves to exactly one durable, matching
+child. If no such evidence exists, it keeps the scan `UNVERIFIED` and does not
+admit a replacement. Ten focused Director tests, Ruff, format, strict Mypy,
+and diff validation passed. The current scan-39 child record was present and
+completed; the stale-pointer behavior is a tested recovery path, not a
+confirmed live incident. See the [versioned recovery
+artifact](VERITAS_MISSION2_DIRECTOR_RECOVERY_001.json) and [ledger
+H083](VERITAS_RESEARCH_LEDGER.json).
+
+The frozen Reality campaign, collector, pilot protocol, and active jobs were
+not modified or restarted. The scheduled Director will reconcile the
+completed scan-39 child on its next cycle and may then admit scan 40 under the
+same bounded policy.
+
+## Previous engineering checkpoint — discovery-frame marginal value
 
 An offline replay verified all 234 Gamma response hashes across 39 saved scans.
 The six frames average 299.05 unique IDs and 164.26 V1-eligible markets.
@@ -12,7 +40,7 @@ artifact](VERITAS_MISSION2_DISCOVERY_FRAME_MARGINAL_001.json), [research ledger
 H082](VERITAS_RESEARCH_LEDGER.json), and [inventory
 044](VERITAS_MISSION2_RESEARCH_INVENTORY_044.json).
 
-## Latest engineering checkpoint — direct control retrieval
+## Previous engineering checkpoint — direct control retrieval
 
 A one-request explicit-ID Gamma diagnostic returned all eight frozen controls
 about 11 minutes after scan 39. Three controls absent from that scan's six-query

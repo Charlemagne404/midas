@@ -1,10 +1,60 @@
 # Veritas Mission 2 Operations
 
-**Latest read-only runtime check:** 2026-10-15 23:05 UTC
+**Latest read-only runtime check:** 2026-10-15 23:34 UTC
 **Services:** Reality recorder and shadow; Midas and Reality API/web; Veritas observer, source analysis, gap detail, and Research Director one-shots
 **Timers:** `midas-veritas-observatory.timer`, `midas-veritas-source-analysis.timer`, `midas-veritas-research-director.timer`, `midas-veritas-gap-detail-analysis.timer`
 
-## Latest runtime state — 2026-10-15 23:05 UTC
+## Latest runtime state — 2026-10-15 23:34 UTC
+
+- The observer completed scan 40 at 23:32:05 UTC. Six bounded queries
+  returned 291 unique IDs, including 77 V1-eligible markets and 214 excluded
+  IDs. Thirty of 40 selected pairs passed request/receipt quality; ten failed
+  on an empty ask side. There were zero positive top-gross pairs and no
+  candidate rows. The next scheduled observer run is at 00:01:47 UTC.
+- The fixed 24-hour coverage pilot has 10/48 scans, 335/400 valid selected
+  pairs, 65 invalid, and 271 distinct selected IDs, with zero skipped scan
+  sequences. Its fixed stop is 2026-10-16 19:00:55 UTC. The role comparison is
+  nonrandomized and descriptive.
+- Arena completed the scan-39 qualification at 23:16:27 UTC with exit status
+  0 and 39/39 source events. It found 1,375/1,560 quality-valid pairs over
+  732 selected IDs, with zero positive states at all five gates and complete
+  zero-row candidate replay. The Director manifest still reports that child
+  as queued and scan 38 as the latest qualified scan. Its next scheduled
+  cycle at 23:45:25 UTC is the reconciliation point. Scan 40 remains pending.
+  No manual Director run, job retry, or service restart occurred.
+- The finalized-source analyzer's 23:14 UTC summary covers 4,038/4,615
+  segments and 247,354 quality-valid states across 63 markets; 577 segments /
+  159,597,957 bytes remain pending. The gap-detail analyzer's 23:20 UTC
+  summary covers 658/4,635 segments, with 3,975 / 1,101,886,466 bytes
+  pending and 1,642 all-period gap events. Its campaign-window gap count is
+  incomplete and is not interpretable as zero. Both analyzers declare
+  `active_segment_read=false`.
+- The recorder and shadow worker remain active with zero and one historical
+  restarts respectively. At 23:34 UTC the recorder used about 402 MB of its
+  512 MiB cap; the shadow used about 265 MB of 512 MiB. Their quotas remain
+  250 ms/s and 100 ms/s. The latest detailed recorder status is still the
+  23:03 UTC `RECORDING_UNSEQUENCED` snapshot, which had a temporary DNS error
+  and `sequence_verified=false`; 16/16 books were flagged fresh, without
+  independent continuity assurance. The prior 23:05 throughput sample found
+  the shadow advancing at about 25% of recorder ordinal throughput and
+  skipping all 21 sample frames under the frozen 250 ms input-age rule.
+- Midas and Reality API/web units and all four Veritas timers are active.
+  Host load was 0.71 / 0.81 / 0.93, available RAM 9.7 GiB, swap 3.5/4 GiB,
+  and disk free 198 GiB (56% used). The Veritas observatory occupies about
+  50 MB; the Reality data directory is about 3.0 GB. No HTTP health probe was
+  made.
+- The Research Director code adds recovery by the canonical scan admission
+  key if a persisted job pointer cannot be inspected. Recovery requires a
+  unique matching durable child; absent evidence leaves the scan unverified
+  without retry. This behavior passed isolated tests. The current scan-39
+  job record was present and completed, so no live pointer-loss incident was
+  confirmed. The code change does not alter the active worker or campaign.
+
+See [Gate A checkpoint 037](VERITAS_MISSION2_GATE_A_CHECKPOINT_037.md), [Gate
+F checkpoint 023](VERITAS_MISSION2_GATE_F_CHECKPOINT_023.md), and [Director
+recovery artifact 001](VERITAS_MISSION2_DIRECTOR_RECOVERY_001.json).
+
+## Previous runtime state — 2026-10-15 23:05 UTC
 
 - The scheduled observer completed scan 39 at 23:00:55 UTC. Six bounded
   queries returned 300 unique IDs (174 eligible same-condition pairs, 126

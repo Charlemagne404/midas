@@ -276,6 +276,55 @@ def test_director_recovers_a_crash_after_durable_job_admission(tmp_path, monkeyp
     assert len(list(arena_root.glob("jobs/*/job.json"))) == 1
 
 
+def test_director_recovers_a_stale_job_pointer_from_its_admission_key(tmp_path, monkeypatch):
+    repository, now = _source(tmp_path)
+    arena_root = tmp_path / "arena"
+    monkeypatch.setattr(research_director, "resources_ready", lambda root: True)
+    job = research_director._create_job(arena_root, SCAN_ID, launch=False)
+    monkeypatch.setattr(
+        jobs,
+        "inspect",
+        lambda root, identity: json.loads((root / "jobs" / identity / "job.json").read_text()),
+    )
+    directory, manifest_path, record = research_director._manifest(arena_root)
+    record.update(
+        current_scan_id=SCAN_ID,
+        current_admission_key=f"veritas-qualification-v1-{SCAN_ID}",
+        current_job_id="job-000000000000000000000000",
+        current_job_state="QUEUED",
+    )
+    atomic_json(manifest_path, record)
+
+    recovered = research_director.tick(repository, arena_root, now=now, launch_jobs=False)
+
+    assert recovered["state"] == "RUNNING"
+    assert recovered["current_job_id"] == job["job_id"]
+    assert recovered["current_job_state"] == "QUEUED"
+    assert len(list(arena_root.glob("jobs/*/job.json"))) == 1
+
+
+def test_director_does_not_re_admit_when_job_pointer_and_durable_admission_are_missing(
+    tmp_path, monkeypatch
+):
+    repository, now = _source(tmp_path)
+    arena_root = tmp_path / "arena"
+    monkeypatch.setattr(research_director, "resources_ready", lambda root: True)
+    _, manifest_path, record = research_director._manifest(arena_root)
+    record.update(
+        current_scan_id=SCAN_ID,
+        current_admission_key=f"veritas-qualification-v1-{SCAN_ID}",
+        current_job_id="job-000000000000000000000000",
+        current_job_state="QUEUED",
+    )
+    atomic_json(manifest_path, record)
+
+    result = research_director.tick(repository, arena_root, now=now, launch_jobs=False)
+
+    assert result["state"] == "UNVERIFIED"
+    assert result["current_job_id"] == "job-000000000000000000000000"
+    assert not list(arena_root.glob("jobs/*/job.json"))
+
+
 def test_director_records_failed_admission_without_automatic_retry(tmp_path, monkeypatch):
     repository, now = _source(tmp_path)
     arena_root = tmp_path / "arena"

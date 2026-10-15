@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-15T23:21:48.799843Z",
+  "updated_at_utc": "2026-10-15T23:34:40Z",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -4757,6 +4757,42 @@
       "status": "continue",
       "success_metric": "After the fixed v1 pilot stops, a versioned eight-call scan retains all six query frames and the direct control lookup, meets explicit response and resource bounds, and demonstrates comparable or improved control availability without a material loss in rotating quality yield.",
       "title": "Is one additional bounded control lookup preferable to dropping a discovery frame?"
+    },
+    {
+      "hypothesis_id": "VERITAS-H083",
+      "experiment_id": "VERITAS-M2-DIRECTOR-RECOVERY-001",
+      "dataset_id": "637c8b133409215e2a8a6ee194b835bb9d4aa86933d1fb619347aea2d38a6412",
+      "title": "Can the Research Director recover a stale job pointer from a durable scan-keyed admission without duplicating work?",
+      "mechanism": "When a persisted child ID cannot be inspected, reconstruct the canonical admission key from the pinned scan, require the stored key to match, scan the bounded Arena job catalog, validate the unique child configuration and inspect that child before updating the Director pointer. If no matching durable child exists, preserve an UNVERIFIED state and do not resubmit.",
+      "success_metric": "A stale pointer is replaced only by a unique durable child that matches the scan and qualification configuration; absent or conflicting evidence must not create a second job.",
+      "status": "continue",
+      "decision": "Keep the scheduled Director as the sole live reconciler. The scan-39 job is now present and completed normally; the new stale-pointer path is verified in isolated fixtures and should remain a recovery guard, not a claim that the live scan failed.",
+      "result": {
+        "artifact_path": "docs/VERITAS_MISSION2_DIRECTOR_RECOVERY_001.json",
+        "artifact_sha256": "637c8b133409215e2a8a6ee194b835bb9d4aa86933d1fb619347aea2d38a6412",
+        "captured_at_utc": "2026-10-15T23:34:40Z",
+        "module_sha256": "ed4bf6dd5c62bc0cfa1eec3b7082c6d14757edd18e6b50a6f81ca81c2da33f4f",
+        "test_sha256": "15cc02dca843bd2ccd0f09eec06800ce790f19b6714d6dddc93475c74c9b3c97",
+        "focused_tests_passed": 10,
+        "stale_pointer_matching_child_fixture": "passed",
+        "missing_child_no_readmission_fixture": "passed",
+        "ruff": "passed",
+        "ruff_format": "passed",
+        "strict_mypy": "passed",
+        "live_scan_39_child_state": "COMPLETED",
+        "live_scan_39_child_exit_status": 0,
+        "live_scan_39_director_projection": "awaiting scheduled reconciliation",
+        "scan_40_id": "scan-20261015T233205Z-a2240a38b48f",
+        "scan_40_quality_valid_pairs": 30,
+        "scan_40_selected_pairs": 40,
+        "orders_submitted": false,
+        "authenticated_requests": false
+      },
+      "limitations": [
+        "The live scan-39 child record was present and completed; no live stale-pointer incident was established.",
+        "Recovery behavior was tested with temporary directories; live reconciliation remains scheduled and was not manually triggered.",
+        "The code does not retry when both the pointer and durable admission evidence are absent."
+      ]
     }
   ],
   "next_research_questions": [
@@ -4775,6 +4811,7 @@
     "Can book_issue:gap censors be linked to a specific preceding same-market gap using finalized receiver-time evidence?",
     "Can the frozen shadow worker process new recorder ordinals faster than the live input while keeping frames within its decision-input lag bound?",
     "Can an eight-call successor preserve all six discovery frames and resolve the frozen controls while meeting request, response, and resource bounds after the fixed pilot ends?",
-    "What versioned successor worker can process the measured source rate with margin while preserving the 250 ms decision-input lag and bounded resource use?"
+    "What versioned successor worker can process the measured source rate with margin while preserving the 250 ms decision-input lag and bounded resource use?",
+    "Does the scheduled Director reconcile completed scan 39 and then qualify scan 40 without duplicating an Arena admission?"
   ]
 }

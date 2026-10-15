@@ -5,7 +5,7 @@ economic impact, current evidence, and compute cost. Work remains on
 `project/veritas`; the frozen Reality campaign is a protected reference. The
 earlier Mission 1 handoff backlog is retained below for provenance.
 
-## Current Mission 2 queue (updated 2026-10-15 23:22 UTC)
+## Current Mission 2 queue (updated 2026-10-15 23:34 UTC)
 
 | Rank | Question | Evidence today | Next experiment | Promotion rule |
 | --- | --- | --- | --- | --- |
@@ -16,6 +16,18 @@ earlier Mission 1 handoff backlog is retained below for provenance.
 | 5 | Does economic qualification find and replay a genuine candidate? | Scan 38 Arena job `job-25b10231cab34b16bfbc5b25` completed 38/38 events with exit 0. The panel has 1,341 valid pairs across 710 IDs, maximum edge -$0.001 and median -$0.020 per share, zero positives at all five economic gates, and complete empty candidate evidence. The Director manifest still projects `QUEUED` for scan 38; scan 39 has not been admitted. | Retain no-trade, let the scheduled Director cycle reconcile scan 38 and admit scan 39, and preserve source evidence if a positive gross state appears. | Require same-condition identity, immutable-source replay, full depth, both per-leg minimums, fees, and independent freshness. |
 | 6 | Do public follow-up labels support a useful strategy or model target? | The current v1.4 report has 937 public markouts across 41,012 slots; 40,075 are censored. Five-second yield is 473/3,503 valid starts (13.50%); every mark has no initial discrepancy, null opportunity persistence, and unknown counterfactual execution. See [censoring report 004](VERITAS_GATE_A_CENSORING_004.json) and [label feasibility 001](VERITAS_MISSION2_LABEL_FEASIBILITY_001.json). | Keep no-trade and defer training. Revisit only if a predeclared candidate-related target has adequate non-degenerate support and independent timing. | Public quote markouts do not establish fill or P&L labels. Do not train on censored or unsupported opportunity targets. |
 | 7 | Can additional complete-outcome structures produce fresh positive net economics? | Strava and OpenAI IPO baskets remain negative or fail timestamp-quality checks; no basket qualifies. | Defer more REST-only recaptures until independent freshness is available; only investigate payoff structures with verified settlement semantics. | Do not infer arbitrage from related markets or relabel directional prediction. |
+
+At 23:34 UTC, scan 40 had completed with 30/40 quality-valid pairs from 291
+unique discovery IDs (77 V1-eligible) and zero positive top-gross pairs. The
+coverage pilot has 10/48 scans, 335/400 valid slots over 271 selected IDs, and
+no skipped scan sequences. The scan-39 Arena qualification completed 39/39
+events with zero candidates; the Director manifest still awaits its scheduled
+reconciliation, and scan 40 remains unqualified. A scan-keyed durable-child
+recovery path now has isolated tests for pointer adoption and no-retry behavior
+when admission evidence is absent. See [Gate A checkpoint
+037](VERITAS_MISSION2_GATE_A_CHECKPOINT_037.md), [Gate F checkpoint
+023](VERITAS_MISSION2_GATE_F_CHECKPOINT_023.md), and [recovery artifact
+001](VERITAS_MISSION2_DIRECTOR_RECOVERY_001.json).
 
 The latest censoring and source-attribution work is documented in [Gate C checkpoint 004](VERITAS_MISSION2_GATE_C_CHECKPOINT_004.md) and [checkpoint 005](VERITAS_MISSION2_GATE_C_CHECKPOINT_005.md). The control-availability projection is in [Gate G checkpoint 010](VERITAS_MISSION2_GATE_G_CHECKPOINT_010.md) and is not deployed to the running host. Current discovery evidence is in [Gate A checkpoint 036](VERITAS_MISSION2_GATE_A_CHECKPOINT_036.md), including the [frame-marginal artifact](VERITAS_MISSION2_DISCOVERY_FRAME_MARGINAL_001.json), the direct-control lookup in [research ledger H081](VERITAS_RESEARCH_LEDGER.json), and the frame-budget result in H082. The latest inventory is [044](VERITAS_MISSION2_RESEARCH_INVENTORY_044.json). The official [Gamma OpenAPI schema](https://gamma-api.polymarket.com/openapi.json) supports the bounded ID lookup used in that diagnostic. The official [Real-Time Data](https://docs.polymarket.com/market-data/realtime-data) and [Prices and Order Books](https://docs.polymarket.com/market-data/prices-order-books) pages remain relevant to freshness; their documented schemas do not provide an independent sequence guarantee.
 

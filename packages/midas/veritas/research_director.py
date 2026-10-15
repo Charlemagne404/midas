@@ -587,10 +587,54 @@ def tick(
             try:
                 current_job = inspect(arena_root, current_job_id)
             except (FileNotFoundError, ValueError, OSError):
-                return save(
-                    "UNVERIFIED",
-                    "Inspecting the existing qualification",
-                    "Previously admitted job evidence is unavailable; explicit review is required",
+                recovery_key = (
+                    f"veritas-qualification-v1-{current_scan_id}"
+                    if isinstance(current_scan_id, str)
+                    else None
+                )
+                if (
+                    not isinstance(current_scan_id, str)
+                    or recovery_key is None
+                    or record.get("current_admission_key") != recovery_key
+                ):
+                    return save(
+                        "UNVERIFIED",
+                        "Inspecting the existing qualification",
+                        "Previously admitted job evidence is unavailable; explicit review is required",
+                    )
+                try:
+                    durable_job = _job_by_admission_key(arena_root, recovery_key)
+                    durable_job_id = durable_job.get("job_id") if durable_job else None
+                    if (
+                        durable_job is None
+                        or not _job_matches_scan(durable_job, current_scan_id)
+                        or not isinstance(durable_job_id, str)
+                        or durable_job_id == current_job_id
+                    ):
+                        return save(
+                            "UNVERIFIED",
+                            "Inspecting the existing qualification",
+                            "The admitted job pointer is unavailable and no matching durable child can be recovered",
+                        )
+                    current_job = inspect(arena_root, durable_job_id)
+                except (FileNotFoundError, ValueError, OSError, json.JSONDecodeError):
+                    return save(
+                        "UNVERIFIED",
+                        "Inspecting the existing qualification",
+                        "The admitted job pointer is unavailable and durable admission recovery failed",
+                    )
+                if not _job_matches_scan(current_job, current_scan_id):
+                    return save(
+                        "UNVERIFIED",
+                        "Verifying the recovered admission",
+                        "The recovered durable child does not match the Director's scan-pinned admission",
+                    )
+                current_job_id = durable_job_id
+                record.update(
+                    current_job_id=current_job_id,
+                    current_job_state=current_job.get("state"),
+                    current_job_error=current_job.get("error"),
+                    current_job_source_revision_sha256=current_job.get("submitted_source_hash"),
                 )
             if not isinstance(current_scan_id, str) or not _job_matches_scan(
                 current_job, current_scan_id
