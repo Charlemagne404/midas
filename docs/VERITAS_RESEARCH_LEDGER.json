@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-15T11:50:10Z",
+  "updated_at_utc": "2026-10-15T12:16:33Z",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -2405,6 +2405,76 @@
       ],
       "status": "continue",
       "decision": "Do not qualify the observed baskets. Extend the bounded audit to additional complete event groups with explicit settlement bounds and fresh source timestamps."
+    },
+    {
+      "hypothesis_id": "VERITAS-H052",
+      "title": "A digest-verified Director history makes bounded qualification failures and recovery auditable",
+      "mechanism": "A read-only API validates immutable event identities, bounds filesystem and payload reads, and exposes scan, job, experiment, dataset, and gate lineage to the Veritas dashboard.",
+      "experiment_id": "VERITAS-M2-GATE-G-DIRECTOR-HISTORY-001",
+      "dataset_id": "a71f0963ebe87880b88e714910345c279fd974dde4f3adce327b0b315eb12089",
+      "success_metric": "Reject mismatched event filenames; return no more than eight verified records after inspecting at most 128 bounded event files per Director; show the source-drift failure and later completed run in the UI.",
+      "result": {
+        "status": "api_and_browser_lineage_checks_passed",
+        "event_archive_files": 15,
+        "verified_recent_events_returned": 8,
+        "history_truncated": true,
+        "invalid_live_artifacts": 0,
+        "tampered_event_rejected_in_isolated_test": true,
+        "source_drift_failure_visible": true,
+        "stable_revision_completion_visible": true,
+        "api_tests_passed": 16,
+        "frontend_tests_passed": 29,
+        "browser_workflow_passed": true,
+        "orders_submitted": false,
+        "authenticated_requests": false
+      },
+      "limitations": [
+        "This improves observability and auditability but adds no economic evidence or candidate labels.",
+        "The dashboard displays at most eight events; the API inspects no more than 128 event files per Director, while the durable archive remains the full record.",
+        "Strategy and model comparisons remain not ready without a quality-valid gross candidate and suitable public outcome labels."
+      ],
+      "decision": "Keep the event view read-only and bounded; retain the full immutable archive and review its displayed history as recurring cycles accumulate.",
+      "status": "continue"
+    },
+    {
+      "hypothesis_id": "VERITAS-H053",
+      "title": "A broader bounded discovery union still yields no positive gross binary candidate",
+      "mechanism": "The rotating six-frame Gamma union adds eligible same-condition V1 binary pairs while the price-blind 40-market panel and unchanged economic qualification gates continue prospectively.",
+      "experiment_id": "VERITAS-M2-ECO-QUAL-001-RUN-a8fa16980163",
+      "dataset_id": "a8fa1698016316f4336a9406f138ae0585e9feeeb6eaa2abd2db57595a220a58",
+      "success_metric": "Preserve the finalized scan identities and report quality-valid coverage plus top-ask, full-depth, minimum-notional, and fee-sensitivity gate counts without changing the baseline.",
+      "result": {
+        "status": "no_positive_gross_candidate_observed",
+        "scan_id": "scan-20261015T120127Z-af0847c75aeb",
+        "bounded_query_ids": 300,
+        "eligible_same_condition_binary_pairs": 200,
+        "explicit_exclusions": 100,
+        "selected_markets": 40,
+        "quality_valid_pairs_latest_scan": 35,
+        "cumulative_snapshots": 17,
+        "cumulative_selected_observations": 680,
+        "cumulative_quality_valid_pairs": 613,
+        "cumulative_distinct_markets": 284,
+        "legacy_freshness_valid_pairs": 148,
+        "positive_states_by_gate": {
+          "unchanged_top_ask_gross_sign": 0,
+          "full_displayed_depth_gross": 0,
+          "full_depth_and_per_leg_minimum_notional": 0,
+          "single_match_fee_sensitivity_positive": 0,
+          "fragmentation_safe_fee_sensitivity_positive": 0
+        },
+        "director_job_id": "job-97c08fcee4f0407b88c06ca1",
+        "finding_id": "veritas-qualification-v1-4158e04dd04c8f4f",
+        "orders_submitted": false,
+        "authenticated_requests": false
+      },
+      "limitations": [
+        "The 40-market panel is conditional on a bounded query-response union and is not a venue-wide sample.",
+        "Repeated snapshots are dependent; request-to-receipt timing does not prove venue sequence, batch atomicity, or upstream queue age.",
+        "The negative qualification result does not establish fill economics, profitability, or a model-ready public outcome label set."
+      ],
+      "decision": "Continue bounded prospective collection and preserve the unchanged no-trade baseline. Do not train a model or run a strategy tournament without an eligible gross candidate and suitable outcome labels.",
+      "status": "continue"
     }
   ],
   "next_research_questions": [

@@ -1,6 +1,7 @@
 """Arena metadata stays available without loading ML libraries into API startup."""
 
 import asyncio
+import hashlib
 import importlib.util
 import json
 import re
@@ -12,6 +13,9 @@ from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, ConfigDict
 
 MAX_RESEARCH_ACTIVITY_RECORD_BYTES = 256 * 1024
+MAX_DIRECTOR_EVENT_BYTES = 64 * 1024
+MAX_DIRECTOR_EVENT_FILES_SCANNED = 128
+MAX_DIRECTOR_HISTORY_EVENTS = 8
 MAX_VERITAS_LATEST_SUMMARY_BYTES = 2 * 1024**2
 MAX_VERITAS_ANALYSIS_EVENT_BYTES = 2 * 1024**2
 
@@ -55,10 +59,13 @@ def create_veritas_qualification_job(arena_root: Path, repository: Path) -> dict
         veritas_qualification=VeritasQualificationSpec(expected_latest_scan_id=scan_id),
         max_wall_seconds=300,
     )
-    return create(
-        arena_root,
-        spec,
-        admission_key=f"veritas-qualification-v1-{scan_id}",
+    return cast(
+        dict[str, Any],
+        create(
+            arena_root,
+            spec,
+            admission_key=f"veritas-qualification-v1-{scan_id}",
+        ),
     )
 
 
@@ -75,6 +82,96 @@ def _qualification_source_scan_id(row: dict[str, Any]) -> str | None:
 
 def _bounded_string(value: object, limit: int) -> str | None:
     return value[:limit] if isinstance(value, str) else None
+
+
+def _director_event_history(
+    root: Path, director_id: object
+) -> tuple[list[dict[str, Any]], bool, int]:
+    """Read a small hash-verified history from one durable Director event stream."""
+    if not isinstance(director_id, str) or not re.fullmatch(r"[A-Za-z0-9_.-]{1,100}", director_id):
+        return [], False, 1
+    directors_root = root / "directors"
+    director_root = directors_root / director_id
+    events_root = director_root / "events"
+    if directors_root.is_symlink() or director_root.is_symlink() or events_root.is_symlink():
+        return [], False, 1
+    if not events_root.is_dir():
+        return [], False, 0
+
+    paths: list[tuple[float, Path]] = []
+    truncated = False
+    invalid = 0
+    try:
+        for index, path in enumerate(events_root.glob("event-*.json")):
+            if index >= MAX_DIRECTOR_EVENT_FILES_SCANNED:
+                truncated = True
+                break
+            if path.is_symlink() or path.parent.is_symlink():
+                invalid += 1
+                continue
+            try:
+                paths.append((path.stat().st_mtime, path))
+            except OSError:
+                invalid += 1
+    except OSError:
+        return [], False, invalid + 1
+
+    history: list[dict[str, Any]] = []
+    for _, path in sorted(paths, key=lambda item: item[0], reverse=True):
+        if len(history) >= MAX_DIRECTOR_HISTORY_EVENTS:
+            break
+        try:
+            if path.stat().st_size > MAX_DIRECTOR_EVENT_BYTES:
+                invalid += 1
+                continue
+            event = json.loads(path.read_text())
+            if not isinstance(event, dict):
+                invalid += 1
+                continue
+            canonical = json.dumps(
+                {key: value for key, value in event.items() if key != "recorded_at_utc"},
+                sort_keys=True,
+                separators=(",", ":"),
+                ensure_ascii=False,
+            ).encode()
+            expected_name = f"event-{hashlib.sha256(canonical).hexdigest()}.json"
+            if path.name != expected_name or event.get("director_id") != director_id:
+                invalid += 1
+                continue
+            counts = event.get("positive_states_by_gate")
+            if not isinstance(counts, dict) or any(
+                not isinstance(key, str)
+                or not isinstance(value, int)
+                or isinstance(value, bool)
+                or value < 0
+                for key, value in counts.items()
+            ):
+                counts = None
+            history.append(
+                {
+                    "recorded_at_utc": _bounded_string(event.get("recorded_at_utc"), 40),
+                    "state": _bounded_string(event.get("state"), 40),
+                    "stage": _bounded_string(event.get("stage"), 120),
+                    "note": _bounded_string(event.get("note"), 300),
+                    "scan_id": _bounded_string(event.get("scan_id"), 80),
+                    "job_id": _bounded_string(event.get("job_id"), 80),
+                    "finding_id": _bounded_string(event.get("finding_id"), 100),
+                    "experiment_run_id": _bounded_string(event.get("experiment_run_id"), 120),
+                    "experiment_sha256": _bounded_string(event.get("experiment_sha256"), 64),
+                    "dataset_sha256": _bounded_string(event.get("dataset_sha256"), 64),
+                    "source_revision_sha256": _bounded_string(
+                        event.get("source_revision_sha256"), 64
+                    ),
+                    "strategy_readiness": _bounded_string(event.get("strategy_readiness"), 100),
+                    "model_readiness": _bounded_string(event.get("model_readiness"), 100),
+                    "positive_states_by_gate": counts,
+                    "recommendation": _bounded_string(event.get("recommendation"), 600),
+                }
+            )
+        except (OSError, ValueError, TypeError):
+            invalid += 1
+    truncated = truncated or len(paths) > len(history)
+    return history, truncated, invalid
 
 
 def research_activity(root: Path) -> dict[str, Any]:
@@ -118,6 +215,11 @@ def research_activity(root: Path) -> dict[str, Any]:
     active_states = {"RUNNING", "QUEUED"}
     active_jobs = [job for job in jobs if job.get("state") in active_states]
     queued_jobs = sum(job.get("state") == "QUEUED" for job in jobs)
+    director_histories: dict[int, tuple[list[dict[str, Any]], bool]] = {}
+    for row in directors[:5]:
+        history, truncated, invalid_history = _director_event_history(root, row.get("director_id"))
+        director_histories[id(row)] = (history, truncated)
+        invalid_records += invalid_history
     return {
         "status": "available",
         "state_source": "persisted Arena manifests; supervisor liveness remains on Arena detail views",
@@ -196,6 +298,8 @@ def research_activity(root: Path) -> dict[str, Any]:
                     if isinstance(row.get("latest_finding"), dict)
                     else None
                 ),
+                "recent_events": director_histories.get(id(row), ([], False))[0],
+                "recent_events_truncated": director_histories.get(id(row), ([], False))[1],
             }
             for row in directors[:5]
         ],
@@ -240,6 +344,9 @@ def research_activity(root: Path) -> dict[str, Any]:
             "maximum_record_bytes": MAX_RESEARCH_ACTIVITY_RECORD_BYTES,
             "maximum_jobs_read": 25,
             "maximum_directors_read": 10,
+            "maximum_director_event_files_scanned": MAX_DIRECTOR_EVENT_FILES_SCANNED,
+            "maximum_director_events_per_director": MAX_DIRECTOR_HISTORY_EVENTS,
+            "maximum_director_event_bytes": MAX_DIRECTOR_EVENT_BYTES,
             "maximum_schedules_read": 10,
             "maximum_alerts_read": 10,
         },
@@ -347,7 +454,7 @@ def router(root: Path) -> APIRouter:
     def path(kind: str, identity: str) -> Path:
         from midas.arena.artifacts import artifact_path
 
-        return artifact_path(root, kind, identity)
+        return cast(Path, artifact_path(root, kind, identity))
 
     def evaluation_counts(record: dict[str, Any]) -> None:
         independent = validation = 0

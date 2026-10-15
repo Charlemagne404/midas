@@ -194,6 +194,20 @@ distinct markets. The legacy timestamp gate accepts 140/640; the paired
 increase is 438 observations (+68.44 percentage points). All top, depth,
 minimum-size, and fee qualification counts remain zero-positive.
 
+## Gate A checkpoint addendum — 2026-10-15, 12:01 UTC
+
+The scheduled 12:01 scan
+`scan-20261015T120127Z-af0847c75aeb` found 200 supported same-condition
+binary pairs in its bounded 300-ID union, with 100 explicit exclusions. The
+40-market sample contained 37 rotating markets and three available controls;
+35 pairs passed the request/receipt quality gate. Cumulative v4 analysis now
+contains 17 snapshots, 680 selected observations, 613 quality-valid pairs,
+and 284 distinct markets. The legacy timestamp gate accepts 148/680; the
+paired increase is 465 observations (+68.38 percentage points). All top,
+depth, minimum-size, and fee qualification counts remain zero-positive. See
+[Gate A checkpoint 014](VERITAS_MISSION2_GATE_A_CHECKPOINT_014.md) and
+[research inventory 017](VERITAS_MISSION2_RESEARCH_INVENTORY_017.json).
+
 ## Gate F checkpoint addendum — 2026-10-15, 11:45 UTC
 
 The Director admitted and completed a 16-event Arena qualification for the
@@ -211,3 +225,45 @@ Mission 2 remains active. The current evidence and scheduled run state are in
 [Gate A checkpoint 013](VERITAS_MISSION2_GATE_A_CHECKPOINT_013.md), [Gate F
 checkpoint 004](VERITAS_MISSION2_GATE_F_CHECKPOINT_004.md), [operations](VERITAS_MISSION2_OPERATIONS.md),
 and [research inventory 016](VERITAS_MISSION2_RESEARCH_INVENTORY_016.json).
+
+## Gate F checkpoint addendum — 2026-10-15, 12:15 UTC
+
+The scheduled Director admitted and completed a 17-event Arena qualification
+for scan `scan-20261015T120127Z-af0847c75aeb` using committed source revision
+`e78a95e2`. Finding `veritas-qualification-v1-4158e04dd04c8f4f` reports no
+positive states at any of five gates across 613 quality-valid pairs. A 12:16
+no-launch poll verified the finding and source summary, set the Director to
+`CURRENT`, and admitted no second job.
+
+The 12:10 finalized-source replay advanced to 1,438/3,313 cataloged segments,
+with 1,875 pending / 504,775,332 bytes and no campaign-window frames. Its
+sealed summary digest is
+`12ae77298aaca26f5b402ac9548983a6b34e4e0d7414d1d1a1b8ac858800bf0d`.
+Mission 2 remains active. Details are in [Gate A checkpoint
+014](VERITAS_MISSION2_GATE_A_CHECKPOINT_014.md), [Gate F checkpoint
+005](VERITAS_MISSION2_GATE_F_CHECKPOINT_005.md), [operations](VERITAS_MISSION2_OPERATIONS.md),
+and [research inventory 017](VERITAS_MISSION2_RESEARCH_INVENTORY_017.json).
+
+## Gate G checkpoint addendum — Director history
+
+The Veritas research interface now exposes a bounded history of durable
+Research Director events, including failures, no-retry decisions, later
+completion, and experiment/dataset lineage. The Arena API verifies each
+event's filename digest and Director identity, inspects at most 128 event
+files per Director, and returns at most eight events. The live activity
+projection returned eight verified events and zero invalid artifacts. The
+11:15 source-drift failure remains visible next to the 11:45 stable-revision
+qualification; this improves auditability but does not alter economics or
+readiness.
+
+The Arena API suite passed 16 tests; the frontend suite passed 29. Strict
+Mypy, Ruff, typecheck, lint, Prettier, production build, and the Veritas
+Playwright workflow passed. The build retains its existing chunk-size
+advisory. Details are in [Gate G checkpoint
+004](VERITAS_MISSION2_GATE_G_CHECKPOINT_004.md), [engineering](VERITAS_MISSION2_ENGINEERING.md),
+and [research inventory 017](VERITAS_MISSION2_RESEARCH_INVENTORY_017.json).
+
+Mission 2 remains active. Current market evidence still contains no qualifying
+positive gross candidate. Multi-day independent coverage, source replay
+through the frozen campaign window, more verified multi-outcome sets, and a
+meaningful strategy comparison remain open.

@@ -79,6 +79,43 @@ it('labels measured evidence and keeps synthetic execution separate from actual 
                       unique_market_ids: 186,
                       positive_states_by_gate: { unchanged_top_ask_gross_sign: 0 },
                     },
+                    recent_events: [
+                      {
+                        recorded_at_utc: '2026-10-15T11:20:00+00:00',
+                        state: 'FAILED',
+                        stage: 'Qualification stopped before event processing',
+                        note: 'Source revision changed while the job was queued',
+                        scan_id: 'scan-20261015T110153Z-93de340dd5ce',
+                        job_id: 'job-source-drift',
+                        finding_id: null,
+                        experiment_run_id: null,
+                        experiment_sha256: null,
+                        dataset_sha256: null,
+                        source_revision_sha256: 'e'.repeat(64),
+                        strategy_readiness: 'NOT_READY_NO_QUALIFIED_GROSS_CANDIDATE',
+                        model_readiness: 'NOT_READY_NO_PUBLIC_OUTCOME_LABELS',
+                        positive_states_by_gate: null,
+                        recommendation: 'Wait for a new finalized scan.',
+                      },
+                      {
+                        recorded_at_utc: '2026-10-15T11:46:11+00:00',
+                        state: 'QUALIFICATION_COMPLETED',
+                        stage: 'Published reproducible economic qualification',
+                        note: 'Qualification completed on the committed revision',
+                        scan_id: 'scan-20261015T113126Z-bf24f3a0706b',
+                        job_id: 'job-stable-revision',
+                        finding_id: 'veritas-qualification-v1-0e39c79c039a76cf',
+                        experiment_run_id: 'VERITAS-M2-ECO-QUAL-001-RUN-b3fc19f69680',
+                        experiment_sha256: 'f'.repeat(64),
+                        dataset_sha256: 'a'.repeat(64),
+                        source_revision_sha256: 'b'.repeat(64),
+                        strategy_readiness: 'NOT_READY_NO_QUALIFIED_GROSS_CANDIDATE',
+                        model_readiness: 'NOT_READY_NO_PUBLIC_OUTCOME_LABELS',
+                        positive_states_by_gate: { unchanged_top_ask_gross_sign: 0 },
+                        recommendation: 'Keep no-trade; continue bounded collection.',
+                      },
+                    ],
+                    recent_events_truncated: true,
                   },
                 ],
                 active_schedule_count: 1,
@@ -391,8 +428,15 @@ it('labels measured evidence and keeps synthetic execution separate from actual 
   expect(
     await screen.findByText(/Finalized source: catching up finalized source/),
   ).toBeInTheDocument();
-  expect(await screen.findByText(/Keep no-trade; continue bounded collection/)).toBeInTheDocument();
+  expect(
+    (await screen.findAllByText(/Keep no-trade; continue bounded collection/)).length,
+  ).toBeGreaterThan(0);
   expect(screen.getByText(/469 quality-valid pairs across 186 markets/)).toBeInTheDocument();
+  fireEvent.click(screen.getByText(/Recent Director history/));
+  expect(screen.getByText(/Source revision changed while the job was queued/)).toBeInTheDocument();
+  expect(screen.getByText(/VERITAS-M2-ECO-QUAL-001-RUN-b3fc19f69680/)).toBeInTheDocument();
+  expect(screen.getByText(/Source revision bbbbbbbbbbbb/)).toBeInTheDocument();
+  expect(screen.getByText(/durable Arena archive retains the full stream/)).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Run bounded qualification in Arena' })).toBeEnabled();
   fireEvent.click(screen.getByText(/Inspect latest per-market selection probabilities/));
   expect(screen.getByText(/Inclusion probability 0.25/)).toBeInTheDocument();

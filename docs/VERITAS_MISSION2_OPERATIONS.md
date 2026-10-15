@@ -1,30 +1,31 @@
 # Veritas Mission 2 Operations
 
-**Runtime checked:** 2026-10-15 11:48 UTC
+**Runtime checked:** 2026-10-15 12:16 UTC
 **Services:** `midas-veritas-observatory.service`, `midas-veritas-source-analysis.service`, `midas-veritas-research-director.service`
 **Timers:** `midas-veritas-observatory.timer`, `midas-veritas-source-analysis.timer`, `midas-veritas-research-director.timer`
 
 ## Current state
 
-- All three Veritas user timers are active. The latest scheduled observer scan was at 11:31 UTC; the next observer, source-analysis, and Director runs are 12:01:17, 12:10:14, and 12:15:15 UTC. The 11:40 source-analysis recurrence and 11:45 Director cycle completed successfully. The oneshot services are inactive between runs as expected.
-- Latest scan: `scan-20261015T113126Z-bf24f3a0706b`, captured at 11:31:26 UTC and finalized under v4. The analyzer has 16 processed snapshots and no pending snapshots.
-- Cumulative panel: 640 selected observations, 578 request/receipt-valid pairs, 62 invalid pairs, and 256 distinct market IDs. The previous reported-age/skew gate accepts 140/640. The paired increase is 438 observations (+68.44 percentage points).
-- The latest bounded discovery union contains 300 IDs: 164 supported same-condition V1 binary pairs and 136 explicit exclusions. The selected panel has 40 markets, 37 rotating and three available frozen controls; unavailable frozen IDs were reported without outcome replacement.
-- Runtime data uses 14,347,125 bytes under `data/veritas-observatory/`, below the 1 GiB hard cap. Snapshots and derived runtime artifacts are ignored by Git; versioned docs record identities and hashes. Do not prune or raise the cap without a separate retention review.
-- The 11:31 v2 scan used seven HTTP attempts (six Gamma frames and one CLOB batch) out of a 14-attempt maximum. Its observer service used 596 ms CPU and completed in 15 seconds. The frozen control file hash remains `9578217e20dcc7d1c65fa110f0ed7c689b55483b61191f1aae8d30c9b7300d9a`.
-- The finalized Reality source analyzer remains `catching_up_finalized_source`: 1,316 of 3,254 cataloged segments processed, 1,938 segments (524,228,737 bytes) pending through ordinal 151,428. The processed prefix has no campaign-window frames. The 11:40 UTC run processed 128 segments / 27,931,474 bytes in 149 seconds, using 7.443 CPU seconds and 116.0 MiB peak memory. Its sealed summary digest is `6f959acc6978fc2e4eb2fbf7e07ee41112a286d0e844daa25d31f43c515fc9cf`. See [research inventory 016](VERITAS_MISSION2_RESEARCH_INVENTORY_016.json).
+- All three Veritas user timers are active. The 12:10 source-analysis recurrence and 12:15 Director cycle completed successfully; a 12:16 no-launch reconciliation verified the Director result. The next observer, source-analysis, and Director runs are 12:30:48, 12:40:38, and 12:45:12 UTC. The oneshot services are inactive between runs as expected.
+- Latest scan: `scan-20261015T120127Z-af0847c75aeb`, captured at 12:01:27 UTC and finalized under v4. The analyzer has 17 processed snapshots and no pending snapshots. The Director qualified this scan and is `CURRENT`.
+- Cumulative panel: 680 selected observations, 613 request/receipt-valid pairs, 67 invalid pairs, and 284 distinct market IDs. The previous reported-age/skew gate accepts 148/680. The paired increase is 465 observations (+68.38 percentage points).
+- The latest bounded discovery union contains 300 IDs: 200 supported same-condition V1 binary pairs and 100 explicit exclusions (82 augmented NegRisk records and 18 unsupported outcome relationships). The selected panel has 40 markets, 37 rotating and three available frozen controls; unavailable frozen IDs were reported without outcome replacement.
+- Runtime data uses 15,306,621 bytes under `data/veritas-observatory/`, below the 1 GiB hard cap. Snapshots and derived runtime artifacts are ignored by Git; versioned docs record identities and hashes. Do not prune or raise the cap without a separate retention review.
+- The 12:01 v2 scan used seven HTTP attempts (six Gamma frames and one CLOB batch) out of a 14-attempt maximum. Its observer service used 634 ms CPU and completed in 16 seconds. The frozen control file hash remains `9578217e20dcc7d1c65fa110f0ed7c689b55483b61191f1aae8d30c9b7300d9a`.
+- The finalized Reality source analyzer remains `catching_up_finalized_source`: 1,438 of 3,313 cataloged segments processed, 1,875 segments (504,775,332 bytes) pending through ordinal 166,686. The processed prefix has no campaign-window frames. The 12:10 UTC run processed 122 segments / 33,266,456 bytes in 159 seconds, using 7.970 CPU seconds and 136.4 MiB peak memory. Its sealed summary digest is `12ae77298aaca26f5b402ac9548983a6b34e4e0d7414d1d1a1b8ac858800bf0d`. See [research inventory 017](VERITAS_MISSION2_RESEARCH_INVENTORY_017.json).
 - The protected Reality user services `midas-reality.service`, `midas-reality-shadow.service`, and `midas-reality-api.service` were active during the read-only check. The separate Reality worktree is clean. No service was restarted or modified by Veritas.
 
-The latest bounded Arena qualification, `job-b7c66151c4c34b3ca60cd376`,
-completed all 16 finalized v4 events and persisted finding
-`veritas-qualification-v1-0e39c79c039a76cf`. It read 293,197 source bytes and
+The latest bounded Arena qualification is `job-97c08fcee4f0407b88c06ca1`.
+It completed all 17 finalized v4 events and persisted finding
+`veritas-qualification-v1-4158e04dd04c8f4f` over 311,541 source bytes. It
 found zero positive states at each of five qualification gates. The job's
-source hash matched the committed revision. A no-launch reconciliation verified
-the finding and set the Director state to `CURRENT`; it admitted no job. There
-are no active or queued jobs, and the activity projection reports zero invalid
-artifacts. The earlier 11:15 UTC job for scan 110153 remains failed at 0/1 on
-source revision drift; it is preserved and was not retried. See [Gate F
-checkpoint 003](VERITAS_MISSION2_GATE_F_CHECKPOINT_003.md) and [checkpoint
+source hash matched the committed revision. A 12:16 no-launch reconciliation
+verified the finding and set the Director state to `CURRENT`; it admitted no
+additional job. The earlier 11:15 UTC job for scan 110153 remains failed at
+0/1 on source revision drift; it is preserved and was not retried. The live
+activity projection reports zero active or queued jobs and zero invalid
+artifacts. See [Gate F checkpoint
+005](VERITAS_MISSION2_GATE_F_CHECKPOINT_005.md) and prior [checkpoint
 004](VERITAS_MISSION2_GATE_F_CHECKPOINT_004.md).
 
 At 11:30 CEST, an observer run failed with `Invalid frozen control cohort`
@@ -32,6 +33,20 @@ because the deployed scanner version rejected the file's legacy version tag.
 The frozen eight-ID file remains unchanged with the SHA256 above; current code
 accepts both the current and legacy tags. The 12:01 and 12:31 CEST scheduled
 scans succeeded. No manual scan was run to recover.
+
+## Research Director history projection
+
+The `/api/arena/research-activity` projection now includes a digest-checked
+history of each displayed Director's recent events. It scans at most 128
+event files per Director, reads at most 64 KiB per event, and returns up to
+eight records. The API verifies each event filename against the canonical
+payload digest and confirms the Director identity before projecting selected
+fields. It does not alter Director manifests or events. The live projection
+returned eight verified entries from the Veritas Director's 19-file event
+archive, marked the view truncated, and reported zero invalid artifacts. The
+full append-only event directory remains the durable record; the UI and API
+history are bounded views. See [Gate G checkpoint
+004](VERITAS_MISSION2_GATE_G_CHECKPOINT_004.md).
 
 ## Resource and network bounds
 
@@ -67,7 +82,7 @@ observer timer. Its latest sample failed the source-age/skew gate and produced
 negative gross edges for both baskets. See [Gate A checkpoint
 012](VERITAS_MISSION2_GATE_A_CHECKPOINT_012.md).
 
-The first v4 pass reindexed ten already finalized immutable snapshots. The 08:31, 09:00, 10:01, and 10:31 UTC scheduled scans were captured and classified under v4 prospectively. The latest 16-snapshot economic qualification remains zero-positive. Protocol 002 documents the paired series; it does not alter a Reality campaign or waive the original follow-up design's gates. The latest source-replay progress and sealed digests are recorded in [research inventory 016](VERITAS_MISSION2_RESEARCH_INVENTORY_016.json).
+The first v4 pass reindexed ten already finalized immutable snapshots. The 08:31, 09:00, 10:01, and 10:31 UTC scheduled scans were captured and classified under v4 prospectively. The latest 17-snapshot economic qualification remains zero-positive. Protocol 002 documents the paired series; it does not alter a Reality campaign or waive the original follow-up design's gates. The latest source-replay progress and sealed digests are recorded in [research inventory 017](VERITAS_MISSION2_RESEARCH_INVENTORY_017.json).
 
 The independent Reality source analyzer validates the frozen campaign identity and reads only cataloged finalized `.seg` inputs. It never opens `.open` files. Per run it is limited to 128 segments or 32 MiB of new segment data; each segment is capped at 16 MiB. Catalog scans are bounded. Source state and events retain campaign/code/prefix digests and stop on identity drift. Resource bounds remain CPU 5%, memory 256 MiB, low priority, ten-minute timeout, and Veritas-only writes.
 

@@ -357,6 +357,24 @@ type ArenaResearchActivity = {
       unique_market_ids: number | null;
       positive_states_by_gate: Record<string, number> | null;
     } | null;
+    recent_events?: Array<{
+      recorded_at_utc: string | null;
+      state: string | null;
+      stage: string | null;
+      note: string | null;
+      scan_id: string | null;
+      job_id: string | null;
+      finding_id: string | null;
+      experiment_run_id: string | null;
+      experiment_sha256: string | null;
+      dataset_sha256: string | null;
+      source_revision_sha256: string | null;
+      strategy_readiness: string | null;
+      model_readiness: string | null;
+      positive_states_by_gate: Record<string, number> | null;
+      recommendation: string | null;
+    }>;
+    recent_events_truncated?: boolean;
   }>;
   active_schedule_count: number;
   schedules: Array<{
@@ -1411,6 +1429,67 @@ export function Veritas() {
                       )}
                       {director.recommendation && <p>{director.recommendation}</p>}
                       {director.research_question && <p>{director.research_question}</p>}
+                      {(director.recent_events?.length ?? 0) > 0 && (
+                        <details className="ve-director-history">
+                          <summary>
+                            Recent Director history ({director.recent_events?.length ?? 0}
+                            {director.recent_events_truncated ? '+' : ''} events)
+                          </summary>
+                          <div className="ve-director-history-list">
+                            {director.recent_events?.map((event, index) => (
+                              <div
+                                className="ve-director-event"
+                                key={`${event.recorded_at_utc ?? 'event'}-${event.state ?? index}`}
+                              >
+                                <div>
+                                  <span>{event.stage ?? 'Research event'}</span>
+                                  <b>{event.state ?? 'unknown'}</b>
+                                </div>
+                                <small>
+                                  {event.recorded_at_utc ?? 'Time unavailable'}
+                                  {event.scan_id ? ` · ${event.scan_id}` : ''}
+                                  {event.job_id ? ` · ${event.job_id}` : ''}
+                                  {event.finding_id ? ` · ${event.finding_id}` : ''}
+                                </small>
+                                {event.note && <p>{event.note}</p>}
+                                {event.experiment_run_id && (
+                                  <p>
+                                    Experiment {event.experiment_run_id}
+                                    {event.experiment_sha256
+                                      ? ` · result ${event.experiment_sha256.slice(0, 12)}`
+                                      : ''}
+                                    {event.dataset_sha256
+                                      ? ` · dataset ${event.dataset_sha256.slice(0, 12)}`
+                                      : ''}
+                                  </p>
+                                )}
+                                {event.source_revision_sha256 && (
+                                  <p>Source revision {event.source_revision_sha256.slice(0, 12)}</p>
+                                )}
+                                {event.positive_states_by_gate && (
+                                  <p>
+                                    Positive states by gate:{' '}
+                                    {Object.entries(event.positive_states_by_gate)
+                                      .map(
+                                        ([gate, count]) =>
+                                          `${gate.replaceAll('_', ' ')} ${fmt(count)}`,
+                                      )
+                                      .join(' · ')}
+                                  </p>
+                                )}
+                                {event.recommendation && <p>{event.recommendation}</p>}
+                              </div>
+                            ))}
+                          </div>
+                          {director.recent_events_truncated && (
+                            <p className="ve-observatory-note">
+                              The view shows up to eight hash-verified events and scans at most 128
+                              event files per Director; the durable Arena archive retains the full
+                              stream.
+                            </p>
+                          )}
+                        </details>
+                      )}
                     </article>
                   ))}
                   {arenaSchedules.slice(0, 3).map((schedule) => (

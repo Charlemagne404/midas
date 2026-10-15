@@ -1,23 +1,36 @@
 # Veritas Mission 2 Engineering Checkpoint
 
-## Latest operational update — Gate F checkpoint 004
+## Latest dashboard update — Gate G checkpoint 004
 
-The 11:45 Director cycle completed a new 16-event qualification for the 11:31
+The read-only Arena activity API now returns a bounded, filename-digest-
+verified history of recent Research Director events. The Veritas page exposes
+scan/job/finding and experiment/dataset lineage, gate counts, and preserved
+failure/recovery notes beside current strategy/model readiness. The live
+projection returned eight verified events from the 19-file archive and zero
+invalid artifacts; the source-drift failure and subsequent stable-revision
+qualification are both visible. Backend, frontend, type, lint, format, build,
+and browser checks passed. See [Gate G checkpoint 004](VERITAS_MISSION2_GATE_G_CHECKPOINT_004.md).
+
+## Latest operational update — Gate F checkpoint 005
+
+The 12:15 Director cycle completed a new 17-event qualification for the 12:01
 scan on committed source revision `e78a95e2`. Its five opportunity gates
-remain zero-positive. A no-launch poll verified the finding and admitted no
-new job. The 11:40 finalized-source replay advanced to 1,316/3,254 cataloged
-segments, with no campaign-window frames. See [Gate F checkpoint
-004](VERITAS_MISSION2_GATE_F_CHECKPOINT_004.md), [operations](VERITAS_MISSION2_OPERATIONS.md),
-and [research inventory 016](VERITAS_MISSION2_RESEARCH_INVENTORY_016.json).
+remain zero-positive. A 12:16 no-launch poll verified the finding and admitted
+no second job. The 12:10 finalized-source replay advanced to 1,438/3,313
+cataloged segments, with no campaign-window frames. See [Gate F checkpoint
+005](VERITAS_MISSION2_GATE_F_CHECKPOINT_005.md), [operations](VERITAS_MISSION2_OPERATIONS.md),
+and [research inventory 017](VERITAS_MISSION2_RESEARCH_INVENTORY_017.json).
 
-## Latest discovery status — Gate A checkpoint 013
+## Latest discovery status — Gate A checkpoint 014
 
-The 11:31 observer scan found 164 supported binary markets among 300 bounded
-IDs, with 136 explicit exclusions. Thirty-five of 40 selected pairs were
-quality-valid. The 16-snapshot panel has 578 valid pairs across 256 market IDs
-and no positive top, depth, minimum-size, or fee-qualified states. See [Gate A
-checkpoint 013](VERITAS_MISSION2_GATE_A_CHECKPOINT_013.md), [research inventory
-016](VERITAS_MISSION2_RESEARCH_INVENTORY_016.json), and
+The 12:01 observer scan found 200 supported binary markets among 300 bounded
+IDs, with 100 explicit exclusions. Thirty-five of 40 selected pairs were
+quality-valid. The 17-snapshot panel has 613 valid pairs across 284 market IDs
+and no positive top, depth, minimum-size, or fee-qualified states. The
+Director qualification and source-replay recurrences have both completed for
+this scan. See [Gate A checkpoint
+014](VERITAS_MISSION2_GATE_A_CHECKPOINT_014.md), [research inventory
+017](VERITAS_MISSION2_RESEARCH_INVENTORY_017.json), and
 [operations](VERITAS_MISSION2_OPERATIONS.md).
 
 ## Previous operational update — Gate F checkpoint 003

@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from midas.arena.artifacts import atomic_json
 
-from apps.api.arena import inspect_director, router
+from apps.api.arena import inspect_director, research_activity, router
 
 
 @pytest.mark.parametrize(
@@ -253,6 +253,75 @@ def test_research_activity_returns_bounded_job_director_schedule_and_alert_statu
     assert activity["schedules"][0]["steps"][0]["name"] == "replay"
     assert activity["alerts"][0]["reason"] == "Source changed before admission"
     assert activity["limits"]["maximum_jobs_read"] == 25
+
+
+def test_research_activity_returns_only_digest_named_director_history(tmp_path):
+    import hashlib
+    import json
+
+    director_root = tmp_path / "directors/director-a"
+    atomic_json(
+        director_root / "manifest.json",
+        {"director_id": "director-a", "state": "CURRENT"},
+    )
+    event = {
+        "director_id": "director-a",
+        "state": "QUALIFICATION_COMPLETED",
+        "stage": "Published reproducible economic qualification",
+        "note": "Completed against the committed source revision",
+        "scan_id": "scan-20261015T113126Z-bf24f3a0706b",
+        "job_id": "job-a",
+        "finding_id": "veritas-qualification-v1-0123456789abcdef",
+        "experiment_run_id": "VERITAS-M2-ECO-QUAL-001-RUN-example",
+        "experiment_sha256": "a" * 64,
+        "dataset_sha256": "b" * 64,
+        "source_revision_sha256": "c" * 64,
+        "strategy_readiness": "NOT_READY_NO_QUALIFIED_GROSS_CANDIDATE",
+        "model_readiness": "NOT_READY_NO_PUBLIC_OUTCOME_LABELS",
+        "positive_states_by_gate": {"top_ask": 0, "full_depth": 0},
+        "recommendation": "Keep no-trade and continue bounded collection.",
+        "recorded_at_utc": "2026-10-15T11:46:11+00:00",
+    }
+    identity = hashlib.sha256(
+        json.dumps(
+            {key: value for key, value in event.items() if key != "recorded_at_utc"},
+            sort_keys=True,
+            separators=(",", ":"),
+            ensure_ascii=False,
+        ).encode()
+    ).hexdigest()
+    atomic_json(director_root / "events" / f"event-{identity}.json", event)
+    atomic_json(
+        director_root / "events" / f"event-{'0' * 64}.json",
+        {**event, "note": "Tampered payload"},
+    )
+
+    activity = research_activity(tmp_path)
+
+    assert activity["directors"][0]["recent_events"] == [
+        {
+            "recorded_at_utc": "2026-10-15T11:46:11+00:00",
+            "state": "QUALIFICATION_COMPLETED",
+            "stage": "Published reproducible economic qualification",
+            "note": "Completed against the committed source revision",
+            "scan_id": "scan-20261015T113126Z-bf24f3a0706b",
+            "job_id": "job-a",
+            "finding_id": "veritas-qualification-v1-0123456789abcdef",
+            "experiment_run_id": "VERITAS-M2-ECO-QUAL-001-RUN-example",
+            "experiment_sha256": "a" * 64,
+            "dataset_sha256": "b" * 64,
+            "source_revision_sha256": "c" * 64,
+            "strategy_readiness": "NOT_READY_NO_QUALIFIED_GROSS_CANDIDATE",
+            "model_readiness": "NOT_READY_NO_PUBLIC_OUTCOME_LABELS",
+            "positive_states_by_gate": {"top_ask": 0, "full_depth": 0},
+            "recommendation": "Keep no-trade and continue bounded collection.",
+        }
+    ]
+    assert activity["invalid_artifact_count"] == 1
+    assert activity["directors"][0]["recent_events_truncated"] is True
+    assert activity["limits"]["maximum_director_event_files_scanned"] == 128
+    assert activity["limits"]["maximum_director_events_per_director"] == 8
+    assert activity["limits"]["maximum_director_event_bytes"] == 64 * 1024
 
 
 def test_veritas_qualification_admission_requires_finalized_v2_scan_and_is_idempotent(

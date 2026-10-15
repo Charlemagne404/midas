@@ -1,6 +1,74 @@
 import { expect, test } from '@playwright/test';
 
 test('shows the bounded discovery cohort and links its finalized evidence', async ({ page }) => {
+  await page.route('**/api/arena/research-activity', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        status: 'available',
+        state_source: 'persisted Arena manifests',
+        active_job_count: 0,
+        queued_job_count: 0,
+        jobs: [],
+        active_director_count: 0,
+        directors: [
+          {
+            director_id: 'director-veritas-opportunity-v1',
+            state: 'CURRENT',
+            research_question: 'Do new finalized public snapshots contain candidates?',
+            current_stage: 'Evidence is qualified',
+            source_scan_id: 'scan-20261015T113126Z-bf24f3a0706b',
+            strategy_readiness: 'NOT_READY_NO_QUALIFIED_GROSS_CANDIDATE',
+            model_readiness: 'NOT_READY_NO_PUBLIC_OUTCOME_LABELS',
+            recommendation: 'Keep no-trade; continue bounded collection.',
+            latest_finding: null,
+            recent_events: [
+              {
+                recorded_at_utc: '2026-10-15T11:20:56+00:00',
+                state: 'FAILED',
+                stage: 'Reviewing a failed qualification',
+                note: 'The admitted job failed; automatic retry is disabled for this scan',
+                scan_id: 'scan-20261015T110153Z-93de340dd5ce',
+                job_id: 'job-source-drift',
+                finding_id: null,
+                experiment_run_id: null,
+                experiment_sha256: null,
+                dataset_sha256: null,
+                source_revision_sha256: 'a'.repeat(64),
+                strategy_readiness: 'NOT_READY_NO_QUALIFIED_GROSS_CANDIDATE',
+                model_readiness: 'NOT_READY_NO_PUBLIC_OUTCOME_LABELS',
+                positive_states_by_gate: null,
+                recommendation: 'Wait for a new scan and stable source revision.',
+              },
+              {
+                recorded_at_utc: '2026-10-15T11:46:11+00:00',
+                state: 'QUALIFICATION_COMPLETED',
+                stage: 'Published reproducible economic qualification',
+                note: 'Qualification completed on the committed revision',
+                scan_id: 'scan-20261015T113126Z-bf24f3a0706b',
+                job_id: 'job-stable-revision',
+                finding_id: 'veritas-qualification-v1-0e39c79c039a76cf',
+                experiment_run_id: 'VERITAS-M2-ECO-QUAL-001-RUN-b3fc19f69680',
+                experiment_sha256: 'b'.repeat(64),
+                dataset_sha256: 'c'.repeat(64),
+                source_revision_sha256: 'd'.repeat(64),
+                strategy_readiness: 'NOT_READY_NO_QUALIFIED_GROSS_CANDIDATE',
+                model_readiness: 'NOT_READY_NO_PUBLIC_OUTCOME_LABELS',
+                positive_states_by_gate: { unchanged_top_ask_gross_sign: 0 },
+                recommendation: 'Keep no-trade; continue bounded collection.',
+              },
+            ],
+            recent_events_truncated: false,
+          },
+        ],
+        active_schedule_count: 0,
+        schedules: [],
+        alerts: [],
+        invalid_artifact_count: 0,
+      }),
+    }),
+  );
   await page.goto('/');
   await page.getByRole('button', { name: 'Veritas', exact: true }).click();
 
@@ -10,6 +78,10 @@ test('shows the bounded discovery cohort and links its finalized evidence', asyn
   await expect(page.getByRole('heading', { name: 'Market discovery and coverage' })).toBeVisible();
   await expect(page.getByText('stratified-gamma-page-rotation-v2')).toBeVisible();
   await expect(page.getByText(/40 target · 50 markets max/)).toBeVisible();
+  await page.getByText(/Recent Director history/).click();
+  await expect(page.getByText(/automatic retry is disabled for this scan/)).toBeVisible();
+  await expect(page.getByText(/VERITAS-M2-ECO-QUAL-001-RUN-b3fc19f69680/)).toBeVisible();
+  await expect(page.getByText(/veritas-qualification-v1-0e39c79c039a76cf/)).toBeVisible();
   await expect(page.getByLabel('Current collector limits')).toBeVisible();
   await expect(
     page.getByRole('button', { name: 'Run bounded qualification in Arena' }),
