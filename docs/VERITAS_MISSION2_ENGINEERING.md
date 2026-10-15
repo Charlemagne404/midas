@@ -1,6 +1,6 @@
 # Veritas Mission 2 Engineering Checkpoint
 
-## Latest operational and discovery update — Gate A checkpoint 021 / Gate F checkpoint 011
+## Earlier operational and discovery update — Gate A checkpoint 021 / Gate F checkpoint 011
 
 The 15:00 scheduled scan is snapshot 23. The cumulative panel has 920
 selected observations, 825 request/receipt-valid pairs, 95 invalid pairs, and
@@ -590,3 +590,40 @@ artifact was rewritten. The next scheduled Director cycle will retry
 reconciliation and consider the newest scan. Details and the test evidence are
 in [Gate F checkpoint 016](VERITAS_MISSION2_GATE_F_CHECKPOINT_016.md) and
 [inventory 031](VERITAS_MISSION2_RESEARCH_INVENTORY_031.json).
+
+## Gate C implementation in operation — coverage pilot scan 1
+
+Commit `de3f764` added a prospective, read-only coverage pilot to the
+scheduled observer. At 19:00:55 UTC, scan
+`scan-20261015T190055Z-7799523b9d87` enrolled 40 selected pair slots; 32
+passed the existing v4 quality checks and eight were invalid because of empty
+ask sides. The scan used the existing seven public HTTP attempts. No manual
+service invocation was used. The 24-hour window ends at 19:00:55 UTC on
+2026-10-16, with a maximum of 48 scans and no early stopping or backfill.
+
+The first descriptive split was 31/37 valid rotating pairs and 1/3 available
+stable controls. This is not randomized and supports no causal inference. The
+same scan had zero-positive top-gross, full-depth, minimum-notional, and both
+fee sensitivity gates. The pilot implementation and plan digests are pinned;
+the source files covered by the pilot hash should remain stable while it is
+running. The fixed protocol, event lineage, limitations, and next work are in
+[Gate C checkpoint 002](VERITAS_MISSION2_GATE_C_CHECKPOINT_002.md) and
+[inventory 036](VERITAS_MISSION2_RESEARCH_INVENTORY_036.json).
+
+## Gate F scheduled cycle — scan 31 and finalized-source progress
+
+The scheduled 19:10 UTC source recurrence processed 113 finalized segments /
+33,445,857 bytes and advanced the prefix to 3,132/4,140 segments. The
+remaining suffix is 1,008 segments / 298,406,538 bytes. The campaign window
+now contains 192,072 frame records and 169,253 quality-valid states across 43
+markets, with zero positive top-ask or full-depth states. The bounded batch
+used 13.619 CPU seconds, 146.7 MiB peak memory, and no swap.
+
+The 19:15 Director cycle admitted scan 31 and Arena completed all 31 events in
+1.914 seconds. Its v3 finding has 1,102 quality-valid pairs across 575
+markets and zero positive states at all five economic gates. Candidate
+provenance/replay is complete for the empty candidate set; the positive
+candidate path remains synthetically tested only. The Arena job is complete,
+but the Director manifest still projects it as queued until the next scheduled
+cycle. See [Gate F checkpoint 017](VERITAS_MISSION2_GATE_F_CHECKPOINT_017.md)
+and [inventory 036](VERITAS_MISSION2_RESEARCH_INVENTORY_036.json).

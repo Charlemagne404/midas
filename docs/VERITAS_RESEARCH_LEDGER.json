@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-15T18:50:18Z",
+  "updated_at_utc": "2026-10-15T19:01:56.758523Z",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -3710,6 +3710,94 @@
         "Fee sensitivity is hypothetical and does not establish order arrival, persistence, or fills."
       ],
       "decision": "Keep no-trade. Allow the next scheduled Director cycle to reconcile the completed job, continue bounded observation, and defer model or execution-policy comparison until a genuine replayable gross candidate exists.",
+      "status": "continue"
+    },
+    {
+      "hypothesis_id": "VERITAS-H070",
+      "title": "Can rotating discovery sampling improve measured quality-valid coverage under the current public-read budget?",
+      "mechanism": "Compare valid paired-book yield, distinct market coverage, exclusions, and missed scan sequences across the existing frozen stable-control and stratified rotating roles within each scheduled scan.",
+      "experiment_id": "VERITAS-M2-COVERAGE-PILOT-001",
+      "dataset_id": "cd9adf78a361e87a0a1e7ad8a8f09df7087ab874ebbe8a6becf1d33d845b6ce4",
+      "success_metric": "Complete a fixed 24-hour or 48-scan evidence record with per-role and per-stratum yield, source lineage, missing-scan diagnostics, and a descriptive comparison; do not require positive economic candidates.",
+      "result": {
+        "status": "running_first_scan_completed",
+        "protocol_version": "veritas-coverage-pilot-v1",
+        "plan_sha256": "d35f25ef84037f3e9cabf4343e9a01db381b73e8fa6cae0fd0b5fc6e07e279ba",
+        "implementation_sha256": "2cf59cebbb72c0e2990ebfe5c40e53b967e867fff5321f0d1e8c4e9a9207284e",
+        "source_commit": "de3f764",
+        "pilot_status": "running",
+        "started_at_utc": "2026-10-15T19:00:55.062293+00:00",
+        "ends_at_utc": "2026-10-16T19:00:55.062293+00:00",
+        "completed_scans": 1,
+        "selected_market_pair_slots": 40,
+        "quality_valid_pairs": 32,
+        "invalid_pairs": 8,
+        "quality_valid_yield": 0.8,
+        "invalid_reasons": {
+          "no_empty_ask_side": 8
+        },
+        "distinct_selected_market_ids": 40,
+        "by_cohort_role": {
+          "rotating_stratified": {
+            "invalid_reasons": {
+              "no_empty_ask_side": 6
+            },
+            "quality_valid": 31,
+            "quality_valid_yield": 0.8378378378378378,
+            "selected": 37
+          },
+          "stable_random_control": {
+            "invalid_reasons": {
+              "no_empty_ask_side": 2
+            },
+            "quality_valid": 1,
+            "quality_valid_yield": 0.3333333333333333,
+            "selected": 3
+          }
+        },
+        "by_selection_stratum": {
+          "higher_snapshot_change": {
+            "distinct_market_count": 1,
+            "quality_valid": 1,
+            "quality_valid_yield": 1.0,
+            "selected": 1
+          },
+          "lower_snapshot_change": {
+            "distinct_market_count": 16,
+            "quality_valid": 12,
+            "quality_valid_yield": 0.75,
+            "selected": 16
+          },
+          "unclassified": {
+            "distinct_market_count": 23,
+            "quality_valid": 19,
+            "quality_valid_yield": 0.8260869565217391,
+            "selected": 23
+          }
+        },
+        "scan_id": "scan-20261015T190055Z-7799523b9d87",
+        "captured_at_utc": "2026-10-15T19:00:55.062293+00:00",
+        "snapshot_evidence_sha256": "7799523b9d87861de0cf06cc33d7387fb24a87aef75d5991d1b0bdb860af8a57",
+        "snapshot_file_sha256": "11592446ba9f057de9c8fddab7295dd027d8a61fed4cc2106db14421a6315d3d",
+        "analysis_event_sha256": "c6e1707fee02857610b0828ad5853d71020db0737aa2f3ad1a8c285b011bb5ed",
+        "analysis_event_file_sha256": "9880323d91d17384fc9d55468676e9b688f75a95015eddccd86779015c42f5dc",
+        "pilot_event_sha256": "cd9adf78a361e87a0a1e7ad8a8f09df7087ab874ebbe8a6becf1d33d845b6ce4",
+        "pilot_summary_sha256": "1aca0353079032f25b8c8cf7aabb92e8f540b7d513262672424a6c46e5864859",
+        "discovery": 122,
+        "positive_top_gross_pairs": 0,
+        "authenticated_requests": false,
+        "orders_submitted": false,
+        "next_observer_scan_utc": "2026-10-15T19:30:19Z",
+        "role_comparison_interpretation": "same-scan control versus rotating yield is descriptive and non-randomized; no causal or venue-wide inference"
+      },
+      "limitations": [
+        "The bounded query-response union is selected and is not the venue-wide universe.",
+        "Stable controls were frozen from an earlier bounded discovery union and are not randomized against rotating markets.",
+        "The same-scan role comparison is descriptive; market composition and availability differ by role.",
+        "Intermittent public snapshots do not establish continuous coverage, quote lifetime, fills, or profitability.",
+        "Reported timestamp age is an update-recency diagnostic; the pilot does not claim venue sequence or upstream freshness."
+      ],
+      "decision": "Continue to the fixed 24-hour or 48-scan stop. Treat role yields as descriptive only; no economic or causal conclusion follows from one scan.",
       "status": "continue"
     }
   ],

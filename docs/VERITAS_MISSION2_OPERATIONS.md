@@ -280,3 +280,64 @@ request-to-receipt quality rule, a paired recovery of 794 (+68.45 percentage
 points). This is a yield comparison only; sequence, atomicity, and upstream
 queue age remain unverified. See the [current inventory
 033](VERITAS_MISSION2_RESEARCH_INVENTORY_033.json).
+
+## 2026-10-15 19:07 UTC — coverage pilot scan 1
+
+The scheduled 19:00:44 observer run completed scan
+`scan-20261015T190055Z-7799523b9d87` at 19:00:55 UTC, with 40 selected pairs,
+32 quality-valid pairs, eight empty-ask invalid pairs, and seven public HTTP
+attempts. It used the already scheduled discovery and books reads; the new
+pilot added no network calls. The v4 panel advanced to 31 snapshots / 1,240
+selected pairs / 1,102 quality-valid pairs / 138 invalid pairs / 575 distinct
+selected market IDs. No positive top-gross state was found.
+
+Pilot `VERITAS-M2-COVERAGE-PILOT-001` is running with one scan, 40 slots, 32
+valid pairs, zero missed scan sequences, and its fixed end at 2026-10-16
+19:00:55 UTC. The source/plan hashes and limitations are recorded in [Gate C
+checkpoint 002](VERITAS_MISSION2_GATE_C_CHECKPOINT_002.md).
+
+At this checkpoint the finalized-source analyzer remained at 3,019/4,081
+segments with 1,062 segments / 312,431,120 bytes pending. Its next timer was
+19:10:05 UTC. The Director's scan-30 qualification job had completed, while
+the manifest still showed it queued; its next cycle was 19:15:13 UTC. The
+observer's next timer was 19:30:19 UTC. There were no active Arena jobs and the
+three Veritas one-shot services were inactive between timers. No manual poll,
+retry, or service restart was run.
+
+The Reality recorder and frozen shadow were active. The recorder log retained
+a prior DNS resolution failure and degraded-state warning; the shadow service
+had one automatic restart after an integrity/continuity mismatch and was
+running at inspection. No protected campaign or recording was changed.
+Available RAM was 8.9 GiB, swap use 3.5/4 GiB, disk use 56% with 199 GiB free,
+and the Veritas observatory root was about 29.3 MB. Main Midas and Reality API
+and web services were active. See [inventory 036](VERITAS_MISSION2_RESEARCH_INVENTORY_036.json).
+
+## 2026-10-15 19:16 UTC — scheduled source and Director recurrences
+
+The 19:10:05 source-analysis timer ran to completion at 19:14:38 UTC with
+exit status 0 and zero restarts. It processed 113 finalized segments /
+33,445,857 bytes; cumulative progress is 3,132/4,140 segments and
+780,800,513 source bytes, with 1,008 segments / 298,406,538 bytes pending.
+The source summary now reports 192,072 campaign-window frame records,
+169,253 quality-valid states, 43 markets, and zero positive top-ask or
+full-depth states. The batch used 13.619 CPU seconds, peaked at 146.7 MiB,
+and used no swap. It reads finalized `.seg` inputs only.
+
+The 19:15:13 Director timer completed normally at 19:15:50 UTC and admitted
+scan `scan-20261015T190055Z-7799523b9d87`. Arena job
+`job-c2b34af59d624f2ea3081b54` completed 31/31 with exit status 0 in 1.914
+seconds. Finding `veritas-qualification-v1-b3744235647f846e` reports 1,102
+quality-valid pairs across 575 markets, zero positives at all five gates, and
+complete zero-candidate replay evidence. The job record is complete, while
+the Director manifest still projects `QUEUED`; its next scheduled cycle is
+19:45:26 UTC. No manual poll, retry, or restart occurred. See [Gate F
+checkpoint 017](VERITAS_MISSION2_GATE_F_CHECKPOINT_017.md).
+
+At 19:16 UTC the Veritas one-shot services were idle between timers; no Arena
+job was running. The next timers were the observer at 19:30:19 UTC, source
+analysis at 19:40:45 UTC, and Director at 19:45:26 UTC. Host load average was
+1.52 on six CPUs, RAM available 8.9 GiB, swap used 3.5/4 GiB, disk 56% used
+with 199 GiB free, and the observatory root was 29,467,543 bytes. The Reality
+recorder and shadow remained active; their previously recorded DNS/degraded
+warning and one shadow restart remain unresolved operational cautions. No
+protected campaign state was changed. See [inventory 036](VERITAS_MISSION2_RESEARCH_INVENTORY_036.json).

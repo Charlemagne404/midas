@@ -581,8 +581,44 @@ measurement-only study capped at 48 scheduled scans. It reuses the observer's
 existing bounded public reads and adds no market requests. It measures
 quality-valid paired-book yield per selected slot, with descriptive stable
 control/rotating comparisons, stratum coverage, missed scans, and immutable
-source lineage. The first scheduled scan after this source revision is
-committed starts enrollment; no pilot observations exist yet. The fixed
-window, no-backfill rule, resource cap, limitations, and verification are in
-[Gate C checkpoint 001](VERITAS_MISSION2_GATE_C_CHECKPOINT_001.md) and the
-[versioned pilot plan](VERITAS_MISSION2_COVERAGE_PILOT_001.json).
+source lineage. At registration, the first scheduled scan after the source revision was
+committed had not yet occurred. Its outcome is recorded below and in [Gate C
+checkpoint 002](VERITAS_MISSION2_GATE_C_CHECKPOINT_002.md). The fixed window,
+no-backfill rule, resource cap, and limitations are in [Gate C checkpoint
+001](VERITAS_MISSION2_GATE_C_CHECKPOINT_001.md) and the [versioned pilot
+plan](VERITAS_MISSION2_COVERAGE_PILOT_001.json).
+
+## Coverage pilot first scan — 2026-10-15 19:00 UTC
+
+The first post-commit scheduled scan started the fixed 24-hour
+`VERITAS-M2-COVERAGE-PILOT-001` window without additional public requests.
+Scan `scan-20261015T190055Z-7799523b9d87` selected 40 pairs, of which 32 were
+quality-valid (80%) and eight had an empty ask side. The current bounded union
+contained 300 IDs and 122 eligible pairs. The small same-scan comparison was
+31/37 valid rotating pairs versus 1/3 available stable controls; it is
+descriptive and non-causal. There were zero positive states at the top gross,
+full-depth, minimum-notional, single-match-fee, and fragmentation-safe-fee
+gates. The pilot remains active with one completed scan; its 24-hour stop is
+2026-10-16 19:00:55 UTC. See [Gate C checkpoint 002](VERITAS_MISSION2_GATE_C_CHECKPOINT_002.md)
+and [research inventory 036](VERITAS_MISSION2_RESEARCH_INVENTORY_036.json).
+
+## Scheduled source and Director cycle — 2026-10-15 19:15 UTC
+
+The 19:10 source-analysis recurrence completed normally at 19:14:38 UTC. It
+processed 113 finalized segments / 33,445,857 bytes, advancing the prefix to
+3,132/4,140 segments (780,800,513 processed source bytes; 1,008 segments /
+298,406,538 bytes pending). The cumulative campaign window now contains
+192,072 frame records and 169,253 quality-valid states across 43 markets;
+positive top-ask and full-depth counts remain zero. The batch used 13.619 CPU
+seconds, peaked at 146.7 MiB, and used no swap.
+
+The scheduled 19:15 Director cycle admitted and completed a scan-31 v3 Arena
+qualification, job `job-c2b34af59d624f2ea3081b54`. It processed all 31 scan
+events in 1.914 seconds and wrote finding
+`veritas-qualification-v1-b3744235647f846e`. The finding covers 1,240 selected
+pairs, 1,102 valid pairs, and 575 markets, with zero positives across all five
+gross/depth/minimum/fee gates and complete zero-candidate replay evidence. The
+job record is complete, but the manifest still reports it queued; the next
+scheduled Director cycle is the reconciliation point. No manual poll or retry
+was used. See [Gate F checkpoint 017](VERITAS_MISSION2_GATE_F_CHECKPOINT_017.md)
+and [research inventory 036](VERITAS_MISSION2_RESEARCH_INVENTORY_036.json).
