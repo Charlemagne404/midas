@@ -195,4 +195,8 @@ See [Gate A checkpoint 023](VERITAS_MISSION2_GATE_A_CHECKPOINT_023.md) and [Gate
 
 The 16:30 observer scan completed in 16 seconds after seven public HTTP attempts and used 0.632 CPU seconds. The 16:40:08 source replay processed 128 finalized segments / 33,042,875 bytes in 221 seconds and 11.037 CPU seconds, within its segment and byte bounds. The 16:45:04 Director cycle reconciled scan 25 and admitted scan 26; Arena completed the bounded 26-event qualification in 1.525 seconds. The Director manifest is due for reconciliation at 17:15:09 UTC. The three timers remain active; no manual poll or retry occurred.
 
+## 2026-10-15 17:15 UTC scheduled cycle
+
+The 17:01 observer scan completed with 40 selected markets, 33 quality-valid pairs, two identical duplicate discovery records, zero identity conflicts, and zero positive economic gates. It used seven public HTTP attempts. The 17:10:17 source replay processed 116 finalized segments / 33,217,726 bytes in 242 seconds, using 12.138 CPU seconds and 122.3 MiB peak memory. Progress is 2,661/3,903 finalized segments; 1,242 / 344,457,128 bytes remain pending. The 17:15:09 Director cycle admitted scan 27. Arena completed all 27 events in 1.619 seconds with zero-positive gates. The Director manifest projection remains queued pending its scheduled 17:45:25 UTC reconciliation. The three timers remain active; no manual poll or retry occurred.
+
 See [Gate A checkpoint 024](VERITAS_MISSION2_GATE_A_CHECKPOINT_024.md) and [Gate F checkpoint 014](VERITAS_MISSION2_GATE_F_CHECKPOINT_014.md) for artifact hashes, counters, and the current manifest projection.

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-15T16:48:38Z",
+  "updated_at_utc": "2026-10-15T17:16:00Z",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -3340,6 +3340,76 @@
         "Zero candidates in this sample do not establish that opportunities never occur.",
         "The qualification does not test order arrival, persistence, fills, or realized profitability."
       ]
+    },
+    {
+      "hypothesis_id": "VERITAS-H064",
+      "experiment_id": "VERITAS-M2-PROSPECTIVE-OBSERVATION-20261015-027",
+      "title": "Does the twenty-seventh scheduled public scan contain a quality-valid positive same-condition pair?",
+      "mechanism": "Continue the bounded six-frame Gamma discovery protocol and 40-market rotating sample, classify paired books using request/receipt quality, and qualify the immutable 27-scan prefix through the existing Arena job.",
+      "dataset_id": "08363598d19c509dcbf48ff77d83197e24cdc58032a801d61f3bb85d2e08b8b7",
+      "success_metric": "At least one same-condition V1 pair passes quality validation and produces a positive top-ask, complete-depth, per-leg minimum, or fee-aware economic qualification, with independent freshness and source lineage preserved.",
+      "result": {
+        "scan_id": "scan-20261015T170112Z-de5e990dcdf5",
+        "captured_at_utc": "2026-10-15T17:01:12.964444+00:00",
+        "analysis_version": "veritas-finalized-snapshot-analysis-v4",
+        "analysis_event_sha256": "66b1a65f12d2f659338c244f4c80396817936dc67818e64a87b1499a216f1f4b",
+        "analysis_event_file_sha256": "b8fe328d92b130ab62218aaa9842eecb01bad5809f8e54eec615924dc71ad3e3",
+        "snapshot_evidence_sha256": "de5e990dcdf55a1bff57cb7d4941ade8663ea35d4e4bd29d69bde86d548517fd",
+        "snapshot_file_sha256": "64f1d21d402e2bf6a86c38d0fcda8a0f755624b3fb382b054409c1089183382a",
+        "arena_job_id": "job-6458cea269bc460db671e75e",
+        "arena_finding_id": "veritas-qualification-v1-b595559921e55264",
+        "arena_finding_sha256": "bd6f00e2d3423c8284e13f61828926c2e101f5226b0271a425246275e91b934a",
+        "experiment_run_id": "VERITAS-M2-ECO-QUAL-001-RUN-08363598d19c",
+        "experiment_sha256": "554b2180964ef796f3f891901307e5829d7fcb7aa737516595cba070284c9464",
+        "source_analysis_summary_sha256": "46d3ed07c0bb8a519d0053fcffe7dfb975fabf6adc5ba1d8a9ea737c8cc18899",
+        "bounded_discovery": {
+          "query_candidate_records": 300,
+          "unique_market_ids": 298,
+          "duplicate_records_across_queries": 2,
+          "identity_conflicts": 0,
+          "eligible_same_condition_v1_pairs": 123,
+          "excluded_market_ids": 175,
+          "exclusion_reasons": {
+            "augmented_negative_risk_semantics_unverified": 121,
+            "unsupported_outcome_relationship": 54
+          }
+        },
+        "cumulative_sample": {
+          "snapshots": 27,
+          "selected_observations": 1080,
+          "quality_valid_pairs": 961,
+          "invalid_pairs": 119,
+          "unique_market_ids": 494,
+          "top_edge_per_share": {
+            "count": 961,
+            "maximum_per_share": "-0.001",
+            "median_nearest_rank_per_share": "-0.022",
+            "minimum_per_share": "-0.996",
+            "positive_count": 0
+          }
+        },
+        "positive_states_by_gate": {
+          "unchanged_top_ask_gross_sign": 0,
+          "full_displayed_depth_gross": 0,
+          "full_depth_and_per_leg_minimum_notional": 0,
+          "single_match_fee_sensitivity_positive": 0,
+          "fragmentation_safe_fee_sensitivity_positive": 0
+        },
+        "orders_submitted": false,
+        "authenticated_requests": false,
+        "director_manifest_reconciliation_pending": true,
+        "status": "completed_no_positive_economic_candidates"
+      },
+      "limitations": [
+        "Snapshots are intermittent and selected; discovery remains conditional on the bounded public query union.",
+        "Two repeated records appeared across predeclared query frames; both were identical and identity conflicts were zero.",
+        "Repeated market snapshots and within-market states are dependent.",
+        "The finding is limited to same-condition V1 binary pairs; unsupported multi-outcome and augmented NegRisk relationships remain excluded.",
+        "Request-to-receipt timing does not establish upstream queue age, response-batch atomicity, or venue sequence continuity.",
+        "Zero candidates in this sample do not establish that opportunities never occur.",
+        "The qualification does not test order arrival, persistence, fills, or realized profitability."
+      ],
+      "decision": "Keep the no-trade baseline and continue bounded observation. The scan-pinned qualification produced no positive candidate at any gate; the Director manifest reconciliation remains scheduled, and no manual poll or retry was started."
     }
   ],
   "next_research_questions": [
