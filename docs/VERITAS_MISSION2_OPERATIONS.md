@@ -266,3 +266,10 @@ their next runs were scheduled for 18:30:45, 18:40:08, and 18:45:20 UTC. The
 source and Director one-shot services were inactive after completion. See [Gate
 F checkpoint 016](VERITAS_MISSION2_GATE_F_CHECKPOINT_016.md) and [inventory
 031](VERITAS_MISSION2_RESEARCH_INVENTORY_031.json).
+
+A post-fix targeted regression completed at 18:22 UTC: 43 backend tests passed
+across six affected Veritas/Arena modules. Strict Mypy, Ruff, formatting, and
+the targeted Veritas browser flow passed. The failure and recovery chronology
+remains in [Gate F checkpoint 016](VERITAS_MISSION2_GATE_F_CHECKPOINT_016.md);
+the updated evidence is in [inventory
+032](VERITAS_MISSION2_RESEARCH_INVENTORY_032.json).

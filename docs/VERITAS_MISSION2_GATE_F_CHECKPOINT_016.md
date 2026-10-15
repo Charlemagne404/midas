@@ -63,3 +63,13 @@ or campaign modification was performed.
 
 See [inventory 031](VERITAS_MISSION2_RESEARCH_INVENTORY_031.json) and the
 [stable current inventory](VERITAS_MISSION2_RESEARCH_INVENTORY.json).
+
+## 2026-10-15 18:22 UTC post-fix regression
+
+The combined affected backend set passed **43 tests** across candidate replay,
+economic qualification, Arena qualification and API, Research Director, and
+dashboard API. Strict Mypy, Ruff, and formatting checks also pass for the
+changed backend modules. The targeted Veritas browser test passes after the
+legacy-ledger projection correction. One existing Starlette/httpx
+TestClient deprecation warning remains. See [inventory
+032](VERITAS_MISSION2_RESEARCH_INVENTORY_032.json).

@@ -1,15 +1,15 @@
 {
   "schema_version": 1,
   "mission": "PROJECT-VERITAS-MISSION-2",
-  "inventory_id": "VERITAS-M2-INVENTORY-20261015-031",
-  "captured_at_utc": "2026-10-15T18:20:46Z",
+  "inventory_id": "VERITAS-M2-INVENTORY-20261015-032",
+  "captured_at_utc": "2026-10-15T18:22:34Z",
   "repository": {
     "path": "/home/charlie/midas-veritas",
     "branch": "project/veritas",
     "starting_commit": "9a857cc56804bec6b7129171ba090d338e263aa3",
-    "commit_at_inventory_creation": "9379985c3550c4df42f83373d3c9cfb567f39e97",
+    "commit_at_inventory_creation": "433abb9a6568b120cebc977f9204a5e4e7b809af",
     "mission_status": "active_scheduled_discovery_and_research",
-    "checkpoint_base_commit": "9379985c3550c4df42f83373d3c9cfb567f39e97",
+    "checkpoint_base_commit": "433abb9a6568b120cebc977f9204a5e4e7b809af",
     "worktree_changes_pending_commit": true
   },
   "discovery_protocol": {
@@ -2106,7 +2106,9 @@
     "code_compatibility_fix_commit": "9379985c3550c4df42f83373d3c9cfb567f39e97",
     "actual_v2_finding_id": "veritas-qualification-v1-7fd5970007ea7a95",
     "actual_v2_finding_experiment_sha256": "d51904d042634f961908fcb23c0ec9789ef0a82f840fb54a41a9a4382283f6c6",
-    "no_manual_reconciliation_or_retry": true
+    "no_manual_reconciliation_or_retry": true,
+    "latest_documentation_commit": "433abb9a6568b120cebc977f9204a5e4e7b809af",
+    "post_fix_backend_regression": "43 passed across six targeted modules"
   },
   "current_scan_029": {
     "scan_id": "scan-20261015T180052Z-f40aae162609",
@@ -2228,5 +2230,26 @@
     "new_finding_written": false,
     "fix_commit": "9379985c3550c4df42f83373d3c9cfb567f39e97",
     "fix": "version-aware v2 compatibility plus regression tests; v3 remains strict"
+  },
+  "gate_h_verification_032": {
+    "captured_at_utc": "2026-10-15T18:22:34Z",
+    "focused_backend_regression": {
+      "result": "43 passed",
+      "warning": "one Starlette/httpx TestClient deprecation warning",
+      "modules": [
+        "candidate replay",
+        "economic qualification",
+        "Arena qualification",
+        "Research Director",
+        "dashboard API",
+        "Arena API"
+      ]
+    },
+    "strict_mypy": "passed for changed research director and Veritas API modules",
+    "ruff_and_format": "passed for changed research director and Veritas API modules",
+    "targeted_veritas_browser": "1 passed after legacy ledger projection correction",
+    "full_frontend_unit_suite": "29 passed",
+    "typescript_production_build_eslint_prettier": "passed; existing large-chunk advisory remains",
+    "full_e2e_run": "5 passed, 2 failed at pre-fix revision; targeted Veritas case subsequently passed; Reality demo fixture still exposes no monitored markets"
   }
 }
