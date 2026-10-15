@@ -1,17 +1,17 @@
 # Veritas Mission 2 Operations
 
-**Runtime checked:** 2026-10-15 12:16 UTC
+**Runtime checked:** 2026-10-15 12:31 UTC
 **Services:** `midas-veritas-observatory.service`, `midas-veritas-source-analysis.service`, `midas-veritas-research-director.service`
 **Timers:** `midas-veritas-observatory.timer`, `midas-veritas-source-analysis.timer`, `midas-veritas-research-director.timer`
 
 ## Current state
 
-- All three Veritas user timers are active. The 12:10 source-analysis recurrence and 12:15 Director cycle completed successfully; a 12:16 no-launch reconciliation verified the Director result. The next observer, source-analysis, and Director runs are 12:30:48, 12:40:38, and 12:45:12 UTC. The oneshot services are inactive between runs as expected.
-- Latest scan: `scan-20261015T120127Z-af0847c75aeb`, captured at 12:01:27 UTC and finalized under v4. The analyzer has 17 processed snapshots and no pending snapshots. The Director qualified this scan and is `CURRENT`.
-- Cumulative panel: 680 selected observations, 613 request/receipt-valid pairs, 67 invalid pairs, and 284 distinct market IDs. The previous reported-age/skew gate accepts 148/680. The paired increase is 465 observations (+68.38 percentage points).
-- The latest bounded discovery union contains 300 IDs: 200 supported same-condition V1 binary pairs and 100 explicit exclusions (82 augmented NegRisk records and 18 unsupported outcome relationships). The selected panel has 40 markets, 37 rotating and three available frozen controls; unavailable frozen IDs were reported without outcome replacement.
-- Runtime data uses 15,306,621 bytes under `data/veritas-observatory/`, below the 1 GiB hard cap. Snapshots and derived runtime artifacts are ignored by Git; versioned docs record identities and hashes. Do not prune or raise the cap without a separate retention review.
-- The 12:01 v2 scan used seven HTTP attempts (six Gamma frames and one CLOB batch) out of a 14-attempt maximum. Its observer service used 634 ms CPU and completed in 16 seconds. The frozen control file hash remains `9578217e20dcc7d1c65fa110f0ed7c689b55483b61191f1aae8d30c9b7300d9a`.
+- All three Veritas user timers are active. The 12:10 source-analysis recurrence and 12:15 Director cycle completed successfully, and a 12:16 no-launch reconciliation verified the Director result. The 12:31 observer scan then completed. The next observer, source-analysis, and Director runs are 13:00:57, 12:40:38, and 12:45:12 UTC. The oneshot services are inactive between runs as expected.
+- Latest scan: `scan-20261015T123114Z-ded26b5ea023`, captured at 12:31:14 UTC and finalized under v4. The analyzer has 18 processed snapshots and no pending snapshots. The Director remains `CURRENT` for scan 17; scan 18 has not yet reached its 12:45 qualification cycle.
+- Cumulative panel: 720 selected observations, 645 request/receipt-valid pairs, 75 invalid pairs, and 304 distinct market IDs. The previous reported-age/skew gate accepts 153/720. The paired increase is 492 observations (+68.33 percentage points).
+- The latest bounded discovery union contains 293 unique IDs: 84 supported same-condition V1 binary pairs and 209 explicit exclusions (146 augmented NegRisk records and 63 unsupported outcome relationships). The selected panel has 40 markets, 37 rotating and three available frozen controls; unavailable frozen IDs were reported without outcome replacement.
+- Runtime data uses 16,454,032 bytes under `data/veritas-observatory/`, below the 1 GiB hard cap. Snapshots and derived runtime artifacts are ignored by Git; versioned docs record identities and hashes. Do not prune or raise the cap without a separate retention review.
+- The 12:31 v2 scan used seven HTTP attempts (six Gamma frames and one CLOB batch) out of a 14-attempt maximum. Thirty-two selected pairs passed the quality gate; eight had empty ask sides. The frozen control file hash remains `9578217e20dcc7d1c65fa110f0ed7c689b55483b61191f1aae8d30c9b7300d9a`.
 - The finalized Reality source analyzer remains `catching_up_finalized_source`: 1,438 of 3,313 cataloged segments processed, 1,875 segments (504,775,332 bytes) pending through ordinal 166,686. The processed prefix has no campaign-window frames. The 12:10 UTC run processed 122 segments / 33,266,456 bytes in 159 seconds, using 7.970 CPU seconds and 136.4 MiB peak memory. Its sealed summary digest is `12ae77298aaca26f5b402ac9548983a6b34e4e0d7414d1d1a1b8ac858800bf0d`. See [research inventory 017](VERITAS_MISSION2_RESEARCH_INVENTORY_017.json).
 - The protected Reality user services `midas-reality.service`, `midas-reality-shadow.service`, and `midas-reality-api.service` were active during the read-only check. The separate Reality worktree is clean. No service was restarted or modified by Veritas.
 
@@ -73,16 +73,33 @@ The observer uses public Gamma GET discovery and unauthenticated public CLOB rea
 
 The scanner writes exclusive, content-hashed compressed snapshots. `continuous_analysis.py` verifies finalized snapshot identities and immutable event digests, then atomically updates analyzer state and summary. It accepts at most 100 pending snapshots per run and rejects malformed, oversized, digest-mismatched, or unsafe inputs. v4 records paired legacy/current gate outcomes and per-market sample coverage. Snapshot fingerprint changes are sampled inter-scan changes, not true venue update rates.
 
-The separate NegRisk structure study is a one-shot, fixed-event read. It
-validates the Gamma event's exact member set and range partition, then requests
-both Yes and No CLOB books in one 18-token batch with a 2 MB response bound and
-one-second request spacing. It writes replayable source bodies under
-`data/veritas-observatory/structure-studies/`; it is not part of the recurring
-observer timer. Its latest sample failed the source-age/skew gate and produced
-negative gross edges for both baskets. See [Gate A checkpoint
-012](VERITAS_MISSION2_GATE_A_CHECKPOINT_012.md).
+The one-shot NegRisk studies cover the complete nine-outcome Strava set and a
+second seven-market OpenAI IPO group. The latter was enumerated by seven direct
+Gamma market reads and checked against the adapter's on-chain question count;
+the Gamma group filter returned 20 unrelated rows and no matching members. Its
+single 14-token CLOB batch returned all books with depth at 5/20/100 shares,
+but timestamps were up to 33.546 seconds old with 20.962 seconds of skew. No
+positive qualified edge appears in either study; the OpenAI Yes set is flat
+before fees at top of book, while its No set is negative. Both captures fail
+freshness qualification. The sealed source and replay artifacts are under
+`data/veritas-observatory/structure-studies/`; these studies are separate from
+the recurring observer timer. See [Gate A checkpoint
+015](VERITAS_MISSION2_GATE_A_CHECKPOINT_015.md).
 
-The first v4 pass reindexed ten already finalized immutable snapshots. The 08:31, 09:00, 10:01, and 10:31 UTC scheduled scans were captured and classified under v4 prospectively. The latest 17-snapshot economic qualification remains zero-positive. Protocol 002 documents the paired series; it does not alter a Reality campaign or waive the original follow-up design's gates. The latest source-replay progress and sealed digests are recorded in [research inventory 017](VERITAS_MISSION2_RESEARCH_INVENTORY_017.json).
+The first v4 pass reindexed ten already finalized immutable snapshots. The 08:31, 09:00, 10:01, and 10:31 UTC scheduled scans were captured and classified under v4 prospectively. The latest completed 17-snapshot economic qualification remains zero-positive; the 12:31 scan has not yet reached its 12:45 Director cycle. Protocol 002 documents the paired series; it does not alter a Reality campaign or waive the original follow-up design's gates. The latest source-replay progress and sealed digests are recorded in [research inventory 018](VERITAS_MISSION2_RESEARCH_INVENTORY_018.json).
+
+## Gate A checkpoint 015 — current evidence
+
+The 12:31 UTC observer scan is finalized and indexed as snapshot 18. It has 32
+quality-valid pairs, eight empty-ask invalid pairs, and no positive economic
+states. Cumulative current/legacy freshness counts and all hashes are in
+[research inventory 018](VERITAS_MISSION2_RESEARCH_INVENTORY_018.json).
+
+The OpenAI IPO structure study is a separate fixed-group read. Its 14-book
+capture has complete displayed depth at 5/20/100 shares but fails the 5-second
+age and 250 ms skew rules. Use the replay runner or one bounded public refresh;
+the study does not run on the recurring observer timer. See [Gate A checkpoint
+015](VERITAS_MISSION2_GATE_A_CHECKPOINT_015.md).
 
 The independent Reality source analyzer validates the frozen campaign identity and reads only cataloged finalized `.seg` inputs. It never opens `.open` files. Per run it is limited to 128 segments or 32 MiB of new segment data; each segment is capped at 16 MiB. Catalog scans are bounded. Source state and events retain campaign/code/prefix digests and stop on identity drift. Resource bounds remain CPU 5%, memory 256 MiB, low priority, ten-minute timeout, and Veritas-only writes.
 

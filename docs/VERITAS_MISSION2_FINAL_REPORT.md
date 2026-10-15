@@ -267,3 +267,33 @@ Mission 2 remains active. Current market evidence still contains no qualifying
 positive gross candidate. Multi-day independent coverage, source replay
 through the frozen campaign window, more verified multi-outcome sets, and a
 meaningful strategy comparison remain open.
+
+## Gate A checkpoint addendum — 2026-10-15, 12:31 UTC
+
+The 12:31 scan (`scan-20261015T123114Z-ded26b5ea023`) is the 18th finalized
+snapshot. It adds 32 quality-valid pairs and eight empty-ask invalid pairs. The
+cumulative panel has 645/720 valid observations across 304 markets; 153/720
+pass the earlier reported-age/skew rule, leaving a paired difference of 492
+(68.33 percentage points). All five economic qualification counts remain
+zero-positive. The Director is scheduled to qualify scan 18 at 12:45 UTC.
+
+A second complete NegRisk group is verified: seven OpenAI IPO market-cap
+outcomes with sequential question indices 0–6 match the Polygon adapter's
+on-chain question count at block 95,574,561. Their six numeric ranges are
+contiguous, exact boundaries resolve upward, and the seventh outcome covers no
+IPO by the end of 2026. The Gamma group-filter endpoint returned 20 unrelated
+records, so completeness rests on the direct member reads and adapter count.
+
+All 14 Yes/No books returned with depth at 5/20/100 shares, but the oldest
+source timestamp was 33.546 seconds old and cross-book skew was 20.962 seconds.
+The Yes top ask equals its conditional $1 payout; the No top ask costs $6.035
+against the $6 protocol minimum. Every tested full-depth basket is gross
+non-positive, before fees. The stale capture is descriptive and does not
+qualify a candidate. No orders or authenticated requests were made. See
+[Gate A checkpoint 015](VERITAS_MISSION2_GATE_A_CHECKPOINT_015.md), [inventory
+018](VERITAS_MISSION2_RESEARCH_INVENTORY_018.json), and the [replayable study
+runner](../scripts/veritas_openai_ipo_basket_study.py).
+
+Mission 2 remains active. The next evidence gate is a fresh complete book
+capture with independently supported source freshness, while the scheduled
+scan and source-replay workflows continue.

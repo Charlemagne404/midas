@@ -382,3 +382,29 @@ venue. Quote sequence freshness, a 24-hour pilot review, the 48-hour
 follow-up/dependence gates, a complete Research Director workflow, and
 independent economic confirmation remain open. The full source replay is still
 catching up and contains no campaign-window frames in its processed prefix.
+
+## Gate A checkpoint 015 addendum — scan 18 and second complete group
+
+The scheduled 12:31 UTC scan brought the v4 panel to 18 snapshots, 720 selected
+observations, 645 quality-valid pairs, and 304 distinct markets. The prior
+reported-age/skew gate accepts 153 pairs; the paired recovery is 492 pairs
+(68.33 percentage points). No positive top, depth, minimum-size, or fee state
+appeared. The 40-market sample remains conditional on the bounded Gamma frame.
+
+The new pinned study runner verifies the seven-market OpenAI IPO NegRisk group
+from direct Gamma market responses, sequential question indices, and the
+Polygon adapter question count. Its rules form six contiguous ranges and one
+No-IPO outcome. The Gamma group-filter query returned 20 unrelated markets,
+which makes the direct member reads and on-chain count the useful completeness
+evidence for this case.
+
+One 14-token CLOB batch returned full displayed depth for 5, 20, and 100
+shares per outcome. Source data failed freshness qualification at 33,546 ms
+maximum age and 20,962 ms cross-book skew. The Yes basket top cost equals its
+conditional $1 payout; the No basket costs $6.035 against a $6 protocol
+minimum. Both are non-positive before fees at all tested sizes. The captured
+artifact replays from its embedded evidence with a matching result digest. The
+runner compiles and replay validation passes; no broader suite was run for this
+documentation and artifact checkpoint. See [Gate A checkpoint
+015](VERITAS_MISSION2_GATE_A_CHECKPOINT_015.md) and [inventory
+018](VERITAS_MISSION2_RESEARCH_INVENTORY_018.json).

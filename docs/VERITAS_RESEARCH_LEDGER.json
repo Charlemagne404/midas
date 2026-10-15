@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-15T12:16:33Z",
+  "updated_at_utc": "2026-10-15T12:35:09Z",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -2475,6 +2475,79 @@
       ],
       "decision": "Continue bounded prospective collection and preserve the unchanged no-trade baseline. Do not train a model or run a strategy tournament without an eligible gross candidate and suitable outcome labels.",
       "status": "continue"
+    },
+    {
+      "hypothesis_id": "VERITAS-H054",
+      "experiment_id": "VERITAS-M2-NEG-RISK-SET-20261015-002",
+      "dataset_id": "f62224d516665762a8ef9b04872d70612a32beacd7a6fa9d65a9a82fd3c8de44",
+      "title": "A second complete NegRisk group contains a quality-valid positive Yes or No basket",
+      "mechanism": "Direct Gamma market bodies yield seven sequential question indices that match the Polygon adapter question count. The shared rules define a contiguous six-range partition plus a No-IPO outcome. A bounded complete CLOB batch is evaluated under the protocol payout floor, displayed depth, minimum sizes, and fragmentation-safe taker fees.",
+      "success_metric": "Verify complete member and settlement structure, capture every Yes/No book in one bounded batch, then require fresh, low-skew complete depth and a positive fee-safe edge against the zero-exposure baseline at 5, 20, or 100 shares per outcome.",
+      "result": {
+        "status": "complete_group_verified_no_positive_basket_observed_quality_invalid",
+        "analysis_version": "veritas-openai-ipo-complete-outcome-basket-study-v1",
+        "study_id": "VERITAS-M2-OPENAI-IPO-BASKET-2026-10-15T12:27:14.767876+00:00",
+        "artifact_path": "data/veritas-observatory/structure-studies/1792067234767876259-openai-ipo-basket-study.json",
+        "artifact_sha256": "ac25dce74644181f6c39c99f6a091c8ff219b5bd7a92fc0b154beb0a097157fd",
+        "artifact_file_sha256": "1d8f30c59d28e20c46f35acc8a1004e6ebbef5ac63592d150972530928828506",
+        "result_sha256": "f62224d516665762a8ef9b04872d70612a32beacd7a6fa9d65a9a82fd3c8de44",
+        "group_id": "0xd2c21cbb9d2cb407ab3dcf619d93f6d65b7967154cd6ee930f7758baa2b4bf00",
+        "market_count": 7,
+        "question_indices": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "polygon_block_number": 95574561,
+        "onchain_question_count": 7,
+        "gamma_group_filter_count": 20,
+        "gamma_group_filter_matches": 0,
+        "book_asset_count": 14,
+        "batch_duration_ms": 100,
+        "maximum_source_age_ms": 33546,
+        "source_age_bound_ms": 5000,
+        "source_timestamp_skew_ms": 20962,
+        "source_skew_bound_ms": 250,
+        "yes_top_gross_edge_usdc": "0.000",
+        "no_top_gross_edge_usdc": "-0.035",
+        "yes_gross_edges_by_shares": {
+          "5": "0.000",
+          "20": "-0.01344",
+          "100": "-0.30500"
+        },
+        "no_gross_edges_by_shares": {
+          "5": "-0.175",
+          "20": "-0.700",
+          "100": "-3.500"
+        },
+        "yes_fee_safe_net_edges_by_shares": {
+          "5": "-0.03356",
+          "20": "-0.14861",
+          "100": "-0.99938"
+        },
+        "no_fee_safe_net_edges_by_shares": {
+          "5": "-0.20301",
+          "20": "-0.81201",
+          "100": "-4.05988"
+        },
+        "all_books_have_depth_and_minimums_at_5_20_100": true,
+        "candidate_qualified": false,
+        "orders_submitted": false,
+        "authenticated_requests": false
+      },
+      "decision": "Keep no-trade. The second group is structurally complete, but this single book capture is stale and skewed; no basket is positive on the displayed gross and fee-safe arithmetic. Require a fresh, independently sequenced capture before any promotion.",
+      "limitations": [
+        "The membership conclusion is specific to this Gamma snapshot and the captured Polygon block; it does not establish venue-wide NegRisk coverage.",
+        "The Gamma group-filter query returned unrelated records, so direct market reads and on-chain question count supplied the completeness checks.",
+        "Every book timestamp exceeded the 5-second age bound and aggregate timestamp skew exceeded 250 ms; economics are descriptive only.",
+        "Displayed depth, fee envelopes, and protocol payout bounds do not establish order arrival, fills, settlement timing, or realized returns.",
+        "The Yes payout requires exactly one Yes under event rules; the protocol only provides an at-most-one-Yes rule. The No basket uses six as a minimum payout floor."
+      ],
+      "status": "continue"
     }
   ],
   "next_research_questions": [
@@ -2486,6 +2559,6 @@
     "Can independent sequence evidence quantify freshness and coverage for the rotating public query frames?",
     "What market/time dependence and coverage evidence will satisfy the 24-hour pilot review and original 48-hour follow-up gates?",
     "Can the Research Director orchestrate bounded snapshot qualification and source replay with typed dependencies while preserving the collector timer?",
-    "Which additional boundedly discovered NegRisk groups can be verified complete with event-specific payout bounds and current full books?"
+    "Can additional boundedly discovered NegRisk groups be verified complete and produce fresh, quality-valid positive full-depth net economics?"
   ]
 }
