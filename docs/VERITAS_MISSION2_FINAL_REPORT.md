@@ -1,8 +1,9 @@
 # Project Veritas Mission 2 — Engineering Checkpoint Report
 
-**Status:** The discovery, measurement-repair, continuous-analysis, experiment,
-and dashboard checkpoint is implemented and running. Mission 2 remains open
-while the observation window and dependence evidence accumulate.
+**Status:** Discovery, measurement repair, snapshot and source-segment analysis,
+the qualification experiment, and dashboard checkpoint are implemented and
+running. Mission 2 remains open while source catch-up, observation, and
+dependence evidence accumulate.
 **Date:** 2026-10-15
 **Branch:** `project/veritas`
 **Starting commit:** `9a857cc56804bec6b7129171ba090d338e263aa3`
@@ -11,17 +12,25 @@ while the observation window and dependence evidence accumulate.
 
 Veritas now has a bounded public market-discovery and snapshot service, a
 stratified 40-market panel with frozen random controls, an independently tested
-same-condition YES/NO audit, and an idempotent analyzer over immutable finalized
-snapshots. The old timestamp-only freshness gate was repaired after the pilot
-showed it rejecting books whose reported update was old even though the book
-payload had just returned in a short batch. The dashboard and read-only API
+same-condition YES/NO audit, and separate idempotent analyzers for finalized
+public snapshots and finalized Reality source segments. The old timestamp-only
+freshness gate was repaired after the pilot showed it rejecting books whose
+reported update was old even though the book
+payload had just returned within a short batch. The dashboard and read-only API
 surface discovery strata, source-quality counts, candidate gates, research
 readiness, and snapshot evidence.
 
-An active 30-minute timer runs the bounded scanner and incremental analyzer
-without changing Reality. It is limited to 40 markets, one second between
-public requests, seven planned requests per scan, 5% CPU, 256 MiB memory, and a
-1 GiB data root.
+The first finalized-source batch processed 128 of 2,681 replayable segments
+through ordinal 7,048. The analyzer has 2,553 segments (648,266,578 bytes)
+pending and remains in `catching_up_finalized_source`; this initial source
+prefix contains no campaign-window frames. See [checkpoint 003](VERITAS_MISSION2_GATE_A_CHECKPOINT_003.md)
+for campaign, code, event, summary, and runtime hashes.
+
+An active 30-minute timer runs the bounded scanner and snapshot analyzer. A
+second offset 30-minute timer advances a read-only, resumable Reality source
+replay. The source reader is pinned to the frozen campaign hash and source root,
+ignores `.open` files, and processes at most 128 finalized segments or 32 MiB
+per run under 5% CPU and 256 MiB memory. Neither service changes Reality.
 
 ## Evidence at this checkpoint
 
@@ -76,14 +85,15 @@ reports two fee sensitivities. Every gate remained at zero in real public
 observations. There are no real candidate labels to justify model training or a
 strategy tournament. No strategy or model was promoted.
 
-The recurring pipeline detects new finalized snapshots, verifies source and
-event digests, updates coverage and opportunity counts idempotently, and exposes
-a readiness state. It does not autonomously rewrite code, campaign policies,
-models, or historical results.
+The snapshot pipeline detects newly finalized public scans; the source pipeline
+replays bounded finalized Reality segments and resumes from its serialized
+reconstruction context. Each verifies source and event digests, updates its
+own summary idempotently, and exposes separate readiness. Neither rewrites
+campaign policies, models, source records, or historical results.
 
 ## Verification and preservation
 
-- Full Veritas backend test selection: 77 passed; one Starlette/httpx
+- Full Veritas backend test selection: 83 passed; one Starlette/httpx
   deprecation warning.
 - Ruff and Mypy on the new observation, analysis, experiment, and test code:
   passed.
@@ -104,12 +114,15 @@ Detailed implementation and commands are in
 [`VERITAS_MISSION2_OPERATIONS.md`](VERITAS_MISSION2_OPERATIONS.md),
 [`VERITAS_MISSION2_GATE_A_CHECKPOINT_001.md`](VERITAS_MISSION2_GATE_A_CHECKPOINT_001.md),
 [`VERITAS_MISSION2_GATE_A_CHECKPOINT_002.md`](VERITAS_MISSION2_GATE_A_CHECKPOINT_002.md),
+[`VERITAS_MISSION2_GATE_A_CHECKPOINT_003.md`](VERITAS_MISSION2_GATE_A_CHECKPOINT_003.md),
 [`VERITAS_MISSION2_RESEARCH_INVENTORY.json`](VERITAS_MISSION2_RESEARCH_INVENTORY.json),
-and [`VERITAS_MISSION2_RESEARCH_INVENTORY_002.json`](VERITAS_MISSION2_RESEARCH_INVENTORY_002.json).
+[`VERITAS_MISSION2_RESEARCH_INVENTORY_002.json`](VERITAS_MISSION2_RESEARCH_INVENTORY_002.json),
+and [`VERITAS_MISSION2_RESEARCH_INVENTORY_003.json`](VERITAS_MISSION2_RESEARCH_INVENTORY_003.json).
 
 ## Next evidence gates
 
-1. Keep the recurring observer active and accumulate a longer window.
+1. Keep both read-only timers active, let the source analyzer catch up in
+   bounded batches, and accumulate a longer public observation window.
 2. Review dependence only after at least 24 hours and adequate market diversity;
    do not claim the specific 48-hour follow-up design is ready until its stated
    gates pass.

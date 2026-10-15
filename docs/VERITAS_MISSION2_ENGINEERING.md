@@ -45,6 +45,19 @@ resumes after partial work, and processes at most 100 pending snapshots per
 run. Version 2 re-audits saved books with the repaired gate and preserves v1
 state, events, and summary. Its current backlog is zero.
 
+[`finalized_source_analysis.py`](../packages/midas/veritas/finalized_source_analysis.py)
+is a separate incremental reader for the frozen Mission 2 Reality campaign. It
+checks the campaign file hash and identity on each run, reads only numeric
+finalized-segment catalogs and their `.seg` files, and never opens `.open`
+files. It validates each new segment hash and record catalog, skips verified
+empty finalized headers, and detects catalog-prefix changes behind progress
+without hashing old segment payloads on every run. A restored `Context`
+reconstructs source state across bounded batches. Each segment gets an
+exclusive digest-sealed event before the atomic cursor/state update, so an
+interrupted segment can be replayed and compared without duplicate application.
+The user service limits each run to 128 segments or 32 MiB, state to 24 MiB,
+and source-analysis artifacts to 256 MiB.
+
 [`economic_experiment.py`](../packages/midas/veritas/economic_experiment.py)
 compares the unchanged top-ask gross-sign baseline to full displayed depth and
 both per-leg minimum checks at 20 shares. It separately counts single-match
@@ -58,29 +71,33 @@ prior results. The artifact reports candidate qualification, not PnL.
 
 [`apps/api/veritas.py`](../apps/api/veritas.py) adds bounded reads for the
 continuous-analysis summary and latest scan, a continuous-analysis artifact,
-and a validated snapshot route. It validates summary digests and scan IDs,
-applies compressed and decompressed byte bounds, and remains read-only.
+validated snapshot route, and a separate finalized-source summary and artifact.
+It validates summary digests and scan IDs, applies compressed and decompressed
+byte bounds, and remains read-only.
 
 [`Veritas.tsx`](../apps/web/src/Veritas.tsx) and
 [`veritas.css`](../apps/web/src/veritas.css) add market-discovery and cohort
 strata, scan/coverage counts, data quality, concentration, edge and candidate
 counts, readiness, and immutable snapshot links. Zero candidates are displayed
-directly. The page keeps intermittent public observation separate from
-continuous quote coverage and realized execution.
+directly. The page shows finalized Reality replay progress in its own panel,
+separate from intermittent public snapshots and realized execution.
 
 ### Recurring operation
 
-The oneshot systemd service runs the observer and incremental analyzer. A user
-timer invokes it every 30 minutes with up to two minutes of randomized delay.
-This does not duplicate Reality's recorder or alter the existing campaign. The
-timer and service are active, bounded, and checked in under
+The observer and snapshot analyzer run every 30 minutes on the existing user
+timer. A separate offset timer advances finalized Reality source replay every
+30 minutes under its own CPU, memory, byte, and segment limits. Neither
+pipeline duplicates Reality's recorder or alters the frozen campaign. Both
+timers and services are active and checked in under
 [`deploy/systemd/user`](../deploy/systemd/user).
 
-The scanner plus versioned readiness API is the current continuous research
-cycle: detect the next snapshot, index it once, refresh market/quality/economic
-counts, and expose readiness and source evidence. It does not launch an Arena
-job or train a model. With zero gross candidate labels, a strategy tournament
-or predictor comparison would not be an evidence-supported experiment.
+The two read-only analysis cycles advance independently: the snapshot cycle
+indexes each newly finalized public scan, while the source cycle replays a
+bounded finalized Reality prefix and resumes from its saved context. The API
+exposes distinct readiness and source evidence for each. Neither launches an
+Arena job or trains a model. With zero gross candidate labels, a strategy
+tournament or predictor comparison would not be an evidence-supported
+experiment.
 
 ## Runtime and evidence at checkpoint
 
@@ -100,18 +117,30 @@ or predictor comparison would not be an evidence-supported experiment.
 - Latest scheduled service process: success, 617 ms CPU time and about 16 seconds elapsed.
   Peak memory was not recorded by systemd for this completed oneshot.
 
+### Finalized source replay extension
+
+The separate source analyzer's first live batch is recorded in
+[`VERITAS_MISSION2_GATE_A_CHECKPOINT_003.md`](VERITAS_MISSION2_GATE_A_CHECKPOINT_003.md).
+It processed 128 of 2,681 replayable segments through ordinal 7,048, with
+2,553 segments (648,266,578 bytes) pending. The run used 3.63 seconds of CPU
+and peaked at 110.6 MiB; readiness is `catching_up_finalized_source`. This
+initial prefix contains no campaign-window frames, so it provides no economic
+result yet. The read-only source timer is active and the Reality checkout
+remains clean.
+
 The full scan results and immutable source identities are in
 [`VERITAS_MISSION2_GATE_A_CHECKPOINT_001.md`](VERITAS_MISSION2_GATE_A_CHECKPOINT_001.md),
 [`VERITAS_MISSION2_GATE_A_CHECKPOINT_002.md`](VERITAS_MISSION2_GATE_A_CHECKPOINT_002.md),
-and [`VERITAS_MISSION2_RESEARCH_INVENTORY_002.json`](VERITAS_MISSION2_RESEARCH_INVENTORY_002.json).
+[`VERITAS_MISSION2_GATE_A_CHECKPOINT_003.md`](VERITAS_MISSION2_GATE_A_CHECKPOINT_003.md),
+and [`VERITAS_MISSION2_RESEARCH_INVENTORY_003.json`](VERITAS_MISSION2_RESEARCH_INVENTORY_003.json).
 
 ## Verification
 
 | Check | Result |
 | --- | --- |
-| Full Veritas backend test selection | 77 passed; one Starlette/httpx deprecation warning |
-| Ruff on new Python implementation, scripts, and tests | Passed |
-| Mypy on eight changed/new Python source files | Passed |
+| Full Veritas backend test selection | 83 passed; one Starlette/httpx deprecation warning |
+| Ruff on source analysis, API, script, tests, and existing implementation | Passed |
+| Mypy on source analysis, API, and CLI script | Passed |
 | Frontend unit suite | 29 passed |
 | Frontend typecheck, lint, production build | Passed; build reports a large-chunk advisory |
 | Veritas Playwright workflow | Passed; discovery, no-candidate state, source link, and API artifact were verified |

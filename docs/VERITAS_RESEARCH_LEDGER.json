@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-15T06:33:50+00:00",
+  "updated_at_utc": "2026-10-15T06:54:27Z",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -1588,6 +1588,43 @@
         "No fills, persistence, continuous coverage, or venue-wide prevalence are inferred."
       ],
       "decision": "Keep no-trade and continue the bounded pilot; do not train a predictor or compare execution policies without qualifying candidates and appropriate outcome labels.",
+      "status": "continue"
+    },
+    {
+      "hypothesis_id": "VERITAS-H032",
+      "title": "Bounded finalized Reality source replay advances and resumes without writer access",
+      "mechanism": "A campaign-pinned incremental reader can reconstruct source context from finalized Reality segments in bounded batches while detecting catalog-prefix drift and recovering idempotently after interruption.",
+      "experiment_id": "VERITAS-M2-SOURCE-REPLAY-001",
+      "dataset_id": "8620e6a909ddf0a10e024056de6fe965709d507a83378f96b1e38ea1e04ca8d6",
+      "success_metric": "Verify source and code hashes, finalized-segment catalog consistency, bounded per-run processing, atomic resumable progress, event identity, and no Reality writer or record changes.",
+      "result": {
+        "status": "passed_initial_bounded_live_batch",
+        "campaign_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
+        "campaign_file_sha256": "aa8acb2b46823c1a1e3ac5d01a57dde917746c2c7471098ae2a4598875e322f5",
+        "analysis_code_sha256": "9f9e2249b49dd1cb10c11713aa2683567aa9cf0914c3ed2b08cf8e3fea25ebf8",
+        "replayable_segments_at_batch": 2681,
+        "empty_finalized_headers_skipped": 2,
+        "processed_segments": 128,
+        "processed_source_bytes": 5646827,
+        "pending_segments": 2553,
+        "pending_source_bytes": 648266578,
+        "last_processed_ordinal": 7048,
+        "campaign_window_frame_records": 0,
+        "campaign_window_quality_valid_states": 0,
+        "systemd_exit_status": 0,
+        "systemd_cpu_ms": 3630,
+        "systemd_memory_peak_bytes": 115990528,
+        "source_timer_active": true,
+        "event_sha256": "a5e7aa9e45a64f3c8cd0ad8acd9b1846b233ee518c87fbfdbbad3d229f358b71",
+        "summary_sha256": "6022714ccd6505bcbf5de5ddd8e9f3cac2564d2d1f2a79a091cb96d6c8011cc6",
+        "evidence": "docs/VERITAS_MISSION2_GATE_A_CHECKPOINT_003.md"
+      },
+      "limitations": [
+        "One live batch does not establish long-term recurring service reliability.",
+        "The processed bootstrap prefix contains no campaign-window frames and yields no economic result.",
+        "The source backlog remains large and readiness remains catching_up_finalized_source."
+      ],
+      "decision": "Keep the bounded read-only source timer active; inspect campaign and code identity, prefix hashes, progress, and resource use as the frozen campaign window accumulates.",
       "status": "continue"
     }
   ],
