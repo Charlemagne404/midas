@@ -1,38 +1,19 @@
 # Veritas Mission 2 Operations
 
-**Runtime checked:** 2026-10-15 12:31 UTC
+**Runtime checked:** 2026-10-15 13:18:58 UTC
 **Services:** `midas-veritas-observatory.service`, `midas-veritas-source-analysis.service`, `midas-veritas-research-director.service`
 **Timers:** `midas-veritas-observatory.timer`, `midas-veritas-source-analysis.timer`, `midas-veritas-research-director.timer`
 
 ## Current state
 
-- All three Veritas user timers are active. The 12:10 source-analysis recurrence and 12:15 Director cycle completed successfully, and a 12:16 no-launch reconciliation verified the Director result. The 12:31 observer scan then completed. The next observer, source-analysis, and Director runs are 13:00:57, 12:40:38, and 12:45:12 UTC. The oneshot services are inactive between runs as expected.
-- Latest scan: `scan-20261015T123114Z-ded26b5ea023`, captured at 12:31:14 UTC and finalized under v4. The analyzer has 18 processed snapshots and no pending snapshots. The Director remains `CURRENT` for scan 17; scan 18 has not yet reached its 12:45 qualification cycle.
-- Cumulative panel: 720 selected observations, 645 request/receipt-valid pairs, 75 invalid pairs, and 304 distinct market IDs. The previous reported-age/skew gate accepts 153/720. The paired increase is 492 observations (+68.33 percentage points).
-- The latest bounded discovery union contains 293 unique IDs: 84 supported same-condition V1 binary pairs and 209 explicit exclusions (146 augmented NegRisk records and 63 unsupported outcome relationships). The selected panel has 40 markets, 37 rotating and three available frozen controls; unavailable frozen IDs were reported without outcome replacement.
-- Runtime data uses 16,454,032 bytes under `data/veritas-observatory/`, below the 1 GiB hard cap. Snapshots and derived runtime artifacts are ignored by Git; versioned docs record identities and hashes. Do not prune or raise the cap without a separate retention review.
-- The 12:31 v2 scan used seven HTTP attempts (six Gamma frames and one CLOB batch) out of a 14-attempt maximum. Thirty-two selected pairs passed the quality gate; eight had empty ask sides. The frozen control file hash remains `9578217e20dcc7d1c65fa110f0ed7c689b55483b61191f1aae8d30c9b7300d9a`.
-- The finalized Reality source analyzer remains `catching_up_finalized_source`: 1,438 of 3,313 cataloged segments processed, 1,875 segments (504,775,332 bytes) pending through ordinal 166,686. The processed prefix has no campaign-window frames. The 12:10 UTC run processed 122 segments / 33,266,456 bytes in 159 seconds, using 7.970 CPU seconds and 136.4 MiB peak memory. Its sealed summary digest is `12ae77298aaca26f5b402ac9548983a6b34e4e0d7414d1d1a1b8ac858800bf0d`. See [research inventory 017](VERITAS_MISSION2_RESEARCH_INVENTORY_017.json).
-- The protected Reality user services `midas-reality.service`, `midas-reality-shadow.service`, and `midas-reality-api.service` were active during the read-only check. The separate Reality worktree is clean. No service was restarted or modified by Veritas.
-
-The latest bounded Arena qualification is `job-97c08fcee4f0407b88c06ca1`.
-It completed all 17 finalized v4 events and persisted finding
-`veritas-qualification-v1-4158e04dd04c8f4f` over 311,541 source bytes. It
-found zero positive states at each of five qualification gates. The job's
-source hash matched the committed revision. A 12:16 no-launch reconciliation
-verified the finding and set the Director state to `CURRENT`; it admitted no
-additional job. The earlier 11:15 UTC job for scan 110153 remains failed at
-0/1 on source revision drift; it is preserved and was not retried. The live
-activity projection reports zero active or queued jobs and zero invalid
-artifacts. See [Gate F checkpoint
-005](VERITAS_MISSION2_GATE_F_CHECKPOINT_005.md) and prior [checkpoint
-004](VERITAS_MISSION2_GATE_F_CHECKPOINT_004.md).
-
-At 11:30 CEST, an observer run failed with `Invalid frozen control cohort`
-because the deployed scanner version rejected the file's legacy version tag.
-The frozen eight-ID file remains unchanged with the SHA256 above; current code
-accepts both the current and legacy tags. The 12:01 and 12:31 CEST scheduled
-scans succeeded. No manual scan was run to recover.
+- All three Veritas user timers are active. The latest observer run completed at 13:01:20 UTC, the finalized-source replay completed at 13:13:51 UTC, and the Director cycle completed at 13:15:58 UTC. Their next scheduled UTC runs are 13:31:21, 13:40:19, and 13:45:16. The oneshot services are inactive between runs as expected.
+- Latest scan: `scan-20261015T130114Z-f5e32eaf445c`, captured at 13:01:14 UTC and finalized under v4. The analyzer has 19 processed snapshots and no pending snapshots. The latest cumulative panel has 760 selected observations, 681 request/receipt-valid pairs, 79 invalid pairs, 326 distinct market IDs, and 160 pairs passing the prior reported-age/skew gate. The paired increase is 521/760 (+68.55 percentage points); all five economic gates remain zero-positive.
+- The latest six-frame bounded discovery union contains 298 unique IDs: 138 supported same-condition V1 binary pairs and 160 explicit exclusions (93 augmented NegRisk records and 67 unsupported outcome relationships). The selected panel has 40 markets, 37 rotating and all three available frozen controls. Scan 19 overlaps scan 18 on seven IDs; 33 rotating selections changed. Its liquidity counts are 15 high / 13 medium / 12 low; expiry counts are 19 near / 14 medium / 7 long; spread counts are 18 tight / 16 medium / 6 wide.
+- Runtime data uses 17,940,019 bytes under `data/veritas-observatory/`, below the 1 GiB hard cap. Snapshots and derived runtime artifacts are ignored by Git; versioned docs record identities and hashes. Do not prune or raise the cap without a separate retention review.
+- The 13:01 v2 scan used seven HTTP attempts (six Gamma frames and one CLOB batch) out of a 14-attempt maximum. Thirty-six selected pairs passed the quality gate; four had empty ask sides (one Yes and three No). The frozen control file hash remains `9578217e20dcc7d1c65fa110f0ed7c689b55483b61191f1aae8d30c9b7300d9a`.
+- The finalized Reality source analyzer remains `catching_up_finalized_source`: 1,676 of 3,432 cataloged finalized segments processed, with 1,756 segments / 470,661,304 bytes pending through ordinal 198,650. The 13:10 UTC recurrence processed 128 segments / 31,714,730 bytes in 187 seconds, using 9.34 CPU seconds and 141,037,568 bytes peak memory. Its partial prefix contains 15,469 campaign-window frame records, 11,367 touched market-frame states, and 11,000 quality-valid states, with zero positive top-ask and full-depth states. Summary digest: `03ace2c3d6761fdb92d6ed81df1e731ad3ed5cf3acda04d609b4b40f6fe27c4d`; summary file SHA256: `d5733cfdfd61e2fe702b79f6e4d894c9023761be7bd68168b3bb32725f6a8cb4`. **Correction:** the 12:43 summary's 4,078 `period_frame_records` were campaign-window frames, not zero. See [Gate A checkpoint 017](VERITAS_MISSION2_GATE_A_CHECKPOINT_017.md) and [inventory 020](VERITAS_MISSION2_RESEARCH_INVENTORY_020.json).
+- The 13:15 Director cycle admitted `job-a7320b92c7f0453ea32b1b79` for scan 19. Arena completed all 19 events at 13:16:07 UTC; finding `veritas-qualification-v1-6e262fb7c4325c0c` reports zero positive states at all five gates. The job and finding are complete, while the Director manifest still says `QUEUED` and retains scan 18 as last qualified. Its next scheduled cycle at 13:45:16 UTC is the reconciliation point. No manual poll or retry was started. See [Gate F checkpoint 007](VERITAS_MISSION2_GATE_F_CHECKPOINT_007.md).
+- The protected Reality user services were active during the last explicit read-only check. The separate Reality worktree was clean. No Reality service was restarted or modified, and no campaign data was changed.
 
 ## Research Director history projection
 
@@ -41,9 +22,9 @@ history of each displayed Director's recent events. It scans at most 128
 event files per Director, reads at most 64 KiB per event, and returns up to
 eight records. The API verifies each event filename against the canonical
 payload digest and confirms the Director identity before projecting selected
-fields. It does not alter Director manifests or events. The live projection
-returned eight verified entries from the Veritas Director's 19-file event
-archive, marked the view truncated, and reported zero invalid artifacts. The
+fields. It does not alter Director manifests or events. The last read-only projection check at 12:55 UTC returned eight verified
+entries from the Director's then-19-file event archive, marked the view
+truncated, and reported zero invalid artifacts. The
 full append-only event directory remains the durable record; the UI and API
 history are bounded views. See [Gate G checkpoint
 004](VERITAS_MISSION2_GATE_G_CHECKPOINT_004.md).
@@ -86,17 +67,32 @@ REST reference. These fixed-group reads remain separate from the recurring
 observer timer. See [Gate A checkpoint
 016](VERITAS_MISSION2_GATE_A_CHECKPOINT_016.md).
 
-The prospective v4 panel now contains 18 snapshots, 720 selected observations,
-645 quality-valid pairs, and zero-positive economic gates. The 12:45 UTC
-Director cycle admitted and completed the 18-event scan 18 qualification. The
-Arena job and finding are complete, while the Director manifest still shows a
-queued admission; the next scheduled Director cycle is 13:15 UTC. The 12:43
-finalized-source summary is at 1,548/3,373 cataloged segments, with 1,825
-segments / 487,084,989 bytes pending and no campaign-window frames in the
-processed prefix. See [research inventory
-019](VERITAS_MISSION2_RESEARCH_INVENTORY_019.json).
+## Gate A checkpoint 017 — current evidence
 
-## Gate A checkpoint 016 — current evidence
+The scheduled 13:01 UTC scan finalized as snapshot 19. The v4 panel contains
+760 selected observations, 681 quality-valid pairs, 79 invalid pairs, 160
+legacy age/skew-valid pairs, and 326 distinct markets. The paired yield
+increase is 521/760 (68.55 percentage points). All five economic gates remain
+zero-positive. Scan 19's bounded union has 298 unique records, 138 supported
+pairs, and 160 explicit exclusions; its 40-market sample retained 37 rotating
+markets and three available frozen controls.
+
+The 13:13 finalized-source summary contains 15,469 campaign-window frame
+records, 11,367 touched states, and 11,000 quality-valid states. The prefix
+remains incomplete with 1,756 finalized segments / 470,661,304 bytes pending;
+positive top-ask and full-depth counts remain zero. The earlier 12:43 summary
+also contained 4,078 campaign-window frame records, 2,779 touched states, and
+2,739 quality-valid states; checkpoint 016's interpretation of that counter as
+zero frames was incorrect and is corrected in checkpoint 017.
+
+The 13:15 Director admission completed all 19 events in Arena, but its
+manifest still showed `QUEUED` and scan 18 as last qualified at this check.
+The next Director cycle at 13:45:16 UTC is the scheduled reconciliation
+point. See [Gate A checkpoint 017](VERITAS_MISSION2_GATE_A_CHECKPOINT_017.md),
+[Gate F checkpoint 007](VERITAS_MISSION2_GATE_F_CHECKPOINT_007.md), and
+[research inventory 020](VERITAS_MISSION2_RESEARCH_INVENTORY_020.json).
+
+## Gate A checkpoint 016 — historical evidence
 
 The 12:31 UTC observer scan remains finalized as snapshot 18. It has 32
 quality-valid pairs and eight empty-ask invalid pairs; the cumulative panel has
@@ -112,6 +108,11 @@ capture does not establish independent sequence freshness. See [Gate A
 checkpoint 016](VERITAS_MISSION2_GATE_A_CHECKPOINT_016.md), [Gate F checkpoint
 006](VERITAS_MISSION2_GATE_F_CHECKPOINT_006.md), and [inventory
 019](VERITAS_MISSION2_RESEARCH_INVENTORY_019.json).
+
+The finalized-source summary referenced by checkpoint 016 contains 4,078
+campaign-window frame records, 2,779 touched market-frame states, and 2,739
+quality-valid states. Top-ask and full-depth positive counts remain zero, and
+the source prefix remains incomplete with finalized segments pending.
 
 The independent Reality source analyzer validates the frozen campaign identity and reads only cataloged finalized `.seg` inputs. It never opens `.open` files. Per run it is limited to 128 segments or 32 MiB of new segment data; each segment is capped at 16 MiB. Catalog scans are bounded. Source state and events retain campaign/code/prefix digests and stop on identity drift. Resource bounds remain CPU 5%, memory 256 MiB, low priority, ten-minute timeout, and Veritas-only writes.
 

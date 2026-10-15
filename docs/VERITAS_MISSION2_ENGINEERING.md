@@ -1,5 +1,30 @@
 # Veritas Mission 2 Engineering Checkpoint
 
+## Latest operational and discovery update — Gate A checkpoint 017 / Gate F checkpoint 007
+
+The 13:01 scheduled scan is snapshot 19. The cumulative panel has 760
+selected observations, 681 request/receipt-valid pairs, 79 invalid pairs, and
+326 distinct markets. The legacy reported-age/skew gate accepts 160 pairs,
+for a paired recovery of 521/760 (+68.55 percentage points). All five
+economic qualification gates remain zero-positive.
+
+The 13:10 finalized-source replay processed 128 segments / 31,714,730 bytes.
+Its partial prefix now covers 1,676/3,432 finalized segments and contains
+15,469 campaign-window frame records, 11,367 touched states, and 11,000
+quality-valid states. There are 1,756 segments / 470,661,304 bytes pending;
+positive top-ask and full-depth states remain zero. The 12:43 summary's 4,078
+`period_frame_records` were campaign-window frames, so checkpoint 016's
+statement that the prefix had no such frames was an interpretation error.
+
+The 13:15 Director cycle admitted scan 19, and Arena completed the 19-event
+qualification at 13:16:07 UTC. The finding remains zero-positive. At this
+checkpoint the Director manifest still showed `QUEUED` and scan 18 as last
+qualified; the next scheduled poll at 13:45:16 UTC is the reconciliation
+point. No manual poll or retry was started. See [Gate A checkpoint
+017](VERITAS_MISSION2_GATE_A_CHECKPOINT_017.md), [Gate F checkpoint
+007](VERITAS_MISSION2_GATE_F_CHECKPOINT_007.md), [operations](VERITAS_MISSION2_OPERATIONS.md),
+and [research inventory 020](VERITAS_MISSION2_RESEARCH_INVENTORY_020.json).
+
 ## Latest dashboard update — Gate G checkpoint 004
 
 The read-only Arena activity API now returns a bounded, filename-digest-
@@ -11,7 +36,7 @@ invalid artifacts; the source-drift failure and subsequent stable-revision
 qualification are both visible. Backend, frontend, type, lint, format, build,
 and browser checks passed. See [Gate G checkpoint 004](VERITAS_MISSION2_GATE_G_CHECKPOINT_004.md).
 
-## Latest operational update — Gate F checkpoint 005
+## Previous operational update — Gate F checkpoint 005
 
 The 12:15 Director cycle completed a new 17-event qualification for the 12:01
 scan on committed source revision `e78a95e2`. Its five opportunity gates
@@ -21,7 +46,7 @@ cataloged segments, with no campaign-window frames. See [Gate F checkpoint
 005](VERITAS_MISSION2_GATE_F_CHECKPOINT_005.md), [operations](VERITAS_MISSION2_OPERATIONS.md),
 and [research inventory 017](VERITAS_MISSION2_RESEARCH_INVENTORY_017.json).
 
-## Latest discovery status — Gate A checkpoint 014
+## Previous discovery status — Gate A checkpoint 014
 
 The 12:01 observer scan found 200 supported binary markets among 300 bounded
 IDs, with 100 explicit exclusions. Thirty-five of 40 selected pairs were
@@ -432,5 +457,30 @@ inventory 019](VERITAS_MISSION2_RESEARCH_INVENTORY_019.json).
 The 12:45 Arena qualification completed 18/18 finalized events and returned
 zero-positive results at all five gates. Its finding is complete in Arena,
 while the Director manifest retains a queued state pending the next scheduled
-poll. The finalized-source analyzer advanced to 1,548/3,373 segments and still
-has no campaign-window frames in its processed prefix.
+poll. The 12:43 finalized-source summary contained 4,078 campaign-window frame
+records, 2,779 touched market-frame states, and 2,739 quality-valid states;
+positive top-ask and full-depth states remained zero.
+
+## Gate A checkpoint 017 addendum — scan 19 and source-window replay
+
+Scan 19 adds 36 quality-valid pairs and four empty-ask invalid pairs. The 19-scan
+panel has 681/760 quality-valid observations, 160/760 legacy age/skew-valid
+observations, and no positive top, depth, per-leg minimum, or fee state. The
+bounded scan union has 298 unique IDs, 138 supported same-condition V1 pairs,
+and 160 explicit exclusions. The 40-market selection retains 37 rotating
+markets and three available frozen controls.
+
+The finalized-source analyzer counts `period_frame_records` inside the frozen
+campaign window. This changes the interpretation of checkpoint 016: its
+12:43 prefix had 4,078 campaign-window frames, 2,779 touched states, and 2,739
+quality-valid states. The 13:13 summary advances that count to 15,469 frames,
+11,367 touched states, and 11,000 quality-valid states, with zero positive
+top-ask or full-depth states. Replay remains partial and reads finalized
+segments only.
+
+The 13:15 Arena job completed all 19 events at 13:16:07 UTC with zero positive
+states at each qualification gate. Its manifest still projects `QUEUED` and
+scan 18 as last qualified until the scheduled 13:45:16 UTC cycle. Mission 2
+remains active. See [Gate A checkpoint 017](VERITAS_MISSION2_GATE_A_CHECKPOINT_017.md),
+[Gate F checkpoint 007](VERITAS_MISSION2_GATE_F_CHECKPOINT_007.md), and
+[research inventory 020](VERITAS_MISSION2_RESEARCH_INVENTORY_020.json).

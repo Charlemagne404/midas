@@ -40,9 +40,11 @@ The bounded finalized-source replay published at 12:43:27 UTC and advanced to
 pending. Its summary SHA256 is
 `15fb5a0364063e02b14c0bb435cb9538077557bb2125204b144c98cfa63f74d8`; its file
 SHA256 is
-`71ad639e9241e98721c82ab30ba4dbd9633dbba74f988e43342aab221bfa9e5d`. There
-are still no campaign-window frames in the processed prefix. The source timer
-remains active; no source files were changed.
+`71ad639e9241e98721c82ab30ba4dbd9633dbba74f988e43342aab221bfa9e5d`. The
+processed prefix contains 4,078 campaign-window frame records, including
+2,779 touched market-frame states and 2,739 quality-valid states; positive
+top-ask and full-depth states remain zero. The source timer remains active; no
+source files were changed.
 
 See [Gate A checkpoint 016](VERITAS_MISSION2_GATE_A_CHECKPOINT_016.md),
 [research inventory 019](VERITAS_MISSION2_RESEARCH_INVENTORY_019.json),

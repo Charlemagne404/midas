@@ -89,8 +89,11 @@ scheduled cycle reconciles it. Detailed lineage is in [Gate F checkpoint
 The 12:40 UTC bounded source replay published its summary at 12:43:27 UTC. It
 processed 1,548 of 3,373 cataloged finalized segments (351,662,824 bytes),
 leaving 1,825 segments / 487,084,989 bytes pending through ordinal 183,006.
-The processed prefix contains 4,078 campaign-period frame records but no
-campaign-window frames; readiness remains `catching_up_finalized_source`.
+The processed prefix contains 4,078 campaign-window frame records, including
+2,779 touched market-frame states and 2,739 quality-valid states; positive
+top-ask and full-depth states remain zero. The campaign window is incomplete
+because finalized segments remain pending; readiness is
+`catching_up_finalized_source`.
 Summary SHA256 is
 `15fb5a0364063e02b14c0bb435cb9538077557bb2125204b144c98cfa63f74d8`; file
 SHA256 is
