@@ -15,6 +15,117 @@ def write_artifact(root: Path, name: str, value: dict) -> None:
     path.write_text(json.dumps(value))
 
 
+def write_censoring_artifact(root: Path, *, campaign_id: str = "campaign-fixture") -> None:
+    write_artifact(
+        root,
+        "VERITAS_GATE_A_CENSORING_003.json",
+        {
+            "artifact_id": "VERITAS-GATE-A-CENSORING-TEST",
+            "captured_at_utc": "2026-10-15T08:00:00Z",
+            "analysis": {
+                "analysis_version": "veritas-forward-forensics-v1.3",
+                "campaign_id": campaign_id,
+                "query": {"truncated": False},
+                "coverage": {
+                    "decisions": 10,
+                    "markets": 2,
+                    "connected_families": 2,
+                    "valid_initial_decisions": 4,
+                    "invalid_initial_decisions": 6,
+                    "utc_days": ["2026-10-15"],
+                },
+                "outcomes": {
+                    "by_horizon": {
+                        "1000": {
+                            "counts_by_status": {
+                                "observed_public_measurement": 1,
+                                "censored": 9,
+                            },
+                            "censor_reasons": {
+                                "future_observation_unavailable": 3,
+                                "invalid_at_decision": 6,
+                            },
+                            "pending": 0,
+                        }
+                    },
+                    "censoring_detail": {
+                        "by_initial_quality_regime_horizon": {
+                            "items": [
+                                {
+                                    "initial_quality_regime": "valid_initial_observation",
+                                    "horizon_ms": 1000,
+                                    "scheduled_followups": 4,
+                                    "resolved_followups": 4,
+                                    "counts_by_status": {
+                                        "observed_public_measurement": 1,
+                                        "censored": 3,
+                                    },
+                                    "pending_followups": 0,
+                                },
+                                {
+                                    "initial_quality_regime": "invalid_initial:stale_book",
+                                    "horizon_ms": 1000,
+                                    "scheduled_followups": 6,
+                                    "resolved_followups": 6,
+                                    "counts_by_status": {"censored": 6},
+                                    "pending_followups": 0,
+                                },
+                            ]
+                        },
+                        "by_market_horizon": {
+                            "items": [
+                                {
+                                    "market_id": "market-a",
+                                    "horizon_ms": 1000,
+                                    "scheduled_followups": 4,
+                                    "resolved_followups": 4,
+                                    "pending_followups": 0,
+                                    "counts_by_status": {
+                                        "observed_public_measurement": 1,
+                                        "censored": 3,
+                                    },
+                                    "censor_reasons": {
+                                        "future_observation_unavailable": 3
+                                    },
+                                    "initial_quality_regimes": {
+                                        "valid_initial_observation": 4
+                                    },
+                                }
+                            ]
+                        },
+                        "by_utc_hour_horizon": {
+                            "items": [
+                                {
+                                    "utc_hour": "2026-10-15T08:00:00Z",
+                                    "horizon_ms": 1000,
+                                    "scheduled_followups": 10,
+                                    "resolved_followups": 10,
+                                    "pending_followups": 0,
+                                    "counts_by_status": {
+                                        "observed_public_measurement": 1,
+                                        "censored": 9,
+                                    },
+                                    "censor_reasons": {
+                                        "future_observation_unavailable": 3,
+                                        "invalid_at_decision": 6,
+                                    },
+                                    "initial_quality_regimes": {
+                                        "valid_initial_observation": 4,
+                                        "invalid_initial:stale_book": 6,
+                                    },
+                                }
+                            ]
+                        },
+                        "by_censoring_regime_horizon": {
+                            "1000": {"items": []}
+                        },
+                    },
+                },
+            },
+        },
+    )
+
+
 def fixture_client(tmp_path: Path) -> TestClient:
     write_artifact(
         tmp_path,
@@ -185,6 +296,50 @@ def test_overview_rejects_followup_counts_that_do_not_reconcile(tmp_path):
         "censored"
     ] = 8
     baseline.write_text(json.dumps(data))
+
+    assert client.get("/api/veritas/overview").status_code == 503
+
+
+def test_overview_uses_versioned_censoring_by_market_hour_and_quality(tmp_path):
+    client = fixture_client(tmp_path)
+    write_censoring_artifact(tmp_path)
+
+    response = client.get("/api/veritas/overview")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["captured_at_utc"] == "2026-10-15T08:00:00Z"
+    assert data["followup_yield"]["valid_initial_decisions"] == 4
+    assert data["followup_yield"]["source_analysis_version"] == "veritas-forward-forensics-v1.3"
+    assert data["followup_yield"]["by_horizon"] == [
+        {
+            "horizon_ms": 1000,
+            "observed": 1,
+            "censored": 3,
+            "invalid_initial": 6,
+            "pending": 0,
+            "censor_reasons": {
+                "future_observation_unavailable": 3,
+                "invalid_at_decision": 6,
+            },
+        }
+    ]
+    assert data["followup_censoring"]["market_group_count"] == 1
+    assert data["followup_censoring"]["utc_hour_group_count"] == 1
+    assert data["followup_censoring"]["by_market_at_longest_horizon"][0]["market_id"] == "market-a"
+    assert data["followup_censoring"]["by_market_at_longest_horizon"][0][
+        "valid_initial_censored"
+    ] == 3
+    assert data["followup_censoring"]["by_utc_hour_at_longest_horizon"][0][
+        "utc_hour"
+    ] == "2026-10-15T08:00:00Z"
+    assert any(item["id"] == "censoring" for item in data["artifacts"])
+    assert client.get("/api/veritas/artifacts/censoring").status_code == 200
+
+
+def test_overview_rejects_censoring_artifact_from_another_campaign(tmp_path):
+    client = fixture_client(tmp_path)
+    write_censoring_artifact(tmp_path, campaign_id="different-campaign")
 
     assert client.get("/api/veritas/overview").status_code == 503
 

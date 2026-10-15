@@ -1,5 +1,5 @@
 import { afterEach, expect, it, vi } from 'vitest';
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Veritas } from './Veritas';
 
@@ -55,6 +55,63 @@ it('labels measured evidence and keeps synthetic execution separate from actual 
               censor_reasons: { invalid_at_decision: 1027 },
             },
           ],
+          source_analysis_version: 'veritas-forward-forensics-v1.3',
+        },
+        followup_censoring: {
+          status: 'available',
+          analysis_version: 'veritas-forward-forensics-v1.3',
+          captured_at_utc: '2026-10-15T08:00:00Z',
+          campaign_id: 'campaign-fixture',
+          decision_count: 1408,
+          market_count: 10,
+          connected_family_count: 6,
+          valid_initial_decisions: 381,
+          invalid_initial_decisions: 1027,
+          utc_days: ['2026-10-15'],
+          query_truncated: false,
+          longest_horizon_ms: 5000,
+          by_market_at_longest_horizon: [
+            {
+              market_id: 'market-a',
+              scheduled_followups: 40,
+              valid_initial_followups: 20,
+              observed: 2,
+              valid_initial_censored: 18,
+              invalid_initial_censored: 20,
+              pending_followups: 0,
+              primary_valid_censor_reason: 'future_observation_not_recorded',
+              primary_valid_censor_count: 10,
+            },
+          ],
+          market_group_count: 10,
+          by_utc_hour_at_longest_horizon: [
+            {
+              utc_hour: '2026-10-15T08:00:00Z',
+              scheduled_followups: 40,
+              valid_initial_followups: 20,
+              observed: 2,
+              valid_initial_censored: 18,
+              invalid_initial_censored: 20,
+              pending_followups: 0,
+              primary_valid_censor_reason: 'future_observation_not_recorded',
+              primary_valid_censor_count: 10,
+            },
+          ],
+          utc_hour_group_count: 1,
+          by_censoring_regime_horizon: {
+            '5000': {
+              items: [
+                {
+                  regime: 'future_observation_not_recorded',
+                  censored_followups: 10,
+                  censor_reasons: { future_observation_unavailable: 10 },
+                },
+              ],
+            },
+          },
+          followup_yield: [],
+          artifact: { id: 'censoring', label: 'Read-only censoring analysis' },
+          limitations: ['Interim correlated evidence.'],
         },
         baseline_policies: { count: 6, all_abstained: true },
         execution_sensitivity: {
@@ -178,7 +235,10 @@ it('labels measured evidence and keeps synthetic execution separate from actual 
           summary_artifact: null,
           limitations: ['No finalized Reality source segments have been indexed yet.'],
         },
-        artifacts: [{ id: 'raw-funnel', label: 'Observed raw opportunity funnel' }],
+        artifacts: [
+          { id: 'raw-funnel', label: 'Observed raw opportunity funnel' },
+          { id: 'censoring', label: 'Read-only censoring by market, time, horizon and quality' },
+        ],
         limitations: ['Displayed liquidity is not guaranteed executable quantity.'],
       }),
     }),
@@ -204,8 +264,16 @@ it('labels measured evidence and keeps synthetic execution separate from actual 
   expect(
     screen.getByText(/Real fills, queue position and profitability remain unknown/),
   ).toBeInTheDocument();
+  expect(screen.getByText(/Latest read-only campaign snapshot/)).toBeInTheDocument();
+  fireEvent.click(screen.getByText(/Inspect censoring by market and UTC hour/));
+  expect(screen.getByText('market-a')).toBeInTheDocument();
+  expect(screen.getByText('2026-10-15T08:00:00Z')).toBeInTheDocument();
   expect(screen.getByRole('link', { name: /Observed raw opportunity funnel/ })).toHaveAttribute(
     'href',
     '/api/veritas/artifacts/raw-funnel',
+  );
+  expect(screen.getByRole('link', { name: /Read-only censoring by market/ })).toHaveAttribute(
+    'href',
+    '/api/veritas/artifacts/censoring',
   );
 });

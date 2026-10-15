@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 from midas.reality.research_schema import digest
 from midas.reality.storage import canonical
-from midas.veritas.forensics import analyze_forward_campaign
+from midas.veritas.forensics import _censoring_regime, analyze_forward_campaign
 
 
 def write_campaign(root: Path) -> None:
@@ -104,6 +104,7 @@ def test_forward_forensics_separates_initial_invalid_from_future_censoring(tmp_p
 
     report = analyze_forward_campaign(tmp_path)
 
+    assert report["analysis_version"] == "veritas-forward-forensics-v1.3"
     assert report["coverage"]["decisions"] == 2
     assert report["coverage"]["valid_initial_decisions"] == 1
     assert report["coverage"]["invalid_initial_decisions"] == 1
@@ -116,8 +117,54 @@ def test_forward_forensics_separates_initial_invalid_from_future_censoring(tmp_p
         "valid_initial_state": {"future_observation_unavailable": 1},
         "invalid_initial_state": {"invalid_at_decision": 2},
     }
+    detail = report["outcomes"]["censoring_detail"]
+    by_market_horizon = {
+        (row["market_id"], row["horizon_ms"]): row
+        for row in detail["by_market_horizon"]["items"]
+    }
+    assert by_market_horizon[("market-a", 300)]["censor_reasons"] == {
+        "future_observation_unavailable": 1
+    }
+    assert by_market_horizon[("market-b", 100)]["initial_quality_regimes"] == {
+        "invalid_initial:stale_book": 1
+    }
+    by_hour_horizon = {
+        (row["utc_hour"], row["horizon_ms"]): row
+        for row in detail["by_utc_hour_horizon"]["items"]
+    }
+    assert by_hour_horizon[("1970-01-01T00:00:00Z", 100)]["counts_by_status"] == {
+        "observed_public_measurement": 1,
+        "censored": 1,
+    }
+    assert detail["by_censoring_regime_horizon"]["100"]["items"] == [
+        {
+            "regime": "invalid_initial_observation",
+            "censored_followups": 1,
+            "censor_reasons": {"invalid_at_decision": 1},
+        }
+    ]
     assert report["actual_orders_submitted"] == 0
     assert report["realized_money"] is None
+
+
+def test_forward_forensics_counts_missing_outcome_rows_as_pending_per_market(tmp_path):
+    write_campaign(tmp_path)
+    db = sqlite3.connect(tmp_path / "shadow.sqlite")
+    db.execute("delete from outcomes where decision_id=? and horizon=?", ("b" * 64, 300))
+    db.commit()
+    db.close()
+
+    report = analyze_forward_campaign(tmp_path)
+
+    by_market_horizon = {
+        (row["market_id"], row["horizon_ms"]): row
+        for row in report["outcomes"]["censoring_detail"]["by_market_horizon"]["items"]
+    }
+    pending = by_market_horizon[("market-b", 300)]
+    assert pending["scheduled_followups"] == 1
+    assert pending["resolved_followups"] == 0
+    assert pending["pending_followups"] == 1
+    assert report["outcomes"]["by_horizon"]["300"]["pending"] == 1
 
 
 def test_forward_forensics_reads_sqlite_without_changing_it(tmp_path):
@@ -152,6 +199,18 @@ def test_forward_forensics_bounds_query_size(tmp_path):
 
     with pytest.raises(ValueError, match="Unbounded"):
         analyze_forward_campaign(tmp_path, limit=50_001)
+
+
+def test_censoring_regimes_keep_feed_gaps_skew_and_semantics_distinct():
+    assert _censoring_regime("recorded_gap:book_resynchronization") == (
+        "recorded_feed_or_resynchronization_gap"
+    )
+    assert _censoring_regime("book_issue:gap:book_resynchronization") == (
+        "recorded_feed_or_resynchronization_gap"
+    )
+    assert _censoring_regime("cross_outcome_observation_skew") == "cross_outcome_synchronization"
+    assert _censoring_regime("unsupported_pair_semantics") == "unsupported_contract_semantics"
+    assert _censoring_regime("stale_book") == "stale_followup_observation"
 
 
 def test_forward_forensics_rejects_changed_frozen_identity(tmp_path):

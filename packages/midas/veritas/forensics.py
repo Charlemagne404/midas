@@ -7,6 +7,7 @@ import json
 import sqlite3
 import zlib
 from collections import Counter, defaultdict
+from datetime import UTC, datetime
 from decimal import ROUND_CEILING, Decimal
 from pathlib import Path
 from typing import Any
@@ -15,6 +16,72 @@ from midas.reality.research_schema import digest
 
 MAX_DECISIONS = 50_000
 _OUTCOME_REASONS = ("invalid_at_decision",)
+_CENSORING_REGIMES = {
+    "invalid_at_decision": "invalid_initial_observation",
+    "future_observation_unavailable": "future_observation_not_recorded",
+    "source_followup_availability_timeout": "source_availability_timeout",
+    "stale_book": "stale_followup_observation",
+    "book_issue:stale": "stale_followup_observation",
+    "future_preceded_durable_decision": "event_order_or_reconstruction",
+    "independent_book_divergence": "cross_outcome_observation_divergence",
+    "cross_outcome_observation_skew": "cross_outcome_synchronization",
+    "book_issue:advertised_top_pending": "book_quality_or_reconstruction",
+    "book_issue:timestamp_regression": "event_order_or_reconstruction",
+    "unsupported_pair_semantics": "unsupported_contract_semantics",
+    "invalid_complementary_pair": "unsupported_contract_semantics",
+    "unverified_market_metadata": "market_metadata_verification",
+    "reported_expiry_reached": "market_lifecycle",
+    "missing_outcome_snapshot": "future_observation_coverage",
+    "market_retired_or_unobserved": "market_lifecycle_or_coverage",
+    "market_left_cohort": "market_lifecycle_or_coverage",
+    "source_prefix_ended": "source_coverage_boundary",
+    "source_revision_changed": "source_revision_or_reconstruction",
+    "tick_regime_changed": "market_regime_change",
+    "source_timing_uncertainty": "source_timing_or_clock",
+    "future_book_receipt": "event_order_or_reconstruction",
+    "missing_durable_decision_commit_proof": "decision_commit_evidence",
+    "shadow_clock_uncertainty": "clock_uncertainty",
+}
+
+
+def _censoring_regime(reason: str) -> str:
+    if reason.startswith(("recorded_gap:", "book_issue:gap:")):
+        return "recorded_feed_or_resynchronization_gap"
+    return _CENSORING_REGIMES.get(reason, "other_recorded_censor_reason")
+
+
+def _utc_hour(decision_ns: int) -> str:
+    hour = datetime.fromtimestamp(decision_ns // 1_000_000_000, tz=UTC)
+    return hour.strftime("%Y-%m-%dT%H:00:00Z")
+
+
+def _new_censor_bucket() -> dict[str, Any]:
+    return {
+        "scheduled_followups": 0,
+        "resolved_followups": 0,
+        "counts_by_status": Counter(),
+        "censor_reasons": Counter(),
+        "censoring_regimes": Counter(),
+        "initial_quality_regimes": Counter(),
+        "censors_by_initial_quality_regime": Counter(),
+    }
+
+
+def _serialize_censor_bucket(bucket: dict[str, Any]) -> dict[str, Any]:
+    scheduled = int(bucket["scheduled_followups"])
+    resolved = int(bucket["resolved_followups"])
+    return {
+        "scheduled_followups": scheduled,
+        "resolved_followups": resolved,
+        "counts_by_status": dict(bucket["counts_by_status"]),
+        "pending_followups": scheduled - resolved,
+        "censor_reasons": dict(bucket["censor_reasons"]),
+        "censoring_regimes": dict(bucket["censoring_regimes"]),
+        "initial_quality_regimes": dict(bucket["initial_quality_regimes"]),
+        "censors_by_initial_quality_regime": dict(
+            bucket["censors_by_initial_quality_regime"]
+        ),
+    }
 
 
 def _decode_event(body: bytes) -> dict[str, Any]:
@@ -134,6 +201,10 @@ def analyze_forward_campaign(
                 "day": day,
                 "valid": valid,
                 "reason": reason,
+                "initial_quality_regime": (
+                    "valid_initial_observation" if valid else f"invalid_initial:{reason}"
+                ),
+                "utc_hour": _utc_hour(int(ns)),
                 "event": item,
             }
             market = per_market.setdefault(
@@ -199,6 +270,22 @@ def analyze_forward_campaign(
                     }
                 )
 
+        market_horizon: dict[tuple[str, int], dict[str, Any]] = defaultdict(_new_censor_bucket)
+        hour_horizon: dict[tuple[str, int], dict[str, Any]] = defaultdict(_new_censor_bucket)
+        quality_horizon: dict[tuple[str, int], dict[str, Any]] = defaultdict(_new_censor_bucket)
+        mechanism_horizon: dict[tuple[str, int], Counter[str]] = defaultdict(Counter)
+        for _uid, decision in decision_by_id.items():
+            dimensions = (
+                (market_horizon, str(decision["market_id"])),
+                (hour_horizon, str(decision["utc_hour"])),
+                (quality_horizon, str(decision["initial_quality_regime"])),
+            )
+            for dimension, label in dimensions:
+                for horizon in horizons:
+                    bucket = dimension[(label, horizon)]
+                    bucket["scheduled_followups"] += 1
+                    bucket["initial_quality_regimes"][decision["initial_quality_regime"]] += 1
+
         outcome_status: Counter[str] = Counter()
         censor_reasons: Counter[str] = Counter()
         censor_by_initial_validity: dict[str, Counter[str]] = defaultdict(Counter)
@@ -207,24 +294,88 @@ def analyze_forward_campaign(
         covered: set[tuple[str, int]] = set()
         for outcome in outcomes:
             uid = outcome["decision_id"]
+            if uid not in decision_by_id:
+                raise ValueError("Outcome index points outside the selected decision set")
             horizon = outcome["horizon"]
             status = outcome["status"]
             reason = outcome["reason"]
             covered.add((uid, horizon))
             outcome_status[status] += 1
             horizon_outcomes[str(horizon)][status] += 1
+            decision = decision_by_id[uid]
+            initial_quality_regime = str(decision["initial_quality_regime"])
+            censoring_regime = _censoring_regime(str(reason or "unspecified"))
+            for dimension, label in (
+                (market_horizon, str(decision["market_id"])),
+                (hour_horizon, str(decision["utc_hour"])),
+                (quality_horizon, initial_quality_regime),
+            ):
+                bucket = dimension[(label, horizon)]
+                bucket["resolved_followups"] += 1
+                bucket["counts_by_status"][status] += 1
             if status == "censored":
                 censor_reasons[str(reason or "unspecified")] += 1
-                initial_valid = decision_by_id[uid]["valid"]
-                bucket = "valid_initial_state" if initial_valid else "invalid_initial_state"
-                censor_by_initial_validity[bucket][str(reason or "unspecified")] += 1
+                initial_valid = decision["valid"]
+                validity_bucket = (
+                    "valid_initial_state" if initial_valid else "invalid_initial_state"
+                )
+                censor_by_initial_validity[validity_bucket][str(reason or "unspecified")] += 1
                 horizon_censors[str(horizon)][str(reason or "unspecified")] += 1
+                mechanism_horizon[(censoring_regime, horizon)][str(reason or "unspecified")] += 1
+                for dimension, label in (
+                    (market_horizon, str(decision["market_id"])),
+                    (hour_horizon, str(decision["utc_hour"])),
+                    (quality_horizon, initial_quality_regime),
+                ):
+                    group = dimension[(label, horizon)]
+                    group["censor_reasons"][str(reason or "unspecified")] += 1
+                    group["censoring_regimes"][censoring_regime] += 1
+                    group["censors_by_initial_quality_regime"][initial_quality_regime] += 1
 
         pending_by_horizon: Counter[str] = Counter()
         for uid in selected_ids:
             for horizon in horizons:
                 if (uid, horizon) not in covered:
                     pending_by_horizon[str(horizon)] += 1
+
+        def serialize_dimension(
+            grouped: dict[tuple[str, int], dict[str, Any]],
+            key_name: str,
+            *,
+            limit_rows: int,
+            sort_by_count: bool,
+        ) -> dict[str, Any]:
+            rows = []
+            for (label, horizon), bucket in grouped.items():
+                rows.append(
+                    {key_name: label, "horizon_ms": horizon, **_serialize_censor_bucket(bucket)}
+                )
+            if sort_by_count:
+                rows.sort(
+                    key=lambda row: (
+                        -int(row["scheduled_followups"]),
+                        str(row[key_name]),
+                        int(row["horizon_ms"]),
+                    )
+                )
+            else:
+                rows.sort(key=lambda row: (str(row[key_name]), int(row["horizon_ms"])))
+            return {"items": rows[:limit_rows], "truncated_group_count": max(0, len(rows) - limit_rows)}
+
+        censoring_regime_by_horizon: dict[str, dict[str, Any]] = {}
+        for horizon in horizons:
+            rows = []
+            for (regime, bucket_horizon), reasons in mechanism_horizon.items():
+                if bucket_horizon == horizon:
+                    rows.append(
+                        {
+                            "regime": regime,
+                            "censored_followups": sum(reasons.values()),
+                            "censor_reasons": dict(reasons),
+                        }
+                    )
+            rows.sort(key=lambda row: (-row["censored_followups"], row["regime"]))
+            censoring_regime_by_horizon[str(horizon)] = {"items": rows}
 
         ordered_markets = sorted(
             per_market.items(), key=lambda item: (-item[1]["decisions"], item[0])
@@ -254,7 +405,7 @@ def analyze_forward_campaign(
 
     return {
         "schema_version": 1,
-        "analysis_version": "veritas-forward-forensics-v1.1",
+        "analysis_version": "veritas-forward-forensics-v1.3",
         "campaign_id": campaign_id,
         "campaign_plan_sha256": hashlib.sha256(plan_path.read_bytes()).hexdigest(),
         "source_kind": identity.get("source_kind"),
@@ -299,6 +450,49 @@ def analyze_forward_campaign(
                 for horizon, counts in horizon_outcomes.items()
             },
             "initial_invalid_censor_reasons": list(_OUTCOME_REASONS),
+            "censoring_detail": {
+                "by_market_horizon": serialize_dimension(
+                    market_horizon, "market_id", limit_rows=500, sort_by_count=True
+                ),
+                "by_utc_hour_horizon": serialize_dimension(
+                    hour_horizon, "utc_hour", limit_rows=1000, sort_by_count=False
+                ),
+                "by_initial_quality_regime_horizon": serialize_dimension(
+                    quality_horizon,
+                    "initial_quality_regime",
+                    limit_rows=500,
+                    sort_by_count=True,
+                ),
+                "by_censoring_regime_horizon": censoring_regime_by_horizon,
+                "regime_definitions": {
+                    "initial_quality_regime": "valid_initial_observation or invalid_initial:<frozen decision quality reason>",
+                    "censoring_regime": "A descriptive grouping of the recorded follow-up censor reason; it does not infer causes absent from the source event.",
+                    "pending_followup": "No outcome row exists for the selected decision and frozen horizon in this SQLite read snapshot.",
+                },
+                "reason_interpretations": {
+                    "invalid_at_decision": "The frozen policy marks each horizon censored because the initial observation failed its recorded quality gate; inspect the initial_quality_regime breakdown for the reason.",
+                    "future_observation_unavailable": "No qualifying synchronized future observation was found in the recorded source for this horizon; this does not establish that the venue had no quote.",
+                    "source_followup_availability_timeout": "The bounded follow-up source did not produce an available observation before its recorded timeout.",
+                    "stale_book": "A future book was available but failed the frozen freshness rule.",
+                    "recorded_gap: and book_issue:gap:": "The source or reconstructed book recorded a continuity/resynchronization gap.",
+                    "book_issue:advertised_top_pending": "The recorded advertised top was not reconciled by the frozen follow-up quality checks.",
+                    "book_issue:timestamp_regression and future_preceded_durable_decision": "The recorded event-time ordering was inconsistent; these are evidence-quality labels and do not alone prove an implementation defect.",
+                    "independent_book_divergence": "The independent outcome books disagreed under the frozen consistency check.",
+                    "cross_outcome_observation_skew": "The two outcome observations exceeded the frozen synchronization window.",
+                    "unsupported_pair_semantics and invalid_complementary_pair": "The contract relationship failed the frozen payoff/identity checks.",
+                    "unverified_market_metadata": "Required market or fee metadata was not verified by the frozen checks.",
+                    "reported_expiry_reached": "The market's reported lifecycle end was reached.",
+                    "missing_outcome_snapshot": "The source lacked one required outcome snapshot at the follow-up check.",
+                    "market_retired_or_unobserved and market_left_cohort": "The market was absent from the reconstructed cohort at follow-up.",
+                    "source_prefix_ended": "The available source prefix ended before a qualifying follow-up.",
+                    "source_revision_changed": "The source producer or reconstruction identity changed from the frozen allowlist.",
+                    "tick_regime_changed": "The effective tick-size regime differed from the initial decision.",
+                    "source_timing_uncertainty and shadow_clock_uncertainty": "Recorded receiver/clock timing uncertainty blocked a synchronized label.",
+                    "future_book_receipt": "A book had an event receipt later than the decision evaluation time.",
+                    "missing_durable_decision_commit_proof": "The worker lacked durable commit timing proof for the decision.",
+                    "unlabeled_causes": "The source does not identify unsupported contract semantics, legitimate outcome unknowability, or a confirmed implementation defect as separate causes unless a specific recorded reason says so.",
+                },
+            },
         },
         "actual_orders_submitted": 0,
         "actual_fills": "unknown_counterfactual",

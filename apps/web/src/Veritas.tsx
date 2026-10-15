@@ -12,6 +12,49 @@ type Horizon = {
   censor_reasons: Record<string, number>;
 };
 
+type CensoringDimensionRow = {
+  scheduled_followups: number;
+  valid_initial_followups: number;
+  observed: number;
+  valid_initial_censored: number;
+  invalid_initial_censored: number;
+  pending_followups: number;
+  primary_valid_censor_reason: string | null;
+  primary_valid_censor_count: number;
+} & ({ market_id: string; utc_hour?: never } | { utc_hour: string; market_id?: never });
+
+type FollowupCensoring = {
+  status: string;
+  analysis_version: string;
+  captured_at_utc: string;
+  campaign_id: string;
+  decision_count: number;
+  market_count: number;
+  connected_family_count: number;
+  valid_initial_decisions: number;
+  invalid_initial_decisions: number;
+  utc_days: string[];
+  query_truncated: boolean;
+  longest_horizon_ms: number;
+  by_market_at_longest_horizon: CensoringDimensionRow[];
+  market_group_count: number;
+  by_utc_hour_at_longest_horizon: CensoringDimensionRow[];
+  utc_hour_group_count: number;
+  by_censoring_regime_horizon: Record<
+    string,
+    {
+      items: Array<{
+        regime: string;
+        censored_followups: number;
+        censor_reasons: Record<string, number>;
+      }>;
+    }
+  >;
+  followup_yield: Horizon[];
+  artifact: Artifact;
+  limitations: string[];
+};
+
 type Artifact = { id: string; label: string };
 
 type ObservatoryCandidate = {
@@ -188,7 +231,12 @@ type Overview = {
       positive_count: number;
     };
   };
-  followup_yield: { valid_initial_decisions: number; by_horizon: Horizon[] };
+  followup_yield: {
+    valid_initial_decisions: number;
+    by_horizon: Horizon[];
+    source_analysis_version?: string;
+  };
+  followup_censoring: FollowupCensoring | null;
   baseline_policies: { count: number; all_abstained: boolean };
   execution_sensitivity: {
     quantity_shares_per_leg: string;
@@ -308,6 +356,7 @@ export function Veritas() {
   const observatoryDiscovery = observatory.discovery;
   const observatoryOpportunity = observatory.opportunity;
   const observatoryQuality = observatory.data_quality;
+  const followupCensoring = data.followup_censoring ?? null;
   const positiveFullDepthAt20 =
     observatoryOpportunity.positive_minimum_notional_by_quantity['20'] ?? 0;
   const latestCategories = Object.entries(observatoryDiscovery.latest_by_category).sort(
@@ -813,7 +862,11 @@ export function Veritas() {
         <Panel
           eyebrow="OBSERVED PUBLIC MEASUREMENTS"
           title="Follow-up yield"
-          note={`Observed and censored counts use ${fmt(denominator)} valid starts. Invalid initial states are shown separately; this one-day cohort is not venue-wide.`}
+          note={
+            followupCensoring
+              ? `Latest read-only campaign snapshot · ${fmt(followupCensoring.decision_count)} decisions across ${fmt(followupCensoring.market_count)} markets · ${followupCensoring.query_truncated ? 'query capped at its decision bound' : 'all indexed decisions in this snapshot'}.`
+              : `Observed and censored counts use ${fmt(denominator)} valid starts from the preserved baseline snapshot. Invalid initial states are shown separately.`
+          }
         >
           <div className="ve-horizon-table">
             <div className="ve-table-head">
@@ -852,6 +905,92 @@ export function Veritas() {
               ))}
             </div>
           </details>
+          {followupCensoring && (
+            <details className="ve-censor-details">
+              <summary>
+                Inspect censoring by market and UTC hour ·{' '}
+                {followupCensoring.longest_horizon_ms >= 1000
+                  ? `${followupCensoring.longest_horizon_ms / 1000} s`
+                  : `${followupCensoring.longest_horizon_ms} ms`}
+              </summary>
+              <div className="ve-censor-dimensions">
+                <p>
+                  As of {time(followupCensoring.captured_at_utc)} ·{' '}
+                  {fmt(followupCensoring.valid_initial_decisions)} valid initial decisions ·{' '}
+                  {fmt(followupCensoring.invalid_initial_decisions)} invalid initial decisions. The
+                  market table shows up to{' '}
+                  {fmt(followupCensoring.by_market_at_longest_horizon.length)} of{' '}
+                  {fmt(followupCensoring.market_group_count)} markets.
+                </p>
+                <div className="ve-censor-dimension-grid">
+                  <div className="ve-censor-dimension-block">
+                    <strong>Market</strong>
+                    <div className="ve-censor-dimension-head">
+                      <span>Market</span>
+                      <span>Valid starts</span>
+                      <span>Observed</span>
+                      <span>Valid censored</span>
+                      <span>Pending</span>
+                    </div>
+                    {followupCensoring.by_market_at_longest_horizon.map((row) => (
+                      <div className="ve-censor-dimension-row" key={row.market_id}>
+                        <code>{row.market_id}</code>
+                        <span>{fmt(row.valid_initial_followups)}</span>
+                        <span>{fmt(row.observed)}</span>
+                        <span>{fmt(row.valid_initial_censored)}</span>
+                        <span>{fmt(row.pending_followups)}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="ve-censor-dimension-block">
+                    <strong>UTC hour</strong>
+                    <div className="ve-censor-dimension-head">
+                      <span>Hour</span>
+                      <span>Valid starts</span>
+                      <span>Observed</span>
+                      <span>Valid censored</span>
+                      <span>Pending</span>
+                    </div>
+                    {followupCensoring.by_utc_hour_at_longest_horizon.map((row) => (
+                      <div className="ve-censor-dimension-row" key={row.utc_hour}>
+                        <code>{row.utc_hour}</code>
+                        <span>{fmt(row.valid_initial_followups)}</span>
+                        <span>{fmt(row.observed)}</span>
+                        <span>{fmt(row.valid_initial_censored)}</span>
+                        <span>{fmt(row.pending_followups)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div className="ve-censor-regimes">
+                  <strong>Censoring mechanism by horizon</strong>
+                  {Object.entries(followupCensoring.by_censoring_regime_horizon).map(
+                    ([horizon, group]) => (
+                      <div key={horizon}>
+                        <b>
+                          {Number(horizon) >= 1000
+                            ? `${Number(horizon) / 1000} s`
+                            : `${horizon} ms`}
+                        </b>
+                        {group.items.map((item) => (
+                          <span key={item.regime}>
+                            {item.regime.replaceAll('_', ' ')}{' '}
+                            <em>{fmt(item.censored_followups)}</em>
+                          </span>
+                        ))}
+                      </div>
+                    ),
+                  )}
+                </div>
+                <p className="ve-censor-limit">
+                  “Future observation unavailable” means no qualifying synchronized follow-up was
+                  recorded; it does not prove that the venue had no quote. Pending means no outcome
+                  row existed in this read snapshot. See the linked artifact for every market, hour,
+                  quality regime, and recorded censor reason.
+                </p>
+              </div>
+            </details>
+          )}
         </Panel>
       </div>
 

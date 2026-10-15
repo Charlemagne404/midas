@@ -14,6 +14,7 @@ test('shows the bounded discovery cohort and links its finalized evidence', asyn
   await expect(
     page.getByText(/No quality-valid positive full-depth gross candidate has been recorded/),
   ).toBeVisible();
+  await expect(page.getByText(/Latest read-only campaign snapshot/)).toBeVisible();
 
   const snapshotLink = page.getByRole('link', { name: /Inspect latest immutable snapshot/ });
   await expect(snapshotLink).toHaveAttribute(
@@ -31,6 +32,14 @@ test('shows the bounded discovery cohort and links its finalized evidence', asyn
   const analysis = await page.request.get('/api/veritas/artifacts/continuous-analysis');
   expect(analysis.ok()).toBeTruthy();
   expect((await analysis.json()).data.analysis_version).toBe(
-    'veritas-finalized-snapshot-analysis-v2',
+    'veritas-finalized-snapshot-analysis-v4',
   );
+
+  const censoring = await page.request.get('/api/veritas/artifacts/censoring');
+  expect(censoring.ok()).toBeTruthy();
+  const censoringArtifact = await censoring.json();
+  expect(censoringArtifact.data.analysis.analysis_version).toBe('veritas-forward-forensics-v1.3');
+  expect(censoringArtifact.data.analysis.coverage.decisions).toBeGreaterThan(1_000);
+  await page.getByText(/Inspect censoring by market and UTC hour/).click();
+  await expect(page.getByText('future observation not recorded').first()).toBeVisible();
 });

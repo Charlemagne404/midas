@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-15T08:33:56Z",
+  "updated_at_utc": "2026-10-15T08:53:20Z",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -2043,10 +2043,69 @@
       ],
       "decision": "Keep no-trade; preserve the run and repeat only when new finalized snapshots arrive.",
       "status": "continue"
+    },
+    {
+      "hypothesis_id": "VERITAS-H043",
+      "title": "Follow-up censoring varies across market, UTC hour, horizon, and initial quality regimes",
+      "mechanism": "A frozen, source-grounded grouping should separate invalid initial states from post-decision future observation loss, stale follow-ups, explicit gaps, timeouts, and reconstruction or ordering evidence.",
+      "experiment_id": "VERITAS-M2-GATE-C-CENSORING-003",
+      "dataset_id": "4e7d8d2bde0cda1afdc5876de2fbc31c3a54219b95d9baba0bfbfeed454b9b72",
+      "success_metric": "Reconcile every scheduled horizon slot into an observed result, censor, or pending row and expose market, decision UTC hour, initial quality, and mechanism dimensions without modifying the campaign.",
+      "result": {
+        "status": "grouped_and_reconciled",
+        "capture_utc": "2026-10-15T08:44:25Z",
+        "decisions": 10165,
+        "markets": 42,
+        "connected_families": 36,
+        "horizon_slots": 40660,
+        "observed_public_measurements": 930,
+        "censored_followups": 39730,
+        "pending_rows": 0,
+        "valid_initial_decisions": 3481,
+        "invalid_initial_decisions": 6684,
+        "market_horizon_groups": 168,
+        "utc_hour_horizon_groups": 48,
+        "initial_quality_horizon_groups": 32,
+        "future_observation_unavailable_valid_initial": 10184
+      },
+      "limitations": [
+        "The campaign writer can append after the read transaction; zero pending applies only to this snapshot.",
+        "future_observation_unavailable does not distinguish quiet venue behavior from all feed and cohort coverage gaps.",
+        "The full SQLite integrity scan and complete event hash-chain replay were not run.",
+        "Repeated market/time observations and connected families are dependent."
+      ],
+      "decision": "Keep campaign history unchanged and seek independent feed coverage or sequence evidence before resolving the unavailable-future mixture.",
+      "status": "continue"
+    },
+    {
+      "hypothesis_id": "VERITAS-H044",
+      "title": "The read-only Veritas dashboard can expose censoring patterns with source and status safeguards",
+      "mechanism": "A campaign-matched versioned artifact with count reconciliation and bounded dimensions can support a compact market/hour/horizon UI while keeping pending outcomes distinct from censor labels.",
+      "experiment_id": "VERITAS-M2-GATE-G-DASHBOARD-003",
+      "dataset_id": "4e7d8d2bde0cda1afdc5876de2fbc31c3a54219b95d9baba0bfbfeed454b9b72",
+      "success_metric": "Validate campaign identity and per-horizon counts in the API, then render market/hour/mechanism coverage and a link to the bounded full artifact.",
+      "result": {
+        "status": "implemented_and_verified",
+        "market_rows_exposed": 20,
+        "markets_in_artifact": 42,
+        "utc_hour_rows_exposed": 12,
+        "artifact_linked": true,
+        "api_read_only": true,
+        "backend_tests": 88,
+        "frontend_tests": 29,
+        "browser_e2e_passed": true
+      },
+      "limitations": [
+        "The dashboard exposes bounded rows; the full artifact remains necessary for complete detail.",
+        "No execution fills or strategy PnL are measured.",
+        "Director and tournament reporting remain unimplemented."
+      ],
+      "decision": "Keep the dashboard evidence-linked and read-only; extend it only when the remaining research and Director evidence has a validated artifact contract.",
+      "status": "continue"
     }
   ],
   "next_research_questions": [
-    "How does valid follow-up censoring vary by market, UTC hour, horizon, and source-quality regime when aggregated from the frozen read-only journal?",
+    "What independent feed sequence or coverage evidence can distinguish venue inactivity, feed gaps, and cohort selection within future_observation_unavailable?",
     "Can Arena provide a typed, bounded Veritas Director job that consumes immutable source manifests without duplicating collector writes or creating unbounded copied artifacts?",
     "Do multi-day public coverage and independent freshness evidence change the measured gross-opportunity distribution?",
     "What temporal dependence and coverage evidence is needed before the original follow-up design is ready?",

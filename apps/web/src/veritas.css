@@ -665,6 +665,105 @@
     Consolas,
     monospace;
 }
+.ve-censor-dimensions {
+  display: grid;
+  gap: 12px;
+  padding: 11px 3px 3px;
+}
+.ve-censor-dimensions > p {
+  color: #7f8999;
+  font-size: 8px;
+  line-height: 1.55;
+}
+.ve-censor-dimension-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.ve-censor-dimension-block {
+  min-width: 0;
+  max-height: 230px;
+  overflow: auto;
+  border: 1px solid #252a32;
+  border-radius: 3px;
+  padding: 8px;
+}
+.ve-censor-dimension-block > strong,
+.ve-censor-regimes > strong {
+  display: block;
+  margin-bottom: 8px;
+  color: #d4b975;
+  font-size: 9px;
+}
+.ve-censor-dimension-head,
+.ve-censor-dimension-row {
+  display: grid;
+  grid-template-columns: minmax(100px, 1.3fr) repeat(4, minmax(50px, 0.7fr));
+  align-items: center;
+  gap: 6px;
+  min-width: 390px;
+}
+.ve-censor-dimension-head {
+  padding-bottom: 6px;
+  color: #778192;
+  font-size: 7px;
+  text-transform: uppercase;
+}
+.ve-censor-dimension-row {
+  min-height: 27px;
+  border-top: 1px solid #222730;
+  color: #aeb6c3;
+  font:
+    8px ui-monospace,
+    'SFMono-Regular',
+    Consolas,
+    monospace;
+}
+.ve-censor-dimension-row code {
+  overflow: hidden;
+  color: #c4b17f;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ve-censor-regimes {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid #252a32;
+  border-radius: 3px;
+}
+.ve-censor-regimes > strong {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+.ve-censor-regimes > div {
+  display: grid;
+  align-content: start;
+  gap: 5px;
+}
+.ve-censor-regimes b {
+  color: #a99b7a;
+  font-size: 8px;
+}
+.ve-censor-regimes span {
+  display: flex;
+  justify-content: space-between;
+  gap: 5px;
+  color: #7f8999;
+  font-size: 7px;
+}
+.ve-censor-regimes em {
+  color: #b7bec9;
+  font-style: normal;
+  font-family: ui-monospace, 'SFMono-Regular', Consolas, monospace;
+}
+.ve-censor-limit {
+  padding: 8px 10px;
+  border-left: 2px solid #675737;
+  background: #151510;
+  color: #a79a7f !important;
+}
 .ve-execution-pair {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -878,6 +977,10 @@
     grid-template-columns: 1fr;
   }
   .ve-measurement-comparison {
+    grid-template-columns: 1fr;
+  }
+  .ve-censor-dimension-grid,
+  .ve-censor-regimes {
     grid-template-columns: 1fr;
   }
   .ve-panel-head {

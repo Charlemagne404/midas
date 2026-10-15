@@ -1,6 +1,6 @@
 # Veritas Mission 2 Engineering Checkpoint
 
-## Current delta: v4 measurement and coverage checkpoint
+## Current delta: paired measurement, censoring, and dashboard checkpoints
 
 The incremental snapshot analyzer is now at `veritas-finalized-snapshot-analysis-v4`;
 v1–v3 state, summaries, and event histories are retained separately. v4 adds
@@ -12,9 +12,11 @@ measurement-yield comparison, with explicit limits around batch atomicity,
 sequence freshness, and upstream queue age.
 
 The dashboard exposes cohort strata, paired gate yield, sampled state changes,
-and a bounded least-covered-market table. See [Gate A checkpoint
-008](VERITAS_MISSION2_GATE_A_CHECKPOINT_008.md), [Gate G checkpoint
-002](VERITAS_MISSION2_GATE_G_CHECKPOINT_002.md), and [measurement comparison
+a bounded least-covered-market table, and the frozen-campaign censoring view.
+See [Gate A checkpoint 008](VERITAS_MISSION2_GATE_A_CHECKPOINT_008.md),
+[Gate C checkpoint 001](VERITAS_MISSION2_GATE_C_CHECKPOINT_001.md), [Gate G
+checkpoint 002](VERITAS_MISSION2_GATE_G_CHECKPOINT_002.md), [Gate G checkpoint
+003](VERITAS_MISSION2_GATE_G_CHECKPOINT_003.md), and [measurement comparison
 protocol 002](VERITAS_MISSION2_MEASUREMENT_COMPARISON_002.md).
 
 **Date:** 2026-10-15
@@ -102,6 +104,35 @@ candidates are displayed directly. The page shows finalized Reality replay
 progress in its own panel, separate from intermittent public snapshots and
 realized execution.
 
+### Gate C censoring analysis and Gate G dashboard
+
+The v1.3 forward-forensics report reads one SQLite transaction from the active
+frozen campaign using `mode=ro` and `PRAGMA query_only=on`. It groups outcomes
+by market, decision UTC hour, frozen horizon, initial observation-quality
+regime, and censor mechanism. An absent outcome row remains pending; it is not
+counted as a censor. The 08:44 UTC snapshot covers 10,165 decisions and 40,660
+horizon slots: 930 public measurements, 39,730 censors, and zero pending rows.
+It includes 168 market/horizon groups, 48 hour/horizon groups, and 32
+initial-quality/horizon groups. The full artifact is
+[`VERITAS_GATE_A_CENSORING_003.json`](VERITAS_GATE_A_CENSORING_003.json),
+SHA256 `4e7d8d2bde0cda1afdc5876de2fbc31c3a54219b95d9baba0bfbfeed454b9b72`.
+
+The API validates campaign identity and count reconciliation before using the
+report for follow-up yield. The dashboard shows horizon yields, up to 20
+markets and 24 UTC-hour rows at the longest horizon, mechanism totals, and a
+link to the full bounded artifact. `future_observation_unavailable` remains
+ambiguous: the frozen worker records it after the horizon deadline passes
+without a qualifying synchronized future book, without proving venue
+inactivity or identifying every feed-selection gap. This audit did not replay
+the complete event hash chain or run a full SQLite integrity scan.
+
+Verification already recorded for this code set: 88 Veritas backend tests, 29
+frontend tests, Ruff, strict Mypy, frontend lint/typecheck/format/build, and the
+Veritas Playwright workflow passed. The production build retains its existing
+large-chunk advisory. See [Gate C checkpoint
+001](VERITAS_MISSION2_GATE_C_CHECKPOINT_001.md) and [Gate G checkpoint
+003](VERITAS_MISSION2_GATE_G_CHECKPOINT_003.md).
+
 ### Recurring operation
 
 The observer and snapshot analyzer run every 30 minutes on the existing user
@@ -138,7 +169,7 @@ experiment.
   rates.
 - Observation window: about 152 minutes; current API readiness is
   `collecting_repeated_temporal_coverage`.
-- Data root: 9,007,858 bytes, below the 1 GiB cap.
+- Data root: 9,190,439 bytes, below the 1 GiB cap.
 - Service configuration: 40 markets, one-second request pacing, seven planned
   network requests per scan, `CPUQuota=5%`, `MemoryMax=256M`, low CPU/IO
   priority, no new privileges, and writes limited to the observatory data root.
@@ -151,13 +182,13 @@ experiment.
 ### Finalized source replay extension
 
 The source analyzer's first batch, persistent catch-up, and scheduled
-recurrences are recorded in checkpoints 003–007. The latest scheduled run
-processed 128 segments / 6,230,348 bytes in 70 seconds, using 3.523 seconds of
-CPU and 111.4 MiB peak memory. Cumulative progress is 530 of 2,839 replayable
-segments, through ordinal 29,076, with 2,309 segments (604,276,235 bytes)
-pending. Readiness remains `catching_up_finalized_source`; the prefix contains
-no campaign-window frames. The source timer is active and the Reality checkout
-remains clean at `714f824`.
+recurrences are recorded in checkpoints 003–007. The latest scheduled run processed 128 segments / 8,585,088 bytes in 87
+seconds, using 4.347 seconds of CPU. Cumulative progress is 658 of 2,899
+replayable segments, through ordinal 39,776, with 2,241 segments
+(610,777,450 bytes) pending. Readiness remains
+`catching_up_finalized_source`; the prefix contains no campaign-window frames.
+The source timer is active and the Reality checkout remains clean at
+`714f824`.
 
 The full scan results and immutable source identities are in
 [`VERITAS_MISSION2_GATE_A_CHECKPOINT_001.md`](VERITAS_MISSION2_GATE_A_CHECKPOINT_001.md),
@@ -172,13 +203,14 @@ The full scan results and immutable source identities are in
 [`VERITAS_MISSION2_RESEARCH_INVENTORY_005.json`](VERITAS_MISSION2_RESEARCH_INVENTORY_005.json),
 [`VERITAS_MISSION2_RESEARCH_INVENTORY_006.json`](VERITAS_MISSION2_RESEARCH_INVENTORY_006.json),
 [`VERITAS_MISSION2_RESEARCH_INVENTORY_007.json`](VERITAS_MISSION2_RESEARCH_INVENTORY_007.json),
-and [`VERITAS_MISSION2_RESEARCH_INVENTORY_008.json`](VERITAS_MISSION2_RESEARCH_INVENTORY_008.json).
+[`VERITAS_MISSION2_RESEARCH_INVENTORY_008.json`](VERITAS_MISSION2_RESEARCH_INVENTORY_008.json),
+and [`VERITAS_MISSION2_RESEARCH_INVENTORY_009.json`](VERITAS_MISSION2_RESEARCH_INVENTORY_009.json).
 
 ## Verification
 
 | Check | Result |
 | --- | --- |
-| Full Veritas backend test selection | 83 passed; one Starlette/httpx deprecation warning |
+| Full Veritas backend test selection | 88 passed; one Starlette/httpx deprecation warning |
 | Ruff on source analysis, API, script, tests, and existing implementation | Passed |
 | Mypy on source analysis, API, and CLI script | Passed |
 | Frontend unit suite | 29 passed |

@@ -20,6 +20,7 @@ ARTIFACTS = {
     "break-even": "VERITAS_GATE_B_EXECUTION_BREAK_EVEN_001.json",
     "ledger": "VERITAS_RESEARCH_LEDGER.json",
     "inventory": "VERITAS_RESEARCH_INVENTORY.json",
+    "censoring": "VERITAS_GATE_A_CENSORING_003.json",
 }
 MAX_ARTIFACT_BYTES = 512 * 1024
 MAX_OBSERVATORY_SUMMARY_BYTES = 2 * 1024**2
@@ -45,6 +46,191 @@ def read_artifact(repository: Path, identity: str) -> tuple[dict[str, Any], Path
     if not isinstance(value, dict):
         raise HTTPException(503, "Veritas evidence has an invalid format")
     return value, path
+
+
+def followup_censoring_overview(
+    repository: Path, expected_campaign_id: str
+) -> dict[str, Any] | None:
+    path = repository / "docs" / ARTIFACTS["censoring"]
+    if path.is_symlink():
+        raise HTTPException(404, "Veritas censoring evidence is unavailable")
+    if not path.exists():
+        return None
+    artifact, path = read_artifact(repository, "censoring")
+    analysis = artifact.get("analysis")
+    if (
+        not isinstance(analysis, dict)
+        or analysis.get("analysis_version") != "veritas-forward-forensics-v1.3"
+        or analysis.get("campaign_id") != expected_campaign_id
+    ):
+        raise HTTPException(503, "Follow-up censoring artifact identity is invalid")
+    coverage = analysis.get("coverage")
+    outcomes = analysis.get("outcomes")
+    if not isinstance(coverage, dict) or not isinstance(outcomes, dict):
+        raise HTTPException(503, "Follow-up censoring artifact is incomplete")
+    valid_initial = coverage.get("valid_initial_decisions")
+    invalid_initial = coverage.get("invalid_initial_decisions")
+    decision_count = coverage.get("decisions")
+    if (
+        not isinstance(valid_initial, int)
+        or isinstance(valid_initial, bool)
+        or valid_initial < 0
+        or not isinstance(invalid_initial, int)
+        or isinstance(invalid_initial, bool)
+        or invalid_initial < 0
+        or not isinstance(decision_count, int)
+        or isinstance(decision_count, bool)
+        or decision_count < 0
+    ):
+        raise HTTPException(503, "Follow-up censoring decision counts are invalid")
+    if valid_initial + invalid_initial != decision_count:
+        raise HTTPException(503, "Follow-up censoring decision counts do not reconcile")
+    horizon_counts = outcomes.get("by_horizon")
+    detail = outcomes.get("censoring_detail")
+    if not isinstance(horizon_counts, dict) or not isinstance(detail, dict):
+        raise HTTPException(503, "Follow-up censoring horizons are invalid")
+    quality_rows = detail.get("by_initial_quality_regime_horizon", {}).get("items")
+    market_rows = detail.get("by_market_horizon", {}).get("items")
+    hour_rows = detail.get("by_utc_hour_horizon", {}).get("items")
+    regimes = detail.get("by_censoring_regime_horizon")
+    if not all(isinstance(rows, list) for rows in (quality_rows, market_rows, hour_rows)) or not isinstance(regimes, dict):
+        raise HTTPException(503, "Follow-up censoring dimensions are invalid")
+    if len(quality_rows) > 2_000 or len(market_rows) > 2_000 or len(hour_rows) > 2_000:
+        raise HTTPException(503, "Follow-up censoring dimension bound is invalid")
+    valid_by_horizon = {
+        int(row["horizon_ms"]): row
+        for row in quality_rows
+        if isinstance(row, dict) and row.get("initial_quality_regime") == "valid_initial_observation"
+    }
+    followups: list[dict[str, Any]] = []
+    for horizon, item in sorted(horizon_counts.items(), key=lambda pair: int(pair[0])):
+        if not isinstance(item, dict) or not isinstance(item.get("counts_by_status"), dict):
+            raise HTTPException(503, "Follow-up horizon status counts are invalid")
+        valid_row = valid_by_horizon.get(int(horizon))
+        if valid_row is None or not isinstance(valid_row.get("counts_by_status"), dict):
+            raise HTTPException(503, "Valid-initial follow-up horizon counts are missing")
+        valid_status = valid_row["counts_by_status"]
+        total_censored = item["counts_by_status"].get("censored", 0)
+        invalid_censored = item.get("censor_reasons", {}).get("invalid_at_decision", 0)
+        observed = valid_status.get("observed_public_measurement", 0)
+        censored = valid_status.get("censored", 0)
+        pending = valid_row.get("pending_followups", 0)
+        if any(
+            not isinstance(value, int) or isinstance(value, bool) or value < 0
+            for value in (total_censored, invalid_censored, observed, censored, pending)
+        ) or censored + invalid_censored != total_censored or observed + censored + pending != valid_initial:
+            raise HTTPException(503, "Follow-up horizon counts do not reconcile")
+        followups.append(
+            {
+                "horizon_ms": int(horizon),
+                "observed": observed,
+                "censored": censored,
+                "invalid_initial": invalid_censored,
+                "pending": pending,
+                "censor_reasons": item.get("censor_reasons", {}),
+            }
+        )
+    horizons = [row["horizon_ms"] for row in followups]
+    longest_horizon = max(horizons, default=0)
+
+    def validate_dimension_row(row: dict[str, Any], key: str) -> bool:
+        if (
+            not isinstance(row.get(key), str)
+            or not isinstance(row.get("horizon_ms"), int)
+            or isinstance(row.get("horizon_ms"), bool)
+            or row.get("horizon_ms") != longest_horizon
+            or not isinstance(row.get("counts_by_status"), dict)
+            or not isinstance(row.get("censor_reasons"), dict)
+            or not isinstance(row.get("initial_quality_regimes"), dict)
+        ):
+            return False
+        counts = [
+            row.get("scheduled_followups"),
+            row.get("resolved_followups"),
+            row.get("pending_followups"),
+        ] + list(row["counts_by_status"].values()) + list(row["censor_reasons"].values())
+        return all(isinstance(value, int) and not isinstance(value, bool) and value >= 0 for value in counts)
+
+    market_rows_at_horizon = [
+        row for row in market_rows if isinstance(row, dict) and row.get("horizon_ms") == longest_horizon
+    ]
+    hour_rows_at_horizon = [
+        row for row in hour_rows if isinstance(row, dict) and row.get("horizon_ms") == longest_horizon
+    ]
+    if any(not validate_dimension_row(row, "market_id") for row in market_rows_at_horizon) or any(
+        not validate_dimension_row(row, "utc_hour") for row in hour_rows_at_horizon
+    ):
+        raise HTTPException(503, "Follow-up censoring dimension rows are invalid")
+
+    def compact_dimension_rows(rows: list[dict[str, Any]], key: str) -> list[dict[str, Any]]:
+        compact: list[dict[str, Any]] = []
+        for row in rows:
+            counts = row["counts_by_status"]
+            reasons = row["censor_reasons"]
+            invalid_censored = int(reasons.get("invalid_at_decision", 0))
+            all_censored = int(counts.get("censored", 0))
+            if invalid_censored > all_censored:
+                raise HTTPException(503, "Follow-up censoring dimension counts do not reconcile")
+            valid_reasons = {
+                str(reason): int(count)
+                for reason, count in reasons.items()
+                if reason != "invalid_at_decision"
+            }
+            primary_reason = max(valid_reasons.items(), key=lambda item: item[1], default=(None, 0))
+            compact.append(
+                {
+                    key: row[key],
+                    "scheduled_followups": int(row["scheduled_followups"]),
+                    "valid_initial_followups": int(
+                        row["initial_quality_regimes"].get("valid_initial_observation", 0)
+                    ),
+                    "observed": int(counts.get("observed_public_measurement", 0)),
+                    "valid_initial_censored": all_censored - invalid_censored,
+                    "invalid_initial_censored": invalid_censored,
+                    "pending_followups": int(row["pending_followups"]),
+                    "primary_valid_censor_reason": primary_reason[0],
+                    "primary_valid_censor_count": primary_reason[1],
+                }
+            )
+        return compact
+
+    selected_market_rows = compact_dimension_rows(market_rows_at_horizon, "market_id")
+    selected_market_rows.sort(
+        key=lambda row: (
+            -row["valid_initial_censored"],
+            -row["scheduled_followups"],
+            row["market_id"],
+        )
+    )
+    selected_hour_rows = compact_dimension_rows(hour_rows_at_horizon, "utc_hour")
+    selected_hour_rows.sort(key=lambda row: str(row.get("utc_hour", "")))
+    return {
+        "status": "available",
+        "analysis_version": analysis["analysis_version"],
+        "captured_at_utc": artifact.get("captured_at_utc"),
+        "campaign_id": analysis["campaign_id"],
+        "decision_count": decision_count,
+        "market_count": coverage.get("markets", 0),
+        "connected_family_count": coverage.get("connected_families", 0),
+        "valid_initial_decisions": valid_initial,
+        "invalid_initial_decisions": invalid_initial,
+        "utc_days": coverage.get("utc_days", []),
+        "query_truncated": bool(analysis.get("query", {}).get("truncated", False)),
+        "longest_horizon_ms": longest_horizon,
+        "by_market_at_longest_horizon": selected_market_rows[:20],
+        "market_group_count": len(selected_market_rows),
+        "by_utc_hour_at_longest_horizon": selected_hour_rows[-24:],
+        "utc_hour_group_count": len(selected_hour_rows),
+        "by_censoring_regime_horizon": regimes,
+        "followup_yield": followups,
+        "artifact": {
+            "id": "censoring",
+            "label": "Read-only censoring by market, time, horizon and quality",
+            "file_sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+            "url": "/api/veritas/artifacts/censoring",
+        },
+        "limitations": artifact.get("limitations", []),
+    }
 
 
 def read_observatory_summary(repository: Path) -> tuple[dict[str, Any], Path] | None:
@@ -624,6 +810,7 @@ def overview(repository: Path) -> dict[str, Any]:
     frozen = baseline["frozen_campaign_forensics"]
     coverage = frozen["coverage"]
     outcomes = frozen["outcomes"]["by_horizon"]
+    current_censoring = followup_censoring_overview(repository, str(funnel["campaign_id"]))
     quantity = "100"
     full_depth = next(
         row
@@ -687,6 +874,9 @@ def overview(repository: Path) -> dict[str, Any]:
                 "censor_reasons": reasons,
             }
         )
+    if current_censoring is not None:
+        followups = current_censoring["followup_yield"]
+        valid_initial = current_censoring["valid_initial_decisions"]
 
     artifacts = [
         {"id": identity, "label": label}
@@ -703,10 +893,16 @@ def overview(repository: Path) -> dict[str, Any]:
         artifacts.append(public_observatory["summary_artifact"])
     if finalized_source["summary_artifact"]:
         artifacts.append(finalized_source["summary_artifact"])
+    if current_censoring is not None:
+        artifacts.append(current_censoring["artifact"])
 
     return {
         "status": "insufficient_independent_evidence",
-        "captured_at_utc": funnel["captured_at_utc"],
+        "captured_at_utc": (
+            current_censoring["captured_at_utc"]
+            if current_censoring is not None
+            else funnel["captured_at_utc"]
+        ),
         "verdict": (
             "The measured public panel has no quality-valid positive gross pair. "
             "The sample is selected and short; execution and profitability remain unknown."
@@ -739,7 +935,13 @@ def overview(repository: Path) -> dict[str, Any]:
         "followup_yield": {
             "valid_initial_decisions": valid_initial,
             "by_horizon": followups,
+            "source_analysis_version": (
+                current_censoring["analysis_version"]
+                if current_censoring is not None
+                else frozen.get("analysis_version", "veritas-forward-forensics-v1")
+            ),
         },
+        "followup_censoring": current_censoring,
         "baseline_policies": {
             "count": len(frozen["policy_actions"]),
             "all_abstained": all(

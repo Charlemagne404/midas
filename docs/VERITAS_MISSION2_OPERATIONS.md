@@ -1,17 +1,17 @@
 # Veritas Mission 2 Operations
 
-**Runtime checked:** 2026-10-15 08:33 UTC
+**Runtime checked:** 2026-10-15 08:53 UTC
 **Services:** `midas-veritas-observatory.service`, `midas-veritas-source-analysis.service`
 **Timers:** `midas-veritas-observatory.timer`, `midas-veritas-source-analysis.timer`
 
 ## Current state
 
-- Both Veritas user timers are active. The observer's 08:31 UTC run succeeded; the next event is 09:00:37 UTC. The source replay timer remains active with its next event at 08:40:37 UTC. The oneshot services are inactive between runs as expected.
+- Both Veritas user timers are active. The observer's 08:31 UTC run succeeded; the next event is 09:00:37 UTC. The source replay's 08:40 UTC run succeeded; the next event is 09:10:54 UTC. The oneshot services are inactive between runs as expected.
 - Latest scan: `scan-20261015T083153Z-1d45d1808d34`, captured at 08:31:53 UTC and indexed by v4 at 08:31:59. The v4 analyzer has 11 processed snapshots and no pending snapshots.
 - Cumulative panel: 440 selected observations, 396 request/receipt-valid pairs, 44 empty-ask invalids, and 156 distinct market IDs. The previous reported-age/skew gate accepts 98/440. The paired increase is 298 observations (+67.7 percentage points).
 - The latest bounded discovery union contains 300 IDs: 167 supported same-condition V1 binary pairs and 133 explicit exclusions. The selected panel has 40 markets, 34 rotating and six available frozen controls.
-- Runtime data uses 9,007,858 bytes under `data/veritas-observatory/`, below the 1 GiB hard cap. Snapshots and derived runtime artifacts are ignored by Git; versioned docs record identities and hashes. Do not prune or raise the cap without a separate retention review.
-- The finalized Reality source analyzer remains `catching_up_finalized_source`: 530 of 2,839 replayable segments processed, 2,309 segments (604,276,235 bytes) pending through ordinal 29,076. Its processed prefix contains no campaign-window frames.
+- Runtime data uses 9,190,439 bytes under `data/veritas-observatory/`, below the 1 GiB hard cap. Snapshots and derived runtime artifacts are ignored by Git; versioned docs record identities and hashes. Do not prune or raise the cap without a separate retention review.
+- The finalized Reality source analyzer remains `catching_up_finalized_source`: 658 of 2,899 replayable segments processed, 2,241 segments (610,777,450 bytes) pending through ordinal 39,776. Its processed prefix contains no campaign-window frames. The latest 08:40 UTC run processed 128 segments / 8,585,088 bytes in 87 seconds, using 4.347 CPU seconds.
 - The protected Reality user services `midas-reality.service`, `midas-reality-shadow.service`, and `midas-reality-api.service` were active during the read-only check. The separate Reality worktree is clean. No service was restarted or modified by Veritas.
 
 ## Resource and network bounds
@@ -41,6 +41,18 @@ The first v4 pass reindexed ten already finalized immutable snapshots. The 08:31
 The independent Reality source analyzer validates the frozen campaign identity and reads only cataloged finalized `.seg` inputs. It never opens `.open` files. Per run it is limited to 128 segments or 32 MiB of new segment data; each segment is capped at 16 MiB. Catalog scans are bounded. Source state and events retain campaign/code/prefix digests and stop on identity drift. Resource bounds remain CPU 5%, memory 256 MiB, low priority, ten-minute timeout, and Veritas-only writes.
 
 Arena's existing scheduler remains active for its supported typed job families. It has no Veritas finalized-source input type; routing every recurring scan through it would add source-copy/artifact handling and a second scheduler path beside the existing bounded timers. Current Veritas collection and analysis therefore remain direct oneshot timer jobs. Gate F still requires a controlled Director workflow and is open; the timers do not constitute that workflow.
+
+## Frozen campaign censoring snapshot
+
+At 08:44 UTC the Gate C analyzer captured 10,165 decisions from one read-only
+SQLite transaction. It used `mode=ro` and `PRAGMA query_only=on`; it did not copy
+raw observations. The artifact contains 40,660 horizon slots, 930 observed
+public measurements, 39,730 censors, and zero pending outcomes in that snapshot.
+The campaign writer remains active, so this is an interim view.
+`future_observation_unavailable` remains unresolved between quiet venue
+activity and feed/cohort coverage. The full event hash chain and a full database
+integrity check were not run. See [Gate C checkpoint
+001](VERITAS_MISSION2_GATE_C_CHECKPOINT_001.md).
 
 ## Read-only inspection
 
