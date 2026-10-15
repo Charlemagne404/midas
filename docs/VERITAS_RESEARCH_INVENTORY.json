@@ -346,6 +346,22 @@
       "orders_submitted": false,
       "focused_veritas_tests": 40,
       "promotion": "synthetic threshold sensitivity only; no policy, strategy, or profitability promotion"
+    },
+    {
+      "experiment_id": "VERITAS-GATE-E-ARENA-POLICY-SEARCH-FORENSICS-20261015-001",
+      "type": "read_only_arena_job_failure_root_cause_audit",
+      "status": "completed_historical_defect_fixed_before_release",
+      "source_dataset_id": "historical_arena_job_39b5b0c0eac945d298b5c666",
+      "evidence": "docs/VERITAS_ARENA_POLICY_SEARCH_FORENSICS_001.md",
+      "analysis_version": "veritas-arena-job-forensics-v1",
+      "historical_error": "KeyError: 'evaluation_generator'",
+      "release_fix_commit": "7ec440ff5ded108e7ec491fada785f3fa41c3494",
+      "fix_in_release_baseline": true,
+      "regression_test": "tests/arena/test_policy_search.py::test_fresh_test_rejects_already_registered_seeds",
+      "focused_tests_passed": 5,
+      "historical_job_rerun": false,
+      "orders_submitted": false,
+      "promotion": "forensic classification only; no code or campaign change"
     }
   ],
   "models": [],

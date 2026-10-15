@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-15T00:40:42.537475+00:00",
+  "updated_at_utc": "2026-10-15T00:46:41.457179+00:00",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -1074,6 +1074,37 @@
       ],
       "decision": "Do not promote the synthetic positive single-match scenario. At 100 shares per leg, the favorable full-depth case would require about 35.4 matched completions per adverse unmatched event, while the fragmentation-safe pair result is already negative. Keep fill rates unknown and wait for a quality-valid observed gross candidate before using the engine for candidate-specific strategy comparison.",
       "status": "continue"
+    },
+    {
+      "hypothesis_id": "VERITAS-H019",
+      "title": "Was the failed Arena policy search still broken in the release baseline?",
+      "mechanism": "A legacy tournament manifest omitted evaluation_generator; the captured policy-search source indexed the missing key while checking seed reuse.",
+      "experiment_id": "VERITAS-GATE-E-ARENA-POLICY-SEARCH-FORENSICS-20261015-001",
+      "dataset_id": "historical_arena_job_39b5b0c0eac945d298b5c666",
+      "success_metric": "Compare the failed job source snapshot with release code, identify the introducing fix and regression coverage, and run the current focused policy-search tests without rerunning the old job.",
+      "result": {
+        "status": "historical_failure_root_cause_confirmed_fixed_in_release",
+        "evidence": "docs/VERITAS_ARENA_POLICY_SEARCH_FORENSICS_001.md",
+        "historical_error": "KeyError: 'evaluation_generator'",
+        "historical_job_record_sha256": "8dd8c52fb4c941f93fb4e4cfbd35558fb06aca031cbecb4230bdf3e8be7a9c5c",
+        "failed_source_snapshot_sha256": "2c6fd5b96061cfee96a7bf2abf75fbc61a7395092e6c54fdbfb580eb03295976",
+        "release_fix_commit": "7ec440ff5ded108e7ec491fada785f3fa41c3494",
+        "fix_is_ancestor_of_release_baseline": true,
+        "regression_test": "tests/arena/test_policy_search.py::test_fresh_test_rejects_already_registered_seeds",
+        "focused_policy_search_tests": 5,
+        "test_runtime_seconds": "75.71",
+        "failed_job_rerun": false,
+        "arena_service_restarted": false,
+        "reality_campaign_mutated": false,
+        "promotion": "historical root cause only; no current code change required"
+      },
+      "limitations": [
+        "The original job was not rerun; the current regression exercises a legacy manifest fixture rather than the old job directory.",
+        "The failure predates the release baseline and does not demonstrate a current policy-search defect.",
+        "A separate Arena dataset job was cancelled at 384 of 1,001 episodes; the cancellation was not investigated as a code failure."
+      ],
+      "decision": "Keep the release fallback and regression. Do not restart or edit the failed job artifact. Continue the broader Research Director and remaining one-shot service audit independently.",
+      "status": "completed"
     }
   ],
   "next_research_questions": [
