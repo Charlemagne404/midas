@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-15T14:48:31Z",
+  "updated_at_utc": "2026-10-15T15:16:48Z",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -2933,6 +2933,99 @@
         "Economic gates evaluate displayed public books and hypothetical fees; they do not establish order arrival, fills, or realized returns.",
         "The scan and Arena finding include only supported same-condition V1 binary pairs; unsupported outcome relationships remain excluded.",
         "Arena completed the 22-event job, while the Director manifest still projects QUEUED pending the scheduled 15:15 UTC cycle."
+      ]
+    },
+    {
+      "hypothesis_id": "VERITAS-H060",
+      "experiment_id": "VERITAS-M2-PROSPECTIVE-OBSERVATION-20261015-023",
+      "dataset_id": "92c7548c9dd97a669673a5243eeb83abaf646273a93957c843a712f0a723844a",
+      "title": "Does the twenty-third scheduled public scan produce a quality-valid positive same-condition pair?",
+      "mechanism": "Continue the bounded six-frame Gamma discovery protocol and 40-market rotating sample, classify paired books using request/receipt quality, and qualify the immutable 23-scan prefix through the existing Arena job.",
+      "success_metric": "At least one same-condition V1 pair passes quality validation and produces a positive top-ask, complete-depth, per-leg minimum, or fee-aware economic qualification, with independent freshness and source lineage preserved.",
+      "result": {
+        "status": "completed_no_positive_economic_candidates",
+        "analysis_version": "veritas-finalized-snapshot-analysis-v4",
+        "scan_id": "scan-20261015T150026Z-56e1e44d7837",
+        "captured_at_utc": "2026-10-15T15:00:26.259023+00:00",
+        "snapshot_evidence_sha256": "56e1e44d7837c5c30efc7dd9e42b74eed9331da69db83f7d6113b4a4acb7146f",
+        "snapshot_file_sha256": "4a6484174e60e520b3a13c03cc40f402edd1fb5469bb021db1b5d8127ae4264e",
+        "analysis_event_sha256": "46b517caa69aa87b5b8a1a0449cffbfeae30e552e06f7ba1ca892716cd0e991c",
+        "analysis_event_file_sha256": "e1de02400a3b772286c49b84f78dd6c6f1ff874ee15e346be26f2233534c18c6",
+        "latest_scan_attempted_pairs": 40,
+        "latest_scan_quality_valid_pairs": 36,
+        "latest_scan_invalid_pairs": 4,
+        "latest_scan_legacy_freshness_valid_pairs": 6,
+        "bounded_discovery": {
+          "query_candidate_records": 300,
+          "unique_market_ids": 300,
+          "eligible_same_condition_v1_pairs": 190,
+          "explicit_exclusions": 110,
+          "exclusion_reasons": {
+            "augmented_negative_risk_semantics_unverified": 84,
+            "unsupported_outcome_relationship": 26
+          }
+        },
+        "cumulative_sample": {
+          "snapshots": 23,
+          "selected_observations": 920,
+          "quality_valid_pairs": 825,
+          "invalid_pairs": 95,
+          "legacy_freshness_valid_pairs": 189,
+          "unique_market_ids": 418,
+          "paired_recovered_pairs": 636,
+          "paired_recovered_percentage_points": 69.13,
+          "sampled_state_comparisons": 502,
+          "sampled_state_changes": 486,
+          "sampled_state_change_fraction": 0.9681,
+          "sampled_activity_bands": {
+            "unclassified": 324,
+            "lower_sampled_change": 55,
+            "higher_sampled_change": 39
+          },
+          "top_edge_per_share": {
+            "count": 825,
+            "maximum_per_share": "-0.001",
+            "median_nearest_rank_per_share": "-0.023",
+            "minimum_per_share": "-0.984",
+            "positive_count": 0
+          }
+        },
+        "positive_states_by_gate": {
+          "unchanged_top_ask_gross_sign": 0,
+          "full_displayed_depth_gross": 0,
+          "full_depth_and_per_leg_minimum_notional": 0,
+          "single_match_fee_sensitivity_positive": 0,
+          "fragmentation_safe_fee_sensitivity_positive": 0
+        },
+        "research_summary_sha256": "010cbf63f0b6af45ab5a12a02174a3a8ff8011bf430dda487001c8575a15be30",
+        "research_summary_file_sha256": "581de46473c4fe099e21bf7203c02e1eb33879d5ad492b1e7770db2441933fa9",
+        "source_analysis_summary_sha256": "37715a41a176feb08db23867b5f2c7b9e39647a3f9df43a770df049c497dd6e3",
+        "source_processed_segments": 2161,
+        "source_catalog_segments": 3668,
+        "source_pending_segments": 1507,
+        "source_pending_bytes": 396434833,
+        "source_campaign_window_frame_records": 70950,
+        "source_campaign_window_touched_states": 59343,
+        "source_campaign_window_quality_valid_states": 57798,
+        "arena_job_id": "job-bf0dbe4c773f4cfe9832fd8d",
+        "arena_finding_id": "veritas-qualification-v1-a695104c7dcbb82a",
+        "arena_finding_sha256": "6d6abd9ad8834370998d7124f1cec7d0e91f3d83674b0e8a41b1d6aa20c7fc0c",
+        "dataset_sha256": "92c7548c9dd97a669673a5243eeb83abaf646273a93957c843a712f0a723844a",
+        "experiment_sha256": "131e29f8052f30ebf34a1768a5cb52c68dd3be82585426a3fba1a38c2a9c8d12",
+        "director_manifest_state": "QUEUED",
+        "director_manifest_last_finding_id": "veritas-qualification-v1-d6e6f2a3574075a0",
+        "director_reconciliation_due_utc": "2026-10-15T15:45:00Z",
+        "orders_submitted": false,
+        "authenticated_requests": false
+      },
+      "decision": "Keep the no-trade baseline and continue the bounded observation schedule. Scan 23 produced no qualifying gross candidate. The Director manifest projection remains queued pending its next scheduled reconciliation; no manual poll or retry was started.",
+      "limitations": [
+        "The six-frame discovery union and rotating sample are conditional and do not form a venue-wide probability sample.",
+        "The 40 selected market observations and repeated snapshots are intermittent and dependent.",
+        "Request-to-receipt timing does not establish upstream queue age, response-batch atomicity, or venue sequence continuity.",
+        "Economic gates evaluate displayed public books and hypothetical fees; they do not establish order arrival, fills, or realized returns.",
+        "The scan and Arena finding include only supported same-condition V1 binary pairs; unsupported outcome relationships remain excluded.",
+        "Arena completed the 23-event job, while the Director manifest still projects QUEUED pending the scheduled 15:45 UTC cycle."
       ]
     }
   ],
