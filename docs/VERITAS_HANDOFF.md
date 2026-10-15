@@ -3,10 +3,11 @@
 Reality Mission 2 is complete at `714f824` and merged into `main`. Project
 Veritas is now active on the separate `project/veritas` branch, based on the
 release checkout. Its current work covers read-only source replay, decision
-freshness, market opportunity, and hypothetical economics. It has not changed
-the Reality campaign and does not include orders, wallets, credentials, or
-live execution. Use the research backlog, ledger, and Gate A checkpoints as
-the current state of the work.
+freshness, market opportunity, hypothetical economics, and synthetic execution
+break-even thresholds. It has not changed the Reality campaign and does not
+include orders, wallets, credentials, or live execution. Use the research
+backlog, ledger, inventory, and latest Gate A/B checkpoints as the current
+state of the work.
 
 ## Current architecture
 
@@ -94,8 +95,9 @@ contents disposable; preserve the existing operational data in place.
 
 1. Read the [research backlog](VERITAS_RESEARCH_BACKLOG.md), [research
    ledger](VERITAS_RESEARCH_LEDGER.json), [operations
-   procedures](VERITAS_OPERATIONS.md), and latest
-   [Gate A checkpoint 011](VERITAS_GATE_A_CHECKPOINT_011.md).
+   procedures](VERITAS_OPERATIONS.md), [Gate A checkpoint
+   011](VERITAS_GATE_A_CHECKPOINT_011.md), and [Gate B checkpoint
+   001](VERITAS_GATE_B_CHECKPOINT_001.md).
 2. Review the protected campaign's immutable identity and service health
    through read-only checks; do not launch a second worker against its store.
 3. Continue research changes in the `project/veritas` worktree. Keep Reality

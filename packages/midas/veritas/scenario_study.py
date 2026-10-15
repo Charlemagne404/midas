@@ -6,7 +6,12 @@ from datetime import UTC, datetime
 from decimal import Decimal
 from typing import Any
 
-from .economics import VERSION, evaluate_binary_pair
+from .economics import VERSION, evaluate_binary_pair, partial_position_bounds
+from .execution_break_even import (
+    MATCHED_RATE_GRID,
+    UNMATCHED_RATE_GRID,
+    break_even_completion_sensitivity,
+)
 
 D = Decimal
 QUANTITY_GRID = ("5", "10", "15", "25", "50", "100", "200", "350", "700")
@@ -111,6 +116,198 @@ def _scenario(depth_fraction: str) -> dict[str, Any]:
         "quantity_scenarios": rows,
         "capital_frontier": frontier,
     }
+
+
+def _unmatched_leg_loss(
+    result: dict[str, Any],
+    quantity: str,
+    *,
+    settlement_days: str,
+    annual_financing_rate: str,
+    operational_cost_per_share: str,
+) -> dict[str, Any]:
+    """Bound one leg that fills and then loses at settlement, without recovery."""
+    q = D(quantity)
+    days = D(settlement_days)
+    financing_rate = D(annual_financing_rate)
+    operations = D(operational_cost_per_share)
+    costs = {side: D(value) for side, value in result["acquisition_cost_by_leg"].items()}
+    fee_shares = {
+        side: D(value)
+        for side, value in result["fragmentation_safe_fee_share_quantity_upper_by_leg"].items()
+    }
+    side_results: dict[str, dict[str, str]] = {}
+    for side in ("yes", "no"):
+        partial = partial_position_bounds(
+            yes_quantity=q if side == "yes" else D(0),
+            no_quantity=q if side == "no" else D(0),
+            yes_acquisition_cost=costs["yes"] if side == "yes" else D(0),
+            no_acquisition_cost=costs["no"] if side == "no" else D(0),
+            yes_fee_shares_upper=fee_shares["yes"] if side == "yes" else D(0),
+            no_fee_shares_upper=fee_shares["no"] if side == "no" else D(0),
+            protocol="v1",
+            pair_semantics="same_condition_yes_no_ctf",
+            same_condition=True,
+            payoff_verified=True,
+        )
+        leg_cost = costs[side]
+        financing = leg_cost * financing_rate * days / D(365)
+        operating = q * operations
+        worst_terminal = min(D(value) for value in partial["terminal_outcomes"].values())
+        worst_pnl = worst_terminal - financing - operating
+        loss = max(D(0), -worst_pnl)
+        side_results[side] = {
+            "leg_acquisition_cost_usdc": str(leg_cost),
+            "single_leg_financing_cost_usdc": str(financing),
+            "single_leg_operational_cost_usdc": str(operating),
+            "worst_terminal_pnl_usdc": str(worst_pnl),
+            "loss_assumption_usdc": str(loss),
+        }
+    worst_side = max(side_results, key=lambda side: D(side_results[side]["loss_assumption_usdc"]))
+    return {
+        "scenario": "one leg fills, loses at settlement, and cannot be recovered",
+        "fee_share_bounds_used": "fragmentation_safe_upper",
+        "settlement_days_assumption": settlement_days,
+        "annual_financing_rate_assumption": annual_financing_rate,
+        "operational_cost_per_share_assumption": operational_cost_per_share,
+        "loss_by_unmatched_leg": side_results,
+        "conservative_unmatched_leg": worst_side,
+        "conservative_unmatched_leg_loss_usdc": side_results[worst_side]["loss_assumption_usdc"],
+        "recovery_value_assumption_usdc": "0",
+    }
+
+
+def build_execution_break_even_report() -> dict[str, Any]:
+    """Add probability-threshold sensitivities to the controlled synthetic grid."""
+    report = build_report()
+    assumptions = report["controlled_inputs"]
+    enriched: dict[str, Any] = {}
+    for scenario_name, scenario in report["scenarios"].items():
+        rows = []
+        for row in scenario["quantity_scenarios"]:
+            quantity = row["quantity_shares_per_leg"]
+            if not (
+                row["full_quantity_supported_by_displayed_depth"]
+                and row["minimum_order_notional_satisfied"]
+            ):
+                rows.append(
+                    {
+                        "quantity_shares_per_leg": quantity,
+                        "status": "complete_pair_economic_input_unavailable",
+                        "reason": "full displayed depth and per-leg minimum are both required",
+                        "rates_are_estimates": False,
+                    }
+                )
+                continue
+
+            pair = evaluate_binary_pair(
+                assumptions["yes_asks_price_shares"],
+                assumptions["no_asks_price_shares"],
+                quantity,
+                assumptions["taker_fee_rate_per_leg"],
+                protocol="v1",
+                pair_semantics="same_condition_yes_no_ctf",
+                same_condition=True,
+                payoff_verified=True,
+                minimum_order_notional=assumptions["minimum_order_notional_per_leg_usdc"],
+                fee_exponent=assumptions["fee_price_component_exponent_per_leg"],
+                depth_fraction=scenario["depth_fraction_assumption"],
+                settlement_days=assumptions["settlement_days"],
+                annual_financing_rate=assumptions["annual_financing_rate"],
+                redemption_cost_per_set=assumptions["redemption_cost_per_set_usdc"],
+                operational_cost_per_share=assumptions["operational_cost_per_share_per_leg_usdc"],
+            )
+            unmatched = _unmatched_leg_loss(
+                pair,
+                quantity,
+                settlement_days=assumptions["settlement_days"],
+                annual_financing_rate=assumptions["annual_financing_rate"],
+                operational_cost_per_share=assumptions["operational_cost_per_share_per_leg_usdc"],
+            )
+            loss = unmatched["conservative_unmatched_leg_loss_usdc"]
+            matched = {
+                "single_match_rounding_scenario": break_even_completion_sensitivity(
+                    pair["net_hypothetical_single_match_worst_resolution"],
+                    loss,
+                    unmatched_rate_grid=UNMATCHED_RATE_GRID,
+                    matched_rate_grid=MATCHED_RATE_GRID,
+                ),
+                "fragmentation_safe_fee_bound": break_even_completion_sensitivity(
+                    min(
+                        D(value)
+                        for value in pair[
+                            "net_hypothetical_fragmentation_safe_lower_by_resolution"
+                        ].values()
+                    ),
+                    loss,
+                    unmatched_rate_grid=UNMATCHED_RATE_GRID,
+                    matched_rate_grid=MATCHED_RATE_GRID,
+                ),
+            }
+            rows.append(
+                {
+                    "quantity_shares_per_leg": quantity,
+                    "status": "scenario_thresholds_only",
+                    "complete_pair_pnl_scenarios_usdc": {
+                        "single_match_rounding_worst_resolution": pair[
+                            "net_hypothetical_single_match_worst_resolution"
+                        ],
+                        "fragmentation_safe_fee_worst_resolution": str(
+                            min(
+                                D(value)
+                                for value in pair[
+                                    "net_hypothetical_fragmentation_safe_lower_by_resolution"
+                                ].values()
+                            )
+                        ),
+                    },
+                    "unmatched_leg_loss": unmatched,
+                    "break_even": matched,
+                    "no_fill_pnl_assumption_usdc": "0",
+                    "rates_are_estimates": False,
+                }
+            )
+        enriched[scenario_name] = {
+            "depth_fraction_assumption": scenario["depth_fraction_assumption"],
+            "quantity_scenarios": rows,
+        }
+
+    report.update(
+        experiment_id="VERITAS-GATE-B-EXECUTION-BREAK-EVEN-20261015-001",
+        analysis_version="veritas-execution-break-even-v1",
+        parent_capacity_experiment_id="VERITAS-GATE-B-CAPACITY-20261015-001",
+        question=(
+            "What matched-completion rate would offset a hypothetical unmatched-leg "
+            "loss under explicit synthetic cost assumptions?"
+        ),
+        execution_break_even_scenarios=enriched,
+        execution_break_even_method={
+            "per_attempt_outcomes": {
+                "matched_pair": "p * complete_pair_pnl",
+                "one_unmatched_leg": "-q * unmatched_leg_loss",
+                "no_fill": "(1 - p - q) * 0",
+            },
+            "break_even_equation": "p * complete_pair_pnl = q * unmatched_leg_loss",
+            "rate_grids_are_sensitivity_inputs_only": True,
+            "public_data_identifies_hypothetical_order_fills": False,
+            "unmatched_leg_treatment": (
+                "one leg fills, loses at binary settlement, and cannot be recovered; "
+                "single-leg financing and operating cost are included"
+            ),
+            "complete_pair_sensitivities": [
+                "single-match rounding worst resolution",
+                "fragmentation-safe fee upper bound worst resolution",
+            ],
+        },
+    )
+    report["limitations"] = [
+        *report["limitations"],
+        "Completion and unmatched-event rates are not estimated from public quote data or any private execution record.",
+        "The unmatched leg is held to an adverse settlement outcome with zero recovery value; alternative recovery paths are not identified.",
+        "The single-match fee case is a favorable fragmentation sensitivity, while the fragmentation-safe case is the conservative fee bound.",
+        "The synthetic order book and all costs are controlled inputs; this analysis is not strategy performance or deployable capacity.",
+    ]
+    return report
 
 
 def build_report() -> dict[str, Any]:

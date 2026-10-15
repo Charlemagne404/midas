@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-15T00:33:04.990843+00:00",
+  "updated_at_utc": "2026-10-15T00:40:42.537475+00:00",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -1038,6 +1038,41 @@
         "A synchronized public measurement does not establish an execution or fill."
       ],
       "decision": "Continue design refinement only. Freeze the eligible universe, pre-period coverage rule, assignment schedule, cluster-power calculation, and analysis before any separately authorized prospective campaign; keep the no-trade control and all existing quality gates.",
+      "status": "continue"
+    },
+    {
+      "hypothesis_id": "VERITAS-H018",
+      "title": "How high must paired completion be to offset an unmatched-leg loss?",
+      "mechanism": "A hypothetical completed pair can have positive P&L under a favorable fee-rounding case while an unpaired leg loses its acquisition cost at settlement. Solving the break-even relationship shows the completion rate required to offset that loss without pretending public quotes identify fills.",
+      "experiment_id": "VERITAS-GATE-B-EXECUTION-BREAK-EVEN-20261015-001",
+      "dataset_id": "controlled_synthetic_orderbook_v1",
+      "success_metric": "For explicit synthetic book, fee, carry, and adverse unmatched-leg assumptions, solve p * complete-pair P&L = q * unmatched-leg loss under single-match and fragmentation-safe fee cases; preserve p, q, and no-fill as unestimated scenarios.",
+      "result": {
+        "status": "completed_controlled_synthetic_threshold_sensitivity",
+        "analysis_version": "veritas-execution-break-even-v1",
+        "evidence": "docs/VERITAS_GATE_B_EXECUTION_BREAK_EVEN_001.json",
+        "parent_capacity_experiment_id": "VERITAS-GATE-B-CAPACITY-20261015-001",
+        "full_depth_100_share_single_match_worst_resolution_pnl_usdc": "1.417808219178082191780821918",
+        "full_depth_100_share_adverse_unmatched_leg_loss_usdc": "50.19589041095890410958904110",
+        "required_matched_completions_per_unmatched_event": "35.40386473429951690821256038",
+        "at_1pct_unmatched_rate_required_matched_rate": "0.3540386473429951690821256038",
+        "at_5pct_unmatched_rate_required_matched_rate": "1.770193236714975845410628019",
+        "at_5pct_unmatched_rate_probability_mass_feasible": false,
+        "full_depth_100_share_fragmentation_safe_worst_resolution_pnl_usdc": "-0.782191780821917808219178082",
+        "full_depth_fragmentation_safe_positive_size_rows": 0,
+        "half_depth_fragmentation_safe_positive_size_rows": 0,
+        "fill_probability_estimated": false,
+        "orders_submitted": false,
+        "realized_money": null,
+        "promotion": "synthetic arithmetic and break-even thresholds only; no strategy promotion"
+      },
+      "limitations": [
+        "The order book, rates, fees, financing, and operating costs are controlled synthetic assumptions, not observed opportunities.",
+        "The unmatched leg is held to an adverse terminal outcome with zero recovery; no recovery route or execution probability is identified.",
+        "The positive single-match result depends on an optimistic fee-fragmentation sensitivity; the fragmentation-safe completed-pair P&L is negative in the tested grid.",
+        "Threshold rates are algebraic sensitivities and cannot be treated as estimated fill rates or expected real-world performance."
+      ],
+      "decision": "Do not promote the synthetic positive single-match scenario. At 100 shares per leg, the favorable full-depth case would require about 35.4 matched completions per adverse unmatched event, while the fragmentation-safe pair result is already negative. Keep fill rates unknown and wait for a quality-valid observed gross candidate before using the engine for candidate-specific strategy comparison.",
       "status": "continue"
     }
   ],

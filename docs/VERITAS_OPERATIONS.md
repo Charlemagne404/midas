@@ -106,6 +106,26 @@ fill, or strategy-performance claim. Its implementation is in
 `packages/midas/veritas/scenario_study.py` and its assumptions are embedded in
 the output artifact.
 
+## Solve synthetic execution break-even thresholds
+
+```bash
+cd /home/charlie/midas-veritas
+PYTHONPATH=packages /home/charlie/midas/.venv/bin/python \
+  scripts/veritas_execution_break_even.py \
+  > docs/VERITAS_GATE_B_EXECUTION_BREAK_EVEN_001.json
+```
+
+This extends the same synthetic size grid with a per-attempt equation for a
+completed pair, one unmatched leg, and no fill. It reports the matched
+completion rate needed to offset explicitly assumed unmatched-leg loss under
+single-match and fragmentation-safe fee cases. The rate grids are sensitivity
+inputs, not estimates; public quote observations cannot identify our
+hypothetical fill rates. No recovery value is assumed for the unmatched leg.
+The math is in `packages/midas/veritas/execution_break_even.py`, and the
+controlled scenario assembly is in `packages/midas/veritas/scenario_study.py`.
+The output is documented in
+[Gate B checkpoint 001](VERITAS_GATE_B_CHECKPOINT_001.md).
+
 Read-only service evidence is available from:
 
 ```bash
@@ -127,20 +147,22 @@ cd /home/charlie/midas-veritas
 PYTHONPATH=packages /home/charlie/midas/.venv/bin/pytest -q \
   tests/test_veritas_economics.py tests/test_veritas_forensics.py \
   tests/test_veritas_source_replay.py tests/test_veritas_raw_funnel.py \
-  tests/test_veritas_economic_scenario_study.py
+  tests/test_veritas_economic_scenario_study.py tests/test_veritas_execution_break_even.py
 /home/charlie/midas/.venv/bin/ruff check \
   packages/midas/veritas scripts/veritas_forward_audit.py \
   scripts/veritas_reconcile_sources.py scripts/veritas_raw_funnel.py \
   scripts/veritas_economic_scenario_study.py \
+  scripts/veritas_execution_break_even.py \
   tests/test_veritas_economics.py tests/test_veritas_forensics.py \
   tests/test_veritas_source_replay.py tests/test_veritas_raw_funnel.py \
-  tests/test_veritas_economic_scenario_study.py
+  tests/test_veritas_economic_scenario_study.py tests/test_veritas_execution_break_even.py
 MYPYPATH=packages /home/charlie/midas/.venv/bin/mypy packages/midas/veritas
 ```
 
-The latest focused economics, funnel, and synthetic scenario set passed 24
-tests. Full project verification remains a later Gate H task. No long-running
-Veritas job is currently scheduled.
+The focused Veritas suite now passes 40 tests, including synthetic execution
+break-even thresholds. Ruff, format, and mypy passed for the Veritas package and
+new generator. Full project verification remains a later Gate H task. No
+long-running Veritas job is currently scheduled.
 
 ## Preserve service and evidence ownership
 

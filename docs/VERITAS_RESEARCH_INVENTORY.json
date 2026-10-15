@@ -4,7 +4,7 @@
   "status": "in_progress",
   "baseline_commit": "f968095feb9c591de38fe12d7493224425f62f3a",
   "branch": "project/veritas",
-  "last_checkpoint": "docs/VERITAS_GATE_A_CHECKPOINT_011.md",
+  "last_checkpoint": "docs/VERITAS_GATE_B_CHECKPOINT_001.md",
   "datasets": [
     {
       "dataset_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
@@ -329,6 +329,23 @@
       "active_segment_read": false,
       "orders_submitted": false,
       "promotion": "diagnostic only; no opportunity, strategy, or profitability promotion"
+    },
+    {
+      "experiment_id": "VERITAS-GATE-B-EXECUTION-BREAK-EVEN-20261015-001",
+      "type": "synthetic_execution_break_even_threshold_sensitivity",
+      "status": "completed_controlled_sensitivity",
+      "source_dataset_id": "controlled_synthetic_orderbook_v1",
+      "evidence": "docs/VERITAS_GATE_B_EXECUTION_BREAK_EVEN_001.json",
+      "analysis_version": "veritas-execution-break-even-v1",
+      "parent_experiment_id": "VERITAS-GATE-B-CAPACITY-20261015-001",
+      "full_displayed_depth_single_match_positive_size_rows": 4,
+      "full_displayed_depth_fragmentation_safe_positive_size_rows": 0,
+      "half_displayed_depth_single_match_positive_size_rows": 3,
+      "half_displayed_depth_fragmentation_safe_positive_size_rows": 0,
+      "fill_probability_estimated": false,
+      "orders_submitted": false,
+      "focused_veritas_tests": 40,
+      "promotion": "synthetic threshold sensitivity only; no policy, strategy, or profitability promotion"
     }
   ],
   "models": [],
