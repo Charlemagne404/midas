@@ -48,6 +48,9 @@ training.
 - Strict Mypy for `apps/api/veritas.py` passed.
 - Prettier check and TypeScript typecheck passed.
 - The API test runner reported one Starlette/httpx deprecation warning.
-- No full regression suite or production build was run for this focused change.
+- At initial checkpoint capture, no full regression suite or production build
+  had been run. Follow-on verification at 20:29 UTC passed `corepack pnpm
+  build`; Vite repeated the existing large-chunk advisory (501.86 kB main
+  bundle and 544.41 kB Chart chunk). The full regression suite remains unrun.
 
 No services, campaigns, collectors, or research jobs were restarted or altered.

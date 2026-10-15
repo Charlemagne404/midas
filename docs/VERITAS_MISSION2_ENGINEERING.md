@@ -15,8 +15,10 @@ persistence, and unknown counterfactual execution. See [Gate G checkpoint
 Focused verification passed: 15 dashboard API tests, one Veritas UI test,
 Ruff, strict Mypy for the API module, Ruff formatting, Prettier, and TypeScript
 typecheck. The API test runner emitted one Starlette/httpx deprecation warning.
-No full regression suite, deployment, or service restart was run. Mission 2
-remains active.
+The subsequent production build passed at 20:29 UTC; Vite repeated its large
+bundle advisory (501.86 kB main bundle, 544.41 kB Chart chunk). No full
+regression suite, deployment, or service restart was run. Mission 2 remains
+active.
 
 ## Previous evidence checkpoint — Gate A scan 33 and recorder continuity audit
 
