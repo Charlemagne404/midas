@@ -51,18 +51,20 @@ when needed rather than as a frequent poll. The committed result is
 `docs/VERITAS_GATE_A_SOURCE_REPLAY_001.json`.
 
 The current replay also reports decision-to-frame input lag, paired-book age,
-cross-outcome receiver-time skew, per-market book-update intervals, recorded
-source gaps, and freshness counts by quality reason and market. The v5 report
-adds five-minute family activity groups, normalized issue labels mapped to
-campaign market IDs, and unmapped-entry counts, without exporting asset
-identifiers. Input lag starts at the recorded frame receiver timestamp; zero skew
-is not evidence of venue-level simultaneity.
+cross-outcome receiver-time skew, per-market and per-outcome book-update
+intervals, recorded source gaps, and freshness counts by quality reason and
+market. Version 5 adds five-minute family activity groups, normalized issue
+labels mapped to campaign market IDs, and unmapped-entry counts. Version 6
+maps finalized gap issue entries to campaign market and YES/NO outcome and
+records allowlisted fields from process-start configuration records. It omits
+outcome asset identifiers and startup storage paths. Input lag starts at the
+recorded frame receiver timestamp; zero skew is not evidence of venue-level
+simultaneity.
 The latest combined snapshot is
-[VERITAS_GATE_A_GAP_MARKET_001.json](VERITAS_GATE_A_GAP_MARKET_001.json),
-documented in [Gate A checkpoint 007](VERITAS_GATE_A_CHECKPOINT_007.md).
-Intervals spanning
-source discontinuities are censored. These measurements are diagnostic and do
-not modify the frozen campaign or establish fills.
+[VERITAS_GATE_A_GAP_OUTCOME_001.json](VERITAS_GATE_A_GAP_OUTCOME_001.json),
+documented in [Gate A checkpoint 009](VERITAS_GATE_A_CHECKPOINT_009.md).
+Intervals spanning source discontinuities are censored. These measurements
+are diagnostic and do not modify the frozen campaign or establish fills.
 
 ## Count raw market-frame quality and opportunity states
 

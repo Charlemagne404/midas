@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import math
 import sqlite3
 import time
 import zlib
@@ -27,6 +28,7 @@ MAX_DECISION_SAMPLE_COMPRESSED_BYTES = 128 * 1024**2
 MAX_DECISION_SAMPLE_DECOMPRESSED_BYTES = 512 * 1024**2
 MAX_SOURCE_BYTES = 20 * 1024**3
 MAX_LINEAGE_REFERENCES = 1_000_000
+MAX_COLLECTOR_PROCESS_START_EPOCHS = 1_000
 _UPDATE_INTERVAL_BUCKETS = (
     ("0_to_250_ms", 250 * 10**6),
     ("250_to_500_ms", 500 * 10**6),
@@ -62,6 +64,20 @@ _REF_FIELDS = (
     "canonical_record_sha256",
     "received_ns",
     "monotonic_ns",
+)
+_PROCESS_START_CONFIG_FIELDS = (
+    "markets",
+    "discovery_limit",
+    "refresh_seconds",
+    "resync_seconds",
+    "stale_seconds",
+    "queue_size",
+    "segment_seconds",
+    "selection_mode",
+    "selection_seed",
+    "near_expiry_tag_id",
+    "comparison_seconds",
+    "comparison_timeout_seconds",
 )
 
 
@@ -371,6 +387,27 @@ def _gap_issue_label(issue: Any) -> str:
     return issue if isinstance(issue, str) and issue in _KNOWN_GAP_ISSUES else "other"
 
 
+def _gap_outcome_label(outcome: Any) -> str:
+    label = str(outcome).strip().lower()
+    return label if label in {"yes", "no"} else "other"
+
+
+def _safe_process_start_config(payload: dict[str, Any]) -> dict[str, Any] | None:
+    config = payload.get("config")
+    if not isinstance(config, dict):
+        return None
+    result: dict[str, Any] = {}
+    for field in _PROCESS_START_CONFIG_FIELDS:
+        value = config.get(field)
+        if isinstance(value, bool):
+            continue
+        if isinstance(value, (int, float)) and math.isfinite(float(value)):
+            result[field] = value
+        elif field == "selection_mode" and isinstance(value, str) and len(value) <= 64:
+            result[field] = value
+    return result
+
+
 def _record_gap_issue_market_activity(
     context: Context,
     reason: str,
@@ -384,33 +421,56 @@ def _record_gap_issue_market_activity(
     if not isinstance(affected_assets, dict):
         return
 
-    token_to_market = {
-        str(token): str(market["id"])
+    token_to_market_outcome = {
+        str(token): (str(market["id"]), _gap_outcome_label(outcome))
         for market in context.cohort.values()
-        for token in market["tokens"]
+        for token, outcome in market["tokens"].items()
     }
-    issues_by_market: defaultdict[str, Counter[str]] = defaultdict(Counter)
+    issues_by_market: defaultdict[str, dict[str, Any]] = defaultdict(
+        lambda: {
+            "affected_issue_counts": Counter(),
+            "affected_issue_counts_by_outcome": defaultdict(Counter),
+            "outcomes": set(),
+        }
+    )
     unmapped_issues: Counter[str] = Counter()
     for token, issue in affected_assets.items():
         issue_label = _gap_issue_label(issue)
-        market_id = token_to_market.get(token) if isinstance(token, str) else None
-        if market_id is None:
+        mapping = token_to_market_outcome.get(token) if isinstance(token, str) else None
+        if mapping is None:
             unmapped_issues[issue_label] += 1
         else:
-            issues_by_market[market_id][issue_label] += 1
+            market_id, outcome = mapping
+            entry = issues_by_market[market_id]
+            entry["affected_issue_counts"][issue_label] += 1
+            entry["affected_issue_counts_by_outcome"][outcome][issue_label] += 1
+            entry["outcomes"].add(outcome)
 
-    for market_id, issue_counts in issues_by_market.items():
+    for market_id, issue_data in issues_by_market.items():
         total_entry = total_by_market.setdefault(
             (reason, market_id),
-            {"gap_records_with_market_issues": 0, "affected_issue_counts": Counter()},
+            {
+                "gap_records_with_market_issues": 0,
+                "affected_issue_counts": Counter(),
+                "affected_issue_counts_by_outcome": defaultdict(Counter),
+                "gap_records_by_outcome_count": Counter(),
+            },
         )
         block_entry = block_by_market.setdefault(
             (block_start_ns, reason, market_id),
-            {"gap_records_with_market_issues": 0, "affected_issue_counts": Counter()},
+            {
+                "gap_records_with_market_issues": 0,
+                "affected_issue_counts": Counter(),
+                "affected_issue_counts_by_outcome": defaultdict(Counter),
+                "gap_records_by_outcome_count": Counter(),
+            },
         )
         for entry in (total_entry, block_entry):
             entry["gap_records_with_market_issues"] += 1
-            entry["affected_issue_counts"].update(issue_counts)
+            entry["affected_issue_counts"].update(issue_data["affected_issue_counts"])
+            entry["gap_records_by_outcome_count"][str(len(issue_data["outcomes"]))] += 1
+            for outcome, issue_counts in issue_data["affected_issue_counts_by_outcome"].items():
+                entry["affected_issue_counts_by_outcome"][outcome].update(issue_counts)
 
     if unmapped_issues:
         unmapped_total[reason].update(unmapped_issues)
@@ -839,6 +899,7 @@ def reconcile_forward_sources(
     source_gap_affected_asset_counts: Counter[str] = Counter()
     source_gap_affected_issue_counts: defaultdict[str, Counter[str]] = defaultdict(Counter)
     activity_discontinuities: Counter[str] = Counter()
+    collector_process_start_epochs: list[dict[str, Any]] = []
     activity_gap_epoch = 0
     expected_refs: set[tuple[Any, ...]] = set()
     for event in decisions:
@@ -866,8 +927,34 @@ def reconcile_forward_sources(
         in_campaign_window = identity["start_ns"] <= now_ns < identity["end_ns"]
         if record["kind"] == "gap":
             activity_gap_epoch += 1
+            payload = record["payload"]
+            if payload.get("reason") == "process_start":
+                if len(collector_process_start_epochs) >= MAX_COLLECTOR_PROCESS_START_EPOCHS:
+                    raise ValueError("Finalized source exceeds the process-start epoch bound")
+                implementation_hash = payload.get("implementation_sha256")
+                if (
+                    not isinstance(implementation_hash, str)
+                    or len(implementation_hash) != 64
+                    or any(char not in "0123456789abcdef" for char in implementation_hash)
+                ):
+                    implementation_hash = None
+                reconstruction_version = payload.get("reconstruction_version")
+                if not isinstance(reconstruction_version, int) or isinstance(
+                    reconstruction_version, bool
+                ):
+                    reconstruction_version = None
+                collector_process_start_epochs.append(
+                    {
+                        "ordinal": record["ordinal"],
+                        "received_ns": now_ns,
+                        "in_campaign_window": in_campaign_window,
+                        "implementation_sha256": implementation_hash,
+                        "reconstruction_version": reconstruction_version,
+                        "collector_config": _safe_process_start_config(payload),
+                    }
+                )
             if in_campaign_window:
-                reason = record["payload"].get("reason", "unknown")
+                reason = payload.get("reason", "unknown")
                 source_gap_reasons[reason] += 1
                 activity_discontinuities[reason] += 1
                 block_start_ns = (
@@ -882,7 +969,7 @@ def reconcile_forward_sources(
                     },
                 )
                 gap_block["gap_reasons"][reason] += 1
-                affected = record["payload"].get("affected_assets")
+                affected = payload.get("affected_assets")
                 if isinstance(affected, dict):
                     count = len(affected)
                     gap_block["affected_asset_counts_by_reason"][reason] += count
@@ -1044,6 +1131,13 @@ def reconcile_forward_sources(
             "market_id": market_id,
             "gap_records_with_market_issues": data["gap_records_with_market_issues"],
             "affected_issue_counts": dict(sorted(data["affected_issue_counts"].items())),
+            "affected_issue_counts_by_outcome": {
+                outcome: dict(sorted(issues.items()))
+                for outcome, issues in sorted(data["affected_issue_counts_by_outcome"].items())
+            },
+            "gap_records_by_outcome_count": dict(
+                sorted(data["gap_records_by_outcome_count"].items())
+            ),
         }
         for (reason, market_id), data in sorted(source_gap_issue_by_market.items())
     ]
@@ -1054,6 +1148,13 @@ def reconcile_forward_sources(
             "market_id": market_id,
             "gap_records_with_market_issues": data["gap_records_with_market_issues"],
             "affected_issue_counts": dict(sorted(data["affected_issue_counts"].items())),
+            "affected_issue_counts_by_outcome": {
+                outcome: dict(sorted(issues.items()))
+                for outcome, issues in sorted(data["affected_issue_counts_by_outcome"].items())
+            },
+            "gap_records_by_outcome_count": dict(
+                sorted(data["gap_records_by_outcome_count"].items())
+            ),
         }
         for (block_start_ns, reason, market_id), data in sorted(
             source_gap_issue_by_market_block.items()
@@ -1069,7 +1170,7 @@ def reconcile_forward_sources(
     ]
     # Keep only aggregate mismatch categories; no raw market or event payloads are exported.
     return {
-        "analysis_version": "veritas-source-replay-v5",
+        "analysis_version": "veritas-source-replay-v6",
         "captured_ns": time.time_ns(),
         "campaign_id": campaign_id,
         "campaign_root": str(campaign_root),
@@ -1110,6 +1211,20 @@ def reconcile_forward_sources(
         "source_gap_issue_activity_by_market_5min_block": (
             source_gap_issue_activity_by_market_block
         ),
+        "collector_process_start_configuration": {
+            "epochs_scanned": len(collector_process_start_epochs),
+            "epochs_in_campaign_window": sum(
+                bool(epoch["in_campaign_window"]) for epoch in collector_process_start_epochs
+            ),
+            "epochs_with_captured_allowlisted_config": sum(
+                bool(epoch["collector_config"]) for epoch in collector_process_start_epochs
+            ),
+            "epochs_without_captured_allowlisted_config": sum(
+                not bool(epoch["collector_config"]) for epoch in collector_process_start_epochs
+            ),
+            "allowlisted_config_fields": list(_PROCESS_START_CONFIG_FIELDS),
+            "epochs": collector_process_start_epochs,
+        },
         "source_gap_unmapped_issue_counts_by_reason": {
             reason: dict(sorted(issues.items()))
             for reason, issues in sorted(source_gap_unmapped_issue_counts.items())
@@ -1128,7 +1243,9 @@ def reconcile_forward_sources(
             "window book-update intervals by market, excluding intervals that span a recorded "
             "gap or unsupported source frame; aligns market updates, scheduled decisions, and "
             "aggregated gap issue labels by five-minute family block, mapping issue entries to "
-            "campaign market IDs without exporting asset identifiers. It does not infer omitted "
-            "decisions, fills, or outcomes."
+            "campaign market IDs and YES/NO outcomes without exporting asset identifiers. It also "
+            "reports allowlisted configuration fields from finalized collector process-start "
+            "records, excluding storage paths. It does not infer omitted decisions, fills, or "
+            "outcomes."
         ),
     }

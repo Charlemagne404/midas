@@ -4,7 +4,7 @@
   "status": "in_progress",
   "baseline_commit": "f968095feb9c591de38fe12d7493224425f62f3a",
   "branch": "project/veritas",
-  "last_checkpoint": "docs/VERITAS_GATE_A_CHECKPOINT_008.md",
+  "last_checkpoint": "docs/VERITAS_GATE_A_CHECKPOINT_009.md",
   "datasets": [
     {
       "dataset_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
@@ -235,6 +235,38 @@
         50000
       ],
       "promotion": "synthetic arithmetic/capacity validation only"
+    },
+    {
+      "experiment_id": "VERITAS-GATE-A-GAP-OUTCOME-20261015-001",
+      "type": "finalized_resynchronization_issue_mapping_by_outcome_and_startup_config",
+      "status": "completed_snapshot_pair_wide_stale_issues",
+      "source_dataset_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
+      "evidence": "docs/VERITAS_GATE_A_GAP_OUTCOME_001.json",
+      "analysis_version": "veritas-source-replay-v6",
+      "source_manifest_sha256": "960fa420cb69c5d9dad8d5d4738cc16ef0db5b86823b8fc54f85a3402dddb542",
+      "finalized_segments": 1886,
+      "source_bytes": 442295829,
+      "source_last_finalized_ordinal": 228329,
+      "decision_rows_sampled": 2729,
+      "decisions_reproduced": 2729,
+      "book_resynchronization_gaps": 178,
+      "affected_issue_entries": 1026,
+      "markets_with_mapped_issue_entries": 8,
+      "market_gap_appearances_by_outcome_count": {
+        "both_outcomes": 509,
+        "one_outcome": 8
+      },
+      "unmapped_issue_entries": 0,
+      "scheduled_freshness_violations": 1730,
+      "scheduled_decisions": 2729,
+      "process_start_epochs_scanned": 15,
+      "process_start_epochs_with_allowlisted_config": 9,
+      "process_start_epochs_in_campaign_window": 0,
+      "focused_tests": 5,
+      "mismatches": 0,
+      "active_segment_read": false,
+      "orders_submitted": false,
+      "promotion": "diagnostic only; no collector, cadence, campaign, strategy, or profitability promotion"
     }
   ],
   "models": [],

@@ -6,7 +6,7 @@ Reality campaign is a protected reference.
 
 | Rank | Question | Evidence today | Next experiment | Promotion rule |
 | --- | --- | --- | --- | --- |
-| 1 | Which source conditions drive stale scheduled decisions, and are any preventable? | The v5 replay reproduced all 2,344 selected decisions. Input lag stayed below 250 ms, while 1,503/2,344 exceeded 5 s freshness. Most mapped gap issues were stale, but market activity did not explain every stale decision. | Inspect per-outcome issue patterns and the configuration in finalized process-start records. Separate pair-wide inactivity from one-sided source behavior before proposing a new collector or cadence study. | Repair only a demonstrated defect. Any sampling or collector change uses a new frozen campaign identity. |
+| 1 | Which source conditions drive stale scheduled decisions, and are any preventable? | The v6 replay reproduced 2,729/2,729 decisions. It mapped 1,026 gap issue entries; all 980 stale entries affected both outcomes, and 509/517 market-gap appearances were pair-wide. Per-outcome update intervals were similar in affected markets. | Align each stale issue and scheduled decision to the preceding per-outcome update and compare elapsed time with the recorded 60-second threshold. Keep the analysis read-only. | Repair only a demonstrated defect. Any sampling or collector change uses a new frozen campaign identity. |
 | 2 | Which future public horizons can yield more synchronized follow-ups without weakening quality rules? | The original frozen campaign had 1,462 censors after valid initial states; 1,183 were missing synchronized future observations or availability timeouts. | Inspect activity intervals and campaign measurement scheduling. Propose a separate, predeclared horizon and sampling design with an all-market control and no-trade policy. | Never alter Reality's horizons, sampling, or labels. A higher measurement rate does not establish fills or profitability. |
 | 3 | Does a longer and broader observed panel contain a positive gross complementary opportunity? | The v2 raw funnel replayed 25,620 quality-valid states over about 2 h 46 m; all five-share top and full-depth pair edges were nonpositive. The selected cohort and interval are limited. | Rerun the versioned funnel on later finalized prefixes and any new approved observation cohort. Stratify by market family, activity, lifetime, and liquidity. | A candidate must pass source quality, same-condition payoff, per-leg USDC minimums, and full-depth costs before fees or execution assumptions are considered. |
 | 4 | Does the v2 economic model correctly bound a real, positive gross candidate across size and cost assumptions? | Official fee fields include rate and exponent; taker buy fees are collected in shares. The v2 engine covers exponent, fee rounding sensitivities, share deductions, and USDC minimums. The controlled capital study remains synthetic. | Independently recalculate an observed candidate if one appears; evaluate per-leg schedules, depth, partial positions, capital lockup, and settlement assumptions. | Do not promote v2 P&L or a synthetic capacity frontier as empirical performance. Unknown fills stay unknown. |
@@ -24,8 +24,10 @@ Reality campaign is a protected reference.
 - The first baseline and original v1 economics are recorded in the
   [research ledger](VERITAS_RESEARCH_LEDGER.json) and
   [Gate A checkpoint 001](VERITAS_GATE_A_CHECKPOINT_001.md). Source replay
-  evidence is in checkpoints 002–007. The corrected v2 economics and refreshed
-  raw funnel are in [Gate A checkpoint 008](VERITAS_GATE_A_CHECKPOINT_008.md).
+  evidence is in checkpoints 002–007; the per-outcome issue and startup-config
+  audit is in [Gate A checkpoint 009](VERITAS_GATE_A_CHECKPOINT_009.md). The
+  corrected v2 economics and refreshed raw funnel are in
+  [Gate A checkpoint 008](VERITAS_GATE_A_CHECKPOINT_008.md).
 - The bounded controlled capacity sensitivity is
   [VERITAS_GATE_B_CAPACITY_001.json](VERITAS_GATE_B_CAPACITY_001.json); it uses
   synthetic inputs and does not promote a strategy.

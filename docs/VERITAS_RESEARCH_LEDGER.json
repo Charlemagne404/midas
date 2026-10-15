@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-14T23:56:53.582154+00:00",
+  "updated_at_utc": "2026-10-15T00:07:43.468875+00:00",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -673,7 +673,7 @@
         "The currently loaded configuration is context and does not prove settings for every historical source gap.",
         "Public observations do not establish fills or profitability."
       ],
-      "decision": "Do not change the collector or campaign. Inspect per-outcome issue patterns and configuration stored in finalized process-start records before considering any separate source or cadence experiment.",
+      "decision": "The v6 outcome/config audit (H014) found the stale issue entries were pair-wide and the last captured pre-campaign settings were consistent with the frozen thresholds. Do not change the collector or campaign; align individual stale events to preceding updates before considering a separate cadence study.",
       "status": "continue"
     },
     {
@@ -790,10 +790,105 @@
       ],
       "decision": "Use the study to validate accounting and capacity reporting only; do not infer observed or scalable economic potential.",
       "status": "completed"
+    },
+    {
+      "hypothesis_id": "VERITAS-H014",
+      "title": "Are resynchronization issues asymmetric by outcome or explained by a startup configuration mismatch?",
+      "mechanism": "If gap issues concentrate on one binary outcome or the recorded stale/resync thresholds differ from the campaign configuration, asymmetric source updates or configuration drift may explain some scheduled stale decisions.",
+      "experiment_id": "VERITAS-GATE-A-GAP-OUTCOME-20261015-001",
+      "dataset_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
+      "success_metric": "Map finalized issue entries to market and YES/NO outcome, compare source update interval buckets and scheduled freshness by market, and inspect allowlisted settings from finalized process-start records without exporting asset IDs.",
+      "result": {
+        "status": "completed_snapshot_pair_wide_stale_issues",
+        "analysis_version": "veritas-source-replay-v6",
+        "evidence": "docs/VERITAS_GATE_A_GAP_OUTCOME_001.json",
+        "source_manifest_sha256": "960fa420cb69c5d9dad8d5d4738cc16ef0db5b86823b8fc54f85a3402dddb542",
+        "finalized_segments": 1886,
+        "source_bytes": 442295829,
+        "source_last_finalized_ordinal": 228329,
+        "journal_event_tail_sequence": 31636,
+        "decision_rows_sampled": 2729,
+        "decisions_reproduced": 2729,
+        "decisions_uncovered_after_finalized_prefix": 0,
+        "mismatches": 0,
+        "active_segment_read": false,
+        "book_resynchronization_gaps": 178,
+        "affected_issue_entries": 1026,
+        "affected_issue_entries_by_reason": {
+          "stale": 980,
+          "top_divergence": 39,
+          "advertised_top_pending": 6,
+          "timestamp_regression": 1
+        },
+        "affected_issue_entries_by_outcome": {
+          "yes": {
+            "stale": 490,
+            "top_divergence": 19,
+            "advertised_top_pending": 6,
+            "timestamp_regression": 1
+          },
+          "no": {
+            "stale": 490,
+            "top_divergence": 20
+          }
+        },
+        "market_gap_appearances_by_outcome_count": {
+          "both_outcomes": 509,
+          "one_outcome": 8
+        },
+        "markets_with_mapped_issue_entries": 8,
+        "unmapped_issue_entries": 0,
+        "source_update_frames_in_issue_markets": {
+          "both_outcomes": 25945,
+          "one_outcome": 52
+        },
+        "scheduled_freshness_violations": 1730,
+        "scheduled_decisions": 2729,
+        "scheduled_freshness_violation_fraction": "0.634298",
+        "process_start_epochs_scanned": 15,
+        "process_start_epochs_with_allowlisted_config": 9,
+        "process_start_epochs_without_allowlisted_config": 6,
+        "process_start_epochs_in_campaign_window": 0,
+        "latest_configured_start_before_campaign": {
+          "ordinal": 52466,
+          "received_at_utc": "2026-10-14T14:34:56.393045+00:00",
+          "campaign_start_lead_time": "6h33m",
+          "reconstruction_version": 4,
+          "implementation_sha256": "9231e11c969cc95af607d847c7d5aa32418a91c21152b214cf9f170d517c0c9f",
+          "config": {
+            "markets": 8,
+            "discovery_limit": 50,
+            "refresh_seconds": 600,
+            "resync_seconds": 300,
+            "stale_seconds": 60,
+            "queue_size": 32,
+            "segment_seconds": 300,
+            "selection_mode": "stratified-v1",
+            "selection_seed": 20261014,
+            "near_expiry_tag_id": 2,
+            "comparison_seconds": 15,
+            "comparison_timeout_seconds": 5
+          }
+        },
+        "focused_source_replay_tests": 5,
+        "static_checks": "ruff, format, and mypy passed",
+        "orders_submitted": false,
+        "promotion": "diagnostic only; no collector, cadence, campaign, strategy, or profitability promotion"
+      },
+      "limitations": [
+        "This is one bounded source and selected campaign snapshot; repeated decisions and issue entries are correlated.",
+        "Market-gap appearance counts overlap across gap records and do not represent unique reconnects or assets.",
+        "The issue map does not identify which issue triggered a resynchronization.",
+        "Intervals spanning source discontinuities are censored, and frame-receiver time is not venue quote time.",
+        "The last captured configured process start predates the campaign; it does not prove settings for every process state or identify causal behavior.",
+        "Public source measurements do not establish fills or profitability."
+      ],
+      "decision": "The stale entries were pair-wide in this snapshot, and the preceding captured startup settings were consistent with the frozen campaign. Keep Reality unchanged. Align stale issues and scheduled decisions to their preceding updates before designing any separate source or cadence study.",
+      "status": "continue"
     }
   ],
   "next_research_questions": [
-    "Do per-outcome issue patterns and finalized process-start configuration explain stale decisions beyond market activity alone?",
+    "Does event-aligned time since the last per-outcome update explain finalized stale issues and scheduled freshness violations relative to the recorded 60-second threshold?",
     "Which predeclared future horizons and quality-aware sampling strata improve synchronized public follow-up coverage in a separate campaign?",
     "Does a broader, longer source panel produce any positive quantity-specific gross complement before modeling fees or execution?",
     "What independent verification is required before a positive candidate can enter a matched hypothetical strategy comparison?",

@@ -106,7 +106,19 @@ def _fixture(tmp_path: Path) -> tuple[Path, Path, dict[str, Any]]:
     producer_hash = "a" * 64
     store.append(
         "gap",
-        dict(reason="process_start", reconstruction_version=4, implementation_sha256=producer_hash),
+        dict(
+            reason="process_start",
+            reconstruction_version=4,
+            implementation_sha256=producer_hash,
+            config=dict(
+                root="/private/collector/path",
+                markets=8,
+                stale_seconds=60,
+                resync_seconds=300,
+                refresh_seconds=600,
+                selection_mode="stratified-v1",
+            ),
+        ),
         received_ns=START,
         monotonic_ns=0,
     )
@@ -126,7 +138,10 @@ def _fixture(tmp_path: Path) -> tuple[Path, Path, dict[str, Any]]:
     )
     store.append(
         "gap",
-        dict(reason="book_resynchronization", affected_assets={"11": "stale"}),
+        dict(
+            reason="book_resynchronization",
+            affected_assets={"11": "stale", "22": "top_divergence"},
+        ),
         received_ns=START + 500_000,
         monotonic_ns=500_000,
     )
@@ -262,23 +277,42 @@ def test_reconciles_finalized_records_and_ignores_active_segment(tmp_path):
     assert report["decision_timing"]["by_market"]["1"][
         "market_outcomes_updated_in_source_frame"
     ] == {"2": 1}
-    assert report["analysis_version"] == "veritas-source-replay-v5"
+    assert report["analysis_version"] == "veritas-source-replay-v6"
     activity = report["source_activity_by_market"][0]
     assert activity["touched_book_update_frames"] == 1
     assert activity["both_outcome_update_frames"] == 1
     assert activity["pair_touch_intervals_ms"] is None
     assert report["source_gap_affected_issue_counts_by_reason"] == {
-        "book_resynchronization": {"stale": 1}
+        "book_resynchronization": {"stale": 1, "top_divergence": 1}
     }
     market_gap = report["source_gap_issue_activity_by_market"]
-    assert len(market_gap) == 1
-    assert market_gap[0]["market_id"] == "1"
-    assert market_gap[0]["gap_records_with_market_issues"] == 1
-    assert market_gap[0]["affected_issue_counts"] == {"stale": 1}
+    assert len(market_gap) == 2
+    market_gap_by_id = {row["market_id"]: row for row in market_gap}
+    assert market_gap_by_id["1"]["gap_records_with_market_issues"] == 1
+    assert market_gap_by_id["1"]["affected_issue_counts"] == {"stale": 1}
+    assert market_gap_by_id["1"]["affected_issue_counts_by_outcome"] == {"yes": {"stale": 1}}
+    assert market_gap_by_id["1"]["gap_records_by_outcome_count"] == {"1": 1}
+    assert market_gap_by_id["2"]["affected_issue_counts_by_outcome"] == {
+        "no": {"top_divergence": 1}
+    }
+    assert market_gap_by_id["2"]["gap_records_by_outcome_count"] == {"1": 1}
     market_gap_block = report["source_gap_issue_activity_by_market_5min_block"]
-    assert len(market_gap_block) == 1
-    assert market_gap_block[0]["market_id"] == "1"
+    assert len(market_gap_block) == 2
     assert report["source_gap_unmapped_issue_counts_by_reason"] == {}
+    process_starts = report["collector_process_start_configuration"]
+    assert process_starts["epochs_scanned"] == 1
+    assert process_starts["epochs_in_campaign_window"] == 1
+    assert process_starts["epochs_with_captured_allowlisted_config"] == 1
+    recorded_config = process_starts["epochs"][0]["collector_config"]
+    assert recorded_config == {
+        "markets": 8,
+        "stale_seconds": 60,
+        "resync_seconds": 300,
+        "refresh_seconds": 600,
+        "selection_mode": "stratified-v1",
+    }
+    assert "root" not in recorded_config
+    assert "affected_assets" not in json.dumps(report)
     assert sum(
         block["scheduled_decisions"] for block in report["source_activity_by_family_5min_block"]
     ) == len(rows)
