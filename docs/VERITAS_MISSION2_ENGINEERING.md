@@ -1,5 +1,22 @@
 # Veritas Mission 2 Engineering Checkpoint
 
+## Current delta: v4 measurement and coverage checkpoint
+
+The incremental snapshot analyzer is now at `veritas-finalized-snapshot-analysis-v4`;
+v1–v3 state, summaries, and event histories are retained separately. v4 adds
+per-market selected/valid counts, first and last sampled time, sampled book
+fingerprint changes, and per-market/cumulative reclassification under the
+previous five-second reported-age and 250 ms cross-outcome-skew gate. The
+current request/receipt gate remains active. The paired result is a
+measurement-yield comparison, with explicit limits around batch atomicity,
+sequence freshness, and upstream queue age.
+
+The dashboard exposes cohort strata, paired gate yield, sampled state changes,
+and a bounded least-covered-market table. See [Gate A checkpoint
+008](VERITAS_MISSION2_GATE_A_CHECKPOINT_008.md), [Gate G checkpoint
+002](VERITAS_MISSION2_GATE_G_CHECKPOINT_002.md), and [measurement comparison
+protocol 002](VERITAS_MISSION2_MEASUREMENT_COMPARISON_002.md).
+
 **Date:** 2026-10-15
 **Branch:** `project/veritas`
 **Starting commit:** `9a857cc56804bec6b7129171ba090d338e263aa3`
@@ -42,8 +59,9 @@ atomicity and sequence ordering unverified rather than assuming them.
 indexes only completed immutable snapshots. It verifies snapshot identity and
 analysis-event digests, uses exclusive event creation and atomic state writes,
 resumes after partial work, and processes at most 100 pending snapshots per
-run. Version 2 re-audits saved books with the repaired gate and preserves v1
-state, events, and summary. Its current backlog is zero.
+run. Version 4 preserves v1–v3 artifacts, re-audits saved books with the
+repaired gate, and adds paired legacy-gate plus per-market sampled coverage
+metrics. Snapshot transitions do not estimate true venue update rates.
 
 [`finalized_source_analysis.py`](../packages/midas/veritas/finalized_source_analysis.py)
 is a separate incremental reader for the frozen Mission 2 Reality campaign. It
@@ -78,9 +96,11 @@ byte bounds, and remains read-only.
 [`Veritas.tsx`](../apps/web/src/Veritas.tsx) and
 [`veritas.css`](../apps/web/src/veritas.css) add market-discovery and cohort
 strata, scan/coverage counts, data quality, concentration, edge and candidate
-counts, readiness, and immutable snapshot links. Zero candidates are displayed
-directly. The page shows finalized Reality replay progress in its own panel,
-separate from intermittent public snapshots and realized execution.
+counts, readiness, paired old/new measurement yield, sampled market-state
+transitions, least-covered markets, and immutable snapshot links. Zero
+candidates are displayed directly. The page shows finalized Reality replay
+progress in its own panel, separate from intermittent public snapshots and
+realized execution.
 
 ### Recurring operation
 
@@ -101,23 +121,32 @@ experiment.
 
 ## Runtime and evidence at checkpoint
 
-- Latest scan: `scan-20261015T080114Z-b735749c3847`, captured 08:01:14 UTC.
+- Latest scan: `scan-20261015T083153Z-1d45d1808d34`, captured 08:31:53 UTC and indexed by v4 at 08:31:59.
 - Latest discovery union: 300 unique IDs, 167 supported pair markets, 133
   explicit exclusions.
 - Latest selected panel: 40 markets (six available stable controls, 34
-  rotating); 37 quality-valid pairs.
-- Indexed panel: ten snapshots, 400 selected observations, 359 quality-valid,
-  41 empty-ask invalids, 152 distinct markets, zero pending snapshots.
-- Observation window: about 122 minutes; current API readiness is
+  rotating); 37 quality-valid pairs. Latest liquidity strata are 9/14/17
+  high/medium/low, expiry strata 17/22/1 near/medium/long, and spread strata
+  9/15/16 tight/medium/wide.
+- Indexed panel: eleven snapshots, 440 selected observations, 396
+  request/receipt-valid, 44 empty-ask invalids, 156 distinct markets, zero
+  pending snapshots. The legacy reported-age/skew gate accepts 98/440; paired
+  yield improves by 298 observations (+67.7 percentage points).
+- There are 284 sampled consecutive book-state comparisons; 271 fingerprints
+  differ. The API bands 54 markets as higher sampled change, eight as lower,
+  and 94 unclassified. These remain intermittent comparisons, not venue update
+  rates.
+- Observation window: about 152 minutes; current API readiness is
   `collecting_repeated_temporal_coverage`.
-- Data root: 7,572,273 bytes, below the 1 GiB cap.
+- Data root: 9,007,858 bytes, below the 1 GiB cap.
 - Service configuration: 40 markets, one-second request pacing, seven planned
   network requests per scan, `CPUQuota=5%`, `MemoryMax=256M`, low CPU/IO
   priority, no new privileges, and writes limited to the observatory data root.
-- Latest scheduled scan completed successfully at 08:01:19 UTC, using about
-  593 ms of CPU. The independent economic qualification run over ten
-  snapshots found zero positive states at all gates (359 quality-valid pairs,
-  152 distinct markets; top-edge median -0.025, maximum -0.001).
+- Latest scheduled scan completed successfully at 08:31:59 UTC, using about
+  609 ms of CPU. Qualification run
+  `VERITAS-M2-ECO-QUAL-001-RUN-95f8752f5291` over eleven snapshots found zero
+  positive states at all gates (396 quality-valid pairs, 156 distinct
+  markets; top-edge median -0.028, maximum -0.001).
 
 ### Finalized source replay extension
 
@@ -142,7 +171,8 @@ The full scan results and immutable source identities are in
 [`VERITAS_MISSION2_RESEARCH_INVENTORY_004.json`](VERITAS_MISSION2_RESEARCH_INVENTORY_004.json),
 [`VERITAS_MISSION2_RESEARCH_INVENTORY_005.json`](VERITAS_MISSION2_RESEARCH_INVENTORY_005.json),
 [`VERITAS_MISSION2_RESEARCH_INVENTORY_006.json`](VERITAS_MISSION2_RESEARCH_INVENTORY_006.json),
-and [`VERITAS_MISSION2_RESEARCH_INVENTORY_007.json`](VERITAS_MISSION2_RESEARCH_INVENTORY_007.json).
+[`VERITAS_MISSION2_RESEARCH_INVENTORY_007.json`](VERITAS_MISSION2_RESEARCH_INVENTORY_007.json),
+and [`VERITAS_MISSION2_RESEARCH_INVENTORY_008.json`](VERITAS_MISSION2_RESEARCH_INVENTORY_008.json).
 
 ## Verification
 

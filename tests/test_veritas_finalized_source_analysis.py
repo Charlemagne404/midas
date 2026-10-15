@@ -170,7 +170,11 @@ def test_finalized_source_prefix_catalog_mutation_is_rejected(tmp_path):
     output = tmp_path / "observatory"
     _run(output, campaign_dir, raw, campaign_hash, max_segments=1)
 
-    sidecar = sorted(raw.glob("*.json"))[0]
+    sidecar = next(
+        path
+        for path in sorted(raw.glob("*.json"))
+        if json.loads(path.read_text()).get("count") > 0
+    )
     catalog = json.loads(sidecar.read_text())
     catalog["sha256"] = "f" * 64
     sidecar.write_text(json.dumps(catalog))

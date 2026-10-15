@@ -204,6 +204,8 @@ def test_overview_exposes_incremental_public_observatory_summary(tmp_path):
             "snapshot_count": 2,
             "selected_market_observations": 80,
             "quality_valid_pairs": 70,
+            "legacy_freshness_valid_pairs": 35,
+            "legacy_freshness_invalid_reasons": {"reported_update_age_above_5s": 35},
             "invalid_pairs": 10,
             "current_bounded_eligible_markets": 50,
             "maximum_bounded_eligible_markets_seen": 50,
@@ -211,8 +213,18 @@ def test_overview_exposes_incremental_public_observatory_summary(tmp_path):
                 "market-1": {
                     "selected_observations": 2,
                     "quality_valid_pairs": 2,
+                    "legacy_freshness_valid_pairs": 1,
+                    "invalid_reasons": {},
+                    "legacy_freshness_invalid_reasons": {
+                        "reported_update_age_above_5s": 1
+                    },
                     "categories": ["Politics"],
                     "cohort_roles": {"stable_random_control": 2},
+                    "first_observed_at_utc": "2026-10-15T05:30:00+00:00",
+                    "last_observed_at_utc": "2026-10-15T06:00:00+00:00",
+                    "sampled_state_fingerprint_count": 2,
+                    "sampled_state_comparisons": 1,
+                    "sampled_state_changes": 1,
                 }
             },
             "category_observations": {"Politics": 2},
@@ -271,6 +283,19 @@ def test_overview_exposes_incremental_public_observatory_summary(tmp_path):
     assert panel["opportunity"]["quality_valid_pairs"] == 70
     assert panel["opportunity"]["positive_full_depth_gross_by_quantity"] == {"20": 0}
     assert panel["data_quality"]["latest_invalid_reasons"] == {"no_empty_ask_side": 5}
+    assert panel["measurement_comparison"]["legacy_freshness_valid_pairs"] == 35
+    assert panel["measurement_comparison"]["corrected_freshness_valid_pairs"] == 70
+    assert panel["measurement_comparison"]["recovered_valid_pairs"] == 35
+    assert panel["measurement_comparison"]["recovered_percentage_points"] == 43.8
+    assert panel["market_coverage"]["tracked_markets"] == 1
+    assert panel["market_coverage"]["coverage_denominator_snapshots"] == 2
+    assert panel["market_coverage"]["sampled_state_changes"] == 1
+    market = panel["market_coverage"]["least_observed_markets"][0]
+    assert market["snapshot_coverage_percent"] == 100.0
+    assert market["quality_valid_percent"] == 100.0
+    assert market["legacy_quality_valid_percent"] == 50.0
+    assert market["sampled_state_change_fraction"] == 1.0
+    assert market["sampled_activity_band"] == "unclassified"
     assert any(item["id"] == "continuous-analysis" for item in response.json()["artifacts"])
 
 

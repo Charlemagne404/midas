@@ -207,9 +207,12 @@ def compare_qualification_rules(
 
 
 def run_finalized_experiment(root: Path, *, quantity: str = "20") -> dict[str, Any]:
-    events_dir = root / "analysis-events" / "v2"
+    version_suffix = SNAPSHOT_ANALYSIS_VERSION.rsplit("-", 1)[-1]
+    events_dir = root / "analysis-events" / version_suffix
     if events_dir.is_symlink() or not events_dir.is_dir():
-        raise ValueError("Version 2 finalized analysis events are unavailable")
+        raise ValueError(
+            f"{SNAPSHOT_ANALYSIS_VERSION} finalized analysis events are unavailable"
+        )
     paths = sorted(events_dir.glob("scan-*.json"))
     if len(paths) > 10_000:
         raise ValueError("Economic experiment snapshot bound exceeded")

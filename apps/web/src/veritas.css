@@ -292,6 +292,33 @@
     monospace;
   text-align: right;
 }
+.ve-strata-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  padding: 11px 15px 13px;
+  border-top: 1px solid #252a32;
+}
+.ve-strata-grid > div {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+}
+.ve-strata-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  color: #9aa4b2;
+  font-size: 8px;
+  text-transform: capitalize;
+}
+.ve-strata-item b {
+  color: #d6dbe4;
+  font-family: ui-monospace, 'SFMono-Regular', Consolas, monospace;
+}
+.ve-strata-item.muted {
+  color: #657082;
+}
 .ve-observatory-note,
 .ve-observatory-empty {
   padding: 10px 15px 13px;
@@ -334,6 +361,92 @@
   font-size: 9px;
   font-weight: 500;
   text-align: right;
+}
+.ve-measurement-comparison {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  padding: 0 15px 12px;
+  border-bottom: 1px solid #252a32;
+}
+.ve-measurement-comparison > div {
+  display: grid;
+  gap: 4px;
+  padding: 9px 10px;
+  border: 1px solid #2b3039;
+  border-radius: 5px;
+  background: #111419;
+}
+.ve-measurement-comparison span {
+  color: #9b8a65;
+  font-size: 7px;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+}
+.ve-measurement-comparison b {
+  color: #d8dce4;
+  font:
+    10px ui-monospace,
+    'SFMono-Regular',
+    Consolas,
+    monospace;
+}
+.ve-measurement-comparison small {
+  color: #758193;
+  font-size: 8px;
+}
+.ve-market-coverage {
+  overflow-x: auto;
+  border-top: 1px solid #252a32;
+}
+.ve-market-coverage-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 15px 8px;
+}
+.ve-market-coverage-heading > span:last-child {
+  color: #798596;
+  font-size: 8px;
+}
+.ve-market-table {
+  display: grid;
+  min-width: 520px;
+  padding: 0 15px;
+}
+.ve-market-table-row {
+  display: grid;
+  grid-template-columns: minmax(95px, 1fr) minmax(86px, 0.72fr) minmax(78px, 0.66fr) minmax(
+      120px,
+      1fr
+    );
+  gap: 9px;
+  padding: 8px 0;
+  border-top: 1px solid #20252c;
+  color: #b6bfcb;
+  font-size: 8px;
+}
+.ve-market-table-row.header {
+  color: #778395;
+  font-size: 7px;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+}
+.ve-market-table-row > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.ve-market-table-row > span:first-child {
+  color: #d6dbe4;
+  font-family: ui-monospace, 'SFMono-Regular', Consolas, monospace;
+}
+.ve-market-table-row small {
+  display: block;
+  margin-top: 3px;
+  color: #778394;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  line-height: 1.35;
 }
 .ve-candidate-list {
   display: grid;
@@ -759,6 +872,12 @@
   }
   .ve-stats,
   .ve-grid {
+    grid-template-columns: 1fr;
+  }
+  .ve-strata-grid {
+    grid-template-columns: 1fr;
+  }
+  .ve-measurement-comparison {
     grid-template-columns: 1fr;
   }
   .ve-panel-head {

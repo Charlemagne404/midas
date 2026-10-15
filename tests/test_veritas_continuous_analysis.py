@@ -2,21 +2,31 @@ from __future__ import annotations
 
 import gzip
 import json
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 from midas.veritas.continuous_analysis import update_finalized_analysis
 
 
-def _report(scan_id: str, *, valid: bool, candidate: bool = False) -> dict[str, Any]:
-    captured_ns = 1_792_044_000_000_000_000
-    stamp = str(captured_ns // 1_000_000 - 10_000)
+def _report(
+    scan_id: str,
+    *,
+    valid: bool,
+    candidate: bool = False,
+    minutes_after: int = 0,
+    state_version: str = "same",
+    reported_age_ms: int = 10_000,
+) -> dict[str, Any]:
+    captured_ns = 1_792_044_000_000_000_000 + minutes_after * 60_000_000_000
+    captured_at_utc = datetime.fromtimestamp(captured_ns / 1_000_000_000, UTC).isoformat()
+    stamp = str(captured_ns // 1_000_000 - reported_age_ms)
     condition = "condition-1"
     yes = {
         "market": condition,
         "asset_id": "11",
         "timestamp": stamp,
-        "hash": "hash-11",
+        "hash": f"hash-11-{state_version}",
         "bids": [{"price": "0.30", "size": "100"}],
         "asks": [{"price": "0.40" if candidate else "0.50", "size": "100"}],
         "min_order_size": "5",
@@ -27,7 +37,7 @@ def _report(scan_id: str, *, valid: bool, candidate: bool = False) -> dict[str, 
         "market": condition,
         "asset_id": "12",
         "timestamp": stamp,
-        "hash": "hash-12",
+        "hash": f"hash-12-{state_version}",
         "bids": [{"price": "0.30", "size": "100"}],
         "asks": [] if not valid else [{"price": "0.50", "size": "100"}],
         "min_order_size": "5",
@@ -51,7 +61,7 @@ def _report(scan_id: str, *, valid: bool, candidate: bool = False) -> dict[str, 
         "scan_id": scan_id,
         "snapshot_evidence_sha256": f"evidence-{scan_id}",
         "source_code_sha256": "scanner-source",
-        "captured_at_utc": "2026-10-15T06:00:00+00:00",
+        "captured_at_utc": captured_at_utc,
         "captured_ns": captured_ns,
         "discovery": {
             "query_count": 6,
@@ -124,16 +134,38 @@ def _report(scan_id: str, *, valid: bool, candidate: bool = False) -> dict[str, 
     }
 
 
-def _write_snapshot(root: Path, scan_id: str, *, valid: bool, candidate: bool = False) -> None:
+def _write_snapshot(
+    root: Path,
+    scan_id: str,
+    *,
+    valid: bool,
+    candidate: bool = False,
+    minutes_after: int = 0,
+    state_version: str = "same",
+    reported_age_ms: int = 10_000,
+) -> None:
     path = root / "snapshots" / f"{scan_id}.json.gz"
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_bytes(
-        gzip.compress(json.dumps(_report(scan_id, valid=valid, candidate=candidate)).encode())
+        gzip.compress(
+            json.dumps(
+                _report(
+                    scan_id,
+                    valid=valid,
+                    candidate=candidate,
+                    minutes_after=minutes_after,
+                    state_version=state_version,
+                    reported_age_ms=reported_age_ms,
+                )
+            ).encode()
+        )
     )
 
 
 def test_finalized_analysis_is_incremental_idempotent_and_lineage_preserving(tmp_path):
-    _write_snapshot(tmp_path, "scan-001", valid=True, candidate=True)
+    _write_snapshot(
+        tmp_path, "scan-001", valid=True, candidate=True, reported_age_ms=1_000
+    )
     prior_summary = {
         "schema_version": 1,
         "analysis_version": "veritas-finalized-snapshot-analysis-v1",
@@ -146,10 +178,11 @@ def test_finalized_analysis_is_incremental_idempotent_and_lineage_preserving(tmp
 
     assert first["processed_snapshot_count"] == 1
     assert first["cumulative"]["quality_valid_pairs"] == 1
+    assert first["cumulative"]["legacy_freshness_valid_pairs"] == 1
     assert first["cumulative"]["candidate_event_count"] == 1
     assert first["cumulative"]["reported_update_age_above_5s_by_leg"] == {
-        "yes": 1,
-        "no": 1,
+        "yes": 0,
+        "no": 0,
     }
     assert first["cumulative"]["recent_candidates"][0]["snapshot_file"] == (
         "snapshots/scan-001.json.gz"
@@ -157,9 +190,11 @@ def test_finalized_analysis_is_incremental_idempotent_and_lineage_preserving(tmp
     assert json.loads((tmp_path / "research-summary-v1.json").read_text()) == prior_summary
     assert again["processed_snapshot_count"] == 1
     assert again["cumulative"]["quality_valid_pairs"] == 1
-    assert len(list((tmp_path / "analysis-events" / "v2").glob("*.json"))) == 1
+    assert len(list((tmp_path / "analysis-events" / "v4").glob("*.json"))) == 1
 
-    _write_snapshot(tmp_path, "scan-002", valid=False)
+    _write_snapshot(
+        tmp_path, "scan-002", valid=False, minutes_after=30, state_version="changed"
+    )
     updated = update_finalized_analysis(tmp_path)
     assert updated["processed_snapshot_count"] == 2
     assert updated["cumulative"]["quality_valid_pairs"] == 1
@@ -167,6 +202,18 @@ def test_finalized_analysis_is_incremental_idempotent_and_lineage_preserving(tmp
     assert updated["cumulative"]["invalid_reasons"] == {"no_empty_ask_side": 1}
     assert updated["cumulative"]["maximum_bounded_eligible_markets_seen"] == 70
     assert updated["cumulative"]["candidate_market_ids"] == ["m1"]
+    market = updated["cumulative"]["observed_market_ids"]["m1"]
+    assert market["selected_observations"] == 2
+    assert market["quality_valid_pairs"] == 1
+    assert market["legacy_freshness_valid_pairs"] == 1
+    assert market["first_observed_at_utc"] == "2026-10-15T06:00:00+00:00"
+    assert market["last_observed_at_utc"] == "2026-10-15T06:30:00+00:00"
+    assert market["sampled_state_fingerprint_count"] == 2
+    assert market["sampled_state_comparisons"] == 1
+    assert market["sampled_state_changes"] == 1
+    assert updated["cumulative"]["legacy_freshness_invalid_reasons"] == {
+        "no_empty_ask_side": 1
+    }
 
 
 def test_finalized_analysis_processes_only_its_bounded_backlog_slice(tmp_path):

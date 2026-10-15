@@ -65,6 +65,16 @@ type Observatory = {
     minimum_top_edge_per_share: string | null;
     maximum_top_edge_per_share: string | null;
   };
+  measurement_comparison: {
+    denominator_selected_market_observations: number;
+    legacy_freshness_valid_pairs: number;
+    corrected_freshness_valid_pairs: number;
+    recovered_valid_pairs: number;
+    legacy_valid_percent: number | null;
+    corrected_valid_percent: number | null;
+    recovered_percentage_points: number | null;
+    legacy_invalid_reasons: Record<string, number>;
+  };
   data_quality: {
     invalid_reasons: Record<string, number>;
     latest_invalid_reasons: Record<string, number>;
@@ -72,6 +82,36 @@ type Observatory = {
     reported_update_age_above_5s_by_leg: Record<string, number>;
     reported_update_timestamp_skew_bands: Record<string, number>;
     reported_update_timestamp_skew_above_250ms_pairs: number;
+    sampled_activity_bands: Record<string, number>;
+  };
+  market_coverage: {
+    coverage_denominator_snapshots: number;
+    tracked_markets: number;
+    sampled_state_comparisons: number;
+    sampled_state_changes: number;
+    sampled_state_change_fraction: number | null;
+    sampled_activity_bands: Record<string, number>;
+    least_observed_markets: Array<{
+      market_id: string;
+      selected_observations: number;
+      snapshot_coverage_percent: number | null;
+      quality_valid_pairs: number;
+      quality_valid_percent: number | null;
+      legacy_freshness_valid_pairs: number;
+      legacy_quality_valid_percent: number | null;
+      legacy_freshness_invalid_reasons: Record<string, number>;
+      invalid_reasons: Record<string, number>;
+      categories: string[];
+      cohort_roles: Record<string, number>;
+      first_observed_at_utc: string | null;
+      last_observed_at_utc: string | null;
+      sampled_state_fingerprints: number;
+      sampled_state_comparisons: number;
+      sampled_state_changes: number;
+      sampled_state_change_fraction: number | null;
+      sampled_activity_band: string;
+    }>;
+    omitted_market_count: number;
   };
   market_concentration: Array<{
     market_id: string;
@@ -274,6 +314,12 @@ export function Veritas() {
     (left, right) => right[1] - left[1] || left[0].localeCompare(right[0]),
   );
   const latestCategoryMaximum = Math.max(1, ...latestCategories.map(([, count]) => count));
+  const latestStrata = [
+    ['Liquidity', observatoryDiscovery.latest_by_liquidity],
+    ['Expiry', observatoryDiscovery.latest_by_expiry],
+    ['Spread', observatoryDiscovery.latest_by_spread],
+  ] as const;
+  const leastObservedMarkets = observatory.market_coverage.least_observed_markets;
   const invalidReasons = Object.entries(observatoryQuality.latest_invalid_reasons).sort(
     (left, right) => right[1] - left[1] || left[0].localeCompare(right[0]),
   );
@@ -403,7 +449,8 @@ export function Veritas() {
               Last source ordinal <b>{fmt(finalizedSource.last_processed_ordinal)}</b>
             </span>
             <span>
-              Positive top / full depth <b>
+              Positive top / full depth{' '}
+              <b>
                 {fmt(finalizedSource.cumulative.positive_top_ask_pair_states)} /{' '}
                 {fmt(finalizedSource.cumulative.positive_full_depth_pre_fee_states)}
               </b>
@@ -471,14 +518,6 @@ export function Veritas() {
             <span>
               Window <b>{observatory.coverage_window_hours.toFixed(1)} h</b>
             </span>
-            <span>
-              Liquidity bands{' '}
-              <b>{Object.keys(observatoryDiscovery.latest_by_liquidity).length || 'unknown'}</b>
-            </span>
-            <span>
-              Expiry bands{' '}
-              <b>{Object.keys(observatoryDiscovery.latest_by_expiry).length || 'unknown'}</b>
-            </span>
           </div>
           {latestCategories.length ? (
             <div className="ve-discovery-list">
@@ -500,6 +539,24 @@ export function Veritas() {
               No finalized public snapshot has been indexed yet.
             </p>
           )}
+          <div className="ve-strata-grid">
+            {latestStrata.map(([label, values]) => (
+              <div key={label}>
+                <span className="ve-subhead">Latest cohort by {label.toLowerCase()}</span>
+                {Object.entries(values).length ? (
+                  Object.entries(values)
+                    .sort(([left], [right]) => left.localeCompare(right))
+                    .map(([stratum, count]) => (
+                      <span className="ve-strata-item" key={stratum}>
+                        {stratum.replaceAll('_', ' ')} <b>{fmt(count)}</b>
+                      </span>
+                    ))
+                ) : (
+                  <span className="ve-strata-item muted">No measured strata</span>
+                )}
+              </div>
+            ))}
+          </div>
           {Object.keys(observatoryDiscovery.latest_exclusions).length > 0 && (
             <p className="ve-observatory-note">
               Latest discovery exclusions:{' '}
@@ -575,6 +632,115 @@ export function Veritas() {
                   : 'None recorded'}
               </b>
             </div>
+            <div>
+              <span>Between-visit sampled state changes</span>
+              <b>
+                {observatory.market_coverage.sampled_state_change_fraction === null
+                  ? 'Not enough repeated fingerprints'
+                  : `${(100 * observatory.market_coverage.sampled_state_change_fraction).toFixed(
+                      1,
+                    )}% · ${fmt(
+                      observatory.market_coverage.sampled_state_changes,
+                    )} / ${fmt(observatory.market_coverage.sampled_state_comparisons)}`}
+              </b>
+            </div>
+          </div>
+          <div className="ve-measurement-comparison">
+            <div>
+              <span>Prior timestamp gate</span>
+              <b>
+                {fmt(observatory.measurement_comparison.legacy_freshness_valid_pairs)} /{' '}
+                {fmt(observatory.measurement_comparison.denominator_selected_market_observations)}
+              </b>
+              <small>
+                {observatory.measurement_comparison.legacy_valid_percent === null
+                  ? 'No paired snapshots'
+                  : `${observatory.measurement_comparison.legacy_valid_percent.toFixed(1)}% valid`}
+              </small>
+            </div>
+            <div>
+              <span>Request/receipt gate</span>
+              <b>
+                {fmt(observatory.measurement_comparison.corrected_freshness_valid_pairs)} /{' '}
+                {fmt(observatory.measurement_comparison.denominator_selected_market_observations)}
+              </b>
+              <small>
+                {observatory.measurement_comparison.corrected_valid_percent === null
+                  ? 'No paired snapshots'
+                  : `${observatory.measurement_comparison.corrected_valid_percent.toFixed(1)}% valid`}
+              </small>
+            </div>
+            <div>
+              <span>Paired yield difference</span>
+              <b>+{fmt(observatory.measurement_comparison.recovered_valid_pairs)} pairs</b>
+              <small>
+                {observatory.measurement_comparison.recovered_percentage_points === null
+                  ? 'No paired snapshots'
+                  : `+${observatory.measurement_comparison.recovered_percentage_points.toFixed(1)} percentage points`}
+              </small>
+            </div>
+          </div>
+          <div className="ve-market-coverage">
+            <div className="ve-market-coverage-heading">
+              <span className="ve-subhead">Least-covered sampled markets</span>
+              <span>
+                {fmt(observatory.market_coverage.tracked_markets)} markets ·{' '}
+                {fmt(observatory.market_coverage.coverage_denominator_snapshots)} snapshots
+              </span>
+            </div>
+            <div className="ve-market-table" role="table" aria-label="Per-market snapshot coverage">
+              <div className="ve-market-table-row header" role="row">
+                <span role="columnheader">Market</span>
+                <span role="columnheader">Snapshots</span>
+                <span role="columnheader">Valid</span>
+                <span role="columnheader">Sampled changes</span>
+              </div>
+              {leastObservedMarkets.map((market) => (
+                <div className="ve-market-table-row" role="row" key={market.market_id}>
+                  <span role="cell">
+                    {market.market_id}
+                    <small>{market.categories.slice(0, 2).join(' · ') || 'Category unknown'}</small>
+                  </span>
+                  <span role="cell">
+                    {market.snapshot_coverage_percent === null
+                      ? '—'
+                      : `${market.snapshot_coverage_percent.toFixed(1)}%`}
+                    <small>{fmt(market.selected_observations)} selected visits</small>
+                  </span>
+                  <span role="cell">
+                    {market.quality_valid_percent === null
+                      ? '—'
+                      : `${market.quality_valid_percent.toFixed(1)}%`}
+                    <small>
+                      {fmt(market.quality_valid_pairs)} current ·{' '}
+                      {market.legacy_quality_valid_percent === null
+                        ? '—'
+                        : `${market.legacy_quality_valid_percent.toFixed(1)}%`}{' '}
+                      legacy
+                    </small>
+                  </span>
+                  <span role="cell">
+                    {market.sampled_state_change_fraction === null
+                      ? '—'
+                      : `${(100 * market.sampled_state_change_fraction).toFixed(0)}%`}
+                    <small>
+                      {fmt(market.sampled_state_changes)} / {fmt(market.sampled_state_comparisons)}{' '}
+                      · {market.sampled_activity_band.replaceAll('_', ' ')}
+                    </small>
+                  </span>
+                </div>
+              ))}
+            </div>
+            <p className="ve-observatory-note">
+              Snapshot coverage is selected visits divided by indexed scans. Sampled state changes
+              compare returned YES/NO book hashes at those visits; they do not measure continuous
+              quote-update frequency or venue sequence.
+              {observatory.market_coverage.omitted_market_count
+                ? ` Showing the 24 least-covered IDs; ${fmt(
+                    observatory.market_coverage.omitted_market_count,
+                  )} additional observed IDs are in the summary artifact.`
+                : ''}
+            </p>
           </div>
           {observatory.recent_candidates.length ? (
             <div className="ve-candidate-list">

@@ -6,7 +6,7 @@ from typing import Any
 
 import pytest
 from midas.veritas.continuous_analysis import VERSION as SNAPSHOT_ANALYSIS_VERSION
-from midas.veritas.economic_experiment import compare_qualification_rules
+from midas.veritas.economic_experiment import compare_qualification_rules, run_finalized_experiment
 
 
 def _event(
@@ -124,3 +124,27 @@ def test_economic_qualification_rejects_tampered_or_wrong_version_events():
     event["analysis_version"] = "unknown-version"
     with pytest.raises(ValueError, match="current analysis version"):
         compare_qualification_rules([event])
+
+
+def test_finalized_experiment_uses_current_analysis_event_version(tmp_path):
+    from midas.veritas.continuous_analysis import VERSION
+
+    event = _event(
+        "scan-001",
+        attempted=2,
+        valid=1,
+        top=0,
+        full_depth=0,
+        minimum=0,
+        single_match=0,
+        fragmentation_safe=0,
+    )
+    event_dir = tmp_path / "analysis-events" / VERSION.rsplit("-", 1)[-1]
+    event_dir.mkdir(parents=True)
+    (event_dir / "scan-001.json").write_text(json.dumps(event))
+
+    result = run_finalized_experiment(tmp_path)
+
+    assert result["input_analysis_version"] == SNAPSHOT_ANALYSIS_VERSION
+    assert result["sample"]["attempted_market_pairs"] == 2
+    assert result["sample"]["quality_valid_pairs"] == 1

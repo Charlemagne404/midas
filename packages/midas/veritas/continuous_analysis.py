@@ -15,7 +15,7 @@ from typing import Any
 
 from .opportunity_audit import audit_pair_snapshot
 
-VERSION = "veritas-finalized-snapshot-analysis-v2"
+VERSION = "veritas-finalized-snapshot-analysis-v4"
 MAX_PENDING_SNAPSHOTS_PER_RUN = 100
 MAX_SNAPSHOT_BYTES = 48 * 1024**2
 MAX_STATE_BYTES = 8 * 1024**2
@@ -84,6 +84,8 @@ def _read_snapshot(path: Path) -> dict[str, Any]:
 def _validate_event(event: dict[str, Any], snapshot_name: str, event_path: Path) -> None:
     if event.get("snapshot_file") != f"snapshots/{snapshot_name}":
         raise ValueError(f"Analysis event identity mismatch: {event_path.name}")
+    if event.get("analysis_version") != VERSION:
+        raise ValueError(f"Analysis event version mismatch: {event_path.name}")
     stored_digest = event.get("analysis_event_sha256")
     payload = dict(event)
     payload.pop("analysis_event_sha256", None)
@@ -121,6 +123,8 @@ def _new_cumulative() -> dict[str, Any]:
         "snapshot_count": 0,
         "selected_market_observations": 0,
         "quality_valid_pairs": 0,
+        "legacy_freshness_valid_pairs": 0,
+        "legacy_freshness_invalid_reasons": {},
         "invalid_pairs": 0,
         "current_bounded_eligible_markets": 0,
         "maximum_bounded_eligible_markets_seen": 0,
@@ -174,6 +178,42 @@ def _reported_skew_band(skew_ms: int) -> str:
     if skew_ms <= 5_000:
         return "1_to_5s"
     return "over_5s"
+
+
+def _sampled_book_state_hash(books: Any, market: Any) -> str | None:
+    """Fingerprint returned YES/NO books for between-snapshot diagnostics."""
+    if not isinstance(books, dict) or not isinstance(market, dict):
+        return None
+    outcomes = market.get("outcomes")
+    if not isinstance(outcomes, dict):
+        return None
+    hashes: list[str] = []
+    for side in ("yes", "no"):
+        asset_id = outcomes.get(side)
+        book = books.get(str(asset_id)) if asset_id is not None else None
+        value = book.get("hash") if isinstance(book, dict) else None
+        if not isinstance(value, str) or not value:
+            return None
+        hashes.append(value)
+    return _sha256("|".join(hashes).encode())
+
+
+def _legacy_freshness_failure(audit: dict[str, Any]) -> str | None:
+    """Apply the prior reported-age and cross-outcome-skew eligibility gates."""
+    if not audit.get("valid"):
+        return str(audit.get("reason") or "invalid_snapshot")
+    quality = audit.get("quality")
+    if not isinstance(quality, dict):
+        return "missing_quality_diagnostics"
+    ages = quality.get("reported_update_age_ms_by_leg")
+    if not isinstance(ages, dict):
+        return "missing_reported_update_ages"
+    failures = []
+    if any(int(value) > 5_000 for value in ages.values()):
+        failures.append("reported_update_age_above_5s")
+    if int(quality.get("reported_update_timestamp_skew_ms", 0)) > 250:
+        failures.append("reported_update_skew_above_250ms")
+    return "+".join(failures) if failures else None
 
 
 def _event_from_snapshot(report: dict[str, Any], snapshot_path: Path) -> dict[str, Any]:
@@ -238,6 +278,8 @@ def _event_from_snapshot(report: dict[str, Any], snapshot_path: Path) -> dict[st
     skew_bands: Counter[str] = Counter()
     skew_above_threshold = 0
     valid_quality_pairs = 0
+    legacy_freshness_valid_pairs = 0
+    legacy_invalid_reasons: Counter[str] = Counter()
     positive_top = 0
     for observation in observations:
         if not isinstance(observation, dict):
@@ -263,6 +305,12 @@ def _event_from_snapshot(report: dict[str, Any], snapshot_path: Path) -> dict[st
                 quantities=quantities,
             )
         valid = bool(audit.get("valid"))
+        legacy_failure = _legacy_freshness_failure(audit)
+        legacy_valid = valid and legacy_failure is None
+        if legacy_valid:
+            legacy_freshness_valid_pairs += 1
+        else:
+            legacy_invalid_reasons[str(legacy_failure or "legacy_freshness_gate_failed")] += 1
         edge = audit.get("top_pair_gross_edge_per_share")
         if not valid:
             invalid_reasons[str(audit.get("reason") or "invalid_snapshot")] += 1
@@ -319,7 +367,10 @@ def _event_from_snapshot(report: dict[str, Any], snapshot_path: Path) -> dict[st
                 "cohort_role": str(observation.get("cohort_role") or "unknown"),
                 "valid": valid,
                 "invalid_reason": audit.get("reason"),
+                "legacy_freshness_valid": legacy_valid,
+                "legacy_freshness_invalid_reason": legacy_failure,
                 "top_pair_gross_edge_per_share": edge,
+                "sampled_book_state_hash": _sampled_book_state_hash(books, market),
             }
         )
     gamma_pages = (
@@ -358,6 +409,7 @@ def _event_from_snapshot(report: dict[str, Any], snapshot_path: Path) -> dict[st
         },
         "counts": {
             "invalid_reasons": dict(sorted(invalid_reasons.items())),
+            "legacy_freshness_invalid_reasons": dict(sorted(legacy_invalid_reasons.items())),
             "positive_full_depth_gross_by_quantity": {
                 quantity: positive_full_depth.get(quantity, 0) for quantity in quantities
             },
@@ -382,6 +434,7 @@ def _event_from_snapshot(report: dict[str, Any], snapshot_path: Path) -> dict[st
         "selected_market_count": len(selected),
         "attempted_market_pairs": len(observations),
         "valid_quality_pairs": valid_quality_pairs,
+        "legacy_freshness_valid_pairs": legacy_freshness_valid_pairs,
         "positive_top_gross_pairs": positive_top,
         "market_rows": market_rows,
         "gross_candidates": gross_candidates,
@@ -406,6 +459,9 @@ def _accumulate(cumulative: dict[str, Any], event: dict[str, Any]) -> None:
     cumulative["snapshot_count"] += 1
     cumulative["selected_market_observations"] += int(event["selected_market_count"])
     cumulative["quality_valid_pairs"] += int(event["valid_quality_pairs"])
+    cumulative["legacy_freshness_valid_pairs"] += int(
+        event["legacy_freshness_valid_pairs"]
+    )
     cumulative["invalid_pairs"] += sum(
         int(value) for value in event["counts"].get("invalid_reasons", {}).values()
     )
@@ -433,6 +489,7 @@ def _accumulate(cumulative: dict[str, Any], event: dict[str, Any]) -> None:
             _increment(cumulative[destination], str(quantity), int(count))
     for source_name, destination_name in (
         ("invalid_reasons", "invalid_reasons"),
+        ("legacy_freshness_invalid_reasons", "legacy_freshness_invalid_reasons"),
         ("reported_update_timestamp_skew_bands", "reported_update_timestamp_skew_bands"),
     ):
         for key, count in event["counts"].get(source_name, {}).items():
@@ -456,9 +513,17 @@ def _accumulate(cumulative: dict[str, Any], event: dict[str, Any]) -> None:
             {
                 "selected_observations": 0,
                 "quality_valid_pairs": 0,
+                "legacy_freshness_valid_pairs": 0,
                 "invalid_reasons": {},
+                "legacy_freshness_invalid_reasons": {},
                 "categories": [],
                 "cohort_roles": {},
+                "first_observed_at_utc": None,
+                "last_observed_at_utc": None,
+                "sampled_state_fingerprint_count": 0,
+                "sampled_state_comparisons": 0,
+                "sampled_state_changes": 0,
+                "last_sampled_state_hash": None,
             },
         )
         target["selected_observations"] += 1
@@ -466,8 +531,33 @@ def _accumulate(cumulative: dict[str, Any], event: dict[str, Any]) -> None:
             target["quality_valid_pairs"] += 1
         elif row.get("invalid_reason"):
             _increment(target["invalid_reasons"], str(row["invalid_reason"]), 1)
+        if row.get("legacy_freshness_valid"):
+            target["legacy_freshness_valid_pairs"] += 1
+        elif row.get("legacy_freshness_invalid_reason"):
+            _increment(
+                target["legacy_freshness_invalid_reasons"],
+                str(row["legacy_freshness_invalid_reason"]),
+                1,
+            )
         target["categories"] = sorted(set(target["categories"]) | set(row["categories"]))[:20]
         _increment(target["cohort_roles"], str(row["cohort_role"]), 1)
+        captured_at = event.get("captured_at_utc")
+        if isinstance(captured_at, str):
+            first = target.get("first_observed_at_utc")
+            last = target.get("last_observed_at_utc")
+            target["first_observed_at_utc"] = min(first, captured_at) if first else captured_at
+            target["last_observed_at_utc"] = max(last, captured_at) if last else captured_at
+        current_state_hash = row.get("sampled_book_state_hash")
+        if isinstance(current_state_hash, str) and current_state_hash:
+            _increment(target, "sampled_state_fingerprint_count", 1)
+            previous_state_hash = target.get("last_sampled_state_hash")
+            if isinstance(previous_state_hash, str) and previous_state_hash:
+                _increment(target, "sampled_state_comparisons", 1)
+                if previous_state_hash != current_state_hash:
+                    _increment(target, "sampled_state_changes", 1)
+            target["last_sampled_state_hash"] = current_state_hash
+        else:
+            target["last_sampled_state_hash"] = None
         for category in row["categories"]:
             _increment(cumulative["category_observations"], category, 1)
         edge = row.get("top_pair_gross_edge_per_share")
@@ -597,6 +687,8 @@ def update_finalized_analysis(
             "Counts summarize repeated intermittent snapshots and are not independent event counts.",
             "The bounded query union is not the venue-wide market universe.",
             "Reported book timestamp age is a diagnostic; batch receipt time is the capture interval.",
+            "Legacy freshness comparison reapplies the prior 5-second reported-age and 250-ms cross-outcome-skew gates to the same saved books; it does not verify batch atomicity or venue sequence.",
+            "Per-market snapshot coverage is selected visits, not continuous recording time; sampled hash changes are not venue update rates.",
             "A gross candidate requires independent source replay and fee review; no fill or profitability is inferred.",
             "Market and time dependence are not estimated by this descriptive index.",
         ],

@@ -1,144 +1,44 @@
-# Project Veritas Mission 2 — Engineering Checkpoint Report
+# Project Veritas Mission 2 — Engineering Checkpoint
 
-**Status:** Discovery, measurement repair, snapshot and source-segment analysis,
-the qualification experiment, and dashboard checkpoint are implemented and
-running. Mission 2 remains open while source catch-up, observation, and
-dependence evidence accumulate.
+**Status:** Mission 2 remains active. Discovery, independent binary-pair arithmetic, bounded public observation, continuous finalized-snapshot analysis, candidate qualification, a paired measurement comparison, and dashboard improvements are implemented. Several required gates remain open, including censoring analysis by market/time, a controlled Director workflow, full dashboard scope, and longer independent validation.
+
 **Date:** 2026-10-15
 **Branch:** `project/veritas`
-**Starting commit:** `9a857cc56804bec6b7129171ba090d338e263aa3`
+**Parent commit:** `87e5a878db3759a1c63553a704827bfb2b3b0cc9`
 
-## What changed
+## Changes in this checkpoint
 
-Veritas now has a bounded public market-discovery and snapshot service, a
-stratified 40-market panel with frozen random controls, an independently tested
-same-condition YES/NO audit, and separate idempotent analyzers for finalized
-public snapshots and finalized Reality source segments. The old timestamp-only
-freshness gate was repaired after the pilot showed it rejecting books whose
-reported update was old even though the book
-payload had just returned within a short batch. The dashboard and read-only API
-surface discovery strata, source-quality counts, candidate gates, research
-readiness, and snapshot evidence.
+- Analyzer v4 preserves v1–v3 artifacts and adds per-market selection/validity coverage, sampled state fingerprints/transitions, and the prior reported-age/skew classification paired on each saved payload.
+- The dashboard and read-only API expose category/liquidity/expiry/spread strata, old/current gate yield, sampled state-change bands, and least-covered markets.
+- The economic experiment now follows the current snapshot analysis version when loading immutable events, so qualification reads v4 evidence.
+- A stale source-integrity fixture now mutates a nonempty processed segment rather than the intentionally skipped empty catalog header.
 
-The finalized-source analyzer has processed 530 of 2,839 replayable segments
-through ordinal 29,076, with 2,309 segments (604,276,235 bytes) pending. Its
-latest scheduled run advanced the 128-segment batch limit; readiness remains
-`catching_up_finalized_source`. The processed prefix still contains no
-campaign-window frames. See [checkpoint 007](VERITAS_MISSION2_GATE_A_CHECKPOINT_007.md)
-for campaign, code, event, summary, and runtime hashes.
+## Evidence at the ten-snapshot checkpoint
 
-An active 30-minute timer runs the bounded scanner and snapshot analyzer. A
-second offset 30-minute timer advances a read-only, resumable Reality source
-replay. The source reader is pinned to the frozen campaign hash and source root,
-ignores `.open` files, and processes at most 128 finalized segments or 32 MiB
-per run under 5% CPU and 256 MiB memory. Neither service changes Reality.
+The panel covers 05:59:28–08:31:53 UTC: 11 snapshots, 440 selected observations, 156 distinct market IDs, and 396 request/receipt-valid pairs. The prior 5-second reported-age plus 250 ms cross-outcome-skew gate accepts 98/440. The paired yield difference is +298 pairs, or +67.7 percentage points. The corrected gate has 44 empty-ask invalid pairs remaining.
 
-## Evidence at this checkpoint
+Across 284 sampled consecutive book-state comparisons, 271 fingerprints differ. These intermittent observations do not estimate WebSocket activity or true quote update rates. The latest bounded discovery union is 300 IDs, with 167 supported same-condition V1 binary pairs and 133 exclusions. The selected cohort remains 40 markets, 34 rotating and six available frozen controls.
 
-- Latest bounded union: 300 unique market IDs; 167 supported V1 binary pairs;
-  133 excluded with explicit reasons (81 unverified augmented negative-risk
-  semantics, 52 unsupported outcome relationships).
-- Latest selection: 40 markets, six available frozen controls, 34 rotating;
-  liquidity, expiry, category, and spread strata are present.
-- Ten immutable snapshots from 05:59:28 to 08:01:14 UTC: 400 selected market
-  observations, 359 quality-valid pairs, 41 empty-ask invalids, 152 distinct
-  market IDs, and zero analyzer backlog. The latest scan had 37 of 40
-  quality-valid pairs.
-- Current descriptive readiness: `collecting_repeated_temporal_coverage`.
-  This 122-minute window does not meet the 24-hour dependence-review readiness
-  threshold or the earlier specific study's 48-hour gate.
-- The paired same-snapshot freshness reclassification changed valid yield from
-  5/40 (12.5%) to 32/40 (80.0%): +27 pairs and +67.5 percentage points on the
-  exact same saved payload. Batch atomicity and upstream queue age remain
-  unverified.
-- `VERITAS-M2-ECO-QUAL-001` run
-  `VERITAS-M2-ECO-QUAL-001-RUN-2857e60b2b6f`, using 359 quality-valid pairs,
-  found zero positive top-ask gross, 20-share depth, minimum-notional,
-  single-match-fee, or fragmentation-safe-fee states across 152 distinct
-  markets. Top-edge range was -0.984 to -0.001 per share; median nearest-rank
-  edge was -0.025. The result supports no-trade today; it does not establish
-  absence across the venue or profitability.
+The deterministic qualification run `VERITAS-M2-ECO-QUAL-001-RUN-95f8752f5291` used v4 data (440 attempted pairs, 396 valid, 156 distinct markets). It found zero positive states at the unchanged top-ask gross-sign baseline, full 20-share displayed depth, per-leg minimum notional, single-match fee, and fragmentation-safe fee gates. This is not a profitability or fill result and does not prove venue-wide absence.
 
-The 08:01 UTC scheduled scan succeeded and analysis v2 indexed exactly one new
-snapshot. The ten-snapshot economic run has a deterministic ID derived from
-its input manifest; earlier results remain preserved separately. The refreshed
-result is [economic run 2857e60b2b6f](../data/veritas-observatory/experiments/VERITAS-M2-ECO-QUAL-001-RUN-2857e60b2b6f.json).
+The Reality source replay remains bounded and read-only at 530/2,839 replayable finalized segments, with 2,309 pending and no campaign-window frames in the processed prefix. The live public observer and source-replay timers remain active. See [operations](VERITAS_MISSION2_OPERATIONS.md).
 
-## Measurement yield and limits
+## Verification
 
-The freshness change materially reduces timestamp-based false exclusions in a
-paired replay. Because it reclassifies one saved scan, the yield change is an
-instrumentation result, not an independent prospective economic result. The
-active periodic panel will collect future observations under the repaired
-protocol. Public book timestamps remain diagnostics and do not prove quote
-availability, matching sequence, order arrival, or fills.
+- Veritas backend regression suite: 83 passed; one Starlette/httpx deprecation warning.
+- Ruff and strict Mypy on changed Python sources: passed.
+- Frontend unit tests: 29 passed; typecheck, lint, formatting check, and production build passed. The existing Vite large-chunk advisory remains.
+- Earlier Veritas Playwright workflow passed. A broader browser set had six passes and one unrelated Reality exact-heading assertion failure; no Reality source was changed.
+- `git diff --check` and documentation/inventory validation are run before this checkpoint commit.
 
-The original prospective follow-up design remains gated on sufficient coverage
-and dependence analysis. This separate public snapshot pilot does not bypass
-those gates. It provides a safe, recurring alternative for market-discovery and
-measurement coverage while the required window grows.
+## Scientific limits and remaining work
 
-## Experiment and readiness decision
+Request-to-receipt duration does not prove venue sequence or batch atomicity. Snapshots are selected, intermittent, and correlated. The initial v4 reclassification is retrospective on ten saved scans; future scheduled scans continue the paired series prospectively. There is no positive gross candidate, so strategy PnL testing, model training, or promotion is unsupported. The original follow-up study's readiness gates remain intact.
 
-The end-to-end comparison is deliberately a candidate-qualification experiment:
-the unchanged baseline uses same-condition top asks; the improvement requires
-complete displayed depth at 20 shares and both per-leg USDC minimums, then
-reports two fee sensitivities. Every gate remained at zero in real public
-observations. There are no real candidate labels to justify model training or a
-strategy tournament. No strategy or model was promoted.
+Mission 2 is not complete. Continue safe observation; extend the read-only forensic report to market-by-hour follow-up censoring; evaluate an Arena-compatible Director workflow without duplicating collector writes; expand dashboard research/readiness surfaces; and gather independent temporal evidence before any economic claim.
 
-The snapshot pipeline detects newly finalized public scans; the source pipeline
-replays bounded finalized Reality segments and resumes from its serialized
-reconstruction context. Each verifies source and event digests, updates its
-own summary idempotently, and exposes separate readiness. Neither rewrites
-campaign policies, models, source records, or historical results.
+## Preserved systems
 
-## Verification and preservation
+No Reality campaign rule, observation, historical result, or service writer was changed. Existing Veritas, Prometheus, Arena, and Laboratory evidence remains preserved. No orders, wallets, deposits, credentials, authenticated trading APIs, or real-money activity were used.
 
-- Full Veritas backend test selection: 83 passed; one Starlette/httpx
-  deprecation warning.
-- Ruff and Mypy on the new observation, analysis, experiment, and test code:
-  passed.
-- Frontend tests: 29 passed; typecheck, lint, and production build passed. The
-  build retains a large-chunk advisory.
-- Veritas Playwright workflow passed. The broad seven-workflow browser run had
-  six passes and one Reality UI assertion failure: its exact `Yes` heading was
-  absent. No Reality source code was changed.
-- The separate Reality checkout remained clean at `714f824`; active Reality
-  services and timers were not restarted or modified. Oct 14 exit-code statuses
-  from three unrelated Reality test/canary units were observed and left alone.
-- No orders, wallets, deposits, credentials, or authenticated requests were
-  used. Historical Reality, Prometheus, Arena, Laboratory, and existing Veritas
-  evidence remains outside the write set.
-
-Detailed implementation and commands are in
-[`VERITAS_MISSION2_ENGINEERING.md`](VERITAS_MISSION2_ENGINEERING.md),
-[`VERITAS_MISSION2_OPERATIONS.md`](VERITAS_MISSION2_OPERATIONS.md),
-[`VERITAS_MISSION2_GATE_A_CHECKPOINT_001.md`](VERITAS_MISSION2_GATE_A_CHECKPOINT_001.md),
-[`VERITAS_MISSION2_GATE_A_CHECKPOINT_002.md`](VERITAS_MISSION2_GATE_A_CHECKPOINT_002.md),
-[`VERITAS_MISSION2_GATE_A_CHECKPOINT_003.md`](VERITAS_MISSION2_GATE_A_CHECKPOINT_003.md),
-[`VERITAS_MISSION2_GATE_A_CHECKPOINT_004.md`](VERITAS_MISSION2_GATE_A_CHECKPOINT_004.md),
-[`VERITAS_MISSION2_GATE_A_CHECKPOINT_005.md`](VERITAS_MISSION2_GATE_A_CHECKPOINT_005.md),
-[`VERITAS_MISSION2_GATE_A_CHECKPOINT_006.md`](VERITAS_MISSION2_GATE_A_CHECKPOINT_006.md),
-[`VERITAS_MISSION2_GATE_A_CHECKPOINT_007.md`](VERITAS_MISSION2_GATE_A_CHECKPOINT_007.md),
-[`VERITAS_MISSION2_RESEARCH_INVENTORY.json`](VERITAS_MISSION2_RESEARCH_INVENTORY.json),
-[`VERITAS_MISSION2_RESEARCH_INVENTORY_002.json`](VERITAS_MISSION2_RESEARCH_INVENTORY_002.json),
-[`VERITAS_MISSION2_RESEARCH_INVENTORY_003.json`](VERITAS_MISSION2_RESEARCH_INVENTORY_003.json),
-[`VERITAS_MISSION2_RESEARCH_INVENTORY_004.json`](VERITAS_MISSION2_RESEARCH_INVENTORY_004.json),
-[`VERITAS_MISSION2_RESEARCH_INVENTORY_005.json`](VERITAS_MISSION2_RESEARCH_INVENTORY_005.json),
-[`VERITAS_MISSION2_RESEARCH_INVENTORY_006.json`](VERITAS_MISSION2_RESEARCH_INVENTORY_006.json),
-and [`VERITAS_MISSION2_RESEARCH_INVENTORY_007.json`](VERITAS_MISSION2_RESEARCH_INVENTORY_007.json).
-
-## Next evidence gates
-
-1. Keep both read-only timers active, let the source analyzer catch up in
-   bounded batches, and accumulate a longer public observation window.
-2. Review dependence only after at least 24 hours and adequate market diversity;
-   do not claim the specific 48-hour follow-up design is ready until its stated
-   gates pass.
-3. Validate request-receipt freshness against a source with sequence or
-   equivalent freshness guarantees.
-4. Expand discovery only after measuring rate, coverage, host resources, and
-   storage on the current frame.
-5. Continue no-trade and no-model status until a quality-valid positive gross
-   candidate supplies appropriate real labels for further economic research.
+Detailed implementation and evidence: [engineering checkpoint](VERITAS_MISSION2_ENGINEERING.md), [Gate A 008](VERITAS_MISSION2_GATE_A_CHECKPOINT_008.md), [Gate G 002](VERITAS_MISSION2_GATE_G_CHECKPOINT_002.md), [measurement comparison 002](VERITAS_MISSION2_MEASUREMENT_COMPARISON_002.md), and [research inventory](VERITAS_MISSION2_RESEARCH_INVENTORY.json).

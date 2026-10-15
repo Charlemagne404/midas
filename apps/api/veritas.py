@@ -6,6 +6,7 @@ import gzip
 import hashlib
 import json
 import re
+from collections import Counter
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -267,6 +268,16 @@ def observatory_overview(repository: Path) -> dict[str, Any]:
                 "minimum_top_edge_per_share": None,
                 "maximum_top_edge_per_share": None,
             },
+            "measurement_comparison": {
+                "denominator_selected_market_observations": 0,
+                "legacy_freshness_valid_pairs": 0,
+                "corrected_freshness_valid_pairs": 0,
+                "recovered_valid_pairs": 0,
+                "legacy_valid_percent": None,
+                "corrected_valid_percent": None,
+                "recovered_percentage_points": None,
+                "legacy_invalid_reasons": {},
+            },
             "data_quality": {
                 "invalid_reasons": {},
                 "latest_invalid_reasons": {},
@@ -274,8 +285,19 @@ def observatory_overview(repository: Path) -> dict[str, Any]:
                 "reported_update_age_above_5s_by_leg": {"yes": 0, "no": 0},
                 "reported_update_timestamp_skew_bands": {},
                 "reported_update_timestamp_skew_above_250ms_pairs": 0,
+                "sampled_activity_bands": {},
             },
             "market_concentration": [],
+            "market_coverage": {
+                "coverage_denominator_snapshots": 0,
+                "tracked_markets": 0,
+                "sampled_state_comparisons": 0,
+                "sampled_state_changes": 0,
+                "sampled_state_change_fraction": None,
+                "sampled_activity_bands": {},
+                "least_observed_markets": [],
+                "omitted_market_count": 0,
+            },
             "category_coverage": [],
             "recent_candidates": [],
             "summary_artifact": None,
@@ -287,6 +309,7 @@ def observatory_overview(repository: Path) -> dict[str, Any]:
     if not isinstance(market_rows, dict):
         raise HTTPException(503, "Veritas public observatory market index is invalid")
     unique_markets = len(market_rows)
+    snapshot_count = int(summary.get("processed_snapshot_count", 0))
     first = cumulative.get("first_captured_at_utc")
     last = cumulative.get("last_captured_at_utc")
     elapsed_hours = 0.0
@@ -334,6 +357,83 @@ def observatory_overview(repository: Path) -> dict[str, Any]:
         )[:10]
         if isinstance(values, dict)
     ]
+    activity_bands: Counter[str] = Counter()
+    sampled_state_comparisons = 0
+    sampled_state_changes = 0
+    market_coverage_rows: list[dict[str, Any]] = []
+    for market_id, values in market_rows.items():
+        if not isinstance(values, dict):
+            continue
+        selected = int(values.get("selected_observations", 0))
+        quality_valid = int(values.get("quality_valid_pairs", 0))
+        comparisons = int(values.get("sampled_state_comparisons", 0))
+        changes = int(values.get("sampled_state_changes", 0))
+        sampled_state_comparisons += comparisons
+        sampled_state_changes += changes
+        first_observed = values.get("first_observed_at_utc")
+        last_observed = values.get("last_observed_at_utc")
+        span_hours = 0.0
+        if isinstance(first_observed, str) and isinstance(last_observed, str):
+            try:
+                begin = datetime.fromisoformat(first_observed.replace("Z", "+00:00"))
+                end = datetime.fromisoformat(last_observed.replace("Z", "+00:00"))
+                span_hours = max(0.0, (end - begin).total_seconds() / 3600)
+            except ValueError:
+                span_hours = 0.0
+        if selected < 3 or comparisons < 2 or span_hours <= 0:
+            activity_band = "unclassified"
+        else:
+            sampled_changes_per_hour = changes / span_hours
+            activity_band = (
+                "no_sampled_changes"
+                if sampled_changes_per_hour == 0
+                else "higher_sampled_change"
+                if sampled_changes_per_hour >= 1
+                else "lower_sampled_change"
+            )
+        activity_bands[activity_band] += 1
+        market_coverage_rows.append(
+            {
+                "market_id": str(market_id),
+                "selected_observations": selected,
+                "snapshot_coverage_percent": round(100 * selected / snapshot_count, 1)
+                if snapshot_count
+                else None,
+                "quality_valid_pairs": quality_valid,
+                "quality_valid_percent": round(100 * quality_valid / selected, 1)
+                if selected
+                else None,
+                "legacy_freshness_valid_pairs": int(
+                    values.get("legacy_freshness_valid_pairs", 0)
+                ),
+                "legacy_quality_valid_percent": round(
+                    100 * int(values.get("legacy_freshness_valid_pairs", 0)) / selected, 1
+                )
+                if selected
+                else None,
+                "legacy_freshness_invalid_reasons": values.get(
+                    "legacy_freshness_invalid_reasons", {}
+                ),
+                "invalid_reasons": values.get("invalid_reasons", {}),
+                "categories": values.get("categories", []),
+                "cohort_roles": values.get("cohort_roles", {}),
+                "first_observed_at_utc": first_observed,
+                "last_observed_at_utc": last_observed,
+                "sampled_state_fingerprints": int(
+                    values.get("sampled_state_fingerprint_count", 0)
+                ),
+                "sampled_state_comparisons": comparisons,
+                "sampled_state_changes": changes,
+                "sampled_state_change_fraction": round(changes / comparisons, 4)
+                if comparisons
+                else None,
+                "sampled_activity_band": activity_band,
+            }
+        )
+    market_coverage_rows.sort(
+        key=lambda item: (int(item["selected_observations"]), str(item["market_id"]))
+    )
+    least_observed_markets = market_coverage_rows[:24]
     candidates = cumulative.get("recent_candidates", [])
     candidates = candidates if isinstance(candidates, list) else []
     recent_candidates = [
@@ -402,6 +502,50 @@ def observatory_overview(repository: Path) -> dict[str, Any]:
             "minimum_top_edge_per_share": cumulative.get("minimum_top_edge_per_share"),
             "maximum_top_edge_per_share": cumulative.get("maximum_top_edge_per_share"),
         },
+        "measurement_comparison": {
+            "denominator_selected_market_observations": int(
+                cumulative.get("selected_market_observations", 0)
+            ),
+            "legacy_freshness_valid_pairs": int(
+                cumulative.get("legacy_freshness_valid_pairs", 0)
+            ),
+            "corrected_freshness_valid_pairs": int(cumulative.get("quality_valid_pairs", 0)),
+            "recovered_valid_pairs": max(
+                0,
+                int(cumulative.get("quality_valid_pairs", 0))
+                - int(cumulative.get("legacy_freshness_valid_pairs", 0)),
+            ),
+            "legacy_valid_percent": round(
+                100
+                * int(cumulative.get("legacy_freshness_valid_pairs", 0))
+                / int(cumulative.get("selected_market_observations", 1)),
+                1,
+            )
+            if int(cumulative.get("selected_market_observations", 0))
+            else None,
+            "corrected_valid_percent": round(
+                100
+                * int(cumulative.get("quality_valid_pairs", 0))
+                / int(cumulative.get("selected_market_observations", 1)),
+                1,
+            )
+            if int(cumulative.get("selected_market_observations", 0))
+            else None,
+            "recovered_percentage_points": round(
+                100
+                * (
+                    int(cumulative.get("quality_valid_pairs", 0))
+                    - int(cumulative.get("legacy_freshness_valid_pairs", 0))
+                )
+                / int(cumulative.get("selected_market_observations", 1)),
+                1,
+            )
+            if int(cumulative.get("selected_market_observations", 0))
+            else None,
+            "legacy_invalid_reasons": cumulative.get(
+                "legacy_freshness_invalid_reasons", {}
+            ),
+        },
         "data_quality": {
             "invalid_reasons": cumulative.get("invalid_reasons", {}),
             "latest_invalid_reasons": latest.get("observation", {}).get("invalid_reasons", {}),
@@ -417,8 +561,23 @@ def observatory_overview(repository: Path) -> dict[str, Any]:
             "reported_update_timestamp_skew_above_250ms_pairs": int(
                 cumulative.get("reported_update_timestamp_skew_above_250ms_pairs", 0)
             ),
+            "sampled_activity_bands": dict(sorted(activity_bands.items())),
         },
         "market_concentration": market_concentration,
+        "market_coverage": {
+            "coverage_denominator_snapshots": snapshot_count,
+            "tracked_markets": unique_markets,
+            "sampled_state_comparisons": sampled_state_comparisons,
+            "sampled_state_changes": sampled_state_changes,
+            "sampled_state_change_fraction": round(
+                sampled_state_changes / sampled_state_comparisons, 4
+            )
+            if sampled_state_comparisons
+            else None,
+            "sampled_activity_bands": dict(sorted(activity_bands.items())),
+            "least_observed_markets": least_observed_markets,
+            "omitted_market_count": max(0, unique_markets - len(least_observed_markets)),
+        },
         "category_coverage": category_coverage,
         "recent_candidates": recent_candidates,
         "summary_artifact": {
