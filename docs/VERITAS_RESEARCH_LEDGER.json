@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-15T00:27:16.435699+00:00",
+  "updated_at_utc": "2026-10-15T00:33:04.990843+00:00",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -126,7 +126,7 @@
         "Selection on activity changes the target population and must remain visible.",
         "A larger observed-label fraction does not establish better execution or profitability."
       ],
-      "decision": "Derive and preregister a distinct campaign only after inspecting decision scheduling, source activity, and the full raw opportunity funnel.",
+      "decision": "A design-only proposal is documented in docs/VERITAS_GATE_A_FOLLOWUP_DESIGN_001.md. Before any prospective run, refine the eligible-universe coverage rule, assignment schedule, and cluster-aware power plan; any run must use a new campaign identity and leave Reality unchanged.",
       "status": "planned"
     },
     {
@@ -996,6 +996,49 @@
       ],
       "decision": "The later finalized prefix did not change the gross opportunity conclusion. Preserve the no-trade decision and quality gates; continue the predeclared horizon/sampling design and wait for a positive quality-valid gross candidate before expanding economics.",
       "status": "completed"
+    },
+    {
+      "hypothesis_id": "VERITAS-H017",
+      "title": "Can activity-stratified sampling improve synchronized public follow-up yield?",
+      "mechanism": "Pre-period paired-book update activity may identify market strata with different public follow-up availability. Comparing a balanced activity-stratified sampler with a uniform random-market control may improve qualifying measurement yield per valid initial decision without relaxing source-quality rules.",
+      "experiment_id": null,
+      "dataset_id": null,
+      "success_metric": "In a separately identified prospective study, compare the qualifying synchronized public measurement proportion at a candidate one-second horizon among valid initial decisions; also report all-scheduled-decision yield, eligibility, horizon censor reasons, and cluster-aware uncertainty.",
+      "result": {
+        "status": "design_draft_only",
+        "evidence": "docs/VERITAS_GATE_A_FOLLOWUP_DESIGN_001.md",
+        "baseline_valid_initial_decisions": 381,
+        "baseline_observed_measurements": {
+          "100ms": 3,
+          "300ms": 10,
+          "1000ms": 27,
+          "5000ms": 22
+        },
+        "candidate_primary_horizon_ms": 1000,
+        "candidate_horizons_ms": [
+          100,
+          300,
+          1000,
+          5000,
+          15000,
+          30000
+        ],
+        "candidate_arms": [
+          "uniform_random_market_control",
+          "preperiod_activity_stratified_sampling"
+        ],
+        "campaign_created_or_started": false,
+        "orders_submitted": false,
+        "promotion": "no campaign, policy, model, strategy, or profitability promotion"
+      },
+      "limitations": [
+        "The initial one-day cohort is selected and small; its horizon rates are planning evidence, not a guarantee of future yield.",
+        "Activity stratification changes the sampled population and cannot be described as venue-wide prevalence.",
+        "Repeated observations are correlated and require cluster-aware planning and analysis.",
+        "A synchronized public measurement does not establish an execution or fill."
+      ],
+      "decision": "Continue design refinement only. Freeze the eligible universe, pre-period coverage rule, assignment schedule, cluster-power calculation, and analysis before any separately authorized prospective campaign; keep the no-trade control and all existing quality gates.",
+      "status": "continue"
     }
   ],
   "next_research_questions": [
