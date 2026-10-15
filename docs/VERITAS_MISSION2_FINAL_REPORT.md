@@ -133,3 +133,51 @@ replay continuation, full strategy/model readiness workflow, and broader
 dashboard work remain open. Details are in [Gate F checkpoint
 002](VERITAS_MISSION2_GATE_F_CHECKPOINT_002.md), [operations](VERITAS_MISSION2_OPERATIONS.md),
 and [research inventory 014](VERITAS_MISSION2_RESEARCH_INVENTORY_014.json).
+
+## Gate A checkpoint addendum — 2026-10-15
+
+The 11:01:53 UTC scheduled scan
+`scan-20261015T110153Z-93de340dd5ce` expanded the bounded union to 207
+eligible binary markets among 300 unique IDs, with 93 explicit exclusions.
+Continuous v4 analysis now contains 15 finalized snapshots / 600 selected
+observations / 543 quality-valid pairs across 235 distinct markets. It retains
+zero positive top-ask, full-depth, minimum, or fee-qualified states. This
+remains intermittent selected coverage and does not give a venue-wide
+inclusion estimate or an independent freshness guarantee.
+
+The new [Gate A checkpoint 012](VERITAS_MISSION2_GATE_A_CHECKPOINT_012.md)
+records an event-level NegRisk study of a complete nine-outcome Strava IPO
+market group. The 18-token CLOB batch returned all Yes and No books in 98 ms,
+but source timestamps were up to 350,713 ms old and spanned 349,801 ms, so the
+capture fails the freshness gate. The Yes ask sum was $2.213 against a
+conditional $1 payout. The No ask sum was $8.595 against the protocol minimum
+payout of $8. Both baskets had negative gross edges at 5, 20, and 100 shares,
+before fees. No candidate qualifies. The v3 artifact preserves raw responses
+and replayable calculations; the earlier v1 and v2 captures also replay.
+NegRisk's at-most-one-Yes rule does not guarantee a Yes outcome, so the Yes
+basket remains conditional on the event rules.
+
+The next research step is to extend the bounded audit to additional complete
+event groups with both Yes and No payoff baskets under explicit settlement
+bounds. Continue excluding them from binary-pair qualification until full
+event membership, payoff relationships, and current book quality are
+independently verified.
+Mission 2 remains active; current lineage is in [research inventory
+015](VERITAS_MISSION2_RESEARCH_INVENTORY_015.json).
+
+## Gate F checkpoint addendum — 2026-10-15
+
+The 11:10 UTC finalized-source recurrence processed 116 segments / 33.07 MB
+and advanced the read-only prefix to 1,188/3,195 segments, with 2,007 pending
+and no campaign-window frames. Its sealed summary digest is
+`c54728b7aa6b2a68a742f5ba5304b11eddeec498aa5b94664a155e961595b7e0`.
+
+At 11:15 UTC the Director admitted the scan-pinned job for the 11:01 scan, but
+the worker rejected it before reading events because the source revision
+changed while it was queued. The failure remains recorded at progress 0/1 with
+no finding. A no-launch reconciliation at 11:20 UTC recorded the Director's
+state as `FAILED` without admitting another job. The Director does not
+automatically retry the same scan. The next scheduled observer and Director
+runs can qualify a new finalized scan against
+the stable committed source. See [Gate F checkpoint
+003](VERITAS_MISSION2_GATE_F_CHECKPOINT_003.md) and [operations](VERITAS_MISSION2_OPERATIONS.md).

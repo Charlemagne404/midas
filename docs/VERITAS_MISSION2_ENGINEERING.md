@@ -1,6 +1,30 @@
 # Veritas Mission 2 Engineering Checkpoint
 
-## Latest status — Gate F checkpoint 002
+## Current operational update — Gate F checkpoint 003
+
+The 11:15 scheduled Director run admitted a bounded qualification for the
+11:01 scan, but the worker rejected it at 0/1 because the source revision
+changed while queued. No finding was written and no same-scan retry was
+submitted. The next scheduled observer and Director cycles can qualify a new
+scan against the stable committed source. Meanwhile the independent source
+replay advanced to 1,188/3,195 finalized segments with no campaign-window
+frames. See [Gate F checkpoint 003](VERITAS_MISSION2_GATE_F_CHECKPOINT_003.md)
+and [operations](VERITAS_MISSION2_OPERATIONS.md), plus [research inventory
+015](VERITAS_MISSION2_RESEARCH_INVENTORY_015.json).
+
+## Latest status — Gate A checkpoint 012
+
+The bounded 11:01 observer scan found 207 eligible binary markets in 300
+unique IDs. A pinned, read-only event audit verified one complete nine-outcome
+NegRisk event and added replayable economics for both complete Yes and No
+baskets. Both have negative gross edge and fail source timestamp age and skew
+gates; neither qualifies an opportunity. The audit preserves the protocol
+limitation that at-most-one Yes does not ensure at least one Yes.
+See [Gate A checkpoint 012](VERITAS_MISSION2_GATE_A_CHECKPOINT_012.md),
+[research inventory 015](VERITAS_MISSION2_RESEARCH_INVENTORY_015.json), and
+[operations](VERITAS_MISSION2_OPERATIONS.md).
+
+## Earlier status — Gate F checkpoint 002
 
 The Research Director now validates and stores the separately maintained
 finalized-source summary on each cycle, including its sealed digest, campaign
