@@ -50,8 +50,9 @@ compares the unchanged top-ask gross-sign baseline to full displayed depth and
 both per-leg minimum checks at 20 shares. It separately counts single-match
 and fragmentation-safe fee sensitivities. Event digests, snapshot evidence
 hashes, scanner hashes, source event hashes, experiment source hash, and a
-result digest are retained. The artifact reports candidate qualification, not
-PnL.
+result digest are retained. Each input dataset gets a deterministic run ID, so
+a later cumulative window creates a new immutable artifact while preserving
+prior results. The artifact reports candidate qualification, not PnL.
 
 ### API and dashboard
 
@@ -83,31 +84,32 @@ or predictor comparison would not be an evidence-supported experiment.
 
 ## Runtime and evidence at checkpoint
 
-- Latest scan: `scan-20261015T062259Z-f060bd25dec4`, captured 06:22:59 UTC.
+- Latest scan: `scan-20261015T063103Z-12947c8cef0a`, captured 06:31:03 UTC.
 - Latest discovery union: 300 unique IDs, 167 supported pair markets, 133
   explicit exclusions.
 - Latest selected panel: 40 markets (six available stable controls, 34
-  rotating); 35 quality-valid pairs.
-- Indexed panel: six snapshots, 240 selected observations, 211 quality-valid,
-  29 empty-ask invalids, 121 distinct markets, zero pending snapshots.
-- Observation window: 23 minutes 31 seconds; current API readiness is
+  rotating); 37 quality-valid pairs.
+- Indexed panel: seven snapshots, 280 selected observations, 248 quality-valid,
+  32 empty-ask invalids, 133 distinct markets, zero pending snapshots.
+- Observation window: 31 minutes 35 seconds; current API readiness is
   `collecting_repeated_temporal_coverage`.
-- Data root: 4,071,986 bytes, below the 1 GiB cap.
+- Data root: 4,745,634 bytes, below the 1 GiB cap.
 - Service configuration: 40 markets, one-second request pacing, seven planned
   network requests per scan, `CPUQuota=5%`, `MemoryMax=256M`, low CPU/IO
   priority, no new privileges, and writes limited to the observatory data root.
-- Latest service process: success, 594 ms CPU time and about 16 seconds elapsed.
+- Latest scheduled service process: success, 617 ms CPU time and about 16 seconds elapsed.
   Peak memory was not recorded by systemd for this completed oneshot.
 
 The full scan results and immutable source identities are in
-[`VERITAS_MISSION2_GATE_A_CHECKPOINT_001.md`](VERITAS_MISSION2_GATE_A_CHECKPOINT_001.md)
-and [`VERITAS_MISSION2_RESEARCH_INVENTORY.json`](VERITAS_MISSION2_RESEARCH_INVENTORY.json).
+[`VERITAS_MISSION2_GATE_A_CHECKPOINT_001.md`](VERITAS_MISSION2_GATE_A_CHECKPOINT_001.md),
+[`VERITAS_MISSION2_GATE_A_CHECKPOINT_002.md`](VERITAS_MISSION2_GATE_A_CHECKPOINT_002.md),
+and [`VERITAS_MISSION2_RESEARCH_INVENTORY_002.json`](VERITAS_MISSION2_RESEARCH_INVENTORY_002.json).
 
 ## Verification
 
 | Check | Result |
 | --- | --- |
-| Targeted Veritas Python/API suite | 34 passed; one Starlette/httpx deprecation warning |
+| Full Veritas backend test selection | 77 passed; one Starlette/httpx deprecation warning |
 | Ruff on new Python implementation, scripts, and tests | Passed |
 | Mypy on eight changed/new Python source files | Passed |
 | Frontend unit suite | 29 passed |

@@ -1,6 +1,6 @@
 # Veritas Mission 2 Operations
 
-**Runtime checked:** 2026-10-15 06:24 UTC
+**Runtime checked:** 2026-10-15 06:32 UTC
 **Service:** `midas-veritas-observatory.service`
 **Timer:** `midas-veritas-observatory.timer`
 
@@ -8,14 +8,15 @@
 
 - The user timer is active and waiting. It is scheduled every 30 minutes in
   UTC, with up to two minutes randomized delay and persistent catch-up behavior.
-- The latest scan (`scan-20261015T062259Z-f060bd25dec4`) completed successfully
-  at 06:22:59 UTC. The oneshot exited successfully after about 16 seconds and
-  used 594 ms CPU time.
+- The latest scan (`scan-20261015T063103Z-12947c8cef0a`) completed successfully
+  at 06:31:03 UTC. The oneshot exited successfully at 06:31:09 after about 16
+  seconds and used 617 ms CPU time.
+- The next scheduled timer event is 07:00:23 UTC.
 - The service is inactive between runs, as expected for a oneshot. The timer
   is the active unit.
 - The loaded unit files match the deploy definitions in this checkout.
-- The analysis index has six processed snapshots and zero pending snapshots.
-- Runtime data uses 4,071,986 bytes under `data/veritas-observatory/`; the
+- The analysis index has seven processed snapshots and zero pending snapshots.
+- Runtime data uses 4,745,634 bytes under `data/veritas-observatory/`; the
   configured hard root limit is 1 GiB. Source snapshots are immutable and
   ignored by Git; docs and experiment artifacts record their paths and hashes.
 

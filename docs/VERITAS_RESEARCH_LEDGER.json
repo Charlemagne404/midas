@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-15T06:24:23+00:00",
+  "updated_at_utc": "2026-10-15T06:33:50+00:00",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -1525,6 +1525,69 @@
         "Displayed depth and hypothetical fees do not establish persistence, order arrival, or execution."
       ],
       "decision": "Keep no-trade as the current hypothetical policy. Continue the bounded observation and rerun a separately identified economic comparison when the evidence window materially grows.",
+      "status": "continue"
+    },
+    {
+      "hypothesis_id": "VERITAS-H030",
+      "title": "The bounded timer advances finalized snapshot analysis once after a committed release",
+      "mechanism": "A persistent user timer and oneshot service should append one immutable snapshot and one v2 analysis event per successful run without rewriting prior snapshot or event identities.",
+      "experiment_id": "VERITAS-M2-POST-COMMIT-SCAN-001",
+      "dataset_id": "12947c8cef0a838589bb74461250020597a1ca153701802ae2f3af4581be7bd0",
+      "success_metric": "Observe the post-commit systemd run exit status, new snapshot and event hashes, before/after processed counts, and residual analysis backlog.",
+      "result": {
+        "status": "passed_for_one_scheduled_run",
+        "service_start_utc": "2026-10-15T06:30:53+00:00",
+        "service_exit_utc": "2026-10-15T06:31:09+00:00",
+        "exit_status": 0,
+        "cpu_time_ms": 617,
+        "snapshot_count_before": 6,
+        "snapshot_count_after": 7,
+        "new_snapshot_id": "scan-20261015T063103Z-12947c8cef0a",
+        "new_snapshot_sha256": "12947c8cef0a838589bb74461250020597a1ca153701802ae2f3af4581be7bd0",
+        "new_analysis_event_sha256": "700f29876c216f28fb1dc9f6a061a7f200488b587b0859cd8153d7e97480a538",
+        "pending_analysis_snapshots": 0,
+        "evidence": "docs/VERITAS_MISSION2_GATE_A_CHECKPOINT_002.md"
+      },
+      "limitations": [
+        "One successful timer run is not evidence of long-term service reliability.",
+        "The next scheduled execution must be checked for timer continuity and bounded resource use."
+      ],
+      "decision": "Keep the read-only timer active and continue checking immutable snapshot and event lineage as coverage accumulates.",
+      "status": "completed"
+    },
+    {
+      "hypothesis_id": "VERITAS-H031",
+      "title": "A later scheduled observation retains the empty gross-to-economic qualification funnel",
+      "mechanism": "If an additional price-blind selected snapshot remains non-positive at top ask, correct full-depth walk, both per-leg minimums, and separately reported fee sensitivities, it supplies no basis to promote a hypothetical strategy.",
+      "experiment_id": "VERITAS-M2-ECO-QUAL-001",
+      "dataset_id": "7878566d1ffb8261caca50ec09036715ec2c5f765b4c57a152744e86cf6d8737",
+      "success_metric": "Re-run frozen baseline and economic qualification rules over all ordered finalized v2 events with a deterministic dataset-derived run identity.",
+      "result": {
+        "status": "no_positive_gross_candidate_observed",
+        "experiment_run_id": "VERITAS-M2-ECO-QUAL-001-RUN-7878566d1ffb",
+        "snapshot_count": 7,
+        "attempted_market_pairs": 280,
+        "quality_valid_pairs": 248,
+        "unique_market_ids": 133,
+        "top_ask_positive_states": 0,
+        "full_depth_20_positive_states": 0,
+        "minimum_notional_20_positive_states": 0,
+        "single_match_fee_20_positive_states": 0,
+        "fragmentation_safe_fee_20_positive_states": 0,
+        "top_edge_per_share": {
+          "minimum": "-0.984",
+          "median_nearest_rank": "-0.028",
+          "maximum": "-0.001"
+        },
+        "artifact": "data/veritas-observatory/experiments/VERITAS-M2-ECO-QUAL-001-RUN-002.json",
+        "artifact_sha256": "291badcaee3e012cbabeaf2323b70fff95d792d94bc22b1aab2fce42020ef91e"
+      },
+      "limitations": [
+        "The seven-snapshot interval is about 32 minutes and remains short and correlated.",
+        "The study is candidate qualification rather than realized or hypothetical strategy PnL.",
+        "No fills, persistence, continuous coverage, or venue-wide prevalence are inferred."
+      ],
+      "decision": "Keep no-trade and continue the bounded pilot; do not train a predictor or compare execution policies without qualifying candidates and appropriate outcome labels.",
       "status": "continue"
     }
   ],

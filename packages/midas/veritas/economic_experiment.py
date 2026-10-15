@@ -18,6 +18,10 @@ def _sha256(value: bytes) -> str:
     return hashlib.sha256(value).hexdigest()
 
 
+def _canonical(value: Any) -> bytes:
+    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
+
+
 def compare_qualification_rules(
     events: list[dict[str, Any]], *, quantity: str = "20"
 ) -> dict[str, Any]:
@@ -44,6 +48,17 @@ def compare_qualification_rules(
             event.get("snapshot_file", "")
         ).endswith(f"{event['scan_id']}.json.gz"):
             raise ValueError("Snapshot event source identity is invalid")
+
+    dataset_manifest = [
+        {
+            "scan_id": event["scan_id"],
+            "snapshot_evidence_sha256": event.get("snapshot_evidence_sha256"),
+            "analysis_event_sha256": event.get("analysis_event_sha256"),
+        }
+        for event in ordered
+    ]
+    dataset_sha256 = _sha256(_canonical(dataset_manifest))
+    run_id = f"{EXPERIMENT_ID}-RUN-{dataset_sha256[:12]}"
 
     attempted = sum(int(event.get("attempted_market_pairs", 0)) for event in ordered)
     valid = sum(int(event.get("valid_quality_pairs", 0)) for event in ordered)
@@ -131,8 +146,10 @@ def compare_qualification_rules(
     result = {
         "schema_version": 1,
         "experiment_id": EXPERIMENT_ID,
+        "experiment_run_id": run_id,
         "analysis_version": VERSION,
         "input_analysis_version": SNAPSHOT_ANALYSIS_VERSION,
+        "dataset_sha256": dataset_sha256,
         "experiment_source_code_sha256": _sha256(Path(__file__).read_bytes()),
         "status": status,
         "baseline": {
@@ -185,9 +202,7 @@ def compare_qualification_rules(
         "orders_submitted": False,
         "authenticated_requests": False,
     }
-    result["experiment_sha256"] = _sha256(
-        json.dumps(result, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
-    )
+    result["experiment_sha256"] = _sha256(_canonical(result))
     return result
 
 

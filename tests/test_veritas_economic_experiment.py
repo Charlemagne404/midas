@@ -82,6 +82,8 @@ def test_economic_qualification_compares_baseline_with_depth_and_fee_gates():
     result = compare_qualification_rules(events, quantity="20")
 
     assert result["experiment_id"] == "VERITAS-M2-ECO-QUAL-001"
+    assert result["experiment_run_id"].startswith("VERITAS-M2-ECO-QUAL-001-RUN-")
+    assert len(result["dataset_sha256"]) == 64
     assert result["baseline"]["positive_states"] == 1
     assert result["research_improvement"]["positive_states"] == 0
     assert result["sample"]["attempted_market_pairs"] == 5
@@ -89,6 +91,9 @@ def test_economic_qualification_compares_baseline_with_depth_and_fee_gates():
     assert result["sample"]["top_pair_edge_per_share"]["positive_count"] == 1
     assert result["status"] == "preliminary_gross_edge_failed_economic_qualification"
     assert result["orders_submitted"] is False
+    assert (
+        compare_qualification_rules(events[:1])["experiment_run_id"] != result["experiment_run_id"]
+    )
 
 
 def test_economic_qualification_rejects_tampered_or_wrong_version_events():

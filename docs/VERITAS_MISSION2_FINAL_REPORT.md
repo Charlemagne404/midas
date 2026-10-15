@@ -30,21 +30,28 @@ public requests, seven planned requests per scan, 5% CPU, 256 MiB memory, and a
   semantics, 52 unsupported outcome relationships).
 - Latest selection: 40 markets, six available frozen controls, 34 rotating;
   liquidity, expiry, category, and spread strata are present.
-- Six immutable snapshots from 05:59:28 to 06:22:59 UTC: 240 selected market
-  observations, 211 quality-valid pairs, 29 empty-ask invalids, 121 distinct
+- Seven immutable snapshots from 05:59:28 to 06:31:03 UTC: 280 selected market
+  observations, 248 quality-valid pairs, 32 empty-ask invalids, 133 distinct
   market IDs, zero analyzer backlog.
 - Current descriptive readiness: `collecting_repeated_temporal_coverage`.
-  This 23-minute window does not meet the 24-hour dependence-review readiness
+  This 31-minute window does not meet the 24-hour dependence-review readiness
   threshold or the earlier specific study's 48-hour gate.
 - The paired same-snapshot freshness reclassification changed valid yield from
   5/40 (12.5%) to 32/40 (80.0%): +27 pairs and +67.5 percentage points on the
   exact same saved payload. Batch atomicity and upstream queue age remain
   unverified.
-- `VERITAS-M2-ECO-QUAL-001`, using 211 quality-valid pairs, found zero positive
+- `VERITAS-M2-ECO-QUAL-001` run
+  `VERITAS-M2-ECO-QUAL-001-RUN-7878566d1ffb`, using 248 quality-valid pairs,
+  found zero positive
   top-ask gross, 20-share depth, minimum-notional, single-match-fee, or
-  fragmentation-safe-fee states. Top-edge range was -0.60 to -0.001 per share;
-  median nearest-rank edge was -0.022. The result supports no-trade today; it
+  fragmentation-safe-fee states. Top-edge range was -0.984 to -0.001 per share;
+  median nearest-rank edge was -0.028. The result supports no-trade today; it
   does not establish absence across the venue or profitability.
+
+The post-commit timer scan succeeded and analysis v2 indexed exactly one new
+snapshot. The seven-snapshot run has a deterministic ID derived from its input
+manifest; the first economic result remains preserved separately.
+The refreshed result is [economic run 002](../data/veritas-observatory/experiments/VERITAS-M2-ECO-QUAL-001-RUN-002.json).
 
 ## Measurement yield and limits
 
@@ -76,7 +83,8 @@ models, or historical results.
 
 ## Verification and preservation
 
-- Targeted Veritas Python/API tests: 34 passed.
+- Full Veritas backend test selection: 77 passed; one Starlette/httpx
+  deprecation warning.
 - Ruff and Mypy on the new observation, analysis, experiment, and test code:
   passed.
 - Frontend tests: 29 passed; typecheck, lint, and production build passed. The
@@ -95,7 +103,9 @@ Detailed implementation and commands are in
 [`VERITAS_MISSION2_ENGINEERING.md`](VERITAS_MISSION2_ENGINEERING.md),
 [`VERITAS_MISSION2_OPERATIONS.md`](VERITAS_MISSION2_OPERATIONS.md),
 [`VERITAS_MISSION2_GATE_A_CHECKPOINT_001.md`](VERITAS_MISSION2_GATE_A_CHECKPOINT_001.md),
-and [`VERITAS_MISSION2_RESEARCH_INVENTORY.json`](VERITAS_MISSION2_RESEARCH_INVENTORY.json).
+[`VERITAS_MISSION2_GATE_A_CHECKPOINT_002.md`](VERITAS_MISSION2_GATE_A_CHECKPOINT_002.md),
+[`VERITAS_MISSION2_RESEARCH_INVENTORY.json`](VERITAS_MISSION2_RESEARCH_INVENTORY.json),
+and [`VERITAS_MISSION2_RESEARCH_INVENTORY_002.json`](VERITAS_MISSION2_RESEARCH_INVENTORY_002.json).
 
 ## Next evidence gates
 
