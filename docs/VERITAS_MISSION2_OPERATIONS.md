@@ -1,10 +1,51 @@
 # Veritas Mission 2 Operations
 
-**Runtime checked:** 2026-10-15 15:16:48 UTC
+**Latest read-only runtime check:** 2026-10-15 19:57 UTC
 **Services:** `midas-veritas-observatory.service`, `midas-veritas-source-analysis.service`, `midas-veritas-research-director.service`
 **Timers:** `midas-veritas-observatory.timer`, `midas-veritas-source-analysis.timer`, `midas-veritas-research-director.timer`
 
-## Current state
+## Latest runtime state — 2026-10-15 19:57 UTC
+
+- The observer timer completed scan 32 at 19:30:35 UTC and is next due at
+  20:00:38 UTC. The fixed coverage pilot has two scans / 80 selected slots /
+  66 quality-valid pairs / 14 invalid pairs / zero skipped sequences. Its
+  fixed stop is 2026-10-16 19:00:55 UTC.
+- The finalized-source analysis timer completed its 19:40:47 UTC run at
+  19:44:07 UTC. It processed 128 segments / 29,884,557 bytes in that batch;
+  cumulative progress is 3,260/4,200 segments / 810,685,070 bytes, with 940
+  segments / 284,210,238 bytes pending. The campaign window has 201,162 frame
+  records, 182,797 touched states, and 177,123 quality-valid states across 47
+  markets; positive top-ask and full-depth state counts remain zero. The next
+  source-analysis timer is due at 20:10:56 UTC.
+- The 19:45:44 UTC Director cycle admitted
+  `job-c69b64f69f314dd89ad80b39` for
+  `scan-20261015T193035Z-7597bbb981fa`. Arena’s authoritative job record
+  completed all 32 events at 19:46:25 UTC with exit status 0 and no error.
+  Finding `veritas-qualification-v1-473344bb0e11e07a` reports zero positives
+  at all five economic gates. The Director manifest still projects `RUNNING`
+  and has not incorporated the completion; the scheduled 20:15:17 UTC cycle
+  is the reconciliation point. No manual poll or retry was started.
+- The Reality recorder service is active with zero restarts, but its latest
+  logged condition is `DEGRADED` after a DNS name-resolution failure. The
+  warning reports eight configured markets and last observation at 04:57:26
+  UTC; no later recorder journal line appeared in the checked interval. The
+  frozen Reality shadow service remains active after one automatic restart
+  following a source integrity/continuity mismatch. Neither service nor its
+  campaign was restarted or modified during this check.
+- Midas API and Reality API health endpoints and both local web interfaces
+  returned HTTP 200. Host memory available was 8.9 GiB; swap use was 3.5/4 GiB.
+  The filesystem had 199 GiB free. Reality recordings occupied about 1.1 GiB,
+  the frozen campaign directory 152 MiB, and the Veritas observatory 38 MiB.
+- A bounded read-only v1.4 campaign audit is recorded in [Gate C checkpoint
+  003](VERITAS_MISSION2_GATE_C_CHECKPOINT_003.md). It found public markouts
+  but no suitable strategy target or execution/P&L labels. The current
+  Director readiness field remains scoped to the separate snapshot
+  qualification dataset and has not ingested this report.
+
+The one-shot Veritas services are inactive between scheduled runs by design.
+The recurring timers remain active; do not manually invoke overlapping runs.
+
+## Historical runtime snapshot — 2026-10-15 15:16 UTC
 
 - All three Veritas user timers are active. Scan 23 finalized at 15:00:26 UTC, the finalized-source replay exited at 15:14:31 UTC, and the Director cycle exited at 15:15:37 UTC. Arena completed its qualification at 15:15:47 UTC. The next scheduled UTC runs are 15:30:10, 15:40:45, and 15:45:00. The oneshot services are inactive between runs as expected.
 - Latest scan: `scan-20261015T150026Z-56e1e44d7837`, captured at 15:00:26 UTC and finalized under v4. The analyzer has 23 processed snapshots and no pending snapshots. The cumulative panel has 920 selected observations, 825 request/receipt-valid pairs, 95 invalid pairs, 418 distinct market IDs, and 189 pairs passing the prior reported-age/skew gate. The paired increase is 636/920 (+69.13 percentage points); all five economic gates remain zero-positive.

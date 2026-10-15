@@ -1,6 +1,37 @@
 # Veritas Mission 2 Engineering Checkpoint
 
-## Latest Gate G checkpoint 005 — coverage dashboard and scan 32
+## Latest checkpoint — Gate C label feasibility and scan 32 qualification
+
+At 19:58 UTC, the bounded v1.4 frozen-campaign audit confirms that 937 public
+markout measurements exist across 41,012 follow-up slots; 40,075 are censored.
+At five seconds, 473/3,503 valid initial decisions have an observed markout,
+but all 473 report no initial discrepancy, null opportunity persistence, and
+unknown-counterfactual execution ground truth. This is not a usable strategy
+or P&L target. The summary-only artifact and limitations are in [Gate C
+checkpoint 003](VERITAS_MISSION2_GATE_C_CHECKPOINT_003.md).
+
+The scan-32 Arena job completed all 32 events at 19:46:25 UTC with exit status
+0. Its persisted finding reports 1,136/1,280 valid pairs across 598 selected
+IDs and zero positives at all five gross/depth/minimum/fee gates. The Director
+manifest still projects `RUNNING`; its scheduled reconciliation remains
+pending (see [Gate F checkpoint 018](VERITAS_MISSION2_GATE_F_CHECKPOINT_018.md)).
+The current 24-hour coverage pilot has two scans / 80 slots / 66
+valid / zero missed sequences.
+
+The 19:40 UTC source replay completed 128 segments / 29,884,557 bytes. The
+prefix is 3,260/4,200 segments, with 940 / 284,210,238 bytes pending; its
+campaign window has 177,123 quality-valid states across 47 markets and zero
+positive top-ask/full-depth states. The eight-market Reality recorder remains
+active but its latest logged state is degraded after a DNS failure, with last
+observation at 04:57 UTC. See [operations](VERITAS_MISSION2_OPERATIONS.md),
+[label artifact](VERITAS_MISSION2_LABEL_FEASIBILITY_001.json), and [research
+ledger H071](VERITAS_RESEARCH_LEDGER.json).
+
+The v1.4 forensic change passed 9 focused tests, Ruff, formatting, and strict
+Mypy. It remains a separate artifact; the dashboard’s frozen-campaign API
+still accepts its pinned v1.3 schema. Mission 2 remains active.
+
+## Gate G checkpoint 005 — coverage dashboard and scan 32
 
 Commit `a03a10c` adds a read-only coverage-pilot panel backed by a
 digest- and lineage-verified API projection. Focused verification passed 12

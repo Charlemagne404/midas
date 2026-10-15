@@ -1,10 +1,35 @@
 # Project Veritas Mission 2 — Current Engineering Report
 
-**Status:** Mission 2 remains active. Discovery, independent binary-pair arithmetic, bounded public observation, continuous finalized-snapshot analysis, candidate qualification, paired measurement comparison, market/time censoring analysis, and the read-only dashboard are implemented. The recurring scan-pinned Veritas Research Director now consumes the independently maintained finalized-source summary alongside public-scan qualification. Strategy/model experiments, broader dashboard scope, and longer independent validation remain open.
+**Status:** Mission 2 remains active. Discovery, independent binary-pair arithmetic, bounded public observation, continuous finalized-snapshot analysis, candidate qualification, paired measurement comparison, market/time censoring analysis, and the read-only dashboard are implemented. The recurring scan-pinned Veritas Research Director consumes the independently maintained finalized-source summary alongside public-scan qualification. A new bounded audit confirms public markout measurements exist in the frozen campaign, but they do not provide a usable opportunity target or execution/P&L labels. Strategy/model experiments, broader dashboard scope, and longer independent validation remain open.
 
 **Date:** 2026-10-15
 **Branch:** `project/veritas`
-**Checkpoint base commit:** `48688f1`
+**Original checkpoint base commit:** `48688f1`; **latest follow-up base commit:** `54cf9dd`.
+
+## Latest checkpoint addendum — 2026-10-15 19:58 UTC
+
+The 32-snapshot panel contains 1,136/1,280 quality-valid pairs across 598
+selected market IDs. Scan-32 Arena qualification completed 32/32 events at
+19:46:25 UTC and found zero positive states at all five economic gates; the
+Director manifest awaits its scheduled reconciliation.
+
+The separate frozen-campaign v1.4 forensic audit found 937 public markout
+measurements across 41,012 follow-up slots, with 40,075 censored. At five
+seconds, 473/3,503 valid initial decisions were observed; all 473 had no
+initial discrepancy, null opportunity persistence, and
+`unknown_counterfactual` execution ground truth. The strongest supported
+conclusion is that these marks do not support a strategy/model comparison;
+they are not evidence of fills or P&L. See [Gate C checkpoint
+003](VERITAS_MISSION2_GATE_C_CHECKPOINT_003.md) and the
+[summary artifact](VERITAS_MISSION2_LABEL_FEASIBILITY_001.json).
+
+Finalized-source replay remains partial at 3,260/4,200 segments, with 940
+pending and zero positive top-ask/full-depth states. The eight-market Reality
+recorder is active but its latest logged state is degraded after a name
+resolution failure, with last observation at 04:57 UTC. The frozen shadow
+service remains active after one automatic restart for source
+integrity/continuity mismatch. No Reality service or campaign was changed for
+this checkpoint. Mission 2 remains active.
 
 ## Changes in this checkpoint
 

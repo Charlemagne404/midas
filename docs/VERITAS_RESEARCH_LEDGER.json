@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-15T19:41:43Z",
+  "updated_at_utc": "2026-10-15T19:58:10Z",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -3914,9 +3914,120 @@
       ],
       "decision": "Continue to the fixed 24-hour or 48-scan stop. Treat role yields as descriptive only; no economic or causal conclusion follows from one scan.",
       "status": "continue"
+    },
+    {
+      "dataset_id": "0435c2c6b6dd6287caf39906485ac1dec663da344c0f52181cb7e0273299d0ec",
+      "decision": "Keep no-trade and do not train or run a strategy tournament on this evidence. Public markout labels exist, but observed five-second outcomes all have no initial discrepancy, opportunity_persistence is null, and fills are unknown_counterfactual. Continue bounded collection and keep the snapshot-dataset readiness scope distinct from this frozen-campaign report.",
+      "experiment_id": "VERITAS-M2-LABEL-FEASIBILITY-001",
+      "hypothesis_id": "VERITAS-H071",
+      "limitations": [
+        "The bounded cohort contains 43 selected markets across two UTC days; observations are dependent and do not represent the venue-wide universe.",
+        "Only 473 five-second public measurements were observed among 3,503 valid initial decisions (13.50% yield); 9,780 five-second follow-up slots were censored.",
+        "All 473 observed five-second labels report quote_persistence=true, opportunity_target_status=no_initial_discrepancy, and opportunity_persistence=null.",
+        "Displayed quantity and public quote movement do not identify fills; execution ground truth is unknown_counterfactual and realized money is null.",
+        "The query used one read-only SQLite transaction with limit 50,000 and no truncation. A full SQLite integrity scan and complete event hash-chain re-verification were not performed.",
+        "The Research Director status is calculated from the separate snapshot-qualification dataset and has not ingested this frozen-campaign forensic report."
+      ],
+      "mechanism": "Run veritas-forward-forensics-v1.4 with a 50,000-decision cap against one read-only SQLite transaction. Aggregate observed-only label support and movement distributions by frozen horizon; do not copy raw campaign observations.",
+      "result": {
+        "analysis_version": "veritas-forward-forensics-v1.4",
+        "artifact_path": "docs/VERITAS_MISSION2_LABEL_FEASIBILITY_001.json",
+        "artifact_sha256": "0435c2c6b6dd6287caf39906485ac1dec663da344c0f52181cb7e0273299d0ec",
+        "source_report_sha256": "dd1994104fbe3cdc75b148d630909ca6eab71120d19a1c3346b70c8038ffd788",
+        "campaign_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
+        "campaign_plan_sha256": "aa8acb2b46823c1a1e3ac5d01a57dde917746c2c7471098ae2a4598875e322f5",
+        "journal_tail_event_seq": 112960,
+        "journal_tail_event_sha256": "470253da4faab9c24797e9d0e48356fb8d3b30e396d3d8b1940f140a6e26f72b",
+        "decisions": 10253,
+        "markets": 43,
+        "valid_initial_decisions": 3503,
+        "invalid_initial_decisions": 6750,
+        "observed_public_measurements": 937,
+        "censored_followups": 40075,
+        "pending_followups": 0,
+        "observed_yield_by_horizon": {
+          "100": {
+            "observed": 29,
+            "censored": 10224,
+            "pending": 0,
+            "valid_initial_decisions": 3503,
+            "yield_per_valid_initial_decision": 0.008278618327148159
+          },
+          "1000": {
+            "observed": 341,
+            "censored": 9912,
+            "pending": 0,
+            "valid_initial_decisions": 3503,
+            "yield_per_valid_initial_decision": 0.09734513274336283
+          },
+          "300": {
+            "observed": 94,
+            "censored": 10159,
+            "pending": 0,
+            "valid_initial_decisions": 3503,
+            "yield_per_valid_initial_decision": 0.02683414216385955
+          },
+          "5000": {
+            "observed": 473,
+            "censored": 9780,
+            "pending": 0,
+            "valid_initial_decisions": 3503,
+            "yield_per_valid_initial_decision": 0.13502711961176134
+          }
+        },
+        "five_second_label_support": {
+          "quote_persistence": {
+            "true": 473
+          },
+          "opportunity_persistence": {
+            "null": 473
+          },
+          "opportunity_target_status": {
+            "no_initial_discrepancy": 473
+          },
+          "execution_ground_truth": {
+            "unknown_counterfactual": 473
+          },
+          "best_ask_pair_movement": {
+            "count": 473,
+            "maximum": "0.00",
+            "median_nearest_rank": "0.000",
+            "minimum": "0.000",
+            "p25_nearest_rank": "0.000",
+            "p75_nearest_rank": "0.000",
+            "positive_count": 0
+          },
+          "adverse_ask_movement": {
+            "count": 473,
+            "maximum": "0",
+            "median_nearest_rank": "0",
+            "minimum": "0",
+            "p25_nearest_rank": "0",
+            "p75_nearest_rank": "0",
+            "positive_count": 0
+          },
+          "quoted_exit_value_change": {
+            "count": 473,
+            "maximum": "0.00",
+            "median_nearest_rank": "0.000",
+            "minimum": "0.000",
+            "p25_nearest_rank": "0.000",
+            "p75_nearest_rank": "0.000",
+            "positive_count": 0
+          }
+        },
+        "all_six_policy_actions_abstained": true,
+        "status": "public_markout_labels_exist_but_no_suitable_strategy_target",
+        "orders_submitted": false,
+        "realized_money": null
+      },
+      "status": "continue",
+      "success_metric": "A model or policy study is eligible only after a predeclared candidate-related target has sufficient non-degenerate quality-valid support and independent timing, with execution ground truth kept separate from public markout measurements.",
+      "title": "Do frozen forward public markouts support a useful strategy or model target?"
     }
   ],
   "next_research_questions": [
+    "Do public markout labels from the frozen campaign support any non-degenerate strategy target once no-initial-discrepancy, censoring, and unknown fills are separated?",
     "What independent feed sequence or coverage evidence can distinguish venue inactivity, feed gaps, and cohort selection within future_observation_unavailable?",
     "Can Arena provide a typed, bounded Veritas Director job that consumes immutable source manifests without duplicating collector writes or creating unbounded copied artifacts?",
     "Do multi-day public coverage and independent freshness evidence change the measured gross-opportunity distribution?",
