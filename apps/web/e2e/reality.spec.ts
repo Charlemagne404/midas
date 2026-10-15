@@ -3,6 +3,67 @@ import { test, expect } from '@playwright/test';
 test('native Reality exposes genuine evidence and frozen replay without synthetic labeling', async ({
   page,
 }) => {
+  // Keep this browser pass isolated from source payloads and service controls.
+  await page.route('**/api/reality/records/**', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        record: {
+          ordinal: 1,
+          kind: 'frame',
+          schema_version: 1,
+          payload: { fixture: 'isolated browser source record' },
+        },
+        payload_truncated: false,
+        segment: '00000000000000000001-00000000000000000000000000000000.seg',
+        offset: 8,
+        canonical_record_sha256: '0'.repeat(64),
+        compressed_record_sha256: '0'.repeat(64),
+      }),
+    });
+  });
+  await page.route('**/api/reality/operations', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        services: [
+          {
+            unit: 'midas-reality.service',
+            available: true,
+            properties: {
+              ActiveState: 'active',
+              SubState: 'running',
+              MainPID: '12345',
+              NRestarts: '0',
+              MemoryCurrent: '16777216',
+            },
+          },
+        ],
+        configuration: {},
+        storage_policy: {},
+        controls: ['check-capacity'],
+        collector_deployment: 'isolated browser fixture',
+      }),
+    });
+  });
+  await page.route('**/api/reality/operations/**', async (route) => {
+    if (route.request().method() !== 'POST') {
+      await route.continue();
+      return;
+    }
+    const action = new URL(route.request().url()).pathname.split('/').at(-1);
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        action,
+        accepted: action === 'check-capacity',
+        detail: 'isolated fixture',
+      }),
+    });
+  });
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(e.message));
   await expect

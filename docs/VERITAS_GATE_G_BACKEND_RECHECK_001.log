@@ -1,0 +1,543 @@
+........................................................................ [  9%]
+........................................................................ [ 18%]
+........F............................................................... [ 27%]
+........................................................................ [ 36%]
+........................................................................ [ 45%]
+......................s................................................. [ 54%]
+........................................................................ [ 64%]
+............................................................FFFFF....... [ 73%]
+........................................F............................... [ 82%]
+........................................................................ [ 91%]
+..................................................................       [100%]
+=================================== FAILURES ===================================
+________ test_coordinator_runs_real_worker_and_verifies_portable_export ________
+
+migration = (PosixPath('/tmp/pytest-of-charlie/pytest-429/independent-storage-audit0'), 'dataset-13a60cbd0708f0191bcc421e', {'conf...1b17c6df0c94b0d10794f22a539'}, 'source_hash': '83ef348e5e912618db84a6bdd1dacf1bbe92a38a5cd1f9e3c3ca7bd9a8db17fc', ...})
+tmp_path = PosixPath('/tmp/pytest-of-charlie/pytest-429/test_coordinator_runs_real_wor0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7a8a2c65afc0>
+
+    def test_coordinator_runs_real_worker_and_verifies_portable_export(
+        migration, tmp_path, monkeypatch
+    ):
+        import io
+        import os
+        import subprocess
+        import sys
+
+        from midas.arena.datasets import load
+        from midas.arena.jobs import create as native_create
+
+        root, identity, original_plan = migration
+        plan = {
+            **original_plan,
+            "configuration": {
+                "kind": "migration",
+                "migration": original_plan["configuration"]["migration"],
+                "max_wall_seconds": 300,
+            },
+            "scientific_samples_added": 0,
+            "models_trained": 0,
+            "tool_hashes": {},
+            "full_gate_unit": "fixture",
+            "full_gate_log": "fixture",
+        }
+        plan_path = tmp_path / "plan.json"
+        plan_path.write_text(json.dumps(plan))
+        monkeypatch.chdir(tmp_path)
+        monkeypatch.setattr(coordinator, "gate_result", lambda *args: {"passed": 575})
+        real_run = subprocess.run
+
+        def command(args, **kwargs):
+            if args[:3] == ["systemctl", "--user", "restart"]:
+                return subprocess.CompletedProcess(args, 0)
+            return real_run(args, **kwargs)
+
+        monkeypatch.setattr(coordinator.subprocess, "run", command)
+
+        def launch(directory, spec, admission_key):
+            job = native_create(directory, spec, launch=False, admission_key=admission_key)
+            result = real_run(
+                [
+                    sys.executable,
+                    "-B",
+                    "-m",
+                    "midas.arena.jobs",
+                    "--root",
+                    str(directory),
+                    "--job",
+                    job["job_id"],
+                ],
+                capture_output=True,
+                text=True,
+                timeout=30,
+                env={
+                    **os.environ,
+                    "OMP_NUM_THREADS": "1",
+                    "MKL_NUM_THREADS": "1",
+                    "OPENBLAS_NUM_THREADS": "1",
+                },
+            )
+            assert result.returncode == 0, result.stdout + result.stderr
+            return json.loads((directory / "jobs" / job["job_id"] / "job.json").read_text())
+
+        monkeypatch.setattr(coordinator, "create", launch)
+
+        def response(url, **kwargs):
+            if url.endswith("/api/health"):
+                body = {"status": "READY"}
+            else:
+                body = {"storage_version": "decision-storage-2", "rows": load(root, identity)[1][:25]}
+            return io.BytesIO(json.dumps(body).encode())
+
+        monkeypatch.setattr(coordinator.urllib.request, "urlopen", response)
+>       result = coordinator.run(root, plan_path, tmp_path / "result.json")
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/home/charlie/midas-veritas/tests/arena/test_migration_pilot_verification.py:182:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+/home/charlie/midas-veritas/scripts/run_dataset_migration_pilot.py:90: in run
+    job = create(root, spec, admission_key="dataset-migration-schema-pilot-1")
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+directory = PosixPath('/tmp/pytest-of-charlie/pytest-429/independent-storage-audit0')
+spec = JobSpec(kind='migration', dataset=None, training=None, severity=None, cost=None, recovery=None, unwind=None, observati..._id=None, model_id=None, rl=None, tournament=None, sweep=None, director=None, policy_search=None, max_wall_seconds=300)
+admission_key = 'dataset-migration-schema-pilot-1'
+
+    def launch(directory, spec, admission_key):
+        job = native_create(directory, spec, launch=False, admission_key=admission_key)
+        result = real_run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "midas.arena.jobs",
+                "--root",
+                str(directory),
+                "--job",
+                job["job_id"],
+            ],
+            capture_output=True,
+            text=True,
+            timeout=30,
+            env={
+                **os.environ,
+                "OMP_NUM_THREADS": "1",
+                "MKL_NUM_THREADS": "1",
+                "OPENBLAS_NUM_THREADS": "1",
+            },
+        )
+>       assert result.returncode == 0, result.stdout + result.stderr
+E       AssertionError: {"admission_key": "dataset-migration-schema-pilot-1", "budget": {"cpu_cores": 1, "max_artifact_mb": 1024, "memory_mb": 4096, "minimum_available_memory_mb": 2048, "wall_seconds": 300}, "configuration": {"cost": null, "dataset": null, "director": null, "kind": "migration", "max_wall_seconds": 300, "migration": {"source_dataset_id": "dataset-acf5991ca6c9c90ab2abe03a", "target_storage_version": "decision-storage-2"}, "model_id": null, "observations": null, "plan_id": null, "policy_search": null, "recovery": null, "rl": null, "severity": null, "sweep": null, "tournament": null, "training": null, "unwind": null}, "created_at": 1792028229.6430368, "error": "ValueError: Research source changed while queued; submit a new job against the current revision", "job_id": "job-ac5dc9df44cc4e72b2ccb761", "progress": {"done": 0, "total": 1}, "result": null, "state": "FAILED", "submitted_source_hash": "83ef348e5e912618db84a6bdd1dacf1bbe92a38a5cd1f9e3c3ca7bd9a8db17fc", "unit": "midas-arena-job-ac5dc9df44cc4e72b2ccb761.service", "updated_at": 1792028231.5651062, "started_at": 1792028231.5190544, "pid": 3131040, "artifact_guard": {"mode": "EVENT_INDEX", "last_error": null, "watch_count": 183}, "elapsed_seconds": 0.05438854900421575, "runtime_profile": {"artifact_scan_seconds": 1.8020975403487682e-05, "progress_publish_seconds": 0.01330528495600447, "artifact_scans": 1, "artifact_files": 157, "artifact_bytes": 1310204, "artifact_observations": 1, "artifact_index_reconciliations": 1, "artifact_index_fallbacks": 0, "artifact_index_init_seconds": 0.008210322994273156}, "exit_status": 1, "completed_at": 1792028231.5651062}
+E
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/home/charlie/midas/.venv/bin/python', '-B', '-m', 'midas.arena.jobs', '--root', '/tmp/pytest-...tifact_index_init_seconds": 0.008210322994273156}, "exit_status": 1, "completed_at": 1792028231.5651062}\n', stderr='').returncode
+
+/home/charlie/midas-veritas/tests/arena/test_migration_pilot_verification.py:169: AssertionError
+----------------------------- Captured stdout call -----------------------------
+{"phase": "WAITING_GATE"}
+{"phase": "DEPLOYING_API"}
+{"phase": "FAILED", "error": "AssertionError: {\"admission_key\": \"dataset-migration-schema-pilot-1\", \"budget\": {\"cpu_cores\": 1, \"max_artifact_mb\": 1024, \"memory_mb\": 4096, \"minimum_available_memory_mb\": 2048, \"wall_seconds\": 300}, \"configuration\": {\"cost\": null, \"dataset\": null, \"director\": null, \"kind\": \"migration\", \"max_wall_seconds\": 300, \"migration\": {\"source_dataset_id\": \"dataset-acf5991ca6c9c90ab2abe03a\", \"target_storage_version\": \"decision-storage-2\"}, \"model_id\": null, \"observations\": null, \"plan_id\": null, \"policy_search\": null, \"recovery\": null, \"rl\": null, \"severity\": null, \"sweep\": null, \"tournament\": null, \"training\": null, \"unwind\": null}, \"created_at\": 1792028229.6430368, \"error\": \"ValueError: Research source changed while queued; submit a new job against the current revision\", \"job_id\": \"job-ac5dc9df44cc4e72b2ccb761\", \"progress\": {\"done\": 0, \"total\": 1}, \"result\": null, \"state\": \"FAILED\", \"submitted_source_hash\": \"83ef348e5e912618db84a6bdd1dacf1bbe92a38a5cd1f9e3c3ca7bd9a8db17fc\", \"unit\": \"midas-arena-job-ac5dc9df44cc4e72b2ccb761.service\", \"updated_at\": 1792028231.5651062, \"started_at\": 1792028231.5190544, \"pid\": 3131040, \"artifact_guard\": {\"mode\": \"EVENT_INDEX\", \"last_error\": null, \"watch_count\": 183}, \"elapsed_seconds\": 0.05438854900421575, \"runtime_profile\": {\"artifact_scan_seconds\": 1.8020975403487682e-05, \"progress_publish_seconds\": 0.01330528495600447, \"artifact_scans\": 1, \"artifact_files\": 157, \"artifact_bytes\": 1310204, \"artifact_observations\": 1, \"artifact_index_reconciliations\": 1, \"artifact_index_fallbacks\": 0, \"artifact_index_init_seconds\": 0.008210322994273156}, \"exit_status\": 1, \"completed_at\": 1792028231.5651062}\n  \nassert 1 == 0\n +  where 1 = CompletedProcess(args=['/home/charlie/midas/.venv/bin/python', '-B', '-m', 'midas.arena.jobs', '--root', '/tmp/pytest-...tifact_index_init_seconds\": 0.008210322994273156}, \"exit_status\": 1, \"completed_at\": 1792028231.5651062}\\n', stderr='').returncode"}
+___________ test_unverified_or_changed_implementation_rejected_first ___________
+
+    def test_unverified_or_changed_implementation_rejected_first():
+>       current = Config()
+                  ^^^^^^^^
+
+tests/test_reality_deployment.py:14:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+<string>:20: in __init__
+    ???
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Config(root='/home/charlie/midas-reality/data/recordings/reality', markets=3, discovery_limit=50, refresh_seconds=600,...ction_mode='legacy', selection_seed=20261014, near_expiry_tag_id=2, comparison_seconds=0, comparison_timeout_seconds=5)
+
+    def __post_init__(self) -> None:
+        for name in (
+            "refresh_seconds",
+            "resync_seconds",
+            "stale_seconds",
+            "segment_seconds",
+            "comparison_seconds",
+            "comparison_timeout_seconds",
+        ):
+            if not math.isfinite(getattr(self, name)):
+                raise ValueError("Timing values must be finite")
+        if not isinstance(self.near_expiry_tag_id, int) or self.near_expiry_tag_id < 1:
+            raise ValueError("Near-expiry tag ID must be positive")
+        if self.selection_mode not in {"legacy", "stratified-v1"}:
+            raise ValueError("Unsupported selection mode")
+        if self.comparison_seconds != 0 and self.comparison_seconds < 10:
+            raise ValueError("Independent comparison interval must be >=10 seconds")
+        if not 1 <= self.comparison_timeout_seconds <= 10:
+            raise ValueError("Comparison timeout must be 1..10 seconds")
+        if not isinstance(self.selection_seed, int) or not 0 <= self.selection_seed < 2**32:
+            raise ValueError("Selection seed must be uint32")
+        if not 1 <= self.markets <= 10 or not self.markets <= self.discovery_limit <= 200:
+            raise ValueError("Cohort must contain 1..10 markets, discovery <=200")
+        if (
+            not 10 <= self.queue_size <= 64
+            or min(self.refresh_seconds, self.resync_seconds, self.stale_seconds) < 10
+        ):
+            raise ValueError("Unsafe queue or refresh configuration")
+        if (
+            min(
+                self.budget_bytes,
+                self.reserve_bytes,
+                self.segment_bytes,
+                self.segment_seconds,
+                self.retention_days,
+            )
+            <= 0
+        ):
+            raise ValueError("Storage limits must be positive")
+        root = Path(self.root).resolve()
+        workspace = Path(__file__).resolve().parents[3]
+        if not root.is_relative_to(workspace / "data" / "recordings"):
+>           raise ValueError("Reality storage must be inside this worktree data/recordings")
+E           ValueError: Reality storage must be inside this worktree data/recordings
+
+packages/midas/reality/config.py:72: ValueError
+______________ test_unisolated_and_unexercised_settings_rejected _______________
+
+    def test_unisolated_and_unexercised_settings_rejected():
+>       config = Config()
+                 ^^^^^^^^
+
+tests/test_reality_deployment.py:22:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+<string>:20: in __init__
+    ???
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Config(root='/home/charlie/midas-reality/data/recordings/reality', markets=3, discovery_limit=50, refresh_seconds=600,...ction_mode='legacy', selection_seed=20261014, near_expiry_tag_id=2, comparison_seconds=0, comparison_timeout_seconds=5)
+
+    def __post_init__(self) -> None:
+        for name in (
+            "refresh_seconds",
+            "resync_seconds",
+            "stale_seconds",
+            "segment_seconds",
+            "comparison_seconds",
+            "comparison_timeout_seconds",
+        ):
+            if not math.isfinite(getattr(self, name)):
+                raise ValueError("Timing values must be finite")
+        if not isinstance(self.near_expiry_tag_id, int) or self.near_expiry_tag_id < 1:
+            raise ValueError("Near-expiry tag ID must be positive")
+        if self.selection_mode not in {"legacy", "stratified-v1"}:
+            raise ValueError("Unsupported selection mode")
+        if self.comparison_seconds != 0 and self.comparison_seconds < 10:
+            raise ValueError("Independent comparison interval must be >=10 seconds")
+        if not 1 <= self.comparison_timeout_seconds <= 10:
+            raise ValueError("Comparison timeout must be 1..10 seconds")
+        if not isinstance(self.selection_seed, int) or not 0 <= self.selection_seed < 2**32:
+            raise ValueError("Selection seed must be uint32")
+        if not 1 <= self.markets <= 10 or not self.markets <= self.discovery_limit <= 200:
+            raise ValueError("Cohort must contain 1..10 markets, discovery <=200")
+        if (
+            not 10 <= self.queue_size <= 64
+            or min(self.refresh_seconds, self.resync_seconds, self.stale_seconds) < 10
+        ):
+            raise ValueError("Unsafe queue or refresh configuration")
+        if (
+            min(
+                self.budget_bytes,
+                self.reserve_bytes,
+                self.segment_bytes,
+                self.segment_seconds,
+                self.retention_days,
+            )
+            <= 0
+        ):
+            raise ValueError("Storage limits must be positive")
+        root = Path(self.root).resolve()
+        workspace = Path(__file__).resolve().parents[3]
+        if not root.is_relative_to(workspace / "data" / "recordings"):
+>           raise ValueError("Reality storage must be inside this worktree data/recordings")
+E           ValueError: Reality storage must be inside this worktree data/recordings
+
+packages/midas/reality/config.py:72: ValueError
+_______________ test_apply_expired_gate_never_writes_or_restarts _______________
+
+tmp_path = PosixPath('/tmp/pytest-of-charlie/pytest-429/test_apply_expired_gate_never_0')
+
+    def test_apply_expired_gate_never_writes_or_restarts(tmp_path):
+>       config = Config()
+                 ^^^^^^^^
+
+tests/test_reality_deployment.py:37:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+<string>:20: in __init__
+    ???
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Config(root='/home/charlie/midas-reality/data/recordings/reality', markets=3, discovery_limit=50, refresh_seconds=600,...ction_mode='legacy', selection_seed=20261014, near_expiry_tag_id=2, comparison_seconds=0, comparison_timeout_seconds=5)
+
+    def __post_init__(self) -> None:
+        for name in (
+            "refresh_seconds",
+            "resync_seconds",
+            "stale_seconds",
+            "segment_seconds",
+            "comparison_seconds",
+            "comparison_timeout_seconds",
+        ):
+            if not math.isfinite(getattr(self, name)):
+                raise ValueError("Timing values must be finite")
+        if not isinstance(self.near_expiry_tag_id, int) or self.near_expiry_tag_id < 1:
+            raise ValueError("Near-expiry tag ID must be positive")
+        if self.selection_mode not in {"legacy", "stratified-v1"}:
+            raise ValueError("Unsupported selection mode")
+        if self.comparison_seconds != 0 and self.comparison_seconds < 10:
+            raise ValueError("Independent comparison interval must be >=10 seconds")
+        if not 1 <= self.comparison_timeout_seconds <= 10:
+            raise ValueError("Comparison timeout must be 1..10 seconds")
+        if not isinstance(self.selection_seed, int) or not 0 <= self.selection_seed < 2**32:
+            raise ValueError("Selection seed must be uint32")
+        if not 1 <= self.markets <= 10 or not self.markets <= self.discovery_limit <= 200:
+            raise ValueError("Cohort must contain 1..10 markets, discovery <=200")
+        if (
+            not 10 <= self.queue_size <= 64
+            or min(self.refresh_seconds, self.resync_seconds, self.stale_seconds) < 10
+        ):
+            raise ValueError("Unsafe queue or refresh configuration")
+        if (
+            min(
+                self.budget_bytes,
+                self.reserve_bytes,
+                self.segment_bytes,
+                self.segment_seconds,
+                self.retention_days,
+            )
+            <= 0
+        ):
+            raise ValueError("Storage limits must be positive")
+        root = Path(self.root).resolve()
+        workspace = Path(__file__).resolve().parents[3]
+        if not root.is_relative_to(workspace / "data" / "recordings"):
+>           raise ValueError("Reality storage must be inside this worktree data/recordings")
+E           ValueError: Reality storage must be inside this worktree data/recordings
+
+packages/midas/reality/config.py:72: ValueError
+_____________ test_apply_changed_process_never_writes_or_restarts ______________
+
+tmp_path = PosixPath('/tmp/pytest-of-charlie/pytest-429/test_apply_changed_process_nev0')
+
+    def test_apply_changed_process_never_writes_or_restarts(tmp_path):
+>       config = Config()
+                 ^^^^^^^^
+
+tests/test_reality_deployment.py:50:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+<string>:20: in __init__
+    ???
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Config(root='/home/charlie/midas-reality/data/recordings/reality', markets=3, discovery_limit=50, refresh_seconds=600,...ction_mode='legacy', selection_seed=20261014, near_expiry_tag_id=2, comparison_seconds=0, comparison_timeout_seconds=5)
+
+    def __post_init__(self) -> None:
+        for name in (
+            "refresh_seconds",
+            "resync_seconds",
+            "stale_seconds",
+            "segment_seconds",
+            "comparison_seconds",
+            "comparison_timeout_seconds",
+        ):
+            if not math.isfinite(getattr(self, name)):
+                raise ValueError("Timing values must be finite")
+        if not isinstance(self.near_expiry_tag_id, int) or self.near_expiry_tag_id < 1:
+            raise ValueError("Near-expiry tag ID must be positive")
+        if self.selection_mode not in {"legacy", "stratified-v1"}:
+            raise ValueError("Unsupported selection mode")
+        if self.comparison_seconds != 0 and self.comparison_seconds < 10:
+            raise ValueError("Independent comparison interval must be >=10 seconds")
+        if not 1 <= self.comparison_timeout_seconds <= 10:
+            raise ValueError("Comparison timeout must be 1..10 seconds")
+        if not isinstance(self.selection_seed, int) or not 0 <= self.selection_seed < 2**32:
+            raise ValueError("Selection seed must be uint32")
+        if not 1 <= self.markets <= 10 or not self.markets <= self.discovery_limit <= 200:
+            raise ValueError("Cohort must contain 1..10 markets, discovery <=200")
+        if (
+            not 10 <= self.queue_size <= 64
+            or min(self.refresh_seconds, self.resync_seconds, self.stale_seconds) < 10
+        ):
+            raise ValueError("Unsafe queue or refresh configuration")
+        if (
+            min(
+                self.budget_bytes,
+                self.reserve_bytes,
+                self.segment_bytes,
+                self.segment_seconds,
+                self.retention_days,
+            )
+            <= 0
+        ):
+            raise ValueError("Storage limits must be positive")
+        root = Path(self.root).resolve()
+        workspace = Path(__file__).resolve().parents[3]
+        if not root.is_relative_to(workspace / "data" / "recordings"):
+>           raise ValueError("Reality storage must be inside this worktree data/recordings")
+E           ValueError: Reality storage must be inside this worktree data/recordings
+
+packages/midas/reality/config.py:72: ValueError
+________________ test_apply_invalid_health_window_cannot_mutate ________________
+
+tmp_path = PosixPath('/tmp/pytest-of-charlie/pytest-429/test_apply_invalid_health_wind0')
+
+    def test_apply_invalid_health_window_cannot_mutate(tmp_path):
+        with (
+            patch("scripts.reality_deployment.atomic_json") as write,
+            patch("scripts.reality_deployment.subprocess.run") as restart,
+        ):
+            with pytest.raises(ValueError, match="health window"):
+                apply(
+>                   Config(),
+                    ^^^^^^^^
+                    {},
+                    tmp_path / "config.json",
+                    tmp_path / "result.json",
+                    health_timeout_seconds=0,
+                )
+
+tests/test_reality_deployment.py:76:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+<string>:20: in __init__
+    ???
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Config(root='/home/charlie/midas-reality/data/recordings/reality', markets=3, discovery_limit=50, refresh_seconds=600,...ction_mode='legacy', selection_seed=20261014, near_expiry_tag_id=2, comparison_seconds=0, comparison_timeout_seconds=5)
+
+    def __post_init__(self) -> None:
+        for name in (
+            "refresh_seconds",
+            "resync_seconds",
+            "stale_seconds",
+            "segment_seconds",
+            "comparison_seconds",
+            "comparison_timeout_seconds",
+        ):
+            if not math.isfinite(getattr(self, name)):
+                raise ValueError("Timing values must be finite")
+        if not isinstance(self.near_expiry_tag_id, int) or self.near_expiry_tag_id < 1:
+            raise ValueError("Near-expiry tag ID must be positive")
+        if self.selection_mode not in {"legacy", "stratified-v1"}:
+            raise ValueError("Unsupported selection mode")
+        if self.comparison_seconds != 0 and self.comparison_seconds < 10:
+            raise ValueError("Independent comparison interval must be >=10 seconds")
+        if not 1 <= self.comparison_timeout_seconds <= 10:
+            raise ValueError("Comparison timeout must be 1..10 seconds")
+        if not isinstance(self.selection_seed, int) or not 0 <= self.selection_seed < 2**32:
+            raise ValueError("Selection seed must be uint32")
+        if not 1 <= self.markets <= 10 or not self.markets <= self.discovery_limit <= 200:
+            raise ValueError("Cohort must contain 1..10 markets, discovery <=200")
+        if (
+            not 10 <= self.queue_size <= 64
+            or min(self.refresh_seconds, self.resync_seconds, self.stale_seconds) < 10
+        ):
+            raise ValueError("Unsafe queue or refresh configuration")
+        if (
+            min(
+                self.budget_bytes,
+                self.reserve_bytes,
+                self.segment_bytes,
+                self.segment_seconds,
+                self.retention_days,
+            )
+            <= 0
+        ):
+            raise ValueError("Storage limits must be positive")
+        root = Path(self.root).resolve()
+        workspace = Path(__file__).resolve().parents[3]
+        if not root.is_relative_to(workspace / "data" / "recordings"):
+>           raise ValueError("Reality storage must be inside this worktree data/recordings")
+E           ValueError: Reality storage must be inside this worktree data/recordings
+
+packages/midas/reality/config.py:72: ValueError
+
+During handling of the above exception, another exception occurred:
+
+tmp_path = PosixPath('/tmp/pytest-of-charlie/pytest-429/test_apply_invalid_health_wind0')
+
+    def test_apply_invalid_health_window_cannot_mutate(tmp_path):
+        with (
+            patch("scripts.reality_deployment.atomic_json") as write,
+            patch("scripts.reality_deployment.subprocess.run") as restart,
+        ):
+>           with pytest.raises(ValueError, match="health window"):
+E           AssertionError: Regex pattern did not match.
+E            Regex: 'health window'
+E            Input: 'Reality storage must be inside this worktree data/recordings'
+
+tests/test_reality_deployment.py:74: AssertionError
+_________ test_discovery_records_every_page_and_verifies_exact_mapping _________
+
+tmp_path = PosixPath('/tmp/pytest-of-charlie/pytest-429/test_discovery_records_every_p0')
+
+    async def test_discovery_records_every_page_and_verifies_exact_mapping(tmp_path):
+        raw = [
+            market(
+                i,
+                liquidity=([20000, 5000, 100][(i - 1) % 3]),
+                category=f"Category {i}",
+            )
+            for i in range(1, 10)
+        ]
+        captured = []
+
+        def append(kind, payload, **kwargs):
+            record = dict(kind=kind, payload=payload, ordinal=len(captured) + 1, **kwargs)
+            captured.append(record)
+            return record
+
+        def handle(request):
+            if request.url.host == "gamma-api.polymarket.com":
+                return httpx.Response(200, json=raw)
+            if request.url.path == "/fee-rate":
+                return httpx.Response(200, json=dict(base_fee=1000))
+            m = next(m for m in raw if m["conditionId"] == request.url.path.split("/")[-1])
+            return httpx.Response(
+                200,
+                json=dict(
+                    version="v1",
+                    condition_id=m["conditionId"],
+                    tokens=[
+                        dict(token_id=t, outcome=o)
+                        for t, o in zip(json.loads(m["clobTokenIds"]), ["Yes", "No"], strict=True)
+                    ],
+                    closed=False,
+                    accepting_orders=True,
+                    neg_risk=False,
+                    tags=[m["category"]],
+                ),
+            )
+
+        class FixtureConfig(Config):
+            def __post_init__(self):
+                pass
+
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handle)) as client:
+            cohort, audit = await discover(
+                client, FixtureConfig(root=str(tmp_path), markets=8), append, update_rates={}
+            )
+>       assert len(cohort) == 8
+E       AssertionError: assert 7 == 8
+E        +  where 7 = len([{'activity_selection_basis': None, 'categories': ['Category 7'], 'condition': '0x000000000000000000000000000000000000...ition': '0x0000000000000000000000000000000000000000000000000000000000000002', 'end_ns': 1792022400000000000, ...}, ...])
+
+tests/test_reality_panel.py:254: AssertionError
+=============================== warnings summary ===============================
+../midas/.venv/lib/python3.12/site-packages/fastapi/testclient.py:1
+  /home/charlie/midas/.venv/lib/python3.12/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/arena/test_migration_pilot_verification.py::test_coordinator_runs_real_worker_and_verifies_portable_export
+FAILED tests/test_reality_deployment.py::test_unverified_or_changed_implementation_rejected_first
+FAILED tests/test_reality_deployment.py::test_unisolated_and_unexercised_settings_rejected
+FAILED tests/test_reality_deployment.py::test_apply_expired_gate_never_writes_or_restarts
+FAILED tests/test_reality_deployment.py::test_apply_changed_process_never_writes_or_restarts
+FAILED tests/test_reality_deployment.py::test_apply_invalid_health_window_cannot_mutate
+FAILED tests/test_reality_panel.py::test_discovery_records_every_page_and_verifies_exact_mapping
+7 failed, 778 passed, 1 skipped, 1 warning in 1147.29s (0:19:07)

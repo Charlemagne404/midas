@@ -26,8 +26,10 @@ reproduction does not identify an Arena logic failure.
 The Veritas test now sets the process timeout to the job's declared wall budget
 plus 30 seconds for process startup and shutdown. That gives the worker its
 full 300-second budget to report its own timeout. The production Arena code and
-the protected Reality checkout were not changed. The full Gate G backend suite
-has not been rerun after this test-only correction.
+the protected Reality checkout were not changed. At the time of this original
+forensic note, the full backend suite had not yet been rerun after this
+test-only correction. The later complete Veritas recheck is recorded in the
+[Gate G checkpoint](VERITAS_GATE_G_CHECKPOINT_001.md).
 
 ## Browser failure finding
 
@@ -48,9 +50,9 @@ ancestor of the Veritas release baseline.
 The segment-rotation lookup bug is the likely cause and is fixed in the release
 baseline. The failed run's error-context artifact was not available, so the
 original API response cannot confirm that attribution. No additional Veritas
-browser code change is indicated. Keep the browser part of Gate G provisional
-until it is checked in isolated staging with the Reality operations endpoint
-disconnected from the protected user services.
+browser code change is indicated. The isolated browser recheck later passed
+with the operations and raw-record routes intercepted; see
+[Gate G checkpoint 001](VERITAS_GATE_G_CHECKPOINT_001.md).
 
 ## Scope and remaining work
 
@@ -59,8 +61,20 @@ The backend reproduction used a temporary `/tmp` artifact root from the Veritas
 checkout. No Reality campaign, raw source, journal, or service was modified or
 restarted. No orders were submitted.
 
-This does not make Gate G green. The isolated backend fixture passed after the
-timeout correction, but the full Gate G suite still needs a bounded Veritas
-verification pass. The separate shadow-canary failure has been classified as
-a pre-release empty-segment continuity bug; see
+The later bounded Veritas recheck is documented in
+[Gate G checkpoint 001](VERITAS_GATE_G_CHECKPOINT_001.md). Its first full pass
+had 778 passed, 1 skipped, and 7 failed. Five failures came from deployment
+tests using the protected worktree's absolute default storage path while
+running in Veritas; one discovery test used an expiry date that had passed;
+and the migration worker test changed directory while retaining relative
+import paths. The test fixtures and runner environment were corrected without
+changing the protected Reality checkout or campaign. The corrected full suite
+passed 785 tests with one optional PostgreSQL skip.
+
+The browser check was then run with temporary app storage and route
+interception for Reality service operations and raw-record requests. It passed
+without starting services or reading source segments. The original error
+response is still unavailable, so the release-fixed rotation lookup remains a
+likely, rather than confirmed, explanation. The separate shadow-canary failure
+has been classified as a pre-release empty-segment continuity bug; see
 [shadow-canary forensics 001](VERITAS_SHADOW_CANARY_FAILURE_FORENSICS_001.md).

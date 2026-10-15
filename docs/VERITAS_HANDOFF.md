@@ -44,17 +44,16 @@ Current evidence is insufficient to select an eligible policy model or claim
 profitability. Cross-day coverage and multi-week conclusions remain open. A
 negative or insufficient result is a valid research outcome.
 
-The Gate G backend suite exposed a Veritas test-wrapper timeout mismatch: a
-bounded plan job allowed 300 seconds while its test subprocess was cut off at
-180 seconds. The test now allows the declared job budget plus 30 seconds, and
-the isolated fixture passed 4 tests in 162.80 seconds after the change; the
-full suite has not been rerun. The Gate G browser test's
-source-record label failure likely came from an active `.open` file not being
-found when the reference retained its `.seg` name. Release commit `c96a031`
-added lookup across both segment forms and its focused regression plus browser
-recheck passed. The original API response was not captured, so that attribution
-remains an inference. See the
-[Gate G failure forensics](VERITAS_GATE_G_TEST_FAILURE_FORENSICS_001.md).
+The full Veritas backend recheck passed 785 tests with one optional PostgreSQL
+skip. Strict typing later found two guards in `scripts/research_followup.py`;
+their 10 focused tests and the final full Mypy check passed after those edits.
+The Reality browser view passed with service-operation and raw-record requests
+intercepted, and five demo browser tests passed in a separate temporary app
+environment. The original source-record browser error response was not
+captured, so the release-fixed segment-rotation cause remains likely but
+unconfirmed. See the [Gate G checkpoint](VERITAS_GATE_G_CHECKPOINT_001.md),
+[Gate H checkpoint](VERITAS_GATE_H_CHECKPOINT_001.md), and [failure
+forensics](VERITAS_GATE_G_TEST_FAILURE_FORENSICS_001.md).
 The separate 2026-10-14 canary failure was caused by its frozen reader treating
 an empty finalized source segment as a continuity break. Release commit
 `8775bda` added the zero-count guard and regression test; the canary artifact
@@ -75,6 +74,11 @@ primary one-second yield and includes a reproducible power sensitivity. It is
 still design-only: market/time dependence and the proposed coverage gate are
 not yet validated, so no separate campaign is frozen or started. See
 [follow-up design draft 002](VERITAS_GATE_A_FOLLOWUP_DESIGN_002.md).
+
+The current research and engineering closeout is summarized in the [final
+report](VERITAS_FINAL_REPORT.md), [engineering report](VERITAS_ENGINEERING_REPORT.md),
+and [economic verdict](VERITAS_ECONOMIC_VERDICT.md). Gate J records the current
+decision and deferred evidence gates in [checkpoint 001](VERITAS_GATE_J_CHECKPOINT_001.md).
 
 ## Active campaigns and services
 
@@ -127,10 +131,14 @@ contents disposable; preserve the existing operational data in place.
 
 ## Recommended starting points
 
-1. Read the [research backlog](VERITAS_RESEARCH_BACKLOG.md), [research
+1. Read the [final report](VERITAS_FINAL_REPORT.md), [economic
+   verdict](VERITAS_ECONOMIC_VERDICT.md), [research
+   backlog](VERITAS_RESEARCH_BACKLOG.md), [research
    ledger](VERITAS_RESEARCH_LEDGER.json), [operations
    procedures](VERITAS_OPERATIONS.md), [Gate A checkpoint
-   012](VERITAS_GATE_A_CHECKPOINT_012.md), [follow-up design draft
+   012](VERITAS_GATE_A_CHECKPOINT_012.md), [Gate G checkpoint
+   001](VERITAS_GATE_G_CHECKPOINT_001.md), [Gate H checkpoint
+   001](VERITAS_GATE_H_CHECKPOINT_001.md), [follow-up design draft
    002](VERITAS_GATE_A_FOLLOWUP_DESIGN_002.md), and [Gate B checkpoint
    001](VERITAS_GATE_B_CHECKPOINT_001.md).
 2. Review the protected campaign's immutable identity and service health

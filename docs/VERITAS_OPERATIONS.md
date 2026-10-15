@@ -156,6 +156,11 @@ KiB. The overview omits raw market records and repository paths. These routes
 are read-only; they cannot change campaign state or submit orders. The page
 refreshes its overview every 60 seconds.
 
+The current decision and evidence limits are summarized in the [final
+report](VERITAS_FINAL_REPORT.md), [engineering report](VERITAS_ENGINEERING_REPORT.md),
+and [economic verdict](VERITAS_ECONOMIC_VERDICT.md). The closeout checkpoint is
+[Gate J checkpoint 001](VERITAS_GATE_J_CHECKPOINT_001.md).
+
 Run focused verification from `/home/charlie/midas-veritas`:
 
 ```bash
@@ -215,10 +220,13 @@ PYTHONPATH=packages /home/charlie/midas/.venv/bin/pytest -q \
 MYPYPATH=packages /home/charlie/midas/.venv/bin/mypy packages/midas/veritas
 ```
 
-The focused Veritas suite now passes 43 tests, including synthetic execution
-break-even thresholds. Ruff, format, and mypy passed for the Veritas package and
-new generator. Full project verification remains a later Gate H task. No
-long-running Veritas job is currently scheduled.
+The focused Veritas suite passes 43 tests, including synthetic execution
+break-even thresholds. The full bounded Gate H verification is recorded in
+[Gate H checkpoint 001](VERITAS_GATE_H_CHECKPOINT_001.md); it includes the
+backend suite, strict Mypy, full Ruff and format checks, frontend tests, lint,
+typecheck, build, and isolated browser runs. The browser Reality test
+intercepts service operations and raw-record requests. No long-running Veritas
+job is currently scheduled.
 
 ## Preserve service and evidence ownership
 

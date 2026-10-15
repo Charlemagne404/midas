@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-15T01:26:02.972672+00:00",
+  "updated_at_utc": "2026-10-15T02:29:06+00:00",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -1116,7 +1116,7 @@
       "dataset_id": "historical_gate_g_services_20261014",
       "success_metric": "Classify each one-shot failure from captured logs and matching source, reproduce bounded backend work in the Veritas checkout, and preserve protected Reality artifacts and services.",
       "result": {
-        "status": "backend_timeout_mismatch_corrected_browser_rotation_bug_likely_fixed_in_release",
+        "status": "backend_full_recheck_passed_browser_failure_likely_fixed_in_release",
         "evidence": "docs/VERITAS_GATE_G_TEST_FAILURE_FORENSICS_001.md",
         "gate_g_backend_full_run": {
           "passed": 737,
@@ -1145,7 +1145,7 @@
         "protected_reality_campaign_mutated": false,
         "protected_reality_services_restarted": false,
         "orders_submitted": false,
-        "promotion": "test-wrapper timeout correction only; Gate G remains unverified after the change",
+        "promotion": "bounded backend and isolated browser verification only; no campaign or strategy promotion",
         "browser_likely_fix_commit": "c96a031eb7ef51cb4a6c252cfa76b2f4ddb3b2d4",
         "browser_fix_is_ancestor_of_release_baseline": true,
         "browser_regression_test": "tests/test_reality_dashboard.py: .seg reference resolves while matching .open source exists",
@@ -1155,14 +1155,56 @@
           "passed": 1,
           "runtime_seconds": "26.8"
         },
-        "browser_root_cause": "likely segment-rotation lookup bug; failed response was not captured"
+        "browser_root_cause": "likely segment-rotation lookup bug; failed response was not captured",
+        "corrected_full_backend_rerun": {
+          "passed": 785,
+          "skipped": 1,
+          "errors": 0,
+          "runtime_seconds": "1147.44",
+          "evidence": "docs/VERITAS_GATE_G_BACKEND_RECHECK_002.log",
+          "checkpoint": "docs/VERITAS_GATE_G_CHECKPOINT_001.md"
+        },
+        "first_veritas_full_recheck": {
+          "passed": 778,
+          "skipped": 1,
+          "failed": 7,
+          "runtime_seconds": "1147.29",
+          "evidence": "docs/VERITAS_GATE_G_BACKEND_RECHECK_001.log",
+          "failure_classification": {
+            "deployment_storage_worktree_assumption": 5,
+            "discovery_fixture_clock_expired": 1,
+            "migration_child_relative_pythonpath": 1
+          }
+        },
+        "isolated_rechecks_after_corrections": {
+          "deployment_and_discovery_tests_passed": 6,
+          "migration_worker_test_passed": 1,
+          "source_segment_reads_from_protected_workspace": false
+        },
+        "browser_isolated_recheck": {
+          "passed": 1,
+          "runtime_seconds": "7.8",
+          "evidence": "docs/VERITAS_GATE_G_BROWSER_ISOLATED_001.log",
+          "operations_get_post_intercepted": true,
+          "raw_record_route_intercepted": true,
+          "temporary_api_database_and_arena_root": true,
+          "protected_workspace_read_only": true
+        },
+        "browser_demo_suite_recheck": {
+          "passed": 5,
+          "runtime_seconds": "3.8m",
+          "evidence": "docs/VERITAS_GATE_H_BROWSER_002.log"
+        },
+        "protected_reality_campaign_plan_sha256": "aa8acb2b46823c1a1e3ac5d01a57dde917746c2c7471098ae2a4598875e322f5",
+        "raw_open_segment_read": false
       },
       "limitations": [
-        "The full 737-test Gate G backend suite has not been rerun; only the bounded plan fixture and its verification tests were repeated after the timeout correction.",
-        "The browser failure likely came from a .seg/.open rotation lookup gap fixed in c96a031, but the original API response was not captured."
+        "The original browser API response was not captured, so the rotation-lookup explanation remains likely rather than confirmed.",
+        "The isolated browser test intercepted operations and raw-record routes; source-record behavior is separately covered with temporary segment fixtures.",
+        "One optional PostgreSQL integration test was skipped because MIDAS_TEST_POSTGRES_URL was not supplied."
       ],
-      "decision": "Give the backend test its declared worker budget plus a shutdown margin. Treat the browser issue as likely fixed by the release source-segment lookup change, while keeping Gate G provisional until bounded verification is complete.",
-      "status": "continue"
+      "decision": "The corrected full backend suite and isolated browser checks pass. Treat the old browser failure as likely fixed by release commit c96a031, preserve its failed log and campaign, and make no protected campaign repair.",
+      "status": "completed"
     },
     {
       "hypothesis_id": "VERITAS-H021",
@@ -1294,13 +1336,83 @@
       ],
       "decision": "The later finalized prefix did not change the gross opportunity conclusion. Preserve the no-trade decision and existing quality gates; wait for a materially larger interval before the next funnel replay and require multi-day evidence before considering a separate follow-up campaign.",
       "status": "completed"
+    },
+    {
+      "hypothesis_id": "VERITAS-H024",
+      "title": "Can the current Veritas branch pass full bounded Gate H verification?",
+      "mechanism": "Independent backend, typing, lint, formatting, frontend build, and isolated browser checks can expose integration defects while keeping Reality service controls and source payloads outside the test path.",
+      "experiment_id": "VERITAS-GATE-H-FULL-VERIFICATION-20261015-001",
+      "dataset_id": "project_veritas_worktree",
+      "success_metric": "Run the full backend suite, strict type checking, lint and format, frontend tests, typecheck and build, and isolated browser checks; retain the protected campaign identity.",
+      "result": {
+        "status": "passed_with_optional_database_skip_and_advisory_warnings",
+        "evidence": "docs/VERITAS_GATE_H_CHECKPOINT_001.md",
+        "backend_suite": {
+          "passed": 785,
+          "skipped": 1,
+          "errors": 0,
+          "runtime_seconds": "1147.44"
+        },
+        "focused_followup_tests_after_type_guards": 10,
+        "dashboard_api_tests": 3,
+        "frontend_tests": 29,
+        "demo_browser_tests": 5,
+        "isolated_reality_browser_tests": 1,
+        "mypy_source_files": 120,
+        "ruff_format_files": 323,
+        "ruff_check_passed": true,
+        "mypy_passed": true,
+        "frontend_lint_passed": true,
+        "frontend_format_passed": true,
+        "frontend_typecheck_passed": true,
+        "frontend_build_passed": true,
+        "protected_campaign_sha256": "aa8acb2b46823c1a1e3ac5d01a57dde917746c2c7471098ae2a4598875e322f5",
+        "protected_services_restarted": false,
+        "open_payload_read": false,
+        "orders_submitted": false,
+        "promotion": "engineering verification only; no opportunity, policy, campaign, strategy, or profitability promotion",
+        "decision_record": "docs/VERITAS_GATE_J_CHECKPOINT_001.md"
+      },
+      "limitations": [
+        "The full backend suite ran before two final type-narrowing guards in scripts/research_followup.py; its 10 focused tests and strict Mypy passed after those guards.",
+        "PostgreSQL integration was skipped because MIDAS_TEST_POSTGRES_URL was not supplied.",
+        "The isolated browser run intercepted operations and raw-record routes; raw-record backend behavior is tested with temporary segments.",
+        "The production build reports the existing main and chart chunks above 500 kB."
+      ],
+      "decision": "Gate H verification passed within the recorded limits. Gate J closeout reports are complete; do not promote an opportunity, policy, campaign, strategy, or profitability claim.",
+      "status": "completed"
+    },
+    {
+      "hypothesis_id": "VERITAS-H025",
+      "title": "Does the finalized observed panel support strategy or prospective campaign promotion?",
+      "mechanism": "A source-verified positive gross candidate that survives quality, payoff, quantity, fee, and minimum-notional checks is a prerequisite for economic policy comparison; public evidence alone does not identify fills.",
+      "experiment_id": "VERITAS-GATE-J-CLOSEOUT-20261015-001",
+      "dataset_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
+      "success_metric": "Reconcile the latest observed funnel, synthetic economics, follow-up readiness, engineering checks, and protected-state boundary; report whether any candidate or separate campaign is justified.",
+      "result": {
+        "status": "no_candidate_no_promotion",
+        "evidence": "docs/VERITAS_GATE_J_CHECKPOINT_001.md",
+        "final_report": "docs/VERITAS_FINAL_REPORT.md",
+        "engineering_report": "docs/VERITAS_ENGINEERING_REPORT.md",
+        "economic_verdict": "docs/VERITAS_ECONOMIC_VERDICT.md",
+        "positive_observed_gross_candidates": 0,
+        "separate_campaign_created_or_started": false,
+        "orders_submitted": false
+      },
+      "limitations": [
+        "The observed market panel and finalized interval are selected and short.",
+        "Observed states are correlated and are not independent opportunities.",
+        "Synthetic fee and unmatched-leg results are sensitivities, not actual money or empirical rates.",
+        "Actual fills, queue position, market impact, and profitability remain unknown."
+      ],
+      "decision": "Keep the no-trade control. Do not select a strategy or start a separate prospective campaign. Continue multi-day source coverage work and revisit only after an independently checked positive gross candidate and a validated follow-up design.",
+      "status": "completed"
     }
   ],
   "next_research_questions": [
     "Can finalized multi-day evidence validate the coverage gate and crossed-dependence power analysis for a separate activity-aware follow-up campaign?",
-    "Does a broader, longer source panel produce any positive quantity-specific gross complement before modeling fees or execution?",
+    "Does a materially broader source panel produce any positive quantity-specific gross complement before fees or execution assumptions?",
     "What independent verification is required before a positive candidate can enter a matched hypothetical strategy comparison?",
-    "Can existing Arena scheduling and Research Director interfaces support bounded Veritas hypotheses without duplicating job control?",
-    "Which remaining Gate G and Gate H one-shot service outcomes require source-level classification before final handoff?"
+    "Can existing Arena scheduling and Research Director interfaces support bounded Veritas hypotheses without duplicating job control?"
   ]
 }

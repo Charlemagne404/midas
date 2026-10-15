@@ -12,7 +12,9 @@ from midas.veritas.forensics import analyze_forward_campaign
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, required=True, help="Frozen campaign directory")
-    parser.add_argument("--limit", type=int, default=5000, help="Maximum indexed decisions (<=50000)")
+    parser.add_argument(
+        "--limit", type=int, default=5000, help="Maximum indexed decisions (<=50000)"
+    )
     parser.add_argument("--since-ns", type=int, default=0, help="Decision-time lower bound")
     parser.add_argument(
         "--check-integrity",

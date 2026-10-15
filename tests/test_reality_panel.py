@@ -249,7 +249,11 @@ async def test_discovery_records_every_page_and_verifies_exact_mapping(tmp_path)
 
     async with httpx.AsyncClient(transport=httpx.MockTransport(handle)) as client:
         cohort, audit = await discover(
-            client, FixtureConfig(root=str(tmp_path), markets=8), append, update_rates={}
+            client,
+            FixtureConfig(root=str(tmp_path), markets=8),
+            append,
+            update_rates={},
+            now_ns=NOW,
         )
     assert len(cohort) == 8
     assert len(audit["page_ordinals"]) == 6

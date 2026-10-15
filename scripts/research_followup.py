@@ -21,7 +21,10 @@ from scripts.compare_arena import compare
 
 
 def read(path: Path) -> dict[str, Any]:
-    return json.loads(path.read_text())
+    value = json.loads(path.read_text())
+    if not isinstance(value, dict):
+        raise ValueError(f"Expected a JSON object in {path}")
+    return value
 
 
 def producer_hashes() -> dict[str, str]:
@@ -395,6 +398,8 @@ def tick(root: Path, identity: str) -> dict[str, Any]:
             tournament = read(
                 artifact_path(root, "tournaments", job["result"]["tournament_id"]) / "manifest.json"
             )
+            if spec.tournament is None:
+                raise ValueError("Completed follow-up has no frozen tournament specification")
             if (
                 tournament["configuration"] != spec.tournament.model_dump(mode="json")
                 or tournament["source_hash"] != record["source_hash"]
