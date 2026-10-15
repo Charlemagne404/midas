@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-15T02:33:51+00:00",
+  "updated_at_utc": "2026-10-15T06:24:23+00:00",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -1434,12 +1434,108 @@
       ],
       "decision": "Reuse the existing Arena controller for eligible simulator studies; defer a Veritas source-reading job until materially longer coverage or another preregistered repeated analysis justifies the adapter and its source-read tests.",
       "status": "completed_review_gap_remains"
+    },
+    {
+      "hypothesis_id": "VERITAS-H027",
+      "title": "The original paired-book freshness gate overcounts stale observations when quiet books return in a current batch",
+      "mechanism": "A reported book timestamp can represent last update time, while a recently returned public batch has a separate request-to-receipt interval. Treating reported age as the only freshness clock may censor otherwise usable paired snapshots.",
+      "experiment_id": "VERITAS-M2-MEASURE-PILOT-001",
+      "dataset_id": "c9777c1cc30036411ffd05d2b1188b0a15134193543360844c0f989641a7249e",
+      "success_metric": "Paired same-payload change in quality-valid pair yield, with batch duration and source-age limitations recorded.",
+      "result": {
+        "status": "paired_measurement_gate_improvement_with_freshness_limitation",
+        "old_gate_valid_pairs": 5,
+        "repaired_gate_valid_pairs": 32,
+        "pairs_recovered": 27,
+        "yield_change_percentage_points": 67.5,
+        "repaired_batch_duration_ms": 70,
+        "accepted_pairs_with_both_reported_ages_over_5s": 27,
+        "oldest_reported_age_ms": 7209108,
+        "positive_top_gross_pairs": 0,
+        "evidence": "data/veritas-observatory/comparisons/measurement-gate-correction-002.json"
+      },
+      "limitations": [
+        "This is a paired reclassification of the exact saved scan, not a new cohort.",
+        "A batch response does not verify atomicity, venue sequence, or upstream queue age.",
+        "The higher valid-pair yield is a measurement result and does not imply an economic candidate or fill."
+      ],
+      "decision": "Use the repaired gate for this bounded snapshot pilot while retaining source age and skew diagnostics; require independent freshness evidence before candidate promotion.",
+      "status": "continue"
+    },
+    {
+      "hypothesis_id": "VERITAS-H028",
+      "title": "A broader price-blind public discovery union can support a stratified rotating market panel",
+      "mechanism": "Multiple bounded market query frames and deterministic sampling across liquidity, expiry, category, spread, and sampled snapshot change can widen the monitored cohort while retaining stable controls and explicit selection scope.",
+      "experiment_id": "VERITAS-M2-MEASURE-PILOT-001",
+      "dataset_id": "fbd7f8bb9dab0d50b125595ec54d94f24a651bfd457c243acd67af5b4a09e740",
+      "success_metric": "Measure eligible query-union size, selected strata, stable/rotating observations, market diversity, valid-pair yield, exclusions, and bounded service cost.",
+      "result": {
+        "status": "early_prospective_snapshot_pilot_operating",
+        "snapshots": 6,
+        "window_minutes": 23.52,
+        "unique_query_union_ids_latest": 300,
+        "eligible_v1_binary_pairs_latest": 167,
+        "excluded_latest": 133,
+        "attempted_pair_observations": 240,
+        "quality_valid_pairs": 211,
+        "unique_observed_market_ids": 121,
+        "stable_controls_available_latest": 6,
+        "rotating_markets_latest": 34,
+        "analysis_backlog": 0,
+        "data_root_bytes": 4071986,
+        "timer_active": true
+      },
+      "limitations": [
+        "The six-frame Gamma union is bounded and is not the venue-wide universe.",
+        "Rotating selection probabilities are conditional on the discovered union and frozen controls.",
+        "The early window is short and repeated market snapshots are dependent.",
+        "This separate snapshot pilot does not satisfy or bypass the specific prospective follow-up design gates."
+      ],
+      "decision": "Keep the read-only timer active and collect a longer window; review dependence only after the stated temporal and diversity criteria are reached.",
+      "status": "continue"
+    },
+    {
+      "hypothesis_id": "VERITAS-H029",
+      "title": "Depth, per-leg minimum, and fee checks do not reveal a positive candidate where the top-ask baseline is empty",
+      "mechanism": "A verified qualification funnel should preserve the unchanged top-ask gross baseline, then separately require full displayed depth, both per-leg minimums, and fee sensitivities without introducing candidates through size or cost arithmetic.",
+      "experiment_id": "VERITAS-M2-ECO-QUAL-001",
+      "dataset_id": "fbd7f8bb9dab0d50b125595ec54d94f24a651bfd457c243acd67af5b4a09e740",
+      "success_metric": "Compare top-ask positive states against 20-share full-depth, minimum-notional, single-match-fee, and fragmentation-safe-fee counts on the same finalized quality-valid observations.",
+      "result": {
+        "status": "no_positive_gross_candidate_observed",
+        "snapshots": 6,
+        "attempted_market_pairs": 240,
+        "quality_valid_pairs": 211,
+        "unique_market_ids": 121,
+        "top_ask_positive": 0,
+        "full_depth_20_positive": 0,
+        "minimum_notional_20_positive": 0,
+        "single_match_fee_20_positive": 0,
+        "fragmentation_safe_fee_20_positive": 0,
+        "top_edge_per_share": {
+          "minimum": "-0.60",
+          "median_nearest_rank": "-0.022",
+          "maximum": "-0.001"
+        },
+        "artifact": "data/veritas-observatory/experiments/VERITAS-M2-ECO-QUAL-001.json"
+      },
+      "limitations": [
+        "This is candidate qualification, not a strategy PnL or fill experiment.",
+        "The selected public panel is short and correlated, not representative of the full venue.",
+        "Displayed depth and hypothetical fees do not establish persistence, order arrival, or execution."
+      ],
+      "decision": "Keep no-trade as the current hypothetical policy. Continue the bounded observation and rerun a separately identified economic comparison when the evidence window materially grows.",
+      "status": "continue"
     }
   ],
   "next_research_questions": [
     "Can finalized multi-day evidence validate the coverage gate and crossed-dependence power analysis for a separate activity-aware follow-up campaign?",
     "Does a materially broader source panel produce any positive quantity-specific gross complement before fees or execution assumptions?",
     "What independent verification is required before a positive candidate can enter a matched hypothetical strategy comparison?",
-    "Can a typed Arena worker safely run a preregistered Veritas source replay with finalized-segment, source-hash, byte, and artifact bounds once repeated analysis is justified?"
+    "Can a typed Arena worker safely run a preregistered Veritas source replay with finalized-segment, source-hash, byte, and artifact bounds once repeated analysis is justified?",
+    "Does request-to-receipt freshness agree with sequence-bearing or otherwise independent source freshness evidence?",
+    "Does quality-valid yield persist across a multi-day observation window after market and time dependence are accounted for?",
+    "Does the economic qualification funnel remain empty as the bounded discovery panel accumulates more markets and regimes?",
+    "When does longer coverage justify a typed Arena source-analysis adapter or a separate preregistered follow-up study?"
   ]
 }

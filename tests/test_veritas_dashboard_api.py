@@ -1,3 +1,4 @@
+import gzip
 import hashlib
 import json
 from pathlib import Path
@@ -148,6 +149,7 @@ def test_overview_uses_bounded_versioned_evidence_without_raw_paths(tmp_path):
     assert data["baseline_policies"]["all_abstained"] is True
     assert data["execution_sensitivity"]["actual_fills"] == "unknown_counterfactual"
     assert data["execution_sensitivity"]["break_even_at_5pct_unmatched_feasible"] is False
+    assert data["opportunity_observatory"]["status"] == "not_started"
     assert "source_root" not in response.text
 
 
@@ -184,3 +186,109 @@ def test_overview_rejects_followup_counts_that_do_not_reconcile(tmp_path):
     baseline.write_text(json.dumps(data))
 
     assert client.get("/api/veritas/overview").status_code == 503
+
+
+def test_overview_exposes_incremental_public_observatory_summary(tmp_path):
+    client = fixture_client(tmp_path)
+    data_dir = tmp_path / "data" / "veritas-observatory"
+    data_dir.mkdir(parents=True)
+    summary = {
+        "schema_version": 1,
+        "analysis_version": "veritas-finalized-snapshot-analysis-v1",
+        "updated_at_utc": "2026-10-15T06:00:00+00:00",
+        "processed_snapshot_count": 2,
+        "pending_snapshot_count": 0,
+        "limitations": ["Repeated snapshots are dependent."],
+        "cumulative": {
+            "snapshot_count": 2,
+            "selected_market_observations": 80,
+            "quality_valid_pairs": 70,
+            "invalid_pairs": 10,
+            "current_bounded_eligible_markets": 50,
+            "maximum_bounded_eligible_markets_seen": 50,
+            "observed_market_ids": {
+                "market-1": {
+                    "selected_observations": 2,
+                    "quality_valid_pairs": 2,
+                    "categories": ["Politics"],
+                    "cohort_roles": {"stable_random_control": 2},
+                }
+            },
+            "category_observations": {"Politics": 2},
+            "invalid_reasons": {"no_empty_ask_side": 10},
+            "positive_top_gross_pairs": 0,
+            "positive_full_depth_gross_by_quantity": {"20": 0},
+            "positive_minimum_notional_by_quantity": {"20": 0},
+            "positive_single_match_by_quantity": {"20": 0},
+            "positive_fragmentation_safe_by_quantity": {"20": 0},
+            "reported_update_age_bands_by_leg": {"yes": {"over_5m": 35}, "no": {"over_5m": 35}},
+            "reported_update_age_above_5s_by_leg": {"yes": 35, "no": 35},
+            "reported_update_timestamp_skew_bands": {"0_to_250ms": 35},
+            "reported_update_timestamp_skew_above_250ms_pairs": 0,
+            "candidate_event_count": 0,
+            "candidate_market_ids": [],
+            "recent_candidates": [],
+            "first_captured_at_utc": "2026-10-15T05:30:00+00:00",
+            "last_captured_at_utc": "2026-10-15T06:00:00+00:00",
+            "observed_utc_days": ["2026-10-15"],
+            "top_edge_state_count": 70,
+            "minimum_top_edge_per_share": "-0.5",
+            "maximum_top_edge_per_share": "-0.001",
+        },
+    }
+    summary["analysis_summary_sha256"] = hashlib.sha256(
+        json.dumps(summary, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
+    ).hexdigest()
+    (data_dir / "research-summary.json").write_text(json.dumps(summary))
+    (data_dir / "latest-summary.json").write_text(
+        json.dumps(
+            {
+                "discovery": {"exclusion_reasons": {"unsupported_protocol": 4}},
+                "selection": {
+                    "phase": "expiry",
+                    "selected_markets": 40,
+                    "stable_control_markets": 8,
+                    "rotating_markets": 32,
+                    "selected_by_category": {"Politics": 8},
+                    "selected_by_liquidity": {"unknown": 40},
+                    "selected_by_expiry": {"unknown": 40},
+                    "selected_by_spread": {"unknown": 40},
+                },
+                "observation": {"invalid_reasons": {"no_empty_ask_side": 5}},
+            }
+        )
+    )
+
+    response = client.get("/api/veritas/overview")
+
+    assert response.status_code == 200
+    panel = response.json()["opportunity_observatory"]
+    assert panel["processed_snapshot_count"] == 2
+    assert panel["readiness"] == "collecting_repeated_temporal_coverage"
+    assert panel["discovery"]["unique_market_ids_observed"] == 1
+    assert panel["discovery"]["latest_phase"] == "expiry"
+    assert panel["opportunity"]["quality_valid_pairs"] == 70
+    assert panel["opportunity"]["positive_full_depth_gross_by_quantity"] == {"20": 0}
+    assert panel["data_quality"]["latest_invalid_reasons"] == {"no_empty_ask_side": 5}
+    assert any(item["id"] == "continuous-analysis" for item in response.json()["artifacts"])
+
+
+def test_finalized_snapshot_download_is_bounded_and_identity_checked(tmp_path):
+    client = fixture_client(tmp_path)
+    scan_id = "scan-20261015T060201Z-517641164ed1"
+    snapshot_dir = tmp_path / "data" / "veritas-observatory" / "snapshots"
+    snapshot_dir.mkdir(parents=True)
+    snapshot = snapshot_dir / f"{scan_id}.json.gz"
+    snapshot.write_bytes(
+        gzip.compress(json.dumps({"scan_id": scan_id, "orders_submitted": False}).encode())
+    )
+
+    response = client.get(f"/api/veritas/observatory/snapshots/{scan_id}")
+
+    assert response.status_code == 200
+    assert response.json()["data"]["scan_id"] == scan_id
+    assert (
+        response.json()["compressed_file_sha256"]
+        == hashlib.sha256(snapshot.read_bytes()).hexdigest()
+    )
+    assert client.get("/api/veritas/observatory/snapshots/../secret").status_code in {404, 405}

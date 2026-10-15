@@ -1,8 +1,28 @@
 # Veritas research backlog
 
-The ranks reflect expected information value, possible economic impact, current
-evidence, and compute cost. Work remains on `project/veritas`; the frozen
-Reality campaign is a protected reference.
+The Mission 2 queue below reflects expected information value, possible
+economic impact, current evidence, and compute cost. Work remains on
+`project/veritas`; the frozen Reality campaign is a protected reference. The
+earlier Mission 1 handoff backlog is retained below for provenance.
+
+## Mission 2 queue (2026-10-15)
+
+| Rank | Question | Evidence today | Next experiment | Promotion rule |
+| --- | --- | --- | --- | --- |
+| 1 | Does request-to-receipt freshness improve usable pair measurement without accepting stale or queued books? | A same-payload comparison recovered 27/40 pairs versus the old reported-timestamp gate (12.5% to 80.0%); 27 accepted pairs still had both reported ages over 5 s. The batch took 70 ms, but atomicity and upstream queue age are unknown. | Validate against a source with sequence or equivalent freshness guarantees. Keep reported age/skew diagnostic distributions in each new snapshot. | Do not call request-to-receipt a venue-time guarantee. Require source identity, complete asset set, bounded receipt time, and an independent freshness check before candidate promotion. |
+| 2 | Does a wider repeated market panel change the gross-opportunity result? | Six snapshots cover 23m31s, 121 distinct IDs, 211 valid pairs, and zero positive top/depth/minimum/fee candidates. The latest bounded union has 167 eligible markets. | Keep the 30-minute pilot running, then review market/time dependence after at least 24 hours. Keep the specific follow-up design's 48-hour coverage and dependence gates intact. | Never treat repeated snapshots as independent events or the six-frame union as a venue census. |
+| 3 | Which segments remain under-covered by the current discovery frames? | Current query union is six capped frames and 300 IDs; 133 IDs are excluded by unsupported payoff or augmented negative-risk semantics. Selection has liquidity, expiry, category, and spread strata, conditional on that union. | Compare eligible market coverage by protocol, category, liquidity, and lifecycle. Add query frames only after observing rate use, response bounds, and resource/storage cost. | New payoff structures require verified settlement/payoff identity and adversarial counterexamples. |
+| 4 | Does economic qualification find any candidate as the pilot accumulates data? | `VERITAS-M2-ECO-QUAL-001` compares top asks with 20-share full-depth, per-leg minimum, and two fee gates on 211 valid states; all counts are zero. | Re-run only when new finalized snapshots arrive; retain the same experiment identity only for append-safe revisions or create a new identity when its rule changes. | Any candidate must pass same-condition semantics, independent replay, freshness, complete depth, both minimums, and fees before hypothetical strategy research. |
+| 5 | Does incremental snapshot analysis remain complete and idempotent under interruption or backlog? | Six v2 events have verified hashes, zero pending work, and tests cover duplicate processing, digest failure, malformed snapshots, and bounded recovery. | Keep event/state lineage checks in each release; exercise larger backlogs in isolated fixtures before changing the per-run bound. | No source record rewrite, duplicate event application, unbounded snapshot read, or silent event repair. |
+| 6 | Is there evidence for a strategy or predictor tournament? | There are no positive gross candidates or realized/public fill labels in the new panel. The comparison tests qualification, not PnL. | Keep no-trade. Reassess only after quality-valid positive gross evidence and suitable chronological outcome labels exist. | No model training or strategy promotion from synthetic cases or a repeated selected holdout. |
+| 7 | Should Veritas source analysis become a typed Arena job? | A bounded systemd timer now drives immutable capture and incremental analysis. The existing Arena scheduler has no Veritas source-reading job type; prior review deferred an adapter until repeated analysis justified it. | Keep the one-shot timer simple while coverage is short. Revisit typed Arena integration after a multi-day panel and measured recurring workload. | Any adapter must pin source/code, bound finalized reads and artifacts, recover idempotently, and keep campaign controls out of scope. |
+
+The operating study protocol is
+[`VERITAS_MISSION2_MEASUREMENT_PILOT_001.md`](VERITAS_MISSION2_MEASUREMENT_PILOT_001.md).
+Its early evidence is summarized in
+[`Mission 2 Gate A checkpoint 001`](VERITAS_MISSION2_GATE_A_CHECKPOINT_001.md).
+
+## Earlier Mission 1 handoff backlog (retained)
 
 | Rank | Question | Evidence today | Next experiment | Promotion rule |
 | --- | --- | --- | --- | --- |
@@ -31,8 +51,9 @@ Reality campaign is a protected reference.
   and [Gate H checkpoint 001](VERITAS_GATE_H_CHECKPOINT_001.md). The corrected
   v2 economics are in
   [Gate A checkpoint 008](VERITAS_GATE_A_CHECKPOINT_008.md).
-- The current decision is no strategy promotion and no new prospective
-  campaign. Read the [final report](VERITAS_FINAL_REPORT.md), [economic
+- The current decision is no strategy promotion and no new Reality follow-up
+  campaign; the bounded snapshot coverage pilot is documented separately
+  above. Read the [final report](VERITAS_FINAL_REPORT.md), [economic
   verdict](VERITAS_ECONOMIC_VERDICT.md), and [Gate J closeout](VERITAS_GATE_J_CHECKPOINT_001.md)
   before starting another study.
 - The bounded controlled capacity sensitivity is

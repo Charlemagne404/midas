@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+import gzip
 import hashlib
 import json
+import re
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -18,6 +21,10 @@ ARTIFACTS = {
     "inventory": "VERITAS_RESEARCH_INVENTORY.json",
 }
 MAX_ARTIFACT_BYTES = 512 * 1024
+MAX_OBSERVATORY_SUMMARY_BYTES = 2 * 1024**2
+MAX_OBSERVATORY_SNAPSHOT_COMPRESSED_BYTES = 4 * 1024**2
+MAX_OBSERVATORY_SNAPSHOT_BYTES = 16 * 1024**2
+SNAPSHOT_ID = re.compile(r"scan-\d{8}T\d{6}Z-[0-9a-f]{12}\Z")
 
 
 def read_artifact(repository: Path, identity: str) -> tuple[dict[str, Any], Path]:
@@ -38,12 +45,296 @@ def read_artifact(repository: Path, identity: str) -> tuple[dict[str, Any], Path
     return value, path
 
 
+def read_observatory_summary(repository: Path) -> tuple[dict[str, Any], Path] | None:
+    path = repository / "data" / "veritas-observatory" / "research-summary.json"
+    if path.parent.is_symlink() or path.is_symlink():
+        raise HTTPException(404, "Veritas public observatory artifact is unavailable")
+    if not path.exists():
+        return None
+    if not path.is_file():
+        raise HTTPException(503, "Veritas public observatory artifact is invalid")
+    if path.stat().st_size > MAX_OBSERVATORY_SUMMARY_BYTES:
+        raise HTTPException(503, "Veritas public observatory summary exceeds the interface bound")
+    try:
+        value = json.loads(path.read_text())
+    except (OSError, ValueError) as error:
+        raise HTTPException(503, "Veritas public observatory summary could not be read") from error
+    if (
+        not isinstance(value, dict)
+        or not isinstance(value.get("cumulative"), dict)
+        or not isinstance(value.get("analysis_version"), str)
+    ):
+        raise HTTPException(503, "Veritas public observatory summary has an invalid format")
+    digest = value.get("analysis_summary_sha256")
+    if isinstance(digest, str):
+        payload = dict(value)
+        payload.pop("analysis_summary_sha256", None)
+        if (
+            digest
+            != hashlib.sha256(
+                json.dumps(
+                    payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False
+                ).encode()
+            ).hexdigest()
+        ):
+            raise HTTPException(503, "Veritas public observatory summary digest is invalid")
+    return value, path
+
+
+def _read_latest_observatory_scan(repository: Path) -> dict[str, Any] | None:
+    path = repository / "data" / "veritas-observatory" / "latest-summary.json"
+    if path.parent.is_symlink() or path.is_symlink():
+        raise HTTPException(404, "Veritas public observatory artifact is unavailable")
+    if not path.exists():
+        return None
+    if not path.is_file() or path.stat().st_size > MAX_OBSERVATORY_SUMMARY_BYTES:
+        raise HTTPException(503, "Latest Veritas public scan exceeds the interface bound")
+    try:
+        value = json.loads(path.read_text())
+    except (OSError, ValueError) as error:
+        raise HTTPException(503, "Latest Veritas public scan could not be read") from error
+    if not isinstance(value, dict):
+        raise HTTPException(503, "Latest Veritas public scan has an invalid format")
+    return value
+
+
+def observatory_overview(repository: Path) -> dict[str, Any]:
+    stored = read_observatory_summary(repository)
+    if stored is None:
+        return {
+            "status": "not_started",
+            "analysis_version": None,
+            "processed_snapshot_count": 0,
+            "pending_snapshot_count": 0,
+            "readiness": "waiting_for_first_finalized_snapshot",
+            "coverage_window_hours": 0,
+            "first_captured_at_utc": None,
+            "last_captured_at_utc": None,
+            "observed_utc_days": [],
+            "discovery": {
+                "current_bounded_eligible_markets": 0,
+                "maximum_bounded_eligible_markets_seen": 0,
+                "unique_market_ids_observed": 0,
+                "selected_market_observations": 0,
+                "latest_phase": None,
+                "latest_scan_id": None,
+                "latest_snapshot_url": None,
+                "latest_selected_markets": 0,
+                "latest_stable_control_markets": 0,
+                "latest_rotating_markets": 0,
+                "latest_by_category": {},
+                "latest_by_liquidity": {},
+                "latest_by_expiry": {},
+                "latest_by_spread": {},
+                "latest_exclusions": {},
+                "latest_snapshot_invalid_reasons": {},
+            },
+            "opportunity": {
+                "quality_valid_pairs": 0,
+                "invalid_pairs": 0,
+                "positive_top_gross_pairs": 0,
+                "positive_full_depth_gross_by_quantity": {},
+                "positive_minimum_notional_by_quantity": {},
+                "positive_single_match_by_quantity": {},
+                "positive_fragmentation_safe_by_quantity": {},
+                "candidate_event_count": 0,
+                "candidate_market_count": 0,
+                "minimum_top_edge_per_share": None,
+                "maximum_top_edge_per_share": None,
+            },
+            "data_quality": {
+                "invalid_reasons": {},
+                "latest_invalid_reasons": {},
+                "reported_update_age_bands_by_leg": {"yes": {}, "no": {}},
+                "reported_update_age_above_5s_by_leg": {"yes": 0, "no": 0},
+                "reported_update_timestamp_skew_bands": {},
+                "reported_update_timestamp_skew_above_250ms_pairs": 0,
+            },
+            "market_concentration": [],
+            "category_coverage": [],
+            "recent_candidates": [],
+            "summary_artifact": None,
+            "limitations": ["No finalized public snapshots have been indexed yet."],
+        }
+    summary, path = stored
+    cumulative = summary["cumulative"]
+    market_rows = cumulative.get("observed_market_ids", {})
+    if not isinstance(market_rows, dict):
+        raise HTTPException(503, "Veritas public observatory market index is invalid")
+    unique_markets = len(market_rows)
+    first = cumulative.get("first_captured_at_utc")
+    last = cumulative.get("last_captured_at_utc")
+    elapsed_hours = 0.0
+    if isinstance(first, str) and isinstance(last, str):
+        try:
+            start_at = datetime.fromisoformat(first.replace("Z", "+00:00"))
+            end_at = datetime.fromisoformat(last.replace("Z", "+00:00"))
+            elapsed_hours = max(0.0, (end_at - start_at).total_seconds() / 3600)
+        except ValueError:
+            elapsed_hours = 0.0
+    if int(summary.get("processed_snapshot_count", 0)) < 2 or elapsed_hours < 24:
+        readiness = "collecting_repeated_temporal_coverage"
+    elif unique_markets < 9:
+        readiness = "insufficient_market_diversity_for_dependence_review"
+    else:
+        readiness = "descriptive_panel_ready_for_dependence_review"
+
+    latest = _read_latest_observatory_scan(repository) or {}
+    latest_discovery = latest.get("discovery", {})
+    latest_selection = latest.get("selection", {})
+    latest_scan_id = latest.get("scan_id")
+    latest_snapshot_url = (
+        f"/api/veritas/observatory/snapshots/{latest_scan_id}"
+        if isinstance(latest_scan_id, str) and SNAPSHOT_ID.fullmatch(latest_scan_id)
+        else None
+    )
+    categories = cumulative.get("category_observations", {})
+    categories = categories if isinstance(categories, dict) else {}
+    category_coverage = [
+        {"category": category, "selected_market_observations": int(count)}
+        for category, count in sorted(
+            categories.items(), key=lambda item: (-int(item[1]), str(item[0]))
+        )[:12]
+    ]
+    market_concentration = [
+        {
+            "market_id": market_id,
+            "selected_observations": int(values.get("selected_observations", 0)),
+            "quality_valid_pairs": int(values.get("quality_valid_pairs", 0)),
+            "categories": values.get("categories", []),
+        }
+        for market_id, values in sorted(
+            market_rows.items(),
+            key=lambda item: (-int(item[1].get("selected_observations", 0)), str(item[0])),
+        )[:10]
+        if isinstance(values, dict)
+    ]
+    candidates = cumulative.get("recent_candidates", [])
+    candidates = candidates if isinstance(candidates, list) else []
+    recent_candidates = [
+        {
+            **candidate,
+            "snapshot_url": f"/api/veritas/observatory/snapshots/{candidate['scan_id']}",
+        }
+        for candidate in candidates[-10:]
+        if isinstance(candidate, dict)
+        and isinstance(candidate.get("scan_id"), str)
+        and SNAPSHOT_ID.fullmatch(candidate["scan_id"])
+    ]
+    return {
+        "status": "recording" if int(summary.get("processed_snapshot_count", 0)) else "catching_up",
+        "analysis_version": summary["analysis_version"],
+        "updated_at_utc": summary.get("updated_at_utc"),
+        "processed_snapshot_count": int(summary.get("processed_snapshot_count", 0)),
+        "pending_snapshot_count": int(summary.get("pending_snapshot_count", 0)),
+        "readiness": readiness,
+        "coverage_window_hours": round(elapsed_hours, 3),
+        "first_captured_at_utc": first,
+        "last_captured_at_utc": last,
+        "observed_utc_days": cumulative.get("observed_utc_days", []),
+        "discovery": {
+            "current_bounded_eligible_markets": int(
+                cumulative.get("current_bounded_eligible_markets", 0)
+            ),
+            "maximum_bounded_eligible_markets_seen": int(
+                cumulative.get("maximum_bounded_eligible_markets_seen", 0)
+            ),
+            "unique_market_ids_observed": unique_markets,
+            "selected_market_observations": int(cumulative.get("selected_market_observations", 0)),
+            "latest_phase": latest_selection.get("phase"),
+            "latest_scan_id": latest_scan_id,
+            "latest_snapshot_url": latest_snapshot_url,
+            "latest_selected_markets": int(latest_selection.get("selected_markets", 0)),
+            "latest_stable_control_markets": int(latest_selection.get("stable_control_markets", 0)),
+            "latest_rotating_markets": int(latest_selection.get("rotating_markets", 0)),
+            "latest_by_category": latest_selection.get("selected_by_category", {}),
+            "latest_by_liquidity": latest_selection.get("selected_by_liquidity", {}),
+            "latest_by_expiry": latest_selection.get("selected_by_expiry", {}),
+            "latest_by_spread": latest_selection.get("selected_by_spread", {}),
+            "latest_exclusions": latest_discovery.get("exclusion_reasons", {}),
+            "latest_snapshot_invalid_reasons": latest.get("observation", {}).get(
+                "invalid_reasons", {}
+            ),
+        },
+        "opportunity": {
+            "quality_valid_pairs": int(cumulative.get("quality_valid_pairs", 0)),
+            "invalid_pairs": int(cumulative.get("invalid_pairs", 0)),
+            "positive_top_gross_pairs": int(cumulative.get("positive_top_gross_pairs", 0)),
+            "positive_full_depth_gross_by_quantity": cumulative.get(
+                "positive_full_depth_gross_by_quantity", {}
+            ),
+            "positive_minimum_notional_by_quantity": cumulative.get(
+                "positive_minimum_notional_by_quantity", {}
+            ),
+            "positive_single_match_by_quantity": cumulative.get(
+                "positive_single_match_by_quantity", {}
+            ),
+            "positive_fragmentation_safe_by_quantity": cumulative.get(
+                "positive_fragmentation_safe_by_quantity", {}
+            ),
+            "candidate_event_count": int(cumulative.get("candidate_event_count", 0)),
+            "candidate_market_count": len(cumulative.get("candidate_market_ids", [])),
+            "minimum_top_edge_per_share": cumulative.get("minimum_top_edge_per_share"),
+            "maximum_top_edge_per_share": cumulative.get("maximum_top_edge_per_share"),
+        },
+        "data_quality": {
+            "invalid_reasons": cumulative.get("invalid_reasons", {}),
+            "latest_invalid_reasons": latest.get("observation", {}).get("invalid_reasons", {}),
+            "reported_update_age_bands_by_leg": cumulative.get(
+                "reported_update_age_bands_by_leg", {}
+            ),
+            "reported_update_age_above_5s_by_leg": cumulative.get(
+                "reported_update_age_above_5s_by_leg", {}
+            ),
+            "reported_update_timestamp_skew_bands": cumulative.get(
+                "reported_update_timestamp_skew_bands", {}
+            ),
+            "reported_update_timestamp_skew_above_250ms_pairs": int(
+                cumulative.get("reported_update_timestamp_skew_above_250ms_pairs", 0)
+            ),
+        },
+        "market_concentration": market_concentration,
+        "category_coverage": category_coverage,
+        "recent_candidates": recent_candidates,
+        "summary_artifact": {
+            "id": "continuous-analysis",
+            "label": "Incremental public snapshot analysis",
+            "file_sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+        },
+        "limitations": summary.get("limitations", []),
+    }
+
+
+def read_public_snapshot(repository: Path, scan_id: str) -> tuple[dict[str, Any], str]:
+    if not SNAPSHOT_ID.fullmatch(scan_id):
+        raise HTTPException(404, "Unknown Veritas public snapshot")
+    path = repository / "data" / "veritas-observatory" / "snapshots" / f"{scan_id}.json.gz"
+    if path.parent.is_symlink() or path.is_symlink() or not path.is_file():
+        raise HTTPException(404, "Veritas public snapshot has not been generated")
+    if path.stat().st_size > MAX_OBSERVATORY_SNAPSHOT_COMPRESSED_BYTES:
+        raise HTTPException(413, "Veritas public snapshot exceeds the download bound")
+    try:
+        with gzip.open(path, "rb") as handle:
+            raw = handle.read(MAX_OBSERVATORY_SNAPSHOT_BYTES + 1)
+        if len(raw) > MAX_OBSERVATORY_SNAPSHOT_BYTES:
+            raise HTTPException(413, "Veritas public snapshot exceeds the uncompressed bound")
+        value = json.loads(raw)
+    except HTTPException:
+        raise
+    except (OSError, EOFError, gzip.BadGzipFile, ValueError) as error:
+        raise HTTPException(503, "Veritas public snapshot could not be read") from error
+    if not isinstance(value, dict) or value.get("scan_id") != scan_id:
+        raise HTTPException(503, "Veritas public snapshot identity is invalid")
+    return value, hashlib.sha256(path.read_bytes()).hexdigest()
+
+
 def overview(repository: Path) -> dict[str, Any]:
     baseline, _ = read_artifact(repository, "baseline")
     funnel, _ = read_artifact(repository, "raw-funnel")
     break_even, _ = read_artifact(repository, "break-even")
     ledger, _ = read_artifact(repository, "ledger")
     inventory, _ = read_artifact(repository, "inventory")
+    public_observatory = observatory_overview(repository)
 
     frozen = baseline["frozen_campaign_forensics"]
     coverage = frozen["coverage"]
@@ -111,6 +402,20 @@ def overview(repository: Path) -> dict[str, Any]:
                 "censor_reasons": reasons,
             }
         )
+
+    artifacts = [
+        {"id": identity, "label": label}
+        for identity, label in (
+            ("raw-funnel", "Observed raw opportunity funnel"),
+            ("baseline", "Protected campaign baseline snapshot"),
+            ("break-even", "Synthetic execution break-even sensitivity"),
+            ("capacity", "Synthetic capital and capacity study"),
+            ("ledger", "Versioned hypothesis ledger"),
+            ("inventory", "Machine-readable research inventory"),
+        )
+    ]
+    if public_observatory["summary_artifact"]:
+        artifacts.append(public_observatory["summary_artifact"])
 
     return {
         "status": "insufficient_independent_evidence",
@@ -192,17 +497,8 @@ def overview(repository: Path) -> dict[str, Any]:
             "candidates": len(inventory["candidates"]),
             "recent_hypotheses": recent_hypotheses,
         },
-        "artifacts": [
-            {"id": identity, "label": label}
-            for identity, label in (
-                ("raw-funnel", "Observed raw opportunity funnel"),
-                ("baseline", "Protected campaign baseline snapshot"),
-                ("break-even", "Synthetic execution break-even sensitivity"),
-                ("capacity", "Synthetic capital and capacity study"),
-                ("ledger", "Versioned hypothesis ledger"),
-                ("inventory", "Machine-readable research inventory"),
-            )
-        ],
+        "opportunity_observatory": public_observatory,
+        "artifacts": artifacts,
         "limitations": [
             "The public panel is selected, finite, and not venue-wide.",
             "Displayed liquidity is not guaranteed executable quantity; no hypothetical fill probability is estimated.",
@@ -221,10 +517,32 @@ def router(repository: Path) -> APIRouter:
 
     @routes.get("/artifacts/{identity}")
     def get_artifact(identity: str) -> dict[str, Any]:
+        if identity == "continuous-analysis":
+            result = read_observatory_summary(repository)
+            if result is None:
+                raise HTTPException(
+                    404, "Veritas public observatory analysis has not been generated"
+                )
+            data, path = result
+            return {
+                "artifact": identity,
+                "file_sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+                "data": data,
+            }
         data, path = read_artifact(repository, identity)
         return {
             "artifact": identity,
             "file_sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+            "data": data,
+        }
+
+    @routes.get("/observatory/snapshots/{scan_id}")
+    def get_observatory_snapshot(scan_id: str) -> dict[str, Any]:
+        data, digest = read_public_snapshot(repository, scan_id)
+        return {
+            "artifact": "finalized_public_observation_snapshot",
+            "scan_id": scan_id,
+            "compressed_file_sha256": digest,
             "data": data,
         }
 

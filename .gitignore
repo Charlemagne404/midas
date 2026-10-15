@@ -13,6 +13,7 @@ htmlcov/
 *.db-shm
 *.db-wal
 data/recordings/
+data/veritas-observatory/
 **/recordings/
 data/failures/
 .env
