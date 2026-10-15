@@ -46,6 +46,14 @@ campaign. The underlying evidence is linked from [Gate A checkpoint
 These changes are scoped to reproducibility and test portability; the
 protected Reality worktree and campaign were not changed.
 
+The Arena orchestration review found that durable, resource-bounded jobs and
+finite schedules already exist. It also found no Veritas source-reading job
+type: raw-source replay remains an explicit command, and the latency
+Research Director runs synthetic Arena comparisons. The review therefore
+recommends reusing Arena rather than duplicating its controller, while
+deferring a Veritas adapter until recurring analysis is justified. See [Gate E
+scheduling review 001](VERITAS_GATE_E_SCHEDULING_REVIEW_001.md).
+
 ## Verification results
 
 | Check | Result |

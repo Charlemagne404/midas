@@ -79,6 +79,8 @@ The current research and engineering closeout is summarized in the [final
 report](VERITAS_FINAL_REPORT.md), [engineering report](VERITAS_ENGINEERING_REPORT.md),
 and [economic verdict](VERITAS_ECONOMIC_VERDICT.md). Gate J records the current
 decision and deferred evidence gates in [checkpoint 001](VERITAS_GATE_J_CHECKPOINT_001.md).
+Arena's bounded-job reuse and the missing Veritas source-job adapter are
+documented in [Gate E scheduling review 001](VERITAS_GATE_E_SCHEDULING_REVIEW_001.md).
 
 ## Active campaigns and services
 

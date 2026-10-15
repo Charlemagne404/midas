@@ -197,6 +197,39 @@ The design and its launch-readiness decision are in
 cluster grid is a sensitivity, not an empirical correlation estimate or a
 campaign power claim.
 
+## Existing Arena jobs and finite schedules
+
+Arena is the existing owner for durable simulator jobs and bounded research
+schedules. The Arena UI's **Durable research jobs** and **Bounded research
+director** areas show persisted progress and controls. Read-only API routes
+include `GET /api/arena`, `GET /api/arena/jobs/{job_id}`,
+`GET /api/arena/jobs/{job_id}/logs`, `GET /api/arena/directors/{director_id}`,
+and `GET /api/arena/schedules/{schedule_id}`. Schedule control routes are
+`POST /api/arena/schedules/{schedule_id}/pause`, `/resume`, and `/cancel`.
+
+Job specifications are validated before admission. Workers are launched by
+the Arena supervisor with one CPU core, 4 GiB memory, a maximum two-hour wall
+budget, and a 1 GiB artifact budget. The finite scheduler admits at most eight
+active or queued jobs, requires at least 2 GiB available memory and free disk,
+and stops admitting when its artifact bound is reached. A schedule has at most
+32 ordered steps and a maximum seven-day admission window. The dispatcher
+polls at most 100 schedules per pass and records local alerts on failures.
+
+The optional installer at `scripts/install_schedule_timer.py` writes user
+systemd unit files and enables a minutely scheduler timer. Do not run it merely
+to make Veritas appear autonomous; it changes user-service state. The
+`scripts/research_followup.py` workflow is a synthetic Arena latency study,
+not a public-market measurement job. Its `plan` command preregisters against a
+qualified baseline; `run` or `tick` may launch supervised Arena children, and
+`stop` cancels its children. Use it only for a bounded, predeclared study with
+an unused seed range.
+
+There is no Veritas-specific raw-funnel worker type yet. Source replay remains
+an explicit bounded command using finalized source segments. The current work
+did not start a Veritas job or install a scheduler timer. See [Gate E
+scheduling review 001](VERITAS_GATE_E_SCHEDULING_REVIEW_001.md) for the
+integration decision and required bounds for a future adapter.
+
 ## Verify Veritas code
 
 Focused economic and forensic checks:
@@ -225,8 +258,8 @@ break-even thresholds. The full bounded Gate H verification is recorded in
 [Gate H checkpoint 001](VERITAS_GATE_H_CHECKPOINT_001.md); it includes the
 backend suite, strict Mypy, full Ruff and format checks, frontend tests, lint,
 typecheck, build, and isolated browser runs. The browser Reality test
-intercepts service operations and raw-record requests. No long-running Veritas
-job is currently scheduled.
+intercepts service operations and raw-record requests. The follow-up power
+calculation is planning-only and does not submit an Arena job.
 
 ## Preserve service and evidence ownership
 

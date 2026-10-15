@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-15T02:29:06+00:00",
+  "updated_at_utc": "2026-10-15T02:33:51+00:00",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -1407,12 +1407,39 @@
       ],
       "decision": "Keep the no-trade control. Do not select a strategy or start a separate prospective campaign. Continue multi-day source coverage work and revisit only after an independently checked positive gross candidate and a validated follow-up design.",
       "status": "completed"
+    },
+    {
+      "hypothesis_id": "VERITAS-H026",
+      "title": "Can Veritas reuse Arena research orchestration without duplicating job control?",
+      "mechanism": "Typed Arena jobs, finite admission, resource gates, persisted status, and the native Research Director can supervise bounded simulator experiments; raw Veritas source analysis needs a separate typed worker only if repeated analyses justify one.",
+      "experiment_id": "VERITAS-GATE-E-SCHEDULING-REVIEW-20261015-001",
+      "dataset_id": "project_veritas_worktree",
+      "success_metric": "Identify existing durable job and schedule controls, limits, UI/API routes, Veritas adapter gaps, and a promotion rule without starting services or jobs.",
+      "result": {
+        "status": "existing_arena_control_sufficient_for_simulator_jobs_source_adapter_absent",
+        "evidence": "docs/VERITAS_GATE_E_SCHEDULING_REVIEW_001.md",
+        "max_active_or_queued_jobs": 8,
+        "worker_cpu_cores": 1,
+        "worker_memory_mb": 4096,
+        "worker_max_wall_seconds": 7200,
+        "finite_schedule_max_steps": 32,
+        "finite_schedule_max_window_seconds": 604800,
+        "veritas_source_job_kind_available": false,
+        "job_created_or_started": false,
+        "scheduler_timer_installed_or_enabled": false
+      },
+      "limitations": [
+        "This is a source-code architecture review; it does not verify the host timer state.",
+        "The existing follow-up Director analyzes synthetic Arena tournaments, not Reality public-market follow-ups."
+      ],
+      "decision": "Reuse the existing Arena controller for eligible simulator studies; defer a Veritas source-reading job until materially longer coverage or another preregistered repeated analysis justifies the adapter and its source-read tests.",
+      "status": "completed_review_gap_remains"
     }
   ],
   "next_research_questions": [
     "Can finalized multi-day evidence validate the coverage gate and crossed-dependence power analysis for a separate activity-aware follow-up campaign?",
     "Does a materially broader source panel produce any positive quantity-specific gross complement before fees or execution assumptions?",
     "What independent verification is required before a positive candidate can enter a matched hypothetical strategy comparison?",
-    "Can existing Arena scheduling and Research Director interfaces support bounded Veritas hypotheses without duplicating job control?"
+    "Can a typed Arena worker safely run a preregistered Veritas source replay with finalized-segment, source-hash, byte, and artifact bounds once repeated analysis is justified?"
   ]
 }

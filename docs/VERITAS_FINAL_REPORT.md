@@ -57,9 +57,10 @@ acceptance is recorded in the [Mission 2 audit](REALITY_MISSION2_ACCEPTANCE.md).
 That acceptance does not mean a model or strategy passed: the captured Gate D
 checkpoint has no scientific champion, and the captured Gate F forward state
 is `insufficient_forward_evidence`. Veritas adds its own source/economic
-analysis in Gates A/B, broad verification in Gates G/H, the read-only dashboard
-in Gate I, and this synthesis in Gate J. The matching letters do not merge the
-two acceptance criteria.
+analysis in Gates A/B, an existing-scheduler integration review for Gate E,
+broad verification in Gates G/H, the read-only dashboard in Gate I, and this
+synthesis in Gate J. The matching letters do not merge the two acceptance
+criteria.
 
 - **Source and opportunity analysis:** bounded finalized-segment replay,
   decision/source reconciliation, timing and gap diagnostics, and the updated
@@ -75,6 +76,12 @@ two acceptance criteria.
   and an allowlisted artifact endpoint. It exposes versioned summaries and
   hashes, not raw market records or campaign controls. See [dashboard
   checkpoint 001](VERITAS_DASHBOARD_CHECKPOINT_001.md).
+- **Research orchestration review:** confirmed that Arena already owns bounded
+  native jobs, finite schedules, persisted progress, and a Research Director
+  interface. Veritas source replay remains a manual bounded command; no
+  source-reading adapter or timer was added because the current evidence does
+  not justify recurring work. See [Gate E review
+  001](VERITAS_GATE_E_SCHEDULING_REVIEW_001.md).
 - **Engineering verification:** completed backend, frontend, type, lint,
   formatting, build, and isolated browser checks. Evidence and qualifications
   are in [Gate G checkpoint 001](VERITAS_GATE_G_CHECKPOINT_001.md) and [Gate H
@@ -122,6 +129,10 @@ existing bundle-size advisory. See [Gate H checkpoint
    payoff mapping, per-leg minimums, full-depth costs, fees, and quantity.
    Only then compare explicitly hypothetical execution policies, keeping fill
    and recovery assumptions unknown unless separately identified.
+5. Reuse Arena's existing job controller if a concrete repeated Veritas
+   analysis becomes worthwhile. Add a typed source-reading job only with
+   explicit finalized-segment, code-hash, byte, interruption, and artifact
+   bounds.
 
 Until then, retain the no-trade control and do not select a strategy, create a
 new prospective campaign, or promote synthetic thresholds as empirical

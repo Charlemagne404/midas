@@ -4,7 +4,7 @@
   "status": "in_progress",
   "baseline_commit": "f968095feb9c591de38fe12d7493224425f62f3a",
   "branch": "project/veritas",
-  "last_checkpoint": "docs/VERITAS_GATE_J_CHECKPOINT_001.md",
+  "last_checkpoint": "docs/VERITAS_GATE_E_SCHEDULING_REVIEW_001.md",
   "datasets": [
     {
       "dataset_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
@@ -563,6 +563,30 @@
       "protected_campaign_sha256": "aa8acb2b46823c1a1e3ac5d01a57dde917746c2c7471098ae2a4598875e322f5",
       "orders_submitted": false,
       "promotion": "closeout only; no strategy or campaign promotion"
+    },
+    {
+      "experiment_id": "VERITAS-GATE-E-SCHEDULING-REVIEW-20261015-001",
+      "type": "bounded_research_director_integration_feasibility_review",
+      "status": "arena_jobs_reusable_veritas_source_adapter_deferred",
+      "source_dataset_id": "project_veritas_worktree",
+      "evidence": "docs/VERITAS_GATE_E_SCHEDULING_REVIEW_001.md",
+      "source_files": [
+        "packages/midas/arena/jobs.py",
+        "packages/midas/arena/scheduling.py",
+        "apps/api/arena.py",
+        "scripts/dispatch_schedules.py",
+        "scripts/install_schedule_timer.py",
+        "scripts/research_followup.py"
+      ],
+      "bounded_arena_jobs_available": true,
+      "finite_schedule_available": true,
+      "veritas_source_job_kind_available": false,
+      "research_followup_is_synthetic_arena_study": true,
+      "job_created_or_started": false,
+      "scheduler_timer_installed_or_enabled": false,
+      "campaign_mutated": false,
+      "orders_submitted": false,
+      "promotion": "reuse Arena for eligible simulator studies; defer Veritas source adapter until recurring analysis is justified"
     }
   ],
   "models": [],
@@ -593,5 +617,5 @@
     "The synthetic capacity study is not evidence that its modeled quotes existed or could be filled.",
     "The isolated Reality browser check intercepted operation and raw-record routes; it verifies the read-only view, not end-to-end behavior of those routes."
   ],
-  "updated_at_utc": "2026-10-15T02:29:06+00:00"
+  "updated_at_utc": "2026-10-15T02:33:51+00:00"
 }
