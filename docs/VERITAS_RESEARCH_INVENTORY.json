@@ -4,7 +4,7 @@
   "status": "in_progress",
   "baseline_commit": "f968095feb9c591de38fe12d7493224425f62f3a",
   "branch": "project/veritas",
-  "last_checkpoint": "docs/VERITAS_GATE_A_CHECKPOINT_010.md",
+  "last_checkpoint": "docs/VERITAS_GATE_A_CHECKPOINT_011.md",
   "datasets": [
     {
       "dataset_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
@@ -305,6 +305,30 @@
       "legs_above_60s": 58,
       "orders_submitted": false,
       "promotion": "diagnostic only; no campaign, collector, cadence, policy, strategy, or profitability promotion"
+    },
+    {
+      "experiment_id": "VERITAS-GATE-A-RAW-FUNNEL-20261015-001",
+      "type": "finalized_source_raw_opportunity_funnel_v2_extended_snapshot",
+      "status": "completed_snapshot_no_positive_candidate",
+      "source_dataset_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
+      "evidence": "docs/VERITAS_GATE_A_RAW_FUNNEL_003.json",
+      "analysis_version": "veritas-raw-opportunity-funnel-v2",
+      "source_manifest_sha256": "2c2b10a584e737702579ffe79d2d8144f182fe8834b964707e47b72ad270df6d",
+      "finalized_segments": 1924,
+      "source_bytes": 450602772,
+      "source_last_finalized_ordinal": 231919,
+      "period_frame_records": 40651,
+      "touched_market_frame_states": 31007,
+      "quality_valid_states": 29932,
+      "quantity_requested_shares": "5",
+      "quantity_depth_complete_states": 29932,
+      "fee_regime_available_states": 29932,
+      "positive_top_ask_pair_states": 0,
+      "positive_top_with_quantity_depth_states": 0,
+      "positive_full_depth_pre_fee_states": 0,
+      "active_segment_read": false,
+      "orders_submitted": false,
+      "promotion": "diagnostic only; no opportunity, strategy, or profitability promotion"
     }
   ],
   "models": [],

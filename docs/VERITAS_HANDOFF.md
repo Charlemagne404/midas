@@ -95,7 +95,7 @@ contents disposable; preserve the existing operational data in place.
 1. Read the [research backlog](VERITAS_RESEARCH_BACKLOG.md), [research
    ledger](VERITAS_RESEARCH_LEDGER.json), [operations
    procedures](VERITAS_OPERATIONS.md), and latest
-   [Gate A checkpoint 010](VERITAS_GATE_A_CHECKPOINT_010.md).
+   [Gate A checkpoint 011](VERITAS_GATE_A_CHECKPOINT_011.md).
 2. Review the protected campaign's immutable identity and service health
    through read-only checks; do not launch a second worker against its store.
 3. Continue research changes in the `project/veritas` worktree. Keep Reality

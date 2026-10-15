@@ -77,7 +77,7 @@ PYTHONPATH=packages /home/charlie/midas/.venv/bin/python \
   scripts/veritas_raw_funnel.py \
   --campaign-root /home/charlie/midas-reality/data/research/reality/forward/mission2 \
   --max-source-gib 20 \
-  > docs/VERITAS_GATE_A_RAW_FUNNEL_002.json
+  > docs/VERITAS_GATE_A_RAW_FUNNEL_003.json
 ```
 
 This replays the finalized prefix to rebuild books and verify online
@@ -86,8 +86,9 @@ touch a paired market. It uses recorded receiver time, not shadow-worker
 processing time. Counts are repeated correlated observations, distinct from
 the scheduled decision denominator. It reports public ask-depth support before
 fees and never claims a fill. Version 2 compares each leg's depth-weighted USDC
-notional with the reported per-order USDC minimum. Its bounded, raw-free output
-is `docs/VERITAS_GATE_A_RAW_FUNNEL_002.json`.
+notional with the reported per-order USDC minimum. The latest bounded, raw-free
+snapshot is `docs/VERITAS_GATE_A_RAW_FUNNEL_003.json`, documented in
+[Gate A checkpoint 011](VERITAS_GATE_A_CHECKPOINT_011.md).
 
 ## Reproduce the controlled capacity sensitivity
 

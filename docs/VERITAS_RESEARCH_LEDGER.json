@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-15T00:21:58.731649+00:00",
+  "updated_at_utc": "2026-10-15T00:27:16.435699+00:00",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -951,6 +951,50 @@
         "The source gap record does not identify a counterfactual trigger or establish fills or profitability."
       ],
       "decision": "The reconstructed stale issue timing matches the active 60-second source threshold. Most frozen 5-second freshness failures occurred below that threshold, with both outcomes aged together. Keep Reality unchanged and prioritize a separate, predeclared sampling/horizon study.",
+      "status": "completed"
+    },
+    {
+      "hypothesis_id": "VERITAS-H016",
+      "title": "Does a longer finalized source prefix change the raw gross-opportunity conclusion?",
+      "mechanism": "Additional finalized observations may reveal a quality-valid positive complementary edge absent in the earlier v2 snapshot; a larger count alone does not imply independent opportunities or execution.",
+      "experiment_id": "VERITAS-GATE-A-RAW-FUNNEL-20261015-001",
+      "dataset_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
+      "success_metric": "Re-run the versioned raw funnel on a later finalized prefix, checking paired-book quality, five-share displayed depth, fee metadata, minimum notionals, and top/full-depth gross edges.",
+      "result": {
+        "status": "completed_extended_snapshot_no_positive_candidate",
+        "analysis_version": "veritas-raw-opportunity-funnel-v2",
+        "evidence": "docs/VERITAS_GATE_A_RAW_FUNNEL_003.json",
+        "source_manifest_sha256": "2c2b10a584e737702579ffe79d2d8144f182fe8834b964707e47b72ad270df6d",
+        "finalized_segments": 1924,
+        "source_bytes": 450602772,
+        "source_last_finalized_ordinal": 231919,
+        "receipt_window_hours": "3.293245",
+        "campaign_market_ids_observed": 15,
+        "period_frame_records": 40651,
+        "touched_market_frame_states": 31007,
+        "quality_valid_states": 29932,
+        "quality_invalid_states": 1075,
+        "quantity_requested_shares": "5",
+        "quantity_depth_complete_states": 29932,
+        "fee_regime_available_states": 29932,
+        "fee_regime_unavailable_states": 0,
+        "positive_top_ask_pair_states": 0,
+        "positive_top_with_quantity_depth_states": 0,
+        "positive_full_depth_pre_fee_states": 0,
+        "positive_full_depth_minimum_notional_satisfied_states": 0,
+        "maximum_pre_fee_top_edge_per_share": "-0.001",
+        "median_pre_fee_top_edge_per_share": "-0.01",
+        "added_quality_valid_states_over_previous_snapshot": 4312,
+        "active_segment_read": false,
+        "orders_submitted": false,
+        "promotion": "no policy, opportunity, strategy, or profitability promotion"
+      },
+      "limitations": [
+        "This is a selected monitored panel, not a venue-wide sample.",
+        "Repeated market-frame states are correlated and are not independent opportunities.",
+        "Displayed depth does not establish order arrival, queue priority, fills, or profitability."
+      ],
+      "decision": "The later finalized prefix did not change the gross opportunity conclusion. Preserve the no-trade decision and quality gates; continue the predeclared horizon/sampling design and wait for a positive quality-valid gross candidate before expanding economics.",
       "status": "completed"
     }
   ],
