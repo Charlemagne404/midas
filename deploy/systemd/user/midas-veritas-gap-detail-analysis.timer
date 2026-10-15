@@ -1,0 +1,10 @@
+[Unit]
+Description=Advance bounded Veritas finalized-source gap-detail indexing twice hourly
+
+[Timer]
+OnCalendar=*-*-* *:20,50:00 UTC
+Persistent=false
+Unit=midas-veritas-gap-detail-analysis.service
+
+[Install]
+WantedBy=timers.target
