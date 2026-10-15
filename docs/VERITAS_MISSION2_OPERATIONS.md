@@ -273,3 +273,10 @@ the targeted Veritas browser flow passed. The failure and recovery chronology
 remains in [Gate F checkpoint 016](VERITAS_MISSION2_GATE_F_CHECKPOINT_016.md);
 the updated evidence is in [inventory
 032](VERITAS_MISSION2_RESEARCH_INVENTORY_032.json).
+
+The v4 paired measurement comparison was recomputed over the same 29 finalized
+events: 240/1,160 passed the legacy age/skew rule and 1,034/1,160 passed the
+request-to-receipt quality rule, a paired recovery of 794 (+68.45 percentage
+points). This is a yield comparison only; sequence, atomicity, and upstream
+queue age remain unverified. See the [current inventory
+033](VERITAS_MISSION2_RESEARCH_INVENTORY_033.json).

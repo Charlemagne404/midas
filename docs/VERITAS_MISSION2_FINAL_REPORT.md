@@ -512,3 +512,14 @@ the next scheduled Director run is due at 18:45:20 UTC. The v3 panel comparison
 remains read-only and has no positive candidates. See [Gate F checkpoint
 016](VERITAS_MISSION2_GATE_F_CHECKPOINT_016.md) and [inventory
 031](VERITAS_MISSION2_RESEARCH_INVENTORY_031.json).
+
+## Gate A measurement update — scan-29 panel
+
+Across the 29-snapshot, 1,160-observation panel, the prior reported-age/skew
+gate accepts 240 observations and the request-to-receipt quality gate accepts
+1,034. The paired increase is 794 observations (+68.45 percentage points).
+This improves usable measurement yield; it does not establish venue sequence,
+batch atomicity, or upstream queue age. The panel remains selected, repeated,
+and correlated, with zero positive gross candidates. See [Gate A checkpoint
+026](VERITAS_MISSION2_GATE_A_CHECKPOINT_026.md) and [inventory
+033](VERITAS_MISSION2_RESEARCH_INVENTORY_033.json).

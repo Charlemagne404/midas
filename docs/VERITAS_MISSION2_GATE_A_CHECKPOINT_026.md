@@ -51,3 +51,15 @@ applies to this bounded, selected and repeated public sample only. See
 [inventory 030](VERITAS_MISSION2_RESEARCH_INVENTORY_030.json) for the complete
 selection record and [Gate D checkpoint 002](VERITAS_MISSION2_GATE_D_CHECKPOINT_002.md)
 for candidate source replay and tests.
+
+## Gate A measurement update — 29-snapshot paired yield
+
+The v4 event panel now contains 1,160 selected market observations. The prior
+reported-age/skew rule accepts 240 pairs (20.69%); the current bounded
+request-to-receipt rule accepts 1,034 (89.14%), recovering 794 observations
+and +68.45 percentage points. This compares the two gates on the same selected
+panel. The improvement is a measurement-yield result: request/receipt timing
+does not prove venue sequence, atomicity, or upstream queue age. The panel is
+repeated and correlated, and still contains zero positive gross candidates.
+See [inventory 033](VERITAS_MISSION2_RESEARCH_INVENTORY_033.json) for the
+versioned summary and source hashes.
