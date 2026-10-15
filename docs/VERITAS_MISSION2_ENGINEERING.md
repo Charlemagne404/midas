@@ -1,5 +1,17 @@
 # Veritas Mission 2 Engineering Checkpoint
 
+## Latest engineering checkpoint — direct control retrieval
+
+A one-request explicit-ID Gamma diagnostic returned all eight frozen controls
+about 11 minutes after scan 39. Three controls absent from that scan's six-query
+union were open and eligible in the direct response; two other absent controls
+were returned with `closed=true`. This confirms that bounded-frame absence
+must remain distinct from lifecycle status. The v1 pilot remains unchanged;
+the diagnostic is a separate versioned probe and contains no book or economic
+observations. See [Gate A checkpoint 035](VERITAS_MISSION2_GATE_A_CHECKPOINT_035.md),
+[research ledger H081](VERITAS_RESEARCH_LEDGER.json), and [inventory
+043](VERITAS_MISSION2_RESEARCH_INVENTORY_043.json).
+
 ## Latest engineering checkpoint — scan 39 and source-lag diagnosis
 
 The scheduled observer completed scan 39 at 23:00:55 UTC. Six bounded queries returned 300 unique IDs; 174 met the supported same-condition pair rule and 126 were excluded. Thirty-four of 40 selected pairs passed the request/receipt quality gate; six had an empty ask side. The raw snapshot reports zero positive top-gross, depth, minimum, and fee-sensitive counts at all five quantities. Its scan-pinned v3 qualification has not yet run. The 24-hour pilot now has nine scans, 305/360 quality-valid pairs across 257 selected IDs, and no missed scan sequences. The latest control diagnostic verifies 3/8 frozen controls selected; five were absent from the bounded query union. See [Gate A checkpoint 034](VERITAS_MISSION2_GATE_A_CHECKPOINT_034.md), [Gate G checkpoint 010](VERITAS_MISSION2_GATE_G_CHECKPOINT_010.md), and [inventory 042](VERITAS_MISSION2_RESEARCH_INVENTORY_042.json).

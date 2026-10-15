@@ -56,6 +56,18 @@
   was 199 GiB (56% used). No HTTP health probe was made. No service, campaign,
   pilot, or source file was restarted or modified.
 
+## Control retrieval diagnostic — 2026-10-15 23:11 UTC
+
+One separate public Gamma request returned all eight frozen controls. Relative
+to scan 39's 23:00:55 UTC snapshot, three controls absent from its bounded
+query union were open and eligible in the 23:11:44 direct response; two other
+absent controls were explicitly closed. The direct response was captured about
+11 minutes after scan 39, so it does not assert the exact lifecycle state at
+scan time. The call made one HTTP attempt, read no books, and submitted no
+orders. The pilot and its pinned code were not changed. See [Gate A checkpoint
+035](VERITAS_MISSION2_GATE_A_CHECKPOINT_035.md) and [inventory
+043](VERITAS_MISSION2_RESEARCH_INVENTORY_043.json).
+
 ## Previous runtime state — 2026-10-15 20:49 UTC
 
 - Scan 34 completed at 20:31:54 UTC with 35/40 request/receipt-valid pairs

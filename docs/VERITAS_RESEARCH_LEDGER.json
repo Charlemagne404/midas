@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-15T23:05:08.921939Z",
+  "updated_at_utc": "2026-10-15T23:12:18Z",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -4682,6 +4682,39 @@
       "status": "investigate",
       "success_metric": "The active worker consumes new source at least as fast as the recorder without exceeding the frozen campaign decision-input lag bound, or a bounded, independently validated remediation path is identified.",
       "title": "Can the live shadow worker keep pace with the recorder within its decision-input lag bound?"
+    },
+    {
+      "dataset_id": "c8cce3e392be98e99b66214c267740822ea79742cda6a9b54ab8e99c2fb98fc2",
+      "decision": "Keep the fixed v1 pilot and seven-call cap unchanged through the pilot stop. For a separately versioned successor, reserve one request for explicit control IDs and compare the resulting five-frame rotating discovery coverage against v1 before adoption.",
+      "experiment_id": "VERITAS-M2-CONTROL-RETRIEVAL-001",
+      "hypothesis_id": "VERITAS-H081",
+      "limitations": [
+        "The direct lookup ran about 11 minutes after scan 39 and cannot establish the exact lifecycle metadata at scan capture.",
+        "This is one Gamma response, not an independent source or a longitudinal retrieval study.",
+        "No CLOB books, prices, depth, fee outcomes, or execution outcomes were collected.",
+        "A scheduled implementation must fit inside the existing seven-call budget; reducing the rotating discovery frames may change measured coverage."
+      ],
+      "mechanism": "Issue one paced public Gamma GET /markets request with the frozen control IDs and closed=any, compare returned IDs to the immutable control cohort and scan-39 bounded-union status, then apply the existing V1 metadata eligibility checks while retaining the raw response digest.",
+      "result": {
+        "artifact_path": "data/veritas-observatory/control-retrieval-probes/control-retrieval-1792105904766378861.json.gz",
+        "artifact_sha256": "c8cce3e392be98e99b66214c267740822ea79742cda6a9b54ab8e99c2fb98fc2",
+        "authenticated_requests": false,
+        "bounded_absent_and_direct_closed": 2,
+        "bounded_absent_and_direct_open_eligible": 3,
+        "bounded_selected_and_direct_open_eligible": 3,
+        "captured_at_utc": "2026-10-15T23:11:44.938860+00:00",
+        "http_attempt_count": 1,
+        "orders_submitted": false,
+        "public_request_count": 1,
+        "returned_unique_controls": 8,
+        "source_response_sha256": "9ef0c6d9d652837d95a681d4435b5434b43a9e32cc84df32260cd1c7bcd89f7c",
+        "source_scan_captured_at_utc": "2026-10-15T23:00:55.112847+00:00",
+        "source_scan_id": "scan-20261015T230055Z-ff1f8c3dbcd8",
+        "status": "all_controls_resolved_by_direct_id_lookup"
+      },
+      "status": "continue",
+      "success_metric": "A versioned successor classifies every frozen control from a direct ID lookup within the existing call budget, preserves the cohort, and quantifies any rotating-frame coverage change against the completed v1 pilot.",
+      "title": "Can one bounded direct-ID lookup resolve frozen controls omitted from the discovery frame?"
     }
   ],
   "next_research_questions": [
@@ -4699,7 +4732,7 @@
     "When the gap-detail prefix reaches the frozen campaign window, which gap reasons, timestamps, and explicitly reported markets account for the 1,090 campaign-window resynchronization/failure markers?",
     "Can book_issue:gap censors be linked to a specific preceding same-market gap using finalized receiver-time evidence?",
     "Can the frozen shadow worker process new recorder ordinals faster than the live input while keeping frames within its decision-input lag bound?",
-    "Can stable control contracts be retrieved consistently under a bounded per-scan request budget after the fixed coverage pilot ends?",
+    "Does reserving one direct-ID request while reducing discovery to five rotating frames preserve acceptable rotating coverage after the fixed pilot ends?",
     "What versioned successor worker can process the measured source rate with margin while preserving the 250 ms decision-input lag and bounded resource use?"
   ]
 }

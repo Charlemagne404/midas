@@ -177,7 +177,7 @@
     "source_bytes": 551636,
     "source_event_count": 30
   },
-  "captured_at_utc": "2026-10-15T23:05:08.921939Z",
+  "captured_at_utc": "2026-10-15T23:12:18Z",
   "censoring_analysis": {
     "analysis_source_file": "packages/midas/veritas/forensics.py",
     "analysis_source_sha256": "0b055a21c4b423bbf02cc9c240f26f18263fb8342cd72dec686705d2601a420c",
@@ -300,6 +300,50 @@
     "The Director manifest projection still trails the completed scan-38 Arena job until a later scheduled reconciliation.",
     "No new positive public opportunity, fee-safe candidate, actual fill, or model improvement was observed."
   ],
+  "checkpoint_043_limitations": [
+    "The direct request was captured about 11 minutes after scan 39, so the response cannot establish the exact lifecycle metadata at scan capture.",
+    "This is a single Gamma response, not an independent source or a longitudinal retrieval study.",
+    "No books, prices, depth, fees, or economic outcomes were measured.",
+    "A scheduled successor must fit the explicit lookup inside the existing seven-call bound and measure the effect of one fewer rotating discovery frame."
+  ],
+  "control_retrieval_probe_001": {
+    "analysis_version": "veritas-control-retrieval-probe-v1",
+    "artifact_bytes": 9325,
+    "artifact_mode": "0o600",
+    "artifact_path": "data/veritas-observatory/control-retrieval-probes/control-retrieval-1792105904766378861.json.gz",
+    "artifact_sha256": "c8cce3e392be98e99b66214c267740822ea79742cda6a9b54ab8e99c2fb98fc2",
+    "authenticated_requests": false,
+    "bounded_absent_and_direct_closed": 2,
+    "bounded_absent_and_direct_open_eligible": 3,
+    "bounded_selected_and_direct_open_eligible": 3,
+    "captured_at_utc": "2026-10-15T23:11:44.938860+00:00",
+    "classification_replay": "passed; current classifier output exactly matches the stored per-control outcomes",
+    "classification_replay_module_sha256": "1d29101dee59a485259167394adf5ffb88a2fe8e2b9532f32b9f9465b94dd4f8",
+    "clob_book_reads": 0,
+    "control_cohort_market_count": 8,
+    "control_cohort_sha256": "9578217e20dcc7d1c65fa110f0ed7c689b55483b61191f1aae8d30c9b7300d9a",
+    "economic_outcome": false,
+    "http_attempt_count": 1,
+    "limitations": [
+      "The direct request was captured about 11 minutes after scan 39, so the response cannot establish the exact lifecycle metadata at scan capture.",
+      "This is a single Gamma response, not an independent source or a longitudinal retrieval study.",
+      "No books, prices, depth, fees, or economic outcomes were measured.",
+      "A scheduled successor must fit the explicit lookup inside the existing seven-call bound and measure the effect of one fewer rotating discovery frame."
+    ],
+    "module_path": "packages/midas/veritas/control_retrieval.py",
+    "openapi_reference": "https://gamma-api.polymarket.com/openapi.json",
+    "orders_submitted": false,
+    "public_request_count": 1,
+    "returned_unique_controls": 8,
+    "runner_path": "scripts/run_veritas_control_retrieval_probe.py",
+    "runner_sha256": "8dc05fb3b39472d9bc1cf8449d5a507ecb1c8420434cc6b2e29af263ab8f35d6",
+    "source_response_bytes": 47860,
+    "source_response_sha256": "9ef0c6d9d652837d95a681d4435b5434b43a9e32cc84df32260cd1c7bcd89f7c",
+    "source_scan_captured_at_utc": "2026-10-15T23:00:55.112847+00:00",
+    "source_scan_id": "scan-20261015T230055Z-ff1f8c3dbcd8",
+    "source_snapshot_evidence_sha256": "ff1f8c3dbcd89382ae9998b42bb67356532667d336b24b0da7ec23945bebb501",
+    "source_snapshot_file_sha256": "793a853700a953f60c17bbd457e24746805fe92d21d5e74bf2c76cf520ac90e2"
+  },
   "coverage_pilot_checkpoint_036": {
     "analysis_event_file_sha256": "9880323d91d17384fc9d55468676e9b688f75a95015eddccd86779015c42f5dc",
     "analysis_event_sha256": "c6e1707fee02857610b0828ad5853d71020db0737aa2f3ad1a8c285b011bb5ed",
@@ -2696,7 +2740,7 @@
     "unique_market_ids": 558,
     "window_minutes": 751.53
   },
-  "inventory_id": "VERITAS-M2-RESEARCH-INVENTORY-041",
+  "inventory_id": "VERITAS-M2-RESEARCH-INVENTORY-043",
   "latest_scan_captured_at_utc": "2026-10-15T23:00:55.112847+00:00",
   "latest_scan_id": "scan-20261015T230055Z-ff1f8c3dbcd8",
   "latest_source_analysis_checkpoint": {
@@ -4054,14 +4098,14 @@
     "veritas_control_cohort_rewritten": false,
     "veritas_control_cohort_sha256": "9578217e20dcc7d1c65fa110f0ed7c689b55483b61191f1aae8d30c9b7300d9a"
   },
-  "previous_inventory": "VERITAS_MISSION2_RESEARCH_INVENTORY_039.json",
+  "previous_inventory": "VERITAS_MISSION2_RESEARCH_INVENTORY_042.json",
   "repository": {
     "branch": "project/veritas",
-    "checkpoint_base_commit": "7ee47a6734edebcc30a53bbe26de96654173fed9",
+    "checkpoint_base_commit": "cbb37b4",
     "code_changes_after_pilot_activation": true,
-    "commit_at_inventory_creation": "7ee47a6734edebcc30a53bbe26de96654173fed9",
+    "commit_at_inventory_creation": "cbb37b4",
     "documentation_and_ledger_checkpoint_pending_commit": true,
-    "head_commit": "7ee47a6734edebcc30a53bbe26de96654173fed9",
+    "head_commit": "cbb37b4",
     "mission_status": "active_scheduled_discovery_source_analysis_gap_detail_and_research",
     "path": "/home/charlie/midas-veritas",
     "starting_commit": "9a857cc56804bec6b7129171ba090d338e263aa3",
@@ -4875,6 +4919,9 @@
     "api_activity_projection": "Live read-only projection returned eight verified Director events from 19 files, marked history truncated, and reported zero invalid artifacts and zero active/queued jobs.",
     "broader_arena_sweep": "stopped near 15% of 369 collected Arena/Veritas cases while unrelated simulator/stress tests consumed a CPU core; focused changed-path groups completed",
     "checkpoint_source_commit": "a03a10c",
+    "control_retrieval_pilot_preservation": "The v1 pilot implementation and frozen cohort were not modified; no service restart, book read, credential, or order was used.",
+    "control_retrieval_probe_tests": "3 focused tests passed; Ruff check and format check passed; git diff --check passed.",
+    "control_retrieval_source_integrity": "The gzip evidence, raw response payload, cohort file, and scan-39 snapshot digests verified; all eight unique controls returned in one request and one HTTP attempt; replay with the current classifier reproduced all eight stored classifications.",
     "coverage_pilot_dashboard_api_tests": "12 passed; verifies digest/plan/implementation/source pins, control hash, event hashes and chain, IDs, rows, totals, and scan consistency.",
     "coverage_pilot_dashboard_browser_test": "Not run for checkpoint 005.",
     "coverage_pilot_dashboard_code_quality": "Ruff lint/format, strict Mypy on changed API module, TypeScript, ESLint, Prettier, and Vite production build passed; existing large-chunk advisory remains.",
@@ -4884,6 +4931,7 @@
     "frontend_lint_typecheck_format_build": "TypeScript typecheck, Prettier, and production build passed; Vite emitted the existing large-chunk advisory",
     "frontend_tests": "targeted Veritas UI test: 1 passed; the prior 29-test full group is recorded in inventory 013",
     "full_mission_regression_at_checkpoint_037": "Not run; broader Arena sweep previously stopped near 15% while unrelated simulator/stress jobs consumed CPU; focused changed-path suites passed.",
+    "inventory_042_identifier_discrepancy": "The preserved inventory 042 file and aggregate identify themselves internally as 041; inventory 043 sets its own correct identifier and predecessor link without rewriting that prior record.",
     "neg_risk_structure_study_replays": "v1, v2, and v3 artifacts replayed with matching result digests; v1=66bf194421a5527a94109e4a062428305b92dd9d45727742ea25177141c08855; v2=de97f74610dd2e0cea713fab31d911709a86f7ebcc73d8a7e9c18a2ce6a5b6f6; v3=e7007fdae2d28e6eb59c06605788a247aa58371ec780476b5a204fb1727af50d",
     "openai_ipo_basket_study_replay": "Replayed the sealed second-group artifact with result SHA256 f62224d516665762a8ef9b04872d70612a32beacd7a6fa9d65a9a82fd3c8de44; source membership and raw book digests matched.",
     "openai_ipo_market_stream_replay": "Replayed the sealed 14-token public market WebSocket capture through --replay-market-stream; capture and REST reference digests matched, result analysis SHA256 a7f121e6f88fb004e2741273469fa342c9e9c797d6968878186ed9122b78d9d6; source age/skew failed quality bounds and all basket edges remained non-positive.",
@@ -4912,15 +4960,16 @@
       "test_suites_run": false
     },
     "research_inventory_039": "Preserved unchanged as the preceding numbered checkpoint inventory.",
+    "research_inventory_043": "Current numbered inventory for the one-request direct frozen-control lookup; previous inventory 042 is preserved unchanged.",
     "research_ledger": "JSON parsed; current ledger includes H068 timestamp/hash audit and H069 scan-30 v3 qualification.",
-    "research_ledger_current": "JSON parsed; updated through H077 (scan 37 qualification), ongoing paired freshness comparison H040, and coverage pilot H070.",
-    "research_ledger_sha256": "5fa65f6602256f937ad4e9fcf33d325ed560ef3756e2547d14237d3c95ea5ba2",
+    "research_ledger_current": "JSON parsed; updated through H081 (one-request frozen-control retrieval diagnostic).",
+    "research_ledger_sha256": "2b6b3080d376826b9a39d5a8a621a9e6d92cf037503ca38d86c3420a7315076a",
     "ruff_format_mypy_changed_python": "Ruff check, Ruff format check, and strict Mypy passed for the NegRisk audit module and collector",
     "runtime_director": "16:45:04 UTC scheduled Director cycle reconciled scan 25 completion at 16:45:29 and admitted scan 26 at 16:45:31 using the 16:43:46 sealed source summary. Arena completed scan 26 at 16:45:44 with all 26 events and zero-positive gates. The manifest still projects QUEUED and scan 25 as last qualified until the 17:15:09 UTC cycle. No manual poll or retry was started.",
     "runtime_director_027": "Scheduled 17:15:09Z cycle admitted scan 27; Arena completed 27/27 at 17:15:51Z with zero-positive gates. Director manifest reconciliation remains scheduled for 17:45:25Z; no manual poll was run.",
     "runtime_observer": "16:30 UTC scheduled scan 26 finalized at 16:30:54 UTC; 34/40 pairs passed request/receipt quality and six had empty No ask sides. The six-frame union contained 300 records, 289 unique IDs, 11 identical cross-frame duplicates, and zero identity conflicts. All gross/depth/minimum/fee gates remained zero. Cumulative panel: 928/1,040 quality-valid pairs across 480 markets.",
     "runtime_observer_027": "Scheduled scan 27 finalized at 2026-10-15T17:01:12Z: 33/40 quality-valid pairs, 298 unique query IDs, two identical duplicates, zero identity conflicts, and zero positive economic gates.",
-    "runtime_source_analysis": "16:40:08 UTC scheduled source replay ran 16:40:08\u201316:43:49 UTC; it processed 128 finalized segments / 33,042,875 bytes (11.037 CPU seconds). Cumulative prefix is 2,545/3,844 segments and 613,809,470 bytes through ordinal 320,213, with 1,299 / 356,461,487 bytes pending. Campaign window: 108,912 frames, 95,468 touched states, 93,007 quality-valid states; positive top-ask and full-depth counts remain zero.",
+    "runtime_source_analysis": "16:40:08 UTC scheduled source replay ran 16:40:08–16:43:49 UTC; it processed 128 finalized segments / 33,042,875 bytes (11.037 CPU seconds). Cumulative prefix is 2,545/3,844 segments and 613,809,470 bytes through ordinal 320,213, with 1,299 / 356,461,487 bytes pending. Campaign window: 108,912 frames, 95,468 touched states, 93,007 quality-valid states; positive top-ask and full-depth counts remain zero.",
     "runtime_source_analysis_027": "Scheduled 17:10:17Z replay completed at 17:14:19Z within 116-segment / 32-MiB limits; 2,661/3,903 finalized segments processed, 107,340 campaign-window quality-valid states, zero positive top-ask or full-depth states.",
     "source_analysis_summary_validation": "The 16:43:46 UTC sealed source summary, campaign identity, code hash, prefix catalog digest, state digest, cumulative campaign-window counters, and no-active-segment boundary were validated on the 16:45:31 Director admission. Current summary digest: c28e4f92547264dfa8d41ba28101357b8e498ddd2816a96af73c103f0f05ca74.",
     "systemd_units": "systemd-analyze --user verify passed for the Director service and timer",
@@ -4943,5 +4992,17 @@
     "production_service_restarts_for_ui_work": 0,
     "temporary_browser_test_ports_free_after_run": true,
     "veritas_playwright_e2e": "1 focused browser workflow passed against isolated demo services"
+  },
+  "verification_checkpoint_043": {
+    "captured_at_utc": "2026-10-15T23:12:18Z",
+    "code_commit_at_capture": "cbb37b4",
+    "focused_tests": "3 passed in 0.16 seconds",
+    "full_mission_regression": "not run; the change is isolated and no broad suite was started",
+    "git_diff_check": "passed",
+    "pilot_implementation_changed": false,
+    "probe_artifact_sha256": "c8cce3e392be98e99b66214c267740822ea79742cda6a9b54ab8e99c2fb98fc2",
+    "reality_campaign_or_services_changed": false,
+    "ruff_check": "passed for the new module, runner, and tests",
+    "ruff_format": "passed for the new module, runner, and tests"
   }
 }
