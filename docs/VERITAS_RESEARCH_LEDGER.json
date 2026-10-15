@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-14T23:41:53.195266+00:00",
+  "updated_at_utc": "2026-10-14T23:56:53.582154+00:00",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -210,7 +210,42 @@
         "The active .open segment was excluded."
       ],
       "decision": "Keep all policies at abstention for this evidence. Measure decision input lag and update cadence before drafting a separate future sampling design.",
-      "status": "continue"
+      "status": "continue",
+      "replications": [
+        {
+          "experiment_id": "VERITAS-GATE-A-RAW-FUNNEL-20261014-002",
+          "dataset_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
+          "analysis_version": "veritas-raw-opportunity-funnel-v2",
+          "captured_at_utc": "2026-10-14T23:55:30.251708+00:00",
+          "source_manifest_sha256": "7282272d7d0693995ae102b74f86ab707571d6a74054d7512f40c065061ec550",
+          "finalized_segments": 1862,
+          "source_bytes": 435886391,
+          "last_finalized_ordinal": 225124,
+          "replayed_records": 225124,
+          "verified_source_checkpoints": 1858,
+          "period_frame_records": 35892,
+          "touched_market_frame_states": 26524,
+          "quality_valid_states": 25620,
+          "positive_top_ask_pair_states": 0,
+          "quantity_shares": "5",
+          "positive_full_depth_pre_fee_states": 0,
+          "minimum_order_notional_satisfied_positive_states": 0,
+          "pre_fee_edge_distribution": {
+            "minimum": "-0.58",
+            "p25_nearest_rank": "-0.10",
+            "median_nearest_rank": "-0.03",
+            "p75_nearest_rank": "-0.01",
+            "maximum": "-0.001",
+            "positive_count": 0
+          },
+          "evidence": "docs/VERITAS_GATE_A_RAW_FUNNEL_002.json",
+          "limitations": [
+            "The receipt window covered about 2 hours 46 minutes of a fourteen-day campaign.",
+            "Repeated market-frame states are correlated and are not independent opportunities.",
+            "No fee, fill, settlement, or market impact outcome is inferred."
+          ]
+        }
+      ]
     },
     {
       "hypothesis_id": "VERITAS-H007",
@@ -640,13 +675,128 @@
       ],
       "decision": "Do not change the collector or campaign. Inspect per-outcome issue patterns and configuration stored in finalized process-start records before considering any separate source or cadence experiment.",
       "status": "continue"
+    },
+    {
+      "hypothesis_id": "VERITAS-H011",
+      "title": "Reported minimum order size must be checked against per-leg USDC notional",
+      "mechanism": "Market minimumOrderSize is a USDC notional. Comparing it to share quantity can incorrectly pass orders whose displayed USDC amount remains below the venue minimum.",
+      "experiment_id": "VERITAS-GATE-A-RAW-FUNNEL-20261014-002",
+      "dataset_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
+      "success_metric": "Correctly evaluate each depth-walked leg's notional against its reported USDC minimum and preserve the prior v1 artifact unchanged.",
+      "result": {
+        "status": "completed_versioned_repair",
+        "prior_analysis_version": "veritas-raw-opportunity-funnel-v1",
+        "new_analysis_version": "veritas-raw-opportunity-funnel-v2",
+        "focused_minimum_notional_boundary_cases": 2,
+        "quality_valid_states": 25620,
+        "positive_full_depth_pre_fee_states": 0,
+        "positive_full_depth_minimum_notional_satisfied_states": 0,
+        "evidence": "docs/VERITAS_GATE_A_RAW_FUNNEL_002.json",
+        "official_source": "https://docs.polymarket.com/market-data/market-details"
+      },
+      "limitations": [
+        "No current positive candidate exercised the minimum threshold in the real source panel.",
+        "The corrected behavior is established by controlled test fixtures, not by a live order attempt."
+      ],
+      "decision": "Keep v1 historical evidence intact and use v2 for future Veritas funnel analyses. No present opportunity conclusion changed because v1 also counted zero positive states.",
+      "status": "completed"
+    },
+    {
+      "hypothesis_id": "VERITAS-H012",
+      "title": "Conditional binary economics must include fee exponents and buy-share deductions",
+      "mechanism": "Applying a fixed exponent or subtracting buy fees as extra cash while retaining gross winning shares can misstate outcome-contingent P&L and entry capital.",
+      "experiment_id": "VERITAS-ECONOMIC-FEASIBILITY-V2",
+      "dataset_id": "controlled_decimal_fixtures_only",
+      "success_metric": "Verify per-market exponent math, both official rounding sensitivities, USDC notional minimums, buy-fee share equivalents, resolution-specific P&L, and partial-position payout bounds.",
+      "result": {
+        "status": "completed_arithmetic_candidate",
+        "analysis_version": "veritas-economic-feasibility-v2",
+        "formula_example": {
+          "quantity_shares": "100",
+          "price": "0.3",
+          "rate": "0.25",
+          "exponent": "2",
+          "fee_usdc_unrounded": "1.1025",
+          "fee_share_equivalent_half_up": "3.675"
+        },
+        "rounding_quantum_usdc": "0.00001",
+        "rounding_direction_in_official_docs": "unspecified",
+        "focused_economics_tests": 18,
+        "promotion": "not promoted to a policy or campaign",
+        "evidence": "packages/midas/veritas/economics.py and tests/test_veritas_economics.py"
+      },
+      "limitations": [
+        "Fee schedule inputs are not verified for every live market or historical fee activation date.",
+        "No private match counts, fills, or realized fees are available.",
+        "The controlled calculations do not establish strategy profitability."
+      ],
+      "decision": "Retain the versioned engine for research scenarios; require a positive, quality-valid gross candidate and independent review before downstream use.",
+      "status": "continue"
+    },
+    {
+      "hypothesis_id": "VERITAS-H013",
+      "title": "Displayed capacity can be economically diluted as hypothetical size increases",
+      "mechanism": "Depth-weighted asks, per-leg minimums, fees, and carry assumptions can cause apparent small-size edge to disappear at larger sizes or under reduced displayed depth.",
+      "experiment_id": "VERITAS-GATE-B-CAPACITY-20261015-001",
+      "dataset_id": "controlled_synthetic_orderbook_v1",
+      "success_metric": "Produce reproducible full-depth and half-depth size grids with per-leg costs, USDC capital frontiers, and outcome-specific P&L bounds while keeping fill probability unidentified.",
+      "result": {
+        "status": "completed_controlled_sensitivity",
+        "analysis_version": "veritas-economic-feasibility-v2",
+        "quantity_grid": [
+          5,
+          10,
+          15,
+          25,
+          50,
+          100,
+          200,
+          350,
+          700
+        ],
+        "capital_grid_usdc": [
+          5,
+          10,
+          15,
+          25,
+          50,
+          100,
+          250,
+          500,
+          750,
+          1000,
+          5000,
+          10000,
+          50000
+        ],
+        "full_depth_frontier_examples": {
+          "15": 15,
+          "100": 100,
+          "500": 350,
+          "750": 700
+        },
+        "half_depth_frontier_usdc_1000": 350,
+        "quantity_100_single_match_positive_but_fragmentation_safe_lower_negative": true,
+        "quantity_700_no_fee_upper_nonpositive": true,
+        "orders_submitted": false,
+        "fill_probability": null,
+        "promotion": "not promoted; synthetic inputs only",
+        "evidence": "docs/VERITAS_GATE_B_CAPACITY_001.json"
+      },
+      "limitations": [
+        "The order book is synthetic and does not come from an observed opportunity.",
+        "The size grid is discrete and displayed depth does not guarantee fills.",
+        "FX conversion, order arrival, queue priority, market impact, and actual operating costs are unmeasured."
+      ],
+      "decision": "Use the study to validate accounting and capacity reporting only; do not infer observed or scalable economic potential.",
+      "status": "completed"
     }
   ],
   "next_research_questions": [
-    "Within five-minute blocks, how do update bursts and book_resynchronization issue types align with scheduled decisions and stale-book periods, especially for high-volume but stale market slices?",
-    "How do displayed complementary costs change across complete depth, fees, minimums, ticks, delays, settlement, and capital levels?",
-    "Which future horizons have enough synchronized public observations without changing frozen Reality labels?",
-    "Does the official fee schedule and per-market fee metadata map exactly to every supported observed market category?",
-    "What independent test evidence is needed before the new Veritas cost engine can be used in a frozen campaign?"
+    "Do per-outcome issue patterns and finalized process-start configuration explain stale decisions beyond market activity alone?",
+    "Which predeclared future horizons and quality-aware sampling strata improve synchronized public follow-up coverage in a separate campaign?",
+    "Does a broader, longer source panel produce any positive quantity-specific gross complement before modeling fees or execution?",
+    "What independent verification is required before a positive candidate can enter a matched hypothetical strategy comparison?",
+    "Can existing Arena scheduling and Research Director interfaces support bounded Veritas hypotheses without duplicating job control?"
   ]
 }

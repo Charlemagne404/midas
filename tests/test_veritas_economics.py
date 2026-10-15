@@ -22,7 +22,7 @@ def pair(**overrides):
         pair_semantics="same_condition_yes_no_ctf",
         same_condition=True,
         payoff_verified=True,
-        minimum_order_size="5",
+        minimum_order_notional="4",
         hypothetical_capital="20",
         settlement_days="7",
         annual_financing_rate="0.10",
@@ -33,25 +33,59 @@ def pair(**overrides):
     return evaluate_binary_pair(**arguments)
 
 
-def test_fee_envelope_shows_match_count_sensitivity_and_safe_upper_bound():
+def test_fee_envelope_reports_rounding_sensitivity_and_safe_upper_bound():
     fees = fee_envelope("100", "0.5", "0.04")
 
-    assert fees["unrounded_formula_fee"] == "1.0000"
-    assert fees["single_match_rounded_fee"] == "1.00000"
-    assert fees["equal_fragment_scenarios"]["10"] == "1.00000"
-    assert fees["unknown_fragmentation_fee_bounds"] == ["0", "2.00000"]
+    assert fees["unrounded_formula_fee_usdc"] == "1.0000"
+    assert fees["single_match_fee_usdc_by_rounding_mode"]["floor"] == "1.00000"
+    assert fees["single_match_fee_usdc_by_rounding_mode"]["half_up"] == "1.00000"
+    assert fees["rounding_direction_in_official_docs"] == "unspecified"
+    assert fees["equal_fragment_fee_usdc_scenarios_by_rounding_mode"]["half_up"]["10"] == "1.00000"
+    assert fees["unknown_fragmentation_fee_bounds_usdc"] == ["0", "2.00000"]
+
+
+def test_fee_formula_uses_market_schedule_exponent():
+    fees = fee_envelope("100", "0.3", "0.25", exponent="2")
+
+    assert fees["unrounded_formula_fee_usdc"] == "1.102500"
+    assert fees["price_component_exponent"] == "2"
+    assert D(fees["single_match_fee_shares_by_rounding_mode"]["half_up"]) == D("3.675")
+
+
+def test_pair_economics_applies_per_leg_fee_exponents_and_resolution_share_cost():
+    result = pair(fee_exponent={"yes": "2", "no": "1"})
+
+    assert result["fee_exponent_by_leg"] == {"yes": "2", "no": "1"}
+    yes_fee_shares = D(
+        result["single_match_fee_share_quantity_by_leg_by_rounding_mode"]["yes"]["half_up"]
+    )
+    no_fee_shares = D(
+        result["single_match_fee_share_quantity_by_leg_by_rounding_mode"]["no"]["half_up"]
+    )
+    total_cost = D(result["acquisition_cost_total"])
+    extra_cost = sum(
+        D(result[key])
+        for key in (
+            "financing_cost_assumption",
+            "redemption_cost_assumption",
+            "operational_cost_assumption",
+        )
+    )
+    outcomes = result["net_hypothetical_single_match_by_resolution"]
+    assert D(outcomes["yes_wins"]) == D(10) - yes_fee_shares - total_cost - extra_cost
+    assert D(outcomes["no_wins"]) == D(10) - no_fee_shares - total_cost - extra_cost
 
 
 def test_fee_precision_can_round_a_small_match_to_zero():
     fees = fee_envelope("0.0001", "0.5", "0.07")
 
-    assert fees["single_match_rounded_fee"] == "0.00000"
-    assert fees["fragmentation_safe_upper_fee"] == "0.00001"
+    assert fees["single_match_fee_usdc_by_rounding_mode"]["half_up"] == "0.00000"
+    assert fees["fragmentation_safe_upper_fee_usdc"] == "0.00001"
 
 
 def test_legacy_per_leg_reserve_is_not_a_bound_for_unknown_match_fragmentation():
     legacy = reality_fee_reserve(D("100"), D("0.5"), D("0.04"))
-    safe = fee_envelope("100", "0.5", "0.04")["fragmentation_safe_upper_fee"]
+    safe = fee_envelope("100", "0.5", "0.04")["fragmentation_safe_upper_fee_usdc"]
 
     assert legacy == D("1.00001")
     assert safe == str(fragmented_bound(D("100"), D("0.5"), D("0.04")))
@@ -81,7 +115,7 @@ def test_fragmentation_safe_bound_covers_unequal_match_partitions():
                     D(0),
                 )
                 assert realized_rounding_sensitivity <= D(
-                    envelope["fragmentation_safe_upper_fee"]
+                    envelope["fragmentation_safe_upper_fee_usdc"]
                 )
 
 
@@ -106,10 +140,21 @@ def test_pair_economics_reports_two_fee_assumptions_and_no_fill_claim():
     assert result["full_quantity_supported_by_displayed_depth"] is True
     assert result["acquisition_cost_by_leg"] == {"yes": "4.32", "no": "5.30"}
     assert result["acquisition_cost_total"] == "9.62"
-    assert result["fee_scenarios_by_leg"]["yes"]["single_match_rounded_fee"] == "0.09812"
-    assert result["fee_scenarios_by_leg"]["no"]["single_match_rounded_fee"] == "0.09964"
-    assert D(result["fragmentation_safe_fee_upper_total"]) >= D(
-        result["single_match_fee_total"]
+    assert (
+        result["fee_scenarios_by_leg"]["yes"]["single_match_fee_usdc_by_rounding_mode"]["half_up"]
+        == "0.09812"
+    )
+    assert (
+        result["fee_scenarios_by_leg"]["no"]["single_match_fee_usdc_by_rounding_mode"]["half_up"]
+        == "0.09964"
+    )
+    assert D(result["fragmentation_safe_fee_upper_total_usdc"]) >= D(
+        result["single_match_fee_total_usdc_by_rounding_mode"]["half_up"]
+    )
+    assert result["fee_collection_medium_for_buy"] == "outcome_shares"
+    assert (
+        result["net_hypothetical_single_match_by_resolution"]["yes_wins"]
+        != result["net_hypothetical_single_match_by_resolution"]["no_wins"]
     )
     assert result["actual_fills"] == "unknown_counterfactual"
     assert result["fill_probability"] is None
@@ -122,7 +167,7 @@ def test_pair_economics_does_not_infer_capacity_past_displayed_depth():
 
     assert result["economic_status"] == "insufficient_displayed_depth"
     assert result["displayed_complete_set_capacity"] == "4"
-    assert result["net_hypothetical_fragmentation_upper"] is None
+    assert result["net_hypothetical_fragmentation_safe_lower"] is None
 
 
 def test_depth_fraction_is_reported_as_an_assumption_not_a_fill_probability():
@@ -136,11 +181,20 @@ def test_depth_fraction_is_reported_as_an_assumption_not_a_fill_probability():
 
 
 def test_pair_economics_reports_capital_insufficiency_without_changing_depth():
-    result = pair(hypothetical_capital="10")
+    result = pair(hypothetical_capital="9.5")
 
     assert result["full_quantity_supported_by_displayed_depth"] is True
-    assert result["capital_required_at_entry"] == "10.03552"
+    assert D(result["capital_required_at_entry"]) == D("9.64")
     assert result["hypothetical_capital_sufficient"] is False
+
+
+def test_minimum_order_requirement_is_collateral_notional_not_share_quantity():
+    result = pair(quantity="10", minimum_order_notional="5")
+
+    assert result["legs"]["yes"]["quantity_requested"] == "10"
+    assert result["observed_order_notional_by_leg"] == {"yes": "4.32", "no": "5.30"}
+    assert result["minimum_order_notional_satisfied"] is False
+    assert result["economic_status"] == "below_reported_minimum_order_notional"
 
 
 def test_pair_economics_requires_verified_same_condition_v1_payoff():
@@ -153,12 +207,12 @@ def test_pair_economics_requires_verified_same_condition_v1_payoff():
 def test_pair_economics_accepts_per_leg_fee_and_minimum_metadata():
     result = pair(
         fee_rate={"yes": "0.04", "no": "0"},
-        minimum_order_size={"yes": "5", "no": "11"},
+        minimum_order_notional={"yes": "5", "no": "11"},
     )
 
     assert result["fee_rate_by_leg"] == {"yes": "0.04", "no": "0"}
-    assert result["minimum_size_satisfied"] is False
-    assert result["economic_status"] == "below_reported_minimum_order_size"
+    assert result["minimum_order_notional_satisfied"] is False
+    assert result["economic_status"] == "below_reported_minimum_order_notional"
 
 
 def test_partial_position_payoff_bounds_cover_both_binary_resolutions():
@@ -175,10 +229,28 @@ def test_partial_position_payoff_bounds_cover_both_binary_resolutions():
         payoff_verified=True,
     )
 
-    assert result["terminal_payout_bounds"] == ["3", "5"]
-    assert result["net_hypothetical_pnl_bounds"] == ["-1.26", "0.74"]
-    assert result["terminal_outcomes"] == {"yes_wins": "-1.26", "no_wins": "0.74"}
+    assert result["terminal_payout_bounds"] == ["2.98", "4.96"]
+    assert result["net_hypothetical_pnl_bounds"] == ["-1.22", "0.76"]
+    assert result["terminal_outcomes"] == {"yes_wins": "-1.22", "no_wins": "0.76"}
     assert result["orders_submitted"] is False
+
+
+def test_partial_position_bounds_floor_payout_at_zero_when_fee_bound_exceeds_quantity():
+    result = partial_position_bounds(
+        "3",
+        "5",
+        "1.2",
+        "3.0",
+        "4",
+        "0.04",
+        protocol="v1",
+        pair_semantics="same_condition_yes_no_ctf",
+        same_condition=True,
+        payoff_verified=True,
+    )
+
+    assert result["terminal_payout_bounds"] == ["0", "4.96"]
+    assert result["net_hypothetical_pnl_bounds"] == ["-4.2", "0.76"]
 
 
 def test_partial_position_bounds_reject_unverified_market_semantics():

@@ -4,7 +4,7 @@
   "status": "in_progress",
   "baseline_commit": "f968095feb9c591de38fe12d7493224425f62f3a",
   "branch": "project/veritas",
-  "last_checkpoint": "docs/VERITAS_GATE_A_CHECKPOINT_007.md",
+  "last_checkpoint": "docs/VERITAS_GATE_A_CHECKPOINT_008.md",
   "datasets": [
     {
       "dataset_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
@@ -30,6 +30,14 @@
       "kind": "unit_test_fixtures",
       "source_kind": "synthetic_controlled_inputs",
       "role": "economic arithmetic implementation checks",
+      "mutated": false,
+      "raw_observations_embedded": false
+    },
+    {
+      "dataset_id": "controlled_synthetic_orderbook_v1",
+      "kind": "controlled_synthetic_scenario",
+      "source_kind": "hand-authored hypothetical asks and explicit cost assumptions",
+      "role": "arithmetic, minimum, fee, and capital capacity sensitivity only",
       "mutated": false,
       "raw_observations_embedded": false
     }
@@ -160,6 +168,73 @@
       "promotion": "diagnostic only; no campaign, cadence, collector, strategy, or profitability promotion",
       "focused_source_replay_tests": 5,
       "static_checks": "ruff, format, and mypy passed"
+    },
+    {
+      "experiment_id": "VERITAS-GATE-A-RAW-FUNNEL-20261014-002",
+      "type": "finalized_source_raw_opportunity_funnel_v2_with_usdc_minimums",
+      "status": "completed_snapshot_no_positive_candidate",
+      "source_dataset_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
+      "evidence": "docs/VERITAS_GATE_A_RAW_FUNNEL_002.json",
+      "analysis_version": "veritas-raw-opportunity-funnel-v2",
+      "finalized_segments": 1862,
+      "source_bytes": 435886391,
+      "source_last_finalized_ordinal": 225124,
+      "period_frame_records": 35892,
+      "touched_market_frame_states": 26524,
+      "quality_valid_states": 25620,
+      "positive_top_ask_pair_states": 0,
+      "positive_full_depth_pre_fee_states": 0,
+      "minimum_order_notional_unit": "USDC per leg",
+      "active_segment_read": false,
+      "promotion": "diagnostic only; no opportunity, policy, or profitability promotion"
+    },
+    {
+      "experiment_id": "VERITAS-ECONOMIC-FEASIBILITY-V2",
+      "type": "market_exponent_buy_share_fee_and_usdc_minimum_accounting_repair",
+      "status": "completed_arithmetic_candidate",
+      "source_dataset_id": "controlled_decimal_fixtures_only",
+      "code": "packages/midas/veritas/economics.py",
+      "tests": "tests/test_veritas_economics.py",
+      "focused_tests": 18,
+      "hypothetical_execution_probability": null,
+      "orders_submitted": false,
+      "promotion": "not promoted"
+    },
+    {
+      "experiment_id": "VERITAS-GATE-B-CAPACITY-20261015-001",
+      "type": "bounded_synthetic_capacity_and_cost_sensitivity",
+      "status": "completed_controlled_sensitivity",
+      "source_dataset_id": "controlled_synthetic_orderbook_v1",
+      "evidence": "docs/VERITAS_GATE_B_CAPACITY_001.json",
+      "code": "packages/midas/veritas/scenario_study.py",
+      "generator": "scripts/veritas_economic_scenario_study.py",
+      "quantity_grid": [
+        5,
+        10,
+        15,
+        25,
+        50,
+        100,
+        200,
+        350,
+        700
+      ],
+      "capital_grid_usdc": [
+        5,
+        10,
+        15,
+        25,
+        50,
+        100,
+        250,
+        500,
+        750,
+        1000,
+        5000,
+        10000,
+        50000
+      ],
+      "promotion": "synthetic arithmetic/capacity validation only"
     }
   ],
   "models": [],
@@ -186,6 +261,7 @@
     "The database integrity check passed; this snapshot did not reverify the full event hash chain or raw-source replay.",
     "No private execution, hypothetical fill, market impact, or real profitability target is identified.",
     "Decision-time freshness is derived from source frame receiver timestamps; it does not identify upstream quote age or venue-level synchronization.",
-    "Pooled source update intervals hide time-block clustering and exclude intervals across discontinuities; they do not independently explain every stale decision."
+    "Pooled source update intervals hide time-block clustering and exclude intervals across discontinuities; they do not independently explain every stale decision.",
+    "The synthetic capacity study is not evidence that its modeled quotes existed or could be filled."
   ]
 }

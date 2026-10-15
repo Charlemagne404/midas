@@ -71,7 +71,8 @@ cd /home/charlie/midas-veritas
 PYTHONPATH=packages /home/charlie/midas/.venv/bin/python \
   scripts/veritas_raw_funnel.py \
   --campaign-root /home/charlie/midas-reality/data/research/reality/forward/mission2 \
-  --max-source-gib 20
+  --max-source-gib 20 \
+  > docs/VERITAS_GATE_A_RAW_FUNNEL_002.json
 ```
 
 This replays the finalized prefix to rebuild books and verify online
@@ -79,8 +80,25 @@ reconstruction checkpoints, but aggregates only campaign-period frames that
 touch a paired market. It uses recorded receiver time, not shadow-worker
 processing time. Counts are repeated correlated observations, distinct from
 the scheduled decision denominator. It reports public ask-depth support before
-fees and never claims a fill. Its bounded, raw-free output is
-`docs/VERITAS_GATE_A_RAW_FUNNEL_001.json`.
+fees and never claims a fill. Version 2 compares each leg's depth-weighted USDC
+notional with the reported per-order USDC minimum. Its bounded, raw-free output
+is `docs/VERITAS_GATE_A_RAW_FUNNEL_002.json`.
+
+## Reproduce the controlled capacity sensitivity
+
+```bash
+cd /home/charlie/midas-veritas
+PYTHONPATH=packages /home/charlie/midas/.venv/bin/python \
+  scripts/veritas_economic_scenario_study.py \
+  > docs/VERITAS_GATE_B_CAPACITY_001.json
+```
+
+This deterministic exercise uses a hand-authored synthetic V1 order book, a
+discrete quantity grid, USDC capital budgets, explicit fee and carry assumptions,
+and full/half displayed-depth sensitivities. It makes no observed-opportunity,
+fill, or strategy-performance claim. Its implementation is in
+`packages/midas/veritas/scenario_study.py` and its assumptions are embedded in
+the output artifact.
 
 Read-only service evidence is available from:
 
@@ -102,17 +120,21 @@ Focused economic and forensic checks:
 cd /home/charlie/midas-veritas
 PYTHONPATH=packages /home/charlie/midas/.venv/bin/pytest -q \
   tests/test_veritas_economics.py tests/test_veritas_forensics.py \
-  tests/test_veritas_source_replay.py tests/test_veritas_raw_funnel.py
+  tests/test_veritas_source_replay.py tests/test_veritas_raw_funnel.py \
+  tests/test_veritas_economic_scenario_study.py
 /home/charlie/midas/.venv/bin/ruff check \
   packages/midas/veritas scripts/veritas_forward_audit.py \
   scripts/veritas_reconcile_sources.py scripts/veritas_raw_funnel.py \
+  scripts/veritas_economic_scenario_study.py \
   tests/test_veritas_economics.py tests/test_veritas_forensics.py \
-  tests/test_veritas_source_replay.py tests/test_veritas_raw_funnel.py
+  tests/test_veritas_source_replay.py tests/test_veritas_raw_funnel.py \
+  tests/test_veritas_economic_scenario_study.py
 MYPYPATH=packages /home/charlie/midas/.venv/bin/mypy packages/midas/veritas
 ```
 
-Full project verification remains a later Gate H task. No long-running Veritas
-job is currently scheduled.
+The latest focused economics, funnel, and synthetic scenario set passed 24
+tests. Full project verification remains a later Gate H task. No long-running
+Veritas job is currently scheduled.
 
 ## Preserve service and evidence ownership
 

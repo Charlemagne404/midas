@@ -117,7 +117,7 @@ def analyze_raw_opportunity_funnel(
     complete_quantity_states = 0
     positive_top_complete_quantity_states = 0
     positive_depth_pre_fee_states = 0
-    positive_depth_minimum_satisfied_states = 0
+    positive_depth_minimum_notional_satisfied_states = 0
     known_fee_regime_states = 0
     unknown_fee_regime_states = 0
     first_period_ns: int | None = None
@@ -230,6 +230,18 @@ def analyze_raw_opportunity_funnel(
                     Decimal(0),
                 )
                 depth_edge = quantity - acquisition
+                minimum = market.get("minimum_order_size")
+                try:
+                    minimum_notional = D(str(minimum))
+                    minimum_notional_satisfied = (
+                        minimum_notional.is_finite() and minimum_notional > 0
+                    )
+                    minimum_notional_satisfied = minimum_notional_satisfied and all(
+                        D(walk["displayed_notional_for_supported_quantity"]) >= minimum_notional
+                        for walk in walks
+                    )
+                except (ArithmeticError, TypeError, ValueError):
+                    minimum_notional_satisfied = False
                 if top_edge > 0:
                     positive_top_complete_quantity_states += 1
                     state_counts["positive_top_with_quantity_depth_states"] += 1
@@ -238,16 +250,10 @@ def analyze_raw_opportunity_funnel(
                     positive_depth_pre_fee_states += 1
                     state_counts["positive_full_depth_pre_fee_states"] += 1
                     block["positive_full_depth_pre_fee_states"] += 1
-                    minimum = market.get("minimum_order_size")
-                    try:
-                        minimum_q = D(str(minimum))
-                        minimum_satisfied = minimum_q.is_finite() and quantity >= minimum_q > 0
-                    except (ArithmeticError, ValueError):
-                        minimum_satisfied = False
-                    if minimum_satisfied:
-                        positive_depth_minimum_satisfied_states += 1
-                        state_counts["positive_full_depth_reported_minimum_satisfied_states"] += 1
-                        block["positive_full_depth_reported_minimum_satisfied_states"] += 1
+                    if minimum_notional_satisfied:
+                        positive_depth_minimum_notional_satisfied_states += 1
+                        state_counts["positive_full_depth_minimum_notional_satisfied_states"] += 1
+                        block["positive_full_depth_minimum_notional_satisfied_states"] += 1
 
             rate = fee_rate({"market": {"fee_regime": market.get("fee_regime")}})
             if rate is None:
@@ -293,7 +299,7 @@ def analyze_raw_opportunity_funnel(
 
     captured_ns = time.time_ns()
     return {
-        "analysis_version": "veritas-raw-opportunity-funnel-v1",
+        "analysis_version": "veritas-raw-opportunity-funnel-v2",
         "captured_at_utc": datetime.fromtimestamp(captured_ns / 10**9, UTC).isoformat(
             timespec="microseconds"
         ),
@@ -324,7 +330,7 @@ def analyze_raw_opportunity_funnel(
         "quantity_depth_complete_states": complete_quantity_states,
         "positive_top_with_quantity_depth_states": positive_top_complete_quantity_states,
         "positive_full_depth_pre_fee_states": positive_depth_pre_fee_states,
-        "positive_full_depth_reported_minimum_satisfied_states": positive_depth_minimum_satisfied_states,
+        "positive_full_depth_minimum_notional_satisfied_states": positive_depth_minimum_notional_satisfied_states,
         "fee_regime_available_states": known_fee_regime_states,
         "fee_regime_unavailable_states": unknown_fee_regime_states,
         "pre_fee_top_edge_distribution": _edge_summary(edge_histogram),
@@ -335,6 +341,7 @@ def analyze_raw_opportunity_funnel(
             "Counts are repeated market-frame observations, not independent opportunities or venue-wide prevalence.",
             "Displayed depth is public quote support only; it does not establish order arrival, matching, fills, or market impact.",
             "Full-depth values are pre-fee; fee regime availability is counted but no fee or settlement assumption is applied here.",
+            "Minimum order requirements are checked against each leg's displayed USDC notional, not share quantity.",
             "Only cataloged finalized segments are included; an active segment is excluded.",
         ],
     }

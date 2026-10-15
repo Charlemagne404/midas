@@ -1,31 +1,31 @@
 # Veritas research backlog
 
-The order reflects expected information value, economic impact, current evidence,
-and compute cost. Work remains on `project/veritas`; the frozen Reality campaign
-is a protected reference.
+The ranks reflect expected information value, possible economic impact, current
+evidence, and compute cost. Work remains on `project/veritas`; the frozen
+Reality campaign is a protected reference.
 
 | Rank | Question | Evidence today | Next experiment | Promotion rule |
 | --- | --- | --- | --- | --- |
-| 1 | Which source conditions drive stale scheduled decisions, and are any preventable? | The v5 replay reproduced all 2,344 selected decisions. Input lag remained below 250 ms, but 1,503/2,344 exceeded 5 s freshness. Of 908 issue entries in 152 resynchronization gaps, 868 were stale; 822 of those mapped to five markets whose scheduled freshness violation rates were 76.1–81.2%. Four other markets had no mapped gap issues, and some still had stale decisions. | Inspect per-outcome issue patterns and the configuration stored in finalized process-start records. Distinguish pair-wide inactivity from one-sided source behavior before proposing any separate collector or cadence experiment. | Repair only a demonstrated defect. Any sampling or collector change gets a new frozen campaign identity. |
-| 2 | Are there complementary opportunities after full displayed depth, fees, and minimums? | In 19,501 quality-valid raw states, displayed quantity five was available on both legs; all had negative top-ask edge (maximum `-0.001`) and none was positive after the full depth walk. Fee regimes were present, but no fee scenario was needed to reject a nonpositive gross quote. | Extend the raw funnel across later campaign snapshots and predeclared quantity/capital grids. Keep fee fragmentation, settlement, and unmatched positions as separate bounds; preserve unknown execution as unknown. | A candidate must survive cost bounds and independent payoff/accounting review. |
-| 3 | Which future public horizons are measurable in this market panel? | Of 1,524 follow-ups with valid initial states, 62 were public measurements and 1,462 were censored. Most valid-state censoring was missing synchronized future data or a source-availability timeout. | Measure pair update intervals and synchronized-book availability by market and activity stratum; predeclare candidate horizons for a separate campaign. | Never alter Reality's horizons or retroactively relabel it. |
-| 4 | Is fee rounding materially understated when match fragmentation is unknown? | Legacy Reality `fee_reserve` adds one quantum per leg; the shared economics package already provides a fragmentation upper bound. | Independently verify fee arithmetic against current official market-specific parameters and scenario partitions; integrate only in Veritas versions. | Use the bound as a conservative scenario, not an estimate of actual fees or fills. |
-| 5 | How do incomplete legs and capital lockup change capacity? | Existing Prometheus/Reality evidence documents unmatched-position risk; the first Veritas pair engine can calculate terminal payoff bounds for verified binary semantics. | Run matched size grids, 500–50,000 SEK scenarios after explicit collateral/FX inputs, settlement durations, and stress assumptions. | Do not imply displayed capacity guarantees fillable size. |
-| 6 | Does ML improve an economically useful decision? | Reality's accepted evidence reports no eligible learned model; the depth heuristic beat learned alternatives and held-out risk-tree gains did not survive. | Recheck the original failure mechanisms and target support before any training; compare chronological grouped models with simple controls. | Train only on sufficient real labels; promote only if prediction gains improve predefined hypothetical decisions. |
-| 7 | Can the Research Director schedule useful controlled work durably? | Existing Arena and Reality scheduling systems already provide bounded jobs, provenance, and freeze controls. | Inventory current director interfaces and add only missing hypothesis ranking, matched-result links, and stop rules. | No unrestricted source edits, campaign mutation, or compute feedback loop. |
-| 8 | What native Veritas evidence should the dashboard expose? | Reality already has a bounded API and native dark dashboard. | Design a Veritas view over bounded APIs backed by validated economic and funnel artifacts. | Display observed, derived, assumed, simulated, and unknown values separately. |
+| 1 | Which source conditions drive stale scheduled decisions, and are any preventable? | The v5 replay reproduced all 2,344 selected decisions. Input lag stayed below 250 ms, while 1,503/2,344 exceeded 5 s freshness. Most mapped gap issues were stale, but market activity did not explain every stale decision. | Inspect per-outcome issue patterns and the configuration in finalized process-start records. Separate pair-wide inactivity from one-sided source behavior before proposing a new collector or cadence study. | Repair only a demonstrated defect. Any sampling or collector change uses a new frozen campaign identity. |
+| 2 | Which future public horizons can yield more synchronized follow-ups without weakening quality rules? | The original frozen campaign had 1,462 censors after valid initial states; 1,183 were missing synchronized future observations or availability timeouts. | Inspect activity intervals and campaign measurement scheduling. Propose a separate, predeclared horizon and sampling design with an all-market control and no-trade policy. | Never alter Reality's horizons, sampling, or labels. A higher measurement rate does not establish fills or profitability. |
+| 3 | Does a longer and broader observed panel contain a positive gross complementary opportunity? | The v2 raw funnel replayed 25,620 quality-valid states over about 2 h 46 m; all five-share top and full-depth pair edges were nonpositive. The selected cohort and interval are limited. | Rerun the versioned funnel on later finalized prefixes and any new approved observation cohort. Stratify by market family, activity, lifetime, and liquidity. | A candidate must pass source quality, same-condition payoff, per-leg USDC minimums, and full-depth costs before fees or execution assumptions are considered. |
+| 4 | Does the v2 economic model correctly bound a real, positive gross candidate across size and cost assumptions? | Official fee fields include rate and exponent; taker buy fees are collected in shares. The v2 engine covers exponent, fee rounding sensitivities, share deductions, and USDC minimums. The controlled capital study remains synthetic. | Independently recalculate an observed candidate if one appears; evaluate per-leg schedules, depth, partial positions, capital lockup, and settlement assumptions. | Do not promote v2 P&L or a synthetic capacity frontier as empirical performance. Unknown fills stay unknown. |
+| 5 | Does ML improve an economically useful decision over heuristics? | Reality reports no eligible learned model; prior depth heuristics beat learned alternatives and held-out risk-tree gains did not survive. The current raw funnel has no gross candidate. | Reassess label count and target support after the source-quality and prospective-horizon work. Train only if real chronological labels support a useful target. | Prediction gains must improve a predeclared hypothetical decision metric on independent data. |
+| 6 | Can the Research Director schedule bounded Veritas work without duplicating existing controls? | Arena and Reality already provide durable jobs, provenance, and freeze controls. | Inventory Director APIs and job lifecycle first; add hypothesis ranking, matched-result links, or stop rules only where a concrete gap exists. | No unrestricted code changes, campaign mutation, or compute feedback loop. |
+| 7 | What Veritas evidence should the native dashboard expose? | Reality already has bounded APIs and a native dark dashboard. No Veritas evidence endpoint is implemented yet. | Design a view over versioned opportunity, economics, and experiment artifacts after their data contracts stabilize. | Label observed, derived, assumed, simulated, and unknown values separately. |
+| 8 | Can a selected strategy reduce incomplete-leg loss under realistic public evidence? | Prometheus and Reality document unmatched-position risk, but no current positive gross candidate supports a meaningful strategy tournament. | Preserve the no-trade control; revisit matched risk-policy and recovery studies after a quality-valid gross candidate appears. | Never assume a hedge, recovery order, or displayed depth would fill. |
 
 ## Current controls
 
-- No order, wallet, credential, deposit, or live-execution integration is in scope.
+- No order, wallet, credential, deposit, or live-execution integration is in
+  scope.
 - Do not restart, pause, or take ownership of Reality service writers.
 - Keep confirmation data untouched and report all unsuccessful experiments.
-- The first baseline and economic implementation are recorded in
-  [the research ledger](VERITAS_RESEARCH_LEDGER.json) and
+- The first baseline and original v1 economics are recorded in the
+  [research ledger](VERITAS_RESEARCH_LEDGER.json) and
   [Gate A checkpoint 001](VERITAS_GATE_A_CHECKPOINT_001.md). Source replay
-  evidence is in [Gate A checkpoint 002](VERITAS_GATE_A_CHECKPOINT_002.md), the
-  raw frame funnel is in [Gate A checkpoint 003](VERITAS_GATE_A_CHECKPOINT_003.md),
-  decision timing is in [Gate A checkpoint 004](VERITAS_GATE_A_CHECKPOINT_004.md),
-  and source cadence is in [Gate A checkpoint 005](VERITAS_GATE_A_CHECKPOINT_005.md),
-  time-block freshness and gap labels are in [Gate A checkpoint 006](VERITAS_GATE_A_CHECKPOINT_006.md),
-  and market-level gap issue summaries are in [Gate A checkpoint 007](VERITAS_GATE_A_CHECKPOINT_007.md).
+  evidence is in checkpoints 002–007. The corrected v2 economics and refreshed
+  raw funnel are in [Gate A checkpoint 008](VERITAS_GATE_A_CHECKPOINT_008.md).
+- The bounded controlled capacity sensitivity is
+  [VERITAS_GATE_B_CAPACITY_001.json](VERITAS_GATE_B_CAPACITY_001.json); it uses
+  synthetic inputs and does not promote a strategy.

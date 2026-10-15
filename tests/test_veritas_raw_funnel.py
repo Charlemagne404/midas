@@ -16,7 +16,7 @@ START = 1_792_000_000_000_000_000
 CONDITION = "0x" + "1" * 64
 
 
-def _market() -> dict[str, Any]:
+def _market(minimum_order_size: str = "5") -> dict[str, Any]:
     return dict(
         id="1",
         condition=CONDITION,
@@ -31,7 +31,7 @@ def _market() -> dict[str, Any]:
         negative_risk=False,
         negative_risk_group=None,
         liquidity="5000",
-        minimum_order_size="5",
+        minimum_order_size=minimum_order_size,
         tick_size=".01",
         end_ns=START + 10**12,
         metadata_ordinal=2,
@@ -59,7 +59,7 @@ def _frame(yes_ask: str) -> str:
     return json.dumps(events)
 
 
-def _fixture(tmp_path: Path) -> Path:
+def _fixture(tmp_path: Path, *, minimum_order_size: str = "5") -> Path:
     raw = tmp_path / "raw"
     raw.mkdir()
     store = Store(raw, reserve=1)
@@ -81,7 +81,7 @@ def _fixture(tmp_path: Path) -> Path:
         "fixture universe",
         received_ns=START,
         monotonic_ns=0,
-        cohort=[_market()],
+        cohort=[_market(minimum_order_size)],
     )
     for index, yes_ask in enumerate((".40", ".50"), 1):
         store.append(
@@ -124,6 +124,7 @@ def test_counts_quality_states_and_full_depth_without_opening_active_segment(tmp
 
     report = analyze_raw_opportunity_funnel(campaign)
 
+    assert report["analysis_version"] == "veritas-raw-opportunity-funnel-v2"
     assert report["active_segment_read"] is False
     assert report["period_frame_records"] == 2
     assert report["touched_market_frame_states"] == 2
@@ -132,9 +133,23 @@ def test_counts_quality_states_and_full_depth_without_opening_active_segment(tmp
     assert report["positive_top_ask_pair_states"] == 1
     assert report["quantity_depth_complete_states"] == 2
     assert report["positive_full_depth_pre_fee_states"] == 1
-    assert report["positive_full_depth_reported_minimum_satisfied_states"] == 1
     assert report["pre_fee_top_edge_distribution"]["positive_count"] == 1
     assert report["markets"][0]["counts"]["touched_market_frame_states"] == 2
+
+
+def test_minimum_order_size_is_checked_in_usdc_notional(tmp_path):
+    report = analyze_raw_opportunity_funnel(_fixture(tmp_path, minimum_order_size="2"))
+
+    assert report["positive_full_depth_pre_fee_states"] == 1
+    assert report["positive_full_depth_minimum_notional_satisfied_states"] == 1
+
+
+def test_share_quantity_above_minimum_does_not_satisfy_usdc_notional(tmp_path):
+    report = analyze_raw_opportunity_funnel(_fixture(tmp_path, minimum_order_size="5"))
+
+    assert report["quantity_requested"] == "5"
+    assert report["positive_full_depth_pre_fee_states"] == 1
+    assert report["positive_full_depth_minimum_notional_satisfied_states"] == 0
 
 
 def test_source_byte_bound_is_checked(tmp_path):
