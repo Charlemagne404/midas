@@ -1272,6 +1272,11 @@ def read_coverage_pilot(
                 "positive_top_gross_pairs": int(event["positive_top_gross_pairs"]),
                 "role_counts": event_roles,
                 "_market_rows": market_rows,
+                "_stable_control_missing": missing_controls,
+                "_snapshot_file": event.get("snapshot_file"),
+                "_snapshot_file_sha256": event.get("snapshot_file_sha256"),
+                "_snapshot_evidence_sha256": event.get("snapshot_evidence_sha256"),
+                "_snapshot_source_code_sha256": event.get("snapshot_source_code_sha256"),
             }
         )
         previous_digest = event_digest
@@ -1314,6 +1319,207 @@ def read_coverage_pilot(
     return summary, verified_events, summary_path
 
 
+def _coverage_pilot_control_availability(
+    repository: Path, summary: dict[str, Any], scan: dict[str, Any]
+) -> dict[str, Any] | None:
+    """Explain the latest frozen-control shortfall from its linked public snapshot."""
+
+    def unavailable() -> dict[str, Any]:
+        return {
+            "status": "unavailable",
+            "source_scan_id": scan.get("scan_id"),
+            "snapshot_url": scan.get("snapshot_url"),
+            "reason": "The latest pilot snapshot or frozen-control lineage could not be verified.",
+        }
+
+    observatory_root = repository / "data" / "veritas-observatory"
+    lineage = summary.get("source_lineage")
+    if not isinstance(lineage, dict):
+        return unavailable()
+    expected_control_digest = lineage.get("control_cohort_sha256")
+    if expected_control_digest is None:
+        return None
+    control_path = observatory_root / "control-cohort.json"
+    try:
+        if (
+            observatory_root.is_symlink()
+            or control_path.is_symlink()
+            or not control_path.is_file()
+            or control_path.stat().st_size > MAX_COVERAGE_PILOT_EVENT_BYTES
+        ):
+            return unavailable()
+        control_bytes = control_path.read_bytes()
+        if hashlib.sha256(control_bytes).hexdigest() != expected_control_digest:
+            return unavailable()
+        control = json.loads(control_bytes)
+    except (OSError, ValueError):
+        return unavailable()
+    control_ids = control.get("market_ids") if isinstance(control, dict) else None
+    if (
+        not isinstance(control_ids, list)
+        or len(control_ids) > 50
+        or not control_ids
+        or not all(isinstance(market_id, str) and market_id for market_id in control_ids)
+        or len(set(control_ids)) != len(control_ids)
+    ):
+        return unavailable()
+    selection_basis = control.get("selection_basis")
+    selection_basis = selection_basis[:200] if isinstance(selection_basis, str) else None
+
+    scan_id = scan.get("scan_id")
+    if not isinstance(scan_id, str) or not SNAPSHOT_ID.fullmatch(scan_id):
+        return unavailable()
+    expected_file = f"snapshots/{scan_id}.json.gz"
+    if scan.get("_snapshot_file") != expected_file:
+        return unavailable()
+    try:
+        snapshot, compressed_digest = read_public_snapshot(repository, scan_id)
+    except HTTPException:
+        return unavailable()
+    if (
+        compressed_digest != scan.get("_snapshot_file_sha256")
+        or snapshot.get("snapshot_file") != expected_file
+        or snapshot.get("snapshot_evidence_sha256") != scan.get("_snapshot_evidence_sha256")
+        or snapshot.get("source_code_sha256") != scan.get("_snapshot_source_code_sha256")
+        or snapshot.get("captured_at_utc") != scan.get("captured_at_utc")
+        or snapshot.get("orders_submitted") is not False
+        or snapshot.get("authenticated_requests") is not False
+    ):
+        return unavailable()
+
+    discovery = snapshot.get("discovery")
+    selection = snapshot.get("selection")
+    universe = discovery.get("universe") if isinstance(discovery, dict) else None
+    selected_markets = selection.get("selected_markets") if isinstance(selection, dict) else None
+
+    def is_count(value: Any) -> bool:
+        return isinstance(value, int) and not isinstance(value, bool) and value >= 0
+
+    if (
+        not isinstance(discovery, dict)
+        or not isinstance(universe, list)
+        or len(universe) > 500
+        or not isinstance(selected_markets, list)
+        or len(selected_markets) > 50
+        or not is_count(discovery.get("unique_market_ids"))
+        or not is_count(discovery.get("eligible_pair_markets"))
+        or not is_count(discovery.get("excluded_market_ids"))
+        or not is_count(scan.get("selected_market_pairs"))
+        or not is_count(scan.get("excluded_market_ids"))
+        or discovery.get("unique_market_ids") != len(universe)
+        or discovery.get("eligible_pair_markets") != scan.get("bounded_eligible_markets")
+        or discovery.get("unique_market_ids") != scan.get("discovered_unique_market_ids")
+        or discovery.get("excluded_market_ids") != scan.get("excluded_market_ids")
+        or discovery.get("eligible_pair_markets") + discovery.get("excluded_market_ids")
+        != discovery.get("unique_market_ids")
+        or len(selected_markets) != scan.get("selected_market_pairs")
+    ):
+        return unavailable()
+
+    universe_by_id: dict[str, dict[str, Any]] = {}
+    eligible_count = 0
+    for row in universe:
+        if not isinstance(row, dict):
+            return unavailable()
+        market_id = row.get("market_id")
+        eligible = row.get("eligible_for_pair_observation")
+        reason = row.get("exclusion_reason")
+        if (
+            not isinstance(market_id, str)
+            or not market_id
+            or len(market_id) > 128
+            or not isinstance(eligible, bool)
+            or (eligible and reason is not None)
+            or (not eligible and (not isinstance(reason, str) or not reason))
+            or market_id in universe_by_id
+        ):
+            return unavailable()
+        universe_by_id[market_id] = row
+        eligible_count += int(eligible)
+    if eligible_count != discovery["eligible_pair_markets"]:
+        return unavailable()
+
+    event_rows = scan.get("_market_rows")
+    if not isinstance(event_rows, list):
+        return unavailable()
+    event_selection: dict[str, str] = {}
+    for row in event_rows:
+        if not isinstance(row, dict):
+            return unavailable()
+        market_id = row.get("market_id")
+        role = row.get("cohort_role")
+        if (
+            not isinstance(market_id, str)
+            or role not in {"rotating_stratified", "stable_random_control"}
+            or market_id in event_selection
+        ):
+            return unavailable()
+        event_selection[market_id] = role
+
+    snapshot_selection: dict[str, str] = {}
+    for row in selected_markets:
+        if not isinstance(row, dict):
+            return unavailable()
+        market_id = row.get("market_id")
+        role = row.get("cohort_role")
+        if (
+            not isinstance(market_id, str)
+            or role not in {"rotating_stratified", "stable_random_control"}
+            or market_id in snapshot_selection
+        ):
+            return unavailable()
+        snapshot_selection[market_id] = role
+    if snapshot_selection != event_selection or any(
+        market_id not in universe_by_id
+        or not universe_by_id[market_id]["eligible_for_pair_observation"]
+        for market_id in snapshot_selection
+    ):
+        return unavailable()
+
+    selected_control_ids = {
+        market_id for market_id, role in event_selection.items() if role == "stable_random_control"
+    }
+    missing_ids = scan.get("_stable_control_missing")
+    if (
+        not isinstance(missing_ids, list)
+        or not all(isinstance(market_id, str) for market_id in missing_ids)
+        or len(set(missing_ids)) != len(missing_ids)
+        or selected_control_ids.intersection(missing_ids)
+        or selected_control_ids.union(missing_ids) != set(control_ids)
+        or len(selected_control_ids) != scan.get("stable_control_available")
+        or len(missing_ids) != scan.get("stable_control_missing_count")
+    ):
+        return unavailable()
+
+    missing_by_reason: Counter[str] = Counter()
+    for market_id in missing_ids:
+        row = universe_by_id.get(market_id)
+        if row is None:
+            missing_by_reason["not_returned_by_bounded_query_union"] += 1
+        elif row["eligible_for_pair_observation"] is False:
+            missing_by_reason[f"excluded_{row['exclusion_reason']}"] += 1
+        else:
+            missing_by_reason["eligible_but_not_selected"] += 1
+    return {
+        "status": "verified",
+        "source_scan_id": scan_id,
+        "snapshot_url": f"/api/veritas/observatory/snapshots/{scan_id}",
+        "frozen_control_count": len(control_ids),
+        "available_in_selected_cohort": len(selected_control_ids),
+        "missing_from_selected_cohort": len(missing_ids),
+        "missing_by_bounded_discovery_status": dict(sorted(missing_by_reason.items())),
+        "bounded_query_union_markets": len(universe_by_id),
+        "eligible_markets_in_query_union": sum(
+            row["eligible_for_pair_observation"] for row in universe_by_id.values()
+        ),
+        "selection_basis": selection_basis,
+        "limitations": [
+            "Absence from the six bounded query responses does not establish that a market is closed or absent from the venue.",
+            "The cohort comparison remains descriptive; missing controls were not replaced with outcome-selected markets.",
+        ],
+    }
+
+
 def coverage_pilot_overview(repository: Path) -> dict[str, Any]:
     stored = read_coverage_pilot(repository)
     if stored is None:
@@ -1337,6 +1543,7 @@ def coverage_pilot_overview(repository: Path) -> dict[str, Any]:
             "by_selection_stratum": {},
             "scans": [],
             "latest_scan": None,
+            "latest_control_availability": None,
             "summary_artifact": None,
             "limitations": [],
         }
@@ -1393,8 +1600,11 @@ def coverage_pilot_overview(repository: Path) -> dict[str, Any]:
     for values in cohort_projection.values():
         invalid_reasons.update(values["invalid_reasons"])
     scan_projection = [
-        {key: value for key, value in scan.items() if key != "_market_rows"} for scan in scans
+        {key: value for key, value in scan.items() if not key.startswith("_")} for scan in scans
     ]
+    control_availability = (
+        _coverage_pilot_control_availability(repository, summary, scans[-1]) if scans else None
+    )
     return {
         "study_id": COVERAGE_PILOT_ID,
         "protocol_version": COVERAGE_PILOT_VERSION,
@@ -1415,6 +1625,7 @@ def coverage_pilot_overview(repository: Path) -> dict[str, Any]:
         "by_selection_stratum": stratum_projection,
         "scans": scan_projection[-8:],
         "latest_scan": scan_projection[-1] if scan_projection else None,
+        "latest_control_availability": control_availability,
         "summary_artifact": {
             "id": "coverage-pilot",
             "label": "Verified prospective coverage-pilot summary",

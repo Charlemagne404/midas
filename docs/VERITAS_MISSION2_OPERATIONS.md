@@ -1,10 +1,62 @@
 # Veritas Mission 2 Operations
 
-**Latest read-only runtime check:** 2026-10-15 20:49 UTC
-**Services:** `midas-veritas-observatory.service`, `midas-veritas-source-analysis.service`, `midas-veritas-research-director.service`
-**Timers:** `midas-veritas-observatory.timer`, `midas-veritas-source-analysis.timer`, `midas-veritas-research-director.timer`
+**Latest read-only runtime check:** 2026-10-15 23:05 UTC
+**Services:** Reality recorder and shadow; Midas and Reality API/web; Veritas observer, source analysis, gap detail, and Research Director one-shots
+**Timers:** `midas-veritas-observatory.timer`, `midas-veritas-source-analysis.timer`, `midas-veritas-research-director.timer`, `midas-veritas-gap-detail-analysis.timer`
 
-## Latest runtime state — 2026-10-15 20:49 UTC
+## Latest runtime state — 2026-10-15 23:05 UTC
+
+- The scheduled observer completed scan 39 at 23:00:55 UTC. Six bounded
+  queries returned 300 unique IDs (174 eligible same-condition pairs, 126
+  excluded). The 40 selected pairs include 34 request/receipt-quality-valid
+  pairs and six empty-ask invalids. Raw snapshot counts are zero at each of
+  the five gross/depth/minimum/fee gates and quantities; the v3 scan-pinned
+  qualification awaits the next Director cycle. The read-only pilot has nine
+  scans / 360 selected slots / 305 valid / 55 invalid / 257 distinct IDs / no
+  skipped sequences. Its rotating cohort is 294/331 valid and frozen controls
+  11/29. The scan-39 diagnostic verifies 3/8 frozen controls selected, with
+  five absent from the bounded query union. The pilot remains descriptive and
+  runs to its fixed stop at 2026-10-16 19:00:55 UTC.
+- The scan-38 Arena v3 job is complete, but the Director manifest still has
+  `current_job_state=QUEUED` and scan 37 as `last_qualified_scan_id`; scan 39
+  is not admitted. The current Director run is scheduled for 23:15:28 UTC.
+  No manual poll, retry, or job was started.
+- The finalized-source analyzer's 22:43:53 UTC checkpoint covers 3,953/4,554
+  segments, 234,315 quality-valid campaign states across 63 markets, and has
+  601 segments / 178,425,657 bytes pending. The gap-detail analyzer completed
+  successfully at 22:50:48 UTC and covers 530/4,574 replayable segments, with
+  4,044 / 1,096,601,919 bytes pending and 1,629 all-period gap events. Its
+  campaign-window count is still incomplete and not interpretable as zero.
+  Both analyzers read finalized segments only and left the active `.open`
+  segment untouched.
+- At 23:03:26 UTC the recorder was active in `RECORDING_UNSEQUENCED` state at
+  ordinal 641,991 / 464,693 frames / 3,578 gap markers, with 8 markets and
+  16/16 books flagged fresh (zero timing-uncertain books). Its status still
+  carries one temporary DNS resolution failure; `sequence_verified=false`.
+  The latest observation timestamp was current at capture. Recording storage
+  was 1,197,411,076 bytes. The worker remained active in
+  `WARMING_OR_LAGGED_SOURCE` at ordinal 476,279, with 10,253 decisions, zero
+  orders, and last decision at 08:58:06 UTC. Its source receipt was
+  14:40:00 UTC, about 8h25m earlier.
+- A 23.1-second read-only throughput sample showed recorder +84 ordinals
+  (31 frames) while the shadow cursor advanced +21 records and skipped 21
+  lagged frames. The shadow cgroup used 2.006 CPU seconds under a 100 ms/s
+  quota; all 201 sample periods were throttled. A digest-verified cursor and
+  metadata-only segment-size sum estimated 299,424,769 unconsumed source
+  bytes at 23:05 UTC. This identifies CPU quota as the proximate catch-up
+  constraint in that sample. The frozen plan's 250 ms decision-input limit,
+  service quota, and campaign were not changed. See [Gate C checkpoint
+  005](VERITAS_MISSION2_GATE_C_CHECKPOINT_005.md) and [diagnostic
+  001](VERITAS_MISSION2_SHADOW_LAG_DIAGNOSTIC_001.json).
+- The Reality recorder, shadow, Midas API/web, and Reality API/web systemd
+  units were active. Recorder and API/web restart counts were zero; the shadow
+  retained one historical restart. Recent Veritas one-shots exited 0, and no
+  systemd jobs were running at inspection. Host load was 0.53 / 1.04 / 1.09
+  on six CPUs; available RAM was 9.7 GiB; swap use was 3.4/4 GiB; disk free
+  was 199 GiB (56% used). No HTTP health probe was made. No service, campaign,
+  pilot, or source file was restarted or modified.
+
+## Previous runtime state — 2026-10-15 20:49 UTC
 
 - Scan 34 completed at 20:31:54 UTC with 35/40 request/receipt-valid pairs
   and zero positive top-gross pairs. The 34-snapshot panel now has 1,202/1,360

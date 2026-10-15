@@ -348,13 +348,26 @@ def write_coverage_pilot_fixture(root: Path) -> Path:
     pilot_root = observatory_root / "measurement-pilots" / "VERITAS-M2-COVERAGE-PILOT-001"
     events_dir = pilot_root / "events"
     events_dir.mkdir(parents=True)
-    control = observatory_root / "control-cohort.json"
-    control.parent.mkdir(parents=True, exist_ok=True)
-    control.write_bytes(b'{"cohort":"fixture"}')
-    control_sha256 = hashlib.sha256(control.read_bytes()).hexdigest()
 
     def canonical(value):
         return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
+
+    control = observatory_root / "control-cohort.json"
+    control.parent.mkdir(parents=True, exist_ok=True)
+    control.write_bytes(
+        canonical(
+            {
+                "market_ids": [
+                    "market-control",
+                    "market-missing",
+                    "market-excluded",
+                    "market-eligible-unselected",
+                ],
+                "selection_basis": "seeded simple random control within bounded discovery union",
+            }
+        )
+    )
+    control_sha256 = hashlib.sha256(control.read_bytes()).hexdigest()
 
     plan = json.loads(
         (
@@ -382,6 +395,56 @@ def write_coverage_pilot_fixture(root: Path) -> Path:
             "invalid_reason": "no_empty_ask_side",
         },
     ]
+    snapshot_file = f"snapshots/{scan_id}.json.gz"
+    snapshot_evidence_sha256 = "c" * 64
+    snapshot_source_code_sha256 = "d" * 64
+    snapshot = {
+        "schema_version": 1,
+        "scan_id": scan_id,
+        "captured_at_utc": captured_at,
+        "snapshot_file": snapshot_file,
+        "snapshot_evidence_sha256": snapshot_evidence_sha256,
+        "source_code_sha256": snapshot_source_code_sha256,
+        "orders_submitted": False,
+        "authenticated_requests": False,
+        "discovery": {
+            "unique_market_ids": 4,
+            "eligible_pair_markets": 3,
+            "excluded_market_ids": 1,
+            "universe": [
+                {
+                    "market_id": "market-control",
+                    "eligible_for_pair_observation": True,
+                    "exclusion_reason": None,
+                },
+                {
+                    "market_id": "market-rotating",
+                    "eligible_for_pair_observation": True,
+                    "exclusion_reason": None,
+                },
+                {
+                    "market_id": "market-eligible-unselected",
+                    "eligible_for_pair_observation": True,
+                    "exclusion_reason": None,
+                },
+                {
+                    "market_id": "market-excluded",
+                    "eligible_for_pair_observation": False,
+                    "exclusion_reason": "unsupported_outcome_relationship",
+                },
+            ],
+        },
+        "selection": {
+            "selected_markets": [
+                {"market_id": "market-rotating", "cohort_role": "rotating_stratified"},
+                {"market_id": "market-control", "cohort_role": "stable_random_control"},
+            ]
+        },
+    }
+    snapshot_bytes = gzip.compress(canonical(snapshot), mtime=0)
+    snapshot_dir = observatory_root / "snapshots"
+    snapshot_dir.mkdir(parents=True)
+    (snapshot_dir / f"{scan_id}.json.gz").write_bytes(snapshot_bytes)
     event = {
         "schema_version": 1,
         "study_id": "VERITAS-M2-COVERAGE-PILOT-001",
@@ -392,17 +455,25 @@ def write_coverage_pilot_fixture(root: Path) -> Path:
         "captured_at_utc": captured_at,
         "phase": "snapshot_change",
         "selection_sequence": 30,
-        "bounded_eligible_markets": 12,
-        "discovered_unique_market_ids": 30,
-        "excluded_market_ids": 18,
+        "bounded_eligible_markets": 3,
+        "discovered_unique_market_ids": 4,
+        "excluded_market_ids": 1,
         "selected_market_pairs": 2,
         "quality_valid_pairs": 1,
         "invalid_reasons": {"no_empty_ask_side": 1},
         "stable_control_available": 1,
-        "stable_control_missing": [],
+        "stable_control_missing": [
+            "market-missing",
+            "market-excluded",
+            "market-eligible-unselected",
+        ],
         "positive_top_gross_pairs": 0,
         "orders_submitted": False,
         "authenticated_requests": False,
+        "snapshot_file": snapshot_file,
+        "snapshot_file_sha256": hashlib.sha256(snapshot_bytes).hexdigest(),
+        "snapshot_evidence_sha256": snapshot_evidence_sha256,
+        "snapshot_source_code_sha256": snapshot_source_code_sha256,
         "previous_event_sha256": None,
         "market_rows": market_rows,
     }
@@ -417,9 +488,10 @@ def write_coverage_pilot_fixture(root: Path) -> Path:
         "selected_market_pairs": 2,
         "quality_valid_pairs": 1,
         "stable_control_available": 1,
-        "stable_control_missing_count": 0,
-        "discovered_unique_market_ids": 30,
-        "bounded_eligible_markets": 12,
+        "stable_control_missing_count": 3,
+        "discovered_unique_market_ids": 4,
+        "bounded_eligible_markets": 3,
+        "excluded_market_ids": 1,
         "positive_top_gross_pairs": 0,
     }
     summary = {
@@ -457,11 +529,6 @@ def write_coverage_pilot_fixture(root: Path) -> Path:
     summary["summary_sha256"] = hashlib.sha256(canonical(summary)).hexdigest()
     summary_path = pilot_root / "summary.json"
     summary_path.write_bytes(canonical(summary))
-    snapshot_dir = observatory_root / "snapshots"
-    snapshot_dir.mkdir(parents=True)
-    (snapshot_dir / f"{scan_id}.json.gz").write_bytes(
-        gzip.compress(canonical({"scan_id": scan_id, "orders_submitted": False}))
-    )
     return summary_path
 
 
@@ -915,6 +982,28 @@ def test_overview_exposes_hash_verified_coverage_pilot_and_artifact(tmp_path):
     assert pilot["by_cohort_role"]["stable_random_control"]["invalid_reasons"] == {
         "no_empty_ask_side": 1
     }
+    assert pilot["latest_control_availability"] == {
+        "status": "verified",
+        "source_scan_id": "scan-20261015T190055Z-7799523b9d87",
+        "snapshot_url": "/api/veritas/observatory/snapshots/scan-20261015T190055Z-7799523b9d87",
+        "frozen_control_count": 4,
+        "available_in_selected_cohort": 1,
+        "missing_from_selected_cohort": 3,
+        "missing_by_bounded_discovery_status": {
+            "excluded_unsupported_outcome_relationship": 1,
+            "eligible_but_not_selected": 1,
+            "not_returned_by_bounded_query_union": 1,
+        },
+        "bounded_query_union_markets": 4,
+        "eligible_markets_in_query_union": 3,
+        "selection_basis": "seeded simple random control within bounded discovery union",
+        "limitations": [
+            "Absence from the six bounded query responses does not establish that a market is closed or absent from the venue.",
+            "The cohort comparison remains descriptive; missing controls were not replaced with outcome-selected markets.",
+        ],
+    }
+    assert "_market_rows" not in pilot["latest_scan"]
+    assert "_snapshot_file" not in pilot["latest_scan"]
     assert pilot["latest_scan"]["snapshot_url"] == (
         "/api/veritas/observatory/snapshots/scan-20261015T190055Z-7799523b9d87"
     )

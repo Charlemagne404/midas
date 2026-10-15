@@ -1,6 +1,16 @@
 # Veritas Mission 2 Engineering Checkpoint
 
-## Latest dashboard update — Gate G checkpoint 008
+## Latest engineering checkpoint — scan 39 and source-lag diagnosis
+
+The scheduled observer completed scan 39 at 23:00:55 UTC. Six bounded queries returned 300 unique IDs; 174 met the supported same-condition pair rule and 126 were excluded. Thirty-four of 40 selected pairs passed the request/receipt quality gate; six had an empty ask side. The raw snapshot reports zero positive top-gross, depth, minimum, and fee-sensitive counts at all five quantities. Its scan-pinned v3 qualification has not yet run. The 24-hour pilot now has nine scans, 305/360 quality-valid pairs across 257 selected IDs, and no missed scan sequences. The latest control diagnostic verifies 3/8 frozen controls selected; five were absent from the bounded query union. See [Gate A checkpoint 034](VERITAS_MISSION2_GATE_A_CHECKPOINT_034.md), [Gate G checkpoint 010](VERITAS_MISSION2_GATE_G_CHECKPOINT_010.md), and [inventory 042](VERITAS_MISSION2_RESEARCH_INVENTORY_042.json).
+
+A read-only throughput sample now identifies a binding resource cap in the frozen Reality shadow worker. Over 23.1 seconds the recorder advanced 84 ordinals (31 frames) while the worker advanced 21 records and skipped 21 lagged frames. The worker's cgroup used 2.006 CPU seconds under a 100 ms/s quota; all 201 observed CFS periods were throttled. Its digest-verified runtime cursor is 165,712 ordinals behind the recorder at capture, with about 299 MB of later source files pending. The code consumes records in order and suppresses new decisions when frame input exceeds its frozen 250 ms limit. This evidence supports CPU-budget-limited catch-up; it does not justify changing or restarting the active campaign. See [Gate C checkpoint 005](VERITAS_MISSION2_GATE_C_CHECKPOINT_005.md) and [the lag diagnostic](VERITAS_MISSION2_SHADOW_LAG_DIAGNOSTIC_001.json).
+
+At 23:03 UTC the recorder status was `RECORDING_UNSEQUENCED`, still carried one DNS resolution failure and 3,578 gap markers, and had a fresh observation timestamp; 16/16 books were flagged fresh and none timing-uncertain. Sequence continuity remains unverified. The shadow remains `WARMING_OR_LAGGED_SOURCE`; its latest decision is from 08:58 UTC. The source analyzer covers 3,953/4,554 segments with 601 / 178 MB pending. The gap-detail analyzer covers 530/4,574 segments with 4,044 / 1.097 GB pending; its campaign-window count remains incomplete. Both the frozen campaign and services were left untouched.
+
+The control-availability API and dashboard passed 18 backend tests and one frontend test. Ruff, format, Prettier, ESLint, TypeScript, and `git diff --check` passed. The code is in this branch and is not deployed to the running host. Gate A, C, F, G, and Mission 2 remain active.
+
+## Previous dashboard update — Gate G checkpoint 008
 
 The opportunity observatory now shows candidate events per elapsed panel
 hour, explicitly describing its snapshots as intermittent, and exposes a

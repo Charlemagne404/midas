@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-15T22:26:02Z",
+  "updated_at_utc": "2026-10-15T23:05:08.921939Z",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -4496,6 +4496,192 @@
       ],
       "decision": "Keep no-trade as the current hypothetical policy. Continue bounded observation; no model or execution-policy comparison is justified without an eligible gross candidate.",
       "status": "continue"
+    },
+    {
+      "dataset_id": "8faa7d1b0f93b4d3f47ceddcd1525e9b21e08f681b8c3c75f9d958ce41223c59",
+      "decision": "Keep no-trade as the current hypothetical policy. Continue bounded observation; no model or execution-policy comparison is justified without an eligible gross candidate.",
+      "experiment_id": "VERITAS-M2-ECO-QUAL-001-V3-RUN-8faa7d1b0f93",
+      "hypothesis_id": "VERITAS-H078",
+      "limitations": [
+        "The 38 snapshots are selected and temporally correlated, not independent market-wide confirmation.",
+        "No positive candidate exercised source replay on genuine market data.",
+        "The experiment qualifies candidates; it does not test fills or strategy P&L."
+      ],
+      "mechanism": "Compare the unchanged same-condition top-ask gross rule with full-depth, per-leg minimum, and fee qualification on identical finalized public snapshots; any positive row must link to immutable source and replay exactly.",
+      "result": {
+        "analysis_version": "veritas-economic-qualification-comparison-v3",
+        "authenticated_requests": false,
+        "experiment_sha256": "0f9ce032cfd7c6ac4ea6268986b7bf8077298ccd3e9cfc1740b70009bdbfd3aa",
+        "finding_id": "veritas-qualification-v1-c6a2316c6738d19b",
+        "gross_candidate_evidence_complete": true,
+        "gross_candidate_evidence_count": 0,
+        "gross_candidate_replay": {
+          "candidate_count": 0,
+          "candidates": [],
+          "complete": true,
+          "replayed_candidate_count": 0,
+          "source_code_sha256": "277b48af76eb28364bd03bbd89a971186417ee1bd2be26ce22ad9b744fdad3e4",
+          "status": "NO_POSITIVE_CANDIDATES_TO_REPLAY",
+          "version": "veritas-gross-candidate-source-replay-v1"
+        },
+        "job_exit_status": 0,
+        "job_id": "job-25b10231cab34b16bfbc5b25",
+        "job_state": "COMPLETED",
+        "orders_submitted": false,
+        "positive_states_by_gate": {
+          "fragmentation_safe_fee_sensitivity_positive": 0,
+          "full_depth_and_per_leg_minimum_notional": 0,
+          "full_displayed_depth_gross": 0,
+          "single_match_fee_sensitivity_positive": 0,
+          "unchanged_top_ask_gross_sign": 0
+        },
+        "sample": {
+          "attempted_market_pairs": 1520,
+          "first_captured_at_utc": "2026-10-15T05:59:28.204111+00:00",
+          "invalid_pairs": 179,
+          "last_captured_at_utc": "2026-10-15T22:31:01.809445+00:00",
+          "quality_valid_pairs": 1341,
+          "snapshot_count": 38,
+          "top_pair_edge_per_share": {
+            "count": 1341,
+            "maximum_per_share": "-0.001",
+            "median_nearest_rank_per_share": "-0.02",
+            "minimum_per_share": "-0.996",
+            "positive_count": 0
+          },
+          "unique_market_ids": 710
+        },
+        "status": "no_positive_gross_candidate_observed"
+      },
+      "status": "continue",
+      "success_metric": "Find a quality-valid positive gross pair that qualifies for complete displayed depth, both minimums and fee sensitivity, with source evidence reproduced independently; otherwise preserve the complete negative result.",
+      "title": "Does the expanded 38-snapshot panel contain a source-complete economic candidate?"
+    },
+    {
+      "dataset_id": "62913d43b3c145eb63f18004f75e34b92a282876364f4f4d3cb3d003c0c32d3c",
+      "decision": "Keep the fixed pilot unchanged through its stop. Use the verified availability evidence to design a later bounded control-retrieval study.",
+      "experiment_id": "VERITAS-M2-COVERAGE-PILOT-001",
+      "hypothesis_id": "VERITAS-H079",
+      "limitations": [
+        "The pilot remains active and its role comparison is descriptive.",
+        "Absence from six bounded query responses does not prove closure or venue absence.",
+        "The fixed pilot protocol remains unchanged; a retrieval redesign requires a versioned study."
+      ],
+      "mechanism": "Join the digest-verified frozen control cohort and pilot event to each immutable public snapshot, then classify each missing control as absent from the query union, excluded with a reason, or eligible but not selected.",
+      "result": {
+        "available_in_selected_cohort": 3,
+        "bounded_query_union_markets": 299,
+        "eligible_markets_in_query_union": 111,
+        "frozen_control_count": 8,
+        "missing_by_bounded_discovery_status": {
+          "not_returned_by_bounded_query_union": 5
+        },
+        "missing_from_selected_cohort": 5,
+        "pilot_completed_scans": 8,
+        "pilot_selected_pair_slots": 320,
+        "pilot_skipped_scan_sequences": 0,
+        "scan_id": "scan-20261015T223101Z-62913d43b3c1",
+        "status": "verified_latest_scan"
+      },
+      "status": "continue",
+      "success_metric": "Reconcile selected and missing controls to the frozen cohort using hash-linked source evidence without replacing missing controls or exposing control IDs in the dashboard.",
+      "title": "Are the frozen control markets present in the bounded discovery frame on each pilot scan?"
+    },
+    {
+      "dataset_id": "5a521f34429331821f901b66b787c5c93b8fe078f88082a166161f4d7e4ad944",
+      "decision": "Keep the current frozen campaign and worker running unchanged. Treat its lagged decisions as noncontinuous evidence. For any successor, create a separately versioned plan and show processing throughput with margin over recorder input under an explicitly chosen CPU budget before launch.",
+      "experiment_id": "VERITAS-M2-SHADOW-SOURCE-LAG-DIAG-001",
+      "hypothesis_id": "VERITAS-H080",
+      "limitations": [
+        "The throughput comparison is a roughly 23-second sample, not a long-run benchmark.",
+        "The recorder reports unsequenced input; the source feed continuity is not independently guaranteed.",
+        "The byte backlog is estimated from a point-in-time cursor and file sizes; the active .open file may grow after capture.",
+        "The on-disk code hashes identify the files at capture but do not prove the exact loaded Python bytecode in the running process.",
+        "The active campaign resource policy was not changed; a prospective successor requires a separately versioned plan and capacity validation."
+      ],
+      "mechanism": "Compare the digest-verified persisted source cursor, source-segment backlog sizes, recorder/shadow ordinal deltas, and cgroup CPU-throttle counters while both services remain running; preserve the frozen campaign and resource policy.",
+      "result": {
+        "actual_orders_submitted": 0,
+        "artifact_path": "docs/VERITAS_MISSION2_SHADOW_LAG_DIAGNOSTIC_001.json",
+        "artifact_sha256": "5a521f34429331821f901b66b787c5c93b8fe078f88082a166161f4d7e4ad944",
+        "campaign_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
+        "captured_at_utc": "2026-10-15T23:05:08.921939Z",
+        "cpu_quota_per_second": "100ms",
+        "cursor_checkpoint_sha256": "4c8b3a71c4d32ffeb5ba911d834b4d3ba1256d0959c3ef137457a8e8df30015e",
+        "estimated_unconsumed_source_bytes": 299424769,
+        "source_ordinal_gap": 166022,
+        "source_receipt_lag_seconds": 30292.612,
+        "status": "cpu_quota_limited_backlog_confirmed",
+        "throughput_sample": {
+          "cgroup": {
+            "allowed_cpu_usec_at_quota": 2310186,
+            "cpu_quota_per_second": "100ms",
+            "periods_delta": 201,
+            "quota_fraction_used": 0.8684,
+            "throttled_periods_delta": 201,
+            "throttled_usec_delta": 18043738,
+            "usage_delta_usec": 2006076
+          },
+          "elapsed_seconds": 23.101864,
+          "end_status_updated_at_utc": "2026-10-15T23:01:21.498990Z",
+          "interpretation": "The shadow cursor advanced at about one quarter of recorder ordinal throughput during this short sample; every observed CFS period was throttled and CPU use approached the configured quota.",
+          "recorder": {
+            "frame_delta": 31,
+            "ordinal_delta": 84,
+            "ordinal_end": 641718,
+            "ordinal_start": 641634,
+            "records_per_second": 3.6361,
+            "storage_bytes_delta": 406333
+          },
+          "relative_cursor_throughput": 0.25,
+          "sample_values": {
+            "end": {
+              "cpu_usage_usec": 7065430452,
+              "nr_periods": 719612,
+              "nr_throttled": 692014,
+              "recorder_frames": 464550,
+              "recorder_ordinal": 641718,
+              "recorder_storage_bytes": 1196571379,
+              "recorder_updated_ns": 1792105281498989776,
+              "shadow_lagged_frames_skipped": 160640,
+              "shadow_ordinal": 476146,
+              "shadow_received_ns": 1792075189757812060,
+              "shadow_records": 476146,
+              "shadow_updated_ns": 1792105276156855378,
+              "throttled_usec": 60857444934
+            },
+            "start": {
+              "cpu_usage_usec": 7063424376,
+              "nr_periods": 719411,
+              "nr_throttled": 691813,
+              "recorder_frames": 464519,
+              "recorder_ordinal": 641634,
+              "recorder_storage_bytes": 1196165046,
+              "recorder_updated_ns": 1792105258397125731,
+              "shadow_lagged_frames_skipped": 160619,
+              "shadow_ordinal": 476125,
+              "shadow_received_ns": 1792075185186037773,
+              "shadow_records": 476125,
+              "shadow_updated_ns": 1792105255970026833,
+              "throttled_usec": 60839401196
+            }
+          },
+          "shadow": {
+            "lagged_frame_delta": 21,
+            "ordinal_delta": 21,
+            "ordinal_end": 476146,
+            "ordinal_start": 476125,
+            "records_delta": 21,
+            "records_per_second": 0.909,
+            "source_receipt_advance_seconds": 4.571774,
+            "source_receipt_time_rate": 0.1979
+          },
+          "start_status_updated_at_utc": "2026-10-15T23:00:58.397126Z"
+        }
+      },
+      "status": "investigate",
+      "success_metric": "The active worker consumes new source at least as fast as the recorder without exceeding the frozen campaign decision-input lag bound, or a bounded, independently validated remediation path is identified.",
+      "title": "Can the live shadow worker keep pace with the recorder within its decision-input lag bound?"
     }
   ],
   "next_research_questions": [
@@ -4511,6 +4697,9 @@
     "Can additional boundedly discovered NegRisk groups be verified complete and produce fresh, quality-valid positive full-depth net economics?",
     "Can a separate bounded finalized-source analysis map current campaign-window gap events to receiver time and reason without altering the v1 source-analysis state?",
     "When the gap-detail prefix reaches the frozen campaign window, which gap reasons, timestamps, and explicitly reported markets account for the 1,090 campaign-window resynchronization/failure markers?",
-    "Can book_issue:gap censors be linked to a specific preceding same-market gap using finalized receiver-time evidence?"
+    "Can book_issue:gap censors be linked to a specific preceding same-market gap using finalized receiver-time evidence?",
+    "Can the frozen shadow worker process new recorder ordinals faster than the live input while keeping frames within its decision-input lag bound?",
+    "Can stable control contracts be retrieved consistently under a bounded per-scan request budget after the fixed coverage pilot ends?",
+    "What versioned successor worker can process the measured source rate with margin while preserving the 250 ms decision-input lag and bounded resource use?"
   ]
 }

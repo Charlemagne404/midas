@@ -1,0 +1,257 @@
+{
+  "artifact_id": "VERITAS-M2-SHADOW-SOURCE-LAG-DIAG-001",
+  "artifact_sha256": "5a521f34429331821f901b66b787c5c93b8fe078f88082a166161f4d7e4ad944",
+  "campaign": {
+    "actual_orders_submitted": 0,
+    "campaign_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
+    "campaign_sha256": "aa8acb2b46823c1a1e3ac5d01a57dde917746c2c7471098ae2a4598875e322f5",
+    "last_decision_at_utc": "2026-10-15T08:58:06.958877Z",
+    "max_decision_input_lag_ms": 250,
+    "source_ordinal_gap_at_capture": 166022,
+    "source_receipt_lag_seconds_at_capture": 30292.612
+  },
+  "captured_at_utc": "2026-10-15T23:05:08.921939Z",
+  "coverage_pilot": {
+    "completed_scans": 9,
+    "distinct_selected_market_ids": 257,
+    "invalid_pairs": 55,
+    "latest_control_availability": {
+      "available_in_selected_cohort": 3,
+      "bounded_query_union_markets": 300,
+      "eligible_markets_in_query_union": 174,
+      "frozen_control_count": 8,
+      "limitations": [
+        "Absence from the six bounded query responses does not establish that a market is closed or absent from the venue.",
+        "The cohort comparison remains descriptive; missing controls were not replaced with outcome-selected markets."
+      ],
+      "missing_by_bounded_discovery_status": {
+        "not_returned_by_bounded_query_union": 5
+      },
+      "missing_from_selected_cohort": 5,
+      "selection_basis": "seeded simple random control within first bounded discovery union",
+      "snapshot_url": "/api/veritas/observatory/snapshots/scan-20261015T230055Z-ff1f8c3dbcd8",
+      "source_scan_id": "scan-20261015T230055Z-ff1f8c3dbcd8",
+      "status": "verified"
+    },
+    "quality_valid_pairs": 305,
+    "quality_valid_yield": 0.8472222222222222,
+    "selected_market_pair_slots": 360,
+    "skipped_scan_sequences": 0,
+    "status": "running"
+  },
+  "latest_runtime_state": {
+    "recorder": {
+      "error": "ConnectError: [Errno -3] Temporary failure in name resolution",
+      "expected_books": 16,
+      "failures": 1,
+      "frames": 465030,
+      "fresh_books": 16,
+      "gaps": 3579,
+      "last_observation_at_utc": "2026-10-15T23:05:07.021401Z",
+      "markets": 8,
+      "ordinal": 642406,
+      "sequence_verified": false,
+      "state": "RECORDING_UNSEQUENCED",
+      "status_updated_at_utc": "2026-10-15T23:05:07.032390Z",
+      "storage_bytes": 1198028057,
+      "timing_uncertain_books": 0
+    },
+    "shadow": {
+      "actual_orders_submitted": 0,
+      "counters": {
+        "lagged_frames_skipped": 160869,
+        "records": 476384,
+        "source_checkpoints": 3605
+      },
+      "decisions": 10253,
+      "last_decision_at_utc": "2026-10-15T08:58:06.958877Z",
+      "markets": 43,
+      "scientific_state": "insufficient_forward_evidence",
+      "source_last_received_at_utc": "2026-10-15T14:40:14.420375Z",
+      "source_ordinal": 476384,
+      "state": "WARMING_OR_LAGGED_SOURCE",
+      "status_updated_at_utc": "2026-10-15T23:05:06.668412Z"
+    },
+    "shadow_service": {
+      "active": true,
+      "cpu_quota_per_second": "100ms",
+      "cpu_stat_at_capture": {
+        "burst_usec": 0,
+        "core_sched.force_idle_usec": 0,
+        "nice_usec": 5721155000,
+        "nr_bursts": 0,
+        "nr_periods": 721867,
+        "nr_throttled": 694269,
+        "system_usec": 1558915659,
+        "throttled_usec": 61059587557,
+        "usage_usec": 7087981649,
+        "user_usec": 5529065989
+      },
+      "memory_current_bytes": 259014656,
+      "memory_max_bytes": 536870912,
+      "n_restarts": 1
+    }
+  },
+  "limitations": [
+    "The throughput comparison is a roughly 23-second sample, not a long-run benchmark.",
+    "The recorder reports unsequenced input; the source feed continuity is not independently guaranteed.",
+    "The byte backlog is estimated from a point-in-time cursor and file sizes; the active .open file may grow after capture.",
+    "The on-disk code hashes identify the files at capture but do not prove the exact loaded Python bytecode in the running process.",
+    "The active campaign resource policy was not changed; a prospective successor requires a separately versioned plan and capacity validation."
+  ],
+  "provenance": {
+    "max_input_lag_coded_in_worker": "250ms check before new decision evaluation; lagged frames are skipped for decision creation",
+    "service_unit_sha256": "c6024c90cecd5c2715588721ef490824db0042e594f79956a5940ae8faefb63b",
+    "shadow_source_sha256_on_disk": "6e0cb3811a8e32a81e9003a79de0ab778eccc28ff9e725f2163d58decf31b327",
+    "shadow_worker_sha256_on_disk": "0b745947399dc33898bdba41df4f0b183ba87477f5dcddecb7ae2d26f29e3c6d"
+  },
+  "scan_039": {
+    "authenticated_requests": false,
+    "captured_at_utc": "2026-10-15T23:00:55.112847+00:00",
+    "discovery": {
+      "duplicate_records_across_queries": 0,
+      "eligible_pair_markets": 174,
+      "excluded_market_ids": 126,
+      "query_candidate_records": 300,
+      "query_count": 6,
+      "unique_market_ids": 300
+    },
+    "invalid_reasons": {
+      "no_empty_ask_side": 6
+    },
+    "orders_submitted": false,
+    "positive_fragmentation_safe_fee_sensitivity_by_quantity": {
+      "10": 0,
+      "100": 0,
+      "20": 0,
+      "5": 0,
+      "50": 0
+    },
+    "positive_full_depth_gross_by_quantity": {
+      "10": 0,
+      "100": 0,
+      "20": 0,
+      "5": 0,
+      "50": 0
+    },
+    "positive_minimum_notional_by_quantity": {
+      "10": 0,
+      "100": 0,
+      "20": 0,
+      "5": 0,
+      "50": 0
+    },
+    "positive_single_match_fee_sensitivity_by_quantity": {
+      "10": 0,
+      "100": 0,
+      "20": 0,
+      "5": 0,
+      "50": 0
+    },
+    "positive_top_gross_pairs": 0,
+    "qualification_state": "awaiting scheduled Research Director cycle",
+    "quality_valid_pairs": 34,
+    "scan_id": "scan-20261015T230055Z-ff1f8c3dbcd8",
+    "selected_market_pairs": 40,
+    "snapshot_evidence_sha256": "ff1f8c3dbcd89382ae9998b42bb67356532667d336b24b0da7ec23945bebb501",
+    "snapshot_sha256": "793a853700a953f60c17bbd457e24746805fe92d21d5e74bf2c76cf520ac90e2",
+    "source_code_sha256": "c490af70f28038237f1a346bc36cf7c6dda4904a2b02802d830450d88e8a26d5"
+  },
+  "schema_version": 1,
+  "status": "cpu_quota_limited_backlog_confirmed",
+  "throughput_sample": {
+    "cgroup": {
+      "allowed_cpu_usec_at_quota": 2310186,
+      "cpu_quota_per_second": "100ms",
+      "periods_delta": 201,
+      "quota_fraction_used": 0.8684,
+      "throttled_periods_delta": 201,
+      "throttled_usec_delta": 18043738,
+      "usage_delta_usec": 2006076
+    },
+    "elapsed_seconds": 23.101864,
+    "end_status_updated_at_utc": "2026-10-15T23:01:21.498990Z",
+    "interpretation": "The shadow cursor advanced at about one quarter of recorder ordinal throughput during this short sample; every observed CFS period was throttled and CPU use approached the configured quota.",
+    "recorder": {
+      "frame_delta": 31,
+      "ordinal_delta": 84,
+      "ordinal_end": 641718,
+      "ordinal_start": 641634,
+      "records_per_second": 3.6361,
+      "storage_bytes_delta": 406333
+    },
+    "relative_cursor_throughput": 0.25,
+    "sample_values": {
+      "end": {
+        "cpu_usage_usec": 7065430452,
+        "nr_periods": 719612,
+        "nr_throttled": 692014,
+        "recorder_frames": 464550,
+        "recorder_ordinal": 641718,
+        "recorder_storage_bytes": 1196571379,
+        "recorder_updated_ns": 1792105281498989776,
+        "shadow_lagged_frames_skipped": 160640,
+        "shadow_ordinal": 476146,
+        "shadow_received_ns": 1792075189757812060,
+        "shadow_records": 476146,
+        "shadow_updated_ns": 1792105276156855378,
+        "throttled_usec": 60857444934
+      },
+      "start": {
+        "cpu_usage_usec": 7063424376,
+        "nr_periods": 719411,
+        "nr_throttled": 691813,
+        "recorder_frames": 464519,
+        "recorder_ordinal": 641634,
+        "recorder_storage_bytes": 1196165046,
+        "recorder_updated_ns": 1792105258397125731,
+        "shadow_lagged_frames_skipped": 160619,
+        "shadow_ordinal": 476125,
+        "shadow_received_ns": 1792075185186037773,
+        "shadow_records": 476125,
+        "shadow_updated_ns": 1792105255970026833,
+        "throttled_usec": 60839401196
+      }
+    },
+    "shadow": {
+      "lagged_frame_delta": 21,
+      "ordinal_delta": 21,
+      "ordinal_end": 476146,
+      "ordinal_start": 476125,
+      "records_delta": 21,
+      "records_per_second": 0.909,
+      "source_receipt_advance_seconds": 4.571774,
+      "source_receipt_time_rate": 0.1979
+    },
+    "start_status_updated_at_utc": "2026-10-15T23:00:58.397126Z"
+  },
+  "verification": {
+    "active_open_segment_content_read": false,
+    "authenticated_requests": false,
+    "campaign_changed": false,
+    "coverage_pilot_snapshot_and_event_chain_verified_by_read_only_api_projection": true,
+    "orders_submitted": false,
+    "service_restarted": false,
+    "shadow_runtime_checkpoint_digest_valid": true,
+    "source_files_changed": false
+  },
+  "verified_source_cursor": {
+    "cursor": {
+      "offset": 56091,
+      "ordinal": 476384,
+      "segment": "00000000000000476300-dbc7b5201efc4499903f9eb6d294afff"
+    },
+    "cursor_segment_bytes": 156443,
+    "cursor_segment_suffix": ".seg",
+    "estimated_unconsumed_source_bytes": 299424769,
+    "last_later_segment": "00000000000000642290-867e3fd64f0d44448c73780113e40172.open",
+    "later_segment_bytes": 299324417,
+    "later_segment_count": 995,
+    "measurement_method": "read-only SQLite runtime checkpoint plus directory listing and stat sizes; no segment payloads read",
+    "remaining_bytes_in_cursor_segment": 100352,
+    "runtime_checkpoint_digest_valid": true,
+    "runtime_checkpoint_sha256": "4c8b3a71c4d32ffeb5ba911d834b4d3ba1256d0959c3ef137457a8e8df30015e",
+    "source_segment_bytes_at_capture": 1196246712,
+    "source_segment_file_count": 4605
+  }
+}

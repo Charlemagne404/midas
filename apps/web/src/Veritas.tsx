@@ -209,6 +209,21 @@ type CoveragePilotScan = {
   role_counts: Record<string, { selected: number; quality_valid: number }>;
 };
 
+type CoveragePilotControlAvailability = {
+  status: string;
+  source_scan_id: string | null;
+  snapshot_url: string | null;
+  frozen_control_count?: number;
+  available_in_selected_cohort?: number;
+  missing_from_selected_cohort?: number;
+  missing_by_bounded_discovery_status?: Record<string, number>;
+  bounded_query_union_markets?: number;
+  eligible_markets_in_query_union?: number;
+  selection_basis?: string | null;
+  limitations?: string[];
+  reason?: string;
+};
+
 type CoveragePilot = {
   study_id: string;
   protocol_version: string;
@@ -229,6 +244,7 @@ type CoveragePilot = {
   by_selection_stratum: Record<string, CoveragePilotCohort & { distinct_market_count: number }>;
   scans: CoveragePilotScan[];
   latest_scan: CoveragePilotScan | null;
+  latest_control_availability: CoveragePilotControlAvailability | null;
   summary_artifact: (Artifact & { file_sha256: string; url: string }) | null;
   limitations: string[];
 };
@@ -594,6 +610,14 @@ const usdc = (value: string) => `${Number(value) >= 0 ? '+' : ''}${Number(value)
 const rate = (value: number, denominator: number) =>
   denominator ? `${((100 * value) / denominator).toFixed(1)}%` : '—';
 const bytes = (value: number) => `${(value / 1024 / 1024).toFixed(1)} MiB`;
+const controlAvailabilityLabel = (reason: string) => {
+  if (reason === 'not_returned_by_bounded_query_union') return 'not returned by bounded query';
+  if (reason === 'eligible_but_not_selected') return 'eligible, not selected';
+  if (reason.startsWith('excluded_')) {
+    return `excluded: ${reason.slice('excluded_'.length).replaceAll('_', ' ')}`;
+  }
+  return reason.replaceAll('_', ' ');
+};
 const time = (value: string) =>
   new Date(value).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
 
@@ -1012,6 +1036,55 @@ export function Veritas() {
                 Inspect latest pilot snapshot <ArrowUpRight size={13} />
               </a>
             </>
+          )}
+          {measurementPilot.latest_control_availability && (
+            <div className="ve-pilot-latest" data-testid="pilot-control-availability">
+              <span>Frozen-control availability · latest scan</span>
+              {measurementPilot.latest_control_availability.status === 'verified' ? (
+                <>
+                  <strong>
+                    {fmt(
+                      measurementPilot.latest_control_availability.available_in_selected_cohort ??
+                        0,
+                    )}{' '}
+                    / {fmt(measurementPilot.latest_control_availability.frozen_control_count ?? 0)}{' '}
+                    selected ·{' '}
+                    {fmt(
+                      measurementPilot.latest_control_availability.missing_from_selected_cohort ??
+                        0,
+                    )}{' '}
+                    missing
+                  </strong>
+                  <small>
+                    {Object.entries(
+                      measurementPilot.latest_control_availability
+                        .missing_by_bounded_discovery_status ?? {},
+                    )
+                      .map(([reason, count]) => `${controlAvailabilityLabel(reason)} ${fmt(count)}`)
+                      .join(' · ')}
+                  </small>
+                  <small>
+                    {measurementPilot.latest_control_availability.limitations?.[0] ??
+                      'Availability describes only the bounded public query union.'}
+                  </small>
+                  {measurementPilot.latest_control_availability.snapshot_url && (
+                    <a
+                      className="ve-latest-snapshot"
+                      href={measurementPilot.latest_control_availability.snapshot_url}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Inspect control-availability snapshot <ArrowUpRight size={13} />
+                    </a>
+                  )}
+                </>
+              ) : (
+                <small>
+                  {measurementPilot.latest_control_availability.reason ??
+                    'The latest control-availability evidence could not be verified.'}
+                </small>
+              )}
+            </div>
           )}
           {measurementPilot.summary_artifact && (
             <a

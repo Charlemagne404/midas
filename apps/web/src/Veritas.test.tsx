@@ -561,6 +561,27 @@ it('labels measured evidence and keeps synthetic execution separate from actual 
                         stable_random_control: { selected: 3, quality_valid: 1 },
                       },
                     },
+                    latest_control_availability: {
+                      status: 'verified',
+                      source_scan_id: 'scan-20261015T190055Z-7799523b9d87',
+                      snapshot_url:
+                        '/api/veritas/observatory/snapshots/scan-20261015T190055Z-7799523b9d87',
+                      frozen_control_count: 4,
+                      available_in_selected_cohort: 1,
+                      missing_from_selected_cohort: 3,
+                      missing_by_bounded_discovery_status: {
+                        not_returned_by_bounded_query_union: 1,
+                        excluded_unsupported_outcome_relationship: 1,
+                        eligible_but_not_selected: 1,
+                      },
+                      bounded_query_union_markets: 4,
+                      eligible_markets_in_query_union: 3,
+                      selection_basis:
+                        'seeded simple random control within bounded discovery union',
+                      limitations: [
+                        'Absence from the six bounded query responses does not establish that a market is closed or absent from the venue.',
+                      ],
+                    },
                     summary_artifact: {
                       id: 'coverage-pilot',
                       label: 'Verified prospective coverage-pilot summary',
@@ -696,6 +717,18 @@ it('labels measured evidence and keeps synthetic execution separate from actual 
   ).toBeInTheDocument();
   expect(screen.getByText('31 / 37 · 83.8%')).toBeInTheDocument();
   expect(screen.getByText('1 / 3 · 33.3%')).toBeInTheDocument();
+  expect(screen.getByTestId('pilot-control-availability')).toHaveTextContent(
+    '1 / 4 selected · 3 missing',
+  );
+  expect(screen.getByTestId('pilot-control-availability')).toHaveTextContent(
+    'not returned by bounded query 1',
+  );
+  expect(screen.getByTestId('pilot-control-availability')).toHaveTextContent(
+    'excluded: unsupported outcome relationship 1',
+  );
+  expect(screen.getByTestId('pilot-control-availability')).toHaveTextContent(
+    'eligible, not selected 1',
+  );
   expect(screen.getByText(/Cohort yields are descriptive/)).toBeInTheDocument();
   expect(screen.getByRole('link', { name: 'Inspect latest pilot snapshot' })).toHaveAttribute(
     'href',
