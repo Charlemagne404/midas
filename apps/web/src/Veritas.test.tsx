@@ -39,6 +39,29 @@ it('labels measured evidence and keeps synthetic execution separate from actual 
                     research_question: 'Does the independent challenge repeat?',
                     current_stage: 'fresh challenge',
                   },
+                  {
+                    director_id: 'director-veritas-opportunity-v1',
+                    state: 'CURRENT',
+                    research_question:
+                      'Do new finalized public snapshots contain quality-valid economic candidates?',
+                    current_stage: 'Evidence is qualified',
+                    source_scan_id: 'scan-20261015T100000Z-6f98ffeaecab',
+                    last_qualified_scan_id: 'scan-20261015T100000Z-6f98ffeaecab',
+                    strategy_readiness: 'NOT_READY_NO_QUALIFIED_GROSS_CANDIDATE',
+                    model_readiness: 'NOT_READY_NO_PUBLIC_OUTCOME_LABELS',
+                    independent_confirmation_readiness:
+                      'NOT_READY_LESS_THAN_48_HOURS_OR_NO_INDEPENDENT_SEQUENCE',
+                    recommendation: 'Keep no-trade; continue bounded collection.',
+                    latest_finding: {
+                      finding_id: 'veritas-qualification-v1-0123456789abcdef',
+                      experiment_run_id: 'VERITAS-M2-ECO-QUAL-001-RUN-test',
+                      status: 'no_positive_gross_candidate_observed',
+                      snapshot_count: 13,
+                      quality_valid_pairs: 469,
+                      unique_market_ids: 186,
+                      positive_states_by_gate: { unchanged_top_ask_gross_sign: 0 },
+                    },
+                  },
                 ],
                 active_schedule_count: 1,
                 schedules: [
@@ -347,6 +370,8 @@ it('labels measured evidence and keeps synthetic execution separate from actual 
   expect(screen.getByText(/7 HTTP attempts used in latest scan/)).toBeInTheDocument();
   expect(await screen.findByText(/validating finalized observations/)).toBeInTheDocument();
   expect(await screen.findByText(/Does the independent challenge repeat/)).toBeInTheDocument();
+  expect(await screen.findByText(/Keep no-trade; continue bounded collection/)).toBeInTheDocument();
+  expect(screen.getByText(/469 quality-valid pairs across 186 markets/)).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Run bounded qualification in Arena' })).toBeEnabled();
   fireEvent.click(screen.getByText(/Inspect latest per-market selection probabilities/));
   expect(screen.getByText(/Inclusion probability 0.25/)).toBeInTheDocument();

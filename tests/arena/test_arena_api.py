@@ -169,6 +169,20 @@ def test_research_activity_returns_bounded_job_director_schedule_and_alert_statu
             "state": "RUNNING",
             "research_question": "Does the frozen challenge repeat?",
             "current_stage": "independent challenge",
+            "latest_scan_id": "scan-20261015T090047Z-6f98ffeaecab",
+            "last_qualified_scan_id": "scan-20261015T083047Z-6f98ffeaecab",
+            "strategy_readiness": "NOT_READY_NO_QUALIFIED_GROSS_CANDIDATE",
+            "model_readiness": "NOT_READY_NO_PUBLIC_OUTCOME_LABELS",
+            "recommendation": "Keep no-trade and continue bounded collection.",
+            "latest_finding": {
+                "finding_id": "veritas-qualification-v1-0123456789abcdef",
+                "experiment_run_id": "VERITAS-M2-ECO-QUAL-001-RUN-example",
+                "status": "no_positive_gross_candidate_observed",
+                "snapshot_count": 13,
+                "quality_valid_pairs": 469,
+                "unique_market_ids": 186,
+                "positive_states_by_gate": {"top_ask": 0},
+            },
         },
     )
     atomic_json(
@@ -204,6 +218,11 @@ def test_research_activity_returns_bounded_job_director_schedule_and_alert_statu
     assert activity["jobs"][0]["progress"] == {"done": 2, "total": 5}
     assert activity["active_director_count"] == 1
     assert activity["directors"][0]["current_stage"] == "independent challenge"
+    assert activity["directors"][0]["source_scan_id"] == "scan-20261015T090047Z-6f98ffeaecab"
+    assert activity["directors"][0]["strategy_readiness"] == (
+        "NOT_READY_NO_QUALIFIED_GROSS_CANDIDATE"
+    )
+    assert activity["directors"][0]["latest_finding"]["quality_valid_pairs"] == 469
     assert activity["active_schedule_count"] == 1
     assert activity["schedules"][0]["steps"][0]["name"] == "replay"
     assert activity["alerts"][0]["reason"] == "Source changed before admission"

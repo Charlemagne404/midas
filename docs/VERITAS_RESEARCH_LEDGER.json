@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-15T10:14:00Z",
+  "updated_at_utc": "2026-10-15T10:41:43Z",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -2284,6 +2284,41 @@
         "The public snapshot panel is independent from this source replay and has its own intermittent coverage limitations."
       ],
       "decision": "Keep the timer active, preserve the source prefix and campaign identity checks, and report progress separately from public snapshot evidence.",
+      "status": "continue"
+    },
+    {
+      "hypothesis_id": "VERITAS-H050",
+      "title": "A recurring scan-pinned Director can qualify finalized Veritas evidence safely and idempotently",
+      "mechanism": "A bounded user timer checks the newest v2 scan against its finalized v4 event, admits at most one Arena job per scan, and stores the job result, readiness, and recommendation with durable lineage.",
+      "experiment_id": "VERITAS-M2-GATE-F-DIRECTOR-013",
+      "dataset_id": "0797528f5255a72382a267edba1f2459fa8c3eede8b07a3f407e5ad05ec69ca8",
+      "success_metric": "Complete one new-scan qualification within explicit input, memory, CPU, wall-time, and job-count bounds; verify source/result hashes and readiness; prove repeat polling reuses the same completed job without changing protected campaign evidence.",
+      "result": {
+        "status": "completed_single_cycle_no_positive_candidate",
+        "latest_scan_id": "scan-20261015T103110Z-b077f9c3d7be",
+        "job_id": "job-1bb0f47d56374e1385503362",
+        "finding_id": "veritas-qualification-v1-115a375a2bd16454",
+        "experiment_run_id": "VERITAS-M2-ECO-QUAL-001-RUN-0797528f5255",
+        "finalized_events": 14,
+        "source_bytes": 256411,
+        "quality_valid_pairs": 507,
+        "market_ids": 210,
+        "positive_states_at_all_five_gates": 0,
+        "repeat_poll_reused_job": true,
+        "active_jobs_after_completion": 0,
+        "invalid_activity_artifacts": 0,
+        "strategy_readiness": "NOT_READY_NO_QUALIFIED_GROSS_CANDIDATE",
+        "model_readiness": "NOT_READY_NO_PUBLIC_OUTCOME_LABELS",
+        "independent_confirmation_readiness": "NOT_READY_LESS_THAN_48_HOURS_OR_NO_INDEPENDENT_SEQUENCE",
+        "recommendation": "Keep no-trade; continue bounded collection and qualify only when a new finalized scan arrives."
+      },
+      "limitations": [
+        "This is one completed Director qualification cycle; it does not establish multi-day reliability.",
+        "Repeated market snapshots are dependent and the panel is a short selected public sample, not independent confirmation.",
+        "The Director does not coordinate Reality source replay, run strategy/model experiments, or promote models.",
+        "Request-to-receipt timing does not verify venue sequence, batch atomicity, or upstream queue age."
+      ],
+      "decision": "Keep the timer active and retain the no-trade recommendation. Continue the 24-hour pilot review and original 48-hour coverage/dependence gates before adding coordination or strategy work.",
       "status": "continue"
     }
   ],

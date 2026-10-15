@@ -320,6 +320,25 @@ type ArenaResearchActivity = {
     state: string | null;
     research_question: string | null;
     current_stage: string | null;
+    source_scan_id?: string | null;
+    last_qualified_scan_id?: string | null;
+    strategy_readiness?: string | null;
+    model_readiness?: string | null;
+    independent_confirmation_readiness?: string | null;
+    source_revision_sha256?: string | null;
+    recommendation?: string | null;
+    updated_at_utc?: string | null;
+    latest_finding?: {
+      finding_id: string | null;
+      experiment_run_id: string | null;
+      experiment_sha256?: string | null;
+      dataset_sha256?: string | null;
+      status: string | null;
+      snapshot_count: number | null;
+      quality_valid_pairs: number | null;
+      unique_market_ids: number | null;
+      positive_states_by_gate: Record<string, number> | null;
+    } | null;
   }>;
   active_schedule_count: number;
   schedules: Array<{
@@ -1269,7 +1288,7 @@ export function Veritas() {
         <Panel
           eyebrow="ARENA / RESEARCH DIRECTOR"
           title="Bounded research activity"
-          note="Read-only Arena manifest status for jobs, schedules, Directors, and alerts; supervisor liveness remains on Arena job detail views."
+          note="The Veritas Director checks for new finalized scans every 30 minutes and admits one bounded qualification job per scan; readiness and findings stay read-only."
         >
           {arenaActivityQuery.isPending ? (
             <p className="ve-observatory-note">Loading bounded Arena activity…</p>
@@ -1323,6 +1342,36 @@ export function Veritas() {
                           director.research_question ??
                           'No stage published'}
                       </h4>
+                      {director.source_scan_id && (
+                        <p>
+                          Latest scan {director.source_scan_id}
+                          {director.last_qualified_scan_id
+                            ? ` · qualified ${director.last_qualified_scan_id}`
+                            : ' · qualification pending'}
+                        </p>
+                      )}
+                      {(director.strategy_readiness || director.model_readiness) && (
+                        <p>
+                          Strategy: {director.strategy_readiness?.replaceAll('_', ' ') ?? 'unknown'}
+                          {' · Model: '}
+                          {director.model_readiness?.replaceAll('_', ' ') ?? 'unknown'}
+                        </p>
+                      )}
+                      {director.independent_confirmation_readiness && (
+                        <p>
+                          Confirmation:{' '}
+                          {director.independent_confirmation_readiness.replaceAll('_', ' ')}
+                        </p>
+                      )}
+                      {director.latest_finding && (
+                        <p>
+                          {fmt(director.latest_finding.quality_valid_pairs ?? 0)} quality-valid
+                          pairs across {fmt(director.latest_finding.unique_market_ids ?? 0)} markets
+                          {' · '}
+                          {director.latest_finding.status?.replaceAll('_', ' ') ?? 'finding'}
+                        </p>
+                      )}
+                      {director.recommendation && <p>{director.recommendation}</p>}
                       {director.research_question && <p>{director.research_question}</p>}
                     </article>
                   ))}

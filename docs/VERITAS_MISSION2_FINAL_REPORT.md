@@ -1,10 +1,10 @@
 # Project Veritas Mission 2 — Current Engineering Report
 
-**Status:** Mission 2 remains active. Discovery, independent binary-pair arithmetic, bounded public observation, continuous finalized-snapshot analysis, candidate qualification, paired measurement comparison, market/time censoring analysis, and the corresponding read-only dashboard view are implemented. The controlled Director workflow, broader dashboard scope, and longer independent validation remain open.
+**Status:** Mission 2 remains active. Discovery, independent binary-pair arithmetic, bounded public observation, continuous finalized-snapshot analysis, candidate qualification, paired measurement comparison, market/time censoring analysis, and the read-only dashboard are implemented. A recurring scan-pinned Veritas Research Director now qualifies new finalized scans and reports readiness. Source-replay coordination, strategy/model experiments, the broader dashboard scope, and longer independent validation remain open.
 
 **Date:** 2026-10-15
 **Branch:** `project/veritas`
-**Parent commit:** `48fcfc27f42b4ae68a06182cfeb1ff936260de67`
+**Checkpoint base commit:** `40f04c8`
 
 ## Changes in this checkpoint
 
@@ -13,7 +13,7 @@
 - The economic experiment now follows the current snapshot analysis version when loading immutable events, so qualification reads v4 evidence.
 - A stale source-integrity fixture now mutates a nonempty processed segment rather than the intentionally skipped empty catalog header.
 
-## Evidence at the twelve-snapshot checkpoint
+## Earlier evidence at the twelve-snapshot checkpoint
 
 The panel covers 05:59:28–09:00:47 UTC: 12 snapshots, 480 selected observations, 161 distinct market IDs, and 431 request/receipt-valid pairs. The prior 5-second reported-age plus 250 ms cross-outcome-skew gate accepts 107/480. The paired yield difference is +324 pairs, or +67.5 percentage points. The corrected gate has 49 empty-ask invalid pairs remaining.
 
@@ -25,7 +25,7 @@ The 08:44 UTC forensic snapshot covers 10,165 frozen-campaign decisions across 4
 
 The latest scan is `scan-20261015T090047Z-6f98ffeaecab`; its 12-snapshot qualification run still has zero positive states. The Reality source replay remains bounded and read-only at 786/2,959 replayable finalized segments, with 2,173 pending and no campaign-window frames in the processed prefix. The live public observer and source-replay timers remain active. See [operations](VERITAS_MISSION2_OPERATIONS.md) and [Gate A checkpoint 010](VERITAS_MISSION2_GATE_A_CHECKPOINT_010.md).
 
-## Verification
+## Earlier checkpoint verification
 
 - Veritas backend regression suite: 88 passed; one Starlette/httpx deprecation warning.
 - Ruff and strict Mypy on changed Python sources: passed.
@@ -37,7 +37,7 @@ The latest scan is `scan-20261015T090047Z-6f98ffeaecab`; its 12-snapshot qualifi
 
 Request-to-receipt duration does not prove venue sequence or batch atomicity. Snapshots and campaign decisions are selected, intermittent, and correlated. The v4 reclassification is retrospective on ten saved scans, with two later scheduled scans captured prospectively. The censoring audit is a bounded read-only SQL snapshot; it did not replay the complete event hash chain or run a full SQLite integrity scan. `future_observation_unavailable` does not establish whether a venue was quiet or the feed failed to expose a quote. There is no positive gross candidate, so strategy PnL testing, model training, or promotion is unsupported. The original follow-up study's readiness gates remain intact.
 
-Mission 2 is not complete. Continue safe observation; seek independent source coverage or sequence evidence to separate unavailable future observations from feed gaps; evaluate an Arena-compatible Director workflow without duplicating collector writes; expand dashboard research/readiness surfaces; and gather independent temporal evidence before any economic claim.
+Mission 2 is not complete. Continue safe observation; seek independent source coverage or sequence evidence to separate unavailable future observations from feed gaps; review the recurring Director after longer operation; coordinate source replay only if its information value justifies another bounded workflow; expand dashboard research/readiness surfaces; and gather independent temporal evidence before any economic claim.
 
 ## Preserved systems
 
@@ -80,3 +80,56 @@ review, the 48-hour follow-up and dependence gates, continued source replay,
 the full Director workflow, and any strategy/model comparison remain open.
 See [Gate A checkpoint 011](VERITAS_MISSION2_GATE_A_CHECKPOINT_011.md) and
 [research inventory 012](VERITAS_MISSION2_RESEARCH_INVENTORY_012.json).
+
+## Gate F checkpoint addendum — 2026-10-15
+
+The 10:31:10 UTC observer scan
+`scan-20261015T103110Z-b077f9c3d7be` brought the v4 panel to 14 finalized
+snapshots, 560 selected observations, 507 request/receipt-valid pairs, 210
+distinct observed markets, and zero pending snapshots. The current bounded
+discovery union contains 300 IDs, 184 eligible same-condition binary pairs,
+and 116 explicit exclusions; the selected 40-market frame had 38 valid pairs.
+Across the cumulative panel the prior reported-age/skew gate accepts 128 of
+560, compared with 507 under the current gate, a paired gain of 379 states
+(67.68 percentage points). This remains intermittent selected coverage and
+does not verify venue sequence or quote lifetime.
+
+The enabled Research Director timer runs at :15 and :45 UTC. Its first
+operational cycle admitted one scan-pinned Arena job for the new v4 evidence,
+processed 14 events / 256,411 source bytes, and persisted
+`veritas-qualification-v1-115a375a2bd16454`. Every top-ask, full-depth,
+minimum-notional, single-match-fee, and fragmentation-safe-fee count is zero.
+The maximum observed top-pair edge is -0.001 per share. The Director keeps
+no-trade, marks strategy review not ready without an eligible gross candidate,
+and marks model work not ready without outcome labels. It does not promote
+models or change source code. The read-only Arena API and dashboard show the
+scan IDs, sample counts, readiness, and recommendation.
+
+The Director service is bounded at CPU 5% and 512 MiB. Its qualification jobs
+are bounded at CPU 10%, 512 MiB, 300 seconds, 64 MiB of source, and 512 events.
+The service and future workers restrict address families to `AF_UNIX`. The
+timer is active, the latest finding is complete, the Arena root has no active
+jobs, and the API activity projection reports zero invalid artifacts.
+
+The separate 10:40 UTC source-replay recurrence processed 128 finalized
+segments / 30,283,274 bytes in 155 seconds, using 7.737 CPU seconds and 132.1
+MiB peak memory. The prefix now covers 1,072/3,136 replayable segments, with
+2,064 pending and no campaign-window frames. The service continues to read
+only finalized `.seg` files; current sealed state and summary digests are in
+[research inventory 013](VERITAS_MISSION2_RESEARCH_INVENTORY_013.json).
+
+The focused backend regression set passed 133 tests; frontend tests passed 29,
+and lint, formatting, strict typing, production build, and the Veritas browser
+workflow passed. The broad all-Arena suite was stopped early while it was
+running unrelated simulator/stress cases under the active collector; the
+affected Veritas and Arena groups completed. The production build retains its
+existing Vite large-chunk advisory. One 11:30 CEST observer run failed on the
+legacy control-cohort version check; its frozen file hash was unchanged, and
+the next two scheduled observations succeeded.
+
+Mission 2 remains active. The 24-hour measurement-pilot review, original
+48-hour follow-up and dependence gates, independent sequence freshness, source
+replay coordination, full strategy/model readiness workflow, and broader
+dashboard work remain open. Details are in [Gate F checkpoint
+001](VERITAS_MISSION2_GATE_F_CHECKPOINT_001.md), [operations](VERITAS_MISSION2_OPERATIONS.md),
+and [research inventory 013](VERITAS_MISSION2_RESEARCH_INVENTORY_013.json).

@@ -1,0 +1,25 @@
+[Unit]
+Description=MIDAS Veritas bounded opportunity Research Director
+After=local-fs.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=%h/midas-veritas
+ExecStart=/home/charlie/midas/.venv/bin/python scripts/veritas_research_director.py --repository %h/midas-veritas --arena-root %h/midas-veritas/data/arena
+Environment=PYTHONPATH=%h/midas-veritas/packages
+Environment=PYTHONDONTWRITEBYTECODE=1
+Environment=OMP_NUM_THREADS=1
+Environment=OPENBLAS_NUM_THREADS=1
+Environment=MKL_NUM_THREADS=1
+MemoryMax=512M
+CPUQuota=5%
+Nice=15
+IOSchedulingClass=idle
+UMask=0077
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=%h/midas-veritas/data/arena %h/midas-veritas/data/veritas-observatory
+RestrictAddressFamilies=AF_UNIX
+PrivateTmp=true
+TimeoutStartSec=90s

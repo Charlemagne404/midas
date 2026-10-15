@@ -111,6 +111,8 @@ def test_veritas_qualification_job_dispatches_through_bounded_arena_worker(tmp_p
         launch=False,
         admission_key=f"veritas-qualification-v1-{scan_id}",
     )
+    assert job["budget"]["cpu_quota_percent"] == 10
+    assert job["budget"]["memory_mb"] == 512
     calls = []
 
     def execute(root, received_spec, progress):
@@ -151,3 +153,32 @@ def test_supervised_job_runner_imports_the_submitted_checkout(tmp_path, monkeypa
     assert len(commands) == 1
     assert f"--working-directory={repository}" in commands[0]
     assert f"--setenv=PYTHONPATH={repository / 'packages'}" in commands[0]
+
+
+def test_veritas_qualification_supervisor_has_read_only_resource_bounds(tmp_path, monkeypatch):
+    from midas.veritas.arena_qualification import VeritasQualificationSpec
+
+    commands = []
+
+    def launch(command, **kwargs):
+        commands.append(command)
+        return SimpleNamespace(returncode=0, stdout="", stderr="")
+
+    monkeypatch.setattr(subprocess, "run", launch)
+    job = create(
+        tmp_path,
+        JobSpec(
+            kind="veritas_qualification",
+            veritas_qualification=VeritasQualificationSpec(
+                expected_latest_scan_id="scan-20261015T090047Z-6f98ffeaecab"
+            ),
+            max_wall_seconds=300,
+        ),
+        admission_key="veritas-qualification-v1-scan-20261015T090047Z-6f98ffeaecab",
+    )
+
+    assert job["state"] == "QUEUED"
+    assert len(commands) == 1
+    assert "--property=MemoryMax=512M" in commands[0]
+    assert "--property=CPUQuota=10%" in commands[0]
+    assert "--property=RestrictAddressFamilies=AF_UNIX" in commands[0]

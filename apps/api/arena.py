@@ -146,6 +146,31 @@ def research_activity(root: Path) -> dict[str, Any]:
                 "state": row.get("state"),
                 "research_question": row.get("research_question"),
                 "current_stage": row.get("current_stage"),
+                "source_scan_id": row.get("latest_scan_id") or row.get("current_scan_id"),
+                "last_qualified_scan_id": row.get("last_qualified_scan_id"),
+                "strategy_readiness": row.get("strategy_readiness"),
+                "model_readiness": row.get("model_readiness"),
+                "independent_confirmation_readiness": row.get("independent_confirmation_readiness"),
+                "source_revision_sha256": row.get("source_revision_sha256"),
+                "recommendation": _bounded_string(row.get("recommendation"), 600),
+                "updated_at_utc": row.get("updated_at_utc"),
+                "latest_finding": (
+                    {
+                        "finding_id": row["latest_finding"].get("finding_id"),
+                        "experiment_run_id": row["latest_finding"].get("experiment_run_id"),
+                        "experiment_sha256": row["latest_finding"].get("experiment_sha256"),
+                        "dataset_sha256": row["latest_finding"].get("dataset_sha256"),
+                        "status": row["latest_finding"].get("status"),
+                        "snapshot_count": row["latest_finding"].get("snapshot_count"),
+                        "quality_valid_pairs": row["latest_finding"].get("quality_valid_pairs"),
+                        "unique_market_ids": row["latest_finding"].get("unique_market_ids"),
+                        "positive_states_by_gate": row["latest_finding"].get(
+                            "positive_states_by_gate"
+                        ),
+                    }
+                    if isinstance(row.get("latest_finding"), dict)
+                    else None
+                ),
             }
             for row in directors[:5]
         ],
@@ -179,6 +204,9 @@ def research_activity(root: Path) -> dict[str, Any]:
                 "state": row.get("state"),
                 "reason": row.get("reason"),
                 "schedule_id": row.get("schedule_id"),
+                "director_id": row.get("director_id"),
+                "scan_id": row.get("scan_id"),
+                "job_id": row.get("job_id"),
             }
             for row in alerts[:5]
         ],

@@ -1,6 +1,29 @@
 # Veritas Mission 2 Engineering Checkpoint
 
-## Latest status — Gate A checkpoint 011
+## Latest status — Gate F checkpoint 001
+
+The recurring Veritas Research Director is enabled at :15 and :45 UTC. It
+verifies a current v2 scan and finalized v4 event, admits one scan-pinned
+Arena qualification job, and publishes durable readiness and finding lineage.
+The first recurring cycle qualified
+`scan-20261015T103110Z-b077f9c3d7be` through
+`job-1bb0f47d56374e1385503362`, producing
+`veritas-qualification-v1-115a375a2bd16454` over 14 events. The cumulative
+panel has 507 valid pairs across 210 markets and zero positive states at all
+qualification gates. The API and Veritas dashboard expose the current scan,
+readiness, sample counts, and no-trade recommendation. See [Gate F checkpoint
+001](VERITAS_MISSION2_GATE_F_CHECKPOINT_001.md), [operations](VERITAS_MISSION2_OPERATIONS.md),
+and [research inventory 013](VERITAS_MISSION2_RESEARCH_INVENTORY_013.json).
+
+The 10:40 UTC Reality source-analysis recurrence processed 128 finalized
+segments / 30,283,274 bytes in 155 seconds (7.737 CPU seconds, 132.1 MiB peak).
+The prefix now covers 1,072 of 3,136 replayable segments, with 2,064 pending
+(557,814,406 bytes) through ordinal 122,759 and no campaign-window frames. The
+observer, source-analysis, and Research Director timers are active. Reality
+services and protected evidence were not restarted or changed. Current source
+and state hashes are in [research inventory 013](VERITAS_MISSION2_RESEARCH_INVENTORY_013.json).
+
+## Earlier status — Gate A checkpoint 011
 
 The 10:01 UTC scheduled v2 discovery scan (`scan-20261015T100116Z-7d135306c470`)
 indexed as the 13th finalized snapshot. The 300-ID bounded union contained 132
