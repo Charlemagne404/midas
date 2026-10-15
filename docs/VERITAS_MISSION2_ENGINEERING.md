@@ -1,28 +1,28 @@
 # Veritas Mission 2 Engineering Checkpoint
 
-## Latest operational and discovery update — Gate A checkpoint 018 / Gate F checkpoint 008
+## Latest operational and discovery update — Gate A checkpoint 019 / Gate F checkpoint 009
 
-The 13:31 scheduled scan is snapshot 20. The cumulative panel has 800
-selected observations, 714 request/receipt-valid pairs, 86 invalid pairs, and
-349 distinct markets. The legacy reported-age/skew gate accepts 167 pairs,
-for a paired recovery of 547/800 (+68.38 percentage points). All five
+The 14:01 scheduled scan is snapshot 21. The cumulative panel has 840
+selected observations, 751 request/receipt-valid pairs, 89 invalid pairs, and
+367 distinct markets. The legacy reported-age/skew gate accepts 176 pairs,
+for a paired recovery of 575/840 (+68.45 percentage points). All five
 economic qualification gates remain zero-positive.
 
-The 13:40 finalized-source replay processed 115 segments / 33,465,203 bytes.
-Its partial prefix now covers 1,791/3,490 finalized segments and contains
-29,198 campaign-window frame records, 21,747 touched states, and 21,041
-quality-valid states. There are 1,699 segments / 450,044,085 bytes pending;
+The 14:10 finalized-source replay processed 128 segments / 32,886,676 bytes.
+Its partial prefix now covers 1,919/3,549 finalized segments and contains
+40,459 campaign-window frame records, 30,809 touched states, and 29,749
+quality-valid states. There are 1,630 segments / 430,839,649 bytes pending;
 positive top-ask and full-depth states remain zero. The earlier source-window
 interpretation correction remains documented in checkpoint 017.
 
-The 13:45 Director cycle admitted scan 20, and Arena completed the 20-event
-qualification at 13:46:06 UTC. The finding remains zero-positive. At this
-checkpoint the Director manifest still showed `QUEUED` and scan 19 as last
-qualified; the next scheduled poll at 14:15:29 UTC is the reconciliation
-point. No manual poll or retry was started. See [Gate A checkpoint
-018](VERITAS_MISSION2_GATE_A_CHECKPOINT_018.md), [Gate F checkpoint
-008](VERITAS_MISSION2_GATE_F_CHECKPOINT_008.md), [operations](VERITAS_MISSION2_OPERATIONS.md),
-and [research inventory 021](VERITAS_MISSION2_RESEARCH_INVENTORY_021.json).
+The 14:15 Director cycle recorded scan 20 completion, admitted scan 21, and
+Arena completed the 21-event qualification at 14:16:20 UTC. The finding
+remains zero-positive. At this checkpoint the Director manifest still showed
+`QUEUED` for scan 21 and scan 20 as last qualified; the next scheduled poll at
+14:45:16 UTC is the reconciliation point. No manual poll or retry was started.
+See [Gate A checkpoint 019](VERITAS_MISSION2_GATE_A_CHECKPOINT_019.md), [Gate F
+checkpoint 009](VERITAS_MISSION2_GATE_F_CHECKPOINT_009.md), [operations](VERITAS_MISSION2_OPERATIONS.md),
+and [research inventory 022](VERITAS_MISSION2_RESEARCH_INVENTORY_022.json).
 
 ## Latest dashboard update — Gate G checkpoint 004
 
@@ -484,7 +484,7 @@ scan 18 as last qualified until the scheduled 13:45:16 UTC cycle. Mission 2
 remains active. See [Gate A checkpoint 017](VERITAS_MISSION2_GATE_A_CHECKPOINT_017.md),
 [Gate F checkpoint 007](VERITAS_MISSION2_GATE_F_CHECKPOINT_007.md), and
 [research inventory 020](VERITAS_MISSION2_RESEARCH_INVENTORY_020.json).
-## Gate A checkpoint 018 addendum — scan 20 and source replay
+## Previous Gate A checkpoint 018 addendum — scan 20 and source replay
 
 Scan 20 adds 33 quality-valid pairs and seven empty-ask invalid pairs. The
 20-scan panel has 714/800 quality-valid observations, 167/800 legacy
@@ -505,3 +505,26 @@ scan 19 as last qualified until the scheduled 14:15:29 UTC cycle. Mission 2
 remains active. See [Gate A checkpoint 018](VERITAS_MISSION2_GATE_A_CHECKPOINT_018.md),
 [Gate F checkpoint 008](VERITAS_MISSION2_GATE_F_CHECKPOINT_008.md), and
 [research inventory 021](VERITAS_MISSION2_RESEARCH_INVENTORY_021.json).
+
+## Gate A checkpoint 019 addendum — scan 21 and source replay
+
+Scan 21 adds 37 quality-valid pairs and three empty-No-ask invalid pairs. The
+21-scan panel has 751/840 quality-valid observations, 176/840 legacy
+age/skew-valid observations, and no positive top, depth, per-leg minimum, or
+fee state. The bounded scan union has 300 unique IDs, 198 supported
+same-condition V1 pairs, and 102 explicit exclusions. The 40-market selection
+retains 37 rotating markets and three available frozen controls.
+
+The 14:13 finalized-source summary counts 40,459 campaign-window frames,
+30,809 touched market-frame states, and 29,749 quality-valid states. The
+prefix remains partial with 1,630 finalized segments pending and zero positive
+top-ask or full-depth states. Checkpoint 016's 12:43 counter interpretation
+was corrected in checkpoint 017.
+
+The 14:15 Director cycle recorded scan 20 completion, then admitted scan 21.
+The Arena job completed all 21 events at 14:16:20 UTC with zero positive
+states at each qualification gate. Its manifest still projects `QUEUED` for scan 21 and
+scan 20 as last qualified until the scheduled 14:45:16 UTC cycle. Mission 2
+remains active. See [Gate A checkpoint 019](VERITAS_MISSION2_GATE_A_CHECKPOINT_019.md),
+[Gate F checkpoint 009](VERITAS_MISSION2_GATE_F_CHECKPOINT_009.md), and
+[research inventory 022](VERITAS_MISSION2_RESEARCH_INVENTORY_022.json).

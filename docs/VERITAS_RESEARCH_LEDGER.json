@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-15T13:47:03Z",
+  "updated_at_utc": "2026-10-15T14:21:21Z",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -2765,6 +2765,81 @@
         "Economic gates evaluate displayed public books and hypothetical fees; they do not establish order arrival, fills, or realized returns.",
         "The scan and Arena finding include only supported same-condition V1 binary pairs; unsupported outcome relationships remain excluded.",
         "The completed Arena job is visible in its job and finding files, while the Director manifest still shows QUEUED pending scheduled reconciliation."
+      ]
+    },
+    {
+      "hypothesis_id": "VERITAS-H058",
+      "experiment_id": "VERITAS-M2-PROSPECTIVE-OBSERVATION-20261015-021",
+      "dataset_id": "fe9b2295cd75246167ad23e6fff017c424f74581036afed3f23f90ee103f6ab6",
+      "title": "Does the twenty-first scheduled public scan produce a quality-valid positive same-condition pair?",
+      "mechanism": "Continue the bounded six-frame Gamma discovery protocol and 40-market rotating sample, classify matched top-of-book pairs using request/receipt quality, and qualify the immutable 21-scan prefix through the existing Arena job.",
+      "success_metric": "At least one same-condition V1 pair passes quality validation and produces a positive top-ask, complete-depth, per-leg minimum, or fee-aware economic qualification, with independent freshness and source lineage preserved.",
+      "result": {
+        "status": "completed_no_positive_economic_candidates",
+        "analysis_version": "veritas-finalized-snapshot-analysis-v4",
+        "scan_id": "scan-20261015T140150Z-b4ba652d6e9c",
+        "captured_at_utc": "2026-10-15T14:01:50.080679+00:00",
+        "snapshot_evidence_sha256": "b4ba652d6e9c94e9fcf69e49de2cf60263263711c94fee487cf4b16f91fc1e7e",
+        "snapshot_file_sha256": "b3299fd25499bc427f81300f017386e97b512541e9381af8343815b905694f93",
+        "analysis_event_sha256": "654efc549f84d9fe490541f1314d022f3a02ff6d67795609941fa8771a28e6e8",
+        "analysis_event_file_sha256": "16eb9dc834bbd321ab39d1535aed02929ceca1d1a7b4a01234264cea89cf9285",
+        "latest_scan_attempted_pairs": 40,
+        "latest_scan_quality_valid_pairs": 37,
+        "latest_scan_invalid_pairs": 3,
+        "latest_scan_legacy_freshness_valid_pairs": 9,
+        "bounded_discovery": {
+          "query_candidate_records": 300,
+          "unique_market_ids": 300,
+          "eligible_same_condition_v1_pairs": 198,
+          "explicit_exclusions": 102,
+          "exclusion_reasons": {
+            "augmented_negative_risk_semantics_unverified": 33,
+            "unsupported_outcome_relationship": 69
+          }
+        },
+        "cumulative_sample": {
+          "snapshots": 21,
+          "selected_observations": 840,
+          "quality_valid_pairs": 751,
+          "invalid_pairs": 89,
+          "legacy_freshness_valid_pairs": 176,
+          "unique_market_ids": 367,
+          "top_edge_per_share": {
+            "count": 751,
+            "maximum_per_share": "-0.001",
+            "median_nearest_rank_per_share": "-0.024",
+            "minimum_per_share": "-0.984",
+            "positive_count": 0
+          }
+        },
+        "positive_states_by_gate": {
+          "unchanged_top_ask_gross_sign": 0,
+          "full_displayed_depth_gross": 0,
+          "full_depth_and_per_leg_minimum_notional": 0,
+          "single_match_fee_sensitivity_positive": 0,
+          "fragmentation_safe_fee_sensitivity_positive": 0
+        },
+        "research_summary_sha256": "c69b4e9c97115c8d836fbd302d143d51ca99e97e3a13fa567e5b18813b68580d",
+        "research_summary_file_sha256": "dd3c0b2d573505d2a68fc4289db15836910f28f72399d2879af8f48dfdfae4fd",
+        "source_analysis_summary_sha256": "ed121aceb771923c0070d648c18794e6b1ff378bce7a17afcba4e8f827614495",
+        "source_campaign_window_frame_records": 40459,
+        "source_campaign_window_quality_valid_states": 29749,
+        "arena_job_id": "job-979f118b02764225b23ad87b",
+        "arena_finding_id": "veritas-qualification-v1-e46e192a082956ab",
+        "arena_finding_sha256": "a96e0e029ce83e2c181aebcaa2b38ef1fc5b816d45fb4a510d5bdbd7f6f8847c",
+        "dataset_sha256": "fe9b2295cd75246167ad23e6fff017c424f74581036afed3f23f90ee103f6ab6",
+        "experiment_sha256": "9047457176fb94a8ff5afddc0949b568f47d5ad3ee08b45f5cf8a29e1bef1ae3",
+        "orders_submitted": false,
+        "authenticated_requests": false
+      },
+      "decision": "Keep the no-trade baseline and continue the bounded observation schedule. The sample produced no qualifying gross candidate; source-age and venue-sequence guarantees remain unverified, and the Director manifest reconciliation is pending its next scheduled cycle.",
+      "limitations": [
+        "The six-frame discovery union and rotating sample are conditional and do not form a venue-wide probability sample.",
+        "The 40 selected market observations and repeated snapshots are intermittent and dependent.",
+        "Request-to-receipt timing does not establish upstream queue age, response-batch atomicity, or venue sequence continuity.",
+        "Economic gates evaluate displayed public books and hypothetical fees; they do not establish order arrival, fills, or realized returns.",
+        "The scan and Arena finding include only supported same-condition V1 binary pairs; unsupported outcome relationships remain excluded.",
+        "The completed Arena job is visible in its job and finding files, while the Director manifest still shows QUEUED for scan 21 and scan 20 as last qualified pending the scheduled 14:45 UTC cycle."
       ]
     }
   ],
