@@ -1,23 +1,38 @@
 # Veritas Mission 2 Engineering Checkpoint
 
-## Latest evidence checkpoint — Gate A scan 34 / Gate F qualification
+## Latest engineering checkpoint — Gate C censoring and exact source audit
 
-The 20:31 UTC bounded scan completed with 35/40 quality-valid pairs; the
-34-snapshot panel has 1,202/1,360 valid observations across 632 selected IDs
-and zero positive economic gates. The scheduled Director admitted one Arena
-job for scan 34; Arena processed all 34 events and completed a full zero-row
-candidate replay. The Director manifest still projects `QUEUED` until its
-21:15 UTC cycle. See [Gate A checkpoint 031](VERITAS_MISSION2_GATE_A_CHECKPOINT_031.md)
-and [Gate F checkpoint 020](VERITAS_MISSION2_GATE_F_CHECKPOINT_020.md).
+The current bounded v1.4 read-only forensic snapshot covers 10,253 decisions,
+43 markets, and 37 connected families. It records 3,503 valid initial states,
+937 public markouts, 40,075 censored horizon slots, and zero pending horizons.
+Most censor rows are invalid starts (27,000); the largest remaining causes are
+10,233 unavailable future observations, 1,461 stale follow-up books, and 970
+source-availability timeouts. A new audit verifies all 179 explicit
+`recorded_gap` outcomes against 97 exact finalized source gap records. The
+other 160 `book_issue:gap` outcomes remain indirect. See [Gate C checkpoint
+004](VERITAS_MISSION2_GATE_C_CHECKPOINT_004.md), [censoring report
+004](VERITAS_GATE_A_CENSORING_004.json), and [gap-censor audit
+001](VERITAS_MISSION2_CENSOR_GAP_AUDIT_001.json).
 
-The source analyzer advanced to 3,516/4,318 finalized segments and 192,716
-quality-valid campaign states across 57 markets, with zero positive top-ask
-or full-depth states. It remains behind the recorder; 802 segments / 254.8 MB
-are pending. The latest campaign gap aggregate is 972 resynchronizations and
-one connection failure, without per-gap times in the v1 index. A separate,
-bounded gap-detail extractor remains the next source-quality task. The 24-hour
-coverage pilot has four scans and 132/160 valid observations; its small,
-nonrandomized control comparison remains descriptive.
+The 24-hour coverage pilot has six scans and 202/240 quality-valid pairs
+across 177 selected markets: 194/220 in its rotating cohort and 8/20 in the
+nonrandomized stable controls. The separate gap-detail extractor has verified
+274/4,455 nonempty finalized segments; its terminal record is pre-window and
+its current zero campaign-gap count is partial while 4,181 segments remain pending.
+The 21:50 batch processed 18 segments / 31.82 MB within the 32 MiB bound.
+Its terminal record is at 2026-10-14 10:24:24.977 UTC. Preserve its pinned
+code and cursor while it catches up. The
+scheduled source analyzer covers 3,763/4,436 segments, with 210,181 valid
+states across 63 markets, 1,089 campaign-window resynchronizations, one
+connection failure, and zero positive gross states.
+
+Scan 36 has 1,272/1,440 quality-valid pairs across 665 selected IDs and zero
+positive gross or economic gates. Its scan-pinned Arena job completed all 36
+events and the empty candidate replay; the Director manifest is pending its
+next scheduled reconciliation. See [Gate C checkpoint
+004](VERITAS_MISSION2_GATE_C_CHECKPOINT_004.md), [Gate A checkpoint
+032](VERITAS_MISSION2_GATE_A_CHECKPOINT_032.md), and [Gate F checkpoint
+021](VERITAS_MISSION2_GATE_F_CHECKPOINT_021.md).
 
 ## Previous engineering checkpoint — Gate G frozen label-feasibility visibility
 

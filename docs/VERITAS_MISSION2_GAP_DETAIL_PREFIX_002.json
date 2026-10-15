@@ -1,0 +1,96 @@
+{
+  "analysis_version": "veritas-finalized-reality-gap-detail-v1",
+  "artifact_id": "VERITAS-M2-RECORDER-GAP-DETAIL-PREFIX-002",
+  "artifact_sha256": "08a0bd70b65b3feb2b560e8f5a9c9e9b3d98a26ff16aa1e611d191b98998d3e4",
+  "authenticated_requests": false,
+  "campaign": {
+    "campaign_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
+    "campaign_sha256": "aa8acb2b46823c1a1e3ac5d01a57dde917746c2c7471098ae2a4598875e322f5",
+    "window_end_exclusive_utc": "2026-10-28T21:07:58.642600351Z",
+    "window_start_utc": "2026-10-14T21:07:58.642600351Z"
+  },
+  "captured_at_utc": "2026-10-15T21:51:20+00:00",
+  "gap_counts": {
+    "all_period_by_reason": {
+      "book_resynchronization": 1108,
+      "malformed_constraints": 5,
+      "process_start": 11,
+      "process_stop": 9,
+      "scheduled_refresh": 19
+    },
+    "all_period_event_count": 1152,
+    "campaign_window_affected_market_counts": {},
+    "campaign_window_by_reason": {},
+    "campaign_window_count_interpretation": "Zero because the verified processed prefix ends before campaign start; not a campaign-time result.",
+    "campaign_window_event_count": 0,
+    "campaign_window_gap_events_without_reported_assets": 0,
+    "campaign_window_unmapped_affected_asset_count": 0
+  },
+  "implementation": {
+    "analysis_code_files": {
+      "gap_detail_analysis.py": "fa33da03275866e0dde2fdbdc2d622dce771233a5d1f497b91ee6a04564e066a",
+      "reality/research_schema.py": "fa31024164ae1e20b579403e79417c1eaa8fc2670d154153aae247546d8f9f33",
+      "reality/shadow_campaign.py": "fbca040df77c90182fa7b94375590f89e95289b21e31a8990da390d1241c9aed",
+      "reality/storage.py": "551966d10c2494dd6fcb50988bf32c26558ff6a02d6bd68617f8593b1f5ec3cc",
+      "scripts/veritas_gap_detail_analysis.py": "48ec5649a75e5fdd82d09468eecb458fa6facc12e66a6f7b0d737def5f1b0533"
+    },
+    "analysis_code_sha256": "d58bed78b6fb1d5c25cbed77301610ca31a366982add6f8d0b0cc0997053cec3"
+  },
+  "independently_verified_at_utc": "2026-10-15T21:53:36Z",
+  "limitations": [
+    "Only cataloged finalized .seg files are read; active .open files are never opened.",
+    "Gap received_ns is recorder receiver time, not an exchange quote timestamp.",
+    "affected_market_ids map only assets named by the gap record and the latest preceding discovery record.",
+    "A later frame is not proof that every affected book or the complete feed recovered.",
+    "The analysis preserves gap events; it does not alter the primary source-analysis state or frozen campaign."
+  ],
+  "orders_submitted": false,
+  "prefix": {
+    "catalog_segment_count_including_empty": 4457,
+    "last_ordinal": 15189,
+    "last_recorded_at_utc": "2026-10-14T10:24:24.977212942Z",
+    "last_segment_file": "00000000000000015063-09c674534dd0459ab7a0a773cb4e7d9f.seg",
+    "pending_segment_count": 4181,
+    "pending_source_bytes": 1100463766,
+    "processed_segment_count": 274,
+    "processed_source_bytes": 60554062,
+    "replayable_nonempty_segment_count": 4455,
+    "status": "catching_up"
+  },
+  "run": {
+    "batch_processed_segment_count": 18,
+    "batch_processed_source_bytes": 31822927,
+    "max_segment_count": 128,
+    "max_source_bytes": 33554432,
+    "systemd_restarts": 0,
+    "systemd_result": "success"
+  },
+  "runtime_artifacts": {
+    "event_chain_sha256": "7a40c3d9ed85910e08b455d79f375f5b8d98d5daf52f55307c12c5d260d2cfb5",
+    "prefix_catalog_sha256": "223d5ec840ed376a0eba9bd769c9553b247cfddd42bb60c2980ee87e2d524bcc",
+    "state_file_sha256": "acb49488c1a740a459d80cca23fd9bd3da58b9f57529a39724ddd0ca019ff615",
+    "state_internal_sha256": "cf876738347a650c36414920b34dabd3879a5c2c4ccf8372f034807c3f102838",
+    "state_path": "data/veritas-observatory/gap-detail-state-v1.json",
+    "summary_file_sha256": "fefd0fc0b5c807ea306989b23c829d5f55e2fb9344bed06d071463a27d2625c6",
+    "summary_internal_sha256": "812cf63682950567d8e38bcafa5a51226d2fb1a03786ce418db0fdb7894511c4",
+    "summary_path": "data/veritas-observatory/gap-detail-summary-v1.json",
+    "terminal_segment_sha256": "e9c26b62bbd5e8dfedb271ce91095ef88f26dc6b2d901c0d56c76af6e1b62cbc"
+  },
+  "schema_version": 1,
+  "verification": {
+    "active_open_segments_read": false,
+    "analysis_code_manifest_valid": true,
+    "finalized_terminal_segment_only_independently_checked": "00000000000000015063-09c674534dd0459ab7a0a773cb4e7d9f.seg",
+    "frozen_campaign_changed": false,
+    "primary_source_analysis_state_changed": false,
+    "state_seal_valid": true,
+    "state_sha256": "cf876738347a650c36414920b34dabd3879a5c2c4ccf8372f034807c3f102838",
+    "summary_seal_valid": true,
+    "summary_sha256": "812cf63682950567d8e38bcafa5a51226d2fb1a03786ce418db0fdb7894511c4",
+    "terminal_record_ordinal_matches_prefix": true,
+    "terminal_record_precedes_campaign_start": true,
+    "terminal_record_received_at_utc": "2026-10-14T10:24:24.977212942Z",
+    "terminal_segment_records_checksum_verified": 127,
+    "terminal_segment_sha256_matches_catalog": true
+  }
+}

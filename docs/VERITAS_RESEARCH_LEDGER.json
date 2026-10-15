@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-15T21:26:05Z",
+  "updated_at_utc": "2026-10-15T21:54:42Z",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -4156,7 +4156,8 @@
         "The verified prefix ends before campaign start and cannot explain campaign-window resynchronizations.",
         "Only affected assets explicitly named in a gap record can be mapped to the latest preceding discovery; absent asset lists remain unknown.",
         "Receiver time does not establish venue quote age, outage duration, full-feed recovery, execution, fills, or profitability.",
-        "The supplemental event chain does not replace or rewrite the primary source-analysis chain."
+        "The supplemental event chain does not replace or rewrite the primary source-analysis chain.",
+        "The highest ordinal record in the latest 21:51 UTC prefix is timestamped 2026-10-14 10:24:24.977 UTC, before the campaign start."
       ],
       "mechanism": "Replay only finalized, cataloged source segments into a separate append-only event chain that records gap receiver time, reason, and explicitly affected public market IDs.",
       "result": {
@@ -4175,11 +4176,84 @@
         "prefix_last_record_utc": "2026-10-14T10:15:11.052089Z",
         "processed_segments": 256,
         "source_and_gap_event_seals_valid": true,
-        "status": "bounded_prefix_verified_campaign_window_not_reached"
+        "status": "bounded_prefix_verified_campaign_window_not_reached",
+        "latest_prefix_artifact_path": "docs/VERITAS_MISSION2_GAP_DETAIL_PREFIX_002.json",
+        "latest_prefix_artifact_sha256": "08a0bd70b65b3feb2b560e8f5a9c9e9b3d98a26ff16aa1e611d191b98998d3e4",
+        "latest_prefix_captured_at_utc": "2026-10-15T21:51:20+00:00",
+        "latest_prefix_independently_verified_at_utc": "2026-10-15T21:53:36Z",
+        "latest_processed_segments": 274,
+        "latest_replayable_nonempty_segments": 4455,
+        "latest_pending_segments": 4181,
+        "latest_pending_source_bytes": 1100463766,
+        "latest_last_ordinal": 15189,
+        "latest_last_recorded_at_utc": "2026-10-14T10:24:24.977212942Z",
+        "latest_batch_processed_segments": 18,
+        "latest_batch_processed_source_bytes": 31822927,
+        "latest_all_period_gap_records": 1152,
+        "latest_all_period_gap_counts_by_reason": {
+          "book_resynchronization": 1108,
+          "malformed_constraints": 5,
+          "process_start": 11,
+          "process_stop": 9,
+          "scheduled_refresh": 19
+        },
+        "latest_campaign_window_gap_records": 0,
+        "latest_summary_and_state_seals_valid": true,
+        "latest_terminal_segment_checksum_records_verified": 127,
+        "latest_systemd_result": "success",
+        "latest_systemd_restarts": 0,
+        "latest_terminal_record_precedes_campaign_start": true
       },
       "status": "continue",
       "success_metric": "Every replayed gap record matches the finalized raw source, the per-segment event chain and catalog prefix verify, memory and source-byte limits are respected, and no frozen campaign or primary source-analysis artifact changes.",
       "title": "Can a separate bounded gap-detail replay preserve gap timing and reason without changing the pinned source analyzer?"
+    },
+    {
+      "hypothesis_id": "VERITAS-H076",
+      "title": "Can explicit gap-censored follow-ups be tied to exact finalized source records?",
+      "mechanism": "A frozen follow-up event retains a termination reference with source segment, ordinal, offset, receiver time, and record hashes. Explicit recorded_gap labels should point to the corresponding raw gap record, while book_issue:gap may terminate on a later non-gap record and needs separate attribution.",
+      "experiment_id": "VERITAS-M2-CENSOR-GAP-AUDIT-001",
+      "dataset_id": "e248797a5e8b594fb43f7a6b5e803ebd4c730a49ce5c42f0a927bb0f7d4d87b5",
+      "success_metric": "Verify every explicit recorded_gap termination reference against a finalized cataloged segment and exact source record; report book_issue:gap separately without asserting an unverified cause.",
+      "result": {
+        "status": "explicit_gap_refs_verified_indirect_book_issue_rows_remain",
+        "audit_artifact_path": "docs/VERITAS_MISSION2_CENSOR_GAP_AUDIT_001.json",
+        "audit_artifact_sha256": "e248797a5e8b594fb43f7a6b5e803ebd4c730a49ce5c42f0a927bb0f7d4d87b5",
+        "censoring_artifact_path": "docs/VERITAS_GATE_A_CENSORING_004.json",
+        "censoring_artifact_sha256": "a7f547d081d1cc3b75e80d099a2737e9e27ba33f9433dedcb4d68cb0f1a99e49",
+        "censored_outcomes_scanned": 40075,
+        "gap_censor_outcomes": 339,
+        "explicit_recorded_gap_outcomes": 179,
+        "unique_explicit_gap_records_verified": 97,
+        "book_issue_gap_outcomes": 160,
+        "book_issue_termination_records_by_source_kind": {
+          "discovery_page": 53,
+          "public_fee_metadata": 2,
+          "public_market_metadata": 5
+        },
+        "unique_termination_records_verified": 157,
+        "finalized_segments_verified": 133,
+        "finalized_segment_bytes_hashed": 58443329,
+        "source_record_frame_bytes_read": 3020478,
+        "explicit_record_hash_and_reason_mismatches": 0,
+        "journal_hash_chain_reverified": false,
+        "sqlite_integrity_scan_performed": false,
+        "active_open_segments_read": false,
+        "audit_captured_at_utc": "2026-10-15T21:52:08Z",
+        "censored_outcome_event_bytes_read": 31324375,
+        "event_byte_limit": 67108864,
+        "finalized_segment_byte_limit": 134217728,
+        "analysis_code_sha256": "3b39492dea5b5f017a2d19fdd0830201dd2ea7292a3551840f9d54203be4f20b"
+      },
+      "limitations": [
+        "The SQLite event hash chain and full database integrity were not reverified.",
+        "book_issue:gap references point to later non-gap source events here and remain indirectly attributed.",
+        "The separate gap-detail prefix still ends before campaign start; it has not yet supplied campaign-window timing and market mapping.",
+        "future_observation_unavailable remains a mixture of venue inactivity, cohort selection, and source coverage.",
+        "Receiver times and source-record identity do not establish venue quote freshness, fills, or profitability."
+      ],
+      "decision": "Keep the frozen labels and no-trade control. Preserve the bounded gap-detail cursor; use its campaign-window time and affected-market index to investigate indirect book-issue censors without changing the active snapshot pilot.",
+      "status": "continue"
     }
   ],
   "next_research_questions": [
@@ -4194,6 +4268,7 @@
     "Can the Research Director orchestrate bounded snapshot qualification and source replay with typed dependencies while preserving the collector timer?",
     "Can additional boundedly discovered NegRisk groups be verified complete and produce fresh, quality-valid positive full-depth net economics?",
     "Can a separate bounded finalized-source analysis map current campaign-window gap events to receiver time and reason without altering the v1 source-analysis state?",
-    "When the gap-detail prefix reaches the frozen campaign window, which gap reasons, timestamps, and explicitly reported markets account for the 1,032 campaign-window resynchronization/failure markers?"
+    "When the gap-detail prefix reaches the frozen campaign window, which gap reasons, timestamps, and explicitly reported markets account for the 1,090 campaign-window resynchronization/failure markers?",
+    "Can book_issue:gap censors be linked to a specific preceding same-market gap using finalized receiver-time evidence?"
   ]
 }
