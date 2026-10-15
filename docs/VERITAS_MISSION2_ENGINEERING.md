@@ -1,18 +1,35 @@
 # Veritas Mission 2 Engineering Checkpoint
 
-## Current operational update — Gate F checkpoint 003
+## Latest operational update — Gate F checkpoint 004
 
-The 11:15 scheduled Director run admitted a bounded qualification for the
-11:01 scan, but the worker rejected it at 0/1 because the source revision
-changed while queued. No finding was written and no same-scan retry was
-submitted. The next scheduled observer and Director cycles can qualify a new
-scan against the stable committed source. Meanwhile the independent source
-replay advanced to 1,188/3,195 finalized segments with no campaign-window
-frames. See [Gate F checkpoint 003](VERITAS_MISSION2_GATE_F_CHECKPOINT_003.md)
-and [operations](VERITAS_MISSION2_OPERATIONS.md), plus [research inventory
-015](VERITAS_MISSION2_RESEARCH_INVENTORY_015.json).
+The 11:45 Director cycle completed a new 16-event qualification for the 11:31
+scan on committed source revision `e78a95e2`. Its five opportunity gates
+remain zero-positive. A no-launch poll verified the finding and admitted no
+new job. The 11:40 finalized-source replay advanced to 1,316/3,254 cataloged
+segments, with no campaign-window frames. See [Gate F checkpoint
+004](VERITAS_MISSION2_GATE_F_CHECKPOINT_004.md), [operations](VERITAS_MISSION2_OPERATIONS.md),
+and [research inventory 016](VERITAS_MISSION2_RESEARCH_INVENTORY_016.json).
 
-## Latest status — Gate A checkpoint 012
+## Latest discovery status — Gate A checkpoint 013
+
+The 11:31 observer scan found 164 supported binary markets among 300 bounded
+IDs, with 136 explicit exclusions. Thirty-five of 40 selected pairs were
+quality-valid. The 16-snapshot panel has 578 valid pairs across 256 market IDs
+and no positive top, depth, minimum-size, or fee-qualified states. See [Gate A
+checkpoint 013](VERITAS_MISSION2_GATE_A_CHECKPOINT_013.md), [research inventory
+016](VERITAS_MISSION2_RESEARCH_INVENTORY_016.json), and
+[operations](VERITAS_MISSION2_OPERATIONS.md).
+
+## Previous operational update — Gate F checkpoint 003
+
+The 11:15 job for the 11:01 scan failed before event processing because its
+source revision changed while queued. It remains preserved at 0/1 and was not
+retried. The next scheduled cycle has since completed successfully against
+the stable committed revision; see [Gate F checkpoint
+003](VERITAS_MISSION2_GATE_F_CHECKPOINT_003.md) and [checkpoint
+004](VERITAS_MISSION2_GATE_F_CHECKPOINT_004.md).
+
+## Previous discovery status — Gate A checkpoint 012
 
 The bounded 11:01 observer scan found 207 eligible binary markets in 300
 unique IDs. A pinned, read-only event audit verified one complete nine-outcome
@@ -36,7 +53,7 @@ frames yet. See [Gate F checkpoint 002](VERITAS_MISSION2_GATE_F_CHECKPOINT_002.m
 [operations](VERITAS_MISSION2_OPERATIONS.md), and [research inventory
 014](VERITAS_MISSION2_RESEARCH_INVENTORY_014.json).
 
-## Latest status — Gate F checkpoint 001
+## Earlier status — Gate F checkpoint 001
 
 The recurring Veritas Research Director is enabled at :15 and :45 UTC. It
 verifies a current v2 scan and finalized v4 event, admits one scan-pinned

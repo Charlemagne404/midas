@@ -181,3 +181,33 @@ automatically retry the same scan. The next scheduled observer and Director
 runs can qualify a new finalized scan against
 the stable committed source. See [Gate F checkpoint
 003](VERITAS_MISSION2_GATE_F_CHECKPOINT_003.md) and [operations](VERITAS_MISSION2_OPERATIONS.md).
+
+## Gate A checkpoint addendum — 2026-10-15, 11:31 UTC
+
+The scheduled 11:31 scan
+`scan-20261015T113126Z-bf24f3a0706b` found 164 supported same-condition V1
+binary pairs in its bounded 300-ID union, with 136 explicit exclusions. The
+40-market sample contained 37 rotating markets and three available controls;
+35 pairs passed the request/receipt quality gate. Cumulative v4 analysis now
+contains 16 snapshots, 640 selected observations, 578 valid pairs, and 256
+distinct markets. The legacy timestamp gate accepts 140/640; the paired
+increase is 438 observations (+68.44 percentage points). All top, depth,
+minimum-size, and fee qualification counts remain zero-positive.
+
+## Gate F checkpoint addendum — 2026-10-15, 11:45 UTC
+
+The Director admitted and completed a 16-event Arena qualification for the
+11:31 scan using the committed source revision. Finding
+`veritas-qualification-v1-0e39c79c039a76cf` reports no positive gross
+candidate at any of five gates. The 11:46 no-launch poll verified the finding,
+set the Director to `CURRENT`, and admitted no job. The earlier 11:15 failure
+for scan 110153 remains preserved and unretried.
+
+The 11:40 finalized-source replay advanced the bounded prefix to 1,316/3,254
+cataloged segments, with 1,938 pending and no campaign-window frames. Its
+sealed summary digest is
+`6f959acc6978fc2e4eb2fbf7e07ee41112a286d0e844daa25d31f43c515fc9cf`.
+Mission 2 remains active. The current evidence and scheduled run state are in
+[Gate A checkpoint 013](VERITAS_MISSION2_GATE_A_CHECKPOINT_013.md), [Gate F
+checkpoint 004](VERITAS_MISSION2_GATE_F_CHECKPOINT_004.md), [operations](VERITAS_MISSION2_OPERATIONS.md),
+and [research inventory 016](VERITAS_MISSION2_RESEARCH_INVENTORY_016.json).

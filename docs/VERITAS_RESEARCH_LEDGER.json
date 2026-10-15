@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-15T10:41:43Z",
+  "updated_at_utc": "2026-10-15T11:50:10Z",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -2310,16 +2310,101 @@
         "strategy_readiness": "NOT_READY_NO_QUALIFIED_GROSS_CANDIDATE",
         "model_readiness": "NOT_READY_NO_PUBLIC_OUTCOME_LABELS",
         "independent_confirmation_readiness": "NOT_READY_LESS_THAN_48_HOURS_OR_NO_INDEPENDENT_SEQUENCE",
-        "recommendation": "Keep no-trade; continue bounded collection and qualify only when a new finalized scan arrives."
+        "recommendation": "Keep no-trade; continue bounded collection and qualify only when a new finalized scan arrives.",
+        "latest_completed_cycle": {
+          "scan_id": "scan-20261015T113126Z-bf24f3a0706b",
+          "job_id": "job-b7c66151c4c34b3ca60cd376",
+          "job_source_revision_sha256": "e78a95e2b3d9c9e4fe8e9a8fcf83da697b8bb17a3d1e65ba3a905aafdd2637cd",
+          "source_revision_matched": true,
+          "progress": {
+            "done": 16,
+            "total": 16
+          },
+          "finding_id": "veritas-qualification-v1-0e39c79c039a76cf",
+          "finding_sha256": "b6510dc85172f47100a43bef4895e996f7f00f6a3cea045fab2cfe56c53ee6dd",
+          "experiment_run_id": "VERITAS-M2-ECO-QUAL-001-RUN-b3fc19f69680",
+          "experiment_sha256": "93b5bb22d9d6f880f896edfdf1bbbd7507bcebfe6a42c63cb3ca178d9d20821e",
+          "snapshot_count": 16,
+          "quality_valid_pairs": 578,
+          "unique_market_ids": 256,
+          "positive_states_at_all_five_gates": 0,
+          "status": "completed_no_positive_gross_candidate_observed",
+          "no_launch_poll_reused_completed_job": true,
+          "new_job_admitted_on_no_launch_poll": false
+        },
+        "prior_source_drift_failure": {
+          "scan_id": "scan-20261015T110153Z-93de340dd5ce",
+          "job_id": "job-8cf39368af21426ea3127501",
+          "progress": {
+            "done": 0,
+            "total": 1
+          },
+          "job_state": "FAILED",
+          "error": "ValueError: Research source changed while queued; submit a new job against the current revision",
+          "automatic_retry": false,
+          "finding_created": false
+        }
       },
       "limitations": [
-        "This is one completed Director qualification cycle; it does not establish multi-day reliability.",
+        "Two scan-pinned qualification attempts were admitted after the first completed cycle: the 11:01 scan failed before event processing when source changed while queued; the later 11:31 scan completed after the source revision was stable.",
+        "This remains short-duration recurring evidence and does not establish multi-day reliability or independent economic confirmation.",
         "Repeated market snapshots are dependent and the panel is a short selected public sample, not independent confirmation.",
         "The Director does not coordinate Reality source replay, run strategy/model experiments, or promote models.",
         "Request-to-receipt timing does not verify venue sequence, batch atomicity, or upstream queue age."
       ],
-      "decision": "Keep the timer active and retain the no-trade recommendation. Continue the 24-hour pilot review and original 48-hour coverage/dependence gates before adding coordination or strategy work.",
+      "decision": "Keep no-trade and the Director timer active. Preserve the 11:15 source-drift failure without retry; continue qualifying only new finalized scans under a stable committed revision.",
       "status": "continue"
+    },
+    {
+      "hypothesis_id": "VERITAS-H051",
+      "title": "A verified complete NegRisk outcome set contains an economically favorable Yes or No basket in captured public books",
+      "mechanism": "A complete event-level payoff bound can justify set economics beyond binary-pair rules only when exact group membership, outcomes, settlement conditions, full books, fees, and source quality are verified.",
+      "experiment_id": "VERITAS-M2-NEG-RISK-SET-20261015-001",
+      "dataset_id": null,
+      "success_metric": "Verify complete event membership and explicit payoff bounds, then report top-ask and full-depth gross and fee-envelope economics for Yes and No baskets at fixed quantities with source-age/skew qualification.",
+      "result": {
+        "status": "one_complete_event_studied_no_positive_gross_basket_observed_quality_invalid",
+        "study_id": "VERITAS-M2-NEG-RISK-SET-2026-10-15T11:16:32.353296+00:00",
+        "analysis_version": "veritas-neg-risk-complete-outcome-basket-study-v3",
+        "artifact_path": "data/veritas-observatory/structure-studies/1792062993453561861-event-164439.json",
+        "artifact_sha256": "01a76cc649c2eca62182e534edaa87ffa8150a4433422ff19af391d135efc6c2",
+        "result_sha256": "e7007fdae2d28e6eb59c06605788a247aa58371ec780476b5a204fb1727af50d",
+        "event_id": "164439",
+        "market_count": 9,
+        "book_asset_count": 18,
+        "quality_valid": false,
+        "batch_duration_ms": 98,
+        "maximum_source_timestamp_age_ms": 350713,
+        "source_timestamp_skew_ms": 349801,
+        "yes_basket_top_ask_cost_usdc": "2.213",
+        "yes_basket_conditional_payout_usdc": "1",
+        "yes_basket_top_gross_edge_usdc": "-1.213",
+        "yes_basket_gross_edges_by_quantity": {
+          "5": "-6.065",
+          "20": "-35.98744",
+          "100": "-286.31895"
+        },
+        "no_basket_top_ask_cost_usdc": "8.595",
+        "no_basket_protocol_minimum_payout_shares": "8",
+        "no_basket_top_gross_edge_usdc": "-0.595",
+        "no_basket_gross_edges_by_quantity": {
+          "5": "-2.975",
+          "20": "-12.21832",
+          "100": "-64.5730"
+        },
+        "positive_basket_candidates": 0,
+        "authenticated_requests": false,
+        "orders_submitted": false,
+        "earlier_yes_only_artifact_replays_match": true
+      },
+      "limitations": [
+        "This is one event and one capture; it does not estimate NegRisk-wide opportunity frequency or prevalence.",
+        "Source timestamps exceeded the 5-second age and 250-millisecond skew bounds, so the displayed economics are descriptive and cannot qualify a candidate.",
+        "The Yes basket pays only conditional on exactly one Yes outcome under the event rules; protocol at-most-one-Yes does not guarantee a Yes outcome.",
+        "Full displayed depth and fee sensitivities do not establish order arrival, fills, settlement timing, or realized returns."
+      ],
+      "status": "continue",
+      "decision": "Do not qualify the observed baskets. Extend the bounded audit to additional complete event groups with explicit settlement bounds and fresh source timestamps."
     }
   ],
   "next_research_questions": [
@@ -2330,6 +2415,7 @@
     "Can the expanded read-only dashboard expose source gaps, censoring, readiness, and Director activity with evidence-linked values?",
     "Can independent sequence evidence quantify freshness and coverage for the rotating public query frames?",
     "What market/time dependence and coverage evidence will satisfy the 24-hour pilot review and original 48-hour follow-up gates?",
-    "Can the Research Director orchestrate bounded snapshot qualification and source replay with typed dependencies while preserving the collector timer?"
+    "Can the Research Director orchestrate bounded snapshot qualification and source replay with typed dependencies while preserving the collector timer?",
+    "Which additional boundedly discovered NegRisk groups can be verified complete with event-specific payout bounds and current full books?"
   ]
 }
