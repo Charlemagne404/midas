@@ -15,6 +15,26 @@ reported its existing large-chunk advisory. See [Gate G checkpoint
 checkpoint 007](VERITAS_MISSION2_GATE_G_CHECKPOINT_007.md). Gate G and Mission
 2 remain active.
 
+## Latest Gate A/F checkpoint — scan 37 and scheduled replay
+
+The 37-snapshot public panel contains 1,307 quality-valid pairs across 689
+selected market IDs and no positive top-gross, full-depth, minimum-notional,
+or fee-qualified state. Its latest Arena qualification completed all 37
+events, compared the unchanged top-ask baseline against depth- and
+minimum-aware qualification, and produced complete empty candidate evidence
+and replay. The paired request/receipt gate accepts 1,307 of 1,480 states,
+compared with 290 under the legacy reported-age gate (+1,017; +68.72 points).
+
+The prospective coverage pilot has seven scans / 280 selected slots / 237
+quality-valid pairs; its role split is nonrandomized and descriptive. The
+primary source analyzer covers 3,852/4,496 segments and 221,768
+campaign-window quality-valid states across 63 markets. The supplemental gap
+index covers 402/4,514 segments and has not yet reached the campaign window.
+See [Gate A checkpoint 033](VERITAS_MISSION2_GATE_A_CHECKPOINT_033.md), [Gate
+F checkpoint 022](VERITAS_MISSION2_GATE_F_CHECKPOINT_022.md), and [inventory
+040](VERITAS_MISSION2_RESEARCH_INVENTORY_040.json). Gate A and Gate F remain
+active.
+
 ## Latest engineering checkpoint — Gate C censoring and exact source audit
 
 The current bounded v1.4 read-only forensic snapshot covers 10,253 decisions,

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-15T21:54:42Z",
+  "updated_at_utc": "2026-10-15T22:26:02Z",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -1958,6 +1958,68 @@
       "result": {
         "status": "ongoing_prospective_series",
         "analysis_version": "veritas-finalized-snapshot-analysis-v4",
+        "snapshots": 37,
+        "first_captured_at_utc": "2026-10-15T05:59:28.204111+00:00",
+        "last_captured_at_utc": "2026-10-15T22:00:39.314289+00:00",
+        "selected_market_observations": 1480,
+        "legacy_valid_pairs": 290,
+        "legacy_valid_percent": 19.59,
+        "corrected_valid_pairs": 1307,
+        "corrected_valid_percent": 88.31,
+        "recovered_pairs": 1017,
+        "recovered_percentage_points": 68.72,
+        "unique_market_ids": 689,
+        "legacy_invalid_reasons": {
+          "no_empty_ask_side": 166,
+          "reported_update_age_above_5s": 1017,
+          "yes_empty_ask_side": 7
+        },
+        "corrected_invalid_reasons": {
+          "no_empty_ask_side": 166,
+          "yes_empty_ask_side": 7
+        },
+        "positive_top_gross_pairs": 0,
+        "positive_full_depth_gross_by_quantity": {
+          "10": 0,
+          "100": 0,
+          "20": 0,
+          "5": 0,
+          "50": 0
+        },
+        "positive_minimum_notional_by_quantity": {
+          "10": 0,
+          "100": 0,
+          "20": 0,
+          "5": 0,
+          "50": 0
+        },
+        "positive_single_match_by_quantity": {
+          "10": 0,
+          "100": 0,
+          "20": 0,
+          "5": 0,
+          "50": 0
+        },
+        "positive_fragmentation_safe_by_quantity": {
+          "10": 0,
+          "100": 0,
+          "20": 0,
+          "5": 0,
+          "50": 0
+        },
+        "maximum_top_edge_per_share": "-0.001",
+        "batch_atomicity_verified": false,
+        "sequence_verified": false
+      },
+      "limitations": [
+        "Request/receipt duration does not establish venue sequence, batch atomicity, or upstream queue age.",
+        "Snapshots remain selected, sparse, and correlated."
+      ],
+      "decision": "Keep request-to-receipt gating as the primary observation-quality measure and retain reported age/skew as diagnostics. Do not claim venue freshness or candidate executability without independent continuity evidence.",
+      "status": "continue",
+      "initial_result": {
+        "status": "ongoing_prospective_series",
+        "analysis_version": "veritas-finalized-snapshot-analysis-v4",
         "snapshots": 11,
         "retrospectively_reclassified_snapshots": 10,
         "new_snapshot_processed_after_v4_deployment": 1,
@@ -1977,13 +2039,7 @@
         },
         "batch_atomicity_verified": false,
         "sequence_verified": false
-      },
-      "limitations": [
-        "Request/receipt duration does not establish venue sequence, batch atomicity, or upstream queue age.",
-        "Snapshots remain selected, sparse, and correlated."
-      ],
-      "decision": "Continue paired classification on scheduled scans; require independent freshness evidence before candidate promotion.",
-      "status": "continue"
+      }
     },
     {
       "hypothesis_id": "VERITAS-H041",
@@ -3720,6 +3776,87 @@
       "dataset_id": "d19266d72a6479e3fc7ad35cf4ddf301de125ba82feefabbb04cea9560aecf04",
       "success_metric": "Complete a fixed 24-hour or 48-scan evidence record with per-role and per-stratum yield, source lineage, missing-scan diagnostics, and a descriptive comparison; do not require positive economic candidates.",
       "result": {
+        "status": "running",
+        "protocol_version": "veritas-coverage-pilot-v1",
+        "plan_sha256": "d35f25ef84037f3e9cabf4343e9a01db381b73e8fa6cae0fd0b5fc6e07e279ba",
+        "implementation_sha256": "2cf59cebbb72c0e2990ebfe5c40e53b967e867fff5321f0d1e8c4e9a9207284e",
+        "control_cohort_sha256": "9578217e20dcc7d1c65fa110f0ed7c689b55483b61191f1aae8d30c9b7300d9a",
+        "started_at_utc": "2026-10-15T19:00:55.062293+00:00",
+        "ends_at_utc": "2026-10-16T19:00:55.062293+00:00",
+        "completed_scans": 7,
+        "selected_market_pair_slots": 280,
+        "quality_valid_pairs": 237,
+        "quality_valid_yield": 0.8464285714285714,
+        "invalid_pairs": 43,
+        "invalid_reasons": {
+          "no_empty_ask_side": 42,
+          "yes_empty_ask_side": 1
+        },
+        "distinct_selected_market_ids": 207,
+        "skipped_scan_sequences": 0,
+        "by_cohort_role": {
+          "rotating_stratified": {
+            "invalid_reasons": {
+              "no_empty_ask_side": 28,
+              "yes_empty_ask_side": 1
+            },
+            "quality_valid": 228,
+            "quality_valid_yield": 0.8871595330739299,
+            "selected": 257
+          },
+          "stable_random_control": {
+            "invalid_reasons": {
+              "no_empty_ask_side": 14
+            },
+            "quality_valid": 9,
+            "quality_valid_yield": 0.391304347826087,
+            "selected": 23
+          }
+        },
+        "by_phase": {
+          "category": {
+            "quality_valid": 35,
+            "scans": 1,
+            "selected": 40
+          },
+          "expiry": {
+            "quality_valid": 31,
+            "scans": 1,
+            "selected": 40
+          },
+          "liquidity": {
+            "quality_valid": 69,
+            "scans": 2,
+            "selected": 80
+          },
+          "snapshot_change": {
+            "quality_valid": 67,
+            "scans": 2,
+            "selected": 80
+          },
+          "spread": {
+            "quality_valid": 35,
+            "scans": 1,
+            "selected": 40
+          }
+        },
+        "latest_scan_id": "scan-20261015T220039Z-1bcb8753082e",
+        "latest_scan_captured_at_utc": "2026-10-15T22:00:39.314289+00:00",
+        "positive_top_gross_pairs_across_completed_scans": 0,
+        "randomized": false,
+        "orders_submitted": false,
+        "authenticated_requests": false
+      },
+      "limitations": [
+        "The bounded query-response union is selected and is not the venue-wide universe.",
+        "Stable controls were frozen from an earlier bounded discovery union and are not randomized against rotating markets.",
+        "The same-scan role comparison is descriptive; market composition and availability differ by role.",
+        "Intermittent public snapshots do not establish continuous coverage, quote lifetime, fills, or profitability.",
+        "Reported timestamp age is an update-recency diagnostic; the pilot does not claim venue sequence or upstream freshness."
+      ],
+      "decision": "Continue through the fixed 24-hour or 48-scan stop. Treat nonrandomized role and phase yields as descriptive; do not infer causal effects or economic opportunity rates from intermittent snapshots.",
+      "status": "continue",
+      "checkpoint_002_scan_result": {
         "status": "running_two_scans_completed",
         "protocol_version": "veritas-coverage-pilot-v1",
         "plan_sha256": "d35f25ef84037f3e9cabf4343e9a01db381b73e8fa6cae0fd0b5fc6e07e279ba",
@@ -3904,16 +4041,7 @@
         ],
         "authenticated_requests": false,
         "orders_submitted": false
-      },
-      "limitations": [
-        "The bounded query-response union is selected and is not the venue-wide universe.",
-        "Stable controls were frozen from an earlier bounded discovery union and are not randomized against rotating markets.",
-        "The same-scan role comparison is descriptive; market composition and availability differ by role.",
-        "Intermittent public snapshots do not establish continuous coverage, quote lifetime, fills, or profitability.",
-        "Reported timestamp age is an update-recency diagnostic; the pilot does not claim venue sequence or upstream freshness."
-      ],
-      "decision": "Continue to the fixed 24-hour or 48-scan stop. Treat role yields as descriptive only; no economic or causal conclusion follows from one scan.",
-      "status": "continue"
+      }
     },
     {
       "dataset_id": "0435c2c6b6dd6287caf39906485ac1dec663da344c0f52181cb7e0273299d0ec",
@@ -4253,6 +4381,120 @@
         "Receiver times and source-record identity do not establish venue quote freshness, fills, or profitability."
       ],
       "decision": "Keep the frozen labels and no-trade control. Preserve the bounded gap-detail cursor; use its campaign-window time and affected-market index to investigate indirect book-issue censors without changing the active snapshot pilot.",
+      "status": "continue"
+    },
+    {
+      "hypothesis_id": "VERITAS-H077",
+      "title": "Does the 37-snapshot public panel contain a source-complete economic candidate?",
+      "mechanism": "The unchanged same-condition top-ask gross rule is compared with the implemented full-depth, per-leg minimum, and fee qualification funnel on identical finalized snapshots; positive rows require immutable source evidence and independent replay.",
+      "experiment_id": "VERITAS-M2-ECO-QUAL-001-V3-RUN-a711bc835c73",
+      "dataset_id": "a711bc835c73b863de9c6c78fd5350df7b5e50a80a727df04338ce10e9a4c0e4",
+      "success_metric": "Find at least one quality-valid positive gross pair whose full requested depth and per-leg minimums qualify, whose fee sensitivities remain positive, and whose source evidence replays exactly; otherwise preserve a complete negative result.",
+      "result": {
+        "status": "no_positive_gross_candidate_observed",
+        "parent_experiment_id": "VERITAS-M2-ECO-QUAL-001",
+        "analysis_version": "veritas-economic-qualification-comparison-v3",
+        "experiment_run_id": "VERITAS-M2-ECO-QUAL-001-V3-RUN-a711bc835c73",
+        "experiment_sha256": "02c48d80dc39692011b9f68b017219914d3ed84dd91eb99f9d8200c7c5fff1ca",
+        "experiment_source_code_sha256": "45b480334bdebad982df7300249515802b87ba43d5031c1979a6ab3fbd0dfcf7",
+        "dataset_sha256": "a711bc835c73b863de9c6c78fd5350df7b5e50a80a727df04338ce10e9a4c0e4",
+        "sample": {
+          "attempted_market_pairs": 1480,
+          "first_captured_at_utc": "2026-10-15T05:59:28.204111+00:00",
+          "invalid_pairs": 173,
+          "last_captured_at_utc": "2026-10-15T22:00:39.314289+00:00",
+          "quality_valid_pairs": 1307,
+          "snapshot_count": 37,
+          "top_pair_edge_per_share": {
+            "count": 1307,
+            "maximum_per_share": "-0.001",
+            "median_nearest_rank_per_share": "-0.020",
+            "minimum_per_share": "-0.996",
+            "positive_count": 0
+          },
+          "unique_market_ids": 689
+        },
+        "baseline": {
+          "name": "unchanged top-ask gross sign",
+          "positive_states": 0,
+          "rule": "same-condition V1 YES and NO best asks sum to less than one collateral unit"
+        },
+        "research_improvement": {
+          "name": "depth and minimum-aware economic qualification",
+          "positive_states": 0,
+          "rule": "complete displayed ask depth for 20 shares per leg, positive gross edge, and both per-leg USDC minimum notionals satisfied"
+        },
+        "economic_qualification_funnel": [
+          {
+            "criterion": "unchanged_top_ask_gross_sign",
+            "positive_states": 0,
+            "valid_state_rate": 0.0
+          },
+          {
+            "criterion": "full_displayed_depth_gross",
+            "positive_states": 0,
+            "valid_state_rate": 0.0
+          },
+          {
+            "criterion": "full_depth_and_per_leg_minimum_notional",
+            "positive_states": 0,
+            "valid_state_rate": 0.0
+          },
+          {
+            "criterion": "single_match_fee_sensitivity_positive",
+            "positive_states": 0,
+            "valid_state_rate": 0.0
+          },
+          {
+            "criterion": "fragmentation_safe_fee_sensitivity_positive",
+            "positive_states": 0,
+            "valid_state_rate": 0.0
+          }
+        ],
+        "gross_candidate_evidence_count": 0,
+        "gross_candidate_evidence_complete": true,
+        "gross_candidate_replay": {
+          "candidate_count": 0,
+          "candidates": [],
+          "complete": true,
+          "replayed_candidate_count": 0,
+          "source_code_sha256": "277b48af76eb28364bd03bbd89a971186417ee1bd2be26ce22ad9b744fdad3e4",
+          "status": "NO_POSITIVE_CANDIDATES_TO_REPLAY",
+          "version": "veritas-gross-candidate-source-replay-v1"
+        },
+        "finding_id": "veritas-qualification-v1-0c90e8c4bf939671",
+        "finding_manifest_path": "data/arena/findings/veritas-qualification-v1-0c90e8c4bf939671/manifest.json",
+        "source_event_count": 37,
+        "job": {
+          "job_id": "job-91acafbffec74604be3eacf5",
+          "state": "COMPLETED",
+          "progress": {
+            "done": 37,
+            "total": 37
+          },
+          "elapsed_seconds": 2.315503510995768,
+          "exit_status": 0,
+          "error": null
+        },
+        "director_manifest_projection": {
+          "state": "RUNNING",
+          "current_job_state": "QUEUED",
+          "last_qualified_scan_id": "scan-20261015T213146Z-e26effdad928",
+          "reconciliation_due_at_next_scheduled_cycle": true
+        },
+        "orders_submitted": false,
+        "authenticated_requests": false
+      },
+      "limitations": [
+        "The top-ask rule is the unchanged discovery baseline; the improved rule adds displayed depth and per-leg minimum checks.",
+        "Repeated market snapshots are dependent and the panel is a short selected public sample, not independent confirmation.",
+        "Fee sensitivities are hypothetical and do not establish order arrival, persistence, fills, or profitability.",
+        "The experiment tests candidate qualification, not realized or hypothetical strategy PnL.",
+        "Only same-condition V1 binary pairs are included; unsupported payoff structures remain excluded.",
+        "Repeated snapshot observations are correlated; this comparison is not a strategy P&L test or independent economic confirmation.",
+        "Director manifest still projects the completed Arena job as queued until its next scheduled reconciliation."
+      ],
+      "decision": "Keep no-trade as the current hypothetical policy. Continue bounded observation; no model or execution-policy comparison is justified without an eligible gross candidate.",
       "status": "continue"
     }
   ],
