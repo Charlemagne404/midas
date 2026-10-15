@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-15T15:53:57Z",
+  "updated_at_utc": "2026-10-15T16:18:44Z",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -3120,6 +3120,107 @@
       },
       "limitations": [
         "Snapshots are intermittent and selected; discovery remains conditional on the bounded public query union.",
+        "Repeated market snapshots and within-market states are dependent.",
+        "The finding is limited to same-condition V1 binary pairs; unsupported multi-outcome and NegRisk relationships remain excluded.",
+        "Zero candidates in this sample do not establish that opportunities never occur.",
+        "The qualification does not test order arrival, persistence, fills, or realized profitability."
+      ]
+    },
+    {
+      "hypothesis_id": "VERITAS-H062",
+      "experiment_id": "VERITAS-M2-PROSPECTIVE-OBSERVATION-20261015-025",
+      "dataset_id": "f8e91d98d0c251402c82d8ddc51ae6bb26fbf98022d76cca9ae959aaf5e89ddd",
+      "title": "Does the twenty-fifth scheduled public scan contain a quality-valid positive same-condition pair?",
+      "mechanism": "Continue the bounded six-frame Gamma discovery protocol and 40-market rotating sample, classify paired books using request/receipt quality, and qualify the immutable 25-scan prefix through the existing Arena job.",
+      "success_metric": "At least one same-condition V1 pair passes quality validation and produces a positive top-ask, complete-depth, per-leg minimum, or fee-aware economic qualification, with independent freshness and source lineage preserved.",
+      "result": {
+        "status": "completed_no_positive_economic_candidates",
+        "analysis_version": "veritas-finalized-snapshot-analysis-v4",
+        "scan_id": "scan-20261015T160014Z-63b12b6b8d54",
+        "captured_at_utc": "2026-10-15T16:00:14.906331+00:00",
+        "snapshot_evidence_sha256": "63b12b6b8d54502847627a8a98526769fd7c4e759eda6ee3d4c1083dd3059ba2",
+        "snapshot_file_sha256": "39bf8d9dc7cef0f6a08f5867c024f35d5b7674dd5b98ffda50267e75c35eb821",
+        "analysis_event_sha256": "4fe4cc75380d6fda27e218a8cd4ade830d50a730909e151956be17f6f5d6658f",
+        "analysis_event_file_sha256": "9dab8bff2820de7629f2be758a6f5c3d21f24d1382690912b5101afdcb92b45f",
+        "latest_scan_attempted_pairs": 40,
+        "latest_scan_quality_valid_pairs": 35,
+        "latest_scan_invalid_pairs": 5,
+        "latest_scan_legacy_freshness_valid_pairs": 7,
+        "latest_scan_top_edge_per_share": {
+          "count": 35,
+          "minimum": "-0.996",
+          "median_nearest_rank": "-0.020",
+          "maximum": "-0.001",
+          "positive_count": 0
+        },
+        "bounded_discovery": {
+          "query_candidate_records": 300,
+          "unique_market_ids": 297,
+          "duplicate_records_across_queries": 3,
+          "identity_conflicts": 0,
+          "eligible_same_condition_v1_pairs": 121,
+          "explicit_exclusions": 176,
+          "exclusion_reasons": {
+            "augmented_negative_risk_semantics_unverified": 110,
+            "unsupported_outcome_relationship": 66
+          }
+        },
+        "cumulative_sample": {
+          "snapshots": 25,
+          "selected_observations": 1000,
+          "quality_valid_pairs": 894,
+          "invalid_pairs": 106,
+          "legacy_freshness_valid_pairs": 203,
+          "unique_market_ids": 460,
+          "paired_recovered_pairs": 691,
+          "paired_recovered_percentage_points": 69.1,
+          "sampled_state_comparisons": 540,
+          "sampled_state_changes": 522,
+          "sampled_state_change_fraction": 0.9667,
+          "sampled_activity_bands": {
+            "unclassified": 364,
+            "lower_sampled_change": 59,
+            "higher_sampled_change": 37
+          },
+          "top_edge_per_share": {
+            "count": 894,
+            "minimum": "-0.996",
+            "median_nearest_rank": "-0.023",
+            "maximum": "-0.001",
+            "positive_count": 0
+          }
+        },
+        "positive_states_by_gate": {
+          "unchanged_top_ask_gross_sign": 0,
+          "full_displayed_depth_gross": 0,
+          "full_depth_and_per_leg_minimum_notional": 0,
+          "single_match_fee_sensitivity_positive": 0,
+          "fragmentation_safe_fee_sensitivity_positive": 0
+        },
+        "arena_job_id": "job-717cf7803fd746809d073d46",
+        "arena_finding_id": "veritas-qualification-v1-454c6e2d83426f98",
+        "arena_finding_sha256": "d4723d6f505af2bbbc04dd671d66a1008964abce0378b3e8e35899ed396406d7",
+        "experiment_run_id": "VERITAS-M2-ECO-QUAL-001-RUN-f8e91d98d0c2",
+        "experiment_sha256": "82fbcb05fc28a10bd5321e713e17df6f46edcb6f8637bf380e9c6af85ce0793f",
+        "source_analysis_summary_sha256": "4e8f84ea69ba9ad1970495b3981feb3136b086367edef693a07be2a4e4351b9a",
+        "source_replay": {
+          "processed_segments": 2417,
+          "catalog_segments": 3786,
+          "pending_segments": 1369,
+          "pending_source_bytes": 372776598,
+          "campaign_window_frame_records": 96535,
+          "touched_market_frame_states": 84138,
+          "quality_valid_states": 81994,
+          "positive_top_ask_states": 0,
+          "positive_full_depth_states": 0
+        },
+        "director_manifest_reconciliation_pending": true,
+        "orders_submitted": false,
+        "authenticated_requests": false
+      },
+      "limitations": [
+        "Snapshots are intermittent and selected; discovery remains conditional on the bounded public query union.",
+        "Duplicate records were observed across query frames; the discovery system deduplicated them and found zero identity conflicts.",
         "Repeated market snapshots and within-market states are dependent.",
         "The finding is limited to same-condition V1 binary pairs; unsupported multi-outcome and NegRisk relationships remain excluded.",
         "Zero candidates in this sample do not establish that opportunities never occur.",
