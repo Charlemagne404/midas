@@ -4,7 +4,7 @@
 
 **Date:** 2026-10-15
 **Branch:** `project/veritas`
-**Checkpoint base commit:** `a7840db`
+**Checkpoint base commit:** `644e509`
 
 ## Changes in this checkpoint
 
@@ -35,7 +35,7 @@ At the twelve-snapshot checkpoint, the latest scan was `scan-20261015T090047Z-6f
 
 ## Scientific limits and remaining work
 
-Request-to-receipt duration does not prove venue sequence or batch atomicity. Snapshots and campaign decisions are selected, intermittent, and correlated. The v4 reclassification is retrospective for the ten initial snapshots; nine later scheduled snapshots were captured under v4. The censoring audit is a bounded read-only SQL snapshot; it did not replay the complete event hash chain or run a full SQLite integrity scan. `future_observation_unavailable` does not establish whether a venue was quiet or the feed failed to expose a quote. There is no positive gross candidate, so strategy PnL testing, model training, or promotion is unsupported. The original follow-up study's readiness gates remain intact.
+Request-to-receipt duration does not prove venue sequence or batch atomicity. Snapshots and campaign decisions are selected, intermittent, and correlated. The v4 reclassification is retrospective for the ten initial snapshots; ten later scheduled snapshots were captured under v4. The censoring audit is a bounded read-only SQL snapshot; it did not replay the complete event hash chain or run a full SQLite integrity scan. `future_observation_unavailable` does not establish whether a venue was quiet or the feed failed to expose a quote. There is no positive gross candidate, so strategy PnL testing, model training, or promotion is unsupported. The original follow-up study's readiness gates remain intact.
 
 Mission 2 is not complete. Continue safe observation; seek independent source coverage or sequence evidence to separate unavailable future observations from feed gaps; review the recurring Director after longer operation; coordinate source replay only if its information value justifies another bounded workflow; expand dashboard research/readiness surfaces; and gather independent temporal evidence before any economic claim.
 
@@ -250,9 +250,10 @@ The Veritas research interface now exposes a bounded history of durable
 Research Director events, including failures, no-retry decisions, later
 completion, and experiment/dataset lineage. The Arena API verifies each
 event's filename digest and Director identity, inspects at most 128 event
-files per Director, and returns at most eight events. The live activity
-projection returned eight verified events and zero invalid artifacts. The
-11:15 source-drift failure remains visible next to the 11:45 stable-revision
+files per Director, and returns at most eight events. The last read-only
+projection check at 12:55 UTC returned eight verified events from the
+Director's then-19-file archive and zero invalid artifacts. The 11:15
+source-drift failure remains visible next to the 11:45 stable-revision
 qualification; this improves auditability but does not alter economics or
 readiness.
 
@@ -359,3 +360,25 @@ reconciliation point. No manual poll or retry was run. See [Gate A checkpoint
 017](VERITAS_MISSION2_GATE_A_CHECKPOINT_017.md), [Gate F checkpoint
 007](VERITAS_MISSION2_GATE_F_CHECKPOINT_007.md), [operations](VERITAS_MISSION2_OPERATIONS.md),
 and [research inventory 020](VERITAS_MISSION2_RESEARCH_INVENTORY_020.json).
+## Gate A checkpoint 018 addendum — scan 20 and source replay progress
+
+The 13:31 scan (`scan-20261015T133142Z-dfa1ef9bb7fe`) is the twentieth
+finalized v4 snapshot. The panel has 800 selected observations, 714
+quality-valid pairs, 86 invalid pairs, and 349 distinct markets. The previous
+reported-age/skew gate accepts 167/800; the paired recovery is 547 pairs
+(68.38 percentage points). All five economic gates remain zero-positive.
+
+The 13:40 source replay advanced to 1,791/3,490 finalized segments, with
+1,699 segments / 450,044,085 bytes pending. Its campaign-window summary counts
+29,198 frames, 21,747 touched states, and 21,041 quality-valid states, with
+zero positive top-ask and full-depth states. The replay remains partial and
+reads finalized segments only.
+
+The 13:45 Director admission completed the scan 20 Arena qualification at
+13:46:06 UTC. Its finding covers all 20 events and remains zero-positive at all
+five gates. The Director manifest still showed `QUEUED` and scan 19 as last
+qualified at checkpoint time; the scheduled 14:15:29 UTC cycle is the next
+reconciliation point. No manual poll or retry was run. See [Gate A checkpoint
+018](VERITAS_MISSION2_GATE_A_CHECKPOINT_018.md), [Gate F checkpoint
+008](VERITAS_MISSION2_GATE_F_CHECKPOINT_008.md), [operations](VERITAS_MISSION2_OPERATIONS.md),
+and [research inventory 021](VERITAS_MISSION2_RESEARCH_INVENTORY_021.json).
