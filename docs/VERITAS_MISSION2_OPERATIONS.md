@@ -1,6 +1,6 @@
 # Veritas Mission 2 Operations
 
-**Runtime checked:** 2026-10-15 06:52 UTC
+**Runtime checked:** 2026-10-15 07:13 UTC
 **Services:** `midas-veritas-observatory.service`, `midas-veritas-source-analysis.service`
 **Timers:** `midas-veritas-observatory.timer`, `midas-veritas-source-analysis.timer`
 
@@ -8,24 +8,25 @@
 
 - The user timer is active and waiting. It is scheduled every 30 minutes in
   UTC, with up to two minutes randomized delay and persistent catch-up behavior.
-- The latest scan (`scan-20261015T063103Z-12947c8cef0a`) completed successfully
-  at 06:31:03 UTC. The oneshot exited successfully at 06:31:09 after about 16
-  seconds and used 617 ms CPU time.
-- The next scheduled timer event is 07:00:23 UTC.
+- The latest scan (`scan-20261015T070035Z-12f2eac522c9`) completed successfully
+  at 07:00:35 UTC. Analysis v2 indexed it by 07:00:41, with exit status 0 and
+  about 620 ms CPU time.
+- The next scheduled snapshot timer event is 07:30:58 UTC.
 - The service is inactive between runs, as expected for a oneshot. The timer
   is the active unit.
 - The loaded unit files match the deploy definitions in this checkout.
-- The analysis index has seven processed snapshots and zero pending snapshots.
-- Runtime data uses 4,959,490 bytes under `data/veritas-observatory/`; the
+- The analysis index has eight processed snapshots and zero pending snapshots.
+- Runtime data uses 5,859,151 bytes under `data/veritas-observatory/`; the
   configured hard root limit is 1 GiB. Source snapshots are immutable and
   ignored by Git; docs and experiment artifacts record their paths and hashes.
 - The finalized Reality source timer is active and offset from the snapshot
-  timer. Its first batch processed 128 of 2,681 replayable segments, with 2,553
-  remaining. The oneshot completed successfully in 72 seconds, used 3.63
-  seconds CPU, and peaked at 110.6 MiB; the active Reality recorder remained
-  untouched.
-- Source-analysis readiness is `catching_up_finalized_source`. The first 128
-  segments end at ordinal 7,048 and contain no campaign-window frames.
+  timer. Its first scheduled recurrence completed at 07:13:05 UTC after 126
+  seconds, using 6.318 seconds CPU and 111.2 MiB peak memory. It processed 18
+  segments / 31,822,927 bytes before reaching the 32 MiB batch bound.
+- The source analyzer has processed 274 of 2,722 replayable segments, leaving
+  2,448 segments (604,079,176 bytes) pending through ordinal 15,189. Readiness
+  is `catching_up_finalized_source`; no campaign-window frames have appeared.
+  The next source timer event is 07:40:01 UTC.
 
 ## Resource and network bounds
 
@@ -117,9 +118,8 @@ before evaluating the corresponding summary.
 ## Preservation audit
 
 The separate `/home/charlie/midas-reality` checkout remained clean at commit
-`714f824`. Reality API, recorder, shadow, and web services and their archive,
-capacity, research, and integrity timers were still active. No Reality service
-was restarted or written by this pilot. Three unrelated Reality test/canary
+`714f824`, and `midas-reality.service` remained active. No Reality service was
+restarted or written by this pilot. Three unrelated Reality test/canary
 units reported exit-code results dated 2026-10-14, before this checkpoint:
 `midas-reality-final-browser.service`,
 `midas-reality-final-regression.service`, and
