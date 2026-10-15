@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-15T18:31:26Z",
+  "updated_at_utc": "2026-10-15T18:50:18Z",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -3556,6 +3556,160 @@
         "The raw study artifact is stored under the local gitignored observatory data directory; its digests are recorded here, but the raw payload is not in the commit."
       ],
       "decision": "Keep no-trade. Before another recapture, establish the meaning of source timestamps or obtain independent freshness/continuity evidence; all tested baskets remain negative.",
+      "status": "continue"
+    },
+    {
+      "hypothesis_id": "VERITAS-H068",
+      "title": "Does the reported CLOB book timestamp track book-state changes rather than snapshot freshness?",
+      "mechanism": "Compare raw per-outcome CLOB state hashes and timestamps across repeated appearances of role-labelled stable controls in finalized public snapshots, using local snapshot receipt times only to bound age diagnostics.",
+      "experiment_id": "VERITAS-M2-BOOK-TIMESTAMP-HASH-AUDIT-20261015-001",
+      "dataset_id": "7a4a1deb3e481f39edfe070058d94fedb6e4cbe8decd5778bc22c2d4086c539a",
+      "success_metric": "Measure whether a sampled state-hash change coincides with timestamp advancement, whether unchanged hashes retain timestamps, and whether the two outcomes have similar update timestamps; do not infer unobserved event continuity.",
+      "result": {
+        "status": "timestamp_tracks_sampled_state_changes_freshness_semantics_unproven",
+        "analysis_version": "veritas-cumulative-book-timestamp-hash-audit-v1",
+        "experiment_id": "VERITAS-M2-BOOK-TIMESTAMP-HASH-AUDIT-20261015-001",
+        "result_sha256": "e34131d5645d8581f12150ef799dbcfd765ddaa5fa93334e00bf0b9e7c7c0f17",
+        "input_snapshot_manifest_sha256": "7a4a1deb3e481f39edfe070058d94fedb6e4cbe8decd5778bc22c2d4086c539a",
+        "input_snapshot_count": 30,
+        "first_capture_at_utc": "2026-10-15T05:59:28.204111+00:00",
+        "last_capture_at_utc": "2026-10-15T18:31:00.171496+00:00",
+        "stable_control_market_count": 8,
+        "book_series_count": 16,
+        "sampled_transitions": 250,
+        "hash_and_timestamp_advanced": 248,
+        "hash_and_timestamp_unchanged": 2,
+        "mismatched_transitions": 0,
+        "stable_control_pair_samples": 133,
+        "pair_same_timestamp_samples": 132,
+        "maximum_pair_timestamp_skew_ms": 1,
+        "book_observations_for_age": 266,
+        "source_timestamp_age_ms_min": 207,
+        "source_timestamp_age_ms_nearest_rank_median": 38003,
+        "source_timestamp_age_ms_max": 1009288,
+        "future_timestamp_count": 0,
+        "cumulative_scan_panel": {
+          "snapshots": 30,
+          "selected_pairs": 1200,
+          "request_receipt_quality_valid_pairs": 1070,
+          "five_second_timestamp_gate_pairs": 246,
+          "distinct_market_ids": 558,
+          "quality_valid_positive_top_ask_pairs": 0,
+          "maximum_top_pair_gross_edge_per_share": "-0.001"
+        },
+        "latest_scan_id": "scan-20261015T183100Z-3e11a6dc87d4",
+        "latest_scan_analysis_event_sha256": "91d34e0fce5802d479545f127fb2574dff04de69b109c8013867e0bee003bc25",
+        "official_documentation": [
+          "https://docs.polymarket.com/market-data/prices-order-books",
+          "https://docs.polymarket.com/market-data/realtime-data"
+        ],
+        "orders_submitted": false,
+        "authenticated_requests": false,
+        "persisted_as_arena_finding": false
+      },
+      "limitations": [
+        "The 250 comparisons are adjacent sampled appearances, not a continuous event replay; intervening updates or dropped messages cannot be observed.",
+        "The observed hash/timestamp association is consistent with timestamps recording book-state changes, but it does not define timestamp semantics or prove response freshness.",
+        "The CLOB book hash is a state fingerprint, not a documented monotonic sequence number; equality across samples does not prove no intermediate event occurred.",
+        "The stable-control panel is a small, selected cohort and is not representative of all markets or all event rates.",
+        "The request/receipt quality gate does not establish batch atomicity, upstream queue age, or venue-wide completeness."
+      ],
+      "decision": "Treat the five-second reported-update-age rule as an update-recency diagnostic, not as proof that an unchanged returned snapshot is stale. Keep no-trade and preserve the independent freshness/sequence requirement; do not change promotion thresholds based only on this audit.",
+      "status": "continue"
+    },
+    {
+      "hypothesis_id": "VERITAS-H069",
+      "title": "Does v3 economic qualification find a replayable positive candidate in the first thirty scheduled snapshots?",
+      "mechanism": "Re-evaluate the 30-snapshot finalized public panel with complete displayed depth, per-leg minimum-notional, single-match fee, fragmentation-safe fee, and immutable gross-candidate replay checks.",
+      "experiment_id": "VERITAS-M2-ECO-QUAL-001",
+      "dataset_id": "56185bafe3435bbc56422dafaab2fe8fe3dd73882e1a7948a944f15b1b4d79e7",
+      "success_metric": "At least one request/receipt-valid same-condition state has positive gross economics, complete requested depth, satisfied per-leg minimums, positive fee sensitivities, and source-complete candidate replay.",
+      "result": {
+        "status": "no_positive_gross_candidate_observed",
+        "analysis_version": "veritas-economic-qualification-comparison-v3",
+        "economic_experiment_version": "veritas-economic-qualification-comparison-v3",
+        "experiment_run_id": "VERITAS-M2-ECO-QUAL-001-V3-RUN-56185bafe343",
+        "experiment_sha256": "e83da5847436b55fd3cc4cf192b2bd36483eafa9e167f398a852b7775f7a053e",
+        "experiment_source_code_sha256": "45b480334bdebad982df7300249515802b87ba43d5031c1979a6ab3fbd0dfcf7",
+        "dataset_sha256": "56185bafe3435bbc56422dafaab2fe8fe3dd73882e1a7948a944f15b1b4d79e7",
+        "sample": {
+          "attempted_market_pairs": 1200,
+          "first_captured_at_utc": "2026-10-15T05:59:28.204111+00:00",
+          "invalid_pairs": 130,
+          "last_captured_at_utc": "2026-10-15T18:31:00.171496+00:00",
+          "quality_valid_pairs": 1070,
+          "snapshot_count": 30,
+          "top_pair_edge_per_share": {
+            "count": 1070,
+            "maximum_per_share": "-0.001",
+            "median_nearest_rank_per_share": "-0.021",
+            "minimum_per_share": "-0.996",
+            "positive_count": 0
+          },
+          "unique_market_ids": 558
+        },
+        "qualification_funnel": [
+          {
+            "criterion": "unchanged_top_ask_gross_sign",
+            "positive_states": 0,
+            "valid_state_rate": 0.0
+          },
+          {
+            "criterion": "full_displayed_depth_gross",
+            "positive_states": 0,
+            "valid_state_rate": 0.0
+          },
+          {
+            "criterion": "full_depth_and_per_leg_minimum_notional",
+            "positive_states": 0,
+            "valid_state_rate": 0.0
+          },
+          {
+            "criterion": "single_match_fee_sensitivity_positive",
+            "positive_states": 0,
+            "valid_state_rate": 0.0
+          },
+          {
+            "criterion": "fragmentation_safe_fee_sensitivity_positive",
+            "positive_states": 0,
+            "valid_state_rate": 0.0
+          }
+        ],
+        "gross_candidate_evidence_count": 0,
+        "gross_candidate_evidence_complete": true,
+        "gross_candidate_replay": {
+          "candidate_count": 0,
+          "candidates": [],
+          "complete": true,
+          "replayed_candidate_count": 0,
+          "source_code_sha256": "277b48af76eb28364bd03bbd89a971186417ee1bd2be26ce22ad9b744fdad3e4",
+          "status": "NO_POSITIVE_CANDIDATES_TO_REPLAY",
+          "version": "veritas-gross-candidate-source-replay-v1"
+        },
+        "finding_id": "veritas-qualification-v1-8255be6bf41e069e",
+        "finding_file_sha256": "26a33d93a86825a6560c4e8c39875aaa67ba4923981767f6806ae3af6ead8cd9",
+        "job_id": "job-0aa6327f9d734da6b7be9dc3",
+        "job_state": "COMPLETED",
+        "job_progress": {
+          "done": 30,
+          "total": 30
+        },
+        "job_elapsed_seconds": 1.89931816898752,
+        "job_file_sha256": "dd224995909b69f7fccaaa0c865296b062fdb614e86f508e382339516ee60aa8",
+        "expected_latest_scan_id": "scan-20261015T183100Z-3e11a6dc87d4",
+        "director_manifest_state": "RUNNING",
+        "director_manifest_current_job_state": "QUEUED",
+        "director_manifest_projection_pending_reconciliation": true,
+        "orders_submitted": false,
+        "authenticated_requests": false
+      },
+      "limitations": [
+        "The 30-snapshot panel is selected, short, and repeated; observations are dependent and do not estimate venue-wide opportunity frequency.",
+        "The result tests candidate qualification, not realized or hypothetical strategy PnL.",
+        "The published book timestamp and hash observations do not prove sequence continuity or response freshness.",
+        "Fee sensitivity is hypothetical and does not establish order arrival, persistence, or fills."
+      ],
+      "decision": "Keep no-trade. Allow the next scheduled Director cycle to reconcile the completed job, continue bounded observation, and defer model or execution-policy comparison until a genuine replayable gross candidate exists.",
       "status": "continue"
     }
   ],

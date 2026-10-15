@@ -540,3 +540,36 @@ no sequence field. Keep no-trade and prioritize independent freshness or
 continuity evidence.
 See [Gate A checkpoint 027](VERITAS_MISSION2_GATE_A_CHECKPOINT_027.md) and
 [inventory 034](VERITAS_MISSION2_RESEARCH_INVENTORY_034.json).
+
+
+## Gate A checkpoint 028 addendum — scan 30 and timestamp/hash audit
+
+Scheduled scan 30 brings the panel to 1,200 selected pairs, 1,070 passing the
+request/receipt completeness gate, and 558 distinct markets. There are still no
+positive gross or fee-qualified states. A read-only audit across 30 snapshots
+found that raw book hashes and timestamps advanced together in 248 of 250
+sampled stable-control transitions and both remained unchanged in two. This is
+consistent with timestamp marking a book-state update, not proof of response
+freshness. Keep the five-second age rule as a recency diagnostic and retain the
+independent freshness/continuity requirement. See [Gate A checkpoint 028](VERITAS_MISSION2_GATE_A_CHECKPOINT_028.md)
+and [research ledger H068](VERITAS_RESEARCH_LEDGER.json).
+
+## Scheduled qualification and source-analysis checkpoint 035
+
+The scheduled 18:45 UTC Research Director cycle reconciled the legacy scan-28
+v2 finding and admitted scan 30 under economic qualification v3. The bounded
+Arena job completed 30/30 in 1.90 seconds over 30 snapshots (1,200 selected
+pairs; 1,070 request/receipt-valid; 558 distinct markets). The persisted finding
+reports zero candidates at all five gross, depth, minimum-notional, and fee
+gates, with complete zero-candidate replay evidence. No model or execution
+policy was promoted. The Director manifest still shows its job as queued while
+the local job record is completed; the next scheduled cycle at 19:15:13 UTC is
+expected to reconcile that projection. No manual poll or retry was used.
+The result is recorded in [research ledger H069](VERITAS_RESEARCH_LEDGER.json).
+
+The scheduled finalized-source replay processed 112 segments (33.29 MB),
+bringing the catalog prefix to 3,019/4,081 segments with 1,062 segments and
+312.43 MB pending. Its campaign window contains 173,498 frame records and
+151,539 quality-valid states, with zero positive top-ask or full-depth states.
+The recurrence exited normally, used 13.1 CPU seconds, peaked at 137.5 MiB,
+and used no swap. Mission 2 remains active; see [inventory 035](VERITAS_MISSION2_RESEARCH_INVENTORY_035.json).
