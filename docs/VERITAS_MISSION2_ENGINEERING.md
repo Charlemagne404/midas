@@ -152,31 +152,31 @@ experiment.
 
 ## Runtime and evidence at checkpoint
 
-- Latest scan: `scan-20261015T083153Z-1d45d1808d34`, captured 08:31:53 UTC and indexed by v4 at 08:31:59.
+- Latest scan: `scan-20261015T090047Z-6f98ffeaecab`, captured 09:00:47 UTC and indexed by v4 at 09:00:52.
 - Latest discovery union: 300 unique IDs, 167 supported pair markets, 133
   explicit exclusions.
 - Latest selected panel: 40 markets (six available stable controls, 34
-  rotating); 37 quality-valid pairs. Latest liquidity strata are 9/14/17
-  high/medium/low, expiry strata 17/22/1 near/medium/long, and spread strata
-  9/15/16 tight/medium/wide.
-- Indexed panel: eleven snapshots, 440 selected observations, 396
-  request/receipt-valid, 44 empty-ask invalids, 156 distinct markets, zero
-  pending snapshots. The legacy reported-age/skew gate accepts 98/440; paired
-  yield improves by 298 observations (+67.7 percentage points).
-- There are 284 sampled consecutive book-state comparisons; 271 fingerprints
-  differ. The API bands 54 markets as higher sampled change, eight as lower,
-  and 94 unclassified. These remain intermittent comparisons, not venue update
+  rotating); 35 quality-valid pairs. Latest liquidity strata are 9/16/15
+  high/medium/low, expiry strata 18/21/1 near/medium/long, and spread strata
+  16/12/12 tight/medium/wide.
+- Indexed panel: twelve snapshots, 480 selected observations, 431
+  request/receipt-valid, 49 empty-ask invalids, 161 distinct markets, zero
+  pending snapshots. The legacy reported-age/skew gate accepts 107/480; paired
+  yield improves by 324 observations (+67.5 percentage points).
+- There are 319 sampled consecutive book-state comparisons; 304 fingerprints
+  differ. The API bands 54 markets as higher sampled change, 15 as lower, and
+  92 unclassified. These remain intermittent comparisons, not venue update
   rates.
-- Observation window: about 152 minutes; current API readiness is
+- Observation window: about 181 minutes; current API readiness is
   `collecting_repeated_temporal_coverage`.
-- Data root: 9,190,439 bytes, below the 1 GiB cap.
+- Data root: 9,865,838 bytes, below the 1 GiB cap.
 - Service configuration: 40 markets, one-second request pacing, seven planned
   network requests per scan, `CPUQuota=5%`, `MemoryMax=256M`, low CPU/IO
   priority, no new privileges, and writes limited to the observatory data root.
-- Latest scheduled scan completed successfully at 08:31:59 UTC, using about
-  609 ms of CPU. Qualification run
-  `VERITAS-M2-ECO-QUAL-001-RUN-95f8752f5291` over eleven snapshots found zero
-  positive states at all gates (396 quality-valid pairs, 156 distinct
+- Latest scheduled scan completed successfully at 09:00:52 UTC, using about
+  605 ms of CPU. Qualification run
+  `VERITAS-M2-ECO-QUAL-001-RUN-b401cd384481` over twelve snapshots found zero
+  positive states at all gates (431 quality-valid pairs, 161 distinct
   markets; top-edge median -0.028, maximum -0.001).
 
 ### Finalized source replay extension
@@ -198,13 +198,16 @@ The full scan results and immutable source identities are in
 [`VERITAS_MISSION2_GATE_A_CHECKPOINT_005.md`](VERITAS_MISSION2_GATE_A_CHECKPOINT_005.md),
 [`VERITAS_MISSION2_GATE_A_CHECKPOINT_006.md`](VERITAS_MISSION2_GATE_A_CHECKPOINT_006.md),
 [`VERITAS_MISSION2_GATE_A_CHECKPOINT_007.md`](VERITAS_MISSION2_GATE_A_CHECKPOINT_007.md),
+[`VERITAS_MISSION2_GATE_A_CHECKPOINT_008.md`](VERITAS_MISSION2_GATE_A_CHECKPOINT_008.md),
+and [`VERITAS_MISSION2_GATE_A_CHECKPOINT_009.md`](VERITAS_MISSION2_GATE_A_CHECKPOINT_009.md). Historical and current evidence inventories are
 [`VERITAS_MISSION2_RESEARCH_INVENTORY_003.json`](VERITAS_MISSION2_RESEARCH_INVENTORY_003.json),
 [`VERITAS_MISSION2_RESEARCH_INVENTORY_004.json`](VERITAS_MISSION2_RESEARCH_INVENTORY_004.json),
 [`VERITAS_MISSION2_RESEARCH_INVENTORY_005.json`](VERITAS_MISSION2_RESEARCH_INVENTORY_005.json),
 [`VERITAS_MISSION2_RESEARCH_INVENTORY_006.json`](VERITAS_MISSION2_RESEARCH_INVENTORY_006.json),
 [`VERITAS_MISSION2_RESEARCH_INVENTORY_007.json`](VERITAS_MISSION2_RESEARCH_INVENTORY_007.json),
 [`VERITAS_MISSION2_RESEARCH_INVENTORY_008.json`](VERITAS_MISSION2_RESEARCH_INVENTORY_008.json),
-and [`VERITAS_MISSION2_RESEARCH_INVENTORY_009.json`](VERITAS_MISSION2_RESEARCH_INVENTORY_009.json).
+[`VERITAS_MISSION2_RESEARCH_INVENTORY_009.json`](VERITAS_MISSION2_RESEARCH_INVENTORY_009.json), and
+[`VERITAS_MISSION2_RESEARCH_INVENTORY_010.json`](VERITAS_MISSION2_RESEARCH_INVENTORY_010.json).
 
 ## Verification
 

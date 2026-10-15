@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-15T08:53:20Z",
+  "updated_at_utc": "2026-10-15T09:02:33Z",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -2101,6 +2101,37 @@
         "Director and tournament reporting remain unimplemented."
       ],
       "decision": "Keep the dashboard evidence-linked and read-only; extend it only when the remaining research and Director evidence has a validated artifact contract.",
+      "status": "continue"
+    },
+    {
+      "hypothesis_id": "VERITAS-H045",
+      "title": "The twelfth prospective public snapshot still yields no positive qualified pair",
+      "mechanism": "A wider repeated selected panel may expose gross complement candidates; the unchanged top-ask baseline and depth/minimum/fee gates are evaluated on the same quality-valid states.",
+      "experiment_id": "VERITAS-M2-ECO-QUAL-001",
+      "dataset_id": "b401cd38448145e0d384d5c58bfa6e16251b85d28d5febe20d65e30ef6880300",
+      "success_metric": "Compare unchanged top-ask gross sign, 20-share full displayed depth, both per-leg minimums, single-match fees, and fragmentation-safe fees over all finalized v4 snapshot events.",
+      "result": {
+        "status": "no_positive_gross_candidate_observed",
+        "snapshot_count": 12,
+        "attempted_market_pairs": 480,
+        "quality_valid_pairs": 431,
+        "unique_market_ids": 161,
+        "top_edge_median_nearest_rank": "-0.028",
+        "top_edge_maximum": "-0.001",
+        "positive_counts": {
+          "unchanged_top_ask_gross_sign": 0,
+          "full_displayed_depth_gross": 0,
+          "full_depth_and_per_leg_minimum_notional": 0,
+          "single_match_fee_sensitivity_positive": 0,
+          "fragmentation_safe_fee_sensitivity_positive": 0
+        },
+        "experiment_sha256": "321d54ba378332a4957e8c6f7dea1791b621f9de9a7cf05a61159c02578ad7e6"
+      },
+      "limitations": [
+        "Repeated snapshots are selected and correlated and cover about 181 minutes.",
+        "Displayed public depth and hypothetical fee sensitivities do not establish persistence, fills, or PnL."
+      ],
+      "decision": "Keep no-trade and repeat the deterministic qualification only when another finalized snapshot is indexed.",
       "status": "continue"
     }
   ],
