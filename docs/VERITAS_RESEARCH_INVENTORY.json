@@ -4,7 +4,7 @@
   "status": "in_progress",
   "baseline_commit": "f968095feb9c591de38fe12d7493224425f62f3a",
   "branch": "project/veritas",
-  "last_checkpoint": "docs/VERITAS_GATE_B_CHECKPOINT_001.md",
+  "last_checkpoint": "docs/VERITAS_GATE_G_TEST_FAILURE_FORENSICS_001.md",
   "datasets": [
     {
       "dataset_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
@@ -362,6 +362,33 @@
       "historical_job_rerun": false,
       "orders_submitted": false,
       "promotion": "forensic classification only; no code or campaign change"
+    },
+    {
+      "experiment_id": "VERITAS-GATE-G-ONE-SHOT-FORENSICS-20261015-001",
+      "type": "read_only_gate_g_failure_classification_and_isolated_backend_reproduction",
+      "status": "backend_test_budget_corrected_browser_rotation_bug_likely_fixed_in_release",
+      "source_dataset_id": "historical_gate_g_services_20261014",
+      "evidence": "docs/VERITAS_GATE_G_TEST_FAILURE_FORENSICS_001.md",
+      "analysis_version": "veritas-gate-g-test-forensics-v1",
+      "backend_fixture_tests_passed": 4,
+      "backend_fixture_nested_job_seconds": "142.59",
+      "backend_fixture_total_seconds": "162.80",
+      "backend_timeout_old_seconds": 180,
+      "backend_timeout_new_seconds": 330,
+      "backend_full_gate_rerun_after_change": false,
+      "browser_gate_tests_passed": 5,
+      "browser_gate_tests_failed": 1,
+      "browser_same_worktree_recheck_passed": 1,
+      "browser_root_cause_confirmed": false,
+      "protected_reality_campaign_mutated": false,
+      "orders_submitted": false,
+      "promotion": "backend test-wrapper timeout correction; browser lookup fix already in release; Gate G remains provisional",
+      "browser_likely_fix_commit": "c96a031eb7ef51cb4a6c252cfa76b2f4ddb3b2d4",
+      "browser_fix_in_release_baseline": true,
+      "browser_focused_regression_tests_passed": 5,
+      "browser_focused_regression_runtime_seconds": "0.73",
+      "browser_root_cause_assessment": "likely .seg/.open segment-rotation lookup gap; original API response unavailable",
+      "backend_fixture_rerun_after_change_passed": 4
     }
   ],
   "models": [],

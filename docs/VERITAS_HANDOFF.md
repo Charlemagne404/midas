@@ -42,6 +42,18 @@ Current evidence is insufficient to select an eligible policy model or claim
 profitability. Cross-day coverage and multi-week conclusions remain open. A
 negative or insufficient result is a valid research outcome.
 
+The Gate G backend suite exposed a Veritas test-wrapper timeout mismatch: a
+bounded plan job allowed 300 seconds while its test subprocess was cut off at
+180 seconds. The test now allows the declared job budget plus 30 seconds, and
+the isolated fixture passed 4 tests in 162.80 seconds after the change; the
+full suite has not been rerun. The Gate G browser test's
+source-record label failure likely came from an active `.open` file not being
+found when the reference retained its `.seg` name. Release commit `c96a031`
+added lookup across both segment forms and its focused regression plus browser
+recheck passed. The original API response was not captured, so that attribution
+remains an inference. See the
+[Gate G failure forensics](VERITAS_GATE_G_TEST_FAILURE_FORENSICS_001.md).
+
 ## Active campaigns and services
 
 The frozen Mission 2 prospective campaign is active. Its immutable identity is

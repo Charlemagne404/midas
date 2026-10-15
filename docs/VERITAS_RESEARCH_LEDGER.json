@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-15T00:46:41.457179+00:00",
+  "updated_at_utc": "2026-10-15T00:57:46.003596+00:00",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -1105,6 +1105,63 @@
       ],
       "decision": "Keep the release fallback and regression. Do not restart or edit the failed job artifact. Continue the broader Research Director and remaining one-shot service audit independently.",
       "status": "completed"
+    },
+    {
+      "hypothesis_id": "VERITAS-H020",
+      "title": "Were the Gate G backend and browser failures persistent Veritas defects?",
+      "mechanism": "The backend integration test used a 180-second subprocess timeout around a plan job with a 300-second declared wall budget. The browser source-record label was absent once; Reality commit c96a031 then added lookup across .seg/.open rotation and the browser recheck passed.",
+      "experiment_id": "VERITAS-GATE-G-ONE-SHOT-FORENSICS-20261015-001",
+      "dataset_id": "historical_gate_g_services_20261014",
+      "success_metric": "Classify each one-shot failure from captured logs and matching source, reproduce bounded backend work in the Veritas checkout, and preserve protected Reality artifacts and services.",
+      "result": {
+        "status": "backend_timeout_mismatch_corrected_browser_rotation_bug_likely_fixed_in_release",
+        "evidence": "docs/VERITAS_GATE_G_TEST_FAILURE_FORENSICS_001.md",
+        "gate_g_backend_full_run": {
+          "passed": 737,
+          "skipped": 1,
+          "errors": 2,
+          "runtime_seconds": "1443.80"
+        },
+        "backend_fixture": "tests/arena/test_evidence_study_verification.py::completed_plan",
+        "nested_job_declared_wall_seconds": 300,
+        "old_subprocess_timeout_seconds": 180,
+        "isolated_reproduction_tests_passed": 4,
+        "isolated_nested_job_seconds": "142.59",
+        "isolated_total_seconds": "162.80",
+        "new_subprocess_timeout_seconds": 330,
+        "post_change_fixture_rerun": true,
+        "gate_g_browser_full_run": {
+          "passed": 5,
+          "failed": 1
+        },
+        "browser_failure": "Checksum-verified raw input record label absent within 5 seconds",
+        "same_worktree_browser_recheck": {
+          "passed": 1,
+          "runtime_seconds": "26.8",
+          "code_changed": false
+        },
+        "protected_reality_campaign_mutated": false,
+        "protected_reality_services_restarted": false,
+        "orders_submitted": false,
+        "promotion": "test-wrapper timeout correction only; Gate G remains unverified after the change",
+        "browser_likely_fix_commit": "c96a031eb7ef51cb4a6c252cfa76b2f4ddb3b2d4",
+        "browser_fix_is_ancestor_of_release_baseline": true,
+        "browser_regression_test": "tests/test_reality_dashboard.py: .seg reference resolves while matching .open source exists",
+        "browser_focused_regression_tests_passed": 5,
+        "browser_focused_regression_runtime_seconds": "0.73",
+        "browser_same_worktree_recheck_passed": {
+          "passed": 1,
+          "runtime_seconds": "26.8"
+        },
+        "browser_root_cause": "likely segment-rotation lookup bug; failed response was not captured"
+      },
+      "limitations": [
+        "The full 737-test Gate G backend suite has not been rerun; only the bounded plan fixture and its verification tests were repeated after the timeout correction.",
+        "The browser failure likely came from a .seg/.open rotation lookup gap fixed in c96a031, but the original API response was not captured.",
+        "The separate shadow-canary final-segment continuity failure remains unclassified."
+      ],
+      "decision": "Give the backend test its declared worker budget plus a shutdown margin. Treat the browser issue as likely fixed by the release source-segment lookup change, while keeping Gate G provisional until bounded verification is complete. Classify the shadow-canary failure independently without modifying Reality stores.",
+      "status": "continue"
     }
   ],
   "next_research_questions": [
@@ -1112,6 +1169,7 @@
     "Does a broader, longer source panel produce any positive quantity-specific gross complement before modeling fees or execution?",
     "What independent verification is required before a positive candidate can enter a matched hypothetical strategy comparison?",
     "Can existing Arena scheduling and Research Director interfaces support bounded Veritas hypotheses without duplicating job control?",
-    "What Veritas evidence should be exposed in the native dashboard after the data contracts stabilize?"
+    "What Veritas evidence should be exposed in the native dashboard after the data contracts stabilize?",
+    "Can the shadow-canary final source-segment continuity failure be attributed without writing to the protected Reality campaign or raw store?"
   ]
 }
