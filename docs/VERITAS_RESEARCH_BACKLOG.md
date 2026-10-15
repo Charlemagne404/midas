@@ -65,3 +65,7 @@ and [`checkpoint 002`](VERITAS_MISSION2_GATE_A_CHECKPOINT_002.md).
 - The bounded controlled capacity sensitivity is
   [VERITAS_GATE_B_CAPACITY_001.json](VERITAS_GATE_B_CAPACITY_001.json); it uses
   synthetic inputs and does not promote a strategy.
+
+## Mission 2 current evidence — scan 24
+
+The bounded observatory has completed 24 scheduled snapshots: 859/960 pairs pass quality checks across 441 markets, with zero positive gross or qualified states. Scan 24 covered 40 markets drawn from a 300-ID response union; 176 markets in that union passed the current same-condition V1 eligibility gate. Keep the read-only observation and qualification pipeline running while the finalized source prefix catches up; do not train or compare execution policies without a qualified gross candidate and suitable outcome labels. Current checkpoint: [Gate A 022](VERITAS_MISSION2_GATE_A_CHECKPOINT_022.md), [Gate F 012](VERITAS_MISSION2_GATE_F_CHECKPOINT_012.md), [inventory 025](VERITAS_MISSION2_RESEARCH_INVENTORY_025.json).

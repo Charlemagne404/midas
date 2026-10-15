@@ -178,3 +178,9 @@ Do not launch overlapping manual runs. If a manual run is needed, invoke its one
 ## Preservation
 
 The separate `/home/charlie/midas-reality` checkout remains the protected source of the frozen campaign. Veritas analysis reads finalized source segments only and writes to its own observatory root. Do not restart or alter Reality services for this workflow. No Arena, Laboratory, Prometheus, or historical campaign records are rewritten. No real-money action is permitted.
+
+## 2026-10-15 15:45 UTC scheduled cycle
+
+The 15:30 observer scan completed in 16 seconds using seven public HTTP attempts and 0.622 CPU seconds; the saved store measured 22,696,673 bytes. The 15:40:45 source replay processed 128 finalized segments / 32,016,580 bytes in 225 seconds and 11.290 CPU seconds. It remains within its 128-segment / 32 MiB batch bounds and leaves 1,438 finalized segments pending. The 15:45:04 Director cycle reconciled scan 23 and admitted scan 24. Arena completed the bounded 24-event job in 1.418 seconds; the Director manifest is due for reconciliation at 16:15:11 UTC. The observer, source-analysis, and Director timers remain active. No manual poll or retry occurred.
+
+See [Gate A checkpoint 022](VERITAS_MISSION2_GATE_A_CHECKPOINT_022.md) and [Gate F checkpoint 012](VERITAS_MISSION2_GATE_F_CHECKPOINT_012.md) for artifact hashes, counters, and the current manifest projection.

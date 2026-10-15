@@ -528,3 +528,7 @@ scan 20 as last qualified until the scheduled 14:45:16 UTC cycle. Mission 2
 remains active. See [Gate A checkpoint 019](VERITAS_MISSION2_GATE_A_CHECKPOINT_019.md),
 [Gate F checkpoint 009](VERITAS_MISSION2_GATE_F_CHECKPOINT_009.md), and
 [research inventory 022](VERITAS_MISSION2_RESEARCH_INVENTORY_022.json).
+
+## Latest operating checkpoint — scan 24
+
+The scheduled observer, finalized-source replay, and Director qualification cycle completed on 2026-10-15. Scan 24 extended the bounded 40-market sample to 24 snapshots and 441 distinct markets; 859/960 pairs pass the current quality gate, while all gross, depth, minimum, and fee qualification gates remain zero-positive. The source prefix reached 2,289/3,727 finalized segments; the Director and Arena completed the scan-pinned qualification without orders or authenticated requests. The Director manifest projection awaits its 16:15:11 UTC scheduled reconciliation. See [Gate A checkpoint 022](VERITAS_MISSION2_GATE_A_CHECKPOINT_022.md), [Gate F checkpoint 012](VERITAS_MISSION2_GATE_F_CHECKPOINT_012.md), and [inventory 025](VERITAS_MISSION2_RESEARCH_INVENTORY_025.json). Mission 2 remains active.

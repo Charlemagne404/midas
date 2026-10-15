@@ -451,3 +451,9 @@ is the reconciliation point. No manual poll or retry was run. See [Gate A
 checkpoint 021](VERITAS_MISSION2_GATE_A_CHECKPOINT_021.md), [Gate F checkpoint
 011](VERITAS_MISSION2_GATE_F_CHECKPOINT_011.md), [operations](VERITAS_MISSION2_OPERATIONS.md),
 and [research inventory 024](VERITAS_MISSION2_RESEARCH_INVENTORY_024.json).
+
+## Latest operating evidence — 2026-10-15 scan 24
+
+The operating discovery system now has 24 scheduled snapshots spanning 05:59–15:30 UTC, with 960 selected observations, 859 quality-valid pairs, and 441 observed market IDs. The latest bounded query union contains 300 IDs, of which 176 were eligible same-condition V1 pairs; the 40 selected markets included three available frozen controls and 37 rotating markets. No positive gross, depth, per-leg-minimum, or fee-sensitive candidate has been observed in this panel. The result remains limited to intermittent selected observations and does not establish venue-wide absence or executability.
+
+The finalized-source replay has processed 2,289/3,727 segments and remains bounded and incomplete; the scheduled Arena and Director qualification completed scan 24 with zero-positive gates. The no-trade baseline remains. See [Gate A checkpoint 022](VERITAS_MISSION2_GATE_A_CHECKPOINT_022.md), [Gate F checkpoint 012](VERITAS_MISSION2_GATE_F_CHECKPOINT_012.md), and [inventory 025](VERITAS_MISSION2_RESEARCH_INVENTORY_025.json). Mission 2 remains active.
