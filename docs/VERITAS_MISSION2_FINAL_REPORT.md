@@ -573,3 +573,16 @@ bringing the catalog prefix to 3,019/4,081 segments with 1,062 segments and
 151,539 quality-valid states, with zero positive top-ask or full-depth states.
 The recurrence exited normally, used 13.1 CPU seconds, peaked at 137.5 MiB,
 and used no swap. Mission 2 remains active; see [inventory 035](VERITAS_MISSION2_RESEARCH_INVENTORY_035.json).
+
+## Gate C checkpoint 001 — coverage pilot registered
+
+Implemented and preregistered `VERITAS-M2-COVERAGE-PILOT-001`, a 24-hour
+measurement-only study capped at 48 scheduled scans. It reuses the observer's
+existing bounded public reads and adds no market requests. It measures
+quality-valid paired-book yield per selected slot, with descriptive stable
+control/rotating comparisons, stratum coverage, missed scans, and immutable
+source lineage. The first scheduled scan after this source revision is
+committed starts enrollment; no pilot observations exist yet. The fixed
+window, no-backfill rule, resource cap, limitations, and verification are in
+[Gate C checkpoint 001](VERITAS_MISSION2_GATE_C_CHECKPOINT_001.md) and the
+[versioned pilot plan](VERITAS_MISSION2_COVERAGE_PILOT_001.json).
