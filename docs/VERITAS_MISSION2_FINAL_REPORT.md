@@ -475,3 +475,15 @@ The finalized-source replay has processed 2,545/3,844 segments and remains bound
 The observatory has completed 27 scheduled snapshots: 961/1,080 pairs pass the current quality gate across 494 observed market IDs. Scan 27 returned 300 query records and 298 unique IDs after two identical duplicates were removed; 123 markets passed the supported same-condition V1 eligibility gate. No positive gross, depth, per-leg-minimum, or fee-sensitive candidate has appeared. This remains intermittent selected evidence and does not establish venue-wide absence or executability.
 
 The finalized-source replay has processed 2,661/3,903 segments and remains bounded and incomplete. Its campaign-window prefix contains 124,922 frame records, 110,158 touched states, and 107,340 quality-valid states, with zero positive top-ask and full-depth states. The scheduled Arena qualification completed scan 27 with zero-positive gates. The Director manifest awaits its scheduled 17:45:25 UTC reconciliation. The no-trade baseline remains. See [Gate A checkpoint 025](VERITAS_MISSION2_GATE_A_CHECKPOINT_025.md), [Gate F checkpoint 015](VERITAS_MISSION2_GATE_F_CHECKPOINT_015.md), and [inventory 028](VERITAS_MISSION2_RESEARCH_INVENTORY_028.json). Mission 2 remains active.
+
+## Gate D engineering addendum — 2026-10-15
+
+The v2 economic qualification now preserves bounded source pointers for every
+quality-valid positive top-ask row, verifies row/counter reconciliation, and
+labels pointers as not independently replayed. This closes a provenance gap
+without treating a candidate as verified or executable. A read-only comparison
+of the 28 finalized snapshots through scan 28 found 996 valid pairs and zero
+positive top-ask rows; no result artifact was written by this check. The
+scheduled Arena qualification remains responsible for persisting the next
+versioned result. See [Gate D checkpoint
+001](VERITAS_MISSION2_GATE_D_CHECKPOINT_001.md).

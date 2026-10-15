@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-15T17:16:00Z",
+  "updated_at_utc": "2026-10-15T17:36:49Z",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -3410,6 +3410,44 @@
         "The qualification does not test order arrival, persistence, fills, or realized profitability."
       ],
       "decision": "Keep the no-trade baseline and continue bounded observation. The scan-pinned qualification produced no positive candidate at any gate; the Director manifest reconciliation remains scheduled, and no manual poll or retry was started."
+    },
+    {
+      "hypothesis_id": "VERITAS-H065",
+      "experiment_id": "VERITAS-M2-CANDIDATE-PROVENANCE-001",
+      "dataset_id": "c3decafe98ba7b7a6f06e2c48c074a4d8581476ee73b5bbcea9d04845281094c",
+      "title": "Does qualification preserve complete source pointers for every quality-valid positive top-ask row?",
+      "mechanism": "Economic qualification v2 emits a bounded record for each positive top-ask market row, linked to its immutable snapshot, evidence digest, event digest, capture time, market identity, sampled book fingerprint, and selection context. It checks the row count against the event counter and refuses malformed or incomplete source pointers.",
+      "success_metric": "For each quality-valid positive row, preserve exactly one source pointer; reject disagreement between aggregate counts and rows; never silently truncate candidate evidence; label pointers as unverified until independent replay.",
+      "result": {
+        "analysis_version": "veritas-economic-qualification-comparison-v2",
+        "experiment_run_id": "VERITAS-M2-ECO-QUAL-001-V2-RUN-c3decafe98ba",
+        "experiment_sha256": "d51904d042634f961908fcb23c0ec9789ef0a82f840fb54a41a9a4382283f6c6",
+        "read_only_dataset": {
+          "snapshots": 28,
+          "attempted_market_pairs": 1120,
+          "quality_valid_pairs": 996,
+          "unique_market_ids": 513,
+          "positive_top_ask_states": 0,
+          "gross_candidate_evidence_count": 0,
+          "gross_candidate_evidence_complete": true,
+          "gross_candidate_evidence_limit": 1024,
+          "persisted_as_finding": false
+        },
+        "synthetic_positive_fixture": "A quality-valid positive top-ask row produced a source-linked candidate record with explicit NOT_YET_INDEPENDENTLY_REPLAYED status.",
+        "adversarial_fixture": "A digest-valid event whose positive counter disagreed with its market rows was rejected.",
+        "targeted_tests_passed": 21,
+        "ruff_passed": true,
+        "formatting_passed": true,
+        "strict_mypy_passed": true,
+        "orders_submitted": false,
+        "authenticated_requests": false
+      },
+      "limitations": [
+        "The current genuine panel contains no positive candidate, so the live candidate branch has not been exercised.",
+        "The v2 row is a provenance pointer; independent snapshot replay and per-candidate fee/depth verification remain required.",
+        "The evidence bound is 1,024 rows; an overflow fails the qualification instead of silently truncating."
+      ],
+      "decision": "Use v2 for the next scheduled Arena qualification. Keep no-trade. Do not promote any row until independent replay and economic review complete."
     }
   ],
   "next_research_questions": [

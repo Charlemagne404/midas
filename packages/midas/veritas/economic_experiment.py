@@ -4,14 +4,15 @@ from __future__ import annotations
 
 import hashlib
 import json
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any
 
 from .continuous_analysis import VERSION as SNAPSHOT_ANALYSIS_VERSION
 
-VERSION = "veritas-economic-qualification-comparison-v1"
+VERSION = "veritas-economic-qualification-comparison-v2"
 EXPERIMENT_ID = "VERITAS-M2-ECO-QUAL-001"
+MAX_GROSS_CANDIDATE_EVIDENCE = 1024
 
 
 def _sha256(value: bytes) -> str:
@@ -20,6 +21,14 @@ def _sha256(value: bytes) -> str:
 
 def _canonical(value: Any) -> bytes:
     return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
+
+
+def _is_sha256(value: Any) -> bool:
+    return (
+        isinstance(value, str)
+        and len(value) == 64
+        and all(character in "0123456789abcdef" for character in value)
+    )
 
 
 def compare_qualification_rules(
@@ -44,9 +53,10 @@ def compare_qualification_rules(
         )
         if not isinstance(stored_digest, str) or stored_digest != expected:
             raise ValueError(f"Snapshot analysis event digest mismatch: {event.get('scan_id')}")
-        if not isinstance(event.get("scan_id"), str) or not str(
-            event.get("snapshot_file", "")
-        ).endswith(f"{event['scan_id']}.json.gz"):
+        scan_id = event.get("scan_id")
+        if not isinstance(scan_id, str) or event.get("snapshot_file") != (
+            f"snapshots/{scan_id}.json.gz"
+        ):
             raise ValueError("Snapshot event source identity is invalid")
 
     dataset_manifest = [
@@ -58,7 +68,7 @@ def compare_qualification_rules(
         for event in ordered
     ]
     dataset_sha256 = _sha256(_canonical(dataset_manifest))
-    run_id = f"{EXPERIMENT_ID}-RUN-{dataset_sha256[:12]}"
+    run_id = f"{EXPERIMENT_ID}-V2-RUN-{dataset_sha256[:12]}"
 
     attempted = sum(int(event.get("attempted_market_pairs", 0)) for event in ordered)
     valid = sum(int(event.get("valid_quality_pairs", 0)) for event in ordered)
@@ -98,14 +108,76 @@ def compare_qualification_rules(
 
     edge_values: list[Decimal] = []
     market_ids: set[str] = set()
+    gross_candidate_evidence: list[dict[str, Any]] = []
     for event in ordered:
-        for row in event.get("market_rows", []):
+        rows = event.get("market_rows")
+        if not isinstance(rows, list):
+            raise ValueError(f"Snapshot event has no market rows: {event.get('scan_id')}")
+        event_candidate_count = 0
+        for row in rows:
             if not isinstance(row, dict):
                 continue
             market_ids.add(str(row.get("market_id") or ""))
             edge = row.get("top_pair_gross_edge_per_share")
             if row.get("valid") and isinstance(edge, str):
-                edge_values.append(Decimal(edge))
+                try:
+                    value = Decimal(edge)
+                except InvalidOperation as error:
+                    raise ValueError("Snapshot event contains a malformed top-pair edge") from error
+                if not value.is_finite():
+                    raise ValueError("Snapshot event contains a non-finite top-pair edge")
+                edge_values.append(value)
+                if value > 0:
+                    event_candidate_count += 1
+                    market_id = str(row.get("market_id") or "")
+                    snapshot_digest = event.get("snapshot_evidence_sha256")
+                    if not market_id:
+                        raise ValueError("Positive top-ask event has no market identity")
+                    if not _is_sha256(snapshot_digest):
+                        raise ValueError("Positive top-ask event has no snapshot evidence digest")
+                    gross_candidate_evidence.append(
+                        {
+                            "candidate_type": "quality_valid_positive_top_ask_gross",
+                            "market_id": market_id,
+                            "top_pair_gross_edge_per_share": str(value),
+                            "source_interval": {
+                                "scan_id": event["scan_id"],
+                                "captured_at_utc": event.get("captured_at_utc"),
+                                "captured_ns": event.get("captured_ns"),
+                                "snapshot_file": event["snapshot_file"],
+                                "snapshot_evidence_sha256": snapshot_digest,
+                                "analysis_event_sha256": event["analysis_event_sha256"],
+                                "sampled_book_state_hash": row.get("sampled_book_state_hash"),
+                            },
+                            "market_context": {
+                                "cohort_role": row.get("cohort_role"),
+                                "categories": row.get("categories", [])[:20]
+                                if isinstance(row.get("categories"), list)
+                                else [],
+                                "legacy_freshness_valid": row.get("legacy_freshness_valid"),
+                                "legacy_freshness_invalid_reason": row.get(
+                                    "legacy_freshness_invalid_reason"
+                                ),
+                            },
+                            "verification_status": "NOT_YET_INDEPENDENTLY_REPLAYED",
+                            "next_step": (
+                                "Independently replay this immutable snapshot and verify payoff, "
+                                "freshness, depth, per-leg minimums, and fees before any "
+                                "hypothetical strategy comparison."
+                            ),
+                        }
+                    )
+        expected_candidate_count = event.get("positive_top_gross_pairs")
+        if (
+            not isinstance(expected_candidate_count, int)
+            or isinstance(expected_candidate_count, bool)
+            or expected_candidate_count != event_candidate_count
+        ):
+            raise ValueError(
+                "Snapshot event positive top-ask count does not match its quality-valid market rows"
+            )
+        if len(gross_candidate_evidence) > MAX_GROSS_CANDIDATE_EVIDENCE:
+            raise ValueError("Gross-candidate evidence exceeds its bounded artifact limit")
     edge_values.sort()
     edge_distribution = {
         "count": len(edge_values),
@@ -173,6 +245,10 @@ def compare_qualification_rules(
             }
             for name, count in criteria
         ],
+        "gross_candidate_evidence_count": len(gross_candidate_evidence),
+        "gross_candidate_evidence_complete": True,
+        "gross_candidate_evidence_limit": MAX_GROSS_CANDIDATE_EVIDENCE,
+        "gross_candidate_evidence": gross_candidate_evidence,
         "sample": {
             "snapshot_count": len(ordered),
             "attempted_market_pairs": attempted,
@@ -210,9 +286,7 @@ def run_finalized_experiment(root: Path, *, quantity: str = "20") -> dict[str, A
     version_suffix = SNAPSHOT_ANALYSIS_VERSION.rsplit("-", 1)[-1]
     events_dir = root / "analysis-events" / version_suffix
     if events_dir.is_symlink() or not events_dir.is_dir():
-        raise ValueError(
-            f"{SNAPSHOT_ANALYSIS_VERSION} finalized analysis events are unavailable"
-        )
+        raise ValueError(f"{SNAPSHOT_ANALYSIS_VERSION} finalized analysis events are unavailable")
     paths = sorted(events_dir.glob("scan-*.json"))
     if len(paths) > 10_000:
         raise ValueError("Economic experiment snapshot bound exceeded")

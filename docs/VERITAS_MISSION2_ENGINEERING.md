@@ -544,3 +544,17 @@ The scheduled discovery and qualification pipeline completed scan 26. Its dedupl
 ## Latest operating checkpoint — scan 27
 
 The scheduled discovery and qualification pipeline completed scan 27. Its six-frame union contained 298 unique IDs after two identical duplicate records were removed; 123 passed same-condition V1 eligibility. The 40-market sample has 33 quality-valid pairs and no positive gross, depth, minimum, or fee state. The source prefix reached 2,661/3,903 finalized segments, with 1,242 pending. Arena completed the 27-event qualification with zero-positive gates. The Director manifest awaits its scheduled reconciliation. See [Gate A checkpoint 025](VERITAS_MISSION2_GATE_A_CHECKPOINT_025.md), [Gate F checkpoint 015](VERITAS_MISSION2_GATE_F_CHECKPOINT_015.md), and [inventory 028](VERITAS_MISSION2_RESEARCH_INVENTORY_028.json). Mission 2 remains active.
+
+## Gate D improvement — version 2 candidate provenance
+
+The economic qualification now records bounded, hash-linked source pointers
+for every quality-valid positive top-ask row. It cross-checks those rows
+against each event's positive counter, requires the exact immutable snapshot
+path, marks the evidence as not independently replayed, and fails closed at
+1,024 evidence rows instead of truncating. The experiment and run identity
+are versioned as v2. The read-only v2 comparison over the current 28 finalized
+snapshots found 996 valid pairs and no candidate; no research finding was
+written by that comparison. Twenty-one targeted backend tests passed, with
+Ruff, strict Mypy, and formatting checks. The positive evidence branch is
+covered by a synthetic fixture and awaits a genuine candidate. Details are
+in [Gate D checkpoint 001](VERITAS_MISSION2_GATE_D_CHECKPOINT_001.md).
