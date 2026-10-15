@@ -20,11 +20,11 @@ payload had just returned within a short batch. The dashboard and read-only API
 surface discovery strata, source-quality counts, candidate gates, research
 readiness, and snapshot evidence.
 
-The finalized-source analyzer has processed 402 of 2,780 replayable segments
-through ordinal 22,352, with 2,378 segments (594,257,808 bytes) pending. Its
+The finalized-source analyzer has processed 530 of 2,839 replayable segments
+through ordinal 29,076, with 2,309 segments (604,276,235 bytes) pending. Its
 latest scheduled run advanced the 128-segment batch limit; readiness remains
 `catching_up_finalized_source`. The processed prefix still contains no
-campaign-window frames. See [checkpoint 006](VERITAS_MISSION2_GATE_A_CHECKPOINT_006.md)
+campaign-window frames. See [checkpoint 007](VERITAS_MISSION2_GATE_A_CHECKPOINT_007.md)
 for campaign, code, event, summary, and runtime hashes.
 
 An active 30-minute timer runs the bounded scanner and snapshot analyzer. A
@@ -40,29 +40,29 @@ per run under 5% CPU and 256 MiB memory. Neither service changes Reality.
   semantics, 52 unsupported outcome relationships).
 - Latest selection: 40 markets, six available frozen controls, 34 rotating;
   liquidity, expiry, category, and spread strata are present.
-- Nine immutable snapshots from 05:59:28 to 07:31:10 UTC: 360 selected
-  market observations, 322 quality-valid pairs, 38 empty-ask invalids, 149
-  distinct market IDs, and zero analyzer backlog. The latest scan had 36 of 40
+- Ten immutable snapshots from 05:59:28 to 08:01:14 UTC: 400 selected market
+  observations, 359 quality-valid pairs, 41 empty-ask invalids, 152 distinct
+  market IDs, and zero analyzer backlog. The latest scan had 37 of 40
   quality-valid pairs.
 - Current descriptive readiness: `collecting_repeated_temporal_coverage`.
-  This 92-minute window does not meet the 24-hour dependence-review readiness
+  This 122-minute window does not meet the 24-hour dependence-review readiness
   threshold or the earlier specific study's 48-hour gate.
 - The paired same-snapshot freshness reclassification changed valid yield from
   5/40 (12.5%) to 32/40 (80.0%): +27 pairs and +67.5 percentage points on the
   exact same saved payload. Batch atomicity and upstream queue age remain
   unverified.
 - `VERITAS-M2-ECO-QUAL-001` run
-  `VERITAS-M2-ECO-QUAL-001-RUN-76de7cc7f15e`, using 322 quality-valid pairs,
+  `VERITAS-M2-ECO-QUAL-001-RUN-2857e60b2b6f`, using 359 quality-valid pairs,
   found zero positive top-ask gross, 20-share depth, minimum-notional,
-  single-match-fee, or fragmentation-safe-fee states across 149 distinct
+  single-match-fee, or fragmentation-safe-fee states across 152 distinct
   markets. Top-edge range was -0.984 to -0.001 per share; median nearest-rank
   edge was -0.025. The result supports no-trade today; it does not establish
   absence across the venue or profitability.
 
-The 07:31 UTC scheduled scan succeeded and analysis v2 indexed exactly one new
-snapshot. The nine-snapshot economic run has a deterministic ID derived from
+The 08:01 UTC scheduled scan succeeded and analysis v2 indexed exactly one new
+snapshot. The ten-snapshot economic run has a deterministic ID derived from
 its input manifest; earlier results remain preserved separately. The refreshed
-result is [economic run 76de7cc7f15e](../data/veritas-observatory/experiments/VERITAS-M2-ECO-QUAL-001-RUN-76de7cc7f15e.json).
+result is [economic run 2857e60b2b6f](../data/veritas-observatory/experiments/VERITAS-M2-ECO-QUAL-001-RUN-2857e60b2b6f.json).
 
 ## Measurement yield and limits
 
@@ -120,12 +120,14 @@ Detailed implementation and commands are in
 [`VERITAS_MISSION2_GATE_A_CHECKPOINT_004.md`](VERITAS_MISSION2_GATE_A_CHECKPOINT_004.md),
 [`VERITAS_MISSION2_GATE_A_CHECKPOINT_005.md`](VERITAS_MISSION2_GATE_A_CHECKPOINT_005.md),
 [`VERITAS_MISSION2_GATE_A_CHECKPOINT_006.md`](VERITAS_MISSION2_GATE_A_CHECKPOINT_006.md),
+[`VERITAS_MISSION2_GATE_A_CHECKPOINT_007.md`](VERITAS_MISSION2_GATE_A_CHECKPOINT_007.md),
 [`VERITAS_MISSION2_RESEARCH_INVENTORY.json`](VERITAS_MISSION2_RESEARCH_INVENTORY.json),
 [`VERITAS_MISSION2_RESEARCH_INVENTORY_002.json`](VERITAS_MISSION2_RESEARCH_INVENTORY_002.json),
 [`VERITAS_MISSION2_RESEARCH_INVENTORY_003.json`](VERITAS_MISSION2_RESEARCH_INVENTORY_003.json),
 [`VERITAS_MISSION2_RESEARCH_INVENTORY_004.json`](VERITAS_MISSION2_RESEARCH_INVENTORY_004.json),
 [`VERITAS_MISSION2_RESEARCH_INVENTORY_005.json`](VERITAS_MISSION2_RESEARCH_INVENTORY_005.json),
-and [`VERITAS_MISSION2_RESEARCH_INVENTORY_006.json`](VERITAS_MISSION2_RESEARCH_INVENTORY_006.json).
+[`VERITAS_MISSION2_RESEARCH_INVENTORY_006.json`](VERITAS_MISSION2_RESEARCH_INVENTORY_006.json),
+and [`VERITAS_MISSION2_RESEARCH_INVENTORY_007.json`](VERITAS_MISSION2_RESEARCH_INVENTORY_007.json).
 
 ## Next evidence gates
 
