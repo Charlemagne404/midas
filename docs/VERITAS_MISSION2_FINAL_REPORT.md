@@ -500,3 +500,15 @@ format, and strict type checks and awaits a later scheduled persisted run.
 Mission 2 remains active. See [Gate D checkpoint
 002](VERITAS_MISSION2_GATE_D_CHECKPOINT_002.md) and [inventory
 029](VERITAS_MISSION2_RESEARCH_INVENTORY_030.json).
+
+## Gate F checkpoint 016 addendum — Director compatibility recovery
+
+The scheduled 18:15 Director cycle rejected the completed scan-28 v2 finding
+under the new v3 replay validator and did not admit scan 29. Commit `9379985`
+adds version-aware reconciliation: the v2 artifact is accepted as legacy and
+unreplayed, while v3 replay checks remain strict. The actual persisted v2
+finding passes the read-only validator after the fix. Mission 2 remains active;
+the next scheduled Director run is due at 18:45:20 UTC. The v3 panel comparison
+remains read-only and has no positive candidates. See [Gate F checkpoint
+016](VERITAS_MISSION2_GATE_F_CHECKPOINT_016.md) and [inventory
+031](VERITAS_MISSION2_RESEARCH_INVENTORY_031.json).

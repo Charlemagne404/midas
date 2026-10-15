@@ -60,3 +60,14 @@ were not restarted or manually invoked.
 Scan 29 and the current v3 comparison are documented in [Gate A checkpoint
 026](VERITAS_MISSION2_GATE_A_CHECKPOINT_026.md) and [inventory
 030](VERITAS_MISSION2_RESEARCH_INVENTORY_030.json).
+
+## Operational follow-up — scheduled compatibility failure and recovery
+
+The 18:15 Director cycle initially rejected the completed v2 scan-28 finding
+because it lacked a replay object. Commit `9379985` now treats v2 results as
+legacy and unreplayed while retaining strict replay validation for v3. The
+persisted v2 finding passes the read-only validator after the fix. No v3
+finding has yet been persisted; the next scheduled Director cycle is due at
+18:45:20 UTC. See [Gate F checkpoint
+016](VERITAS_MISSION2_GATE_F_CHECKPOINT_016.md) and [inventory
+031](VERITAS_MISSION2_RESEARCH_INVENTORY_031.json).

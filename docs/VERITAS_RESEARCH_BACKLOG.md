@@ -94,3 +94,16 @@ later scheduled Director run persist v3 before considering further strategy
 work. Outcome labels, independent venue sequence, order arrival, and fills
 remain unavailable. Current checkpoint: [Gate D 002](VERITAS_MISSION2_GATE_D_CHECKPOINT_002.md),
 [inventory 030](VERITAS_MISSION2_RESEARCH_INVENTORY_030.json).
+
+## Mission 2 current evidence — scan 29 and Director compatibility
+
+The 29-scan v3 comparison remains negative: 1,034 quality-valid pairs across
+536 markets, maximum top-pair edge -0.001/share, and zero positive states at
+every gross or economic gate. The 18:15 Director cycle marked its manifest
+`UNVERIFIED` because it could not reconcile the prior scan-28 v2 finding.
+Commit `9379985` fixes legacy v2 handling; the actual finding now passes a
+read-only validation. Wait for the next scheduled cycle to reconcile the old
+finding and qualify the newest scan. The isolated browser suite still has a
+Reality test-fixture limitation; the targeted Veritas browser workflow passes.
+Current evidence: [Gate F 016](VERITAS_MISSION2_GATE_F_CHECKPOINT_016.md),
+[inventory 031](VERITAS_MISSION2_RESEARCH_INVENTORY_031.json).

@@ -1,15 +1,15 @@
 {
   "schema_version": 1,
   "mission": "PROJECT-VERITAS-MISSION-2",
-  "inventory_id": "VERITAS-M2-INVENTORY-20261015-030",
-  "captured_at_utc": "2026-10-15T18:04:20Z",
+  "inventory_id": "VERITAS-M2-INVENTORY-20261015-031",
+  "captured_at_utc": "2026-10-15T18:20:46Z",
   "repository": {
     "path": "/home/charlie/midas-veritas",
     "branch": "project/veritas",
     "starting_commit": "9a857cc56804bec6b7129171ba090d338e263aa3",
-    "commit_at_inventory_creation": "abc1bc18cb40f868a1bbf6178a486394d1166ddd",
+    "commit_at_inventory_creation": "9379985c3550c4df42f83373d3c9cfb567f39e97",
     "mission_status": "active_scheduled_discovery_and_research",
-    "checkpoint_base_commit": "abc1bc18cb40f868a1bbf6178a486394d1166ddd",
+    "checkpoint_base_commit": "9379985c3550c4df42f83373d3c9cfb567f39e97",
     "worktree_changes_pending_commit": true
   },
   "discovery_protocol": {
@@ -1397,7 +1397,7 @@
     },
     "current_state": "RUNNING",
     "latest_evidence_state": "READY",
-    "latest_scan_id": "scan-20261015T170112Z-de5e990dcdf5",
+    "latest_scan_id": "scan-20261015T180052Z-f40aae162609",
     "latest_scan_age_seconds_at_manifest_update": 861,
     "analysis_event_sha256": "66b1a65f12d2f659338c244f4c80396817936dc67818e64a87b1499a216f1f4b",
     "job_id": "job-6458cea269bc460db671e75e",
@@ -1473,7 +1473,7 @@
       "automatic_retry": false,
       "finding_created": false
     },
-    "manifest_updated_at_utc": "2026-10-15T17:15:34+00:00",
+    "manifest_updated_at_utc": "2026-10-15T18:15:45+00:00",
     "manifest_current_job_id": "job-6458cea269bc460db671e75e",
     "manifest_current_job_state": "QUEUED",
     "manifest_last_qualified_scan_id": "scan-20261015T163054Z-7f7265f6f8fe",
@@ -1498,7 +1498,17 @@
     "same_scan_repeat_poll_for_scan24": "not_run",
     "same_scan_repeat_poll_for_scan25": "not_run",
     "same_scan_repeat_poll_for_scan26": "not_run",
-    "same_scan_repeat_poll_for_scan27": "not_run"
+    "same_scan_repeat_poll_for_scan27": "not_run",
+    "state": "UNVERIFIED",
+    "status_note": "Finding validation failed: Qualification result has invalid gross-candidate replay evidence",
+    "latest_evidence_note": "Newest v2 scan and its v4 analysis event agree and pass digest validation",
+    "current_scan_id": "scan-20261015T173211Z-90639c13dfaf",
+    "current_job_id": "job-947c57cba6584e79978571ce",
+    "current_job_state_in_manifest": "QUEUED",
+    "current_job_actual_state": "COMPLETED",
+    "current_job_error": null,
+    "last_qualified_scan_id": "scan-20261015T170112Z-de5e990dcdf5",
+    "source_revision_sha256_at_failed_cycle": "56d1f28a3035a167cae81be129073b2417d2f2030b3afd479f4dcd6b2ce415e4"
   },
   "neg_risk_structure_study": {
     "analysis_version": "veritas-neg-risk-complete-outcome-basket-study-v3",
@@ -1967,85 +1977,85 @@
     "campaign_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
     "campaign_sha256": "aa8acb2b46823c1a1e3ac5d01a57dde917746c2c7471098ae2a4598875e322f5",
     "analysis_code_sha256": "9f9e2249b49dd1cb10c11713aa2683567aa9cf0914c3ed2b08cf8e3fea25ebf8",
-    "summary_sha256": "7c5084f124af56591d415f9320cf3a07ae984fd57cd4486eeb872e05c49d6dca",
-    "summary_file_sha256": "cdbf3c86aec32c422acd3bb7c996e882e1eb92f3d8845c07d8c6c3b1787233b3",
-    "generated_at_utc": "2026-10-15T17:44:13+00:00",
+    "summary_sha256": "15430b315fbab8ffb534534ba8ee6209114537cbf4142510cf5aaa8d81151280",
+    "summary_file_sha256": "f952ea84a90c84f84cb06bcfdcbaf4c635bf76363f1e41ff91e2802277f1d90e",
+    "generated_at_utc": "2026-10-15T18:14:33+00:00",
     "active_segment_read": false,
-    "processed_segments": 2780,
-    "catalog_segments": 3962,
-    "pending_segments": 1182,
-    "pending_bytes": 327830232,
-    "processed_source_bytes": 680531641,
-    "last_processed_ordinal": 360067,
+    "processed_segments": 2907,
+    "catalog_segments": 4023,
+    "pending_segments": 1116,
+    "pending_bytes": 316707896,
+    "processed_source_bytes": 714067245,
+    "last_processed_ordinal": 378514,
     "readiness": "catching_up_finalized_source",
     "cumulative": {
       "campaign_window_ns": {
         "end_exclusive": 1793221678642600351,
         "start": 1792012078642600351
       },
-      "fee_regime_available_states": 122512,
+      "fee_regime_available_states": 134373,
       "fee_regime_unavailable_states": 0,
       "frames_excluded_unsupported_producer": 0,
       "frames_excluded_unsupported_reconstruction": 0,
       "gap_reasons_in_window": {
-        "book_resynchronization": 616,
+        "book_resynchronization": 679,
         "connection_failure": 1
       },
-      "market_count": 37,
-      "period_frame_records": 141072,
+      "market_count": 42,
+      "period_frame_records": 155373,
       "period_record_kinds": {
-        "book_comparison": 2425,
-        "checkpoint": 1248,
-        "discovery": 616,
-        "discovery_page": 3696,
-        "frame": 141072,
-        "gap": 617,
-        "heartbeat": 3060,
-        "independent_book": 2425,
-        "public_fee_metadata": 9856,
-        "public_market_metadata": 4928,
-        "snapshot_constraints": 9854,
-        "subscription": 616,
-        "timing_measurement": 1248
+        "book_comparison": 2674,
+        "checkpoint": 1375,
+        "discovery": 679,
+        "discovery_page": 4074,
+        "frame": 155373,
+        "gap": 680,
+        "heartbeat": 3367,
+        "independent_book": 2674,
+        "public_fee_metadata": 10864,
+        "public_market_metadata": 5432,
+        "snapshot_constraints": 10862,
+        "subscription": 679,
+        "timing_measurement": 1375
       },
       "positive_full_depth_minimum_notional_satisfied_states": 0,
       "positive_full_depth_pre_fee_states": 0,
       "positive_top_ask_pair_states": 0,
       "positive_top_with_quantity_depth_states": 0,
       "quality_invalid_reason_counts": {
-        "book_issue:top_divergence": 34,
-        "empty_ask_side": 2544,
+        "book_issue:top_divergence": 38,
+        "empty_ask_side": 3775,
         "independent_book_divergence": 358,
-        "reported_expiry_reached": 173,
-        "source_timing_uncertainty": 89
+        "reported_expiry_reached": 200,
+        "source_timing_uncertainty": 93
       },
-      "quality_valid_states": 122512,
-      "quantity_depth_complete_states": 122512,
+      "quality_valid_states": 134373,
+      "quantity_depth_complete_states": 134373,
       "quantity_requested": "5",
-      "raw_records_replayed": 360067,
+      "raw_records_replayed": 378514,
       "receiver_clock_regression_frames": 0,
       "record_kinds": {
-        "book_comparison": 4023,
-        "checkpoint": 2778,
-        "discovery": 2678,
-        "discovery_page": 6294,
-        "frame": 283445,
-        "gap": 2698,
-        "heartbeat": 6938,
-        "independent_book": 4023,
+        "book_comparison": 4272,
+        "checkpoint": 2905,
+        "discovery": 2741,
+        "discovery_page": 6672,
+        "frame": 297746,
+        "gap": 2761,
+        "heartbeat": 7245,
+        "independent_book": 4272,
         "metadata_correction": 5,
-        "public_fee_metadata": 16784,
-        "public_market_metadata": 8392,
-        "snapshot_constraints": 17238,
-        "subscription": 2678,
-        "timing_measurement": 2093
+        "public_fee_metadata": 17792,
+        "public_market_metadata": 8896,
+        "snapshot_constraints": 18246,
+        "subscription": 2741,
+        "timing_measurement": 2220
       },
       "source_receipt_window_ns": {
         "first": 1792012079737246201,
-        "last": 1792050019864324035
+        "last": 1792053890027818256
       },
       "top_edge_distribution": {
-        "count": 122512,
+        "count": 134373,
         "maximum": "-0.001",
         "median_nearest_rank": "-0.01",
         "minimum": "-0.998",
@@ -2053,9 +2063,11 @@
         "p75_nearest_rank": "-0.007",
         "positive_count": 0
       },
-      "touched_market_frame_states": 125710,
-      "verified_source_checkpoints": 2778
-    }
+      "touched_market_frame_states": 138837,
+      "verified_source_checkpoints": 2905
+    },
+    "batch_processed_segments": 127,
+    "batch_processed_bytes": 33535604
   },
   "current_operational_checkpoint": {
     "latest_scan_id": "scan-20261015T180052Z-f40aae162609",
@@ -2066,17 +2078,35 @@
     "panel_selected_pairs": 1160,
     "panel_quality_valid_pairs": 1034,
     "panel_unique_market_ids": 536,
-    "observatory_root_bytes": 27227975,
-    "director_manifest_updated_at_utc": "2026-10-15T17:45:56+00:00",
-    "director_latest_scan_id": "scan-20261015T173211Z-90639c13dfaf",
+    "observatory_root_bytes": 27491196,
+    "director_manifest_updated_at_utc": "2026-10-15T18:15:45+00:00",
+    "director_latest_scan_id": "scan-20261015T180052Z-f40aae162609",
     "director_latest_persisted_finding_id": "veritas-qualification-v1-b595559921e55264",
     "scan28_arena_job_id": "job-947c57cba6584e79978571ce",
     "scan28_arena_job_state": "COMPLETED",
     "observer_timer_next_utc": "2026-10-15T18:30:45Z",
-    "source_analysis_timer_next_utc": "2026-10-15T18:10:37Z",
-    "research_director_timer_next_utc": "2026-10-15T18:15:12Z",
+    "source_analysis_timer_next_utc": "2026-10-15T18:40:08Z",
+    "research_director_timer_next_utc": "2026-10-15T18:45:20Z",
     "service_restarts_or_manual_runs_for_checkpoint": 0,
-    "note": "Scan 29 is collected but not yet admitted by the scheduled Director. Scan 28 Arena job completed v2; its manifest reconciliation is still pending."
+    "note": "Scan 29 is collected but not yet admitted by the scheduled Director. Scan 28 Arena job completed v2; its manifest reconciliation is still pending.",
+    "captured_at_utc": "2026-10-15T18:20:46Z",
+    "director_state": "UNVERIFIED",
+    "director_status_note": "Finding validation failed: Qualification result has invalid gross-candidate replay evidence",
+    "director_current_scan_id": "scan-20261015T173211Z-90639c13dfaf",
+    "director_current_job_id": "job-947c57cba6584e79978571ce",
+    "director_current_job_state_in_manifest": "QUEUED",
+    "director_job_actual_state": "COMPLETED",
+    "director_last_qualified_scan_id": "scan-20261015T170112Z-de5e990dcdf5",
+    "scan29_admitted_to_arena": false,
+    "v3_finding_persisted": false,
+    "arena_job_state_counts": {
+      "COMPLETED": 15,
+      "FAILED": 1
+    },
+    "code_compatibility_fix_commit": "9379985c3550c4df42f83373d3c9cfb567f39e97",
+    "actual_v2_finding_id": "veritas-qualification-v1-7fd5970007ea7a95",
+    "actual_v2_finding_experiment_sha256": "d51904d042634f961908fcb23c0ec9789ef0a82f840fb54a41a9a4382283f6c6",
+    "no_manual_reconciliation_or_retry": true
   },
   "current_scan_029": {
     "scan_id": "scan-20261015T180052Z-f40aae162609",
@@ -2164,5 +2194,39 @@
       "stable_control_markets": 3,
       "target_markets": 40
     }
+  },
+  "gate_h_verification_031": {
+    "backend_research_director_and_dashboard_api_tests": "18 passed",
+    "strict_mypy_changed_source": "passed",
+    "ruff_lint": "passed",
+    "ruff_format": "passed",
+    "frontend_unit_suite": "29 passed across 5 files",
+    "typescript_and_production_build": "passed",
+    "production_build_note": "Vite emitted the existing large-chunk advisory: index 501.86 kB and Chart 544.41 kB minified.",
+    "frontend_lint": "passed",
+    "prettier_format_check": "passed",
+    "full_browser_suite_at_pre_fix_revision": {
+      "passed": 5,
+      "failed": 2,
+      "failed_tests": [
+        "Reality workflow in isolated demo had zero monitored markets",
+        "Veritas dashboard overview assumed legacy ledger status fields"
+      ]
+    },
+    "targeted_veritas_browser_after_fix": "1 passed",
+    "actual_persisted_v2_finding_read_only_validation": "passed; replay marked REPLAY_NOT_AVAILABLE_LEGACY_V2 and incomplete",
+    "temporary_browser_data": "/tmp isolated demo database and Arena root; no production campaign writes"
+  },
+  "director_compatibility_incident_031": {
+    "scheduled_cycle_started_at_utc": "2026-10-15T18:15:21Z",
+    "scheduled_cycle_completed_at_utc": "2026-10-15T18:15:49Z",
+    "service_exit_status": 0,
+    "director_state": "UNVERIFIED",
+    "failure": "Qualification result has invalid gross-candidate replay evidence",
+    "source": "completed scan-28 v2 result predates the replay manifest; v3-only validation rejected it",
+    "scan29_admitted": false,
+    "new_finding_written": false,
+    "fix_commit": "9379985c3550c4df42f83373d3c9cfb567f39e97",
+    "fix": "version-aware v2 compatibility plus regression tests; v3 remains strict"
   }
 }

@@ -577,3 +577,16 @@ is still v2; v3 was exercised with synthetic positive and tampered-source
 fixtures and is awaiting the next scheduled persisted qualification. See
 [Gate D checkpoint 002](VERITAS_MISSION2_GATE_D_CHECKPOINT_002.md) and
 [inventory 030](VERITAS_MISSION2_RESEARCH_INVENTORY_030.json).
+
+## Gate F compatibility correction — legacy v2 finding
+
+The 18:15 Director cycle surfaced a version-compatibility defect: it treated
+the completed scan-28 v2 finding as invalid because only v3 results contain the
+source-replay object. Commit `9379985` accepts v2 candidate-pointer results as
+unreplayed legacy evidence while keeping strict replay validation for v3. It
+also makes dashboard projections tolerant of historical ledger entries that
+lack status fields. The actual v2 finding now passes read-only validation; no
+artifact was rewritten. The next scheduled Director cycle will retry
+reconciliation and consider the newest scan. Details and the test evidence are
+in [Gate F checkpoint 016](VERITAS_MISSION2_GATE_F_CHECKPOINT_016.md) and
+[inventory 031](VERITAS_MISSION2_RESEARCH_INVENTORY_031.json).

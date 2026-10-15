@@ -243,3 +243,26 @@ run, retry, or service restart was used.
 Scan 29 source and selection evidence is indexed in [Gate A checkpoint
 026](VERITAS_MISSION2_GATE_A_CHECKPOINT_026.md) and the current machine-readable
 [inventory 030](VERITAS_MISSION2_RESEARCH_INVENTORY_030.json).
+
+## 2026-10-15 18:20 UTC source replay and Director recovery note
+
+The 18:10 source-analysis service completed at 18:14:33 UTC with 127 finalized
+segments / 33,535,604 bytes processed. Cumulative progress is 2,907/4,023
+segments and 714,067,245 processed source bytes; 1,116 segments / 316,707,896
+bytes remain. It used 11.65 CPU seconds and 160.1 MiB peak memory, below its
+5% CPU and 256 MiB memory bounds, and did not open the active segment.
+
+The 18:15:21 Director service exited successfully at the process level but
+marked its manifest `UNVERIFIED`: it rejected the completed scan-28 v2 finding
+because it predates the v3 replay object. It did not admit scan 29. The
+completed job artifact remains unchanged; its manifest projection is stale and
+shows `QUEUED`. Commit `9379985` fixes the version compatibility and adds
+regression coverage. A read-only validation of the persisted v2 finding now
+passes and labels replay unavailable for legacy v2. No manual reconciliation,
+retry, or service restart was run.
+
+At inspection, the observer, source-analysis, and Director timers were active;
+their next runs were scheduled for 18:30:45, 18:40:08, and 18:45:20 UTC. The
+source and Director one-shot services were inactive after completion. See [Gate
+F checkpoint 016](VERITAS_MISSION2_GATE_F_CHECKPOINT_016.md) and [inventory
+031](VERITAS_MISSION2_RESEARCH_INVENTORY_031.json).
