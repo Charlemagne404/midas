@@ -136,3 +136,28 @@ finding and qualify the newest scan. The isolated browser suite still has a
 Reality test-fixture limitation; the targeted Veritas browser workflow passes.
 Current evidence: [Gate F 016](VERITAS_MISSION2_GATE_F_CHECKPOINT_016.md),
 [inventory 031](VERITAS_MISSION2_RESEARCH_INVENTORY_031.json).
+
+## Mission 2 continuation — scan 35 / checkpoint 039
+
+Scan 35 is durably qualified with no positive gross candidates and a complete
+empty candidate replay. The Director manifest reconciliation is due at 21:45
+UTC. The five-scan coverage pilot remains active and ends at its fixed stop,
+2026-10-16 19:00:55 UTC.
+
+The scheduled finalized-source analyzer now covers 3,641/4,377 segments, with
+204,052 quality-valid states across 57 markets and 736 segments pending. The
+new gap-detail analyzer has only reached ordinal 13,113 / 2026-10-14 10:15 UTC,
+before the frozen campaign began. Its 466 all-period gap records are
+independently reconciled to finalized source, but campaign-time gap detail is
+still pending. Preserve its code and pinned cursor while it catches up.
+
+Next work: let the 21:45 Director cycle reconcile scan 35; keep the scheduled
+observer, source replay, and gap-detail batches running; check whether source
+analysis reaches its current catalog before increasing bounds; then continue
+Gate C censoring diagnosis with the latest detailed gap prefix and frozen
+label-feasibility evidence. Do not spend model-training time while every
+observed gross gate remains zero and candidate-relevant labels remain
+unavailable. Do not alter the coverage pilot's hashed code or fixed protocol.
+Current evidence is in [Gate A checkpoint 032](VERITAS_MISSION2_GATE_A_CHECKPOINT_032.md),
+[Gate F checkpoint 021](VERITAS_MISSION2_GATE_F_CHECKPOINT_021.md), and
+[inventory 039](VERITAS_MISSION2_RESEARCH_INVENTORY_039.json).

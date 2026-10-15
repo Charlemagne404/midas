@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-15T20:49:08Z",
+  "updated_at_utc": "2026-10-15T21:26:05Z",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -4146,6 +4146,40 @@
       ],
       "decision": "Keep the frozen campaign and current source-analysis schema unchanged. Build a separate, versioned, bounded read-only extractor over finalized segments before making a time-cluster or recovery claim; serialize it with the existing source-analysis resource budget.",
       "status": "continue"
+    },
+    {
+      "dataset_id": "8ff33f21b824aef3bdca57efb116ee21503946f8b16240940ee6680fe99cb044",
+      "decision": "Keep the pinned extractor and its 30-minute bounded timer running. Do not interpret the pre-campaign zero as campaign evidence; use later prefixes to inspect timing and affected-market scope.",
+      "experiment_id": "VERITAS-M2-RECORDER-GAP-DETAIL-001",
+      "hypothesis_id": "VERITAS-H075",
+      "limitations": [
+        "The verified prefix ends before campaign start and cannot explain campaign-window resynchronizations.",
+        "Only affected assets explicitly named in a gap record can be mapped to the latest preceding discovery; absent asset lists remain unknown.",
+        "Receiver time does not establish venue quote age, outage duration, full-feed recovery, execution, fills, or profitability.",
+        "The supplemental event chain does not replace or rewrite the primary source-analysis chain."
+      ],
+      "mechanism": "Replay only finalized, cataloged source segments into a separate append-only event chain that records gap receiver time, reason, and explicitly affected public market IDs.",
+      "result": {
+        "all_period_gap_records": 466,
+        "artifact_path": "docs/VERITAS_MISSION2_GAP_DETAIL_PREFIX_001.json",
+        "artifact_sha256": "8ff33f21b824aef3bdca57efb116ee21503946f8b16240940ee6680fe99cb044",
+        "campaign_start_utc": "2026-10-14T21:07:58.642601Z",
+        "campaign_window_gap_records_in_prefix": 0,
+        "cpu_seconds": 3.307,
+        "event_chain_and_catalog_prefix_valid": true,
+        "independent_raw_gap_records_compared": 466,
+        "last_ordinal": 13113,
+        "memory_peak_bytes": 137846784,
+        "memory_swap_peak_bytes": 0,
+        "pending_segments": 4140,
+        "prefix_last_record_utc": "2026-10-14T10:15:11.052089Z",
+        "processed_segments": 256,
+        "source_and_gap_event_seals_valid": true,
+        "status": "bounded_prefix_verified_campaign_window_not_reached"
+      },
+      "status": "continue",
+      "success_metric": "Every replayed gap record matches the finalized raw source, the per-segment event chain and catalog prefix verify, memory and source-byte limits are respected, and no frozen campaign or primary source-analysis artifact changes.",
+      "title": "Can a separate bounded gap-detail replay preserve gap timing and reason without changing the pinned source analyzer?"
     }
   ],
   "next_research_questions": [
@@ -4159,6 +4193,7 @@
     "What market/time dependence and coverage evidence will satisfy the 24-hour pilot review and original 48-hour follow-up gates?",
     "Can the Research Director orchestrate bounded snapshot qualification and source replay with typed dependencies while preserving the collector timer?",
     "Can additional boundedly discovered NegRisk groups be verified complete and produce fresh, quality-valid positive full-depth net economics?",
-    "Can a separate bounded finalized-source analysis map current campaign-window gap events to receiver time and reason without altering the v1 source-analysis state?"
+    "Can a separate bounded finalized-source analysis map current campaign-window gap events to receiver time and reason without altering the v1 source-analysis state?",
+    "When the gap-detail prefix reaches the frozen campaign window, which gap reasons, timestamps, and explicitly reported markets account for the 1,032 campaign-window resynchronization/failure markers?"
   ]
 }

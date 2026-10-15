@@ -1,0 +1,89 @@
+{
+  "analysis_version": "veritas-finalized-reality-gap-detail-v1",
+  "artifact_id": "VERITAS-M2-RECORDER-GAP-DETAIL-PREFIX-001",
+  "authenticated_requests": false,
+  "campaign": {
+    "campaign_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
+    "campaign_sha256": "aa8acb2b46823c1a1e3ac5d01a57dde917746c2c7471098ae2a4598875e322f5",
+    "window_end_exclusive_utc": "2026-10-28T21:07:58.642601Z",
+    "window_start_utc": "2026-10-14T21:07:58.642601Z"
+  },
+  "captured_at_utc": "2026-10-15T21:26:05Z",
+  "gap_counts": {
+    "all_period_by_reason": {
+      "book_resynchronization": 422,
+      "malformed_constraints": 5,
+      "process_start": 11,
+      "process_stop": 9,
+      "scheduled_refresh": 19
+    },
+    "all_period_event_count": 466,
+    "campaign_window_by_reason": {},
+    "campaign_window_count_interpretation": "Zero only because the processed prefix ends before the campaign window; it is not a campaign-time result.",
+    "campaign_window_event_count": 0
+  },
+  "implementation": {
+    "analysis_code_files": {
+      "gap_detail_analysis.py": "fa33da03275866e0dde2fdbdc2d622dce771233a5d1f497b91ee6a04564e066a",
+      "reality/research_schema.py": "fa31024164ae1e20b579403e79417c1eaa8fc2670d154153aae247546d8f9f33",
+      "reality/shadow_campaign.py": "fbca040df77c90182fa7b94375590f89e95289b21e31a8990da390d1241c9aed",
+      "reality/storage.py": "551966d10c2494dd6fcb50988bf32c26558ff6a02d6bd68617f8593b1f5ec3cc",
+      "scripts/veritas_gap_detail_analysis.py": "48ec5649a75e5fdd82d09468eecb458fa6facc12e66a6f7b0d737def5f1b0533"
+    },
+    "analysis_code_sha256": "d58bed78b6fb1d5c25cbed77301610ca31a366982add6f8d0b0cc0997053cec3"
+  },
+  "independent_verification": {
+    "active_open_segments_read": false,
+    "catalog_prefix_sha256_matches_source_analysis_event_256": true,
+    "gap_event_chain_matches_state": true,
+    "gap_event_seals_valid": 256,
+    "gap_records_compared_by_ordinal_receiver_time_reason": 466,
+    "last_ordinal_matches_source_analysis_event_256": true,
+    "segments_cross_checked": 256,
+    "segments_with_gap_records_matching_raw_finalized_records": 256,
+    "source_event_seals_valid": 256,
+    "source_gap_event_identity_matches": 256
+  },
+  "limitations": [
+    "This replay indexes finalized cataloged segments only and is still catching up.",
+    "The verified prefix ends before the frozen campaign starts, so it cannot explain campaign-window gap timing or affected markets.",
+    "Receiver time is not an exchange quote timestamp; later frames do not prove complete book recovery.",
+    "Affected market mapping only uses assets explicitly named by a gap record and the latest preceding discovery record.",
+    "Gap counts do not establish outage duration, quote freshness, execution, fills, or profitability."
+  ],
+  "orders_submitted": false,
+  "prefix": {
+    "catalog_segment_count_including_empty": 4398,
+    "ends_before_campaign_window": true,
+    "last_ordinal": 13113,
+    "last_recorded_at_utc": "2026-10-14T10:15:11.052089Z",
+    "last_segment_file": "00000000000000012978-e33ef2b7472247ff9cf48fd3c50e3d99.seg",
+    "pending_segment_count": 4140,
+    "pending_source_bytes": 1119426054,
+    "processed_segment_count": 256,
+    "processed_source_bytes": 28731135,
+    "replayable_nonempty_segment_count": 4396,
+    "status": "catching_up"
+  },
+  "run": {
+    "batch_processed_segment_count": 128,
+    "batch_processed_source_bytes": 23084308,
+    "completed_at_utc": "2026-10-15T21:21:07+00:00",
+    "cpu_seconds": 3.307,
+    "memory_peak_bytes": 137846784,
+    "memory_swap_peak_bytes": 0,
+    "systemd_restarts": 0,
+    "systemd_result": "success"
+  },
+  "runtime_artifacts": {
+    "event_chain_sha256": "89813f1d01b373c7fb42f1ed73c54443d3982131122d6b41539228db0cc7c6db",
+    "prefix_catalog_sha256": "50e40cfcd73cad289cedfaec6f995b40c51ec00567f40a8a1efbfe4892908fb5",
+    "state_file_sha256": "a88b0998371498a18c9e095366d5b0d9777475702100c8e40af6aa4ec037a3a1",
+    "state_internal_sha256": "1a349377a9cad9bfee76db7e32faf0c2699b8ef44fadd64dac94c52d4e52672c",
+    "state_path": "data/veritas-observatory/gap-detail-state-v1.json",
+    "summary_file_sha256": "5be1a784833d8acca02e88a76f60d487e65bc768a8259c2218b0746f07837d8e",
+    "summary_internal_sha256": "df628b764bb7920712661cb43e587602ba7cfb991b5adbc21711853ab243e47d",
+    "summary_path": "data/veritas-observatory/gap-detail-summary-v1.json"
+  },
+  "schema_version": 1
+}

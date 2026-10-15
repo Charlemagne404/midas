@@ -496,3 +496,40 @@ were restarted or modified for this checkpoint.
 See [Gate G checkpoint 005](VERITAS_MISSION2_GATE_G_CHECKPOINT_005.md),
 [research inventory 037](VERITAS_MISSION2_RESEARCH_INVENTORY_037.json), and
 [the live pilot summary](../data/veritas-observatory/measurement-pilots/VERITAS-M2-COVERAGE-PILOT-001/summary.json).
+
+## 2026-10-15 21:22 UTC checkpoint
+
+The observatory, source-analysis, Director, Arena, and supplemental gap-detail
+timers remain enabled. Next planned Veritas runs at capture were the observer
+at 21:31:31 UTC, source analysis at 21:40:13, Director reconciliation at
+21:45:04, and gap detail at 21:50:00. The Director one-shot and both recent
+analysis one-shots exited successfully. The scan-35 Arena job is complete;
+the Director's persisted projection remains queued until its next cycle.
+
+| Service | State | Restarts |
+| --- | --- | ---: |
+| Midas API / web | Active | 0 / 0 |
+| Reality recorder | Active | 0 |
+| Frozen Reality shadow | Active | 1 prior restart |
+| Reality API / web | Active | 0 / 0 |
+| Veritas observer / source analysis / Director / gap detail | Inactive after successful bounded one-shot | 0 each |
+
+No HTTP health probe was run at this capture. A historical queued Veritas
+Arena job (`job-8cf39368af21426ea3127501`) is failed with
+`Research source changed while queued`; the current scan-35 job was admitted
+against the current source revision and completed successfully. This is an
+old job failure, not an active worker failure. Other failed unit records in
+the user manager are from earlier unrelated regression or research runs.
+
+Host load average was 0.96 / 1.02 / 1.18 across six CPUs. RAM available was
+9.2 GiB of 15 GiB; swap was 3.6/4 GiB. The root filesystem was 56% used with
+199 GiB free. `data/veritas-observatory` occupied 42 MiB and the Reality raw
+recording directory 1.2 GiB. Between 20:59 and 21:21 UTC the gap-detail
+cataloged source total grew by about 9.9 MB (processed plus pending), or
+roughly 27 MB/hour over that short interval. This includes finalized source
+growth and is not a long-term rate estimate.
+
+No collector, API, web service, frozen campaign, or existing research job was
+restarted or changed for this checkpoint. No HTTP requests were made to probe
+health; all health statements above come from systemd state, process state,
+and filesystem/resource reads.

@@ -738,3 +738,33 @@ candidate path remains synthetically tested only. The Arena job is complete,
 but the Director manifest still projects it as queued until the next scheduled
 cycle. See [Gate F checkpoint 017](VERITAS_MISSION2_GATE_F_CHECKPOINT_017.md)
 and [inventory 036](VERITAS_MISSION2_RESEARCH_INVENTORY_036.json).
+
+## Gate A / Gate F checkpoint 039 — scan 35 and supplemental gap replay
+
+Scan 35 (`scan-20261015T210215Z-1f43257737f1`) extended the bounded panel to
+35 snapshots / 1,400 selected pairs / 1,237 quality-valid pairs / 648 distinct
+market IDs. The cumulative maximum top edge remains -$0.001 per share and all
+five economic gates remain zero-positive. The five-scan coverage pilot has
+200 slots, 167 valid pairs, 33 invalid pairs, 152 distinct IDs, and no skipped
+sequences; its nonrandomized cohort split remains descriptive. See [Gate A
+checkpoint 032](VERITAS_MISSION2_GATE_A_CHECKPOINT_032.md).
+
+The scheduled source analyzer processed 125 segments / 33.39 MB and now covers
+3,641/4,377 cataloged segments, with 736 / 237.91 MB pending. It has 204,052
+quality-valid campaign-window states over 57 markets, with zero positive
+states at every tracked gross/economic gate. A separate, pinned, bounded
+gap-detail extractor now has a 256-segment prefix and 466 all-period gap
+records. Independent raw-record and event-chain checks passed for the full
+prefix; the indexed prefix ends about 11 hours before campaign start, so its
+zero campaign-window gap count is not informative for the campaign. This
+supplemental replay preserves the primary analyzer and frozen campaign. See
+[Gate F checkpoint 021](VERITAS_MISSION2_GATE_F_CHECKPOINT_021.md) and [gap
+detail prefix artifact 001](VERITAS_MISSION2_GAP_DETAIL_PREFIX_001.json).
+
+The 21:15 UTC Director cycle admitted scan 35. Arena completed all 35 events
+with a complete zero-candidate replay. The manifest still projects the job as
+queued until the next scheduled Director cycle at 21:45 UTC. No strategy or
+model is promoted. Focused opportunity-audit and candidate-replay verification
+passed 23 tests. The new gap-detail implementation's three isolated tests,
+Ruff, strict Mypy, formatting, and systemd unit checks passed before its first
+scheduled runs; those runs have since completed with no restart or swap.
