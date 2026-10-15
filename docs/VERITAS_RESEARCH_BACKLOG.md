@@ -93,4 +93,4 @@ allow the scheduled collector and source-prefix replay to continue, and let a
 later scheduled Director run persist v3 before considering further strategy
 work. Outcome labels, independent venue sequence, order arrival, and fills
 remain unavailable. Current checkpoint: [Gate D 002](VERITAS_MISSION2_GATE_D_CHECKPOINT_002.md),
-[inventory 029](VERITAS_MISSION2_RESEARCH_INVENTORY_029.json).
+[inventory 030](VERITAS_MISSION2_RESEARCH_INVENTORY_030.json).

@@ -576,4 +576,4 @@ positive states at every gross or economic gate. The persisted scan-28 finding
 is still v2; v3 was exercised with synthetic positive and tampered-source
 fixtures and is awaiting the next scheduled persisted qualification. See
 [Gate D checkpoint 002](VERITAS_MISSION2_GATE_D_CHECKPOINT_002.md) and
-[inventory 029](VERITAS_MISSION2_RESEARCH_INVENTORY_029.json).
+[inventory 030](VERITAS_MISSION2_RESEARCH_INVENTORY_030.json).

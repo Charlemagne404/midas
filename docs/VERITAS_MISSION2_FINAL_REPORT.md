@@ -499,4 +499,4 @@ scan-28 finding remains v2; v3 has passed focused backend, frontend, lint,
 format, and strict type checks and awaits a later scheduled persisted run.
 Mission 2 remains active. See [Gate D checkpoint
 002](VERITAS_MISSION2_GATE_D_CHECKPOINT_002.md) and [inventory
-029](VERITAS_MISSION2_RESEARCH_INVENTORY_029.json).
+029](VERITAS_MISSION2_RESEARCH_INVENTORY_030.json).

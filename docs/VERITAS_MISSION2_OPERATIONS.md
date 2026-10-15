@@ -239,3 +239,7 @@ states at every economic gate. The observer timer's next run is scheduled for
 18:30:45 UTC. The 18:10:37 source-analysis and 18:15:12 Director runs remain
 scheduled; the latter will reconcile scan 28 and can admit scan 29. No manual
 run, retry, or service restart was used.
+
+Scan 29 source and selection evidence is indexed in [Gate A checkpoint
+026](VERITAS_MISSION2_GATE_A_CHECKPOINT_026.md) and the current machine-readable
+[inventory 030](VERITAS_MISSION2_RESEARCH_INVENTORY_030.json).

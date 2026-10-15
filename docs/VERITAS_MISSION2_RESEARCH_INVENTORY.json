@@ -1,74 +1,78 @@
 {
   "schema_version": 1,
   "mission": "PROJECT-VERITAS-MISSION-2",
-  "inventory_id": "VERITAS-M2-INVENTORY-20261015-028",
-  "captured_at_utc": "2026-10-15T17:16:00Z",
+  "inventory_id": "VERITAS-M2-INVENTORY-20261015-030",
+  "captured_at_utc": "2026-10-15T18:04:20Z",
   "repository": {
     "path": "/home/charlie/midas-veritas",
     "branch": "project/veritas",
     "starting_commit": "9a857cc56804bec6b7129171ba090d338e263aa3",
-    "commit_at_inventory_creation": "0cedcad",
+    "commit_at_inventory_creation": "abc1bc18cb40f868a1bbf6178a486394d1166ddd",
     "mission_status": "active_scheduled_discovery_and_research",
-    "checkpoint_base_commit": "0cedcad",
+    "checkpoint_base_commit": "abc1bc18cb40f868a1bbf6178a486394d1166ddd",
     "worktree_changes_pending_commit": true
   },
   "discovery_protocol": {
     "version": "veritas-public-observatory-v2",
     "bounded_gamma_query_frames": 6,
     "query_candidate_records_latest": 300,
-    "unique_market_ids_latest": 298,
-    "eligible_same_condition_v1_binary_pairs_latest": 123,
-    "excluded_market_ids_latest": 175,
+    "unique_market_ids_latest": 296,
+    "eligible_same_condition_v1_binary_pairs_latest": 189,
+    "excluded_market_ids_latest": 107,
     "exclusion_reasons_latest": {
-      "augmented_negative_risk_semantics_unverified": 121,
-      "unsupported_outcome_relationship": 54
+      "augmented_negative_risk_semantics_unverified": 42,
+      "unsupported_outcome_relationship": 65
     },
     "selected_markets_latest": 40,
     "stable_controls_target": 8,
-    "stable_controls_available_latest": 4,
-    "rotating_markets_latest": 36,
-    "latest_selected_by_liquidity": {
-      "low": 19,
-      "medium": 9,
-      "high": 12
-    },
-    "latest_selected_by_expiry": {
-      "near_7d": 22,
-      "long": 1,
-      "medium_90d": 17
-    },
-    "latest_selected_by_spread": {
-      "tight_le_0.01": 19,
-      "medium_le_0.05": 11,
-      "wide_gt_0.05": 10
-    },
+    "stable_controls_available_latest": 3,
+    "rotating_markets_latest": 37,
+    "latest_selected_by_liquidity": null,
+    "latest_selected_by_expiry": null,
+    "latest_selected_by_spread": null,
     "selection_probability_scope": "conditional on the bounded query-response union and frozen stable control IDs",
     "coverage_kind": "intermittent_public_snapshots",
-    "latest_scan_id": "scan-20261015T170112Z-de5e990dcdf5",
-    "latest_scan_captured_at_utc": "2026-10-15T17:01:12.964444+00:00",
+    "latest_scan_id": "scan-20261015T180052Z-f40aae162609",
+    "latest_scan_captured_at_utc": "2026-10-15T18:00:52.714647+00:00",
     "latest_selected_by_category": {
-      "Politics": 13,
-      "Economy": 2,
-      "Brazil": 1,
-      "Games": 2,
-      "Economic Policy": 2,
-      "Geopolitics": 6,
+      "AI": 2,
+      "Aliens": 1,
+      "Bab el-Mandeb": 1,
+      "Big Tech": 1,
+      "Bitcoin": 1,
       "Blockade": 1,
-      "Elections": 2,
-      "BNB": 2,
-      "Crypto": 3,
-      "Culture": 1,
-      "Celebrities": 2,
-      "AI": 1,
+      "Brazil": 1,
+      "Bundesliga": 1,
+      "Business": 1,
+      "CNN": 1,
+      "CPI": 1,
       "Catalonia": 1,
-      "Big Tech": 1
+      "Climate & Science": 1,
+      "Congress": 1,
+      "Corporate Financials": 1,
+      "Courts": 1,
+      "Crypto": 2,
+      "Culture": 2,
+      "Debate": 1,
+      "EPL": 1,
+      "Economic Policy": 1,
+      "Economy": 1,
+      "Elections": 2,
+      "Elon Musk": 1,
+      "Finance": 1,
+      "Fiscal": 1,
+      "Foreign Policy": 1,
+      "Games": 1,
+      "Geopolitics": 2,
+      "Lid": 1,
+      "Politics": 5
     },
     "latest_query_candidate_records": 300,
-    "latest_unique_market_ids": 298,
+    "latest_unique_market_ids": 296,
     "frame_protocol": "stratified-gamma-page-rotation-v2",
     "gamma_page_limit": 50,
-    "eligible_pair_markets_latest": 123,
-    "latest_selection_phase": "liquidity",
+    "eligible_pair_markets_latest": 189,
+    "latest_selection_phase": "category",
     "latest_rotating_page_offsets": {
       "high_liquidity": 352,
       "medium_liquidity": 623,
@@ -145,7 +149,111 @@
       "stable_controls": 3,
       "total": 7
     },
-    "latest_rotating_selections_changed": 32
+    "latest_rotating_selections_changed": 32,
+    "previous_distribution_snapshot": {
+      "scan_id": "scan-20261015T170112Z-de5e990dcdf5",
+      "selected_by_liquidity": {
+        "low": 19,
+        "medium": 9,
+        "high": 12
+      },
+      "selected_by_expiry": {
+        "near_7d": 22,
+        "long": 1,
+        "medium_90d": 17
+      },
+      "selected_by_spread": {
+        "tight_le_0.01": 19,
+        "medium_le_0.05": 11,
+        "wide_gt_0.05": 10
+      },
+      "note": "These distributions were last reported for the prior liquidity-phase scan; scan 29 selected in category phase and its summary does not carry these stratification dimensions."
+    },
+    "latest_duplicate_records_across_queries": 4,
+    "latest_selection_probability_scope": "per sampled market as recorded in immutable snapshot; rotating category selections are conditional on bounded query union and frozen controls",
+    "latest_distribution_dimensions_available": [
+      "primary_category",
+      "cohort_role",
+      "selection_stratum",
+      "selection_probability"
+    ],
+    "latest_distribution_dimensions_not_reported": [
+      "liquidity",
+      "expiry",
+      "spread"
+    ],
+    "latest_snapshot_discovery_frame_protocol": "stratified-gamma-page-rotation-v2",
+    "latest_discovery_protocol_counts": {
+      "duplicate_records_across_queries": 4,
+      "eligible_pair_markets": 189,
+      "excluded_market_ids": 107,
+      "exclusion_reasons": {
+        "augmented_negative_risk_semantics_unverified": 42,
+        "unsupported_outcome_relationship": 65
+      },
+      "frame_protocol": "stratified-gamma-page-rotation-v2",
+      "offset_bucket_seconds": 1800,
+      "query_candidate_records": 300,
+      "query_count": 6,
+      "unique_market_ids": 296
+    },
+    "latest_selection_counts": {
+      "eligible_population": 189,
+      "phase": "category",
+      "rotating_markets": 37,
+      "selected_by_category": {
+        "AI": 2,
+        "Aliens": 1,
+        "Bab el-Mandeb": 1,
+        "Big Tech": 1,
+        "Bitcoin": 1,
+        "Blockade": 1,
+        "Brazil": 1,
+        "Bundesliga": 1,
+        "Business": 1,
+        "CNN": 1,
+        "CPI": 1,
+        "Catalonia": 1,
+        "Climate & Science": 1,
+        "Congress": 1,
+        "Corporate Financials": 1,
+        "Courts": 1,
+        "Crypto": 2,
+        "Culture": 2,
+        "Debate": 1,
+        "EPL": 1,
+        "Economic Policy": 1,
+        "Economy": 1,
+        "Elections": 2,
+        "Elon Musk": 1,
+        "Finance": 1,
+        "Fiscal": 1,
+        "Foreign Policy": 1,
+        "Games": 1,
+        "Geopolitics": 2,
+        "Lid": 1,
+        "Politics": 5
+      },
+      "selected_by_expiry": {
+        "long": 6,
+        "medium_90d": 14,
+        "near_7d": 19,
+        "unknown": 1
+      },
+      "selected_by_liquidity": {
+        "high": 16,
+        "low": 13,
+        "medium": 11
+      },
+      "selected_by_spread": {
+        "medium_le_0.05": 14,
+        "tight_le_0.01": 20,
+        "wide_gt_0.05": 6
+      },
+      "selected_markets": 40,
+      "stable_control_markets": 3,
+      "target_markets": 40
+    }
   },
   "finalized_snapshots": [
     {
@@ -542,6 +650,22 @@
       "snapshot_file_sha256": "64f1d21d402e2bf6a86c38d0fcda8a0f755624b3fb382b054409c1089183382a",
       "snapshot_file_size_bytes": 691952,
       "public_http_attempts": 7
+    },
+    {
+      "scan_id": "scan-20261015T180052Z-f40aae162609",
+      "captured_at_utc": "2026-10-15T18:00:52.714647+00:00",
+      "path": "data/veritas-observatory/snapshots/scan-20261015T180052Z-f40aae162609.json.gz",
+      "evidence_sha256": "f40aae1626099a2d7bc5b5b36a236f81d8f2a1b5f3789100f8434c8aa5ff0789",
+      "analysis_event_sha256": "5b1978ae55e0e998c9c516de8fee42dec8387cbf1ce2db1956a6d6b85e2db7c4",
+      "analysis_event_file_sha256": "dec04c2a0a14a81c2a3b5e53ffd65c63c114ce259606b2b988c88dc6fe98a392",
+      "analysis_event_file_size_bytes": 18445,
+      "scanner_source_sha256": "a8a867c91c2dc5d8648df2e8fae5b5d913936676177cd322124393d2834a17f9",
+      "attempted_pairs": 40,
+      "quality_valid_pairs_v4": 38,
+      "legacy_freshness_valid_pairs_v4": 10,
+      "snapshot_file_sha256": "b527f6b2b1ad5a24a29861dabbf0a3c08bd46c99de2933e5aa164c50b3ae0b30",
+      "snapshot_file_size_bytes": 686530,
+      "public_http_attempts": 7
     }
   ],
   "measurement_gate_comparison": {
@@ -891,7 +1015,7 @@
     "api_activity_projection": "Live read-only projection returned eight verified Director events from 19 files, marked history truncated, and reported zero invalid artifacts and zero active/queued jobs.",
     "broader_arena_sweep": "stopped near 15% of 369 collected Arena/Veritas cases while unrelated simulator/stress tests consumed a CPU core; focused changed-path groups completed",
     "runtime_director": "16:45:04 UTC scheduled Director cycle reconciled scan 25 completion at 16:45:29 and admitted scan 26 at 16:45:31 using the 16:43:46 sealed source summary. Arena completed scan 26 at 16:45:44 with all 26 events and zero-positive gates. The manifest still projects QUEUED and scan 25 as last qualified until the 17:15:09 UTC cycle. No manual poll or retry was started.",
-    "runtime_source_analysis": "16:40:08 UTC scheduled source replay ran 16:40:08\u201316:43:49 UTC; it processed 128 finalized segments / 33,042,875 bytes (11.037 CPU seconds). Cumulative prefix is 2,545/3,844 segments and 613,809,470 bytes through ordinal 320,213, with 1,299 / 356,461,487 bytes pending. Campaign window: 108,912 frames, 95,468 touched states, 93,007 quality-valid states; positive top-ask and full-depth counts remain zero.",
+    "runtime_source_analysis": "16:40:08 UTC scheduled source replay ran 16:40:08–16:43:49 UTC; it processed 128 finalized segments / 33,042,875 bytes (11.037 CPU seconds). Cumulative prefix is 2,545/3,844 segments and 613,809,470 bytes through ordinal 320,213, with 1,299 / 356,461,487 bytes pending. Campaign window: 108,912 frames, 95,468 touched states, 93,007 quality-valid states; positive top-ask and full-depth counts remain zero.",
     "research_inventory_012": "preserved unchanged as prior checkpoint inventory",
     "source_analysis_summary_validation": "The 16:43:46 UTC sealed source summary, campaign identity, code hash, prefix catalog digest, state digest, cumulative campaign-window counters, and no-active-segment boundary were validated on the 16:45:31 Director admission. Current summary digest: c28e4f92547264dfa8d41ba28101357b8e498ddd2816a96af73c103f0f05ca74.",
     "research_inventory_013": "preserved unchanged as prior checkpoint inventory",
@@ -1751,5 +1875,294 @@
     "authenticated_requests": false,
     "rest_vs_stream_source_timestamps_newer_matches": 14,
     "rest_vs_stream_capture_spacing_seconds": 360.256037024
+  },
+  "gate_d_candidate_replay": {
+    "comparison_version": "veritas-economic-qualification-comparison-v3",
+    "comparison_run_id": "VERITAS-M2-ECO-QUAL-001-V3-RUN-fd9b0c1cdc06",
+    "comparison_sha256": "e927ea7eecf94823b098d51746021f0e1915c55006de0de7118b51a6d6528e0b",
+    "comparison_source_code_sha256": "45b480334bdebad982df7300249515802b87ba43d5031c1979a6ab3fbd0dfcf7",
+    "dataset_sha256": "fd9b0c1cdc0624555237fb7fe891bbe43ab2bef5e20fd343e24f4bdf69e4f777",
+    "persisted_as_finding": false,
+    "sample": {
+      "snapshot_count": 29,
+      "attempted_market_pairs": 1160,
+      "quality_valid_pairs": 1034,
+      "invalid_pairs": 126,
+      "unique_market_ids": 536,
+      "first_captured_at_utc": "2026-10-15T05:59:28.204111+00:00",
+      "last_captured_at_utc": "2026-10-15T18:00:52.714647+00:00",
+      "top_pair_edge_per_share": {
+        "count": 1034,
+        "minimum_per_share": "-0.996",
+        "median_nearest_rank_per_share": "-0.022",
+        "maximum_per_share": "-0.001",
+        "positive_count": 0
+      }
+    },
+    "positive_states_by_gate": {
+      "unchanged_top_ask_gross_sign": 0,
+      "full_displayed_depth_gross": 0,
+      "full_depth_and_per_leg_minimum_notional": 0,
+      "single_match_fee_sensitivity_positive": 0,
+      "fragmentation_safe_fee_sensitivity_positive": 0
+    },
+    "candidate_evidence_count": 0,
+    "candidate_evidence_complete": true,
+    "replay": {
+      "version": "veritas-gross-candidate-source-replay-v1",
+      "source_code_sha256": "277b48af76eb28364bd03bbd89a971186417ee1bd2be26ce22ad9b744fdad3e4",
+      "candidate_count": 0,
+      "replayed_candidate_count": 0,
+      "complete": true,
+      "status": "NO_POSITIVE_CANDIDATES_TO_REPLAY",
+      "candidates": []
+    },
+    "synthetic_positive_fixture": "recomputed best asks, quantity depth, and fee/minimum sensitivities; passed",
+    "synthetic_tamper_fixture": "changed saved book versus hashed source payload; rejected",
+    "limitations": [
+      "No genuine positive candidate has exercised the replay path.",
+      "Request/receipt timing does not establish independent sequence freshness, batch atomicity, order arrival, or fills.",
+      "Fee sensitivity uses the shared versioned fee model."
+    ],
+    "verification": {
+      "targeted_backend_tests_passed": 40,
+      "targeted_frontend_tests_passed": 1,
+      "ruff_passed": true,
+      "ruff_format_passed": true,
+      "strict_mypy_passed": true,
+      "prettier_passed": true,
+      "git_diff_check_passed": true
+    }
+  },
+  "persisted_scan28_qualification": {
+    "job_id": "job-947c57cba6584e79978571ce",
+    "job_state": "COMPLETED",
+    "job_progress": {
+      "done": 28,
+      "total": 28
+    },
+    "finding_id": "veritas-qualification-v1-7fd5970007ea7a95",
+    "finding_path": "data/arena/findings/veritas-qualification-v1-7fd5970007ea7a95/manifest.json",
+    "finding_file_sha256": "de5852505a47d0576fcb74fa8496a8a8bcaba76adc7b9690f56e1a2a2b8362d1",
+    "experiment_run_id": "VERITAS-M2-ECO-QUAL-001-V2-RUN-c3decafe98ba",
+    "experiment_sha256": "d51904d042634f961908fcb23c0ec9789ef0a82f840fb54a41a9a4382283f6c6",
+    "analysis_version": "veritas-economic-qualification-comparison-v2",
+    "snapshot_count": 28,
+    "attempted_market_pairs": 1120,
+    "quality_valid_pairs": 996,
+    "unique_market_ids": 513,
+    "positive_states_by_gate": {
+      "unchanged_top_ask_gross_sign": 0,
+      "full_displayed_depth_gross": 0,
+      "full_depth_and_per_leg_minimum_notional": 0,
+      "single_match_fee_sensitivity_positive": 0,
+      "fragmentation_safe_fee_sensitivity_positive": 0
+    },
+    "orders_submitted": false,
+    "authenticated_requests": false,
+    "note": "Persisted run is v2. The v3 comparison above is read-only and unpersisted."
+  },
+  "latest_source_analysis_checkpoint": {
+    "analysis_version": "veritas-finalized-reality-source-analysis-v1",
+    "campaign_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
+    "campaign_sha256": "aa8acb2b46823c1a1e3ac5d01a57dde917746c2c7471098ae2a4598875e322f5",
+    "analysis_code_sha256": "9f9e2249b49dd1cb10c11713aa2683567aa9cf0914c3ed2b08cf8e3fea25ebf8",
+    "summary_sha256": "7c5084f124af56591d415f9320cf3a07ae984fd57cd4486eeb872e05c49d6dca",
+    "summary_file_sha256": "cdbf3c86aec32c422acd3bb7c996e882e1eb92f3d8845c07d8c6c3b1787233b3",
+    "generated_at_utc": "2026-10-15T17:44:13+00:00",
+    "active_segment_read": false,
+    "processed_segments": 2780,
+    "catalog_segments": 3962,
+    "pending_segments": 1182,
+    "pending_bytes": 327830232,
+    "processed_source_bytes": 680531641,
+    "last_processed_ordinal": 360067,
+    "readiness": "catching_up_finalized_source",
+    "cumulative": {
+      "campaign_window_ns": {
+        "end_exclusive": 1793221678642600351,
+        "start": 1792012078642600351
+      },
+      "fee_regime_available_states": 122512,
+      "fee_regime_unavailable_states": 0,
+      "frames_excluded_unsupported_producer": 0,
+      "frames_excluded_unsupported_reconstruction": 0,
+      "gap_reasons_in_window": {
+        "book_resynchronization": 616,
+        "connection_failure": 1
+      },
+      "market_count": 37,
+      "period_frame_records": 141072,
+      "period_record_kinds": {
+        "book_comparison": 2425,
+        "checkpoint": 1248,
+        "discovery": 616,
+        "discovery_page": 3696,
+        "frame": 141072,
+        "gap": 617,
+        "heartbeat": 3060,
+        "independent_book": 2425,
+        "public_fee_metadata": 9856,
+        "public_market_metadata": 4928,
+        "snapshot_constraints": 9854,
+        "subscription": 616,
+        "timing_measurement": 1248
+      },
+      "positive_full_depth_minimum_notional_satisfied_states": 0,
+      "positive_full_depth_pre_fee_states": 0,
+      "positive_top_ask_pair_states": 0,
+      "positive_top_with_quantity_depth_states": 0,
+      "quality_invalid_reason_counts": {
+        "book_issue:top_divergence": 34,
+        "empty_ask_side": 2544,
+        "independent_book_divergence": 358,
+        "reported_expiry_reached": 173,
+        "source_timing_uncertainty": 89
+      },
+      "quality_valid_states": 122512,
+      "quantity_depth_complete_states": 122512,
+      "quantity_requested": "5",
+      "raw_records_replayed": 360067,
+      "receiver_clock_regression_frames": 0,
+      "record_kinds": {
+        "book_comparison": 4023,
+        "checkpoint": 2778,
+        "discovery": 2678,
+        "discovery_page": 6294,
+        "frame": 283445,
+        "gap": 2698,
+        "heartbeat": 6938,
+        "independent_book": 4023,
+        "metadata_correction": 5,
+        "public_fee_metadata": 16784,
+        "public_market_metadata": 8392,
+        "snapshot_constraints": 17238,
+        "subscription": 2678,
+        "timing_measurement": 2093
+      },
+      "source_receipt_window_ns": {
+        "first": 1792012079737246201,
+        "last": 1792050019864324035
+      },
+      "top_edge_distribution": {
+        "count": 122512,
+        "maximum": "-0.001",
+        "median_nearest_rank": "-0.01",
+        "minimum": "-0.998",
+        "p25_nearest_rank": "-0.01",
+        "p75_nearest_rank": "-0.007",
+        "positive_count": 0
+      },
+      "touched_market_frame_states": 125710,
+      "verified_source_checkpoints": 2778
+    }
+  },
+  "current_operational_checkpoint": {
+    "latest_scan_id": "scan-20261015T180052Z-f40aae162609",
+    "latest_scan_captured_at_utc": "2026-10-15T18:00:52.714647+00:00",
+    "selected_markets": 40,
+    "quality_valid_pairs_latest_scan": 38,
+    "panel_snapshots": 29,
+    "panel_selected_pairs": 1160,
+    "panel_quality_valid_pairs": 1034,
+    "panel_unique_market_ids": 536,
+    "observatory_root_bytes": 27227975,
+    "director_manifest_updated_at_utc": "2026-10-15T17:45:56+00:00",
+    "director_latest_scan_id": "scan-20261015T173211Z-90639c13dfaf",
+    "director_latest_persisted_finding_id": "veritas-qualification-v1-b595559921e55264",
+    "scan28_arena_job_id": "job-947c57cba6584e79978571ce",
+    "scan28_arena_job_state": "COMPLETED",
+    "observer_timer_next_utc": "2026-10-15T18:30:45Z",
+    "source_analysis_timer_next_utc": "2026-10-15T18:10:37Z",
+    "research_director_timer_next_utc": "2026-10-15T18:15:12Z",
+    "service_restarts_or_manual_runs_for_checkpoint": 0,
+    "note": "Scan 29 is collected but not yet admitted by the scheduled Director. Scan 28 Arena job completed v2; its manifest reconciliation is still pending."
+  },
+  "current_scan_029": {
+    "scan_id": "scan-20261015T180052Z-f40aae162609",
+    "captured_at_utc": "2026-10-15T18:00:52.714647+00:00",
+    "snapshot_evidence_sha256": "f40aae1626099a2d7bc5b5b36a236f81d8f2a1b5f3789100f8434c8aa5ff0789",
+    "snapshot_file_sha256": "b527f6b2b1ad5a24a29861dabbf0a3c08bd46c99de2933e5aa164c50b3ae0b30",
+    "analysis_event_sha256": "5b1978ae55e0e998c9c516de8fee42dec8387cbf1ce2db1956a6d6b85e2db7c4",
+    "analysis_event_file_sha256": "dec04c2a0a14a81c2a3b5e53ffd65c63c114ce259606b2b988c88dc6fe98a392",
+    "selected_market_pairs": 40,
+    "quality_valid_pairs": 38,
+    "positive_top_gross_pairs": 0,
+    "selected_markets": 40,
+    "public_http_attempts": 7,
+    "orders_submitted": false,
+    "authenticated_requests": false,
+    "coverage_kind": "intermittent_public_snapshots",
+    "discovery": {
+      "duplicate_records_across_queries": 4,
+      "eligible_pair_markets": 189,
+      "excluded_market_ids": 107,
+      "exclusion_reasons": {
+        "augmented_negative_risk_semantics_unverified": 42,
+        "unsupported_outcome_relationship": 65
+      },
+      "frame_protocol": "stratified-gamma-page-rotation-v2",
+      "offset_bucket_seconds": 1800,
+      "query_candidate_records": 300,
+      "query_count": 6,
+      "unique_market_ids": 296
+    },
+    "selection_summary": {
+      "eligible_population": 189,
+      "phase": "category",
+      "rotating_markets": 37,
+      "selected_by_category": {
+        "AI": 2,
+        "Aliens": 1,
+        "Bab el-Mandeb": 1,
+        "Big Tech": 1,
+        "Bitcoin": 1,
+        "Blockade": 1,
+        "Brazil": 1,
+        "Bundesliga": 1,
+        "Business": 1,
+        "CNN": 1,
+        "CPI": 1,
+        "Catalonia": 1,
+        "Climate & Science": 1,
+        "Congress": 1,
+        "Corporate Financials": 1,
+        "Courts": 1,
+        "Crypto": 2,
+        "Culture": 2,
+        "Debate": 1,
+        "EPL": 1,
+        "Economic Policy": 1,
+        "Economy": 1,
+        "Elections": 2,
+        "Elon Musk": 1,
+        "Finance": 1,
+        "Fiscal": 1,
+        "Foreign Policy": 1,
+        "Games": 1,
+        "Geopolitics": 2,
+        "Lid": 1,
+        "Politics": 5
+      },
+      "selected_by_expiry": {
+        "long": 6,
+        "medium_90d": 14,
+        "near_7d": 19,
+        "unknown": 1
+      },
+      "selected_by_liquidity": {
+        "high": 16,
+        "low": 13,
+        "medium": 11
+      },
+      "selected_by_spread": {
+        "medium_le_0.05": 14,
+        "tight_le_0.01": 20,
+        "wide_gt_0.05": 6
+      },
+      "selected_markets": 40,
+      "stable_control_markets": 3,
+      "target_markets": 40
+    }
   }
 }

@@ -56,3 +56,7 @@ exercised it.
 No live orders, authenticated requests, or research findings were created by
 the read-only comparison. The scheduled collector and source-analysis jobs
 were not restarted or manually invoked.
+
+Scan 29 and the current v3 comparison are documented in [Gate A checkpoint
+026](VERITAS_MISSION2_GATE_A_CHECKPOINT_026.md) and [inventory
+030](VERITAS_MISSION2_RESEARCH_INVENTORY_030.json).
