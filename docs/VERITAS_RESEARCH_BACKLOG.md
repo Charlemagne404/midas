@@ -5,7 +5,21 @@ economic impact, current evidence, and compute cost. Work remains on
 `project/veritas`; the frozen Reality campaign is a protected reference. The
 earlier Mission 1 handoff backlog is retained below for provenance.
 
-## Current Mission 2 queue (2026-10-15, checkpoint 036)
+## Current Mission 2 queue (2026-10-15, checkpoint 037)
+
+| Rank | Question | Evidence today | Next experiment | Promotion rule |
+| --- | --- | --- | --- | --- |
+| 1 | What freshness assurance does request-to-receipt timing provide? | Across 32 snapshots, 262/1,280 pass the legacy five-second update-age rule and 1,136/1,280 pass request/receipt completeness (+874; +68.28 percentage points). The timestamp/hash audit remains consistent with state-change timestamps, not independent receipt freshness. | Keep paired classification on each finalized scan. Seek venue sequence or an independently validated continuity signal. | Require source identity, complete asset coverage, bounded receipt timing, and independent freshness/continuity evidence before candidate promotion. |
+| 2 | Does the rotating cohort improve usable observation coverage under the fixed request budget? | Pilot has two scans: 66/80 valid (82.5%), with 64/74 rotating and 2/6 available controls; zero missed sequences. Controls are not randomized and the comparison is descriptive. | Continue through the fixed 24-hour/48-scan stop; then review role and stratum yield, exclusions, and sequence completeness. | Do not infer causality, venue-wide yield, quote lifetime, fills, or profitability from intermittent snapshots. |
+| 3 | Which eligible segments remain under-covered by discovery? | Scan 32 returned 300 unique IDs; 188 were supported same-condition V1 pairs and 112 excluded (46 unverified augmented NegRisk, 66 unsupported relationships). Forty markets were selected across current strata. | Summarize coverage by category, liquidity, expiry, and relationship type after the pilot. Expand queries only within measured rate, byte, and storage bounds. | Keep inclusion probabilities conditional on the bounded query union; prove payout identity and counterexamples before adding structures. |
+| 4 | Does economic qualification find and replay a genuine candidate? | The 32-snapshot panel has 1,136 valid pairs across 598 selected IDs and no positives at any of five gross/depth/minimum/fee gates. Scan 31 is the latest persisted qualification; scan 32 awaits its scheduled Director cycle. | Let the scheduled Director qualify scan 32. Retain no-trade and preserve source evidence if a positive gross state appears. | Require same-condition identity, immutable-source replay, full depth, both per-leg minimums, fees, and independent freshness. |
+| 5 | Can additional complete-outcome structures produce fresh positive net economics? | Strava and OpenAI IPO baskets remain negative or fail timestamp-quality checks; no basket qualifies. | Defer more REST-only recaptures until independent freshness is available; only investigate payoff structures with verified settlement semantics. | Do not infer arbitrage from related markets or relabel directional prediction. |
+| 6 | Can a strategy or model improve an economically useful decision? | No positive gross state or suitable public outcome labels exist; strategy and model readiness remain not ready. | Preserve no-trade. Run a controlled comparison only when valid targets and independent chronological evaluation are available. | No training on repeated price states without valid targets, market-aware grouping, and held-out evaluation. |
+
+The latest Gate G panel is documented in [checkpoint 005](VERITAS_MISSION2_GATE_G_CHECKPOINT_005.md); its implementation is not deployed to the running host.
+
+
+## Archived Mission 2 queue (checkpoint 036; retained for provenance)
 
 | Rank | Question | Evidence today | Next experiment | Promotion rule |
 | --- | --- | --- | --- | --- |

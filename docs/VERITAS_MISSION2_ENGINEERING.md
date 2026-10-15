@@ -1,5 +1,22 @@
 # Veritas Mission 2 Engineering Checkpoint
 
+## Latest Gate G checkpoint 005 — coverage dashboard and scan 32
+
+Commit `a03a10c` adds a read-only coverage-pilot panel backed by a
+digest- and lineage-verified API projection. Focused verification passed 12
+API tests, one targeted UI test, Ruff, formatting, strict Mypy, TypeScript,
+ESLint, Prettier, and the production build; the existing Vite large-chunk
+advisory remains. No host deployment or service restart occurred.
+
+The live pilot has two scans / 80 selected slots / 66 quality-valid / 14
+invalid / zero missed sequences. Scan 32 selected 40 pairs from a 300-ID
+bounded discovery union; 34 were quality-valid and none had positive gross.
+The 32-snapshot panel contains 1,136/1,280 quality-valid pairs across 598
+distinct selected IDs, zero positives at all five economic gates, and a
+maximum top edge of -$0.001/share. Finalized-source analysis remains partial.
+See [Gate G checkpoint 005](VERITAS_MISSION2_GATE_G_CHECKPOINT_005.md).
+
+
 ## Earlier operational and discovery update — Gate A checkpoint 021 / Gate F checkpoint 011
 
 The 15:00 scheduled scan is snapshot 23. The cumulative panel has 920

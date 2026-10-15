@@ -622,3 +622,31 @@ job record is complete, but the manifest still reports it queued; the next
 scheduled Director cycle is the reconciliation point. No manual poll or retry
 was used. See [Gate F checkpoint 017](VERITAS_MISSION2_GATE_F_CHECKPOINT_017.md)
 and [research inventory 036](VERITAS_MISSION2_RESEARCH_INVENTORY_036.json).
+
+
+## Checkpoint addendum — Gate G dashboard and scan 32 (2026-10-15 19:41 UTC)
+
+Mission 2 remains active and this addendum does not change final acceptance
+status. The read-only dashboard now exposes the prospective coverage pilot
+through a verified API projection and a dedicated panel. Commit `a03a10c`
+passed 12 dashboard API tests, one targeted UI test, Python lint/format/type
+checks, frontend type/lint/format checks, and a production build. The dashboard
+was not deployed to the running host.
+
+The live 24-hour pilot has two scans: 66/80 selected pair slots are
+quality-valid (82.5%), with zero missed scan sequences. The scan-32 v4 panel
+contains 1,136 valid pairs out of 1,280 selected observations across 598
+distinct market IDs. No positive gross, depth, per-leg minimum, or fee-safe
+candidate has appeared; the maximum top edge remains -$0.001/share. The latest
+persisted Arena qualification is scan 31; scan 32 awaits its scheduled
+Director cycle.
+
+Finalized Reality source analysis remains partial at 3,132/4,140 segments,
+with 1,008 pending. Its campaign window has 169,253 quality-valid states
+across 43 markets and zero positive top-ask or full-depth states. The recorder,
+frozen shadow, and Veritas timers were active at capture; the scheduled source
+analysis was running. Freshness/continuity evidence, source catch-up, Gate E
+experimentation, broader dashboard coverage, and full regression verification
+remain open. See [Gate G checkpoint
+005](VERITAS_MISSION2_GATE_G_CHECKPOINT_005.md), [operations](VERITAS_MISSION2_OPERATIONS.md),
+and [inventory 037](VERITAS_MISSION2_RESEARCH_INVENTORY_037.json).

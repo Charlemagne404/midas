@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-15T19:01:56.758523Z",
+  "updated_at_utc": "2026-10-15T19:41:43Z",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -3717,50 +3717,66 @@
       "title": "Can rotating discovery sampling improve measured quality-valid coverage under the current public-read budget?",
       "mechanism": "Compare valid paired-book yield, distinct market coverage, exclusions, and missed scan sequences across the existing frozen stable-control and stratified rotating roles within each scheduled scan.",
       "experiment_id": "VERITAS-M2-COVERAGE-PILOT-001",
-      "dataset_id": "cd9adf78a361e87a0a1e7ad8a8f09df7087ab874ebbe8a6becf1d33d845b6ce4",
+      "dataset_id": "d19266d72a6479e3fc7ad35cf4ddf301de125ba82feefabbb04cea9560aecf04",
       "success_metric": "Complete a fixed 24-hour or 48-scan evidence record with per-role and per-stratum yield, source lineage, missing-scan diagnostics, and a descriptive comparison; do not require positive economic candidates.",
       "result": {
-        "status": "running_first_scan_completed",
+        "status": "running_two_scans_completed",
         "protocol_version": "veritas-coverage-pilot-v1",
         "plan_sha256": "d35f25ef84037f3e9cabf4343e9a01db381b73e8fa6cae0fd0b5fc6e07e279ba",
         "implementation_sha256": "2cf59cebbb72c0e2990ebfe5c40e53b967e867fff5321f0d1e8c4e9a9207284e",
         "source_commit": "de3f764",
+        "dashboard_commit": "a03a10c",
         "pilot_status": "running",
         "started_at_utc": "2026-10-15T19:00:55.062293+00:00",
         "ends_at_utc": "2026-10-16T19:00:55.062293+00:00",
-        "completed_scans": 1,
-        "selected_market_pair_slots": 40,
-        "quality_valid_pairs": 32,
-        "invalid_pairs": 8,
-        "quality_valid_yield": 0.8,
+        "completed_scans": 2,
+        "selected_market_pair_slots": 80,
+        "quality_valid_pairs": 66,
+        "quality_valid_yield": 0.825,
+        "invalid_pairs": 14,
         "invalid_reasons": {
-          "no_empty_ask_side": 8
+          "no_empty_ask_side": 13,
+          "yes_empty_ask_side": 1
         },
-        "distinct_selected_market_ids": 40,
+        "distinct_selected_market_ids": 70,
+        "skipped_scan_sequences": 0,
         "by_cohort_role": {
           "rotating_stratified": {
             "invalid_reasons": {
-              "no_empty_ask_side": 6
+              "no_empty_ask_side": 9,
+              "yes_empty_ask_side": 1
             },
-            "quality_valid": 31,
-            "quality_valid_yield": 0.8378378378378378,
-            "selected": 37
+            "quality_valid": 64,
+            "quality_valid_yield": 0.8648648648648649,
+            "selected": 74
           },
           "stable_random_control": {
             "invalid_reasons": {
-              "no_empty_ask_side": 2
+              "no_empty_ask_side": 4
             },
-            "quality_valid": 1,
+            "quality_valid": 2,
             "quality_valid_yield": 0.3333333333333333,
-            "selected": 3
+            "selected": 6
           }
         },
         "by_selection_stratum": {
+          "high": {
+            "distinct_market_count": 13,
+            "quality_valid": 13,
+            "quality_valid_yield": 1.0,
+            "selected": 13
+          },
           "higher_snapshot_change": {
             "distinct_market_count": 1,
             "quality_valid": 1,
             "quality_valid_yield": 1.0,
             "selected": 1
+          },
+          "low": {
+            "distinct_market_count": 12,
+            "quality_valid": 10,
+            "quality_valid_yield": 0.8333333333333334,
+            "selected": 12
           },
           "lower_snapshot_change": {
             "distinct_market_count": 16,
@@ -3768,27 +3784,126 @@
             "quality_valid_yield": 0.75,
             "selected": 16
           },
+          "medium": {
+            "distinct_market_count": 12,
+            "quality_valid": 10,
+            "quality_valid_yield": 0.8333333333333334,
+            "selected": 12
+          },
           "unclassified": {
             "distinct_market_count": 23,
-            "quality_valid": 19,
-            "quality_valid_yield": 0.8260869565217391,
-            "selected": 23
+            "quality_valid": 20,
+            "quality_valid_yield": 0.7692307692307693,
+            "selected": 26
           }
         },
-        "scan_id": "scan-20261015T190055Z-7799523b9d87",
-        "captured_at_utc": "2026-10-15T19:00:55.062293+00:00",
-        "snapshot_evidence_sha256": "7799523b9d87861de0cf06cc33d7387fb24a87aef75d5991d1b0bdb860af8a57",
-        "snapshot_file_sha256": "11592446ba9f057de9c8fddab7295dd027d8a61fed4cc2106db14421a6315d3d",
-        "analysis_event_sha256": "c6e1707fee02857610b0828ad5853d71020db0737aa2f3ad1a8c285b011bb5ed",
-        "analysis_event_file_sha256": "9880323d91d17384fc9d55468676e9b688f75a95015eddccd86779015c42f5dc",
-        "pilot_event_sha256": "cd9adf78a361e87a0a1e7ad8a8f09df7087ab874ebbe8a6becf1d33d845b6ce4",
-        "pilot_summary_sha256": "1aca0353079032f25b8c8cf7aabb92e8f540b7d513262672424a6c46e5864859",
-        "discovery": 122,
-        "positive_top_gross_pairs": 0,
+        "scan_evidence": [
+          {
+            "scan_id": "scan-20261015T190055Z-7799523b9d87",
+            "captured_at_utc": "2026-10-15T19:00:55.062293+00:00",
+            "phase": "snapshot_change",
+            "selection_sequence": 30,
+            "discovered_unique_market_ids": 300,
+            "eligible_pair_markets": 122,
+            "excluded_market_ids": 178,
+            "exclusion_reasons": {
+              "augmented_negative_risk_semantics_unverified": 128,
+              "unsupported_outcome_relationship": 50
+            },
+            "selected_market_pairs": 40,
+            "quality_valid_pairs": 32,
+            "invalid_reasons": {
+              "no_empty_ask_side": 8
+            },
+            "role_counts": {
+              "rotating_stratified": {
+                "invalid_reasons": {
+                  "no_empty_ask_side": 6
+                },
+                "quality_valid": 31,
+                "selected": 37
+              },
+              "stable_random_control": {
+                "invalid_reasons": {
+                  "no_empty_ask_side": 2
+                },
+                "quality_valid": 1,
+                "selected": 3
+              }
+            },
+            "stable_control_available": 3,
+            "legacy_freshness_valid_pairs": 10,
+            "positive_top_gross_pairs": 0,
+            "snapshot_evidence_sha256": "7799523b9d87861de0cf06cc33d7387fb24a87aef75d5991d1b0bdb860af8a57",
+            "snapshot_file": "snapshots/scan-20261015T190055Z-7799523b9d87.json.gz",
+            "snapshot_file_sha256": "11592446ba9f057de9c8fddab7295dd027d8a61fed4cc2106db14421a6315d3d",
+            "snapshot_compressed_bytes": 537411,
+            "analysis_event_sha256": "c6e1707fee02857610b0828ad5853d71020db0737aa2f3ad1a8c285b011bb5ed",
+            "analysis_event_file_sha256": "9880323d91d17384fc9d55468676e9b688f75a95015eddccd86779015c42f5dc",
+            "pilot_event_sha256": "cd9adf78a361e87a0a1e7ad8a8f09df7087ab874ebbe8a6becf1d33d845b6ce4",
+            "pilot_event_file_sha256": "22ad15e630709c2db8893d1e18a47b94b1d151a42f39eb0137d1be921e442de3",
+            "snapshot_source_code_sha256": "c490af70f28038237f1a346bc36cf7c6dda4904a2b02802d830450d88e8a26d5"
+          },
+          {
+            "scan_id": "scan-20261015T193035Z-7597bbb981fa",
+            "captured_at_utc": "2026-10-15T19:30:35.832304+00:00",
+            "phase": "liquidity",
+            "selection_sequence": 31,
+            "discovered_unique_market_ids": 300,
+            "eligible_pair_markets": 188,
+            "excluded_market_ids": 112,
+            "exclusion_reasons": {
+              "augmented_negative_risk_semantics_unverified": 46,
+              "unsupported_outcome_relationship": 66
+            },
+            "selected_market_pairs": 40,
+            "quality_valid_pairs": 34,
+            "invalid_reasons": {
+              "no_empty_ask_side": 5,
+              "yes_empty_ask_side": 1
+            },
+            "role_counts": {
+              "rotating_stratified": {
+                "invalid_reasons": {
+                  "no_empty_ask_side": 3,
+                  "yes_empty_ask_side": 1
+                },
+                "quality_valid": 33,
+                "selected": 37
+              },
+              "stable_random_control": {
+                "invalid_reasons": {
+                  "no_empty_ask_side": 2
+                },
+                "quality_valid": 1,
+                "selected": 3
+              }
+            },
+            "stable_control_available": 3,
+            "legacy_freshness_valid_pairs": 6,
+            "positive_top_gross_pairs": 0,
+            "snapshot_evidence_sha256": "7597bbb981fa445b0d651e400dcba4754ad86821a0922c5794cd2c9875a47b3d",
+            "snapshot_file": "snapshots/scan-20261015T193035Z-7597bbb981fa.json.gz",
+            "snapshot_file_sha256": "168f1699be0dc8abf2796d54c1c41edbbe44648a52566196e25cb719d50f2507",
+            "snapshot_compressed_bytes": 657943,
+            "analysis_event_sha256": "14a941335ce3d61714e09a7560b9b62b8c51cf6986e952c323038ac20641c75f",
+            "analysis_event_file_sha256": "040f405da892e6617f1ae3b90c65166a5ab2ee97bd521e1e75b3cb57ebf16290",
+            "pilot_event_sha256": "d19266d72a6479e3fc7ad35cf4ddf301de125ba82feefabbb04cea9560aecf04",
+            "pilot_event_file_sha256": "6a9465a9e6a9b92a61694e90f29bdb8dd9f916fd4e46b4cfab38dc192984e9f4",
+            "snapshot_source_code_sha256": "c490af70f28038237f1a346bc36cf7c6dda4904a2b02802d830450d88e8a26d5"
+          }
+        ],
+        "pilot_summary_sha256": "61d942c6335e573b394b5e1b692e01c4de3139d1dbcfe8b07f5e8a864225a97f",
+        "decision": "Continue through the fixed 24-hour or 48-scan stop; yields are descriptive only, with no causal, venue-wide, execution, or profitability claim.",
+        "limitations": [
+          "The bounded query-response union is selected and is not the venue-wide universe.",
+          "Stable controls were frozen from an earlier bounded discovery union and are not randomized against rotating markets.",
+          "The same-scan role comparison is descriptive; market composition and availability differ by role.",
+          "Intermittent public snapshots do not establish continuous coverage, quote lifetime, fills, or profitability.",
+          "Reported timestamp age is an update-recency diagnostic; the pilot does not claim venue sequence or upstream freshness."
+        ],
         "authenticated_requests": false,
-        "orders_submitted": false,
-        "next_observer_scan_utc": "2026-10-15T19:30:19Z",
-        "role_comparison_interpretation": "same-scan control versus rotating yield is descriptive and non-randomized; no causal or venue-wide inference"
+        "orders_submitted": false
       },
       "limitations": [
         "The bounded query-response union is selected and is not the venue-wide universe.",

@@ -341,3 +341,48 @@ with 199 GiB free, and the observatory root was 29,467,543 bytes. The Reality
 recorder and shadow remained active; their previously recorded DNS/degraded
 warning and one shadow restart remain unresolved operational cautions. No
 protected campaign state was changed. See [inventory 036](VERITAS_MISSION2_RESEARCH_INVENTORY_036.json).
+
+
+## 2026-10-15 19:41 UTC — scan 32 and Gate G dashboard code checkpoint
+
+The scheduled observer completed scan
+`scan-20261015T193035Z-7597bbb981fa` at 19:30:35 UTC. Six bounded public
+discovery pages returned 300 unique market IDs; 188 met same-condition V1
+eligibility. Forty pairs were selected (37 rotating, three available stable
+controls); 34 passed the request/receipt quality gate and six had an empty ask
+side. The 112 explicit exclusions comprised 46 markets with unverified
+augmented NegRisk semantics and 66 unsupported outcome relationships. All
+gross, depth, minimum-notional, and fee gates remained zero-positive.
+
+The cumulative v4 panel has 32 snapshots, 1,280 selected pairs, 1,136
+quality-valid pairs, 144 invalid pairs, and 598 distinct selected IDs. The
+legacy reported-age rule accepts 262 pairs versus 1,136 under request/receipt
+completeness (+874, +68.28 percentage points). The maximum top-pair edge
+remains -$0.001 per share. These are repeated selected observations, not
+independent opportunities or venue-wide coverage.
+
+The 24-hour pilot has completed two scans: 66/80 slots valid, 14 invalid, and
+zero missed sequences. Rotating markets yielded 64/74 valid; available
+controls yielded 2/6. This is descriptive and nonrandomized. The pilot adds
+no requests and remains fixed through 2026-10-16 19:00:55 UTC.
+
+At capture (19:41 UTC), the Reality recorder and frozen shadow were active.
+The shadow has one historical automatic restart after a final-source integrity
+or continuity mismatch; the recorder retains a prior temporary DNS/degraded
+warning. The scheduled source-analysis run started at 19:40:47 UTC and was
+still active at capture (PID 528516, 1.0 min elapsed, 3.2 CPU seconds, 171 MiB
+RSS); its last completed summary remained at 3,132/4,140 segments (780,800,513
+bytes processed; 298,406,538 pending). It is bounded to 128 segments and 32
+MiB per run. The Director timer is next at 19:45:26 UTC; the observer timer is
+next at 20:00:38 UTC. No Arena job was active.
+
+Host load average was 0.87 / 1.39 / 1.45 across six CPUs, RAM available was
+8.9 GiB of 15 GiB, swap used was 3.5/4 GiB, and disk use was 56% with 199 GiB
+free. The observatory root measured 30,246,059 bytes. Main Midas and Reality
+APIs and web services were active. Gate G checkpoint 005 is committed code on
+`project/veritas` but was not deployed; no services, collectors, or campaigns
+were restarted or modified for this checkpoint.
+
+See [Gate G checkpoint 005](VERITAS_MISSION2_GATE_G_CHECKPOINT_005.md),
+[research inventory 037](VERITAS_MISSION2_RESEARCH_INVENTORY_037.json), and
+[the live pilot summary](../data/veritas-observatory/measurement-pilots/VERITAS-M2-COVERAGE-PILOT-001/summary.json).
