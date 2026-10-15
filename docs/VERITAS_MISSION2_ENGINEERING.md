@@ -1,6 +1,25 @@
 # Veritas Mission 2 Engineering Checkpoint
 
-## Latest checkpoint — Gate G frozen label-feasibility visibility
+## Latest evidence checkpoint — Gate A scan 34 / Gate F qualification
+
+The 20:31 UTC bounded scan completed with 35/40 quality-valid pairs; the
+34-snapshot panel has 1,202/1,360 valid observations across 632 selected IDs
+and zero positive economic gates. The scheduled Director admitted one Arena
+job for scan 34; Arena processed all 34 events and completed a full zero-row
+candidate replay. The Director manifest still projects `QUEUED` until its
+21:15 UTC cycle. See [Gate A checkpoint 031](VERITAS_MISSION2_GATE_A_CHECKPOINT_031.md)
+and [Gate F checkpoint 020](VERITAS_MISSION2_GATE_F_CHECKPOINT_020.md).
+
+The source analyzer advanced to 3,516/4,318 finalized segments and 192,716
+quality-valid campaign states across 57 markets, with zero positive top-ask
+or full-depth states. It remains behind the recorder; 802 segments / 254.8 MB
+are pending. The latest campaign gap aggregate is 972 resynchronizations and
+one connection failure, without per-gap times in the v1 index. A separate,
+bounded gap-detail extractor remains the next source-quality task. The 24-hour
+coverage pilot has four scans and 132/160 valid observations; its small,
+nonrandomized control comparison remains descriptive.
+
+## Previous engineering checkpoint — Gate G frozen label-feasibility visibility
 
 The dashboard now exposes the frozen-campaign v1.4 label-feasibility report
 as a digest-verified, campaign-matched API projection, separate from the

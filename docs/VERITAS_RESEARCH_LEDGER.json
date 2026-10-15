@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-15T20:20:45Z",
+  "updated_at_utc": "2026-10-15T20:49:08Z",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -4110,6 +4110,42 @@
       ],
       "decision": "The connection failure matches the logged warning and a later frame was recorded 2.445 seconds afterward. Keep the full-feed continuity claim unresolved, preserve the campaign, and continue scheduled observation.",
       "status": "continue"
+    },
+    {
+      "hypothesis_id": "VERITAS-H074",
+      "title": "Can the current source-analysis index explain where and when the campaign resynchronizations occurred?",
+      "mechanism": "Verify the sealed per-segment source-analysis event chain and compare its all-period gap record counts with the campaign-window aggregate and the earlier detailed source replay.",
+      "experiment_id": "VERITAS-M2-RECORDER-GAP-INDEX-AUDIT-001",
+      "dataset_id": "0718dd6480b8486dc31028a996c2b1fd9322fb47a15de05f2e3c036f2780915b",
+      "success_metric": "Determine whether the existing digest-linked event index supports campaign-window gap clustering by timestamp, reason, and market without rereading source segments.",
+      "result": {
+        "status": "per_segment_gap_presence_confirmed_timing_not_retained",
+        "artifact_path": "docs/VERITAS_MISSION2_GAP_INDEX_AUDIT_001.json",
+        "artifact_sha256": "0718dd6480b8486dc31028a996c2b1fd9322fb47a15de05f2e3c036f2780915b",
+        "processed_segment_count": 3388,
+        "catalog_segment_count": 4260,
+        "event_chain_verified": true,
+        "all_period_gap_records_in_processed_prefix": 2993,
+        "processed_segments_with_any_gap_record": 1440,
+        "largest_gap_record_count_in_one_segment": 46,
+        "campaign_window_gap_reasons": {
+          "book_resynchronization": 911,
+          "connection_failure": 1
+        },
+        "current_event_index_has_per_gap_timestamps": false,
+        "current_event_index_has_per_gap_reasons": false,
+        "orders_submitted": false,
+        "authenticated_requests": false,
+        "status_note": "All-period per-segment counts include records outside the campaign window. Existing detailed timing evidence covers only the earlier 1,914-segment prefix."
+      },
+      "limitations": [
+        "The source-analysis event chain and cumulative summary were verified, but the audit did not reread raw source segments.",
+        "The per-segment record_kinds field has no gap timestamp or reason, so 911 campaign-window resynchronizations cannot be clustered from this index.",
+        "The previous detailed replay ends at segment 1,914 / ordinal 231,059 and is not representative of the full processed prefix.",
+        "Gap counts do not establish feed outage duration or full market-book recovery."
+      ],
+      "decision": "Keep the frozen campaign and current source-analysis schema unchanged. Build a separate, versioned, bounded read-only extractor over finalized segments before making a time-cluster or recovery claim; serialize it with the existing source-analysis resource budget.",
+      "status": "continue"
     }
   ],
   "next_research_questions": [
@@ -4122,6 +4158,7 @@
     "Can independent sequence evidence quantify freshness and coverage for the rotating public query frames?",
     "What market/time dependence and coverage evidence will satisfy the 24-hour pilot review and original 48-hour follow-up gates?",
     "Can the Research Director orchestrate bounded snapshot qualification and source replay with typed dependencies while preserving the collector timer?",
-    "Can additional boundedly discovered NegRisk groups be verified complete and produce fresh, quality-valid positive full-depth net economics?"
+    "Can additional boundedly discovered NegRisk groups be verified complete and produce fresh, quality-valid positive full-depth net economics?",
+    "Can a separate bounded finalized-source analysis map current campaign-window gap events to receiver time and reason without altering the v1 source-analysis state?"
   ]
 }

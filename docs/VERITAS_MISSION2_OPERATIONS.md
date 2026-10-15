@@ -1,10 +1,52 @@
 # Veritas Mission 2 Operations
 
-**Latest read-only runtime check:** 2026-10-15 20:20 UTC
+**Latest read-only runtime check:** 2026-10-15 20:49 UTC
 **Services:** `midas-veritas-observatory.service`, `midas-veritas-source-analysis.service`, `midas-veritas-research-director.service`
 **Timers:** `midas-veritas-observatory.timer`, `midas-veritas-source-analysis.timer`, `midas-veritas-research-director.timer`
 
-## Latest runtime state — 2026-10-15 20:20 UTC
+## Latest runtime state — 2026-10-15 20:49 UTC
+
+- Scan 34 completed at 20:31:54 UTC with 35/40 request/receipt-valid pairs
+  and zero positive top-gross pairs. The 34-snapshot panel now has 1,202/1,360
+  valid observations across 632 IDs, zero positives at all five economic
+  gates, and maximum top edge -$0.001/share. The pilot has four scans / 160
+  selected slots / 132 valid / 28 invalid / zero missed sequences. Its stop is
+  2026-10-16 19:00:55 UTC.
+- The 20:40:22 UTC source-analysis recurrence completed at 20:43:30 UTC. It
+  processed 128 segments / 30,416,223 bytes in about 188 seconds, using 9.376
+  CPU seconds and 133.5 MiB peak memory, with no swap. The current prefix is
+  3,516/4,318 cataloged segments, with 802 / 254,804,640 bytes pending through
+  ordinal 463,159. It contains 220,589 campaign-window frames, 199,121
+  touched states, and 192,716 quality-valid states over 57 markets; all
+  top-ask, depth, minimum, and fee candidate counts remain zero. The campaign
+  window has 972 `book_resynchronization` records and one
+  `connection_failure`. These are reconstruction barriers, not duration or
+  complete-feed evidence. Summary digest:
+  `b9d23135153f083a57e5332d167685efcafceb78afab688a1c5a3ca40e04ea17`;
+  file SHA-256:
+  `0fd9245a5b4ad2243d80fa047775f1521c3912701efd250152d5e28457c7898b`.
+- The scheduled Director cycle at 20:45:05 UTC reconciled scan 33 and admitted
+  `job-e47f6ced4e8f4900965b7179` for scan 34. Arena completed all 34 events at
+  20:45:47 UTC with zero positives at each of five gates and a complete
+  zero-row candidate replay. The finding is
+  `veritas-qualification-v1-ef893dbea8f4dfa4`. The manifest still reports
+  `QUEUED` and scan 33 as latest qualified; the scheduled 21:15 UTC cycle is
+  the reconciliation point. No manual poll or retry was started. See [Gate F
+  checkpoint 020](VERITAS_MISSION2_GATE_F_CHECKPOINT_020.md).
+- At 20:49:08 UTC the Reality recorder and frozen shadow were active. The
+  recorder has zero restarts; the shadow has one prior restart. Midas API/web
+  and Reality API/web units were active with zero restarts. The three
+  scheduled Veritas one-shots were idle after completion and their timers
+  remained active. The Veritas Arena job archive contained 20 completed jobs
+  and one preserved historical failure, with no nonterminal job. The older
+  failure is the scan-11 source-drift `ValueError`; it was not retried. Host
+  load was 1.45 / 1.34 / 1.32 on six logical CPUs; RAM available was 8.8 GiB;
+  swap use was 3.6/4 GiB; disk free was 199 GiB (56% used); the observatory
+  files totaled 32,322,459 bytes. Systemd and process state were checked, but
+  no HTTP health probe was run. No service or campaign was restarted or
+  altered.
+
+## Previous runtime state — 2026-10-15 20:20 UTC
 
 - The observer timer completed scan 33 at 20:00:54 UTC and is next due at
   20:31:39 UTC. The fixed coverage pilot has three scans / 120 selected slots
