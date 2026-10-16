@@ -2312,10 +2312,14 @@ def coverage_pilot_overview(repository: Path) -> dict[str, Any]:
     control_availability = (
         _coverage_pilot_control_availability(repository, summary, scans[-1]) if scans else None
     )
+    implementation_pin_status = _coverage_pilot_pin_status(repository, summary)
+    projected_status = summary["status"]
+    if implementation_pin_status == "historical_source_drift" and projected_status == "running":
+        projected_status = "historical_source_drift"
     return {
         "study_id": COVERAGE_PILOT_ID,
         "protocol_version": COVERAGE_PILOT_VERSION,
-        "status": summary["status"],
+        "status": projected_status,
         "started_at_utc": summary["started_at_utc"],
         "ends_at_utc": summary["ends_at_utc"],
         "maximum_elapsed_hours": 24,
@@ -2333,7 +2337,7 @@ def coverage_pilot_overview(repository: Path) -> dict[str, Any]:
         "scans": scan_projection[-8:],
         "latest_scan": scan_projection[-1] if scan_projection else None,
         "latest_control_availability": control_availability,
-        "implementation_pin_status": _coverage_pilot_pin_status(repository, summary),
+        "implementation_pin_status": implementation_pin_status,
         "summary_sha256": summary["summary_sha256"],
         "summary_file_sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
         "summary_artifact": {

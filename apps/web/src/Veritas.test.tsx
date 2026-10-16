@@ -481,7 +481,7 @@ it('labels measured evidence and keeps synthetic execution separate from actual 
                   measurement_pilot: {
                     study_id: 'VERITAS-M2-COVERAGE-PILOT-001',
                     protocol_version: 'veritas-coverage-pilot-v1',
-                    status: 'running',
+                    status: 'historical_source_drift',
                     started_at_utc: '2026-10-15T19:00:55.062293+00:00',
                     ends_at_utc: '2026-10-16T19:00:55.062293+00:00',
                     maximum_elapsed_hours: 24,

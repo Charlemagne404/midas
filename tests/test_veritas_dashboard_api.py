@@ -1808,7 +1808,7 @@ def test_coverage_pilot_preserves_verified_history_after_source_pin_drift(tmp_pa
 
     assert response.status_code == 200
     pilot = response.json()["opportunity_observatory"]["measurement_pilot"]
-    assert pilot["status"] == "running"
+    assert pilot["status"] == "historical_source_drift"
     assert pilot["implementation_pin_status"] == "historical_source_drift"
     assert pilot["completed_scans"] == 1
 
