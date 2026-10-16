@@ -1,0 +1,40 @@
+[WebServer] INFO:     Started server process [3163947]
+[WebServer] INFO:     Waiting for application startup.
+[WebServer] INFO:     Application startup complete.
+[WebServer] INFO:     Uvicorn running on http://127.0.0.1:18000 (Press CTRL+C to quit)
+[WebServer] (node:3163970) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:3163987) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 5 tests using 1 worker
+
+(node:3164015) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  1 e2e/arena.spec.ts:5:1 › build, train, inspect and evaluate genuine Arena artifacts (49.5s)
+(node:3164682) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  2 e2e/laboratory.spec.ts:3:1 › configure, launch, compare and replay a persisted laboratory experiment (3.4s)
+  ✓  3 e2e/laboratory.spec.ts:46:1 › controlled adversarial violation preserves minimized incident and replay (2.8s)
+  ✓  4 e2e/paper.spec.ts:3:1 › persistent paper account, decision audit and execution comparison (1.1s)
+  ✓  5 e2e/smoke.spec.ts:2:1 › discover, inspect, simulate, replay and expose execution failure (3.3s)
+
+
+  1) e2e/arena.spec.ts:5:1 › build, train, inspect and evaluate genuine Arena artifacts ────────────
+
+    Error: spawnSync /home/charlie/midas-veritas/.venv/bin/python ENOENT
+
+      66 |     .toBe(1);
+      67 |   const completed = await (await page.request.get('/api/arena')).json();
+    > 68 |   execFileSync(
+         |   ^
+      69 |     fileURLToPath(new URL('../../../.venv/bin/python', import.meta.url)),
+      70 |     [
+      71 |       fileURLToPath(new URL('../../../scripts/arena_economics.py', import.meta.url)),
+        at /home/charlie/midas-veritas/apps/web/e2e/arena.spec.ts:68:3
+
+    Error Context: test-results/arena-build-train-inspect--97987-ate-genuine-Arena-artifacts/error-context.md
+
+  1 failed
+    e2e/arena.spec.ts:5:1 › build, train, inspect and evaluate genuine Arena artifacts ─────────────
+  4 passed (1.1m)

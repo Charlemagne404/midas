@@ -1,0 +1,24 @@
+[Unit]
+Description=MIDAS Veritas bounded read-only finalized Reality gap-detail analysis
+After=local-fs.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=%h/midas-veritas
+ExecStart=/home/charlie/midas/.venv/bin/python scripts/veritas_gap_detail_analysis.py --root %h/midas-veritas/data/veritas-observatory --max-segments 128 --max-source-mib 32
+Environment=PYTHONPATH=%h/midas-veritas/packages
+Environment=OMP_NUM_THREADS=1
+Environment=OPENBLAS_NUM_THREADS=1
+Environment=MKL_NUM_THREADS=1
+MemoryMax=256M
+CPUQuota=5%
+Nice=19
+IOSchedulingClass=idle
+UMask=0077
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=%h/midas-veritas/data/veritas-observatory
+PrivateTmp=true
+RestrictAddressFamilies=AF_UNIX
+TimeoutStartSec=10min

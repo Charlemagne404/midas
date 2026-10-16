@@ -1,0 +1,104 @@
+{
+  "schema_version": 1,
+  "experiment_id": "VERITAS-M2-SHADOW-READER-BENCHMARK-002",
+  "captured_at_utc": "2026-10-16T13:06:25Z",
+  "status": "BOUNDED_FULL_CONSUME_STATE_AND_RESEARCH_EQUIVALENCE_VERIFIED",
+  "purpose": "Compare the frozen reader and the Veritas reader through Shadow.consume, including policy evaluation, observation and decision journaling, follow-up processing, and periodic saves, using an isolated temporary journal and identical finalized public source records.",
+  "campaign": {
+    "campaign_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
+    "identity_sha256": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
+    "pinned_campaign_code_verified": true,
+    "live_campaign_modified": false,
+    "live_worker_restarted": false
+  },
+  "runtime_snapshot": {
+    "path": "/tmp/veritas_shadow_runtime_snapshot_current.json",
+    "runtime_sha256": "5651bb2478f8dc392b0aa9ecaabe8e48a0262db456dc578170998b8542107fc0",
+    "persisted_runtime_sha256": "eedc8e9dedfa044ecfee8b14c2e8b1a65d9e26508a6f2da74a45cf234fecba83",
+    "start_cursor": {
+      "segment": "00000000000000518452-ad72d50dbcc54586b459e8cb12ead3d7",
+      "offset": 12359,
+      "ordinal": 518470
+    }
+  },
+  "source": {
+    "kind": "genuine_finalized_public_recording",
+    "root": "/home/charlie/midas-reality/data/recordings/reality",
+    "first_consumed_ordinal": 518471,
+    "last_consumed_ordinal": 521244,
+    "records_consumed": 2774,
+    "frame_records": 2247,
+    "finalized_segments_verified": 16,
+    "active_segment_read": false
+  },
+  "method": {
+    "repetitions_per_implementation": 1,
+    "python_hash_seed": 0,
+    "clock_model": "Both time.monotonic() and time.monotonic_ns() follow the recorded monotonic clock, initialized from the saved context clock; time.time_ns() follows recorded receipt time.",
+    "execution_limits": {
+      "cpu_quota_percent": 25,
+      "memory_max_bytes": 536870912,
+      "nice": 19
+    },
+    "journal": "Fresh temporary SQLite journal for each pass; source, campaign, and persisted runtime inputs read-only.",
+    "implementation_roots": {
+      "frozen": "/home/charlie/midas-reality/data/research/reality/forward/mission2/code/midas",
+      "veritas": "/home/charlie/midas-veritas/packages/midas"
+    },
+    "deployed_to_frozen_worker": false
+  },
+  "results": {
+    "frozen": {
+      "cpu_seconds": 49.643897489,
+      "wall_seconds": 198.5633636409184
+    },
+    "veritas_final_tree": {
+      "cpu_seconds": 10.010616319,
+      "wall_seconds": 40.01538348104805
+    },
+    "cpu_reduction_percent": 79.8352,
+    "wall_reduction_percent": 79.8475,
+    "cpu_speedup": 4.9591,
+    "counts_identical": {
+      "records": 2774,
+      "frames": 2247,
+      "sealed_segments_verified": 16,
+      "decisions": 128,
+      "observations": 640,
+      "research_events": 768,
+      "event_kinds": {
+        "decision": 128,
+        "decision_committed": 128,
+        "followup": 512
+      },
+      "followup_statuses": {
+        "censored": 500,
+        "observed_public_measurement": 12
+      }
+    },
+    "semantic_equality": {
+      "normalized_rows_equal": true,
+      "normalized_rows_sha256": "7ab2d997ddd760cda823010eae1a928190df04b73f9ffa3e93e0ab43d469b798",
+      "engine_state_sha256_equal": true,
+      "engine_state_sha256": "aa6c1a97623dd74cda31e6a02d137908fcf91ed1fb53cd864933c038e10ab45c",
+      "context_state_sha256_equal": true,
+      "context_state_sha256": "bea93fa76b85226df36c0c2ac8f943f5b32adb152ddea37dba5adb422331546c"
+    }
+  },
+  "verification": {
+    "focused_test_command": "PYTHONPATH=/home/charlie/midas-veritas/packages /home/charlie/midas-reality/.venv/bin/python -m pytest -q tests/test_reality_shadow.py",
+    "focused_test_result": "16 passed",
+    "ruff": "passed",
+    "strict_mypy": "passed",
+    "benchmark_help": "passed",
+    "peak_rss_reader_smoke_check": "/proc/self/status VmHWM reader returned 159490048 bytes; peak-RSS comparison omitted from A/B results because an earlier resource.getrusage conversion disagreed with the cgroup measurement."
+  },
+  "limitations": [
+    "This is one bounded 16-segment historical replay per implementation, not a live-worker catch-up measurement or long-run throughput distribution.",
+    "The range starts from a saved mid-campaign runtime cursor; it validates exact normalized decision, commitment, and follow-up rows for the compared range only.",
+    "The replay produced no new market discovery or economic finding. Its 12 observed and 500 censored follow-up rows reproduce the existing saved runtime labels.",
+    "The code remains in project/veritas and is not deployed to, or used to restart, the protected Reality worker.",
+    "The process peak-RSS field is excluded from comparative results because the prior getrusage-based value conflicted with the scope memory peak; the benchmark runner now reads Linux VmHWM directly."
+  ],
+  "decision": "Retain the reader optimization in the branch. Its bounded full-consume replay is state- and research-row-equivalent with materially lower CPU on this range. Keep the protected frozen campaign unchanged; assess any future deployment only through the authorized campaign lifecycle and a separate acceptance review."
+}

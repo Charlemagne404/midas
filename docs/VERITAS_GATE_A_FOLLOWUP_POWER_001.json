@@ -1,0 +1,69 @@
+{
+  "analysis_version": "veritas-followup-power-v1",
+  "baseline": {
+    "decisions": 1408,
+    "invalid_initial_decisions": 1027,
+    "one_second_public_measurements": 27,
+    "one_second_yield_per_scheduled_decision": 0.019176136363636364,
+    "one_second_yield_per_valid_initial_decision": 0.07086614173228346,
+    "selected_cohort_only": true,
+    "valid_initial_decisions": 381
+  },
+  "campaign_created_or_started": false,
+  "capacity": {
+    "expected_scheduled_decisions_per_day": 1408,
+    "expected_total_slots_at_baseline_volume": 19712,
+    "maximum_days": 14,
+    "maximum_design_effect_supported_by_slot_count": 2.4677015523284926
+  },
+  "cluster_sensitivity": [
+    {
+      "expected_days_at_baseline_volume": 5.673295454545454,
+      "fits_maximum_window_capacity": true,
+      "planning_design_effect": 1.0,
+      "required_slots_per_arm": 3994,
+      "required_total_slots": 7988
+    },
+    {
+      "expected_days_at_baseline_volume": 8.509943181818182,
+      "fits_maximum_window_capacity": true,
+      "planning_design_effect": 1.5,
+      "required_slots_per_arm": 5991,
+      "required_total_slots": 11982
+    },
+    {
+      "expected_days_at_baseline_volume": 11.346590909090908,
+      "fits_maximum_window_capacity": true,
+      "planning_design_effect": 2.0,
+      "required_slots_per_arm": 7988,
+      "required_total_slots": 15976
+    },
+    {
+      "expected_days_at_baseline_volume": 17.019886363636363,
+      "fits_maximum_window_capacity": false,
+      "planning_design_effect": 3.0,
+      "required_slots_per_arm": 11982,
+      "required_total_slots": 23964
+    }
+  ],
+  "evidence_class": "derived_planning_sensitivity_only",
+  "experiment_id": "VERITAS-GATE-A-FOLLOWUP-POWER-20261015-001",
+  "limitations": [
+    "The baseline is one selected cohort and its rate is not assumed stationary.",
+    "No market, time-block, family, or repeated-measure correlation was estimated.",
+    "A single design effect is only a sensitivity illustration; crossed market and time dependence needs a design-specific power analysis.",
+    "This calculation does not establish campaign feasibility, fills, or profitability."
+  ],
+  "orders_submitted": false,
+  "planning_assumptions": {
+    "cluster_design_effects_are_empirical_estimates": false,
+    "independent_bernoulli_sample_size_per_arm": 3994,
+    "power": 0.8,
+    "relative_minimum_detectable_lift": 0.5,
+    "sample_size_method": "normal approximation for two independent proportions",
+    "target_treatment_probability": 0.028764204545454544,
+    "two_sided_alpha": 0.05
+  },
+  "promotion": "planning sensitivity only; no campaign or strategy promotion",
+  "source_evidence": "docs/VERITAS_GATE_A_BASELINE.json"
+}

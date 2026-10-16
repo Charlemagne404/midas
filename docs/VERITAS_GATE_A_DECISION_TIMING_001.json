@@ -1,0 +1,712 @@
+{
+  "analysis_version": "veritas-source-replay-v2",
+  "captured_at_utc": "2026-10-14T23:19:56.595651+00:00",
+  "active_segment_read": false,
+  "campaign_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
+  "campaign_root": "/home/charlie/midas-reality/data/research/reality/forward/mission2",
+  "captured_ns": 1792019996595651775,
+  "database_event_tail_sequence": 23697,
+  "decision_limit": 5000,
+  "decision_rows_missing_inside_finalized_prefix": 0,
+  "decision_sample_rows": 2008,
+  "decision_sample_truncated": false,
+  "decision_timing": {
+    "all": {
+      "cross_outcome_skew_ms": {
+        "count": 2008,
+        "maximum_ms": "0",
+        "minimum_ms": "0",
+        "p50_nearest_rank_ms": "0",
+        "p90_nearest_rank_ms": "0",
+        "p95_nearest_rank_ms": "0"
+      },
+      "decisions": 2008,
+      "freshness_violation_decisions": 1337,
+      "maximum_leg_age_ms": {
+        "count": 2008,
+        "maximum_ms": "62407.484423",
+        "minimum_ms": "1.667662",
+        "p50_nearest_rank_ms": "10459.76248",
+        "p90_nearest_rank_ms": "42958.535393",
+        "p95_nearest_rank_ms": "52349.935021"
+      },
+      "pair_books_available": {
+        "2": 2008
+      },
+      "source_input_lag_bands": {
+        "0_to_25_ms": 510,
+        "100_ms_to_limit": 619,
+        "25_to_50_ms": 647,
+        "50_to_100_ms": 232
+      },
+      "source_input_lag_ms": {
+        "count": 2008,
+        "maximum_ms": "248.865611",
+        "minimum_ms": "0.89728",
+        "p50_nearest_rank_ms": "41.990889",
+        "p90_nearest_rank_ms": "194.845799",
+        "p95_nearest_rank_ms": "220.232379"
+      }
+    },
+    "by_market": {
+      "559687": {
+        "cross_outcome_skew_ms": {
+          "count": 251,
+          "maximum_ms": "0",
+          "minimum_ms": "0",
+          "p50_nearest_rank_ms": "0",
+          "p90_nearest_rank_ms": "0",
+          "p95_nearest_rank_ms": "0"
+        },
+        "decisions": 251,
+        "family_id": "98d4894c6568745322c8a053472cc907a1006702cc851d99db5a38c89805b413",
+        "freshness_violation_decisions": 205,
+        "maximum_leg_age_ms": {
+          "count": 251,
+          "maximum_ms": "62015.4862",
+          "minimum_ms": "6.513217",
+          "p50_nearest_rank_ms": "18725.48155",
+          "p90_nearest_rank_ms": "45375.501226",
+          "p95_nearest_rank_ms": "56443.625032"
+        },
+        "pair_books_available": {
+          "2": 251
+        },
+        "source_input_lag_bands": {
+          "0_to_25_ms": 65,
+          "100_ms_to_limit": 77,
+          "25_to_50_ms": 80,
+          "50_to_100_ms": 29
+        },
+        "source_input_lag_ms": {
+          "count": 251,
+          "maximum_ms": "248.865611",
+          "minimum_ms": "0.89728",
+          "p50_nearest_rank_ms": "41.631414",
+          "p90_nearest_rank_ms": "194.845799",
+          "p95_nearest_rank_ms": "220.232379"
+        }
+      },
+      "561251": {
+        "cross_outcome_skew_ms": {
+          "count": 251,
+          "maximum_ms": "0",
+          "minimum_ms": "0",
+          "p50_nearest_rank_ms": "0",
+          "p90_nearest_rank_ms": "0",
+          "p95_nearest_rank_ms": "0"
+        },
+        "decisions": 251,
+        "family_id": "8b36711cd4e70e5bf64b37d75b77301477c54da7327875e2d61618f839e71c6f",
+        "freshness_violation_decisions": 197,
+        "maximum_leg_age_ms": {
+          "count": 251,
+          "maximum_ms": "62015.4862",
+          "minimum_ms": "6.513217",
+          "p50_nearest_rank_ms": "19725.424345",
+          "p90_nearest_rank_ms": "46345.345677",
+          "p95_nearest_rank_ms": "56493.822122"
+        },
+        "pair_books_available": {
+          "2": 251
+        },
+        "source_input_lag_bands": {
+          "0_to_25_ms": 65,
+          "100_ms_to_limit": 77,
+          "25_to_50_ms": 80,
+          "50_to_100_ms": 29
+        },
+        "source_input_lag_ms": {
+          "count": 251,
+          "maximum_ms": "248.865611",
+          "minimum_ms": "0.89728",
+          "p50_nearest_rank_ms": "41.631414",
+          "p90_nearest_rank_ms": "194.845799",
+          "p95_nearest_rank_ms": "220.232379"
+        }
+      },
+      "562828": {
+        "cross_outcome_skew_ms": {
+          "count": 137,
+          "maximum_ms": "0",
+          "minimum_ms": "0",
+          "p50_nearest_rank_ms": "0",
+          "p90_nearest_rank_ms": "0",
+          "p95_nearest_rank_ms": "0"
+        },
+        "decisions": 137,
+        "family_id": "000fa43ea94d31165feb5867ed32a0ea0de5cf0510e1e942219f81610403f738",
+        "freshness_violation_decisions": 6,
+        "maximum_leg_age_ms": {
+          "count": 137,
+          "maximum_ms": "8444.489955",
+          "minimum_ms": "4.815416",
+          "p50_nearest_rank_ms": "139.188659",
+          "p90_nearest_rank_ms": "2827.162249",
+          "p95_nearest_rank_ms": "4687.177284"
+        },
+        "pair_books_available": {
+          "2": 137
+        },
+        "source_input_lag_bands": {
+          "0_to_25_ms": 34,
+          "100_ms_to_limit": 41,
+          "25_to_50_ms": 45,
+          "50_to_100_ms": 17
+        },
+        "source_input_lag_ms": {
+          "count": 137,
+          "maximum_ms": "248.812135",
+          "minimum_ms": "4.815416",
+          "p50_nearest_rank_ms": "42.509786",
+          "p90_nearest_rank_ms": "198.736912",
+          "p95_nearest_rank_ms": "231.865456"
+        }
+      },
+      "5674900": {
+        "cross_outcome_skew_ms": {
+          "count": 251,
+          "maximum_ms": "0",
+          "minimum_ms": "0",
+          "p50_nearest_rank_ms": "0",
+          "p90_nearest_rank_ms": "0",
+          "p95_nearest_rank_ms": "0"
+        },
+        "decisions": 251,
+        "family_id": "a0b812b3e921ef209d1fdbb3091a5ba65ce35bad579e1e305cdb0f243474a4c4",
+        "freshness_violation_decisions": 203,
+        "maximum_leg_age_ms": {
+          "count": 251,
+          "maximum_ms": "62407.484423",
+          "minimum_ms": "6.513217",
+          "p50_nearest_rank_ms": "21343.260508",
+          "p90_nearest_rank_ms": "46345.345677",
+          "p95_nearest_rank_ms": "54757.695844"
+        },
+        "pair_books_available": {
+          "2": 251
+        },
+        "source_input_lag_bands": {
+          "0_to_25_ms": 65,
+          "100_ms_to_limit": 77,
+          "25_to_50_ms": 80,
+          "50_to_100_ms": 29
+        },
+        "source_input_lag_ms": {
+          "count": 251,
+          "maximum_ms": "248.865611",
+          "minimum_ms": "0.89728",
+          "p50_nearest_rank_ms": "41.631414",
+          "p90_nearest_rank_ms": "194.845799",
+          "p95_nearest_rank_ms": "220.232379"
+        }
+      },
+      "5674902": {
+        "cross_outcome_skew_ms": {
+          "count": 45,
+          "maximum_ms": "0",
+          "minimum_ms": "0",
+          "p50_nearest_rank_ms": "0",
+          "p90_nearest_rank_ms": "0",
+          "p95_nearest_rank_ms": "0"
+        },
+        "decisions": 45,
+        "family_id": "a0b812b3e921ef209d1fdbb3091a5ba65ce35bad579e1e305cdb0f243474a4c4",
+        "freshness_violation_decisions": 33,
+        "maximum_leg_age_ms": {
+          "count": 45,
+          "maximum_ms": "62407.484423",
+          "minimum_ms": "13.816449",
+          "p50_nearest_rank_ms": "29466.533525",
+          "p90_nearest_rank_ms": "44466.861938",
+          "p95_nearest_rank_ms": "62015.4862"
+        },
+        "pair_books_available": {
+          "2": 45
+        },
+        "source_input_lag_bands": {
+          "0_to_25_ms": 9,
+          "100_ms_to_limit": 16,
+          "25_to_50_ms": 15,
+          "50_to_100_ms": 5
+        },
+        "source_input_lag_ms": {
+          "count": 45,
+          "maximum_ms": "248.865611",
+          "minimum_ms": "5.77168",
+          "p50_nearest_rank_ms": "44.880085",
+          "p90_nearest_rank_ms": "204.076235",
+          "p95_nearest_rank_ms": "217.63566"
+        }
+      },
+      "5674915": {
+        "cross_outcome_skew_ms": {
+          "count": 251,
+          "maximum_ms": "0",
+          "minimum_ms": "0",
+          "p50_nearest_rank_ms": "0",
+          "p90_nearest_rank_ms": "0",
+          "p95_nearest_rank_ms": "0"
+        },
+        "decisions": 251,
+        "family_id": "a0b812b3e921ef209d1fdbb3091a5ba65ce35bad579e1e305cdb0f243474a4c4",
+        "freshness_violation_decisions": 202,
+        "maximum_leg_age_ms": {
+          "count": 251,
+          "maximum_ms": "62407.484423",
+          "minimum_ms": "6.513217",
+          "p50_nearest_rank_ms": "19133.30426",
+          "p90_nearest_rank_ms": "49422.314315",
+          "p95_nearest_rank_ms": "56493.822122"
+        },
+        "pair_books_available": {
+          "2": 251
+        },
+        "source_input_lag_bands": {
+          "0_to_25_ms": 65,
+          "100_ms_to_limit": 77,
+          "25_to_50_ms": 80,
+          "50_to_100_ms": 29
+        },
+        "source_input_lag_ms": {
+          "count": 251,
+          "maximum_ms": "248.865611",
+          "minimum_ms": "0.89728",
+          "p50_nearest_rank_ms": "41.631414",
+          "p90_nearest_rank_ms": "194.845799",
+          "p95_nearest_rank_ms": "220.232379"
+        }
+      },
+      "5675021": {
+        "cross_outcome_skew_ms": {
+          "count": 251,
+          "maximum_ms": "0",
+          "minimum_ms": "0",
+          "p50_nearest_rank_ms": "0",
+          "p90_nearest_rank_ms": "0",
+          "p95_nearest_rank_ms": "0"
+        },
+        "decisions": 251,
+        "family_id": "a0b812b3e921ef209d1fdbb3091a5ba65ce35bad579e1e305cdb0f243474a4c4",
+        "freshness_violation_decisions": 113,
+        "maximum_leg_age_ms": {
+          "count": 251,
+          "maximum_ms": "57776.506393",
+          "minimum_ms": "6.513217",
+          "p50_nearest_rank_ms": "3898.345154",
+          "p90_nearest_rank_ms": "29027.753636",
+          "p95_nearest_rank_ms": "37379.639981"
+        },
+        "pair_books_available": {
+          "2": 251
+        },
+        "source_input_lag_bands": {
+          "0_to_25_ms": 65,
+          "100_ms_to_limit": 77,
+          "25_to_50_ms": 80,
+          "50_to_100_ms": 29
+        },
+        "source_input_lag_ms": {
+          "count": 251,
+          "maximum_ms": "248.865611",
+          "minimum_ms": "0.89728",
+          "p50_nearest_rank_ms": "41.631414",
+          "p90_nearest_rank_ms": "194.845799",
+          "p95_nearest_rank_ms": "220.232379"
+        }
+      },
+      "665205": {
+        "cross_outcome_skew_ms": {
+          "count": 251,
+          "maximum_ms": "0",
+          "minimum_ms": "0",
+          "p50_nearest_rank_ms": "0",
+          "p90_nearest_rank_ms": "0",
+          "p95_nearest_rank_ms": "0"
+        },
+        "decisions": 251,
+        "family_id": "3c9d6abe6f98f19e1a62a3018ae10cc929071e87e55f45996f2469bcd0f5c807",
+        "freshness_violation_decisions": 211,
+        "maximum_leg_age_ms": {
+          "count": 251,
+          "maximum_ms": "62407.484423",
+          "minimum_ms": "6.513217",
+          "p50_nearest_rank_ms": "26813.14884",
+          "p90_nearest_rank_ms": "51931.833926",
+          "p95_nearest_rank_ms": "57700.39164"
+        },
+        "pair_books_available": {
+          "2": 251
+        },
+        "source_input_lag_bands": {
+          "0_to_25_ms": 65,
+          "100_ms_to_limit": 77,
+          "25_to_50_ms": 80,
+          "50_to_100_ms": 29
+        },
+        "source_input_lag_ms": {
+          "count": 251,
+          "maximum_ms": "248.865611",
+          "minimum_ms": "0.89728",
+          "p50_nearest_rank_ms": "41.631414",
+          "p90_nearest_rank_ms": "194.845799",
+          "p95_nearest_rank_ms": "220.232379"
+        }
+      },
+      "679026": {
+        "cross_outcome_skew_ms": {
+          "count": 251,
+          "maximum_ms": "0",
+          "minimum_ms": "0",
+          "p50_nearest_rank_ms": "0",
+          "p90_nearest_rank_ms": "0",
+          "p95_nearest_rank_ms": "0"
+        },
+        "decisions": 251,
+        "family_id": "5c6dbad73b2c74a595c0fe4a5eee9e92e167f8f2d5b53d1c0281fac0818d67e3",
+        "freshness_violation_decisions": 145,
+        "maximum_leg_age_ms": {
+          "count": 251,
+          "maximum_ms": "43549.117804",
+          "minimum_ms": "6.513217",
+          "p50_nearest_rank_ms": "6187.351931",
+          "p90_nearest_rank_ms": "23241.197176",
+          "p95_nearest_rank_ms": "31549.181128"
+        },
+        "pair_books_available": {
+          "2": 251
+        },
+        "source_input_lag_bands": {
+          "0_to_25_ms": 65,
+          "100_ms_to_limit": 77,
+          "25_to_50_ms": 80,
+          "50_to_100_ms": 29
+        },
+        "source_input_lag_ms": {
+          "count": 251,
+          "maximum_ms": "248.865611",
+          "minimum_ms": "0.89728",
+          "p50_nearest_rank_ms": "41.631414",
+          "p90_nearest_rank_ms": "194.845799",
+          "p95_nearest_rank_ms": "220.232379"
+        }
+      },
+      "679055": {
+        "cross_outcome_skew_ms": {
+          "count": 69,
+          "maximum_ms": "0",
+          "minimum_ms": "0",
+          "p50_nearest_rank_ms": "0",
+          "p90_nearest_rank_ms": "0",
+          "p95_nearest_rank_ms": "0"
+        },
+        "decisions": 69,
+        "family_id": "5c6dbad73b2c74a595c0fe4a5eee9e92e167f8f2d5b53d1c0281fac0818d67e3",
+        "freshness_violation_decisions": 22,
+        "maximum_leg_age_ms": {
+          "count": 69,
+          "maximum_ms": "32792.085517",
+          "minimum_ms": "1.667662",
+          "p50_nearest_rank_ms": "2651.370806",
+          "p90_nearest_rank_ms": "10373.910319",
+          "p95_nearest_rank_ms": "13084.320648"
+        },
+        "pair_books_available": {
+          "2": 69
+        },
+        "source_input_lag_bands": {
+          "0_to_25_ms": 12,
+          "100_ms_to_limit": 23,
+          "25_to_50_ms": 27,
+          "50_to_100_ms": 7
+        },
+        "source_input_lag_ms": {
+          "count": 69,
+          "maximum_ms": "238.264332",
+          "minimum_ms": "0.89728",
+          "p50_nearest_rank_ms": "43.995694",
+          "p90_nearest_rank_ms": "175.37001",
+          "p95_nearest_rank_ms": "197.519996"
+        }
+      }
+    },
+    "by_quality_reason": {
+      "book_issue:advertised_top_pending": {
+        "cross_outcome_skew_ms": {
+          "count": 11,
+          "maximum_ms": "0",
+          "minimum_ms": "0",
+          "p50_nearest_rank_ms": "0",
+          "p90_nearest_rank_ms": "0",
+          "p95_nearest_rank_ms": "0"
+        },
+        "decisions": 11,
+        "freshness_violation_decisions": 1,
+        "maximum_leg_age_ms": {
+          "count": 11,
+          "maximum_ms": "13084.320648",
+          "minimum_ms": "111.840468",
+          "p50_nearest_rank_ms": "3109.681423",
+          "p90_nearest_rank_ms": "4357.841161",
+          "p95_nearest_rank_ms": "13084.320648"
+        },
+        "pair_books_available": {
+          "2": 11
+        },
+        "source_input_lag_bands": {
+          "0_to_25_ms": 3,
+          "100_ms_to_limit": 4,
+          "25_to_50_ms": 4
+        },
+        "source_input_lag_ms": {
+          "count": 11,
+          "maximum_ms": "248.865611",
+          "minimum_ms": "8.606589",
+          "p50_nearest_rank_ms": "26.724776",
+          "p90_nearest_rank_ms": "235.305823",
+          "p95_nearest_rank_ms": "248.865611"
+        }
+      },
+      "book_issue:stale": {
+        "cross_outcome_skew_ms": {
+          "count": 22,
+          "maximum_ms": "0",
+          "minimum_ms": "0",
+          "p50_nearest_rank_ms": "0",
+          "p90_nearest_rank_ms": "0",
+          "p95_nearest_rank_ms": "0"
+        },
+        "decisions": 22,
+        "freshness_violation_decisions": 22,
+        "maximum_leg_age_ms": {
+          "count": 22,
+          "maximum_ms": "62407.484423",
+          "minimum_ms": "60883.349338",
+          "p50_nearest_rank_ms": "62015.4862",
+          "p90_nearest_rank_ms": "62407.484423",
+          "p95_nearest_rank_ms": "62407.484423"
+        },
+        "pair_books_available": {
+          "2": 22
+        },
+        "source_input_lag_bands": {
+          "0_to_25_ms": 4,
+          "100_ms_to_limit": 6,
+          "25_to_50_ms": 12
+        },
+        "source_input_lag_ms": {
+          "count": 22,
+          "maximum_ms": "204.076235",
+          "minimum_ms": "8.842868",
+          "p50_nearest_rank_ms": "38.178075",
+          "p90_nearest_rank_ms": "122.73705",
+          "p95_nearest_rank_ms": "204.076235"
+        }
+      },
+      "eligible": {
+        "cross_outcome_skew_ms": {
+          "count": 555,
+          "maximum_ms": "0",
+          "minimum_ms": "0",
+          "p50_nearest_rank_ms": "0",
+          "p90_nearest_rank_ms": "0",
+          "p95_nearest_rank_ms": "0"
+        },
+        "decisions": 555,
+        "freshness_violation_decisions": 0,
+        "maximum_leg_age_ms": {
+          "count": 555,
+          "maximum_ms": "4989.482501",
+          "minimum_ms": "1.667662",
+          "p50_nearest_rank_ms": "398.921895",
+          "p90_nearest_rank_ms": "3851.839728",
+          "p95_nearest_rank_ms": "4440.154179"
+        },
+        "pair_books_available": {
+          "2": 555
+        },
+        "source_input_lag_bands": {
+          "0_to_25_ms": 130,
+          "100_ms_to_limit": 190,
+          "25_to_50_ms": 183,
+          "50_to_100_ms": 52
+        },
+        "source_input_lag_ms": {
+          "count": 555,
+          "maximum_ms": "248.865611",
+          "minimum_ms": "0.89728",
+          "p50_nearest_rank_ms": "44.351245",
+          "p90_nearest_rank_ms": "196.976874",
+          "p95_nearest_rank_ms": "219.469165"
+        }
+      },
+      "empty_ask_side": {
+        "cross_outcome_skew_ms": {
+          "count": 100,
+          "maximum_ms": "0",
+          "minimum_ms": "0",
+          "p50_nearest_rank_ms": "0",
+          "p90_nearest_rank_ms": "0",
+          "p95_nearest_rank_ms": "0"
+        },
+        "decisions": 100,
+        "freshness_violation_decisions": 0,
+        "maximum_leg_age_ms": {
+          "count": 100,
+          "maximum_ms": "4988.424209",
+          "minimum_ms": "6.513217",
+          "p50_nearest_rank_ms": "754.655188",
+          "p90_nearest_rank_ms": "4084.531404",
+          "p95_nearest_rank_ms": "4532.728511"
+        },
+        "pair_books_available": {
+          "2": 100
+        },
+        "source_input_lag_bands": {
+          "0_to_25_ms": 18,
+          "100_ms_to_limit": 30,
+          "25_to_50_ms": 40,
+          "50_to_100_ms": 12
+        },
+        "source_input_lag_ms": {
+          "count": 100,
+          "maximum_ms": "248.865611",
+          "minimum_ms": "6.513217",
+          "p50_nearest_rank_ms": "44.825274",
+          "p90_nearest_rank_ms": "192.755063",
+          "p95_nearest_rank_ms": "198.736912"
+        }
+      },
+      "independent_book_divergence": {
+        "cross_outcome_skew_ms": {
+          "count": 4,
+          "maximum_ms": "0",
+          "minimum_ms": "0",
+          "p50_nearest_rank_ms": "0",
+          "p90_nearest_rank_ms": "0",
+          "p95_nearest_rank_ms": "0"
+        },
+        "decisions": 4,
+        "freshness_violation_decisions": 0,
+        "maximum_leg_age_ms": {
+          "count": 4,
+          "maximum_ms": "2182.037471",
+          "minimum_ms": "27.646556",
+          "p50_nearest_rank_ms": "41.200093",
+          "p90_nearest_rank_ms": "2182.037471",
+          "p95_nearest_rank_ms": "2182.037471"
+        },
+        "pair_books_available": {
+          "2": 4
+        },
+        "source_input_lag_bands": {
+          "0_to_25_ms": 1,
+          "25_to_50_ms": 3
+        },
+        "source_input_lag_ms": {
+          "count": 4,
+          "maximum_ms": "41.200093",
+          "minimum_ms": "22.374573",
+          "p50_nearest_rank_ms": "27.646556",
+          "p90_nearest_rank_ms": "41.200093",
+          "p95_nearest_rank_ms": "41.200093"
+        }
+      },
+      "source_timing_uncertainty": {
+        "cross_outcome_skew_ms": {
+          "count": 22,
+          "maximum_ms": "0",
+          "minimum_ms": "0",
+          "p50_nearest_rank_ms": "0",
+          "p90_nearest_rank_ms": "0",
+          "p95_nearest_rank_ms": "0"
+        },
+        "decisions": 22,
+        "freshness_violation_decisions": 20,
+        "maximum_leg_age_ms": {
+          "count": 22,
+          "maximum_ms": "59213.444432",
+          "minimum_ms": "45.269019",
+          "p50_nearest_rank_ms": "28541.001853",
+          "p90_nearest_rank_ms": "58649.868904",
+          "p95_nearest_rank_ms": "58677.174366"
+        },
+        "pair_books_available": {
+          "2": 22
+        },
+        "source_input_lag_bands": {
+          "0_to_25_ms": 4,
+          "100_ms_to_limit": 6,
+          "25_to_50_ms": 7,
+          "50_to_100_ms": 5
+        },
+        "source_input_lag_ms": {
+          "count": 22,
+          "maximum_ms": "238.264332",
+          "minimum_ms": "0.89728",
+          "p50_nearest_rank_ms": "45.269019",
+          "p90_nearest_rank_ms": "220.232379",
+          "p95_nearest_rank_ms": "235.305823"
+        }
+      },
+      "stale_book": {
+        "cross_outcome_skew_ms": {
+          "count": 1294,
+          "maximum_ms": "0",
+          "minimum_ms": "0",
+          "p50_nearest_rank_ms": "0",
+          "p90_nearest_rank_ms": "0",
+          "p95_nearest_rank_ms": "0"
+        },
+        "decisions": 1294,
+        "freshness_violation_decisions": 1294,
+        "maximum_leg_age_ms": {
+          "count": 1294,
+          "maximum_ms": "59748.958659",
+          "minimum_ms": "5056.947081",
+          "p50_nearest_rank_ms": "22373.391242",
+          "p90_nearest_rank_ms": "46112.079156",
+          "p95_nearest_rank_ms": "52656.916035"
+        },
+        "pair_books_available": {
+          "2": 1294
+        },
+        "source_input_lag_bands": {
+          "0_to_25_ms": 350,
+          "100_ms_to_limit": 383,
+          "25_to_50_ms": 398,
+          "50_to_100_ms": 163
+        },
+        "source_input_lag_ms": {
+          "count": 1294,
+          "maximum_ms": "248.812135",
+          "minimum_ms": "0.89728",
+          "p50_nearest_rank_ms": "41.4771",
+          "p90_nearest_rank_ms": "191.199914",
+          "p95_nearest_rank_ms": "220.232379"
+        }
+      }
+    },
+    "covered_decisions": 2008,
+    "frozen_input_lag_limit_ms": 250
+  },
+  "decisions_reproduced": 2008,
+  "decisions_uncovered_after_finalized_prefix": 0,
+  "difference_paths": {},
+  "history_lineage_variance": {
+    "runtime_history_reference_window_variance_decisions": 1491
+  },
+  "mismatches": {},
+  "passed_for_finalized_prefix": true,
+  "raw_records_replayed": 216095,
+  "scope": "Reproduces campaign source state, producer/reconstruction identity, quality reason, features, baseline, and source lineage for the sampled decisions whose source ordinals are in the captured finalized segment prefix. It does not infer omitted decisions, fills, or outcomes.",
+  "source_bytes": 416779433,
+  "source_last_finalized_ordinal": 216095,
+  "source_lineage_references_expected": 11850,
+  "source_lineage_references_resolved": 11850,
+  "source_lineage_references_unresolved": 0,
+  "source_manifest_sha256": "cafdee622901ee882f7bd7f351f0fb5ac51583acd6d3a588d2f87139d22a6971",
+  "source_root": "/home/charlie/midas-reality/data/recordings/reality",
+  "source_segments": 1792,
+  "verified_source_checkpoints": 1788
+}

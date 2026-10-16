@@ -1,0 +1,21 @@
+
+> @midas/command-center@0.1.0 build /home/charlie/midas-veritas/apps/web
+> tsc -b && vite build
+
+vite v7.3.7 building client environment for production...
+transforming...
+✓ 2224 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                     0.42 kB │ gzip:   0.30 kB
+dist/assets/Veritas-MAX6SNJX.css    9.32 kB │ gzip:   2.39 kB
+dist/assets/index-vj_kxqWo.css     39.59 kB │ gzip:   9.25 kB
+dist/assets/Veritas-CLUcB-52.js    10.46 kB │ gzip:   3.39 kB
+dist/assets/index-BKJFnSYY.js     501.84 kB │ gzip: 144.73 kB
+dist/assets/Chart-r8KjA4X2.js     544.41 kB │ gzip: 186.76 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 4.46s

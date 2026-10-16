@@ -1,0 +1,170 @@
+{
+  "schema_version": 1,
+  "benchmark_id": "VERITAS-M2-SHADOW-ORDERED-RESUME-BENCH-009",
+  "experiment_id": "VERITAS-M2-SHADOW-RESUME-ORDER-009",
+  "captured_at_utc": "2026-10-16T18:38:29Z",
+  "status": "bounded_four_segment_split_resume_order_verified",
+  "purpose": "Compare a one-shot four-segment historical shadow replay with the same replay split across two process invocations, including ordered business-event and persisted-state parity.",
+  "campaign": {
+    "path": "/home/charlie/midas-reality/data/research/reality/forward/mission2/campaign.json",
+    "sha256": "aa8acb2b46823c1a1e3ac5d01a57dde917746c2c7471098ae2a4598875e322f5",
+    "modified": false,
+    "actual_orders_submitted": 0
+  },
+  "implementation": {
+    "commit": "9a4d8f6",
+    "mode": "current_checkout",
+    "implementation_code_hashes_checked_against_campaign": false,
+    "pinned_campaign_code_verified": true,
+    "work_manifest_path": "data/veritas-canaries/shadow-resume-order-009/whole/work/work-manifest.json",
+    "work_manifest_sha256": "10ced540d507fc9eb988da1e39df6f2c2b4eced56c202611abbc9c96f1ae61ab"
+  },
+  "input": {
+    "runtime_snapshot_path": "data/veritas-canaries/shadow-resume-order-009/input-runtime.json",
+    "runtime_snapshot_file_sha256": "d5d8d6a7841ebbe770cbacca7b06c0236948e90f6355475b47df36c9852b2548",
+    "runtime_snapshot_sha256": "f12db7a84bd4484ee9d47cb87e7a9b7330f04e807d968258735be006da9e4464",
+    "starting_cursor": {
+      "offset": 115014,
+      "ordinal": 533226,
+      "segment": "00000000000000533058-7aa814676a344351ad252c81101dd0e2.seg"
+    },
+    "cursor_segment_sha256": "214cf904f71f7c322244c13686c56b75495113ac40aac9bc72d6ffd9d7fae5f0",
+    "source_root": "/home/charlie/midas-reality/data/recordings/reality"
+  },
+  "resource_limits": {
+    "cpu_quota_percent": 10,
+    "memory_max_bytes": 402653184,
+    "memory_swap_max_bytes": 0,
+    "nice": 19,
+    "isolated_work_directory": "data/veritas-canaries/shadow-resume-order-009",
+    "network_client_opened": false,
+    "order_api_opened": false
+  },
+  "one_shot": {
+    "result_path": "data/veritas-canaries/shadow-resume-order-009/whole/work/result.json",
+    "result_file_sha256": "1860f710dd59ef95353aeac65a9c48acd88301912da236cc6f05370bbefefc3e",
+    "runtime_snapshot_path": "data/veritas-canaries/shadow-resume-order-009/whole/after-runtime.json",
+    "runtime_snapshot_file_sha256": "0770832d4010d21a90ccd7f6ad90053e0de5c7667dcb966d78535faf5ed0158b",
+    "final_runtime_sha256": "c46fffce10854a0de717f80841e06d661ee9e1724cc69380a180895bd8ab584d",
+    "ending_cursor": {
+      "offset": 678,
+      "ordinal": 534144,
+      "segment": "00000000000000534144-4c6e856d73f64725946727a670d09907"
+    },
+    "segments": 4,
+    "records": 918,
+    "frames": 789,
+    "decisions": 32,
+    "observations": 168,
+    "research_events": 192,
+    "followup_status_counts": {
+      "censored": 119,
+      "observed_public_measurement": 9
+    },
+    "engine_state_sha256": "87be3f519847d38b257e2974b411891474a302c0e668d6bc5cdbb916afabb800",
+    "context_state_sha256": "ceda05d3c06e6efc25856ebc86f1b15a1a37c34fe89d8b4be4aea22f2d19e489",
+    "research_semantics_sha256": "76c7f3b18e4f67aea2743fde37d30fe0a91b7ec208c1db8da6c88f8c0306616f",
+    "journal_verification": {
+      "events": 365,
+      "tail_sha256": "78288cb1ab84edd57e672f4d3243357a6278bfe777a4c48e6e2953a9096b6930"
+    },
+    "cpu_seconds": 3.466528911,
+    "wall_seconds": 34.61226436600555,
+    "max_rss_bytes": 190357504,
+    "sqlite_integrity": "ok"
+  },
+  "split_resume": {
+    "invocations": [
+      {
+        "result_path": "data/veritas-canaries/shadow-resume-order-009/split/work/result-001.json",
+        "result_file_sha256": "1597ec72084bcca277d8062cbb03826d1c713e64b67078489e2a410f1849afd2",
+        "ending_cursor": {
+          "offset": 682,
+          "ordinal": 533688,
+          "segment": "00000000000000533688-659ea5ba70eb4fd8a55105bacdba2ce8"
+        },
+        "segments": 2,
+        "records_this_invocation": 462,
+        "frames_this_invocation": 399,
+        "decisions": 16,
+        "observations": 80,
+        "research_events": 96,
+        "journal_events": 179,
+        "cpu_seconds": 1.8993368640000003,
+        "wall_seconds": 19.005391782033257
+      },
+      {
+        "result_path": "data/veritas-canaries/shadow-resume-order-009/split/work/result-002.json",
+        "result_file_sha256": "4ca656755b09ae68f5c7a25524d7502f48f61bf178b729d1429d8f1c262014a9",
+        "ending_cursor": {
+          "offset": 678,
+          "ordinal": 534144,
+          "segment": "00000000000000534144-4c6e856d73f64725946727a670d09907"
+        },
+        "segments": 2,
+        "records_this_invocation": 456,
+        "records_processed_total": 918,
+        "frames_this_invocation": 390,
+        "frames_processed_total": 789,
+        "decisions": 32,
+        "observations": 168,
+        "research_events": 192,
+        "journal_events": 366,
+        "cpu_seconds": 1.7532077780000002,
+        "wall_seconds": 17.51060340204276
+      }
+    ],
+    "final_runtime_snapshot_path": "data/veritas-canaries/shadow-resume-order-009/split/after-runtime-002.json",
+    "final_runtime_snapshot_file_sha256": "0770832d4010d21a90ccd7f6ad90053e0de5c7667dcb966d78535faf5ed0158b",
+    "final_runtime_sha256": "c46fffce10854a0de717f80841e06d661ee9e1724cc69380a180895bd8ab584d",
+    "engine_state_sha256": "87be3f519847d38b257e2974b411891474a302c0e668d6bc5cdbb916afabb800",
+    "context_state_sha256": "ceda05d3c06e6efc25856ebc86f1b15a1a37c34fe89d8b4be4aea22f2d19e489",
+    "research_semantics_sha256": "76c7f3b18e4f67aea2743fde37d30fe0a91b7ec208c1db8da6c88f8c0306616f",
+    "journal_verification": {
+      "events": 366,
+      "tail_sha256": "44154b8206d2b6a9587a47588e1f10c79bc89616d4e12ead363057cdf5d85c47"
+    },
+    "sqlite_integrity": "ok"
+  },
+  "comparison": {
+    "ending_cursor_equal": true,
+    "final_runtime_snapshot_byte_identical": true,
+    "engine_context_research_equal": true,
+    "normalized_business_event_sequence_equal": true,
+    "normalization": [
+      "Exclude the additional worker_start lifecycle event written by the resumed process.",
+      "Remove generated decision_event_seq references from decision_committed payloads before comparing event content."
+    ],
+    "business_event_rows": {
+      "one_shot": 364,
+      "split_resume": 364
+    },
+    "business_table_checks": {
+      "decisions": {"one_shot": 32, "split_resume": 32, "content_equal_ignoring_event_seq": true},
+      "outcomes": {"one_shot": 128, "split_resume": 128, "content_equal_ignoring_event_seq": true},
+      "observations": {"one_shot": 168, "split_resume": 168, "content_equal_ignoring_event_seq": true},
+      "family_map": {"one_shot": 79, "split_resume": 79, "content_equal_ignoring_event_seq": true},
+      "reserves": {"one_shot": 0, "split_resume": 0, "content_equal_ignoring_event_seq": true}
+    },
+    "one_extra_worker_start_event": true,
+    "journal_tail_hash_equal": false,
+    "all_production_tables_integrity_checked_read_only": true,
+    "no_business_rows_lost_or_duplicated": true
+  },
+  "live_state_postflight": {
+    "checked_at_utc": "2026-10-16T18:39:03Z",
+    "campaign_sha256": "aa8acb2b46823c1a1e3ac5d01a57dde917746c2c7471098ae2a4598875e322f5",
+    "collector_active": true,
+    "collector_restart_count": 0,
+    "shadow_active": true,
+    "shadow_restart_count": 1,
+    "canary_scope_active_after_completion": false
+  },
+  "interpretation": "The branch preserves business-event append order and final state across this bounded two-process split. The event-chain tail differs as expected because resume appends one worker_start event and generated decision-event sequence pointers shift. This confirms deterministic historical replay continuity for one input window; it neither demonstrates live catch-up nor adds independent economic observations.",
+  "limitations": [
+    "This is a single four-segment historical source replay with one clean split point, not a sustained-throughput or live recovery test.",
+    "The campaign-pinned code snapshot was verified, but the branch implementation hashes were not checked against that frozen snapshot; this benchmark ran current checkout commit 9a4d8f6.",
+    "The canary changes no frozen campaign file, production cursor, or production journal and submits no orders.",
+    "Replay follow-up labels are historical public measurements and censored observations; they are not realized fills or independent opportunities."
+  ]
+}

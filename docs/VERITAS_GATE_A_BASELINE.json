@@ -1,0 +1,598 @@
+{
+  "application_health_snapshot": {
+    "api_endpoint": "http://127.0.0.1:8010/api/health",
+    "live_execution": false,
+    "startup_error": null,
+    "startup_status": "READY",
+    "status": "READY"
+  },
+  "captured_at_utc": "2026-10-14T22:40:02.303642+00:00",
+  "frozen_campaign_forensics": {
+    "actual_fills": "unknown_counterfactual",
+    "actual_orders_submitted": 0,
+    "analysis_version": "veritas-forward-forensics-v1",
+    "campaign_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
+    "campaign_plan_sha256": "aa8acb2b46823c1a1e3ac5d01a57dde917746c2c7471098ae2a4598875e322f5",
+    "category_decisions_with_valid_features": {
+      "Bitcoin": 25,
+      "Crypto": 25,
+      "Culture": 174,
+      "Earn 3.25%": 58,
+      "Elections": 182,
+      "Finance": 25,
+      "France": 124,
+      "French Election": 124,
+      "French Elections": 124,
+      "Global Elections": 182,
+      "Gov Reserve": 25,
+      "Main Election": 182,
+      "Mentions": 174,
+      "Midterms": 232,
+      "Politics": 381,
+      "Recurring": 25,
+      "Rewards 20, 4.5, 50": 58,
+      "Trump": 174,
+      "Trump Speech": 174,
+      "US Election": 58,
+      "United States": 58,
+      "World": 124
+    },
+    "coverage": {
+      "connected_families": 6,
+      "decisions": 1408,
+      "duplicate_variants_are_independent": false,
+      "invalid_initial_decisions": 1027,
+      "markets": 10,
+      "time_range_ns": [
+        1792012079760393613,
+        1792017594163958634
+      ],
+      "utc_days": [
+        "2026-10-14"
+      ],
+      "valid_initial_decisions": 381
+    },
+    "decision_quality_reasons": {
+      "book_issue:advertised_top_pending": 11,
+      "book_issue:stale": 22,
+      "eligible": 381,
+      "empty_ask_side": 72,
+      "independent_book_divergence": 3,
+      "source_timing_uncertainty": 21,
+      "stale_book": 898
+    },
+    "end_ns": 1793221678642600351,
+    "frozen_ns": 1792010631978337784,
+    "journal_snapshot": {
+      "event_count": 16852,
+      "hash_chain_reverified": false,
+      "read_only": true,
+      "sqlite_integrity": "ok",
+      "tail_event_seq": 16852,
+      "tail_event_sha256": "774cdcbd3a941f5bf8a4aea09aeefddcd8376b486677c8b4802fb2c0961634cb"
+    },
+    "limitations": [
+      "The campaign records a bounded, selected public-market cohort, not the full venue.",
+      "Displayed depth and public quote survival do not identify hypothetical fills.",
+      "Shared feed intervals and connected market families are dependent observations.",
+      "A database integrity check is run here; the complete event hash chain is not reverified.",
+      "The external campaign status file is intentionally excluded from the SQL snapshot."
+    ],
+    "market_funnel": {
+      "items": [
+        {
+          "decisions": 176,
+          "eligible_decisions": 0,
+          "invalid_decisions": 176,
+          "market_id": "559687",
+          "positive_pre_fee_discrepancies": 0,
+          "pre_fee_edge_distribution": null,
+          "quality_reasons": {
+            "book_issue:stale": 3,
+            "empty_ask_side": 32,
+            "stale_book": 141
+          }
+        },
+        {
+          "decisions": 176,
+          "eligible_decisions": 0,
+          "invalid_decisions": 176,
+          "market_id": "561251",
+          "positive_pre_fee_discrepancies": 0,
+          "pre_fee_edge_distribution": null,
+          "quality_reasons": {
+            "book_issue:stale": 3,
+            "empty_ask_side": 40,
+            "stale_book": 133
+          }
+        },
+        {
+          "decisions": 176,
+          "eligible_decisions": 35,
+          "invalid_decisions": 141,
+          "market_id": "5674900",
+          "positive_pre_fee_discrepancies": 0,
+          "pre_fee_edge_distribution": {
+            "count": 35,
+            "maximum": "-0.21",
+            "median_nearest_rank": "-0.24",
+            "minimum": "-0.34",
+            "p25_nearest_rank": "-0.31",
+            "p75_nearest_rank": "-0.24",
+            "positive_count": 0
+          },
+          "quality_reasons": {
+            "book_issue:advertised_top_pending": 1,
+            "book_issue:stale": 2,
+            "eligible": 35,
+            "source_timing_uncertainty": 3,
+            "stale_book": 135
+          }
+        },
+        {
+          "decisions": 176,
+          "eligible_decisions": 38,
+          "invalid_decisions": 138,
+          "market_id": "5674915",
+          "positive_pre_fee_discrepancies": 0,
+          "pre_fee_edge_distribution": {
+            "count": 38,
+            "maximum": "-0.15",
+            "median_nearest_rank": "-0.39",
+            "minimum": "-0.51",
+            "p25_nearest_rank": "-0.41",
+            "p75_nearest_rank": "-0.19",
+            "positive_count": 0
+          },
+          "quality_reasons": {
+            "book_issue:advertised_top_pending": 1,
+            "book_issue:stale": 5,
+            "eligible": 38,
+            "stale_book": 132
+          }
+        },
+        {
+          "decisions": 176,
+          "eligible_decisions": 89,
+          "invalid_decisions": 87,
+          "market_id": "5675021",
+          "positive_pre_fee_discrepancies": 0,
+          "pre_fee_edge_distribution": {
+            "count": 89,
+            "maximum": "-0.02",
+            "median_nearest_rank": "-0.08",
+            "minimum": "-0.36",
+            "p25_nearest_rank": "-0.12",
+            "p75_nearest_rank": "-0.07",
+            "positive_count": 0
+          },
+          "quality_reasons": {
+            "book_issue:advertised_top_pending": 9,
+            "eligible": 89,
+            "stale_book": 78
+          }
+        },
+        {
+          "decisions": 176,
+          "eligible_decisions": 25,
+          "invalid_decisions": 151,
+          "market_id": "665205",
+          "positive_pre_fee_discrepancies": 0,
+          "pre_fee_edge_distribution": {
+            "count": 25,
+            "maximum": "-0.03",
+            "median_nearest_rank": "-0.03",
+            "minimum": "-0.03",
+            "p25_nearest_rank": "-0.03",
+            "p75_nearest_rank": "-0.03",
+            "positive_count": 0
+          },
+          "quality_reasons": {
+            "book_issue:stale": 5,
+            "eligible": 25,
+            "source_timing_uncertainty": 18,
+            "stale_book": 128
+          }
+        },
+        {
+          "decisions": 176,
+          "eligible_decisions": 80,
+          "invalid_decisions": 96,
+          "market_id": "679026",
+          "positive_pre_fee_discrepancies": 0,
+          "pre_fee_edge_distribution": {
+            "count": 80,
+            "maximum": "-0.001",
+            "median_nearest_rank": "-0.001",
+            "minimum": "-0.001",
+            "p25_nearest_rank": "-0.001",
+            "p75_nearest_rank": "-0.001",
+            "positive_count": 0
+          },
+          "quality_reasons": {
+            "eligible": 80,
+            "stale_book": 96
+          }
+        },
+        {
+          "decisions": 69,
+          "eligible_decisions": 44,
+          "invalid_decisions": 25,
+          "market_id": "679055",
+          "positive_pre_fee_discrepancies": 0,
+          "pre_fee_edge_distribution": {
+            "count": 44,
+            "maximum": "-0.001",
+            "median_nearest_rank": "-0.001",
+            "minimum": "-0.001",
+            "p25_nearest_rank": "-0.001",
+            "p75_nearest_rank": "-0.001",
+            "positive_count": 0
+          },
+          "quality_reasons": {
+            "eligible": 44,
+            "independent_book_divergence": 3,
+            "stale_book": 22
+          }
+        },
+        {
+          "decisions": 62,
+          "eligible_decisions": 58,
+          "invalid_decisions": 4,
+          "market_id": "562828",
+          "positive_pre_fee_discrepancies": 0,
+          "pre_fee_edge_distribution": {
+            "count": 58,
+            "maximum": "-0.01",
+            "median_nearest_rank": "-0.01",
+            "minimum": "-0.01",
+            "p25_nearest_rank": "-0.01",
+            "p75_nearest_rank": "-0.01",
+            "positive_count": 0
+          },
+          "quality_reasons": {
+            "eligible": 58,
+            "stale_book": 4
+          }
+        },
+        {
+          "decisions": 45,
+          "eligible_decisions": 12,
+          "invalid_decisions": 33,
+          "market_id": "5674902",
+          "positive_pre_fee_discrepancies": 0,
+          "pre_fee_edge_distribution": {
+            "count": 12,
+            "maximum": "-0.07",
+            "median_nearest_rank": "-0.08",
+            "minimum": "-0.08",
+            "p25_nearest_rank": "-0.08",
+            "p75_nearest_rank": "-0.07",
+            "positive_count": 0
+          },
+          "quality_reasons": {
+            "book_issue:stale": 4,
+            "eligible": 12,
+            "stale_book": 29
+          }
+        }
+      ],
+      "truncated_market_count": 0
+    },
+    "outcomes": {
+      "by_horizon": {
+        "100": {
+          "censor_reasons": {
+            "book_issue:gap:book_resynchronization": 4,
+            "future_observation_unavailable": 309,
+            "invalid_at_decision": 1027,
+            "source_followup_availability_timeout": 65
+          },
+          "counts_by_status": {
+            "censored": 1405,
+            "observed_public_measurement": 3
+          },
+          "pending": 0
+        },
+        "1000": {
+          "censor_reasons": {
+            "book_issue:advertised_top_pending": 7,
+            "book_issue:gap:book_resynchronization": 14,
+            "future_observation_unavailable": 252,
+            "invalid_at_decision": 1027,
+            "recorded_gap:book_resynchronization": 3,
+            "source_followup_availability_timeout": 59,
+            "stale_book": 19
+          },
+          "counts_by_status": {
+            "censored": 1381,
+            "observed_public_measurement": 27
+          },
+          "pending": 0
+        },
+        "300": {
+          "censor_reasons": {
+            "book_issue:gap:book_resynchronization": 5,
+            "future_observation_unavailable": 309,
+            "invalid_at_decision": 1027,
+            "recorded_gap:book_resynchronization": 1,
+            "source_followup_availability_timeout": 54,
+            "stale_book": 2
+          },
+          "counts_by_status": {
+            "censored": 1398,
+            "observed_public_measurement": 10
+          },
+          "pending": 0
+        },
+        "5000": {
+          "censor_reasons": {
+            "book_issue:advertised_top_pending": 29,
+            "book_issue:gap:book_resynchronization": 14,
+            "future_observation_unavailable": 98,
+            "invalid_at_decision": 1027,
+            "recorded_gap:book_resynchronization": 27,
+            "source_followup_availability_timeout": 37,
+            "stale_book": 154
+          },
+          "counts_by_status": {
+            "censored": 1386,
+            "observed_public_measurement": 22
+          },
+          "pending": 0
+        }
+      },
+      "censor_reasons": {
+        "book_issue:advertised_top_pending": 36,
+        "book_issue:gap:book_resynchronization": 37,
+        "future_observation_unavailable": 968,
+        "invalid_at_decision": 4108,
+        "recorded_gap:book_resynchronization": 31,
+        "source_followup_availability_timeout": 215,
+        "stale_book": 175
+      },
+      "censor_reasons_by_initial_validity": {
+        "invalid_initial_state": {
+          "invalid_at_decision": 4108
+        },
+        "valid_initial_state": {
+          "book_issue:advertised_top_pending": 36,
+          "book_issue:gap:book_resynchronization": 37,
+          "future_observation_unavailable": 968,
+          "recorded_gap:book_resynchronization": 31,
+          "source_followup_availability_timeout": 215,
+          "stale_book": 175
+        }
+      },
+      "counts_by_status": {
+        "censored": 5570,
+        "observed_public_measurement": 62
+      },
+      "initial_invalid_censor_reasons": [
+        "invalid_at_decision"
+      ]
+    },
+    "policy_actions": {
+      "conservative_risk": {
+        "abstain": 1408
+      },
+      "mathematical_filter": {
+        "abstain": 1408
+      },
+      "no_trade": {
+        "abstain": 1408
+      },
+      "prediction_gate": {
+        "abstain": 1408
+      },
+      "prometheus_control": {
+        "abstain": 1408
+      },
+      "recovery_guard": {
+        "abstain": 1408
+      }
+    },
+    "policy_reasons": {
+      "conservative_risk": {
+        "book_issue:advertised_top_pending": 11,
+        "book_issue:stale": 22,
+        "conservative_liquidity_timing_fee_or_recovery_gate": 381,
+        "empty_ask_side": 72,
+        "independent_book_divergence": 3,
+        "source_timing_uncertainty": 21,
+        "stale_book": 898
+      },
+      "mathematical_filter": {
+        "book_issue:advertised_top_pending": 11,
+        "book_issue:stale": 22,
+        "empty_ask_side": 72,
+        "independent_book_divergence": 3,
+        "no_initial_supported_discrepancy": 381,
+        "source_timing_uncertainty": 21,
+        "stale_book": 898
+      },
+      "no_trade": {
+        "book_issue:advertised_top_pending": 11,
+        "book_issue:stale": 22,
+        "empty_ask_side": 72,
+        "frozen_no_trade_control": 381,
+        "independent_book_divergence": 3,
+        "source_timing_uncertainty": 21,
+        "stale_book": 898
+      },
+      "prediction_gate": {
+        "book_issue:advertised_top_pending": 11,
+        "book_issue:stale": 22,
+        "empty_ask_side": 72,
+        "independent_book_divergence": 3,
+        "insufficient_model_evidence": 381,
+        "source_timing_uncertainty": 21,
+        "stale_book": 898
+      },
+      "prometheus_control": {
+        "STALE_DATA": 199,
+        "UNSUPPORTED_STRUCTURE": 182,
+        "book_issue:advertised_top_pending": 11,
+        "book_issue:stale": 22,
+        "empty_ask_side": 72,
+        "independent_book_divergence": 3,
+        "source_timing_uncertainty": 21,
+        "stale_book": 898
+      },
+      "recovery_guard": {
+        "book_issue:advertised_top_pending": 11,
+        "book_issue:stale": 22,
+        "conservative_liquidity_timing_fee_or_recovery_gate": 381,
+        "empty_ask_side": 72,
+        "independent_book_divergence": 3,
+        "source_timing_uncertainty": 21,
+        "stale_book": 898
+      }
+    },
+    "pre_fee_edge_per_unit_distribution": {
+      "count": 381,
+      "maximum": "-0.001",
+      "median_nearest_rank": "-0.03",
+      "minimum": "-0.51",
+      "p25_nearest_rank": "-0.12",
+      "p75_nearest_rank": "-0.001",
+      "positive_count": 0
+    },
+    "query": {
+      "limit": 50000,
+      "since_ns": 0,
+      "truncated": false
+    },
+    "realized_money": null,
+    "schema_version": 1,
+    "source_kind": "genuine_public_recording",
+    "start_ns": 1792012078642600351
+  },
+  "provenance_notes": [
+    "Reality API snapshots are read-only and bounded; the campaign journal summary uses one read-only SQLite transaction.",
+    "The frozen campaign plan was not edited and its campaign identity/hash are recorded in frozen_campaign_forensics.",
+    "No market observations, campaign events, raw recordings, model artifacts, or protected archives were modified.",
+    "Remote synchronization was checked with git ls-remote before creating the Veritas worktree."
+  ],
+  "reality_service_snapshot": {
+    "capacity": {
+      "alerts": [],
+      "available_headroom_bytes": 25377516837,
+      "budget_bytes": 25769803776,
+      "estimated_bytes_per_day": 727652214.7139643,
+      "estimated_storage_seconds_remaining": 3013276.686828617,
+      "filesystem_free_bytes": 216642646016,
+      "limitations": [
+        "Recent finalized-segment rate includes gaps and metadata; future rates vary.",
+        "Active segment excluded from rate, included in root usage.",
+        "Raw originals never pruned. Retention horizon stops collection.",
+        "Local archive copies consume additional disk; off-host offloading is separate."
+      ],
+      "measured_ns": 1792017458210897544,
+      "raw_root_bytes": 392286939
+    },
+    "collector": {
+      "expected_books": 16,
+      "failures": 0,
+      "frames": 119341,
+      "fresh_books": 16,
+      "gaps": 2172,
+      "markets": 8,
+      "max_append_seconds": 0.08547133504180238,
+      "ordinal": 203727,
+      "sequence_verified": false,
+      "state": "RECORDING_UNSEQUENCED",
+      "storage_bytes": 393330470,
+      "timing_uncertain_books": 0,
+      "updated_ns": 1792017598951021321
+    },
+    "collector_status_age_seconds": 3.317945663,
+    "health": "recording",
+    "services_and_timers": [
+      {
+        "ActiveState": "active",
+        "MainPID": "2288376",
+        "MemoryCurrent": "380768256",
+        "NRestarts": "0",
+        "SubState": "running",
+        "unit": "midas-reality.service"
+      },
+      {
+        "ActiveState": "active",
+        "MainPID": "2820914",
+        "MemoryCurrent": "179630080",
+        "NRestarts": "0",
+        "SubState": "running",
+        "unit": "midas-reality-shadow.service"
+      },
+      {
+        "ActiveState": "active",
+        "MainPID": null,
+        "MemoryCurrent": null,
+        "NRestarts": null,
+        "SubState": "waiting",
+        "unit": "midas-reality-capacity.timer"
+      },
+      {
+        "ActiveState": "active",
+        "MainPID": null,
+        "MemoryCurrent": null,
+        "NRestarts": null,
+        "SubState": "waiting",
+        "unit": "midas-reality-archive.timer"
+      },
+      {
+        "ActiveState": "active",
+        "MainPID": null,
+        "MemoryCurrent": null,
+        "NRestarts": null,
+        "SubState": "waiting",
+        "unit": "midas-reality-research.timer"
+      },
+      {
+        "ActiveState": "active",
+        "MainPID": null,
+        "MemoryCurrent": null,
+        "NRestarts": null,
+        "SubState": "waiting",
+        "unit": "midas-reality-shadow-integrity.timer"
+      }
+    ],
+    "shadow_status": {
+      "actual_orders_submitted": 0,
+      "budget_bytes": 4294967296,
+      "campaign_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
+      "counters": {
+        "lagged_frames_skipped": 3702,
+        "records": 203723,
+        "source_checkpoints": 1711
+      },
+      "decisions": 1408,
+      "evidence_bytes": 58137724,
+      "families": 6,
+      "followups": {
+        "censored": 5569,
+        "observed_public_measurement": 61
+      },
+      "markets": 10,
+      "pending_horizons": 2,
+      "state": "FORWARD_EVALUATING_EXPERIMENTAL",
+      "updated_ns": 1792017597209272494
+    },
+    "snapshots_not_transactionally_synchronized_with_campaign_database": true
+  },
+  "release_verification": {
+    "main_commit": "f968095feb9c591de38fe12d7493224425f62f3a",
+    "main_worktree_clean_before_veritas_start": true,
+    "origin_main_commit": "f968095feb9c591de38fe12d7493224425f62f3a",
+    "reality_worktree_clean_before_veritas_start": true,
+    "reality_worktree_commit": "714f824f74d710f946169834787daa8b5e3a47ea",
+    "release_tag": "reality-final-2026-10-14",
+    "release_tag_commit": "f968095feb9c591de38fe12d7493224425f62f3a",
+    "remote_branch_and_peeled_tag_match": true,
+    "veritas_base_commit": "f968095feb9c591de38fe12d7493224425f62f3a",
+    "veritas_branch": "project/veritas",
+    "veritas_worktree": "/home/charlie/midas-veritas"
+  },
+  "schema_version": 1
+}

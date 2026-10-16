@@ -1,0 +1,3424 @@
+{
+  "analysis_version": "veritas-execution-break-even-v2",
+  "captured_at_utc": "2026-10-16T09:06:13.350494+00:00",
+  "controlled_inputs": {
+    "annual_financing_rate": "0.10",
+    "capital_grid_usdc": [
+      "5",
+      "10",
+      "15",
+      "25",
+      "50",
+      "100",
+      "250",
+      "500",
+      "750",
+      "1000",
+      "5000",
+      "10000",
+      "50000"
+    ],
+    "depth_scenarios": {
+      "full_displayed_depth": "1",
+      "half_displayed_depth": "0.5"
+    },
+    "fee_collection_medium_for_buy": "collateral",
+    "fee_price_component_exponent_per_leg": "1",
+    "fee_rounding_direction": "official docs do not specify; floor and half-up sensitivities plus conservative bound are reported",
+    "fee_rounding_quantum_usdc": "0.00001",
+    "minimum_order_notional_per_leg_usdc": "5",
+    "no_asks_price_shares": [
+      [
+        "0.50",
+        "100"
+      ],
+      [
+        "0.52",
+        "250"
+      ],
+      [
+        "0.54",
+        "350"
+      ]
+    ],
+    "operational_cost_per_share_per_leg_usdc": "0.001",
+    "quantity_grid_shares_per_leg": [
+      "5",
+      "10",
+      "15",
+      "25",
+      "50",
+      "100",
+      "200",
+      "350",
+      "700"
+    ],
+    "redemption_cost_per_set_usdc": "0.01",
+    "settlement_days": "7",
+    "taker_fee_rate_per_leg": "0.04",
+    "yes_asks_price_shares": [
+      [
+        "0.45",
+        "100"
+      ],
+      [
+        "0.48",
+        "250"
+      ],
+      [
+        "0.51",
+        "350"
+      ]
+    ]
+  },
+  "dataset_id": "controlled_synthetic_orderbook_v1",
+  "evidence_class": "controlled_synthetic_hypothetical_execution",
+  "execution_break_even_method": {
+    "break_even_equation": "p * complete_pair_pnl = q * unmatched_leg_loss",
+    "complete_pair_sensitivities": [
+      "single-match rounding worst resolution",
+      "fragmentation-safe fee upper bound worst resolution"
+    ],
+    "per_attempt_outcomes": {
+      "matched_pair": "p * complete_pair_pnl",
+      "no_fill": "(1 - p - q) * 0",
+      "one_unmatched_leg": "-q * unmatched_leg_loss"
+    },
+    "public_data_identifies_hypothetical_order_fills": false,
+    "rate_grids_are_sensitivity_inputs_only": true,
+    "unmatched_leg_treatment": "one leg fills, loses at binary settlement, and cannot be recovered; single-leg financing and operating cost are included"
+  },
+  "execution_break_even_scenarios": {
+    "full_displayed_depth": {
+      "depth_fraction_assumption": "1",
+      "quantity_scenarios": [
+        {
+          "quantity_shares_per_leg": "5",
+          "rates_are_estimates": false,
+          "reason": "full displayed depth and per-leg minimum are both required",
+          "status": "complete_pair_economic_input_unavailable"
+        },
+        {
+          "quantity_shares_per_leg": "10",
+          "rates_are_estimates": false,
+          "reason": "full displayed depth and per-leg minimum are both required",
+          "status": "complete_pair_economic_input_unavailable"
+        },
+        {
+          "break_even": {
+            "fragmentation_safe_fee_bound": {
+              "complete_pair_pnl_assumption": "-0.0554736986301369863013698630",
+              "maximum_unmatched_rate_by_matched_completion_rate": [
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.05",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.10",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.25",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.50",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.75",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.90",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                }
+              ],
+              "minimum_matched_completions_per_unmatched_event": null,
+              "rates_are_estimates": false,
+              "required_matched_rate_by_unmatched_event_rate": [
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.001"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.01"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.05"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.10"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.25"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.50"
+                }
+              ],
+              "status": "no_positive_complete_pair_pnl",
+              "unmatched_leg_loss_assumption": "7.829958904109589041095890411",
+              "version": "veritas-execution-break-even-v1"
+            },
+            "single_match_rounding_scenario": {
+              "complete_pair_pnl_assumption": "0.2435987671232876712328767123",
+              "maximum_unmatched_rate_by_matched_completion_rate": [
+                {
+                  "break_even_unmatched_event_rate": "0.001555555847141380052380477512",
+                  "matched_completion_rate_assumption": "0.05",
+                  "maximum_unmatched_rate_without_negative_ev": "0.001555555847141380052380477512",
+                  "probability_mass_allows_break_even": true
+                },
+                {
+                  "break_even_unmatched_event_rate": "0.003111111694282760104760955024",
+                  "matched_completion_rate_assumption": "0.10",
+                  "maximum_unmatched_rate_without_negative_ev": "0.003111111694282760104760955024",
+                  "probability_mass_allows_break_even": true
+                },
+                {
+                  "break_even_unmatched_event_rate": "0.007777779235706900261902387561",
+                  "matched_completion_rate_assumption": "0.25",
+                  "maximum_unmatched_rate_without_negative_ev": "0.007777779235706900261902387561",
+                  "probability_mass_allows_break_even": true
+                },
+                {
+                  "break_even_unmatched_event_rate": "0.01555555847141380052380477512",
+                  "matched_completion_rate_assumption": "0.50",
+                  "maximum_unmatched_rate_without_negative_ev": "0.01555555847141380052380477512",
+                  "probability_mass_allows_break_even": true
+                },
+                {
+                  "break_even_unmatched_event_rate": "0.02333333770712070078570716268",
+                  "matched_completion_rate_assumption": "0.75",
+                  "maximum_unmatched_rate_without_negative_ev": "0.02333333770712070078570716268",
+                  "probability_mass_allows_break_even": true
+                },
+                {
+                  "break_even_unmatched_event_rate": "0.02800000524854484094284859522",
+                  "matched_completion_rate_assumption": "0.90",
+                  "maximum_unmatched_rate_without_negative_ev": "0.02800000524854484094284859522",
+                  "probability_mass_allows_break_even": true
+                }
+              ],
+              "minimum_matched_completions_per_unmatched_event": "32.14285111774302117056399166",
+              "rates_are_estimates": false,
+              "required_matched_rate_by_unmatched_event_rate": [
+                {
+                  "probability_mass_feasible": true,
+                  "required_matched_completion_rate": "0.03214285111774302117056399166",
+                  "unmatched_event_rate_assumption": "0.001"
+                },
+                {
+                  "probability_mass_feasible": true,
+                  "required_matched_completion_rate": "0.3214285111774302117056399166",
+                  "unmatched_event_rate_assumption": "0.01"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": "1.607142555887151058528199583",
+                  "unmatched_event_rate_assumption": "0.05"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": "3.214285111774302117056399166",
+                  "unmatched_event_rate_assumption": "0.10"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": "8.035712779435755292640997915",
+                  "unmatched_event_rate_assumption": "0.25"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": "16.07142555887151058528199583",
+                  "unmatched_event_rate_assumption": "0.50"
+                }
+              ],
+              "status": "conditional_break_even_thresholds_available",
+              "unmatched_leg_loss_assumption": "7.829958904109589041095890411",
+              "version": "veritas-execution-break-even-v1"
+            }
+          },
+          "complete_pair_pnl_scenarios_usdc": {
+            "fragmentation_safe_fee_worst_resolution": "-0.0554736986301369863013698630",
+            "single_match_rounding_worst_resolution": "0.2435987671232876712328767123"
+          },
+          "no_fill_pnl_assumption_usdc": "0",
+          "quantity_shares_per_leg": "15",
+          "rates_are_estimates": false,
+          "status": "scenario_thresholds_only",
+          "unmatched_leg_loss": {
+            "annual_financing_rate_assumption": "0.10",
+            "conservative_unmatched_leg": "no",
+            "conservative_unmatched_leg_loss_usdc": "7.829958904109589041095890411",
+            "fee_cash_cost_bounds_used": "fragmentation_safe_upper",
+            "loss_by_unmatched_leg": {
+              "no": {
+                "leg_acquisition_cost_usdc": "7.50",
+                "leg_fee_cash_cost_upper_bound_usdc": "0.30000",
+                "loss_assumption_usdc": "7.829958904109589041095890411",
+                "single_leg_financing_cost_usdc": "0.01495890410958904109589041096",
+                "single_leg_operational_cost_usdc": "0.015",
+                "worst_terminal_pnl_usdc": "-7.829958904109589041095890411"
+              },
+              "yes": {
+                "leg_acquisition_cost_usdc": "6.75",
+                "leg_fee_cash_cost_upper_bound_usdc": "0.29700",
+                "loss_assumption_usdc": "7.075514794520547945205479452",
+                "single_leg_financing_cost_usdc": "0.01351479452054794520547945205",
+                "single_leg_operational_cost_usdc": "0.015",
+                "worst_terminal_pnl_usdc": "-7.075514794520547945205479452"
+              }
+            },
+            "operational_cost_per_share_assumption": "0.001",
+            "recovery_value_assumption_usdc": "0",
+            "scenario": "one leg fills, loses at settlement, and cannot be recovered",
+            "settlement_days_assumption": "7"
+          }
+        },
+        {
+          "break_even": {
+            "fragmentation_safe_fee_bound": {
+              "complete_pair_pnl_assumption": "-0.0924561643835616438356164384",
+              "maximum_unmatched_rate_by_matched_completion_rate": [
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.05",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.10",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.25",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.50",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.75",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.90",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                }
+              ],
+              "minimum_matched_completions_per_unmatched_event": null,
+              "rates_are_estimates": false,
+              "required_matched_rate_by_unmatched_event_rate": [
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.001"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.01"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.05"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.10"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.25"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.50"
+                }
+              ],
+              "status": "no_positive_complete_pair_pnl",
+              "unmatched_leg_loss_assumption": "13.04993150684931506849315068",
+              "version": "veritas-execution-break-even-v1"
+            },
+            "single_match_rounding_scenario": {
+              "complete_pair_pnl_assumption": "0.4059979452054794520547945206",
+              "maximum_unmatched_rate_by_matched_completion_rate": [
+                {
+                  "break_even_unmatched_event_rate": "0.001555555847141380052380477513",
+                  "matched_completion_rate_assumption": "0.05",
+                  "maximum_unmatched_rate_without_negative_ev": "0.001555555847141380052380477513",
+                  "probability_mass_allows_break_even": true
+                },
+                {
+                  "break_even_unmatched_event_rate": "0.003111111694282760104760955026",
+                  "matched_completion_rate_assumption": "0.10",
+                  "maximum_unmatched_rate_without_negative_ev": "0.003111111694282760104760955026",
+                  "probability_mass_allows_break_even": true
+                },
+                {
+                  "break_even_unmatched_event_rate": "0.007777779235706900261902387566",
+                  "matched_completion_rate_assumption": "0.25",
+                  "maximum_unmatched_rate_without_negative_ev": "0.007777779235706900261902387566",
+                  "probability_mass_allows_break_even": true
+                },
+                {
+                  "break_even_unmatched_event_rate": "0.01555555847141380052380477513",
+                  "matched_completion_rate_assumption": "0.50",
+                  "maximum_unmatched_rate_without_negative_ev": "0.01555555847141380052380477513",
+                  "probability_mass_allows_break_even": true
+                },
+                {
+                  "break_even_unmatched_event_rate": "0.02333333770712070078570716270",
+                  "matched_completion_rate_assumption": "0.75",
+                  "maximum_unmatched_rate_without_negative_ev": "0.02333333770712070078570716270",
+                  "probability_mass_allows_break_even": true
+                },
+                {
+                  "break_even_unmatched_event_rate": "0.02800000524854484094284859524",
+                  "matched_completion_rate_assumption": "0.90",
+                  "maximum_unmatched_rate_without_negative_ev": "0.02800000524854484094284859524",
+                  "probability_mass_allows_break_even": true
+                }
+              ],
+              "minimum_matched_completions_per_unmatched_event": "32.14285111774302117056399164",
+              "rates_are_estimates": false,
+              "required_matched_rate_by_unmatched_event_rate": [
+                {
+                  "probability_mass_feasible": true,
+                  "required_matched_completion_rate": "0.03214285111774302117056399164",
+                  "unmatched_event_rate_assumption": "0.001"
+                },
+                {
+                  "probability_mass_feasible": true,
+                  "required_matched_completion_rate": "0.3214285111774302117056399164",
+                  "unmatched_event_rate_assumption": "0.01"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": "1.607142555887151058528199582",
+                  "unmatched_event_rate_assumption": "0.05"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": "3.214285111774302117056399164",
+                  "unmatched_event_rate_assumption": "0.10"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": "8.035712779435755292640997910",
+                  "unmatched_event_rate_assumption": "0.25"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": "16.07142555887151058528199582",
+                  "unmatched_event_rate_assumption": "0.50"
+                }
+              ],
+              "status": "conditional_break_even_thresholds_available",
+              "unmatched_leg_loss_assumption": "13.04993150684931506849315068",
+              "version": "veritas-execution-break-even-v1"
+            }
+          },
+          "complete_pair_pnl_scenarios_usdc": {
+            "fragmentation_safe_fee_worst_resolution": "-0.0924561643835616438356164384",
+            "single_match_rounding_worst_resolution": "0.4059979452054794520547945206"
+          },
+          "no_fill_pnl_assumption_usdc": "0",
+          "quantity_shares_per_leg": "25",
+          "rates_are_estimates": false,
+          "status": "scenario_thresholds_only",
+          "unmatched_leg_loss": {
+            "annual_financing_rate_assumption": "0.10",
+            "conservative_unmatched_leg": "no",
+            "conservative_unmatched_leg_loss_usdc": "13.04993150684931506849315068",
+            "fee_cash_cost_bounds_used": "fragmentation_safe_upper",
+            "loss_by_unmatched_leg": {
+              "no": {
+                "leg_acquisition_cost_usdc": "12.50",
+                "leg_fee_cash_cost_upper_bound_usdc": "0.50000",
+                "loss_assumption_usdc": "13.04993150684931506849315068",
+                "single_leg_financing_cost_usdc": "0.02493150684931506849315068493",
+                "single_leg_operational_cost_usdc": "0.025",
+                "worst_terminal_pnl_usdc": "-13.04993150684931506849315068"
+              },
+              "yes": {
+                "leg_acquisition_cost_usdc": "11.25",
+                "leg_fee_cash_cost_upper_bound_usdc": "0.49500",
+                "loss_assumption_usdc": "11.79252465753424657534246575",
+                "single_leg_financing_cost_usdc": "0.02252465753424657534246575342",
+                "single_leg_operational_cost_usdc": "0.025",
+                "worst_terminal_pnl_usdc": "-11.79252465753424657534246575"
+              }
+            },
+            "operational_cost_per_share_assumption": "0.001",
+            "recovery_value_assumption_usdc": "0",
+            "scenario": "one leg fills, loses at settlement, and cannot be recovered",
+            "settlement_days_assumption": "7"
+          }
+        },
+        {
+          "break_even": {
+            "fragmentation_safe_fee_bound": {
+              "complete_pair_pnl_assumption": "-0.1849123287671232876712328767",
+              "maximum_unmatched_rate_by_matched_completion_rate": [
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.05",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.10",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.25",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.50",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.75",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.90",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                }
+              ],
+              "minimum_matched_completions_per_unmatched_event": null,
+              "rates_are_estimates": false,
+              "required_matched_rate_by_unmatched_event_rate": [
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.001"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.01"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.05"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.10"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.25"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.50"
+                }
+              ],
+              "status": "no_positive_complete_pair_pnl",
+              "unmatched_leg_loss_assumption": "26.09986301369863013698630137",
+              "version": "veritas-execution-break-even-v1"
+            },
+            "single_match_rounding_scenario": {
+              "complete_pair_pnl_assumption": "0.8119958904109589041095890411",
+              "maximum_unmatched_rate_by_matched_completion_rate": [
+                {
+                  "break_even_unmatched_event_rate": "0.001555555847141380052380477513",
+                  "matched_completion_rate_assumption": "0.05",
+                  "maximum_unmatched_rate_without_negative_ev": "0.001555555847141380052380477513",
+                  "probability_mass_allows_break_even": true
+                },
+                {
+                  "break_even_unmatched_event_rate": "0.003111111694282760104760955025",
+                  "matched_completion_rate_assumption": "0.10",
+                  "maximum_unmatched_rate_without_negative_ev": "0.003111111694282760104760955025",
+                  "probability_mass_allows_break_even": true
+                },
+                {
+                  "break_even_unmatched_event_rate": "0.007777779235706900261902387564",
+                  "matched_completion_rate_assumption": "0.25",
+                  "maximum_unmatched_rate_without_negative_ev": "0.007777779235706900261902387564",
+                  "probability_mass_allows_break_even": true
+                },
+                {
+                  "break_even_unmatched_event_rate": "0.01555555847141380052380477513",
+                  "matched_completion_rate_assumption": "0.50",
+                  "maximum_unmatched_rate_without_negative_ev": "0.01555555847141380052380477513",
+                  "probability_mass_allows_break_even": true
+                },
+                {
+                  "break_even_unmatched_event_rate": "0.02333333770712070078570716269",
+                  "matched_completion_rate_assumption": "0.75",
+                  "maximum_unmatched_rate_without_negative_ev": "0.02333333770712070078570716269",
+                  "probability_mass_allows_break_even": true
+                },
+                {
+                  "break_even_unmatched_event_rate": "0.02800000524854484094284859523",
+                  "matched_completion_rate_assumption": "0.90",
+                  "maximum_unmatched_rate_without_negative_ev": "0.02800000524854484094284859523",
+                  "probability_mass_allows_break_even": true
+                }
+              ],
+              "minimum_matched_completions_per_unmatched_event": "32.14285111774302117056399165",
+              "rates_are_estimates": false,
+              "required_matched_rate_by_unmatched_event_rate": [
+                {
+                  "probability_mass_feasible": true,
+                  "required_matched_completion_rate": "0.03214285111774302117056399165",
+                  "unmatched_event_rate_assumption": "0.001"
+                },
+                {
+                  "probability_mass_feasible": true,
+                  "required_matched_completion_rate": "0.3214285111774302117056399165",
+                  "unmatched_event_rate_assumption": "0.01"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": "1.607142555887151058528199582",
+                  "unmatched_event_rate_assumption": "0.05"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": "3.214285111774302117056399165",
+                  "unmatched_event_rate_assumption": "0.10"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": "8.035712779435755292640997912",
+                  "unmatched_event_rate_assumption": "0.25"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": "16.07142555887151058528199582",
+                  "unmatched_event_rate_assumption": "0.50"
+                }
+              ],
+              "status": "conditional_break_even_thresholds_available",
+              "unmatched_leg_loss_assumption": "26.09986301369863013698630137",
+              "version": "veritas-execution-break-even-v1"
+            }
+          },
+          "complete_pair_pnl_scenarios_usdc": {
+            "fragmentation_safe_fee_worst_resolution": "-0.1849123287671232876712328767",
+            "single_match_rounding_worst_resolution": "0.8119958904109589041095890411"
+          },
+          "no_fill_pnl_assumption_usdc": "0",
+          "quantity_shares_per_leg": "50",
+          "rates_are_estimates": false,
+          "status": "scenario_thresholds_only",
+          "unmatched_leg_loss": {
+            "annual_financing_rate_assumption": "0.10",
+            "conservative_unmatched_leg": "no",
+            "conservative_unmatched_leg_loss_usdc": "26.09986301369863013698630137",
+            "fee_cash_cost_bounds_used": "fragmentation_safe_upper",
+            "loss_by_unmatched_leg": {
+              "no": {
+                "leg_acquisition_cost_usdc": "25.00",
+                "leg_fee_cash_cost_upper_bound_usdc": "1.00000",
+                "loss_assumption_usdc": "26.09986301369863013698630137",
+                "single_leg_financing_cost_usdc": "0.04986301369863013698630136986",
+                "single_leg_operational_cost_usdc": "0.050",
+                "worst_terminal_pnl_usdc": "-26.09986301369863013698630137"
+              },
+              "yes": {
+                "leg_acquisition_cost_usdc": "22.50",
+                "leg_fee_cash_cost_upper_bound_usdc": "0.99000",
+                "loss_assumption_usdc": "23.58504931506849315068493151",
+                "single_leg_financing_cost_usdc": "0.04504931506849315068493150685",
+                "single_leg_operational_cost_usdc": "0.050",
+                "worst_terminal_pnl_usdc": "-23.58504931506849315068493151"
+              }
+            },
+            "operational_cost_per_share_assumption": "0.001",
+            "recovery_value_assumption_usdc": "0",
+            "scenario": "one leg fills, loses at settlement, and cannot be recovered",
+            "settlement_days_assumption": "7"
+          }
+        },
+        {
+          "break_even": {
+            "fragmentation_safe_fee_bound": {
+              "complete_pair_pnl_assumption": "-0.369824657534246575342465753",
+              "maximum_unmatched_rate_by_matched_completion_rate": [
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.05",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.10",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.25",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.50",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.75",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.90",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                }
+              ],
+              "minimum_matched_completions_per_unmatched_event": null,
+              "rates_are_estimates": false,
+              "required_matched_rate_by_unmatched_event_rate": [
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.001"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.01"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.05"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.10"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.25"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.50"
+                }
+              ],
+              "status": "no_positive_complete_pair_pnl",
+              "unmatched_leg_loss_assumption": "52.19972602739726027397260274",
+              "version": "veritas-execution-break-even-v1"
+            },
+            "single_match_rounding_scenario": {
+              "complete_pair_pnl_assumption": "1.623991780821917808219178082",
+              "maximum_unmatched_rate_by_matched_completion_rate": [
+                {
+                  "break_even_unmatched_event_rate": "0.001555555847141380052380477512",
+                  "matched_completion_rate_assumption": "0.05",
+                  "maximum_unmatched_rate_without_negative_ev": "0.001555555847141380052380477512",
+                  "probability_mass_allows_break_even": true
+                },
+                {
+                  "break_even_unmatched_event_rate": "0.003111111694282760104760955024",
+                  "matched_completion_rate_assumption": "0.10",
+                  "maximum_unmatched_rate_without_negative_ev": "0.003111111694282760104760955024",
+                  "probability_mass_allows_break_even": true
+                },
+                {
+                  "break_even_unmatched_event_rate": "0.007777779235706900261902387561",
+                  "matched_completion_rate_assumption": "0.25",
+                  "maximum_unmatched_rate_without_negative_ev": "0.007777779235706900261902387561",
+                  "probability_mass_allows_break_even": true
+                },
+                {
+                  "break_even_unmatched_event_rate": "0.01555555847141380052380477512",
+                  "matched_completion_rate_assumption": "0.50",
+                  "maximum_unmatched_rate_without_negative_ev": "0.01555555847141380052380477512",
+                  "probability_mass_allows_break_even": true
+                },
+                {
+                  "break_even_unmatched_event_rate": "0.02333333770712070078570716268",
+                  "matched_completion_rate_assumption": "0.75",
+                  "maximum_unmatched_rate_without_negative_ev": "0.02333333770712070078570716268",
+                  "probability_mass_allows_break_even": true
+                },
+                {
+                  "break_even_unmatched_event_rate": "0.02800000524854484094284859522",
+                  "matched_completion_rate_assumption": "0.90",
+                  "maximum_unmatched_rate_without_negative_ev": "0.02800000524854484094284859522",
+                  "probability_mass_allows_break_even": true
+                }
+              ],
+              "minimum_matched_completions_per_unmatched_event": "32.14285111774302117056399166",
+              "rates_are_estimates": false,
+              "required_matched_rate_by_unmatched_event_rate": [
+                {
+                  "probability_mass_feasible": true,
+                  "required_matched_completion_rate": "0.03214285111774302117056399166",
+                  "unmatched_event_rate_assumption": "0.001"
+                },
+                {
+                  "probability_mass_feasible": true,
+                  "required_matched_completion_rate": "0.3214285111774302117056399166",
+                  "unmatched_event_rate_assumption": "0.01"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": "1.607142555887151058528199583",
+                  "unmatched_event_rate_assumption": "0.05"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": "3.214285111774302117056399166",
+                  "unmatched_event_rate_assumption": "0.10"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": "8.035712779435755292640997915",
+                  "unmatched_event_rate_assumption": "0.25"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": "16.07142555887151058528199583",
+                  "unmatched_event_rate_assumption": "0.50"
+                }
+              ],
+              "status": "conditional_break_even_thresholds_available",
+              "unmatched_leg_loss_assumption": "52.19972602739726027397260274",
+              "version": "veritas-execution-break-even-v1"
+            }
+          },
+          "complete_pair_pnl_scenarios_usdc": {
+            "fragmentation_safe_fee_worst_resolution": "-0.369824657534246575342465753",
+            "single_match_rounding_worst_resolution": "1.623991780821917808219178082"
+          },
+          "no_fill_pnl_assumption_usdc": "0",
+          "quantity_shares_per_leg": "100",
+          "rates_are_estimates": false,
+          "status": "scenario_thresholds_only",
+          "unmatched_leg_loss": {
+            "annual_financing_rate_assumption": "0.10",
+            "conservative_unmatched_leg": "no",
+            "conservative_unmatched_leg_loss_usdc": "52.19972602739726027397260274",
+            "fee_cash_cost_bounds_used": "fragmentation_safe_upper",
+            "loss_by_unmatched_leg": {
+              "no": {
+                "leg_acquisition_cost_usdc": "50.00",
+                "leg_fee_cash_cost_upper_bound_usdc": "2.00000",
+                "loss_assumption_usdc": "52.19972602739726027397260274",
+                "single_leg_financing_cost_usdc": "0.09972602739726027397260273973",
+                "single_leg_operational_cost_usdc": "0.100",
+                "worst_terminal_pnl_usdc": "-52.19972602739726027397260274"
+              },
+              "yes": {
+                "leg_acquisition_cost_usdc": "45.00",
+                "leg_fee_cash_cost_upper_bound_usdc": "1.98000",
+                "loss_assumption_usdc": "47.17009863013698630136986301",
+                "single_leg_financing_cost_usdc": "0.09009863013698630136986301370",
+                "single_leg_operational_cost_usdc": "0.100",
+                "worst_terminal_pnl_usdc": "-47.17009863013698630136986301"
+              }
+            },
+            "operational_cost_per_share_assumption": "0.001",
+            "recovery_value_assumption_usdc": "0",
+            "scenario": "one leg fills, loses at settlement, and cannot be recovered",
+            "settlement_days_assumption": "7"
+          }
+        },
+        {
+          "break_even": {
+            "fragmentation_safe_fee_bound": {
+              "complete_pair_pnl_assumption": "-5.762864438356164383561643836",
+              "maximum_unmatched_rate_by_matched_completion_rate": [
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.05",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.10",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.25",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.50",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.75",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.90",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                }
+              ],
+              "minimum_matched_completions_per_unmatched_event": null,
+              "rates_are_estimates": false,
+              "required_matched_rate_by_unmatched_event_rate": [
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.001"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.01"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.05"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.10"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.25"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.50"
+                }
+              ],
+              "status": "no_positive_complete_pair_pnl",
+              "unmatched_leg_loss_assumption": "106.4000815342465753424657534",
+              "version": "veritas-execution-break-even-v1"
+            },
+            "single_match_rounding_scenario": {
+              "complete_pair_pnl_assumption": "-1.768418520547945205479452055",
+              "maximum_unmatched_rate_by_matched_completion_rate": [
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.05",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.10",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.25",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.50",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.75",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.90",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                }
+              ],
+              "minimum_matched_completions_per_unmatched_event": null,
+              "rates_are_estimates": false,
+              "required_matched_rate_by_unmatched_event_rate": [
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.001"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.01"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.05"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.10"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.25"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.50"
+                }
+              ],
+              "status": "no_positive_complete_pair_pnl",
+              "unmatched_leg_loss_assumption": "106.4000815342465753424657534",
+              "version": "veritas-execution-break-even-v1"
+            }
+          },
+          "complete_pair_pnl_scenarios_usdc": {
+            "fragmentation_safe_fee_worst_resolution": "-5.762864438356164383561643836",
+            "single_match_rounding_worst_resolution": "-1.768418520547945205479452055"
+          },
+          "no_fill_pnl_assumption_usdc": "0",
+          "quantity_shares_per_leg": "200",
+          "rates_are_estimates": false,
+          "status": "scenario_thresholds_only",
+          "unmatched_leg_loss": {
+            "annual_financing_rate_assumption": "0.10",
+            "conservative_unmatched_leg": "no",
+            "conservative_unmatched_leg_loss_usdc": "106.4000815342465753424657534",
+            "fee_cash_cost_bounds_used": "fragmentation_safe_upper",
+            "loss_by_unmatched_leg": {
+              "no": {
+                "leg_acquisition_cost_usdc": "102.00",
+                "leg_fee_cash_cost_upper_bound_usdc": "3.99680",
+                "loss_assumption_usdc": "106.4000815342465753424657534",
+                "single_leg_financing_cost_usdc": "0.2032815342465753424657534247",
+                "single_leg_operational_cost_usdc": "0.200",
+                "worst_terminal_pnl_usdc": "-106.4000815342465753424657534"
+              },
+              "yes": {
+                "leg_acquisition_cost_usdc": "93.00",
+                "leg_fee_cash_cost_upper_bound_usdc": "3.97680",
+                "loss_assumption_usdc": "97.36278290410958904109589041",
+                "single_leg_financing_cost_usdc": "0.1859829041095890410958904110",
+                "single_leg_operational_cost_usdc": "0.200",
+                "worst_terminal_pnl_usdc": "-97.36278290410958904109589041"
+              }
+            },
+            "operational_cost_per_share_assumption": "0.001",
+            "recovery_value_assumption_usdc": "0",
+            "scenario": "one leg fills, loses at settlement, and cannot be recovered",
+            "settlement_days_assumption": "7"
+          }
+        },
+        {
+          "break_even": {
+            "fragmentation_safe_fee_bound": {
+              "complete_pair_pnl_assumption": "-13.85242410958904109589041096",
+              "maximum_unmatched_rate_by_matched_completion_rate": [
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.05",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.10",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.25",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.50",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.75",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.90",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                }
+              ],
+              "minimum_matched_completions_per_unmatched_event": null,
+              "rates_are_estimates": false,
+              "required_matched_rate_by_unmatched_event_rate": [
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.001"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.01"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.05"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.10"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.25"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.50"
+                }
+              ],
+              "status": "no_positive_complete_pair_pnl",
+              "unmatched_leg_loss_assumption": "187.7006147945205479452054795",
+              "version": "veritas-execution-break-even-v1"
+            },
+            "single_match_rounding_scenario": {
+              "complete_pair_pnl_assumption": "-6.857033972602739726027397260",
+              "maximum_unmatched_rate_by_matched_completion_rate": [
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.05",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.10",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.25",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.50",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.75",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.90",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                }
+              ],
+              "minimum_matched_completions_per_unmatched_event": null,
+              "rates_are_estimates": false,
+              "required_matched_rate_by_unmatched_event_rate": [
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.001"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.01"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.05"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.10"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.25"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.50"
+                }
+              ],
+              "status": "no_positive_complete_pair_pnl",
+              "unmatched_leg_loss_assumption": "187.7006147945205479452054795",
+              "version": "veritas-execution-break-even-v1"
+            }
+          },
+          "complete_pair_pnl_scenarios_usdc": {
+            "fragmentation_safe_fee_worst_resolution": "-13.85242410958904109589041096",
+            "single_match_rounding_worst_resolution": "-6.857033972602739726027397260"
+          },
+          "no_fill_pnl_assumption_usdc": "0",
+          "quantity_shares_per_leg": "350",
+          "rates_are_estimates": false,
+          "status": "scenario_thresholds_only",
+          "unmatched_leg_loss": {
+            "annual_financing_rate_assumption": "0.10",
+            "conservative_unmatched_leg": "no",
+            "conservative_unmatched_leg_loss_usdc": "187.7006147945205479452054795",
+            "fee_cash_cost_bounds_used": "fragmentation_safe_upper",
+            "loss_by_unmatched_leg": {
+              "no": {
+                "leg_acquisition_cost_usdc": "180.00",
+                "leg_fee_cash_cost_upper_bound_usdc": "6.99200",
+                "loss_assumption_usdc": "187.7006147945205479452054795",
+                "single_leg_financing_cost_usdc": "0.3586147945205479452054794521",
+                "single_leg_operational_cost_usdc": "0.350",
+                "worst_terminal_pnl_usdc": "-187.7006147945205479452054795"
+              },
+              "yes": {
+                "leg_acquisition_cost_usdc": "165.00",
+                "leg_fee_cash_cost_upper_bound_usdc": "6.97200",
+                "loss_assumption_usdc": "172.6518093150684931506849315",
+                "single_leg_financing_cost_usdc": "0.3298093150684931506849315068",
+                "single_leg_operational_cost_usdc": "0.350",
+                "worst_terminal_pnl_usdc": "-172.6518093150684931506849315"
+              }
+            },
+            "operational_cost_per_share_assumption": "0.001",
+            "recovery_value_assumption_usdc": "0",
+            "scenario": "one leg fills, loses at settlement, and cannot be recovered",
+            "settlement_days_assumption": "7"
+          }
+        },
+        {
+          "break_even": {
+            "fragmentation_safe_fee_bound": {
+              "complete_pair_pnl_assumption": "-50.23637665753424657534246575",
+              "maximum_unmatched_rate_by_matched_completion_rate": [
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.05",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.10",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.25",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.50",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.75",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.90",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                }
+              ],
+              "minimum_matched_completions_per_unmatched_event": null,
+              "rates_are_estimates": false,
+              "required_matched_rate_by_unmatched_event_rate": [
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.001"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.01"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.05"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.10"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.25"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.50"
+                }
+              ],
+              "status": "no_positive_complete_pair_pnl",
+              "unmatched_leg_loss_assumption": "384.3816192876712328767123288",
+              "version": "veritas-execution-break-even-v1"
+            },
+            "single_match_rounding_scenario": {
+              "complete_pair_pnl_assumption": "-36.25140750684931506849315068",
+              "maximum_unmatched_rate_by_matched_completion_rate": [
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.05",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.10",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.25",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.50",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.75",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.90",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                }
+              ],
+              "minimum_matched_completions_per_unmatched_event": null,
+              "rates_are_estimates": false,
+              "required_matched_rate_by_unmatched_event_rate": [
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.001"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.01"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.05"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.10"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.25"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.50"
+                }
+              ],
+              "status": "no_positive_complete_pair_pnl",
+              "unmatched_leg_loss_assumption": "384.3816192876712328767123288",
+              "version": "veritas-execution-break-even-v1"
+            }
+          },
+          "complete_pair_pnl_scenarios_usdc": {
+            "fragmentation_safe_fee_worst_resolution": "-50.23637665753424657534246575",
+            "single_match_rounding_worst_resolution": "-36.25140750684931506849315068"
+          },
+          "no_fill_pnl_assumption_usdc": "0",
+          "quantity_shares_per_leg": "700",
+          "rates_are_estimates": false,
+          "status": "scenario_thresholds_only",
+          "unmatched_leg_loss": {
+            "annual_financing_rate_assumption": "0.10",
+            "conservative_unmatched_leg": "no",
+            "conservative_unmatched_leg_loss_usdc": "384.3816192876712328767123288",
+            "fee_cash_cost_bounds_used": "fragmentation_safe_upper",
+            "loss_by_unmatched_leg": {
+              "no": {
+                "leg_acquisition_cost_usdc": "369.00",
+                "leg_fee_cash_cost_upper_bound_usdc": "13.94720",
+                "loss_assumption_usdc": "384.3816192876712328767123288",
+                "single_leg_financing_cost_usdc": "0.7344192876712328767123287671",
+                "single_leg_operational_cost_usdc": "0.700",
+                "worst_terminal_pnl_usdc": "-384.3816192876712328767123288"
+              },
+              "yes": {
+                "leg_acquisition_cost_usdc": "343.50",
+                "leg_fee_cash_cost_upper_bound_usdc": "13.96920",
+                "loss_assumption_usdc": "358.8547573698630136986301370",
+                "single_leg_financing_cost_usdc": "0.6855573698630136986301369863",
+                "single_leg_operational_cost_usdc": "0.700",
+                "worst_terminal_pnl_usdc": "-358.8547573698630136986301370"
+              }
+            },
+            "operational_cost_per_share_assumption": "0.001",
+            "recovery_value_assumption_usdc": "0",
+            "scenario": "one leg fills, loses at settlement, and cannot be recovered",
+            "settlement_days_assumption": "7"
+          }
+        }
+      ]
+    },
+    "half_displayed_depth": {
+      "depth_fraction_assumption": "0.5",
+      "quantity_scenarios": [
+        {
+          "quantity_shares_per_leg": "5",
+          "rates_are_estimates": false,
+          "reason": "full displayed depth and per-leg minimum are both required",
+          "status": "complete_pair_economic_input_unavailable"
+        },
+        {
+          "quantity_shares_per_leg": "10",
+          "rates_are_estimates": false,
+          "reason": "full displayed depth and per-leg minimum are both required",
+          "status": "complete_pair_economic_input_unavailable"
+        },
+        {
+          "break_even": {
+            "fragmentation_safe_fee_bound": {
+              "complete_pair_pnl_assumption": "-0.0554736986301369863013698630",
+              "maximum_unmatched_rate_by_matched_completion_rate": [
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.05",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.10",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.25",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.50",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.75",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.90",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                }
+              ],
+              "minimum_matched_completions_per_unmatched_event": null,
+              "rates_are_estimates": false,
+              "required_matched_rate_by_unmatched_event_rate": [
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.001"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.01"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.05"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.10"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.25"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.50"
+                }
+              ],
+              "status": "no_positive_complete_pair_pnl",
+              "unmatched_leg_loss_assumption": "7.829958904109589041095890411",
+              "version": "veritas-execution-break-even-v1"
+            },
+            "single_match_rounding_scenario": {
+              "complete_pair_pnl_assumption": "0.2435987671232876712328767123",
+              "maximum_unmatched_rate_by_matched_completion_rate": [
+                {
+                  "break_even_unmatched_event_rate": "0.001555555847141380052380477512",
+                  "matched_completion_rate_assumption": "0.05",
+                  "maximum_unmatched_rate_without_negative_ev": "0.001555555847141380052380477512",
+                  "probability_mass_allows_break_even": true
+                },
+                {
+                  "break_even_unmatched_event_rate": "0.003111111694282760104760955024",
+                  "matched_completion_rate_assumption": "0.10",
+                  "maximum_unmatched_rate_without_negative_ev": "0.003111111694282760104760955024",
+                  "probability_mass_allows_break_even": true
+                },
+                {
+                  "break_even_unmatched_event_rate": "0.007777779235706900261902387561",
+                  "matched_completion_rate_assumption": "0.25",
+                  "maximum_unmatched_rate_without_negative_ev": "0.007777779235706900261902387561",
+                  "probability_mass_allows_break_even": true
+                },
+                {
+                  "break_even_unmatched_event_rate": "0.01555555847141380052380477512",
+                  "matched_completion_rate_assumption": "0.50",
+                  "maximum_unmatched_rate_without_negative_ev": "0.01555555847141380052380477512",
+                  "probability_mass_allows_break_even": true
+                },
+                {
+                  "break_even_unmatched_event_rate": "0.02333333770712070078570716268",
+                  "matched_completion_rate_assumption": "0.75",
+                  "maximum_unmatched_rate_without_negative_ev": "0.02333333770712070078570716268",
+                  "probability_mass_allows_break_even": true
+                },
+                {
+                  "break_even_unmatched_event_rate": "0.02800000524854484094284859522",
+                  "matched_completion_rate_assumption": "0.90",
+                  "maximum_unmatched_rate_without_negative_ev": "0.02800000524854484094284859522",
+                  "probability_mass_allows_break_even": true
+                }
+              ],
+              "minimum_matched_completions_per_unmatched_event": "32.14285111774302117056399166",
+              "rates_are_estimates": false,
+              "required_matched_rate_by_unmatched_event_rate": [
+                {
+                  "probability_mass_feasible": true,
+                  "required_matched_completion_rate": "0.03214285111774302117056399166",
+                  "unmatched_event_rate_assumption": "0.001"
+                },
+                {
+                  "probability_mass_feasible": true,
+                  "required_matched_completion_rate": "0.3214285111774302117056399166",
+                  "unmatched_event_rate_assumption": "0.01"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": "1.607142555887151058528199583",
+                  "unmatched_event_rate_assumption": "0.05"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": "3.214285111774302117056399166",
+                  "unmatched_event_rate_assumption": "0.10"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": "8.035712779435755292640997915",
+                  "unmatched_event_rate_assumption": "0.25"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": "16.07142555887151058528199583",
+                  "unmatched_event_rate_assumption": "0.50"
+                }
+              ],
+              "status": "conditional_break_even_thresholds_available",
+              "unmatched_leg_loss_assumption": "7.829958904109589041095890411",
+              "version": "veritas-execution-break-even-v1"
+            }
+          },
+          "complete_pair_pnl_scenarios_usdc": {
+            "fragmentation_safe_fee_worst_resolution": "-0.0554736986301369863013698630",
+            "single_match_rounding_worst_resolution": "0.2435987671232876712328767123"
+          },
+          "no_fill_pnl_assumption_usdc": "0",
+          "quantity_shares_per_leg": "15",
+          "rates_are_estimates": false,
+          "status": "scenario_thresholds_only",
+          "unmatched_leg_loss": {
+            "annual_financing_rate_assumption": "0.10",
+            "conservative_unmatched_leg": "no",
+            "conservative_unmatched_leg_loss_usdc": "7.829958904109589041095890411",
+            "fee_cash_cost_bounds_used": "fragmentation_safe_upper",
+            "loss_by_unmatched_leg": {
+              "no": {
+                "leg_acquisition_cost_usdc": "7.50",
+                "leg_fee_cash_cost_upper_bound_usdc": "0.30000",
+                "loss_assumption_usdc": "7.829958904109589041095890411",
+                "single_leg_financing_cost_usdc": "0.01495890410958904109589041096",
+                "single_leg_operational_cost_usdc": "0.015",
+                "worst_terminal_pnl_usdc": "-7.829958904109589041095890411"
+              },
+              "yes": {
+                "leg_acquisition_cost_usdc": "6.75",
+                "leg_fee_cash_cost_upper_bound_usdc": "0.29700",
+                "loss_assumption_usdc": "7.075514794520547945205479452",
+                "single_leg_financing_cost_usdc": "0.01351479452054794520547945205",
+                "single_leg_operational_cost_usdc": "0.015",
+                "worst_terminal_pnl_usdc": "-7.075514794520547945205479452"
+              }
+            },
+            "operational_cost_per_share_assumption": "0.001",
+            "recovery_value_assumption_usdc": "0",
+            "scenario": "one leg fills, loses at settlement, and cannot be recovered",
+            "settlement_days_assumption": "7"
+          }
+        },
+        {
+          "break_even": {
+            "fragmentation_safe_fee_bound": {
+              "complete_pair_pnl_assumption": "-0.0924561643835616438356164384",
+              "maximum_unmatched_rate_by_matched_completion_rate": [
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.05",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.10",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.25",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.50",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.75",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.90",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                }
+              ],
+              "minimum_matched_completions_per_unmatched_event": null,
+              "rates_are_estimates": false,
+              "required_matched_rate_by_unmatched_event_rate": [
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.001"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.01"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.05"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.10"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.25"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.50"
+                }
+              ],
+              "status": "no_positive_complete_pair_pnl",
+              "unmatched_leg_loss_assumption": "13.04993150684931506849315068",
+              "version": "veritas-execution-break-even-v1"
+            },
+            "single_match_rounding_scenario": {
+              "complete_pair_pnl_assumption": "0.4059979452054794520547945206",
+              "maximum_unmatched_rate_by_matched_completion_rate": [
+                {
+                  "break_even_unmatched_event_rate": "0.001555555847141380052380477513",
+                  "matched_completion_rate_assumption": "0.05",
+                  "maximum_unmatched_rate_without_negative_ev": "0.001555555847141380052380477513",
+                  "probability_mass_allows_break_even": true
+                },
+                {
+                  "break_even_unmatched_event_rate": "0.003111111694282760104760955026",
+                  "matched_completion_rate_assumption": "0.10",
+                  "maximum_unmatched_rate_without_negative_ev": "0.003111111694282760104760955026",
+                  "probability_mass_allows_break_even": true
+                },
+                {
+                  "break_even_unmatched_event_rate": "0.007777779235706900261902387566",
+                  "matched_completion_rate_assumption": "0.25",
+                  "maximum_unmatched_rate_without_negative_ev": "0.007777779235706900261902387566",
+                  "probability_mass_allows_break_even": true
+                },
+                {
+                  "break_even_unmatched_event_rate": "0.01555555847141380052380477513",
+                  "matched_completion_rate_assumption": "0.50",
+                  "maximum_unmatched_rate_without_negative_ev": "0.01555555847141380052380477513",
+                  "probability_mass_allows_break_even": true
+                },
+                {
+                  "break_even_unmatched_event_rate": "0.02333333770712070078570716270",
+                  "matched_completion_rate_assumption": "0.75",
+                  "maximum_unmatched_rate_without_negative_ev": "0.02333333770712070078570716270",
+                  "probability_mass_allows_break_even": true
+                },
+                {
+                  "break_even_unmatched_event_rate": "0.02800000524854484094284859524",
+                  "matched_completion_rate_assumption": "0.90",
+                  "maximum_unmatched_rate_without_negative_ev": "0.02800000524854484094284859524",
+                  "probability_mass_allows_break_even": true
+                }
+              ],
+              "minimum_matched_completions_per_unmatched_event": "32.14285111774302117056399164",
+              "rates_are_estimates": false,
+              "required_matched_rate_by_unmatched_event_rate": [
+                {
+                  "probability_mass_feasible": true,
+                  "required_matched_completion_rate": "0.03214285111774302117056399164",
+                  "unmatched_event_rate_assumption": "0.001"
+                },
+                {
+                  "probability_mass_feasible": true,
+                  "required_matched_completion_rate": "0.3214285111774302117056399164",
+                  "unmatched_event_rate_assumption": "0.01"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": "1.607142555887151058528199582",
+                  "unmatched_event_rate_assumption": "0.05"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": "3.214285111774302117056399164",
+                  "unmatched_event_rate_assumption": "0.10"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": "8.035712779435755292640997910",
+                  "unmatched_event_rate_assumption": "0.25"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": "16.07142555887151058528199582",
+                  "unmatched_event_rate_assumption": "0.50"
+                }
+              ],
+              "status": "conditional_break_even_thresholds_available",
+              "unmatched_leg_loss_assumption": "13.04993150684931506849315068",
+              "version": "veritas-execution-break-even-v1"
+            }
+          },
+          "complete_pair_pnl_scenarios_usdc": {
+            "fragmentation_safe_fee_worst_resolution": "-0.0924561643835616438356164384",
+            "single_match_rounding_worst_resolution": "0.4059979452054794520547945206"
+          },
+          "no_fill_pnl_assumption_usdc": "0",
+          "quantity_shares_per_leg": "25",
+          "rates_are_estimates": false,
+          "status": "scenario_thresholds_only",
+          "unmatched_leg_loss": {
+            "annual_financing_rate_assumption": "0.10",
+            "conservative_unmatched_leg": "no",
+            "conservative_unmatched_leg_loss_usdc": "13.04993150684931506849315068",
+            "fee_cash_cost_bounds_used": "fragmentation_safe_upper",
+            "loss_by_unmatched_leg": {
+              "no": {
+                "leg_acquisition_cost_usdc": "12.50",
+                "leg_fee_cash_cost_upper_bound_usdc": "0.50000",
+                "loss_assumption_usdc": "13.04993150684931506849315068",
+                "single_leg_financing_cost_usdc": "0.02493150684931506849315068493",
+                "single_leg_operational_cost_usdc": "0.025",
+                "worst_terminal_pnl_usdc": "-13.04993150684931506849315068"
+              },
+              "yes": {
+                "leg_acquisition_cost_usdc": "11.25",
+                "leg_fee_cash_cost_upper_bound_usdc": "0.49500",
+                "loss_assumption_usdc": "11.79252465753424657534246575",
+                "single_leg_financing_cost_usdc": "0.02252465753424657534246575342",
+                "single_leg_operational_cost_usdc": "0.025",
+                "worst_terminal_pnl_usdc": "-11.79252465753424657534246575"
+              }
+            },
+            "operational_cost_per_share_assumption": "0.001",
+            "recovery_value_assumption_usdc": "0",
+            "scenario": "one leg fills, loses at settlement, and cannot be recovered",
+            "settlement_days_assumption": "7"
+          }
+        },
+        {
+          "break_even": {
+            "fragmentation_safe_fee_bound": {
+              "complete_pair_pnl_assumption": "-0.1849123287671232876712328767",
+              "maximum_unmatched_rate_by_matched_completion_rate": [
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.05",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.10",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.25",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.50",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.75",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.90",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                }
+              ],
+              "minimum_matched_completions_per_unmatched_event": null,
+              "rates_are_estimates": false,
+              "required_matched_rate_by_unmatched_event_rate": [
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.001"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.01"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.05"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.10"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.25"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.50"
+                }
+              ],
+              "status": "no_positive_complete_pair_pnl",
+              "unmatched_leg_loss_assumption": "26.09986301369863013698630137",
+              "version": "veritas-execution-break-even-v1"
+            },
+            "single_match_rounding_scenario": {
+              "complete_pair_pnl_assumption": "0.8119958904109589041095890411",
+              "maximum_unmatched_rate_by_matched_completion_rate": [
+                {
+                  "break_even_unmatched_event_rate": "0.001555555847141380052380477513",
+                  "matched_completion_rate_assumption": "0.05",
+                  "maximum_unmatched_rate_without_negative_ev": "0.001555555847141380052380477513",
+                  "probability_mass_allows_break_even": true
+                },
+                {
+                  "break_even_unmatched_event_rate": "0.003111111694282760104760955025",
+                  "matched_completion_rate_assumption": "0.10",
+                  "maximum_unmatched_rate_without_negative_ev": "0.003111111694282760104760955025",
+                  "probability_mass_allows_break_even": true
+                },
+                {
+                  "break_even_unmatched_event_rate": "0.007777779235706900261902387564",
+                  "matched_completion_rate_assumption": "0.25",
+                  "maximum_unmatched_rate_without_negative_ev": "0.007777779235706900261902387564",
+                  "probability_mass_allows_break_even": true
+                },
+                {
+                  "break_even_unmatched_event_rate": "0.01555555847141380052380477513",
+                  "matched_completion_rate_assumption": "0.50",
+                  "maximum_unmatched_rate_without_negative_ev": "0.01555555847141380052380477513",
+                  "probability_mass_allows_break_even": true
+                },
+                {
+                  "break_even_unmatched_event_rate": "0.02333333770712070078570716269",
+                  "matched_completion_rate_assumption": "0.75",
+                  "maximum_unmatched_rate_without_negative_ev": "0.02333333770712070078570716269",
+                  "probability_mass_allows_break_even": true
+                },
+                {
+                  "break_even_unmatched_event_rate": "0.02800000524854484094284859523",
+                  "matched_completion_rate_assumption": "0.90",
+                  "maximum_unmatched_rate_without_negative_ev": "0.02800000524854484094284859523",
+                  "probability_mass_allows_break_even": true
+                }
+              ],
+              "minimum_matched_completions_per_unmatched_event": "32.14285111774302117056399165",
+              "rates_are_estimates": false,
+              "required_matched_rate_by_unmatched_event_rate": [
+                {
+                  "probability_mass_feasible": true,
+                  "required_matched_completion_rate": "0.03214285111774302117056399165",
+                  "unmatched_event_rate_assumption": "0.001"
+                },
+                {
+                  "probability_mass_feasible": true,
+                  "required_matched_completion_rate": "0.3214285111774302117056399165",
+                  "unmatched_event_rate_assumption": "0.01"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": "1.607142555887151058528199582",
+                  "unmatched_event_rate_assumption": "0.05"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": "3.214285111774302117056399165",
+                  "unmatched_event_rate_assumption": "0.10"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": "8.035712779435755292640997912",
+                  "unmatched_event_rate_assumption": "0.25"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": "16.07142555887151058528199582",
+                  "unmatched_event_rate_assumption": "0.50"
+                }
+              ],
+              "status": "conditional_break_even_thresholds_available",
+              "unmatched_leg_loss_assumption": "26.09986301369863013698630137",
+              "version": "veritas-execution-break-even-v1"
+            }
+          },
+          "complete_pair_pnl_scenarios_usdc": {
+            "fragmentation_safe_fee_worst_resolution": "-0.1849123287671232876712328767",
+            "single_match_rounding_worst_resolution": "0.8119958904109589041095890411"
+          },
+          "no_fill_pnl_assumption_usdc": "0",
+          "quantity_shares_per_leg": "50",
+          "rates_are_estimates": false,
+          "status": "scenario_thresholds_only",
+          "unmatched_leg_loss": {
+            "annual_financing_rate_assumption": "0.10",
+            "conservative_unmatched_leg": "no",
+            "conservative_unmatched_leg_loss_usdc": "26.09986301369863013698630137",
+            "fee_cash_cost_bounds_used": "fragmentation_safe_upper",
+            "loss_by_unmatched_leg": {
+              "no": {
+                "leg_acquisition_cost_usdc": "25.00",
+                "leg_fee_cash_cost_upper_bound_usdc": "1.00000",
+                "loss_assumption_usdc": "26.09986301369863013698630137",
+                "single_leg_financing_cost_usdc": "0.04986301369863013698630136986",
+                "single_leg_operational_cost_usdc": "0.050",
+                "worst_terminal_pnl_usdc": "-26.09986301369863013698630137"
+              },
+              "yes": {
+                "leg_acquisition_cost_usdc": "22.50",
+                "leg_fee_cash_cost_upper_bound_usdc": "0.99000",
+                "loss_assumption_usdc": "23.58504931506849315068493151",
+                "single_leg_financing_cost_usdc": "0.04504931506849315068493150685",
+                "single_leg_operational_cost_usdc": "0.050",
+                "worst_terminal_pnl_usdc": "-23.58504931506849315068493151"
+              }
+            },
+            "operational_cost_per_share_assumption": "0.001",
+            "recovery_value_assumption_usdc": "0",
+            "scenario": "one leg fills, loses at settlement, and cannot be recovered",
+            "settlement_days_assumption": "7"
+          }
+        },
+        {
+          "break_even": {
+            "fragmentation_safe_fee_bound": {
+              "complete_pair_pnl_assumption": "-2.881432219178082191780821918",
+              "maximum_unmatched_rate_by_matched_completion_rate": [
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.05",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.10",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.25",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.50",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.75",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.90",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                }
+              ],
+              "minimum_matched_completions_per_unmatched_event": null,
+              "rates_are_estimates": false,
+              "required_matched_rate_by_unmatched_event_rate": [
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.001"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.01"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.05"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.10"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.25"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.50"
+                }
+              ],
+              "status": "no_positive_complete_pair_pnl",
+              "unmatched_leg_loss_assumption": "53.20004076712328767123287671",
+              "version": "veritas-execution-break-even-v1"
+            },
+            "single_match_rounding_scenario": {
+              "complete_pair_pnl_assumption": "-0.884209260273972602739726027",
+              "maximum_unmatched_rate_by_matched_completion_rate": [
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.05",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.10",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.25",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.50",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.75",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.90",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                }
+              ],
+              "minimum_matched_completions_per_unmatched_event": null,
+              "rates_are_estimates": false,
+              "required_matched_rate_by_unmatched_event_rate": [
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.001"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.01"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.05"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.10"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.25"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.50"
+                }
+              ],
+              "status": "no_positive_complete_pair_pnl",
+              "unmatched_leg_loss_assumption": "53.20004076712328767123287671",
+              "version": "veritas-execution-break-even-v1"
+            }
+          },
+          "complete_pair_pnl_scenarios_usdc": {
+            "fragmentation_safe_fee_worst_resolution": "-2.881432219178082191780821918",
+            "single_match_rounding_worst_resolution": "-0.884209260273972602739726027"
+          },
+          "no_fill_pnl_assumption_usdc": "0",
+          "quantity_shares_per_leg": "100",
+          "rates_are_estimates": false,
+          "status": "scenario_thresholds_only",
+          "unmatched_leg_loss": {
+            "annual_financing_rate_assumption": "0.10",
+            "conservative_unmatched_leg": "no",
+            "conservative_unmatched_leg_loss_usdc": "53.20004076712328767123287671",
+            "fee_cash_cost_bounds_used": "fragmentation_safe_upper",
+            "loss_by_unmatched_leg": {
+              "no": {
+                "leg_acquisition_cost_usdc": "51.000",
+                "leg_fee_cash_cost_upper_bound_usdc": "1.99840",
+                "loss_assumption_usdc": "53.20004076712328767123287671",
+                "single_leg_financing_cost_usdc": "0.1016407671232876712328767123",
+                "single_leg_operational_cost_usdc": "0.100",
+                "worst_terminal_pnl_usdc": "-53.20004076712328767123287671"
+              },
+              "yes": {
+                "leg_acquisition_cost_usdc": "46.500",
+                "leg_fee_cash_cost_upper_bound_usdc": "1.98840",
+                "loss_assumption_usdc": "48.68139145205479452054794521",
+                "single_leg_financing_cost_usdc": "0.09299145205479452054794520548",
+                "single_leg_operational_cost_usdc": "0.100",
+                "worst_terminal_pnl_usdc": "-48.68139145205479452054794521"
+              }
+            },
+            "operational_cost_per_share_assumption": "0.001",
+            "recovery_value_assumption_usdc": "0",
+            "scenario": "one leg fills, loses at settlement, and cannot be recovered",
+            "settlement_days_assumption": "7"
+          }
+        },
+        {
+          "break_even": {
+            "fragmentation_safe_fee_bound": {
+              "complete_pair_pnl_assumption": "-9.525065808219178082191780822",
+              "maximum_unmatched_rate_by_matched_completion_rate": [
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.05",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.10",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.25",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.50",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.75",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.90",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                }
+              ],
+              "minimum_matched_completions_per_unmatched_event": null,
+              "rates_are_estimates": false,
+              "required_matched_rate_by_unmatched_event_rate": [
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.001"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.01"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.05"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.10"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.25"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.50"
+                }
+              ],
+              "status": "no_positive_complete_pair_pnl",
+              "unmatched_leg_loss_assumption": "107.8989505753424657534246575",
+              "version": "veritas-execution-break-even-v1"
+            },
+            "single_match_rounding_scenario": {
+              "complete_pair_pnl_assumption": "-5.528115095890410958904109589",
+              "maximum_unmatched_rate_by_matched_completion_rate": [
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.05",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.10",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.25",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.50",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.75",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.90",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                }
+              ],
+              "minimum_matched_completions_per_unmatched_event": null,
+              "rates_are_estimates": false,
+              "required_matched_rate_by_unmatched_event_rate": [
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.001"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.01"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.05"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.10"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.25"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.50"
+                }
+              ],
+              "status": "no_positive_complete_pair_pnl",
+              "unmatched_leg_loss_assumption": "107.8989505753424657534246575",
+              "version": "veritas-execution-break-even-v1"
+            }
+          },
+          "complete_pair_pnl_scenarios_usdc": {
+            "fragmentation_safe_fee_worst_resolution": "-9.525065808219178082191780822",
+            "single_match_rounding_worst_resolution": "-5.528115095890410958904109589"
+          },
+          "no_fill_pnl_assumption_usdc": "0",
+          "quantity_shares_per_leg": "200",
+          "rates_are_estimates": false,
+          "status": "scenario_thresholds_only",
+          "unmatched_leg_loss": {
+            "annual_financing_rate_assumption": "0.10",
+            "conservative_unmatched_leg": "no",
+            "conservative_unmatched_leg_loss_usdc": "107.8989505753424657534246575",
+            "fee_cash_cost_bounds_used": "fragmentation_safe_upper",
+            "loss_by_unmatched_leg": {
+              "no": {
+                "leg_acquisition_cost_usdc": "103.500",
+                "leg_fee_cash_cost_upper_bound_usdc": "3.99280",
+                "loss_assumption_usdc": "107.8989505753424657534246575",
+                "single_leg_financing_cost_usdc": "0.2061505753424657534246575342",
+                "single_leg_operational_cost_usdc": "0.200",
+                "worst_terminal_pnl_usdc": "-107.8989505753424657534246575"
+              },
+              "yes": {
+                "leg_acquisition_cost_usdc": "95.250",
+                "leg_fee_cash_cost_upper_bound_usdc": "3.98580",
+                "loss_assumption_usdc": "99.62611523287671232876712329",
+                "single_leg_financing_cost_usdc": "0.1903152328767123287671232877",
+                "single_leg_operational_cost_usdc": "0.200",
+                "worst_terminal_pnl_usdc": "-99.62611523287671232876712329"
+              }
+            },
+            "operational_cost_per_share_assumption": "0.001",
+            "recovery_value_assumption_usdc": "0",
+            "scenario": "one leg fills, loses at settlement, and cannot be recovered",
+            "settlement_days_assumption": "7"
+          }
+        },
+        {
+          "break_even": {
+            "fragmentation_safe_fee_bound": {
+              "complete_pair_pnl_assumption": "-25.11818832876712328767123288",
+              "maximum_unmatched_rate_by_matched_completion_rate": [
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.05",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.10",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.25",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.50",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.75",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.90",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                }
+              ],
+              "minimum_matched_completions_per_unmatched_event": null,
+              "rates_are_estimates": false,
+              "required_matched_rate_by_unmatched_event_rate": [
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.001"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.01"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.05"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.10"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.25"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.50"
+                }
+              ],
+              "status": "no_positive_complete_pair_pnl",
+              "unmatched_leg_loss_assumption": "192.1908096438356164383561644",
+              "version": "veritas-execution-break-even-v1"
+            },
+            "single_match_rounding_scenario": {
+              "complete_pair_pnl_assumption": "-18.12570375342465753424657534",
+              "maximum_unmatched_rate_by_matched_completion_rate": [
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.05",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.10",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.25",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.50",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.75",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                },
+                {
+                  "break_even_unmatched_event_rate": null,
+                  "matched_completion_rate_assumption": "0.90",
+                  "maximum_unmatched_rate_without_negative_ev": null,
+                  "probability_mass_allows_break_even": false
+                }
+              ],
+              "minimum_matched_completions_per_unmatched_event": null,
+              "rates_are_estimates": false,
+              "required_matched_rate_by_unmatched_event_rate": [
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.001"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.01"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.05"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.10"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.25"
+                },
+                {
+                  "probability_mass_feasible": false,
+                  "required_matched_completion_rate": null,
+                  "unmatched_event_rate_assumption": "0.50"
+                }
+              ],
+              "status": "no_positive_complete_pair_pnl",
+              "unmatched_leg_loss_assumption": "192.1908096438356164383561644",
+              "version": "veritas-execution-break-even-v1"
+            }
+          },
+          "complete_pair_pnl_scenarios_usdc": {
+            "fragmentation_safe_fee_worst_resolution": "-25.11818832876712328767123288",
+            "single_match_rounding_worst_resolution": "-18.12570375342465753424657534"
+          },
+          "no_fill_pnl_assumption_usdc": "0",
+          "quantity_shares_per_leg": "350",
+          "rates_are_estimates": false,
+          "status": "scenario_thresholds_only",
+          "unmatched_leg_loss": {
+            "annual_financing_rate_assumption": "0.10",
+            "conservative_unmatched_leg": "no",
+            "conservative_unmatched_leg_loss_usdc": "192.1908096438356164383561644",
+            "fee_cash_cost_bounds_used": "fragmentation_safe_upper",
+            "loss_by_unmatched_leg": {
+              "no": {
+                "leg_acquisition_cost_usdc": "184.500",
+                "leg_fee_cash_cost_upper_bound_usdc": "6.97360",
+                "loss_assumption_usdc": "192.1908096438356164383561644",
+                "single_leg_financing_cost_usdc": "0.3672096438356164383561643836",
+                "single_leg_operational_cost_usdc": "0.350",
+                "worst_terminal_pnl_usdc": "-192.1908096438356164383561644"
+              },
+              "yes": {
+                "leg_acquisition_cost_usdc": "171.750",
+                "leg_fee_cash_cost_upper_bound_usdc": "6.98460",
+                "loss_assumption_usdc": "179.4273786849315068493150685",
+                "single_leg_financing_cost_usdc": "0.3427786849315068493150684932",
+                "single_leg_operational_cost_usdc": "0.350",
+                "worst_terminal_pnl_usdc": "-179.4273786849315068493150685"
+              }
+            },
+            "operational_cost_per_share_assumption": "0.001",
+            "recovery_value_assumption_usdc": "0",
+            "scenario": "one leg fills, loses at settlement, and cannot be recovered",
+            "settlement_days_assumption": "7"
+          }
+        },
+        {
+          "quantity_shares_per_leg": "700",
+          "rates_are_estimates": false,
+          "reason": "full displayed depth and per-leg minimum are both required",
+          "status": "complete_pair_economic_input_unavailable"
+        }
+      ]
+    }
+  },
+  "experiment_id": "VERITAS-GATE-B-EXECUTION-BREAK-EVEN-20261016-002",
+  "fee_collection_medium_for_buy": "collateral",
+  "fee_collection_source": "https://github.com/Polymarket/ctf-exchange-v2/blob/main/src/exchange/mixins/Trading.sol",
+  "fee_model_version": "veritas-economic-feasibility-v3",
+  "limitations": [
+    "Synthetic order levels are chosen solely to exercise the accounting and capacity model.",
+    "Displayed depth is not a fill guarantee, and the depth fraction is a sensitivity, not a fill probability.",
+    "No order arrival, queue priority, market impact, adversarial reaction, FX conversion, or real operating cost is measured.",
+    "Capital frontiers select from a discrete quantity grid and exclude any claim of deployable capacity.",
+    "Single-match P&L is conditional on the stated rounding and resolution assumptions; the fragmentation-safe lower bound is the conservative fee sensitivity.",
+    "No policy or strategy is promoted by this synthetic exercise.",
+    "Completion and unmatched-event rates are not estimated from public quote data or any private execution record.",
+    "The unmatched leg is held to an adverse settlement outcome with zero recovery value; alternative recovery paths are not identified.",
+    "The single-match fee case is a favorable fragmentation sensitivity, while the fragmentation-safe case is the conservative fee bound.",
+    "Taker fees are modeled as collateral costs charged at entry on each purchased leg, independent of the eventual resolution.",
+    "The synthetic order book and all costs are controlled inputs; this analysis is not strategy performance or deployable capacity."
+  ],
+  "market_semantics": {
+    "pair": "same-condition Yes/No CTF",
+    "payoff_verified_for_engine_scope": true,
+    "payout_per_complete_set_usdc": "1",
+    "protocol": "v1"
+  },
+  "orders_submitted": false,
+  "parent_capacity_experiment_id": "VERITAS-GATE-B-CAPACITY-20261015-001",
+  "question": "What matched-completion rate would offset a hypothetical unmatched-leg loss under explicit synthetic cost assumptions?",
+  "realized_money": null,
+  "rounding_scenario_scope": "Each displayed price level is treated as one hypothetical match in the single-match scenario; fragmented matches are not observed.",
+  "scenarios": {
+    "full_displayed_depth": {
+      "capital_frontier": [
+        {
+          "economic_status_at_selected_quantity": null,
+          "entry_capital_required_usdc": null,
+          "hypothetical_capital_usdc": "5",
+          "interpretation": "displayed-depth and affordability bound; no fill claim",
+          "maximum_grid_quantity_supported": null,
+          "pnl_bounds_usdc_at_selected_quantity": null
+        },
+        {
+          "economic_status_at_selected_quantity": null,
+          "entry_capital_required_usdc": null,
+          "hypothetical_capital_usdc": "10",
+          "interpretation": "displayed-depth and affordability bound; no fill claim",
+          "maximum_grid_quantity_supported": null,
+          "pnl_bounds_usdc_at_selected_quantity": null
+        },
+        {
+          "economic_status_at_selected_quantity": "positive_under_single_match_rounding_scenario_only",
+          "entry_capital_required_usdc": "14.87700",
+          "hypothetical_capital_usdc": "15",
+          "interpretation": "displayed-depth and affordability bound; no fill claim",
+          "maximum_grid_quantity_supported": "15",
+          "pnl_bounds_usdc_at_selected_quantity": [
+            "-0.0554736986301369863013698630",
+            "0.5426712328767123287671232877"
+          ]
+        },
+        {
+          "economic_status_at_selected_quantity": "positive_under_single_match_rounding_scenario_only",
+          "entry_capital_required_usdc": "24.79500",
+          "hypothetical_capital_usdc": "25",
+          "interpretation": "displayed-depth and affordability bound; no fill claim",
+          "maximum_grid_quantity_supported": "25",
+          "pnl_bounds_usdc_at_selected_quantity": [
+            "-0.0924561643835616438356164384",
+            "0.9044520547945205479452054794"
+          ]
+        },
+        {
+          "economic_status_at_selected_quantity": "positive_under_single_match_rounding_scenario_only",
+          "entry_capital_required_usdc": "49.59000",
+          "hypothetical_capital_usdc": "50",
+          "interpretation": "displayed-depth and affordability bound; no fill claim",
+          "maximum_grid_quantity_supported": "50",
+          "pnl_bounds_usdc_at_selected_quantity": [
+            "-0.1849123287671232876712328767",
+            "1.808904109589041095890410959"
+          ]
+        },
+        {
+          "economic_status_at_selected_quantity": "positive_under_single_match_rounding_scenario_only",
+          "entry_capital_required_usdc": "99.18000",
+          "hypothetical_capital_usdc": "100",
+          "interpretation": "displayed-depth and affordability bound; no fill claim",
+          "maximum_grid_quantity_supported": "100",
+          "pnl_bounds_usdc_at_selected_quantity": [
+            "-0.369824657534246575342465753",
+            "3.617808219178082191780821918"
+          ]
+        },
+        {
+          "economic_status_at_selected_quantity": "nonpositive_under_single_match_rounding_scenario",
+          "entry_capital_required_usdc": "203.37360",
+          "hypothetical_capital_usdc": "250",
+          "interpretation": "displayed-depth and affordability bound; no fill claim",
+          "maximum_grid_quantity_supported": "200",
+          "pnl_bounds_usdc_at_selected_quantity": [
+            "-5.762864438356164383561643836",
+            "2.226027397260273972602739726"
+          ]
+        },
+        {
+          "economic_status_at_selected_quantity": "nonpositive_under_single_match_rounding_scenario",
+          "entry_capital_required_usdc": "359.66400",
+          "hypothetical_capital_usdc": "500",
+          "interpretation": "displayed-depth and affordability bound; no fill claim",
+          "maximum_grid_quantity_supported": "350",
+          "pnl_bounds_usdc_at_selected_quantity": [
+            "-13.85242410958904109589041096",
+            "0.138356164383561643835616438"
+          ]
+        },
+        {
+          "economic_status_at_selected_quantity": "nonpositive_under_single_match_rounding_scenario",
+          "entry_capital_required_usdc": "741.81640",
+          "hypothetical_capital_usdc": "750",
+          "interpretation": "displayed-depth and affordability bound; no fill claim",
+          "maximum_grid_quantity_supported": "700",
+          "pnl_bounds_usdc_at_selected_quantity": [
+            "-50.23637665753424657534246575",
+            "-22.26643835616438356164383562"
+          ]
+        },
+        {
+          "economic_status_at_selected_quantity": "nonpositive_under_single_match_rounding_scenario",
+          "entry_capital_required_usdc": "741.81640",
+          "hypothetical_capital_usdc": "1000",
+          "interpretation": "displayed-depth and affordability bound; no fill claim",
+          "maximum_grid_quantity_supported": "700",
+          "pnl_bounds_usdc_at_selected_quantity": [
+            "-50.23637665753424657534246575",
+            "-22.26643835616438356164383562"
+          ]
+        },
+        {
+          "economic_status_at_selected_quantity": "nonpositive_under_single_match_rounding_scenario",
+          "entry_capital_required_usdc": "741.81640",
+          "hypothetical_capital_usdc": "5000",
+          "interpretation": "displayed-depth and affordability bound; no fill claim",
+          "maximum_grid_quantity_supported": "700",
+          "pnl_bounds_usdc_at_selected_quantity": [
+            "-50.23637665753424657534246575",
+            "-22.26643835616438356164383562"
+          ]
+        },
+        {
+          "economic_status_at_selected_quantity": "nonpositive_under_single_match_rounding_scenario",
+          "entry_capital_required_usdc": "741.81640",
+          "hypothetical_capital_usdc": "10000",
+          "interpretation": "displayed-depth and affordability bound; no fill claim",
+          "maximum_grid_quantity_supported": "700",
+          "pnl_bounds_usdc_at_selected_quantity": [
+            "-50.23637665753424657534246575",
+            "-22.26643835616438356164383562"
+          ]
+        },
+        {
+          "economic_status_at_selected_quantity": "nonpositive_under_single_match_rounding_scenario",
+          "entry_capital_required_usdc": "741.81640",
+          "hypothetical_capital_usdc": "50000",
+          "interpretation": "displayed-depth and affordability bound; no fill claim",
+          "maximum_grid_quantity_supported": "700",
+          "pnl_bounds_usdc_at_selected_quantity": [
+            "-50.23637665753424657534246575",
+            "-22.26643835616438356164383562"
+          ]
+        }
+      ],
+      "depth_fraction_assumption": "1",
+      "quantity_scenarios": [
+        {
+          "acquisition_cost_total_usdc": null,
+          "actual_fills": "unknown_counterfactual",
+          "capital_required_at_entry_usdc": null,
+          "economic_status": "below_reported_minimum_order_notional",
+          "fill_probability": null,
+          "fragmentation_safe_pnl_lower_by_resolution_usdc": null,
+          "full_quantity_supported_by_displayed_depth": true,
+          "minimum_order_notional_satisfied": false,
+          "observed_order_notional_by_leg_usdc": {
+            "no": "2.50",
+            "yes": "2.25"
+          },
+          "pnl_bounds_usdc": null,
+          "quantity_shares_per_leg": "5",
+          "single_match_pnl_by_resolution_usdc": null
+        },
+        {
+          "acquisition_cost_total_usdc": null,
+          "actual_fills": "unknown_counterfactual",
+          "capital_required_at_entry_usdc": null,
+          "economic_status": "below_reported_minimum_order_notional",
+          "fill_probability": null,
+          "fragmentation_safe_pnl_lower_by_resolution_usdc": null,
+          "full_quantity_supported_by_displayed_depth": true,
+          "minimum_order_notional_satisfied": false,
+          "observed_order_notional_by_leg_usdc": {
+            "no": "5.00",
+            "yes": "4.50"
+          },
+          "pnl_bounds_usdc": null,
+          "quantity_shares_per_leg": "10",
+          "single_match_pnl_by_resolution_usdc": null
+        },
+        {
+          "acquisition_cost_total_usdc": "14.25",
+          "actual_fills": "unknown_counterfactual",
+          "capital_required_at_entry_usdc": "14.87700",
+          "economic_status": "positive_under_single_match_rounding_scenario_only",
+          "fill_probability": null,
+          "fragmentation_safe_pnl_lower_by_resolution_usdc": {
+            "no_wins": "-0.0554736986301369863013698630",
+            "yes_wins": "-0.0554736986301369863013698630"
+          },
+          "full_quantity_supported_by_displayed_depth": true,
+          "minimum_order_notional_satisfied": true,
+          "observed_order_notional_by_leg_usdc": {
+            "no": "7.50",
+            "yes": "6.75"
+          },
+          "pnl_bounds_usdc": [
+            "-0.0554736986301369863013698630",
+            "0.5426712328767123287671232877"
+          ],
+          "quantity_shares_per_leg": "15",
+          "single_match_pnl_by_resolution_usdc": {
+            "no_wins": "0.2435987671232876712328767123",
+            "yes_wins": "0.2435987671232876712328767123"
+          }
+        },
+        {
+          "acquisition_cost_total_usdc": "23.75",
+          "actual_fills": "unknown_counterfactual",
+          "capital_required_at_entry_usdc": "24.79500",
+          "economic_status": "positive_under_single_match_rounding_scenario_only",
+          "fill_probability": null,
+          "fragmentation_safe_pnl_lower_by_resolution_usdc": {
+            "no_wins": "-0.0924561643835616438356164384",
+            "yes_wins": "-0.0924561643835616438356164384"
+          },
+          "full_quantity_supported_by_displayed_depth": true,
+          "minimum_order_notional_satisfied": true,
+          "observed_order_notional_by_leg_usdc": {
+            "no": "12.50",
+            "yes": "11.25"
+          },
+          "pnl_bounds_usdc": [
+            "-0.0924561643835616438356164384",
+            "0.9044520547945205479452054794"
+          ],
+          "quantity_shares_per_leg": "25",
+          "single_match_pnl_by_resolution_usdc": {
+            "no_wins": "0.4059979452054794520547945206",
+            "yes_wins": "0.4059979452054794520547945206"
+          }
+        },
+        {
+          "acquisition_cost_total_usdc": "47.50",
+          "actual_fills": "unknown_counterfactual",
+          "capital_required_at_entry_usdc": "49.59000",
+          "economic_status": "positive_under_single_match_rounding_scenario_only",
+          "fill_probability": null,
+          "fragmentation_safe_pnl_lower_by_resolution_usdc": {
+            "no_wins": "-0.1849123287671232876712328767",
+            "yes_wins": "-0.1849123287671232876712328767"
+          },
+          "full_quantity_supported_by_displayed_depth": true,
+          "minimum_order_notional_satisfied": true,
+          "observed_order_notional_by_leg_usdc": {
+            "no": "25.00",
+            "yes": "22.50"
+          },
+          "pnl_bounds_usdc": [
+            "-0.1849123287671232876712328767",
+            "1.808904109589041095890410959"
+          ],
+          "quantity_shares_per_leg": "50",
+          "single_match_pnl_by_resolution_usdc": {
+            "no_wins": "0.8119958904109589041095890411",
+            "yes_wins": "0.8119958904109589041095890411"
+          }
+        },
+        {
+          "acquisition_cost_total_usdc": "95.00",
+          "actual_fills": "unknown_counterfactual",
+          "capital_required_at_entry_usdc": "99.18000",
+          "economic_status": "positive_under_single_match_rounding_scenario_only",
+          "fill_probability": null,
+          "fragmentation_safe_pnl_lower_by_resolution_usdc": {
+            "no_wins": "-0.369824657534246575342465753",
+            "yes_wins": "-0.369824657534246575342465753"
+          },
+          "full_quantity_supported_by_displayed_depth": true,
+          "minimum_order_notional_satisfied": true,
+          "observed_order_notional_by_leg_usdc": {
+            "no": "50.00",
+            "yes": "45.00"
+          },
+          "pnl_bounds_usdc": [
+            "-0.369824657534246575342465753",
+            "3.617808219178082191780821918"
+          ],
+          "quantity_shares_per_leg": "100",
+          "single_match_pnl_by_resolution_usdc": {
+            "no_wins": "1.623991780821917808219178082",
+            "yes_wins": "1.623991780821917808219178082"
+          }
+        },
+        {
+          "acquisition_cost_total_usdc": "195.00",
+          "actual_fills": "unknown_counterfactual",
+          "capital_required_at_entry_usdc": "203.37360",
+          "economic_status": "nonpositive_under_single_match_rounding_scenario",
+          "fill_probability": null,
+          "fragmentation_safe_pnl_lower_by_resolution_usdc": {
+            "no_wins": "-5.762864438356164383561643836",
+            "yes_wins": "-5.762864438356164383561643836"
+          },
+          "full_quantity_supported_by_displayed_depth": true,
+          "minimum_order_notional_satisfied": true,
+          "observed_order_notional_by_leg_usdc": {
+            "no": "102.00",
+            "yes": "93.00"
+          },
+          "pnl_bounds_usdc": [
+            "-5.762864438356164383561643836",
+            "2.226027397260273972602739726"
+          ],
+          "quantity_shares_per_leg": "200",
+          "single_match_pnl_by_resolution_usdc": {
+            "no_wins": "-1.768418520547945205479452055",
+            "yes_wins": "-1.768418520547945205479452055"
+          }
+        },
+        {
+          "acquisition_cost_total_usdc": "345.00",
+          "actual_fills": "unknown_counterfactual",
+          "capital_required_at_entry_usdc": "359.66400",
+          "economic_status": "nonpositive_under_single_match_rounding_scenario",
+          "fill_probability": null,
+          "fragmentation_safe_pnl_lower_by_resolution_usdc": {
+            "no_wins": "-13.85242410958904109589041096",
+            "yes_wins": "-13.85242410958904109589041096"
+          },
+          "full_quantity_supported_by_displayed_depth": true,
+          "minimum_order_notional_satisfied": true,
+          "observed_order_notional_by_leg_usdc": {
+            "no": "180.00",
+            "yes": "165.00"
+          },
+          "pnl_bounds_usdc": [
+            "-13.85242410958904109589041096",
+            "0.138356164383561643835616438"
+          ],
+          "quantity_shares_per_leg": "350",
+          "single_match_pnl_by_resolution_usdc": {
+            "no_wins": "-6.857033972602739726027397260",
+            "yes_wins": "-6.857033972602739726027397260"
+          }
+        },
+        {
+          "acquisition_cost_total_usdc": "712.50",
+          "actual_fills": "unknown_counterfactual",
+          "capital_required_at_entry_usdc": "741.81640",
+          "economic_status": "nonpositive_under_single_match_rounding_scenario",
+          "fill_probability": null,
+          "fragmentation_safe_pnl_lower_by_resolution_usdc": {
+            "no_wins": "-50.23637665753424657534246575",
+            "yes_wins": "-50.23637665753424657534246575"
+          },
+          "full_quantity_supported_by_displayed_depth": true,
+          "minimum_order_notional_satisfied": true,
+          "observed_order_notional_by_leg_usdc": {
+            "no": "369.00",
+            "yes": "343.50"
+          },
+          "pnl_bounds_usdc": [
+            "-50.23637665753424657534246575",
+            "-22.26643835616438356164383562"
+          ],
+          "quantity_shares_per_leg": "700",
+          "single_match_pnl_by_resolution_usdc": {
+            "no_wins": "-36.25140750684931506849315068",
+            "yes_wins": "-36.25140750684931506849315068"
+          }
+        }
+      ]
+    },
+    "half_displayed_depth": {
+      "capital_frontier": [
+        {
+          "economic_status_at_selected_quantity": null,
+          "entry_capital_required_usdc": null,
+          "hypothetical_capital_usdc": "5",
+          "interpretation": "displayed-depth and affordability bound; no fill claim",
+          "maximum_grid_quantity_supported": null,
+          "pnl_bounds_usdc_at_selected_quantity": null
+        },
+        {
+          "economic_status_at_selected_quantity": null,
+          "entry_capital_required_usdc": null,
+          "hypothetical_capital_usdc": "10",
+          "interpretation": "displayed-depth and affordability bound; no fill claim",
+          "maximum_grid_quantity_supported": null,
+          "pnl_bounds_usdc_at_selected_quantity": null
+        },
+        {
+          "economic_status_at_selected_quantity": "positive_under_single_match_rounding_scenario_only",
+          "entry_capital_required_usdc": "14.87700",
+          "hypothetical_capital_usdc": "15",
+          "interpretation": "displayed-depth and affordability bound; no fill claim",
+          "maximum_grid_quantity_supported": "15",
+          "pnl_bounds_usdc_at_selected_quantity": [
+            "-0.0554736986301369863013698630",
+            "0.5426712328767123287671232877"
+          ]
+        },
+        {
+          "economic_status_at_selected_quantity": "positive_under_single_match_rounding_scenario_only",
+          "entry_capital_required_usdc": "24.79500",
+          "hypothetical_capital_usdc": "25",
+          "interpretation": "displayed-depth and affordability bound; no fill claim",
+          "maximum_grid_quantity_supported": "25",
+          "pnl_bounds_usdc_at_selected_quantity": [
+            "-0.0924561643835616438356164384",
+            "0.9044520547945205479452054794"
+          ]
+        },
+        {
+          "economic_status_at_selected_quantity": "positive_under_single_match_rounding_scenario_only",
+          "entry_capital_required_usdc": "49.59000",
+          "hypothetical_capital_usdc": "50",
+          "interpretation": "displayed-depth and affordability bound; no fill claim",
+          "maximum_grid_quantity_supported": "50",
+          "pnl_bounds_usdc_at_selected_quantity": [
+            "-0.1849123287671232876712328767",
+            "1.808904109589041095890410959"
+          ]
+        },
+        {
+          "economic_status_at_selected_quantity": "positive_under_single_match_rounding_scenario_only",
+          "entry_capital_required_usdc": "49.59000",
+          "hypothetical_capital_usdc": "100",
+          "interpretation": "displayed-depth and affordability bound; no fill claim",
+          "maximum_grid_quantity_supported": "50",
+          "pnl_bounds_usdc_at_selected_quantity": [
+            "-0.1849123287671232876712328767",
+            "1.808904109589041095890410959"
+          ]
+        },
+        {
+          "economic_status_at_selected_quantity": "nonpositive_under_single_match_rounding_scenario",
+          "entry_capital_required_usdc": "207.12860",
+          "hypothetical_capital_usdc": "250",
+          "interpretation": "displayed-depth and affordability bound; no fill claim",
+          "maximum_grid_quantity_supported": "200",
+          "pnl_bounds_usdc_at_selected_quantity": [
+            "-9.525065808219178082191780822",
+            "-1.531164383561643835616438356"
+          ]
+        },
+        {
+          "economic_status_at_selected_quantity": "nonpositive_under_single_match_rounding_scenario",
+          "entry_capital_required_usdc": "370.90820",
+          "hypothetical_capital_usdc": "500",
+          "interpretation": "displayed-depth and affordability bound; no fill claim",
+          "maximum_grid_quantity_supported": "350",
+          "pnl_bounds_usdc_at_selected_quantity": [
+            "-25.11818832876712328767123288",
+            "-11.13321917808219178082191781"
+          ]
+        },
+        {
+          "economic_status_at_selected_quantity": "nonpositive_under_single_match_rounding_scenario",
+          "entry_capital_required_usdc": "370.90820",
+          "hypothetical_capital_usdc": "750",
+          "interpretation": "displayed-depth and affordability bound; no fill claim",
+          "maximum_grid_quantity_supported": "350",
+          "pnl_bounds_usdc_at_selected_quantity": [
+            "-25.11818832876712328767123288",
+            "-11.13321917808219178082191781"
+          ]
+        },
+        {
+          "economic_status_at_selected_quantity": "nonpositive_under_single_match_rounding_scenario",
+          "entry_capital_required_usdc": "370.90820",
+          "hypothetical_capital_usdc": "1000",
+          "interpretation": "displayed-depth and affordability bound; no fill claim",
+          "maximum_grid_quantity_supported": "350",
+          "pnl_bounds_usdc_at_selected_quantity": [
+            "-25.11818832876712328767123288",
+            "-11.13321917808219178082191781"
+          ]
+        },
+        {
+          "economic_status_at_selected_quantity": "nonpositive_under_single_match_rounding_scenario",
+          "entry_capital_required_usdc": "370.90820",
+          "hypothetical_capital_usdc": "5000",
+          "interpretation": "displayed-depth and affordability bound; no fill claim",
+          "maximum_grid_quantity_supported": "350",
+          "pnl_bounds_usdc_at_selected_quantity": [
+            "-25.11818832876712328767123288",
+            "-11.13321917808219178082191781"
+          ]
+        },
+        {
+          "economic_status_at_selected_quantity": "nonpositive_under_single_match_rounding_scenario",
+          "entry_capital_required_usdc": "370.90820",
+          "hypothetical_capital_usdc": "10000",
+          "interpretation": "displayed-depth and affordability bound; no fill claim",
+          "maximum_grid_quantity_supported": "350",
+          "pnl_bounds_usdc_at_selected_quantity": [
+            "-25.11818832876712328767123288",
+            "-11.13321917808219178082191781"
+          ]
+        },
+        {
+          "economic_status_at_selected_quantity": "nonpositive_under_single_match_rounding_scenario",
+          "entry_capital_required_usdc": "370.90820",
+          "hypothetical_capital_usdc": "50000",
+          "interpretation": "displayed-depth and affordability bound; no fill claim",
+          "maximum_grid_quantity_supported": "350",
+          "pnl_bounds_usdc_at_selected_quantity": [
+            "-25.11818832876712328767123288",
+            "-11.13321917808219178082191781"
+          ]
+        }
+      ],
+      "depth_fraction_assumption": "0.5",
+      "quantity_scenarios": [
+        {
+          "acquisition_cost_total_usdc": null,
+          "actual_fills": "unknown_counterfactual",
+          "capital_required_at_entry_usdc": null,
+          "economic_status": "below_reported_minimum_order_notional",
+          "fill_probability": null,
+          "fragmentation_safe_pnl_lower_by_resolution_usdc": null,
+          "full_quantity_supported_by_displayed_depth": true,
+          "minimum_order_notional_satisfied": false,
+          "observed_order_notional_by_leg_usdc": {
+            "no": "2.50",
+            "yes": "2.25"
+          },
+          "pnl_bounds_usdc": null,
+          "quantity_shares_per_leg": "5",
+          "single_match_pnl_by_resolution_usdc": null
+        },
+        {
+          "acquisition_cost_total_usdc": null,
+          "actual_fills": "unknown_counterfactual",
+          "capital_required_at_entry_usdc": null,
+          "economic_status": "below_reported_minimum_order_notional",
+          "fill_probability": null,
+          "fragmentation_safe_pnl_lower_by_resolution_usdc": null,
+          "full_quantity_supported_by_displayed_depth": true,
+          "minimum_order_notional_satisfied": false,
+          "observed_order_notional_by_leg_usdc": {
+            "no": "5.00",
+            "yes": "4.50"
+          },
+          "pnl_bounds_usdc": null,
+          "quantity_shares_per_leg": "10",
+          "single_match_pnl_by_resolution_usdc": null
+        },
+        {
+          "acquisition_cost_total_usdc": "14.25",
+          "actual_fills": "unknown_counterfactual",
+          "capital_required_at_entry_usdc": "14.87700",
+          "economic_status": "positive_under_single_match_rounding_scenario_only",
+          "fill_probability": null,
+          "fragmentation_safe_pnl_lower_by_resolution_usdc": {
+            "no_wins": "-0.0554736986301369863013698630",
+            "yes_wins": "-0.0554736986301369863013698630"
+          },
+          "full_quantity_supported_by_displayed_depth": true,
+          "minimum_order_notional_satisfied": true,
+          "observed_order_notional_by_leg_usdc": {
+            "no": "7.50",
+            "yes": "6.75"
+          },
+          "pnl_bounds_usdc": [
+            "-0.0554736986301369863013698630",
+            "0.5426712328767123287671232877"
+          ],
+          "quantity_shares_per_leg": "15",
+          "single_match_pnl_by_resolution_usdc": {
+            "no_wins": "0.2435987671232876712328767123",
+            "yes_wins": "0.2435987671232876712328767123"
+          }
+        },
+        {
+          "acquisition_cost_total_usdc": "23.75",
+          "actual_fills": "unknown_counterfactual",
+          "capital_required_at_entry_usdc": "24.79500",
+          "economic_status": "positive_under_single_match_rounding_scenario_only",
+          "fill_probability": null,
+          "fragmentation_safe_pnl_lower_by_resolution_usdc": {
+            "no_wins": "-0.0924561643835616438356164384",
+            "yes_wins": "-0.0924561643835616438356164384"
+          },
+          "full_quantity_supported_by_displayed_depth": true,
+          "minimum_order_notional_satisfied": true,
+          "observed_order_notional_by_leg_usdc": {
+            "no": "12.50",
+            "yes": "11.25"
+          },
+          "pnl_bounds_usdc": [
+            "-0.0924561643835616438356164384",
+            "0.9044520547945205479452054794"
+          ],
+          "quantity_shares_per_leg": "25",
+          "single_match_pnl_by_resolution_usdc": {
+            "no_wins": "0.4059979452054794520547945206",
+            "yes_wins": "0.4059979452054794520547945206"
+          }
+        },
+        {
+          "acquisition_cost_total_usdc": "47.50",
+          "actual_fills": "unknown_counterfactual",
+          "capital_required_at_entry_usdc": "49.59000",
+          "economic_status": "positive_under_single_match_rounding_scenario_only",
+          "fill_probability": null,
+          "fragmentation_safe_pnl_lower_by_resolution_usdc": {
+            "no_wins": "-0.1849123287671232876712328767",
+            "yes_wins": "-0.1849123287671232876712328767"
+          },
+          "full_quantity_supported_by_displayed_depth": true,
+          "minimum_order_notional_satisfied": true,
+          "observed_order_notional_by_leg_usdc": {
+            "no": "25.00",
+            "yes": "22.50"
+          },
+          "pnl_bounds_usdc": [
+            "-0.1849123287671232876712328767",
+            "1.808904109589041095890410959"
+          ],
+          "quantity_shares_per_leg": "50",
+          "single_match_pnl_by_resolution_usdc": {
+            "no_wins": "0.8119958904109589041095890411",
+            "yes_wins": "0.8119958904109589041095890411"
+          }
+        },
+        {
+          "acquisition_cost_total_usdc": "97.500",
+          "actual_fills": "unknown_counterfactual",
+          "capital_required_at_entry_usdc": "101.68680",
+          "economic_status": "nonpositive_under_single_match_rounding_scenario",
+          "fill_probability": null,
+          "fragmentation_safe_pnl_lower_by_resolution_usdc": {
+            "no_wins": "-2.881432219178082191780821918",
+            "yes_wins": "-2.881432219178082191780821918"
+          },
+          "full_quantity_supported_by_displayed_depth": true,
+          "minimum_order_notional_satisfied": true,
+          "observed_order_notional_by_leg_usdc": {
+            "no": "51.000",
+            "yes": "46.500"
+          },
+          "pnl_bounds_usdc": [
+            "-2.881432219178082191780821918",
+            "1.113013698630136986301369863"
+          ],
+          "quantity_shares_per_leg": "100",
+          "single_match_pnl_by_resolution_usdc": {
+            "no_wins": "-0.884209260273972602739726027",
+            "yes_wins": "-0.884209260273972602739726027"
+          }
+        },
+        {
+          "acquisition_cost_total_usdc": "198.750",
+          "actual_fills": "unknown_counterfactual",
+          "capital_required_at_entry_usdc": "207.12860",
+          "economic_status": "nonpositive_under_single_match_rounding_scenario",
+          "fill_probability": null,
+          "fragmentation_safe_pnl_lower_by_resolution_usdc": {
+            "no_wins": "-9.525065808219178082191780822",
+            "yes_wins": "-9.525065808219178082191780822"
+          },
+          "full_quantity_supported_by_displayed_depth": true,
+          "minimum_order_notional_satisfied": true,
+          "observed_order_notional_by_leg_usdc": {
+            "no": "103.500",
+            "yes": "95.250"
+          },
+          "pnl_bounds_usdc": [
+            "-9.525065808219178082191780822",
+            "-1.531164383561643835616438356"
+          ],
+          "quantity_shares_per_leg": "200",
+          "single_match_pnl_by_resolution_usdc": {
+            "no_wins": "-5.528115095890410958904109589",
+            "yes_wins": "-5.528115095890410958904109589"
+          }
+        },
+        {
+          "acquisition_cost_total_usdc": "356.250",
+          "actual_fills": "unknown_counterfactual",
+          "capital_required_at_entry_usdc": "370.90820",
+          "economic_status": "nonpositive_under_single_match_rounding_scenario",
+          "fill_probability": null,
+          "fragmentation_safe_pnl_lower_by_resolution_usdc": {
+            "no_wins": "-25.11818832876712328767123288",
+            "yes_wins": "-25.11818832876712328767123288"
+          },
+          "full_quantity_supported_by_displayed_depth": true,
+          "minimum_order_notional_satisfied": true,
+          "observed_order_notional_by_leg_usdc": {
+            "no": "184.500",
+            "yes": "171.750"
+          },
+          "pnl_bounds_usdc": [
+            "-25.11818832876712328767123288",
+            "-11.13321917808219178082191781"
+          ],
+          "quantity_shares_per_leg": "350",
+          "single_match_pnl_by_resolution_usdc": {
+            "no_wins": "-18.12570375342465753424657534",
+            "yes_wins": "-18.12570375342465753424657534"
+          }
+        },
+        {
+          "acquisition_cost_total_usdc": null,
+          "actual_fills": "unknown_counterfactual",
+          "capital_required_at_entry_usdc": null,
+          "economic_status": "insufficient_displayed_depth",
+          "fill_probability": null,
+          "fragmentation_safe_pnl_lower_by_resolution_usdc": null,
+          "full_quantity_supported_by_displayed_depth": false,
+          "minimum_order_notional_satisfied": true,
+          "observed_order_notional_by_leg_usdc": {
+            "no": "184.500",
+            "yes": "171.750"
+          },
+          "pnl_bounds_usdc": null,
+          "quantity_shares_per_leg": "700",
+          "single_match_pnl_by_resolution_usdc": null
+        }
+      ]
+    }
+  },
+  "schema_version": 1,
+  "source_evidence": "No real market book is used in this experiment."
+}

@@ -11,6 +11,7 @@ import type { ColumnDef, SortingState } from '@tanstack/react-table';
 import {
   Activity,
   ArrowUpRight,
+  BarChart3,
   Beaker,
   CheckCircle2,
   ChevronRight,
@@ -38,6 +39,7 @@ import { Reality } from './Reality';
 import { PaperPage, PaperSummary, ExperimentPanel } from './Paper';
 import { chartBase } from './chart-theme';
 const LazyChart = lazy(() => import('./Chart').then((module) => ({ default: module.Chart })));
+const LazyVeritas = lazy(() => import('./Veritas').then((module) => ({ default: module.Veritas })));
 function Chart(props: ComponentProps<typeof LazyChart>) {
   return (
     <Suspense fallback={<div className="chart empty">Loading chart…</div>}>
@@ -60,6 +62,7 @@ import type {
 const pages = [
   ['Mission Control', LayoutDashboard],
   ['Reality', Radio],
+  ['Veritas', BarChart3],
   ['Scanner', Search],
   ['Paper Trading', Database],
   ['Simulation Lab', FlaskConical],
@@ -180,8 +183,12 @@ export function App() {
           <span className="tiny-label">RESEARCH WORKSPACE</span>
           <div>
             <Beaker size={15} />
-            {page === 'Reality' ? 'Reality lab' : 'Foundation lab'}{' '}
-            <Badge tone="gold">{page === 'Reality' ? 'M2' : 'M1'}</Badge>
+            {page === 'Reality'
+              ? 'Reality lab'
+              : page === 'Veritas'
+                ? 'Veritas research'
+                : 'Foundation lab'}{' '}
+            {page !== 'Veritas' && <Badge tone="gold">{page === 'Reality' ? 'M2' : 'M1'}</Badge>}
           </div>
         </div>
         <nav aria-label="Main navigation">
@@ -223,12 +230,14 @@ export function App() {
             <span>{page}</span>
           </div>
           <div className="topbar-right">
-            <Badge tone={state?.mode === 'live' ? 'cyan' : 'gold'}>
+            <Badge tone={page !== 'Veritas' && state?.mode === 'live' ? 'cyan' : 'gold'}>
               {page === 'Reality'
                 ? 'REALITY · PUBLIC OBSERVATIONS'
-                : state?.mode === 'live'
-                  ? 'LIVE OBSERVATION'
-                  : 'DEMO · SYNTHETIC'}
+                : page === 'Veritas'
+                  ? 'VERITAS · ECONOMIC EVIDENCE'
+                  : state?.mode === 'live'
+                    ? 'LIVE OBSERVATION'
+                    : 'DEMO · SYNTHETIC'}
             </Badge>
             <span className="topbar-boundary">
               <ShieldCheck size={13} />
@@ -237,7 +246,7 @@ export function App() {
           </div>
         </header>
         <main>
-          {page !== 'Reality' && (
+          {page !== 'Reality' && page !== 'Veritas' && (
             <div className="page-heading">
               <div>
                 <div className="eyebrow">
@@ -276,7 +285,7 @@ export function App() {
               </div>
             </div>
           )}
-          {page !== 'Reality' && disconnected && (
+          {page !== 'Reality' && page !== 'Veritas' && disconnected && (
             <div className="alert danger">
               <TriangleAlert size={17} />
               <div>
@@ -286,7 +295,7 @@ export function App() {
               <button onClick={() => void stateQuery.refetch()}>Retry connection</button>
             </div>
           )}
-          {page !== 'Reality' && state?.mode === 'demo' && (
+          {page !== 'Reality' && page !== 'Veritas' && state?.mode === 'demo' && (
             <div className="demo-strip">
               <FlaskConical size={14} />
               <strong>SYNTHETIC DATA</strong>
@@ -294,14 +303,17 @@ export function App() {
               <span className="strip-end">No deposited funds</span>
             </div>
           )}
-          {page !== 'Reality' && state?.status === 'DEGRADED' && !disconnected && (
-            <div className="alert danger">
-              <TriangleAlert size={17} />
-              Data quality is degraded. Inspect book timestamps and Telemetry before interpreting
-              observations.
-            </div>
-          )}
-          {page !== 'Reality' && state?.safety.emergency_stop && (
+          {page !== 'Reality' &&
+            page !== 'Veritas' &&
+            state?.status === 'DEGRADED' &&
+            !disconnected && (
+              <div className="alert danger">
+                <TriangleAlert size={17} />
+                Data quality is degraded. Inspect book timestamps and Telemetry before interpreting
+                observations.
+              </div>
+            )}
+          {page !== 'Reality' && page !== 'Veritas' && state?.safety.emergency_stop && (
             <div className="alert danger" role="alert">
               <ShieldX size={17} />
               Emergency stop active. New virtual proposals and scenario runs are blocked.
@@ -335,6 +347,11 @@ export function App() {
           {page === 'Analytics' && <AnalyticsPage data={analytics.data} />}
           {page === 'Arena' && <Arena />}
           {page === 'Reality' && <Reality />}
+          {page === 'Veritas' && (
+            <Suspense fallback={<div className="empty">Loading Veritas evidence…</div>}>
+              <LazyVeritas />
+            </Suspense>
+          )}
           {page === 'Incidents' && <Incidents />}
           {page === 'Telemetry' && <Telemetry state={state} />}
           {page === 'Settings' && <SettingsPage />}

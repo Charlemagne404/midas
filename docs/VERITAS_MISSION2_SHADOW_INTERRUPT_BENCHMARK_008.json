@@ -1,0 +1,201 @@
+{
+  "schema_version": 1,
+  "benchmark_id": "VERITAS-M2-SHADOW-INTERRUPT-RECOVERY-BENCH-008",
+  "experiment_id": "VERITAS-M2-SHADOW-INTERRUPT-RECOVERY-001",
+  "captured_at_utc": "2026-10-16T17:58:53Z",
+  "status": "bounded_sigterm_checkpoint_and_resume_complete",
+  "purpose": "Exercise the resumable replay SIGTERM checkpoint path on a private isolated journal, then continue that journal to a previously verified four-segment endpoint.",
+  "campaign": {
+    "path": "/home/charlie/midas-reality/data/research/reality/forward/mission2/campaign.json",
+    "sha256": "aa8acb2b46823c1a1e3ac5d01a57dde917746c2c7471098ae2a4598875e322f5",
+    "modified": false,
+    "actual_orders_submitted": 0
+  },
+  "implementation": {
+    "commit": "0b31025",
+    "mode": "current_checkout",
+    "implementation_code_hashes_checked_against_campaign": false,
+    "pinned_campaign_code_verified": true,
+    "work_manifest_path": "data/veritas-canaries/shadow-resume-signal-001/work/work-manifest.json",
+    "work_manifest_sha256": "69a45a669e69ef6003a6c45b242486e6fda8051d366e19e355a942b62ffa8296"
+  },
+  "input": {
+    "runtime_snapshot_path": "data/veritas-canaries/shadow-reader-catchup-001/after-runtime.json",
+    "runtime_snapshot_sha256": "82a71b6db289238d1ac23965efee424dd5983a97f13817704d8590fb39631478",
+    "starting_cursor": {
+      "offset": 678,
+      "ordinal": 529092,
+      "segment": "00000000000000529092-9d1bcfda4c7e491f9792a4c2fcd32637"
+    },
+    "source_root": "/home/charlie/midas-reality/data/recordings/reality"
+  },
+  "resource_limits": {
+    "cpu_quota_percent": 10,
+    "memory_max_bytes": 402653184,
+    "memory_swap_max_bytes": 0,
+    "stop_request_after_seconds": 45,
+    "kill_after_seconds": 20,
+    "resume_wall_timeout_seconds": 180,
+    "isolated_work_directory": "data/veritas-canaries/shadow-resume-signal-001/work",
+    "network_client_opened": false,
+    "order_api_opened": false
+  },
+  "interrupted_invocation": {
+    "result_path": "data/veritas-canaries/shadow-resume-signal-001/work/result-interrupted.json",
+    "result_sha256": "0c66b6ebf1c08797e3fddd2ab082ef22dcf4f9370f3c7a4d36cfb1603aae6339",
+    "runtime_snapshot_path": "data/veritas-canaries/shadow-resume-signal-001/work/after-interrupted.json",
+    "runtime_snapshot_sha256": "f8dc5f2bf41e644d854ba377838765270b1f1751b623162b268dab410a662153",
+    "wrapper_exit_code": 124,
+    "runner_termination": "interrupted_checkpointed",
+    "ending_cursor": {
+      "offset": 64720,
+      "ordinal": 529161,
+      "segment": "00000000000000529092-9d1bcfda4c7e491f9792a4c2fcd32637"
+    },
+    "records_processed": 69,
+    "frames_processed": 66,
+    "decision_count": 0,
+    "observation_count": 16,
+    "research_event_count": 0,
+    "uncommitted_decisions_recovered": 0,
+    "journal_verification": {
+      "events": 17,
+      "tail_sha256": "5b891b667403f4754b9a39bd9af6e7233ed3d5f73940af4f6ef3f71b6dbf7c10"
+    },
+    "interpretation": "The timeout threshold initiated SIGTERM and returned wrapper status 124; the child handled the signal, wrote the checkpoint/result and exited through the interrupted_checkpointed path."
+  },
+  "resume_invocation": {
+    "result_path": "data/veritas-canaries/shadow-resume-signal-001/work/result-resumed.json",
+    "result_sha256": "c342e5016629ca9cfedf135c138510f469b720c384c1e6b07045e2117c948393",
+    "runtime_snapshot_path": "data/veritas-canaries/shadow-resume-signal-001/work/after-resumed.json",
+    "runtime_snapshot_sha256": "1c2011c05e0e836152444882bb312aae3e2e3ea6b168f5032f370bdddba26eae",
+    "starting_cursor": {
+      "offset": 64720,
+      "ordinal": 529161,
+      "segment": "00000000000000529092-9d1bcfda4c7e491f9792a4c2fcd32637"
+    },
+    "ending_cursor": {
+      "offset": 683,
+      "ordinal": 529998,
+      "segment": "00000000000000529998-b2b41e1a08db47528bb4b215f92f1fb3"
+    },
+    "records_processed_this_invocation": 837,
+    "records_processed_total": 906,
+    "frames_processed_total": 777,
+    "segments_sealed": 4,
+    "decisions": 32,
+    "observations": 168,
+    "outcomes": 124,
+    "followup_status_counts": {
+      "censored": 123,
+      "observed_public_measurement": 1
+    },
+    "research_events": 188,
+    "research_semantics_sha256": "d5676bc436c6a822acbe5cc884f27a7bf5b8a72b8f398b76f740e4d32ec5cae2",
+    "engine_state_sha256": "e4843abe4781bd3f2d3344626e0607069d4c41cd8670d041139d1a21a64a667a",
+    "context_state_sha256": "34196ce3b58e35c9ee53b07916330156ca8419a46afbe4fdc81584d01ce1031b",
+    "uncommitted_decisions_recovered": 0,
+    "journal_verification": {
+      "events": 362,
+      "tail_sha256": "d73a2eb3370cdae75f4daa4de8e8d4c1d00ca144132e1da36ece27c98822f6ef"
+    }
+  },
+  "one_shot_reference": {
+    "result_path": "data/veritas-canaries/shadow-multisegment-001/current/work/result.json",
+    "result_sha256": "044c142b408b489a75c1ed7dac147f45bdf697f6e8c63353062c123d7c81a5bc",
+    "runtime_snapshot_path": "data/veritas-canaries/shadow-multisegment-001/current/work/after-runtime.json",
+    "runtime_snapshot_sha256": "1c2011c05e0e836152444882bb312aae3e2e3ea6b168f5032f370bdddba26eae",
+    "engine_state_sha256": "e4843abe4781bd3f2d3344626e0607069d4c41cd8670d041139d1a21a64a667a",
+    "context_state_sha256": "34196ce3b58e35c9ee53b07916330156ca8419a46afbe4fdc81584d01ce1031b",
+    "research_semantics_sha256": "d5676bc436c6a822acbe5cc884f27a7bf5b8a72b8f398b76f740e4d32ec5cae2",
+    "journal_verification": {
+      "events": 361,
+      "tail_sha256": "7d7a0bc29af29a69c6164e30b0b68711131e4982323a296c1e47e8518da4b4ed"
+    }
+  },
+  "comparison": {
+    "cursor_join_at_interruption": true,
+    "final_runtime_snapshot_byte_identical": true,
+    "engine_context_research_equal": true,
+    "normalized_business_event_multiset_equal": true,
+    "normalized_business_event_sequence_equal": true,
+    "observation_event_sequence_equal": true,
+    "one_shot_event_kind_counts": {
+      "worker_start": 1,
+      "observation": 168,
+      "decision": 32,
+      "decision_committed": 32,
+      "followup": 124,
+      "source_segment_sealed": 4
+    },
+    "signal_resume_event_kind_counts": {
+      "worker_start": 2,
+      "observation": 168,
+      "decision": 32,
+      "decision_committed": 32,
+      "followup": 124,
+      "source_segment_sealed": 4
+    },
+    "one_extra_worker_start_lifecycle_event": true,
+    "all_other_event_kind_counts_equal": true,
+    "journal_tail_hash_equal": false,
+    "sqlite_integrity_one_shot": "ok",
+    "sqlite_integrity_signal_resume": "ok",
+    "business_table_checks": {
+      "decisions": {
+        "one_shot": 32,
+        "signal_resumed": 32,
+        "content_equal_ignoring_event_seq": true
+      },
+      "outcomes": {
+        "one_shot": 124,
+        "signal_resumed": 124,
+        "content_equal_ignoring_event_seq": true
+      },
+      "observations": {
+        "one_shot": 168,
+        "signal_resumed": 168,
+        "content_equal_ignoring_event_seq": true
+      },
+      "reserves": {
+        "one_shot": 0,
+        "signal_resumed": 0,
+        "content_equal_ignoring_event_seq": true
+      },
+      "family_map": {
+        "one_shot": 79,
+        "signal_resumed": 79,
+        "content_equal_ignoring_event_seq": true
+      }
+    },
+    "valid_decision_commit_references": {
+      "one_shot": 32,
+      "signal_resumed": 32
+    }
+  },
+  "live_state_postflight": {
+    "checked_at_utc": "2026-10-16T17:58:53Z",
+    "campaign_sha256": "aa8acb2b46823c1a1e3ac5d01a57dde917746c2c7471098ae2a4598875e322f5",
+    "collector_active": true,
+    "collector_restart_count": 0,
+    "shadow_active": true,
+    "shadow_restart_count": 1,
+    "canary_scope_active_after_completion": false
+  },
+  "interpretation": "The runner handled a SIGTERM during a partially read source segment, persisted a valid checkpoint, and resumed the same private journal to the same four-segment endpoint as the one-shot reference. Runtime, engine/context, research semantics, table contents, and normalized business-event sequence match. The final journal hash differs only in its lifecycle sequence: the resumed process appends one extra worker_start event, which is expected and is retained.",
+  "limitations": [
+    "The SIGTERM canary stopped before the first decision, so it does not itself exercise the decision-to-commit recovery branch; that branch is covered by the focused deterministic fault-injection regression named above.",
+    "The final journal tail hash differs because the resumed process contributes an additional worker_start event; decision-event references shift and were verified valid.",
+    "This is one controlled interruption on historical public recordings, not a live worker recovery or new economic observation.",
+    "The isolated SQLite files were inspected read-only and are retained locally but excluded from version control; output summaries and snapshots are retained."
+  ],
+  "existing_regression_coverage": {
+    "test_path": "tests/test_veritas_resumable_shadow_replay.py::test_missing_decision_commit_marker_is_repaired_before_followup",
+    "focused_suite_result": "51 passed in 5.69 seconds",
+    "included_in_focused_suite": true,
+    "fault_injection": "Raises between the decision and decision_committed journal transactions, then resumes.",
+    "expected_recovery_count": 1,
+    "uninterrupted_state_and_research_parity_verified": true,
+    "scope_note": "This unit-level fault injection covers the decision-to-commit recovery path; the separate SIGTERM canary stopped before its first decision."
+  }
+}

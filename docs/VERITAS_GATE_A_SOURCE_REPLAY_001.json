@@ -1,0 +1,32 @@
+{
+  "analysis_version": "veritas-source-replay-v1",
+  "captured_at_utc": "2026-10-14T22:59:40.573453+00:00",
+  "captured_ns": 1792018780573452686,
+  "campaign_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
+  "campaign_root": "/home/charlie/midas-reality/data/research/reality/forward/mission2",
+  "source_root": "/home/charlie/midas-reality/data/recordings/reality",
+  "source_manifest_sha256": "2b28b87c7edb3fcabd199142e605d915f11ca0c31d71550e0f85f8f7747558a8",
+  "source_segments": 1752,
+  "source_bytes": 404829765,
+  "source_last_finalized_ordinal": 210322,
+  "active_segment_read": false,
+  "raw_records_replayed": 210322,
+  "verified_source_checkpoints": 1748,
+  "decision_limit": 5000,
+  "decision_sample_truncated": false,
+  "decision_sample_rows": 1696,
+  "database_event_tail_sequence": 20152,
+  "decisions_reproduced": 1688,
+  "decisions_uncovered_after_finalized_prefix": 8,
+  "decision_rows_missing_inside_finalized_prefix": 0,
+  "source_lineage_references_expected": 9838,
+  "source_lineage_references_resolved": 9838,
+  "source_lineage_references_unresolved": 0,
+  "mismatches": {},
+  "difference_paths": {},
+  "history_lineage_variance": {
+    "runtime_history_reference_window_variance_decisions": 1254
+  },
+  "passed_for_finalized_prefix": true,
+  "scope": "Reproduces campaign source state, producer/reconstruction identity, quality reason, features, baseline, and source lineage for the sampled decisions whose source ordinals are in the captured finalized segment prefix. It does not infer omitted decisions, fills, or outcomes."
+}

@@ -1,0 +1,63 @@
+{
+  "analysis": {
+    "analysis_version": "veritas-source-gap-index-audit-v1",
+    "captured_at_utc": "2026-10-15T20:34:55Z",
+    "read_only": true,
+    "source_analysis_version": "veritas-finalized-reality-source-analysis-v1",
+    "source_state_schema_version": 1
+  },
+  "artifact_id": "VERITAS-M2-GAP-INDEX-AUDIT-001",
+  "campaign": {
+    "campaign_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
+    "window_start_ns": 1792012078642600351,
+    "window_end_exclusive_ns": 1793221678642600351
+  },
+  "source_index": {
+    "processed_segment_count": 3388,
+    "catalog_segment_count": 4260,
+    "pending_segment_count": 872,
+    "last_processed_ordinal": 450558,
+    "processed_prefix_catalog_sha256": "c8bfca21824fcab6a8a06787551fbafd956d1fcc753d399b0dc0190af4a45028",
+    "analysis_code_sha256": "9f9e2249b49dd1cb10c11713aa2683567aa9cf0914c3ed2b08cf8e3fea25ebf8",
+    "summary_sha256": "c32f8e0796c9c8c814e7fc5eb0538042667a908b0d90ad6b589af551d05608e4",
+    "summary_file_sha256": "f3517dc2950bb5a6436e40d5605ac4ff492ae3e4c70477e982a6be572eee351f",
+    "state_sha256": "bfcd4961736eff817553bac11103632330562d31dc9ce851977ca8abfcf04f0e",
+    "event_chain_head_sha256": "6e601a413e6ba2fd9d8c18d7affd0fb9380035a354d77b51a631766dd3c7de27",
+    "event_count": 3388,
+    "event_sequence_contiguous": true,
+    "individual_event_digests_verified": true,
+    "event_chain_matches_state": true,
+    "catalog_prefix_matches_state": true,
+    "summary_prefix_matches_events": true
+  },
+  "gap_counts": {
+    "all_period_gap_records_in_processed_prefix": 2993,
+    "processed_segments_with_any_gap_record": 1440,
+    "largest_gap_record_count_in_one_segment": 46,
+    "campaign_window_gap_reasons": {
+      "book_resynchronization": 911,
+      "connection_failure": 1
+    }
+  },
+  "prior_detailed_gap_replay": {
+    "artifact_path": "docs/VERITAS_GATE_A_GAP_AGE_001.json",
+    "artifact_file_sha256": "97e1afb39e04ee5924c3304b44b18c18cc8c7adb71a65d26bbc4308e1f674ce0",
+    "analysis_version": "veritas-source-replay-v7",
+    "source_segments": 1914,
+    "source_last_finalized_ordinal": 231059,
+    "campaign_window_book_resynchronization_count": 191,
+    "five_minute_buckets": 39
+  },
+  "finding": {
+    "status": "gap_markers_verified_but_current_temporal_detail_unavailable",
+    "conclusion": "The current sealed v1 source-analysis event store confirms recurring gap records across the processed prefix, and the current campaign-window summary counts 911 book_resynchronization markers plus one connection_failure. The per-segment record_kinds field contains no per-gap timestamps or reasons, so it cannot cluster the current campaign markers by market or time or estimate recovery duration. The earlier detailed replay covers only the first 1,914 segments and must not be extrapolated to the newer prefix.",
+    "next_step": "Build a separate, versioned, bounded read-only extractor for gap timestamps and reasons from finalized segments. Keep the existing source-analysis event schema and frozen campaign unchanged; run serially within the existing source-analysis resource budget."
+  },
+  "limitations": [
+    "The 2,993 per-segment gap total covers all retained source periods in the processed prefix, not only the campaign window.",
+    "The source prefix is incomplete at 3,388 of 4,260 segments.",
+    "No raw source segment was read for this metadata-index audit; source payloads and current per-gap event times were not reverified here.",
+    "A later frame after one connection_failure does not prove synchronized recovery or market freshness."
+  ],
+  "schema_version": 1
+}

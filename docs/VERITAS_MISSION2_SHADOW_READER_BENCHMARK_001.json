@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "experiment_id": "VERITAS-M2-SHADOW-READER-BENCHMARK-001",
+  "captured_at_utc": "2026-10-16T12:06:24Z",
+  "status": "OFFLINE_STATE_EQUIVALENT_CPU_IMPROVEMENT_MEASURED",
+  "purpose": "Compare the frozen reader implementation with the Veritas branch reader on an identical sealed public-recording range without touching the running campaign.",
+  "source": {
+    "kind": "genuine_finalized_public_recording",
+    "root": "/home/charlie/midas-reality/data/recordings/reality",
+    "first_ordinal": 516051,
+    "last_ordinal": 519036,
+    "records_consumed_excluding_checkpoints": 2970,
+    "frame_records": 2461,
+    "finalized_segments_verified": 16,
+    "checkpoint_rows_excluded": 16,
+    "active_segment_read": false
+  },
+  "implementation": {
+    "changes": [
+      "Tail.refresh caches the finalized/open segment path list while the source directory device, inode, mtime_ns and ctime_ns remain unchanged; directory changes trigger a rescan and symlink check.",
+      "Engine.consume returns decoded frame events so Context.consume reuses them for last-trade tracking."
+    ],
+    "branch": "project/veritas",
+    "deployed_to_frozen_worker": false
+  },
+  "measurements": {
+    "refresh_baseline": {
+      "method": "Forced full directory refresh over 6134 segment paths.",
+      "cpu_ms_median": 67.79,
+      "cpu_ms_observed_range": [68, 91],
+      "refresh_interval_seconds": 0.5,
+      "estimated_cpu_ms_per_second_at_interval": [136, 182],
+      "active_worker_cpu_quota_ms_per_second": 100
+    },
+    "refresh_cached": {
+      "method": "100 forced refresh calls with unchanged directory metadata after initial listing.",
+      "segment_paths": 6137,
+      "cpu_ms_median": 0.004,
+      "directory_rescans": 0,
+      "new_entry_and_symlink_detection": "Covered by focused tests."
+    },
+    "context_only": {
+      "frozen_cpu_median_seconds": 0.263,
+      "veritas_cpu_median_seconds": 0.2434,
+      "frozen_frame_payload_decodes": 4922,
+      "veritas_frame_payload_decodes": 2461,
+      "state_sha256_equal": true,
+      "cpu_reduction_percent": 7.45
+    },
+    "tail_plus_context": {
+      "repetitions_per_implementation": 3,
+      "frozen_cpu_median_seconds": 5.6814,
+      "veritas_cpu_median_seconds": 4.7632,
+      "frozen_wall_median_seconds": 5.7114,
+      "veritas_wall_median_seconds": 4.7883,
+      "state_sha256": "676fe95befcf15df8ba122058b38f2dfbcd5e78e879a178ae7f755ca7b3c7591",
+      "state_sha256_equal": true,
+      "cpu_reduction_percent": 16.16
+    }
+  },
+  "verification": {
+    "focused_tests": "28 passed",
+    "ruff": "passed",
+    "strict_mypy": "passed",
+    "frozen_campaign_changed": false,
+    "frozen_worker_restarted": false,
+    "orders_submitted": false,
+    "authenticated_requests": false
+  },
+  "limitations": [
+    "The performance replay measures Tail plus Context, not the complete Shadow.consume path with follow-up scans, policy inference, SQLite writes and status checkpoints.",
+    "The bounded range begins mid-campaign, so its 16 checkpoint rows were omitted from Context replay; Tail independently verified the 16 sealed segment hashes through the endpoint.",
+    "The CPU-quota calculation extrapolates a forced-refresh microbenchmark at the configured 0.5-second refresh interval; it is not a long-run service profile.",
+    "No throughput, decision freshness or economic outcome has been measured on the running frozen worker."
+  ]
+}

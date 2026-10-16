@@ -1,0 +1,54 @@
+{
+  "analysis_version": "veritas-director-durable-admission-recovery-v1",
+  "captured_at_utc": "2026-10-15T23:34:40Z",
+  "implementation": {
+    "module_path": "packages/midas/veritas/research_director.py",
+    "module_sha256": "ed4bf6dd5c62bc0cfa1eec3b7082c6d14757edd18e6b50a6f81ca81c2da33f4f",
+    "test_path": "tests/test_veritas_research_director.py",
+    "test_sha256": "15cc02dca843bd2ccd0f09eec06800ce790f19b6714d6dddc93475c74c9b3c97"
+  },
+  "mission": "PROJECT-VERITAS-MISSION-2",
+  "authenticated_requests": false,
+  "runtime_observation": {
+    "director_manifest_state": "RUNNING",
+    "director_manifest_job_state": "QUEUED",
+    "director_manifest_updated_at_utc": "2026-10-15T23:16:09+00:00",
+    "director_current_scan_id": "scan-20261015T230055Z-ff1f8c3dbcd8",
+    "director_last_qualified_scan_id": "scan-20261015T223101Z-62913d43b3c1",
+    "arena_child_state": "COMPLETED",
+    "arena_child_exit_status": 0,
+    "arena_child_processed_events": 39,
+    "arena_child_total_events": 39,
+    "arena_child_elapsed_seconds": 2.5153853649972007,
+    "arena_finding_id": "veritas-qualification-v1-02bd068b60c51000",
+    "arena_finding_status": "no_positive_gross_candidate_observed",
+    "next_scheduled_director_cycle_utc": "2026-10-15T23:45:25Z",
+    "scan_40_id": "scan-20261015T233205Z-a2240a38b48f",
+    "scan_40_qualified_pairs": 30,
+    "scan_40_selected_pairs": 40,
+    "coverage_pilot_scans": 10,
+    "coverage_pilot_scheduled_scans": 48,
+    "coverage_pilot_valid_pairs": 335,
+    "coverage_pilot_selected_slots": 400,
+    "coverage_pilot_distinct_markets": 271,
+    "coverage_pilot_skipped_sequences": 0
+  },
+  "status": "implemented_and_isolated_tests_passed",
+  "test_evidence": {
+    "command": "PYTHONPATH=packages /home/charlie/midas/.venv/bin/python -m pytest -q tests/test_veritas_research_director.py",
+    "passed": 10,
+    "failed": 0,
+    "ruff_check": "passed",
+    "ruff_format_check": "passed",
+    "strict_mypy": "passed",
+    "git_diff_check": "passed",
+    "fixtures_use_temporary_roots": true
+  },
+  "limitations": [
+    "The live scan-39 child record was present and completed; no live stale-pointer failure was established.",
+    "Stale-pointer adoption and the no-retry path were verified only with isolated temporary fixtures.",
+    "The Research Director manifest had not yet reconciled the completed scan-39 finding at capture time; the next scheduled cycle remains responsible for reconciliation.",
+    "Scan 40 and the coverage pilot are repeated selected observations and do not establish venue-wide coverage or profitability."
+  ],
+  "orders_submitted": false
+}

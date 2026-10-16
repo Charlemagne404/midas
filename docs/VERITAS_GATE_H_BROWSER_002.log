@@ -1,0 +1,21 @@
+[WebServer] INFO:     Started server process [3165804]
+[WebServer] INFO:     Waiting for application startup.
+[WebServer] INFO:     Application startup complete.
+[WebServer] INFO:     Uvicorn running on http://127.0.0.1:18000 (Press CTRL+C to quit)
+[WebServer] (node:3165832) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:3165846) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 5 tests using 1 worker
+
+(node:3165873) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+  ✓  1 e2e/arena.spec.ts:6:1 › build, train, inspect and evaluate genuine Arena artifacts (3.6m)
+  ✓  2 e2e/laboratory.spec.ts:3:1 › configure, launch, compare and replay a persisted laboratory experiment (3.2s)
+  ✓  3 e2e/laboratory.spec.ts:46:1 › controlled adversarial violation preserves minimized incident and replay (3.2s)
+  ✓  4 e2e/paper.spec.ts:3:1 › persistent paper account, decision audit and execution comparison (1.5s)
+  ✓  5 e2e/smoke.spec.ts:2:1 › discover, inspect, simulate, replay and expose execution failure (3.4s)
+
+  5 passed (3.8m)

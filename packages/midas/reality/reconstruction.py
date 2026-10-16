@@ -34,6 +34,8 @@ def spread(bid: Decimal | None, ask: Decimal | None) -> str | None:
 class Engine:
     def __init__(self, stale_ns: int = 60_000_000_000) -> None:
         self.books: dict[str, dict[str, Any]] = {}
+        self._tops: dict[str, tuple[Decimal | None, Decimal | None]] = {}
+        self._top_book_ids: dict[str, int] = {}
         self.tokens: dict[str, str] = {}
         self.counts: Counter[str] = Counter()
         self.recent: deque[str] = deque(maxlen=4096)
@@ -50,10 +52,52 @@ class Engine:
             if isinstance(asset, str) and asset in self.books:
                 self.books[asset]["issue"] = reason
 
-    def consume(self, record: dict[str, Any]) -> None:
+    def top_for(self, asset: str) -> tuple[Decimal | None, Decimal | None]:
+        """Return a maintained top for an engine-owned book, rebuilding lazily."""
+        book = self.books[asset]
+        if self._top_book_ids.get(asset) != id(book):
+            return self._remember_top(asset, self.top(book))
+        return self._tops[asset]
+
+    def _remember_top(
+        self, asset: str, top: tuple[Decimal | None, Decimal | None]
+    ) -> tuple[Decimal | None, Decimal | None]:
+        self._tops[asset] = top
+        self._top_book_ids[asset] = id(self.books[asset])
+        return top
+
+    def rebuild_top_cache(self) -> None:
+        """Rebuild derived tops after restoring externally serialized books."""
+        self._tops = {asset: self.top(book) for asset, book in self.books.items()}
+        self._top_book_ids = {asset: id(book) for asset, book in self.books.items()}
+
+    def _update_top_after_level_change(
+        self,
+        asset: str,
+        side: str,
+        price: Decimal,
+        size: Decimal,
+        before: tuple[Decimal | None, Decimal | None],
+    ) -> tuple[Decimal | None, Decimal | None]:
+        bid, ask = before
+        book = self.books[asset]
+        if side == "bids":
+            if size and (bid is None or price > bid):
+                bid = price
+            elif not size and price == bid:
+                bid = max(book["bids"], default=None)
+        else:
+            if size and (ask is None or price < ask):
+                ask = price
+            elif not size and price == ask:
+                ask = min(book["asks"], default=None)
+        return self._remember_top(asset, (bid, ask))
+
+    def consume(self, record: dict[str, Any]) -> list[Any] | None:
         self.last_ordinal = record["ordinal"]
         self.now_ns = max(self.now_ns, record["received_ns"])
         kind = record["kind"]
+        parsed_events: list[Any] | None = None
         if kind == "gap":
             if record["payload"].get("reason") == "process_start":
                 version = record["payload"].get("reconstruction_version", 1)
@@ -78,20 +122,26 @@ class Engine:
                 for token in market["tokens"]
             }
             self.books = {k: v for k, v in self.books.items() if k in self.tokens}
+            self._tops = {k: v for k, v in self._tops.items() if k in self.books}
+            self._top_book_ids = {k: v for k, v in self._top_book_ids.items() if k in self.books}
         elif kind == "frame":
             try:
                 if record.get("encoding", "utf8") != "utf8":
                     raise ValueError("Unsupported binary frame")
+                # Keep the decoded events available to callers that need
+                # frame-level diagnostics. The shadow context used to decode
+                # this payload a second time just to collect last trades.
                 events = json.loads(record["payload"])
-                events = events if isinstance(events, list) else [events]
-                if not events:
+                parsed_events = events if isinstance(events, list) else [events]
+                if not parsed_events:
                     self.counts["empty_frame"] += 1
-                for index, event in enumerate(events):
+                for index, event in enumerate(parsed_events):
                     self.event(event, record, index)
             except (ValueError, TypeError, KeyError, DecimalException):
                 self.counts["malformed_frame"] += 1
                 self.invalidate("malformed_frame")
         self.invalidate_stale()
+        return parsed_events
 
     def invalidate_stale(self) -> None:
         for book in self.books.values():
@@ -204,6 +254,10 @@ class Engine:
                         hash=raw.get("hash"),
                         continuity="unsequenced_observed_lineage",
                     )
+                    self._remember_top(
+                        asset,
+                        (max(levels["bids"], default=None), min(levels["asks"], default=None)),
+                    )
                     if prior and (
                         regressed_snapshot
                         or (
@@ -225,7 +279,7 @@ class Engine:
                         raise ValueError("Invalid side")
                     side = "bids" if change["side"] == "BUY" else "asks"
                     p, q = number(change["price"], price=True), number(change["size"])
-                    before = self.top(prior)
+                    before = self.top_for(asset)
                     if q:
                         if p not in prior[side] and len(prior[side]) >= 10000:
                             raise ValueError("Book depth limit exceeded")
@@ -238,7 +292,8 @@ class Engine:
                         last=lineage,
                         hash=change.get("hash"),
                     )
-                    if before != self.top(prior):
+                    after = self._update_top_after_level_change(asset, side, p, q, before)
+                    if before != after:
                         life = prior["quote_lifetimes"]
                         life["count"] += 1
                         life["total_ns"] += max(0, record["received_ns"] - prior["quote_since_ns"])
@@ -252,11 +307,12 @@ class Engine:
                     prior["last"] = lineage
                 elif kind == "best_bid_ask":
                     if self.reconstruction_version >= 3:
+                        top = self.top_for(asset)
                         matches = all(
                             key not in raw
-                            or self.top(prior)[index] == number(raw[key], price=True)
+                            or top[index] == number(raw[key], price=True)
                             or (
-                                self.top(prior)[index] is None
+                                top[index] is None
                                 and number(raw[key], price=True) == Decimal(index)
                             )
                             for index, key in enumerate(("best_bid", "best_ask"))
@@ -277,7 +333,7 @@ class Engine:
                         self.check_top(prior, raw)
                 book = self.books.get(asset)
                 if book:
-                    bid, ask = self.top(book)
+                    bid, ask = self.top_for(asset)
                     if bid is not None and ask is not None and bid >= ask:
                         book["issue"] = "crossed_or_locked"
                         self.counts["crossed"] += 1
@@ -285,7 +341,11 @@ class Engine:
                 for change in changes:
                     if change["asset_id"] in self.books:
                         updated_book = self.books[change["asset_id"]]
-                        self.check_top(updated_book, change)
+                        self.check_top(
+                            updated_book,
+                            change,
+                            top=self.top_for(change["asset_id"]),
+                        )
                         if (
                             self.reconstruction_version >= 4
                             and updated_book.get("source_timestamp_floor_ms") is not None
@@ -304,8 +364,14 @@ class Engine:
     def top(book: dict[str, Any]) -> tuple[Decimal | None, Decimal | None]:
         return max(book["bids"], default=None), min(book["asks"], default=None)
 
-    def check_top(self, book: dict[str, Any], raw: dict[str, Any]) -> None:
-        top = self.top(book)
+    def check_top(
+        self,
+        book: dict[str, Any],
+        raw: dict[str, Any],
+        *,
+        top: tuple[Decimal | None, Decimal | None] | None = None,
+    ) -> None:
+        top = self.top(book) if top is None else top
         for index, key in enumerate(("best_bid", "best_ask")):
             if key in raw:
                 advertised = number(raw[key], price=True)

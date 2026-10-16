@@ -1,0 +1,178 @@
+{
+  "schema_version": 1,
+  "benchmark_id": "VERITAS-M2-SHADOW-RESUMABLE-BENCH-007",
+  "experiment_id": "VERITAS-M2-SHADOW-RESUMABLE-SPLIT-001",
+  "captured_at_utc": "2026-10-16T17:54:22Z",
+  "status": "bounded_split_resume_complete",
+  "purpose": "Verify that a committed branch replay split across two separate clean process invocations resumes from its durable isolated journal and reaches the same runtime and research state as a one-shot four-segment run.",
+  "campaign": {
+    "path": "/home/charlie/midas-reality/data/research/reality/forward/mission2/campaign.json",
+    "sha256": "aa8acb2b46823c1a1e3ac5d01a57dde917746c2c7471098ae2a4598875e322f5",
+    "modified": false,
+    "actual_orders_submitted": 0
+  },
+  "input": {
+    "runtime_snapshot_path": "data/veritas-canaries/shadow-reader-catchup-001/after-runtime.json",
+    "runtime_snapshot_sha256": "82a71b6db289238d1ac23965efee424dd5983a97f13817704d8590fb39631478",
+    "start_cursor": {
+      "offset": 678,
+      "ordinal": 529092,
+      "segment": "00000000000000529092-9d1bcfda4c7e491f9792a4c2fcd32637"
+    },
+    "split_boundary_cursor": {
+      "offset": 676,
+      "ordinal": 529712,
+      "segment": "00000000000000529712-5949175219704d1090f4a2a9ddb4a490"
+    },
+    "final_cursor": {
+      "offset": 683,
+      "ordinal": 529998,
+      "segment": "00000000000000529998-b2b41e1a08db47528bb4b215f92f1fb3"
+    },
+    "branch_commit": "40d1207"
+  },
+  "resource_limits": {
+    "cpu_quota_percent": 10,
+    "memory_max_bytes": 402653184,
+    "memory_swap_max_bytes": 0,
+    "per_invocation_wall_timeout_seconds": 180,
+    "isolated_work_directory": "data/veritas-canaries/shadow-resumable-split-001/work",
+    "network_client_opened": false,
+    "order_api_opened": false
+  },
+  "invocations": [
+    {
+      "result_path": "data/veritas-canaries/shadow-resumable-split-001/work/result-part-001.json",
+      "result_sha256": "e0b37ae558cdb84a5ee6ad15dbfca1873c2dd85430fc13af40a1f749cf9cbf54",
+      "segments": 2,
+      "first_ordinal": 529093,
+      "last_ordinal": 529712,
+      "records": 620,
+      "frames": 554,
+      "ending_cursor": {
+        "offset": 676,
+        "ordinal": 529712,
+        "segment": "00000000000000529712-5949175219704d1090f4a2a9ddb4a490"
+      },
+      "journal_events": 185,
+      "journal_tail_sha256": "fd4cbb67c265203000e1bd63d14cfb00a731fc71c55c586a6f6092247350a38d",
+      "recovered_uncommitted_decisions": 0,
+      "runtime_snapshot_path": "data/veritas-canaries/shadow-resumable-split-001/work/after-part-001.json",
+      "runtime_snapshot_sha256": "93687ad17d3b8d0a256402209ff90416aaacfa4fd42e1eb223c67213ca92e580"
+    },
+    {
+      "result_path": "data/veritas-canaries/shadow-resumable-split-001/work/result-part-002.json",
+      "result_sha256": "e47e57d54c87315c87dd8b06599c62b7ab7a7e860a8d6fbe2864e48276b97bf7",
+      "segments": 2,
+      "first_ordinal": 529713,
+      "last_ordinal": 529998,
+      "records": 286,
+      "frames": 223,
+      "records_processed_total": 906,
+      "frames_processed_total": 777,
+      "ending_cursor": {
+        "offset": 683,
+        "ordinal": 529998,
+        "segment": "00000000000000529998-b2b41e1a08db47528bb4b215f92f1fb3"
+      },
+      "journal_events": 362,
+      "journal_tail_sha256": "81672b7cddb0ac5f5c074bc5ce234e97f415b55c0fb82fdff6f3b382d9baa821",
+      "recovered_uncommitted_decisions": 0,
+      "runtime_snapshot_path": "data/veritas-canaries/shadow-resumable-split-001/work/after-part-002.json",
+      "runtime_snapshot_sha256": "1c2011c05e0e836152444882bb312aae3e2e3ea6b168f5032f370bdddba26eae"
+    }
+  ],
+  "one_shot_reference": {
+    "result_path": "data/veritas-canaries/shadow-multisegment-001/current/work/result.json",
+    "result_sha256": "044c142b408b489a75c1ed7dac147f45bdf697f6e8c63353062c123d7c81a5bc",
+    "runtime_snapshot_path": "data/veritas-canaries/shadow-multisegment-001/current/work/after-runtime.json",
+    "runtime_snapshot_sha256": "1c2011c05e0e836152444882bb312aae3e2e3ea6b168f5032f370bdddba26eae",
+    "engine_state_sha256": "e4843abe4781bd3f2d3344626e0607069d4c41cd8670d041139d1a21a64a667a",
+    "context_state_sha256": "34196ce3b58e35c9ee53b07916330156ca8419a46afbe4fdc81584d01ce1031b",
+    "research_semantics_sha256": "d5676bc436c6a822acbe5cc884f27a7bf5b8a72b8f398b76f740e4d32ec5cae2",
+    "journal_events": 361,
+    "journal_tail_sha256": "7d7a0bc29af29a69c6164e30b0b68711131e4982323a296c1e47e8518da4b4ed"
+  },
+  "comparison": {
+    "runtime_snapshot_byte_identical": true,
+    "ending_cursor_equal": true,
+    "engine_state_equal": true,
+    "context_state_equal": true,
+    "research_semantics_equal": true,
+    "decisions_equal": true,
+    "observations_equal": true,
+    "followup_status_counts_equal": true,
+    "sqlite_integrity_check_one_shot": "ok",
+    "sqlite_integrity_check_split": "ok",
+    "normalized_business_event_multiset_equal": true,
+    "event_kind_counts_one_shot": {
+      "worker_start": 1,
+      "observation": 168,
+      "decision": 32,
+      "decision_committed": 32,
+      "followup": 124,
+      "source_segment_sealed": 4
+    },
+    "event_kind_counts_split": {
+      "worker_start": 2,
+      "observation": 168,
+      "decision": 32,
+      "decision_committed": 32,
+      "followup": 124,
+      "source_segment_sealed": 4
+    },
+    "one_additional_worker_start_expected_after_resume": true,
+    "all_other_event_kind_counts_equal": true,
+    "business_table_checks": {
+      "decisions": {
+        "one_shot_count": 32,
+        "split_count": 32,
+        "content_equal_ignoring_event_seq": true
+      },
+      "outcomes": {
+        "one_shot_count": 124,
+        "split_count": 124,
+        "content_equal_ignoring_event_seq": true
+      },
+      "observations": {
+        "one_shot_count": 168,
+        "split_count": 168,
+        "content_equal_ignoring_event_seq": true
+      },
+      "reserves": {
+        "one_shot_count": 0,
+        "split_count": 0,
+        "content_equal_ignoring_event_seq": true
+      },
+      "family_map": {
+        "one_shot_count": 79,
+        "split_count": 79,
+        "content_equal_ignoring_event_seq": true
+      }
+    },
+    "decision_commit_references_valid": {
+      "one_shot": 32,
+      "split": 32
+    },
+    "journal_tail_hash_equal": false,
+    "observation_event_append_order_equal": false
+  },
+  "interpretation": "The split run resumed cleanly from the first invocation boundary and reached byte-identical final runtime, cursor, engine/context state, research semantics, and the same business-event multiset. The append-only journal chain validates; decision references and indexed rows are intact. The journal tail hash is expected to differ: a second worker_start lifecycle event is present, and observation rows with the same event time are appended in a different order after restore. No business events were lost or duplicated, but byte-for-byte journal order is not invariant across process boundaries.",
+  "live_state_postflight": {
+    "checked_at_utc": "2026-10-16T17:54:22Z",
+    "campaign_sha256": "aa8acb2b46823c1a1e3ac5d01a57dde917746c2c7471098ae2a4598875e322f5",
+    "shadow_service_active": true,
+    "shadow_service_restart_count": 1,
+    "collector_active": true,
+    "collector_restart_count": 0,
+    "canary_scope_active_after_completion": false
+  },
+  "limitations": [
+    "One clean two-invocation split at a single segment boundary; no forced termination at an intermediate checkpoint was exercised.",
+    "A resumed worker appends an additional worker_start event and the ordering of same-window observation events differs, although normalized event content, research semantics, runtime state and integrity checks agree.",
+    "This replay used historical source and added no new independent market observations or actual fills.",
+    "The work database was inspected read-only for this audit and is excluded from version control; result and snapshot summaries are retained."
+  ],
+  "work_manifest_path": "data/veritas-canaries/shadow-resumable-split-001/work/work-manifest.json",
+  "work_manifest_sha256": "69a45a669e69ef6003a6c45b242486e6fda8051d366e19e355a942b62ffa8296"
+}

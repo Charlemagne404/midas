@@ -1,0 +1,3 @@
+scripts/research_followup.py:24: error: Returning Any from function declared to return "dict[str, Any]"  [no-any-return]
+scripts/research_followup.py:399: error: Item "None" of "TournamentSpec | None" has no attribute "model_dump"  [union-attr]
+Found 2 errors in 1 file (checked 120 source files)

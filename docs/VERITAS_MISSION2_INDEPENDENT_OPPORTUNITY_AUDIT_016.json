@@ -1,0 +1,118 @@
+{
+  "authenticated_requests": false,
+  "captured_at_utc": "2026-10-16T18:38:29.657746+00:00",
+  "complete": true,
+  "compressed_source_bytes": 50119641,
+  "experiment_id": "VERITAS-M2-INDEPENDENT-SOURCE-AUDIT-002",
+  "fee_collection_medium_for_buy": "collateral",
+  "fee_collection_source": "https://github.com/Polymarket/ctf-exchange-v2/blob/main/src/exchange/mixins/Trading.sol",
+  "fee_model_version": "veritas-economic-feasibility-v3",
+  "independent_fee_checked_quantity_count": 3415,
+  "independent_fee_disagreement_count": 0,
+  "independent_v3_valid_count": 2628,
+  "invalid_reasons": {
+    "no_empty_ask_side": 469,
+    "yes_empty_ask_side": 23
+  },
+  "limitations": [
+    "This audit covers selected saved snapshots, not the full venue universe or continuous quote histories.",
+    "Reported timestamp age and skew are conservative filters; they do not prove upstream freshness, sequence ordering, or atomicity.",
+    "Hypothetical fee sensitivities do not establish order arrival, fills, recovery, or profitability.",
+    "The independent fee arithmetic cross-check uses the documented fee curve and reported schedule, but does not verify the fee actually charged to a hypothetical order.",
+    "Source integrity verifies stored public payloads; it does not establish that the venue response represented an executable state."
+  ],
+  "orders_submitted": false,
+  "pair_skew_exceedance_count": 1,
+  "positive_both_fee_sensitivities_by_quantity": {
+    "10": 0,
+    "100": 0,
+    "20": 0,
+    "5": 0,
+    "50": 0
+  },
+  "positive_fragmentation_safe_fee_sensitivity_by_quantity": {
+    "10": 0,
+    "100": 0,
+    "20": 0,
+    "5": 0,
+    "50": 0
+  },
+  "positive_full_depth_and_both_minimums_by_quantity": {
+    "10": 0,
+    "100": 0,
+    "20": 0,
+    "5": 0,
+    "50": 0
+  },
+  "positive_full_depth_gross_by_quantity": {
+    "10": 0,
+    "100": 0,
+    "20": 0,
+    "5": 0,
+    "50": 0
+  },
+  "positive_single_match_fee_sensitivity_by_quantity": {
+    "10": 0,
+    "100": 0,
+    "20": 0,
+    "5": 0,
+    "50": 0
+  },
+  "positive_top_pair_gross_count": 0,
+  "positive_top_pair_gross_examples": [],
+  "reported_age_exceedance_pair_count": 2058,
+  "result_sha256": "820ba4a9438511a1c1fcf05b36cdf3d2867231e00d06a3b2203da35501a5c38c",
+  "selected_market_observation_count": 3120,
+  "snapshot_count": 78,
+  "source_code_sha256": "ff0d89ef437a051b27002ca9a5f6deb5b1f7dca52e87883894a48ccc726f98e2",
+  "source_manifest_sha256": "f4c71a4168b6825a2b0efaabffe2b0aa1107ad6e1a65715a9fe1f4c0eedb1f33",
+  "source_root": "data/veritas-observatory",
+  "status": "NO_POSITIVE_GROSS_CANDIDATE_OBSERVED",
+  "strict_fresh_positive_both_fee_sensitivities_by_quantity": {
+    "10": 0,
+    "100": 0,
+    "20": 0,
+    "5": 0,
+    "50": 0
+  },
+  "strict_fresh_positive_fragmentation_safe_fee_sensitivity_by_quantity": {
+    "10": 0,
+    "100": 0,
+    "20": 0,
+    "5": 0,
+    "50": 0
+  },
+  "strict_fresh_positive_full_depth_and_both_minimums_by_quantity": {
+    "10": 0,
+    "100": 0,
+    "20": 0,
+    "5": 0,
+    "50": 0
+  },
+  "strict_fresh_positive_full_depth_gross_by_quantity": {
+    "10": 0,
+    "100": 0,
+    "20": 0,
+    "5": 0,
+    "50": 0
+  },
+  "strict_fresh_positive_single_match_fee_sensitivity_by_quantity": {
+    "10": 0,
+    "100": 0,
+    "20": 0,
+    "5": 0,
+    "50": 0
+  },
+  "strict_fresh_positive_top_pair_gross_count": 0,
+  "strict_freshness_policy": {
+    "interpretation": "conservative reported-timestamp sensitivity; not sequence or venue freshness proof",
+    "negative_age_allowed": false,
+    "reported_book_update_age_ms_max_inclusive": 5000,
+    "reported_pair_timestamp_skew_ms_max_inclusive": 250
+  },
+  "strict_freshness_valid_count": 569,
+  "v4_stored_quality_valid_count": 2628,
+  "v4_v3_top_edge_mismatch_count": 0,
+  "v4_v3_validity_mismatch_count": 0,
+  "version": "veritas-independent-source-opportunity-audit-v2"
+}
