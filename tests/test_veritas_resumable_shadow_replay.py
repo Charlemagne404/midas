@@ -3,14 +3,17 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+import sqlite3
 import sys
+import zlib
 from pathlib import Path
 
 import pytest
 from midas.reality.reconstruction import Engine
 from midas.reality.research_schema import digest
 from midas.reality.shadow_campaign import freeze
-from midas.reality.shadow_source import Context
+from midas.reality.shadow_source import Context, Tail
+from midas.reality.shadow_worker import _restore_context_cohort_order
 from midas.reality.storage import MAGIC, Store, atomic_json, canonical, manifest
 from test_reality_foundry import START, market, snapshot
 
@@ -22,6 +25,47 @@ from scripts.benchmark_shadow_consume import (
 
 RUN_ID = "b" * 64
 PRODUCER_HASH = "a" * 64
+CONDITION_2 = "0x" + "2" * 64
+
+
+def second_market():
+    value = market(event_id="family-2")
+    return {
+        **value,
+        "id": "2",
+        "condition": CONDITION_2,
+        "tokens": {"21": "Yes", "22": "No"},
+        "metadata_ordinal": None,
+    }
+
+
+def snapshot_pair(ms: int) -> str:
+    events = json.loads(snapshot(ms, moved=ms > 0))
+    second_events = []
+    token_map = {"11": "21", "12": "22"}
+    for event in events:
+        second = dict(event)
+        second["asset_id"] = token_map[second["asset_id"]]
+        second["market"] = CONDITION_2
+        second_events.append(second)
+    return json.dumps(events + second_events)
+
+
+def normalized_business_events(work_directory: str) -> list[tuple[str, int, dict[str, object]]]:
+    database = Path(work_directory) / "shadow.sqlite"
+    with sqlite3.connect(database) as connection:
+        rows = connection.execute(
+            "select kind,occurred_ns,body from events order by seq"
+        ).fetchall()
+    result = []
+    for kind, occurred_ns, body in rows:
+        if kind == "worker_start":
+            continue
+        value = json.loads(zlib.decompress(body))
+        if kind == "decision_committed":
+            value.pop("decision_event_seq", None)
+        result.append((kind, occurred_ns, value))
+    return result
 
 
 def make_inputs(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
@@ -45,9 +89,9 @@ def make_inputs(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
         0,
     )
     add("public_market_metadata", "fixture metadata", 0, market_id="1")
-    add("discovery", "fixture universe", 0, cohort=[market()])
-    for ms in (0, 100, 200, 300, 400, 500):
-        add("frame", snapshot(ms, moved=ms > 0), ms)
+    add("discovery", "fixture universe", 0, cohort=[second_market(), market()])
+    for ms in (0, 100, 200, 300, 400, 500, 6000, 11000, 16000):
+        add("frame", snapshot_pair(ms), ms)
     add("checkpoint", dict(state_sha256=engine.digest()), 500)
     store.close()
 
@@ -136,15 +180,17 @@ def run_chunk(
 def test_split_resumable_replay_matches_one_uninterrupted_window(tmp_path, monkeypatch):
     campaign, runtime, campaign_path, snapshot_path = make_inputs(tmp_path, monkeypatch)
     whole = run_chunk(
-        tmp_path, campaign, runtime, campaign_path, snapshot_path, "whole", segments=4
+        tmp_path, campaign, runtime, campaign_path, snapshot_path, "whole", segments=12
     )
     first = run_chunk(
-        tmp_path, campaign, runtime, campaign_path, snapshot_path, "split", segments=2
+        tmp_path, campaign, runtime, campaign_path, snapshot_path, "split", segments=4
     )
     second = run_chunk(
-        tmp_path, campaign, runtime, campaign_path, snapshot_path, "split", segments=2
+        tmp_path, campaign, runtime, campaign_path, snapshot_path, "split", segments=8
     )
 
+    assert whole["decision_count"] > 0
+    assert whole["observation_count"] >= 2
     for key in (
         "ending_cursor",
         "records_processed_total",
@@ -163,6 +209,34 @@ def test_split_resumable_replay_matches_one_uninterrupted_window(tmp_path, monke
         second["final_journal_verification"]["events"]
         > first["final_journal_verification"]["events"]
     )
+    expected_order = [second_market()["condition"], market()["condition"]]
+    assert whole["_final_runtime"]["cohort_order"] == expected_order
+    assert second["_final_runtime"]["cohort_order"] == expected_order
+    assert normalized_business_events(second["work_directory"]) == normalized_business_events(
+        whole["work_directory"]
+    )
+
+
+def test_legacy_runtime_recovers_cohort_order_from_discovery_source(tmp_path, monkeypatch):
+    _, _, _, _ = make_inputs(tmp_path, monkeypatch)
+    raw = tmp_path / "raw"
+    tail = Tail(raw)
+    context = Context()
+    while True:
+        item = tail.next()
+        assert item is not None
+        row, ref = item
+        context.consume(row, ref)
+        if row["kind"] == "discovery":
+            break
+    tail.close()
+
+    expected_order = [second_market()["condition"], market()["condition"]]
+    restored = Context.restore(json.loads(canonical(context.snapshot())))
+    assert restored.cohort_order != expected_order
+
+    _restore_context_cohort_order(restored, raw, None)
+    assert restored.cohort_order == expected_order
 
 
 def test_interrupted_record_replays_idempotently_from_prior_cursor(tmp_path, monkeypatch):

@@ -146,6 +146,7 @@ class Context:
     def __init__(self) -> None:
         self.engine = Engine()
         self.cohort: dict[str, dict[str, Any]] = {}
+        self.cohort_order: list[str] = []
         self.refs: dict[int, dict[str, Any]] = {}
         self.history: dict[str, deque[dict[str, Any]]] = {}
         self.trades: dict[str, dict[str, Any]] = {}
@@ -190,6 +191,9 @@ class Context:
                 self.producer_hash = row["payload"].get("implementation_sha256")
         frame_events = self.engine.consume(row)
         if kind == "discovery":
+            self.cohort_order = [m["condition"] for m in row["cohort"]]
+            if len(self.cohort_order) != len(set(self.cohort_order)):
+                raise ValueError("Discovery cohort contains duplicate conditions")
             self.cohort = {m["condition"]: dict(m, discovery_ref=ref) for m in row["cohort"]}
             for m in self.cohort.values():
                 self.families.add(family_keys(m))
@@ -256,6 +260,15 @@ class Context:
             },
             history={t: [v["ref"] for v in self.history.get(t, [])] for t in market["tokens"]},
         )
+
+    def restore_cohort_order(self, order: Any) -> None:
+        if not isinstance(order, list) or any(
+            not isinstance(condition, str) for condition in order
+        ):
+            raise ValueError("Shadow checkpoint cohort order is malformed")
+        if len(order) != len(set(order)) or set(order) != set(self.cohort):
+            raise ValueError("Shadow checkpoint cohort order does not match the restored cohort")
+        self.cohort_order = list(order)
 
     def snapshot(self) -> dict[str, Any]:
         for queue in self.history.values():
@@ -338,6 +351,7 @@ class Context:
         if e.digest() != s["digest"]:
             raise ValueError("Shadow engine checkpoint corruption")
         c.cohort = value["cohort"]
+        c.cohort_order = list(c.cohort)
         c.refs = {int(k): v for k, v in value["refs"].items()}
         c.history = {k: deque(v, maxlen=10000) for k, v in value["history"].items()}
         c.trades = value["trades"]

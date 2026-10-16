@@ -928,6 +928,11 @@ def run_once(
             worker = Shadow(Path(temp_dir), campaign)
             verify_module_roots(Path(shadow_worker.__file__).resolve().parents[1])
             worker.ctx = Context.restore(copy.deepcopy(runtime["context"]))
+            shadow_worker._restore_context_cohort_order(
+                worker.ctx,
+                raw_root,
+                runtime.get("cohort_order"),
+            )
             worker.tail.close()
             worker.tail = Tail(raw_root, cursor)
             worker.next_decision = copy.deepcopy(runtime["next_decision"])

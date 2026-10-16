@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import fcntl
+import hashlib
 import importlib.metadata
 import json
 import signal
@@ -29,7 +30,7 @@ from .shadow_campaign import verify
 from .shadow_policy import POLICIES, decide
 from .shadow_source import Context, Tail
 from .shadow_store import Journal
-from .storage import atomic_json, file_hash
+from .storage import MAGIC, atomic_json, canonical, file_hash, records
 
 D = Decimal
 
@@ -44,6 +45,56 @@ def spec_for(plan: dict[str, Any]) -> DatasetSpec:
         max_freshness_ms=i["max_freshness_ms"],
         max_skew_ms=i["max_skew_ms"],
     )
+
+
+def _restore_context_cohort_order(
+    context: Context, raw_root: Path, saved_order: Any | None
+) -> None:
+    if saved_order is not None:
+        context.restore_cohort_order(saved_order)
+        return
+    if not context.cohort:
+        context.restore_cohort_order([])
+        return
+
+    refs: list[dict[str, Any]] = []
+    for market in context.cohort.values():
+        ref = market.get("discovery_ref")
+        if not isinstance(ref, dict):
+            raise ValueError("Legacy shadow runtime has no discovery source reference")
+        refs.append(ref)
+    discovery_ref = refs[0]
+    if any(ref != discovery_ref for ref in refs[1:]):
+        raise ValueError("Legacy shadow runtime has inconsistent discovery references")
+    segment_name = discovery_ref.get("segment")
+    if (
+        not isinstance(segment_name, str)
+        or Path(segment_name).name != segment_name
+        or not segment_name.endswith(".seg")
+    ):
+        raise ValueError("Legacy shadow discovery reference has an unsafe segment path")
+    sealed = raw_root / segment_name
+    open_segment = sealed.with_suffix(".open")
+    if sealed.exists() == open_segment.exists():
+        raise ValueError("Legacy shadow discovery segment is missing or ambiguous")
+    source = sealed if sealed.exists() else open_segment
+    if source.is_symlink() or not source.is_file():
+        raise ValueError("Legacy shadow discovery source is not a regular file")
+
+    offset = len(MAGIC)
+    for row, end in records(source, incomplete=source.suffix == ".open"):
+        if row["ordinal"] == discovery_ref.get("ordinal"):
+            if (
+                offset != discovery_ref.get("offset")
+                or row.get("kind") != "discovery"
+                or hashlib.sha256(canonical(row)).hexdigest()
+                != discovery_ref.get("canonical_record_sha256")
+            ):
+                raise ValueError("Legacy shadow discovery source does not match its checkpoint")
+            context.restore_cohort_order([market["condition"] for market in row["cohort"]])
+            return
+        offset = end
+    raise ValueError("Legacy shadow discovery record is absent from its source segment")
 
 
 def scenario_results(
@@ -164,6 +215,12 @@ class Shadow:
         if stored and stored["campaign_id"] != plan["campaign_id"]:
             raise ValueError("Runtime belongs to a different campaign")
         self.ctx = Context.restore(stored["context"]) if stored else Context()
+        if stored:
+            _restore_context_cohort_order(
+                self.ctx,
+                Path(self.i["raw_root"]),
+                stored.get("cohort_order"),
+            )
         self.tail = Tail(Path(self.i["raw_root"]), stored["cursor"] if stored else None)
         self.next_decision = stored["next_decision"] if stored else {}
         self.next_observation = stored["next_observation"] if stored else {}
@@ -191,6 +248,7 @@ class Shadow:
         return dict(
             campaign_id=self.plan["campaign_id"],
             context=self.ctx.snapshot(),
+            cohort_order=list(self.ctx.cohort_order),
             cursor=dict(self.tail.cursor),
             next_decision=self.next_decision,
             next_observation=self.next_observation,
@@ -543,7 +601,8 @@ class Shadow:
             self.status = "PAUSED_UNSUPPORTED_SOURCE_REVISION"
             return
         self.status = "FORWARD_EVALUATING_EXPERIMENTAL"
-        for market in self.ctx.cohort.values():
+        for condition in self.ctx.cohort_order:
+            market = self.ctx.cohort[condition]
             reason = pair_quality(market, self.ctx.engine.books, now, self.spec)
             if reason is None and any(t in self.ctx.bad for t in market["tokens"]):
                 reason = "independent_book_divergence"
