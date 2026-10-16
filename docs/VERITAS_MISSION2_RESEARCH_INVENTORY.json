@@ -177,7 +177,7 @@
     "source_bytes": 551636,
     "source_event_count": 30
   },
-  "captured_at_utc": "2026-10-16T03:32:58Z",
+  "captured_at_utc": "2026-10-16T03:37:47Z",
   "censoring_analysis": {
     "analysis_source_file": "packages/midas/veritas/forensics.py",
     "analysis_source_sha256": "0b055a21c4b423bbf02cc9c240f26f18263fb8342cd72dec686705d2601a420c",
@@ -2857,7 +2857,7 @@
     "unique_market_ids": 558,
     "window_minutes": 751.53
   },
-  "inventory_id": "VERITAS-M2-RESEARCH-INVENTORY-060",
+  "inventory_id": "VERITAS-M2-RESEARCH-INVENTORY-061",
   "latest_scan_captured_at_utc": "2026-10-16T02:30:17.432809+00:00",
   "latest_scan_id": "scan-20261016T023017Z-1254a0a63f4d",
   "latest_source_analysis_checkpoint": {
@@ -4042,14 +4042,14 @@
     "veritas_control_cohort_sha256": "9578217e20dcc7d1c65fa110f0ed7c689b55483b61191f1aae8d30c9b7300d9a",
     "control_cohort_sha256": "9578217e20dcc7d1c65fa110f0ed7c689b55483b61191f1aae8d30c9b7300d9a"
   },
-  "previous_inventory": "VERITAS_MISSION2_RESEARCH_INVENTORY_059.json",
+  "previous_inventory": "VERITAS_MISSION2_RESEARCH_INVENTORY_060.json",
   "repository": {
     "branch": "project/veritas",
     "checkpoint_base_commit": "3c1cf4119f95961c1efd183bc63a108dac42c2e7",
     "code_changes_after_pilot_activation": true,
-    "commit_at_inventory_creation": "c49b333ed3079e7df26e2f13cf1f70664d84d795",
+    "commit_at_inventory_creation": "3abc800b1120d450a140d625ea98ec4b8d72659b",
     "documentation_and_ledger_checkpoint_pending_commit": true,
-    "head_commit": "c49b333ed3079e7df26e2f13cf1f70664d84d795",
+    "head_commit": "3abc800b1120d450a140d625ea98ec4b8d72659b",
     "mission_status": "active_scheduled_discovery_source_analysis_gap_detail_and_research",
     "path": "/home/charlie/midas-veritas",
     "starting_commit": "9a857cc56804bec6b7129171ba090d338e263aa3",
@@ -7963,5 +7963,141 @@
     "checkpoint_path": "docs/VERITAS_MISSION2_GATE_C_CHECKPOINT_012.md",
     "checkpoint_file_sha256": "479f29dcb63a17e500604ab8d07fa48a37cbcc24683ce8730785cb4b61d9cca6",
     "status": "scheduled gap-detail prefix advanced and summary verified; mission active"
-  }
+  },
+  "latest_gap_detail_checkpoint_055": {
+    "captured_at_utc": "2026-10-16T03:37:47Z",
+    "checkpoint_path": "docs/VERITAS_MISSION2_GATE_C_CHECKPOINT_013.md",
+    "checkpoint_file_sha256": "ea1532ebadf365433cbd8a6d4fba87f2d27b45e4c72beb5c0ec18c072187548d",
+    "summary_path": "data/veritas-observatory/gap-detail-summary-v1.json",
+    "summary_file_sha256": "2e47109dc73aa160e1346bc0688add44e602b7582eb3a7b42b039b0a18f249dd",
+    "summary_sha256": "3101b62de98890bdb2f05b39e7eec2626a3f69763bcdadb854d0fffff87a8e1f",
+    "generated_at_utc": "2026-10-16T03:36:17+00:00",
+    "service_result": {
+      "exit_status": 0,
+      "restarts": 0,
+      "start_utc": "2026-10-16T03:35:04Z",
+      "exit_utc": "2026-10-16T03:36:20Z"
+    },
+    "processed_segment_count": 2161,
+    "replayable_catalog_segment_count": 5135,
+    "catalog_segment_count": 5137,
+    "pending_segment_count": 2974,
+    "processed_source_bytes": 516420246,
+    "pending_source_bytes": 810593712,
+    "all_period_gap_event_count": 2392,
+    "campaign_window_gap_event_count": 311,
+    "campaign_window_gap_counts_by_reason": {
+      "book_resynchronization": 311
+    },
+    "campaign_window_affected_market_count": 11,
+    "campaign_window_gap_events_without_reported_assets": 0,
+    "campaign_window_unmapped_affected_asset_count": 0,
+    "active_segment_read": false,
+    "last_processed_ordinal": 269843
+  },
+  "gate_c_checkpoint_013": {
+    "captured_at_utc": "2026-10-16T03:37:47Z",
+    "checkpoint_path": "docs/VERITAS_MISSION2_GATE_C_CHECKPOINT_013.md",
+    "checkpoint_file_sha256": "ea1532ebadf365433cbd8a6d4fba87f2d27b45e4c72beb5c0ec18c072187548d",
+    "status": "03:35 scheduled gap-detail batch verified; source prefix remains partial"
+  },
+  "gate_h_checkpoint_001": {
+    "captured_at_utc": "2026-10-16T03:37:47Z",
+    "checkpoint_path": "docs/VERITAS_MISSION2_GATE_H_CHECKPOINT_001.md",
+    "checkpoint_file_sha256": "05fa38999c63fc468066b4fc52a74dc20dfa9885cbc890f6634cf8147171fa33",
+    "test_path": "apps/web/e2e/veritas.spec.ts",
+    "test_file_sha256": "ddaffdd07ab06797130cebb4b7c7107f1931286940491f153861e1ffc668dacf",
+    "status": "one isolated Veritas browser workflow passed; Gate H remains active"
+  },
+  "verification_checkpoint_052": {
+    "captured_at_utc": "2026-10-16T03:37:47Z",
+    "veritas_playwright": "1 passed in 5.4s",
+    "veritas_api_dashboard_tests": "23 passed; existing Starlette/httpx deprecation warning",
+    "veritas_component_test": "1 passed",
+    "typescript_typecheck": "passed",
+    "eslint": "passed",
+    "prettier": "passed",
+    "mypy_apps_api_veritas": "passed",
+    "ruff_check_and_format": "passed",
+    "production_build": "passed with Vite large-chunk advisory",
+    "full_regression": "not run",
+    "preservation_and_scheduler_recovery_suite": "not run"
+  },
+  "operations_checkpoint_061": {
+    "captured_at_utc": "2026-10-16T03:37:47Z",
+    "latest_full_host_service_health_snapshot_as_of_utc": "2026-10-16T02:59:00Z",
+    "limited_systemd_and_timer_sample_utc_minute": "2026-10-16T03:37Z",
+    "gap_detail_service": {
+      "state": "inactive",
+      "result": "success",
+      "exit_status": 0,
+      "restarts": 0,
+      "start_utc": "2026-10-16T03:35:04Z",
+      "exit_utc": "2026-10-16T03:36:20Z"
+    },
+    "observer_service": {
+      "state": "inactive",
+      "result": "success",
+      "exit_status": 0,
+      "restarts": 0,
+      "start_utc": "2026-10-16T03:31:44Z",
+      "exit_utc": "2026-10-16T03:32:03Z",
+      "scan_output_read": false
+    },
+    "source_analysis_service": {
+      "last_exit_status": 0,
+      "last_exit_utc": "2026-10-16T03:14:55Z",
+      "next_timer_utc": "2026-10-16T03:40:40Z"
+    },
+    "research_director_service": {
+      "last_exit_status": 0,
+      "last_exit_utc": "2026-10-16T03:15:35Z",
+      "next_timer_utc": "2026-10-16T03:45:19Z"
+    },
+    "next_gap_detail_timer_utc": "2026-10-16T03:50:00Z",
+    "next_observer_timer_utc": "2026-10-16T04:00:18Z",
+    "playwright_isolated_api_port": 18000,
+    "playwright_isolated_web_port": 15173,
+    "playwright_servers_stopped": true,
+    "playwright_ports_free_after_run": true,
+    "full_host_health_probe_performed": false,
+    "cpu_ram_disk_probe_performed": false,
+    "main_or_reality_services_checked": false,
+    "manual_job_trigger_poll_or_retry": false,
+    "campaign_pilot_or_frozen_source_mutation": false,
+    "limitations": [
+      "Only Veritas systemd/timers and sealed research summaries were sampled.",
+      "Host load, RAM, disk, Reality/Midas services, and the hosted dashboard were not checked; the full operational snapshot remains 02:59 UTC."
+    ]
+  },
+  "current_operational_checkpoint_061": {
+    "captured_at_utc": "2026-10-16T03:37:47Z",
+    "source_analysis_generated_at_utc": "2026-10-16T03:14:52+00:00",
+    "source_analysis_processed_segments": 4997,
+    "source_analysis_catalog_segments": 5089,
+    "source_analysis_pending_segments": 92,
+    "source_analysis_pending_bytes": 23048067,
+    "source_analysis_quality_valid_states": 331241,
+    "source_analysis_markets": 77,
+    "source_analysis_positive_top_ask_states": 0,
+    "gap_detail_generated_at_utc": "2026-10-16T03:36:17+00:00",
+    "gap_detail_processed_segments": 2161,
+    "gap_detail_catalog_segments": 5137,
+    "gap_detail_pending_segments": 2974,
+    "gap_detail_pending_bytes": 810593712,
+    "gap_detail_all_period_events": 2392,
+    "gap_detail_campaign_window_events": 311,
+    "gap_detail_campaign_window_market_count": 11,
+    "gap_detail_campaign_window_complete": false,
+    "latest_observer_output_inspected": false,
+    "full_resource_snapshot_current": false
+  },
+  "checkpoint_061_limitations": [
+    "The gap-detail prefix remains incomplete at 2,161/5,137 cataloged segments.",
+    "The attribution artifact remains pinned to the older 1,919/5,079 prefix; no successor audit was run in this checkpoint.",
+    "The primary source-analysis summary remains at 4,997/5,089 segments from 03:14:52 UTC.",
+    "No full host/resource or Reality/Midas service health check was performed after 02:59 UTC.",
+    "The observer output was not inspected and the next Director cycle had not run.",
+    "Only one Playwright Veritas workflow was run; Gate H and the full regression remain open."
+  ]
 }

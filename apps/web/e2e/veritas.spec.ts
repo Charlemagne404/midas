@@ -134,6 +134,11 @@ test('shows the bounded discovery cohort and links its finalized evidence', asyn
   await expect(
     page.getByText(/direct causal link to the original gap was not verified/),
   ).toBeVisible();
+  await expect(page.getByText('Frozen campaign gap attribution')).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Inspect attribution' })).toHaveAttribute(
+    'href',
+    '/api/veritas/artifacts/censor-gap-attribution',
+  );
   await expect(page.getByText('Incremental finalized-source gap detail')).toBeVisible();
   await expect(page.getByRole('link', { name: 'Inspect source audit' })).toHaveAttribute(
     'href',
@@ -142,5 +147,14 @@ test('shows the bounded discovery cohort and links its finalized evidence', asyn
   await expect(page.getByRole('link', { name: 'Inspect verified prefix' })).toHaveAttribute(
     'href',
     '/api/veritas/artifacts/gap-detail-current',
+  );
+
+  const attribution = await page.request.get('/api/veritas/artifacts/censor-gap-attribution');
+  expect(attribution.ok()).toBeTruthy();
+  const attributionArtifact = await attribution.json();
+  expect(attributionArtifact.data.analysis_version).toBe('veritas-censor-gap-attribution-v1');
+  expect(attributionArtifact.data.query.gap_censored_outcomes).toBe(339);
+  expect(attributionArtifact.data.gap_censors.same_market_preceding_gap_is_causal_proof).toBe(
+    false,
   );
 });

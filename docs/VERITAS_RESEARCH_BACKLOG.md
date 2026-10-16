@@ -233,3 +233,29 @@ read only sealed outputs after their services exit, refresh the Director
 projection after its scheduled cycle, and decide whether an attribution
 artifact 002 adds enough new classified outcomes to justify a bounded rerun.
 Do not read the observer's in-progress scan or manually trigger a job.
+
+## Mission 2 continuation — 03:35 gap-detail batch and Gate H browser check
+
+The 03:35 finalized-only gap-detail batch completed successfully. Its sealed
+prefix is 2,161/5,137 cataloged segments, with 2,974 segments / 810,593,712
+bytes pending and 311 campaign-window book-resynchronization events across 11
+markets. The primary source analyzer's last completed summary remains
+4,997/5,089 segments and 331,241 quality-valid states across 77 markets, with
+zero positive gross states. The current gap attribution artifact 001 is still
+pinned to the earlier 1,919-segment prefix; preserve it if a new bounded
+attribution version is produced.
+
+The isolated Veritas Playwright workflow now verifies the attribution card,
+link, and artifact endpoint, including the 339-row count and explicit
+non-causality flag. It passed 1 test; its temporary API and Vite servers were
+closed and their ports were free afterward. This is a local source-checkout
+workflow, not a hosted deployment check. Gate H remains active. See [Gate C
+checkpoint 013](VERITAS_MISSION2_GATE_C_CHECKPOINT_013.md), [Gate H checkpoint
+001](VERITAS_MISSION2_GATE_H_CHECKPOINT_001.md), and [inventory
+061](VERITAS_MISSION2_RESEARCH_INVENTORY_061.json).
+
+Next: allow source analysis and the 03:45 Director cycle to finish, then read
+only their sealed outputs and reconcile the scan-47 projection after its
+scheduled cycle. Continue the gap-detail prefix under its existing bounds;
+do not manually launch an overlapping analyzer or inspect an in-progress
+observer output.

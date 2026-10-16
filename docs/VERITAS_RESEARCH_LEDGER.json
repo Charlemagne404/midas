@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-16T03:32:58Z",
+  "updated_at_utc": "2026-10-16T03:37:47Z",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -5894,6 +5894,41 @@
         "The read-only summary digest and progress counters were validated; no full raw-source rehash was run during this checkpoint.",
         "The source analyzer is also still catching up, and the active observer output was not inspected.",
         "The Director's next scheduled cycle at 03:45 UTC had not yet run at capture."
+      ]
+    },
+    {
+      "hypothesis_id": "VERITAS-H104",
+      "experiment_id": "VERITAS-M2-DASH-E2E-20261016-001",
+      "dataset_id": "2c81d4ad8852b2feaae7a7b5f7bf6948a5f85c514ac9d6bfd0f3bff3935dcab2",
+      "title": "Can an isolated browser workflow reach and inspect the verified campaign gap-attribution artifact?",
+      "mechanism": "A headless browser loads the Veritas dashboard against an isolated API and temporary database, then follows the source-linked artifact route and checks the saved artifact identity, gap-labeled outcome count, and non-causality flag.",
+      "success_metric": "The browser displays the attribution panel and correct artifact URL; the API route returns the expected version and 339 gap-labeled rows while explicitly leaving causal proof false; the isolated test servers exit without using or restarting the hosted services.",
+      "status": "continue",
+      "decision": "The focused Playwright Veritas workflow passed 1 test in 5.4 seconds. Its API and Vite servers used isolated ports 18000/15173 and a temporary SQLite database, then stopped; the ports were free after the run. The hosted dashboard was not deployed.",
+      "result": {
+        "captured_at_utc": "2026-10-16T03:37:47Z",
+        "checkpoint_path": "docs/VERITAS_MISSION2_GATE_H_CHECKPOINT_001.md",
+        "test_path": "apps/web/e2e/veritas.spec.ts",
+        "test_file_sha256": "ddaffdd07ab06797130cebb4b7c7107f1931286940491f153861e1ffc668dacf",
+        "command": "npm run test:e2e -- e2e/veritas.spec.ts",
+        "browser_test": "1 passed in 5.4s",
+        "artifact_path": "docs/VERITAS_MISSION2_CENSOR_GAP_ATTRIBUTION_001.json",
+        "artifact_result_sha256": "2c81d4ad8852b2feaae7a7b5f7bf6948a5f85c514ac9d6bfd0f3bff3935dcab2",
+        "artifact_file_sha256": "332258b51f72c058cf945742ff29f0d26abcb1da0d5865ebcfd5419fb94e45a5",
+        "schema_version": "veritas-censor-gap-attribution-v1",
+        "gap_censored_outcomes": 339,
+        "same_market_preceding_gap_is_causal_proof": false,
+        "isolated_api_port": 18000,
+        "isolated_vite_port": 15173,
+        "temporary_database": true,
+        "test_servers_stopped": true,
+        "full_regression": "not run",
+        "hosted_dashboard_deployed": false
+      },
+      "limitations": [
+        "This is one browser workflow in the source checkout, not a hosted deployment test.",
+        "Only the Veritas spec was run; the full browser suite and Gate H preservation and scheduler checks remain open.",
+        "The gap attribution remains a partial-prefix analysis and does not prove causality, fills, or profitability."
       ]
     }
   ],

@@ -1,6 +1,23 @@
 # Veritas Mission 2 Engineering Checkpoint
 
-## Latest checkpoint — 03:29 UTC, Gate G gap-attribution projection
+## Latest checkpoint — 03:37 UTC, scheduled gap detail and browser verification
+
+The 03:35 scheduled gap-detail batch exited successfully and advanced the
+finalized-only prefix to 2,161/5,137 cataloged segments, with 2,974 segments /
+810,593,712 bytes pending and 311 campaign-window gaps across 11 markets. The
+prefix is partial. The source analyzer's last summary remains at 4,997/5,089
+segments and 331,241 quality-valid states across 77 markets, with no positive
+gross gates. See [Gate C checkpoint
+013](VERITAS_MISSION2_GATE_C_CHECKPOINT_013.md).
+
+The Veritas browser workflow passed one isolated Playwright test, including
+the attribution card and hash-validated artifact route. The temporary API and
+Vite servers exited after the test; the hosted dashboard remains unchanged.
+See [Gate H checkpoint
+001](VERITAS_MISSION2_GATE_H_CHECKPOINT_001.md). Mission 2 and Gate H remain
+active.
+
+## Gate G implementation checkpoint — 03:29 UTC, gap-attribution projection
 
 The read-only dashboard now validates and summarizes the new frozen-campaign
 gap-censor attribution artifact, checks row counts against its digest-protected

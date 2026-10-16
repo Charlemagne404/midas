@@ -1,6 +1,6 @@
 # Veritas Mission 2 Operations
 
-**Latest limited systemd/timer check:** 2026-10-16 03:31 UTC
+**Latest limited systemd/timer check:** 2026-10-16 03:37 UTC
 **Latest full host/service snapshot:** 2026-10-16 02:59 UTC
 **Services sampled at 03:31:** Veritas observer, source analysis, gap detail, and Research Director
 **Timers:** `midas-veritas-observatory.timer`, `midas-veritas-source-analysis.timer`, `midas-veritas-research-director.timer`, `midas-veritas-gap-detail-analysis.timer`
@@ -40,6 +40,22 @@ This was a limited systemd and sealed-summary check. Host load, RAM, disk,
 Reality recorder/shadow state, and Midas/Reality API or web health were not
 sampled; the earlier full host/service snapshot below remains the last such
 check. No services, campaign, or fixed pilot were changed.
+
+## Scheduled gap-detail and browser verification — 2026-10-16 03:37 UTC
+
+The 03:35 gap-detail one-shot completed at 03:36:20 UTC with exit status 0
+and zero restarts. Its sealed summary advanced the index to 2,161/5,137
+cataloged segments, with 2,974 segments / 810,593,712 bytes pending and 311
+campaign-window gap events across 11 markets. The summary digest and progress
+counters passed the read-only dashboard validator. The prefix remains
+incomplete; no active segment was read.
+
+The focused Veritas browser workflow also passed 1 test. Playwright used a
+temporary database and isolated API/Vite test servers on ports 18000 and 15173;
+the ports were free after the run. No hosted service was restarted or reused.
+The next timer starts observed are source analysis 03:40:40, Director 03:45:19,
+gap detail 03:50:00, and observer 04:00:18 UTC. Host load, RAM, disk, and
+Reality/Midas health remain unrefreshed since the 02:59 full snapshot.
 
 ## Latest runtime state — 2026-10-16 02:59 UTC
 
