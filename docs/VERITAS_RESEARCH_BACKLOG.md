@@ -329,3 +329,20 @@ The 06:45 UTC Director cycle reconciled scan 53 and admitted scan 54. Its Arena 
 5. Automated API tests, browser checks, and deployment remain open; the in-process projection of artifact 008 is verified.
 
 See [Gate A checkpoint 050](VERITAS_MISSION2_GATE_A_CHECKPOINT_050.md), [Gate B checkpoint 009](VERITAS_MISSION2_GATE_B_CHECKPOINT_009.md), [Gate F checkpoint 033](VERITAS_MISSION2_GATE_F_CHECKPOINT_033.md), [Gate G checkpoint 017](VERITAS_MISSION2_GATE_G_CHECKPOINT_017.md), and [inventory 073](VERITAS_MISSION2_RESEARCH_INVENTORY_073.json).
+
+
+## Mission 2 continuation — scan-58 independent coverage and opportunity replay
+
+The saved public snapshot panel now has 58 scans / 2,320 selected pair observations. Versioned A1 replay 010 verifies snapshot, Gamma, and stored eligibility lineage for all 58 scans: 6,565 bounded-union IDs, 2,204 eligible at least once, and 998 selected market/condition IDs. Independent audit 010 reproduces all 1,981 valid states and top-edge decisions with zero mismatches; no positive top, depth, minimum, or fee-qualified state appears. These are selected intermittent observations, not a venue census or execution result.
+
+The scheduled observer is at scan 58 and the fixed measurement pilot is at 27/48 scans, 878/1,080 valid slots, 630 distinct selected market IDs, and one skipped sequence. Keep audit 002 immutable; it covers 25 pilot scans and is stale. The latest finalized-source pass remains current at 5,677 segments / 386,158 valid states / 101 markets. Gap detail completed at 08:36:30 UTC and advanced to 4,485/5,724 replayable segments, with 1,239 / 302,415,732 bytes pending and 1,442 campaign-window gaps indexed.
+
+Next actions:
+
+1. Allow the scheduled 08:45:23 UTC Director cycle to reconcile scan 57; do not manually poll, retry, or admit a child.
+2. Keep the Arena research package pinned through that reconciliation. Scan 58 is not yet admitted.
+3. Continue the fixed pilot to its existing end or cap, then run a new versioned inclusion-support audit against the completed prefix.
+4. Continue source/gap-detail analysis only on finalized segments; investigate the failed archive service and shadow lag without changing the frozen campaign.
+5. Complete the isolated Mission 2 regression, preservation, scheduler-recovery, and dashboard checks. Do not train a model without candidate-relevant labels.
+
+See [Gate A checkpoint 053](VERITAS_MISSION2_GATE_A_CHECKPOINT_053.md), [Gate B checkpoint 011](VERITAS_MISSION2_GATE_B_CHECKPOINT_011.md), [inventory 076](VERITAS_MISSION2_RESEARCH_INVENTORY_076.json), and ledgers H128–H129.

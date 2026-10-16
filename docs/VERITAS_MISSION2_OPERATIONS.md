@@ -1,5 +1,56 @@
 # Veritas Mission 2 Operations
 
+## Read-only research/runtime checkpoint — 2026-10-16T08:36:57Z
+
+- Offline A1 replay 010 and independent opportunity audit 010 cover 58 saved
+  snapshots / 2,320 selected pair observations. They verified the retained
+  snapshot, Gamma, and analysis lineage without public requests or orders.
+  There are 1,981 quality-valid pairs, zero v4/audit mismatches, and zero
+  positive top, depth, minimum, or fee-qualified results. See [Gate A
+  checkpoint 053](VERITAS_MISSION2_GATE_A_CHECKPOINT_053.md), [Gate B
+  checkpoint 011](VERITAS_MISSION2_GATE_B_CHECKPOINT_011.md), and ledger
+  H128–H129.
+- The latest observer scan is 58 (`scan-20261016T083116Z-ee68f55ff194`),
+  captured at 08:31:16 UTC: 36/40 pairs pass quality, and no top-gross pair is
+  positive. The fixed measurement pilot is at 27/48 scans, 878/1,080 valid
+  slots, and 630 selected market IDs, with one skipped sequence. Audit 002
+  remains at 25 scans and is stale.
+- The finalized-source analyzer is current through 5,677/5,677 segments /
+  1,460,522,573 bytes, with 386,158 quality-valid states across 101 markets;
+  it reports no positive top-ask, full-depth, or minimum-notional state. The
+  latest gap-detail batch completed at 08:36:30 UTC with exit 0 and no restart.
+  It processed 4,485/5,724 replayable segments, leaving 1,239 segments /
+  302,415,732 bytes pending; 1,442 campaign-window gaps are indexed. It read
+  no active segment.
+- The 08:15:58 UTC Director cycle reconciled scan 55 and admitted scan 57 as
+  `job-df156882038246b497d9788a`. That Arena job completed at 08:16:17 UTC with
+  no positive gross candidate. Its manifest still projects `QUEUED` until the
+  scheduled reconciliation at 08:45:23 UTC. Scan 58 has not yet been admitted.
+  No one-shot Veritas analysis service was active at 08:36:57 UTC; the next
+  source-analysis, Director, gap-detail, and observer cycles are scheduled for
+  08:40:12, 08:45:23, 08:50:00, and 09:00:30 UTC.
+- The Reality recorder and frozen shadow remain active; the recorder had zero
+  restarts at its latest detailed check. The shadow remains
+  `WARMING_OR_LAGGED_SOURCE` with one historical restart. Midas returned HTTP
+  200/READY; Reality returned HTTP 200/DEGRADED with startup READY. Both are in
+  demo mode with live execution disabled. The Reality archive service remains
+  failed after its 30-minute timeout and exit status 15, with zero restarts.
+- Host snapshot: load average 0.82 / 0.82 / 0.82, 9.5 GiB RAM available,
+  swap 3.8/4 GiB used, and root disk 56% used with about 197 GiB available.
+  No service, campaign, or ongoing research job was restarted or changed.
+
+## Scan-58 A1 and independent opportunity artifacts
+
+The new audits ran against saved local snapshots and wrote versioned evidence
+only. The A1 replay verified 58/58 stored eligibility classifications across
+6,565 bounded-union Gamma IDs, with 2,204 IDs eligible at least once and 998
+selected market/condition IDs. The independent evaluator reproduced all 1,981
+quality-valid decisions and top edges with zero mismatches. Its conservative
+reported-age sensitivity admits 421 states; 1,560 pairs exceed the five-second
+age threshold. This does not establish sequence freshness or execution.
+Artifacts are [coverage replay 010](VERITAS_MISSION2_MARKET_UNIVERSE_COVERAGE_010.json)
+and [independent audit 010](VERITAS_MISSION2_INDEPENDENT_OPPORTUNITY_AUDIT_010.json).
+
 ## Isolated browser verification — 2026-10-16T08:23:32Z
 
 - The focused Veritas Playwright workflow passed 1 test in 5.6 seconds. It
