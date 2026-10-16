@@ -88,7 +88,8 @@ def market_universe_coverage_artifact_path(repository: Path, ledger: dict[str, A
             else None
         )
         if (
-            match is None
+            not isinstance(relative_path, str)
+            or match is None
             or result.get("analysis_version") != "veritas-market-universe-coverage-v1"
             or not isinstance(result.get("artifact_file_sha256"), str)
         ):
@@ -124,7 +125,8 @@ def coverage_design_audit_artifact_path(repository: Path, ledger: dict[str, Any]
             else None
         )
         if (
-            match is None
+            not isinstance(relative_path, str)
+            or match is None
             or result.get("analysis_version") != COVERAGE_DESIGN_AUDIT_VERSION
             or not isinstance(result.get("artifact_file_sha256"), str)
         ):
@@ -158,7 +160,8 @@ def execution_break_even_artifact_path(repository: Path, ledger: dict[str, Any])
             else None
         )
         if (
-            match is None
+            not isinstance(relative_path, str)
+            or match is None
             or result.get("analysis_version") != EXECUTION_BREAK_EVEN_VERSION
             or not isinstance(result.get("artifact_file_sha256"), str)
         ):
@@ -3214,9 +3217,8 @@ def coverage_design_audit_overview(
     result_payload = dict(value)
     artifact_digest = result_payload.pop("artifact_sha256", None)
     result_digest = result_payload.pop("result_sha256", None)
-    canonical = lambda obj: json.dumps(  # noqa: E731
-        obj, sort_keys=True, separators=(",", ":"), ensure_ascii=False
-    ).encode()
+    def canonical(obj: Any) -> bytes:
+        return json.dumps(obj, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
     calculated_result_digest = hashlib.sha256(canonical(result_payload)).hexdigest()
     calculated_artifact_digest = hashlib.sha256(
         canonical({**result_payload, "result_sha256": result_digest})

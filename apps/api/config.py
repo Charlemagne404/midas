@@ -11,6 +11,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="MIDAS_", env_file=".env", extra="ignore")
     reality_workspace: Path = Path(".")
+    veritas_workspace: Path | None = None
     mode: Literal["demo", "live"] = "demo"
     laboratory_root: Path | None = None
     arena_root: Path = Path("data/arena")

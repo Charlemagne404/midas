@@ -1,7 +1,11 @@
 from __future__ import annotations
 
+import json
+
+from midas.veritas import reported_book_timestamp_audit as timestamp_audit
 from midas.veritas.reported_book_timestamp_audit import (
     BookObservation,
+    analyze_reported_book_timestamps,
     summarize_repeated_book_observations,
 )
 
@@ -95,3 +99,45 @@ def test_unordered_input_is_compared_in_receipt_order():
 
     assert report["repeated_asset_transition_count"] == 1
     assert report["transition_classes"] == {"content_changed_timestamp_advanced": 1}
+
+
+def test_analyzer_passes_compressed_snapshot_to_integrity_verifier(tmp_path, monkeypatch):
+    snapshots = tmp_path / "snapshots"
+    snapshots.mkdir()
+    scan_id = "scan-20261016T000000Z-abcdef123456"
+    snapshot_path = snapshots / f"{scan_id}.json.gz"
+    snapshot_path.write_bytes(b"fixture")
+    compressed = b"verified compressed snapshot"
+    snapshot = {
+        "scan_id": scan_id,
+        "captured_ns": 10_000_000_000,
+        "source_requests": {
+            "clob_books": {
+                "requested_at_ns": 9_900_000_000,
+                "received_at_ns": 10_000_000_000,
+                "response_payload": json.dumps(
+                    [{"asset_id": "asset-a", "timestamp": "9000", "hash": "book-hash"}]
+                ),
+                "response_book_count": 1,
+                "response_sha256": "unused-by-this-orchestration-test",
+            }
+        },
+    }
+    received: dict[str, bytes] = {}
+    monkeypatch.setattr(timestamp_audit, "_read_snapshot", lambda path: (snapshot, compressed))
+
+    def verify(received_snapshot, path, raw):
+        assert received_snapshot is snapshot
+        received["compressed"] = raw
+        return {
+            "scan_id": scan_id,
+            "captured_ns": snapshot["captured_ns"],
+            "snapshot_evidence_sha256": "evidence-hash",
+            "compressed_snapshot_sha256": "compressed-hash",
+        }
+
+    monkeypatch.setattr(timestamp_audit, "_verify_snapshot", verify)
+    result = analyze_reported_book_timestamps(snapshots)
+
+    assert received["compressed"] == compressed
+    assert result["source"]["snapshots"][0]["scan_id"] == scan_id

@@ -93,7 +93,7 @@ test('shows the bounded discovery cohort and links its finalized evidence', asyn
   expect(qualityExperiment.data.model.not_deployed).toBe(true);
   expect(qualityExperiment.data.evaluation.positive_gross_candidates_in_held_out_markets).toBe(0);
   await expect(page.getByText('Independent opportunity audit', { exact: true })).toBeVisible();
-  await expect(page.getByText(/85 scans · 3,400 selected observations/)).toBeVisible();
+  await expect(page.getByText(/84 scans · 3,360 selected observations/)).toBeVisible();
   const independentAuditLink = page.getByRole('link', { name: 'Inspect replay' });
   await expect(independentAuditLink).toHaveAttribute(
     'href',
@@ -104,7 +104,7 @@ test('shows the bounded discovery cohort and links its finalized evidence', asyn
   );
   expect(independentAuditResponse.ok()).toBeTruthy();
   const independentAudit = await independentAuditResponse.json();
-  expect(independentAudit.data.snapshot_count).toBe(85);
+  expect(independentAudit.data.snapshot_count).toBe(84);
   expect(independentAudit.data.independent_fee_disagreement_count).toBe(0);
   await expect(page.getByRole('heading', { name: 'Market discovery and coverage' })).toBeVisible();
   await expect(page.getByText('stratified-gamma-page-rotation-v2')).toBeVisible();

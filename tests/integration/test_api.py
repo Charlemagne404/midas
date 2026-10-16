@@ -78,3 +78,32 @@ def test_failed_startup_exposes_health_and_gates_dependent_endpoints(tmp_path, m
         assert health.json()["startup_status"] == "FAILED"
         assert client.get("/api/state").status_code == 503
         assert client.get("/docs").status_code == 200
+
+
+def test_veritas_overview_is_registered_against_configured_workspace(tmp_path, monkeypatch):
+    from apps.api import arena, veritas
+
+    workspace = tmp_path / "midas-veritas"
+    arena_workspace = {}
+    monkeypatch.setattr(veritas, "overview", lambda repository: {"workspace": str(repository)})
+    monkeypatch.setattr(
+        arena,
+        "create_veritas_qualification_job",
+        lambda arena_root, repository: arena_workspace.update(
+            arena_root=str(arena_root), repository=str(repository)
+        )
+        or arena_workspace,
+    )
+    app = create_app(Settings(veritas_workspace=workspace))
+
+    assert "/api/veritas/overview" in app.openapi()["paths"]
+    # This client intentionally does not enter its lifespan; these routes do not
+    # require the paper database and the test must not touch runtime databases.
+    client = TestClient(app)
+    response = client.get("/api/veritas/overview")
+    assert response.status_code == 200
+    assert response.json() == {"workspace": str(workspace.resolve())}
+    qualification = client.post("/api/arena/jobs/veritas-qualification")
+    assert qualification.status_code == 201
+    assert arena_workspace["repository"] == str(workspace.resolve())
+    client.close()

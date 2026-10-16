@@ -9,6 +9,7 @@ Type=simple
 WorkingDirectory=%h/midas
 Environment=MIDAS_MODE=demo
 Environment=MIDAS_LABORATORY_ROOT=%h/midas/data/laboratory-final
+Environment=MIDAS_VERITAS_WORKSPACE=%h/midas-veritas
 Environment=PYTHONUNBUFFERED=1
 ExecStart=%h/midas/.venv/bin/uvicorn apps.api.main:app --host 127.0.0.1 --port 8000 --timeout-graceful-shutdown 60
 Restart=on-failure

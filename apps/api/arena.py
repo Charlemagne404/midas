@@ -196,19 +196,25 @@ def _latest_veritas_qualification_distribution(
         median = edge.get("median_nearest_rank_per_share")
         maximum = edge.get("maximum_per_share")
         numeric_fields = (minimum, median, maximum)
+        count_fields = (
+            count,
+            positive_count,
+            quality_valid_pairs,
+            snapshot_count,
+            attempted_market_pairs,
+            unique_market_ids,
+        )
+        if any(
+            not isinstance(value, int) or isinstance(value, bool) or value < 0
+            for value in count_fields
+        ):
+            return None
+        count = cast(int, count)
+        positive_count = cast(int, positive_count)
+        quality_valid_pairs = cast(int, quality_valid_pairs)
+        snapshot_count = cast(int, snapshot_count)
         if (
-            any(
-                not isinstance(value, int) or isinstance(value, bool) or value < 0
-                for value in (
-                    count,
-                    positive_count,
-                    quality_valid_pairs,
-                    snapshot_count,
-                    attempted_market_pairs,
-                    unique_market_ids,
-                )
-            )
-            or count != quality_valid_pairs
+            count != quality_valid_pairs
             or positive_count > count
             or snapshot_count < 1
             or snapshot_count != len(source_snapshots)
@@ -226,7 +232,9 @@ def _latest_veritas_qualification_distribution(
         if len(baseline_rows) != 1 or baseline_rows[0].get("positive_states") != positive_count:
             return None
         try:
-            minimum_value, median_value, maximum_value = map(Decimal, numeric_fields)
+            minimum_value, median_value, maximum_value = map(
+                Decimal, cast(tuple[str, str, str], numeric_fields)
+            )
         except (InvalidOperation, ValueError):
             return None
         if (
@@ -622,7 +630,7 @@ def inspect_director(root: Path, identity: str) -> dict[str, Any]:
     return record
 
 
-def router(root: Path) -> APIRouter:
+def router(root: Path, *, veritas_repository: Path | None = None) -> APIRouter:
     api = APIRouter(prefix="/api/arena", tags=["Arena"])
 
     async def call(fn: Any, *args: Any) -> Any:
@@ -1144,7 +1152,11 @@ def router(root: Path) -> APIRouter:
 
     @api.post("/jobs/veritas-qualification", status_code=201)
     async def create_veritas_qualification() -> Any:
-        return await call(create_veritas_qualification_job, root, veritas_repository_root())
+        return await call(
+            create_veritas_qualification_job,
+            root,
+            veritas_repository or veritas_repository_root(),
+        )
 
     @api.get("/jobs/{identity}")
     async def job(identity: str) -> Any:
