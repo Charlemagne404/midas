@@ -13,6 +13,12 @@ and are not loaded by the frozen service. The old integrity result verifies
 113,162 journal events; the live counter is 113,376. No active-writer
 integrity scan, service restart, quota change, or campaign write occurred.
 
+Source-code comparison locates a plausible hot path: the pinned reader scans
+and sorts the segment directory every 0.5 seconds while consuming records;
+the branch reuses its open-segment inventory and refreshes at sealed
+boundaries. The isolated four-segment benchmark reduced CPU by 81.32%, but
+does not show throughput against the full live journal.
+
 The scheduled source replay is caught up through 6,962 segments with zero
 positive economic states, and the scan-79 Director/Arena qualification
 completed with all five gates zero and empty candidate evidence. These results

@@ -36,6 +36,15 @@ available RAM 10.1 GB, swap 4.28 / 4.29 GB used, and disk 57% used / 195 GB
 free. This is strong evidence that the CPU quota is binding; it does not
 establish that quota is the only cost in the large live journal.
 
+Code comparison identifies a likely source-side cost: the frozen
+`Tail.refresh()` re-enumerates and sorts the segment directory at least every
+0.5 seconds as records are read, while the current branch keeps the open
+segment handle and refreshes the inventory at sealed-segment boundaries. The
+branch also reuses decoded frame events and cached top-of-book values. Its
+four-segment isolated canary reduced process CPU by 81.32% while preserving
+the tested business-event results, but that short run does not establish
+catch-up throughput against the live journal's full accumulated state.
+
 The live campaign pins `shadow_worker.py` to hash
 `0b745947399dc33898bdba41df4f0b183ba87477f5dcddecb7ae2d26f29e3c6d`; the
 current Veritas branch version is

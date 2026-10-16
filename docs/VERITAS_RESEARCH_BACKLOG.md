@@ -718,10 +718,12 @@ checkpoint 055](VERITAS_MISSION2_GATE_A_CHECKPOINT_055.md), and inventory
 1. **Preserve the frozen shadow and plan continuity-safe recovery.** The live
    worker is 450,641 ordinals behind, has not made a new decision in about
    34h22m, and is throttled in 98.10% of CPU periods. Its campaign pins a
-   worker hash different from the current branch. Define an isolated,
-   versioned successor and a bounded throughput/continuity test; do not
-   restart the worker, change its quota, or read/modify its active SQLite
-   journal for a migration experiment.
+   worker hash different from the current branch. The pinned reader also
+   re-enumerates/sorts the segment directory every 0.5 seconds; the branch
+   refreshes at segment boundaries and had 81.32% lower CPU on a four-segment
+   canary. Define a larger-state isolated throughput/continuity test for a
+   versioned successor; do not restart the worker, change its quota, or
+   inspect/copy its active SQLite journal for a migration experiment.
 2. **Let scheduled research reconcile naturally.** Source replay is captured
    through 6,962 segments at 19:12 UTC; gap detail advanced at 19:21 to
    6,981/6,981 replayable segments with no pending work. Their separate
