@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-16T05:22:16Z",
+  "updated_at_utc": "2026-10-16T05:27:54Z",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -6574,6 +6574,87 @@
         "The independent arithmetic shares only the versioned fee evaluator after its own price, depth, minimum, and quality calculations.",
         "Source integrity verifies stored public payloads; it does not establish that the venue response represented an executable state."
       ]
+    },
+    {
+      "hypothesis_id": "VERITAS-H115",
+      "title": "Does the bounded universe replay through scan 51 preserve discovery and data-quality findings?",
+      "experiment_id": "VERITAS-GATE-A-COVERAGE-REPLAY-20261016-002",
+      "dataset_id": "saved_public_universe_snapshots_scans_1_to_51",
+      "mechanism": "A bounded offline replay verifies saved snapshot, Gamma, and CLOB evidence, reapplies the current eligibility classifier across all discovery frames, and measures identity, selection, book-quality, and sampled-activity coverage.",
+      "success_metric": "Reproduce stored eligibility counts on each scan, verify all retained source hashes, report current-replay quality and positive top-gross counts, and disclose any capture-versus-replay discrepancies.",
+      "status": "continue",
+      "decision": "The 51-snapshot replay verifies all retained snapshot, Gamma, and CLOB evidence and matches stored eligible counts on 51/51 scans. It contains 6,118 bounded-union market IDs, 2,168 eligible at least once, and 903 selected markets. Current replay finds 1,755 quality-valid pairs from 2,040 observations and zero positive top-gross pairs. Preserve the first-scan capture mismatch (5 captured-valid versus 32 current-replay-valid); do not treat the bounded intermittent panel as venue-wide or executable evidence.",
+      "limitations": [
+        "The six-frame query union is bounded and upstream-filtered, not a venue-wide market denominator.",
+        "Snapshots are intermittent and selected; sampled changes do not establish continuous coverage, quote lifetime, or venue update frequency.",
+        "One first-scan capture-versus-replay valid-pair discrepancy remains: 5 stored versus 32 current replay; the other 50 scans match.",
+        "Quality validity and positive gross screens do not establish order arrival, fills, market impact, or profitability.",
+        "Selection probabilities are conditional on the bounded observed union and frozen controls."
+      ],
+      "result": {
+        "status": "completed",
+        "captured_at_utc": "2026-10-16T05:25:46.019207+00:00",
+        "checkpoint_path": "docs/VERITAS_MISSION2_GATE_A_CHECKPOINT_047.md",
+        "artifact_path": "docs/VERITAS_MISSION2_MARKET_UNIVERSE_COVERAGE_005.json",
+        "artifact_file_sha256": "0def0f2f926657ca50ca305bd5d5626520c4da9036b1743b7528f240844b3a47",
+        "artifact_bytes": 105635,
+        "analysis_version": "veritas-market-universe-coverage-v1",
+        "analysis_module_path": "packages/midas/veritas/universe_coverage.py",
+        "analysis_module_sha256": "3512586bfd7d63b0238abed2a7330556a10466c40f1624366b7bac5fc5138826",
+        "analysis_runner_path": "scripts/analyze_veritas_market_universe_coverage.py",
+        "analysis_runner_sha256": "486712f5729f8a11d105d4bfe12649807ff52f6637d3d163cfd5420ec8d5d379",
+        "snapshot_count": 51,
+        "compressed_snapshot_bytes": 33318338,
+        "snapshot_evidence_hashes_verified": true,
+        "snapshot_manifest_sha256": "26aad8db8aec10d80163397b8b7ed5394e57669a6f8291b5f4cf13d6d061becb",
+        "gamma_response_count": 306,
+        "gamma_response_hashes_verified": true,
+        "gamma_response_manifest_sha256": "eb4404c468a87f830a5df1096d835a37f02580168121b080ea1467265b7db05d",
+        "clob_response_hashes_verified": true,
+        "bounded_union_market_ids": 6118,
+        "eligible_market_ids_at_least_once": 2168,
+        "selected_market_ids_over_window": 903,
+        "selected_outcome_asset_ids_over_window": 1806,
+        "attempted_market_pair_observations": 2040,
+        "current_replay_quality_valid_pairs": 1755,
+        "invalid_pairs": 285,
+        "quality_valid_yield": 0.8603,
+        "classifier_matches_stored_eligible_counts": 51,
+        "capture_recorded_quality_valid_pairs": 1728,
+        "capture_vs_replay_valid_pair_delta": 27,
+        "capture_vs_replay_mismatch": [
+          {
+            "capture_recorded_valid_pairs": 5,
+            "current_replay_valid_pairs": 32,
+            "scan_id": "scan-20261015T055928Z-c9777c1cc300"
+          }
+        ],
+        "positive_top_gross_pairs": 0,
+        "candidate_events": 0,
+        "latest_scan": {
+          "distinct_payoff_verified_outcome_asset_ids": 56,
+          "distinct_selected_condition_ids": 40,
+          "distinct_selected_outcome_asset_ids": 80,
+          "eligible_market_ids": 191,
+          "excluded_market_ids": 108,
+          "gamma_market_ids": 299,
+          "scan_id": "scan-20261016T050020Z-5729ddc65f43",
+          "selected_market_ids": 40
+        },
+        "mean_six_frame_bounded_union_ids": 298.8,
+        "mean_six_frame_eligible_ids": 159.43,
+        "numeric_conditional_selection_probability_count": 1853,
+        "conditional_selection_probability_min_median_max": [
+          0.04145077720207254,
+          0.24,
+          1.0
+        ],
+        "repeated_sample_top_of_book_comparisons": 885,
+        "repeated_sample_top_of_book_changed_comparisons": 421,
+        "sampled_top_of_book_change_fraction": 0.4757,
+        "orders_submitted": false,
+        "authenticated_requests": false
+      }
     }
   ],
   "next_research_questions": [

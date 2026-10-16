@@ -1199,3 +1199,14 @@ No collector, API, web service, frozen campaign, or existing research job was
 restarted or changed for this checkpoint. No HTTP requests were made to probe
 health; all health statements above come from systemd state, process state,
 and filesystem/resource reads.
+
+
+## 2026-10-16 05:27 UTC read-only operations snapshot
+
+The Midas API/web, Reality recorder, frozen shadow, Reality API/web were active. The recorder and APIs showed zero restarts; the shadow showed one historical restart and retains its 10% CPU quota. Both local API health probes were HTTP 200 / READY at 05:22 UTC; no new HTTP probe was run at 05:27. Veritas observer, source-analysis, Director, and gap-detail one-shot services were inactive between timers; no Arena job service was active. The Arena scheduler timer was due at 05:28 UTC, followed by observer 05:30:53, gap detail 05:35, source analysis 05:40:08, and Director 05:45:02 UTC. The scan-51 child had completed but the Director manifest still projected QUEUED pending that scheduled cycle.
+
+The archive unit remained failed after the 04:33:35 UTC 30-minute timeout, with zero restarts; archive completeness and data loss remain unverified. The fixed pilot was last refreshed at 05:22 UTC (20/48 scans, 652/800 valid slots, 492 markets, one skipped sequence). Finalized-source analysis was current through 5,324/5,324 available catalog segments with 361,068 quality-valid states across 91 markets and zero positive top-ask/full-depth states. Gap detail had processed 3,019/5,344 segments, with 2,323 / 633,802,218 bytes pending and 735 campaign-window gap events; it read no active segment.
+
+Host load was 1.53 / 1.08 / 0.97; 9.3 GiB RAM was available, swap use was 3.7/4 GiB, and the root filesystem was 56% used with 197 GiB free. `data/veritas-observatory` occupied 55,893,662 bytes. The separately measured Reality research recording directory `/home/charlie/midas-reality/data/research/reality` occupied 1,478,846,486 bytes; this is a path-specific size, not a growth-rate estimate. `systemctl --user --failed` listed 15 loaded historical failed units, including the archive timeout and prior Arena/research/regression units; no active Veritas one-shot unit was failed at capture.
+
+No campaign, collector, service, or research job was restarted or manually triggered for this snapshot. See [research inventory 069](VERITAS_MISSION2_RESEARCH_INVENTORY_069.json).

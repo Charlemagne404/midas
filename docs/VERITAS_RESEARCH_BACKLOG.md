@@ -259,3 +259,18 @@ only their sealed outputs and reconcile the scan-47 projection after its
 scheduled cycle. Continue the gap-detail prefix under its existing bounds;
 do not manually launch an overlapping analyzer or inspect an in-progress
 observer output.
+
+
+## Mission 2 continuation — scan-51 coverage and scheduled reconciliation
+
+The A1 replay is verified through scan 51. Keep the 5-versus-32 first-scan capture/replay valid-pair discrepancy visible while using the 1,755/2,040 current-replay valid states for the explicitly versioned replay. The bounded six-frame discovery union still yields zero positive top-gross pairs; do not infer a venue-wide zero-opportunity rate.
+
+Next actions:
+
+1. Let the scheduled 05:45 UTC Director cycle reconcile the completed scan-51 child; do not poll, retry, or manually admit it.
+2. Preserve the existing bounded observation schedule and compare later scans against the same source-pinned coverage and independent economic panels.
+3. Review whether a predeclared future query-frame design should retain the tagged near-expiry and low-liquidity frames; frame-removal values overlap and do not justify changing the active campaign.
+4. Keep the dashboard projection and browser verification scoped to the artifact version actually exposed; artifact 005 has not been checked against the current API projection.
+5. Continue the fixed pilot, finalized-source catch-up, and separate gap-detail prefix under their existing bounds; do not use the active recording segment.
+
+See [Gate A checkpoint 047](VERITAS_MISSION2_GATE_A_CHECKPOINT_047.md), [coverage artifact 005](VERITAS_MISSION2_MARKET_UNIVERSE_COVERAGE_005.json), and [inventory 069](VERITAS_MISSION2_RESEARCH_INVENTORY_069.json).
