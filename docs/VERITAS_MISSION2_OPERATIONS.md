@@ -1,6 +1,44 @@
 # Veritas Mission 2 Operations
 
-## Read-only research/runtime checkpoint — 2026-10-16T08:36:57Z
+## Final operational capture — 2026-10-16T21:25:40Z
+
+### Services and recording
+
+- Reality recorder: `active/running`, PID 2288376, restart count 0. Status `DEGRADED_BOOKS`; ordinal 1,022,655; 759,804 frames; 8 markets / 16 expected books; 1,875,307,177 recorded bytes; 4,881 gaps; 4 connection failures; sequence verification unavailable. Last reported socket error: `ConnectionClosedError: no close frame received or sent`. Status timestamps continued advancing during inspection.
+- Recorder cgroup now has `MemoryHigh=640 MiB`, `MemoryMax=768 MiB`; current use was about 499 MiB. This limit increase was applied without restarting the service. `daemon-reload` kept the same PID and zero restarts.
+- Frozen parent shadow: active, PID 3207316, one historical restart. State `WARMING_OR_LAGGED_SOURCE`; latest source receipt age 99,622 seconds and decision age 131,253 seconds. Cursor 540,116 versus recorder ordinal 1,022,655; 212,830 lagged frames skipped. Counts: 10,253 decisions, 47,911 observations, 113,406 events, 937 observed and 40,075 censored follow-ups, zero pending, zero orders.
+- Parent campaign hash remains `aa8acb2b46823c1a1e3ac5d01a57dde917746c2c7471098ae2a4598875e322f5`. Last saved integrity artifact checked SQLite/event chain through 113,162 events; the 244-event live tail remains outside that report. No active-writer audit was run.
+- Separate successor: active, PID 2078181, no restarts; near-head cursor 1,022,638 (17 ordinals behind at this capture), receipt age 10 seconds, decision age 26 seconds. State `WARMING_OR_LAGGED_SOURCE` is a live status snapshot, not a crash. Counts: 1,045 decisions, 4,833 observations, 11,243 events, 108 observed / 4,168 censored follow-ups, zero pending, zero orders. Its source checkpoint count is zero by design for the verified cold-start path. Campaign hash `c5eb8b98cbfd657372fc620192c5a0c0bb46f41d760800e680181fa7f3ee95a3`.
+
+### Research schedules and data
+
+- Latest saved public scan: `scan-20261016T210207Z-012d623bd16a`, 35/40 quality-valid pairs. Current v4 summary covers 83 scans / 3,320 selected pairs / 2,813 quality-valid; zero positive top-gross states; zero pending snapshots.
+- Coverage pilot 002 remains running at 22/48 scans, 738/880 valid, 637 distinct selected market IDs, zero skipped sequences. Its fixed end remains 2026-10-17 10:30:50 UTC; handoff does not wait for it.
+- Latest independent opportunity audit is scan 82: 2,778 valid states, no arithmetic mismatches, 3,653 fee calculations checked with zero disagreements, and no positive candidate at tested gates.
+- Finalized source analysis completed at 21:12:54 UTC: 7,188/7,188 segments, 1,863,839,227 bytes, 545,231 quality-valid states over 125 markets, zero positive top/depth/minimum states, zero pending. It reads sealed segments only.
+- Gap detail completed at 21:21:15 UTC: 7,206 replayable segments processed, zero pending; two empty catalog segments were excluded. Campaign window has 2,794 gaps (2,790 book resynchronizations, 4 connection failures). It reads no active segment.
+- The 21:15 UTC Director cycle admitted scan 83; Arena job `job-2fa56ee265ff4dfb97878f57` completed 83/83 with `no_positive_gross_candidate_observed`. The Director manifest still projects the child as `QUEUED`; the next ordinary cycle at 21:45 UTC is its reconciliation point. No manual retry was launched.
+- Source analysis, gap detail, observatory, Director, archive, research readiness, and integrity timers remain enabled. No model-training process is running. Research readiness last reported `WAITING_FOR_COVERAGE` (1.77 recorded days versus the 7-day minimum).
+
+### Archive, APIs, and host
+
+- Incremental archive last succeeded at 14:54 UTC, verifying 6,318 segments. Originals were retained and the active segment excluded. Next archive timer is scheduled for 04:04 UTC.
+- Midas API: HTTP 200 / `READY`, demo mode, live execution disabled. The hosted process from `/home/charlie/midas` returns 404 for `/api/veritas/overview`; the branch’s isolated API/browser flow is not deployed there.
+- Reality API: HTTP 200 / `DEGRADED`, startup `READY`; Reality web root and Midas web root last returned HTTP 200. The UI root health does not establish that Veritas is served by the hosted API.
+- Aegis, RoadReach, Vanguard, Continental, and ID services were active in the user-service inventory. No unrelated service failure was observed in the final check.
+- Host: 9.1 GiB RAM available, 3.9/4 GiB swap used, 195 GB disk free (57% used), load average 3.06 / 2.40 / 2.05 at capture. No full research replay or model training was active.
+
+### Git and preservation
+
+- Branch `project/veritas`; previous HEAD at capture `47bdb0f9db18c540d76aa8401bf96dc97299230d`. No campaign reset, no order submission, no active SQLite integrity scan, and no changes to Reality source records.
+- Local `data/veritas-canaries/` remains preserved and is ignored. Runtime recordings, Arena job outputs, secrets, and other generated data are excluded from Git.
+- `origin` has `main`; no remote `project/veritas` branch or upstream is configured. No push or merge was performed.
+
+---
+
+# Veritas Mission 2 Operations
+
+## Archived read-only checkpoint — 2026-10-16T08:36:57Z
 
 - Offline A1 replay 010 and independent opportunity audit 010 cover 58 saved
   snapshots / 2,320 selected pair observations. They verified the retained

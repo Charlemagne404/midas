@@ -103,7 +103,7 @@ test('shows the bounded discovery cohort and links its finalized evidence', asyn
 
   const coverageDesignAudit = page.getByTestId('coverage-design-audit');
   await expect(coverageDesignAudit).toBeVisible();
-  await expect(coverageDesignAudit.getByText('Audited 25 scans · pilot now at 26')).toBeVisible();
+  await expect(coverageDesignAudit.getByText(/Audited 25 scans · pilot now at \d+/)).toBeVisible();
   await expect(coverageDesignAudit.getByText('99.80%')).toBeVisible();
   await expect(coverageDesignAudit.getByText('82.96%')).toBeVisible();
   await expect(coverageDesignAudit.getByText(/bounded query union/)).toBeVisible();

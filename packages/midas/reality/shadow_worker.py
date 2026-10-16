@@ -215,13 +215,33 @@ class Shadow:
         if stored and stored["campaign_id"] != plan["campaign_id"]:
             raise ValueError("Runtime belongs to a different campaign")
         self.ctx = Context.restore(stored["context"]) if stored else Context()
+        bootstrap = self.i.get("bootstrap") if not stored else None
+        if bootstrap:
+            self.ctx.producer = dict(bootstrap["producer_ref"])
+            self.ctx.producer_hash = bootstrap["producer_hash"]
+            self.ctx.checkpoint_verification_enabled = False
+            self.ctx.engine.last_ordinal = bootstrap["cursor"]["ordinal"]
+            self.ctx.engine.last_gap_ordinal = bootstrap["cursor"]["ordinal"]
+            self.ctx.engine.now_ns = bootstrap["discovery_ref"]["received_ns"]
+            self.ctx.clock = (
+                bootstrap["discovery_ref"]["received_ns"],
+                bootstrap["discovery_ref"]["monotonic_ns"],
+            )
+            self.ctx.engine.reconstruction_version = bootstrap["source_epoch"][
+                "reconstruction_version"
+            ]
+            if bootstrap["source_epoch"].get("stale_ns") is not None:
+                self.ctx.engine.stale_ns = bootstrap["source_epoch"]["stale_ns"]
         if stored:
             _restore_context_cohort_order(
                 self.ctx,
                 Path(self.i["raw_root"]),
                 stored.get("cohort_order"),
             )
-        self.tail = Tail(Path(self.i["raw_root"]), stored["cursor"] if stored else None)
+        self.tail = Tail(
+            Path(self.i["raw_root"]),
+            stored["cursor"] if stored else dict(bootstrap["cursor"]) if bootstrap else None,
+        )
         self.next_decision = stored["next_decision"] if stored else {}
         self.next_observation = stored["next_observation"] if stored else {}
         self.pending = self.journal.pending(self.i["horizons_ms"])
@@ -261,6 +281,7 @@ class Shadow:
         with self.journal.db:
             self.journal.save_runtime(self.runtime())
         self.counters["source_checkpoints"] = self.ctx.checkpoints
+        self.counters["source_checkpoints_skipped"] = self.ctx.checkpoints_skipped
         state = dict(
             state=self.status,
             campaign_id=self.plan["campaign_id"],
@@ -269,6 +290,16 @@ class Shadow:
             source_last_received_ns=self.ctx.engine.now_ns,
             producer_hash=self.ctx.producer_hash,
             counters=self.counters,
+            source_checkpoint_validation=dict(
+                enabled=self.ctx.checkpoint_verification_enabled,
+                verified=self.ctx.checkpoints,
+                skipped=self.ctx.checkpoints_skipped,
+                mode=(
+                    "source_state_digest"
+                    if self.ctx.checkpoint_verification_enabled
+                    else "cold_start_record_segment_integrity_only"
+                ),
+            ),
             **self.journal.summary(),
             actual_orders_submitted=0,
             scientific_state="insufficient_forward_evidence",

@@ -8,7 +8,12 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from midas.veritas.coverage_pilot_v2 import record_coverage_pilot_v2
 
-from apps.api.veritas import MAX_ARTIFACT_BYTES, coverage_design_audit_overview, router
+from apps.api.veritas import (
+    MAX_ARTIFACT_BYTES,
+    MAX_LEDGER_ARTIFACT_BYTES,
+    coverage_design_audit_overview,
+    router,
+)
 
 
 def write_artifact(root: Path, name: str, value: dict) -> None:
@@ -1443,6 +1448,22 @@ def test_overview_tolerates_hypotheses_without_any_status_fields(tmp_path):
     assert hypothesis["decision"] == "No decision recorded."
 
 
+def test_overview_labels_hypotheses_with_missing_titles(tmp_path):
+    client = fixture_client(tmp_path)
+    ledger_path = tmp_path / "docs" / "VERITAS_RESEARCH_LEDGER.json"
+    ledger = json.loads(ledger_path.read_text())
+    hypothesis = ledger["hypotheses"][-1]
+    hypothesis_id = hypothesis["hypothesis_id"]
+    hypothesis.pop("title")
+    ledger_path.write_text(json.dumps(ledger))
+
+    response = client.get("/api/veritas/overview")
+
+    assert response.status_code == 200
+    recent = response.json()["research_status"]["recent_hypotheses"]
+    assert recent[-1]["title"] == f"Untitled hypothesis ({hypothesis_id})"
+
+
 def test_artifact_allowlist_hash_and_size_bound(tmp_path):
     client = fixture_client(tmp_path)
 
@@ -1464,6 +1485,21 @@ def test_artifact_allowlist_hash_and_size_bound(tmp_path):
     target.write_text("{}")
     oversized.symlink_to(target)
     assert client.get("/api/veritas/artifacts/raw-funnel").status_code == 404
+
+
+def test_ledger_artifact_uses_larger_but_finite_bound(tmp_path):
+    client = fixture_client(tmp_path)
+    ledger_path = tmp_path / "docs" / "VERITAS_RESEARCH_LEDGER.json"
+    ledger = json.loads(ledger_path.read_text())
+
+    ledger["fixture_padding"] = "x" * MAX_ARTIFACT_BYTES
+    ledger_path.write_text(json.dumps(ledger))
+    assert ledger_path.stat().st_size > MAX_ARTIFACT_BYTES
+    assert client.get("/api/veritas/artifacts/ledger").status_code == 200
+
+    ledger["fixture_padding"] = "x" * MAX_LEDGER_ARTIFACT_BYTES
+    ledger_path.write_text(json.dumps(ledger))
+    assert client.get("/api/veritas/artifacts/ledger").status_code == 413
 
 
 def test_overview_rejects_followup_counts_that_do_not_reconcile(tmp_path):

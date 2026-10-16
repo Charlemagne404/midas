@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 from midas.reality.research_schema import digest
 from midas.reality.shadow_audit import audit
-from midas.reality.shadow_campaign import freeze, verify
+from midas.reality.shadow_campaign import freeze, freeze_successor, verify
 from midas.reality.shadow_integrity import check
 from midas.reality.shadow_report import report
 from midas.reality.shadow_source import Context, Tail
@@ -49,6 +49,56 @@ def advance(worker, clock, until=None):
 def close(worker):
     worker.tail.close()
     worker.journal.close()
+
+
+def successor_fixture(tmp_path, monkeypatch):
+    raw = tmp_path / "raw"
+    tape(raw, times=(0, 110, 310, 1010, 5010))
+    source = Tail(raw)
+    producer_ref = None
+    while item := source.next():
+        row, ref = item
+        if row["kind"] == "gap" and row["payload"]["reason"] == "process_start":
+            producer_ref = ref
+            break
+    source.close()
+    assert producer_ref is not None
+
+    training = tmp_path / "training"
+    directory = training / "runs" / ("b" * 64)
+    directory.mkdir(parents=True)
+    atomic_json(directory / "report.json", dict(targets={}, state="labeled_fixture_no_model"))
+    parent_root = tmp_path / "campaigns" / "parent"
+    monkeypatch.setattr("time.time_ns", lambda: START - 10**9)
+    monkeypatch.setattr("time.monotonic_ns", lambda: 10**12 - 10**9)
+    parent = freeze(
+        parent_root,
+        raw,
+        training,
+        "b" * 64,
+        "a" * 64,
+        {},
+        fixture=True,
+        start_ns=START,
+        days=1,
+    )
+    end_ordinal = manifest(raw)["segments"][-1]["last"]
+    atomic_json(
+        raw / "status.json",
+        dict(
+            state="RECORDING_UNSEQUENCED",
+            started_ns=START,
+            updated_ns=START + 10**9,
+            ordinal=end_ordinal,
+            sequence_verified=False,
+        ),
+    )
+    clock = [START + 10**9]
+    monkeypatch.setattr("time.time_ns", lambda: clock[0])
+    monkeypatch.setattr("time.monotonic_ns", lambda: 10**12 + clock[0] - START)
+    successor_root = tmp_path / "campaigns" / "successor"
+    successor = freeze_successor(successor_root, parent_root, producer_ref)
+    return successor_root, successor, parent, producer_ref, clock
 
 
 def test_live_tail_and_context_exact_checkpoint_recovery(tmp_path):
@@ -471,6 +521,87 @@ def test_frozen_campaign_corruption_and_overlap_are_rejected(tmp_path, monkeypat
             days=1,
         )
     close(worker)
+
+
+def test_successor_bootstraps_at_verified_discovery_and_resumes_without_rewind(
+    tmp_path, monkeypatch
+):
+    root, plan, parent, _, clock = successor_fixture(tmp_path, monkeypatch)
+    verify(plan)
+    assert plan["identity"]["parent_campaign"]["campaign_id"] == parent["campaign_id"]
+    assert plan["identity"]["bootstrap"]["method"].endswith("prior_source_history_not_replayed")
+
+    worker = Shadow(root, plan)
+    first = worker.tail.next()
+    assert first is not None
+    assert first[0]["kind"] == "discovery"
+    assert first[0]["ordinal"] == plan["identity"]["bootstrap"]["discovery_ref"]["ordinal"]
+    assert worker.ctx.producer_hash == "a" * 64
+    worker.consume(*first)
+    with worker.journal.db:
+        worker.journal.save_runtime(worker.runtime())
+    close(worker)
+
+    resumed = Shadow(root, plan)
+    next_item = resumed.tail.next()
+    assert next_item is not None
+    assert next_item[0]["ordinal"] == first[0]["ordinal"] + 1
+    resumed.consume(*next_item)
+    advance(resumed, clock)
+    final_ordinal = manifest(Path(plan["identity"]["raw_root"]))["segments"][-1]["last"]
+    assert resumed.tail.cursor["ordinal"] == final_ordinal
+    resumed.save()
+    saved_status = json.loads((root / "status.json").read_text())
+    assert saved_status["source_checkpoint_validation"] == dict(
+        enabled=False,
+        verified=0,
+        skipped=1,
+        mode="cold_start_record_segment_integrity_only",
+    )
+    assert resumed.journal.runtime()["cursor"]["ordinal"] == final_ordinal
+    decisions_before_restart = resumed.journal.summary()["decisions"]
+    assert decisions_before_restart > 0
+    assert resumed.ctx.checkpoints_skipped == 1
+    saved_cursor = resumed.journal.runtime()["cursor"]
+    close(resumed)
+
+    restarted = Shadow(root, plan)
+    assert restarted.tail.cursor == saved_cursor
+    assert restarted.tail.next() is None
+    assert restarted.tail.cursor["ordinal"] == final_ordinal
+    assert restarted.journal.summary()["decisions"] == decisions_before_restart
+    assert restarted.ctx.checkpoints_skipped == 1
+    close(restarted)
+
+
+def test_successor_rejects_changed_bootstrap_source_and_unrelated_overlap(tmp_path, monkeypatch):
+    root, plan, parent, _, _ = successor_fixture(tmp_path, monkeypatch)
+    raw = Path(plan["identity"]["raw_root"])
+    referenced = plan["identity"]["bootstrap"]["discovery_ref"]["segment"]
+    with (raw / referenced).open("ab") as stream:
+        stream.write(b"x")
+    with pytest.raises(ValueError, match="integrity mismatch"):
+        verify(plan)
+
+    # Use a separate fixture root for the overlap check so the deliberate
+    # source tamper above does not affect campaign validation.
+    other_root, other_plan, other_parent, producer_ref, _ = successor_fixture(
+        tmp_path / "overlap", monkeypatch
+    )
+    identity = copy.deepcopy(other_parent["identity"])
+    identity["frozen_ns"] += 1
+    unrelated = dict(
+        campaign_id=digest(identity), identity=identity, limitations=other_parent["limitations"]
+    )
+    unrelated_root = other_root.parent / "unrelated"
+    unrelated_root.mkdir()
+    atomic_json(unrelated_root / "campaign.json", unrelated)
+    with pytest.raises(ValueError, match="unrelated frozen campaign"):
+        freeze_successor(
+            other_root.parent / "second-successor",
+            other_root.parent / "parent",
+            producer_ref,
+        )
 
 
 def test_corrupt_event_bytes_are_detected_independently(tmp_path):

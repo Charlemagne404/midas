@@ -295,6 +295,129 @@ def test_empty_side_revision_preserves_legacy_and_never_creates_liquidity():
         )
 
 
+def test_engine_top_cache_matches_reference_after_snapshots_and_depth_deltas():
+    engine = Engine()
+    engine.tokens = {"2": "0x1"}
+
+    def consume(ordinal, event):
+        engine.consume(
+            dict(
+                ordinal=ordinal,
+                kind="frame",
+                received_ns=NOW + ordinal,
+                payload=json.dumps(event),
+            )
+        )
+        assert engine.top_for("2") == Engine.top(engine.books["2"])
+
+    consume(
+        1,
+        dict(
+            event_type="book",
+            market="0x1",
+            asset_id="2",
+            timestamp="1000",
+            bids=[dict(price="0.2", size="3"), dict(price="0.3", size="4")],
+            asks=[dict(price="0.5", size="5"), dict(price="0.6", size="6")],
+        ),
+    )
+    assert engine.top_for("2") == (Decimal("0.3"), Decimal("0.5"))
+
+    # Replacing and then removing a new best bid in one batch exercises each
+    # incremental transition, while the non-best removal must leave the top alone.
+    consume(
+        2,
+        dict(
+            event_type="price_change",
+            market="0x1",
+            timestamp="1001",
+            price_changes=[
+                dict(asset_id="2", side="BUY", price="0.4", size="2"),
+                dict(asset_id="2", side="BUY", price="0.4", size="0"),
+                dict(asset_id="2", side="BUY", price="0.2", size="0"),
+            ],
+        ),
+    )
+    assert engine.top_for("2") == (Decimal("0.3"), Decimal("0.5"))
+
+    # Better ask insertion/removal, non-best removal, empty-side and re-add paths.
+    for ordinal, side, price, size, expected in [
+        (3, "SELL", "0.4", "1", (Decimal("0.3"), Decimal("0.4"))),
+        (4, "SELL", "0.4", "0", (Decimal("0.3"), Decimal("0.5"))),
+        (5, "SELL", "0.6", "0", (Decimal("0.3"), Decimal("0.5"))),
+        (6, "SELL", "0.5", "0", (Decimal("0.3"), None)),
+        (7, "SELL", "0.8", "2", (Decimal("0.3"), Decimal("0.8"))),
+        (8, "BUY", "0.3", "0", (None, Decimal("0.8"))),
+        (9, "BUY", "0.2", "4", (Decimal("0.2"), Decimal("0.8"))),
+    ]:
+        consume(
+            ordinal,
+            dict(
+                event_type="price_change",
+                market="0x1",
+                timestamp=str(1000 + ordinal),
+                price_changes=[dict(asset_id="2", side=side, price=price, size=size)],
+            ),
+        )
+        assert engine.top_for("2") == expected
+
+    before_rebuild = engine.digest()
+    engine.rebuild_top_cache()
+    assert engine.top_for("2") == Engine.top(engine.books["2"])
+    assert engine.digest() == before_rebuild
+
+
+def test_non_best_depth_updates_use_cached_top_without_full_book_scan(monkeypatch):
+    engine = Engine()
+    engine.tokens = {"2": "0x1"}
+    engine.consume(
+        dict(
+            ordinal=1,
+            kind="frame",
+            received_ns=NOW + 1,
+            payload=json.dumps(
+                dict(
+                    event_type="book",
+                    market="0x1",
+                    asset_id="2",
+                    timestamp="1000",
+                    bids=[dict(price="0.2", size="3"), dict(price="0.3", size="4")],
+                    asks=[dict(price="0.5", size="5"), dict(price="0.6", size="6")],
+                )
+            ),
+        )
+    )
+    calls = 0
+    reference_top = Engine.top
+
+    def count_full_scans(book):
+        nonlocal calls
+        calls += 1
+        return reference_top(book)
+
+    monkeypatch.setattr(Engine, "top", staticmethod(count_full_scans))
+    engine.consume(
+        dict(
+            ordinal=2,
+            kind="frame",
+            received_ns=NOW + 2,
+            payload=json.dumps(
+                dict(
+                    event_type="price_change",
+                    market="0x1",
+                    timestamp="1001",
+                    price_changes=[
+                        dict(asset_id="2", side="BUY", price="0.25", size="7"),
+                        dict(asset_id="2", side="SELL", price="0.6", size="8"),
+                    ],
+                )
+            ),
+        )
+    )
+    assert calls == 0
+    assert engine.top_for("2") == (Decimal("0.3"), Decimal("0.5"))
+
+
 def test_independent_comparison_does_not_round_away_real_depth_difference():
     args, raw = compare_args(), rest_book()
     args["before"]["bids"] = {"0.3": "10.00000000000000000000000000000000001"}

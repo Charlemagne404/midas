@@ -30,6 +30,7 @@ ARTIFACTS = {
     "coverage-design-audit": "VERITAS_MISSION2_COVERAGE_DESIGN_AUDIT_002.json",
 }
 MAX_ARTIFACT_BYTES = 512 * 1024
+MAX_LEDGER_ARTIFACT_BYTES = 1024 * 1024
 MAX_OBSERVATORY_SUMMARY_BYTES = 2 * 1024**2
 MAX_OBSERVATORY_SNAPSHOT_COMPRESSED_BYTES = 4 * 1024**2
 MAX_OBSERVATORY_SNAPSHOT_BYTES = 16 * 1024**2
@@ -201,7 +202,8 @@ def read_artifact(
         path = repository / "docs" / name
     if path.is_symlink() or not path.is_file():
         raise HTTPException(404, "Veritas evidence has not been generated")
-    if path.stat().st_size > MAX_ARTIFACT_BYTES:
+    maximum_bytes = MAX_LEDGER_ARTIFACT_BYTES if identity == "ledger" else MAX_ARTIFACT_BYTES
+    if path.stat().st_size > maximum_bytes:
         raise HTTPException(413, "Veritas evidence exceeds the interface bound")
     try:
         raw = path.read_bytes()
@@ -3307,6 +3309,16 @@ def _hypothesis_status(item: dict[str, Any]) -> str:
     return "unknown"
 
 
+def _hypothesis_title(item: dict[str, Any]) -> str:
+    title = item.get("title")
+    if isinstance(title, str) and title.strip():
+        return title
+    hypothesis_id = item.get("hypothesis_id")
+    if isinstance(hypothesis_id, str) and hypothesis_id:
+        return f"Untitled hypothesis ({hypothesis_id})"
+    return "Untitled hypothesis (missing id)"
+
+
 def _hypothesis_decision(item: dict[str, Any]) -> str:
     decision = item.get("decision")
     return decision if isinstance(decision, str) and decision else "No decision recorded."
@@ -3380,7 +3392,7 @@ def overview(repository: Path) -> dict[str, Any]:
     recent_hypotheses = [
         {
             "id": item["hypothesis_id"],
-            "title": item["title"],
+            "title": _hypothesis_title(item),
             "status": _hypothesis_status(item),
             "result_status": _hypothesis_result_status(item),
             "decision": _hypothesis_decision(item),

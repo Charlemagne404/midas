@@ -14,6 +14,7 @@ htmlcov/
 *.db-wal
 data/recordings/
 data/veritas-observatory/
+data/veritas-canaries/
 **/recordings/
 data/failures/
 .env

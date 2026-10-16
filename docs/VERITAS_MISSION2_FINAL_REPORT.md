@@ -1,4 +1,76 @@
-# Project Veritas Mission 2 — Current Engineering Report
+# Project Veritas Mission 2 — Final Handoff
+
+**Operational capture:** 2026-10-16 21:25:40 UTC
+**Branch:** `project/veritas`
+**Mission time:** approximately 39 hours, as estimated by the project owner; no active-time meter was maintained.
+
+## Handoff state
+
+The bounded engineering handoff is ready for review. Mission 2 is **not scientifically complete**: the accumulated genuine public observations have produced no positive gross arbitrage candidate, no fee- and depth-qualified opportunity, and no demonstrated strategy or model improvement. Existing collection and bounded scheduled analysis remain active under their established supervision. No orders were submitted.
+
+This handoff does not wait for the measurement pilot or future market observations. Those continue on their predeclared schedules after interactive engineering stops.
+
+## Gate status
+
+| Gate | Status at handoff | Verified result and remaining acceptance |
+| --- | --- | --- |
+| A — Market discovery | **Verified for bounded discovery** | The recurring observer and coverage replay operated through 83 saved scans. The audited 82-scan union contained 8,052 distinct Gamma IDs, 2,603 eligible at least once, and 1,380 selected markets. This is a bounded intermittent sample, not a venue census or continuous coverage guarantee. |
+| B — Opportunity audit | **Verified for the audited panel** | Independent replay through scan 82 matched 2,778 stored quality-valid decisions and top edges with zero mismatches; 3,653 fee calculations had zero disagreements. All gross, displayed-depth, minimum, and fee gates were zero-positive. The first-scan capture/replay count discrepancy (5 captured versus 32 replay-valid) remains unresolved. |
+| C — Measurement improvements | **Implemented; scientific validation incomplete** | The request-to-receipt comparison accepted 1,034/1,160 observations (89.14%) versus 240/1,160 (20.69%) under the old reported-age/skew gate. Pilot 002 is at 22/48 scans, 738/880 valid slots, and 637 distinct selected IDs. Neither result proves venue sequence freshness or atomicity; follow-up censoring remains severe. |
+| D — Continuous opportunity analysis | **Operationally verified** | The latest completed finalized-source replay covered 7,188/7,188 cataloged segments, about 1.864 GB, and 545,231 quality-valid states across 125 markets; pending was zero and positive top-ask, depth, and minimum-notional states were zero. Gap detail covered 7,206 replayable segments, with two empty catalog segments excluded and zero pending. Future sealed segments remain on the timer. |
+| E — Economic and strategy research | **Incomplete; deferred** | Binary-pair qualification and two complete negative-risk structures were examined. No positive candidate appeared. No strategy beat a baseline on independent evidence; no model was trained. Candidate-relevant targets and execution labels are absent. |
+| F — Autonomous research | **Implemented; operationally verified with a reconciliation caveat** | The scheduled Director admitted the scan-83 Arena job, which completed 83/83 events with `no_positive_gross_candidate_observed`. At capture, the Director manifest still projected that child as `QUEUED`; the normal 21:45 UTC cycle is the next reconciliation point. Strategy/model readiness remains `NOT_READY`. |
+| G — Dashboard | **Implemented in branch; hosted deployment incomplete** | Branch unit tests and an isolated Veritas browser workflow pass. A 512 KiB generic artifact cap had rejected the 528,859-byte ledger; a ledger-specific 1 MiB cap and missing-title handling now let the current saved evidence render. The hosted Midas API still returns 404 for `/api/veritas/overview`; no hosted service was restarted or redeployed. |
+| H — Verification | **Partially verified** | Focused backend, frontend, static, build, provenance, and isolated browser checks pass (details below). The broad backend suite was stopped at 14% after ten minutes; one failure appeared before a summary was available. Strict Mypy on `apps/api/veritas.py` reports five errors outside the changed lines. A full green release suite is therefore not claimed. |
+
+## Accomplishments and implementation
+
+- Added a cold-start successor bootstrap that pins a derivative to its parent identity, approved producer record, source segment and cursor; it rejects tampered or unrelated overlap and resumes without rewinding or duplicating decisions in isolated fixtures.
+- Made source checkpoint validation/skips explicit in branch status, and added incremental top-of-book cache parity/performance coverage. These branch changes are not running in the frozen parent worker.
+- Fixed the Veritas API’s ledger size rejection and made missing historical hypothesis titles render as an explicit `Untitled hypothesis (ID)` instead of raising a server error.
+- Retained hash-linked market coverage and independent opportunity audit artifacts through scan 82, the scan-83 Director qualification, and successor censor forensics. No historical campaign was reset and no active SQLite journal was scanned for this handoff.
+- Added a repository ignore rule for local canaries so isolated runtime/test data stays out of Git. Canary data remains local and is not committed.
+
+## Economic findings
+
+The latest public observatory summary contains 83 intermittent scans / 3,320 selected market-pair observations, of which 2,813 pass the current quality gate. It records zero positive top-gross candidates; the maximum stored edge is `-0.001` per share. The independent audit covers 82 scans / 3,280 observations / 2,778 valid states and finds zero positive candidates at every tested quantity and economic gate. Its strict reported-timestamp sensitivity admits 603 states; 2,174 pairs have at least one reported age over five seconds and one pair exceeds the 250 ms skew bound. These are correlated snapshots, not independent opportunity trials.
+
+The separate source replay of genuine Reality recording frames reports zero positive top-ask, full-depth, or minimum-notional states. The seven-market OpenAI IPO basket capture had zero positive gross basket edge and was invalid for required freshness/skew; the complete Strava negative-risk basket study was also non-positive. Those are observed displayed-book calculations and synthetic sizing sensitivities, not fills. All studies submitted zero orders.
+
+There is no trained Veritas model and no demonstrated economic gain from machine learning. The scheduled readiness job is waiting for coverage, and the available public marks do not establish executable outcomes or P&L labels. The evidence supports continuing a no-trade posture; it does not prove that no opportunity exists anywhere on the venue or at another time.
+
+## Live systems and preservation
+
+At the operational capture, the Reality recorder was active and advancing (ordinal 1,022,655; 759,804 frames; 8 markets / 16 expected books; 1.875 GB recorded). Its state was `DEGRADED_BOOKS`, with four connection failures, 4,881 gaps, and `sequence_verified=false`; it continued recording with no service restart. Collector memory was near its former 512 MiB limit, so its live/persistent cgroup headroom was raised to 640 MiB high / 768 MiB max and the user manager reloaded without changing PID or restart count.
+
+The protected parent campaign remains byte-identical at SHA-256 `aa8acb2b46823c1a1e3ac5d01a57dde917746c2c7471098ae2a4598875e322f5`. It is still severely lagged: latest receipt about 27.7 hours old, latest decision about 36.5 hours old, 212,830 lagged frames skipped, and no new decisions. Its saved integrity artifact verifies SQLite and the event chain through 113,162 events; live status is at 113,406, leaving 244 newer events outside that saved check. No live-writer integrity scan or restart was performed.
+
+The separate successor remains active near the recorder head, but experimental: at capture it had 1,045 decisions, 4,833 observations, 108 observed and 4,168 censored follow-ups, zero pending, and zero orders. It has no verified source checkpoints because its cold start intentionally begins at the verified segment boundary. It is not a replacement acceptance result for the frozen parent.
+
+Midas API health was HTTP 200 / `READY`, with live execution disabled. Reality API health was HTTP 200 / `DEGRADED` despite successful startup. The hosted Midas API exposes no Veritas overview route. Midas and Reality web roots returned HTTP 200 at the last probe. Aegis, RoadReach, Vanguard, Continental, and identity services were active. The successful archive run verified 6,318 segments, retained originals, and excluded the active segment; the next archive timer remains scheduled. Host disk had 195 GB free, RAM available was about 9.1 GiB, and swap was 3.9/4 GiB used.
+
+## Verification and open issues
+
+- `tests/test_reality_shadow.py` + `tests/test_reality_panel.py`: **46 passed**.
+- `tests/test_veritas_dashboard_api.py`: **35 passed** (one Starlette/httpx deprecation warning).
+- Frontend unit tests: **29 passed**; TypeScript typecheck, ESLint, Prettier, and production build passed. The build reports a large-chunk warning (501.86 kB main JS; 544.41 kB chart chunk).
+- Isolated Veritas Playwright workflow: **1 passed** after the ledger-bound and dynamic pilot-count fixes.
+- Ruff and formatting on changed Python files passed; strict Mypy on the three Reality shadow modules passed.
+- Broad backend regression: **incomplete**. It first failed collection when the shared virtualenv imported `/home/charlie/midas`; with `PYTHONPATH=packages`, it ran for ten minutes, reached 14%, displayed one failure, and was stopped before pytest emitted a test name or final summary. No temporary worker remained.
+- Strict Mypy on `apps/api/veritas.py` remains red on five existing issues at lines 89, 125, 159, 3140, and 3142; none is in the changed logic.
+- The collector may again exceed its memory bound if its footprint continues to grow; the new cgroup limits have substantially more headroom but do not fix the Reality source’s unsequenced feed or socket failures.
+- The frozen worker’s CPU throttling and continuity gap remain unresolved. Recovering it safely would need a separately reviewed continuity plan; no restart, cursor migration, or quota change was made.
+
+## Deferred after handoff
+
+Do not delay engineering closure for future market evidence. Leave the currently supervised recorder, pilot, source/gap timers, Director, archive, and integrity timers running. If Mission 2 is resumed later, first reconcile the scan-83 Director manifest and investigate the unnamed broad-suite test failure; then decide whether to deploy the Veritas API/UI from this branch. Keep strategy/model claims deferred until positive candidates and independent execution-relevant labels exist.
+
+The research ledger remains unchanged at H152; operational finalization is recorded in this report, [engineering notes](VERITAS_MISSION2_ENGINEERING.md), [operations](VERITAS_MISSION2_OPERATIONS.md), and inventory 094. No merge was performed. `origin` has `main` only; there is no configured remote `project/veritas` branch, so the final branch remains local.
+
+
+---
+
+## Archived rolling report (prior status cut: 2026-10-16T08:36:57Z)
 
 ## Latest update — 2026-10-16T08:36:57Z
 

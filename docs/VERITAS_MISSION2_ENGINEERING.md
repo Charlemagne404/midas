@@ -1,3 +1,32 @@
+# Project Veritas Mission 2 — Engineering handoff notes
+
+## Finalization cut — 2026-10-16T21:25:40Z
+
+This is an engineering handoff, not a scientific success claim. The frozen parent is protected and unchanged; the separate successor and the bounded collectors remain supervised. Changes below are the completed branch work included for final review.
+
+### Changes
+
+- Cold-start successor creation validates direct parent identity, authorized producer process start, source segment/record integrity, source epoch corroboration, and the exact source cursor. The successor starts at that verified boundary and excludes historical overlap.
+- Shadow source handling records verified versus intentionally skipped source checkpoints; the worker exposes the distinction in status. The cold-start path’s deliberate zero source checkpoints must not be reported as verified checkpoint digests.
+- Added isolated tamper-rejection, unrelated-overlap, restart/resume, no-rewind, and no-duplicate tests; expanded top-of-book cache parity and benchmark coverage.
+- The Veritas API now uses a 1 MiB finite cap for the research ledger while retaining the 512 KiB cap for other generic artifacts. Missing historical hypothesis titles render as explicit untitled IDs instead of crashing `/api/veritas/overview`.
+- `data/veritas-canaries/` is ignored by Git. Local canaries were preserved but excluded from the commit.
+
+### Verification
+
+- Reality shadow/panel tests: 46 passed.
+- Veritas dashboard API tests: 35 passed.
+- Frontend unit tests: 29 passed; frontend typecheck, lint, format check, production build, and the isolated Veritas browser flow passed.
+- Ruff check/format and strict Mypy passed for the three modified Reality shadow modules.
+- The complete backend suite did not finish: after using the correct branch import path it reached 14% in ten minutes and displayed one failure before being stopped; there is no final traceback or test ID. Do not report it as passed.
+- Strict Mypy on `apps/api/veritas.py` still has five unrelated existing errors at lines 89, 125, 159, 3140, and 3142.
+
+### Limits and operational handoff
+
+The frozen worker is still behind the recorder by roughly 482,500 ordinals and has not made a decision for about 36.5 hours. Its 10% CPU quota and old pinned reader remain unchanged because changing them would alter protected operating conditions. The successor is near the recorder head, but its source freshness is intermittent and its scientific state remains insufficient. The main hosted API does not serve `/api/veritas/overview`; the branch UI/API is verified only in an isolated Playwright server. See [the final report](VERITAS_MISSION2_FINAL_REPORT.md) and [operations](VERITAS_MISSION2_OPERATIONS.md).
+
+---
+
 ## Latest runtime finding — 2026-10-16T19:19Z, shadow remains CPU-bound
 
 The protected Reality shadow is active but not producing fresh decisions. Its

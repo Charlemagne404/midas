@@ -159,6 +159,8 @@ class Context:
         self.fees: dict[str, dict[str, Any]] = {}
         self.ticks: dict[str, dict[str, Any]] = {}
         self.families = Families()
+        self.checkpoint_verification_enabled = True
+        self.checkpoints_skipped = 0
 
     def consume(self, row: dict[str, Any], ref: dict[str, Any]) -> str | None:
         kind = row["kind"]
@@ -171,9 +173,12 @@ class Context:
         if kind == "snapshot_constraints":
             self.ticks[row["payload"]["asset_id"]] = ref
         if kind == "checkpoint":
-            if self.engine.digest() != row["payload"]["state_sha256"]:
-                raise ValueError("Source online/shadow checkpoint differs")
-            self.checkpoints += 1
+            if self.checkpoint_verification_enabled:
+                if self.engine.digest() != row["payload"]["state_sha256"]:
+                    raise ValueError("Source online/shadow checkpoint differs")
+                self.checkpoints += 1
+            else:
+                self.checkpoints_skipped += 1
         if kind == "frame":
             if self.clock and (
                 row["received_ns"] < self.clock[0] or row["monotonic_ns"] < self.clock[1]
@@ -319,6 +324,8 @@ class Context:
             bad=sorted(self.bad),
             clock=self.clock,
             checkpoints=self.checkpoints,
+            checkpoints_skipped=self.checkpoints_skipped,
+            checkpoint_verification_enabled=self.checkpoint_verification_enabled,
             metadata=self.metadata,
             fees=self.fees,
             ticks=self.ticks,
@@ -360,6 +367,8 @@ class Context:
         c.bad = set(value["bad"])
         c.clock = tuple(value["clock"]) if value["clock"] else None
         c.checkpoints = value["checkpoints"]
+        c.checkpoints_skipped = value.get("checkpoints_skipped", 0)
+        c.checkpoint_verification_enabled = value.get("checkpoint_verification_enabled", True)
         c.metadata = value["metadata"]
         c.fees = value["fees"]
         c.ticks = value["ticks"]

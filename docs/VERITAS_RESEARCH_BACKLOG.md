@@ -1,11 +1,30 @@
 # Veritas research backlog
 
+## Finalization state — 2026-10-16T21:25:40Z
+
+Interactive engineering is closing now. Do not hold the handoff open for the pilot’s remaining scans, a fresh campaign window, a candidate, or model readiness. Existing bounded collection and scheduled analyses remain enabled under their current resource bounds.
+
+| Priority after handoff | Deferred item | State at capture | Safe next action if the owner resumes Mission 2 |
+| --- | --- | --- | --- |
+| 1 | Frozen parent shadow freshness and continuity | Parent cursor is 482,539 ordinals behind; receipt is about 27.7 hours old; no new decision for about 36.5 hours; one historical restart; current writer tail exceeds the saved integrity check by 244 events. | Review the source-integrity and cursor evidence. Design a continuity-preserving recovery separately; do not reset, restart, migrate, or change resource conditions without review. |
+| 2 | Hosted Veritas dashboard integration | Branch API and isolated browser flow pass; hosted Midas API returns 404 for `/api/veritas/overview`. | Review/merge the branch, then deploy through the normal release path and verify the hosted API/UI without touching Reality campaigns. |
+| 3 | Broad backend regression and strict type check | One broad-suite failure appeared before the ten-minute cutoff; the test ID/trace was not emitted. API-module Mypy has five errors outside the changed lines. | Identify the failure with a targeted run and clear the pre-existing type errors before claiming a fully green release suite. |
+| 4 | Measurement pilot 002 | Running at 22/48 scans, 738/880 valid; fixed end 2026-10-17 10:30:50 UTC. | Let its already scheduled protocol finish; audit after completion only if the owner wants the evidence. Do not alter selection or recode results. |
+| 5 | Strategy and model evidence | No positive gross candidate, fee-safe candidate, candidate-specific label, or independent strategy gain. Model readiness is `NOT_READY`. | Keep no-trade and do not train unless genuinely positive candidates and independent execution-relevant labels appear. |
+| 6 | Recorder capacity and socket/book quality | Recorder continues, but is `DEGRADED_BOOKS`, unsequenced, with four connection failures and growing gap counts. Its cgroup headroom is now 640/768 MiB. | Keep the existing capacity timer. Review future status before any code or network changes; preserve gaps explicitly. |
+
+The latest completed independent economic evidence remains audit 019 through scan 82. The latest saved public panel includes scan 83 but that extension has not been independently audited. The Director’s scan-83 job completed with no positive gross candidate; its manifest projection is due for ordinary reconciliation. There is no live model training or new large-scale experiment to stop.
+
+---
+
+# Veritas research backlog
+
 The active Mission 2 queue reflects expected information value, possible
 economic impact, current evidence, and compute cost. Work remains on
 `project/veritas`; the frozen Reality campaign is a protected reference. The
 earlier Mission 1 handoff backlog is retained below for provenance.
 
-## Current Mission 2 queue (updated 2026-10-16T20:38:30Z)
+## Archived Mission 2 queue (captured 2026-10-16T20:38:30Z; retained for provenance)
 
 The independent A1/B replays now cover all 82 finalized public snapshots. They
 confirm 2,778 quality-valid pairs and zero positive gross, full-depth,
