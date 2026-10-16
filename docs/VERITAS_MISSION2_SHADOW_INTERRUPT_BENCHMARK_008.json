@@ -184,9 +184,18 @@
   },
   "interpretation": "The runner handled a SIGTERM during a partially read source segment, persisted a valid checkpoint, and resumed the same private journal to the same four-segment endpoint as the one-shot reference. Runtime, engine/context, research semantics, table contents, and normalized business-event sequence match. The final journal hash differs only in its lifecycle sequence: the resumed process appends one extra worker_start event, which is expected and is retained.",
   "limitations": [
-    "The signal arrived before the first decision event in this source window, so recovery from a crash between decision creation and decision_committed was not exercised.",
+    "The SIGTERM canary stopped before the first decision, so it does not itself exercise the decision-to-commit recovery branch; that branch is covered by the focused deterministic fault-injection regression named above.",
     "The final journal tail hash differs because the resumed process contributes an additional worker_start event; decision-event references shift and were verified valid.",
     "This is one controlled interruption on historical public recordings, not a live worker recovery or new economic observation.",
     "The isolated SQLite files were inspected read-only and are retained locally but excluded from version control; output summaries and snapshots are retained."
-  ]
+  ],
+  "existing_regression_coverage": {
+    "test_path": "tests/test_veritas_resumable_shadow_replay.py::test_missing_decision_commit_marker_is_repaired_before_followup",
+    "focused_suite_result": "51 passed in 5.69 seconds",
+    "included_in_focused_suite": true,
+    "fault_injection": "Raises between the decision and decision_committed journal transactions, then resumes.",
+    "expected_recovery_count": 1,
+    "uninterrupted_state_and_research_parity_verified": true,
+    "scope_note": "This unit-level fault injection covers the decision-to-commit recovery path; the separate SIGTERM canary stopped before its first decision."
+  }
 }

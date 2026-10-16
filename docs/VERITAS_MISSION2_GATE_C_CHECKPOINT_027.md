@@ -24,10 +24,17 @@ canary, business-event ordering in this signal-stop run also matches after
 normalizing the lifecycle event and generated decision-event sequence pointer.
 
 This validates graceful interruption and continuation for this isolated
-source window. The stop occurred before the first decision, so recovery from
-an interruption between decision creation and commit remains untested. The
-live collector and frozen shadow remained active (restart counts 0 and 1) and
-the campaign SHA remained
+source window. The stop occurred before the first decision, so this canary
+does not itself exercise the decision-to-commit recovery branch. The existing
+focused regression
+`tests/test_veritas_resumable_shadow_replay.py::test_missing_decision_commit_marker_is_repaired_before_followup`
+injects a failure between the decision and commit transactions, verifies one
+recovered uncommitted decision, and matches uninterrupted state and research
+semantics; it passed in the focused 51-test suite. That is deterministic
+unit-level fault injection, not an OS kill at the same instruction.
+
+The live collector and frozen shadow remained active (restart counts 0 and 1)
+and the campaign SHA remained
 `aa8acb2b46823c1a1e3ac5d01a57dde917746c2c7471098ae2a4598875e322f5`. See
 [benchmark 008](VERITAS_MISSION2_SHADOW_INTERRUPT_BENCHMARK_008.json) and
 isolated results under `data/veritas-canaries/shadow-resume-signal-001/`.

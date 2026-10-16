@@ -580,15 +580,18 @@ See Gate C checkpoint 026 and benchmark 007.
 
 ## Active Mission 2 queue — 2026-10-16 17:58 UTC
 
-1. **Exercise the decision-to-commit recovery window.** A forced SIGTERM at a
-   mid-segment checkpoint resumed to exact one-shot business-event order and
-   final state. The stop happened before the first decision, so the recovery
-   code for a decision written but not yet committed still needs a focused
-   isolated fixture or fault-injection check.
-2. **Keep the frozen live shadow and campaign unchanged.** The successful
-   canaries establish bounded reader and resume behavior, not live catch-up. A
-   successor still requires a versioned plan and continuity criteria.
+1. **Assess event-order reproducibility across process resumes.** The clean
+   segment split and the forced SIGTERM both preserved state and normalized
+   business-event content, but only the SIGTERM replay preserved normalized
+   event order. Decide whether byte-stable append order is an acceptance
+   requirement before adding more ordering machinery.
+2. **Keep the frozen live shadow and campaign unchanged.** The current shadow
+   remains untouched. A versioned successor still needs a bounded forward
+   run and a documented continuity plan before prospective evidence can be
+   used.
 3. **Keep economics evidence-gated.** These historical source replays add no
-   new market observations, candidates, actual fills, or model targets.
+   new market observations, candidates, actual fills, or model targets. The
+   decision-to-commit recovery path already has focused fault-injection
+   coverage in `test_missing_decision_commit_marker_is_repaired_before_followup`.
 
 See Gate C checkpoint 027 and benchmark 008.

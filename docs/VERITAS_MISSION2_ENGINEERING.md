@@ -1741,7 +1741,10 @@ and a separate process resumed the same work directory to the same endpoint
 as the one-shot four-segment reference. Final runtime bytes, engine/context,
 research semantics, indexed rows, and normalized business-event sequence
 match. The journal adds the expected second `worker_start`, so its final tail
-hash differs. The signal arrived before the first decision, leaving the
-decision-to-commit crash window untested. See [Gate C checkpoint
+hash differs. This SIGTERM canary stopped before the first decision; the
+focused regression `test_missing_decision_commit_marker_is_repaired_before_followup`
+in `tests/test_veritas_resumable_shadow_replay.py` separately injects a failure
+between the two journal transactions and verifies one recovered decision and
+one-shot state/research parity. See [Gate C checkpoint
 027](VERITAS_MISSION2_GATE_C_CHECKPOINT_027.md) and [benchmark
 008](VERITAS_MISSION2_SHADOW_INTERRUPT_BENCHMARK_008.json).

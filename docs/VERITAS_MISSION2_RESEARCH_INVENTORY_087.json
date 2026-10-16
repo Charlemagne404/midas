@@ -8574,10 +8574,10 @@
   "research_inventory_063": "Current numbered inventory for the scheduled 04:20 gap-detail batch, read-only censor-attribution refresh 002, and dashboard receipt verification; inventory 062 is preserved unchanged.",
   "research_ledger_current": {
     "artifact_path": "docs/VERITAS_RESEARCH_LEDGER.json",
-    "artifact_sha256": "0a954b2200ae9a54a55be332ad800ec94773560d9faf40698ce8581a196ac6f7",
+    "artifact_sha256": "1f35eb8148c886ba0a40a8bc26f52ce877d20242b3798a0d88653df45edff0bd",
     "updated_at_utc": "2026-10-16T17:58:53Z"
   },
-  "research_ledger_sha256": "0a954b2200ae9a54a55be332ad800ec94773560d9faf40698ce8581a196ac6f7",
+  "research_ledger_sha256": "1f35eb8148c886ba0a40a8bc26f52ce877d20242b3798a0d88653df45edff0bd",
   "source_analysis_checkpoint_063": {
     "active_segment_read": false,
     "catalog_segment_count": 5206,
@@ -13875,7 +13875,7 @@
   ],
   "shadow_interrupt_recovery_benchmark_008": {
     "artifact_path": "docs/VERITAS_MISSION2_SHADOW_INTERRUPT_BENCHMARK_008.json",
-    "artifact_sha256": "58f6828b11488222ebf036d25a8332ade6f8b4b6dbb2f16a65f68da6a6a48b59",
+    "artifact_sha256": "817cb2867c71eb8653628f86b7caf55d6260fd47a9314e4de0eb08b5f855a002",
     "checkpoint_path": "docs/VERITAS_MISSION2_GATE_C_CHECKPOINT_027.md",
     "interrupted_result_sha256": "0c66b6ebf1c08797e3fddd2ab082ef22dcf4f9370f3c7a4d36cfb1603aae6339",
     "resumed_result_sha256": "c342e5016629ca9cfedf135c138510f469b720c384c1e6b07045e2117c948393",
@@ -13901,8 +13901,14 @@
     "canary_scope_active_after_completion": false
   },
   "checkpoint_087_limitations": [
-    "One controlled SIGTERM before the first decision; decision-to-commit crash recovery remains untested.",
-    "The separate resume appends an extra worker_start event, so the immutable journal tail differs from one-shot.",
+    "The controlled SIGTERM stopped before the first decision, while the focused unit suite separately covers decision-to-commit recovery by fault injection.",
+    "The resumed journal appends an extra worker_start event and its tail differs from one-shot.",
     "No live or economic evidence was added."
-  ]
+  ],
+  "decision_commit_recovery_regression": {
+    "test_path": "tests/test_veritas_resumable_shadow_replay.py::test_missing_decision_commit_marker_is_repaired_before_followup",
+    "focused_suite_result": "51 passed in 5.69 seconds",
+    "expected_recovered_decisions": 1,
+    "scope": "Deterministic unit-level fault injection; the SIGTERM canary itself stopped before its first decision."
+  }
 }

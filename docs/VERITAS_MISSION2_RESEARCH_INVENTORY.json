@@ -8574,10 +8574,10 @@
   "research_inventory_063": "Current numbered inventory for the scheduled 04:20 gap-detail batch, read-only censor-attribution refresh 002, and dashboard receipt verification; inventory 062 is preserved unchanged.",
   "research_ledger_current": {
     "artifact_path": "docs/VERITAS_RESEARCH_LEDGER.json",
-    "artifact_sha256": "0a954b2200ae9a54a55be332ad800ec94773560d9faf40698ce8581a196ac6f7",
+    "artifact_sha256": "1f35eb8148c886ba0a40a8bc26f52ce877d20242b3798a0d88653df45edff0bd",
     "updated_at_utc": "2026-10-16T17:58:53Z"
   },
-  "research_ledger_sha256": "0a954b2200ae9a54a55be332ad800ec94773560d9faf40698ce8581a196ac6f7",
+  "research_ledger_sha256": "1f35eb8148c886ba0a40a8bc26f52ce877d20242b3798a0d88653df45edff0bd",
   "source_analysis_checkpoint_063": {
     "active_segment_read": false,
     "catalog_segment_count": 5206,
@@ -13852,14 +13852,14 @@
   "shadow_resume_benchmark_007_sha256": "de457e4bcc3d4a9c2f2386ee65f4167966d2821cd13fd503168a2a07b8f4b8a6",
   "research_inventory_087": {
     "artifact_path": "docs/VERITAS_MISSION2_RESEARCH_INVENTORY_087.json",
-    "artifact_sha256": "647d40ffac43bf773d034fc0985cf4ab551287c556e4bc0b7d2b21d31dbc76ad",
+    "artifact_sha256": "13c0cddcb92a7da8cffdfbb41efa1779210f23f2dc601b1faad07e18bbba8fa8",
     "based_on_inventory": "docs/VERITAS_MISSION2_RESEARCH_INVENTORY_086.json",
     "based_on_inventory_sha256": "1629cdcaf553d790b4f075c1402e3c150f2a2fab7e71fe20382eec7020e468d0",
     "capture_scope": "Record a bounded SIGTERM checkpoint and same-journal resume canary, verify final state and event content against the one-shot four-segment reference, and record campaign/service postflight; other metrics retain earlier timestamps."
   },
   "shadow_interrupt_recovery_benchmark_008": {
     "artifact_path": "docs/VERITAS_MISSION2_SHADOW_INTERRUPT_BENCHMARK_008.json",
-    "artifact_sha256": "58f6828b11488222ebf036d25a8332ade6f8b4b6dbb2f16a65f68da6a6a48b59",
+    "artifact_sha256": "817cb2867c71eb8653628f86b7caf55d6260fd47a9314e4de0eb08b5f855a002",
     "checkpoint_path": "docs/VERITAS_MISSION2_GATE_C_CHECKPOINT_027.md",
     "interrupted_result_sha256": "0c66b6ebf1c08797e3fddd2ab082ef22dcf4f9370f3c7a4d36cfb1603aae6339",
     "resumed_result_sha256": "c342e5016629ca9cfedf135c138510f469b720c384c1e6b07045e2117c948393",
@@ -13874,5 +13874,5 @@
     "decision_to_commit_window_exercised": false,
     "campaign_changed": false
   },
-  "shadow_interrupt_benchmark_008_sha256": "58f6828b11488222ebf036d25a8332ade6f8b4b6dbb2f16a65f68da6a6a48b59"
+  "shadow_interrupt_benchmark_008_sha256": "817cb2867c71eb8653628f86b7caf55d6260fd47a9314e4de0eb08b5f855a002"
 }
