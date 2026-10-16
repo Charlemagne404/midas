@@ -1,4 +1,30 @@
-## Latest checkpoint — 2026-10-16T05:17:20Z, scan-51 qualification and source catch-up
+## Latest checkpoint — 2026-10-16T05:22:16Z, independent replay through scan 51
+
+Independent source audit 005 now covers 51 snapshots / 2,040 selected
+observations. It reproduces all 1,755 v4 validity and top-edge results with
+zero mismatches. Strict reported-age sensitivity admits 379 states; all
+top-gross, depth, minimum, and fee gates remain zero. This corroborates the
+scan-51 no-trade qualification but does not establish sequence freshness,
+executability, or fills. See [Gate B checkpoint
+006](VERITAS_MISSION2_GATE_B_CHECKPOINT_006.md), [audit
+005](VERITAS_MISSION2_INDEPENDENT_OPPORTUNITY_AUDIT_005.json), and ledger
+H114.
+
+The scheduled gap-detail batch advanced its partial prefix to 3,019/5,344
+segments / 747,354,656 bytes. It records 735 campaign-window gap events and
+leaves 2,323 segments / 633,802,218 bytes pending. The full catalog source
+analysis remains at 5,324/5,324 segments, 361,068 valid states across 91
+markets, with no positive gross, full-depth, or minimum-notional states. See
+[operations](VERITAS_MISSION2_OPERATIONS.md) and [inventory
+068](VERITAS_MISSION2_RESEARCH_INVENTORY_068.json).
+
+The scan-51 Director child remains complete with no positives; its manifest
+reconciliation is scheduled for 05:45:02 UTC. Both APIs returned READY in
+demo mode; the archive unit remains failed after timeout. The timestamp
+association result remains in H112 and Gate B checkpoint 005. No full Mission
+2 regression was run. Mission 2 remains active.
+
+## Previous checkpoint — 2026-10-16T05:17:20Z, scan-51 qualification and source catch-up
 
 The 05:15 Director cycle reconciled scan 50 and admitted scan 51 to Arena.
 The scan-51 child completed 51/51 events with 1,755/2,040 quality-valid pairs

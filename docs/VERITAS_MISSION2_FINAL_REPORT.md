@@ -1,6 +1,26 @@
 # Project Veritas Mission 2 — Current Engineering Report
 
-## Latest update — 2026-10-16T05:17:20Z
+## Latest update — 2026-10-16T05:22:16Z
+
+The independent raw-source audit now covers 51 snapshots / 2,040 observations.
+It reproduces all 1,755 v4 quality-valid decisions and top edges with zero
+mismatches. Strict reported-age sensitivity admits 379 states; every top-gross,
+depth, minimum, and fee gate remains zero. Reported age still does not prove
+sequence freshness or executable liquidity. See [Gate B checkpoint
+006](VERITAS_MISSION2_GATE_B_CHECKPOINT_006.md), [audit
+005](VERITAS_MISSION2_INDEPENDENT_OPPORTUNITY_AUDIT_005.json), and ledger
+H114.
+
+The gap-detail prefix advanced to 3,019/5,344 replayable segments, with 735
+campaign-window gap events and 2,323 segments / 633,802,218 bytes pending.
+The source analyzer remains current at 5,324/5,324 cataloged segments and
+361,068 quality-valid states across 91 markets, with no positive gross or
+economic states. The scan-51 Director projection is due for scheduled
+reconciliation at 05:45:02 UTC. Mission 2 remains active; the archive timeout
+is unresolved. See [operations](VERITAS_MISSION2_OPERATIONS.md) and [inventory
+068](VERITAS_MISSION2_RESEARCH_INVENTORY_068.json).
+
+## Previous update — 2026-10-16T05:17:20Z
 
 Scan 51 completed its scheduled v4 Arena qualification: 1,755/2,040 pairs
 were quality-valid across 903 selected markets; the maximum top-pair edge was

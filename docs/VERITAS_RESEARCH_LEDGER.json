@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-16T05:17:20Z",
+  "updated_at_utc": "2026-10-16T05:22:16Z",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -6499,6 +6499,80 @@
         "The fee results are hypothetical and use displayed public-book depth; they do not prove executable liquidity.",
         "The child job completed, but the Director manifest projection remains queued until its next scheduled cycle.",
         "No authenticated requests or orders were used."
+      ]
+    },
+    {
+      "hypothesis_id": "VERITAS-H114",
+      "title": "Does an independent raw-source replay reproduce v4 qualification through scan 51?",
+      "mechanism": "A separately implemented bounded evaluator verifies retained snapshot, Gamma, CLOB, selection, book, and analysis-event lineage, then recomputes pair validity, top edges, depth, minimums, and fee sensitivities for every selected saved scan.",
+      "experiment_id": "VERITAS-M2-INDEPENDENT-SOURCE-AUDIT-001-RUN-5d1b667a72bd",
+      "dataset_id": "236754ef937101fd9348dd67bff0f461a1d28cc4c2fb0b5d5e60ae0b7d500dc4",
+      "success_metric": "Complete the source-pinned replay through the latest saved scan, report validity and top-edge agreement with v4, strict reported-age sensitivity, all economic gates, and a digest-linked result.",
+      "status": "continue",
+      "decision": "The independent audit completed all 51 snapshots / 2,040 selected observations over 33,318,338 compressed bytes. It reproduced all 1,755 v4 stored quality-valid decisions and top edges with zero mismatches. Strict reported-age sensitivity admits 379 states; 1,376 pairs exceed the five-second age rule. All top-gross, full-depth, minimum, and fee gates remain zero. Continue no-trade and bounded observation; reported age is not sequence-freshness or execution evidence.",
+      "result": {
+        "captured_at_utc": "2026-10-16T05:21:59.239733+00:00",
+        "artifact_path": "docs/VERITAS_MISSION2_INDEPENDENT_OPPORTUNITY_AUDIT_005.json",
+        "artifact_file_sha256": "60b1f2a204970f504f97e4096fa4bb45d8a139175b19e79d1796ae18baa045b9",
+        "result_sha256": "5d1b667a72bdd8d444d956fcd266e56e8e137fd4dcf35fdabfae4f71a6c9773a",
+        "source_manifest_sha256": "236754ef937101fd9348dd67bff0f461a1d28cc4c2fb0b5d5e60ae0b7d500dc4",
+        "source_code_sha256": "29354d4fb2bf1238e7b77154a8315564846af5b8cd1c902c89fdc832da3fb87d",
+        "analysis_version": "veritas-independent-source-opportunity-audit-v1",
+        "snapshot_count": 51,
+        "selected_market_observation_count": 2040,
+        "compressed_source_bytes": 33318338,
+        "independent_v2_valid_count": 1755,
+        "v4_stored_quality_valid_count": 1755,
+        "validity_mismatch_count": 0,
+        "top_edge_mismatch_count": 0,
+        "strict_freshness_valid_count": 379,
+        "reported_age_exceedance_pair_count": 1376,
+        "pair_skew_exceedance_count": 0,
+        "positive_top_pair_gross_count": 0,
+        "positive_full_depth_gross_by_quantity": {
+          "10": 0,
+          "100": 0,
+          "20": 0,
+          "5": 0,
+          "50": 0
+        },
+        "positive_full_depth_and_both_minimums_by_quantity": {
+          "10": 0,
+          "100": 0,
+          "20": 0,
+          "5": 0,
+          "50": 0
+        },
+        "positive_single_match_fee_sensitivity_by_quantity": {
+          "10": 0,
+          "100": 0,
+          "20": 0,
+          "5": 0,
+          "50": 0
+        },
+        "positive_fragmentation_safe_fee_sensitivity_by_quantity": {
+          "10": 0,
+          "100": 0,
+          "20": 0,
+          "5": 0,
+          "50": 0
+        },
+        "positive_both_fee_sensitivities_by_quantity": {
+          "10": 0,
+          "100": 0,
+          "20": 0,
+          "5": 0,
+          "50": 0
+        },
+        "authenticated_requests": false,
+        "orders_submitted": false
+      },
+      "limitations": [
+        "This audit covers selected saved snapshots, not the full venue universe or continuous quote histories.",
+        "Reported timestamp age and skew are conservative filters; they do not prove upstream freshness, sequence ordering, or atomicity.",
+        "Hypothetical fee sensitivities do not establish order arrival, fills, recovery, or profitability.",
+        "The independent arithmetic shares only the versioned fee evaluator after its own price, depth, minimum, and quality calculations.",
+        "Source integrity verifies stored public payloads; it does not establish that the venue response represented an executable state."
       ]
     }
   ],
