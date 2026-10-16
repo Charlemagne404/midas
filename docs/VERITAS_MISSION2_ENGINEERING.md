@@ -1,5 +1,18 @@
 # Veritas Mission 2 Engineering Checkpoint
 
+## Latest Gate A checkpoint — scan 43 and interim pilot yield
+
+The scheduled observer completed scan 43 at 01:01:47 UTC and exited 0. It
+found 32/40 quality-valid pairs, with 300 distinct IDs in its six-page
+bounded union and 202 currently eligible pairs. No positive gross candidate
+appeared, and all five tested quantities had zero positive full-depth,
+minimum-notional, and fee-sensitive states. Across 43 snapshots the v4
+summary has 1,499/1,720 quality-valid states, 784 selected market IDs, and
+zero candidate events. The descriptive fixed pilot is at 13/48 scans and
+429/520 valid slots, with no skipped sequence. Scan 43 awaits the scheduled
+Research Director cycle. See [Gate A checkpoint 041](VERITAS_MISSION2_GATE_A_CHECKPOINT_041.md)
+and [inventory 051](VERITAS_MISSION2_RESEARCH_INVENTORY_051.json).
+
 ## Latest Gate F checkpoint — scan 42 qualification and source catch-up
 
 The scheduled Research Director admitted scan 42 to Arena at 00:45 UTC.

@@ -177,7 +177,7 @@
     "source_bytes": 551636,
     "source_event_count": 30
   },
-  "captured_at_utc": "2026-10-16T00:52:13+00:00",
+  "captured_at_utc": "2026-10-16T01:05:29+00:00",
   "censoring_analysis": {
     "analysis_source_file": "packages/midas/veritas/forensics.py",
     "analysis_source_sha256": "0b055a21c4b423bbf02cc9c240f26f18263fb8342cd72dec686705d2601a420c",
@@ -2842,9 +2842,9 @@
     "unique_market_ids": 558,
     "window_minutes": 751.53
   },
-  "inventory_id": "VERITAS-M2-RESEARCH-INVENTORY-050",
-  "latest_scan_captured_at_utc": "2026-10-16T00:32:08.616672+00:00",
-  "latest_scan_id": "scan-20261016T003208Z-f65962fb4420",
+  "inventory_id": "VERITAS-M2-RESEARCH-INVENTORY-051",
+  "latest_scan_captured_at_utc": "2026-10-16T01:01:47.700201+00:00",
+  "latest_scan_id": "scan-20261016T010147Z-5d3367f05002",
   "latest_source_analysis_checkpoint": {
     "active_segment_read": false,
     "analysis_code_sha256": "9f9e2249b49dd1cb10c11713aa2683567aa9cf0914c3ed2b08cf8e3fea25ebf8",
@@ -4015,7 +4015,7 @@
     "veritas_control_cohort_rewritten": false,
     "veritas_control_cohort_sha256": "9578217e20dcc7d1c65fa110f0ed7c689b55483b61191f1aae8d30c9b7300d9a"
   },
-  "previous_inventory": "VERITAS_MISSION2_RESEARCH_INVENTORY_049.json",
+  "previous_inventory": "VERITAS_MISSION2_RESEARCH_INVENTORY_050.json",
   "repository": {
     "branch": "project/veritas",
     "checkpoint_base_commit": "122da17",
@@ -6125,5 +6125,130 @@
     "The gap-detail prefix ends before the campaign window; zero campaign-window gaps are not a campaign result.",
     "The v1 24-hour pilot remains active through its fixed 2026-10-16T19:00:55Z stop; the discovery successor remains unactivated.",
     "No full mission regression, browser workflow, HTTP health probe, or CPU sample was performed at this checkpoint."
+  ],
+  "current_scan_043": {
+    "analysis_summary_sha256": "3b31bee729baa6cc3253af005f5714a0e5fb28981001bc46d0215337a059f756",
+    "arena_qualification_inspected": false,
+    "attempted_market_pairs": 40,
+    "authenticated_requests": false,
+    "captured_at_utc": "2026-10-16T01:01:47.700201+00:00",
+    "current_eligible_discovery_markets": 202,
+    "excluded_discovery_ids": 98,
+    "orders_submitted": false,
+    "positive_fragmentation_safe_fee_by_quantity": {
+      "10": 0,
+      "100": 0,
+      "20": 0,
+      "5": 0,
+      "50": 0
+    },
+    "positive_full_depth_gross_by_quantity": {
+      "10": 0,
+      "100": 0,
+      "20": 0,
+      "5": 0,
+      "50": 0
+    },
+    "positive_minimum_notional_by_quantity": {
+      "10": 0,
+      "100": 0,
+      "20": 0,
+      "5": 0,
+      "50": 0
+    },
+    "positive_single_match_fee_by_quantity": {
+      "10": 0,
+      "100": 0,
+      "20": 0,
+      "5": 0,
+      "50": 0
+    },
+    "positive_top_gross_pairs": 0,
+    "public_http_attempts": 7,
+    "quality_invalid_reasons": {
+      "no_empty_ask_side": 8
+    },
+    "quality_valid_pairs": 32,
+    "query_count": 6,
+    "rotating_markets": 37,
+    "scan_id": "scan-20261016T010147Z-5d3367f05002",
+    "selected_markets": 40,
+    "snapshot_evidence_sha256": "5d3367f050021ef373438f1934dda6b69895f67a2ade0d51a0c4ad8e0684c98e",
+    "snapshot_file": "snapshots/scan-20261016T010147Z-5d3367f05002.json.gz",
+    "snapshot_source_code_sha256": "c490af70f28038237f1a346bc36cf7c6dda4904a2b02802d830450d88e8a26d5",
+    "stable_control_markets": 3,
+    "unique_discovery_ids": 300
+  },
+  "coverage_pilot_checkpoint_049": {
+    "completed_scans": 13,
+    "distinct_selected_market_ids": 326,
+    "ends_at_utc": "2026-10-16T19:00:55.062293+00:00",
+    "interpretation": "same-scan control versus rotating yield is descriptive and non-randomized; no causal or venue-wide inference",
+    "invalid_pairs": 91,
+    "maximum_completed_scans": 48,
+    "protocol_version": "veritas-coverage-pilot-v1",
+    "quality_valid_pairs": 429,
+    "quality_valid_yield": 0.825,
+    "selected_market_pair_slots": 520,
+    "skipped_scan_sequences": 0,
+    "status": "running",
+    "study_id": "VERITAS-M2-COVERAGE-PILOT-001",
+    "summary_sha256": "50fb78b07bf04c4f4c3cf920c8b578f52422f120522232669f49fc0b66771006"
+  },
+  "current_operational_checkpoint_050": {
+    "captured_at_utc": "2026-10-16T01:05:29+00:00",
+    "observer_service_state": "inactive_after_success",
+    "observer_exit_status": 0,
+    "observer_last_scan_id": "scan-20261016T010147Z-5d3367f05002",
+    "observer_timer_state": "active_waiting",
+    "observer_next_timer_utc": "2026-10-16T01:30:03Z",
+    "source_analysis_timer_next_utc": "2026-10-16T01:10:29Z",
+    "research_director_timer_next_utc": "2026-10-16T01:15:26Z",
+    "gap_detail_timer_next_utc": "2026-10-16T01:20:00Z",
+    "director_manifest_last_checked_at_utc": "2026-10-16T00:52:13Z",
+    "director_manifest_current_child_last_known_state": "QUEUED",
+    "director_manifest_scan_43_qualified": false,
+    "coverage_pilot_completed_scans": 13,
+    "coverage_pilot_selected_slots": 520,
+    "coverage_pilot_valid_pairs": 429,
+    "coverage_pilot_invalid_pairs": 91,
+    "coverage_pilot_distinct_selected_markets": 326,
+    "coverage_pilot_skipped_scan_sequences": 0,
+    "coverage_pilot_fixed_stop_utc": "2026-10-16T19:00:55.062293+00:00",
+    "source_and_gap_summaries_refreshed_in_this_checkpoint": false,
+    "manual_director_poll_or_retry": false,
+    "manual_service_restarts_or_interruption": false
+  },
+  "system_health_checkpoint_041": {
+    "captured_at_utc": "2026-10-16T00:55:01Z",
+    "health_endpoint_status": "READY",
+    "live_execution": false,
+    "collector_state": "RECORDING_UNSEQUENCED",
+    "collector_active": true,
+    "collector_restart_count": 0,
+    "collector_memory_current_bytes": 401240064,
+    "shadow_active": true,
+    "shadow_restart_count": 1,
+    "shadow_restart_is_historical": true,
+    "shadow_current_memory_bytes": 274845696,
+    "shadow_historical_failure": "Final source segment integrity/continuity mismatch at 2026-10-15T03:01:30Z; systemd restarted it about 32 seconds later. Current invocation is active with exit status 0.",
+    "shadow_new_journal_entries_since_2026_10_16T00Z": false,
+    "api_and_web_services_active": true,
+    "available_memory_bytes": 10432573440,
+    "swap_used_bytes": 3738796032,
+    "disk_available_bytes": 212386803712,
+    "disk_used_percent": 56,
+    "recording_root_bytes": 1250572917,
+    "cpu_usage_sampled": false
+  },
+  "checkpoint_051_limitations": [
+    "Scan 43 is one selected intermittent public snapshot. The 43-scan panel is repeated and correlated, not a venue census or execution record.",
+    "Scan 43 has not yet received its scheduled Arena qualification; the Director projection was last checked at 00:52 UTC and remains due for the 01:15:26 UTC cycle.",
+    "The fixed v1 measurement pilot is incomplete at 13/48 scans and remains descriptive; its fixed stop is 2026-10-16T19:00:55Z.",
+    "The source and gap-detail summaries were not refreshed in this checkpoint; their latest completed summaries remain those recorded in inventory 050.",
+    "No active .open segment was read for this checkpoint.",
+    "The Reality shadow has one documented historical restart after a finalized-source continuity error; the worker is currently active. No new restart was observed today.",
+    "Available memory and disk were ample at the recorded snapshot, but swap usage was high. CPU usage was not sampled.",
+    "No service, timer, pilot, or frozen campaign was manually changed or restarted. No orders were submitted."
   ]
 }
