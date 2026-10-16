@@ -7,7 +7,7 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from apps.api.veritas import MAX_ARTIFACT_BYTES, router
+from apps.api.veritas import MAX_ARTIFACT_BYTES, coverage_design_audit_overview, router
 
 
 def write_artifact(root: Path, name: str, value: dict) -> None:
@@ -120,6 +120,75 @@ def update_market_universe_coverage_receipt(root: Path, artifact_path: Path) -> 
         }
     )
     ledger_path.write_text(json.dumps(ledger))
+
+
+def write_coverage_design_audit_fixture(root: Path) -> Path:
+    result = {
+        "schema_version": 1,
+        "experiment_id": "VERITAS-M2-COVERAGE-DESIGN-AUDIT-002",
+        "analysis_version": "veritas-coverage-design-audit-v2",
+        "analysis_code_sha256": "a" * 64,
+        "created_at_utc": "2026-10-16T07:36:23Z",
+        "study_status_at_audit": "running",
+        "source": {
+            "study_id": "VERITAS-M2-COVERAGE-PILOT-001",
+            "protocol_version": "veritas-coverage-pilot-v1",
+            "summary_sha256": "b" * 64,
+            "summary_file_sha256": "c" * 64,
+            "event_count": 2,
+            "compressed_snapshot_bytes": 4096,
+        },
+        "analysis": {
+            "scan_count": 2,
+            "role_totals": {
+                "rotating_stratified": {"selected": 30, "valid": 24, "yield": 0.8},
+                "stable_random_control": {"selected": 4, "valid": 2, "yield": 0.5},
+            },
+            "fully_supported_scan_count": 1,
+            "partially_supported_scan_count": 1,
+            "unsupported_scan_count": 0,
+            "mean_rotating_population_support_fraction": 0.95,
+            "fully_supported_scan_weighted_yield_mean": 0.82,
+            "supported_population_scan_yield_range": {"minimum": 0.77, "maximum": 0.87},
+            "skipped_selection_sequences": 1,
+        },
+        "interpretation": {
+            "no_venue_wide_inference": True,
+            "no_continuous_coverage_claim": True,
+            "no_economic_candidate_or_profit_claim": True,
+            "markets_and_scans_are_dependent": True,
+        },
+        "safety": {
+            "live_requests": 0,
+            "authenticated_requests": False,
+            "orders_submitted": False,
+            "campaign_modified": False,
+        },
+    }
+    artifact = {**result, "result_sha256": hashlib.sha256(canonical_json(result)).hexdigest()}
+    artifact["artifact_sha256"] = hashlib.sha256(canonical_json(artifact)).hexdigest()
+    artifact_path = root / "docs" / "VERITAS_MISSION2_COVERAGE_DESIGN_AUDIT_002.json"
+    artifact_path.parent.mkdir(parents=True, exist_ok=True)
+    artifact_path.write_bytes(canonical_json(artifact))
+
+    ledger_path = root / "docs" / "VERITAS_RESEARCH_LEDGER.json"
+    ledger = json.loads(ledger_path.read_text())
+    ledger["hypotheses"].append(
+        {
+            "hypothesis_id": "VERITAS-H125",
+            "experiment_id": "VERITAS-M2-COVERAGE-DESIGN-AUDIT-002",
+            "title": "Fixture inclusion-support audit",
+            "result": {
+                "artifact_path": "docs/VERITAS_MISSION2_COVERAGE_DESIGN_AUDIT_002.json",
+                "artifact_file_sha256": hashlib.sha256(artifact_path.read_bytes()).hexdigest(),
+                "artifact_sha256": artifact["artifact_sha256"],
+                "result_sha256": artifact["result_sha256"],
+                "analysis_version": "veritas-coverage-design-audit-v2",
+            },
+        }
+    )
+    ledger_path.write_text(json.dumps(ledger))
+    return artifact_path
 
 
 def update_censor_gap_attribution_receipt(root: Path, artifact_path: Path) -> None:
@@ -865,6 +934,91 @@ def test_market_universe_overview_rejects_stale_artifact_receipt(tmp_path):
     response = client.get("/api/veritas/overview")
 
     assert response.status_code == 503
+
+
+def test_coverage_design_audit_projects_hash_verified_support_and_pilot_freshness(tmp_path):
+    client = fixture_client(tmp_path)
+    artifact_path = write_coverage_design_audit_fixture(tmp_path)
+
+    response = client.get("/api/veritas/overview")
+
+    assert response.status_code == 200
+    audit = response.json()["opportunity_observatory"]["coverage_design_audit"]
+    assert audit["status"] == "available"
+    assert audit["study_scan_count"] == 2
+    assert audit["current_pilot_scan_count"] == 0
+    assert audit["source_is_current"] is False
+    assert audit["mean_rotating_population_support_fraction"] == 0.95
+    assert audit["fully_supported_scan_weighted_yield_mean"] == 0.82
+    assert audit["role_totals"]["rotating_stratified"] == {
+        "selected": 30,
+        "valid": 24,
+        "yield": 0.8,
+    }
+    assert any(item["id"] == "coverage-design-audit" for item in response.json()["artifacts"])
+
+    ledger = json.loads((tmp_path / "docs" / "VERITAS_RESEARCH_LEDGER.json").read_text())
+    source_is_current = coverage_design_audit_overview(
+        tmp_path,
+        ledger,
+        {"completed_scans": 2, "summary_sha256": "b" * 64},
+    )
+    assert source_is_current is not None
+    assert source_is_current["source_is_current"] is True
+    source_is_stale = coverage_design_audit_overview(
+        tmp_path,
+        ledger,
+        {"completed_scans": 3, "summary_sha256": "d" * 64},
+    )
+    assert source_is_stale is not None
+    assert source_is_stale["source_is_current"] is False
+
+    artifact_response = client.get("/api/veritas/artifacts/coverage-design-audit")
+    assert artifact_response.status_code == 200
+    assert artifact_response.json()["data"]["analysis_version"] == (
+        "veritas-coverage-design-audit-v2"
+    )
+    assert (
+        artifact_response.json()["file_sha256"]
+        == hashlib.sha256(artifact_path.read_bytes()).hexdigest()
+    )
+
+
+def test_coverage_design_audit_fails_closed_on_tampered_digest_or_invalid_fraction(tmp_path):
+    client = fixture_client(tmp_path)
+    artifact_path = write_coverage_design_audit_fixture(tmp_path)
+    artifact = json.loads(artifact_path.read_text())
+    artifact["analysis"]["mean_rotating_population_support_fraction"] = 1.5
+    artifact_path.write_bytes(canonical_json(artifact))
+
+    assert client.get("/api/veritas/overview").status_code == 503
+
+
+def test_coverage_design_route_selects_newest_receipted_artifact(tmp_path):
+    client = fixture_client(tmp_path)
+    artifact_path = write_coverage_design_audit_fixture(tmp_path)
+    latest_path = artifact_path.with_name("VERITAS_MISSION2_COVERAGE_DESIGN_AUDIT_003.json")
+    latest_path.write_bytes(artifact_path.read_bytes())
+    ledger_path = tmp_path / "docs" / "VERITAS_RESEARCH_LEDGER.json"
+    ledger = json.loads(ledger_path.read_text())
+    base_result = ledger["hypotheses"][-1]["result"]
+    ledger["hypotheses"].append(
+        {
+            "hypothesis_id": "VERITAS-H126",
+            "experiment_id": "VERITAS-M2-COVERAGE-DESIGN-AUDIT-002",
+            "result": {
+                **base_result,
+                "artifact_path": "docs/VERITAS_MISSION2_COVERAGE_DESIGN_AUDIT_003.json",
+                "artifact_file_sha256": hashlib.sha256(latest_path.read_bytes()).hexdigest(),
+            },
+        }
+    )
+    ledger_path.write_text(json.dumps(ledger))
+
+    response = client.get("/api/veritas/artifacts/coverage-design-audit")
+
+    assert response.status_code == 200
+    assert response.json()["file_sha256"] == hashlib.sha256(latest_path.read_bytes()).hexdigest()
 
 
 def test_overview_exposes_hash_verified_gap_censor_and_prefix_evidence(tmp_path):

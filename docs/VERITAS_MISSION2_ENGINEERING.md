@@ -1,28 +1,40 @@
-## Latest checkpoint — 2026-10-16T05:22:16Z, independent replay through scan 51
+## Latest checkpoint — 2026-10-16T08:17:07Z, scan-57 reconciliation, source catch-up, and Gate G
 
-Independent source audit 005 now covers 51 snapshots / 2,040 selected
-observations. It reproduces all 1,755 v4 validity and top-edge results with
-zero mismatches. Strict reported-age sensitivity admits 379 states; all
-top-gross, depth, minimum, and fee gates remain zero. This corroborates the
-scan-51 no-trade qualification but does not establish sequence freshness,
-executability, or fills. See [Gate B checkpoint
-006](VERITAS_MISSION2_GATE_B_CHECKPOINT_006.md), [audit
-005](VERITAS_MISSION2_INDEPENDENT_OPPORTUNITY_AUDIT_005.json), and ledger
-H114.
+The bounded observer remains at 57 scans / 2,280 selected pair observations. The current v4 summary reports 1,945 quality-valid pairs and zero positive top-gross states; scan 57 was captured at 08:00:56 UTC. Independent A1 coverage and raw-source audit 009 remain through scan 55 / 2,200 observations / 1,882 valid pairs, with no validity or top-edge mismatches and no positive top, depth, minimum, or fee-qualified states. See the live [observatory summary](../data/veritas-observatory/latest-summary.json), [Gate A checkpoint 051](VERITAS_MISSION2_GATE_A_CHECKPOINT_051.md), and [Gate B checkpoint 010](VERITAS_MISSION2_GATE_B_CHECKPOINT_010.md).
 
-The scheduled gap-detail batch advanced its partial prefix to 3,019/5,344
-segments / 747,354,656 bytes. It records 735 campaign-window gap events and
-leaves 2,323 segments / 633,802,218 bytes pending. The full catalog source
-analysis remains at 5,324/5,324 segments, 361,068 valid states across 91
-markets, with no positive gross, full-depth, or minimum-notional states. See
-[operations](VERITAS_MISSION2_OPERATIONS.md) and [inventory
-068](VERITAS_MISSION2_RESEARCH_INVENTORY_068.json).
+The measurement pilot is at 26/48 scans: 842/1,040 valid pair slots across 608 selected market IDs, with one skipped sequence. Audit 002 remains at 25 scans; the API projection reports it available and stale against the current pilot. The 08:15:58 Director cycle reconciled the scan-55 child, then admitted scan 57. Its Arena job completed with zero positive gross candidates; the manifest still shows QUEUED pending the next scheduled reconciliation. The Arena source revision remains pinned.
 
-The scan-51 Director child remains complete with no positives; its manifest
-reconciliation is scheduled for 05:45:02 UTC. Both APIs returned READY in
-demo mode; the archive unit remains failed after timeout. The timestamp
-association result remains in H112 and Gate B checkpoint 005. No full Mission
-2 regression was run. Mission 2 remains active.
+The scheduled finalized-source analyzer caught up at 08:12:56: 5,677/5,677 segments / 1,460,522,573 bytes, with 386,158 quality-valid states across 101 markets and zero positive top-ask, full-depth, or minimum-notional states. Gap detail remains partial at 4,242/5,665 replayable segments; 1,423 segments / 351,838,232 bytes are pending, and 1,327 campaign-window gaps are indexed. The analysis read no active segment. Focused verification passed 33 backend tests and one UI test; TypeScript, ESLint, and Prettier passed. No full regression or model training was run. See [Gate G checkpoint 018](VERITAS_MISSION2_GATE_G_CHECKPOINT_018.md), [operations](VERITAS_MISSION2_OPERATIONS.md), and H126.
+
+## Previous checkpoint — 2026-10-16T07:36:47Z, scan-55 independent replay and coverage-design audit
+
+The A1 universe replay and independent raw-source audit are complete through
+scan 55 / 2,200 selected pair observations. The independent audit reproduces
+all 1,882 v4 quality and edge decisions with zero mismatches; no positive
+top-pair, depth, minimum, or fee-qualified result appears. The newest scan 56
+is separately recorded by the active measurement pilot at 29/40 valid pairs
+and zero positive top-gross pairs, but is not yet included in A1 artifact 009.
+See [Gate A checkpoint 051](VERITAS_MISSION2_GATE_A_CHECKPOINT_051.md), [Gate B
+checkpoint 010](VERITAS_MISSION2_GATE_B_CHECKPOINT_010.md), and ledgers H123–H124.
+
+The new inclusion-support audit independently verifies all 25 coverage-pilot
+events and their snapshot and analysis-event lineage. It finds full rotating
+population support in 23 scans, partial support in two, and 99.80% pooled
+population support. The 82.96% mean design-weighted yield over fully supported
+scans remains descriptive; frozen controls are not randomized against the
+rotating cohort. See [Gate A checkpoint
+052](VERITAS_MISSION2_GATE_A_CHECKPOINT_052.md), [audit
+002](VERITAS_MISSION2_COVERAGE_DESIGN_AUDIT_002.json), and ledger H125.
+
+The latest finalized-source summary covers 5,558/5,558 cataloged segments /
+1,430,421,272 bytes and 378,755 quality-valid states across 98 markets, with
+zero positive top-ask, full-depth, or minimum-notional states. The gap-detail
+prefix covers 4,038/5,606 replayable segments and records 1,227
+campaign-window gaps; 1,568 segments / 402,129,096 bytes remain pending. The
+07:15 Director cycle admitted scan 55; its next scheduled reconciliation is
+07:45:24 UTC. The Arena source remains pinned. Four focused inclusion-audit
+tests pass; no full regression or model training was run. Mission 2 remains
+active.
 
 ## Previous checkpoint — 2026-10-16T05:17:20Z, scan-51 qualification and source catch-up
 
@@ -1493,3 +1505,15 @@ A read-only comparison of the saved first snapshot and its v4 analysis event fou
 The bounded A1 replay now covers 54 snapshots / 35,111,892 compressed bytes. The six-frame union contains 6,303 Gamma IDs; 2,185 were eligible at least once and 960 markets were selected. Current replay yields 1,853 quality-valid pairs from 2,160 observations; classifier counts match on 54/54 scans and positive top-gross pairs remain zero. Independent audit 008 reproduces all v4 validity and top-edge decisions with zero mismatches; strict reported-age sensitivity accepts 391 states. Top-gross, depth, minimum, and fee gates remain zero. The first-scan snapshot-counter comparison is explained in [Gate A note 001](VERITAS_MISSION2_GATE_A_COUNTER_SEMANTICS_NOTE_001.md). See [Gate A checkpoint 050](VERITAS_MISSION2_GATE_A_CHECKPOINT_050.md) and [Gate B checkpoint 009](VERITAS_MISSION2_GATE_B_CHECKPOINT_009.md).
 
 The scheduled 06:45 UTC Director cycle reconciled scan 53 and admitted scan 54. Its Arena child completed 54/54 events with zero positives and complete empty candidate evidence/replay. The Director manifest now projects scan 54 as `QUEUED`, pending the scheduled 07:15 UTC reconciliation; keep the Arena research package pinned. The read-only API projection selects coverage artifact 008 after receipt H121; automated API/browser checks and deployment remain open. See [Gate F checkpoint 033](VERITAS_MISSION2_GATE_F_CHECKPOINT_033.md), [Gate G checkpoint 017](VERITAS_MISSION2_GATE_G_CHECKPOINT_017.md), and inventory 073.
+
+
+## Gate A / Gate B / Gate F checkpoint — scan 55
+
+The 55-snapshot A1 replay verifies 330 Gamma responses and 35,726,316 compressed snapshot bytes. It covers 6,371 bounded-union Gamma IDs, 2,187 eligible at least once, and 967 selected markets. Current replay finds 1,882 quality-valid pairs / 2,200 observations (85.55%) with zero positive top-gross pairs. The independent raw-source replay matches v4 validity and top-edge decisions with zero mismatches; strict reported-age sensitivity accepts 399 states and all gross, depth, minimum, and fee gates remain zero. Preserve the first-scan 5-versus-32 counter note. See [Gate A checkpoint 051](VERITAS_MISSION2_GATE_A_CHECKPOINT_051.md) and [Gate B checkpoint 010](VERITAS_MISSION2_GATE_B_CHECKPOINT_010.md).
+
+The scheduled 07:15 UTC Director cycle reconciled scan 54 and admitted scan 55. Its job is projected as `QUEUED` until the scheduled 07:45 UTC cycle, so keep the Arena source pinned. See [Gate F checkpoint 034](VERITAS_MISSION2_GATE_F_CHECKPOINT_034.md). Automated API/browser checks and deployment remain open.
+
+
+## Gate A checkpoint 052 — verify selection-probability support
+
+The new offline design audit independently verifies 25 immutable coverage-pilot events, their source snapshots, and their v4 analysis events. All selected rotating-market inclusion probabilities match the recorded within-stratum quota/population ratio. Twenty-three scans fully support the rotating population; two category-phase scans have partial support, leaving 99.80% pooled support across scan-population exposure. The mean design-weighted valid yield across fully supported scans is 82.96%. This is conditional descriptive evidence; the frozen control comparison remains nonrandomized. See [Gate A checkpoint 052](VERITAS_MISSION2_GATE_A_CHECKPOINT_052.md), [audit 002](VERITAS_MISSION2_COVERAGE_DESIGN_AUDIT_002.json), and ledger H125. Four focused tests passed; no campaign or runtime package was changed.

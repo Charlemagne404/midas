@@ -5,6 +5,7 @@ from __future__ import annotations
 import gzip
 import hashlib
 import json
+import math
 import re
 from collections import Counter
 from datetime import datetime
@@ -26,6 +27,7 @@ ARTIFACTS = {
     "censor-gap-attribution": "VERITAS_MISSION2_CENSOR_GAP_ATTRIBUTION_002.json",
     # Legacy fallback; newer versions are selected from matching ledger receipts.
     "market-universe-coverage": "VERITAS_MISSION2_MARKET_UNIVERSE_COVERAGE_004.json",
+    "coverage-design-audit": "VERITAS_MISSION2_COVERAGE_DESIGN_AUDIT_002.json",
 }
 MAX_ARTIFACT_BYTES = 512 * 1024
 MAX_OBSERVATORY_SUMMARY_BYTES = 2 * 1024**2
@@ -36,6 +38,8 @@ MAX_GAP_DETAIL_SUMMARY_BYTES = 512 * 1024
 MAX_COVERAGE_PILOT_SUMMARY_BYTES = 2 * 1024**2
 MAX_COVERAGE_PILOT_EVENT_BYTES = 256 * 1024
 MAX_COVERAGE_PILOT_SCANS = 48
+COVERAGE_DESIGN_AUDIT_ID = "VERITAS-M2-COVERAGE-DESIGN-AUDIT-002"
+COVERAGE_DESIGN_AUDIT_VERSION = "veritas-coverage-design-audit-v2"
 SNAPSHOT_ID = re.compile(r"scan-\d{8}T\d{6}Z-[0-9a-f]{12}\Z")
 COVERAGE_PILOT_ID = "VERITAS-M2-COVERAGE-PILOT-001"
 COVERAGE_PILOT_VERSION = "veritas-coverage-pilot-v1"
@@ -43,11 +47,12 @@ COVERAGE_PILOT_PLAN_SHA256 = "d35f25ef84037f3e9cabf4343e9a01db381b73e8fa6cae0fd0
 COVERAGE_ARTIFACT_PATH = re.compile(
     r"docs/VERITAS_MISSION2_MARKET_UNIVERSE_COVERAGE_(\d{3,})\.json\Z"
 )
+COVERAGE_DESIGN_AUDIT_PATH = re.compile(
+    r"docs/VERITAS_MISSION2_COVERAGE_DESIGN_AUDIT_(\d{3,})\.json\Z"
+)
 
 
-def market_universe_coverage_artifact_path(
-    repository: Path, ledger: dict[str, Any]
-) -> Path:
+def market_universe_coverage_artifact_path(repository: Path, ledger: dict[str, Any]) -> Path:
     """Choose the newest hash-receipted coverage artifact that exists locally."""
     docs = repository / "docs"
     fallback = docs / ARTIFACTS["market-universe-coverage"]
@@ -83,16 +88,53 @@ def market_universe_coverage_artifact_path(
     return max(candidates, key=lambda candidate: candidate[0])[1]
 
 
+def coverage_design_audit_artifact_path(repository: Path, ledger: dict[str, Any]) -> Path:
+    """Choose the newest hash-receipted coverage-design audit present locally."""
+    docs = repository / "docs"
+    fallback = docs / ARTIFACTS["coverage-design-audit"]
+    if docs.is_symlink() or not docs.is_dir():
+        return fallback
+    hypotheses = ledger.get("hypotheses")
+    if not isinstance(hypotheses, list):
+        return fallback
+    candidates: list[tuple[int, Path]] = []
+    for item in hypotheses:
+        if not isinstance(item, dict) or item.get("experiment_id") != COVERAGE_DESIGN_AUDIT_ID:
+            continue
+        result = item.get("result")
+        if not isinstance(result, dict):
+            continue
+        relative_path = result.get("artifact_path")
+        match = (
+            COVERAGE_DESIGN_AUDIT_PATH.fullmatch(relative_path)
+            if isinstance(relative_path, str)
+            else None
+        )
+        if (
+            match is None
+            or result.get("analysis_version") != COVERAGE_DESIGN_AUDIT_VERSION
+            or not isinstance(result.get("artifact_file_sha256"), str)
+        ):
+            continue
+        path = repository / relative_path
+        if path.parent == docs and path.is_file() and not path.is_symlink():
+            candidates.append((int(match.group(1)), path))
+    return max(candidates, key=lambda candidate: candidate[0])[1] if candidates else fallback
+
+
 def read_artifact(
     repository: Path, identity: str, *, ledger: dict[str, Any] | None = None
 ) -> tuple[dict[str, Any], Path]:
     name = ARTIFACTS.get(identity)
     if name is None:
         raise HTTPException(404, "Unknown Veritas evidence artifact")
-    if identity == "market-universe-coverage":
+    if identity in {"market-universe-coverage", "coverage-design-audit"}:
         if ledger is None:
             ledger, _ = read_artifact(repository, "ledger")
-        path = market_universe_coverage_artifact_path(repository, ledger)
+        if identity == "market-universe-coverage":
+            path = market_universe_coverage_artifact_path(repository, ledger)
+        else:
+            path = coverage_design_audit_artifact_path(repository, ledger)
     else:
         path = repository / "docs" / name
     if path.is_symlink() or not path.is_file():
@@ -1839,6 +1881,8 @@ def coverage_pilot_overview(repository: Path) -> dict[str, Any]:
             "scans": [],
             "latest_scan": None,
             "latest_control_availability": None,
+            "summary_sha256": None,
+            "summary_file_sha256": None,
             "summary_artifact": None,
             "limitations": [],
         }
@@ -1921,6 +1965,8 @@ def coverage_pilot_overview(repository: Path) -> dict[str, Any]:
         "scans": scan_projection[-8:],
         "latest_scan": scan_projection[-1] if scan_projection else None,
         "latest_control_availability": control_availability,
+        "summary_sha256": summary["summary_sha256"],
+        "summary_file_sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
         "summary_artifact": {
             "id": "coverage-pilot",
             "label": "Verified prospective coverage-pilot summary",
@@ -2587,6 +2633,202 @@ def market_universe_coverage_overview(
     }
 
 
+def coverage_design_audit_overview(
+    repository: Path,
+    ledger: dict[str, Any],
+    measurement_pilot: dict[str, Any],
+) -> dict[str, Any] | None:
+    """Validate the receipted selection-support audit and mark its pilot freshness."""
+    docs = repository / "docs"
+    path = coverage_design_audit_artifact_path(repository, ledger)
+    if docs.is_symlink() or path.is_symlink():
+        raise HTTPException(404, "Veritas coverage-design audit is unavailable")
+    if not path.exists():
+        return None
+    value, path = read_artifact(repository, "coverage-design-audit", ledger=ledger)
+    payload_bytes = path.read_bytes()
+    file_digest = hashlib.sha256(payload_bytes).hexdigest()
+    relative_path = path.relative_to(repository).as_posix()
+    hypotheses = ledger.get("hypotheses")
+    receipts = (
+        [
+            item
+            for item in hypotheses
+            if isinstance(item, dict)
+            and item.get("experiment_id") == COVERAGE_DESIGN_AUDIT_ID
+            and isinstance(item.get("result"), dict)
+            and item["result"].get("artifact_path") == relative_path
+        ]
+        if isinstance(hypotheses, list)
+        else []
+    )
+    receipt = receipts[0].get("result") if len(receipts) == 1 else None
+    if not isinstance(receipt, dict):
+        raise HTTPException(503, "Veritas coverage-design audit ledger receipt is invalid")
+
+    result_payload = dict(value)
+    artifact_digest = result_payload.pop("artifact_sha256", None)
+    result_digest = result_payload.pop("result_sha256", None)
+    canonical = lambda obj: json.dumps(  # noqa: E731
+        obj, sort_keys=True, separators=(",", ":"), ensure_ascii=False
+    ).encode()
+    calculated_result_digest = hashlib.sha256(canonical(result_payload)).hexdigest()
+    calculated_artifact_digest = hashlib.sha256(
+        canonical({**result_payload, "result_sha256": result_digest})
+    ).hexdigest()
+    if (
+        file_digest != receipt.get("artifact_file_sha256")
+        or artifact_digest != receipt.get("artifact_sha256")
+        or result_digest != receipt.get("result_sha256")
+        or calculated_result_digest != result_digest
+        or calculated_artifact_digest != artifact_digest
+        or receipt.get("analysis_version") != COVERAGE_DESIGN_AUDIT_VERSION
+    ):
+        raise HTTPException(503, "Veritas coverage-design audit digest or receipt is invalid")
+
+    source = value.get("source")
+    analysis = value.get("analysis")
+    interpretation = value.get("interpretation")
+    safety = value.get("safety")
+    if (
+        value.get("schema_version") != 1
+        or value.get("experiment_id") != COVERAGE_DESIGN_AUDIT_ID
+        or value.get("analysis_version") != COVERAGE_DESIGN_AUDIT_VERSION
+        or not isinstance(value.get("created_at_utc"), str)
+        or not isinstance(source, dict)
+        or not isinstance(analysis, dict)
+        or not isinstance(interpretation, dict)
+        or not isinstance(safety, dict)
+    ):
+        raise HTTPException(503, "Veritas coverage-design audit identity is invalid")
+
+    def count(record: dict[str, Any], field: str, *, maximum: int | None = None) -> int:
+        number = record.get(field)
+        if (
+            not isinstance(number, int)
+            or isinstance(number, bool)
+            or number < 0
+            or (maximum is not None and number > maximum)
+        ):
+            raise HTTPException(503, f"Veritas coverage-design count {field} is invalid")
+        return number
+
+    def fraction(record: dict[str, Any], field: str) -> float:
+        number = record.get(field)
+        if (
+            not isinstance(number, (int, float))
+            or isinstance(number, bool)
+            or not math.isfinite(number)
+            or number < 0
+            or number > 1
+        ):
+            raise HTTPException(503, f"Veritas coverage-design fraction {field} is invalid")
+        return float(number)
+
+    scan_count = count(source, "event_count", maximum=MAX_COVERAGE_PILOT_SCANS)
+    if (
+        scan_count < 1
+        or scan_count != count(analysis, "scan_count", maximum=MAX_COVERAGE_PILOT_SCANS)
+        or source.get("study_id") != COVERAGE_PILOT_ID
+        or source.get("protocol_version") != COVERAGE_PILOT_VERSION
+        or not isinstance(source.get("summary_sha256"), str)
+        or not isinstance(source.get("summary_file_sha256"), str)
+        or safety.get("live_requests") != 0
+        or safety.get("authenticated_requests") is not False
+        or safety.get("orders_submitted") is not False
+        or safety.get("campaign_modified") is not False
+        or interpretation.get("no_venue_wide_inference") is not True
+        or interpretation.get("no_continuous_coverage_claim") is not True
+        or interpretation.get("no_economic_candidate_or_profit_claim") is not True
+        or interpretation.get("markets_and_scans_are_dependent") is not True
+    ):
+        raise HTTPException(
+            503, "Veritas coverage-design audit source or safety fields are invalid"
+        )
+
+    fully_supported = count(analysis, "fully_supported_scan_count", maximum=scan_count)
+    partially_supported = count(analysis, "partially_supported_scan_count", maximum=scan_count)
+    unsupported = count(analysis, "unsupported_scan_count", maximum=scan_count)
+    if fully_supported + partially_supported + unsupported != scan_count:
+        raise HTTPException(503, "Veritas coverage-design support counts do not reconcile")
+
+    role_totals = analysis.get("role_totals")
+    if not isinstance(role_totals, dict):
+        raise HTTPException(503, "Veritas coverage-design role totals are missing")
+    role_projection: dict[str, dict[str, int | float]] = {}
+    for role in ("rotating_stratified", "stable_random_control"):
+        record = role_totals.get(role)
+        if not isinstance(record, dict):
+            raise HTTPException(503, "Veritas coverage-design role totals are invalid")
+        selected = count(record, "selected")
+        valid = count(record, "valid")
+        yield_value = fraction(record, "yield")
+        expected_yield = valid / selected if selected else 0.0
+        if valid > selected or not math.isclose(yield_value, expected_yield, abs_tol=1e-9):
+            raise HTTPException(503, "Veritas coverage-design role yield does not reconcile")
+        role_projection[role] = {
+            "selected": selected,
+            "valid": valid,
+            "yield": yield_value,
+        }
+
+    support_fraction = fraction(analysis, "mean_rotating_population_support_fraction")
+    weighted_yield = fraction(analysis, "fully_supported_scan_weighted_yield_mean")
+    yield_range = analysis.get("supported_population_scan_yield_range")
+    if not isinstance(yield_range, dict):
+        raise HTTPException(503, "Veritas coverage-design yield range is missing")
+    minimum_yield = fraction(yield_range, "minimum")
+    maximum_yield = fraction(yield_range, "maximum")
+    if minimum_yield > maximum_yield:
+        raise HTTPException(503, "Veritas coverage-design yield range is invalid")
+
+    current_scan_count = measurement_pilot.get("completed_scans", 0)
+    current_summary_digest = measurement_pilot.get("summary_sha256")
+    if not isinstance(current_scan_count, int) or isinstance(current_scan_count, bool):
+        current_scan_count = 0
+    source_is_current = (
+        current_scan_count == scan_count
+        and isinstance(current_summary_digest, str)
+        and current_summary_digest == source["summary_sha256"]
+    )
+    limitations = [
+        "The weighted yield is conditional on the bounded Gamma response union and excludes zero-quota strata.",
+        "Rotating and frozen-control observations are repeated and nonrandomized; their difference is descriptive.",
+        "The audit measures quality-valid observation yield, not continuous coverage, freshness, execution, or profitability.",
+    ]
+    return {
+        "status": "available",
+        "analysis_version": COVERAGE_DESIGN_AUDIT_VERSION,
+        "captured_at_utc": value["created_at_utc"],
+        "study_scan_count": scan_count,
+        "current_pilot_scan_count": current_scan_count,
+        "source_is_current": source_is_current,
+        "selected_market_pair_slots": sum(
+            role_projection[role]["selected"] for role in role_projection
+        ),
+        "quality_valid_pairs": sum(role_projection[role]["valid"] for role in role_projection),
+        "role_totals": role_projection,
+        "fully_supported_scan_count": fully_supported,
+        "partially_supported_scan_count": partially_supported,
+        "unsupported_scan_count": unsupported,
+        "mean_rotating_population_support_fraction": support_fraction,
+        "fully_supported_scan_weighted_yield_mean": weighted_yield,
+        "supported_population_scan_yield_range": {
+            "minimum": minimum_yield,
+            "maximum": maximum_yield,
+        },
+        "skipped_selection_sequences": count(analysis, "skipped_selection_sequences"),
+        "compressed_snapshot_bytes": count(source, "compressed_snapshot_bytes"),
+        "limitations": limitations,
+        "artifact": {
+            "id": "coverage-design-audit",
+            "label": "Hash-verified coverage-pilot inclusion-support audit",
+            "file_sha256": file_digest,
+            "url": "/api/veritas/artifacts/coverage-design-audit",
+        },
+    }
+
+
 def _hypothesis_status(item: dict[str, Any]) -> str:
     status = item.get("status")
     if isinstance(status, str) and status:
@@ -2624,6 +2866,9 @@ def overview(repository: Path) -> dict[str, Any]:
     inventory, _ = read_artifact(repository, "inventory")
     public_observatory = observatory_overview(repository)
     public_observatory["measurement_pilot"] = coverage_pilot_overview(repository)
+    public_observatory["coverage_design_audit"] = coverage_design_audit_overview(
+        repository, ledger, public_observatory["measurement_pilot"]
+    )
     public_observatory["market_universe_coverage"] = market_universe_coverage_overview(
         repository, ledger
     )
@@ -2723,6 +2968,8 @@ def overview(repository: Path) -> dict[str, Any]:
         artifacts.append(public_observatory["measurement_pilot"]["summary_artifact"])
     if public_observatory["market_universe_coverage"]:
         artifacts.append(public_observatory["market_universe_coverage"]["artifact"])
+    if public_observatory["coverage_design_audit"]:
+        artifacts.append(public_observatory["coverage_design_audit"]["artifact"])
     if finalized_source["summary_artifact"]:
         artifacts.append(finalized_source["summary_artifact"])
     if current_censoring is not None:
@@ -2918,6 +3165,17 @@ def router(repository: Path) -> APIRouter:
             file_sha256 = hashlib.sha256(path.read_bytes()).hexdigest()
             if file_sha256 != validated["artifact"]["file_sha256"]:
                 raise HTTPException(503, "Veritas market-universe coverage changed during read")
+            return {"artifact": identity, "file_sha256": file_sha256, "data": data}
+        if identity == "coverage-design-audit":
+            ledger, _ = read_artifact(repository, "ledger")
+            pilot = coverage_pilot_overview(repository)
+            validated = coverage_design_audit_overview(repository, ledger, pilot)
+            if validated is None:
+                raise HTTPException(404, "Veritas coverage-design audit is unavailable")
+            data, path = read_artifact(repository, identity, ledger=ledger)
+            file_sha256 = hashlib.sha256(path.read_bytes()).hexdigest()
+            if file_sha256 != validated["artifact"]["file_sha256"]:
+                raise HTTPException(503, "Veritas coverage-design audit changed during read")
             return {"artifact": identity, "file_sha256": file_sha256, "data": data}
         if identity == "finalized-source-analysis":
             source_result = read_finalized_source_summary(repository)

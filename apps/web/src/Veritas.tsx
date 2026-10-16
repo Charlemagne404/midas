@@ -328,6 +328,28 @@ type MarketUniverseCoverage = {
   artifact: Artifact & { file_sha256: string; url: string };
 };
 
+type CoverageDesignAudit = {
+  status: string;
+  analysis_version: string;
+  captured_at_utc: string;
+  study_scan_count: number;
+  current_pilot_scan_count: number;
+  source_is_current: boolean;
+  selected_market_pair_slots: number;
+  quality_valid_pairs: number;
+  role_totals: Record<string, { selected: number; valid: number; yield: number }>;
+  fully_supported_scan_count: number;
+  partially_supported_scan_count: number;
+  unsupported_scan_count: number;
+  mean_rotating_population_support_fraction: number;
+  fully_supported_scan_weighted_yield_mean: number;
+  supported_population_scan_yield_range: { minimum: number; maximum: number };
+  skipped_selection_sequences: number;
+  compressed_snapshot_bytes: number;
+  limitations: string[];
+  artifact: Artifact & { file_sha256: string; url: string };
+};
+
 type Observatory = {
   status: string;
   analysis_version: string | null;
@@ -457,6 +479,7 @@ type Observatory = {
   recent_candidates: ObservatoryCandidate[];
   summary_artifact: Artifact | null;
   measurement_pilot: CoveragePilot;
+  coverage_design_audit?: CoverageDesignAudit | null;
   market_universe_coverage?: MarketUniverseCoverage | null;
   limitations: string[];
 };
@@ -798,6 +821,7 @@ export function Veritas() {
   const funnelMaximum = Math.max(data.coverage.period_frame_records, 1);
   const observatory = data.opportunity_observatory;
   const measurementPilot = observatory.measurement_pilot;
+  const coverageDesignAudit = observatory.coverage_design_audit ?? null;
   const universeCoverage = observatory.market_universe_coverage ?? null;
   const finalizedSource = data.finalized_reality_source;
   const observatoryDiscovery = observatory.discovery;
@@ -1080,6 +1104,81 @@ export function Veritas() {
               )}
             </div>
           </div>
+
+          {coverageDesignAudit?.status === 'available' && (
+            <div className="ve-design-audit" data-testid="coverage-design-audit">
+              <div className="ve-design-audit-heading">
+                <div>
+                  <span className="ve-subhead">Independent inclusion-support audit</span>
+                  <strong>
+                    {coverageDesignAudit.source_is_current
+                      ? `Current through ${fmt(coverageDesignAudit.study_scan_count)} scans`
+                      : `Audited ${fmt(coverageDesignAudit.study_scan_count)} scans · pilot now at ${fmt(coverageDesignAudit.current_pilot_scan_count)}`}
+                  </strong>
+                  <small>
+                    {time(coverageDesignAudit.captured_at_utc)} ·{' '}
+                    {(coverageDesignAudit.compressed_snapshot_bytes / 1024 / 1024).toFixed(2)} MiB
+                  </small>
+                </div>
+                <a href={coverageDesignAudit.artifact.url} target="_blank" rel="noreferrer">
+                  Inspect audit <ArrowUpRight size={13} />
+                </a>
+              </div>
+              <div className="ve-design-audit-stats">
+                <div>
+                  <span>Rotating population with support</span>
+                  <b>
+                    {(100 * coverageDesignAudit.mean_rotating_population_support_fraction).toFixed(
+                      2,
+                    )}
+                    %
+                  </b>
+                  <small>
+                    {fmt(coverageDesignAudit.fully_supported_scan_count)} full ·{' '}
+                    {fmt(coverageDesignAudit.partially_supported_scan_count)} partial ·{' '}
+                    {fmt(coverageDesignAudit.unsupported_scan_count)} unsupported scans
+                  </small>
+                </div>
+                <div>
+                  <span>Weighted valid yield on supported scans</span>
+                  <b>
+                    {(100 * coverageDesignAudit.fully_supported_scan_weighted_yield_mean).toFixed(
+                      2,
+                    )}
+                    %
+                  </b>
+                  <small>
+                    Range{' '}
+                    {(
+                      100 * coverageDesignAudit.supported_population_scan_yield_range.minimum
+                    ).toFixed(1)}
+                    %–
+                    {(
+                      100 * coverageDesignAudit.supported_population_scan_yield_range.maximum
+                    ).toFixed(1)}
+                    % · rotating markets only
+                  </small>
+                </div>
+                <div>
+                  <span>Audited slots</span>
+                  <b>
+                    {fmt(coverageDesignAudit.quality_valid_pairs)} /{' '}
+                    {fmt(coverageDesignAudit.selected_market_pair_slots)}
+                  </b>
+                  <small>
+                    {fmt(coverageDesignAudit.skipped_selection_sequences)} skipped scan sequence
+                    {coverageDesignAudit.skipped_selection_sequences === 1 ? '' : 's'}
+                  </small>
+                </div>
+              </div>
+              <p className="ve-observatory-note">
+                The weighted yield is conditional on the bounded query union and excludes zero-quota
+                strata. The frozen-control comparison remains descriptive because the cohorts were
+                not randomized. This audit measures observation quality, not economic opportunity or
+                profit.
+              </p>
+            </div>
+          )}
 
           <div className="ve-observatory-meta">
             <span>

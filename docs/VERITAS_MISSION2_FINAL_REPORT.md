@@ -1,6 +1,41 @@
 # Project Veritas Mission 2 — Current Engineering Report
 
-## Latest update — 2026-10-16T05:22:16Z
+## Latest update — 2026-10-16T08:17:07Z
+
+Mission 2 remains active. Observer scan 57 reports 1,945/2,280 quality-valid pair observations and zero positive top-gross pairs. The A1 market-universe replay and independent raw-source audit remain verified through scan 55: 2,200 observations, 1,882 valid pairs, and zero validity or edge mismatches. They show no positive top-pair, depth, minimum, or fee-qualified results; scan 57 is not included in artifacts 009.
+
+The measurement-only pilot remains at 26/48 scans, with 842/1,040 valid slots across 608 selected markets and one skipped sequence. Audit 002 covers 25 scans, and the API projection correctly marks it stale against the live pilot. The comparison remains descriptive and nonrandomized. The scheduled 08:15:58 Director cycle reconciled the scan-55 child and admitted scan 57. Arena job job-df156882038246b497d9788a completed with no positive gross candidate; the manifest still projects QUEUED until its next scheduled reconciliation. See [Gate A checkpoint 052](VERITAS_MISSION2_GATE_A_CHECKPOINT_052.md), [audit 002](VERITAS_MISSION2_COVERAGE_DESIGN_AUDIT_002.json), [Gate G checkpoint 018](VERITAS_MISSION2_GATE_G_CHECKPOINT_018.md), and H126.
+
+The finalized-source replay caught up at 08:12:56 UTC: 5,677/5,677 segments / 1,460,522,573 bytes and 386,158 quality-valid states across 101 markets. Positive top-ask, full-depth, and minimum-notional results remain zero. Gap detail is partial at 4,242/5,665 replayable segments, with 1,423 segments / 351,838,232 bytes pending and 1,327 campaign-window gaps indexed. Focused API tests (33), the UI test (1), TypeScript, ESLint, and Prettier passed. No full regression or model training was run.
+
+## Previous update — 2026-10-16T07:36:47Z
+
+Mission 2 remains active. The A1 coverage replay and independent opportunity
+audit are verified through scan 55: 2,200 selected pair observations, 1,882
+quality-valid pairs, zero positive top-pair gross states, and zero positive
+depth, minimum, or fee-qualified states. The independent audit reproduces all
+1,882 v4 quality and edge decisions with no mismatches. The newer scan 56 is
+recorded separately at 29/40 quality-valid pairs with no positive top-gross
+pair; it is not yet included in A1 artifact 009.
+
+An independent selection-support audit verifies 25 coverage-pilot events and
+their snapshot and v4-analysis lineage. The rotating sample has 779/931 valid
+observations, while frozen controls have 29/69; this is not a causal comparison.
+Twenty-three scans fully support the rotating population, two are partial,
+and pooled support is 99.80%. The 82.96% mean design-weighted valid yield over
+fully supported scans is conditional on each bounded query union. See [Gate A
+checkpoint 052](VERITAS_MISSION2_GATE_A_CHECKPOINT_052.md), [coverage-design
+audit 002](VERITAS_MISSION2_COVERAGE_DESIGN_AUDIT_002.json), and H125.
+
+The current finalized-source analyzer covers 5,558/5,558 available segments,
+1,430,421,272 bytes, and 378,755 quality-valid states across 98 markets, with
+no positive top-ask, full-depth, or minimum-notional states. The gap-detail
+index remains partial at 4,038/5,606 replayable segments; 1,568 segments /
+402,129,096 bytes are pending, and 1,227 campaign-window gaps are indexed.
+The 07:15 Director cycle admitted scan 55; scheduled reconciliation is due at
+07:45:24 UTC. No full regression or model training was run for this update.
+
+## Previous update — 2026-10-16T05:22:16Z
 
 The independent raw-source audit now covers 51 snapshots / 2,040 observations.
 It reproduces all 1,755 v4 quality-valid decisions and top edges with zero

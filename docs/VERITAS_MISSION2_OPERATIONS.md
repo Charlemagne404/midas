@@ -1,5 +1,48 @@
 # Veritas Mission 2 Operations
 
+- **Latest runtime/resource snapshot:** 2026-10-16T08:17:07Z
+- **Latest source summary:** 2026-10-16T08:12:56Z
+- **Latest gap-detail summary:** 2026-10-16T08:06:29Z
+- **Latest Midas/Reality API health probes:** 2026-10-16T08:17:07Z
+
+## Runtime checkpoint — 2026-10-16T08:17:07Z
+
+- The Reality recorder is active with zero restarts, 8 markets / 16 books,
+  ordinal 781,791, and 1,464,973,417 recorded bytes. Its state remains
+  RECORDING_UNSEQUENCED and sequence_verified is false. The frozen shadow is
+  active with one historical restart and remains WARMING_OR_LAGGED_SOURCE;
+  its source receipt is from 2026-10-15T16:14:53Z and its last decision from
+  2026-10-15T08:58:06Z. It has 43 markets, 47,911 observations, 40,075
+  censored follow-ups, 937 measured follow-ups, and zero pending horizons.
+- Midas and Reality APIs both returned HTTP 200 in demo mode with live
+  execution disabled. Midas reported READY; Reality reported DEGRADED with
+  startup READY. Their API/web services remain active. The Reality archive
+  service remains failed after timeout with exit status 15 and zero restarts.
+- Observer scan 57 (scan-20261016T080056Z-49ba7ada7fab) was captured at
+  08:00:56 UTC. The observer panel has 1,945/2,280 quality-valid pairs and
+  zero positive top-gross states. The measurement pilot remains at 26/48 scans
+  and 842/1,040 valid slots across 608 selected IDs; audit 002 covers 25 scans.
+- The 08:12:56 UTC finalized-source summary is current through 5,677/5,677
+  segments / 1,460,522,573 bytes. It reports 386,158 quality-valid states
+  across 101 markets and zero positive top-ask, full-depth, or
+  minimum-notional states; it read no active segment.
+- The 08:06:29 UTC gap-detail summary is partial at 4,242/5,665 replayable
+  segments / 1,105,386,857 bytes processed. It has 1,423 segments /
+  351,838,232 bytes pending and 1,327 campaign-window gaps indexed.
+- The scheduled 08:15:58 UTC Director cycle reconciled scan 55 and admitted
+  scan 57 as job job-df156882038246b497d9788a. The Arena job completed at
+  08:16:17 UTC with no positive gross candidate. The manifest still shows
+  QUEUED at its 08:15:58 update, pending the next scheduled reconciliation
+  around 08:45 UTC. No manual poll or retry was made.
+- Load average was 0.55 / 0.71 / 0.86; 9.6 GiB RAM was available and swap
+  use was 3.8/4 GiB. Root disk use was 56%, with about 197 GB available.
+  The Reality recording directory was 1.5 GB; the archive directory 922 MB;
+  Veritas observatory data 84 MB; Arena data 76 MB.
+- At capture, the next scheduled gap-detail, observer, source-analysis, and
+  Director cycles were due around 08:20, 08:31, 08:40, and 08:45 UTC. No
+  service, campaign, or running research job was restarted or changed for
+  this checkpoint.
+
 - **Latest runtime/resource snapshot:** 2026-10-16T06:47:38Z
 - **Latest source summary:** 2026-10-16T06:41:47Z
 - **Latest gap-detail summary:** 2026-10-16T06:51:25Z
@@ -1351,3 +1394,85 @@ The fixed measurement pilot is running at 21/48 scans: 685/840 valid market-pair
 Host load was 1.25 / 1.33 / 1.29; available RAM was 9.8 GiB, swap use was 3.8/4 GiB, and root disk use was 56% with 197 GiB free. The Veritas observatory directory occupied 56,914,183 bytes, up 1,020,521 bytes from the 05:27 sample. `/home/charlie/midas-reality/data/research/reality` occupied 1,486,467,696 bytes, up 7,621,210 bytes from 05:27. These two-point changes over about 20 minutes are short-term observations, not long-term growth rates.
 
 No service, collector, frozen campaign, or research job was manually restarted or triggered for this checkpoint. See [research inventory 070](VERITAS_MISSION2_RESEARCH_INVENTORY_070.json).
+
+
+## 2026-10-16 07:39 UTC runtime and research checkpoint
+
+- The public Reality recorder, frozen shadow, Midas/Reality APIs, and web
+  services are active. The recorder and APIs show zero systemd restarts; the
+  shadow has one historical restart. The Reality archive unit remains failed
+  with exit status 15 and zero restarts after its prior timeout.
+- Read-only health probes returned HTTP 200: the Midas API reports `READY` in
+  demo mode with live execution disabled; the Reality API reports
+  `DEGRADED` in demo mode with live execution disabled. The synthetic Reality
+  demo API recorder is separate from the active public recorder.
+- The latest observer scan is scan 56
+  (`scan-20261016T073034Z-c97112eae9a3`): 29/40 quality-valid pairs and zero
+  positive top-gross pairs. The measurement-only coverage pilot is 25/48 scans,
+  808/1,000 valid slots across 587 markets, with one skipped sequence. Its
+  role-yield comparison is descriptive and nonrandomized.
+- A1 coverage and independent-source replay remain verified through scan 55.
+  The 07:12 finalized-source summary covers 5,558/5,558 cataloged segments /
+  1,430,421,272 bytes and 378,755 quality-valid states across 98 markets. The
+  next source-analysis timer is 07:40 UTC.
+- The 07:35 gap-detail batch completed by 07:36:23 UTC with zero restarts. Its
+  finalized-only prefix covers 4,038/5,606 replayable segments /
+  1,039,209,554 bytes, leaving 1,568 segments / 402,129,096 bytes pending. It
+  indexes 1,227 campaign-window gaps and read no active segment.
+- The 07:15 Director cycle reconciled scan 54 and admitted scan 55. The
+  manifest projected the child as `QUEUED`; its scheduled reconciliation is
+  due at 07:45:24 UTC. No manual poll, retry, or admission was performed, and
+  the Arena package remains pinned.
+- At 07:39 UTC, load averages were 0.71 / 0.75 / 0.86; available RAM was
+  9.6 GiB of 15 GiB; swap use was 3.8/4 GiB; root storage was 56% used with
+  197 GiB free. The configured public recording directory measured
+  1,445,297,998 bytes and the Veritas observatory directory 61,568,254 bytes.
+  These are point measurements, not a stable growth-rate forecast.
+- The observer, gap-detail, source-analysis, and Director one-shot services
+  were inactive between runs with zero restarts. No training worker was
+  observed. No service, collector, frozen campaign, or research job was
+  manually restarted, cancelled, or changed for this checkpoint.
+
+
+## 2026-10-16 08:01 UTC runtime and research checkpoint
+
+- The latest public observer scan is scan 57
+  (scan-20261016T080056Z-49ba7ada7fab), captured at 08:00:56 UTC. The current
+  v4 summary covers 57 scans / 2,280 selected pair observations, with 1,945
+  quality-valid pairs and zero positive top-gross pairs.
+- The immutable measurement pilot is running at 26/48 scans: 842/1,040 valid
+  slots across 608 selected market IDs, with one skipped sequence. Audit 002
+  remains through 25 scans; the Gate G source projection marks it stale.
+- The Reality recorder is active with zero systemd restarts and continues
+  writing segments. Its 07:58 status reports RECORDING_UNSEQUENCED, eight
+  markets / 16 fresh outcome books, 4,097 gap markers, no verified sequence,
+  and a ConnectionClosedError field. This means recording is active but
+  continuity is not verified.
+- The frozen shadow process remains active with one historical restart. Its
+  status is WARMING_OR_LAGGED_SOURCE; at 07:58 its last source receipt was
+  about 15 hours 47 minutes old and its last decision about 23 hours old. It
+  reports insufficient forward evidence and zero pending horizons.
+- Midas and Reality APIs and web services remain active. The last read-only
+  probes, at 07:39 UTC, returned HTTP 200; Midas reported READY and Reality
+  DEGRADED in demo mode with live execution disabled. No fresh health probes
+  were made for this snapshot.
+- Finalized-source analysis remains current at 5,617/5,617 segments /
+  1,443,975,599 bytes, 382,066 quality-valid states across 98 markets, and
+  zero positive top-ask or full-depth states. It read no active segment.
+- Gap detail remains partial at 4,121/5,638 replayable segments /
+  1,071,968,283 bytes, leaving 1,515 segments / 376,229,972 bytes pending.
+  It indexes 1,268 campaign-window gaps and read no active segment.
+- The 07:45 Director manifest still projects scan 56 as QUEUED, with scan 55
+  last qualified. The scheduled 07:56 Arena scheduler pass exited
+  successfully; scan 57 has not yet been reconciled. Keep the admitted Arena
+  source revision pinned.
+- At 08:01 UTC, load averages were 0.94 / 0.95 / 0.94; available RAM was
+  9.7 GiB of 15 GiB; swap use was 3.8/4 GiB; root storage was 56% used with
+  197 GiB free. The Veritas observatory directory occupied 62,558,308 bytes;
+  the configured public recording directory occupied 1,456,793,716 bytes.
+  These are point sizes, not a stable growth-rate estimate.
+- Veritas one-shot services were inactive between timer firings with zero
+  restarts. The Reality archive unit remains failed with exit status 15 after
+  its prior timeout and zero restarts. No model training worker was observed.
+- No service, collector, frozen campaign, or research job was manually
+  restarted, cancelled, or changed for this checkpoint.

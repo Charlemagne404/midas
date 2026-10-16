@@ -600,6 +600,79 @@
   overflow-x: auto;
   border-top: 1px solid #252a32;
 }
+.ve-design-audit {
+  display: grid;
+  gap: 9px;
+  margin-top: 12px;
+  padding: 11px;
+  border: 1px solid #51472f;
+  border-radius: 5px;
+  background: #141511;
+}
+.ve-design-audit-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.ve-design-audit-heading > div {
+  display: grid;
+  gap: 4px;
+}
+.ve-design-audit-heading strong {
+  color: #e0d3b0;
+  font-size: 9px;
+  font-weight: 500;
+}
+.ve-design-audit-heading small {
+  color: #788394;
+  font-size: 8px;
+}
+.ve-design-audit-heading a {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: 0 0 auto;
+  color: var(--ve-gold);
+  font-size: 8px;
+}
+.ve-design-audit-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+}
+.ve-design-audit-stats > div {
+  display: grid;
+  gap: 4px;
+  padding: 8px;
+  border: 1px solid #2d302b;
+  border-radius: 4px;
+  background: #10120f;
+}
+.ve-design-audit-stats span {
+  color: #9b8a65;
+  font-size: 7px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+.ve-design-audit-stats b {
+  color: #d8dce4;
+  font:
+    10px ui-monospace,
+    'SFMono-Regular',
+    Consolas,
+    monospace;
+}
+.ve-design-audit-stats small {
+  color: #788394;
+  font-size: 8px;
+  line-height: 1.4;
+}
+@media (max-width: 700px) {
+  .ve-design-audit-stats {
+    grid-template-columns: 1fr;
+  }
+}
 .ve-market-coverage-heading {
   display: flex;
   align-items: baseline;

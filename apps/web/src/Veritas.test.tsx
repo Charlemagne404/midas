@@ -647,6 +647,38 @@ it('labels measured evidence and keeps synthetic execution separate from actual 
                       url: '/api/veritas/artifacts/market-universe-coverage',
                     },
                   },
+                  coverage_design_audit: {
+                    status: 'available',
+                    analysis_version: 'veritas-coverage-design-audit-v2',
+                    captured_at_utc: '2026-10-16T07:36:23Z',
+                    study_scan_count: 25,
+                    current_pilot_scan_count: 25,
+                    source_is_current: true,
+                    selected_market_pair_slots: 1000,
+                    quality_valid_pairs: 808,
+                    role_totals: {
+                      rotating_stratified: { selected: 931, valid: 779, yield: 0.8367 },
+                      stable_random_control: { selected: 69, valid: 29, yield: 0.4203 },
+                    },
+                    fully_supported_scan_count: 23,
+                    partially_supported_scan_count: 2,
+                    unsupported_scan_count: 0,
+                    mean_rotating_population_support_fraction: 0.99803757,
+                    fully_supported_scan_weighted_yield_mean: 0.82964156,
+                    supported_population_scan_yield_range: {
+                      minimum: 0.66652098,
+                      maximum: 0.95724258,
+                    },
+                    skipped_selection_sequences: 1,
+                    compressed_snapshot_bytes: 15973408,
+                    limitations: ['Conditional on bounded query unions.'],
+                    artifact: {
+                      id: 'coverage-design-audit',
+                      label: 'Hash-verified coverage-pilot inclusion-support audit',
+                      file_sha256: 'd'.repeat(64),
+                      url: '/api/veritas/artifacts/coverage-design-audit',
+                    },
+                  },
                   limitations: ['No public snapshots yet.'],
                 },
                 finalized_reality_source: {
@@ -845,6 +877,14 @@ it('labels measured evidence and keeps synthetic execution separate from actual 
   expect(screen.getByRole('link', { name: 'Inspect hash-verified pilot summary' })).toHaveAttribute(
     'href',
     '/api/veritas/artifacts/coverage-pilot',
+  );
+  expect(screen.getByTestId('coverage-design-audit')).toHaveTextContent('Current through 25 scans');
+  expect(screen.getByTestId('coverage-design-audit')).toHaveTextContent('99.80%');
+  expect(screen.getByText('23 full · 2 partial · 0 unsupported scans')).toBeInTheDocument();
+  expect(screen.getByTestId('coverage-design-audit')).toHaveTextContent('82.96%');
+  expect(screen.getByRole('link', { name: 'Inspect audit' })).toHaveAttribute(
+    'href',
+    '/api/veritas/artifacts/coverage-design-audit',
   );
   expect(screen.getByText('7.1% qualifying measurements')).toBeInTheDocument();
   expect(screen.getByText('Frozen Mission 2 campaign · public markouts')).toBeInTheDocument();
