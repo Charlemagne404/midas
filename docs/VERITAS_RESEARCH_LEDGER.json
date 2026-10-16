@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-16T00:09:09.264583+00:00",
+  "updated_at_utc": "2026-10-16T00:34:09+00:00",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -4899,6 +4899,45 @@
         "Focused UI and API tests verify a source projection, not a deployed dashboard or external HTTP behavior.",
         "The dashboard does not establish continuous quote availability, order arrival, fills, or profitability."
       ]
+    },
+    {
+      "hypothesis_id": "VERITAS-H086",
+      "experiment_id": "VERITAS-M2-DISCOVERY-SUCCESSOR-001",
+      "dataset_id": null,
+      "title": "Can a separately versioned eight-read discovery scanner preserve frame coverage while directly retrieving frozen controls?",
+      "mechanism": "Retain the six bounded Gamma frames and batched CLOB books read, add one explicit-ID Gamma lookup for the frozen control cohort, and isolate artifacts and pilot state from the v1 observer. Fail closed on missing, duplicate, ineligible, unexpected, or identity-conflicting control responses.",
+      "success_metric": "Focused tests prove the eight-logical-read plan, six-frame retention, stable-control identity rules, bounded separate artifacts, fail-closed behavior, and fixed-pilot-stop CLI guard without calling v1 writers.",
+      "status": "continue",
+      "decision": "Implementation and focused verification passed in source commit 52342dc. Keep the successor unactivated through the fixed v1 pilot stop. No live response, control yield, operating cost, or economic evidence is claimed. After the pilot stops, review the pilot and decide whether to evaluate this as the sole scheduled collector.",
+      "result": {
+        "checkpoint_path": "docs/VERITAS_MISSION2_GATE_A_CHECKPOINT_039.md",
+        "module_path": "packages/midas/veritas/discovery_successor.py",
+        "module_sha256": "7908387c1d4ec03a77010b6ad9899934d0797cf289aa113ee5864b954b9f2f62",
+        "runner_path": "scripts/veritas_discovery_successor.py",
+        "runner_sha256": "d9b6dd5a7b9e6d2baa3e91a2b53aa954ec2116dcba6f91297bad62264dd00e66",
+        "test_path": "tests/test_veritas_discovery_successor.py",
+        "test_sha256": "2d62d1477d995f8f5c6bdb829347de8e7cc6345dc91c08bb21643565157f5f66",
+        "source_commit": "52342dc",
+        "logical_reads_per_complete_scan": 8,
+        "discovery_frames_retained": 6,
+        "focused_test_command": "tests/test_veritas_discovery_successor.py tests/test_veritas_observatory.py tests/test_veritas_control_retrieval.py",
+        "focused_tests_passed": 18,
+        "ruff": "passed",
+        "ruff_format": "passed",
+        "strict_mypy": "passed",
+        "diff_check": "passed",
+        "live_scan_performed": false,
+        "authenticated_requests": false,
+        "orders_submitted": false,
+        "services_or_campaigns_changed": false,
+        "captured_at_utc": "2026-10-16T00:34:09+00:00"
+      },
+      "limitations": [
+        "The successor has not run against live public endpoints and has no measured control-availability, response-size, latency, or storage results.",
+        "The fixed v1 pilot is still active through its predetermined stop; no collector switch has been made.",
+        "The eight logical-read plan and code-level bounds have focused mocked verification, not operational verification.",
+        "Intermittent bounded public discovery does not establish venue-wide coverage, fills, or profitability."
+      ]
     }
   ],
   "next_research_questions": [
@@ -4916,9 +4955,9 @@
     "When the gap-detail prefix reaches the frozen campaign window, which gap reasons, timestamps, and explicitly reported markets account for the 1,090 campaign-window resynchronization/failure markers?",
     "Can book_issue:gap censors be linked to a specific preceding same-market gap using finalized receiver-time evidence?",
     "Can the frozen shadow worker process new recorder ordinals faster than the live input while keeping frames within its decision-input lag bound?",
-    "Can an eight-call successor preserve all six discovery frames and resolve the frozen controls while meeting request, response, and resource bounds after the fixed pilot ends?",
+    "After the fixed 24-hour pilot stops, should the implemented eight-read successor replace the v1 observer, and how does a bounded sole-collector evaluation compare control availability, quality yield, response size, pacing, and storage?",
     "What versioned successor worker can process the measured source rate with margin while preserving the 250 ms decision-input lag and bounded resource use?",
-    "Does the scheduled Director reconcile completed scan 39 and then qualify scan 40 without duplicating an Arena admission?",
+    "Does the scheduled Director qualify scan 42 once its source is complete while preserving exactly one admission?",
     "Can source-version-pinned counter labels normalize the early v1 capture summary against v4 replay without relabeling historical quality counts?"
   ]
 }

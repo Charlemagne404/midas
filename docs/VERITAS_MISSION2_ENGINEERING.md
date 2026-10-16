@@ -1,26 +1,56 @@
 # Veritas Mission 2 Engineering Checkpoint
 
-## Latest Gate G checkpoint — bounded market-coverage dashboard projection
+## Latest Gate A checkpoint — isolated eight-read discovery successor
 
-The read-only overview now exposes the H084-digest-pinned A1 coverage report.
+The separate `discovery-successor-001` implementation is committed at
+`52342dc`. It retains all six Gamma discovery frames and the batched CLOB
+books read, adds one direct lookup for the frozen control IDs, and produces
+eight logical reads on a complete scan. It uses its own non-overlapping
+artifact root, applies strict control identity checks, and refuses to run
+before the fixed pilot stop. Focused successor, observer, and control tests
+passed (18); Ruff, Ruff format, strict Mypy, and diff checks passed. No live
+successor scan, service/timer change, or deployment was made. See [Gate A
+checkpoint 039](VERITAS_MISSION2_GATE_A_CHECKPOINT_039.md),
+[H086](VERITAS_RESEARCH_LEDGER.json), and [inventory
+048](VERITAS_MISSION2_RESEARCH_INVENTORY_048.json).
+
+At 00:32 UTC the unchanged v1 observer completed scan 42 with 29/40
+quality-valid pairs, 300 unique bounded discovery IDs, 116 eligible IDs, and
+zero positive gross or economic states. Across 42 snapshots, 1,467/1,680
+selected pairs pass current v4 quality checks, with zero positive candidates
+at any displayed gross, depth, minimum, or fee gate. The fixed pilot has
+12/48 scans, 397/480 valid slots across 299 IDs, and no skipped sequences;
+it remains descriptive and ends at 19:00:55 UTC. These are intermittent
+public observations, not a venue census, execution record, or profitability
+result.
+
+The saved source replay through 00:14 UTC covers 4,242/4,733 finalized
+segments, with 268,179 quality-valid states across 67 markets and zero
+positive top-gross or deeper economic states. The gap-detail extractor through
+00:21 UTC covers 908/4,753 catalog segments and has not reached the campaign
+window. The 00:32 observer run exited successfully; source, gap-detail, and
+Director one-shots were inactive at capture. Reality recorder, shadow, and
+Midas web/API services reported active. See [inventory 048](VERITAS_MISSION2_RESEARCH_INVENTORY_048.json)
+for resource measurements and saved-summary times.
+
+## Previous Gate G checkpoint — bounded market-coverage dashboard projection
+
+The read-only overview exposes the H084-digest-pinned A1 coverage report.
 Its API verifies the report against the ledger receipt and validates internal
 counts before projecting the summary. The Market Discovery panel shows the
 audited IDs, identities, current v4 quality pairs, metadata bands, the
 capture/replay count difference, and bounded-query limitations. The saved
-artifact still covers 40 scans through scan 40; it is not a venue-wide
-coverage estimate and does not include the newer scan 41. API tests (21),
-coverage-audit tests (2), the targeted UI test (1), Ruff, strict Mypy, ESLint,
-Prettier, TypeScript, and diff checks passed.
-The source change is pending commit and is not deployed. See [Gate G
+artifact covers 40 scans through scan 40; it is not a venue-wide coverage
+estimate. API tests (21), coverage-audit tests (2), the targeted UI test (1),
+Ruff, strict Mypy, ESLint, Prettier, TypeScript, and diff checks passed. The
+source change is committed at `73b695f` and is not deployed. See [Gate G
 checkpoint 011](VERITAS_MISSION2_GATE_G_CHECKPOINT_011.md) and [inventory
 047](VERITAS_MISSION2_RESEARCH_INVENTORY_047.json).
 
-The scheduled observer recorded scan 41 at 00:02:15 UTC with 33/40
+The preceding checkpoint recorded scan 41 at 00:02:15 UTC with 33/40
 request/receipt-quality-valid pairs and zero positive gross or economic
-states. Across 41 snapshots the current v4 replay has 1,438/1,640 valid pairs
-and no candidates. The pilot has 11/48 scans, 368/440 valid selected pairs
-across 282 selected IDs, and no missed scan sequences. Scan 40's completed
-Arena child still awaits scheduled Director reconciliation at 00:15:04 UTC.
+states. The pilot then had 11/48 scans, 368/440 valid selected pairs across
+282 selected IDs, and no missed scan sequences.
 
 ## Latest Gate A checkpoint — digest-verified market coverage
 
