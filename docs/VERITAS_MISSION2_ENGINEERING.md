@@ -2,17 +2,19 @@
 
 ## Latest Gate A checkpoint — isolated eight-read discovery successor
 
-The separate `discovery-successor-001` implementation is committed at
-`52342dc`. It retains all six Gamma discovery frames and the batched CLOB
-books read, adds one direct lookup for the frozen control IDs, and produces
-eight logical reads on a complete scan. It uses its own non-overlapping
-artifact root, applies strict control identity checks, and refuses to run
-before the fixed pilot stop. Focused successor, observer, and control tests
-passed (18); Ruff, Ruff format, strict Mypy, and diff checks passed. No live
-successor scan, service/timer change, or deployment was made. See [Gate A
-checkpoint 039](VERITAS_MISSION2_GATE_A_CHECKPOINT_039.md),
-[H086](VERITAS_RESEARCH_LEDGER.json), and [inventory
-048](VERITAS_MISSION2_RESEARCH_INVENTORY_048.json).
+The separate `discovery-successor-001` implementation began in `52342dc` and
+was hardened in `70144d9`. It retains all six Gamma discovery frames and the
+batched CLOB books read, adds one direct lookup for the frozen control IDs,
+and produces eight logical reads on a complete scan. It uses its own
+non-overlapping artifact root, applies strict control identity checks, rejects
+even dangling symlink roots, and refuses to run before the fixed pilot stop.
+Focused successor, observer, and control tests passed (19); Ruff, Ruff format,
+strict Mypy, and diff checks passed. No live successor scan, service/timer
+change, or deployment was made. See [Gate A checkpoint
+040](VERITAS_MISSION2_GATE_A_CHECKPOINT_040.md), [checkpoint
+039](VERITAS_MISSION2_GATE_A_CHECKPOINT_039.md),
+[H086–H087](VERITAS_RESEARCH_LEDGER.json), and [inventory
+049](VERITAS_MISSION2_RESEARCH_INVENTORY_049.json).
 
 At 00:32 UTC the unchanged v1 observer completed scan 42 with 29/40
 quality-valid pairs, 300 unique bounded discovery IDs, 116 eligible IDs, and

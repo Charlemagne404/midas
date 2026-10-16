@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-16T00:34:09+00:00",
+  "updated_at_utc": "2026-10-16T00:38:48+00:00",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -4937,6 +4937,39 @@
         "The fixed v1 pilot is still active through its predetermined stop; no collector switch has been made.",
         "The eight logical-read plan and code-level bounds have focused mocked verification, not operational verification.",
         "Intermittent bounded public discovery does not establish venue-wide coverage, fills, or profitability."
+      ]
+    },
+    {
+      "hypothesis_id": "VERITAS-H087",
+      "experiment_id": "VERITAS-M2-DISCOVERY-SUCCESSOR-PATH-SAFETY-001",
+      "dataset_id": null,
+      "title": "Does the discovery successor reject dangling symlink output roots before resolving or writing through them?",
+      "mechanism": "Inspect the output-root resolution path and exercise a dangling symlink pointing at a nonexistent target in an isolated temporary directory.",
+      "success_metric": "Every symlink output root is rejected before resolution, the target remains absent, and the focused scanner regression set plus strict static checks pass.",
+      "status": "continue",
+      "decision": "The edge was present in the initial successor implementation but no live scan had run. The root guard now rejects Path.is_symlink() before resolution; a regression test verifies that a dangling link does not create its target. No artifact impact was observed because the successor was not activated.",
+      "result": {
+        "checkpoint_path": "docs/VERITAS_MISSION2_GATE_A_CHECKPOINT_040.md",
+        "source_commit": "70144d9",
+        "module_path": "packages/midas/veritas/discovery_successor.py",
+        "module_sha256": "3796e8dd1a7b0fcbc5eb11f033dcf0b15c85a26ea231acfb86619b670ced6f52",
+        "test_path": "tests/test_veritas_discovery_successor.py",
+        "test_sha256": "a445c8058d5528316467b845a86dd658643c46cadd04e37914ed1b8eac9a2ac7",
+        "regression_test": "test_successor_rejects_dangling_symlink_root_without_creating_target",
+        "focused_tests_passed": 19,
+        "ruff": "passed",
+        "ruff_format": "passed",
+        "strict_mypy": "passed",
+        "diff_check": "passed",
+        "live_scan_performed": false,
+        "public_http_requests": 0,
+        "orders_submitted": false,
+        "services_or_campaigns_changed": false,
+        "captured_at_utc": "2026-10-16T00:38:24+00:00"
+      },
+      "limitations": [
+        "The regression test uses an isolated temporary symlink and does not exercise a live service.",
+        "The fix provides no new market data, control-availability result, or economic evidence."
       ]
     }
   ],

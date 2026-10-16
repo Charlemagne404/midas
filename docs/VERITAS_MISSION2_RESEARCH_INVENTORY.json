@@ -177,7 +177,7 @@
     "source_bytes": 551636,
     "source_event_count": 30
   },
-  "captured_at_utc": "2026-10-16T00:34:09+00:00",
+  "captured_at_utc": "2026-10-16T00:38:48+00:00",
   "censoring_analysis": {
     "analysis_source_file": "packages/midas/veritas/forensics.py",
     "analysis_source_sha256": "0b055a21c4b423bbf02cc9c240f26f18263fb8342cd72dec686705d2601a420c",
@@ -2836,7 +2836,7 @@
     "unique_market_ids": 558,
     "window_minutes": 751.53
   },
-  "inventory_id": "VERITAS-M2-RESEARCH-INVENTORY-048",
+  "inventory_id": "VERITAS-M2-RESEARCH-INVENTORY-049",
   "latest_scan_captured_at_utc": "2026-10-16T00:32:08.616672+00:00",
   "latest_scan_id": "scan-20261016T003208Z-f65962fb4420",
   "latest_source_analysis_checkpoint": {
@@ -3998,14 +3998,14 @@
     "veritas_control_cohort_rewritten": false,
     "veritas_control_cohort_sha256": "9578217e20dcc7d1c65fa110f0ed7c689b55483b61191f1aae8d30c9b7300d9a"
   },
-  "previous_inventory": "VERITAS_MISSION2_RESEARCH_INVENTORY_047.json",
+  "previous_inventory": "VERITAS_MISSION2_RESEARCH_INVENTORY_048.json",
   "repository": {
     "branch": "project/veritas",
     "checkpoint_base_commit": "122da17",
     "code_changes_after_pilot_activation": true,
-    "commit_at_inventory_creation": "52342dc",
+    "commit_at_inventory_creation": "70144d9",
     "documentation_and_ledger_checkpoint_pending_commit": true,
-    "head_commit": "52342dc",
+    "head_commit": "70144d9",
     "mission_status": "active_scheduled_discovery_source_analysis_gap_detail_and_research",
     "path": "/home/charlie/midas-veritas",
     "starting_commit": "9a857cc56804bec6b7129171ba090d338e263aa3",
@@ -4825,7 +4825,7 @@
   "verification": {
     "api_activity_projection": "Live read-only projection returned eight verified Director events from 19 files, marked history truncated, and reported zero invalid artifacts and zero active/queued jobs.",
     "broader_arena_sweep": "stopped near 15% of 369 collected Arena/Veritas cases while unrelated simulator/stress tests consumed a CPU core; focused changed-path groups completed",
-    "checkpoint_source_commit": "52342dc",
+    "checkpoint_source_commit": "70144d9",
     "control_retrieval_pilot_preservation": "The v1 pilot implementation and frozen cohort were not modified; no service restart, book read, credential, or order was used.",
     "control_retrieval_probe_tests": "3 focused tests passed; Ruff check and format check passed; git diff --check passed.",
     "control_retrieval_source_integrity": "The gzip evidence, raw response payload, cohort file, and scan-39 snapshot digests verified; all eight unique controls returned in one request and one HTTP attempt; replay with the current classifier reproduced all eight stored classifications.",
@@ -4873,8 +4873,8 @@
     "research_inventory_043": "Current numbered inventory for the one-request direct frozen-control lookup; previous inventory 042 is preserved unchanged.",
     "research_inventory_044": "Current numbered inventory for the 39-scan discovery-frame marginal replay and bounded control-lookup sensitivity.",
     "research_ledger": "JSON parsed; current ledger includes H068 timestamp/hash audit and H069 scan-30 v3 qualification.",
-    "research_ledger_current": "JSON parsed; updated through H086 for the separately implemented, not activated eight-read discovery successor.",
-    "research_ledger_sha256": "350b2e3beece0e0d3458894a0885ef0835e298ea16a7c514b93590393e3d59a2",
+    "research_ledger_current": "JSON parsed; updated through H087 for the pre-activation dangling-symlink root fix.",
+    "research_ledger_sha256": "8a86637e2cadfb7807702b077ca82d85853220ee3a2c9841cba8146dc421539b",
     "ruff_format_mypy_changed_python": "Ruff check, Ruff format check, and strict Mypy passed for the NegRisk audit module and collector",
     "runtime_director": "16:45:04 UTC scheduled Director cycle reconciled scan 25 completion at 16:45:29 and admitted scan 26 at 16:45:31 using the 16:43:46 sealed source summary. Arena completed scan 26 at 16:45:44 with all 26 events and zero-positive gates. The manifest still projects QUEUED and scan 25 as last qualified until the 17:15:09 UTC cycle. No manual poll or retry was started.",
     "runtime_director_027": "Scheduled 17:15:09Z cycle admitted scan 27; Arena completed 27/27 at 17:15:51Z with zero-positive gates. Director manifest reconciliation remains scheduled for 17:45:25Z; no manual poll was run.",
@@ -4886,10 +4886,11 @@
     "systemd_units": "systemd-analyze --user verify passed for the Director service and timer",
     "veritas_playwright_e2e": "1 passed",
     "scan_40_arena_qualification": "Scheduled child completed 40/40 source events with exit status 0; complete candidate replay and zero states at all five economic gates.",
-    "discovery_successor_001": "18 focused successor, observer, and control tests passed; Ruff, Ruff format, strict Mypy, and diff checks passed. Mocked transports only; no live successor scan or activation.",
+    "discovery_successor_001": "19 focused successor, observer, and control tests passed; Ruff, Ruff format, strict Mypy, and diff checks passed after rejecting dangling symlink roots. Mocked transports only; no live successor scan or activation.",
     "current_scan_042": "Persisted public scan 42 inspected after the scheduled observer exited successfully; 29/40 quality-valid pairs, 300 bounded unique IDs, 116 currently eligible IDs, and zero positive economic gates.",
     "source_analysis_checkpoint_048": "Saved summary at 00:14 UTC: 4,242/4,733 finalized segments, 268,179 quality-valid campaign-window states across 67 markets, zero positive gross/deeper states; active segment not read.",
-    "gap_detail_checkpoint_048": "Saved summary at 00:21 UTC: 908/4,753 catalog segments and 1,760 all-period gap events; last retained event at 15:50:46 UTC precedes campaign start at 21:07:58 UTC, so campaign-window zero is incomplete."
+    "gap_detail_checkpoint_048": "Saved summary at 00:21 UTC: 908/4,753 catalog segments and 1,760 all-period gap events; last retained event at 15:50:46 UTC precedes campaign start at 21:07:58 UTC, so campaign-window zero is incomplete.",
+    "successor_path_safety_fix_001": "Regression test proves a dangling output-root symlink is rejected before its absent target is created; focused tests (19), Ruff, formatting, strict Mypy, and diff check passed."
   },
   "verification_checkpoint_040": {
     "api_campaign_gap_projection_work_commits": [
@@ -5706,7 +5707,7 @@
   "discovery_successor_001": {
     "implementation_id": "VERITAS-M2-DISCOVERY-SUCCESSOR-001",
     "status": "implemented_not_activated",
-    "source_commit": "52342dc",
+    "source_commit": "70144d9",
     "logical_reads_per_complete_scan": 8,
     "preserves_all_six_discovery_frames": true,
     "adds_direct_frozen_control_lookup": true,
@@ -5720,13 +5721,13 @@
     "live_market_data_collected": false,
     "economic_evidence_created": false,
     "module_path": "packages/midas/veritas/discovery_successor.py",
-    "module_sha256": "7908387c1d4ec03a77010b6ad9899934d0797cf289aa113ee5864b954b9f2f62",
+    "module_sha256": "3796e8dd1a7b0fcbc5eb11f033dcf0b15c85a26ea231acfb86619b670ced6f52",
     "runner_path": "scripts/veritas_discovery_successor.py",
     "runner_sha256": "d9b6dd5a7b9e6d2baa3e91a2b53aa954ec2116dcba6f91297bad62264dd00e66",
     "test_path": "tests/test_veritas_discovery_successor.py",
-    "test_sha256": "2d62d1477d995f8f5c6bdb829347de8e7cc6345dc91c08bb21643565157f5f66",
+    "test_sha256": "a445c8058d5528316467b845a86dd658643c46cadd04e37914ed1b8eac9a2ac7",
     "focused_test_command": "tests/test_veritas_discovery_successor.py tests/test_veritas_observatory.py tests/test_veritas_control_retrieval.py",
-    "focused_tests_passed": 18,
+    "focused_tests_passed": 19,
     "ruff": "passed",
     "ruff_format": "passed",
     "strict_mypy": "passed",
@@ -5736,7 +5737,7 @@
     "orders_submitted": false,
     "services_or_campaigns_changed": false,
     "checkpoint_path": "docs/VERITAS_MISSION2_GATE_A_CHECKPOINT_039.md",
-    "captured_at_utc": "2026-10-16T00:34:09+00:00",
+    "captured_at_utc": "2026-10-16T00:38:48+00:00",
     "limitations": [
       "The successor has not run against live public endpoints and has no measured control-availability, response-size, latency, or storage results.",
       "The fixed v1 pilot is still active through its predetermined stop; no collector switch has been made.",
@@ -5845,5 +5846,48 @@
     "The gap-detail prefix ends at 2026-10-14T15:50:46Z, before the campaign window starts at 2026-10-14T21:07:58Z; its campaign-window zero remains incomplete.",
     "No external HTTP health probe was performed, CPU usage was not sampled, and active Arena job count was not checked.",
     "No services, timers, pilot files, or frozen campaigns were modified or restarted."
+  ],
+  "successor_path_safety_fix_001": {
+    "status": "implemented_and_verified",
+    "source_commit": "70144d9",
+    "finding": "A dangling symlink root had exists()==false and could be resolved through to create its target as an artifact directory.",
+    "fix": "Reject Path.is_symlink() before resolving the requested output root.",
+    "module_path": "packages/midas/veritas/discovery_successor.py",
+    "module_sha256": "3796e8dd1a7b0fcbc5eb11f033dcf0b15c85a26ea231acfb86619b670ced6f52",
+    "test_path": "tests/test_veritas_discovery_successor.py",
+    "test_sha256": "a445c8058d5528316467b845a86dd658643c46cadd04e37914ed1b8eac9a2ac7",
+    "regression_test": "test_successor_rejects_dangling_symlink_root_without_creating_target",
+    "focused_test_command": "tests/test_veritas_discovery_successor.py tests/test_veritas_observatory.py tests/test_veritas_control_retrieval.py",
+    "focused_tests_passed": 19,
+    "ruff": "passed",
+    "ruff_format": "passed",
+    "strict_mypy": "passed",
+    "diff_check": "passed",
+    "temporary_target_created": false,
+    "live_market_http_requests": 0,
+    "services_or_campaigns_changed": false,
+    "captured_at_utc": "2026-10-16T00:38:24+00:00"
+  },
+  "operations_checkpoint_048": {
+    "captured_at_utc": "2026-10-16T00:38:24Z",
+    "source_analysis_timer_next_utc": "2026-10-16T00:40:09Z",
+    "research_director_timer_next_utc": "2026-10-16T00:45:02Z",
+    "gap_detail_timer_next_utc": "2026-10-16T00:50:00Z",
+    "observatory_timer_next_utc": "2026-10-16T01:01:30Z",
+    "service_states_last_verified_utc": "2026-10-16T00:32:33Z",
+    "service_or_campaign_changes_made": false,
+    "purpose": "Read-only timer inspection while continuing the mission; no job was polled or triggered manually."
+  },
+  "checkpoint_049_limitations": [
+    "The new discovery successor is implemented and tested with mocked public responses but has not run against live endpoints or collected market data.",
+    "The v1 fixed pilot remains active through 2026-10-16T19:00:55Z; no switch or concurrent collector was started.",
+    "The current 42-scan panel and pilot are intermittent, selected, and correlated; they are not a venue census or execution record.",
+    "The latest scan has not had its Arena qualification inspected in this checkpoint.",
+    "The gap-detail prefix ends at 2026-10-14T15:50:46Z, before the campaign window starts at 2026-10-14T21:07:58Z; its campaign-window zero remains incomplete.",
+    "No external HTTP health probe was performed, CPU usage was not sampled, and active Arena job count was not checked.",
+    "No services, timers, pilot files, or frozen campaigns were modified or restarted.",
+    "A post-implementation code review found and fixed the dangling-symlink artifact-root case before live activation; the regression test covers an absent temporary target.",
+    "The path-safety fix has focused test and static-check evidence only; it does not add live endpoint, service, or economic evidence.",
+    "Operational service states are from 00:32:33 UTC; only scheduled timer times were reread at 00:38:24 UTC."
   ]
 }
