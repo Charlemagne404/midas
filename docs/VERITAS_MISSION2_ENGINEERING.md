@@ -1,3 +1,17 @@
+## Latest progress — 2026-10-16T19:10Z, scan-79 independent audit
+
+Independent audit 017 completed through 79 saved snapshots / 3,160 selected
+observations. It reproduces all 2,667 stored quality-valid decisions and top
+edges with zero mismatches and agrees on 3,497 fee calculations with zero
+disagreements. The additional scan contributes 39 valid and nine
+strict-freshness states; the panel still has zero positive top-gross,
+full-depth, minimum-qualified, fee-sensitive, or strict-freshness-positive
+states. These are correlated public observations, not fill evidence or
+independent opportunity trials. No model or strategy experiment is supported
+by this result. See [Gate B checkpoint
+016](VERITAS_MISSION2_GATE_B_CHECKPOINT_016.md) and [audit
+017](VERITAS_MISSION2_INDEPENDENT_OPPORTUNITY_AUDIT_017.json).
+
 ## Latest progress — 2026-10-16T19:03Z, streaming A1 replay through scan 79
 
 A1 coverage artifact 014 now verifies 79 saved observer snapshots / 50,824,348

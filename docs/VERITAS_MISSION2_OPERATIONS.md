@@ -1905,3 +1905,17 @@ did not retain an exact peak-memory measurement. Two focused coverage tests,
 Ruff check/format, and strict Mypy passed. See [Gate A checkpoint
 055](VERITAS_MISSION2_GATE_A_CHECKPOINT_055.md) and [artifact
 014](VERITAS_MISSION2_MARKET_UNIVERSE_COVERAGE_014.json).
+
+
+## 2026-10-16 19:10 UTC — independent opportunity audit through scan 79
+
+Independent source audit 017 completed over 79 saved snapshots / 3,160
+selected observations under a 15% CPU quota, 512 MiB memory cap, and disabled
+swap. It replayed saved source snapshots and stored analysis events; it did
+not contact the collector, write campaign data, or restart services. The
+audit reproduced all 2,667 stored valid decisions and top edges, agreed on
+3,497 fee calculations, and found no positive state at any tested gross,
+depth, minimum, fee, or strict-freshness gate. Exact resource peak was not
+retained. See [Gate B checkpoint
+016](VERITAS_MISSION2_GATE_B_CHECKPOINT_016.md) and [audit
+017](VERITAS_MISSION2_INDEPENDENT_OPPORTUNITY_AUDIT_017.json).

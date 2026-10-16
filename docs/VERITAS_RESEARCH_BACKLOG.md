@@ -683,3 +683,31 @@ checkpoint 028](VERITAS_MISSION2_GATE_C_CHECKPOINT_028.md), [Gate F checkpoint
 See [Gate A checkpoint 055](VERITAS_MISSION2_GATE_A_CHECKPOINT_055.md),
 [coverage artifact 014](VERITAS_MISSION2_MARKET_UNIVERSE_COVERAGE_014.json),
 [inventory 090](VERITAS_MISSION2_RESEARCH_INVENTORY_090.json).
+
+
+## Active Mission 2 queue — 2026-10-16 19:10 UTC
+
+1. **Preserve and diagnose the Reality shadow from read-only evidence.** Its
+   last saved health snapshot showed severe source lag. Refresh receipt age,
+   decision age, source cursor gap, campaign hash, restart count, and journal
+   integrity before evaluating a recovery plan. Keep the campaign and worker
+   unchanged until source continuity can be preserved.
+2. **Reconcile the scheduled finalized-source and gap-detail prefixes.** Use
+   their separate capture times, catalog counts, and byte totals; verify
+   whether the backlog remains empty and whether either scheduled job failed.
+3. **Let measurement pilot 002 reach its predeclared window.** Treat its
+   freshness and synchronization diagnostics separately from atomicity or
+   sequence evidence.
+4. **Keep no-trade and defer model training.** Independent audit 017 matches
+   all 2,667 valid states and finds zero positive candidates across the tested
+   gates. The panel provides no execution labels or demonstrated strategy
+   improvement.
+5. **Do not spend more time on A1 memory work without new evidence.** Its
+   exact 78-snapshot output parity and capped 79-snapshot completion are
+   recorded; the process completed below 512 MiB, though exact peak usage was
+   not retained.
+
+See [Gate B checkpoint 016](VERITAS_MISSION2_GATE_B_CHECKPOINT_016.md),
+[audit 017](VERITAS_MISSION2_INDEPENDENT_OPPORTUNITY_AUDIT_017.json), [Gate A
+checkpoint 055](VERITAS_MISSION2_GATE_A_CHECKPOINT_055.md), and inventory
+091.
