@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-16T20:38:28Z",
+  "updated_at_utc": "2026-10-16T21:41:45.543712+00:00",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -8733,6 +8733,89 @@
         "Fee arithmetic is a sensitivity calculation, not a fill or profitability result.",
         "The A1 capture/replay discrepancy remains isolated to the first scan and is not explained by stored source hash verification."
       ]
+    },
+    {
+      "hypothesis_id": "VERITAS-H153",
+      "experiment_id": "VERITAS-M2-MARKET-QUALITY-PREDICTION-001",
+      "dataset_id": "veritas-observatory-source-4ab2fa35be8d568a6e65a833f26f3c32e5b20f821bfb6e6c3ddcb9474bd6f060",
+      "title": "Can pre-book market metadata improve quality-valid snapshot selection on unseen markets?",
+      "mechanism": "A regularized logistic model using only Gamma metadata captured before the CLOB books request may rank selected markets by same-snapshot pair-quality validity better than constant-prevalence, random, and liquidity/spread baselines.",
+      "success_metric": "On the frozen chronological holdout of market IDs absent from training, compare inverse-inclusion-weighted Brier score and top-quartile quality-valid yield with fixed baselines.",
+      "status": "continue",
+      "decision": "The short holdout is promising for measurement ranking only. Keep the model undeployed, retain broad stratified/random exploration, and require an independent prospective replication. It does not predict gross opportunity, fills, or profitability.",
+      "result": {
+        "status": "exploratory_out_of_time_quality_prediction_result",
+        "artifact_path": "docs/VERITAS_MISSION2_MARKET_QUALITY_EXPERIMENT_001.json",
+        "artifact_file_sha256": "dfe9bd6589071b4f43c79e39bfb2cda4896c189534a616453040b158cd8a2c02",
+        "analysis_version": "veritas-market-quality-selection-experiment-v1",
+        "analysis_code_path": "packages/midas/veritas/market_quality_experiment.py",
+        "analysis_code_sha256": "b9bbeeed3408ff9c668ef62066a2beba69338c9fd9483b9e3b8d822687a2c63d",
+        "preregistration_path": "docs/VERITAS_MISSION2_MARKET_QUALITY_EXPERIMENT_001.md",
+        "preregistration_sha256": "b0bcec4d763ccaa68112d691f4fcac27c7bae1c8159374a24211db53fbd09dd9",
+        "source_revision_sha256": "4ab2fa35be8d568a6e65a833f26f3c32e5b20f821bfb6e6c3ddcb9474bd6f060",
+        "source_snapshot_count": 23,
+        "training_scans": 16,
+        "training_unique_markets": 470,
+        "held_out_scans": 7,
+        "held_out_unseen_markets": 175,
+        "held_out_quality_valid_count": 166,
+        "held_out_quality_valid_fraction_unweighted": 0.9485714285714286,
+        "weighted_brier_score_model": 0.03998457456868467,
+        "weighted_brier_score_constant_baseline": 0.050874767778588126,
+        "weighted_roc_auc": 0.8942419551303357,
+        "weighted_average_precision": 0.9932874657573262,
+        "model_top_quartile_quality_valid_count": 44,
+        "model_top_quartile_selected_count": 44,
+        "model_top_quartile_weighted_yield": 1.0,
+        "random_top_quartile_weighted_yield": 0.905260381145323,
+        "fixed_heuristic_top_quartile_weighted_yield": 0.8656069883471394,
+        "positive_gross_candidates_in_holdout": 0,
+        "orders_submitted": false,
+        "model_deployed": false
+      }
+    },
+    {
+      "hypothesis_id": "VERITAS-H154",
+      "experiment_id": "VERITAS-M2-INDEPENDENT-SOURCE-AUDIT-002",
+      "dataset_id": "veritas-observatory-84-snapshot-panel",
+      "title": "Does an independent replay through scan 84 reproduce the stored opportunity decisions and reveal a positive gross candidate?",
+      "mechanism": "An independent v3 reconstruction of every saved public snapshot and quantity-specific fee calculation can expose validity, edge-direction, depth, or fee discrepancies in the expanded v4 panel.",
+      "success_metric": "Reproduce v4 quality validity and top edges, independently cross-check quantity fee arithmetic, and report every gross/depth/minimum/fee gate without treating repeated snapshots as independent opportunities.",
+      "status": "continue",
+      "decision": "The independent replay extends through scan 84 with zero validity mismatches, zero top-edge mismatches, zero fee disagreements, and zero positive candidates at any tested quantity or fee sensitivity. Continue no-trade and scheduled observation; preserve the strict reported-freshness result as a timestamp sensitivity, not sequence freshness or proof of execution.",
+      "result": {
+        "artifact_path": "docs/VERITAS_MISSION2_INDEPENDENT_OPPORTUNITY_AUDIT_020.json",
+        "artifact_sha256": "1791541daa965492f37363ce8d70aea714bb8938a09eef4fd2511d59b4546738",
+        "result_sha256": "f4a807d5f393deb21ead9565151b52d33acf5e20abaf9a9c07efddbb02365ced",
+        "source_manifest_sha256": "12d319a011d93e521b53a59c0abce591badef610cb5b2234b3a3fc4a38f93476",
+        "source_code_sha256": "ff0d89ef437a051b27002ca9a5f6deb5b1f7dca52e87883894a48ccc726f98e2",
+        "snapshots": 84,
+        "selected_observations": 3360,
+        "independent_quality_valid_states": 2845,
+        "v4_v3_validity_mismatches": 0,
+        "v4_v3_top_edge_mismatches": 0,
+        "fee_calculations_checked": 3768,
+        "fee_disagreements": 0,
+        "strict_reported_freshness_states": 622,
+        "reported_age_exceedance_pairs": 2222,
+        "pair_skew_exceedances": 1,
+        "positive_top_gross": 0,
+        "positive_full_depth_at_quantities_5_10_20_50_100": {
+          "5": 0,
+          "10": 0,
+          "20": 0,
+          "50": 0,
+          "100": 0
+        },
+        "positive_after_minimums_and_fees": 0,
+        "orders_submitted": false
+      },
+      "limitations": [
+        "The 84 public snapshots are selected, intermittent, and correlated; state counts are not independent opportunity trials.",
+        "Reported age and timestamp skew do not prove venue sequence freshness, atomicity, quote persistence, or execution.",
+        "Fee arithmetic is a qualification sensitivity, not a fill or profitability result.",
+        "The first-scan capture/replay count discrepancy remains unresolved outside this independently reproduced 84-scan source panel."
+      ]
     }
   ],
   "next_research_questions": [
@@ -8751,6 +8834,7 @@
     "Does the next scheduled source-analysis batch keep pace with finalized-segment arrival without growing its backlog?",
     "Can an isolated successor shadow preserve its SQLite research journal and exact source cursor across bounded chunk interruptions?",
     "Does coverage pilot 002 complete its 48-scan protocol with stable request-to-receipt yield and sufficiently characterized market/time dependence?",
-    "Does the next scheduled Research Director cycle reconcile the completed scan-71 Arena finding without duplicating admission or losing its source and experiment lineage?"
+    "Does the next scheduled Research Director cycle reconcile the completed scan-71 Arena finding without duplicating admission or losing its source and experiment lineage?",
+    "Does the fixed market-quality ranker improve future snapshot usability on an independent prospective window while preserving stratified and random exploration, without reducing positive-candidate discovery?"
   ]
 }

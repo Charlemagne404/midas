@@ -163,6 +163,101 @@ it('labels measured evidence and keeps synthetic execution separate from actual 
                 status: 'insufficient_independent_evidence',
                 captured_at_utc: '2026-10-15T00:00:00Z',
                 verdict: 'The selected public panel has no positive gross pair.',
+                market_quality_experiment: {
+                  analysis_version: 'veritas-market-quality-selection-experiment-v1',
+                  experiment_id: 'VERITAS-M2-MARKET-QUALITY-PREDICTION-001',
+                  status: 'exploratory_out_of_time_validation',
+                  model_deployed: false,
+                  source_snapshot_count: 23,
+                  data_cutoff_scan_id: 'scan-20261016T213038Z-498756c46b83',
+                  training_market_count: 470,
+                  evaluation_market_count: 175,
+                  evaluation_scan_count: 7,
+                  positive_gross_candidates: 0,
+                  model: {
+                    type: 'scikit-learn LogisticRegression',
+                    converged: true,
+                    weighted_brier_score: 0.03998457456868467,
+                    weighted_roc_auc: 0.8942419551303357,
+                    weighted_average_precision: 0.9932874657573262,
+                    top_quartile: {
+                      selected_markets: 44,
+                      selected_fraction: 0.25,
+                      valid_markets: 44,
+                      weighted_quality_valid_yield: 1,
+                    },
+                  },
+                  constant_baseline: {
+                    weighted_brier_score: 0.050874767778588126,
+                    weighted_roc_auc: 0.5,
+                  },
+                  random_top_quartile: {
+                    selected_markets: 44,
+                    selected_fraction: 0.25,
+                    valid_markets: 40,
+                    weighted_quality_valid_yield: 0.905260381145323,
+                  },
+                  fixed_heuristic_top_quartile: {
+                    selected_markets: 44,
+                    selected_fraction: 0.25,
+                    valid_markets: 39,
+                    weighted_quality_valid_yield: 0.8656069883471394,
+                  },
+                  artifact: {
+                    id: 'market-quality-experiment',
+                    label: 'Market-quality selection experiment 001',
+                    file_sha256: 'a'.repeat(64),
+                    url: '/api/veritas/artifacts/market-quality-experiment',
+                  },
+                  interpretation:
+                    'Predicts same-snapshot measurement quality only; this is not an economic, fill, or P&L model.',
+                },
+                independent_opportunity_audit: {
+                  status: 'NO_POSITIVE_GROSS_CANDIDATE_OBSERVED',
+                  analysis_version: 'veritas-independent-source-opportunity-audit-v2',
+                  captured_at_utc: '2026-10-16T22:13:55.420170+00:00',
+                  snapshot_count: 85,
+                  selected_market_observation_count: 3400,
+                  stored_quality_valid_count: 2874,
+                  independent_quality_valid_count: 2874,
+                  validity_mismatches: 0,
+                  top_edge_mismatches: 0,
+                  fee_calculations_checked: 3826,
+                  fee_disagreements: 0,
+                  strict_reported_freshness_valid_count: 627,
+                  reported_age_exceedance_pair_count: 2246,
+                  pair_skew_exceedance_count: 1,
+                  positive_top_gross_count: 0,
+                  positive_full_depth_gross_by_quantity: {
+                    '5': 0,
+                    '10': 0,
+                    '20': 0,
+                    '50': 0,
+                    '100': 0,
+                  },
+                  positive_full_depth_minimums_by_quantity: {
+                    '5': 0,
+                    '10': 0,
+                    '20': 0,
+                    '50': 0,
+                    '100': 0,
+                  },
+                  positive_fee_sensitivity_by_quantity: {
+                    '5': 0,
+                    '10': 0,
+                    '20': 0,
+                    '50': 0,
+                    '100': 0,
+                  },
+                  source_manifest_sha256: 'f'.repeat(64),
+                  artifact: {
+                    id: 'independent-opportunity-audit',
+                    label: 'Independent opportunity audit through 85 scans',
+                    file_sha256: 'e'.repeat(64),
+                    url: '/api/veritas/artifacts/independent-opportunity-audit',
+                  },
+                  limitations: ['selected correlated snapshots'],
+                },
                 coverage: {
                   markets: 15,
                   connected_families: 6,
@@ -1024,6 +1119,17 @@ it('labels measured evidence and keeps synthetic execution separate from actual 
     '/api/veritas/artifacts/gap-detail-current',
   );
   expect(screen.getByText(/0.000 events \/ panel hour/)).toBeInTheDocument();
+  expect(screen.getByRole('heading', { name: 'Snapshot quality prediction' })).toBeInTheDocument();
+  expect(screen.getByText(/Held-out positive gross candidates: 0/)).toBeInTheDocument();
+  expect(screen.getByText('Independent opportunity audit')).toBeInTheDocument();
+  expect(screen.getByText('2,874 / 2,874')).toBeInTheDocument();
+  expect(screen.getByRole('link', { name: 'Inspect replay' })).toHaveAttribute(
+    'href',
+    '/api/veritas/artifacts/independent-opportunity-audit',
+  );
+  expect(
+    screen.getByRole('link', { name: /Inspect preregistration, split, metrics and source hashes/ }),
+  ).toHaveAttribute('href', '/api/veritas/artifacts/market-quality-experiment');
   const economicGateTable = screen.getByRole('table', {
     name: 'Positive economic states by quantity and gate',
   });

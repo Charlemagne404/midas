@@ -1,5 +1,64 @@
 # Project Veritas Mission 2 — Engineering handoff notes
 
+## Mission continuation checkpoint — 2026-10-16T21:54Z
+
+The 21:25 handoff below is a historical snapshot. Mission 2 resumed on
+`project/veritas`; its scientific goals remain active.
+
+### Implemented
+
+- Added a preregistered, bounded offline experiment that tests whether
+  pre-book Gamma metadata ranks markets by the same-snapshot book-pair quality
+  gate. It pins the source revision and cutoff, uses a chronological split,
+  excludes training market IDs from evaluation, weights only within the saved
+  query-response frame, and compares a regularized logistic model with
+  constant, random, and fixed liquidity/spread baselines.
+- Added a reproducible CLI, immutable result artifact, H153 ledger receipt,
+  and dashboard/API exposure with source-hash validation. The panel labels the
+  target as measurement quality, shows the zero-positive holdout, and states
+  that the model is not deployed.
+- Added a browser assertion for the new panel and hash-checked artifact route.
+- Extended the existing independent opportunity replay through all 84 current
+  saved scans. The versioned audit reproduces all 2,845 quality-valid states
+  and top edges, with zero mismatches and zero disagreements over 3,768 fee
+  checks. It found zero positive gross, depth, minimum, or fee-qualified
+  candidates.
+- Added NumPy array annotations and stable typed coefficient ranking to the
+  new analysis module. The experiment was rerun against the same pinned
+  snapshots after this type-only cleanup; all scientific metrics were
+  unchanged. Its artifact and ledger hashes now refer to the exact current
+  source.
+
+### Evidence and limits
+
+The 23-scan evaluation includes 470 first-seen training markets and 175
+unseen held-out markets over seven later scans. The model's inverse-probability
+weighted Brier score is 0.03998 versus 0.05087 for constant prevalence; its
+weighted ROC AUC is 0.894. The model-selected top quartile is 44/44 valid,
+versus 40/44 random and 39/44 for the fixed heuristic. There are zero positive
+gross candidates. This is a short, correlated measurement-quality result,
+not economic prediction, strategy gain, fills, or P&L; the model remains
+undeployed.
+
+### Verification after continuation work
+
+- All Veritas backend tests: **232 passed** (one existing Starlette/httpx
+  deprecation warning).
+- Frontend tests: **29 passed**; isolated Veritas browser workflow: **1
+  passed** including the new artifact endpoint assertions.
+- Production build, TypeScript typecheck, ESLint, Prettier check, Ruff check,
+  and strict Mypy for the new analysis module and CLI: **passed**. Production
+  build retains the existing large-chunk warning (501.86 kB application JS;
+  544.41 kB chart chunk).
+- Strict Mypy on the whole `apps/api/veritas.py` module still reports five
+  earlier errors at lines 90, 126, 160, 3141, and 3143, outside this
+  continuation's new logic. The entire repository backend suite was not run
+  in this checkpoint; the earlier handoff attempt remained incomplete.
+
+No live campaign, recording, service, or timer was restarted or modified.
+The new artifact is a research result only; it does not change collector
+selection, the ongoing pilot, or any policy.
+
 ## Finalization cut — 2026-10-16T21:25:40Z
 
 This is an engineering handoff, not a scientific success claim. The frozen parent is protected and unchanged; the separate successor and the bounded collectors remain supervised. Changes below are the completed branch work included for final review.

@@ -1,0 +1,383 @@
+{
+  "analysis_code": {
+    "path": "packages/midas/veritas/market_quality_experiment.py",
+    "sha256": "b9bbeeed3408ff9c668ef62066a2beba69338c9fd9483b9e3b8d822687a2c63d"
+  },
+  "analysis_version": "veritas-market-quality-selection-experiment-v1",
+  "authenticated_requests": false,
+  "created_at_utc": "2026-10-16T21:47:03.132212+00:00",
+  "evaluation": {
+    "by_selection_phase": {
+      "category": {
+        "inverse_probability_weighted_quality_valid_yield": 0.9475149105367793,
+        "market_count": 43,
+        "quality_valid_count": 41
+      },
+      "expiry": {
+        "inverse_probability_weighted_quality_valid_yield": 0.9437733348097926,
+        "market_count": 44,
+        "quality_valid_count": 42
+      },
+      "liquidity": {
+        "inverse_probability_weighted_quality_valid_yield": 0.961062636335307,
+        "market_count": 30,
+        "quality_valid_count": 28
+      },
+      "snapshot_change": {
+        "inverse_probability_weighted_quality_valid_yield": 0.9591742055207609,
+        "market_count": 27,
+        "quality_valid_count": 26
+      },
+      "spread": {
+        "inverse_probability_weighted_quality_valid_yield": 0.937085514834206,
+        "market_count": 31,
+        "quality_valid_count": 29
+      }
+    },
+    "constant_training_prevalence_baseline": {
+      "kish_effective_sample_size_before_dependence_adjustment": 148.27480647903053,
+      "observed_inverse_probability_weighted_quality_valid_yield": 0.9496039441533616,
+      "observed_quality_valid_count": 166,
+      "observed_quality_valid_fraction": 0.9485714285714286,
+      "row_count": 175,
+      "sum_inverse_probability_weights": 724.0341036992259,
+      "weighted_average_precision": 0.9496039441533618,
+      "weighted_brier_score": 0.050874767778588126,
+      "weighted_log_loss": 0.21911938714012313,
+      "weighted_roc_auc": 0.5
+    },
+    "fixed_liquidity_spread_heuristic_top_quartile": {
+      "ranking": "highest log1p liquidity, then narrowest spread; deterministic market-id hash tie break",
+      "selected_fraction": 0.25,
+      "selected_markets": 44,
+      "valid_markets": 39,
+      "weighted_quality_valid_yield": 0.8656069883471394
+    },
+    "held_out_first_observation_of_unseen_markets": {
+      "kish_effective_sample_size_before_dependence_adjustment": 148.27480647903053,
+      "observed_inverse_probability_weighted_quality_valid_yield": 0.9496039441533616,
+      "observed_quality_valid_count": 166,
+      "observed_quality_valid_fraction": 0.9485714285714286,
+      "row_count": 175,
+      "sum_inverse_probability_weights": 724.0341036992259,
+      "weighted_average_precision": 0.9932874657573262,
+      "weighted_brier_score": 0.03998457456868467,
+      "weighted_log_loss": 0.1417311891122686,
+      "weighted_roc_auc": 0.8942419551303357
+    },
+    "model_top_quartile": {
+      "selected_fraction": 0.25,
+      "selected_markets": 44,
+      "valid_markets": 44,
+      "weighted_quality_valid_yield": 1.0
+    },
+    "orders_submitted": false,
+    "positive_gross_candidates_in_held_out_markets": 0,
+    "random_top_quartile": {
+      "selected_fraction": 0.25,
+      "selected_markets": 44,
+      "valid_markets": 40,
+      "weighted_quality_valid_yield": 0.905260381145323
+    }
+  },
+  "experiment_id": "VERITAS-M2-MARKET-QUALITY-PREDICTION-001",
+  "features": {
+    "categorical": [
+      "primary_category",
+      "primary_category_source",
+      "liquidity_band",
+      "expiry_band",
+      "spread_band"
+    ],
+    "excluded": [
+      "market_id",
+      "book prices",
+      "economic edges",
+      "future observations"
+    ],
+    "numeric": [
+      "log_liquidity_usdc",
+      "log_volume_24h_usdc",
+      "days_to_expiry",
+      "spread_per_share"
+    ]
+  },
+  "frozen_campaign_changed": false,
+  "limitations": [
+    "The target is one snapshot's measurement-quality gate, not economic opportunity or future market behavior.",
+    "The sample is selected from a bounded, changing Gamma query-response union and is not venue-representative.",
+    "The seven-scan chronological holdout is short and supports only exploratory internal validation.",
+    "A market-disjoint split limits ID leakage but does not make markets or categories independent; the Kish effective size does not adjust for temporal or category dependence.",
+    "Reported update ages, batch receipt, and quality validity do not establish venue sequence freshness or atomicity.",
+    "No fitted model was deployed and no selection rule, campaign, or service was changed."
+  ],
+  "live_selection_changed": false,
+  "model": {
+    "C": 1.0,
+    "converged": true,
+    "max_iter": 2000,
+    "not_deployed": true,
+    "random_state": 20261016,
+    "solver": "lbfgs",
+    "top_coefficients": [
+      {
+        "coefficient": -4.707095373312443,
+        "feature": "primary_category_Brazil"
+      },
+      {
+        "coefficient": -3.3905435788772134,
+        "feature": "primary_category_Business"
+      },
+      {
+        "coefficient": -2.3768003704273823,
+        "feature": "liquidity_band_low"
+      },
+      {
+        "coefficient": 1.7825857951024138,
+        "feature": "liquidity_band_high"
+      },
+      {
+        "coefficient": -1.639233854799842,
+        "feature": "expiry_band_near_7d"
+      },
+      {
+        "coefficient": 1.6091050425585127,
+        "feature": "primary_category_Approval"
+      },
+      {
+        "coefficient": -1.5346143773740057,
+        "feature": "primary_category_Chinese Super League"
+      },
+      {
+        "coefficient": -1.219977802936232,
+        "feature": "log_liquidity_usdc"
+      },
+      {
+        "coefficient": 1.0726036194603867,
+        "feature": "days_to_expiry"
+      },
+      {
+        "coefficient": 1.0609937731525405,
+        "feature": "primary_category_Bundesliga"
+      },
+      {
+        "coefficient": 1.0569868896940118,
+        "feature": "primary_category_Crypto"
+      },
+      {
+        "coefficient": -1.049737170643426,
+        "feature": "missingindicator_log_volume_24h_usdc"
+      },
+      {
+        "coefficient": 0.9198445358187175,
+        "feature": "expiry_band_long"
+      },
+      {
+        "coefficient": 0.7793666466881018,
+        "feature": "primary_category_Big Tech"
+      },
+      {
+        "coefficient": -0.7506619496206748,
+        "feature": "spread_band_tight_le_0.01"
+      },
+      {
+        "coefficient": 0.7079688391044696,
+        "feature": "expiry_band_medium_90d"
+      },
+      {
+        "coefficient": 0.6608160774964387,
+        "feature": "liquidity_band_medium"
+      },
+      {
+        "coefficient": 0.6479907117341379,
+        "feature": "primary_category_Exchange Rate"
+      },
+      {
+        "coefficient": -0.5992635039304073,
+        "feature": "missingindicator_log_liquidity_usdc"
+      },
+      {
+        "coefficient": 0.5726742569940981,
+        "feature": "primary_category_Elections"
+      }
+    ],
+    "training_weighted_prevalence": 0.8946633000285672,
+    "type": "scikit-learn LogisticRegression"
+  },
+  "orders_submitted": false,
+  "preregistration": {
+    "path": "docs/VERITAS_MISSION2_MARKET_QUALITY_EXPERIMENT_001.md",
+    "sha256": "b0bcec4d763ccaa68112d691f4fcac27c7bae1c8159374a24211db53fbd09dd9"
+  },
+  "question": "Can pre-book Gamma metadata rank rotating-stratified markets by same-snapshot quality validity?",
+  "sampling": {
+    "evaluation_market_ids_disjoint_from_training": true,
+    "inverse_inclusion_probability_weighted": true,
+    "primary_cohort": "rotating_stratified",
+    "probability_scope": "within saved bounded Gamma query-response frame only"
+  },
+  "schema_version": 1,
+  "source": {
+    "analysis_version": "veritas-public-observatory-v2",
+    "data_cutoff_scan_id": "scan-20261016T213038Z-498756c46b83",
+    "discovery_frame_protocol": "stratified-gamma-page-rotation-v2",
+    "first_scan_id": "scan-20261016T103050Z-bc8cf9bc331e",
+    "last_scan_id": "scan-20261016T213038Z-498756c46b83",
+    "root": "data/veritas-observatory/snapshots",
+    "snapshot_count": 23,
+    "source_code_sha256": "4ab2fa35be8d568a6e65a833f26f3c32e5b20f821bfb6e6c3ddcb9474bd6f060",
+    "source_manifest": [
+      {
+        "compressed_file_sha256": "dd9e9f76d70337bd6e4e862e62a1b7308f2016209d158a663f6da92e89246263",
+        "path": "snapshots/scan-20261016T103050Z-bc8cf9bc331e.json.gz",
+        "scan_id": "scan-20261016T103050Z-bc8cf9bc331e"
+      },
+      {
+        "compressed_file_sha256": "8b8cd8cda24f1b4ba05a61f5cbe309228c4c1985715f76480feba38906966472",
+        "path": "snapshots/scan-20261016T110036Z-5be97bfc39d3.json.gz",
+        "scan_id": "scan-20261016T110036Z-5be97bfc39d3"
+      },
+      {
+        "compressed_file_sha256": "4bc9a9590f5170d777803943b2bc78157c361971451e63e28a59386e1e10ea6a",
+        "path": "snapshots/scan-20261016T113053Z-73c82d971c34.json.gz",
+        "scan_id": "scan-20261016T113053Z-73c82d971c34"
+      },
+      {
+        "compressed_file_sha256": "48b02534ef2411775ae77a9af7915ebd0d8b5a6fe1c611549445d6f79180909c",
+        "path": "snapshots/scan-20261016T120117Z-10e2a7e6f68b.json.gz",
+        "scan_id": "scan-20261016T120117Z-10e2a7e6f68b"
+      },
+      {
+        "compressed_file_sha256": "3c95f668056c956653e6c205abf15519bfc0ee292ede5b1e8f40eb3ddc127164",
+        "path": "snapshots/scan-20261016T123045Z-48e697a5f79c.json.gz",
+        "scan_id": "scan-20261016T123045Z-48e697a5f79c"
+      },
+      {
+        "compressed_file_sha256": "808159006bdb848f7ecaa336f84ae0a7098a959b4047340abf6b0497a91a6dd0",
+        "path": "snapshots/scan-20261016T130118Z-044a33b6a4b6.json.gz",
+        "scan_id": "scan-20261016T130118Z-044a33b6a4b6"
+      },
+      {
+        "compressed_file_sha256": "b438bcf3f93296e4ef72e7df8b450e65675e8da0d8cd05901e25d83c8a37f24c",
+        "path": "snapshots/scan-20261016T133157Z-ce9040ebce04.json.gz",
+        "scan_id": "scan-20261016T133157Z-ce9040ebce04"
+      },
+      {
+        "compressed_file_sha256": "f147764f4a11223b76ece7edf78ffc773eaaa4e343a6838434303862c5f0352c",
+        "path": "snapshots/scan-20261016T140119Z-0c36469beeeb.json.gz",
+        "scan_id": "scan-20261016T140119Z-0c36469beeeb"
+      },
+      {
+        "compressed_file_sha256": "cbc1516474bc487b5112ec69e5f0b62aba3f5b03f949e414cb0529625021bc27",
+        "path": "snapshots/scan-20261016T143109Z-4d5eb812e873.json.gz",
+        "scan_id": "scan-20261016T143109Z-4d5eb812e873"
+      },
+      {
+        "compressed_file_sha256": "be4fa1fb812aa8d9587c8cdb385062edb45f24cf73cf5e28b88fd3b43d0ab376",
+        "path": "snapshots/scan-20261016T150117Z-366ac2e7f8ea.json.gz",
+        "scan_id": "scan-20261016T150117Z-366ac2e7f8ea"
+      },
+      {
+        "compressed_file_sha256": "97ffaaad707c5132c78d1dedf726e3d21fb95c64724f38e0875e2d99e929f742",
+        "path": "snapshots/scan-20261016T153145Z-ad485dd39c0f.json.gz",
+        "scan_id": "scan-20261016T153145Z-ad485dd39c0f"
+      },
+      {
+        "compressed_file_sha256": "f84d85bb1e9c7323f70f334deaebedbc1532343d74f9a850ead62594a589d23d",
+        "path": "snapshots/scan-20261016T160217Z-14487e8de467.json.gz",
+        "scan_id": "scan-20261016T160217Z-14487e8de467"
+      },
+      {
+        "compressed_file_sha256": "2668d45c339eff2560c77c24ae9f9d547097e98d8c112cb05db9436036d4bbd9",
+        "path": "snapshots/scan-20261016T163057Z-96c79e6c489c.json.gz",
+        "scan_id": "scan-20261016T163057Z-96c79e6c489c"
+      },
+      {
+        "compressed_file_sha256": "5b4546da8db09bdd96a45496d2665e6fb345ef23f63eaa32b439e2bc233b228f",
+        "path": "snapshots/scan-20261016T170115Z-afb62b370453.json.gz",
+        "scan_id": "scan-20261016T170115Z-afb62b370453"
+      },
+      {
+        "compressed_file_sha256": "0f91d8cbfd42430073ce5604134764e2445aa8db2ceb536ca9d57011a777afa8",
+        "path": "snapshots/scan-20261016T173149Z-fc03a5a6ec52.json.gz",
+        "scan_id": "scan-20261016T173149Z-fc03a5a6ec52"
+      },
+      {
+        "compressed_file_sha256": "2baa2a7273a4e4dc114e89552d804dc8bfdb77ef9c538ec20a5a370444dfcf28",
+        "path": "snapshots/scan-20261016T180205Z-a29e88b88d29.json.gz",
+        "scan_id": "scan-20261016T180205Z-a29e88b88d29"
+      },
+      {
+        "compressed_file_sha256": "62cf9aa60ec8884d1984533beab344430f3f258e838fde325f9c1d94be6cb209",
+        "path": "snapshots/scan-20261016T183053Z-5cc3121a6906.json.gz",
+        "scan_id": "scan-20261016T183053Z-5cc3121a6906"
+      },
+      {
+        "compressed_file_sha256": "9e6719507ec849b00e1da940ec1848b02e39e7aeae6e25ee36e8132a3701972a",
+        "path": "snapshots/scan-20261016T190051Z-25ce58a611e0.json.gz",
+        "scan_id": "scan-20261016T190051Z-25ce58a611e0"
+      },
+      {
+        "compressed_file_sha256": "1aa4036c21da0cc39cc077f956fa5596e063097efcd0a23e1ca636b7c1f0ea7d",
+        "path": "snapshots/scan-20261016T193136Z-b607415423d5.json.gz",
+        "scan_id": "scan-20261016T193136Z-b607415423d5"
+      },
+      {
+        "compressed_file_sha256": "832195fcd07ef84c51acd015f7a5cba5a787f097913ef7a85fcd6220834c79c2",
+        "path": "snapshots/scan-20261016T200204Z-c491338d8ee0.json.gz",
+        "scan_id": "scan-20261016T200204Z-c491338d8ee0"
+      },
+      {
+        "compressed_file_sha256": "c4d1c11fdc85fb746943a7a7296a7ca5342d437ec5a14514b425f873772e4fbc",
+        "path": "snapshots/scan-20261016T203022Z-fc4e53f469e3.json.gz",
+        "scan_id": "scan-20261016T203022Z-fc4e53f469e3"
+      },
+      {
+        "compressed_file_sha256": "85a530e54dcb36adad50e0f71451ec774225b972cdf76c2157eec8523be5f588",
+        "path": "snapshots/scan-20261016T210207Z-012d623bd16a.json.gz",
+        "scan_id": "scan-20261016T210207Z-012d623bd16a"
+      },
+      {
+        "compressed_file_sha256": "53cc4d4b7fc4116c1e8d0ef060468de7b8a62ad8291531f9bebbbaafaf93a3dc",
+        "path": "snapshots/scan-20261016T213038Z-498756c46b83.json.gz",
+        "scan_id": "scan-20261016T213038Z-498756c46b83"
+      }
+    ]
+  },
+  "split": {
+    "evaluation_scan_count": 7,
+    "evaluation_scan_ids": [
+      "scan-20261016T183053Z-5cc3121a6906",
+      "scan-20261016T190051Z-25ce58a611e0",
+      "scan-20261016T193136Z-b607415423d5",
+      "scan-20261016T200204Z-c491338d8ee0",
+      "scan-20261016T203022Z-fc4e53f469e3",
+      "scan-20261016T210207Z-012d623bd16a",
+      "scan-20261016T213038Z-498756c46b83"
+    ],
+    "evaluation_unseen_market_count": 175,
+    "overlapping_market_ids_excluded_from_evaluation": 470,
+    "training_market_count": 470,
+    "training_scan_count": 16,
+    "training_scan_ids": [
+      "scan-20261016T103050Z-bc8cf9bc331e",
+      "scan-20261016T110036Z-5be97bfc39d3",
+      "scan-20261016T113053Z-73c82d971c34",
+      "scan-20261016T120117Z-10e2a7e6f68b",
+      "scan-20261016T123045Z-48e697a5f79c",
+      "scan-20261016T130118Z-044a33b6a4b6",
+      "scan-20261016T133157Z-ce9040ebce04",
+      "scan-20261016T140119Z-0c36469beeeb",
+      "scan-20261016T143109Z-4d5eb812e873",
+      "scan-20261016T150117Z-366ac2e7f8ea",
+      "scan-20261016T153145Z-ad485dd39c0f",
+      "scan-20261016T160217Z-14487e8de467",
+      "scan-20261016T163057Z-96c79e6c489c",
+      "scan-20261016T170115Z-afb62b370453",
+      "scan-20261016T173149Z-fc03a5a6ec52",
+      "scan-20261016T180205Z-a29e88b88d29"
+    ]
+  },
+  "study_id": "VERITAS-M2-COVERAGE-PILOT-002-EXPLORATORY-QUALITY-PREDICTION",
+  "target": "existing audit.valid boolean; not opportunity, fill, P&L, or profitability"
+}

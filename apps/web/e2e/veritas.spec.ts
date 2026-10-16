@@ -75,6 +75,37 @@ test('shows the bounded discovery cohort and links its finalized evidence', asyn
   await expect(
     page.getByRole('heading', { level: 1, name: /Evidence before conviction/ }),
   ).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Snapshot quality prediction' })).toBeVisible();
+  await expect(page.getByText(/Held-out positive gross candidates: 0/)).toBeVisible();
+  const qualityExperimentLink = page.getByRole('link', {
+    name: /Inspect preregistration, split, metrics and source hashes/,
+  });
+  await expect(qualityExperimentLink).toHaveAttribute(
+    'href',
+    '/api/veritas/artifacts/market-quality-experiment',
+  );
+  const qualityExperimentResponse = await page.request.get(
+    '/api/veritas/artifacts/market-quality-experiment',
+  );
+  expect(qualityExperimentResponse.ok()).toBeTruthy();
+  const qualityExperiment = await qualityExperimentResponse.json();
+  expect(qualityExperiment.data.experiment_id).toBe('VERITAS-M2-MARKET-QUALITY-PREDICTION-001');
+  expect(qualityExperiment.data.model.not_deployed).toBe(true);
+  expect(qualityExperiment.data.evaluation.positive_gross_candidates_in_held_out_markets).toBe(0);
+  await expect(page.getByText('Independent opportunity audit', { exact: true })).toBeVisible();
+  await expect(page.getByText(/85 scans · 3,400 selected observations/)).toBeVisible();
+  const independentAuditLink = page.getByRole('link', { name: 'Inspect replay' });
+  await expect(independentAuditLink).toHaveAttribute(
+    'href',
+    '/api/veritas/artifacts/independent-opportunity-audit',
+  );
+  const independentAuditResponse = await page.request.get(
+    '/api/veritas/artifacts/independent-opportunity-audit',
+  );
+  expect(independentAuditResponse.ok()).toBeTruthy();
+  const independentAudit = await independentAuditResponse.json();
+  expect(independentAudit.data.snapshot_count).toBe(85);
+  expect(independentAudit.data.independent_fee_disagreement_count).toBe(0);
   await expect(page.getByRole('heading', { name: 'Market discovery and coverage' })).toBeVisible();
   await expect(page.getByText('stratified-gamma-page-rotation-v2')).toBeVisible();
   await expect(page.getByText(/40 target · 50 markets max/)).toBeVisible();

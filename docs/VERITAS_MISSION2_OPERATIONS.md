@@ -1,5 +1,111 @@
 # Veritas Mission 2 Operations
 
+## Active continuation snapshot — 2026-10-16T21:50Z
+
+This snapshot follows the 21:25 engineering handoff. All paths below were
+inspected read-only. No service, timer, collector, campaign, or active journal
+was restarted, reset, or modified.
+
+### Collector and forward campaigns
+
+- Reality recorder service: active, PID 2288376, zero restarts. Its latest
+  status file was under one second old and reported
+  `RECORDING_UNSEQUENCED`, ordinal 1,031,671, 767,044 frames, 1,890,376,080
+  bytes, 8 markets / 16 expected books, 5 connection failures, 4,909 gaps,
+  and `sequence_verified=false`. A connection-closed message remains in its
+  error field.
+- At 21:49Z the recorder used 670,146,560 bytes against `MemoryHigh=671,088,640`
+  and `MemoryMax=805,306,368`, less than 1 MiB below its high threshold. The
+  capacity timer is active. Its recent one-hour rate estimated about 804 MB
+  per day of recording growth; the capacity estimate left about 23.9 GB in its
+  configured recording budget. Root storage had 195 GB free.
+- Protected parent campaign ID
+  `adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46` retains
+  campaign-file SHA-256
+  `aa8acb2b46823c1a1e3ac5d01a57dde917746c2c7471098ae2a4598875e322f5`. Its
+  worker remains active with one historical restart and state
+  `WARMING_OR_LAGGED_SOURCE`. At the latest status read, source ordinal was
+  541,009 versus recorder ordinal 1,031,671; source receipt age was about
+  28.1 hours and decision age about 36.9 hours. The status reports 213,637
+  lagged frames skipped, 10,253 decisions, 47,911 observations, and 113,410
+  journal events. Follow-ups remain 937 observed and 40,075 censored, with
+  zero pending horizons.
+- The last saved parent integrity artifact reports SQLite integrity `ok` and
+  verifies the event chain through 113,162 events. Live status has advanced to
+  113,410, so 248 later events are outside that saved check. The active SQLite
+  database was not read; current tail integrity is therefore unverified.
+- Separate successor ID
+  `6f6452f2509e7c1c4a3dd4fd86b0095bd4b434cd7b55259435cb4956968fba48` remains
+  active, PID 2078181, zero restarts. It was at the recorder ordinal with a
+  3.2-second source receipt age and 24.9-second decision age. It has 1,436
+  decisions, 6,625 observations, 15,430 events, 151 observed and 5,593
+  censored follow-ups, zero pending horizons, and zero orders. Its zero source
+  checkpoint count is expected for this experimental cold-start path; it is
+  not evidence that the parent recovered.
+
+### Veritas evidence and scheduled work
+
+- Latest public observer scan is 84, captured at 21:30:38Z: 32/40 selected
+  pairs passed quality. The current panel covers 84 scans / 3,360 selected
+  observations / 2,845 quality-valid states, with zero positive gross
+  candidates. These are correlated intermittent snapshots, not continuous
+  coverage of 650 markets.
+- Independent audit 020 now replays all 84 snapshots: it reproduces the 2,845
+  quality-valid decisions and stored top edges with zero mismatches, checks
+  3,768 fee calculations with zero disagreements, and reports zero positive
+  candidates at all tested gates. Its 622 strict returned-timestamp states
+  remain a sensitivity analysis; they do not establish venue sequence
+  freshness or execution. The first-scan capture/replay discrepancy remains
+  unresolved. See [Gate B checkpoint 018](VERITAS_MISSION2_GATE_B_CHECKPOINT_018.md).
+- Coverage pilot 002 remains `running`: 23/48 scans, 770/920 valid pair slots
+  (83.70%), 650 distinct selected IDs, and zero skipped scan sequences. Its
+  fixed end is 2026-10-17T10:30:50Z. Do not change its plan.
+- Finalized-source analysis last completed at 21:42:53Z: 7,246/7,246
+  cataloged sealed segments, 1,880,785,950 source bytes, 553,055
+  quality-valid states across 125 markets, zero pending segments, and zero
+  positive top-ask, full-depth, or minimum-notional states. It read no active
+  segment. Gap detail last completed at 21:36:13Z: 7,236/7,236 replayable
+  segments, no pending, and 2,810 campaign-window gaps (2,805 book
+  resynchronizations, 5 connection failures); two empty finalized segments
+  were excluded.
+- The 21:45:58Z Research Director run admitted scan 84 as Arena job
+  `job-8d189052926c4612b28083e1`. Strategy readiness remains
+  `NOT_READY_NO_QUALIFIED_GROSS_CANDIDATE`; model readiness remains
+  `NOT_READY_NO_CANDIDATE_RELEVANT_TARGET`. The child job's completion was
+  not yet verified at this capture. The Director is a finite scheduled job,
+  not a continuously running service.
+- Observer, source-analysis, gap-detail, Director, capacity, archive,
+  research-readiness, integrity, and Arena scheduling timers remain enabled.
+  At capture, the next observer was due at 22:00Z, source analysis at 22:10Z,
+  and Director at 22:15Z. No model training or full replay was running.
+
+### Hosted interfaces and host capacity
+
+- Midas `/api/health`: HTTP 200 / `READY`, demo mode, live execution disabled;
+  service active with zero restarts. Reality `/api/health` on port 8010:
+  HTTP 200 / `DEGRADED`, startup `READY`, demo mode, no restart. Midas and
+  Reality web services were active with zero restarts.
+- The hosted Midas API at port 8000 still returns HTTP 404 for
+  `/api/veritas/overview`; the new dashboard remains branch-only.
+- At 21:49Z, host load average was 1.49 / 1.93 / 1.84, available RAM 8.9
+  GiB, swap used 3.9/4 GiB, and root disk free 195 GB. The collector is close
+  to its `MemoryHigh` bound; this is the immediate resource concern. No
+  evidence of a service crash or unplanned restart was observed in this
+  snapshot.
+
+## Resumed research run — 2026-10-16T21:54Z
+
+The read-only market-quality experiment uses the frozen 23-scan cutoff ending
+at `scan-20261016T213038Z-498756c46b83`. Its analysis was rerun after a
+type-only cleanup and retained identical metrics. All 232 Veritas backend
+tests, 29 frontend tests, and the isolated Veritas browser flow pass. The
+full repository backend suite was not run. The main API/UI checkout remains
+separate from `project/veritas`; no deployment was attempted.
+
+The independent opportunity audit has also advanced through scan 84; see
+[Gate B checkpoint 018](VERITAS_MISSION2_GATE_B_CHECKPOINT_018.md). It found
+no candidate and did not touch the active source, collector, or campaign.
+
 ## Final operational capture — 2026-10-16T21:25:40Z
 
 ### Services and recording

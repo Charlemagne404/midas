@@ -1,4 +1,96 @@
-# Project Veritas Mission 2 — Final Handoff
+# Project Veritas Mission 2 — Active continuation checkpoint
+
+**Captured:** 2026-10-16 21:59 UTC  
+**Branch:** `project/veritas`  
+**Mission state:** Active. The previous handoff below is retained as a historical
+checkpoint; Mission 2 resumed afterward and is not complete.
+
+## Current gate state
+
+| Gate | Status | Current evidence and remaining work |
+| --- | --- | --- |
+| A — Market discovery | **In progress** | The intermittent observer has reached scan 84: 84 scans / 3,360 selected pair observations / 2,845 quality-valid states. The separate rotating coverage pilot has selected 650 distinct market IDs so far. The continuously recorded cohort is still only eight markets; broad snapshots do not equal continuous market coverage. |
+| B — Opportunity audit | **Verified through scan 84; broader inference remains in progress** | Independent audit 020 verifies all 84 scans / 3,360 selected observations: 2,845 quality-valid, zero v4/v3 validity or edge mismatches, and zero disagreements across 3,768 fee checks. No positive gross, depth, minimum, or fee-qualified candidate appeared. The first-scan capture/replay discrepancy remains unresolved, and the sample is intermittent and selected. |
+| C — Measurement improvements | **In progress** | Pilot 002 is running at 23/48 scans, 770/920 valid pair slots (83.70%) across 650 distinct IDs, with no skipped scan sequences. This is measurement yield; it does not establish sequence freshness or resolve the frozen campaign's severe follow-up censoring. |
+| D — Continuous opportunity analysis | **Verified operationally** | The scheduled finalized-source analyzer is current at 7,246/7,246 cataloged segments, 553,055 quality-valid states across 125 markets, and zero pending segments. Gap detail is current through 7,236/7,236 replayable segments, excluding two empty finalized segments. Scheduled runs continue. |
+| E — Economic and strategy research | **In progress** | New preregistered experiment 001 found promising same-snapshot quality ranking on 175 unseen markets, but no positive gross candidates and no strategy or economic improvement. The model remains undeployed; prospective replication and candidate-specific labels are absent. |
+| F — Autonomous research | **Implemented** | The 21:45 UTC Director cycle admitted scan 84 to a bounded Arena qualification job. Strategy readiness is `NOT_READY_NO_QUALIFIED_GROSS_CANDIDATE`; model readiness is `NOT_READY_NO_CANDIDATE_RELEVANT_TARGET`. No training is active. |
+| G — Dashboard | **Implemented in the branch** | The quality-prediction panel and the independent 84-scan opportunity audit panel expose ledger- and hash-verified artifacts. Component and isolated browser checks pass. The hosted Midas API still returns 404 for `/api/veritas/overview`; this branch is not deployed there. |
+| H — Verification | **In progress** | All 235 Veritas backend tests, 29 frontend tests, and the isolated Veritas browser workflow pass. TypeScript, lint, formatting, build, Ruff, and strict Mypy for the new analysis module pass. The complete repository backend suite remains unverified; `apps/api/veritas.py` retains five existing Mypy errors outside the new audit logic. |
+
+## New economic and predictive result
+
+Experiment `VERITAS-M2-MARKET-QUALITY-PREDICTION-001` uses 23 genuine but
+intermittent, stratified public scans. The chronological evaluation contains
+175 first-observed market IDs absent from the training set: 166 passed the
+same-snapshot measurement gate and 9 did not. A pre-book metadata logistic
+model achieved a weighted Brier score of 0.03998 versus 0.05087 for constant
+prevalence, weighted ROC AUC 0.894, and 44/44 quality-valid observations in
+its selected top quartile versus 40/44 for deterministic random selection and
+39/44 for the fixed liquidity/spread heuristic. The evaluation recorded zero
+positive gross candidates.
+
+This is a useful, short-window result for measurement selection only. The
+markets and scans remain dependent, the weights apply only within the bounded
+query-response frame, and the result does not predict economic opportunities,
+fills, or P&L. The model is not deployed and does not replace randomized or
+stratified discovery. A type-safety cleanup was followed by a reproducibility
+rerun against the same pinned snapshots; the reported metrics were unchanged.
+See [Gate E checkpoint 002](VERITAS_MISSION2_GATE_E_CHECKPOINT_002.md), the
+[preregistration](VERITAS_MISSION2_MARKET_QUALITY_EXPERIMENT_001.md), and the
+[result artifact](VERITAS_MISSION2_MARKET_QUALITY_EXPERIMENT_001.json).
+
+The newest independent Gate B replay now covers the full 84-scan public panel.
+It reproduces all 2,845 stored quality-valid states and top-edge decisions,
+with zero mismatches across either measure and zero disagreements in 3,768
+fee checks. Strict returned-timestamp sensitivity retains 622 states; 2,222
+pairs exceed the reported-age bound and one exceeds the timestamp-skew bound.
+Every tested gross, full-depth, minimum, and fee gate remains zero-positive.
+See [Gate B checkpoint 018](VERITAS_MISSION2_GATE_B_CHECKPOINT_018.md) and
+[independent audit 020](VERITAS_MISSION2_INDEPENDENT_OPPORTUNITY_AUDIT_020.json).
+
+## Current preservation and operating limits
+
+The live Reality recorder remains active with no restart, but reports
+`RECORDING_UNSEQUENCED`, eight markets / sixteen expected books, five
+connection failures, 4,903 cumulative gaps, and `sequence_verified=false`.
+At 21:49 UTC it used 670,146,560 bytes against `MemoryHigh=640 MiB` and
+`MemoryMax=768 MiB`; it was within about 1 MiB of the high threshold. The
+capacity timer remains enabled. Host storage had 195 GB free, 8.9 GiB RAM
+available, and 3.9/4 GiB swap used.
+
+The protected parent campaign file still hashes to
+`aa8acb2b46823c1a1e3ac5d01a57dde917746c2c7471098ae2a4598875e322f5`. Its
+worker is active but severely lagged: roughly 28 hours since receipt, 36.8
+hours since decision, and more than 488,000 recorder ordinals behind. The last
+saved integrity artifact covers 113,162 events while live status reports
+113,408; the newer 246-event tail has not been checked against the active
+writer. No campaign journal was scanned, reset, or modified. The separate
+successor is active near the recorder head, with fresh receipts, 1,348
+decisions, 135 observed and 5,257 censored follow-ups, and zero orders. Its
+forward-measurement yield remains low.
+
+The Midas API is `READY` with live execution disabled. Reality API health is
+`DEGRADED` with startup `READY`; Reality and Midas web services remain active.
+The ordinary Director, observer, source-analysis, gap-detail, capacity,
+archive, and integrity schedules remain enabled. No experiment or model
+training process is running. The main checkout has not received this branch's
+API or UI changes.
+
+## Work still open
+
+Keep the recorder, stratified discovery, pilot 002, and bounded analyses under
+their existing supervision. Independently audit the new public snapshots;
+let pilot 002 finish without changing its plan; design any frozen-parent
+recovery only from an explicit continuity plan; preserve the model as an
+offline result until it has a prospective replication with randomized
+controls; and keep strategy/profitability claims blocked until genuine
+positive candidates and execution-relevant labels exist. Do not alter or
+replace the frozen campaign to resolve its lag or old integrity tail.
+
+---
+
+# Previous engineering handoff — 2026-10-16 21:25:40 UTC
 
 **Operational capture:** 2026-10-16 21:25:40 UTC
 **Branch:** `project/veritas`

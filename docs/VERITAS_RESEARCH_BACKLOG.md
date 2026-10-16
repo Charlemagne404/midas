@@ -1,6 +1,27 @@
 # Veritas research backlog
 
-## Finalization state — 2026-10-16T21:25:40Z
+## Active Mission 2 queue — 2026-10-16T21:50Z
+
+Mission 2 resumed after the 21:25 engineering handoff. The new
+market-quality predictor showed a promising short-window improvement on
+same-snapshot measurement yield. The model remains undeployed and has no
+economic target. The recorder, pilot, and scheduled analyses continue under
+their existing bounds.
+
+| Priority | Work | Evidence now | Next action / guardrail |
+| --- | --- | --- | --- |
+| 1 | Keep the Reality collector within resource limits and preserve source continuity | The recorder is active and unsequenced, with 8 markets / 16 expected books, 4,909 gaps, and memory within about 1 MiB of `MemoryHigh`. | Let the existing capacity timer monitor it; preserve all gaps. Review a targeted collector fix only with isolated evidence and without changing the frozen campaign. |
+| 2 | Preserve and assess the frozen parent shadow safely | The parent is about 28 hours from its last receipt and 36.9 hours from its last decision. Its saved integrity artifact stops 248 events before the current status tail. | Keep the campaign identity and journal unchanged. Make a continuity recovery plan using verified checkpoints and current writer constraints before considering any intervention. |
+| 3 | Finish prospective measurement pilot 002 | 23/48 scans, 770/920 valid slots, 650 distinct market IDs, zero skipped sequences; fixed end 2026-10-17T10:30:50Z. | Let the frozen plan finish. Then report valid initial and follow-up outcomes, censoring by reason, freshness, synchronization, and dependence. |
+| 4 | Continue independent public opportunity audits | Audit 020 independently verifies all 84 saved scans / 3,360 observations: 2,845 valid, no stored v4/v3 mismatches, 3,768 fee checks with zero disagreements, and no positive candidate at tested gates. | Extend the existing audit on future immutable scans and retain the first-scan capture/replay discrepancy as unresolved until its raw evidence reconciles. Preserve correlated-state counts as states, not independent trials. |
+| 5 | Replicate the quality-selection result prospectively | The 23-scan holdout beat constant, random, and fixed heuristic baselines for same-snapshot quality validity. Economic candidates remain zero. | Freeze a scorer and evaluate on a future preregistered window while retaining random/stratified controls. Keep opportunity discovery broad and the model undeployed. |
+| 6 | Verify recurring analysis and branch dashboard integration | The 21:45 Director run admitted scan 84; source and gap analysis timers remain enabled. The branch UI/API pass tests, while hosted Midas still returns 404 for the Veritas route. | Verify the Arena child through its normal scheduler and continue bounded analysis. Integrate the branch only through the normal reviewed deployment path. |
+
+No candidate-relevant execution labels currently justify strategy tournament or
+economic model training. Continue no-trade; collect and qualify evidence under
+the existing read-only controls.
+
+## Prior handoff state — 2026-10-16T21:25:40Z (historical)
 
 Interactive engineering is closing now. Do not hold the handoff open for the pilot’s remaining scans, a fresh campaign window, a candidate, or model readiness. Existing bounded collection and scheduled analyses remain enabled under their current resource bounds.
 

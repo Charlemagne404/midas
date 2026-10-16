@@ -551,6 +551,74 @@ type FinalizedRealitySource = {
   limitations: string[];
 };
 
+type MarketQualityExperiment = {
+  analysis_version: string;
+  experiment_id: string;
+  status: string;
+  model_deployed: boolean;
+  source_snapshot_count: number;
+  data_cutoff_scan_id: string;
+  training_market_count: number;
+  evaluation_market_count: number;
+  evaluation_scan_count: number;
+  positive_gross_candidates: number;
+  model: {
+    type: string;
+    converged: boolean;
+    weighted_brier_score: number;
+    weighted_roc_auc: number;
+    weighted_average_precision: number;
+    top_quartile: {
+      selected_markets: number;
+      selected_fraction: number;
+      valid_markets: number;
+      weighted_quality_valid_yield: number;
+    };
+  };
+  constant_baseline: {
+    weighted_brier_score: number;
+    weighted_roc_auc: number;
+  };
+  random_top_quartile: {
+    selected_markets: number;
+    selected_fraction: number;
+    valid_markets: number;
+    weighted_quality_valid_yield: number;
+  };
+  fixed_heuristic_top_quartile: {
+    selected_markets: number;
+    selected_fraction: number;
+    valid_markets: number;
+    weighted_quality_valid_yield: number;
+  };
+  artifact: Artifact & { file_sha256: string; url: string };
+  interpretation: string;
+};
+
+type IndependentOpportunityAudit = {
+  status: string;
+  analysis_version: string;
+  captured_at_utc: string;
+  snapshot_count: number;
+  selected_market_observation_count: number;
+  stored_quality_valid_count: number;
+  independent_quality_valid_count: number;
+  validity_mismatches: number;
+  top_edge_mismatches: number;
+  fee_calculations_checked: number;
+  fee_disagreements: number;
+  strict_reported_freshness_valid_count: number;
+  reported_age_exceedance_pair_count: number;
+  pair_skew_exceedance_count: number;
+  positive_top_gross_count: number;
+  positive_full_depth_gross_by_quantity: Record<string, number>;
+  positive_full_depth_minimums_by_quantity: Record<string, number>;
+  positive_fee_sensitivity_by_quantity: Record<string, number>;
+  source_manifest_sha256: string;
+  artifact: Artifact & { file_sha256: string; url: string };
+  limitations: string[];
+};
+
 type Overview = {
   status: string;
   captured_at_utc: string;
@@ -620,6 +688,8 @@ type Overview = {
       decision: string;
     }>;
   };
+  market_quality_experiment: MarketQualityExperiment | null;
+  independent_opportunity_audit: IndependentOpportunityAudit | null;
   opportunity_observatory: Observatory;
   finalized_reality_source: FinalizedRealitySource;
   artifacts: Artifact[];
@@ -1978,6 +2048,73 @@ export function Veritas() {
               remains active.
             </p>
           )}
+          {data.independent_opportunity_audit && (
+            <div className="ve-gap-evidence" aria-label="Independent opportunity arithmetic audit">
+              <section>
+                <div className="ve-gap-evidence-heading">
+                  <div>
+                    <span className="ve-subhead">Independent opportunity audit</span>
+                    <small>
+                      {fmt(data.independent_opportunity_audit.snapshot_count)} scans ·{' '}
+                      {fmt(data.independent_opportunity_audit.selected_market_observation_count)}{' '}
+                      selected observations ·{' '}
+                      {time(data.independent_opportunity_audit.captured_at_utc)}
+                    </small>
+                  </div>
+                  <a
+                    href={data.independent_opportunity_audit.artifact.url}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Inspect replay <ArrowUpRight size={13} />
+                  </a>
+                </div>
+                <div className="ve-gap-evidence-stats">
+                  <div>
+                    <span>Stored and independent quality states</span>
+                    <b>
+                      {fmt(data.independent_opportunity_audit.stored_quality_valid_count)} /{' '}
+                      {fmt(data.independent_opportunity_audit.independent_quality_valid_count)}
+                    </b>
+                    <small>
+                      {fmt(data.independent_opportunity_audit.validity_mismatches)} validity ·{' '}
+                      {fmt(data.independent_opportunity_audit.top_edge_mismatches)} edge mismatches
+                    </small>
+                  </div>
+                  <div>
+                    <span>Independent fee calculations</span>
+                    <b>
+                      {fmt(data.independent_opportunity_audit.fee_calculations_checked)} checked ·{' '}
+                      {fmt(data.independent_opportunity_audit.fee_disagreements)} disagreements
+                    </b>
+                    <small>
+                      {fmt(data.independent_opportunity_audit.positive_top_gross_count)} positive
+                      top-gross candidates
+                    </small>
+                  </div>
+                  <div>
+                    <span>Strict returned-timestamp sensitivity</span>
+                    <b>
+                      {fmt(
+                        data.independent_opportunity_audit.strict_reported_freshness_valid_count,
+                      )}{' '}
+                      states pass
+                    </b>
+                    <small>
+                      {fmt(data.independent_opportunity_audit.reported_age_exceedance_pair_count)}{' '}
+                      age · {fmt(data.independent_opportunity_audit.pair_skew_exceedance_count)}{' '}
+                      skew exceedances; sequence freshness remains unverified
+                    </small>
+                  </div>
+                </div>
+                <p>
+                  Full-depth, per-leg minimum, and both-fee sensitivities are zero-positive at every
+                  tested quantity. This is a selected, correlated snapshot panel; the audited states
+                  are not independent opportunity trials or fills.
+                </p>
+              </section>
+            </div>
+          )}
           {(gapCensorAudit || gapCensorAttribution || finalizedGapDetail) && (
             <div className="ve-gap-evidence" aria-label="Gap attribution and source continuity">
               {gapCensorAudit && (
@@ -2500,6 +2637,97 @@ export function Veritas() {
               </article>
             ))}
           </div>
+        </Panel>
+
+        <Panel
+          eyebrow="SHADOW RESEARCH MODEL · NOT DEPLOYED"
+          title="Snapshot quality prediction"
+          note="Uses pre-book Gamma metadata to predict whether a selected YES/NO book pair passes the same-snapshot quality gate. It does not predict an opportunity or economic return."
+        >
+          {data.market_quality_experiment ? (
+            <>
+              <div className="ve-observatory-stats compact">
+                <div>
+                  <span>Chronological market-disjoint evaluation</span>
+                  <strong>
+                    {fmt(data.market_quality_experiment.training_market_count)} train ·{' '}
+                    {fmt(data.market_quality_experiment.evaluation_market_count)} unseen test
+                  </strong>
+                  <small>
+                    {fmt(data.market_quality_experiment.evaluation_scan_count)} held-out scans ·{' '}
+                    {fmt(data.market_quality_experiment.source_snapshot_count)} total scans
+                  </small>
+                </div>
+                <div>
+                  <span>Weighted Brier score</span>
+                  <strong>
+                    {data.market_quality_experiment.model.weighted_brier_score.toFixed(4)} vs{' '}
+                    {data.market_quality_experiment.constant_baseline.weighted_brier_score.toFixed(
+                      4,
+                    )}
+                  </strong>
+                  <small>Model vs constant training-prevalence baseline · lower is better</small>
+                </div>
+                <div>
+                  <span>Weighted ROC AUC</span>
+                  <strong>
+                    {data.market_quality_experiment.model.weighted_roc_auc.toFixed(3)}
+                  </strong>
+                  <small>
+                    Weighted average precision{' '}
+                    {data.market_quality_experiment.model.weighted_average_precision.toFixed(3)}
+                  </small>
+                </div>
+                <div>
+                  <span>Top-quartile quality yield</span>
+                  <strong>
+                    {rate(
+                      data.market_quality_experiment.model.top_quartile
+                        .weighted_quality_valid_yield * 100,
+                      100,
+                    )}{' '}
+                    · {fmt(data.market_quality_experiment.model.top_quartile.valid_markets)}/
+                    {fmt(data.market_quality_experiment.model.top_quartile.selected_markets)}
+                  </strong>
+                  <small>
+                    Random{' '}
+                    {rate(
+                      data.market_quality_experiment.random_top_quartile
+                        .weighted_quality_valid_yield * 100,
+                      100,
+                    )}{' '}
+                    ({fmt(data.market_quality_experiment.random_top_quartile.valid_markets)}/
+                    {fmt(data.market_quality_experiment.random_top_quartile.selected_markets)}) ·{' '}
+                    fixed heuristic{' '}
+                    {rate(
+                      data.market_quality_experiment.fixed_heuristic_top_quartile
+                        .weighted_quality_valid_yield * 100,
+                      100,
+                    )}
+                  </small>
+                </div>
+              </div>
+              <div className="ve-caveat">
+                <ShieldCheck size={16} /> Held-out positive gross candidates:{' '}
+                {fmt(data.market_quality_experiment.positive_gross_candidates)}. This short
+                selected-panel result only supports exploratory measurement ranking; the model
+                remains undeployed and the holdout is not independent of market-category and time
+                dependence.
+              </div>
+              <a
+                className="ve-latest-snapshot"
+                href={data.market_quality_experiment.artifact.url}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Inspect preregistration, split, metrics and source hashes <ArrowUpRight size={13} />
+              </a>
+            </>
+          ) : (
+            <p className="ve-observatory-note">
+              No ledger- and code-verified market-quality prediction experiment is available.
+            </p>
+          )}
         </Panel>
 
         <Panel

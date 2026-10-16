@@ -4,7 +4,7 @@
   "status": "in_progress",
   "baseline_commit": "f968095feb9c591de38fe12d7493224425f62f3a",
   "branch": "project/veritas",
-  "last_checkpoint": "docs/VERITAS_MISSION2_GATE_B_CHECKPOINT_013.md",
+  "last_checkpoint": "docs/VERITAS_MISSION2_GATE_E_CHECKPOINT_002.md",
   "datasets": [
     {
       "dataset_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
@@ -66,6 +66,38 @@
       "quality_valid_pairs": 2047,
       "compressed_source_bytes": 38901902,
       "latest_scan_id": "scan-20261016T093021Z-b20cf6a3b852",
+      "selection_is_venue_wide": false,
+      "observations_are_independent": false,
+      "mutated": false,
+      "raw_observations_embedded": false
+    },
+    {
+      "dataset_id": "veritas-observatory-source-4ab2fa35be8d568a6e65a833f26f3c32e5b20f821bfb6e6c3ddcb9474bd6f060",
+      "kind": "hash-linked_public_intermittent_market_snapshots",
+      "source_kind": "genuine_unauthenticated_public_observations",
+      "role": "exploratory same-snapshot measurement-quality prediction only",
+      "analysis_version": "veritas-public-observatory-v2",
+      "source_code_sha256": "4ab2fa35be8d568a6e65a833f26f3c32e5b20f821bfb6e6c3ddcb9474bd6f060",
+      "snapshot_count": 23,
+      "latest_scan_id": "scan-20261016T213038Z-498756c46b83",
+      "selection_is_venue_wide": false,
+      "observations_are_independent": false,
+      "mutated": false,
+      "raw_observations_embedded": false
+    },
+    {
+      "dataset_id": "veritas-observatory-independent-audit-through-scan-84-20261016",
+      "kind": "hash-linked_public_intermittent_market_snapshots",
+      "source_kind": "genuine_unauthenticated_public_observations",
+      "role": "independent opportunity arithmetic and measurement-quality audit",
+      "analysis_version": "veritas-independent-source-opportunity-audit-v2",
+      "source_code_sha256": "ff0d89ef437a051b27002ca9a5f6deb5b1f7dca52e87883894a48ccc726f98e2",
+      "source_manifest_sha256": "12d319a011d93e521b53a59c0abce591badef610cb5b2234b3a3fc4a38f93476",
+      "snapshot_count": 84,
+      "selected_market_pair_observations": 3360,
+      "quality_valid_pairs": 2845,
+      "compressed_source_bytes": 53961165,
+      "latest_scan_id": "scan-20261016T213038Z-498756c46b83",
       "selection_is_venue_wide": false,
       "observations_are_independent": false,
       "mutated": false,
@@ -670,9 +702,59 @@
       "campaign_mutated": false,
       "manual_state_reset": false,
       "promotion": "preserve the original pinned source-analysis helper; verify the next timer recurrence"
+    },
+    {
+      "experiment_id": "VERITAS-M2-MARKET-QUALITY-PREDICTION-001",
+      "type": "read_only_market_quality_prediction_and_selection_comparison",
+      "status": "exploratory_out_of_time_validation_completed",
+      "source_dataset_id": "veritas-observatory-source-4ab2fa35be8d568a6e65a833f26f3c32e5b20f821bfb6e6c3ddcb9474bd6f060",
+      "preregistration": "docs/VERITAS_MISSION2_MARKET_QUALITY_EXPERIMENT_001.md",
+      "evidence": "docs/VERITAS_MISSION2_MARKET_QUALITY_EXPERIMENT_001.json",
+      "training_markets": 470,
+      "held_out_unseen_markets": 175,
+      "weighted_roc_auc": 0.8942419551303357,
+      "weighted_brier_model": 0.03998457456868467,
+      "weighted_brier_constant_baseline": 0.050874767778588126,
+      "positive_gross_candidates": 0,
+      "orders_submitted": false,
+      "model_promoted": false
+    },
+    {
+      "experiment_id": "VERITAS-M2-INDEPENDENT-SOURCE-AUDIT-002",
+      "type": "independent_v3_replay_of_v4_public_opportunity_panel",
+      "status": "completed_no_positive_candidate",
+      "source_dataset_id": "veritas-observatory-independent-audit-through-scan-84-20261016",
+      "evidence": "docs/VERITAS_MISSION2_INDEPENDENT_OPPORTUNITY_AUDIT_020.json",
+      "ledger_hypothesis_id": "VERITAS-H154",
+      "artifact_sha256": "1791541daa965492f37363ce8d70aea714bb8938a09eef4fd2511d59b4546738",
+      "result_sha256": "f4a807d5f393deb21ead9565151b52d33acf5e20abaf9a9c07efddbb02365ced",
+      "stored_validity_mismatches": 0,
+      "stored_top_edge_mismatches": 0,
+      "fee_calculations_checked": 3768,
+      "fee_disagreements": 0,
+      "strict_reported_freshness_states": 622,
+      "positive_top_gross_candidates": 0,
+      "positive_depth_minimum_or_fee_candidates": 0,
+      "orders_submitted": false,
+      "promotion": "confirms arithmetic and source replay only; no opportunity or profitability promotion"
     }
   ],
-  "models": [],
+  "models": [
+    {
+      "model_id": "VERITAS-M2-MARKET-QUALITY-LOGISTIC-001",
+      "type": "regularized_logistic_regression",
+      "target": "same_snapshot_quality_validity_only",
+      "status": "evaluated_offline_not_deployed",
+      "experiment_id": "VERITAS-M2-MARKET-QUALITY-PREDICTION-001",
+      "artifact": "docs/VERITAS_MISSION2_MARKET_QUALITY_EXPERIMENT_001.json",
+      "training_markets": 470,
+      "held_out_unseen_markets": 175,
+      "weighted_roc_auc": 0.8942419551303357,
+      "weighted_brier_score": 0.03998457456868467,
+      "economic_opportunity_prediction": false,
+      "strategy_promotion": false
+    }
+  ],
   "policies": [
     {
       "policy_set_id": "reality-shadow-policies-v1",
@@ -704,5 +786,5 @@
     "The live observer/API process has not been restarted to load the updated model; the source replay and local code are current, while deployed UI activation awaits a safe rollout.",
     "The finalized-source analyzer had one code-pin mismatch after the v3 economics edit; it recovered after the v3 model was isolated and the pinned economics.py helper restored. The next scheduled recurrence remains unverified."
   ],
-  "updated_at_utc": "2026-10-16T09:30:52Z"
+  "updated_at_utc": "2026-10-16T21:54:23.727297+00:00"
 }

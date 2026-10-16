@@ -21,6 +21,8 @@ ARTIFACTS = {
     "break-even": "VERITAS_GATE_B_EXECUTION_BREAK_EVEN_001.json",
     "ledger": "VERITAS_RESEARCH_LEDGER.json",
     "inventory": "VERITAS_RESEARCH_INVENTORY.json",
+    "market-quality-experiment": "VERITAS_MISSION2_MARKET_QUALITY_EXPERIMENT_001.json",
+    "independent-opportunity-audit": "VERITAS_MISSION2_INDEPENDENT_OPPORTUNITY_AUDIT_020.json",
     "censoring": "VERITAS_GATE_A_CENSORING_003.json",
     "label-feasibility": "VERITAS_MISSION2_LABEL_FEASIBILITY_001.json",
     "censor-gap-audit": "VERITAS_MISSION2_CENSOR_GAP_AUDIT_001.json",
@@ -43,6 +45,8 @@ COVERAGE_DESIGN_AUDIT_ID = "VERITAS-M2-COVERAGE-DESIGN-AUDIT-002"
 COVERAGE_DESIGN_AUDIT_VERSION = "veritas-coverage-design-audit-v2"
 EXECUTION_BREAK_EVEN_VERSION = "veritas-execution-break-even-v2"
 EXECUTION_BREAK_EVEN_ID = "VERITAS-GATE-B-EXECUTION-BREAK-EVEN-20261016-002"
+INDEPENDENT_OPPORTUNITY_AUDIT_ID = "VERITAS-M2-INDEPENDENT-SOURCE-AUDIT-002"
+INDEPENDENT_OPPORTUNITY_AUDIT_VERSION = "veritas-independent-source-opportunity-audit-v2"
 SNAPSHOT_ID = re.compile(r"scan-\d{8}T\d{6}Z-[0-9a-f]{12}\Z")
 COVERAGE_PILOT_ID = "VERITAS-M2-COVERAGE-PILOT-001"
 COVERAGE_PILOT_VERSION = "veritas-coverage-pilot-v1"
@@ -56,6 +60,9 @@ COVERAGE_DESIGN_AUDIT_PATH = re.compile(
     r"docs/VERITAS_MISSION2_COVERAGE_DESIGN_AUDIT_(\d{3,})\.json\Z"
 )
 EXECUTION_BREAK_EVEN_PATH = re.compile(r"docs/VERITAS_GATE_B_EXECUTION_BREAK_EVEN_(\d{3,})\.json\Z")
+INDEPENDENT_OPPORTUNITY_AUDIT_PATH = re.compile(
+    r"docs/VERITAS_MISSION2_INDEPENDENT_OPPORTUNITY_AUDIT_(\d{3,})\.json\Z"
+)
 
 
 def market_universe_coverage_artifact_path(repository: Path, ledger: dict[str, Any]) -> Path:
@@ -162,6 +169,41 @@ def execution_break_even_artifact_path(repository: Path, ledger: dict[str, Any])
     return max(candidates, key=lambda candidate: candidate[0])[1] if candidates else fallback
 
 
+def independent_opportunity_audit_artifact_path(repository: Path, ledger: dict[str, Any]) -> Path:
+    """Choose the newest ledger-receipted independent source audit."""
+    docs = repository / "docs"
+    fallback = docs / ARTIFACTS["independent-opportunity-audit"]
+    if docs.is_symlink() or not docs.is_dir():
+        return fallback
+    hypotheses = ledger.get("hypotheses")
+    if not isinstance(hypotheses, list):
+        return fallback
+    candidates: list[tuple[int, Path]] = []
+    for item in hypotheses:
+        if (
+            not isinstance(item, dict)
+            or item.get("experiment_id") != INDEPENDENT_OPPORTUNITY_AUDIT_ID
+        ):
+            continue
+        result = item.get("result")
+        if not isinstance(result, dict):
+            continue
+        relative_path = result.get("artifact_path")
+        if not isinstance(relative_path, str):
+            continue
+        match = INDEPENDENT_OPPORTUNITY_AUDIT_PATH.fullmatch(relative_path)
+        if (
+            match is None
+            or not isinstance(result.get("artifact_sha256"), str)
+            or not isinstance(result.get("result_sha256"), str)
+        ):
+            continue
+        path = repository / relative_path
+        if path.parent == docs and path.is_file() and not path.is_symlink():
+            candidates.append((int(match.group(1)), path))
+    return max(candidates, key=lambda candidate: candidate[0])[1] if candidates else fallback
+
+
 def read_artifact(
     repository: Path, identity: str, *, ledger: dict[str, Any] | None = None
 ) -> tuple[dict[str, Any], Path]:
@@ -169,13 +211,41 @@ def read_artifact(
     if name is None:
         raise HTTPException(404, "Unknown Veritas evidence artifact")
     break_even_receipt_sha256: str | None = None
-    if identity in {"market-universe-coverage", "coverage-design-audit", "break-even"}:
+    independent_audit_receipt: dict[str, Any] | None = None
+    if identity in {
+        "market-universe-coverage",
+        "coverage-design-audit",
+        "break-even",
+        "independent-opportunity-audit",
+    }:
         if ledger is None:
             ledger, _ = read_artifact(repository, "ledger")
         if identity == "market-universe-coverage":
             path = market_universe_coverage_artifact_path(repository, ledger)
         elif identity == "coverage-design-audit":
             path = coverage_design_audit_artifact_path(repository, ledger)
+        elif identity == "independent-opportunity-audit":
+            path = independent_opportunity_audit_artifact_path(repository, ledger)
+            relative_path = path.relative_to(repository).as_posix()
+            for item in ledger.get("hypotheses", []):
+                if (
+                    not isinstance(item, dict)
+                    or item.get("experiment_id") != INDEPENDENT_OPPORTUNITY_AUDIT_ID
+                ):
+                    continue
+                result = item.get("result")
+                if (
+                    isinstance(result, dict)
+                    and result.get("artifact_path") == relative_path
+                    and isinstance(result.get("artifact_sha256"), str)
+                    and isinstance(result.get("result_sha256"), str)
+                ):
+                    independent_audit_receipt = result
+                    break
+            if independent_audit_receipt is None:
+                raise HTTPException(
+                    503, "Independent opportunity audit has no matching ledger receipt"
+                )
         else:
             path = execution_break_even_artifact_path(repository, ledger)
             relative_path = path.relative_to(repository).as_posix()
@@ -221,6 +291,16 @@ def read_artifact(
             or value.get("fee_collection_medium_for_buy") != "collateral"
         ):
             raise HTTPException(503, "Veritas execution sensitivity failed its receipt checks")
+    if independent_audit_receipt is not None:
+        if (
+            hashlib.sha256(raw).hexdigest() != independent_audit_receipt.get("artifact_sha256")
+            or value.get("version") != INDEPENDENT_OPPORTUNITY_AUDIT_VERSION
+            or value.get("experiment_id") != INDEPENDENT_OPPORTUNITY_AUDIT_ID
+            or value.get("result_sha256") != independent_audit_receipt.get("result_sha256")
+            or value.get("source_manifest_sha256")
+            != independent_audit_receipt.get("source_manifest_sha256")
+        ):
+            raise HTTPException(503, "Independent opportunity audit failed its receipt checks")
     return value, path
 
 
@@ -3333,12 +3413,211 @@ def _hypothesis_result_status(item: dict[str, Any]) -> str:
     return "unknown"
 
 
+def market_quality_experiment_overview(
+    repository: Path, ledger: dict[str, Any]
+) -> dict[str, Any] | None:
+    """Expose the quality predictor only with matching code and ledger receipts."""
+    if "market-quality-experiment" not in ARTIFACTS:
+        return None
+    path = repository / "docs" / ARTIFACTS["market-quality-experiment"]
+    if path.is_symlink():
+        raise HTTPException(503, "Market-quality experiment artifact is unsafe")
+    if not path.exists():
+        return None
+    data, path = read_artifact(repository, "market-quality-experiment")
+    raw = path.read_bytes()
+    file_sha256 = hashlib.sha256(raw).hexdigest()
+    experiment_id = "VERITAS-M2-MARKET-QUALITY-PREDICTION-001"
+    analysis_version = "veritas-market-quality-selection-experiment-v1"
+    receipt = next(
+        (
+            item.get("result")
+            for item in ledger.get("hypotheses", [])
+            if isinstance(item, dict)
+            and item.get("experiment_id") == experiment_id
+            and isinstance(item.get("result"), dict)
+            and item["result"].get("artifact_path")
+            == f"docs/{ARTIFACTS['market-quality-experiment']}"
+        ),
+        None,
+    )
+    model = data.get("model")
+    if (
+        not isinstance(receipt, dict)
+        or receipt.get("artifact_file_sha256") != file_sha256
+        or data.get("experiment_id") != experiment_id
+        or data.get("analysis_version") != analysis_version
+        or data.get("orders_submitted") is not False
+        or data.get("live_selection_changed") is not False
+        or not isinstance(model, dict)
+        or model.get("not_deployed") is not True
+    ):
+        raise HTTPException(503, "Market-quality experiment failed its ledger receipt checks")
+
+    for identity, expected_path in (
+        ("analysis_code", "packages/midas/veritas/market_quality_experiment.py"),
+        ("preregistration", "docs/VERITAS_MISSION2_MARKET_QUALITY_EXPERIMENT_001.md"),
+    ):
+        source = data.get(identity)
+        if not isinstance(source, dict) or source.get("path") != expected_path:
+            raise HTTPException(503, "Market-quality experiment provenance path is invalid")
+        source_path = repository / expected_path
+        if (
+            source_path.is_symlink()
+            or not source_path.is_file()
+            or source_path.stat().st_size > 512 * 1024
+            or hashlib.sha256(source_path.read_bytes()).hexdigest() != source.get("sha256")
+        ):
+            raise HTTPException(503, "Market-quality experiment provenance hash is invalid")
+    if (
+        receipt.get("analysis_code_sha256") != data["analysis_code"]["sha256"]
+        or receipt.get("preregistration_sha256") != data["preregistration"]["sha256"]
+    ):
+        raise HTTPException(503, "Market-quality experiment source receipt does not match")
+
+    source = data.get("source")
+    split = data.get("split")
+    evaluation = data.get("evaluation")
+    if not isinstance(source, dict):
+        raise HTTPException(503, "Market-quality experiment source is incomplete")
+    if not isinstance(split, dict):
+        raise HTTPException(503, "Market-quality experiment split is incomplete")
+    if not isinstance(evaluation, dict):
+        raise HTTPException(503, "Market-quality experiment summary is incomplete")
+    manifest = source.get("source_manifest")
+    if (
+        not isinstance(manifest, list)
+        or len(manifest) != source.get("snapshot_count")
+        or len(manifest) > 100
+        or len({entry.get("scan_id") for entry in manifest if isinstance(entry, dict)})
+        != len(manifest)
+    ):
+        raise HTTPException(503, "Market-quality experiment source manifest is invalid")
+    model_metrics = evaluation.get("held_out_first_observation_of_unseen_markets")
+    baseline_metrics = evaluation.get("constant_training_prevalence_baseline")
+    model_top = evaluation.get("model_top_quartile")
+    random_top = evaluation.get("random_top_quartile")
+    heuristic_top = evaluation.get("fixed_liquidity_spread_heuristic_top_quartile")
+    if not isinstance(model_metrics, dict):
+        raise HTTPException(503, "Market-quality model metrics are incomplete")
+    if not isinstance(baseline_metrics, dict):
+        raise HTTPException(503, "Market-quality baseline metrics are incomplete")
+    if not isinstance(model_top, dict):
+        raise HTTPException(503, "Market-quality model selection metrics are incomplete")
+    if not isinstance(random_top, dict):
+        raise HTTPException(503, "Market-quality random baseline metrics are incomplete")
+    if not isinstance(heuristic_top, dict):
+        raise HTTPException(503, "Market-quality experiment metrics are incomplete")
+    artifact = {
+        "id": "market-quality-experiment",
+        "label": "Market-quality selection experiment 001",
+        "file_sha256": file_sha256,
+        "url": "/api/veritas/artifacts/market-quality-experiment",
+    }
+    return {
+        "analysis_version": analysis_version,
+        "experiment_id": experiment_id,
+        "status": "exploratory_out_of_time_validation",
+        "model_deployed": False,
+        "source_snapshot_count": source.get("snapshot_count"),
+        "data_cutoff_scan_id": source.get("data_cutoff_scan_id"),
+        "training_market_count": split.get("training_market_count"),
+        "evaluation_market_count": split.get("evaluation_unseen_market_count"),
+        "evaluation_scan_count": split.get("evaluation_scan_count"),
+        "positive_gross_candidates": evaluation.get(
+            "positive_gross_candidates_in_held_out_markets"
+        ),
+        "model": {
+            "type": model.get("type"),
+            "converged": model.get("converged"),
+            "weighted_brier_score": model_metrics.get("weighted_brier_score"),
+            "weighted_roc_auc": model_metrics.get("weighted_roc_auc"),
+            "weighted_average_precision": model_metrics.get("weighted_average_precision"),
+            "top_quartile": model_top,
+        },
+        "constant_baseline": {
+            "weighted_brier_score": baseline_metrics.get("weighted_brier_score"),
+            "weighted_roc_auc": baseline_metrics.get("weighted_roc_auc"),
+        },
+        "random_top_quartile": random_top,
+        "fixed_heuristic_top_quartile": heuristic_top,
+        "artifact": artifact,
+        "interpretation": (
+            "Predicts same-snapshot measurement quality only; this is not an economic, fill, or P&L model."
+        ),
+    }
+
+
+def independent_opportunity_audit_overview(
+    repository: Path, ledger: dict[str, Any]
+) -> dict[str, Any] | None:
+    """Summarize the newest hash-receipted independent source audit."""
+    path = independent_opportunity_audit_artifact_path(repository, ledger)
+    if path.is_symlink():
+        raise HTTPException(503, "Independent opportunity audit artifact is unsafe")
+    if not path.is_file():
+        return None
+    data, path = read_artifact(repository, "independent-opportunity-audit", ledger=ledger)
+    if (
+        data.get("complete") is not True
+        or data.get("version") != INDEPENDENT_OPPORTUNITY_AUDIT_VERSION
+        or data.get("experiment_id") != INDEPENDENT_OPPORTUNITY_AUDIT_ID
+        or data.get("authenticated_requests") is not False
+        or data.get("orders_submitted") is not False
+    ):
+        raise HTTPException(
+            503, "Independent opportunity audit identity or safety fields are invalid"
+        )
+
+    def count(field: str) -> int:
+        value = data.get(field)
+        if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+            raise HTTPException(503, f"Independent opportunity audit count is invalid: {field}")
+        return value
+
+    file_sha256 = hashlib.sha256(path.read_bytes()).hexdigest()
+    return {
+        "status": data.get("status"),
+        "analysis_version": data["version"],
+        "captured_at_utc": data.get("captured_at_utc"),
+        "snapshot_count": count("snapshot_count"),
+        "selected_market_observation_count": count("selected_market_observation_count"),
+        "stored_quality_valid_count": count("v4_stored_quality_valid_count"),
+        "independent_quality_valid_count": count("independent_v3_valid_count"),
+        "validity_mismatches": count("v4_v3_validity_mismatch_count"),
+        "top_edge_mismatches": count("v4_v3_top_edge_mismatch_count"),
+        "fee_calculations_checked": count("independent_fee_checked_quantity_count"),
+        "fee_disagreements": count("independent_fee_disagreement_count"),
+        "strict_reported_freshness_valid_count": count("strict_freshness_valid_count"),
+        "reported_age_exceedance_pair_count": count("reported_age_exceedance_pair_count"),
+        "pair_skew_exceedance_count": count("pair_skew_exceedance_count"),
+        "positive_top_gross_count": count("positive_top_pair_gross_count"),
+        "positive_full_depth_gross_by_quantity": data.get("positive_full_depth_gross_by_quantity"),
+        "positive_full_depth_minimums_by_quantity": data.get(
+            "positive_full_depth_and_both_minimums_by_quantity"
+        ),
+        "positive_fee_sensitivity_by_quantity": data.get(
+            "positive_both_fee_sensitivities_by_quantity"
+        ),
+        "source_manifest_sha256": data.get("source_manifest_sha256"),
+        "artifact": {
+            "id": "independent-opportunity-audit",
+            "label": f"Independent opportunity audit through {count('snapshot_count')} scans",
+            "file_sha256": file_sha256,
+            "url": "/api/veritas/artifacts/independent-opportunity-audit",
+        },
+        "limitations": data.get("limitations", []),
+    }
+
+
 def overview(repository: Path) -> dict[str, Any]:
     baseline, _ = read_artifact(repository, "baseline")
     funnel, _ = read_artifact(repository, "raw-funnel")
     ledger, _ = read_artifact(repository, "ledger")
     break_even, _ = read_artifact(repository, "break-even", ledger=ledger)
     inventory, _ = read_artifact(repository, "inventory")
+    market_quality_experiment = market_quality_experiment_overview(repository, ledger)
+    independent_opportunity_audit = independent_opportunity_audit_overview(repository, ledger)
     public_observatory = observatory_overview(repository)
     public_observatory["measurement_pilot"] = coverage_pilot_overview(repository)
     public_observatory["measurement_pilot_v2"] = coverage_pilot_v2_overview(repository)
@@ -3460,6 +3739,10 @@ def overview(repository: Path) -> dict[str, Any]:
         artifacts.append(gap_censor_attribution["artifact"])
     if gap_detail is not None:
         artifacts.append(gap_detail["summary_artifact"])
+    if market_quality_experiment is not None:
+        artifacts.append(market_quality_experiment["artifact"])
+    if independent_opportunity_audit is not None:
+        artifacts.append(independent_opportunity_audit["artifact"])
 
     return {
         "status": "insufficient_independent_evidence",
@@ -3559,6 +3842,8 @@ def overview(repository: Path) -> dict[str, Any]:
             "candidates": len(inventory["candidates"]),
             "recent_hypotheses": recent_hypotheses,
         },
+        "market_quality_experiment": market_quality_experiment,
+        "independent_opportunity_audit": independent_opportunity_audit,
         "opportunity_observatory": public_observatory,
         "finalized_reality_source": finalized_source,
         "artifacts": artifacts,
@@ -3648,6 +3933,16 @@ def router(repository: Path) -> APIRouter:
                 "file_sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
                 "data": data,
             }
+        if identity == "independent-opportunity-audit":
+            ledger, _ = read_artifact(repository, "ledger")
+            validated = independent_opportunity_audit_overview(repository, ledger)
+            if validated is None:
+                raise HTTPException(404, "Independent opportunity audit is unavailable")
+            data, path = read_artifact(repository, identity, ledger=ledger)
+            file_sha256 = hashlib.sha256(path.read_bytes()).hexdigest()
+            if file_sha256 != validated["artifact"]["file_sha256"]:
+                raise HTTPException(503, "Independent opportunity audit changed during read")
+            return {"artifact": identity, "file_sha256": file_sha256, "data": data}
         if identity == "market-universe-coverage":
             ledger, _ = read_artifact(repository, "ledger")
             validated = market_universe_coverage_overview(repository, ledger)
