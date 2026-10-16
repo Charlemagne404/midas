@@ -101,6 +101,28 @@ test('shows the bounded discovery cohort and links its finalized evidence', asyn
   ).toBeVisible();
   await expect(page.getByText(/Latest read-only campaign snapshot/)).toBeVisible();
 
+  const coverageDesignAudit = page.getByTestId('coverage-design-audit');
+  await expect(coverageDesignAudit).toBeVisible();
+  await expect(coverageDesignAudit.getByText('Audited 25 scans · pilot now at 26')).toBeVisible();
+  await expect(coverageDesignAudit.getByText('99.80%')).toBeVisible();
+  await expect(coverageDesignAudit.getByText('82.96%')).toBeVisible();
+  await expect(coverageDesignAudit.getByText(/bounded query union/)).toBeVisible();
+  const coverageAuditLink = coverageDesignAudit.getByRole('link', { name: 'Inspect audit' });
+  await expect(coverageAuditLink).toHaveAttribute(
+    'href',
+    '/api/veritas/artifacts/coverage-design-audit',
+  );
+  const coverageAuditResponse = await page.request.get(
+    '/api/veritas/artifacts/coverage-design-audit',
+  );
+  expect(coverageAuditResponse.ok()).toBeTruthy();
+  const coverageAuditArtifact = await coverageAuditResponse.json();
+  expect(coverageAuditArtifact.artifact).toBe('coverage-design-audit');
+  expect(coverageAuditArtifact.data.analysis_version).toBe('veritas-coverage-design-audit-v2');
+  expect(coverageAuditArtifact.data.source.event_count).toBe(25);
+  expect(coverageAuditArtifact.data.analysis.fully_supported_scan_count).toBe(23);
+  expect(coverageAuditArtifact.data.interpretation.no_venue_wide_inference).toBe(true);
+
   const snapshotLink = page.getByRole('link', { name: /Inspect latest immutable snapshot/ });
   await expect(snapshotLink).toHaveAttribute(
     'href',

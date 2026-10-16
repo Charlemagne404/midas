@@ -1,12 +1,12 @@
 # Project Veritas Mission 2 — Current Engineering Report
 
-## Latest update — 2026-10-16T08:17:07Z
+## Latest update — 2026-10-16T08:23:32Z
 
 Mission 2 remains active. Observer scan 57 reports 1,945/2,280 quality-valid pair observations and zero positive top-gross pairs. The A1 market-universe replay and independent raw-source audit remain verified through scan 55: 2,200 observations, 1,882 valid pairs, and zero validity or edge mismatches. They show no positive top-pair, depth, minimum, or fee-qualified results; scan 57 is not included in artifacts 009.
 
 The measurement-only pilot remains at 26/48 scans, with 842/1,040 valid slots across 608 selected markets and one skipped sequence. Audit 002 covers 25 scans, and the API projection correctly marks it stale against the live pilot. The comparison remains descriptive and nonrandomized. The scheduled 08:15:58 Director cycle reconciled the scan-55 child and admitted scan 57. Arena job job-df156882038246b497d9788a completed with no positive gross candidate; the manifest still projects QUEUED until its next scheduled reconciliation. See [Gate A checkpoint 052](VERITAS_MISSION2_GATE_A_CHECKPOINT_052.md), [audit 002](VERITAS_MISSION2_COVERAGE_DESIGN_AUDIT_002.json), [Gate G checkpoint 018](VERITAS_MISSION2_GATE_G_CHECKPOINT_018.md), and H126.
 
-The finalized-source replay caught up at 08:12:56 UTC: 5,677/5,677 segments / 1,460,522,573 bytes and 386,158 quality-valid states across 101 markets. Positive top-ask, full-depth, and minimum-notional results remain zero. Gap detail is partial at 4,242/5,665 replayable segments, with 1,423 segments / 351,838,232 bytes pending and 1,327 campaign-window gaps indexed. Focused API tests (33), the UI test (1), TypeScript, ESLint, and Prettier passed. No full regression or model training was run.
+The finalized-source replay caught up at 08:12:56 UTC: 5,677/5,677 segments / 1,460,522,573 bytes and 386,158 quality-valid states across 101 markets. Positive top-ask, full-depth, and minimum-notional results remain zero. Gap detail is partial at 4,242/5,665 replayable segments, with 1,423 segments / 351,838,232 bytes pending and 1,327 campaign-window gaps indexed. Focused API tests (33), the UI unit test (1), TypeScript, ESLint, and Prettier passed. An isolated browser workflow verifies the inclusion-support card, stale label, audit link and artifact route, and scope limitations: 1 passed in 5.6 seconds. Its temporary API and Vite servers exited and both ports were free afterward. The full regression and hosted deployment remain open; no model training was run. See [Gate H checkpoint 002](VERITAS_MISSION2_GATE_H_CHECKPOINT_002.md) and H127.
 
 ## Previous update — 2026-10-16T07:36:47Z
 

@@ -1,5 +1,22 @@
 # Veritas Mission 2 Operations
 
+## Isolated browser verification — 2026-10-16T08:23:32Z
+
+- The focused Veritas Playwright workflow passed 1 test in 5.6 seconds. It
+  verified the coverage-design audit card, its stale 25-versus-26 scan label,
+  displayed support and yield values, direct artifact endpoint, and
+  no-venue-wide-inference limitation. See [Gate H checkpoint
+  002](VERITAS_MISSION2_GATE_H_CHECKPOINT_002.md).
+- The workflow used the configured temporary API on port 18000 and Vite on
+  port 15173 with a temporary SQLite database and Arena root. Both ports were
+  free after Playwright exited. No hosted service, campaign, or scheduled
+  research job was restarted or modified; no public request, authenticated
+  request, or order was made.
+- This targeted browser check does not replace the full browser suite,
+  Mission 2 regression, hosted deployment check, or preservation audit.
+- The verified run is recorded in [Gate H checkpoint
+  002](VERITAS_MISSION2_GATE_H_CHECKPOINT_002.md) and ledger H127.
+
 - **Latest runtime/resource snapshot:** 2026-10-16T08:17:07Z
 - **Latest source summary:** 2026-10-16T08:12:56Z
 - **Latest gap-detail summary:** 2026-10-16T08:06:29Z

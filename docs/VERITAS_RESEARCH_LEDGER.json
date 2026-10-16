@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-16T08:20:29Z",
+  "updated_at_utc": "2026-10-16T08:23:32Z",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -7423,6 +7423,54 @@
         "orders_submitted": false,
         "authenticated_requests": false,
         "live_market_requests": 0
+      }
+    },
+    {
+      "hypothesis_id": "VERITAS-H127",
+      "experiment_id": "VERITAS-M2-GATE-H-COVERAGE-DESIGN-BROWSER-001",
+      "title": "Does the isolated browser show the audited inclusion-support result, its freshness, and its evidence limits correctly?",
+      "mechanism": "Exercise the current Veritas UI and read-only artifact route in Playwright using the isolated demo API/Vite configuration, and compare the visible audit summary with the receipted local artifact.",
+      "success_metric": "The browser identifies audit 002 as stale against the current pilot, displays the audited support/yield figures and limitation, links to the direct artifact route, and the endpoint returns the expected versioned source counts.",
+      "decision": "Verified for the targeted source-checkout workflow. Playwright passed one Veritas browser test in 5.6 seconds. The test checks the label Audited 25 scans · pilot now at 26, 99.80% support, 82.96% weighted yield, the direct artifact link, 25 source events, 23 fully supported scans, and the no-venue-wide-inference flag. The full suite and hosted deployment remain unverified.",
+      "status": "continue",
+      "dataset_id": "VERITAS-M2-COVERAGE-PILOT-001_current_26_scans_and_COVERAGE-DESIGN-AUDIT-002",
+      "limitations": [
+        "This is one targeted Playwright workflow, not the full frontend/browser or Mission 2 regression suite.",
+        "The run uses isolated local demo API/Vite services and validates the source checkout, not the hosted dashboard.",
+        "Audit 002 covers 25 pilot scans while the active pilot has 26; the browser explicitly presents that freshness difference.",
+        "The audit is conditional on bounded Gamma response unions and provides no venue-wide, causal, economic, or profit inference.",
+        "No new market observations, authenticated requests, or orders were made by the browser workflow."
+      ],
+      "result": {
+        "analysis_version": "veritas-gate-h-coverage-design-browser-v1",
+        "captured_at_utc": "2026-10-16T08:23:32Z",
+        "gate_checkpoint_path": "docs/VERITAS_MISSION2_GATE_H_CHECKPOINT_002.md",
+        "gate_checkpoint_bytes": 1476,
+        "gate_checkpoint_file_sha256": "52bd5ed6e7e2169cdabd6dccc9d7068b6ad57e4970fe588069164b1478696b0a",
+        "coverage_design_audit_file_sha256": "6520390afc2fd8f4582c9b06bbc6a9e1908811daf11d0250ba80c3395d5820c4",
+        "browser_spec_sha256": "201caf4a4ccf1db63a0db78015acf6f06e0f4931bf58142e99fb08efce0bf7d7",
+        "source_file_sha256": {
+          "apps/web/e2e/veritas.spec.ts": "201caf4a4ccf1db63a0db78015acf6f06e0f4931bf58142e99fb08efce0bf7d7",
+          "apps/web/playwright.config.ts": "377051f98ba130cd08d16f1b3631df34893de16ea53948de407e01cf255d787a",
+          "apps/web/src/Veritas.tsx": "ec6d624877260f8da0c254c0ddd8ac1067f43ecf63cf4054e961d8a4f72719d2",
+          "apps/api/veritas.py": "0f2002d8b17178d2190943bf30aa52fb38f577cc26143c81953c25f17fc03eac"
+        },
+        "command": "npm run test:e2e -- --config=playwright.config.ts e2e/veritas.spec.ts",
+        "focused_browser_test": "1 passed in 5.6s",
+        "assertions": "stale 25-versus-26 scan label; 99.80% support; 82.96% weighted yield; direct artifact link and endpoint; 25 source events; 23 fully supported scans; no-venue-wide-inference limitation",
+        "prettier_check": "passed",
+        "eslint_check": "passed",
+        "isolated_api_port": 18000,
+        "isolated_vite_port": 15173,
+        "temporary_services_stopped": true,
+        "ports_free_after_run": true,
+        "hosted_services_restarted": false,
+        "campaigns_modified": false,
+        "orders_submitted": false,
+        "authenticated_requests": false,
+        "public_market_requests": 0,
+        "hosted_deployment_verified": false,
+        "full_mission_regression": "not run"
       }
     }
   ],
