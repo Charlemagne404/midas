@@ -24,6 +24,7 @@ ARTIFACTS = {
     "label-feasibility": "VERITAS_MISSION2_LABEL_FEASIBILITY_001.json",
     "censor-gap-audit": "VERITAS_MISSION2_CENSOR_GAP_AUDIT_001.json",
     "censor-gap-attribution": "VERITAS_MISSION2_CENSOR_GAP_ATTRIBUTION_002.json",
+    # Legacy fallback; newer versions are selected from matching ledger receipts.
     "market-universe-coverage": "VERITAS_MISSION2_MARKET_UNIVERSE_COVERAGE_004.json",
 }
 MAX_ARTIFACT_BYTES = 512 * 1024
@@ -39,13 +40,61 @@ SNAPSHOT_ID = re.compile(r"scan-\d{8}T\d{6}Z-[0-9a-f]{12}\Z")
 COVERAGE_PILOT_ID = "VERITAS-M2-COVERAGE-PILOT-001"
 COVERAGE_PILOT_VERSION = "veritas-coverage-pilot-v1"
 COVERAGE_PILOT_PLAN_SHA256 = "d35f25ef84037f3e9cabf4343e9a01db381b73e8fa6cae0fd0b5fc6e07e279ba"
+COVERAGE_ARTIFACT_PATH = re.compile(
+    r"docs/VERITAS_MISSION2_MARKET_UNIVERSE_COVERAGE_(\d{3,})\.json\Z"
+)
 
 
-def read_artifact(repository: Path, identity: str) -> tuple[dict[str, Any], Path]:
+def market_universe_coverage_artifact_path(
+    repository: Path, ledger: dict[str, Any]
+) -> Path:
+    """Choose the newest hash-receipted coverage artifact that exists locally."""
+    docs = repository / "docs"
+    fallback = docs / ARTIFACTS["market-universe-coverage"]
+    if docs.is_symlink() or not docs.is_dir():
+        return fallback
+    hypotheses = ledger.get("hypotheses")
+    if not isinstance(hypotheses, list):
+        return fallback
+    candidates: list[tuple[int, Path]] = []
+    for item in hypotheses:
+        if not isinstance(item, dict):
+            continue
+        result = item.get("result")
+        if not isinstance(result, dict):
+            continue
+        relative_path = result.get("artifact_path")
+        match = (
+            COVERAGE_ARTIFACT_PATH.fullmatch(relative_path)
+            if isinstance(relative_path, str)
+            else None
+        )
+        if (
+            match is None
+            or result.get("analysis_version") != "veritas-market-universe-coverage-v1"
+            or not isinstance(result.get("artifact_file_sha256"), str)
+        ):
+            continue
+        path = repository / relative_path
+        if path.parent == docs and path.is_file() and not path.is_symlink():
+            candidates.append((int(match.group(1)), path))
+    if not candidates:
+        return fallback
+    return max(candidates, key=lambda candidate: candidate[0])[1]
+
+
+def read_artifact(
+    repository: Path, identity: str, *, ledger: dict[str, Any] | None = None
+) -> tuple[dict[str, Any], Path]:
     name = ARTIFACTS.get(identity)
     if name is None:
         raise HTTPException(404, "Unknown Veritas evidence artifact")
-    path = repository / "docs" / name
+    if identity == "market-universe-coverage":
+        if ledger is None:
+            ledger, _ = read_artifact(repository, "ledger")
+        path = market_universe_coverage_artifact_path(repository, ledger)
+    else:
+        path = repository / "docs" / name
     if path.is_symlink() or not path.is_file():
         raise HTTPException(404, "Veritas evidence has not been generated")
     if path.stat().st_size > MAX_ARTIFACT_BYTES:
@@ -2309,12 +2358,12 @@ def market_universe_coverage_overview(
     repository: Path, ledger: dict[str, Any]
 ) -> dict[str, Any] | None:
     """Validate and project the saved public market-universe coverage report."""
-    path = repository / "docs" / ARTIFACTS["market-universe-coverage"]
+    path = market_universe_coverage_artifact_path(repository, ledger)
     if path.parent.is_symlink() or path.is_symlink():
         raise HTTPException(404, "Veritas market-universe coverage is unavailable")
     if not path.exists():
         return None
-    value, path = read_artifact(repository, "market-universe-coverage")
+    value, path = read_artifact(repository, "market-universe-coverage", ledger=ledger)
     artifact_bytes = path.read_bytes()
     try:
         artifact_value = json.loads(artifact_bytes)
@@ -2327,11 +2376,14 @@ def market_universe_coverage_overview(
     value = artifact_value
     artifact_digest = hashlib.sha256(artifact_bytes).hexdigest()
     hypotheses = ledger.get("hypotheses")
+    relative_path = path.relative_to(repository).as_posix()
     receipts = (
         [
             item
             for item in hypotheses
-            if isinstance(item, dict) and item.get("hypothesis_id") == "VERITAS-H110"
+            if isinstance(item, dict)
+            and isinstance(item.get("result"), dict)
+            and item["result"].get("artifact_path") == relative_path
         ]
         if isinstance(hypotheses, list)
         else []
@@ -2339,8 +2391,7 @@ def market_universe_coverage_overview(
     receipt_result = receipts[0].get("result") if len(receipts) == 1 else None
     if (
         not isinstance(receipt_result, dict)
-        or receipt_result.get("artifact_path")
-        != "docs/VERITAS_MISSION2_MARKET_UNIVERSE_COVERAGE_004.json"
+        or receipt_result.get("artifact_path") != relative_path
         or receipt_result.get("artifact_file_sha256") != artifact_digest
         or receipt_result.get("analysis_version") != "veritas-market-universe-coverage-v1"
     ):
@@ -2863,7 +2914,7 @@ def router(repository: Path) -> APIRouter:
             validated = market_universe_coverage_overview(repository, ledger)
             if validated is None:
                 raise HTTPException(404, "Veritas market-universe coverage is unavailable")
-            data, path = read_artifact(repository, identity)
+            data, path = read_artifact(repository, identity, ledger=ledger)
             file_sha256 = hashlib.sha256(path.read_bytes()).hexdigest()
             if file_sha256 != validated["artifact"]["file_sha256"]:
                 raise HTTPException(503, "Veritas market-universe coverage changed during read")

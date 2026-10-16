@@ -1471,3 +1471,8 @@ The bounded offline A1 replay now covers 51 saved snapshots / 33,318,338 compres
 ## Gate A / Gate B checkpoint — scan 52
 
 The bounded A1 replay is verified through 52 snapshots / 33,957,407 compressed bytes. It reports 6,195 bounded-union Gamma IDs, 2,180 eligible at least once, 926 selected markets, and 1,788/2,080 current-replay valid pairs; all 52 eligibility counts match and positive top-gross pairs remain zero. Independent source replay 006 matches all 1,788 v4 valid states and top edges with no mismatches; all gross, depth, minimum, and fee gates remain zero. The completed scan-52 Arena child awaits the scheduled 06:15 Director manifest reconciliation. See [Gate A checkpoint 048](VERITAS_MISSION2_GATE_A_CHECKPOINT_048.md), [Gate B checkpoint 007](VERITAS_MISSION2_GATE_B_CHECKPOINT_007.md), and inventory 070.
+
+
+## Gate G checkpoint 015 — latest receipted coverage projection
+
+The source API no longer pins the market-universe route to artifact 004/H110. It resolves the highest numbered existing coverage artifact with a matching ledger receipt, then validates its file hash and analysis version. A direct in-process projection returned coverage artifact 006 at scan 52, 1,788 valid pairs, and zero positive top-gross pairs. Older artifact 004/H110 receipts remain supported. Automated API tests and browser checks were not run; this source-only change is not deployed. See [Gate G checkpoint 015](VERITAS_MISSION2_GATE_G_CHECKPOINT_015.md).

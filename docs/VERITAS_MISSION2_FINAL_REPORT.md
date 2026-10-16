@@ -860,3 +860,8 @@ Coverage artifact 006 extends the bounded A1 replay to 52 snapshots / 2,080 sele
 The 05:45 Director cycle reconciled scan 51 and admitted scan 52. Its Arena child completed all 52 events, found 1,788 valid pairs, and has complete empty candidate evidence and replay; the Director manifest still projects it as QUEUED pending 06:15:10 UTC. The 05:40 source analysis caught up to all 5,382 available finalized segments with 369,257 valid states across 91 markets and zero positive top-ask/full-depth states. The 05:35 gap-detail batch advanced to 3,132/5,374 segments, with 2,240 / 608,836,620 bytes pending and 789 campaign-window gaps. The fixed pilot is 21/48 scans, 685/840 valid slots, 520 markets, and one skipped sequence.
 
 At 05:47 UTC, the Reality recorder, shadow, Midas/Reality APIs and web services were active; archive remained failed after the 04:33:35 timeout. Host available RAM was 9.8 GiB, swap use 3.8/4 GiB, and the root disk was 56% used with 197 GiB free. No service, campaign, or research job was manually restarted or triggered.
+
+
+## Gate G source update — current A1 coverage projection (2026-10-16 05:53:56 UTC)
+
+The read-only API now follows the latest versioned coverage artifact with a matching ledger receipt. Its in-process projection reads artifact 006 through scan 52 (1,788 valid pairs; zero positive top-gross pairs) and matches the artifact file hash. Automated tests, browser checks, and deployment remain outstanding. The change is confined to `apps/api/veritas.py`; it does not alter the source revision pinned by the pending scan-52 Director reconciliation. See [Gate G checkpoint 015](VERITAS_MISSION2_GATE_G_CHECKPOINT_015.md).
