@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-16T17:39:12Z",
+  "updated_at_utc": "2026-10-16T17:47:55Z",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -8563,6 +8563,37 @@
         "Different timeout ceilings were configured, though both runs completed normally far below their limits.",
         "The current branch was compared with its immediately preceding branch version, not accepted as the frozen campaign implementation.",
         "No live worker, source cursor, production journal, campaign file, economic outcome, or order state was changed."
+      ]
+    },
+    {
+      "hypothesis_id": "VERITAS-H149",
+      "experiment_id": "VERITAS-M2-SHADOW-READER-MULTISEG-001",
+      "dataset_id": "shadow-runtime-82a71b6db289238d1ac23965efee424dd5983a97f13817704d8590fb39631478",
+      "title": "Does the committed reader optimization preserve exact durable semantics and reduce CPU across a four-segment finalized-source window?",
+      "mechanism": "The maintained top-of-book cache and tail reader refresh deferral should reduce repeated full-depth and directory scans without changing reconstruction state, research rows, or event-journal lineage.",
+      "success_metric": "Process four sequential sealed segments from the same runtime cursor with exact engine, context, research and journal hash parity while reducing CPU under matched resource caps.",
+      "status": "continue",
+      "decision": "Retain the branch optimization for split/resume verification and additional representative profiling. Do not alter or restart the frozen worker; live deployment requires a separately versioned successor and continuity review.",
+      "result": {
+        "artifact_path": "docs/VERITAS_MISSION2_SHADOW_READER_BENCHMARK_006.json",
+        "artifact_sha256": "43bcabeb3e990a77f81ac8b75261bd676a6e5e9f2a49f90074230c250339dc3f",
+        "semantic_equal": true,
+        "segments": 4,
+        "records": 906,
+        "frames": 777,
+        "baseline_cpu_seconds": 17.293326178999997,
+        "current_cpu_seconds": 3.230238013,
+        "cpu_reduction_percent": 81.321,
+        "baseline_wall_seconds": 172.98999462707434,
+        "current_wall_seconds": 32.30271353095304,
+        "wall_reduction_percent": 81.327,
+        "independent_passes_per_implementation": 1
+      },
+      "limitations": [
+        "One paired four-segment window; no repeated or extended live-catch-up claim.",
+        "This compares the composite branch against frozen code, not the incremental tail refresh by itself.",
+        "One replay follow-up was an observed public measurement, 123 were censored, and there are no actual fills or independent new market observations.",
+        "No production service or frozen campaign state was changed."
       ]
     }
   ],

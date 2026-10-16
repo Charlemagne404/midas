@@ -538,3 +538,22 @@ log for the current evidence and limitations.
    evidence.
 
 See Gate C checkpoint 024 and benchmark 005.
+
+
+## Active Mission 2 queue — 2026-10-16 17:47 UTC
+
+1. **Check resumable multi-segment continuity.** The committed branch now has
+   exact parity on a four-segment replay and an 81.32% process CPU reduction
+   versus the frozen implementation on this window. Validate a split/resume
+   sequence with persistent isolated journal and source cursor before planning
+   any versioned successor.
+2. **Preserve the frozen live campaign while assessing recovery criteria.**
+   The shadow service remains active but still has one historical restart;
+   no canary has changed its cursor or journal. Any future recovery mechanism
+   must preserve source continuity and journal integrity.
+3. **Continue evidence-gated economic work.** This replay produced no new
+   market states or independent opportunities and no execution ground truth.
+   Keep the no-trade posture and defer model training until candidate-relevant
+   targets exist.
+
+See Gate C checkpoint 025 and benchmark 006.

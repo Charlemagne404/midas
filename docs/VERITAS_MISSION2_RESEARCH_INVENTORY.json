@@ -177,7 +177,7 @@
     "source_bytes": 551636,
     "source_event_count": 30
   },
-  "captured_at_utc": "2026-10-16T17:39:12Z",
+  "captured_at_utc": "2026-10-16T17:47:55Z",
   "censoring_analysis": {
     "analysis_source_file": "packages/midas/veritas/forensics.py",
     "analysis_source_sha256": "0b055a21c4b423bbf02cc9c240f26f18263fb8342cd72dec686705d2601a420c",
@@ -2900,7 +2900,7 @@
     "unique_market_ids": 558,
     "window_minutes": 751.53
   },
-  "inventory_id": "VERITAS-M2-RESEARCH-INVENTORY-084",
+  "inventory_id": "VERITAS-M2-RESEARCH-INVENTORY-085",
   "latest_scan_captured_at_utc": "2026-10-16T16:30:57.897746+00:00",
   "latest_scan_id": "scan-20261016T163057Z-96c79e6c489c",
   "latest_source_analysis_checkpoint": {
@@ -8574,10 +8574,10 @@
   "research_inventory_063": "Current numbered inventory for the scheduled 04:20 gap-detail batch, read-only censor-attribution refresh 002, and dashboard receipt verification; inventory 062 is preserved unchanged.",
   "research_ledger_current": {
     "artifact_path": "docs/VERITAS_RESEARCH_LEDGER.json",
-    "artifact_sha256": "7511e1b58f459b8ea91ec1b9748697f7cf492eeb864f57d9745571939d7c7426",
-    "updated_at_utc": "2026-10-16T17:39:12Z"
+    "artifact_sha256": "8c69c59d2de5be98adf42bb17b4613169b9bc601969d5776daf563243470eee5",
+    "updated_at_utc": "2026-10-16T17:47:55Z"
   },
-  "research_ledger_sha256": "7511e1b58f459b8ea91ec1b9748697f7cf492eeb864f57d9745571939d7c7426",
+  "research_ledger_sha256": "8c69c59d2de5be98adf42bb17b4613169b9bc601969d5776daf563243470eee5",
   "source_analysis_checkpoint_063": {
     "active_segment_read": false,
     "catalog_segment_count": 5206,
@@ -13799,5 +13799,31 @@
     "live_collector_active": true,
     "live_collector_restart_count": 0
   },
-  "shadow_reader_benchmark_005_sha256": "865087edbedecfd088785cd7a894eeb97913881e026e9067501b8bebadb79048"
+  "shadow_reader_benchmark_005_sha256": "865087edbedecfd088785cd7a894eeb97913881e026e9067501b8bebadb79048",
+  "research_inventory_085": {
+    "artifact_path": "docs/VERITAS_MISSION2_RESEARCH_INVENTORY_085.json",
+    "artifact_sha256": "b56216588d9da8ba9078ca6a067d692161bd0d55d34df3572f607e9bd528950d",
+    "based_on_inventory": "docs/VERITAS_MISSION2_RESEARCH_INVENTORY_084.json",
+    "based_on_inventory_sha256": "c42d11b5533140c9e3b55eed1839c98d7191b24011059c10d4df27284a7cb1d3",
+    "capture_scope": "Record the paired four-segment frozen-versus-committed-branch reader canary and verify postflight campaign/service state; other host and research metrics retain their explicit earlier timestamps."
+  },
+  "shadow_multisegment_benchmark_006": {
+    "artifact_path": "docs/VERITAS_MISSION2_SHADOW_READER_BENCHMARK_006.json",
+    "artifact_sha256": "43bcabeb3e990a77f81ac8b75261bd676a6e5e9f2a49f90074230c250339dc3f",
+    "checkpoint_path": "docs/VERITAS_MISSION2_GATE_C_CHECKPOINT_025.md",
+    "pinned_result_sha256": "d290d2d6fd63b06764fdd92f61a70a258f82bd369c366b758832f89b03fde4a1",
+    "branch_result_sha256": "044c142b408b489a75c1ed7dac147f45bdf697f6e8c63353062c123d7c81a5bc",
+    "segments": 4,
+    "records": 906,
+    "frames": 777,
+    "pinned_cpu_seconds": 17.293326178999997,
+    "branch_cpu_seconds": 3.230238013,
+    "cpu_reduction_percent": 81.321,
+    "pinned_wall_seconds": 172.98999462707434,
+    "branch_wall_seconds": 32.30271353095304,
+    "wall_reduction_percent": 81.327,
+    "semantic_hashes_equal": true,
+    "campaign_changed": false
+  },
+  "shadow_reader_benchmark_006_sha256": "43bcabeb3e990a77f81ac8b75261bd676a6e5e9f2a49f90074230c250339dc3f"
 }

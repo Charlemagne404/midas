@@ -1759,3 +1759,16 @@ did not write the production cursor or journal and provides no evidence of
 forward catch-up. See [Gate C checkpoint
 024](VERITAS_MISSION2_GATE_C_CHECKPOINT_024.md) and [benchmark
 005](VERITAS_MISSION2_SHADOW_READER_BENCHMARK_005.json).
+
+
+## 2026-10-16 17:47 UTC — four-segment canary postflight
+
+The pinned and committed-branch canaries completed sequentially without
+timeout. The Reality collector and frozen shadow remained active, with
+restart counts 0 and 1. Campaign SHA-256 remained
+`aa8acb2b46823c1a1e3ac5d01a57dde917746c2c7471098ae2a4598875e322f5`; no
+benchmark scope remained active. Four source-segment state and journal hashes
+matched exactly. The branch used 3.23 CPU seconds versus 17.29 in the pinned
+run. This remains an offline engineering canary, not a live recovery. See
+[Gate C checkpoint 025](VERITAS_MISSION2_GATE_C_CHECKPOINT_025.md) and
+[benchmark 006](VERITAS_MISSION2_SHADOW_READER_BENCHMARK_006.json).

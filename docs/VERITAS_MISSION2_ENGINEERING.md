@@ -1704,3 +1704,16 @@ focused suite passed 51 tests; Ruff and formatting passed, while strict Mypy
 for the newest change was not confirmed. See [Gate C checkpoint
 024](VERITAS_MISSION2_GATE_C_CHECKPOINT_024.md) and [benchmark
 005](VERITAS_MISSION2_SHADOW_READER_BENCHMARK_005.json).
+
+
+## Gate C checkpoint 025 — four-segment durable replay
+
+A paired replay over four sequential segments preserved the frozen
+implementation's engine, context, research and journal hashes on committed
+branch `40d1207`. Under identical 10% CPU, 384 MiB memory and zero-swap caps,
+CPU fell from 17.29 to 3.23 seconds (81.32%) and wall time from 172.99 to
+32.30 seconds. This is one historical window; it does not prove sustained
+live catch-up. One public-measurement follow-up was observed and 123 were
+censored; no fills or new market collection resulted. See [Gate C checkpoint
+025](VERITAS_MISSION2_GATE_C_CHECKPOINT_025.md) and [benchmark
+006](VERITAS_MISSION2_SHADOW_READER_BENCHMARK_006.json).
