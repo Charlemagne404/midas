@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-16T05:06:29Z",
+  "updated_at_utc": "2026-10-16T05:17:20Z",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -6406,10 +6406,104 @@
         "A reported timestamp age over five seconds is not independently labeled as a stale or executable quote.",
         "The experiment evaluates no fee, liquidity, order-arrival, fill, or strategy-profitability gate."
       ]
+    },
+    {
+      "hypothesis_id": "VERITAS-H113",
+      "title": "Does the scan-pinned v4 economic qualification preserve the no-trade decision through scan 51?",
+      "mechanism": "Run the bounded, source-pinned v4 qualification over each finalized selected market-pair event, then require full candidate source replay for any positive gross candidate before a result can be promoted.",
+      "experiment_id": "VERITAS-M2-ECO-QUAL-001-V4-RUN-198c7ec6b7b9",
+      "dataset_id": "198c7ec6b7b9a68be907e38ea0b662f4fee87763e852f7e067250a4677f47806",
+      "success_metric": "Complete the scan-pinned 51-event qualification, report every gross/depth/minimum/fee gate, and require complete candidate evidence and independent replay without authenticated requests or orders.",
+      "status": "continue",
+      "decision": "The 05:15 scheduled Director cycle reconciled scan 50 and admitted scan 51. Arena job job-33ab2ea94205478f94f7880f completed all 51 events with 1,755/2,040 quality-valid pairs and zero positive states at all five economic gates. Candidate evidence is complete with zero rows, and independent replay is complete with zero candidates. Keep no-trade. The Director manifest records scan 50 as last qualified and still projects the completed scan-51 child as QUEUED until the scheduled 05:45:02 UTC reconciliation; no manual poll or retry was used.",
+      "result": {
+        "captured_at_utc": "2026-10-16T05:15:47+00:00",
+        "artifact_path": "data/arena/findings/veritas-qualification-v1-08a84f34c946e743/manifest.json",
+        "artifact_id": "veritas-qualification-v1-08a84f34c946e743",
+        "artifact_file_sha256": "b3ae96a6c754292b483b4f82102c117f97ec2c851a2463c315309198bf6b2161",
+        "experiment_sha256": "dbe582adf7230b2e2ed24544980d62086334574218463d2f16a348d97f73fa5d",
+        "source_manifest_file_path": "data/arena/jobs/job-33ab2ea94205478f94f7880f/source-manifest.json",
+        "source_manifest_file_sha256": "decf263a3172020337d14899e0d2468825e252a4a3e8b5b6ce84ae42f486ae97",
+        "source_manifest_event_count": 51,
+        "source_manifest_bytes": 938775,
+        "job_record_path": "data/arena/jobs/job-33ab2ea94205478f94f7880f/job.json",
+        "job_record_sha256": "75b11363a91e121e623f725e6acb84127440033cfc37bec9d59c351e3c98a980",
+        "job_exit_status": 0,
+        "job_progress_done": 51,
+        "job_progress_total": 51,
+        "job_elapsed_seconds": 3.714262698078528,
+        "job_cpu_seconds": 1.658,
+        "analysis_version": "veritas-economic-qualification-comparison-v4",
+        "snapshot_count": 51,
+        "selected_market_observation_count": 2040,
+        "quality_valid_pairs": 1755,
+        "invalid_pairs": 285,
+        "unique_market_ids": 903,
+        "top_pair_edge_per_share": {
+          "count": 1755,
+          "maximum_per_share": "-0.001",
+          "median_nearest_rank_per_share": "-0.020",
+          "minimum_per_share": "-0.996",
+          "positive_count": 0
+        },
+        "economic_qualification_funnel": [
+          {
+            "criterion": "unchanged_top_ask_gross_sign",
+            "positive_states": 0,
+            "valid_state_rate": 0.0
+          },
+          {
+            "criterion": "full_displayed_depth_gross",
+            "positive_states": 0,
+            "valid_state_rate": 0.0
+          },
+          {
+            "criterion": "full_depth_and_per_leg_minimum_notional",
+            "positive_states": 0,
+            "valid_state_rate": 0.0
+          },
+          {
+            "criterion": "single_match_fee_sensitivity_positive",
+            "positive_states": 0,
+            "valid_state_rate": 0.0
+          },
+          {
+            "criterion": "fragmentation_safe_fee_sensitivity_positive",
+            "positive_states": 0,
+            "valid_state_rate": 0.0
+          }
+        ],
+        "gross_candidate_evidence_complete": true,
+        "gross_candidate_evidence_count": 0,
+        "gross_candidate_replay": {
+          "candidate_count": 0,
+          "candidates": [],
+          "complete": true,
+          "replayed_candidate_count": 0,
+          "source_code_sha256": "e49ad47ab09f71dd56f93795d159d660d2eb6e9fee8e40df7c3790115994595f",
+          "status": "NO_POSITIVE_CANDIDATES_TO_REPLAY",
+          "version": "veritas-gross-candidate-source-replay-v2"
+        },
+        "authenticated_requests": false,
+        "orders_submitted": false,
+        "director_manifest_file_sha256_at_capture": "669117f3b0acdfb026c0b786ef1b36722cff0cba287c45c4e2c61fad9122021b",
+        "director_last_qualified_scan_id": "scan-20261016T043140Z-6dbd91418e78",
+        "director_current_job_id": "job-33ab2ea94205478f94f7880f",
+        "director_current_job_state": "QUEUED",
+        "director_projection_state": "RUNNING",
+        "director_next_reconciliation_utc": "2026-10-16T05:45:02Z"
+      },
+      "limitations": [
+        "This is a selected, intermittent 51-snapshot panel and is not a venue-wide denominator or continuous quote history.",
+        "The qualification tests candidate discovery and economic gates, not strategy P&L, realized fills, order arrival, or profitability.",
+        "The fee results are hypothetical and use displayed public-book depth; they do not prove executable liquidity.",
+        "The child job completed, but the Director manifest projection remains queued until its next scheduled cycle.",
+        "No authenticated requests or orders were used."
+      ]
     }
   ],
   "next_research_questions": [
-    "Does the scheduled Director cycle reconcile the completed scan-50 child and qualify the latest saved scan without duplicate admission?",
+    "Does the 05:45 scheduled Director cycle reconcile the completed scan-51 child without duplicate admission?",
     "Can documented venue timestamp semantics or an independent sequence-bearing source establish continuity beyond endpoint timestamp age?",
     "How do the completed coverage pilot strata, missed sequences, storage, and compute costs affect the next observation design?",
     "Can finalized-source gap indexing advance without reading active segments, and which censored outcomes remain beyond the indexed prefix?"

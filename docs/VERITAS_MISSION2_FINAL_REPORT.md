@@ -1,6 +1,31 @@
 # Project Veritas Mission 2 — Current Engineering Report
 
-## Latest update — 2026-10-16T05:06:29Z
+## Latest update — 2026-10-16T05:17:20Z
+
+Scan 51 completed its scheduled v4 Arena qualification: 1,755/2,040 pairs
+were quality-valid across 903 selected markets; the maximum top-pair edge was
+-$0.001/share, and all five gross, depth, minimum, and fee gates remained
+zero-positive. Candidate evidence and independent replay are complete with
+zero rows. The Director reconciled scan 50 and admits scan 51, whose completed
+child remains projected as `QUEUED` until the 05:45:02 UTC scheduled cycle.
+See [Gate F checkpoint 032](VERITAS_MISSION2_GATE_F_CHECKPOINT_032.md) and
+ledger H113.
+
+The finalized-source analyzer now covers 5,324/5,324 cataloged segments / 1.376
+GB, with 361,068 quality-valid states across 91 markets and no positive
+top-ask, full-depth, or minimum-notional state. Its campaign-window readiness
+remains collecting. See [Gate C checkpoint
+017](VERITAS_MISSION2_GATE_C_CHECKPOINT_017.md).
+
+The 51-snapshot timestamp/content association audit remains bounded and does
+not prove freshness semantics; see [Gate B checkpoint
+005](VERITAS_MISSION2_GATE_B_CHECKPOINT_005.md). Midas and Reality APIs
+returned READY in demo mode, while the archive service remains failed after
+timeout. Mission 2 remains active; no full regression was run. See
+[operations](VERITAS_MISSION2_OPERATIONS.md) and [inventory
+067](VERITAS_MISSION2_RESEARCH_INVENTORY_067.json).
+
+## Previous update — 2026-10-16T05:06:29Z
 
 The new bounded reported timestamp audit verifies 51 saved snapshots / 4,080
 book observations. All 2,197 content-changing repeated-asset endpoints had an

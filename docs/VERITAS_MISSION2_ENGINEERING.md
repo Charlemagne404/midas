@@ -1,4 +1,30 @@
-## Latest checkpoint — 2026-10-16T05:01:27Z, reported timestamp audit and scan 51
+## Latest checkpoint — 2026-10-16T05:17:20Z, scan-51 qualification and source catch-up
+
+The 05:15 Director cycle reconciled scan 50 and admitted scan 51 to Arena.
+The scan-51 child completed 51/51 events with 1,755/2,040 quality-valid pairs
+and zero positive states at all five economic gates. Candidate evidence is
+complete with zero rows; independent candidate replay is complete with zero
+candidates. The maximum top-pair edge is -$0.001/share. The Director manifest
+now records scan 50 as last qualified and scan 51's completed child remains
+`QUEUED` in its projection until the scheduled 05:45:02 UTC reconciliation.
+See [Gate F checkpoint
+032](VERITAS_MISSION2_GATE_F_CHECKPOINT_032.md) and ledger H113.
+
+The scheduled finalized-source replay advanced to 5,324/5,324 cataloged
+segments / 1,375,911,587 bytes, with 361,068 quality-valid states across 91
+markets and zero positive top-ask, full-depth, or minimum-notional states. It
+read no active segment. The campaign window remains in collecting status. See
+[Gate C checkpoint 017](VERITAS_MISSION2_GATE_C_CHECKPOINT_017.md).
+
+The reported-timestamp audit remains pinned through 51 snapshots; its
+endpoint association finding is recorded in [Gate B checkpoint
+005](VERITAS_MISSION2_GATE_B_CHECKPOINT_005.md) and ledger H112. Services and
+the frozen shadow were left untouched. Both APIs returned READY in demo mode;
+the archive unit remains failed after timeout. No full Mission 2 regression
+was run. See [inventory 067](VERITAS_MISSION2_RESEARCH_INVENTORY_067.json)
+and [operations](VERITAS_MISSION2_OPERATIONS.md). Mission 2 remains active.
+
+## Previous checkpoint — 2026-10-16T05:01:27Z, reported timestamp audit and scan 51
 
 The bounded offline timestamp/content audit verified and replayed all 51 saved
 snapshots (33,318,338 compressed bytes; 4,080 retained book observations;
