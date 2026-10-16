@@ -28,7 +28,13 @@ class Tail:
         self.seals: list[dict[str, Any]] = []
         self.verified_seals: set[str] = set()
 
-    def refresh(self) -> None:
+    def refresh(self, *, force: bool = False) -> None:
+        # Once a segment is open, its file handle remains valid while it is
+        # appended to and when it is atomically renamed to .seg. Unrelated
+        # directory entries (for example the recorder's status.json) must not
+        # trigger a full segment inventory on every source record.
+        if self.handle is not None and not force:
+            return
         if time.monotonic() - self.checked < 0.5:
             return
         self.checked = time.monotonic()
@@ -57,8 +63,8 @@ class Tail:
         if stem is None:
             stem = self.files[0].stem
             self.cursor["segment"] = stem
-        current = next((p for p in self.files if p.stem == stem), None)
         if self.handle is None:
+            current = next((p for p in self.files if p.stem == stem), None)
             if current is None:
                 return None
             try:
@@ -86,6 +92,10 @@ class Tail:
                 ):
                     raise ValueError("Final source segment integrity/continuity mismatch")
                 self.verified_seals.add(stem)
+                # Refresh at a sealed boundary so a newly rotated segment is
+                # discovered before advancing the source cursor. The refresh
+                # interval still bounds scans when the live tail is idle.
+                self.refresh(force=True)
                 following = next((p for p in self.files if p.stem > stem), None)
                 if following:
                     self.seals.append(info)
@@ -202,10 +212,11 @@ class Context:
                 if book["last"][0] != row["ordinal"] or book["issue"]:
                     continue
                 h = self.history.setdefault(token, deque(maxlen=10000))
+                best_ask = self.engine.top_for(token)[1]
                 h.append(
                     dict(
                         received_ns=row["received_ns"],
-                        best_ask=str(min(book["asks"])) if book["asks"] else None,
+                        best_ask=str(best_ask) if best_ask is not None else None,
                         ask_quantity=str(sum(book["asks"].values(), Decimal(0))),
                         ref=ref,
                     )
@@ -313,6 +324,7 @@ class Context:
             }
             for t, b in s["books"].items()
         }
+        e.rebuild_top_cache()
         e.tokens = s["tokens"]
         e.counts = Counter(s["counts"])
         e.recent = deque(s["recent"], maxlen=4096)

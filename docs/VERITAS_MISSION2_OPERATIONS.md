@@ -1716,3 +1716,46 @@ events. Its finding has complete zero-candidate evidence at all five gross,
 depth, minimum, and fee qualification checks. The Director's current summary
 still projects scan 70 as last qualified; scan 71 reconciliation remains for
 the next scheduled cycle. No manual retry or additional admission occurred.
+
+## 2026-10-16 16:38 UTC — current collection and top-cache canary
+
+The Reality recorder and frozen shadow service remain active; restart counts
+are zero and one respectively. The campaign file SHA-256 remains
+`aa8acb2b46823c1a1e3ac5d01a57dde917746c2c7471098ae2a4598875e322f5`. The
+shadow reports `WARMING_OR_LAGGED_SOURCE`, 203,883 lagged frames skipped, a
+source receipt about 23.5 hours old, and a decision about 31.7 hours old. It
+still has 10,253 decisions, 47,911 observations, 937 observed follow-ups, and
+40,075 censored follow-ups. No campaign policy, journal, or worker was changed.
+
+The finalized-source opportunity summary generated at 16:12 UTC covers
+6,614/6,614 cataloged segments, 1.703 GB of source, 482,337 quality-valid
+states across 110 markets, and zero positive top, quantity-depth, full-depth,
+or minimum-notional states. Gap-detail analysis generated at 16:36 UTC reports
+6,663 processed of 6,665 catalog entries, no pending finalized bytes, and
+2,525 campaign-window gap events (2,521 book resynchronizations and 4
+connection failures). The snapshot observer is at scan 74; the V2 coverage
+pilot is 13/48 scans (398/520 quality-valid slots, 390 distinct markets, no
+skipped scan sequences). This remains intermittent sampling.
+
+At 16:38 UTC, host load was 0.87/1.11/1.05, available RAM 9.4 GiB, swap 4.0/4.0
+GiB, and filesystem use 57% with 196 GB free. Veritas timers remain enabled.
+The isolated two-segment top-cache canary used a 5% CPU / 384 MiB memory cap,
+matched baseline semantics, and finished normally. It reduced aggregate CPU
+by 4.82% in one paired pass; this does not establish live catch-up. Full
+details are in [Gate C checkpoint 023](VERITAS_MISSION2_GATE_C_CHECKPOINT_023.md)
+and [benchmark 004](VERITAS_MISSION2_SHADOW_READER_BENCHMARK_004.json).
+
+
+## 2026-10-16 17:39 UTC — tail-refresh canary postflight
+
+The isolated 5% CPU canary completed without timeout. The Reality collector
+and frozen shadow remained active; service restart counts were 0 and 1, and
+the campaign file SHA-256 remained
+`aa8acb2b46823c1a1e3ac5d01a57dde917746c2c7471098ae2a4598875e322f5`. No
+benchmark scope remained active after completion. The paired one-segment
+replay matched all engine, context, research and isolated-journal hashes,
+using 1.406 CPU seconds versus 5.977 in the pre-tail branch run. This canary
+did not write the production cursor or journal and provides no evidence of
+forward catch-up. See [Gate C checkpoint
+024](VERITAS_MISSION2_GATE_C_CHECKPOINT_024.md) and [benchmark
+005](VERITAS_MISSION2_SHADOW_READER_BENCHMARK_005.json).

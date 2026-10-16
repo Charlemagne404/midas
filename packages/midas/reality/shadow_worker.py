@@ -383,9 +383,19 @@ class Shadow:
         due = self.next_decision.get(condition, 0)
         fast = False
         if reason is None:
-            books = [self.ctx.engine.books[t] for t in market["tokens"]]
-            fast = sum(min(b["asks"]) for b in books) < 1 and all(
-                b["asks"][min(b["asks"])] >= D(self.i["quantity"]) for b in books
+            token_best_asks = [
+                (token, self.ctx.engine.top_for(token)[1]) for token in market["tokens"]
+            ]
+            available_asks = [ask for _, ask in token_best_asks if ask is not None]
+            quantity = D(self.i["quantity"])
+            fast = (
+                len(available_asks) == len(token_best_asks)
+                and sum(available_asks, D(0)) < 1
+                and all(
+                    self.ctx.engine.books[token]["asks"][ask] >= quantity
+                    for token, ask in token_best_asks
+                    if ask is not None
+                )
             )
         if now < due and not fast:
             return

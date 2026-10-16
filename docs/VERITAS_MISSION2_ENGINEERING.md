@@ -1676,3 +1676,31 @@ minimum, and fee gates. The Director still awaits its next scheduled manifest
 reconciliation. Model and strategy readiness remain blocked on missing
 candidate-relevant evidence. See [Gate F checkpoint
 036](VERITAS_MISSION2_GATE_F_CHECKPOINT_036.md).
+
+## Gate C checkpoint 023 — maintained top-of-book cache
+
+The branch now maintains best bid/ask values during snapshot and price-delta
+reconstruction, rebuilds the derived cache after runtime restore, and uses it
+in shadow history and the fast opportunity check. A sequential two-segment
+canary matched engine, context, research, and journal hashes against the
+baseline. Aggregate CPU fell 4.82% in this single paired pass; the first
+segment was unchanged and the second was faster. Treat the reduction as
+preliminary. The frozen worker was not restarted or changed. The focused suite
+passes 49 tests, with Ruff, formatting, strict Mypy, and diff checks passing.
+See [Gate C checkpoint 023](VERITAS_MISSION2_GATE_C_CHECKPOINT_023.md) and
+[benchmark 004](VERITAS_MISSION2_SHADOW_READER_BENCHMARK_004.json).
+
+
+## Gate C checkpoint 024 — durable tail refresh avoidance
+
+The tail reader now skips directory inventory and cached-path stem searches
+while a source segment handle is open, then forces an inventory refresh at a
+sealed segment boundary. A one-segment paired replay under the same 5% CPU,
+384 MiB memory, and zero-swap limits retained identical engine, context,
+research, and journal hashes. Process CPU fell 76.48% versus the same branch
+before this change. This remains a one-pass microbenchmark, not evidence of
+live worker catch-up; the frozen campaign and worker were untouched. The
+focused suite passed 51 tests; Ruff and formatting passed, while strict Mypy
+for the newest change was not confirmed. See [Gate C checkpoint
+024](VERITAS_MISSION2_GATE_C_CHECKPOINT_024.md) and [benchmark
+005](VERITAS_MISSION2_SHADOW_READER_BENCHMARK_005.json).

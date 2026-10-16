@@ -177,7 +177,7 @@
     "source_bytes": 551636,
     "source_event_count": 30
   },
-  "captured_at_utc": "2026-10-16T15:18:33Z",
+  "captured_at_utc": "2026-10-16T17:39:12Z",
   "censoring_analysis": {
     "analysis_source_file": "packages/midas/veritas/forensics.py",
     "analysis_source_sha256": "0b055a21c4b423bbf02cc9c240f26f18263fb8342cd72dec686705d2601a420c",
@@ -2900,9 +2900,9 @@
     "unique_market_ids": 558,
     "window_minutes": 751.53
   },
-  "inventory_id": "VERITAS-M2-RESEARCH-INVENTORY-082",
-  "latest_scan_captured_at_utc": "2026-10-16T15:01:17.742944+00:00",
-  "latest_scan_id": "scan-20261016T150117Z-366ac2e7f8ea",
+  "inventory_id": "VERITAS-M2-RESEARCH-INVENTORY-084",
+  "latest_scan_captured_at_utc": "2026-10-16T16:30:57.897746+00:00",
+  "latest_scan_id": "scan-20261016T163057Z-96c79e6c489c",
   "latest_source_analysis_checkpoint": {
     "active_segment_read": false,
     "analysis_code_sha256": "9f9e2249b49dd1cb10c11713aa2683567aa9cf0914c3ed2b08cf8e3fea25ebf8",
@@ -4087,7 +4087,7 @@
     "veritas_control_cohort_sha256": "9578217e20dcc7d1c65fa110f0ed7c689b55483b61191f1aae8d30c9b7300d9a",
     "control_cohort_sha256": "9578217e20dcc7d1c65fa110f0ed7c689b55483b61191f1aae8d30c9b7300d9a"
   },
-  "previous_inventory": "VERITAS_MISSION2_RESEARCH_INVENTORY_080.json",
+  "previous_inventory": "VERITAS_MISSION2_RESEARCH_INVENTORY_082.json",
   "repository": {
     "path": "/home/charlie/midas-veritas",
     "branch": "project/veritas",
@@ -4097,10 +4097,14 @@
     "code_changes_after_pilot_activation": true,
     "source_code_changes_pending_commit": true,
     "evidence_and_documentation_changes_pending_commit": true,
-    "mission_status": "active_scheduled_discovery_source_analysis_gap_detail_and_research",
+    "mission_status": "active",
     "protected_reality_worktree": "/home/charlie/midas-reality",
     "worktree_source_changes_pending_commit": false,
-    "documentation_and_evidence_changes_pending_commit": true
+    "documentation_and_evidence_changes_pending_commit": true,
+    "head_commit_at_capture": "781a12e",
+    "checkpoint_code_changes_pending_commit": true,
+    "checkpoint_documentation_pending_commit": true,
+    "worktree_source_changes_uncommitted": true
   },
   "research_director": {
     "director_id": "director-veritas-opportunity-v1",
@@ -4971,7 +4975,7 @@
     "runtime_director_027": "Scheduled 17:15:09Z cycle admitted scan 27; Arena completed 27/27 at 17:15:51Z with zero-positive gates. Director manifest reconciliation remains scheduled for 17:45:25Z; no manual poll was run.",
     "runtime_observer": "16:30 UTC scheduled scan 26 finalized at 16:30:54 UTC; 34/40 pairs passed request/receipt quality and six had empty No ask sides. The six-frame union contained 300 records, 289 unique IDs, 11 identical cross-frame duplicates, and zero identity conflicts. All gross/depth/minimum/fee gates remained zero. Cumulative panel: 928/1,040 quality-valid pairs across 480 markets.",
     "runtime_observer_027": "Scheduled scan 27 finalized at 2026-10-15T17:01:12Z: 33/40 quality-valid pairs, 298 unique query IDs, two identical duplicates, zero identity conflicts, and zero positive economic gates.",
-    "runtime_source_analysis": "16:40:08 UTC scheduled source replay ran 16:40:08–16:43:49 UTC; it processed 128 finalized segments / 33,042,875 bytes (11.037 CPU seconds). Cumulative prefix is 2,545/3,844 segments and 613,809,470 bytes through ordinal 320,213, with 1,299 / 356,461,487 bytes pending. Campaign window: 108,912 frames, 95,468 touched states, 93,007 quality-valid states; positive top-ask and full-depth counts remain zero.",
+    "runtime_source_analysis": "16:40:08 UTC scheduled source replay ran 16:40:08\u201316:43:49 UTC; it processed 128 finalized segments / 33,042,875 bytes (11.037 CPU seconds). Cumulative prefix is 2,545/3,844 segments and 613,809,470 bytes through ordinal 320,213, with 1,299 / 356,461,487 bytes pending. Campaign window: 108,912 frames, 95,468 touched states, 93,007 quality-valid states; positive top-ask and full-depth counts remain zero.",
     "runtime_source_analysis_027": "Scheduled 17:10:17Z replay completed at 17:14:19Z within 116-segment / 32-MiB limits; 2,661/3,903 finalized segments processed, 107,340 campaign-window quality-valid states, zero positive top-ask or full-depth states.",
     "source_analysis_summary_validation": "The 16:43:46 UTC sealed source summary, campaign identity, code hash, prefix catalog digest, state digest, cumulative campaign-window counters, and no-active-segment boundary were validated on the 16:45:31 Director admission. Current summary digest: c28e4f92547264dfa8d41ba28101357b8e498ddd2816a96af73c103f0f05ca74.",
     "systemd_units": "systemd-analyze --user verify passed for the Director service and timer",
@@ -5378,7 +5382,7 @@
     "The A1 market-universe report covers 40 bounded six-frame scans, not every venue market; the venue-wide denominator and selection coverage percentage remain unknown.",
     "The saved public snapshots are intermittent and do not verify venue sequence, batch atomicity, quote duration, order arrival, fills, or profitability.",
     "The first saved scan stores a v1 count of five valid pairs; its current v4 replay has 32 quality-valid and five legacy-freshness-valid pairs. The report preserves this versioned counter difference.",
-    "The public snapshot screen is separate from the Reality recorder’s eight-market continuous cohort; no collector expansion was activated.",
+    "The public snapshot screen is separate from the Reality recorder\u2019s eight-market continuous cohort; no collector expansion was activated.",
     "The fixed measurement pilot remains active and its successor must wait for its fixed stop."
   ],
   "gate_f_checkpoint_024": {
@@ -8568,8 +8572,12 @@
   },
   "previous_inventory_file_sha256": "7ed6d653c3ae85d8e37f722856aa43768d9b270a4e7f99a02d6fc17ae34105d1",
   "research_inventory_063": "Current numbered inventory for the scheduled 04:20 gap-detail batch, read-only censor-attribution refresh 002, and dashboard receipt verification; inventory 062 is preserved unchanged.",
-  "research_ledger_current": "Updated through H146: exact read-only cursor evidence corrected from the captured snapshot; includes reader canaries, independent audit, source replay, and scan-71 Arena qualification.",
-  "research_ledger_sha256": "f9873d764ae079710289bfb3542113e23a8d4d2ba39369193d61dc6e085fcbe8",
+  "research_ledger_current": {
+    "artifact_path": "docs/VERITAS_RESEARCH_LEDGER.json",
+    "artifact_sha256": "7511e1b58f459b8ea91ec1b9748697f7cf492eeb864f57d9745571939d7c7426",
+    "updated_at_utc": "2026-10-16T17:39:12Z"
+  },
+  "research_ledger_sha256": "7511e1b58f459b8ea91ec1b9748697f7cf492eeb864f57d9745571939d7c7426",
   "source_analysis_checkpoint_063": {
     "active_segment_read": false,
     "catalog_segment_count": 5206,
@@ -10101,7 +10109,7 @@
     "The archive unit failed after its 04:33:35 UTC timeout; archive completeness and data loss remain unverified.",
     "No full Mission 2 regression or dashboard browser check was run."
   ],
-  "previous_inventory_sha256": "4cdbaa47ee8f3b19bfabe1ae5a90dc2bd68ca714f93e46fbda67737471197d4f",
+  "previous_inventory_sha256": "e3c338e4da9ac398c6394b105bb0d336fdc9bed27fcca7c1d592767fe1168d4a",
   "research_inventory_071": "Current inventory after scan-53 qualification, 53-snapshot A1 and independent replay, 06:21 UTC gap-detail completion, and 06:18 UTC operations snapshot.",
   "market_universe_coverage_007": {
     "status": "completed",
@@ -13560,5 +13568,236 @@
     "finding_manifest_sha256": "4ba06ab7d4fe480bbd6d0ad706f7ac4b5be441e41b9215a1aa301635fad07db8",
     "positive_states_at_baseline_depth_minimum_and_fees": 0,
     "director_reconciliation_pending": true
-  }
+  },
+  "updated_from_inventory_082_file_sha256": "e3c338e4da9ac398c6394b105bb0d336fdc9bed27fcca7c1d592767fe1168d4a",
+  "current_scan_074": {
+    "scan_id": "scan-20261016T163057Z-96c79e6c489c",
+    "captured_at_utc": "2026-10-16T16:30:57.897746+00:00",
+    "snapshot_file": "snapshots/scan-20261016T163057Z-96c79e6c489c.json.gz",
+    "snapshot_evidence_sha256": "96c79e6c489c6330564e940a264b907ccfc4dfa5b36cbda1bb97ae25c1951959",
+    "attempted_market_pairs": 40,
+    "quality_valid_pairs": 38,
+    "invalid_reasons": {
+      "no_empty_ask_side": 2
+    },
+    "positive_top_gross_pairs": 0,
+    "positive_full_depth_gross_by_quantity": {
+      "10": 0,
+      "100": 0,
+      "20": 0,
+      "5": 0,
+      "50": 0
+    },
+    "positive_minimum_notional_by_quantity": {
+      "10": 0,
+      "100": 0,
+      "20": 0,
+      "5": 0,
+      "50": 0
+    },
+    "coverage_kind": "intermittent_public_snapshots"
+  },
+  "continuous_opportunity_analysis_current_074": {
+    "updated_at_utc": "2026-10-16T16:30:57.897746+00:00",
+    "processed_snapshots": 74,
+    "pending_snapshots": 0,
+    "selected_market_observations": 2960,
+    "quality_valid_pairs": 2473,
+    "invalid_pairs": 487,
+    "candidate_event_count": 0,
+    "current_bounded_eligible_markets": 145,
+    "maximum_eligible_seen": 249,
+    "coverage_kind": "intermittent_public_snapshots"
+  },
+  "coverage_pilot_002_current_083": {
+    "study_id": "VERITAS-M2-COVERAGE-PILOT-002",
+    "status": "running",
+    "completed_scans": 13,
+    "target_scans": 48,
+    "selected_pair_slots": 520,
+    "quality_valid_pairs": 398,
+    "quality_valid_yield": 0.7653846153846153,
+    "distinct_selected_market_ids": 390,
+    "skipped_scan_sequences": 0,
+    "strict_reported_fresh_pairs": 84,
+    "sequence_verified_pairs": 0,
+    "batch_atomicity_verified_pairs": 0,
+    "plan_sha256": "2993333a23ef53472d1ee471357d0a98351bc99a0c91879dde48dbf844b96694",
+    "limitation": "The main quality gate does not establish reported freshness, sequence ordering, or batch atomicity."
+  },
+  "latest_source_analysis_checkpoint_083": {
+    "generated_at_utc": "2026-10-16T16:12:05+00:00",
+    "status": "current",
+    "processed_segments": 6614,
+    "catalog_segments": 6614,
+    "pending_segments": 0,
+    "pending_source_bytes": 0,
+    "batch_processed_segments": 56,
+    "batch_processed_bytes": 13687021,
+    "processed_source_bytes": 1703081352,
+    "last_processed_ordinal": 924204,
+    "quality_valid_states": 482337,
+    "markets": 110,
+    "positive_top_ask_pair_states": 0,
+    "positive_full_depth_pre_fee_states": 0,
+    "positive_full_depth_minimum_notional_satisfied_states": 0,
+    "top_edge_distribution": {
+      "count": 482337,
+      "maximum": "-0.001",
+      "median_nearest_rank": "-0.01",
+      "minimum": "-0.998",
+      "p25_nearest_rank": "-0.021",
+      "p75_nearest_rank": "-0.01",
+      "positive_count": 0
+    },
+    "summary_sha256": "1b64151e4333b5798041f9a191b370877b39334b8a82a64010ae8849ad638de1",
+    "limitation": "Repeated states are correlated and are not independent opportunity observations."
+  },
+  "latest_gap_detail_checkpoint_083": {
+    "generated_at_utc": "2026-10-16T16:36:13+00:00",
+    "processed_segments": 6663,
+    "catalog_segments": 6665,
+    "replayable_catalog_segments": 6663,
+    "pending_segments": 0,
+    "pending_bytes": 0,
+    "processed_source_bytes": 1716597895,
+    "last_processed_ordinal": 931898,
+    "campaign_window_gap_events": 2525,
+    "campaign_window_gap_counts_by_reason": {
+      "book_resynchronization": 2521,
+      "connection_failure": 4
+    },
+    "summary_sha256": "f802c8666406e26414d843171ddbbd26284415cd83dcf640abc9f4083740d301",
+    "limitation": "Gap events are not a one-to-one attribution of censored follow-up labels."
+  },
+  "shadow_top_cache_benchmark_004": {
+    "artifact_path": "docs/VERITAS_MISSION2_SHADOW_READER_BENCHMARK_004.json",
+    "artifact_sha256": "015184f1f8f4c25ae8b0805ea8df42623d7ece29c50aa7a3dbf559e33a315194",
+    "baseline_result_001_sha256": "238e24c26941121524054661b660d9a68baf6fbd3213513b4e927de8eea045b5",
+    "baseline_result_002_sha256": "2481f7c37c991a8251b8cab19c06d5132e731be2c8144962d28de7ca2ea8dc47",
+    "current_result_001_sha256": "e7598e83a542cb831bd894ac200d73910af1aaa87b53c9413221dc44dfe08272",
+    "current_result_002_sha256": "80168dd673e61aec2f6a490406b0f744a93bf96a0005180b29bed76ee46aa942",
+    "segments": 2,
+    "semantic_hashes_equal": true,
+    "cpu_reduction_percent": 4.821,
+    "wall_reduction_percent": 4.795,
+    "peak_rss_increase_bytes": 1269760,
+    "active_worker_changed": false,
+    "frozen_campaign_changed": false,
+    "limitation": "Single paired two-segment pass; preliminary engineering evidence only."
+  },
+  "current_operational_checkpoint_083": {
+    "captured_at_utc": "2026-10-16T16:41:23Z",
+    "branch": "project/veritas",
+    "head_commit": "781a12e",
+    "worktree_code_changes_uncommitted": true,
+    "campaign_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
+    "campaign_plan_sha256": "aa8acb2b46823c1a1e3ac5d01a57dde917746c2c7471098ae2a4598875e322f5",
+    "campaign_modified": false,
+    "orders_submitted": 0,
+    "collector_service": "active; zero restarts",
+    "shadow_service": "active",
+    "shadow_state": "WARMING_OR_LAGGED_SOURCE",
+    "shadow_restart_count": 1,
+    "shadow_cursor_ordinal": 529102,
+    "shadow_ordinal_lag_to_latest_gap_analysis": 402796,
+    "shadow_lagged_frames_skipped": 203976,
+    "shadow_last_source_receipt_age_hours": 23.48,
+    "shadow_last_decision_age_hours": 31.72,
+    "shadow_decisions": 10253,
+    "shadow_observations": 47911,
+    "shadow_followups_observed": 937,
+    "shadow_followups_censored": 40075,
+    "shadow_pending_horizons": 0,
+    "filesystem_free_bytes": 209431388160,
+    "memory_available_bytes_at_capture": 10093173145,
+    "swap_used_bytes_at_capture": 4294754304,
+    "long_running_services_restarted": false
+  },
+  "verification_checkpoint_083": {
+    "captured_at_utc": "2026-10-16T16:41:23Z",
+    "targeted_tests": "49 passed",
+    "ruff": "passed",
+    "ruff_format": "passed",
+    "strict_mypy": "passed",
+    "git_diff_check": "passed",
+    "shadow_top_cache_canary": "two sequential segments; semantic hashes equal; 4.821% CPU reduction in one paired pass",
+    "full_mission_regression": "not run",
+    "campaign_modified": false,
+    "collector_or_shadow_restarted": false,
+    "orders_submitted": false,
+    "authenticated_requests": false
+  },
+  "checkpoint_083_limitations": [
+    "Market snapshots remain intermittent, selected, and correlated; they are not continuous venue coverage.",
+    "The finalized-source replay still contains zero positive gross or post-depth candidates.",
+    "The measurement pilot's quality-valid yield does not prove timestamp freshness, upstream atomicity, or sequence ordering.",
+    "The shadow worker remains severely behind its source; this checkpoint did not restart or change it.",
+    "The top-cache benchmark covers two sequential segments in one paired pass and does not demonstrate production catch-up."
+  ],
+  "shadow_reader_benchmark_004_sha256": "015184f1f8f4c25ae8b0805ea8df42623d7ece29c50aa7a3dbf559e33a315194",
+  "operations_checkpoint_083": {
+    "captured_at_utc": "2026-10-16T16:41:23Z",
+    "branch": "project/veritas",
+    "head_commit": "781a12e",
+    "worktree_code_changes_uncommitted": true,
+    "campaign_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
+    "campaign_plan_sha256": "aa8acb2b46823c1a1e3ac5d01a57dde917746c2c7471098ae2a4598875e322f5",
+    "campaign_modified": false,
+    "orders_submitted": 0,
+    "collector_service": "active; zero restarts",
+    "shadow_service": "active",
+    "shadow_state": "WARMING_OR_LAGGED_SOURCE",
+    "shadow_restart_count": 1,
+    "shadow_cursor_ordinal": 529102,
+    "shadow_ordinal_lag_to_latest_gap_analysis": 402796,
+    "shadow_lagged_frames_skipped": 203976,
+    "shadow_last_source_receipt_age_hours": 23.48,
+    "shadow_last_decision_age_hours": 31.72,
+    "shadow_decisions": 10253,
+    "shadow_observations": 47911,
+    "shadow_followups_observed": 937,
+    "shadow_followups_censored": 40075,
+    "shadow_pending_horizons": 0,
+    "filesystem_free_bytes": 209431388160,
+    "memory_available_bytes_at_capture": 10093173145,
+    "swap_used_bytes_at_capture": 4294754304,
+    "long_running_services_restarted": false
+  },
+  "research_inventory_083": {
+    "artifact_path": "docs/VERITAS_MISSION2_RESEARCH_INVENTORY_083.json",
+    "based_on_inventory": "docs/VERITAS_MISSION2_RESEARCH_INVENTORY_082.json",
+    "based_on_inventory_sha256": "e3c338e4da9ac398c6394b105bb0d336fdc9bed27fcca7c1d592767fe1168d4a",
+    "capture_scope": "Refresh scan 74, coverage pilot 002, source/gap analysis, live frozen-campaign status, and the two-segment top-cache semantic/performance canary.",
+    "artifact_sha256": "46181a3458a123eb6c92db3caa8b706fd9251fc6f3bd174978593165d1d8389a"
+  },
+  "research_inventory_084": {
+    "artifact_path": "docs/VERITAS_MISSION2_RESEARCH_INVENTORY_084.json",
+    "artifact_sha256": "c42d11b5533140c9e3b55eed1839c98d7191b24011059c10d4df27284a7cb1d3",
+    "based_on_inventory": "docs/VERITAS_MISSION2_RESEARCH_INVENTORY_083.json",
+    "based_on_inventory_sha256": "46181a3458a123eb6c92db3caa8b706fd9251fc6f3bd174978593165d1d8389a",
+    "capture_scope": "Record the bounded one-segment 5% CPU tail-refresh comparison and verify post-canary campaign identity and service active/restart state; other system metrics retain their explicit earlier capture times."
+  },
+  "shadow_tail_refresh_benchmark_005": {
+    "artifact_path": "docs/VERITAS_MISSION2_SHADOW_READER_BENCHMARK_005.json",
+    "artifact_sha256": "865087edbedecfd088785cd7a894eeb97913881e026e9067501b8bebadb79048",
+    "checkpoint_path": "docs/VERITAS_MISSION2_GATE_C_CHECKPOINT_024.md",
+    "control_result_sha256": "e7598e83a542cb831bd894ac200d73910af1aaa87b53c9413221dc44dfe08272",
+    "treatment_result_sha256": "d7525aaf258fc3bff24897ce2dd7029861f8ae8f9c73a18d48a5a56c539e1c5b",
+    "control_cpu_seconds": 5.977172027,
+    "treatment_cpu_seconds": 1.4058942390000002,
+    "cpu_reduction_percent": 76.479,
+    "control_wall_seconds": 119.60200795496348,
+    "treatment_wall_seconds": 28.207126223947853,
+    "wall_reduction_percent": 76.416,
+    "segment_count": 1,
+    "semantic_hashes_equal": true,
+    "implementation_hash_change_isolated_to_shadow_source": true,
+    "frozen_campaign_changed": false,
+    "live_shadow_active": true,
+    "live_shadow_restart_count": 1,
+    "live_collector_active": true,
+    "live_collector_restart_count": 0
+  },
+  "shadow_reader_benchmark_005_sha256": "865087edbedecfd088785cd7a894eeb97913881e026e9067501b8bebadb79048"
 }

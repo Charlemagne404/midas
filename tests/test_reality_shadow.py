@@ -119,6 +119,69 @@ def test_tail_refresh_skips_unchanged_directory_and_detects_new_segments(tmp_pat
     tail.close()
 
 
+def test_open_tail_skips_directory_rescan_and_cached_path_search_per_record(tmp_path, monkeypatch):
+    raw = tmp_path / "raw"
+    tape(raw, times=(0, 100, 200))
+    clock = [1.0]
+    monkeypatch.setattr("time.monotonic", lambda: clock[0])
+    tail = Tail(raw)
+
+    first = tail.next()
+    assert first is not None
+
+    # Simulate the recorder replacing an unrelated status file, which changes
+    # the directory marker even though the open source segment is unchanged.
+    (raw / "status.json").write_text("{}")
+    clock[0] = 2.0
+
+    original_iterdir = Path.iterdir
+    original_stem = Path.stem.fget
+    scans = 0
+    stem_lookups = 0
+
+    def count_scans(path):
+        nonlocal scans
+        if path == raw:
+            scans += 1
+        return original_iterdir(path)
+
+    def count_stem(path):
+        nonlocal stem_lookups
+        stem_lookups += 1
+        return original_stem(path)
+
+    monkeypatch.setattr(Path, "iterdir", count_scans)
+    monkeypatch.setattr(Path, "stem", property(count_stem))
+    second = tail.next()
+
+    assert second is not None
+    assert second[0]["ordinal"] == first[0]["ordinal"] + 1
+    assert scans == 0
+    assert stem_lookups == 0
+    tail.close()
+
+
+def test_tail_discovers_successor_created_after_initial_inventory(tmp_path, monkeypatch):
+    raw = tmp_path / "raw"
+    tape(raw, times=(0, 100))
+    clock = [1.0]
+    monkeypatch.setattr("time.monotonic", lambda: clock[0])
+    tail = Tail(raw)
+
+    first = tail.next()
+    assert first is not None
+    tape(raw, times=(200, 300))
+    clock[0] = 2.0
+
+    seen = [first[0]["ordinal"]]
+    while item := tail.next():
+        seen.append(item[0]["ordinal"])
+
+    last_ordinal = manifest(raw)["segments"][-1]["last"]
+    assert seen == list(range(1, last_ordinal + 1))
+    tail.close()
+
+
 def test_tail_refresh_rejects_symlink_added_after_initial_scan(tmp_path):
     raw = tmp_path / "raw"
     raw.mkdir()

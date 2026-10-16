@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-16T15:18:33Z",
+  "updated_at_utc": "2026-10-16T17:39:12Z",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -7431,7 +7431,7 @@
       "title": "Does the isolated browser show the audited inclusion-support result, its freshness, and its evidence limits correctly?",
       "mechanism": "Exercise the current Veritas UI and read-only artifact route in Playwright using the isolated demo API/Vite configuration, and compare the visible audit summary with the receipted local artifact.",
       "success_metric": "The browser identifies audit 002 as stale against the current pilot, displays the audited support/yield figures and limitation, links to the direct artifact route, and the endpoint returns the expected versioned source counts.",
-      "decision": "Verified for the targeted source-checkout workflow. Playwright passed one Veritas browser test in 5.6 seconds. The test checks the label Audited 25 scans · pilot now at 26, 99.80% support, 82.96% weighted yield, the direct artifact link, 25 source events, 23 fully supported scans, and the no-venue-wide-inference flag. The full suite and hosted deployment remain unverified.",
+      "decision": "Verified for the targeted source-checkout workflow. Playwright passed one Veritas browser test in 5.6 seconds. The test checks the label Audited 25 scans \u00b7 pilot now at 26, 99.80% support, 82.96% weighted yield, the direct artifact link, 25 source events, 23 fully supported scans, and the no-venue-wide-inference flag. The full suite and hosted deployment remain unverified.",
       "status": "continue",
       "dataset_id": "VERITAS-M2-COVERAGE-PILOT-001_current_26_scans_and_COVERAGE-DESIGN-AUDIT-002",
       "limitations": [
@@ -7996,7 +7996,7 @@
       "experiment_id": "VERITAS-M2-FROZEN-SOURCE-IMPORT-ISOLATION-001",
       "title": "Can finalized-source and gap analysis keep using the frozen Reality code while Veritas develops a successor?",
       "dataset_id": "Mission2_frozen_code_snapshot_and_finalized_source_catalog_20261016",
-      "mechanism": "Place the campaign’s own immutable code snapshot ahead of the mutable Veritas package path for both read-only analysis units, while retaining the current branch Veritas analysis modules and their persisted state identities.",
+      "mechanism": "Place the campaign\u2019s own immutable code snapshot ahead of the mutable Veritas package path for both read-only analysis units, while retaining the current branch Veritas analysis modules and their persisted state identities.",
       "success_metric": "Campaign code hashes and both analyzer-state code identities match; bounded source and gap jobs resume without cursor reset, campaign mutation, active-segment reads, or orders.",
       "result": {
         "status": "BOUNDED_REPLAYS_RECOVERED",
@@ -8405,7 +8405,7 @@
       "status": "continue",
       "decision": "The 15:10 UTC cycle processed all 57 new segments and ended current at 6,498/6,498. Keep the schedule and collect more intervals before claiming a sustained throughput margin.",
       "limitations": [
-        "One run matching this interval’s incoming segment count does not prove durable capacity headroom.",
+        "One run matching this interval\u2019s incoming segment count does not prove durable capacity headroom.",
         "A zero-pending result is a replay-completeness check, not an economic result."
       ],
       "result": {
@@ -8507,6 +8507,63 @@
         "model_readiness": "NOT_READY_NO_CANDIDATE_RELEVANT_TARGET",
         "strategy_readiness": "NOT_READY_NO_QUALIFIED_GROSS_CANDIDATE"
       }
+    },
+    {
+      "hypothesis_id": "VERITAS-H147",
+      "experiment_id": "VERITAS-M2-SHADOW-TOP-CACHE-001",
+      "dataset_id": "shadow-runtime-82a71b6db289238d1ac23965efee424dd5983a97f13817704d8590fb39631478",
+      "mechanism": "Maintaining reconstructed best bid/ask values across snapshots and price deltas should reduce repeated full-depth scans in the shadow consume path without changing serialized engine state or research decisions.",
+      "result": {
+        "artifact_path": "docs/VERITAS_MISSION2_SHADOW_READER_BENCHMARK_004.json",
+        "artifact_sha256": "015184f1f8f4c25ae8b0805ea8df42623d7ece29c50aa7a3dbf559e33a315194",
+        "semantic_equal": true,
+        "baseline_cpu_seconds": 9.803773872999997,
+        "current_cpu_seconds": 9.331051857,
+        "cpu_reduction_percent": 4.821,
+        "baseline_wall_seconds": 196.12005877494812,
+        "current_wall_seconds": 186.7153132929234,
+        "wall_reduction_percent": 4.795,
+        "peak_rss_increase_bytes": 1269760,
+        "segments": 2,
+        "independent_passes_per_implementation": 1
+      },
+      "decision": "Retain as a branch-local optimization for further representative profiling. Do not deploy to the frozen worker or claim live catch-up: the measured reduction is modest, based on two segments, and implementation hashes were explicitly allowed to differ from the campaign's frozen code.",
+      "limitations": [
+        "Only two sequential source segments were measured once per implementation.",
+        "The first segment was effectively unchanged; most of the measured reduction came from the second segment.",
+        "The 5% CPU quota makes the wall-time comparison quota-sensitive.",
+        "No live worker, campaign journal, collector, or economic outcome was changed."
+      ]
+    },
+    {
+      "hypothesis_id": "VERITAS-H148",
+      "experiment_id": "VERITAS-M2-SHADOW-TAIL-REFRESH-001",
+      "dataset_id": "shadow-runtime-82a71b6db289238d1ac23965efee424dd5983a97f13817704d8590fb39631478",
+      "title": "Does avoiding per-record tail-directory refresh work reduce durable shadow replay cost without changing event semantics?",
+      "mechanism": "A live open segment handle remains usable across appended records and atomic finalization, so directory enumeration and cached-path stem search can be deferred until the handle closes; force-refresh at the sealed boundary preserves successor discovery.",
+      "success_metric": "Match engine, context, research and isolated journal hashes on the same finalized segment while reducing process CPU under identical CPU, memory and swap limits.",
+      "status": "continue",
+      "decision": "Retain the branch-local change for a bounded multi-segment replay. Do not deploy it to or restart the frozen worker until longer sequential and rotation-boundary evidence confirms parity and throughput.",
+      "result": {
+        "artifact_path": "docs/VERITAS_MISSION2_SHADOW_READER_BENCHMARK_005.json",
+        "artifact_sha256": "865087edbedecfd088785cd7a894eeb97913881e026e9067501b8bebadb79048",
+        "semantic_equal": true,
+        "same_resource_quota_and_memory_caps": true,
+        "control_cpu_seconds": 5.977172027,
+        "treatment_cpu_seconds": 1.4058942390000002,
+        "cpu_reduction_percent": 76.479,
+        "control_wall_seconds": 119.60200795496348,
+        "treatment_wall_seconds": 28.207126223947853,
+        "wall_reduction_percent": 76.416,
+        "segments": 1,
+        "independent_passes_per_implementation": 1
+      },
+      "limitations": [
+        "One finalized segment and one pass per implementation; no multi-segment throughput or boundary scaling conclusion.",
+        "Different timeout ceilings were configured, though both runs completed normally far below their limits.",
+        "The current branch was compared with its immediately preceding branch version, not accepted as the frozen campaign implementation.",
+        "No live worker, source cursor, production journal, campaign file, economic outcome, or order state was changed."
+      ]
     }
   ],
   "next_research_questions": [

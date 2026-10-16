@@ -492,3 +492,49 @@ the original worker and campaign untouched. See [benchmark
 See Gate C checkpoint 022, Gate F checkpoint 036, independent audit 015,
 coverage 012, the operations log, and inventory 082 for the evidence and
 limitations.
+
+## Active Mission 2 queue — 2026-10-16 16:38 UTC
+
+1. **Resolve the frozen shadow's lag without changing its campaign.** The
+   worker remains at a 10% CPU quota, has skipped 203,883 lagged frames, and
+   has no decision newer than about 31.7 hours. The maintained-top branch
+   canary now covers two sequential segments with exact state/journal
+   equivalence and a modest 4.82% aggregate CPU reduction in one paired pass.
+   This is not evidence of live recovery. Continue profiling the actual
+   consume path and keep any prospective implementation in a versioned
+   successor; do not restart or retune the frozen worker.
+2. **Complete coverage pilot 002 under its fixed protocol.** It is at 13/48
+   scans and 398/520 quality-valid slots across 390 markets. Only 84 slots
+   meet strict reported freshness; sequence and atomicity verification remain
+   zero. Do not equate the 76.5% main gate yield with synchronized evidence.
+3. **Keep the incremental source analysis current.** The 16:12 UTC
+   opportunity replay is at 6,614/6,614 segments with zero pending and still
+   has zero positive economic gates. Gap-detail is at 6,663/6,665 catalog
+   entries with zero pending finalized bytes. Check the next scheduled run
+   for sustained headroom rather than assuming one current prefix proves it.
+4. **Keep model and strategy work gated on evidence.** There is still no
+   candidate-relevant target or independent strategy comparison. Continue
+   the read-only observation and qualification cycle; do not train a model to
+   compensate for missing synchronized outcomes.
+
+See Gate C checkpoint 023, benchmark 004, inventory 083, and the operations
+log for the current evidence and limitations.
+
+
+## Active Mission 2 queue — 2026-10-16 17:39 UTC
+
+1. **Validate the durable reader gain on a longer sequential window.** The
+   matched one-segment 5% canary reduced process CPU by 76.48% with exact
+   state and journal parity. Repeat on several sealed segments and at a
+   segment rotation boundary before considering any versioned successor. The
+   frozen campaign and worker remain protected.
+2. **Keep the measurement and economic evidence streams running.** The canary
+   reused finalized observations and yielded no new market evidence. Continue
+   the fixed prospective coverage protocol and independent candidate
+   qualification; repeated states remain dependent.
+3. **Do not train models or select a new strategy without eligible targets.**
+   The current engineering result concerns reader CPU only. It neither
+   supplies candidate-relevant labels nor changes the zero-candidate economic
+   evidence.
+
+See Gate C checkpoint 024 and benchmark 005.
