@@ -85,7 +85,7 @@ def write_market_universe_coverage_fixture(root: Path) -> Path:
         },
         "limitations": ["The observed query union is not a venue-wide denominator."],
     }
-    path = root / "docs" / "VERITAS_MISSION2_MARKET_UNIVERSE_COVERAGE_001.json"
+    path = root / "docs" / "VERITAS_MISSION2_MARKET_UNIVERSE_COVERAGE_004.json"
     write_artifact(root, path.name, artifact)
     update_market_universe_coverage_receipt(root, path)
     return path
@@ -101,21 +101,54 @@ def update_market_universe_coverage_receipt(root: Path, artifact_path: Path) -> 
     entries = [
         item
         for item in hypotheses
-        if isinstance(item, dict) and item.get("hypothesis_id") == "VERITAS-H084"
+        if isinstance(item, dict) and item.get("hypothesis_id") == "VERITAS-H110"
     ]
     receipt = entries[0] if len(entries) == 1 else {}
     if not entries:
         hypotheses.append(receipt)
     receipt.update(
         {
-            "hypothesis_id": "VERITAS-H084",
+            "hypothesis_id": "VERITAS-H110",
             "title": "Fixture coverage audit",
             "status": "continue",
             "decision": "Keep the bounded sample caveat.",
             "result": {
-                "artifact_path": "docs/VERITAS_MISSION2_MARKET_UNIVERSE_COVERAGE_001.json",
-                "artifact_sha256": hashlib.sha256(artifact_path.read_bytes()).hexdigest(),
+                "artifact_path": "docs/VERITAS_MISSION2_MARKET_UNIVERSE_COVERAGE_004.json",
+                "artifact_file_sha256": hashlib.sha256(artifact_path.read_bytes()).hexdigest(),
                 "analysis_version": "veritas-market-universe-coverage-v1",
+            },
+        }
+    )
+    ledger_path.write_text(json.dumps(ledger))
+
+
+def update_censor_gap_attribution_receipt(root: Path, artifact_path: Path) -> None:
+    ledger_path = root / "docs" / "VERITAS_RESEARCH_LEDGER.json"
+    ledger = json.loads(ledger_path.read_text())
+    hypotheses = ledger.get("hypotheses")
+    if not isinstance(hypotheses, list):
+        hypotheses = []
+        ledger["hypotheses"] = hypotheses
+    entries = [
+        item
+        for item in hypotheses
+        if isinstance(item, dict) and item.get("hypothesis_id") == "VERITAS-H109"
+    ]
+    receipt = entries[0] if len(entries) == 1 else {}
+    if not entries:
+        hypotheses.append(receipt)
+    artifact = json.loads(artifact_path.read_text())
+    receipt.update(
+        {
+            "hypothesis_id": "VERITAS-H109",
+            "title": "Fixture gap-censor attribution refresh",
+            "status": "continue",
+            "decision": "Keep the partial-prefix and temporal-link caveats.",
+            "result": {
+                "artifact_path": "docs/VERITAS_MISSION2_CENSOR_GAP_ATTRIBUTION_002.json",
+                "artifact_file_sha256": hashlib.sha256(artifact_path.read_bytes()).hexdigest(),
+                "result_sha256": artifact["result_sha256"],
+                "analysis_version": "veritas-censor-gap-attribution-v1",
             },
         }
     )
@@ -361,8 +394,10 @@ def write_censor_gap_attribution_fixture(
         "limitations": ["The indexed gap prefix is incomplete."],
     }
     artifact["result_sha256"] = hashlib.sha256(canonical_json(artifact)).hexdigest()
-    write_artifact(root, "VERITAS_MISSION2_CENSOR_GAP_ATTRIBUTION_001.json", artifact)
-    return root / "docs" / "VERITAS_MISSION2_CENSOR_GAP_ATTRIBUTION_001.json"
+    path = root / "docs" / "VERITAS_MISSION2_CENSOR_GAP_ATTRIBUTION_002.json"
+    write_artifact(root, path.name, artifact)
+    update_censor_gap_attribution_receipt(root, path)
+    return path
 
 
 def write_gap_detail_fixture(root: Path, *, campaign_id: str = "campaign-fixture") -> Path:
@@ -806,8 +841,25 @@ def test_market_universe_overview_rejects_mismatched_ledger_digest(tmp_path):
     write_market_universe_coverage_fixture(tmp_path)
     ledger_path = tmp_path / "docs" / "VERITAS_RESEARCH_LEDGER.json"
     ledger = json.loads(ledger_path.read_text())
-    receipt = next(item for item in ledger["hypotheses"] if item["hypothesis_id"] == "VERITAS-H084")
-    receipt["result"]["artifact_sha256"] = "0" * 64
+    receipt = next(item for item in ledger["hypotheses"] if item["hypothesis_id"] == "VERITAS-H110")
+    receipt["result"]["artifact_file_sha256"] = "0" * 64
+    ledger_path.write_text(json.dumps(ledger))
+
+    response = client.get("/api/veritas/overview")
+
+    assert response.status_code == 503
+
+
+def test_market_universe_overview_rejects_stale_artifact_receipt(tmp_path):
+    client = fixture_client(tmp_path)
+    artifact_path = write_market_universe_coverage_fixture(tmp_path)
+    ledger_path = tmp_path / "docs" / "VERITAS_RESEARCH_LEDGER.json"
+    ledger = json.loads(ledger_path.read_text())
+    receipt = next(item for item in ledger["hypotheses"] if item["hypothesis_id"] == "VERITAS-H110")
+    receipt["result"]["artifact_path"] = "docs/VERITAS_MISSION2_MARKET_UNIVERSE_COVERAGE_002.json"
+    receipt["result"]["artifact_file_sha256"] = hashlib.sha256(
+        artifact_path.read_bytes()
+    ).hexdigest()
     ledger_path.write_text(json.dumps(ledger))
 
     response = client.get("/api/veritas/overview")
@@ -891,6 +943,30 @@ def test_gap_censor_attribution_rejects_mismatches_and_unreconciled_claims(tmp_p
 
     artifact["gap_detail_index"]["pending_source_bytes"] += 1
     attribution_path.write_bytes(canonical_json(artifact))
+    assert client.get("/api/veritas/overview").status_code == 503
+
+
+def test_gap_censor_attribution_rejects_stale_ledger_artifact_path(tmp_path):
+    client = fixture_client(tmp_path)
+    write_censor_gap_attribution_fixture(tmp_path)
+    ledger_path = tmp_path / "docs" / "VERITAS_RESEARCH_LEDGER.json"
+    ledger = json.loads(ledger_path.read_text())
+    receipt = next(item for item in ledger["hypotheses"] if item["hypothesis_id"] == "VERITAS-H109")
+    receipt["result"]["artifact_path"] = "docs/VERITAS_MISSION2_CENSOR_GAP_ATTRIBUTION_001.json"
+    ledger_path.write_text(json.dumps(ledger))
+
+    assert client.get("/api/veritas/overview").status_code == 503
+
+
+def test_gap_censor_attribution_rejects_ledger_digest_mismatch(tmp_path):
+    client = fixture_client(tmp_path)
+    write_censor_gap_attribution_fixture(tmp_path)
+    ledger_path = tmp_path / "docs" / "VERITAS_RESEARCH_LEDGER.json"
+    ledger = json.loads(ledger_path.read_text())
+    receipt = next(item for item in ledger["hypotheses"] if item["hypothesis_id"] == "VERITAS-H109")
+    receipt["result"]["artifact_file_sha256"] = "0" * 64
+    ledger_path.write_text(json.dumps(ledger))
+
     assert client.get("/api/veritas/overview").status_code == 503
 
     attribution_path = write_censor_gap_attribution_fixture(tmp_path)

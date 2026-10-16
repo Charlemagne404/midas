@@ -1,6 +1,145 @@
+## Latest checkpoint — 2026-10-16T04:42:06Z, scan-50 audit and source catch-up
+
+The offline A1 replay now verifies 50 snapshots / 32,683,291 compressed bytes.
+It finds 6,059 Gamma IDs, 2,166 eligible at least once, 887 selected IDs, and
+1,727/2,000 current-replay valid pairs. The discovery union is conditional and
+not a venue-wide denominator. See [Gate A checkpoint
+046](VERITAS_MISSION2_GATE_A_CHECKPOINT_046.md) and [coverage artifact
+004](VERITAS_MISSION2_MARKET_UNIVERSE_COVERAGE_004.json).
+
+The independent raw audit also covers 50 scans. It reproduces all 1,727
+quality and top-edge decisions with zero mismatches; 374 pass the conservative
+reported-age sensitivity, and every gross, depth, minimum, and fee gate is
+zero. See [Gate B checkpoint
+004](VERITAS_MISSION2_GATE_B_CHECKPOINT_004.md) and [audit artifact
+004](VERITAS_MISSION2_INDEPENDENT_OPPORTUNITY_AUDIT_004.json).
+
+The read-only market-coverage route now validates artifact 004 against ledger
+H110. H111 records the independent scan-50 audit. The latest offline analyses
+made no public requests and used no orders. The dashboard API and coverage
+tests passed 28 cases; Ruff, formatting, strict Mypy, and diff checks passed.
+The in-process overview and artifact routes returned HTTP 200 and the served
+coverage hash matched artifact 004. The scheduled 04:45 Director cycle remains
+pending.
+
+The scheduled finalized-source analyzer then completed at 04:42:06 UTC with
+zero restarts. Its prefix advanced to 5,264/5,264 segments / 1,358,762,036
+bytes and 354,898 quality-valid states across 87 markets. It found zero
+positive top-ask, full-depth, or minimum-notional states. The job used 5.178
+CPU seconds, peaked at 120.6 MiB, and read no active segment. See [Gate C
+checkpoint 016](VERITAS_MISSION2_GATE_C_CHECKPOINT_016.md).
+
+## Previous checkpoint — 2026-10-16T04:29:03Z, gap-index extension and H109 attribution
+
+The scheduled 04:20 UTC gap-detail batch completed at 04:21:18 with exit 0,
+zero restarts, 3.939 CPU seconds, and a 62.5 MiB peak. The partial index now
+covers 2,545/5,224 replayable finalized segments, with 2,679 segments /
+736,206,152 bytes pending. It contains 500 campaign-window resynchronization
+events across 20 markets; no active segment was read. See [Gate C checkpoint
+015](VERITAS_MISSION2_GATE_C_CHECKPOINT_015.md).
+
+Versioned censor-attribution artifact 002 scanned 40,075 censored outcomes and
+verified 339 gap-related rows. It now links 100 exact recorded-gap references
+to indexed events and leaves 79 exact references beyond the index. There are
+63 same-market preceding-gap links across nine unique gap events; these remain
+temporal associations, not causal proof. The ledger records this as H109.
+
+The read-only API now validates artifact 002 against H109's path, file hash,
+result digest, and analysis version. Dashboard API and coverage tests passed
+28 cases; Ruff, formatting, strict Mypy, and `git diff --check` passed. The
+source-only update remains undeployed. See [Gate G checkpoint
+014](VERITAS_MISSION2_GATE_G_CHECKPOINT_014.md).
+
+At 04:27 UTC the collector, frozen shadow, and APIs were active; both health
+endpoints returned HTTP 200. The 04:20 gap job was inactive after its
+successful exit. The next observer, gap-detail, source-analysis, and Director
+timers are 04:31:28, 04:35, 04:40:23, and 04:45:07 UTC. No campaign or
+collector state was changed. See [operations](VERITAS_MISSION2_OPERATIONS.md)
+and [inventory 063](VERITAS_MISSION2_RESEARCH_INVENTORY_063.json).
+
+## Previous checkpoint — 2026-10-16T04:18:16Z, independent scan-49 audit, scheduled qualification, and finalized-source catch-up
+
+The independent raw audit now covers 49 saved scans / 1,960 observations. It reproduces the v4 validity and top-edge decisions for all 1,691 valid states with zero mismatches; strict reported-age sensitivity admits 364, while 1,327 states exceed five seconds on at least one leg. All gross/depth/minimum/fee gates remain zero. See [Gate B checkpoint 003](VERITAS_MISSION2_GATE_B_CHECKPOINT_003.md).
+
+The 04:15 UTC Research Director cycle admitted scan 49 to Arena. Its 49/49 child completed with all five economic gates at zero and complete empty candidate evidence and replay. The Director manifest still projects QUEUED even though the job record is complete; scan 48 remains its last qualified scan. The next scheduled cycle at 04:45 UTC is the reconciliation point. See [Gate F checkpoint 031](VERITAS_MISSION2_GATE_F_CHECKPOINT_031.md).
+
+The finalized-source analyzer caught up at 04:13 UTC: 5,206/5,206 segments, zero pending bytes, 351,524 valid states over 87 markets, and zero positive top-ask/full-depth states. The separate gap-detail prefix remains incomplete at 2,417/5,194 replayable segments, with 435 campaign-window resynchronization events across 15 market IDs.
+
+The source-only dashboard route still targets artifact 003/H105 and remains uncommitted and undeployed. The pilot remains at 18/48 scans. No service, collector, pilot, or frozen campaign was modified.
+
+## Latest checkpoint — 2026-10-16T04:18:16Z, independent scan-49 audit, scheduled qualification, and finalized-source catch-up
+
+The independent raw audit now covers 49 saved scans / 1,960 observations. It reproduces the v4 validity and top-edge decisions for all 1,691 valid states with zero mismatches; strict reported-age sensitivity admits 364, while 1,327 states exceed five seconds on at least one leg. All gross/depth/minimum/fee gates remain zero. See [Gate B checkpoint 003](VERITAS_MISSION2_GATE_B_CHECKPOINT_003.md).
+
+The 04:15 UTC Research Director cycle admitted scan 49 to Arena. Its 49/49 child completed with all five economic gates at zero and complete empty candidate evidence and replay. The Director manifest still projects QUEUED even though the job record is complete; scan 48 remains its last qualified scan. The next scheduled cycle at 04:45 UTC is the reconciliation point. See [Gate F checkpoint 031](VERITAS_MISSION2_GATE_F_CHECKPOINT_031.md).
+
+The finalized-source analyzer caught up at 04:13 UTC: 5,206/5,206 segments, zero pending bytes, 351,524 valid states over 87 markets, and zero positive top-ask/full-depth states. The separate gap-detail prefix remains incomplete at 2,417/5,194 replayable segments, with 435 campaign-window resynchronization events across 15 market IDs.
+
+The source-only dashboard route still targets artifact 003/H105 and remains uncommitted and undeployed. The pilot remains at 18/48 scans. No service, collector, pilot, or frozen campaign was modified.
+
+## Latest checkpoint — 2026-10-16T04:12:21Z, scan 49, Gate E v4 experiment, and gap-index progress
+
+The scheduled scan-48 Arena experiment completed 48/48 events and compared the unchanged top-ask baseline with the depth/minimum/fee-aware qualification rule. Both had zero positive states; complete candidate evidence and zero-row independent replay were recorded. This is an end-to-end economic qualification experiment, not a strategy-P&L test. See [Gate E checkpoint 001](VERITAS_MISSION2_GATE_E_CHECKPOINT_001.md) and [Gate F checkpoint 030](VERITAS_MISSION2_GATE_F_CHECKPOINT_030.md).
+
+The observer finalized scan 49 (scan-20261016T040030Z-56b893816f32) at 04:00:30 UTC: 40 selected markets, 31 valid pairs from a 298-ID union (127 eligible, 171 excluded), and zero positive gross/depth/minimum/fee states. It is outside coverage artifact 003 and awaits the next scheduled Director cycle.
+
+The active pilot remains at 18/48 scans with 588/720 valid slots over 434 selected IDs; rotating yield is 567/666 and control yield is 21/54, descriptive and nonrandomized. The fixed stop is 19:00:55 UTC.
+
+The source analyzer's latest sealed prefix is 5,125/5,147 segments and 342,943 valid states across 81 markets, with 22 segments pending and no positive top-ask/full-depth states. The gap-detail service completed its 04:05 UTC batch successfully, advancing to 2,417/5,196 segments, with 435 campaign-window resynchronization gaps across 15 market IDs and 2,777 segments / 762,500,134 bytes pending. Both source and gap analyses are partial; neither reads active segments.
+
+The source-only coverage route update validates artifact 003 against H105. The latest recorded focused API/coverage test result is 26 passed, with Ruff, formatting, strict Mypy for the API module and diff checks passed. The route is not deployed. No collector, pilot or frozen campaign was modified.
+
 # Veritas Mission 2 Engineering Checkpoint
 
-## Latest checkpoint — 03:37 UTC, scheduled gap detail and browser verification
+## Previous checkpoint — 04:02 UTC, scan 49 and scan-48 qualification
+
+The offline A1 coverage replay verified all 48 saved snapshots and retained
+Gamma/CLOB evidence hashes across 31,353,007 compressed bytes. Its bounded
+union contains 5,903 Gamma IDs, 2,135 eligible IDs, and 849 selected IDs;
+1,660/1,920 selected observations pass current replay quality checks. It found
+zero positive top-gross pairs. The first-scan capture/replay count mismatch
+(5 stored versus 32 replayed valid pairs) remains disclosed. See [Gate A
+checkpoint 045](VERITAS_MISSION2_GATE_A_CHECKPOINT_045.md) and [coverage
+artifact 003](VERITAS_MISSION2_MARKET_UNIVERSE_COVERAGE_003.json).
+
+The 03:45 Research Director cycle admitted scan 48 to Arena. Its bounded child
+completed all 48 events at 03:46 UTC. All five economic qualification gates
+remain zero, candidate evidence is complete and empty, and candidate replay
+is complete with zero rows. The child result awaits the next scheduled Director
+reconciliation. See [Gate F checkpoint
+030](VERITAS_MISSION2_GATE_F_CHECKPOINT_030.md).
+
+The observer finalized scan 49 at 04:00:30 UTC, after coverage artifact 003's
+48-snapshot cutoff. Scan 49 selected 40 markets, with 31 quality-valid pairs
+from a 298-ID union (127 eligible and 171 excluded). All positive economic
+gates remain zero. The independent raw-source audit and A1 coverage artifact
+remain at scans 47 and 48 respectively; scan 49 is reported as a separate
+observation pending the next Director cycle.
+
+The active 24-hour pilot is now 18/48 scans: 588/720 valid selected slots
+over 434 distinct IDs, with one skipped sequence after the scan-45 code-hash
+mismatch. Rotating yield is 567/666 and frozen-control yield is 21/54; the
+comparison remains descriptive and nonrandomized. The fixed stop is
+19:00:55 UTC.
+
+The latest finalized-source summary, generated at 03:44:33 UTC, covers
+5,125/5,147 segments and 1,324,261,380 processed bytes; 22 segments /
+5,883,267 bytes remain pending. It reports 342,943 quality-valid states over
+81 markets and zero positive top-ask, full-depth, or minimum-notional states.
+The separate gap-detail index, generated at 03:51:18 UTC, covers 2,289/5,165
+replayable segments and 548,436,826 processed bytes, with 2,876 segments /
+786,842,920 bytes pending. Its partial prefix contains 373 campaign-window
+book-resynchronization events across 11 markets. Neither analysis read an
+active source segment.
+
+The dashboard coverage route now points to artifact 003 and validates its
+H105 ledger receipt and artifact-file digest. The focused API and coverage
+tests passed 26 tests; Ruff, formatting, strict Mypy for the changed API
+module, and git diff checks passed. This source change is not deployed. See
+[Gate G checkpoint 013](VERITAS_MISSION2_GATE_G_CHECKPOINT_013.md). No
+service, collector, pilot, or frozen campaign was modified.
+
+## Previous checkpoint — 03:37 UTC, scheduled gap detail and browser verification
 
 The 03:35 scheduled gap-detail batch exited successfully and advanced the
 finalized-only prefix to 2,161/5,137 cataloged segments, with 2,974 segments /

@@ -23,8 +23,8 @@ ARTIFACTS = {
     "censoring": "VERITAS_GATE_A_CENSORING_003.json",
     "label-feasibility": "VERITAS_MISSION2_LABEL_FEASIBILITY_001.json",
     "censor-gap-audit": "VERITAS_MISSION2_CENSOR_GAP_AUDIT_001.json",
-    "censor-gap-attribution": "VERITAS_MISSION2_CENSOR_GAP_ATTRIBUTION_001.json",
-    "market-universe-coverage": "VERITAS_MISSION2_MARKET_UNIVERSE_COVERAGE_001.json",
+    "censor-gap-attribution": "VERITAS_MISSION2_CENSOR_GAP_ATTRIBUTION_002.json",
+    "market-universe-coverage": "VERITAS_MISSION2_MARKET_UNIVERSE_COVERAGE_004.json",
 }
 MAX_ARTIFACT_BYTES = 512 * 1024
 MAX_OBSERVATORY_SUMMARY_BYTES = 2 * 1024**2
@@ -906,12 +906,33 @@ def read_censor_gap_attribution(
 
 
 def censor_gap_attribution_overview(
-    repository: Path, expected_campaign_id: str
+    repository: Path, expected_campaign_id: str, ledger: dict[str, Any]
 ) -> dict[str, Any] | None:
     stored = read_censor_gap_attribution(repository, expected_campaign_id)
     if stored is None:
         return None
     value, path = stored
+    hypotheses = ledger.get("hypotheses")
+    receipts = (
+        [
+            item
+            for item in hypotheses
+            if isinstance(item, dict) and item.get("hypothesis_id") == "VERITAS-H109"
+        ]
+        if isinstance(hypotheses, list)
+        else []
+    )
+    receipt_result = receipts[0].get("result") if len(receipts) == 1 else None
+    artifact_file_sha256 = hashlib.sha256(path.read_bytes()).hexdigest()
+    if (
+        not isinstance(receipt_result, dict)
+        or receipt_result.get("artifact_path")
+        != "docs/VERITAS_MISSION2_CENSOR_GAP_ATTRIBUTION_002.json"
+        or receipt_result.get("artifact_file_sha256") != artifact_file_sha256
+        or receipt_result.get("result_sha256") != value.get("result_sha256")
+        or receipt_result.get("analysis_version") != "veritas-censor-gap-attribution-v1"
+    ):
+        raise HTTPException(503, "Veritas gap-censor attribution ledger receipt is invalid")
     gaps = value["gap_censors"]
     return {
         "status": value["status"],
@@ -937,7 +958,7 @@ def censor_gap_attribution_overview(
         "artifact": {
             "id": "censor-gap-attribution",
             "label": "Verified partial-prefix gap-censor attribution",
-            "file_sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+            "file_sha256": artifact_file_sha256,
             "url": "/api/veritas/artifacts/censor-gap-attribution",
         },
         "limitations": value["limitations"],
@@ -2310,7 +2331,7 @@ def market_universe_coverage_overview(
         [
             item
             for item in hypotheses
-            if isinstance(item, dict) and item.get("hypothesis_id") == "VERITAS-H084"
+            if isinstance(item, dict) and item.get("hypothesis_id") == "VERITAS-H110"
         ]
         if isinstance(hypotheses, list)
         else []
@@ -2319,8 +2340,8 @@ def market_universe_coverage_overview(
     if (
         not isinstance(receipt_result, dict)
         or receipt_result.get("artifact_path")
-        != "docs/VERITAS_MISSION2_MARKET_UNIVERSE_COVERAGE_001.json"
-        or receipt_result.get("artifact_sha256") != artifact_digest
+        != "docs/VERITAS_MISSION2_MARKET_UNIVERSE_COVERAGE_004.json"
+        or receipt_result.get("artifact_file_sha256") != artifact_digest
         or receipt_result.get("analysis_version") != "veritas-market-universe-coverage-v1"
     ):
         raise HTTPException(503, "Veritas market-universe coverage ledger digest is invalid")
@@ -2563,7 +2584,9 @@ def overview(repository: Path) -> dict[str, Any]:
     current_censoring = followup_censoring_overview(repository, str(funnel["campaign_id"]))
     label_feasibility = label_feasibility_overview(repository, str(funnel["campaign_id"]))
     gap_censor_audit = censor_gap_audit_overview(repository, str(funnel["campaign_id"]))
-    gap_censor_attribution = censor_gap_attribution_overview(repository, str(funnel["campaign_id"]))
+    gap_censor_attribution = censor_gap_attribution_overview(
+        repository, str(funnel["campaign_id"]), ledger
+    )
     gap_detail = finalized_gap_detail_overview(repository, str(funnel["campaign_id"]))
     quantity = "100"
     full_depth = next(
@@ -2779,7 +2802,10 @@ def router(repository: Path) -> APIRouter:
     def get_artifact(identity: str) -> dict[str, Any]:
         if identity == "censor-gap-attribution":
             raw_funnel, _ = read_artifact(repository, "raw-funnel")
-            validated = censor_gap_attribution_overview(repository, str(raw_funnel["campaign_id"]))
+            ledger, _ = read_artifact(repository, "ledger")
+            validated = censor_gap_attribution_overview(
+                repository, str(raw_funnel["campaign_id"]), ledger
+            )
             if validated is None:
                 raise HTTPException(404, "Veritas gap-censor attribution has not been generated")
             stored = read_censor_gap_attribution(repository, str(raw_funnel["campaign_id"]))
