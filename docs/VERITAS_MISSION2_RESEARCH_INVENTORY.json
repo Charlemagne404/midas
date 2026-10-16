@@ -177,7 +177,7 @@
     "source_bytes": 551636,
     "source_event_count": 30
   },
-  "captured_at_utc": "2026-10-16T17:54:22Z",
+  "captured_at_utc": "2026-10-16T17:58:53Z",
   "censoring_analysis": {
     "analysis_source_file": "packages/midas/veritas/forensics.py",
     "analysis_source_sha256": "0b055a21c4b423bbf02cc9c240f26f18263fb8342cd72dec686705d2601a420c",
@@ -2900,7 +2900,7 @@
     "unique_market_ids": 558,
     "window_minutes": 751.53
   },
-  "inventory_id": "VERITAS-M2-RESEARCH-INVENTORY-086",
+  "inventory_id": "VERITAS-M2-RESEARCH-INVENTORY-087",
   "latest_scan_captured_at_utc": "2026-10-16T16:30:57.897746+00:00",
   "latest_scan_id": "scan-20261016T163057Z-96c79e6c489c",
   "latest_source_analysis_checkpoint": {
@@ -8574,10 +8574,10 @@
   "research_inventory_063": "Current numbered inventory for the scheduled 04:20 gap-detail batch, read-only censor-attribution refresh 002, and dashboard receipt verification; inventory 062 is preserved unchanged.",
   "research_ledger_current": {
     "artifact_path": "docs/VERITAS_RESEARCH_LEDGER.json",
-    "artifact_sha256": "de2236e0c3e579be515d93d98cec6aa6ea5de061f71341b9ef0029a1636ca41a",
-    "updated_at_utc": "2026-10-16T17:54:22Z"
+    "artifact_sha256": "0a954b2200ae9a54a55be332ad800ec94773560d9faf40698ce8581a196ac6f7",
+    "updated_at_utc": "2026-10-16T17:58:53Z"
   },
-  "research_ledger_sha256": "de2236e0c3e579be515d93d98cec6aa6ea5de061f71341b9ef0029a1636ca41a",
+  "research_ledger_sha256": "0a954b2200ae9a54a55be332ad800ec94773560d9faf40698ce8581a196ac6f7",
   "source_analysis_checkpoint_063": {
     "active_segment_read": false,
     "catalog_segment_count": 5206,
@@ -13849,5 +13849,30 @@
     "no_business_rows_lost_or_duplicated": true,
     "work_manifest_sha256": "69a45a669e69ef6003a6c45b242486e6fda8051d366e19e355a942b62ffa8296"
   },
-  "shadow_resume_benchmark_007_sha256": "de457e4bcc3d4a9c2f2386ee65f4167966d2821cd13fd503168a2a07b8f4b8a6"
+  "shadow_resume_benchmark_007_sha256": "de457e4bcc3d4a9c2f2386ee65f4167966d2821cd13fd503168a2a07b8f4b8a6",
+  "research_inventory_087": {
+    "artifact_path": "docs/VERITAS_MISSION2_RESEARCH_INVENTORY_087.json",
+    "artifact_sha256": "647d40ffac43bf773d034fc0985cf4ab551287c556e4bc0b7d2b21d31dbc76ad",
+    "based_on_inventory": "docs/VERITAS_MISSION2_RESEARCH_INVENTORY_086.json",
+    "based_on_inventory_sha256": "1629cdcaf553d790b4f075c1402e3c150f2a2fab7e71fe20382eec7020e468d0",
+    "capture_scope": "Record a bounded SIGTERM checkpoint and same-journal resume canary, verify final state and event content against the one-shot four-segment reference, and record campaign/service postflight; other metrics retain earlier timestamps."
+  },
+  "shadow_interrupt_recovery_benchmark_008": {
+    "artifact_path": "docs/VERITAS_MISSION2_SHADOW_INTERRUPT_BENCHMARK_008.json",
+    "artifact_sha256": "58f6828b11488222ebf036d25a8332ade6f8b4b6dbb2f16a65f68da6a6a48b59",
+    "checkpoint_path": "docs/VERITAS_MISSION2_GATE_C_CHECKPOINT_027.md",
+    "interrupted_result_sha256": "0c66b6ebf1c08797e3fddd2ab082ef22dcf4f9370f3c7a4d36cfb1603aae6339",
+    "resumed_result_sha256": "c342e5016629ca9cfedf135c138510f469b720c384c1e6b07045e2117c948393",
+    "reference_result_sha256": "044c142b408b489a75c1ed7dac147f45bdf697f6e8c63353062c123d7c81a5bc",
+    "runner_status": "interrupted_checkpointed",
+    "wrapper_exit_code": 124,
+    "interrupted_after_records": 69,
+    "resumed_total_records": 906,
+    "runtime_snapshot_byte_identical": true,
+    "business_event_sequence_equal_after_normalization": true,
+    "one_extra_worker_start": true,
+    "decision_to_commit_window_exercised": false,
+    "campaign_changed": false
+  },
+  "shadow_interrupt_benchmark_008_sha256": "58f6828b11488222ebf036d25a8332ade6f8b4b6dbb2f16a65f68da6a6a48b59"
 }

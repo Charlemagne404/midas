@@ -576,3 +576,19 @@ See Gate C checkpoint 025 and benchmark 006.
    fill evidence, or strategy/model evaluation.
 
 See Gate C checkpoint 026 and benchmark 007.
+
+
+## Active Mission 2 queue — 2026-10-16 17:58 UTC
+
+1. **Exercise the decision-to-commit recovery window.** A forced SIGTERM at a
+   mid-segment checkpoint resumed to exact one-shot business-event order and
+   final state. The stop happened before the first decision, so the recovery
+   code for a decision written but not yet committed still needs a focused
+   isolated fixture or fault-injection check.
+2. **Keep the frozen live shadow and campaign unchanged.** The successful
+   canaries establish bounded reader and resume behavior, not live catch-up. A
+   successor still requires a versioned plan and continuity criteria.
+3. **Keep economics evidence-gated.** These historical source replays add no
+   new market observations, candidates, actual fills, or model targets.
+
+See Gate C checkpoint 027 and benchmark 008.

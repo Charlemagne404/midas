@@ -1731,3 +1731,17 @@ so its final chain hash differs. No evidence was lost or duplicated, but
 append order is not byte-stable across process boundaries. See [Gate C
 checkpoint 026](VERITAS_MISSION2_GATE_C_CHECKPOINT_026.md) and [benchmark
 007](VERITAS_MISSION2_SHADOW_RESUME_BENCHMARK_007.json).
+
+
+## Gate C checkpoint 027 — SIGTERM checkpoint and resume
+
+A bounded SIGTERM interrupted a private current-branch replay mid-segment.
+The worker wrote an `interrupted_checkpointed` result, verified its journal,
+and a separate process resumed the same work directory to the same endpoint
+as the one-shot four-segment reference. Final runtime bytes, engine/context,
+research semantics, indexed rows, and normalized business-event sequence
+match. The journal adds the expected second `worker_start`, so its final tail
+hash differs. The signal arrived before the first decision, leaving the
+decision-to-commit crash window untested. See [Gate C checkpoint
+027](VERITAS_MISSION2_GATE_C_CHECKPOINT_027.md) and [benchmark
+008](VERITAS_MISSION2_SHADOW_INTERRUPT_BENCHMARK_008.json).

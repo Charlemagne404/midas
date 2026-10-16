@@ -1786,3 +1786,16 @@ The live collector and frozen shadow remain active with restart counts 0 and
 written. See [Gate C checkpoint
 026](VERITAS_MISSION2_GATE_C_CHECKPOINT_026.md) and [benchmark
 007](VERITAS_MISSION2_SHADOW_RESUME_BENCHMARK_007.json).
+
+
+## 2026-10-16 17:58 UTC — controlled interruption postflight
+
+The isolated replay handled the 45-second SIGTERM request by checkpointing
+mid-segment; its wrapper returned 124 at the stop threshold, while the child
+wrote a verifiable result and exited normally through its interruption path.
+A second process resumed the same private journal to the one-shot endpoint.
+The live collector and frozen shadow remained active with restart counts 0
+and 1; campaign SHA-256 is unchanged. No production cursor or journal was
+written. See [Gate C checkpoint
+027](VERITAS_MISSION2_GATE_C_CHECKPOINT_027.md) and [benchmark
+008](VERITAS_MISSION2_SHADOW_INTERRUPT_BENCHMARK_008.json).

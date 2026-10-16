@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-16T17:54:22Z",
+  "updated_at_utc": "2026-10-16T17:58:53Z",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -8654,6 +8654,41 @@
         "Resuming appends one extra worker_start event and can reorder same-time observation events; normalized business content and research semantics match but chain hashes differ.",
         "No live service, campaign file, production cursor, production journal, or order state changed.",
         "No new market evidence or execution outcome was produced."
+      ]
+    },
+    {
+      "hypothesis_id": "VERITAS-H151",
+      "experiment_id": "VERITAS-M2-SHADOW-INTERRUPT-RECOVERY-001",
+      "dataset_id": "shadow-runtime-82a71b6db289238d1ac23965efee424dd5983a97f13817704d8590fb39631478",
+      "title": "Does the resumable reader checkpoint on SIGTERM and continue the same isolated journal to the one-shot state without losing or duplicating business events?",
+      "mechanism": "The runner handles SIGTERM at a record/checkpoint boundary, persists the cursor and journal, and can reopen that same work directory in a new process.",
+      "success_metric": "Produce an interrupted_checkpointed result, verify journal integrity, resume from the exact cursor, and match final runtime, research semantics, table contents and normalized business-event sequence.",
+      "status": "continue",
+      "decision": "Accept bounded SIGTERM checkpoint and resume for this source interval. Keep the extra worker_start event and tail-hash difference explicit; test the decision-to-commit crash window before relying on recovery for a successor.",
+      "result": {
+        "artifact_path": "docs/VERITAS_MISSION2_SHADOW_INTERRUPT_BENCHMARK_008.json",
+        "artifact_sha256": "58f6828b11488222ebf036d25a8332ade6f8b4b6dbb2f16a65f68da6a6a48b59",
+        "runner_status": "interrupted_checkpointed",
+        "wrapper_exit_code": 124,
+        "stopped_after_records": 69,
+        "resumed_total_records": 906,
+        "runtime_snapshot_byte_identical": true,
+        "engine_context_research_equal": true,
+        "business_event_sequence_equal_after_normalization": true,
+        "sqlite_integrity": [
+          "ok",
+          "ok"
+        ],
+        "journal_tail_hash_equal": false,
+        "decision_commit_references_valid": {
+          "one_shot": 32,
+          "signal_resumed": 32
+        }
+      },
+      "limitations": [
+        "The stop occurred before the first decision and does not test recovery of an uncommitted decision.",
+        "An extra worker_start lifecycle event causes the final event count and tail hash to differ from one-shot.",
+        "Historical bounded canary only; no live service or new economic evidence."
       ]
     }
   ],
