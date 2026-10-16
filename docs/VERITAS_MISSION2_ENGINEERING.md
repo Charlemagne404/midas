@@ -1609,3 +1609,70 @@ claim. The active worker and frozen campaign remain unchanged. This replay
 shows reader efficiency, not live catch-up, new market evidence, or economic
 improvement. See [Gate C checkpoint 020](VERITAS_MISSION2_GATE_C_CHECKPOINT_020.md)
 and [benchmark 002](VERITAS_MISSION2_SHADOW_READER_BENCHMARK_002.json).
+
+## Gate C checkpoint 021 — independent full-consume comparison
+
+A second, non-overlapping finalized window (ordinals 521245–525719) matched
+all 768 normalized research rows and both engine/context state digests. In a
+single bounded pass, CPU fell from 63.83 to 13.43 seconds and wall time from
+255.31 to 53.67 seconds under equal resource bounds. A two-segment sequential
+runtime-snapshot preflight also passed: the branch runner wrote a snapshot,
+then loaded it to process the next finalized segment. The focused 16-test
+shadow suite, Ruff, formatting, and strict Mypy passed. These results verify
+the replay path, not live campaign catch-up or economic improvement. The
+frozen worker remains untouched. See [checkpoint 021](VERITAS_MISSION2_GATE_C_CHECKPOINT_021.md),
+[benchmark 003](VERITAS_MISSION2_SHADOW_READER_BENCHMARK_003.json), and ledger
+H140–H141.
+
+## Gate C checkpoint 022 — cursor validation and bounded runtime canary
+
+The read-only runtime exporter now verifies that a cursor's ordinal and byte
+offset land on the same finalized source-record boundary, in addition to
+checking journal, campaign, segment, and catalog digests. A live snapshot of
+the frozen campaign passed those checks without writing its journal. The five
+snapshot-specific tests and the 21-test snapshot/shadow group passed; Ruff,
+formatting, and strict Mypy also passed.
+
+A 32-segment canary under a 5% CPU cap timed out at 20 minutes without
+publishing progress. A smaller eight-segment canary under a 10% cap completed
+in 84.69 seconds of process wall time (8.47 CPU seconds; 1,655 records and
+1,393 frames). Its decision clock followed recorded timestamps, and its
+temporary journal is not evidence of live catch-up or new economic outcomes.
+The active campaign remains unchanged. See [Gate C checkpoint
+022](VERITAS_MISSION2_GATE_C_CHECKPOINT_022.md).
+
+## Gate A / B — independent 71-scan replay
+
+The saved intermittent snapshot panel now contains 71 scans / 2,840 selected
+market-pair observations, of which 2,361 pass the request-to-receipt quality
+gate. The independent audit found zero positive top gross states and zero
+positive states after displayed depth, per-leg minimums, or either fee
+sensitivity. It independently checked 3,006 quantity-specific fee
+calculations with no disagreements and found no v4 validity or edge mismatch.
+The 7,355-ID bounded Gamma union included 2,378 markets eligible at least
+once; 1,181 distinct market IDs were actually selected. The latest scan's
+bounded union had 300 IDs / 113 eligible and selected 40. These remain
+intermittent, selected observations, not continuous venue coverage. See
+[audit 015](VERITAS_MISSION2_INDEPENDENT_OPPORTUNITY_AUDIT_015.json) and
+[coverage 012](VERITAS_MISSION2_MARKET_UNIVERSE_COVERAGE_012.json).
+
+Coverage pilot 002 has completed 10/48 scheduled scans: 286/400 selected pair
+slots pass the main gate (71.5%), across 283 distinct markets, with no skipped
+scan sequence. Its conservative reported-age sensitivity accepts 68 slots;
+it verifies neither upstream atomicity nor sequence freshness. This is an
+ongoing measurement study, not a strategy evaluation.
+
+The scheduled finalized-source replay at 15:10 UTC completed at 15:13 UTC,
+processing 57 new segments / 16.6 MB. It reached 6,498/6,498 cataloged
+segments with no pending bytes and 469,501 quality-valid states across 106
+markets; all tracked gross and post-depth gates remain zero. This interval
+matched the incoming segment count but does not establish sustained surplus
+capacity. The frozen campaign digest remains unchanged.
+
+The 15:15 UTC Research Director cycle admitted scan 71 to the bounded Arena
+qualification workflow. Its child completed 71/71 scan events in 5.32 seconds
+and returned complete zero-candidate evidence at the baseline, depth,
+minimum, and fee gates. The Director still awaits its next scheduled manifest
+reconciliation. Model and strategy readiness remain blocked on missing
+candidate-relevant evidence. See [Gate F checkpoint
+036](VERITAS_MISSION2_GATE_F_CHECKPOINT_036.md).

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-16T13:06:25Z",
+  "updated_at_utc": "2026-10-16T15:18:33Z",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -8163,6 +8163,350 @@
       ],
       "decision": "Retain the optimization in the branch. Keep the frozen worker and campaign unchanged; require an approved successor lifecycle and further range-level verification before deployment.",
       "status": "continue"
+    },
+    {
+      "hypothesis_id": "VERITAS-H140",
+      "experiment_id": "VERITAS-M2-SHADOW-READER-BENCHMARK-003",
+      "title": "Does the optimized reader preserve complete shadow evidence semantics and CPU reduction on a second nonoverlapping source window?",
+      "dataset_id": "Reality_finalized_recording_ordinals_521245_525719",
+      "mechanism": "Cache unchanged source-directory listings and reuse the frame decode while replaying the entire temporary-journal Shadow.consume path.",
+      "success_metric": "Exact equality of normalized decision/commitment/follow-up rows and state hashes on the same finalized range, with lower CPU under fixed resource limits.",
+      "result": {
+        "status": "SECOND_NONOVERLAPPING_WINDOW_STATE_AND_RESEARCH_EQUIVALENCE_VERIFIED",
+        "captured_at_utc": "2026-10-16T13:27:46Z",
+        "artifact_path": "docs/VERITAS_MISSION2_SHADOW_READER_BENCHMARK_003.json",
+        "artifact_sha256": "716e7f13e794dfecebc36cdf5232ede78b8d494b9c98cd1dc4182810440219b9",
+        "source_range": {
+          "first_ordinal": 521245,
+          "last_ordinal": 525719,
+          "records": 4475,
+          "frames": 3899,
+          "sealed_segments_verified": 16
+        },
+        "decisions": 128,
+        "distinct_markets": 8,
+        "quality_valid_decision_states": 45,
+        "quality_invalid_decision_states": 83,
+        "positive_gross_candidates": 0,
+        "followups": {
+          "observed_public_measurement": 2,
+          "censored": 510
+        },
+        "research_semantics_sha256": "1932f2e6d4e37813028b8cb2d5729c3f625a32e39faee2f7a03679cca88f845d",
+        "engine_state_sha256": "5fa4c68b98e332579fe24c108752db8f21fe63dd87b4b9b9133cd975f8498291",
+        "context_state_sha256": "d6e5b05f7235389624d8a7461669bc22749f47f4d2a4c5668e3fd512dd05e660",
+        "normalized_rows_equal": true,
+        "cpu_seconds": {
+          "pinned": 63.829193895,
+          "veritas": 13.432735419
+        },
+        "cpu_reduction_percent": 78.9552,
+        "wall_reduction_percent": 78.9769,
+        "process_peak_rss_bytes": {
+          "pinned": 193163264,
+          "veritas": 193122304
+        },
+        "focused_test_result": "16 passed",
+        "ruff": "passed",
+        "strict_mypy": "passed",
+        "current_live_worker_throttle_percent": 97.77,
+        "frozen_campaign_modified": false,
+        "live_worker_restarted": false
+      },
+      "limitations": [
+        "One bounded pass per implementation is not a long-run worker throughput guarantee.",
+        "Replay-derived decisions are temporary and hypothetical; follow-up censoring may be caused by the segment endpoint and is not prospective yield.",
+        "The live frozen worker remains severely throttled and does not run the branch optimization."
+      ],
+      "decision": "Keep the optimization in project/veritas. The second range confirms state/evidence equivalence and CPU reduction, while the live worker remains unchanged. Prepare a separately versioned, resource-bounded operational canary before claiming live recovery.",
+      "status": "continue"
+    },
+    {
+      "hypothesis_id": "VERITAS-H141",
+      "experiment_id": "VERITAS-M2-SHADOW-RUNTIME-SNAPSHOT-PREFLIGHT-001",
+      "dataset_id": "Reality_finalized_recording_ordinals_521576_522245",
+      "mechanism": "The full-consume benchmark can persist a hash-verified runtime snapshot and resume from its next finalized-source cursor in a separate temporary journal.",
+      "result": {
+        "artifact_path": "docs/VERITAS_MISSION2_GATE_C_CHECKPOINT_021.md",
+        "captured_at_utc": "2026-10-16T13:42:04Z",
+        "campaign_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
+        "producer_ordinals": [
+          521576,
+          522003
+        ],
+        "producer_records": 428,
+        "producer_frames": 419,
+        "consumer_ordinals": [
+          522004,
+          522245
+        ],
+        "consumer_records": 242,
+        "consumer_frames": 185,
+        "sequential_cursor_continuity": true,
+        "runtime_snapshot_sha256": "80a6af40810997adfd575269bee3590c25b3c4504ba8835f076ab68c6d2bb921",
+        "producer_output_sha256": "e1f3b5d18adcdc237f70e6be7eb6651f2542d544b40f12c3abb3af351ae9ab13",
+        "consumer_output_sha256": "d31fea71fd5919088c98384844cc1ced805a9e90784a5c1fb15f7c41fa86e666",
+        "focused_shadow_tests": "16 passed",
+        "ruff": "passed",
+        "ruff_format": "passed",
+        "strict_mypy": "passed",
+        "benchmark_script_sha256": "d6b1b31db06531c5b017d7770b08a9ec8078b2f6750c443e0e199097ef62ea12"
+      },
+      "decision": "Keep the snapshot helper for isolated successor research; do not use it to write into or restart the frozen campaign.",
+      "limitations": [
+        "This smoke preflight validates two sequential one-segment replays only.",
+        "It does not prove live catch-up, campaign journal migration, or economic improvement."
+      ],
+      "status": "verified"
+    },
+    {
+      "hypothesis_id": "VERITAS-H142",
+      "experiment_id": "VERITAS-M2-SHADOW-RUNTIME-SNAPSHOT-002",
+      "title": "Does live shadow snapshot capture validate exact source cursor boundaries without writing to the frozen journal?",
+      "dataset_id": "Reality_campaign_adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46_runtime_captured_2026-10-16T15:05Z",
+      "mechanism": "Read the last committed SQLite runtime checkpoint, verify its stored digest, campaign identity, finalized segment/catalog hashes, record framing, and exact offset-to-ordinal boundary before exporting an isolated snapshot.",
+      "success_metric": "A snapshot of the active campaign passes source and journal integrity checks, has a cursor exactly after its declared ordinal, and leaves the journal unchanged.",
+      "status": "verified",
+      "decision": "Keep the stricter exporter and adversarial boundary tests in the Veritas branch. Continue using only read-only capture for the protected campaign.",
+      "limitations": [
+        "A valid snapshot does not demonstrate live catch-up or authorize writing to the frozen campaign.",
+        "Source and journal verification are a point-in-time check; the capture does not establish future continuity."
+      ],
+      "result": {
+        "status": "verified_read_only_cursor_boundary",
+        "artifact_path": "data/veritas-canaries/shadow-runtime-readonly-003/live-runtime.json",
+        "artifact_sha256": "024bf401f02c9aaa3ed92182b73460910aa3784b44c8d0c1e7c7bb7aaa03fd0a",
+        "campaign_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
+        "campaign_plan_sha256": "aa8acb2b46823c1a1e3ac5d01a57dde917746c2c7471098ae2a4598875e322f5",
+        "runtime_sha256": "5f32abc331c204af7c400f69d6bcf2fe1c21a8c6bf555e9c54ae6581d6b90736",
+        "cursor": {
+          "catalog_sha256": "5f0ff8bd9240ab81686c227912c1050223191fa1781af9895710df2fac6a3b08",
+          "offset": 83447,
+          "ordinal": 524953,
+          "segment": "00000000000000524898-39d15b1877bc459887f4083483d3f177.seg",
+          "segment_bytes": 491247,
+          "segment_sha256": "191824c64521321e3063a75a596205fbef0ac17fd083678366991bf624c59b12"
+        },
+        "tests": "5 snapshot-specific and 21 combined snapshot/shadow tests passed; Ruff, Ruff format, and strict Mypy passed",
+        "source_file": "packages/midas/veritas/shadow_runtime_snapshot.py",
+        "export_script": "scripts/export_veritas_shadow_runtime_snapshot.py",
+        "persisted_runtime_sha256": "5f32abc331c204af7c400f69d6bcf2fe1c21a8c6bf555e9c54ae6581d6b90736"
+      }
+    },
+    {
+      "hypothesis_id": "VERITAS-H143",
+      "experiment_id": "VERITAS-M2-SHADOW-READER-CANARY-002-003",
+      "title": "Can an isolated branch reader process bounded finalized windows under conservative CPU and memory limits?",
+      "dataset_id": "Reality_finalized_recording_ordinals_523698_on_timeout_and_529093_530747_on_success",
+      "mechanism": "Compare a larger 5%-CPU attempt with a smaller 10%-CPU full-consume replay, both in isolated journals and under fixed memory and wall-time limits.",
+      "success_metric": "Record successful complete-window throughput and resource use; timeouts must leave an explicit terminal record and must not be described as partial progress.",
+      "status": "continue",
+      "decision": "Retain the small successful canary as a performance datum and the timeout as a failed scale point. Do not infer live recovery or deploy to the frozen worker; implement resumable journal-preserving continuation before any larger catch-up test.",
+      "limitations": [
+        "The successful run uses decision time advanced alongside recorded timestamps and does not reproduce wall-clock lag.",
+        "The run uses Veritas branch code with --allow-current-code; campaign-pinned files were verified but implementation code hashes were not checked against the frozen campaign.",
+        "One eight-segment window does not establish sustained throughput or fresh prospective observations.",
+        "The timeout emitted no final output and provides no measured throughput for the 32-segment target."
+      ],
+      "result": {
+        "timeout": {
+          "status": "timed_out_at_configured_wall_limit",
+          "artifact_path": "data/veritas-canaries/shadow-reader-catchup-002/run-status.json",
+          "artifact_sha256": "c3b52126033eb68686c97b95a5d861edf9bbda9d3cb956f1455da184f3333f01",
+          "cpu_quota_percent": 5,
+          "memory_max_bytes": 402653184,
+          "wall_limit_seconds": 1200,
+          "cpu_seconds": 76.0,
+          "wall_seconds": 1200.093,
+          "memory_peak_displayed_mib": 137.8,
+          "result_artifact_written": false,
+          "after_runtime_artifact_written": false
+        },
+        "bounded_success": {
+          "status": "bounded_success",
+          "artifact_path": "data/veritas-canaries/shadow-reader-catchup-003/run-manifest.json",
+          "artifact_sha256": "a82e58689d232c55afa75d0306200e04be48cdfeb1733e0e9c6faef65cd9f02c",
+          "result_path": "data/veritas-canaries/shadow-reader-catchup-003/result.json",
+          "result_sha256": "74a95d62ede54be9cb00c5c836bf2e206affcffddc02889f90c700b61326d5f2",
+          "resource_limits": {
+            "cpu_quota_percent": 10,
+            "memory_max_bytes": 402653184,
+            "runtime_max_seconds": 600
+          },
+          "source_range": {
+            "first_ordinal": 529093,
+            "frames": 1393,
+            "last_ordinal": 530747,
+            "records": 1655,
+            "sealed_segments_verified": 8
+          },
+          "metrics": {
+            "context_state_sha256": "9b140a5f5d3f3da9c41ebd35ca5257df79ae0b8b6edc605b7192f5ec2e43c826",
+            "cpu_seconds": 8.466374049,
+            "decision_count": 56,
+            "engine_state_sha256": "89607a20bf879f2422149f1f1daceb9bd46ffd79006e2deead8305b332fa01a8",
+            "followup_status_counts": {
+              "censored": 221,
+              "observed_public_measurement": 3
+            },
+            "max_rss_bytes_process": 187482112,
+            "observation_count": 336,
+            "research_event_count": 336,
+            "research_semantics_sha256": "8f2403429eb121d965fdd5b9a1a1b968a77ca8624e4028d12f789a1ce11dcea2",
+            "wall_seconds": 84.69002565299161
+          },
+          "terminal_observation": {
+            "systemd_cpu_seconds": 12.9,
+            "systemd_memory_peak_mib": 131.4,
+            "systemd_result": "success",
+            "wall_runtime_seconds": 128.854
+          },
+          "orders_submitted": false,
+          "protected_campaign_modified": false
+        }
+      }
+    },
+    {
+      "hypothesis_id": "VERITAS-H144",
+      "experiment_id": "VERITAS-M2-INDEPENDENT-SOURCE-AUDIT-015",
+      "title": "Does the expanded 71-scan selected public snapshot panel contain a positive gross complementary-market state?",
+      "dataset_id": "VERITAS_observatory_saved_snapshots_scans_1_71",
+      "mechanism": "Recompute snapshot integrity, pair eligibility, gross edges, freshness sensitivities, depth, minimums, and v3 fee sensitivities in an independent audit path.",
+      "success_metric": "Reproduce stored v4 validity and edges, cross-check v3 fees independently, and report any quality-valid positive state with its exact source lineage.",
+      "status": "continue",
+      "decision": "No candidate was found. Preserve the no-trade baseline and continue operating the bounded observation pipeline; repeated selected states are correlated and do not estimate venue-wide opportunity prevalence.",
+      "limitations": [
+        "Snapshots are intermittent, selected, and dependent.",
+        "Request-to-receipt validity is not venue sequence or upstream freshness proof.",
+        "Displayed book depth and fee arithmetic do not establish order arrival, fills, or profitability."
+      ],
+      "result": {
+        "status": "NO_POSITIVE_GROSS_CANDIDATE_OBSERVED",
+        "artifact_path": "docs/VERITAS_MISSION2_INDEPENDENT_OPPORTUNITY_AUDIT_015.json",
+        "artifact_sha256": "1d2bda0b3e7f0ed297079f02717a4faa4f84b921e1d3158c1576e3024e2b8f44",
+        "snapshot_count": 71,
+        "selected_market_observation_count": 2840,
+        "quality_valid_count": 2361,
+        "strict_freshness_valid_count": 502,
+        "positive_top_pair_gross_count": 0,
+        "fee_quantity_checks": 3006,
+        "fee_disagreements": 0,
+        "v4_v3_validity_mismatches": 0,
+        "v4_v3_edge_mismatches": 0
+      }
+    },
+    {
+      "hypothesis_id": "VERITAS-H145",
+      "experiment_id": "VERITAS-M2-FINALIZED-SOURCE-TIMER-20261016T1510Z",
+      "title": "Does the scheduled incremental source analyzer keep pace with current finalized-segment arrival?",
+      "dataset_id": "Reality_campaign_finalized_segments_6441_to_6498",
+      "mechanism": "Allow the normal bounded timer to run against finalized segments and compare newly cataloged arrivals with processed progress, pending bytes, CPU, wall time, and memory.",
+      "success_metric": "The scheduled run processes the entire observed incremental prefix with no pending segments or bytes while preserving campaign and source hashes.",
+      "status": "continue",
+      "decision": "The 15:10 UTC cycle processed all 57 new segments and ended current at 6,498/6,498. Keep the schedule and collect more intervals before claiming a sustained throughput margin.",
+      "limitations": [
+        "One run matching this interval’s incoming segment count does not prove durable capacity headroom.",
+        "A zero-pending result is a replay-completeness check, not an economic result."
+      ],
+      "result": {
+        "status": "current",
+        "generated_at_utc": "2026-10-16T15:13:03+00:00",
+        "summary_sha256": "061f386d287fc782ac2e2e978ffa210103e7a7128974e3a69d0f89cb914c0f5e",
+        "batch_processed_segment_count": 57,
+        "batch_processed_source_bytes": 16627664,
+        "processed_segment_count": 6498,
+        "catalog_segment_count": 6498,
+        "pending_segment_count": 0,
+        "pending_source_bytes": 0,
+        "last_processed_ordinal": 904995,
+        "quality_valid_states": 469501,
+        "market_count": 106,
+        "positive_gross_states": {
+          "top_ask": 0,
+          "quantity_depth": 0,
+          "full_depth": 0,
+          "minimum_notional": 0
+        },
+        "systemd": {
+          "result": "success",
+          "wall_seconds": 152,
+          "cpu_seconds": 7.628971,
+          "memory_peak_bytes": 131014656,
+          "swap_peak_bytes": 0
+        }
+      }
+    },
+    {
+      "hypothesis_id": "VERITAS-H146",
+      "experiment_id": "VERITAS-M2-ECO-QUAL-001-V4-RUN-1eee813f5361",
+      "title": "Does scheduled independent v4 qualification identify positive states in scan 71 after depth, per-leg constraints, and fees?",
+      "dataset_id": "veritas_scan_20261016T150117Z-366ac2e7f8ea",
+      "mechanism": "Run the pinned bounded v4 Arena workflow over all finalized scan events, compare its improved depth/notional prefilter and independent share-minimum/fee replay against the unchanged top-ask gross baseline.",
+      "success_metric": "Qualify all scan events, preserve complete candidate evidence and replay lineage, and report positive-state counts separately at every funnel gate.",
+      "status": "continue",
+      "decision": "Keep no-trade as the current hypothetical policy. Continue bounded observation; no model or execution-policy comparison is justified without an eligible gross candidate.",
+      "limitations": [
+        "The panel contains intermittent dependent market snapshots and is not an independent strategy evaluation.",
+        "Qualification arithmetic and displayed liquidity do not establish execution, fills, or profitability.",
+        "The Director has admitted and the Arena child has completed the scan, but its summary awaits the next scheduled Director reconciliation."
+      ],
+      "result": {
+        "artifact_path": "data/arena/findings/veritas-qualification-v1-a68c91de3c2245a9/manifest.json",
+        "artifact_sha256": "4ba06ab7d4fe480bbd6d0ad706f7ac4b5be441e41b9215a1aa301635fad07db8",
+        "job_path": "data/arena/jobs/job-4fcf2252f1d84e53a54e0966/job.json",
+        "job_file_sha256": "53299619b0ed7bf07ecad30ba089c177f2d29ea19f94cfc523ffe3f75d99f68a",
+        "job_state": "COMPLETED",
+        "job_progress": {
+          "done": 71,
+          "total": 71
+        },
+        "job_elapsed_seconds": 5.323333960957825,
+        "source_event_count": 71,
+        "source_bytes": 1303680,
+        "expected_latest_scan_id": "scan-20261016T150117Z-366ac2e7f8ea",
+        "experiment_sha256": "74b8e27193c78f37d582ccb0f5a74d1e2442c1e6ebed2862396d5cb693874556",
+        "dataset_sha256": "1eee813f5361579d99e889aebfd99a3ae672b0a93d036afefcad2fbf589ecbeb",
+        "gross_candidate_evidence_count": 0,
+        "gross_candidate_evidence_complete": true,
+        "economic_qualification_funnel": [
+          {
+            "criterion": "unchanged_top_ask_gross_sign",
+            "positive_states": 0,
+            "valid_state_rate": 0.0
+          },
+          {
+            "criterion": "full_displayed_depth_gross",
+            "positive_states": 0,
+            "valid_state_rate": 0.0
+          },
+          {
+            "criterion": "full_depth_and_per_leg_minimum_notional",
+            "positive_states": 0,
+            "valid_state_rate": 0.0
+          },
+          {
+            "criterion": "single_match_fee_sensitivity_positive",
+            "positive_states": 0,
+            "valid_state_rate": 0.0
+          },
+          {
+            "criterion": "fragmentation_safe_fee_sensitivity_positive",
+            "positive_states": 0,
+            "valid_state_rate": 0.0
+          }
+        ],
+        "gross_candidate_replay": {
+          "candidate_count": 0,
+          "candidates": [],
+          "complete": true,
+          "replayed_candidate_count": 0,
+          "source_code_sha256": "652f562ba24f362aeffad51099dbfd56d9228166bee542bd4c290a0fa63676d6",
+          "status": "NO_POSITIVE_CANDIDATES_TO_REPLAY",
+          "version": "veritas-gross-candidate-source-replay-v2"
+        },
+        "model_readiness": "NOT_READY_NO_CANDIDATE_RELEVANT_TARGET",
+        "strategy_readiness": "NOT_READY_NO_QUALIFIED_GROSS_CANDIDATE"
+      }
     }
   ],
   "next_research_questions": [
@@ -8177,6 +8521,10 @@
     "Does a future scheduled scan produce any quality-valid positive gross candidate after independent v3 replay, or does the no-candidate finding persist in the selected panel?",
     "Does decoded-event reuse measurably reduce CPU over a bounded finalized-source replay while preserving shadow state digests and the frozen campaign?",
     "Do the next scheduled source and gap-detail timer runs resume under the frozen-code import overlay and preserve their existing state identities?",
-    "Does the full-consume CPU reduction reproduce on a second independent finalized-source window, with exact journal-row equality, before any successor deployment decision?"
+    "Can a separately versioned, resource-bounded reader canary advance on live finalized source under the 10% CPU limit without altering or restarting the protected campaign?",
+    "Does the next scheduled source-analysis batch keep pace with finalized-segment arrival without growing its backlog?",
+    "Can an isolated successor shadow preserve its SQLite research journal and exact source cursor across bounded chunk interruptions?",
+    "Does coverage pilot 002 complete its 48-scan protocol with stable request-to-receipt yield and sufficiently characterized market/time dependence?",
+    "Does the next scheduled Research Director cycle reconcile the completed scan-71 Arena finding without duplicating admission or losing its source and experiment lineage?"
   ]
 }

@@ -1635,3 +1635,84 @@ passed. See [Gate C checkpoint 020](VERITAS_MISSION2_GATE_C_CHECKPOINT_020.md),
 [benchmark 002](VERITAS_MISSION2_SHADOW_READER_BENCHMARK_002.json), and ledger
 H139. The earlier checkpoint's limited-range claim remains historical; this
 entry records the broader full-consume-path comparison.
+
+## 2026-10-16 13:37 UTC — archive timeout recovery in progress
+
+The daily raw archive service exceeded its 30-minute start timeout while
+running under its existing 10% CPU quota, 256 MiB memory cap, and idle I/O
+priority. Its published manifest remains the last verified 2,348-segment
+prefix; the interrupted run had produced additional segment copies but had
+not published a new manifest. The archive implementation verifies existing
+copies, resumes missing finalized segments, and preserves the raw originals.
+
+A user-level drop-in now raises only `TimeoutStartSec` to two hours. At 13:40
+UTC the one-shot archive retry was active under the same CPU, memory, and I/O
+limits; the collector, frozen shadow, and campaign were not restarted or
+changed. The retry has not yet published a new manifest, so archive recovery
+is still in progress and needs a completion/integrity check.
+
+At 13:42 UTC the same process remained active with no OOM or OOM-kill events.
+Its cgroup was at 253.4 MiB of the 256 MiB limit and had reached the limit
+repeatedly (635 `max` events); memory-pressure averages remained zero. It had
+about 24 MiB of swap in use. Leave this run uninterrupted and verify the
+published manifest and copied segment hashes after it exits.
+
+## 2026-10-16 15:07 UTC — archive recovery and shadow-reader canaries
+
+The scheduled archive retry completed successfully at 14:54:43 UTC with exit
+status 0. Its published manifest contains 6,318 verified finalized segments
+through ordinal 861,364 and records the source-manifest digest. It included no
+active segment and deleted no originals. The retry used 463 CPU seconds and
+reached its 256 MiB memory cap (with 25.8 MiB swap peak); it completed without
+an OOM failure. This supersedes the earlier “recovery in progress” note. The
+archive is a verified prefix, not the complete current recording.
+
+At 15:07 UTC the Reality recorder, shadow worker, Reality API/web, and Midas
+API/web were active with restart counts 0, 1, 0, 0, 0, and 0 respectively.
+The collector had recorded 664,571 frames across eight markets / 16 books;
+all 16 books were fresh in the latest API snapshot, while sequence ordering
+remains unverified. The API still reports the recent connection-close error
+and four collector failures. Reality API health is DEGRADED because the shadow
+is behind; Midas API health is READY. Both remain demo-mode/read-only.
+
+The read-only runtime snapshot captured at 15:05 UTC remained at source
+ordinal 524,953 while the finalized gap-detail replay had reached ordinal
+902,368 at 15:06 UTC. The persisted shadow cursor reports 200,483 lagged frames
+skipped; its source receipt is about 22.1 hours old, and the latest decision
+about 30.2 hours old at this operational capture. The campaign and plan hashes
+match their frozen identities. Gap-detail analysis is current at 6,487 of
+6,489 replayable/cataloged segments, zero pending segments, and no active
+segment read. The source opportunity replay last completed at 14:43 UTC with
+6,441/6,441 segments; the next scheduled run is due at 15:10 UTC.
+
+The 5% / 32-segment isolated reader canary timed out at its 20-minute limit
+without a result. The 10% / eight-segment canary completed in 84.69 seconds of
+process wall time, with 8.47 CPU seconds and 187.5 MB process peak RSS. It
+used a synthetic replay clock and a separate temporary journal; it does not
+show live recovery. No active service or campaign was changed for either run.
+
+Host load was 0.63 / 1.04 / 1.09; available RAM was about 10.4 GiB, with 4.22
+GiB of 4.29 GiB swap occupied. Disk use was 56% with about 196 GB free. The
+capacity API projects roughly 890 MB/day of raw recording and 27 days to the
+configured raw budget at its recent rate. This swap occupancy and the shadow's
+strict CPU quota are the main operational risks; the archive run reached its
+memory cap but finished successfully.
+
+The scheduled 15:10 UTC finalized-source replay finished at 15:13 UTC with
+exit status 0. It processed 57 segments / 16,627,664 bytes in 152 seconds of
+wall time, used 7.63 CPU seconds, peaked at 124.9 MiB, and used no swap. The
+source prefix is current at 6,498/6,498 segments / 1,672,290,098 bytes,
+through ordinal 904,995, with zero pending segments or bytes. It reports
+469,501 quality-valid states across 106 markets and zero positive top-ask,
+quantity-depth, full-depth, or minimum-notional states. Compared with 6,441
+segments at the 14:43 UTC run, the 57-segment batch matched growth over this
+interval. This is a successful scheduled catch-up, not a measured long-run
+throughput margin.
+
+The 15:15 UTC Director timer completed with exit status 0 and admitted Arena
+job `job-4fcf2252f1d84e53a54e0966` for scan 71. The child completed at 15:15:56
+UTC with exit status 0 after 5.32 seconds, processing 71/71 finalized scan
+events. Its finding has complete zero-candidate evidence at all five gross,
+depth, minimum, and fee qualification checks. The Director's current summary
+still projects scan 70 as last qualified; scan 71 reconciliation remains for
+the next scheduled cycle. No manual retry or additional admission occurred.

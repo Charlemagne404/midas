@@ -459,3 +459,36 @@ the next reader check is a second independent finalized-source window with
 exact evidence-row comparison before any successor deployment decision. Keep
 the original worker and campaign untouched. See [benchmark
 002](VERITAS_MISSION2_SHADOW_READER_BENCHMARK_002.json) and ledger H139.
+
+## Active Mission 2 queue — 2026-10-16 15:07 UTC
+
+1. **Recover useful forward evidence safely.** The frozen Reality shadow is
+   still roughly 22 hours behind its source, has skipped about 200,483 lagged
+   frames, and has not made a decision for about 30 hours. Its single
+   historical restart count is unchanged. Keep the campaign and worker
+   untouched. The branch shows equivalent decisions with materially lower
+   CPU on two bounded source windows, but the 5% 32-segment canary timed out;
+   only an eight-segment, 10% synthetic-clock canary completed. Any successor
+   needs resumable, journal-preserving checkpoints and continuity checks
+   before it can safely contribute prospective evidence.
+2. **Keep the independent discovery and measurement streams operating.** The
+   71-scan audit and the scheduled Arena v4 qualification still have zero
+   positive gross candidates. Coverage pilot 002
+   is 10/48 scans with 286/400 request-to-receipt-valid slots and no skipped
+   scan sequence. Complete its fixed protocol and interpret repeated markets
+   as dependent; do not change eligibility based on the economic result.
+3. **Keep verifying incremental finalized-source throughput.** The scheduled
+   15:10 UTC replay processed 57 segments / 16.6 MB and reached 6,498/6,498
+   with zero pending bytes at 15:13 UTC; that matched the incoming count for
+   this interval. Gap-detail had reached 6,487/6,489 at 15:06 UTC. Continue
+   checking the normal timer because one successful interval does not prove
+   long-run capacity margin.
+4. **Do not train a predictor yet.** The readiness endpoint remains
+   `WAITING_FOR_COVERAGE` at 1.77 recorded days versus a seven-day minimum.
+   The audited panel still has no observed positive gross state or
+   candidate-relevant labels. Keep model work blocked on evidence, not on
+   engineering availability.
+
+See Gate C checkpoint 022, Gate F checkpoint 036, independent audit 015,
+coverage 012, the operations log, and inventory 082 for the evidence and
+limitations.

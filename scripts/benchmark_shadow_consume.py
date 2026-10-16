@@ -34,6 +34,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--repetitions", type=int, default=3)
     parser.add_argument("--allow-current-code", action="store_true")
     parser.add_argument("--include-research-events", action="store_true")
+    parser.add_argument(
+        "--runtime-snapshot-output",
+        type=Path,
+        help="Write the last repetition's read-only replay runtime for a successor window.",
+    )
     parser.add_argument("--output", required=True, type=Path)
     return parser.parse_args()
 
@@ -148,6 +153,7 @@ def run_once(
     runtime_sha: str,
     segment_target: int,
     include_research_events: bool,
+    include_final_runtime: bool,
 ) -> dict[str, Any]:
     identity = campaign["identity"]
     raw_root = Path(identity["raw_root"])
@@ -156,7 +162,11 @@ def run_once(
     if not stem:
         raise ValueError("Runtime cursor has no finalized source segment")
     sealed_path = raw_root / f"{stem}.seg"
-    if not sealed_path.is_file() or sealed_path.is_symlink() or (raw_root / f"{stem}.open").exists():
+    if (
+        not sealed_path.is_file()
+        or sealed_path.is_symlink()
+        or (raw_root / f"{stem}.open").exists()
+    ):
         raise ValueError("Benchmark cursor must point into a finalized regular segment")
 
     prior_clock = runtime.get("context", {}).get("clock")
@@ -165,13 +175,13 @@ def run_once(
     real_time_ns = time.time_ns
     real_monotonic = time.monotonic
     real_monotonic_ns = time.monotonic_ns
-    time.time_ns = lambda: wall_now[0]  # type: ignore[assignment]
+    time.time_ns = lambda: wall_now[0]
     # Shadow.save() and Tail.refresh() use the float monotonic API. Keep those
     # cadence checks on the same recorded clock as the nanosecond API; using
     # the host clock makes a faster implementation save less often and can
     # change the provenance histories emitted into decisions.
-    time.monotonic = lambda: mono_now[0] / 10**9  # type: ignore[assignment]
-    time.monotonic_ns = lambda: mono_now[0]  # type: ignore[assignment]
+    time.monotonic = lambda: mono_now[0] / 10**9
+    time.monotonic_ns = lambda: mono_now[0]
     try:
         with tempfile.TemporaryDirectory(prefix="veritas-shadow-consume-") as temp_dir:
             worker = Shadow(Path(temp_dir), campaign)
@@ -228,7 +238,9 @@ def run_once(
                             totals["decisions"] >= identity["max_decisions"]
                             or totals["observations"] >= identity["max_observations"]
                         ):
-                            raise ValueError("Frozen evidence-row limit reached in temporary journal")
+                            raise ValueError(
+                                "Frozen evidence-row limit reached in temporary journal"
+                            )
                         worker.save()
                         worker.last_save = time.monotonic()
                 worker.save()
@@ -261,14 +273,16 @@ def run_once(
                 }
                 if include_research_events:
                     result["research_semantics_rows"] = research_rows
+                if include_final_runtime:
+                    result["_final_runtime"] = worker.runtime()
                 return result
             finally:
                 worker.tail.close()
                 worker.journal.close()
     finally:
-        time.time_ns = real_time_ns  # type: ignore[assignment]
-        time.monotonic = real_monotonic  # type: ignore[assignment]
-        time.monotonic_ns = real_monotonic_ns  # type: ignore[assignment]
+        time.time_ns = real_time_ns
+        time.monotonic = real_monotonic
+        time.monotonic_ns = real_monotonic_ns
 
 
 def main() -> None:
@@ -285,9 +299,26 @@ def main() -> None:
             runtime_sha,
             args.segments,
             args.include_research_events,
+            args.runtime_snapshot_output is not None,
         )
         for _ in range(args.repetitions)
     ]
+    if args.runtime_snapshot_output is not None:
+        runtime_output = results[-1].pop("_final_runtime")
+        persisted_runtime = storage.canonical(runtime_output)
+        # Canonical JSON stringifies integer mapping keys. Hash the same
+        # normalized object that a later JSON reader will restore.
+        snapshot_runtime = json.loads(persisted_runtime)
+        snapshot = {
+            "schema_version": 1,
+            "campaign_id": campaign["campaign_id"],
+            "runtime": snapshot_runtime,
+            "runtime_sha256": stable_sha256(snapshot_runtime),
+            "persisted_runtime_json": persisted_runtime.decode("utf-8"),
+            "persisted_runtime_sha256": hashlib.sha256(persisted_runtime).hexdigest(),
+        }
+        args.runtime_snapshot_output.parent.mkdir(parents=True, exist_ok=True)
+        args.runtime_snapshot_output.write_bytes(stable_json(snapshot))
     output = {
         "schema_version": 1,
         "implementation_module": str(Path(shadow_worker.__file__).resolve()),
