@@ -177,7 +177,7 @@
     "source_bytes": 551636,
     "source_event_count": 30
   },
-  "captured_at_utc": "2026-10-16T03:30:13Z",
+  "captured_at_utc": "2026-10-16T03:32:58Z",
   "censoring_analysis": {
     "analysis_source_file": "packages/midas/veritas/forensics.py",
     "analysis_source_sha256": "0b055a21c4b423bbf02cc9c240f26f18263fb8342cd72dec686705d2601a420c",
@@ -2857,7 +2857,7 @@
     "unique_market_ids": 558,
     "window_minutes": 751.53
   },
-  "inventory_id": "VERITAS-M2-RESEARCH-INVENTORY-059",
+  "inventory_id": "VERITAS-M2-RESEARCH-INVENTORY-060",
   "latest_scan_captured_at_utc": "2026-10-16T02:30:17.432809+00:00",
   "latest_scan_id": "scan-20261016T023017Z-1254a0a63f4d",
   "latest_source_analysis_checkpoint": {
@@ -4042,14 +4042,14 @@
     "veritas_control_cohort_sha256": "9578217e20dcc7d1c65fa110f0ed7c689b55483b61191f1aae8d30c9b7300d9a",
     "control_cohort_sha256": "9578217e20dcc7d1c65fa110f0ed7c689b55483b61191f1aae8d30c9b7300d9a"
   },
-  "previous_inventory": "VERITAS_MISSION2_RESEARCH_INVENTORY_058.json",
+  "previous_inventory": "VERITAS_MISSION2_RESEARCH_INVENTORY_059.json",
   "repository": {
     "branch": "project/veritas",
     "checkpoint_base_commit": "3c1cf4119f95961c1efd183bc63a108dac42c2e7",
     "code_changes_after_pilot_activation": true,
-    "commit_at_inventory_creation": "266e94dac342f3c72cc4defe6c577f05be613798",
+    "commit_at_inventory_creation": "c49b333ed3079e7df26e2f13cf1f70664d84d795",
     "documentation_and_ledger_checkpoint_pending_commit": true,
-    "head_commit": "266e94dac342f3c72cc4defe6c577f05be613798",
+    "head_commit": "c49b333ed3079e7df26e2f13cf1f70664d84d795",
     "mission_status": "active_scheduled_discovery_source_analysis_gap_detail_and_research",
     "path": "/home/charlie/midas-veritas",
     "starting_commit": "9a857cc56804bec6b7129171ba090d338e263aa3",
@@ -7821,5 +7821,147 @@
     "The gap-detail index is partial and the source attribution does not prove causality, fills, or profitability.",
     "The 46-snapshot A1 market-universe artifact does not include scan 47.",
     "Mission 2 remains active; no full regression or model training was run."
-  ]
+  ],
+  "latest_gap_detail_checkpoint_054": {
+    "captured_at_utc": "2026-10-16T03:32:58Z",
+    "checkpoint_path": "docs/VERITAS_MISSION2_GATE_C_CHECKPOINT_012.md",
+    "checkpoint_file_sha256": "479f29dcb63a17e500604ab8d07fa48a37cbcc24683ce8730785cb4b61d9cca6",
+    "summary_path": "data/veritas-observatory/gap-detail-summary-v1.json",
+    "summary_file_sha256": "0294ba0a76adb38cbc082de5bc22a64fe0f74d7c3b501b3b8e099864f83b9c06",
+    "summary_sha256": "f593d0c1756ce5e1efa0ea9fdc771ed2a22a3b0566f55a41fd4d98ba7e6f4536",
+    "generated_at_utc": "2026-10-16T03:21:18+00:00",
+    "service_result": {
+      "exit_status": 0,
+      "restarts": 0,
+      "start_utc": "2026-10-16T03:20:04Z",
+      "exit_utc": "2026-10-16T03:21:20Z"
+    },
+    "processed_segment_count": 2037,
+    "replayable_catalog_segment_count": 5106,
+    "catalog_segment_count": 5108,
+    "pending_segment_count": 3069,
+    "processed_source_bytes": 483256271,
+    "pending_source_bytes": 836081401,
+    "all_period_gap_event_count": 2332,
+    "campaign_window_gap_event_count": 251,
+    "campaign_window_gap_counts_by_reason": {
+      "book_resynchronization": 251
+    },
+    "campaign_window_affected_market_count": 11,
+    "campaign_window_gap_events_without_reported_assets": 0,
+    "campaign_window_unmapped_affected_asset_count": 0,
+    "active_segment_read": false,
+    "last_processed_ordinal": 251691
+  },
+  "latest_source_analysis_checkpoint_053": {
+    "captured_at_utc": "2026-10-16T03:32:58Z",
+    "summary_path": "data/veritas-observatory/source-research-summary.json",
+    "summary_file_sha256": "710ce4c9a348e0919d0e9d34d949b50a0172ccda0ff340240b437525d3db9229",
+    "summary_sha256": "7f1adfcb235d5cf9ba6be7db6b554688369251db840b1403d0cd8f576844b531",
+    "generated_at_utc": "2026-10-16T03:14:52+00:00",
+    "status": "catching_up",
+    "processed_segment_count": 4997,
+    "catalog_segment_count": 5089,
+    "pending_segment_count": 92,
+    "processed_source_bytes": 1292353290,
+    "pending_source_bytes": 23048067,
+    "quality_valid_states": 331241,
+    "market_count": 77,
+    "positive_top_ask_pair_states": 0,
+    "positive_full_depth_pre_fee_states": 0,
+    "top_edge_distribution": {
+      "count": 331241,
+      "maximum": "-0.001",
+      "median_nearest_rank": "-0.01",
+      "minimum": "-0.998",
+      "p25_nearest_rank": "-0.01",
+      "p75_nearest_rank": "-0.01",
+      "positive_count": 0
+    },
+    "active_segment_read": false
+  },
+  "operations_checkpoint_060": {
+    "captured_at_utc": "2026-10-16T03:32:58Z",
+    "latest_full_host_service_health_snapshot_as_of_utc": "2026-10-16T02:59:00Z",
+    "gap_detail_service": {
+      "state_after_run": "inactive",
+      "result": "success",
+      "exit_status": 0,
+      "restarts": 0,
+      "start_utc": "2026-10-16T03:20:04Z",
+      "exit_utc": "2026-10-16T03:21:20Z"
+    },
+    "source_analysis_service": {
+      "state_after_run": "inactive",
+      "result": "success",
+      "exit_status": 0,
+      "restarts": 0,
+      "start_utc": "2026-10-16T03:11:02Z",
+      "exit_utc": "2026-10-16T03:14:55Z"
+    },
+    "research_director_service": {
+      "state_after_run": "inactive",
+      "result": "success",
+      "exit_status": 0,
+      "restarts": 0,
+      "start_utc": "2026-10-16T03:15:03Z",
+      "exit_utc": "2026-10-16T03:15:35Z",
+      "next_scheduled_cycle_utc": "2026-10-16T03:45:19Z"
+    },
+    "observer_service": {
+      "start_utc": "2026-10-16T03:31:44Z",
+      "restarts": 0,
+      "in_progress_output_inspected": false,
+      "state_at_sample": "activating"
+    },
+    "next_gap_detail_timer_utc": "2026-10-16T03:35:00Z",
+    "next_source_analysis_timer_utc": "2026-10-16T03:40:40Z",
+    "next_research_director_timer_utc": "2026-10-16T03:45:19Z",
+    "full_host_health_probe_performed": false,
+    "cpu_ram_disk_probe_performed": false,
+    "main_or_reality_services_checked": false,
+    "manual_job_trigger_poll_or_retry": false,
+    "service_restart_or_interruption": false,
+    "campaign_or_pilot_mutation": false,
+    "limitations": [
+      "This check sampled only the four Veritas service units, user timer list, and sealed gap/source summaries.",
+      "The latest full host/resource and Midas/Reality health snapshot remains 02:59 UTC.",
+      "The active observer scan was not inspected; timer times are schedule evidence only."
+    ],
+    "systemd_status_sample_minute_utc": "2026-10-16T03:31Z"
+  },
+  "current_operational_checkpoint_060": {
+    "captured_at_utc": "2026-10-16T03:32:58Z",
+    "source_analysis_processed_segments": 4997,
+    "source_analysis_catalog_segments": 5089,
+    "source_analysis_pending_segments": 92,
+    "source_analysis_pending_bytes": 23048067,
+    "source_analysis_quality_valid_states": 331241,
+    "source_analysis_markets": 77,
+    "source_analysis_positive_top_ask_states": 0,
+    "gap_detail_processed_segments": 2037,
+    "gap_detail_catalog_segments": 5108,
+    "gap_detail_pending_segments": 3069,
+    "gap_detail_pending_bytes": 836081401,
+    "gap_detail_all_period_events": 2332,
+    "gap_detail_campaign_window_events": 251,
+    "gap_detail_campaign_window_market_count": 11,
+    "gap_detail_campaign_window_complete": false,
+    "observer_active_output_not_read": true,
+    "full_resource_snapshot_current": false
+  },
+  "checkpoint_060_limitations": [
+    "The source-analysis and gap-detail prefixes remain incomplete.",
+    "The new 03:21 gap-detail summary advanced beyond attribution artifact 001, whose sealed index remains at 1,919/5,079; preserve it and use a distinct successor if refreshed.",
+    "No full host, disk, memory, CPU, Reality recorder/shadow, or Midas/Reality API health check was performed at this checkpoint.",
+    "The observer was active, so its in-progress scan and pilot summary were not inspected.",
+    "The Director's next scheduled cycle at 03:45:19 UTC had not yet run.",
+    "No full regression or model training was run."
+  ],
+  "gate_c_checkpoint_012": {
+    "captured_at_utc": "2026-10-16T03:32:58Z",
+    "checkpoint_path": "docs/VERITAS_MISSION2_GATE_C_CHECKPOINT_012.md",
+    "checkpoint_file_sha256": "479f29dcb63a17e500604ab8d07fa48a37cbcc24683ce8730785cb4b61d9cca6",
+    "status": "scheduled gap-detail prefix advanced and summary verified; mission active"
+  }
 }

@@ -207,3 +207,29 @@ remaining discovery/readiness views and preserve the scheduled research
 pipeline. At the next operational checkpoint, inspect only persisted outputs
 from completed scheduled runs and refresh host/service telemetry read-only; do
 not manually trigger jobs or alter the fixed coverage pilot.
+
+## Mission 2 continuation — scheduled gap-detail batch 03:20 UTC
+
+The completed 03:20 gap-detail run advanced the finalized-only prefix from
+1,919 to 2,037 processed segments and from 194 to 251 campaign-window gap
+events. The current prefix has 3,069 replayable segments / 836,081,401 bytes
+pending; the 251 indexed events affect 11 markets, with no missing reported
+assets or unmapped affected assets. The primary source analyzer remains at
+4,997/5,089 segments, 331,241 quality-valid states over 77 markets, and zero
+positive gross states. These summaries passed their read-only digest and
+progress checks after the one-shot services exited successfully.
+
+The scheduled observer had just started at 03:31:44 UTC during the limited
+systemd check; its scan output was left untouched. The Director's next cycle is
+scheduled for 03:45:19 UTC. The attribution artifact 001 remains explicitly
+pinned to the 03:10, 1,919-segment gap prefix. If refreshed later, write a new
+version and preserve 001. Current operational evidence is in [Gate C
+checkpoint 012](VERITAS_MISSION2_GATE_C_CHECKPOINT_012.md), [operations
+checkpoint 060](VERITAS_MISSION2_OPERATIONS.md), and [inventory
+060](VERITAS_MISSION2_RESEARCH_INVENTORY_060.json).
+
+Next: let scheduled collection and analysis continue. At the next safe review,
+read only sealed outputs after their services exit, refresh the Director
+projection after its scheduled cycle, and decide whether an attribution
+artifact 002 adds enough new classified outcomes to justify a bounded rerun.
+Do not read the observer's in-progress scan or manually trigger a job.

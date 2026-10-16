@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-16T03:30:13Z",
+  "updated_at_utc": "2026-10-16T03:32:58Z",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -5825,6 +5825,75 @@
         "Receiver timestamps are recorder time, not exchange quote time; no source event establishes fills or profitability.",
         "The SQLite event hash chain and full database integrity were not reverified.",
         "This code is not deployed to the hosted dashboard."
+      ]
+    },
+    {
+      "hypothesis_id": "VERITAS-H103",
+      "experiment_id": "VERITAS-M2-GAP-DETAIL-BATCH-20261016-0320-001",
+      "dataset_id": "f593d0c1756ce5e1efa0ea9fdc771ed2a22a3b0566f55a41fd4d98ba7e6f4536",
+      "title": "Does the scheduled finalized-only gap-detail batch extend campaign-window attribution safely?",
+      "mechanism": "A bounded scheduled analyzer advances a sealed source prefix over finalized Reality segments, preserving campaign-window gap counts and source-continuity limitations without reading active segments or changing the primary research state.",
+      "success_metric": "The one-shot exits successfully, its summary digest and progress reconcile, the processed prefix advances, and no active segment is read; campaign-window event counts remain explicitly partial until the catalog is complete.",
+      "status": "continue",
+      "decision": "The 03:20 UTC one-shot exited 0 with zero service restarts. Its validated summary advanced the gap-detail prefix to 2,037/5,108 cataloged segments and 251 campaign-window book-resynchronization events across 11 affected markets. The prefix remains partial with 3,069 segments / 836,081,401 bytes pending.",
+      "result": {
+        "captured_at_utc": "2026-10-16T03:32:58Z",
+        "checkpoint_path": "docs/VERITAS_MISSION2_GATE_C_CHECKPOINT_012.md",
+        "summary_path": "data/veritas-observatory/gap-detail-summary-v1.json",
+        "summary_file_sha256": "0294ba0a76adb38cbc082de5bc22a64fe0f74d7c3b501b3b8e099864f83b9c06",
+        "summary_sha256": "f593d0c1756ce5e1efa0ea9fdc771ed2a22a3b0566f55a41fd4d98ba7e6f4536",
+        "generated_at_utc": "2026-10-16T03:21:18+00:00",
+        "service_start_utc": "2026-10-16T03:20:04Z",
+        "service_exit_utc": "2026-10-16T03:21:20Z",
+        "service_exit_status": 0,
+        "service_restarts": 0,
+        "processed_segment_count": 2037,
+        "replayable_catalog_segment_count": 5106,
+        "catalog_segment_count": 5108,
+        "pending_segment_count": 3069,
+        "processed_source_bytes": 483256271,
+        "pending_source_bytes": 836081401,
+        "all_period_gap_event_count": 2332,
+        "campaign_window_gap_event_count": 251,
+        "campaign_window_gap_counts_by_reason": {
+          "book_resynchronization": 251
+        },
+        "campaign_window_affected_market_count": 11,
+        "campaign_window_gap_events_without_reported_assets": 0,
+        "campaign_window_unmapped_affected_asset_count": 0,
+        "active_segment_read": false,
+        "last_processed_ordinal": 251691,
+        "latest_gap_detail_summary_sha256": "f593d0c1756ce5e1efa0ea9fdc771ed2a22a3b0566f55a41fd4d98ba7e6f4536",
+        "source_analysis_summary_sha256": "7f1adfcb235d5cf9ba6be7db6b554688369251db840b1403d0cd8f576844b531",
+        "source_analysis_generated_at_utc": "2026-10-16T03:14:52+00:00",
+        "source_analysis_processed_segment_count": 4997,
+        "source_analysis_catalog_segment_count": 5089,
+        "source_analysis_pending_segment_count": 92,
+        "source_analysis_processed_source_bytes": 1292353290,
+        "source_analysis_pending_source_bytes": 23048067,
+        "source_analysis_quality_valid_states": 331241,
+        "source_analysis_market_count": 77,
+        "source_analysis_positive_top_ask_pair_states": 0,
+        "source_analysis_positive_full_depth_pre_fee_states": 0,
+        "source_analysis_top_edge_distribution": {
+          "count": 331241,
+          "maximum": "-0.001",
+          "median_nearest_rank": "-0.01",
+          "minimum": "-0.998",
+          "p25_nearest_rank": "-0.01",
+          "p75_nearest_rank": "-0.01",
+          "positive_count": 0
+        },
+        "full_host_health_probe": false,
+        "observer_output_inspected": false,
+        "manual_job_trigger_poll_or_retry": false
+      },
+      "limitations": [
+        "The indexed gap-detail prefix is incomplete and has not processed the remaining 3,069 segments.",
+        "Gap receiver timestamps are recorder time, not an exchange quote clock; later frames do not prove complete recovery.",
+        "The read-only summary digest and progress counters were validated; no full raw-source rehash was run during this checkpoint.",
+        "The source analyzer is also still catching up, and the active observer output was not inspected.",
+        "The Director's next scheduled cycle at 03:45 UTC had not yet run at capture."
       ]
     }
   ],

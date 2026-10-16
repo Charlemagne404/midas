@@ -20,6 +20,18 @@ production build passed. The build retains its large-chunk advisory. This
 change is source-only and has not been deployed. No service or research job
 was changed, and no host telemetry was refreshed.
 
+### Scheduled source-analysis follow-up — 03:21 UTC
+
+The scheduled 03:20 gap-detail run exited 0 and advanced its finalized-only
+prefix to 2,037/5,108 segments, with 251 campaign-window book-resynchronization
+events across 11 markets. The indexed prefix remains incomplete at 3,069
+segments / 836,081,401 bytes pending. The primary source analyzer remains at
+4,997/5,089 segments and 331,241 quality-valid states over 77 markets, with
+zero positive top-ask or full-depth gross states. The 03:10 attribution
+artifact remains a separate, older 1,919-segment prefix snapshot; a later
+version should be generated as a new artifact rather than rewriting it. See
+[Gate C checkpoint 012](VERITAS_MISSION2_GATE_C_CHECKPOINT_012.md).
+
 ## Previous checkpoint — 03:12 UTC, scan 47 and gap attribution
 
 The latest v4 panel has 47 snapshots, 1,880 selected pair observations,

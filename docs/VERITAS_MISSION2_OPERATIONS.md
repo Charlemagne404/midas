@@ -1,7 +1,8 @@
 # Veritas Mission 2 Operations
 
-**Latest runtime check:** 2026-10-16 02:59 UTC
-**Services:** Reality recorder and shadow; Midas and Reality API/web; Veritas observer, source analysis, gap detail, and Research Director one-shots
+**Latest limited systemd/timer check:** 2026-10-16 03:31 UTC
+**Latest full host/service snapshot:** 2026-10-16 02:59 UTC
+**Services sampled at 03:31:** Veritas observer, source analysis, gap detail, and Research Director
 **Timers:** `midas-veritas-observatory.timer`, `midas-veritas-source-analysis.timer`, `midas-veritas-research-director.timer`, `midas-veritas-gap-detail-analysis.timer`
 
 ## Engineering update — 2026-10-16 03:29 UTC
@@ -14,6 +15,31 @@ runtime state below remains the last recorded operational snapshot, not a
 claim about current service health. See [Gate G checkpoint
 012](VERITAS_MISSION2_GATE_G_CHECKPOINT_012.md) and [inventory
 059](VERITAS_MISSION2_RESEARCH_INVENTORY_059.json).
+
+## Scheduled Veritas state — 2026-10-16 03:31 UTC
+
+The gap-detail service completed its 03:20:04–03:21:20 UTC run with exit
+status 0 and zero restarts. Its validated summary covers 2,037/5,108 cataloged
+segments, with 3,069 segments / 836,081,401 bytes pending and 251 campaign-
+window `book_resynchronization` gaps across 11 affected markets. All reported
+affected assets are mapped. The primary source analyzer completed its 03:11:02–
+03:14:55 UTC run with exit 0 and zero restarts; its summary remains at
+4,997/5,089 segments, with 92 segments / 23,048,067 bytes pending and 331,241
+quality-valid campaign-window states over 77 markets. The source summary
+reports zero positive gross states at its tracked gates; the gap-detail
+summary describes source continuity and gap events.
+
+The Director's 03:15:03–03:15:35 UTC one-shot completed successfully with zero
+restarts. Its next scheduled cycle is at 03:45:19 UTC. At 03:31:44 UTC the
+observer service had just entered `activating`; its current scan output was not
+read. The sampled next timer starts were gap detail at 03:35, source analysis
+at 03:40:40, and Director at 03:45:19 UTC. No job was manually triggered,
+polled, or retried.
+
+This was a limited systemd and sealed-summary check. Host load, RAM, disk,
+Reality recorder/shadow state, and Midas/Reality API or web health were not
+sampled; the earlier full host/service snapshot below remains the last such
+check. No services, campaign, or fixed pilot were changed.
 
 ## Latest runtime state — 2026-10-16 02:59 UTC
 
