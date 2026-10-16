@@ -73,7 +73,7 @@ DEFAULT_CONTROL_FILE = ACTIVE_OBSERVATORY_ROOT / "control-cohort.json"
 
 def _isolated_root(root: Path) -> Path:
     requested = root.expanduser()
-    if requested.exists() and requested.is_symlink():
+    if requested.is_symlink():
         raise ValueError("Discovery-successor root cannot be a symlink")
     resolved = requested.resolve(strict=False)
     active = ACTIVE_OBSERVATORY_ROOT.resolve(strict=False)

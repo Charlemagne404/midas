@@ -262,6 +262,20 @@ def test_successor_rejects_root_overlapping_active_observer(tmp_path):
         _scan(ACTIVE_OBSERVATORY_ROOT, control_file, _transport(markets, []))
 
 
+def test_successor_rejects_dangling_symlink_root_without_creating_target(tmp_path):
+    markets = [_market(index) for index in range(60)]
+    control_file = tmp_path / "control-cohort.json"
+    _write_controls(control_file, [markets[0]["id"]])
+    target = tmp_path / "uncreated-target"
+    root_link = tmp_path / "dangling-root-link"
+    root_link.symlink_to(target, target_is_directory=True)
+
+    with pytest.raises(ValueError, match="cannot be a symlink"):
+        _scan(root_link, control_file, _transport(markets, []))
+
+    assert not target.exists()
+
+
 def test_cumulative_response_budget_stops_after_first_oversized_frame(tmp_path, monkeypatch):
     import midas.veritas.discovery_successor as successor
 
