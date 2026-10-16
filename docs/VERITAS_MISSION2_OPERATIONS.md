@@ -1,11 +1,76 @@
 # Veritas Mission 2 Operations
 
-**Latest runtime/resource snapshot:** 2026-10-16T05:22:16Z
-**Latest source summary:** 2026-10-16T05:12:45+00:00
-**Latest gap-detail summary:** 2026-10-16T05:21:20+00:00
-**Latest Midas/Reality API health probes:** 2026-10-16T05:22:16Z
+- **Latest runtime/resource snapshot:** 2026-10-16T06:18:36Z
+- **Latest source summary:** 2026-10-16T06:11:45Z
+- **Latest gap-detail summary:** 2026-10-16T06:21:22Z
+- **Latest Midas/Reality API health probes:** 2026-10-16T06:18:35Z
 
-## Runtime checkpoint — 2026-10-16T05:22:16Z
+## Runtime checkpoint — 2026-10-16T06:18:36Z
+
+- The Reality recorder, frozen shadow, Midas and Reality APIs, and both web
+  services were active. The recorder has zero restarts; the shadow retains one
+  historical restart. Both read-only API health probes returned HTTP 200 /
+  `READY` in demo mode with live execution disabled. The archive service is
+  still failed after its 30-minute timeout at 04:33:35 UTC, with zero
+  restarts. No recovery attempt was made.
+- Observer scan 53 (`scan-20261016T060051Z-340d33b97461`) completed at
+  06:00:57 UTC with 30/40 quality-valid pairs and zero positive top-gross
+  pairs. The fixed pilot is 22/48 scans, 715/880 valid slots across 541
+  distinct markets, with one skipped sequence. Its rotating/control
+  comparison remains descriptive and nonrandomized.
+- The 06:15:10 UTC Director cycle exited 0 at 06:15:35 and reconciled scan 52.
+  It admitted scan 53. Arena child `job-6be536ab59a143ec964f46b1` completed
+  53/53 events with exit 0 in 3.91 seconds; all five gates are zero and
+  candidate evidence/replay are complete and empty. The Director manifest
+  still projects the completed child as `QUEUED`, with scan 52 last qualified,
+  until its scheduled 06:45:08 UTC cycle. No manual poll or retry occurred.
+- The 06:10 UTC finalized-source analysis exited 0 at 06:11:48 with zero
+  restarts. Its sealed prefix covers 5,439/5,439 segments / 1,404,163,458
+  bytes and 372,088 quality-valid states across 95 markets. Positive top-ask,
+  full-depth, and minimum-notional states remain zero. It read no active
+  segment; readiness remains `collecting_frozen_campaign_window`.
+- The 06:05 UTC gap-detail batch exited 0 at 06:06:21 with zero restarts. Its
+  finalized-only prefix covers 3,388/5,431 catalog segments / 842,162,936
+  bytes, leaving 2,041 segments / 559,812,218 bytes pending. It indexes 912
+  campaign-window gap events and read no active segment.
+- The Reality archive unit remains the known operational failure. The system
+  user-unit list also contains historical failed research and test units; the
+  system-level Daymark database unit is failed and unrelated to the Veritas
+  collector and APIs.
+- Load averages were 1.18 / 0.94 / 0.98. Available RAM was 9.7 GiB of 15 GiB;
+  swap use was 3.7/4 GiB. Root storage was 56% used with 197 GiB free. The
+  Reality research recording directory measured 1,498,523,236 bytes and the
+  observatory directory 58,097,261 bytes. Relative to the 05:47 UTC sample,
+  these grew 12,055,540 and 1,183,078 bytes over about 31 minutes; this is a
+  short two-point sample, not a stable growth-rate forecast.
+- At capture, the observer, Director, source-analysis, and gap-detail one-shot
+  services were inactive between scheduled runs. No model-training process
+  appeared in the sampled top CPU process list. Next scheduled timers were
+  gap detail 06:20 UTC, Reality capacity 06:20:48, observer 06:31:12, source
+  analysis 06:40, and Director 06:45:08 UTC. No service, collector, pilot,
+  Arena child, or frozen campaign was manually restarted or changed.
+
+See [Gate A checkpoint 049](VERITAS_MISSION2_GATE_A_CHECKPOINT_049.md),
+[Gate B checkpoint 008](VERITAS_MISSION2_GATE_B_CHECKPOINT_008.md), [Gate G
+checkpoint 016](VERITAS_MISSION2_GATE_G_CHECKPOINT_016.md), and [inventory
+071](VERITAS_MISSION2_RESEARCH_INVENTORY_071.json).
+
+## Scheduled gap-detail completion — 2026-10-16T06:21:25Z
+
+The scheduled 06:20 UTC finalized-only batch exited 0 at 06:21:25 with zero
+restarts. It processed 128 segments / 30,416,223 bytes. The sealed index now
+covers 3,516/5,459 replayable catalog segments / 872,579,159 bytes, leaving
+1,943 segments / 535,462,034 bytes pending. It records 973 campaign-window
+gap events and did not read an active segment. The previously completed
+06:18 runtime snapshot above is unchanged; this is a later sealed analysis
+result. The next bounded batch remains scheduled by the existing timer.
+
+**Previous runtime/resource snapshot:** 2026-10-16T05:22:16Z
+**Previous source summary:** 2026-10-16T05:12:45+00:00
+**Previous gap-detail summary:** 2026-10-16T05:21:20+00:00
+**Previous Midas/Reality API health probes:** 2026-10-16T05:22:16Z
+
+## Previous runtime checkpoint — 2026-10-16T05:22:16Z
 
 - The Reality recorder and frozen shadow are active with zero and one
   historical restarts. Midas and Reality APIs are active; both local health

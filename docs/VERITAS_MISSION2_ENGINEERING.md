@@ -1476,3 +1476,10 @@ The bounded A1 replay is verified through 52 snapshots / 33,957,407 compressed b
 ## Gate G checkpoint 015 — latest receipted coverage projection
 
 The source API no longer pins the market-universe route to artifact 004/H110. It resolves the highest numbered existing coverage artifact with a matching ledger receipt, then validates its file hash and analysis version. A direct in-process projection returned coverage artifact 006 at scan 52, 1,788 valid pairs, and zero positive top-gross pairs. Older artifact 004/H110 receipts remain supported. Automated API tests and browser checks were not run; this source-only change is not deployed. See [Gate G checkpoint 015](VERITAS_MISSION2_GATE_G_CHECKPOINT_015.md).
+
+
+## Gate A / Gate B checkpoint — scan 53
+
+The bounded A1 replay now verifies 53 saved snapshots / 34,505,902 compressed bytes and matches the stored eligibility count on 53/53 scans. It reports 6,248 bounded-union Gamma IDs, 2,183 eligible at least once, 942 selected markets, and 1,818/2,120 current-replay valid pairs. Independent source audit 007 reproduces all valid states and top edges with zero mismatches; strict reported-age sensitivity accepts 388 states. Top-gross, full-depth, minimum, and fee gates remain zero. The first-scan capture/replay mismatch of 5 versus 32 remains unresolved and explicit. See [Gate A checkpoint 049](VERITAS_MISSION2_GATE_A_CHECKPOINT_049.md), [Gate B checkpoint 008](VERITAS_MISSION2_GATE_B_CHECKPOINT_008.md), and inventory 071.
+
+The scan-53 Arena child completed 53/53 events with zero positive states and complete empty candidate evidence/replay. The Director manifest still projects it as `QUEUED`, with scan 52 last qualified, until the scheduled 06:45 UTC reconciliation. The read-only API projection selects coverage artifact 007 after its H118 ledger receipt; automated API/browser checks and deployment remain outstanding. See [Gate G checkpoint 016](VERITAS_MISSION2_GATE_G_CHECKPOINT_016.md).

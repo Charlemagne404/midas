@@ -292,3 +292,16 @@ See [Gate A checkpoint 048](VERITAS_MISSION2_GATE_A_CHECKPOINT_048.md), [Gate B 
 ## Mission 2 continuation — Gate G coverage projection
 
 The source API now selects the newest existing A1 coverage artifact with a matching ledger receipt instead of pinning artifact 004/H110. A direct in-process projection reports scan 52 / 1,788 valid pairs / zero positive top-gross pairs and the expected artifact hash. Automated tests, browser verification, and deployment remain open. The change is in `apps/api`, outside the Arena source hash; the scan-52 child source revision is unchanged. Continue to leave the Director manifest for the scheduled 06:15:10 UTC reconciliation. See [Gate G checkpoint 015](VERITAS_MISSION2_GATE_G_CHECKPOINT_015.md).
+
+
+## Mission 2 continuation — scan 53 coverage and source audit
+
+Coverage artifact 007 and independent audit 007 now cover 53 saved scans / 2,120 selected pair observations. Current replay finds 1,818 quality-valid states and zero positive top-gross candidates; the independent evaluator matches v4 validity and edge decisions with no mismatches. Keep the first-scan 5-versus-32 capture/replay discrepancy visible. All depth, minimum, and fee gates remain zero. The scan-53 Arena child is complete, but the Director manifest is still `QUEUED` pending its 06:45 UTC scheduled reconciliation.
+
+1. Let the scheduled 06:45 UTC Director cycle reconcile scan 53; do not poll, retry, or manually admit the completed child.
+2. Keep the Arena research package pinned until that reconciliation completes; the API-only projection change remains outside the Arena source hash.
+3. Continue the fixed coverage pilot and finalized-source/gap-detail schedules under their existing bounds. Read only sealed summaries and never open the active recording segment.
+4. Keep the no-trade policy and frozen campaign unchanged. Do not start model training or a strategy tournament without an eligible gross candidate and candidate-relevant labels.
+5. Complete the source API's focused/browser verification at a suitable point; the direct in-process projection of artifact 007 is verified, but tests, browser checks, and deployment remain open.
+
+See [Gate A checkpoint 049](VERITAS_MISSION2_GATE_A_CHECKPOINT_049.md), [Gate B checkpoint 008](VERITAS_MISSION2_GATE_B_CHECKPOINT_008.md), [Gate G checkpoint 016](VERITAS_MISSION2_GATE_G_CHECKPOINT_016.md), and [inventory 071](VERITAS_MISSION2_RESEARCH_INVENTORY_071.json).
