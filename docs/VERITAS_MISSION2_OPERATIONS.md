@@ -4,6 +4,17 @@
 **Services:** Reality recorder and shadow; Midas and Reality API/web; Veritas observer, source analysis, gap detail, and Research Director one-shots
 **Timers:** `midas-veritas-observatory.timer`, `midas-veritas-source-analysis.timer`, `midas-veritas-research-director.timer`, `midas-veritas-gap-detail-analysis.timer`
 
+## Engineering update — 2026-10-16 03:29 UTC
+
+Gate G checkpoint 012 added read-only API validation and dashboard projection
+for the frozen gap-censor attribution. This was a source and test change only;
+no runtime or host-resource probe was performed, and no service, collector,
+campaign, scheduled job, or coverage pilot was restarted or altered. The
+runtime state below remains the last recorded operational snapshot, not a
+claim about current service health. See [Gate G checkpoint
+012](VERITAS_MISSION2_GATE_G_CHECKPOINT_012.md) and [inventory
+059](VERITAS_MISSION2_RESEARCH_INVENTORY_059.json).
+
 ## Latest runtime state — 2026-10-16 02:59 UTC
 
 - Reality recorder and shadow are active under systemd with `Result=success`;

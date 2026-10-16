@@ -274,6 +274,97 @@ def write_censor_gap_audit_fixture(root: Path, *, campaign_id: str = "campaign-f
     return root / "docs" / "VERITAS_MISSION2_CENSOR_GAP_AUDIT_001.json"
 
 
+def write_censor_gap_attribution_fixture(
+    root: Path, *, campaign_id: str = "campaign-fixture"
+) -> Path:
+    outcomes = [
+        {
+            "reason": "book_issue:gap:book_resynchronization",
+            "link_status": "candidate_preceding_same_market_gap",
+        },
+        {
+            "reason": "book_issue:gap:book_resynchronization",
+            "link_status": "no_prior_same_market_gap_in_indexed_prefix",
+        },
+        {
+            "reason": "book_issue:gap:book_resynchronization",
+            "link_status": "termination_after_indexed_prefix",
+        },
+        {
+            "reason": "recorded_gap:book_resynchronization",
+            "link_status": "exact_recorded_gap_reference_verified_and_indexed",
+        },
+        {
+            "reason": "recorded_gap:book_resynchronization",
+            "link_status": "exact_recorded_gap_reference_verified_not_yet_indexed",
+        },
+    ]
+    artifact = {
+        "schema_version": 1,
+        "analysis_version": "veritas-censor-gap-attribution-v1",
+        "captured_at_utc": "2026-10-16T03:10:11Z",
+        "status": "verified_partial_prefix",
+        "campaign": {"campaign_id": campaign_id, "campaign_plan_sha256": "c" * 64},
+        "gap_detail_index": {
+            "analysis_version": "veritas-finalized-reality-gap-detail-v1",
+            "analysis_code_files_verified": True,
+            "processed_segment_count": 2,
+            "catalog_segment_count": 3,
+            "pending_segment_count": 1,
+            "pending_source_bytes": 512,
+            "indexed_campaign_gap_events": 2,
+            "active_segment_read": False,
+            "complete": False,
+        },
+        "query": {
+            "censored_outcome_limit": 10,
+            "censored_outcomes_scanned": 7,
+            "gap_censored_outcomes": 5,
+            "censored_outcome_event_bytes_read": 100,
+            "event_byte_limit": 1000,
+            "truncated": False,
+        },
+        "journal_snapshot": {"read_only": True, "hash_chain_reverified": False},
+        "source_verification": {
+            "active_open_segments_read": False,
+            "finalized_segment_byte_limit": 1024,
+            "unique_finalized_segments_verified": 3,
+            "finalized_segment_bytes_hashed": 256,
+            "unique_source_records_verified": 4,
+            "exact_source_references_verified": True,
+        },
+        "gap_censors": {
+            "outcomes_by_reason": {
+                "book_issue:gap:book_resynchronization": 3,
+                "recorded_gap:book_resynchronization": 2,
+            },
+            "link_status_counts": {
+                "candidate_preceding_same_market_gap": 1,
+                "exact_recorded_gap_reference_verified_and_indexed": 1,
+                "exact_recorded_gap_reference_verified_not_yet_indexed": 1,
+                "no_prior_same_market_gap_in_indexed_prefix": 1,
+                "termination_after_indexed_prefix": 1,
+            },
+            "unique_gap_events_linked": 2,
+            "unique_candidate_preceding_gap_events": 1,
+            "unique_exact_recorded_gap_events_indexed": 1,
+            "candidate_preceding_gap_age_bands_to_termination_receiver_time_ns": {
+                "0_to_1s": 0,
+                "1_to_60s": 0,
+                "60_to_300s": 0,
+                "300_to_3600s": 0,
+                "over_3600s": 1,
+            },
+            "same_market_preceding_gap_is_causal_proof": False,
+        },
+        "outcomes": outcomes,
+        "limitations": ["The indexed gap prefix is incomplete."],
+    }
+    artifact["result_sha256"] = hashlib.sha256(canonical_json(artifact)).hexdigest()
+    write_artifact(root, "VERITAS_MISSION2_CENSOR_GAP_ATTRIBUTION_001.json", artifact)
+    return root / "docs" / "VERITAS_MISSION2_CENSOR_GAP_ATTRIBUTION_001.json"
+
+
 def write_gap_detail_fixture(root: Path, *, campaign_id: str = "campaign-fixture") -> Path:
     summary = {
         "schema_version": 1,
@@ -765,6 +856,67 @@ def test_overview_exposes_hash_verified_gap_censor_and_prefix_evidence(tmp_path)
     assert audit_artifact.json()["data"]["artifact_id"] == "VERITAS-M2-CENSOR-GAP-AUDIT-001"
     assert detail_artifact.status_code == 200
     assert detail_artifact.json()["data"]["summary_sha256"]
+
+
+def test_overview_exposes_verified_gap_censor_attribution_and_artifact_route(tmp_path):
+    client = fixture_client(tmp_path)
+    attribution_path = write_censor_gap_attribution_fixture(tmp_path)
+
+    response = client.get("/api/veritas/overview")
+
+    assert response.status_code == 200
+    attribution = response.json()["gap_censor_attribution"]
+    assert attribution["status"] == "verified_partial_prefix"
+    assert attribution["censored_outcomes_scanned"] == 7
+    assert attribution["gap_censored_outcomes"] == 5
+    assert attribution["link_status_counts"]["candidate_preceding_same_market_gap"] == 1
+    assert attribution["same_market_preceding_gap_is_causal_proof"] is False
+    assert attribution["gap_detail_index"]["active_segment_read"] is False
+    assert (
+        attribution["artifact"]["file_sha256"]
+        == hashlib.sha256(attribution_path.read_bytes()).hexdigest()
+    )
+    assert {item["id"] for item in response.json()["artifacts"]} >= {"censor-gap-attribution"}
+
+    artifact_response = client.get("/api/veritas/artifacts/censor-gap-attribution")
+    assert artifact_response.status_code == 200
+    assert artifact_response.json()["data"]["result_sha256"]
+    assert len(artifact_response.json()["data"]["outcomes"]) == 5
+
+
+def test_gap_censor_attribution_rejects_mismatches_and_unreconciled_claims(tmp_path):
+    client = fixture_client(tmp_path)
+    attribution_path = write_censor_gap_attribution_fixture(tmp_path)
+    artifact = json.loads(attribution_path.read_text())
+
+    artifact["gap_detail_index"]["pending_source_bytes"] += 1
+    attribution_path.write_bytes(canonical_json(artifact))
+    assert client.get("/api/veritas/overview").status_code == 503
+
+    attribution_path = write_censor_gap_attribution_fixture(tmp_path)
+    artifact = json.loads(attribution_path.read_text())
+    artifact["campaign"]["campaign_id"] = "other-campaign"
+    artifact["result_sha256"] = hashlib.sha256(
+        canonical_json({key: value for key, value in artifact.items() if key != "result_sha256"})
+    ).hexdigest()
+    attribution_path.write_bytes(canonical_json(artifact))
+    assert client.get("/api/veritas/overview").status_code == 503
+
+    artifact["campaign"]["campaign_id"] = "campaign-fixture"
+    artifact["gap_censors"]["same_market_preceding_gap_is_causal_proof"] = True
+    artifact["result_sha256"] = hashlib.sha256(
+        canonical_json({key: value for key, value in artifact.items() if key != "result_sha256"})
+    ).hexdigest()
+    attribution_path.write_bytes(canonical_json(artifact))
+    assert client.get("/api/veritas/overview").status_code == 503
+
+    artifact["gap_censors"]["same_market_preceding_gap_is_causal_proof"] = False
+    artifact["outcomes"][0]["reason"] = "unrelated_reason"
+    artifact["result_sha256"] = hashlib.sha256(
+        canonical_json({key: value for key, value in artifact.items() if key != "result_sha256"})
+    ).hexdigest()
+    attribution_path.write_bytes(canonical_json(artifact))
+    assert client.get("/api/veritas/overview").status_code == 503
 
 
 def test_gap_evidence_rejects_campaign_mismatch_and_digest_tampering(tmp_path):

@@ -80,6 +80,37 @@ type GapCensorAudit = {
   limitations: string[];
 };
 
+type CensorGapAttribution = {
+  status: string;
+  analysis_version: string;
+  captured_at_utc: string;
+  campaign_id: string;
+  censored_outcomes_scanned: number;
+  gap_censored_outcomes: number;
+  link_status_counts: Record<string, number>;
+  unique_gap_events_linked: number;
+  unique_candidate_preceding_gap_events: number;
+  unique_exact_recorded_gap_events_indexed: number;
+  candidate_preceding_gap_age_bands: Record<string, number>;
+  same_market_preceding_gap_is_causal_proof: boolean;
+  gap_detail_index: {
+    complete: boolean;
+    processed_segment_count: number;
+    catalog_segment_count: number;
+    pending_segment_count: number;
+    pending_source_bytes: number;
+    indexed_campaign_gap_events: number;
+    active_segment_read: boolean;
+  };
+  source_verification: {
+    unique_finalized_segments_verified: number;
+    unique_source_records_verified: number;
+    finalized_segment_bytes_hashed: number;
+  };
+  artifact: Artifact & { file_sha256: string; url: string };
+  limitations: string[];
+};
+
 type FinalizedGapDetail = {
   status: string;
   analysis_version: string;
@@ -501,6 +532,7 @@ type Overview = {
   followup_censoring: FollowupCensoring | null;
   label_feasibility: LabelFeasibility | null;
   gap_censor_audit: GapCensorAudit | null;
+  gap_censor_attribution: CensorGapAttribution | null;
   finalized_gap_detail: FinalizedGapDetail | null;
   baseline_policies: { count: number; all_abstained: boolean };
   execution_sensitivity: {
@@ -779,7 +811,14 @@ export function Veritas() {
   const followupCensoring = data.followup_censoring ?? null;
   const labelFeasibility = data.label_feasibility ?? null;
   const gapCensorAudit = data.gap_censor_audit ?? null;
+  const gapCensorAttribution = data.gap_censor_attribution ?? null;
   const finalizedGapDetail = data.finalized_gap_detail ?? null;
+  const precedingGapOutcomeCount =
+    gapCensorAttribution?.link_status_counts['candidate_preceding_same_market_gap'] ?? 0;
+  const uniquePrecedingGapEventCount =
+    gapCensorAttribution?.unique_candidate_preceding_gap_events ?? 0;
+  const overOneHourGapCount =
+    gapCensorAttribution?.candidate_preceding_gap_age_bands['over_3600s'] ?? 0;
   const indirectGapTerminationCount = gapCensorAudit
     ? Object.values(gapCensorAudit.unique_book_issue_termination_records_by_source_kind).reduce(
         (sum, count) => sum + count,
@@ -1761,7 +1800,7 @@ export function Veritas() {
               remains active.
             </p>
           )}
-          {(gapCensorAudit || finalizedGapDetail) && (
+          {(gapCensorAudit || gapCensorAttribution || finalizedGapDetail) && (
             <div className="ve-gap-evidence" aria-label="Gap attribution and source continuity">
               {gapCensorAudit && (
                 <section>
@@ -1808,6 +1847,83 @@ export function Veritas() {
                     {indirectGapTerminationSources || 'not listed'}. Their direct causal link to the
                     original gap was not verified. The SQLite event hash chain{' '}
                     {gapCensorAudit.journal_hash_chain_reverified ? 'was' : 'was not'} reverified.
+                  </p>
+                </section>
+              )}
+              {gapCensorAttribution && (
+                <section>
+                  <div className="ve-gap-evidence-heading">
+                    <div>
+                      <span className="ve-subhead">Frozen campaign gap attribution</span>
+                      <small>
+                        {gapCensorAttribution.status.replaceAll('_', ' ')} · as of{' '}
+                        {time(gapCensorAttribution.captured_at_utc)}
+                      </small>
+                    </div>
+                    <a href={gapCensorAttribution.artifact.url} target="_blank" rel="noreferrer">
+                      Inspect attribution <ArrowUpRight size={13} />
+                    </a>
+                  </div>
+                  <div className="ve-gap-evidence-stats">
+                    <div>
+                      <span>Gap-censored follow-ups examined</span>
+                      <b>
+                        {fmt(gapCensorAttribution.gap_censored_outcomes)} /{' '}
+                        {fmt(gapCensorAttribution.censored_outcomes_scanned)}
+                      </b>
+                    </div>
+                    <div>
+                      <span>Preceding same-market gap candidates</span>
+                      <b>{fmt(precedingGapOutcomeCount)}</b>
+                    </div>
+                    <div>
+                      <span>Verified gap-index prefix</span>
+                      <b>
+                        {fmt(gapCensorAttribution.gap_detail_index.processed_segment_count)} /{' '}
+                        {fmt(gapCensorAttribution.gap_detail_index.catalog_segment_count)} ·{' '}
+                        {fmt(gapCensorAttribution.gap_detail_index.pending_segment_count)} pending
+                      </b>
+                    </div>
+                  </div>
+                  <p>
+                    {fmt(
+                      gapCensorAttribution.link_status_counts[
+                        'no_prior_same_market_gap_in_indexed_prefix'
+                      ] ?? 0,
+                    )}{' '}
+                    outcomes had no matching earlier gap in the indexed prefix;{' '}
+                    {fmt(
+                      gapCensorAttribution.link_status_counts[
+                        'exact_recorded_gap_reference_verified_and_indexed'
+                      ] ?? 0,
+                    )}{' '}
+                    explicit gap references were verified and indexed;{' '}
+                    {fmt(
+                      gapCensorAttribution.link_status_counts[
+                        'exact_recorded_gap_reference_verified_not_yet_indexed'
+                      ] ?? 0,
+                    )}{' '}
+                    verified references and{' '}
+                    {fmt(
+                      gapCensorAttribution.link_status_counts['termination_after_indexed_prefix'] ??
+                        0,
+                    )}{' '}
+                    terminations are beyond the current prefix. The{' '}
+                    {fmt(uniquePrecedingGapEventCount)} unique preceding same-market gap event
+                    {uniquePrecedingGapEventCount === 1
+                      ? ' is a temporal candidate'
+                      : 's are temporal candidates'}
+                    , not proof of cause. Candidate gap ages use recorder receiver time;{' '}
+                    {fmt(overOneHourGapCount)} {overOneHourGapCount === 1 ? 'was' : 'were'} over one
+                    hour old. No active segment was read. The source check covered{' '}
+                    {fmt(gapCensorAttribution.source_verification.unique_source_records_verified)}{' '}
+                    records across{' '}
+                    {fmt(
+                      gapCensorAttribution.source_verification.unique_finalized_segments_verified,
+                    )}{' '}
+                    finalized segments (
+                    {bytes(gapCensorAttribution.source_verification.finalized_segment_bytes_hashed)}{' '}
+                    hashed); the SQLite event hash chain was not reverified.
                   </p>
                 </section>
               )}

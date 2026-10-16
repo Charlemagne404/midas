@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-16T03:20:25Z",
+  "updated_at_utc": "2026-10-16T03:30:13Z",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -5758,6 +5758,73 @@
         "The source observations are selected repeated public snapshots, not independent venue confirmation.",
         "The Director manifest was not yet reconciled after the child completed; the next scheduled cycle must close that projection gap.",
         "Zero candidates in this panel does not establish zero opportunity prevalence outside the observed sample."
+      ]
+    },
+    {
+      "hypothesis_id": "VERITAS-H102",
+      "experiment_id": "VERITAS-M2-GAP-ATTRIBUTION-DASH-001",
+      "dataset_id": "2c81d4ad8852b2feaae7a7b5f7bf6948a5f85c514ac9d6bfd0f3bff3935dcab2",
+      "title": "Can the read-only dashboard surface frozen gap attribution without overstating cause or completeness?",
+      "mechanism": "A campaign-pinned API projection verifies the attribution artifact digest and row-to-summary counts, bounds its full-artifact route, and presents the partial gap prefix and temporal-candidate limitations alongside the source evidence.",
+      "success_metric": "The real saved artifact is accepted only when its digest, campaign identity, limits, source flags, prefix state, outcome rows, reason totals, link totals, and non-causal status reconcile; fixtures reject changed identity, digest, aggregate counts, and causal claims.",
+      "status": "continue",
+      "decision": "The read-only projection and artifact route are implemented and verified in source. The API suite passed 23 tests and the Veritas browser test passed. Strict Mypy, Ruff, TypeScript, ESLint, Prettier, and the production build passed. The hosted dashboard was not deployed or restarted.",
+      "result": {
+        "captured_at_utc": "2026-10-16T03:30:13Z",
+        "checkpoint_path": "docs/VERITAS_MISSION2_GATE_G_CHECKPOINT_012.md",
+        "artifact_path": "docs/VERITAS_MISSION2_CENSOR_GAP_ATTRIBUTION_001.json",
+        "artifact_file_sha256": "332258b51f72c058cf945742ff29f0d26abcb1da0d5865ebcfd5419fb94e45a5",
+        "artifact_result_sha256": "2c81d4ad8852b2feaae7a7b5f7bf6948a5f85c514ac9d6bfd0f3bff3935dcab2",
+        "campaign_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
+        "censored_outcomes_scanned": 40075,
+        "gap_censored_outcomes": 339,
+        "link_status_counts": {
+          "candidate_preceding_same_market_gap": 45,
+          "exact_recorded_gap_reference_verified_and_indexed": 38,
+          "exact_recorded_gap_reference_verified_not_yet_indexed": 141,
+          "no_prior_same_market_gap_in_indexed_prefix": 29,
+          "termination_after_indexed_prefix": 86
+        },
+        "candidate_preceding_gap_age_bands": {
+          "0_to_1s": 0,
+          "1_to_60s": 2,
+          "300_to_3600s": 7,
+          "60_to_300s": 6,
+          "over_3600s": 30
+        },
+        "gap_detail_prefix": {
+          "processed_segment_count": 1919,
+          "catalog_segment_count": 5079,
+          "pending_segment_count": 3158,
+          "pending_source_bytes": 862240407,
+          "active_segment_read": false,
+          "complete": false
+        },
+        "source_verification": {
+          "active_open_segments_read": false,
+          "exact_source_references_verified": true,
+          "finalized_segment_byte_limit": 134217728,
+          "finalized_segment_bytes_hashed": 58443329,
+          "unique_finalized_segments_verified": 133,
+          "unique_source_records_verified": 157
+        },
+        "sqlite_event_hash_chain_reverified": false,
+        "implementation_status": "verified_source_only_not_deployed",
+        "api_tests": "23 passed; one existing Starlette/httpx deprecation warning",
+        "frontend_test": "1 passed",
+        "python_verification": "Ruff check and format; strict Mypy for apps/api/veritas.py; Python compile check passed",
+        "frontend_verification": "TypeScript build-mode typecheck, ESLint, Prettier, and production build passed",
+        "build_note": "Vite retained the large-chunk advisory: main JS 501.86 kB and chart bundle 544.41 kB before gzip.",
+        "full_regression": "not run",
+        "host_or_service_probe": "not performed",
+        "service_restart_or_job_interruption": false
+      },
+      "limitations": [
+        "The gap-detail source prefix is incomplete; unmatched outcomes beyond its last ordinal remain unresolved.",
+        "Preceding same-market matching-reason links are temporal candidates, not causal proof or continuous impairment.",
+        "Receiver timestamps are recorder time, not exchange quote time; no source event establishes fills or profitability.",
+        "The SQLite event hash chain and full database integrity were not reverified.",
+        "This code is not deployed to the hosted dashboard."
       ]
     }
   ],

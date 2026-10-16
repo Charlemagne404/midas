@@ -23,6 +23,7 @@ ARTIFACTS = {
     "censoring": "VERITAS_GATE_A_CENSORING_003.json",
     "label-feasibility": "VERITAS_MISSION2_LABEL_FEASIBILITY_001.json",
     "censor-gap-audit": "VERITAS_MISSION2_CENSOR_GAP_AUDIT_001.json",
+    "censor-gap-attribution": "VERITAS_MISSION2_CENSOR_GAP_ATTRIBUTION_001.json",
     "market-universe-coverage": "VERITAS_MISSION2_MARKET_UNIVERSE_COVERAGE_001.json",
 }
 MAX_ARTIFACT_BYTES = 512 * 1024
@@ -728,6 +729,218 @@ def censor_gap_audit_overview(repository: Path, expected_campaign_id: str) -> di
             "url": "/api/veritas/artifacts/censor-gap-audit",
         },
         "limitations": value.get("limitations", []),
+    }
+
+
+def read_censor_gap_attribution(
+    repository: Path, expected_campaign_id: str
+) -> tuple[dict[str, Any], Path] | None:
+    path = repository / "docs" / ARTIFACTS["censor-gap-attribution"]
+    if path.is_symlink():
+        raise HTTPException(404, "Veritas gap-censor attribution is unavailable")
+    if not path.exists():
+        return None
+    value, path = read_artifact(repository, "censor-gap-attribution")
+    payload = dict(value)
+    stored_digest = payload.pop("result_sha256", None)
+    calculated_digest = hashlib.sha256(
+        json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
+    ).hexdigest()
+    campaign = value.get("campaign")
+    gap_index = value.get("gap_detail_index")
+    query = value.get("query")
+    source = value.get("source_verification")
+    journal = value.get("journal_snapshot")
+    gaps = value.get("gap_censors")
+    outcomes = value.get("outcomes")
+    if (
+        value.get("schema_version") != 1
+        or value.get("analysis_version") != "veritas-censor-gap-attribution-v1"
+        or value.get("status") not in ("verified_partial_prefix", "verified_complete_prefix")
+        or not isinstance(value.get("captured_at_utc"), str)
+        or not isinstance(stored_digest, str)
+        or stored_digest != calculated_digest
+        or not isinstance(campaign, dict)
+        or campaign.get("campaign_id") != expected_campaign_id
+        or not isinstance(campaign.get("campaign_plan_sha256"), str)
+        or re.fullmatch(r"[0-9a-f]{64}", campaign["campaign_plan_sha256"]) is None
+        or not isinstance(gap_index, dict)
+        or not isinstance(query, dict)
+        or not isinstance(source, dict)
+        or not isinstance(journal, dict)
+        or not isinstance(gaps, dict)
+        or not isinstance(outcomes, list)
+    ):
+        raise HTTPException(503, "Veritas gap-censor attribution identity or digest is invalid")
+
+    def nonnegative(mapping: dict[str, Any], field: str) -> int | None:
+        number = mapping.get(field)
+        if not isinstance(number, int) or isinstance(number, bool) or number < 0:
+            return None
+        return number
+
+    def count_map(mapping: dict[str, Any], field: str) -> dict[str, int] | None:
+        raw = mapping.get(field)
+        if not isinstance(raw, dict):
+            return None
+        validated: dict[str, int] = {}
+        for key, number in raw.items():
+            if (
+                not isinstance(key, str)
+                or not isinstance(number, int)
+                or isinstance(number, bool)
+                or number < 0
+            ):
+                return None
+            validated[key] = number
+        return validated
+
+    processed_segments = nonnegative(gap_index, "processed_segment_count")
+    catalog_segments = nonnegative(gap_index, "catalog_segment_count")
+    pending_segments = nonnegative(gap_index, "pending_segment_count")
+    pending_bytes = nonnegative(gap_index, "pending_source_bytes")
+    indexed_gap_events = nonnegative(gap_index, "indexed_campaign_gap_events")
+    scanned = nonnegative(query, "censored_outcomes_scanned")
+    gap_outcomes = nonnegative(query, "gap_censored_outcomes")
+    outcome_limit = nonnegative(query, "censored_outcome_limit")
+    event_bytes = nonnegative(query, "censored_outcome_event_bytes_read")
+    event_byte_limit = nonnegative(query, "event_byte_limit")
+    verified_segments = nonnegative(source, "unique_finalized_segments_verified")
+    verified_records = nonnegative(source, "unique_source_records_verified")
+    verified_bytes = nonnegative(source, "finalized_segment_bytes_hashed")
+    source_byte_limit = nonnegative(source, "finalized_segment_byte_limit")
+    reason_counts = count_map(gaps, "outcomes_by_reason")
+    link_counts = count_map(gaps, "link_status_counts")
+    age_bands = count_map(gaps, "candidate_preceding_gap_age_bands_to_termination_receiver_time_ns")
+    allowed_age_bands = {"0_to_1s", "1_to_60s", "60_to_300s", "300_to_3600s", "over_3600s"}
+    row_reason_counts: Counter[str] = Counter()
+    row_link_counts: Counter[str] = Counter()
+    allowed_link_statuses = {
+        "candidate_preceding_same_market_gap",
+        "exact_recorded_gap_reference_verified_and_indexed",
+        "exact_recorded_gap_reference_verified_not_yet_indexed",
+        "exact_recorded_gap_reference_missing_from_indexed_prefix",
+        "no_prior_same_market_gap_in_indexed_prefix",
+        "termination_after_indexed_prefix",
+    }
+    rows_valid = True
+    for row in outcomes:
+        if not isinstance(row, dict):
+            rows_valid = False
+            break
+        reason = row.get("reason")
+        link_status = row.get("link_status")
+        if (
+            not isinstance(reason, str)
+            or not reason.startswith(("recorded_gap:", "book_issue:gap:"))
+            or not isinstance(link_status, str)
+            or link_status not in allowed_link_statuses
+        ):
+            rows_valid = False
+            break
+        row_reason_counts[reason] += 1
+        row_link_counts[link_status] += 1
+
+    candidate_count = (
+        link_counts.get("candidate_preceding_same_market_gap", -1) if link_counts else -1
+    )
+    indexed_status_count = nonnegative(gaps, "unique_exact_recorded_gap_events_indexed")
+    linked_gap_count = nonnegative(gaps, "unique_gap_events_linked")
+    candidate_gap_event_count = nonnegative(gaps, "unique_candidate_preceding_gap_events")
+    if (
+        processed_segments is None
+        or catalog_segments is None
+        or pending_segments is None
+        or pending_bytes is None
+        or indexed_gap_events is None
+        or scanned is None
+        or gap_outcomes is None
+        or outcome_limit is None
+        or event_bytes is None
+        or event_byte_limit is None
+        or verified_segments is None
+        or verified_records is None
+        or verified_bytes is None
+        or source_byte_limit is None
+        or reason_counts is None
+        or link_counts is None
+        or age_bands is None
+        or set(age_bands) != allowed_age_bands
+        or not rows_valid
+        or gap_outcomes != len(outcomes)
+        or gap_outcomes > scanned
+        or scanned > outcome_limit
+        or event_bytes > event_byte_limit
+        or sum(reason_counts.values()) != gap_outcomes
+        or dict(row_reason_counts) != reason_counts
+        or sum(link_counts.values()) != gap_outcomes
+        or dict(row_link_counts) != link_counts
+        or sum(age_bands.values()) != candidate_count
+        or processed_segments + pending_segments > catalog_segments
+        or gap_index.get("active_segment_read") is not False
+        or gap_index.get("analysis_code_files_verified") is not True
+        or gap_index.get("complete") is not (pending_segments == 0)
+        or (value["status"] == "verified_complete_prefix") != (pending_segments == 0)
+        or query.get("truncated") is not False
+        or source.get("exact_source_references_verified") is not True
+        or source.get("active_open_segments_read") is not False
+        or verified_segments > verified_records
+        or verified_bytes <= 0
+        or journal.get("read_only") is not True
+        or not isinstance(journal.get("hash_chain_reverified"), bool)
+        or gaps.get("same_market_preceding_gap_is_causal_proof") is not False
+        or indexed_status_count is None
+        or linked_gap_count is None
+        or candidate_gap_event_count is None
+        or indexed_status_count > linked_gap_count
+        or indexed_status_count
+        > link_counts.get("exact_recorded_gap_reference_verified_and_indexed", 0)
+        or candidate_gap_event_count > linked_gap_count
+        or candidate_gap_event_count > candidate_count
+        or verified_bytes > source_byte_limit
+        or not isinstance(value.get("limitations"), list)
+        or any(not isinstance(item, str) for item in value["limitations"])
+    ):
+        raise HTTPException(503, "Veritas gap-censor attribution evidence does not reconcile")
+    return value, path
+
+
+def censor_gap_attribution_overview(
+    repository: Path, expected_campaign_id: str
+) -> dict[str, Any] | None:
+    stored = read_censor_gap_attribution(repository, expected_campaign_id)
+    if stored is None:
+        return None
+    value, path = stored
+    gaps = value["gap_censors"]
+    return {
+        "status": value["status"],
+        "analysis_version": value["analysis_version"],
+        "captured_at_utc": value["captured_at_utc"],
+        "campaign_id": value["campaign"]["campaign_id"],
+        "censored_outcomes_scanned": value["query"]["censored_outcomes_scanned"],
+        "gap_censored_outcomes": value["query"]["gap_censored_outcomes"],
+        "link_status_counts": gaps["link_status_counts"],
+        "unique_gap_events_linked": gaps["unique_gap_events_linked"],
+        "unique_candidate_preceding_gap_events": gaps["unique_candidate_preceding_gap_events"],
+        "unique_exact_recorded_gap_events_indexed": gaps[
+            "unique_exact_recorded_gap_events_indexed"
+        ],
+        "candidate_preceding_gap_age_bands": gaps[
+            "candidate_preceding_gap_age_bands_to_termination_receiver_time_ns"
+        ],
+        "same_market_preceding_gap_is_causal_proof": gaps[
+            "same_market_preceding_gap_is_causal_proof"
+        ],
+        "gap_detail_index": value["gap_detail_index"],
+        "source_verification": value["source_verification"],
+        "artifact": {
+            "id": "censor-gap-attribution",
+            "label": "Verified partial-prefix gap-censor attribution",
+            "file_sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+            "url": "/api/veritas/artifacts/censor-gap-attribution",
+        },
+        "limitations": value["limitations"],
     }
 
 
@@ -2350,6 +2563,7 @@ def overview(repository: Path) -> dict[str, Any]:
     current_censoring = followup_censoring_overview(repository, str(funnel["campaign_id"]))
     label_feasibility = label_feasibility_overview(repository, str(funnel["campaign_id"]))
     gap_censor_audit = censor_gap_audit_overview(repository, str(funnel["campaign_id"]))
+    gap_censor_attribution = censor_gap_attribution_overview(repository, str(funnel["campaign_id"]))
     gap_detail = finalized_gap_detail_overview(repository, str(funnel["campaign_id"]))
     quantity = "100"
     full_depth = next(
@@ -2443,6 +2657,8 @@ def overview(repository: Path) -> dict[str, Any]:
         artifacts.append(label_feasibility["artifact"])
     if gap_censor_audit is not None:
         artifacts.append(gap_censor_audit["artifact"])
+    if gap_censor_attribution is not None:
+        artifacts.append(gap_censor_attribution["artifact"])
     if gap_detail is not None:
         artifacts.append(gap_detail["summary_artifact"])
 
@@ -2494,6 +2710,7 @@ def overview(repository: Path) -> dict[str, Any]:
         "followup_censoring": current_censoring,
         "label_feasibility": label_feasibility,
         "gap_censor_audit": gap_censor_audit,
+        "gap_censor_attribution": gap_censor_attribution,
         "finalized_gap_detail": gap_detail,
         "baseline_policies": {
             "count": len(frozen["policy_actions"]),
@@ -2560,6 +2777,19 @@ def router(repository: Path) -> APIRouter:
 
     @routes.get("/artifacts/{identity}")
     def get_artifact(identity: str) -> dict[str, Any]:
+        if identity == "censor-gap-attribution":
+            raw_funnel, _ = read_artifact(repository, "raw-funnel")
+            validated = censor_gap_attribution_overview(repository, str(raw_funnel["campaign_id"]))
+            if validated is None:
+                raise HTTPException(404, "Veritas gap-censor attribution has not been generated")
+            stored = read_censor_gap_attribution(repository, str(raw_funnel["campaign_id"]))
+            if stored is None:
+                raise HTTPException(404, "Veritas gap-censor attribution has not been generated")
+            data, path = stored
+            file_sha256 = hashlib.sha256(path.read_bytes()).hexdigest()
+            if file_sha256 != validated["artifact"]["file_sha256"]:
+                raise HTTPException(503, "Veritas gap-censor attribution changed during read")
+            return {"artifact": identity, "file_sha256": file_sha256, "data": data}
         if identity == "gap-detail-current":
             raw_funnel, _ = read_artifact(repository, "raw-funnel")
             validated = finalized_gap_detail_overview(repository, str(raw_funnel["campaign_id"]))

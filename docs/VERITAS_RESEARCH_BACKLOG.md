@@ -177,3 +177,33 @@ unavailable. Do not alter the coverage pilot's hashed code or fixed protocol.
 Current evidence is in [Gate A checkpoint 032](VERITAS_MISSION2_GATE_A_CHECKPOINT_032.md),
 [Gate F checkpoint 021](VERITAS_MISSION2_GATE_F_CHECKPOINT_021.md), and
 [inventory 039](VERITAS_MISSION2_RESEARCH_INVENTORY_039.json).
+
+## Mission 2 continuation — scan 47 / Gate G checkpoint 012
+
+The latest pinned 47-snapshot qualification and independent source audit still
+show zero positive gross or economic candidates: 1,880 selected observations,
+1,628 quality-valid, with no v4/v2 validity or top-edge mismatches. The A1
+market-universe artifact remains the 46-scan report and should not be described
+as scan-47 coverage. The campaign gap-censor artifact scanned 40,075 censored
+follow-ups and found 339 gap-labeled rows. Its partial gap index has processed
+1,919/5,079 segments, leaving 3,158 segments / 862,240,407 bytes pending; 45
+same-market preceding-gap outcome links are temporal candidates, not causal
+proof.
+
+Gate G now exposes that frozen attribution through a digest- and
+campaign-validated overview summary and an artifact inspection route. The UI
+keeps the incomplete prefix, recorder receiver-time basis, source checks, and
+causality limitation visible. The focused API, browser, typing, lint,
+formatting, and production-build checks passed. The code is source-only and
+not deployed. No collector, campaign, or research job was touched; the latest
+runtime evidence remains in inventory 058 and should be refreshed at a later
+safe checkpoint. See [Gate B checkpoint 002](VERITAS_MISSION2_GATE_B_CHECKPOINT_002.md),
+[Gate C checkpoint 011](VERITAS_MISSION2_GATE_C_CHECKPOINT_011.md), [Gate G
+checkpoint 012](VERITAS_MISSION2_GATE_G_CHECKPOINT_012.md), and [inventory
+059](VERITAS_MISSION2_RESEARCH_INVENTORY_059.json).
+
+Next: commit this coherent Gate G checkpoint, then continue Gate G review for
+remaining discovery/readiness views and preserve the scheduled research
+pipeline. At the next operational checkpoint, inspect only persisted outputs
+from completed scheduled runs and refresh host/service telemetry read-only; do
+not manually trigger jobs or alter the fixed coverage pilot.

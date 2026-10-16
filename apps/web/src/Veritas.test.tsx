@@ -701,6 +701,53 @@ it('labels measured evidence and keeps synthetic execution separate from actual 
                   },
                   limitations: ['The SQLite event hash chain was not reverified.'],
                 },
+                gap_censor_attribution: {
+                  status: 'verified_partial_prefix',
+                  analysis_version: 'veritas-censor-gap-attribution-v1',
+                  captured_at_utc: '2026-10-16T03:10:11Z',
+                  campaign_id: 'campaign-fixture',
+                  censored_outcomes_scanned: 7,
+                  gap_censored_outcomes: 5,
+                  link_status_counts: {
+                    candidate_preceding_same_market_gap: 1,
+                    exact_recorded_gap_reference_verified_and_indexed: 1,
+                    exact_recorded_gap_reference_verified_not_yet_indexed: 1,
+                    no_prior_same_market_gap_in_indexed_prefix: 1,
+                    termination_after_indexed_prefix: 1,
+                  },
+                  unique_gap_events_linked: 2,
+                  unique_candidate_preceding_gap_events: 1,
+                  unique_exact_recorded_gap_events_indexed: 1,
+                  candidate_preceding_gap_age_bands: {
+                    '0_to_1s': 0,
+                    '1_to_60s': 0,
+                    '60_to_300s': 0,
+                    '300_to_3600s': 0,
+                    over_3600s: 1,
+                  },
+                  same_market_preceding_gap_is_causal_proof: false,
+                  gap_detail_index: {
+                    complete: false,
+                    processed_segment_count: 2,
+                    catalog_segment_count: 3,
+                    pending_segment_count: 1,
+                    pending_source_bytes: 512,
+                    indexed_campaign_gap_events: 2,
+                    active_segment_read: false,
+                  },
+                  source_verification: {
+                    unique_finalized_segments_verified: 3,
+                    unique_source_records_verified: 4,
+                    finalized_segment_bytes_hashed: 256,
+                  },
+                  artifact: {
+                    id: 'censor-gap-attribution',
+                    label: 'Verified partial-prefix gap-censor attribution',
+                    file_sha256: 'd'.repeat(64),
+                    url: '/api/veritas/artifacts/censor-gap-attribution',
+                  },
+                  limitations: ['The indexed gap prefix is incomplete.'],
+                },
                 finalized_gap_detail: {
                   status: 'catching_up',
                   analysis_version: 'veritas-finalized-reality-gap-detail-v1',
@@ -745,6 +792,10 @@ it('labels measured evidence and keeps synthetic execution separate from actual 
                   {
                     id: 'censor-gap-audit',
                     label: 'Verified finalized-source gap-censor attribution',
+                  },
+                  {
+                    id: 'censor-gap-attribution',
+                    label: 'Verified partial-prefix gap-censor attribution',
                   },
                   {
                     id: 'gap-detail-current',
@@ -875,6 +926,10 @@ it('labels measured evidence and keeps synthetic execution separate from actual 
   expect(
     screen.getByText(/direct causal link to the original gap was not verified/),
   ).toBeInTheDocument();
+  expect(screen.getByText('Frozen campaign gap attribution')).toBeInTheDocument();
+  expect(screen.getByText('5 / 7')).toBeInTheDocument();
+  expect(screen.getByText('Preceding same-market gap candidates')).toBeInTheDocument();
+  expect(screen.getByText(/a temporal candidate, not proof of cause/)).toBeInTheDocument();
   expect(screen.getByText('Incremental finalized-source gap detail')).toBeInTheDocument();
   expect(screen.getByText('Campaign-window events in processed prefix')).toBeInTheDocument();
   expect(
@@ -883,6 +938,10 @@ it('labels measured evidence and keeps synthetic execution separate from actual 
   expect(screen.getByRole('link', { name: 'Inspect source audit' })).toHaveAttribute(
     'href',
     '/api/veritas/artifacts/censor-gap-audit',
+  );
+  expect(screen.getByRole('link', { name: 'Inspect attribution' })).toHaveAttribute(
+    'href',
+    '/api/veritas/artifacts/censor-gap-attribution',
   );
   expect(screen.getByRole('link', { name: 'Inspect verified prefix' })).toHaveAttribute(
     'href',

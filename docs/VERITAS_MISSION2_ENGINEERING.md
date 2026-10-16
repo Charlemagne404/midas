@@ -1,6 +1,26 @@
 # Veritas Mission 2 Engineering Checkpoint
 
-## Latest checkpoint — 03:12 UTC, scan 47 and gap attribution
+## Latest checkpoint — 03:29 UTC, Gate G gap-attribution projection
+
+The read-only dashboard now validates and summarizes the new frozen-campaign
+gap-censor attribution artifact, checks row counts against its digest-protected
+aggregates, links to the bounded full artifact, and preserves the temporal vs.
+causal distinction. The current saved artifact has 339 gap-labeled follow-ups
+among 40,075 scanned; 45 rows have a preceding same-market candidate link,
+representing six unique indexed gaps. The gap-detail index is partial at
+1,919/5,079 processed segments with 3,158 segments / 862,240,407 bytes
+pending. Source verification covers 157 references over 133 finalized
+segments; no active source segment was read. The read-only SQLite hash chain
+was not reverified. See [Gate G checkpoint
+012](VERITAS_MISSION2_GATE_G_CHECKPOINT_012.md).
+
+The focused dashboard API suite passed 23 tests, the Veritas browser test
+passed, and Ruff, strict Mypy, ESLint, Prettier, TypeScript typecheck, and the
+production build passed. The build retains its large-chunk advisory. This
+change is source-only and has not been deployed. No service or research job
+was changed, and no host telemetry was refreshed.
+
+## Previous checkpoint — 03:12 UTC, scan 47 and gap attribution
 
 The latest v4 panel has 47 snapshots, 1,880 selected pair observations,
 1,628 quality-valid states, 835 distinct selected markets, and zero candidate
