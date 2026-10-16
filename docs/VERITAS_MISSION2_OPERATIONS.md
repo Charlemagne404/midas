@@ -1969,3 +1969,46 @@ window has 2,681 gaps (2,677 book resynchronizations, four connection
 failures); the run read no active segment, used about 3.59 CPU seconds, and
 peaked at 114.4 MiB. Source analysis remains at its 19:12 capture, so do not
 compare the two segment totals as an exact same-time backlog.
+
+
+## 2026-10-16T20:37Z — scan 82 and live Reality state
+
+- Independent A1 coverage and B opportunity replays now cover 82 saved public
+  snapshots / 3,280 selected observations. A1 artifact 016 and B audit 019
+  report 2,778 quality-valid pairs, 603 strict reported-time-fresh states,
+  and zero positive gross/depth/fee-qualified candidates. The first-scan
+  capture/replay mismatch remains 5 versus 32 valid pairs.
+- The observatory v4 analyzer is caught up through snapshot 82 with zero
+  pending. The latest saved scan is
+  `scan-20261016T203022Z-fc4e53f469e3`, 37/40 valid pairs, zero top-gross
+  positives. Pilot 002 is at 21/48 scans (703/840 valid pairs, 614 unique
+  selected markets, zero skipped scan sequences).
+- The Reality recorder is active, `RECORDING_UNSEQUENCED`, at ordinal 1,008,261
+  and 748,643 frames, with 8 markets / 16 books, four connection failures,
+  and zero restarts. It reports `ConnectionClosedError` but continues to
+  advance. Host memory high remains close to the recorder's 512 MiB cap.
+- The protected campaign remains active at its pinned identity. The frozen
+  worker is `WARMING_OR_LAGGED_SOURCE`; source receipt age is 26h57m, decision
+  age 35h39m, and skipped lagged frames are 211,431. Its counts remain
+  10,253 decisions, 47,911 observations, 937 observed and 40,075 censored
+  follow-ups. The single prior restart is unchanged. No worker or campaign
+  modification was made.
+- The separate successor is active and near the recorder head: receipt age
+  about 2 seconds, decision age about 11 seconds, 306 decisions, 1,441
+  observations, 40 observed / 1,184 censored follow-ups, and zero restarts.
+  It remains experimental and has insufficient forward evidence.
+- Gap detail completed at 20:35 UTC through 7,118/7,118 segments with zero
+  pending; campaign-window gap count is 2,748 (2,744 resynchronizations, four
+  connection failures). Source analysis last completed at 20:12 UTC through
+  7,080/7,080 with zero pending; the next timer is 20:40 UTC. The Director's
+  20:15 manifest remains stale (`QUEUED`) although Arena job
+  `job-71dc6f3e55604a8fb5cfd7c0` completed at 20:16 UTC. Its next timer is
+  20:45 UTC.
+- The last saved original-campaign integrity report covers 113,162 journal
+  events; live status reports 113,395. The current journal tail is not covered
+  by that saved verification. The next integrity timer is scheduled for
+  03:01 UTC.
+- Host snapshot: 9.1 GiB available RAM, 3.9/4 GiB swap used, 195 GB free
+  disk. The current Reality recording directory reports about 1.85 GB. The
+  Midas and Reality APIs and frontends remain active. No training, full test
+  suite, or extra replay is running.

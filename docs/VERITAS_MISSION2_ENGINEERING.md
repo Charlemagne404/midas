@@ -1883,3 +1883,29 @@ between the two journal transactions and verifies one recovered decision and
 one-shot state/research parity. See [Gate C checkpoint
 027](VERITAS_MISSION2_GATE_C_CHECKPOINT_027.md) and [benchmark
 008](VERITAS_MISSION2_SHADOW_INTERRUPT_BENCHMARK_008.json).
+
+
+## 2026-10-16T20:38Z — independent market and opportunity replay through scan 82
+
+Coverage replay 016 processed 82 finalized snapshots / 3,280 selected pairs. It
+found 8,052 distinct bounded-union Gamma market IDs, 2,603 eligible at least
+once, 1,380 distinct selected market/condition IDs, and 2,760 selected outcome
+assets. The latest scan selected 40 of 171 currently eligible markets from a
+300-ID bounded union. The sampled top book changed in 763/1,467 comparable
+transitions; this is an intermittent activity proxy.
+
+Independent opportunity audit 019 matched stored v4 across 2,778 quality-valid
+states with zero validity or edge mismatches. It cross-checked 3,653 fee
+calculations with zero disagreements. Positive gross, depth, minimum, fee, and
+strict-freshness candidate counts remain zero at tested quantities. Strict
+reported-time freshness admits 603 states; 2,174 pairs have a leg older than
+five seconds and one pair exceeds 250 ms skew.
+
+The capture/replay discrepancy remains isolated to the first scan (5 capture
+valid pairs versus 32 current replay-valid pairs), producing the 27-pair
+panel-level delta. Stored source hashes verify, but the cause is unresolved.
+Artifacts: [A1 coverage 016](VERITAS_MISSION2_MARKET_UNIVERSE_COVERAGE_016.json),
+[independent audit 019](VERITAS_MISSION2_INDEPENDENT_OPPORTUNITY_AUDIT_019.json),
+and [Gate B checkpoint 017](VERITAS_MISSION2_GATE_B_CHECKPOINT_017.md).
+These replays used saved data, made no public requests, and wrote no campaign
+records. The frozen worker, collector, and campaigns were not changed.

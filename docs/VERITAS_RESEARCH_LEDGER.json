@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-16T17:58:53Z",
+  "updated_at_utc": "2026-10-16T20:38:28Z",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -7431,7 +7431,7 @@
       "title": "Does the isolated browser show the audited inclusion-support result, its freshness, and its evidence limits correctly?",
       "mechanism": "Exercise the current Veritas UI and read-only artifact route in Playwright using the isolated demo API/Vite configuration, and compare the visible audit summary with the receipted local artifact.",
       "success_metric": "The browser identifies audit 002 as stale against the current pilot, displays the audited support/yield figures and limitation, links to the direct artifact route, and the endpoint returns the expected versioned source counts.",
-      "decision": "Verified for the targeted source-checkout workflow. Playwright passed one Veritas browser test in 5.6 seconds. The test checks the label Audited 25 scans \u00b7 pilot now at 26, 99.80% support, 82.96% weighted yield, the direct artifact link, 25 source events, 23 fully supported scans, and the no-venue-wide-inference flag. The full suite and hosted deployment remain unverified.",
+      "decision": "Verified for the targeted source-checkout workflow. Playwright passed one Veritas browser test in 5.6 seconds. The test checks the label Audited 25 scans · pilot now at 26, 99.80% support, 82.96% weighted yield, the direct artifact link, 25 source events, 23 fully supported scans, and the no-venue-wide-inference flag. The full suite and hosted deployment remain unverified.",
       "status": "continue",
       "dataset_id": "VERITAS-M2-COVERAGE-PILOT-001_current_26_scans_and_COVERAGE-DESIGN-AUDIT-002",
       "limitations": [
@@ -7996,7 +7996,7 @@
       "experiment_id": "VERITAS-M2-FROZEN-SOURCE-IMPORT-ISOLATION-001",
       "title": "Can finalized-source and gap analysis keep using the frozen Reality code while Veritas develops a successor?",
       "dataset_id": "Mission2_frozen_code_snapshot_and_finalized_source_catalog_20261016",
-      "mechanism": "Place the campaign\u2019s own immutable code snapshot ahead of the mutable Veritas package path for both read-only analysis units, while retaining the current branch Veritas analysis modules and their persisted state identities.",
+      "mechanism": "Place the campaign’s own immutable code snapshot ahead of the mutable Veritas package path for both read-only analysis units, while retaining the current branch Veritas analysis modules and their persisted state identities.",
       "success_metric": "Campaign code hashes and both analyzer-state code identities match; bounded source and gap jobs resume without cursor reset, campaign mutation, active-segment reads, or orders.",
       "result": {
         "status": "BOUNDED_REPLAYS_RECOVERED",
@@ -8405,7 +8405,7 @@
       "status": "continue",
       "decision": "The 15:10 UTC cycle processed all 57 new segments and ended current at 6,498/6,498. Keep the schedule and collect more intervals before claiming a sustained throughput margin.",
       "limitations": [
-        "One run matching this interval\u2019s incoming segment count does not prove durable capacity headroom.",
+        "One run matching this interval’s incoming segment count does not prove durable capacity headroom.",
         "A zero-pending result is a replay-completeness check, not an economic result."
       ],
       "result": {
@@ -8692,6 +8692,46 @@
         "The SIGTERM canary stopped before the first decision; the decision-to-commit branch is covered separately by test_missing_decision_commit_marker_is_repaired_before_followup in the focused regression suite.",
         "An extra worker_start lifecycle event causes the final event count and tail hash to differ from one-shot.",
         "Historical bounded canary only; no live service or new economic evidence."
+      ]
+    },
+    {
+      "hypothesis_id": "VERITAS-H152",
+      "experiment_id": "VERITAS-M2-INDEPENDENT-SOURCE-AUDIT-002",
+      "dataset_id": "veritas-observatory-82-snapshot-panel",
+      "title": "Does independent replay of the expanded 82-scan panel reveal a quality-valid positive gross candidate?",
+      "mechanism": "An independent v3 reconstruction of saved public snapshots and fee calculations should either reproduce the current v4 opportunity evidence or expose a sign, validity, depth, or fee discrepancy.",
+      "success_metric": "Match stored v4 validity and top edges, cross-check quantity fee arithmetic, and count quality-valid gross/depth/minimum/fee candidates without treating repeated snapshots as independent trials.",
+      "result": {
+        "artifact_path": "docs/VERITAS_MISSION2_INDEPENDENT_OPPORTUNITY_AUDIT_019.json",
+        "artifact_sha256": "a199b52542d5bdea33c14ae46d7431b648dd853420dd16fdaf74601a0880ec38",
+        "source_manifest_sha256": "920aa5494c3ea8eb6b00c339f267cd4636e1aaa8e1ed27c4ec0dfdfa59c61cad",
+        "result_sha256": "7e9641ad0ef182da523d0a85cf2daf151586da1b6cbada37e71dab996e02b519",
+        "snapshots": 82,
+        "selected_observations": 3280,
+        "independent_quality_valid_states": 2778,
+        "v4_v3_validity_mismatches": 0,
+        "v4_v3_top_edge_mismatches": 0,
+        "fee_calculations_checked": 3653,
+        "fee_disagreements": 0,
+        "strict_reported_freshness_states": 603,
+        "positive_top_gross": 0,
+        "positive_full_depth_at_quantities_5_10_20_50_100": {
+          "5": 0,
+          "10": 0,
+          "20": 0,
+          "50": 0,
+          "100": 0
+        },
+        "positive_after_minimums_and_fees": 0,
+        "orders_submitted": false
+      },
+      "decision": "Retain no-trade and continue bounded collection. The expanded independent replay verifies the supported same-condition binary path but yields no candidate or candidate-relevant model target. Preserve the unresolved first-scan capture/replay counter discrepancy separately.",
+      "status": "continue",
+      "limitations": [
+        "The 82 saved snapshots are selected, intermittent, and correlated; counts are not independent opportunity trials.",
+        "Reported timestamp age and skew do not prove upstream freshness, sequence ordering, or batch atomicity.",
+        "Fee arithmetic is a sensitivity calculation, not a fill or profitability result.",
+        "The A1 capture/replay discrepancy remains isolated to the first scan and is not explained by stored source hash verification."
       ]
     }
   ],

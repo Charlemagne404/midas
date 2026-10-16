@@ -1,11 +1,31 @@
 # Veritas research backlog
 
-The Mission 2 queue below reflects expected information value, possible
+The active Mission 2 queue reflects expected information value, possible
 economic impact, current evidence, and compute cost. Work remains on
 `project/veritas`; the frozen Reality campaign is a protected reference. The
 earlier Mission 1 handoff backlog is retained below for provenance.
 
-## Current Mission 2 queue (updated 2026-10-16T11:31:12Z)
+## Current Mission 2 queue (updated 2026-10-16T20:38:30Z)
+
+The independent A1/B replays now cover all 82 finalized public snapshots. They
+confirm 2,778 quality-valid pairs and zero positive gross, full-depth,
+minimum-notional, fee, or strict-freshness candidates. The current panel is
+intermittent and correlated. The first-scan capture/replay discrepancy
+remains unresolved. The separate 48-scan measurement pilot is 21/48, with
+703/840 valid pairs and only 29 stable-control selections. The original frozen
+shadow remains stale; the separate successor is near the recorder head but
+has only 40 observed and 1,184 censored follow-ups.
+
+| Rank | Question | Evidence now | Next action | Promotion rule |
+| --- | --- | --- | --- | --- |
+| 1 | Can the successor produce reliable forward measurements without touching the frozen campaign? | Successor receipt and decision are current, but follow-up yield is low and `source_checkpoints` remains zero. | Inspect its decision/follow-up reason records and verify cursor, journal, and restart recovery on isolated state. Keep parent campaign untouched. | Require current receipts, durable verified source cursor, non-duplicated decisions, and source-linked follow-ups. |
+| 2 | Does the broader public panel reveal a candidate? | Audit 019 independently verifies 82 snapshots / 3,280 observations; 2,778 valid, 603 strict-fresh, zero gross candidates. | Continue scheduled scans; independently audit each material extension and resolve the first-scan capture/replay mismatch. | Positive gross first; then verify payoff relation, freshness, depth, minimums, fees, and exact source interval. |
+| 3 | Does pilot 002 improve usable coverage without losing control representation? | 21/48 scans, 703/840 valid; stable controls are 29/840 selected and 18 valid. | Let the frozen protocol finish; audit selection support and strict freshness. Do not silently alter its eligibility rules. | Compare compatible strata and report dependence; do not equate a higher primary yield with trustworthy follow-up. |
+| 4 | Can finalized-source analysis keep pace with recordings? | Last source replay reached 7,080/7,080 with zero pending; gap detail reached 7,118/7,118. | Let the scheduled 20:40 UTC source pass complete; compare same-time prefixes and new-segment throughput. | Use sealed segments only; require idempotence, bounded work, and exact lineage. |
+| 5 | Is a strategy or model experiment admissible? | No real gross candidate or candidate-relevant target exists; Director readiness remains `NOT_READY`. | Keep no-trade and defer training. Define a candidate-free availability comparison only if it tests a real research improvement against a fixed baseline. | No synthetic profitability, leakage, or reuse of the frozen campaign as a tuning set. |
+| 6 | Can the Director reconcile bounded jobs promptly? | Job `job-71dc…` completed at 20:16 UTC while its manifest still projects `QUEUED` from 20:15. | Verify the scheduled 20:45 UTC reconciliation and preserve source pinning/idempotence. | Complete source-pinned job and manifest reconciliation without duplicate admission. |
+
+### Superseded Mission 2 queue (updated 2026-10-16T11:31:12Z)
 
 The protected shadow worker remains lagged. Both frozen-source analysis jobs
 now load Reality modules from the campaign's pinned snapshot through a durable

@@ -177,7 +177,7 @@
     "source_bytes": 551636,
     "source_event_count": 30
   },
-  "captured_at_utc": "2026-10-16T18:58:07Z",
+  "captured_at_utc": "2026-10-16T20:41:18Z",
   "censoring_analysis": {
     "analysis_source_file": "packages/midas/veritas/forensics.py",
     "analysis_source_sha256": "0b055a21c4b423bbf02cc9c240f26f18263fb8342cd72dec686705d2601a420c",
@@ -2900,7 +2900,7 @@
     "unique_market_ids": 558,
     "window_minutes": 751.53
   },
-  "inventory_id": "VERITAS-M2-RESEARCH-INVENTORY-089",
+  "inventory_id": "VERITAS-M2-RESEARCH-INVENTORY-093",
   "latest_scan_captured_at_utc": "2026-10-16T18:30:53.340010+00:00",
   "latest_scan_id": "scan-20261016T183053Z-5cc3121a6906",
   "latest_source_analysis_checkpoint": {
@@ -4091,9 +4091,9 @@
   "repository": {
     "path": "/home/charlie/midas-veritas",
     "branch": "project/veritas",
-    "head_commit": "dddfd74351a69e8aeebcdd7096736129d1faac51",
-    "checkpoint_base_commit": "dddfd74351a69e8aeebcdd7096736129d1faac51",
-    "commit_at_inventory_creation": "dddfd74351a69e8aeebcdd7096736129d1faac51",
+    "head_commit": "b187ee2655bb810d0a2fbd962e365d5218589c10",
+    "checkpoint_base_commit": "b187ee2655bb810d0a2fbd962e365d5218589c10",
+    "commit_at_inventory_creation": "b187ee2655bb810d0a2fbd962e365d5218589c10",
     "code_changes_after_pilot_activation": true,
     "source_code_changes_pending_commit": true,
     "evidence_and_documentation_changes_pending_commit": true,
@@ -4101,10 +4101,13 @@
     "protected_reality_worktree": "/home/charlie/midas-reality",
     "worktree_source_changes_pending_commit": false,
     "documentation_and_evidence_changes_pending_commit": true,
-    "head_commit_at_capture": "781a12e",
+    "head_commit_at_capture": "b187ee2",
     "checkpoint_code_changes_pending_commit": true,
     "checkpoint_documentation_pending_commit": true,
-    "worktree_source_changes_uncommitted": true
+    "worktree_source_changes_uncommitted": true,
+    "source_head_at_capture": "b187ee2655bb810d0a2fbd962e365d5218589c10",
+    "worktree_clean": false,
+    "worktree_dirty_path_count": 56
   },
   "research_director": {
     "director_id": "director-veritas-opportunity-v1",
@@ -8573,9 +8576,11 @@
   "previous_inventory_file_sha256": "7ed6d653c3ae85d8e37f722856aa43768d9b270a4e7f99a02d6fc17ae34105d1",
   "research_inventory_063": "Current numbered inventory for the scheduled 04:20 gap-detail batch, read-only censor-attribution refresh 002, and dashboard receipt verification; inventory 062 is preserved unchanged.",
   "research_ledger_current": {
-    "artifact_path": "docs/VERITAS_RESEARCH_LEDGER.json",
-    "artifact_sha256": "1f35eb8148c886ba0a40a8bc26f52ce877d20242b3798a0d88653df45edff0bd",
-    "updated_at_utc": "2026-10-16T17:58:53Z"
+    "path": "docs/VERITAS_RESEARCH_LEDGER.json",
+    "file_sha256": "ff8f992c79b5ed01b806ccdfe2f6bff38c3df50613d1ff094d9df4c277b8a708",
+    "updated_at_utc": "2026-10-16T20:38:28Z",
+    "hypothesis_count": 152,
+    "latest_hypothesis_id": "VERITAS-H152"
   },
   "research_ledger_sha256": "1f35eb8148c886ba0a40a8bc26f52ce877d20242b3798a0d88653df45edff0bd",
   "source_analysis_checkpoint_063": {
@@ -13878,7 +13883,7 @@
   "based_on_inventory": "docs/VERITAS_MISSION2_RESEARCH_INVENTORY_088.json",
   "based_on_inventory_sha256": "5884e57a10d1a2f0b847cda40047be2fe569569e82a4056dcf42b5e811408a29",
   "capture_scope": "Record hash-verified A1 market-universe coverage through scan 78, the capped audit resource outcome, and the completed 18:50 scheduled gap-detail batch; other inherited campaign, service, and economic metrics retain their own capture timestamps.",
-  "source_head_at_capture": "533772f4084ced8061a2ce1549aa6a4d5004497b",
+  "source_head_at_capture": "b187ee2655bb810d0a2fbd962e365d5218589c10",
   "current_scan_078": {
     "scan_id": "scan-20261016T183053Z-5cc3121a6906",
     "captured_at_utc": "2026-10-16T18:30:53.340010+00:00",
@@ -14806,7 +14811,246 @@
     "artifact_path": "docs/VERITAS_MISSION2_RESEARCH_INVENTORY_092.json",
     "based_on_inventory": "docs/VERITAS_MISSION2_RESEARCH_INVENTORY_091.json",
     "based_on_inventory_sha256": "def35265a06009ad9fba9a6fef0adbfb4c002f2b91c32fcdab66e88818431543",
-    "capture_scope": "Record the 19:19 UTC frozen-shadow and recorder state, current CPU throttling and campaign identity, the 19:12 finalized-source replay, 19:21 gap-detail catch-up, and scan-79 Director/Arena completion. Live files and services retain their individual capture timestamps.",
-    "artifact_sha256": "c0102da17977424478626cc849aba883f78a5d69f2c7d962323180271251b0b5"
+    "capture_scope": "Record the 19:19 UTC frozen-shadow and recorder state, current CPU throttling and campaign identity, the 19:12 finalized-source replay, 19:21 gap-detail catch-up, and scan-79 Director/Arena completion. Live files and services retain their individual capture timestamps."
+  },
+  "status": "active_mission2_checkpoint",
+  "checkpoint_scope": "Extend the independent public snapshot coverage and opportunity replays through scan 82; record current scheduled analysis and live Reality recorder/shadow status. No service or campaign changes.",
+  "market_universe_coverage_016": {
+    "artifact_path": "docs/VERITAS_MISSION2_MARKET_UNIVERSE_COVERAGE_016.json",
+    "artifact_file_sha256": "0c2d041e66a7464897ea704903fe4ff68027c18b4dfc435c17a96c29bbfb2fe8",
+    "captured_at_utc": "2026-10-16T20:38:15.585149+00:00",
+    "snapshot_count": 82,
+    "source_manifest_sha256": "bf0d860c663812173184d52ea4ac820e6977be040ef1fd763ef0c89484cecf96",
+    "attempted_market_pairs": 3280,
+    "quality_valid_market_pairs": 2778,
+    "quality_valid_yield": 0.847,
+    "capture_recorded_quality_valid_market_pairs": 2751,
+    "capture_vs_current_replay_delta": 27,
+    "capture_replay_mismatch": [
+      {
+        "capture_recorded_valid_pairs": 5,
+        "current_replay_valid_pairs": 32,
+        "scan_id": "scan-20261015T055928Z-c9777c1cc300"
+      }
+    ],
+    "distinct_gamma_market_ids": 8052,
+    "eligible_market_ids_at_least_once": 2603,
+    "distinct_selected_market_ids": 1380,
+    "distinct_outcome_asset_ids": 16104,
+    "selected_outcome_asset_ids": 2760,
+    "candidate_events": 0,
+    "orders_submitted": false,
+    "authenticated_requests": false
+  },
+  "independent_source_opportunity_audit_019": {
+    "artifact_path": "docs/VERITAS_MISSION2_INDEPENDENT_OPPORTUNITY_AUDIT_019.json",
+    "artifact_file_sha256": "a199b52542d5bdea33c14ae46d7431b648dd853420dd16fdaf74601a0880ec38",
+    "captured_at_utc": "2026-10-16T20:38:28.175540+00:00",
+    "experiment_id": "VERITAS-M2-INDEPENDENT-SOURCE-AUDIT-002",
+    "snapshot_count": 82,
+    "selected_market_observation_count": 3280,
+    "v4_stored_quality_valid_count": 2778,
+    "independent_v3_valid_count": 2778,
+    "validity_mismatches": 0,
+    "top_edge_mismatches": 0,
+    "fee_checks": 3653,
+    "fee_disagreements": 0,
+    "strict_freshness_valid_count": 603,
+    "positive_top_pair_gross_count": 0,
+    "positive_full_depth_gross_by_quantity": {
+      "10": 0,
+      "100": 0,
+      "20": 0,
+      "5": 0,
+      "50": 0
+    },
+    "positive_after_minimums_and_fees_by_quantity": {
+      "10": 0,
+      "100": 0,
+      "20": 0,
+      "5": 0,
+      "50": 0
+    },
+    "source_manifest_sha256": "920aa5494c3ea8eb6b00c339f267cd4636e1aaa8e1ed27c4ec0dfdfa59c61cad",
+    "result_sha256": "7e9641ad0ef182da523d0a85cf2daf151586da1b6cbada37e71dab996e02b519",
+    "orders_submitted": false
+  },
+  "gate_a_checkpoint_056": {
+    "artifact_path": "docs/VERITAS_MISSION2_GATE_A_CHECKPOINT_056.md",
+    "artifact_file_sha256": "5d304d09dd88fe042fc841991ce283167f8d0d322afd3d390032a738c9368faf",
+    "coverage_artifact": "docs/VERITAS_MISSION2_MARKET_UNIVERSE_COVERAGE_016.json"
+  },
+  "gate_b_checkpoint_017": {
+    "artifact_path": "docs/VERITAS_MISSION2_GATE_B_CHECKPOINT_017.md",
+    "artifact_file_sha256": "af7cca44e1cb33aad0897af31458fcdc280b33110e227afa6701c5d9f0461710",
+    "audit_artifact": "docs/VERITAS_MISSION2_INDEPENDENT_OPPORTUNITY_AUDIT_019.json"
+  },
+  "current_scan_082": {
+    "scan_id": "scan-20261016T203022Z-fc4e53f469e3",
+    "captured_at_utc": "2026-10-16T20:30:22.842109+00:00",
+    "selected_markets": 40,
+    "attempted_pairs": 40,
+    "quality_valid_pairs": 37,
+    "positive_top_gross_pairs": 0,
+    "orders_submitted": false,
+    "snapshot_file": "snapshots/scan-20261016T203022Z-fc4e53f469e3.json.gz",
+    "snapshot_evidence_sha256": "fc4e53f469e375a3ccc601008af2f6c8295a484504f33a364d91a0df5c3606b4"
+  },
+  "latest_continuous_snapshot_analysis_082": {
+    "updated_at_utc": "2026-10-16T20:30:27.878263+00:00",
+    "processed_snapshot_count": 82,
+    "pending_snapshot_count": 0,
+    "selected_market_observations": 3280,
+    "quality_valid_pairs": 2778,
+    "strict_reported_freshness_pairs": 603,
+    "positive_top_gross_pairs": 0,
+    "positive_full_depth_gross_by_quantity": {
+      "10": 0,
+      "100": 0,
+      "20": 0,
+      "5": 0,
+      "50": 0
+    }
+  },
+  "coverage_pilot_002_current_093": {
+    "study_id": "VERITAS-M2-COVERAGE-PILOT-002",
+    "status": "running",
+    "completed_scans": 21,
+    "maximum_completed_scans": 48,
+    "selected_market_pair_slots": 840,
+    "quality_valid_pairs": 703,
+    "quality_valid_yield": 0.8369047619047619,
+    "distinct_selected_market_ids": 614,
+    "skipped_scan_sequences": 0,
+    "by_cohort_role": {
+      "rotating_stratified": {
+        "invalid_reasons": {
+          "no_empty_ask_side": 116,
+          "yes_empty_ask_side": 10
+        },
+        "quality_valid": 685,
+        "quality_valid_yield": 0.8446362515413071,
+        "selected": 811
+      },
+      "stable_random_control": {
+        "invalid_reasons": {
+          "no_empty_ask_side": 11
+        },
+        "quality_valid": 18,
+        "quality_valid_yield": 0.6206896551724138,
+        "selected": 29
+      }
+    }
+  },
+  "latest_source_analysis_checkpoint_093": {
+    "captured_at_utc": null,
+    "status": "current",
+    "catalog_segment_count": 7080,
+    "processed_segment_count": 7080,
+    "pending_segment_count": 0,
+    "batch_processed_segment_count": 58,
+    "quality_valid_states": 534106,
+    "market_count": 119,
+    "positive_top_ask_pair_states": 0,
+    "positive_full_depth_pre_fee_states": 0,
+    "gap_reasons_in_window": {
+      "book_resynchronization": 2725,
+      "connection_failure": 4
+    }
+  },
+  "latest_gap_detail_checkpoint_093": {
+    "captured_at_utc": "2026-10-16T20:36:12.434144+00:00",
+    "processed_segment_count": 7118,
+    "pending_segment_count": 0,
+    "campaign_window_gap_event_count": 2748,
+    "campaign_window_gap_counts_by_reason": {
+      "book_resynchronization": 2744,
+      "connection_failure": 4
+    },
+    "all_period_gap_event_count": 4829
+  },
+  "current_operational_checkpoint_093": {
+    "captured_at_utc": "2026-10-16T20:41:18Z",
+    "reality_recorder": {
+      "active": true,
+      "restart_count": 0,
+      "state": "RECORDING_UNSEQUENCED",
+      "ordinal": 1009209,
+      "frames": 749385,
+      "markets": 8,
+      "expected_books": 16,
+      "sequence_verified": false,
+      "failures": 4,
+      "error": "ConnectionClosedError: no close frame received or sent",
+      "storage_bytes": 1851411714,
+      "memory_current_bytes": 468770816,
+      "memory_high_bytes": 469762048,
+      "memory_max_bytes": 536870912
+    },
+    "frozen_shadow": {
+      "active": true,
+      "restart_count": 1,
+      "campaign_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
+      "campaign_file_sha256": "aa8acb2b46823c1a1e3ac5d01a57dde917746c2c7471098ae2a4598875e322f5",
+      "integrity_state": "INTEGRITY_VERIFIED",
+      "integrity_checked_ns": 1792119701420605429,
+      "integrity_verified_events": 113162,
+      "current_events": 113396,
+      "source_ordinal": 538522,
+      "recorder_ordinal": 1009209,
+      "source_receipt_age_seconds": 97263,
+      "decision_age_seconds": 128592,
+      "lagged_frames_skipped": 211563,
+      "decisions": 10253,
+      "observations": 47911,
+      "followups": {
+        "censored": 40075,
+        "observed_public_measurement": 937
+      },
+      "scientific_state": "insufficient_forward_evidence",
+      "memory_current_bytes": 322797568
+    },
+    "successor_shadow": {
+      "active": true,
+      "restart_count": 0,
+      "campaign_id": "6f6452f2509e7c1c4a3dd4fd86b0095bd4b434cd7b55259435cb4956968fba48",
+      "campaign_file_sha256": "c5eb8b98cbfd657372fc620192c5a0c0bb46f41d760800e680181fa7f3ee95a3",
+      "state": "FORWARD_EVALUATING_EXPERIMENTAL",
+      "source_ordinal": 1009209,
+      "source_receipt_age_seconds": 5,
+      "decision_age_seconds": 13,
+      "decisions": 362,
+      "observations": 1697,
+      "followups": {
+        "censored": 1405,
+        "observed_public_measurement": 43
+      },
+      "lagged_frames_skipped": 1845,
+      "source_checkpoints": 0,
+      "scientific_state": "insufficient_forward_evidence"
+    },
+    "veritas_services": {
+      "latest_snapshot_count": 82,
+      "snapshot_pending_count": 0,
+      "source_analysis_state": "current",
+      "gap_analysis_processed_segments": 7118,
+      "gap_analysis_pending_segments": 0,
+      "director_manifest_updated_at_utc": "2026-10-16T20:15:42+00:00",
+      "director_latest_scan_id": "scan-20261016T200204Z-c491338d8ee0",
+      "director_current_job_state": "QUEUED",
+      "pilot_002_completed_scans": 21
+    },
+    "preservation": {
+      "actual_orders_submitted": 0,
+      "frozen_campaign_plan_unchanged": true,
+      "service_restarts_performed_by_checkpoint": false
+    }
+  },
+  "research_inventory_093": {
+    "artifact_path": "docs/VERITAS_MISSION2_RESEARCH_INVENTORY_093.json",
+    "based_on_inventory": "docs/VERITAS_MISSION2_RESEARCH_INVENTORY_092.json",
+    "based_on_inventory_sha256": "c0102da17977424478626cc849aba883f78a5d69f2c7d962323180271251b0b5",
+    "capture_scope": "Record independent A1/B replay through scan 82, the latest continuous snapshot state, pilot progress, source/gap analysis, and current protected Reality worker/recorder status. No campaign or service modifications.",
+    "artifact_sha256": "2ad80a57f9fb3a213fefd009f8ca4c8f4cc2d4f1ee78f04957c09e90612597e7"
   }
 }
