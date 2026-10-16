@@ -89,8 +89,8 @@ def test_economic_qualification_compares_baseline_with_depth_and_fee_gates():
     result = compare_qualification_rules(events, quantity="20")
 
     assert result["experiment_id"] == "VERITAS-M2-ECO-QUAL-001"
-    assert result["analysis_version"] == "veritas-economic-qualification-comparison-v3"
-    assert result["experiment_run_id"].startswith("VERITAS-M2-ECO-QUAL-001-V3-RUN-")
+    assert result["analysis_version"] == "veritas-economic-qualification-comparison-v4"
+    assert result["experiment_run_id"].startswith("VERITAS-M2-ECO-QUAL-001-V4-RUN-")
     assert len(result["dataset_sha256"]) == 64
     assert result["baseline"]["positive_states"] == 1
     assert result["research_improvement"]["positive_states"] == 0
@@ -99,6 +99,16 @@ def test_economic_qualification_compares_baseline_with_depth_and_fee_gates():
     assert result["sample"]["top_pair_edge_per_share"]["positive_count"] == 1
     assert result["gross_candidate_evidence_count"] == 1
     assert result["gross_candidate_evidence_complete"] is True
+    assert result["research_improvement"]["count_stage"] == (
+        "finalized_event_usdc_notional_prefilter"
+    )
+    assert result["independent_candidate_replay_qualification"]["complete"] is False
+    assert (
+        result["independent_candidate_replay_qualification"][
+            "positive_full_depth_and_both_minimums"
+        ]
+        is None
+    )
     candidate = result["gross_candidate_evidence"][0]
     assert candidate["candidate_type"] == "quality_valid_positive_top_ask_gross"
     assert candidate["market_id"] == "market-scan-001-0"

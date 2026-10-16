@@ -11,9 +11,9 @@ from pathlib import Path
 from typing import Any
 
 from .continuous_analysis import VERSION as SNAPSHOT_ANALYSIS_VERSION
-from .opportunity_audit import audit_pair_snapshot, normalize_market
+from .opportunity_audit_v2 import audit_pair_snapshot, normalize_market
 
-VERSION = "veritas-gross-candidate-source-replay-v1"
+VERSION = "veritas-gross-candidate-source-replay-v2"
 MAX_CANDIDATES = 256
 MAX_SNAPSHOT_COUNT = 128
 MAX_TOTAL_COMPRESSED_BYTES = 96 * 1024**2
@@ -30,6 +30,16 @@ def _canonical(value: Any) -> bytes:
 
 def _sha256(value: bytes) -> str:
     return hashlib.sha256(value).hexdigest()
+
+
+def source_code_sha256() -> str:
+    """Hash the replay and its economic-audit dependencies for artifact lineage."""
+    digest = hashlib.sha256()
+    for name in ("candidate_replay.py", "opportunity_audit_v2.py", "economics.py"):
+        digest.update(name.encode())
+        digest.update(b"\0")
+        digest.update(Path(__file__).with_name(name).read_bytes())
+    return digest.hexdigest()
 
 
 def _integer(value: Any, field: str) -> int:
@@ -229,12 +239,35 @@ def _validate_snapshot_source(
     plan_selected = selection.get("selected_markets")
     if not isinstance(plan_selected, list):
         raise ValueError("snapshot_selection_missing")
-    requested_assets = [
-        str(market.get("outcomes", {}).get(side))
-        for market in plan_selected
-        if isinstance(market, dict)
-        for side in ("yes", "no")
-    ]
+    observation_rows = snapshot.get("market_observations")
+    if not isinstance(observation_rows, list):
+        raise ValueError("snapshot_market_observations_missing")
+    observations_by_market: dict[str, dict[str, Any]] = {}
+    for row in observation_rows:
+        if not isinstance(row, dict):
+            raise ValueError("snapshot_market_observation_invalid")
+        market_id = str(row.get("market_id") or "")
+        if not market_id or market_id in observations_by_market:
+            raise ValueError("snapshot_market_observation_identity_invalid")
+        observations_by_market[market_id] = row
+
+    requested_assets: list[str] = []
+    for market in plan_selected:
+        if not isinstance(market, dict):
+            raise ValueError("snapshot_selected_market_invalid")
+        market_id = str(market.get("market_id") or "")
+        outcomes = market.get("outcomes")
+        if not isinstance(outcomes, dict):
+            # The first snapshot schema kept token identity on each observation
+            # rather than duplicating normalized metadata in the selected row.
+            observation = observations_by_market.get(market_id)
+            outcomes = observation.get("outcomes") if isinstance(observation, dict) else None
+        if not isinstance(outcomes, dict) or any(
+            not isinstance(outcomes.get(side), (str, int)) or not str(outcomes[side])
+            for side in ("yes", "no")
+        ):
+            raise ValueError("snapshot_selected_market_outcomes_missing")
+        requested_assets.extend(str(outcomes[side]) for side in ("yes", "no"))
     request_body = [{"token_id": asset} for asset in requested_assets]
     request_sha256 = clob.get("request_sha256")
     if not isinstance(request_sha256, str) or request_sha256 != _sha256(_canonical(request_body)):
@@ -400,20 +433,26 @@ def _replay_one(
         universe, selected, observation = universe_rows[0], selected_rows[0], observation_rows[0]
         if universe.get("eligible_for_pair_observation") is not True:
             raise ValueError("snapshot_market_not_eligible_for_pair_observation")
-        for record in (universe, selected):
-            for field in (
-                "market_id",
-                "condition",
-                "protocol",
-                "pair_semantics",
-                "outcomes",
-                "negative_risk",
-                "minimum_order_notional_usdc",
-                "tick_size",
-                "fee_regime",
-            ):
-                if record.get(field) != normalized.get(field):
-                    raise ValueError("gamma_market_normalization_mismatch")
+        normalized_fields = (
+            "market_id",
+            "condition",
+            "protocol",
+            "pair_semantics",
+            "outcomes",
+            "negative_risk",
+            "minimum_order_notional_usdc",
+            "tick_size",
+            "fee_regime",
+        )
+        for field in normalized_fields:
+            # The universe row is the normalized record in every snapshot
+            # schema. Older selected rows contain only selection metadata, so
+            # compare the fields they actually recorded and recover the rest
+            # from the hashed Gamma payload plus observation lineage.
+            if field not in universe or universe.get(field) != normalized.get(field):
+                raise ValueError("gamma_market_normalization_mismatch")
+            if field in selected and selected.get(field) != normalized.get(field):
+                raise ValueError("gamma_market_normalization_mismatch")
         if (
             universe.get("raw_market_metadata_sha256") != metadata_digest
             or selected.get("raw_market_metadata_sha256") != metadata_digest
@@ -508,7 +547,8 @@ def _replay_one(
         full_depth_by_leg: dict[str, bool] = {}
         notional_by_leg: dict[str, Decimal] = {}
         used_depth_by_leg: dict[str, list[dict[str, str]]] = {}
-        minimum_by_leg: dict[str, Decimal] = {}
+        minimum_notional_by_leg: dict[str, Decimal] = {}
+        minimum_shares_by_leg: dict[str, Decimal] = {}
         market_minimum = _decimal(
             normalized.get("minimum_order_notional_usdc"), "market_minimum_order_notional"
         )
@@ -516,20 +556,30 @@ def _replay_one(
             full_depth_by_leg[side], notional_by_leg[side], used_depth_by_leg[side] = (
                 _independent_depth(asks_by_leg[side], requested_quantity)
             )
-            minimum_by_leg[side] = _decimal(
+            minimum_notional_by_leg[side] = market_minimum
+            minimum_shares_by_leg[side] = _decimal(
                 sanitized_books[outcome_ids[side]].get("min_order_size"),
-                f"{side}_minimum_order_notional",
+                f"{side}_minimum_order_shares",
             )
-            if minimum_by_leg[side] != market_minimum:
-                raise ValueError("independent_market_minimum_does_not_match_book")
+            if minimum_shares_by_leg[side] <= 0:
+                raise ValueError(f"independent_{side}_minimum_order_shares_invalid")
         full_depth = all(full_depth_by_leg.values())
-        minimums_met = all(notional_by_leg[side] >= minimum_by_leg[side] for side in ("yes", "no"))
+        minimum_notional_met = all(
+            notional_by_leg[side] >= minimum_notional_by_leg[side] for side in ("yes", "no")
+        )
+        minimum_shares_met = all(
+            requested_quantity >= minimum_shares_by_leg[side] for side in ("yes", "no")
+        )
+        minimum_constraints_met = minimum_notional_met and minimum_shares_met
         independent_gross_usdc = (
             requested_quantity - sum(notional_by_leg.values(), Decimal(0)) if full_depth else None
         )
         if (
             quantity_result.get("full_depth") is not full_depth
-            or quantity_result.get("minimum_order_notional_satisfied") is not minimums_met
+            or quantity_result.get("minimum_order_notional_satisfied") is not minimum_notional_met
+            or quantity_result.get("minimum_order_shares_satisfied") is not minimum_shares_met
+            or quantity_result.get("minimum_order_constraints_satisfied")
+            is not minimum_constraints_met
             or (
                 independent_gross_usdc is not None
                 and _decimal(
@@ -561,7 +611,10 @@ def _replay_one(
         )
         result_status = (
             "GROSS_POSITIVE_REPLAYED_ECONOMIC_SENSITIVITIES_POSITIVE"
-            if full_depth and minimums_met and single_match_positive and fragmentation_safe_positive
+            if full_depth
+            and minimum_constraints_met
+            and single_match_positive
+            and fragmentation_safe_positive
             else "GROSS_POSITIVE_REPLAYED_ECONOMIC_GATES_NOT_ALL_POSITIVE"
         )
         results.append(
@@ -571,7 +624,7 @@ def _replay_one(
                 "status": result_status,
                 "top_pair_gross_edge_per_share": str(replayed_edge),
                 "independent_arithmetic": {
-                    "method": "decimal_best_ask_and_sorted_depth_replay-v1",
+                    "method": "decimal_best_ask_and_sorted_depth_replay-v2",
                     "best_ask_by_leg": {side: str(price) for side, price in top_asks.items()},
                     "top_pair_gross_edge_per_share": str(replayed_edge),
                     "quantity_shares_per_leg": quantity,
@@ -584,7 +637,10 @@ def _replay_one(
                         str(independent_gross_usdc) if independent_gross_usdc is not None else None
                     ),
                     "minimum_order_notional_usdc_by_leg": {
-                        side: str(value) for side, value in minimum_by_leg.items()
+                        side: str(value) for side, value in minimum_notional_by_leg.items()
+                    },
+                    "minimum_order_shares_by_leg": {
+                        side: str(value) for side, value in minimum_shares_by_leg.items()
                     },
                 },
                 "payoff_identity": audit["payoff_identity"],
@@ -613,9 +669,14 @@ def _replay_one(
                         str(independent_gross_usdc) if independent_gross_usdc is not None else None
                     ),
                     "minimum_order_notional_usdc_by_leg": {
-                        side: str(value) for side, value in minimum_by_leg.items()
+                        side: str(value) for side, value in minimum_notional_by_leg.items()
                     },
-                    "minimum_order_notional_satisfied_both_legs": minimums_met,
+                    "minimum_order_shares_by_leg": {
+                        side: str(value) for side, value in minimum_shares_by_leg.items()
+                    },
+                    "minimum_order_notional_satisfied_both_legs": minimum_notional_met,
+                    "minimum_order_shares_satisfied_both_legs": minimum_shares_met,
+                    "minimum_order_constraints_satisfied_both_legs": minimum_constraints_met,
                     "fee_status": fee_status,
                     "fee_sensitivity_basis": (
                         "shared_versioned_fee_model_recomputed_from_replayed_depth"
@@ -637,7 +698,7 @@ def replay_gross_candidate_evidence(
     quantity: str = "20",
 ) -> dict[str, Any]:
     """Verify candidate pointers against hashed public responses and replay raw books."""
-    source_sha256 = _sha256(Path(__file__).read_bytes())
+    source_sha256 = source_code_sha256()
     if not candidates:
         return {
             "version": VERSION,

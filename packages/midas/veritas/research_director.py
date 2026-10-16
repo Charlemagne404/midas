@@ -352,6 +352,7 @@ def _finding_summary(root: Path, job: dict[str, Any], expected_scan_id: str) -> 
     if analysis_version not in {
         "veritas-economic-qualification-comparison-v2",
         "veritas-economic-qualification-comparison-v3",
+        "veritas-economic-qualification-comparison-v4",
     }:
         raise ValueError("Qualification result has an unsupported comparison version")
     if (
@@ -400,6 +401,32 @@ def _finding_summary(root: Path, job: dict[str, Any], expected_scan_id: str) -> 
                     raise ValueError("Completed candidate replay counts do not reconcile")
             elif replay_complete is not False:
                 raise ValueError("Incomplete candidate replay is incorrectly marked complete")
+    independent_replay = experiment.get("independent_candidate_replay_qualification")
+    if analysis_version == "veritas-economic-qualification-comparison-v4":
+        if (
+            not isinstance(independent_replay, dict)
+            or independent_replay.get("version") != "veritas-gross-candidate-source-replay-v2"
+            or independent_replay.get("candidate_count") != candidate_count
+            or independent_replay.get("replayed_candidate_count") != replayed_count
+            or independent_replay.get("complete") is not replay_complete
+        ):
+            raise ValueError("Qualification result has invalid independent replay qualification")
+        minimum_count = independent_replay.get("positive_full_depth_and_both_minimums")
+        fee_count = independent_replay.get("positive_under_both_fee_sensitivities")
+        if replay_complete:
+            if (
+                not isinstance(minimum_count, int)
+                or isinstance(minimum_count, bool)
+                or not isinstance(fee_count, int)
+                or isinstance(fee_count, bool)
+                or minimum_count < 0
+                or fee_count < 0
+                or fee_count > minimum_count
+                or minimum_count > replayed_count
+            ):
+                raise ValueError("Completed independent replay qualification counts are invalid")
+        elif minimum_count is not None or fee_count is not None:
+            raise ValueError("Incomplete independent replay qualification must keep counts unknown")
     return {
         "finding_id": finding_id,
         "job_source_revision_sha256": job.get("submitted_source_hash"),
@@ -419,6 +446,7 @@ def _finding_summary(root: Path, job: dict[str, Any], expected_scan_id: str) -> 
         "gross_candidate_replay_status": replay_status,
         "gross_candidate_replayed_count": replayed_count,
         "gross_candidate_replay_complete": replay_complete,
+        "independent_candidate_replay_qualification": independent_replay,
         "decision": experiment.get("decision"),
         "orders_submitted": experiment.get("orders_submitted"),
         "authenticated_requests": experiment.get("authenticated_requests"),
@@ -706,6 +734,9 @@ def tick(
                         "experiment_sha256": summary.get("experiment_sha256"),
                         "dataset_sha256": summary.get("dataset_sha256"),
                         "positive_states_by_gate": summary.get("positive_states_by_gate"),
+                        "independent_candidate_replay_qualification": summary.get(
+                            "independent_candidate_replay_qualification"
+                        ),
                         "strategy_readiness": record.get("strategy_readiness"),
                         "model_readiness": record.get("model_readiness"),
                         "recommendation": record.get("recommendation"),
@@ -859,6 +890,9 @@ def tick(
                     "experiment_sha256": summary.get("experiment_sha256"),
                     "dataset_sha256": summary.get("dataset_sha256"),
                     "positive_states_by_gate": summary.get("positive_states_by_gate"),
+                    "independent_candidate_replay_qualification": summary.get(
+                        "independent_candidate_replay_qualification"
+                    ),
                     "strategy_readiness": record.get("strategy_readiness"),
                     "model_readiness": record.get("model_readiness"),
                     "recommendation": record.get("recommendation"),

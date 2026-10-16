@@ -1,16 +1,79 @@
 # Veritas Mission 2 Engineering Checkpoint
 
-## Latest Gate C progress — gap-detail prefix remains pre-campaign
+## Latest checkpoint — 02:55 UTC, independent full-panel audit and gap progress
 
-The scheduled 01:20 UTC gap-detail batch exited 0 after processing 128
-finalized segments / 30.3 MB. It has processed 1,072/4,871 catalog segments
-with 1,855 all-period gap events, while 3,797 segments / 1.037 GB remain.
-The processed prefix still has zero campaign-window events but ends before
-the frozen window; that zero is incomplete. See [Gate C checkpoint
-006](VERITAS_MISSION2_GATE_C_CHECKPOINT_006.md) and [inventory
-053](VERITAS_MISSION2_RESEARCH_INVENTORY_053.json).
+The scan-46 panel now contains 46 snapshots, 1,840 selected pair observations,
+1,600 v4 quality-valid states, and 820 distinct selected markets. The new
+read-only independent source audit verified the snapshot, public response, and
+v4 event lineage and reproduced all 1,600 v4 validity decisions and top edges
+with zero mismatches. It found no positive top-pair gross candidate and zero
+positive full-depth, minimum, or fee-sensitive results at 5, 10, 20, 50, or
+100 shares per leg. Its conservative reported-timestamp sensitivity admits
+349 pairs; 1,251 have at least one reported book age above five seconds. This
+does not establish sequence freshness or fills. See [Gate B checkpoint
+001](VERITAS_MISSION2_GATE_B_CHECKPOINT_001.md) and the [audit
+artifact](VERITAS_MISSION2_INDEPENDENT_OPPORTUNITY_AUDIT_001.json).
 
-## Latest Gate A checkpoint — scan 43 and interim pilot yield
+The separate market-constraint audit compared both stored book legs for all
+1,840 observations: Gamma USDC minimum values and CLOB share minimum values
+were numerically equal in all 3,680 comparisons, as were tick values. The
+artifact explicitly keeps their units distinct. Focused verification passed
+77 tests; Ruff, formatting, strict Mypy on nine changed source files, and
+`git diff --check` passed. No full regression or model training was run.
+
+At 02:30 UTC, scan 46 selected 40 markets; 33 passed quality checks. Its
+bounded discovery union had 300 IDs, 178 eligible pairs, and 122 exclusions.
+The fixed pilot is 15/48 scans with 497/600 valid slots, 367 distinct IDs, and
+one skipped sequence after a scan-45 code-hash mismatch. The pilot remains
+unchanged and ends at 19:00:55 UTC.
+
+The latest finalized Reality source prefix covers 4,869/5,029 segments,
+1,261,406,393 processed bytes, 318,568 quality-valid states across 77 markets,
+and zero positive gross/depth states; 160 segments / 39,330,180 bytes remain.
+The 02:50 scheduled gap-detail batch advanced the separate prefix to
+1,791/5,049 segments and 416,842,757 processed bytes, leaving 3,256 /
+888,351,418 bytes pending. It has attributed 131 campaign-window book
+resynchronization gaps across seven markets; attribution is progressing but
+remains incomplete. The 02:45 Director admitted scan 46; its Arena child
+completed 46/46 events and passed read-only finding validation, while the
+Director manifest remains queued pending its scheduled reconciliation at
+03:15 UTC. A 02:55 check corrected the earlier storage-directory
+interpretation: the Reality recorder's configured `recordings/reality` root
+is 1,309,431,325 bytes, versus 1,261,164,701 bytes at 01:18 UTC, an increase
+of about 48 MB over 97 minutes. See [Gate A checkpoint
+043](VERITAS_MISSION2_GATE_A_CHECKPOINT_043.md), [Gate C checkpoint
+010](VERITAS_MISSION2_GATE_C_CHECKPOINT_010.md), [Gate F checkpoint
+028](VERITAS_MISSION2_GATE_F_CHECKPOINT_028.md), and [inventory
+055](VERITAS_MISSION2_RESEARCH_INVENTORY_055.json).
+
+## Previous runtime update — 01:51 UTC, scan 44 and bounded source catch-up
+
+The observer completed scan 44 at 01:30:14 UTC: 35/40 pairs passed quality,
+the six-page union contained 300 IDs / 204 currently eligible pairs, and all
+gross/depth/minimum/fee counts were zero. The 44-snapshot panel has 1,534/1,760
+quality-valid states and 798 selected IDs. The fixed pilot is at 14/48 scans,
+464/560 valid slots, 348 selected IDs, and zero skipped sequences.
+
+The scheduled Director admitted scan 44 to Arena. The child completed 44/44
+events, and the read-only finding validator accepted its source revision,
+finding digest, complete empty candidate evidence, and complete empty replay.
+All five gates remain zero. The Director manifest still projects the completed
+child as `QUEUED` until its next scheduled reconciliation at about 02:15 UTC.
+See [Gate A checkpoint 042](VERITAS_MISSION2_GATE_A_CHECKPOINT_042.md) and
+[Gate F checkpoint 027](VERITAS_MISSION2_GATE_F_CHECKPOINT_027.md).
+
+The finalized-source analyzer at 01:44 UTC covers 4,613/4,910 segments,
+296,396 quality-valid states across 72 markets, and zero positive economic
+states; 297 segments / 72,605,628 bytes remain. The gap-detail timer was
+staggered to :05, :20, :35, and :50 UTC without changing its per-run bounds.
+Its :35 and :50 batches both exited 0, processing 244 segments / 61.0 MB in
+total. The gap prefix is now 1,316/4,931 segments, with 3,613 / 990,355,252
+bytes pending and 1,973 all-period events. Its campaign-window count remains
+incomplete. See [Gate C checkpoint
+008](VERITAS_MISSION2_GATE_C_CHECKPOINT_008.md) and [inventory
+054](VERITAS_MISSION2_RESEARCH_INVENTORY_054.json).
+
+## Previous Gate A checkpoint — scan 43 and interim pilot yield
 
 The scheduled observer completed scan 43 at 01:01:47 UTC and exited 0. It
 found 32/40 quality-valid pairs, with 300 distinct IDs in its six-page
@@ -18,12 +81,24 @@ bounded union and 202 currently eligible pairs. No positive gross candidate
 appeared, and all five tested quantities had zero positive full-depth,
 minimum-notional, and fee-sensitive states. Across 43 snapshots the v4
 summary has 1,499/1,720 quality-valid states, 784 selected market IDs, and
-zero candidate events. The descriptive fixed pilot is at 13/48 scans and
-429/520 valid slots, with no skipped sequence. Scan 43 awaits the scheduled
+zero candidate events. The descriptive fixed pilot was at 13/48 scans and
+429/520 valid slots, with no skipped sequence. Scan 43 awaited the scheduled
 Research Director cycle. See [Gate A checkpoint 041](VERITAS_MISSION2_GATE_A_CHECKPOINT_041.md)
 and [inventory 052](VERITAS_MISSION2_RESEARCH_INVENTORY_052.json).
 
-## Latest Gate F checkpoint — scan 43 qualification and source catch-up
+## Latest Gate F checkpoint — scan 44 qualification and source catch-up
+
+Scan 44 was admitted by the scheduled Director at 01:45 UTC. Arena child
+`job-c8a59c778af54704895630a9` completed 44/44 events with exit status 0;
+the read-only validator accepted finding
+`veritas-qualification-v1-262313565b399a77`, experiment digest, source
+manifest, complete empty candidate evidence, and complete empty replay. All
+five economic gates remain zero over 1,534/1,760 quality-valid states and 798
+selected IDs. The Director projection remains `QUEUED` until its next cycle.
+See [Gate F checkpoint 027](VERITAS_MISSION2_GATE_F_CHECKPOINT_027.md) and
+[H091](VERITAS_RESEARCH_LEDGER.json).
+
+## Previous Gate F checkpoint — scan 43 qualification and source catch-up
 
 The scheduled Director admitted scan 43 to Arena at 01:15 UTC. Child
 `job-4653ecaf1d5d457f8530c8bc` completed all 43 events with exit status 0;

@@ -139,20 +139,30 @@ def test_director_admits_one_idempotent_scan_pinned_job_and_publishes_readiness(
     atomic_json(job_path, job)
     experiment = {
         "experiment_run_id": "VERITAS-M2-ECO-QUAL-001-RUN-test",
-        "analysis_version": "veritas-economic-qualification-comparison-v3",
+        "analysis_version": "veritas-economic-qualification-comparison-v4",
         "dataset_sha256": "d" * 64,
         "status": "no_positive_gross_candidate_observed",
         "gross_candidate_evidence_count": 0,
         "gross_candidate_evidence_complete": True,
         "gross_candidate_evidence": [],
         "gross_candidate_replay": {
-            "version": "veritas-gross-candidate-source-replay-v1",
+            "version": "veritas-gross-candidate-source-replay-v2",
             "source_code_sha256": "e" * 64,
             "candidate_count": 0,
             "replayed_candidate_count": 0,
             "complete": True,
             "status": "NO_POSITIVE_CANDIDATES_TO_REPLAY",
             "candidates": [],
+        },
+        "independent_candidate_replay_qualification": {
+            "version": "veritas-gross-candidate-source-replay-v2",
+            "complete": True,
+            "candidate_count": 0,
+            "replayed_candidate_count": 0,
+            "quantity_shares_per_leg": "20",
+            "positive_full_depth_and_both_minimums": 0,
+            "positive_under_both_fee_sensitivities": 0,
+            "counts_are_null_when_incomplete": True,
         },
         "sample": {
             "snapshot_count": 14,
@@ -186,6 +196,12 @@ def test_director_admits_one_idempotent_scan_pinned_job_and_publishes_readiness(
     assert completed["last_qualified_scan_id"] == SCAN_ID
     assert completed["strategy_readiness"] == "NOT_READY_NO_QUALIFIED_GROSS_CANDIDATE"
     assert completed["model_readiness"] == "NOT_READY_NO_CANDIDATE_RELEVANT_TARGET"
+    assert (
+        completed["latest_finding"]["independent_candidate_replay_qualification"][
+            "positive_full_depth_and_both_minimums"
+        ]
+        == 0
+    )
     assert "Keep no-trade" in completed["recommendation"]
     assert (
         len(

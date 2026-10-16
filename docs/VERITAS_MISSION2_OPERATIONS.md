@@ -1,10 +1,109 @@
 # Veritas Mission 2 Operations
 
-**Latest read-only runtime check:** 2026-10-16 00:12 UTC
+**Latest runtime check:** 2026-10-16 02:55 UTC
 **Services:** Reality recorder and shadow; Midas and Reality API/web; Veritas observer, source analysis, gap detail, and Research Director one-shots
 **Timers:** `midas-veritas-observatory.timer`, `midas-veritas-source-analysis.timer`, `midas-veritas-research-director.timer`, `midas-veritas-gap-detail-analysis.timer`
 
-## Latest runtime state — 2026-10-16 00:12 UTC
+## Latest runtime state — 2026-10-16 02:55 UTC
+
+- Reality recorder and shadow are active under systemd with `Result=success`;
+  the recorder has zero restarts and uses about 400 MB, while the shadow has
+  one historical restart and uses about 289 MB. The Midas API, Reality API,
+  Reality web, and Midas web services are active. No new HTTP health probe was
+  made for this check, so these are service-state observations.
+- The Veritas observer, source analyzer, gap-detail analyzer, and Director
+  one-shots are inactive between timer invocations after successful exits.
+  Their timers remain active. The next scheduled UTC starts observed were
+  observer 03:01:49, source analysis 03:10:56, Director 03:15, and gap detail
+  03:05.
+- The latest finalized public panel is scan 46 at 02:30:17 UTC: 33/40 pairs
+  passed the quality gate. Its six-query union had 300 unique IDs, 178
+  currently eligible pairs, and 122 exclusions. Across 46 scans the v4 panel
+  has 1,600/1,840 quality-valid observations over 820 selected IDs and zero
+  candidate events. The 24-hour pilot has 15/48 scans, 497/600 valid slots,
+  367 distinct selected IDs, and one skipped scan sequence after a scan-45
+  code-hash mismatch. Its fixed stop remains 19:00:55 UTC.
+- The independent source audit covered all 46 saved snapshots / 1,840
+  observations, reproduced all 1,600 v4 validity and edge results with zero
+  mismatches, and found no positive gross, depth, minimum, or fee-sensitive
+  candidates. Only 349 pairs pass the conservative reported-age/skew filter;
+  reported timestamp age is not sequence evidence.
+- The finalized-source analyzer summary at 02:44:41 UTC covers 4,869/5,029
+  segments and 318,568 quality-valid states across 77 markets; 160 segments /
+  39,330,180 bytes remain pending. The 02:50 gap-detail run processed 115
+  finalized segments / 33,465,203 bytes, used 3.656 CPU seconds, and exited 0
+  at 02:51:13 UTC with zero restarts. Its latest summary covers 1,791/5,049
+  segments / 416,842,757 processed bytes, with 3,256 / 888,351,418 bytes
+  pending. It reports 131 campaign-window `book_resynchronization` events
+  affecting seven markets, with no missing or unmapped affected assets. The
+  prefix is not complete, and the active `.open` segment was not read.
+- The 02:45 Director admitted scan 46. Its Arena child completed 46/46 events
+  with exit 0 and passed the read-only finding validator. The Director
+  manifest still projects the child as `QUEUED` until its next scheduled
+  reconciliation at 03:15 UTC. No manual poll or retry was made.
+- Host load was 1.15 / 1.02 / 1.07, available RAM 9.6 GiB, swap use 3.5 GiB,
+  and root disk 56% used with about 198 GiB available. The configured Reality
+  recording root is 1,309,431,325 bytes. Compared with the 01:18 UTC status
+  value of 1,261,164,701 bytes, that is a sampled increase of about 48 MB over
+  97 minutes (roughly 30 MB/hour if sustained). A previous `du` command
+  measured the parent `data/recordings` tree at 1.88 GB; that is not the
+  recorder's configured root and is not used for this growth estimate. Midas
+  API current RSS was about 1.55 GB (4.44 GB historical peak). There is no
+  immediate capacity failure; swap use, API peak, and recording growth merit
+  monitoring.
+- Historical faults remain visible: the shadow's one restart followed a
+  finalized-source integrity/continuity mismatch on 2026-10-15; the collector
+  has logged a WebSocket `ConnectionClosedError` and remains unsequenced. One
+  older Veritas Arena job for the 2026-10-15 11:01 scan failed because its
+  source changed while queued. The current recorder and shadow are running,
+  and the scan-46 Arena job completed and validated successfully.
+- No observer, recorder, shadow, source-analysis, Director, or gap-detail
+  service was restarted or interrupted. No pilot or frozen campaign files
+  were changed, and no orders or authenticated requests were used.
+
+See [Gate A checkpoint 043](VERITAS_MISSION2_GATE_A_CHECKPOINT_043.md),
+[Gate B checkpoint 001](VERITAS_MISSION2_GATE_B_CHECKPOINT_001.md), [Gate C
+checkpoint 010](VERITAS_MISSION2_GATE_C_CHECKPOINT_010.md), [Gate F
+checkpoint 028](VERITAS_MISSION2_GATE_F_CHECKPOINT_028.md), and [inventory
+055](VERITAS_MISSION2_RESEARCH_INVENTORY_055.json).
+
+## Previous runtime state — 2026-10-16 01:36 UTC
+
+- The observer completed scan 44 at 01:30:14 UTC with 35/40 quality-valid
+  pairs. Its six-page bounded union contained 300 IDs, 204 currently eligible
+  pairs, and zero positive top-gross pairs. The v4 panel has 44 scans, 1,534
+  valid of 1,760 selected states across 798 selected IDs, and zero candidate
+  events. The fixed measurement pilot has 14/48 scans, 464/560 valid slots,
+  348 distinct selected IDs, and no skipped scan sequences. It remains
+  nonrandomized/descriptive and ends at 19:00:55 UTC.
+- The gap-detail timer now runs every 15 minutes at :05, :20, :35, and :50
+  UTC. At 01:35 it started the first added off-cycle batch. That one-shot
+  exited 0 at 01:36:13 UTC after processing 116 finalized segments /
+  33,071,280 bytes. It used 3.674 CPU seconds and 52.2 MiB peak memory, with
+  no memory swap peak; its existing 5% CPU, 256-MiB memory, nice 19, and idle
+  I/O limits are unchanged. It did not read an active `.open` segment.
+- The gap-detail prefix is 1,188/4,901 replayable segments and 257,304,555
+  processed bytes; 3,711 segments / 1,011,014,530 bytes remain pending. It
+  records 1,911 all-period events. The processed prefix remains pre-campaign,
+  so zero campaign-window events is incomplete. The timer is active and next
+  due at 01:50 UTC; the one-shot is inactive after success with zero restarts.
+- The timer source under `deploy/systemd/user` matches the installed user
+  unit. Only `midas-veritas-gap-detail-analysis.timer` was restarted to apply
+  the schedule; the analyzer service, Reality recorder/shadow, observer,
+  source-analysis, Research Director, APIs, and frozen campaign were not
+  restarted or interrupted.
+- The local service-unit snapshot reports the Midas/Reality APIs and web
+  services plus the Reality recorder and shadow active. At 01:37:51 UTC the
+  recorder status briefly read `DEGRADED_BOOKS` with
+  `ConnectionClosedError: no close frame received or sent`; the next read one
+  second later showed `RECORDING_UNSEQUENCED`, ordinal 681,318, and 16 fresh
+  books. The service has zero restarts, but `sequence_verified=false`; the
+  error and transient degraded state remain operational cautions.
+- This checkpoint did not run a manual research job, HTTP probe, model
+  training, full regression, or campaign modification. See [Gate C
+  checkpoint 007](VERITAS_MISSION2_GATE_C_CHECKPOINT_007.md).
+
+## Previous runtime state — 2026-10-16 00:12 UTC
 
 - The latest observer scan is 41 (`scan-20261016T000215Z-e6ff8b97e045`),
   captured at 00:02:15 UTC. It has 33/40 request/receipt-quality-valid pairs

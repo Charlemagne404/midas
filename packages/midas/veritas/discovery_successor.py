@@ -53,10 +53,10 @@ from .observatory import (
     discover_universe,
     select_cohort,
 )
-from .opportunity_audit import audit_pair_snapshot, normalize_market
+from .opportunity_audit_v2 import audit_pair_snapshot, normalize_market
 
-VERSION = "veritas-public-observatory-discovery-successor-v1"
-FRAME_PROTOCOL = "stratified-gamma-page-rotation-v2+direct-frozen-control-v1"
+VERSION = "veritas-public-observatory-discovery-successor-v2"
+FRAME_PROTOCOL = "stratified-gamma-page-rotation-v2+direct-frozen-control-v1+economic-audit-v2"
 MAX_CONTROL_MARKETS = DEFAULT_CONTROL_MARKETS
 MAX_PUBLIC_READS_PER_SCAN = DISCOVERY_QUERIES + 2
 MAX_PUBLIC_HTTP_ATTEMPTS_PER_SCAN = MAX_PUBLIC_READS_PER_SCAN * (MAX_RETRIES_PER_PUBLIC_READ + 1)
@@ -282,7 +282,8 @@ def _source_code_hash() -> str:
     for name in (
         "discovery_successor.py",
         "observatory.py",
-        "opportunity_audit.py",
+        "opportunity_audit_v2.py",
+        "economics.py",
         "control_retrieval.py",
     ):
         path = Path(__file__).with_name(name)
@@ -322,6 +323,8 @@ def _collect_observations(
     quantity_counts: dict[str, Counter[str]] = {
         "positive_full_depth_gross": Counter(),
         "positive_minimum_notional": Counter(),
+        "positive_minimum_order_shares": Counter(),
+        "positive_order_constraints": Counter(),
         "positive_single_match": Counter(),
         "positive_fragmentation_safe": Counter(),
     }
@@ -371,6 +374,13 @@ def _collect_observations(
                     and result["minimum_order_notional_satisfied"]
                 ):
                     quantity_counts["positive_minimum_notional"][quantity] += 1
+                if result["positive_full_depth_gross"] and result["minimum_order_shares_satisfied"]:
+                    quantity_counts["positive_minimum_order_shares"][quantity] += 1
+                if (
+                    result["positive_full_depth_gross"]
+                    and result["minimum_order_constraints_satisfied"]
+                ):
+                    quantity_counts["positive_order_constraints"][quantity] += 1
                 if result["positive_single_match_sensitivity"]:
                     quantity_counts["positive_single_match"][quantity] += 1
                 if result["positive_fragmentation_safe_sensitivity"]:
@@ -401,6 +411,18 @@ def _collect_observations(
                     for item in quantity_rows
                     if item.get("positive_full_depth_gross")
                     and item.get("minimum_order_notional_satisfied")
+                ],
+                "positive_minimum_order_shares_quantities": [
+                    item["quantity_shares_per_leg"]
+                    for item in quantity_rows
+                    if item.get("positive_full_depth_gross")
+                    and item.get("minimum_order_shares_satisfied")
+                ],
+                "positive_order_constraints_quantities": [
+                    item["quantity_shares_per_leg"]
+                    for item in quantity_rows
+                    if item.get("positive_full_depth_gross")
+                    and item.get("minimum_order_constraints_satisfied")
                 ],
                 "positive_single_match_quantities": [
                     item["quantity_shares_per_leg"]
@@ -438,6 +460,14 @@ def _collect_observations(
         },
         "positive_minimum_notional_by_quantity": {
             quantity: quantity_counts["positive_minimum_notional"].get(quantity, 0)
+            for quantity in quantity_grid
+        },
+        "positive_minimum_order_shares_by_quantity": {
+            quantity: quantity_counts["positive_minimum_order_shares"].get(quantity, 0)
+            for quantity in quantity_grid
+        },
+        "positive_order_constraints_by_quantity": {
+            quantity: quantity_counts["positive_order_constraints"].get(quantity, 0)
             for quantity in quantity_grid
         },
         "positive_single_match_fee_sensitivity_by_quantity": {

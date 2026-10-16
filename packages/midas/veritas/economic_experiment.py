@@ -9,10 +9,10 @@ from pathlib import Path
 from typing import Any
 
 from .candidate_replay import VERSION as CANDIDATE_REPLAY_VERSION
-from .candidate_replay import replay_gross_candidate_evidence
+from .candidate_replay import replay_gross_candidate_evidence, source_code_sha256
 from .continuous_analysis import VERSION as SNAPSHOT_ANALYSIS_VERSION
 
-VERSION = "veritas-economic-qualification-comparison-v3"
+VERSION = "veritas-economic-qualification-comparison-v4"
 EXPERIMENT_ID = "VERITAS-M2-ECO-QUAL-001"
 MAX_GROSS_CANDIDATE_EVIDENCE = 256
 
@@ -31,6 +31,16 @@ def _is_sha256(value: Any) -> bool:
         and len(value) == 64
         and all(character in "0123456789abcdef" for character in value)
     )
+
+
+def _decimal(value: Any, field: str) -> Decimal:
+    try:
+        parsed = Decimal(str(value))
+    except (InvalidOperation, TypeError, ValueError) as error:
+        raise ValueError(f"invalid_{field}") from error
+    if not parsed.is_finite():
+        raise ValueError(f"invalid_{field}")
+    return parsed
 
 
 def compare_qualification_rules(
@@ -70,7 +80,7 @@ def compare_qualification_rules(
         for event in ordered
     ]
     dataset_sha256 = _sha256(_canonical(dataset_manifest))
-    run_id = f"{EXPERIMENT_ID}-V3-RUN-{dataset_sha256[:12]}"
+    run_id = f"{EXPERIMENT_ID}-V4-RUN-{dataset_sha256[:12]}"
 
     attempted = sum(int(event.get("attempted_market_pairs", 0)) for event in ordered)
     valid = sum(int(event.get("valid_quality_pairs", 0)) for event in ordered)
@@ -223,9 +233,7 @@ def compare_qualification_rules(
     if source_root is None and gross_candidate_evidence:
         gross_candidate_replay = {
             "version": CANDIDATE_REPLAY_VERSION,
-            "source_code_sha256": _sha256(
-                Path(__file__).with_name("candidate_replay.py").read_bytes()
-            ),
+            "source_code_sha256": source_code_sha256(),
             "candidate_count": len(gross_candidate_evidence),
             "replayed_candidate_count": 0,
             "complete": False,
@@ -246,6 +254,40 @@ def compare_qualification_rules(
         if isinstance(replay_rows, list)
         else {}
     )
+    replay_complete = gross_candidate_replay.get("complete") is True and gross_candidate_replay.get(
+        "replayed_candidate_count"
+    ) == len(gross_candidate_evidence)
+    replay_depth_and_minimum_count: int | None = 0 if not gross_candidate_evidence else None
+    replay_both_fee_sensitivities_count: int | None = 0 if not gross_candidate_evidence else None
+    if replay_complete and gross_candidate_evidence:
+        replay_depth_and_minimum_count = 0
+        replay_both_fee_sensitivities_count = 0
+        for replay_row in replay_by_identity.values():
+            qualification = replay_row.get("quantity_qualification")
+            if not isinstance(qualification, dict):
+                raise ValueError("Completed candidate replay is missing quantity qualification")
+            qualifies_minima = (
+                qualification.get("full_displayed_depth") is True
+                and qualification.get("minimum_order_constraints_satisfied_both_legs") is True
+                and _decimal(qualification.get("gross_edge_usdc"), "replay_gross_edge") > 0
+            )
+            if qualifies_minima:
+                replay_depth_and_minimum_count += 1
+                if (
+                    qualification.get("single_match_fee_sensitivity_positive") is True
+                    and qualification.get("fragmentation_safe_fee_sensitivity_positive") is True
+                ):
+                    replay_both_fee_sensitivities_count += 1
+    independent_candidate_replay = {
+        "version": CANDIDATE_REPLAY_VERSION,
+        "complete": replay_complete,
+        "candidate_count": len(gross_candidate_evidence),
+        "replayed_candidate_count": gross_candidate_replay.get("replayed_candidate_count"),
+        "quantity_shares_per_leg": quantity,
+        "positive_full_depth_and_both_minimums": replay_depth_and_minimum_count,
+        "positive_under_both_fee_sensitivities": replay_both_fee_sensitivities_count,
+        "counts_are_null_when_incomplete": True,
+    }
     for candidate in gross_candidate_evidence:
         interval = candidate.get("source_interval", {})
         replay = replay_by_identity.get((interval.get("scan_id"), candidate.get("market_id")))
@@ -276,12 +318,14 @@ def compare_qualification_rules(
             "positive_states": top_positive,
         },
         "research_improvement": {
-            "name": "depth and minimum-aware economic qualification",
+            "name": "depth and USDC-notional event prefilter with independent share-minimum replay",
             "rule": (
-                f"complete displayed ask depth for {quantity} shares per leg, positive gross edge, "
-                "and both per-leg USDC minimum notionals satisfied"
+                f"finalized events screen for complete displayed ask depth and positive gross edge "
+                f"at {quantity} shares per leg plus both Gamma USDC minimums; source replay then "
+                "independently checks both CLOB share minimums and the versioned fee sensitivities"
             ),
             "positive_states": minimum_positive,
+            "count_stage": "finalized_event_usdc_notional_prefilter",
         },
         "economic_qualification_funnel": [
             {
@@ -296,6 +340,7 @@ def compare_qualification_rules(
         "gross_candidate_evidence_limit": MAX_GROSS_CANDIDATE_EVIDENCE,
         "gross_candidate_evidence": gross_candidate_evidence,
         "gross_candidate_replay": gross_candidate_replay,
+        "independent_candidate_replay_qualification": independent_candidate_replay,
         "sample": {
             "snapshot_count": len(ordered),
             "attempted_market_pairs": attempted,
@@ -316,7 +361,7 @@ def compare_qualification_rules(
             else "Preserve the candidate for independent source replay and later hypothetical review."
         ),
         "limitations": [
-            "The top-ask rule is the unchanged discovery baseline; the improved rule adds displayed depth and per-leg minimum checks.",
+            "The top-ask rule is the unchanged discovery baseline; the improved replay keeps Gamma USDC minimum notionals and CLOB minimum share quantities separate, then adds full-depth and fee checks.",
             "Repeated market snapshots are dependent and the panel is a short selected public sample, not independent confirmation.",
             "Fee sensitivities are hypothetical and do not establish order arrival, persistence, fills, or profitability.",
             "The experiment tests candidate qualification, not realized or hypothetical strategy PnL.",

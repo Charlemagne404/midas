@@ -20,7 +20,12 @@ from midas.veritas.discovery_successor import (
 )
 
 
-def _market(index: int, *, condition_index: int | None = None) -> dict[str, Any]:
+def _market(
+    index: int,
+    *,
+    condition_index: int | None = None,
+    minimum_notional: str = "5",
+) -> dict[str, Any]:
     condition = condition_index if condition_index is not None else index + 1
     return {
         "id": str(100_000 + index),
@@ -38,7 +43,7 @@ def _market(index: int, *, condition_index: int | None = None) -> dict[str, Any]
         "negRiskAugmented": False,
         "restricted": False,
         "orderPriceMinTickSize": "0.01",
-        "orderMinSize": 5,
+        "orderMinSize": minimum_notional,
         "feesEnabled": False,
         "feeSchedule": None,
         "liquidityNum": 10_000 + index * 100,
@@ -71,6 +76,10 @@ def _transport(
     missing_controls: set[str] | None = None,
     duplicate_control: str | None = None,
     conflict_control: str | None = None,
+    yes_minimum_shares: str = "5",
+    no_minimum_shares: str = "5",
+    yes_ask: str = "0.51",
+    no_ask: str = "0.52",
 ) -> httpx.MockTransport:
     by_id = {row["id"]: row for row in markets}
     by_asset: dict[str, dict[str, Any]] = {}
@@ -109,7 +118,7 @@ def _transport(
                 asset_id = item["token_id"]
                 identity = by_asset[asset_id]
                 stamp = time.time_ns() // 1_000_000
-                ask = "0.51" if identity["side"] == "yes" else "0.52"
+                ask = yes_ask if identity["side"] == "yes" else no_ask
                 bid = "0.49" if identity["side"] == "yes" else "0.50"
                 response.append(
                     {
@@ -119,7 +128,9 @@ def _transport(
                         "hash": f"book-{asset_id}",
                         "bids": [{"price": bid, "size": "100"}],
                         "asks": [{"price": ask, "size": "100"}],
-                        "min_order_size": "5",
+                        "min_order_size": (
+                            yes_minimum_shares if identity["side"] == "yes" else no_minimum_shares
+                        ),
                         "tick_size": "0.01",
                         "neg_risk": False,
                     }
@@ -162,7 +173,7 @@ def test_eight_read_successor_keeps_frames_and_adds_direct_only_control(tmp_path
     assert len(seen) == 8
     assert seen[:7] == [("GET", "gamma-api.polymarket.com", "/markets")] * 7
     assert seen[7] == ("POST", "clob.polymarket.com", "/books")
-    assert report["analysis_version"] == "veritas-public-observatory-discovery-successor-v1"
+    assert report["analysis_version"] == "veritas-public-observatory-discovery-successor-v2"
     assert report["collection_bounds"]["maximum_public_read_calls_per_scan"] == 8
     assert report["source_requests"]["public_read_calls"] == 8
     assert report["source_requests"]["public_http_attempts"] == 8
@@ -205,6 +216,53 @@ def test_eight_read_successor_keeps_frames_and_adds_direct_only_control(tmp_path
     assert stored["snapshot_evidence_sha256"] == report["snapshot_evidence_sha256"]
     assert stored["source_requests"]["public_read_calls"] == 8
     assert not (ACTIVE_OBSERVATORY_ROOT / "successor-root").exists()
+
+
+def test_successor_applies_usdc_and_share_minimums_as_separate_gates(tmp_path):
+    markets = [_market(index, minimum_notional="2") for index in range(60)]
+    controls = [markets[0]["id"], markets[59]["id"]]
+    control_file = tmp_path / "control-cohort.json"
+    _write_controls(control_file, controls)
+    seen: list[tuple[str, str, str]] = []
+
+    report = _scan(
+        tmp_path / "successor-root",
+        control_file,
+        _transport(
+            markets,
+            seen,
+            yes_minimum_shares="10",
+            no_minimum_shares="5",
+            yes_ask="0.40",
+            no_ask="0.50",
+        ),
+        target=30,
+    )
+
+    assert report["counts"]["valid_quality_pairs"] == 30
+    assert report["counts"]["positive_top_gross_pairs"] == 30
+    assert report["counts"]["positive_full_depth_gross_by_quantity"] == {
+        "5": 30,
+        "10": 30,
+    }
+    assert report["counts"]["positive_minimum_notional_by_quantity"] == {
+        "5": 30,
+        "10": 30,
+    }
+    assert report["counts"]["positive_minimum_order_shares_by_quantity"] == {
+        "5": 0,
+        "10": 30,
+    }
+    assert report["counts"]["positive_order_constraints_by_quantity"] == {
+        "5": 0,
+        "10": 30,
+    }
+    for row in report["market_observations"]:
+        q5, q10 = row["audit"]["quantity_results"]
+        assert q5["minimum_order_notional_satisfied"] is True
+        assert q5["minimum_order_shares_satisfied"] is False
+        assert q5["minimum_order_constraints_satisfied"] is False
+        assert q10["minimum_order_constraints_satisfied"] is True
 
 
 def test_direct_lookup_missing_control_is_not_reused_from_frame(tmp_path):

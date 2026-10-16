@@ -9,7 +9,12 @@ from typing import Any
 
 from midas.veritas.continuous_analysis import VERSION as SNAPSHOT_ANALYSIS_VERSION
 from midas.veritas.economic_experiment import compare_qualification_rules
-from midas.veritas.opportunity_audit import audit_pair_snapshot, normalize_market
+from midas.veritas.market_constraint_audit import audit_market_constraint_semantics
+from midas.veritas.opportunity_audit_v2 import audit_pair_snapshot, normalize_market
+from midas.veritas.source_opportunity_audit import (
+    _strict_freshness,
+    audit_source_opportunities,
+)
 
 
 def _canonical(value: Any) -> bytes:
@@ -34,7 +39,13 @@ def _sanitized(book: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def _write_source_fixture(root: Path) -> dict[str, Any]:
+def _write_source_fixture(
+    root: Path,
+    *,
+    market_minimum: str = "5",
+    yes_minimum_shares: str = "5",
+    no_minimum_shares: str = "5",
+) -> dict[str, Any]:
     captured_ns = int(datetime(2026, 10, 15, 6, 0, 0, tzinfo=UTC).timestamp() * 1_000_000_000)
     condition = "0x" + "11" * 32
     raw_market = {
@@ -49,7 +60,7 @@ def _write_source_fixture(root: Path) -> dict[str, Any]:
         "clobTokenIds": ["101", "102"],
         "negRisk": False,
         "orderPriceMinTickSize": "0.01",
-        "orderMinSize": "5",
+        "orderMinSize": market_minimum,
         "feesEnabled": False,
     }
     normalized, exclusion = normalize_market(raw_market)
@@ -63,7 +74,7 @@ def _write_source_fixture(root: Path) -> dict[str, Any]:
             "hash": "yes-book-hash",
             "bids": [{"price": "0.48", "size": "100"}],
             "asks": [{"price": "0.49", "size": "100"}],
-            "min_order_size": "5",
+            "min_order_size": yes_minimum_shares,
             "tick_size": "0.01",
             "neg_risk": False,
         },
@@ -74,7 +85,7 @@ def _write_source_fixture(root: Path) -> dict[str, Any]:
             "hash": "no-book-hash",
             "bids": [{"price": "0.49", "size": "100"}],
             "asks": [{"price": "0.50", "size": "100"}],
-            "min_order_size": "5",
+            "min_order_size": no_minimum_shares,
             "tick_size": "0.01",
             "neg_risk": False,
         },
@@ -140,9 +151,11 @@ def _write_source_fixture(root: Path) -> dict[str, Any]:
     sampled_book_hash = _sha256(b"yes-book-hash|no-book-hash")
     observation = {
         "market_id": normalized["market_id"],
+        "valid": audit["valid"],
         "condition": normalized["condition"],
         "outcomes": normalized["outcomes"],
         "question": "Synthetic complement fixture",
+        "top_pair_gross_edge_per_share": audit["top_pair_gross_edge_per_share"],
         "categories": ["Fixture"],
         "cohort_role": "rotating_stratified",
         "selection_probability": "1",
@@ -245,7 +258,7 @@ def test_positive_candidate_replays_hashed_source_and_recomputes_economic_checks
 
     result = compare_qualification_rules([event], source_root=tmp_path)
 
-    assert result["analysis_version"] == "veritas-economic-qualification-comparison-v3"
+    assert result["analysis_version"] == "veritas-economic-qualification-comparison-v4"
     assert result["gross_candidate_evidence_count"] == 1
     assert result["gross_candidate_replay"]["status"] == "ALL_GROSS_CANDIDATES_REPLAYED"
     assert result["gross_candidate_replay"]["complete"] is True
@@ -253,7 +266,7 @@ def test_positive_candidate_replays_hashed_source_and_recomputes_economic_checks
     assert replay["status"] == "GROSS_POSITIVE_REPLAYED_ECONOMIC_SENSITIVITIES_POSITIVE"
     assert replay["top_pair_gross_edge_per_share"] == "0.01"
     assert replay["independent_arithmetic"]["method"] == (
-        "decimal_best_ask_and_sorted_depth_replay-v1"
+        "decimal_best_ask_and_sorted_depth_replay-v2"
     )
     assert replay["independent_arithmetic"]["full_depth_gross_edge_usdc"] == "0.20"
     assert replay["source_integrity"]["gamma_response_payloads_verified"] is True
@@ -262,10 +275,197 @@ def test_positive_candidate_replays_hashed_source_and_recomputes_economic_checks
     assert replay["freshness"]["sequence_verified"] is False
     assert replay["quantity_qualification"]["full_displayed_depth"] is True
     assert replay["quantity_qualification"]["minimum_order_notional_satisfied_both_legs"] is True
+    assert replay["quantity_qualification"]["minimum_order_shares_satisfied_both_legs"] is True
+    assert replay["quantity_qualification"]["minimum_order_constraints_satisfied_both_legs"] is True
     assert replay["quantity_qualification"]["fragmentation_safe_fee_sensitivity_positive"] is True
     assert replay["promotion_status"] == "BLOCKED_NO_SEQUENCE_OR_ORDER_ARRIVAL_EVIDENCE"
     assert result["gross_candidate_evidence"][0]["verification_status"] == (
         "GROSS_EDGE_SOURCE_REPLAYED"
+    )
+    assert result["independent_candidate_replay_qualification"]["complete"] is True
+    assert (
+        result["independent_candidate_replay_qualification"][
+            "positive_full_depth_and_both_minimums"
+        ]
+        == 1
+    )
+    assert (
+        result["independent_candidate_replay_qualification"][
+            "positive_under_both_fee_sensitivities"
+        ]
+        == 1
+    )
+
+
+def test_independent_source_audit_recomputes_positive_fixture_and_strict_freshness(tmp_path):
+    fixture = _write_source_fixture(tmp_path)
+
+    audit = audit_source_opportunities(tmp_path, [fixture["scan_id"]])
+
+    assert audit["complete"] is True
+    assert audit["snapshot_count"] == 1
+    assert audit["selected_market_observation_count"] == 1
+    assert audit["independent_v2_valid_count"] == 1
+    assert audit["strict_freshness_valid_count"] == 1
+    assert audit["positive_top_pair_gross_count"] == 1
+    assert audit["strict_fresh_positive_top_pair_gross_count"] == 1
+    assert audit["positive_full_depth_and_both_minimums_by_quantity"]["20"] == 1
+    assert audit["positive_both_fee_sensitivities_by_quantity"]["20"] == 1
+    assert audit["v4_v2_validity_mismatch_count"] == 0
+    assert audit["v4_v2_top_edge_mismatch_count"] == 0
+
+
+def test_independent_source_audit_uses_v4_event_for_legacy_snapshot_summary(tmp_path):
+    fixture = _write_source_fixture(tmp_path)
+    snapshot = fixture["snapshot"]
+    observation = snapshot["market_observations"][0]
+    observation.pop("valid")
+    observation.pop("top_pair_gross_edge_per_share")
+    observation["audit"] = {"valid": False, "reason": "legacy_reported_age_gate"}
+    snapshot_path = tmp_path / "snapshots" / f"{fixture['scan_id']}.json.gz"
+    snapshot_path.write_bytes(gzip.compress(_canonical(snapshot), mtime=0))
+
+    audit = audit_source_opportunities(tmp_path, [fixture["scan_id"]])
+
+    assert audit["complete"] is True
+    assert audit["v4_stored_quality_valid_count"] == 1
+    assert audit["independent_v2_valid_count"] == 1
+    assert audit["v4_v2_validity_mismatch_count"] == 0
+    assert audit["v4_v2_top_edge_mismatch_count"] == 0
+
+
+def test_strict_freshness_sensitivity_excludes_old_or_skewed_books():
+    report = {
+        "valid": True,
+        "quality": {
+            "reported_update_age_ms_by_leg": {"yes": 5_001, "no": 100},
+            "reported_update_timestamp_skew_ms": 1,
+            "returned_in_same_batch_response": True,
+        },
+    }
+
+    assert _strict_freshness(report) is False
+    report["quality"]["reported_update_age_ms_by_leg"] = {"yes": 100, "no": 100}
+    report["quality"]["reported_update_timestamp_skew_ms"] = 251
+    assert _strict_freshness(report) is False
+    report["quality"]["reported_update_timestamp_skew_ms"] = 250
+    assert _strict_freshness(report) is True
+
+
+def test_positive_candidate_replays_early_snapshot_selection_schema(tmp_path):
+    fixture = _write_source_fixture(tmp_path)
+    snapshot = fixture["snapshot"]
+    selected = snapshot["selection"]["selected_markets"][0]
+    for field in (
+        "protocol",
+        "pair_semantics",
+        "outcomes",
+        "negative_risk",
+        "minimum_order_notional_usdc",
+        "tick_size",
+        "fee_regime",
+    ):
+        selected.pop(field, None)
+    snapshot_path = tmp_path / "snapshots" / f"{fixture['scan_id']}.json.gz"
+    snapshot_path.write_bytes(gzip.compress(_canonical(snapshot), mtime=0))
+
+    result = compare_qualification_rules([fixture["event"]], source_root=tmp_path)
+
+    replay = result["gross_candidate_replay"]["candidates"][0]
+    assert result["gross_candidate_replay"]["complete"] is True
+    assert replay["source_integrity"]["clob_response_payload_verified"] is True
+    assert replay["quantity_qualification"]["minimum_order_constraints_satisfied_both_legs"] is True
+
+
+def test_raw_market_constraint_audit_keeps_mismatched_units_separate(tmp_path):
+    fixture = _write_source_fixture(
+        tmp_path,
+        market_minimum="2",
+        yes_minimum_shares="10",
+        no_minimum_shares="5",
+    )
+    snapshot = fixture["snapshot"]
+    selected = snapshot["selection"]["selected_markets"][0]
+    for field in (
+        "protocol",
+        "pair_semantics",
+        "outcomes",
+        "negative_risk",
+        "minimum_order_notional_usdc",
+        "tick_size",
+        "fee_regime",
+    ):
+        selected.pop(field, None)
+    snapshot_path = tmp_path / "snapshots" / f"{fixture['scan_id']}.json.gz"
+    snapshot_path.write_bytes(gzip.compress(_canonical(snapshot), mtime=0))
+
+    audit = audit_market_constraint_semantics(tmp_path, [fixture["scan_id"]])
+
+    assert audit["complete"] is True
+    assert audit["market_observation_count"] == 1
+    assert audit["book_leg_count"] == 2
+    assert audit["minimum_value_equal_count"] == 0
+    assert audit["minimum_value_mismatch_count"] == 2
+    assert audit["tick_value_equal_count"] == 2
+    assert audit["status"] == "CONSTRAINT_VALUE_MISMATCHES_OBSERVED"
+
+
+def test_candidate_replay_keeps_usdc_and_share_minimums_in_separate_units(tmp_path):
+    _write_source_fixture(
+        tmp_path,
+        market_minimum="2",
+        yes_minimum_shares="10",
+        no_minimum_shares="5",
+    )
+    event = json.loads(next((tmp_path / "analysis-events" / "v4").glob("*.json")).read_text())
+
+    below_share_minimum = compare_qualification_rules([event], source_root=tmp_path, quantity="5")[
+        "gross_candidate_replay"
+    ]["candidates"][0]
+    assert (
+        below_share_minimum["quantity_qualification"]["minimum_order_notional_satisfied_both_legs"]
+        is True
+    )
+    assert (
+        below_share_minimum["quantity_qualification"]["minimum_order_shares_satisfied_both_legs"]
+        is False
+    )
+    assert (
+        below_share_minimum["quantity_qualification"][
+            "minimum_order_constraints_satisfied_both_legs"
+        ]
+        is False
+    )
+    assert below_share_minimum["status"] == (
+        "GROSS_POSITIVE_REPLAYED_ECONOMIC_GATES_NOT_ALL_POSITIVE"
+    )
+    assert (
+        compare_qualification_rules([event], source_root=tmp_path, quantity="5")[
+            "independent_candidate_replay_qualification"
+        ]["positive_full_depth_and_both_minimums"]
+        == 0
+    )
+
+    at_both_minimums = compare_qualification_rules([event], source_root=tmp_path, quantity="10")[
+        "gross_candidate_replay"
+    ]["candidates"][0]
+    assert (
+        at_both_minimums["quantity_qualification"]["minimum_order_notional_satisfied_both_legs"]
+        is True
+    )
+    assert (
+        at_both_minimums["quantity_qualification"]["minimum_order_shares_satisfied_both_legs"]
+        is True
+    )
+    assert (
+        at_both_minimums["quantity_qualification"]["minimum_order_constraints_satisfied_both_legs"]
+        is True
+    )
+    assert (
+        compare_qualification_rules([event], source_root=tmp_path, quantity="10")[
+            "independent_candidate_replay_qualification"
+        ]["positive_full_depth_and_both_minimums"]
+        == 1
     )
 
 
