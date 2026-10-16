@@ -570,22 +570,22 @@ def fixture_client(tmp_path: Path) -> TestClient:
     sensitivity = {
         "quantity_shares_per_leg": "100",
         "complete_pair_pnl_scenarios_usdc": {
-            "single_match_rounding_worst_resolution": "1.4",
-            "fragmentation_safe_fee_worst_resolution": "-0.8",
+            "single_match_rounding_worst_resolution": "1.624",
+            "fragmentation_safe_fee_worst_resolution": "-0.370",
         },
-        "unmatched_leg_loss": {"conservative_unmatched_leg_loss_usdc": "50.2"},
+        "unmatched_leg_loss": {"conservative_unmatched_leg_loss_usdc": "52.200"},
         "break_even": {
             "single_match_rounding_scenario": {
-                "minimum_matched_completions_per_unmatched_event": "35.4",
+                "minimum_matched_completions_per_unmatched_event": "32.143",
                 "required_matched_rate_by_unmatched_event_rate": [
                     {
                         "unmatched_event_rate_assumption": "0.01",
-                        "required_matched_completion_rate": "0.354",
+                        "required_matched_completion_rate": "0.321",
                         "probability_mass_feasible": True,
                     },
                     {
                         "unmatched_event_rate_assumption": "0.05",
-                        "required_matched_completion_rate": "1.77",
+                        "required_matched_completion_rate": "1.607",
                         "probability_mass_feasible": False,
                     },
                 ],
@@ -596,10 +596,12 @@ def fixture_client(tmp_path: Path) -> TestClient:
         tmp_path,
         "VERITAS_GATE_B_EXECUTION_BREAK_EVEN_001.json",
         {
+            "fee_model_version": "veritas-economic-feasibility-v3",
+            "fee_collection_medium_for_buy": "collateral",
             "execution_break_even_scenarios": {
                 scenario: {"quantity_scenarios": [sensitivity]}
                 for scenario in ("full_displayed_depth", "half_displayed_depth")
-            }
+            },
         },
     )
     write_artifact(tmp_path, "VERITAS_GATE_B_CAPACITY_001.json", {"fixture": True})
@@ -850,9 +852,99 @@ def test_overview_uses_bounded_versioned_evidence_without_raw_paths(tmp_path):
     assert data["execution_sensitivity"]["actual_fills"] == "unknown_counterfactual"
     assert data["opportunity_observatory"]["measurement_pilot"]["status"] == "not_started"
     assert data["execution_sensitivity"]["break_even_at_5pct_unmatched_feasible"] is False
+    assert data["execution_sensitivity"]["fee_model_version"] == "veritas-economic-feasibility-v3"
+    assert data["execution_sensitivity"]["fee_collection_medium_for_buy"] == "collateral"
     assert data["opportunity_observatory"]["status"] == "not_started"
     assert data["finalized_reality_source"]["status"] == "not_started"
     assert "source_root" not in response.text
+
+
+def test_overview_uses_hash_receipted_current_execution_sensitivity(tmp_path):
+    client = fixture_client(tmp_path)
+    report = {
+        "experiment_id": "VERITAS-GATE-B-EXECUTION-BREAK-EVEN-20261016-002",
+        "analysis_version": "veritas-execution-break-even-v2",
+        "fee_model_version": "veritas-economic-feasibility-v3",
+        "fee_collection_medium_for_buy": "collateral",
+        "execution_break_even_scenarios": {
+            "full_displayed_depth": {
+                "quantity_scenarios": [
+                    {
+                        "quantity_shares_per_leg": "100",
+                        "complete_pair_pnl_scenarios_usdc": {
+                            "single_match_rounding_worst_resolution": "1.624",
+                            "fragmentation_safe_fee_worst_resolution": "-0.370",
+                        },
+                        "unmatched_leg_loss": {"conservative_unmatched_leg_loss_usdc": "52.200"},
+                        "break_even": {
+                            "single_match_rounding_scenario": {
+                                "minimum_matched_completions_per_unmatched_event": "32.143",
+                                "required_matched_rate_by_unmatched_event_rate": [
+                                    {
+                                        "unmatched_event_rate_assumption": "0.01",
+                                        "required_matched_completion_rate": "0.321",
+                                        "probability_mass_feasible": True,
+                                    },
+                                    {
+                                        "unmatched_event_rate_assumption": "0.05",
+                                        "required_matched_completion_rate": "1.607",
+                                        "probability_mass_feasible": False,
+                                    },
+                                ],
+                            }
+                        },
+                    }
+                ]
+            },
+            "half_displayed_depth": {
+                "quantity_scenarios": [
+                    {
+                        "quantity_shares_per_leg": "100",
+                        "complete_pair_pnl_scenarios_usdc": {
+                            "single_match_rounding_worst_resolution": "-0.884"
+                        },
+                    }
+                ]
+            },
+        },
+    }
+    path = tmp_path / "docs" / "VERITAS_GATE_B_EXECUTION_BREAK_EVEN_002.json"
+    write_artifact(tmp_path, path.name, report)
+    artifact_sha256 = hashlib.sha256(path.read_bytes()).hexdigest()
+    write_artifact(
+        tmp_path,
+        "VERITAS_RESEARCH_LEDGER.json",
+        {
+            "hypotheses": [
+                {
+                    "hypothesis_id": "VERITAS-H130",
+                    "title": "Current execution sensitivity receipt",
+                    "status": "continue",
+                    "decision": "Use the current fee model.",
+                    "experiment_id": report["experiment_id"],
+                    "result": {
+                        "artifact_path": "docs/VERITAS_GATE_B_EXECUTION_BREAK_EVEN_002.json",
+                        "analysis_version": report["analysis_version"],
+                        "artifact_file_sha256": artifact_sha256,
+                    },
+                }
+            ]
+        },
+    )
+
+    response = client.get("/api/veritas/overview")
+
+    assert response.status_code == 200
+    sensitivity = response.json()["execution_sensitivity"]
+    assert sensitivity["fee_model_version"] == "veritas-economic-feasibility-v3"
+    assert sensitivity["fee_collection_medium_for_buy"] == "collateral"
+    assert sensitivity["completed_pair_pnl_single_match_usdc"] == "1.624"
+    artifact_response = client.get("/api/veritas/artifacts/break-even")
+    assert artifact_response.status_code == 200
+    assert artifact_response.json()["data"]["experiment_id"] == report["experiment_id"]
+    path.write_text(path.read_text() + "\n")
+    tampered_response = client.get("/api/veritas/artifacts/break-even")
+    assert tampered_response.status_code == 503
 
 
 def test_overview_exposes_hash_verified_market_universe_coverage(tmp_path):

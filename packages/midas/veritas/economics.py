@@ -14,9 +14,12 @@ D = Decimal
 ZERO = D(0)
 ONE = D(1)
 FEE_QUANTUM = D("0.00001")
-VERSION = "veritas-economic-feasibility-v2"
+VERSION = "veritas-economic-feasibility-v3"
 FEE_SOURCE = "https://docs.polymarket.com/trading/fees"
 MARKET_DETAILS_SOURCE = "https://docs.polymarket.com/market-data/market-details"
+FEE_COLLECTION_SOURCE = (
+    "https://github.com/Polymarket/ctf-exchange-v2/blob/main/src/exchange/mixins/Trading.sol"
+)
 SUPPORTED_PAIR = "same_condition_yes_no_ctf"
 
 
@@ -106,6 +109,7 @@ def fee_envelope(
         "rate": str(r),
         "price_component_exponent": str(e),
         "fee_quantity_basis": "shares",
+        "fee_collection_medium_for_buy": "collateral",
         "unrounded_formula_fee_usdc": str(raw),
         "single_match_fee_usdc_by_rounding_mode": single_fees,
         "single_match_fee_shares_by_rounding_mode": single_share_fees,
@@ -117,6 +121,7 @@ def fee_envelope(
         "rounding_quantum_usdc": str(FEE_QUANTUM),
         "rounding_direction_in_official_docs": "unspecified",
         "formula_source": FEE_SOURCE,
+        "fee_collection_source": FEE_COLLECTION_SOURCE,
         "market_schedule_source": MARKET_DETAILS_SOURCE,
         "evidence_kind": "official_fee_curve_with_explicit_rounding_scenarios",
     }
@@ -289,8 +294,9 @@ def evaluate_binary_pair(
 
     `depth_fraction` is a scenario assumption applied to the displayed depth. It
     never changes observed source data and is not a fill probability. The fee
-    amount is modeled in USDC then translated into an equivalent share deduction
-    for buy resolution payoffs; all fees are assumed to be taker fees.
+    amount is modeled in collateral as an entry cost on both legs. Which outcome
+    wins does not change fees already paid. Share equivalents remain diagnostic
+    only and are not subtracted from terminal payout.
     """
     if protocol != "v1" or pair_semantics != SUPPORTED_PAIR or not same_condition:
         raise ValueError("Only same-condition V1 Yes/No CTF pairs are supported")
@@ -370,7 +376,8 @@ def evaluate_binary_pair(
         "fee_source": FEE_SOURCE,
         "market_details_source": MARKET_DETAILS_SOURCE,
         "assumed_execution_role": "taker",
-        "fee_collection_medium_for_buy": "outcome_shares",
+        "fee_collection_medium_for_buy": "collateral",
+        "fee_collection_source": FEE_COLLECTION_SOURCE,
         "maker_rebates_included": False,
         "hypothetical_capital": (
             str(_decimal(hypothetical_capital, "hypothetical capital"))
@@ -432,38 +439,37 @@ def evaluate_binary_pair(
         "yes": _decimal(yes_fees["fragmentation_safe_upper_fee_shares"], "YES fee shares"),
         "no": _decimal(no_fees["fragmentation_safe_upper_fee_shares"], "NO fee shares"),
     }
-    financing = acquisition * financing_rate * days / D(365)
+    # Conservatively include the fragmentation-safe fee bound in financed entry
+    # capital, since the fee is charged when the taker trade executes.
+    financing = (acquisition + upper_fee_usdc) * financing_rate * days / D(365)
+    single_match_financing = (
+        (acquisition + single_fee_usdc_by_rounding["half_up"]) * financing_rate * days / D(365)
+    )
+    no_fee_financing = acquisition * financing_rate * days / D(365)
     redemption_total = redemption * q
     operational_total = operations * q * D(2)
     extra_costs = financing + redemption_total + operational_total
-    single_pnl_by_resolution = {
-        "yes_wins": max(ZERO, q - single_fee_shares_by_rounding["yes"]["half_up"])
-        * payout
-        * collateral_factor
+    single_match_extra_costs = single_match_financing + redemption_total + operational_total
+    no_fee_extra_costs = no_fee_financing + redemption_total + operational_total
+    single_pnl = (
+        q * payout * collateral_factor
         - acquisition
-        - extra_costs,
-        "no_wins": max(ZERO, q - single_fee_shares_by_rounding["no"]["half_up"])
-        * payout
-        * collateral_factor
-        - acquisition
-        - extra_costs,
-    }
+        - single_fee_usdc_by_rounding["half_up"]
+        - single_match_extra_costs
+    )
+    single_pnl_by_resolution = {"yes_wins": single_pnl, "no_wins": single_pnl}
     fragmentation_safe_lower_by_resolution = {
-        "yes_wins": max(ZERO, q - upper_fee_shares_by_leg["yes"]) * payout * collateral_factor
-        - acquisition
-        - extra_costs,
-        "no_wins": max(ZERO, q - upper_fee_shares_by_leg["no"]) * payout * collateral_factor
-        - acquisition
-        - extra_costs,
+        outcome: q * payout * collateral_factor - acquisition - upper_fee_usdc - extra_costs
+        for outcome in ("yes_wins", "no_wins")
     }
     no_fee_upper_by_resolution = {
-        "yes_wins": q * payout * collateral_factor - acquisition - extra_costs,
-        "no_wins": q * payout * collateral_factor - acquisition - extra_costs,
+        "yes_wins": q * payout * collateral_factor - acquisition - no_fee_extra_costs,
+        "no_wins": q * payout * collateral_factor - acquisition - no_fee_extra_costs,
     }
     pnl_lower = min(fragmentation_safe_lower_by_resolution.values())
     pnl_upper = max(no_fee_upper_by_resolution.values())
     single_worst = min(single_pnl_by_resolution.values())
-    entry_capital = acquisition + operational_total
+    entry_capital = acquisition + upper_fee_usdc + operational_total
     capital = (
         _decimal(hypothetical_capital, "hypothetical capital")
         if hypothetical_capital is not None
@@ -496,9 +502,15 @@ def evaluate_binary_pair(
             side: str(value) for side, value in upper_fee_shares_by_leg.items()
         },
         financing_cost_assumption=str(financing),
+        single_match_financing_cost_assumption=str(single_match_financing),
+        no_fee_financing_cost_assumption=str(no_fee_financing),
         redemption_cost_assumption=str(redemption_total),
         operational_cost_assumption=str(operational_total),
         non_fee_cash_cost_at_entry=str(acquisition + operational_total),
+        fee_cash_cost_at_entry_upper_bound=str(upper_fee_usdc),
+        fee_cost_is_resolution_independent=True,
+        fee_collection_medium_for_buy="collateral",
+        fee_collection_source=FEE_COLLECTION_SOURCE,
         net_hypothetical_single_match_by_resolution={
             outcome: str(value) for outcome, value in single_pnl_by_resolution.items()
         },
@@ -515,15 +527,7 @@ def evaluate_binary_pair(
         },
         net_hypothetical_pnl_bounds=[str(pnl_lower), str(pnl_upper)],
         break_even_collateral_value_factor=(
-            str(
-                max(
-                    (acquisition + extra_costs) / (max(ZERO, q - fee_shares) * payout)
-                    for fee_shares in upper_fee_shares_by_leg.values()
-                    if q > fee_shares
-                )
-            )
-            if all(q > fee_shares for fee_shares in upper_fee_shares_by_leg.values())
-            else None
+            str((acquisition + upper_fee_usdc + extra_costs) / (q * payout)) if q > ZERO else None
         ),
         capital_required_at_entry=str(entry_capital),
         hypothetical_capital_sufficient=(capital >= entry_capital) if capital is not None else None,
@@ -541,8 +545,8 @@ def partial_position_bounds(
     no_quantity: Any,
     yes_acquisition_cost: Any,
     no_acquisition_cost: Any,
-    yes_fee_shares_upper: Any = ZERO,
-    no_fee_shares_upper: Any = ZERO,
+    yes_fee_usdc_upper: Any = ZERO,
+    no_fee_usdc_upper: Any = ZERO,
     *,
     protocol: str,
     pair_semantics: str,
@@ -551,7 +555,7 @@ def partial_position_bounds(
     payout_per_winning_share: Any = ONE,
     collateral_value_factor: Any = ONE,
 ) -> dict[str, Any]:
-    """Bound binary terminal payout after explicit buy fees in outcome shares."""
+    """Bound terminal payout after collateral-denominated buy fees at entry."""
     if protocol != "v1" or pair_semantics != SUPPORTED_PAIR or not same_condition:
         raise ValueError("Only same-condition V1 Yes/No CTF pairs are supported")
     if not payoff_verified:
@@ -564,36 +568,38 @@ def partial_position_bounds(
         "yes": _decimal(yes_acquisition_cost, "YES acquisition cost"),
         "no": _decimal(no_acquisition_cost, "NO acquisition cost"),
     }
-    fee_shares = {
-        "yes": _decimal(yes_fee_shares_upper, "YES fee share upper bound"),
-        "no": _decimal(no_fee_shares_upper, "NO fee share upper bound"),
+    fee_costs = {
+        "yes": _decimal(yes_fee_usdc_upper, "YES fee collateral upper bound"),
+        "no": _decimal(no_fee_usdc_upper, "NO fee collateral upper bound"),
     }
     payout = _decimal(payout_per_winning_share, "payout per winning share")
     factor = _bounded(collateral_value_factor, "collateral value factor")
-    if min(*quantities.values(), *costs.values(), *fee_shares.values()) < ZERO or payout <= ZERO:
-        raise ValueError("Quantities, costs, and fee shares must be nonnegative")
+    if min(*quantities.values(), *costs.values(), *fee_costs.values()) < ZERO or payout <= ZERO:
+        raise ValueError("Quantities, costs, and fee costs must be nonnegative")
     total_cost = sum(costs.values(), ZERO)
+    total_fee_cost = sum(fee_costs.values(), ZERO)
     terminal = [
-        max(ZERO, quantities["yes"] - fee_shares["yes"]) * payout * factor,
-        max(ZERO, quantities["no"] - fee_shares["no"]) * payout * factor,
+        quantities["yes"] * payout * factor,
+        quantities["no"] * payout * factor,
     ]
     return {
         "version": VERSION,
         "yes_quantity": str(quantities["yes"]),
         "no_quantity": str(quantities["no"]),
         "acquisition_cost_total": str(sum(costs.values(), ZERO)),
-        "fee_share_upper_by_leg": {side: str(value) for side, value in fee_shares.items()},
-        "fee_share_upper_total": str(sum(fee_shares.values(), ZERO)),
+        "fee_cost_upper_by_leg": {side: str(value) for side, value in fee_costs.items()},
+        "fee_cost_upper_total": str(total_fee_cost),
         "terminal_payout_bounds": [str(min(terminal)), str(max(terminal))],
         "net_hypothetical_pnl_bounds": [
-            str(min(terminal) - total_cost),
-            str(max(terminal) - total_cost),
+            str(min(terminal) - total_cost - total_fee_cost),
+            str(max(terminal) - total_cost - total_fee_cost),
         ],
         "terminal_outcomes": {
-            "yes_wins": str(terminal[0] - total_cost),
-            "no_wins": str(terminal[1] - total_cost),
+            "yes_wins": str(terminal[0] - total_cost - total_fee_cost),
+            "no_wins": str(terminal[1] - total_cost - total_fee_cost),
         },
-        "fee_collection_medium_for_buy": "outcome_shares",
+        "fee_collection_medium_for_buy": "collateral",
+        "fee_collection_source": FEE_COLLECTION_SOURCE,
         "actual_fills": "unknown_counterfactual",
         "orders_submitted": False,
         "realized_money": None,

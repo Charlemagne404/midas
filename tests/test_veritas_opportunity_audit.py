@@ -276,6 +276,8 @@ def test_enabled_taker_fee_math_matches_independent_decimal_calculation():
     assert result is not None
     assert result["acquisition_cost_by_leg"] == {"yes": "9.980", "no": "10.000"}
     assert result["single_match_fee_total_usdc_by_rounding_mode"]["half_up"] == "0.40000"
-    assert Decimal(result["net_hypothetical_single_match_worst_resolution"]) == Decimal(
-        "-0.38080160320641282565130261"
+    assert Decimal(result["net_hypothetical_single_match_worst_resolution"]) == Decimal("-0.38000")
+    assert (
+        result["net_hypothetical_single_match_by_resolution"]["yes_wins"]
+        == result["net_hypothetical_single_match_by_resolution"]["no_wins"]
     )

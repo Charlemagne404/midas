@@ -10,7 +10,14 @@ never identifies fills or submits orders.
 from __future__ import annotations
 
 import json
-from decimal import Decimal, InvalidOperation
+from decimal import (
+    ROUND_CEILING,
+    ROUND_DOWN,
+    ROUND_HALF_UP,
+    Decimal,
+    InvalidOperation,
+    localcontext,
+)
 from typing import Any
 
 from .economics import evaluate_binary_pair
@@ -18,7 +25,8 @@ from .economics import evaluate_binary_pair
 D = Decimal
 ONE = D(1)
 SUPPORTED_PAIR = "same_condition_yes_no_ctf"
-VERSION = "veritas-independent-pair-audit-v2"
+VERSION = "veritas-independent-pair-audit-v3"
+FEE_QUANTUM = D("0.00001")
 
 
 def _decimal(value: Any, field: str) -> Decimal:
@@ -188,6 +196,34 @@ def _walk_asks(levels: list[tuple[Decimal, Decimal]], quantity: Decimal) -> dict
     }
 
 
+def _independent_fee_reference(
+    levels: list[dict[str, str]], rate: str, exponent: str
+) -> dict[str, str]:
+    """Recompute the documented collateral fee curve without the shared evaluator."""
+    fee_rate = _decimal(rate, "fee_rate")
+    fee_exponent = _decimal(exponent, "fee_exponent")
+    raw_total = D(0)
+    floor_total = D(0)
+    half_up_total = D(0)
+    upper_total = D(0)
+    with localcontext() as context:
+        context.prec = 80
+        for level in levels:
+            quantity = _decimal(level["quantity"], "fee_quantity")
+            price = _decimal(level["price"], "fee_price")
+            raw = quantity * fee_rate * (price * (ONE - price)) ** fee_exponent
+            raw_total += raw
+            floor_total += raw.quantize(FEE_QUANTUM, rounding=ROUND_DOWN)
+            half_up_total += raw.quantize(FEE_QUANTUM, rounding=ROUND_HALF_UP)
+            upper_total += (raw * 2).quantize(FEE_QUANTUM, rounding=ROUND_CEILING)
+    return {
+        "unrounded_formula_fee_collateral": str(raw_total),
+        "single_match_fee_collateral_floor": str(floor_total),
+        "single_match_fee_collateral_half_up": str(half_up_total),
+        "fragmentation_safe_fee_collateral_upper": str(upper_total),
+    }
+
+
 def _fee_parameters(market: dict[str, Any]) -> tuple[str | None, str | None, str]:
     regime = market["fee_regime"]
     if regime["status"] == "verified_disabled":
@@ -299,6 +335,8 @@ def audit_pair_snapshot(
         gross_edge = quantity - sum(notional_by_leg.values(), D(0)) if full_depth else None
         shared_result: dict[str, Any] | None = None
         disagreement: str | None = None
+        independent_fee_reference_by_leg: dict[str, dict[str, str]] | None = None
+        independent_fee_agrees_with_shared: bool | None = None
         if (
             full_depth
             and minimums_satisfied
@@ -326,6 +364,47 @@ def audit_pair_snapshot(
                     shared_notional = D(shared_result["acquisition_cost_by_leg"][side])
                     if shared_notional != notional_by_leg[side]:
                         disagreement = "independent_depth_calculation_disagreement"
+                independent_fee_reference_by_leg = {
+                    side: _independent_fee_reference(
+                        walked[side]["levels_used"], fee_rate, fee_exponent
+                    )
+                    for side in ("yes", "no")
+                }
+                independent_fee_agrees_with_shared = True
+                for side in ("yes", "no"):
+                    shared_fee = shared_result["fee_scenarios_by_leg"][side]
+                    reference_fee = independent_fee_reference_by_leg[side]
+                    comparisons = (
+                        (
+                            "unrounded_formula_fee_collateral",
+                            "unrounded_formula_fee_usdc",
+                        ),
+                        (
+                            "single_match_fee_collateral_floor",
+                            "single_match_fee_usdc_by_rounding_mode.floor",
+                        ),
+                        (
+                            "single_match_fee_collateral_half_up",
+                            "single_match_fee_usdc_by_rounding_mode.half_up",
+                        ),
+                        (
+                            "fragmentation_safe_fee_collateral_upper",
+                            "fragmentation_safe_upper_fee_usdc",
+                        ),
+                    )
+                    for reference_key, shared_key in comparisons:
+                        if "." in shared_key:
+                            parent_key, child_key = shared_key.split(".", 1)
+                            shared_value = shared_fee[parent_key][child_key]
+                        else:
+                            shared_value = shared_fee[shared_key]
+                        if D(reference_fee[reference_key]) != D(shared_value):
+                            independent_fee_agrees_with_shared = False
+                            if disagreement is None:
+                                disagreement = "independent_fee_calculation_disagreement"
+                            break
+                    if independent_fee_agrees_with_shared is False:
+                        break
             except (ArithmeticError, KeyError, TypeError, ValueError):
                 disagreement = "shared_fee_model_rejected_input"
         safe_resolution_values = (
@@ -364,7 +443,9 @@ def audit_pair_snapshot(
                 "full_depth_gross_edge_usdc": str(gross_edge) if gross_edge is not None else None,
                 "positive_full_depth_gross": gross_edge is not None and gross_edge > 0,
                 "fee_status": fee_status,
-                "independent_depth_disagreement": disagreement,
+                "independent_calculation_disagreement": disagreement,
+                "independent_fee_reference_by_leg": independent_fee_reference_by_leg,
+                "independent_fee_agrees_with_shared": independent_fee_agrees_with_shared,
                 "hypothetical_fee_evaluation": shared_result,
                 "positive_single_match_sensitivity": bool(
                     shared_result

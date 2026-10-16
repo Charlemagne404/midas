@@ -560,6 +560,8 @@ type Overview = {
   baseline_policies: { count: number; all_abstained: boolean };
   execution_sensitivity: {
     quantity_shares_per_leg: string;
+    fee_model_version: string;
+    fee_collection_medium_for_buy: string;
     completed_pair_pnl_single_match_usdc: string;
     completed_pair_pnl_fragmentation_safe_usdc: string;
     unmatched_leg_loss_usdc: string;
@@ -2340,7 +2342,7 @@ export function Veritas() {
         <Panel
           eyebrow="SIMULATED · ASSUMPTIONS ONLY"
           title="Execution sensitivity"
-          note={`${data.execution_sensitivity.quantity_shares_per_leg} shares per leg · full displayed depth · no empirical fill probability`}
+          note={`${data.execution_sensitivity.quantity_shares_per_leg} shares per leg · full displayed depth · ${data.execution_sensitivity.fee_model_version} · buy fees charged in ${data.execution_sensitivity.fee_collection_medium_for_buy} at entry · no empirical fill probability`}
         >
           <div className="ve-execution-pair">
             <div className="ve-execution-card favorable">

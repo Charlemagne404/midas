@@ -10,10 +10,12 @@ from pathlib import Path
 from typing import Any
 
 from . import candidate_replay
+from .economics import FEE_COLLECTION_SOURCE
+from .economics import VERSION as FEE_MODEL_VERSION
 from .opportunity_audit_v2 import audit_pair_snapshot, normalize_market
 
-VERSION = "veritas-independent-source-opportunity-audit-v1"
-EXPERIMENT_ID = "VERITAS-M2-INDEPENDENT-SOURCE-AUDIT-001"
+VERSION = "veritas-independent-source-opportunity-audit-v2"
+EXPERIMENT_ID = "VERITAS-M2-INDEPENDENT-SOURCE-AUDIT-002"
 MAX_SNAPSHOTS = 128
 MAX_TOTAL_COMPRESSED_BYTES = 96 * 1024**2
 MAX_CANDIDATE_EXAMPLES = 100
@@ -113,15 +115,17 @@ def audit_source_opportunities(source_root: Path, scan_ids: list[str]) -> dict[s
 
     manifest: list[dict[str, Any]] = []
     selected_count = 0
-    v2_valid_count = 0
+    v3_valid_count = 0
     strict_fresh_count = 0
     positive_top_count = 0
     strict_positive_top_count = 0
     v4_valid_count = 0
-    v4_v2_validity_mismatch_count = 0
-    edge_mismatch_count = 0
+    v4_v3_validity_mismatch_count = 0
+    v4_v3_top_edge_mismatch_count = 0
     reported_age_exceedance_count = 0
     pair_skew_exceedance_count = 0
+    independent_fee_checked_quantity_count = 0
+    independent_fee_disagreement_count = 0
     invalid_reasons: dict[str, int] = {}
     quantity_counts = _new_quantity_counts()
     strict_quantity_counts = _new_quantity_counts()
@@ -267,19 +271,19 @@ def audit_source_opportunities(source_root: Path, scan_ids: list[str]) -> dict[s
                     reason = str(report.get("reason") or "unknown_v2_invalid_reason")
                     invalid_reasons[reason] = invalid_reasons.get(reason, 0) + 1
                     if stored_v4_valid:
-                        v4_v2_validity_mismatch_count += 1
+                        v4_v3_validity_mismatch_count += 1
                     continue
 
-                v2_valid_count += 1
+                v3_valid_count += 1
                 if not stored_v4_valid:
-                    v4_v2_validity_mismatch_count += 1
+                    v4_v3_validity_mismatch_count += 1
                 try:
                     v2_edge = Decimal(str(report.get("top_pair_gross_edge_per_share")))
                     v4_edge = event_row.get("top_pair_gross_edge_per_share")
                     if v4_edge is None or Decimal(str(v4_edge)) != v2_edge:
-                        edge_mismatch_count += 1
+                        v4_v3_top_edge_mismatch_count += 1
                 except (InvalidOperation, TypeError, ValueError):
-                    edge_mismatch_count += 1
+                    v4_v3_top_edge_mismatch_count += 1
 
                 is_strict_fresh = _strict_freshness(report)
                 if is_strict_fresh:
@@ -325,6 +329,12 @@ def audit_source_opportunities(source_root: Path, scan_ids: list[str]) -> dict[s
                     quantity = str(quantity_result.get("quantity_shares_per_leg"))
                     if quantity not in QUANTITIES:
                         raise ValueError("independent_quantity_result_unexpected")
+                    fee_agreement = quantity_result.get("independent_fee_agrees_with_shared")
+                    if fee_agreement is True:
+                        independent_fee_checked_quantity_count += 1
+                    elif fee_agreement is False:
+                        independent_fee_checked_quantity_count += 1
+                        independent_fee_disagreement_count += 1
                     positive_depth = quantity_result.get("positive_full_depth_gross") is True
                     both_minima = (
                         quantity_result.get("minimum_order_notional_satisfied") is True
@@ -390,7 +400,9 @@ def audit_source_opportunities(source_root: Path, scan_ids: list[str]) -> dict[s
         }
 
     status = (
-        "STRICT_FRESH_POSITIVE_GROSS_CANDIDATE_OBSERVED"
+        "INDEPENDENT_FEE_RECALCULATION_MISMATCH"
+        if independent_fee_disagreement_count
+        else "STRICT_FRESH_POSITIVE_GROSS_CANDIDATE_OBSERVED"
         if strict_positive_top_count
         else "GROSS_POSITIVES_ONLY_OUTSIDE_STRICT_FRESHNESS"
         if positive_top_count
@@ -401,13 +413,16 @@ def audit_source_opportunities(source_root: Path, scan_ids: list[str]) -> dict[s
         "version": VERSION,
         "captured_at_utc": datetime.now(UTC).isoformat(),
         "source_code_sha256": code_digest,
+        "fee_model_version": FEE_MODEL_VERSION,
+        "fee_collection_medium_for_buy": "collateral",
+        "fee_collection_source": FEE_COLLECTION_SOURCE,
         "source_root": str(source_root),
         "status": status,
         "complete": True,
         "snapshot_count": len(manifest),
         "selected_market_observation_count": selected_count,
         "v4_stored_quality_valid_count": v4_valid_count,
-        "independent_v2_valid_count": v2_valid_count,
+        "independent_v3_valid_count": v3_valid_count,
         "strict_freshness_valid_count": strict_fresh_count,
         "strict_freshness_policy": {
             "reported_book_update_age_ms_max_inclusive": STRICT_MAX_BOOK_AGE_MS,
@@ -418,8 +433,10 @@ def audit_source_opportunities(source_root: Path, scan_ids: list[str]) -> dict[s
         "invalid_reasons": invalid_reasons,
         "reported_age_exceedance_pair_count": reported_age_exceedance_count,
         "pair_skew_exceedance_count": pair_skew_exceedance_count,
-        "v4_v2_validity_mismatch_count": v4_v2_validity_mismatch_count,
-        "v4_v2_top_edge_mismatch_count": edge_mismatch_count,
+        "independent_fee_checked_quantity_count": independent_fee_checked_quantity_count,
+        "independent_fee_disagreement_count": independent_fee_disagreement_count,
+        "v4_v3_validity_mismatch_count": v4_v3_validity_mismatch_count,
+        "v4_v3_top_edge_mismatch_count": v4_v3_top_edge_mismatch_count,
         "positive_top_pair_gross_count": positive_top_count,
         "strict_fresh_positive_top_pair_gross_count": strict_positive_top_count,
         "positive_full_depth_gross_by_quantity": quantity_counts["positive_full_depth_gross"],
@@ -459,7 +476,7 @@ def audit_source_opportunities(source_root: Path, scan_ids: list[str]) -> dict[s
             "This audit covers selected saved snapshots, not the full venue universe or continuous quote histories.",
             "Reported timestamp age and skew are conservative filters; they do not prove upstream freshness, sequence ordering, or atomicity.",
             "Hypothetical fee sensitivities do not establish order arrival, fills, recovery, or profitability.",
-            "The independent arithmetic shares only the versioned fee evaluator after its own price, depth, minimum, and quality calculations.",
+            "The independent fee arithmetic cross-check uses the documented fee curve and reported schedule, but does not verify the fee actually charged to a hypothetical order.",
             "Source integrity verifies stored public payloads; it does not establish that the venue response represented an executable state.",
         ],
     }

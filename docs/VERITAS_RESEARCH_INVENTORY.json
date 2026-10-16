@@ -4,7 +4,7 @@
   "status": "in_progress",
   "baseline_commit": "f968095feb9c591de38fe12d7493224425f62f3a",
   "branch": "project/veritas",
-  "last_checkpoint": "docs/VERITAS_GATE_E_SCHEDULING_REVIEW_001.md",
+  "last_checkpoint": "docs/VERITAS_MISSION2_GATE_B_CHECKPOINT_012.md",
   "datasets": [
     {
       "dataset_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
@@ -40,6 +40,21 @@
       "role": "arithmetic, minimum, fee, and capital capacity sensitivity only",
       "mutated": false,
       "raw_observations_embedded": false
+    },
+    {
+      "dataset_id": "saved_public_selected_market_snapshots_scans_1_to_59",
+      "kind": "hashed_public_market_snapshots",
+      "source_kind": "genuine_public_intermittent_observations",
+      "role": "source audit and opportunity qualification only",
+      "snapshot_count": 59,
+      "selected_market_pair_observations": 2360,
+      "quality_valid_pairs": 2015,
+      "compressed_source_bytes": 38387196,
+      "latest_scan_id": "scan-20261016T083116Z-ee68f55ff194",
+      "selection_is_venue_wide": false,
+      "observations_are_independent": false,
+      "mutated": false,
+      "raw_observations_embedded": false
     }
   ],
   "experiments": [
@@ -59,7 +74,7 @@
     {
       "experiment_id": "VERITAS-ECONOMIC-FEASIBILITY-V1",
       "type": "versioned_economic_engine_and_partial_position_accounting",
-      "status": "exploratory_candidate_implemented",
+      "status": "superseded_by_v3_collateral_fee_accounting",
       "source_dataset_id": "controlled_decimal_fixtures_only",
       "code": "packages/midas/veritas/economics.py",
       "tests": "tests/test_veritas_economics.py",
@@ -587,6 +602,36 @@
       "campaign_mutated": false,
       "orders_submitted": false,
       "promotion": "reuse Arena for eligible simulator studies; defer Veritas source adapter until recurring analysis is justified"
+    },
+    {
+      "experiment_id": "VERITAS-M2-INDEPENDENT-SOURCE-AUDIT-002",
+      "type": "bounded_independent_source_opportunity_replay_and_fee_cross_check",
+      "status": "complete_no_positive_gross_candidate",
+      "source_dataset_id": "saved_public_selected_market_snapshots_scans_1_to_59",
+      "evidence": "docs/VERITAS_MISSION2_INDEPENDENT_OPPORTUNITY_AUDIT_011.json",
+      "analysis_version": "veritas-independent-source-opportunity-audit-v2",
+      "fee_model_version": "veritas-economic-feasibility-v3",
+      "fee_checked_quantity_count": 2523,
+      "fee_arithmetic_disagreements": 0,
+      "quality_validity_mismatches": 0,
+      "top_edge_mismatches": 0,
+      "positive_gross_candidates": 0,
+      "orders_submitted": false,
+      "authenticated_requests": false,
+      "promotion": "no strategy/model promotion; retain no-trade"
+    },
+    {
+      "experiment_id": "VERITAS-GATE-B-EXECUTION-BREAK-EVEN-20261016-002",
+      "type": "controlled_synthetic_execution_and_break_even_sensitivity",
+      "status": "completed_synthetic_recalculation",
+      "source_dataset_id": "controlled_synthetic_orderbook_v1",
+      "evidence": "docs/VERITAS_GATE_B_EXECUTION_BREAK_EVEN_002.json",
+      "analysis_version": "veritas-execution-break-even-v2",
+      "fee_model_version": "veritas-economic-feasibility-v3",
+      "fee_collection_medium_for_buy": "collateral",
+      "orders_submitted": false,
+      "realized_money": null,
+      "promotion": "synthetic result only; no strategy or capacity claim"
     }
   ],
   "models": [],
@@ -615,7 +660,10 @@
     "Decision-time freshness is derived from source frame receiver timestamps; it does not identify upstream quote age or venue-level synchronization.",
     "Pooled source update intervals hide time-block clustering and exclude intervals across discontinuities; they do not independently explain every stale decision.",
     "The synthetic capacity study is not evidence that its modeled quotes existed or could be filled.",
-    "The isolated Reality browser check intercepted operation and raw-record routes; it verifies the read-only view, not end-to-end behavior of those routes."
+    "The isolated Reality browser check intercepted operation and raw-record routes; it verifies the read-only view, not end-to-end behavior of those routes.",
+    "The current independent source audit covers 59 selected intermittent scans and is not a venue-wide sample or independent opportunity count.",
+    "Current fee-model v3 uses collateral-denominated taker fees charged at entry on both purchased legs. Earlier v2 share-deduction synthetic calculations are superseded for current economics.",
+    "The live observer/API process has not been restarted to load the updated model; the source replay and local code are current, while deployed UI activation awaits a safe rollout."
   ],
-  "updated_at_utc": "2026-10-15T02:33:51+00:00"
+  "updated_at_utc": "2026-10-16T09:06:14Z"
 }

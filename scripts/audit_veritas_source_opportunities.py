@@ -20,7 +20,7 @@ def main() -> int:
     parser.add_argument(
         "--output",
         type=Path,
-        default=Path("docs/VERITAS_MISSION2_INDEPENDENT_OPPORTUNITY_AUDIT_001.json"),
+        default=Path("docs/VERITAS_MISSION2_INDEPENDENT_OPPORTUNITY_AUDIT_011.json"),
     )
     args = parser.parse_args()
 
@@ -51,7 +51,7 @@ def main() -> int:
                 "complete": result["complete"],
                 "snapshot_count": result["snapshot_count"],
                 "selected_market_observation_count": result["selected_market_observation_count"],
-                "independent_v2_valid_count": result["independent_v2_valid_count"],
+                "independent_v3_valid_count": result["independent_v3_valid_count"],
                 "strict_freshness_valid_count": result["strict_freshness_valid_count"],
                 "positive_top_pair_gross_count": result["positive_top_pair_gross_count"],
                 "status": result["status"],

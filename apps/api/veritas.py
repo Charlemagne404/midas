@@ -40,6 +40,8 @@ MAX_COVERAGE_PILOT_EVENT_BYTES = 256 * 1024
 MAX_COVERAGE_PILOT_SCANS = 48
 COVERAGE_DESIGN_AUDIT_ID = "VERITAS-M2-COVERAGE-DESIGN-AUDIT-002"
 COVERAGE_DESIGN_AUDIT_VERSION = "veritas-coverage-design-audit-v2"
+EXECUTION_BREAK_EVEN_VERSION = "veritas-execution-break-even-v2"
+EXECUTION_BREAK_EVEN_ID = "VERITAS-GATE-B-EXECUTION-BREAK-EVEN-20261016-002"
 SNAPSHOT_ID = re.compile(r"scan-\d{8}T\d{6}Z-[0-9a-f]{12}\Z")
 COVERAGE_PILOT_ID = "VERITAS-M2-COVERAGE-PILOT-001"
 COVERAGE_PILOT_VERSION = "veritas-coverage-pilot-v1"
@@ -50,6 +52,7 @@ COVERAGE_ARTIFACT_PATH = re.compile(
 COVERAGE_DESIGN_AUDIT_PATH = re.compile(
     r"docs/VERITAS_MISSION2_COVERAGE_DESIGN_AUDIT_(\d{3,})\.json\Z"
 )
+EXECUTION_BREAK_EVEN_PATH = re.compile(r"docs/VERITAS_GATE_B_EXECUTION_BREAK_EVEN_(\d{3,})\.json\Z")
 
 
 def market_universe_coverage_artifact_path(repository: Path, ledger: dict[str, Any]) -> Path:
@@ -122,19 +125,76 @@ def coverage_design_audit_artifact_path(repository: Path, ledger: dict[str, Any]
     return max(candidates, key=lambda candidate: candidate[0])[1] if candidates else fallback
 
 
+def execution_break_even_artifact_path(repository: Path, ledger: dict[str, Any]) -> Path:
+    """Choose the newest hash-receipted execution sensitivity present locally."""
+    docs = repository / "docs"
+    fallback = docs / ARTIFACTS["break-even"]
+    if docs.is_symlink() or not docs.is_dir():
+        return fallback
+    hypotheses = ledger.get("hypotheses")
+    if not isinstance(hypotheses, list):
+        return fallback
+    candidates: list[tuple[int, Path]] = []
+    for item in hypotheses:
+        if not isinstance(item, dict) or item.get("experiment_id") != EXECUTION_BREAK_EVEN_ID:
+            continue
+        result = item.get("result")
+        if not isinstance(result, dict):
+            continue
+        relative_path = result.get("artifact_path")
+        match = (
+            EXECUTION_BREAK_EVEN_PATH.fullmatch(relative_path)
+            if isinstance(relative_path, str)
+            else None
+        )
+        if (
+            match is None
+            or result.get("analysis_version") != EXECUTION_BREAK_EVEN_VERSION
+            or not isinstance(result.get("artifact_file_sha256"), str)
+        ):
+            continue
+        path = repository / relative_path
+        if path.parent == docs and path.is_file() and not path.is_symlink():
+            candidates.append((int(match.group(1)), path))
+    return max(candidates, key=lambda candidate: candidate[0])[1] if candidates else fallback
+
+
 def read_artifact(
     repository: Path, identity: str, *, ledger: dict[str, Any] | None = None
 ) -> tuple[dict[str, Any], Path]:
     name = ARTIFACTS.get(identity)
     if name is None:
         raise HTTPException(404, "Unknown Veritas evidence artifact")
-    if identity in {"market-universe-coverage", "coverage-design-audit"}:
+    break_even_receipt_sha256: str | None = None
+    if identity in {"market-universe-coverage", "coverage-design-audit", "break-even"}:
         if ledger is None:
             ledger, _ = read_artifact(repository, "ledger")
         if identity == "market-universe-coverage":
             path = market_universe_coverage_artifact_path(repository, ledger)
-        else:
+        elif identity == "coverage-design-audit":
             path = coverage_design_audit_artifact_path(repository, ledger)
+        else:
+            path = execution_break_even_artifact_path(repository, ledger)
+            relative_path = path.relative_to(repository).as_posix()
+            for item in ledger.get("hypotheses", []):
+                if (
+                    not isinstance(item, dict)
+                    or item.get("experiment_id") != EXECUTION_BREAK_EVEN_ID
+                ):
+                    continue
+                result = item.get("result")
+                if (
+                    isinstance(result, dict)
+                    and result.get("artifact_path") == relative_path
+                    and result.get("analysis_version") == EXECUTION_BREAK_EVEN_VERSION
+                    and isinstance(result.get("artifact_file_sha256"), str)
+                ):
+                    break_even_receipt_sha256 = result["artifact_file_sha256"]
+                    break
+            if path.name != ARTIFACTS["break-even"] and break_even_receipt_sha256 is None:
+                raise HTTPException(
+                    503, "Veritas execution sensitivity has no matching ledger receipt"
+                )
     else:
         path = repository / "docs" / name
     if path.is_symlink() or not path.is_file():
@@ -142,11 +202,21 @@ def read_artifact(
     if path.stat().st_size > MAX_ARTIFACT_BYTES:
         raise HTTPException(413, "Veritas evidence exceeds the interface bound")
     try:
-        value = json.loads(path.read_text())
+        raw = path.read_bytes()
+        value = json.loads(raw)
     except (OSError, ValueError) as error:
         raise HTTPException(503, "Veritas evidence could not be read") from error
     if not isinstance(value, dict):
         raise HTTPException(503, "Veritas evidence has an invalid format")
+    if break_even_receipt_sha256 is not None:
+        if (
+            hashlib.sha256(raw).hexdigest() != break_even_receipt_sha256
+            or value.get("analysis_version") != EXECUTION_BREAK_EVEN_VERSION
+            or value.get("experiment_id") != EXECUTION_BREAK_EVEN_ID
+            or value.get("fee_model_version") != "veritas-economic-feasibility-v3"
+            or value.get("fee_collection_medium_for_buy") != "collateral"
+        ):
+            raise HTTPException(503, "Veritas execution sensitivity failed its receipt checks")
     return value, path
 
 
@@ -2861,8 +2931,8 @@ def _hypothesis_result_status(item: dict[str, Any]) -> str:
 def overview(repository: Path) -> dict[str, Any]:
     baseline, _ = read_artifact(repository, "baseline")
     funnel, _ = read_artifact(repository, "raw-funnel")
-    break_even, _ = read_artifact(repository, "break-even")
     ledger, _ = read_artifact(repository, "ledger")
+    break_even, _ = read_artifact(repository, "break-even", ledger=ledger)
     inventory, _ = read_artifact(repository, "inventory")
     public_observatory = observatory_overview(repository)
     public_observatory["measurement_pilot"] = coverage_pilot_overview(repository)
@@ -3043,6 +3113,10 @@ def overview(repository: Path) -> dict[str, Any]:
         },
         "execution_sensitivity": {
             "quantity_shares_per_leg": quantity,
+            "fee_model_version": break_even.get("fee_model_version", "legacy_unknown"),
+            "fee_collection_medium_for_buy": break_even.get(
+                "fee_collection_medium_for_buy", "unknown"
+            ),
             "completed_pair_pnl_single_match_usdc": full_depth["complete_pair_pnl_scenarios_usdc"][
                 "single_match_rounding_worst_resolution"
             ],

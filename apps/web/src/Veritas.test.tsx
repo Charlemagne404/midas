@@ -328,14 +328,16 @@ it('labels measured evidence and keeps synthetic execution separate from actual 
                 baseline_policies: { count: 6, all_abstained: true },
                 execution_sensitivity: {
                   quantity_shares_per_leg: '100',
-                  completed_pair_pnl_single_match_usdc: '1.4178',
-                  completed_pair_pnl_fragmentation_safe_usdc: '-0.7822',
-                  unmatched_leg_loss_usdc: '50.1959',
-                  required_matched_completions_per_unmatched_event: '35.4039',
-                  required_matched_rate_at_1pct_unmatched: '0.3540',
-                  required_matched_rate_at_5pct_unmatched: '1.7702',
+                  fee_model_version: 'veritas-economic-feasibility-v3',
+                  fee_collection_medium_for_buy: 'collateral',
+                  completed_pair_pnl_single_match_usdc: '1.623991780821917808219178082',
+                  completed_pair_pnl_fragmentation_safe_usdc: '-0.369824657534246575342465753',
+                  unmatched_leg_loss_usdc: '52.19972602739726027397260274',
+                  required_matched_completions_per_unmatched_event: '32.14285111774302117056399166',
+                  required_matched_rate_at_1pct_unmatched: '0.3214285111774302117056399166',
+                  required_matched_rate_at_5pct_unmatched: '1.607142555887151058528199583',
                   break_even_at_5pct_unmatched_feasible: false,
-                  half_depth_single_match_pair_pnl_usdc: '-1.0270',
+                  half_depth_single_match_pair_pnl_usdc: '-0.884209260273972602739726027',
                   rates_are_estimates: false,
                   actual_fills: 'unknown_counterfactual',
                 },
@@ -898,7 +900,10 @@ it('labels measured evidence and keeps synthetic execution separate from actual 
   ).toHaveAttribute('href', '/api/veritas/artifacts/label-feasibility');
   expect(screen.getByText('354')).toBeInTheDocument();
   expect(screen.getAllByText('1,027').length).toBeGreaterThan(0);
-  expect(screen.getByText('-1.03 USDC')).toBeInTheDocument();
+  expect(screen.getByText('-52.20 USDC')).toBeInTheDocument();
+  expect(
+    screen.getByText(/veritas-economic-feasibility-v3 · buy fees charged in collateral at entry/),
+  ).toBeInTheDocument();
   expect(screen.getByText('stratified-gamma-page-rotation-v2')).toBeInTheDocument();
   expect(screen.getByText('Latest completed qualification edge distribution')).toBeInTheDocument();
   expect(screen.getByText('-0.020')).toBeInTheDocument();

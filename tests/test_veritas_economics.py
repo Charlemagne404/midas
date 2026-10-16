@@ -52,28 +52,20 @@ def test_fee_formula_uses_market_schedule_exponent():
     assert D(fees["single_match_fee_shares_by_rounding_mode"]["half_up"]) == D("3.675")
 
 
-def test_pair_economics_applies_per_leg_fee_exponents_and_resolution_share_cost():
+def test_pair_economics_applies_per_leg_fee_exponents_as_entry_collateral_costs():
     result = pair(fee_exponent={"yes": "2", "no": "1"})
 
     assert result["fee_exponent_by_leg"] == {"yes": "2", "no": "1"}
-    yes_fee_shares = D(
-        result["single_match_fee_share_quantity_by_leg_by_rounding_mode"]["yes"]["half_up"]
-    )
-    no_fee_shares = D(
-        result["single_match_fee_share_quantity_by_leg_by_rounding_mode"]["no"]["half_up"]
-    )
+    total_fee = D(result["single_match_fee_total_usdc_by_rounding_mode"]["half_up"])
     total_cost = D(result["acquisition_cost_total"])
-    extra_cost = sum(
-        D(result[key])
-        for key in (
-            "financing_cost_assumption",
-            "redemption_cost_assumption",
-            "operational_cost_assumption",
-        )
-    )
+    extra_cost = D(result["redemption_cost_assumption"]) + D(result["operational_cost_assumption"])
+    financing = D(result["single_match_financing_cost_assumption"])
     outcomes = result["net_hypothetical_single_match_by_resolution"]
-    assert D(outcomes["yes_wins"]) == D(10) - yes_fee_shares - total_cost - extra_cost
-    assert D(outcomes["no_wins"]) == D(10) - no_fee_shares - total_cost - extra_cost
+    expected = D(10) - total_fee - total_cost - financing - extra_cost
+    assert D(outcomes["yes_wins"]) == expected
+    assert D(outcomes["no_wins"]) == expected
+    assert result["fee_collection_medium_for_buy"] == "collateral"
+    assert result["fee_cost_is_resolution_independent"] is True
 
 
 def test_fee_precision_can_round_a_small_match_to_zero():
@@ -151,10 +143,10 @@ def test_pair_economics_reports_two_fee_assumptions_and_no_fill_claim():
     assert D(result["fragmentation_safe_fee_upper_total_usdc"]) >= D(
         result["single_match_fee_total_usdc_by_rounding_mode"]["half_up"]
     )
-    assert result["fee_collection_medium_for_buy"] == "outcome_shares"
+    assert result["fee_collection_medium_for_buy"] == "collateral"
     assert (
         result["net_hypothetical_single_match_by_resolution"]["yes_wins"]
-        != result["net_hypothetical_single_match_by_resolution"]["no_wins"]
+        == result["net_hypothetical_single_match_by_resolution"]["no_wins"]
     )
     assert result["actual_fills"] == "unknown_counterfactual"
     assert result["fill_probability"] is None
@@ -184,7 +176,11 @@ def test_pair_economics_reports_capital_insufficiency_without_changing_depth():
     result = pair(hypothetical_capital="9.5")
 
     assert result["full_quantity_supported_by_displayed_depth"] is True
-    assert D(result["capital_required_at_entry"]) == D("9.64")
+    assert D(result["capital_required_at_entry"]) == (
+        D(result["acquisition_cost_total"])
+        + D(result["fee_cash_cost_at_entry_upper_bound"])
+        + D(result["operational_cost_assumption"])
+    )
     assert result["hypothetical_capital_sufficient"] is False
 
 
@@ -221,17 +217,18 @@ def test_partial_position_payoff_bounds_cover_both_binary_resolutions():
         "5",
         "1.2",
         "3.0",
-        "0.02",
-        "0.04",
+        yes_fee_usdc_upper="0.02",
+        no_fee_usdc_upper="0.04",
         protocol="v1",
         pair_semantics="same_condition_yes_no_ctf",
         same_condition=True,
         payoff_verified=True,
     )
 
-    assert result["terminal_payout_bounds"] == ["2.98", "4.96"]
-    assert result["net_hypothetical_pnl_bounds"] == ["-1.22", "0.76"]
-    assert result["terminal_outcomes"] == {"yes_wins": "-1.22", "no_wins": "0.76"}
+    assert result["terminal_payout_bounds"] == ["3", "5"]
+    assert result["fee_cost_upper_total"] == "0.06"
+    assert result["net_hypothetical_pnl_bounds"] == ["-1.26", "0.74"]
+    assert result["terminal_outcomes"] == {"yes_wins": "-1.26", "no_wins": "0.74"}
     assert result["orders_submitted"] is False
 
 
@@ -241,16 +238,16 @@ def test_partial_position_bounds_floor_payout_at_zero_when_fee_bound_exceeds_qua
         "5",
         "1.2",
         "3.0",
-        "4",
-        "0.04",
+        yes_fee_usdc_upper="4",
+        no_fee_usdc_upper="0.04",
         protocol="v1",
         pair_semantics="same_condition_yes_no_ctf",
         same_condition=True,
         payoff_verified=True,
     )
 
-    assert result["terminal_payout_bounds"] == ["0", "4.96"]
-    assert result["net_hypothetical_pnl_bounds"] == ["-4.2", "0.76"]
+    assert result["terminal_payout_bounds"] == ["3", "5"]
+    assert result["net_hypothetical_pnl_bounds"] == ["-5.24", "-3.24"]
 
 
 def test_partial_position_bounds_reject_unverified_market_semantics():

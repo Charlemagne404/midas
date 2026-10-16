@@ -591,12 +591,16 @@ def _replay_one(
             raise ValueError("independent_depth_arithmetic_disagrees_with_snapshot_audit")
         fee_status = str(quantity_result.get("fee_status") or "unknown")
         fee_evaluation = quantity_result.get("hypothetical_fee_evaluation")
+        if quantity_result.get("independent_fee_agrees_with_shared") is False:
+            raise ValueError("independent_fee_arithmetic_disagrees_with_snapshot_audit")
         compact_fee_sensitivity = (
             {
                 field: fee_evaluation.get(field)
                 for field in (
                     "fee_rate_by_leg",
                     "fee_exponent_by_leg",
+                    "fee_collection_medium_for_buy",
+                    "fee_cash_cost_at_entry_upper_bound",
                     "net_hypothetical_single_match_worst_resolution",
                     "net_hypothetical_fragmentation_safe_lower_by_resolution",
                 )
@@ -679,7 +683,13 @@ def _replay_one(
                     "minimum_order_constraints_satisfied_both_legs": minimum_constraints_met,
                     "fee_status": fee_status,
                     "fee_sensitivity_basis": (
-                        "shared_versioned_fee_model_recomputed_from_replayed_depth"
+                        "versioned_collateral_fee_model_recomputed_from_replayed_depth"
+                    ),
+                    "independent_fee_arithmetic_agrees_with_shared": quantity_result.get(
+                        "independent_fee_agrees_with_shared"
+                    ),
+                    "independent_fee_reference_by_leg": quantity_result.get(
+                        "independent_fee_reference_by_leg"
                     ),
                     "single_match_fee_sensitivity_positive": single_match_positive,
                     "fragmentation_safe_fee_sensitivity_positive": fragmentation_safe_positive,

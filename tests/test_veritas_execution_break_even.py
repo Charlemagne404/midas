@@ -71,7 +71,9 @@ def test_synthetic_execution_report_keeps_rates_as_unestimated_scenarios():
         ]
     }
 
-    assert report["experiment_id"] == "VERITAS-GATE-B-EXECUTION-BREAK-EVEN-20261015-001"
+    assert report["experiment_id"] == "VERITAS-GATE-B-EXECUTION-BREAK-EVEN-20261016-002"
+    assert report["fee_model_version"] == "veritas-economic-feasibility-v3"
+    assert report["fee_collection_medium_for_buy"] == "collateral"
     assert (
         report["execution_break_even_method"]["public_data_identifies_hypothetical_order_fills"]
         is False
@@ -80,5 +82,8 @@ def test_synthetic_execution_report_keeps_rates_as_unestimated_scenarios():
     assert rows["100"]["rates_are_estimates"] is False
     assert rows["100"]["unmatched_leg_loss"]["recovery_value_assumption_usdc"] == "0"
     assert D(rows["100"]["unmatched_leg_loss"]["conservative_unmatched_leg_loss_usdc"]) > 0
+    assert D(
+        rows["100"]["complete_pair_pnl_scenarios_usdc"]["single_match_rounding_worst_resolution"]
+    ) == D("1.623991780821917808219178082")
     assert report["orders_submitted"] is False
     assert report["realized_money"] is None

@@ -2,6 +2,15 @@
 
 **As of:** 2026-10-15
 
+**Model correction (2026-10-16):** The synthetic v2 P&L numbers below used an
+outcome-share fee deduction. Current public fee guidance specifies fees in
+USDC, and current CTF Exchange V2 settlement code charges buy fees from
+collateral. Model v3 charges both purchased legs at entry; the v2 synthetic
+figures below are retained as historical output and are superseded for current
+economics by [Gate B checkpoint 012](VERITAS_MISSION2_GATE_B_CHECKPOINT_012.md)
+and [break-even artifact 002](VERITAS_GATE_B_EXECUTION_BREAK_EVEN_002.json).
+No observed gross-candidate conclusion changed.
+
 **Verdict:** No observed opportunity qualifies for strategy promotion or a new prospective campaign. Keep the no-trade control.
 
 ## Observed opportunity funnel

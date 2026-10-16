@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-16T08:33:23Z",
+  "updated_at_utc": "2026-10-16T09:06:14Z",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -7431,7 +7431,7 @@
       "title": "Does the isolated browser show the audited inclusion-support result, its freshness, and its evidence limits correctly?",
       "mechanism": "Exercise the current Veritas UI and read-only artifact route in Playwright using the isolated demo API/Vite configuration, and compare the visible audit summary with the receipted local artifact.",
       "success_metric": "The browser identifies audit 002 as stale against the current pilot, displays the audited support/yield figures and limitation, links to the direct artifact route, and the endpoint returns the expected versioned source counts.",
-      "decision": "Verified for the targeted source-checkout workflow. Playwright passed one Veritas browser test in 5.6 seconds. The test checks the label Audited 25 scans · pilot now at 26, 99.80% support, 82.96% weighted yield, the direct artifact link, 25 source events, 23 fully supported scans, and the no-venue-wide-inference flag. The full suite and hosted deployment remain unverified.",
+      "decision": "Verified for the targeted source-checkout workflow. Playwright passed one Veritas browser test in 5.6 seconds. The test checks the label Audited 25 scans \u00b7 pilot now at 26, 99.80% support, 82.96% weighted yield, the direct artifact link, 25 source events, 23 fully supported scans, and the no-venue-wide-inference flag. The full suite and hosted deployment remain unverified.",
       "status": "continue",
       "dataset_id": "VERITAS-M2-COVERAGE-PILOT-001_current_26_scans_and_COVERAGE-DESIGN-AUDIT-002",
       "limitations": [
@@ -7600,12 +7600,120 @@
         "authenticated_requests": false,
         "orders_submitted": false
       }
+    },
+    {
+      "hypothesis_id": "VERITAS-H130",
+      "title": "Does independent source replay reproduce opportunity gates with current collateral fee accounting?",
+      "mechanism": "Replay each immutable saved public snapshot from its hashed Gamma and CLOB payloads. Recompute quality, gross edge, displayed depth, minimums, and fee sensitivities using economic model v3, then compare its fee arithmetic with a separate Decimal implementation of the documented fee formula.",
+      "experiment_id": "VERITAS-M2-INDEPENDENT-SOURCE-AUDIT-002",
+      "dataset_id": "saved_public_selected_market_snapshots_scans_1_to_59",
+      "success_metric": "Reproduce stored validity and top-edge decisions; independently agree on reported fee arithmetic; report all positive gross and economic counts without treating repeated states as independent.",
+      "result": {
+        "status": "NO_POSITIVE_GROSS_CANDIDATE_OBSERVED",
+        "analysis_version": "veritas-independent-source-opportunity-audit-v2",
+        "captured_at_utc": "2026-10-16T09:04:19.683749+00:00",
+        "artifact_path": "docs/VERITAS_MISSION2_INDEPENDENT_OPPORTUNITY_AUDIT_011.json",
+        "artifact_file_sha256": "f8538a523f2cc092939de7755e4697e1a5fb0ad52c48ecc16657162dbf8fb069",
+        "artifact_bytes": 3836,
+        "result_sha256": "208ff1828969e8e49baf414345d7100b3d01680048b951036796af5bfcaa521c",
+        "source_manifest_sha256": "c6de53f929bc35faba2abd989227c332af528ce4868f9394aa57988aa98e4879",
+        "source_code_sha256": "74ccd22e477e1f842c97ac400af80db365950f4624ad29057351480f7260f0dd",
+        "fee_model_version": "veritas-economic-feasibility-v3",
+        "fee_collection_medium_for_buy": "collateral",
+        "fee_collection_source": "https://github.com/Polymarket/ctf-exchange-v2/blob/main/src/exchange/mixins/Trading.sol",
+        "snapshot_count": 59,
+        "selected_market_observation_count": 2360,
+        "quality_valid_count": 2015,
+        "stored_quality_valid_count": 2015,
+        "quality_validity_mismatch_count": 0,
+        "top_edge_mismatch_count": 0,
+        "strict_reported_freshness_count": 426,
+        "reported_age_exceedance_count": 1589,
+        "pair_skew_exceedance_count": 0,
+        "fee_checked_quantity_count": 2523,
+        "fee_arithmetic_disagreement_count": 0,
+        "positive_top_gross_count": 0,
+        "positive_full_depth_gross_by_quantity": {
+          "10": 0,
+          "100": 0,
+          "20": 0,
+          "5": 0,
+          "50": 0
+        },
+        "positive_full_depth_and_minimums_by_quantity": {
+          "10": 0,
+          "100": 0,
+          "20": 0,
+          "5": 0,
+          "50": 0
+        },
+        "positive_single_match_fee_by_quantity": {
+          "10": 0,
+          "100": 0,
+          "20": 0,
+          "5": 0,
+          "50": 0
+        },
+        "positive_fragmentation_safe_fee_by_quantity": {
+          "10": 0,
+          "100": 0,
+          "20": 0,
+          "5": 0,
+          "50": 0
+        },
+        "compressed_source_bytes": 38387196,
+        "authenticated_requests": false,
+        "orders_submitted": false
+      },
+      "limitations": [
+        "Saved snapshots are selected, intermittent, and correlated; they do not estimate a venue-wide denominator or independent opportunity count.",
+        "Reported timestamp age does not prove sequence freshness, atomicity, queue position, order arrival, or fills.",
+        "The independent arithmetic cross-check reproduces the documented curve and schedule, but does not verify a fee charged on a hypothetical order.",
+        "Current public records produce no positive gross candidate; this is not evidence that opportunities never occur or are absent between scans."
+      ],
+      "decision": "Fee arithmetic agrees across both implementations for all checked quantities. The corrected v3 model leaves the public no-gross-candidate conclusion unchanged; continue no-trade and do not train a strategy model without candidate-relevant labels.",
+      "status": "continue"
+    },
+    {
+      "hypothesis_id": "VERITAS-H131",
+      "title": "How does current collateral-denominated taker-fee accounting change synthetic paired economics?",
+      "mechanism": "Recompute the controlled synthetic depth and break-even grid using the current published taker fee formula and fee collection in collateral. Charge both bought legs at entry, include the fee reserve in capital needs, and treat fees as resolution-independent costs.",
+      "experiment_id": "VERITAS-GATE-B-EXECUTION-BREAK-EVEN-20261016-002",
+      "dataset_id": "controlled_synthetic_orderbook_v1",
+      "success_metric": "Produce a versioned synthetic sensitivity that is explicit about fee source, collection medium, rounding uncertainty, and the absence of empirical fills or completion rates.",
+      "result": {
+        "status": "synthetic_sensitivities_recomputed",
+        "analysis_version": "veritas-execution-break-even-v2",
+        "fee_model_version": "veritas-economic-feasibility-v3",
+        "fee_collection_medium_for_buy": "collateral",
+        "fee_collection_source": "https://github.com/Polymarket/ctf-exchange-v2/blob/main/src/exchange/mixins/Trading.sol",
+        "captured_at_utc": "2026-10-16T09:06:13.350494+00:00",
+        "artifact_path": "docs/VERITAS_GATE_B_EXECUTION_BREAK_EVEN_002.json",
+        "artifact_file_sha256": "662ec9cc4be0923fdf03a0270daf49c68d3ffefbb5eb3c4d6c16c9839b9cdea0",
+        "artifact_bytes": 161097,
+        "quantity_shares_per_leg": "100",
+        "full_depth_single_match_pnl_usdc": "1.623991780821917808219178082",
+        "full_depth_fragmentation_safe_pnl_usdc": "-0.369824657534246575342465753",
+        "full_depth_unmatched_leg_loss_usdc": "52.19972602739726027397260274",
+        "half_depth_single_match_pnl_usdc": "-0.884209260273972602739726027",
+        "orders_submitted": false,
+        "realized_money": null
+      },
+      "limitations": [
+        "This is a controlled synthetic book and not an observed market state, candidate, fill, strategy result, or profitability estimate.",
+        "The positive single-match result is a rounding sensitivity; the fragmentation-safe result remains negative.",
+        "Completion, unmatched-event, queue, order-arrival, recovery, and fill rates remain unknown.",
+        "The public fee formula and current contract settlement source inform the model, but no hypothetical order was sent and no charged fee was observed."
+      ],
+      "decision": "The previous v2 share-deduction sensitivity is superseded for current fee accounting. Use v3 for future modeling and dashboard display; retain v2 as immutable history. The synthetic favorable case is not economic evidence for Midas.",
+      "status": "continue"
     }
   ],
   "next_research_questions": [
-    "Does the 05:45 scheduled Director cycle reconcile the completed scan-51 child without duplicate admission?",
-    "Can documented venue timestamp semantics or an independent sequence-bearing source establish continuity beyond endpoint timestamp age?",
-    "How do the completed coverage pilot strata, missed sequences, storage, and compute costs affect the next observation design?",
-    "Can finalized-source gap indexing advance without reading active segments, and which censored outcomes remain beyond the indexed prefix?"
+    "Can the normal safe service code rollover load the corrected v3 fee model without disturbing the collector, Reality worker, or protected campaign?",
+    "Do future observed public snapshots continue to show zero quality-valid positive gross states under the unchanged opportunity definition?",
+    "Can documented venue sequence semantics or an independent continuity signal establish freshness beyond returned timestamp age?",
+    "How do the fixed coverage pilot strata, missed sequences, storage, and compute costs affect the next observation design?",
+    "Can finalized-source gap indexing advance while preserving the original frozen campaign labels and source prefix?"
   ]
 }

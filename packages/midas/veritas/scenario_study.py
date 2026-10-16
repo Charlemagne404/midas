@@ -6,7 +6,7 @@ from datetime import UTC, datetime
 from decimal import Decimal
 from typing import Any
 
-from .economics import VERSION, evaluate_binary_pair, partial_position_bounds
+from .economics import FEE_COLLECTION_SOURCE, VERSION, evaluate_binary_pair, partial_position_bounds
 from .execution_break_even import (
     MATCHED_RATE_GRID,
     UNMATCHED_RATE_GRID,
@@ -132,9 +132,9 @@ def _unmatched_leg_loss(
     financing_rate = D(annual_financing_rate)
     operations = D(operational_cost_per_share)
     costs = {side: D(value) for side, value in result["acquisition_cost_by_leg"].items()}
-    fee_shares = {
-        side: D(value)
-        for side, value in result["fragmentation_safe_fee_share_quantity_upper_by_leg"].items()
+    fee_costs = {
+        side: D(result["fee_scenarios_by_leg"][side]["fragmentation_safe_upper_fee_usdc"])
+        for side in ("yes", "no")
     }
     side_results: dict[str, dict[str, str]] = {}
     for side in ("yes", "no"):
@@ -143,21 +143,22 @@ def _unmatched_leg_loss(
             no_quantity=q if side == "no" else D(0),
             yes_acquisition_cost=costs["yes"] if side == "yes" else D(0),
             no_acquisition_cost=costs["no"] if side == "no" else D(0),
-            yes_fee_shares_upper=fee_shares["yes"] if side == "yes" else D(0),
-            no_fee_shares_upper=fee_shares["no"] if side == "no" else D(0),
+            yes_fee_usdc_upper=fee_costs["yes"] if side == "yes" else D(0),
+            no_fee_usdc_upper=fee_costs["no"] if side == "no" else D(0),
             protocol="v1",
             pair_semantics="same_condition_yes_no_ctf",
             same_condition=True,
             payoff_verified=True,
         )
         leg_cost = costs[side]
-        financing = leg_cost * financing_rate * days / D(365)
+        financing = (leg_cost + fee_costs[side]) * financing_rate * days / D(365)
         operating = q * operations
         worst_terminal = min(D(value) for value in partial["terminal_outcomes"].values())
         worst_pnl = worst_terminal - financing - operating
         loss = max(D(0), -worst_pnl)
         side_results[side] = {
             "leg_acquisition_cost_usdc": str(leg_cost),
+            "leg_fee_cash_cost_upper_bound_usdc": str(fee_costs[side]),
             "single_leg_financing_cost_usdc": str(financing),
             "single_leg_operational_cost_usdc": str(operating),
             "worst_terminal_pnl_usdc": str(worst_pnl),
@@ -166,7 +167,7 @@ def _unmatched_leg_loss(
     worst_side = max(side_results, key=lambda side: D(side_results[side]["loss_assumption_usdc"]))
     return {
         "scenario": "one leg fills, loses at settlement, and cannot be recovered",
-        "fee_share_bounds_used": "fragmentation_safe_upper",
+        "fee_cash_cost_bounds_used": "fragmentation_safe_upper",
         "settlement_days_assumption": settlement_days,
         "annual_financing_rate_assumption": annual_financing_rate,
         "operational_cost_per_share_assumption": operational_cost_per_share,
@@ -273,8 +274,11 @@ def build_execution_break_even_report() -> dict[str, Any]:
         }
 
     report.update(
-        experiment_id="VERITAS-GATE-B-EXECUTION-BREAK-EVEN-20261015-001",
-        analysis_version="veritas-execution-break-even-v1",
+        experiment_id="VERITAS-GATE-B-EXECUTION-BREAK-EVEN-20261016-002",
+        analysis_version="veritas-execution-break-even-v2",
+        fee_model_version=VERSION,
+        fee_collection_medium_for_buy="collateral",
+        fee_collection_source=FEE_COLLECTION_SOURCE,
         parent_capacity_experiment_id="VERITAS-GATE-B-CAPACITY-20261015-001",
         question=(
             "What matched-completion rate would offset a hypothetical unmatched-leg "
@@ -305,6 +309,7 @@ def build_execution_break_even_report() -> dict[str, Any]:
         "Completion and unmatched-event rates are not estimated from public quote data or any private execution record.",
         "The unmatched leg is held to an adverse settlement outcome with zero recovery value; alternative recovery paths are not identified.",
         "The single-match fee case is a favorable fragmentation sensitivity, while the fragmentation-safe case is the conservative fee bound.",
+        "Taker fees are modeled as collateral costs charged at entry on each purchased leg, independent of the eventual resolution.",
         "The synthetic order book and all costs are controlled inputs; this analysis is not strategy performance or deployable capacity.",
     ]
     return report
@@ -316,6 +321,9 @@ def build_report() -> dict[str, Any]:
         "schema_version": 1,
         "experiment_id": "VERITAS-GATE-B-CAPACITY-20261015-001",
         "analysis_version": VERSION,
+        "fee_model_version": VERSION,
+        "fee_collection_medium_for_buy": "collateral",
+        "fee_collection_source": FEE_COLLECTION_SOURCE,
         "captured_at_utc": datetime.now(UTC).isoformat(timespec="microseconds"),
         "evidence_class": "controlled_synthetic_hypothetical_execution",
         "dataset_id": "controlled_synthetic_orderbook_v1",
@@ -335,6 +343,7 @@ def build_report() -> dict[str, Any]:
             "fee_price_component_exponent_per_leg": "1",
             "fee_rounding_quantum_usdc": "0.00001",
             "fee_rounding_direction": "official docs do not specify; floor and half-up sensitivities plus conservative bound are reported",
+            "fee_collection_medium_for_buy": "collateral",
             "settlement_days": "7",
             "annual_financing_rate": "0.10",
             "redemption_cost_per_set_usdc": "0.01",

@@ -2,6 +2,15 @@
 
 **As of:** 2026-10-15
 
+**Model correction (2026-10-16):** This historical Mission 1 report's
+synthetic P&L table uses the v2 outcome-share fee assumption. Current public fee
+guidance and CTF Exchange V2 settlement semantics support collateral fees
+charged at entry on both bought legs. Model v3 supersedes those synthetic
+figures for current economics; see [Gate B checkpoint
+012](VERITAS_MISSION2_GATE_B_CHECKPOINT_012.md) and [break-even artifact
+002](VERITAS_GATE_B_EXECUTION_BREAK_EVEN_002.json). The observed zero-gross
+result in this historical panel is unchanged.
+
 **Worktree:** `/home/charlie/midas-veritas`, branch `project/veritas`
 
 **Decision:** No observed candidate supports a strategy or a separate prospective campaign. Keep the existing Reality campaign and its services untouched; continue passive evidence collection and revisit only after the stated evidence gates are met.

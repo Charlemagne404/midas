@@ -305,14 +305,18 @@ def test_independent_source_audit_recomputes_positive_fixture_and_strict_freshne
     assert audit["complete"] is True
     assert audit["snapshot_count"] == 1
     assert audit["selected_market_observation_count"] == 1
-    assert audit["independent_v2_valid_count"] == 1
+    assert audit["independent_v3_valid_count"] == 1
     assert audit["strict_freshness_valid_count"] == 1
     assert audit["positive_top_pair_gross_count"] == 1
     assert audit["strict_fresh_positive_top_pair_gross_count"] == 1
     assert audit["positive_full_depth_and_both_minimums_by_quantity"]["20"] == 1
     assert audit["positive_both_fee_sensitivities_by_quantity"]["20"] == 1
-    assert audit["v4_v2_validity_mismatch_count"] == 0
-    assert audit["v4_v2_top_edge_mismatch_count"] == 0
+    assert audit["fee_model_version"] == "veritas-economic-feasibility-v3"
+    assert audit["fee_collection_medium_for_buy"] == "collateral"
+    assert audit["independent_fee_checked_quantity_count"] == 3
+    assert audit["independent_fee_disagreement_count"] == 0
+    assert audit["v4_v3_validity_mismatch_count"] == 0
+    assert audit["v4_v3_top_edge_mismatch_count"] == 0
 
 
 def test_independent_source_audit_uses_v4_event_for_legacy_snapshot_summary(tmp_path):
@@ -329,9 +333,9 @@ def test_independent_source_audit_uses_v4_event_for_legacy_snapshot_summary(tmp_
 
     assert audit["complete"] is True
     assert audit["v4_stored_quality_valid_count"] == 1
-    assert audit["independent_v2_valid_count"] == 1
-    assert audit["v4_v2_validity_mismatch_count"] == 0
-    assert audit["v4_v2_top_edge_mismatch_count"] == 0
+    assert audit["independent_v3_valid_count"] == 1
+    assert audit["v4_v3_validity_mismatch_count"] == 0
+    assert audit["v4_v3_top_edge_mismatch_count"] == 0
 
 
 def test_strict_freshness_sensitivity_excludes_old_or_skewed_books():
