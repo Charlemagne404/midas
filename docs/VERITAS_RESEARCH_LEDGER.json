@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-16T02:59:00Z",
+  "updated_at_utc": "2026-10-16T03:14:43Z",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -5563,6 +5563,75 @@
         "Snapshots are intermittent and do not establish continuous quote coverage, upstream freshness, order arrival, or fills.",
         "The first scan retains a legacy capture-counter/current-replay discrepancy; the current v4 panel count is not rewritten.",
         "The fixed 24-hour coverage pilot remains incomplete at 15/48 scans and one sequence was skipped after a scan-45 code-hash mismatch."
+      ]
+    },
+    {
+      "hypothesis_id": "VERITAS-H099",
+      "experiment_id": "VERITAS-M2-CENSOR-GAP-ATTRIBUTION-001",
+      "dataset_id": "96d2a39c9bcb0cfe5c3b22868104a9fa8b80a15da13021c2810f269d425715eb",
+      "title": "Can finalized receiver-time gaps explain campaign-window gap-labeled censors?",
+      "mechanism": "A read-only audit joins frozen campaign censor outcomes to a sealed, code-pinned finalized Reality gap-detail prefix. Exact recorded-gap references are separated from indirect earlier same-market/same-reason temporal candidates.",
+      "success_metric": "Verify campaign and gap-index identities, the sealed summary/state/code/event-file chains, exact source references, and all censored rows without reading active segments or changing the frozen campaign; report unresolved rows explicitly while the prefix is partial.",
+      "status": "continue",
+      "decision": "The audit scanned all 40,075 censored horizon rows and found 339 gap-labeled outcomes. Among 160 book_issue:gap rows, 45 have a preceding same-market/same-reason gap candidate in the indexed prefix, 29 have no such gap through the reference, and 86 references lie beyond the prefix. Only eight candidates are within five minutes and 30 are more than one hour later. Of 179 explicit recorded-gap rows, 38 map into the current index and 141 exact gap references remain beyond it. The join is temporal evidence, not causality; preserve the partial result and rerun after scheduled prefix advancement.",
+      "result": {
+        "captured_at_utc": "2026-10-16T03:10:11Z",
+        "checkpoint_path": "docs/VERITAS_MISSION2_GATE_C_CHECKPOINT_011.md",
+        "artifact_path": "docs/VERITAS_MISSION2_CENSOR_GAP_ATTRIBUTION_001.json",
+        "artifact_file_sha256": "332258b51f72c058cf945742ff29f0d26abcb1da0d5865ebcfd5419fb94e45a5",
+        "result_sha256": "2c81d4ad8852b2feaae7a7b5f7bf6948a5f85c514ac9d6bfd0f3bff3935dcab2",
+        "gap_detail_summary_sha256": "96d2a39c9bcb0cfe5c3b22868104a9fa8b80a15da13021c2810f269d425715eb",
+        "gap_detail_prefix": {
+          "processed_segments": 1919,
+          "catalog_segments": 5079,
+          "processed_source_bytes": 449729433,
+          "pending_segments": 3158,
+          "pending_source_bytes": 862240407,
+          "campaign_window_gap_events": 194,
+          "campaign_window_affected_markets": 10,
+          "active_segment_read": false
+        },
+        "censored_horizon_rows_scanned": 40075,
+        "gap_labeled_outcomes": 339,
+        "book_issue_gap_rows": 160,
+        "book_issue_gap_link_status": {
+          "preceding_same_market_same_reason_candidate": 45,
+          "no_prior_matching_gap_in_indexed_prefix": 29,
+          "termination_reference_beyond_indexed_prefix": 86
+        },
+        "candidate_gap_age_bands": {
+          "0_to_1s": 0,
+          "1_to_60s": 2,
+          "60_to_300s": 6,
+          "300_to_3600s": 7,
+          "over_3600s": 30
+        },
+        "explicit_recorded_gap_rows": 179,
+        "explicit_gap_link_status": {
+          "verified_and_indexed": 38,
+          "verified_but_not_yet_indexed": 141
+        },
+        "exact_termination_records_verified": 157,
+        "finalized_source_segments_verified": 133,
+        "finalized_source_bytes_hashed": 58443329,
+        "sqlite_event_hash_chain_reverified": false,
+        "causal_claim_made": false
+      },
+      "implementation": {
+        "module_path": "packages/midas/veritas/censor_gap_attribution.py",
+        "module_sha256": "d17119700b7e8b6361feea46f3e60ff5a6180bb2779cb3574e0d2f6b4283cb4a",
+        "runner_path": "scripts/veritas_censor_gap_attribution.py",
+        "runner_sha256": "d8a2742890588dbe141364ebab83fa25984cb0f9b4cf6e3644d3da1c5d74fe04",
+        "test_path": "tests/test_veritas_censor_gap_attribution.py",
+        "test_sha256": "8482c4b75f2f04c02e18e072fa2b3e343977fd92fb18383a5cf5edcd362a9cc2",
+        "verification": "3 focused tests passed in 1.17s; Ruff check/format and strict Mypy passed; no full regression run."
+      },
+      "limitations": [
+        "The gap-detail source prefix remains incomplete, so references beyond its last processed ordinal remain unresolved.",
+        "A preceding same-market/same-reason gap is a temporal candidate, not evidence of direct causality or continuous impairment.",
+        "Gap receive times are Reality recorder times, not exchange quote timestamps.",
+        "Exact raw source segments and gap-detail event files were verified under bounded caps; the SQLite event chain and full database integrity were not reverified.",
+        "No source gap or public mark establishes order arrival, fills, or profitability."
       ]
     }
   ],

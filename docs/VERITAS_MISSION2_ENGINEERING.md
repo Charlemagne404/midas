@@ -1,16 +1,16 @@
 # Veritas Mission 2 Engineering Checkpoint
 
-## Latest checkpoint — 02:59 UTC, coverage refresh and gap progress
+## Latest checkpoint — 03:12 UTC, scan 47 and gap attribution
 
-The scan-46 panel now contains 46 snapshots, 1,840 selected pair observations,
-1,600 v4 quality-valid states, and 820 distinct selected markets. The new
-read-only independent source audit verified the snapshot, public response, and
-v4 event lineage and reproduced all 1,600 v4 validity decisions and top edges
-with zero mismatches. It found no positive top-pair gross candidate and zero
-positive full-depth, minimum, or fee-sensitive results at 5, 10, 20, 50, or
-100 shares per leg. Its conservative reported-timestamp sensitivity admits
-349 pairs; 1,251 have at least one reported book age above five seconds. This
-does not establish sequence freshness or fills. See [Gate B checkpoint
+The latest v4 panel has 47 snapshots, 1,880 selected pair observations,
+1,628 quality-valid states, 835 distinct selected markets, and zero candidate
+events. The independent source audit covers the first 46 snapshots: it
+reproduced all 1,600 v4 validity decisions and top edges with zero mismatches,
+and found no positive top-pair gross candidate or positive full-depth,
+minimum, or fee-sensitive result at 5, 10, 20, 50, or 100 shares per leg.
+Its conservative reported-timestamp sensitivity admits 349 pairs; 1,251 have
+at least one reported book age above five seconds. This does not establish
+sequence freshness or fills. See [Gate B checkpoint
 001](VERITAS_MISSION2_GATE_B_CHECKPOINT_001.md) and the [audit
 artifact](VERITAS_MISSION2_INDEPENDENT_OPPORTUNITY_AUDIT_001.json).
 
@@ -21,10 +21,11 @@ artifact explicitly keeps their units distinct. Focused verification passed
 77 tests; Ruff, formatting, strict Mypy on nine changed source files, and
 `git diff --check` passed. No full regression or model training was run.
 
-At 02:30 UTC, scan 46 selected 40 markets; 33 passed quality checks. Its
-bounded discovery union had 300 IDs, 178 eligible pairs, and 122 exclusions.
-The fixed pilot is 15/48 scans with 497/600 valid slots, 367 distinct IDs, and
-one skipped sequence after a scan-45 code-hash mismatch. The pilot remains
+At 03:02 UTC, scan 47 selected 40 markets; 28 passed quality checks. Its
+bounded discovery union had 293 IDs, 116 eligible pairs, and 177 exclusions.
+It had zero positive top-gross, full-depth, minimum, or fee-sensitive states.
+The fixed pilot is 16/48 scans with 525/640 valid slots across 388 IDs and one
+skipped sequence after a scan-45 code-hash mismatch. The pilot remains
 unchanged and ends at 19:00:55 UTC.
 
 The refreshed offline A1 audit verifies all 46 saved snapshots and their
@@ -40,24 +41,29 @@ collection was used for this refresh. See [Gate A checkpoint
 044](VERITAS_MISSION2_GATE_A_CHECKPOINT_044.md) and the [46-scan coverage
 artifact](VERITAS_MISSION2_MARKET_UNIVERSE_COVERAGE_002.json).
 
-The latest finalized Reality source prefix covers 4,869/5,029 segments,
+The last completed finalized-source summary covers 4,869/5,029 segments,
 1,261,406,393 processed bytes, 318,568 quality-valid states across 77 markets,
 and zero positive gross/depth states; 160 segments / 39,330,180 bytes remain.
-The 02:50 scheduled gap-detail batch advanced the separate prefix to
-1,791/5,049 segments and 416,842,757 processed bytes, leaving 3,256 /
-888,351,418 bytes pending. It has attributed 131 campaign-window book
-resynchronization gaps across seven markets; attribution is progressing but
-remains incomplete. The 02:45 Director admitted scan 46; its Arena child
-completed 46/46 events and passed read-only finding validation, while the
-Director manifest remains queued pending its scheduled reconciliation at
-03:15 UTC. A 02:55 check corrected the earlier storage-directory
+The 03:05 scheduled gap-detail batch advanced the separate prefix to
+1,919/5,079 segments and 449,729,433 processed bytes, leaving 3,158 /
+862,240,407 bytes pending. It now indexes 194 campaign-window book
+resynchronization gaps across ten markets. The new read-only censor join found
+45 indirect same-market temporal candidates among 160 `book_issue:gap` rows;
+most were hours after the preceding gap, so they do not establish causality.
+Another 86 indirect rows and 141 explicit gap rows point beyond the indexed
+prefix. See [Gate C checkpoint
+011](VERITAS_MISSION2_GATE_C_CHECKPOINT_011.md) and the [attribution
+artifact](VERITAS_MISSION2_CENSOR_GAP_ATTRIBUTION_001.json). The 02:45
+Director admitted scan 46; its Arena child completed 46/46 events and passed
+read-only finding validation, while the Director projection awaits its
+scheduled 03:15 UTC reconciliation. A 02:55 check corrected the earlier storage-directory
 interpretation: the Reality recorder's configured `recordings/reality` root
 is 1,309,431,325 bytes, versus 1,261,164,701 bytes at 01:18 UTC, an increase
 of about 48 MB over 97 minutes. See [Gate A checkpoint
 043](VERITAS_MISSION2_GATE_A_CHECKPOINT_043.md), [Gate C checkpoint
 010](VERITAS_MISSION2_GATE_C_CHECKPOINT_010.md), [Gate F checkpoint
 028](VERITAS_MISSION2_GATE_F_CHECKPOINT_028.md), and [inventory
-056](VERITAS_MISSION2_RESEARCH_INVENTORY_056.json).
+057](VERITAS_MISSION2_RESEARCH_INVENTORY_057.json).
 
 ## Previous runtime update — 01:51 UTC, scan 44 and bounded source catch-up
 

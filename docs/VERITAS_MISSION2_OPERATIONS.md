@@ -70,9 +70,39 @@
 
 See [Gate A checkpoint 043](VERITAS_MISSION2_GATE_A_CHECKPOINT_043.md),
 [Gate B checkpoint 001](VERITAS_MISSION2_GATE_B_CHECKPOINT_001.md), [Gate C
-checkpoint 010](VERITAS_MISSION2_GATE_C_CHECKPOINT_010.md), [Gate F
+checkpoint 011](VERITAS_MISSION2_GATE_C_CHECKPOINT_011.md), [Gate F
 checkpoint 028](VERITAS_MISSION2_GATE_F_CHECKPOINT_028.md), and [inventory
-056](VERITAS_MISSION2_RESEARCH_INVENTORY_056.json).
+057](VERITAS_MISSION2_RESEARCH_INVENTORY_057.json).
+
+## Subsequent scheduled research artifacts — 2026-10-16 03:10 UTC
+
+- The scheduled observer finalized scan 47 at 03:02:03 UTC. It selected 40
+  markets, with 28 quality-valid pairs from a 293-ID bounded union: 116 met
+  the current eligibility rule and 177 were excluded. All recorded gross,
+  depth, minimum, and fee gates were zero. The v4 panel has 47 snapshots,
+  1,628/1,880 valid observations, 835 selected IDs, and zero candidate events.
+- The unchanged 24-hour coverage pilot now has 16/48 scans, 525/640 valid
+  slots, and 388 distinct selected IDs. It retains one skipped sequence after
+  the scan-45 code-hash mismatch and ends at 19:00:55 UTC. Its rotating and
+  frozen-control comparison remains descriptive.
+- The scheduled 03:05 gap-detail batch completed at 03:06:14 UTC, processing
+  128 finalized segments / 32,886,676 bytes. Its prefix is 1,919/5,079
+  segments / 449,729,433 processed bytes, with 3,158 / 862,240,407 bytes
+  pending and 194 campaign-window resynchronization events across ten
+  markets. The index remains incomplete; no active `.open` segment was read.
+- A read-only attribution pass verified all 1,919 sealed gap-event files and
+  scanned all 40,075 censored outcomes. It found 45 candidate prior
+  same-market gap links among 160 `book_issue:gap` rows; 29 had no matching
+  gap within the processed prefix, and 86 reference events beyond it. Of 179
+  explicit gap censors, 38 map into the index and 141 point beyond its prefix.
+  Most indirect candidate intervals exceed five minutes, so none is treated
+  as causal. See [Gate C checkpoint
+  011](VERITAS_MISSION2_GATE_C_CHECKPOINT_011.md) and the [row-level
+  artifact](VERITAS_MISSION2_CENSOR_GAP_ATTRIBUTION_001.json).
+
+The service-state and host-resource figures above remain the 02:59 read-only
+snapshot. No newer service probe, manual research-job poll, retry, or restart
+was made for these artifact updates.
 
 ## Previous runtime state — 2026-10-16 01:36 UTC
 

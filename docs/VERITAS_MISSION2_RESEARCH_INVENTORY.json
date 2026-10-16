@@ -177,7 +177,7 @@
     "source_bytes": 551636,
     "source_event_count": 30
   },
-  "captured_at_utc": "2026-10-16T03:00:22+00:00",
+  "captured_at_utc": "2026-10-16T03:14:43+00:00",
   "censoring_analysis": {
     "analysis_source_file": "packages/midas/veritas/forensics.py",
     "analysis_source_sha256": "0b055a21c4b423bbf02cc9c240f26f18263fb8342cd72dec686705d2601a420c",
@@ -2857,7 +2857,7 @@
     "unique_market_ids": 558,
     "window_minutes": 751.53
   },
-  "inventory_id": "VERITAS-M2-RESEARCH-INVENTORY-056",
+  "inventory_id": "VERITAS-M2-RESEARCH-INVENTORY-057",
   "latest_scan_captured_at_utc": "2026-10-16T02:30:17.432809+00:00",
   "latest_scan_id": "scan-20261016T023017Z-1254a0a63f4d",
   "latest_source_analysis_checkpoint": {
@@ -4042,14 +4042,14 @@
     "veritas_control_cohort_sha256": "9578217e20dcc7d1c65fa110f0ed7c689b55483b61191f1aae8d30c9b7300d9a",
     "control_cohort_sha256": "9578217e20dcc7d1c65fa110f0ed7c689b55483b61191f1aae8d30c9b7300d9a"
   },
-  "previous_inventory": "VERITAS_MISSION2_RESEARCH_INVENTORY_055.json",
+  "previous_inventory": "VERITAS_MISSION2_RESEARCH_INVENTORY_056.json",
   "repository": {
     "branch": "project/veritas",
     "checkpoint_base_commit": "3c1cf4119f95961c1efd183bc63a108dac42c2e7",
     "code_changes_after_pilot_activation": true,
-    "commit_at_inventory_creation": "d4ae630e7cd0c7aa7a9b9b9631a67cdf32371f03",
+    "commit_at_inventory_creation": "b1018b41b424fab0cd874892b2da415a906e3791",
     "documentation_and_ledger_checkpoint_pending_commit": true,
-    "head_commit": "d4ae630e7cd0c7aa7a9b9b9631a67cdf32371f03",
+    "head_commit": "b1018b41b424fab0cd874892b2da415a906e3791",
     "mission_status": "active_scheduled_discovery_source_analysis_gap_detail_and_research",
     "path": "/home/charlie/midas-veritas",
     "starting_commit": "9a857cc56804bec6b7129171ba090d338e263aa3",
@@ -7283,5 +7283,216 @@
     "The scan-46 Director projection remains queued pending its scheduled 03:15 UTC reconciliation.",
     "Runtime state is carried forward from the latest read-only operational snapshot; no new service probe or HTTP health probe was made for this documentation refresh.",
     "The worktree documentation and ledger updates were pending commit when this inventory was captured."
+  ],
+  "current_scan_047": {
+    "scan_id": "scan-20261016T030203Z-8baf1b769e20",
+    "captured_at_utc": "2026-10-16T03:02:03.251813+00:00",
+    "snapshot_file": "data/veritas-observatory/snapshots/scan-20261016T030203Z-8baf1b769e20.json.gz",
+    "snapshot_compressed_bytes": 639096,
+    "snapshot_file_sha256": "184b06da8bfa4a8be083e23eb9459b93fab707a6146ba7127a4e5793c22a436f",
+    "snapshot_evidence_sha256": "8baf1b769e208b6e42e183f1672dd32165872fc019a346af2a962086c63eacf0",
+    "snapshot_source_code_sha256": "c490af70f28038237f1a346bc36cf7c6dda4904a2b02802d830450d88e8a26d5",
+    "source_http_attempts": 7,
+    "selected_markets": 40,
+    "quality_valid_pairs": 28,
+    "quality_invalid_pairs": 12,
+    "quality_invalid_reasons": {
+      "no_empty_ask_side": 6,
+      "yes_empty_ask_side": 6
+    },
+    "positive_top_gross_pairs": 0,
+    "positive_full_depth_gross_by_quantity": {
+      "5": 0,
+      "10": 0,
+      "20": 0,
+      "50": 0,
+      "100": 0
+    },
+    "positive_minimum_notional_by_quantity": {
+      "5": 0,
+      "10": 0,
+      "20": 0,
+      "50": 0,
+      "100": 0
+    },
+    "positive_single_match_fee_by_quantity": {
+      "5": 0,
+      "10": 0,
+      "20": 0,
+      "50": 0,
+      "100": 0
+    },
+    "positive_fragmentation_safe_fee_by_quantity": {
+      "5": 0,
+      "10": 0,
+      "20": 0,
+      "50": 0,
+      "100": 0
+    },
+    "query_count": 6,
+    "unique_discovery_ids": 293,
+    "eligible_discovery_markets": 116,
+    "excluded_discovery_ids": 177,
+    "authenticated_requests": false,
+    "orders_submitted": false
+  },
+  "latest_panel_checkpoint_047": {
+    "analysis_version": "veritas-finalized-snapshot-analysis-v4",
+    "analysis_summary_sha256": "9a9c796fc5a49cf278640485364d18117e07ed7576225a56ff377fb798451122",
+    "latest_summary_file_sha256": "cb86e092460068d567709c7b82e1366023f57c2731b6d6ece2e8765cd132d834",
+    "scan_count": 47,
+    "selected_pair_observations": 1880,
+    "quality_valid_pairs": 1628,
+    "invalid_pairs": 252,
+    "distinct_selected_market_ids": 835,
+    "candidate_event_count": 0,
+    "positive_top_gross_pairs": 0,
+    "maximum_top_edge_per_share": "-0.001",
+    "minimum_top_edge_per_share": "-0.996",
+    "independent_source_audit_coverage": "first 46 saved snapshots only",
+    "orders_submitted": false
+  },
+  "coverage_pilot_checkpoint_051": {
+    "study_id": "VERITAS-M2-COVERAGE-PILOT-001",
+    "status": "running",
+    "completed_scans": 16,
+    "maximum_completed_scans": 48,
+    "selected_market_pair_slots": 640,
+    "quality_valid_pairs": 525,
+    "invalid_pairs": 115,
+    "quality_valid_yield": 0.8203125,
+    "distinct_selected_market_ids": 388,
+    "skipped_scan_sequences": 1,
+    "fixed_stop_utc": "2026-10-16T19:00:55.062293+00:00",
+    "latest_scan_id": "scan-20261016T030203Z-8baf1b769e20",
+    "latest_scan_role_yield": {
+      "rotating_stratified": {
+        "valid": 27,
+        "selected": 38
+      },
+      "stable_random_control": {
+        "valid": 1,
+        "selected": 2
+      }
+    },
+    "cumulative_role_yield": {
+      "rotating_stratified": {
+        "valid": 507,
+        "selected": 591
+      },
+      "stable_random_control": {
+        "valid": 18,
+        "selected": 49
+      }
+    },
+    "summary_sha256": "27c2edd00a890c098877b8d1ad0c7b3f197ad2d6865d364df347f1ae982ddb43",
+    "plan_sha256": "d35f25ef84037f3e9cabf4343e9a01db381b73e8fa6cae0fd0b5fc6e07e279ba",
+    "implementation_sha256": "2cf59cebbb72c0e2990ebfe5c40e53b967e867fff5321f0d1e8c4e9a9207284e",
+    "control_cohort_sha256": "9578217e20dcc7d1c65fa110f0ed7c689b55483b61191f1aae8d30c9b7300d9a",
+    "interpretation": "descriptive, fixed-cohort observation; not randomized and not evidence of venue-wide availability or profitability"
+  },
+  "latest_gap_detail_checkpoint_053": {
+    "captured_at_utc": "2026-10-16T03:06:14+00:00",
+    "generated_at_utc": "2026-10-16T03:06:14+00:00",
+    "analysis_version": "veritas-finalized-reality-gap-detail-v1",
+    "status": "catching_up",
+    "active_segment_read": false,
+    "catalog_segments": 5079,
+    "processed_segments": 1919,
+    "processed_source_bytes": 449729433,
+    "pending_segments": 3158,
+    "pending_source_bytes": 862240407,
+    "batch_processed_segments": 128,
+    "batch_processed_source_bytes": 32886676,
+    "last_processed_ordinal": 231603,
+    "campaign_window_gap_event_count": 194,
+    "campaign_window_gap_counts_by_reason": {
+      "book_resynchronization": 194
+    },
+    "campaign_window_affected_market_count": 10,
+    "summary_file_sha256": "ffbd6e0fb508a1ae14f7bb6bcc5007570fcd920ea9be9c55e8b8b86fedefb359",
+    "summary_sha256": "96d2a39c9bcb0cfe5c3b22868104a9fa8b80a15da13021c2810f269d425715eb",
+    "service_restart_count": 0,
+    "campaign_window_complete": false
+  },
+  "censor_gap_attribution_001": {
+    "analysis_version": "veritas-censor-gap-attribution-v1",
+    "captured_at_utc": "2026-10-16T03:10:11Z",
+    "artifact_path": "docs/VERITAS_MISSION2_CENSOR_GAP_ATTRIBUTION_001.json",
+    "artifact_file_sha256": "332258b51f72c058cf945742ff29f0d26abcb1da0d5865ebcfd5419fb94e45a5",
+    "result_sha256": "2c81d4ad8852b2feaae7a7b5f7bf6948a5f85c514ac9d6bfd0f3bff3935dcab2",
+    "campaign_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
+    "campaign_plan_sha256": "aa8acb2b46823c1a1e3ac5d01a57dde917746c2c7471098ae2a4598875e322f5",
+    "gap_detail_summary_sha256": "96d2a39c9bcb0cfe5c3b22868104a9fa8b80a15da13021c2810f269d425715eb",
+    "censored_horizon_rows_scanned": 40075,
+    "gap_labeled_outcomes": 339,
+    "book_issue_gap_rows": 160,
+    "candidate_preceding_same_market_gaps": 45,
+    "no_prior_matching_gap_through_indexed_prefix": 29,
+    "termination_reference_beyond_indexed_prefix": 86,
+    "explicit_recorded_gap_rows": 179,
+    "explicit_gaps_verified_and_indexed": 38,
+    "explicit_gaps_verified_but_not_yet_indexed": 141,
+    "candidate_gap_age_bands": {
+      "0_to_1s": 0,
+      "1_to_60s": 2,
+      "60_to_300s": 6,
+      "300_to_3600s": 7,
+      "over_3600s": 30
+    },
+    "exact_termination_records_verified": 157,
+    "finalized_source_segments_verified": 133,
+    "finalized_source_bytes_hashed": 58443329,
+    "sqlite_event_hash_chain_reverified": false,
+    "causal_claim_made": false,
+    "module_path": "packages/midas/veritas/censor_gap_attribution.py",
+    "module_sha256": "d17119700b7e8b6361feea46f3e60ff5a6180bb2779cb3574e0d2f6b4283cb4a",
+    "runner_path": "scripts/veritas_censor_gap_attribution.py",
+    "runner_sha256": "d8a2742890588dbe141364ebab83fa25984cb0f9b4cf6e3644d3da1c5d74fe04",
+    "test_path": "tests/test_veritas_censor_gap_attribution.py",
+    "test_sha256": "8482c4b75f2f04c02e18e072fa2b3e343977fd92fb18383a5cf5edcd362a9cc2",
+    "verification": "3 focused tests passed in 1.17s; Ruff check/format and strict Mypy passed; no full regression run."
+  },
+  "gate_c_checkpoint_011": {
+    "captured_at_utc": "2026-10-16T03:12:00Z",
+    "checkpoint_path": "docs/VERITAS_MISSION2_GATE_C_CHECKPOINT_011.md",
+    "checkpoint_file_sha256": "d666897a556a84ec061066440245b4759ce6be7a9a6448df243a08571aca967b",
+    "artifact_path": "docs/VERITAS_MISSION2_CENSOR_GAP_ATTRIBUTION_001.json",
+    "artifact_sha256": "332258b51f72c058cf945742ff29f0d26abcb1da0d5865ebcfd5419fb94e45a5",
+    "status": "partial_prefix_baseline_recorded; mission active"
+  },
+  "verification_checkpoint_047": {
+    "captured_at_utc": "2026-10-16T03:14:43Z",
+    "censor_gap_attribution_tests": "3 passed in 1.17s.",
+    "ruff_check_and_format": "passed for attribution module, runner, and tests.",
+    "strict_mypy": "passed for attribution module and runner (2 source files).",
+    "git_diff_check": "pending final post-bookkeeping check.",
+    "full_regression": "not run.",
+    "live_http_calls_for_attribution": 0,
+    "model_training": "not run."
+  },
+  "operations_checkpoint_057": {
+    "captured_at_utc": "2026-10-16T03:14:43Z",
+    "host_service_and_resource_snapshot_as_of_utc": "2026-10-16T02:59:00Z",
+    "source": "docs/VERITAS_MISSION2_OPERATIONS.md",
+    "new_service_or_host_probe_performed": false,
+    "manual_research_job_poll_or_retry_performed": false,
+    "service_restart_or_interruption_performed": false,
+    "scheduled_scan_47_artifact_observed_read_only": true,
+    "scheduled_gap_detail_artifact_observed_read_only": true,
+    "scheduled_director_reconciliation_at_0315_utc": "pending at inventory capture time",
+    "limitations": [
+      "This record documents new scheduled research artifacts and explicitly carries forward the 02:59 runtime/resource snapshot; it is not a fresh health check.",
+      "The current service state and active research job list were not manually polled for this inventory."
+    ]
+  },
+  "checkpoint_057_limitations": [
+    "Scan 47 has a saved public snapshot and cumulative v4 classification, but the independent raw opportunity audit currently covers only the first 46 saved snapshots.",
+    "The gap-detail index is a partial finalized-source prefix; 141 explicit gaps and 86 indirect censor references remain beyond it.",
+    "Same-market preceding gaps are temporal candidates only; recorder receiver time does not establish quote age or causality.",
+    "The fixed 24-hour pilot remains active at 16/48 scans, with one skipped sequence and a nonrandomized control.",
+    "The latest host/service/resource snapshot remains the 02:59 read-only check. No current process status is inferred from the 03:10 artifacts.",
+    "The scheduled 03:15 Director reconciliation remained pending at the 03:14:43 UTC inventory capture time; it was not manually polled.",
+    "The worktree, ledger, and inventory updates were pending commit when this inventory was captured."
   ]
 }
