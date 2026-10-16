@@ -1799,3 +1799,59 @@ and 1; campaign SHA-256 is unchanged. No production cursor or journal was
 written. See [Gate C checkpoint
 027](VERITAS_MISSION2_GATE_C_CHECKPOINT_027.md) and [benchmark
 008](VERITAS_MISSION2_SHADOW_INTERRUPT_BENCHMARK_008.json).
+
+
+## 2026-10-16 18:47 UTC — independent audit and ordered-resume postflight
+
+Independent source audit 016 completed through 78 saved snapshots / 3,120
+selected market observations. It reproduced all 2,628 stored quality-valid
+decisions with zero quality or edge mismatches, independently agreed on 3,415
+fee calculations, and found zero positive gross, depth, minimum, or fee-safe
+states. The snapshots remain intermittent and correlated; this is not an
+estimate of an independent opportunity rate. See Gate B checkpoint 015.
+
+The bounded current-branch replay canary split a four-segment historical
+window across two processes. It matched the one-shot runtime snapshot and
+ordered normalized business events. The production Reality recorder and
+frozen shadow remained active; restarts remain zero and one, and the campaign
+SHA-256 remains
+`aa8acb2b46823c1a1e3ac5d01a57dde917746c2c7471098ae2a4598875e322f5`. No
+production campaign cursor or journal was modified. See Gate C checkpoint 028
+and [benchmark 009](VERITAS_MISSION2_SHADOW_RESUME_BENCHMARK_009.json).
+
+At 18:40 UTC the recorder status was `RECORDING_UNSEQUENCED`, with eight
+markets / 16 expected books, source ordinal 975,712, 723,070 frames, 4,725
+gaps, and four recorded failures. Its latest status reported
+`ConnectionClosedError`, but collection continued. The shadow status remained
+`WARMING_OR_LAGGED_SOURCE`: cursor 533,899, 207,871 lagged frames skipped,
+last source receipt 2026-10-15T17:25:25Z, and last decision
+2026-10-15T08:58:06Z. The source ordinal difference from the recorder was
+441,813. The 10% CPU quota remains the limit; no restart or quota change was
+made. The shadow had 10,253 decisions, 47,911 observations, 937 observed
+public-measurement follow-ups, and 40,075 censored follow-ups.
+
+The last saved shadow integrity report is from 2026-10-16T03:01:41Z and
+verified 113,162 journal events. The 18:40 UTC live status reported 113,366
+events, so that integrity report did not cover the newest 204 events. No full journal
+verification was run against the active writer. The 18:36 UTC gap-detail run
+covered 6,894/6,894 replayable segments and recorded 2,639 campaign-window
+gaps. The 18:40 scheduled source-analysis run completed successfully at
+18:43:35 UTC with no restarts: it processed 59 segments / 17,635,207 bytes and
+caught up through 6,905/6,905 finalized segments (zero pending), with 517,353
+quality-valid states over 111 markets and zero positive top-ask, full-depth,
+or minimum-notional states. It used 8.60 CPU seconds, peaked at 125.4 MiB, used
+no swap, and read no active segment. Gap detail's last run predates this
+source prefix; its next scheduled batch at 18:50 UTC is the gap-index progress
+point to watch.
+
+Host load was 0.85 / 0.92 / 1.09, available memory 10.1 GB, swap use 4.27/4.29
+GB, and root storage 57% used with about 209 GB free. Reality recordings
+occupied 1.79 GB and Veritas observatory data 84 MB. The shadow cgroup used
+about 311 MB of its 512 MiB limit under the 10% CPU quota. Pilot 002 remains
+17/48 scans, with 553/680 valid slots (81.3%), 495 selected markets, and no
+skipped scan sequence. The 18:45:18 UTC Director cycle exited successfully,
+admitted scan 78 to Arena, and its child completed 78/78 events at 18:46:04
+UTC with exit 0 in 5.92 seconds. All five economic gates were zero; candidate
+evidence and independent replay were complete and empty. The next scheduled
+Director reconciliation is at 19:15 UTC; no manual poll or retry was made.
+See [Gate F checkpoint 037](VERITAS_MISSION2_GATE_F_CHECKPOINT_037.md).

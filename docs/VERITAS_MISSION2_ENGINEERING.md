@@ -1,3 +1,59 @@
+## Latest checkpoint — 2026-10-16T18:47Z, scan-78 qualification and ordered resume parity
+
+Independent opportunity audit 016 replays all 78 saved observer snapshots /
+3,120 selected market observations (50,119,641 compressed bytes). It
+reproduces all 2,628 stored v4 quality decisions and top-edge results with
+zero mismatches, agrees with the v3 collateral-entry fee model on 3,415
+calculations, and finds zero positive top gross, depth, minimum, or fee-safe
+states. The conservative reported-age sensitivity admits 569 states; 2,058
+pairs have a leg older than five seconds and one pair exceeds 250 ms reported
+timestamp skew. These selected snapshots are correlated, not independent
+opportunity trials. See [Gate B checkpoint 015](VERITAS_MISSION2_GATE_B_CHECKPOINT_015.md)
+and audit 016.
+
+The four-segment split/resume canary now reproduces the one-shot business-event
+order after excluding the extra `worker_start` lifecycle event and generated
+`decision_event_seq` references. Final runtime bytes, engine/context/research
+hashes, business tables, and the 364 normalized business events match; both
+SQLite integrity checks return `ok`. It used isolated historical recordings
+under a 10% CPU quota and creates no live catch-up evidence. See [Gate C
+checkpoint 028](VERITAS_MISSION2_GATE_C_CHECKPOINT_028.md) and [benchmark
+009](VERITAS_MISSION2_SHADOW_RESUME_BENCHMARK_009.json).
+
+At 18:41 UTC the collector remained `RECORDING_UNSEQUENCED` (8 markets, 16
+expected books, ordinal 975,712); its last status reported a stream-close
+error while recording continued. The frozen shadow remained
+`WARMING_OR_LAGGED_SOURCE`, with ordinal 533,899, 207,871 lagged frames,
+441,813 ordinals behind the collector, no source receipt since 2026-10-15
+17:25:25Z, and no decision since 2026-10-15 08:58:06Z. It remains at a 10%
+CPU quota. Campaign SHA is unchanged and neither service was restarted.
+
+The 18:40 scheduled source run completed at 18:43:35 UTC with exit 0 and no
+restarts. It processed 59 segments / 17,635,207 bytes and caught up through
+6,905/6,905 finalized segments, with 517,353 quality-valid states over 111
+markets and zero positive top-ask, full-depth, or minimum-notional states.
+The run used 8.60 CPU seconds, peaked at 125.4 MiB, and read no active segment.
+Gap detail's 18:36 summary covers 6,894 replayable segments and 2,639
+campaign-window gaps; its next normal batch is due at 18:50 UTC. Pilot 002
+remains at 17/48 scans and 553/680 quality-valid slots across 495 selected
+markets; no sequence or atomicity is verified. The 18:45 Director cycle
+admitted scan 78 to Arena; its child completed 78/78 events at 18:46:04 UTC
+with zero positives at all five qualification gates and complete empty
+candidate evidence/replay. The next scheduled Director reconciliation is at
+19:15 UTC. See [Gate F checkpoint
+037](VERITAS_MISSION2_GATE_F_CHECKPOINT_037.md), [inventory
+088](VERITAS_MISSION2_RESEARCH_INVENTORY_088.json), and
+[operations](VERITAS_MISSION2_OPERATIONS.md).
+
+The last Reality integrity report verified 113,162 journal events at
+03:01:41Z; at the 18:40 UTC shadow-status capture the live status had reached
+113,366. This is not a current full-journal integrity claim. Swap remains nearly full at 4.27/4.29
+GB, while root storage is 57% used with about 209 GB free. No full regression
+or new model training was run for this checkpoint. Branch `project/veritas`
+remains at `9a4d8f6`; focused replay tests and static checks were verified
+after that implementation commit. Existing user changes and canary artifacts
+were left unstaged.
+
 ## Latest checkpoint — 2026-10-16T09:30:52Z, scan-60 independent replay
 
 The public snapshot directory contains 60 saved snapshots through `scan-20261016T093021Z-b20cf6a3b852`. Independent audit 012 replays 2,400 selected market observations, reproduces all 2,047 stored quality-valid states and top-edge results with zero mismatches, agrees on 2,548 fee calculations, and finds zero positive gross, full-depth, minimum-qualified, single-match-fee, or fragmentation-safe-fee states. The new scheduled scan contributed 32/40 quality-valid pairs and zero positive top-gross pairs. The snapshots are intermittent and correlated. See [Gate B checkpoint 013](VERITAS_MISSION2_GATE_B_CHECKPOINT_013.md), audit 012, and ledger H133.

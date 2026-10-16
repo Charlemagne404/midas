@@ -595,3 +595,35 @@ See Gate C checkpoint 026 and benchmark 007.
    coverage in `test_missing_decision_commit_marker_is_repaired_before_followup`.
 
 See Gate C checkpoint 027 and benchmark 008.
+
+
+## Active Mission 2 queue — 2026-10-16 18:47 UTC
+
+1. **Keep the frozen campaign and live writer untouched.** The current shadow
+   is still about 441,813 recorder ordinals behind, with a 25-hour-old source
+   receipt and 33-hour-old decision. The current branch canary verifies
+   isolated resume ordering but is not permission or evidence to restart the
+   protected worker. The 18:40 source replay caught up through 6,905 finalized
+   segments with no pending source segments; keep watching live shadow lag and
+   preserve campaign identity.
+2. **Continue the economic observation, not model training.** Independent
+   replay now covers 78 snapshots / 3,120 selected observations and still has
+   zero positive gross or qualified states. Keep the no-trade baseline. The
+   states are selected and correlated; do not convert the count into
+   independent-trial evidence. The scheduled scan-78 Arena child also
+   completed 78/78 events with zero positives at all five gates and complete
+   empty candidate evidence and source replay. The next Director reconciliation
+   is due at 19:15 UTC.
+3. **Let pilot 002 reach its predeclared completion before judging its
+   measurement yield.** It is at 17/48 scans and 553/680 quality-valid slots.
+   Its age and synchronization diagnostics remain distinct from atomicity or
+   sequence verification. Gap detail last covered 6,894 replayable segments;
+   review the scheduled 18:50 batch after the source analyzer caught up to
+   6,905 segments, then compare the two prefixes without assuming their
+   timestamp difference is an exact pending count.
+
+See [Gate B checkpoint 015](VERITAS_MISSION2_GATE_B_CHECKPOINT_015.md), [Gate C
+checkpoint 028](VERITAS_MISSION2_GATE_C_CHECKPOINT_028.md), [inventory
+088](VERITAS_MISSION2_RESEARCH_INVENTORY_088.json), and benchmark 009. The
+four-segment canary used historical input;
+it added no market observations, fills, or model targets.
