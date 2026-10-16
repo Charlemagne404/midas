@@ -195,6 +195,9 @@ venue freshness; zero verification counts remain unknown or unverified, not
 proof of failure. The overview exposes a read-only `measurement_pilot_v2`
 projection and the `coverage-pilot-v2` artifact. Do not manually trigger a scan
 to enroll or accelerate this study.
+The dashboard continues to verify pilot 001 against its stored event-chain pin
+and labels current-source drift explicitly; this preserves the historical
+record without treating its source as current.
 
 ## Follow-up power sensitivity
 

@@ -584,6 +584,7 @@ it('labels measured evidence and keeps synthetic execution separate from actual 
                         'Absence from the six bounded query responses does not establish that a market is closed or absent from the venue.',
                       ],
                     },
+                    implementation_pin_status: 'historical_source_drift',
                     summary_artifact: {
                       id: 'coverage-pilot',
                       label: 'Verified prospective coverage-pilot summary',
@@ -911,6 +912,9 @@ it('labels measured evidence and keeps synthetic execution separate from actual 
   expect(screen.getByTestId('coverage-design-audit')).toHaveTextContent('99.80%');
   expect(screen.getByText('23 full · 2 partial · 0 unsupported scans')).toBeInTheDocument();
   expect(screen.getByTestId('coverage-design-audit')).toHaveTextContent('82.96%');
+  expect(screen.getByTestId('pilot-v1-source-drift')).toHaveTextContent(
+    'current observer source has changed',
+  );
   expect(screen.getByRole('link', { name: 'Inspect audit' })).toHaveAttribute(
     'href',
     '/api/veritas/artifacts/coverage-design-audit',

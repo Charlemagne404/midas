@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-16T10:20:27Z",
+  "updated_at_utc": "2026-10-16T10:26:14Z",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -7844,12 +7844,13 @@
         "protocol_path": "docs/VERITAS_MISSION2_COVERAGE_PILOT_002.json",
         "protocol_file_sha256": "1c5ffde7639bdcdc343ce1c349bf7b02a85802ab2de39cd0f32bf2d1ee03a525",
         "focused_pilot_and_observer_tests_passed": 12,
-        "dashboard_api_tests_passed": 32,
+        "dashboard_api_tests_passed": 33,
         "frontend_typescript_build": "passed",
         "prospective_scan_count": 0,
         "orders_submitted": false,
         "authenticated_requests": false,
-        "dashboard_component_tests_passed": 1
+        "dashboard_component_tests_passed": 1,
+        "historical_v1_source_pin_drift_projection": "passed; stored event chain remains verifiable and current-source drift is labeled"
       },
       "limitations": [
         "No prospective v2 market observation has been collected yet; first enrollment awaits the ordinary scheduled observer scan.",

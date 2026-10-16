@@ -1486,8 +1486,11 @@ def read_coverage_pilot(
     source_lineage = summary.get("source_lineage")
     if not isinstance(source_lineage, dict) or source_lineage.get("plan_sha256") != plan_digest:
         raise HTTPException(503, "Coverage pilot plan lineage is invalid")
-    implementation_digest = _coverage_pilot_source_digest(repository)
-    if source_lineage.get("implementation_sha256") != implementation_digest:
+    implementation_digest = source_lineage.get("implementation_sha256")
+    if (
+        not isinstance(implementation_digest, str)
+        or re.fullmatch(r"[0-9a-f]{64}", implementation_digest) is None
+    ):
         raise HTTPException(503, "Coverage pilot implementation lineage is invalid")
     control_digest = source_lineage.get("control_cohort_sha256")
     if control_digest is not None:
@@ -2245,6 +2248,7 @@ def coverage_pilot_overview(repository: Path) -> dict[str, Any]:
             "scans": [],
             "latest_scan": None,
             "latest_control_availability": None,
+            "implementation_pin_status": "not_started",
             "summary_sha256": None,
             "summary_file_sha256": None,
             "summary_artifact": None,
@@ -2329,6 +2333,7 @@ def coverage_pilot_overview(repository: Path) -> dict[str, Any]:
         "scans": scan_projection[-8:],
         "latest_scan": scan_projection[-1] if scan_projection else None,
         "latest_control_availability": control_availability,
+        "implementation_pin_status": _coverage_pilot_pin_status(repository, summary),
         "summary_sha256": summary["summary_sha256"],
         "summary_file_sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
         "summary_artifact": {
@@ -2339,6 +2344,16 @@ def coverage_pilot_overview(repository: Path) -> dict[str, Any]:
         },
         "limitations": summary.get("limitations", []),
     }
+
+
+def _coverage_pilot_pin_status(repository: Path, summary: dict[str, Any]) -> str:
+    lineage = summary.get("source_lineage")
+    expected = lineage.get("implementation_sha256") if isinstance(lineage, dict) else None
+    try:
+        current = _coverage_pilot_source_digest(repository)
+    except HTTPException:
+        return "historical_source_drift"
+    return "matches_current_source" if current == expected else "historical_source_drift"
 
 
 def coverage_pilot_v2_overview(repository: Path) -> dict[str, Any]:

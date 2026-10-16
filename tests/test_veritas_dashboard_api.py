@@ -1742,6 +1742,7 @@ def test_overview_exposes_hash_verified_coverage_pilot_and_artifact(tmp_path):
     assert pilot["quality_valid_pairs"] == 1
     assert pilot["quality_valid_yield"] == 0.5
     assert pilot["skipped_scan_sequences"] == 0
+    assert pilot["implementation_pin_status"] == "matches_current_source"
     assert pilot["by_cohort_role"]["rotating_stratified"]["quality_valid"] == 1
     assert pilot["by_cohort_role"]["stable_random_control"]["invalid_reasons"] == {
         "no_empty_ask_side": 1
@@ -1795,6 +1796,21 @@ def test_coverage_pilot_rejects_tampered_event(tmp_path):
     response = client.get("/api/veritas/overview")
 
     assert response.status_code == 503
+
+
+def test_coverage_pilot_preserves_verified_history_after_source_pin_drift(tmp_path):
+    client = fixture_client(tmp_path)
+    write_coverage_pilot_fixture(tmp_path)
+    source_file = tmp_path / "packages" / "midas" / "veritas" / "observatory.py"
+    source_file.write_bytes(source_file.read_bytes() + b"\n# later observer revision\n")
+
+    response = client.get("/api/veritas/overview")
+
+    assert response.status_code == 200
+    pilot = response.json()["opportunity_observatory"]["measurement_pilot"]
+    assert pilot["status"] == "running"
+    assert pilot["implementation_pin_status"] == "historical_source_drift"
+    assert pilot["completed_scans"] == 1
 
 
 def test_overview_exposes_hash_verified_coverage_pilot_v2(tmp_path):

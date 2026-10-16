@@ -405,8 +405,10 @@ new market data or economic result exists yet.
 The observer enrolls pilot 002 only on its next normal scan, without backfill;
 pilot 001 state and the frozen Reality campaign remain untouched. The dashboard
 has a separate v2 status and hash-verified artifact route. Focused pilot and
-observer tests pass (12), all dashboard API tests pass (32), and the frontend
-component test and TypeScript build pass. The first prospective v2 event and
-its source-lineage check remain pending that scheduled scan. See the frozen
+observer tests pass (12), all dashboard API tests pass (33), and the frontend
+component test and TypeScript build pass. The API keeps v1's internally
+verified event chain visible while explicitly flagging drift from its old
+current-source pin. The first prospective v2 event and its source-lineage check
+remain pending that scheduled scan. See the frozen
 [pilot 002 protocol](VERITAS_MISSION2_COVERAGE_PILOT_002.json) and the
 [operations note](VERITAS_OPERATIONS.md#prospective-measurement-pilot-v2).

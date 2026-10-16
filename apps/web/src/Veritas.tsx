@@ -276,6 +276,7 @@ type CoveragePilot = {
   scans: CoveragePilotScan[];
   latest_scan: CoveragePilotScan | null;
   latest_control_availability: CoveragePilotControlAvailability | null;
+  implementation_pin_status: string;
   summary_artifact: (Artifact & { file_sha256: string; url: string }) | null;
   limitations: string[];
 };
@@ -1325,6 +1326,12 @@ export function Veritas() {
             markets. Intermittent snapshots do not establish venue-wide coverage, quote lifetime,
             sequence freshness, fills, or profitability.
           </p>
+          {measurementPilot.implementation_pin_status === 'historical_source_drift' && (
+            <p className="ve-observatory-note" data-testid="pilot-v1-source-drift">
+              Pilot 001 events verify against their recorded code pin, but the current observer
+              source has changed. New prospective scans use isolated pilot 002.
+            </p>
+          )}
           {measurementPilot.limitations.length > 0 && (
             <details className="ve-pilot-limitations">
               <summary>Protocol limitations ({measurementPilot.limitations.length})</summary>
