@@ -1,9 +1,56 @@
 # Veritas Mission 2 Operations
 
-**Latest runtime/resource snapshot:** 2026-10-16T04:39:57Z
+**Latest runtime/resource snapshot:** 2026-10-16T05:06:29Z
 **Latest source summary:** 2026-10-16T04:42:04+00:00
-**Latest gap-detail summary:** 2026-10-16T04:36:19+00:00
-**Latest Midas/Reality API health probes:** 2026-10-16T04:39:57Z
+**Latest gap-detail summary:** 2026-10-16T05:06:22Z
+**Latest Midas/Reality API health probes:** 2026-10-16T05:06:29Z
+
+## Runtime checkpoint — 2026-10-16T05:06:29Z
+
+- The Reality recorder and frozen shadow are active with zero and one
+  historical systemd restarts. Midas API and Reality API are active; both
+  `/api/health` probes returned `READY` in demo mode with live execution
+  disabled. The shadow ordinal lag was not refreshed during this checkpoint.
+  Its configured CPU ceiling remains 10%; a prior cgroup sample showed
+  throttling in about 97% of quota periods. That resource constraint may
+  explain slow shadow catch-up and was left unchanged.
+- Observer scan 51 (`scan-20261016T050020Z-5729ddc65f43`) exited 0 at
+  05:00:26 UTC with 28/40 quality-valid pairs, 299 discovery IDs, 191 eligible
+  IDs, and zero positive top-gross pairs. The fixed pilot is 20/48 scans,
+  652/800 valid slots across 492 IDs, with one skipped sequence. Rotating
+  selections yield 629/742; frozen controls yield 23/58. This comparison is
+  descriptive and nonrandomized; the pilot's fixed stop is 19:00:55 UTC.
+- The Director's 04:45:07 UTC cycle exited 0 at 04:45:39. Its scan-50 Arena
+  child completed with all economic gates at zero and complete empty
+  candidate evidence/replay, while the manifest still projects `QUEUED` and
+  records scan 49 as last qualified. The next reconciliation is scheduled for
+  05:15:03 UTC.
+- The 04:40:23 UTC finalized-source analysis exited 0 at 04:42:06. Its sealed
+  prefix remains 5,264/5,264 segments / 1,358,762,036 bytes, with 354,898
+  quality-valid states across 87 markets and zero positive top-ask,
+  full-depth, or minimum-notional states. The next run is scheduled for
+  05:10:39 UTC.
+- The 05:05:04 UTC gap-detail batch completed at 05:06:25 UTC with exit 0 and
+  zero restarts. Its sealed prefix advanced to 2,907/5,315 replayable
+  segments / 714,067,245 bytes, leaving 2,406 segments / 658,840,424 bytes
+  pending. The prefix contains 680 campaign-window gap events and reports no
+  active-segment reads. The next batch is scheduled for 05:20 UTC.
+- The Reality archive unit remains failed after its 30-minute timeout at
+  04:33:35 UTC, with zero restarts. This is an archival delay risk; no evidence
+  of source loss was established. Its next timer is the following day.
+- Load averages were 1.16 / 0.99 / 0.95; RAM available was 9.5 GiB of 15 GiB;
+  swap used was 3.6/4 GiB. Root storage was 56% used with 197 GiB free. The
+  Reality recordings directory measured 2,347,476,230 bytes and the
+  observatory directory 55,597,327 bytes. No sustained growth rate was
+  estimated from this single sample.
+- No Arena, training, or Veritas analysis worker was active at the capture
+  instant; the gap-detail batch had completed. The source-analysis, Director,
+  and observer one-shots were idle between timers. No service, collector,
+  frozen campaign, or pilot was restarted or changed for this checkpoint.
+
+The local health probes were read-only. The active gap-detail process is left
+running. See [research inventory 066](VERITAS_MISSION2_RESEARCH_INVENTORY_066.json)
+and [Gate B checkpoint 005](VERITAS_MISSION2_GATE_B_CHECKPOINT_005.md).
 
 ## Scheduled source-analysis completion — 2026-10-16T04:42:06Z
 

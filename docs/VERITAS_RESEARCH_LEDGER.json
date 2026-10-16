@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-16T04:38:43Z",
+  "updated_at_utc": "2026-10-16T05:06:29Z",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -6349,26 +6349,69 @@
         "The independent arithmetic shares only the versioned fee evaluator after its own price, depth, minimum, and quality calculations.",
         "Source integrity verifies stored public payloads; it does not establish that the venue response represented an executable state."
       ]
+    },
+    {
+      "hypothesis_id": "VERITAS-H112",
+      "title": "Does the reported CLOB book timestamp move with returned book content, and can endpoint age classify stale books?",
+      "mechanism": "For each verified saved snapshot, canonicalize every raw outcome-asset book response while excluding its reported timestamp and response hash. Compare consecutive saved endpoints for the same asset and classify content changes, timestamp movement, reported age, and receipt interval.",
+      "experiment_id": "VERITAS-M2-REPORTED-BOOK-TIMESTAMP-001-RUN-aed483fda621",
+      "dataset_id": "4d2825f44f40d81fffe3434078356b3759001a2973b4b0853f27b9193b1b9b92",
+      "success_metric": "Verify the bounded source lineage and report repeated-asset endpoint transitions without treating timestamp age as proof of stale quotes or sequence freshness.",
+      "status": "continue",
+      "decision": "The offline audit verified 51 snapshots / 4,080 book observations over 33,318,338 compressed bytes. Among 2,274 repeated-asset endpoint transitions, all 2,197 content-changing transitions had an advancing reported timestamp; 37 unchanged-content transitions had an advancing timestamp and 40 had an unchanged timestamp. No content change with an unchanged or regressed timestamp and no timestamp regression was observed. Of 1,848 later endpoints older than five seconds, 1,771 had changed endpoint content and 77 were unchanged. This supports timestamp/content association in this selected intermittent panel but does not establish venue-side semantics, sequence freshness, continuous quote age, or executability. Keep the reported-age rule as a sensitivity pending independent sequence or documented semantic evidence.",
+      "result": {
+        "captured_at_utc": "2026-10-16T05:01:27+00:00",
+        "artifact_path": "docs/VERITAS_MISSION2_REPORTED_BOOK_TIMESTAMP_AUDIT_001.json",
+        "artifact_file_sha256": "98b95bb563078349dfd8f6272cecd3c0d4738fc7016b7b1fa2ac32ac7a8f5c8d",
+        "result_sha256": "aed483fda621f79221d8095a4d14c8d674b61eb3dadf4726388e03f311d85263",
+        "source_manifest_sha256": "4d2825f44f40d81fffe3434078356b3759001a2973b4b0853f27b9193b1b9b92",
+        "analysis_module_sha256": "afac8f95021ef8424638f2965957ca224c11bed66a8482d027c045f0092aad1e",
+        "analysis_runner_sha256": "e944e05831ea016a2a2840d03beb2500dfad4f961c1cc35c7ae0d2f866303529",
+        "snapshot_count": 51,
+        "compressed_snapshot_bytes": 33318338,
+        "response_book_observation_count": 4080,
+        "unique_outcome_asset_ids": 1806,
+        "repeated_asset_count": 538,
+        "repeated_asset_transition_count": 2274,
+        "transition_classes": {
+          "content_changed_timestamp_advanced": 2197,
+          "content_unchanged_timestamp_advanced": 37,
+          "content_unchanged_timestamp_same": 40
+        },
+        "later_endpoint_reported_age_bands": {
+          "0_to_1s": 150,
+          "1s_to_threshold": 276,
+          "30s_to_5m": 964,
+          "over_5m": 254,
+          "threshold_to_30s": 630
+        },
+        "later_endpoints_over_age_threshold_by_content_relation": {
+          "changed": 1771,
+          "unchanged": 77
+        },
+        "receipt_interval_ms": {
+          "count": 2274,
+          "max": 79184340.321,
+          "median": 3615798.559,
+          "min": 56423.229
+        },
+        "authenticated_requests": false,
+        "orders_submitted": false,
+        "economic_gate_replay_performed": false
+      },
+      "limitations": [
+        "The 51-snapshot panel is selected and intermittent, not a venue-wide or continuous asset history.",
+        "Endpoint comparisons cannot reveal intermediate book changes, reversions, or server refresh behavior.",
+        "Timestamp/content co-movement does not establish the timestamp field's venue-side semantics or sequence ordering.",
+        "A reported timestamp age over five seconds is not independently labeled as a stale or executable quote.",
+        "The experiment evaluates no fee, liquidity, order-arrival, fill, or strategy-profitability gate."
+      ]
     }
   ],
   "next_research_questions": [
-    "Do public markout labels from the frozen campaign support any non-degenerate strategy target once no-initial-discrepancy, censoring, and unknown fills are separated?",
-    "What independent feed sequence or coverage evidence can distinguish venue inactivity, feed gaps, and cohort selection within future_observation_unavailable?",
-    "Can Arena provide a typed, bounded Veritas Director job that consumes immutable source manifests without duplicating collector writes or creating unbounded copied artifacts?",
-    "Do multi-day public coverage and independent freshness evidence change the measured gross-opportunity distribution?",
-    "What temporal dependence and coverage evidence is needed before the original follow-up design is ready?",
-    "Can the expanded read-only dashboard expose source gaps, censoring, readiness, and Director activity with evidence-linked values?",
-    "Can independent sequence evidence quantify freshness and coverage for the rotating public query frames?",
-    "What market/time dependence and coverage evidence will satisfy the 24-hour pilot review and original 48-hour follow-up gates?",
-    "Can the Research Director orchestrate bounded snapshot qualification and source replay with typed dependencies while preserving the collector timer?",
-    "Can additional boundedly discovered NegRisk groups be verified complete and produce fresh, quality-valid positive full-depth net economics?",
-    "Can a separate bounded finalized-source analysis map current campaign-window gap events to receiver time and reason without altering the v1 source-analysis state?",
-    "When the gap-detail prefix reaches the frozen campaign window, which gap reasons, timestamps, and explicitly reported markets account for the 1,090 campaign-window resynchronization/failure markers?",
-    "Can book_issue:gap censors be linked to a specific preceding same-market gap using finalized receiver-time evidence?",
-    "Can the frozen shadow worker process new recorder ordinals faster than the live input while keeping frames within its decision-input lag bound?",
-    "After the fixed 24-hour pilot stops, should the implemented eight-read successor replace the v1 observer, and how does a bounded sole-collector evaluation compare control availability, quality yield, response size, pacing, and storage?",
-    "What versioned successor worker can process the measured source rate with margin while preserving the 250 ms decision-input lag and bounded resource use?",
-    "Does the scheduled Director reconcile scan 42’s completed child at its next cycle and avoid duplicate admission?",
-    "Can source-version-pinned counter labels normalize the early v1 capture summary against v4 replay without relabeling historical quality counts?"
+    "Does the scheduled Director cycle reconcile the completed scan-50 child and qualify the latest saved scan without duplicate admission?",
+    "Can documented venue timestamp semantics or an independent sequence-bearing source establish continuity beyond endpoint timestamp age?",
+    "How do the completed coverage pilot strata, missed sequences, storage, and compute costs affect the next observation design?",
+    "Can finalized-source gap indexing advance without reading active segments, and which censored outcomes remain beyond the indexed prefix?"
   ]
 }

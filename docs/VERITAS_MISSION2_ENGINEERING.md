@@ -1,4 +1,37 @@
-## Latest checkpoint — 2026-10-16T04:42:06Z, scan-50 audit and source catch-up
+## Latest checkpoint — 2026-10-16T05:01:27Z, reported timestamp audit and scan 51
+
+The bounded offline timestamp/content audit verified and replayed all 51 saved
+snapshots (33,318,338 compressed bytes; 4,080 retained book observations;
+1,806 outcome assets). Across 2,274 repeated-asset endpoint transitions,
+2,197 content changes coincided with an advancing reported timestamp; 37
+unchanged-content transitions also had an advancing timestamp, and 40 had an
+unchanged timestamp. No content change with a same or regressed timestamp was
+observed. Of 1,848 endpoints older than five seconds by the reported field,
+1,771 had changed content and 77 had unchanged content. Intermittent endpoint
+comparisons do not establish timestamp semantics, sequence freshness, or quote
+persistence. See [Gate B checkpoint
+005](VERITAS_MISSION2_GATE_B_CHECKPOINT_005.md), [timestamp audit
+001](VERITAS_MISSION2_REPORTED_BOOK_TIMESTAMP_AUDIT_001.json), and ledger
+H112.
+
+The scheduled observer completed scan 51
+(`scan-20261016T050020Z-5729ddc65f43`) with 28/40 quality-valid pairs and zero
+positive top-gross pairs. The fixed coverage pilot has 20/48 scans and 652/800
+valid slots, including one skipped sequence; its rotating/control comparison
+remains descriptive and nonrandomized. The 04:45 Director cycle and 04:50 gap
+batch completed successfully. The source analyzer's latest sealed prefix is
+5,264/5,264 segments, with 354,898 valid states and no positive top-ask,
+full-depth, or minimum-notional state. The Director's scan-50 child has no
+positive candidate; its manifest still projects `QUEUED` pending the next
+scheduled cycle. See [inventory 066](VERITAS_MISSION2_RESEARCH_INVENTORY_066.json)
+and [operations](VERITAS_MISSION2_OPERATIONS.md).
+
+The timestamp audit's four focused tests passed; Ruff, formatting, strict
+Mypy, digest verification, and `git diff --check` passed. No full regression
+was run. The analysis used finalized local snapshots only and made no public
+requests or orders. Mission 2 remains active.
+
+## Previous checkpoint — 2026-10-16T04:42:06Z, scan-50 audit and source catch-up
 
 The offline A1 replay now verifies 50 snapshots / 32,683,291 compressed bytes.
 It finds 6,059 Gamma IDs, 2,166 eligible at least once, 887 selected IDs, and
