@@ -5,16 +5,32 @@ economic impact, current evidence, and compute cost. Work remains on
 `project/veritas`; the frozen Reality campaign is a protected reference. The
 earlier Mission 1 handoff backlog is retained below for provenance.
 
-## Current Mission 2 queue (updated 2026-10-16T10:33:39Z)
+## Current Mission 2 queue (updated 2026-10-16T11:31:12Z)
+
+The protected shadow worker remains lagged. Both frozen-source analysis jobs
+now load Reality modules from the campaign's pinned snapshot through a durable
+per-user import overlay; bounded source and gap runs have succeeded without
+changing the campaign or resetting either cursor. Confirm the next scheduled
+runs before treating this as durable operation. The separate decode-reuse
+change remains in the Veritas worktree, passed focused tests, and has no
+measured CPU effect; profile it only in an isolated successor and do not
+deploy it to the frozen worker.
+
+Scan 64 completed at 11:30:53 UTC. The cumulative panel now has 2,560 selected
+pair observations, 2,150 quality-valid pairs, and zero top-gross candidates;
+the independent opportunity audit remains through scan 62. The source replay
+last completed at 11:26:34 with 6,055 segments and zero pending at that run;
+gap detail last completed at 11:28:49 with 5,885/6,064 segments and 177
+pending. See [Gate D checkpoint 003](VERITAS_MISSION2_GATE_D_CHECKPOINT_003.md).
 
 | Rank | Question | Evidence today | Next experiment | Promotion rule |
 | --- | --- | --- | --- | --- |
-| 1 | Has any credible gross or economically qualified opportunity appeared? | Independent audit 013 covers 62 saved snapshots through `scan-20261016T103050Z-bc8cf9bc331e`: 2,480 selected observations, 2,095 quality-valid pairs, zero v4/v3 validity or top-edge mismatches, and zero positive top, depth, minimum, single-match-fee, or fragmentation-safe-fee states. The independent Decimal cross-check agrees on 2,609 fee evaluations. See [Gate B checkpoint 014](VERITAS_MISSION2_GATE_B_CHECKPOINT_014.md). | Preserve no-trade. Continue bounded independent replay only as immutable snapshots accrue; do not count repeated states as independent opportunities. Define candidate-specific replay only after a positive gross observation survives source-quality review. | Require an observed gross candidate, depth and per-leg minimums, current fee-model checks, independent replay, and evidence of executable conditions; qualification is not P&L. |
+| 1 | Has any credible gross or economically qualified opportunity appeared? | Independent audit 013 covers 62 saved snapshots through `scan-20261016T103050Z-bc8cf9bc331e`: 2,480 selected observations, 2,095 quality-valid pairs, zero v4/v3 validity or top-edge mismatches, and zero positive top, depth, minimum, single-match-fee, or fragmentation-safe-fee states. The independent Decimal cross-check agrees on 2,609 fee evaluations. Newer scan 64 brings the stored panel to 2,560 observations / 2,150 valid pairs, still with zero top-gross candidates; it is not yet independently audited. See [Gate B checkpoint 014](VERITAS_MISSION2_GATE_B_CHECKPOINT_014.md). | Preserve no-trade. Extend the immutable independent replay through scan 64; do not count repeated states as independent opportunities. Define candidate-specific replay only after a positive gross observation survives source-quality review. | Require an observed gross candidate, depth and per-leg minimums, current fee-model checks, independent replay, and evidence of executable conditions; qualification is not P&L. |
 | 2 | Does the current fee model correctly account for both taker legs and entry capital? | Fee model v3 follows current published collateral-denominated fees and charges both purchased legs at entry. Independent source replay found zero formula mismatches. The 100-share synthetic full-depth case is +1.624 USDC under single-match rounding and -0.370 USDC under the fragmentation-safe bound; the assumed unrecovered unmatched-leg loss is 52.200 USDC. These are controlled sensitivities only. Previous v2 share-deduction outputs are superseded. | Keep the corrected synthetic artifact as the dashboard source after a safe code rollout. Recompute any future observed candidate with its reported schedule and supported venue semantics. | Never treat synthetic P&L or sensitivity rates as observed profitability, fills, or execution likelihood. |
-| 3 | Does the fixed coverage pilot improve usable market coverage? | Immutable pilot 001 is 28/48 scans: 912/1,120 valid slots across 657 selected markets, with one skipped sequence; its historical code pin now differs from current observer code and the dashboard labels that drift. New prospective pilot 002 recorded its first scheduled scan: 20/40 valid slots. This single scan does not establish a yield improvement. | Let pilot 001 reach its fixed stop/cap and let pilot 002 proceed under its own bound. Re-audit coverage support after the new cohort completes; do not edit either protocol while active. | Do not treat repeated observations as independent or infer causal or venue-wide improvement. |
+| 3 | Does the fixed coverage pilot improve usable market coverage? | Pilot 001 remains 28/48 scans: 912/1,120 valid slots across 657 selected markets, with one skipped sequence; its latest summary flags current-source code drift. Pilot 002 is 3/48 scans: 75/120 valid pairs across 98 IDs; 17 pass the strict reported-age sensitivity, with zero verified atomicity or sequence pairs. | Let pilot 002 proceed under its own bound. Re-audit inclusion support after the new cohort completes; do not edit either protocol while active. | Do not treat repeated observations as independent or infer causal or venue-wide improvement. |
 | 4 | What do reported timestamps and intermittent coverage establish about freshness? | Audit 013 covers 62 scans / 2,480 observations and reproduces v4 validity and top-edge decisions with zero mismatches. Strict reported-age sensitivity admits 438 states; 1,657 pairs exceed five seconds; none exceeds the 250 ms timestamp-skew threshold. Pilot 002 separately records its first scan's age bands and no verified batch atomicity or sequence counts. | Preserve quality and freshness gates. Seek documented venue sequence semantics or an independent continuity signal before changing them. | Request-to-receipt and returned timestamps do not prove venue sequence freshness, batch atomicity, quote persistence, order arrival, or fills. |
-| 5 | Which source gaps coincide with frozen follow-up censoring? | The 08:06 sealed gap summary covers 4,242/5,665 replayable segments / 1,105,386,857 bytes, with 1,423 segments / 351,838,232 bytes pending and 1,327 campaign-window gaps indexed. Earlier attribution remains exact, temporal-only, or unresolved as recorded. | Continue scheduled bounded gap-detail batches; refresh attribution when the sealed prefix materially advances and preserve frozen labels. | Keep beyond-prefix outcomes unresolved; temporal association is not causal attribution. |
-| 6 | Can the Research Director qualify and reconcile each new scan durably? | The 08:15:58 UTC cycle reconciled scan 55 and admitted scan 57. Its Arena child completed with no positive gross candidate, but the manifest still projects QUEUED until the next scheduled cycle; scan 57 is the latest admitted scan. | Preserve the Arena source revision until scheduled reconciliation records the completed scan-57 child; then extend A1 and independent replay through scan 57. | Require pinned revisions, idempotent admission, complete replay, bounded resources, and read-only behavior. |
+| 5 | Which source gaps coincide with frozen follow-up censoring? | The 11:28:49 UTC gap summary covers 5,885/6,064 segments / 1,509,016,852 processed bytes, with 177 segments / 44,891,642 bytes pending and 2,142 campaign-window events (2,138 resynchronizations, 4 connection failures). Attribution 003 remains partial and noncausal. | Continue scheduled bounded gap-detail batches; refresh attribution when the sealed prefix materially advances and preserve frozen labels. | Keep beyond-prefix outcomes unresolved; temporal association is not causal attribution. |
+| 6 | Can the Research Director qualify and reconcile each new scan durably? | The 11:15 UTC cycle admitted scan 63; its Arena child completed all 63 events with no positive gross candidate. Scan 64 is the latest public snapshot and is awaiting the next Director reconciliation. | Preserve the Arena source revision through the scheduled 11:45 UTC reconciliation; then extend the independent audit through scan 64. | Require pinned revisions, idempotent admission, complete replay, bounded resources, and read-only behavior. |
 | 7 | Is the research dashboard current and fully verified? | The API validates v1's stored event chain and labels current-source pin drift; pilot 002 is exposed with its first scan and verified snapshot/analysis lineage. API tests (33), pilot/observer tests (12), component test (1), and TypeScript build pass. The hosted main checkout is not deployed from this branch. | Keep displayed values tied to receipted artifacts and sample limits; run the isolated browser workflow after the next material UI change and use a safe deployment path when authorized. | Every displayed source value must resolve to a validated artifact and show sample limits. |
 | 8 | Do machine learning or strategy comparisons have candidate-relevant evidence? | No gross candidate or public outcome labels support training or a strategy tournament. The available economic runs qualify a read-only discovery pipeline, not expected returns or fills. | Do not train or compare execution policies yet; revisit when eligible gross candidates and suitable labels exist. | Do not infer improvement from synthetic inputs, hypothetical execution, or infrastructure completion. |
 
@@ -422,3 +438,24 @@ post-cost candidates. See the frozen
 The independent follow-up replay is recorded in
 [Gate B checkpoint 014](VERITAS_MISSION2_GATE_B_CHECKPOINT_014.md) and
 [audit 013](VERITAS_MISSION2_INDEPENDENT_OPPORTUNITY_AUDIT_013.json).
+
+## Mission 2 continuation — profile the complete shadow consume path
+
+Profiling found that frozen `Tail.refresh()` repeatedly scans and symlink-
+checks approximately 6,134 segment files every 0.5 seconds. The measured
+68–91 ms CPU per scan can exceed the worker's 100 ms/s quota before record
+processing. The Veritas branch now caches the path list behind directory
+device/inode/mtime/ctime and retains the existing symlink check on rescans.
+Reusing frame decodes plus the directory cache reduced bounded `Tail` plus
+`Context` replay CPU by 16.16%, with an identical state digest. This replay
+does not include the policy, journal, follow-up or status-save path.
+
+The full consume path was profiled in an isolated temporary journal in
+[Gate C checkpoint 020](VERITAS_MISSION2_GATE_C_CHECKPOINT_020.md). The branch
+matched the pinned implementation's engine/context digests and all 768
+normalized research rows on 2,774 records / 2,247 frames. A single bounded
+pass used 79.8% less CPU under the same quota. This does not show live catch-up;
+the next reader check is a second independent finalized-source window with
+exact evidence-row comparison before any successor deployment decision. Keep
+the original worker and campaign untouched. See [benchmark
+002](VERITAS_MISSION2_SHADOW_READER_BENCHMARK_002.json) and ledger H139.

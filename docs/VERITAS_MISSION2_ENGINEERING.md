@@ -1519,3 +1519,93 @@ The scheduled 07:15 UTC Director cycle reconciled scan 54 and admitted scan 55. 
 ## Gate A checkpoint 052 — verify selection-probability support
 
 The new offline design audit independently verifies 25 immutable coverage-pilot events, their source snapshots, and their v4 analysis events. All selected rotating-market inclusion probabilities match the recorded within-stratum quota/population ratio. Twenty-three scans fully support the rotating population; two category-phase scans have partial support, leaving 99.80% pooled support across scan-population exposure. The mean design-weighted valid yield across fully supported scans is 82.96%. This is conditional descriptive evidence; the frozen control comparison remains nonrandomized. See [Gate A checkpoint 052](VERITAS_MISSION2_GATE_A_CHECKPOINT_052.md), [audit 002](VERITAS_MISSION2_COVERAGE_DESIGN_AUDIT_002.json), and ledger H125. Four focused tests passed; no campaign or runtime package was changed.
+
+
+## Gate C checkpoint 018 — shadow frame decode reuse
+
+`Engine.consume` now returns the parsed frame events and `Context.consume`
+reuses them to update last-trade diagnostics. This removes a duplicate
+`json.loads` call on normal frame records while preserving raw canonical
+records, reconstruction behavior, and trade tracking. The change is in the
+Veritas worktree only; the frozen Reality worker continues to use its pinned
+copy.
+
+The focused Reality shadow and reconstruction tests passed (26), as did Ruff
+and focused Mypy. The new test verifies one frame-payload parse and unchanged
+trade output. No end-to-end CPU or throughput benchmark has been run, so the
+runtime benefit remains unquantified. The active campaign remains lagged and
+was not restarted. See [Gate C checkpoint
+018](VERITAS_MISSION2_GATE_C_CHECKPOINT_018.md).
+
+## Gate D checkpoint 003 — frozen-code import isolation (2026-10-16T11:29Z)
+
+The editable Veritas checkout had drifted from the Reality code hashes pinned
+by the original campaign. Both finalized-source and gap-detail jobs then
+failed at `verify_campaign`, even though the frozen campaign files and plan
+were intact. The analyzers were importing mutable `packages/midas/reality`
+modules from the Veritas checkout.
+
+A persistent import overlay now places the campaign's own `code/midas`
+snapshot ahead of the editable Veritas packages for the two read-only replay
+services. Their Veritas analysis modules and CLI scripts still load from the
+active branch. The user-unit drop-ins are
+`midas-veritas-source-analysis.service.d/20-frozen-campaign-import.conf` and
+`midas-veritas-gap-detail-analysis.service.d/20-frozen-campaign-import.conf`;
+the overlay is under
+`/home/charlie/.local/share/midas-veritas/frozen-runtime-overlay`. This
+preserves code and state identity checks rather than bypassing them.
+
+Preflight verified all 20 campaign code files against the frozen plan and
+matched both existing analysis-state code identities. The bounded source
+analysis then processed 85 new segments and completed at 6,055/6,055 with no
+pending bytes: 416,513 quality-valid states across 102 markets and zero
+positive top-ask or full-depth states. The gap-detail batch processed 128
+segments and advanced to 5,885/6,064, leaving 177 segments / 44,891,642 bytes
+pending; it read no active segment. Both one-shots exited successfully under
+their existing resource bounds. Campaign SHA remains
+`aa8acb2b46823c1a1e3ac5d01a57dde917746c2c7471098ae2a4598875e322f5`, and the
+separate Reality checkout remains clean. See [checkpoint 003](VERITAS_MISSION2_GATE_D_CHECKPOINT_003.md).
+
+This repairs historical analysis operation; it does not fix the live shadow
+lag or measure the decode-reuse optimization's CPU effect. The recurring timer
+runs must still confirm that the overlay remains effective.
+
+## Gate C checkpoint 019 — reader CPU bottleneck
+
+Repeated `Tail.refresh()` directory walks measured 68–91 ms CPU over roughly
+6,134 source segments at a 0.5-second refresh interval. Under the frozen
+worker's 100 ms/s CPU quota, this repeated filesystem work could consume the
+entire budget. The Veritas branch now reuses the segment path list until the
+recording directory's device/inode/mtime/ctime changes and then rescans with
+the existing symlink check. It also reuses parsed frame events for trade
+diagnostics.
+
+The focused suite passes (28), as do Ruff and strict Mypy. A bounded replay of
+2,970 records / 2,461 frames across 16 sealed segments produced identical
+Context state and reduced median `Tail` plus `Context` CPU by 16.16% against
+the frozen reader. It does not include worker policy inference, journal writes,
+or periodic saves. The optimization is not deployed to the original frozen
+campaign; a full isolated successor-path profile is still required. See
+[Gate C checkpoint 019](VERITAS_MISSION2_GATE_C_CHECKPOINT_019.md) and
+[benchmark 001](VERITAS_MISSION2_SHADOW_READER_BENCHMARK_001.json).
+
+## Gate C checkpoint 020 — full consume-path comparison
+
+The isolated comparison now includes `Shadow.consume()` policy evaluation,
+decision and observation journaling, follow-up processing, and periodic saves.
+On the same 16 finalized segments, both implementations consumed 2,774 records
+and produced identical engine and context digests plus all 768 normalized
+decision, commitment, and follow-up rows. The Veritas branch used 10.01 CPU
+seconds versus 49.64 seconds for pinned code, about 79.8% lower in this single
+bounded pass. The replay ran under equal CPU and memory caps and wrote only to
+temporary journals.
+
+Focused shadow tests pass (16), as do Ruff and strict Mypy. A benchmark clock
+fix makes periodic saves follow recorded monotonic time in both implementations;
+a malformed-frame regression test preserves prior diagnostic trade tracking.
+The benchmark runner's peak-RSS reading was corrected after its previous value
+conflicted with the observed scope memory peak; memory is omitted from the A/B
+claim. The active worker and frozen campaign remain unchanged. This replay
+shows reader efficiency, not live catch-up, new market evidence, or economic
+improvement. See [Gate C checkpoint 020](VERITAS_MISSION2_GATE_C_CHECKPOINT_020.md)
+and [benchmark 002](VERITAS_MISSION2_SHADOW_READER_BENCHMARK_002.json).

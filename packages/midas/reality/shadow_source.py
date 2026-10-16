@@ -23,6 +23,7 @@ class Tail:
         self.cursor = cursor or dict(segment=None, offset=len(MAGIC), ordinal=0)
         self.files: list[Path] = []
         self.checked = 0.0
+        self.directory_marker: tuple[int, int, int, int] | None = None
         self.handle: Any = None
         self.seals: list[dict[str, Any]] = []
         self.verified_seals: set[str] = set()
@@ -31,11 +32,22 @@ class Tail:
         if time.monotonic() - self.checked < 0.5:
             return
         self.checked = time.monotonic()
-        self.files = sorted(
+        before = self.root.stat()
+        marker = (before.st_dev, before.st_ino, before.st_mtime_ns, before.st_ctime_ns)
+        if marker == self.directory_marker:
+            return
+        files = sorted(
             p for p in self.root.iterdir() if p.name[:1].isdigit() and p.suffix in {".open", ".seg"}
         )
-        if any(p.is_symlink() for p in self.files):
+        if any(p.is_symlink() for p in files):
             raise ValueError("Source segment symlink")
+        after = self.root.stat()
+        after_marker = (after.st_dev, after.st_ino, after.st_mtime_ns, after.st_ctime_ns)
+        self.files = files
+        # Keep the pre-scan marker if entries changed during enumeration so
+        # the next refresh retries instead of accepting a potentially partial
+        # directory view.
+        self.directory_marker = marker if marker != after_marker else after_marker
 
     def next(self) -> tuple[dict[str, Any], dict[str, Any]] | None:
         self.refresh()
@@ -166,7 +178,7 @@ class Context:
             if row["payload"]["reason"] == "process_start":
                 self.producer = ref
                 self.producer_hash = row["payload"].get("implementation_sha256")
-        self.engine.consume(row)
+        frame_events = self.engine.consume(row)
         if kind == "discovery":
             self.cohort = {m["condition"]: dict(m, discovery_ref=ref) for m in row["cohort"]}
             for m in self.cohort.values():
@@ -201,8 +213,7 @@ class Context:
                 if book["snapshot"][0] == row["ordinal"]:
                     self.bad.discard(token)
             try:
-                native = json.loads(row["payload"])
-                for event in native if isinstance(native, list) else [native]:
+                for event in frame_events or []:
                     if isinstance(event, dict) and event.get("event_type") == "last_trade_price":
                         self.trades[event["asset_id"]] = dict(
                             received_ns=row["received_ns"],

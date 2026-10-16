@@ -1544,3 +1544,94 @@ No service, collector, frozen campaign, or research job was manually restarted o
   its prior timeout and zero restarts. No model training worker was observed.
 - No service, collector, frozen campaign, or research job was manually
   restarted, cancelled, or changed for this checkpoint.
+
+
+## Veritas source-reader optimization — 2026-10-16
+
+The `project/veritas` source reader now shares decoded frame events between
+book reconstruction and last-trade diagnostics. The change passed its
+focused tests, Ruff, and focused Mypy. It has not been deployed to the
+Reality checkout or frozen campaign. At capture, the Reality recorder
+continued running, while the shadow worker remained lagged with one historical
+restart. The campaign plan hash and frozen source file remained unchanged.
+This code change has no measured effect on the current worker's CPU use or
+throughput.
+
+
+## 2026-10-16 11:29 UTC — frozen source-analysis import recovery
+
+- Source analysis previously failed at 11:11 UTC, and gap detail failed at
+  11:20 UTC, because `verify_campaign` loaded mutable Reality modules from the
+  Veritas branch instead of the campaign's pinned code snapshot.
+- The campaign plan itself was unchanged. A persistent import overlay at
+  `/home/charlie/.local/share/midas-veritas/frozen-runtime-overlay` now places
+  the frozen campaign code first and the current Veritas analysis package
+  second. Both read-only oneshot units have a per-user systemd drop-in setting
+  this `PYTHONPATH`; `daemon-reload` was used, and no long-running service was
+  restarted.
+- Preflight matched the campaign plan's 20 code-file hashes and the existing
+  source and gap analyzer-state code identities.
+- The bounded source replay completed at 11:26:37 UTC after processing 85
+  segments: 6,055/6,055, 1,552,487,702 processed bytes, 416,513 valid states
+  across 102 markets, zero positive top-ask/full-depth states, zero pending
+  bytes. It used 8.524 CPU seconds and peaked at 122.7 MiB.
+- The bounded gap-detail replay completed at 11:28:51 UTC after 128 segments:
+  5,885/6,064, 177 pending / 44,891,642 bytes, 2,142 campaign-window gap
+  events (2,138 book resynchronizations and 4 connection failures). It read no
+  active segment, used 4.386 CPU seconds, and peaked at 112 MiB.
+- Both units now report success with zero restarts. The separate
+  `/home/charlie/midas-reality` checkout remains clean; campaign SHA remains
+  `aa8acb2b46823c1a1e3ac5d01a57dde917746c2c7471098ae2a4598875e322f5`.
+- Next scheduled source and gap-detail runs are due at 11:40 and 11:35 UTC.
+  Verify those timers use the overlay. This fix restores historical replay; it
+  does not address the active shadow worker's lag or deploy the decode change.
+- The 11:30:53 UTC observer timer completed scan 64. Cumulative snapshot
+  evidence is 2,560 selected observations / 2,150 quality-valid pairs with
+  zero top-gross candidates; scan 64 itself contributed 31/40 valid pairs.
+  Pilot 002 is 3/48 scans with 75/120 valid pairs over 98 IDs; 17 pass the
+  strict reported-age sensitivity, with zero verified atomicity or sequence
+  pairs. Independent audit 013 remains through scan 62.
+- At 11:30 UTC the recorder remained `RECORDING_UNSEQUENCED`: 8 markets, 16
+  fresh books, 4,315 gaps, 603,058 frames, and no verified sequence. The
+  shadow worker remained `WARMING_OR_LAGGED_SOURCE`, with 192,638 lagged
+  frames skipped, 937 observed follow-ups, 40,075 censored, and zero pending.
+  Its source receipt and decision remain stale; the decode-reuse change is not
+  deployed. Core collector/shadow services were not restarted.
+
+
+## 2026-10-16 12:06 UTC — source-reader refresh diagnosis
+
+The Veritas `Tail.refresh()` path repeatedly listed and symlink-checked about
+6,134 recording segments. Forced refreshes measured 68–91 ms CPU, while the
+reader's refresh interval is 0.5 seconds. That repeated work could consume
+136–182 ms CPU per second against the frozen worker's 100 ms/s quota. The
+Veritas branch now skips a full listing when directory device/inode/mtime/ctime
+are unchanged and rescans on entry changes; focused tests cover segment
+discovery and symlink rejection. The decoded-frame reuse change remains in
+place.
+
+A three-run sealed-data replay over 2,970 records / 2,461 frames in 16 verified
+segments showed identical Context state and 16.16% lower median CPU for
+`Tail` plus `Context` than the frozen reader. Focused tests (28), Ruff and
+strict Mypy pass. The benchmark omits policy inference, journaling and worker
+checkpoints, so it does not prove live catch-up. The running worker remains
+frozen, active and lagged; neither it nor its campaign was modified or
+restarted. See [Gate C checkpoint 019](VERITAS_MISSION2_GATE_C_CHECKPOINT_019.md)
+and [benchmark 001](VERITAS_MISSION2_SHADOW_READER_BENCHMARK_001.json).
+
+## 2026-10-16 13:06 UTC — full shadow consume-path replay
+
+The successor replay includes policy evaluation, temporary SQLite decision and
+observation writes, follow-up processing, and periodic runtime saves. Across
+the same 16 verified finalized segments, the branch matched the pinned
+implementation's engine state, context state, and 768 normalized research
+rows. Its single-pass CPU time was 10.01 seconds compared with 49.64 seconds
+for pinned code under the same 25% CPU quota. This does not demonstrate live
+worker catch-up and was not deployed to the active campaign.
+
+The replay output was written under `/tmp`; the protected worker and campaign
+were left untouched. The focused 16-test shadow suite, Ruff, and strict Mypy
+passed. See [Gate C checkpoint 020](VERITAS_MISSION2_GATE_C_CHECKPOINT_020.md),
+[benchmark 002](VERITAS_MISSION2_SHADOW_READER_BENCHMARK_002.json), and ledger
+H139. The earlier checkpoint's limited-range claim remains historical; this
+entry records the broader full-consume-path comparison.

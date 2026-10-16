@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-16T10:34:23Z",
+  "updated_at_utc": "2026-10-16T13:06:25Z",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -7954,6 +7954,215 @@
       ],
       "decision": "Maintain no-trade and do not train a model or promote a strategy without candidate-relevant evidence. Continue only the bounded scheduled observation and independent replay; revisit candidate-specific checks if a positive quality-valid gross state appears.",
       "status": "continue"
+    },
+    {
+      "hypothesis_id": "VERITAS-H136",
+      "title": "Can the shadow context reuse decoded frame events without changing reconstruction or trade diagnostics?",
+      "mechanism": "Engine.consume already decodes each public frame for book reconstruction. Returning that event list lets the shadow context extract last-trade events without a second JSON decode.",
+      "experiment_id": "VERITAS-M2-SHADOW-DECODE-REUSE-001",
+      "dataset_id": "isolated_reality_shadow_frame_fixture_20261016",
+      "success_metric": "One frame-payload JSON decode, unchanged last-trade result, unchanged canonical source records, and passing focused reconstruction/shadow tests.",
+      "result": {
+        "status": "IMPLEMENTED_AND_FOCUSED_TESTS_PASSED",
+        "captured_at_utc": "2026-10-16T11:13:01Z",
+        "source_head_before_change": "920527f4f08def4ddbcd3326f7e47673be163df1",
+        "source_files": [
+          "packages/midas/reality/reconstruction.py",
+          "packages/midas/reality/shadow_source.py"
+        ],
+        "test_file": "tests/test_reality_shadow.py",
+        "focused_test_command": "PYTHONPATH=packages /home/charlie/midas/.venv/bin/pytest -q tests/test_reality_shadow.py tests/test_reality.py",
+        "focused_tests_passed": 26,
+        "ruff": "passed",
+        "focused_mypy": "passed",
+        "one_payload_parse_verified": true,
+        "end_to_end_cpu_or_throughput_effect": "not measured",
+        "deployed_to_frozen_worker": false,
+        "campaign_plan_sha256": "aa8acb2b46823c1a1e3ac5d01a57dde917746c2c7471098ae2a4598875e322f5",
+        "frozen_shadow_source_sha256": "6e0cb3811a8e32a81e9003a79de0ab778eccc28ff9e725f2163d58decf31b327",
+        "orders_submitted": false,
+        "authenticated_requests": false
+      },
+      "limitations": [
+        "The exact parse count is verified on an isolated fixture; full worker CPU share and catch-up throughput have not been measured.",
+        "The active worker runs its frozen campaign code, so this change cannot affect its current lag.",
+        "The prior final-source seal mismatch and source lag remain unresolved."
+      ],
+      "decision": "Retain the change in the Veritas branch. Profile a bounded finalized-segment replay in an isolated successor and compare state digests before considering deployment.",
+      "status": "continue"
+    },
+    {
+      "hypothesis_id": "VERITAS-H137",
+      "experiment_id": "VERITAS-M2-FROZEN-SOURCE-IMPORT-ISOLATION-001",
+      "title": "Can finalized-source and gap analysis keep using the frozen Reality code while Veritas develops a successor?",
+      "dataset_id": "Mission2_frozen_code_snapshot_and_finalized_source_catalog_20261016",
+      "mechanism": "Place the campaign’s own immutable code snapshot ahead of the mutable Veritas package path for both read-only analysis units, while retaining the current branch Veritas analysis modules and their persisted state identities.",
+      "success_metric": "Campaign code hashes and both analyzer-state code identities match; bounded source and gap jobs resume without cursor reset, campaign mutation, active-segment reads, or orders.",
+      "result": {
+        "status": "BOUNDED_REPLAYS_RECOVERED",
+        "captured_at_utc": "2026-10-16T11:33:00Z",
+        "campaign_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
+        "campaign_sha256": "aa8acb2b46823c1a1e3ac5d01a57dde917746c2c7471098ae2a4598875e322f5",
+        "frozen_code_file_count": 20,
+        "campaign_code_hashes_match": true,
+        "source_analysis_state_identity_matches": true,
+        "gap_detail_state_identity_matches": true,
+        "overlay_path": "/home/charlie/.local/share/midas-veritas/frozen-runtime-overlay",
+        "source_analysis": {
+          "completed_at_utc": "2026-10-16T11:26:37Z",
+          "batch_processed_segments": 85,
+          "batch_processed_bytes": 21776308,
+          "processed_segments": 6055,
+          "catalog_segments_at_generation": 6055,
+          "pending_segments_at_generation": 0,
+          "quality_valid_states": 416513,
+          "market_count": 102,
+          "positive_top_ask_states": 0,
+          "positive_full_depth_states": 0,
+          "cpu_seconds": 8.524,
+          "peak_memory_mib": 122.7,
+          "active_segment_read": false
+        },
+        "gap_detail": {
+          "completed_at_utc": "2026-10-16T11:28:51Z",
+          "batch_processed_segments": 128,
+          "batch_processed_bytes": 31213166,
+          "processed_segments": 5885,
+          "replayable_catalog_segments": 6064,
+          "pending_segments": 177,
+          "pending_source_bytes": 44891642,
+          "campaign_window_gap_events": 2142,
+          "campaign_window_gap_counts_by_reason": {
+            "book_resynchronization": 2138,
+            "connection_failure": 4
+          },
+          "cpu_seconds": 4.386,
+          "peak_memory_mib": 112,
+          "active_segment_read": false
+        },
+        "bounded_one_shots_started": true,
+        "long_running_services_restarted": false,
+        "campaign_modified": false,
+        "reality_checkout_clean": true,
+        "orders_submitted": false,
+        "authenticated_requests": false
+      },
+      "limitations": [
+        "The per-user systemd import overrides and symlink overlay are host configuration outside Git.",
+        "The next scheduled runs are still needed to verify recurrence.",
+        "This restores finalized historical analysis but does not repair the active shadow worker lag.",
+        "The branch decode-reuse change remains unbenchmarked and undeployed."
+      ],
+      "decision": "Keep the campaign import overlay for both read-only analyzers and verify the next scheduled runs. Do not weaken the frozen code guard or alter the campaign plan.",
+      "status": "continue"
+    },
+    {
+      "hypothesis_id": "VERITAS-H138",
+      "experiment_id": "VERITAS-M2-SHADOW-READER-BENCHMARK-001",
+      "title": "Does avoiding unchanged source-directory scans materially reduce shadow reader CPU without changing reconstructed state?",
+      "dataset_id": "Reality_finalized_recording_ordinals_516051_519036",
+      "mechanism": "Cache the sorted finalized/open segment path set until directory device, inode, mtime_ns or ctime_ns changes; reuse decoded frame events between book reconstruction and trade diagnostics.",
+      "success_metric": "Reproducible CPU reduction over the frozen reader with identical context-state digest, validated sealed segments, focused safety tests, and no frozen campaign modification.",
+      "result": {
+        "status": "STATE_EQUIVALENT_CPU_REDUCTION_MEASURED",
+        "captured_at_utc": "2026-10-16T12:06:24Z",
+        "artifact_path": "docs/VERITAS_MISSION2_SHADOW_READER_BENCHMARK_001.json",
+        "artifact_sha256": "8a48363feb915b862847896e0642888d7cefbcda7284052c2b30f021bfa7c4dc",
+        "source_range": {
+          "first_ordinal": 516051,
+          "last_ordinal": 519036,
+          "consumed_records_excluding_checkpoints": 2970,
+          "frame_records": 2461,
+          "sealed_segments_verified": 16
+        },
+        "full_tail_context_cpu_median_seconds": {
+          "frozen": 5.6814,
+          "veritas": 4.7632
+        },
+        "full_tail_context_wall_median_seconds": {
+          "frozen": 5.7114,
+          "veritas": 4.7883
+        },
+        "cpu_reduction_percent": 16.16,
+        "context_state_sha256": "676fe95befcf15df8ba122058b38f2dfbcd5e78e879a178ae7f755ca7b3c7591",
+        "context_state_equal": true,
+        "frame_payload_decodes": {
+          "frozen": 4922,
+          "veritas": 2461
+        },
+        "unchanged_directory_refresh_cpu_ms_median": {
+          "frozen_full_rescan": 67.79,
+          "veritas_cached": 0.004
+        },
+        "active_worker_changed": false,
+        "frozen_campaign_changed": false,
+        "focused_tests_passed": 28,
+        "ruff": "passed",
+        "strict_mypy": "passed"
+      },
+      "limitations": [
+        "The replay does not include Shadow.consume policy inference, SQLite journal transactions, follow-up processing or periodic runtime saves.",
+        "Checkpoint assertion rows were omitted because the sealed range begins mid-campaign; Tail verified 16 finalized segment seals through the endpoint.",
+        "A forced-refresh microbenchmark and bounded offline replay are not a long-run live-worker profile.",
+        "The change is confined to project/veritas and is not deployed to the frozen worker."
+      ],
+      "decision": "Keep the reader optimizations in the branch and profile the complete consume path in an isolated successor before any deployment. Do not restart or modify the frozen campaign.",
+      "status": "continue"
+    },
+    {
+      "hypothesis_id": "VERITAS-H139",
+      "experiment_id": "VERITAS-M2-SHADOW-READER-BENCHMARK-002",
+      "title": "Does the optimized Reality reader reduce CPU across the complete shadow consume path without changing recorded evidence?",
+      "dataset_id": "Reality_finalized_recording_ordinals_518471_521244",
+      "mechanism": "Cache the finalized/open path list while source-directory identity and timestamps remain unchanged; reuse the decoded frame events for last-trade diagnostics.",
+      "success_metric": "Exact equality of normalized decision, commitment, and follow-up rows, reconstructed engine and context state hashes, and a measured full-consume CPU reduction on the same sealed public source range.",
+      "result": {
+        "status": "FULL_CONSUME_STATE_AND_RESEARCH_EQUIVALENT_CPU_REDUCTION_MEASURED",
+        "captured_at_utc": "2026-10-16T13:06:25Z",
+        "artifact_path": "docs/VERITAS_MISSION2_SHADOW_READER_BENCHMARK_002.json",
+        "artifact_sha256": "c44125a06981c0fc216d2176418a68bc27161f09f289484a9078dd49119b3bbf",
+        "source_range": {
+          "first_ordinal": 518471,
+          "last_ordinal": 521244,
+          "records": 2774,
+          "frames": 2247,
+          "sealed_segments_verified": 16
+        },
+        "decisions": 128,
+        "observations": 640,
+        "research_events": 768,
+        "followup_statuses": {
+          "censored": 500,
+          "observed_public_measurement": 12
+        },
+        "research_semantics_sha256": "7ab2d997ddd760cda823010eae1a928190df04b73f9ffa3e93e0ab43d469b798",
+        "context_state_sha256": "bea93fa76b85226df36c0c2ac8f943f5b32adb152ddea37dba5adb422331546c",
+        "engine_state_sha256": "aa6c1a97623dd74cda31e6a02d137908fcf91ed1fb53cd864933c038e10ab45c",
+        "cpu_seconds": {
+          "frozen": 49.643897489,
+          "veritas": 10.010616319
+        },
+        "wall_seconds": {
+          "frozen": 198.5633636409184,
+          "veritas": 40.01538348104805
+        },
+        "cpu_reduction_percent": 79.8352,
+        "wall_reduction_percent": 79.8475,
+        "full_consume_range_replayed": true,
+        "semantic_rows_equal": true,
+        "active_worker_changed": false,
+        "frozen_campaign_changed": false,
+        "focused_test_result": "16 passed",
+        "ruff": "passed",
+        "strict_mypy": "passed"
+      },
+      "limitations": [
+        "One bounded historical range per implementation does not establish long-run live-worker catch-up performance.",
+        "The full-consume replay reproduces prior saved public observations and labels; it produces no independent economic result.",
+        "The optimization remains in the Veritas branch and has not been deployed to the protected frozen campaign."
+      ],
+      "decision": "Retain the optimization in the branch. Keep the frozen worker and campaign unchanged; require an approved successor lifecycle and further range-level verification before deployment.",
+      "status": "continue"
     }
   ],
   "next_research_questions": [
@@ -7965,6 +8174,9 @@
     "How do the fixed coverage pilot strata, missed sequences, storage, and compute costs affect the next observation design?",
     "Can finalized-source gap indexing advance while preserving the original frozen campaign labels and source prefix?",
     "Does prospective pilot 002 enroll and preserve snapshot/analysis lineage on its first ordinary scan, then report the planned freshness and synchronization diagnostics?",
-    "Does a future scheduled scan produce any quality-valid positive gross candidate after independent v3 replay, or does the no-candidate finding persist in the selected panel?"
+    "Does a future scheduled scan produce any quality-valid positive gross candidate after independent v3 replay, or does the no-candidate finding persist in the selected panel?",
+    "Does decoded-event reuse measurably reduce CPU over a bounded finalized-source replay while preserving shadow state digests and the frozen campaign?",
+    "Do the next scheduled source and gap-detail timer runs resume under the frozen-code import overlay and preserve their existing state identities?",
+    "Does the full-consume CPU reduction reproduce on a second independent finalized-source window, with exact journal-row equality, before any successor deployment decision?"
   ]
 }

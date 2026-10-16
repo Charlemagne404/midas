@@ -50,10 +50,11 @@ class Engine:
             if isinstance(asset, str) and asset in self.books:
                 self.books[asset]["issue"] = reason
 
-    def consume(self, record: dict[str, Any]) -> None:
+    def consume(self, record: dict[str, Any]) -> list[Any] | None:
         self.last_ordinal = record["ordinal"]
         self.now_ns = max(self.now_ns, record["received_ns"])
         kind = record["kind"]
+        parsed_events: list[Any] | None = None
         if kind == "gap":
             if record["payload"].get("reason") == "process_start":
                 version = record["payload"].get("reconstruction_version", 1)
@@ -82,16 +83,20 @@ class Engine:
             try:
                 if record.get("encoding", "utf8") != "utf8":
                     raise ValueError("Unsupported binary frame")
+                # Keep the decoded events available to callers that need
+                # frame-level diagnostics. The shadow context used to decode
+                # this payload a second time just to collect last trades.
                 events = json.loads(record["payload"])
-                events = events if isinstance(events, list) else [events]
-                if not events:
+                parsed_events = events if isinstance(events, list) else [events]
+                if not parsed_events:
                     self.counts["empty_frame"] += 1
-                for index, event in enumerate(events):
+                for index, event in enumerate(parsed_events):
                     self.event(event, record, index)
             except (ValueError, TypeError, KeyError, DecimalException):
                 self.counts["malformed_frame"] += 1
                 self.invalidate("malformed_frame")
         self.invalidate_stale()
+        return parsed_events
 
     def invalidate_stale(self) -> None:
         for book in self.books.values():

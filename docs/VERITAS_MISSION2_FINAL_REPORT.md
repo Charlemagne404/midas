@@ -935,3 +935,73 @@ At 06:47 UTC the recorder, shadow, Midas/Reality APIs, and web services were act
 ## Scheduled gap-detail follow-up (2026-10-16T06:51Z)
 
 The scheduled 06:50 UTC finalized-only batch completed at 06:51:28 with exit 0 and no restarts. Its sealed prefix covers 3,763/5,518 replayable segments / 939,429,869 bytes, with 1,755 segments / 482,445,348 bytes pending and 1,090 campaign-window gap events. The batch processed 122 segments / 33,462,900 bytes, used 4.194 CPU seconds, peaked at 63.6 MiB, and read no active segment. This improves the separate gap index while finalized-source analysis remains independently current for its own catalog. See [operations](VERITAS_MISSION2_OPERATIONS.md) and [inventory 073](VERITAS_MISSION2_RESEARCH_INVENTORY_073.json).
+
+
+## Mission 2 continuation — shadow source decode reuse (2026-10-16T11:11Z)
+
+The Veritas checkout removed a redundant JSON decode from the shadow
+reconstruction/context path: the engine now returns parsed frame events, and
+the context reuses them for last-trade diagnostics. This preserves the source
+record representation and was verified by 26 focused tests, Ruff, and focused
+Mypy. The change is not deployed to the frozen Reality worker, and no
+end-to-end throughput gain is claimed. The protected campaign remains
+`WARMING_OR_LAGGED_SOURCE`; its plan hash and frozen source copy were not
+changed. See [Gate C checkpoint
+018](VERITAS_MISSION2_GATE_C_CHECKPOINT_018.md).
+
+## Mission 2 continuation — restore frozen-source replay (2026-10-16T11:29Z)
+
+The 11:11 UTC source-analysis failure and 11:20 UTC gap-detail failure both
+came from the mutable Veritas checkout failing the original campaign's code
+hash guard. A persistent Python import overlay now loads the campaign's
+immutable code snapshot for Reality modules while retaining current Veritas
+analysis code. Preflight matched the frozen campaign's 20 code hashes and both
+stored analysis-state code identities.
+
+The source-analysis one-shot resumed its existing cursor, processed 85 new
+segments, and completed at 6,055/6,055 segments with 416,513 quality-valid
+states across 102 markets and no positive top-ask/full-depth states. The
+separate gap-detail one-shot advanced 128 segments to 5,885/6,064, with 177
+pending and no active segment read. Both bounded jobs exited successfully;
+the frozen campaign SHA and separate Reality worktree remain unchanged. The
+per-user systemd import overrides are recorded in [Gate D checkpoint
+003](VERITAS_MISSION2_GATE_D_CHECKPOINT_003.md). The next scheduled runs still
+need to confirm recurring operation. The worker itself remains lagged, and
+the decode-reuse improvement remains unbenchmarked and undeployed.
+
+## Scheduled scan 64 — 2026-10-16T11:30:53Z
+
+The public observation service completed scan 64. Across 64 snapshots the
+stored panel now contains 2,560 selected observations and 2,150 quality-valid
+pairs, with zero positive top-gross candidates. The new scan contributed 31
+valid pairs from 40 selected pairs. This v4 result is not yet included in
+independent audit 013, which remains through scan 62. Pilot 002 is 3/48 scans
+with 75/120 valid pairs across 98 IDs; 17 pass its strict reported-age rule,
+and no pair has verified batch atomicity or sequence. These repeated selected
+observations remain descriptive. See the [latest scan summary](/home/charlie/midas-veritas/data/veritas-observatory/latest-summary.json), [research summary](/home/charlie/midas-veritas/data/veritas-observatory/research-summary.json), and pilot 002 artifact.
+
+## Gate C update — 2026-10-16
+
+The live shadow reader's repeated source-directory scans are a measured CPU
+bottleneck: 68–91 ms per full refresh at a 0.5-second interval, against a
+100 ms/s worker quota. A branch-only directory-metadata cache and decoded-event
+reuse passed 28 focused tests, Ruff and strict Mypy. An offline replay over 16
+sealed segments preserved the exact Context state and reduced median
+`Tail`-plus-`Context` CPU by 16.16%. The measurement excludes decision/policy
+inference, SQLite journaling and status saves. It has not been deployed to the
+frozen worker and does not yet demonstrate fresh live decisions. See [Gate C
+checkpoint 019](VERITAS_MISSION2_GATE_C_CHECKPOINT_019.md) and [benchmark
+001](VERITAS_MISSION2_SHADOW_READER_BENCHMARK_001.json).
+
+## Gate C update — full consume replay, 2026-10-16
+
+A bounded full `Shadow.consume()` comparison now includes model/policy
+evaluation, journal writes, follow-ups, and periodic saves. Over 2,774 records
+and 2,247 frames in 16 finalized segments, the branch exactly matches the
+pinned code's 128 decisions, 640 observations, 768 normalized research rows,
+and engine/context state digests. One branch pass used 10.01 CPU seconds
+versus 49.64 seconds for pinned code (79.8% lower); this is a single historical
+range, not a live catch-up measurement. The branch remains undeployed and the
+frozen campaign was not modified. See [Gate C checkpoint
+020](VERITAS_MISSION2_GATE_C_CHECKPOINT_020.md) and [benchmark
+002](VERITAS_MISSION2_SHADOW_READER_BENCHMARK_002.json).
