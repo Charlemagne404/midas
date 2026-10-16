@@ -280,6 +280,38 @@ type CoveragePilot = {
   limitations: string[];
 };
 
+type CoveragePilotV2 = {
+  study_id: string;
+  protocol_version: string;
+  status: string;
+  started_at_utc: string | null;
+  ends_at_utc: string | null;
+  maximum_completed_scans: number;
+  completed_scans: number;
+  selected_market_pair_slots: number;
+  quality_valid_pairs: number;
+  quality_valid_yield: number | null;
+  distinct_selected_market_ids: number;
+  implementation_pin_status: string;
+  measurement_diagnostics: {
+    strict_reported_fresh_pairs: number;
+    reported_update_age_above_5s_by_leg: Record<string, number>;
+    reported_update_timestamp_skew_above_250ms_pairs: number;
+    reported_update_timestamp_skew_bands: Record<string, number>;
+    batch_atomicity_verified_pairs: number;
+    sequence_verified_pairs: number;
+  };
+  latest_scan: {
+    scan_id: string;
+    captured_at_utc: string;
+    selected_market_pairs: number;
+    quality_valid_pairs: number;
+    positive_top_gross_pairs: number;
+  } | null;
+  summary_artifact: (Artifact & { file_sha256: string; url: string }) | null;
+  limitations: string[];
+};
+
 type MarketUniverseCoverage = {
   status: string;
   analysis_version: string;
@@ -479,6 +511,7 @@ type Observatory = {
   recent_candidates: ObservatoryCandidate[];
   summary_artifact: Artifact | null;
   measurement_pilot: CoveragePilot;
+  measurement_pilot_v2: CoveragePilotV2;
   coverage_design_audit?: CoverageDesignAudit | null;
   market_universe_coverage?: MarketUniverseCoverage | null;
   limitations: string[];
@@ -823,6 +856,7 @@ export function Veritas() {
   const funnelMaximum = Math.max(data.coverage.period_frame_records, 1);
   const observatory = data.opportunity_observatory;
   const measurementPilot = observatory.measurement_pilot;
+  const measurementPilotV2 = observatory.measurement_pilot_v2;
   const coverageDesignAudit = observatory.coverage_design_audit ?? null;
   const universeCoverage = observatory.market_universe_coverage ?? null;
   const finalizedSource = data.finalized_reality_source;
@@ -1301,6 +1335,42 @@ export function Veritas() {
               </ul>
             </details>
           )}
+          <div className="ve-pilot-latest" data-testid="measurement-pilot-v2">
+            <span>
+              Prospective measurement v2 · {measurementPilotV2.status.replaceAll('_', ' ')}
+            </span>
+            <strong>
+              {fmt(measurementPilotV2.quality_valid_pairs)} /{' '}
+              {fmt(measurementPilotV2.selected_market_pair_slots)} quality-valid ·{' '}
+              {fmt(measurementPilotV2.completed_scans)} /{' '}
+              {fmt(measurementPilotV2.maximum_completed_scans)} scans
+            </strong>
+            <small>
+              {fmt(measurementPilotV2.measurement_diagnostics.strict_reported_fresh_pairs)} strict
+              reported-age freshness pairs · pin{' '}
+              {measurementPilotV2.implementation_pin_status.replaceAll('_', ' ')}
+            </small>
+            {measurementPilotV2.latest_scan && (
+              <small>
+                Latest scan {time(measurementPilotV2.latest_scan.captured_at_utc)} ·{' '}
+                {fmt(measurementPilotV2.latest_scan.positive_top_gross_pairs)} positive gross pairs
+              </small>
+            )}
+            {measurementPilotV2.summary_artifact && (
+              <a
+                className="ve-latest-snapshot"
+                href={measurementPilotV2.summary_artifact.url}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Inspect verified v2 measurement summary <ArrowUpRight size={13} />
+              </a>
+            )}
+          </div>
+          <p className="ve-observatory-note">
+            V2 is prospectively enrolled from normal scans. Reported timestamp recency is not
+            venue-sequence freshness; batch atomicity and sequence evidence remain separate fields.
+          </p>
         </Panel>
       </div>
 

@@ -26,6 +26,7 @@ import httpx
 
 from .continuous_analysis import update_finalized_analysis
 from .coverage_pilot import record_coverage_pilot
+from .coverage_pilot_v2 import record_coverage_pilot_v2
 from .opportunity_audit import audit_pair_snapshot, normalize_market
 
 GAMMA = "https://gamma-api.polymarket.com"
@@ -982,6 +983,7 @@ def _summary(report: dict[str, Any]) -> dict[str, Any]:
         ],
         "positive_candidates": positive_candidates,
         "measurement_pilot": report.get("measurement_pilot"),
+        "measurement_pilot_v2": report.get("measurement_pilot_v2"),
         "coverage_kind": "intermittent_public_snapshots",
         "orders_submitted": False,
         "limitations": report["limitations"],
@@ -1224,6 +1226,7 @@ async def run_scan(
                 + Path(__file__).with_name("economic_feasibility_v3.py").read_bytes()
                 + Path(__file__).with_name("continuous_analysis.py").read_bytes()
                 + Path(__file__).with_name("coverage_pilot.py").read_bytes()
+                + Path(__file__).with_name("coverage_pilot_v2.py").read_bytes()
             )
             counts = {
                 "selected_markets": len(selected),
@@ -1394,9 +1397,23 @@ async def run_scan(
                     "authenticated_requests": False,
                 }
             report["measurement_pilot"] = measurement_pilot
+            try:
+                measurement_pilot_v2 = record_coverage_pilot_v2(root, report)
+            except Exception as error:  # keep the public observation writer authoritative
+                measurement_pilot_v2 = {
+                    "study_id": "VERITAS-M2-COVERAGE-PILOT-002",
+                    "protocol_version": "veritas-coverage-pilot-v2",
+                    "status": "recording_error",
+                    "error_type": type(error).__name__,
+                    "error": str(error)[:500],
+                    "orders_submitted": False,
+                    "authenticated_requests": False,
+                }
+            report["measurement_pilot_v2"] = measurement_pilot_v2
             latest = _summary(report)
             latest["continuous_analysis"] = continuous_analysis
             latest["measurement_pilot"] = measurement_pilot
+            latest["measurement_pilot_v2"] = measurement_pilot_v2
             _atomic_json(root / "latest-summary.json", latest)
             for observation in observations:
                 books = observation["books"]

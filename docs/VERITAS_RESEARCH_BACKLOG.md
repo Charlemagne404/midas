@@ -390,3 +390,23 @@ The next scheduled source-analysis and Director cycles are 09:40 and 09:45 UTC.
 See [Gate B checkpoint 013](VERITAS_MISSION2_GATE_B_CHECKPOINT_013.md),
 [audit 012](VERITAS_MISSION2_INDEPENDENT_OPPORTUNITY_AUDIT_012.json), and
 ledger H133.
+
+## Mission 2 continuation — prospective measurement pilot v2 implementation
+
+Implemented an isolated, bounded pilot 002 after pilot 001's protocol pin
+proved too broad: v1 hashed observer, analysis, opportunity, and fee code, so
+unrelated engineering changes stopped its recording. V2 pins only its protocol
+module and the shared event/summary helper, while recording snapshot and v4
+analysis hashes plus source-code lineage per scan. It reports the strict
+reported-age sensitivity, per-leg age bands, timestamp skew, and separate
+atomicity/sequence verification counts. This is a measurement instrument; no
+new market data or economic result exists yet.
+
+The observer enrolls pilot 002 only on its next normal scan, without backfill;
+pilot 001 state and the frozen Reality campaign remain untouched. The dashboard
+has a separate v2 status and hash-verified artifact route. Focused pilot and
+observer tests pass (12), all dashboard API tests pass (32), and the frontend
+component test and TypeScript build pass. The first prospective v2 event and
+its source-lineage check remain pending that scheduled scan. See the frozen
+[pilot 002 protocol](VERITAS_MISSION2_COVERAGE_PILOT_002.json) and the
+[operations note](VERITAS_OPERATIONS.md#prospective-measurement-pilot-v2).

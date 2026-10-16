@@ -176,6 +176,26 @@ corepack pnpm --dir apps/web build
 See [dashboard checkpoint 001](VERITAS_DASHBOARD_CHECKPOINT_001.md) for the
 displayed evidence and latest verification result.
 
+## Prospective measurement pilot v2
+
+Mission 2 adds `VERITAS-M2-COVERAGE-PILOT-002` as an isolated 24-hour / 48-scan
+measurement study. Its [frozen protocol](VERITAS_MISSION2_COVERAGE_PILOT_002.json)
+enrolls from the next ordinary immutable observer scan after deployment; it
+does not backfill earlier snapshots or change pilot 001. State, events, and the
+summary live under
+`data/veritas-observatory/measurement-pilots/VERITAS-M2-COVERAGE-PILOT-002/`.
+
+The v2 implementation pin covers only `coverage_pilot_v2.py` and the shared
+`coverage_pilot.py` event/summary helpers. Keep those files unchanged until the
+study reaches its fixed stop or cap. Each event links the saved snapshot and
+finalized v4 analysis by digest and records the observer/analysis code hashes,
+reported timestamp-age and cross-outcome-skew diagnostics, plus separate
+atomicity and sequence-verification counts. Reported timestamp recency is not
+venue freshness; zero verification counts remain unknown or unverified, not
+proof of failure. The overview exposes a read-only `measurement_pilot_v2`
+projection and the `coverage-pilot-v2` artifact. Do not manually trigger a scan
+to enroll or accelerate this study.
+
 ## Follow-up power sensitivity
 
 The activity-aware sampling proposal has a reproducible planning-only power

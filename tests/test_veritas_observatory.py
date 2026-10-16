@@ -137,6 +137,9 @@ def test_stratified_observatory_is_bounded_reproducible_and_keeps_controls(tmp_p
     assert first["analysis_version"] == VERSION
     assert first["measurement_pilot"]["study_id"] == "VERITAS-M2-COVERAGE-PILOT-001"
     assert first["measurement_pilot"]["status"] == "running"
+    assert first["measurement_pilot_v2"]["study_id"] == "VERITAS-M2-COVERAGE-PILOT-002"
+    assert first["measurement_pilot_v2"]["status"] == "running"
+    assert first["measurement_pilot_v2"]["completed_scans"] == 1
     assert first["discovery_frame_protocol"] == "stratified-gamma-page-rotation-v2"
     assert first["selection"]["plan"]["phase"] == "liquidity"
     assert second["selection"]["plan"]["phase"] == "expiry"
@@ -187,6 +190,7 @@ def test_stratified_observatory_is_bounded_reproducible_and_keeps_controls(tmp_p
     latest = json.loads((tmp_path / "latest-summary.json").read_text())
     assert latest["scan_id"] == second["scan_id"]
     assert latest["measurement_pilot"]["completed_scans"] == 2
+    assert latest["measurement_pilot_v2"]["completed_scans"] == 2
     assert latest["coverage_kind"] == "intermittent_public_snapshots"
     assert latest["discovery"]["frame_protocol"] == "stratified-gamma-page-rotation-v2"
     assert latest["discovery"]["offset_bucket_seconds"] == 30 * 60

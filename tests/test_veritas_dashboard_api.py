@@ -6,6 +6,7 @@ from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from midas.veritas.coverage_pilot_v2 import record_coverage_pilot_v2
 
 from apps.api.veritas import MAX_ARTIFACT_BYTES, coverage_design_audit_overview, router
 
@@ -835,6 +836,124 @@ def write_coverage_pilot_fixture(root: Path) -> Path:
     return summary_path
 
 
+def write_coverage_pilot_v2_fixture(root: Path) -> Path:
+    source_dir = Path(__file__).resolve().parents[1] / "packages" / "midas" / "veritas"
+    target_dir = root / "packages" / "midas" / "veritas"
+    target_dir.mkdir(parents=True)
+    for name in ("coverage_pilot.py", "coverage_pilot_v2.py"):
+        shutil.copyfile(source_dir / name, target_dir / name)
+    observatory_root = root / "data" / "veritas-observatory"
+    scan_id = "scan-20261016T100000Z-123456abcdef"
+    captured_at = "2026-10-16T10:00:00+00:00"
+    snapshot_relative = f"snapshots/{scan_id}.json.gz"
+    snapshot_path = observatory_root / snapshot_relative
+    snapshot_path.parent.mkdir(parents=True)
+    snapshot_path.write_bytes(b"v2 dashboard fixture snapshot")
+    evidence_sha256 = hashlib.sha256(b"v2 fixture evidence").hexdigest()
+    source_sha256 = hashlib.sha256(b"v2 observer fixture").hexdigest()
+    selected = [
+        {
+            "market_id": "market-control",
+            "cohort_role": "stable_random_control",
+            "selection_stratum": None,
+            "selection_probability": "1",
+            "primary_category": "Politics",
+        },
+        {
+            "market_id": "market-rotating",
+            "cohort_role": "rotating_stratified",
+            "selection_stratum": "tight_le_0.01",
+            "selection_probability": "0.5",
+            "primary_category": "Economics",
+        },
+    ]
+    observations = [
+        {
+            "market_id": row["market_id"],
+            "cohort_role": row["cohort_role"],
+            "selection_stratum": row["selection_stratum"],
+            "audit": {
+                "valid": index == 0,
+                "quality": {
+                    "batch_atomicity_verified": False,
+                    "sequence_verified": False,
+                }
+                if index == 0
+                else None,
+            },
+        }
+        for index, row in enumerate(selected)
+    ]
+    analysis = {
+        "analysis_version": "veritas-finalized-snapshot-analysis-v4",
+        "scan_id": scan_id,
+        "snapshot_evidence_sha256": evidence_sha256,
+        "attempted_market_pairs": 2,
+        "valid_quality_pairs": 1,
+        "legacy_freshness_valid_pairs": 0,
+        "analysis_source_code_sha256": hashlib.sha256(b"analysis fixture").hexdigest(),
+        "positive_top_gross_pairs": 0,
+        "counts": {
+            "invalid_reasons": {"empty_ask_side": 1},
+            "positive_full_depth_gross_by_quantity": {"20": 0},
+            "positive_minimum_notional_by_quantity": {"20": 0},
+            "reported_update_age_above_5s_by_leg": {"yes": 0, "no": 0},
+            "reported_update_age_bands_by_leg": {"yes": {}, "no": {}},
+            "reported_update_timestamp_skew_above_250ms_pairs": 0,
+            "reported_update_timestamp_skew_bands": {},
+        },
+        "market_rows": [
+            {
+                "market_id": row["market_id"],
+                "cohort_role": row["cohort_role"],
+                "valid": index == 0,
+                "invalid_reason": None if index == 0 else "empty_ask_side",
+            }
+            for index, row in enumerate(selected)
+        ],
+    }
+
+    def canonical(value):
+        return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
+
+    analysis["analysis_event_sha256"] = hashlib.sha256(canonical(analysis)).hexdigest()
+    analysis_path = observatory_root / "analysis-events" / "v4" / f"{scan_id}.json"
+    analysis_path.parent.mkdir(parents=True)
+    analysis_path.write_bytes(canonical(analysis))
+    report = {
+        "scan_id": scan_id,
+        "captured_at_utc": captured_at,
+        "snapshot_file": snapshot_relative,
+        "snapshot_evidence_sha256": evidence_sha256,
+        "source_code_sha256": source_sha256,
+        "discovery": {
+            "eligible_pair_markets": 10,
+            "unique_market_ids": 12,
+            "excluded_market_ids": 2,
+            "exclusion_reasons": {"unsupported_outcome_relationship": 2},
+        },
+        "selection": {
+            "plan": {
+                "sequence": 1,
+                "phase": "liquidity",
+                "stable_control_available_this_scan": 1,
+                "stable_control_missing_this_scan": [],
+                "rotation_strata": {},
+            },
+            "selected_markets": selected,
+        },
+        "market_observations": observations,
+        "counts": {
+            "reported_update_age_above_5s_by_leg": {"yes": 0, "no": 0},
+            "reported_update_age_bands_by_leg": {"yes": {}, "no": {}},
+            "reported_update_timestamp_skew_above_250ms_pairs": 0,
+            "reported_update_timestamp_skew_bands": {},
+        },
+    }
+    result = record_coverage_pilot_v2(observatory_root, report)
+    return observatory_root / "measurement-pilots" / result["study_id"] / "summary.json"
+
+
 def test_overview_uses_bounded_versioned_evidence_without_raw_paths(tmp_path):
     client = fixture_client(tmp_path)
 
@@ -851,6 +970,7 @@ def test_overview_uses_bounded_versioned_evidence_without_raw_paths(tmp_path):
     assert data["baseline_policies"]["all_abstained"] is True
     assert data["execution_sensitivity"]["actual_fills"] == "unknown_counterfactual"
     assert data["opportunity_observatory"]["measurement_pilot"]["status"] == "not_started"
+    assert data["opportunity_observatory"]["measurement_pilot_v2"]["status"] == "not_started"
     assert data["execution_sensitivity"]["break_even_at_5pct_unmatched_feasible"] is False
     assert data["execution_sensitivity"]["fee_model_version"] == "veritas-economic-feasibility-v3"
     assert data["execution_sensitivity"]["fee_collection_medium_for_buy"] == "collateral"
@@ -1670,6 +1790,44 @@ def test_coverage_pilot_rejects_tampered_event(tmp_path):
     event_path = summary_path.parent / "events" / f"{scan_id}.json"
     event = json.loads(event_path.read_text())
     event["market_rows"][0]["quality_valid"] = False
+    event_path.write_text(json.dumps(event))
+
+    response = client.get("/api/veritas/overview")
+
+    assert response.status_code == 503
+
+
+def test_overview_exposes_hash_verified_coverage_pilot_v2(tmp_path):
+    client = fixture_client(tmp_path)
+    summary_path = write_coverage_pilot_v2_fixture(tmp_path)
+
+    response = client.get("/api/veritas/overview")
+
+    assert response.status_code == 200
+    pilot = response.json()["opportunity_observatory"]["measurement_pilot_v2"]
+    assert pilot["study_id"] == "VERITAS-M2-COVERAGE-PILOT-002"
+    assert pilot["status"] == "running"
+    assert pilot["completed_scans"] == 1
+    assert pilot["selected_market_pair_slots"] == 2
+    assert pilot["quality_valid_pairs"] == 1
+    assert pilot["measurement_diagnostics"]["strict_reported_fresh_pairs"] == 0
+    assert pilot["implementation_pin_status"] == "matches_current_source"
+    assert pilot["latest_scan"]["positive_top_gross_pairs"] == 0
+    assert any(item["id"] == "coverage-pilot-v2" for item in response.json()["artifacts"])
+
+    artifact = client.get("/api/veritas/artifacts/coverage-pilot-v2")
+    assert artifact.status_code == 200
+    assert artifact.json()["data"]["summary_sha256"]
+    assert artifact.json()["file_sha256"] == hashlib.sha256(summary_path.read_bytes()).hexdigest()
+
+
+def test_coverage_pilot_v2_rejects_tampered_event(tmp_path):
+    client = fixture_client(tmp_path)
+    summary_path = write_coverage_pilot_v2_fixture(tmp_path)
+    scan_id = "scan-20261016T100000Z-123456abcdef"
+    event_path = summary_path.parent / "events" / f"{scan_id}.json"
+    event = json.loads(event_path.read_text())
+    event["quality_valid_pairs"] = 0
     event_path.write_text(json.dumps(event))
 
     response = client.get("/api/veritas/overview")
