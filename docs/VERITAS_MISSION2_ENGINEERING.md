@@ -1,6 +1,40 @@
 # Veritas Mission 2 Engineering Checkpoint
 
-## Latest Gate A checkpoint — isolated eight-read discovery successor
+## Latest Gate F checkpoint — scan 42 qualification and source catch-up
+
+The scheduled Research Director admitted scan 42 to Arena at 00:45 UTC.
+Child `job-aa54e348ab8347b3b1771479` completed all 42 source events with exit
+status 0; its 2.7-second run produced finding
+`veritas-qualification-v1-d6329d3c4c93c779`. The read-only finding validator
+accepted the finding and its experiment digest, and the job source-manifest
+hash matches the submitted source revision.
+
+The result covers 1,467/1,680 quality-valid pairs across 760 selected market
+IDs and 42 repeated snapshots. The unchanged top-ask baseline and the
+depth/minimum-aware qualification each have zero positive states. Full-depth,
+per-leg-minimum, single-match-fee, and fragmentation-safe-fee gates are also
+zero; the complete candidate evidence set is empty and its empty source
+replay is marked complete. The maximum edge is -$0.001/share and median is
+-$0.020/share. This is a qualification experiment, not strategy P&L or
+independent market confirmation.
+
+Arena completed the child, but the Director manifest still reports its
+current job as `QUEUED` and its last qualified scan as scan 41. The manifest
+was last updated during admission at 00:45:28 UTC. The next scheduled
+Director cycle is 01:15:26 UTC; no manual reconciliation, retry, or duplicate
+admission was made.
+
+The 00:43 source summary covers 4,357/4,791 finalized segments and 278,820
+quality-valid campaign-window states across 68 markets, with zero positive
+gross or deeper economic states. The 00:51 gap-detail summary covers
+944/4,812 catalog segments and 1,793 all-period gap events. Its last retained
+event is 16:08 UTC, before the campaign window starts at 21:07 UTC, so the
+campaign-window gap count remains incomplete. Both one-shots exited
+successfully and were inactive at 00:52 UTC. See [Gate F checkpoint
+025](VERITAS_MISSION2_GATE_F_CHECKPOINT_025.md), [inventory
+050](VERITAS_MISSION2_RESEARCH_INVENTORY_050.json), and [H088](VERITAS_RESEARCH_LEDGER.json).
+
+## Previous Gate A checkpoint — isolated eight-read discovery successor
 
 The separate `discovery-successor-001` implementation began in `52342dc` and
 was hardened in `70144d9`. It retains all six Gamma discovery frames and the

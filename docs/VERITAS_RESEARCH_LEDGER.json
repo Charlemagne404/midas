@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-16T00:38:48+00:00",
+  "updated_at_utc": "2026-10-16T00:52:13+00:00",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -4971,6 +4971,63 @@
         "The regression test uses an isolated temporary symlink and does not exercise a live service.",
         "The fix provides no new market data, control-availability result, or economic evidence."
       ]
+    },
+    {
+      "hypothesis_id": "VERITAS-H088",
+      "experiment_id": "VERITAS-M2-ECO-QUAL-001",
+      "dataset_id": "d449697ba6fe13185118794e172e3d3f01048a547f895bc8466f9a7bfcd86116",
+      "title": "Does the scheduled depth- and minimum-aware qualification preserve a complete, replayable funnel through scan 42?",
+      "mechanism": "The scheduled Research Director pins the finalized v4 snapshot prefix through scan 42, submits one bounded Arena qualification, and compares the unchanged top-ask gross baseline with full-depth, per-leg-minimum, and fee-sensitive gates. Validate the resulting finding digest, source manifest revision, candidate evidence, and empty replay status.",
+      "success_metric": "All 42 source events complete; the scan identity and experiment digest validate; the job source manifest matches its submitted revision; every gate count and candidate replay status reconciles.",
+      "status": "continue",
+      "decision": "The scheduled Arena child completed 42/42 events and passed the read-only Research Director finding validator. The unchanged top-ask baseline and the depth/minimum-aware qualification both have zero positive states; all three additional depth/minimum/fee gates are also zero. Candidate evidence is complete and empty, with complete empty source replay. Keep no-trade. The Director manifest has not yet reconciled this child and still projects it as QUEUED pending the 01:15:26 UTC scheduled cycle; no manual poll or retry was issued.",
+      "result": {
+        "checkpoint_path": "docs/VERITAS_MISSION2_GATE_F_CHECKPOINT_025.md",
+        "scan_id": "scan-20261016T003208Z-f65962fb4420",
+        "job_id": "job-aa54e348ab8347b3b1771479",
+        "job_state": "COMPLETED",
+        "job_exit_status": 0,
+        "job_progress": {
+          "done": 42,
+          "total": 42
+        },
+        "job_elapsed_seconds": 2.71535362303257,
+        "job_record_sha256": "e397b8bea171756ccd9fd20ea567f176abe8980a52b500b82b477060fa585d43",
+        "source_manifest_sha256": "379c619fdd2d5e5386974985e58a2ab66a5a6f5b224a5a610c8bef1f5f7f5124",
+        "submitted_source_hash": "7ea33c451b69fc5ab3429c0808a13279fd3d8ffc816a37a76207fc205cf0b163",
+        "source_manifest_hash_matches_job": true,
+        "finding_id": "veritas-qualification-v1-d6329d3c4c93c779",
+        "finding_manifest_sha256": "d36b902567e436c39f8d33935db12d378d271902cf403dfdd0409c44067d35bb",
+        "experiment_run_id": "VERITAS-M2-ECO-QUAL-001-V3-RUN-d449697ba6fe",
+        "dataset_sha256": "d449697ba6fe13185118794e172e3d3f01048a547f895bc8466f9a7bfcd86116",
+        "experiment_sha256": "ff45f118498542bda8685b342161b5ff2564818eeb6428197d44bc0b4bcb39ce",
+        "snapshot_count": 42,
+        "attempted_market_pairs": 1680,
+        "quality_valid_pairs": 1467,
+        "unique_market_ids": 760,
+        "maximum_top_edge_per_share": "-0.001",
+        "median_top_edge_per_share": "-0.02",
+        "positive_states_by_gate": {
+          "unchanged_top_ask_gross_sign": 0,
+          "full_displayed_depth_gross": 0,
+          "full_depth_and_per_leg_minimum_notional": 0,
+          "single_match_fee_sensitivity_positive": 0,
+          "fragmentation_safe_fee_sensitivity_positive": 0
+        },
+        "gross_candidate_evidence_count": 0,
+        "gross_candidate_replay_status": "NO_POSITIVE_CANDIDATES_TO_REPLAY",
+        "gross_candidate_replay_complete": true,
+        "read_only_finding_validation": "passed",
+        "orders_submitted": false,
+        "authenticated_requests": false,
+        "captured_at_utc": "2026-10-16T00:52:13+00:00"
+      },
+      "limitations": [
+        "The 42 snapshots are repeated, selected, and dependent observations, not independent confirmation or a venue census.",
+        "The qualification experiment does not establish strategy P&L, execution, order arrival, or fills.",
+        "No positive candidate appeared; absence in this panel does not prove the venue lacks economic opportunities.",
+        "The Director manifest still awaits its scheduled reconciliation of the completed Arena child."
+      ]
     }
   ],
   "next_research_questions": [
@@ -4990,7 +5047,7 @@
     "Can the frozen shadow worker process new recorder ordinals faster than the live input while keeping frames within its decision-input lag bound?",
     "After the fixed 24-hour pilot stops, should the implemented eight-read successor replace the v1 observer, and how does a bounded sole-collector evaluation compare control availability, quality yield, response size, pacing, and storage?",
     "What versioned successor worker can process the measured source rate with margin while preserving the 250 ms decision-input lag and bounded resource use?",
-    "Does the scheduled Director qualify scan 42 once its source is complete while preserving exactly one admission?",
+    "Does the scheduled Director reconcile scan 42’s completed child at its next cycle and avoid duplicate admission?",
     "Can source-version-pinned counter labels normalize the early v1 capture summary against v4 replay without relabeling historical quality counts?"
   ]
 }
