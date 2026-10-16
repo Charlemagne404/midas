@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import gzip
 import hashlib
+import io
 import json
 from collections import Counter, defaultdict
 from datetime import UTC, datetime
@@ -42,7 +43,7 @@ def _read_snapshot(path: Path) -> tuple[dict[str, Any], bytes]:
     if len(compressed) > MAX_COMPRESSED_SNAPSHOT_BYTES:
         raise ValueError(f"Compressed snapshot exceeds byte bound: {path.name}")
     try:
-        with gzip.open(path, "rb") as handle:
+        with gzip.GzipFile(fileobj=io.BytesIO(compressed), mode="rb") as handle:
             content = handle.read(MAX_UNCOMPRESSED_SNAPSHOT_BYTES + 1)
         if len(content) > MAX_UNCOMPRESSED_SNAPSHOT_BYTES:
             raise ValueError(f"Uncompressed snapshot exceeds byte bound: {path.name}")
@@ -57,7 +58,7 @@ def _read_snapshot(path: Path) -> tuple[dict[str, Any], bytes]:
     return value, compressed
 
 
-def _verify_snapshot(snapshot: dict[str, Any], path: Path) -> dict[str, Any]:
+def _verify_snapshot(snapshot: dict[str, Any], path: Path, compressed: bytes) -> dict[str, Any]:
     if (
         snapshot.get("orders_submitted") is not False
         or snapshot.get("authenticated_requests") is not False
@@ -169,22 +170,52 @@ def _verify_snapshot(snapshot: dict[str, Any], path: Path) -> dict[str, Any]:
     if selected_ids != observed_ids:
         raise ValueError(f"Snapshot selected cohort differs from observed books: {path.name}")
 
+    replay_counts = replay.get("counts", {})
+    age_counts = replay_counts.get("reported_update_age_bands_by_leg", {})
+    stale_counts = replay_counts.get("reported_update_age_above_5s_by_leg", {})
+    replay_summary = {
+        "analysis_source_code_sha256": replay.get("analysis_source_code_sha256"),
+        "opportunity_audit_source_code_sha256": replay.get("opportunity_audit_source_code_sha256"),
+        "attempted_market_pairs": replay.get("attempted_market_pairs"),
+        "valid_quality_pairs": replay.get("valid_quality_pairs"),
+        "counts": {
+            "invalid_reasons": replay_counts.get("invalid_reasons", {}),
+            "reported_update_age_bands_by_leg": age_counts,
+            "reported_update_age_above_5s_by_leg": stale_counts,
+            "reported_update_timestamp_skew_bands": replay_counts.get(
+                "reported_update_timestamp_skew_bands", {}
+            ),
+            "reported_update_timestamp_skew_above_250ms_pairs": replay_counts.get(
+                "reported_update_timestamp_skew_above_250ms_pairs", 0
+            ),
+        },
+        "positive_top_gross_pairs": replay.get("positive_top_gross_pairs", 0),
+        "gross_candidate_count": len(replay.get("gross_candidates", [])),
+    }
+
     return {
         "scan_id": scan_id,
         "captured_ns": captured_ns,
         "source_code_sha256": source_code_sha256,
         "snapshot_evidence_sha256": evidence_digest,
         "gamma_response_hashes": response_hashes,
-        "compressed_snapshot_sha256": _sha256(path.read_bytes()),
+        "compressed_snapshot_sha256": _sha256(compressed),
         "frame_result": frame_result,
         "raw_by_id": raw_by_id,
         "universe_by_id": universe_by_id,
         "selected": selected,
         "observations": observations,
-        "discovery": discovery,
+        "discovery": {
+            "eligible_pair_markets": stored_eligible,
+            "excluded_market_ids": len(universe) - stored_eligible,
+            "queries": [
+                {"query_id": page["query_id"], "response_sha256": page["response_sha256"]}
+                for page in pages
+            ],
+        },
         "selection_plan": plan,
         "capture_counts": snapshot.get("counts", {}),
-        "observation_summary": replay,
+        "observation_summary": replay_summary,
         "collection_bounds": snapshot.get("collection_bounds", {}),
         "source_http_attempts": snapshot.get("source_requests", {}).get("public_http_attempts", 0),
     }
@@ -329,17 +360,24 @@ def analyze_market_universe_coverage(snapshots_dir: Path) -> dict[str, Any]:
         raise ValueError("Snapshot count is empty or exceeds the analysis bound")
     if any(path.is_symlink() for path in paths):
         raise ValueError("Symlink snapshots are not valid analysis inputs")
-    compressed_bytes = sum(path.stat().st_size for path in paths)
-    if compressed_bytes > MAX_TOTAL_COMPRESSED_BYTES:
-        raise ValueError("Total compressed snapshot bytes exceed the analysis bound")
-
-    verified: list[dict[str, Any]] = []
+    ordered_paths: list[tuple[int, str, Path, str]] = []
+    seen_scan_ids: set[str] = set()
+    compressed_bytes = 0
     for path in paths:
-        snapshot, _ = _read_snapshot(path)
-        verified.append(_verify_snapshot(snapshot, path))
-    verified.sort(key=lambda row: (row["captured_ns"], row["scan_id"]))
-    if len({row["scan_id"] for row in verified}) != len(verified):
-        raise ValueError("Snapshot IDs must be unique")
+        snapshot, compressed = _read_snapshot(path)
+        captured_ns = snapshot.get("captured_ns")
+        scan_id = snapshot.get("scan_id")
+        if not isinstance(captured_ns, int) or captured_ns <= 0 or not isinstance(scan_id, str):
+            raise ValueError(f"Snapshot ordering metadata is invalid: {path.name}")
+        if scan_id in seen_scan_ids:
+            raise ValueError("Snapshot IDs must be unique")
+        seen_scan_ids.add(scan_id)
+        compressed_bytes += len(compressed)
+        if compressed_bytes > MAX_TOTAL_COMPRESSED_BYTES:
+            raise ValueError("Total compressed snapshot bytes exceed the analysis bound")
+        ordered_paths.append((captured_ns, scan_id, path, _sha256(compressed)))
+        del snapshot, compressed
+    ordered_paths.sort(key=lambda row: (row[0], row[1]))
 
     all_profiles: dict[str, dict[str, Any]] = {}
     ever_eligible_profiles: dict[str, dict[str, Any]] = {}
@@ -380,12 +418,32 @@ def analyze_market_universe_coverage(snapshots_dir: Path) -> dict[str, Any]:
     selected_asset_ids: set[str] = set()
     global_market_identity: dict[str, tuple[str | None, tuple[str, ...]]] = {}
     global_identity_conflict_ids: set[str] = set()
+    captured_ns_values: list[int] = []
+    scan_ids: list[str] = []
+    latest_scan_counts: dict[str, int] = {}
+    latest_scan_collection_bounds: dict[str, Any] = {}
+    latest_selected_condition_ids: set[str] = set()
+    latest_selected_assets: set[str] = set()
+    latest_payoff_verified_assets: set[str] = set()
+    positive_top_gross_pairs = 0
+    total_candidate_events = 0
 
-    for scan in verified:
+    for scan_index, (ordered_captured_ns, ordered_scan_id, path, expected_digest) in enumerate(
+        ordered_paths
+    ):
+        snapshot, compressed = _read_snapshot(path)
+        if _sha256(compressed) != expected_digest:
+            raise ValueError(f"Snapshot changed during analysis: {path.name}")
+        scan = _verify_snapshot(snapshot, path, compressed)
+        if scan["captured_ns"] != ordered_captured_ns or scan["scan_id"] != ordered_scan_id:
+            raise ValueError(f"Snapshot ordering metadata changed during analysis: {path.name}")
+        del snapshot, compressed
         raw_by_id = scan["raw_by_id"]
         universe_by_id = scan["universe_by_id"]
         profiles: list[dict[str, Any]] = []
         eligible_profiles: list[dict[str, Any]] = []
+        captured_ns_values.append(scan["captured_ns"])
+        scan_ids.append(scan["scan_id"])
         frame_results.append(scan["frame_result"])
         unique_union_sizes.append(len(raw_by_id))
         eligible_count = int(scan["discovery"].get("eligible_pair_markets", 0))
@@ -434,9 +492,41 @@ def analyze_market_universe_coverage(snapshots_dir: Path) -> dict[str, Any]:
 
         per_scan_eligible_profiles.append(eligible_profiles)
 
-        if scan is verified[-1]:
+        if scan_index == len(ordered_paths) - 1:
             latest_scan_profiles = profiles
             latest_scan_eligible_profiles = eligible_profiles
+            latest_scan_counts = {
+                "gamma_market_ids": len(raw_by_id),
+                "eligible_market_ids": eligible_count,
+                "excluded_market_ids": int(scan["discovery"].get("excluded_market_ids", 0)),
+                "selected_market_ids": len(scan["selected"]),
+            }
+            latest_scan_collection_bounds = scan["collection_bounds"]
+            latest_selected_condition_ids = {
+                str(observation["condition"])
+                for observation in scan["observations"]
+                if observation.get("condition")
+            }
+            latest_selected_assets = {
+                str(asset)
+                for observation in scan["observations"]
+                for asset in (
+                    observation.get("outcomes", {}).values()
+                    if isinstance(observation.get("outcomes"), dict)
+                    else []
+                )
+                if asset
+            }
+            latest_payoff_verified_assets = {
+                str(payoff[field])
+                for observation in scan["observations"]
+                for audit in [observation.get("audit")]
+                if isinstance(audit, dict)
+                for payoff in [audit.get("payoff_identity")]
+                if isinstance(payoff, dict)
+                for field in ("yes_asset_id", "no_asset_id")
+                if payoff.get(field)
+            }
 
         plan = scan["selection_plan"]
         selected_by_phase[str(plan.get("phase") or "unknown")] += len(scan["selected"])
@@ -520,6 +610,8 @@ def analyze_market_universe_coverage(snapshots_dir: Path) -> dict[str, Any]:
                 replay_code_hashes[code_hash] += 1
 
         replay_counts = summary.get("counts", {}) if isinstance(summary, dict) else {}
+        positive_top_gross_pairs += int(summary.get("positive_top_gross_pairs", 0))
+        total_candidate_events += int(summary.get("gross_candidate_count", 0))
         reasons = (
             replay_counts.get("invalid_reasons", {}) if isinstance(replay_counts, dict) else {}
         )
@@ -563,6 +655,7 @@ def analyze_market_universe_coverage(snapshots_dir: Path) -> dict[str, Any]:
                 "source_code_sha256": scan["source_code_sha256"],
             }
         )
+        del raw_by_id, universe_by_id, profiles, eligible_profiles, scan
 
     comparisons = 0
     changed_comparisons = 0
@@ -578,36 +671,14 @@ def analyze_market_universe_coverage(snapshots_dir: Path) -> dict[str, Any]:
                 comparisons += 1
                 changed_comparisons += previous != current
 
-    captured_ns_values = [int(row["captured_ns"]) for row in verified]
     intervals_seconds = [
         (later - earlier) / 1_000_000_000
         for earlier, later in zip(captured_ns_values, captured_ns_values[1:], strict=False)
     ]
-    latest_scan = verified[-1]
     distinct_conditions = {
         condition for conditions in global_conditions.values() for condition in conditions
     }
     distinct_assets = {asset for assets in global_assets.values() for asset in assets}
-    latest_selected_assets = {
-        str(asset)
-        for observation in latest_scan["observations"]
-        for asset in (
-            observation.get("outcomes", {}).values()
-            if isinstance(observation.get("outcomes"), dict)
-            else []
-        )
-        if asset
-    }
-    latest_payoff_verified_assets = {
-        str(payoff[field])
-        for observation in latest_scan["observations"]
-        for audit in [observation.get("audit")]
-        if isinstance(audit, dict)
-        for payoff in [audit.get("payoff_identity")]
-        if isinstance(payoff, dict)
-        for field in ("yes_asset_id", "no_asset_id")
-        if payoff.get(field)
-    }
     selected_market_condition_conflicts = sum(
         len(conditions) > 1 for conditions in global_conditions.values()
     )
@@ -620,13 +691,6 @@ def analyze_market_universe_coverage(snapshots_dir: Path) -> dict[str, Any]:
         "scope": "conditional on the bounded query-response union and frozen controls",
     }
     mean_valid_yield = round(sum(valid) / sum(attempted), 4) if sum(attempted) else None
-    total_candidate_events = sum(
-        len(row["observation_summary"].get("gross_candidates", []))
-        if isinstance(row["observation_summary"], dict)
-        else 0
-        for row in verified
-    )
-
     return {
         "schema_version": 1,
         "analysis_version": ANALYSIS_VERSION,
@@ -634,11 +698,11 @@ def analyze_market_universe_coverage(snapshots_dir: Path) -> dict[str, Any]:
         "source": {
             "analysis_module_sha256": _sha256(Path(__file__).read_bytes()),
             "current_replay_source_code_hash_counts": dict(sorted(replay_code_hashes.items())),
-            "snapshot_count": len(verified),
+            "snapshot_count": len(ordered_paths),
             "first_captured_ns": captured_ns_values[0],
             "last_captured_ns": captured_ns_values[-1],
-            "first_scan_id": verified[0]["scan_id"],
-            "last_scan_id": latest_scan["scan_id"],
+            "first_scan_id": scan_ids[0],
+            "last_scan_id": scan_ids[-1],
             "compressed_snapshot_bytes": compressed_bytes,
             "gamma_response_count": len(response_manifest),
             "gamma_response_manifest_sha256": _sha256(
@@ -661,7 +725,7 @@ def analyze_market_universe_coverage(snapshots_dir: Path) -> dict[str, Any]:
             "coverage_kind": "intermittent_public_snapshots",
             "gamma_frames_per_scan": EXPECTED_GAMMA_FRAMES,
             "mean_query_candidate_records_per_scan": round(
-                mean(row["frame_result"]["candidate_records"] for row in verified), 2
+                mean(row["candidate_records"] for row in frame_results), 2
             ),
             "mean_unique_market_ids_per_bounded_union": round(mean(unique_union_sizes), 2),
             "min_unique_market_ids_per_bounded_union": min(unique_union_sizes),
@@ -680,15 +744,10 @@ def analyze_market_universe_coverage(snapshots_dir: Path) -> dict[str, Any]:
             "total_invalid_market_pairs": sum(invalid),
             "invalid_pair_reasons": dict(sorted(invalid_reasons.items())),
             "quality_valid_yield": mean_valid_yield,
-            "positive_top_gross_pairs": sum(
-                int(row["observation_summary"].get("positive_top_gross_pairs", 0))
-                if isinstance(row["observation_summary"], dict)
-                else 0
-                for row in verified
-            ),
+            "positive_top_gross_pairs": positive_top_gross_pairs,
             "candidate_events": total_candidate_events,
             "http_attempts": response_attempts,
-            "latest_collection_bounds": latest_scan["collection_bounds"],
+            "latest_collection_bounds": latest_scan_collection_bounds,
         },
         "identity_coverage": {
             "distinct_gamma_market_ids_over_window": len(all_profiles),
@@ -698,20 +757,9 @@ def analyze_market_universe_coverage(snapshots_dir: Path) -> dict[str, Any]:
             "market_ids_with_multiple_condition_ids_over_time": selected_market_condition_conflicts,
             "market_ids_with_source_identity_conflicts": len(global_identity_conflict_ids),
             "latest_scan": {
-                "scan_id": latest_scan["scan_id"],
-                "gamma_market_ids": len(latest_scan["raw_by_id"]),
-                "eligible_market_ids": int(
-                    latest_scan["discovery"].get("eligible_pair_markets", 0)
-                ),
-                "excluded_market_ids": int(latest_scan["discovery"].get("excluded_market_ids", 0)),
-                "selected_market_ids": len(latest_scan["selected"]),
-                "distinct_selected_condition_ids": len(
-                    {
-                        str(row.get("condition"))
-                        for row in latest_scan["observations"]
-                        if row.get("condition")
-                    }
-                ),
+                "scan_id": scan_ids[-1],
+                **latest_scan_counts,
+                "distinct_selected_condition_ids": len(latest_selected_condition_ids),
                 "distinct_selected_outcome_asset_ids": len(latest_selected_assets),
                 "distinct_payoff_verified_outcome_asset_ids": len(latest_payoff_verified_assets),
             },
@@ -747,7 +795,7 @@ def analyze_market_universe_coverage(snapshots_dir: Path) -> dict[str, Any]:
             "selection_probability_basis_counts": dict(sorted(selection_probability_basis.items())),
             "per_frame_marginal_value": summarize_frame_marginals(frame_results),
             "current_classifier_matches_stored_eligible_count_scans": current_classifier_matches,
-            "classifier_replay_scan_count": len(verified),
+            "classifier_replay_scan_count": len(ordered_paths),
         },
         "freshness_and_sampled_activity": {
             "reported_book_update_age_bands_by_leg": {

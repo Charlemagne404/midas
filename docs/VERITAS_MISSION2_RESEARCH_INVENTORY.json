@@ -14345,5 +14345,111 @@
     "scheduled_job_cpu_seconds": 3.586,
     "scheduled_job_restart_count": 0,
     "next_scheduled_timer_at_utc": "2026-10-16T19:05:00Z"
+  },
+  "market_universe_coverage_014": {
+    "artifact_path": "docs/VERITAS_MISSION2_MARKET_UNIVERSE_COVERAGE_014.json",
+    "artifact_file_sha256": "9ec97dd27b4c2fe234965fd41e72a5e3821d22dd7dd810fac60ada387a9a5d77",
+    "analysis_version": "veritas-market-universe-coverage-v1",
+    "captured_at_utc": "2026-10-16T19:03:21.068908+00:00",
+    "snapshot_count": 79,
+    "compressed_snapshot_bytes": 50824348,
+    "first_scan_id": "scan-20261015T055928Z-c9777c1cc300",
+    "last_scan_id": "scan-20261016T190051Z-25ce58a611e0",
+    "snapshot_evidence_hashes_verified": true,
+    "gamma_response_hashes_verified": true,
+    "clob_response_hashes_verified": true,
+    "snapshot_manifest_sha256": "72031cf5036383461d583c904298487e672bf6a12fa03b9942c300800bc6f224",
+    "gamma_response_manifest_sha256": "4c9f37263a52a0a607a8f65a4b9a195175b54586a31d52dc36ddbd1840aee4f9",
+    "analysis_module_sha256": "14981424835134b4d5de320a1b56cc9d5550b1e2abdc4a28330a54617ead5055",
+    "analysis_runner_sha256": "486712f5729f8a11d105d4bfe12649807ff52f6637d3d163cfd5420ec8d5d379",
+    "distinct_gamma_market_ids_over_window": 7846,
+    "distinct_market_ids_eligible_at_least_once": 2566,
+    "distinct_condition_ids_over_window": 7846,
+    "distinct_outcome_asset_ids_over_window": 15692,
+    "selected_market_ids_over_window": 1324,
+    "selected_condition_ids_over_window": 1324,
+    "selected_outcome_asset_ids_over_window": 2648,
+    "market_ids_with_multiple_condition_ids_over_time": 0,
+    "market_ids_with_source_identity_conflicts": 0,
+    "latest_scan": {
+      "distinct_payoff_verified_outcome_asset_ids": 78,
+      "distinct_selected_condition_ids": 40,
+      "distinct_selected_outcome_asset_ids": 80,
+      "eligible_market_ids": 181,
+      "excluded_market_ids": 98,
+      "gamma_market_ids": 279,
+      "scan_id": "scan-20261016T190051Z-25ce58a611e0",
+      "selected_market_ids": 40
+    },
+    "coverage_kind": "intermittent_public_snapshots",
+    "gamma_frames_per_scan": 6,
+    "public_http_attempts": 469,
+    "mean_unique_market_ids_per_bounded_union": 298.57,
+    "mean_eligible_market_ids_per_bounded_union": 155.84,
+    "total_attempted_market_pairs": 3160,
+    "total_quality_valid_market_pairs": 2667,
+    "total_invalid_market_pairs": 493,
+    "quality_valid_yield": 0.844,
+    "capture_recorded_quality_valid_market_pairs": 2640,
+    "capture_vs_replay_delta": 27,
+    "capture_vs_replay_count_mismatches": [
+      {
+        "capture_recorded_valid_pairs": 5,
+        "current_replay_valid_pairs": 32,
+        "scan_id": "scan-20261015T055928Z-c9777c1cc300"
+      }
+    ],
+    "positive_top_gross_pairs": 0,
+    "candidate_events": 0,
+    "repeated_comparable_markets": 475,
+    "sampled_top_of_book_changed_comparisons": 723,
+    "sampled_top_of_book_comparisons": 1408,
+    "sampled_top_of_book_change_fraction": 0.5135,
+    "reported_age_over_five_seconds_by_leg": {
+      "no": 2088,
+      "yes": 2088
+    },
+    "reported_cross_outcome_skew_above_250ms_pairs": 1,
+    "limitations": [
+      "The six-page query union is bounded and selected by upstream filters; it is not the venue-wide universe.",
+      "Selection probabilities apply only within each observed query union and conditional on frozen controls.",
+      "Category, liquidity, expiry, and spread summaries describe observed metadata, not all venue markets.",
+      "Markets, condition contracts, and outcome asset IDs are counted separately; a selected V1 pair normally has two assets.",
+      "Reported update-age fields are source timestamp ages at snapshot time; sampled state changes are not an update-rate estimate.",
+      "Snapshots are intermittent and cannot establish quote duration, continuous coverage, order arrival, or fills.",
+      "V1 eligibility is limited to the supported same-condition binary payoff relationship; other structures remain excluded or unverified."
+    ]
+  },
+  "streaming_coverage_replay_001": {
+    "module_path": "packages/midas/veritas/universe_coverage.py",
+    "module_sha256": "14981424835134b4d5de320a1b56cc9d5550b1e2abdc4a28330a54617ead5055",
+    "captured_at_utc": "2026-10-16T19:03:21.068908+00:00",
+    "fixed_input_snapshot_count": 78,
+    "parity_source_artifact": "docs/VERITAS_MISSION2_MARKET_UNIVERSE_COVERAGE_013.json",
+    "fixed_input_snapshot_manifest_sha256": "6120d5431fc89ca48718d75e608c55274c63db31a7fbd4c4d7afe1fc1fe03468",
+    "fixed_input_gamma_manifest_sha256": "9a58ccfef5f8829ee1ececaf125f7a56d052ffa232760bfef31417cd91a6345f",
+    "semantic_differences_outside_expected_fields": 0,
+    "expected_differences": [
+      "captured_at_utc",
+      "source.analysis_module_sha256"
+    ],
+    "resource_cap_cpu_percent": 15,
+    "resource_cap_memory_bytes": 536870912,
+    "resource_cap_swap_bytes": 0,
+    "process_exit_status": 0,
+    "completed_below_memory_cap": true,
+    "exact_peak_memory_bytes": null,
+    "focused_pytest": "tests/test_veritas_universe_coverage.py: 2 passed",
+    "ruff_check": "passed",
+    "ruff_format": "passed",
+    "mypy_strict": "passed for packages/midas/veritas/universe_coverage.py",
+    "scope": "Offline replay of saved snapshots; no public requests, campaign writes, or service restarts."
+  },
+  "research_inventory_090": {
+    "artifact_path": "docs/VERITAS_MISSION2_RESEARCH_INVENTORY_090.json",
+    "based_on_inventory": "docs/VERITAS_MISSION2_RESEARCH_INVENTORY_089.json",
+    "based_on_inventory_sha256": "adcf6e156c0b9ef6273616953431e7a504fcecb8c3e805a99055d8ed9a93475c",
+    "capture_scope": "Record the memory-bounded A1 coverage replay through scan 79, exact 78-snapshot parity validation, and focused static/test verification; inherited operational and campaign values keep their recorded capture timestamps.",
+    "artifact_sha256": "246ce0bd9b408b40f0166fc34a01cce4204444f5d6dce2e8e70f79d53543b7ae"
   }
 }

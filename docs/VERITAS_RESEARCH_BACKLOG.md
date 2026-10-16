@@ -654,3 +654,32 @@ B checkpoint 015](VERITAS_MISSION2_GATE_B_CHECKPOINT_015.md), [Gate C
 checkpoint 028](VERITAS_MISSION2_GATE_C_CHECKPOINT_028.md), [Gate F checkpoint
 037](VERITAS_MISSION2_GATE_F_CHECKPOINT_037.md), inventory 089, and benchmark
 009.
+
+
+## Active Mission 2 queue — 2026-10-16 19:06 UTC
+
+1. **Keep the Reality campaign and shadow worker protected.** The A1 replay
+   improvement is offline analysis only and does not address the prior
+   source-cursor lag. Take a fresh read-only source-receipt, decision-age,
+   cursor-gap, and journal-integrity snapshot before proposing recovery. Do not
+   change the frozen campaign or restart the worker without continuity
+   evidence.
+2. **Independently audit scan 79.** A1 now includes 79 scans and still reports
+   zero positive top-gross states. Extend the independent observation replay
+   through scan 79 and compare stored quality, fee, and candidate evidence
+   before treating the new scan as corroboration. Keep repeated snapshots
+   separate from independent opportunity counts.
+3. **Keep model training deferred.** The 79-scan coverage replay contains
+   3,160 selected observations, 2,667 current quality-valid pairs, and no
+   positive gross candidates. It still supplies no candidate-relevant
+   training target, execution ground truth, or evidence of strategy
+   improvement.
+4. **Treat the A1 memory issue as bounded for the current panel.** The exact
+   78-snapshot parity replay matched artifact 013 apart from run time and
+   analyzer source hash, and the 79-snapshot run fit under a 512 MiB cap.
+   Resume scaling work only if growth or measured peak-memory evidence calls
+   for it; the successful capped runs did not retain an exact peak value.
+
+See [Gate A checkpoint 055](VERITAS_MISSION2_GATE_A_CHECKPOINT_055.md),
+[coverage artifact 014](VERITAS_MISSION2_MARKET_UNIVERSE_COVERAGE_014.json),
+[inventory 090](VERITAS_MISSION2_RESEARCH_INVENTORY_090.json).

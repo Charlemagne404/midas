@@ -1885,3 +1885,23 @@ replayable prefix from 6,894 to 6,922 segments. The current summary is
 (2,649 book resynchronizations, four connection failures); no active segment
 was read. The batch used 3.59 CPU seconds. The next gap-detail timer is due at
 19:05 UTC.
+
+
+## 2026-10-16 19:03 UTC — bounded A1 replay and parity validation
+
+The A1 replay analyzed the 79 saved observer snapshots through
+`scan-20261016T190051Z-25ce58a611e0`. It completed under a 15% CPU quota,
+512 MiB memory cap, and disabled swap. The output is coverage artifact 014;
+all snapshot, Gamma, and CLOB response hash checks passed. The run used only
+saved files and wrote the result under `/tmp` before it was preserved in the
+repository. It did not contact the collector, write campaign data, or restart
+services.
+
+The analyzer also replayed the exact 78 files in artifact 013 under the same
+resource limits. Every report field matched except the run timestamp and
+analyzer source hash; both source manifest hashes matched. The successful
+process proves the 78/79-snapshot panels fit below the 512 MiB cap; systemd
+did not retain an exact peak-memory measurement. Two focused coverage tests,
+Ruff check/format, and strict Mypy passed. See [Gate A checkpoint
+055](VERITAS_MISSION2_GATE_A_CHECKPOINT_055.md) and [artifact
+014](VERITAS_MISSION2_MARKET_UNIVERSE_COVERAGE_014.json).

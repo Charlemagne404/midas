@@ -1,3 +1,24 @@
+## Latest progress — 2026-10-16T19:03Z, streaming A1 replay through scan 79
+
+A1 coverage artifact 014 now verifies 79 saved observer snapshots / 50,824,348
+compressed bytes, 474 Gamma response hashes, all CLOB response hashes, and all
+snapshot evidence hashes. It covers 7,846 distinct Gamma market IDs, 2,566
+eligible at least once, and 1,324 selected markets over the window. Across
+3,160 selected observations, 2,667 replay quality-valid (84.40%); positive
+top-gross pairs and candidate events remain zero. This is an intermittent,
+selected and correlated panel. The first-scan capture/replay mismatch (5
+recorded versus 32 replayed valid pairs) remains unresolved.
+
+The coverage analyzer no longer holds all verified scans and full discovery
+payloads in memory. The 79-snapshot run completed under a 512 MiB cap with
+swap disabled. A second run over the exact 78 inputs in artifact 013 matched
+every report field except run time and analyzer source hash; the source and
+Gamma manifest hashes were identical. The run completed successfully, but no
+exact peak-memory value was recorded. Focused coverage tests pass (2 passed),
+and Ruff, formatting, and strict Mypy pass for the modified module. See [Gate A
+checkpoint 055](VERITAS_MISSION2_GATE_A_CHECKPOINT_055.md) and [coverage
+artifact 014](VERITAS_MISSION2_MARKET_UNIVERSE_COVERAGE_014.json).
+
 ## Latest checkpoint — 2026-10-16T18:58Z, scan-78 coverage and qualification
 
 Independent opportunity audit 016 replays all 78 saved observer snapshots /
