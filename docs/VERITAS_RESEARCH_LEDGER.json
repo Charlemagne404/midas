@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-16T06:28:29Z",
+  "updated_at_utc": "2026-10-16T06:48:18Z",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -7006,6 +7006,164 @@
         "independent_v2_vs_v4_validity_mismatches": 0,
         "payload_hash_verification": "passed",
         "repository_changes_to_arena_source": false
+      }
+    },
+    {
+      "hypothesis_id": "VERITAS-H121",
+      "title": "Does the bounded universe replay through scan 54 preserve discovery and data-quality findings?",
+      "experiment_id": "VERITAS-GATE-A-COVERAGE-REPLAY-20261016-005",
+      "dataset_id": "saved_public_universe_snapshots_scans_1_to_54",
+      "mechanism": "A bounded offline replay verifies saved snapshot, Gamma, and CLOB evidence, reapplies the current eligibility classifier across all discovery frames, and measures identity, selection, pair quality, and sampled activity.",
+      "success_metric": "Verify every retained source hash, reproduce stored eligibility counts on every scan, report current-replay quality and gross candidates, and retain snapshot-counter versus current-replay differences with their counter semantics.",
+      "status": "continue",
+      "decision": "The 54-snapshot replay verifies retained evidence and matches stored eligible counts on 54/54 scans. It covers 6,303 bounded-union Gamma IDs, 2,185 eligible at least once, and 960 selected markets. Current replay finds 1,853 quality-valid pairs from 2,160 observations and zero positive top-gross pairs. The first-scan 5-versus-32 snapshot-counter comparison remains present; the paired v4 event reports 32 current-quality and 5 legacy-freshness pairs, as documented in Gate A note 001.",
+      "limitations": [
+        "The six-frame discovery union is bounded and upstream-filtered, not a venue-wide market denominator.",
+        "Snapshots are selected and intermittent; sampled changes do not establish continuous book coverage, quote lifetime, or update frequency.",
+        "The snapshot counter and current replay field differ on the first scan; note 001 documents the unlike counter semantics.",
+        "Zero positive candidates in the observed panel does not prove that no opportunity exists elsewhere or between snapshots.",
+        "Selection probabilities apply only within the bounded observed union and frozen controls."
+      ],
+      "result": {
+        "status": "completed",
+        "captured_at_utc": "2026-10-16T06:47:15.691518+00:00",
+        "checkpoint_path": "docs/VERITAS_MISSION2_GATE_A_CHECKPOINT_050.md",
+        "artifact_path": "docs/VERITAS_MISSION2_MARKET_UNIVERSE_COVERAGE_008.json",
+        "artifact_file_sha256": "85a5e630621329463ee205470ce88b2655758b6e6039fc3bbc81a6db2f9b3e30",
+        "artifact_bytes": 106006,
+        "analysis_version": "veritas-market-universe-coverage-v1",
+        "analysis_module_path": "packages/midas/veritas/universe_coverage.py",
+        "analysis_module_sha256": "3512586bfd7d63b0238abed2a7330556a10466c40f1624366b7bac5fc5138826",
+        "analysis_runner_path": "scripts/analyze_veritas_market_universe_coverage.py",
+        "analysis_runner_sha256": "486712f5729f8a11d105d4bfe12649807ff52f6637d3d163cfd5420ec8d5d379",
+        "snapshot_count": 54,
+        "compressed_snapshot_bytes": 35111892,
+        "snapshot_evidence_hashes_verified": true,
+        "snapshot_manifest_sha256": "955d1932b5a06431418243ab893071e72dd14d265d9ad5cc75ec984aa977c967",
+        "gamma_response_count": 324,
+        "gamma_response_hashes_verified": true,
+        "gamma_response_manifest_sha256": "f63adc3d1abf13532a92a031bb7de152e6a05c1f075afc8301268bae1f8ed964",
+        "clob_response_hashes_verified": true,
+        "bounded_union_market_ids": 6303,
+        "eligible_market_ids_at_least_once": 2185,
+        "selected_market_ids_over_window": 960,
+        "selected_outcome_asset_ids_over_window": 1920,
+        "attempted_market_pair_observations": 2160,
+        "snapshot_stored_valid_pair_counter_sum": 1826,
+        "current_replay_quality_valid_pairs": 1853,
+        "invalid_pairs": 307,
+        "quality_valid_yield": 0.8579,
+        "classifier_matches_stored_eligible_counts": 54,
+        "snapshot_counter_vs_current_replay_delta": 27,
+        "snapshot_counter_vs_current_replay_mismatches": [
+          {
+            "capture_recorded_valid_pairs": 5,
+            "current_replay_valid_pairs": 32,
+            "scan_id": "scan-20261015T055928Z-c9777c1cc300"
+          }
+        ],
+        "positive_top_gross_pairs": 0,
+        "candidate_events": 0,
+        "latest_scan": {
+          "distinct_payoff_verified_outcome_asset_ids": 70,
+          "distinct_selected_condition_ids": 40,
+          "distinct_selected_outcome_asset_ids": 80,
+          "eligible_market_ids": 122,
+          "excluded_market_ids": 174,
+          "gamma_market_ids": 296,
+          "scan_id": "scan-20261016T063125Z-a83f9f475d62",
+          "selected_market_ids": 40
+        },
+        "mean_six_frame_unique_union": 298.78,
+        "mean_six_frame_eligible_union": 158.41,
+        "conditional_probability_count": 1967,
+        "conditional_probability_min_median_max": [
+          0.04145077720207254,
+          0.24390243902439024,
+          1.0
+        ],
+        "sampled_top_of_book_comparisons": 930,
+        "sampled_top_of_book_changed_comparisons": 441,
+        "sampled_top_of_book_change_fraction": 0.4742,
+        "orders_submitted": false,
+        "authenticated_requests": false
+      }
+    },
+    {
+      "hypothesis_id": "VERITAS-H122",
+      "title": "Does the independent raw-source replay reproduce v4 qualification through scan 54?",
+      "experiment_id": "VERITAS-M2-INDEPENDENT-SOURCE-AUDIT-001",
+      "dataset_id": "saved_public_selected_market_snapshots_scans_1_to_54",
+      "mechanism": "A separately implemented bounded evaluator verifies retained snapshot, Gamma, CLOB, selection, book, and analysis-event lineage, then independently recomputes pair validity, top edges, depth, minimums, and fee sensitivities for each selected saved scan.",
+      "success_metric": "Reproduce v4 quality and top-edge decisions with zero mismatches and report conservative reported-age sensitivity separately from every gross, depth, minimum, and fee gate.",
+      "status": "continue",
+      "decision": "The audit covers 54 snapshots / 2,160 selected observations and 35,111,892 compressed bytes. It reproduces all 1,853 v4 valid decisions and top edges with zero mismatches. The conservative reported-age sensitivity admits 391 states; 1,462 pairs exceed the five-second age rule. Top, depth, minimum, and both fee-sensitivity gates remain zero at quantities 5, 10, 20, 50, and 100. Continue no-trade; this is not sequence freshness or execution evidence.",
+      "limitations": [
+        "The replay uses selected intermittent observations, not venue-wide or continuous-book histories.",
+        "Reported timestamp age and skew are conservative sensitivities, not sequence freshness or independent stale-quote labels.",
+        "Hypothetical fee and depth checks do not establish order arrival, fills, market impact, or profitability.",
+        "All repeated pair observations are dependent and must not be treated as independent opportunity counts.",
+        "The first-scan snapshot counter semantics are described separately in Gate A note 001."
+      ],
+      "result": {
+        "status": "NO_POSITIVE_GROSS_CANDIDATE_OBSERVED",
+        "captured_at_utc": "2026-10-16T06:47:12.748156+00:00",
+        "checkpoint_path": "docs/VERITAS_MISSION2_GATE_B_CHECKPOINT_009.md",
+        "artifact_path": "docs/VERITAS_MISSION2_INDEPENDENT_OPPORTUNITY_AUDIT_008.json",
+        "artifact_bytes": 3482,
+        "artifact_file_sha256": "994ed09161d31b7e571cd99fe047599dd8e08987020d3acdf5c2f891f786e7fe",
+        "result_sha256": "895c0aae38b2196fcf429416f90ce018a3fe0b5fc34713d80217bbb0746c5808",
+        "source_manifest_sha256": "1558e96013bdb6fc6baad546b02ee3a09d656697e082ac45a00e454e2d70ab37",
+        "source_code_sha256": "29354d4fb2bf1238e7b77154a8315564846af5b8cd1c902c89fdc832da3fb87d",
+        "analysis_version": "veritas-independent-source-opportunity-audit-v1",
+        "snapshot_count": 54,
+        "selected_market_observation_count": 2160,
+        "compressed_source_bytes": 35111892,
+        "independent_v2_valid_count": 1853,
+        "v4_stored_quality_valid_count": 1853,
+        "validity_mismatch_count": 0,
+        "top_edge_mismatch_count": 0,
+        "strict_freshness_valid_count": 391,
+        "reported_age_exceedance_pair_count": 1462,
+        "pair_skew_exceedance_count": 0,
+        "positive_top_pair_gross_count": 0,
+        "positive_full_depth_gross_by_quantity": {
+          "10": 0,
+          "100": 0,
+          "20": 0,
+          "5": 0,
+          "50": 0
+        },
+        "positive_full_depth_and_both_minimums_by_quantity": {
+          "10": 0,
+          "100": 0,
+          "20": 0,
+          "5": 0,
+          "50": 0
+        },
+        "positive_single_match_fee_sensitivity_by_quantity": {
+          "10": 0,
+          "100": 0,
+          "20": 0,
+          "5": 0,
+          "50": 0
+        },
+        "positive_fragmentation_safe_fee_sensitivity_by_quantity": {
+          "10": 0,
+          "100": 0,
+          "20": 0,
+          "5": 0,
+          "50": 0
+        },
+        "positive_both_fee_sensitivities_by_quantity": {
+          "10": 0,
+          "100": 0,
+          "20": 0,
+          "5": 0,
+          "50": 0
+        },
+        "authenticated_requests": false,
+        "orders_submitted": false
       }
     }
   ],

@@ -314,3 +314,18 @@ The first-scan 5-versus-32 A1 flag compares unlike saved counters: snapshot `cou
 After the scheduled 06:45 UTC Director reconciliation, update the A1 analyzer to report snapshot-stored and v4 event counters separately, then write a versioned successor artifact. Preserve coverage artifact 007 and the original records. Keep the Arena research source pinned until the completed scan-53 child is reconciled.
 
 See [Gate A counter-semantics note 001](VERITAS_MISSION2_GATE_A_COUNTER_SEMANTICS_NOTE_001.md) and [inventory 072](VERITAS_MISSION2_RESEARCH_INVENTORY_072.json).
+
+
+## Mission 2 continuation — scan 54 coverage and qualification
+
+Coverage artifact 008 and independent audit 008 now cover 54 snapshots / 2,160 selected pair observations. Current replay finds 1,853 quality-valid pairs; the independent evaluator matches v4 validity and edge decisions with no mismatches. All gross, depth, minimum, and fee gates remain zero. The first-scan 5-versus-32 A1 flag is clarified as a comparison of snapshot and v4/legacy-freshness counters; keep note 001 linked and preserve artifact 008.
+
+The 06:45 UTC Director cycle reconciled scan 53 and admitted scan 54. Its Arena child is complete with zero positives, but the Director manifest remains `QUEUED` until 07:15 UTC.
+
+1. Let the scheduled 07:15 UTC Director cycle reconcile scan 54; do not poll, retry, or manually admit the completed child.
+2. Keep the Arena research package pinned until that reconciliation completes.
+3. Continue the fixed coverage pilot and finalized-source/gap-detail schedules under their existing bounds; read only sealed summaries and never open the active recording segment.
+4. Preserve the no-trade policy and frozen campaign. Do not start model training or a strategy tournament without an eligible gross candidate and candidate-relevant labels.
+5. Automated API tests, browser checks, and deployment remain open; the in-process projection of artifact 008 is verified.
+
+See [Gate A checkpoint 050](VERITAS_MISSION2_GATE_A_CHECKPOINT_050.md), [Gate B checkpoint 009](VERITAS_MISSION2_GATE_B_CHECKPOINT_009.md), [Gate F checkpoint 033](VERITAS_MISSION2_GATE_F_CHECKPOINT_033.md), [Gate G checkpoint 017](VERITAS_MISSION2_GATE_G_CHECKPOINT_017.md), and [inventory 073](VERITAS_MISSION2_RESEARCH_INVENTORY_073.json).

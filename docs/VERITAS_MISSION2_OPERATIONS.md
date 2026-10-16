@@ -1,11 +1,74 @@
 # Veritas Mission 2 Operations
 
-- **Latest runtime/resource snapshot:** 2026-10-16T06:18:36Z
-- **Latest source summary:** 2026-10-16T06:11:45Z
-- **Latest gap-detail summary:** 2026-10-16T06:21:22Z
-- **Latest Midas/Reality API health probes:** 2026-10-16T06:18:35Z
+- **Latest runtime/resource snapshot:** 2026-10-16T06:47:38Z
+- **Latest source summary:** 2026-10-16T06:41:47Z
+- **Latest gap-detail summary:** 2026-10-16T06:51:25Z
+- **Latest Midas/Reality API health probes:** 2026-10-16T06:47:38Z
 
-## Runtime checkpoint — 2026-10-16T06:18:36Z
+## Runtime checkpoint — 2026-10-16T06:47:38Z
+
+- The Reality recorder, frozen shadow, Midas and Reality APIs, and both web
+  services were active. The recorder has zero restarts; the shadow retains one
+  historical restart. Both health probes returned HTTP 200 / `READY` in demo
+  mode with live execution disabled. The archive service remains failed after
+  its 30-minute timeout at 04:33:35 UTC, with zero restarts.
+- Observer scan 54 (`scan-20261016T063125Z-a83f9f475d62`) completed at
+  06:31:25 UTC with 35/40 quality-valid pairs and zero positive top-gross
+  pairs. The fixed pilot is 23/48 scans, 750/920 valid slots across 562
+  distinct markets, with one skipped sequence. Its rotating/control
+  comparison remains descriptive and nonrandomized.
+- The 06:45:08 UTC Director cycle exited 0 and reconciled scan 53. It admitted
+  scan 54. Arena child `job-f8035f4c4d534e7082246684` completed 54/54 events
+  with exit 0 in 3.91 seconds; all five gates are zero and candidate
+  evidence/replay are complete and empty. The Director manifest still
+  projects the child as `QUEUED` until the scheduled 07:15:14 UTC cycle. No
+  manual poll or retry occurred.
+- The 06:40 UTC finalized-source analysis exited 0 with zero restarts. Its
+  sealed prefix covers 5,498/5,498 segments / 1,416,952,599 bytes and 375,120
+  quality-valid states across 95 markets. Positive top-ask, full-depth, and
+  minimum-notional states remain zero. It read no active segment; readiness
+  remains `collecting_frozen_campaign_window`.
+- The 06:35 UTC gap-detail batch exited 0 with zero restarts. Its finalized-only
+  prefix covers 3,641/5,488 replayable catalog segments / 905,966,969 bytes,
+  leaving 1,847 segments / 508,817,892 bytes pending. It indexes 1,032
+  campaign-window gap events and read no active segment.
+- Load averages were 1.18 / 0.97 / 0.97. Available RAM was 9.7 GiB of 15 GiB;
+  swap use was 3.8/4 GiB. Root storage was 56% used with 197 GiB free. The
+  Reality research recording directory measured 1,509,797,538 bytes and the
+  observatory directory 59,343,927 bytes. Relative to the 06:18 UTC sample,
+  these grew 11,274,302 and 1,246,666 bytes over about 29 minutes; this is a
+  short two-point sample, not a stable growth-rate forecast.
+- At capture, the observer, Director, source-analysis, and gap-detail one-shot
+  services were inactive between scheduled runs. Next scheduled timers were
+  gap detail 06:50 UTC, Reality capacity 06:50:53, observer 07:01:12, source
+  analysis 07:10:15, and Director 07:15:14 UTC. No service, collector, pilot,
+  Arena child, or frozen campaign was manually restarted or changed.
+
+See [Gate A checkpoint 050](VERITAS_MISSION2_GATE_A_CHECKPOINT_050.md),
+[Gate B checkpoint 009](VERITAS_MISSION2_GATE_B_CHECKPOINT_009.md), [Gate F
+checkpoint 033](VERITAS_MISSION2_GATE_F_CHECKPOINT_033.md), [Gate G
+checkpoint 017](VERITAS_MISSION2_GATE_G_CHECKPOINT_017.md), and [inventory
+073](VERITAS_MISSION2_RESEARCH_INVENTORY_073.json).
+
+## Scheduled gap-detail completion — 2026-10-16T06:51:28Z
+
+The scheduled 06:50 UTC finalized-only batch started at 06:50:04 and exited 0
+at 06:51:28 with zero restarts. It processed 122 segments / 33,462,900 bytes.
+The sealed index now covers 3,763/5,518 replayable catalog segments / 939,429,869
+bytes, leaving 1,755 segments / 482,445,348 bytes pending. It records 1,090
+campaign-window gap events and read no active segment. The batch used 4.194 CPU
+seconds, peaked at 63.6 MiB, and used no swap.
+
+Summary file SHA-256: `1223768dea9b8b9e221bcf83bcdbca263abe0fdceba481618aa5aa6bfc75232d`;
+summary SHA-256: `0e1f37bbad1578c6022dd1ef76746b4699d97d2ed0fb588696293bd955999677`.
+The next scheduled observer and source-analysis runs remain 07:01:12 and
+07:10:15 UTC, followed by Director reconciliation at 07:15:14 UTC. No service
+or campaign was manually changed.
+
+See [inventory 073](VERITAS_MISSION2_RESEARCH_INVENTORY_073.json) for the
+post-run evidence record.
+
+## Previous runtime checkpoint — 2026-10-16T06:18:36Z
 
 - The Reality recorder, frozen shadow, Midas and Reality APIs, and both web
   services were active. The recorder has zero restarts; the shadow retains one
