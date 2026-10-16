@@ -100,6 +100,7 @@ def _code_sha256() -> str:
         module_dir / "observatory.py",
         module_dir / "continuous_analysis.py",
         module_dir / "opportunity_audit.py",
+        module_dir / "economic_feasibility_v3.py",
     )
     digest = hashlib.sha256()
     for path in files:

@@ -1,4 +1,4 @@
-# Gate B checkpoint 012 — collateral fee correction and replay through scan 59
+# Gate B checkpoint 012 — collateral fee correction and replay of 59 saved snapshots
 
 **Captured:** 2026-10-16 09:06 UTC
 
@@ -9,8 +9,10 @@ the protected Reality campaign and raw source records were not changed.
 
 ## Independent public-snapshot replay
 
-The independent audit replayed the 59 saved, selected snapshots from scans 1–59
-(2,360 selected market observations; 38,387,196 compressed source bytes). It
+The independent audit replayed all 59 saved, selected snapshots available at
+capture time, including latest scan
+`scan-20261016T090043Z-957608af59ae` (2,360 selected market observations;
+38,387,196 compressed source bytes). It
 reproduced all stored quality decisions and top-edge results under the corrected
 v3 economics with no mismatches. It is a replay of intermittent, selected, and
 correlated snapshots; the row count is not an independent opportunity count or

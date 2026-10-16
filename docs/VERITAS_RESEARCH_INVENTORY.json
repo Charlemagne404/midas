@@ -4,7 +4,7 @@
   "status": "in_progress",
   "baseline_commit": "f968095feb9c591de38fe12d7493224425f62f3a",
   "branch": "project/veritas",
-  "last_checkpoint": "docs/VERITAS_MISSION2_GATE_B_CHECKPOINT_012.md",
+  "last_checkpoint": "docs/VERITAS_MISSION2_GATE_F_CHECKPOINT_035.md",
   "datasets": [
     {
       "dataset_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
@@ -42,7 +42,7 @@
       "raw_observations_embedded": false
     },
     {
-      "dataset_id": "saved_public_selected_market_snapshots_scans_1_to_59",
+      "dataset_id": "saved_public_selected_market_snapshots_59_as_of_20261016T090043Z",
       "kind": "hashed_public_market_snapshots",
       "source_kind": "genuine_public_intermittent_observations",
       "role": "source audit and opportunity qualification only",
@@ -50,7 +50,7 @@
       "selected_market_pair_observations": 2360,
       "quality_valid_pairs": 2015,
       "compressed_source_bytes": 38387196,
-      "latest_scan_id": "scan-20261016T083116Z-ee68f55ff194",
+      "latest_scan_id": "scan-20261016T090043Z-957608af59ae",
       "selection_is_venue_wide": false,
       "observations_are_independent": false,
       "mutated": false,
@@ -607,8 +607,10 @@
       "experiment_id": "VERITAS-M2-INDEPENDENT-SOURCE-AUDIT-002",
       "type": "bounded_independent_source_opportunity_replay_and_fee_cross_check",
       "status": "complete_no_positive_gross_candidate",
-      "source_dataset_id": "saved_public_selected_market_snapshots_scans_1_to_59",
+      "source_dataset_id": "saved_public_selected_market_snapshots_59_as_of_20261016T090043Z",
       "evidence": "docs/VERITAS_MISSION2_INDEPENDENT_OPPORTUNITY_AUDIT_011.json",
+      "code": "packages/midas/veritas/source_opportunity_audit.py",
+      "economic_model_code": "packages/midas/veritas/economic_feasibility_v3.py",
       "analysis_version": "veritas-independent-source-opportunity-audit-v2",
       "fee_model_version": "veritas-economic-feasibility-v3",
       "fee_checked_quantity_count": 2523,
@@ -626,12 +628,31 @@
       "status": "completed_synthetic_recalculation",
       "source_dataset_id": "controlled_synthetic_orderbook_v1",
       "evidence": "docs/VERITAS_GATE_B_EXECUTION_BREAK_EVEN_002.json",
+      "code": "packages/midas/veritas/scenario_study.py",
+      "economic_model_code": "packages/midas/veritas/economic_feasibility_v3.py",
       "analysis_version": "veritas-execution-break-even-v2",
       "fee_model_version": "veritas-economic-feasibility-v3",
       "fee_collection_medium_for_buy": "collateral",
       "orders_submitted": false,
       "realized_money": null,
       "promotion": "synthetic result only; no strategy or capacity claim"
+    },
+    {
+      "experiment_id": "VERITAS-GATE-F-SOURCE-ANALYSIS-CODE-PIN-RECOVERY-20261016-001",
+      "type": "bounded_code_pin_recovery_for_finalized_source_analysis",
+      "status": "recovered_once_monitor_next_timer",
+      "source_dataset_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
+      "evidence": "docs/VERITAS_MISSION2_GATE_F_CHECKPOINT_035.md",
+      "analysis_version": "veritas-finalized-reality-source-analysis-v1",
+      "failed_runs": 1,
+      "successful_recovery_runs": 1,
+      "processed_segments": 5815,
+      "pending_segments": 0,
+      "quality_valid_states": 394313,
+      "positive_gross_states": 0,
+      "campaign_mutated": false,
+      "manual_state_reset": false,
+      "promotion": "preserve the original pinned source-analysis helper; verify the next timer recurrence"
     }
   ],
   "models": [],
@@ -663,7 +684,8 @@
     "The isolated Reality browser check intercepted operation and raw-record routes; it verifies the read-only view, not end-to-end behavior of those routes.",
     "The current independent source audit covers 59 selected intermittent scans and is not a venue-wide sample or independent opportunity count.",
     "Current fee-model v3 uses collateral-denominated taker fees charged at entry on both purchased legs. Earlier v2 share-deduction synthetic calculations are superseded for current economics.",
-    "The live observer/API process has not been restarted to load the updated model; the source replay and local code are current, while deployed UI activation awaits a safe rollout."
+    "The live observer/API process has not been restarted to load the updated model; the source replay and local code are current, while deployed UI activation awaits a safe rollout.",
+    "The finalized-source analyzer had one code-pin mismatch after the v3 economics edit; it recovered after the v3 model was isolated and the pinned economics.py helper restored. The next scheduled recurrence remains unverified."
   ],
-  "updated_at_utc": "2026-10-16T09:06:14Z"
+  "updated_at_utc": "2026-10-16T09:23:41Z"
 }

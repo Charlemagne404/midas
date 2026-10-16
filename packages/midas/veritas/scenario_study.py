@@ -6,7 +6,12 @@ from datetime import UTC, datetime
 from decimal import Decimal
 from typing import Any
 
-from .economics import FEE_COLLECTION_SOURCE, VERSION, evaluate_binary_pair, partial_position_bounds
+from .economic_feasibility_v3 import (
+    FEE_COLLECTION_SOURCE,
+    VERSION,
+    evaluate_binary_pair,
+    partial_position_bounds,
+)
 from .execution_break_even import (
     MATCHED_RATE_GRID,
     UNMATCHED_RATE_GRID,

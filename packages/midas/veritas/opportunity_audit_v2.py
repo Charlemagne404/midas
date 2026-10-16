@@ -20,7 +20,7 @@ from decimal import (
 )
 from typing import Any
 
-from .economics import evaluate_binary_pair
+from .economic_feasibility_v3 import evaluate_binary_pair
 
 D = Decimal
 ONE = D(1)

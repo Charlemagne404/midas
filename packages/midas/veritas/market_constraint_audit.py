@@ -31,7 +31,7 @@ def _source_code_sha256() -> str:
         "market_constraint_audit.py",
         "candidate_replay.py",
         "opportunity_audit_v2.py",
-        "economics.py",
+        "economic_feasibility_v3.py",
     ):
         digest.update(name.encode())
         digest.update(b"\0")

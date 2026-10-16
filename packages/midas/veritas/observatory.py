@@ -1221,6 +1221,7 @@ async def run_scan(
             source_code_hash = _sha256(
                 Path(__file__).read_bytes()
                 + Path(__file__).with_name("opportunity_audit.py").read_bytes()
+                + Path(__file__).with_name("economic_feasibility_v3.py").read_bytes()
                 + Path(__file__).with_name("continuous_analysis.py").read_bytes()
                 + Path(__file__).with_name("coverage_pilot.py").read_bytes()
             )

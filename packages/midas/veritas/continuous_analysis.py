@@ -388,6 +388,7 @@ def _event_from_snapshot(report: dict[str, Any], snapshot_path: Path) -> dict[st
         "analysis_source_code_sha256": _sha256(Path(__file__).read_bytes()),
         "opportunity_audit_source_code_sha256": _sha256(
             Path(__file__).with_name("opportunity_audit.py").read_bytes()
+            + Path(__file__).with_name("economic_feasibility_v3.py").read_bytes()
         ),
         "captured_at_utc": report.get("captured_at_utc"),
         "captured_ns": report.get("captured_ns"),
@@ -459,9 +460,7 @@ def _accumulate(cumulative: dict[str, Any], event: dict[str, Any]) -> None:
     cumulative["snapshot_count"] += 1
     cumulative["selected_market_observations"] += int(event["selected_market_count"])
     cumulative["quality_valid_pairs"] += int(event["valid_quality_pairs"])
-    cumulative["legacy_freshness_valid_pairs"] += int(
-        event["legacy_freshness_valid_pairs"]
-    )
+    cumulative["legacy_freshness_valid_pairs"] += int(event["legacy_freshness_valid_pairs"])
     cumulative["invalid_pairs"] += sum(
         int(value) for value in event["counts"].get("invalid_reasons", {}).values()
     )

@@ -4,12 +4,13 @@ from decimal import Decimal as D
 import pytest
 from midas.economics.fees import fragmented_bound
 from midas.reality.execution_research import fee_reserve as reality_fee_reserve
-from midas.veritas.economics import (
+from midas.veritas.economic_feasibility_v3 import (
     evaluate_binary_pair,
     fee_envelope,
     partial_position_bounds,
     walk_asks,
 )
+from midas.veritas.economics import walk_asks as pinned_replay_walk_asks
 
 
 def pair(**overrides):
@@ -31,6 +32,13 @@ def pair(**overrides):
     )
     arguments.update(overrides)
     return evaluate_binary_pair(**arguments)
+
+
+def test_fee_model_v3_keeps_pinned_source_depth_walker_identical():
+    asks = [["0.42", "4"], ["0.44", "6"], ["0.50", "12"]]
+
+    for quantity in ("4", "8", "15", "22"):
+        assert walk_asks(asks, quantity) == pinned_replay_walk_asks(asks, quantity)
 
 
 def test_fee_envelope_reports_rounding_sensitivity_and_safe_upper_bound():

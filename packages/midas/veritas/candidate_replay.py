@@ -35,7 +35,11 @@ def _sha256(value: bytes) -> str:
 def source_code_sha256() -> str:
     """Hash the replay and its economic-audit dependencies for artifact lineage."""
     digest = hashlib.sha256()
-    for name in ("candidate_replay.py", "opportunity_audit_v2.py", "economics.py"):
+    for name in (
+        "candidate_replay.py",
+        "opportunity_audit_v2.py",
+        "economic_feasibility_v3.py",
+    ):
         digest.update(name.encode())
         digest.update(b"\0")
         digest.update(Path(__file__).with_name(name).read_bytes())

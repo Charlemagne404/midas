@@ -10,8 +10,8 @@ from pathlib import Path
 from typing import Any
 
 from . import candidate_replay
-from .economics import FEE_COLLECTION_SOURCE
-from .economics import VERSION as FEE_MODEL_VERSION
+from .economic_feasibility_v3 import FEE_COLLECTION_SOURCE
+from .economic_feasibility_v3 import VERSION as FEE_MODEL_VERSION
 from .opportunity_audit_v2 import audit_pair_snapshot, normalize_market
 
 VERSION = "veritas-independent-source-opportunity-audit-v2"
@@ -38,7 +38,7 @@ def _source_code_sha256() -> str:
         "source_opportunity_audit.py",
         "opportunity_audit_v2.py",
         "candidate_replay.py",
-        "economics.py",
+        "economic_feasibility_v3.py",
     ):
         digest.update(name.encode())
         digest.update(b"\0")

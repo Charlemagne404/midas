@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-16T09:06:14Z",
+  "updated_at_utc": "2026-10-16T09:23:41Z",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -7606,7 +7606,7 @@
       "title": "Does independent source replay reproduce opportunity gates with current collateral fee accounting?",
       "mechanism": "Replay each immutable saved public snapshot from its hashed Gamma and CLOB payloads. Recompute quality, gross edge, displayed depth, minimums, and fee sensitivities using economic model v3, then compare its fee arithmetic with a separate Decimal implementation of the documented fee formula.",
       "experiment_id": "VERITAS-M2-INDEPENDENT-SOURCE-AUDIT-002",
-      "dataset_id": "saved_public_selected_market_snapshots_scans_1_to_59",
+      "dataset_id": "saved_public_selected_market_snapshots_59_as_of_20261016T090043Z",
       "success_metric": "Reproduce stored validity and top-edge decisions; independently agree on reported fee arithmetic; report all positive gross and economic counts without treating repeated states as independent.",
       "result": {
         "status": "NO_POSITIVE_GROSS_CANDIDATE_OBSERVED",
@@ -7707,10 +7707,58 @@
       ],
       "decision": "The previous v2 share-deduction sensitivity is superseded for current fee accounting. Use v3 for future modeling and dashboard display; retain v2 as immutable history. The synthetic favorable case is not economic evidence for Midas.",
       "status": "continue"
+    },
+    {
+      "hypothesis_id": "VERITAS-H132",
+      "title": "Can v3 fee accounting coexist with the fingerprint-pinned finalized-source replay?",
+      "mechanism": "The 09:10 UTC scheduled source-analysis run rejected its persisted state after the v3 fee change altered economics.py. Compare the campaign and per-file code identities, isolate v3 into a new module, restore the pinned depth helper, and resume one bounded run without resetting its cursor.",
+      "experiment_id": "VERITAS-GATE-F-SOURCE-ANALYSIS-CODE-PIN-RECOVERY-20261016-001",
+      "dataset_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
+      "success_metric": "The saved campaign and source-analysis code hashes match exactly; a bounded service run completes under its existing limits, advances the cursor, and leaves no pending finalized segments without mutating campaign or raw source records.",
+      "result": {
+        "status": "RECOVERED_AFTER_ONE_PIN_MISMATCH_FAILURE",
+        "captured_at_utc": "2026-10-16T09:23:41Z",
+        "failed_run_started_at_utc": "2026-10-16T09:10:33Z",
+        "failed_run_exited_at_utc": "2026-10-16T09:11:13Z",
+        "failure": "Source-analysis state is pinned to different campaign or code",
+        "only_mismatched_code_file": "economics.py",
+        "stored_economics_file_sha256": "0fc69b88d160acd3123bbff38ed6480d9ae9853b48429b3f739200d6cba5eda8",
+        "campaign_sha256_unchanged": "aa8acb2b46823c1a1e3ac5d01a57dde917746c2c7471098ae2a4598875e322f5",
+        "recovery_started_at_utc": "2026-10-16T09:21:21Z",
+        "recovery_completed_at_utc": "2026-10-16T09:23:41Z",
+        "recovery_exit_status": 0,
+        "systemd_restart_count": 0,
+        "manual_state_reset": false,
+        "processed_segments_before_recovery": 5734,
+        "last_ordinal_before_recovery": 786013,
+        "processed_segments_after_recovery": 5815,
+        "last_ordinal_after_recovery": 794343,
+        "batch_processed_segment_count": 81,
+        "batch_processed_source_bytes": 18820608,
+        "cumulative_processed_source_bytes": 1491299688,
+        "pending_segment_count": 0,
+        "pending_source_bytes": 0,
+        "quality_valid_states": 394313,
+        "distinct_markets": 102,
+        "positive_gross_states": 0,
+        "readiness": "collecting_frozen_campaign_window",
+        "summary_sha256": "8233bf2cc94d52ec6fa789cf5846c8ce837f33457cca378a6d2e0b5d3646f9f4",
+        "source_analysis_code_sha256": "9f9e2249b49dd1cb10c11713aa2683567aa9cf0914c3ed2b08cf8e3fea25ebf8"
+      },
+      "limitations": [
+        "One scheduled source-analysis cycle failed before cursor advancement; the failure remains preserved in the journal.",
+        "The successful bounded run verifies recovery once, not the next recurrence; the scheduled 09:40 UTC run remains to be checked.",
+        "The code refactor changes Veritas source fingerprints for future opportunity audits; audit 011 remains an immutable result from the prior code layout.",
+        "No new economic observation or opportunity resulted from this source-analysis recovery."
+      ],
+      "decision": "Keep v3 fee accounting in its separate module and leave the source analyzer on its pinned depth helper. The cursor and frozen campaign are intact; verify the next scheduled source-analysis and Research Director cycles before treating recovery as durable.",
+      "status": "continue"
     }
   ],
   "next_research_questions": [
-    "Can the normal safe service code rollover load the corrected v3 fee model without disturbing the collector, Reality worker, or protected campaign?",
+    "Does the 09:40 UTC scheduled source-analysis run remain current after the fee-engine isolation?",
+    "Does the 09:45 UTC Research Director cycle reconcile the active scan-pinned job and continue admission without source-revision drift?",
+    "Can the corrected branch API and dashboard be rolled out through an existing safe path without disturbing other hosted Midas services?",
     "Do future observed public snapshots continue to show zero quality-valid positive gross states under the unchanged opportunity definition?",
     "Can documented venue sequence semantics or an independent continuity signal establish freshness beyond returned timestamp age?",
     "How do the fixed coverage pilot strata, missed sequences, storage, and compute costs affect the next observation design?",

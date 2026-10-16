@@ -283,7 +283,7 @@ def _source_code_hash() -> str:
         "discovery_successor.py",
         "observatory.py",
         "opportunity_audit_v2.py",
-        "economics.py",
+        "economic_feasibility_v3.py",
         "control_retrieval.py",
     ):
         path = Path(__file__).with_name(name)

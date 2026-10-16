@@ -7,7 +7,8 @@ import re
 from decimal import Decimal
 from typing import Any, Literal
 
-from .economics import fee_envelope, walk_asks
+from .economic_feasibility_v3 import fee_envelope
+from .economics import walk_asks
 
 EVENT_ID = "164439"
 EVENT_SLUG = "strava-ipo-closing-market-cap"

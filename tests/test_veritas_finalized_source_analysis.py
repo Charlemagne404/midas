@@ -16,6 +16,13 @@ CONDITION = "0x" + "1" * 64
 PRODUCER_HASH = "a" * 64
 
 
+def test_source_analysis_code_identity_remains_on_pinned_depth_module():
+    code = analysis._code_identity()
+
+    assert "economics.py" in code
+    assert "economic_feasibility_v3.py" not in code
+
+
 def _market() -> dict[str, Any]:
     return dict(
         id="1",
@@ -171,9 +178,7 @@ def test_finalized_source_prefix_catalog_mutation_is_rejected(tmp_path):
     _run(output, campaign_dir, raw, campaign_hash, max_segments=1)
 
     sidecar = next(
-        path
-        for path in sorted(raw.glob("*.json"))
-        if json.loads(path.read_text()).get("count") > 0
+        path for path in sorted(raw.glob("*.json")) if json.loads(path.read_text()).get("count") > 0
     )
     catalog = json.loads(sidecar.read_text())
     catalog["sha256"] = "f" * 64
