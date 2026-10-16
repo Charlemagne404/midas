@@ -104,6 +104,37 @@ The service-state and host-resource figures above remain the 02:59 read-only
 snapshot. No newer service probe, manual research-job poll, retry, or restart
 was made for these artifact updates.
 
+## Subsequent scheduled research artifacts — 2026-10-16 03:19 UTC
+
+- The 03:15 Director cycle reconciled the scan-46 child and admitted scan 47.
+  Arena job `job-d5fda223640d4a94893cdf35` completed all 47/47 source events
+  with exit status 0 at 03:15:46 UTC. Its finding reports 1,880 observations,
+  1,628 valid pairs across 835 IDs, zero positives at all five economic gates,
+  and complete empty candidate evidence/replay. The Director manifest was
+  updated at 03:15:28 and still projects `RUNNING` / `QUEUED`, retaining scan
+  46 as last qualified. The 03:45:19 UTC scheduled cycle is the next
+  reconciliation point. Only persisted job, source-manifest, finding, and
+  Director files were read; no job API poll or retry was made.
+- An offline independent source replay completed at 03:17:32 UTC over all 47
+  snapshots and 30,697,840 compressed bytes. It matched all 1,628 v4-valid
+  decisions and top edges with zero mismatches. It found no positive gross,
+  depth, minimum, or fee-sensitive states. A conservative timestamp filter
+  admitted 353 states; 1,275 had at least one reported age above five seconds.
+  See [Gate B checkpoint 002](VERITAS_MISSION2_GATE_B_CHECKPOINT_002.md).
+- The source summary pinned by the Director was generated at 03:14:52 UTC; it
+  covers 4,997/5,089 finalized segments / 1,292,353,290 bytes, with 92 /
+  23,048,067 bytes pending. It reports 331,241 quality-valid states and zero
+  positive top-ask or full-depth states. Its readiness remains
+  `catching_up_finalized_source`.
+- A read-only user-timer listing at 03:18:52 UTC showed the next starts at
+  03:20 gap detail, 03:31:32 observer, 03:40:40 source analysis, and 03:45:19
+  Director. No service-health probe or host-resource sample was taken; the
+  latest such figures remain from 02:59 UTC. No service or timer was restarted.
+
+See [Gate F checkpoint 029](VERITAS_MISSION2_GATE_F_CHECKPOINT_029.md), [Gate B
+checkpoint 002](VERITAS_MISSION2_GATE_B_CHECKPOINT_002.md), and [inventory
+058](VERITAS_MISSION2_RESEARCH_INVENTORY_058.json).
+
 ## Previous runtime state — 2026-10-16 01:36 UTC
 
 - The observer completed scan 44 at 01:30:14 UTC with 35/40 quality-valid

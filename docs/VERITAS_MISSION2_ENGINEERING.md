@@ -65,6 +65,52 @@ of about 48 MB over 97 minutes. See [Gate A checkpoint
 028](VERITAS_MISSION2_GATE_F_CHECKPOINT_028.md), and [inventory
 057](VERITAS_MISSION2_RESEARCH_INVENTORY_057.json).
 
+## Latest checkpoint — 03:19 UTC, 47-snapshot replay and scheduled qualification
+
+The v4 panel contains 47 snapshots, 1,880 selected pair observations, 1,628
+quality-valid states across 835 selected markets, and zero candidate events.
+The independent raw audit now covers all 47 snapshots / 30,697,840 compressed
+bytes. It reproduced all 1,628 v4 validity decisions and top edges with zero
+mismatches. It found no positive gross, full-depth, per-leg-minimum, or
+fee-sensitive state at 5, 10, 20, 50, or 100 shares per leg. Its conservative
+reported-timestamp filter admits 353 states; 1,275 have at least one reported
+book age above five seconds. This is not venue sequence or fill evidence. See
+[Gate B checkpoint 002](VERITAS_MISSION2_GATE_B_CHECKPOINT_002.md) and the
+[audit artifact](VERITAS_MISSION2_INDEPENDENT_OPPORTUNITY_AUDIT_002.json).
+
+At 03:02 UTC, scan 47 selected 40 markets; 28 passed quality checks. Its
+bounded discovery union had 293 IDs, 116 eligible pairs, and 177 exclusions.
+The unchanged pilot is 16/48 scans with 525/640 valid slots across 388 IDs and
+one skipped sequence after the scan-45 code-hash mismatch. It remains
+unchanged and ends at 19:00:55 UTC.
+
+The offline A1 coverage report still covers 46 saved snapshots. Its six-frame
+union contains 5,784 Gamma IDs, 2,115 eligible at least once, and 820 selected
+IDs. Scan 47's 293-ID union is recorded separately; neither is a venue census.
+The first-scan legacy capture-versus-replay discrepancy (5 stored versus 32
+current-replay valid pairs) remains disclosed. See [Gate A checkpoint
+044](VERITAS_MISSION2_GATE_A_CHECKPOINT_044.md).
+
+The last completed finalized-source summary, generated at 03:14:52 UTC,
+covers 4,997/5,089 segments and 1,292,353,290 processed bytes; 92 segments /
+23,048,067 bytes remain. It reports 331,241 valid states and no positive
+top-ask or full-depth states. The separate gap-detail prefix last completed
+at 03:06 UTC with 1,919/5,079 segments and 194 campaign-window gaps across
+ten markets. The censor join found 45 weak temporal candidates among 160
+`book_issue:gap` rows; it does not establish causality. See [Gate C checkpoint
+011](VERITAS_MISSION2_GATE_C_CHECKPOINT_011.md).
+
+The scheduled 03:15 Director cycle reconciled scan 46 and admitted scan 47.
+Arena completed 47/47 events at 03:15:46 UTC with all five positive gates at
+zero and complete empty candidate replay. The persisted Director projection
+still shows `QUEUED` / scan 46 as last qualified; its next timer is 03:45:19
+UTC. See [Gate F checkpoint 029](VERITAS_MISSION2_GATE_F_CHECKPOINT_029.md).
+
+The latest host and service measurements remain the read-only 02:59 snapshot;
+only the user timer list was inspected afterward. No health probe or manual job
+API poll was made. See [operations checkpoint](VERITAS_MISSION2_OPERATIONS.md)
+and [inventory 058](VERITAS_MISSION2_RESEARCH_INVENTORY_058.json).
+
 ## Previous runtime update — 01:51 UTC, scan 44 and bounded source catch-up
 
 The observer completed scan 44 at 01:30:14 UTC: 35/40 pairs passed quality,

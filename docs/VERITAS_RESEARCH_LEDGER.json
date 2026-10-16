@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-16T03:14:43Z",
+  "updated_at_utc": "2026-10-16T03:20:25Z",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -5632,6 +5632,132 @@
         "Gap receive times are Reality recorder times, not exchange quote timestamps.",
         "Exact raw source segments and gap-detail event files were verified under bounded caps; the SQLite event chain and full database integrity were not reverified.",
         "No source gap or public mark establishes order arrival, fills, or profitability."
+      ]
+    },
+    {
+      "hypothesis_id": "VERITAS-H100",
+      "experiment_id": "VERITAS-M2-INDEPENDENT-SOURCE-AUDIT-001",
+      "dataset_id": "e100c2c25b23a74f765499648c501b2dc456dead48625de30b948db240ca5cd8",
+      "title": "Does independent source replay continue to match v4 and find positive gross states in the expanded panel?",
+      "mechanism": "Verify each saved public snapshot and retained Gamma/CLOB source payload, reconcile v4 analysis events, and recompute the supported same-condition binary-pair quality, edge, depth, minimum, and fee checks through the independent v2 audit path.",
+      "success_metric": "Complete the bounded 47-snapshot saved panel with source hashes verified, zero independent-v4 validity/edge mismatches, and explicit gross and economic counts across the quantity grid.",
+      "status": "continue",
+      "decision": "The offline audit covered all 47 snapshots / 1,880 selected observations over 30,697,840 compressed bytes. It reproduced all 1,628 v4-valid states and top edges with zero mismatches and found zero positive gross, depth, minimum, or fee-sensitive states. The conservative timestamp sensitivity retains 353 states; 1,275 valid observations have at least one reported update age over five seconds. Keep no-trade, continue observation, and treat the selected intermittent sample and reported timestamps as limited evidence.",
+      "result": {
+        "captured_at_utc": "2026-10-16T03:17:32.825869+00:00",
+        "checkpoint_path": "docs/VERITAS_MISSION2_GATE_B_CHECKPOINT_002.md",
+        "artifact_path": "docs/VERITAS_MISSION2_INDEPENDENT_OPPORTUNITY_AUDIT_002.json",
+        "artifact_file_sha256": "552a6ac301dff6c863be7f322604168781a87c1fe0a0347e5dcb69c457e1a6dd",
+        "result_sha256": "7cf0b2b3c887de4037ae2a470e31dedf2a9f7b407487f23bc5ebede7b6e84a1d",
+        "analysis_version": "veritas-independent-source-opportunity-audit-v1",
+        "source_code_sha256": "29354d4fb2bf1238e7b77154a8315564846af5b8cd1c902c89fdc832da3fb87d",
+        "source_manifest_sha256": "e100c2c25b23a74f765499648c501b2dc456dead48625de30b948db240ca5cd8",
+        "snapshot_count": 47,
+        "compressed_source_bytes": 30697840,
+        "selected_market_observation_count": 1880,
+        "v4_stored_quality_valid_count": 1628,
+        "independent_v2_valid_count": 1628,
+        "v4_v2_validity_mismatch_count": 0,
+        "v4_v2_top_edge_mismatch_count": 0,
+        "strict_freshness_valid_count": 353,
+        "reported_age_exceedance_pair_count": 1275,
+        "pair_skew_exceedance_count": 0,
+        "positive_top_pair_gross_count": 0,
+        "positive_full_depth_gross_by_quantity": {
+          "5": 0,
+          "10": 0,
+          "20": 0,
+          "50": 0,
+          "100": 0
+        },
+        "positive_full_depth_and_both_minimums_by_quantity": {
+          "5": 0,
+          "10": 0,
+          "20": 0,
+          "50": 0,
+          "100": 0
+        },
+        "positive_single_match_fee_sensitivity_by_quantity": {
+          "5": 0,
+          "10": 0,
+          "20": 0,
+          "50": 0,
+          "100": 0
+        },
+        "positive_fragmentation_safe_fee_sensitivity_by_quantity": {
+          "5": 0,
+          "10": 0,
+          "20": 0,
+          "50": 0,
+          "100": 0
+        },
+        "authenticated_requests": false,
+        "orders_submitted": false
+      },
+      "limitations": [
+        "The panel is selected and intermittent; it does not estimate venue-wide prevalence or continuous quote persistence.",
+        "Reported timestamp age and skew are conservative sensitivities, not independent sequence or upstream freshness evidence.",
+        "Fee calculations are hypothetical and do not establish order arrival, fills, recovery, or profitability.",
+        "The independent path supports the explicitly normalized same-condition V1 binary pair; unsupported settlement relationships remain excluded."
+      ]
+    },
+    {
+      "hypothesis_id": "VERITAS-H101",
+      "experiment_id": "VERITAS-M2-ECO-QUAL-001",
+      "dataset_id": "8eb3c4effd22b83323f726db0c9a3f7012ee4cfafde68ad0febf861de39c8b8e",
+      "title": "Does scheduled scan-47 qualification preserve complete, bounded no-candidate replay?",
+      "mechanism": "The scheduled Research Director reconciles the previous Arena child, admits one scan-pinned qualification job for the latest finalized v4 event, and persists a deterministic finding with candidate and source-replay evidence.",
+      "success_metric": "The child completes all admitted events within its resource bounds; job, source manifest, finding, dataset, and experiment digests agree; all five economic gates and candidate replay are explicit; the Director reconciles the child without a duplicate admission.",
+      "status": "continue",
+      "decision": "The scheduled 03:15 cycle reconciled scan 46 and admitted scan 47. The Arena child completed 47/47 events with exit 0 in 3.02 seconds; its finding contains zero positive states at all five economic gates and complete empty candidate evidence/replay. The finding digests and identity recompute. At capture, the Director manifest still projected QUEUED and retained scan 46 as last qualified; its scheduled next cycle is the reconciliation point. Do not manually poll or retry.",
+      "result": {
+        "captured_at_utc": "2026-10-16T03:19:00Z",
+        "checkpoint_path": "docs/VERITAS_MISSION2_GATE_F_CHECKPOINT_029.md",
+        "scan_id": "scan-20261016T030203Z-8baf1b769e20",
+        "job_id": "job-d5fda223640d4a94893cdf35",
+        "job_state": "COMPLETED",
+        "job_exit_status": 0,
+        "job_progress": {
+          "done": 47,
+          "total": 47
+        },
+        "job_elapsed_seconds": 3.0192503799917176,
+        "job_record_sha256": "81ae5bcc349740dbd0c7ec689b266ac7af8a312a13516a9a3f98de56036c243c",
+        "source_manifest_file_sha256": "e50f42ab0fa5944d49c7587347f7982d879173b32854da81329a27a48c59269a",
+        "submitted_source_revision_sha256": "2fdf687710705a717e480d127a162ab9a4fabccb92dd5bb02c2caab25e1b6743",
+        "finding_id": "veritas-qualification-v1-2c8fea9bc2f8c8a9",
+        "finding_manifest_sha256": "7b23d70025557aa1ef7ad30b658aeecbdaa05facfd532c978c9ea37c180c5724",
+        "experiment_run_id": "VERITAS-M2-ECO-QUAL-001-V4-RUN-8eb3c4effd22",
+        "experiment_sha256": "16d87730dc9744ead219a698cf32015b6d1e8f17f8bae4674cddc8c9271f19e9",
+        "dataset_sha256": "8eb3c4effd22b83323f726db0c9a3f7012ee4cfafde68ad0febf861de39c8b8e",
+        "snapshot_count": 47,
+        "attempted_market_pairs": 1880,
+        "quality_valid_pairs": 1628,
+        "unique_market_ids": 835,
+        "positive_states_by_gate": {
+          "unchanged_top_ask_gross_sign": 0,
+          "full_displayed_depth_gross": 0,
+          "full_depth_and_per_leg_minimum_notional": 0,
+          "single_match_fee_sensitivity_positive": 0,
+          "fragmentation_safe_fee_sensitivity_positive": 0
+        },
+        "gross_candidate_evidence_count": 0,
+        "gross_candidate_evidence_complete": true,
+        "gross_candidate_replay_status": "NO_POSITIVE_CANDIDATES_TO_REPLAY",
+        "gross_candidate_replay_complete": true,
+        "finding_digest_recomputed": true,
+        "artifact_identity_matches_dataset_and_source": true,
+        "director_projection_state_at_capture": "RUNNING",
+        "director_projected_job_state_at_capture": "QUEUED",
+        "director_last_qualified_scan_id_at_capture": "scan-20261016T023017Z-1254a0a63f4d",
+        "director_next_scheduled_cycle_utc": "2026-10-16T03:45:19Z",
+        "orders_submitted": false,
+        "authenticated_requests": false
+      },
+      "limitations": [
+        "The source observations are selected repeated public snapshots, not independent venue confirmation.",
+        "The Director manifest was not yet reconciled after the child completed; the next scheduled cycle must close that projection gap.",
+        "Zero candidates in this panel does not establish zero opportunity prevalence outside the observed sample."
       ]
     }
   ],
