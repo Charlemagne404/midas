@@ -1,4 +1,4 @@
-## Latest checkpoint — 2026-10-16T18:47Z, scan-78 qualification and ordered resume parity
+## Latest checkpoint — 2026-10-16T18:58Z, scan-78 coverage and qualification
 
 Independent opportunity audit 016 replays all 78 saved observer snapshots /
 3,120 selected market observations (50,119,641 compressed bytes). It
@@ -10,6 +10,17 @@ pairs have a leg older than five seconds and one pair exceeds 250 ms reported
 timestamp skew. These selected snapshots are correlated, not independent
 opportunity trials. See [Gate B checkpoint 015](VERITAS_MISSION2_GATE_B_CHECKPOINT_015.md)
 and audit 016.
+
+The A1 market-universe replay verifies 78/78 snapshot evidence hashes, all 468
+Gamma response hashes, and all retained CLOB response hashes. It covers 7,801
+distinct Gamma market IDs, 2,552 eligible at least once within the bounded
+query unions, and zero market identity conflicts. The latest six-frame union
+has 300 IDs / 156 eligible. Across 3,120 selected pairs, 2,628 are
+quality-valid and none are positive top gross. One historical capture counter
+mismatch persists: scan `scan-20261015T055928Z-c9777c1cc300` recorded 5 valid
+pairs but replays to 32. These panels are selected and correlated. See [Gate A
+checkpoint 054](VERITAS_MISSION2_GATE_A_CHECKPOINT_054.md) and coverage
+artifact 013.
 
 The four-segment split/resume canary now reproduces the one-shot business-event
 order after excluding the extra `worker_start` lifecycle event and generated
@@ -33,8 +44,9 @@ restarts. It processed 59 segments / 17,635,207 bytes and caught up through
 6,905/6,905 finalized segments, with 517,353 quality-valid states over 111
 markets and zero positive top-ask, full-depth, or minimum-notional states.
 The run used 8.60 CPU seconds, peaked at 125.4 MiB, and read no active segment.
-Gap detail's 18:36 summary covers 6,894 replayable segments and 2,639
-campaign-window gaps; its next normal batch is due at 18:50 UTC. Pilot 002
+The scheduled 18:50 gap-detail batch completed at 18:51:11 UTC, processing 28
+segments / 7,230,248 bytes and extending its prefix to 6,922/6,922 replayable
+segments with no pending work and 2,653 campaign-window gaps. Pilot 002
 remains at 17/48 scans and 553/680 quality-valid slots across 495 selected
 markets; no sequence or atomicity is verified. The 18:45 Director cycle
 admitted scan 78 to Arena; its child completed 78/78 events at 18:46:04 UTC
@@ -42,7 +54,7 @@ with zero positives at all five qualification gates and complete empty
 candidate evidence/replay. The next scheduled Director reconciliation is at
 19:15 UTC. See [Gate F checkpoint
 037](VERITAS_MISSION2_GATE_F_CHECKPOINT_037.md), [inventory
-088](VERITAS_MISSION2_RESEARCH_INVENTORY_088.json), and
+089](VERITAS_MISSION2_RESEARCH_INVENTORY_089.json), and
 [operations](VERITAS_MISSION2_OPERATIONS.md).
 
 The last Reality integrity report verified 113,162 journal events at
@@ -51,8 +63,11 @@ The last Reality integrity report verified 113,162 journal events at
 GB, while root storage is 57% used with about 209 GB free. No full regression
 or new model training was run for this checkpoint. Branch `project/veritas`
 remains at `9a4d8f6`; focused replay tests and static checks were verified
-after that implementation commit. Existing user changes and canary artifacts
-were left unstaged.
+after that implementation commit. The 78-snapshot coverage audit first hit
+OOM at 384 MiB with no artifact written; its 5%-CPU retry completed at a
+952.2 MiB peak with no swap. This exposes memory growth from retaining the
+verified panel and motivates a streaming implementation. Existing user
+changes and canary artifacts were left unstaged.
 
 ## Latest checkpoint — 2026-10-16T09:30:52Z, scan-60 independent replay
 

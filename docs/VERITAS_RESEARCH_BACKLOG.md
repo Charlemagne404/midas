@@ -627,3 +627,30 @@ checkpoint 028](VERITAS_MISSION2_GATE_C_CHECKPOINT_028.md), [inventory
 088](VERITAS_MISSION2_RESEARCH_INVENTORY_088.json), and benchmark 009. The
 four-segment canary used historical input;
 it added no market observations, fills, or model targets.
+
+
+## Active Mission 2 queue — 2026-10-16 18:58 UTC
+
+1. **Preserve the frozen Reality campaign while tracking the live reader gap.**
+   The current-branch canary proves isolated resume ordering only. Keep the
+   production worker, cursor, campaign identity, and CPU quota unchanged until
+   a separately reviewed continuity plan exists.
+2. **Keep economic work evidence-gated.** The independent replay and scan-78
+   Arena child both found zero positive gross or qualified states. Maintain
+   no-trade and do not train models without candidate-relevant labels.
+3. **Finish the predeclared pilot 002 window.** It remains at 17/48 scans and
+   553/680 quality-valid slots. Review its freshness and selection diagnostics
+   separately from sequence or atomicity evidence. The 18:50 gap-detail batch
+   now covers 6,922/6,922 replayable segments with no pending work and 2,653
+   campaign-window gaps; the source-analysis prefix remains at 6,905 segments,
+   with its next run due at 19:10 UTC. Keep their capture times distinct.
+4. **Reduce coverage-audit memory before extending the panel further.** A1
+   coverage 013 verifies all 78 scans but peaks at 952.2 MiB; the 384 MiB
+   attempt OOMed before output. Preserve snapshot/hash validation while
+   streaming the replay and confirm output parity against artifact 013.
+
+See [Gate A checkpoint 054](VERITAS_MISSION2_GATE_A_CHECKPOINT_054.md), [Gate
+B checkpoint 015](VERITAS_MISSION2_GATE_B_CHECKPOINT_015.md), [Gate C
+checkpoint 028](VERITAS_MISSION2_GATE_C_CHECKPOINT_028.md), [Gate F checkpoint
+037](VERITAS_MISSION2_GATE_F_CHECKPOINT_037.md), inventory 089, and benchmark
+009.

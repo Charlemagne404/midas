@@ -177,7 +177,7 @@
     "source_bytes": 551636,
     "source_event_count": 30
   },
-  "captured_at_utc": "2026-10-16T18:47:08Z",
+  "captured_at_utc": "2026-10-16T18:58:07Z",
   "censoring_analysis": {
     "analysis_source_file": "packages/midas/veritas/forensics.py",
     "analysis_source_sha256": "0b055a21c4b423bbf02cc9c240f26f18263fb8342cd72dec686705d2601a420c",
@@ -2900,7 +2900,7 @@
     "unique_market_ids": 558,
     "window_minutes": 751.53
   },
-  "inventory_id": "VERITAS-M2-RESEARCH-INVENTORY-088",
+  "inventory_id": "VERITAS-M2-RESEARCH-INVENTORY-089",
   "latest_scan_captured_at_utc": "2026-10-16T18:30:53.340010+00:00",
   "latest_scan_id": "scan-20261016T183053Z-5cc3121a6906",
   "latest_source_analysis_checkpoint": {
@@ -13875,10 +13875,10 @@
     "campaign_changed": false
   },
   "shadow_interrupt_benchmark_008_sha256": "817cb2867c71eb8653628f86b7caf55d6260fd47a9314e4de0eb08b5f855a002",
-  "based_on_inventory": "docs/VERITAS_MISSION2_RESEARCH_INVENTORY_087.json",
-  "based_on_inventory_sha256": "13c0cddcb92a7da8cffdfbb41efa1779210f23f2dc601b1faad07e18bbba8fa8",
-  "capture_scope": "Record independent source audit through scan 78, ordered isolated shadow resume parity, the completed scheduled source replay, and the scan-78 Research Director/Arena qualification; inherited operational fields retain their own capture timestamps.",
-  "source_head_at_capture": "9a4d8f67e485d5d77bb270d15e08a52bb42510b9",
+  "based_on_inventory": "docs/VERITAS_MISSION2_RESEARCH_INVENTORY_088.json",
+  "based_on_inventory_sha256": "5884e57a10d1a2f0b847cda40047be2fe569569e82a4056dcf42b5e811408a29",
+  "capture_scope": "Record hash-verified A1 market-universe coverage through scan 78, the capped audit resource outcome, and the completed 18:50 scheduled gap-detail batch; other inherited campaign, service, and economic metrics retain their own capture timestamps.",
+  "source_head_at_capture": "533772f4084ced8061a2ce1549aa6a4d5004497b",
   "current_scan_078": {
     "scan_id": "scan-20261016T183053Z-5cc3121a6906",
     "captured_at_utc": "2026-10-16T18:30:53.340010+00:00",
@@ -14129,7 +14129,7 @@
       "director_next_timer_at_local": "2026-10-16 20:45:16 CEST",
       "observer_last_completed_scan": "scan-20261016T183053Z-5cc3121a6906",
       "observer_next_timer_at_local": "2026-10-16 21:00:22 CEST",
-      "gap_detail_latest_completed_at_utc": "2026-10-16T18:36:11+00:00",
+      "gap_detail_latest_completed_at_utc": "2026-10-16T18:51:09+00:00",
       "source_analysis_completed_at_utc": "2026-10-16T18:43:35Z",
       "source_analysis_exit_status": 0,
       "source_analysis_processed_segments": 6905,
@@ -14141,7 +14141,10 @@
       "director_arena_job_completed_at_utc": "2026-10-16T18:46:04+00:00",
       "director_arena_job_state": "COMPLETED",
       "director_arena_job_exit_status": 0,
-      "director_next_reconciliation_at_utc": "2026-10-16T19:15:27Z"
+      "director_next_reconciliation_at_utc": "2026-10-16T19:15:27Z",
+      "gap_detail_processed_segments": 6922,
+      "gap_detail_pending_segments": 0,
+      "gap_detail_next_timer_at_utc": "2026-10-16T19:05:00Z"
     },
     "campaign_or_service_restarted_or_modified_for_canary": false
   },
@@ -14202,5 +14205,145 @@
     "manual_poll_or_retry": false,
     "finding_status": "no_positive_gross_candidate_observed",
     "decision": "Keep no-trade as the current hypothetical policy. Continue bounded observation; no model or execution-policy comparison is justified without an eligible gross candidate."
+  },
+  "market_universe_coverage_013": {
+    "artifact_path": "docs/VERITAS_MISSION2_MARKET_UNIVERSE_COVERAGE_013.json",
+    "artifact_file_sha256": "19fb72f6b9a87b1b90110a3380503cdcbe021cf03bdd80f72c1097f151fb7673",
+    "analysis_version": "veritas-market-universe-coverage-v1",
+    "captured_at_utc": "2026-10-16T18:55:16.015390+00:00",
+    "snapshot_count": 78,
+    "compressed_snapshot_bytes": 50119641,
+    "first_scan_id": "scan-20261015T055928Z-c9777c1cc300",
+    "last_scan_id": "scan-20261016T183053Z-5cc3121a6906",
+    "snapshot_evidence_hashes_verified": true,
+    "gamma_response_hashes_verified": true,
+    "clob_response_hashes_verified": true,
+    "snapshot_manifest_sha256": "6120d5431fc89ca48718d75e608c55274c63db31a7fbd4c4d7afe1fc1fe03468",
+    "gamma_response_manifest_sha256": "9a58ccfef5f8829ee1ececaf125f7a56d052ffa232760bfef31417cd91a6345f",
+    "analysis_module_sha256": "3512586bfd7d63b0238abed2a7330556a10466c40f1624366b7bac5fc5138826",
+    "analysis_runner_sha256": "486712f5729f8a11d105d4bfe12649807ff52f6637d3d163cfd5420ec8d5d379",
+    "distinct_gamma_market_ids_over_window": 7801,
+    "distinct_market_ids_eligible_at_least_once": 2552,
+    "distinct_outcome_asset_ids_over_window": 15602,
+    "selected_market_ids_over_window": 1307,
+    "selected_condition_ids_over_window": 1307,
+    "selected_outcome_asset_ids_over_window": 2614,
+    "market_ids_with_multiple_condition_ids_over_time": 0,
+    "market_ids_with_source_identity_conflicts": 0,
+    "latest_scan": {
+      "distinct_payoff_verified_outcome_asset_ids": 76,
+      "distinct_selected_condition_ids": 40,
+      "distinct_selected_outcome_asset_ids": 80,
+      "eligible_market_ids": 156,
+      "excluded_market_ids": 144,
+      "gamma_market_ids": 300,
+      "scan_id": "scan-20261016T183053Z-5cc3121a6906",
+      "selected_market_ids": 40
+    },
+    "coverage_kind": "intermittent_public_snapshots",
+    "gamma_frames_per_scan": 6,
+    "public_http_attempts": 462,
+    "mean_unique_market_ids_per_bounded_union": 298.82,
+    "mean_eligible_market_ids_per_bounded_union": 155.51,
+    "total_attempted_market_pairs": 3120,
+    "total_quality_valid_market_pairs": 2628,
+    "total_invalid_market_pairs": 492,
+    "quality_valid_yield": 0.8423,
+    "capture_recorded_quality_valid_market_pairs": 2601,
+    "capture_vs_replay_delta": 27,
+    "capture_vs_replay_count_mismatches": [
+      {
+        "capture_recorded_valid_pairs": 5,
+        "current_replay_valid_pairs": 32,
+        "scan_id": "scan-20261015T055928Z-c9777c1cc300"
+      }
+    ],
+    "positive_top_gross_pairs": 0,
+    "repeated_comparable_markets": 471,
+    "sampled_top_of_book_changed_comparisons": 706,
+    "sampled_top_of_book_comparisons": 1385,
+    "sampled_top_of_book_change_fraction": 0.5097,
+    "reported_age_over_five_seconds_by_leg": {
+      "no": 2058,
+      "yes": 2058
+    },
+    "reported_cross_outcome_skew_above_250ms_pairs": 1,
+    "limitations": [
+      "The six-page query union is bounded and selected by upstream filters; it is not the venue-wide universe.",
+      "Selection probabilities apply only within each observed query union and conditional on frozen controls.",
+      "Category, liquidity, expiry, and spread summaries describe observed metadata, not all venue markets.",
+      "Markets, condition contracts, and outcome asset IDs are counted separately; a selected V1 pair normally has two assets.",
+      "Reported update-age fields are source timestamp ages at snapshot time; sampled state changes are not an update-rate estimate.",
+      "Snapshots are intermittent and cannot establish quote duration, continuous coverage, order arrival, or fills.",
+      "V1 eligibility is limited to the supported same-condition binary payoff relationship; other structures remain excluded or unverified."
+    ]
+  },
+  "coverage_audit_resource_outcome_001": {
+    "runner": "scripts/analyze_veritas_market_universe_coverage.py",
+    "output_artifact_path": "docs/VERITAS_MISSION2_MARKET_UNIVERSE_COVERAGE_013.json",
+    "first_attempt": {
+      "scope": "veritas-market-coverage-scan-078.scope",
+      "cpu_quota_percent": 5,
+      "memory_max_bytes": 402653184,
+      "memory_swap_max_bytes": 0,
+      "result": "oom-kill",
+      "wall_seconds": 97,
+      "cpu_seconds": 4.901,
+      "memory_peak_mib": 355.8,
+      "output_written": false
+    },
+    "retry": {
+      "scope": "veritas-market-coverage-scan-078-retry.scope",
+      "cpu_quota_percent": 5,
+      "memory_max_bytes": 2147483648,
+      "memory_swap_max_bytes": 0,
+      "result": "success",
+      "wall_seconds": 297,
+      "cpu_seconds": 14.931,
+      "memory_peak_mib": 952.2,
+      "output_written": true
+    },
+    "interpretation": "The analyzer retains the complete verified panel and has high peak-memory use. Reduce memory with streaming while preserving artifact hashes and results."
+  },
+  "checkpoint_089_limitations": [
+    "Discovery counts are conditional on bounded, upstream-filtered query unions and are not a venue-wide market census.",
+    "Repeated snapshots and pair states are selected and correlated; they are not independent opportunity trials.",
+    "One historical scan has a capture-vs-current-replay quality-count mismatch (5 recorded, 32 replayed); snapshot and response hashes verify.",
+    "Reported timestamp age, timestamp skew, and sampled book changes do not establish sequence freshness, atomicity, quote persistence, or fills.",
+    "No positive gross candidate or economic qualification resulted from this coverage replay.",
+    "The first audit attempt OOMed at 384 MiB; the retry succeeded at 952.2 MiB peak, showing a memory-scalability issue in full-panel retention."
+  ],
+  "research_inventory_089": {
+    "artifact_path": "docs/VERITAS_MISSION2_RESEARCH_INVENTORY_089.json",
+    "artifact_sha256": "adcf6e156c0b9ef6273616953431e7a504fcecb8c3e805a99055d8ed9a93475c",
+    "based_on_inventory": "docs/VERITAS_MISSION2_RESEARCH_INVENTORY_088.json",
+    "based_on_inventory_sha256": "5884e57a10d1a2f0b847cda40047be2fe569569e82a4056dcf42b5e811408a29",
+    "capture_scope": "Record hash-verified A1 market-universe coverage through scan 78, the capped audit resource outcome, and the completed 18:50 scheduled gap-detail batch; other inherited campaign, service, and economic metrics retain their own capture timestamps."
+  },
+  "latest_gap_detail_checkpoint_089": {
+    "summary_path": "data/veritas-observatory/gap-detail-summary-v1.json",
+    "summary_file_sha256": "64fa6a53ae276280a379a8f2d9e4989978a49e871a3cb1ef8ff7ba2cf0a9026b",
+    "summary_sha256": "aabbf6daa8facb467ab0ffd6ed43b9bb7b38fdad246219cbd4c282c6cf09d29e",
+    "generated_at_utc": "2026-10-16T18:51:09+00:00",
+    "catalog_segment_count": 6924,
+    "replayable_catalog_segment_count": 6922,
+    "processed_segment_count": 6922,
+    "pending_segment_count": 0,
+    "processed_source_bytes": 1792498693,
+    "pending_source_bytes": 0,
+    "campaign_window_gap_event_count": 2653,
+    "campaign_window_gap_counts_by_reason": {
+      "book_resynchronization": 2649,
+      "connection_failure": 4
+    },
+    "active_segment_read": false,
+    "batch_processed_segment_count": 28,
+    "batch_processed_source_bytes": 7230248,
+    "scheduled_job_started_at_utc": "2026-10-16T18:50:00Z",
+    "scheduled_job_completed_at_utc": "2026-10-16T18:51:11Z",
+    "scheduled_job_exit_status": 0,
+    "scheduled_job_cpu_seconds": 3.586,
+    "scheduled_job_restart_count": 0,
+    "next_scheduled_timer_at_utc": "2026-10-16T19:05:00Z"
   }
 }

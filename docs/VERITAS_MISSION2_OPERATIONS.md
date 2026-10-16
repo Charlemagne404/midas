@@ -1855,3 +1855,33 @@ UTC with exit 0 in 5.92 seconds. All five economic gates were zero; candidate
 evidence and independent replay were complete and empty. The next scheduled
 Director reconciliation is at 19:15 UTC; no manual poll or retry was made.
 See [Gate F checkpoint 037](VERITAS_MISSION2_GATE_F_CHECKPOINT_037.md).
+
+
+## 2026-10-16 18:58 UTC — bounded universe replay through scan 78
+
+The saved-snapshot market-universe replay verified 78 snapshots / 50,119,641
+compressed bytes, all snapshot and Gamma response hashes, and retained CLOB
+response hashes. It finds 7,801 distinct Gamma market IDs, 2,552 eligible at
+least once within the bounded unions, 1,307 distinct selected markets, and no
+market identity conflicts. Its latest 300-ID query union contains 156 current
+V1-eligible IDs. Across 3,120 selected observations, 2,628 are quality-valid
+(84.23%) and positive top-gross states remain zero. One historical capture
+count mismatch persists: scan 20261015T055928 recorded 5 valid pairs but
+replays to 32.
+
+The first run under a 384 MiB cap was OOM-killed before writing output. The
+retry completed under a 5% CPU quota and no-swap limit, using 14.93 CPU seconds
+over 4 minutes 57 seconds and peaking at 952.2 MiB. It read saved snapshots
+only. No public request, campaign change, production write, or service restart
+occurred. Full-panel retention is a memory bottleneck; consider a streaming
+implementation before the snapshot set grows further. See [Gate A checkpoint
+054](VERITAS_MISSION2_GATE_A_CHECKPOINT_054.md) and [coverage artifact
+013](VERITAS_MISSION2_MARKET_UNIVERSE_COVERAGE_013.json).
+
+The scheduled 18:50 UTC gap-detail batch exited 0 at 18:51:11 UTC with no
+restarts. It processed 28 segments / 7,230,248 bytes and advanced the
+replayable prefix from 6,894 to 6,922 segments. The current summary is
+6,922/6,922 replayable segments, zero pending, and 2,653 campaign-window gaps
+(2,649 book resynchronizations, four connection failures); no active segment
+was read. The batch used 3.59 CPU seconds. The next gap-detail timer is due at
+19:05 UTC.
