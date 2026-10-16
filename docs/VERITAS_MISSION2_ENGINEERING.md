@@ -1,5 +1,15 @@
 # Veritas Mission 2 Engineering Checkpoint
 
+## Latest Gate C progress — gap-detail prefix remains pre-campaign
+
+The scheduled 01:20 UTC gap-detail batch exited 0 after processing 128
+finalized segments / 30.3 MB. It has processed 1,072/4,871 catalog segments
+with 1,855 all-period gap events, while 3,797 segments / 1.037 GB remain.
+The processed prefix still has zero campaign-window events but ends before
+the frozen window; that zero is incomplete. See [Gate C checkpoint
+006](VERITAS_MISSION2_GATE_C_CHECKPOINT_006.md) and [inventory
+053](VERITAS_MISSION2_RESEARCH_INVENTORY_053.json).
+
 ## Latest Gate A checkpoint — scan 43 and interim pilot yield
 
 The scheduled observer completed scan 43 at 01:01:47 UTC and exited 0. It
