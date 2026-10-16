@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-16T10:26:14Z",
+  "updated_at_utc": "2026-10-16T10:34:23Z",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -7835,22 +7835,41 @@
       "title": "Can a prospective measurement pilot report quality yield and freshness diagnostics without invalidating on unrelated code changes?",
       "mechanism": "A narrow protocol/helper pin preserves the pilot across fee, opportunity, and observer refactors, while each scheduled scan stores immutable snapshot and finalized-analysis lineage with reported-age, skew, atomicity, and sequence diagnostics.",
       "experiment_id": "VERITAS-M2-COVERAGE-PILOT-002",
-      "dataset_id": "pending_first_scheduled_observer_scan",
+      "dataset_id": "pilot_002_scan_001_20261016T103050Z",
       "success_metric": "Enroll only from the next normal immutable scan without backfill; enforce a 24-hour/48-scan bound; verify the append-only event chain and snapshot/analysis lineage; report freshness and synchronization diagnostics without economic or causal claims.",
       "result": {
-        "status": "IMPLEMENTATION_VERIFIED_AWAITING_FIRST_SCAN",
+        "status": "FIRST_SCHEDULED_SCAN_RECORDED",
         "analysis_version": "veritas-coverage-pilot-v2",
-        "captured_at_utc": "2026-10-16T10:18:21Z",
+        "captured_at_utc": "2026-10-16T10:30:50.143010Z",
         "protocol_path": "docs/VERITAS_MISSION2_COVERAGE_PILOT_002.json",
         "protocol_file_sha256": "1c5ffde7639bdcdc343ce1c349bf7b02a85802ab2de39cd0f32bf2d1ee03a525",
         "focused_pilot_and_observer_tests_passed": 12,
         "dashboard_api_tests_passed": 33,
         "frontend_typescript_build": "passed",
-        "prospective_scan_count": 0,
+        "prospective_scan_count": 1,
         "orders_submitted": false,
         "authenticated_requests": false,
         "dashboard_component_tests_passed": 1,
-        "historical_v1_source_pin_drift_projection": "passed; stored event chain remains verifiable and current-source drift is labeled"
+        "historical_v1_source_pin_drift_projection": "passed; stored event chain remains verifiable and current-source drift is labeled",
+        "first_scan_id": "scan-20261016T103050Z-bc8cf9bc331e",
+        "first_scan_selected_pairs": 40,
+        "first_scan_quality_valid_pairs": 20,
+        "first_scan_positive_top_gross_pairs": 0,
+        "strict_reported_fresh_pairs": 4,
+        "reported_age_above_5s_by_leg": {
+          "no": 16,
+          "yes": 16
+        },
+        "reported_skew_above_250ms_pairs": 0,
+        "batch_atomicity_verified_pairs": 0,
+        "sequence_verified_pairs": 0,
+        "event_sha256": "8ad07cebdbd327ac1cfe777d4f231c16153c109b3ab4c1687125ca7f6532887a",
+        "snapshot_file_sha256": "dd9e9f76d70337bd6e4e862e62a1b7308f2016209d158a663f6da92e89246263",
+        "analysis_event_file_sha256": "037b03d371d1c5cf81ac1e08d1fa2002ee16dd586066524dabcb77c47bb2641e",
+        "analysis_event_sha256": "4f937a75c766ac9e2f463c5afadd82dd79328f6a6b9eeaf76e090d28add3e3c6",
+        "summary_sha256": "e31eaefbcce6330665ccad8b4682f41df5548c75e55957a4a6f2384a8fe32ce6",
+        "summary_file_sha256": "b9c6b04d7ed5bf1e3b573cfea72aa0c8ae6389ecfa2e5210a431bbd09d1ffcf8",
+        "v1_projected_status_after_source_drift": "historical_source_drift"
       },
       "limitations": [
         "No prospective v2 market observation has been collected yet; first enrollment awaits the ordinary scheduled observer scan.",
@@ -7859,6 +7878,81 @@
         "A measurement-yield result does not establish an economic opportunity or strategy improvement."
       ],
       "decision": "Deploy through the existing observer checkout and allow normal scheduled collection to enroll the first event. Preserve v1 and the frozen Reality campaign. Do not manually trigger a scan or promote any economic claim from measurement diagnostics.",
+      "status": "continue"
+    },
+    {
+      "hypothesis_id": "VERITAS-H135",
+      "title": "Does independent replay of the expanded selected panel reveal a quality-valid positive gross opportunity?",
+      "mechanism": "Recompute all stored public snapshot pair quality, top edge, displayed depth, per-leg minimums, and v3 collateral-fee sensitivities using an independent source audit; compare current results with stored v4 decisions.",
+      "experiment_id": "VERITAS-M2-INDEPENDENT-SOURCE-AUDIT-002",
+      "dataset_id": "saved_public_selected_market_snapshots_62_as_of_20261016T103050Z",
+      "success_metric": "Complete source and stored-result reconciliation with no unreported mismatches; report positive gross and every post-cost gate separately without treating repeated snapshots as independent trials.",
+      "result": {
+        "status": "NO_POSITIVE_GROSS_CANDIDATE_OBSERVED",
+        "analysis_version": "veritas-independent-source-opportunity-audit-v2",
+        "captured_at_utc": "2026-10-16T10:31:51.452984+00:00",
+        "artifact_path": "docs/VERITAS_MISSION2_INDEPENDENT_OPPORTUNITY_AUDIT_013.json",
+        "artifact_file_sha256": "4d5c3d97fceeaf6cad8b81306dae9a187498955b2f6b21e3c89057d1cd8c5bd0",
+        "artifact_bytes": 3836,
+        "result_sha256": "530ad108fa4fe4674f002f7119875777d7c0d638fce70d53db257b1e163617e4",
+        "source_manifest_sha256": "e00b5c6f13f31070a97ac098268318d078befe1b539d620329b72bcd7f892e1f",
+        "source_code_sha256": "ff0d89ef437a051b27002ca9a5f6deb5b1f7dca52e87883894a48ccc726f98e2",
+        "fee_model_version": "veritas-economic-feasibility-v3",
+        "fee_collection_medium_for_buy": "collateral",
+        "snapshot_count": 62,
+        "selected_market_observation_count": 2480,
+        "v4_stored_quality_valid_count": 2095,
+        "independent_v3_quality_valid_count": 2095,
+        "v4_v3_validity_mismatch_count": 0,
+        "v4_v3_top_edge_mismatch_count": 0,
+        "strict_freshness_valid_count": 438,
+        "reported_age_exceedance_pair_count": 1657,
+        "pair_skew_exceedance_count": 0,
+        "independent_fee_checked_quantity_count": 2609,
+        "independent_fee_disagreement_count": 0,
+        "positive_top_pair_gross_count": 0,
+        "positive_full_depth_gross_by_quantity": {
+          "10": 0,
+          "100": 0,
+          "20": 0,
+          "5": 0,
+          "50": 0
+        },
+        "positive_full_depth_and_both_minimums_by_quantity": {
+          "10": 0,
+          "100": 0,
+          "20": 0,
+          "5": 0,
+          "50": 0
+        },
+        "positive_single_match_fee_sensitivity_by_quantity": {
+          "10": 0,
+          "100": 0,
+          "20": 0,
+          "5": 0,
+          "50": 0
+        },
+        "positive_fragmentation_safe_fee_sensitivity_by_quantity": {
+          "10": 0,
+          "100": 0,
+          "20": 0,
+          "5": 0,
+          "50": 0
+        },
+        "compressed_source_bytes": 40048177,
+        "latest_scan_id": "scan-20261016T103050Z-bc8cf9bc331e",
+        "latest_snapshot_quality_valid_pairs": 20,
+        "latest_snapshot_positive_top_gross_pairs": 0,
+        "orders_submitted": false,
+        "authenticated_requests": false
+      },
+      "limitations": [
+        "The 62 saved snapshots are selected, intermittent, and correlated; the observation count is not an independent opportunity count or venue-wide denominator.",
+        "Reported timestamp age and skew do not prove sequence freshness, quote persistence, atomicity, order arrival, or fills.",
+        "Fee arithmetic agreement is not evidence of an observed fee charge or hypothetical execution.",
+        "No positive gross candidate appeared in this selected panel; this does not prove that none can occur between scans."
+      ],
+      "decision": "Maintain no-trade and do not train a model or promote a strategy without candidate-relevant evidence. Continue only the bounded scheduled observation and independent replay; revisit candidate-specific checks if a positive quality-valid gross state appears.",
       "status": "continue"
     }
   ],
@@ -7870,6 +7964,7 @@
     "Can documented venue sequence semantics or an independent continuity signal establish freshness beyond returned timestamp age?",
     "How do the fixed coverage pilot strata, missed sequences, storage, and compute costs affect the next observation design?",
     "Can finalized-source gap indexing advance while preserving the original frozen campaign labels and source prefix?",
-    "Does prospective pilot 002 enroll and preserve snapshot/analysis lineage on its first ordinary scan, then report the planned freshness and synchronization diagnostics?"
+    "Does prospective pilot 002 enroll and preserve snapshot/analysis lineage on its first ordinary scan, then report the planned freshness and synchronization diagnostics?",
+    "Does a future scheduled scan produce any quality-valid positive gross candidate after independent v3 replay, or does the no-candidate finding persist in the selected panel?"
   ]
 }

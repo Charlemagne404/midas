@@ -5,17 +5,17 @@ economic impact, current evidence, and compute cost. Work remains on
 `project/veritas`; the frozen Reality campaign is a protected reference. The
 earlier Mission 1 handoff backlog is retained below for provenance.
 
-## Current Mission 2 queue (updated 2026-10-16T09:30:52Z)
+## Current Mission 2 queue (updated 2026-10-16T10:33:39Z)
 
 | Rank | Question | Evidence today | Next experiment | Promotion rule |
 | --- | --- | --- | --- | --- |
-| 1 | Has any credible gross or economically qualified opportunity appeared? | Independent audit 012 covers 60 saved snapshots through latest scan `scan-20261016T093021Z-b20cf6a3b852`: 2,400 selected observations, 2,047 quality-valid pairs, zero validity/top-edge mismatches, and zero positive gross, depth, minimum, or fee-qualified states. The Decimal cross-check agrees on 2,548 fee evaluations. | Preserve no-trade. Extend the bounded replay after another immutable snapshot is saved; do not count repeated states as independent opportunities. Define candidate-specific replay only after a positive gross observation survives source-quality review. | Require an observed gross candidate, depth and per-leg minimums, current fee-model checks, independent replay, and evidence of executable conditions; qualification is not P&L. |
+| 1 | Has any credible gross or economically qualified opportunity appeared? | Independent audit 013 covers 62 saved snapshots through `scan-20261016T103050Z-bc8cf9bc331e`: 2,480 selected observations, 2,095 quality-valid pairs, zero v4/v3 validity or top-edge mismatches, and zero positive top, depth, minimum, single-match-fee, or fragmentation-safe-fee states. The independent Decimal cross-check agrees on 2,609 fee evaluations. See [Gate B checkpoint 014](VERITAS_MISSION2_GATE_B_CHECKPOINT_014.md). | Preserve no-trade. Continue bounded independent replay only as immutable snapshots accrue; do not count repeated states as independent opportunities. Define candidate-specific replay only after a positive gross observation survives source-quality review. | Require an observed gross candidate, depth and per-leg minimums, current fee-model checks, independent replay, and evidence of executable conditions; qualification is not P&L. |
 | 2 | Does the current fee model correctly account for both taker legs and entry capital? | Fee model v3 follows current published collateral-denominated fees and charges both purchased legs at entry. Independent source replay found zero formula mismatches. The 100-share synthetic full-depth case is +1.624 USDC under single-match rounding and -0.370 USDC under the fragmentation-safe bound; the assumed unrecovered unmatched-leg loss is 52.200 USDC. These are controlled sensitivities only. Previous v2 share-deduction outputs are superseded. | Keep the corrected synthetic artifact as the dashboard source after a safe code rollout. Recompute any future observed candidate with its reported schedule and supported venue semantics. | Never treat synthetic P&L or sensitivity rates as observed profitability, fills, or execution likelihood. |
-| 3 | Does the fixed coverage pilot improve usable market coverage? | The immutable pilot is 26/48 scans: 842/1,040 valid slots across 608 selected markets, with one skipped sequence. Audit 002 remains through 25 scans: 23 full-support scans, two partial, no unsupported scans, and 99.80% pooled support. Rotating/control yield comparison remains descriptive and nonrandomized. The dashboard now flags audit 002 as stale against the pilot's 26-scan summary. | Let the fixed pilot reach its existing stop/cap, then re-audit the final cohort and report strata, control availability, missed scans, storage, and compute cost. | Do not treat repeated observations as independent or infer causal or venue-wide improvement. |
-| 4 | What do reported timestamps and intermittent coverage establish about freshness? | Independent audit 009 covers 55 scans / 2,200 observations and reproduces v4 validity and top-edge decisions with zero mismatches. Strict reported-age sensitivity admits 399 states; 1,483 pairs exceed five seconds. | Preserve freshness gates. Seek documented venue sequence semantics or an independent continuity signal before changing them. | Request-to-receipt and returned timestamps do not prove venue sequence freshness, batch atomicity, quote persistence, order arrival, or fills. |
+| 3 | Does the fixed coverage pilot improve usable market coverage? | Immutable pilot 001 is 28/48 scans: 912/1,120 valid slots across 657 selected markets, with one skipped sequence; its historical code pin now differs from current observer code and the dashboard labels that drift. New prospective pilot 002 recorded its first scheduled scan: 20/40 valid slots. This single scan does not establish a yield improvement. | Let pilot 001 reach its fixed stop/cap and let pilot 002 proceed under its own bound. Re-audit coverage support after the new cohort completes; do not edit either protocol while active. | Do not treat repeated observations as independent or infer causal or venue-wide improvement. |
+| 4 | What do reported timestamps and intermittent coverage establish about freshness? | Audit 013 covers 62 scans / 2,480 observations and reproduces v4 validity and top-edge decisions with zero mismatches. Strict reported-age sensitivity admits 438 states; 1,657 pairs exceed five seconds; none exceeds the 250 ms timestamp-skew threshold. Pilot 002 separately records its first scan's age bands and no verified batch atomicity or sequence counts. | Preserve quality and freshness gates. Seek documented venue sequence semantics or an independent continuity signal before changing them. | Request-to-receipt and returned timestamps do not prove venue sequence freshness, batch atomicity, quote persistence, order arrival, or fills. |
 | 5 | Which source gaps coincide with frozen follow-up censoring? | The 08:06 sealed gap summary covers 4,242/5,665 replayable segments / 1,105,386,857 bytes, with 1,423 segments / 351,838,232 bytes pending and 1,327 campaign-window gaps indexed. Earlier attribution remains exact, temporal-only, or unresolved as recorded. | Continue scheduled bounded gap-detail batches; refresh attribution when the sealed prefix materially advances and preserve frozen labels. | Keep beyond-prefix outcomes unresolved; temporal association is not causal attribution. |
 | 6 | Can the Research Director qualify and reconcile each new scan durably? | The 08:15:58 UTC cycle reconciled scan 55 and admitted scan 57. Its Arena child completed with no positive gross candidate, but the manifest still projects QUEUED until the next scheduled cycle; scan 57 is the latest admitted scan. | Preserve the Arena source revision until scheduled reconciliation records the completed scan-57 child; then extend A1 and independent replay through scan 57. | Require pinned revisions, idempotent admission, complete replay, bounded resources, and read-only behavior. |
-| 7 | Is the research dashboard current and fully verified? | Coverage design audit 002 is projected with digest, receipt, safety, and staleness checks. The in-process overview reports it available but stale (25 audited scans versus 26 current pilot scans). API/UI unit checks and the isolated Playwright workflow pass; the browser test verifies the stale state, support/yield values, artifact link, endpoint data, and inference limit. Application changes are committed in 1590f2d and b7cbb7d; E2E spec and Gate H receipt H127 are pending commit. | Keep displayed values tied to receipted artifacts and sample limits; verify the current UI by browser after each material dashboard change. | Every displayed source value must resolve to a validated artifact and show sample limits. |
+| 7 | Is the research dashboard current and fully verified? | The API validates v1's stored event chain and labels current-source pin drift; pilot 002 is exposed with its first scan and verified snapshot/analysis lineage. API tests (33), pilot/observer tests (12), component test (1), and TypeScript build pass. The hosted main checkout is not deployed from this branch. | Keep displayed values tied to receipted artifacts and sample limits; run the isolated browser workflow after the next material UI change and use a safe deployment path when authorized. | Every displayed source value must resolve to a validated artifact and show sample limits. |
 | 8 | Do machine learning or strategy comparisons have candidate-relevant evidence? | No gross candidate or public outcome labels support training or a strategy tournament. The available economic runs qualify a read-only discovery pipeline, not expected returns or fills. | Do not train or compare execution policies yet; revisit when eligible gross candidates and suitable labels exist. | Do not infer improvement from synthetic inputs, hypothetical execution, or infrastructure completion. |
 
 ### Fee-model correction (2026-10-16)
@@ -391,7 +391,7 @@ See [Gate B checkpoint 013](VERITAS_MISSION2_GATE_B_CHECKPOINT_013.md),
 [audit 012](VERITAS_MISSION2_INDEPENDENT_OPPORTUNITY_AUDIT_012.json), and
 ledger H133.
 
-## Mission 2 continuation — prospective measurement pilot v2 implementation
+## Mission 2 continuation — prospective measurement pilot v2 and first scheduled scan
 
 Implemented an isolated, bounded pilot 002 after pilot 001's protocol pin
 proved too broad: v1 hashed observer, analysis, opportunity, and fee code, so
@@ -399,8 +399,8 @@ unrelated engineering changes stopped its recording. V2 pins only its protocol
 module and the shared event/summary helper, while recording snapshot and v4
 analysis hashes plus source-code lineage per scan. It reports the strict
 reported-age sensitivity, per-leg age bands, timestamp skew, and separate
-atomicity/sequence verification counts. This is a measurement instrument; no
-new market data or economic result exists yet.
+atomicity/sequence verification counts. This is a measurement instrument, not
+an economic strategy.
 
 The observer enrolls pilot 002 only on its next normal scan, without backfill;
 pilot 001 state and the frozen Reality campaign remain untouched. The dashboard
@@ -408,7 +408,17 @@ has a separate v2 status and hash-verified artifact route. Focused pilot and
 observer tests pass (12), all dashboard API tests pass (33), and the frontend
 component test and TypeScript build pass. The API keeps v1's internally
 verified event chain visible while explicitly flagging drift from its old
-current-source pin. The first prospective v2 event and its source-lineage check
-remain pending that scheduled scan. See the frozen
+current-source pin. The first scheduled v2 scan recorded 20/40 quality-valid
+pairs and zero positive top-gross candidates. Its event, summary, snapshot, and
+finalized-analysis digests verify. Four states pass the strict reported-age
+sensitivity; 16 legs on each side exceed five seconds; no batch atomicity or
+sequence claims are verified. These single-scan measurements are descriptive.
+The independent source audit 013 now covers 62 snapshots / 2,480 selected
+observations / 2,095 quality-valid states and still has zero positive gross or
+post-cost candidates. See the frozen
 [pilot 002 protocol](VERITAS_MISSION2_COVERAGE_PILOT_002.json) and the
 [operations note](VERITAS_OPERATIONS.md#prospective-measurement-pilot-v2).
+
+The independent follow-up replay is recorded in
+[Gate B checkpoint 014](VERITAS_MISSION2_GATE_B_CHECKPOINT_014.md) and
+[audit 013](VERITAS_MISSION2_INDEPENDENT_OPPORTUNITY_AUDIT_013.json).
