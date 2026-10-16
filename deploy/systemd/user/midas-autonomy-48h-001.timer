@@ -1,0 +1,13 @@
+[Unit]
+Description=Run MIDAS 48H-001 progress, health and resource checks every five minutes
+
+[Timer]
+OnBootSec=2min
+OnCalendar=*:0/5
+Persistent=true
+RandomizedDelaySec=15
+AccuracySec=15
+Unit=midas-autonomy-48h-001.service
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,28 @@
+[Unit]
+Description=MIDAS autonomous 48-hour research campaign state and backpressure controller
+After=midas-api.service midas-reality.service
+Wants=midas-api.service midas-reality.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=%h/midas
+ExecStart=%h/midas/.venv/bin/python %h/midas/scripts/autonomy_48h.py tick --workspace %h/midas
+Environment=PYTHONPATH=%h/midas/packages
+Environment=PYTHONDONTWRITEBYTECODE=1
+Environment=OMP_NUM_THREADS=1
+Environment=OPENBLAS_NUM_THREADS=1
+Environment=MKL_NUM_THREADS=1
+Environment=CUDA_VISIBLE_DEVICES=
+MemoryMax=1024M
+CPUQuota=10%
+Nice=19
+IOSchedulingClass=idle
+UMask=0077
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=%h/midas/data/autonomy %h/midas/data/arena
+PrivateTmp=true
+TimeoutStartSec=300s
+StandardOutput=journal
+StandardError=journal

@@ -1,0 +1,114 @@
+{
+  "version": "midas-autonomy-campaign-1",
+  "campaign_id": "48H-001",
+  "title": "MIDAS AUTONOMOUS RESEARCH CAMPAIGN — 48H-001",
+  "duration_seconds": 172800,
+  "poll_interval_seconds": 300,
+  "report_interval_seconds": 1800,
+  "completion_grace_seconds": 600,
+  "resource_limits": {
+    "max_concurrent_campaign_jobs": 1,
+    "cpu_quota_percent": 50,
+    "memory_limit_mb": 1536,
+    "nice": 15,
+    "io_scheduling_class": "idle",
+    "minimum_available_memory_mb": 7168,
+    "cancel_below_available_memory_mb": 4096,
+    "minimum_disk_free_bytes": 17179869184,
+    "maximum_recorder_memory_fraction": 0.95,
+    "maximum_source_status_age_seconds": 180,
+    "maximum_last_observation_age_seconds": 180,
+    "maximum_swap_activity_bytes_per_interval": 67108864,
+    "maximum_memory_psi_some_avg10_percent": 2.0,
+    "maximum_memory_psi_full_avg10_percent": 0.5,
+    "maximum_io_psi_some_avg10_percent": 10.0,
+    "maximum_load_average_1m": 4.5,
+    "minimum_arena_artifact_headroom_bytes": 67108864
+  },
+  "arena_evaluation": {
+    "dataset_id": "dataset-38ec6e9776097d8e36693372",
+    "model_ids": [
+      "model-ef77bbbd7d1f4be78c41c0b6",
+      "model-f587b98d06f34441bb040877",
+      "model-33cddb0d92024c2bb0a3b34a"
+    ],
+    "challenge_episodes": 120,
+    "scenario_families": [
+      "calm",
+      "volatile",
+      "thin",
+      "deep",
+      "one_sided",
+      "disappearing"
+    ],
+    "execution_models": ["standard", "conservative"],
+    "baseline": "no_trade",
+    "maximum_wall_seconds": 1800,
+    "schedule": [
+      {
+        "name": "fresh-seed-declared-fee-depth-baseline",
+        "after_seconds": 0,
+        "taker_fee_rate": "0.04",
+        "depth_multiplier": "0.75",
+        "additional_submission_latency_ms": 200
+      },
+      {
+        "name": "independent-liquidity-fee-stress",
+        "after_seconds": 43200,
+        "taker_fee_rate": "0.08",
+        "depth_multiplier": "0.50",
+        "additional_submission_latency_ms": 500
+      },
+      {
+        "name": "fresh-seed-independent-confirmation",
+        "after_seconds": 86400,
+        "taker_fee_rate": "0.04",
+        "depth_multiplier": "0.75",
+        "additional_submission_latency_ms": 200
+      },
+      {
+        "name": "severe-depth-and-latency-stress",
+        "after_seconds": 129600,
+        "taker_fee_rate": "0.08",
+        "depth_multiplier": "0.25",
+        "additional_submission_latency_ms": 1000
+      }
+    ]
+  },
+  "training": {
+    "enabled": false,
+    "status": "SKIPPED",
+    "reason": "Current Arena targets are generated from synthetic hypothetical fills. No independent observed public-market fill target is available, and unchanged training data would not justify repeating model training."
+  },
+  "existing_services": {
+    "required_active_units": [
+      "midas-api.service",
+      "midas-reality.service",
+      "midas-reality-shadow.service",
+      "midas-reality-shadow-successor.service",
+      "midas-arena-scheduler.timer",
+      "midas-reality-research.timer",
+      "midas-veritas-observatory.timer",
+      "midas-veritas-source-analysis.timer",
+      "midas-veritas-research-director.timer"
+    ],
+    "protected_campaign_paths": [
+      "data/research/reality/forward/mission2/campaign.json",
+      "data/research/reality/forward/mission2-successor-20261016/campaign.json"
+    ]
+  },
+  "verification": {
+    "activation": ["focused_campaign_smoke", "api_health", "scheduler_state", "latest_source_segment_hashes", "dataset_and_model_identity"],
+    "during_campaign_interval_seconds": 21600,
+    "midpoint_regression_after_seconds": 86400,
+    "completion": ["focused_campaign_smoke", "campaign_tournament_hashes", "matched_baseline_invariants", "protected_manifest_hashes", "latest_source_segment_hashes"],
+    "test_command": [".venv/bin/python", "-m", "pytest", "-q", "tests/test_autonomy_campaign.py"],
+    "test_scratch_only": true
+  },
+  "artifacts": {
+    "runtime_directory": "data/autonomy/48H-001",
+    "progress_markdown": "data/autonomy/48H-001/STATUS.md",
+    "progress_json": "data/autonomy/48H-001/status.json",
+    "final_report": "data/autonomy/48H-001/AUTONOMY_48H_001_FINAL_REPORT.md"
+  }
+}

@@ -69,6 +69,10 @@ class JobSpec(Model):
     policy_search: PolicySearchSpec | None = None
     veritas_qualification: VeritasQualificationSpec | None = None
     max_wall_seconds: int = Field(default=1800, ge=10, le=7200)
+    memory_limit_mb: int = Field(default=3072, ge=128, le=3072)
+    cpu_quota_percent: int = Field(default=100, ge=1, le=100)
+    nice: int = Field(default=10, ge=0, le=19)
+    io_scheduling_class: Literal["best-effort", "idle"] = "best-effort"
 
     @model_validator(mode="after")
     def inputs(self) -> "JobSpec":
@@ -154,8 +158,10 @@ def _create(
     identity = "job-" + uuid.uuid4().hex[:24]
     directory = artifact_path(root, "jobs", identity)
     veritas_read_only = spec.kind == "veritas_qualification"
-    memory_limit_mb = 512 if veritas_read_only else 4096
-    cpu_quota_percent = 10 if veritas_read_only else 100
+    memory_limit_mb = 512 if veritas_read_only else spec.memory_limit_mb
+    cpu_quota_percent = 10 if veritas_read_only else spec.cpu_quota_percent
+    nice = max(spec.nice, 15) if veritas_read_only else spec.nice
+    io_scheduling_class = "idle" if veritas_read_only else spec.io_scheduling_class
     record = {
         "job_id": identity,
         "configuration": spec.model_dump(mode="json"),
@@ -168,7 +174,7 @@ def _create(
         "unit": f"midas-arena-{identity}.service",
         "submitted_source_hash": research_hash(),
         "budget": {
-            "cpu_cores": 1,
+            "cpu_cores": cpu_quota_percent / 100,
             "cpu_quota_percent": cpu_quota_percent,
             "memory_mb": memory_limit_mb,
             "wall_seconds": spec.max_wall_seconds,
@@ -197,7 +203,8 @@ def _create(
             f"--unit=midas-arena-{identity}",
             f"--property=MemoryMax={memory_limit_mb}M",
             f"--property=CPUQuota={cpu_quota_percent}%",
-            "--property=Nice=10",
+            f"--property=Nice={nice}",
+            f"--property=IOSchedulingClass={io_scheduling_class}",
             f"--property=RuntimeMaxSec={spec.max_wall_seconds}",
             "--property=TimeoutStopSec=30",
             f"--working-directory={repository}",
