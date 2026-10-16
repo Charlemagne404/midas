@@ -30,3 +30,5 @@ The first-scan capture discrepancy remains preserved: 5 captured-valid pairs ver
 | Research ledger | H118 |
 
 The six query frames are bounded and upstream-filtered, not a venue-wide denominator. Intermittent observations do not establish continuous book coverage, quote lifetime, sequence freshness, order arrival, fills, or profitability. No authenticated requests or orders were used. The capture mismatch is unresolved.
+
+**Counter-semantics follow-up (06:25 UTC):** the first-scan snapshot stores 5 in `counts.valid_quality_pairs`, while its paired v4 event stores 32 in `valid_quality_pairs` and 5 in `legacy_freshness_valid_pairs`. The 5-versus-32 difference therefore appears to compare unlike counters; see [Gate A counter-semantics note 001](VERITAS_MISSION2_GATE_A_COUNTER_SEMANTICS_NOTE_001.md). Keep artifact 007 unchanged; the analyzer field labeling needs a versioned follow-up after Director reconciliation.

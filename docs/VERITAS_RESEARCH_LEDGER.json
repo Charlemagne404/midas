@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-16T06:25:00Z",
+  "updated_at_utc": "2026-10-16T06:28:29Z",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -6970,6 +6970,42 @@
         },
         "authenticated_requests": false,
         "orders_submitted": false
+      }
+    },
+    {
+      "hypothesis_id": "VERITAS-H120",
+      "title": "Does the scan-1 5-versus-32 A1 count difference indicate missing data or different counters?",
+      "experiment_id": "VERITAS-GATE-A-COUNTER-SEMANTICS-REVIEW-20261016-001",
+      "dataset_id": "scan_20261015T055928Z_snapshot_and_v4_analysis_event",
+      "mechanism": "Compare the immutable snapshot counter with the paired v4 analysis-event fields and verify the underlying snapshot/event lineage hashes.",
+      "success_metric": "Determine whether the A1 count delta survives when counters with matching semantics are compared; preserve all source records and disclose remaining uncertainty.",
+      "status": "continue",
+      "decision": "The snapshot stores 5 in counts.valid_quality_pairs; its paired v4 analysis event stores 32 valid_quality_pairs and 5 legacy_freshness_valid_pairs, with 27 pairs over the reported-age threshold. The independent v2 evaluator reproduces v4 validity. This points to a counter-semantics mismatch rather than missing payloads. Preserve artifact 007; version a future A1 field-labeling correction only after the pending scan-53 Director reconciliation.",
+      "limitations": [
+        "The exact historical producer semantics for the snapshot counter are not fully documented by this comparison alone.",
+        "Reported update age is a sensitivity and does not prove sequence freshness or quote execution.",
+        "The review is a counter comparison on one saved scan and does not establish venue-wide opportunity prevalence."
+      ],
+      "result": {
+        "status": "COUNTER_SEMANTICS_MISMATCH_IDENTIFIED",
+        "captured_at_utc": "2026-10-16T06:25:00Z",
+        "note_path": "docs/VERITAS_MISSION2_GATE_A_COUNTER_SEMANTICS_NOTE_001.md",
+        "note_file_sha256": "d2839e03529e45f9d2aa2f226f26dd4a8d3d857d307e677e08f1d787d6eea8d5",
+        "scan_id": "scan-20261015T055928Z-c9777c1cc300",
+        "snapshot_path": "data/veritas-observatory/snapshots/scan-20261015T055928Z-c9777c1cc300.json.gz",
+        "snapshot_file_sha256": "208b6918879bf46972fbc1c7fc282096ef88ee27177450362fafb3eb28a8e66c",
+        "snapshot_evidence_sha256": "c9777c1cc30036411ffd05d2b1188b0a15134193543360844c0f989641a7249e",
+        "snapshot_stored_valid_quality_pairs": 5,
+        "v4_event_path": "data/veritas-observatory/analysis-events/v4/scan-20261015T055928Z-c9777c1cc300.json",
+        "v4_event_file_sha256": "d95c33694447b649a64c2dface7a90ea906ad41511f114400c0648739af35a8e",
+        "v4_event_sha256": "bc9e3b0a127eabb533f47dd23e8b7494a341b7a4f02026d60901cdaa4e598bb1",
+        "v4_valid_quality_pairs": 32,
+        "v4_legacy_freshness_valid_pairs": 5,
+        "legacy_reported_age_exceedance_pairs": 27,
+        "other_scans_with_snapshot_vs_v4_count_mismatch": 0,
+        "independent_v2_vs_v4_validity_mismatches": 0,
+        "payload_hash_verification": "passed",
+        "repository_changes_to_arena_source": false
       }
     }
   ],

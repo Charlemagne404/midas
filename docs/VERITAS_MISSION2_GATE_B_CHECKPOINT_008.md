@@ -33,3 +33,5 @@ The scheduled 06:15 UTC Director cycle admitted scan 53. Arena child `job-6be536
 | Research ledger | H119 |
 
 This is an independent qualification replay, not a strategy-P&L experiment or evidence of executable liquidity. All source reads used saved public responses; no authenticated request or order was made. Keep the no-trade policy and reported age separate from sequence freshness.
+
+The first-scan v4 event itself stores 32 quality-valid pairs and 5 legacy-freshness-valid pairs; the independent evaluator reproduces the v4 count. The A1 5-versus-32 flag compares the snapshot's legacy counter with the v4 event counter. See [Gate A counter-semantics note 001](VERITAS_MISSION2_GATE_A_COUNTER_SEMANTICS_NOTE_001.md).

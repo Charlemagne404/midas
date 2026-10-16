@@ -305,3 +305,12 @@ Coverage artifact 007 and independent audit 007 now cover 53 saved scans / 2,120
 5. Complete the source API's focused/browser verification at a suitable point; the direct in-process projection of artifact 007 is verified, but tests, browser checks, and deployment remain open.
 
 See [Gate A checkpoint 049](VERITAS_MISSION2_GATE_A_CHECKPOINT_049.md), [Gate B checkpoint 008](VERITAS_MISSION2_GATE_B_CHECKPOINT_008.md), [Gate G checkpoint 016](VERITAS_MISSION2_GATE_G_CHECKPOINT_016.md), and [inventory 071](VERITAS_MISSION2_RESEARCH_INVENTORY_071.json).
+
+
+## Mission 2 continuation — A1 counter-semantics review
+
+The first-scan 5-versus-32 A1 flag compares unlike saved counters: snapshot `counts.valid_quality_pairs=5` versus v4 event `valid_quality_pairs=32`; that same event reports `legacy_freshness_valid_pairs=5` and 27 reported-age exceedances. The independent evaluator matches the v4 value and the retained source hashes verify. This points to a counter-semantics mismatch rather than missing payloads, while the snapshot producer semantics still need documentation.
+
+After the scheduled 06:45 UTC Director reconciliation, update the A1 analyzer to report snapshot-stored and v4 event counters separately, then write a versioned successor artifact. Preserve coverage artifact 007 and the original records. Keep the Arena research source pinned until the completed scan-53 child is reconciled.
+
+See [Gate A counter-semantics note 001](VERITAS_MISSION2_GATE_A_COUNTER_SEMANTICS_NOTE_001.md) and [inventory 072](VERITAS_MISSION2_RESEARCH_INVENTORY_072.json).
