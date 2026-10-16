@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-15T23:34:40Z",
+  "updated_at_utc": "2026-10-16T00:09:09.264583+00:00",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -4793,6 +4793,112 @@
         "Recovery behavior was tested with temporary directories; live reconciliation remains scheduled and was not manually triggered.",
         "The code does not retry when both the pointer and durable admission evidence are absent."
       ]
+    },
+    {
+      "hypothesis_id": "VERITAS-H084",
+      "experiment_id": "VERITAS-M2-MARKET-UNIVERSE-COVERAGE-001",
+      "dataset_id": "db330e63bc541321a8a0167bf21ff64895bf655ffd00ac7729d78f04ff906aef",
+      "title": "Can finalized public snapshots support a digest-verified measurement of discovery coverage and cohort identity?",
+      "mechanism": "Replay each saved six-frame Gamma query union and its paired public CLOB response; verify retained response, metadata, and snapshot evidence digests; distinguish market, condition, and outcome asset IDs; classify metadata and selection coverage; and recompute quality counts with the current v4 audit.",
+      "success_metric": "Every bounded source response and snapshot evidence digest verifies; current eligibility counters reconcile; selected metadata, identity, frame marginal, and conditional-selection summaries are reproducible; the report states that no venue-wide denominator is available.",
+      "status": "continue",
+      "decision": "Accept the versioned report as the A1 audit of the saved 40-scan public screen. Keep all six discovery frames during the fixed v1 pilot because each adds unique eligible IDs. Preserve capture-time and current-v4 counters separately: scan 1 records five v1-valid pairs while its v4 replay has 32 quality-valid and five legacy-freshness-valid pairs. Continue the planned eight-call successor only after the pilot stop; this audit does not authorize a change to the live collector.",
+      "result": {
+        "artifact_path": "docs/VERITAS_MISSION2_MARKET_UNIVERSE_COVERAGE_001.json",
+        "artifact_sha256": "db330e63bc541321a8a0167bf21ff64895bf655ffd00ac7729d78f04ff906aef",
+        "artifact_bytes": 97575,
+        "captured_at_utc": "2026-10-15T23:56:37.239674+00:00",
+        "analysis_version": "veritas-market-universe-coverage-v1",
+        "analysis_module_path": "packages/midas/veritas/universe_coverage.py",
+        "analysis_module_sha256": "3512586bfd7d63b0238abed2a7330556a10466c40f1624366b7bac5fc5138826",
+        "analysis_runner_path": "scripts/analyze_veritas_market_universe_coverage.py",
+        "analysis_runner_sha256": "486712f5729f8a11d105d4bfe12649807ff52f6637d3d163cfd5420ec8d5d379",
+        "test_path": "tests/test_veritas_universe_coverage.py",
+        "test_sha256": "93bafbdaccb4e81e1a3805105300e84a94407f3fbd78412f59178c6350a9c174",
+        "focused_tests_passed": 2,
+        "ruff": "passed",
+        "ruff_format": "passed",
+        "strict_mypy": "passed",
+        "snapshot_count": 40,
+        "gamma_response_count": 240,
+        "compressed_snapshot_bytes": 26226564,
+        "gamma_response_hashes_verified": true,
+        "clob_response_hashes_verified": true,
+        "snapshot_evidence_hashes_verified": true,
+        "unique_gamma_market_ids": 5319,
+        "eligible_market_ids_at_least_once": 2077,
+        "quality_valid_pairs_current_v4_replay": 1405,
+        "capture_recorded_quality_valid_pairs": 1378,
+        "capture_vs_replay_pair_delta": 27,
+        "capture_vs_replay_mismatch": [
+          {
+            "capture_recorded_valid_pairs": 5,
+            "current_replay_valid_pairs": 32,
+            "scan_id": "scan-20261015T055928Z-c9777c1cc300"
+          }
+        ],
+        "positive_top_gross_pairs": 0,
+        "candidate_events": 0,
+        "orders_submitted": false,
+        "authenticated_requests": false
+      },
+      "limitations": [
+        "The six-page Gamma union is bounded and selected upstream; the archive cannot provide a venue-wide denominator or eligible-universe percentage.",
+        "Selection probabilities are conditional on each observed query union and the frozen control cohort.",
+        "The 40 snapshots are intermittent; their sampled price changes do not establish continuous coverage, quote lifetime, order arrival, or fills.",
+        "The earliest saved scan carries a v1 valid-pair counter; current v4 replay preserves its different request/receipt and legacy-freshness counts explicitly.",
+        "Metadata classifications and bands describe saved public responses and do not validate settlement semantics for excluded structures."
+      ]
+    },
+    {
+      "hypothesis_id": "VERITAS-H085",
+      "experiment_id": "VERITAS-M2-MARKET-UNIVERSE-DASHBOARD-001",
+      "dataset_id": "db330e63bc541321a8a0167bf21ff64895bf655ffd00ac7729d78f04ff906aef",
+      "title": "Can the read-only dashboard expose the A1 market-coverage audit without weakening its evidence limits?",
+      "mechanism": "Allowlist the versioned report in the API, verify its file digest and internal identity/count reconciliations before projection, then render the bounded metrics, capture/replay discrepancy, artifact link, and explicit limitations in Market Discovery.",
+      "success_metric": "A valid report is exposed only after digest and count checks; an unreconciled report is rejected; the UI displays the 40-scan evidence and bounded-denominator caveat; focused API/UI and static checks pass.",
+      "status": "continue",
+      "decision": "The source-only projection is implemented and verified. Keep it read-only and undeployed. The A1 artifact remains the 40-scan report through scan 40; regenerate a versioned report only after an evidence-based need, and preserve the distinction from newer live snapshots.",
+      "result": {
+        "checkpoint_path": "docs/VERITAS_MISSION2_GATE_G_CHECKPOINT_011.md",
+        "coverage_artifact_path": "docs/VERITAS_MISSION2_MARKET_UNIVERSE_COVERAGE_001.json",
+        "coverage_artifact_sha256": "db330e63bc541321a8a0167bf21ff64895bf655ffd00ac7729d78f04ff906aef",
+        "api_path": "apps/api/veritas.py",
+        "api_sha256": "2703df51f26b94fb6e019ad81dcc2f55a4119ef7bb0c7904c93c3709405b191d",
+        "dashboard_path": "apps/web/src/Veritas.tsx",
+        "dashboard_sha256": "207ff476f67c16396291e0109018aa997fcc5e0e1e7d7621f14ac105d3896449",
+        "api_test_path": "tests/test_veritas_dashboard_api.py",
+        "api_test_sha256": "13ce7575ecf9bb561a18c2a261405bc543ca2b2ab0bf574d91521054e84d099a",
+        "api_tests_passed": 21,
+        "coverage_audit_test_path": "tests/test_veritas_universe_coverage.py",
+        "coverage_audit_test_sha256": "93bafbdaccb4e81e1a3805105300e84a94407f3fbd78412f59178c6350a9c174",
+        "coverage_audit_tests_passed": 2,
+        "dashboard_test_path": "apps/web/src/Veritas.test.tsx",
+        "dashboard_test_sha256": "361ffe7c50d79e9af28b8d4df5498c24d5d2708bae8b2778ef67df3522d0b62a",
+        "dashboard_tests_passed": 1,
+        "ruff": "passed",
+        "ruff_format": "passed",
+        "strict_mypy": "passed",
+        "eslint": "passed",
+        "prettier": "passed",
+        "typescript_no_emit": "passed",
+        "diff_check": "passed",
+        "production_build": "not run",
+        "live_http_probe": "not performed",
+        "deployed_to_host": "false",
+        "orders_submitted": false,
+        "authenticated_requests": false,
+        "services_or_campaigns_changed": false,
+        "captured_at_utc": "2026-10-16T00:13:13.181399+00:00",
+        "tampered_ledger_receipt_fixture": "passed",
+        "unreconciled_count_fixture": "passed"
+      },
+      "limitations": [
+        "The source report summarizes 40 intermittent snapshots through scan 40 and does not include the newer live scan 41.",
+        "The six-frame query unions are bounded and selected upstream; no venue-wide denominator or coverage percentage is available.",
+        "Focused UI and API tests verify a source projection, not a deployed dashboard or external HTTP behavior.",
+        "The dashboard does not establish continuous quote availability, order arrival, fills, or profitability."
+      ]
     }
   ],
   "next_research_questions": [
@@ -4812,6 +4918,7 @@
     "Can the frozen shadow worker process new recorder ordinals faster than the live input while keeping frames within its decision-input lag bound?",
     "Can an eight-call successor preserve all six discovery frames and resolve the frozen controls while meeting request, response, and resource bounds after the fixed pilot ends?",
     "What versioned successor worker can process the measured source rate with margin while preserving the 250 ms decision-input lag and bounded resource use?",
-    "Does the scheduled Director reconcile completed scan 39 and then qualify scan 40 without duplicating an Arena admission?"
+    "Does the scheduled Director reconcile completed scan 39 and then qualify scan 40 without duplicating an Arena admission?",
+    "Can source-version-pinned counter labels normalize the early v1 capture summary against v4 replay without relabeling historical quality counts?"
   ]
 }

@@ -16,6 +16,112 @@ def write_artifact(root: Path, name: str, value: dict) -> None:
     path.write_text(json.dumps(value))
 
 
+def write_market_universe_coverage_fixture(root: Path) -> Path:
+    artifact = {
+        "schema_version": 1,
+        "analysis_version": "veritas-market-universe-coverage-v1",
+        "captured_at_utc": "2026-10-15T23:56:00Z",
+        "orders_submitted": False,
+        "authenticated_requests": False,
+        "source": {
+            "snapshot_count": 2,
+            "gamma_response_count": 12,
+            "first_scan_id": "scan-20261015T190055Z-7799523b9d87",
+            "last_scan_id": "scan-20261015T193055Z-7799523b9d87",
+            "gamma_response_hashes_verified": True,
+            "clob_response_hashes_verified": True,
+            "snapshot_evidence_hashes_verified": True,
+            "read_only_evidence": True,
+        },
+        "collection_protocol": {
+            "coverage_kind": "intermittent_public_snapshots",
+            "total_attempted_market_pairs": 3,
+            "total_quality_valid_market_pairs": 2,
+            "positive_top_gross_pairs": 0,
+            "candidate_events": 0,
+            "mean_unique_market_ids_per_bounded_union": 3.5,
+            "mean_v1_eligible_market_ids_per_bounded_union": 2.5,
+            "capture_vs_current_replay_valid_pair_delta": 1,
+            "scans_with_capture_vs_replay_count_mismatch": 1,
+            "capture_vs_replay_count_mismatches": [
+                {"scan_id": "scan-20261015T190055Z-7799523b9d87"}
+            ],
+        },
+        "identity_coverage": {
+            "distinct_gamma_market_ids_over_window": 4,
+            "distinct_market_ids_eligible_at_least_once": 3,
+            "distinct_condition_ids_over_window": 4,
+            "distinct_outcome_asset_ids_over_window": 8,
+            "selected_market_ids_over_window": 2,
+            "selected_condition_ids_over_window": 2,
+            "selected_outcome_asset_ids_over_window": 4,
+            "latest_scan": {
+                "scan_id": "scan-20261015T193055Z-7799523b9d87",
+                "gamma_market_ids": 4,
+                "eligible_market_ids": 2,
+                "excluded_market_ids": 2,
+                "selected_market_ids": 1,
+                "distinct_selected_condition_ids": 1,
+                "distinct_selected_outcome_asset_ids": 2,
+                "distinct_payoff_verified_outcome_asset_ids": 2,
+            },
+        },
+        "metadata_coverage": {
+            "latest_scan_v1_eligible_population": {
+                "liquidity_band_counts": {"high": 1, "low": 1},
+                "expiry_band_counts": {"near_7d": 1, "long": 1},
+                "spread_band_counts": {"tight_le_0.01": 1, "wide_gt_0.05": 1},
+            }
+        },
+        "sampling": {
+            "selection_probabilities": {
+                "count_numeric_conditional_probabilities": 2,
+                "min": 0.5,
+                "median": 0.75,
+                "max": 1.0,
+                "scope": "conditional on bounded union and controls",
+            },
+            "selected_slots_by_cohort_role": {"rotating_stratified": 2},
+        },
+        "limitations": ["The observed query union is not a venue-wide denominator."],
+    }
+    path = root / "docs" / "VERITAS_MISSION2_MARKET_UNIVERSE_COVERAGE_001.json"
+    write_artifact(root, path.name, artifact)
+    update_market_universe_coverage_receipt(root, path)
+    return path
+
+
+def update_market_universe_coverage_receipt(root: Path, artifact_path: Path) -> None:
+    ledger_path = root / "docs" / "VERITAS_RESEARCH_LEDGER.json"
+    ledger = json.loads(ledger_path.read_text())
+    hypotheses = ledger.get("hypotheses")
+    if not isinstance(hypotheses, list):
+        hypotheses = []
+        ledger["hypotheses"] = hypotheses
+    entries = [
+        item
+        for item in hypotheses
+        if isinstance(item, dict) and item.get("hypothesis_id") == "VERITAS-H084"
+    ]
+    receipt = entries[0] if len(entries) == 1 else {}
+    if not entries:
+        hypotheses.append(receipt)
+    receipt.update(
+        {
+            "hypothesis_id": "VERITAS-H084",
+            "title": "Fixture coverage audit",
+            "status": "continue",
+            "decision": "Keep the bounded sample caveat.",
+            "result": {
+                "artifact_path": "docs/VERITAS_MISSION2_MARKET_UNIVERSE_COVERAGE_001.json",
+                "artifact_sha256": hashlib.sha256(artifact_path.read_bytes()).hexdigest(),
+                "analysis_version": "veritas-market-universe-coverage-v1",
+            },
+        }
+    )
+    ledger_path.write_text(json.dumps(ledger))
+
+
 def write_censoring_artifact(root: Path, *, campaign_id: str = "campaign-fixture") -> None:
     write_artifact(
         root,
@@ -552,6 +658,70 @@ def test_overview_uses_bounded_versioned_evidence_without_raw_paths(tmp_path):
     assert data["opportunity_observatory"]["status"] == "not_started"
     assert data["finalized_reality_source"]["status"] == "not_started"
     assert "source_root" not in response.text
+
+
+def test_overview_exposes_hash_verified_market_universe_coverage(tmp_path):
+    client = fixture_client(tmp_path)
+    artifact_path = write_market_universe_coverage_fixture(tmp_path)
+
+    response = client.get("/api/veritas/overview")
+
+    assert response.status_code == 200
+    coverage = response.json()["opportunity_observatory"]["market_universe_coverage"]
+    assert coverage["status"] == "available"
+    assert coverage["snapshot_count"] == 2
+    assert coverage["distinct_gamma_market_ids"] == 4
+    assert coverage["eligible_market_ids_at_least_once"] == 3
+    assert coverage["latest_scan"]["distinct_selected_outcome_asset_ids"] == 2
+    assert coverage["latest_eligible_metadata_distributions"]["liquidity"] == {
+        "high": 1,
+        "low": 1,
+    }
+    assert coverage["positive_top_gross_pairs"] == 0
+    assert (
+        coverage["artifact"]["file_sha256"]
+        == hashlib.sha256(artifact_path.read_bytes()).hexdigest()
+    )
+    assert any(
+        artifact["id"] == "market-universe-coverage" for artifact in response.json()["artifacts"]
+    )
+
+    artifact_response = client.get("/api/veritas/artifacts/market-universe-coverage")
+    assert artifact_response.status_code == 200
+    assert artifact_response.json()["data"]["analysis_version"] == (
+        "veritas-market-universe-coverage-v1"
+    )
+    assert (
+        artifact_response.json()["file_sha256"]
+        == hashlib.sha256(artifact_path.read_bytes()).hexdigest()
+    )
+
+
+def test_market_universe_overview_rejects_unreconciled_counts(tmp_path):
+    client = fixture_client(tmp_path)
+    artifact_path = write_market_universe_coverage_fixture(tmp_path)
+    artifact = json.loads(artifact_path.read_text())
+    artifact["collection_protocol"]["total_quality_valid_market_pairs"] = 4
+    artifact_path.write_text(json.dumps(artifact))
+    update_market_universe_coverage_receipt(tmp_path, artifact_path)
+
+    response = client.get("/api/veritas/overview")
+
+    assert response.status_code == 503
+
+
+def test_market_universe_overview_rejects_mismatched_ledger_digest(tmp_path):
+    client = fixture_client(tmp_path)
+    write_market_universe_coverage_fixture(tmp_path)
+    ledger_path = tmp_path / "docs" / "VERITAS_RESEARCH_LEDGER.json"
+    ledger = json.loads(ledger_path.read_text())
+    receipt = next(item for item in ledger["hypotheses"] if item["hypothesis_id"] == "VERITAS-H084")
+    receipt["result"]["artifact_sha256"] = "0" * 64
+    ledger_path.write_text(json.dumps(ledger))
+
+    response = client.get("/api/veritas/overview")
+
+    assert response.status_code == 503
 
 
 def test_overview_exposes_hash_verified_gap_censor_and_prefix_evidence(tmp_path):

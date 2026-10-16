@@ -9,7 +9,7 @@ import re
 from collections import Counter
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, TypeGuard
 
 from fastapi import APIRouter, HTTPException
 
@@ -23,6 +23,7 @@ ARTIFACTS = {
     "censoring": "VERITAS_GATE_A_CENSORING_003.json",
     "label-feasibility": "VERITAS_MISSION2_LABEL_FEASIBILITY_001.json",
     "censor-gap-audit": "VERITAS_MISSION2_CENSOR_GAP_AUDIT_001.json",
+    "market-universe-coverage": "VERITAS_MISSION2_MARKET_UNIVERSE_COVERAGE_001.json",
 }
 MAX_ARTIFACT_BYTES = 512 * 1024
 MAX_OBSERVATORY_SUMMARY_BYTES = 2 * 1024**2
@@ -1392,7 +1393,7 @@ def _coverage_pilot_control_availability(
     universe = discovery.get("universe") if isinstance(discovery, dict) else None
     selected_markets = selection.get("selected_markets") if isinstance(selection, dict) else None
 
-    def is_count(value: Any) -> bool:
+    def is_count(value: object) -> TypeGuard[int]:
         return isinstance(value, int) and not isinstance(value, bool) and value >= 0
 
     if (
@@ -1401,18 +1402,29 @@ def _coverage_pilot_control_availability(
         or len(universe) > 500
         or not isinstance(selected_markets, list)
         or len(selected_markets) > 50
-        or not is_count(discovery.get("unique_market_ids"))
-        or not is_count(discovery.get("eligible_pair_markets"))
-        or not is_count(discovery.get("excluded_market_ids"))
-        or not is_count(scan.get("selected_market_pairs"))
-        or not is_count(scan.get("excluded_market_ids"))
-        or discovery.get("unique_market_ids") != len(universe)
-        or discovery.get("eligible_pair_markets") != scan.get("bounded_eligible_markets")
-        or discovery.get("unique_market_ids") != scan.get("discovered_unique_market_ids")
-        or discovery.get("excluded_market_ids") != scan.get("excluded_market_ids")
-        or discovery.get("eligible_pair_markets") + discovery.get("excluded_market_ids")
-        != discovery.get("unique_market_ids")
-        or len(selected_markets) != scan.get("selected_market_pairs")
+    ):
+        return unavailable()
+
+    unique_market_ids: object = discovery.get("unique_market_ids")
+    eligible_pair_markets: object = discovery.get("eligible_pair_markets")
+    excluded_market_ids: object = discovery.get("excluded_market_ids")
+    selected_market_pairs: object = scan.get("selected_market_pairs")
+    scan_excluded_market_ids: object = scan.get("excluded_market_ids")
+    if (
+        not is_count(unique_market_ids)
+        or not is_count(eligible_pair_markets)
+        or not is_count(excluded_market_ids)
+        or not is_count(selected_market_pairs)
+        or not is_count(scan_excluded_market_ids)
+    ):
+        return unavailable()
+    if (
+        unique_market_ids != len(universe)
+        or eligible_pair_markets != scan.get("bounded_eligible_markets")
+        or unique_market_ids != scan.get("discovered_unique_market_ids")
+        or excluded_market_ids != scan_excluded_market_ids
+        or eligible_pair_markets + excluded_market_ids != unique_market_ids
+        or len(selected_markets) != selected_market_pairs
     ):
         return unavailable()
 
@@ -2059,6 +2071,237 @@ def read_public_snapshot(repository: Path, scan_id: str) -> tuple[dict[str, Any]
     return value, hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def market_universe_coverage_overview(
+    repository: Path, ledger: dict[str, Any]
+) -> dict[str, Any] | None:
+    """Validate and project the saved public market-universe coverage report."""
+    path = repository / "docs" / ARTIFACTS["market-universe-coverage"]
+    if path.parent.is_symlink() or path.is_symlink():
+        raise HTTPException(404, "Veritas market-universe coverage is unavailable")
+    if not path.exists():
+        return None
+    value, path = read_artifact(repository, "market-universe-coverage")
+    artifact_bytes = path.read_bytes()
+    try:
+        artifact_value = json.loads(artifact_bytes)
+    except ValueError as error:
+        raise HTTPException(
+            503, "Veritas market-universe coverage could not be verified"
+        ) from error
+    if not isinstance(artifact_value, dict) or artifact_value != value:
+        raise HTTPException(503, "Veritas market-universe coverage changed during read")
+    value = artifact_value
+    artifact_digest = hashlib.sha256(artifact_bytes).hexdigest()
+    hypotheses = ledger.get("hypotheses")
+    receipts = (
+        [
+            item
+            for item in hypotheses
+            if isinstance(item, dict) and item.get("hypothesis_id") == "VERITAS-H084"
+        ]
+        if isinstance(hypotheses, list)
+        else []
+    )
+    receipt_result = receipts[0].get("result") if len(receipts) == 1 else None
+    if (
+        not isinstance(receipt_result, dict)
+        or receipt_result.get("artifact_path")
+        != "docs/VERITAS_MISSION2_MARKET_UNIVERSE_COVERAGE_001.json"
+        or receipt_result.get("artifact_sha256") != artifact_digest
+        or receipt_result.get("analysis_version") != "veritas-market-universe-coverage-v1"
+    ):
+        raise HTTPException(503, "Veritas market-universe coverage ledger digest is invalid")
+    source = value.get("source")
+    collection = value.get("collection_protocol")
+    identity = value.get("identity_coverage")
+    metadata = value.get("metadata_coverage")
+    sampling = value.get("sampling")
+    if (
+        value.get("schema_version") != 1
+        or value.get("analysis_version") != "veritas-market-universe-coverage-v1"
+        or value.get("orders_submitted") is not False
+        or value.get("authenticated_requests") is not False
+        or not isinstance(value.get("captured_at_utc"), str)
+        or not isinstance(source, dict)
+        or not isinstance(collection, dict)
+        or not isinstance(identity, dict)
+        or not isinstance(metadata, dict)
+        or not isinstance(sampling, dict)
+    ):
+        raise HTTPException(503, "Veritas market-universe coverage identity is invalid")
+
+    def count(record: dict[str, Any], field: str) -> int:
+        number = record.get(field)
+        if not isinstance(number, int) or isinstance(number, bool) or number < 0:
+            raise HTTPException(503, f"Veritas market-universe count {field} is invalid")
+        return number
+
+    def count_map(record: dict[str, Any], field: str) -> dict[str, int]:
+        raw = record.get(field)
+        if not isinstance(raw, dict) or any(
+            not isinstance(key, str)
+            or not isinstance(number, int)
+            or isinstance(number, bool)
+            or number < 0
+            for key, number in raw.items()
+        ):
+            raise HTTPException(503, f"Veritas market-universe distribution {field} is invalid")
+        return dict(raw)
+
+    snapshot_count = count(source, "snapshot_count")
+    gamma_response_count = count(source, "gamma_response_count")
+    if (
+        snapshot_count < 1
+        or snapshot_count > 500
+        or gamma_response_count != snapshot_count * 6
+        or source.get("gamma_response_hashes_verified") is not True
+        or source.get("clob_response_hashes_verified") is not True
+        or source.get("snapshot_evidence_hashes_verified") is not True
+        or source.get("read_only_evidence") is not True
+    ):
+        raise HTTPException(503, "Veritas market-universe source verification is invalid")
+
+    first_scan_id = source.get("first_scan_id")
+    last_scan_id = source.get("last_scan_id")
+    if (
+        not isinstance(first_scan_id, str)
+        or SNAPSHOT_ID.fullmatch(first_scan_id) is None
+        or not isinstance(last_scan_id, str)
+        or SNAPSHOT_ID.fullmatch(last_scan_id) is None
+    ):
+        raise HTTPException(503, "Veritas market-universe scan identity is invalid")
+
+    attempted = count(collection, "total_attempted_market_pairs")
+    quality_valid = count(collection, "total_quality_valid_market_pairs")
+    positive = count(collection, "positive_top_gross_pairs")
+    candidate_events = count(collection, "candidate_events")
+    if quality_valid > attempted or positive > quality_valid:
+        raise HTTPException(503, "Veritas market-universe pair totals do not reconcile")
+
+    distinct_markets = count(identity, "distinct_gamma_market_ids_over_window")
+    eligible_ever = count(identity, "distinct_market_ids_eligible_at_least_once")
+    distinct_conditions = count(identity, "distinct_condition_ids_over_window")
+    distinct_assets = count(identity, "distinct_outcome_asset_ids_over_window")
+    latest = identity.get("latest_scan")
+    if not isinstance(latest, dict) or latest.get("scan_id") != last_scan_id:
+        raise HTTPException(503, "Veritas market-universe latest scan is invalid")
+    latest_union = count(latest, "gamma_market_ids")
+    latest_eligible = count(latest, "eligible_market_ids")
+    latest_excluded = count(latest, "excluded_market_ids")
+    latest_selected = count(latest, "selected_market_ids")
+    latest_conditions = count(latest, "distinct_selected_condition_ids")
+    latest_assets = count(latest, "distinct_selected_outcome_asset_ids")
+    if (
+        eligible_ever > distinct_markets
+        or latest_eligible + latest_excluded != latest_union
+        or latest_selected > latest_eligible
+        or latest_conditions > latest_selected
+        or latest_assets > latest_selected * 2
+    ):
+        raise HTTPException(503, "Veritas market-universe identity totals do not reconcile")
+
+    latest_eligible_metadata = metadata.get("latest_scan_v1_eligible_population")
+    if not isinstance(latest_eligible_metadata, dict):
+        raise HTTPException(503, "Veritas market-universe metadata profile is missing")
+    metadata_distributions = {
+        "liquidity": count_map(latest_eligible_metadata, "liquidity_band_counts"),
+        "expiry": count_map(latest_eligible_metadata, "expiry_band_counts"),
+        "spread": count_map(latest_eligible_metadata, "spread_band_counts"),
+    }
+    if any(
+        sum(distribution.values()) != latest_eligible
+        for distribution in metadata_distributions.values()
+    ):
+        raise HTTPException(503, "Veritas market-universe metadata totals do not reconcile")
+
+    probabilities = sampling.get("selection_probabilities")
+    roles = sampling.get("selected_slots_by_cohort_role")
+    if not isinstance(probabilities, dict) or not isinstance(roles, dict):
+        raise HTTPException(503, "Veritas market-universe sampling summary is invalid")
+    probability_count = probabilities.get("count_numeric_conditional_probabilities")
+    if (
+        not isinstance(probability_count, int)
+        or isinstance(probability_count, bool)
+        or probability_count < 0
+    ):
+        raise HTTPException(503, "Veritas market-universe probability count is invalid")
+    if any(
+        not isinstance(role, str)
+        or not isinstance(number, int)
+        or isinstance(number, bool)
+        or number < 0
+        for role, number in roles.items()
+    ):
+        raise HTTPException(503, "Veritas market-universe cohort counts are invalid")
+
+    mismatches = collection.get("capture_vs_replay_count_mismatches")
+    mismatch_count = count(collection, "scans_with_capture_vs_replay_count_mismatch")
+    if (
+        not isinstance(mismatches, list)
+        or len(mismatches) != mismatch_count
+        or mismatch_count > snapshot_count
+    ):
+        raise HTTPException(503, "Veritas market-universe replay discrepancy is invalid")
+
+    limitations = value.get("limitations")
+    if not isinstance(limitations, list) or not all(isinstance(item, str) for item in limitations):
+        raise HTTPException(503, "Veritas market-universe limitations are invalid")
+
+    return {
+        "status": "available",
+        "analysis_version": value["analysis_version"],
+        "captured_at_utc": value["captured_at_utc"],
+        "coverage_kind": collection.get("coverage_kind"),
+        "snapshot_count": snapshot_count,
+        "first_scan_id": first_scan_id,
+        "last_scan_id": last_scan_id,
+        "distinct_gamma_market_ids": distinct_markets,
+        "eligible_market_ids_at_least_once": eligible_ever,
+        "distinct_condition_ids": distinct_conditions,
+        "distinct_outcome_asset_ids": distinct_assets,
+        "mean_unique_market_ids_per_bounded_union": collection.get(
+            "mean_unique_market_ids_per_bounded_union"
+        ),
+        "mean_eligible_market_ids_per_bounded_union": collection.get(
+            "mean_v1_eligible_market_ids_per_bounded_union"
+        ),
+        "latest_scan": {
+            "scan_id": last_scan_id,
+            "gamma_market_ids": latest_union,
+            "eligible_market_ids": latest_eligible,
+            "excluded_market_ids": latest_excluded,
+            "selected_market_ids": latest_selected,
+            "distinct_selected_condition_ids": latest_conditions,
+            "distinct_selected_outcome_asset_ids": latest_assets,
+            "distinct_payoff_verified_outcome_asset_ids": count(
+                latest, "distinct_payoff_verified_outcome_asset_ids"
+            ),
+        },
+        "latest_eligible_metadata_distributions": metadata_distributions,
+        "selected_slots_by_cohort_role": dict(roles),
+        "conditional_selection_probabilities": {
+            key: probabilities.get(key)
+            for key in ("count_numeric_conditional_probabilities", "min", "median", "max", "scope")
+        },
+        "total_attempted_market_pairs": attempted,
+        "total_quality_valid_market_pairs_current_replay": quality_valid,
+        "positive_top_gross_pairs": positive,
+        "candidate_events": candidate_events,
+        "capture_vs_current_replay_delta": count(
+            collection, "capture_vs_current_replay_valid_pair_delta"
+        ),
+        "capture_vs_replay_count_mismatches": mismatches,
+        "source_hashes_verified": True,
+        "limitations": limitations,
+        "artifact": {
+            "id": "market-universe-coverage",
+            "label": "Hash-verified bounded market-universe coverage report",
+            "file_sha256": artifact_digest,
+            "url": "/api/veritas/artifacts/market-universe-coverage",
+        },
+    }
+
+
 def _hypothesis_status(item: dict[str, Any]) -> str:
     status = item.get("status")
     if isinstance(status, str) and status:
@@ -2096,6 +2339,9 @@ def overview(repository: Path) -> dict[str, Any]:
     inventory, _ = read_artifact(repository, "inventory")
     public_observatory = observatory_overview(repository)
     public_observatory["measurement_pilot"] = coverage_pilot_overview(repository)
+    public_observatory["market_universe_coverage"] = market_universe_coverage_overview(
+        repository, ledger
+    )
     finalized_source = finalized_source_overview(repository)
 
     frozen = baseline["frozen_campaign_forensics"]
@@ -2187,6 +2433,8 @@ def overview(repository: Path) -> dict[str, Any]:
         artifacts.append(public_observatory["summary_artifact"])
     if public_observatory["measurement_pilot"]["summary_artifact"]:
         artifacts.append(public_observatory["measurement_pilot"]["summary_artifact"])
+    if public_observatory["market_universe_coverage"]:
+        artifacts.append(public_observatory["market_universe_coverage"]["artifact"])
     if finalized_source["summary_artifact"]:
         artifacts.append(finalized_source["summary_artifact"])
     if current_censoring is not None:
@@ -2354,6 +2602,16 @@ def router(repository: Path) -> APIRouter:
                 "file_sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
                 "data": data,
             }
+        if identity == "market-universe-coverage":
+            ledger, _ = read_artifact(repository, "ledger")
+            validated = market_universe_coverage_overview(repository, ledger)
+            if validated is None:
+                raise HTTPException(404, "Veritas market-universe coverage is unavailable")
+            data, path = read_artifact(repository, identity)
+            file_sha256 = hashlib.sha256(path.read_bytes()).hexdigest()
+            if file_sha256 != validated["artifact"]["file_sha256"]:
+                raise HTTPException(503, "Veritas market-universe coverage changed during read")
+            return {"artifact": identity, "file_sha256": file_sha256, "data": data}
         if identity == "finalized-source-analysis":
             source_result = read_finalized_source_summary(repository)
             if source_result is None:

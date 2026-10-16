@@ -1,8 +1,64 @@
 # Veritas Mission 2 Operations
 
-**Latest read-only runtime check:** 2026-10-15 23:34 UTC
+**Latest read-only runtime check:** 2026-10-16 00:12 UTC
 **Services:** Reality recorder and shadow; Midas and Reality API/web; Veritas observer, source analysis, gap detail, and Research Director one-shots
 **Timers:** `midas-veritas-observatory.timer`, `midas-veritas-source-analysis.timer`, `midas-veritas-research-director.timer`, `midas-veritas-gap-detail-analysis.timer`
+
+## Latest runtime state — 2026-10-16 00:12 UTC
+
+- The latest observer scan is 41 (`scan-20261016T000215Z-e6ff8b97e045`),
+  captured at 00:02:15 UTC. It has 33/40 request/receipt-quality-valid pairs
+  and zero positive top-gross or fee/depth-gated states. Its scan-pinned
+  Arena qualification is waiting for the 00:15:04 UTC Director cycle; scan
+  40's child completed successfully but its manifest projection is still
+  pending. No manual poll or retry was made.
+- The unchanged measurement pilot has 11/48 scans, 368/440 valid selected
+  pairs across 282 IDs, and zero skipped scan sequences. Its fixed stop
+  remains 2026-10-16 19:00:55 UTC.
+- The scheduled source-analysis batch started at 00:10:44 UTC and was still
+  activating at this check. Its last completed summary, at 23:44 UTC, covers
+  4,121/4,673 segments; 552 segments / 140,809,972 bytes remain pending. It
+  reports 259,253 campaign-window quality-valid states across 65 markets and
+  zero positive gross or minimum-notional states. I did not inspect its
+  in-progress outputs; the bounded run is left alone.
+- The gap-detail analyzer last completed at 23:51 UTC and covers 786/4,694
+  segments, with 3,906 / 1,089,814,211 bytes pending and 1,699 all-period
+  gap records. Its campaign-window count is still incomplete and must not be
+  read as evidence of no gaps. Its next timer is 00:20 UTC.
+- The Reality recorder and shadow, Midas and Reality API/web, Aegis,
+  RoadReach, Vanguard, Continental auth/tailnet, and Veritas timers reported
+  active or scheduled. The observer and gap-detail one-shots had successful
+  exits; the Director remains scheduled for 00:15:04 UTC. The bounded source
+  batch is the only active Veritas one-shot. The persisted Arena catalog has
+  26 completed jobs, one historical failure, and no active or queued jobs.
+- At 00:12 UTC, host available RAM was 10,281,988,096 bytes; swap use was
+  3,725,090,816 bytes. Root disk was 56% used with 212,503,977,984 bytes
+  available. The Veritas observatory directory measured 40,225,610 bytes at
+  00:09:40 UTC.
+- A1 remains an offline replay of the 40 saved scans through scan 40. This
+  projection added no external requests and no HTTP health probe. No service,
+  collector, frozen campaign, pilot, or research job was restarted or
+  changed.
+
+See [Gate A checkpoint 038](VERITAS_MISSION2_GATE_A_CHECKPOINT_038.md), the
+[coverage artifact](VERITAS_MISSION2_MARKET_UNIVERSE_COVERAGE_001.json),
+[Gate G checkpoint 011](VERITAS_MISSION2_GATE_G_CHECKPOINT_011.md), and
+[inventory 047](VERITAS_MISSION2_RESEARCH_INVENTORY_047.json).
+
+## Previous runtime state — 2026-10-15 23:57 UTC
+
+The 23:57 runtime capture is preserved in [inventory
+046](VERITAS_MISSION2_RESEARCH_INVENTORY_046.json). At that time scan 40 was
+the latest observer result, the scan-40 Arena child had completed, and its
+Director projection was queued for the next scheduled cycle. The fixed pilot
+was at 10/48 scans. No runtime action was taken for that inventory update.
+
+## Previous runtime state — 2026-10-16 00:06 UTC
+
+This read-only check is recorded in [inventory
+047](VERITAS_MISSION2_RESEARCH_INVENTORY_047.json). It preceded the current
+00:10:44 source-analysis batch; the saved 23:44 prefix summary is the last
+completed analysis state and is not presented as the batch's final result.
 
 ## Latest runtime state — 2026-10-15 23:34 UTC
 

@@ -590,6 +590,63 @@ it('labels measured evidence and keeps synthetic execution separate from actual 
                     },
                     limitations: ['Same-scan role comparison is descriptive.'],
                   },
+                  market_universe_coverage: {
+                    status: 'available',
+                    analysis_version: 'veritas-market-universe-coverage-v1',
+                    captured_at_utc: '2026-10-15T23:56:00Z',
+                    coverage_kind: 'intermittent_public_snapshots',
+                    snapshot_count: 40,
+                    first_scan_id: 'scan-20261015T055928Z-c9777c1cc300',
+                    last_scan_id: 'scan-20261015T233205Z-a2240a38b48f',
+                    distinct_gamma_market_ids: 5319,
+                    eligible_market_ids_at_least_once: 2077,
+                    distinct_condition_ids: 5319,
+                    distinct_outcome_asset_ids: 10638,
+                    mean_unique_market_ids_per_bounded_union: 298.85,
+                    mean_eligible_market_ids_per_bounded_union: 162.07,
+                    latest_scan: {
+                      scan_id: 'scan-20261015T233205Z-a2240a38b48f',
+                      gamma_market_ids: 291,
+                      eligible_market_ids: 77,
+                      excluded_market_ids: 214,
+                      selected_market_ids: 40,
+                      distinct_selected_condition_ids: 40,
+                      distinct_selected_outcome_asset_ids: 80,
+                      distinct_payoff_verified_outcome_asset_ids: 60,
+                    },
+                    latest_eligible_metadata_distributions: {
+                      liquidity: { high: 22, medium: 14, low: 41 },
+                      expiry: { near_7d: 50, medium_90d: 12, long: 15 },
+                      spread: { tight_le_0_01: 35, medium_le_0_05: 27, wide_gt_0_05: 15 },
+                    },
+                    selected_slots_by_cohort_role: {
+                      rotating_stratified: 1435,
+                      stable_random_control: 165,
+                    },
+                    conditional_selection_probabilities: {
+                      count_numeric_conditional_probabilities: 1443,
+                      min: 0.0414507772,
+                      median: 0.2244897959,
+                      max: 1,
+                      scope: 'conditional on the bounded query-response union and frozen controls',
+                    },
+                    total_attempted_market_pairs: 1600,
+                    total_quality_valid_market_pairs_current_replay: 1405,
+                    positive_top_gross_pairs: 0,
+                    candidate_events: 0,
+                    capture_vs_current_replay_delta: 27,
+                    capture_vs_replay_count_mismatches: [
+                      { scan_id: 'scan-20261015T055928Z-c9777c1cc300' },
+                    ],
+                    source_hashes_verified: true,
+                    limitations: ['The bounded discovery union is not a venue-wide denominator.'],
+                    artifact: {
+                      id: 'market-universe-coverage',
+                      label: 'Hash-verified bounded market-universe coverage report',
+                      file_sha256: 'b'.repeat(64),
+                      url: '/api/veritas/artifacts/market-universe-coverage',
+                    },
+                  },
                   limitations: ['No public snapshots yet.'],
                 },
                 finalized_reality_source: {
@@ -759,6 +816,18 @@ it('labels measured evidence and keeps synthetic execution separate from actual 
     '/api/arena/findings/veritas-qualification-v1-0123456789abcdef',
   );
   expect(screen.getByText(/40 target · 50 markets max/)).toBeInTheDocument();
+  expect(screen.getByText('5,319 market IDs')).toBeInTheDocument();
+  expect(screen.getByText('2,077 eligible at least once')).toBeInTheDocument();
+  expect(screen.getByText(/Latest selected books/).parentElement).toHaveTextContent(
+    '40 markets · 40 conditions · 80 assets',
+  );
+  expect(
+    screen.getByText(/1 saved scan has a capture-to-replay count mismatch of 27 pair counts/),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByRole('link', { name: /Inspect hash-verified A1 coverage artifact/ }),
+  ).toHaveAttribute('href', '/api/veritas/artifacts/market-universe-coverage');
+  expect(screen.getByText(/They do not provide a venue-wide denominator/)).toBeInTheDocument();
   expect(screen.getByText(/7 HTTP attempts used in latest scan/)).toBeInTheDocument();
   expect(await screen.findByText(/validating finalized observations/)).toBeInTheDocument();
   expect(await screen.findByText(/Does the independent challenge repeat/)).toBeInTheDocument();

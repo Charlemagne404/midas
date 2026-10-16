@@ -1,6 +1,50 @@
 # Veritas Mission 2 Engineering Checkpoint
 
-## Latest engineering checkpoint — Director recovery and scan 40
+## Latest Gate G checkpoint — bounded market-coverage dashboard projection
+
+The read-only overview now exposes the H084-digest-pinned A1 coverage report.
+Its API verifies the report against the ledger receipt and validates internal
+counts before projecting the summary. The Market Discovery panel shows the
+audited IDs, identities, current v4 quality pairs, metadata bands, the
+capture/replay count difference, and bounded-query limitations. The saved
+artifact still covers 40 scans through scan 40; it is not a venue-wide
+coverage estimate and does not include the newer scan 41. API tests (21),
+coverage-audit tests (2), the targeted UI test (1), Ruff, strict Mypy, ESLint,
+Prettier, TypeScript, and diff checks passed.
+The source change is pending commit and is not deployed. See [Gate G
+checkpoint 011](VERITAS_MISSION2_GATE_G_CHECKPOINT_011.md) and [inventory
+047](VERITAS_MISSION2_RESEARCH_INVENTORY_047.json).
+
+The scheduled observer recorded scan 41 at 00:02:15 UTC with 33/40
+request/receipt-quality-valid pairs and zero positive gross or economic
+states. Across 41 snapshots the current v4 replay has 1,438/1,640 valid pairs
+and no candidates. The pilot has 11/48 scans, 368/440 valid selected pairs
+across 282 selected IDs, and no missed scan sequences. Scan 40's completed
+Arena child still awaits scheduled Director reconciliation at 00:15:04 UTC.
+
+## Latest Gate A checkpoint — digest-verified market coverage
+
+An offline A1 audit now summarizes the 40 saved six-frame public discovery
+scans from 05:59:28 to 23:32:05 UTC. All 240 Gamma page responses, 40 CLOB
+responses, and 40 snapshot evidence digests verified. The observed bounded
+unions contain 5,319 distinct market IDs and 2,077 IDs eligible at least once;
+the report explicitly does not estimate venue-wide coverage. Current v4
+replay finds 1,405 quality-valid selected pairs and zero positive top-gross
+pairs across 1,600 slots. It records the one scan-1 counter difference
+against the v1 capture field, which matches the legacy freshness count. See
+[Gate A checkpoint 038](VERITAS_MISSION2_GATE_A_CHECKPOINT_038.md), the
+[coverage artifact](VERITAS_MISSION2_MARKET_UNIVERSE_COVERAGE_001.json), and
+[inventory 046](VERITAS_MISSION2_RESEARCH_INVENTORY_046.json). Gate A and
+Mission 2 remain active; the Reality collector and fixed pilot were not
+changed.
+
+The scan-40 Arena child also completed all 40 events with exit status 0,
+complete empty candidate evidence, and zero states at all five economic
+gates. Its Director projection remains queued for the scheduled 00:15:04 UTC
+reconciliation. See [Gate F checkpoint
+024](VERITAS_MISSION2_GATE_F_CHECKPOINT_024.md).
+
+## Previous engineering checkpoint — Director recovery and scan 40
 
 The scheduled observer completed scan 40 at 23:32:05 UTC with 30/40
 request/receipt-quality-valid pairs, 291 unique IDs in the bounded discovery

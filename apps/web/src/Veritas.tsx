@@ -249,6 +249,54 @@ type CoveragePilot = {
   limitations: string[];
 };
 
+type MarketUniverseCoverage = {
+  status: string;
+  analysis_version: string;
+  captured_at_utc: string;
+  coverage_kind: string;
+  snapshot_count: number;
+  first_scan_id: string;
+  last_scan_id: string;
+  distinct_gamma_market_ids: number;
+  eligible_market_ids_at_least_once: number;
+  distinct_condition_ids: number;
+  distinct_outcome_asset_ids: number;
+  mean_unique_market_ids_per_bounded_union: number;
+  mean_eligible_market_ids_per_bounded_union: number;
+  latest_scan: {
+    scan_id: string;
+    gamma_market_ids: number;
+    eligible_market_ids: number;
+    excluded_market_ids: number;
+    selected_market_ids: number;
+    distinct_selected_condition_ids: number;
+    distinct_selected_outcome_asset_ids: number;
+    distinct_payoff_verified_outcome_asset_ids: number;
+  };
+  latest_eligible_metadata_distributions: {
+    liquidity: Record<string, number>;
+    expiry: Record<string, number>;
+    spread: Record<string, number>;
+  };
+  selected_slots_by_cohort_role: Record<string, number>;
+  conditional_selection_probabilities: {
+    count_numeric_conditional_probabilities: number;
+    min: number | null;
+    median: number | null;
+    max: number | null;
+    scope: string;
+  };
+  total_attempted_market_pairs: number;
+  total_quality_valid_market_pairs_current_replay: number;
+  positive_top_gross_pairs: number;
+  candidate_events: number;
+  capture_vs_current_replay_delta: number;
+  capture_vs_replay_count_mismatches: Array<Record<string, unknown>>;
+  source_hashes_verified: boolean;
+  limitations: string[];
+  artifact: Artifact & { file_sha256: string; url: string };
+};
+
 type Observatory = {
   status: string;
   analysis_version: string | null;
@@ -378,6 +426,7 @@ type Observatory = {
   recent_candidates: ObservatoryCandidate[];
   summary_artifact: Artifact | null;
   measurement_pilot: CoveragePilot;
+  market_universe_coverage?: MarketUniverseCoverage | null;
   limitations: string[];
 };
 
@@ -717,6 +766,7 @@ export function Veritas() {
   const funnelMaximum = Math.max(data.coverage.period_frame_records, 1);
   const observatory = data.opportunity_observatory;
   const measurementPilot = observatory.measurement_pilot;
+  const universeCoverage = observatory.market_universe_coverage ?? null;
   const finalizedSource = data.finalized_reality_source;
   const observatoryDiscovery = observatory.discovery;
   const existingQualificationJob = arenaJobs.find(
@@ -1170,6 +1220,115 @@ export function Veritas() {
               Window <b>{observatory.coverage_window_hours.toFixed(1)} h</b>
             </span>
           </div>
+          {universeCoverage?.status === 'available' && (
+            <div className="ve-universe-audit" aria-label="Saved market-universe coverage audit">
+              <div className="ve-observatory-stats">
+                <div>
+                  <span>Hash-verified saved snapshots</span>
+                  <strong>{fmt(universeCoverage.snapshot_count)} scans</strong>
+                  <small>
+                    {universeCoverage.first_scan_id} → {universeCoverage.last_scan_id}
+                  </small>
+                </div>
+                <div>
+                  <span>Distinct markets in bounded unions</span>
+                  <strong>{fmt(universeCoverage.distinct_gamma_market_ids)} market IDs</strong>
+                  <small>
+                    {fmt(universeCoverage.eligible_market_ids_at_least_once)} eligible at least once
+                  </small>
+                </div>
+                <div>
+                  <span>Latest bounded discovery union</span>
+                  <strong>{fmt(universeCoverage.latest_scan.gamma_market_ids)} IDs</strong>
+                  <small>
+                    {fmt(universeCoverage.latest_scan.eligible_market_ids)} eligible ·{' '}
+                    {fmt(universeCoverage.latest_scan.excluded_market_ids)} excluded
+                  </small>
+                </div>
+                <div>
+                  <span>Current v4 quality replay</span>
+                  <strong>
+                    {fmt(universeCoverage.total_quality_valid_market_pairs_current_replay)} /{' '}
+                    {fmt(universeCoverage.total_attempted_market_pairs)} pairs
+                  </strong>
+                  <small>
+                    {fmt(universeCoverage.positive_top_gross_pairs)} positive top-gross ·{' '}
+                    {fmt(universeCoverage.candidate_events)} candidates
+                  </small>
+                </div>
+              </div>
+              <div className="ve-observatory-meta">
+                <span>
+                  Identity counts{' '}
+                  <b>
+                    {fmt(universeCoverage.distinct_gamma_market_ids)} markets ·{' '}
+                    {fmt(universeCoverage.distinct_condition_ids)} conditions ·{' '}
+                    {fmt(universeCoverage.distinct_outcome_asset_ids)} outcome assets
+                  </b>
+                </span>
+                <span>
+                  Latest selected books{' '}
+                  <b>
+                    {fmt(universeCoverage.latest_scan.selected_market_ids)} markets ·{' '}
+                    {fmt(universeCoverage.latest_scan.distinct_selected_condition_ids)} conditions ·{' '}
+                    {fmt(universeCoverage.latest_scan.distinct_selected_outcome_asset_ids)} assets
+                  </b>
+                </span>
+                <span>
+                  Mean bounded union{' '}
+                  <b>
+                    {universeCoverage.mean_unique_market_ids_per_bounded_union.toFixed(1)} IDs ·{' '}
+                    {universeCoverage.mean_eligible_market_ids_per_bounded_union.toFixed(1)}{' '}
+                    eligible
+                  </b>
+                </span>
+              </div>
+              <div className="ve-strata-grid">
+                {(
+                  [
+                    [
+                      'Liquidity',
+                      universeCoverage.latest_eligible_metadata_distributions.liquidity,
+                    ],
+                    ['Expiry', universeCoverage.latest_eligible_metadata_distributions.expiry],
+                    ['Spread', universeCoverage.latest_eligible_metadata_distributions.spread],
+                  ] as const
+                ).map(([label, distribution]) => (
+                  <div key={label}>
+                    <span className="ve-subhead">Latest eligible by {label.toLowerCase()}</span>
+                    {Object.entries(distribution).map(([band, count]) => (
+                      <span className="ve-strata-item" key={band}>
+                        {band.replaceAll('_', ' ')} <b>{fmt(count)}</b>
+                      </span>
+                    ))}
+                  </div>
+                ))}
+              </div>
+              {universeCoverage.capture_vs_replay_count_mismatches.length > 0 && (
+                <p className="ve-observatory-note">
+                  {fmt(universeCoverage.capture_vs_replay_count_mismatches.length)} saved scan
+                  {universeCoverage.capture_vs_replay_count_mismatches.length === 1
+                    ? ' has'
+                    : 's have'}{' '}
+                  a capture-to-replay count mismatch of{' '}
+                  {fmt(universeCoverage.capture_vs_current_replay_delta)} pair counts; the report
+                  preserves both versions.
+                </p>
+              )}
+              <p className="ve-observatory-note">
+                These are intermittent snapshots from bounded query unions. They do not provide a
+                venue-wide denominator, continuous quotes, order arrival, fills, or profitability.
+              </p>
+              <a
+                className="ve-latest-snapshot"
+                href={universeCoverage.artifact.url}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Inspect hash-verified A1 coverage artifact <ArrowUpRight size={13} />
+              </a>
+            </div>
+          )}
           {latestCategories.length ? (
             <div className="ve-discovery-list">
               <span className="ve-subhead">Latest cohort by category</span>
