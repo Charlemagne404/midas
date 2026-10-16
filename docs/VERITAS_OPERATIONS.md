@@ -253,6 +253,22 @@ did not start a Veritas job or install a scheduler timer. See [Gate E
 scheduling review 001](VERITAS_GATE_E_SCHEDULING_REVIEW_001.md) for the
 integration decision and required bounds for a future adapter.
 
+`scripts/benchmark_shadow_consume.py` also has an isolated resumable mode for
+measuring shadow-consume catch-up. Pass `--work-dir` below
+`data/veritas-canaries`, `--repetitions 1`, and an `--output` path inside that
+work directory. The runner checks the frozen campaign and runtime snapshot,
+pins their hashes and the implementation hashes in a write-once manifest,
+locks the private work directory, and refuses campaign, raw-source, training,
+symlink, or output-path overlap. It writes only to that isolated journal and
+artifacts. Resume requires the same inputs and implementation. Cursor, replay
+clock, source-seal events, and research state are checkpointed transactionally
+at segment seals, the segment bound, or the configured wall-clock interval.
+SIGINT and SIGTERM stop after the current source record and preserve the last
+safe checkpoint. The result is a bounded replay measurement; its synthetic
+clock does not establish live recovery, new market evidence, or strategy
+performance. Avoid running it alongside resource-constrained production
+research jobs.
+
 ## Verify Veritas code
 
 Focused economic and forensic checks:
