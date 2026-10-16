@@ -1,0 +1,11 @@
+[Unit]
+Description=Run the bounded Veritas public observation pilot every 30 minutes
+
+[Timer]
+OnCalendar=*-*-* *:00,30:00 UTC
+RandomizedDelaySec=2min
+Persistent=true
+Unit=midas-veritas-observatory.service
+
+[Install]
+WantedBy=timers.target

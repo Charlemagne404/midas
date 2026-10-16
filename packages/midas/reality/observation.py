@@ -18,11 +18,16 @@ Append = Callable[..., dict[str, Any]]
 
 
 async def discover(
-    client: httpx.AsyncClient, config: Config, append: Append, *, update_rates: dict[str, float]
+    client: httpx.AsyncClient,
+    config: Config,
+    append: Append,
+    *,
+    update_rates: dict[str, float],
+    now_ns: int | None = None,
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     raw: list[dict[str, Any]] = []
     page_ordinals = []
-    now_ns = time.time_ns()
+    now_ns = time.time_ns() if now_ns is None else now_ns
     for stratum, params in queries(
         config.discovery_limit, now_ns, config.selection_seed, config.near_expiry_tag_id
     ):

@@ -198,7 +198,8 @@ def test_native_plan_runs_four_fits_and_matched_fresh_studies(evidence):
         ],
         capture_output=True,
         text=True,
-        timeout=180,
+        # Let the worker enforce its declared budget; leave room for process startup and shutdown.
+        timeout=spec.max_wall_seconds + 30,
         env={
             **os.environ,
             "OMP_NUM_THREADS": "1",

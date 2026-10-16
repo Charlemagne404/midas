@@ -23,19 +23,37 @@ class Tail:
         self.cursor = cursor or dict(segment=None, offset=len(MAGIC), ordinal=0)
         self.files: list[Path] = []
         self.checked = 0.0
+        self.directory_marker: tuple[int, int, int, int] | None = None
         self.handle: Any = None
         self.seals: list[dict[str, Any]] = []
         self.verified_seals: set[str] = set()
 
-    def refresh(self) -> None:
+    def refresh(self, *, force: bool = False) -> None:
+        # Once a segment is open, its file handle remains valid while it is
+        # appended to and when it is atomically renamed to .seg. Unrelated
+        # directory entries (for example the recorder's status.json) must not
+        # trigger a full segment inventory on every source record.
+        if self.handle is not None and not force:
+            return
         if time.monotonic() - self.checked < 0.5:
             return
         self.checked = time.monotonic()
-        self.files = sorted(
+        before = self.root.stat()
+        marker = (before.st_dev, before.st_ino, before.st_mtime_ns, before.st_ctime_ns)
+        if marker == self.directory_marker:
+            return
+        files = sorted(
             p for p in self.root.iterdir() if p.name[:1].isdigit() and p.suffix in {".open", ".seg"}
         )
-        if any(p.is_symlink() for p in self.files):
+        if any(p.is_symlink() for p in files):
             raise ValueError("Source segment symlink")
+        after = self.root.stat()
+        after_marker = (after.st_dev, after.st_ino, after.st_mtime_ns, after.st_ctime_ns)
+        self.files = files
+        # Keep the pre-scan marker if entries changed during enumeration so
+        # the next refresh retries instead of accepting a potentially partial
+        # directory view.
+        self.directory_marker = marker if marker != after_marker else after_marker
 
     def next(self) -> tuple[dict[str, Any], dict[str, Any]] | None:
         self.refresh()
@@ -45,8 +63,8 @@ class Tail:
         if stem is None:
             stem = self.files[0].stem
             self.cursor["segment"] = stem
-        current = next((p for p in self.files if p.stem == stem), None)
         if self.handle is None:
+            current = next((p for p in self.files if p.stem == stem), None)
             if current is None:
                 return None
             try:
@@ -74,6 +92,10 @@ class Tail:
                 ):
                     raise ValueError("Final source segment integrity/continuity mismatch")
                 self.verified_seals.add(stem)
+                # Refresh at a sealed boundary so a newly rotated segment is
+                # discovered before advancing the source cursor. The refresh
+                # interval still bounds scans when the live tail is idle.
+                self.refresh(force=True)
                 following = next((p for p in self.files if p.stem > stem), None)
                 if following:
                     self.seals.append(info)
@@ -124,6 +146,7 @@ class Context:
     def __init__(self) -> None:
         self.engine = Engine()
         self.cohort: dict[str, dict[str, Any]] = {}
+        self.cohort_order: list[str] = []
         self.refs: dict[int, dict[str, Any]] = {}
         self.history: dict[str, deque[dict[str, Any]]] = {}
         self.trades: dict[str, dict[str, Any]] = {}
@@ -136,6 +159,8 @@ class Context:
         self.fees: dict[str, dict[str, Any]] = {}
         self.ticks: dict[str, dict[str, Any]] = {}
         self.families = Families()
+        self.checkpoint_verification_enabled = True
+        self.checkpoints_skipped = 0
 
     def consume(self, row: dict[str, Any], ref: dict[str, Any]) -> str | None:
         kind = row["kind"]
@@ -148,9 +173,12 @@ class Context:
         if kind == "snapshot_constraints":
             self.ticks[row["payload"]["asset_id"]] = ref
         if kind == "checkpoint":
-            if self.engine.digest() != row["payload"]["state_sha256"]:
-                raise ValueError("Source online/shadow checkpoint differs")
-            self.checkpoints += 1
+            if self.checkpoint_verification_enabled:
+                if self.engine.digest() != row["payload"]["state_sha256"]:
+                    raise ValueError("Source online/shadow checkpoint differs")
+                self.checkpoints += 1
+            else:
+                self.checkpoints_skipped += 1
         if kind == "frame":
             if self.clock and (
                 row["received_ns"] < self.clock[0] or row["monotonic_ns"] < self.clock[1]
@@ -166,8 +194,11 @@ class Context:
             if row["payload"]["reason"] == "process_start":
                 self.producer = ref
                 self.producer_hash = row["payload"].get("implementation_sha256")
-        self.engine.consume(row)
+        frame_events = self.engine.consume(row)
         if kind == "discovery":
+            self.cohort_order = [m["condition"] for m in row["cohort"]]
+            if len(self.cohort_order) != len(set(self.cohort_order)):
+                raise ValueError("Discovery cohort contains duplicate conditions")
             self.cohort = {m["condition"]: dict(m, discovery_ref=ref) for m in row["cohort"]}
             for m in self.cohort.values():
                 self.families.add(family_keys(m))
@@ -190,10 +221,11 @@ class Context:
                 if book["last"][0] != row["ordinal"] or book["issue"]:
                     continue
                 h = self.history.setdefault(token, deque(maxlen=10000))
+                best_ask = self.engine.top_for(token)[1]
                 h.append(
                     dict(
                         received_ns=row["received_ns"],
-                        best_ask=str(min(book["asks"])) if book["asks"] else None,
+                        best_ask=str(best_ask) if best_ask is not None else None,
                         ask_quantity=str(sum(book["asks"].values(), Decimal(0))),
                         ref=ref,
                     )
@@ -201,8 +233,7 @@ class Context:
                 if book["snapshot"][0] == row["ordinal"]:
                     self.bad.discard(token)
             try:
-                native = json.loads(row["payload"])
-                for event in native if isinstance(native, list) else [native]:
+                for event in frame_events or []:
                     if isinstance(event, dict) and event.get("event_type") == "last_trade_price":
                         self.trades[event["asset_id"]] = dict(
                             received_ns=row["received_ns"],
@@ -234,6 +265,15 @@ class Context:
             },
             history={t: [v["ref"] for v in self.history.get(t, [])] for t in market["tokens"]},
         )
+
+    def restore_cohort_order(self, order: Any) -> None:
+        if not isinstance(order, list) or any(
+            not isinstance(condition, str) for condition in order
+        ):
+            raise ValueError("Shadow checkpoint cohort order is malformed")
+        if len(order) != len(set(order)) or set(order) != set(self.cohort):
+            raise ValueError("Shadow checkpoint cohort order does not match the restored cohort")
+        self.cohort_order = list(order)
 
     def snapshot(self) -> dict[str, Any]:
         for queue in self.history.values():
@@ -284,6 +324,8 @@ class Context:
             bad=sorted(self.bad),
             clock=self.clock,
             checkpoints=self.checkpoints,
+            checkpoints_skipped=self.checkpoints_skipped,
+            checkpoint_verification_enabled=self.checkpoint_verification_enabled,
             metadata=self.metadata,
             fees=self.fees,
             ticks=self.ticks,
@@ -302,6 +344,7 @@ class Context:
             }
             for t, b in s["books"].items()
         }
+        e.rebuild_top_cache()
         e.tokens = s["tokens"]
         e.counts = Counter(s["counts"])
         e.recent = deque(s["recent"], maxlen=4096)
@@ -315,6 +358,7 @@ class Context:
         if e.digest() != s["digest"]:
             raise ValueError("Shadow engine checkpoint corruption")
         c.cohort = value["cohort"]
+        c.cohort_order = list(c.cohort)
         c.refs = {int(k): v for k, v in value["refs"].items()}
         c.history = {k: deque(v, maxlen=10000) for k, v in value["history"].items()}
         c.trades = value["trades"]
@@ -323,6 +367,8 @@ class Context:
         c.bad = set(value["bad"])
         c.clock = tuple(value["clock"]) if value["clock"] else None
         c.checkpoints = value["checkpoints"]
+        c.checkpoints_skipped = value.get("checkpoints_skipped", 0)
+        c.checkpoint_verification_enabled = value.get("checkpoint_verification_enabled", True)
         c.metadata = value["metadata"]
         c.fees = value["fees"]
         c.ticks = value["ticks"]

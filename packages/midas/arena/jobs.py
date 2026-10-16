@@ -29,6 +29,7 @@ from midas.arena.tournaments import TournamentSpec
 from midas.arena.unwind import UnwindStudySpec
 from midas.arena.usage import UsageIndex
 from midas.core.models import Model
+from midas.veritas.arena_qualification import VeritasQualificationSpec
 
 
 class JobSpec(Model):
@@ -49,6 +50,7 @@ class JobSpec(Model):
         "observations",
         "migration",
         "plan",
+        "veritas_qualification",
     ]
     dataset: DatasetSpec | None = None
     training: TrainingSpec | None = None
@@ -65,6 +67,7 @@ class JobSpec(Model):
     sweep: SweepSpec | None = None
     director: DirectorSpec | None = None
     policy_search: PolicySearchSpec | None = None
+    veritas_qualification: VeritasQualificationSpec | None = None
     max_wall_seconds: int = Field(default=1800, ge=10, le=7200)
 
     @model_validator(mode="after")
@@ -79,6 +82,7 @@ class JobSpec(Model):
             "observations": "observations",
             "migration": "migration",
             "plan": "plan_id",
+            "veritas_qualification": "veritas_qualification",
             "evaluation": "model_id",
             "diagnostics": "model_id",
             "rl": "rl",
@@ -103,6 +107,7 @@ class JobSpec(Model):
             "sweep",
             "director",
             "policy_search",
+            "veritas_qualification",
         ):
             if (getattr(self, field) is not None) != (field == required):
                 raise ValueError(f"{self.kind} job requires only {required}")
@@ -148,6 +153,9 @@ def _create(
         raise ValueError("Arena admission limit: eight jobs are already active or queued")
     identity = "job-" + uuid.uuid4().hex[:24]
     directory = artifact_path(root, "jobs", identity)
+    veritas_read_only = spec.kind == "veritas_qualification"
+    memory_limit_mb = 512 if veritas_read_only else 4096
+    cpu_quota_percent = 10 if veritas_read_only else 100
     record = {
         "job_id": identity,
         "configuration": spec.model_dump(mode="json"),
@@ -161,7 +169,8 @@ def _create(
         "submitted_source_hash": research_hash(),
         "budget": {
             "cpu_cores": 1,
-            "memory_mb": 4096,
+            "cpu_quota_percent": cpu_quota_percent,
+            "memory_mb": memory_limit_mb,
             "wall_seconds": spec.max_wall_seconds,
             "minimum_available_memory_mb": 2048,
             "max_artifact_mb": 1024,
@@ -186,12 +195,14 @@ def _create(
             "systemd-run",
             "--user",
             f"--unit=midas-arena-{identity}",
-            "--property=MemoryMax=4G",
-            "--property=CPUQuota=100%",
+            f"--property=MemoryMax={memory_limit_mb}M",
+            f"--property=CPUQuota={cpu_quota_percent}%",
             "--property=Nice=10",
             f"--property=RuntimeMaxSec={spec.max_wall_seconds}",
             "--property=TimeoutStopSec=30",
             f"--working-directory={repository}",
+            f"--setenv=PYTHONPATH={repository / 'packages'}",
+            *(["--property=RestrictAddressFamilies=AF_UNIX"] if veritas_read_only else []),
             "--setenv=OMP_NUM_THREADS=1",
             "--setenv=OPENBLAS_NUM_THREADS=1",
             "--setenv=MKL_NUM_THREADS=1",
@@ -386,6 +397,17 @@ def _run(root: Path, identity: str) -> None:
                 record["result"] = {
                     "plan_id": result["plan_id"],
                     "director_id": result["director_id"],
+                }
+            elif spec.kind == "veritas_qualification":
+                from midas.veritas.arena_qualification import run_qualification
+
+                assert spec.veritas_qualification is not None
+                result = run_qualification(root, spec.veritas_qualification, progress)
+                record["result"] = {
+                    "finding_id": result["artifact_id"],
+                    "experiment_run_id": result["result"]["experiment_run_id"],
+                    "status": result["result"]["status"],
+                    "experiment_sha256": result["experiment_sha256"],
                 }
             elif spec.kind == "supervised":
                 from midas.arena.supervised import train

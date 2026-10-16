@@ -1,0 +1,162 @@
+{
+  "schema_version": 1,
+  "benchmark_id": "VERITAS-M2-SHADOW-READER-BENCH-006",
+  "experiment_id": "VERITAS-M2-SHADOW-READER-MULTISEG-001",
+  "captured_at_utc": "2026-10-16T17:47:55Z",
+  "status": "bounded_paired_canary_complete",
+  "purpose": "Compare the frozen shadow consume implementation with the committed branch across four sequential finalized-source segments, including durable research-journal writes and source-boundary verification.",
+  "campaign": {
+    "path": "/home/charlie/midas-reality/data/research/reality/forward/mission2/campaign.json",
+    "sha256": "aa8acb2b46823c1a1e3ac5d01a57dde917746c2c7471098ae2a4598875e322f5",
+    "modified": false,
+    "actual_orders_submitted": 0
+  },
+  "input": {
+    "runtime_snapshot_path": "data/veritas-canaries/shadow-reader-catchup-001/after-runtime.json",
+    "runtime_snapshot_file_sha256": "82eb7f697b04bcff91fc270a6838853c2fc768743786a8ca548f3818114baa25",
+    "runtime_state_sha256": "82a71b6db289238d1ac23965efee424dd5983a97f13817704d8590fb39631478",
+    "source_root": "/home/charlie/midas-reality/data/recordings/reality",
+    "starting_cursor": {
+      "offset": 678,
+      "ordinal": 529092,
+      "segment": "00000000000000529092-9d1bcfda4c7e491f9792a4c2fcd32637"
+    },
+    "ending_cursor": {
+      "offset": 683,
+      "ordinal": 529998,
+      "segment": "00000000000000529998-b2b41e1a08db47528bb4b215f92f1fb3"
+    },
+    "segments_target": 4
+  },
+  "resource_limits": {
+    "cpu_quota_percent": 10,
+    "memory_max_bytes": 402653184,
+    "memory_swap_max_bytes": 0,
+    "wall_timeout_seconds": 360,
+    "isolated_journals": true,
+    "network_client_opened": false,
+    "order_api_opened": false,
+    "runs_sequential": true
+  },
+  "runs": {
+    "frozen_campaign_implementation": {
+      "result_path": "data/veritas-canaries/shadow-multisegment-001/pinned/work/result.json",
+      "result_sha256": "d290d2d6fd63b06764fdd92f61a70a258f82bd369c366b758832f89b03fde4a1",
+      "work_manifest_path": "data/veritas-canaries/shadow-multisegment-001/pinned/work/work-manifest.json",
+      "implementation_mode": "campaign_pinned",
+      "implementation_code_hashes_checked_against_campaign": true,
+      "implementation_hashes": {
+        "benchmark_shadow_consume": "4d05dc436fa0920b0bfda29de366d0d16a1061bd8f119a34b99382b328cf58a9",
+        "shadow_campaign": "fbca040df77c90182fa7b94375590f89e95289b21e31a8990da390d1241c9aed",
+        "shadow_source": "6e0cb3811a8e32a81e9003a79de0ab778eccc28ff9e725f2163d58decf31b327",
+        "shadow_store": "75e6c208013ee859a39d0463a12660b521d1c631af6517e1cfd5008a6c42ff00",
+        "shadow_worker": "0b745947399dc33898bdba41df4f0b183ba87477f5dcddecb7ae2d26f29e3c6d",
+        "storage": "551966d10c2494dd6fcb50988bf32c26558ff6a02d6bd68617f8593b1f5ec3cc"
+      },
+      "metrics": {
+        "cpu_seconds": 17.293326178999997,
+        "wall_seconds": 172.98999462707434,
+        "max_rss_bytes": 190377984,
+        "records": 906,
+        "frames": 777,
+        "segments_verified": 4,
+        "decisions": 32,
+        "observations": 168,
+        "followup_status_counts": {
+          "censored": 123,
+          "observed_public_measurement": 1
+        },
+        "research_events": 188,
+        "journal_events": 361,
+        "journal_tail_sha256": "7d7a0bc29af29a69c6164e30b0b68711131e4982323a296c1e47e8518da4b4ed",
+        "engine_state_sha256": "e4843abe4781bd3f2d3344626e0607069d4c41cd8670d041139d1a21a64a667a",
+        "context_state_sha256": "34196ce3b58e35c9ee53b07916330156ca8419a46afbe4fdc81584d01ce1031b",
+        "research_semantics_sha256": "d5676bc436c6a822acbe5cc884f27a7bf5b8a72b8f398b76f740e4d32ec5cae2"
+      },
+      "output_runtime_snapshot_path": "data/veritas-canaries/shadow-multisegment-001/pinned/work/after-runtime.json",
+      "output_runtime_snapshot_sha256": "1c2011c05e0e836152444882bb312aae3e2e3ea6b168f5032f370bdddba26eae"
+    },
+    "committed_branch_40d1207": {
+      "result_path": "data/veritas-canaries/shadow-multisegment-001/current/work/result.json",
+      "result_sha256": "044c142b408b489a75c1ed7dac147f45bdf697f6e8c63353062c123d7c81a5bc",
+      "work_manifest_path": "data/veritas-canaries/shadow-multisegment-001/current/work/work-manifest.json",
+      "implementation_mode": "current_checkout",
+      "implementation_code_hashes_checked_against_campaign": false,
+      "pinned_campaign_code_verified": true,
+      "implementation_hashes": {
+        "benchmark_shadow_consume": "4d05dc436fa0920b0bfda29de366d0d16a1061bd8f119a34b99382b328cf58a9",
+        "shadow_campaign": "fbca040df77c90182fa7b94375590f89e95289b21e31a8990da390d1241c9aed",
+        "shadow_source": "fbba422448e682426dd9e91dfd19d23eff48729cf2015a3416284a9e73650b56",
+        "shadow_store": "75e6c208013ee859a39d0463a12660b521d1c631af6517e1cfd5008a6c42ff00",
+        "shadow_worker": "abdaf5cb7c58d2270c10c569967f54928934a0adfe8d1ae630a8c78c89722103",
+        "storage": "551966d10c2494dd6fcb50988bf32c26558ff6a02d6bd68617f8593b1f5ec3cc"
+      },
+      "metrics": {
+        "cpu_seconds": 3.230238013,
+        "wall_seconds": 32.30271353095304,
+        "max_rss_bytes": 187822080,
+        "records": 906,
+        "frames": 777,
+        "segments_verified": 4,
+        "decisions": 32,
+        "observations": 168,
+        "followup_status_counts": {
+          "censored": 123,
+          "observed_public_measurement": 1
+        },
+        "research_events": 188,
+        "journal_events": 361,
+        "journal_tail_sha256": "7d7a0bc29af29a69c6164e30b0b68711131e4982323a296c1e47e8518da4b4ed",
+        "engine_state_sha256": "e4843abe4781bd3f2d3344626e0607069d4c41cd8670d041139d1a21a64a667a",
+        "context_state_sha256": "34196ce3b58e35c9ee53b07916330156ca8419a46afbe4fdc81584d01ce1031b",
+        "research_semantics_sha256": "d5676bc436c6a822acbe5cc884f27a7bf5b8a72b8f398b76f740e4d32ec5cae2"
+      },
+      "output_runtime_snapshot_path": "data/veritas-canaries/shadow-multisegment-001/current/work/after-runtime.json",
+      "output_runtime_snapshot_sha256": "1c2011c05e0e836152444882bb312aae3e2e3ea6b168f5032f370bdddba26eae"
+    }
+  },
+  "comparison": {
+    "semantic_equal": true,
+    "all_engine_context_research_and_journal_hashes_equal": true,
+    "same_record_interval_and_counts": true,
+    "cpu_reduction_percent": 81.321,
+    "wall_reduction_percent": 81.327,
+    "rss_change_bytes": -2555904,
+    "runs_completed_without_timeout": true,
+    "output_runtime_snapshots_equal": true
+  },
+  "implementation_scope": {
+    "branch_commit": "40d1207",
+    "branch_contains_maintained_top_cache_and_tail_refresh_changes": true,
+    "branch_code_hashes_checked_against_frozen_campaign": false,
+    "frozen_implementation_hashes_verified": true
+  },
+  "market_evidence_interpretation": {
+    "source_is_newly_collected": false,
+    "independent_market_states_added": 0,
+    "observations_replayed": 168,
+    "followup_status_counts": {
+      "censored": 123,
+      "observed_public_measurement": 1
+    },
+    "actual_fills": null,
+    "economic_profit_claim": false,
+    "note": "The replay includes one observed public-measurement follow-up and 123 censored outcomes. These are historical public observations; the canary adds no new market collection and supplies no actual fill evidence."
+  },
+  "live_state_postflight": {
+    "checked_at_utc": "2026-10-16T17:47:55Z",
+    "campaign_sha256": "aa8acb2b46823c1a1e3ac5d01a57dde917746c2c7471098ae2a4598875e322f5",
+    "shadow_service_active": true,
+    "shadow_service_restart_count": 1,
+    "collector_active": true,
+    "collector_restart_count": 0,
+    "canary_scope_active_after_completion": false
+  },
+  "interpretation": "On this four-segment historical window, the committed branch preserved exact shadow state, research semantics, and isolated journal integrity while using 81.3% less process CPU than the frozen implementation. This is stronger multi-segment reader evidence than the preceding one-segment test, but it remains one paired window and does not establish sustained live catch-up or economic value.",
+  "limitations": [
+    "One paired four-segment window and one run per implementation; different source windows and repeated passes remain untested.",
+    "The result compares the full committed branch optimization bundle with the frozen implementation, so it does not isolate the incremental tail-refresh contribution.",
+    "No live collector, frozen shadow, campaign cursor, production journal, or order API was changed or restarted.",
+    "The one observed follow-up is a public market measurement and not a fill or execution outcome; 123 follow-ups were censored."
+  ]
+}

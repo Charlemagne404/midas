@@ -8,17 +8,21 @@ Midas evaluates complementary binary positions using exact ask-depth arithmetic,
 
 ![Midas command center](docs/mission-control.png)
 
-## Reality research
+## Current project state
 
-Project Reality Mission 2 is complete and merged into `main` at `714f824`.
-Its bounded public-market collector and frozen fourteen-day shadow campaign
-continue from the separate `/home/charlie/midas-reality` operational worktree.
-Current evidence does not establish an eligible policy model, real fills, or
-profitability. See the [Reality acceptance record](docs/REALITY_MISSION2_ACCEPTANCE.md)
-and [Calibration Laboratory](docs/REALITY_CALIBRATION_LABORATORY.md).
+Prometheus, Reality, and Veritas engineering is consolidated in `main`. The
+Reality recorder and campaign workers continue from their retained runtime
+worktree; Veritas scheduled replay and observation use their retained data
+workspace. These worktrees remain because active services depend on their paths.
+Their runtime stores and historical evidence remain separate and unchanged.
 
-Project Veritas is next. Its scope is not yet defined; begin with the
-[Veritas handoff](docs/VERITAS_HANDOFF.md) before implementation.
+The recorded Reality and Veritas evidence does not establish an eligible trading
+strategy, real fills, or profitability. Read the [current state and operations
+reference](docs/MIDAS_CURRENT_STATE.md) for the live service map, retained
+worktrees, data locations, latest receipted findings, and known operating limits.
+The [Reality acceptance record](docs/REALITY_MISSION2_ACCEPTANCE.md),
+[Veritas research ledger](docs/VERITAS_RESEARCH_LEDGER.json), and historical
+checkpoints preserve the original evidence and provenance.
 
 ## Install and run
 

@@ -3,11 +3,12 @@ import json
 import os
 import subprocess
 import sys
+from pathlib import Path
 from types import SimpleNamespace
 
 from midas.arena.artifacts import atomic_json
 from midas.arena.datasets import DatasetSpec
-from midas.arena.jobs import JobSpec, create, inspect
+from midas.arena.jobs import JobSpec, create, inspect, run
 
 
 def worker(root, identity):
@@ -92,3 +93,92 @@ def test_duplicate_runner_cannot_write_progress_while_job_lease_is_held(tmp_path
             env={**os.environ, "OMP_NUM_THREADS": "1", "OPENBLAS_NUM_THREADS": "1"},
         )
         assert json.loads((directory / "job.json").read_text()) == job
+
+
+def test_veritas_qualification_job_dispatches_through_bounded_arena_worker(tmp_path, monkeypatch):
+    import midas.veritas.arena_qualification as qualification
+    from midas.veritas.arena_qualification import VeritasQualificationSpec
+
+    scan_id = "scan-20261015T090047Z-6f98ffeaecab"
+    spec = JobSpec(
+        kind="veritas_qualification",
+        veritas_qualification=VeritasQualificationSpec(expected_latest_scan_id=scan_id),
+        max_wall_seconds=300,
+    )
+    job = create(
+        tmp_path,
+        spec,
+        launch=False,
+        admission_key=f"veritas-qualification-v1-{scan_id}",
+    )
+    assert job["budget"]["cpu_quota_percent"] == 10
+    assert job["budget"]["memory_mb"] == 512
+    calls = []
+
+    def execute(root, received_spec, progress):
+        calls.append((root, received_spec.expected_latest_scan_id))
+        progress.phase("validating finalized observations")
+        return {
+            "artifact_id": "veritas-qualification-v1-example",
+            "result": {
+                "experiment_run_id": "VERITAS-M2-ECO-QUAL-001-RUN-example",
+                "status": "no_positive_gross_candidate_observed",
+            },
+            "experiment_sha256": "a" * 64,
+        }
+
+    monkeypatch.setattr(qualification, "run_qualification", execute)
+    run(tmp_path, job["job_id"])
+
+    completed = json.loads((tmp_path / "jobs" / job["job_id"] / "job.json").read_text())
+    assert completed["state"] == "COMPLETED"
+    assert completed["result"]["finding_id"] == "veritas-qualification-v1-example"
+    assert completed["result"]["status"] == "no_positive_gross_candidate_observed"
+    assert completed["phase"] == "validating finalized observations"
+    assert calls == [(tmp_path, scan_id)]
+
+
+def test_supervised_job_runner_imports_the_submitted_checkout(tmp_path, monkeypatch):
+    commands = []
+
+    def launch(command, **kwargs):
+        commands.append(command)
+        return SimpleNamespace(returncode=0, stdout="", stderr="")
+
+    monkeypatch.setattr(subprocess, "run", launch)
+    job = create(tmp_path, JobSpec(kind="dataset", dataset=DatasetSpec(episodes=30)))
+
+    repository = Path(__file__).resolve().parents[2]
+    assert job["state"] == "QUEUED"
+    assert len(commands) == 1
+    assert f"--working-directory={repository}" in commands[0]
+    assert f"--setenv=PYTHONPATH={repository / 'packages'}" in commands[0]
+
+
+def test_veritas_qualification_supervisor_has_read_only_resource_bounds(tmp_path, monkeypatch):
+    from midas.veritas.arena_qualification import VeritasQualificationSpec
+
+    commands = []
+
+    def launch(command, **kwargs):
+        commands.append(command)
+        return SimpleNamespace(returncode=0, stdout="", stderr="")
+
+    monkeypatch.setattr(subprocess, "run", launch)
+    job = create(
+        tmp_path,
+        JobSpec(
+            kind="veritas_qualification",
+            veritas_qualification=VeritasQualificationSpec(
+                expected_latest_scan_id="scan-20261015T090047Z-6f98ffeaecab"
+            ),
+            max_wall_seconds=300,
+        ),
+        admission_key="veritas-qualification-v1-scan-20261015T090047Z-6f98ffeaecab",
+    )
+
+    assert job["state"] == "QUEUED"
+    assert len(commands) == 1
+    assert "--property=MemoryMax=512M" in commands[0]
+    assert "--property=CPUQuota=10%" in commands[0]
+    assert "--property=RestrictAddressFamilies=AF_UNIX" in commands[0]

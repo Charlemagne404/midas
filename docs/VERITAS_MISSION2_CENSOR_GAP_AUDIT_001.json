@@ -1,0 +1,92 @@
+{
+  "analysis_code_files": {
+    "packages/midas/reality/research_schema.py": "fa31024164ae1e20b579403e79417c1eaa8fc2670d154153aae247546d8f9f33",
+    "packages/midas/reality/storage.py": "551966d10c2494dd6fcb50988bf32c26558ff6a02d6bd68617f8593b1f5ec3cc",
+    "packages/midas/veritas/censor_gap_audit.py": "cb596731bc6413fa732a4e3afb40c77d00d8db1f7f07fb84a2c9234f8613bc5e",
+    "scripts/veritas_censor_gap_audit.py": "015829f1b5300b876a3c250773ebd3b708619f1a1c822273d69c2b00f1a7288e"
+  },
+  "analysis_code_sha256": "3b39492dea5b5f017a2d19fdd0830201dd2ea7292a3551840f9d54203be4f20b",
+  "analysis_version": "veritas-censor-gap-reference-audit-v1",
+  "artifact_id": "VERITAS-M2-CENSOR-GAP-AUDIT-001",
+  "artifact_sha256": "e248797a5e8b594fb43f7a6b5e803ebd4c730a49ce5c42f0a927bb0f7d4d87b5",
+  "campaign": {
+    "campaign_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
+    "campaign_plan_sha256": "aa8acb2b46823c1a1e3ac5d01a57dde917746c2c7471098ae2a4598875e322f5"
+  },
+  "captured_at_utc": "2026-10-15T21:52:08Z",
+  "gap_censors": {
+    "book_issue_direct_gap_causality_verified": false,
+    "book_issue_gap_outcomes": 160,
+    "explicit_recorded_gap_outcomes": 179,
+    "outcome_rows": 339,
+    "outcome_rows_by_horizon_ms": {
+      "100": {
+        "book_issue:gap:book_resynchronization": 6
+      },
+      "1000": {
+        "book_issue:gap:book_resynchronization": 66,
+        "recorded_gap:book_resynchronization": 27
+      },
+      "300": {
+        "book_issue:gap:book_resynchronization": 12,
+        "recorded_gap:book_resynchronization": 2
+      },
+      "5000": {
+        "book_issue:gap:book_resynchronization": 76,
+        "recorded_gap:book_resynchronization": 150
+      }
+    },
+    "outcome_rows_by_reason": {
+      "book_issue:gap:book_resynchronization": 160,
+      "recorded_gap:book_resynchronization": 179
+    },
+    "unique_book_issue_termination_records_by_source_kind": {
+      "discovery_page": 53,
+      "public_fee_metadata": 2,
+      "public_market_metadata": 5
+    },
+    "unique_explicit_gap_records_by_reason": {
+      "book_resynchronization": 97
+    },
+    "unique_explicit_gap_records_verified": 97,
+    "unique_termination_record_kinds": {
+      "discovery_page": 53,
+      "gap": 97,
+      "public_fee_metadata": 2,
+      "public_market_metadata": 5
+    },
+    "unique_termination_records": 157
+  },
+  "journal_snapshot": {
+    "hash_chain_reverified": false,
+    "read_only": true,
+    "sqlite_integrity_check_performed": false,
+    "tail_event_seq": 113010,
+    "tail_event_sha256": "59ba667151914f792778ef5fbddba1adb5787837d9a9a34dcdba887247e1928e"
+  },
+  "limitations": [
+    "The read-only SQLite event hash chain and full database integrity were not reverified.",
+    "Explicit recorded_gap labels are matched to their exact finalized gap record.",
+    "book_issue:gap references are verified as source records but are not attributed to a specific prior gap.",
+    "future_observation_unavailable remains a mixed absence, inactivity, and coverage category.",
+    "Source record identity does not establish exchange sequence, fills, or profitability."
+  ],
+  "query": {
+    "censored_outcome_event_bytes_read": 31324375,
+    "censored_outcome_limit": 50000,
+    "censored_outcomes_scanned": 40075,
+    "event_byte_limit": 67108864,
+    "truncated": false
+  },
+  "schema_version": 1,
+  "source_verification": {
+    "active_open_segments_read": false,
+    "finalized_segment_byte_limit": 134217728,
+    "finalized_segment_bytes_hashed": 58443329,
+    "record_offsets_and_hashes_verified": true,
+    "source_record_frame_bytes_read": 3020478,
+    "unique_finalized_segments_verified": 133,
+    "unique_source_records_verified": 157
+  },
+  "status": "verified"
+}

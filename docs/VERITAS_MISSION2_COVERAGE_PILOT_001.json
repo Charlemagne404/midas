@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "study_id": "VERITAS-M2-COVERAGE-PILOT-001",
+  "protocol_version": "veritas-coverage-pilot-v1",
+  "study_type": "prospective measurement-only coverage pilot",
+  "activation": "first scheduled observer snapshot after this implementation is deployed; no historical snapshots are backfilled",
+  "window": {
+    "maximum_elapsed_hours": 24,
+    "maximum_completed_scans": 48,
+    "early_stopping": false,
+    "missed_scans": "remain visible as coverage gaps; do not extend the fixed elapsed-time window"
+  },
+  "observation_frame": {
+    "source": "existing six-query bounded Gamma union and one batched public CLOB books read",
+    "target_markets_per_scan": 40,
+    "configured_market_range": [
+      30,
+      50
+    ],
+    "stable_control_count": 8,
+    "rotating_selection": "existing stratified phase rotation with recorded conditional inclusion probabilities",
+    "additional_public_requests": 0,
+    "selection_uses_price_edge": false,
+    "coverage_kind": "intermittent_public_snapshots"
+  },
+  "primary_outcome": {
+    "name": "complete quality-valid paired-book yield per selected pair slot",
+    "numerator": "selected V1 same-condition pairs passing the existing finalized v4 request/receipt, identity, and paired-book quality checks",
+    "denominator": "all selected pair slots; invalid and unavailable pairs remain in the denominator",
+    "comparison": "stable_random_control versus rotating_stratified roles within the same scheduled scan"
+  },
+  "secondary_outcomes": [
+    "per-scan and cumulative quality yield by role, phase, and selection stratum",
+    "distinct selected market IDs and market revisit counts",
+    "bounded discovery population, exclusions, missing controls, and skipped scan sequences",
+    "source response and analysis-event lineage for every included scan",
+    "observed candidate gate counts, without treating absence as a strategy result"
+  ],
+  "analysis": {
+    "role_comparison_is_descriptive": true,
+    "causal_claim_permitted": false,
+    "venue_wide_prevalence_estimated": false,
+    "dependent_repeated_observations_are_independent_trials": false,
+    "no_strategy_or_model_promotion": true
+  },
+  "safety": {
+    "read_only_public_market_data": true,
+    "orders_submitted": false,
+    "authenticated_requests": false,
+    "does_not_modify_reality_campaigns": true,
+    "writes_only_versioned_aggregates_under_observatory_root": true,
+    "maximum_pilot_artifact_bytes": 4194304
+  },
+  "limitations": [
+    "The bounded query-response union is selected and is not the venue-wide universe.",
+    "Stable controls were frozen from an earlier bounded discovery union and are not randomized against rotating markets.",
+    "The same-scan role comparison is descriptive; market composition and availability differ by role.",
+    "Intermittent public snapshots do not establish continuous coverage, quote lifetime, fills, or profitability.",
+    "Reported timestamp age is an update-recency diagnostic; the pilot does not claim venue sequence or upstream freshness."
+  ]
+}

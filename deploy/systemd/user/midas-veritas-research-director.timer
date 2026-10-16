@@ -1,0 +1,11 @@
+[Unit]
+Description=Check for new finalized Veritas evidence every 30 minutes
+
+[Timer]
+OnCalendar=*-*-* *:15,45:00 UTC
+RandomizedDelaySec=30
+Persistent=true
+Unit=midas-veritas-research-director.service
+
+[Install]
+WantedBy=timers.target

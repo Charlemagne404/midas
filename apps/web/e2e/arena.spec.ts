@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { execFileSync } from 'node:child_process';
+import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 test('build, train, inspect and evaluate genuine Arena artifacts', async ({ page }) => {
@@ -65,8 +66,12 @@ test('build, train, inspect and evaluate genuine Arena artifacts', async ({ page
     })
     .toBe(1);
   const completed = await (await page.request.get('/api/arena')).json();
+  const localPython = fileURLToPath(new URL('../../../.venv/bin/python', import.meta.url));
+  const python =
+    process.env.MIDAS_PYTHON ??
+    (existsSync(localPython) ? localPython : '/home/charlie/midas/.venv/bin/python');
   execFileSync(
-    fileURLToPath(new URL('../../../.venv/bin/python', import.meta.url)),
+    python,
     [
       fileURLToPath(new URL('../../../scripts/arena_economics.py', import.meta.url)),
       '--root',

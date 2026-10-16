@@ -1,0 +1,12 @@
+unformatted: File would be reformatted
+  --> scripts/veritas_forward_audit.py:15:25
+   |
+14 |     parser.add_argument("--root", type=Path, required=True, help="Frozen campaign directory")
+   -     parser.add_argument("--limit", type=int, default=5000, help="Maximum indexed decisions (<=50000)")
+15 +     parser.add_argument(
+16 +         "--limit", type=int, default=5000, help="Maximum indexed decisions (<=50000)"
+17 +     )
+18 |     parser.add_argument("--since-ns", type=int, default=0, help="Decision-time lower bound")
+   |
+
+1 file would be reformatted, 322 files already formatted

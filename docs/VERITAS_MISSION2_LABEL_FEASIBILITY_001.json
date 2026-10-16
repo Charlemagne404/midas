@@ -1,0 +1,381 @@
+{
+  "analysis": {
+    "query": {
+      "limit": 50000,
+      "since_ns": 0,
+      "truncated": false
+    },
+    "repository_head": "54cf9dd",
+    "source_file": "packages/midas/veritas/forensics.py",
+    "source_file_sha256": "3d5ea3f8f49f4a301dcbed16efa9e373f3f80391d27dc39f746db5b082f28010",
+    "source_kind": "genuine_public_recording",
+    "source_report_sha256": "dd1994104fbe3cdc75b148d630909ca6eab71120d19a1c3346b70c8038ffd788",
+    "source_worktree_modified": true,
+    "version": "veritas-forward-forensics-v1.4"
+  },
+  "artifact_id": "VERITAS-M2-LABEL-FEASIBILITY-001",
+  "assessment": {
+    "decision": "Do not train or compare strategy policies on these labels. They are sparse public markout measurements, the opportunity target is unsupported because no initial discrepancy occurred, and execution/P&L ground truth is unknown.",
+    "director_readiness_scope": "The current Research Director readiness field is produced from the separate snapshot qualification dataset; it has not ingested this frozen-campaign forensic report.",
+    "five_second_execution_ground_truth": {
+      "unknown_counterfactual": 473
+    },
+    "five_second_opportunity_persistence_all_null": true,
+    "five_second_quote_persistence_constant_true": true,
+    "five_second_target_status_no_initial_discrepancy": true,
+    "public_markout_measurements_exist": true,
+    "suitable_strategy_target_support": false
+  },
+  "campaign": {
+    "campaign_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
+    "connected_families": 37,
+    "decisions": 10253,
+    "duplicate_variants_are_independent": false,
+    "invalid_initial_decisions": 6750,
+    "markets": 43,
+    "observed_decision_time_range_utc": [
+      "2026-10-14T21:07:59.760394Z",
+      "2026-10-15T08:58:06.958877Z"
+    ],
+    "plan_sha256": "aa8acb2b46823c1a1e3ac5d01a57dde917746c2c7471098ae2a4598875e322f5",
+    "utc_days": [
+      "2026-10-14",
+      "2026-10-15"
+    ],
+    "valid_initial_decisions": 3503
+  },
+  "captured_at_utc": "2026-10-15T19:58:10Z",
+  "economic_observations": {
+    "actual_fills": "unknown_counterfactual",
+    "actual_orders_submitted": 0,
+    "policy_actions": {
+      "conservative_risk": {
+        "abstain": 10253
+      },
+      "mathematical_filter": {
+        "abstain": 10253
+      },
+      "no_trade": {
+        "abstain": 10253
+      },
+      "prediction_gate": {
+        "abstain": 10253
+      },
+      "prometheus_control": {
+        "abstain": 10253
+      },
+      "recovery_guard": {
+        "abstain": 10253
+      }
+    },
+    "pre_fee_edge_per_unit": {
+      "count": 3503,
+      "maximum": "-0.001",
+      "median_nearest_rank": "-0.01",
+      "minimum": "-0.997",
+      "p25_nearest_rank": "-0.015",
+      "p75_nearest_rank": "-0.005",
+      "positive_count": 0
+    },
+    "realized_money": null
+  },
+  "followup_label_support": {
+    "by_horizon": {
+      "100": {
+        "categorical_counts": {
+          "displayed_quantity_supported": {
+            "true": 29
+          },
+          "execution_ground_truth": {
+            "unknown_counterfactual": 29
+          },
+          "market_disruption": {
+            "false": 29
+          },
+          "opportunity_persistence": {
+            "null": 29
+          },
+          "opportunity_target_status": {
+            "no_initial_discrepancy": 29
+          },
+          "quote_persistence": {
+            "true": 29
+          }
+        },
+        "censored": 10224,
+        "numeric_distributions": {
+          "adverse_ask_movement": {
+            "count": 29,
+            "maximum": "0",
+            "median_nearest_rank": "0",
+            "minimum": "0",
+            "p25_nearest_rank": "0",
+            "p75_nearest_rank": "0",
+            "positive_count": 0
+          },
+          "best_ask_pair_movement": {
+            "count": 29,
+            "maximum": "0.00",
+            "median_nearest_rank": "0.00",
+            "minimum": "0.00",
+            "p25_nearest_rank": "0.00",
+            "p75_nearest_rank": "0.00",
+            "positive_count": 0
+          },
+          "quoted_exit_value_change": {
+            "count": 29,
+            "maximum": "0.00",
+            "median_nearest_rank": "0.00",
+            "minimum": "0.00",
+            "p25_nearest_rank": "0.00",
+            "p75_nearest_rank": "0.00",
+            "positive_count": 0
+          }
+        },
+        "observed_public_measurements": 29,
+        "observed_yield_per_valid_initial_decision": 0.008278618327148159,
+        "pending": 0,
+        "per_leg_quote_persistence": {
+          "no": {
+            "true": 29
+          },
+          "yes": {
+            "true": 29
+          }
+        },
+        "scheduled_followups": 10253,
+        "valid_initial_decisions": 3503
+      },
+      "1000": {
+        "categorical_counts": {
+          "displayed_quantity_supported": {
+            "true": 341
+          },
+          "execution_ground_truth": {
+            "unknown_counterfactual": 341
+          },
+          "market_disruption": {
+            "false": 341
+          },
+          "opportunity_persistence": {
+            "null": 341
+          },
+          "opportunity_target_status": {
+            "no_initial_discrepancy": 341
+          },
+          "quote_persistence": {
+            "false": 1,
+            "true": 340
+          }
+        },
+        "censored": 9912,
+        "numeric_distributions": {
+          "adverse_ask_movement": {
+            "count": 341,
+            "maximum": "0",
+            "median_nearest_rank": "0",
+            "minimum": "0",
+            "p25_nearest_rank": "0",
+            "p75_nearest_rank": "0",
+            "positive_count": 0
+          },
+          "best_ask_pair_movement": {
+            "count": 341,
+            "maximum": "0.00",
+            "median_nearest_rank": "0.000",
+            "minimum": "-0.02",
+            "p25_nearest_rank": "0.000",
+            "p75_nearest_rank": "0.00",
+            "positive_count": 0
+          },
+          "quoted_exit_value_change": {
+            "count": 341,
+            "maximum": "0.10",
+            "median_nearest_rank": "0.000",
+            "minimum": "0.00",
+            "p25_nearest_rank": "0.000",
+            "p75_nearest_rank": "0.00",
+            "positive_count": 2
+          }
+        },
+        "observed_public_measurements": 341,
+        "observed_yield_per_valid_initial_decision": 0.09734513274336283,
+        "pending": 0,
+        "per_leg_quote_persistence": {
+          "no": {
+            "false": 1,
+            "true": 340
+          },
+          "yes": {
+            "true": 341
+          }
+        },
+        "scheduled_followups": 10253,
+        "valid_initial_decisions": 3503
+      },
+      "300": {
+        "categorical_counts": {
+          "displayed_quantity_supported": {
+            "true": 94
+          },
+          "execution_ground_truth": {
+            "unknown_counterfactual": 94
+          },
+          "market_disruption": {
+            "false": 94
+          },
+          "opportunity_persistence": {
+            "null": 94
+          },
+          "opportunity_target_status": {
+            "no_initial_discrepancy": 94
+          },
+          "quote_persistence": {
+            "true": 94
+          }
+        },
+        "censored": 10159,
+        "numeric_distributions": {
+          "adverse_ask_movement": {
+            "count": 94,
+            "maximum": "0",
+            "median_nearest_rank": "0",
+            "minimum": "0",
+            "p25_nearest_rank": "0",
+            "p75_nearest_rank": "0",
+            "positive_count": 0
+          },
+          "best_ask_pair_movement": {
+            "count": 94,
+            "maximum": "0.00",
+            "median_nearest_rank": "0.00",
+            "minimum": "0.00",
+            "p25_nearest_rank": "0.00",
+            "p75_nearest_rank": "0.00",
+            "positive_count": 0
+          },
+          "quoted_exit_value_change": {
+            "count": 94,
+            "maximum": "0.00",
+            "median_nearest_rank": "0.00",
+            "minimum": "0.00",
+            "p25_nearest_rank": "0.00",
+            "p75_nearest_rank": "0.00",
+            "positive_count": 0
+          }
+        },
+        "observed_public_measurements": 94,
+        "observed_yield_per_valid_initial_decision": 0.02683414216385955,
+        "pending": 0,
+        "per_leg_quote_persistence": {
+          "no": {
+            "true": 94
+          },
+          "yes": {
+            "true": 94
+          }
+        },
+        "scheduled_followups": 10253,
+        "valid_initial_decisions": 3503
+      },
+      "5000": {
+        "categorical_counts": {
+          "displayed_quantity_supported": {
+            "true": 473
+          },
+          "execution_ground_truth": {
+            "unknown_counterfactual": 473
+          },
+          "market_disruption": {
+            "false": 473
+          },
+          "opportunity_persistence": {
+            "null": 473
+          },
+          "opportunity_target_status": {
+            "no_initial_discrepancy": 473
+          },
+          "quote_persistence": {
+            "true": 473
+          }
+        },
+        "censored": 9780,
+        "numeric_distributions": {
+          "adverse_ask_movement": {
+            "count": 473,
+            "maximum": "0",
+            "median_nearest_rank": "0",
+            "minimum": "0",
+            "p25_nearest_rank": "0",
+            "p75_nearest_rank": "0",
+            "positive_count": 0
+          },
+          "best_ask_pair_movement": {
+            "count": 473,
+            "maximum": "0.00",
+            "median_nearest_rank": "0.000",
+            "minimum": "0.000",
+            "p25_nearest_rank": "0.000",
+            "p75_nearest_rank": "0.000",
+            "positive_count": 0
+          },
+          "quoted_exit_value_change": {
+            "count": 473,
+            "maximum": "0.00",
+            "median_nearest_rank": "0.000",
+            "minimum": "0.000",
+            "p25_nearest_rank": "0.000",
+            "p75_nearest_rank": "0.000",
+            "positive_count": 0
+          }
+        },
+        "observed_public_measurements": 473,
+        "observed_yield_per_valid_initial_decision": 0.13502711961176134,
+        "pending": 0,
+        "per_leg_quote_persistence": {
+          "no": {
+            "true": 473
+          },
+          "yes": {
+            "true": 473
+          }
+        },
+        "scheduled_followups": 10253,
+        "valid_initial_decisions": 3503
+      }
+    },
+    "censor_reasons": {
+      "book_issue:advertised_top_pending": 67,
+      "book_issue:gap:book_resynchronization": 160,
+      "book_issue:timestamp_regression": 2,
+      "future_observation_unavailable": 10233,
+      "future_preceded_durable_decision": 2,
+      "independent_book_divergence": 1,
+      "invalid_at_decision": 27000,
+      "recorded_gap:book_resynchronization": 179,
+      "source_followup_availability_timeout": 970,
+      "stale_book": 1461
+    },
+    "total_censored": 40075,
+    "total_observed_public_measurements": 937,
+    "total_pending": 0
+  },
+  "journal_snapshot": {
+    "hash_chain_reverified": false,
+    "read_only": true,
+    "sqlite_integrity_check": {
+      "performed": false,
+      "result": null
+    },
+    "tail_event_seq": 112960,
+    "tail_event_sha256": "470253da4faab9c24797e9d0e48356fb8d3b30e396d3d8b1940f140a6e26f72b"
+  },
+  "limitations": [
+    "The campaign records a bounded, selected public-market cohort, not the full venue.",
+    "Displayed depth and public quote survival do not identify hypothetical fills.",
+    "Shared feed intervals and connected market families are dependent observations.",
+    "A full SQLite integrity scan is optional; the complete event hash chain is not reverified.",
+    "The external campaign status file is intentionally excluded from the SQL snapshot."
+  ],
+  "schema_version": 1
+}

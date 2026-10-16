@@ -85,21 +85,15 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for the data flow and storage details.
 
 ## Keep worktrees and runtime data separate
 
-Use one worktree per concurrent program, each with its own virtual environment,
-frontend install, `.env`, and `data/` directory. From a checkout containing the
-Prometheus baseline tag:
+Read [MIDAS_CURRENT_STATE.md](MIDAS_CURRENT_STATE.md) before changing an
+operational checkout. `main` is the authoritative development branch. The Reality
+and Veritas worktrees are retained because active services use their paths and
+their mutable data belongs to those workspaces. Do not remove, repoint, or share
+their database, model, campaign, or recording paths during ordinary development.
 
-```bash
-git worktree add ../midas-reality -b project/reality prometheus-final-2026-10-14
-git worktree add ../midas-atlas -b project/atlas prometheus-final-2026-10-14
-```
-
-The database, Arena, Laboratory, and recording paths in `.env.example` are
-relative to the worktree. Keep them relative or set each to a unique path inside
-that worktree; do not symlink two worktrees to the same mutable database, model
-store, campaign archive, or recording directory. Install dependencies separately
-in each worktree. The package-manager download cache may be shared, but generated
-builds and runtime artifacts should remain local to each checkout.
+For an explicitly approved isolated test checkout, use separate temporary
+databases and artifact roots. Keep mutable stores local to that checkout, and do
+not symlink them to active campaign or recorder directories.
 
 ## Data and research constraints
 
@@ -111,5 +105,5 @@ archive to a source change. Preserve the protected Laboratory campaign and
 historical Prometheus evidence; verify them read-only.
 
 MIDAS remains paper-only. Public observation and synthetic evaluation do not
-establish executable fills or real-market profitability. Reality and Atlas work
-must respect the constraints in [ROADMAP.md](ROADMAP.md).
+establish executable fills or real-market profitability. Reality operations must
+respect the constraints in [ROADMAP.md](ROADMAP.md).

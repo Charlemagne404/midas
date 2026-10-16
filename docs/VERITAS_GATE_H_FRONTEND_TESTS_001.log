@@ -1,0 +1,19 @@
+
+> @midas/command-center@0.1.0 test /home/charlie/midas-veritas/apps/web
+> vitest run
+
+
+ RUN  v3.2.7 /home/charlie/midas-veritas/apps/web
+
+ ✓ src/Veritas.test.tsx (1 test) 209ms
+ ✓ src/Laboratory.test.tsx (2 tests) 287ms
+ ✓ src/Reality.test.tsx (5 tests) 1245ms
+   ✓ reports unavailable genuine evidence without inventing observations  1116ms
+ ✓ src/Arena.test.tsx (18 tests) 1569ms
+ ✓ src/App.test.tsx (3 tests) 1639ms
+   ✓ application integrity > opens Veritas as its own evidence workspace without a synthetic-data badge  1457ms
+
+ Test Files  5 passed (5)
+      Tests  29 passed (29)
+   Start at  04:13:19
+   Duration  3.15s (transform 1.25s, setup 783ms, collect 2.90s, tests 4.95s, environment 2.16s, prepare 533ms)

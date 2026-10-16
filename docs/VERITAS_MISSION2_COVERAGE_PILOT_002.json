@@ -1,0 +1,86 @@
+{
+  "activation": "first scheduled observer snapshot after this implementation is deployed; no historical snapshots are backfilled",
+  "analysis": {
+    "causal_claim_permitted": false,
+    "dependent_repeated_observations_are_independent_trials": false,
+    "no_strategy_or_model_promotion": true,
+    "role_comparison_is_descriptive": true,
+    "venue_wide_prevalence_estimated": false
+  },
+  "implementation_pin": {
+    "excluded_from_implementation_pin": [
+      "observatory.py",
+      "continuous_analysis.py",
+      "opportunity_audit.py",
+      "economic_feasibility_v3.py"
+    ],
+    "files": [
+      "coverage_pilot_v2.py",
+      "coverage_pilot.py"
+    ],
+    "per_scan_source_evidence": [
+      "snapshot_source_code_sha256",
+      "analysis_event_file_sha256",
+      "analysis_event_sha256",
+      "analysis_source_code_sha256"
+    ],
+    "scope": "v2 protocol and the shared immutable event/summary primitives"
+  },
+  "limitations": [
+    "The bounded Gamma query-response union is selected and is not the venue-wide universe.",
+    "Stable controls were frozen from an earlier bounded discovery union and are not randomized against rotating markets.",
+    "The same-scan role comparison is descriptive; market composition and availability differ by role.",
+    "Intermittent public snapshots do not establish continuous coverage, quote lifetime, fills, or profitability.",
+    "Reported update timestamps do not establish venue sequence freshness, upstream queue age, or batch atomicity.",
+    "Repeated market and scan observations are dependent and are not independent trials."
+  ],
+  "observation_frame": {
+    "additional_public_requests": 0,
+    "configured_market_range": [
+      30,
+      50
+    ],
+    "coverage_kind": "intermittent_public_snapshots",
+    "rotating_selection": "existing stratified phase rotation with recorded conditional inclusion probabilities",
+    "selection_uses_price_edge": false,
+    "source": "existing six-query bounded Gamma union and one batched public CLOB books read",
+    "stable_control_count": 8,
+    "target_markets_per_scan": 40
+  },
+  "primary_outcome": {
+    "comparison": "stable_random_control versus rotating_stratified roles within the same scheduled scan",
+    "denominator": "all selected pair slots; invalid and unavailable pairs remain in the denominator",
+    "name": "complete quality-valid paired-book yield per selected pair slot",
+    "numerator": "selected V1 same-condition pairs passing the existing finalized v4 request/receipt, identity, and paired-book quality checks",
+    "secondary_measurements": [
+      "strict reported-age freshness sensitivity from the finalized v4 analysis event",
+      "reported cross-outcome timestamp skew",
+      "verified batch atomicity and venue sequence counts"
+    ]
+  },
+  "protocol_version": "veritas-coverage-pilot-v2",
+  "safety": {
+    "authenticated_requests": false,
+    "does_not_modify_reality_campaigns": true,
+    "maximum_pilot_artifact_bytes": 4194304,
+    "orders_submitted": false,
+    "read_only_public_market_data": true,
+    "writes_only_versioned_aggregates_under_observatory_root": true
+  },
+  "schema_version": 1,
+  "secondary_outcomes": [
+    "per-scan and cumulative quality yield by role, phase, and selection stratum",
+    "distinct selected market IDs and market revisit counts",
+    "bounded discovery population, exclusions, missing controls, and skipped scan sequences",
+    "source response and analysis-event lineage for every included scan",
+    "observed candidate gate counts, without treating absence as a strategy result"
+  ],
+  "study_id": "VERITAS-M2-COVERAGE-PILOT-002",
+  "study_type": "prospective measurement-only coverage pilot",
+  "window": {
+    "early_stopping": false,
+    "maximum_completed_scans": 48,
+    "maximum_elapsed_hours": 24,
+    "missed_scans": "remain visible as coverage gaps; do not extend the fixed elapsed-time window"
+  }
+}

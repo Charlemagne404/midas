@@ -1,0 +1,1538 @@
+{
+  "analysis_version": "veritas-source-replay-v3",
+  "captured_at_utc": "2026-10-14T23:27:08.178011+00:00",
+  "active_segment_read": false,
+  "campaign_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
+  "campaign_root": "/home/charlie/midas-reality/data/research/reality/forward/mission2",
+  "captured_ns": 1792020428178011120,
+  "database_event_tail_sequence": 24919,
+  "decision_limit": 5000,
+  "decision_rows_missing_inside_finalized_prefix": 0,
+  "decision_sample_rows": 2120,
+  "decision_sample_truncated": false,
+  "decision_timing": {
+    "all": {
+      "cross_outcome_skew_ms": {
+        "count": 2120,
+        "maximum_ms": "0",
+        "minimum_ms": "0",
+        "p50_nearest_rank_ms": "0",
+        "p90_nearest_rank_ms": "0",
+        "p95_nearest_rank_ms": "0"
+      },
+      "decisions": 2120,
+      "freshness_violation_decisions": 1380,
+      "market_outcomes_updated_in_source_frame": {
+        "0": 1761,
+        "2": 359
+      },
+      "maximum_leg_age_ms": {
+        "count": 2120,
+        "maximum_ms": "62407.484423",
+        "minimum_ms": "1.667662",
+        "p50_nearest_rank_ms": "10316.824168",
+        "p90_nearest_rank_ms": "42813.579086",
+        "p95_nearest_rank_ms": "51784.905655"
+      },
+      "pair_books_available": {
+        "2": 2120
+      },
+      "source_input_lag_bands": {
+        "0_to_25_ms": 526,
+        "100_ms_to_limit": 643,
+        "25_to_50_ms": 695,
+        "50_to_100_ms": 256
+      },
+      "source_input_lag_ms": {
+        "count": 2120,
+        "maximum_ms": "248.865611",
+        "minimum_ms": "0.89728",
+        "p50_nearest_rank_ms": "41.969589",
+        "p90_nearest_rank_ms": "192.755063",
+        "p95_nearest_rank_ms": "219.469165"
+      }
+    },
+    "by_market": {
+      "559687": {
+        "cross_outcome_skew_ms": {
+          "count": 265,
+          "maximum_ms": "0",
+          "minimum_ms": "0",
+          "p50_nearest_rank_ms": "0",
+          "p90_nearest_rank_ms": "0",
+          "p95_nearest_rank_ms": "0"
+        },
+        "decisions": 265,
+        "family_id": "98d4894c6568745322c8a053472cc907a1006702cc851d99db5a38c89805b413",
+        "freshness_violation_decisions": 212,
+        "market_outcomes_updated_in_source_frame": {
+          "0": 244,
+          "2": 21
+        },
+        "maximum_leg_age_ms": {
+          "count": 265,
+          "maximum_ms": "62015.4862",
+          "minimum_ms": "6.513217",
+          "p50_nearest_rank_ms": "17339.103946",
+          "p90_nearest_rank_ms": "44715.022624",
+          "p95_nearest_rank_ms": "56197.379238"
+        },
+        "pair_books_available": {
+          "2": 265
+        },
+        "source_input_lag_bands": {
+          "0_to_25_ms": 67,
+          "100_ms_to_limit": 80,
+          "25_to_50_ms": 86,
+          "50_to_100_ms": 32
+        },
+        "source_input_lag_ms": {
+          "count": 265,
+          "maximum_ms": "248.865611",
+          "minimum_ms": "0.89728",
+          "p50_nearest_rank_ms": "41.631414",
+          "p90_nearest_rank_ms": "192.755063",
+          "p95_nearest_rank_ms": "219.469165"
+        }
+      },
+      "561251": {
+        "cross_outcome_skew_ms": {
+          "count": 265,
+          "maximum_ms": "0",
+          "minimum_ms": "0",
+          "p50_nearest_rank_ms": "0",
+          "p90_nearest_rank_ms": "0",
+          "p95_nearest_rank_ms": "0"
+        },
+        "decisions": 265,
+        "family_id": "8b36711cd4e70e5bf64b37d75b77301477c54da7327875e2d61618f839e71c6f",
+        "freshness_violation_decisions": 204,
+        "market_outcomes_updated_in_source_frame": {
+          "0": 238,
+          "2": 27
+        },
+        "maximum_leg_age_ms": {
+          "count": 265,
+          "maximum_ms": "62015.4862",
+          "minimum_ms": "6.513217",
+          "p50_nearest_rank_ms": "19333.805487",
+          "p90_nearest_rank_ms": "46112.079156",
+          "p95_nearest_rank_ms": "56197.379238"
+        },
+        "pair_books_available": {
+          "2": 265
+        },
+        "source_input_lag_bands": {
+          "0_to_25_ms": 67,
+          "100_ms_to_limit": 80,
+          "25_to_50_ms": 86,
+          "50_to_100_ms": 32
+        },
+        "source_input_lag_ms": {
+          "count": 265,
+          "maximum_ms": "248.865611",
+          "minimum_ms": "0.89728",
+          "p50_nearest_rank_ms": "41.631414",
+          "p90_nearest_rank_ms": "192.755063",
+          "p95_nearest_rank_ms": "219.469165"
+        }
+      },
+      "562828": {
+        "cross_outcome_skew_ms": {
+          "count": 151,
+          "maximum_ms": "0",
+          "minimum_ms": "0",
+          "p50_nearest_rank_ms": "0",
+          "p90_nearest_rank_ms": "0",
+          "p95_nearest_rank_ms": "0"
+        },
+        "decisions": 151,
+        "family_id": "000fa43ea94d31165feb5867ed32a0ea0de5cf0510e1e942219f81610403f738",
+        "freshness_violation_decisions": 6,
+        "market_outcomes_updated_in_source_frame": {
+          "0": 55,
+          "2": 96
+        },
+        "maximum_leg_age_ms": {
+          "count": 151,
+          "maximum_ms": "8444.489955",
+          "minimum_ms": "4.815416",
+          "p50_nearest_rank_ms": "140.177281",
+          "p90_nearest_rank_ms": "2793.363333",
+          "p95_nearest_rank_ms": "4565.927445"
+        },
+        "pair_books_available": {
+          "2": 151
+        },
+        "source_input_lag_bands": {
+          "0_to_25_ms": 36,
+          "100_ms_to_limit": 44,
+          "25_to_50_ms": 51,
+          "50_to_100_ms": 20
+        },
+        "source_input_lag_ms": {
+          "count": 151,
+          "maximum_ms": "248.812135",
+          "minimum_ms": "4.815416",
+          "p50_nearest_rank_ms": "41.990889",
+          "p90_nearest_rank_ms": "194.845799",
+          "p95_nearest_rank_ms": "230.437796"
+        }
+      },
+      "5674900": {
+        "cross_outcome_skew_ms": {
+          "count": 265,
+          "maximum_ms": "0",
+          "minimum_ms": "0",
+          "p50_nearest_rank_ms": "0",
+          "p90_nearest_rank_ms": "0",
+          "p95_nearest_rank_ms": "0"
+        },
+        "decisions": 265,
+        "family_id": "a0b812b3e921ef209d1fdbb3091a5ba65ce35bad579e1e305cdb0f243474a4c4",
+        "freshness_violation_decisions": 210,
+        "market_outcomes_updated_in_source_frame": {
+          "0": 244,
+          "2": 21
+        },
+        "maximum_leg_age_ms": {
+          "count": 265,
+          "maximum_ms": "62407.484423",
+          "minimum_ms": "6.513217",
+          "p50_nearest_rank_ms": "21343.260508",
+          "p90_nearest_rank_ms": "46112.079156",
+          "p95_nearest_rank_ms": "54168.263689"
+        },
+        "pair_books_available": {
+          "2": 265
+        },
+        "source_input_lag_bands": {
+          "0_to_25_ms": 67,
+          "100_ms_to_limit": 80,
+          "25_to_50_ms": 86,
+          "50_to_100_ms": 32
+        },
+        "source_input_lag_ms": {
+          "count": 265,
+          "maximum_ms": "248.865611",
+          "minimum_ms": "0.89728",
+          "p50_nearest_rank_ms": "41.631414",
+          "p90_nearest_rank_ms": "192.755063",
+          "p95_nearest_rank_ms": "219.469165"
+        }
+      },
+      "5674902": {
+        "cross_outcome_skew_ms": {
+          "count": 45,
+          "maximum_ms": "0",
+          "minimum_ms": "0",
+          "p50_nearest_rank_ms": "0",
+          "p90_nearest_rank_ms": "0",
+          "p95_nearest_rank_ms": "0"
+        },
+        "decisions": 45,
+        "family_id": "a0b812b3e921ef209d1fdbb3091a5ba65ce35bad579e1e305cdb0f243474a4c4",
+        "freshness_violation_decisions": 33,
+        "market_outcomes_updated_in_source_frame": {
+          "0": 39,
+          "2": 6
+        },
+        "maximum_leg_age_ms": {
+          "count": 45,
+          "maximum_ms": "62407.484423",
+          "minimum_ms": "13.816449",
+          "p50_nearest_rank_ms": "29466.533525",
+          "p90_nearest_rank_ms": "44466.861938",
+          "p95_nearest_rank_ms": "62015.4862"
+        },
+        "pair_books_available": {
+          "2": 45
+        },
+        "source_input_lag_bands": {
+          "0_to_25_ms": 9,
+          "100_ms_to_limit": 16,
+          "25_to_50_ms": 15,
+          "50_to_100_ms": 5
+        },
+        "source_input_lag_ms": {
+          "count": 45,
+          "maximum_ms": "248.865611",
+          "minimum_ms": "5.77168",
+          "p50_nearest_rank_ms": "44.880085",
+          "p90_nearest_rank_ms": "204.076235",
+          "p95_nearest_rank_ms": "217.63566"
+        }
+      },
+      "5674915": {
+        "cross_outcome_skew_ms": {
+          "count": 265,
+          "maximum_ms": "0",
+          "minimum_ms": "0",
+          "p50_nearest_rank_ms": "0",
+          "p90_nearest_rank_ms": "0",
+          "p95_nearest_rank_ms": "0"
+        },
+        "decisions": 265,
+        "family_id": "a0b812b3e921ef209d1fdbb3091a5ba65ce35bad579e1e305cdb0f243474a4c4",
+        "freshness_violation_decisions": 209,
+        "market_outcomes_updated_in_source_frame": {
+          "0": 238,
+          "2": 27
+        },
+        "maximum_leg_age_ms": {
+          "count": 265,
+          "maximum_ms": "62407.484423",
+          "minimum_ms": "6.513217",
+          "p50_nearest_rank_ms": "19133.30426",
+          "p90_nearest_rank_ms": "49227.988485",
+          "p95_nearest_rank_ms": "56443.625032"
+        },
+        "pair_books_available": {
+          "2": 265
+        },
+        "source_input_lag_bands": {
+          "0_to_25_ms": 67,
+          "100_ms_to_limit": 80,
+          "25_to_50_ms": 86,
+          "50_to_100_ms": 32
+        },
+        "source_input_lag_ms": {
+          "count": 265,
+          "maximum_ms": "248.865611",
+          "minimum_ms": "0.89728",
+          "p50_nearest_rank_ms": "41.631414",
+          "p90_nearest_rank_ms": "192.755063",
+          "p95_nearest_rank_ms": "219.469165"
+        }
+      },
+      "5675021": {
+        "cross_outcome_skew_ms": {
+          "count": 265,
+          "maximum_ms": "0",
+          "minimum_ms": "0",
+          "p50_nearest_rank_ms": "0",
+          "p90_nearest_rank_ms": "0",
+          "p95_nearest_rank_ms": "0"
+        },
+        "decisions": 265,
+        "family_id": "a0b812b3e921ef209d1fdbb3091a5ba65ce35bad579e1e305cdb0f243474a4c4",
+        "freshness_violation_decisions": 118,
+        "market_outcomes_updated_in_source_frame": {
+          "0": 197,
+          "2": 68
+        },
+        "maximum_leg_age_ms": {
+          "count": 265,
+          "maximum_ms": "57776.506393",
+          "minimum_ms": "6.513217",
+          "p50_nearest_rank_ms": "3859.66408",
+          "p90_nearest_rank_ms": "29027.753636",
+          "p95_nearest_rank_ms": "37168.039971"
+        },
+        "pair_books_available": {
+          "2": 265
+        },
+        "source_input_lag_bands": {
+          "0_to_25_ms": 67,
+          "100_ms_to_limit": 80,
+          "25_to_50_ms": 86,
+          "50_to_100_ms": 32
+        },
+        "source_input_lag_ms": {
+          "count": 265,
+          "maximum_ms": "248.865611",
+          "minimum_ms": "0.89728",
+          "p50_nearest_rank_ms": "41.631414",
+          "p90_nearest_rank_ms": "192.755063",
+          "p95_nearest_rank_ms": "219.469165"
+        }
+      },
+      "665205": {
+        "cross_outcome_skew_ms": {
+          "count": 265,
+          "maximum_ms": "0",
+          "minimum_ms": "0",
+          "p50_nearest_rank_ms": "0",
+          "p90_nearest_rank_ms": "0",
+          "p95_nearest_rank_ms": "0"
+        },
+        "decisions": 265,
+        "family_id": "3c9d6abe6f98f19e1a62a3018ae10cc929071e87e55f45996f2469bcd0f5c807",
+        "freshness_violation_decisions": 217,
+        "market_outcomes_updated_in_source_frame": {
+          "0": 244,
+          "2": 21
+        },
+        "maximum_leg_age_ms": {
+          "count": 265,
+          "maximum_ms": "62407.484423",
+          "minimum_ms": "6.513217",
+          "p50_nearest_rank_ms": "26493.436386",
+          "p90_nearest_rank_ms": "51784.905655",
+          "p95_nearest_rank_ms": "57585.435575"
+        },
+        "pair_books_available": {
+          "2": 265
+        },
+        "source_input_lag_bands": {
+          "0_to_25_ms": 67,
+          "100_ms_to_limit": 80,
+          "25_to_50_ms": 86,
+          "50_to_100_ms": 32
+        },
+        "source_input_lag_ms": {
+          "count": 265,
+          "maximum_ms": "248.865611",
+          "minimum_ms": "0.89728",
+          "p50_nearest_rank_ms": "41.631414",
+          "p90_nearest_rank_ms": "192.755063",
+          "p95_nearest_rank_ms": "219.469165"
+        }
+      },
+      "679026": {
+        "cross_outcome_skew_ms": {
+          "count": 265,
+          "maximum_ms": "0",
+          "minimum_ms": "0",
+          "p50_nearest_rank_ms": "0",
+          "p90_nearest_rank_ms": "0",
+          "p95_nearest_rank_ms": "0"
+        },
+        "decisions": 265,
+        "family_id": "5c6dbad73b2c74a595c0fe4a5eee9e92e167f8f2d5b53d1c0281fac0818d67e3",
+        "freshness_violation_decisions": 149,
+        "market_outcomes_updated_in_source_frame": {
+          "0": 215,
+          "2": 50
+        },
+        "maximum_leg_age_ms": {
+          "count": 265,
+          "maximum_ms": "43549.117804",
+          "minimum_ms": "6.513217",
+          "p50_nearest_rank_ms": "5941.809786",
+          "p90_nearest_rank_ms": "23241.197176",
+          "p95_nearest_rank_ms": "31436.524779"
+        },
+        "pair_books_available": {
+          "2": 265
+        },
+        "source_input_lag_bands": {
+          "0_to_25_ms": 67,
+          "100_ms_to_limit": 80,
+          "25_to_50_ms": 86,
+          "50_to_100_ms": 32
+        },
+        "source_input_lag_ms": {
+          "count": 265,
+          "maximum_ms": "248.865611",
+          "minimum_ms": "0.89728",
+          "p50_nearest_rank_ms": "41.631414",
+          "p90_nearest_rank_ms": "192.755063",
+          "p95_nearest_rank_ms": "219.469165"
+        }
+      },
+      "679055": {
+        "cross_outcome_skew_ms": {
+          "count": 69,
+          "maximum_ms": "0",
+          "minimum_ms": "0",
+          "p50_nearest_rank_ms": "0",
+          "p90_nearest_rank_ms": "0",
+          "p95_nearest_rank_ms": "0"
+        },
+        "decisions": 69,
+        "family_id": "5c6dbad73b2c74a595c0fe4a5eee9e92e167f8f2d5b53d1c0281fac0818d67e3",
+        "freshness_violation_decisions": 22,
+        "market_outcomes_updated_in_source_frame": {
+          "0": 47,
+          "2": 22
+        },
+        "maximum_leg_age_ms": {
+          "count": 69,
+          "maximum_ms": "32792.085517",
+          "minimum_ms": "1.667662",
+          "p50_nearest_rank_ms": "2651.370806",
+          "p90_nearest_rank_ms": "10373.910319",
+          "p95_nearest_rank_ms": "13084.320648"
+        },
+        "pair_books_available": {
+          "2": 69
+        },
+        "source_input_lag_bands": {
+          "0_to_25_ms": 12,
+          "100_ms_to_limit": 23,
+          "25_to_50_ms": 27,
+          "50_to_100_ms": 7
+        },
+        "source_input_lag_ms": {
+          "count": 69,
+          "maximum_ms": "238.264332",
+          "minimum_ms": "0.89728",
+          "p50_nearest_rank_ms": "43.995694",
+          "p90_nearest_rank_ms": "175.37001",
+          "p95_nearest_rank_ms": "197.519996"
+        }
+      }
+    },
+    "by_quality_reason": {
+      "book_issue:advertised_top_pending": {
+        "cross_outcome_skew_ms": {
+          "count": 11,
+          "maximum_ms": "0",
+          "minimum_ms": "0",
+          "p50_nearest_rank_ms": "0",
+          "p90_nearest_rank_ms": "0",
+          "p95_nearest_rank_ms": "0"
+        },
+        "decisions": 11,
+        "freshness_violation_decisions": 1,
+        "market_outcomes_updated_in_source_frame": {
+          "0": 11
+        },
+        "maximum_leg_age_ms": {
+          "count": 11,
+          "maximum_ms": "13084.320648",
+          "minimum_ms": "111.840468",
+          "p50_nearest_rank_ms": "3109.681423",
+          "p90_nearest_rank_ms": "4357.841161",
+          "p95_nearest_rank_ms": "13084.320648"
+        },
+        "pair_books_available": {
+          "2": 11
+        },
+        "source_input_lag_bands": {
+          "0_to_25_ms": 3,
+          "100_ms_to_limit": 4,
+          "25_to_50_ms": 4
+        },
+        "source_input_lag_ms": {
+          "count": 11,
+          "maximum_ms": "248.865611",
+          "minimum_ms": "8.606589",
+          "p50_nearest_rank_ms": "26.724776",
+          "p90_nearest_rank_ms": "235.305823",
+          "p95_nearest_rank_ms": "248.865611"
+        }
+      },
+      "book_issue:stale": {
+        "cross_outcome_skew_ms": {
+          "count": 22,
+          "maximum_ms": "0",
+          "minimum_ms": "0",
+          "p50_nearest_rank_ms": "0",
+          "p90_nearest_rank_ms": "0",
+          "p95_nearest_rank_ms": "0"
+        },
+        "decisions": 22,
+        "freshness_violation_decisions": 22,
+        "market_outcomes_updated_in_source_frame": {
+          "0": 22
+        },
+        "maximum_leg_age_ms": {
+          "count": 22,
+          "maximum_ms": "62407.484423",
+          "minimum_ms": "60883.349338",
+          "p50_nearest_rank_ms": "62015.4862",
+          "p90_nearest_rank_ms": "62407.484423",
+          "p95_nearest_rank_ms": "62407.484423"
+        },
+        "pair_books_available": {
+          "2": 22
+        },
+        "source_input_lag_bands": {
+          "0_to_25_ms": 4,
+          "100_ms_to_limit": 6,
+          "25_to_50_ms": 12
+        },
+        "source_input_lag_ms": {
+          "count": 22,
+          "maximum_ms": "204.076235",
+          "minimum_ms": "8.842868",
+          "p50_nearest_rank_ms": "38.178075",
+          "p90_nearest_rank_ms": "122.73705",
+          "p95_nearest_rank_ms": "204.076235"
+        }
+      },
+      "eligible": {
+        "cross_outcome_skew_ms": {
+          "count": 610,
+          "maximum_ms": "0",
+          "minimum_ms": "0",
+          "p50_nearest_rank_ms": "0",
+          "p90_nearest_rank_ms": "0",
+          "p95_nearest_rank_ms": "0"
+        },
+        "decisions": 610,
+        "freshness_violation_decisions": 0,
+        "market_outcomes_updated_in_source_frame": {
+          "0": 302,
+          "2": 308
+        },
+        "maximum_leg_age_ms": {
+          "count": 610,
+          "maximum_ms": "4989.482501",
+          "minimum_ms": "1.667662",
+          "p50_nearest_rank_ms": "238.164131",
+          "p90_nearest_rank_ms": "3847.698084",
+          "p95_nearest_rank_ms": "4326.434317"
+        },
+        "pair_books_available": {
+          "2": 610
+        },
+        "source_input_lag_bands": {
+          "0_to_25_ms": 134,
+          "100_ms_to_limit": 203,
+          "25_to_50_ms": 207,
+          "50_to_100_ms": 66
+        },
+        "source_input_lag_ms": {
+          "count": 610,
+          "maximum_ms": "248.865611",
+          "minimum_ms": "0.89728",
+          "p50_nearest_rank_ms": "44.351245",
+          "p90_nearest_rank_ms": "195.693199",
+          "p95_nearest_rank_ms": "215.05684"
+        }
+      },
+      "empty_ask_side": {
+        "cross_outcome_skew_ms": {
+          "count": 110,
+          "maximum_ms": "0",
+          "minimum_ms": "0",
+          "p50_nearest_rank_ms": "0",
+          "p90_nearest_rank_ms": "0",
+          "p95_nearest_rank_ms": "0"
+        },
+        "decisions": 110,
+        "freshness_violation_decisions": 0,
+        "market_outcomes_updated_in_source_frame": {
+          "0": 65,
+          "2": 45
+        },
+        "maximum_leg_age_ms": {
+          "count": 110,
+          "maximum_ms": "4988.424209",
+          "minimum_ms": "6.513217",
+          "p50_nearest_rank_ms": "669.149649",
+          "p90_nearest_rank_ms": "3898.527617",
+          "p95_nearest_rank_ms": "4532.728511"
+        },
+        "pair_books_available": {
+          "2": 110
+        },
+        "source_input_lag_bands": {
+          "0_to_25_ms": 18,
+          "100_ms_to_limit": 32,
+          "25_to_50_ms": 45,
+          "50_to_100_ms": 15
+        },
+        "source_input_lag_ms": {
+          "count": 110,
+          "maximum_ms": "248.865611",
+          "minimum_ms": "6.513217",
+          "p50_nearest_rank_ms": "44.825274",
+          "p90_nearest_rank_ms": "192.755063",
+          "p95_nearest_rank_ms": "198.736912"
+        }
+      },
+      "independent_book_divergence": {
+        "cross_outcome_skew_ms": {
+          "count": 4,
+          "maximum_ms": "0",
+          "minimum_ms": "0",
+          "p50_nearest_rank_ms": "0",
+          "p90_nearest_rank_ms": "0",
+          "p95_nearest_rank_ms": "0"
+        },
+        "decisions": 4,
+        "freshness_violation_decisions": 0,
+        "market_outcomes_updated_in_source_frame": {
+          "0": 2,
+          "2": 2
+        },
+        "maximum_leg_age_ms": {
+          "count": 4,
+          "maximum_ms": "2182.037471",
+          "minimum_ms": "27.646556",
+          "p50_nearest_rank_ms": "41.200093",
+          "p90_nearest_rank_ms": "2182.037471",
+          "p95_nearest_rank_ms": "2182.037471"
+        },
+        "pair_books_available": {
+          "2": 4
+        },
+        "source_input_lag_bands": {
+          "0_to_25_ms": 1,
+          "25_to_50_ms": 3
+        },
+        "source_input_lag_ms": {
+          "count": 4,
+          "maximum_ms": "41.200093",
+          "minimum_ms": "22.374573",
+          "p50_nearest_rank_ms": "27.646556",
+          "p90_nearest_rank_ms": "41.200093",
+          "p95_nearest_rank_ms": "41.200093"
+        }
+      },
+      "source_timing_uncertainty": {
+        "cross_outcome_skew_ms": {
+          "count": 29,
+          "maximum_ms": "0",
+          "minimum_ms": "0",
+          "p50_nearest_rank_ms": "0",
+          "p90_nearest_rank_ms": "0",
+          "p95_nearest_rank_ms": "0"
+        },
+        "decisions": 29,
+        "freshness_violation_decisions": 23,
+        "market_outcomes_updated_in_source_frame": {
+          "0": 25,
+          "2": 4
+        },
+        "maximum_leg_age_ms": {
+          "count": 29,
+          "maximum_ms": "59213.444432",
+          "minimum_ms": "26.949781",
+          "p50_nearest_rank_ms": "28541.001853",
+          "p90_nearest_rank_ms": "58649.868904",
+          "p95_nearest_rank_ms": "58677.174366"
+        },
+        "pair_books_available": {
+          "2": 29
+        },
+        "source_input_lag_bands": {
+          "0_to_25_ms": 4,
+          "100_ms_to_limit": 9,
+          "25_to_50_ms": 9,
+          "50_to_100_ms": 7
+        },
+        "source_input_lag_ms": {
+          "count": 29,
+          "maximum_ms": "238.264332",
+          "minimum_ms": "0.89728",
+          "p50_nearest_rank_ms": "50.622585",
+          "p90_nearest_rank_ms": "220.232379",
+          "p95_nearest_rank_ms": "235.305823"
+        }
+      },
+      "stale_book": {
+        "cross_outcome_skew_ms": {
+          "count": 1334,
+          "maximum_ms": "0",
+          "minimum_ms": "0",
+          "p50_nearest_rank_ms": "0",
+          "p90_nearest_rank_ms": "0",
+          "p95_nearest_rank_ms": "0"
+        },
+        "decisions": 1334,
+        "freshness_violation_decisions": 1334,
+        "market_outcomes_updated_in_source_frame": {
+          "0": 1334
+        },
+        "maximum_leg_age_ms": {
+          "count": 1334,
+          "maximum_ms": "59748.958659",
+          "minimum_ms": "5056.947081",
+          "p50_nearest_rank_ms": "23327.532783",
+          "p90_nearest_rank_ms": "45993.871986",
+          "p95_nearest_rank_ms": "52656.916035"
+        },
+        "pair_books_available": {
+          "2": 1334
+        },
+        "source_input_lag_bands": {
+          "0_to_25_ms": 362,
+          "100_ms_to_limit": 389,
+          "25_to_50_ms": 415,
+          "50_to_100_ms": 168
+        },
+        "source_input_lag_ms": {
+          "count": 1334,
+          "maximum_ms": "248.812135",
+          "minimum_ms": "0.89728",
+          "p50_nearest_rank_ms": "41.200093",
+          "p90_nearest_rank_ms": "188.332259",
+          "p95_nearest_rank_ms": "220.232379"
+        }
+      }
+    },
+    "covered_decisions": 2120,
+    "frozen_input_lag_limit_ms": 250
+  },
+  "decisions_reproduced": 2120,
+  "decisions_uncovered_after_finalized_prefix": 0,
+  "difference_paths": {},
+  "history_lineage_variance": {
+    "runtime_history_reference_window_variance_decisions": 1547
+  },
+  "mismatches": {},
+  "passed_for_finalized_prefix": true,
+  "raw_records_replayed": 217712,
+  "scope": "Reproduces campaign source state, producer/reconstruction identity, quality reason, features, baseline, and source lineage for the sampled decisions whose source ordinals are in the captured finalized segment prefix. It also summarizes campaign window book-update intervals by market, excluding intervals that span a recorded gap or unsupported source frame. It does not infer omitted decisions, fills, or outcomes.",
+  "source_activity_by_market": [
+    {
+      "both_outcome_update_frames": 274,
+      "family_id": "98d4894c6568745322c8a053472cc907a1006702cc851d99db5a38c89805b413",
+      "frames_by_updated_outcome_count": {
+        "2": 274
+      },
+      "market_id": "559687",
+      "nonmonotonic_pair_intervals": 0,
+      "one_outcome_update_frames": 0,
+      "outcome_update_frames": {
+        "No": 274,
+        "Yes": 274
+      },
+      "outcome_update_intervals_censored_by_discontinuity": {
+        "No": 137,
+        "Yes": 137
+      },
+      "outcome_update_intervals_ms": {
+        "No": {
+          "bucket_counts": {
+            "0_to_250_ms": 24,
+            "10_to_30_s": 48,
+            "1_to_2_s": 6,
+            "250_to_500_ms": 4,
+            "2_to_5_s": 12,
+            "30_to_60_s": 22,
+            "500_ms_to_1_s": 0,
+            "5_to_10_s": 19,
+            "60_s_or_more": 1
+          },
+          "count": 136,
+          "nearest_rank_p50_bucket": "10_to_30_s",
+          "nearest_rank_p95_bucket": "30_to_60_s"
+        },
+        "Yes": {
+          "bucket_counts": {
+            "0_to_250_ms": 24,
+            "10_to_30_s": 48,
+            "1_to_2_s": 6,
+            "250_to_500_ms": 4,
+            "2_to_5_s": 12,
+            "30_to_60_s": 22,
+            "500_ms_to_1_s": 0,
+            "5_to_10_s": 19,
+            "60_s_or_more": 1
+          },
+          "count": 136,
+          "nearest_rank_p50_bucket": "10_to_30_s",
+          "nearest_rank_p95_bucket": "30_to_60_s"
+        }
+      },
+      "pair_touch_intervals_censored_by_discontinuity": 137,
+      "pair_touch_intervals_ms": {
+        "bucket_counts": {
+          "0_to_250_ms": 24,
+          "10_to_30_s": 48,
+          "1_to_2_s": 6,
+          "250_to_500_ms": 4,
+          "2_to_5_s": 12,
+          "30_to_60_s": 22,
+          "500_ms_to_1_s": 0,
+          "5_to_10_s": 19,
+          "60_s_or_more": 1
+        },
+        "count": 136,
+        "nearest_rank_p50_bucket": "10_to_30_s",
+        "nearest_rank_p95_bucket": "30_to_60_s"
+      },
+      "quality_reason_counts": {
+        "empty_ask_side": 270,
+        "source_timing_uncertainty": 4
+      },
+      "touched_book_update_frames": 274
+    },
+    {
+      "both_outcome_update_frames": 279,
+      "family_id": "8b36711cd4e70e5bf64b37d75b77301477c54da7327875e2d61618f839e71c6f",
+      "frames_by_updated_outcome_count": {
+        "2": 279
+      },
+      "market_id": "561251",
+      "nonmonotonic_pair_intervals": 0,
+      "one_outcome_update_frames": 0,
+      "outcome_update_frames": {
+        "No": 279,
+        "Yes": 279
+      },
+      "outcome_update_intervals_censored_by_discontinuity": {
+        "No": 137,
+        "Yes": 137
+      },
+      "outcome_update_intervals_ms": {
+        "No": {
+          "bucket_counts": {
+            "0_to_250_ms": 31,
+            "10_to_30_s": 36,
+            "1_to_2_s": 5,
+            "250_to_500_ms": 2,
+            "2_to_5_s": 19,
+            "30_to_60_s": 30,
+            "500_ms_to_1_s": 1,
+            "5_to_10_s": 17,
+            "60_s_or_more": 0
+          },
+          "count": 141,
+          "nearest_rank_p50_bucket": "5_to_10_s",
+          "nearest_rank_p95_bucket": "30_to_60_s"
+        },
+        "Yes": {
+          "bucket_counts": {
+            "0_to_250_ms": 31,
+            "10_to_30_s": 36,
+            "1_to_2_s": 5,
+            "250_to_500_ms": 2,
+            "2_to_5_s": 19,
+            "30_to_60_s": 30,
+            "500_ms_to_1_s": 1,
+            "5_to_10_s": 17,
+            "60_s_or_more": 0
+          },
+          "count": 141,
+          "nearest_rank_p50_bucket": "5_to_10_s",
+          "nearest_rank_p95_bucket": "30_to_60_s"
+        }
+      },
+      "pair_touch_intervals_censored_by_discontinuity": 137,
+      "pair_touch_intervals_ms": {
+        "bucket_counts": {
+          "0_to_250_ms": 31,
+          "10_to_30_s": 36,
+          "1_to_2_s": 5,
+          "250_to_500_ms": 2,
+          "2_to_5_s": 19,
+          "30_to_60_s": 30,
+          "500_ms_to_1_s": 1,
+          "5_to_10_s": 17,
+          "60_s_or_more": 0
+        },
+        "count": 141,
+        "nearest_rank_p50_bucket": "5_to_10_s",
+        "nearest_rank_p95_bucket": "30_to_60_s"
+      },
+      "quality_reason_counts": {
+        "empty_ask_side": 278,
+        "source_timing_uncertainty": 1
+      },
+      "touched_book_update_frames": 279
+    },
+    {
+      "both_outcome_update_frames": 7444,
+      "family_id": "000fa43ea94d31165feb5867ed32a0ea0de5cf0510e1e942219f81610403f738",
+      "frames_by_updated_outcome_count": {
+        "1": 6,
+        "2": 7444
+      },
+      "market_id": "562828",
+      "nonmonotonic_pair_intervals": 0,
+      "one_outcome_update_frames": 6,
+      "outcome_update_frames": {
+        "No": 7447,
+        "Yes": 7447
+      },
+      "outcome_update_intervals_censored_by_discontinuity": {
+        "No": 78,
+        "Yes": 78
+      },
+      "outcome_update_intervals_ms": {
+        "No": {
+          "bucket_counts": {
+            "0_to_250_ms": 4741,
+            "10_to_30_s": 7,
+            "1_to_2_s": 604,
+            "250_to_500_ms": 760,
+            "2_to_5_s": 585,
+            "30_to_60_s": 0,
+            "500_ms_to_1_s": 585,
+            "5_to_10_s": 86,
+            "60_s_or_more": 0
+          },
+          "count": 7368,
+          "nearest_rank_p50_bucket": "0_to_250_ms",
+          "nearest_rank_p95_bucket": "2_to_5_s"
+        },
+        "Yes": {
+          "bucket_counts": {
+            "0_to_250_ms": 4741,
+            "10_to_30_s": 7,
+            "1_to_2_s": 604,
+            "250_to_500_ms": 760,
+            "2_to_5_s": 585,
+            "30_to_60_s": 0,
+            "500_ms_to_1_s": 585,
+            "5_to_10_s": 86,
+            "60_s_or_more": 0
+          },
+          "count": 7368,
+          "nearest_rank_p50_bucket": "0_to_250_ms",
+          "nearest_rank_p95_bucket": "2_to_5_s"
+        }
+      },
+      "pair_touch_intervals_censored_by_discontinuity": 78,
+      "pair_touch_intervals_ms": {
+        "bucket_counts": {
+          "0_to_250_ms": 4744,
+          "10_to_30_s": 7,
+          "1_to_2_s": 604,
+          "250_to_500_ms": 760,
+          "2_to_5_s": 585,
+          "30_to_60_s": 0,
+          "500_ms_to_1_s": 585,
+          "5_to_10_s": 86,
+          "60_s_or_more": 0
+        },
+        "count": 7371,
+        "nearest_rank_p50_bucket": "0_to_250_ms",
+        "nearest_rank_p95_bucket": "2_to_5_s"
+      },
+      "quality_reason_counts": {
+        "eligible": 7445,
+        "independent_book_divergence": 5
+      },
+      "touched_book_update_frames": 7450
+    },
+    {
+      "both_outcome_update_frames": 351,
+      "family_id": "a0b812b3e921ef209d1fdbb3091a5ba65ce35bad579e1e305cdb0f243474a4c4",
+      "frames_by_updated_outcome_count": {
+        "1": 4,
+        "2": 351
+      },
+      "market_id": "5674900",
+      "nonmonotonic_pair_intervals": 0,
+      "one_outcome_update_frames": 4,
+      "outcome_update_frames": {
+        "No": 353,
+        "Yes": 353
+      },
+      "outcome_update_intervals_censored_by_discontinuity": {
+        "No": 137,
+        "Yes": 137
+      },
+      "outcome_update_intervals_ms": {
+        "No": {
+          "bucket_counts": {
+            "0_to_250_ms": 116,
+            "10_to_30_s": 16,
+            "1_to_2_s": 15,
+            "250_to_500_ms": 12,
+            "2_to_5_s": 11,
+            "30_to_60_s": 31,
+            "500_ms_to_1_s": 5,
+            "5_to_10_s": 9,
+            "60_s_or_more": 0
+          },
+          "count": 215,
+          "nearest_rank_p50_bucket": "0_to_250_ms",
+          "nearest_rank_p95_bucket": "30_to_60_s"
+        },
+        "Yes": {
+          "bucket_counts": {
+            "0_to_250_ms": 116,
+            "10_to_30_s": 16,
+            "1_to_2_s": 15,
+            "250_to_500_ms": 12,
+            "2_to_5_s": 11,
+            "30_to_60_s": 31,
+            "500_ms_to_1_s": 5,
+            "5_to_10_s": 9,
+            "60_s_or_more": 0
+          },
+          "count": 215,
+          "nearest_rank_p50_bucket": "0_to_250_ms",
+          "nearest_rank_p95_bucket": "30_to_60_s"
+        }
+      },
+      "pair_touch_intervals_censored_by_discontinuity": 137,
+      "pair_touch_intervals_ms": {
+        "bucket_counts": {
+          "0_to_250_ms": 118,
+          "10_to_30_s": 16,
+          "1_to_2_s": 15,
+          "250_to_500_ms": 12,
+          "2_to_5_s": 11,
+          "30_to_60_s": 31,
+          "500_ms_to_1_s": 5,
+          "5_to_10_s": 9,
+          "60_s_or_more": 0
+        },
+        "count": 217,
+        "nearest_rank_p50_bucket": "0_to_250_ms",
+        "nearest_rank_p95_bucket": "30_to_60_s"
+      },
+      "quality_reason_counts": {
+        "book_issue:top_divergence": 2,
+        "eligible": 351,
+        "source_timing_uncertainty": 2
+      },
+      "touched_book_update_frames": 355
+    },
+    {
+      "both_outcome_update_frames": 104,
+      "family_id": "a0b812b3e921ef209d1fdbb3091a5ba65ce35bad579e1e305cdb0f243474a4c4",
+      "frames_by_updated_outcome_count": {
+        "2": 104
+      },
+      "market_id": "5674902",
+      "nonmonotonic_pair_intervals": 0,
+      "one_outcome_update_frames": 0,
+      "outcome_update_frames": {
+        "No": 104,
+        "Yes": 104
+      },
+      "outcome_update_intervals_censored_by_discontinuity": {
+        "No": 23,
+        "Yes": 23
+      },
+      "outcome_update_intervals_ms": {
+        "No": {
+          "bucket_counts": {
+            "0_to_250_ms": 61,
+            "10_to_30_s": 2,
+            "1_to_2_s": 1,
+            "250_to_500_ms": 3,
+            "2_to_5_s": 5,
+            "30_to_60_s": 6,
+            "500_ms_to_1_s": 1,
+            "5_to_10_s": 1,
+            "60_s_or_more": 0
+          },
+          "count": 80,
+          "nearest_rank_p50_bucket": "0_to_250_ms",
+          "nearest_rank_p95_bucket": "30_to_60_s"
+        },
+        "Yes": {
+          "bucket_counts": {
+            "0_to_250_ms": 61,
+            "10_to_30_s": 2,
+            "1_to_2_s": 1,
+            "250_to_500_ms": 3,
+            "2_to_5_s": 5,
+            "30_to_60_s": 6,
+            "500_ms_to_1_s": 1,
+            "5_to_10_s": 1,
+            "60_s_or_more": 0
+          },
+          "count": 80,
+          "nearest_rank_p50_bucket": "0_to_250_ms",
+          "nearest_rank_p95_bucket": "30_to_60_s"
+        }
+      },
+      "pair_touch_intervals_censored_by_discontinuity": 23,
+      "pair_touch_intervals_ms": {
+        "bucket_counts": {
+          "0_to_250_ms": 61,
+          "10_to_30_s": 2,
+          "1_to_2_s": 1,
+          "250_to_500_ms": 3,
+          "2_to_5_s": 5,
+          "30_to_60_s": 6,
+          "500_ms_to_1_s": 1,
+          "5_to_10_s": 1,
+          "60_s_or_more": 0
+        },
+        "count": 80,
+        "nearest_rank_p50_bucket": "0_to_250_ms",
+        "nearest_rank_p95_bucket": "30_to_60_s"
+      },
+      "quality_reason_counts": {
+        "book_issue:top_divergence": 1,
+        "eligible": 103
+      },
+      "touched_book_update_frames": 104
+    },
+    {
+      "both_outcome_update_frames": 646,
+      "family_id": "a0b812b3e921ef209d1fdbb3091a5ba65ce35bad579e1e305cdb0f243474a4c4",
+      "frames_by_updated_outcome_count": {
+        "1": 2,
+        "2": 646
+      },
+      "market_id": "5674915",
+      "nonmonotonic_pair_intervals": 0,
+      "one_outcome_update_frames": 2,
+      "outcome_update_frames": {
+        "No": 647,
+        "Yes": 647
+      },
+      "outcome_update_intervals_censored_by_discontinuity": {
+        "No": 137,
+        "Yes": 137
+      },
+      "outcome_update_intervals_ms": {
+        "No": {
+          "bucket_counts": {
+            "0_to_250_ms": 352,
+            "10_to_30_s": 45,
+            "1_to_2_s": 10,
+            "250_to_500_ms": 23,
+            "2_to_5_s": 22,
+            "30_to_60_s": 18,
+            "500_ms_to_1_s": 14,
+            "5_to_10_s": 25,
+            "60_s_or_more": 0
+          },
+          "count": 509,
+          "nearest_rank_p50_bucket": "0_to_250_ms",
+          "nearest_rank_p95_bucket": "10_to_30_s"
+        },
+        "Yes": {
+          "bucket_counts": {
+            "0_to_250_ms": 352,
+            "10_to_30_s": 45,
+            "1_to_2_s": 10,
+            "250_to_500_ms": 23,
+            "2_to_5_s": 22,
+            "30_to_60_s": 18,
+            "500_ms_to_1_s": 14,
+            "5_to_10_s": 25,
+            "60_s_or_more": 0
+          },
+          "count": 509,
+          "nearest_rank_p50_bucket": "0_to_250_ms",
+          "nearest_rank_p95_bucket": "10_to_30_s"
+        }
+      },
+      "pair_touch_intervals_censored_by_discontinuity": 137,
+      "pair_touch_intervals_ms": {
+        "bucket_counts": {
+          "0_to_250_ms": 353,
+          "10_to_30_s": 45,
+          "1_to_2_s": 10,
+          "250_to_500_ms": 23,
+          "2_to_5_s": 22,
+          "30_to_60_s": 18,
+          "500_ms_to_1_s": 14,
+          "5_to_10_s": 25,
+          "60_s_or_more": 0
+        },
+        "count": 510,
+        "nearest_rank_p50_bucket": "0_to_250_ms",
+        "nearest_rank_p95_bucket": "10_to_30_s"
+      },
+      "quality_reason_counts": {
+        "book_issue:top_divergence": 5,
+        "eligible": 643
+      },
+      "touched_book_update_frames": 648
+    },
+    {
+      "both_outcome_update_frames": 11607,
+      "family_id": "a0b812b3e921ef209d1fdbb3091a5ba65ce35bad579e1e305cdb0f243474a4c4",
+      "frames_by_updated_outcome_count": {
+        "1": 30,
+        "2": 11607
+      },
+      "market_id": "5675021",
+      "nonmonotonic_pair_intervals": 0,
+      "one_outcome_update_frames": 30,
+      "outcome_update_frames": {
+        "No": 11622,
+        "Yes": 11622
+      },
+      "outcome_update_intervals_censored_by_discontinuity": {
+        "No": 138,
+        "Yes": 138
+      },
+      "outcome_update_intervals_ms": {
+        "No": {
+          "bucket_counts": {
+            "0_to_250_ms": 9695,
+            "10_to_30_s": 120,
+            "1_to_2_s": 415,
+            "250_to_500_ms": 408,
+            "2_to_5_s": 280,
+            "30_to_60_s": 29,
+            "500_ms_to_1_s": 426,
+            "5_to_10_s": 110,
+            "60_s_or_more": 0
+          },
+          "count": 11483,
+          "nearest_rank_p50_bucket": "0_to_250_ms",
+          "nearest_rank_p95_bucket": "1_to_2_s"
+        },
+        "Yes": {
+          "bucket_counts": {
+            "0_to_250_ms": 9695,
+            "10_to_30_s": 120,
+            "1_to_2_s": 415,
+            "250_to_500_ms": 408,
+            "2_to_5_s": 280,
+            "30_to_60_s": 29,
+            "500_ms_to_1_s": 426,
+            "5_to_10_s": 110,
+            "60_s_or_more": 0
+          },
+          "count": 11483,
+          "nearest_rank_p50_bucket": "0_to_250_ms",
+          "nearest_rank_p95_bucket": "1_to_2_s"
+        }
+      },
+      "pair_touch_intervals_censored_by_discontinuity": 138,
+      "pair_touch_intervals_ms": {
+        "bucket_counts": {
+          "0_to_250_ms": 9710,
+          "10_to_30_s": 120,
+          "1_to_2_s": 415,
+          "250_to_500_ms": 408,
+          "2_to_5_s": 280,
+          "30_to_60_s": 29,
+          "500_ms_to_1_s": 426,
+          "5_to_10_s": 110,
+          "60_s_or_more": 0
+        },
+        "count": 11498,
+        "nearest_rank_p50_bucket": "0_to_250_ms",
+        "nearest_rank_p95_bucket": "1_to_2_s"
+      },
+      "quality_reason_counts": {
+        "book_issue:top_divergence": 9,
+        "eligible": 11515,
+        "independent_book_divergence": 112,
+        "source_timing_uncertainty": 1
+      },
+      "touched_book_update_frames": 11637
+    },
+    {
+      "both_outcome_update_frames": 177,
+      "family_id": "3c9d6abe6f98f19e1a62a3018ae10cc929071e87e55f45996f2469bcd0f5c807",
+      "frames_by_updated_outcome_count": {
+        "2": 177
+      },
+      "market_id": "665205",
+      "nonmonotonic_pair_intervals": 0,
+      "one_outcome_update_frames": 0,
+      "outcome_update_frames": {
+        "No": 177,
+        "Yes": 177
+      },
+      "outcome_update_intervals_censored_by_discontinuity": {
+        "No": 137,
+        "Yes": 137
+      },
+      "outcome_update_intervals_ms": {
+        "No": {
+          "bucket_counts": {
+            "0_to_250_ms": 14,
+            "10_to_30_s": 13,
+            "1_to_2_s": 0,
+            "250_to_500_ms": 0,
+            "2_to_5_s": 0,
+            "30_to_60_s": 8,
+            "500_ms_to_1_s": 2,
+            "5_to_10_s": 2,
+            "60_s_or_more": 0
+          },
+          "count": 39,
+          "nearest_rank_p50_bucket": "10_to_30_s",
+          "nearest_rank_p95_bucket": "30_to_60_s"
+        },
+        "Yes": {
+          "bucket_counts": {
+            "0_to_250_ms": 14,
+            "10_to_30_s": 13,
+            "1_to_2_s": 0,
+            "250_to_500_ms": 0,
+            "2_to_5_s": 0,
+            "30_to_60_s": 8,
+            "500_ms_to_1_s": 2,
+            "5_to_10_s": 2,
+            "60_s_or_more": 0
+          },
+          "count": 39,
+          "nearest_rank_p50_bucket": "10_to_30_s",
+          "nearest_rank_p95_bucket": "30_to_60_s"
+        }
+      },
+      "pair_touch_intervals_censored_by_discontinuity": 137,
+      "pair_touch_intervals_ms": {
+        "bucket_counts": {
+          "0_to_250_ms": 14,
+          "10_to_30_s": 13,
+          "1_to_2_s": 0,
+          "250_to_500_ms": 0,
+          "2_to_5_s": 0,
+          "30_to_60_s": 8,
+          "500_ms_to_1_s": 2,
+          "5_to_10_s": 2,
+          "60_s_or_more": 0
+        },
+        "count": 39,
+        "nearest_rank_p50_bucket": "10_to_30_s",
+        "nearest_rank_p95_bucket": "30_to_60_s"
+      },
+      "quality_reason_counts": {
+        "eligible": 148,
+        "source_timing_uncertainty": 29
+      },
+      "touched_book_update_frames": 177
+    },
+    {
+      "both_outcome_update_frames": 1113,
+      "family_id": "5c6dbad73b2c74a595c0fe4a5eee9e92e167f8f2d5b53d1c0281fac0818d67e3",
+      "frames_by_updated_outcome_count": {
+        "2": 1113
+      },
+      "market_id": "679026",
+      "nonmonotonic_pair_intervals": 0,
+      "one_outcome_update_frames": 0,
+      "outcome_update_frames": {
+        "No": 1113,
+        "Yes": 1113
+      },
+      "outcome_update_intervals_censored_by_discontinuity": {
+        "No": 137,
+        "Yes": 137
+      },
+      "outcome_update_intervals_ms": {
+        "No": {
+          "bucket_counts": {
+            "0_to_250_ms": 220,
+            "10_to_30_s": 183,
+            "1_to_2_s": 69,
+            "250_to_500_ms": 44,
+            "2_to_5_s": 173,
+            "30_to_60_s": 21,
+            "500_ms_to_1_s": 48,
+            "5_to_10_s": 217,
+            "60_s_or_more": 0
+          },
+          "count": 975,
+          "nearest_rank_p50_bucket": "2_to_5_s",
+          "nearest_rank_p95_bucket": "10_to_30_s"
+        },
+        "Yes": {
+          "bucket_counts": {
+            "0_to_250_ms": 220,
+            "10_to_30_s": 183,
+            "1_to_2_s": 69,
+            "250_to_500_ms": 44,
+            "2_to_5_s": 173,
+            "30_to_60_s": 21,
+            "500_ms_to_1_s": 48,
+            "5_to_10_s": 217,
+            "60_s_or_more": 0
+          },
+          "count": 975,
+          "nearest_rank_p50_bucket": "2_to_5_s",
+          "nearest_rank_p95_bucket": "10_to_30_s"
+        }
+      },
+      "pair_touch_intervals_censored_by_discontinuity": 137,
+      "pair_touch_intervals_ms": {
+        "bucket_counts": {
+          "0_to_250_ms": 220,
+          "10_to_30_s": 183,
+          "1_to_2_s": 69,
+          "250_to_500_ms": 44,
+          "2_to_5_s": 173,
+          "30_to_60_s": 21,
+          "500_ms_to_1_s": 48,
+          "5_to_10_s": 217,
+          "60_s_or_more": 0
+        },
+        "count": 975,
+        "nearest_rank_p50_bucket": "2_to_5_s",
+        "nearest_rank_p95_bucket": "10_to_30_s"
+      },
+      "quality_reason_counts": {
+        "eligible": 1106,
+        "independent_book_divergence": 5,
+        "source_timing_uncertainty": 2
+      },
+      "touched_book_update_frames": 1113
+    },
+    {
+      "both_outcome_update_frames": 743,
+      "family_id": "5c6dbad73b2c74a595c0fe4a5eee9e92e167f8f2d5b53d1c0281fac0818d67e3",
+      "frames_by_updated_outcome_count": {
+        "2": 743
+      },
+      "market_id": "679055",
+      "nonmonotonic_pair_intervals": 0,
+      "one_outcome_update_frames": 0,
+      "outcome_update_frames": {
+        "No": 743,
+        "Yes": 743
+      },
+      "outcome_update_intervals_censored_by_discontinuity": {
+        "No": 35,
+        "Yes": 35
+      },
+      "outcome_update_intervals_ms": {
+        "No": {
+          "bucket_counts": {
+            "0_to_250_ms": 274,
+            "10_to_30_s": 23,
+            "1_to_2_s": 76,
+            "250_to_500_ms": 22,
+            "2_to_5_s": 149,
+            "30_to_60_s": 4,
+            "500_ms_to_1_s": 42,
+            "5_to_10_s": 117,
+            "60_s_or_more": 0
+          },
+          "count": 707,
+          "nearest_rank_p50_bucket": "1_to_2_s",
+          "nearest_rank_p95_bucket": "5_to_10_s"
+        },
+        "Yes": {
+          "bucket_counts": {
+            "0_to_250_ms": 274,
+            "10_to_30_s": 23,
+            "1_to_2_s": 76,
+            "250_to_500_ms": 22,
+            "2_to_5_s": 149,
+            "30_to_60_s": 4,
+            "500_ms_to_1_s": 42,
+            "5_to_10_s": 117,
+            "60_s_or_more": 0
+          },
+          "count": 707,
+          "nearest_rank_p50_bucket": "1_to_2_s",
+          "nearest_rank_p95_bucket": "5_to_10_s"
+        }
+      },
+      "pair_touch_intervals_censored_by_discontinuity": 35,
+      "pair_touch_intervals_ms": {
+        "bucket_counts": {
+          "0_to_250_ms": 274,
+          "10_to_30_s": 23,
+          "1_to_2_s": 76,
+          "250_to_500_ms": 22,
+          "2_to_5_s": 149,
+          "30_to_60_s": 4,
+          "500_ms_to_1_s": 42,
+          "5_to_10_s": 117,
+          "60_s_or_more": 0
+        },
+        "count": 707,
+        "nearest_rank_p50_bucket": "1_to_2_s",
+        "nearest_rank_p95_bucket": "5_to_10_s"
+      },
+      "quality_reason_counts": {
+        "eligible": 719,
+        "independent_book_divergence": 23,
+        "source_timing_uncertainty": 1
+      },
+      "touched_book_update_frames": 743
+    }
+  ],
+  "source_activity_discontinuities_in_campaign_window": {
+    "book_resynchronization": 138
+  },
+  "source_bytes": 420222882,
+  "source_gap_reasons_in_campaign_window": {
+    "book_resynchronization": 138
+  },
+  "source_last_finalized_ordinal": 217712,
+  "source_lineage_references_expected": 12387,
+  "source_lineage_references_resolved": 12387,
+  "source_lineage_references_unresolved": 0,
+  "source_manifest_sha256": "1c9ead2717035a8b9fa22ac12fa4f8ec2c10728cb8fcf2cea9df72453562f319",
+  "source_root": "/home/charlie/midas-reality/data/recordings/reality",
+  "source_segments": 1806,
+  "verified_source_checkpoints": 1802
+}

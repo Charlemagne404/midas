@@ -1,0 +1,118 @@
+{
+  "schema_version": 1,
+  "benchmark_id": "VERITAS-M2-SHADOW-TOP-CACHE-BENCH-001",
+  "experiment_id": "VERITAS-M2-SHADOW-TOP-CACHE-001",
+  "captured_at_utc": "2026-10-16T16:38:45Z",
+  "status": "bounded_canary_complete",
+  "purpose": "Compare the branch-local maintained top-of-book cache with the prior shadow consume implementation on the same sequential finalized-source windows.",
+  "campaign": {
+    "path": "/home/charlie/midas-reality/data/research/reality/forward/mission2/campaign.json",
+    "sha256": "aa8acb2b46823c1a1e3ac5d01a57dde917746c2c7471098ae2a4598875e322f5",
+    "modified": false,
+    "actual_orders_submitted": 0
+  },
+  "runtime_snapshot": {
+    "path": "data/veritas-canaries/shadow-reader-catchup-001/after-runtime.json",
+    "runtime_sha256": "82a71b6db289238d1ac23965efee424dd5983a97f13817704d8590fb39631478",
+    "initial_cursor": {
+      "segment_ordinal": 529092,
+      "offset": 678
+    }
+  },
+  "source_results": {
+    "baseline_run": {
+      "run_id": "shadow-resumable-004",
+      "result_001_path": "data/veritas-canaries/shadow-resumable-004/result-001.json",
+      "result_001_sha256": "238e24c26941121524054661b660d9a68baf6fbd3213513b4e927de8eea045b5",
+      "result_002_path": "data/veritas-canaries/shadow-resumable-004/result-002.json",
+      "result_002_sha256": "2481f7c37c991a8251b8cab19c06d5132e731be2c8144962d28de7ca2ea8dc47"
+    },
+    "current_run": {
+      "run_id": "shadow-resumable-005",
+      "result_001_path": "data/veritas-canaries/shadow-resumable-005/result-001.json",
+      "result_001_sha256": "e7598e83a542cb831bd894ac200d73910af1aaa87b53c9413221dc44dfe08272",
+      "result_002_path": "data/veritas-canaries/shadow-resumable-005/result-002.json",
+      "result_002_sha256": "80168dd673e61aec2f6a490406b0f744a93bf96a0005180b29bed76ee46aa942",
+      "work_manifest_path": "data/veritas-canaries/shadow-resumable-005/work-manifest.json"
+    }
+  },
+  "resource_limits": {
+    "cpu_quota_percent": 5,
+    "memory_max_bytes": 402653184,
+    "memory_swap_max_bytes": 0,
+    "wall_timeout_seconds": 300,
+    "segments_per_invocation": 1,
+    "isolated_journal": true,
+    "network_client_opened": false,
+    "order_api_opened": false
+  },
+  "segments": [
+    {
+      "index": 1,
+      "source_ordinals": [529093, 529528],
+      "records": 436,
+      "frames": 379,
+      "decisions": 8,
+      "observations": 40,
+      "followups": {"censored": 32},
+      "engine_state_sha256": "b8cf155916b39acee36421d776a71408ae7dfe36822417b5772d61643c49bba6",
+      "context_state_sha256": "8bcda5823cdb8aff498619e39045d93329f7c412d6aa80da55c5abef9bd6dded",
+      "research_semantics_sha256": "91ae7c32fe49fa1af92da3da2cd9f4d514c27b67aa3b43dceedc3ab723815b9e",
+      "journal_tail_sha256": "e2b69847ade0ca08b67ef6a6910203ddbb0030697ca6f2b4831e4458f6daba78",
+      "semantic_equal": true,
+      "baseline": {"wall_seconds": 120.00718678289559, "cpu_seconds": 5.999949516999999, "max_rss_bytes": 189353984},
+      "current": {"wall_seconds": 119.60200795496348, "cpu_seconds": 5.977172027, "max_rss_bytes": 190623744}
+    },
+    {
+      "index": 2,
+      "source_ordinals": [529529, 529712],
+      "records": 184,
+      "frames": 175,
+      "decisions": 8,
+      "observations": 48,
+      "followups": {"censored": 62},
+      "engine_state_sha256": "838867e4383c2bea33acfd909f1487f754b89638389dde953d542b53fd7ed899",
+      "context_state_sha256": "636b09f8031c6f7b48083a117edd80e0ae3591a791e388fa6d1b3fe0e421dea0",
+      "research_semantics_sha256": "4b908cbd702dd68a72333051b489c6df18cb36b121596f8cf07cb1d3469a8de1",
+      "journal_tail_sha256": "24d8d2fb8d229e9cd46f8ee8afe84325e1e0fe739651d5c3b366c966e8823e6e",
+      "semantic_equal": true,
+      "baseline": {"wall_seconds": 76.11287199205253, "cpu_seconds": 3.803824355999999, "max_rss_bytes": 187314176},
+      "current": {"wall_seconds": 67.1133053379599, "cpu_seconds": 3.3538798300000003, "max_rss_bytes": 188022784}
+    }
+  ],
+  "aggregate": {
+    "baseline_wall_seconds": 196.12005877494812,
+    "current_wall_seconds": 186.7153132929234,
+    "wall_reduction_percent": 4.795,
+    "baseline_cpu_seconds": 9.803773872999998,
+    "current_cpu_seconds": 9.331051857,
+    "cpu_reduction_percent": 4.821,
+    "baseline_peak_rss_bytes": 189353984,
+    "current_peak_rss_bytes": 190623744,
+    "peak_rss_increase_bytes": 1269760,
+    "all_recorded_semantic_hashes_equal": true
+  },
+  "implementation": {
+    "reconstruction_sha256": "ce1aff48300b01a513c49fbf449fadc87e27532a07e1a609fea50f876651bb65",
+    "shadow_source_sha256": "93b9cf24e8fa96c78f57b7d93ab8471c5380851b7a208edf51d5feb1b3f08fb1",
+    "shadow_worker_sha256": "abdaf5cb7c58d2270c10c569967f54928934a0adfe8d1ae630a8c78c89722103",
+    "implementation_hashes_checked_against_frozen_campaign": false,
+    "campaign_identity_and_runtime_snapshot_verified": true
+  },
+  "verification": {
+    "targeted_tests": "49 passed in 5.54 seconds",
+    "ruff_check": "passed",
+    "ruff_format_check": "passed",
+    "strict_mypy": "passed",
+    "git_diff_check": "passed",
+    "full_mission_regression": "not run"
+  },
+  "interpretation": "The two sequential windows preserve engine, context, research, and journal semantics. The aggregate CPU reduction is modest and based on one paired two-segment pass; one segment showed no measurable gain and the second was faster. Treat this as a preliminary branch-local optimization, not proof of live worker catch-up or economic improvement.",
+  "limitations": [
+    "Only two adjacent source segments and one pass per implementation were measured.",
+    "The 5% CPU quota makes wall time quota-sensitive; CPU time is the stronger comparison here.",
+    "The current runner explicitly allowed branch code; implementation hashes were not compared with the frozen campaign's implementation hashes.",
+    "No live collector, shadow worker, campaign journal, source recording, network client, or order API was changed or opened for writing.",
+    "No economic finding, strategy improvement, fill, or profitability claim follows from this engineering benchmark."
+  ]
+}

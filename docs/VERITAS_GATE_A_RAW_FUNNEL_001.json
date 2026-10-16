@@ -1,0 +1,1535 @@
+{
+  "active_segment_read": false,
+  "analysis_version": "veritas-raw-opportunity-funnel-v1",
+  "campaign_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
+  "campaign_window_ns": {
+    "end_exclusive": 1793221678642600351,
+    "start": 1792012078642600351
+  },
+  "captured_at_utc": "2026-10-14T23:08:03.112457+00:00",
+  "captured_ns": 1792019283112456402,
+  "family_five_minute_blocks": [
+    {
+      "block_start_ns": 1792011900000000000,
+      "counts": {
+        "quality_valid_states": 100,
+        "quantity_depth_complete_states": 100,
+        "touched_market_frame_states": 100
+      },
+      "family_id": "000fa43ea94d31165feb5867ed32a0ea0de5cf0510e1e942219f81610403f738"
+    },
+    {
+      "block_start_ns": 1792012200000000000,
+      "counts": {
+        "quality_valid_states": 390,
+        "quantity_depth_complete_states": 390,
+        "touched_market_frame_states": 390
+      },
+      "family_id": "000fa43ea94d31165feb5867ed32a0ea0de5cf0510e1e942219f81610403f738"
+    },
+    {
+      "block_start_ns": 1792015800000000000,
+      "counts": {
+        "quality_valid_states": 279,
+        "quantity_depth_complete_states": 279,
+        "touched_market_frame_states": 279
+      },
+      "family_id": "000fa43ea94d31165feb5867ed32a0ea0de5cf0510e1e942219f81610403f738"
+    },
+    {
+      "block_start_ns": 1792016100000000000,
+      "counts": {
+        "quality_valid_states": 355,
+        "quantity_depth_complete_states": 355,
+        "touched_market_frame_states": 355
+      },
+      "family_id": "000fa43ea94d31165feb5867ed32a0ea0de5cf0510e1e942219f81610403f738"
+    },
+    {
+      "block_start_ns": 1792016400000000000,
+      "counts": {
+        "quality_valid_states": 463,
+        "quantity_depth_complete_states": 463,
+        "touched_market_frame_states": 463
+      },
+      "family_id": "000fa43ea94d31165feb5867ed32a0ea0de5cf0510e1e942219f81610403f738"
+    },
+    {
+      "block_start_ns": 1792016700000000000,
+      "counts": {
+        "quality_valid_states": 386,
+        "quantity_depth_complete_states": 386,
+        "touched_market_frame_states": 386
+      },
+      "family_id": "000fa43ea94d31165feb5867ed32a0ea0de5cf0510e1e942219f81610403f738"
+    },
+    {
+      "block_start_ns": 1792017000000000000,
+      "counts": {
+        "quality_valid_states": 502,
+        "quantity_depth_complete_states": 502,
+        "touched_market_frame_states": 502
+      },
+      "family_id": "000fa43ea94d31165feb5867ed32a0ea0de5cf0510e1e942219f81610403f738"
+    },
+    {
+      "block_start_ns": 1792017300000000000,
+      "counts": {
+        "quality_valid_states": 369,
+        "quantity_depth_complete_states": 369,
+        "touched_market_frame_states": 369
+      },
+      "family_id": "000fa43ea94d31165feb5867ed32a0ea0de5cf0510e1e942219f81610403f738"
+    },
+    {
+      "block_start_ns": 1792017600000000000,
+      "counts": {
+        "quality_valid_states": 512,
+        "quantity_depth_complete_states": 512,
+        "touched_market_frame_states": 512
+      },
+      "family_id": "000fa43ea94d31165feb5867ed32a0ea0de5cf0510e1e942219f81610403f738"
+    },
+    {
+      "block_start_ns": 1792017900000000000,
+      "counts": {
+        "quality_valid_states": 385,
+        "quantity_depth_complete_states": 385,
+        "touched_market_frame_states": 385
+      },
+      "family_id": "000fa43ea94d31165feb5867ed32a0ea0de5cf0510e1e942219f81610403f738"
+    },
+    {
+      "block_start_ns": 1792018200000000000,
+      "counts": {
+        "quality_valid_states": 609,
+        "quantity_depth_complete_states": 609,
+        "touched_market_frame_states": 609
+      },
+      "family_id": "000fa43ea94d31165feb5867ed32a0ea0de5cf0510e1e942219f81610403f738"
+    },
+    {
+      "block_start_ns": 1792018500000000000,
+      "counts": {
+        "quality_valid_states": 401,
+        "quantity_depth_complete_states": 401,
+        "touched_market_frame_states": 401
+      },
+      "family_id": "000fa43ea94d31165feb5867ed32a0ea0de5cf0510e1e942219f81610403f738"
+    },
+    {
+      "block_start_ns": 1792018800000000000,
+      "counts": {
+        "quality_valid_states": 555,
+        "quantity_depth_complete_states": 555,
+        "touched_market_frame_states": 555
+      },
+      "family_id": "000fa43ea94d31165feb5867ed32a0ea0de5cf0510e1e942219f81610403f738"
+    },
+    {
+      "block_start_ns": 1792019100000000000,
+      "counts": {
+        "quality_valid_states": 76,
+        "quantity_depth_complete_states": 76,
+        "touched_market_frame_states": 76
+      },
+      "family_id": "000fa43ea94d31165feb5867ed32a0ea0de5cf0510e1e942219f81610403f738"
+    },
+    {
+      "block_start_ns": 1792011900000000000,
+      "counts": {
+        "quality_valid_states": 3,
+        "quantity_depth_complete_states": 3,
+        "touched_market_frame_states": 3
+      },
+      "family_id": "3c9d6abe6f98f19e1a62a3018ae10cc929071e87e55f45996f2469bcd0f5c807"
+    },
+    {
+      "block_start_ns": 1792012200000000000,
+      "counts": {
+        "quality_valid_states": 6,
+        "quantity_depth_complete_states": 6,
+        "touched_market_frame_states": 6
+      },
+      "family_id": "3c9d6abe6f98f19e1a62a3018ae10cc929071e87e55f45996f2469bcd0f5c807"
+    },
+    {
+      "block_start_ns": 1792012500000000000,
+      "counts": {
+        "quality_valid_states": 5,
+        "quantity_depth_complete_states": 5,
+        "touched_market_frame_states": 5
+      },
+      "family_id": "3c9d6abe6f98f19e1a62a3018ae10cc929071e87e55f45996f2469bcd0f5c807"
+    },
+    {
+      "block_start_ns": 1792012800000000000,
+      "counts": {
+        "quality_valid_states": 8,
+        "quantity_depth_complete_states": 8,
+        "touched_market_frame_states": 8
+      },
+      "family_id": "3c9d6abe6f98f19e1a62a3018ae10cc929071e87e55f45996f2469bcd0f5c807"
+    },
+    {
+      "block_start_ns": 1792013100000000000,
+      "counts": {
+        "quality_valid_states": 7,
+        "quantity_depth_complete_states": 7,
+        "touched_market_frame_states": 7
+      },
+      "family_id": "3c9d6abe6f98f19e1a62a3018ae10cc929071e87e55f45996f2469bcd0f5c807"
+    },
+    {
+      "block_start_ns": 1792013400000000000,
+      "counts": {
+        "quality_valid_states": 6,
+        "quantity_depth_complete_states": 6,
+        "touched_market_frame_states": 6
+      },
+      "family_id": "3c9d6abe6f98f19e1a62a3018ae10cc929071e87e55f45996f2469bcd0f5c807"
+    },
+    {
+      "block_start_ns": 1792013700000000000,
+      "counts": {
+        "quality_valid_states": 7,
+        "quantity_depth_complete_states": 7,
+        "touched_market_frame_states": 7
+      },
+      "family_id": "3c9d6abe6f98f19e1a62a3018ae10cc929071e87e55f45996f2469bcd0f5c807"
+    },
+    {
+      "block_start_ns": 1792014000000000000,
+      "counts": {
+        "quality_valid_states": 4,
+        "quantity_depth_complete_states": 4,
+        "touched_market_frame_states": 4
+      },
+      "family_id": "3c9d6abe6f98f19e1a62a3018ae10cc929071e87e55f45996f2469bcd0f5c807"
+    },
+    {
+      "block_start_ns": 1792014300000000000,
+      "counts": {
+        "quality_invalid_states": 1,
+        "quality_valid_states": 7,
+        "quantity_depth_complete_states": 7,
+        "touched_market_frame_states": 8
+      },
+      "family_id": "3c9d6abe6f98f19e1a62a3018ae10cc929071e87e55f45996f2469bcd0f5c807"
+    },
+    {
+      "block_start_ns": 1792014600000000000,
+      "counts": {
+        "quality_invalid_states": 5,
+        "touched_market_frame_states": 5
+      },
+      "family_id": "3c9d6abe6f98f19e1a62a3018ae10cc929071e87e55f45996f2469bcd0f5c807"
+    },
+    {
+      "block_start_ns": 1792014900000000000,
+      "counts": {
+        "quality_invalid_states": 5,
+        "quality_valid_states": 2,
+        "quantity_depth_complete_states": 2,
+        "touched_market_frame_states": 7
+      },
+      "family_id": "3c9d6abe6f98f19e1a62a3018ae10cc929071e87e55f45996f2469bcd0f5c807"
+    },
+    {
+      "block_start_ns": 1792015200000000000,
+      "counts": {
+        "quality_invalid_states": 5,
+        "touched_market_frame_states": 5
+      },
+      "family_id": "3c9d6abe6f98f19e1a62a3018ae10cc929071e87e55f45996f2469bcd0f5c807"
+    },
+    {
+      "block_start_ns": 1792015500000000000,
+      "counts": {
+        "quality_invalid_states": 4,
+        "quality_valid_states": 3,
+        "quantity_depth_complete_states": 3,
+        "touched_market_frame_states": 7
+      },
+      "family_id": "3c9d6abe6f98f19e1a62a3018ae10cc929071e87e55f45996f2469bcd0f5c807"
+    },
+    {
+      "block_start_ns": 1792015800000000000,
+      "counts": {
+        "quality_invalid_states": 1,
+        "quality_valid_states": 8,
+        "quantity_depth_complete_states": 8,
+        "touched_market_frame_states": 9
+      },
+      "family_id": "3c9d6abe6f98f19e1a62a3018ae10cc929071e87e55f45996f2469bcd0f5c807"
+    },
+    {
+      "block_start_ns": 1792016100000000000,
+      "counts": {
+        "quality_invalid_states": 5,
+        "touched_market_frame_states": 5
+      },
+      "family_id": "3c9d6abe6f98f19e1a62a3018ae10cc929071e87e55f45996f2469bcd0f5c807"
+    },
+    {
+      "block_start_ns": 1792016400000000000,
+      "counts": {
+        "quality_invalid_states": 3,
+        "quality_valid_states": 5,
+        "quantity_depth_complete_states": 5,
+        "touched_market_frame_states": 8
+      },
+      "family_id": "3c9d6abe6f98f19e1a62a3018ae10cc929071e87e55f45996f2469bcd0f5c807"
+    },
+    {
+      "block_start_ns": 1792016700000000000,
+      "counts": {
+        "quality_valid_states": 5,
+        "quantity_depth_complete_states": 5,
+        "touched_market_frame_states": 5
+      },
+      "family_id": "3c9d6abe6f98f19e1a62a3018ae10cc929071e87e55f45996f2469bcd0f5c807"
+    },
+    {
+      "block_start_ns": 1792017000000000000,
+      "counts": {
+        "quality_valid_states": 7,
+        "quantity_depth_complete_states": 7,
+        "touched_market_frame_states": 7
+      },
+      "family_id": "3c9d6abe6f98f19e1a62a3018ae10cc929071e87e55f45996f2469bcd0f5c807"
+    },
+    {
+      "block_start_ns": 1792017300000000000,
+      "counts": {
+        "quality_valid_states": 4,
+        "quantity_depth_complete_states": 4,
+        "touched_market_frame_states": 4
+      },
+      "family_id": "3c9d6abe6f98f19e1a62a3018ae10cc929071e87e55f45996f2469bcd0f5c807"
+    },
+    {
+      "block_start_ns": 1792017600000000000,
+      "counts": {
+        "quality_valid_states": 11,
+        "quantity_depth_complete_states": 11,
+        "touched_market_frame_states": 11
+      },
+      "family_id": "3c9d6abe6f98f19e1a62a3018ae10cc929071e87e55f45996f2469bcd0f5c807"
+    },
+    {
+      "block_start_ns": 1792017900000000000,
+      "counts": {
+        "quality_valid_states": 5,
+        "quantity_depth_complete_states": 5,
+        "touched_market_frame_states": 5
+      },
+      "family_id": "3c9d6abe6f98f19e1a62a3018ae10cc929071e87e55f45996f2469bcd0f5c807"
+    },
+    {
+      "block_start_ns": 1792018200000000000,
+      "counts": {
+        "quality_valid_states": 7,
+        "quantity_depth_complete_states": 7,
+        "touched_market_frame_states": 7
+      },
+      "family_id": "3c9d6abe6f98f19e1a62a3018ae10cc929071e87e55f45996f2469bcd0f5c807"
+    },
+    {
+      "block_start_ns": 1792018500000000000,
+      "counts": {
+        "quality_valid_states": 6,
+        "quantity_depth_complete_states": 6,
+        "touched_market_frame_states": 6
+      },
+      "family_id": "3c9d6abe6f98f19e1a62a3018ae10cc929071e87e55f45996f2469bcd0f5c807"
+    },
+    {
+      "block_start_ns": 1792018800000000000,
+      "counts": {
+        "quality_valid_states": 7,
+        "quantity_depth_complete_states": 7,
+        "touched_market_frame_states": 7
+      },
+      "family_id": "3c9d6abe6f98f19e1a62a3018ae10cc929071e87e55f45996f2469bcd0f5c807"
+    },
+    {
+      "block_start_ns": 1792019100000000000,
+      "counts": {
+        "quality_valid_states": 1,
+        "quantity_depth_complete_states": 1,
+        "touched_market_frame_states": 1
+      },
+      "family_id": "3c9d6abe6f98f19e1a62a3018ae10cc929071e87e55f45996f2469bcd0f5c807"
+    },
+    {
+      "block_start_ns": 1792011900000000000,
+      "counts": {
+        "quality_valid_states": 15,
+        "quantity_depth_complete_states": 15,
+        "touched_market_frame_states": 15
+      },
+      "family_id": "5c6dbad73b2c74a595c0fe4a5eee9e92e167f8f2d5b53d1c0281fac0818d67e3"
+    },
+    {
+      "block_start_ns": 1792012200000000000,
+      "counts": {
+        "quality_valid_states": 50,
+        "quantity_depth_complete_states": 50,
+        "touched_market_frame_states": 50
+      },
+      "family_id": "5c6dbad73b2c74a595c0fe4a5eee9e92e167f8f2d5b53d1c0281fac0818d67e3"
+    },
+    {
+      "block_start_ns": 1792012500000000000,
+      "counts": {
+        "quality_valid_states": 40,
+        "quantity_depth_complete_states": 40,
+        "touched_market_frame_states": 40
+      },
+      "family_id": "5c6dbad73b2c74a595c0fe4a5eee9e92e167f8f2d5b53d1c0281fac0818d67e3"
+    },
+    {
+      "block_start_ns": 1792012800000000000,
+      "counts": {
+        "quality_valid_states": 38,
+        "quantity_depth_complete_states": 38,
+        "touched_market_frame_states": 38
+      },
+      "family_id": "5c6dbad73b2c74a595c0fe4a5eee9e92e167f8f2d5b53d1c0281fac0818d67e3"
+    },
+    {
+      "block_start_ns": 1792013100000000000,
+      "counts": {
+        "quality_valid_states": 47,
+        "quantity_depth_complete_states": 47,
+        "touched_market_frame_states": 47
+      },
+      "family_id": "5c6dbad73b2c74a595c0fe4a5eee9e92e167f8f2d5b53d1c0281fac0818d67e3"
+    },
+    {
+      "block_start_ns": 1792013400000000000,
+      "counts": {
+        "quality_valid_states": 34,
+        "quantity_depth_complete_states": 34,
+        "touched_market_frame_states": 34
+      },
+      "family_id": "5c6dbad73b2c74a595c0fe4a5eee9e92e167f8f2d5b53d1c0281fac0818d67e3"
+    },
+    {
+      "block_start_ns": 1792013700000000000,
+      "counts": {
+        "quality_valid_states": 96,
+        "quantity_depth_complete_states": 96,
+        "touched_market_frame_states": 96
+      },
+      "family_id": "5c6dbad73b2c74a595c0fe4a5eee9e92e167f8f2d5b53d1c0281fac0818d67e3"
+    },
+    {
+      "block_start_ns": 1792014000000000000,
+      "counts": {
+        "quality_invalid_states": 11,
+        "quality_valid_states": 177,
+        "quantity_depth_complete_states": 177,
+        "touched_market_frame_states": 188
+      },
+      "family_id": "5c6dbad73b2c74a595c0fe4a5eee9e92e167f8f2d5b53d1c0281fac0818d67e3"
+    },
+    {
+      "block_start_ns": 1792014300000000000,
+      "counts": {
+        "quality_invalid_states": 4,
+        "quality_valid_states": 120,
+        "quantity_depth_complete_states": 120,
+        "touched_market_frame_states": 124
+      },
+      "family_id": "5c6dbad73b2c74a595c0fe4a5eee9e92e167f8f2d5b53d1c0281fac0818d67e3"
+    },
+    {
+      "block_start_ns": 1792014600000000000,
+      "counts": {
+        "quality_invalid_states": 9,
+        "quality_valid_states": 179,
+        "quantity_depth_complete_states": 179,
+        "touched_market_frame_states": 188
+      },
+      "family_id": "5c6dbad73b2c74a595c0fe4a5eee9e92e167f8f2d5b53d1c0281fac0818d67e3"
+    },
+    {
+      "block_start_ns": 1792014900000000000,
+      "counts": {
+        "quality_valid_states": 135,
+        "quantity_depth_complete_states": 135,
+        "touched_market_frame_states": 135
+      },
+      "family_id": "5c6dbad73b2c74a595c0fe4a5eee9e92e167f8f2d5b53d1c0281fac0818d67e3"
+    },
+    {
+      "block_start_ns": 1792015200000000000,
+      "counts": {
+        "quality_valid_states": 143,
+        "quantity_depth_complete_states": 143,
+        "touched_market_frame_states": 143
+      },
+      "family_id": "5c6dbad73b2c74a595c0fe4a5eee9e92e167f8f2d5b53d1c0281fac0818d67e3"
+    },
+    {
+      "block_start_ns": 1792015500000000000,
+      "counts": {
+        "quality_valid_states": 113,
+        "quantity_depth_complete_states": 113,
+        "touched_market_frame_states": 113
+      },
+      "family_id": "5c6dbad73b2c74a595c0fe4a5eee9e92e167f8f2d5b53d1c0281fac0818d67e3"
+    },
+    {
+      "block_start_ns": 1792015800000000000,
+      "counts": {
+        "quality_invalid_states": 3,
+        "quality_valid_states": 101,
+        "quantity_depth_complete_states": 101,
+        "touched_market_frame_states": 104
+      },
+      "family_id": "5c6dbad73b2c74a595c0fe4a5eee9e92e167f8f2d5b53d1c0281fac0818d67e3"
+    },
+    {
+      "block_start_ns": 1792016100000000000,
+      "counts": {
+        "quality_valid_states": 41,
+        "quantity_depth_complete_states": 41,
+        "touched_market_frame_states": 41
+      },
+      "family_id": "5c6dbad73b2c74a595c0fe4a5eee9e92e167f8f2d5b53d1c0281fac0818d67e3"
+    },
+    {
+      "block_start_ns": 1792016400000000000,
+      "counts": {
+        "quality_valid_states": 37,
+        "quantity_depth_complete_states": 37,
+        "touched_market_frame_states": 37
+      },
+      "family_id": "5c6dbad73b2c74a595c0fe4a5eee9e92e167f8f2d5b53d1c0281fac0818d67e3"
+    },
+    {
+      "block_start_ns": 1792016700000000000,
+      "counts": {
+        "quality_valid_states": 58,
+        "quantity_depth_complete_states": 58,
+        "touched_market_frame_states": 58
+      },
+      "family_id": "5c6dbad73b2c74a595c0fe4a5eee9e92e167f8f2d5b53d1c0281fac0818d67e3"
+    },
+    {
+      "block_start_ns": 1792017000000000000,
+      "counts": {
+        "quality_valid_states": 33,
+        "quantity_depth_complete_states": 33,
+        "touched_market_frame_states": 33
+      },
+      "family_id": "5c6dbad73b2c74a595c0fe4a5eee9e92e167f8f2d5b53d1c0281fac0818d67e3"
+    },
+    {
+      "block_start_ns": 1792017300000000000,
+      "counts": {
+        "quality_valid_states": 40,
+        "quantity_depth_complete_states": 40,
+        "touched_market_frame_states": 40
+      },
+      "family_id": "5c6dbad73b2c74a595c0fe4a5eee9e92e167f8f2d5b53d1c0281fac0818d67e3"
+    },
+    {
+      "block_start_ns": 1792017600000000000,
+      "counts": {
+        "quality_valid_states": 47,
+        "quantity_depth_complete_states": 47,
+        "touched_market_frame_states": 47
+      },
+      "family_id": "5c6dbad73b2c74a595c0fe4a5eee9e92e167f8f2d5b53d1c0281fac0818d67e3"
+    },
+    {
+      "block_start_ns": 1792017900000000000,
+      "counts": {
+        "quality_valid_states": 33,
+        "quantity_depth_complete_states": 33,
+        "touched_market_frame_states": 33
+      },
+      "family_id": "5c6dbad73b2c74a595c0fe4a5eee9e92e167f8f2d5b53d1c0281fac0818d67e3"
+    },
+    {
+      "block_start_ns": 1792018200000000000,
+      "counts": {
+        "quality_valid_states": 29,
+        "quantity_depth_complete_states": 29,
+        "touched_market_frame_states": 29
+      },
+      "family_id": "5c6dbad73b2c74a595c0fe4a5eee9e92e167f8f2d5b53d1c0281fac0818d67e3"
+    },
+    {
+      "block_start_ns": 1792018500000000000,
+      "counts": {
+        "quality_valid_states": 41,
+        "quantity_depth_complete_states": 41,
+        "touched_market_frame_states": 41
+      },
+      "family_id": "5c6dbad73b2c74a595c0fe4a5eee9e92e167f8f2d5b53d1c0281fac0818d67e3"
+    },
+    {
+      "block_start_ns": 1792018800000000000,
+      "counts": {
+        "quality_valid_states": 32,
+        "quantity_depth_complete_states": 32,
+        "touched_market_frame_states": 32
+      },
+      "family_id": "5c6dbad73b2c74a595c0fe4a5eee9e92e167f8f2d5b53d1c0281fac0818d67e3"
+    },
+    {
+      "block_start_ns": 1792019100000000000,
+      "counts": {
+        "quality_valid_states": 14,
+        "quantity_depth_complete_states": 14,
+        "touched_market_frame_states": 14
+      },
+      "family_id": "5c6dbad73b2c74a595c0fe4a5eee9e92e167f8f2d5b53d1c0281fac0818d67e3"
+    },
+    {
+      "block_start_ns": 1792011900000000000,
+      "counts": {
+        "quality_invalid_states": 6,
+        "touched_market_frame_states": 6
+      },
+      "family_id": "8b36711cd4e70e5bf64b37d75b77301477c54da7327875e2d61618f839e71c6f"
+    },
+    {
+      "block_start_ns": 1792012200000000000,
+      "counts": {
+        "quality_invalid_states": 12,
+        "touched_market_frame_states": 12
+      },
+      "family_id": "8b36711cd4e70e5bf64b37d75b77301477c54da7327875e2d61618f839e71c6f"
+    },
+    {
+      "block_start_ns": 1792012500000000000,
+      "counts": {
+        "quality_invalid_states": 11,
+        "touched_market_frame_states": 11
+      },
+      "family_id": "8b36711cd4e70e5bf64b37d75b77301477c54da7327875e2d61618f839e71c6f"
+    },
+    {
+      "block_start_ns": 1792012800000000000,
+      "counts": {
+        "quality_invalid_states": 11,
+        "touched_market_frame_states": 11
+      },
+      "family_id": "8b36711cd4e70e5bf64b37d75b77301477c54da7327875e2d61618f839e71c6f"
+    },
+    {
+      "block_start_ns": 1792013100000000000,
+      "counts": {
+        "quality_invalid_states": 8,
+        "touched_market_frame_states": 8
+      },
+      "family_id": "8b36711cd4e70e5bf64b37d75b77301477c54da7327875e2d61618f839e71c6f"
+    },
+    {
+      "block_start_ns": 1792013400000000000,
+      "counts": {
+        "quality_invalid_states": 11,
+        "touched_market_frame_states": 11
+      },
+      "family_id": "8b36711cd4e70e5bf64b37d75b77301477c54da7327875e2d61618f839e71c6f"
+    },
+    {
+      "block_start_ns": 1792013700000000000,
+      "counts": {
+        "quality_invalid_states": 8,
+        "touched_market_frame_states": 8
+      },
+      "family_id": "8b36711cd4e70e5bf64b37d75b77301477c54da7327875e2d61618f839e71c6f"
+    },
+    {
+      "block_start_ns": 1792014000000000000,
+      "counts": {
+        "quality_invalid_states": 8,
+        "touched_market_frame_states": 8
+      },
+      "family_id": "8b36711cd4e70e5bf64b37d75b77301477c54da7327875e2d61618f839e71c6f"
+    },
+    {
+      "block_start_ns": 1792014300000000000,
+      "counts": {
+        "quality_invalid_states": 10,
+        "touched_market_frame_states": 10
+      },
+      "family_id": "8b36711cd4e70e5bf64b37d75b77301477c54da7327875e2d61618f839e71c6f"
+    },
+    {
+      "block_start_ns": 1792014600000000000,
+      "counts": {
+        "quality_invalid_states": 10,
+        "touched_market_frame_states": 10
+      },
+      "family_id": "8b36711cd4e70e5bf64b37d75b77301477c54da7327875e2d61618f839e71c6f"
+    },
+    {
+      "block_start_ns": 1792014900000000000,
+      "counts": {
+        "quality_invalid_states": 13,
+        "touched_market_frame_states": 13
+      },
+      "family_id": "8b36711cd4e70e5bf64b37d75b77301477c54da7327875e2d61618f839e71c6f"
+    },
+    {
+      "block_start_ns": 1792015200000000000,
+      "counts": {
+        "quality_invalid_states": 11,
+        "touched_market_frame_states": 11
+      },
+      "family_id": "8b36711cd4e70e5bf64b37d75b77301477c54da7327875e2d61618f839e71c6f"
+    },
+    {
+      "block_start_ns": 1792015500000000000,
+      "counts": {
+        "quality_invalid_states": 10,
+        "touched_market_frame_states": 10
+      },
+      "family_id": "8b36711cd4e70e5bf64b37d75b77301477c54da7327875e2d61618f839e71c6f"
+    },
+    {
+      "block_start_ns": 1792015800000000000,
+      "counts": {
+        "quality_invalid_states": 8,
+        "touched_market_frame_states": 8
+      },
+      "family_id": "8b36711cd4e70e5bf64b37d75b77301477c54da7327875e2d61618f839e71c6f"
+    },
+    {
+      "block_start_ns": 1792016100000000000,
+      "counts": {
+        "quality_invalid_states": 17,
+        "touched_market_frame_states": 17
+      },
+      "family_id": "8b36711cd4e70e5bf64b37d75b77301477c54da7327875e2d61618f839e71c6f"
+    },
+    {
+      "block_start_ns": 1792016400000000000,
+      "counts": {
+        "quality_invalid_states": 7,
+        "touched_market_frame_states": 7
+      },
+      "family_id": "8b36711cd4e70e5bf64b37d75b77301477c54da7327875e2d61618f839e71c6f"
+    },
+    {
+      "block_start_ns": 1792016700000000000,
+      "counts": {
+        "quality_invalid_states": 12,
+        "touched_market_frame_states": 12
+      },
+      "family_id": "8b36711cd4e70e5bf64b37d75b77301477c54da7327875e2d61618f839e71c6f"
+    },
+    {
+      "block_start_ns": 1792017000000000000,
+      "counts": {
+        "quality_invalid_states": 10,
+        "touched_market_frame_states": 10
+      },
+      "family_id": "8b36711cd4e70e5bf64b37d75b77301477c54da7327875e2d61618f839e71c6f"
+    },
+    {
+      "block_start_ns": 1792017300000000000,
+      "counts": {
+        "quality_invalid_states": 6,
+        "touched_market_frame_states": 6
+      },
+      "family_id": "8b36711cd4e70e5bf64b37d75b77301477c54da7327875e2d61618f839e71c6f"
+    },
+    {
+      "block_start_ns": 1792017600000000000,
+      "counts": {
+        "quality_invalid_states": 12,
+        "touched_market_frame_states": 12
+      },
+      "family_id": "8b36711cd4e70e5bf64b37d75b77301477c54da7327875e2d61618f839e71c6f"
+    },
+    {
+      "block_start_ns": 1792017900000000000,
+      "counts": {
+        "quality_invalid_states": 8,
+        "touched_market_frame_states": 8
+      },
+      "family_id": "8b36711cd4e70e5bf64b37d75b77301477c54da7327875e2d61618f839e71c6f"
+    },
+    {
+      "block_start_ns": 1792018200000000000,
+      "counts": {
+        "quality_invalid_states": 14,
+        "touched_market_frame_states": 14
+      },
+      "family_id": "8b36711cd4e70e5bf64b37d75b77301477c54da7327875e2d61618f839e71c6f"
+    },
+    {
+      "block_start_ns": 1792018500000000000,
+      "counts": {
+        "quality_invalid_states": 11,
+        "touched_market_frame_states": 11
+      },
+      "family_id": "8b36711cd4e70e5bf64b37d75b77301477c54da7327875e2d61618f839e71c6f"
+    },
+    {
+      "block_start_ns": 1792018800000000000,
+      "counts": {
+        "quality_invalid_states": 9,
+        "touched_market_frame_states": 9
+      },
+      "family_id": "8b36711cd4e70e5bf64b37d75b77301477c54da7327875e2d61618f839e71c6f"
+    },
+    {
+      "block_start_ns": 1792019100000000000,
+      "counts": {
+        "quality_invalid_states": 1,
+        "touched_market_frame_states": 1
+      },
+      "family_id": "8b36711cd4e70e5bf64b37d75b77301477c54da7327875e2d61618f839e71c6f"
+    },
+    {
+      "block_start_ns": 1792011900000000000,
+      "counts": {
+        "quality_invalid_states": 4,
+        "touched_market_frame_states": 4
+      },
+      "family_id": "98d4894c6568745322c8a053472cc907a1006702cc851d99db5a38c89805b413"
+    },
+    {
+      "block_start_ns": 1792012200000000000,
+      "counts": {
+        "quality_invalid_states": 11,
+        "touched_market_frame_states": 11
+      },
+      "family_id": "98d4894c6568745322c8a053472cc907a1006702cc851d99db5a38c89805b413"
+    },
+    {
+      "block_start_ns": 1792012500000000000,
+      "counts": {
+        "quality_invalid_states": 12,
+        "touched_market_frame_states": 12
+      },
+      "family_id": "98d4894c6568745322c8a053472cc907a1006702cc851d99db5a38c89805b413"
+    },
+    {
+      "block_start_ns": 1792012800000000000,
+      "counts": {
+        "quality_invalid_states": 12,
+        "touched_market_frame_states": 12
+      },
+      "family_id": "98d4894c6568745322c8a053472cc907a1006702cc851d99db5a38c89805b413"
+    },
+    {
+      "block_start_ns": 1792013100000000000,
+      "counts": {
+        "quality_invalid_states": 9,
+        "touched_market_frame_states": 9
+      },
+      "family_id": "98d4894c6568745322c8a053472cc907a1006702cc851d99db5a38c89805b413"
+    },
+    {
+      "block_start_ns": 1792013400000000000,
+      "counts": {
+        "quality_invalid_states": 9,
+        "touched_market_frame_states": 9
+      },
+      "family_id": "98d4894c6568745322c8a053472cc907a1006702cc851d99db5a38c89805b413"
+    },
+    {
+      "block_start_ns": 1792013700000000000,
+      "counts": {
+        "quality_invalid_states": 8,
+        "touched_market_frame_states": 8
+      },
+      "family_id": "98d4894c6568745322c8a053472cc907a1006702cc851d99db5a38c89805b413"
+    },
+    {
+      "block_start_ns": 1792014000000000000,
+      "counts": {
+        "quality_invalid_states": 11,
+        "touched_market_frame_states": 11
+      },
+      "family_id": "98d4894c6568745322c8a053472cc907a1006702cc851d99db5a38c89805b413"
+    },
+    {
+      "block_start_ns": 1792014300000000000,
+      "counts": {
+        "quality_invalid_states": 10,
+        "touched_market_frame_states": 10
+      },
+      "family_id": "98d4894c6568745322c8a053472cc907a1006702cc851d99db5a38c89805b413"
+    },
+    {
+      "block_start_ns": 1792014600000000000,
+      "counts": {
+        "quality_invalid_states": 9,
+        "touched_market_frame_states": 9
+      },
+      "family_id": "98d4894c6568745322c8a053472cc907a1006702cc851d99db5a38c89805b413"
+    },
+    {
+      "block_start_ns": 1792014900000000000,
+      "counts": {
+        "quality_invalid_states": 9,
+        "touched_market_frame_states": 9
+      },
+      "family_id": "98d4894c6568745322c8a053472cc907a1006702cc851d99db5a38c89805b413"
+    },
+    {
+      "block_start_ns": 1792015200000000000,
+      "counts": {
+        "quality_invalid_states": 7,
+        "touched_market_frame_states": 7
+      },
+      "family_id": "98d4894c6568745322c8a053472cc907a1006702cc851d99db5a38c89805b413"
+    },
+    {
+      "block_start_ns": 1792015500000000000,
+      "counts": {
+        "quality_invalid_states": 10,
+        "touched_market_frame_states": 10
+      },
+      "family_id": "98d4894c6568745322c8a053472cc907a1006702cc851d99db5a38c89805b413"
+    },
+    {
+      "block_start_ns": 1792015800000000000,
+      "counts": {
+        "quality_invalid_states": 8,
+        "touched_market_frame_states": 8
+      },
+      "family_id": "98d4894c6568745322c8a053472cc907a1006702cc851d99db5a38c89805b413"
+    },
+    {
+      "block_start_ns": 1792016100000000000,
+      "counts": {
+        "quality_invalid_states": 13,
+        "touched_market_frame_states": 13
+      },
+      "family_id": "98d4894c6568745322c8a053472cc907a1006702cc851d99db5a38c89805b413"
+    },
+    {
+      "block_start_ns": 1792016400000000000,
+      "counts": {
+        "quality_invalid_states": 11,
+        "touched_market_frame_states": 11
+      },
+      "family_id": "98d4894c6568745322c8a053472cc907a1006702cc851d99db5a38c89805b413"
+    },
+    {
+      "block_start_ns": 1792016700000000000,
+      "counts": {
+        "quality_invalid_states": 8,
+        "touched_market_frame_states": 8
+      },
+      "family_id": "98d4894c6568745322c8a053472cc907a1006702cc851d99db5a38c89805b413"
+    },
+    {
+      "block_start_ns": 1792017000000000000,
+      "counts": {
+        "quality_invalid_states": 8,
+        "touched_market_frame_states": 8
+      },
+      "family_id": "98d4894c6568745322c8a053472cc907a1006702cc851d99db5a38c89805b413"
+    },
+    {
+      "block_start_ns": 1792017300000000000,
+      "counts": {
+        "quality_invalid_states": 9,
+        "touched_market_frame_states": 9
+      },
+      "family_id": "98d4894c6568745322c8a053472cc907a1006702cc851d99db5a38c89805b413"
+    },
+    {
+      "block_start_ns": 1792017600000000000,
+      "counts": {
+        "quality_invalid_states": 14,
+        "touched_market_frame_states": 14
+      },
+      "family_id": "98d4894c6568745322c8a053472cc907a1006702cc851d99db5a38c89805b413"
+    },
+    {
+      "block_start_ns": 1792017900000000000,
+      "counts": {
+        "quality_invalid_states": 9,
+        "touched_market_frame_states": 9
+      },
+      "family_id": "98d4894c6568745322c8a053472cc907a1006702cc851d99db5a38c89805b413"
+    },
+    {
+      "block_start_ns": 1792018200000000000,
+      "counts": {
+        "quality_invalid_states": 8,
+        "touched_market_frame_states": 8
+      },
+      "family_id": "98d4894c6568745322c8a053472cc907a1006702cc851d99db5a38c89805b413"
+    },
+    {
+      "block_start_ns": 1792018500000000000,
+      "counts": {
+        "quality_invalid_states": 8,
+        "touched_market_frame_states": 8
+      },
+      "family_id": "98d4894c6568745322c8a053472cc907a1006702cc851d99db5a38c89805b413"
+    },
+    {
+      "block_start_ns": 1792018800000000000,
+      "counts": {
+        "quality_invalid_states": 15,
+        "touched_market_frame_states": 15
+      },
+      "family_id": "98d4894c6568745322c8a053472cc907a1006702cc851d99db5a38c89805b413"
+    },
+    {
+      "block_start_ns": 1792019100000000000,
+      "counts": {
+        "quality_invalid_states": 4,
+        "touched_market_frame_states": 4
+      },
+      "family_id": "98d4894c6568745322c8a053472cc907a1006702cc851d99db5a38c89805b413"
+    },
+    {
+      "block_start_ns": 1792011900000000000,
+      "counts": {
+        "quality_invalid_states": 1,
+        "quality_valid_states": 708,
+        "quantity_depth_complete_states": 708,
+        "touched_market_frame_states": 709
+      },
+      "family_id": "a0b812b3e921ef209d1fdbb3091a5ba65ce35bad579e1e305cdb0f243474a4c4"
+    },
+    {
+      "block_start_ns": 1792012200000000000,
+      "counts": {
+        "quality_valid_states": 1126,
+        "quantity_depth_complete_states": 1126,
+        "touched_market_frame_states": 1126
+      },
+      "family_id": "a0b812b3e921ef209d1fdbb3091a5ba65ce35bad579e1e305cdb0f243474a4c4"
+    },
+    {
+      "block_start_ns": 1792012500000000000,
+      "counts": {
+        "quality_valid_states": 893,
+        "quantity_depth_complete_states": 893,
+        "touched_market_frame_states": 893
+      },
+      "family_id": "a0b812b3e921ef209d1fdbb3091a5ba65ce35bad579e1e305cdb0f243474a4c4"
+    },
+    {
+      "block_start_ns": 1792012800000000000,
+      "counts": {
+        "quality_invalid_states": 2,
+        "quality_valid_states": 182,
+        "quantity_depth_complete_states": 182,
+        "touched_market_frame_states": 184
+      },
+      "family_id": "a0b812b3e921ef209d1fdbb3091a5ba65ce35bad579e1e305cdb0f243474a4c4"
+    },
+    {
+      "block_start_ns": 1792013100000000000,
+      "counts": {
+        "quality_valid_states": 239,
+        "quantity_depth_complete_states": 239,
+        "touched_market_frame_states": 239
+      },
+      "family_id": "a0b812b3e921ef209d1fdbb3091a5ba65ce35bad579e1e305cdb0f243474a4c4"
+    },
+    {
+      "block_start_ns": 1792013400000000000,
+      "counts": {
+        "quality_invalid_states": 1,
+        "quality_valid_states": 516,
+        "quantity_depth_complete_states": 516,
+        "touched_market_frame_states": 517
+      },
+      "family_id": "a0b812b3e921ef209d1fdbb3091a5ba65ce35bad579e1e305cdb0f243474a4c4"
+    },
+    {
+      "block_start_ns": 1792013700000000000,
+      "counts": {
+        "quality_valid_states": 519,
+        "quantity_depth_complete_states": 519,
+        "touched_market_frame_states": 519
+      },
+      "family_id": "a0b812b3e921ef209d1fdbb3091a5ba65ce35bad579e1e305cdb0f243474a4c4"
+    },
+    {
+      "block_start_ns": 1792014000000000000,
+      "counts": {
+        "quality_valid_states": 204,
+        "quantity_depth_complete_states": 204,
+        "touched_market_frame_states": 204
+      },
+      "family_id": "a0b812b3e921ef209d1fdbb3091a5ba65ce35bad579e1e305cdb0f243474a4c4"
+    },
+    {
+      "block_start_ns": 1792014300000000000,
+      "counts": {
+        "quality_invalid_states": 4,
+        "quality_valid_states": 95,
+        "quantity_depth_complete_states": 95,
+        "touched_market_frame_states": 99
+      },
+      "family_id": "a0b812b3e921ef209d1fdbb3091a5ba65ce35bad579e1e305cdb0f243474a4c4"
+    },
+    {
+      "block_start_ns": 1792014600000000000,
+      "counts": {
+        "quality_invalid_states": 1,
+        "quality_valid_states": 186,
+        "quantity_depth_complete_states": 186,
+        "touched_market_frame_states": 187
+      },
+      "family_id": "a0b812b3e921ef209d1fdbb3091a5ba65ce35bad579e1e305cdb0f243474a4c4"
+    },
+    {
+      "block_start_ns": 1792014900000000000,
+      "counts": {
+        "quality_valid_states": 1159,
+        "quantity_depth_complete_states": 1159,
+        "touched_market_frame_states": 1159
+      },
+      "family_id": "a0b812b3e921ef209d1fdbb3091a5ba65ce35bad579e1e305cdb0f243474a4c4"
+    },
+    {
+      "block_start_ns": 1792015200000000000,
+      "counts": {
+        "quality_valid_states": 1077,
+        "quantity_depth_complete_states": 1077,
+        "touched_market_frame_states": 1077
+      },
+      "family_id": "a0b812b3e921ef209d1fdbb3091a5ba65ce35bad579e1e305cdb0f243474a4c4"
+    },
+    {
+      "block_start_ns": 1792015500000000000,
+      "counts": {
+        "quality_invalid_states": 1,
+        "quality_valid_states": 532,
+        "quantity_depth_complete_states": 532,
+        "touched_market_frame_states": 533
+      },
+      "family_id": "a0b812b3e921ef209d1fdbb3091a5ba65ce35bad579e1e305cdb0f243474a4c4"
+    },
+    {
+      "block_start_ns": 1792015800000000000,
+      "counts": {
+        "quality_valid_states": 720,
+        "quantity_depth_complete_states": 720,
+        "touched_market_frame_states": 720
+      },
+      "family_id": "a0b812b3e921ef209d1fdbb3091a5ba65ce35bad579e1e305cdb0f243474a4c4"
+    },
+    {
+      "block_start_ns": 1792016100000000000,
+      "counts": {
+        "quality_invalid_states": 3,
+        "quality_valid_states": 196,
+        "quantity_depth_complete_states": 196,
+        "touched_market_frame_states": 199
+      },
+      "family_id": "a0b812b3e921ef209d1fdbb3091a5ba65ce35bad579e1e305cdb0f243474a4c4"
+    },
+    {
+      "block_start_ns": 1792016400000000000,
+      "counts": {
+        "quality_valid_states": 292,
+        "quantity_depth_complete_states": 292,
+        "touched_market_frame_states": 292
+      },
+      "family_id": "a0b812b3e921ef209d1fdbb3091a5ba65ce35bad579e1e305cdb0f243474a4c4"
+    },
+    {
+      "block_start_ns": 1792016700000000000,
+      "counts": {
+        "quality_valid_states": 231,
+        "quantity_depth_complete_states": 231,
+        "touched_market_frame_states": 231
+      },
+      "family_id": "a0b812b3e921ef209d1fdbb3091a5ba65ce35bad579e1e305cdb0f243474a4c4"
+    },
+    {
+      "block_start_ns": 1792017000000000000,
+      "counts": {
+        "quality_valid_states": 640,
+        "quantity_depth_complete_states": 640,
+        "touched_market_frame_states": 640
+      },
+      "family_id": "a0b812b3e921ef209d1fdbb3091a5ba65ce35bad579e1e305cdb0f243474a4c4"
+    },
+    {
+      "block_start_ns": 1792017300000000000,
+      "counts": {
+        "quality_invalid_states": 1,
+        "quality_valid_states": 585,
+        "quantity_depth_complete_states": 585,
+        "touched_market_frame_states": 586
+      },
+      "family_id": "a0b812b3e921ef209d1fdbb3091a5ba65ce35bad579e1e305cdb0f243474a4c4"
+    },
+    {
+      "block_start_ns": 1792017600000000000,
+      "counts": {
+        "quality_invalid_states": 2,
+        "quality_valid_states": 969,
+        "quantity_depth_complete_states": 969,
+        "touched_market_frame_states": 971
+      },
+      "family_id": "a0b812b3e921ef209d1fdbb3091a5ba65ce35bad579e1e305cdb0f243474a4c4"
+    },
+    {
+      "block_start_ns": 1792017900000000000,
+      "counts": {
+        "quality_invalid_states": 1,
+        "quality_valid_states": 161,
+        "quantity_depth_complete_states": 161,
+        "touched_market_frame_states": 162
+      },
+      "family_id": "a0b812b3e921ef209d1fdbb3091a5ba65ce35bad579e1e305cdb0f243474a4c4"
+    },
+    {
+      "block_start_ns": 1792018200000000000,
+      "counts": {
+        "quality_invalid_states": 70,
+        "quality_valid_states": 291,
+        "quantity_depth_complete_states": 291,
+        "touched_market_frame_states": 361
+      },
+      "family_id": "a0b812b3e921ef209d1fdbb3091a5ba65ce35bad579e1e305cdb0f243474a4c4"
+    },
+    {
+      "block_start_ns": 1792018500000000000,
+      "counts": {
+        "quality_valid_states": 317,
+        "quantity_depth_complete_states": 317,
+        "touched_market_frame_states": 317
+      },
+      "family_id": "a0b812b3e921ef209d1fdbb3091a5ba65ce35bad579e1e305cdb0f243474a4c4"
+    },
+    {
+      "block_start_ns": 1792018800000000000,
+      "counts": {
+        "quality_valid_states": 439,
+        "quantity_depth_complete_states": 439,
+        "touched_market_frame_states": 439
+      },
+      "family_id": "a0b812b3e921ef209d1fdbb3091a5ba65ce35bad579e1e305cdb0f243474a4c4"
+    },
+    {
+      "block_start_ns": 1792019100000000000,
+      "counts": {
+        "quality_invalid_states": 1,
+        "quality_valid_states": 25,
+        "quantity_depth_complete_states": 25,
+        "touched_market_frame_states": 26
+      },
+      "family_id": "a0b812b3e921ef209d1fdbb3091a5ba65ce35bad579e1e305cdb0f243474a4c4"
+    }
+  ],
+  "fee_regime_available_states": 19501,
+  "fee_regime_unavailable_states": 0,
+  "frames_excluded_unsupported_producer": 0,
+  "frames_excluded_unsupported_reconstruction": 0,
+  "gap_reasons_in_window": {
+    "book_resynchronization": 119
+  },
+  "limitations": [
+    "Source receiver time is used for frame states; offline replay time and worker processing lag are not reconstructed.",
+    "Counts are repeated market-frame observations, not independent opportunities or venue-wide prevalence.",
+    "Displayed depth is public quote support only; it does not establish order arrival, matching, fills, or market impact.",
+    "Full-depth values are pre-fee; fee regime availability is counted but no fee or settlement assumption is applied here.",
+    "Only cataloged finalized segments are included; an active segment is excluded."
+  ],
+  "markets": [
+    {
+      "condition": "0xe06a7e94cf2fa8dc2085b7610fe16e9be1cde6654f34d365c13da1149b276c61",
+      "counts": {
+        "quality_invalid_states": 236,
+        "touched_market_frame_states": 236
+      },
+      "family_id": "98d4894c6568745322c8a053472cc907a1006702cc851d99db5a38c89805b413",
+      "market_id": "559687",
+      "pre_fee_top_edge_distribution": null,
+      "quality_reasons": {
+        "empty_ask_side": 236
+      }
+    },
+    {
+      "condition": "0x836b850fc838195374862551a36f1c8691d96ff01e58b0a071f0fc1a0e357fb1",
+      "counts": {
+        "quality_invalid_states": 244,
+        "touched_market_frame_states": 244
+      },
+      "family_id": "8b36711cd4e70e5bf64b37d75b77301477c54da7327875e2d61618f839e71c6f",
+      "market_id": "561251",
+      "pre_fee_top_edge_distribution": null,
+      "quality_reasons": {
+        "empty_ask_side": 243,
+        "source_timing_uncertainty": 1
+      }
+    },
+    {
+      "condition": "0x16c63b7cc37f012b9f59ee164ec03877914c701d06d48291ae8d6fc08a088b0d",
+      "counts": {
+        "fee_regime_available_states": 5382,
+        "quality_valid_states": 5382,
+        "quantity_depth_complete_states": 5382,
+        "touched_market_frame_states": 5382
+      },
+      "family_id": "000fa43ea94d31165feb5867ed32a0ea0de5cf0510e1e942219f81610403f738",
+      "market_id": "562828",
+      "pre_fee_top_edge_distribution": {
+        "count": 5382,
+        "maximum": "-0.01",
+        "median_nearest_rank": "-0.01",
+        "minimum": "-0.01",
+        "p25_nearest_rank": "-0.01",
+        "p75_nearest_rank": "-0.01",
+        "positive_count": 0
+      },
+      "quality_reasons": {}
+    },
+    {
+      "condition": "0x48ee6920ecb2d0a588b11219813b4e5534e8c92d3d09773e58ba489e60b83694",
+      "counts": {
+        "fee_regime_available_states": 322,
+        "quality_invalid_states": 4,
+        "quality_valid_states": 322,
+        "quantity_depth_complete_states": 322,
+        "touched_market_frame_states": 326
+      },
+      "family_id": "a0b812b3e921ef209d1fdbb3091a5ba65ce35bad579e1e305cdb0f243474a4c4",
+      "market_id": "5674900",
+      "pre_fee_top_edge_distribution": {
+        "count": 322,
+        "maximum": "-0.03",
+        "median_nearest_rank": "-0.27",
+        "minimum": "-0.45",
+        "p25_nearest_rank": "-0.32",
+        "p75_nearest_rank": "-0.24",
+        "positive_count": 0
+      },
+      "quality_reasons": {
+        "book_issue:top_divergence": 2,
+        "source_timing_uncertainty": 2
+      }
+    },
+    {
+      "condition": "0xf6346ff4208c93bb04ee467bde7d1aa72a68942ab14929f3c0bcdaa97a851483",
+      "counts": {
+        "fee_regime_available_states": 103,
+        "quality_invalid_states": 1,
+        "quality_valid_states": 103,
+        "quantity_depth_complete_states": 103,
+        "touched_market_frame_states": 104
+      },
+      "family_id": "a0b812b3e921ef209d1fdbb3091a5ba65ce35bad579e1e305cdb0f243474a4c4",
+      "market_id": "5674902",
+      "pre_fee_top_edge_distribution": {
+        "count": 103,
+        "maximum": "-0.07",
+        "median_nearest_rank": "-0.14",
+        "minimum": "-0.15",
+        "p25_nearest_rank": "-0.14",
+        "p75_nearest_rank": "-0.08",
+        "positive_count": 0
+      },
+      "quality_reasons": {
+        "book_issue:top_divergence": 1
+      }
+    },
+    {
+      "condition": "0x588f57f6d10aa26e4d943f88f2b0131bae3c7eaefbaa2d9c9bf02ad0a7126e7f",
+      "counts": {
+        "fee_regime_available_states": 621,
+        "quality_invalid_states": 5,
+        "quality_valid_states": 621,
+        "quantity_depth_complete_states": 621,
+        "touched_market_frame_states": 626
+      },
+      "family_id": "a0b812b3e921ef209d1fdbb3091a5ba65ce35bad579e1e305cdb0f243474a4c4",
+      "market_id": "5674915",
+      "pre_fee_top_edge_distribution": {
+        "count": 621,
+        "maximum": "-0.15",
+        "median_nearest_rank": "-0.39",
+        "minimum": "-0.58",
+        "p25_nearest_rank": "-0.47",
+        "p75_nearest_rank": "-0.35",
+        "positive_count": 0
+      },
+      "quality_reasons": {
+        "book_issue:top_divergence": 5
+      }
+    },
+    {
+      "condition": "0x41afd61acafb6d2cd0ae4fe581a5a06c2c3d962e6e7dd9bda76196d4e6c8a5ae",
+      "counts": {
+        "fee_regime_available_states": 11256,
+        "quality_invalid_states": 78,
+        "quality_valid_states": 11256,
+        "quantity_depth_complete_states": 11256,
+        "touched_market_frame_states": 11334
+      },
+      "family_id": "a0b812b3e921ef209d1fdbb3091a5ba65ce35bad579e1e305cdb0f243474a4c4",
+      "market_id": "5675021",
+      "pre_fee_top_edge_distribution": {
+        "count": 11256,
+        "maximum": "-0.02",
+        "median_nearest_rank": "-0.09",
+        "minimum": "-0.44",
+        "p25_nearest_rank": "-0.13",
+        "p75_nearest_rank": "-0.07",
+        "positive_count": 0
+      },
+      "quality_reasons": {
+        "book_issue:top_divergence": 9,
+        "independent_book_divergence": 69
+      }
+    },
+    {
+      "condition": "0x953b1439569eef0a0e639566acd35d32ebadee8ab70dbb2f8e00bb936a277aa2",
+      "counts": {
+        "fee_regime_available_states": 124,
+        "quality_invalid_states": 29,
+        "quality_valid_states": 124,
+        "quantity_depth_complete_states": 124,
+        "touched_market_frame_states": 153
+      },
+      "family_id": "3c9d6abe6f98f19e1a62a3018ae10cc929071e87e55f45996f2469bcd0f5c807",
+      "market_id": "665205",
+      "pre_fee_top_edge_distribution": {
+        "count": 124,
+        "maximum": "-0.03",
+        "median_nearest_rank": "-0.03",
+        "minimum": "-0.03",
+        "p25_nearest_rank": "-0.03",
+        "p75_nearest_rank": "-0.03",
+        "positive_count": 0
+      },
+      "quality_reasons": {
+        "source_timing_uncertainty": 29
+      }
+    },
+    {
+      "condition": "0x6189539ff1b08bc4052607d89921663ca0de0f0cd70b79c9993d7f9f3211ec3e",
+      "counts": {
+        "fee_regime_available_states": 974,
+        "quality_invalid_states": 3,
+        "quality_valid_states": 974,
+        "quantity_depth_complete_states": 974,
+        "touched_market_frame_states": 977
+      },
+      "family_id": "5c6dbad73b2c74a595c0fe4a5eee9e92e167f8f2d5b53d1c0281fac0818d67e3",
+      "market_id": "679026",
+      "pre_fee_top_edge_distribution": {
+        "count": 974,
+        "maximum": "-0.001",
+        "median_nearest_rank": "-0.001",
+        "minimum": "-0.001",
+        "p25_nearest_rank": "-0.001",
+        "p75_nearest_rank": "-0.001",
+        "positive_count": 0
+      },
+      "quality_reasons": {
+        "independent_book_divergence": 2,
+        "source_timing_uncertainty": 1
+      }
+    },
+    {
+      "condition": "0x53e78cfec087a9bc8d1336c16a2da9db577cacedb5569c36e776711b264351a6",
+      "counts": {
+        "fee_regime_available_states": 719,
+        "quality_invalid_states": 24,
+        "quality_valid_states": 719,
+        "quantity_depth_complete_states": 719,
+        "touched_market_frame_states": 743
+      },
+      "family_id": "5c6dbad73b2c74a595c0fe4a5eee9e92e167f8f2d5b53d1c0281fac0818d67e3",
+      "market_id": "679055",
+      "pre_fee_top_edge_distribution": {
+        "count": 719,
+        "maximum": "-0.001",
+        "median_nearest_rank": "-0.001",
+        "minimum": "-0.001",
+        "p25_nearest_rank": "-0.001",
+        "p75_nearest_rank": "-0.001",
+        "positive_count": 0
+      },
+      "quality_reasons": {
+        "independent_book_divergence": 23,
+        "source_timing_uncertainty": 1
+      }
+    }
+  ],
+  "period_frame_records": 27489,
+  "period_record_kinds": {
+    "book_comparison": 454,
+    "checkpoint": 234,
+    "discovery": 119,
+    "discovery_page": 714,
+    "frame": 27489,
+    "gap": 119,
+    "heartbeat": 577,
+    "independent_book": 454,
+    "public_fee_metadata": 1904,
+    "public_market_metadata": 952,
+    "snapshot_constraints": 1904,
+    "subscription": 119,
+    "timing_measurement": 234
+  },
+  "positive_full_depth_pre_fee_states": 0,
+  "positive_full_depth_reported_minimum_satisfied_states": 0,
+  "positive_top_ask_pair_states": 0,
+  "positive_top_with_quantity_depth_states": 0,
+  "pre_fee_top_edge_distribution": {
+    "count": 19501,
+    "maximum": "-0.001",
+    "median_nearest_rank": "-0.06",
+    "minimum": "-0.58",
+    "p25_nearest_rank": "-0.11",
+    "p75_nearest_rank": "-0.01",
+    "positive_count": 0
+  },
+  "quality_invalid_reason_counts": {
+    "book_issue:top_divergence": 17,
+    "empty_ask_side": 479,
+    "independent_book_divergence": 94,
+    "source_timing_uncertainty": 34
+  },
+  "quality_valid_states": 19501,
+  "quantity_depth_complete_states": 19501,
+  "quantity_requested": "5",
+  "raw_records_replayed": 213679,
+  "receiver_clock_regression_frames": 0,
+  "record_kinds": {
+    "book_comparison": 2052,
+    "checkpoint": 1764,
+    "discovery": 2181,
+    "discovery_page": 3312,
+    "frame": 169862,
+    "gap": 2200,
+    "heartbeat": 4455,
+    "independent_book": 2052,
+    "metadata_correction": 5,
+    "public_fee_metadata": 8832,
+    "public_market_metadata": 4416,
+    "snapshot_constraints": 9288,
+    "subscription": 2181,
+    "timing_measurement": 1079
+  },
+  "source_bytes": 411096328,
+  "source_last_finalized_ordinal": 213679,
+  "source_manifest_sha256": "df23dedd8a27d08aaf5b25925a12d32007a8266068d8f7048ac47c00abfa3d4d",
+  "source_receipt_window_ns": {
+    "first": 1792012079737246201,
+    "last": 1792019183714978849
+  },
+  "source_root": "/home/charlie/midas-reality/data/recordings/reality",
+  "source_segments": 1768,
+  "touched_market_frame_states": 20125,
+  "verified_source_checkpoints": 1764
+}

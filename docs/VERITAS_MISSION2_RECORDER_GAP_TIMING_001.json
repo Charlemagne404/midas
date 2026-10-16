@@ -1,0 +1,49 @@
+{
+  "artifact_id": "VERITAS-M2-RECORDER-GAP-TIMING-001",
+  "captured_at_utc": "2026-10-15T20:20:20Z",
+  "method": "Read one finalized Reality segment through the repository record decoder. Validate each record's compressed-payload digest and compare the whole-segment SHA-256 with its finalized catalog sidecar. Extract only gap reason and receiver timestamps plus the adjacent preceding and first following frame timestamps.",
+  "schema_version": 1,
+  "source_summary": {
+    "generated_at_utc": "2026-10-15T20:14:33Z",
+    "summary_sha256": "c32f8e0796c9c8c814e7fc5eb0538042667a908b0d90ad6b589af551d05608e4",
+    "connection_failure_count_in_campaign_window": 1
+  },
+  "segment": {
+    "file": "00000000000000309646-f2a1b2ee15654bb295cdc43634774090.seg",
+    "bytes": 405703,
+    "sha256": "63d8fb314df20ed753916b61251cd9cdad59a237b94ded9bbab73f2d95e41112",
+    "catalog_sidecar_sha256": "63d8fb314df20ed753916b61251cd9cdad59a237b94ded9bbab73f2d95e41112",
+    "whole_file_hash_matches_catalog": true,
+    "records_read_and_integrity_checked": 92
+  },
+  "timeline": {
+    "preceding_frame": {
+      "ordinal": 309680,
+      "received_at_utc": "2026-10-15T04:57:26.428480Z"
+    },
+    "book_resynchronization": {
+      "ordinal": 309681,
+      "received_at_utc": "2026-10-15T04:57:26.438753Z"
+    },
+    "connection_failure": {
+      "ordinal": 309682,
+      "received_at_utc": "2026-10-15T04:57:26.717847Z",
+      "error": "ConnectError: [Errno -3] Temporary failure in name resolution"
+    },
+    "first_following_frame": {
+      "ordinal": 309715,
+      "received_at_utc": "2026-10-15T04:57:29.162854Z",
+      "seconds_after_connection_failure": 2.445007193
+    }
+  },
+  "interpretation": {
+    "connection_failure_matches_reported_warning": true,
+    "what_this_supports": "The sole connection_failure counted in the 20:14 campaign-window summary is the same receiver-time event as the 04:57:26 UTC DNS warning. A later frame record was written 2.445 seconds after that gap event.",
+    "not_proven": [
+      "The first later frame contained a complete snapshot for all eight configured markets.",
+      "The public feed was continuously complete before or after this event.",
+      "The interval between frames equals exchange-side data unavailability; timestamps are recorder receiver times.",
+      "Quote freshness, order arrival, fills, or economic opportunity availability."
+    ]
+  }
+}

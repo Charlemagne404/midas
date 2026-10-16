@@ -1,15 +1,550 @@
 """Arena metadata stays available without loading ML libraries into API startup."""
 
 import asyncio
+import hashlib
 import importlib.util
 import json
 import re
 import subprocess
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any, Literal, cast
 
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, ConfigDict
+
+MAX_RESEARCH_ACTIVITY_RECORD_BYTES = 256 * 1024
+MAX_DIRECTOR_EVENT_BYTES = 64 * 1024
+MAX_DIRECTOR_EVENT_FILES_SCANNED = 128
+MAX_DIRECTOR_HISTORY_EVENTS = 8
+MAX_VERITAS_LATEST_SUMMARY_BYTES = 2 * 1024**2
+MAX_VERITAS_ANALYSIS_EVENT_BYTES = 2 * 1024**2
+MAX_VERITAS_QUALIFICATION_FINDING_BYTES = 2 * 1024**2
+
+
+def veritas_repository_root() -> Path:
+    return Path(__file__).resolve().parents[2]
+
+
+def create_veritas_qualification_job(arena_root: Path, repository: Path) -> dict[str, Any]:
+    data_root = repository / "data" / "veritas-observatory"
+    latest_path = data_root / "latest-summary.json"
+    if data_root.is_symlink() or latest_path.is_symlink() or not latest_path.is_file():
+        raise ValueError("Latest bounded Veritas public scan is unavailable")
+    if latest_path.stat().st_size > MAX_VERITAS_LATEST_SUMMARY_BYTES:
+        raise ValueError("Latest Veritas public scan summary exceeds the read bound")
+    latest = json.loads(latest_path.read_text())
+    if not isinstance(latest, dict) or latest.get("analysis_version") != (
+        "veritas-public-observatory-v2"
+    ):
+        raise ValueError("A finalized v2 Veritas scan is required before qualification")
+    scan_id = latest.get("scan_id")
+    if not isinstance(scan_id, str) or not re.fullmatch(r"scan-\d{8}T\d{6}Z-[0-9a-f]{12}", scan_id):
+        raise ValueError("Latest Veritas scan identity is invalid")
+    analysis_events_root = data_root / "analysis-events"
+    version_root = analysis_events_root / "v4"
+    source_event = version_root / f"{scan_id}.json"
+    if (
+        analysis_events_root.is_symlink()
+        or version_root.is_symlink()
+        or source_event.is_symlink()
+        or not source_event.is_file()
+    ):
+        raise ValueError("Latest Veritas scan has not reached finalized v4 analysis")
+    if source_event.stat().st_size > MAX_VERITAS_ANALYSIS_EVENT_BYTES:
+        raise ValueError("Latest Veritas analysis event exceeds the job admission bound")
+    from midas.arena.jobs import JobSpec, create
+    from midas.veritas.arena_qualification import VeritasQualificationSpec
+
+    spec = JobSpec(
+        kind="veritas_qualification",
+        veritas_qualification=VeritasQualificationSpec(expected_latest_scan_id=scan_id),
+        max_wall_seconds=300,
+    )
+    return create(
+        arena_root,
+        spec,
+        admission_key=f"veritas-qualification-v1-{scan_id}",
+    )
+
+
+def _qualification_source_scan_id(row: dict[str, Any]) -> str | None:
+    configuration = row.get("configuration")
+    if not isinstance(configuration, dict):
+        return None
+    veritas_spec = configuration.get("veritas_qualification")
+    if not isinstance(veritas_spec, dict):
+        return None
+    scan_id = veritas_spec.get("expected_latest_scan_id")
+    return scan_id if isinstance(scan_id, str) else None
+
+
+def _bounded_string(value: object, limit: int) -> str | None:
+    return value[:limit] if isinstance(value, str) else None
+
+
+def read_veritas_qualification_finding(root: Path, identity: str) -> dict[str, Any]:
+    """Read one bounded, digest-verified immutable Veritas qualification finding."""
+    if not re.fullmatch(r"veritas-qualification-v1-[0-9a-f]{16}", identity):
+        raise ValueError("Invalid Veritas qualification finding identity")
+    findings_root = root / "findings"
+    directory = findings_root / identity
+    manifest_path = directory / "manifest.json"
+    if root.is_symlink() or findings_root.is_symlink() or directory.is_symlink():
+        raise ValueError("Veritas qualification finding path is unsafe")
+    if (
+        manifest_path.is_symlink()
+        or not manifest_path.is_file()
+        or manifest_path.stat().st_size > MAX_VERITAS_QUALIFICATION_FINDING_BYTES
+    ):
+        raise FileNotFoundError(
+            "Veritas qualification finding is missing or exceeds its read bound"
+        )
+    try:
+        manifest = json.loads(manifest_path.read_text())
+    except (OSError, json.JSONDecodeError) as error:
+        raise ValueError("Veritas qualification finding is unreadable") from error
+    if (
+        not isinstance(manifest, dict)
+        or manifest.get("artifact_id") != identity
+        or manifest.get("artifact_type") != "veritas_public_opportunity_qualification"
+    ):
+        raise ValueError("Veritas qualification finding identity does not match")
+    result = manifest.get("result")
+    if not isinstance(result, dict):
+        raise ValueError("Veritas qualification finding has no result")
+    claimed = result.get("experiment_sha256")
+    payload = dict(result)
+    payload.pop("experiment_sha256", None)
+    calculated = hashlib.sha256(
+        json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
+    ).hexdigest()
+    if (
+        not isinstance(claimed, str)
+        or claimed != calculated
+        or manifest.get("experiment_sha256") != claimed
+    ):
+        raise ValueError("Veritas qualification finding result digest does not match")
+    if (
+        result.get("orders_submitted") is not False
+        or result.get("authenticated_requests") is not False
+    ):
+        raise ValueError("Veritas qualification finding violates its read-only boundary")
+    return manifest
+
+
+def _latest_veritas_qualification_distribution(
+    root: Path, jobs: list[dict[str, Any]]
+) -> dict[str, Any] | None:
+    """Project a bounded edge distribution from the newest completed sealed finding."""
+    scan_pattern = re.compile(r"scan-\d{8}T\d{6}Z-[0-9a-f]{12}")
+    for job in jobs:
+        configuration = job.get("configuration")
+        result_ref = job.get("result")
+        exit_status = job.get("exit_status")
+        if (
+            job.get("state") != "COMPLETED"
+            or not isinstance(exit_status, int)
+            or isinstance(exit_status, bool)
+            or exit_status != 0
+            or not isinstance(configuration, dict)
+            or configuration.get("kind") != "veritas_qualification"
+            or not isinstance(result_ref, dict)
+        ):
+            continue
+        source_scan_id = _qualification_source_scan_id(job)
+        finding_id = result_ref.get("finding_id")
+        if (
+            not isinstance(source_scan_id, str)
+            or not scan_pattern.fullmatch(source_scan_id)
+            or not isinstance(finding_id, str)
+        ):
+            return None
+        try:
+            manifest = read_veritas_qualification_finding(root, finding_id)
+        except (FileNotFoundError, OSError, ValueError):
+            return None
+        result = manifest.get("result")
+        if (
+            not isinstance(result, dict)
+            or manifest.get("expected_latest_scan_id") != source_scan_id
+            or result.get("analysis_version") != "veritas-economic-qualification-comparison-v3"
+            or result.get("experiment_sha256") != result_ref.get("experiment_sha256")
+            or result.get("experiment_run_id") != result_ref.get("experiment_run_id")
+            or result.get("status") != result_ref.get("status")
+        ):
+            return None
+        sample = result.get("sample")
+        source_snapshots = result.get("source_snapshots")
+        funnel = result.get("economic_qualification_funnel")
+        if (
+            not isinstance(sample, dict)
+            or not isinstance(source_snapshots, list)
+            or not isinstance(funnel, list)
+        ):
+            return None
+        edge = sample.get("top_pair_edge_per_share")
+        if not isinstance(edge, dict):
+            return None
+        count = edge.get("count")
+        positive_count = edge.get("positive_count")
+        quality_valid_pairs = sample.get("quality_valid_pairs")
+        snapshot_count = sample.get("snapshot_count")
+        attempted_market_pairs = sample.get("attempted_market_pairs")
+        unique_market_ids = sample.get("unique_market_ids")
+        minimum = edge.get("minimum_per_share")
+        median = edge.get("median_nearest_rank_per_share")
+        maximum = edge.get("maximum_per_share")
+        numeric_fields = (minimum, median, maximum)
+        count_fields = (
+            count,
+            positive_count,
+            quality_valid_pairs,
+            snapshot_count,
+            attempted_market_pairs,
+            unique_market_ids,
+        )
+        if any(
+            not isinstance(value, int) or isinstance(value, bool) or value < 0
+            for value in count_fields
+        ):
+            return None
+        count = cast(int, count)
+        positive_count = cast(int, positive_count)
+        quality_valid_pairs = cast(int, quality_valid_pairs)
+        snapshot_count = cast(int, snapshot_count)
+        if (
+            count != quality_valid_pairs
+            or positive_count > count
+            or snapshot_count < 1
+            or snapshot_count != len(source_snapshots)
+            or not source_snapshots
+            or not isinstance(source_snapshots[-1], dict)
+            or source_snapshots[-1].get("scan_id") != source_scan_id
+            or any(not isinstance(value, str) or len(value) > 64 for value in numeric_fields)
+        ):
+            return None
+        baseline_rows = [
+            row
+            for row in funnel
+            if isinstance(row, dict) and row.get("criterion") == "unchanged_top_ask_gross_sign"
+        ]
+        if len(baseline_rows) != 1 or baseline_rows[0].get("positive_states") != positive_count:
+            return None
+        try:
+            minimum_value, median_value, maximum_value = map(
+                Decimal, cast(tuple[str, str, str], numeric_fields)
+            )
+        except (InvalidOperation, ValueError):
+            return None
+        if (
+            not all(value.is_finite() for value in (minimum_value, median_value, maximum_value))
+            or minimum_value > median_value
+            or median_value > maximum_value
+        ):
+            return None
+        return {
+            "job_id": _bounded_string(job.get("job_id"), 100),
+            "source_scan_id": source_scan_id,
+            "finding_id": finding_id,
+            "experiment_run_id": result["experiment_run_id"],
+            "snapshot_count": snapshot_count,
+            "attempted_market_pairs": attempted_market_pairs,
+            "quality_valid_pairs": quality_valid_pairs,
+            "unique_market_ids": unique_market_ids,
+            "top_pair_edge_per_share": {
+                "count": count,
+                "minimum_per_share": minimum,
+                "median_nearest_rank_per_share": median,
+                "maximum_per_share": maximum,
+                "positive_count": positive_count,
+            },
+            "finding_url": f"/api/arena/findings/{finding_id}",
+        }
+    return None
+
+
+def _director_event_history(
+    root: Path, director_id: object
+) -> tuple[list[dict[str, Any]], bool, int]:
+    """Read a small hash-verified history from one durable Director event stream."""
+    if not isinstance(director_id, str) or not re.fullmatch(r"[A-Za-z0-9_.-]{1,100}", director_id):
+        return [], False, 1
+    directors_root = root / "directors"
+    director_root = directors_root / director_id
+    events_root = director_root / "events"
+    if directors_root.is_symlink() or director_root.is_symlink() or events_root.is_symlink():
+        return [], False, 1
+    if not events_root.is_dir():
+        return [], False, 0
+
+    paths: list[tuple[float, Path]] = []
+    truncated = False
+    invalid = 0
+    try:
+        for index, path in enumerate(events_root.glob("event-*.json")):
+            if index >= MAX_DIRECTOR_EVENT_FILES_SCANNED:
+                truncated = True
+                break
+            if path.is_symlink() or path.parent.is_symlink():
+                invalid += 1
+                continue
+            try:
+                paths.append((path.stat().st_mtime, path))
+            except OSError:
+                invalid += 1
+    except OSError:
+        return [], False, invalid + 1
+
+    history: list[dict[str, Any]] = []
+    for _, path in sorted(paths, key=lambda item: item[0], reverse=True):
+        if len(history) >= MAX_DIRECTOR_HISTORY_EVENTS:
+            break
+        try:
+            if path.stat().st_size > MAX_DIRECTOR_EVENT_BYTES:
+                invalid += 1
+                continue
+            event = json.loads(path.read_text())
+            if not isinstance(event, dict):
+                invalid += 1
+                continue
+            canonical = json.dumps(
+                {key: value for key, value in event.items() if key != "recorded_at_utc"},
+                sort_keys=True,
+                separators=(",", ":"),
+                ensure_ascii=False,
+            ).encode()
+            expected_name = f"event-{hashlib.sha256(canonical).hexdigest()}.json"
+            if path.name != expected_name or event.get("director_id") != director_id:
+                invalid += 1
+                continue
+            counts = event.get("positive_states_by_gate")
+            if not isinstance(counts, dict) or any(
+                not isinstance(key, str)
+                or not isinstance(value, int)
+                or isinstance(value, bool)
+                or value < 0
+                for key, value in counts.items()
+            ):
+                counts = None
+            history.append(
+                {
+                    "recorded_at_utc": _bounded_string(event.get("recorded_at_utc"), 40),
+                    "state": _bounded_string(event.get("state"), 40),
+                    "stage": _bounded_string(event.get("stage"), 120),
+                    "note": _bounded_string(event.get("note"), 300),
+                    "scan_id": _bounded_string(event.get("scan_id"), 80),
+                    "job_id": _bounded_string(event.get("job_id"), 80),
+                    "finding_id": _bounded_string(event.get("finding_id"), 100),
+                    "experiment_run_id": _bounded_string(event.get("experiment_run_id"), 120),
+                    "experiment_sha256": _bounded_string(event.get("experiment_sha256"), 64),
+                    "dataset_sha256": _bounded_string(event.get("dataset_sha256"), 64),
+                    "source_revision_sha256": _bounded_string(
+                        event.get("source_revision_sha256"), 64
+                    ),
+                    "strategy_readiness": _bounded_string(event.get("strategy_readiness"), 100),
+                    "model_readiness": _bounded_string(event.get("model_readiness"), 100),
+                    "positive_states_by_gate": counts,
+                    "recommendation": _bounded_string(event.get("recommendation"), 600),
+                }
+            )
+        except (OSError, ValueError, TypeError):
+            invalid += 1
+    truncated = truncated or len(paths) > len(history)
+    return history, truncated, invalid
+
+
+def research_activity(root: Path) -> dict[str, Any]:
+    """Return a small read-only summary of Arena's durable research activity."""
+    invalid_records = 0
+
+    def records(kind: str, filename: str, limit: int) -> list[dict[str, Any]]:
+        nonlocal invalid_records
+        directory = root / kind
+        if directory.is_symlink():
+            invalid_records += 1
+            return []
+        paths = []
+        for path in directory.glob(f"*/{filename}") if directory.is_dir() else []:
+            if path.is_symlink() or path.parent.is_symlink():
+                invalid_records += 1
+                continue
+            try:
+                paths.append((path.stat().st_mtime, path))
+            except OSError:
+                invalid_records += 1
+        values: list[dict[str, Any]] = []
+        for _, path in sorted(paths, key=lambda item: item[0], reverse=True)[:limit]:
+            try:
+                if path.stat().st_size > MAX_RESEARCH_ACTIVITY_RECORD_BYTES:
+                    invalid_records += 1
+                    continue
+                value = json.loads(path.read_text())
+                if isinstance(value, dict):
+                    values.append(value)
+                else:
+                    invalid_records += 1
+            except (OSError, ValueError):
+                invalid_records += 1
+        return values
+
+    jobs = records("jobs", "job.json", 25)
+    latest_veritas_qualification = _latest_veritas_qualification_distribution(root, jobs)
+    directors = records("directors", "manifest.json", 10)
+    schedules = records("schedules", "manifest.json", 10)
+    alerts = records("alerts", "manifest.json", 10)
+    active_states = {"RUNNING", "QUEUED"}
+    active_jobs = [job for job in jobs if job.get("state") in active_states]
+    queued_jobs = sum(job.get("state") == "QUEUED" for job in jobs)
+    director_histories: dict[int, tuple[list[dict[str, Any]], bool]] = {}
+    for row in directors[:5]:
+        history, truncated, invalid_history = _director_event_history(root, row.get("director_id"))
+        director_histories[id(row)] = (history, truncated)
+        invalid_records += invalid_history
+    return {
+        "status": "available",
+        "state_source": "persisted Arena manifests; supervisor liveness remains on Arena detail views",
+        "active_job_count": len(active_jobs),
+        "queued_job_count": queued_jobs,
+        "jobs": [
+            {
+                "job_id": row.get("job_id"),
+                "kind": row.get("configuration", {}).get("kind")
+                if isinstance(row.get("configuration"), dict)
+                else None,
+                "source_scan_id": _qualification_source_scan_id(row),
+                "state": row.get("state"),
+                "created_at": row.get("created_at"),
+                "updated_at": row.get("updated_at"),
+                "phase": row.get("phase"),
+                "progress": row.get("progress") if isinstance(row.get("progress"), dict) else None,
+                "error": _bounded_string(row.get("error"), 300),
+            }
+            for row in jobs[:10]
+        ],
+        "latest_veritas_qualification": latest_veritas_qualification,
+        "active_director_count": sum(row.get("state") == "RUNNING" for row in directors),
+        "directors": [
+            {
+                "director_id": row.get("director_id"),
+                "state": row.get("state"),
+                "research_question": row.get("research_question"),
+                "current_stage": row.get("current_stage"),
+                "source_scan_id": row.get("latest_scan_id") or row.get("current_scan_id"),
+                "last_qualified_scan_id": row.get("last_qualified_scan_id"),
+                "strategy_readiness": row.get("strategy_readiness"),
+                "model_readiness": row.get("model_readiness"),
+                "independent_confirmation_readiness": row.get("independent_confirmation_readiness"),
+                "source_revision_sha256": row.get("source_revision_sha256"),
+                "finalized_source_analysis": (
+                    {
+                        key: row["finalized_source_analysis"].get(key)
+                        for key in (
+                            "state",
+                            "readiness",
+                            "status",
+                            "campaign_id",
+                            "summary_sha256",
+                            "processed_segment_count",
+                            "catalog_segment_count",
+                            "pending_segment_count",
+                            "pending_source_bytes",
+                            "processed_source_bytes",
+                            "last_processed_ordinal",
+                            "period_frame_records",
+                            "touched_market_frame_states",
+                            "quality_valid_states",
+                            "positive_top_ask_pair_states",
+                            "positive_full_depth_pre_fee_states",
+                        )
+                    }
+                    if isinstance(row.get("finalized_source_analysis"), dict)
+                    else None
+                ),
+                "recommendation": _bounded_string(row.get("recommendation"), 600),
+                "updated_at_utc": row.get("updated_at_utc"),
+                "latest_finding": (
+                    {
+                        "finding_id": row["latest_finding"].get("finding_id"),
+                        "experiment_run_id": row["latest_finding"].get("experiment_run_id"),
+                        "experiment_sha256": row["latest_finding"].get("experiment_sha256"),
+                        "dataset_sha256": row["latest_finding"].get("dataset_sha256"),
+                        "status": row["latest_finding"].get("status"),
+                        "snapshot_count": row["latest_finding"].get("snapshot_count"),
+                        "quality_valid_pairs": row["latest_finding"].get("quality_valid_pairs"),
+                        "unique_market_ids": row["latest_finding"].get("unique_market_ids"),
+                        "gross_candidate_evidence_count": row["latest_finding"].get(
+                            "gross_candidate_evidence_count"
+                        ),
+                        "gross_candidate_replay_status": row["latest_finding"].get(
+                            "gross_candidate_replay_status"
+                        ),
+                        "gross_candidate_replayed_count": row["latest_finding"].get(
+                            "gross_candidate_replayed_count"
+                        ),
+                        "gross_candidate_replay_complete": row["latest_finding"].get(
+                            "gross_candidate_replay_complete"
+                        ),
+                        "positive_states_by_gate": row["latest_finding"].get(
+                            "positive_states_by_gate"
+                        ),
+                    }
+                    if isinstance(row.get("latest_finding"), dict)
+                    else None
+                ),
+                "recent_events": director_histories.get(id(row), ([], False))[0],
+                "recent_events_truncated": director_histories.get(id(row), ([], False))[1],
+            }
+            for row in directors[:5]
+        ],
+        "active_schedule_count": sum(
+            row.get("state") in {"PENDING", "RUNNING"} for row in schedules
+        ),
+        "schedules": [
+            {
+                "schedule_id": row.get("schedule_id"),
+                "state": row.get("state"),
+                "question": row.get("configuration", {}).get("question")
+                if isinstance(row.get("configuration"), dict)
+                else None,
+                "steps": [
+                    {
+                        "name": step.get("name"),
+                        "state": step.get("state"),
+                        "job_id": step.get("job_id"),
+                    }
+                    for step in row.get("steps", [])[:8]
+                    if isinstance(step, dict)
+                ]
+                if isinstance(row.get("steps"), list)
+                else [],
+            }
+            for row in schedules[:5]
+        ],
+        "alerts": [
+            {
+                "alert_id": row.get("alert_id"),
+                "state": row.get("state"),
+                "reason": row.get("reason"),
+                "schedule_id": row.get("schedule_id"),
+                "director_id": row.get("director_id"),
+                "scan_id": row.get("scan_id"),
+                "job_id": row.get("job_id"),
+            }
+            for row in alerts[:5]
+        ],
+        "invalid_artifact_count": invalid_records,
+        "limits": {
+            "maximum_record_bytes": MAX_RESEARCH_ACTIVITY_RECORD_BYTES,
+            "maximum_jobs_read": 25,
+            "maximum_directors_read": 10,
+            "maximum_director_event_files_scanned": MAX_DIRECTOR_EVENT_FILES_SCANNED,
+            "maximum_director_events_per_director": MAX_DIRECTOR_HISTORY_EVENTS,
+            "maximum_director_event_bytes": MAX_DIRECTOR_EVENT_BYTES,
+            "maximum_schedules_read": 10,
+            "maximum_alerts_read": 10,
+        },
+    }
 
 
 def inspect_director(root: Path, identity: str) -> dict[str, Any]:
@@ -95,7 +630,7 @@ def inspect_director(root: Path, identity: str) -> dict[str, Any]:
     return record
 
 
-def router(root: Path) -> APIRouter:
+def router(root: Path, *, veritas_repository: Path | None = None) -> APIRouter:
     api = APIRouter(prefix="/api/arena", tags=["Arena"])
 
     async def call(fn: Any, *args: Any) -> Any:
@@ -265,6 +800,10 @@ def router(root: Path) -> APIRouter:
     async def overview() -> Any:
         return await call(overview_data)
 
+    @api.get("/research-activity")
+    async def get_research_activity() -> Any:
+        return await call(research_activity, root)
+
     @api.get("/datasets/{identity}")
     async def dataset(identity: str) -> Any:
         return await call(
@@ -358,6 +897,10 @@ def router(root: Path) -> APIRouter:
     @api.get("/directors/{identity}")
     async def director(identity: str) -> Any:
         return await call(inspect_director, root, identity)
+
+    @api.get("/findings/{identity}")
+    async def veritas_qualification_finding(identity: str) -> Any:
+        return await call(read_veritas_qualification_finding, root, identity)
 
     @api.post("/directors/{identity}/cancel")
     async def cancel_director(identity: str) -> Any:
@@ -606,6 +1149,14 @@ def router(root: Path) -> APIRouter:
             return create(root, JobSpec.model_validate(body.configuration))
 
         return await call(create)
+
+    @api.post("/jobs/veritas-qualification", status_code=201)
+    async def create_veritas_qualification() -> Any:
+        return await call(
+            create_veritas_qualification_job,
+            root,
+            veritas_repository or veritas_repository_root(),
+        )
 
     @api.get("/jobs/{identity}")
     async def job(identity: str) -> Any:

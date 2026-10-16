@@ -1,0 +1,22 @@
+{
+  "artifact_id": "VERITAS-M2-MARKET-CONSTRAINT-AUDIT-001",
+  "book_leg_count": 3680,
+  "captured_at_utc": "2026-10-16T02:38:22+00:00",
+  "complete": true,
+  "compressed_source_bytes": 30058744,
+  "market_observation_count": 1840,
+  "minimum_mismatch_examples": [],
+  "minimum_value_equal_count": 3680,
+  "minimum_value_mismatch_count": 0,
+  "result_sha256": "498865433c62ff10d2028744467c03a275ae3ee26de958839f8a37caf8aacf1c",
+  "snapshot_count": 46,
+  "source_code_sha256": "6ad8de7e43393aa8c37cb22f15339d1146075c113fd9d2ddd3ee4890ca1b7680",
+  "source_manifest_sha256": "ac5547d3ab7c937951432b0f40a40b032f9b548ba289c285e1e55499dc3d340e",
+  "source_root": "data/veritas-observatory",
+  "status": "NUMERIC_VALUES_EQUAL_UNITS_DISTINCT",
+  "tick_mismatch_examples": [],
+  "tick_value_equal_count": 3680,
+  "tick_value_mismatch_count": 0,
+  "units_note": "Gamma orderMinSize is USDC notional; CLOB min_order_size is shares. Numeric equality does not make these units interchangeable.",
+  "version": "veritas-market-constraint-semantics-audit-v1"
+}

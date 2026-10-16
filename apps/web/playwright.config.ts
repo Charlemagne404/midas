@@ -1,7 +1,16 @@
 import { defineConfig } from '@playwright/test';
-import { mkdtempSync } from 'node:fs';
+import { existsSync, mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { dirname, join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const webRoot = dirname(fileURLToPath(import.meta.url));
+const repository = resolve(webRoot, '../..');
+const python =
+  process.env.MIDAS_PYTHON ??
+  (existsSync(join(repository, '.venv/bin/python'))
+    ? join(repository, '.venv/bin/python')
+    : '/home/charlie/midas/.venv/bin/python');
 const database = join(mkdtempSync(join(tmpdir(), 'midas-browser-')), 'paper.db');
 export default defineConfig({
   testDir: './e2e',
@@ -13,18 +22,21 @@ export default defineConfig({
   },
   webServer: [
     {
-      command: '.venv/bin/uvicorn apps.api.main:app --host 127.0.0.1 --port 18000',
-      cwd: '../..',
+      command: `${python} -m uvicorn apps.api.main:app --host 127.0.0.1 --port 18000`,
+      cwd: repository,
       url: 'http://127.0.0.1:18000/api/health',
       reuseExistingServer: false,
       env: {
         MIDAS_MODE: 'demo',
         MIDAS_DATABASE_URL: `sqlite+aiosqlite:///${database}`,
         MIDAS_ARENA_ROOT: join(dirname(database), 'arena'),
+        MIDAS_VERITAS_WORKSPACE: process.env.MIDAS_VERITAS_WORKSPACE ?? repository,
+        PYTHONPATH: join(repository, 'packages'),
       },
     },
     {
       command: 'corepack pnpm dev --port 15173',
+      cwd: webRoot,
       env: { MIDAS_API_TARGET: 'http://127.0.0.1:18000' },
       url: 'http://127.0.0.1:15173',
       reuseExistingServer: false,
