@@ -11,9 +11,22 @@ summary has 1,499/1,720 quality-valid states, 784 selected market IDs, and
 zero candidate events. The descriptive fixed pilot is at 13/48 scans and
 429/520 valid slots, with no skipped sequence. Scan 43 awaits the scheduled
 Research Director cycle. See [Gate A checkpoint 041](VERITAS_MISSION2_GATE_A_CHECKPOINT_041.md)
-and [inventory 051](VERITAS_MISSION2_RESEARCH_INVENTORY_051.json).
+and [inventory 052](VERITAS_MISSION2_RESEARCH_INVENTORY_052.json).
 
-## Latest Gate F checkpoint — scan 42 qualification and source catch-up
+## Latest Gate F checkpoint — scan 43 qualification and source catch-up
+
+The scheduled Director admitted scan 43 to Arena at 01:15 UTC. Child
+`job-4653ecaf1d5d457f8530c8bc` completed all 43 events with exit status 0;
+the read-only finding validator accepted its source hash, digest, scan
+identity, complete empty candidate evidence, and complete empty replay. All
+five economic gates remain zero over 1,499/1,720 quality-valid states and 784
+selected IDs. The Director manifest still awaits the next scheduled
+reconciliation at 01:45:26 UTC. The finalized-source analyzer now covers
+4,485/4,851 segments, 286,617 valid states across 72 markets, and zero
+positive states. See [Gate F checkpoint 026](VERITAS_MISSION2_GATE_F_CHECKPOINT_026.md)
+and [inventory 052](VERITAS_MISSION2_RESEARCH_INVENTORY_052.json).
+
+## Previous Gate F checkpoint — scan 42 qualification and source catch-up
 
 The scheduled Research Director admitted scan 42 to Arena at 00:45 UTC.
 Child `job-aa54e348ab8347b3b1771479` completed all 42 source events with exit

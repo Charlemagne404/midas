@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-16T00:52:13+00:00",
+  "updated_at_utc": "2026-10-16T01:18:12+00:00",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -5027,6 +5027,67 @@
         "The qualification experiment does not establish strategy P&L, execution, order arrival, or fills.",
         "No positive candidate appeared; absence in this panel does not prove the venue lacks economic opportunities.",
         "The Director manifest still awaits its scheduled reconciliation of the completed Arena child."
+      ]
+    },
+    {
+      "hypothesis_id": "VERITAS-H089",
+      "experiment_id": "VERITAS-M2-ECO-QUAL-001",
+      "dataset_id": "c1a50c704723d6af4a749eb7622d1ddb772713afb6631e2658cbec34e75df42e",
+      "title": "Scan 43 scheduled economic qualification",
+      "mechanism": "The scheduled Research Director pins the finalized v4 snapshot prefix through scan 43, submits one bounded Arena qualification, and compares the unchanged top-ask gross baseline with full-depth, per-leg-minimum, and fee-sensitive gates. Validate the finding digest, source manifest revision, candidate evidence, and empty replay.",
+      "success_metric": "All 43 source events complete; the scan identity and experiment digest validate; the job source manifest matches its submitted revision; all five gate counts and candidate replay status reconcile.",
+      "status": "continue",
+      "decision": "The scheduled Arena child completed 43/43 events and passed the read-only finding validator. The top-ask baseline and all four additional depth/minimum/fee gates have zero positive states. Candidate evidence is complete and empty, with complete empty source replay. Keep no-trade. The Director manifest was updated during admission and still shows the child as QUEUED until its next scheduled reconciliation at 01:45:26 UTC; no manual poll or retry was issued.",
+      "result": {
+        "checkpoint_path": "docs/VERITAS_MISSION2_GATE_F_CHECKPOINT_026.md",
+        "scan_id": "scan-20261016T010147Z-5d3367f05002",
+        "job_id": "job-4653ecaf1d5d457f8530c8bc",
+        "job_state": "COMPLETED",
+        "job_exit_status": 0,
+        "job_progress": {
+          "done": 43,
+          "total": 43
+        },
+        "job_elapsed_seconds": 2.724548874073662,
+        "job_record_sha256": "faac8a1926cf25cd13c3c0ec8ac7b5c312173787b2368ac2f5a722d7ad0fbfca",
+        "source_manifest_sha256": "379c619fdd2d5e5386974985e58a2ab66a5a6f5b224a5a610c8bef1f5f7f5124",
+        "submitted_source_hash": "7ea33c451b69fc5ab3429c0808a13279fd3d8ffc816a37a76207fc205cf0b163",
+        "source_manifest_hash_matches_job": true,
+        "finding_id": "veritas-qualification-v1-8a9f2a1a489aeb3c",
+        "finding_manifest_sha256": "08afbe0154fd8dd79c16cc4dfee33306d154273b939875c9c50839e319253a1a",
+        "experiment_run_id": "VERITAS-M2-ECO-QUAL-001-V3-RUN-c1a50c704723",
+        "dataset_sha256": "c1a50c704723d6af4a749eb7622d1ddb772713afb6631e2658cbec34e75df42e",
+        "experiment_sha256": "b33be2ab08cf41cb91c7cca014f63fc8b57b561d808093a4b065a51524676521",
+        "snapshot_count": 43,
+        "attempted_market_pairs": 1720,
+        "quality_valid_pairs": 1499,
+        "unique_market_ids": 784,
+        "maximum_top_edge_per_share": "-0.001",
+        "median_top_edge_per_share": "-0.02",
+        "positive_states_by_gate": {
+          "unchanged_top_ask_gross_sign": 0,
+          "full_displayed_depth_gross": 0,
+          "full_depth_and_per_leg_minimum_notional": 0,
+          "single_match_fee_sensitivity_positive": 0,
+          "fragmentation_safe_fee_sensitivity_positive": 0
+        },
+        "gross_candidate_evidence_count": 0,
+        "gross_candidate_evidence_complete": true,
+        "gross_candidate_replay_status": "NO_POSITIVE_CANDIDATES_TO_REPLAY",
+        "gross_candidate_replay_complete": true,
+        "read_only_finding_validation": "passed",
+        "director_manifest_reconciled": false,
+        "director_manifest_last_qualified_scan_id": "scan-20261016T003208Z-f65962fb4420",
+        "director_manifest_next_cycle_utc": "2026-10-16T01:45:26Z",
+        "orders_submitted": false,
+        "authenticated_requests": false,
+        "captured_at_utc": "2026-10-16T01:18:12+00:00"
+      },
+      "limitations": [
+        "The 43 snapshots are repeated, selected, and dependent observations, not independent confirmation or a venue census.",
+        "The qualification experiment does not establish strategy P&L, execution, order arrival, or fills.",
+        "No positive candidate appeared; absence in this panel does not prove the venue lacks economic opportunities.",
+        "The child completed after the Director manifest update; the scheduled reconciliation remains pending."
       ]
     }
   ],
