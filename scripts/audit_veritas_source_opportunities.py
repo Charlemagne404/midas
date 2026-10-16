@@ -20,7 +20,7 @@ def main() -> int:
     parser.add_argument(
         "--output",
         type=Path,
-        default=Path("docs/VERITAS_MISSION2_INDEPENDENT_OPPORTUNITY_AUDIT_012.json"),
+        default=Path("docs/VERITAS_MISSION2_INDEPENDENT_OPPORTUNITY_AUDIT_013.json"),
     )
     args = parser.parse_args()
 

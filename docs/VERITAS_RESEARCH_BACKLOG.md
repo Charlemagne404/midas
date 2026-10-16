@@ -5,11 +5,11 @@ economic impact, current evidence, and compute cost. Work remains on
 `project/veritas`; the frozen Reality campaign is a protected reference. The
 earlier Mission 1 handoff backlog is retained below for provenance.
 
-## Current Mission 2 queue (updated 2026-10-16T09:23:41Z)
+## Current Mission 2 queue (updated 2026-10-16T09:30:52Z)
 
 | Rank | Question | Evidence today | Next experiment | Promotion rule |
 | --- | --- | --- | --- | --- |
-| 1 | Has any credible gross or economically qualified opportunity appeared? | Independent audit 011 covers all 59 saved snapshots through latest scan `scan-20261016T090043Z-957608af59ae`: 2,360 selected observations, 2,015 quality-valid pairs, zero validity/top-edge mismatches, and zero positive gross, depth, minimum, or fee-qualified states. A separate Decimal cross-check agrees on 2,523 fee evaluations. | Preserve no-trade. Extend the bounded replay after another immutable snapshot is saved; do not count repeated states as independent opportunities. Define candidate-specific replay only after a positive gross observation survives source-quality review. | Require an observed gross candidate, depth and per-leg minimums, current fee-model checks, independent replay, and evidence of executable conditions; qualification is not P&L. |
+| 1 | Has any credible gross or economically qualified opportunity appeared? | Independent audit 012 covers 60 saved snapshots through latest scan `scan-20261016T093021Z-b20cf6a3b852`: 2,400 selected observations, 2,047 quality-valid pairs, zero validity/top-edge mismatches, and zero positive gross, depth, minimum, or fee-qualified states. The Decimal cross-check agrees on 2,548 fee evaluations. | Preserve no-trade. Extend the bounded replay after another immutable snapshot is saved; do not count repeated states as independent opportunities. Define candidate-specific replay only after a positive gross observation survives source-quality review. | Require an observed gross candidate, depth and per-leg minimums, current fee-model checks, independent replay, and evidence of executable conditions; qualification is not P&L. |
 | 2 | Does the current fee model correctly account for both taker legs and entry capital? | Fee model v3 follows current published collateral-denominated fees and charges both purchased legs at entry. Independent source replay found zero formula mismatches. The 100-share synthetic full-depth case is +1.624 USDC under single-match rounding and -0.370 USDC under the fragmentation-safe bound; the assumed unrecovered unmatched-leg loss is 52.200 USDC. These are controlled sensitivities only. Previous v2 share-deduction outputs are superseded. | Keep the corrected synthetic artifact as the dashboard source after a safe code rollout. Recompute any future observed candidate with its reported schedule and supported venue semantics. | Never treat synthetic P&L or sensitivity rates as observed profitability, fills, or execution likelihood. |
 | 3 | Does the fixed coverage pilot improve usable market coverage? | The immutable pilot is 26/48 scans: 842/1,040 valid slots across 608 selected markets, with one skipped sequence. Audit 002 remains through 25 scans: 23 full-support scans, two partial, no unsupported scans, and 99.80% pooled support. Rotating/control yield comparison remains descriptive and nonrandomized. The dashboard now flags audit 002 as stale against the pilot's 26-scan summary. | Let the fixed pilot reach its existing stop/cap, then re-audit the final cohort and report strata, control availability, missed scans, storage, and compute cost. | Do not treat repeated observations as independent or infer causal or venue-wide improvement. |
 | 4 | What do reported timestamps and intermittent coverage establish about freshness? | Independent audit 009 covers 55 scans / 2,200 observations and reproduces v4 validity and top-edge decisions with zero mismatches. Strict reported-age sensitivity admits 399 states; 1,483 pairs exceed five seconds. | Preserve freshness gates. Seek documented venue sequence semantics or an independent continuity signal before changing them. | Request-to-receipt and returned timestamps do not prove venue sequence freshness, batch atomicity, quote persistence, order arrival, or fills. |
@@ -377,3 +377,16 @@ markets, and no pending source. The pinned campaign digest still matches. See
 [Gate F checkpoint 035](VERITAS_MISSION2_GATE_F_CHECKPOINT_035.md), and ledger
 H132. The next scheduled source-analysis and Director cycles remain to be
 verified; the hosted API and dashboard are still on the main checkout.
+
+## Mission 2 continuation — scan 60 and independent audit 012
+
+The scheduled 09:30 UTC observer cycle completed with zero restarts and saved
+scan `scan-20261016T093021Z-b20cf6a3b852` (32/40 quality-valid pairs; zero
+positive top-gross pairs). Independent audit 012 covers 60 saved snapshots /
+2,400 selected observations / 2,047 quality-valid pairs, reproduces stored
+quality and top-edge results with zero mismatches, and agrees on 2,548 fee
+calculations. Gross, depth, minimum and both fee-sensitivity gates remain zero.
+The next scheduled source-analysis and Director cycles are 09:40 and 09:45 UTC.
+See [Gate B checkpoint 013](VERITAS_MISSION2_GATE_B_CHECKPOINT_013.md),
+[audit 012](VERITAS_MISSION2_INDEPENDENT_OPPORTUNITY_AUDIT_012.json), and
+ledger H133.

@@ -4,7 +4,7 @@
   "status": "in_progress",
   "baseline_commit": "f968095feb9c591de38fe12d7493224425f62f3a",
   "branch": "project/veritas",
-  "last_checkpoint": "docs/VERITAS_MISSION2_GATE_F_CHECKPOINT_035.md",
+  "last_checkpoint": "docs/VERITAS_MISSION2_GATE_B_CHECKPOINT_013.md",
   "datasets": [
     {
       "dataset_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
@@ -51,6 +51,21 @@
       "quality_valid_pairs": 2015,
       "compressed_source_bytes": 38387196,
       "latest_scan_id": "scan-20261016T090043Z-957608af59ae",
+      "selection_is_venue_wide": false,
+      "observations_are_independent": false,
+      "mutated": false,
+      "raw_observations_embedded": false
+    },
+    {
+      "dataset_id": "saved_public_selected_market_snapshots_60_as_of_20261016T093021Z",
+      "kind": "hashed_public_market_snapshots",
+      "source_kind": "genuine_public_intermittent_observations",
+      "role": "source audit and opportunity qualification only",
+      "snapshot_count": 60,
+      "selected_market_pair_observations": 2400,
+      "quality_valid_pairs": 2047,
+      "compressed_source_bytes": 38901902,
+      "latest_scan_id": "scan-20261016T093021Z-b20cf6a3b852",
       "selection_is_venue_wide": false,
       "observations_are_independent": false,
       "mutated": false,
@@ -607,14 +622,16 @@
       "experiment_id": "VERITAS-M2-INDEPENDENT-SOURCE-AUDIT-002",
       "type": "bounded_independent_source_opportunity_replay_and_fee_cross_check",
       "status": "complete_no_positive_gross_candidate",
-      "source_dataset_id": "saved_public_selected_market_snapshots_59_as_of_20261016T090043Z",
-      "evidence": "docs/VERITAS_MISSION2_INDEPENDENT_OPPORTUNITY_AUDIT_011.json",
+      "source_dataset_id": "saved_public_selected_market_snapshots_60_as_of_20261016T093021Z",
+      "evidence": "docs/VERITAS_MISSION2_INDEPENDENT_OPPORTUNITY_AUDIT_012.json",
+      "previous_evidence": "docs/VERITAS_MISSION2_INDEPENDENT_OPPORTUNITY_AUDIT_011.json",
       "code": "packages/midas/veritas/source_opportunity_audit.py",
       "economic_model_code": "packages/midas/veritas/economic_feasibility_v3.py",
       "analysis_version": "veritas-independent-source-opportunity-audit-v2",
       "fee_model_version": "veritas-economic-feasibility-v3",
-      "fee_checked_quantity_count": 2523,
+      "fee_checked_quantity_count": 2548,
       "fee_arithmetic_disagreements": 0,
+      "result_sha256": "1ebc7a3665ae48e37661e522d0d81ef03bd1cf63b838ea9286b5e80cb959e092",
       "quality_validity_mismatches": 0,
       "top_edge_mismatches": 0,
       "positive_gross_candidates": 0,
@@ -687,5 +704,5 @@
     "The live observer/API process has not been restarted to load the updated model; the source replay and local code are current, while deployed UI activation awaits a safe rollout.",
     "The finalized-source analyzer had one code-pin mismatch after the v3 economics edit; it recovered after the v3 model was isolated and the pinned economics.py helper restored. The next scheduled recurrence remains unverified."
   ],
-  "updated_at_utc": "2026-10-16T09:23:41Z"
+  "updated_at_utc": "2026-10-16T09:30:52Z"
 }
