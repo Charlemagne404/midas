@@ -1,3 +1,26 @@
+## Latest runtime finding — 2026-10-16T19:19Z, shadow remains CPU-bound
+
+The protected Reality shadow is active but not producing fresh decisions. Its
+source receipt is about 25h49m old, its last decision about 34h22m old, and
+its ordinal gap to the active recorder is 450,641. That gap widened by 8,828
+ordinals since the 18:40 snapshot. The 10% CPU cgroup quota is binding in
+98.10% of recorded periods. This points to CPU quota pressure; it does not
+isolate the cost of the large live journal.
+
+The live campaign pins `shadow_worker.py` to a different hash than the current
+branch. The branch's isolated optimizations therefore remain canary evidence
+and are not loaded by the frozen service. The old integrity result verifies
+113,162 journal events; the live counter is 113,376. No active-writer
+integrity scan, service restart, quota change, or campaign write occurred.
+
+The scheduled source replay is caught up through 6,962 segments with zero
+positive economic states, and the scan-79 Director/Arena qualification
+completed with all five gates zero and empty candidate evidence. These results
+do not repair forward-shadow continuity. See [Gate C checkpoint
+029](VERITAS_MISSION2_GATE_C_CHECKPOINT_029.md), [Gate F checkpoint
+038](VERITAS_MISSION2_GATE_F_CHECKPOINT_038.md), and [inventory
+092](VERITAS_MISSION2_RESEARCH_INVENTORY_092.json).
+
 ## Latest progress — 2026-10-16T19:10Z, scan-79 independent audit
 
 Independent audit 017 completed through 79 saved snapshots / 3,160 selected

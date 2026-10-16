@@ -14564,5 +14564,249 @@
     "based_on_inventory_sha256": "246ce0bd9b408b40f0166fc34a01cce4204444f5d6dce2e8e70f79d53543b7ae",
     "capture_scope": "Record independent public-source opportunity replay through scan 79. Existing service, campaign, host, and collector observations retain their own capture times.",
     "artifact_sha256": "def35265a06009ad9fba9a6fef0adbfb4c002f2b91c32fcdab66e88818431543"
+  },
+  "frozen_shadow_health_092": {
+    "captured_at_utc": "2026-10-16T19:19:10.021132+00:00",
+    "status_path": "/home/charlie/midas-reality/data/research/reality/forward/mission2/status.json",
+    "status_file_sha256": "4bf771ecf9499770299bc131fda6c8b5069f25095e95578706f97114179a6b62",
+    "campaign_sha256": "aa8acb2b46823c1a1e3ac5d01a57dde917746c2c7471098ae2a4598875e322f5",
+    "campaign_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
+    "state": "WARMING_OR_LAGGED_SOURCE",
+    "active": true,
+    "systemd_restarts": 1,
+    "source_ordinal": 535359,
+    "source_receipt_utc": "2026-10-15T17:30:13.706002+00:00",
+    "source_receipt_age_seconds": 92936.3,
+    "last_decision_utc": "2026-10-15T08:58:06.958877+00:00",
+    "decision_age_seconds": 123663.1,
+    "decisions": 10253,
+    "observations": 47911,
+    "events": 113376,
+    "lagged_frames_skipped": 209056,
+    "followups_observed": 937,
+    "followups_censored": 40075,
+    "actual_orders_submitted": 0,
+    "producer_hash": "9231e11c969cc95af607d847c7d5aa32418a91c21152b214cf9f170d517c0c9f",
+    "campaign_pinned_shadow_worker_sha256": "0b745947399dc33898bdba41df4f0b183ba87477f5dcddecb7ae2d26f29e3c6d",
+    "branch_shadow_worker_sha256": "903a5cd900678a6b89c1e7bf6efb1fa58a131c8d0b2d5e7ef82d2a6dd46b0005",
+    "cgroup_cpu_max": "10000 100000",
+    "cgroup_cpu_quota_percent": 10,
+    "throttled_periods": 1422680,
+    "cpu_periods": 1450279,
+    "throttled_period_fraction": 0.981,
+    "cgroup_memory_current_bytes": 315604992,
+    "cgroup_memory_peak_bytes": 323477504,
+    "cgroup_memory_limit_bytes": 536870912,
+    "cgroup_swap_current_bytes": 15126528,
+    "cgroup_oom_events": 0,
+    "cgroup_disk_log_entries_since_2026_10_16T18_40Z": 0,
+    "last_saved_integrity_path": "/home/charlie/midas-reality/data/research/reality/forward/mission2/integrity.json",
+    "last_saved_integrity_sha256": "2e423d7b6f0b3071af57e6c1d5f2a6649b28180880a4a163119a7655e70e0582",
+    "last_saved_integrity_checked_utc": "2026-10-16T03:01:41.420491+00:00",
+    "last_saved_integrity_events": 113162,
+    "live_events_outside_last_integrity_check": 214,
+    "live_database_full_integrity_rechecked": false,
+    "comparison_to_18_40": {
+      "shadow_ordinal_delta": 1460,
+      "recorder_ordinal_delta": 10288,
+      "ordinal_gap_at_18_40": 441813,
+      "ordinal_gap_now": 450641,
+      "gap_growth": 8828,
+      "lagged_frames_delta": 1185,
+      "decisions_delta": 0,
+      "events_delta": 10
+    }
+  },
+  "reality_recorder_health_092": {
+    "captured_at_utc": "2026-10-16T19:19:10.021132+00:00",
+    "status_path": "/home/charlie/midas-reality/data/recordings/reality/status.json",
+    "status_file_sha256": "17b941903650ace22aece91b4b6c83b9eb393190cf94f601bb293cafa8d937af",
+    "state": "RECORDING_UNSEQUENCED",
+    "active": true,
+    "systemd_restarts": 0,
+    "ordinal": 986000,
+    "frames": 730984,
+    "markets": 8,
+    "expected_books": 16,
+    "fresh_books": 16,
+    "gaps": 4761,
+    "failures": 4,
+    "latest_error": "ConnectionClosedError: no close frame received or sent",
+    "storage_bytes": 1810599403,
+    "ordinal_gap_to_shadow": 450641
+  },
+  "source_analysis_checkpoint_092": {
+    "summary_path": "data/veritas-observatory/source-research-summary.json",
+    "summary_file_sha256": "c9ff233e2a5e554cb0919f4686c157859759c772578403574e89b1aba5af87a6",
+    "generated_at_utc": "2026-10-16T19:12:17+00:00",
+    "status": "current",
+    "catalog_segment_count": 6962,
+    "processed_segment_count": 6962,
+    "pending_segment_count": 0,
+    "processed_source_bytes": 1803672874,
+    "batch_processed_segment_count": 57,
+    "batch_processed_source_bytes": 15024320,
+    "active_segment_read": false,
+    "quality_valid_states": 522203,
+    "market_count": 114,
+    "positive_top_ask_pair_states": 0,
+    "positive_full_depth_pre_fee_states": 0,
+    "positive_full_depth_minimum_notional_satisfied_states": 0,
+    "last_processed_ordinal": 983449,
+    "scheduled_run_exit_status": 0,
+    "scheduled_run_cpu_seconds": 6.558817,
+    "scheduled_run_memory_peak_bytes": 131149824,
+    "scheduled_run_restart_count": 0
+  },
+  "gap_detail_checkpoint_092": {
+    "summary_path": "data/veritas-observatory/gap-detail-summary-v1.json",
+    "summary_file_sha256": "6368066f45950a3c90f1b99f13d45d9cf70ff23d38745670f5f52df16f2f6172",
+    "generated_at_utc": "2026-10-16T19:21:10+00:00",
+    "catalog_segment_count": 6983,
+    "replayable_catalog_segment_count": 6981,
+    "processed_segment_count": 6981,
+    "pending_segment_count": 0,
+    "processed_source_bytes": 1808264124,
+    "campaign_window_gap_event_count": 2681,
+    "campaign_window_gap_counts_by_reason": {
+      "book_resynchronization": 2677,
+      "connection_failure": 4
+    },
+    "active_segment_read": false,
+    "batch_processed_segment_count": 29,
+    "batch_processed_source_bytes": 7562836,
+    "scheduled_job_exit_status": 0,
+    "scheduled_job_cpu_seconds": 3.585735,
+    "scheduled_job_memory_peak_bytes": 120020992,
+    "scheduled_job_restart_count": 0,
+    "next_scheduled_timer_at_utc": "2026-10-16T19:35:00+00:00"
+  },
+  "director_scan_79_qualification_092": {
+    "job_id": "job-d55daccf680c4ebf939922ba",
+    "job_file_path": "data/arena/jobs/job-d55daccf680c4ebf939922ba/job.json",
+    "job_file_sha256": "ba3397bbe100155cc3e9ca548af191ebb3790a5af1eede4a7e4ed292b2b2c540",
+    "state": "COMPLETED",
+    "exit_status": 0,
+    "elapsed_seconds": 6.019200934912078,
+    "progress": {
+      "done": 79,
+      "total": 79
+    },
+    "scan_id": "scan-20261016T190051Z-25ce58a611e0",
+    "experiment_run_id": "VERITAS-M2-ECO-QUAL-001-V4-RUN-82514893e642",
+    "finding_id": "veritas-qualification-v1-2989b7fa2f535c0f",
+    "finding_path": "data/arena/findings/veritas-qualification-v1-2989b7fa2f535c0f/manifest.json",
+    "finding_file_sha256": "03abc165b47964afe4f42a01c20f38f228a86e7df4578377ebfce82838443712",
+    "snapshot_count": 79,
+    "selected_market_observation_count": 3160,
+    "quality_valid_pairs": 2667,
+    "positive_gate_counts": {
+      "unchanged_top_ask_gross_sign": 0,
+      "full_displayed_depth_gross": 0,
+      "full_depth_and_per_leg_minimum_notional": 0,
+      "single_match_fee_sensitivity_positive": 0,
+      "fragmentation_safe_fee_sensitivity_positive": 0
+    },
+    "gross_candidate_evidence_count": 0,
+    "gross_candidate_evidence_complete": true,
+    "independent_candidate_replay": {
+      "candidate_count": 0,
+      "candidates": [],
+      "complete": true,
+      "replayed_candidate_count": 0,
+      "source_code_sha256": "652f562ba24f362aeffad51099dbfd56d9228166bee542bd4c290a0fa63676d6",
+      "status": "NO_POSITIVE_CANDIDATES_TO_REPLAY",
+      "version": "veritas-gross-candidate-source-replay-v2"
+    },
+    "director_manifest_path": "data/arena/directors/director-veritas-opportunity-v1/manifest.json",
+    "director_manifest_sha256": "e3e37caa2aa0d3d06e86687d528b777c7518e8c80dc85a7dd8aa9b5e4159c864",
+    "director_manifest_captured_at_utc": "2026-10-16T19:15:57+00:00",
+    "director_state_at_capture": "RUNNING",
+    "director_last_qualified_scan_id": "scan-20261016T183053Z-5cc3121a6906",
+    "director_current_scan_id": "scan-20261016T190051Z-25ce58a611e0",
+    "director_current_job_state_at_capture": "QUEUED",
+    "arena_child_completed_at_utc": "2026-10-16T19:16:20.418890+00:00",
+    "next_director_timer_at_utc": "2026-10-16T19:45:05+00:00"
+  },
+  "runtime_services_092": {
+    "midas-reality-shadow.service": {
+      "active": true,
+      "restarts": 1,
+      "memory_current_bytes": 315604992,
+      "memory_peak_bytes": 323477504,
+      "cpu_quota_percent": 10
+    },
+    "midas-reality.service": {
+      "active": true,
+      "restarts": 0,
+      "memory_current_bytes": 401514496,
+      "memory_peak_bytes": 420126720,
+      "cpu_quota_percent": 25
+    },
+    "midas-veritas-source-analysis.service": {
+      "active": false,
+      "last_exit_status": 0,
+      "last_exit_utc": "2026-10-16T19:12:20+00:00",
+      "restarts": 0
+    },
+    "midas-veritas-gap-detail-analysis.service": {
+      "active": false,
+      "last_exit_status": 0,
+      "last_exit_utc": "2026-10-16T19:06:17+00:00",
+      "restarts": 0
+    },
+    "midas-veritas-observatory.service": {
+      "active": false,
+      "last_exit_status": 0,
+      "last_exit_utc": "2026-10-16T19:01:00+00:00",
+      "restarts": 0
+    },
+    "midas-veritas-research-director.service": {
+      "active": false,
+      "last_exit_status": 0,
+      "last_exit_utc": "2026-10-16T19:16:05+00:00",
+      "restarts": 0
+    },
+    "midas-arena-job-d55daccf680c4ebf939922ba.service": {
+      "active": false,
+      "result": "success",
+      "exit_status": 0
+    },
+    "midas-api.service": {
+      "active": true,
+      "restarts": 0
+    },
+    "midas-web.service": {
+      "active": true,
+      "restarts": 0
+    },
+    "midas-reality-api.service": {
+      "active": true,
+      "restarts": 0
+    },
+    "midas-reality-web.service": {
+      "active": true,
+      "restarts": 0
+    }
+  },
+  "host_resources_092": {
+    "captured_at_utc": "2026-10-16T19:19:10.021132+00:00",
+    "load_average": [
+      0.565,
+      0.957,
+      1.059
+    ],
+    "available_ram_bytes": 10085269504,
+    "swap_used_bytes": 4288053248,
+    "swap_total_bytes": 4294963200,
+    "root_disk_used_percent": 57,
+    "root_disk_free_bytes": 209158688768
+  },
+  "research_inventory_092": {
+    "artifact_path": "docs/VERITAS_MISSION2_RESEARCH_INVENTORY_092.json",
+    "based_on_inventory": "docs/VERITAS_MISSION2_RESEARCH_INVENTORY_091.json",
+    "based_on_inventory_sha256": "def35265a06009ad9fba9a6fef0adbfb4c002f2b91c32fcdab66e88818431543",
+    "capture_scope": "Record the 19:19 UTC frozen-shadow and recorder state, current CPU throttling and campaign identity, the 19:12 finalized-source replay, 19:21 gap-detail catch-up, and scan-79 Director/Arena completion. Live files and services retain their individual capture timestamps.",
+    "artifact_sha256": "c0102da17977424478626cc849aba883f78a5d69f2c7d962323180271251b0b5"
   }
 }

@@ -711,3 +711,36 @@ See [Gate B checkpoint 016](VERITAS_MISSION2_GATE_B_CHECKPOINT_016.md),
 [audit 017](VERITAS_MISSION2_INDEPENDENT_OPPORTUNITY_AUDIT_017.json), [Gate A
 checkpoint 055](VERITAS_MISSION2_GATE_A_CHECKPOINT_055.md), and inventory
 091.
+
+
+## Active Mission 2 queue — 2026-10-16 19:19 UTC
+
+1. **Preserve the frozen shadow and plan continuity-safe recovery.** The live
+   worker is 450,641 ordinals behind, has not made a new decision in about
+   34h22m, and is throttled in 98.10% of CPU periods. Its campaign pins a
+   worker hash different from the current branch. Define an isolated,
+   versioned successor and a bounded throughput/continuity test; do not
+   restart the worker, change its quota, or read/modify its active SQLite
+   journal for a migration experiment.
+2. **Let scheduled research reconcile naturally.** Source replay is captured
+   through 6,962 segments at 19:12 UTC; gap detail advanced at 19:21 to
+   6,981/6,981 replayable segments with no pending work. Their separate
+   captures are not an exact same-time backlog comparison. The Director
+   manifest has not yet reconciled the completed scan-79 Arena child; its next
+   timer is 19:45 UTC. Review scheduled results without duplicate jobs or
+   manual retries.
+3. **Finish measurement pilot 002's predeclared window.** Keep reported
+   timestamp freshness, synchronization, atomicity, and sequence claims
+   separate.
+4. **Maintain no-trade and defer model training.** Audit 017 and the scan-79
+   Arena qualification both have complete empty candidate evidence and zero
+   positives at all economic gates. There are no candidate-specific targets
+   or demonstrated strategy gains.
+5. **Keep A1 memory work parked.** The exact 78-snapshot parity and successful
+   79-snapshot capped replay are recorded; no further scaling work is justified
+   until new panel growth or measured peak-memory evidence appears.
+
+See [Gate C checkpoint 029](VERITAS_MISSION2_GATE_C_CHECKPOINT_029.md),
+[Gate F checkpoint 038](VERITAS_MISSION2_GATE_F_CHECKPOINT_038.md),
+[inventory 092](VERITAS_MISSION2_RESEARCH_INVENTORY_092.json), and [audit
+017](VERITAS_MISSION2_INDEPENDENT_OPPORTUNITY_AUDIT_017.json).

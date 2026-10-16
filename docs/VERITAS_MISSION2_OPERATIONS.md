@@ -1919,3 +1919,53 @@ depth, minimum, fee, or strict-freshness gate. Exact resource peak was not
 retained. See [Gate B checkpoint
 016](VERITAS_MISSION2_GATE_B_CHECKPOINT_016.md) and [audit
 017](VERITAS_MISSION2_INDEPENDENT_OPPORTUNITY_AUDIT_017.json).
+
+
+## 2026-10-16 19:19 UTC — current shadow health and scan-79 reconciliation
+
+Read-only status files show the Reality recorder still active with restart
+count 0, `RECORDING_UNSEQUENCED`, 8 markets / 16 books, ordinal 986,000, 730,984
+frames, 4,761 gaps, four failures, and a reported `ConnectionClosedError`; it
+continued recording. The frozen shadow remains active with restart count 1
+and `WARMING_OR_LAGGED_SOURCE`. Its cursor is 535,359, 450,641 ordinals behind
+the recorder. The last source receipt is 25h49m old and the last decision is
+34h22m old. Since the 18:40 snapshot, the gap widened by 8,828 ordinals and
+the lagged-frame counter grew by 1,185; there were no new decisions.
+
+The 10% shadow CPU limit is binding: 98.10% of recorded cgroup CPU periods
+were throttled. Current cgroup memory is 315.6 MB / 512 MiB, peak is 323.5 MB,
+swap is 15.1 MB, and OOM counters are zero. The host had 10.1 GB RAM available,
+4.29 / 4.29 GB swap used, and 195 GB disk free. The campaign SHA-256 remains
+`aa8acb2b46823c1a1e3ac5d01a57dde917746c2c7471098ae2a4598875e322f5`. Its
+allowed worker code hash differs from the current branch worker; the branch
+canary optimization is not running in this frozen service. No worker, quota,
+campaign, cursor, or journal was changed.
+
+The prior completed integrity report still covers 113,162 journal events;
+the current live counter is 113,376, so 214 later events are not covered by
+that report. No full SQLite integrity scan was run against the active writer.
+The 19:12 source replay completed 6,962 / 6,962 segments, 522,203
+quality-valid states across 114 markets, and zero positive top-ask, depth, or
+minimum-notional states. The 19:06 gap-detail report covered 6,952 / 6,952
+replayable segments with zero pending at its capture time and 2,667 campaign
+window gaps; it predates the newer source prefix by ten segments.
+
+The scheduled 19:15 Director cycle admitted scan 79. Arena job
+`job-d55daccf680c4ebf939922ba` completed 79 / 79 events in 6.02 seconds with
+exit 0 and zero positives at all five gates. Candidate evidence and replay
+are complete and empty. The Director manifest last wrote at 19:15:57 and
+still projected the child as `QUEUED`; the Arena job completed at 19:16:20.
+No manual poll or retry was made. The next Director reconciliation is due at
+19:45:05 UTC. Midas API/web and Reality API/web remain active with zero
+restarts. See [Gate C checkpoint
+029](VERITAS_MISSION2_GATE_C_CHECKPOINT_029.md), [Gate F checkpoint
+038](VERITAS_MISSION2_GATE_F_CHECKPOINT_038.md), and [inventory
+092](VERITAS_MISSION2_RESEARCH_INVENTORY_092.json).
+
+The 19:20 UTC gap-detail timer then completed at 19:21:13 UTC with exit 0 and
+no restarts. It processed 29 finalized segments / 7,562,836 bytes and now
+covers 6,981 / 6,981 replayable segments with no pending work. The campaign
+window has 2,681 gaps (2,677 book resynchronizations, four connection
+failures); the run read no active segment, used about 3.59 CPU seconds, and
+peaked at 114.4 MiB. Source analysis remains at its 19:12 capture, so do not
+compare the two segment totals as an exact same-time backlog.
