@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-16T02:56:20.895773+00:00",
+  "updated_at_utc": "2026-10-16T02:59:00Z",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -5489,6 +5489,80 @@
         "The gap-detail prefix remains incomplete.",
         "Gap records do not prove quote age, outage duration, economic impact, or causal connection to frozen follow-up censoring.",
         "Analysis reads finalized segments only and does not read the active .open segment."
+      ]
+    },
+    {
+      "hypothesis_id": "VERITAS-H098",
+      "experiment_id": "VERITAS-M2-MARKET-UNIVERSE-COVERAGE-002",
+      "dataset_id": "a2350a9cafba373e9b6704f6f25984fc8fa36f4d83a3c6b43d8d55b3d0e82a1f",
+      "title": "Does the 46-snapshot A1 replay preserve useful breadth across the frozen discovery frames?",
+      "mechanism": "An offline replay verifies saved snapshot evidence, retained Gamma and CLOB response hashes, current eligibility decisions, and conditional marginal discovery contribution for each frozen query frame.",
+      "success_metric": "All retained evidence hashes verify; the replay reports expanded observed and eligible-ID counts, selected panel size, legacy classifier discrepancies, and per-frame marginal contribution without live collection.",
+      "status": "continue",
+      "decision": "The 46-snapshot replay verifies all snapshot, Gamma, and CLOB hashes. Relative to the prior 40-scan report, the bounded union adds 465 Gamma IDs, including 38 more eligible IDs; the selected panel adds 79 IDs. All six frames retain conditional marginal eligible-ID contributions. Keep the six-frame protocol through the fixed pilot stop and do not interpret the bounded union as a venue census. Preserve the first-scan legacy valid-count discrepancy (5 stored versus 32 current replay).",
+      "result": {
+        "captured_at_utc": "2026-10-16T02:58:23.538200+00:00",
+        "checkpoint_path": "docs/VERITAS_MISSION2_GATE_A_CHECKPOINT_044.md",
+        "artifact_path": "docs/VERITAS_MISSION2_MARKET_UNIVERSE_COVERAGE_002.json",
+        "artifact_file_sha256": "a85a34c6878e27f06666c2f8cf88b8aba28f1258ec48c0b818873c315af87a83",
+        "artifact_bytes": 102503,
+        "analysis_version": "veritas-market-universe-coverage-v1",
+        "analysis_runner_path": "scripts/analyze_veritas_market_universe_coverage.py",
+        "analysis_runner_sha256": "486712f5729f8a11d105d4bfe12649807ff52f6637d3d163cfd5420ec8d5d379",
+        "analysis_module_path": "packages/midas/veritas/universe_coverage.py",
+        "analysis_module_sha256": "3512586bfd7d63b0238abed2a7330556a10466c40f1624366b7bac5fc5138826",
+        "snapshot_count": 46,
+        "compressed_snapshot_bytes": 30058744,
+        "snapshot_evidence_hashes_verified": true,
+        "gamma_response_count": 276,
+        "gamma_response_hashes_verified": true,
+        "clob_response_hashes_verified": true,
+        "snapshot_manifest_sha256": "a2350a9cafba373e9b6704f6f25984fc8fa36f4d83a3c6b43d8d55b3d0e82a1f",
+        "gamma_response_manifest_sha256": "d3984d83f3a55b16d605707fb6ba70b4ee9e5cad4bbf3d86bbbb4d4f7e5bb79d",
+        "bounded_union_gamma_ids": 5784,
+        "eligible_ids_at_least_once": 2115,
+        "selected_market_ids": 820,
+        "selected_pair_observations": 1840,
+        "current_replay_valid_pairs": 1600,
+        "previous_40_scan_counts": {
+          "bounded_union_gamma_ids": 5319,
+          "eligible_ids_at_least_once": 2077,
+          "selected_market_ids": 741,
+          "current_replay_valid_pairs": 1405,
+          "selected_pair_observations": 1600
+        },
+        "positive_top_gross_pairs": 0,
+        "added_scans": 6,
+        "added_gamma_ids": 465,
+        "added_eligible_ids": 38,
+        "added_selected_ids": 79,
+        "mean_unique_ids_per_six_frame_union": 298.98,
+        "mean_eligible_ids_per_six_frame_union": 160.39,
+        "all_six_frames_have_conditional_marginal_eligible_contribution": true,
+        "capture_vs_replay_mismatch_count": 1,
+        "capture_vs_replay_mismatch": {
+          "capture_recorded_valid_pairs": 5,
+          "current_replay_valid_pairs": 32,
+          "scan_id": "scan-20261015T055928Z-c9777c1cc300"
+        },
+        "reported_book_age_over_5s_by_leg": {
+          "no": 1251,
+          "yes": 1251
+        },
+        "reported_skew_over_250ms_pairs": 0,
+        "sampled_top_of_book_changes": 378,
+        "sampled_top_of_book_comparisons": 796,
+        "authenticated_requests": false,
+        "orders_submitted": false,
+        "live_http_calls_for_replay": 0,
+        "coverage_tests": "2 passed in 0.17s"
+      },
+      "limitations": [
+        "The six-frame query union is bounded and selected upstream, not a venue-wide denominator.",
+        "Frame marginal contributions are conditional on the other frozen frames and do not establish venue-wide inclusion probabilities.",
+        "Snapshots are intermittent and do not establish continuous quote coverage, upstream freshness, order arrival, or fills.",
+        "The first scan retains a legacy capture-counter/current-replay discrepancy; the current v4 panel count is not rewritten.",
+        "The fixed 24-hour coverage pilot remains incomplete at 15/48 scans and one sequence was skipped after a scan-45 code-hash mismatch."
       ]
     }
   ],

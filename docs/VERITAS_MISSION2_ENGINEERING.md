@@ -1,6 +1,6 @@
 # Veritas Mission 2 Engineering Checkpoint
 
-## Latest checkpoint — 02:55 UTC, independent full-panel audit and gap progress
+## Latest checkpoint — 02:59 UTC, coverage refresh and gap progress
 
 The scan-46 panel now contains 46 snapshots, 1,840 selected pair observations,
 1,600 v4 quality-valid states, and 820 distinct selected markets. The new
@@ -27,6 +27,19 @@ The fixed pilot is 15/48 scans with 497/600 valid slots, 367 distinct IDs, and
 one skipped sequence after a scan-45 code-hash mismatch. The pilot remains
 unchanged and ends at 19:00:55 UTC.
 
+The refreshed offline A1 audit verifies all 46 saved snapshots and their
+Gamma/CLOB response hashes. The bounded six-frame union contains 5,784 unique
+Gamma market IDs and 2,115 eligible at least once; 820 IDs were selected for
+paired observation. Relative to the prior 40-scan report, this adds 465
+distinct discovered IDs and 38 eligible IDs, while the selected panel adds
+79 IDs. Each of the six frames still has a conditional marginal contribution
+to unique eligible IDs. One legacy capture-versus-current-replay counter
+mismatch remains on the first scan (5 stored versus 32 replayed valid pairs);
+it is preserved as a versioned schema discrepancy. No HTTP call or live
+collection was used for this refresh. See [Gate A checkpoint
+044](VERITAS_MISSION2_GATE_A_CHECKPOINT_044.md) and the [46-scan coverage
+artifact](VERITAS_MISSION2_MARKET_UNIVERSE_COVERAGE_002.json).
+
 The latest finalized Reality source prefix covers 4,869/5,029 segments,
 1,261,406,393 processed bytes, 318,568 quality-valid states across 77 markets,
 and zero positive gross/depth states; 160 segments / 39,330,180 bytes remain.
@@ -44,7 +57,7 @@ of about 48 MB over 97 minutes. See [Gate A checkpoint
 043](VERITAS_MISSION2_GATE_A_CHECKPOINT_043.md), [Gate C checkpoint
 010](VERITAS_MISSION2_GATE_C_CHECKPOINT_010.md), [Gate F checkpoint
 028](VERITAS_MISSION2_GATE_F_CHECKPOINT_028.md), and [inventory
-055](VERITAS_MISSION2_RESEARCH_INVENTORY_055.json).
+056](VERITAS_MISSION2_RESEARCH_INVENTORY_056.json).
 
 ## Previous runtime update — 01:51 UTC, scan 44 and bounded source catch-up
 

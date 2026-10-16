@@ -177,7 +177,7 @@
     "source_bytes": 551636,
     "source_event_count": 30
   },
-  "captured_at_utc": "2026-10-16T02:56:20+00:00",
+  "captured_at_utc": "2026-10-16T03:00:22+00:00",
   "censoring_analysis": {
     "analysis_source_file": "packages/midas/veritas/forensics.py",
     "analysis_source_sha256": "0b055a21c4b423bbf02cc9c240f26f18263fb8342cd72dec686705d2601a420c",
@@ -2857,7 +2857,7 @@
     "unique_market_ids": 558,
     "window_minutes": 751.53
   },
-  "inventory_id": "VERITAS-M2-RESEARCH-INVENTORY-055",
+  "inventory_id": "VERITAS-M2-RESEARCH-INVENTORY-056",
   "latest_scan_captured_at_utc": "2026-10-16T02:30:17.432809+00:00",
   "latest_scan_id": "scan-20261016T023017Z-1254a0a63f4d",
   "latest_source_analysis_checkpoint": {
@@ -4042,14 +4042,14 @@
     "veritas_control_cohort_sha256": "9578217e20dcc7d1c65fa110f0ed7c689b55483b61191f1aae8d30c9b7300d9a",
     "control_cohort_sha256": "9578217e20dcc7d1c65fa110f0ed7c689b55483b61191f1aae8d30c9b7300d9a"
   },
-  "previous_inventory": "VERITAS_MISSION2_RESEARCH_INVENTORY_054.json",
+  "previous_inventory": "VERITAS_MISSION2_RESEARCH_INVENTORY_055.json",
   "repository": {
     "branch": "project/veritas",
     "checkpoint_base_commit": "3c1cf4119f95961c1efd183bc63a108dac42c2e7",
     "code_changes_after_pilot_activation": true,
-    "commit_at_inventory_creation": "3c1cf4119f95961c1efd183bc63a108dac42c2e7",
+    "commit_at_inventory_creation": "d4ae630e7cd0c7aa7a9b9b9631a67cdf32371f03",
     "documentation_and_ledger_checkpoint_pending_commit": true,
-    "head_commit": "3c1cf4119f95961c1efd183bc63a108dac42c2e7",
+    "head_commit": "d4ae630e7cd0c7aa7a9b9b9631a67cdf32371f03",
     "mission_status": "active_scheduled_discovery_source_analysis_gap_detail_and_research",
     "path": "/home/charlie/midas-veritas",
     "starting_commit": "9a857cc56804bec6b7129171ba090d338e263aa3",
@@ -7057,5 +7057,231 @@
     "The Director manifest projection remains QUEUED for the completed scan-46 child pending scheduled reconciliation at 03:15 UTC.",
     "A previous checkpoint used the parent recordings directory for a storage measurement; the corrected configured Reality recorder root is 1,309,431,325 bytes.",
     "No HTTP health probe, service restart, manual job retry, pilot change, or frozen campaign modification occurred."
+  ],
+  "market_universe_coverage_002": {
+    "analysis_version": "veritas-market-universe-coverage-v1",
+    "artifact_path": "docs/VERITAS_MISSION2_MARKET_UNIVERSE_COVERAGE_002.json",
+    "artifact_bytes": 102503,
+    "artifact_sha256": "a85a34c6878e27f06666c2f8cf88b8aba28f1258ec48c0b818873c315af87a83",
+    "captured_at_utc": "2026-10-16T02:58:23.538200+00:00",
+    "experiment_id": "VERITAS-M2-MARKET-UNIVERSE-COVERAGE-002",
+    "analysis_module_path": "packages/midas/veritas/universe_coverage.py",
+    "analysis_module_sha256": "3512586bfd7d63b0238abed2a7330556a10466c40f1624366b7bac5fc5138826",
+    "analysis_runner_path": "scripts/analyze_veritas_market_universe_coverage.py",
+    "analysis_runner_sha256": "486712f5729f8a11d105d4bfe12649807ff52f6637d3d163cfd5420ec8d5d379",
+    "source": {
+      "snapshot_count": 46,
+      "compressed_snapshot_bytes": 30058744,
+      "snapshot_evidence_hashes_verified": true,
+      "gamma_response_count": 276,
+      "gamma_response_hashes_verified": true,
+      "clob_response_hashes_verified": true,
+      "snapshot_manifest_sha256": "a2350a9cafba373e9b6704f6f25984fc8fa36f4d83a3c6b43d8d55b3d0e82a1f",
+      "gamma_response_manifest_sha256": "d3984d83f3a55b16d605707fb6ba70b4ee9e5cad4bbf3d86bbbb4d4f7e5bb79d",
+      "read_only_evidence": true
+    },
+    "identity_coverage": {
+      "distinct_gamma_market_ids_over_window": 5784,
+      "distinct_condition_ids_over_window": 5784,
+      "distinct_market_ids_eligible_at_least_once": 2115,
+      "selected_market_ids_over_window": 820,
+      "selected_outcome_asset_ids_over_window": 1640,
+      "market_ids_with_source_identity_conflicts": 0,
+      "latest_scan": {
+        "distinct_payoff_verified_outcome_asset_ids": 66,
+        "distinct_selected_condition_ids": 40,
+        "distinct_selected_outcome_asset_ids": 80,
+        "eligible_market_ids": 178,
+        "excluded_market_ids": 122,
+        "gamma_market_ids": 300,
+        "scan_id": "scan-20261016T023017Z-1254a0a63f4d",
+        "selected_market_ids": 40
+      }
+    },
+    "collection_protocol": {
+      "coverage_kind": "intermittent_public_snapshots",
+      "http_attempts": 238,
+      "gamma_frames_per_scan": 6,
+      "total_attempted_market_pairs": 1840,
+      "total_quality_valid_market_pairs": 1600,
+      "quality_valid_yield": 0.8696,
+      "capture_recorded_quality_valid_market_pairs": 1573,
+      "capture_vs_current_replay_valid_pair_delta": 27,
+      "capture_vs_replay_count_mismatches": [
+        {
+          "capture_recorded_valid_pairs": 5,
+          "current_replay_valid_pairs": 32,
+          "scan_id": "scan-20261015T055928Z-c9777c1cc300"
+        }
+      ],
+      "positive_top_gross_pairs": 0,
+      "candidate_events": 0,
+      "live_http_calls_for_replay": 0
+    },
+    "sampling": {
+      "scan_count": 46,
+      "mean_six_frame_unique_union": 298.98,
+      "mean_six_frame_eligible_union": 160.39,
+      "per_frame_marginal_value": {
+        "marginal_by_frame": [
+          {
+            "frame": "high_liquidity",
+            "mean_eligible_ids_lost_if_removed": 11.02,
+            "mean_response_rows": 50,
+            "mean_unique_ids_lost_if_removed": 49.17,
+            "median_eligible_ids_lost_if_removed": 11.0,
+            "p90_eligible_ids_lost_if_removed": 21,
+            "scans": 46,
+            "scans_with_zero_eligible_ids_lost": 0
+          },
+          {
+            "frame": "low_liquidity",
+            "mean_eligible_ids_lost_if_removed": 38.37,
+            "mean_response_rows": 50,
+            "mean_unique_ids_lost_if_removed": 49.96,
+            "median_eligible_ids_lost_if_removed": 47.0,
+            "p90_eligible_ids_lost_if_removed": 50,
+            "scans": 46,
+            "scans_with_zero_eligible_ids_lost": 1
+          },
+          {
+            "frame": "medium_liquidity",
+            "mean_eligible_ids_lost_if_removed": 31.59,
+            "mean_response_rows": 50,
+            "mean_unique_ids_lost_if_removed": 49.87,
+            "median_eligible_ids_lost_if_removed": 40.0,
+            "p90_eligible_ids_lost_if_removed": 50,
+            "scans": 46,
+            "scans_with_zero_eligible_ids_lost": 5
+          },
+          {
+            "frame": "near_expiry",
+            "mean_eligible_ids_lost_if_removed": 5,
+            "mean_response_rows": 50,
+            "mean_unique_ids_lost_if_removed": 49.72,
+            "median_eligible_ids_lost_if_removed": 0.0,
+            "p90_eligible_ids_lost_if_removed": 26,
+            "scans": 46,
+            "scans_with_zero_eligible_ids_lost": 30
+          },
+          {
+            "frame": "rotating_id_control_frame",
+            "mean_eligible_ids_lost_if_removed": 24,
+            "mean_response_rows": 50,
+            "mean_unique_ids_lost_if_removed": 49.33,
+            "median_eligible_ids_lost_if_removed": 15.0,
+            "p90_eligible_ids_lost_if_removed": 50,
+            "scans": 46,
+            "scans_with_zero_eligible_ids_lost": 6
+          },
+          {
+            "frame": "tagged_near_expiry",
+            "mean_eligible_ids_lost_if_removed": 49.91,
+            "mean_response_rows": 50,
+            "mean_unique_ids_lost_if_removed": 49.91,
+            "median_eligible_ids_lost_if_removed": 50.0,
+            "p90_eligible_ids_lost_if_removed": 50,
+            "scans": 46,
+            "scans_with_zero_eligible_ids_lost": 0
+          }
+        ],
+        "mean_six_frame_eligible_union": 160.39,
+        "mean_six_frame_unique_union": 298.98,
+        "scan_count": 46
+      }
+    },
+    "comparison_to_coverage_001": {
+      "previous_snapshot_count": 40,
+      "previous_gamma_ids": 5319,
+      "current_gamma_ids": 5784,
+      "added_gamma_ids": 465,
+      "previous_eligible_ids": 2077,
+      "current_eligible_ids": 2115,
+      "added_eligible_ids": 38,
+      "previous_selected_ids": 741,
+      "current_selected_ids": 820,
+      "added_selected_ids": 79,
+      "previous_quality_valid_pairs": 1405,
+      "current_quality_valid_pairs": 1600
+    },
+    "test_path": "tests/test_veritas_universe_coverage.py",
+    "tests_passed": 2,
+    "verification": "2 passed in 0.17s; no full regression run."
+  },
+  "gate_a_checkpoint_044": {
+    "captured_at_utc": "2026-10-16T02:59:00Z",
+    "checkpoint_path": "docs/VERITAS_MISSION2_GATE_A_CHECKPOINT_044.md",
+    "artifact_path": "docs/VERITAS_MISSION2_MARKET_UNIVERSE_COVERAGE_002.json",
+    "artifact_sha256": "a85a34c6878e27f06666c2f8cf88b8aba28f1258ec48c0b818873c315af87a83",
+    "snapshot_manifest_sha256": "a2350a9cafba373e9b6704f6f25984fc8fa36f4d83a3c6b43d8d55b3d0e82a1f",
+    "status": "offline coverage refresh complete; mission active"
+  },
+  "verification_checkpoint_046": {
+    "captured_at_utc": "2026-10-16T02:59:00Z",
+    "coverage_tests": "2 passed in 0.17s.",
+    "coverage_artifact_hashes": "Snapshot evidence, Gamma responses, and CLOB responses verified across 46 snapshots.",
+    "full_regression": "not run.",
+    "model_training": "not run.",
+    "live_http_calls_for_coverage_refresh": 0
+  },
+  "operations_checkpoint_056": {
+    "captured_at_utc": "2026-10-16T02:59:00Z",
+    "latest_runtime_state_source": "docs/VERITAS_MISSION2_OPERATIONS.md",
+    "runtime_read_only": true,
+    "no_services_restarted_or_interrupted_for_coverage_refresh": true,
+    "collector_active": true,
+    "collector_restart_count": 0,
+    "collector_sequence_verified": false,
+    "shadow_active": true,
+    "shadow_historical_restart_count": 1,
+    "midas_api_active": true,
+    "reality_api_and_web_active": true,
+    "midas_web_active": true,
+    "latest_finalized_source_summary_at_utc": "2026-10-16T02:44:41Z",
+    "source_analysis_processed_segments": 4869,
+    "source_analysis_catalog_segments": 5029,
+    "source_analysis_quality_valid_states": 318568,
+    "source_analysis_markets": 77,
+    "source_analysis_pending_segments": 160,
+    "source_analysis_pending_bytes": 39330180,
+    "gap_detail_latest_run_finished_at_utc": "2026-10-16T02:51:13Z",
+    "gap_detail_run_exit_status": 0,
+    "gap_detail_run_restarts": 0,
+    "gap_detail_processed_segments": 1791,
+    "gap_detail_catalog_segments": 5049,
+    "gap_detail_processed_bytes": 416842757,
+    "gap_detail_pending_segments": 3256,
+    "gap_detail_pending_bytes": 888351418,
+    "campaign_window_resynchronization_events": 131,
+    "campaign_window_affected_markets": 7,
+    "arena_scan_46_job_state": "COMPLETED",
+    "arena_scan_46_job_events": 46,
+    "arena_scan_46_job_exit_status": 0,
+    "director_projection": "QUEUED pending scheduled 03:15 UTC reconciliation",
+    "available_ram_bytes": 10314539008,
+    "swap_used_bytes": 3766472704,
+    "root_disk_percent_used": 56,
+    "root_disk_available_bytes": 212015202304,
+    "configured_reality_recording_root_bytes": 1309431325,
+    "recording_root_growth_sample_bytes": 48266624,
+    "recording_root_growth_sample_minutes": 97,
+    "recording_root_growth_rate_estimate_bytes_per_hour": 30000000,
+    "recording_root_growth_is_sampled_estimate": true,
+    "http_health_probe_performed_for_this_checkpoint": false,
+    "limitations": [
+      "The operations document records the latest read-only service and host snapshot; no newer service probe was made for the A1 refresh.",
+      "The gap-detail and source-analysis prefixes are incomplete.",
+      "The recorder is active but remains unsequenced; a historical WebSocket ConnectionClosedError remains documented.",
+      "The scan-46 Director manifest projection awaits its scheduled reconciliation."
+    ]
+  },
+  "checkpoint_056_limitations": [
+    "The offline A1 replay is over the saved, bounded six-frame query union and is not a venue census.",
+    "The legacy first-scan capture validity counter remains 5 versus 32 under current replay; historical counts were not rewritten.",
+    "The finalized source-analysis summary remains at 4,869/5,029 segments; the gap-detail prefix remains at 1,791/5,049 segments.",
+    "The fixed pilot is incomplete at 15/48 scans and one sequence was skipped after the scan-45 code-hash mismatch.",
+    "The scan-46 Director projection remains queued pending its scheduled 03:15 UTC reconciliation.",
+    "Runtime state is carried forward from the latest read-only operational snapshot; no new service probe or HTTP health probe was made for this documentation refresh.",
+    "The worktree documentation and ledger updates were pending commit when this inventory was captured."
   ]
 }

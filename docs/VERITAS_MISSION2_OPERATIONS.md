@@ -1,10 +1,10 @@
 # Veritas Mission 2 Operations
 
-**Latest runtime check:** 2026-10-16 02:55 UTC
+**Latest runtime check:** 2026-10-16 02:59 UTC
 **Services:** Reality recorder and shadow; Midas and Reality API/web; Veritas observer, source analysis, gap detail, and Research Director one-shots
 **Timers:** `midas-veritas-observatory.timer`, `midas-veritas-source-analysis.timer`, `midas-veritas-research-director.timer`, `midas-veritas-gap-detail-analysis.timer`
 
-## Latest runtime state — 2026-10-16 02:55 UTC
+## Latest runtime state — 2026-10-16 02:59 UTC
 
 - Reality recorder and shadow are active under systemd with `Result=success`;
   the recorder has zero restarts and uses about 400 MB, while the shadow has
@@ -28,6 +28,13 @@
   mismatches, and found no positive gross, depth, minimum, or fee-sensitive
   candidates. Only 349 pairs pass the conservative reported-age/skew filter;
   reported timestamp age is not sequence evidence.
+- The offline A1 refresh verified all snapshot, Gamma, and CLOB hashes across
+  those 46 scans. The bounded six-frame query union now contains 5,784
+  distinct Gamma IDs, 2,115 IDs eligible at least once, and 820 selected IDs;
+  the prior 40-scan report had 5,319 / 2,077 / 741. One legacy capture versus
+  current-replay validity-counter mismatch remains on scan 1 (5 versus 32).
+  The refresh read saved files only and made no public HTTP calls. See [Gate A
+  checkpoint 044](VERITAS_MISSION2_GATE_A_CHECKPOINT_044.md).
 - The finalized-source analyzer summary at 02:44:41 UTC covers 4,869/5,029
   segments and 318,568 quality-valid states across 77 markets; 160 segments /
   39,330,180 bytes remain pending. The 02:50 gap-detail run processed 115
@@ -65,7 +72,7 @@ See [Gate A checkpoint 043](VERITAS_MISSION2_GATE_A_CHECKPOINT_043.md),
 [Gate B checkpoint 001](VERITAS_MISSION2_GATE_B_CHECKPOINT_001.md), [Gate C
 checkpoint 010](VERITAS_MISSION2_GATE_C_CHECKPOINT_010.md), [Gate F
 checkpoint 028](VERITAS_MISSION2_GATE_F_CHECKPOINT_028.md), and [inventory
-055](VERITAS_MISSION2_RESEARCH_INVENTORY_055.json).
+056](VERITAS_MISSION2_RESEARCH_INVENTORY_056.json).
 
 ## Previous runtime state — 2026-10-16 01:36 UTC
 
