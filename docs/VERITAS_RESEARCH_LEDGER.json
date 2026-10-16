@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-16T08:19:06Z",
+  "updated_at_utc": "2026-10-16T08:20:29Z",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -7390,8 +7390,8 @@
         "analysis_version": "veritas-inclusion-support-dashboard-projection-v1",
         "captured_at_utc": "2026-10-16T08:19:06Z",
         "gate_checkpoint_path": "docs/VERITAS_MISSION2_GATE_G_CHECKPOINT_018.md",
-        "gate_checkpoint_bytes": 3005,
-        "gate_checkpoint_file_sha256": "a19c69cb12fa1b1606de5f4eb174e3641c7e86cc89431bcb3941083153f2164f",
+        "gate_checkpoint_bytes": 3003,
+        "gate_checkpoint_file_sha256": "01970f5c2c58474d5454142c03d931f5b304c52a5d053523dad7356f7f7f0aba",
         "coverage_design_audit_path": "docs/VERITAS_MISSION2_COVERAGE_DESIGN_AUDIT_002.json",
         "coverage_design_audit_file_sha256": "6520390afc2fd8f4582c9b06bbc6a9e1908811daf11d0250ba80c3395d5820c4",
         "coverage_design_audit_canonical_sha256": "1332780f05a6fc1b50a45e03feae39f158cef05c87b32cc1a6cc200b3052df95",

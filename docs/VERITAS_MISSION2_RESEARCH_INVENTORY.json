@@ -177,7 +177,7 @@
     "source_bytes": 551636,
     "source_event_count": 30
   },
-  "captured_at_utc": "2026-10-16T08:19:06Z",
+  "captured_at_utc": "2026-10-16T08:20:29Z",
   "censoring_analysis": {
     "analysis_source_file": "packages/midas/veritas/forensics.py",
     "analysis_source_sha256": "0b055a21c4b423bbf02cc9c240f26f18263fb8342cd72dec686705d2601a420c",
@@ -916,10 +916,10 @@
     "summary_sha256": "959ad8a1b8fb6d24433da8fcdb9a2d51fbad4d6882e07d5fbf017753503aad4f"
   },
   "current_operational_checkpoint": {
-    "captured_at_utc": "2026-10-16T08:19:06Z",
+    "captured_at_utc": "2026-10-16T08:20:29Z",
     "branch": "project/veritas",
-    "source_head_at_capture": "7fc46a0425d71877449a69601178fda888b2cb26",
-    "source_code_changes_uncommitted": true,
+    "source_head_at_capture": "1590f2daf078ca239421a01cd9c60a71f4838a58",
+    "source_code_changes_uncommitted": false,
     "evidence_and_documentation_changes_pending_commit": true,
     "reality_recorder_state": "RECORDING_UNSEQUENCED; active/running",
     "reality_recorder_restarts": 0,
@@ -1014,7 +1014,8 @@
     "archive_directory_bytes_rounded": "922 MB",
     "veritas_observatory_directory_bytes_rounded": "84 MB",
     "arena_directory_bytes_rounded": "76 MB",
-    "no_services_campaigns_or_jobs_restarted_for_checkpoint": true
+    "no_services_campaigns_or_jobs_restarted_for_checkpoint": true,
+    "checkpoint_commit": "1590f2daf078ca239421a01cd9c60a71f4838a58"
   },
   "current_scan_029": {
     "analysis_event_file_sha256": "dec04c2a0a14a81c2a3b5e53ffd65c63c114ce259606b2b988c88dc6fe98a392",
@@ -8141,7 +8142,7 @@
     "The observer output was not inspected and the next Director cycle had not run.",
     "Only one Playwright Veritas workflow was run; Gate H and the full regression remain open."
   ],
-  "source_head_at_capture_before_commit": "7fc46a0425d71877449a69601178fda888b2cb26",
+  "source_head_at_capture_before_commit": "1590f2daf078ca239421a01cd9c60a71f4838a58",
   "working_tree_source_changes_uncommitted": false,
   "gate_e_experiment_checkpoint_062": {
     "captured_at_utc": "2026-10-16T04:12:21Z",
@@ -8562,8 +8563,8 @@
   },
   "previous_inventory_file_sha256": "7ba4d4eef0e6243559a44fbeab500ba5ed4c4b1ebf40dec959082eb5e5310e5d",
   "research_inventory_063": "Current numbered inventory for the scheduled 04:20 gap-detail batch, read-only censor-attribution refresh 002, and dashboard receipt verification; inventory 062 is preserved unchanged.",
-  "research_ledger_current": "Updated through H126 for the read-only inclusion-support dashboard projection.",
-  "research_ledger_sha256": "66b6c34e0cd02446a81c91ba68a4f4370e1bbae532edeea2530fb902d6bfb11d",
+  "research_ledger_current": "Updated through H126; the H126 checkpoint file digest is reconciled after commit.",
+  "research_ledger_sha256": "cec4cafa2a0b244e3bd412a8ab3426db7599e8aa5bd326b2a8bcb0daefcd5613",
   "source_analysis_checkpoint_063": {
     "active_segment_read": false,
     "catalog_segment_count": 5206,
@@ -11346,12 +11347,12 @@
     "summary_file_sha256": "1223768dea9b8b9e221bcf83bcdbca263abe0fdceba481618aa5aa6bfc75232d",
     "summary_sha256": "0e1f37bbad1578c6022dd1ef76746b4699d97d2ed0fb588696293bd955999677"
   },
-  "research_inventory_074": "Current inventory after scan-57 Director admission and zero-candidate qualification, finalized-source replay through 5,677 segments, 08:17 UTC operational snapshot, and H126 dashboard freshness verification.",
+  "research_inventory_074": "Current inventory after the scan-57 Director admission and no-positive qualification, finalized-source replay through 5,677 segments, H126 dashboard freshness verification, and checkpoint commit 1590f2d.",
   "current_operational_checkpoint_074": {
-    "captured_at_utc": "2026-10-16T08:19:06Z",
+    "captured_at_utc": "2026-10-16T08:20:29Z",
     "branch": "project/veritas",
-    "source_head_at_capture": "7fc46a0425d71877449a69601178fda888b2cb26",
-    "source_code_changes_uncommitted": true,
+    "source_head_at_capture": "1590f2daf078ca239421a01cd9c60a71f4838a58",
+    "source_code_changes_uncommitted": false,
     "evidence_and_documentation_changes_pending_commit": true,
     "reality_recorder_state": "RECORDING_UNSEQUENCED; active/running",
     "reality_recorder_restarts": 0,
@@ -11446,7 +11447,8 @@
     "archive_directory_bytes_rounded": "922 MB",
     "veritas_observatory_directory_bytes_rounded": "84 MB",
     "arena_directory_bytes_rounded": "76 MB",
-    "no_services_campaigns_or_jobs_restarted_for_checkpoint": true
+    "no_services_campaigns_or_jobs_restarted_for_checkpoint": true,
+    "checkpoint_commit": "1590f2daf078ca239421a01cd9c60a71f4838a58"
   },
   "coverage_pilot_checkpoint_074": {
     "study_id": "VERITAS-M2-COVERAGE-PILOT-001",
@@ -11525,7 +11527,7 @@
     "ledger_receipt": "VERITAS-H126"
   },
   "verification_checkpoint_074": {
-    "captured_at_utc": "2026-10-16T08:19:06Z",
+    "captured_at_utc": "2026-10-16T08:20:29Z",
     "latest_scan_snapshot_hash": "49ba7ada7fab740e78cd17077e8e3fca0b33a325a78be6a76cec115cdbd78a1c",
     "source_analysis_summary_sha256": "68b5fdf53e7a5ba017b6cd22034a461909a84221f9c23d4ed552727ee7cbc4bb",
     "gap_detail_summary_sha256": "25272cd058792b0e8166b26480f683d16cfb382aa50cfb9866e1b903dc77798e",
@@ -11543,8 +11545,10 @@
     "browser_workflow_for_inclusion_support_card": "not run",
     "reality_services_campaigns_restarted_or_modified": false,
     "orders_submitted": false,
-    "authenticated_requests": false
+    "authenticated_requests": false,
+    "source_head_after_checkpoint_commit": "1590f2daf078ca239421a01cd9c60a71f4838a58",
+    "gate_g_checkpoint_file_sha256": "01970f5c2c58474d5454142c03d931f5b304c52a5d053523dad7356f7f7f0aba"
   },
   "updated_from_inventory_073_file_sha256": "922da1ef8dd89e57943927b1d0a9317ce457fbcb8cd9042d4c63bd0f6d1b327e",
-  "research_ledger_file_sha256": "66b6c34e0cd02446a81c91ba68a4f4370e1bbae532edeea2530fb902d6bfb11d"
+  "research_ledger_file_sha256": "cec4cafa2a0b244e3bd412a8ab3426db7599e8aa5bd326b2a8bcb0daefcd5613"
 }
