@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "MIDAS Project Veritas",
-  "updated_at_utc": "2026-10-16T17:47:55Z",
+  "updated_at_utc": "2026-10-16T17:54:22Z",
   "status": "active",
   "baseline": {
     "release_tag": "reality-final-2026-10-14",
@@ -8594,6 +8594,66 @@
         "This compares the composite branch against frozen code, not the incremental tail refresh by itself.",
         "One replay follow-up was an observed public measurement, 123 were censored, and there are no actual fills or independent new market observations.",
         "No production service or frozen campaign state was changed."
+      ]
+    },
+    {
+      "hypothesis_id": "VERITAS-H150",
+      "experiment_id": "VERITAS-M2-SHADOW-RESUMABLE-SPLIT-001",
+      "dataset_id": "shadow-runtime-82a71b6db289238d1ac23965efee424dd5983a97f13817704d8590fb39631478",
+      "title": "Can two clean resumable replay invocations preserve the four-segment runtime and research state without losing or duplicating business events?",
+      "mechanism": "The isolated journal persists the runtime cursor and append-only event chain between worker processes; a later invocation should continue from the prior durable cursor.",
+      "success_metric": "Match one-shot final runtime, engine/context/research semantics, indexed research rows and normalized business-event content while validating the resumed journal chain and references.",
+      "status": "continue",
+      "decision": "Treat clean split/resume as successful for runtime, research content and journal integrity. Keep event-order reproducibility as a documented limitation and verify a controlled interruption before using this path for a successor worker.",
+      "result": {
+        "artifact_path": "docs/VERITAS_MISSION2_SHADOW_RESUME_BENCHMARK_007.json",
+        "artifact_sha256": "de457e4bcc3d4a9c2f2386ee65f4167966d2821cd13fd503168a2a07b8f4b8a6",
+        "runtime_snapshot_byte_identical": true,
+        "engine_context_research_semantics_equal": true,
+        "normalized_business_event_multiset_equal": true,
+        "sqlite_integrity_one_shot": "ok",
+        "sqlite_integrity_split": "ok",
+        "one_shot_journal_events": 361,
+        "split_journal_events": 362,
+        "extra_worker_start_events": 1,
+        "business_table_checks": {
+          "decisions": {
+            "one_shot_count": 32,
+            "split_count": 32,
+            "content_equal_ignoring_event_seq": true
+          },
+          "outcomes": {
+            "one_shot_count": 124,
+            "split_count": 124,
+            "content_equal_ignoring_event_seq": true
+          },
+          "observations": {
+            "one_shot_count": 168,
+            "split_count": 168,
+            "content_equal_ignoring_event_seq": true
+          },
+          "reserves": {
+            "one_shot_count": 0,
+            "split_count": 0,
+            "content_equal_ignoring_event_seq": true
+          },
+          "family_map": {
+            "one_shot_count": 79,
+            "split_count": 79,
+            "content_equal_ignoring_event_seq": true
+          }
+        },
+        "decision_commit_references_valid": {
+          "one_shot": 32,
+          "split": 32
+        },
+        "journal_tail_hash_equal": false
+      },
+      "limitations": [
+        "One clean split point; no forced termination was exercised.",
+        "Resuming appends one extra worker_start event and can reorder same-time observation events; normalized business content and research semantics match but chain hashes differ.",
+        "No live service, campaign file, production cursor, production journal, or order state changed.",
+        "No new market evidence or execution outcome was produced."
       ]
     }
   ],

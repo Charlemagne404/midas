@@ -177,7 +177,7 @@
     "source_bytes": 551636,
     "source_event_count": 30
   },
-  "captured_at_utc": "2026-10-16T17:47:55Z",
+  "captured_at_utc": "2026-10-16T17:54:22Z",
   "censoring_analysis": {
     "analysis_source_file": "packages/midas/veritas/forensics.py",
     "analysis_source_sha256": "0b055a21c4b423bbf02cc9c240f26f18263fb8342cd72dec686705d2601a420c",
@@ -2900,7 +2900,7 @@
     "unique_market_ids": 558,
     "window_minutes": 751.53
   },
-  "inventory_id": "VERITAS-M2-RESEARCH-INVENTORY-085",
+  "inventory_id": "VERITAS-M2-RESEARCH-INVENTORY-086",
   "latest_scan_captured_at_utc": "2026-10-16T16:30:57.897746+00:00",
   "latest_scan_id": "scan-20261016T163057Z-96c79e6c489c",
   "latest_source_analysis_checkpoint": {
@@ -8574,10 +8574,10 @@
   "research_inventory_063": "Current numbered inventory for the scheduled 04:20 gap-detail batch, read-only censor-attribution refresh 002, and dashboard receipt verification; inventory 062 is preserved unchanged.",
   "research_ledger_current": {
     "artifact_path": "docs/VERITAS_RESEARCH_LEDGER.json",
-    "artifact_sha256": "8c69c59d2de5be98adf42bb17b4613169b9bc601969d5776daf563243470eee5",
-    "updated_at_utc": "2026-10-16T17:47:55Z"
+    "artifact_sha256": "de2236e0c3e579be515d93d98cec6aa6ea5de061f71341b9ef0029a1636ca41a",
+    "updated_at_utc": "2026-10-16T17:54:22Z"
   },
-  "research_ledger_sha256": "8c69c59d2de5be98adf42bb17b4613169b9bc601969d5776daf563243470eee5",
+  "research_ledger_sha256": "de2236e0c3e579be515d93d98cec6aa6ea5de061f71341b9ef0029a1636ca41a",
   "source_analysis_checkpoint_063": {
     "active_segment_read": false,
     "catalog_segment_count": 5206,
@@ -13825,5 +13825,29 @@
     "semantic_hashes_equal": true,
     "campaign_changed": false
   },
-  "shadow_reader_benchmark_006_sha256": "43bcabeb3e990a77f81ac8b75261bd676a6e5e9f2a49f90074230c250339dc3f"
+  "shadow_reader_benchmark_006_sha256": "43bcabeb3e990a77f81ac8b75261bd676a6e5e9f2a49f90074230c250339dc3f",
+  "research_inventory_086": {
+    "artifact_path": "docs/VERITAS_MISSION2_RESEARCH_INVENTORY_086.json",
+    "artifact_sha256": "1629cdcaf553d790b4f075c1402e3c150f2a2fab7e71fe20382eec7020e468d0",
+    "based_on_inventory": "docs/VERITAS_MISSION2_RESEARCH_INVENTORY_085.json",
+    "based_on_inventory_sha256": "b56216588d9da8ba9078ca6a067d692161bd0d55d34df3572f607e9bd528950d",
+    "capture_scope": "Record a two-process split/resume canary, audit isolated journal/table continuity against the one-shot four-segment replay, and verify campaign/service postflight; other host/research metrics retain earlier capture timestamps."
+  },
+  "shadow_resumable_split_benchmark_007": {
+    "artifact_path": "docs/VERITAS_MISSION2_SHADOW_RESUME_BENCHMARK_007.json",
+    "artifact_sha256": "de457e4bcc3d4a9c2f2386ee65f4167966d2821cd13fd503168a2a07b8f4b8a6",
+    "checkpoint_path": "docs/VERITAS_MISSION2_GATE_C_CHECKPOINT_026.md",
+    "part1_result_sha256": "e0b37ae558cdb84a5ee6ad15dbfca1873c2dd85430fc13af40a1f749cf9cbf54",
+    "part2_result_sha256": "e47e57d54c87315c87dd8b06599c62b7ab7a7e860a8d6fbe2864e48276b97bf7",
+    "one_shot_result_sha256": "044c142b408b489a75c1ed7dac147f45bdf697f6e8c63353062c123d7c81a5bc",
+    "runtime_snapshot_byte_identical": true,
+    "normalized_business_event_multiset_equal": true,
+    "one_shot_journal_events": 361,
+    "split_journal_events": 362,
+    "additional_worker_start_event": true,
+    "journal_tail_hash_equal": false,
+    "no_business_rows_lost_or_duplicated": true,
+    "work_manifest_sha256": "69a45a669e69ef6003a6c45b242486e6fda8051d366e19e355a942b62ffa8296"
+  },
+  "shadow_resume_benchmark_007_sha256": "de457e4bcc3d4a9c2f2386ee65f4167966d2821cd13fd503168a2a07b8f4b8a6"
 }

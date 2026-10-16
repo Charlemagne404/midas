@@ -557,3 +557,22 @@ See Gate C checkpoint 024 and benchmark 005.
    targets exist.
 
 See Gate C checkpoint 025 and benchmark 006.
+
+
+## Active Mission 2 queue — 2026-10-16 17:54 UTC
+
+1. **Test recovery from a bounded interruption.** The clean two-process split
+   resumed without lost or duplicated business events and reproduced the
+   one-shot runtime and research state. A second `worker_start` and reordered
+   same-time observations make the journal tail hash differ; decide whether
+   stable append order is an acceptance need, then exercise a controlled stop
+   at a durable checkpoint in an isolated work directory.
+2. **Keep any production recovery separate from the frozen campaign.** The
+   current shadow remains untouched. A versioned successor still needs a
+   bounded run and a documented continuity plan before prospective evidence
+   can be used.
+3. **Continue collecting and auditing economic observations.** This replay
+   used historical recordings and created no new market states, candidate,
+   fill evidence, or strategy/model evaluation.
+
+See Gate C checkpoint 026 and benchmark 007.

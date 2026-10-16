@@ -1772,3 +1772,17 @@ matched exactly. The branch used 3.23 CPU seconds versus 17.29 in the pinned
 run. This remains an offline engineering canary, not a live recovery. See
 [Gate C checkpoint 025](VERITAS_MISSION2_GATE_C_CHECKPOINT_025.md) and
 [benchmark 006](VERITAS_MISSION2_SHADOW_READER_BENCHMARK_006.json).
+
+
+## 2026-10-16 17:54 UTC — split/resume canary postflight
+
+Two isolated current-branch replays exited normally at sealed-segment
+boundaries and resumed from the same private journal. The final cursor and
+runtime snapshot match the one-shot reference; the event chain and SQLite
+integrity checks pass. A second `worker_start` event and a different order for
+same-time observation events explain the nonmatching final journal tail hash.
+The live collector and frozen shadow remain active with restart counts 0 and
+1; campaign identity is unchanged. No production cursor or journal was
+written. See [Gate C checkpoint
+026](VERITAS_MISSION2_GATE_C_CHECKPOINT_026.md) and [benchmark
+007](VERITAS_MISSION2_SHADOW_RESUME_BENCHMARK_007.json).

@@ -1717,3 +1717,17 @@ live catch-up. One public-measurement follow-up was observed and 123 were
 censored; no fills or new market collection resulted. See [Gate C checkpoint
 025](VERITAS_MISSION2_GATE_C_CHECKPOINT_025.md) and [benchmark
 006](VERITAS_MISSION2_SHADOW_READER_BENCHMARK_006.json).
+
+
+## Gate C checkpoint 026 — split/resume journal continuity
+
+A two-process, two-segment-per-process replay resumed from the first durable
+cursor and reached a byte-identical final runtime snapshot to the one-shot
+four-segment canary. Engine, context, research semantics, business-row
+multisets, table counts, and decision references match; both journal chains
+and SQLite integrity checks pass. The split journal contains one additional
+expected `worker_start` event and reorders some same-time observation events,
+so its final chain hash differs. No evidence was lost or duplicated, but
+append order is not byte-stable across process boundaries. See [Gate C
+checkpoint 026](VERITAS_MISSION2_GATE_C_CHECKPOINT_026.md) and [benchmark
+007](VERITAS_MISSION2_SHADOW_RESUME_BENCHMARK_007.json).
