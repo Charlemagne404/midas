@@ -274,3 +274,16 @@ Next actions:
 5. Continue the fixed pilot, finalized-source catch-up, and separate gap-detail prefix under their existing bounds; do not use the active recording segment.
 
 See [Gate A checkpoint 047](VERITAS_MISSION2_GATE_A_CHECKPOINT_047.md), [coverage artifact 005](VERITAS_MISSION2_MARKET_UNIVERSE_COVERAGE_005.json), and [inventory 069](VERITAS_MISSION2_RESEARCH_INVENTORY_069.json).
+
+
+## Mission 2 continuation — scan-52 evidence and manifest reconciliation
+
+The A1 universe replay and independent raw-source audit now cover scan 52. Preserve the first-scan capture/replay quality discrepancy. The Arena child is complete with zero economic candidates, but the Director manifest has not yet reconciled it.
+
+1. Allow the scheduled 06:15:10 UTC Director cycle to reconcile scan 52; do not poll or retry the child.
+2. Keep source code unchanged until that manifest reconciliation completes, because queued jobs pin their source revision.
+3. After reconciliation, update the source dashboard API’s artifact and ledger receipt selection: it currently pins coverage artifact 004 / H110 and will otherwise continue to display stale scan-50 coverage. Keep this change on the source checkout; deployment and browser verification remain separate work.
+4. Continue the fixed pilot and scheduled source/gap-detail batches; use only finalized source segments.
+5. Do not change the frozen campaign, active scan cadence, or no-trade threshold in response to this selected panel.
+
+See [Gate A checkpoint 048](VERITAS_MISSION2_GATE_A_CHECKPOINT_048.md), [Gate B checkpoint 007](VERITAS_MISSION2_GATE_B_CHECKPOINT_007.md), and [inventory 070](VERITAS_MISSION2_RESEARCH_INVENTORY_070.json).

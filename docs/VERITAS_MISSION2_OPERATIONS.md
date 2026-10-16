@@ -1210,3 +1210,16 @@ The archive unit remained failed after the 04:33:35 UTC 30-minute timeout, with 
 Host load was 1.53 / 1.08 / 0.97; 9.3 GiB RAM was available, swap use was 3.7/4 GiB, and the root filesystem was 56% used with 197 GiB free. `data/veritas-observatory` occupied 55,893,662 bytes. The separately measured Reality research recording directory `/home/charlie/midas-reality/data/research/reality` occupied 1,478,846,486 bytes; this is a path-specific size, not a growth-rate estimate. `systemctl --user --failed` listed 15 loaded historical failed units, including the archive timeout and prior Arena/research/regression units; no active Veritas one-shot unit was failed at capture.
 
 No campaign, collector, service, or research job was restarted or manually triggered for this snapshot. See [research inventory 069](VERITAS_MISSION2_RESEARCH_INVENTORY_069.json).
+
+
+## 2026-10-16 05:47 UTC scheduled research snapshot
+
+The 05:45 Director cycle exited 0 and reconciled scan 51. It admitted scan 52 to Arena job `job-6c0fa56b47034494a10ccaa1`. The child completed 52/52 events with exit 0; the finding has 1,788 valid pairs and zero positives at all five economic gates, with candidate evidence and source replay complete and empty. The Director manifest still records the completed child as QUEUED and scan 51 as last qualified until its scheduled 06:15:10 UTC cycle. No poll, retry, or manual admission was used.
+
+The 05:40 finalized-source analysis exited 0 at 05:42:25 UTC with zero restarts. It processed all 5,382/5,382 available catalog segments (1,391,469,142 bytes; zero pending), yielding 369,257 quality-valid states across 91 markets. Top-ask, full-depth, and minimum-notional positive counts are zero; the frozen campaign window remains collecting. The separate 05:35 gap-detail run exited 0 at 05:36:25 UTC, with 3,132/5,374 segments processed, 2,240 / 608,836,620 bytes pending, and 789 campaign-window gap events; no active segment was read.
+
+The fixed measurement pilot is running at 21/48 scans: 685/840 valid market-pair slots across 520 selected markets, one missed sequence; comparison remains descriptive and non-randomized. The Reality recorder, frozen shadow, Midas/Reality APIs, and web services are active. The shadow has one historical restart and its lag was not refreshed. Both APIs were HTTP 200 / READY at 05:22 UTC; no new HTTP probe was run at this capture. The archive unit remains failed following its 04:33:35 UTC 30-minute timeout with zero restarts; archive completeness and data loss remain unverified.
+
+Host load was 1.25 / 1.33 / 1.29; available RAM was 9.8 GiB, swap use was 3.8/4 GiB, and root disk use was 56% with 197 GiB free. The Veritas observatory directory occupied 56,914,183 bytes, up 1,020,521 bytes from the 05:27 sample. `/home/charlie/midas-reality/data/research/reality` occupied 1,486,467,696 bytes, up 7,621,210 bytes from 05:27. These two-point changes over about 20 minutes are short-term observations, not long-term growth rates.
+
+No service, collector, frozen campaign, or research job was manually restarted or triggered for this checkpoint. See [research inventory 070](VERITAS_MISSION2_RESEARCH_INVENTORY_070.json).
