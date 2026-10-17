@@ -9,6 +9,7 @@ from midas.arena.scheduling import create as create_schedule
 from midas.arena.tournaments import TournamentSpec
 
 from scripts.autonomy_48h import (
+    _observe_steps,
     apply_plan_revision,
     build_director_steps,
     job_unit_usage,
@@ -245,3 +246,72 @@ def test_plan_revision_preserves_active_job_and_its_linked_tournament(tmp_path, 
         )
         == 23
     )
+
+
+def test_safety_cancel_is_deferred_without_spending_retry_or_losing_partial_artifacts(
+    tmp_path, monkeypatch
+):
+    from scripts import autonomy_48h as campaign
+
+    step = {
+        "step": 5,
+        "state": "CANCEL_REQUESTED",
+        "job_id": "job-backpressure",
+        "attempt": 0,
+        "error": "recorder_continuity_degraded",
+    }
+    manifest = {"steps": [step], "paused_jobs": [], "failed_jobs": []}
+    monkeypatch.setattr(
+        campaign,
+        "inspect",
+        lambda *_args: {"state": "CANCELLED", "error": "Cancellation requested"},
+    )
+    monkeypatch.setattr(campaign, "record_job_usage", lambda *_args: None)
+
+    assert _observe_steps(tmp_path, manifest, 1_000_000_000)
+    assert step["state"] == "WAITING_RESOURCE"
+    assert step["job_id"] is None
+    assert step["attempt"] == 0
+    assert step["admission_generation"] == 1
+    assert step["deferred_job_ids"] == ["job-backpressure"]
+    assert manifest["failed_jobs"] == []
+    assert manifest["paused_jobs"][0]["partial_artifacts_preserved"] is True
+
+
+def test_legacy_health_cancelled_failure_is_recovered_from_incident_provenance(
+    tmp_path, monkeypatch
+):
+    from scripts import autonomy_48h as campaign
+
+    requested_ns = 1_000_000_000_000_000_000
+    step = {
+        "step": 5,
+        "state": "FAILED",
+        "job_id": "job-legacy-cancel",
+        "attempt": 0,
+        "cancel_requested_at_ns": requested_ns,
+        "error": "Cancellation requested; completed artifacts retained",
+    }
+    manifest = {
+        "steps": [step],
+        "failed_jobs": [{"job_id": "job-legacy-cancel", "state": "CANCELLED"}],
+        "operational_incidents": [
+            {
+                "key": "campaign_job_cancelled_for_health",
+                "first_seen_at": campaign.now_iso(requested_ns),
+                "detail": ["recorder_continuity_degraded"],
+            }
+        ],
+    }
+    monkeypatch.setattr(
+        campaign,
+        "inspect",
+        lambda *_args: {"state": "CANCELLED", "error": "Cancellation requested"},
+    )
+
+    assert _observe_steps(tmp_path, manifest, requested_ns + 1_000_000_000)
+    assert step["state"] == "WAITING_RESOURCE"
+    assert step["job_id"] is None
+    assert step["admission_generation"] == 1
+    assert manifest["failed_jobs"][0]["state"] == "CANCELLED_FOR_HEALTH_BACKPRESSURE"
+    assert manifest["recovery_events"][0]["action"] == "deferred_cancelled_run_for_health_backpressure"

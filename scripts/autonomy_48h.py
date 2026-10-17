@@ -21,11 +21,13 @@ from typing import Any
 from midas.arena.artifacts import atomic_json, sha256
 from midas.arena.datasets import load as load_dataset
 from midas.arena.datasets import research_hash
+from midas.arena.evolution import SweepSpec
 from midas.arena.jobs import JobSpec, artifact_usage, inspect
 from midas.arena.jobs import cancel as cancel_job
 from midas.arena.jobs import create as create_job
 from midas.arena.tournaments import TournamentSpec
 from midas.arena.tournaments import summaries as tournament_summaries
+from midas.economics.attestation import digest
 
 REPOSITORY = Path(__file__).resolve().parents[1]
 CONFIG_PATH = REPOSITORY / "deploy/autonomy/midas-autonomous-research-48h-001.json"
@@ -38,6 +40,19 @@ CAMPAIGN_MODEL_IDS = (
 )
 VERITAS_DIRECTOR_ID = "director-veritas-opportunity-v1"
 TERMINAL = {"COMPLETE", "PARTIAL", "FAILED", "CANCELLED"}
+HEALTH_BACKPRESSURE_REASONS = {
+    "host_memory_critical",
+    "recorder_memory_critical",
+    "recorder_continuity_degraded",
+    "api_health_degraded",
+    "required_service_degraded",
+    "host_load_pressure",
+    "host_memory_pressure",
+    "host_io_pressure",
+    "swap_activity",
+    "host_disk_reserve",
+    "arena_artifact_headroom",
+}
 PAGE_SIZE = os.sysconf("SC_PAGE_SIZE")
 CAMPAIGN_TIMER = "midas-autonomy-48h-001.timer"
 
@@ -1073,6 +1088,69 @@ def validated_tournaments(step: dict[str, Any]) -> list[dict[str, Any]]:
     return [result] if result.get("tournament_id") else []
 
 
+def registered_sweep_models(workspace: Path, step: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    """Read completed trial artifacts even while their Director tournaments are running."""
+    raw = step.get("job_spec", {}).get("director")
+    if not raw:
+        return {}
+    arguments = {
+        "dataset_id": raw["dataset_id"],
+        "epochs": raw["training_epochs"],
+        "seeds": raw["sweep_seeds"],
+    }
+    if raw.get("sweep_candidates") is not None:
+        arguments["candidates"] = raw["sweep_candidates"]
+    spec = SweepSpec(**arguments)
+    arena_root = workspace / "data/arena"
+    dataset, _ = load_dataset(arena_root, spec.dataset_id)
+    source_hash = research_hash()
+    sweep_id = "sweep-" + digest(
+        [spec.model_dump(mode="json"), dataset["rows_sha256"], source_hash]
+    )[:24]
+    sweep = read_json(arena_root / "sweeps" / sweep_id / "manifest.json", {})
+    if (
+        not sweep
+        or sweep.get("sweep_id") != sweep_id
+        or sweep.get("dataset_sha256") != dataset["rows_sha256"]
+        or sweep.get("source_hash") != source_hash
+    ):
+        return {}
+    registered: dict[str, dict[str, Any]] = {}
+    for trial in sweep.get("trials", []):
+        if trial.get("state") != "COMPLETED" or not trial.get("model_id"):
+            continue
+        model_id = trial["model_id"]
+        model_dir = arena_root / "models" / model_id
+        model = read_json(model_dir / "manifest.json", {})
+        parameter_file = model_dir / "parameters.json"
+        if (
+            model.get("model_id") != model_id
+            or model.get("dataset_sha256") != dataset["rows_sha256"]
+            or model.get("state") not in {"TRAINED", "EVALUATED"}
+            or not parameter_file.is_file()
+            or sha256(parameter_file) != model.get("artifact_sha256")
+            or trial.get("artifact_sha256") != model.get("artifact_sha256")
+        ):
+            continue
+        registered[model_id] = {
+            "model_id": model_id,
+            "family": model.get("family"),
+            "dataset_id": model.get("dataset_id"),
+            "dataset_sha256": model.get("dataset_sha256"),
+            "artifact_sha256": model.get("artifact_sha256"),
+            "training_configuration": model.get("configuration", {}),
+            "training_duration_seconds": model.get("training_duration_seconds"),
+            "validation": model.get("validation"),
+            "evaluation_status": (
+                "Director evaluation pending"
+                if step.get("state") != "COMPLETED"
+                else "Director evaluation completed"
+            ),
+            "sweep_id": sweep_id,
+        }
+    return registered
+
+
 def _progress(
     workspace: Path,
     reality_root: Path,
@@ -1089,10 +1167,36 @@ def _progress(
         report = step.get("validated_result") or {}
         tournaments.extend(validated_tournaments(step))
         for model in report.get("trained_models", []):
+            model = copy.deepcopy(model)
+            model.setdefault("evaluation_status", "Director evaluation completed")
             trained_models[model["model_id"]] = model
+    for step in steps:
+        if step.get("state") == "COMPLETED" and step.get("validated_result"):
+            continue
+        for model_id, model in registered_sweep_models(workspace, step).items():
+            trained_models.setdefault(model_id, model)
     training_status = copy.deepcopy(manifest["training"])
     training_status["models_trained"] = len(trained_models)
     training_status["training_trials_completed"] = len(trained_models)
+    training_status["models_director_validated"] = len(
+        {
+            model["model_id"]
+            for step in completed
+            if step.get("job_spec", {}).get("kind") == "director"
+            for model in (step.get("validated_result") or {}).get("trained_models", [])
+        }
+    )
+    training_status["registered_candidates"] = [
+        {
+            "model_id": model_id,
+            "family": model.get("family"),
+            "dataset_id": model.get("dataset_id"),
+            "validation_brier": (model.get("validation") or {}).get("brier"),
+            "evaluation_status": model.get("evaluation_status", "validated"),
+            "sweep_id": model.get("sweep_id"),
+        }
+        for model_id, model in sorted(trained_models.items())
+    ]
     training_status["training_families_observed"] = sorted(
         {model.get("family") for model in trained_models.values()}
     )
@@ -1546,6 +1650,62 @@ def append_incident(manifest: dict[str, Any], key: str, detail: Any, timestamp_n
         )
 
 
+def health_backpressure_reasons(manifest: dict[str, Any], step: dict[str, Any]) -> set[str]:
+    reasons = set((step.get("error") or "").split(";")) & HEALTH_BACKPRESSURE_REASONS
+    reasons.update(set(step.get("cancellation_reasons", [])) & HEALTH_BACKPRESSURE_REASONS)
+    requested_at = step.get("cancel_requested_at_ns")
+    if requested_at:
+        for incident in manifest.get("operational_incidents", []):
+            if incident.get("key") != "campaign_job_cancelled_for_health":
+                continue
+            try:
+                incident_at = dt.datetime.fromisoformat(incident["first_seen_at"]).timestamp()
+            except (KeyError, ValueError):
+                continue
+            if abs(incident_at - requested_at / 1_000_000_000) > 300:
+                continue
+            detail = incident.get("last_detail") or incident.get("detail") or []
+            reasons.update(set(detail) & HEALTH_BACKPRESSURE_REASONS)
+    return reasons
+
+
+def defer_health_cancelled_step(
+    manifest: dict[str, Any], step: dict[str, Any], job_id: str, reasons: set[str], timestamp_ns: int
+) -> None:
+    step.setdefault("deferred_job_ids", []).append(job_id)
+    step["admission_generation"] = int(step.get("admission_generation", 0)) + 1
+    step["job_id"] = None
+    step["admission_intent"] = None
+    step.pop("cancel_requested_at_ns", None)
+    step["state"] = "WAITING_RESOURCE"
+    step["error"] = "Previous run stopped by campaign backpressure: " + ", ".join(
+        sorted(reasons)
+    )
+    for record in manifest.get("failed_jobs", []):
+        if record.get("job_id") == job_id and record.get("state") == "CANCELLED":
+            record["state"] = "CANCELLED_FOR_HEALTH_BACKPRESSURE"
+            record["recovery"] = "Eligible for bounded retry when resource gates recover"
+            break
+    manifest.setdefault("paused_jobs", []).append(
+        {
+            "step": step["step"],
+            "job_id": job_id,
+            "at": now_iso(timestamp_ns),
+            "reason": sorted(reasons),
+            "partial_artifacts_preserved": True,
+        }
+    )
+    manifest.setdefault("recovery_events", []).append(
+        {
+            "step": step["step"],
+            "job_id": job_id,
+            "at": now_iso(timestamp_ns),
+            "action": "deferred_cancelled_run_for_health_backpressure",
+            "reason": sorted(reasons),
+        }
+    )
+
+
 def close_resolved_incidents(
     manifest: dict[str, Any], active_keys: set[str], timestamp_ns: int
 ) -> None:
@@ -1732,7 +1892,8 @@ def _admit_due_step(
         due["resolved_model_id"] = selected_model
     spec = JobSpec.model_validate(job_spec)
     attempt = int(due.get("attempt", 0))
-    key = f"autonomy-{CAMPAIGN_ID}-step-{due['step']}-attempt-{attempt}"
+    generation = int(due.get("admission_generation", 0))
+    key = f"autonomy-{CAMPAIGN_ID}-step-{due['step']}-attempt-{attempt}-run-{generation}"
     due["admission_intent"] = {
         "key": key,
         "recorded_at": now_iso(timestamp_ns),
@@ -1752,9 +1913,17 @@ def _observe_steps(workspace: Path, manifest: dict[str, Any], timestamp_ns: int)
     arena_root = workspace / "data/arena"
     for step in manifest["steps"]:
         job_id = step.get("job_id")
-        if not job_id or step["state"] in {"COMPLETED", "FAILED", "SKIPPED", "RETRY_WAIT"}:
+        if not job_id:
             continue
         previous_state = step.get("state")
+        if previous_state in {"COMPLETED", "FAILED", "SKIPPED", "RETRY_WAIT"}:
+            if previous_state == "FAILED" and step.get("cancel_requested_at_ns"):
+                job = inspect(arena_root, job_id)
+                reasons = health_backpressure_reasons(manifest, step)
+                if job.get("state") == "CANCELLED" and reasons:
+                    defer_health_cancelled_step(manifest, step, job_id, reasons, timestamp_ns)
+                    changed = True
+            continue
         job = inspect(arena_root, job_id)
         record_job_usage(manifest, job_id, job.get("state", "UNKNOWN"), timestamp_ns)
         if previous_state == "CANCEL_REQUESTED" and job.get("state") in {"QUEUED", "RUNNING"}:
@@ -1763,6 +1932,15 @@ def _observe_steps(workspace: Path, manifest: dict[str, Any], timestamp_ns: int)
                 command(
                     ["systemctl", "--user", "stop", f"midas-arena-{job_id}.service"], timeout=35
                 )
+            continue
+        safety_reasons = health_backpressure_reasons(manifest, step)
+        if (
+            previous_state == "CANCEL_REQUESTED"
+            and job.get("state") == "CANCELLED"
+            and safety_reasons
+        ):
+            defer_health_cancelled_step(manifest, step, job_id, safety_reasons, timestamp_ns)
+            changed = True
             continue
         step["state"] = job.get("state", "UNKNOWN")
         step["progress"] = job.get("progress")
@@ -1894,6 +2072,7 @@ def _cancel_unhealthy_running_job(
         cancel_campaign_job(workspace, step["job_id"])
         step["state"] = "CANCEL_REQUESTED"
         step["cancel_requested_at_ns"] = timestamp_ns
+        step["cancellation_reasons"] = reasons
         step["error"] = ";".join(reasons)
         append_incident(manifest, "campaign_job_cancelled_for_health", reasons, timestamp_ns)
 
@@ -2046,6 +2225,11 @@ def render_final_report(workspace: Path, manifest: dict[str, Any], final: dict[s
         for step in validated_steps
         for model in step["validated_result"].get("trained_models", [])
     }
+    for step in manifest["steps"]:
+        if step.get("state") == "COMPLETED" and step.get("validated_result"):
+            continue
+        for model_id, model in registered_sweep_models(workspace, step).items():
+            trained_models.setdefault(model_id, model)
     campaign_job_ids = {step.get("job_id") for step in manifest["steps"] if step.get("job_id")}
     usage = [
         item
