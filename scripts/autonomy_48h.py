@@ -1990,6 +1990,7 @@ def _admit_due_step(
     }
     if not ready:
         due["state"] = "WAITING_RESOURCE"
+        due["error"] = "Waiting for resource backpressure gates: " + ",".join(reasons)
         key = "campaign_resources"
         append_incident(manifest, key, reasons, timestamp_ns)
         manifest.setdefault("paused_jobs", []).append(
@@ -1998,6 +1999,7 @@ def _admit_due_step(
         return
     close_resolved_incidents(manifest, set(), timestamp_ns)
     due["state"] = "ADMITTING"
+    due["error"] = None
     job_spec = copy.deepcopy(
         due["job_spec_template"] if "job_spec_template" in due else due["job_spec"]
     )
