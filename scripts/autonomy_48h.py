@@ -55,6 +55,7 @@ HEALTH_BACKPRESSURE_REASONS = {
 }
 PAGE_SIZE = os.sysconf("SC_PAGE_SIZE")
 CAMPAIGN_TIMER = "midas-autonomy-48h-001.timer"
+SOURCE_RECOVERY_STABILITY_NS = 600 * 1_000_000_000
 
 
 def now_iso(timestamp_ns: int | None = None) -> str:
@@ -1323,6 +1324,7 @@ def _progress(
             "load_average_1m": snapshot["host"]["load_average_1m"],
             "recorder_memory_bytes": recorder.get("memory_current_bytes"),
             "recorder_memory_fraction_of_max": recorder.get("memory_fraction_of_max"),
+            "source_recovery": copy.deepcopy(manifest.get("source_recovery", {})),
             "api_health": snapshot["api"].get("status"),
             "disk_free_bytes": snapshot["host"]["disk_free_bytes"],
             "campaign_job_resource_usage": manifest.get("job_resource_usage", []),
@@ -1754,6 +1756,53 @@ def campaign_health(manifest: dict[str, Any], snapshot: dict[str, Any]) -> str:
     )
 
 
+def update_source_stability(
+    manifest: dict[str, Any], snapshot: dict[str, Any], config: dict[str, Any], timestamp_ns: int
+) -> dict[str, Any]:
+    recorder = snapshot["recorder"]
+    limits = config["resource_limits"]
+    source_healthy = (
+        recorder.get("state") in {"RECORDING_UNSEQUENCED", "RECORDING_SEQUENCED"}
+        and recorder.get("unit_active")
+        and (recorder.get("updated_age_seconds") or 1e9)
+        <= limits["maximum_source_status_age_seconds"]
+        and (recorder.get("last_observation_age_seconds") or 1e9)
+        <= limits["maximum_last_observation_age_seconds"]
+    )
+    stability = manifest.setdefault("source_recovery", {})
+    last_check_ns = stability.get("last_check_ns")
+    if not source_healthy:
+        stability.update(
+            stable=False,
+            consecutive_healthy_checks=0,
+            healthy_since_ns=None,
+            last_check_ns=timestamp_ns,
+            last_check_at=now_iso(timestamp_ns),
+        )
+    else:
+        healthy_since_ns = stability.get("healthy_since_ns")
+        if (
+            not stability.get("last_check_healthy")
+            or healthy_since_ns is None
+            or last_check_ns is None
+            or timestamp_ns - last_check_ns > SOURCE_RECOVERY_STABILITY_NS
+        ):
+            healthy_since_ns = timestamp_ns
+            count = 1
+        else:
+            count = int(stability.get("consecutive_healthy_checks", 0)) + 1
+        stability.update(
+            stable=timestamp_ns - healthy_since_ns >= SOURCE_RECOVERY_STABILITY_NS,
+            consecutive_healthy_checks=count,
+            healthy_since_ns=healthy_since_ns,
+            last_check_ns=timestamp_ns,
+            last_check_at=now_iso(timestamp_ns),
+        )
+    stability["last_check_healthy"] = bool(source_healthy)
+    stability["stability_required_seconds"] = SOURCE_RECOVERY_STABILITY_NS // 1_000_000_000
+    return stability
+
+
 def close_resolved_incidents(
     manifest: dict[str, Any], active_keys: set[str], timestamp_ns: int
 ) -> None:
@@ -1900,6 +1949,9 @@ def _admit_due_step(
     ready, reasons, swap = check_campaign_resources(
         workspace, snapshot, config, manifest.get("last_resource_sample"), used
     )
+    if not manifest.get("source_recovery", {}).get("stable", False):
+        ready = False
+        reasons = sorted(set(reasons) | {"recorder_recovery_stability"})
     due["latest_backpressure"] = {
         "checked_at": now_iso(timestamp_ns),
         "ready": ready,
@@ -2516,6 +2568,7 @@ def tick(
                 {"campaign_id": CAMPAIGN_ID, "status": manifest["status"]},
             )
         snapshot = host_snapshot(workspace, reality_root, veritas_root, api_base, config)
+        update_source_stability(manifest, snapshot, config, timestamp_ns)
         manifest["last_snapshot"] = snapshot
         manifest["last_veritas"] = snapshot["veritas"]
         current_scan = snapshot["veritas"].get("latest_scan_id")

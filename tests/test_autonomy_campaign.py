@@ -15,6 +15,7 @@ from scripts.autonomy_48h import (
     campaign_health,
     job_unit_usage,
     record_job_usage,
+    update_source_stability,
 )
 
 
@@ -391,3 +392,34 @@ def test_expected_dependency_wait_does_not_mark_active_healthy_campaign_degraded
         "units": {"midas-reality.service": True, "midas-api.service": True},
     }
     assert campaign_health(manifest, snapshot) == "HEALTHY"
+
+
+def test_source_recovery_requires_ten_minutes_of_consecutive_healthy_checks():
+    config = json.loads(
+        (
+            Path(__file__).parents[1]
+            / "deploy/autonomy/midas-autonomous-research-48h-001.json"
+        ).read_text()
+    )
+    snapshot = {
+        "recorder": {
+            "state": "RECORDING_UNSEQUENCED",
+            "unit_active": True,
+            "updated_age_seconds": 1,
+            "last_observation_age_seconds": 1,
+        }
+    }
+    manifest = {}
+    start = 1_000_000_000_000_000_000
+
+    assert not update_source_stability(manifest, snapshot, config, start)["stable"]
+    assert not update_source_stability(
+        manifest, snapshot, config, start + 300 * 1_000_000_000
+    )["stable"]
+    assert update_source_stability(
+        manifest, snapshot, config, start + 600 * 1_000_000_000
+    )["stable"]
+    snapshot["recorder"]["state"] = "DEGRADED_SOURCE_TIMING"
+    assert not update_source_stability(
+        manifest, snapshot, config, start + 900 * 1_000_000_000
+    )["stable"]
