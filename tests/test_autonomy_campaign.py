@@ -8,6 +8,8 @@ from midas.arena.scheduling import ScheduledStep, ScheduleSpec
 from midas.arena.scheduling import create as create_schedule
 from midas.arena.tournaments import TournamentSpec
 
+from scripts.autonomy_48h import job_unit_usage, record_job_usage
+
 
 def test_campaign_job_budget_and_durable_schedule_are_bounded(tmp_path, monkeypatch):
     seen: list[list[str]] = []
@@ -51,3 +53,43 @@ def test_campaign_job_budget_and_durable_schedule_are_bounded(tmp_path, monkeypa
     assert "--property=MemoryMax=1024M" in command
     assert "--property=Nice=15" in command
     assert "--property=IOSchedulingClass=idle" in command
+
+
+def test_transient_job_cgroup_usage_is_saved_before_systemd_collects_it(monkeypatch):
+    samples = iter(
+        (
+            {
+                "CPUUsageNSec": "234000000000",
+                "MemoryPeak": "638996480",
+                "MemoryCurrent": "500000000",
+                "Result": "success",
+            },
+            {
+                "CPUUsageNSec": "234000000000",
+                "MemoryPeak": "638996480",
+                "MemoryCurrent": "500000000",
+                "Result": "success",
+            },
+            {
+                "CPUUsageNSec": "[not set]",
+                "MemoryPeak": "[not set]",
+                "MemoryCurrent": "[not set]",
+                "Result": "success",
+            },
+        )
+    )
+    monkeypatch.setattr(
+        "scripts.autonomy_48h.systemd_properties",
+        lambda _unit: next(samples),
+    )
+    assert job_unit_usage("job-fixture")["MemoryPeak"] == 638996480
+
+    manifest: dict = {}
+    record_job_usage(manifest, "job-fixture", "RUNNING", 1_000_000_000)
+    record_job_usage(manifest, "job-fixture", "COMPLETED", 2_000_000_000)
+    saved = manifest["job_resource_usage"][0]
+    assert saved["CPUUsageNSec"] == 234000000000
+    assert saved["MemoryPeak"] == 638996480
+    assert saved["MemoryCurrent"] == 500000000
+    assert saved["samples"] == 1
+    assert saved["last_observed_state"] == "COMPLETED"

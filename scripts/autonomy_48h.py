@@ -1024,9 +1024,29 @@ def job_unit_usage(job_id: str) -> dict[str, Any]:
         value = data.get(key)
         if value and value.isdigit():
             result[key] = int(value)
-        elif value:
+        elif value and value not in {"[not set]", "unknown"}:
             result[key] = value
     return result
+
+
+def record_job_usage(manifest: dict[str, Any], job_id: str, state: str, timestamp_ns: int) -> None:
+    sample = job_unit_usage(job_id)
+    records = manifest.setdefault("job_resource_usage", [])
+    record = next((item for item in records if item.get("job_id") == job_id), None)
+    if record is None:
+        record = {"job_id": job_id, "samples": 0}
+        records.append(record)
+    for key in ("CPUUsageNSec", "MemoryPeak"):
+        if isinstance(sample.get(key), int):
+            record[key] = max(record.get(key, 0), sample[key])
+    if isinstance(sample.get("MemoryCurrent"), int):
+        record["MemoryCurrent"] = sample["MemoryCurrent"]
+    if sample.get("Result") not in (None, "[not set]", "unknown"):
+        record["Result"] = sample["Result"]
+    record["last_observed_state"] = state
+    record["last_sampled_at"] = now_iso(timestamp_ns)
+    if any(key in sample for key in ("CPUUsageNSec", "MemoryPeak", "MemoryCurrent")):
+        record["samples"] = record.get("samples", 0) + 1
 
 
 def cancel_campaign_job(workspace: Path, job_id: str) -> None:
@@ -1242,6 +1262,7 @@ def _observe_steps(workspace: Path, manifest: dict[str, Any], timestamp_ns: int)
             continue
         previous_state = step.get("state")
         job = inspect(arena_root, job_id)
+        record_job_usage(manifest, job_id, job.get("state", "UNKNOWN"), timestamp_ns)
         if previous_state == "CANCEL_REQUESTED" and job.get("state") in {"QUEUED", "RUNNING"}:
             requested_at = step.get("cancel_requested_at_ns", timestamp_ns)
             if timestamp_ns - requested_at > 180 * 1_000_000_000:
@@ -1255,7 +1276,6 @@ def _observe_steps(workspace: Path, manifest: dict[str, Any], timestamp_ns: int)
         if job.get("state") in {"QUEUED", "RUNNING"}:
             continue
         changed = True
-        manifest.setdefault("job_resource_usage", []).append(job_unit_usage(job_id))
         if job.get("state") == "COMPLETED":
             validation = validate_tournament_artifact(workspace, job, step)
             if validation.get("valid"):
@@ -1520,6 +1540,11 @@ def render_final_report(workspace: Path, manifest: dict[str, Any], final: dict[s
     initial = manifest.get("initial_observations", {})
     veritas = manifest.get("last_veritas", {})
     reports = [s.get("validated_result") for s in manifest["steps"] if s.get("validated_result")]
+    controller_updates = manifest.get("runtime_controller_updates", [])
+    update_lines = [
+        f"- Controller update `{item.get('commit')}` at {item.get('at')}: {item.get('reason')}"
+        for item in controller_updates
+    ] or ["- No controller changes were made after campaign activation."]
     leader_lines = []
     for row in reports:
         leader_lines.append(
@@ -1565,6 +1590,7 @@ def render_final_report(workspace: Path, manifest: dict[str, Any], final: dict[s
             f"- Runtime: {duration // 3600}h {(duration % 3600) // 60}m {duration % 60}s",
             f"- Final state: **{manifest['status']}**",
             f"- Code revision: `{manifest.get('code_revision')}`",
+            *update_lines,
             f"- Continuous Reality frames added: {max(0, int(final_recorder.get('frames', 0)) - int(initial.get('frames', 0)))}",
             f"- Finalized source segments added: {max(0, int(snapshots.get('segments_finalized', 0)) - int(initial.get('segments_finalized', 0)))}",
             f"- Recording gaps added: {max(0, int(final_recorder.get('gaps', 0)) - int(initial.get('gaps', 0)))}; final total gaps: {final_recorder.get('gaps')}",
