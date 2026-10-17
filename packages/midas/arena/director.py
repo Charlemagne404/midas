@@ -7,9 +7,10 @@ from typing import Any, Self
 
 from pydantic import Field, model_validator
 
-from midas.arena.artifacts import artifact_path, atomic_json
+from midas.arena.artifacts import artifact_path, atomic_json, sha256
 from midas.arena.datasets import DatasetSpec, load, research_hash
 from midas.arena.evolution import Candidate, SweepSpec, run_sweep
+from midas.arena.supervised import TrainingSpec
 from midas.arena.tournaments import TournamentSpec, run_tournament
 from midas.core.models import Model
 from midas.economics.attestation import digest
@@ -26,6 +27,7 @@ class DirectorSpec(Model):
     research_question: str | None = Field(default=None, max_length=500)
     sweep_candidates: tuple[Candidate, ...] | None = None
     sweep_seeds: tuple[int, ...] = (11, 29)
+    reuse_sweep_id: str | None = Field(default=None, pattern=r"^sweep-[a-zA-Z0-9_-]{1,96}$")
 
     @model_validator(mode="after")
     def bounded_sweep(self) -> Self:
@@ -38,6 +40,66 @@ class DirectorSpec(Model):
             arguments["candidates"] = self.sweep_candidates
         SweepSpec(**arguments)
         return self
+
+
+def load_reusable_sweep(root: Path, sweep_id: str, spec: DirectorSpec) -> dict[str, Any]:
+    """Validate a completed validation-only sweep before a Director reuses it."""
+    dataset, _ = load(root, spec.dataset_id)
+    sweep_spec = SweepSpec(
+        dataset_id=spec.dataset_id,
+        epochs=spec.training_epochs,
+        seeds=spec.sweep_seeds,
+        **({"candidates": spec.sweep_candidates} if spec.sweep_candidates is not None else {}),
+    )
+    path = artifact_path(root, "sweeps", sweep_id) / "manifest.json"
+    if not path.is_file():
+        raise ValueError(f"Reusable sweep is missing: {sweep_id}")
+    sweep = json.loads(path.read_text())
+    if (
+        sweep.get("state") != "COMPLETED"
+        or sweep.get("configuration") != sweep_spec.model_dump(mode="json")
+        or sweep.get("dataset_sha256") != dataset.get("rows_sha256")
+        or sweep.get("test_labels_used_for_selection") is not False
+        or not sweep.get("source_hash")
+    ):
+        raise ValueError("Reusable sweep is incomplete or differs from the Director plan")
+    selection = sweep.get("selection") or {}
+    trial_ids: set[str] = set()
+    for trial in sweep.get("trials", []):
+        model_id = trial.get("model_id")
+        if trial.get("state") != "COMPLETED" or not model_id:
+            raise ValueError("Reusable sweep contains an incomplete training trial")
+        model_path = artifact_path(root, "models", model_id)
+        manifest_path = model_path / "manifest.json"
+        parameters = model_path / "parameters.json"
+        model = json.loads(manifest_path.read_text()) if manifest_path.is_file() else None
+        candidate = sweep_spec.candidates[int(trial["candidate_index"])]
+        training = TrainingSpec(
+            dataset_id=spec.dataset_id,
+            seed=int(trial["seed"]),
+            epochs=spec.training_epochs,
+            **candidate.model_dump(),
+        )
+        if (
+            not model
+            or model.get("state") not in {"TRAINED", "EVALUATED"}
+            or model.get("configuration") != training.model_dump(mode="json")
+            or model.get("dataset_id") != spec.dataset_id
+            or model.get("dataset_sha256") != dataset.get("rows_sha256")
+            or model.get("source_hash") != sweep.get("source_hash")
+            or model.get("test") is not None
+            or not parameters.is_file()
+            or sha256(parameters) != model.get("artifact_sha256")
+            or model.get("artifact_sha256") != trial.get("artifact_sha256")
+        ):
+            raise ValueError(f"Reusable model provenance or integrity failed: {model_id}")
+        trial_ids.add(model_id)
+    if (
+        selection.get("selection_partition") != "validation"
+        or selection.get("selected_model_id") not in trial_ids
+    ):
+        raise ValueError("Reusable sweep has no validation-selected trained model")
+    return sweep
 
 
 def run_director(root: Path, spec: DirectorSpec, progress: Any = None) -> dict[str, Any]:
@@ -105,14 +167,20 @@ def run_director(root: Path, spec: DirectorSpec, progress: Any = None) -> dict[s
 
         callback = Progress(step)
         if index == 0:
-            sweep_args: dict[str, Any] = {
-                "dataset_id": spec.dataset_id,
-                "epochs": spec.training_epochs,
-                "seeds": spec.sweep_seeds,
-            }
-            if spec.sweep_candidates is not None:
-                sweep_args["candidates"] = spec.sweep_candidates
-            result = run_sweep(root, SweepSpec(**sweep_args), callback)
+            if spec.reuse_sweep_id:
+                result = load_reusable_sweep(root, spec.reuse_sweep_id, spec)
+                record["training_reused_from_sweep"] = spec.reuse_sweep_id
+                record["training_source_hash"] = result["source_hash"]
+                atomic_json(file, record)
+            else:
+                sweep_args: dict[str, Any] = {
+                    "dataset_id": spec.dataset_id,
+                    "epochs": spec.training_epochs,
+                    "seeds": spec.sweep_seeds,
+                }
+                if spec.sweep_candidates is not None:
+                    sweep_args["candidates"] = spec.sweep_candidates
+                result = run_sweep(root, SweepSpec(**sweep_args), callback)
             step["artifact"] = {"kind": "sweeps", "identity": result["sweep_id"]}
             record["selected_model_id"] = result["selection"]["selected_model_id"]
         else:

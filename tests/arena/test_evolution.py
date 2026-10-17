@@ -65,3 +65,39 @@ def test_bounded_director_runs_real_selection_and_two_matched_challenges(tmp_pat
         groups.append({r["base_episode_id"] for r in rows})
     assert groups[0] == groups[1]
     assert not groups[0] & set(sum(dataset["partition_identities"].values(), []))
+
+
+def test_director_can_reuse_a_validated_completed_sweep_without_retraining(tmp_path, monkeypatch):
+    import midas.arena.director as director
+
+    dataset = build(tmp_path, DatasetSpec(episodes=60))
+    base = DirectorSpec(
+        dataset_id=dataset["dataset_id"], episodes=30, training_epochs=5, challenge_seed=910072
+    )
+    sweep = run_sweep(
+        tmp_path,
+        SweepSpec(dataset_id=base.dataset_id, epochs=base.training_epochs, seeds=base.sweep_seeds),
+    )
+    model_ids_before = sorted(path.name for path in (tmp_path / "models").iterdir())
+    calls = []
+
+    def no_retraining(*args, **kwargs):
+        raise AssertionError("A completed sweep must be reused without retraining")
+
+    def tournament(root, spec, progress=None):
+        calls.append(spec.unsupported_input_policy)
+        return {
+            "tournament_id": f"tournament-reuse-{len(calls)}",
+            "conclusion": "bounded test stub",
+        }
+
+    monkeypatch.setattr(director, "run_sweep", no_retraining)
+    monkeypatch.setattr(director, "run_tournament", tournament)
+    spec = base.model_copy(update={"reuse_sweep_id": sweep["sweep_id"]})
+    report = director.run_director(tmp_path, spec)
+
+    assert report["state"] == "COMPLETED"
+    assert report["training_reused_from_sweep"] == sweep["sweep_id"]
+    assert report["selected_model_id"] == sweep["selection"]["selected_model_id"]
+    assert calls == ["warn", "abstain"]
+    assert sorted(path.name for path in (tmp_path / "models").iterdir()) == model_ids_before

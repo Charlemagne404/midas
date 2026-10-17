@@ -283,10 +283,16 @@ def _run(root: Path, identity: str) -> None:
         "artifact_files": 0,
         "artifact_bytes": 0,
         "artifact_observations": 0,
+        "arena_total_bytes": 0,
+        "job_artifact_bytes": 0,
+        "job_artifact_baseline_bytes": 0,
+        "job_artifact_budget_bytes": int(record.get("budget", {}).get("max_artifact_mb", 1024))
+        * 1024**2,
         "artifact_index_reconciliations": 0,
         "artifact_index_fallbacks": 0,
     }
     usage_index: UsageIndex | None = None
+    job_artifact_baseline_bytes: int | None = None
 
     def stopped(signum: int, frame: Any) -> None:
         nonlocal stop
@@ -326,9 +332,26 @@ def _run(root: Path, identity: str) -> None:
             }
         else:
             overhead["artifact_scans"] += 1
-        overhead.update(artifact_files=file_count, artifact_bytes=total_bytes)
-        if total_bytes > 1024**3:
-            raise RuntimeError("Arena artifact budget exceeded 1 GiB; evidence retained")
+        job_artifact_bytes = (
+            max(0, total_bytes - job_artifact_baseline_bytes)
+            if job_artifact_baseline_bytes is not None
+            else 0
+        )
+        artifact_budget_bytes = int(record.get("budget", {}).get("max_artifact_mb", 1024)) * 1024**2
+        overhead.update(
+            artifact_files=file_count,
+            artifact_bytes=total_bytes,
+            arena_total_bytes=total_bytes,
+            job_artifact_bytes=job_artifact_bytes,
+            job_artifact_baseline_bytes=job_artifact_baseline_bytes or 0,
+            job_artifact_budget_bytes=artifact_budget_bytes,
+        )
+        # The job budget is growth while this worker owns Arena's write lease, not
+        # the accumulated size of historical artifacts shared by every Arena job.
+        if job_artifact_baseline_bytes is not None and job_artifact_bytes > artifact_budget_bytes:
+            raise RuntimeError(
+                f"Arena job artifact budget exceeded {artifact_budget_bytes // 1024**2} MiB; evidence retained"
+            )
         record.update(
             progress={"done": done, "total": total},
             updated_at=time.time(),
@@ -372,6 +395,7 @@ def _run(root: Path, identity: str) -> None:
             index_began = time.perf_counter()
             usage_index = UsageIndex(root, artifact_usage)
             overhead["artifact_index_init_seconds"] = time.perf_counter() - index_began
+            job_artifact_baseline_bytes = usage_index.usage()[0]
             record.update(state="RUNNING", started_at=time.time(), pid=os.getpid())
             publish(0, 1)
             if record.get("submitted_source_hash") != research_hash():

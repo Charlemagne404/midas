@@ -21,6 +21,7 @@ from typing import Any
 from midas.arena.artifacts import atomic_json, sha256
 from midas.arena.datasets import load as load_dataset
 from midas.arena.datasets import research_hash
+from midas.arena.director import DirectorSpec, load_reusable_sweep
 from midas.arena.evolution import SweepSpec
 from midas.arena.jobs import JobSpec, artifact_usage, inspect
 from midas.arena.jobs import cancel as cancel_job
@@ -1489,6 +1490,7 @@ def validate_director_artifact(workspace: Path, job: dict[str, Any]) -> dict[str
         return {"valid": False, "reason": "Director configuration differs from admitted job"}
     if record.get("source_hash") != job.get("submitted_source_hash"):
         return {"valid": False, "reason": "Director source provenance differs from admitted job"}
+    director_spec = DirectorSpec.model_validate(configuration)
     dataset, _ = load_dataset(arena_root, configuration["dataset_id"])
     if record.get("dataset_sha256") != dataset.get("rows_sha256"):
         return {"valid": False, "reason": "Director dataset hash changed"}
@@ -1500,11 +1502,36 @@ def validate_director_artifact(workspace: Path, job: dict[str, Any]) -> dict[str
     selection = record.get("selected_model_id")
     sweep_identity = record["steps"][0].get("artifact", {}).get("identity")
     sweep = read_json(arena_root / "sweeps" / str(sweep_identity) / "manifest.json")
+    reused_sweep_id = record.get("training_reused_from_sweep")
+    reused_training = bool(director_spec.reuse_sweep_id)
+    expected_sweep = SweepSpec(
+        dataset_id=director_spec.dataset_id,
+        epochs=director_spec.training_epochs,
+        seeds=director_spec.sweep_seeds,
+        **(
+            {"candidates": director_spec.sweep_candidates}
+            if director_spec.sweep_candidates is not None
+            else {}
+        ),
+    )
+    if reused_training:
+        try:
+            load_reusable_sweep(arena_root, director_spec.reuse_sweep_id, director_spec)
+        except Exception as error:
+            return {"valid": False, "reason": f"Reused training provenance failed: {error}"}
     if (
         not sweep
         or sweep.get("state") != "COMPLETED"
         or sweep.get("dataset_sha256") != dataset.get("rows_sha256")
-        or sweep.get("source_hash") != record.get("source_hash")
+        or sweep.get("configuration") != expected_sweep.model_dump(mode="json")
+        or (
+            sweep.get("source_hash") != record.get("source_hash")
+            and not (
+                reused_training
+                and reused_sweep_id == director_spec.reuse_sweep_id == sweep_identity
+                and record.get("training_source_hash") == sweep.get("source_hash")
+            )
+        )
         or sweep.get("test_labels_used_for_selection") is not False
     ):
         return {"valid": False, "reason": "Sweep provenance or validation-only selection failed"}
@@ -1521,7 +1548,7 @@ def validate_director_artifact(workspace: Path, job: dict[str, Any]) -> dict[str
             or model.get("state") not in {"TRAINED", "EVALUATED"}
             or model.get("dataset_id") != configuration["dataset_id"]
             or model.get("dataset_sha256") != dataset.get("rows_sha256")
-            or model.get("source_hash") != record.get("source_hash")
+            or model.get("source_hash") != sweep.get("source_hash")
             or model.get("test") is not None
             or not parameters.is_file()
             or sha256(parameters) != model.get("artifact_sha256")
@@ -1559,6 +1586,7 @@ def validate_director_artifact(workspace: Path, job: dict[str, Any]) -> dict[str
             not tournament
             or not rows_path.is_file()
             or sha256(rows_path) != tournament.get("rows_sha256")
+            or tournament.get("source_hash") != record.get("source_hash")
         ):
             return {
                 "valid": False,
@@ -1609,6 +1637,7 @@ def validate_director_artifact(workspace: Path, job: dict[str, Any]) -> dict[str
         "selected_model_id": selection,
         "trained_model_ids": [row["model_id"] for row in trained_models],
         "trained_models": trained_models,
+        "training_reused_from_sweep": reused_sweep_id if reused_training else None,
         "tournament_results": tournament_results,
         "evaluation_class": "SYNTHETIC_TRAINING_AND_SIMULATION",
         "test_partition_used_for_selection": False,

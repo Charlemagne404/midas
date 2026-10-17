@@ -45,16 +45,57 @@ def test_stale_source_is_not_silently_executed(tmp_path):
     assert "source changed" in result["error"]
 
 
-def test_artifact_cap_still_stops_worker_and_retains_scan_profile(tmp_path):
-    job = create(tmp_path, JobSpec(kind="dataset", dataset=DatasetSpec(episodes=30)), launch=False)
+def test_job_artifact_budget_ignores_existing_arena_history(tmp_path):
     with (tmp_path / "oversized-sparse-artifact").open("wb") as artifact:
         artifact.truncate(1024**3 + 1)
+    job = create(tmp_path, JobSpec(kind="dataset", dataset=DatasetSpec(episodes=30)), launch=False)
     result = worker(tmp_path, job["job_id"])
-    assert result["state"] == "FAILED"
-    assert "artifact budget exceeded" in result["error"]
+    assert result["state"] == "COMPLETED"
     assert result["runtime_profile"]["artifact_scans"] >= 1
     assert result["runtime_profile"]["artifact_bytes"] > 1024**3
+    assert result["runtime_profile"]["arena_total_bytes"] > 1024**3
+    assert result["runtime_profile"]["job_artifact_bytes"] < 1024**3
+    assert result["runtime_profile"]["job_artifact_budget_bytes"] == 1024**3
     assert result["runtime_profile"]["artifact_scan_seconds"] >= 0
+
+
+def test_job_artifact_budget_still_rejects_excessive_job_growth(tmp_path, monkeypatch):
+    import signal
+
+    import midas.arena.jobs as arena_jobs
+
+    class GrowingIndex:
+        fd = -1
+        reconciliations = 1
+        fallbacks = 0
+        last_error = None
+        watches = {}
+
+        def __init__(self, root, fallback):
+            self.baseline = fallback(root)[0]
+            self.calls = 0
+
+        def usage(self):
+            self.calls += 1
+            growth = 0 if self.calls == 1 else 1024**3 + 1
+            return self.baseline + growth, 0
+
+        def close(self):
+            pass
+
+    job = create(tmp_path, JobSpec(kind="dataset", dataset=DatasetSpec(episodes=30)), launch=False)
+    monkeypatch.setattr(arena_jobs, "UsageIndex", GrowingIndex)
+    prior_term = signal.getsignal(signal.SIGTERM)
+    prior_int = signal.getsignal(signal.SIGINT)
+    try:
+        arena_jobs.run(tmp_path, job["job_id"])
+    finally:
+        signal.signal(signal.SIGTERM, prior_term)
+        signal.signal(signal.SIGINT, prior_int)
+    result = json.loads((tmp_path / "jobs" / job["job_id"] / "job.json").read_text())
+    assert result["state"] == "FAILED"
+    assert "job artifact budget exceeded" in result["error"]
+    assert result["runtime_profile"]["job_artifact_bytes"] == 1024**3 + 1
 
 
 def test_missing_supervisor_process_is_interrupted_not_complete(tmp_path, monkeypatch):
