@@ -87,7 +87,7 @@
     "real_execution_training": "Unavailable because MIDAS has no measured order execution labels; synthetic results do not establish real-market profitability."
   },
   "research_queue": {
-    "revision_id": "plan-003-mlp-focused-search",
+    "revision_id": "plan-004-director-wall-budget",
     "dataset_id": "dataset-38ec6e9776097d8e36693372",
     "incumbent_model_ids": [
       "model-ef77bbbd7d1f4be78c41c0b6",
@@ -108,7 +108,7 @@
     "adversarial_depth_multiplier": "0.25",
     "adversarial_submission_latency_ms": 1000,
     "adversarial_job_max_wall_seconds": 1800,
-    "job_max_wall_seconds": 3600,
+    "job_max_wall_seconds": 5400,
     "training_seed_start": 2026101748,
     "challenge_seed_start": 2026101824,
     "adversarial_seed_start": 2026101924,

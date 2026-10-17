@@ -897,6 +897,20 @@ def apply_plan_revision(workspace: Path, config: dict[str, Any]) -> dict[str, An
                 if step.get("selected_model_from_step") == current_step
                 and step.get("state") not in {"COMPLETED", "FAILED", "SKIPPED"}
             )
+        resource_deferred_steps = {
+            step["step"]
+            for step in manifest["steps"]
+            if step.get("state") == "WAITING_RESOURCE"
+            and step.get("family")
+            in {"bounded_synthetic_research_director", "laboratory_adversarial_tournament"}
+        }
+        preserved_steps.update(resource_deferred_steps)
+        preserved_steps.update(
+            step["step"]
+            for step in manifest["steps"]
+            if step.get("selected_model_from_step") in resource_deferred_steps
+            and step.get("state") not in {"COMPLETED", "FAILED", "SKIPPED"}
+        )
         timestamp_ns = time.time_ns()
         previous_pending = [
             copy.deepcopy(step)
@@ -927,6 +941,15 @@ def apply_plan_revision(workspace: Path, config: dict[str, Any]) -> dict[str, An
                     f"Superseded by versioned plan {revision_id}; no evidence was run"
                 )
                 step["superseded_at"] = now_iso(timestamp_ns)
+            elif (
+                step.get("step") in preserved_steps
+                and step.get("state") == "WAITING_RESOURCE"
+                and not step.get("job_id")
+                and step.get("job_spec", {}).get("kind") == "director"
+            ):
+                step["job_spec"]["max_wall_seconds"] = config["research_queue"][
+                    "job_max_wall_seconds"
+                ]
         first_step = max((int(step.get("step", 0)) for step in manifest["steps"]), default=0) + 1
         new_steps = build_director_steps(config, first_step)
         manifest["steps"].extend(new_steps)
@@ -946,6 +969,7 @@ def apply_plan_revision(workspace: Path, config: dict[str, Any]) -> dict[str, An
                     if step.get("step") not in preserved_steps
                 ],
                 "preserved_in_flight_steps": sorted(preserved_steps),
+                "preserved_resource_deferred_steps": sorted(resource_deferred_steps),
                 "new_step_numbers": [step["step"] for step in new_steps],
                 "training_before_revision": old_training,
             }

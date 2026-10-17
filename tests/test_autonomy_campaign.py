@@ -315,3 +315,62 @@ def test_legacy_health_cancelled_failure_is_recovered_from_incident_provenance(
     assert step["admission_generation"] == 1
     assert manifest["failed_jobs"][0]["state"] == "CANCELLED_FOR_HEALTH_BACKPRESSURE"
     assert manifest["recovery_events"][0]["action"] == "deferred_cancelled_run_for_health_backpressure"
+
+
+def test_plan_revision_preserves_resource_deferred_step_and_bounds_wall_budget(tmp_path, monkeypatch):
+    import time
+
+    from midas.arena.artifacts import atomic_json
+
+    import scripts.autonomy_48h as campaign
+
+    config_path = tmp_path / "campaign-config.json"
+    source_config = (
+        Path(__file__).parents[1] / "deploy/autonomy/midas-autonomous-research-48h-001.json"
+    )
+    config_path.write_bytes(source_config.read_bytes())
+    monkeypatch.setattr(campaign, "CONFIG_PATH", config_path)
+    now = time.time_ns()
+    started = now - 3600 * 1_000_000_000
+    deadline = started + 172800 * 1_000_000_000
+    workspace = tmp_path / "workspace"
+    directory = campaign.campaign_dir(workspace)
+    directory.mkdir(parents=True)
+    deferred = {
+        "step": 5,
+        "state": "WAITING_RESOURCE",
+        "family": "bounded_synthetic_research_director",
+        "job_id": None,
+        "job_spec": {"kind": "director", "max_wall_seconds": 3600},
+    }
+    dependent = {
+        "step": 6,
+        "state": "WAITING_RESOURCE",
+        "family": "laboratory_adversarial_tournament",
+        "job_id": None,
+        "selected_model_from_step": 5,
+    }
+    obsolete = {"step": 7, "state": "PENDING", "family": "bounded_synthetic_research_director"}
+    manifest = {
+        "campaign_id": "48H-001",
+        "status": "ACTIVE",
+        "started_at_ns": started,
+        "planned_end_ns": deadline,
+        "planned_end_at": campaign.now_iso(deadline),
+        "steps": [deferred, dependent, obsolete],
+        "completed_jobs": [],
+        "training": {"enabled": True, "status": "SYNTHETIC_TRAINING_ENABLED"},
+        "resource_budgets": {},
+        "approved_research_families": [],
+        "skipped_jobs": [],
+        "runtime_controller_updates": [],
+    }
+    atomic_json(directory / "manifest.json", manifest)
+
+    revised = apply_plan_revision(workspace, json.loads(config_path.read_text()))
+    assert revised["planned_end_ns"] == deadline
+    assert revised["steps"][0]["state"] == "WAITING_RESOURCE"
+    assert revised["steps"][0]["job_spec"]["max_wall_seconds"] == 5400
+    assert revised["steps"][1]["state"] == "WAITING_RESOURCE"
+    assert revised["steps"][2]["state"] == "SKIPPED"
+    assert revised["plan_revisions"][-1]["preserved_resource_deferred_steps"] == [5, 6]
