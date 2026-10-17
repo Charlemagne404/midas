@@ -39,6 +39,7 @@ data/arena-cold/
 data/exports/
 data/backups/
 data/runtime/
+data/autonomy/
 data/models/
 data/checkpoints/
 data/cache/
