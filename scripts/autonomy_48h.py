@@ -2308,11 +2308,24 @@ def tick(
                 finalize(
                     workspace, reality_root, veritas_root, api_base, manifest, config, timestamp_ns
                 )
-        if manifest.get("status") not in TERMINAL and manifest.get("health") != "DEGRADED":
-            if snapshot["api"].get("status") == "READY" and snapshot["recorder"].get("unit_active"):
-                manifest["health"] = "HEALTHY"
-            else:
-                manifest["health"] = "DEGRADED"
+        if manifest.get("status") not in TERMINAL:
+            recorder_healthy = snapshot["recorder"].get("state") in {
+                "RECORDING_UNSEQUENCED",
+                "RECORDING_SEQUENCED",
+            } and snapshot["recorder"].get("unit_active")
+            waiting_for_recovery = any(
+                step.get("state") in {"WAITING_RESOURCE", "WAITING_DEPENDENCY", "CANCEL_REQUESTED"}
+                for step in manifest["steps"]
+            )
+            manifest["health"] = (
+                "HEALTHY"
+                if snapshot["api"].get("status") == "READY"
+                and recorder_healthy
+                and all(snapshot["units"].values())
+                and not manifest.get("integrity_blocked")
+                and not waiting_for_recovery
+                else "DEGRADED"
+            )
         manifest["elapsed_seconds"] = elapsed
         manifest["last_resource_sample"] = resource_sample(snapshot)
         status = write_status(workspace, reality_root, veritas_root, manifest, snapshot)
