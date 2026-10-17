@@ -1,14 +1,14 @@
 {
   "version": "midas-autonomy-campaign-1",
   "campaign_id": "48H-001",
-  "title": "MIDAS AUTONOMOUS RESEARCH CAMPAIGN — 48H-001",
+  "title": "MIDAS AUTONOMOUS RESEARCH CAMPAIGN \u2014 48H-001",
   "duration_seconds": 172800,
   "poll_interval_seconds": 300,
   "report_interval_seconds": 1800,
   "completion_grace_seconds": 600,
   "resource_limits": {
     "max_concurrent_campaign_jobs": 1,
-    "cpu_quota_percent": 50,
+    "cpu_quota_percent": 80,
     "memory_limit_mb": 1536,
     "nice": 15,
     "io_scheduling_class": "idle",
@@ -23,7 +23,8 @@
     "maximum_memory_psi_full_avg10_percent": 0.5,
     "maximum_io_psi_some_avg10_percent": 10.0,
     "maximum_load_average_1m": 4.5,
-    "minimum_arena_artifact_headroom_bytes": 67108864
+    "minimum_arena_artifact_headroom_bytes": 1342177280,
+    "maximum_arena_artifact_bytes": 8589934592
   },
   "arena_evaluation": {
     "dataset_id": "dataset-38ec6e9776097d8e36693372",
@@ -41,7 +42,10 @@
       "one_sided",
       "disappearing"
     ],
-    "execution_models": ["standard", "conservative"],
+    "execution_models": [
+      "standard",
+      "conservative"
+    ],
     "baseline": "no_trade",
     "maximum_wall_seconds": 1800,
     "schedule": [
@@ -76,9 +80,165 @@
     ]
   },
   "training": {
-    "enabled": false,
-    "status": "SKIPPED",
-    "reason": "Current Arena targets are generated from synthetic hypothetical fills. No independent observed public-market fill target is available, and unchanged training data would not justify repeating model training."
+    "enabled": true,
+    "status": "SYNTHETIC_TRAINING_ENABLED",
+    "objective": "Synthetic hypothetical initial two-leg completion classification; train partition only, select on validation, evaluate on fresh challenge seeds.",
+    "dataset_id": "dataset-38ec6e9776097d8e36693372",
+    "real_execution_training": "Unavailable because MIDAS has no measured order execution labels; synthetic results do not establish real-market profitability."
+  },
+  "research_queue": {
+    "revision_id": "plan-002-synthetic-full-research",
+    "dataset_id": "dataset-38ec6e9776097d8e36693372",
+    "incumbent_model_ids": [
+      "model-ef77bbbd7d1f4be78c41c0b6",
+      "model-f587b98d06f34441bb040877",
+      "model-33cddb0d92024c2bb0a3b34a"
+    ],
+    "director_rounds": 24,
+    "challenge_episodes": 200,
+    "adversarial_episodes": 160,
+    "adversarial_families": [
+      "thin",
+      "one_sided",
+      "disappearing",
+      "volatile"
+    ],
+    "adversarial_taker_fee_rate": "0.08",
+    "adversarial_depth_multiplier": "0.25",
+    "adversarial_submission_latency_ms": 1000,
+    "adversarial_job_max_wall_seconds": 1800,
+    "job_max_wall_seconds": 3600,
+    "training_seed_start": 2026101700,
+    "challenge_seed_start": 2026101800,
+    "adversarial_seed_start": 2026101900,
+    "epoch_schedule": [
+      60,
+      80,
+      100
+    ],
+    "candidate_sets": [
+      {
+        "name": "logistic-vs-compact-mlp",
+        "hypothesis": "a compact MLP can improve grouped synthetic completion calibration over logistic regression",
+        "candidates": [
+          {
+            "family": "logistic"
+          },
+          {
+            "family": "mlp",
+            "hidden_size": 16,
+            "learning_rate": 0.0005,
+            "weight_decay": 0.0001
+          }
+        ]
+      },
+      {
+        "name": "logistic-vs-regularized-mlp",
+        "hypothesis": "moderate MLP regularization improves validation calibration across execution variants",
+        "candidates": [
+          {
+            "family": "logistic"
+          },
+          {
+            "family": "mlp",
+            "hidden_size": 32,
+            "learning_rate": 0.001,
+            "weight_decay": 0.001
+          }
+        ]
+      },
+      {
+        "name": "tree-vs-mlp",
+        "hypothesis": "a shallow existing tree family offers a robust alternative to a nonlinear MLP",
+        "candidates": [
+          {
+            "family": "tree"
+          },
+          {
+            "family": "mlp",
+            "hidden_size": 32,
+            "learning_rate": 0.001,
+            "weight_decay": 0.0001
+          }
+        ]
+      },
+      {
+        "name": "wide-mlp-capacity",
+        "hypothesis": "additional MLP capacity helps only if grouped validation improvement persists across training seeds",
+        "candidates": [
+          {
+            "family": "logistic"
+          },
+          {
+            "family": "mlp",
+            "hidden_size": 64,
+            "learning_rate": 0.001,
+            "weight_decay": 0.0001
+          }
+        ]
+      },
+      {
+        "name": "tree-vs-regularized-wide-mlp",
+        "hypothesis": "regularization can stabilize a wider MLP under thin and volatile scenario variation",
+        "candidates": [
+          {
+            "family": "tree"
+          },
+          {
+            "family": "mlp",
+            "hidden_size": 64,
+            "learning_rate": 0.0005,
+            "weight_decay": 0.01
+          }
+        ]
+      },
+      {
+        "name": "logistic-vs-tree",
+        "hypothesis": "the existing tree model captures useful nonlinear synthetic completion structure beyond logistic regression",
+        "candidates": [
+          {
+            "family": "logistic"
+          },
+          {
+            "family": "tree"
+          }
+        ]
+      },
+      {
+        "name": "fee-latency-feature-ablation",
+        "hypothesis": "fee and latency inputs improve predictive calibration rather than acting as synthetic shortcuts",
+        "candidates": [
+          {
+            "family": "logistic"
+          },
+          {
+            "family": "logistic",
+            "excluded_features": [
+              "fee_rate",
+              "latency_ms"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "small-vs-wide-mlp",
+        "hypothesis": "model capacity changes validation calibration and fresh-seed policy robustness",
+        "candidates": [
+          {
+            "family": "mlp",
+            "hidden_size": 16,
+            "learning_rate": 0.001,
+            "weight_decay": 0.001
+          },
+          {
+            "family": "mlp",
+            "hidden_size": 64,
+            "learning_rate": 0.001,
+            "weight_decay": 0.001
+          }
+        ]
+      }
+    ]
   },
   "existing_services": {
     "required_active_units": [
@@ -98,11 +258,29 @@
     ]
   },
   "verification": {
-    "activation": ["focused_campaign_smoke", "api_health", "scheduler_state", "latest_source_segment_hashes", "dataset_and_model_identity"],
+    "activation": [
+      "focused_campaign_smoke",
+      "api_health",
+      "scheduler_state",
+      "latest_source_segment_hashes",
+      "dataset_and_model_identity"
+    ],
     "during_campaign_interval_seconds": 21600,
     "midpoint_regression_after_seconds": 86400,
-    "completion": ["focused_campaign_smoke", "campaign_tournament_hashes", "matched_baseline_invariants", "protected_manifest_hashes", "latest_source_segment_hashes"],
-    "test_command": [".venv/bin/python", "-m", "pytest", "-q", "tests/test_autonomy_campaign.py"],
+    "completion": [
+      "focused_campaign_smoke",
+      "campaign_tournament_hashes",
+      "matched_baseline_invariants",
+      "protected_manifest_hashes",
+      "latest_source_segment_hashes"
+    ],
+    "test_command": [
+      ".venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "tests/test_autonomy_campaign.py"
+    ],
     "test_scratch_only": true
   },
   "artifacts": {

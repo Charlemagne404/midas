@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import copy
 import datetime as dt
 import fcntl
 import hashlib
@@ -551,7 +552,8 @@ def check_preflight(
         blocking=False,
     )
     if arena_usage_bytes is not None:
-        headroom = 1024**3 - arena_usage_bytes
+        maximum_artifacts = limits.get("maximum_arena_artifact_bytes", 1024**3)
+        headroom = maximum_artifacts - arena_usage_bytes
         add(
             "arena_artifact_headroom",
             headroom >= limits["minimum_arena_artifact_headroom_bytes"],
@@ -712,6 +714,251 @@ def build_step_specs(arena_root: Path, config: dict[str, Any]) -> list[dict[str,
     return steps
 
 
+def build_director_steps(config: dict[str, Any], first_step: int) -> list[dict[str, Any]]:
+    """Build the finite, pre-approved synthetic training and matched-evaluation queue."""
+    queue = config["research_queue"]
+    resources = config["resource_limits"]
+    candidate_sets = queue["candidate_sets"]
+    steps = []
+    for offset in range(queue["director_rounds"]):
+        variant_index = offset % len(candidate_sets)
+        variant = candidate_sets[variant_index]
+        number = first_step + 2 * offset
+        challenge_seed = queue["challenge_seed_start"] + offset
+        seed_start = queue["training_seed_start"] + 2 * offset
+        epochs = queue["epoch_schedule"][offset % len(queue["epoch_schedule"])]
+        director = {
+            "dataset_id": queue["dataset_id"],
+            "incumbent_model_ids": queue["incumbent_model_ids"],
+            "challenge_seed": challenge_seed,
+            "episodes": queue["challenge_episodes"],
+            "training_epochs": epochs,
+            "minimum_champion_episodes": 30,
+            "research_question": (
+                f"Round {offset + 1}: compare {variant['hypothesis']} using synthetic "
+                "train and validation partitions, then fresh matched scenario challenges."
+            ),
+            "sweep_candidates": variant["candidates"],
+            "sweep_seeds": [seed_start, seed_start + 1],
+        }
+        spec = JobSpec.model_validate(
+            {
+                "kind": "director",
+                "director": director,
+                "max_wall_seconds": queue["job_max_wall_seconds"],
+                "memory_limit_mb": resources["memory_limit_mb"],
+                "cpu_quota_percent": resources["cpu_quota_percent"],
+                "nice": resources["nice"],
+                "io_scheduling_class": resources["io_scheduling_class"],
+            }
+        )
+        director_step_number = number
+        steps.append(
+            {
+                "step": number,
+                "name": f"synthetic-director-{offset + 1:02d}-{variant['name']}",
+                "family": "bounded_synthetic_research_director",
+                "after_seconds": 0,
+                "attempt": 0,
+                "max_attempts": 2,
+                "retry_delay_seconds": 600,
+                "job_id": None,
+                "admission_intent": None,
+                "state": "PENDING",
+                "error": None,
+                "result": None,
+                "job_spec": spec.model_dump(mode="json"),
+                "expected_tournaments": 2,
+                "expected_training_trials": len(variant["candidates"]) * 2,
+                "failed_job_ids": [],
+                "hypothesis": variant["hypothesis"],
+            }
+        )
+        stress_seed = queue["adversarial_seed_start"] + offset
+        adversarial_spec = JobSpec.model_validate(
+            {
+                "kind": "tournament",
+                "tournament": {
+                    "purpose": "research",
+                    "dataset_id": queue["dataset_id"],
+                    "model_ids": queue["incumbent_model_ids"],
+                    "execution_models": ["standard", "conservative"],
+                    "max_episodes": queue["adversarial_episodes"],
+                    "seed": stress_seed,
+                    "adversarial": True,
+                    "minimum_champion_episodes": 30,
+                    "challenge": {
+                        "episodes": queue["adversarial_episodes"],
+                        "seed": stress_seed,
+                        "split_seed": 1977,
+                        "families": queue["adversarial_families"],
+                        "execution_models": ["standard", "conservative"],
+                        "observation_latency_ms": 500,
+                        "label_target": "completion",
+                        "decision_scope": "initial",
+                    },
+                    "partition": "test",
+                    "unsupported_input_policy": "abstain",
+                    "economic_regime": {
+                        "version": "economic-regime-1",
+                        "depth_multiplier": queue["adversarial_depth_multiplier"],
+                        "taker_fee_rate": queue["adversarial_taker_fee_rate"],
+                        "additional_submission_latency_ms": queue[
+                            "adversarial_submission_latency_ms"
+                        ],
+                        "costs": None,
+                    },
+                },
+                "max_wall_seconds": queue["adversarial_job_max_wall_seconds"],
+                "memory_limit_mb": resources["memory_limit_mb"],
+                "cpu_quota_percent": resources["cpu_quota_percent"],
+                "nice": resources["nice"],
+                "io_scheduling_class": resources["io_scheduling_class"],
+            }
+        )
+        steps.append(
+            {
+                "step": director_step_number + 1,
+                "name": f"adversarial-confirmation-{offset + 1:02d}",
+                "family": "laboratory_adversarial_tournament",
+                "after_seconds": 0,
+                "attempt": 0,
+                "max_attempts": 2,
+                "retry_delay_seconds": 600,
+                "job_id": None,
+                "admission_intent": None,
+                "state": "PENDING",
+                "error": None,
+                "result": None,
+                "job_spec_template": adversarial_spec.model_dump(mode="json"),
+                "selected_model_from_step": director_step_number,
+                "challenge_seed": stress_seed,
+                "economic_assumptions": {
+                    "taker_fee_rate": queue["adversarial_taker_fee_rate"],
+                    "depth_multiplier": queue["adversarial_depth_multiplier"],
+                    "additional_submission_latency_ms": queue["adversarial_submission_latency_ms"],
+                },
+                "expected_tournaments": 1,
+                "failed_job_ids": [],
+            }
+        )
+    return steps
+
+
+def apply_plan_revision(workspace: Path, config: dict[str, Any]) -> dict[str, Any]:
+    """Append a versioned active-plan revision without changing the campaign clock."""
+    directory = campaign_dir(workspace)
+    manifest_path = directory / "manifest.json"
+    if not manifest_path.is_file():
+        raise RuntimeError("Campaign 48H-001 has not been started")
+    with (directory / "controller.lock").open("a+") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        manifest = read_json(manifest_path)
+        revision_id = config["research_queue"]["revision_id"]
+        if any(row.get("revision_id") == revision_id for row in manifest.get("plan_revisions", [])):
+            return manifest
+        if manifest.get("status") in TERMINAL or time.time_ns() >= manifest["planned_end_ns"]:
+            raise RuntimeError("Campaign is terminal or its original deadline has passed")
+        expected_duration = int(config["duration_seconds"]) * 1_000_000_000
+        if manifest["planned_end_ns"] != manifest["started_at_ns"] + expected_duration:
+            raise RuntimeError(
+                "Existing campaign clock does not match its original 48-hour duration"
+            )
+        if any(
+            step.get("state") in {"RUNNING", "QUEUED", "ADMITTING"} for step in manifest["steps"]
+        ):
+            raise RuntimeError("Wait for the current Arena job to finish before revising the queue")
+        timestamp_ns = time.time_ns()
+        previous_pending = [
+            copy.deepcopy(step)
+            for step in manifest["steps"]
+            if step.get("state") not in {"COMPLETED", "FAILED", "SKIPPED"}
+        ]
+        revision_directory = directory / "plan-revisions"
+        revision_directory.mkdir(parents=True, exist_ok=True)
+        original_snapshot = {
+            "revision_id": revision_id,
+            "created_at": now_iso(timestamp_ns),
+            "original_deadline": manifest["planned_end_at"],
+            "preserved_completed_job_ids": list(manifest.get("completed_jobs", [])),
+            "superseded_pending_steps": previous_pending,
+            "research_queue_configuration": config["research_queue"],
+            "resource_limits": config["resource_limits"],
+        }
+        revision_path = revision_directory / f"{revision_id}.json"
+        atomic_json(revision_path, original_snapshot)
+        for step in manifest["steps"]:
+            if step.get("state") not in {"COMPLETED", "FAILED", "SKIPPED"}:
+                step["state"] = "SKIPPED"
+                step["skip_reason"] = (
+                    f"Superseded by versioned plan {revision_id}; no evidence was run"
+                )
+                step["superseded_at"] = now_iso(timestamp_ns)
+        first_step = max((int(step.get("step", 0)) for step in manifest["steps"]), default=0) + 1
+        new_steps = build_director_steps(config, first_step)
+        manifest["steps"].extend(new_steps)
+        old_training = copy.deepcopy(manifest.get("training", {}))
+        manifest.setdefault("plan_revisions", []).append(
+            {
+                "revision_id": revision_id,
+                "created_at": now_iso(timestamp_ns),
+                "previous_configuration_sha256": manifest.get("configuration_sha256"),
+                "configuration_sha256": sha256(CONFIG_PATH),
+                "snapshot_path": str(revision_path),
+                "snapshot_sha256": sha256(revision_path),
+                "preserved_deadline": manifest["planned_end_at"],
+                "superseded_step_numbers": [step["step"] for step in previous_pending],
+                "new_step_numbers": [step["step"] for step in new_steps],
+                "training_before_revision": old_training,
+            }
+        )
+        manifest["plan_revision"] = revision_id
+        manifest["configuration_sha256"] = sha256(CONFIG_PATH)
+        manifest["resource_budgets"] = config["resource_limits"]
+        manifest["training"] = {
+            "enabled": True,
+            "status": "SYNTHETIC_TRAINING_ENABLED",
+            "objective": "synthetic hypothetical initial two-leg completion classification",
+            "dataset_id": config["research_queue"]["dataset_id"],
+            "training_partition": "train",
+            "model_selection_partition": "validation",
+            "independent_evaluation": "fresh deterministic Director challenge seeds; untouched dataset test partition is not used for selection",
+            "model_families": sorted(
+                {
+                    candidate["family"]
+                    for variant in config["research_queue"]["candidate_sets"]
+                    for candidate in variant["candidates"]
+                }
+            ),
+            "real_execution_training": "unavailable; MIDAS has no measured order execution labels",
+            "automatic_promotion": False,
+            "status_note": "Synthetic simulation improvement is not real-market profitability evidence.",
+        }
+        for item in manifest.get("skipped_jobs", []):
+            if item.get("family") == "new_model_training":
+                item["superseded_at"] = now_iso(timestamp_ns)
+                item["state"] = "HISTORICAL_SKIP_SUPERSEDED_BY_SYNTHETIC_TRAINING"
+        for family in (
+            "bounded_synthetic_Arena_Director_sweeps",
+            "matched_fresh-seed_synthetic_model_evaluation",
+        ):
+            if family not in manifest["approved_research_families"]:
+                manifest["approved_research_families"].append(family)
+        commit = command(["git", "rev-parse", "HEAD"], timeout=5).stdout.strip()
+        manifest.setdefault("runtime_controller_updates", []).append(
+            {
+                "at": now_iso(timestamp_ns),
+                "commit": commit,
+                "reason": (
+                    f"Applied {revision_id}; admitted synthetic model training and matched "
+                    "Director evaluation queue with the original deadline and single controller."
+                ),
+            }
+        )
+        atomic_json(manifest_path, manifest)
+        return manifest
+
+
 def run_focused_smoke(workspace: Path) -> dict[str, Any]:
     """Use pytest's scratch fixture root; never point these checks at live MIDAS data."""
     test_file = workspace / "tests/test_autonomy_campaign.py"
@@ -796,6 +1043,13 @@ def write_preflight(
     }
 
 
+def validated_tournaments(step: dict[str, Any]) -> list[dict[str, Any]]:
+    result = step.get("validated_result") or {}
+    if result.get("tournament_results"):
+        return result["tournament_results"]
+    return [result] if result.get("tournament_id") else []
+
+
 def _progress(
     workspace: Path,
     reality_root: Path,
@@ -807,10 +1061,40 @@ def _progress(
     completed = [s for s in steps if s["state"] == "COMPLETED"]
     failed = [item for item in manifest.get("failed_jobs", [])]
     tournaments = []
+    trained_models: dict[str, dict[str, Any]] = {}
     for step in completed:
         report = step.get("validated_result") or {}
-        if report:
-            tournaments.append(report)
+        tournaments.extend(validated_tournaments(step))
+        for model in report.get("trained_models", []):
+            trained_models[model["model_id"]] = model
+    training_status = copy.deepcopy(manifest["training"])
+    training_status["models_trained"] = len(trained_models)
+    training_status["training_trials_completed"] = len(trained_models)
+    training_status["training_families_observed"] = sorted(
+        {model.get("family") for model in trained_models.values()}
+    )
+    training_status["total_optimizer_training_seconds"] = sum(
+        float(model.get("training_duration_seconds") or 0) for model in trained_models.values()
+    )
+    campaign_job_ids = {step.get("job_id") for step in steps if step.get("job_id")}
+    campaign_usage = [
+        item
+        for item in manifest.get("job_resource_usage", [])
+        if item.get("job_id") in campaign_job_ids
+    ]
+    director_job_ids = {
+        step.get("job_id")
+        for step in steps
+        if step.get("job_id") and step.get("job_spec", {}).get("kind") == "director"
+    }
+    director_usage = [item for item in campaign_usage if item.get("job_id") in director_job_ids]
+    unique_challenges = {
+        row.get("challenge_dataset_identity"): row
+        for row in tournaments
+        if row.get("challenge_dataset_identity")
+    }
+    cgroup_cpu_ns = sum(int(item.get("CPUUsageNSec", 0) or 0) for item in campaign_usage)
+    director_cpu_ns = sum(int(item.get("CPUUsageNSec", 0) or 0) for item in director_usage)
     initial = manifest.get("initial_observations", {})
     recorder = snapshot["recorder"]
     veritas = snapshot["veritas"]
@@ -831,12 +1115,25 @@ def _progress(
             0, (manifest["planned_end_ns"] - snapshot["checked_at_ns"]) // 1_000_000_000
         ),
         "experiments_completed": len(completed),
-        "models_trained": 0,
-        "training_status": manifest["training"],
+        "models_trained": len(trained_models),
+        "training_status": training_status,
         "tournaments_completed": len(tournaments),
+        "synthetic_scenario_episodes_evaluated": sum(
+            max(
+                (int(entry.get("base_episodes", 0)) for entry in row.get("leaderboard", [])),
+                default=0,
+            )
+            for row in unique_challenges.values()
+        ),
+        "synthetic_evaluation_cases": sum(int(row.get("row_count", 0) or 0) for row in tournaments),
         "valid_strategy_comparisons": sum(1 for row in tournaments if row.get("comparison_valid")),
         "datasets_processed": sorted(
-            {ARENA_DATASET_ID} | {row["challenge_dataset_identity"] for row in tournaments}
+            {ARENA_DATASET_ID}
+            | {
+                row["challenge_dataset_identity"]
+                for row in tournaments
+                if row.get("challenge_dataset_identity")
+            }
         ),
         "raw_market_frames_collected": max(
             0, int(recorder.get("frames", 0)) - int(initial.get("frames", 0))
@@ -878,6 +1175,11 @@ def _progress(
             "api_health": snapshot["api"].get("status"),
             "disk_free_bytes": snapshot["host"]["disk_free_bytes"],
             "campaign_job_resource_usage": manifest.get("job_resource_usage", []),
+            "campaign_cpu_hours": cgroup_cpu_ns / 3_600_000_000_000,
+            "director_cpu_hours": director_cpu_ns / 3_600_000_000_000,
+            "maximum_job_memory_bytes": max(
+                (int(item.get("MemoryPeak", 0) or 0) for item in campaign_usage), default=0
+            ),
         },
         "research_paths": {
             "runtime_directory": str(campaign_dir(workspace)),
@@ -902,11 +1204,13 @@ def render_status(report: dict[str, Any]) -> str:
             f"- Elapsed: {report.get('elapsed_seconds', 0) // 3600}h; remaining: {hours}h {minutes}m",
             f"- Current step: {current}",
             f"- Experiments/tournaments completed: {report.get('experiments_completed', 0)}/{report.get('tournaments_completed', 0)}",
-            f"- Models trained: {report.get('models_trained', 0)} (training skipped: no independent observed target)",
+            f"- Synthetic models trained: {report.get('models_trained', 0)}; tournament evaluations: {report.get('tournaments_completed', 0)}",
+            f"- Unique synthetic scenario episodes: {report.get('synthetic_scenario_episodes_evaluated', 0)}; matched evaluation cases: {report.get('synthetic_evaluation_cases', 0)}",
             f"- New public frames: {report.get('raw_market_frames_collected', 0)}; source gaps since start: {report.get('source_gaps_delta', 0)}",
             f"- Positive gross candidates in latest Veritas qualification: {report.get('positive_gross_candidates_current')}",
             f"- Valid synthetic strategy comparisons: {report.get('valid_strategy_comparisons', 0)}",
             f"- Failed experiments: {len(report.get('failed_experiments', []))}; deferred jobs: {len(report.get('paused_or_deferred_jobs', []))}",
+            f"- Campaign CPU: {report.get('resource_snapshot', {}).get('campaign_cpu_hours', 0):.3f} CPU-hours; peak job memory: {report.get('resource_snapshot', {}).get('maximum_job_memory_bytes', 0)} bytes",
             f"- Latest finding: {report.get('latest_significant_discovery')}",
             "",
             "All Arena tournament results are synthetic simulation results. They are not evidence of real-world profitability or executed fills.",
@@ -1014,6 +1318,147 @@ def validate_tournament_artifact(
         "leaderboard": record["leaderboard"],
         "elapsed_seconds": record.get("duration_seconds"),
         "source_hash": record.get("source_hash"),
+    }
+
+
+def validate_director_artifact(workspace: Path, job: dict[str, Any]) -> dict[str, Any]:
+    """Verify a durable Arena Director run, its trained models and both matched challenges."""
+    arena_root = workspace / "data/arena"
+    director_id = (job.get("result") or {}).get("director_id")
+    if not director_id:
+        return {"valid": False, "reason": "Completed Director job has no director identity"}
+    path = arena_root / "directors" / director_id / "manifest.json"
+    record = read_json(path)
+    if not record or record.get("state") != "COMPLETED":
+        return {"valid": False, "reason": "Director manifest is missing or incomplete"}
+    configuration = (job.get("configuration") or {}).get("director") or {}
+    if record.get("configuration") != configuration:
+        return {"valid": False, "reason": "Director configuration differs from admitted job"}
+    if record.get("source_hash") != job.get("submitted_source_hash"):
+        return {"valid": False, "reason": "Director source provenance differs from admitted job"}
+    dataset, _ = load_dataset(arena_root, configuration["dataset_id"])
+    if record.get("dataset_sha256") != dataset.get("rows_sha256"):
+        return {"valid": False, "reason": "Director dataset hash changed"}
+    if len(record.get("steps", [])) != 3:
+        return {
+            "valid": False,
+            "reason": "Director did not complete its three preregistered stages",
+        }
+    selection = record.get("selected_model_id")
+    sweep_identity = record["steps"][0].get("artifact", {}).get("identity")
+    sweep = read_json(arena_root / "sweeps" / str(sweep_identity) / "manifest.json")
+    if (
+        not sweep
+        or sweep.get("state") != "COMPLETED"
+        or sweep.get("dataset_sha256") != dataset.get("rows_sha256")
+        or sweep.get("source_hash") != record.get("source_hash")
+        or sweep.get("test_labels_used_for_selection") is not False
+    ):
+        return {"valid": False, "reason": "Sweep provenance or validation-only selection failed"}
+    trained_models = []
+    for trial in sweep.get("trials", []):
+        if trial.get("state") != "COMPLETED" or not trial.get("model_id"):
+            return {"valid": False, "reason": "A preregistered model training trial is incomplete"}
+        model_id = trial["model_id"]
+        model_path = arena_root / "models" / model_id
+        model = read_json(model_path / "manifest.json")
+        parameters = model_path / "parameters.json"
+        if (
+            not model
+            or model.get("state") not in {"TRAINED", "EVALUATED"}
+            or model.get("dataset_id") != configuration["dataset_id"]
+            or model.get("dataset_sha256") != dataset.get("rows_sha256")
+            or model.get("source_hash") != record.get("source_hash")
+            or model.get("test") is not None
+            or not parameters.is_file()
+            or sha256(parameters) != model.get("artifact_sha256")
+            or model.get("artifact_sha256") != trial.get("artifact_sha256")
+        ):
+            return {"valid": False, "reason": f"Model provenance or integrity failed: {model_id}"}
+        trained_models.append(
+            {
+                "model_id": model_id,
+                "family": model.get("family"),
+                "training_configuration": model.get("configuration"),
+                "training_duration_seconds": model.get("training_duration_seconds"),
+                "validation": model.get("validation"),
+                "dataset_id": model.get("dataset_id"),
+                "dataset_sha256": model.get("dataset_sha256"),
+                "artifact_sha256": model.get("artifact_sha256"),
+                "label_target": model.get("label_target"),
+                "evidence_class": "SYNTHETIC_TRAINING_AND_VALIDATION",
+            }
+        )
+    if selection not in {row["model_id"] for row in trained_models}:
+        return {"valid": False, "reason": "Validation-selected model is not in the trained sweep"}
+    tournament_results = []
+    for index, stage in enumerate(record["steps"][1:], start=1):
+        if stage.get("state") != "COMPLETED":
+            return {"valid": False, "reason": "Director challenge stage did not complete"}
+        artifact = stage.get("artifact") or {}
+        tournament_id = artifact.get("identity")
+        if artifact.get("kind") != "tournaments" or not tournament_id:
+            return {"valid": False, "reason": "Director challenge artifact identity is invalid"}
+        directory = arena_root / "tournaments" / tournament_id
+        tournament = read_json(directory / "manifest.json")
+        rows_path = directory / "rows.json"
+        if (
+            not tournament
+            or not rows_path.is_file()
+            or sha256(rows_path) != tournament.get("rows_sha256")
+        ):
+            return {
+                "valid": False,
+                "reason": f"Tournament artifact integrity failed: {tournament_id}",
+            }
+        try:
+            spec = TournamentSpec.model_validate(tournament["configuration"])
+            rows = json.loads(rows_path.read_text())
+            computed = tournament_summaries(rows, spec)
+            stored = {x["policy"]: x for x in tournament["leaderboard"]}
+            current = {x["policy"]: x for x in computed["leaderboard"]}
+            if "no_trade" not in stored or set(stored) != set(current):
+                raise ValueError("No-trade baseline or matched policy inventory is missing")
+            if selection not in stored:
+                raise ValueError("Newly trained selected model was not evaluated")
+            for name, result in current.items():
+                prior = stored[name]
+                for metric in ("mean_pnl", "score", "worst_loss", "cvar_05_loss"):
+                    if abs(float(result[metric]) - float(prior[metric])) > 1e-8:
+                        raise ValueError(f"Tournament summary changed: {name}/{metric}")
+        except Exception as error:
+            return {
+                "valid": False,
+                "reason": f"Director tournament validation failed: {error}",
+            }
+        tournament_results.append(
+            {
+                "valid": True,
+                "comparison_valid": True,
+                "tournament_id": tournament_id,
+                "row_count": len(rows),
+                "challenge_dataset_identity": (
+                    f"{spec.dataset_id}:challenge-seed-{spec.challenge.seed if spec.challenge else 'none'}"
+                ),
+                "model_ids": tournament.get("configuration", {}).get("model_ids", []),
+                "economic_assumptions": tournament.get("configuration", {}).get("economic_regime"),
+                "leaderboard": tournament["leaderboard"],
+                "source_hash": tournament.get("source_hash"),
+                "evaluation_class": "SYNTHETIC_SIMULATION",
+                "stage": index,
+            }
+        )
+    return {
+        "valid": True,
+        "comparison_valid": all(row["comparison_valid"] for row in tournament_results),
+        "director_id": director_id,
+        "sweep_id": sweep_identity,
+        "selected_model_id": selection,
+        "trained_model_ids": [row["model_id"] for row in trained_models],
+        "trained_models": trained_models,
+        "tournament_results": tournament_results,
+        "evaluation_class": "SYNTHETIC_TRAINING_AND_SIMULATION",
+        "test_partition_used_for_selection": False,
     }
 
 
@@ -1143,13 +1588,19 @@ def initialize(
         "steps": steps,
         "completed_jobs": [],
         "failed_jobs": [],
-        "skipped_jobs": [
-            {
-                "family": "new_model_training",
-                "state": "SKIPPED",
-                "reason": config["training"]["reason"],
-            }
-        ],
+        "skipped_jobs": (
+            []
+            if config["training"].get("enabled")
+            else [
+                {
+                    "family": "new_model_training",
+                    "state": "SKIPPED",
+                    "reason": config["training"].get(
+                        "reason", "Training is disabled by configuration"
+                    ),
+                }
+            ]
+        ),
         "paused_jobs": [],
         "operational_incidents": [],
         "job_resource_usage": [],
@@ -1235,18 +1686,38 @@ def _admit_due_step(
         return
     close_resolved_incidents(manifest, set(), timestamp_ns)
     due["state"] = "ADMITTING"
-    spec = JobSpec.model_validate(due["job_spec"])
+    job_spec = copy.deepcopy(
+        due["job_spec_template"] if "job_spec_template" in due else due["job_spec"]
+    )
+    if due.get("selected_model_from_step") is not None:
+        dependency = next(
+            (
+                item
+                for item in manifest["steps"]
+                if item.get("step") == due["selected_model_from_step"]
+            ),
+            None,
+        )
+        selected_model = (dependency or {}).get("validated_result", {}).get("selected_model_id")
+        if not selected_model:
+            due["state"] = "WAITING_DEPENDENCY"
+            due["error"] = "Waiting for the validated Director-selected model"
+            return
+        model_ids = job_spec["tournament"]["model_ids"]
+        if selected_model not in model_ids:
+            job_spec["tournament"]["model_ids"] = [*model_ids, selected_model]
+        due["resolved_model_id"] = selected_model
+    spec = JobSpec.model_validate(job_spec)
     attempt = int(due.get("attempt", 0))
     key = f"autonomy-{CAMPAIGN_ID}-step-{due['step']}-attempt-{attempt}"
     due["admission_intent"] = {
         "key": key,
         "recorded_at": now_iso(timestamp_ns),
-        "spec_sha256": hashlib.sha256(
-            json.dumps(due["job_spec"], sort_keys=True).encode()
-        ).hexdigest(),
+        "spec_sha256": hashlib.sha256(json.dumps(job_spec, sort_keys=True).encode()).hexdigest(),
     }
     due["admission_attempt"] = attempt
     # The native Arena admission key recovers this exact job after a controller or host restart.
+    due["job_spec"] = job_spec
     job = create_job(arena_root, spec, admission_key=key)
     due["job_id"] = job["job_id"]
     due["state"] = job["state"]
@@ -1277,7 +1748,12 @@ def _observe_steps(workspace: Path, manifest: dict[str, Any], timestamp_ns: int)
             continue
         changed = True
         if job.get("state") == "COMPLETED":
-            validation = validate_tournament_artifact(workspace, job, step)
+            kind = (job.get("configuration") or {}).get("kind")
+            validation = (
+                validate_director_artifact(workspace, job)
+                if kind == "director"
+                else validate_tournament_artifact(workspace, job, step)
+            )
             if validation.get("valid"):
                 step["state"] = "COMPLETED"
                 step["result"] = job.get("result")
@@ -1361,7 +1837,7 @@ def _cancel_unhealthy_running_job(
     try:
         arena_bytes = artifact_usage(workspace / "data/arena")[0]
     except OSError:
-        arena_bytes = 1024**3
+        arena_bytes = limits.get("maximum_arena_artifact_bytes", 1024**3)
     reasons = []
     if available < limits["cancel_below_available_memory_mb"] * 1024**2:
         reasons.append("host_memory_critical")
@@ -1386,7 +1862,8 @@ def _cancel_unhealthy_running_job(
         reasons.append("swap_activity")
     if host["disk_free_bytes"] < limits["minimum_disk_free_bytes"]:
         reasons.append("host_disk_reserve")
-    if 1024**3 - arena_bytes < limits["minimum_arena_artifact_headroom_bytes"]:
+    maximum_artifacts = limits.get("maximum_arena_artifact_bytes", 1024**3)
+    if maximum_artifacts - arena_bytes < limits["minimum_arena_artifact_headroom_bytes"]:
         reasons.append("arena_artifact_headroom")
     if not reasons:
         return
@@ -1539,7 +2016,52 @@ def render_final_report(workspace: Path, manifest: dict[str, Any], final: dict[s
     final_recorder = snapshots.get("recorder", {})
     initial = manifest.get("initial_observations", {})
     veritas = manifest.get("last_veritas", {})
-    reports = [s.get("validated_result") for s in manifest["steps"] if s.get("validated_result")]
+    validated_steps = [s for s in manifest["steps"] if s.get("validated_result")]
+    reports = [row for step in validated_steps for row in validated_tournaments(step)]
+    trained_models = {
+        model["model_id"]: model
+        for step in validated_steps
+        for model in step["validated_result"].get("trained_models", [])
+    }
+    campaign_job_ids = {step.get("job_id") for step in manifest["steps"] if step.get("job_id")}
+    usage = [
+        item
+        for item in manifest.get("job_resource_usage", [])
+        if item.get("job_id") in campaign_job_ids
+    ]
+    training_seconds = sum(
+        float(model.get("training_duration_seconds") or 0) for model in trained_models.values()
+    )
+    campaign_cpu_hours = sum(int(item.get("CPUUsageNSec", 0) or 0) for item in usage) / 3.6e12
+    director_job_ids = {
+        step.get("job_id")
+        for step in manifest["steps"]
+        if step.get("job_id") and step.get("job_spec", {}).get("kind") == "director"
+    }
+    director_cpu_hours = (
+        sum(
+            int(item.get("CPUUsageNSec", 0) or 0)
+            for item in usage
+            if item.get("job_id") in director_job_ids
+        )
+        / 3.6e12
+    )
+    unique_challenges = {
+        row.get("challenge_dataset_identity"): row
+        for row in reports
+        if row.get("challenge_dataset_identity")
+    }
+    synthetic_episodes = sum(
+        max(
+            (int(entry.get("base_episodes", 0)) for entry in row.get("leaderboard", [])),
+            default=0,
+        )
+        for row in unique_challenges.values()
+    )
+    training_lines = [
+        f"- `{model_id}` ({model.get('family')}, seed {model.get('training_configuration', {}).get('seed')}): validation Brier {model.get('validation', {}).get('brier')}, training {float(model.get('training_duration_seconds') or 0):.1f}s, dataset SHA-256 `{model.get('dataset_sha256')}`, artifact SHA-256 `{model.get('artifact_sha256')}`"
+        for model_id, model in sorted(trained_models.items())
+    ] or ["- No newly trained model passed artifact and provenance validation."]
     controller_updates = manifest.get("runtime_controller_updates", [])
     update_lines = [
         f"- Controller update `{item.get('commit')}` at {item.get('at')}: {item.get('reason')}"
@@ -1559,6 +2081,11 @@ def render_final_report(workspace: Path, manifest: dict[str, Any], final: dict[s
     if not leader_lines:
         leader_lines = ["- No campaign Arena tournament completed with a validated artifact."]
     complete_count = len(reports)
+    expected_tournaments = sum(
+        int(step.get("expected_tournaments", 1))
+        for step in manifest["steps"]
+        if step.get("state") != "SKIPPED"
+    )
     positive_count = veritas.get("gross_candidate_evidence_count")
     comparison = (
         "No valid simulated comparison beat no-trade on the declared downside-aware score."
@@ -1576,8 +2103,12 @@ def render_final_report(workspace: Path, manifest: dict[str, Any], final: dict[s
         if positive_count == 0
         else f"The latest Veritas finding reports {positive_count} gross candidate evidence item(s); all still require its independent replay and economic gates."
     )
-    unproductive = "No new model training was justified because the available Arena targets are synthetic hypothetical fill outcomes, while the public Reality observations do not provide observed execution labels. Repeating training on unchanged synthetic data would not add independent evidence."
-    next_focus = "Continue broad, quality-screened public observations and incremental source replay; improve independent temporal coverage and wait for candidate-relevant measured targets before new training or promotion."
+    unproductive = (
+        "Real-execution training and real-profitability claims remain unsupported because MIDAS has no measured order execution labels. Synthetic supervised fitting was run as simulation research; validation and fresh-seed challenges do not establish real-market performance."
+        if trained_models
+        else "No synthetic model training completed; the reason and failed or deferred jobs are listed in the campaign manifest."
+    )
+    next_focus = "Continue quality-screened public observations and incremental source replay; compare synthetic candidates on new scenario identities, and investigate public-data prediction targets only when timestamped labels pass freshness and leakage checks."
     return "\n".join(
         [
             f"# {manifest['title']} — Final Report",
@@ -1604,8 +2135,13 @@ def render_final_report(workspace: Path, manifest: dict[str, Any], final: dict[s
             "",
             f"- New public raw frames: {max(0, int(final_recorder.get('frames', 0)) - int(initial.get('frames', 0)))}",
             f"- New Veritas scans: {len(manifest.get('new_veritas_scans', []))}; latest scan: `{veritas.get('latest_scan_id')}`",
-            f"- Campaign Arena tournaments run: {complete_count}/{len(manifest['steps'])}; matched-baseline validations: {sum(1 for r in reports if r.get('comparison_valid'))}",
-            "- New models trained: 0. Training was skipped for the evidence reason recorded in the manifest.",
+            f"- Campaign Arena tournaments run: {complete_count}/{expected_tournaments}; matched-baseline validations: {sum(1 for r in reports if r.get('comparison_valid'))}",
+            f"- New synthetic models registered: {len(trained_models)}; families: {', '.join(sorted({str(model.get('family')) for model in trained_models.values()})) or 'none'}.",
+            f"- Unique synthetic scenario episodes evaluated: {synthetic_episodes}; total matched tournament rows: {sum(int(row.get('row_count', 0) or 0) for row in reports)}.",
+            f"- Model optimizer training time: {training_seconds / 3600:.3f} hours; Director cgroup CPU: {director_cpu_hours:.3f} CPU-hours; campaign cgroup CPU: {campaign_cpu_hours:.3f} CPU-hours; peak job memory: {max((int(item.get('MemoryPeak', 0) or 0) for item in usage), default=0)} bytes.",
+            f"- Training dataset: `{manifest.get('training', {}).get('dataset_id')}`; synthetic objective: {manifest.get('training', {}).get('objective')}; model selection used validation; untouched dataset test partition used for selection: no.",
+            "- Each new Director candidate was evaluated in fresh synthetic matched challenges alongside no-trade and existing compatible policies, including the existing PPO model. Simulated performance is not real-market profitability evidence.",
+            *training_lines,
             "- Hypothetical execution assumptions: standard and conservative execution models; fee rates 4% or 8%; depth multipliers 0.75, 0.50, or 0.25; declared additional submission latency 200, 500, or 1000 ms.",
             "- Results are separated as synthetic simulation, historical public-data qualification, or independent prospective public observation. No actual orders or fills occurred.",
             "",
@@ -1625,7 +2161,7 @@ def render_final_report(workspace: Path, manifest: dict[str, Any], final: dict[s
             "",
             f"1. Did MIDAS discover anything economically promising? {economic}",
             f"2. Did an existing strategy improve against a valid baseline? {comparison}",
-            "3. Did additional training provide measurable benefit? No; no training was run because there was no new independent empirical target, so a training benefit is not established.",
+            f"3. Did additional training provide measurable benefit? {('Synthetic candidates have recorded validation metrics and matched challenge results; any apparent improvement is simulation-only and reported per candidate.' if trained_models else 'No synthetic training completed; a training benefit is not established.')}",
             f"4. Did expanded observation change prior Veritas findings? Latest gross candidate evidence count: {positive_count}; initial count: {manifest.get('initial_veritas', {}).get('gross_candidate_evidence_count')}. See the incremental source summary and qualification artifacts for the comparable evidence.",
             f"5. Which directions were unproductive? {unproductive}",
             f"6. Which findings merit additional investigation? {comparison} Any candidate that persists across independent fresh seeds and the 8% fee/depth stresses may merit more simulation; public-data confirmation remains necessary.",
@@ -1668,7 +2204,9 @@ def finalize(
             step["state"] = "INTERRUPTED"
     final = final_validation(workspace, reality_root, veritas_root, api_base, manifest, config)
     manifest["final_validation"] = final
-    if all(step["state"] == "COMPLETED" for step in manifest["steps"]):
+    if all(step["state"] in {"COMPLETED", "SKIPPED"} for step in manifest["steps"]) and any(
+        step["state"] == "COMPLETED" for step in manifest["steps"]
+    ):
         manifest["status"] = "COMPLETE"
     elif any(step["state"] == "COMPLETED" for step in manifest["steps"]):
         manifest["status"] = "PARTIAL"
@@ -1847,20 +2385,42 @@ def status(workspace: Path) -> dict[str, Any]:
             0,
             int((manifest["planned_end_ns"] - time.time_ns()) // 1_000_000_000),
         )
-        report["steps"] = [
-            {
-                k: step.get(k)
-                for k in ("step", "name", "state", "job_id", "challenge_seed", "progress", "error")
-            }
+        report["plan_revision"] = manifest.get("plan_revision")
+        report["queued_steps"] = sum(
+            step.get("state") in {"PENDING", "WAITING_RESOURCE", "WAITING_DEPENDENCY"}
             for step in manifest["steps"]
-        ]
+        )
+        report["steps"] = []
+        for step in manifest["steps"]:
+            spec = step.get("job_spec") or step.get("job_spec_template") or {}
+            report["steps"].append(
+                {
+                    k: step.get(k)
+                    for k in (
+                        "step",
+                        "name",
+                        "family",
+                        "state",
+                        "job_id",
+                        "challenge_seed",
+                        "progress",
+                        "error",
+                        "selected_model_from_step",
+                        "resolved_model_id",
+                        "skip_reason",
+                    )
+                    if step.get(k) is not None
+                }
+                | {"job_kind": spec.get("kind")}
+            )
     return report or {"campaign_id": CAMPAIGN_ID, "status": manifest.get("status")}
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "action", choices=("preflight", "start", "tick", "status", "pause", "resume", "cancel")
+        "action",
+        choices=("preflight", "start", "revise", "tick", "status", "pause", "resume", "cancel"),
     )
     parser.add_argument("--workspace", type=Path, default=REPOSITORY)
     parser.add_argument("--reality-root", type=Path, default=None)
@@ -1885,6 +2445,8 @@ def main() -> int:
         output = tick(workspace, reality_root, veritas_root, args.api_base, config)
         output["started_at"] = manifest["started_at"]
         output["planned_end_at"] = manifest["planned_end_at"]
+    elif args.action == "revise":
+        output = apply_plan_revision(workspace, config)
     elif args.action == "tick":
         output = tick(workspace, reality_root, veritas_root, args.api_base, config)
     elif args.action == "status":

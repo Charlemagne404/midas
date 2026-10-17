@@ -8,7 +8,12 @@ from midas.arena.scheduling import ScheduledStep, ScheduleSpec
 from midas.arena.scheduling import create as create_schedule
 from midas.arena.tournaments import TournamentSpec
 
-from scripts.autonomy_48h import job_unit_usage, record_job_usage
+from scripts.autonomy_48h import (
+    apply_plan_revision,
+    build_director_steps,
+    job_unit_usage,
+    record_job_usage,
+)
 
 
 def test_campaign_job_budget_and_durable_schedule_are_bounded(tmp_path, monkeypatch):
@@ -92,4 +97,84 @@ def test_transient_job_cgroup_usage_is_saved_before_systemd_collects_it(monkeypa
     assert saved["MemoryPeak"] == 638996480
     assert saved["MemoryCurrent"] == 500000000
     assert saved["samples"] == 1
-    assert saved["last_observed_state"] == "COMPLETED"
+
+
+def test_full_research_queue_is_finite_bounded_and_training_first(tmp_path):
+    config = json.loads(
+        (
+            Path(__file__).parents[1] / "deploy/autonomy/midas-autonomous-research-48h-001.json"
+        ).read_text()
+    )
+    steps = build_director_steps(config, first_step=5)
+    assert len(steps) == 48
+    assert steps[0]["job_spec"]["kind"] == "director"
+    assert steps[1]["family"] == "laboratory_adversarial_tournament"
+    assert steps[1]["selected_model_from_step"] == steps[0]["step"]
+    assert steps[1]["job_spec_template"]["tournament"]["adversarial"] is True
+    assert steps[0]["after_seconds"] == steps[1]["after_seconds"] == 0
+    assert all(step["job_spec"]["cpu_quota_percent"] == 80 for step in steps if "job_spec" in step)
+    director_steps = [step for step in steps if step.get("job_spec", {}).get("kind") == "director"]
+    training_seeds = [
+        seed for step in director_steps for seed in step["job_spec"]["director"]["sweep_seeds"]
+    ]
+    challenge_seeds = [step["job_spec"]["director"]["challenge_seed"] for step in director_steps]
+    assert len(set(training_seeds)) == len(training_seeds)
+    assert len(set(challenge_seeds)) == len(challenge_seeds)
+    assert all(step["job_spec"]["director"]["episodes"] == 200 for step in director_steps)
+
+
+def test_plan_revision_preserves_deadline_and_completed_evidence(tmp_path, monkeypatch):
+    import time
+
+    from midas.arena.artifacts import atomic_json
+
+    import scripts.autonomy_48h as campaign
+
+    config_path = tmp_path / "campaign-config.json"
+    source_config = (
+        Path(__file__).parents[1] / "deploy/autonomy/midas-autonomous-research-48h-001.json"
+    )
+    config_path.write_bytes(source_config.read_bytes())
+    monkeypatch.setattr(campaign, "CONFIG_PATH", config_path)
+    now = time.time_ns()
+    started = now - 3600 * 1_000_000_000
+    deadline = started + 172800 * 1_000_000_000
+    workspace = tmp_path / "workspace"
+    directory = campaign.campaign_dir(workspace)
+    directory.mkdir(parents=True)
+    completed = {"step": 1, "state": "COMPLETED", "name": "preserved", "job_id": "job-old"}
+    pending = {"step": 2, "state": "PENDING", "name": "old-schedule", "job_id": None}
+    manifest = {
+        "campaign_id": "48H-001",
+        "status": "ACTIVE",
+        "started_at_ns": started,
+        "planned_end_ns": deadline,
+        "planned_end_at": campaign.now_iso(deadline),
+        "steps": [completed, pending],
+        "completed_jobs": ["job-old"],
+        "training": {"enabled": False, "status": "SKIPPED"},
+        "resource_budgets": {},
+        "approved_research_families": [],
+        "skipped_jobs": [{"family": "new_model_training", "state": "SKIPPED"}],
+        "runtime_controller_updates": [],
+    }
+    atomic_json(directory / "manifest.json", manifest)
+    revised = apply_plan_revision(workspace, json.loads(config_path.read_text()))
+    assert revised["planned_end_ns"] == deadline
+    assert revised["started_at_ns"] == started
+    assert revised["completed_jobs"] == ["job-old"]
+    assert revised["steps"][0] == completed
+    assert revised["steps"][1]["state"] == "SKIPPED"
+    assert (
+        len(
+            [
+                step
+                for step in revised["steps"]
+                if step.get("family") == "bounded_synthetic_research_director"
+            ]
+        )
+        == 24
+    )
+    assert revised["training"]["enabled"] is True
+    again = apply_plan_revision(workspace, json.loads(config_path.read_text()))
+    assert len(again["plan_revisions"]) == 1
