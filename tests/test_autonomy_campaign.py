@@ -106,7 +106,7 @@ def test_full_research_queue_is_finite_bounded_and_training_first(tmp_path):
         ).read_text()
     )
     steps = build_director_steps(config, first_step=5)
-    assert len(steps) == 48
+    assert len(steps) == 46
     assert steps[0]["job_spec"]["kind"] == "director"
     assert steps[1]["family"] == "laboratory_adversarial_tournament"
     assert steps[1]["selected_model_from_step"] == steps[0]["step"]
@@ -121,6 +121,11 @@ def test_full_research_queue_is_finite_bounded_and_training_first(tmp_path):
     assert len(set(training_seeds)) == len(training_seeds)
     assert len(set(challenge_seeds)) == len(challenge_seeds)
     assert all(step["job_spec"]["director"]["episodes"] == 200 for step in director_steps)
+    assert {
+        candidate["family"]
+        for step in director_steps
+        for candidate in step["job_spec"]["director"]["sweep_candidates"]
+    } == {"mlp"}
 
 
 def test_plan_revision_preserves_deadline_and_completed_evidence(tmp_path, monkeypatch):
@@ -173,8 +178,70 @@ def test_plan_revision_preserves_deadline_and_completed_evidence(tmp_path, monke
                 if step.get("family") == "bounded_synthetic_research_director"
             ]
         )
-        == 24
+        == json.loads(config_path.read_text())["research_queue"]["director_rounds"]
     )
     assert revised["training"]["enabled"] is True
     again = apply_plan_revision(workspace, json.loads(config_path.read_text()))
     assert len(again["plan_revisions"]) == 1
+
+
+def test_plan_revision_preserves_active_job_and_its_linked_tournament(tmp_path, monkeypatch):
+    import time
+
+    from midas.arena.artifacts import atomic_json
+
+    import scripts.autonomy_48h as campaign
+
+    config_path = tmp_path / "campaign-config.json"
+    source_config = (
+        Path(__file__).parents[1] / "deploy/autonomy/midas-autonomous-research-48h-001.json"
+    )
+    config_path.write_bytes(source_config.read_bytes())
+    monkeypatch.setattr(campaign, "CONFIG_PATH", config_path)
+    now = time.time_ns()
+    started = now - 3600 * 1_000_000_000
+    deadline = started + 172800 * 1_000_000_000
+    workspace = tmp_path / "workspace"
+    directory = campaign.campaign_dir(workspace)
+    directory.mkdir(parents=True)
+    completed = {"step": 1, "state": "COMPLETED", "name": "preserved", "job_id": "job-old"}
+    active = {"step": 5, "state": "RUNNING", "name": "active-director", "job_id": "job-live"}
+    dependent = {
+        "step": 6,
+        "state": "PENDING",
+        "name": "linked-adversarial",
+        "job_id": None,
+        "selected_model_from_step": 5,
+    }
+    obsolete = {"step": 7, "state": "PENDING", "name": "old-pending", "job_id": None}
+    manifest = {
+        "campaign_id": "48H-001",
+        "status": "ACTIVE",
+        "started_at_ns": started,
+        "planned_end_ns": deadline,
+        "planned_end_at": campaign.now_iso(deadline),
+        "steps": [completed, active, dependent, obsolete],
+        "completed_jobs": ["job-old"],
+        "training": {"enabled": True, "status": "SYNTHETIC_TRAINING_ENABLED"},
+        "resource_budgets": {},
+        "approved_research_families": [],
+        "skipped_jobs": [],
+        "runtime_controller_updates": [],
+    }
+    atomic_json(directory / "manifest.json", manifest)
+    revised = apply_plan_revision(workspace, json.loads(config_path.read_text()))
+    assert revised["steps"][0] == completed
+    assert revised["steps"][1] == active
+    assert revised["steps"][2] == dependent
+    assert revised["steps"][3]["state"] == "SKIPPED"
+    assert revised["plan_revisions"][-1]["preserved_in_flight_steps"] == [5, 6]
+    assert (
+        len(
+            [
+                step
+                for step in revised["steps"]
+                if step.get("family") == "bounded_synthetic_research_director"
+            ]
+        )
+        == 23
+    )

@@ -864,10 +864,24 @@ def apply_plan_revision(workspace: Path, config: dict[str, Any]) -> dict[str, An
             raise RuntimeError(
                 "Existing campaign clock does not match its original 48-hour duration"
             )
-        if any(
-            step.get("state") in {"RUNNING", "QUEUED", "ADMITTING"} for step in manifest["steps"]
+        active = [
+            step
+            for step in manifest["steps"]
+            if step.get("state") in {"RUNNING", "QUEUED", "ADMITTING"} and step.get("job_id")
+        ]
+        if len(active) > 1 or any(
+            step.get("state") == "CANCEL_REQUESTED" for step in manifest["steps"]
         ):
-            raise RuntimeError("Wait for the current Arena job to finish before revising the queue")
+            raise RuntimeError("Queue revision requires at most one healthy active Arena job")
+        preserved_steps = {step["step"] for step in active}
+        if active:
+            current_step = active[0]["step"]
+            preserved_steps.update(
+                step["step"]
+                for step in manifest["steps"]
+                if step.get("selected_model_from_step") == current_step
+                and step.get("state") not in {"COMPLETED", "FAILED", "SKIPPED"}
+            )
         timestamp_ns = time.time_ns()
         previous_pending = [
             copy.deepcopy(step)
@@ -881,14 +895,18 @@ def apply_plan_revision(workspace: Path, config: dict[str, Any]) -> dict[str, An
             "created_at": now_iso(timestamp_ns),
             "original_deadline": manifest["planned_end_at"],
             "preserved_completed_job_ids": list(manifest.get("completed_jobs", [])),
-            "superseded_pending_steps": previous_pending,
+            "prior_nonterminal_steps": previous_pending,
+            "preserved_in_flight_steps": sorted(preserved_steps),
             "research_queue_configuration": config["research_queue"],
             "resource_limits": config["resource_limits"],
         }
         revision_path = revision_directory / f"{revision_id}.json"
         atomic_json(revision_path, original_snapshot)
         for step in manifest["steps"]:
-            if step.get("state") not in {"COMPLETED", "FAILED", "SKIPPED"}:
+            if (
+                step.get("state") not in {"COMPLETED", "FAILED", "SKIPPED"}
+                and step.get("step") not in preserved_steps
+            ):
                 step["state"] = "SKIPPED"
                 step["skip_reason"] = (
                     f"Superseded by versioned plan {revision_id}; no evidence was run"
@@ -907,7 +925,12 @@ def apply_plan_revision(workspace: Path, config: dict[str, Any]) -> dict[str, An
                 "snapshot_path": str(revision_path),
                 "snapshot_sha256": sha256(revision_path),
                 "preserved_deadline": manifest["planned_end_at"],
-                "superseded_step_numbers": [step["step"] for step in previous_pending],
+                "superseded_step_numbers": [
+                    step["step"]
+                    for step in previous_pending
+                    if step.get("step") not in preserved_steps
+                ],
+                "preserved_in_flight_steps": sorted(preserved_steps),
                 "new_step_numbers": [step["step"] for step in new_steps],
                 "training_before_revision": old_training,
             }

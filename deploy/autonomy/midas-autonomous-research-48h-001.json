@@ -1,7 +1,7 @@
 {
   "version": "midas-autonomy-campaign-1",
   "campaign_id": "48H-001",
-  "title": "MIDAS AUTONOMOUS RESEARCH CAMPAIGN \u2014 48H-001",
+  "title": "MIDAS AUTONOMOUS RESEARCH CAMPAIGN — 48H-001",
   "duration_seconds": 172800,
   "poll_interval_seconds": 300,
   "report_interval_seconds": 1800,
@@ -87,14 +87,15 @@
     "real_execution_training": "Unavailable because MIDAS has no measured order execution labels; synthetic results do not establish real-market profitability."
   },
   "research_queue": {
-    "revision_id": "plan-002-synthetic-full-research",
+    "revision_id": "plan-003-mlp-focused-search",
     "dataset_id": "dataset-38ec6e9776097d8e36693372",
     "incumbent_model_ids": [
       "model-ef77bbbd7d1f4be78c41c0b6",
       "model-f587b98d06f34441bb040877",
-      "model-33cddb0d92024c2bb0a3b34a"
+      "model-33cddb0d92024c2bb0a3b34a",
+      "model-f51ed0dcc4094f2d9cbae2f2"
     ],
-    "director_rounds": 24,
+    "director_rounds": 23,
     "challenge_episodes": 200,
     "adversarial_episodes": 160,
     "adversarial_families": [
@@ -108,9 +109,9 @@
     "adversarial_submission_latency_ms": 1000,
     "adversarial_job_max_wall_seconds": 1800,
     "job_max_wall_seconds": 3600,
-    "training_seed_start": 2026101700,
-    "challenge_seed_start": 2026101800,
-    "adversarial_seed_start": 2026101900,
+    "training_seed_start": 2026101748,
+    "challenge_seed_start": 2026101824,
+    "adversarial_seed_start": 2026101924,
     "epoch_schedule": [
       60,
       80,
@@ -118,71 +119,32 @@
     ],
     "candidate_sets": [
       {
-        "name": "logistic-vs-compact-mlp",
-        "hypothesis": "a compact MLP can improve grouped synthetic completion calibration over logistic regression",
+        "name": "compact-vs-medium",
+        "hypothesis": "Test whether compact MLP capacity remains competitive with a medium network.",
         "candidates": [
-          {
-            "family": "logistic"
-          },
           {
             "family": "mlp",
             "hidden_size": 16,
             "learning_rate": 0.0005,
             "weight_decay": 0.0001
-          }
-        ]
-      },
-      {
-        "name": "logistic-vs-regularized-mlp",
-        "hypothesis": "moderate MLP regularization improves validation calibration across execution variants",
-        "candidates": [
-          {
-            "family": "logistic"
           },
           {
             "family": "mlp",
             "hidden_size": 32,
+            "learning_rate": 0.001,
+            "weight_decay": 0.0001
+          }
+        ]
+      },
+      {
+        "name": "regularization-stress",
+        "hypothesis": "Test whether weight decay stabilizes larger synthetic completion predictors.",
+        "candidates": [
+          {
+            "family": "mlp",
+            "hidden_size": 16,
             "learning_rate": 0.001,
             "weight_decay": 0.001
-          }
-        ]
-      },
-      {
-        "name": "tree-vs-mlp",
-        "hypothesis": "a shallow existing tree family offers a robust alternative to a nonlinear MLP",
-        "candidates": [
-          {
-            "family": "tree"
-          },
-          {
-            "family": "mlp",
-            "hidden_size": 32,
-            "learning_rate": 0.001,
-            "weight_decay": 0.0001
-          }
-        ]
-      },
-      {
-        "name": "wide-mlp-capacity",
-        "hypothesis": "additional MLP capacity helps only if grouped validation improvement persists across training seeds",
-        "candidates": [
-          {
-            "family": "logistic"
-          },
-          {
-            "family": "mlp",
-            "hidden_size": 64,
-            "learning_rate": 0.001,
-            "weight_decay": 0.0001
-          }
-        ]
-      },
-      {
-        "name": "tree-vs-regularized-wide-mlp",
-        "hypothesis": "regularization can stabilize a wider MLP under thin and volatile scenario variation",
-        "candidates": [
-          {
-            "family": "tree"
           },
           {
             "family": "mlp",
@@ -193,41 +155,13 @@
         ]
       },
       {
-        "name": "logistic-vs-tree",
-        "hypothesis": "the existing tree model captures useful nonlinear synthetic completion structure beyond logistic regression",
-        "candidates": [
-          {
-            "family": "logistic"
-          },
-          {
-            "family": "tree"
-          }
-        ]
-      },
-      {
-        "name": "fee-latency-feature-ablation",
-        "hypothesis": "fee and latency inputs improve predictive calibration rather than acting as synthetic shortcuts",
-        "candidates": [
-          {
-            "family": "logistic"
-          },
-          {
-            "family": "logistic",
-            "excluded_features": [
-              "fee_rate",
-              "latency_ms"
-            ]
-          }
-        ]
-      },
-      {
-        "name": "small-vs-wide-mlp",
-        "hypothesis": "model capacity changes validation calibration and fresh-seed policy robustness",
+        "name": "medium-vs-wide",
+        "hypothesis": "Test model capacity and seed variance across a medium and wide MLP.",
         "candidates": [
           {
             "family": "mlp",
-            "hidden_size": 16,
-            "learning_rate": 0.001,
+            "hidden_size": 32,
+            "learning_rate": 0.0005,
             "weight_decay": 0.001
           },
           {
@@ -235,6 +169,96 @@
             "hidden_size": 64,
             "learning_rate": 0.001,
             "weight_decay": 0.001
+          }
+        ]
+      },
+      {
+        "name": "high-regularization",
+        "hypothesis": "Test learning-rate and decay sensitivity under a thin and volatile scenario mix.",
+        "candidates": [
+          {
+            "family": "mlp",
+            "hidden_size": 32,
+            "learning_rate": 0.002,
+            "weight_decay": 0.01
+          },
+          {
+            "family": "mlp",
+            "hidden_size": 64,
+            "learning_rate": 0.0005,
+            "weight_decay": 0.001
+          }
+        ]
+      },
+      {
+        "name": "small-medium-decay",
+        "hypothesis": "Test regularization with a smaller network against a medium network.",
+        "candidates": [
+          {
+            "family": "mlp",
+            "hidden_size": 16,
+            "learning_rate": 0.001,
+            "weight_decay": 0.01
+          },
+          {
+            "family": "mlp",
+            "hidden_size": 32,
+            "learning_rate": 0.001,
+            "weight_decay": 0.001
+          }
+        ]
+      },
+      {
+        "name": "medium-wide-decay",
+        "hypothesis": "Test whether stronger regularization limits wide-model validation variance.",
+        "candidates": [
+          {
+            "family": "mlp",
+            "hidden_size": 32,
+            "learning_rate": 0.0005,
+            "weight_decay": 0.0001
+          },
+          {
+            "family": "mlp",
+            "hidden_size": 64,
+            "learning_rate": 0.001,
+            "weight_decay": 0.01
+          }
+        ]
+      },
+      {
+        "name": "low-rate-capacity",
+        "hypothesis": "Compare compact low-rate fitting with a wider lower-decay alternative.",
+        "candidates": [
+          {
+            "family": "mlp",
+            "hidden_size": 16,
+            "learning_rate": 0.0005,
+            "weight_decay": 0.01
+          },
+          {
+            "family": "mlp",
+            "hidden_size": 64,
+            "learning_rate": 0.0005,
+            "weight_decay": 0.0001
+          }
+        ]
+      },
+      {
+        "name": "higher-rate-capacity",
+        "hypothesis": "Test faster optimization against a wide, regularized candidate.",
+        "candidates": [
+          {
+            "family": "mlp",
+            "hidden_size": 16,
+            "learning_rate": 0.002,
+            "weight_decay": 0.001
+          },
+          {
+            "family": "mlp",
+            "hidden_size": 64,
+            "learning_rate": 0.002,
+            "weight_decay": 0.01
           }
         ]
       }
