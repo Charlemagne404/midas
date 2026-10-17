@@ -423,3 +423,156 @@ def test_source_recovery_requires_ten_minutes_of_consecutive_healthy_checks():
     assert not update_source_stability(
         manifest, snapshot, config, start + 900 * 1_000_000_000
     )["stable"]
+
+
+def test_synthetic_steps_ignore_only_source_continuity_and_keep_resource_gates(
+    tmp_path, monkeypatch
+):
+    import scripts.autonomy_48h as campaign
+
+    config = json.loads(
+        (
+            Path(__file__).parents[1]
+            / "deploy/autonomy/midas-autonomous-research-48h-001.json"
+        ).read_text()
+    )
+    pinned = {
+        "dataset_id": campaign.ARENA_DATASET_ID,
+        "rows_sha256": "a" * 64,
+        "source": "Midas Laboratory synthetic generator",
+    }
+    manifest = {"initial_dataset_identities": [pinned], "integrity_blocked": False}
+    monkeypatch.setattr(
+        campaign,
+        "load_dataset",
+        lambda _root, identity: ({**pinned, "dataset_id": identity}, []),
+    )
+    swap_pages = [100, 100]
+    monkeypatch.setattr(campaign, "vmstat_swap_pages", lambda: tuple(swap_pages))
+    snapshot = {
+        "checked_at": "2026-10-18T00:40:13+00:00",
+        "units": {unit: True for unit in config["existing_services"]["required_active_units"]},
+        "api": {
+            "status": "READY",
+            "startup_status": "READY",
+            "reachable": True,
+            "live_execution": False,
+        },
+        "recorder": {
+            "state": "AWAITING_DATA",
+            "unit_active": True,
+            "updated_age_seconds": 1,
+            "last_observation_age_seconds": 6,
+            "markets": 8,
+            "fresh_books": 0,
+            "expected_books": 16,
+            "max_append_seconds": 0.01,
+            "memory_fraction_of_max": 0.90,
+            "memory_events": {"oom_kill": 0},
+        },
+        "segment_integrity": [{"valid": True}],
+        "host": {
+            "mem_available_bytes": 9 * 1024**3,
+            "disk_free_bytes": 200 * 1024**3,
+            "user_manager_linger": True,
+            "load_average_1m": 1.0,
+            "memory_psi": {"some_avg10": 0.0, "full_avg10": 0.0},
+            "io_psi": {"some_avg10": 0.0},
+        },
+        "arena": {"active_jobs": [], "veritas_active_jobs": []},
+    }
+    synthetic_step = {
+        "step": 5,
+        "family": "bounded_synthetic_research_director",
+        "state": "WAITING_RESOURCE",
+        "job_spec": {
+            "kind": "director",
+            "director": {"dataset_id": campaign.ARENA_DATASET_ID},
+        },
+    }
+    prior_sample = {"swap_pages": [100, 100]}
+
+    ready, reasons, _ = campaign.check_campaign_resources(
+        tmp_path, snapshot, config, prior_sample, 0, synthetic_step, manifest
+    )
+    assert ready
+    assert reasons == []
+
+    snapshot["recorder"]["memory_fraction_of_max"] = 0.96
+    ready, reasons, _ = campaign.check_campaign_resources(
+        tmp_path, snapshot, config, prior_sample, 0, synthetic_step, manifest
+    )
+    assert not ready
+    assert "recorder_memory_headroom" in reasons
+    snapshot["recorder"]["memory_fraction_of_max"] = 0.90
+
+    snapshot["segment_integrity"] = [{"valid": False}]
+    ready, reasons, _ = campaign.check_campaign_resources(
+        tmp_path, snapshot, config, prior_sample, 0, synthetic_step, manifest
+    )
+    assert not ready
+    assert "latest_source_segment_integrity" in reasons
+    snapshot["segment_integrity"] = [{"valid": True}]
+
+    live_step = {
+        "step": 99,
+        "family": "live_source_replay",
+        "job_spec": {"kind": "veritas_qualification"},
+    }
+    ready, reasons, _ = campaign.check_campaign_resources(
+        tmp_path, snapshot, config, prior_sample, 0, live_step, manifest
+    )
+    assert not ready
+    assert "recorder_continuity" in reasons
+
+    snapshot["host"]["memory_psi"]["some_avg10"] = 3.0
+    ready, reasons, _ = campaign.check_campaign_resources(
+        tmp_path, snapshot, config, prior_sample, 0, synthetic_step, manifest
+    )
+    assert not ready
+    assert "host_pressure" in reasons
+    assert "recorder_continuity" not in reasons
+
+    snapshot["host"]["memory_psi"]["some_avg10"] = 0.0
+    swap_pages[0] += 20_000
+    ready, reasons, _ = campaign.check_campaign_resources(
+        tmp_path, snapshot, config, prior_sample, 0, synthetic_step, manifest
+    )
+    assert not ready
+    assert "swap_activity" in reasons
+    swap_pages[0] = 100
+
+    cancelled: list[str] = []
+    monkeypatch.setattr(campaign, "artifact_usage", lambda _root: (0, {}))
+    monkeypatch.setattr(
+        campaign, "cancel_campaign_job", lambda _workspace, job_id: cancelled.append(job_id)
+    )
+    active = {**synthetic_step, "state": "RUNNING", "job_id": "job-synthetic"}
+    running_manifest = {
+        **manifest,
+        "steps": [active],
+        "last_resource_sample": prior_sample,
+    }
+    snapshot["host"]["memory_psi"]["some_avg10"] = 0.0
+    campaign._cancel_unhealthy_running_job(
+        tmp_path, running_manifest, snapshot, config, 1_000_000_000
+    )
+    assert cancelled == []
+    assert active["state"] == "RUNNING"
+
+    live_active = {**live_step, "state": "RUNNING", "job_id": "job-live"}
+    running_manifest["steps"] = [live_active]
+    campaign._cancel_unhealthy_running_job(
+        tmp_path, running_manifest, snapshot, config, 2_000_000_000
+    )
+    assert cancelled == ["job-live"]
+    assert live_active["cancellation_reasons"] == ["recorder_continuity_degraded"]
+
+    snapshot["host"]["memory_psi"]["some_avg10"] = 3.0
+    running_manifest["steps"] = [active]
+    campaign._cancel_unhealthy_running_job(
+        tmp_path, running_manifest, snapshot, config, 3_000_000_000
+    )
+    assert cancelled == ["job-live", "job-synthetic"]
+    assert active["cancellation_reasons"] == ["host_memory_pressure"]
+    assert "recorder_continuity_degraded" not in active["cancellation_reasons"]

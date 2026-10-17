@@ -460,7 +460,11 @@ def resource_sample(snapshot: dict[str, Any]) -> dict[str, Any]:
 
 
 def check_preflight(
-    snapshot: dict[str, Any], config: dict[str, Any], arena_usage_bytes: int | None = None
+    snapshot: dict[str, Any],
+    config: dict[str, Any],
+    arena_usage_bytes: int | None = None,
+    *,
+    require_recorder_continuity: bool = True,
 ) -> dict[str, Any]:
     limits = config["resource_limits"]
     checks: list[dict[str, Any]] = []
@@ -494,26 +498,37 @@ def check_preflight(
         api,
     )
     recorder = snapshot["recorder"]
-    add(
-        "recorder_continuity",
-        recorder.get("state") in {"RECORDING_UNSEQUENCED", "RECORDING_SEQUENCED"}
-        and (recorder.get("updated_age_seconds") or 1e9)
-        <= limits["maximum_source_status_age_seconds"]
-        and (recorder.get("last_observation_age_seconds") or 1e9)
-        <= limits["maximum_last_observation_age_seconds"],
-        {
-            k: recorder.get(k)
-            for k in (
-                "state",
-                "updated_age_seconds",
-                "last_observation_age_seconds",
-                "markets",
-                "fresh_books",
-                "expected_books",
-                "max_append_seconds",
-            )
-        },
-    )
+    recorder_continuity_detail = {
+        k: recorder.get(k)
+        for k in (
+            "state",
+            "updated_age_seconds",
+            "last_observation_age_seconds",
+            "markets",
+            "fresh_books",
+            "expected_books",
+            "max_append_seconds",
+        )
+    }
+    if require_recorder_continuity:
+        add(
+            "recorder_continuity",
+            recorder.get("state") in {"RECORDING_UNSEQUENCED", "RECORDING_SEQUENCED"}
+            and (recorder.get("updated_age_seconds") or 1e9)
+            <= limits["maximum_source_status_age_seconds"]
+            and (recorder.get("last_observation_age_seconds") or 1e9)
+            <= limits["maximum_last_observation_age_seconds"],
+            recorder_continuity_detail,
+        )
+    else:
+        checks.append(
+            {
+                "name": "recorder_continuity",
+                "state": "NOT_APPLICABLE",
+                "detail": recorder_continuity_detail,
+                "blocking": False,
+            }
+        )
     mem_fraction = recorder.get("memory_fraction_of_max")
     add(
         "recorder_memory_headroom",
@@ -1398,9 +1413,21 @@ def check_campaign_resources(
     config: dict[str, Any],
     prior_sample: dict[str, Any] | None,
     arena_usage_bytes: int,
+    step: dict[str, Any] | None = None,
+    campaign_manifest: dict[str, Any] | None = None,
+    source_independent: bool | None = None,
 ) -> tuple[bool, list[str], dict[str, Any]]:
     limits = config["resource_limits"]
-    checks = check_preflight(snapshot, config, arena_usage_bytes)
+    if source_independent is None:
+        source_independent = is_verified_synthetic_step(
+            workspace, step, campaign_manifest or {}
+        )
+    checks = check_preflight(
+        snapshot,
+        config,
+        arena_usage_bytes,
+        require_recorder_continuity=not source_independent,
+    )
     reasons = [
         x["name"]
         for x in checks["checks"]
@@ -1421,6 +1448,49 @@ def check_campaign_resources(
         reasons.append("another_main_arena_job_active")
     # A Veritas qualification is capped at 512 MiB/10% CPU, so it may overlap safely.
     return not reasons, sorted(set(reasons)), activity
+
+
+def is_verified_synthetic_step(
+    workspace: Path,
+    step: dict[str, Any] | None,
+    campaign_manifest: dict[str, Any],
+) -> bool:
+    """Allow source-independent gates only for a verified synthetic Arena dataset."""
+    if step is None or campaign_manifest.get("integrity_blocked"):
+        return False
+    spec = step.get("job_spec") or step.get("job_spec_template") or {}
+    kind = spec.get("kind")
+    if kind == "director":
+        dataset_id = (spec.get("director") or {}).get("dataset_id")
+    elif kind == "tournament":
+        dataset_id = (spec.get("tournament") or {}).get("dataset_id")
+    else:
+        return False
+    if dataset_id != ARENA_DATASET_ID or spec.get("observations"):
+        return False
+    pinned = next(
+        (
+            item
+            for item in campaign_manifest.get("initial_dataset_identities", [])
+            if item.get("dataset_id") == dataset_id
+        ),
+        None,
+    )
+    if (
+        not pinned
+        or pinned.get("source") != "Midas Laboratory synthetic generator"
+        or not pinned.get("rows_sha256")
+    ):
+        return False
+    try:
+        current, _ = load_dataset(workspace / "data/arena", dataset_id)
+    except (OSError, ValueError, KeyError, TypeError, RuntimeError):
+        return False
+    return (
+        current.get("dataset_id") == dataset_id
+        and current.get("source") == pinned["source"]
+        and current.get("rows_sha256") == pinned["rows_sha256"]
+    )
 
 
 def validate_tournament_artifact(
@@ -1975,10 +2045,18 @@ def _admit_due_step(
         due["state"] = "WAITING_RESOURCE"
         due["error"] = f"Arena artifact inventory unavailable: {error}"
         return
+    source_independent = is_verified_synthetic_step(workspace, due, manifest)
     ready, reasons, swap = check_campaign_resources(
-        workspace, snapshot, config, manifest.get("last_resource_sample"), used
+        workspace,
+        snapshot,
+        config,
+        manifest.get("last_resource_sample"),
+        used,
+        step=due,
+        campaign_manifest=manifest,
+        source_independent=source_independent,
     )
-    if not manifest.get("source_recovery", {}).get("stable", False):
+    if not source_independent and not manifest.get("source_recovery", {}).get("stable", False):
         ready = False
         reasons = sorted(set(reasons) | {"recorder_recovery_stability"})
     due["latest_backpressure"] = {
@@ -1987,6 +2065,8 @@ def _admit_due_step(
         "reasons": reasons,
         "swap_activity": swap,
         "arena_artifact_usage_bytes": used,
+        "recorder_continuity_required": not source_independent,
+        "source_recovery_stability_required": not source_independent,
     }
     if not ready:
         due["state"] = "WAITING_RESOURCE"
@@ -2170,36 +2250,38 @@ def _cancel_unhealthy_running_job(
         arena_bytes = artifact_usage(workspace / "data/arena")[0]
     except OSError:
         arena_bytes = limits.get("maximum_arena_artifact_bytes", 1024**3)
-    reasons = []
+    resource_reasons = []
     if available < limits["cancel_below_available_memory_mb"] * 1024**2:
-        reasons.append("host_memory_critical")
+        resource_reasons.append("host_memory_critical")
     if recorder_memory_bad:
-        reasons.append("recorder_memory_critical")
-    if source_bad:
-        reasons.append("recorder_continuity_degraded")
+        resource_reasons.append("recorder_memory_critical")
     if api_bad:
-        reasons.append("api_health_degraded")
+        resource_reasons.append("api_health_degraded")
     if not all(snapshot["units"].values()):
-        reasons.append("required_service_degraded")
+        resource_reasons.append("required_service_degraded")
     if host["load_average_1m"] > limits["maximum_load_average_1m"]:
-        reasons.append("host_load_pressure")
+        resource_reasons.append("host_load_pressure")
     if (
         memory_psi.get("some_avg10", 0) > limits["maximum_memory_psi_some_avg10_percent"]
         or memory_psi.get("full_avg10", 0) > limits["maximum_memory_psi_full_avg10_percent"]
     ):
-        reasons.append("host_memory_pressure")
+        resource_reasons.append("host_memory_pressure")
     if io_psi.get("some_avg10", 0) > limits["maximum_io_psi_some_avg10_percent"]:
-        reasons.append("host_io_pressure")
+        resource_reasons.append("host_io_pressure")
     if swap["bytes"] > limits["maximum_swap_activity_bytes_per_interval"]:
-        reasons.append("swap_activity")
+        resource_reasons.append("swap_activity")
     if host["disk_free_bytes"] < limits["minimum_disk_free_bytes"]:
-        reasons.append("host_disk_reserve")
+        resource_reasons.append("host_disk_reserve")
     maximum_artifacts = limits.get("maximum_arena_artifact_bytes", 1024**3)
     if maximum_artifacts - arena_bytes < limits["minimum_arena_artifact_headroom_bytes"]:
-        reasons.append("arena_artifact_headroom")
-    if not reasons:
-        return
+        resource_reasons.append("arena_artifact_headroom")
     for step in active_steps:
+        source_independent = is_verified_synthetic_step(workspace, step, manifest)
+        reasons = list(resource_reasons)
+        if source_bad and not source_independent:
+            reasons.append("recorder_continuity_degraded")
+        if not reasons:
+            continue
         cancel_campaign_job(workspace, step["job_id"])
         step["state"] = "CANCEL_REQUESTED"
         step["cancel_requested_at_ns"] = timestamp_ns
