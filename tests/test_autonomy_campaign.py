@@ -12,6 +12,7 @@ from scripts.autonomy_48h import (
     _observe_steps,
     apply_plan_revision,
     build_director_steps,
+    campaign_health,
     job_unit_usage,
     record_job_usage,
 )
@@ -374,3 +375,19 @@ def test_plan_revision_preserves_resource_deferred_step_and_bounds_wall_budget(t
     assert revised["steps"][1]["state"] == "WAITING_RESOURCE"
     assert revised["steps"][2]["state"] == "SKIPPED"
     assert revised["plan_revisions"][-1]["preserved_resource_deferred_steps"] == [5, 6]
+
+
+def test_expected_dependency_wait_does_not_mark_active_healthy_campaign_degraded():
+    manifest = {
+        "integrity_blocked": False,
+        "steps": [
+            {"state": "QUEUED"},
+            {"state": "WAITING_RESOURCE", "selected_model_from_step": 5},
+        ],
+    }
+    snapshot = {
+        "api": {"status": "READY"},
+        "recorder": {"state": "RECORDING_UNSEQUENCED", "unit_active": True},
+        "units": {"midas-reality.service": True, "midas-api.service": True},
+    }
+    assert campaign_health(manifest, snapshot) == "HEALTHY"

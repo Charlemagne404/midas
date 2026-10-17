@@ -1730,6 +1730,30 @@ def defer_health_cancelled_step(
     )
 
 
+def campaign_health(manifest: dict[str, Any], snapshot: dict[str, Any]) -> str:
+    steps = manifest.get("steps", [])
+    active_job = any(
+        step.get("state") in {"RUNNING", "QUEUED", "ADMITTING"} for step in steps
+    )
+    waiting_for_recovery = any(step.get("state") == "CANCEL_REQUESTED" for step in steps) or (
+        not active_job and any(step.get("state") == "WAITING_RESOURCE" for step in steps)
+    )
+    recorder = snapshot["recorder"]
+    recorder_healthy = recorder.get("state") in {
+        "RECORDING_UNSEQUENCED",
+        "RECORDING_SEQUENCED",
+    } and recorder.get("unit_active")
+    return (
+        "HEALTHY"
+        if snapshot["api"].get("status") == "READY"
+        and recorder_healthy
+        and all(snapshot["units"].values())
+        and not manifest.get("integrity_blocked")
+        and not waiting_for_recovery
+        else "DEGRADED"
+    )
+
+
 def close_resolved_incidents(
     manifest: dict[str, Any], active_keys: set[str], timestamp_ns: int
 ) -> None:
@@ -2540,23 +2564,7 @@ def tick(
                     workspace, reality_root, veritas_root, api_base, manifest, config, timestamp_ns
                 )
         if manifest.get("status") not in TERMINAL:
-            recorder_healthy = snapshot["recorder"].get("state") in {
-                "RECORDING_UNSEQUENCED",
-                "RECORDING_SEQUENCED",
-            } and snapshot["recorder"].get("unit_active")
-            waiting_for_recovery = any(
-                step.get("state") in {"WAITING_RESOURCE", "WAITING_DEPENDENCY", "CANCEL_REQUESTED"}
-                for step in manifest["steps"]
-            )
-            manifest["health"] = (
-                "HEALTHY"
-                if snapshot["api"].get("status") == "READY"
-                and recorder_healthy
-                and all(snapshot["units"].values())
-                and not manifest.get("integrity_blocked")
-                and not waiting_for_recovery
-                else "DEGRADED"
-            )
+            manifest["health"] = campaign_health(manifest, snapshot)
         manifest["elapsed_seconds"] = elapsed
         manifest["last_resource_sample"] = resource_sample(snapshot)
         status = write_status(workspace, reality_root, veritas_root, manifest, snapshot)
