@@ -276,7 +276,7 @@ def _run(root: Path, identity: str) -> None:
     began = time.monotonic()
     stop = False
     signalled = False
-    overhead: dict[str, float | int] = {
+    overhead: dict[str, float | int | str] = {
         "artifact_scan_seconds": 0.0,
         "progress_publish_seconds": 0.0,
         "artifact_scans": 0,
@@ -290,6 +290,7 @@ def _run(root: Path, identity: str) -> None:
         * 1024**2,
         "artifact_index_reconciliations": 0,
         "artifact_index_fallbacks": 0,
+        "artifact_index_file_watch_mode": "UNINITIALIZED",
     }
     usage_index: UsageIndex | None = None
     job_artifact_baseline_bytes: int | None = None
@@ -325,10 +326,14 @@ def _run(root: Path, identity: str) -> None:
             overhead["artifact_index_reconciliations"] = usage_index.reconciliations
             overhead["artifact_index_fallbacks"] = usage_index.fallbacks
             overhead["artifact_scans"] = usage_index.reconciliations + usage_index.fallbacks
+            file_watch_mode = getattr(usage_index, "file_watch_mode", "UNKNOWN")
+            overhead["artifact_index_file_watch_mode"] = file_watch_mode
             record["artifact_guard"] = {
                 "mode": "EVENT_INDEX" if usage_index.fd >= 0 else "FULL_SCAN_FALLBACK",
                 "last_error": usage_index.last_error,
                 "watch_count": len(usage_index.watches),
+                "file_watch_mode": file_watch_mode,
+                "polling_file_count": len(getattr(usage_index, "poll_files", ())),
             }
         else:
             overhead["artifact_scans"] += 1
@@ -549,29 +554,50 @@ def inspect(root: Path, identity: str) -> dict[str, Any]:
     directory = artifact_path(root, "jobs", identity)
     record: dict[str, Any] = json.loads((directory / "job.json").read_text())
     if record["state"] in {"RUNNING", "QUEUED"}:
-        status = subprocess.run(
-            [
-                "systemctl",
-                "--user",
-                "show",
-                record["unit"],
-                "--property=ActiveState",
-                "--property=SubState",
-                "--property=Result",
-                "--property=MainPID",
-                "--property=MemoryCurrent",
-                "--property=CPUUsageNSec",
-            ],
-            capture_output=True,
-            text=True,
-            timeout=5,
-        )
+        try:
+            status = subprocess.run(
+                [
+                    "systemctl",
+                    "--user",
+                    "show",
+                    record["unit"],
+                    "--property=LoadState",
+                    "--property=ActiveState",
+                    "--property=SubState",
+                    "--property=Result",
+                    "--property=MainPID",
+                    "--property=MemoryCurrent",
+                    "--property=MemoryPeak",
+                    "--property=MemorySwapCurrent",
+                    "--property=MemorySwapPeak",
+                    "--property=CPUUsageNSec",
+                    "--property=ControlGroup",
+                ],
+                capture_output=True,
+                text=True,
+                timeout=5,
+            )
+        except (OSError, subprocess.SubprocessError) as error:
+            record["supervisor"] = {"ActiveState": "unknown", "error": str(error)}
+            return record
         properties = dict(line.split("=", 1) for line in status.stdout.splitlines() if "=" in line)
         record["supervisor"] = properties
         # A heartbeat isn't proof of liveness: require an authoritative supervisor state.
-        if properties.get("ActiveState") in {"inactive", "failed"}:
+        unit_missing = properties.get("LoadState") == "not-found" or (
+            status.returncode != 0
+            and any(
+                phrase in getattr(status, "stderr", "").lower()
+                for phrase in ("not found", "could not be found", "not loaded")
+            )
+        )
+        if properties.get("ActiveState") in {"inactive", "failed"} or unit_missing:
             record.update(
-                state="INTERRUPTED", error=f"Supervisor terminated: {properties.get('Result')}"
+                state="INTERRUPTED",
+                error=(
+                    "Supervisor unit is missing"
+                    if unit_missing
+                    else f"Supervisor terminated: {properties.get('Result')}"
+                ),
             )
     return record
 

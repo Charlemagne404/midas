@@ -1,6 +1,7 @@
 import os
 import shutil
 
+import midas.arena.usage as usage
 import pytest
 from midas.arena.artifacts import atomic_bytes
 from midas.arena.jobs import artifact_usage
@@ -182,5 +183,65 @@ def test_replacement_during_watch_registration_falls_back(tmp_path, monkeypatch)
         monkeypatch.setattr(index, "_watch", replace)
         exact(index, tmp_path)
         assert changed and index.fd == -1 and index.fallbacks > 0
+    finally:
+        index.close()
+
+
+def test_large_historical_tree_keeps_exact_budget_without_watching_every_old_file(
+    tmp_path, monkeypatch
+):
+    root = tmp_path / "arena"
+    root.mkdir()
+    historical = root / "historical-sparse-artifact"
+    with historical.open("wb") as artifact:
+        artifact.truncate(1024**3 + 1)
+    for number in range(80):
+        (root / f"historical-{number}").write_bytes(b"old evidence")
+
+    # Exercise the same directory-only mode selected for the production Arena
+    # tree, whose historical file count exceeds the inotify user watch limit.
+    monkeypatch.setattr(usage, "MAX_INITIAL_FILE_WATCHES", 16)
+    watched_inodes = []
+    add_watch = UsageIndex._watch
+
+    def track_watch(index, path, inode=None):
+        if inode is not None:
+            watched_inodes.append(inode)
+        return add_watch(index, path, inode)
+
+    monkeypatch.setattr(UsageIndex, "_watch", track_watch)
+    index = UsageIndex(root, artifact_usage)
+    try:
+        if index.fd < 0:
+            pytest.skip(index.last_error)
+        assert index.file_watch_mode == "DIRECTORY_EVENTS"
+        assert index.usage() == artifact_usage(root)
+        baseline, _ = index.usage()
+        assert baseline > 1024**3
+        assert index.fallbacks == 0
+        assert watched_inodes == []
+
+        # A new artifact and an atomic replacement of a historical file are
+        # both observed from the directory event stream and remain exact.
+        atomic_bytes(root / "new-run" / "result.json", b"new evidence" * 100)
+        exact(index, root)
+        atomic_bytes(root / "historical-0", b"replaced historical evidence" * 100)
+        exact(index, root)
+        assert index.usage()[0] - baseline < 1024**3
+        assert index.fallbacks == 0
+
+        # A file that grows in place after job admission is polled directly;
+        # its bytes still count toward the same job growth budget.
+        active = root / "new-run" / "active.bin"
+        active.parent.mkdir(parents=True, exist_ok=True)
+        active.write_bytes(b"first batch")
+        exact(index, root)
+        before = index.usage()[0]
+        with active.open("ab") as stream:
+            stream.write(b"second batch" * 100)
+        exact(index, root)
+        assert index.usage()[0] - before == len(b"second batch" * 100)
+        assert index.file_watch_mode == "DIRECTORY_EVENTS"
+        assert index.fallbacks == 0
     finally:
         index.close()

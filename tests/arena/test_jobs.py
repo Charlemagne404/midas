@@ -112,6 +112,22 @@ def test_missing_supervisor_process_is_interrupted_not_complete(tmp_path, monkey
     assert "Supervisor terminated" in result["error"]
 
 
+def test_missing_supervisor_unit_is_not_left_as_a_stale_active_job(tmp_path, monkeypatch):
+    job = create(tmp_path, JobSpec(kind="dataset", dataset=DatasetSpec(episodes=30)), launch=False)
+    monkeypatch.setattr(
+        subprocess,
+        "run",
+        lambda *args, **kwargs: SimpleNamespace(
+            stdout="LoadState=not-found\nActiveState=inactive\nSubState=dead\nResult=not-found\n",
+            stderr="Unit midas-arena-job.service could not be found.",
+            returncode=1,
+        ),
+    )
+    result = inspect(tmp_path, job["job_id"])
+    assert result["state"] == "INTERRUPTED"
+    assert result["error"] == "Supervisor unit is missing"
+
+
 def test_duplicate_runner_cannot_write_progress_while_job_lease_is_held(tmp_path):
     job = create(tmp_path, JobSpec(kind="dataset", dataset=DatasetSpec(episodes=30)), launch=False)
     directory = tmp_path / "jobs" / job["job_id"]

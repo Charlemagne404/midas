@@ -1,6 +1,7 @@
 """Event-driven logical artifact sizes, with conservative full-scan fallback."""
 
 import ctypes
+import errno
 import os
 import stat
 import struct
@@ -33,6 +34,12 @@ MASK = (
 )
 RESET = DELETE_SELF | MOVE_SELF | UNMOUNT | OVERFLOW | IGNORED
 EVENT = struct.Struct("iIII")
+# Historical Arena trees can contain far more files than the per-user inotify
+# watch limit. Watching all of those immutable files is unnecessary: Arena
+# publishers create or atomically replace artifacts while holding worker.lock,
+# and their parent-directory events are sufficient to account for that growth.
+# Keep file watches for small trees and for files created/replaced during a job.
+MAX_INITIAL_FILE_WATCHES = 8192
 
 
 class UsageIndex:
@@ -53,6 +60,7 @@ class UsageIndex:
         self.watch_inodes: dict[int, tuple[int, int]] = {}
         self.watched_inodes: set[tuple[int, int]] = set()
         self.directories: set[Path] = set()
+        self.poll_files: set[Path] = set()
         self.files: dict[Path, tuple[int, tuple[int, int]]] = {}
         self.aliases: dict[tuple[int, int], set[Path]] = {}
         self.links: set[Path] = set()
@@ -61,6 +69,7 @@ class UsageIndex:
         self.reconciliations = 0
         self.fallbacks = 0
         self.last_error: str | None = None
+        self.file_watch_mode = "UNINITIALIZED"
         self._rebuild()
 
     def close(self) -> None:
@@ -80,6 +89,7 @@ class UsageIndex:
 
     def _forget(self, path: Path) -> None:
         self.links.discard(path)
+        self.poll_files.discard(path)
         old = self.files.pop(path, None)
         if old:
             self.total -= old[0]
@@ -100,7 +110,7 @@ class UsageIndex:
         self.files[path] = (info.st_size, inode)
         self.aliases.setdefault(inode, set()).add(path)
 
-    def _refresh(self, path: Path) -> None:
+    def _refresh(self, path: Path, watch_file: bool = True) -> None:
         try:
             own = path.lstat()
         except FileNotFoundError:
@@ -108,7 +118,7 @@ class UsageIndex:
             return
         if stat.S_ISDIR(own.st_mode):
             if path not in self.directories:
-                self._scan(path)
+                self._scan(path, watch_files=True)
             return
         if stat.S_ISLNK(own.st_mode):
             self.links.add(path)
@@ -126,29 +136,46 @@ class UsageIndex:
             if stat.S_ISLNK(own.st_mode):
                 self.links.add(path)
             return
-        try:
-            descriptor = os.open(path, os.O_PATH | os.O_CLOEXEC)
-        except FileNotFoundError:
-            self._forget(path)
-            return
-        try:
-            info = os.fstat(descriptor)
-            if not stat.S_ISREG(info.st_mode):
-                raise OSError("Artifact type changed during watch registration")
-            inode = (info.st_dev, info.st_ino)
-            if inode not in self.watched_inodes:
-                # Watch the opened inode, not a pathname that another process
-                # could replace between stat() and watch registration.
-                self._watch(Path(f"/proc/self/fd/{descriptor}"), inode)
-            info = os.fstat(descriptor)
+        inode = (info.st_dev, info.st_ino)
+        if watch_file and self.file_watch_mode == "DIRECTORY_EVENTS":
+            # The historical tree already selected directory-only mode. New
+            # paths are tracked by the parent directory and polled individually
+            # so in-place writes remain visible without repeatedly asking the
+            # exhausted per-user watch table for another inode watch.
+            self.poll_files.add(path)
+        elif watch_file and inode not in self.watched_inodes:
             try:
-                current = path.stat()
-            except FileNotFoundError as error:
-                raise OSError("Artifact vanished during watch registration") from error
-            if (current.st_dev, current.st_ino) != inode:
-                raise OSError("Artifact replaced during watch registration")
-        finally:
-            os.close(descriptor)
+                descriptor = os.open(path, os.O_PATH | os.O_CLOEXEC)
+            except FileNotFoundError:
+                self._forget(path)
+                return
+            try:
+                info = os.fstat(descriptor)
+                if not stat.S_ISREG(info.st_mode):
+                    raise OSError("Artifact type changed during watch registration")
+                inode = (info.st_dev, info.st_ino)
+                try:
+                    # Watch the opened inode, not a pathname that another process
+                    # could replace between stat() and watch registration.
+                    self._watch(Path(f"/proc/self/fd/{descriptor}"), inode)
+                    self.poll_files.discard(path)
+                except OSError as error:
+                    if error.errno != errno.ENOSPC:
+                        raise
+                    # The directory watch still accounts for atomic creates and
+                    # replacements. Poll only this newly active path so a write
+                    # in place remains visible without rescanning Arena history.
+                    self.poll_files.add(path)
+                    self.last_error = str(error)
+                info = os.fstat(descriptor)
+                try:
+                    current = path.stat()
+                except FileNotFoundError as error:
+                    raise OSError("Artifact vanished during watch registration") from error
+                if (current.st_dev, current.st_ino) != inode:
+                    raise OSError("Artifact replaced during watch registration")
+            finally:
+                os.close(descriptor)
         peers = set(self.aliases.get(inode, ()))
         self._remember(path, info)
         for peer in peers - {path}:
@@ -162,7 +189,7 @@ class UsageIndex:
             else:
                 self._forget(peer)
 
-    def _scan(self, root: Path) -> None:
+    def _scan(self, root: Path, watch_files: bool = True) -> None:
         pending = [root]
         while pending:
             directory = pending.pop()
@@ -177,7 +204,7 @@ class UsageIndex:
                         if entry.is_dir(follow_symlinks=False):
                             pending.append(path)
                         else:
-                            self._refresh(path)
+                            self._refresh(path, watch_file=watch_files)
             except FileNotFoundError:
                 continue
 
@@ -187,10 +214,12 @@ class UsageIndex:
         self.watch_inodes.clear()
         self.watched_inodes.clear()
         self.directories.clear()
+        self.poll_files.clear()
         self.files.clear()
         self.aliases.clear()
         self.links.clear()
         self.total = 0
+        self.file_watch_mode = "FULL_SCAN_FALLBACK"
         self.reconciliations += 1
         try:
             if not self.root.is_dir():
@@ -205,9 +234,20 @@ class UsageIndex:
             self.fd = self.lib.inotify_init1(os.O_NONBLOCK | os.O_CLOEXEC)
             if self.fd < 0:
                 raise OSError(ctypes.get_errno(), "inotify initialization failed")
-            self._scan(self.root)
+            # Build the exact initial size cache while watching directories only.
+            # If the historical tree is small enough, add the stronger inode
+            # watches used by the original index. Large trees remain exact for
+            # Arena's atomic artifact publishers and avoid exhausting inotify.
+            self._scan(self.root, watch_files=False)
+            if len(self.files) <= MAX_INITIAL_FILE_WATCHES:
+                self.file_watch_mode = "ALL_INITIAL_FILES"
+                for path in list(self.files):
+                    self._refresh(path, watch_file=True)
+            else:
+                self.file_watch_mode = "DIRECTORY_EVENTS"
         except (AttributeError, OSError) as error:
             self.last_error = str(error)
+            self.file_watch_mode = "FULL_SCAN_FALLBACK"
             self.close()
 
     def _events(self) -> set[Path] | None:
@@ -263,7 +303,7 @@ class UsageIndex:
                     if self.fd < 0:
                         break
                     continue
-                for path in dirty | set(self.links):
+                for path in dirty | set(self.links) | set(self.poll_files):
                     self._refresh(path)
                 if not dirty:
                     return self.total, len(self.files)

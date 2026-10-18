@@ -41,6 +41,7 @@ CAMPAIGN_MODEL_IDS = (
 )
 VERITAS_DIRECTOR_ID = "director-veritas-opportunity-v1"
 TERMINAL = {"COMPLETE", "PARTIAL", "FAILED", "CANCELLED"}
+STEP_TERMINAL = {"COMPLETED", "FAILED", "SKIPPED", "BLOCKED_DEPENDENCY"}
 HEALTH_BACKPRESSURE_REASONS = {
     "host_memory_critical",
     "recorder_memory_critical",
@@ -51,6 +52,9 @@ HEALTH_BACKPRESSURE_REASONS = {
     "host_memory_pressure",
     "host_io_pressure",
     "swap_activity",
+    "research_worker_swap_pressure",
+    "research_worker_memory_pressure",
+    "research_worker_io_pressure",
     "host_disk_reserve",
     "arena_artifact_headroom",
 }
@@ -156,13 +160,26 @@ def vmstat_swap_pages() -> tuple[int, int]:
     return int(fields["pswpin"]), int(fields["pswpout"])
 
 
+def vmstat_major_faults() -> int:
+    for line in Path("/proc/vmstat").read_text().splitlines():
+        if line.startswith("pgmajfault "):
+            return int(line.split()[1])
+    return 0
+
+
 def cgroup_memory(properties: dict[str, str]) -> dict[str, Any]:
     group = properties.get("ControlGroup")
     if not group:
         return {}
     base = Path("/sys/fs/cgroup") / group.lstrip("/")
     result: dict[str, Any] = {}
-    for name in ("memory.current", "memory.high", "memory.max"):
+    for name in (
+        "memory.current",
+        "memory.high",
+        "memory.max",
+        "memory.swap.current",
+        "memory.swap.peak",
+    ):
         try:
             raw = (base / name).read_text().strip()
             result[name] = None if raw == "max" else int(raw)
@@ -177,6 +194,36 @@ def cgroup_memory(properties: dict[str, str]) -> dict[str, Any]:
         )
     except (OSError, ValueError):
         result["memory.events"] = {}
+    try:
+        result["memory.stat"] = dict(
+            (key, int(value))
+            for key, value in (
+                line.split() for line in (base / "memory.stat").read_text().splitlines()
+            )
+        )
+    except (OSError, ValueError):
+        result["memory.stat"] = {}
+    for kind in ("memory", "cpu", "io"):
+        parsed: dict[str, float] = {}
+        try:
+            for line in (base / f"{kind}.pressure").read_text().splitlines():
+                label, _, rest = line.partition(" ")
+                fields = dict(item.split("=", 1) for item in rest.split() if "=" in item)
+                for key in ("avg10", "avg60", "avg300"):
+                    if key in fields:
+                        parsed[f"{label}_{key}"] = float(fields[key])
+        except (OSError, ValueError):
+            pass
+        result[f"{kind}.pressure"] = parsed
+    try:
+        result["cpu.stat"] = dict(
+            (key, int(value))
+            for key, value in (
+                line.split() for line in (base / "cpu.stat").read_text().splitlines()
+            )
+        )
+    except (OSError, ValueError):
+        result["cpu.stat"] = {}
     return result
 
 
@@ -247,16 +294,33 @@ def arena_job_records(arena_root: Path) -> list[dict[str, Any]]:
 
 
 def active_arena_jobs(arena_root: Path) -> list[dict[str, Any]]:
-    return [
-        {
-            "job_id": row.get("job_id"),
-            "state": row.get("state"),
-            "kind": row.get("configuration", {}).get("kind"),
-            "unit": row.get("unit"),
-        }
-        for row in arena_job_records(arena_root)
-        if row.get("state") in {"QUEUED", "RUNNING"}
-    ]
+    active: list[dict[str, Any]] = []
+    for row in arena_job_records(arena_root):
+        if row.get("state") not in {"QUEUED", "RUNNING"}:
+            continue
+        # A stale job.json heartbeat must not hold the single-worker gate after
+        # systemd has already reaped the process. inspect() is authoritative.
+        current = inspect(arena_root, str(row.get("job_id")))
+        if current.get("state") not in {"QUEUED", "RUNNING"}:
+            continue
+        supervisor = current.get("supervisor", {})
+        started = current.get("started_at")
+        active.append(
+            {
+                "job_id": current.get("job_id"),
+                "state": current.get("state"),
+                "kind": current.get("configuration", {}).get("kind"),
+                "unit": current.get("unit"),
+                "pid": current.get("pid") or supervisor.get("MainPID"),
+                "progress": current.get("progress"),
+                "phase": current.get("phase"),
+                "started_at": started,
+                "elapsed_seconds": max(0.0, time.time() - float(started)) if started else None,
+                "supervisor": supervisor,
+                "cgroup": cgroup_memory(supervisor),
+            }
+        )
+    return active
 
 
 def protected_refs(reality_root: Path, config: dict[str, Any]) -> list[dict[str, Any]]:
@@ -357,6 +421,7 @@ def host_snapshot(
     mem_current = int(rec_unit.get("MemoryCurrent", 0) or 0)
     mem_max_raw = rec_unit.get("MemoryMax", "")
     mem_max = int(mem_max_raw) if mem_max_raw.isdigit() else None
+    recorder_cgroup = cgroup_memory(rec_unit)
     disk = shutil.disk_usage(workspace)
     director = veritas_state(veritas_root)
     required_units = {
@@ -375,7 +440,12 @@ def host_snapshot(
             "mem_total_bytes": health.get("MemTotal", 0),
             "swap_total_bytes": swap_total,
             "swap_free_bytes": swap_free,
+            "swap_used_bytes": max(0, swap_total - swap_free),
             "swap_used_fraction": (swap_total - swap_free) / swap_total if swap_total else 0,
+            "anonymous_memory_bytes": health.get("AnonPages", 0),
+            "file_cache_bytes": health.get("Cached", 0),
+            "swap_cache_bytes": health.get("SwapCached", 0),
+            "major_page_faults": vmstat_major_faults(),
             "load_average_1m": load1,
             "load_average_5m": load5,
             "load_average_15m": load15,
@@ -426,7 +496,8 @@ def host_snapshot(
             "memory_high_bytes": int(rec_unit.get("MemoryHigh", 0) or 0),
             "memory_max_bytes": mem_max,
             "memory_fraction_of_max": mem_current / mem_max if mem_max else None,
-            "memory_events": cgroup_memory(rec_unit).get("memory.events", {}),
+            "memory_events": recorder_cgroup.get("memory.events", {}),
+            "cgroup": recorder_cgroup,
             "unit_result": rec_unit.get("Result"),
         },
         "units": required_units,
@@ -452,11 +523,40 @@ def swap_activity(previous: dict[str, Any] | None, current: dict[str, Any]) -> d
 
 def resource_sample(snapshot: dict[str, Any]) -> dict[str, Any]:
     pswpin, pswpout = vmstat_swap_pages()
+    workers = snapshot.get("arena", {}).get("active_jobs", [])
+    worker = workers[0] if workers else {}
+    cgroup = worker.get("cgroup", {})
+    memory_stat = cgroup.get("memory.stat", {})
+    cpu_stat = cgroup.get("cpu.stat", {})
     return {
         "at_ns": snapshot["checked_at_ns"],
         "swap_pages": [pswpin, pswpout],
         "mem_available_bytes": snapshot["host"]["mem_available_bytes"],
+        "major_page_faults": snapshot["host"].get("major_page_faults", 0),
+        "worker_job_id": worker.get("job_id"),
+        "worker_swap_bytes": cgroup.get("memory.swap.current"),
+        "worker_major_page_faults": memory_stat.get("pgmajfault"),
+        "worker_cpu_throttled_usec": cpu_stat.get("throttled_usec"),
+        "worker_memory_pressure": cgroup.get("memory.pressure", {}),
+        "worker_io_pressure": cgroup.get("io.pressure", {}),
     }
+
+
+def swap_pressure_correlated(
+    snapshot: dict[str, Any], limits: dict[str, Any], *, cancellation: bool = False
+) -> bool:
+    host = snapshot.get("host", {})
+    memory_psi = host.get("memory_psi", {})
+    memory_floor = (
+        limits["cancel_below_available_memory_mb"]
+        if cancellation
+        else limits["minimum_available_memory_mb"]
+    )
+    return (
+        host.get("mem_available_bytes", 0) < memory_floor * 1024**2
+        or memory_psi.get("some_avg10", 0) > limits["maximum_memory_psi_some_avg10_percent"]
+        or memory_psi.get("full_avg10", 0) > limits["maximum_memory_psi_full_avg10_percent"]
+    )
 
 
 def check_preflight(
@@ -538,11 +638,21 @@ def check_preflight(
         {"fraction_of_max": mem_fraction, "memory_events": recorder.get("memory_events")},
     )
     integrity = snapshot["segment_integrity"]
-    add(
-        "latest_source_segment_integrity",
-        bool(integrity) and all(x.get("valid") for x in integrity),
-        integrity,
-    )
+    if require_recorder_continuity:
+        add(
+            "latest_source_segment_integrity",
+            bool(integrity) and all(x.get("valid") for x in integrity),
+            integrity,
+        )
+    else:
+        checks.append(
+            {
+                "name": "latest_source_segment_integrity",
+                "state": "NOT_APPLICABLE",
+                "detail": integrity,
+                "blocking": False,
+            }
+        )
     host = snapshot["host"]
     add(
         "host_memory_headroom",
@@ -1145,16 +1255,28 @@ def registered_sweep_models(workspace: Path, step: dict[str, Any]) -> dict[str, 
     arena_root = workspace / "data/arena"
     dataset, _ = load_dataset(arena_root, spec.dataset_id)
     source_hash = research_hash()
-    sweep_id = "sweep-" + digest(
-        [spec.model_dump(mode="json"), dataset["rows_sha256"], source_hash]
-    )[:24]
-    sweep = read_json(arena_root / "sweeps" / sweep_id / "manifest.json", {})
-    if (
-        not sweep
-        or sweep.get("sweep_id") != sweep_id
-        or sweep.get("dataset_sha256") != dataset["rows_sha256"]
-        or sweep.get("source_hash") != source_hash
-    ):
+    sweep_ids = [
+        raw.get("reuse_sweep_id"),
+        "sweep-" + digest([spec.model_dump(mode="json"), dataset["rows_sha256"], source_hash])[:24],
+    ]
+    sweep = {}
+    sweep_id = None
+    for candidate_id in dict.fromkeys(item for item in sweep_ids if item):
+        candidate = read_json(arena_root / "sweeps" / candidate_id / "manifest.json", {})
+        if (
+            candidate
+            and candidate.get("sweep_id") == candidate_id
+            and candidate.get("dataset_sha256") == dataset["rows_sha256"]
+            and candidate.get("configuration") == spec.model_dump(mode="json")
+        ):
+            try:
+                load_reusable_sweep(arena_root, candidate_id, DirectorSpec.model_validate(raw))
+            except (OSError, ValueError, KeyError, TypeError):
+                continue
+            sweep = candidate
+            sweep_id = candidate_id
+            break
+    if not sweep or not sweep_id:
         return {}
     registered: dict[str, dict[str, Any]] = {}
     for trial in sweep.get("trials", []):
@@ -1190,6 +1312,38 @@ def registered_sweep_models(workspace: Path, step: dict[str, Any]) -> dict[str, 
             "sweep_id": sweep_id,
         }
     return registered
+
+
+def _resource_usage_rows(manifest: dict[str, Any]) -> tuple[list[dict[str, Any]], set[str]]:
+    """Return durable per-attempt usage rows and all historically Director jobs."""
+    step_kinds = {
+        step.get("step"): (step.get("job_spec") or step.get("job_spec_template") or {}).get("kind")
+        for step in manifest.get("steps", [])
+    }
+    job_steps: dict[str, Any] = {}
+    for step in manifest.get("steps", []):
+        ids = [
+            step.get("job_id"),
+            *(step.get("deferred_job_ids") or []),
+            *(step.get("failed_job_ids") or []),
+        ]
+        for identity in ids:
+            if identity:
+                job_steps[str(identity)] = step.get("step")
+    for row in manifest.get("failed_jobs", []) + manifest.get("paused_jobs", []):
+        if row.get("job_id"):
+            job_steps[str(row["job_id"])] = row.get("step")
+    rows = list(manifest.get("job_resource_usage", []))
+    director_ids = {
+        str(row.get("job_id"))
+        for row in rows
+        if row.get("job_id")
+        and (
+            row.get("job_kind") == "director"
+            or step_kinds.get(row.get("step", job_steps.get(str(row.get("job_id"))))) == "director"
+        )
+    }
+    return rows, director_ids
 
 
 def _progress(
@@ -1244,18 +1398,20 @@ def _progress(
     training_status["total_optimizer_training_seconds"] = sum(
         float(model.get("training_duration_seconds") or 0) for model in trained_models.values()
     )
-    campaign_job_ids = {step.get("job_id") for step in steps if step.get("job_id")}
-    campaign_usage = [
-        item
-        for item in manifest.get("job_resource_usage", [])
-        if item.get("job_id") in campaign_job_ids
+    campaign_usage, director_job_ids = _resource_usage_rows(manifest)
+    director_usage = [
+        item for item in campaign_usage if str(item.get("job_id")) in director_job_ids
     ]
-    director_job_ids = {
-        step.get("job_id")
+    active_ids = {
+        str(step.get("job_id"))
         for step in steps
-        if step.get("job_id") and step.get("job_spec", {}).get("kind") == "director"
+        if step.get("job_id") and step.get("state") in {"RUNNING", "QUEUED", "ADMITTING"}
     }
-    director_usage = [item for item in campaign_usage if item.get("job_id") in director_job_ids]
+    active_cpu_ns = sum(
+        int(item.get("CPUUsageNSec", 0) or 0)
+        for item in campaign_usage
+        if str(item.get("job_id")) in active_ids
+    )
     unique_challenges = {
         row.get("challenge_dataset_identity"): row
         for row in tournaments
@@ -1321,6 +1477,16 @@ def _progress(
             "source_analysis_positive_full_depth_pre_fee_states"
         ),
         "failed_experiments": failed,
+        "blocked_experiments": [
+            {
+                "step": step.get("step"),
+                "name": step.get("name"),
+                "blocked_by_step": step.get("blocked_by_step"),
+                "reason": step.get("error"),
+            }
+            for step in steps
+            if step.get("state") == "BLOCKED_DEPENDENCY"
+        ],
         "paused_or_deferred_jobs": manifest.get("paused_jobs", []),
         "skipped_experiments": manifest.get("skipped_jobs", []),
         "top_simulated_strategies": [
@@ -1336,15 +1502,27 @@ def _progress(
         or veritas.get("status_note"),
         "resource_snapshot": {
             "available_ram_bytes": snapshot["host"]["mem_available_bytes"],
+            "anonymous_memory_bytes": snapshot["host"].get("anonymous_memory_bytes"),
+            "file_cache_bytes": snapshot["host"].get("file_cache_bytes"),
             "swap_used_fraction": snapshot["host"]["swap_used_fraction"],
+            "swap_used_bytes": snapshot["host"].get("swap_used_bytes"),
+            "memory_psi": snapshot["host"].get("memory_psi", {}),
+            "cpu_psi": snapshot["host"].get("cpu_psi", {}),
+            "io_psi": snapshot["host"].get("io_psi", {}),
+            "major_page_faults": snapshot["host"].get("major_page_faults"),
             "load_average_1m": snapshot["host"]["load_average_1m"],
             "recorder_memory_bytes": recorder.get("memory_current_bytes"),
             "recorder_memory_fraction_of_max": recorder.get("memory_fraction_of_max"),
+            "recorder_cgroup": recorder.get("cgroup", {}),
+            "active_workers": snapshot["arena"].get("active_jobs", []),
+            "backpressure_diagnostics": manifest.get("last_backpressure_diagnostics", {}),
             "source_recovery": copy.deepcopy(manifest.get("source_recovery", {})),
             "api_health": snapshot["api"].get("status"),
             "disk_free_bytes": snapshot["host"]["disk_free_bytes"],
             "campaign_job_resource_usage": manifest.get("job_resource_usage", []),
             "campaign_cpu_hours": cgroup_cpu_ns / 3_600_000_000_000,
+            "campaign_cpu_hours_scope": "cumulative systemd CPU usage across every recorded campaign job attempt",
+            "current_job_cpu_hours": active_cpu_ns / 3_600_000_000_000,
             "director_cpu_hours": director_cpu_ns / 3_600_000_000_000,
             "maximum_job_memory_bytes": max(
                 (int(item.get("MemoryPeak", 0) or 0) for item in campaign_usage), default=0
@@ -1379,7 +1557,7 @@ def render_status(report: dict[str, Any]) -> str:
             f"- Positive gross candidates in latest Veritas qualification: {report.get('positive_gross_candidates_current')}",
             f"- Valid synthetic strategy comparisons: {report.get('valid_strategy_comparisons', 0)}",
             f"- Failed experiments: {len(report.get('failed_experiments', []))}; deferred jobs: {len(report.get('paused_or_deferred_jobs', []))}",
-            f"- Campaign CPU: {report.get('resource_snapshot', {}).get('campaign_cpu_hours', 0):.3f} CPU-hours; peak job memory: {report.get('resource_snapshot', {}).get('maximum_job_memory_bytes', 0)} bytes",
+            f"- Campaign CPU: {report.get('resource_snapshot', {}).get('campaign_cpu_hours', 0):.3f} cumulative CPU-hours; current job: {report.get('resource_snapshot', {}).get('current_job_cpu_hours', 0):.3f} CPU-hours; peak job memory: {report.get('resource_snapshot', {}).get('maximum_job_memory_bytes', 0)} bytes",
             f"- Latest finding: {report.get('latest_significant_discovery')}",
             "",
             "All Arena tournament results are synthetic simulation results. They are not evidence of real-world profitability or executed fills.",
@@ -1419,9 +1597,7 @@ def check_campaign_resources(
 ) -> tuple[bool, list[str], dict[str, Any]]:
     limits = config["resource_limits"]
     if source_independent is None:
-        source_independent = is_verified_synthetic_step(
-            workspace, step, campaign_manifest or {}
-        )
+        source_independent = is_verified_synthetic_step(workspace, step, campaign_manifest or {})
     checks = check_preflight(
         snapshot,
         config,
@@ -1438,7 +1614,9 @@ def check_campaign_resources(
     if len(snapshot["arena"]["veritas_active_jobs"]) > 1:
         reasons.append("too_many_veritas_arena_jobs_active")
     activity = swap_activity(prior_sample, {"swap_pages": list(vmstat_swap_pages())})
-    if activity["bytes"] > limits["maximum_swap_activity_bytes_per_interval"]:
+    if activity["bytes"] > limits[
+        "maximum_swap_activity_bytes_per_interval"
+    ] and swap_pressure_correlated(snapshot, limits):
         reasons.append("swap_activity")
     # Campaign starts only after the mandatory service checks passed. If a base service
     # drops later, defer new work and let the periodic health checks record the incident.
@@ -1717,7 +1895,15 @@ def validate_director_artifact(workspace: Path, job: dict[str, Any]) -> dict[str
 def job_unit_usage(job_id: str) -> dict[str, Any]:
     data = systemd_properties(f"midas-arena-{job_id}.service")
     result: dict[str, Any] = {"job_id": job_id}
-    for key in ("CPUUsageNSec", "MemoryPeak", "MemoryCurrent", "Result"):
+    for key in (
+        "CPUUsageNSec",
+        "MemoryPeak",
+        "MemoryCurrent",
+        "MemorySwapPeak",
+        "MemorySwapCurrent",
+        "Result",
+        "ControlGroup",
+    ):
         value = data.get(key)
         if value and value.isdigit():
             result[key] = int(value)
@@ -1726,23 +1912,39 @@ def job_unit_usage(job_id: str) -> dict[str, Any]:
     return result
 
 
-def record_job_usage(manifest: dict[str, Any], job_id: str, state: str, timestamp_ns: int) -> None:
+def record_job_usage(
+    manifest: dict[str, Any],
+    job_id: str,
+    state: str,
+    timestamp_ns: int,
+    *,
+    job_kind: str | None = None,
+    step_number: int | None = None,
+) -> None:
     sample = job_unit_usage(job_id)
     records = manifest.setdefault("job_resource_usage", [])
     record = next((item for item in records if item.get("job_id") == job_id), None)
     if record is None:
         record = {"job_id": job_id, "samples": 0}
         records.append(record)
-    for key in ("CPUUsageNSec", "MemoryPeak"):
+    for key in ("CPUUsageNSec", "MemoryPeak", "MemorySwapPeak"):
         if isinstance(sample.get(key), int):
             record[key] = max(record.get(key, 0), sample[key])
-    if isinstance(sample.get("MemoryCurrent"), int):
-        record["MemoryCurrent"] = sample["MemoryCurrent"]
+    for key in ("MemoryCurrent", "MemorySwapCurrent"):
+        if isinstance(sample.get(key), int):
+            record[key] = sample[key]
+    if job_kind:
+        record["job_kind"] = job_kind
+    if step_number is not None:
+        record["step"] = step_number
     if sample.get("Result") not in (None, "[not set]", "unknown"):
         record["Result"] = sample["Result"]
     record["last_observed_state"] = state
     record["last_sampled_at"] = now_iso(timestamp_ns)
-    if any(key in sample for key in ("CPUUsageNSec", "MemoryPeak", "MemoryCurrent")):
+    if any(
+        key in sample
+        for key in ("CPUUsageNSec", "MemoryPeak", "MemoryCurrent", "MemorySwapCurrent")
+    ):
         record["samples"] = record.get("samples", 0) + 1
 
 
@@ -1795,7 +1997,11 @@ def health_backpressure_reasons(manifest: dict[str, Any], step: dict[str, Any]) 
 
 
 def defer_health_cancelled_step(
-    manifest: dict[str, Any], step: dict[str, Any], job_id: str, reasons: set[str], timestamp_ns: int
+    manifest: dict[str, Any],
+    step: dict[str, Any],
+    job_id: str,
+    reasons: set[str],
+    timestamp_ns: int,
 ) -> None:
     step.setdefault("deferred_job_ids", []).append(job_id)
     step["admission_generation"] = int(step.get("admission_generation", 0)) + 1
@@ -1803,9 +2009,7 @@ def defer_health_cancelled_step(
     step["admission_intent"] = None
     step.pop("cancel_requested_at_ns", None)
     step["state"] = "WAITING_RESOURCE"
-    step["error"] = "Previous run stopped by campaign backpressure: " + ", ".join(
-        sorted(reasons)
-    )
+    step["error"] = "Previous run stopped by campaign backpressure: " + ", ".join(sorted(reasons))
     for record in manifest.get("failed_jobs", []):
         if record.get("job_id") == job_id and record.get("state") == "CANCELLED":
             record["state"] = "CANCELLED_FOR_HEALTH_BACKPRESSURE"
@@ -1833,12 +2037,11 @@ def defer_health_cancelled_step(
 
 def campaign_health(manifest: dict[str, Any], snapshot: dict[str, Any]) -> str:
     steps = manifest.get("steps", [])
-    active_job = any(
-        step.get("state") in {"RUNNING", "QUEUED", "ADMITTING"} for step in steps
-    )
-    waiting_for_recovery = any(step.get("state") == "CANCEL_REQUESTED" for step in steps) or (
-        not active_job and any(step.get("state") == "WAITING_RESOURCE" for step in steps)
-    )
+    active_job = any(step.get("state") in {"RUNNING", "QUEUED", "ADMITTING"} for step in steps)
+    waiting_for_recovery = any(
+        step.get("state") in {"CANCEL_REQUESTED", "RETRY_WAIT", "BLOCKED_DEPENDENCY"}
+        for step in steps
+    ) or (not active_job and any(step.get("state") == "WAITING_RESOURCE" for step in steps))
     recorder = snapshot["recorder"]
     recorder_healthy = recorder.get("state") in {
         "RECORDING_UNSEQUENCED",
@@ -1908,6 +2111,21 @@ def close_resolved_incidents(
     for item in manifest.get("operational_incidents", []):
         if not item.get("resolved_at") and item.get("key") not in active_keys:
             item["resolved_at"] = now_iso(timestamp_ns)
+
+
+def research_source_is_accepted(manifest: dict[str, Any], current_hash: str) -> bool:
+    """Keep the original scientific hash pinned while allowing reviewed ops-only changes."""
+    baseline = manifest.get("research_source_hash")
+    accepted = {baseline} if baseline else set()
+    for transition in manifest.get("approved_research_source_transitions", []):
+        if (
+            transition.get("classification") == "OPERATIONAL_ONLY"
+            and transition.get("reviewed") is True
+            and transition.get("from_hash") in accepted
+            and transition.get("to_hash")
+        ):
+            accepted.add(transition["to_hash"])
+    return current_hash in accepted
 
 
 def initialize(
@@ -2016,6 +2234,75 @@ def initialize(
     return manifest
 
 
+def _block_failed_dependencies(manifest: dict[str, Any], timestamp_ns: int) -> None:
+    by_step = {item.get("step"): item for item in manifest.get("steps", [])}
+    for step in manifest.get("steps", []):
+        dependency_number = step.get("selected_model_from_step")
+        if dependency_number is None or step.get("state") in STEP_TERMINAL or step.get("job_id"):
+            continue
+        dependency = by_step.get(dependency_number)
+        reason = None
+        if dependency is None:
+            reason = f"Required Director step {dependency_number} is missing"
+        elif dependency.get("state") in {"FAILED", "SKIPPED", "BLOCKED_DEPENDENCY"}:
+            reason = (
+                f"Required Director step {dependency_number} ended as {dependency.get('state')}"
+            )
+        elif dependency.get("state") == "COMPLETED" and not (
+            dependency.get("validated_result") or {}
+        ).get("selected_model_id"):
+            reason = f"Completed Director step {dependency_number} has no validated selected model"
+        if reason is None:
+            continue
+        step.update(
+            state="BLOCKED_DEPENDENCY",
+            error=reason,
+            blocked_by_step=dependency_number,
+            blocked_at=now_iso(timestamp_ns),
+        )
+        manifest.setdefault("blocked_jobs", []).append(
+            {
+                "step": step.get("step"),
+                "name": step.get("name"),
+                "blocked_by_step": dependency_number,
+                "reason": reason,
+                "at": now_iso(timestamp_ns),
+            }
+        )
+
+
+def reusable_completed_director_sweep(arena_root: Path, step: dict[str, Any]) -> str | None:
+    """Find a complete, hash-verified sweep from an interrupted attempt of this Director."""
+    raw = (step.get("job_spec") or {}).get("director") or {}
+    if not raw or raw.get("reuse_sweep_id"):
+        return None
+    try:
+        spec = DirectorSpec.model_validate(raw)
+    except Exception:
+        return None
+    expected = spec.model_dump(mode="json")
+    directories = sorted(
+        (arena_root / "directors").glob("director-*/manifest.json"),
+        key=lambda path: path.stat().st_mtime,
+        reverse=True,
+    )
+    for path in directories:
+        record = read_json(path, {})
+        stages = record.get("steps") or []
+        if record.get("configuration") != expected or not stages:
+            continue
+        artifact = stages[0].get("artifact") or {}
+        sweep_id = artifact.get("identity")
+        if stages[0].get("state") != "COMPLETED" or artifact.get("kind") != "sweeps":
+            continue
+        try:
+            load_reusable_sweep(arena_root, str(sweep_id), spec)
+        except (OSError, ValueError, KeyError, TypeError):
+            continue
+        return str(sweep_id)
+    return None
+
+
 def _admit_due_step(
     workspace: Path,
     manifest: dict[str, Any],
@@ -2024,99 +2311,145 @@ def _admit_due_step(
     timestamp_ns: int,
 ) -> None:
     elapsed = (timestamp_ns - manifest["started_at_ns"]) // 1_000_000_000
-    due = next(
-        (s for s in manifest["steps"] if s["state"] not in {"COMPLETED", "FAILED", "SKIPPED"}), None
-    )
-    if due is None or due.get("job_id") or elapsed < due["after_seconds"]:
-        return
+    _block_failed_dependencies(manifest, timestamp_ns)
     if manifest.get("integrity_blocked"):
-        due["state"] = "WAITING_INTEGRITY"
-        due["error"] = (
-            "Frozen campaign source, configuration, or protected artifact integrity changed"
-        )
+        for step in manifest["steps"]:
+            if step.get("state") not in STEP_TERMINAL and not step.get("job_id"):
+                step["state"] = "WAITING_INTEGRITY"
+                step["error"] = (
+                    "Frozen campaign source, configuration, or protected artifact integrity changed"
+                )
         return
-    if due.get("retry_at_ns") and timestamp_ns < due["retry_at_ns"]:
-        due["state"] = "RETRY_WAIT"
+    candidates = []
+    for step in manifest["steps"]:
+        if step.get("state") in STEP_TERMINAL or step.get("job_id"):
+            continue
+        if elapsed < step.get("after_seconds", 0):
+            continue
+        if step.get("retry_at_ns") and timestamp_ns < step["retry_at_ns"]:
+            step["state"] = "RETRY_WAIT"
+            continue
+        dependency_number = step.get("selected_model_from_step")
+        if dependency_number is not None:
+            dependency = next(
+                (item for item in manifest["steps"] if item.get("step") == dependency_number),
+                None,
+            )
+            if dependency is None or dependency.get("state") != "COMPLETED":
+                step["state"] = "WAITING_DEPENDENCY"
+                step["error"] = f"Waiting for Director step {dependency_number}"
+                continue
+        candidates.append(step)
+    if not candidates:
         return
     arena_root = workspace / "data/arena"
     try:
         used, _ = artifact_usage(arena_root)
     except OSError as error:
-        due["state"] = "WAITING_RESOURCE"
-        due["error"] = f"Arena artifact inventory unavailable: {error}"
+        candidate = candidates[0]
+        candidate["state"] = "WAITING_RESOURCE"
+        candidate["error"] = f"Arena artifact inventory unavailable: {error}"
         return
-    source_independent = is_verified_synthetic_step(workspace, due, manifest)
-    ready, reasons, swap = check_campaign_resources(
-        workspace,
-        snapshot,
-        config,
-        manifest.get("last_resource_sample"),
-        used,
-        step=due,
-        campaign_manifest=manifest,
-        source_independent=source_independent,
-    )
-    if not source_independent and not manifest.get("source_recovery", {}).get("stable", False):
-        ready = False
-        reasons = sorted(set(reasons) | {"recorder_recovery_stability"})
-    due["latest_backpressure"] = {
-        "checked_at": now_iso(timestamp_ns),
-        "ready": ready,
-        "reasons": reasons,
-        "swap_activity": swap,
-        "arena_artifact_usage_bytes": used,
-        "recorder_continuity_required": not source_independent,
-        "source_recovery_stability_required": not source_independent,
+
+    source_only_reasons = {
+        "recorder_continuity",
+        "recorder_recovery_stability",
+        "latest_source_segment_integrity",
     }
-    if not ready:
-        due["state"] = "WAITING_RESOURCE"
-        due["error"] = "Waiting for resource backpressure gates: " + ",".join(reasons)
-        key = "campaign_resources"
-        append_incident(manifest, key, reasons, timestamp_ns)
-        manifest.setdefault("paused_jobs", []).append(
-            {"step": due["step"], "at": now_iso(timestamp_ns), "reason": reasons}
+    for due in candidates:
+        source_independent = is_verified_synthetic_step(workspace, due, manifest)
+        ready, reasons, swap = check_campaign_resources(
+            workspace,
+            snapshot,
+            config,
+            manifest.get("last_resource_sample"),
+            used,
+            step=due,
+            campaign_manifest=manifest,
+            source_independent=source_independent,
         )
-        return
-    close_resolved_incidents(manifest, set(), timestamp_ns)
-    due["state"] = "ADMITTING"
-    due["error"] = None
-    job_spec = copy.deepcopy(
-        due["job_spec_template"] if "job_spec_template" in due else due["job_spec"]
-    )
-    if due.get("selected_model_from_step") is not None:
-        dependency = next(
-            (
+        if not source_independent and not manifest.get("source_recovery", {}).get("stable", False):
+            ready = False
+            reasons = sorted(set(reasons) | {"recorder_recovery_stability"})
+        previous_backpressure = due.get("latest_backpressure") or {}
+        due["latest_backpressure"] = {
+            "checked_at": now_iso(timestamp_ns),
+            "ready": ready,
+            "reasons": reasons,
+            "swap_activity": swap,
+            "arena_artifact_usage_bytes": used,
+            "recorder_continuity_required": not source_independent,
+            "source_recovery_stability_required": not source_independent,
+        }
+        if not ready:
+            due["state"] = "WAITING_RESOURCE"
+            due["error"] = "Waiting for resource backpressure gates: " + ",".join(reasons)
+            append_incident(manifest, "campaign_resources", reasons, timestamp_ns)
+            if previous_backpressure.get("reasons") != reasons:
+                manifest.setdefault("paused_jobs", []).append(
+                    {"step": due["step"], "at": now_iso(timestamp_ns), "reason": reasons}
+                )
+            if set(reasons) <= source_only_reasons:
+                continue
+            return
+
+        job_spec = copy.deepcopy(
+            due["job_spec_template"] if "job_spec_template" in due else due["job_spec"]
+        )
+        if due.get("selected_model_from_step") is not None:
+            dependency = next(
                 item
                 for item in manifest["steps"]
                 if item.get("step") == due["selected_model_from_step"]
-            ),
-            None,
-        )
-        selected_model = (dependency or {}).get("validated_result", {}).get("selected_model_id")
-        if not selected_model:
-            due["state"] = "WAITING_DEPENDENCY"
-            due["error"] = "Waiting for the validated Director-selected model"
-            return
-        model_ids = job_spec["tournament"]["model_ids"]
-        if selected_model not in model_ids:
-            job_spec["tournament"]["model_ids"] = [*model_ids, selected_model]
-        due["resolved_model_id"] = selected_model
-    spec = JobSpec.model_validate(job_spec)
-    attempt = int(due.get("attempt", 0))
-    generation = int(due.get("admission_generation", 0))
-    key = f"autonomy-{CAMPAIGN_ID}-step-{due['step']}-attempt-{attempt}-run-{generation}"
-    due["admission_intent"] = {
-        "key": key,
-        "recorded_at": now_iso(timestamp_ns),
-        "spec_sha256": hashlib.sha256(json.dumps(job_spec, sort_keys=True).encode()).hexdigest(),
-    }
-    due["admission_attempt"] = attempt
-    # The native Arena admission key recovers this exact job after a controller or host restart.
-    due["job_spec"] = job_spec
-    job = create_job(arena_root, spec, admission_key=key)
-    due["job_id"] = job["job_id"]
-    due["state"] = job["state"]
-    due["admitted_at"] = now_iso(timestamp_ns)
+            )
+            selected_model = (dependency.get("validated_result") or {}).get("selected_model_id")
+            if not selected_model:
+                due["state"] = "BLOCKED_DEPENDENCY"
+                due["error"] = "Completed Director has no validated selected model"
+                due["blocked_by_step"] = due["selected_model_from_step"]
+                continue
+            model_ids = job_spec["tournament"]["model_ids"]
+            if selected_model not in model_ids:
+                job_spec["tournament"]["model_ids"] = [*model_ids, selected_model]
+            due["resolved_model_id"] = selected_model
+
+        if due.get("attempt", 0) > 0 and job_spec.get("kind") == "director":
+            sweep_id = reusable_completed_director_sweep(arena_root, due)
+            if sweep_id:
+                job_spec["director"]["reuse_sweep_id"] = sweep_id
+                due["recovery_reused_sweep_id"] = sweep_id
+                manifest.setdefault("recovery_events", []).append(
+                    {
+                        "step": due["step"],
+                        "at": now_iso(timestamp_ns),
+                        "action": "reuse_verified_completed_director_sweep",
+                        "sweep_id": sweep_id,
+                        "attempt": due["attempt"],
+                    }
+                )
+
+        spec = JobSpec.model_validate(job_spec)
+        close_resolved_incidents(manifest, set(), timestamp_ns)
+        due["state"] = "ADMITTING"
+        due["error"] = None
+        attempt = int(due.get("attempt", 0))
+        generation = int(due.get("admission_generation", 0))
+        key = f"autonomy-{CAMPAIGN_ID}-step-{due['step']}-attempt-{attempt}-run-{generation}"
+        due["admission_intent"] = {
+            "key": key,
+            "recorded_at": now_iso(timestamp_ns),
+            "spec_sha256": hashlib.sha256(
+                json.dumps(job_spec, sort_keys=True).encode()
+            ).hexdigest(),
+        }
+        due["admission_attempt"] = attempt
+        # The native Arena admission key recovers this exact job after a controller or host restart.
+        due["job_spec"] = job_spec
+        job = create_job(arena_root, spec, admission_key=key)
+        due["job_id"] = job["job_id"]
+        due["state"] = job["state"]
+        due["admitted_at"] = now_iso(timestamp_ns)
+        return
 
 
 def _observe_steps(workspace: Path, manifest: dict[str, Any], timestamp_ns: int) -> bool:
@@ -2136,7 +2469,14 @@ def _observe_steps(workspace: Path, manifest: dict[str, Any], timestamp_ns: int)
                     changed = True
             continue
         job = inspect(arena_root, job_id)
-        record_job_usage(manifest, job_id, job.get("state", "UNKNOWN"), timestamp_ns)
+        record_job_usage(
+            manifest,
+            job_id,
+            job.get("state", "UNKNOWN"),
+            timestamp_ns,
+            job_kind=(job.get("configuration") or {}).get("kind"),
+            step_number=step.get("step"),
+        )
         if previous_state == "CANCEL_REQUESTED" and job.get("state") in {"QUEUED", "RUNNING"}:
             requested_at = step.get("cancel_requested_at_ns", timestamp_ns)
             if timestamp_ns - requested_at > 180 * 1_000_000_000:
@@ -2186,6 +2526,9 @@ def _observe_steps(workspace: Path, manifest: dict[str, Any], timestamp_ns: int)
                 )
             continue
         error = job.get("error") or f"Arena job ended in {job.get('state')}"
+        step.setdefault("failed_job_ids", [])
+        if job_id not in step["failed_job_ids"]:
+            step["failed_job_ids"].append(job_id)
         manifest.setdefault("failed_jobs", []).append(
             {
                 "job_id": job_id,
@@ -2246,6 +2589,41 @@ def _cancel_unhealthy_running_job(
     swap = swap_activity(
         manifest.get("last_resource_sample"), {"swap_pages": list(vmstat_swap_pages())}
     )
+    prior_sample = manifest.get("last_resource_sample") or {}
+    campaign_job_ids = {step.get("job_id") for step in active_steps}
+    worker = next(
+        (
+            item
+            for item in snapshot.get("arena", {}).get("active_jobs", [])
+            if item.get("job_id") in campaign_job_ids
+        ),
+        {},
+    )
+    worker_cgroup = worker.get("cgroup", {})
+    worker_swap = worker_cgroup.get("memory.swap.current")
+    worker_swap_delta = 0
+    if (
+        worker_swap is not None
+        and prior_sample.get("worker_job_id") == worker.get("job_id")
+        and prior_sample.get("worker_swap_bytes") is not None
+    ):
+        worker_swap_delta = max(0, int(worker_swap) - int(prior_sample["worker_swap_bytes"]))
+    worker_memory_psi = worker_cgroup.get("memory.pressure", {})
+    worker_io_psi = worker_cgroup.get("io.pressure", {})
+    worker_memory_events = worker_cgroup.get("memory.events", {})
+    diagnostics = {
+        "global_swap_activity_bytes": swap["bytes"],
+        "global_swap_activity_correlated_with_pressure": swap_pressure_correlated(
+            snapshot, limits, cancellation=True
+        ),
+        "worker_job_id": worker.get("job_id"),
+        "worker_swap_current_bytes": worker_swap,
+        "worker_swap_growth_bytes": worker_swap_delta,
+        "worker_memory_pressure": worker_memory_psi,
+        "worker_io_pressure": worker_io_psi,
+        "worker_memory_events": worker_memory_events,
+    }
+    manifest["last_backpressure_diagnostics"] = diagnostics
     try:
         arena_bytes = artifact_usage(workspace / "data/arena")[0]
     except OSError:
@@ -2268,8 +2646,21 @@ def _cancel_unhealthy_running_job(
         resource_reasons.append("host_memory_pressure")
     if io_psi.get("some_avg10", 0) > limits["maximum_io_psi_some_avg10_percent"]:
         resource_reasons.append("host_io_pressure")
-    if swap["bytes"] > limits["maximum_swap_activity_bytes_per_interval"]:
+    if (
+        swap["bytes"] > limits["maximum_swap_activity_bytes_per_interval"]
+        and diagnostics["global_swap_activity_correlated_with_pressure"]
+    ):
         resource_reasons.append("swap_activity")
+    if worker_swap_delta > limits["maximum_swap_activity_bytes_per_interval"]:
+        resource_reasons.append("research_worker_swap_pressure")
+    if (
+        worker_memory_psi.get("some_avg10", 0) > limits["maximum_memory_psi_some_avg10_percent"]
+        or worker_memory_psi.get("full_avg10", 0) > limits["maximum_memory_psi_full_avg10_percent"]
+        or worker_memory_events.get("oom_kill", 0) > 0
+    ):
+        resource_reasons.append("research_worker_memory_pressure")
+    if worker_io_psi.get("some_avg10", 0) > limits["maximum_io_psi_some_avg10_percent"]:
+        resource_reasons.append("research_worker_io_pressure")
     if host["disk_free_bytes"] < limits["minimum_disk_free_bytes"]:
         resource_reasons.append("host_disk_reserve")
     maximum_artifacts = limits.get("maximum_arena_artifact_bytes", 1024**3)
@@ -2311,7 +2702,7 @@ def _run_scheduled_regression(
         reasons.append("latest finalized Reality segment hash verification failed")
     if sha256(CONFIG_PATH) != manifest.get("configuration_sha256"):
         reasons.append("campaign configuration changed after activation")
-    if research_hash() != manifest.get("research_source_hash"):
+    if not research_source_is_accepted(manifest, research_hash()):
         reasons.append("Arena research package source changed after activation")
     if manifest.get("integrity_failure"):
         reasons.append("a prior periodic dataset/model integrity check failed")
@@ -2443,26 +2834,16 @@ def render_final_report(workspace: Path, manifest: dict[str, Any], final: dict[s
             continue
         for model_id, model in registered_sweep_models(workspace, step).items():
             trained_models.setdefault(model_id, model)
-    campaign_job_ids = {step.get("job_id") for step in manifest["steps"] if step.get("job_id")}
-    usage = [
-        item
-        for item in manifest.get("job_resource_usage", [])
-        if item.get("job_id") in campaign_job_ids
-    ]
+    usage, director_job_ids = _resource_usage_rows(manifest)
     training_seconds = sum(
         float(model.get("training_duration_seconds") or 0) for model in trained_models.values()
     )
     campaign_cpu_hours = sum(int(item.get("CPUUsageNSec", 0) or 0) for item in usage) / 3.6e12
-    director_job_ids = {
-        step.get("job_id")
-        for step in manifest["steps"]
-        if step.get("job_id") and step.get("job_spec", {}).get("kind") == "director"
-    }
     director_cpu_hours = (
         sum(
             int(item.get("CPUUsageNSec", 0) or 0)
             for item in usage
-            if item.get("job_id") in director_job_ids
+            if str(item.get("job_id")) in director_job_ids
         )
         / 3.6e12
     )
@@ -2547,8 +2928,8 @@ def render_final_report(workspace: Path, manifest: dict[str, Any], final: dict[s
             f"- Recording gaps added: {max(0, int(final_recorder.get('gaps', 0)) - int(initial.get('gaps', 0)))}; final total gaps: {final_recorder.get('gaps')}",
             f"- Recorder state: `{final_recorder.get('state')}`; memory at final check: {final_recorder.get('memory_current_bytes')} bytes",
             f"- Arena artifacts at final check: {manifest.get('final_arena_artifact_usage_bytes')} bytes; host disk free: {final_recorder.get('capacity', {}).get('filesystem_free_bytes')}",
-            f"- Failed jobs: {len(manifest.get('failed_jobs', []))}; recoveries: {sum(1 for s in manifest['steps'] if len(s.get('failed_job_ids', [])) > 0)}",
-            f"- Resource interruptions: {len(manifest.get('operational_incidents', []))}; peak CPU/memory records: `{manifest.get('job_resource_usage', [])}`",
+            f"- Failed jobs: {len(manifest.get('failed_jobs', []))}; blocked dependencies: {sum(1 for s in manifest['steps'] if s.get('state') == 'BLOCKED_DEPENDENCY')}; recoveries: {sum(1 for s in manifest['steps'] if len(s.get('failed_job_ids', [])) > 0)}",
+            f"- Resource incidents: {len(manifest.get('operational_incidents', []))}; resource samples retained for {len(usage)} campaign job attempts.",
             f"- Final integrity: protected campaigns unchanged={final['protected_campaigns_unchanged']}; dataset unchanged={final['dataset_identity_unchanged']}; model artifacts unchanged={final['model_artifact_identities_unchanged']}; newest segment hashes valid={final['latest_source_segments_valid']}",
             "",
             "## Scientific activity",
@@ -2558,7 +2939,7 @@ def render_final_report(workspace: Path, manifest: dict[str, Any], final: dict[s
             f"- Campaign Arena tournaments run: {complete_count}/{expected_tournaments}; matched-baseline validations: {sum(1 for r in reports if r.get('comparison_valid'))}",
             f"- New synthetic models registered: {len(trained_models)}; families: {', '.join(sorted({str(model.get('family')) for model in trained_models.values()})) or 'none'}.",
             f"- Unique synthetic scenario episodes evaluated: {synthetic_episodes}; total matched tournament rows: {sum(int(row.get('row_count', 0) or 0) for row in reports)}.",
-            f"- Model optimizer training time: {training_seconds / 3600:.3f} hours; Director cgroup CPU: {director_cpu_hours:.3f} CPU-hours; campaign cgroup CPU: {campaign_cpu_hours:.3f} CPU-hours; peak job memory: {max((int(item.get('MemoryPeak', 0) or 0) for item in usage), default=0)} bytes.",
+            f"- Model optimizer training time: {training_seconds / 3600:.3f} hours; Director cgroup CPU: {director_cpu_hours:.3f} cumulative CPU-hours; campaign cgroup CPU: {campaign_cpu_hours:.3f} cumulative CPU-hours across all attempts; peak job memory: {max((int(item.get('MemoryPeak', 0) or 0) for item in usage), default=0)} bytes.",
             f"- Training dataset: `{manifest.get('training', {}).get('dataset_id')}`; synthetic objective: {manifest.get('training', {}).get('objective')}; model selection used validation; untouched dataset test partition used for selection: no.",
             "- Each new Director candidate was evaluated in fresh synthetic matched challenges alongside no-trade and existing compatible policies, including the existing PPO model. Simulated performance is not real-market profitability evidence.",
             *training_lines,
@@ -2805,8 +3186,14 @@ def status(workspace: Path) -> dict[str, Any]:
         )
         report["plan_revision"] = manifest.get("plan_revision")
         report["queued_steps"] = sum(
-            step.get("state") in {"PENDING", "WAITING_RESOURCE", "WAITING_DEPENDENCY"}
+            step.get("state") in {"PENDING", "WAITING_RESOURCE", "WAITING_DEPENDENCY", "RETRY_WAIT"}
             for step in manifest["steps"]
+        )
+        report["retry_wait_steps"] = sum(
+            step.get("state") == "RETRY_WAIT" for step in manifest["steps"]
+        )
+        report["blocked_step_count"] = sum(
+            step.get("state") == "BLOCKED_DEPENDENCY" for step in manifest["steps"]
         )
         report["steps"] = []
         for step in manifest["steps"]:
@@ -2826,6 +3213,7 @@ def status(workspace: Path) -> dict[str, Any]:
                         "selected_model_from_step",
                         "resolved_model_id",
                         "skip_reason",
+                        "blocked_by_step",
                     )
                     if step.get(k) is not None
                 }
