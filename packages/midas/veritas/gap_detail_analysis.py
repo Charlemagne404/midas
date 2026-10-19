@@ -294,9 +294,16 @@ def _initial_cumulative() -> dict[str, Any]:
     }
 
 
-def _increment(mapping: dict[str, int], key: str, amount: int = 1) -> None:
-    if key not in mapping and len(mapping) >= MAX_GAP_REASONS:
-        raise ValueError("Distinct finalized gap reasons exceeded their bound")
+def _increment(
+    mapping: dict[str, int],
+    key: str,
+    amount: int = 1,
+    *,
+    max_distinct: int = MAX_GAP_REASONS,
+    overflow_message: str = "Distinct finalized gap reasons exceeded their bound",
+) -> None:
+    if key not in mapping and len(mapping) >= max_distinct:
+        raise ValueError(overflow_message)
     mapping[key] = int(mapping.get(key, 0)) + amount
 
 
@@ -758,13 +765,14 @@ def update_finalized_gap_detail_analysis(
                     "unmapped_affected_asset_count"
                 ]
                 for market_id in gap["affected_market_ids"]:
-                    if (
-                        market_id not in cumulative["campaign_window_affected_market_counts"]
-                        and len(cumulative["campaign_window_affected_market_counts"])
-                        >= MAX_TRACKED_MARKETS
-                    ):
-                        raise ValueError("Distinct gap-affected market count exceeded its bound")
-                    _increment(cumulative["campaign_window_affected_market_counts"], market_id)
+                    _increment(
+                        cumulative["campaign_window_affected_market_counts"],
+                        market_id,
+                        max_distinct=MAX_TRACKED_MARKETS,
+                        overflow_message=(
+                            "Distinct gap-affected market count exceeded its bound"
+                        ),
+                    )
                 received = gap["received_ns"]
                 first = cumulative["campaign_window_first_gap_received_ns"]
                 last = cumulative["campaign_window_last_gap_received_ns"]
