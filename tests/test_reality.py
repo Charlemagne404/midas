@@ -2,6 +2,8 @@ import json
 from pathlib import Path
 
 import pytest
+from midas.reality import storage as storage_module
+from midas.reality.collector import collection_health
 from midas.reality.discovery import select
 from midas.reality.reconstruction import Engine
 from midas.reality.replay import replay
@@ -145,6 +147,86 @@ def test_storage_integrity_rotation_lock_budget_and_replay(tmp_path):
     tiny.close()
 
 
+def test_lifetime_record_counts_survive_store_restart(tmp_path):
+    store = Store(tmp_path, reserve=1)
+    store.append("frame", {"raw": "first"})
+    store.append("gap", {"reason": "disconnect"})
+    store.close()
+
+    resumed = Store(tmp_path, reserve=1)
+    assert resumed.counts == {"frame": 1, "gap": 1}
+    resumed.append("frame", {"raw": "second"})
+    assert resumed.counts["frame"] == 2
+    resumed.close()
+
+    restarted = Store(tmp_path, reserve=1)
+    assert restarted.counts == {"frame": 2, "gap": 1}
+    restarted.close()
+
+
+def test_manifest_integrity_and_replay_share_one_segment_pass(tmp_path, monkeypatch):
+    store = Store(tmp_path, reserve=1)
+    store.append("gap", {"reason": "fixture"})
+    store.close()
+    value = manifest(tmp_path)
+
+    def unexpected_second_pass(_path):
+        raise AssertionError("read_manifest must not call standalone hash or describe passes")
+
+    monkeypatch.setattr(storage_module, "file_hash", unexpected_second_pass)
+    monkeypatch.setattr(storage_module, "describe", unexpected_second_pass)
+    rows = list(read_manifest(tmp_path, value))
+    assert len(rows) == 1 and rows[0]["payload"]["reason"] == "fixture"
+
+
+def test_prefix_replay_still_checks_segment_tail_integrity(tmp_path):
+    store = Store(tmp_path, reserve=1)
+    store.append("gap", {"reason": "prefix"})
+    store.append("gap", {"reason": "tail"})
+    store.close()
+    value = manifest(tmp_path)
+    segment = tmp_path / value["segments"][0]["file"]
+    payload = bytearray(segment.read_bytes())
+    payload[-1] ^= 1
+    segment.write_bytes(payload)
+
+    with pytest.raises(ValueError):
+        replay(tmp_path, value, through=1)
+
+
+@pytest.mark.parametrize(
+    (
+        "state",
+        "last_observation",
+        "fresh",
+        "expected",
+        "now",
+        "stale",
+        "backpressured",
+        "health",
+    ),
+    [
+        ("STARTING", None, 0, 6, 100, 10, False, "recovering"),
+        ("RECORDING_UNSEQUENCED", None, 0, 6, 100, 10, False, "active_no_events"),
+        ("RECORDING_UNSEQUENCED", 95, 6, 6, 100, 10, False, "active_receiving"),
+        ("RECORDING_UNSEQUENCED", 95, 6, 6, 100, 10, True, "backpressured"),
+        ("RECORDING_UNSEQUENCED", 80, 6, 6, 100, 10, False, "stale"),
+        ("RECORDING_UNSEQUENCED", 80, 6, 6, 100, 10, True, "stale"),
+        ("DEGRADED", 95, 6, 6, 100, 10, True, "reconnecting"),
+        ("FAILED", 95, 6, 6, 100, 10, False, "failed"),
+    ],
+)
+def test_collection_health_reports_state(
+    state, last_observation, fresh, expected, now, stale, backpressured, health
+):
+    assert (
+        collection_health(
+            state, last_observation, fresh, expected, now, stale, backpressured=backpressured
+        )
+        == health
+    )
+
+
 def test_crash_tail_recovery_preserves_complete_records(tmp_path):
     store = Store(tmp_path, reserve=1)
     store.append("test", {"raw": "original"})
@@ -218,6 +300,11 @@ async def test_network_interruption_reconnect_and_safe_stop(tmp_path, monkeypatc
     engine, checkpoints = replay(tmp_path, manifest(tmp_path))
     assert engine.counts["book"] >= 12 and checkpoints >= 1
     assert json.loads((tmp_path / "status.json").read_text())["state"] == "STOPPED"
+    status = json.loads((tmp_path / "status.json").read_text())
+    assert status["frames"] == 2
+    assert status["process_frames"] == 2
+    assert status["lifetime_frames"] == 2
+    assert status["lifetime_record_counts"]["frame"] == 2
     resumed = Store(tmp_path, reserve=1)
     resumed.close()
 
@@ -411,6 +498,10 @@ async def test_restart_with_stale_books_waits_for_initial_snapshots(tmp_path, mo
     rows = list(read_manifest(tmp_path, manifest(tmp_path)))
     assert len(connections) == 1
     assert len([r for r in rows if r["kind"] == "frame"]) == 2
+    status = json.loads((tmp_path / "status.json").read_text())
+    assert status["frames"] == 2
+    assert status["process_frames"] == 1
+    assert status["lifetime_gap_records"] >= 2
     assert not any(
         r["kind"] == "gap" and r["payload"]["reason"] == "book_resynchronization" for r in rows
     )

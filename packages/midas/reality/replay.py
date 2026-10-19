@@ -12,7 +12,9 @@ def replay(root: Path, manifest: dict[str, Any], through: int | None = None) -> 
     checkpoints = 0
     for record in read_manifest(root, manifest):
         if through is not None and record["ordinal"] > through:
-            break
+            # Consume the immutable tail so each segment's checksum and manifest
+            # metadata are still verified after a prefix-only state reconstruction.
+            continue
         if record["kind"] == "checkpoint":
             if engine.digest() != record["payload"]["state_sha256"]:
                 raise ValueError(f"Online/replay state differs at {record['ordinal']}")
