@@ -5,8 +5,6 @@ import fcntl
 import json
 from pathlib import Path
 
-from midas.arena.scheduling import alert, tick
-
 
 def dispatch(root: Path) -> dict:
     root.mkdir(parents=True, exist_ok=True)
@@ -16,6 +14,7 @@ def dispatch(root: Path) -> dict:
         except BlockingIOError:
             return {"state": "BUSY", "schedules": []}
         results = []
+        candidates = []
         for path in sorted(root.glob("schedules/*/manifest.json")):
             record = json.loads(path.read_text())
             if record["state"] in {
@@ -27,8 +26,18 @@ def dispatch(root: Path) -> dict:
                 "PAUSED",
             }:
                 continue
-            if len(results) >= 100:
+            if len(candidates) >= 100:
                 break
+            candidates.append((path, record))
+        if not candidates:
+            return {"state": "COMPLETE", "schedules": []}
+
+        # Importing the scheduler also imports the Arena job/model stack. The
+        # timer runs every minute, including while all schedules are terminal,
+        # so keep that recurring no-op path small.
+        from midas.arena.scheduling import alert, tick
+
+        for path, record in candidates:
             try:
                 updated = tick(root, path.parent.name)
                 results.append({"schedule_id": path.parent.name, "state": updated["state"]})
