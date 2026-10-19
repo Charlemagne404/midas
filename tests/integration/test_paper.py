@@ -8,7 +8,7 @@ import pytest
 from midas.economics.attestation import digest
 from midas.paper.broker import AccountConfig, ExecutionModel, audit, summary
 from midas.simulation.fixtures import DEMO_EPOCH, binary_fixture
-from sqlalchemy import update
+from sqlalchemy import event, update
 
 from apps.api.paper import (
     PaperBroker,
@@ -145,8 +145,24 @@ async def test_large_journal_startup_restores_snapshot_without_replaying_history
         return original_transition(*args, **kwargs)
 
     monkeypatch.setattr(paper_module, "transition", counted_transition)
+    journal_query_options = {}
+
+    def record_journal_query_options(
+        connection, cursor, statement, parameters, context, executemany
+    ):
+        if "FROM paper_events" in statement:
+            journal_query_options.update(context.execution_options)
+
+    event.listen(
+        store.engine.sync_engine, "before_cursor_execute", record_journal_query_options
+    )
     recovered = PaperBroker(store, "test", AccountConfig())
     await recovered.start(DEMO_EPOCH + 500)
+    event.remove(
+        store.engine.sync_engine, "before_cursor_execute", record_journal_query_options
+    )
+    assert journal_query_options.get("yield_per") == 256
+    assert journal_query_options.get("stream_results") is True
     assert transition_calls == 1  # The single durable recovery event, not 10,000 history rows.
     assert recovered.recovery_status == "CHECKPOINT_VERIFIED"
     assert recovered.journal_event_count == 10_003
