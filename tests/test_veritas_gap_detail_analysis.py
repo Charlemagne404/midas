@@ -11,15 +11,15 @@ from midas.veritas import gap_detail_analysis as analysis
 START = 1_792_000_000_000_000_000
 
 
-def _market() -> dict[str, Any]:
+def _market(index: int = 1) -> dict[str, Any]:
     return {
-        "id": "market-1",
-        "condition": "condition-1",
-        "tokens": {"asset-yes": "Yes", "asset-no": "No"},
+        "id": f"market-{index}",
+        "condition": f"condition-{index}",
+        "tokens": {f"asset-yes-{index}": "Yes", f"asset-no-{index}": "No"},
     }
 
 
-def _fixture(tmp_path: Path) -> tuple[Path, Path, str]:
+def _fixture(tmp_path: Path, market_count: int = 1) -> tuple[Path, Path, str]:
     raw = tmp_path / "raw"
     raw.mkdir()
     store = Store(raw, reserve=1, segment_bytes=32 * 1024**2)
@@ -30,14 +30,18 @@ def _fixture(tmp_path: Path) -> tuple[Path, Path, str]:
         received_ns=START - 1_000_000_000,
         monotonic_ns=0,
     )
-    store.append("discovery", "fixture universe", received_ns=START, cohort=[_market()])
+    markets = [_market(index) for index in range(1, market_count + 1)]
+    store.append("discovery", "fixture universe", received_ns=START, cohort=markets)
     store.rotate()
     store.append(
         "gap",
         {
             "reason": "book_resynchronization",
             "affected_assets": {
-                "asset-yes": "timestamp_regression",
+                **{
+                    f"asset-yes-{index}": "timestamp_regression"
+                    for index in range(1, market_count + 1)
+                },
                 "asset-missing": "malformed_frame",
             },
         },
@@ -166,6 +170,25 @@ def test_gap_detail_analysis_rejects_changed_processed_catalog_prefix(
 
     with pytest.raises(ValueError, match="catalog prefix changed"):
         _run(output, campaign_path, raw, campaign_sha256, monkeypatch)
+
+
+def test_gap_detail_analysis_bounds_markets_separately_from_gap_reasons(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    campaign_path, raw, campaign_sha256 = _fixture(tmp_path, market_count=129)
+
+    result = _run(
+        tmp_path / "observatory",
+        campaign_path,
+        raw,
+        campaign_sha256,
+        monkeypatch,
+        max_segments=2,
+    )
+
+    assert result["campaign_window_gap_counts_by_reason"] == {"book_resynchronization": 1}
+    assert len(result["campaign_window_affected_market_counts"]) == 129
+    assert set(result["campaign_window_affected_market_counts"].values()) == {1}
 
 
 def test_gap_detail_analysis_rejects_tampered_event_digest(
