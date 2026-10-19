@@ -33,6 +33,18 @@ def prepared(tmp_path, monkeypatch):
         "inspect",
         lambda root, identity: json.loads((root / "jobs" / identity / "job.json").read_text()),
     )
+    monkeypatch.setattr(
+        scheduling,
+        "resource_snapshot",
+        lambda _root: {
+            "active_job_ids": [],
+            "available_memory_bytes": 8 * 1024**3,
+            "disk_free_bytes": 20 * 1024**3,
+            "cpu_psi": {"some": 0.0},
+            "memory_psi": {"some": 0.0, "full": 0.0},
+            "io_psi": {"some": 0.0},
+        },
+    )
     return tmp_path, config, record["schedule_id"]
 
 
@@ -104,10 +116,45 @@ def test_expiry_pause_resume_and_failed_child(prepared):
 
 def test_admission_expiry_and_resource_deferral(prepared, monkeypatch):
     root, _, identity = prepared
-    monkeypatch.setattr(scheduling, "artifact_usage", lambda root: (1024**3, 1))
+    monkeypatch.setattr(
+        scheduling,
+        "resource_snapshot",
+        lambda _root: {
+            "active_job_ids": [],
+            "available_memory_bytes": 8 * 1024**3,
+            "disk_free_bytes": 2 * 1024**3,
+            "cpu_psi": {"some": 0.0},
+            "memory_psi": {"some": 0.0, "full": 0.0},
+            "io_psi": {"some": 0.0},
+        },
+    )
     assert tick(root, identity, now=1010)["state"] == "WAITING_RESOURCES"
     assert tick(root, identity, now=1100)["state"] == "EXPIRED"
     assert not list(root.glob("jobs/*/job.json"))
+
+
+def test_existing_arena_history_does_not_consume_next_job_growth_budget(prepared):
+    root, _, identity = prepared
+    historical = root / "historical-sparse-artifact"
+    with historical.open("wb") as artifact:
+        artifact.truncate(3 * 1024**3)
+    active = tick(root, identity, now=1010)
+    assert active["state"] == "RUNNING"
+    assert len(list(root.glob("jobs/*/job.json"))) == 1
+
+
+def test_resource_gate_uses_pressure_and_reserve_not_swap_occupancy():
+    ready = {
+        "active_job_ids": [],
+        "available_memory_bytes": 8 * 1024**3,
+        "disk_free_bytes": 8 * 1024**3,
+        "cpu_psi": {"some": 0.0},
+        "memory_psi": {"some": 0.0, "full": 0.0},
+        "io_psi": {"some": 0.0},
+    }
+    assert scheduling.resource_gate(ready) == {"ready": True, "reasons": []}
+    pressured = {**ready, "cpu_psi": {"some": 80.0}}
+    assert scheduling.resource_gate(pressured)["reasons"] == ["host_cpu_pressure"]
 
 
 def test_expired_crash_intent_without_child_does_not_admit(prepared):

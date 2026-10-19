@@ -94,6 +94,105 @@ def test_tournament_pairing_and_persisted_replay(tmp_path):
         )
 
 
+def test_interrupted_tournament_reuses_valid_rows_and_matches_uninterrupted_run(tmp_path):
+    dataset_spec = DatasetSpec(episodes=60, seed=31011)
+    resumed_root = tmp_path / "resumed"
+    reference_root = tmp_path / "reference"
+    resumed_dataset = build(resumed_root, dataset_spec)
+    reference_dataset = build(reference_root, dataset_spec)
+    spec = TournamentSpec(
+        dataset_id=resumed_dataset["dataset_id"],
+        max_episodes=2,
+        execution_models=("standard",),
+        purpose="performance_replay",
+    )
+    reference_spec = spec.model_copy(update={"dataset_id": reference_dataset["dataset_id"]})
+
+    class SimulatedWorkerDeath(Exception):
+        pass
+
+    def stop_after_seven_rows(done, _total):
+        if done == 7:
+            raise SimulatedWorkerDeath
+
+    with pytest.raises(SimulatedWorkerDeath):
+        run_tournament(resumed_root, spec, progress=stop_after_seven_rows)
+
+    reference = run_tournament(reference_root, reference_spec)
+    resumed = run_tournament(resumed_root, spec)
+    assert resumed["checkpoint_rows_reused"] == 7
+    assert resumed["checkpoint_rows_computed"] == 1
+    assert resumed["resumed_from_partial"] is True
+    assert resumed["challenge_seeds"] == reference["challenge_seeds"]
+    assert resumed["tournament_id"] == reference["tournament_id"]
+
+    def scientific_rows(root, report):
+        rows = json.loads(
+            (root / "tournaments" / report["tournament_id"] / "rows.json").read_text()
+        )
+        return {row["id"]: (row["scenario_hash"], row["passed"], row["metrics"]) for row in rows}
+
+    assert scientific_rows(resumed_root, resumed) == scientific_rows(reference_root, reference)
+
+
+def test_corrupted_partial_tournament_checkpoint_is_preserved_and_recomputed(tmp_path):
+    dataset = build(tmp_path, DatasetSpec(episodes=60, seed=31012))
+    spec = TournamentSpec(
+        dataset_id=dataset["dataset_id"],
+        max_episodes=2,
+        execution_models=("standard",),
+        purpose="performance_replay",
+    )
+
+    class SimulatedWorkerDeath(Exception):
+        pass
+
+    def stop_after_first_row(done, _total):
+        if done == 1:
+            raise SimulatedWorkerDeath
+
+    with pytest.raises(SimulatedWorkerDeath):
+        run_tournament(tmp_path, spec, progress=stop_after_first_row)
+    preparation = next((tmp_path / "tournaments").glob("tournament-*/preparing.json"))
+    tournament_dir = preparation.parent
+    checkpoint = next((tournament_dir / "replays").glob("*.json.gz"))
+    checkpoint.write_bytes(b"corrupt checkpoint")
+
+    completed = run_tournament(tmp_path, spec)
+    recovery = json.loads((tournament_dir / "checkpoint-recovery.json").read_text())
+    assert completed["checkpoint_rows_reused"] == 0
+    assert len(recovery["events"]) == 1
+    assert (tournament_dir / recovery["events"][0]["rejected_path"]).is_file()
+
+
+def test_completed_tournament_reconciles_registration_after_worker_death(tmp_path, monkeypatch):
+    import midas.arena.tournaments as tournament_module
+
+    dataset = build(tmp_path, DatasetSpec(episodes=60, seed=31013))
+    spec = TournamentSpec(
+        dataset_id=dataset["dataset_id"],
+        max_episodes=2,
+        execution_models=("standard",),
+        purpose="performance_replay",
+    )
+    register = tournament_module._register_completed_tournament
+    monkeypatch.setattr(
+        tournament_module,
+        "_register_completed_tournament",
+        lambda *_args: (_ for _ in ()).throw(RuntimeError("simulated death before registration")),
+    )
+    with pytest.raises(RuntimeError, match="simulated death"):
+        run_tournament(tmp_path, spec)
+    manifest_path = next((tmp_path / "tournaments").glob("tournament-*/manifest.json"))
+    tournament_id = json.loads(manifest_path.read_text())["tournament_id"]
+    monkeypatch.setattr(tournament_module, "_register_completed_tournament", register)
+
+    recovered = run_tournament(tmp_path, spec)
+    assert recovered["tournament_id"] == tournament_id
+    assert recovered["checkpoint_reuse"] == {"completed": True, "rows_reused": 8}
+    assert len(list((tmp_path / "findings").glob("*/manifest.json"))) == 1
+
+
 def test_bootstrap_does_not_count_variants_as_independent():
     template = {
         "metrics": {

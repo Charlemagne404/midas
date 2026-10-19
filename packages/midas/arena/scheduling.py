@@ -12,9 +12,17 @@ from pydantic import Field, model_validator
 
 from midas.arena.artifacts import artifact_path, atomic_json
 from midas.arena.datasets import research_hash
-from midas.arena.jobs import JobSpec, artifact_usage, inspect
+from midas.arena.jobs import JobSpec, inspect
 from midas.arena.jobs import create as create_job
 from midas.core.models import Model
+
+MINIMUM_AVAILABLE_MEMORY_BYTES = 2 * 1024**3
+MINIMUM_DISK_RESERVE_BYTES = 2 * 1024**3
+NEXT_JOB_ARTIFACT_BUDGET_BYTES = 1024**3
+MAX_CPU_PSI_SOME_AVG10_PERCENT = 20.0
+MAX_MEMORY_PSI_SOME_AVG10_PERCENT = 10.0
+MAX_MEMORY_PSI_FULL_AVG10_PERCENT = 1.0
+MAX_IO_PSI_SOME_AVG10_PERCENT = 20.0
 
 
 class ScheduledStep(Model):
@@ -89,22 +97,67 @@ def alert(root: Path, record: dict[str, Any], reason: str, job_id: str | None = 
         )
 
 
-def resources_ready(root: Path) -> bool:
-    active = any(
-        inspect(root, p.parent.name)["state"] in {"QUEUED", "RUNNING"}
-        for p in root.glob("jobs/*/job.json")
-    )
+def pressure_avg10(kind: str) -> dict[str, float]:
+    values: dict[str, float] = {}
+    try:
+        lines = Path(f"/proc/pressure/{kind}").read_text().splitlines()
+    except OSError:
+        return values
+    for line in lines:
+        label, _, rest = line.partition(" ")
+        fields = dict(item.split("=", 1) for item in rest.split() if "=" in item)
+        if "avg10" in fields:
+            values[label] = float(fields["avg10"])
+    return values
+
+
+def resource_snapshot(root: Path) -> dict[str, Any]:
+    active_jobs = []
+    for path in root.glob("jobs/*/job.json"):
+        job = inspect(root, path.parent.name)
+        if job["state"] in {"QUEUED", "RUNNING"}:
+            active_jobs.append(job)
     available = next(
-        int(line.split()[1])
+        int(line.split()[1]) * 1024
         for line in Path("/proc/meminfo").read_text().splitlines()
         if line.startswith("MemAvailable:")
     )
-    return (
-        not active
-        and available >= 2048 * 1024
-        and shutil.disk_usage(root).free >= 2 * 1024**3
-        and artifact_usage(root)[0] < 1024**3 - 16 * 1024**2
-    )
+    disk_free = shutil.disk_usage(root).free
+    return {
+        "active_job_ids": [job.get("job_id") for job in active_jobs],
+        "available_memory_bytes": available,
+        "disk_free_bytes": disk_free,
+        "cpu_psi": pressure_avg10("cpu"),
+        "memory_psi": pressure_avg10("memory"),
+        "io_psi": pressure_avg10("io"),
+    }
+
+
+def resource_gate(snapshot: dict[str, Any]) -> dict[str, Any]:
+    reasons: list[str] = []
+    if snapshot.get("active_job_ids"):
+        reasons.append("arena_worker_active")
+    if snapshot.get("available_memory_bytes", 0) < MINIMUM_AVAILABLE_MEMORY_BYTES:
+        reasons.append("host_memory_headroom")
+    if snapshot.get("disk_free_bytes", 0) < (
+        MINIMUM_DISK_RESERVE_BYTES + NEXT_JOB_ARTIFACT_BUDGET_BYTES
+    ):
+        reasons.append("disk_reserve_for_next_job")
+    if snapshot.get("cpu_psi", {}).get("some", 0) > MAX_CPU_PSI_SOME_AVG10_PERCENT:
+        reasons.append("host_cpu_pressure")
+    memory_psi = snapshot.get("memory_psi", {})
+    if (
+        memory_psi.get("some", 0) > MAX_MEMORY_PSI_SOME_AVG10_PERCENT
+        or memory_psi.get("full", 0) > MAX_MEMORY_PSI_FULL_AVG10_PERCENT
+    ):
+        reasons.append("host_memory_pressure")
+    if snapshot.get("io_psi", {}).get("some", 0) > MAX_IO_PSI_SOME_AVG10_PERCENT:
+        reasons.append("host_io_pressure")
+    return {"ready": not reasons, "reasons": reasons}
+
+
+def resources_ready(root: Path) -> bool:
+    return resource_gate(resource_snapshot(root))["ready"]
 
 
 def tick(root: Path, identity: str, now: float | None = None) -> dict[str, Any]:
@@ -145,8 +198,10 @@ def tick(root: Path, identity: str, now: float | None = None) -> dict[str, Any]:
                 if not admitted and timestamp >= record["admission_expires_at"]:
                     alert(root, record, "Admission intent expired before creating a child")
                     return save("EXPIRED")
-                if not admitted and not resources_ready(root):
-                    return save("WAITING_RESOURCES")
+                if not admitted:
+                    gate = resource_gate(resource_snapshot(root))
+                    if not gate["ready"]:
+                        return save("WAITING_RESOURCES", resource_gate=gate)
                 # Retry only durable admission with the same key. Native create
                 # returns the existing job if the prior call crossed a crash gap.
                 job = create_job(
@@ -178,8 +233,9 @@ def tick(root: Path, identity: str, now: float | None = None) -> dict[str, Any]:
                 return save("EXPIRED")
             if timestamp < step["due_at"]:
                 return save("WAITING_TIME", next_due_at=step["due_at"])
-            if not resources_ready(root):
-                return save("WAITING_RESOURCES")
+            gate = resource_gate(resource_snapshot(root))
+            if not gate["ready"]:
+                return save("WAITING_RESOURCES", resource_gate=gate)
             step["state"] = "ADMITTING"
             save("ADMITTING", current_step=index)
             job = create_job(
