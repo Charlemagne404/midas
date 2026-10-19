@@ -11,6 +11,7 @@ from sqlalchemy import select, update
 from apps.api.storage import PaperAccount, PaperEvent, Store
 
 _JOURNAL_VERSION = "paper-journal-v1"
+JOURNAL_RECOVERY_BATCH_SIZE = 256
 
 
 def journal_payload(state: dict[str, Any], previous: dict[str, Any], kind: str) -> dict[str, Any]:
@@ -165,6 +166,7 @@ class PaperBroker:
                         )
                         .where(PaperEvent.account_id == self.account_id)
                         .order_by(PaperEvent.revision)
+                        .execution_options(yield_per=JOURNAL_RECOVERY_BATCH_SIZE)
                     )
                     previous = ""
                     rolling_hash = ""
