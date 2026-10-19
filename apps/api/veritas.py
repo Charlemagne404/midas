@@ -41,6 +41,11 @@ MAX_GAP_DETAIL_SUMMARY_BYTES = 512 * 1024
 MAX_COVERAGE_PILOT_SUMMARY_BYTES = 2 * 1024**2
 MAX_COVERAGE_PILOT_EVENT_BYTES = 256 * 1024
 MAX_COVERAGE_PILOT_SCANS = 48
+GAP_DETAIL_V2_CAMPAIGN_PATH = (
+    "/home/charlie/midas-reality/data/research/reality/forward/mission2/campaign.json"
+)
+GAP_DETAIL_V2_CAMPAIGN_SHA256 = "aa8acb2b46823c1a1e3ac5d01a57dde917746c2c7471098ae2a4598875e322f5"
+GAP_DETAIL_V2_SOURCE_ROOT = "/home/charlie/midas-reality/data/recordings/reality"
 COVERAGE_DESIGN_AUDIT_ID = "VERITAS-M2-COVERAGE-DESIGN-AUDIT-002"
 COVERAGE_DESIGN_AUDIT_VERSION = "veritas-coverage-design-audit-v2"
 EXECUTION_BREAK_EVEN_VERSION = "veritas-execution-break-even-v2"
@@ -1214,8 +1219,19 @@ def censor_gap_attribution_overview(
 
 
 def read_gap_detail_summary(repository: Path) -> tuple[dict[str, Any], Path] | None:
-    path = repository / "data" / "veritas-observatory" / "gap-detail-summary-v1.json"
-    if path.parent.is_symlink() or path.is_symlink():
+    v2_root = repository / "data" / "veritas-gap-detail-v2"
+    v2_path = v2_root / "gap-detail-summary-v2.json"
+    v1_root = repository / "data" / "veritas-observatory"
+    v1_path = v1_root / "gap-detail-summary-v1.json"
+    if v2_root.is_symlink() or v1_root.is_symlink() or v2_path.is_symlink() or v1_path.is_symlink():
+        raise HTTPException(404, "Finalized Reality gap-detail summary is unavailable")
+    path = v2_path if v2_path.exists() else v1_path
+    expected_version = (
+        "veritas-finalized-reality-gap-detail-v2"
+        if path == v2_path
+        else "veritas-finalized-reality-gap-detail-v1"
+    )
+    if path.is_symlink():
         raise HTTPException(404, "Finalized Reality gap-detail summary is unavailable")
     if not path.exists():
         return None
@@ -1237,7 +1253,7 @@ def read_gap_detail_summary(repository: Path) -> tuple[dict[str, Any], Path] | N
     ).hexdigest()
     if (
         value.get("schema_version") != 1
-        or value.get("analysis_version") != "veritas-finalized-reality-gap-detail-v1"
+        or value.get("analysis_version") != expected_version
         or not isinstance(stored_digest, str)
         or stored_digest != calculated_digest
     ):
@@ -1245,6 +1261,31 @@ def read_gap_detail_summary(repository: Path) -> tuple[dict[str, Any], Path] | N
             503, "Finalized Reality gap-detail summary identity or digest is invalid"
         )
     return value, path
+
+
+def gap_detail_v2_transition(repository: Path) -> dict[str, Any]:
+    root = repository / "data" / "veritas-gap-detail-v2"
+    if root.is_symlink():
+        return {"status": "INVALID_CONTROL", "error": "Veritas v2 output root is a symlink"}
+    try:
+        from midas.veritas.gap_detail_control import read_control
+
+        control = read_control(root)
+    except (ImportError, OSError, ValueError) as error:
+        return {"status": "INVALID_CONTROL", "error": f"{type(error).__name__}: {error}"}
+    if control is None:
+        return {"status": "NOT_STARTED", "output_root": str(root)}
+    return {
+        "status": control.get("status", "INVALID_CONTROL"),
+        "consecutive_failures": control.get("consecutive_failures", 0),
+        "processed_segment_count": control.get("processed_segment_count"),
+        "pending_segment_count": control.get("pending_segment_count"),
+        "summary_sha256": control.get("summary_sha256"),
+        "last_error_type": control.get("last_error_type"),
+        "last_error": control.get("last_error"),
+        "updated_ns": control.get("updated_ns"),
+        "output_root": str(root),
+    }
 
 
 def finalized_gap_detail_overview(
@@ -1288,6 +1329,26 @@ def finalized_gap_detail_overview(
         != summary["catalog_segment_count"]
     ):
         raise HTTPException(503, "Finalized Reality gap-detail identity or progress is invalid")
+    source_lineage = summary.get("source_lineage")
+    if summary["analysis_version"] == "veritas-finalized-reality-gap-detail-v2":
+        if (
+            not isinstance(source_lineage, dict)
+            or not isinstance(source_lineage.get("campaign_path"), str)
+            or not source_lineage["campaign_path"]
+            or not isinstance(source_lineage.get("source_root"), str)
+            or not source_lineage["source_root"]
+            or source_lineage["campaign_path"] != GAP_DETAIL_V2_CAMPAIGN_PATH
+            or source_lineage["source_root"] != GAP_DETAIL_V2_SOURCE_ROOT
+            or source_lineage.get("campaign_sha256") != GAP_DETAIL_V2_CAMPAIGN_SHA256
+            or summary.get("campaign_sha256") != GAP_DETAIL_V2_CAMPAIGN_SHA256
+            or source_lineage.get("campaign_id") != summary["campaign_id"]
+            or source_lineage.get("campaign_sha256") != summary["campaign_sha256"]
+            or source_lineage.get("catalog_segment_count") != summary["catalog_segment_count"]
+            or source_lineage.get("processed_segment_count") != summary["processed_segment_count"]
+            or source_lineage.get("prefix_catalog_sha256") != summary.get("prefix_catalog_sha256")
+            or source_lineage.get("last_ordinal") != summary["last_processed_ordinal"]
+        ):
+            raise HTTPException(503, "Finalized Reality gap-detail source lineage is invalid")
     window = summary.get("campaign_window_ns")
     if (
         not isinstance(window, dict)
@@ -1336,6 +1397,8 @@ def finalized_gap_detail_overview(
     return {
         "status": summary["status"],
         "analysis_version": summary["analysis_version"],
+        "source_lineage": source_lineage,
+        "v2_transition": gap_detail_v2_transition(repository),
         "generated_at_utc": summary["generated_at_utc"],
         "campaign_id": summary["campaign_id"],
         "processed_segment_count": summary["processed_segment_count"],
@@ -3217,8 +3280,10 @@ def coverage_design_audit_overview(
     result_payload = dict(value)
     artifact_digest = result_payload.pop("artifact_sha256", None)
     result_digest = result_payload.pop("result_sha256", None)
+
     def canonical(obj: Any) -> bytes:
         return json.dumps(obj, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
+
     calculated_result_digest = hashlib.sha256(canonical(result_payload)).hexdigest()
     calculated_artifact_digest = hashlib.sha256(
         canonical({**result_payload, "result_sha256": result_digest})

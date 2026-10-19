@@ -191,6 +191,41 @@ def test_gap_detail_analysis_bounds_markets_separately_from_gap_reasons(
     assert set(result["campaign_window_affected_market_counts"].values()) == {1}
 
 
+def test_gap_detail_v2_uses_separate_outputs_and_records_source_lineage(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    campaign_path, raw, campaign_sha256 = _fixture(tmp_path, market_count=129)
+    output = tmp_path / "veritas-gap-detail-v2"
+
+    result = _run(
+        output,
+        campaign_path,
+        raw,
+        campaign_sha256,
+        monkeypatch,
+        max_segments=2,
+        output_version="v2",
+    )
+
+    assert result["analysis_version"] == "veritas-finalized-reality-gap-detail-v2"
+    assert result["campaign_window_gap_counts_by_reason"] == {"book_resynchronization": 1}
+    assert len(result["campaign_window_affected_market_counts"]) == 129
+    assert result["source_lineage"] == {
+        "campaign_path": str(campaign_path.resolve()),
+        "campaign_id": "fixture-campaign",
+        "campaign_sha256": campaign_sha256,
+        "source_root": str(raw.resolve()),
+        "catalog_segment_count": 4,
+        "processed_segment_count": 2,
+        "prefix_catalog_sha256": result["prefix_catalog_sha256"],
+        "last_ordinal": result["last_processed_ordinal"],
+    }
+    assert (output / "gap-detail-state-v2.json").is_file()
+    assert (output / "gap-detail-events/v2/00000000000000000002.json").is_file()
+    assert not (output / "gap-detail-state-v1.json").exists()
+    assert analysis.read_finalized_gap_detail_summary(output, "v2") == result
+
+
 def test_gap_detail_analysis_rejects_tampered_event_digest(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ):

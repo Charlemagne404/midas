@@ -7,8 +7,12 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from midas.veritas.coverage_pilot_v2 import record_coverage_pilot_v2
+from midas.veritas.gap_detail_control import run_v2_batch
 
 from apps.api.veritas import (
+    GAP_DETAIL_V2_CAMPAIGN_PATH,
+    GAP_DETAIL_V2_CAMPAIGN_SHA256,
+    GAP_DETAIL_V2_SOURCE_ROOT,
     MAX_ARTIFACT_BYTES,
     MAX_LEDGER_ARTIFACT_BYTES,
     coverage_design_audit_overview,
@@ -1279,6 +1283,51 @@ def test_overview_exposes_hash_verified_gap_censor_and_prefix_evidence(tmp_path)
     assert audit_artifact.json()["data"]["artifact_id"] == "VERITAS-M2-CENSOR-GAP-AUDIT-001"
     assert detail_artifact.status_code == 200
     assert detail_artifact.json()["data"]["summary_sha256"]
+
+
+def test_v2_gap_detail_is_preferred_and_blocked_transition_is_reported(tmp_path):
+    client = fixture_client(tmp_path)
+    v1_path = write_gap_detail_fixture(tmp_path)
+    v2 = json.loads(v1_path.read_text())
+    v2.pop("summary_sha256")
+    v2["analysis_version"] = "veritas-finalized-reality-gap-detail-v2"
+    v2["campaign_sha256"] = GAP_DETAIL_V2_CAMPAIGN_SHA256
+    v2["prefix_catalog_sha256"] = "a" * 64
+    v2["source_lineage"] = {
+        "campaign_path": GAP_DETAIL_V2_CAMPAIGN_PATH,
+        "campaign_id": v2["campaign_id"],
+        "campaign_sha256": GAP_DETAIL_V2_CAMPAIGN_SHA256,
+        "source_root": GAP_DETAIL_V2_SOURCE_ROOT,
+        "catalog_segment_count": v2["catalog_segment_count"],
+        "processed_segment_count": v2["processed_segment_count"],
+        "prefix_catalog_sha256": v2["prefix_catalog_sha256"],
+        "last_ordinal": v2["last_processed_ordinal"],
+    }
+    v2["summary_sha256"] = hashlib.sha256(canonical_json(v2)).hexdigest()
+    v2_path = tmp_path / "data/veritas-gap-detail-v2/gap-detail-summary-v2.json"
+    v2_path.parent.mkdir(parents=True, exist_ok=True)
+    v2_path.write_bytes(canonical_json(v2))
+
+    def deterministic_failure(root, **kwargs):
+        raise ValueError("test-only blocked transition")
+
+    run_v2_batch(v2_path.parent, updater=deterministic_failure)
+    response = client.get("/api/veritas/overview")
+
+    assert response.status_code == 200
+    detail = response.json()["finalized_gap_detail"]
+    assert detail["analysis_version"] == "veritas-finalized-reality-gap-detail-v2"
+    assert detail["source_lineage"]["source_root"] == GAP_DETAIL_V2_SOURCE_ROOT
+    assert detail["v2_transition"]["status"] == "BLOCKED"
+    artifact = client.get("/api/veritas/artifacts/gap-detail-current")
+    assert artifact.status_code == 200
+    assert artifact.json()["data"]["analysis_version"] == "veritas-finalized-reality-gap-detail-v2"
+
+    v2["source_lineage"]["source_root"] = "/unrelated/source"
+    v2.pop("summary_sha256")
+    v2["summary_sha256"] = hashlib.sha256(canonical_json(v2)).hexdigest()
+    v2_path.write_bytes(canonical_json(v2))
+    assert client.get("/api/veritas/overview").status_code == 503
 
 
 def test_overview_exposes_verified_gap_censor_attribution_and_artifact_route(tmp_path):

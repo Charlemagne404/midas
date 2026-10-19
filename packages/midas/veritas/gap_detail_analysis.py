@@ -17,13 +17,14 @@ import time
 from collections import Counter
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, cast
+from typing import Any, Literal, cast
 
 from midas.reality.research_schema import digest
 from midas.reality.shadow_campaign import verify as verify_campaign
 from midas.reality.storage import MAGIC, file_hash, records
 
 VERSION = "veritas-finalized-reality-gap-detail-v1"
+OUTPUT_VERSIONS = ("v1", "v2")
 DEFAULT_CAMPAIGN_PATH = Path(
     "/home/charlie/midas-reality/data/research/reality/forward/mission2/campaign.json"
 )
@@ -58,6 +59,12 @@ def _canonical(value: Any) -> bytes:
 
 def _sha256(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
+
+
+def _analysis_version(output_version: str) -> str:
+    if output_version not in OUTPUT_VERSIONS:
+        raise ValueError("Unsupported gap-detail output version")
+    return f"veritas-finalized-reality-gap-detail-{output_version}"
 
 
 def _atomic_json(path: Path, value: dict[str, Any], *, maximum: int) -> int:
@@ -112,6 +119,7 @@ def _code_identity() -> dict[str, str]:
     reality = Path(__file__).parents[1] / "reality"
     repo = Path(__file__).parents[3]
     return {
+        "gap_detail_control.py": file_hash(Path(__file__).with_name("gap_detail_control.py")),
         "gap_detail_analysis.py": file_hash(Path(__file__)),
         "scripts/veritas_gap_detail_analysis.py": file_hash(
             repo / "scripts" / "veritas_gap_detail_analysis.py"
@@ -268,11 +276,11 @@ def _prefix_hash(catalogs: list[dict[str, Any]], count: int) -> str:
     return chain.hex()
 
 
-def _directory(root: Path) -> Path:
+def _directory(root: Path, output_version: str) -> Path:
     base = root / "gap-detail-events"
     if base.is_symlink():
         raise ValueError("Gap-detail event root is a symlink")
-    versioned = base / "v1"
+    versioned = base / output_version
     if versioned.is_symlink():
         raise ValueError("Gap-detail event version is a symlink")
     versioned.mkdir(parents=True, exist_ok=True, mode=0o700)
@@ -456,6 +464,7 @@ def _verify_event_chain(
     campaign_id: str,
     campaign_sha256: str,
     code_hash: str,
+    analysis_version: str,
     expected_chain: str | None,
 ) -> None:
     chain = "0" * 64
@@ -468,7 +477,7 @@ def _verify_event_chain(
         next_prefix = hashlib.sha256(bytes.fromhex(prefix) + _canonical(info)).hexdigest()
         if (
             event.get("schema_version") != 1
-            or event.get("analysis_version") != VERSION
+            or event.get("analysis_version") != analysis_version
             or event.get("analysis_code_sha256") != code_hash
             or event.get("campaign_id") != campaign_id
             or event.get("campaign_sha256") != campaign_sha256
@@ -492,9 +501,9 @@ def _verify_event_chain(
         raise ValueError("Gap-detail event chain differs from persisted state")
 
 
-def _artifact_bytes(root: Path) -> int:
+def _artifact_bytes(root: Path, output_version: str) -> int:
     total = 0
-    event_root = root / "gap-detail-events" / "v1"
+    event_root = root / "gap-detail-events" / output_version
     if event_root.exists():
         if event_root.is_symlink() or not event_root.is_dir():
             raise ValueError("Gap-detail event store is unsafe")
@@ -502,12 +511,18 @@ def _artifact_bytes(root: Path) -> int:
             if path.is_symlink() or not path.is_file():
                 raise ValueError("Gap-detail event artifact is unsafe")
             total += path.stat().st_size
-    for pattern in (".gap-detail-state-v1.json.*.tmp", ".gap-detail-summary-v1.json.*.tmp"):
+    for pattern in (
+        f".gap-detail-state-{output_version}.json.*.tmp",
+        f".gap-detail-summary-{output_version}.json.*.tmp",
+    ):
         for path in root.glob(pattern):
             if path.is_symlink() or not path.is_file():
                 raise ValueError("Gap-detail temporary artifact is unsafe")
             total += path.stat().st_size
-    for path in (root / "gap-detail-state-v1.json", root / "gap-detail-summary-v1.json"):
+    for path in (
+        root / f"gap-detail-state-{output_version}.json",
+        root / f"gap-detail-summary-{output_version}.json",
+    ):
         if path.exists():
             if path.is_symlink() or not path.is_file():
                 raise ValueError("Gap-detail state artifact is unsafe")
@@ -524,6 +539,9 @@ def _make_summary(
     batch_bytes: int,
     campaign: dict[str, Any],
     campaign_sha256: str,
+    campaign_path: Path,
+    source_root: Path,
+    analysis_version: str,
     code_hash: str,
     code_identity: dict[str, str],
 ) -> dict[str, Any]:
@@ -532,11 +550,21 @@ def _make_summary(
     cumulative = state["cumulative"]
     return {
         "schema_version": 1,
-        "analysis_version": VERSION,
+        "analysis_version": analysis_version,
         "analysis_code_sha256": code_hash,
         "analysis_code_files": code_identity,
         "campaign_id": campaign["campaign_id"],
         "campaign_sha256": campaign_sha256,
+        "source_lineage": {
+            "campaign_path": str(campaign_path.resolve()),
+            "campaign_id": campaign["campaign_id"],
+            "campaign_sha256": campaign_sha256,
+            "source_root": str(source_root.resolve()),
+            "catalog_segment_count": len(catalogs) + empty_count,
+            "processed_segment_count": state["processed_segment_count"],
+            "prefix_catalog_sha256": state["prefix_catalog_sha256"],
+            "last_ordinal": state["last_ordinal"],
+        },
         "campaign_window_ns": {"start": identity["start_ns"], "end_exclusive": identity["end_ns"]},
         "catalog_segment_count": len(catalogs) + empty_count,
         "empty_finalized_segment_count": empty_count,
@@ -591,12 +619,14 @@ def update_finalized_gap_detail_analysis(
     expected_campaign_sha256: str = DEFAULT_CAMPAIGN_SHA256,
     expected_campaign_id: str | None = DEFAULT_CAMPAIGN_ID,
     expected_source_root: Path | None = DEFAULT_SOURCE_ROOT,
+    output_version: Literal["v1", "v2"] = "v1",
 ) -> dict[str, Any]:
     """Process one bounded suffix of the pinned finalized source catalog."""
     if not 1 <= max_segments <= MAX_SEGMENTS_PER_RUN:
         raise ValueError(f"max_segments must be in 1..{MAX_SEGMENTS_PER_RUN}")
     if not 1 <= max_source_bytes <= MAX_SOURCE_BYTES_PER_RUN:
         raise ValueError(f"max_source_bytes must be in 1..{MAX_SOURCE_BYTES_PER_RUN}")
+    analysis_version = _analysis_version(output_version)
     root.mkdir(parents=True, exist_ok=True, mode=0o700)
     if root.is_symlink():
         raise ValueError("Gap-detail output root is a symlink")
@@ -618,16 +648,16 @@ def update_finalized_gap_detail_analysis(
         catalogs, empty_count = _read_catalogs(raw_root)
         code_identity = _code_identity()
         code_hash = digest(code_identity)
-        event_dir = _directory(root)
-        state_path = root / "gap-detail-state-v1.json"
-        summary_path = root / "gap-detail-summary-v1.json"
+        event_dir = _directory(root, output_version)
+        state_path = root / f"gap-detail-state-{output_version}.json"
+        summary_path = root / f"gap-detail-summary-{output_version}.json"
         if state_path.exists():
             stored = _read_sealed(
                 state_path, maximum=MAX_STATE_BYTES, key="state_sha256", label="gap-detail state"
             )
             if (
                 stored.get("schema_version") != 1
-                or stored.get("analysis_version") != VERSION
+                or stored.get("analysis_version") != analysis_version
                 or stored.get("campaign_id") != campaign["campaign_id"]
                 or stored.get("campaign_sha256") != campaign_sha256
                 or stored.get("analysis_code_sha256") != code_hash
@@ -651,7 +681,7 @@ def update_finalized_gap_detail_analysis(
         else:
             state = {
                 "schema_version": 1,
-                "analysis_version": VERSION,
+                "analysis_version": analysis_version,
                 "analysis_code_sha256": code_hash,
                 "analysis_code_files": code_identity,
                 "campaign_id": campaign["campaign_id"],
@@ -668,7 +698,7 @@ def update_finalized_gap_detail_analysis(
             token_markets = state["token_markets"]
             cumulative = state["cumulative"]
 
-        initial_bytes = _artifact_bytes(root)
+        initial_bytes = _artifact_bytes(root, output_version)
         if initial_bytes > MAX_EVENTS_BYTES:
             raise ValueError("Gap-detail analysis artifacts exceed the storage bound")
         _verify_event_chain(
@@ -678,6 +708,7 @@ def update_finalized_gap_detail_analysis(
             campaign_id=campaign["campaign_id"],
             campaign_sha256=campaign_sha256,
             code_hash=code_hash,
+            analysis_version=analysis_version,
             expected_chain=state["last_event_chain_sha256"],
         )
         start_ns = campaign["identity"]["start_ns"]
@@ -769,9 +800,7 @@ def update_finalized_gap_detail_analysis(
                         cumulative["campaign_window_affected_market_counts"],
                         market_id,
                         max_distinct=MAX_TRACKED_MARKETS,
-                        overflow_message=(
-                            "Distinct gap-affected market count exceeded its bound"
-                        ),
+                        overflow_message=("Distinct gap-affected market count exceeded its bound"),
                     )
                 received = gap["received_ns"]
                 first = cumulative["campaign_window_first_gap_received_ns"]
@@ -786,7 +815,7 @@ def update_finalized_gap_detail_analysis(
             new_prefix = hashlib.sha256(bytes.fromhex(prior_prefix) + _canonical(info)).hexdigest()
             event = {
                 "schema_version": 1,
-                "analysis_version": VERSION,
+                "analysis_version": analysis_version,
                 "analysis_code_sha256": code_hash,
                 "campaign_id": campaign["campaign_id"],
                 "campaign_sha256": campaign_sha256,
@@ -849,6 +878,9 @@ def update_finalized_gap_detail_analysis(
             batch_bytes=batch_bytes,
             campaign=campaign,
             campaign_sha256=campaign_sha256,
+            campaign_path=campaign_path,
+            source_root=raw_root,
+            analysis_version=analysis_version,
             code_hash=code_hash,
             code_identity=code_identity,
         )
@@ -861,13 +893,16 @@ def update_finalized_gap_detail_analysis(
         return sealed_summary
 
 
-def read_finalized_gap_detail_summary(root: Path) -> dict[str, Any] | None:
-    path = root / "gap-detail-summary-v1.json"
+def read_finalized_gap_detail_summary(
+    root: Path, output_version: Literal["v1", "v2"] = "v1"
+) -> dict[str, Any] | None:
+    analysis_version = _analysis_version(output_version)
+    path = root / f"gap-detail-summary-{output_version}.json"
     if not path.exists():
         return None
     summary = _read_sealed(
         path, maximum=MAX_SUMMARY_BYTES, key="summary_sha256", label="gap-detail summary"
     )
-    if summary.get("analysis_version") != VERSION or summary.get("schema_version") != 1:
+    if summary.get("analysis_version") != analysis_version or summary.get("schema_version") != 1:
         raise ValueError("Unsupported finalized gap-detail summary")
     return summary
