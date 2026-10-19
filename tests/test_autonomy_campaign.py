@@ -65,6 +65,7 @@ def test_campaign_job_budget_and_durable_schedule_are_bounded(tmp_path, monkeypa
     assert "--property=MemoryMax=1024M" in command
     assert "--property=Nice=15" in command
     assert "--property=IOSchedulingClass=idle" in command
+    assert "--property=RuntimeMaxSec=1200" in command
 
 
 def test_transient_job_cgroup_usage_is_saved_before_systemd_collects_it(monkeypatch):
@@ -282,6 +283,82 @@ def test_safety_cancel_is_deferred_without_spending_retry_or_losing_partial_arti
     assert step["deferred_job_ids"] == ["job-backpressure"]
     assert manifest["failed_jobs"] == []
     assert manifest["paused_jobs"][0]["partial_artifacts_preserved"] is True
+
+
+def test_repeated_health_cancellations_enter_terminal_resource_block(tmp_path, monkeypatch):
+    import scripts.autonomy_48h as campaign
+
+    step = {
+        "step": 5,
+        "state": "CANCEL_REQUESTED",
+        "job_id": "job-backpressure-1",
+        "attempt": 0,
+        "error": "recorder_continuity_degraded",
+    }
+    manifest = {"steps": [step], "paused_jobs": [], "failed_jobs": []}
+    monkeypatch.setattr(
+        campaign,
+        "inspect",
+        lambda *_args: {"state": "CANCELLED", "error": "Cancellation requested"},
+    )
+    monkeypatch.setattr(campaign, "record_job_usage", lambda *_args, **_kwargs: None)
+
+    for number in range(1, campaign.MAX_HEALTH_BACKPRESSURE_RETRIES + 1):
+        step.update(
+            state="CANCEL_REQUESTED",
+            job_id=f"job-backpressure-{number}",
+            error="recorder_continuity_degraded",
+        )
+        assert _observe_steps(tmp_path, manifest, number * 1_000_000_000)
+
+    assert step["state"] == "BLOCKED_RESOURCE"
+    assert step["health_backpressure_retries"] == campaign.MAX_HEALTH_BACKPRESSURE_RETRIES
+    assert step["retry_of"] == f"job-backpressure-{campaign.MAX_HEALTH_BACKPRESSURE_RETRIES}"
+    assert step["job_id"] is None
+    assert "BLOCKED_RESOURCE" in campaign.STEP_TERMINAL
+    assert manifest["recovery_events"][-1]["blocked"] is True
+
+
+def test_retry_admission_links_new_job_to_failed_parent(tmp_path, monkeypatch):
+    import scripts.autonomy_48h as campaign
+
+    config = json.loads(
+        (
+            Path(__file__).parents[1] / "deploy/autonomy/midas-autonomous-research-48h-001.json"
+        ).read_text()
+    )
+    step = build_director_steps(config, first_step=5)[0]
+    step.update(
+        state="RETRY_WAIT",
+        attempt=1,
+        max_attempts=2,
+        retry_at_ns=0,
+        job_id=None,
+        retry_of="job-failed-parent",
+    )
+    monkeypatch.setattr(campaign, "artifact_usage", lambda _root: (0, 0))
+    monkeypatch.setattr(campaign, "is_verified_synthetic_step", lambda *_args: True)
+    monkeypatch.setattr(
+        campaign, "check_campaign_resources", lambda *_args, **_kwargs: (True, [], {})
+    )
+    submitted = []
+
+    def create_job(_root, _spec, admission_key, retry_of=None):
+        submitted.append((admission_key, retry_of))
+        return {"job_id": "job-retry-child", "state": "QUEUED"}
+
+    monkeypatch.setattr(campaign, "create_job", create_job)
+    manifest = {
+        "started_at_ns": 1_000_000_000,
+        "integrity_blocked": False,
+        "source_recovery": {"stable": True},
+        "last_resource_sample": {"swap_pages": [0, 0]},
+        "steps": [step],
+    }
+
+    _admit_due_step(tmp_path, manifest, {}, config, 2_000_000_000)
+    assert submitted == [("autonomy-48H-001-step-5-attempt-1-run-0", "job-failed-parent")]
+    assert step["job_id"] == "job-retry-child"
 
 
 def test_legacy_health_cancelled_failure_is_recovered_from_incident_provenance(
@@ -568,6 +645,259 @@ def test_tick_honors_original_deadline_and_runs_final_reconciliation(tmp_path, m
     assert status["status"] == saved["status"] == "PARTIAL"
 
 
+def test_deadline_requests_worker_shutdown_then_finalizes_after_grace(tmp_path, monkeypatch):
+    from midas.arena.artifacts import atomic_json
+
+    import scripts.autonomy_48h as campaign
+
+    config = json.loads(
+        (
+            Path(__file__).parents[1] / "deploy/autonomy/midas-autonomous-research-48h-001.json"
+        ).read_text()
+    )
+    workspace = tmp_path / "workspace"
+    reality = tmp_path / "reality"
+    veritas = tmp_path / "veritas"
+    directory = campaign.campaign_dir(workspace)
+    directory.mkdir(parents=True)
+    deadline = 10_000_000_000
+    clock = [deadline + 1]
+    manifest = {
+        "campaign_id": "48H-001",
+        "status": "ACTIVE",
+        "started_at_ns": deadline - 172800 * 1_000_000_000,
+        "planned_end_ns": deadline,
+        "planned_end_at": campaign.now_iso(deadline),
+        "completion_grace_seconds": config["completion_grace_seconds"],
+        "steps": [{"step": 1, "name": "fixture", "state": "RUNNING", "job_id": "job-active"}],
+        "initial_veritas": {},
+        "operational_incidents": [],
+    }
+    atomic_json(directory / "manifest.json", manifest)
+    monkeypatch.setattr(campaign.time, "time_ns", lambda: clock[0])
+    monkeypatch.setattr(
+        campaign,
+        "host_snapshot",
+        lambda *_args: {
+            "checked_at": campaign.now_iso(clock[0]),
+            "checked_at_ns": clock[0],
+            "units": {},
+            "api": {"status": "READY"},
+            "veritas": {"latest_scan_id": None},
+            "recorder": {},
+            "host": {},
+            "arena": {},
+            "segment_integrity": [],
+        },
+    )
+    monkeypatch.setattr(campaign, "update_source_stability", lambda *_args: {"stable": True})
+    monkeypatch.setattr(campaign, "_observe_steps", lambda *_args: False)
+    monkeypatch.setattr(campaign, "_cancel_unhealthy_running_job", lambda *_args: None)
+    monkeypatch.setattr(campaign, "_run_scheduled_regression", lambda *_args: None)
+    cancellations = []
+    monkeypatch.setattr(
+        campaign,
+        "cancel_campaign_job",
+        lambda _workspace, job_id: cancellations.append(job_id),
+    )
+    finalizations = []
+
+    def finalize(*args):
+        finalizations.append(True)
+        args[4]["status"] = "PARTIAL"
+
+    monkeypatch.setattr(campaign, "finalize", finalize)
+    monkeypatch.setattr(campaign, "resource_sample", lambda _snapshot: {})
+    monkeypatch.setattr(
+        campaign, "write_status", lambda _w, _r, _v, state, _s: {"status": state["status"]}
+    )
+    monkeypatch.setattr(campaign, "stop_campaign_timer", lambda: None)
+
+    first = campaign.tick(workspace, reality, veritas, "http://unused", config)
+    saved = json.loads((directory / "manifest.json").read_text())
+    assert first["status"] == saved["status"] == "COMPLETING"
+    assert cancellations == ["job-active"]
+    assert saved["steps"][0]["state"] == "CANCEL_REQUESTED"
+    assert saved["steps"][0]["deadline_stop_requested_at_ns"] == deadline + 1
+    assert finalizations == []
+
+    clock[0] = deadline + config["completion_grace_seconds"] * 1_000_000_000
+    second = campaign.tick(workspace, reality, veritas, "http://unused", config)
+    assert finalizations == [True]
+    assert second["status"] == "PARTIAL"
+    assert cancellations == ["job-active"]
+
+
+def test_controller_reconciles_job_created_before_its_restart(tmp_path, monkeypatch):
+    import scripts.autonomy_48h as campaign
+
+    step = {
+        "step": 5,
+        "state": "ADMITTING",
+        "job_id": None,
+        "job_spec": {"kind": "dataset"},
+        "admission_intent": {"key": "admission-fixture"},
+    }
+    manifest = {"steps": [step], "recovery_events": []}
+    found = {
+        "job_id": "job-created-before-restart",
+        "state": "QUEUED",
+        "configuration": step["job_spec"],
+    }
+    calls = []
+
+    def find(_root, key, configuration, retry_of=None):
+        calls.append((key, configuration, retry_of))
+        return found
+
+    monkeypatch.setattr(campaign, "find_by_admission_key", find)
+    campaign.reconcile_admitting_steps(tmp_path, manifest, 123_000_000_000)
+
+    assert calls == [("admission-fixture", {"kind": "dataset"}, None)]
+    assert step["job_id"] == found["job_id"]
+    assert step["state"] == "QUEUED"
+    assert manifest["recovery_events"][0]["action"] == (
+        "reconciled_durable_admission_after_controller_restart"
+    )
+
+
+def test_admission_cutoff_leaves_time_for_job_and_queue_limits(tmp_path, monkeypatch):
+    from midas.arena.datasets import DatasetSpec
+
+    import scripts.autonomy_48h as campaign
+
+    spec = JobSpec(
+        kind="dataset",
+        dataset=DatasetSpec(episodes=30),
+        max_wall_seconds=10,
+    )
+    step = {
+        "step": 1,
+        "name": "short fixture",
+        "state": "PENDING",
+        "job_id": None,
+        "after_seconds": 0,
+        "attempt": 0,
+        "admission_generation": 0,
+        "job_spec": spec.model_dump(mode="json"),
+    }
+    manifest = {
+        "started_at_ns": 100_000_000_000,
+        "planned_end_ns": 1_000_000_000_000,
+        "integrity_blocked": False,
+        "resource_budgets": {},
+        "steps": [step],
+    }
+    monkeypatch.setattr(
+        campaign,
+        "campaign_artifact_usage",
+        lambda *_args, **_kwargs: {
+            "bytes": 0,
+            "observed_bytes": 0,
+            "mode": "TEST",
+            "files": 0,
+        },
+    )
+    monkeypatch.setattr(campaign, "is_verified_synthetic_step", lambda *_args: True)
+    monkeypatch.setattr(
+        campaign, "check_campaign_resources", lambda *_args, **_kwargs: (True, [], {})
+    )
+    monkeypatch.setattr(
+        campaign,
+        "create_job",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(AssertionError("late admission")),
+    )
+
+    cutoff = manifest["planned_end_ns"] - (10 + campaign.MAX_QUEUE_WAIT_SECONDS) * 1_000_000_000
+    _admit_due_step(tmp_path, manifest, {}, {}, cutoff)
+
+    assert step["state"] == "NOT_ADMITTED_DEADLINE"
+    assert step["deadline_cutoff_ns"] == cutoff
+    assert step["last_permitted_job_admission_at"] == campaign.now_iso(cutoff)
+
+
+def test_campaign_artifact_usage_uses_job_budgets_and_recovers_with_a_scan(tmp_path, monkeypatch):
+    import scripts.autonomy_48h as campaign
+
+    arena = tmp_path / "data/arena"
+    (arena / "jobs").mkdir(parents=True)
+    scans = []
+
+    def scan(_root):
+        scans.append(True)
+        return 3 * 1024**3, 100
+
+    monkeypatch.setattr(campaign, "artifact_usage", scan)
+    manifest = {
+        "resource_budgets": {
+            "maximum_arena_artifact_bytes": 8 * 1024**3,
+            "minimum_arena_artifact_headroom_bytes": 1280 * 1024**2,
+        }
+    }
+    now = 1_000_000_000_000
+    first = campaign.campaign_artifact_usage(tmp_path, manifest, now)
+    assert first["mode"] == "FULL_SCAN"
+    assert scans == [True]
+
+    job_dir = arena / "jobs/job-growth"
+    job_dir.mkdir()
+    (job_dir / "job.json").write_text(
+        json.dumps(
+            {
+                "job_id": "job-growth",
+                "state": "COMPLETED",
+                "budget": {"max_artifact_mb": 1024},
+            }
+        )
+    )
+    estimated = campaign.campaign_artifact_usage(tmp_path, manifest, now + 1_000_000_000)
+    assert estimated["mode"] == "JOB_BUDGET_ESTIMATE"
+    assert estimated["bytes"] == 4 * 1024**3
+    assert scans == [True]
+
+    recovered = campaign.campaign_artifact_usage(
+        tmp_path,
+        manifest,
+        now + campaign.ARENA_USAGE_CACHE_TTL_NS + 1,
+    )
+    assert recovered["mode"] == "FULL_SCAN"
+    assert recovered["bytes"] == 3 * 1024**3
+    assert len(scans) == 2
+
+
+def test_finalization_failure_publishes_terminal_report(tmp_path, monkeypatch):
+    from midas.arena.artifacts import atomic_json
+
+    import scripts.autonomy_48h as campaign
+
+    workspace = tmp_path / "workspace"
+    directory = campaign.campaign_dir(workspace)
+    directory.mkdir(parents=True)
+    now = 1_000_000_000_000
+    manifest = {
+        "campaign_id": "48H-001",
+        "status": "ACTIVE",
+        "started_at_ns": now - 172800 * 1_000_000_000,
+        "planned_end_ns": now - 601 * 1_000_000_000,
+        "planned_end_at": campaign.now_iso(now - 601 * 1_000_000_000),
+        "completion_grace_seconds": 600,
+        "steps": [],
+        "initial_veritas": {},
+        "operational_incidents": [],
+    }
+    atomic_json(directory / "manifest.json", manifest)
+    campaign.fail_finalization(workspace, manifest, now, "RuntimeError: report checksum failure")
+
+    saved = json.loads((directory / "manifest.json").read_text())
+    final = json.loads((directory / "final-validation.json").read_text())
+    report = directory / "AUTONOMY_48H_001_FINAL_REPORT.md"
+    assert saved["status"] == "FINALIZATION_FAILED"
+    assert saved["finalization_state"] == "FAILED"
+    assert final["state"] == "FINALIZATION_FAILED"
+    assert "report checksum failure" in report.read_text()
+    assert saved["final_report_sha256"] == campaign.sha256(report)
+
+
 def test_finalize_writes_report_and_classifies_mixed_results_as_partial(tmp_path, monkeypatch):
     import scripts.autonomy_48h as campaign
 
@@ -575,6 +905,8 @@ def test_finalize_writes_report_and_classifies_mixed_results_as_partial(tmp_path
     directory = campaign.campaign_dir(workspace)
     directory.mkdir(parents=True)
     manifest = {
+        "planned_end_ns": 1_000_000_000,
+        "planned_end_at": campaign.now_iso(1_000_000_000),
         "steps": [
             {"step": 1, "state": "COMPLETED", "job_id": "job-good"},
             {"step": 2, "state": "FAILED", "job_id": "job-bad"},
@@ -849,6 +1181,21 @@ def test_expected_dependency_wait_does_not_mark_active_healthy_campaign_degraded
     assert campaign_health(manifest, snapshot) == "HEALTHY"
 
 
+def test_deterministic_and_deadline_blocks_are_visible_as_degraded_health():
+    snapshot = {
+        "api": {"status": "READY"},
+        "recorder": {"state": "RECORDING_UNSEQUENCED", "unit_active": True},
+        "units": {"midas-reality.service": True, "midas-api.service": True},
+    }
+    for state in (
+        "BLOCKED_RESOURCE",
+        "BLOCKED_ADMISSION_RECONCILIATION",
+        "NOT_ADMITTED_DEADLINE",
+        "FAILED",
+    ):
+        assert campaign_health({"steps": [{"state": state}]}, snapshot) == "DEGRADED"
+
+
 def test_source_recovery_requires_ten_minutes_of_consecutive_healthy_checks():
     config = json.loads(
         (
@@ -1047,6 +1394,40 @@ def test_synthetic_steps_ignore_only_source_continuity_and_keep_resource_gates(
     )
     assert cancelled == []
     assert active["state"] == "RUNNING"
+
+    worker = {
+        "job_id": "job-synthetic",
+        "cgroup": {
+            "memory.swap.current": config["resource_limits"][
+                "maximum_swap_activity_bytes_per_interval"
+            ]
+            + 1,
+            "memory.pressure": {"some_avg10": 0.0, "full_avg10": 0.0},
+            "memory.events": {"high": 0, "max": 0, "oom": 0, "oom_kill": 0},
+        },
+    }
+    snapshot["arena"]["active_jobs"] = [worker]
+    prior_sample.update(worker_job_id="job-synthetic", worker_swap_bytes=0)
+    campaign._cancel_unhealthy_running_job(
+        tmp_path, running_manifest, snapshot, config, 1_500_000_000
+    )
+    assert cancelled == []
+    assert not running_manifest["last_backpressure_diagnostics"][
+        "worker_swap_growth_correlated_with_pressure"
+    ]
+
+    worker["cgroup"]["memory.pressure"]["some_avg10"] = (
+        config["resource_limits"]["maximum_memory_psi_some_avg10_percent"] + 1
+    )
+    campaign._cancel_unhealthy_running_job(
+        tmp_path, running_manifest, snapshot, config, 1_750_000_000
+    )
+    assert cancelled == ["job-synthetic"]
+    assert "research_worker_swap_pressure" in active["cancellation_reasons"]
+
+    cancelled.clear()
+    active["state"] = "RUNNING"
+    snapshot["arena"]["active_jobs"] = []
 
     live_active = {**live_step, "state": "RUNNING", "job_id": "job-live"}
     running_manifest["steps"] = [live_active]

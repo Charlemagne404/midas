@@ -23,6 +23,6 @@ ProtectSystem=strict
 ProtectHome=read-only
 ReadWritePaths=%h/midas/data/autonomy %h/midas/data/arena
 PrivateTmp=true
-TimeoutStartSec=300s
+TimeoutStartSec=240s
 StandardOutput=journal
 StandardError=journal

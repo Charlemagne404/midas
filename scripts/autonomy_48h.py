@@ -18,12 +18,18 @@ import urllib.request
 from pathlib import Path
 from typing import Any
 
-from midas.arena.artifacts import atomic_json, sha256
+from midas.arena.artifacts import atomic_bytes, atomic_json, sha256
 from midas.arena.datasets import load as load_dataset
 from midas.arena.datasets import research_hash
 from midas.arena.director import DirectorSpec, load_reusable_sweep
 from midas.arena.evolution import SweepSpec
-from midas.arena.jobs import JobSpec, artifact_usage, inspect
+from midas.arena.jobs import (
+    MAX_QUEUE_WAIT_SECONDS,
+    JobSpec,
+    artifact_usage,
+    find_by_admission_key,
+    inspect,
+)
 from midas.arena.jobs import cancel as cancel_job
 from midas.arena.jobs import create as create_job
 from midas.arena.tournaments import TournamentSpec
@@ -40,8 +46,17 @@ CAMPAIGN_MODEL_IDS = (
     "model-33cddb0d92024c2bb0a3b34a",
 )
 VERITAS_DIRECTOR_ID = "director-veritas-opportunity-v1"
-TERMINAL = {"COMPLETE", "PARTIAL", "FAILED", "CANCELLED"}
-STEP_TERMINAL = {"COMPLETED", "FAILED", "SKIPPED", "BLOCKED_DEPENDENCY"}
+TERMINAL = {"COMPLETE", "PARTIAL", "FAILED", "CANCELLED", "FINALIZATION_FAILED"}
+STEP_TERMINAL = {
+    "COMPLETED",
+    "FAILED",
+    "SKIPPED",
+    "BLOCKED_DEPENDENCY",
+    "BLOCKED_RESOURCE",
+    "NOT_ADMITTED_DEADLINE",
+    "BLOCKED_ADMISSION_RECONCILIATION",
+}
+MAX_HEALTH_BACKPRESSURE_RETRIES = 3
 HEALTH_BACKPRESSURE_REASONS = {
     "host_memory_critical",
     "recorder_memory_critical",
@@ -61,6 +76,10 @@ HEALTH_BACKPRESSURE_REASONS = {
 PAGE_SIZE = os.sysconf("SC_PAGE_SIZE")
 CAMPAIGN_TIMER = "midas-autonomy-48h-001.timer"
 SOURCE_RECOVERY_STABILITY_NS = 600 * 1_000_000_000
+REPORT_PUBLICATION_BUDGET_SECONDS = 300
+ARENA_USAGE_CACHE_TTL_NS = 6 * 60 * 60 * 1_000_000_000
+ARENA_USAGE_MIN_RESCAN_NS = 5 * 60 * 1_000_000_000
+NEXT_JOB_ARTIFACT_BUDGET_BYTES = 1024**3
 
 
 def now_iso(timestamp_ns: int | None = None) -> str:
@@ -556,6 +575,21 @@ def swap_pressure_correlated(
         host.get("mem_available_bytes", 0) < memory_floor * 1024**2
         or memory_psi.get("some_avg10", 0) > limits["maximum_memory_psi_some_avg10_percent"]
         or memory_psi.get("full_avg10", 0) > limits["maximum_memory_psi_full_avg10_percent"]
+    )
+
+
+def worker_swap_pressure_correlated(
+    snapshot: dict[str, Any], worker: dict[str, Any], limits: dict[str, Any]
+) -> bool:
+    """Treat worker swap growth as harmful only when memory pressure corroborates it."""
+    cgroup = worker.get("cgroup", {})
+    memory_psi = cgroup.get("memory.pressure", {})
+    memory_events = cgroup.get("memory.events", {})
+    return (
+        swap_pressure_correlated(snapshot, limits, cancellation=True)
+        or memory_psi.get("some_avg10", 0) > limits["maximum_memory_psi_some_avg10_percent"]
+        or memory_psi.get("full_avg10", 0) > limits["maximum_memory_psi_full_avg10_percent"]
+        or any(memory_events.get(key, 0) > 0 for key in ("high", "max", "oom", "oom_kill"))
     )
 
 
@@ -1169,7 +1203,7 @@ def run_focused_smoke(workspace: Path) -> dict[str, Any]:
                 ],
                 capture_output=True,
                 text=True,
-                timeout=600,
+                timeout=120,
                 check=False,
                 cwd=workspace,
                 env=environment,
@@ -1187,6 +1221,109 @@ def run_focused_smoke(workspace: Path) -> dict[str, Any]:
 
 def campaign_dir(workspace: Path) -> Path:
     return workspace / "data/autonomy" / CAMPAIGN_ID
+
+
+def campaign_artifact_usage(
+    workspace: Path,
+    manifest: dict[str, Any],
+    timestamp_ns: int,
+    *,
+    force_refresh: bool = False,
+) -> dict[str, Any]:
+    """Use a durable scan baseline plus conservative per-job growth bounds.
+
+    New or active jobs count against their full artifact allowance until the next
+    reconciliation scan. This avoids rescanning immutable Arena history every
+    controller tick while retaining a bounded recovery path for crashes and
+    changes made outside a worker.
+    """
+    root = workspace / "data/arena"
+    records: dict[str, dict[str, Any]] = {}
+    for path in (root / "jobs").glob("*/job.json"):
+        try:
+            record = json.loads(path.read_text())
+        except (OSError, json.JSONDecodeError):
+            record = {}
+        records[str(record.get("job_id") or path.parent.name)] = record
+    active_ids = {
+        job_id for job_id, record in records.items() if record.get("state") in {"QUEUED", "RUNNING"}
+    }
+    limits = manifest.get("resource_budgets", {})
+    max_bytes = int(limits.get("maximum_arena_artifact_bytes", 8 * 1024**3))
+    minimum_headroom = int(limits.get("minimum_arena_artifact_headroom_bytes", 0))
+    checkpoint = manifest.get("arena_artifact_accounting")
+    valid = (
+        isinstance(checkpoint, dict)
+        and checkpoint.get("version") == 1
+        and isinstance(checkpoint.get("base_bytes"), int)
+        and isinstance(checkpoint.get("base_job_ids"), list)
+    )
+    base_ids = set(checkpoint.get("base_job_ids", [])) if valid else set()
+    growth_ids = set(checkpoint.get("pending_growth_job_ids", [])) if valid else set()
+    growth_ids.update(set(records) - base_ids)
+    growth_ids.update(active_ids)
+    estimated = int(checkpoint.get("base_bytes", 0)) if valid else 0
+    for job_id in growth_ids:
+        record = records.get(job_id, {})
+        budget_mb = int((record.get("budget") or {}).get("max_artifact_mb", 1024))
+        estimated += max(0, budget_mb) * 1024**2
+    sampled_at_ns = int(checkpoint.get("sampled_at_ns", 0)) if valid else 0
+    stale = timestamp_ns - sampled_at_ns >= ARENA_USAGE_CACHE_TTL_NS
+    would_leave_too_little = (
+        max_bytes - estimated - NEXT_JOB_ARTIFACT_BUDGET_BYTES < minimum_headroom
+    )
+    rescan_for_headroom = would_leave_too_little and (
+        timestamp_ns - sampled_at_ns >= ARENA_USAGE_MIN_RESCAN_NS
+    )
+    if force_refresh or not valid or stale or rescan_for_headroom:
+        started = time.perf_counter()
+        used, files = artifact_usage(root)
+        scan_seconds = time.perf_counter() - started
+        checkpoint = {
+            "version": 1,
+            "sampled_at_ns": timestamp_ns,
+            "base_bytes": used,
+            "base_files": files,
+            "base_job_ids": sorted(records),
+            "pending_growth_job_ids": sorted(active_ids),
+            "scan_seconds": scan_seconds,
+            "reconciliation_reason": (
+                "forced"
+                if force_refresh
+                else "initial"
+                if not valid
+                else "stale"
+                if stale
+                else "artifact_headroom"
+            ),
+        }
+        manifest["arena_artifact_accounting"] = checkpoint
+        estimated = used
+        # An active job could grow after the point-in-time walk. Retain its full
+        # bound in the estimate until a later reconciliation confirms the result.
+        for job_id in active_ids:
+            record = records.get(job_id, {})
+            budget_mb = int((record.get("budget") or {}).get("max_artifact_mb", 1024))
+            estimated += max(0, budget_mb) * 1024**2
+        return {
+            "bytes": estimated,
+            "observed_bytes": used,
+            "files": files,
+            "mode": "FULL_SCAN",
+            "scan_seconds": scan_seconds,
+            "pending_growth_jobs": len(active_ids),
+        }
+    checkpoint["pending_growth_job_ids"] = sorted(growth_ids)
+    manifest["arena_artifact_accounting"] = checkpoint
+    return {
+        "bytes": estimated,
+        "observed_bytes": checkpoint["base_bytes"],
+        "files": checkpoint.get("base_files"),
+        "mode": "JOB_BUDGET_ESTIMATE",
+        "scan_seconds": 0.0,
+        "age_seconds": max(0.0, (timestamp_ns - sampled_at_ns) / 1e9),
+        "pending_growth_jobs": len(growth_ids),
+    }
 
 
 def write_preflight(
@@ -1432,6 +1569,13 @@ def _progress(
         "updated_at": snapshot["checked_at"],
         "started_at": manifest.get("started_at"),
         "planned_end_at": manifest.get("planned_end_at"),
+        "execution_deadline_at": manifest.get("planned_end_at"),
+        "worker_shutdown_grace_deadline_at": now_iso(
+            manifest["planned_end_ns"]
+            + int(manifest.get("completion_grace_seconds", 600) * 1_000_000_000)
+        ),
+        "report_publication_deadline_at": now_iso(_report_publication_deadline(manifest)),
+        "finalization_state": manifest.get("finalization_state", "PENDING"),
         "elapsed_seconds": max(
             0, (snapshot["checked_at_ns"] - manifest["started_at_ns"]) // 1_000_000_000
         ),
@@ -1485,7 +1629,8 @@ def _progress(
                 "reason": step.get("error"),
             }
             for step in steps
-            if step.get("state") == "BLOCKED_DEPENDENCY"
+            if step.get("state")
+            in {"BLOCKED_DEPENDENCY", "BLOCKED_RESOURCE", "BLOCKED_ADMISSION_RECONCILIATION"}
         ],
         "paused_or_deferred_jobs": manifest.get("paused_jobs", []),
         "skipped_experiments": manifest.get("skipped_jobs", []),
@@ -1516,6 +1661,7 @@ def _progress(
             "recorder_cgroup": recorder.get("cgroup", {}),
             "active_workers": snapshot["arena"].get("active_jobs", []),
             "backpressure_diagnostics": manifest.get("last_backpressure_diagnostics", {}),
+            "arena_artifact_accounting": manifest.get("arena_artifact_accounting", {}),
             "source_recovery": copy.deepcopy(manifest.get("source_recovery", {})),
             "api_health": snapshot["api"].get("status"),
             "disk_free_bytes": snapshot["host"]["disk_free_bytes"],
@@ -1548,6 +1694,7 @@ def render_status(report: dict[str, Any]) -> str:
             f"- Status: **{report.get('status')}** ({report.get('health')})",
             f"- Started: {report.get('started_at')}",
             f"- Planned end: {report.get('planned_end_at')}",
+            f"- Finalization: {report.get('finalization_state')} (report deadline {report.get('report_publication_deadline_at')})",
             f"- Elapsed: {report.get('elapsed_seconds', 0) // 3600}h; remaining: {hours}h {minutes}m",
             f"- Current step: {current}",
             f"- Experiments/tournaments completed: {report.get('experiments_completed', 0)}/{report.get('tournaments_completed', 0)}",
@@ -2003,17 +2150,36 @@ def defer_health_cancelled_step(
     reasons: set[str],
     timestamp_ns: int,
 ) -> None:
-    step.setdefault("deferred_job_ids", []).append(job_id)
-    step["admission_generation"] = int(step.get("admission_generation", 0)) + 1
+    deferred_job_ids = step.setdefault("deferred_job_ids", [])
+    if job_id not in deferred_job_ids:
+        deferred_job_ids.append(job_id)
+    retry_count = int(step.get("health_backpressure_retries", 0)) + 1
+    step["health_backpressure_retries"] = retry_count
+    step["retry_of"] = job_id
     step["job_id"] = None
     step["admission_intent"] = None
     step.pop("cancel_requested_at_ns", None)
-    step["state"] = "WAITING_RESOURCE"
-    step["error"] = "Previous run stopped by campaign backpressure: " + ", ".join(sorted(reasons))
+    if retry_count >= MAX_HEALTH_BACKPRESSURE_RETRIES:
+        step["state"] = "BLOCKED_RESOURCE"
+        step["blocked_at"] = now_iso(timestamp_ns)
+        step["error"] = (
+            f"Blocked after {retry_count} health backpressure cancellations: "
+            + ", ".join(sorted(reasons))
+        )
+    else:
+        step["admission_generation"] = int(step.get("admission_generation", 0)) + 1
+        step["state"] = "WAITING_RESOURCE"
+        step["error"] = "Previous run stopped by campaign backpressure: " + ", ".join(
+            sorted(reasons)
+        )
     for record in manifest.get("failed_jobs", []):
         if record.get("job_id") == job_id and record.get("state") == "CANCELLED":
             record["state"] = "CANCELLED_FOR_HEALTH_BACKPRESSURE"
-            record["recovery"] = "Eligible for bounded retry when resource gates recover"
+            record["recovery"] = (
+                "Blocked after repeated resource pressure"
+                if retry_count >= MAX_HEALTH_BACKPRESSURE_RETRIES
+                else "Eligible for bounded retry when resource gates recover"
+            )
             break
     manifest.setdefault("paused_jobs", []).append(
         {
@@ -2030,6 +2196,8 @@ def defer_health_cancelled_step(
             "job_id": job_id,
             "at": now_iso(timestamp_ns),
             "action": "deferred_cancelled_run_for_health_backpressure",
+            "retry_count": retry_count,
+            "blocked": retry_count >= MAX_HEALTH_BACKPRESSURE_RETRIES,
             "reason": sorted(reasons),
         }
     )
@@ -2039,7 +2207,16 @@ def campaign_health(manifest: dict[str, Any], snapshot: dict[str, Any]) -> str:
     steps = manifest.get("steps", [])
     active_job = any(step.get("state") in {"RUNNING", "QUEUED", "ADMITTING"} for step in steps)
     waiting_for_recovery = any(
-        step.get("state") in {"CANCEL_REQUESTED", "RETRY_WAIT", "BLOCKED_DEPENDENCY"}
+        step.get("state")
+        in {
+            "CANCEL_REQUESTED",
+            "RETRY_WAIT",
+            "BLOCKED_DEPENDENCY",
+            "BLOCKED_RESOURCE",
+            "BLOCKED_ADMISSION_RECONCILIATION",
+            "NOT_ADMITTED_DEADLINE",
+            "FAILED",
+        }
         for step in steps
     ) or (not active_job and any(step.get("state") == "WAITING_RESOURCE" for step in steps))
     recorder = snapshot["recorder"]
@@ -2165,6 +2342,7 @@ def initialize(
         "started_at_ns": started_ns,
         "planned_end_at": now_iso(end_ns),
         "planned_end_ns": end_ns,
+        "completion_grace_seconds": config["completion_grace_seconds"],
         "actual_end_at": None,
         "configuration_path": str(CONFIG_PATH),
         "configuration_sha256": sha256(CONFIG_PATH),
@@ -2344,8 +2522,9 @@ def _admit_due_step(
         return
     arena_root = workspace / "data/arena"
     try:
-        used, _ = artifact_usage(arena_root)
-    except OSError as error:
+        accounting = campaign_artifact_usage(workspace, manifest, timestamp_ns)
+        used = accounting["bytes"]
+    except (OSError, ValueError, TypeError, KeyError) as error:
         candidate = candidates[0]
         candidate["state"] = "WAITING_RESOURCE"
         candidate["error"] = f"Arena artifact inventory unavailable: {error}"
@@ -2363,7 +2542,7 @@ def _admit_due_step(
             snapshot,
             config,
             manifest.get("last_resource_sample"),
-            used,
+            used + NEXT_JOB_ARTIFACT_BUDGET_BYTES,
             step=due,
             campaign_manifest=manifest,
             source_independent=source_independent,
@@ -2378,6 +2557,8 @@ def _admit_due_step(
             "reasons": reasons,
             "swap_activity": swap,
             "arena_artifact_usage_bytes": used,
+            "arena_artifact_accounting_mode": accounting["mode"],
+            "arena_artifact_observed_bytes": accounting["observed_bytes"],
             "recorder_continuity_required": not source_independent,
             "source_recovery_stability_required": not source_independent,
         }
@@ -2429,6 +2610,29 @@ def _admit_due_step(
                 )
 
         spec = JobSpec.model_validate(job_spec)
+        if manifest.get("planned_end_ns"):
+            latest_admission_ns = (
+                manifest["planned_end_ns"]
+                - (spec.max_wall_seconds + MAX_QUEUE_WAIT_SECONDS) * 1_000_000_000
+            )
+            due["last_permitted_job_admission_at"] = now_iso(latest_admission_ns)
+            if timestamp_ns >= latest_admission_ns:
+                due["state"] = "NOT_ADMITTED_DEADLINE"
+                due["deadline_cutoff_ns"] = latest_admission_ns
+                due["error"] = (
+                    "Not admitted because the remaining execution window is shorter than "
+                    "the job wall limit plus bounded lease wait"
+                )
+                manifest.setdefault("deadline_blocked_jobs", []).append(
+                    {
+                        "step": due["step"],
+                        "cutoff_at": now_iso(latest_admission_ns),
+                        "recorded_at": now_iso(timestamp_ns),
+                        "max_wall_seconds": spec.max_wall_seconds,
+                        "queue_wait_seconds": MAX_QUEUE_WAIT_SECONDS,
+                    }
+                )
+                continue
         close_resolved_incidents(manifest, set(), timestamp_ns)
         due["state"] = "ADMITTING"
         due["error"] = None
@@ -2445,7 +2649,10 @@ def _admit_due_step(
         due["admission_attempt"] = attempt
         # The native Arena admission key recovers this exact job after a controller or host restart.
         due["job_spec"] = job_spec
-        job = create_job(arena_root, spec, admission_key=key)
+        if due.get("retry_of"):
+            job = create_job(arena_root, spec, admission_key=key, retry_of=due["retry_of"])
+        else:
+            job = create_job(arena_root, spec, admission_key=key)
         due["job_id"] = job["job_id"]
         due["state"] = job["state"]
         due["admitted_at"] = now_iso(timestamp_ns)
@@ -2529,6 +2736,7 @@ def _observe_steps(workspace: Path, manifest: dict[str, Any], timestamp_ns: int)
         step.setdefault("failed_job_ids", [])
         if job_id not in step["failed_job_ids"]:
             step["failed_job_ids"].append(job_id)
+        step["retry_of"] = job_id
         manifest.setdefault("failed_jobs", []).append(
             {
                 "job_id": job_id,
@@ -2622,12 +2830,18 @@ def _cancel_unhealthy_running_job(
         "worker_memory_pressure": worker_memory_psi,
         "worker_io_pressure": worker_io_psi,
         "worker_memory_events": worker_memory_events,
+        "worker_swap_growth_correlated_with_pressure": worker_swap_pressure_correlated(
+            snapshot, worker, limits
+        ),
     }
     manifest["last_backpressure_diagnostics"] = diagnostics
     try:
-        arena_bytes = artifact_usage(workspace / "data/arena")[0]
-    except OSError:
+        accounting = campaign_artifact_usage(workspace, manifest, timestamp_ns)
+        arena_bytes = accounting["bytes"]
+    except (OSError, ValueError, TypeError, KeyError):
         arena_bytes = limits.get("maximum_arena_artifact_bytes", 1024**3)
+        accounting = {"mode": "BLOCKED_UNAVAILABLE", "scan_seconds": None}
+    diagnostics["arena_artifact_accounting"] = accounting
     resource_reasons = []
     if available < limits["cancel_below_available_memory_mb"] * 1024**2:
         resource_reasons.append("host_memory_critical")
@@ -2651,7 +2865,10 @@ def _cancel_unhealthy_running_job(
         and diagnostics["global_swap_activity_correlated_with_pressure"]
     ):
         resource_reasons.append("swap_activity")
-    if worker_swap_delta > limits["maximum_swap_activity_bytes_per_interval"]:
+    if (
+        worker_swap_delta > limits["maximum_swap_activity_bytes_per_interval"]
+        and diagnostics["worker_swap_growth_correlated_with_pressure"]
+    ):
         resource_reasons.append("research_worker_swap_pressure")
     if (
         worker_memory_psi.get("some_avg10", 0) > limits["maximum_memory_psi_some_avg10_percent"]
@@ -2789,7 +3006,16 @@ def final_validation(
     dataset_matches = dataset.get("rows_sha256") == manifest["initial_dataset_identities"][0].get(
         "rows_sha256"
     )
-    smoke = run_focused_smoke(workspace)
+    verification = manifest.get("verification", {})
+    smoke = verification.get("midpoint_regression") or verification.get("activation_smoke")
+    if smoke is None:
+        smoke = {"state": "NOT_RUN", "reason": "No prior isolated regression result recorded"}
+    else:
+        smoke = {
+            **smoke,
+            "evidence_source": "latest_completed_campaign_regression",
+            "evidence_at": verification.get("midpoint_regression_at") or manifest.get("started_at"),
+        }
     return {
         "checked_at": snapshot["checked_at"],
         "protected_campaigns_unchanged": all(x["unchanged"] for x in refs),
@@ -2928,7 +3154,7 @@ def render_final_report(workspace: Path, manifest: dict[str, Any], final: dict[s
             f"- Recording gaps added: {max(0, int(final_recorder.get('gaps', 0)) - int(initial.get('gaps', 0)))}; final total gaps: {final_recorder.get('gaps')}",
             f"- Recorder state: `{final_recorder.get('state')}`; memory at final check: {final_recorder.get('memory_current_bytes')} bytes",
             f"- Arena artifacts at final check: {manifest.get('final_arena_artifact_usage_bytes')} bytes; host disk free: {final_recorder.get('capacity', {}).get('filesystem_free_bytes')}",
-            f"- Failed jobs: {len(manifest.get('failed_jobs', []))}; blocked dependencies: {sum(1 for s in manifest['steps'] if s.get('state') == 'BLOCKED_DEPENDENCY')}; recoveries: {sum(1 for s in manifest['steps'] if len(s.get('failed_job_ids', [])) > 0)}",
+            f"- Failed jobs: {len(manifest.get('failed_jobs', []))}; blocked dependencies: {sum(1 for s in manifest['steps'] if s.get('state') == 'BLOCKED_DEPENDENCY')}; resource-blocked steps: {sum(1 for s in manifest['steps'] if s.get('state') == 'BLOCKED_RESOURCE')}; deadline omissions: {sum(1 for s in manifest['steps'] if s.get('state') == 'NOT_ADMITTED_DEADLINE')}; recoveries: {sum(1 for s in manifest['steps'] if len(s.get('failed_job_ids', [])) > 0)}",
             f"- Resource incidents: {len(manifest.get('operational_incidents', []))}; resource samples retained for {len(usage)} campaign job attempts.",
             f"- Final integrity: protected campaigns unchanged={final['protected_campaigns_unchanged']}; dataset unchanged={final['dataset_identity_unchanged']}; model artifacts unchanged={final['model_artifact_identities_unchanged']}; newest segment hashes valid={final['latest_source_segments_valid']}",
             "",
@@ -2987,17 +3213,39 @@ def finalize(
     config: dict[str, Any],
     timestamp_ns: int,
 ) -> None:
-    for step in manifest["steps"]:
-        if step.get("state") in {"RUNNING", "QUEUED", "CANCEL_REQUESTED"} and step.get("job_id"):
-            cancel_campaign_job(workspace, step["job_id"])
-            result = command(
-                ["systemctl", "--user", "stop", f"midas-arena-{step['job_id']}.service"], timeout=35
-            )
+    manifest["status"] = "FINALIZING"
+    manifest["finalization_state"] = "RUNNING"
+    manifest["finalization_started_at_ns"] = timestamp_ns
+    manifest["finalization_started_at"] = now_iso(timestamp_ns)
+    manifest["report_publication_deadline_ns"] = (
+        manifest["planned_end_ns"]
+        + int(config.get("completion_grace_seconds", 600) * 1_000_000_000)
+        + REPORT_PUBLICATION_BUDGET_SECONDS * 1_000_000_000
+    )
+    atomic_json(campaign_dir(workspace) / "manifest.json", manifest)
+    active_steps = [
+        step
+        for step in manifest["steps"]
+        if step.get("state") in {"RUNNING", "QUEUED", "CANCEL_REQUESTED"} and step.get("job_id")
+    ]
+    for step in active_steps:
+        cancel_campaign_job(workspace, step["job_id"])
+    if active_steps:
+        result = command(
+            [
+                "systemctl",
+                "--user",
+                "stop",
+                *(f"midas-arena-{step['job_id']}.service" for step in active_steps),
+            ],
+            timeout=35,
+        )
+        for step in active_steps:
             manifest.setdefault("failed_jobs", []).append(
                 {
                     "job_id": step["job_id"],
                     "step": step["step"],
-                    "state": "STOPPED_AT_CAMPAIGN_GRACE",
+                    "state": "STOPPED_AT_EXECUTION_GRACE",
                     "error": result.stderr.strip(),
                     "at": now_iso(timestamp_ns),
                 }
@@ -3018,9 +3266,10 @@ def finalize(
     manifest["final_arena_artifact_usage_bytes"] = artifact_usage(workspace / "data/arena")[0]
     report = render_final_report(workspace, manifest, final)
     final_path = campaign_dir(workspace) / "AUTONOMY_48H_001_FINAL_REPORT.md"
-    final_path.write_text(report)
+    atomic_bytes(final_path, report.encode("utf-8"))
     atomic_json(campaign_dir(workspace) / "final-validation.json", final)
     manifest["final_report_sha256"] = sha256(final_path)
+    manifest["finalization_state"] = "COMPLETED"
     manifest["health"] = (
         "HEALTHY"
         if all(
@@ -3035,6 +3284,136 @@ def finalize(
         )
         and final.get("focused_scratch_regression", {}).get("state") == "PASSED"
         else "DEGRADED"
+    )
+
+
+def fail_finalization(
+    workspace: Path, manifest: dict[str, Any], timestamp_ns: int, reason: str
+) -> None:
+    """Publish a bounded, durable terminal report when full reconciliation fails."""
+    active_steps = [
+        step
+        for step in manifest.get("steps", [])
+        if step.get("job_id") and step.get("state") in {"RUNNING", "QUEUED", "CANCEL_REQUESTED"}
+    ]
+    for step in active_steps:
+        cancel_campaign_job(workspace, step["job_id"])
+    if active_steps:
+        command(
+            [
+                "systemctl",
+                "--user",
+                "stop",
+                *(f"midas-arena-{step['job_id']}.service" for step in active_steps),
+            ],
+            timeout=35,
+        )
+        for step in active_steps:
+            step["state"] = "INTERRUPTED"
+    message = f"Finalization failed: {reason}"
+    final_path = campaign_dir(workspace) / "AUTONOMY_48H_001_FINAL_REPORT.md"
+    atomic_bytes(
+        final_path,
+        (
+            "# MIDAS 48H-001 finalization failure\n\n"
+            f"- Campaign deadline: {manifest.get('planned_end_at')}\n"
+            f"- Failure recorded: {now_iso(timestamp_ns)}\n"
+            f"- Reason: {message}\n"
+            "- Research results remain in their original artifacts; final reconciliation did not complete.\n"
+        ).encode(),
+    )
+    failure = {
+        "state": "FINALIZATION_FAILED",
+        "checked_at": now_iso(timestamp_ns),
+        "error": message,
+    }
+    atomic_json(campaign_dir(workspace) / "final-validation.json", failure)
+    manifest.update(
+        status="FINALIZATION_FAILED",
+        health="DEGRADED",
+        finalization_state="FAILED",
+        finalization_error=message,
+        actual_end_ns=timestamp_ns,
+        actual_end_at=now_iso(timestamp_ns),
+        final_report_sha256=sha256(final_path),
+    )
+    atomic_json(campaign_dir(workspace) / "manifest.json", manifest)
+
+
+def request_deadline_shutdown(workspace: Path, manifest: dict[str, Any], timestamp_ns: int) -> None:
+    """Stop admission at deadline and ask active workers to checkpoint and exit."""
+    for step in manifest["steps"]:
+        if step.get("state") in STEP_TERMINAL:
+            continue
+        job_id = step.get("job_id")
+        if not job_id:
+            step["state"] = "NOT_ADMITTED_DEADLINE"
+            step["deadline_cutoff_ns"] = manifest["planned_end_ns"]
+            step["error"] = "Campaign execution deadline arrived before this step was admitted"
+            manifest.setdefault("deadline_blocked_jobs", []).append(
+                {
+                    "step": step["step"],
+                    "cutoff_at": manifest.get("planned_end_at"),
+                    "recorded_at": now_iso(timestamp_ns),
+                    "reason": "campaign_execution_deadline",
+                }
+            )
+            continue
+        if step.get("state") not in {"RUNNING", "QUEUED", "CANCEL_REQUESTED"}:
+            continue
+        if step.get("deadline_stop_requested_at_ns"):
+            continue
+        cancel_campaign_job(workspace, job_id)
+        step["state"] = "CANCEL_REQUESTED"
+        step["cancel_requested_at_ns"] = timestamp_ns
+        step["deadline_stop_requested_at_ns"] = timestamp_ns
+        step["cancellation_reasons"] = ["campaign_execution_deadline"]
+
+
+def reconcile_admitting_steps(workspace: Path, manifest: dict[str, Any], timestamp_ns: int) -> None:
+    """Bind jobs created before a controller crash to their persisted intent."""
+    arena_root = workspace / "data/arena"
+    for step in manifest.get("steps", []):
+        if step.get("state") != "ADMITTING" or step.get("job_id"):
+            continue
+        intent = step.get("admission_intent") or {}
+        key = intent.get("key")
+        if not key:
+            continue
+        configuration = step.get("job_spec") or step.get("job_spec_template")
+        try:
+            job = find_by_admission_key(
+                arena_root,
+                key,
+                configuration,
+                retry_of=step.get("retry_of"),
+            )
+        except (OSError, ValueError, KeyError, TypeError) as error:
+            step["state"] = "BLOCKED_ADMISSION_RECONCILIATION"
+            step["error"] = f"Admission intent could not be reconciled safely: {error}"
+            step["reconciliation_failed_at"] = now_iso(timestamp_ns)
+            continue
+        if job:
+            step["job_id"] = job["job_id"]
+            step["state"] = job["state"]
+            step["admission_recovered_at"] = now_iso(timestamp_ns)
+            manifest.setdefault("recovery_events", []).append(
+                {
+                    "step": step["step"],
+                    "job_id": job["job_id"],
+                    "at": now_iso(timestamp_ns),
+                    "action": "reconciled_durable_admission_after_controller_restart",
+                    "admission_key": key,
+                }
+            )
+
+
+def _report_publication_deadline(manifest: dict[str, Any]) -> int:
+    return int(
+        manifest.get("report_publication_deadline_ns")
+        or manifest["planned_end_ns"]
+        + int(manifest.get("completion_grace_seconds", 600) * 1_000_000_000)
+        + REPORT_PUBLICATION_BUDGET_SECONDS * 1_000_000_000
     )
 
 
@@ -3081,11 +3460,23 @@ def tick(
         close_resolved_incidents(manifest, active_incidents, timestamp_ns)
         if snapshot["api"].get("status") != "READY":
             append_incident(manifest, "api_unhealthy", snapshot["api"], timestamp_ns)
+        reconcile_admitting_steps(workspace, manifest, timestamp_ns)
         _observe_steps(workspace, manifest, timestamp_ns)
         _cancel_unhealthy_running_job(workspace, manifest, snapshot, config, timestamp_ns)
         _run_scheduled_regression(workspace, manifest, snapshot, config, timestamp_ns)
         elapsed = (timestamp_ns - manifest["started_at_ns"]) // 1_000_000_000
-        if timestamp_ns < manifest["planned_end_ns"]:
+        report_deadline_ns = _report_publication_deadline(manifest)
+        grace_deadline_ns = manifest["planned_end_ns"] + int(
+            config["completion_grace_seconds"] * 1_000_000_000
+        )
+        if timestamp_ns >= report_deadline_ns:
+            fail_finalization(
+                workspace,
+                manifest,
+                timestamp_ns,
+                "The bounded final-report publication deadline expired",
+            )
+        elif timestamp_ns < manifest["planned_end_ns"]:
             if manifest.get("status") == "PAUSED":
                 pass
             else:
@@ -3095,21 +3486,32 @@ def tick(
                     append_incident(manifest, "campaign_controller_error", str(error), timestamp_ns)
                     manifest["health"] = "DEGRADED"
         else:
+            request_deadline_shutdown(workspace, manifest, timestamp_ns)
             active_steps = [
                 s
                 for s in manifest["steps"]
                 if s.get("state") in {"RUNNING", "QUEUED", "CANCEL_REQUESTED"}
             ]
-            if (
-                active_steps
-                and timestamp_ns
-                < manifest["planned_end_ns"] + config["completion_grace_seconds"] * 1_000_000_000
-            ):
+            if active_steps and timestamp_ns < grace_deadline_ns:
                 manifest["status"] = "COMPLETING"
             else:
-                finalize(
-                    workspace, reality_root, veritas_root, api_base, manifest, config, timestamp_ns
-                )
+                try:
+                    finalize(
+                        workspace,
+                        reality_root,
+                        veritas_root,
+                        api_base,
+                        manifest,
+                        config,
+                        timestamp_ns,
+                    )
+                except Exception as error:
+                    fail_finalization(
+                        workspace,
+                        manifest,
+                        timestamp_ns,
+                        f"{type(error).__name__}: {error}",
+                    )
         if manifest.get("status") not in TERMINAL:
             manifest["health"] = campaign_health(manifest, snapshot)
         manifest["elapsed_seconds"] = elapsed
@@ -3185,6 +3587,13 @@ def status(workspace: Path) -> dict[str, Any]:
             int((manifest["planned_end_ns"] - time.time_ns()) // 1_000_000_000),
         )
         report["plan_revision"] = manifest.get("plan_revision")
+        report["execution_deadline_at"] = manifest.get("planned_end_at")
+        report["worker_shutdown_grace_deadline_at"] = now_iso(
+            manifest["planned_end_ns"]
+            + int(manifest.get("completion_grace_seconds", 600) * 1_000_000_000)
+        )
+        report["report_publication_deadline_at"] = now_iso(_report_publication_deadline(manifest))
+        report["finalization_state"] = manifest.get("finalization_state", "PENDING")
         report["queued_steps"] = sum(
             step.get("state") in {"PENDING", "WAITING_RESOURCE", "WAITING_DEPENDENCY", "RETRY_WAIT"}
             for step in manifest["steps"]
@@ -3193,7 +3602,14 @@ def status(workspace: Path) -> dict[str, Any]:
             step.get("state") == "RETRY_WAIT" for step in manifest["steps"]
         )
         report["blocked_step_count"] = sum(
-            step.get("state") == "BLOCKED_DEPENDENCY" for step in manifest["steps"]
+            step.get("state") in {"BLOCKED_DEPENDENCY", "BLOCKED_RESOURCE"}
+            for step in manifest["steps"]
+        )
+        report["blocked_resource_step_count"] = sum(
+            step.get("state") == "BLOCKED_RESOURCE" for step in manifest["steps"]
+        )
+        report["deadline_omission_count"] = sum(
+            step.get("state") == "NOT_ADMITTED_DEADLINE" for step in manifest["steps"]
         )
         report["steps"] = []
         for step in manifest["steps"]:
@@ -3214,6 +3630,9 @@ def status(workspace: Path) -> dict[str, Any]:
                         "resolved_model_id",
                         "skip_reason",
                         "blocked_by_step",
+                        "last_permitted_job_admission_at",
+                        "health_backpressure_retries",
+                        "retry_of",
                     )
                     if step.get(k) is not None
                 }
