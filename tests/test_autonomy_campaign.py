@@ -21,6 +21,9 @@ from scripts.autonomy_48h import (
     research_source_is_accepted,
     update_source_stability,
 )
+from scripts.autonomy_48h import (
+    status as campaign_status,
+)
 
 
 def test_campaign_job_budget_and_durable_schedule_are_bounded(tmp_path, monkeypatch):
@@ -944,6 +947,33 @@ def test_finalize_writes_report_and_classifies_mixed_results_as_partial(tmp_path
     assert report.read_text() == "preserved final report\n"
     assert (directory / "final-validation.json").is_file()
     assert manifest["final_report_sha256"] == "report-sha256"
+
+
+def test_status_verifies_report_for_legacy_terminal_campaign(tmp_path):
+    import scripts.autonomy_48h as campaign
+
+    directory = campaign.campaign_dir(tmp_path)
+    directory.mkdir(parents=True)
+    final_report = directory / "AUTONOMY_48H_001_FINAL_REPORT.md"
+    final_report.write_text("preserved final report\n")
+    manifest = {
+        "status": "PARTIAL",
+        "started_at_ns": 1_000_000_000,
+        "planned_end_ns": 2_000_000_000,
+        "planned_end_at": campaign.now_iso(2_000_000_000),
+        "steps": [],
+        "report_path": str(final_report),
+        "final_report_sha256": campaign.sha256(final_report),
+    }
+    from midas.arena.artifacts import atomic_json
+
+    atomic_json(directory / "manifest.json", manifest)
+    atomic_json(directory / "status.json", {"campaign_id": "48H-001"})
+
+    assert campaign_status(tmp_path)["finalization_state"] == "COMPLETED"
+
+    final_report.write_text("changed report\n")
+    assert campaign_status(tmp_path)["finalization_state"] == "FAILED"
 
 
 def test_director_tournament_transition_admits_next_round_automatically(tmp_path, monkeypatch):

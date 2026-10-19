@@ -3593,7 +3593,7 @@ def status(workspace: Path) -> dict[str, Any]:
             + int(manifest.get("completion_grace_seconds", 600) * 1_000_000_000)
         )
         report["report_publication_deadline_at"] = now_iso(_report_publication_deadline(manifest))
-        report["finalization_state"] = manifest.get("finalization_state", "PENDING")
+        report["finalization_state"] = _reported_finalization_state(workspace, manifest)
         report["queued_steps"] = sum(
             step.get("state") in {"PENDING", "WAITING_RESOURCE", "WAITING_DEPENDENCY", "RETRY_WAIT"}
             for step in manifest["steps"]
@@ -3639,6 +3639,26 @@ def status(workspace: Path) -> dict[str, Any]:
                 | {"job_kind": spec.get("kind")}
             )
     return report or {"campaign_id": CAMPAIGN_ID, "status": manifest.get("status")}
+
+
+def _reported_finalization_state(workspace: Path, manifest: dict[str, Any]) -> str:
+    """Report legacy terminal campaigns accurately without rewriting their manifests."""
+    state = manifest.get("finalization_state")
+    if state:
+        return str(state)
+    if manifest.get("status") == "FINALIZATION_FAILED":
+        return "FAILED"
+    report_value = manifest.get("report_path")
+    expected_hash = manifest.get("final_report_sha256")
+    if manifest.get("status") in TERMINAL and report_value and expected_hash:
+        report_path = Path(report_value)
+        if not report_path.is_absolute():
+            report_path = workspace / report_path
+        try:
+            return "COMPLETED" if sha256(report_path) == expected_hash else "FAILED"
+        except OSError:
+            return "FAILED"
+    return "PENDING"
 
 
 def main() -> int:
