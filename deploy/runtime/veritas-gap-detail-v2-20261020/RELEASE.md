@@ -7,6 +7,13 @@ aggregate code hash. The service must keep loading this release while that
 checkpoint is being extended. A code change that alters those hashes needs a
 new output root or an explicit migration.
 
+Install the `packages/` and `scripts/` trees as a physical, read-only release
+at `~/.local/share/midas-veritas/gap-detail-v2-20261020/runtime/`. Verify the
+stored code identity against the installed files before enabling the timer.
+The service unit intentionally reads the installed copy rather than a mutable
+worktree. The older `gap-detail-v2-admission-20261020/runtime-overlay` remains
+available for rollback.
+
 The checkpoint's `analysis_code_sha256` is
 `29cf366aa905f70963e1223d8c54872c08526a604e209f0941542bd879dd9708`. Its
 file identities are:
