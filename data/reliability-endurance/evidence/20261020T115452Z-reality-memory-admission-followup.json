@@ -1,0 +1,84 @@
+{
+  "arena": {
+    "active_directors": 0,
+    "active_jobs": 0,
+    "active_schedules": 0,
+    "invalid_artifacts": 0,
+    "queued_directors": 0,
+    "queued_jobs": 0,
+    "stale_directors": 3,
+    "status": "available"
+  },
+  "candidate_deployment_guard": {
+    "deployed": false,
+    "failure_keeps_restart_disabled_and_does_not_retry_or_rollback": true,
+    "isolated_tests_passed": true,
+    "restores_previous_policy_only_after_health_window": true,
+    "unit_restart_policy_during_single_start": "no"
+  },
+  "captured_at_local": "2026-10-20T13:54:52.698339+02:00",
+  "captured_at_utc": "2026-10-20T11:54:52.698339+00:00",
+  "main_api": {
+    "journal_events": 398107,
+    "live_execution": false,
+    "restarts": 0,
+    "status": "READY"
+  },
+  "note": "Cgroup headroom is below the 4 MiB gate. Memory PSI and OOM counters are zero, but no staging replay or protected service transition was attempted.",
+  "reality_recorder": {
+    "active_state": "active",
+    "anonymous_delta_since_2026_10_20_13_31_sample_bytes": 1794048,
+    "cgroup": {
+      "events": {
+        "high": 10110,
+        "max": 0,
+        "oom": 0,
+        "oom_group_kill": 0,
+        "oom_kill": 0
+      },
+      "memory_current_bytes": 737337344,
+      "memory_high_bytes": 738197504,
+      "memory_high_margin_bytes": 860160,
+      "memory_max_bytes": 805306368,
+      "memory_pressure": "some/full avg10=0, avg60=0, avg300=0",
+      "memory_swap_current_bytes": 684032,
+      "memory_swap_max_bytes": 0
+    },
+    "loaded_revision": "2b838182b2cda465bf41ea1b99af9b7fb7bfc029",
+    "memory_stat_bytes": {
+      "active_file": 2437120,
+      "anon": 572760064,
+      "file": 145891328,
+      "inactive_file": 143454208,
+      "kernel": 18370560,
+      "pagetables": 1228800,
+      "slab": 17123216
+    },
+    "pid": 863193,
+    "process_smaps_rollup_at_approx_13_54_local": {
+      "private_dirty_kib": 559208,
+      "pss_kib": 561238,
+      "rss_kib": 568872,
+      "swap_kib": 668
+    },
+    "restart_delay_seconds": 10,
+    "restart_policy": "on-failure",
+    "restarts": 1,
+    "staging_admitted": false,
+    "staging_gate_bytes": 4194304,
+    "start_limit_burst": 5,
+    "start_limit_interval_seconds": 300
+  },
+  "veritas_v2_latest": {
+    "batch_processed_segment_count": 10,
+    "control_sha256": "ed82ed27fc2cad716c5c00ab5da3cff9042e86a3451e991800a78b1a3bf51124",
+    "cpu_seconds": 5.278,
+    "exit_status": 0,
+    "pending_segment_count": 0,
+    "processed_segment_count": 16216,
+    "run_finished_local": "2026-10-20T13:52:19+02:00",
+    "run_started_local": "2026-10-20T13:52:14+02:00",
+    "status": "CURRENT",
+    "summary_sha256": "6632b26605070e4988e80c6ffdc203b550982ce46ae06a473817ad632d34d490"
+  }
+}
