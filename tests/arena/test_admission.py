@@ -73,3 +73,29 @@ def test_launched_worker_is_rejected_before_systemd_when_pressure_is_unsafe(tmp_
         create(root, JobSpec(kind="dataset", dataset=DatasetSpec(episodes=30)))
     assert not calls
     assert not list(root.glob("jobs/*/job.json"))
+
+
+def test_worker_budget_preserves_production_reserve():
+    snapshot = {**ready_snapshot(), "available_memory_bytes": 4 * 1024**3}
+    assert admission.resource_gate(snapshot, requested_memory_bytes=512 * 1024**2)["ready"]
+    assert admission.resource_gate(snapshot, requested_memory_bytes=3 * 1024**3) == {
+        "ready": False,
+        "reasons": ["host_memory_headroom"],
+    }
+    snapshot["available_memory_bytes"] = 5 * 1024**3
+    assert admission.resource_gate(snapshot, requested_memory_bytes=3 * 1024**3)["ready"]
+    with pytest.raises(ValueError, match="nonnegative"):
+        admission.resource_gate(snapshot, requested_memory_bytes=-1)
+
+
+def test_worker_memory_budget_is_checked_before_artifacts_or_launch(tmp_path, monkeypatch):
+    root = tmp_path / "arena"
+    monkeypatch.setattr(admission, "global_lock_path", lambda: tmp_path / "admission.lock")
+    snapshot = {**ready_snapshot(), "available_memory_bytes": 4 * 1024**3}
+    monkeypatch.setattr(admission, "resource_snapshot", lambda _root: snapshot)
+    calls = []
+    monkeypatch.setattr("midas.arena.jobs.subprocess.run", lambda *a, **kw: calls.append(a))
+    with pytest.raises(ResourceAdmissionDenied, match="host_memory_headroom"):
+        create(root, JobSpec(kind="dataset", dataset=DatasetSpec(episodes=30)))
+    assert not calls
+    assert not list(root.glob("jobs/*/job.json"))

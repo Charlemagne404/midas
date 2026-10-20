@@ -150,11 +150,15 @@ def resource_snapshot(
     }
 
 
-def resource_gate(snapshot: dict[str, Any]) -> dict[str, Any]:
+def resource_gate(snapshot: dict[str, Any], *, requested_memory_bytes: int = 0) -> dict[str, Any]:
+    if requested_memory_bytes < 0:
+        raise ValueError("Requested worker memory must be nonnegative")
     reasons: list[str] = []
     if snapshot.get("active_job_ids"):
         reasons.append("arena_worker_active")
-    if snapshot.get("available_memory_bytes", 0) < MINIMUM_AVAILABLE_MEMORY_BYTES:
+    if snapshot.get("available_memory_bytes", 0) < (
+        MINIMUM_AVAILABLE_MEMORY_BYTES + requested_memory_bytes
+    ):
         reasons.append("host_memory_headroom")
     if snapshot.get("disk_free_bytes", 0) < (
         MINIMUM_DISK_RESERVE_BYTES + NEXT_JOB_ARTIFACT_BUDGET_BYTES
@@ -184,11 +188,13 @@ def resource_gate(snapshot: dict[str, Any]) -> dict[str, Any]:
 
 
 @contextmanager
-def admission_slot(root: Path) -> Iterator[None]:
+def admission_slot(root: Path, *, requested_memory_bytes: int = 0) -> Iterator[None]:
     """Hold the host-wide lease from pressure check through worker launch."""
     try:
         with resource_admission_slot():
-            gate = resource_gate(resource_snapshot(root))
+            gate = resource_gate(
+                resource_snapshot(root), requested_memory_bytes=requested_memory_bytes
+            )
             if not gate["ready"]:
                 raise ResourceAdmissionDenied(gate["reasons"])
             yield

@@ -142,7 +142,8 @@ def create(
         if launch:
             from midas.arena.admission import admission_slot
 
-            with admission_slot(root):
+            memory_mb = 512 if spec.kind == "veritas_qualification" else 4096
+            with admission_slot(root, requested_memory_bytes=memory_mb * 1024**2):
                 return _create(root, spec, launch, admission_key)
         return _create(root, spec, launch, admission_key)
 
@@ -179,7 +180,7 @@ def _create(
             "cpu_quota_percent": cpu_quota_percent,
             "memory_mb": memory_limit_mb,
             "wall_seconds": spec.max_wall_seconds,
-            "minimum_available_memory_mb": 2048,
+            "minimum_available_memory_mb": 2048 + memory_limit_mb,
             "max_artifact_mb": 1024,
         },
     }
