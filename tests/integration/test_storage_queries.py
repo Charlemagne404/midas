@@ -89,3 +89,46 @@ async def test_rare_kind_avoids_whole_source_scan(tmp_path):
         assert any("ix_records_kind" in row[-1] for row in plan)
         assert all("TEMP B-TREE" not in row[-1] for row in plan)
     await store.close()
+
+
+@pytest.mark.asyncio
+async def test_rare_source_observations_keep_source_index(tmp_path):
+    store = Store(f"sqlite+aiosqlite:///{tmp_path}/records.db")
+    await store.initialize()
+    async with store.sessions.begin() as session:
+        session.add(
+            Record(
+                kind="observation",
+                key="live",
+                source="LIVE",
+                received_ts_ms=1,
+                payload={"source": "LIVE"},
+            )
+        )
+        session.add_all(
+            [
+                Record(
+                    kind="observation",
+                    key=str(i),
+                    source="SYNTHETIC",
+                    received_ts_ms=i,
+                    payload={"i": i},
+                )
+                for i in range(5000)
+            ]
+        )
+    async with store.engine.connect() as connection:
+        driver = (await connection.get_raw_connection()).driver_connection
+        await driver.set_progress_handler(lambda: 1, 1000)
+        try:
+            async with store.sessions(bind=connection) as session:
+                original = store.sessions
+                store.sessions = lambda: session
+                try:
+                    rows = await store.recent("observation", 200, "LIVE")
+                finally:
+                    store.sessions = original
+            assert [r["key"] for r in rows] == ["live"]
+        finally:
+            await driver.set_progress_handler(None, 0)
+    await store.close()

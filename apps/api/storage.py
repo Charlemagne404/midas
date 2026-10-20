@@ -106,10 +106,12 @@ class Store:
         if source:
             statement = statement.where(Record.source == source)
         statement = statement.order_by(Record.id.desc()).limit(min(limit, 2000))
-        if source and self.engine.dialect.name == "sqlite":
+        if source and kind in {"simulation", "experiment"} and self.engine.dialect.name == "sqlite":
             # SQLite otherwise chooses the source index for these equalities.
             # Rare simulation/experiment rows then require scanning all the
             # (potentially millions of) newer synthetic market observations.
+            # Keep the planner's source index for observations: a rare LIVE
+            # source within a large synthetic history needs that selectivity.
             # The kind index, created by migration 001, includes rowid order;
             # filter source within that kind without sorting or archive scans.
             statement = (
