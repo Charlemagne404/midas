@@ -346,6 +346,56 @@ def test_research_activity_projects_cancelled_director_owner_without_rewriting_h
     assert manifest_path.read_bytes() == original_manifest
 
 
+def test_director_detail_and_overview_project_stopped_owner_without_rewriting_history(tmp_path):
+    import json
+
+    root = tmp_path / "arena"
+    director_configuration = {"dataset_id": "dataset-cancelled"}
+    director_source_hash = "e" * 64
+    director_job_id = "job-fedcba9876543210fedcba98"
+    manifest_path = root / "directors/director-cancelled/manifest.json"
+    atomic_json(
+        manifest_path,
+        {
+            "director_id": "director-cancelled",
+            "state": "RUNNING",
+            "configuration": director_configuration,
+            "source_hash": director_source_hash,
+            "steps": [{"name": "challenge", "state": "RUNNING"}],
+        },
+    )
+    original_manifest = manifest_path.read_bytes()
+    atomic_json(
+        root / "jobs" / director_job_id / "job.json",
+        {
+            "job_id": director_job_id,
+            "unit": f"midas-arena-job-{director_job_id.removeprefix('job-')}.service",
+            "configuration": {"kind": "director", "director": director_configuration},
+            "submitted_source_hash": director_source_hash,
+            "state": "CANCELLED",
+            "error": "Cancellation requested; completed artifacts retained",
+            "updated_at": 3,
+        },
+    )
+    app = FastAPI()
+    app.include_router(router(root))
+
+    with TestClient(app) as client:
+        detail = client.get("/api/arena/directors/director-cancelled")
+        overview = client.get("/api/arena")
+
+    assert detail.status_code == 200
+    assert detail.json()["state"] == "CANCELLED"
+    assert detail.json()["persisted_state"] == "RUNNING"
+    assert detail.json()["owner_job_state"] == "CANCELLED"
+    assert detail.json()["owner_job_id"] == director_job_id
+    assert overview.status_code == 200
+    projected = next(item for item in overview.json()["directors"] if item["director_id"] == "director-cancelled")
+    assert projected["state"] == "CANCELLED"
+    assert projected["persisted_state"] == "RUNNING"
+    assert json.loads(original_manifest) == json.loads(manifest_path.read_text())
+
+
 def test_research_activity_projects_only_a_digest_verified_completed_edge_distribution(tmp_path):
     import hashlib
     import json

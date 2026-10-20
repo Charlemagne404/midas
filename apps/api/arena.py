@@ -513,6 +513,58 @@ def _director_runtime_state(
     return view
 
 
+def _recent_owner_jobs(root: Path) -> list[dict[str, Any]]:
+    files = []
+    for file in (root / "jobs").glob("*/job.json"):
+        try:
+            files.append((file.stat().st_mtime, file))
+        except OSError:
+            continue
+    files = [
+        file
+        for _, file in sorted(files, key=lambda item: item[0], reverse=True)[
+            :MAX_DIRECTOR_OWNER_JOBS_READ
+        ]
+    ]
+    jobs = []
+    for file in files:
+        try:
+            if file.stat().st_size > MAX_RESEARCH_ACTIVITY_RECORD_BYTES:
+                continue
+            row = json.loads(file.read_text())
+        except (OSError, ValueError, json.JSONDecodeError):
+            continue
+        if isinstance(row, dict):
+            jobs.append(row)
+    return jobs
+
+
+def _project_director_record(
+    root: Path,
+    row: dict[str, Any],
+    *,
+    jobs: list[dict[str, Any]] | None = None,
+    supervisors: dict[str, dict[str, str]] | None = None,
+) -> dict[str, Any]:
+    """Expose observed lifecycle state without rewriting a Director manifest."""
+    identity = row.get("director_id")
+    if row.get("director_version") == "adaptive-latency-1":
+        if isinstance(identity, str):
+            return inspect_director(root, identity)
+        return row
+    if row.get("state") not in {"RUNNING", "QUEUED"}:
+        return row
+
+    owner_jobs = jobs if jobs is not None else _recent_owner_jobs(root)
+    if supervisors is None:
+        owner = _director_owner(row, owner_jobs)
+        active_owners = [
+            owner
+        ] if owner is not None and owner.get("state") in {"RUNNING", "QUEUED"} else []
+        supervisors = _director_supervisors(active_owners)
+    return {**row, **_director_runtime_state(root, row, owner_jobs, supervisors)}
+
+
 def research_activity(root: Path) -> dict[str, Any]:
     """Return a small read-only summary of Arena's durable research activity."""
     invalid_records = 0
@@ -865,14 +917,30 @@ def router(root: Path, *, veritas_repository: Path | None = None) -> APIRouter:
         record["independent_policy_evaluations"] = independent
         record["validation_policy_comparisons"] = validation
 
-    def catalog(kind: str) -> list[dict[str, Any]]:
+    def catalog(
+        kind: str, *, director_owner_jobs: list[dict[str, Any]] | None = None
+    ) -> list[dict[str, Any]]:
         values = []
+        owner_jobs = []
+        supervisors: dict[str, dict[str, str]] = {}
+        if kind == "directors":
+            owner_jobs = (
+                director_owner_jobs
+                if director_owner_jobs is not None
+                else _recent_owner_jobs(root)
+            )
+            supervisors = _director_supervisors(owner_jobs)
         for manifest in sorted(
             (root / kind).glob("*/manifest.json"), key=lambda p: p.stat().st_mtime, reverse=True
         )[:100]:
             record = json.loads(manifest.read_text())
             if kind == "directors":
-                record = inspect_director(root, manifest.parent.name)
+                record = _project_director_record(
+                    root,
+                    record,
+                    jobs=owner_jobs,
+                    supervisors=supervisors,
+                )
             if kind == "models":
                 evaluation_counts(record)
             if kind == "plans" and record["state"] == "RUNNING" and record.get("owner_job_id"):
@@ -991,7 +1059,7 @@ def router(root: Path, *, veritas_repository: Path | None = None) -> APIRouter:
             "root": str(root),
             "recorded_sources": recorded_sources,
             "sweeps": catalog("sweeps"),
-            "directors": catalog("directors"),
+            "directors": catalog("directors", director_owner_jobs=jobs),
             "searches": catalog("searches"),
             "recoveries": catalog("recoveries"),
             "unwinds": catalog("unwinds"),
@@ -1100,7 +1168,11 @@ def router(root: Path, *, veritas_repository: Path | None = None) -> APIRouter:
 
     @api.get("/directors/{identity}")
     async def director(identity: str) -> Any:
-        return await call(inspect_director, root, identity)
+        def inspect() -> dict[str, Any]:
+            record = json.loads((path("directors", identity) / "manifest.json").read_text())
+            return _project_director_record(root, record)
+
+        return await call(inspect)
 
     @api.get("/findings/{identity}")
     async def veritas_qualification_finding(identity: str) -> Any:
