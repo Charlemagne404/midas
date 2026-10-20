@@ -10,6 +10,7 @@ from typing import Any, Literal
 
 from pydantic import Field, model_validator
 
+from midas.arena.admission import ResourceAdmissionDenied
 from midas.arena.artifacts import artifact_path, atomic_json
 from midas.arena.datasets import research_hash
 from midas.arena.jobs import JobSpec, artifact_usage, inspect
@@ -218,9 +219,13 @@ def tick(root: Path, identity: str, now: float | None = None) -> dict[str, Any]:
                     return save("WAITING_RESOURCES")
                 # Retry only durable admission with the same key. Native create
                 # returns the existing job if the prior call crossed a crash gap.
-                job = create_job(
-                    root, spec.steps[index].configuration, admission_key=step["admission_key"]
-                )
+                try:
+                    job = create_job(
+                        root, spec.steps[index].configuration, admission_key=step["admission_key"]
+                    )
+                except ResourceAdmissionDenied as error:
+                    step["state"] = "WAITING_RESOURCES"
+                    return save("WAITING_RESOURCES", resource_reasons=list(error.reasons))
                 step["job_id"] = job["job_id"]
             if step["job_id"] is not None:
                 job = inspect(root, step["job_id"])
@@ -251,9 +256,13 @@ def tick(root: Path, identity: str, now: float | None = None) -> dict[str, Any]:
                 return save("WAITING_RESOURCES")
             step["state"] = "ADMITTING"
             save("ADMITTING", current_step=index)
-            job = create_job(
-                root, spec.steps[index].configuration, admission_key=step["admission_key"]
-            )
+            try:
+                job = create_job(
+                    root, spec.steps[index].configuration, admission_key=step["admission_key"]
+                )
+            except ResourceAdmissionDenied as error:
+                step["state"] = "WAITING_RESOURCES"
+                return save("WAITING_RESOURCES", resource_reasons=list(error.reasons))
             step.update(job_id=job["job_id"], state=job["state"])
             return save("RUNNING", current_job_id=job["job_id"])
         return save("COMPLETED", completed_at=timestamp, current_job_id=None)

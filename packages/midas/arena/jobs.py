@@ -139,6 +139,11 @@ def create(
                 if existing["configuration"] != spec.model_dump(mode="json"):
                     raise ValueError("Admission key was already bound to another configuration")
                 return existing
+        if launch:
+            from midas.arena.admission import admission_slot
+
+            with admission_slot(root):
+                return _create(root, spec, launch, admission_key)
         return _create(root, spec, launch, admission_key)
 
 

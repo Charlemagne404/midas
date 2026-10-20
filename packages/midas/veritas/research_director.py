@@ -13,6 +13,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from midas.arena.admission import ResourceAdmissionDenied
 from midas.arena.artifacts import atomic_json
 from midas.arena.datasets import research_hash
 from midas.arena.scheduling import resources_ready
@@ -814,6 +815,18 @@ def tick(
         atomic_json(manifest_path, record)
         try:
             job = existing or _create_job(arena_root, latest["scan_id"], launch_jobs)
+        except ResourceAdmissionDenied as error:
+            record.update(
+                current_job_id=None,
+                current_job_state="WAITING_RESOURCES",
+                current_job_error=str(error),
+                pending_scan_id=latest["scan_id"],
+            )
+            return save(
+                "WAITING_RESOURCES",
+                "Waiting for a host-wide Arena admission window",
+                str(error),
+            )
         except (OSError, ValueError, RuntimeError) as error:
             record.update(
                 current_job_id=None,

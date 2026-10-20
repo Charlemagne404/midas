@@ -271,6 +271,35 @@ def test_director_defers_for_resource_pressure_and_recovers_without_duplicate_jo
     assert len(list(arena_root.glob("jobs/*/job.json"))) == 1
 
 
+def test_director_recovers_from_host_wide_admission_lock_contention(tmp_path, monkeypatch):
+    from midas.arena.admission import ResourceAdmissionDenied
+
+    repository, now = _source(tmp_path)
+    arena_root = tmp_path / "arena"
+    monkeypatch.setattr(research_director, "resources_ready", lambda root: True)
+    create_job = research_director._create_job
+    calls = 0
+
+    def defer_once(root, scan_id, launch):
+        nonlocal calls
+        calls += 1
+        if calls == 1:
+            raise ResourceAdmissionDenied(["resource_admission_lock_busy"])
+        return create_job(root, scan_id, launch=False)
+
+    monkeypatch.setattr(research_director, "_create_job", defer_once)
+    waiting = research_director.tick(repository, arena_root, now=now, launch_jobs=True)
+    assert waiting["state"] == "WAITING_RESOURCES"
+    assert waiting["pending_scan_id"] == SCAN_ID
+    assert waiting.get("failed_admission_scan_id") is None
+    assert not list(arena_root.glob("jobs/*/job.json"))
+
+    recovered = research_director.tick(repository, arena_root, now=now + 30, launch_jobs=True)
+    assert recovered["state"] == "RUNNING"
+    assert recovered["pending_scan_id"] is None
+    assert len(list(arena_root.glob("jobs/*/job.json"))) == 1
+
+
 def test_director_recovers_a_crash_after_durable_job_admission(tmp_path, monkeypatch):
     repository, now = _source(tmp_path)
     arena_root = tmp_path / "arena"
