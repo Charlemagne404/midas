@@ -15,7 +15,7 @@ import zlib
 from collections import Counter
 from collections.abc import Iterator
 from pathlib import Path
-from typing import Any
+from typing import Any, BinaryIO, cast
 
 MAGIC = b"MIDASR1\n"
 MAX_RECORD = 8 * 1024 * 1024
@@ -83,7 +83,9 @@ def _record_stream(
 
 
 class _HashingReader:
-    def __init__(self, source: Any, digest: Any, copy_to: Any = None):
+    def __init__(
+        self, source: BinaryIO, digest: Any, copy_to: Any = None
+    ) -> None:
         self.source = source
         self.digest = digest
         self.copy_to = copy_to
@@ -142,14 +144,22 @@ def _validate_manifest_metadata(path: Path, info: Any) -> dict[str, Any]:
         or any(char not in "0123456789abcdef" for char in digest)
     ):
         raise ValueError(f"Invalid segment manifest digest: {path}")
-    first, last, count, kinds = (
+    first_value, last_value, count_value, kinds = (
         info.get("first"),
         info.get("last"),
         info.get("count"),
         info.get("kinds"),
     )
-    if any(type(value) is not int or value < 0 for value in (first, last, count)):
+    if any(
+        type(value) is not int or value < 0
+        for value in (first_value, last_value, count_value)
+    ):
         raise ValueError(f"Invalid segment manifest counters: {path}")
+    first, last, count = (
+        cast(int, first_value),
+        cast(int, last_value),
+        cast(int, count_value),
+    )
     if not isinstance(kinds, dict) or any(
         not isinstance(kind, str) or type(amount) is not int or amount < 0
         for kind, amount in kinds.items()
@@ -159,7 +169,7 @@ def _validate_manifest_metadata(path: Path, info: Any) -> dict[str, Any]:
         raise ValueError(f"Inconsistent segment manifest counters: {path}")
     if count > 0 and (first < 1 or last < first):
         raise ValueError(f"Invalid segment ordinal range: {path}")
-    return info
+    return cast(dict[str, Any], info)
 
 
 class Store:

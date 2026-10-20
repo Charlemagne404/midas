@@ -1,6 +1,7 @@
 """Artificial metadata and localhost frames verify panel/quality invariants."""
 
 import json
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 
 import httpx
@@ -206,11 +207,13 @@ def test_independent_divergence_stale_and_invalid_ids():
 
 
 async def test_discovery_records_every_page_and_verifies_exact_mapping(tmp_path):
+    future_end = (datetime.now(UTC) + timedelta(days=2)).isoformat().replace("+00:00", "Z")
     raw = [
         market(
             i,
             liquidity=([20000, 5000, 100][(i - 1) % 3]),
             category=f"Category {i}",
+            end=future_end,
         )
         for i in range(1, 10)
     ]
