@@ -65,6 +65,7 @@ class Service:
         self.status = "STARTING"
         self.processing_latency_ms = 0.0
         self.last_refresh_ms: int | None = None
+        self.demo_initial_conditions: dict[str, dict[str, Any]] = {}
         self.recording_healthy = True
         self.retention_last_ms = 0
         self.started_ms = now_ms()
@@ -90,10 +91,15 @@ class Service:
             log.error("event_persistence_failed", error=str(error))
 
     async def record(self, event: MarketEvent) -> None:
+        if self.recorder.halted:
+            self.recording_healthy = False
+            self.status = "DEGRADED"
+            return
         try:
             await self.recorder.append(event)
             self.recording_healthy = True
         except OSError as error:
+            self.recorder.halted = True
             self.recording_healthy = False
             self.status = "DEGRADED"
             await self.report("ERROR", f"Market recording halted: {error}")
@@ -141,13 +147,17 @@ class Service:
             "insufficient_liquidity",
             "missing_payout",
         ):
-            fixture = await asyncio.to_thread(run_scenario, scenario_id, 7)
-            market = Market.model_validate(fixture["initial_conditions"]["market"])
+            initial_conditions = self.demo_initial_conditions.get(scenario_id)
+            if initial_conditions is None:
+                fixture = await asyncio.to_thread(run_scenario, scenario_id, 7)
+                initial_conditions = fixture["initial_conditions"]
+                self.demo_initial_conditions[scenario_id] = initial_conditions
+            market = Market.model_validate(initial_conditions["market"])
             self.markets[market.id] = market
             await self.store.append(
                 "market", market.id, market.source.value, ts, market.model_dump(mode="json")
             )
-            for raw in fixture["initial_conditions"]["books"].values():
+            for raw in initial_conditions["books"].values():
                 book = Book.model_validate(raw).model_copy(
                     update={"exchange_ts_ms": ts, "received_ts_ms": ts}
                 )
@@ -304,7 +314,7 @@ class Service:
         self.processing_latency_ms = (time.perf_counter() - started) * 1000
 
     async def broker_loop(self) -> None:
-        while True:
+        while not self.recorder.halted:
             try:
                 if self.broker.healthy and self.store.healthy and self.recording_healthy:
                     await self.broker.tick(now_ms(), self.books.books, self.markets)
@@ -346,7 +356,7 @@ class Service:
 
     async def loop(self) -> None:
         last_metadata = 0
-        while True:
+        while not self.recorder.halted:
             try:
                 ts = now_ms()
                 if self.settings.mode == "demo":

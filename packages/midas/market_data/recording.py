@@ -31,7 +31,13 @@ class Recorder:
 
     async def append(self, event: MarketEvent) -> None:
         async with self.lock:
-            await asyncio.to_thread(self._append, event)
+            if self.halted:
+                raise OSError("Recording is halted; explicit recovery is required")
+            try:
+                await asyncio.to_thread(self._append, event)
+            except OSError:
+                self.halted = True
+                raise
 
 
 def replay(
