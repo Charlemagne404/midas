@@ -579,6 +579,10 @@ async def run(config: Config, duration: float | None = None) -> None:
                                     pending_snapshots.remove(asset)
                             if payload != "PONG":
                                 last_frame = time.monotonic()
+                                # Keep current health separate from the historical gap
+                                # journal: a successful frame clears the prior
+                                # connection diagnostic while preserving failures.
+                                status.pop("error", None)
                                 status.update(
                                     frames=status["frames"] + 1,
                                     process_frames=status["process_frames"] + 1,

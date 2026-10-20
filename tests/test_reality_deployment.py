@@ -165,6 +165,7 @@ def test_apply_changed_process_never_writes_or_restarts(tmp_path):
         production_unit_config={},
     )
     with (
+        patch("scripts.reality_deployment.production_source_hash", return_value=source_hash()),
         patch("scripts.reality_deployment.service", return_value=dict(MainPID="124")),
         patch("scripts.reality_deployment.atomic_json") as write,
         patch("scripts.reality_deployment.subprocess.run") as restart,
@@ -218,6 +219,7 @@ def test_apply_timeout_keeps_one_shot_guard_and_never_restarts_back(tmp_path, mo
         Restart="no",
     )
     with (
+        patch("scripts.reality_deployment.production_source_hash", return_value=source_hash()),
         patch("scripts.reality_deployment.service", side_effect=[
             dict(service_state, MainPID="123", Restart="on-failure"),
             service_state,

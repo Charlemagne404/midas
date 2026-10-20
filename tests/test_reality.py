@@ -398,6 +398,8 @@ async def test_network_interruption_reconnect_and_safe_stop(tmp_path, monkeypatc
     assert engine.counts["book"] >= 12 and checkpoints >= 1
     assert json.loads((tmp_path / "status.json").read_text())["state"] == "STOPPED"
     status = json.loads((tmp_path / "status.json").read_text())
+    assert status["failures"] == 1
+    assert "error" not in status
     assert status["frames"] == 2
     assert status["process_frames"] == 2
     assert status["lifetime_frames"] == 2
