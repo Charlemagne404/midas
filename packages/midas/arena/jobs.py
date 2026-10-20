@@ -155,7 +155,9 @@ def _create(
     directory = artifact_path(root, "jobs", identity)
     veritas_read_only = spec.kind == "veritas_qualification"
     memory_limit_mb = 512 if veritas_read_only else 4096
-    cpu_quota_percent = 10 if veritas_read_only else 100
+    cpu_quota_percent = 100
+    nice = 19 if veritas_read_only else 10
+    io_scheduling_class = "idle" if veritas_read_only else "best-effort"
     record = {
         "job_id": identity,
         "configuration": spec.model_dump(mode="json"),
@@ -168,7 +170,7 @@ def _create(
         "unit": f"midas-arena-{identity}.service",
         "submitted_source_hash": research_hash(),
         "budget": {
-            "cpu_cores": 1,
+            "cpu_cores": cpu_quota_percent / 100,
             "cpu_quota_percent": cpu_quota_percent,
             "memory_mb": memory_limit_mb,
             "wall_seconds": spec.max_wall_seconds,
@@ -196,8 +198,10 @@ def _create(
             "--user",
             f"--unit=midas-arena-{identity}",
             f"--property=MemoryMax={memory_limit_mb}M",
+            "--property=MemorySwapMax=0",
             f"--property=CPUQuota={cpu_quota_percent}%",
-            "--property=Nice=10",
+            f"--property=Nice={nice}",
+            f"--property=IOSchedulingClass={io_scheduling_class}",
             f"--property=RuntimeMaxSec={spec.max_wall_seconds}",
             "--property=TimeoutStopSec=30",
             f"--working-directory={repository}",
