@@ -57,3 +57,6 @@ data/datasets/public-series-*.manifest.json
 *.sqlite
 *.sqlite-shm
 *.sqlite-wal
+
+# Versioned production output is preserved locally, not staged as source.
+data/veritas-gap-detail-v2/
