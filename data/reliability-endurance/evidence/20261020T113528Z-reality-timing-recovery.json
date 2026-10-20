@@ -1,0 +1,44 @@
+{
+  "captured_at_utc": "2026-10-20T11:35:38Z",
+  "transient_degradation": {
+    "first_observed_local": "2026-10-20T13:34:26+02:00",
+    "health": "degraded",
+    "health_reasons": ["collector_state"],
+    "state": "DEGRADED_SOURCE_TIMING",
+    "fresh_books": 16,
+    "expected_books": 16,
+    "sequence_verified": false,
+    "collector_status_age_seconds": 2.315820756,
+    "subsequent_recovery_observed": true,
+    "affected_asset_or_event_captured": false
+  },
+  "recovery_samples": [
+    {"time_ns": 1792496098131452880, "health": "recording", "health_reasons": [], "state": "RECORDING_UNSEQUENCED", "timing_uncertain_books": 0, "fresh_books": 16, "expected_books": 16, "ordinal": 2421117, "status_age_seconds": 2.201094537, "sequence_verified": false},
+    {"time_ns": 1792496108137073116, "health": "recording", "health_reasons": [], "state": "RECORDING_UNSEQUENCED", "timing_uncertain_books": 0, "fresh_books": 16, "expected_books": 16, "ordinal": 2421139, "status_age_seconds": 0.2264692, "sequence_verified": false},
+    {"time_ns": 1792496118141326587, "health": "recording", "health_reasons": [], "state": "RECORDING_UNSEQUENCED", "timing_uncertain_books": 0, "fresh_books": 16, "expected_books": 16, "ordinal": 2421201, "status_age_seconds": 1.03255549, "sequence_verified": false},
+    {"time_ns": 1792496128144763091, "health": "recording", "health_reasons": [], "state": "RECORDING_UNSEQUENCED", "timing_uncertain_books": 0, "fresh_books": 16, "expected_books": 16, "ordinal": 2421221, "status_age_seconds": 1.572557892, "sequence_verified": false}
+  ],
+  "reconstruction_behavior": {
+    "candidate_source_file": "packages/midas/reality/reconstruction.py",
+    "degradation_reason": "snapshot_source_timestamp_regressed_after_gap",
+    "clearing_condition": "A later depth update reaches the source timestamp floor, has no issue, and confirms best bid/ask.",
+    "regression_test_coverage": "tests/test_reality_panel.py covers uncertainty and clearing.",
+    "candidate_suite": {"tests_passed": 77, "ruff_passed": true, "mypy_passed": true, "mypy_source_files": 37}
+  },
+  "current_services_at_2026-10-20T13:35:38+02:00": {
+    "main_api": {"pid": 2737736, "health": "READY", "journal_events": 397489, "live_execution": false},
+    "reality_recorder": {
+      "pid": 863193,
+      "restarts": 1,
+      "candidate_deployed": false,
+      "memory_current_bytes": 737120256,
+      "memory_high_bytes": 738197504,
+      "memory_margin_bytes": 1077248,
+      "memory_events": {"high": 10098, "max": 0, "oom": 0, "oom_kill": 0}
+    },
+    "veritas_v2": {"status": "CURRENT", "processed_segments": 16176, "pending_segments": 0, "summary_sha256": "6856c4e434c6d78753c1a589911f5a3a8dcb5c52af75cc528df1639f60428757"},
+    "host_memory_psi_some_avg10_percent": 0.0,
+    "staging_replay_allowed": false,
+    "staging_gate_margin_required_bytes": 4194304
+  }
+}
