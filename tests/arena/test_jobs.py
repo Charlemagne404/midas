@@ -354,6 +354,7 @@ def test_supervised_job_runner_imports_the_submitted_checkout(tmp_path, monkeypa
     assert len(commands) == 1
     assert f"--working-directory={repository}" in commands[0]
     assert f"--setenv=PYTHONPATH={repository / 'packages'}" in commands[0]
+    assert "--property=MemorySwapMax=0" in commands[0]
 
 
 def test_veritas_qualification_supervisor_has_read_only_resource_bounds(tmp_path, monkeypatch):
@@ -381,5 +382,6 @@ def test_veritas_qualification_supervisor_has_read_only_resource_bounds(tmp_path
     assert job["state"] == "QUEUED"
     assert len(commands) == 1
     assert "--property=MemoryMax=512M" in commands[0]
+    assert "--property=MemorySwapMax=0" in commands[0]
     assert "--property=CPUQuota=10%" in commands[0]
     assert "--property=RestrictAddressFamilies=AF_UNIX" in commands[0]

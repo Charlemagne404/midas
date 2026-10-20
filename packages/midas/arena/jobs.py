@@ -262,6 +262,7 @@ def _create(
             "--user",
             f"--unit=midas-arena-{identity}",
             f"--property=MemoryMax={memory_limit_mb}M",
+            "--property=MemorySwapMax=0",
             f"--property=CPUQuota={cpu_quota_percent}%",
             f"--property=Nice={nice}",
             f"--property=IOSchedulingClass={io_scheduling_class}",
