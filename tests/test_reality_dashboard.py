@@ -20,11 +20,15 @@ from apps.api.reality import router
 def dashboard(tmp_path):
     raw = tmp_path / "data/recordings/reality"
     raw.mkdir(parents=True)
+    now_ns = time.time_ns()
     (raw / "status.json").write_text(
         json.dumps(
             dict(
                 state="RECORDING_UNSEQUENCED",
-                updated_ns=time.time_ns(),
+                updated_ns=now_ns,
+                last_observation_ns=now_ns,
+                config={"stale_seconds": 60},
+                backpressure_active=False,
                 failures=0,
                 books={},
                 selection_audit={"large": "excluded"},
@@ -85,7 +89,52 @@ def test_stale_status_not_reported_as_healthy(dashboard):
     data["updated_ns"] = time.time_ns() - 40_000_000_000
     path.write_text(json.dumps(data))
     r = c.get("/api/reality/overview").json()
-    assert r["health"] == "degraded" and "selection_audit" not in r["collector"]
+    assert r["health"] == "degraded"
+    assert r["health_reasons"] == ["status_stale"]
+    assert "selection_audit" not in r["collector"]
+
+
+def test_recovered_capture_does_not_remain_degraded_for_lifetime_failures(dashboard):
+    c, root, _ = dashboard
+    path = root / "data/recordings/reality/status.json"
+    data = json.loads(path.read_text())
+    data["failures"] = 1
+    data["error"] = "ConnectionClosedOK: received 1001 (going away) server shutting down"
+    path.write_text(json.dumps(data))
+
+    result = c.get("/api/reality/overview").json()
+
+    assert result["health"] == "recording"
+    assert result["health_reasons"] == []
+    assert result["collector"]["failures"] == 1
+    assert "ConnectionClosedOK" in result["collector"]["error"]
+
+
+def test_fresh_status_with_stale_observations_is_degraded(dashboard):
+    c, root, _ = dashboard
+    path = root / "data/recordings/reality/status.json"
+    data = json.loads(path.read_text())
+    data["last_observation_ns"] = time.time_ns() - 61_000_000_000
+    data["updated_ns"] = time.time_ns()
+    path.write_text(json.dumps(data))
+
+    result = c.get("/api/reality/overview").json()
+
+    assert result["health"] == "degraded"
+    assert result["health_reasons"] == ["observations_stale"]
+
+
+def test_backpressure_is_reported_as_degraded(dashboard):
+    c, root, _ = dashboard
+    path = root / "data/recordings/reality/status.json"
+    data = json.loads(path.read_text())
+    data["backpressure_active"] = True
+    path.write_text(json.dumps(data))
+
+    result = c.get("/api/reality/overview").json()
+
+    assert result["health"] == "degraded"
+    assert result["health_reasons"] == ["backpressured"]
 
 
 def test_index_bounds_and_exact_decision_evidence(dashboard):
