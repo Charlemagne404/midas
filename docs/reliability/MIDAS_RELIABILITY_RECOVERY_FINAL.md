@@ -4,7 +4,7 @@
 
 **Scope:** Reliability and efficiency only. Project Frontier, Project Atlas, and a new 48-hour campaign remain unstarted.
 
-**Current verdicts (2026-10-20 09:03 CEST):** Reliability foundation **PARTIALLY RECOVERED**; Frontier development **CONDITIONALLY READY** for separately authorized work that does not depend on deploying the protected Reality recorder change; another unattended campaign **NOT READY**.
+**Current verdicts (2026-10-20 09:09 CEST):** Reliability foundation **PARTIALLY RECOVERED**; Frontier development **CONDITIONALLY READY** for separately authorized work that does not depend on deploying the protected Reality recorder change; another unattended campaign **NOT READY**.
 
 This journal separates source fixes, isolated tests, deployment, and production verification. It is updated as each recovery phase completes.
 
@@ -324,3 +324,10 @@ This refresh supersedes the 08:46 current-state summary above. Earlier entries r
 **Future 48-hour campaign: NOT READY.** The protected Reality deployment remains outstanding, and another unattended campaign needs a separate readiness review. `48H-001` remains untouched.
 
 **Approval requested:** authorize one controlled stop/start of Reality recorder PID 863193 to load `project/reality` revision `e0b9bab77969b51d749c92dc362e5990c9ca5f10`. The measured stage supports a 30–45 minute capture interruption estimate; the slow full verification scan remains unmeasured. One start attempt is covered. Any rollback restart requires separate authorization.
+
+## Reality source-timing observation — 2026-10-20 09:09 CEST
+
+- At 09:06:26 one API capacity sample reported `DEGRADED_SOURCE_TIMING` while the status file was fresh. The status file about 1.6 seconds later showed `RECORDING_UNSEQUENCED`, 16/16 fresh books, and zero currently timing-uncertain books. A 60-second status-only monitor then recorded 28 `RECORDING_UNSEQUENCED` samples and two `AWAITING_DATA` samples; the brief awaiting interval lasted four seconds, followed by all 16 books fresh. The cumulative gap count remained 9,155 and the failure count remained 1; the existing `ConnectionClosedOK` text did not change. No restart or production state mutation occurred.
+- The current reconstruction marks a book timing-uncertain when a snapshot timestamp regresses after a gap, and clears the current flag only after later source time catches up with a valid top-of-book update. The cumulative `snapshot_source_time_regression_after_gap` count was 1,017 and `sequence_verified=false` remained explicit. The kernel clock reported synchronized; a separate 120-segment capacity sample showed zero WebSocket clock regressions. Its 144 receipt-order regressions are distinct: asynchronous HTTP results can be persisted after newer WebSocket frames, as documented in the code. At the final API read, collection was `RECORDING_UNSEQUENCED`, the status age was 1.19 seconds, and there were no capacity alerts.
+- This was a short recoverable source-timing classification, not evidence of a local clock failure or a sustained recorder outage. It remains a data-quality signal and will be checked again in the authorized post-start validation. The 30 observations are in [`20261020T070810Z-reality-source-timing-monitor.jsonl`](../../data/reliability-endurance/evidence/20261020T070810Z-reality-source-timing-monitor.jsonl).
+- The protected recorder is still PID 863193 on the old in-memory code. The controlled restart approval requested above remains the only blocker to deploying the Reality candidate; no restart was inferred from the permission to pause the shadow workers.
