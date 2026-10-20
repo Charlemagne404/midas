@@ -112,6 +112,76 @@ def test_recovered_capture_projects_last_error_as_historical(dashboard):
     assert "ConnectionClosedOK" in json.loads(path.read_text())["error"]
 
 
+def test_fresh_book_status_exposes_unsequenced_quality_and_unverified_latency(dashboard):
+    c, root, _ = dashboard
+    path = root / "data/recordings/reality/status.json"
+    data = json.loads(path.read_text())
+    data.update(
+        expected_books=16,
+        fresh_books=16,
+        sequence_verified=False,
+        max_append_seconds=1.98,
+        book_comparisons={
+            "stable_local_lineage_divergence": 118,
+            "stable_local_lineage_match_unsequenced": 200,
+        },
+        gaps=10099,
+        counts={
+            "duplicate": 101,
+            "timestamp_regression": 47,
+            "snapshot_divergence": 29312,
+        },
+        last_book_comparison={
+            "response_ns": time.time_ns(),
+            "assessment": "stable_local_lineage_divergence",
+        },
+    )
+    path.write_text(json.dumps(data))
+
+    result = c.get("/api/reality/overview").json()
+
+    assert result["health"] == "recording"
+    quality = result["source_quality"]
+    assert quality["book_coverage"] == {
+        "state": "complete_current_books",
+        "expected": 16,
+        "fresh": 16,
+        "missing": 0,
+    }
+    assert quality["sequence_state"] == "unsequenced"
+    assert quality["secondary_comparison"]["state"] == "fresh"
+    assert quality["lineage"]["stable_local_divergences"] == 118
+    assert quality["lineage"]["latest_assessment"] == "stable_local_lineage_divergence"
+    assert quality["recorded_gaps"]["count"] == 10099
+    assert quality["event_integrity_signals"]["duplicate_event_hashes_recent_window"] == 101
+    assert quality["event_integrity_signals"]["duplicate_window_capacity"] == 4096
+    assert quality["event_integrity_signals"]["timestamp_regressions"] == 47
+    assert quality["persistence"]["state"] == "recent_window_unavailable"
+    assert quality["persistence"]["lifetime_max_exceeded_threshold"] is True
+    assert quality["recovery_state"] == "not_reported"
+
+
+def test_source_quality_handles_missing_and_malformed_legacy_metrics(dashboard):
+    c, root, _ = dashboard
+    path = root / "data/recordings/reality/status.json"
+    data = json.loads(path.read_text())
+    data.update(
+        markets=8,
+        fresh_books=20,
+        gaps="unknown",
+        counts={"duplicate": "unknown"},
+        book_comparisons={"stable_local_lineage_divergence": "unknown"},
+    )
+    path.write_text(json.dumps(data))
+
+    quality = c.get("/api/reality/overview").json()["source_quality"]
+
+    assert quality["book_coverage"]["state"] == "inconsistent_current_books"
+    assert quality["recorded_gaps"]["count"] is None
+    assert quality["lineage"]["stable_local_divergences"] is None
+    assert quality["event_integrity_signals"]["duplicate_event_hashes_recent_window"] is None
+
+
 def test_websocket_subscription_wait_is_reported_as_a_transition(dashboard):
     c, root, _ = dashboard
     path = root / "data/recordings/reality/status.json"

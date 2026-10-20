@@ -62,6 +62,172 @@ def project_collector_status(status: dict[str, Any], health: str) -> dict[str, A
     return projected
 
 
+def source_quality_report(status: dict[str, Any], now_ns: int) -> dict[str, Any]:
+    """Expose coverage, comparison, persistence, and recovery limits beside liveness."""
+
+    def nonnegative_int(value: Any) -> int | None:
+        return (
+            value if isinstance(value, int) and not isinstance(value, bool) and value >= 0 else None
+        )
+
+    config = status.get("config") if isinstance(status.get("config"), dict) else {}
+    comparisons = (
+        status.get("book_comparisons") if isinstance(status.get("book_comparisons"), dict) else {}
+    )
+    expected = nonnegative_int(status.get("expected_books"))
+    fresh = nonnegative_int(status.get("fresh_books"))
+    markets = nonnegative_int(status.get("markets"))
+    if expected is None and markets is not None and markets > 0:
+        expected = markets * 2
+    if expected is not None and fresh is not None:
+        missing = max(0, expected - fresh)
+        coverage_state = (
+            "inconsistent_current_books"
+            if fresh > expected
+            else "complete_current_books"
+            if missing == 0
+            else "missing_current_books"
+        )
+    else:
+        missing = None
+        coverage_state = "unknown"
+
+    comparison = status.get("last_book_comparison")
+    comparison = comparison if isinstance(comparison, dict) else {}
+    response_ns = comparison.get("response_ns")
+    comparison_period = config.get("comparison_seconds", 15)
+    if not isinstance(comparison_period, (int, float)) or comparison_period <= 0:
+        comparison_period = 15
+    comparison_limit = max(30.0, float(comparison_period) * 2)
+    comparison_age = None
+    if isinstance(response_ns, int) and not isinstance(response_ns, bool):
+        comparison_age = (now_ns - response_ns) / 1e9
+    if comparison_age is None:
+        comparison_state = "unreported"
+    elif comparison_age < 0:
+        comparison_state = "clock_uncertain"
+    elif comparison_age > comparison_limit:
+        comparison_state = "stale"
+    else:
+        comparison_state = "fresh"
+
+    lifetime_max_append = status.get("process_max_append_seconds", status.get("max_append_seconds"))
+    recent_max_append = status.get("recent_max_append_seconds")
+    threshold_seconds = 1.0
+    backpressure = status.get("backpressure_active")
+    if backpressure is True or (
+        isinstance(recent_max_append, (int, float)) and recent_max_append >= threshold_seconds
+    ):
+        persistence_state = "backpressured"
+    elif backpressure is False and isinstance(recent_max_append, (int, float)):
+        persistence_state = "within_recent_threshold"
+    else:
+        persistence_state = "recent_window_unavailable"
+
+    recovery = status.get("recovery")
+    if isinstance(recovery, dict):
+        recovery_state = (
+            recovery.get("status")
+            or recovery.get("recovery_status")
+            or status.get("recovery_status")
+            or "details_present_status_unknown"
+        )
+    else:
+        recovery_state = status.get("recovery_status") or "not_reported"
+
+    sequence_verified = status.get("sequence_verified")
+    event_counts = status.get("counts") if isinstance(status.get("counts"), dict) else {}
+    latest_assessment = comparison.get("assessment")
+    recorded_gaps = nonnegative_int(status.get("gaps"))
+    timing_uncertain = nonnegative_int(status.get("timing_uncertain_books"))
+    queue_bound = nonnegative_int(status.get("transport_queue_bound"))
+    queue_depth = nonnegative_int(status.get("transport_queue_depth"))
+    return {
+        "interpretation": (
+            "The upstream feed has no documented monotonic sequence field. Current-book freshness "
+            "and REST comparisons describe observed state; they cannot prove event completeness."
+        ),
+        "book_coverage": {
+            "state": coverage_state,
+            "expected": expected,
+            "fresh": fresh,
+            "missing": missing,
+        },
+        "sequence_state": (
+            "verified"
+            if sequence_verified is True
+            else "unsequenced"
+            if sequence_verified is False
+            else "unreported"
+        ),
+        "secondary_comparison": {
+            "state": comparison_state,
+            "age_seconds": comparison_age,
+            "stale_after_seconds": comparison_limit,
+            "assessment": latest_assessment,
+            "response_ns": response_ns,
+            "raw_ordinal": nonnegative_int(comparison.get("raw_ordinal")),
+            "before_lineage": comparison.get("before_lineage"),
+            "after_lineage": comparison.get("after_lineage"),
+        },
+        "lineage": {
+            "latest_assessment": latest_assessment or "unreported",
+            "stable_local_divergences": nonnegative_int(
+                comparisons.get("stable_local_lineage_divergence")
+            ),
+            "stable_local_matches_unsequenced": nonnegative_int(
+                comparisons.get("stable_local_lineage_match_unsequenced")
+            ),
+            "interpretation": (
+                "A REST/WebSocket mismatch at stable local lineage does not establish which view "
+                "is incomplete when the upstream feed has no sequence guarantee."
+            ),
+        },
+        "recorded_gaps": {
+            "count": recorded_gaps,
+            "reason_breakdown": status.get("gap_reason_counts"),
+            "scope": "The recorder's reported durable gap count; gap reasons are unreported here.",
+        },
+        "event_integrity_signals": {
+            "duplicate_event_hashes_recent_window": nonnegative_int(event_counts.get("duplicate")),
+            "duplicate_window_capacity": 4096,
+            "timestamp_regressions": nonnegative_int(event_counts.get("timestamp_regression")),
+            "snapshot_divergences": nonnegative_int(event_counts.get("snapshot_divergence")),
+            "snapshot_source_time_regressions_after_gap": nonnegative_int(
+                event_counts.get("snapshot_source_time_regression_after_gap")
+            ),
+            "scope": (
+                "Local reconstruction counters. Repeated hashes are counted within a bounded recent "
+                "window; timestamp regressions are source-time checks, not provider sequence proof."
+            ),
+        },
+        "timing": {
+            "uncertain_books": timing_uncertain,
+            "clock_health": status.get("clock_health"),
+            "cross_outcome_skew_ns": status.get("cross_outcome_skew_ns"),
+        },
+        "transport_queue": {
+            "depth": queue_depth,
+            "bound": queue_bound,
+            "depth_state": "reported" if queue_depth is not None else "unreported",
+        },
+        "persistence": {
+            "state": persistence_state,
+            "backpressure_active": backpressure if isinstance(backpressure, bool) else None,
+            "recent_max_append_seconds": recent_max_append,
+            "recent_window_available": isinstance(recent_max_append, (int, float)),
+            "lifetime_max_append_seconds": lifetime_max_append,
+            "lifetime_max_exceeded_threshold": (
+                isinstance(lifetime_max_append, (int, float))
+                and lifetime_max_append >= threshold_seconds
+            ),
+            "backpressure_events": status.get("process_backpressure_events"),
+            "threshold_seconds": threshold_seconds,
+        },
+        "recovery_state": recovery_state,
+    }
+
+
 def read_json(path: Path) -> dict[str, Any]:
     if not path.is_file():
         return {}
@@ -108,6 +274,7 @@ def router(workspace: Path) -> APIRouter:
         updated_ns = status.get("updated_ns")
         age = (now - updated_ns) / 1e9 if isinstance(updated_ns, int) else None
         health, health_reasons = classify_collector_health(status, now)
+        source_quality = source_quality_report(status, now)
         status = project_collector_status(status, health)
         return dict(
             now_ns=now,
@@ -115,6 +282,7 @@ def router(workspace: Path) -> APIRouter:
             collector_status_age_seconds=age,
             health=health,
             health_reasons=health_reasons,
+            source_quality=source_quality,
             forward=read_json(forward / "status.json"),
             capacity=read_json(artifact_paths()["capacity"]),
             schedule=read_json(artifact_paths()["schedule"]),
