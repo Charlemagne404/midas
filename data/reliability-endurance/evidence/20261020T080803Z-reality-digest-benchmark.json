@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "status": "isolated synthetic benchmark; source only",
+  "measurement_time_approx": "2026-10-20 10:08 CEST",
+  "source_sha256": "0469889b4613a5fb875f34d2c6e14f9b74ba7f3188f51a3a9350078597bd8ad5",
+  "fixture": {
+    "book_count": 16,
+    "bid_levels_per_book": 10000,
+    "ask_levels_per_book": 10000,
+    "total_levels": 320000,
+    "data_origin": "synthetic decimal maps; no production archive read"
+  },
+  "execution_boundary": {
+    "memory_max_bytes": 536870912,
+    "memory_swap_max_bytes": 0,
+    "cpu_quota_percent": 50
+  },
+  "method": "Measure sha256(canonical(engine.state())) against Engine.digest() with tracemalloc started after fixture construction.",
+  "baseline_full_state": {
+    "elapsed_seconds_under_tracemalloc": 7.186,
+    "incremental_traced_peak_mib": 65.9
+  },
+  "streaming_digest": {
+    "elapsed_seconds_under_tracemalloc": 4.405,
+    "incremental_traced_peak_mib": 0.6
+  },
+  "digest_equal": true,
+  "limitations": [
+    "Traced peak excludes the retained synthetic Engine fixture and does not measure native allocations.",
+    "This does not measure production recorder memory or startup behavior.",
+    "The protected production recorder has not loaded this source."
+  ]
+}
