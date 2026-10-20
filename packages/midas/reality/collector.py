@@ -57,6 +57,19 @@ def collection_health(
     return "active_receiving"
 
 
+def prune_cohort_tracking(
+    book_updates: Counter[str],
+    coverage_started: dict[str, int],
+    coverage_last: dict[str, int],
+    active_assets: set[str],
+) -> None:
+    """Keep per-asset coverage counters bounded to the current market cohort."""
+    for tracker in (book_updates, coverage_started, coverage_last):
+        for asset in tuple(tracker):
+            if asset not in active_assets:
+                del tracker[asset]
+
+
 async def run(config: Config, duration: float | None = None) -> None:
     root = Path(config.root)
     store = Store(
@@ -65,14 +78,19 @@ async def run(config: Config, duration: float | None = None) -> None:
         reserve=config.reserve_bytes,
         segment_bytes=config.segment_bytes,
         segment_seconds=config.segment_seconds,
+        verify_existing=False,
+        defer_open=True,
     )
     try:
-        engine, _ = replay(root, manifest(root))
+        source_manifest = manifest(root)
+        engine, _ = replay(root, source_manifest)
+        if engine.last_ordinal != store.ordinal:
+            raise ValueError("Verified replay ordinal differs from the durable segment index")
     except BaseException:
         store.close()
         raise
     oldest_ns = time.time_ns()
-    oldest = next((s for s in manifest(root)["segments"] if s["count"]), None)
+    oldest = next((s for s in source_manifest["segments"] if s["count"]), None)
     if oldest:
         from .storage import records
 
@@ -83,6 +101,7 @@ async def run(config: Config, duration: float | None = None) -> None:
             raise OSError(
                 "Retention horizon reached; export/archive this root and configure a new root"
             )
+    store.activate()
 
     append_samples: deque[dict[str, int]] = deque(maxlen=1024)
     book_updates: Counter[str] = Counter()
@@ -311,6 +330,9 @@ async def run(config: Config, duration: float | None = None) -> None:
                     if not cohort:
                         raise ValueError("No supported active markets discovered")
                     tokens = [token for market in cohort for token in market["tokens"]]
+                    prune_cohort_tracking(
+                        book_updates, coverage_started, coverage_last, set(tokens)
+                    )
                     status.update(markets=len(cohort), cohort=cohort, state="CONNECTING")
                     async with connect(
                         WS,

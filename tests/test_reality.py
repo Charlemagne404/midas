@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 from midas.reality import storage as storage_module
-from midas.reality.collector import collection_health
+from midas.reality.collector import collection_health, prune_cohort_tracking
 from midas.reality.discovery import select
 from midas.reality.reconstruction import Engine
 from midas.reality.replay import replay
@@ -177,6 +177,53 @@ def test_manifest_integrity_and_replay_share_one_segment_pass(tmp_path, monkeypa
     monkeypatch.setattr(storage_module, "describe", unexpected_second_pass)
     rows = list(read_manifest(tmp_path, value))
     assert len(rows) == 1 and rows[0]["payload"]["reason"] == "fixture"
+
+
+def test_startup_store_defers_writer_until_verified_replay(tmp_path):
+    created = Store(tmp_path, reserve=1)
+    created.append("gap", {"reason": "startup"})
+    created.close()
+    before = {p.name for p in tmp_path.iterdir()}
+
+    store = Store(tmp_path, reserve=1, verify_existing=False, defer_open=True)
+    assert store.file is None
+    engine, _ = replay(tmp_path, manifest(tmp_path))
+    assert engine.last_ordinal == store.ordinal == 1
+    assert {p.name for p in tmp_path.iterdir()} == before
+    store.activate()
+    store.append("gap", {"reason": "after_verified_replay"})
+    store.close()
+
+
+def test_startup_store_does_not_write_after_corrupt_replay(tmp_path):
+    created = Store(tmp_path, reserve=1)
+    created.append("gap", {"reason": "startup"})
+    created.close()
+    value = manifest(tmp_path)
+    segment = tmp_path / value["segments"][0]["file"]
+    data = bytearray(segment.read_bytes())
+    data[-1] ^= 1
+    segment.write_bytes(data)
+    before = {p.name for p in tmp_path.iterdir()}
+
+    store = Store(tmp_path, reserve=1, verify_existing=False, defer_open=True)
+    assert store.file is None
+    with pytest.raises(ValueError):
+        replay(tmp_path, value)
+    store.close()
+    assert {p.name for p in tmp_path.iterdir()} == before
+
+
+def test_cohort_tracking_retains_only_active_assets():
+    from collections import Counter
+
+    updates = Counter({"old-1": 5, "active-1": 2})
+    started = {"old-1": 10, "active-1": 20}
+    last = {"old-1": 15, "active-1": 25}
+    prune_cohort_tracking(updates, started, last, {"active-1", "active-2"})
+    assert updates == {"active-1": 2}
+    assert started == {"active-1": 20}
+    assert last == {"active-1": 25}
 
 
 def test_prefix_replay_still_checks_segment_tail_integrity(tmp_path):

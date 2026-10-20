@@ -127,6 +127,41 @@ def describe(path: Path) -> dict[str, Any]:
     )
 
 
+def _validate_manifest_metadata(path: Path, info: Any) -> dict[str, Any]:
+    """Validate the fields needed for bounded setup before replay checks bytes."""
+    if not isinstance(info, dict):
+        raise ValueError(f"Invalid segment manifest: {path}")
+    if info.get("schema_version") != 1 or info.get("file") != path.name:
+        raise ValueError(f"Invalid segment manifest identity: {path}")
+    if info.get("bytes") != path.stat().st_size:
+        raise ValueError(f"Segment size differs from manifest: {path}")
+    digest = info.get("sha256")
+    if (
+        not isinstance(digest, str)
+        or len(digest) != 64
+        or any(char not in "0123456789abcdef" for char in digest)
+    ):
+        raise ValueError(f"Invalid segment manifest digest: {path}")
+    first, last, count, kinds = (
+        info.get("first"),
+        info.get("last"),
+        info.get("count"),
+        info.get("kinds"),
+    )
+    if any(type(value) is not int or value < 0 for value in (first, last, count)):
+        raise ValueError(f"Invalid segment manifest counters: {path}")
+    if not isinstance(kinds, dict) or any(
+        not isinstance(kind, str) or type(amount) is not int or amount < 0
+        for kind, amount in kinds.items()
+    ):
+        raise ValueError(f"Invalid segment manifest kinds: {path}")
+    if sum(kinds.values()) != count or (count == 0 and (first != 0 or last != 0)):
+        raise ValueError(f"Inconsistent segment manifest counters: {path}")
+    if count > 0 and (first < 1 or last < first):
+        raise ValueError(f"Invalid segment ordinal range: {path}")
+    return info
+
+
 class Store:
     def __init__(
         self,
@@ -136,7 +171,11 @@ class Store:
         reserve: int = 5 * 1024**3,
         segment_bytes: int = 8 * 1024**2,
         segment_seconds: float = 300,
+        verify_existing: bool = True,
+        defer_open: bool = False,
     ) -> None:
+        if not verify_existing and not defer_open:
+            raise ValueError("Unverified segments require deferred writer activation")
         self.root = root.resolve()
         self.root.mkdir(parents=True, exist_ok=True, mode=0o700)
         self.lock = (self.root / "writer.lock").open("a")
@@ -191,16 +230,20 @@ class Store:
                 manifest_path = path.with_suffix(".json")
                 if manifest_path.exists():
                     info = json.loads(manifest_path.read_text())
-                    actual = describe(path)
-                    if actual != info:
-                        raise ValueError(f"Segment checksum mismatch: {path}")
+                    if verify_existing:
+                        actual = describe(path)
+                        if actual != info:
+                            raise ValueError(f"Segment checksum mismatch: {path}")
+                    else:
+                        info = _validate_manifest_metadata(path, info)
                 else:
                     info = describe(path)
                     atomic_json(manifest_path, info)
                 self.ordinal = max(self.ordinal, info["last"])
                 self.counts.update(info["kinds"])
             self.used = sum(p.stat().st_size for p in self.root.iterdir() if p.is_file())
-            self._open()
+            if not defer_open:
+                self._open()
         except BaseException:
             self.lock.close()
             raise
@@ -216,6 +259,11 @@ class Store:
         self.opened = time.monotonic()
         self.count = 0
 
+    def activate(self) -> None:
+        """Open the append segment after the caller has verified existing data."""
+        if self.file is None:
+            self._open()
+
     def append(
         self,
         kind: str,
@@ -229,6 +277,8 @@ class Store:
     ) -> dict[str, Any]:
         if self.write_failed:
             raise OSError("Recorder persistence previously failed; restart/recovery required")
+        if self.file is None:
+            raise RuntimeError("Recorder writer activation requires verified startup replay")
         record = dict(
             schema_version=1,
             ordinal=self.ordinal + 1,
@@ -349,3 +399,45 @@ def read_manifest(root: Path, value: dict[str, Any]) -> Iterator[dict[str, Any]]
             spool.seek(0)
             for record, _ in _record_stream(spool, path):
                 yield record
+
+
+def _read_manifest_for_replay(root: Path, value: dict[str, Any]) -> Iterator[dict[str, Any]]:
+    """Verify and stream records into private replay state with bounded memory.
+
+    The final segment digest is checked after records have been yielded. Replay
+    owns only a local Engine and returns it only after this iterator completes;
+    an integrity failure therefore discards all partially reconstructed state.
+    Callers that expose records incrementally must use read_manifest instead.
+    """
+    if value["schema_version"] != 1 or value["format"] != "midas-reality-framed-zlib-v1":
+        raise ValueError("Unsupported manifest")
+    previous = 0
+    for info in value["segments"]:
+        if Path(info["file"]).name != info["file"]:
+            raise ValueError("Unsafe segment path")
+        path = root / info["file"]
+        first = last = count = 0
+        kinds: dict[str, int] = {}
+        digest = hashlib.sha256()
+        with path.open("rb") as source:
+            for record, _ in _record_stream(_HashingReader(source, digest), path):
+                if record["ordinal"] != previous + 1:
+                    raise ValueError("Non-contiguous recording ordinal")
+                previous = record["ordinal"]
+                first = first or record["ordinal"]
+                last = record["ordinal"]
+                count += 1
+                kinds[record["kind"]] = kinds.get(record["kind"], 0) + 1
+                yield record
+        actual = dict(
+            schema_version=1,
+            file=path.name,
+            sha256=digest.hexdigest(),
+            bytes=path.stat().st_size,
+            first=first,
+            last=last,
+            count=count,
+            kinds=kinds,
+        )
+        if actual != info:
+            raise ValueError(f"Segment integrity mismatch: {path}")
