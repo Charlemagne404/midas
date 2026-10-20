@@ -94,7 +94,7 @@ def test_stale_status_not_reported_as_healthy(dashboard):
     assert "selection_audit" not in r["collector"]
 
 
-def test_recovered_capture_does_not_remain_degraded_for_lifetime_failures(dashboard):
+def test_recovered_capture_projects_last_error_as_historical(dashboard):
     c, root, _ = dashboard
     path = root / "data/recordings/reality/status.json"
     data = json.loads(path.read_text())
@@ -107,7 +107,9 @@ def test_recovered_capture_does_not_remain_degraded_for_lifetime_failures(dashbo
     assert result["health"] == "recording"
     assert result["health_reasons"] == []
     assert result["collector"]["failures"] == 1
-    assert "ConnectionClosedOK" in result["collector"]["error"]
+    assert result["collector"]["error"] is None
+    assert "ConnectionClosedOK" in result["collector"]["last_error"]
+    assert "ConnectionClosedOK" in json.loads(path.read_text())["error"]
 
 
 def test_websocket_subscription_wait_is_reported_as_a_transition(dashboard):

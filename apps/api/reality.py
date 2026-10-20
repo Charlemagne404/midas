@@ -52,6 +52,16 @@ def classify_collector_health(status: dict[str, Any], now_ns: int) -> tuple[str,
     return ("degraded" if reasons else "recording"), reasons
 
 
+def project_collector_status(status: dict[str, Any], health: str) -> dict[str, Any]:
+    """Keep a recovered connection's last diagnostic out of the current-error field."""
+    projected = dict(status)
+    last_error = projected.get("error")
+    if health == "recording" and last_error:
+        projected["last_error"] = last_error
+        projected["error"] = None
+    return projected
+
+
 def read_json(path: Path) -> dict[str, Any]:
     if not path.is_file():
         return {}
@@ -98,6 +108,7 @@ def router(workspace: Path) -> APIRouter:
         updated_ns = status.get("updated_ns")
         age = (now - updated_ns) / 1e9 if isinstance(updated_ns, int) else None
         health, health_reasons = classify_collector_health(status, now)
+        status = project_collector_status(status, health)
         return dict(
             now_ns=now,
             collector=status,
