@@ -522,6 +522,6 @@ The bounded top-50 status projection still left a full-depth allocation in `Engi
 | Reality | Recorder captures with 16/16 fresh books, but two source-timing markers keep status DEGRADED; candidate `29f77ad` remains undeployed | Approval, safe memory window, one bounded start, source-quality recovery and production verification |
 | Host resources | Host PSI remains low; recorder-local high events continue and current use is within 1.6 MiB of MemoryHigh | No full-store replay or endurance load while this persists |
 | Endurance | Prior 63m45s isolated lifecycle test passed with 32 automatic transitions; broad suite interrupted for CPU safety | Do not count interrupted suite as a full integration pass |
-| Git/deployment | Main at `59cc7d4` before this journal update; Reality `29f77ad` and Veritas `8717666` synchronized | Commit and push this update; no force-push |
+| Git/deployment | Main, Reality, and Veritas worktrees are clean and synchronized; Reality `29f77ad` and Veritas `8717666` are pushed | No Git synchronization pending; protected Reality deployment approval remains outstanding |
 
 **Current verdicts:** Reliability foundation **PARTIALLY RECOVERED**; Frontier development **CONDITIONALLY READY** only for separate work that does not depend on live Reality data or the undeployed recorder change; another unattended 48-hour campaign **NOT READY**.
