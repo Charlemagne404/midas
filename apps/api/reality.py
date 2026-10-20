@@ -21,6 +21,37 @@ CALIBRATION = "8e29bed2af533d3e2ee1640c5c9e876d3323480d8b2d579b454b6c9768aa2500"
 TRAINING = "9f593b0e68c61c5a8eabf3b01b7ad38c9e1df27436bd041a55a505c995a0a9f9"
 
 
+def classify_collector_health(status: dict[str, Any], now_ns: int) -> tuple[str, list[str]]:
+    """Classify current capture health without treating lifetime failures as active faults."""
+    if not status:
+        return "unavailable", ["status_unavailable"]
+    if status.get("state") == "STOPPED":
+        return "paused", []
+
+    reasons: list[str] = []
+    updated_ns = status.get("updated_ns")
+    if not isinstance(updated_ns, int) or now_ns - updated_ns > 30 * 1_000_000_000:
+        reasons.append("status_stale")
+
+    state = status.get("state")
+    if state != "RECORDING_UNSEQUENCED":
+        reasons.append("collector_state")
+
+    config = status.get("config")
+    stale_seconds = config.get("stale_seconds", 60) if isinstance(config, dict) else 60
+    if not isinstance(stale_seconds, (int, float)) or stale_seconds <= 0:
+        stale_seconds = 60
+    last_observation_ns = status.get("last_observation_ns")
+    if not isinstance(last_observation_ns, int):
+        reasons.append("observations_missing")
+    elif now_ns - last_observation_ns >= stale_seconds * 1_000_000_000:
+        reasons.append("observations_stale")
+
+    if status.get("backpressure_active"):
+        reasons.append("backpressured")
+    return ("degraded" if reasons else "recording"), reasons
+
+
 def read_json(path: Path) -> dict[str, Any]:
     if not path.is_file():
         return {}
@@ -64,22 +95,15 @@ def router(workspace: Path) -> APIRouter:
         status = read_json(raw / "status.json")
         status.pop("selection_audit", None)
         now = time.time_ns()
-        age = (now - status["updated_ns"]) / 1e9 if status else None
-        state = status.get("state", "")
-        health = (
-            "unavailable"
-            if age is None
-            else "paused"
-            if state == "STOPPED"
-            else "degraded"
-            if age > 30 or status.get("failures") or state != "RECORDING_UNSEQUENCED"
-            else "recording"
-        )
+        updated_ns = status.get("updated_ns")
+        age = (now - updated_ns) / 1e9 if isinstance(updated_ns, int) else None
+        health, health_reasons = classify_collector_health(status, now)
         return dict(
             now_ns=now,
             collector=status,
             collector_status_age_seconds=age,
             health=health,
+            health_reasons=health_reasons,
             forward=read_json(forward / "status.json"),
             capacity=read_json(artifact_paths()["capacity"]),
             schedule=read_json(artifact_paths()["schedule"]),
