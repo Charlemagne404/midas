@@ -1,6 +1,7 @@
 """Receipt-ordered exact books; unsequenced continuity is always explicit."""
 
 import hashlib
+import heapq
 import json
 from collections import Counter, deque
 from decimal import Decimal, DecimalException, localcontext
@@ -329,14 +330,26 @@ class Engine:
             book["issue"] = None
             book.pop("pending_top_advertisement", None)
 
-    def state(self) -> dict[str, Any]:
+    def state(self, *, max_depth: int | None = None) -> dict[str, Any]:
+        """Return the complete replay state or a bounded status projection."""
+        if max_depth is not None and (type(max_depth) is not int or max_depth < 1):
+            raise ValueError("max_depth must be a positive integer")
         books = {}
         for asset, book in sorted(self.books.items()):
-            bid, ask = self.top(book)
-            books[asset] = {
+            if max_depth is None:
+                bids = sorted(book["bids"].items(), reverse=True)
+                asks = sorted(book["asks"].items())
+            else:
+                # Status consumers retain only this bounded top-of-book view.
+                # Avoid sorting and materializing every deep level on each poll.
+                bids = heapq.nlargest(max_depth, book["bids"].items())
+                asks = heapq.nsmallest(max_depth, book["asks"].items())
+            bid = bids[0][0] if bids else None
+            ask = asks[0][0] if asks else None
+            view = {
                 **{k: v for k, v in book.items() if k not in {"bids", "asks"}},
-                "bids": [[str(p), str(q)] for p, q in sorted(book["bids"].items(), reverse=True)],
-                "asks": [[str(p), str(q)] for p, q in sorted(book["asks"].items())],
+                "bids": [[str(p), str(q)] for p, q in bids],
+                "asks": [[str(p), str(q)] for p, q in asks],
                 "best_bid": str(bid) if bid is not None else None,
                 "best_ask": str(ask) if ask is not None else None,
                 "spread": spread(bid, ask),
@@ -344,6 +357,15 @@ class Engine:
                 "internally_consistent": book["issue"] is None,
                 "sequence_verified": False,
             }
+            if max_depth is not None:
+                view.update(
+                    bid_depth_levels=len(book["bids"]),
+                    ask_depth_levels=len(book["asks"]),
+                    depth_truncated=(
+                        len(book["bids"]) > max_depth or len(book["asks"]) > max_depth
+                    ),
+                )
+            books[asset] = view
         return dict(
             schema_version=1,
             **(

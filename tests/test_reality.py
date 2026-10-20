@@ -52,6 +52,32 @@ def test_observed_discovery_and_books():
         assert b["issue"] is None
 
 
+def test_bounded_status_depth_preserves_full_reconstruction_digest():
+    from decimal import Decimal
+
+    engine = ready()
+    asset = next(iter(engine.books))
+    book = engine.books[asset]
+    book["bids"] = {Decimal(i) / 1000: Decimal(i) for i in range(1, 101)}
+    book["asks"] = {Decimal(i) / 1000: Decimal(i) for i in range(201, 301)}
+    digest_before = engine.digest()
+
+    full = engine.state()["books"][asset]
+    status = engine.state(max_depth=50)["books"][asset]
+
+    assert len(full["bids"]) == len(full["asks"]) == 100
+    assert status["bids"] == full["bids"][:50]
+    assert status["asks"] == full["asks"][:50]
+    assert status["bid_depth_levels"] == status["ask_depth_levels"] == 100
+    assert status["depth_truncated"] is True
+    assert "depth_truncated" not in full
+    assert "bid_depth_levels" not in full
+    assert engine.digest() == digest_before
+
+    with pytest.raises(ValueError, match="positive integer"):
+        engine.state(max_depth=0)
+
+
 def test_gaps_staleness_unknown_malformed_crossed():
     e = ready()
     e.consume(dict(kind="gap", ordinal=10, received_ns=e.now_ns, payload=dict(reason="disconnect")))

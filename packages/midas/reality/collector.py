@@ -29,6 +29,8 @@ class StorageFailure(RuntimeError):
 
 
 APPEND_BACKPRESSURE_SECONDS = 1.0
+# The Reality API marks status older than 30 seconds stale; failures report immediately.
+STATUS_REPORT_INTERVAL_SECONDS = 10.0
 
 
 def collection_health(
@@ -150,7 +152,7 @@ async def run(config: Config, duration: float | None = None) -> None:
         return record
 
     def report() -> None:
-        state = engine.state()
+        state = engine.state(max_depth=50)
         now = time.time_ns()
         books = state["books"]
         fresh = sum(
@@ -194,15 +196,7 @@ async def run(config: Config, duration: float | None = None) -> None:
                 state_sha256=engine.digest(),
                 sequence_verified=False,
                 clock_health=clock_health(),
-                books={
-                    asset: dict(
-                        book,
-                        bids=book["bids"][:50],
-                        asks=book["asks"][:50],
-                        depth_truncated=len(book["bids"]) > 50 or len(book["asks"]) > 50,
-                    )
-                    for asset, book in books.items()
-                },
+                books=books,
                 observation_coverage={
                     asset: dict(
                         book_update_frames=book_updates[asset],
@@ -359,7 +353,7 @@ async def run(config: Config, duration: float | None = None) -> None:
                         status["state"] = "AWAITING_DATA"
                         while not stop.is_set():
                             now = time.monotonic()
-                            if now - last_report >= 2:
+                            if now - last_report >= STATUS_REPORT_INTERVAL_SECONDS:
                                 report()
                                 last_report = now
                             if now - last_checkpoint >= 30 or rotate.is_set():
