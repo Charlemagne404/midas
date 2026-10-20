@@ -1,0 +1,162 @@
+{
+  "host": {
+    "available_disk_bytes": 181772972032,
+    "cpu_count": 6,
+    "cpu_psi_some_avg10_percent": 3.47,
+    "io_psi_full_avg10_percent": 1.31,
+    "io_psi_some_avg10_percent": 1.55,
+    "memory_available_bytes": 9060323328,
+    "memory_psi_full_avg10_percent": 0.0,
+    "memory_psi_some_avg10_percent": 0.0,
+    "no_safety_gates_disabled": true,
+    "swap_total_bytes": 4294963200,
+    "swap_used_bytes": 4251279360
+  },
+  "production_services": {
+    "midas_api": {
+      "active": true,
+      "health": "READY",
+      "journal_events": 396043,
+      "journal_recovery": "CHECKPOINT_VERIFIED",
+      "laboratory": "READY",
+      "live_execution": false,
+      "memory_current_bytes": 727695360,
+      "memory_swap_current_bytes": 0,
+      "oom_events": 0,
+      "pid": 2737736,
+      "restarts": 0
+    },
+    "reality_api": {
+      "active": true,
+      "health": "READY",
+      "journal_events": 61798,
+      "journal_recovery": "CHECKPOINT_VERIFIED",
+      "live_execution": false,
+      "pid": 2688994,
+      "restarts": 0
+    },
+    "reality_recorder": {
+      "active": true,
+      "candidate_deployed": false,
+      "memory_current_bytes": 713138176,
+      "memory_events": {
+        "high": 10097,
+        "max": 0,
+        "oom": 0,
+        "oom_kill": 0
+      },
+      "memory_high_bytes": 738197504,
+      "memory_max_bytes": 805306368,
+      "memory_peak_bytes": 738721792,
+      "memory_swap_current_bytes": 684032,
+      "pid": 863193,
+      "restarts": 1
+    },
+    "veritas_v2": {
+      "control_sha256": "a5b8f35d7ddb676508287b95af2d200e2b9ba5a67bf8da0de88d2ff9baf68f29",
+      "last_batch_at": "2026-10-20T12:47:21+02:00",
+      "last_batch_result": "CURRENT",
+      "next_scheduled_at": "2026-10-20T12:52:03+02:00",
+      "pending_segments": 0,
+      "processed_segments": 16088,
+      "summary_sha256": "05300da7686f5a67d879de4f397a396f498720d657bc19f96457d64f56991406",
+      "timer_active": true,
+      "v1_timer_active": false
+    }
+  },
+  "purpose": "Reality deployment guard verification, user-approved shadow pause confirmation, and integrated service health snapshot",
+  "reality_candidate_verification": {
+    "candidate_systemd_unit_sha256": "0afb3154bd51f5e016768f583ea792e27b882f0e5ddc6651be3bcbb890a8dd94",
+    "deployment_helper_sha256": "18f26aca1ad093189e0c35db7bf102157d08fa78e130dbe050a7c101337b0df0",
+    "imports_confirmed_inside_detached_workspace": true,
+    "mypy": "passed, 37 source files",
+    "passed": true,
+    "pytest": "77 passed in 15.05s",
+    "ruff": "passed",
+    "source_sha256": "0469889b4613a5fb875f34d2c6e14f9b74ba7f3188f51a3a9350078597bd8ad5",
+    "transient_service": {
+      "cpu_time_seconds": 23.824,
+      "cpu_weight": 20,
+      "memory_peak_mib": 519.7,
+      "memory_swap_peak_bytes": 0,
+      "nice": 19,
+      "restart": "no"
+    },
+    "workspace": "/tmp/midas-reality-deploy-guard-20261020"
+  },
+  "reality_production_preflight": {
+    "attempted": true,
+    "candidate_unit_sha256": "0afb3154bd51f5e016768f583ea792e27b882f0e5ddc6651be3bcbb890a8dd94",
+    "error": "Installed Reality service unit differs from verified source; install it and daemon-reload before preflight",
+    "execution": "isolated transient service with MemoryMax=256M, MemorySwapMax=0, CPUWeight=20, Nice=19, idle I/O, Restart=no",
+    "fresh_gate_written": false,
+    "installed_unit_sha256": "b07ac87d4c1108ee3ca98291972c3963033bab40dad565b957fb100657c727f4",
+    "production_recorder_restarted": false,
+    "production_unit_installed": false,
+    "result": "expected fail-closed before canary replay",
+    "stale_detached_workspace_gate": {
+      "mtime_local": "2026-10-20T12:22:29+02:00",
+      "path": "/tmp/midas-reality-deploy-guard-20261020/docs/REALITY_GATE_A_PREFLIGHT.json",
+      "source_sha256": "3b00e8fec7973c73b18281d4df4fb715b68e14d1fd315f887f61f56cd945becb",
+      "updated_by_attempt": false,
+      "valid_for_current_candidate": false
+    },
+    "systemd_daemon_reloaded": false
+  },
+  "recorded_at": "2026-10-20T12:51:49+02:00",
+  "repositories": {
+    "main": {
+      "branch": "main",
+      "commit": "a86dbce",
+      "origin_matches": true,
+      "worktree_clean_before_evidence_update": true
+    },
+    "reality": {
+      "branch": "project/reality",
+      "commit": "c833200",
+      "origin_matches": true,
+      "worktree_clean": true
+    },
+    "veritas": {
+      "branch": "project/veritas",
+      "commit": "8717666",
+      "origin_matches": true,
+      "worktree_clean": true
+    }
+  },
+  "schema_version": 1,
+  "scope_protection": {
+    "campaign_48h_001_changed": false,
+    "frontier_started": false,
+    "new_campaign_started": false,
+    "recorder_stopped": false
+  },
+  "shadow_workers": {
+    "mission2": {
+      "active": false,
+      "actual_orders_submitted": 0,
+      "campaign_sha256": "aa8acb2b46823c1a1e3ac5d01a57dde917746c2c7471098ae2a4598875e322f5",
+      "enabled": false,
+      "pending_horizons": 0,
+      "pid": 0,
+      "source_ordinal": 652065,
+      "state": "STOPPED_WITH_RECOVERABLE_PENDING",
+      "status_sha256": "087a6498457b864b07adb2a47a21a8483f35548166e6c8031f17004eebd5836b",
+      "unit": "midas-reality-shadow.service"
+    },
+    "mission2_successor": {
+      "active": false,
+      "actual_orders_submitted": 0,
+      "campaign_sha256": "c5eb8b98cbfd657372fc620192c5a0c0bb46f41d760800e680181fa7f3ee95a3",
+      "enabled": false,
+      "pending_horizons": 0,
+      "pid": 0,
+      "source_ordinal": 2136971,
+      "state": "STOPPED_WITH_RECOVERABLE_PENDING",
+      "status_sha256": "37cff1121c3b8191aec0e6d470ac36875665a9ae2880e0979bd86837e4ea399d",
+      "unit": "midas-reality-shadow-successor.service"
+    },
+    "state_at_followup": "Both already inactive and disabled with no worker process; recoverable pending state preserved; no additional signal or campaign write issued",
+    "user_approval": "Yes, pause both"
+  }
+}
