@@ -1,10 +1,10 @@
 [Unit]
-Description=Advance bounded Veritas v2 finalized-source gap-detail indexing every five minutes
+Description=Advance bounded Veritas v2 gap-detail replay every five minutes with resource admission
 
 [Timer]
-OnCalendar=*-*-* *:02,07,12,17,22,27,32,37,42,47,52,57:00 UTC
+OnCalendar=*-*-* *:02/5:00 UTC
 Persistent=false
-RandomizedDelaySec=30
+RandomizedDelaySec=20
 AccuracySec=5
 Unit=midas-veritas-gap-detail-v2.service
 
