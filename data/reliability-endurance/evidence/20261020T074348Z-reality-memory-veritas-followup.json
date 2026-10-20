@@ -1,0 +1,816 @@
+{
+  "apis": {
+    "main": {
+      "health": {
+        "laboratory": {
+          "recovering_campaigns": [],
+          "recovery_errors": [],
+          "root": "/home/charlie/midas/data/laboratory-final",
+          "status": "READY"
+        },
+        "live_execution": false,
+        "mode": "demo",
+        "paper_recovery": {
+          "journal_events": 389947,
+          "revision": 389946,
+          "status": "CHECKPOINT_VERIFIED"
+        },
+        "startup_error": null,
+        "startup_status": "READY",
+        "status": "READY"
+      },
+      "unit": {
+        "ActiveState": "active",
+        "ExecMainStartTimestamp": "Tue 2026-10-20 08:54:16 CEST",
+        "MainPID": "2737736",
+        "MemoryCurrent": "1117622272",
+        "MemoryMax": "1879048192",
+        "NRestarts": "0",
+        "SubState": "running"
+      }
+    },
+    "reality": {
+      "health": {
+        "laboratory": {
+          "recovering_campaigns": [],
+          "recovery_errors": [],
+          "root": "/home/charlie/midas-reality/data/research/reality/interface/laboratory",
+          "status": "READY"
+        },
+        "live_execution": false,
+        "mode": "demo",
+        "paper_recovery": {
+          "journal_events": 56146,
+          "revision": 56145,
+          "status": "CHECKPOINT_VERIFIED"
+        },
+        "startup_error": null,
+        "startup_status": "READY",
+        "status": "READY"
+      },
+      "unit": {
+        "ActiveState": "active",
+        "ExecMainStartTimestamp": "Tue 2026-10-20 08:24:36 CEST",
+        "MainPID": "2688994",
+        "MemoryCurrent": "220803072",
+        "MemoryMax": "536870912",
+        "NRestarts": "0",
+        "SubState": "running"
+      }
+    }
+  },
+  "candidate": {
+    "branch": "project/reality",
+    "loaded_by_recorder": false,
+    "remote_matches": true,
+    "revision": "397ec50ecce39c5e2a06674ab5c41190931936dd"
+  },
+  "observed_interpretation": "Cgroup current rose by about 2.8 MB over four minutes, mainly anonymous and file-backed memory; no new high, max, OOM, OOM-kill, or swap-limit events occurred. This window is too short to diagnose a leak or project an exhaustion time.",
+  "purpose": "Five-minute read-only Reality cgroup window and post-09:42 Veritas timer verification",
+  "reality_samples": [
+    {
+      "anon": 529674240,
+      "file": 147812352,
+      "kernel": 16699392,
+      "local": "2026-10-20T09:39:00+02:00",
+      "max_oom_oom_kill": 0,
+      "memory_current": 694239232,
+      "memory_high_events": 10069,
+      "rss_kib": 526924,
+      "swap_current": 684032
+    },
+    {
+      "anon": 529813504,
+      "file": 148275200,
+      "kernel": 16719872,
+      "local": "2026-10-20T09:40:00+02:00",
+      "max_oom_oom_kill": 0,
+      "memory_current": 694804480,
+      "memory_high_events": 10069,
+      "rss_kib": 527060,
+      "swap_current": 684032
+    },
+    {
+      "anon": 529928192,
+      "file": 148672512,
+      "kernel": 16732160,
+      "local": "2026-10-20T09:41:00+02:00",
+      "max_oom_oom_kill": 0,
+      "memory_current": 695406592,
+      "memory_high_events": 10069,
+      "rss_kib": 527172,
+      "swap_current": 684032
+    },
+    {
+      "anon": 530055168,
+      "file": 149053440,
+      "kernel": 16748544,
+      "local": "2026-10-20T09:42:00+02:00",
+      "max_oom_oom_kill": 0,
+      "memory_current": 695910400,
+      "memory_high_events": 10069,
+      "rss_kib": 527296,
+      "swap_current": 684032
+    },
+    {
+      "anon": 530817024,
+      "file": 149434368,
+      "kernel": 16764928,
+      "local": "2026-10-20T09:43:00+02:00",
+      "max_oom_oom_kill": 0,
+      "memory_current": 697069568,
+      "memory_high_events": 10069,
+      "rss_kib": 528040,
+      "swap_current": 684032
+    }
+  ],
+  "reality_service": {
+    "ActiveState": "active",
+    "MainPID": "863193",
+    "MemoryCurrent": "698425344",
+    "MemoryHigh": "738197504",
+    "MemoryMax": "805306368",
+    "MemoryPeak": "738721792",
+    "MemorySwapMax": "0",
+    "NRestarts": "1",
+    "SubState": "running"
+  },
+  "recorded_at_utc": "2026-10-20T07:43:48.310434+00:00",
+  "veritas_v2": {
+    "artifact": {
+      "artifact": "gap-detail-current",
+      "data": {
+        "active_segment_read": false,
+        "all_period_gap_counts_by_reason": {
+          "book_resynchronization": 9075,
+          "connection_failure": 18,
+          "malformed_constraints": 5,
+          "process_start": 16,
+          "process_stop": 13,
+          "scheduled_refresh": 57,
+          "unconfirmed_top_advertisement": 2
+        },
+        "all_period_gap_event_count": 9186,
+        "analysis_code_files": {
+          "gap_detail_analysis.py": "95ecab847d79d0bfd27e54186fc301ef964bec0b90cc835d15c4003bebf5b000",
+          "gap_detail_control.py": "1ca6293e8171dd18dc06376247869515ecc76700dace89c93c4f33a32d1f5029",
+          "reality/research_schema.py": "fa31024164ae1e20b579403e79417c1eaa8fc2670d154153aae247546d8f9f33",
+          "reality/shadow_campaign.py": "fbca040df77c90182fa7b94375590f89e95289b21e31a8990da390d1241c9aed",
+          "reality/storage.py": "551966d10c2494dd6fcb50988bf32c26558ff6a02d6bd68617f8593b1f5ec3cc",
+          "scripts/veritas_gap_detail_analysis.py": "c99af3561a83aef189dc077bc909d9f187f68e1a06fb365d21461135f927709c"
+        },
+        "analysis_code_sha256": "29cf366aa905f70963e1223d8c54872c08526a604e209f0941542bd879dd9708",
+        "analysis_version": "veritas-finalized-reality-gap-detail-v2",
+        "batch_processed_segment_count": 10,
+        "batch_processed_source_bytes": 1927161,
+        "campaign_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
+        "campaign_sha256": "aa8acb2b46823c1a1e3ac5d01a57dde917746c2c7471098ae2a4598875e322f5",
+        "campaign_window_affected_market_counts": {
+          "1302038": 8,
+          "3407425": 190,
+          "3478544": 3,
+          "3478675": 170,
+          "4118936": 1,
+          "4377630": 58,
+          "4377631": 10,
+          "4838902": 12,
+          "4844468": 79,
+          "4853875": 9,
+          "4853877": 3,
+          "4853879": 1,
+          "4853883": 4,
+          "4869264": 9,
+          "4881818": 20,
+          "4906127": 1,
+          "5087611": 120,
+          "5166771": 12,
+          "5177469": 18,
+          "5362423": 73,
+          "5362426": 919,
+          "5362494": 126,
+          "5362498": 255,
+          "5362509": 226,
+          "5394208": 190,
+          "5401794": 96,
+          "5410796": 1,
+          "5410885": 24,
+          "5410887": 8,
+          "5410892": 23,
+          "5429234": 22,
+          "5429236": 19,
+          "5429275": 5,
+          "5432674": 6,
+          "5432708": 2,
+          "5444189": 9,
+          "5444209": 15,
+          "5457254": 10,
+          "5457256": 10,
+          "5457263": 21,
+          "5457264": 1,
+          "5457266": 12,
+          "5473554": 11,
+          "5475239": 228,
+          "5475241": 8,
+          "5475294": 11,
+          "5475295": 23,
+          "5475297": 11,
+          "5475300": 1,
+          "5475867": 3,
+          "5475868": 5,
+          "5475879": 5,
+          "5475884": 2,
+          "5475891": 7,
+          "5479304": 156,
+          "5479329": 104,
+          "5479360": 153,
+          "5522520": 17,
+          "5523557": 6,
+          "5539311": 115,
+          "5591411": 868,
+          "5591422": 290,
+          "5591423": 71,
+          "559687": 498,
+          "5610590": 2,
+          "5611008": 128,
+          "561251": 3955,
+          "562794": 8,
+          "562828": 12,
+          "562831": 1,
+          "5640274": 3,
+          "5640276": 7,
+          "5640298": 2,
+          "5640299": 21,
+          "5640318": 9,
+          "5640322": 17,
+          "5640352": 9,
+          "5641263": 6,
+          "5641266": 2,
+          "5641277": 2,
+          "5641278": 13,
+          "5641293": 11,
+          "5641319": 4,
+          "5643519": 277,
+          "5652834": 349,
+          "5674900": 112,
+          "5674902": 15,
+          "5674915": 88,
+          "5675021": 33,
+          "5684228": 4,
+          "5684246": 3,
+          "5691643": 10,
+          "5704773": 9,
+          "5710779": 1,
+          "5711537": 4,
+          "5711543": 4,
+          "5713344": 5,
+          "5713354": 4,
+          "5713393": 57,
+          "5713397": 83,
+          "5719465": 1,
+          "5719469": 4,
+          "5719477": 7,
+          "5719483": 6,
+          "5720511": 3,
+          "5720512": 2,
+          "5720519": 4,
+          "5720523": 3,
+          "5720532": 2,
+          "5721699": 6,
+          "5721701": 2,
+          "5721710": 9,
+          "5721714": 4,
+          "5722932": 11,
+          "5722937": 1,
+          "5722940": 4,
+          "5722944": 4,
+          "5723894": 5,
+          "5742119": 124,
+          "5742120": 73,
+          "5763844": 1070,
+          "5763860": 294,
+          "5765287": 5,
+          "5765292": 1,
+          "5765298": 1,
+          "5766069": 7,
+          "5766077": 1,
+          "5766719": 5,
+          "5766721": 1,
+          "5766727": 4,
+          "5766736": 3,
+          "5767498": 5,
+          "5767501": 6,
+          "5767511": 2,
+          "5769117": 3,
+          "5769123": 3,
+          "5769127": 3,
+          "5772791": 2,
+          "5772804": 3,
+          "5772965": 2,
+          "5795112": 11,
+          "5795113": 17,
+          "5797892": 2,
+          "5797897": 3,
+          "5854148": 1,
+          "5854157": 3,
+          "5854162": 4,
+          "5854167": 2,
+          "5863587": 5,
+          "5887870": 5,
+          "5887877": 484,
+          "5887884": 96,
+          "5887887": 80,
+          "5887888": 409,
+          "5911597": 5,
+          "5911614": 4,
+          "5911898": 5,
+          "5911907": 3,
+          "5912537": 2,
+          "5912544": 3,
+          "5913833": 7,
+          "5913834": 8,
+          "5915282": 2,
+          "5915286": 8,
+          "5916609": 1,
+          "5916622": 2,
+          "5917407": 1,
+          "5917408": 1,
+          "5917415": 5,
+          "5917416": 1,
+          "5918911": 12,
+          "5918914": 5,
+          "5918918": 4,
+          "5918931": 4,
+          "5920195": 3,
+          "5920199": 2,
+          "5951955": 39,
+          "5958182": 2,
+          "5958183": 4,
+          "5958192": 4,
+          "5958199": 5,
+          "5958208": 2,
+          "5959199": 2,
+          "5959204": 3,
+          "5959206": 5,
+          "5959218": 2,
+          "665205": 4042,
+          "665331": 117,
+          "676783": 5,
+          "676784": 3,
+          "677164": 38,
+          "679055": 9
+        },
+        "campaign_window_first_gap_received_ns": 1792012085030653976,
+        "campaign_window_gap_counts_by_reason": {
+          "book_resynchronization": 7088,
+          "connection_failure": 14,
+          "process_start": 1,
+          "unconfirmed_top_advertisement": 2
+        },
+        "campaign_window_gap_event_count": 7105,
+        "campaign_window_gap_events_without_reported_assets": 15,
+        "campaign_window_last_gap_received_ns": 1792482095111862099,
+        "campaign_window_ns": {
+          "end_exclusive": 1793221678642600351,
+          "start": 1792012078642600351
+        },
+        "campaign_window_unmapped_affected_asset_count": 0,
+        "catalog_segment_count": 15725,
+        "empty_finalized_segment_count": 2,
+        "generated_at_utc": "2026-10-20T07:42:16+00:00",
+        "last_event_chain_sha256": "d9e369a438956ced5189f303024ad6b24a7463a534decf0010f5daf25fab7798",
+        "last_processed_ordinal": 2364033,
+        "last_processed_segment_file": "00000000000002363962-dd5b401021cb475d8eb9998011b11e7c.seg",
+        "limitations": [
+          "Only cataloged finalized .seg files are read; active .open files are never opened.",
+          "Gap received_ns is recorder receiver time, not an exchange quote timestamp.",
+          "affected_market_ids map only assets named by the gap record and the latest preceding discovery record.",
+          "A later frame is not proof that every affected book or the complete feed recovered.",
+          "The analysis preserves gap events; it does not alter the primary source-analysis state or frozen campaign."
+        ],
+        "pending_segment_count": 0,
+        "pending_source_bytes": 0,
+        "prefix_catalog_sha256": "b08306fa80c02ac8fb55f58d2b4c050c99331249bd62888501d49fb1a0a35d12",
+        "processed_segment_count": 15723,
+        "processed_source_bytes": 4203321891,
+        "recent_gap_events": [
+          {
+            "affected_asset_count": 8,
+            "affected_asset_issue_counts": {
+              "stale": 8
+            },
+            "affected_asset_scope": "reported_assets",
+            "affected_market_ids": [
+              "5479304",
+              "5479329",
+              "561251",
+              "665205"
+            ],
+            "in_campaign_window": true,
+            "ordinal": 2358960,
+            "reason": "book_resynchronization",
+            "received_at_utc": "2026-10-20T07:20:53.802147463Z",
+            "received_ns": 1792480853802147463,
+            "segment_file": "00000000000002358934-55bbd2fd2f5f4149890f2d97f305563a.seg",
+            "segment_index": 15682,
+            "unmapped_affected_asset_count": 0
+          },
+          {
+            "affected_asset_count": 4,
+            "affected_asset_issue_counts": {
+              "stale": 4
+            },
+            "affected_asset_scope": "reported_assets",
+            "affected_market_ids": [
+              "561251",
+              "665205"
+            ],
+            "in_campaign_window": true,
+            "ordinal": 2359213,
+            "reason": "book_resynchronization",
+            "received_at_utc": "2026-10-20T07:21:57.373492926Z",
+            "received_ns": 1792480917373492926,
+            "segment_file": "00000000000002359163-37264e3980724947ab9dc9a8a32ee07b.seg",
+            "segment_index": 15684,
+            "unmapped_affected_asset_count": 0
+          },
+          {
+            "affected_asset_count": 4,
+            "affected_asset_issue_counts": {
+              "stale": 4
+            },
+            "affected_asset_scope": "reported_assets",
+            "affected_market_ids": [
+              "5479360",
+              "665205"
+            ],
+            "in_campaign_window": true,
+            "ordinal": 2359683,
+            "reason": "book_resynchronization",
+            "received_at_utc": "2026-10-20T07:22:59.871034840Z",
+            "received_ns": 1792480979871034840,
+            "segment_file": "00000000000002359554-18d67b041d644f3d8f9a1a8207e11c8f.seg",
+            "segment_index": 15686,
+            "unmapped_affected_asset_count": 0
+          },
+          {
+            "affected_asset_count": 4,
+            "affected_asset_issue_counts": {
+              "stale": 4
+            },
+            "affected_asset_scope": "reported_assets",
+            "affected_market_ids": [
+              "561251",
+              "665205"
+            ],
+            "in_campaign_window": true,
+            "ordinal": 2359957,
+            "reason": "book_resynchronization",
+            "received_at_utc": "2026-10-20T07:24:02.475577332Z",
+            "received_ns": 1792481042475577332,
+            "segment_file": "00000000000002359886-4ef2e4b32c274b7580a8a21ae472656b.seg",
+            "segment_index": 15688,
+            "unmapped_affected_asset_count": 0
+          },
+          {
+            "affected_asset_count": 4,
+            "affected_asset_issue_counts": {
+              "stale": 4
+            },
+            "affected_asset_scope": "reported_assets",
+            "affected_market_ids": [
+              "5479360",
+              "665205"
+            ],
+            "in_campaign_window": true,
+            "ordinal": 2360389,
+            "reason": "book_resynchronization",
+            "received_at_utc": "2026-10-20T07:25:05.679773517Z",
+            "received_ns": 1792481105679773517,
+            "segment_file": "00000000000002360297-b6bd25365f294986bf633fe7917f32d7.seg",
+            "segment_index": 15690,
+            "unmapped_affected_asset_count": 0
+          },
+          {
+            "affected_asset_count": 6,
+            "affected_asset_issue_counts": {
+              "stale": 6
+            },
+            "affected_asset_scope": "reported_assets",
+            "affected_market_ids": [
+              "5479360",
+              "561251",
+              "665205"
+            ],
+            "in_campaign_window": true,
+            "ordinal": 2360577,
+            "reason": "book_resynchronization",
+            "received_at_utc": "2026-10-20T07:26:09.063659944Z",
+            "received_ns": 1792481169063659944,
+            "segment_file": "00000000000002360509-41ac1b22eb3442568b06a617da768e80.seg",
+            "segment_index": 15692,
+            "unmapped_affected_asset_count": 0
+          },
+          {
+            "affected_asset_count": 2,
+            "affected_asset_issue_counts": {
+              "stale": 2
+            },
+            "affected_asset_scope": "reported_assets",
+            "affected_market_ids": [
+              "665205"
+            ],
+            "in_campaign_window": true,
+            "ordinal": 2361116,
+            "reason": "book_resynchronization",
+            "received_at_utc": "2026-10-20T07:27:11.920364990Z",
+            "received_ns": 1792481231920364990,
+            "segment_file": "00000000000002360925-5b9ad8e93efa43078a6845dae236ba98.seg",
+            "segment_index": 15694,
+            "unmapped_affected_asset_count": 0
+          },
+          {
+            "affected_asset_count": 4,
+            "affected_asset_issue_counts": {
+              "stale": 4
+            },
+            "affected_asset_scope": "reported_assets",
+            "affected_market_ids": [
+              "5479360",
+              "561251"
+            ],
+            "in_campaign_window": true,
+            "ordinal": 2361503,
+            "reason": "book_resynchronization",
+            "received_at_utc": "2026-10-20T07:28:14.485758055Z",
+            "received_ns": 1792481294485758055,
+            "segment_file": "00000000000002361375-5bc0c75e4fef414e826b13df9e5aeee5.seg",
+            "segment_index": 15696,
+            "unmapped_affected_asset_count": 0
+          },
+          {
+            "affected_asset_count": 6,
+            "affected_asset_issue_counts": {
+              "stale": 6
+            },
+            "affected_asset_scope": "reported_assets",
+            "affected_market_ids": [
+              "5479360",
+              "561251",
+              "665205"
+            ],
+            "in_campaign_window": true,
+            "ordinal": 2362109,
+            "reason": "book_resynchronization",
+            "received_at_utc": "2026-10-20T07:29:16.863072758Z",
+            "received_ns": 1792481356863072758,
+            "segment_file": "00000000000002361911-e5fde36aa6724275bd269264daadf74f.seg",
+            "segment_index": 15698,
+            "unmapped_affected_asset_count": 0
+          },
+          {
+            "affected_asset_count": 2,
+            "affected_asset_issue_counts": {
+              "stale": 2
+            },
+            "affected_asset_scope": "reported_assets",
+            "affected_market_ids": [
+              "561251"
+            ],
+            "in_campaign_window": true,
+            "ordinal": 2362575,
+            "reason": "book_resynchronization",
+            "received_at_utc": "2026-10-20T07:30:53.029278364Z",
+            "received_ns": 1792481453029278364,
+            "segment_file": "00000000000002362565-6bebd45eeecf4d3988dcf57c2845b0b6.seg",
+            "segment_index": 15702,
+            "unmapped_affected_asset_count": 0
+          },
+          {
+            "affected_asset_count": 6,
+            "affected_asset_issue_counts": {
+              "stale": 6
+            },
+            "affected_asset_scope": "reported_assets",
+            "affected_market_ids": [
+              "5479329",
+              "5479360",
+              "665205"
+            ],
+            "in_campaign_window": true,
+            "ordinal": 2362761,
+            "reason": "book_resynchronization",
+            "received_at_utc": "2026-10-20T07:31:57.029902055Z",
+            "received_ns": 1792481517029902055,
+            "segment_file": "00000000000002362746-e5e96ac216774b6eb0b2abfdeddfc0e8.seg",
+            "segment_index": 15704,
+            "unmapped_affected_asset_count": 0
+          },
+          {
+            "affected_asset_count": 4,
+            "affected_asset_issue_counts": {
+              "stale": 4
+            },
+            "affected_asset_scope": "reported_assets",
+            "affected_market_ids": [
+              "561251",
+              "665205"
+            ],
+            "in_campaign_window": true,
+            "ordinal": 2362873,
+            "reason": "book_resynchronization",
+            "received_at_utc": "2026-10-20T07:33:01.021857559Z",
+            "received_ns": 1792481581021857559,
+            "segment_file": "00000000000002362853-189328f9bb634593a9480071d78190f2.seg",
+            "segment_index": 15706,
+            "unmapped_affected_asset_count": 0
+          },
+          {
+            "affected_asset_count": 8,
+            "affected_asset_issue_counts": {
+              "stale": 8
+            },
+            "affected_asset_scope": "reported_assets",
+            "affected_market_ids": [
+              "5479304",
+              "5479360",
+              "561251",
+              "665205"
+            ],
+            "in_campaign_window": true,
+            "ordinal": 2362978,
+            "reason": "book_resynchronization",
+            "received_at_utc": "2026-10-20T07:34:05.028309950Z",
+            "received_ns": 1792481645028309950,
+            "segment_file": "00000000000002362966-7c23bf4b43314180bd7360a47abbf905.seg",
+            "segment_index": 15708,
+            "unmapped_affected_asset_count": 0
+          },
+          {
+            "affected_asset_count": 4,
+            "affected_asset_issue_counts": {
+              "stale": 4
+            },
+            "affected_asset_scope": "reported_assets",
+            "affected_market_ids": [
+              "5479329",
+              "561251"
+            ],
+            "in_campaign_window": true,
+            "ordinal": 2363085,
+            "reason": "book_resynchronization",
+            "received_at_utc": "2026-10-20T07:35:07.978743367Z",
+            "received_ns": 1792481707978743367,
+            "segment_file": "00000000000002363079-65899c041aa445fd9acb0017af8a8bac.seg",
+            "segment_index": 15710,
+            "unmapped_affected_asset_count": 0
+          },
+          {
+            "affected_asset_count": 4,
+            "affected_asset_issue_counts": {
+              "stale": 4
+            },
+            "affected_asset_scope": "reported_assets",
+            "affected_market_ids": [
+              "5479360",
+              "665205"
+            ],
+            "in_campaign_window": true,
+            "ordinal": 2363208,
+            "reason": "book_resynchronization",
+            "received_at_utc": "2026-10-20T07:36:11.195376476Z",
+            "received_ns": 1792481771195376476,
+            "segment_file": "00000000000002363198-923fc6aeaa7645e68f935cdca97a018a.seg",
+            "segment_index": 15712,
+            "unmapped_affected_asset_count": 0
+          },
+          {
+            "affected_asset_count": 8,
+            "affected_asset_issue_counts": {
+              "stale": 8
+            },
+            "affected_asset_scope": "reported_assets",
+            "affected_market_ids": [
+              "5479329",
+              "5479360",
+              "561251",
+              "665205"
+            ],
+            "in_campaign_window": true,
+            "ordinal": 2363448,
+            "reason": "book_resynchronization",
+            "received_at_utc": "2026-10-20T07:37:16.330984696Z",
+            "received_ns": 1792481836330984696,
+            "segment_file": "00000000000002363421-429e37ed27d4469ca6098a57301bbf4f.seg",
+            "segment_index": 15714,
+            "unmapped_affected_asset_count": 0
+          },
+          {
+            "affected_asset_count": 6,
+            "affected_asset_issue_counts": {
+              "stale": 6
+            },
+            "affected_asset_scope": "reported_assets",
+            "affected_market_ids": [
+              "5479360",
+              "561251",
+              "665205"
+            ],
+            "in_campaign_window": true,
+            "ordinal": 2363555,
+            "reason": "book_resynchronization",
+            "received_at_utc": "2026-10-20T07:38:22.326932976Z",
+            "received_ns": 1792481902326932976,
+            "segment_file": "00000000000002363542-0eef7b411b5b4d0aa8dac3e12a39976b.seg",
+            "segment_index": 15716,
+            "unmapped_affected_asset_count": 0
+          },
+          {
+            "affected_asset_count": 4,
+            "affected_asset_issue_counts": {
+              "stale": 4
+            },
+            "affected_asset_scope": "reported_assets",
+            "affected_market_ids": [
+              "561251",
+              "665205"
+            ],
+            "in_campaign_window": true,
+            "ordinal": 2363680,
+            "reason": "book_resynchronization",
+            "received_at_utc": "2026-10-20T07:39:25.984759302Z",
+            "received_ns": 1792481965984759302,
+            "segment_file": "00000000000002363646-577fbf957a39474eb6fca4c4252ec0ce.seg",
+            "segment_index": 15718,
+            "unmapped_affected_asset_count": 0
+          },
+          {
+            "affected_asset_count": 6,
+            "affected_asset_issue_counts": {
+              "stale": 6
+            },
+            "affected_asset_scope": "reported_assets",
+            "affected_market_ids": [
+              "5479304",
+              "5479360",
+              "665205"
+            ],
+            "in_campaign_window": true,
+            "ordinal": 2363832,
+            "reason": "book_resynchronization",
+            "received_at_utc": "2026-10-20T07:40:29.500370316Z",
+            "received_ns": 1792482029500370316,
+            "segment_file": "00000000000002363832-53682bd064434090810a0b685af54983.seg",
+            "segment_index": 15721,
+            "unmapped_affected_asset_count": 0
+          },
+          {
+            "affected_asset_count": 4,
+            "affected_asset_issue_counts": {
+              "stale": 4
+            },
+            "affected_asset_scope": "reported_assets",
+            "affected_market_ids": [
+              "5479304",
+              "5479329"
+            ],
+            "in_campaign_window": true,
+            "ordinal": 2363968,
+            "reason": "book_resynchronization",
+            "received_at_utc": "2026-10-20T07:41:35.111862099Z",
+            "received_ns": 1792482095111862099,
+            "segment_file": "00000000000002363962-dd5b401021cb475d8eb9998011b11e7c.seg",
+            "segment_index": 15723,
+            "unmapped_affected_asset_count": 0
+          }
+        ],
+        "replayable_catalog_segment_count": 15723,
+        "schema_version": 1,
+        "source_lineage": {
+          "campaign_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
+          "campaign_path": "/home/charlie/midas-reality/data/research/reality/forward/mission2/campaign.json",
+          "campaign_sha256": "aa8acb2b46823c1a1e3ac5d01a57dde917746c2c7471098ae2a4598875e322f5",
+          "catalog_segment_count": 15725,
+          "last_ordinal": 2364033,
+          "prefix_catalog_sha256": "b08306fa80c02ac8fb55f58d2b4c050c99331249bd62888501d49fb1a0a35d12",
+          "processed_segment_count": 15723,
+          "source_root": "/home/charlie/midas-reality/data/recordings/reality"
+        },
+        "status": "current",
+        "summary_sha256": "6e6666df200976737d57ec16489953f61f97e845b553fff72a9e018e2ec8a24b"
+      },
+      "file_sha256": "fc974b748c3258e001c9c324321facf48f29360d04e38283f53a0366e1dca9d3"
+    },
+    "service": {
+      "ExecMainExitTimestamp": "Tue 2026-10-20 09:42:16 CEST",
+      "ExecMainStartTimestamp": "Tue 2026-10-20 09:42:11 CEST",
+      "ExecMainStatus": "0",
+      "Result": "success"
+    },
+    "timer": {
+      "ActiveState": "active",
+      "LastTriggerUSec": "Tue 2026-10-20 09:42:11 CEST",
+      "NextElapseUSecRealtime": "Tue 2026-10-20 09:47:14 CEST",
+      "Result": "success"
+    }
+  }
+}
