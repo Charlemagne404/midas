@@ -1,0 +1,126 @@
+{
+  "state": "complete",
+  "samples": [
+    {
+      "pid": 3681193,
+      "store_source": "/home/charlie/.local/share/midas-capacity/interface-query-refined-20261020/apps/api/storage.py",
+      "store_source_sha256": "166d08aab1c8b708ee6e81acd29c56da3fffb27121b125d1bf7f434864b78728",
+      "commands": 64,
+      "cpu_seconds": 6.814632460999999,
+      "wall_seconds": 7.051908641005866,
+      "io_delta": {
+        "rchar": 66798973,
+        "wchar": 169860352,
+        "syscr": 16311,
+        "syscw": 71971,
+        "read_bytes": 0,
+        "write_bytes": 170172416,
+        "cancelled_write_bytes": 32768
+      },
+      "stored_head_bytes": 971791,
+      "logical_head_bytes": 971791,
+      "compressed": false,
+      "logical_state_sha256": "87bca10a655679d718c55d39d983d04daf5c9ecf5584ba0e8ede3583ec96289e",
+      "proc_memory_kib": {
+        "VmHWM": 95784,
+        "VmRSS": 94544
+      },
+      "recovery_seconds": 0.2196840289980173,
+      "recovered_journal_events": 267,
+      "scope": "fixed synthetic observations, FULL-sync commits plus final checkpoint; warm disposable SQLite",
+      "mode": "plain",
+      "repetition": 0
+    },
+    {
+      "pid": 3681744,
+      "store_source": "/home/charlie/.local/share/midas-capacity/interface-state-codec-20261020/apps/api/storage.py",
+      "store_source_sha256": "b2725fe0c192f223d01e9d502b3c0a271139cc015fd08351733879594944db8b",
+      "commands": 64,
+      "cpu_seconds": 6.697816039999999,
+      "wall_seconds": 6.8183351589832455,
+      "io_delta": {
+        "rchar": 1244920,
+        "wchar": 6754264,
+        "syscr": 306,
+        "syscw": 3004,
+        "read_bytes": 0,
+        "write_bytes": 7008256,
+        "cancelled_write_bytes": 32768
+      },
+      "stored_head_bytes": 34369,
+      "logical_head_bytes": 971791,
+      "compressed": true,
+      "logical_state_sha256": "87bca10a655679d718c55d39d983d04daf5c9ecf5584ba0e8ede3583ec96289e",
+      "proc_memory_kib": {
+        "VmHWM": 92292,
+        "VmRSS": 91660
+      },
+      "recovery_seconds": 0.20547001902014017,
+      "recovered_journal_events": 267,
+      "scope": "fixed synthetic observations, FULL-sync commits plus final checkpoint; warm disposable SQLite",
+      "mode": "encoded",
+      "repetition": 0
+    },
+    {
+      "pid": 3682243,
+      "store_source": "/home/charlie/.local/share/midas-capacity/interface-query-refined-20261020/apps/api/storage.py",
+      "store_source_sha256": "166d08aab1c8b708ee6e81acd29c56da3fffb27121b125d1bf7f434864b78728",
+      "commands": 64,
+      "cpu_seconds": 6.874080648000001,
+      "wall_seconds": 7.120125415967777,
+      "io_delta": {
+        "rchar": 66798976,
+        "wchar": 169860352,
+        "syscr": 16311,
+        "syscw": 71971,
+        "read_bytes": 0,
+        "write_bytes": 170172416,
+        "cancelled_write_bytes": 32768
+      },
+      "stored_head_bytes": 971791,
+      "logical_head_bytes": 971791,
+      "compressed": false,
+      "logical_state_sha256": "87bca10a655679d718c55d39d983d04daf5c9ecf5584ba0e8ede3583ec96289e",
+      "proc_memory_kib": {
+        "VmHWM": 96684,
+        "VmRSS": 95348
+      },
+      "recovery_seconds": 0.2153714579762891,
+      "recovered_journal_events": 267,
+      "scope": "fixed synthetic observations, FULL-sync commits plus final checkpoint; warm disposable SQLite",
+      "mode": "plain",
+      "repetition": 1
+    },
+    {
+      "pid": 3682819,
+      "store_source": "/home/charlie/.local/share/midas-capacity/interface-state-codec-20261020/apps/api/storage.py",
+      "store_source_sha256": "b2725fe0c192f223d01e9d502b3c0a271139cc015fd08351733879594944db8b",
+      "commands": 64,
+      "cpu_seconds": 6.66093573,
+      "wall_seconds": 6.784461927018128,
+      "io_delta": {
+        "rchar": 1244920,
+        "wchar": 6754264,
+        "syscr": 306,
+        "syscw": 3004,
+        "read_bytes": 0,
+        "write_bytes": 7008256,
+        "cancelled_write_bytes": 32768
+      },
+      "stored_head_bytes": 34369,
+      "logical_head_bytes": 971791,
+      "compressed": true,
+      "logical_state_sha256": "87bca10a655679d718c55d39d983d04daf5c9ecf5584ba0e8ede3583ec96289e",
+      "proc_memory_kib": {
+        "VmHWM": 92388,
+        "VmRSS": 91640
+      },
+      "recovery_seconds": 0.20221901999320835,
+      "recovered_journal_events": 267,
+      "scope": "fixed synthetic observations, FULL-sync commits plus final checkpoint; warm disposable SQLite",
+      "mode": "encoded",
+      "repetition": 1
+    }
+  ],
+  "finished": 1792516510.6247697
+}

@@ -1,0 +1,33 @@
+{
+  "time": 1792518556.9402719,
+  "snapshot": {
+    "active_job_ids": [],
+    "available_memory_bytes": 9298817024,
+    "disk_free_bytes": 179912982528,
+    "cpu_psi": {
+      "some": 2.37,
+      "full": 0.0
+    },
+    "memory_psi": {
+      "some": 0.0,
+      "full": 0.0
+    },
+    "io_psi": {
+      "some": 1.01,
+      "full": 0.95
+    }
+  },
+  "qualification_512MiB": {
+    "ready": true,
+    "reasons": []
+  },
+  "main_default_3GiB": {
+    "ready": true,
+    "reasons": []
+  },
+  "veritas_4GiB": {
+    "ready": true,
+    "reasons": []
+  },
+  "scope": "read-only instantaneous launch eligibility, not an executed workload"
+}

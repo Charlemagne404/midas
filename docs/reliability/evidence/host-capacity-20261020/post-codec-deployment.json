@@ -1,0 +1,13 @@
+{
+  "time": 1792518128.510922,
+  "source_commit": "a9d37720b5dd2ed4afe6088a7f8626a2b0800e17",
+  "services": "Restart=no\nMainPID=3717987\nNRestarts=0\nExecStart={ path=/home/charlie/midas/.venv/bin/uvicorn ; argv[]=/home/charlie/midas/.venv/bin/uvicorn apps.api.main:app --host 127.0.0.1 --port 8000 --timeout-graceful-shutdown 60 ; ignore_errors=no ; start_time=[n/a] ; stop_time=[n/a] ; pid=0 ; code=(null) ; status=0/0 }\nMemoryCurrent=1605177344\nMemoryHigh=1610612736\nMemoryMax=1879048192\nId=midas-api.service\nActiveEnterTimestamp=Tue 2026-10-20 19:36:20 CEST\n\nRestart=no\nMainPID=3725032\nNRestarts=0\nExecStart={ path=/home/charlie/midas-reality/.venv/bin/python ; argv[]=/home/charlie/midas-reality/.venv/bin/python -S -m uvicorn apps.api.main:app --app-dir /home/charlie/.local/share/midas-capacity/interface-capacity-v1-20261020 --host 127.0.0.1 --port 8010 ; ignore_errors=no ; start_time=[Tue 2026-10-20 19:40:40 CEST] ; stop_time=[n/a] ; pid=3725032 ; code=(null) ; status=0/0 }\nMemoryCurrent=432152576\nMemoryHigh=infinity\nMemoryMax=536870912\nId=midas-reality-api.service\nActiveEnterTimestamp=Tue 2026-10-20 19:40:40 CEST\n\nRestart=on-failure\nMainPID=863193\nNRestarts=1\nExecStart={ path=/home/charlie/midas-reality/.venv/bin/python ; argv[]=/home/charlie/midas-reality/.venv/bin/python -m midas.reality record --config /home/charlie/midas-reality/deploy/reality.json ; ignore_errors=no ; start_time=[n/a] ; stop_time=[n/a] ; pid=0 ; code=(null) ; status=0/0 }\nMemoryCurrent=737267712\nMemoryHigh=738197504\nMemoryMax=805306368\nId=midas-reality.service\nActiveEnterTimestamp=Mon 2026-10-19 00:50:57 CEST\n",
+  "frozen_hashes": {
+    "/home/charlie/midas/data/autonomy/48H-001/manifest.json": "55538167f6b0d9516270001587abea0894801124effad635a0d830be5e0be379",
+    "/home/charlie/midas/data/autonomy/48H-001/STATUS.md": "704c929029f7aaaf42154ae0af8e29fb4e162509c9b9af059ffb9ddcc1e22fac",
+    "/home/charlie/midas-reality/data/research/reality/forward/mission2/campaign.json": "aa8acb2b46823c1a1e3ac5d01a57dde917746c2c7471098ae2a4598875e322f5",
+    "/home/charlie/midas-reality/data/research/reality/forward/canary-empty-segments-v2/campaign.json": "bbbb0978e63abc7f30980abb6aa25cbb21e9ce94ca1410dcfdd65714318f9782",
+    "/home/charlie/midas-reality/data/research/reality/forward/mission2-successor-20261016/campaign.json": "c5eb8b98cbfd657372fc620192c5a0c0bb46f41d760800e680181fa7f3ee95a3",
+    "/home/charlie/midas-reality/data/research/reality/forward/canary-20261014/campaign.json": "ce5a288527425271fcfb5b8d7bb93cca1cf47e02a6ba91e693e018ddf96afeb8"
+  }
+}
