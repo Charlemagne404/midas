@@ -18,6 +18,7 @@ def test_units_pressure_cpu_and_swap_rates_are_distinct(tmp_path):
                     "meminfo": f"MemAvailable: {10 + i} kB\nSwapFree: 0 kB\nCached: 2 kB\nAnonPages: 3 kB\nSlab: 1 kB\n",
                     "vmstat": f"pswpin {i * 2}\npswpout 0\n",
                     "stat": "cpu 25 0 0 50 25 0 0 0\n" if i else "cpu 0 0 0 0 0 0 0 0\n",
+                    "diskstats": f"259 0 nvme0n1 {i * 4} 0 {i * 8} {i * 12} {i * 2} 0 {i * 16} {i * 8} 0 {i * 20} {i * 20}\n",
                     "pressure": {"cpu": f"some avg10={i * 10}.00 total=0\n"},
                 },
                 "cgroups": {
@@ -38,6 +39,10 @@ def test_units_pressure_cpu_and_swap_rates_are_distinct(tmp_path):
     assert result["host"]["cpu_iowait_percent"]["mean"] == 25
     assert result["host"]["cpu_some_avg10"]["mean"] == 5
     assert result["host"]["pswpin_per_second"]["mean"] == 1
+    assert result["host"]["disk_nvme0n1_read_iops"]["mean"] == 2
+    assert result["host"]["disk_nvme0n1_read_bytes_per_second"]["mean"] == 2048
+    assert result["host"]["disk_nvme0n1_read_await_ms"]["mean"] == 3
+    assert result["host"]["disk_nvme0n1_util_percent"]["mean"] == 1
     group = result["cgroups"]["/example"]
     assert group["cpu_seconds"] == 1
     assert group["interval_seconds"] == 2

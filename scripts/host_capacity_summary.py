@@ -67,6 +67,49 @@ def summarize(path, since=0, until=float("inf")):
                     samples[f"{kind}_{label}_avg10"].append(float(values["avg10"]))
             dt = row["monotonic"] - previous["monotonic"] if previous else 0
             if dt:
+                old_disks = {
+                    p[2]: list(map(int, p[3:]))
+                    for line in (previous["host"].get("diskstats") or "").splitlines()
+                    if len(p := line.split()) >= 14
+                }
+                for line in (row["host"].get("diskstats") or "").splitlines():
+                    p = line.split()
+                    if len(p) < 14 or p[2] not in old_disks:
+                        continue
+                    name, values = p[2], list(map(int, p[3:]))
+                    delta = [a - b for a, b in zip(values, old_disks[name], strict=False)]
+                    if min(delta[:8]) < 0:
+                        continue
+                    for label, index, scale in (
+                        ("read_iops", 0, 1),
+                        ("write_iops", 4, 1),
+                        ("read_bytes_per_second", 2, 512),
+                        ("write_bytes_per_second", 6, 512),
+                        ("util_percent", 9, 0.1),
+                    ):
+                        samples[f"disk_{name}_{label}"].append(delta[index] * scale / dt)
+                    for label, count_index, ms_index in (("read", 0, 3), ("write", 4, 7)):
+                        if delta[count_index]:
+                            samples[f"disk_{name}_{label}_await_ms"].append(
+                                delta[ms_index] / delta[count_index]
+                            )
+                for pid, process in row.get("processes", {}).items():
+                    old_process = previous.get("processes", {}).get(pid)
+                    if not old_process or not process.get("io") or not old_process.get("io"):
+                        continue
+                    new_stat = process["stat"].rsplit(")", 1)[1].split()
+                    old_stat = old_process["stat"].rsplit(")", 1)[1].split()
+                    if new_stat[19] != old_stat[19]:
+                        continue  # PID reused; counters have a different owner.
+                    group = (process.get("cgroup") or "").strip().removeprefix("0::")
+                    target = services[group]["samples"]
+                    before, after = fields(old_process["io"]), fields(process["io"])
+                    for key in ("read_bytes", "write_bytes"):
+                        delta_bytes = after.get(key, 0) - before.get(key, 0)
+                        if delta_bytes >= 0:
+                            # Per-process rates, not cgroup aggregate: waited-child
+                            # counters can overlap. Label them explicitly.
+                            target[f"pid_{pid}_{key}_per_second"].append(delta_bytes / dt)
                 old_vm, new_vm = fields(previous["host"]["vmstat"]), fields(row["host"]["vmstat"])
                 for name in ("pswpin", "pswpout", "pgmajfault", "pgscan_direct", "pgscan_kswapd"):
                     samples[name + "_per_second"].append(
