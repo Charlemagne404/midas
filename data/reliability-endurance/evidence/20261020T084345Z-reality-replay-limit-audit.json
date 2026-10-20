@@ -1,0 +1,74 @@
+{
+  "capture_window_local": "2026-10-20T10:42:47+02:00/2026-10-20T10:43:45+02:00",
+  "historical_fullstore_stage_audit": {
+    "evidence_file": "20261020T010724Z-reality-fullstore-stage.json",
+    "candidate_revision": "e0b9bab77969b51d749c92dc362e5990c9ca5f10",
+    "staged_revision": "87788aee2b7975239d5c049b11c75fb28af84a9a",
+    "segment_count": 14911,
+    "segment_bytes": 3921429823,
+    "last_ordinal": 2159694,
+    "snapshot_manifest_list_sha256": "546f94fe962730765ee23c58a4615ebba59975b019c092e957bad9f86ce30585",
+    "systemd_unit": "midas-reality-startup-fast-20261020.service",
+    "systemd_start_local": "2026-10-20T03:07:24+02:00",
+    "systemd_stop_local": "2026-10-20T08:42:25+02:00",
+    "journal_cpu_time_seconds": 382.561,
+    "journal_memory_peak_display": "512.2M",
+    "journal_memory_swap_peak_display": "0B",
+    "post_collection_unit_properties": {
+      "CPUQuotaPerSecUSec": "infinity",
+      "MemoryHigh": "infinity",
+      "MemoryMax": "infinity",
+      "MemorySwapMax": "infinity"
+    },
+    "post_collection_query_context": "The transient unit was already collected; the journal says its transient unit file could not be opened. These infinity defaults do not establish its properties while running.",
+    "earlier_reported_runtime_properties": {
+      "CPUQuota": "100%",
+      "MemoryHigh": "512M",
+      "MemoryMax": "768M",
+      "MemorySwapMax": "0",
+      "Nice": 19,
+      "IOSchedulingClass": "idle"
+    },
+    "hard_resource_bound_independently_verified": false,
+    "benchmark_result_artifact_retained": false,
+    "earlier_report_claim_of_768_mib_hard_cap": "not_independently_verifiable; earlier report says this was applied",
+    "earlier_reported_wall_seconds": 386,
+    "systemd_start_stop_wall_seconds": 20101,
+    "reported_digest_match_hash_retained": false
+  },
+  "current_protected_recorder": {
+    "unit": "midas-reality.service",
+    "unit_scope": "systemd --user",
+    "pid": 863193,
+    "active": true,
+    "n_restarts": 1,
+    "loaded_candidate_commit": false,
+    "memory_current_sample_range_bytes": [736514048, 737538048],
+    "memory_high_bytes": 738197504,
+    "memory_max_bytes": 805306368,
+    "memory_high_events_sample_start": 10072,
+    "memory_high_events_sample_end": 10077,
+    "memory_max_oom_oom_kill_events": 0,
+    "cgroup_memory_psi_some_avg10_percent": 0.0,
+    "host_memory_psi_some_avg10_percent": 0.0
+  },
+  "current_integrated_health": {
+    "main_api": {
+      "status": "READY",
+      "paper_recovery": "CHECKPOINT_VERIFIED",
+      "journal_events": 391938,
+      "revision": 391937,
+      "live_execution": false
+    },
+    "reality_api": {
+      "collector_state": "RECORDING_UNSEQUENCED",
+      "frames": 415521,
+      "ordinal": 2373727,
+      "fresh_books": 16,
+      "expected_books": 16,
+      "health_reasons": [],
+      "cumulative_failures": 1
+    }
+  },
+  "decision": "Do not run the current full-store replay while the protected recorder is repeatedly crossing MemoryHigh. The prior replay had a measured peak but no verified hard ceiling; its current-store/candidate replacement remains unmeasured."
+}

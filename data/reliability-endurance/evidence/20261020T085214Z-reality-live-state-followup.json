@@ -1,0 +1,70 @@
+{
+  "capture_window_local": "2026-10-20T10:48:20+02:00/2026-10-20T10:52:14+02:00",
+  "bounded_transient_probe": {
+    "unit": "midas-reliability-bounds-probe-20261020.service",
+    "started_local": "2026-10-20T10:48:20+02:00",
+    "duration_seconds": 10.082,
+    "exit_status": 0,
+    "cpu_time_seconds": 0.035,
+    "memory_peak_display": "512.0K",
+    "swap_peak_display": "0B",
+    "live_cgroup_values": {
+      "memory.high": 671088640,
+      "memory.max": 805306368,
+      "memory.swap.max": 0,
+      "cpu.max": "25000 100000"
+    },
+    "requested_readonly_paths_observed": false,
+    "findmnt_source_result": "/ rw,relatime",
+    "post_collection_systemctl_values_return_to_infinity": true,
+    "lesson": "Read cgroup properties from inside a live transient process; post-collection unit inspection does not preserve the applied values."
+  },
+  "protected_recorder": {
+    "unit": "midas-reality.service",
+    "pid": 863193,
+    "active": true,
+    "n_restarts": 1,
+    "candidate_commit_loaded": false,
+    "memory_current_bytes_at_10_52_14": 736477184,
+    "memory_high_bytes": 738197504,
+    "memory_max_bytes": 805306368,
+    "memory_high_events_at_10_50_31": 10081,
+    "memory_high_events_at_10_52_14": 10085,
+    "max_oom_oom_kill_events": 0,
+    "host_and_recorder_memory_psi_some_avg10_percent": 0.0
+  },
+  "reality_data_quality": {
+    "state": "DEGRADED_SOURCE_TIMING",
+    "health_reasons": ["collector_state"],
+    "frames": 415959,
+    "ordinal": 2374633,
+    "fresh_books": 16,
+    "expected_books": 16,
+    "timing_uncertain_books": 2,
+    "timing_uncertainty_reason": "snapshot_source_timestamp_regressed_after_gap",
+    "affected_asset_ids": [
+      "115563279943088574368475763566308524191598627607680105838058505260056381768939",
+      "30455770425041126193569940063234142577691408508440512817158696601142733755169"
+    ],
+    "kernel_clock_status": "kernel_synchronized",
+    "cumulative_failures": 1,
+    "persistent_across_samples_seconds": 46
+  },
+  "main_api": {
+    "status": "READY",
+    "paper_recovery": "CHECKPOINT_VERIFIED",
+    "journal_events": 392173,
+    "revision": 392172,
+    "live_execution": false
+  },
+  "veritas_v2": {
+    "last_run_local": "2026-10-20T10:47:11+02:00",
+    "status": "CURRENT",
+    "processed_segments": 15851,
+    "pending_segments": 0,
+    "batch_processed_segments": 9,
+    "summary_sha256": "0a3e0ab734ab3e4578e44544a487a8adfcdd09566b7b526d69fd39db64ddcd13",
+    "control_sha256": "626894ae978c2917c40a7e05167ba82d97bb841acf8687d55df761e94d20bbbf"
+  },
+  "decision": "No full-store replay was run. Cgroup limits are enforceable and verifiable while a transient worker is active, but the Reality source remains near MemoryHigh with recent high events, and the user-service mount view did not provide read-only isolation. The bounded replay function must remain read-only and the live-recorder pressure gate must pass before a full replay is considered."
+}
