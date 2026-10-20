@@ -45,6 +45,29 @@ def test_capacity_real_bytes_rates_and_horizon(tmp_path):
     assert result["estimated_action_deadline_ns"] > 121_000_000_000
 
 
+def test_capacity_warns_thirty_days_ahead_and_marks_fourteen_day_critical(tmp_path):
+    sample(tmp_path)
+    used = sum(p.stat().st_size for p in tmp_path.iterdir() if p.is_file())
+    sample_bytes = sum(
+        segment["bytes"] + (tmp_path / segment["file"]).with_suffix(".json").stat().st_size
+        for segment in manifest(tmp_path)["segments"][-120:]
+    )
+    rate = sample_bytes / 120
+
+    warning = capacity(
+        config(tmp_path, budget_bytes=used + int(rate * 25 * 86400), reserve_bytes=1),
+        now_ns=121_000_000_000,
+    )
+    assert "CAPACITY_WARNING_WITHIN_THIRTY_DAYS" in warning["alerts"]
+    assert "CAPACITY_CRITICAL_WITHIN_FOURTEEN_DAYS" not in warning["alerts"]
+
+    critical = capacity(
+        config(tmp_path, budget_bytes=used + int(rate * 10 * 86400), reserve_bytes=1),
+        now_ns=121_000_000_000,
+    )
+    assert "CAPACITY_CRITICAL_WITHIN_FOURTEEN_DAYS" in critical["alerts"]
+
+
 def test_capacity_alerts_unknown_clock_and_corruption(tmp_path):
     sample(tmp_path)
     result = capacity(

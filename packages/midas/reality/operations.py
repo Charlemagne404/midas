@@ -20,6 +20,9 @@ from .config import Config
 from .replay import replay
 from .storage import atomic_json, canonical, describe, file_hash, manifest, records, sync_dir
 
+CAPACITY_WARNING_SECONDS = 30 * 86400
+CAPACITY_CRITICAL_SECONDS = 14 * 86400
+
 
 def capacity(
     config: Config, *, window_segments: int = 120, now_ns: int | None = None
@@ -86,8 +89,13 @@ def capacity(
         alerts.append("BUDGET_LOW")
     if free - config.reserve_bytes < config.segment_bytes * 2:
         alerts.append("DISK_RESERVE_LOW")
-    if deadline is not None and deadline < 7 * 86400:
-        alerts.append("CAPACITY_ACTION_WITHIN_SEVEN_DAYS")
+    if deadline is not None:
+        if deadline <= CAPACITY_WARNING_SECONDS:
+            alerts.append("CAPACITY_WARNING_WITHIN_THIRTY_DAYS")
+        if deadline <= CAPACITY_CRITICAL_SECONDS:
+            alerts.append("CAPACITY_CRITICAL_WITHIN_FOURTEEN_DAYS")
+        if deadline < 7 * 86400:
+            alerts.append("CAPACITY_ACTION_WITHIN_SEVEN_DAYS")
     if retention_seconds == 0:
         alerts.append("RETENTION_HORIZON_REACHED")
     if rate is None:
