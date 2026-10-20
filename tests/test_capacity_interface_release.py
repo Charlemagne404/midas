@@ -46,6 +46,7 @@ try:
     assert len(calls) == 1
     command = calls[0]
     assert "--property=MemorySwapMax=0" in command and "-S" in command
+    assert "--property=CPUWeight=10" in command
     assert any(str(Path(jobs.__file__).parents[3] / "packages") in p
                for p in command if p.startswith("--setenv=PYTHONPATH="))
     assert record["budget"]["minimum_available_memory_mb"] == 6144

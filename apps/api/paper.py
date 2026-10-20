@@ -1,7 +1,8 @@
 """Transactional manager. Strategy/venue never see database or public transport."""
 
 import asyncio
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Iterable, Mapping
+from itertools import chain
 from typing import Any
 
 from midas.economics.attestation import digest
@@ -55,17 +56,18 @@ def advance_journal_hash(previous: str, entry: Mapping[str, Any]) -> str:
     return digest({"version": _JOURNAL_VERSION, "previous": previous, "entry": entry})
 
 
-def replay_journal(events: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+def replay_journal(events: Iterable[Mapping[str, Any]]) -> dict[str, Any]:
     """Fully replay and verify a paper event journal for explicit offline audits."""
-    if not events:
+    iterator = iter(events)
+    first = next(iterator, None)
+    if first is None:
         raise ValueError("Missing initial financial journal")
-    first = events[0]
     command = first["command"]
     if command.get("kind") != "initial":
         raise ValueError("Missing initial financial journal")
-    reconstructed = initial(AccountConfig.model_validate(command["config"]))
+    reconstructed: dict[str, Any] = initial(AccountConfig.model_validate(command["config"]))
     previous = ""
-    for revision, event in enumerate(events):
+    for revision, event in enumerate(chain((first,), iterator)):
         command = event["command"]
         prior_state = reconstructed
         if revision:

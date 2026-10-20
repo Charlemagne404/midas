@@ -12,9 +12,13 @@ from pathlib import Path
 BASE = "c83320000a085bf30490b4b76b425527fe8574f7"
 OVERRIDES = (
     "apps/api/storage.py",
+    "apps/api/paper.py",
+    "apps/api/state_codec.py",
     "packages/midas/paper/broker.py",
     "packages/midas/arena/admission.py",
     "packages/midas/laboratory/campaigns.py",
+    "scripts/paper_state_storage.py",
+    "scripts/verify_paper_journal.py",
 )
 
 
@@ -31,6 +35,7 @@ def prepare(destination: Path) -> dict:
             "packages",
             "infra",
             "alembic.ini",
+            "scripts",
         ],
         cwd=repository,
     )
@@ -59,6 +64,10 @@ def prepare(destination: Path) -> dict:
     source = source.replace(
         '"--property=MemoryMax=4G",',
         '"--property=MemoryMax=4G",\n            "--property=MemorySwapMax=0",',
+    )
+    source = source.replace(
+        '"--property=CPUQuota=100%",',
+        '"--property=CPUQuota=100%",\n            "--property=CPUWeight=10",',
     )
     # Transient units don't inherit the caller's import path. Keep spawned
     # workers on this pinned release rather than the recorder's editable tree.

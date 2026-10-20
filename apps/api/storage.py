@@ -1,6 +1,7 @@
 """Immutable normalized observations, simulation artifacts and system incidents."""
 
 import asyncio
+import logging
 from pathlib import Path
 from typing import Any
 
@@ -16,12 +17,30 @@ from sqlalchemy import (
     select,
     text,
 )
+from sqlalchemy.engine import Dialect
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from sqlalchemy.types import TypeDecorator
+
+from apps.api.state_codec import VERSION as STATE_CODEC_VERSION
+from apps.api.state_codec import decode_state, encode_state
 
 
 class Base(DeclarativeBase):
     pass
+
+
+class PaperStateJSON(TypeDecorator[dict[str, Any]]):
+    """Only the account head is encoded; all event journal columns stay plain JSON."""
+
+    impl = JSON
+    cache_ok = True
+
+    def process_bind_param(self, value: Any, dialect: Dialect) -> Any:
+        return encode_state(value) if isinstance(value, dict) else value
+
+    def process_result_value(self, value: Any, dialect: Dialect) -> Any:
+        return decode_state(value) if isinstance(value, dict) else value
 
 
 class Record(Base):
@@ -85,6 +104,9 @@ class Store:
                 )
             await asyncio.to_thread(command.stamp, config, "001")
         await asyncio.to_thread(command.upgrade, config, "head")
+        logging.getLogger("uvicorn.error").info(
+            "MIDAS storage runtime: source=%s account_codec=%s", __file__, STATE_CODEC_VERSION
+        )
 
     async def append(
         self, kind: str, key: str, source: str, ts: int, payload: dict[str, Any]
@@ -151,7 +173,7 @@ class PaperAccount(Base):
     __tablename__ = "paper_accounts"
     id: Mapped[str] = mapped_column(String(64), primary_key=True)
     revision: Mapped[int] = mapped_column(Integer)
-    payload: Mapped[dict[str, Any]] = mapped_column(JSON)
+    payload: Mapped[dict[str, Any]] = mapped_column(PaperStateJSON())
     checksum: Mapped[str] = mapped_column(String(64))
     journal_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
 
