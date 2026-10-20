@@ -178,6 +178,7 @@ def _create(
         "budget": {
             "cpu_cores": cpu_quota_percent / 100,
             "cpu_quota_percent": cpu_quota_percent,
+            "cpu_weight": 10,
             "memory_mb": memory_limit_mb,
             "wall_seconds": spec.max_wall_seconds,
             "minimum_available_memory_mb": 2048 + memory_limit_mb,
@@ -206,6 +207,7 @@ def _create(
             f"--property=MemoryMax={memory_limit_mb}M",
             "--property=MemorySwapMax=0",
             f"--property=CPUQuota={cpu_quota_percent}%",
+            "--property=CPUWeight=10",
             f"--property=Nice={nice}",
             f"--property=IOSchedulingClass={io_scheduling_class}",
             f"--property=RuntimeMaxSec={spec.max_wall_seconds}",

@@ -7,6 +7,7 @@ import fcntl
 import inspect
 import json
 import multiprocessing
+import os
 import resource
 import sqlite3
 import stat
@@ -210,6 +211,9 @@ def plan(spec: CampaignSpec, index: int, datasets: Path) -> list[Scenario]:
 
 
 def worker_limit(memory_mb: int) -> None:
+    # Pool children share the API cgroup; yield CPU to the coordinator's
+    # request/recording threads without changing deterministic evaluation work.
+    os.nice(max(0, 19 - os.getpriority(os.PRIO_PROCESS, 0)))
     resource.setrlimit(resource.RLIMIT_AS, (memory_mb * 1024**2, memory_mb * 1024**2))
 
 
