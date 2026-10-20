@@ -370,8 +370,11 @@ def test_checkpoint_mismatch_and_no_future_state(tmp_path):
 
 
 def test_config_isolation_and_bounds():
+    from pathlib import Path
+
     from midas.reality.config import Config
 
+    assert Path(Config().root) == Path(__file__).resolve().parents[1] / "data/recordings/reality"
     with pytest.raises(ValueError):
         Config(root="/home/charlie/midas/data/laboratory-final")
     with pytest.raises(ValueError):
