@@ -34,6 +34,13 @@ def test_resource_gate_blocks_worker_pressure_and_missing_metrics(ready_snapshot
     assert batch.resource_gate(missing)["reasons"] == ["resource_pressure_unavailable"]
 
 
+def test_batch_reserves_its_own_memory_above_host_headroom(ready_snapshot):
+    ready_snapshot["available_memory_bytes"] = batch.MINIMUM_AVAILABLE_MEMORY_BYTES
+    assert batch.resource_gate(ready_snapshot)["reasons"] == ["host_memory_headroom"]
+    ready_snapshot["available_memory_bytes"] += batch.BATCH_MEMORY_BUDGET_BYTES
+    assert batch.resource_gate(ready_snapshot)["ready"]
+
+
 def test_resource_snapshot_reads_psi_and_detects_active_jobs(tmp_path):
     arena, output, pressure = tmp_path / "arena", tmp_path / "output", tmp_path / "pressure"
     (arena / "jobs/job-active").mkdir(parents=True)

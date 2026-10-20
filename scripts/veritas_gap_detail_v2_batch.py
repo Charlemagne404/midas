@@ -16,6 +16,7 @@ from typing import Any
 from midas.veritas.gap_detail_control import read_control, run_v2_batch
 
 MINIMUM_AVAILABLE_MEMORY_BYTES = 2 * 1024**3
+BATCH_MEMORY_BUDGET_BYTES = 256 * 1024**2  # Matches the bounded service MemoryMax.
 MINIMUM_DISK_RESERVE_BYTES = 2 * 1024**3
 NEXT_JOB_ARTIFACT_BUDGET_BYTES = 1024**3
 MAX_CPU_PSI_SOME_AVG10_PERCENT = 20.0
@@ -140,7 +141,9 @@ def resource_gate(snapshot: dict[str, Any]) -> dict[str, Any]:
     reasons: list[str] = []
     if snapshot.get("active_arena_job_ids"):
         reasons.append("arena_worker_active")
-    if snapshot.get("available_memory_bytes", 0) < MINIMUM_AVAILABLE_MEMORY_BYTES:
+    if snapshot.get("available_memory_bytes", 0) < (
+        MINIMUM_AVAILABLE_MEMORY_BYTES + BATCH_MEMORY_BUDGET_BYTES
+    ):
         reasons.append("host_memory_headroom")
     if snapshot.get("disk_free_bytes", 0) < (
         MINIMUM_DISK_RESERVE_BYTES + NEXT_JOB_ARTIFACT_BUDGET_BYTES
