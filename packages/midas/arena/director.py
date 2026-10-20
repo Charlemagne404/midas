@@ -140,10 +140,59 @@ def run_director(root: Path, spec: DirectorSpec, progress: Any = None) -> dict[s
             "stopping_condition": "Exactly three preregistered stages; no adaptive refitting or threshold selection after final evaluations.",
         }
         atomic_json(file, record)
+    prior_state = record.get("state")
+    record["state"] = "RUNNING"
+    owner_job_id = getattr(progress, "job_id", None)
+    if isinstance(owner_job_id, str) and owner_job_id:
+        record["owner_job_id"] = owner_job_id
+    if prior_state in {"CANCELLED", "INTERRUPTED", "FAILED"}:
+        record["resumed_from_state"] = prior_state
+    for key in ("last_error", "stopped_at", "completed_at"):
+        record.pop(key, None)
+    atomic_json(file, record)
+    try:
+        return _execute_director(root, spec, progress, dataset, source_hash, identity, file, record)
+    except Exception as error:
+        if type(error).__name__ == "Cancelled":
+            terminal_state = "CANCELLED"
+        elif isinstance(error, (InterruptedError, TimeoutError)):
+            terminal_state = "INTERRUPTED"
+        else:
+            terminal_state = "FAILED"
+        current_stage = record.get("current_stage")
+        for step in record.get("steps", []):
+            if step.get("name") == current_stage and step.get("state") != "COMPLETED":
+                step.update(
+                    state=terminal_state,
+                    stopped_at=time.time(),
+                    error=f"{type(error).__name__}: {error}"[:500],
+                )
+                break
+        record.update(
+            state=terminal_state,
+            stopped_at=time.time(),
+            last_error=f"{type(error).__name__}: {error}"[:1000],
+        )
+        atomic_json(file, record)
+        raise
+
+
+def _execute_director(
+    root: Path,
+    spec: DirectorSpec,
+    progress: Any,
+    dataset: dict[str, Any],
+    source_hash: str,
+    identity: str,
+    file: Path,
+    record: dict[str, Any],
+) -> dict[str, Any]:
     for index, step in enumerate(record["steps"]):
         if step["state"] == "COMPLETED":
             continue
+        step["state"] = "RUNNING"
         record["current_stage"] = step["name"]
+        atomic_json(file, record)
         phase = getattr(progress, "phase", None)
         if phase:
             phase(step["name"])

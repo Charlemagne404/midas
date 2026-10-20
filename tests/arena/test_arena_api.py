@@ -145,7 +145,24 @@ def test_api_empty_state_validation_and_missing_artifacts(tmp_path):
         assert client.get("/api/arena/tournaments/x/rows?limit=10000").status_code == 422
 
 
-def test_research_activity_returns_bounded_job_director_schedule_and_alert_status(tmp_path):
+def test_research_activity_returns_bounded_job_director_schedule_and_alert_status(
+    tmp_path, monkeypatch
+):
+    director_configuration = {"dataset_id": "dataset-a"}
+    director_source_hash = "e" * 64
+    director_job_id = "job-0123456789abcdef01234567"
+    director_unit = "midas-arena-job-0123456789abcdef01234567.service"
+    atomic_json(
+        tmp_path / "jobs" / director_job_id / "job.json",
+        {
+            "job_id": director_job_id,
+            "unit": director_unit,
+            "configuration": {"kind": "director", "director": director_configuration},
+            "submitted_source_hash": director_source_hash,
+            "state": "RUNNING",
+            "updated_at": 2,
+        },
+    )
     atomic_json(
         tmp_path / "jobs/job-a/job.json",
         {
@@ -167,6 +184,9 @@ def test_research_activity_returns_bounded_job_director_schedule_and_alert_statu
         {
             "director_id": "director-a",
             "state": "RUNNING",
+            "owner_job_id": director_job_id,
+            "source_hash": director_source_hash,
+            "configuration": director_configuration,
             "research_question": "Does the frozen challenge repeat?",
             "current_stage": "independent challenge",
             "latest_scan_id": "scan-20261015T090047Z-6f98ffeaecab",
@@ -228,6 +248,16 @@ def test_research_activity_returns_bounded_job_director_schedule_and_alert_statu
             "schedule_id": "schedule-a",
         },
     )
+    from types import SimpleNamespace
+
+    def active_supervisor(command, **kwargs):
+        assert director_unit in command
+        return SimpleNamespace(
+            returncode=0,
+            stdout=f"MainPID=42\nId={director_unit}\nLoadState=loaded\nActiveState=active\n",
+        )
+
+    monkeypatch.setattr("apps.api.arena.subprocess.run", active_supervisor)
     app = FastAPI()
     app.include_router(router(tmp_path))
 
@@ -236,13 +266,17 @@ def test_research_activity_returns_bounded_job_director_schedule_and_alert_statu
 
     assert response.status_code == 200
     activity = response.json()
-    assert activity["active_job_count"] == 1
+    assert activity["active_job_count"] == 2
     assert activity["queued_job_count"] == 0
     assert activity["jobs"][0]["kind"] == "veritas_qualification"
     assert activity["jobs"][0]["source_scan_id"] == "scan-20261015T090047Z-6f98ffeaecab"
     assert activity["jobs"][0]["progress"] == {"done": 2, "total": 5}
     assert activity["latest_veritas_qualification"] is None
     assert activity["active_director_count"] == 1
+    assert activity["queued_director_count"] == 0
+    assert activity["stale_director_count"] == 0
+    assert activity["directors"][0]["owner_job_id"] == director_job_id
+    assert activity["directors"][0]["owner_job_state"] == "RUNNING"
     assert activity["directors"][0]["current_stage"] == "independent challenge"
     assert activity["directors"][0]["source_scan_id"] == "scan-20261015T090047Z-6f98ffeaecab"
     assert activity["directors"][0]["strategy_readiness"] == (
@@ -262,6 +296,54 @@ def test_research_activity_returns_bounded_job_director_schedule_and_alert_statu
     assert activity["schedules"][0]["steps"][0]["name"] == "replay"
     assert activity["alerts"][0]["reason"] == "Source changed before admission"
     assert activity["limits"]["maximum_jobs_read"] == 25
+
+
+def test_research_activity_projects_cancelled_director_owner_without_rewriting_history(
+    tmp_path, monkeypatch
+):
+    director_configuration = {"dataset_id": "dataset-cancelled"}
+    director_source_hash = "f" * 64
+    director_job_id = "job-abcdef0123456789abcdef01"
+    manifest_path = tmp_path / "directors/director-cancelled/manifest.json"
+    atomic_json(
+        manifest_path,
+        {
+            "director_id": "director-cancelled",
+            "state": "RUNNING",
+            "configuration": director_configuration,
+            "source_hash": director_source_hash,
+            "steps": [{"name": "challenge", "state": "RUNNING", "progress": {"done": 4}}],
+        },
+    )
+    original_manifest = manifest_path.read_bytes()
+    atomic_json(
+        tmp_path / "jobs" / director_job_id / "job.json",
+        {
+            "job_id": director_job_id,
+            "unit": "midas-arena-job-abcdef0123456789abcdef01.service",
+            "configuration": {"kind": "director", "director": director_configuration},
+            "submitted_source_hash": director_source_hash,
+            "state": "CANCELLED",
+            "error": "Cancellation requested; completed artifacts retained",
+            "updated_at": 3,
+        },
+    )
+
+    def unexpected_supervisor_check(*args, **kwargs):
+        raise AssertionError("A terminal owner job does not need a supervisor query")
+
+    monkeypatch.setattr("apps.api.arena.subprocess.run", unexpected_supervisor_check)
+    activity = research_activity(tmp_path)
+
+    assert activity["active_director_count"] == 0
+    assert activity["stale_director_count"] == 1
+    assert activity["stale_directors"][0]["director_id"] == "director-cancelled"
+    assert activity["unverified_directors"] == []
+    observed = activity["directors"][0]
+    assert observed["state"] == "CANCELLED"
+    assert observed["persisted_state"] == "RUNNING"
+    assert observed["owner_job_state"] == "CANCELLED"
+    assert manifest_path.read_bytes() == original_manifest
 
 
 def test_research_activity_projects_only_a_digest_verified_completed_edge_distribution(tmp_path):
