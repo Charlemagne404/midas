@@ -1,0 +1,22 @@
+{
+  "captured_at_utc": "2026-10-20T11:36:38.890852Z",
+  "unit": "midas-reality.service",
+  "pid": 863193,
+  "active": true,
+  "historical_restarts": 1,
+  "candidate_loaded": false,
+  "memory_current_bytes": 737382400,
+  "memory_high_bytes": 738197504,
+  "memory_max_bytes": 805306368,
+  "margin_to_memory_high_bytes": 815104,
+  "memory_stat": {
+    "anon_bytes": 571117568,
+    "file_bytes": 147886080,
+    "inactive_file_bytes": 145453056,
+    "kernel_bytes": 18325504
+  },
+  "memory_events": {"low": 0, "high": 10099, "max": 0, "oom": 0, "oom_kill": 0, "oom_group_kill": 0},
+  "memory_pressure": {"some_avg10_percent": 0.0, "full_avg10_percent": 0.0},
+  "staging_gate": {"minimum_margin_bytes": 4194304, "passed": false},
+  "deployment_or_replay_attempted": false
+}
