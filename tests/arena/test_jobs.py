@@ -312,7 +312,7 @@ def test_veritas_qualification_job_dispatches_through_bounded_arena_worker(tmp_p
         launch=False,
         admission_key=f"veritas-qualification-v1-{scan_id}",
     )
-    assert job["budget"]["cpu_quota_percent"] == 10
+    assert job["budget"]["cpu_quota_percent"] == spec.cpu_quota_percent
     assert job["budget"]["memory_mb"] == 512
     calls = []
 
@@ -383,5 +383,23 @@ def test_veritas_qualification_supervisor_has_read_only_resource_bounds(tmp_path
     assert len(commands) == 1
     assert "--property=MemoryMax=512M" in commands[0]
     assert "--property=MemorySwapMax=0" in commands[0]
-    assert "--property=CPUQuota=10%" in commands[0]
+    assert "--property=CPUQuota=100%" in commands[0]
     assert "--property=RestrictAddressFamilies=AF_UNIX" in commands[0]
+
+
+def test_qualification_honors_explicit_smaller_cpu_budget(tmp_path):
+    from midas.veritas.arena_qualification import VeritasQualificationSpec
+
+    job = create(
+        tmp_path,
+        JobSpec(
+            kind="veritas_qualification",
+            cpu_quota_percent=37,
+            veritas_qualification=VeritasQualificationSpec(
+                expected_latest_scan_id="scan-20261015T090047Z-6f98ffeaecab"
+            ),
+        ),
+        launch=False,
+    )
+    assert job["budget"]["cpu_quota_percent"] == 37
+    assert job["budget"]["memory_mb"] == 512

@@ -158,7 +158,8 @@ def create(
         if launch:
             from midas.arena.admission import admission_slot
 
-            with admission_slot(root):
+            memory_mb = 512 if spec.kind == "veritas_qualification" else spec.memory_limit_mb
+            with admission_slot(root, requested_memory_bytes=memory_mb * 1024**2):
                 return _create(root, spec, launch, admission_key, retry_of, attempt_number)
         return _create(root, spec, launch, admission_key, retry_of, attempt_number)
 
@@ -166,7 +167,7 @@ def create(
 def _find_by_admission_key(
     root: Path, admission_key: str, configuration: dict[str, Any] | None = None
 ) -> dict[str, Any] | None:
-    matches = []
+    matches: list[dict[str, Any]] = []
     for path in root.glob("jobs/*/job.json"):
         candidate = json.loads(path.read_text())
         if candidate.get("admission_key") == admission_key:
@@ -216,7 +217,10 @@ def _create(
     directory = artifact_path(root, "jobs", identity)
     veritas_read_only = spec.kind == "veritas_qualification"
     memory_limit_mb = 512 if veritas_read_only else spec.memory_limit_mb
-    cpu_quota_percent = 10 if veritas_read_only else spec.cpu_quota_percent
+    # Global admission permits one worker. Respect its declared <= one-core
+    # budget: a hidden 10% qualification cap stretched CPU work across ten
+    # times the wall time and generated quota PSI on an otherwise idle host.
+    cpu_quota_percent = spec.cpu_quota_percent
     nice = max(spec.nice, 15) if veritas_read_only else spec.nice
     io_scheduling_class = "idle" if veritas_read_only else spec.io_scheduling_class
     record = {
@@ -237,7 +241,7 @@ def _create(
             "cpu_quota_percent": cpu_quota_percent,
             "memory_mb": memory_limit_mb,
             "wall_seconds": spec.max_wall_seconds,
-            "minimum_available_memory_mb": 2048,
+            "minimum_available_memory_mb": 2048 + memory_limit_mb,
             "max_artifact_mb": 1024,
             "max_arena_artifact_mb": MAX_ARENA_ARTIFACT_BYTES // 1024**2,
         },
@@ -342,7 +346,7 @@ def _run(root: Path, identity: str) -> None:
     queue_wait_seconds = 0.0
     stop = False
     signalled = False
-    overhead: dict[str, float | int | str] = {
+    overhead: dict[str, Any] = {
         "artifact_scan_seconds": 0.0,
         "progress_publish_seconds": 0.0,
         "artifact_scans": 0,
