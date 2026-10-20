@@ -113,12 +113,21 @@ def source_quality_report(status: dict[str, Any], now_ns: int) -> dict[str, Any]
 
     lifetime_max_append = status.get("process_max_append_seconds", status.get("max_append_seconds"))
     recent_max_append = status.get("recent_max_append_seconds")
+    recent_max_persist = status.get("recent_max_persist_seconds")
+    recent_p95_append = status.get("recent_p95_append_seconds")
+    recent_p95_persist = status.get("recent_p95_persist_seconds")
+    recent_window_complete = status.get("persistence_latency_window_complete")
+    recent_sample_count = nonnegative_int(status.get("recent_append_sample_count"))
     threshold_seconds = 1.0
     backpressure = status.get("backpressure_active")
     if backpressure is True or (
         isinstance(recent_max_append, (int, float)) and recent_max_append >= threshold_seconds
     ):
         persistence_state = "backpressured"
+    elif isinstance(recent_max_append, (int, float)) and recent_window_complete is False:
+        persistence_state = "partial_recent_window"
+    elif isinstance(recent_max_append, (int, float)) and recent_window_complete is not True:
+        persistence_state = "recent_window_scope_unreported"
     elif backpressure is False and isinstance(recent_max_append, (int, float)):
         persistence_state = "within_recent_threshold"
     else:
@@ -215,6 +224,15 @@ def source_quality_report(status: dict[str, Any], now_ns: int) -> dict[str, Any]
             "state": persistence_state,
             "backpressure_active": backpressure if isinstance(backpressure, bool) else None,
             "recent_max_append_seconds": recent_max_append,
+            "recent_p95_append_seconds": recent_p95_append,
+            "recent_max_persist_seconds": recent_max_persist,
+            "recent_p95_persist_seconds": recent_p95_persist,
+            "recent_sample_count": recent_sample_count,
+            "recent_window_seconds": status.get("persistence_latency_window_seconds"),
+            "recent_window_covered_seconds": status.get(
+                "persistence_latency_window_covered_seconds"
+            ),
+            "recent_window_complete": recent_window_complete,
             "recent_window_available": isinstance(recent_max_append, (int, float)),
             "lifetime_max_append_seconds": lifetime_max_append,
             "lifetime_max_exceeded_threshold": (

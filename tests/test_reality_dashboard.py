@@ -182,6 +182,34 @@ def test_source_quality_handles_missing_and_malformed_legacy_metrics(dashboard):
     assert quality["event_integrity_signals"]["duplicate_event_hashes_recent_window"] is None
 
 
+def test_recent_persistence_window_is_reported_with_its_coverage(dashboard):
+    c, root, _ = dashboard
+    path = root / "data/recordings/reality/status.json"
+    data = json.loads(path.read_text())
+    data.update(
+        backpressure_active=False,
+        recent_append_sample_count=12,
+        recent_max_append_seconds=0.8,
+        recent_p95_append_seconds=0.2,
+        recent_max_persist_seconds=0.7,
+        recent_p95_persist_seconds=0.15,
+        persistence_latency_window_seconds=60,
+        persistence_latency_window_covered_seconds=20,
+        persistence_latency_window_complete=False,
+    )
+    path.write_text(json.dumps(data))
+
+    quality = c.get("/api/reality/overview").json()["source_quality"]["persistence"]
+
+    assert quality["state"] == "partial_recent_window"
+    assert quality["recent_sample_count"] == 12
+    assert quality["recent_max_append_seconds"] == 0.8
+    assert quality["recent_p95_append_seconds"] == 0.2
+    assert quality["recent_max_persist_seconds"] == 0.7
+    assert quality["recent_window_covered_seconds"] == 20
+    assert quality["recent_window_complete"] is False
+
+
 def test_websocket_subscription_wait_is_reported_as_a_transition(dashboard):
     c, root, _ = dashboard
     path = root / "data/recordings/reality/status.json"
