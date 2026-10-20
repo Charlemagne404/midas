@@ -4,7 +4,7 @@
 
 **Scope:** Reliability and efficiency only. Project Frontier, Project Atlas, and a new 48-hour campaign remain unstarted.
 
-**Current verdicts (2026-10-20 09:15 CEST):** Reliability foundation **PARTIALLY RECOVERED**; Frontier development **CONDITIONALLY READY** for separately authorized work that does not depend on deploying the protected Reality recorder change; another unattended campaign **NOT READY**.
+**Current verdicts (2026-10-20 09:18 CEST):** Reliability foundation **PARTIALLY RECOVERED**; Frontier development **CONDITIONALLY READY** for separately authorized work that does not depend on deploying the protected Reality recorder change; another unattended campaign **NOT READY**.
 
 This journal separates source fixes, isolated tests, deployment, and production verification. It is updated as each recovery phase completes.
 
@@ -346,3 +346,8 @@ This refresh supersedes the 08:46 current-state summary above. Earlier entries r
 - Reality recorder PID 863193 remains active on its old in-memory code; it has not been restarted. The latest API read shows `RECORDING_UNSEQUENCED`, 16/16 fresh books, a 1.60-second status age, zero currently timing-uncertain books, `sequence_verified=false`, one historical connection failure, and zero submitted orders. Its gap counter rose from 9,157 in the 09:10 sample to 9,161 in this sample; this is retained as a live data-quality signal, not hidden by the health label. The cgroup uses 677,863,424 of 805,306,368 bytes, with zero `max`/OOM events, 10,069 `high` events, and 216 socket-throttle events. The candidate `e0b9bab77969b51d749c92dc362e5990c9ca5f10` remains staged and undeployed.
 - Host CPU PSI `some avg10` was 5.10% and `full` remained zero; memory PSI remained zero. About 8.14 GiB was available, while swap remained nearly full (4,189,640 KiB of 4,194,300 KiB used). A two-sample `vmstat` check showed 116 KiB in / 118 KiB out in its initial interval and zero in / out in the next interval. No unrelated service was stopped and no endurance workload was active.
 - Final live-state evidence is appended to [`20261020T064630Z-final-integration.jsonl`](../../data/reliability-endurance/evidence/20261020T064630Z-final-integration.jsonl) at 07:15:20 UTC. At that snapshot, the main API source matched `d12739f`; this documentation/evidence update does not change runtime imports. The Reality candidate is still undeployed. No new campaign was started and `48H-001` remains terminal and untouched.
+
+## Veritas scheduler follow-up — 2026-10-20 09:17 CEST
+
+- The next scheduled v2 run after the 09:15 integration snapshot started at 09:17:17 and exited 0 at 09:17:23, processing another bounded batch of 10 segments. The artifact remained current at 15,674/15,674 replayable segments, 15,676 catalog entries including two empty finalized segments, 4,191,354,197 source bytes, and zero pending. The campaign SHA-256 remained `aa8acb2b46823c1a1e3ac5d01a57dde917746c2c7471098ae2a4598875e322f5`; 192 rolling-window markets are represented, with 7,082 window gap events and 9,163 all-period gap events. Output SHA-256 is `a2277ddc9e5de547d59380b772477ab6de80fe3c4d42adbe4e47440c1d9250e7`. The next timer tick is 09:22:17 CEST. The rising gap totals reflect new captured source events; the pinned campaign identity and bounded replay remain stable.
+- This scheduled follow-up was recorded at 07:18:01 UTC in [`20261020T064630Z-final-integration.jsonl`](../../data/reliability-endurance/evidence/20261020T064630Z-final-integration.jsonl). The main branch and `origin/main` matched at the time of capture.
