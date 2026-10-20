@@ -4,7 +4,7 @@
 
 **Scope:** Reliability and efficiency only. Project Frontier, Project Atlas, and a new 48-hour campaign remain unstarted.
 
-**Current verdicts (2026-10-20 10:52 CEST):** Reliability foundation **PARTIALLY RECOVERED**; Frontier development **CONDITIONALLY READY** for separately authorized work that does not depend on deploying the protected Reality recorder change; another unattended campaign **NOT READY**.
+**Current verdicts (2026-10-20 10:55 CEST):** Reliability foundation **PARTIALLY RECOVERED**; Frontier development **CONDITIONALLY READY** for separately authorized work that does not depend on deploying the protected Reality recorder change; another unattended campaign **NOT READY**.
 
 This journal separates source fixes, isolated tests, deployment, and production verification. It is updated as each recovery phase completes.
 
@@ -513,14 +513,14 @@ The bounded top-50 status projection still left a full-depth allocation in `Engi
 - The candidate remains undeployed pending the separately requested recorder stop/start approval. Full-store replay remains deferred until the live recorder’s MemoryHigh events are stable and its headroom is materially greater; the old 14,911-segment run’s runtime ceiling remains independently unverified.
 - Evidence is preserved in [the live-state follow-up](../../data/reliability-endurance/evidence/20261020T085214Z-reality-live-state-followup.json).
 
-### Current acceptance status — 2026-10-20 10:52 CEST
+### Current acceptance status — 2026-10-20 10:55 CEST
 
 | Area | Current status | Remaining requirement |
 |---|---|---|
-| API | Production-verified READY; checkpoint verified; live execution disabled | Continue normal monitoring |
-| Veritas | v2 CURRENT at 15,851 segments, zero pending; v1 identities preserved and its timer inactive | Continue bounded v2 scheduling |
-| Reality | Recorder captures with 16/16 fresh books, but two source-timing markers keep status DEGRADED; candidate `29f77ad` remains undeployed | Approval, safe memory window, one bounded start, source-quality recovery and production verification |
-| Host resources | Host PSI remains low; recorder-local high events continue and current use is within 1.6 MiB of MemoryHigh | No full-store replay or endurance load while this persists |
+| API | Production-verified READY; checkpoint verified at 392,287 journal events; live execution disabled | Continue normal monitoring |
+| Veritas | v2 CURRENT at 15,861 segments, zero pending; v1 identities preserved and its timer inactive | Continue bounded v2 scheduling |
+| Reality | Recorder active with 16/16 fresh books, but two source-timing markers keep status DEGRADED; candidate `29f77ad` remains undeployed | Approval, safe memory window, one bounded start, source-quality recovery and production verification |
+| Host resources | Host PSI remains low; recorder uses 737,095,680 bytes against 738,197,504 `MemoryHigh` (about 1.05 MiB margin); high events reached 10,087 | No full-store replay or endurance load while this persists |
 | Endurance | Prior 63m45s isolated lifecycle test passed with 32 automatic transitions; broad suite interrupted for CPU safety | Do not count interrupted suite as a full integration pass |
 | Git/deployment | Main, Reality, and Veritas worktrees are clean and synchronized; Reality `29f77ad` and Veritas `8717666` are pushed | No Git synchronization pending; protected Reality deployment approval remains outstanding |
 
