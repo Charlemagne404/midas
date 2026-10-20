@@ -1,0 +1,273 @@
+{
+  "api_health": {
+    "laboratory": {
+      "recovering_campaigns": [],
+      "recovery_errors": [],
+      "root": "/home/charlie/midas/data/laboratory-final",
+      "status": "READY"
+    },
+    "live_execution": false,
+    "mode": "demo",
+    "paper_recovery": {
+      "journal_events": 397741,
+      "revision": 397740,
+      "status": "CHECKPOINT_VERIFIED"
+    },
+    "startup_error": null,
+    "startup_status": "READY",
+    "status": "READY"
+  },
+  "arena_research_activity": {
+    "active_director_count": 0,
+    "active_job_count": 0,
+    "active_schedule_count": 0,
+    "invalid_artifact_count": 0,
+    "queued_director_count": 0,
+    "queued_job_count": 0,
+    "stale_director_count": 3,
+    "status": "available",
+    "unverified_director_count": 0
+  },
+  "captured_at_local": "2026-10-20T13:43:23.952214+02:00",
+  "captured_at_utc": "2026-10-20T11:43:23.952214+00:00",
+  "historical_shadow_canary": {
+    "campaign_sha256": "ce5a288527425271fcfb5b8d7bb93cca1cf47e02a6ba91e693e018ddf96afeb8",
+    "campaign_state": "FAILED",
+    "certainty": "Likely code-path cause; the exact segment/catalog was not recorded, so the empty-segment attribution is not independently proven.",
+    "current_fix_commit": "8775bdaa",
+    "current_source_sha256": "6e0cb3811a8e32a81e9003a79de0ab778eccc28ff9e725f2163d58decf31b327",
+    "error": "Final source segment integrity/continuity mismatch",
+    "failed_at_local": "2026-10-14T20:49:15+02:00",
+    "frozen_shadow_source_sha256": "eed00214749e77f0fe96df6746412a806c0784b81b18317d8d1b14eb7763010e",
+    "historical_artifacts_modified": false,
+    "retry_timer": false,
+    "root_cause_assessment": "The frozen source code predates commit 8775bda, which changed final-segment continuity validation to compare last ordinal only when segment count is positive. The current source has that guard and test_reality_shadow.py::test_verified_empty_rotated_segments_do_not_reset_global_ordinal. This failure is consistent with an empty finalized segment being rejected by the older unconditional ordinal check.",
+    "service": "midas-reality-shadow-canary.service",
+    "source_ordinal": 847
+  },
+  "host_swap_observation": "Swap occupancy remains high; over the six-second vmstat sample, swap-in/out ceased after the initial interval and memory PSI stayed at zero.",
+  "production_services": {
+    "api": {
+      "ActiveState": "active",
+      "ControlGroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/midas-api.service",
+      "ExecMainExitTimestamp": "",
+      "ExecMainStartTimestamp": "Tue 2026-10-20 08:54:16 CEST",
+      "ExecMainStatus": "0",
+      "Id": "midas-api.service",
+      "MainPID": "2737736",
+      "NRestarts": "0",
+      "Result": "success",
+      "SubState": "running",
+      "UnitFileState": "enabled"
+    },
+    "arena_scheduler_service": {
+      "ActiveState": "inactive",
+      "ControlGroup": "",
+      "ExecMainExitTimestamp": "Tue 2026-10-20 13:43:04 CEST",
+      "ExecMainStartTimestamp": "Tue 2026-10-20 13:43:04 CEST",
+      "ExecMainStatus": "0",
+      "Id": "midas-arena-scheduler.service",
+      "MainPID": "0",
+      "NRestarts": "0",
+      "Result": "success",
+      "SubState": "dead",
+      "UnitFileState": "static"
+    },
+    "arena_scheduler_timer": {
+      "ActiveState": "active",
+      "Id": "midas-arena-scheduler.timer",
+      "Result": "success",
+      "SubState": "waiting",
+      "UnitFileState": "enabled"
+    },
+    "historical_canary": {
+      "ActiveState": "failed",
+      "ControlGroup": "",
+      "ExecMainExitTimestamp": "Wed 2026-10-14 20:49:15 CEST",
+      "ExecMainStartTimestamp": "Wed 2026-10-14 20:48:58 CEST",
+      "ExecMainStatus": "1",
+      "Id": "midas-reality-shadow-canary.service",
+      "MainPID": "0",
+      "NRestarts": "0",
+      "Result": "exit-code",
+      "SubState": "failed",
+      "UnitFileState": "transient"
+    },
+    "reality_api": {
+      "ActiveState": "active",
+      "ControlGroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/midas-reality-api.service",
+      "ExecMainExitTimestamp": "",
+      "ExecMainStartTimestamp": "Tue 2026-10-20 08:24:36 CEST",
+      "ExecMainStatus": "0",
+      "Id": "midas-reality-api.service",
+      "MainPID": "2688994",
+      "NRestarts": "0",
+      "Result": "success",
+      "SubState": "running",
+      "UnitFileState": "enabled"
+    },
+    "reality_recorder": {
+      "ActiveState": "active",
+      "ControlGroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/midas-reality.service",
+      "ExecMainExitTimestamp": "",
+      "ExecMainStartTimestamp": "Mon 2026-10-19 00:50:57 CEST",
+      "ExecMainStatus": "0",
+      "Id": "midas-reality.service",
+      "MainPID": "863193",
+      "NRestarts": "1",
+      "Result": "success",
+      "SubState": "running",
+      "UnitFileState": "enabled"
+    },
+    "shadow_mission2": {
+      "ActiveState": "inactive",
+      "ControlGroup": "",
+      "ExecMainExitTimestamp": "",
+      "ExecMainStartTimestamp": "",
+      "ExecMainStatus": "0",
+      "Id": "midas-reality-shadow.service",
+      "MainPID": "0",
+      "NRestarts": "0",
+      "Result": "success",
+      "SubState": "dead",
+      "UnitFileState": "disabled"
+    },
+    "shadow_successor": {
+      "ActiveState": "inactive",
+      "ControlGroup": "",
+      "ExecMainExitTimestamp": "",
+      "ExecMainStartTimestamp": "",
+      "ExecMainStatus": "0",
+      "Id": "midas-reality-shadow-successor.service",
+      "MainPID": "0",
+      "NRestarts": "0",
+      "Result": "success",
+      "SubState": "dead",
+      "UnitFileState": "disabled"
+    },
+    "veritas_v1_timer": {
+      "ActiveState": "inactive",
+      "Id": "midas-veritas-gap-detail.timer",
+      "Result": "success",
+      "SubState": "dead",
+      "UnitFileState": ""
+    },
+    "veritas_v2_service": {
+      "ActiveState": "inactive",
+      "ControlGroup": "",
+      "ExecMainExitTimestamp": "Tue 2026-10-20 13:42:26 CEST",
+      "ExecMainStartTimestamp": "Tue 2026-10-20 13:42:21 CEST",
+      "ExecMainStatus": "0",
+      "Id": "midas-veritas-gap-detail-v2.service",
+      "MainPID": "0",
+      "NRestarts": "0",
+      "Result": "success",
+      "SubState": "dead",
+      "UnitFileState": "static"
+    },
+    "veritas_v2_timer": {
+      "ActiveState": "active",
+      "Id": "midas-veritas-gap-detail-v2.timer",
+      "Result": "success",
+      "SubState": "waiting",
+      "UnitFileState": "enabled"
+    }
+  },
+  "protected_data_sha256": {
+    "48H-001_manifest": "55538167f6b0d9516270001587abea0894801124effad635a0d830be5e0be379",
+    "48H-001_status": "44f146d86567830a34db95838297faa980510e7bc6daac1f22a36fcbbe6b8954",
+    "mission2_campaign": "aa8acb2b46823c1a1e3ac5d01a57dde917746c2c7471098ae2a4598875e322f5",
+    "mission2_status": "087a6498457b864b07adb2a47a21a8483f35548166e6c8031f17004eebd5836b",
+    "mission2_successor_campaign": "c5eb8b98cbfd657372fc620192c5a0c0bb46f41d760800e680181fa7f3ee95a3",
+    "mission2_successor_status": "37cff1121c3b8191aec0e6d470ac36875665a9ae2880e0979bd86837e4ea399d"
+  },
+  "reality_candidate": {
+    "commit": "b0610c1b694e6ece52a4ac4fc12db2624540b8ed",
+    "deployed": false,
+    "deployment_gate": "recorder cgroup memory.high margin below 4 MiB staging gate; protected recorder restart authorization remains ungranted",
+    "package_fingerprint": "a1fbcbc7b10806b2b2c9cf2a75f1d101d326017b72f0dc0d98c31c17d6b689c9"
+  },
+  "reality_overview": {
+    "collector_state": "RECORDING_UNSEQUENCED",
+    "collector_status_age_seconds": 1.944015203,
+    "error": "ConnectionClosedOK: received 1001 (going away) server shutting down; then sent 1001 (going away) server shutting down",
+    "expected_books": 16,
+    "failures": 1,
+    "frames": 453011,
+    "fresh_books": 16,
+    "health": "recording",
+    "health_reasons": [],
+    "integrity_state": "INTEGRITY_VERIFIED",
+    "orders_submitted": 0,
+    "ordinal": 2422581,
+    "sequence_verified": false,
+    "storage_bytes": 4319463094,
+    "timing_uncertain_books": 0
+  },
+  "repositories": {
+    "midas": {
+      "branch": "main",
+      "head": "7753ca31be9cfb5aa0a5c7bacf228680110769f5",
+      "status": "",
+      "upstream": "7753ca31be9cfb5aa0a5c7bacf228680110769f5"
+    },
+    "reality_candidate": {
+      "branch": "fix/reality-stale-error-status",
+      "head": "b0610c1b694e6ece52a4ac4fc12db2624540b8ed",
+      "status": "",
+      "upstream": "b0610c1b694e6ece52a4ac4fc12db2624540b8ed"
+    },
+    "reality_live_source": {
+      "branch": "project/reality",
+      "head": "c83320000a085bf30490b4b76b425527fe8574f7",
+      "status": "",
+      "upstream": "c83320000a085bf30490b4b76b425527fe8574f7"
+    },
+    "veritas": {
+      "branch": "project/veritas",
+      "head": "8717666aa1988fb28c999998014ca1c4b5717113",
+      "status": "",
+      "upstream": "8717666aa1988fb28c999998014ca1c4b5717113"
+    }
+  },
+  "resource_snapshot": {
+    "api_cgroup": {
+      "memory.current": "756572160",
+      "memory.events": "low 0\nhigh 2292\nmax 0\noom 0\noom_kill 0\noom_group_kill 0\nsock_throttled 0",
+      "memory.high": "1610612736",
+      "memory.max": "1879048192",
+      "memory.pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=33762\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=33762",
+      "memory.swap.current": "0",
+      "memory.swap.max": "0"
+    },
+    "host_mem_available_bytes": 9070166016,
+    "host_swap_free_bytes": 64008192,
+    "host_swap_total_bytes": 4294963200,
+    "pressure": {
+      "cpu": "some avg10=2.35 avg60=3.12 avg300=3.33 total=277882424257\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+      "io": "some avg10=1.08 avg60=0.87 avg300=0.85 total=16202503620\nfull avg10=1.07 avg60=0.78 avg300=0.72 total=12634708876",
+      "memory": "some avg10=0.00 avg60=0.00 avg300=0.00 total=10877657547\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=6260862306"
+    },
+    "reality_cgroup": {
+      "memory.current": "736407552",
+      "memory.events": "low 0\nhigh 10108\nmax 0\noom 0\noom_kill 0\noom_group_kill 0\nsock_throttled 216",
+      "memory.high": "738197504",
+      "memory.max": "805306368",
+      "memory.pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=711952\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=711952",
+      "memory.swap.current": "684032",
+      "memory.swap.max": "0"
+    },
+    "reality_memory_high_margin_bytes": 1789952
+  },
+  "shadow_worker_pause_authorization": "Yes, pause both; both workers were already inactive/disabled with PID 0 and recoverable pending status, so no additional stop signal or campaign write was needed.",
+  "veritas_v2_latest_run": {
+    "batch_processed_segment_count": 10,
+    "control_sha256": "35c3211b620ab196cc98c60777ba7be991a86351ce01ef0ab7be89bf28f8b032",
+    "last_error": null,
+    "last_error_type": null,
+    "pending_segment_count": 0,
+    "processed_segment_count": 16196,
+    "status": "CURRENT",
+    "summary_sha256": "e4994a8cd29de29e67e8af1f009355b7726e1817b5ef1e5ec21506fc25bf825b"
+  }
+}
