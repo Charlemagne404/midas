@@ -24,7 +24,10 @@ MAX_MEMORY_PSI_FULL_AVG10_PERCENT = 1.0
 MAX_IO_PSI_SOME_AVG10_PERCENT = 20.0
 MAX_ARENA_JOB_RECORDS = 10_000
 MAX_ARENA_JOB_BYTES = 64 * 1024
-OTHER_ARENA_ROOT = Path("/home/charlie/midas-veritas/data/arena")
+OTHER_ARENA_ROOTS = (
+    Path.home() / "midas-veritas/data/arena",
+    Path.home() / "midas/data/reliability-endurance/arena",
+)
 
 
 class AdmissionLeaseBusy(RuntimeError):
@@ -240,7 +243,7 @@ def main() -> None:
         "--other-arena-root",
         action="append",
         type=Path,
-        default=[OTHER_ARENA_ROOT],
+        default=list(OTHER_ARENA_ROOTS),
         help="Additional Arena worker catalog for host-wide admission",
     )
     parser.add_argument("--max-segments", type=int, default=128)

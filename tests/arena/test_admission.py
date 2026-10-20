@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 from midas.arena import admission
 from midas.arena.admission import ResourceAdmissionDenied
@@ -29,6 +31,20 @@ def test_resource_snapshot_detects_workers_across_arena_roots(tmp_path, monkeypa
     snapshot = admission.resource_snapshot(primary)
     assert snapshot["active_job_ids"] == ["veritas:job-active"]
     assert admission.resource_gate(snapshot)["reasons"] == ["arena_worker_active"]
+
+
+def test_default_catalog_includes_isolated_endurance_root(tmp_path, monkeypatch):
+    monkeypatch.setattr(Path, "home", lambda: tmp_path)
+    primary = tmp_path / "midas/data/arena"
+    endurance = tmp_path / "midas/data/reliability-endurance/arena"
+    (primary / "jobs").mkdir(parents=True)
+    (endurance / "jobs/job-endurance").mkdir(parents=True)
+    atomic_json(
+        endurance / "jobs/job-endurance/job.json",
+        {"job_id": "job-endurance", "state": "RUNNING"},
+    )
+
+    assert admission._active_jobs(primary) == ["arena:job-endurance"]
 
 
 def test_admission_slot_is_exclusive_and_denies_busy_owner(tmp_path, monkeypatch):

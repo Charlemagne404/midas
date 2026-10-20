@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 import pytest
 from midas.arena import admission
@@ -78,6 +79,7 @@ def test_resource_snapshot_checks_arena_jobs_across_both_repositories(tmp_path):
 
 def test_global_admission_lock_path_matches_arena_worker_path():
     assert batch.global_lock_path() == admission.global_lock_path()
+    assert Path.home() / "midas/data/reliability-endurance/arena" in batch.OTHER_ARENA_ROOTS
 
 
 def test_waiting_for_resources_does_not_touch_v2_control(
