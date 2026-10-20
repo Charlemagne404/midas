@@ -4,7 +4,7 @@ Description=MIDAS Reality recording capacity and reserve monitor
 [Service]
 Type=oneshot
 WorkingDirectory=%h/midas-reality
-ExecStart=%h/midas-reality/.venv/bin/python -m midas.reality.operations capacity --config %h/midas-reality/deploy/reality.json --output %h/midas-reality/data/recordings/capacity.json
+ExecStart=%h/midas-reality/.venv/bin/python -m midas.reality.operations capacity --config %h/midas-reality/deploy/reality.json --output %h/midas-reality/data/recordings/capacity.json --archive-path /mnt/continental-cloud/data/midas-reality-staging/archive-mission3 --archive-budget-bytes 103079215104 --archive-reserve-bytes 429496729600 --archive-mountpoint /mnt/continental-cloud
 MemoryMax=128M
 CPUQuota=100%
 Nice=15

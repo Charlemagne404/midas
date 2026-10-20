@@ -1,18 +1,29 @@
 {
-  "schema_version": 1,
-  "raw_budget_bytes": 25769803776,
-  "archive_budget_bytes": 25769803776,
+  "schema_version": 2,
+  "raw_budget_bytes": 103079215104,
+  "archive_budget_bytes": 103079215104,
   "free_disk_reserve_bytes": 21474836480,
   "retention_stop_days": 90,
-  "archive_destination": "/home/charlie/midas-reality/data/recordings/reality-archive-mission2",
-  "archive_frequency": "daily at 04:00 UTC, maximum five-minute jitter",
+  "archive_destination": "/mnt/continental-cloud/data/midas-reality-staging/archive-mission3",
+  "archive_frequency": "daily at 04:00 UTC, maximum five-minute jitter, only after destination mount and resource admission",
   "raw_pruning": "prohibited",
   "derivative_pruning": "Only deploy/reality-research.json scheduled completed example caches and unpublished builder scratch are disposable. Keep immutable manifests/code/source references and visible pruning receipts. Raw roots, accepted Gate B/C/D artifacts and protected Prometheus evidence are excluded.",
   "capacity_action_threshold_days": 7,
-  "offloading": "Use verified archive CLI with an explicitly chosen mounted/off-host destination before the alert deadline. Never delete originals automatically. Off-host destination is not configured on this host.",
+  "offloading": "Verified local archive on the allocated /dev/sda4 staging filesystem; this is a second copy, not off-host redundancy. Never delete originals automatically.",
   "rollover": "A new raw root requires an intentional collector stop, finalized verified archive, retained old-root manifest, and reviewed disk commitments. Keep the original root recoverable; new root identity/ordinals must remain distinct. No automatic rollover is configured.",
   "on_exhaustion": "Fail closed, publish FAILED status if disk permits, retain complete checksummed observations, require operator capacity action. Do not drop frames or erase observations to maintain an apparently healthy state.",
-  "headroom_basis": "Preflight budgets the full remaining raw allocation plus the full archive allocation while preserving 20 GiB. This is a bounded approximately 48 GiB local commitment, not all free disk.",
+  "headroom_basis": "Separate commitments: raw budget up to 96 GiB on NVMe while preserving at least 20 GiB filesystem free; verified archive budget up to 96 GiB on /dev/sda4 while preserving 400 GiB. At the measured snapshot, these allocations leave about 54.5 GiB of additional NVMe free beyond the raw commitment and reserve, and about 101 GiB of HDD free beyond archive budget and reserve. The existing local archive remains preserved.",
   "research_priority": "Collector: 512 MiB maximum, 25% of one CPU. Capacity: 128 MiB, 10% CPU. Archive: 256 MiB, 10% CPU, idle I/O and lower scheduling priority. Both operations workers are independent of collector and frontend.",
-  "limits": ["Local replication is not off-host redundancy.", "Growth forecasts vary; the five-minute capacity monitor must remain enabled.", "A retention stop or budget stop is intentional; finite local disks cannot preserve unlimited original observations.", "Full archival verification and collector cold-start replay scale with archive size; bounded archival jobs may fail at their timeout and must be inspected."]
+  "limits": [
+    "Raw 96 GiB budget supports approximately 101 days at the conservative 0.973 GB/day observed rate from current usage; the initial target is 90 days at current workload.",
+    "A second comparable source at 2x current total growth needs about 175 GB over 90 days, above current NVMe capacity after the 20 GiB reserve; further storage is required before that sustained expansion.",
+    "Local replication is not off-host redundancy.",
+    "The protected recorder still enforces its currently loaded 24 GiB budget until an explicitly approved restart; the larger config is pending and must be shown separately by monitoring.",
+    "No raw pruning, automatic rollover, or new collectors are configured.",
+    "Capacity monitor samples every 30 minutes; it warns at 30 days, marks critical at 14 days, and requires capacity action by 7 days without pruning raw data."
+  ],
+  "archive_filesystem_reserve_bytes": 429496729600,
+  "capacity_monitor_interval_seconds": 1800,
+  "capacity_warning_days": 30,
+  "capacity_critical_days": 14
 }
