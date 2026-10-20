@@ -20,6 +20,7 @@ def test_offline_api_workflow_contract_and_persistence(tmp_path, monkeypatch):
     with TestClient(app) as client:
         state = client.get("/api/state").json()
         assert state["mode"] == "demo" and not state["safety"]["live_execution"]
+        assert "decisions" not in state["paper_broker"]
         paper_summary = client.get("/api/paper/summary")
         assert paper_summary.status_code == 200
         assert "decisions" not in paper_summary.json()

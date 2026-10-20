@@ -428,7 +428,10 @@ class Service:
             "potential_gross_profit": str(sum((e.gross_profit for e in verified), Decimal(0))),
             "potential_net_profit": str(sum((e.net_profit for e in verified), Decimal(0))),
             "virtual_starting_capital": str(self.settings.paper_capital),
-            "paper_broker": {**summary(self.broker.state, ts), "healthy": self.broker.healthy},
+            "paper_broker": {
+                **summary(self.broker.state, ts, include_decisions=False),
+                "healthy": self.broker.healthy,
+            },
             "latest_simulated_pnl": latest["portfolio"]["realized_pnl"] if latest else None,
             "latest_simulation": latest["scenario_id"] if latest else None,
             "unit": "virtual USD" if self.settings.mode == "demo" else "modeled pUSD",
