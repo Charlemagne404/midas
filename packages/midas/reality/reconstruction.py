@@ -4,6 +4,7 @@ import hashlib
 import heapq
 import json
 from collections import Counter, deque
+from collections.abc import Iterable, Iterator
 from decimal import Decimal, DecimalException, localcontext
 from typing import Any
 
@@ -30,6 +31,42 @@ def spread(bid: Decimal | None, ask: Decimal | None) -> str | None:
     with localcontext() as context:
         context.prec = 160  # exceeds validated wire coefficient/exponent bounds
         return str(ask - bid)
+
+
+class _CanonicalStream:
+    """A lazily encoded JSON value used by the full-state digest."""
+
+    def __init__(self, chunks: Iterable[bytes]) -> None:
+        self.chunks = chunks
+
+
+def _canonical_chunks(value: Any) -> Iterator[bytes]:
+    """Yield canonical JSON bytes without materializing nested state arrays."""
+    if isinstance(value, _CanonicalStream):
+        yield from value.chunks
+    elif isinstance(value, dict):
+        yield b"{"
+        for index, key in enumerate(sorted(value)):
+            if index:
+                yield b","
+            yield from _canonical_chunks(key)
+            yield b":"
+            yield from _canonical_chunks(value[key])
+        yield b"}"
+    elif isinstance(value, (list, tuple)):
+        yield b"["
+        for index, item in enumerate(value):
+            if index:
+                yield b","
+            yield from _canonical_chunks(item)
+        yield b"]"
+    else:
+        yield json.dumps(
+            value,
+            sort_keys=True,
+            separators=(",", ":"),
+            ensure_ascii=False,
+        ).encode()
 
 
 class Engine:
@@ -385,4 +422,49 @@ class Engine:
         )
 
     def digest(self) -> str:
-        return hashlib.sha256(canonical(self.state())).hexdigest()
+        books = {}
+        for asset, book in sorted(self.books.items()):
+            bid, ask = self.top(book)
+            books[asset] = {
+                **{k: v for k, v in book.items() if k not in {"bids", "asks"}},
+                "bids": _CanonicalStream(self._level_array(book["bids"], reverse=True)),
+                "asks": _CanonicalStream(self._level_array(book["asks"], reverse=False)),
+                "best_bid": str(bid) if bid is not None else None,
+                "best_ask": str(ask) if ask is not None else None,
+                "spread": spread(bid, ask),
+                "age_ns": self.now_ns - book["received_ns"],
+                "internally_consistent": book["issue"] is None,
+                "sequence_verified": False,
+            }
+        state = dict(
+            schema_version=1,
+            **(
+                dict(reconstruction_version=self.reconstruction_version)
+                if self.reconstruction_version != 1
+                else {}
+            ),
+            **(
+                dict(last_gap_ordinal=self.last_gap_ordinal)
+                if self.reconstruction_version >= 4
+                else {}
+            ),
+            books=books,
+            counts=dict(sorted(self.counts.items())),
+            gaps=self.gaps,
+            ordinal=self.last_ordinal,
+        )
+        digest = hashlib.sha256()
+        for chunk in _canonical_chunks(state):
+            digest.update(chunk)
+        return digest.hexdigest()
+
+    @staticmethod
+    def _level_array(levels: dict[Decimal, Decimal], *, reverse: bool) -> Iterator[bytes]:
+        yield b"["
+        for index, (price, quantity) in enumerate(sorted(levels.items(), reverse=reverse)):
+            if index:
+                yield b","
+            # Decimal.__str__ emits only JSON-safe ASCII characters, so this
+            # avoids a JSON encoder call for every individual price and size.
+            yield b'["' + str(price).encode() + b'","' + str(quantity).encode() + b'"]'
+        yield b"]"

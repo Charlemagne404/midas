@@ -1,3 +1,4 @@
+import hashlib
 import json
 from pathlib import Path
 
@@ -7,7 +8,7 @@ from midas.reality.collector import collection_health, prune_cohort_tracking
 from midas.reality.discovery import select
 from midas.reality.reconstruction import Engine
 from midas.reality.replay import replay
-from midas.reality.storage import MAGIC, Store, manifest, read_manifest
+from midas.reality.storage import MAGIC, Store, canonical, manifest, read_manifest
 
 FIXTURE = json.loads((Path(__file__).parent / "fixtures/reality/observed.json").read_text())
 
@@ -76,6 +77,29 @@ def test_bounded_status_depth_preserves_full_reconstruction_digest():
 
     with pytest.raises(ValueError, match="positive integer"):
         engine.state(max_depth=0)
+
+
+@pytest.mark.parametrize(("reconstruction_version", "last_gap_ordinal"), [(1, 0), (4, 17)])
+def test_streaming_digest_matches_canonical_full_state(
+    reconstruction_version, last_gap_ordinal, monkeypatch
+):
+    from decimal import Decimal
+
+    engine = ready()
+    engine.reconstruction_version = reconstruction_version
+    engine.last_gap_ordinal = last_gap_ordinal
+    asset = next(iter(engine.books))
+    book = engine.books[asset]
+    book["bids"] = {Decimal(i) / 100_000: Decimal(i) for i in range(1, 10_001)}
+    book["asks"] = {Decimal(i) / 100_000: Decimal(i) for i in range(20_001, 30_001)}
+
+    expected = hashlib.sha256(canonical(engine.state())).hexdigest()
+
+    def fail_if_full_state_is_materialized(**kwargs):
+        raise AssertionError("digest must stream state instead of calling state()")
+
+    monkeypatch.setattr(engine, "state", fail_if_full_state_is_materialized)
+    assert engine.digest() == expected
 
 
 def test_gaps_staleness_unknown_malformed_crossed():
