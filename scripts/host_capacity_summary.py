@@ -60,6 +60,10 @@ def summarize(path, since=0, until=float("inf")):
             first = first or row["time"]
             last = row["time"]
             mem = fields(row["host"]["meminfo"])
+            stat = fields(row["host"]["stat"])
+            for name in ("procs_running", "procs_blocked"):
+                if name in stat:
+                    samples[name].append(stat[name])
             for name in ("MemAvailable", "SwapFree", "Cached", "AnonPages", "Slab"):
                 samples[name + "_bytes"].append(mem[name] * 1024)
             for kind, raw in row["host"]["pressure"].items():
@@ -67,6 +71,10 @@ def summarize(path, since=0, until=float("inf")):
                     samples[f"{kind}_{label}_avg10"].append(float(values["avg10"]))
             dt = row["monotonic"] - previous["monotonic"] if previous else 0
             if dt:
+                old_stat = fields(previous["host"]["stat"])
+                for name in ("ctxt", "processes"):
+                    if name in old_stat and name in stat:
+                        samples[name + "_per_second"].append((stat[name] - old_stat[name]) / dt)
                 old_disks = {
                     p[2]: list(map(int, p[3:]))
                     for line in (previous["host"].get("diskstats") or "").splitlines()
