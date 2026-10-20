@@ -111,7 +111,13 @@ def exchanges(state: dict[str, Any]) -> dict[str, Exchange]:
     return {k: Exchange.restore(v["exchange"]) for k, v in state["positions"].items()}
 
 
-def summary(state: dict[str, Any], now: int = 0) -> dict[str, Any]:
+def summary(
+    state: dict[str, Any],
+    now: int = 0,
+    *,
+    include_decisions: bool = True,
+    include_details: bool = True,
+) -> dict[str, Any]:
     config = AccountConfig.model_validate(state["config"])
     xs = exchanges(state)
     starting = config.capital
@@ -138,74 +144,77 @@ def summary(state: dict[str, Any], now: int = 0) -> dict[str, Any]:
     unmatched = sum(
         (D(x.portfolio.summary(x.market)["unmatched_quantity"]) for x in xs.values()), D(0)
     )
-    positions = [
-        {
-            "id": k,
-            "market_id": x.market.id,
-            "event_id": x.market.event_id,
-            "source": x.market.source.value,
-            "execution_model": state["positions"][k]["execution_model"],
-            "fill_certainty": "HYPOTHETICAL_UNVERIFIED",
-            "settled": x.settled,
-            "portfolio": serial(x.portfolio.summary(x.market)),
-            "orders": serial(x.checkpoint()["orders"]),
-            "decision": state["positions"][k]["decision"],
-            "ledger": serial(x.checkpoint()["ledger"]),
-        }
-        for k, x in xs.items()
-    ]
+    positions = []
+    if include_details:
+        positions = [
+            {
+                "id": k,
+                "market_id": x.market.id,
+                "event_id": x.market.event_id,
+                "source": x.market.source.value,
+                "execution_model": state["positions"][k]["execution_model"],
+                "fill_certainty": "HYPOTHETICAL_UNVERIFIED",
+                "settled": x.settled,
+                "portfolio": serial(x.portfolio.summary(x.market)),
+                "orders": serial(x.checkpoint()["orders"]),
+                "decision": state["positions"][k]["decision"],
+                "ledger": serial(x.checkpoint()["ledger"]),
+            }
+            for k, x in xs.items()
+        ]
     active = [
         x
         for k, x in xs.items()
         if not x.settled and (x.portfolio.locked or x.portfolio.reserved or k in held)
     ]
+    result_payload = {
+        "status": "STOPPED"
+        if state["emergency_stop"]
+        else "PAUSED"
+        if state["paused"]
+        else "RUNNING",
+        "mode": config.mode,
+        "strategy_version": BinaryStrategy.version,
+        "broker_version": VERSION,
+        "execution": config.execution.model_dump(mode="json"),
+        "unit": "virtual USD/pUSD (parity assumption)",
+        "initial_capital": starting,
+        "available": available,
+        "reserved": reserved,
+        "locked": locked,
+        "equity": available + reserved + locked + unrealized,
+        "realized_pnl": pnl,
+        "unrealized_pnl": unrealized,
+        "fees": sum((x.portfolio.fees for x in xs.values()), D(0)),
+        "settlement_proceeds": sum((x.portfolio.proceeds for x in xs.values()), D(0)),
+        "gross_exposure": locked + reserved,
+        "net_exposure_shares": unmatched,
+        "max_drawdown": state["max_drawdown"],
+        "capital_utilization": (locked + reserved) / starting,
+        "daily_loss": max(D(0), -daily),
+        "cumulative_loss": max(D(0), -pnl),
+        "open_positions": len(active),
+        "pending_actions": len(state["pending"]),
+        "observations": state["observations"],
+        "rejected": state["rejected_total"],
+        "paper_trades": len(xs),
+        "hypothetical_fills": sum(
+            e.kind in {"fill", "sell_fill"} for x in xs.values() for e in x.portfolio.ledger
+        ),
+        "settled_positions": sum(x.settled for x in xs.values()),
+        "recovery_count": state["recovery_count"],
+        "last_processed_ms": state["last_processed_ms"],
+        "risk_limits": config.limits.model_dump(mode="json"),
+        "live_orders": 0,
+    }
+    if include_decisions:
+        result_payload["decisions"] = state["decisions"]
+    if include_details:
+        result_payload["positions"] = positions
+        result_payload["incidents"] = state["incidents"]
     result = cast(
         dict[str, Any],
-        serial(
-            {
-                "status": "STOPPED"
-                if state["emergency_stop"]
-                else "PAUSED"
-                if state["paused"]
-                else "RUNNING",
-                "mode": config.mode,
-                "strategy_version": BinaryStrategy.version,
-                "broker_version": VERSION,
-                "execution": config.execution.model_dump(mode="json"),
-                "unit": "virtual USD/pUSD (parity assumption)",
-                "initial_capital": starting,
-                "available": available,
-                "reserved": reserved,
-                "locked": locked,
-                "equity": available + reserved + locked + unrealized,
-                "realized_pnl": pnl,
-                "unrealized_pnl": unrealized,
-                "fees": sum((x.portfolio.fees for x in xs.values()), D(0)),
-                "settlement_proceeds": sum((x.portfolio.proceeds for x in xs.values()), D(0)),
-                "gross_exposure": locked + reserved,
-                "net_exposure_shares": unmatched,
-                "max_drawdown": state["max_drawdown"],
-                "capital_utilization": (locked + reserved) / starting,
-                "daily_loss": max(D(0), -daily),
-                "cumulative_loss": max(D(0), -pnl),
-                "open_positions": len(active),
-                "positions": positions,
-                "pending_actions": len(state["pending"]),
-                "observations": state["observations"],
-                "decisions": state["decisions"],
-                "rejected": state["rejected_total"],
-                "paper_trades": len(xs),
-                "hypothetical_fills": sum(
-                    e.kind in {"fill", "sell_fill"} for x in xs.values() for e in x.portfolio.ledger
-                ),
-                "settled_positions": sum(x.settled for x in xs.values()),
-                "recovery_count": state["recovery_count"],
-                "incidents": state["incidents"],
-                "last_processed_ms": state["last_processed_ms"],
-                "risk_limits": config.limits.model_dump(mode="json"),
-                "live_orders": 0,
-            }
-        ),
+        serial(result_payload),
     )
     if any(x.sales_enabled for x in xs.values()):
         result["reserved_sale_shares"] = str(
@@ -228,7 +237,7 @@ def summary(state: dict[str, Any], now: int = 0) -> dict[str, Any]:
 
 
 def risk_state(state: dict[str, Any], market: Market, now: int) -> RiskState:
-    s = summary(state, now)
+    s = summary(state, now, include_details=False)
     xs = exchanges(state).values()
     held = {p["position"] for p in state["pending"]}
 
@@ -276,7 +285,7 @@ def risk_state(state: dict[str, Any], market: Market, now: int) -> RiskState:
 
 def audit(state: dict[str, Any]) -> list[str]:
     errors = [f"{k}: {e}" for k, x in exchanges(state).items() for e in reconcile(x)]
-    s = summary(state)
+    s = summary(state, include_details=False)
     if min(D(s[k]) for k in ("available", "reserved", "locked")) < 0:
         errors.append("Negative shared account bucket")
     if D(s["available"]) + D(s["reserved"]) + D(s["locked"]) != D(s["initial_capital"]) + D(
@@ -659,7 +668,7 @@ def transition(
     else:
         raise ValueError("Unknown internal broker command")
     state["last_processed_ms"] = ts
-    s = summary(state, ts)
+    s = summary(state, ts, include_details=False)
     peak = max(D(state["peak_equity"]), D(s["equity"]))
     state["peak_equity"] = str(peak)
     state["max_drawdown"] = str(max(D(state["max_drawdown"]), (peak - D(s["equity"])) / peak))

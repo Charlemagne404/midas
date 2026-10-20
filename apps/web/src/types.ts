@@ -244,3 +244,4 @@ export interface PaperAccount {
     ledger: Record<string, unknown>[];
   }[];
 }
+export type PaperAccountSummary = Omit<PaperAccount, 'decisions'>;

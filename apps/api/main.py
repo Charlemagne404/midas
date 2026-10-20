@@ -234,6 +234,16 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
         return {**summary(service.broker.state, now_ms()), "healthy": service.broker.healthy}
 
+    @app.get("/api/paper/summary")
+    async def paper_summary() -> dict[str, Any]:
+        from midas.market_data.polymarket import now_ms
+        from midas.paper.broker import summary
+
+        return {
+            **summary(service.broker.state, now_ms(), include_decisions=False),
+            "healthy": service.broker.healthy,
+        }
+
     class PaperControl(BaseModel):
         model_config = ConfigDict(extra="forbid")
         paused: bool | None = None

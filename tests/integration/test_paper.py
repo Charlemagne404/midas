@@ -66,6 +66,22 @@ async def test_crash_at_atomic_ledger_boundary_and_duplicate_fill(tmp_path, boun
     await store.close()
 
 
+async def test_summary_can_skip_redundant_decision_history(tmp_path):
+    store, broker, command = await setup(tmp_path)
+    await broker.apply(command)
+
+    full = summary(broker.state)
+    lightweight = summary(broker.state, include_decisions=False)
+    compact = summary(broker.state, include_decisions=False, include_details=False)
+
+    assert "decisions" in full
+    assert "decisions" not in lightweight
+    assert {key: value for key, value in full.items() if key != "decisions"} == lightweight
+    assert not {"decisions", "positions", "incidents"} & compact.keys()
+    assert all(compact[key] == full[key] for key in compact)
+    await store.close()
+
+
 @pytest.mark.parametrize("target", ["snapshot", "journal"])
 async def test_inconsistent_financial_state_fails_closed(tmp_path, target):
     store, broker, c = await setup(tmp_path)
