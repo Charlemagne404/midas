@@ -1,0 +1,34 @@
+{
+  "candidate_revision": "e0b9bab77969b51d749c92dc362e5990c9ca5f10",
+  "current_collector_storage_bytes": 4183872337,
+  "limitations": "Snapshot contains 14,911 segments / 3,921,429,823 bytes (about 96% of roughly 15.6k current segments). The slower double-scan startup path was not measured.",
+  "phase": "reality_fullstore_staging_replay",
+  "replay_scope": "--fast ran one Store manifest/replay pass over every finalized snapshot segment with checkpoints; it disabled Store's separate pre-open verify scan. Mutable .open/status files were excluded; finalized .seg/.json inputs were hard-linked into /tmp staging.",
+  "result": "completed with exit status 0",
+  "snapshot": {
+    "last_ordinal": 2159694,
+    "manifest_list_sha256": "546f94fe962730765ee23c58a4615ebba59975b019c092e957bad9f86ce30585",
+    "segment_bytes": 3921429823,
+    "segment_count": 14911,
+    "snapshot_created_ns": 1792457368443885011,
+    "source_root": "/home/charlie/midas-reality/data/recordings/reality",
+    "storage": "hard links to finalized immutable .seg/.json files; .open and mutable status excluded"
+  },
+  "staged_revision": "87788aee2b7975239d5c049b11c75fb28af84a9a",
+  "ts_utc": "2026-10-20T06:46:30.386582+00:00",
+  "unit": "midas-reality-startup-fast-20261020.service",
+  "unit_properties": {
+    "ActiveState": "inactive",
+    "CPUQuotaPerSecUSec": "infinity",
+    "CPUUsageNSec": "[not set]",
+    "ExecMainExitTimestamp": "",
+    "ExecMainStartTimestamp": "",
+    "ExecMainStatus": "0",
+    "MemoryHigh": "infinity",
+    "MemoryMax": "infinity",
+    "MemoryPeak": "[not set]",
+    "MemorySwapMax": "infinity",
+    "Result": "success",
+    "SubState": "dead"
+  }
+}
