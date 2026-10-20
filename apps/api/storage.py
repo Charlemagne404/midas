@@ -4,7 +4,18 @@ import asyncio
 from pathlib import Path
 from typing import Any
 
-from sqlalchemy import JSON, BigInteger, Index, Integer, String, delete, event, inspect, select
+from sqlalchemy import (
+    JSON,
+    BigInteger,
+    Index,
+    Integer,
+    String,
+    delete,
+    event,
+    inspect,
+    select,
+    text,
+)
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
@@ -95,6 +106,23 @@ class Store:
         if source:
             statement = statement.where(Record.source == source)
         statement = statement.order_by(Record.id.desc()).limit(min(limit, 2000))
+        if source and self.engine.dialect.name == "sqlite":
+            # SQLite otherwise chooses the source index for these equalities.
+            # Rare simulation/experiment rows then require scanning all the
+            # (potentially millions of) newer synthetic market observations.
+            # The kind index, created by migration 001, includes rowid order;
+            # filter source within that kind without sorting or archive scans.
+            statement = (
+                select(Record)
+                .from_statement(  # type: ignore[assignment]
+                    text(
+                        "SELECT * FROM records INDEXED BY ix_records_kind "
+                        "WHERE kind = :kind AND source = :source "
+                        "ORDER BY id DESC LIMIT :limit"
+                    )
+                )
+                .params(kind=kind, source=source, limit=min(limit, 2000))
+            )
         async with self.sessions() as session:
             result = await session.scalars(statement)
             return [
