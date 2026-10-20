@@ -1,0 +1,89 @@
+{
+  "api_cgroup_final": {
+    "available": true,
+    "cpu.stat": {
+      "burst_usec": 0,
+      "core_sched.force_idle_usec": 0,
+      "nice_usec": 459210000,
+      "nr_bursts": 0,
+      "nr_periods": 10925,
+      "nr_throttled": 59,
+      "system_usec": 17033580,
+      "throttled_usec": 1416539,
+      "usage_usec": 478181466,
+      "user_usec": 461147885
+    },
+    "memory.current": 1440481280,
+    "memory.events": {
+      "high": 3709,
+      "low": 0,
+      "max": 0,
+      "oom": 0,
+      "oom_group_kill": 0,
+      "oom_kill": 0,
+      "sock_throttled": 0
+    },
+    "memory.peak": 1611268096,
+    "memory.swap.current": 0,
+    "memory.swap.peak": 0
+  },
+  "automatic_transitions": 32,
+  "campaign_48h_001_unchanged": true,
+  "checkpoint_rows_computed": 74,
+  "checkpoint_rows_reused": 6,
+  "completed_jobs": 32,
+  "dataset_id": "dataset-e0e34a508dad1d117dc02279",
+  "dataset_rows_sha256": "9c61570d5db28e57f1999e10dfb71b363d646ced95f51173abaeede0e2d0f2f0",
+  "director_id": "director-db77aee36a55d008adbfe55c",
+  "director_steps_completed": 3,
+  "duration_seconds": 3825.68,
+  "evidence_root": "/home/charlie/midas/data/reliability-endurance/evidence/20261020T044601Z",
+  "finished_at": "2026-10-20T05:49:47.444414+00:00",
+  "interrupted_job_id": "job-c7becf91ab63450a941339ad",
+  "interrupted_progress": {
+    "done": 5,
+    "total": 80
+  },
+  "minimum_duration_seconds": 3600,
+  "model_artifact_sha256": "f15a25b360f64135a1b50fa044b97ba8ea93e365132eeecba6f147ccd082d118",
+  "model_id": "model-bbf9f4be22244cd4a95940c8",
+  "production_arena_job_manifests": 108,
+  "reality_campaign_manifests_unchanged": true,
+  "reality_cgroup_final": {
+    "available": true,
+    "cpu.stat": {
+      "burst_usec": 0,
+      "core_sched.force_idle_usec": 0,
+      "nice_usec": 1165765000,
+      "nr_bursts": 0,
+      "nr_periods": 300820,
+      "nr_throttled": 23325,
+      "system_usec": 76302880,
+      "throttled_usec": 1535416985,
+      "usage_usec": 1255667633,
+      "user_usec": 1179364752
+    },
+    "memory.current": 621010944,
+    "memory.events": {
+      "high": 10069,
+      "low": 0,
+      "max": 0,
+      "oom": 0,
+      "oom_group_kill": 0,
+      "oom_kill": 0,
+      "sock_throttled": 216
+    },
+    "memory.peak": 738721792,
+    "memory.swap.current": 684032,
+    "memory.swap.peak": 53149696
+  },
+  "recovered_tournament_id": "tournament-404698fd0b27f172275cc0f0",
+  "recovered_tournament_rows": 80,
+  "resource_samples": 119,
+  "run_id": "20261020T044601Z",
+  "schedule_id": "schedule-c323c03aa8694ed9b739dda2",
+  "started_at": "2026-10-20T04:46:01.970300+00:00",
+  "status": "PASS",
+  "test_root": "/home/charlie/midas/data/reliability-endurance/arena",
+  "veritas_v1_outputs_unchanged": true
+}
