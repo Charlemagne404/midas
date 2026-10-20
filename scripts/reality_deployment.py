@@ -12,6 +12,7 @@ import argparse
 import hashlib
 import json
 import math
+import os
 import shutil
 import subprocess
 import sys
@@ -25,19 +26,112 @@ from midas.reality.replay import replay
 from midas.reality.storage import atomic_json, canonical, manifest, read_manifest
 
 WORKSPACE = Path(__file__).resolve().parents[1]
+PRODUCTION_WORKSPACE = Path.home() / "midas-reality"
+PRODUCTION_PYTHON = PRODUCTION_WORKSPACE / ".venv/bin/python"
+PRODUCTION_CONFIG = PRODUCTION_WORKSPACE / "deploy/reality.json"
+SERVICE_UNIT_SOURCE = WORKSPACE / "deploy/systemd/user/midas-reality.service"
+SERVICE_UNIT_TARGET = Path.home() / ".config/systemd/user/midas-reality.service"
+EXPECTED_EFFECTIVE_LIMITS = {
+    "MemoryHigh": str(704 * 1024**2),
+    "MemoryMax": str(768 * 1024**2),
+    "MemorySwapMax": "0",
+    "CPUQuotaPerSecUSec": "250ms",
+    "TasksMax": "32",
+}
 
 
-def source_hash() -> str:
+def source_hash(workspace: Path = WORKSPACE) -> str:
     return hashlib.sha256(
         b"".join(
             p.name.encode() + p.read_bytes()
-            for p in sorted((WORKSPACE / "packages/midas/reality").glob("*.py"))
+            for p in sorted((workspace / "packages/midas/reality").glob("*.py"))
         )
     ).hexdigest()
 
 
 def deployment_tool_hash() -> str:
     return hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
+
+
+def service_unit_hash() -> str:
+    if SERVICE_UNIT_SOURCE.is_symlink() or not SERVICE_UNIT_SOURCE.is_file():
+        raise ValueError("Verified Reality service unit is missing or unsafe")
+    return hashlib.sha256(SERVICE_UNIT_SOURCE.read_bytes()).hexdigest()
+
+
+def production_source_hash() -> str:
+    return source_hash(PRODUCTION_WORKSPACE)
+
+
+def verification_environment() -> dict[str, str]:
+    environment = os.environ.copy()
+    paths = [str(WORKSPACE), str(WORKSPACE / "packages")]
+    inherited = environment.get("PYTHONPATH")
+    if inherited:
+        paths.extend(inherited.split(os.pathsep))
+    environment["PYTHONPATH"] = os.pathsep.join(paths)
+    return environment
+
+
+def _unit_configuration_identity(unit: dict[str, str]) -> dict[str, Any]:
+    fragment = Path(unit.get("FragmentPath", ""))
+    if not fragment.is_absolute() or fragment.is_symlink() or not fragment.is_file():
+        raise ValueError("Active Reality service fragment is missing or unsafe")
+    drop_ins = []
+    for value in unit.get("DropInPaths", "").split():
+        path = Path(value)
+        if path.is_symlink() or not path.is_file():
+            raise ValueError("Active Reality service drop-in is missing or unsafe")
+        drop_ins.append(
+            {"path": str(path), "sha256": hashlib.sha256(path.read_bytes()).hexdigest()}
+        )
+    return {
+        "fragment_path": str(fragment),
+        "fragment_sha256": hashlib.sha256(fragment.read_bytes()).hexdigest(),
+        "drop_ins": drop_ins,
+        "exec_start": unit.get("ExecStart", ""),
+        "working_directory": unit.get("WorkingDirectory", ""),
+        "environment_sha256": unit.get(
+            "EnvironmentSHA256",
+            hashlib.sha256(unit.get("Environment", "").encode()).hexdigest(),
+        ),
+        "environment_files": unit.get("EnvironmentFiles", ""),
+        "user": unit.get("User", ""),
+        "effective_limits": {
+            name: unit.get(name) for name in EXPECTED_EFFECTIVE_LIMITS
+        },
+        "restart": unit.get("Restart"),
+    }
+
+
+def _validate_service_configuration(unit: dict[str, str]) -> dict[str, Any]:
+    identity = _unit_configuration_identity(unit)
+    if SERVICE_UNIT_TARGET.is_symlink() or not SERVICE_UNIT_TARGET.is_file():
+        raise ValueError("Installed Reality service unit is missing or unsafe")
+    if identity["fragment_path"] != str(SERVICE_UNIT_TARGET):
+        raise ValueError("Active Reality service fragment is not the configured user unit")
+    if identity["fragment_sha256"] != service_unit_hash():
+        raise ValueError(
+            "Installed Reality service unit differs from verified source; install it and daemon-reload before preflight"
+        )
+    expected_start = (
+        f"path={PRODUCTION_PYTHON} ; argv[]={PRODUCTION_PYTHON} -m midas.reality "
+        f"record --config {PRODUCTION_CONFIG} ;"
+    )
+    if expected_start not in identity["exec_start"]:
+        raise ValueError("Reality service executable or module arguments differ from the verified target")
+    if identity["working_directory"] != str(PRODUCTION_WORKSPACE):
+        raise ValueError("Reality service working directory differs from the verified target")
+    expected_environment_hash = hashlib.sha256(b"PYTHONUNBUFFERED=1").hexdigest()
+    if identity["environment_sha256"] != expected_environment_hash:
+        raise ValueError("Reality service environment differs from the verified target")
+    if identity["environment_files"] or identity["user"]:
+        raise ValueError("Reality service has an unverified environment file or user override")
+    if identity["effective_limits"] != EXPECTED_EFFECTIVE_LIMITS:
+        raise ValueError("Effective Reality service resource limits differ from the verified contract")
+    if identity["restart"] != "on-failure":
+        raise ValueError("Reality service restart policy is not the expected bounded policy")
+    return identity
 
 
 def service() -> dict[str, str]:
@@ -56,13 +150,40 @@ def service() -> dict[str, str]:
             "-p",
             "Restart",
             "-p",
+            "ExecStart",
+            "-p",
+            "WorkingDirectory",
+            "-p",
+            "Environment",
+            "-p",
+            "EnvironmentFiles",
+            "-p",
+            "User",
+            "-p",
             "ControlGroup",
+            "-p",
+            "FragmentPath",
+            "-p",
+            "DropInPaths",
+            "-p",
+            "MemoryHigh",
+            "-p",
+            "MemoryMax",
+            "-p",
+            "MemorySwapMax",
+            "-p",
+            "CPUQuotaPerSecUSec",
+            "-p",
+            "TasksMax",
         ],
         check=True,
         capture_output=True,
         text=True,
     )
-    return dict(line.split("=", 1) for line in result.stdout.splitlines())
+    values = dict(line.split("=", 1) for line in result.stdout.splitlines())
+    environment = values.pop("Environment", "")
+    values["EnvironmentSHA256"] = hashlib.sha256(environment.encode()).hexdigest()
+    return values
 
 
 def _restart_guard_path() -> Path:
@@ -106,7 +227,19 @@ def verify(output: Path) -> dict[str, Any]:
     began = time.time_ns()
     identity = source_hash()
     tool_identity = deployment_tool_hash()
+    unit_identity = service_unit_hash()
+    workspace = repr(str(WORKSPACE.resolve()))
+    import_check = (
+        "from pathlib import Path; import midas.reality, scripts.reality_deployment; "
+        f"root=Path({workspace}); "
+        "package=Path(midas.reality.__file__).resolve(); "
+        "script=Path(scripts.reality_deployment.__file__).resolve(); "
+        "assert package.is_relative_to(root/'packages'), package; "
+        "assert script.is_relative_to(root/'scripts'), script; "
+        "print(f'package={package} script={script}')"
+    )
     checks = [
+        [sys.executable, "-c", import_check],
         [
             sys.executable,
             "-m",
@@ -132,8 +265,16 @@ def verify(output: Path) -> dict[str, Any]:
         ],
     ]
     results = []
+    environment = verification_environment()
     for command in checks:
-        result = subprocess.run(command, cwd=WORKSPACE, capture_output=True, text=True, check=False)
+        result = subprocess.run(
+            command,
+            cwd=WORKSPACE,
+            env=environment,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
         results.append(
             dict(
                 command=command, returncode=result.returncode, output=result.stdout + result.stderr
@@ -143,6 +284,7 @@ def verify(output: Path) -> dict[str, Any]:
         all(r["returncode"] == 0 for r in results)
         and source_hash() == identity
         and deployment_tool_hash() == tool_identity
+        and service_unit_hash() == unit_identity
     )
     receipt = dict(
         schema_version=1,
@@ -150,6 +292,7 @@ def verify(output: Path) -> dict[str, Any]:
         completed_ns=time.time_ns(),
         source_sha256=identity,
         deployment_tool_sha256=tool_identity,
+        systemd_unit_sha256=unit_identity,
         passed=passed,
         checks=results,
     )
@@ -172,6 +315,7 @@ def preflight(
         not receipt.get("passed")
         or receipt.get("source_sha256") != source_hash()
         or receipt.get("deployment_tool_sha256") != deployment_tool_hash()
+        or receipt.get("systemd_unit_sha256") != service_unit_hash()
     ):
         raise ValueError("Checks missing, failed or source changed since verification")
     if time.time_ns() - receipt["completed_ns"] > 24 * 3600 * 10**9:
@@ -181,6 +325,11 @@ def preflight(
     ignored = {"root", "budget_bytes", "reserve_bytes", "retention_days"}
     if any(candidate.dump()[k] != canary.dump()[k] for k in candidate.dump() if k not in ignored):
         raise ValueError("Canary did not exercise candidate network/reconstruction settings")
+    production_service = service()
+    production_unit_config = _validate_service_configuration(production_service)
+    deployed_source_identity = production_source_hash()
+    if deployed_source_identity != source_hash():
+        raise ValueError("Production Reality package source differs from the verified candidate")
     root = Path(canary.root)
     status = json.loads((root / "status.json").read_text())
     if status["state"] != "STOPPED" or status["failures"] or status["frames"] < 20:
@@ -246,7 +395,7 @@ def preflight(
     if runway < 14 * 86400:
         raise ValueError("Pilot growth offers less than fourteen days storage runway")
     production_status = json.loads((Path(candidate.root) / "status.json").read_text())
-    current = service()
+    current = production_service
     fresh_production = (
         production_status["state"] == "RECORDING_UNSEQUENCED"
         and production_status["fresh_books"] == production_status["expected_books"]
@@ -278,6 +427,9 @@ def preflight(
         checked_ns=time.time_ns(),
         source_sha256=source_hash(),
         deployment_tool_sha256=deployment_tool_hash(),
+        systemd_unit_sha256=service_unit_hash(),
+        production_source_sha256=deployed_source_identity,
+        production_unit_config=production_unit_config,
         candidate=candidate.dump(),
         canary=canary.dump(),
         canary_replay_sha256=engine.digest(),
@@ -327,13 +479,19 @@ def apply(
         not gate.get("passed")
         or gate["source_sha256"] != source_hash()
         or gate.get("deployment_tool_sha256") != deployment_tool_hash()
+        or gate.get("systemd_unit_sha256") != service_unit_hash()
+        or gate.get("production_source_sha256") != production_source_hash()
+        or gate.get("production_source_sha256") != source_hash()
         or gate["candidate"] != candidate.dump()
+        or not isinstance(gate.get("production_unit_config"), dict)
         or time.time_ns() - gate["checked_ns"] > 60 * 10**9
     ):
         raise ValueError("Deployment gate changed or expired; rerun preflight")
     before = service()
     if before["MainPID"] != gate["production_before"]["MainPID"]:
         raise ValueError("Production process changed after preflight")
+    if _validate_service_configuration(before) != gate["production_unit_config"]:
+        raise ValueError("Production service unit or drop-ins changed after preflight")
     if before.get("Restart") != "on-failure":
         raise ValueError("Production restart policy is not the expected bounded policy")
     previous = Config.load(config_path)

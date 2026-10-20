@@ -8,7 +8,47 @@ from unittest.mock import patch
 import pytest
 from midas.reality.config import Config
 
-from scripts.reality_deployment import apply, deployment_tool_hash, preflight, source_hash
+from scripts.reality_deployment import (
+    PRODUCTION_CONFIG,
+    PRODUCTION_PYTHON,
+    PRODUCTION_WORKSPACE,
+    SERVICE_UNIT_SOURCE,
+    _validate_service_configuration,
+    apply,
+    deployment_tool_hash,
+    preflight,
+    service_unit_hash,
+    source_hash,
+    verification_environment,
+)
+
+
+def _service_state(tmp_path, monkeypatch):
+    fragment = tmp_path / "home/.config/systemd/user/midas-reality.service"
+    fragment.parent.mkdir(parents=True)
+    fragment.write_bytes(SERVICE_UNIT_SOURCE.read_bytes())
+    drop_in = tmp_path / "home/.config/systemd/user.control/midas-reality.service.d/limits.conf"
+    drop_in.parent.mkdir(parents=True)
+    drop_in.write_text("[Service]\nMemorySwapMax=0\n")
+    monkeypatch.setattr("scripts.reality_deployment.SERVICE_UNIT_TARGET", fragment)
+    return dict(
+        FragmentPath=str(fragment),
+        DropInPaths=str(drop_in),
+        MemoryHigh=str(704 * 1024**2),
+        MemoryMax=str(768 * 1024**2),
+        MemorySwapMax="0",
+        CPUQuotaPerSecUSec="250ms",
+        TasksMax="32",
+        Restart="on-failure",
+        ExecStart=(
+            f"{{ path={PRODUCTION_PYTHON} ; argv[]={PRODUCTION_PYTHON} -m midas.reality "
+            f"record --config {PRODUCTION_CONFIG} ; ignore_errors=no }}"
+        ),
+        WorkingDirectory=str(PRODUCTION_WORKSPACE),
+        Environment="PYTHONUNBUFFERED=1",
+        EnvironmentFiles="",
+        User="",
+    )
 
 
 def test_unverified_or_changed_implementation_rejected_first():
@@ -19,12 +59,21 @@ def test_unverified_or_changed_implementation_rejected_first():
             preflight(current, canary, receipt, 1024, current.reserve_bytes)
 
 
+def test_verification_environment_prioritizes_disposable_worktree(tmp_path, monkeypatch):
+    monkeypatch.setattr("scripts.reality_deployment.WORKSPACE", tmp_path)
+    monkeypatch.setenv("PYTHONPATH", "/production:/production/packages")
+    paths = verification_environment()["PYTHONPATH"].split(":")
+    assert paths[:2] == [str(tmp_path), str(tmp_path / "packages")]
+    assert paths[2:] == ["/production", "/production/packages"]
+
+
 def test_unisolated_and_unexercised_settings_rejected():
     config = Config()
     receipt = dict(
         passed=True,
         source_sha256=source_hash(),
         deployment_tool_sha256=deployment_tool_hash(),
+        systemd_unit_sha256=service_unit_hash(),
         completed_ns=time.time_ns(),
     )
     with pytest.raises(ValueError, match="isolated"):
@@ -39,14 +88,58 @@ def test_unisolated_and_unexercised_settings_rejected():
         )
 
 
+def test_preflight_requires_source_unit_and_effective_limits(tmp_path, monkeypatch):
+    unit = _service_state(tmp_path, monkeypatch)
+    identity = _validate_service_configuration(unit)
+    assert identity["fragment_sha256"] == service_unit_hash()
+    unit["ExecStart"] = "{ path=/tmp/other-python ; argv[]=/tmp/other-python -m other }"
+    with pytest.raises(ValueError, match="executable or module arguments"):
+        _validate_service_configuration(unit)
+    unit["ExecStart"] = (
+        f"{{ path={PRODUCTION_PYTHON} ; argv[]={PRODUCTION_PYTHON} -m midas.reality "
+        f"record --config {PRODUCTION_CONFIG} ; ignore_errors=no }}"
+    )
+    unit["MemoryMax"] = str(512 * 1024**2)
+    with pytest.raises(ValueError, match="resource limits"):
+        _validate_service_configuration(unit)
+    unit["MemoryMax"] = str(768 * 1024**2)
+    fragment = tmp_path / "home/.config/systemd/user/midas-reality.service"
+    fragment.write_text("[Service]\nMemoryMax=512M\n")
+    with pytest.raises(ValueError, match="differs from verified source"):
+        _validate_service_configuration(unit)
+
+
+def test_preflight_rejects_production_package_source_drift(tmp_path, monkeypatch):
+    current = Config()
+    canary = replace(current, root=current.root + "-canary")
+    receipt = dict(
+        passed=True,
+        source_sha256=source_hash(),
+        deployment_tool_sha256=deployment_tool_hash(),
+        systemd_unit_sha256=service_unit_hash(),
+        completed_ns=time.time_ns(),
+    )
+    service_state = _service_state(tmp_path, monkeypatch)
+    with (
+        patch("scripts.reality_deployment.service", return_value=service_state),
+        patch("scripts.reality_deployment.production_source_hash", return_value="drifted"),
+    ):
+        with pytest.raises(ValueError, match="package source differs"):
+            preflight(current, canary, receipt, 1024, current.reserve_bytes)
+
+
 def test_apply_expired_gate_never_writes_or_restarts(tmp_path):
     config = Config()
     gate = dict(
         passed=True,
         source_sha256=source_hash(),
         deployment_tool_sha256=deployment_tool_hash(),
+        systemd_unit_sha256=service_unit_hash(),
+        production_source_sha256=source_hash(),
         candidate=config.dump(),
         checked_ns=0,
+        production_before={},
+        production_unit_config={},
     )
     with (
         patch("scripts.reality_deployment.atomic_json") as write,
@@ -64,9 +157,12 @@ def test_apply_changed_process_never_writes_or_restarts(tmp_path):
         passed=True,
         source_sha256=source_hash(),
         deployment_tool_sha256=deployment_tool_hash(),
+        systemd_unit_sha256=service_unit_hash(),
+        production_source_sha256=source_hash(),
         candidate=config.dump(),
         checked_ns=time.time_ns(),
         production_before=dict(MainPID="123"),
+        production_unit_config={},
     )
     with (
         patch("scripts.reality_deployment.service", return_value=dict(MainPID="124")),
@@ -96,25 +192,30 @@ def test_apply_invalid_health_window_cannot_mutate(tmp_path):
     restart.assert_not_called()
 
 
-def test_apply_timeout_keeps_one_shot_guard_and_never_restarts_back(tmp_path):
+def test_apply_timeout_keeps_one_shot_guard_and_never_restarts_back(tmp_path, monkeypatch):
     config = Config()
     config_path = tmp_path / "reality.json"
     config_path.write_text(json.dumps(config.dump()))
     output = tmp_path / "deployment.json"
+    initial_service_state = _service_state(tmp_path, monkeypatch)
+    initial_service_state.update(MainPID="123", ActiveState="active", ControlGroup="")
     gate = dict(
         passed=True,
         source_sha256=source_hash(),
         deployment_tool_sha256=deployment_tool_hash(),
+        systemd_unit_sha256=service_unit_hash(),
+        production_source_sha256=source_hash(),
         candidate=config.dump(),
         checked_ns=time.time_ns(),
-        production_before=dict(MainPID="123"),
+        production_before=initial_service_state,
+        production_unit_config=_validate_service_configuration(initial_service_state),
     )
     service_state = dict(
+        initial_service_state,
         MainPID="456",
         NRestarts="0",
         ActiveState="active",
         Restart="no",
-        ControlGroup="",
     )
     with (
         patch("scripts.reality_deployment.service", side_effect=[
