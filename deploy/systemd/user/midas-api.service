@@ -8,6 +8,7 @@ StartLimitBurst=2
 Type=simple
 WorkingDirectory=%h/midas
 Environment=MIDAS_MODE=demo
+Environment=MIDAS_RECORDING_MAX_BYTES=4294967296
 Environment=MIDAS_LABORATORY_ROOT=%h/midas/data/laboratory-final
 Environment=MIDAS_VERITAS_WORKSPACE=%h/midas-veritas
 Environment=MIDAS_REALITY_WORKSPACE=%h/midas-reality
