@@ -3,8 +3,13 @@
 from __future__ import annotations
 
 import argparse
+import fcntl
 import json
+import os
 import shutil
+import stat
+from collections.abc import Iterator
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 
@@ -19,6 +24,39 @@ MAX_MEMORY_PSI_FULL_AVG10_PERCENT = 1.0
 MAX_IO_PSI_SOME_AVG10_PERCENT = 20.0
 MAX_ARENA_JOB_RECORDS = 10_000
 MAX_ARENA_JOB_BYTES = 64 * 1024
+OTHER_ARENA_ROOT = Path("/home/charlie/midas-veritas/data/arena")
+
+
+class AdmissionLeaseBusy(RuntimeError):
+    """Another MIDAS worker or bounded batch owns the host admission lease."""
+
+
+def global_lock_path() -> Path:
+    arena_root = Path.home() / "midas/data/arena"
+    if arena_root.is_symlink() or not arena_root.is_dir():
+        raise OSError("Primary Arena root is unavailable or unsafe")
+    return arena_root / ".global-admission.lock"
+
+
+@contextmanager
+def admission_lease() -> Iterator[None]:
+    path = global_lock_path()
+    flags = os.O_CREAT | os.O_RDWR | os.O_CLOEXEC | getattr(os, "O_NOFOLLOW", 0)
+    fd = os.open(path, flags, 0o600)
+    try:
+        metadata = os.fstat(fd)
+        if not stat.S_ISREG(metadata.st_mode) or metadata.st_uid != os.getuid():
+            raise OSError("Resource admission lock is not a user-owned regular file")
+        with os.fdopen(fd, "r+") as lease:
+            fd = -1
+            try:
+                fcntl.flock(lease, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except BlockingIOError:
+                raise AdmissionLeaseBusy from None
+            yield
+    finally:
+        if fd >= 0:
+            os.close(fd)
 
 
 def _pressure_avg10(kind: str, root: Path = Path("/proc/pressure")) -> dict[str, float]:
@@ -38,24 +76,40 @@ def _available_memory_bytes(path: Path = Path("/proc/meminfo")) -> int:
     raise ValueError("MemAvailable is missing")
 
 
-def _active_arena_jobs(root: Path) -> list[str]:
-    if root.is_symlink() or not root.is_dir():
-        raise ValueError("Arena state root is missing or unsafe")
-    jobs_root = root / "jobs"
-    if jobs_root.is_symlink():
-        raise ValueError("Arena jobs root is a symlink")
+def _active_arena_jobs(roots: tuple[Path, ...]) -> list[str]:
+    if not roots:
+        raise ValueError("At least one Arena root is required")
     active: list[str] = []
-    paths = root.glob("jobs/*/job.json")
-    for index, path in enumerate(paths):
-        if index >= MAX_ARENA_JOB_RECORDS:
-            raise ValueError("Arena job catalog exceeds its bound")
-        if path.is_symlink() or not path.is_file() or path.stat().st_size > MAX_ARENA_JOB_BYTES:
-            raise ValueError("Arena job record is missing, unsafe, or oversized")
-        record = json.loads(path.read_text())
-        if not isinstance(record, dict):
-            raise ValueError("Arena job record is malformed")
-        if record.get("state") in {"QUEUED", "RUNNING"}:
-            active.append(str(record.get("job_id", path.parent.name)))
+    seen: set[Path] = set()
+    for index, root in enumerate(roots):
+        if root.is_symlink():
+            raise ValueError("Arena state root is a symlink")
+        if not root.exists() and index > 0:
+            continue
+        if not root.is_dir():
+            raise ValueError("Arena state root is missing or unsafe")
+        resolved = root.resolve()
+        if resolved in seen:
+            continue
+        seen.add(resolved)
+        jobs_root = root / "jobs"
+        if jobs_root.is_symlink():
+            raise ValueError("Arena jobs root is a symlink")
+        for record_index, path in enumerate(jobs_root.glob("*/job.json")):
+            if record_index >= MAX_ARENA_JOB_RECORDS:
+                raise ValueError("Arena job catalog exceeds its bound")
+            if (
+                path.is_symlink()
+                or path.parent.is_symlink()
+                or not path.is_file()
+                or path.stat().st_size > MAX_ARENA_JOB_BYTES
+            ):
+                raise ValueError("Arena job record is missing, unsafe, or oversized")
+            record = json.loads(path.read_text())
+            if not isinstance(record, dict):
+                raise ValueError("Arena job record is malformed")
+            if record.get("state") in {"QUEUED", "RUNNING"}:
+                active.append(f"{root.name}:{record.get('job_id', path.parent.name)}")
     return active
 
 
@@ -63,13 +117,14 @@ def resource_snapshot(
     arena_root: Path,
     output_root: Path,
     *,
+    other_arena_roots: tuple[Path, ...] = (),
     pressure_root: Path = Path("/proc/pressure"),
     meminfo_path: Path = Path("/proc/meminfo"),
 ) -> dict[str, Any]:
     if output_root.is_symlink() or not output_root.is_dir():
         raise ValueError("Gap-detail output root is missing or unsafe")
     return {
-        "active_arena_job_ids": _active_arena_jobs(arena_root),
+        "active_arena_job_ids": _active_arena_jobs((arena_root, *other_arena_roots)),
         "available_memory_bytes": _available_memory_bytes(meminfo_path),
         "disk_free_bytes": shutil.disk_usage(output_root).free,
         "cpu_psi": _pressure_avg10("cpu", pressure_root),
@@ -126,34 +181,50 @@ def run_batch(
     *,
     max_segments: int = 128,
     max_source_mib: int = 32,
+    other_arena_roots: tuple[Path, ...] = (),
     snapshot: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     if not 1 <= max_segments <= 128 or not 1 <= max_source_mib <= 32:
         raise ValueError("batch limits must be within 1..128 segments and 1..32 MiB")
-    measured = snapshot if snapshot is not None else resource_snapshot(arena_root, root)
-    gate = resource_gate(measured)
-    if not gate["ready"]:
-        return {"status": "WAITING_RESOURCES", "resource_reasons": gate["reasons"]}
-    result = run_v2_batch(
-        root,
-        max_segments=max_segments,
-        max_source_bytes=max_source_mib * 1024**2,
-    )
-    control = read_control(root)
-    last_success = _last_successful_batch(control)
-    batch_processed = 0
-    if last_success.get("summary_sha256") == result.get("summary_sha256"):
-        batch_processed = int(last_success.get("batch_processed_segment_count", 0))
-    return {
-        "status": result["status"],
-        "batch_processed_segment_count": batch_processed,
-        "processed_segment_count": result.get("processed_segment_count", 0),
-        "pending_segment_count": result.get("pending_segment_count", 0),
-        "summary_sha256": result.get("summary_sha256"),
-        "control_sha256": result.get("control_sha256"),
-        "last_error_type": result.get("last_error_type"),
-        "last_error": result.get("last_error"),
-    }
+    try:
+        with admission_lease():
+            measured = (
+                snapshot
+                if snapshot is not None
+                else resource_snapshot(
+                    arena_root,
+                    root,
+                    other_arena_roots=other_arena_roots,
+                )
+            )
+            gate = resource_gate(measured)
+            if not gate["ready"]:
+                return {"status": "WAITING_RESOURCES", "resource_reasons": gate["reasons"]}
+            result = run_v2_batch(
+                root,
+                max_segments=max_segments,
+                max_source_bytes=max_source_mib * 1024**2,
+            )
+            control = read_control(root)
+            last_success = _last_successful_batch(control)
+            batch_processed = 0
+            if last_success.get("summary_sha256") == result.get("summary_sha256"):
+                batch_processed = int(last_success.get("batch_processed_segment_count", 0))
+            return {
+                "status": result["status"],
+                "batch_processed_segment_count": batch_processed,
+                "processed_segment_count": result.get("processed_segment_count", 0),
+                "pending_segment_count": result.get("pending_segment_count", 0),
+                "summary_sha256": result.get("summary_sha256"),
+                "control_sha256": result.get("control_sha256"),
+                "last_error_type": result.get("last_error_type"),
+                "last_error": result.get("last_error"),
+            }
+    except AdmissionLeaseBusy:
+        return {
+            "status": "WAITING_RESOURCES",
+            "resource_reasons": ["resource_admission_lock_busy"],
+        }
 
 
 def main() -> None:
@@ -164,6 +235,13 @@ def main() -> None:
         type=Path,
         default=Path("/home/charlie/midas/data/arena"),
         help="Arena worker catalog used by the resource admission gate",
+    )
+    parser.add_argument(
+        "--other-arena-root",
+        action="append",
+        type=Path,
+        default=[OTHER_ARENA_ROOT],
+        help="Additional Arena worker catalog for host-wide admission",
     )
     parser.add_argument("--max-segments", type=int, default=128)
     parser.add_argument("--max-source-mib", type=int, default=32)
@@ -176,7 +254,13 @@ def main() -> None:
             args.arena_root,
             max_segments=args.max_segments,
             max_source_mib=args.max_source_mib,
+            other_arena_roots=tuple(args.other_arena_root),
         )
+    except AdmissionLeaseBusy:
+        result = {
+            "status": "WAITING_RESOURCES",
+            "resource_reasons": ["resource_admission_lock_busy"],
+        }
     except (OSError, ValueError, json.JSONDecodeError) as error:
         result = {
             "status": "WAITING_RESOURCES",

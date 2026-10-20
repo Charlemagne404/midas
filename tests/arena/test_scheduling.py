@@ -133,6 +133,22 @@ def test_admission_expiry_and_resource_deferral(prepared, monkeypatch):
     assert not list(root.glob("jobs/*/job.json"))
 
 
+def test_global_admission_race_persists_waiting_resources(prepared, monkeypatch):
+    from midas.arena.admission import ResourceAdmissionDenied
+
+    root, _, identity = prepared
+
+    def busy(*_args, **_kwargs):
+        raise ResourceAdmissionDenied(["resource_admission_lock_busy"])
+
+    monkeypatch.setattr(scheduling, "create_job", busy)
+    waiting = tick(root, identity, now=1010)
+    assert waiting["state"] == "WAITING_RESOURCES"
+    assert waiting["resource_reasons"] == ["resource_admission_lock_busy"]
+    assert waiting["steps"][0]["state"] == "WAITING_RESOURCES"
+    assert not list(root.glob("jobs/*/job.json"))
+
+
 def test_existing_arena_history_does_not_consume_next_job_growth_budget(prepared):
     root, _, identity = prepared
     historical = root / "historical-sparse-artifact"

@@ -155,6 +155,11 @@ def create(
                 if existing.get("retry_of") != retry_of:
                     raise ValueError("Admission key was already bound to another retry parent")
                 return existing
+        if launch:
+            from midas.arena.admission import admission_slot
+
+            with admission_slot(root):
+                return _create(root, spec, launch, admission_key, retry_of, attempt_number)
         return _create(root, spec, launch, admission_key, retry_of, attempt_number)
 
 
