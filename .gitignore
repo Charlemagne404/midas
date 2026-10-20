@@ -58,3 +58,6 @@ data/datasets/public-series-*.manifest.json
 *.sqlite
 *.sqlite-shm
 *.sqlite-wal
+
+# Isolated reliability endurance artifacts; compact evidence remains tracked.
+data/reliability-endurance/arena/
