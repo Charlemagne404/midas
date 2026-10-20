@@ -1,0 +1,77 @@
+{
+  "captured_at": "2026-10-20T13:19:08+02:00",
+  "repositories": {
+    "main": {"revision": "fb15a2b295a955e06565353d0f745f1d795a6ef6", "origin_matches": true, "clean": true},
+    "reality": {"branch": "project/reality", "revision": "c83320000a085bf30490b4b76b425527fe8574f7", "origin_matches": true, "clean": true},
+    "veritas": {"branch": "project/veritas", "revision": "8717666aa1988fb28c999998014ca1c4b5717113", "origin_matches": true, "clean": true}
+  },
+  "services": {
+    "midas_api": {"active": true, "pid": 2737736, "restarts": 0, "health": "READY", "paper_recovery": "CHECKPOINT_VERIFIED", "journal_events": 396955, "laboratory": "READY", "live_execution": false},
+    "midas_reality_api": {"active": true, "pid": 2688994, "restarts": 0, "direct_health_requires_authentication": true},
+    "midas_reality_recorder": {
+      "unit": "midas-reality.service",
+      "active": true,
+      "pid": 863193,
+      "restarts": 1,
+      "loaded_candidate_code": false,
+      "memory_current_bytes": 731574272,
+      "memory_high_bytes": 738197504,
+      "memory_max_bytes": 805306368,
+      "memory_swap_current_bytes": 684032,
+      "memory_swap_max_bytes": 0,
+      "memory_events": {"high": 10097, "max": 0, "oom": 0, "oom_kill": 0},
+      "margin_to_memory_high_bytes": 6623232
+    }
+  },
+  "reality_observation": {
+    "health": "recording",
+    "health_reasons": [],
+    "state": "RECORDING_UNSEQUENCED",
+    "ordinal": 2418744,
+    "frames": 450697,
+    "fresh_books": 16,
+    "expected_books": 16,
+    "status_age_seconds": 1.79170916,
+    "sequence_verified": false,
+    "orders_submitted": 0,
+    "failure_count": 1,
+    "diagnostic": "ConnectionClosedOK: received 1001 (going away) server shutting down; then sent 1001 (going away) server shutting down",
+    "diagnostic_timestamp_available": false
+  },
+  "veritas_v2": {
+    "last_run_start": "2026-10-20T13:17:14+02:00",
+    "last_run_exit": "2026-10-20T13:17:20+02:00",
+    "last_run_result": "success",
+    "status": "current",
+    "analysis_version": "veritas-finalized-reality-gap-detail-v2",
+    "processed_segment_count": 16147,
+    "pending_segment_count": 0,
+    "last_processed_ordinal": 2418439,
+    "summary_sha256": "8466ba4598e506a08f5ac0c8e8952d43abc4e202647b99751efb0b519a82f4f2",
+    "campaign_sha256": "aa8acb2b46823c1a1e3ac5d01a57dde917746c2c7471098ae2a4598875e322f5",
+    "v2_timer_active": true,
+    "v1_timer_active": false
+  },
+  "host": {
+    "cpu_psi_some_avg10_percent": 3.94,
+    "memory_psi_some_avg10_percent": 0.0,
+    "memory_psi_full_avg10_percent": 0.0,
+    "io_psi_some_avg10_percent": 0.70,
+    "available_memory_bytes": 9070108672,
+    "swap_total_bytes": 4294963200,
+    "swap_used_bytes": 4243329024
+  },
+  "campaign_48h_001": {
+    "manifest_sha256": "55538167f6b0d9516270001587abea0894801124effad635a0d830be5e0be379",
+    "status_sha256": "44f146d86567830a34db95838297faa980510e7bc6daac1f22a36fcbbe6b8954",
+    "modified": false
+  },
+  "deployment": {
+    "reality_candidate_revision": "c83320000a085bf30490b4b76b425527fe8574f7",
+    "candidate_package_sha256": "0469889b4613a5fb875f34d2c6e14f9b74ba7f3188f51a3a9350078597bd8ad5",
+    "production_deployed": false,
+    "production_replay_attempted": false,
+    "recorder_restart_attempted": false
+  },
+  "endurance": {"previous_isolated_run_seconds": 3825, "automatic_transitions": 32, "checkpoint_recovery_passed": true}
+}
