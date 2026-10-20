@@ -1,0 +1,498 @@
+{
+  "synthetic": true,
+  "memory": [
+    {
+      "synthetic": true,
+      "variant": "candidate",
+      "markets": 1,
+      "subscriptions": 2,
+      "depth_per_side": 100,
+      "retained_heap_bytes": 105715,
+      "digest_temporary_peak_bytes": 13417,
+      "post_digest_heap_bytes": 113380,
+      "digest_seconds": 0.0033992649987339973,
+      "digest": "8b090e22c142088542d6a882c94e9fc03c99d9bdf6a56233da56ce8a84e206dc",
+      "max_rss_kib": 20324,
+      "allocation_sites": [
+        "/home/charlie/midas-reality-reliability/packages/midas/reality/reconstruction.py:17: size=81.5 KiB, count=804, average=104 B",
+        "/home/charlie/midas-reality-reliability/packages/midas/reality/reconstruction.py:227: size=18.1 KiB, count=4, average=4624 B",
+        "/home/charlie/midas-reality-reliability/packages/midas/reality/reconstruction.py:464: size=5544 B, count=99, average=56 B",
+        "/home/charlie/midas-reality-reliability/packages/midas/reality/reconstruction.py:230: size=1048 B, count=5, average=210 B",
+        "/home/charlie/midas-reality-reliability/packages/midas/reality/reconstruction.py:77: size=760 B, count=2, average=380 B"
+      ]
+    },
+    {
+      "synthetic": true,
+      "variant": "loaded-2b83818",
+      "markets": 1,
+      "subscriptions": 2,
+      "depth_per_side": 100,
+      "retained_heap_bytes": 105779,
+      "digest_temporary_peak_bytes": 92664,
+      "post_digest_heap_bytes": 117588,
+      "digest_seconds": 0.0037165479734539986,
+      "digest": "8b090e22c142088542d6a882c94e9fc03c99d9bdf6a56233da56ce8a84e206dc",
+      "max_rss_kib": 21544,
+      "allocation_sites": [
+        "historical-reconstruction-2b83818:15: size=81.5 KiB, count=804, average=104 B",
+        "historical-reconstruction-2b83818:189: size=18.1 KiB, count=4, average=4624 B",
+        "historical-reconstruction-2b83818:338: size=4200 B, count=75, average=56 B",
+        "historical-reconstruction-2b83818:339: size=4144 B, count=74, average=56 B",
+        "/usr/lib/python3.12/json/encoder.py:258: size=1784 B, count=32, average=56 B"
+      ]
+    },
+    {
+      "synthetic": true,
+      "variant": "candidate",
+      "markets": 4,
+      "subscriptions": 8,
+      "depth_per_side": 100,
+      "retained_heap_bytes": 417725,
+      "digest_temporary_peak_bytes": 22947,
+      "post_digest_heap_bytes": 425654,
+      "digest_seconds": 0.012829743907786906,
+      "digest": "3f455da019e2a6b4cf84391f4f21ae11bc5e9d4601125055a13c0dd1afe82d71",
+      "max_rss_kib": 21532,
+      "allocation_sites": [
+        "/home/charlie/midas-reality-reliability/packages/midas/reality/reconstruction.py:17: size=325 KiB, count=3204, average=104 B",
+        "/home/charlie/midas-reality-reliability/packages/midas/reality/reconstruction.py:227: size=72.2 KiB, count=16, average=4624 B",
+        "/home/charlie/midas-reality-reliability/packages/midas/reality/reconstruction.py:464: size=5544 B, count=99, average=56 B",
+        "/home/charlie/midas-reality-reliability/packages/midas/reality/reconstruction.py:230: size=3920 B, count=17, average=231 B",
+        "/home/charlie/midas-reality-reliability/packages/midas/reality/reconstruction.py:241: size=1472 B, count=16, average=92 B"
+      ]
+    },
+    {
+      "synthetic": true,
+      "variant": "loaded-2b83818",
+      "markets": 4,
+      "subscriptions": 8,
+      "depth_per_side": 100,
+      "retained_heap_bytes": 417789,
+      "digest_temporary_peak_bytes": 348544,
+      "post_digest_heap_bytes": 430198,
+      "digest_seconds": 0.014702865038998425,
+      "digest": "3f455da019e2a6b4cf84391f4f21ae11bc5e9d4601125055a13c0dd1afe82d71",
+      "max_rss_kib": 22396,
+      "allocation_sites": [
+        "historical-reconstruction-2b83818:15: size=325 KiB, count=3204, average=104 B",
+        "historical-reconstruction-2b83818:189: size=72.2 KiB, count=16, average=4624 B",
+        "historical-reconstruction-2b83818:338: size=4200 B, count=75, average=56 B",
+        "historical-reconstruction-2b83818:339: size=4144 B, count=74, average=56 B",
+        "historical-reconstruction-2b83818:192: size=3920 B, count=17, average=231 B"
+      ]
+    },
+    {
+      "synthetic": true,
+      "variant": "candidate",
+      "markets": 8,
+      "subscriptions": 16,
+      "depth_per_side": 100,
+      "retained_heap_bytes": 833213,
+      "digest_temporary_peak_bytes": 33795,
+      "post_digest_heap_bytes": 841654,
+      "digest_seconds": 0.025149399996735156,
+      "digest": "661e682f7de89e5a695f3f3fbbce772242ca3a82f5660c2ee98249fc69e0cf16",
+      "max_rss_kib": 22780,
+      "allocation_sites": [
+        "/home/charlie/midas-reality-reliability/packages/midas/reality/reconstruction.py:17: size=650 KiB, count=6404, average=104 B",
+        "/home/charlie/midas-reality-reliability/packages/midas/reality/reconstruction.py:227: size=144 KiB, count=32, average=4624 B",
+        "/home/charlie/midas-reality-reliability/packages/midas/reality/reconstruction.py:230: size=7824 B, count=33, average=237 B",
+        "/home/charlie/midas-reality-reliability/packages/midas/reality/reconstruction.py:464: size=5544 B, count=99, average=56 B",
+        "/home/charlie/midas-reality-reliability/packages/midas/reality/reconstruction.py:241: size=2944 B, count=32, average=92 B"
+      ]
+    },
+    {
+      "synthetic": true,
+      "variant": "loaded-2b83818",
+      "markets": 8,
+      "subscriptions": 16,
+      "depth_per_side": 100,
+      "retained_heap_bytes": 833109,
+      "digest_temporary_peak_bytes": 689828,
+      "post_digest_heap_bytes": 846478,
+      "digest_seconds": 0.030083613004535437,
+      "digest": "661e682f7de89e5a695f3f3fbbce772242ca3a82f5660c2ee98249fc69e0cf16",
+      "max_rss_kib": 24280,
+      "allocation_sites": [
+        "historical-reconstruction-2b83818:15: size=650 KiB, count=6404, average=104 B",
+        "historical-reconstruction-2b83818:189: size=144 KiB, count=32, average=4624 B",
+        "historical-reconstruction-2b83818:192: size=7824 B, count=33, average=237 B",
+        "historical-reconstruction-2b83818:338: size=4200 B, count=75, average=56 B",
+        "historical-reconstruction-2b83818:339: size=4144 B, count=74, average=56 B"
+      ]
+    },
+    {
+      "synthetic": true,
+      "variant": "candidate",
+      "markets": 10,
+      "subscriptions": 20,
+      "depth_per_side": 100,
+      "retained_heap_bytes": 1042441,
+      "digest_temporary_peak_bytes": 38831,
+      "post_digest_heap_bytes": 1051138,
+      "digest_seconds": 0.031273539061658084,
+      "digest": "9927f2b56e9dc3bbd1b7592594f889fb114a5da3c1f99d8552b87bee34b7d4e1",
+      "max_rss_kib": 23696,
+      "allocation_sites": [
+        "/home/charlie/midas-reality-reliability/packages/midas/reality/reconstruction.py:17: size=813 KiB, count=8004, average=104 B",
+        "/home/charlie/midas-reality-reliability/packages/midas/reality/reconstruction.py:227: size=181 KiB, count=40, average=4624 B",
+        "/home/charlie/midas-reality-reliability/packages/midas/reality/reconstruction.py:230: size=9680 B, count=41, average=236 B",
+        "/home/charlie/midas-reality-reliability/packages/midas/reality/reconstruction.py:464: size=5544 B, count=99, average=56 B",
+        "/home/charlie/midas-reality-reliability/packages/midas/reality/reconstruction.py:241: size=3680 B, count=40, average=92 B"
+      ]
+    },
+    {
+      "synthetic": true,
+      "variant": "loaded-2b83818",
+      "markets": 10,
+      "subscriptions": 20,
+      "depth_per_side": 100,
+      "retained_heap_bytes": 1042113,
+      "digest_temporary_peak_bytes": 860372,
+      "post_digest_heap_bytes": 1055962,
+      "digest_seconds": 0.03676336701028049,
+      "digest": "9927f2b56e9dc3bbd1b7592594f889fb114a5da3c1f99d8552b87bee34b7d4e1",
+      "max_rss_kib": 25224,
+      "allocation_sites": [
+        "historical-reconstruction-2b83818:15: size=813 KiB, count=8004, average=104 B",
+        "historical-reconstruction-2b83818:189: size=181 KiB, count=40, average=4624 B",
+        "historical-reconstruction-2b83818:192: size=9680 B, count=41, average=236 B",
+        "historical-reconstruction-2b83818:338: size=4200 B, count=75, average=56 B",
+        "historical-reconstruction-2b83818:339: size=4144 B, count=74, average=56 B"
+      ]
+    },
+    {
+      "synthetic": true,
+      "variant": "candidate",
+      "markets": 1,
+      "subscriptions": 2,
+      "depth_per_side": 1000,
+      "retained_heap_bytes": 983635,
+      "digest_temporary_peak_bytes": 71045,
+      "post_digest_heap_bytes": 1041700,
+      "digest_seconds": 0.025198608986102045,
+      "digest": "b45bd6bc7667bf1a71f04d8272839d069e54d2a1f8d0872bc5fb785ff41b5e8e",
+      "max_rss_kib": 24428,
+      "allocation_sites": [
+        "/home/charlie/midas-reality-reliability/packages/midas/reality/reconstruction.py:17: size=813 KiB, count=8004, average=104 B",
+        "/home/charlie/midas-reality-reliability/packages/midas/reality/reconstruction.py:227: size=144 KiB, count=4, average=36.0 KiB",
+        "/home/charlie/midas-reality-reliability/packages/midas/reality/reconstruction.py:464: size=54.6 KiB, count=999, average=56 B",
+        "/home/charlie/midas-reality-reliability/packages/midas/reality/reconstruction.py:230: size=1048 B, count=5, average=210 B",
+        "/home/charlie/midas-reality-reliability/packages/midas/reality/reconstruction.py:77: size=760 B, count=2, average=380 B"
+      ]
+    },
+    {
+      "synthetic": true,
+      "variant": "loaded-2b83818",
+      "markets": 1,
+      "subscriptions": 2,
+      "depth_per_side": 1000,
+      "retained_heap_bytes": 983635,
+      "digest_temporary_peak_bytes": 884008,
+      "post_digest_heap_bytes": 1045844,
+      "digest_seconds": 0.034373843926005065,
+      "digest": "b45bd6bc7667bf1a71f04d8272839d069e54d2a1f8d0872bc5fb785ff41b5e8e",
+      "max_rss_kib": 25472,
+      "allocation_sites": [
+        "historical-reconstruction-2b83818:15: size=813 KiB, count=8004, average=104 B",
+        "historical-reconstruction-2b83818:189: size=144 KiB, count=4, average=36.0 KiB",
+        "historical-reconstruction-2b83818:339: size=53.3 KiB, count=974, average=56 B",
+        "historical-reconstruction-2b83818:338: size=4200 B, count=75, average=56 B",
+        "/usr/lib/python3.12/json/encoder.py:258: size=1784 B, count=32, average=56 B"
+      ]
+    },
+    {
+      "synthetic": true,
+      "variant": "candidate",
+      "markets": 4,
+      "subscriptions": 8,
+      "depth_per_side": 1000,
+      "retained_heap_bytes": 3929213,
+      "digest_temporary_peak_bytes": 80575,
+      "post_digest_heap_bytes": 3987542,
+      "digest_seconds": 0.09933149500284344,
+      "digest": "985c96a08bf17fb18a35d3ee8bd1fc22db3ad859da242185f50c854138b05338",
+      "max_rss_kib": 34740,
+      "allocation_sites": [
+        "/home/charlie/midas-reality-reliability/packages/midas/reality/reconstruction.py:17: size=3250 KiB, count=32004, average=104 B",
+        "/home/charlie/midas-reality-reliability/packages/midas/reality/reconstruction.py:227: size=576 KiB, count=16, average=36.0 KiB",
+        "/home/charlie/midas-reality-reliability/packages/midas/reality/reconstruction.py:464: size=54.6 KiB, count=999, average=56 B",
+        "/home/charlie/midas-reality-reliability/packages/midas/reality/reconstruction.py:230: size=3920 B, count=17, average=231 B",
+        "/home/charlie/midas-reality-reliability/packages/midas/reality/reconstruction.py:241: size=1472 B, count=16, average=92 B"
+      ]
+    },
+    {
+      "synthetic": true,
+      "variant": "loaded-2b83818",
+      "markets": 4,
+      "subscriptions": 8,
+      "depth_per_side": 1000,
+      "retained_heap_bytes": 3929213,
+      "digest_temporary_peak_bytes": 3362720,
+      "post_digest_heap_bytes": 3992022,
+      "digest_seconds": 0.14083559205755591,
+      "digest": "985c96a08bf17fb18a35d3ee8bd1fc22db3ad859da242185f50c854138b05338",
+      "max_rss_kib": 37868,
+      "allocation_sites": [
+        "historical-reconstruction-2b83818:15: size=3250 KiB, count=32004, average=104 B",
+        "historical-reconstruction-2b83818:189: size=576 KiB, count=16, average=36.0 KiB",
+        "historical-reconstruction-2b83818:339: size=53.3 KiB, count=974, average=56 B",
+        "historical-reconstruction-2b83818:338: size=4200 B, count=75, average=56 B",
+        "historical-reconstruction-2b83818:192: size=3920 B, count=17, average=231 B"
+      ]
+    },
+    {
+      "synthetic": true,
+      "variant": "candidate",
+      "markets": 8,
+      "subscriptions": 16,
+      "depth_per_side": 1000,
+      "retained_heap_bytes": 7856125,
+      "digest_temporary_peak_bytes": 91423,
+      "post_digest_heap_bytes": 7914966,
+      "digest_seconds": 0.19672152202110738,
+      "digest": "4dfa4b9b843ee9e4c328dc420db3767a13d5d084159699d91d9a26dd3adbdedd",
+      "max_rss_kib": 47480,
+      "allocation_sites": [
+        "/home/charlie/midas-reality-reliability/packages/midas/reality/reconstruction.py:17: size=6500 KiB, count=64004, average=104 B",
+        "/home/charlie/midas-reality-reliability/packages/midas/reality/reconstruction.py:227: size=1153 KiB, count=32, average=36.0 KiB",
+        "/home/charlie/midas-reality-reliability/packages/midas/reality/reconstruction.py:464: size=54.6 KiB, count=999, average=56 B",
+        "/home/charlie/midas-reality-reliability/packages/midas/reality/reconstruction.py:230: size=7824 B, count=33, average=237 B",
+        "/home/charlie/midas-reality-reliability/packages/midas/reality/reconstruction.py:241: size=2944 B, count=32, average=92 B"
+      ]
+    },
+    {
+      "synthetic": true,
+      "variant": "loaded-2b83818",
+      "markets": 8,
+      "subscriptions": 16,
+      "depth_per_side": 1000,
+      "retained_heap_bytes": 7855957,
+      "digest_temporary_peak_bytes": 6667780,
+      "post_digest_heap_bytes": 7919726,
+      "digest_seconds": 0.2784175999695435,
+      "digest": "4dfa4b9b843ee9e4c328dc420db3767a13d5d084159699d91d9a26dd3adbdedd",
+      "max_rss_kib": 55588,
+      "allocation_sites": [
+        "historical-reconstruction-2b83818:15: size=6500 KiB, count=64004, average=104 B",
+        "historical-reconstruction-2b83818:189: size=1153 KiB, count=32, average=36.0 KiB",
+        "historical-reconstruction-2b83818:339: size=53.3 KiB, count=974, average=56 B",
+        "historical-reconstruction-2b83818:192: size=7824 B, count=33, average=237 B",
+        "historical-reconstruction-2b83818:338: size=4200 B, count=75, average=56 B"
+      ]
+    },
+    {
+      "synthetic": true,
+      "variant": "candidate",
+      "markets": 10,
+      "subscriptions": 20,
+      "depth_per_side": 1000,
+      "retained_heap_bytes": 9821065,
+      "digest_temporary_peak_bytes": 96459,
+      "post_digest_heap_bytes": 9880162,
+      "digest_seconds": 0.24622660502791405,
+      "digest": "ceefad429307d8338e607095951dc47393c9960115fc2a96394d8e98d73403fc",
+      "max_rss_kib": 54920,
+      "allocation_sites": [
+        "/home/charlie/midas-reality-reliability/packages/midas/reality/reconstruction.py:17: size=8125 KiB, count=80004, average=104 B",
+        "/home/charlie/midas-reality-reliability/packages/midas/reality/reconstruction.py:227: size=1441 KiB, count=40, average=36.0 KiB",
+        "/home/charlie/midas-reality-reliability/packages/midas/reality/reconstruction.py:464: size=54.6 KiB, count=999, average=56 B",
+        "/home/charlie/midas-reality-reliability/packages/midas/reality/reconstruction.py:230: size=9680 B, count=41, average=236 B",
+        "/home/charlie/midas-reality-reliability/packages/midas/reality/reconstruction.py:241: size=3680 B, count=40, average=92 B"
+      ]
+    },
+    {
+      "synthetic": true,
+      "variant": "loaded-2b83818",
+      "markets": 10,
+      "subscriptions": 20,
+      "depth_per_side": 1000,
+      "retained_heap_bytes": 9820673,
+      "digest_temporary_peak_bytes": 8320212,
+      "post_digest_heap_bytes": 9884922,
+      "digest_seconds": 0.3497946970164776,
+      "digest": "ceefad429307d8338e607095951dc47393c9960115fc2a96394d8e98d73403fc",
+      "max_rss_kib": 63244,
+      "allocation_sites": [
+        "historical-reconstruction-2b83818:15: size=8125 KiB, count=80004, average=104 B",
+        "historical-reconstruction-2b83818:189: size=1441 KiB, count=40, average=36.0 KiB",
+        "historical-reconstruction-2b83818:339: size=53.3 KiB, count=974, average=56 B",
+        "historical-reconstruction-2b83818:192: size=9680 B, count=41, average=236 B",
+        "historical-reconstruction-2b83818:338: size=4200 B, count=75, average=56 B"
+      ]
+    },
+    {
+      "synthetic": true,
+      "variant": "candidate",
+      "markets": 1,
+      "subscriptions": 2,
+      "depth_per_side": 10000,
+      "retained_heap_bytes": 9503795,
+      "digest_temporary_peak_bytes": 647045,
+      "post_digest_heap_bytes": 9617636,
+      "digest_seconds": 0.2523991280468181,
+      "digest": "25d719f27d58cb2896c8bd3718db2a07dd07581e23f83dd9e8e95cdae3621741",
+      "max_rss_kib": 60712,
+      "allocation_sites": [
+        "/home/charlie/midas-reality-reliability/packages/midas/reality/reconstruction.py:17: size=8125 KiB, count=80004, average=104 B",
+        "/home/charlie/midas-reality-reliability/packages/midas/reality/reconstruction.py:227: size=1152 KiB, count=4, average=288 KiB",
+        "/home/charlie/midas-reality-reliability/packages/midas/reality/reconstruction.py:464: size=109 KiB, count=1998, average=56 B",
+        "/home/charlie/midas-reality-reliability/packages/midas/reality/reconstruction.py:230: size=1048 B, count=5, average=210 B",
+        "/home/charlie/midas-reality-reliability/packages/midas/reality/reconstruction.py:77: size=760 B, count=2, average=380 B"
+      ]
+    },
+    {
+      "synthetic": true,
+      "variant": "loaded-2b83818",
+      "markets": 1,
+      "subscriptions": 2,
+      "depth_per_side": 10000,
+      "retained_heap_bytes": 9503795,
+      "digest_temporary_peak_bytes": 8337176,
+      "post_digest_heap_bytes": 9621892,
+      "digest_seconds": 0.3556445789290592,
+      "digest": "25d719f27d58cb2896c8bd3718db2a07dd07581e23f83dd9e8e95cdae3621741",
+      "max_rss_kib": 63656,
+      "allocation_sites": [
+        "historical-reconstruction-2b83818:15: size=8125 KiB, count=80004, average=104 B",
+        "historical-reconstruction-2b83818:189: size=1152 KiB, count=4, average=288 KiB",
+        "historical-reconstruction-2b83818:339: size=108 KiB, count=1972, average=56 B",
+        "historical-reconstruction-2b83818:338: size=4200 B, count=75, average=56 B",
+        "/usr/lib/python3.12/json/encoder.py:258: size=1784 B, count=32, average=56 B"
+      ]
+    }
+  ],
+  "startup": [
+    {
+      "variant": "candidate",
+      "synthetic": true,
+      "detail": {
+        "mode": "checkpoint_and_verified_tail",
+        "fallback_reason": null,
+        "prefix_segments_hashed": 9,
+        "prefix_bytes_hashed": 455415,
+        "segments_reconstructed": 0,
+        "reconstructed_bytes": 0,
+        "tail_checkpoints_verified": 0,
+        "seconds": 0.00446985091548413,
+        "source_integrity": "verified",
+        "sequence_verified": false
+      },
+      "seconds_to_first_new_durable_record": 0.017432973021641374,
+      "cpu_seconds": 0.006994000000000004,
+      "max_rss_kib": 22884,
+      "segments": 9,
+      "archive_bytes": 455415,
+      "io_before": "rchar: 1796114\nwchar: 0\nsyscr: 182\nsyscw: 0\nread_bytes: 0\nwrite_bytes: 0\ncancelled_write_bytes: 0\n",
+      "io_after": "rchar: 2434175\nwchar: 421\nsyscr: 263\nsyscw: 3\nread_bytes: 0\nwrite_bytes: 12288\ncancelled_write_bytes: 0\n",
+      "digest": "473998a5cc773184441ebb6083d00de60bc1d8ebd82f7b02d2cdcc7677f21e68",
+      "ordinal": 138
+    },
+    {
+      "variant": "full",
+      "synthetic": true,
+      "detail": {
+        "mode": "full_replay",
+        "checkpoints": 8
+      },
+      "seconds_to_first_new_durable_record": 0.2470052980352193,
+      "cpu_seconds": 0.23634300000000003,
+      "max_rss_kib": 22884,
+      "segments": 9,
+      "archive_bytes": 455415,
+      "io_before": "rchar: 1796114\nwchar: 0\nsyscr: 182\nsyscw: 0\nread_bytes: 0\nwrite_bytes: 0\ncancelled_write_bytes: 0\n",
+      "io_after": "rchar: 2256205\nwchar: 422\nsyscr: 338\nsyscw: 3\nread_bytes: 0\nwrite_bytes: 12288\ncancelled_write_bytes: 0\n",
+      "digest": "b123890405187b829137e4603d87abbd1e6d5d9b7a89655bfb80ebd329e69517",
+      "ordinal": 138
+    },
+    {
+      "variant": "candidate",
+      "synthetic": true,
+      "detail": {
+        "mode": "checkpoint_and_verified_tail",
+        "fallback_reason": null,
+        "prefix_segments_hashed": 33,
+        "prefix_bytes_hashed": 1684516,
+        "segments_reconstructed": 0,
+        "reconstructed_bytes": 0,
+        "tail_checkpoints_verified": 0,
+        "seconds": 0.00908796803560108,
+        "source_integrity": "verified",
+        "sequence_verified": false
+      },
+      "seconds_to_first_new_durable_record": 0.02401021507102996,
+      "cpu_seconds": 0.014522999999999996,
+      "max_rss_kib": 23340,
+      "segments": 33,
+      "archive_bytes": 1684516,
+      "io_before": "rchar: 1796114\nwchar: 0\nsyscr: 182\nsyscw: 0\nread_bytes: 0\nwrite_bytes: 0\ncancelled_write_bytes: 0\n",
+      "io_after": "rchar: 3995778\nwchar: 423\nsyscr: 431\nsyscw: 3\nread_bytes: 0\nwrite_bytes: 12288\ncancelled_write_bytes: 0\n",
+      "digest": "41335f7ae2773b176f29140f47a2c913dc924ee1b14300faa6184d688e812c26",
+      "ordinal": 546
+    },
+    {
+      "variant": "full",
+      "synthetic": true,
+      "detail": {
+        "mode": "full_replay",
+        "checkpoints": 32
+      },
+      "seconds_to_first_new_durable_record": 0.9382561300881207,
+      "cpu_seconds": 0.928657,
+      "max_rss_kib": 23340,
+      "segments": 33,
+      "archive_bytes": 1684516,
+      "io_before": "rchar: 1796114\nwchar: 0\nsyscr: 182\nsyscw: 0\nread_bytes: 0\nwrite_bytes: 0\ncancelled_write_bytes: 0\n",
+      "io_after": "rchar: 3497162\nwchar: 422\nsyscr: 770\nsyscw: 3\nread_bytes: 0\nwrite_bytes: 12288\ncancelled_write_bytes: 0\n",
+      "digest": "93d716570c2028eec3426779b00c6951441d818d20c37eb2072a83fac30ca968",
+      "ordinal": 546
+    },
+    {
+      "variant": "candidate",
+      "synthetic": true,
+      "detail": {
+        "mode": "checkpoint_and_verified_tail",
+        "fallback_reason": null,
+        "prefix_segments_hashed": 129,
+        "prefix_bytes_hashed": 6604343,
+        "segments_reconstructed": 0,
+        "reconstructed_bytes": 0,
+        "tail_checkpoints_verified": 0,
+        "seconds": 0.023965053958818316,
+        "source_integrity": "verified",
+        "sequence_verified": false
+      },
+      "seconds_to_first_new_durable_record": 0.045057454030029476,
+      "cpu_seconds": 0.03995199999999999,
+      "max_rss_kib": 23624,
+      "segments": 129,
+      "archive_bytes": 6604343,
+      "io_before": "rchar: 1796114\nwchar: 0\nsyscr: 182\nsyscw: 0\nread_bytes: 0\nwrite_bytes: 0\ncancelled_write_bytes: 0\n",
+      "io_after": "rchar: 9148176\nwchar: 424\nsyscr: 1104\nsyscw: 3\nread_bytes: 0\nwrite_bytes: 12288\ncancelled_write_bytes: 0\n",
+      "digest": "36c3ae9c301edab73ad5111d31f8f599ca4da8943f5e263b0484cbaac94c0460",
+      "ordinal": 2178
+    },
+    {
+      "variant": "full",
+      "synthetic": true,
+      "detail": {
+        "mode": "full_replay",
+        "checkpoints": 128
+      },
+      "seconds_to_first_new_durable_record": 3.7091784320073202,
+      "cpu_seconds": 3.703537,
+      "max_rss_kib": 23624,
+      "segments": 129,
+      "archive_bytes": 6604343,
+      "io_before": "rchar: 1796114\nwchar: 0\nsyscr: 182\nsyscw: 0\nread_bytes: 0\nwrite_bytes: 0\ncancelled_write_bytes: 0\n",
+      "io_after": "rchar: 8464691\nwchar: 424\nsyscr: 2498\nsyscw: 3\nread_bytes: 0\nwrite_bytes: 12288\ncancelled_write_bytes: 0\n",
+      "digest": "aa13026bc4521532191e222b0ff9d70f75df7bf128ca02f55d70dc5937d9c8e8",
+      "ordinal": 2178
+    }
+  ],
+  "limitations": [
+    "Warm disposable archives; not full-store evidence or a production ETA.",
+    "RSS includes Python allocator and imports; heap is tracemalloc observed.",
+    "No transport queue is allocated in the memory model; protocol buffers budget separately."
+  ]
+}
