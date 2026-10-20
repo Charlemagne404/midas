@@ -59,6 +59,18 @@ def test_admission_slot_is_exclusive_and_denies_busy_owner(tmp_path, monkeypatch
     assert error.value.reasons == ("resource_admission_lock_busy",)
 
 
+def test_default_catalog_includes_interface_jobs(tmp_path, monkeypatch):
+    monkeypatch.setattr(Path, "home", lambda: tmp_path)
+    root = tmp_path / "midas/data/arena"
+    root.mkdir(parents=True)
+    interface = tmp_path / "midas-reality/data/research/reality/interface/arena"
+    (interface / "jobs/job-preview").mkdir(parents=True)
+    atomic_json(
+        interface / "jobs/job-preview/job.json", {"job_id": "job-preview", "state": "QUEUED"}
+    )
+    assert admission._active_jobs(root) == ["arena:job-preview"]
+
+
 def test_launched_worker_is_rejected_before_systemd_when_pressure_is_unsafe(tmp_path, monkeypatch):
     root = tmp_path / "arena"
     monkeypatch.setattr(admission, "global_lock_path", lambda: tmp_path / "admission.lock")

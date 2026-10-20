@@ -11,11 +11,12 @@ import resource
 import sqlite3
 import stat
 import subprocess
+import sys
 import threading
 import time
 import uuid
 from collections.abc import Iterator
-from contextlib import contextmanager
+from contextlib import AbstractContextManager, contextmanager
 from decimal import Decimal
 from pathlib import Path
 from typing import Any, Literal
@@ -33,6 +34,37 @@ from midas.paper.broker import AccountConfig, ExecutionModel
 from midas.risk.engine import Limits
 
 PRESETS = {"Quick": 32, "Standard": 1000, "Deep": 10_000, "Extreme": 1_000_000}
+
+
+def require_pool_capacity(
+    spec: CampaignSpec,
+    *,
+    proc_root: Path = Path("/proc"),
+    cgroup_root: Path = Path("/sys/fs/cgroup"),
+) -> None:
+    """Keep worker address-space budgets and coordinator reserve within the API cgroup."""
+    relative = (proc_root / "self/cgroup").read_text().split("0::", 1)[1].splitlines()[0]
+    group = cgroup_root / relative.lstrip("/")
+    limits = []
+    while group.is_relative_to(cgroup_root):
+        for name in ("memory.high", "memory.max"):
+            path = group / name
+            if path.exists() and (value := path.read_text().strip()) != "max":
+                limits.append(int(value))
+        if group == cgroup_root:
+            break
+        group = group.parent
+    rss = next(
+        int(line.split()[1]) * 1024
+        for line in (proc_root / "self/status").read_text().splitlines()
+        if line.startswith("VmRSS:")
+    )
+    required = rss + 128 * 1024**2 + spec.workers * spec.memory_mb * 1024**2
+    if limits and required > min(limits):
+        raise ValueError(
+            f"Laboratory worker budgets plus API reserve need {required} bytes; "
+            f"cgroup working limit is {min(limits)}. Queue or request fewer/smaller workers."
+        )
 
 
 def archive_bytes(root: Path) -> int:
@@ -297,19 +329,56 @@ class Campaigns:
                 raise ValueError(
                     "Code changed; archived campaign is not resumable under this implementation"
                 )
-            with self.connect() as c:
-                active = c.execute(
-                    "SELECT count(*) FROM campaigns WHERE status='RUNNING'"
-                ).fetchone()[0]
-                if active >= 2:
-                    raise ValueError("Active campaign resource limit")
-                c.execute(
-                    "UPDATE campaigns SET status='RUNNING',updated=?,error=NULL WHERE id=?",
-                    (time.time(), id),
+            from midas.arena.admission import (
+                resource_admission_slot,
+                resource_gate,
+                resource_snapshot,
+            )
+
+            spec = CampaignSpec.model_validate(row["spec"])
+            require_pool_capacity(spec)
+            slot = resource_admission_slot()
+            slot.__enter__()
+            marked_running = False
+            thread: threading.Thread | None = None
+            try:
+                gate = resource_gate(
+                    resource_snapshot(self.root),
+                    requested_memory_bytes=(spec.workers * spec.memory_mb * 1024**2),
                 )
-            thread = threading.Thread(target=self._drive, args=(id,), daemon=True)
-            self.threads[id] = thread
-            thread.start()
+                if not gate["ready"]:
+                    raise ValueError(
+                        "Laboratory waiting for resources: " + ", ".join(gate["reasons"])
+                    )
+                with self.connect() as c:
+                    active = c.execute(
+                        "SELECT count(*) FROM campaigns WHERE status='RUNNING'"
+                    ).fetchone()[0]
+                    if active >= 2:
+                        raise ValueError("Active campaign resource limit")
+                    c.execute(
+                        "UPDATE campaigns SET status='RUNNING',updated=?,error=NULL WHERE id=?",
+                        (time.time(), id),
+                    )
+                    marked_running = True
+                thread = threading.Thread(target=self._drive_reserved, args=(id, slot), daemon=True)
+                self.threads[id] = thread
+                thread.start()
+            except BaseException:
+                if thread is None or not thread.is_alive():
+                    slot.__exit__(*sys.exc_info())
+                    self.threads.pop(id, None)
+                    if marked_running:
+                        self._status(id, "INTERRUPTED", "Coordinator thread failed to start")
+                raise
+
+    def _drive_reserved(self, id: str, slot: AbstractContextManager[None]) -> None:
+        # Hold the host admission lease through pool shutdown, including
+        # in-flight commits after pause/cancel. Process death releases it too.
+        try:
+            self._drive(id)
+        finally:
+            slot.__exit__(None, None, None)
 
     def control(self, id: str, action: str) -> dict[str, Any]:
         if self.read_only:

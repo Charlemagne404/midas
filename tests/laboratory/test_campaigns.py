@@ -1,4 +1,5 @@
 import json
+import threading
 import time
 from pathlib import Path
 
@@ -8,6 +9,103 @@ from midas.laboratory.campaigns import Campaigns, CampaignSpec, run_group
 from pydantic import ValidationError
 
 DATASETS = Path(__file__).resolve().parents[2] / "data/datasets"
+
+
+@pytest.fixture(autouse=True)
+def isolated_admission(tmp_path, monkeypatch):
+    from midas.arena import admission
+
+    monkeypatch.setattr(admission, "global_lock_path", lambda: tmp_path / "admission.lock")
+    monkeypatch.setattr(
+        admission,
+        "resource_snapshot",
+        lambda _: {
+            "active_job_ids": [],
+            "available_memory_bytes": 16 * 1024**3,
+            "disk_free_bytes": 30 * 1024**3,
+            "cpu_psi": {"some": 0},
+            "memory_psi": {"some": 0, "full": 0},
+            "io_psi": {"some": 0},
+        },
+    )
+
+
+def test_pool_capacity_respects_api_and_ancestor_limits(tmp_path):
+    from midas.laboratory.campaigns import require_pool_capacity
+
+    proc, groups = tmp_path / "proc", tmp_path / "groups"
+    (proc / "self").mkdir(parents=True)
+    (groups / "user/api").mkdir(parents=True)
+    (proc / "self/cgroup").write_text("0::/user/api\n")
+    (proc / "self/status").write_text("VmRSS: 262144 kB\n")
+    (groups / "user/api/memory.high").write_text(str(1536 * 1024**2))
+    (groups / "user/api/memory.max").write_text(str(1792 * 1024**2))
+    (groups / "user/memory.max").write_text("max")
+    require_pool_capacity(CampaignSpec(workers=2), proc_root=proc, cgroup_root=groups)
+    with pytest.raises(ValueError, match="fewer/smaller"):
+        require_pool_capacity(CampaignSpec(workers=4), proc_root=proc, cgroup_root=groups)
+    (groups / "user/memory.max").write_text(str(1024 * 1024**2))
+    with pytest.raises(ValueError, match="working limit"):
+        require_pool_capacity(CampaignSpec(workers=2), proc_root=proc, cgroup_root=groups)
+
+
+def test_laboratory_holds_shared_admission_through_pause_drain(tmp_path, monkeypatch):
+    from midas.arena import admission
+
+    entered, finish = threading.Event(), threading.Event()
+    monkeypatch.setattr(Campaigns, "_drive", lambda *args: (entered.set(), finish.wait(5)))
+    lab = Campaigns(tmp_path / "lab", DATASETS)
+    try:
+        record = lab.create(CampaignSpec(runs=1))
+        assert entered.wait(2)
+        lab.control(record["id"], "pause")
+        with pytest.raises(admission.ResourceAdmissionDenied):
+            with admission.resource_admission_slot():
+                pass
+        finish.set()
+        lab.threads[record["id"]].join(5)
+        with admission.resource_admission_slot():
+            pass
+    finally:
+        finish.set()
+        lab.close()
+
+
+def test_resource_denial_keeps_campaign_ready_and_releases_lease(tmp_path, monkeypatch):
+    from midas.arena import admission
+
+    snapshot = admission.resource_snapshot(tmp_path)
+    snapshot["cpu_psi"] = {"some": 99}
+    monkeypatch.setattr(admission, "resource_snapshot", lambda _: snapshot)
+    lab = Campaigns(tmp_path / "lab", DATASETS)
+    try:
+        with pytest.raises(ValueError, match="waiting for resources"):
+            lab.create(CampaignSpec(runs=1))
+        assert lab.all()[0]["status"] == "READY"
+        assert not lab.threads
+        with admission.resource_admission_slot():
+            pass
+    finally:
+        lab.close()
+
+
+def test_thread_start_failure_releases_admission_and_preserves_recovery(tmp_path, monkeypatch):
+    from midas.arena import admission
+
+    def fail(*args, **kwargs):
+        raise RuntimeError("thread unavailable")
+
+    monkeypatch.setattr(threading.Thread, "start", fail)
+    lab = Campaigns(tmp_path / "lab", DATASETS)
+    try:
+        with pytest.raises(RuntimeError, match="thread unavailable"):
+            lab.create(CampaignSpec(runs=1))
+        assert lab.all()[0]["status"] == "INTERRUPTED"
+        assert not lab.threads
+        with admission.resource_admission_slot():
+            pass
+    finally:
+        lab.close()
 
 
 def wait(lab, id, timeout=20):

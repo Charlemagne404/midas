@@ -11,7 +11,7 @@ import stat
 from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from midas.veritas.gap_detail_control import read_control, run_v2_batch
 
@@ -28,6 +28,7 @@ MAX_ARENA_JOB_BYTES = 64 * 1024
 OTHER_ARENA_ROOTS = (
     Path.home() / "midas-veritas/data/arena",
     Path.home() / "midas/data/reliability-endurance/arena",
+    Path.home() / "midas-reality/data/research/reality/interface/arena",
 )
 
 
@@ -177,7 +178,7 @@ def _last_successful_batch(control: dict[str, Any] | None) -> dict[str, Any]:
         return {}
     for event in reversed(control.get("history", [])):
         if event.get("event") == "batch_succeeded":
-            return event
+            return cast(dict[str, Any], event)
     return {}
 
 

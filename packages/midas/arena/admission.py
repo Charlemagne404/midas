@@ -67,6 +67,7 @@ def _arena_roots(root: Path) -> list[Path]:
         Path.home() / "midas/data/arena",
         Path.home() / "midas-veritas/data/arena",
         Path.home() / "midas/data/reliability-endurance/arena",
+        Path.home() / "midas-reality/data/research/reality/interface/arena",
     ]
     result: list[Path] = []
     seen: set[Path] = set()
