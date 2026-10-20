@@ -95,7 +95,15 @@ def main():
                 result = request("http://127.0.0.1:8000/api/" + endpoint)
                 body = result.pop("body", {})
                 if endpoint == "state":
-                    result["processing_latency_ms"] = body.get("processing_latency_ms")
+                    telemetry = body.get("telemetry", {})
+                    for key in (
+                        "processing_latency_ms",
+                        "queue_depth",
+                        "pending_simulations",
+                        "broker_processing_delay_ms",
+                        "scanner_markets_per_second",
+                    ):
+                        result[key] = telemetry.get(key)
                 row[endpoint] = result
             row["frozen_hashes_unchanged"] = frozen_hashes() == baseline
             stream.write(json.dumps(row) + "\n")
