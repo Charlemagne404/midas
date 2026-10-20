@@ -110,6 +110,22 @@ def test_recovered_capture_does_not_remain_degraded_for_lifetime_failures(dashbo
     assert "ConnectionClosedOK" in result["collector"]["error"]
 
 
+def test_websocket_subscription_wait_is_reported_as_a_transition(dashboard):
+    c, root, _ = dashboard
+    path = root / "data/recordings/reality/status.json"
+    data = json.loads(path.read_text())
+    data["state"] = "AWAITING_DATA"
+    data["updated_ns"] = time.time_ns()
+    data["last_observation_ns"] = time.time_ns() - 1_000_000_000
+    path.write_text(json.dumps(data))
+
+    result = c.get("/api/reality/overview").json()
+
+    assert result["health"] == "degraded"
+    assert result["health_reasons"] == ["collector_state"]
+    assert result["collector"]["state"] == "AWAITING_DATA"
+
+
 def test_fresh_status_with_stale_observations_is_degraded(dashboard):
     c, root, _ = dashboard
     path = root / "data/recordings/reality/status.json"
