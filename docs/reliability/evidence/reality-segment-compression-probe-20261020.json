@@ -1,0 +1,44 @@
+{
+  "date": "2026-10-20",
+  "scope": "four finalized Reality segments copied to disposable memory/temp outputs; production files were read-only",
+  "input_bytes": 237662,
+  "gzip_level_1_bytes": 225588,
+  "gzip_level_6_bytes": 224816,
+  "gzip_level_9_bytes": 224813,
+  "gzip_level_6_savings_bytes": 12846,
+  "gzip_level_6_savings_fraction": 0.054047,
+  "round_trip_byte_equal": true,
+  "source_sha256_verified_before_and_after_decode": true,
+  "source_files_changed": false,
+  "samples": [
+    {
+      "file": "00000000000000000001-78968e9995f1412fb2d66cf115626190.seg",
+      "bytes": 90566,
+      "gzip_6_bytes": 88990,
+      "savings_fraction": 0.017403,
+      "sha256": "cc2a3cfcc4bfc55ce0d42ad70898bdd11871b3bcc31ae7039b9224b5537b53e9"
+    },
+    {
+      "file": "00000000000001181041-cb23aca259334ff58ed9d638ba7678d3.seg",
+      "bytes": 20574,
+      "gzip_6_bytes": 19844,
+      "savings_fraction": 0.035475,
+      "sha256": "612a7cff3f39a7332b2e07e1b2e052f28237a7a28801a1893057d8308fbbf245"
+    },
+    {
+      "file": "00000000000002436218-a1a0135e235243f4bba648c54b2fb1ab.seg",
+      "bytes": 9365,
+      "gzip_6_bytes": 9279,
+      "savings_fraction": 0.009183,
+      "sha256": "2cb71f768fd465157269f1ce6e2bbb80009e1900031078f0d674f9e892c5a8ac"
+    },
+    {
+      "file": "00000000000002506653-1e2fdb1affd64dd0ba5cbfa695ec1a95.seg",
+      "bytes": 117157,
+      "gzip_6_bytes": 106703,
+      "savings_fraction": 0.089263,
+      "sha256": "0890d2348db890e436fceb9b13ea926d20bda256b848640609a4a2340e94bda5"
+    }
+  ],
+  "decision": "No archive migration proposed. Existing segments already compress each record with zlib and bind the compressed record bytes with SHA256; a second outer gzip layer saved 5.40% in this small heterogeneous sample, insufficient to justify changing the evidence format or migration risk."
+}

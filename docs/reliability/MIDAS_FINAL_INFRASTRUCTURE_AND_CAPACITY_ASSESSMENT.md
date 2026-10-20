@@ -80,6 +80,8 @@ For a simple linear Frontier scenario, one comparable additional collector would
 
 The warning threshold is now 30 days, critical is 14 days, and the existing action threshold remains seven days. The capacity timer was safely changed from five to thirty minutes to avoid repeatedly sampling the same 120-segment window; it remains active. Raw retention remains 90 days and the writer still stops at its configured budget/reserve. No budget expansion was applied because the live recorder has its configuration loaded in memory; changing the file alone would make the timer's displayed limit disagree with the writer's actual limit until a protected transition. A coordinated budget/retention/archive decision and recorder transition are still required.
 
+A disposable compression probe read four finalized segments (237,662 bytes total), verified each original SHA256, wrote gzip outputs only under a temporary root, and confirmed byte-exact decompression. Gzip level 6 reduced this small heterogeneous sample by 12,846 bytes (5.40%); per-segment savings ranged from 0.9% to 8.9%. Reality segments already zlib-compress each record and hash the compressed payload. The second compression layer is too small to solve the runway and does not justify a protected archive-format migration. The originals were unchanged; detailed checksums and results are in [the probe receipt](evidence/reality-segment-compression-probe-20261020.json).
+
 **Storage verdict: NOT READY.** The physical root is not about to fill, but the active Reality budget still has roughly 22 days of runway, far below the 90-day target.
 
 ## D. Reality source quality
