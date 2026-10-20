@@ -78,7 +78,7 @@ def _restore(state: dict[str, Any]) -> Engine:
         if type(value) is not int or value < 0:
             raise ValueError("Invalid recovery scalar")
         setattr(engine, name, value)
-    if engine.reconstruction_version not in (1, 2, 3, 4):
+    if engine.reconstruction_version not in (1, 2, 3, 4, 5):
         raise ValueError("Unsupported reconstruction checkpoint")
     engine.tokens = state["tokens"]
     engine.books = state["books"]

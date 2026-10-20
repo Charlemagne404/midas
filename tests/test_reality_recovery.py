@@ -49,6 +49,44 @@ def test_accelerator_skips_prefix_decode_but_hashes_every_segment(tmp_path, monk
     assert status["segments_reconstructed"] == 0
 
 
+@pytest.mark.parametrize(("revision", "stale_issue"), [(4, True), (5, False)])
+def test_revisioned_quiet_book_semantics_survive_replay_and_checkpoint(
+    tmp_path, revision, stale_issue
+):
+    store = Store(tmp_path, reserve=1)
+    engine = Engine()
+    start = store.append(
+        "gap",
+        dict(reason="process_start", reconstruction_version=revision, stale_ns=60_000_000_000),
+        received_ns=1,
+    )
+    engine.consume(start)
+    discovery = FIXTURE["discovery"]
+    engine.consume(
+        store.append(
+            "discovery",
+            discovery["payload"],
+            cohort=discovery["cohort"],
+            received_ns=2,
+        )
+    )
+    engine.consume(store.append("frame", FIXTURE["frames"][0]["payload"], received_ns=3))
+    engine.consume(store.append("heartbeat", "PONG", received_ns=60_000_000_004))
+    assert all((book["issue"] == "stale") is stale_issue for book in engine.books.values())
+    engine.consume(store.append("checkpoint", dict(state_sha256=engine.digest())))
+    store.close()
+
+    catalog = manifest(tmp_path)
+    replayed, checkpoints = replay(tmp_path, catalog)
+    assert checkpoints == 1
+    assert replayed.__dict__ == engine.__dict__
+    if revision == 5:
+        recovery.save(tmp_path, engine, catalog)
+        restored, receipt = recovery.recover(tmp_path, catalog)
+        assert receipt["mode"] == "checkpoint_and_verified_tail"
+        assert restored.__dict__ == engine.__dict__
+
+
 def test_checkpoint_tail_replay_and_repeated_restart(tmp_path):
     expected, catalog = archive(tmp_path)
     recovery.save(tmp_path, expected, catalog)

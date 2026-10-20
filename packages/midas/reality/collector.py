@@ -4,6 +4,7 @@ import asyncio
 import hashlib
 import json
 import logging
+import math
 import signal
 import time
 import uuid
@@ -32,6 +33,7 @@ class StorageFailure(RuntimeError):
 
 
 APPEND_BACKPRESSURE_SECONDS = 1.0
+APPEND_LATENCY_WINDOW_NS = 60 * 1_000_000_000
 # The Reality API marks status older than 30 seconds stale; failures report immediately.
 STATUS_REPORT_INTERVAL_SECONDS = 10.0
 
@@ -62,6 +64,37 @@ def collection_health(
     if backpressured:
         return "backpressured"
     return "active_receiving"
+
+
+def append_latency_summary(
+    samples: deque[tuple[int, int, int]], now_ns: int, process_started_ns: int
+) -> dict[str, Any]:
+    """Summarize durable-write and full append latency over the last minute."""
+    start_ns = max(process_started_ns, now_ns - APPEND_LATENCY_WINDOW_NS)
+    recent = [sample for sample in samples if start_ns <= sample[0] <= now_ns]
+    window_seconds = max(0.0, (now_ns - start_ns) / 1e9)
+    window_complete = process_started_ns <= now_ns - APPEND_LATENCY_WINDOW_NS
+    if len(samples) == samples.maxlen and samples and samples[0][0] > start_ns:
+        window_complete = False
+
+    def seconds(values: list[int], quantile: float | None = None) -> float | None:
+        if not values:
+            return None
+        ordered = sorted(values)
+        index = -1 if quantile is None else max(0, math.ceil(quantile * len(ordered)) - 1)
+        return ordered[index] / 1e9
+
+    durable = [sample[1] for sample in recent]
+    appended = [sample[2] for sample in recent]
+    return {
+        "window_seconds": window_seconds,
+        "window_complete": window_complete,
+        "sample_count": len(recent),
+        "max_durable_write_seconds": seconds(durable),
+        "p95_durable_write_seconds": seconds(durable, 0.95),
+        "max_append_seconds": seconds(appended),
+        "p95_append_seconds": seconds(appended, 0.95),
+    }
 
 
 def prune_cohort_tracking(
@@ -129,6 +162,9 @@ async def run(config: Config, duration: float | None = None) -> None:
         defer_open=True,
     )
     startup_began = time.monotonic()
+    process_started_ns = time.monotonic_ns()
+    last_transport_message = startup_began
+    last_market_event = startup_began
     try:
         source_manifest = manifest(root)
         engine, recovery_status = recovery.recover(root, source_manifest)
@@ -153,6 +189,8 @@ async def run(config: Config, duration: float | None = None) -> None:
     store.activate()
 
     append_samples: deque[dict[str, int]] = deque(maxlen=1024)
+    append_latency_samples: deque[tuple[int, int, int]] = deque(maxlen=4096)
+    slow_append_timestamps: deque[int] = deque()
     book_updates: Counter[str] = Counter()
     coverage_started: dict[str, int] = {}
     coverage_last: dict[str, int] = {}
@@ -176,6 +214,9 @@ async def run(config: Config, duration: float | None = None) -> None:
         persisted_ns = time.monotonic_ns()
         engine.consume(record)
         processed_ns = time.monotonic_ns()
+        append_latency_samples.append(
+            (processed_ns, persisted_ns - began_ns, processed_ns - began_ns)
+        )
         if kind == "frame":
             status.setdefault("first_frame_received_ns", record["received_ns"])
             append_samples.append(
@@ -196,11 +237,20 @@ async def run(config: Config, duration: float | None = None) -> None:
         status["process_max_append_seconds"] = max(
             status.get("process_max_append_seconds", 0), append_seconds
         )
+        durable_seconds = (persisted_ns - began_ns) / 1e9
+        status["process_max_persist_seconds"] = max(
+            status.get("process_max_persist_seconds", 0), durable_seconds
+        )
         if append_seconds >= APPEND_BACKPRESSURE_SECONDS:
             status["process_backpressure_events"] += 1
-            status["backpressure_active"] = True
-        elif kind == "frame":
-            status["backpressure_active"] = False
+        while (
+            slow_append_timestamps
+            and slow_append_timestamps[0] < processed_ns - APPEND_LATENCY_WINDOW_NS
+        ):
+            slow_append_timestamps.popleft()
+        if append_seconds >= APPEND_BACKPRESSURE_SECONDS:
+            slow_append_timestamps.append(processed_ns)
+        status["backpressure_active"] = bool(slow_append_timestamps)
         return record
 
     def save_recovery() -> None:
@@ -229,11 +279,34 @@ async def run(config: Config, duration: float | None = None) -> None:
     def report() -> None:
         state = engine.state(max_depth=50)
         now = time.time_ns()
+        latency_now_ns = time.monotonic_ns()
+        latency = append_latency_summary(append_latency_samples, latency_now_ns, process_started_ns)
+        while (
+            slow_append_timestamps
+            and slow_append_timestamps[0] < latency_now_ns - APPEND_LATENCY_WINDOW_NS
+        ):
+            slow_append_timestamps.popleft()
+        status["persistence_latency_window_seconds"] = APPEND_LATENCY_WINDOW_NS / 1e9
+        status["persistence_latency_window_covered_seconds"] = latency["window_seconds"]
+        status["persistence_latency_window_complete"] = latency["window_complete"]
+        status["recent_append_sample_count"] = latency["sample_count"]
+        status["recent_max_append_seconds"] = latency["max_append_seconds"]
+        status["recent_p95_append_seconds"] = latency["p95_append_seconds"]
+        status["recent_max_persist_seconds"] = latency["max_durable_write_seconds"]
+        status["recent_p95_persist_seconds"] = latency["p95_durable_write_seconds"]
+        status["backpressure_window_seconds"] = APPEND_LATENCY_WINDOW_NS / 1e9
+        status["backpressure_active"] = bool(slow_append_timestamps)
         books = state["books"]
         fresh = sum(
             b["internally_consistent"] and now - b["received_ns"] < config.stale_seconds * 1e9
             for b in books.values()
         )
+        stale_book_ids = [
+            asset
+            for asset, book in books.items()
+            if not book["internally_consistent"]
+            or now - book["received_ns"] >= config.stale_seconds * 1e9
+        ]
         timing_uncertain = sum(bool(b.get("timing_uncertainty")) for b in books.values())
         try:
             resources = resource_snapshot()
@@ -275,6 +348,13 @@ async def run(config: Config, duration: float | None = None) -> None:
                 gaps=engine.gaps,
                 fresh_books=fresh,
                 expected_books=status["markets"] * 2,
+                stale_book_count=len(stale_book_ids),
+                stale_book_asset_ids=stale_book_ids,
+                book_freshness_basis=(
+                    "age since last per-token market update; a quiet book is not proof of loss or completeness"
+                ),
+                transport_message_age_seconds=max(0, time.monotonic() - last_transport_message),
+                market_event_age_seconds=max(0, time.monotonic() - last_market_event),
                 state_sha256=engine.digest(),
                 sequence_verified=False,
                 clock_health=clock_health(),
@@ -332,7 +412,7 @@ async def run(config: Config, duration: float | None = None) -> None:
             "gap",
             dict(
                 reason="process_start",
-                reconstruction_version=4,
+                reconstruction_version=5,
                 clock_health=clock_health(),
                 recovered=store.recovered,
                 stale_ns=int(config.stale_seconds * 1e9),
@@ -445,7 +525,9 @@ async def run(config: Config, duration: float | None = None) -> None:
                         status.setdefault(
                             "seconds_until_subscription", time.monotonic() - startup_began
                         )
-                        connected = last_ping = last_frame = time.monotonic()
+                        connected = last_ping = last_market_event = last_transport_message = (
+                            time.monotonic()
+                        )
                         pending_snapshots = set(tokens)
                         status["state"] = "AWAITING_DATA"
                         while not stop.is_set():
@@ -600,14 +682,13 @@ async def run(config: Config, duration: float | None = None) -> None:
                                 raise TimeoutError(
                                     "Initial snapshots incomplete; reconnect for fresh books"
                                 )
-                            if now - last_frame > config.stale_seconds:
-                                raise TimeoutError(
-                                    "Market observations stale; reconnect for fresh snapshots"
-                                )
+                            if now - last_transport_message > config.stale_seconds:
+                                raise TimeoutError("Market WebSocket heartbeat or event stale")
                             try:
                                 payload = await asyncio.wait_for(ws.recv(), timeout=1)
                             except TimeoutError:
                                 continue
+                            last_transport_message = time.monotonic()
                             received, monotonic = time.time_ns(), time.monotonic_ns()
                             normalized, constraints, invalid_constraints = frame_metadata(payload)
                             if isinstance(payload, bytes):
@@ -651,7 +732,7 @@ async def run(config: Config, duration: float | None = None) -> None:
                                 ):
                                     pending_snapshots.remove(asset)
                             if payload != "PONG":
-                                last_frame = time.monotonic()
+                                last_market_event = time.monotonic()
                                 # Keep current health separate from the historical gap
                                 # journal: a successful frame clears the prior
                                 # connection diagnostic while preserving failures.

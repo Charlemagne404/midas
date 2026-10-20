@@ -182,6 +182,8 @@ def test_independent_depth_agreement_and_concurrent_uncertainty():
     assert result["sequence_verified"] is False
     assert result["source_native_hash"] == "opaque-native"
     assert result["round_trip_ns"] == 1_000_000
+    assert result["local_depth_sha256"]
+    assert result["depth_difference_counts"] == {"bids": 0, "asks": 0}
     args["after"]["last"] = [3, 0]
     assert compare(rest_book(), **args)["assessment"] == "concurrent_updates_ambiguous"
     args["after"] = None
@@ -191,7 +193,10 @@ def test_independent_depth_agreement_and_concurrent_uncertainty():
 def test_independent_divergence_stale_and_invalid_ids():
     raw, args = rest_book(), compare_args()
     raw["asks"][0]["size"] = "1"
-    assert compare(raw, **args)["assessment"] == "stable_local_lineage_divergence"
+    divergence = compare(raw, **args)
+    assert divergence["assessment"] == "stable_local_lineage_divergence"
+    assert divergence["depth_difference_counts"] == {"bids": 0, "asks": 1}
+    assert divergence["local_depth_sha256"] != divergence["independent_depth_sha256"]
     args["response_ns"] += 61_000_000_000
     assert compare(raw, **args)["assessment"] == "stale_local_state"
     with pytest.raises(ValueError, match="mismatch"):
