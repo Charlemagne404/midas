@@ -22,10 +22,130 @@ from .storage import atomic_json, canonical, describe, file_hash, manifest, reco
 
 CAPACITY_WARNING_SECONDS = 30 * 86400
 CAPACITY_CRITICAL_SECONDS = 14 * 86400
+CAPACITY_ACTION_SECONDS = 7 * 86400
+
+
+def _last_started_budget(
+    root: Path, configured_budget: int, status: dict[str, Any]
+) -> tuple[int, str]:
+    """Use the last-started writer configuration until runtime status confirms a change."""
+    observed: list[tuple[str, int]] = []
+    status_config = status.get("config")
+    if isinstance(status_config, dict):
+        value = status_config.get("budget_bytes")
+        if isinstance(value, int) and not isinstance(value, bool) and value > 0:
+            observed.append(("collector_status", value))
+    startup_path = root / "config.json"
+    if startup_path.is_file():
+        try:
+            startup_config = json.loads(startup_path.read_text())
+        except (OSError, json.JSONDecodeError):
+            startup_config = {}
+        if isinstance(startup_config, dict):
+            value = startup_config.get("budget_bytes")
+            if isinstance(value, int) and not isinstance(value, bool) and value > 0:
+                observed.append(("startup_config", value))
+    if not observed:
+        return configured_budget, "configured_fallback"
+    # If status and its startup receipt disagree, use the lower known limit until reconciled.
+    effective = min(value for _, value in observed)
+    source = "+".join(name for name, value in observed if value == effective)
+    return effective, source
+
+
+def archive_capacity(
+    root: Path,
+    destination: Path,
+    mountpoint: Path,
+    *,
+    budget: int,
+    reserve: int,
+    bytes_per_second: float | None,
+    segment_bytes: int,
+) -> dict[str, Any]:
+    """Report archive-volume capacity without treating a manifest as an integrity audit."""
+    if budget <= 0 or reserve <= 0 or segment_bytes <= 0:
+        raise ValueError("Archive budget, reserve, and segment size must be positive")
+    root, destination, mountpoint = root.resolve(), destination.resolve(), mountpoint.resolve()
+    alerts: list[str] = []
+    mounted = mountpoint.is_mount()
+    same_as_raw = root.stat().st_dev == mountpoint.stat().st_dev if mountpoint.exists() else False
+    destination_on_mount = (
+        destination.exists() and destination.stat().st_dev == mountpoint.stat().st_dev
+        if mountpoint.exists()
+        else False
+    )
+    used = (
+        sum(p.stat().st_size for p in destination.iterdir() if p.is_file())
+        if destination.is_dir()
+        else 0
+    )
+    manifest_present = (destination / "manifest.json").is_file()
+    state = "MANIFEST_PRESENT" if manifest_present else "NOT_YET_VERIFIED"
+    if not mounted:
+        alerts.append("ARCHIVE_MOUNT_UNAVAILABLE")
+    elif not destination_on_mount:
+        alerts.append("ARCHIVE_DESTINATION_OFF_EXPECTED_MOUNT")
+    if same_as_raw:
+        alerts.append("ARCHIVE_SHARES_RAW_FILESYSTEM")
+    if not destination_on_mount or not mounted or same_as_raw:
+        return dict(
+            destination=str(destination),
+            mountpoint=str(mountpoint),
+            mounted=mounted,
+            destination_on_expected_mount=destination_on_mount,
+            separate_from_raw_filesystem=mounted and not same_as_raw,
+            destination_state=state,
+            raw_archive_bytes=used,
+            budget_bytes=budget,
+            filesystem_free_bytes=None,
+            filesystem_reserve_bytes=reserve,
+            available_headroom_bytes=0,
+            estimated_storage_seconds_remaining=None,
+            alerts=alerts,
+        )
+    free = shutil.disk_usage(mountpoint).free
+    headroom = min(budget - used, free - reserve)
+    seconds = max(0, headroom) / bytes_per_second if bytes_per_second else None
+    if headroom <= 0:
+        alerts.append("ARCHIVE_CAPACITY_EXHAUSTED")
+    elif budget - used < max(segment_bytes * 2, budget * 0.1):
+        alerts.append("ARCHIVE_BUDGET_LOW")
+    if free - reserve < segment_bytes * 2:
+        alerts.append("ARCHIVE_DISK_RESERVE_LOW")
+    if seconds is not None:
+        if seconds <= CAPACITY_WARNING_SECONDS:
+            alerts.append("ARCHIVE_CAPACITY_WARNING_WITHIN_THIRTY_DAYS")
+        if seconds <= CAPACITY_CRITICAL_SECONDS:
+            alerts.append("ARCHIVE_CAPACITY_CRITICAL_WITHIN_FOURTEEN_DAYS")
+        if seconds <= CAPACITY_ACTION_SECONDS:
+            alerts.append("ARCHIVE_CAPACITY_ACTION_WITHIN_SEVEN_DAYS")
+    return dict(
+        destination=str(destination),
+        mountpoint=str(mountpoint),
+        mounted=mounted,
+        destination_on_expected_mount=destination_on_mount,
+        separate_from_raw_filesystem=True,
+        destination_state=state,
+        raw_archive_bytes=used,
+        budget_bytes=budget,
+        filesystem_free_bytes=free,
+        filesystem_reserve_bytes=reserve,
+        available_headroom_bytes=max(0, headroom),
+        estimated_storage_seconds_remaining=seconds,
+        alerts=alerts,
+    )
 
 
 def capacity(
-    config: Config, *, window_segments: int = 120, now_ns: int | None = None
+    config: Config,
+    *,
+    window_segments: int = 120,
+    now_ns: int | None = None,
+    archive_path: Path | None = None,
+    archive_budget: int | None = None,
+    archive_reserve: int | None = None,
+    archive_mountpoint: Path | None = None,
 ) -> dict[str, Any]:
     if not 2 <= window_segments <= 2000:
         raise ValueError("Sample must contain 2..2000 finalized segments")
@@ -75,7 +195,9 @@ def capacity(
     now = time.time_ns() if now_ns is None else now_ns
     used = sum(p.stat().st_size for p in root.iterdir() if p.is_file())
     free = shutil.disk_usage(root).free
-    headroom = min(config.budget_bytes - used, free - config.reserve_bytes)
+    runtime_budget, budget_source = _last_started_budget(root, config.budget_bytes, status)
+    budget_pending = runtime_budget != config.budget_bytes
+    headroom = min(runtime_budget - used, free - config.reserve_bytes)
     storage_seconds = max(0, headroom) / rate if rate else None
     retention_seconds = (
         max(0, config.retention_days * 86400 - (now - oldest) / 1e9) if oldest is not None else None
@@ -83,9 +205,11 @@ def capacity(
     horizons = [x for x in (storage_seconds, retention_seconds) if x is not None]
     deadline = min(horizons) if horizons else None
     alerts = []
+    if budget_pending:
+        alerts.append("BUDGET_CHANGE_PENDING_RESTART")
     if headroom <= 0:
         alerts.append("CAPACITY_EXHAUSTED")
-    elif config.budget_bytes - used < max(config.segment_bytes * 2, config.budget_bytes * 0.1):
+    elif runtime_budget - used < max(config.segment_bytes * 2, runtime_budget * 0.1):
         alerts.append("BUDGET_LOW")
     if free - config.reserve_bytes < config.segment_bytes * 2:
         alerts.append("DISK_RESERVE_LOW")
@@ -94,23 +218,47 @@ def capacity(
             alerts.append("CAPACITY_WARNING_WITHIN_THIRTY_DAYS")
         if deadline <= CAPACITY_CRITICAL_SECONDS:
             alerts.append("CAPACITY_CRITICAL_WITHIN_FOURTEEN_DAYS")
-        if deadline < 7 * 86400:
+        if deadline <= CAPACITY_ACTION_SECONDS:
             alerts.append("CAPACITY_ACTION_WITHIN_SEVEN_DAYS")
     if retention_seconds == 0:
         alerts.append("RETENTION_HORIZON_REACHED")
     if rate is None:
         alerts.append("RATE_INSUFFICIENT_EVIDENCE")
+    archive_report = None
+    if any(
+        value is not None
+        for value in (archive_path, archive_budget, archive_reserve, archive_mountpoint)
+    ):
+        if any(
+            value is None
+            for value in (archive_path, archive_budget, archive_reserve, archive_mountpoint)
+        ):
+            raise ValueError("Archive monitoring requires path, budget, reserve, and mountpoint")
+        archive_report = archive_capacity(
+            root,
+            archive_path,
+            archive_mountpoint,
+            budget=archive_budget,
+            reserve=archive_reserve,
+            bytes_per_second=rate,
+            segment_bytes=config.segment_bytes,
+        )
+        alerts.extend(archive_report["alerts"])
     age = (now - status["updated_ns"]) / 1e9 if "updated_ns" in status else None
     if age is None or age < 0 or age > 10:
         alerts.append("COLLECTOR_STATUS_STALE")
     return dict(
         schema_version=1,
-        capacity_builder_version="receipt-aware-capacity-v2",
+        capacity_builder_version="receipt-aware-capacity-v4-split-archive-volume",
         capacity_builder_sha256=file_hash(Path(__file__)),
         measured_ns=now,
         recording_root=str(root),
         raw_root_bytes=used,
-        budget_bytes=config.budget_bytes,
+        budget_bytes=runtime_budget,
+        effective_budget_bytes=runtime_budget,
+        configured_budget_bytes=config.budget_bytes,
+        budget_source=budget_source,
+        budget_change_pending_restart=budget_pending,
         filesystem_free_bytes=free,
         free_disk_reserve_bytes=config.reserve_bytes,
         available_headroom_bytes=max(0, headroom),
@@ -134,12 +282,14 @@ def capacity(
         estimated_action_deadline_ns=int(now + deadline * 1e9) if deadline is not None else None,
         collector_state=status.get("state", "UNKNOWN"),
         collector_status_age_seconds=age,
+        archive_capacity=archive_report,
         alerts=alerts,
         limitations=[
             "Recent finalized-segment rate includes gaps and metadata; future rates vary.",
             "Active segment excluded from rate, included in root usage.",
             "Raw originals never pruned. Retention horizon stops collection.",
-            "Local archive copies consume additional disk; off-host offloading is separate.",
+            "Capacity metadata does not perform full archive integrity verification.",
+            "Local archive copies consume a separately accounted filesystem allocation; they are not off-host redundancy.",
         ],
     )
 
@@ -232,10 +382,20 @@ def main() -> None:
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--budget-bytes", type=int)
     parser.add_argument("--reserve-bytes", type=int)
+    parser.add_argument("--archive-path", type=Path)
+    parser.add_argument("--archive-budget-bytes", type=int)
+    parser.add_argument("--archive-reserve-bytes", type=int)
+    parser.add_argument("--archive-mountpoint", type=Path)
     args = parser.parse_args()
     config = Config.load(args.config)
     if args.command == "capacity":
-        result = capacity(config)
+        result = capacity(
+            config,
+            archive_path=args.archive_path,
+            archive_budget=args.archive_budget_bytes,
+            archive_reserve=args.archive_reserve_bytes,
+            archive_mountpoint=args.archive_mountpoint,
+        )
         atomic_json(args.output, result)
         if result["alerts"]:
             logging.warning(

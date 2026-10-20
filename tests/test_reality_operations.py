@@ -6,7 +6,7 @@ from unittest.mock import patch
 
 import pytest
 from midas.reality.config import Config
-from midas.reality.operations import archive, capacity
+from midas.reality.operations import archive, archive_capacity, capacity
 from midas.reality.storage import Store, atomic_json, file_hash, manifest
 
 
@@ -43,6 +43,106 @@ def test_capacity_real_bytes_rates_and_horizon(tmp_path):
     assert result["retention_seconds_remaining"] == 30 * 86400 - 120
     assert result["collector_status_age_seconds"] == 0
     assert result["estimated_action_deadline_ns"] > 121_000_000_000
+
+
+def test_capacity_reports_last_started_budget_until_recorder_confirms_restart(tmp_path):
+    sample(tmp_path)
+    old_budget = 2 * 1024**2
+    new_budget = 64 * 1024**2
+    atomic_json(tmp_path / "config.json", {"budget_bytes": old_budget})
+    atomic_json(
+        tmp_path / "status.json",
+        dict(
+            updated_ns=121_000_000_000,
+            state="RECORDING_UNSEQUENCED",
+            config={"budget_bytes": old_budget},
+        ),
+    )
+
+    pending = capacity(config(tmp_path, budget_bytes=new_budget), now_ns=121_000_000_000)
+    assert pending["budget_bytes"] == old_budget
+    assert pending["effective_budget_bytes"] == old_budget
+    assert pending["configured_budget_bytes"] == new_budget
+    assert pending["budget_change_pending_restart"] is True
+    assert pending["budget_source"] == "collector_status+startup_config"
+    assert "BUDGET_CHANGE_PENDING_RESTART" in pending["alerts"]
+
+    atomic_json(tmp_path / "config.json", {"budget_bytes": new_budget})
+    atomic_json(
+        tmp_path / "status.json",
+        dict(
+            updated_ns=121_000_000_000,
+            state="RECORDING_UNSEQUENCED",
+            config={"budget_bytes": new_budget},
+        ),
+    )
+    active = capacity(config(tmp_path, budget_bytes=new_budget), now_ns=121_000_000_000)
+    assert active["budget_bytes"] == new_budget
+    assert active["budget_change_pending_restart"] is False
+    assert "BUDGET_CHANGE_PENDING_RESTART" not in active["alerts"]
+
+
+def test_archive_capacity_checks_mount_budget_and_reserve(tmp_path, monkeypatch):
+    raw = tmp_path / "raw"
+    archive = tmp_path / "hdd" / "archive"
+    raw.mkdir()
+    archive.mkdir(parents=True)
+    mountpoint = archive.parent
+
+    class StatProxy:
+        def __init__(self, value, device):
+            self.value = value
+            self.st_dev = device
+
+        def __getattr__(self, name):
+            return getattr(self.value, name)
+
+    original_stat = Path.stat
+
+    def separate_devices(path, *args, **kwargs):
+        value = original_stat(path, *args, **kwargs)
+        if path == raw:
+            return StatProxy(value, 1)
+        if path in {mountpoint, archive}:
+            return StatProxy(value, 2)
+        return value
+
+    monkeypatch.setattr(Path, "stat", separate_devices)
+    monkeypatch.setattr(Path, "is_mount", lambda path: path == mountpoint)
+
+    class Disk:
+        total = used = 0
+        free = 500
+
+    monkeypatch.setattr("midas.reality.operations.shutil.disk_usage", lambda _path: Disk())
+    result = archive_capacity(
+        raw,
+        archive,
+        mountpoint,
+        budget=100,
+        reserve=400,
+        bytes_per_second=2,
+        segment_bytes=8,
+    )
+    assert result["available_headroom_bytes"] == 100
+    assert result["estimated_storage_seconds_remaining"] == 50
+    assert result["destination_state"] == "NOT_YET_VERIFIED"
+    assert "ARCHIVE_CAPACITY_WARNING_WITHIN_THIRTY_DAYS" in result["alerts"]
+    assert "ARCHIVE_CAPACITY_CRITICAL_WITHIN_FOURTEEN_DAYS" in result["alerts"]
+    assert "ARCHIVE_CAPACITY_ACTION_WITHIN_SEVEN_DAYS" in result["alerts"]
+
+    monkeypatch.setattr(Path, "is_mount", lambda _path: False)
+    missing = archive_capacity(
+        raw,
+        archive,
+        mountpoint,
+        budget=100,
+        reserve=400,
+        bytes_per_second=2,
+        segment_bytes=8,
+    )
+    assert missing["filesystem_free_bytes"] is None
+    assert "ARCHIVE_MOUNT_UNAVAILABLE" in missing["alerts"]
 
 
 def test_capacity_warns_thirty_days_ahead_and_marks_fourteen_day_critical(tmp_path):
