@@ -1,6 +1,8 @@
 [Unit]
 Description=MIDAS Reality interface API (isolated development state)
 After=network.target
+StartLimitIntervalSec=120
+StartLimitBurst=2
 
 [Service]
 Type=simple
@@ -13,10 +15,13 @@ Environment=MIDAS_ARENA_ROOT=%h/midas-reality/data/research/reality/interface/ar
 Environment=MIDAS_REALITY_WORKSPACE=%h/midas-reality
 ExecStart=%h/midas-reality/.venv/bin/uvicorn apps.api.main:app --host 127.0.0.1 --port 8010
 Restart=on-failure
-RestartSec=10
+RestartSec=30
+TimeoutStartSec=3min
 MemoryMax=512M
-CPUQuota=20%
-Nice=15
+MemorySwapMax=0
+CPUQuota=50%
+Nice=19
+IOSchedulingClass=idle
 
 [Install]
 WantedBy=default.target
