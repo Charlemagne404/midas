@@ -111,7 +111,8 @@ def test_veritas_qualification_job_dispatches_through_bounded_arena_worker(tmp_p
         launch=False,
         admission_key=f"veritas-qualification-v1-{scan_id}",
     )
-    assert job["budget"]["cpu_quota_percent"] == 10
+    assert job["budget"]["cpu_quota_percent"] == 100
+    assert job["budget"]["cpu_cores"] == 1
     assert job["budget"]["memory_mb"] == 512
     calls = []
 
@@ -180,5 +181,8 @@ def test_veritas_qualification_supervisor_has_read_only_resource_bounds(tmp_path
     assert job["state"] == "QUEUED"
     assert len(commands) == 1
     assert "--property=MemoryMax=512M" in commands[0]
-    assert "--property=CPUQuota=10%" in commands[0]
+    assert "--property=MemorySwapMax=0" in commands[0]
+    assert "--property=CPUQuota=100%" in commands[0]
+    assert "--property=Nice=19" in commands[0]
+    assert "--property=IOSchedulingClass=idle" in commands[0]
     assert "--property=RestrictAddressFamilies=AF_UNIX" in commands[0]
