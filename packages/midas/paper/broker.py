@@ -1,6 +1,5 @@
 """Persistent broker state machine; internal virtual venue only, no network imports."""
 
-import copy
 import json
 import random
 from decimal import ROUND_FLOOR, Decimal
@@ -237,7 +236,7 @@ def summary(
 
 
 def risk_state(state: dict[str, Any], market: Market, now: int) -> RiskState:
-    s = summary(state, now, include_details=False)
+    s = summary(state, now, include_decisions=False, include_details=False)
     xs = exchanges(state).values()
     held = {p["position"] for p in state["pending"]}
 
@@ -285,7 +284,7 @@ def risk_state(state: dict[str, Any], market: Market, now: int) -> RiskState:
 
 def audit(state: dict[str, Any]) -> list[str]:
     errors = [f"{k}: {e}" for k, x in exchanges(state).items() for e in reconcile(x)]
-    s = summary(state, include_details=False)
+    s = summary(state, include_decisions=False, include_details=False)
     if min(D(s[k]) for k in ("available", "reserved", "locked")) < 0:
         errors.append("Negative shared account bucket")
     if D(s["available"]) + D(s["reserved"]) + D(s["locked"]) != D(s["initial_capital"]) + D(
@@ -318,7 +317,10 @@ def transition(
     original: dict[str, Any], command: dict[str, Any], strategy: Strategy | None = None
 ) -> dict[str, Any]:
     """Copy-on-write transition. Commit state and event together in Store, then publish."""
-    state = copy.deepcopy(original)
+    # Broker state is durable JSON. Clone through the same normalization used
+    # at the return boundary, avoiding Python's recursive deepcopy dispatch
+    # over the large retained decision history. All nested values are detached.
+    state = cast(dict[str, Any], serial(original))
     config = AccountConfig.model_validate(state["config"])
     kind, ts, event_id = command["kind"], int(command["ts"]), command["id"]
     if kind == "control":
@@ -668,7 +670,7 @@ def transition(
     else:
         raise ValueError("Unknown internal broker command")
     state["last_processed_ms"] = ts
-    s = summary(state, ts, include_details=False)
+    s = summary(state, ts, include_decisions=False, include_details=False)
     peak = max(D(state["peak_equity"]), D(s["equity"]))
     state["peak_equity"] = str(peak)
     state["max_drawdown"] = str(max(D(state["max_drawdown"]), (peak - D(s["equity"])) / peak))
