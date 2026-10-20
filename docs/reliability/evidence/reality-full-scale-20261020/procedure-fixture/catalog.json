@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "format": "midas-reality-framed-zlib-v1",
+  "ordering": "durable ordinal then frame array index",
+  "segments": [
+    {
+      "bytes": 374,
+      "count": 2,
+      "file": "00000000000000000001-e5ecd311d9f2402ca7d20c56835ae65e.seg",
+      "first": 1,
+      "kinds": {
+        "gap": 2
+      },
+      "last": 2,
+      "schema_version": 1,
+      "sha256": "43225987baaec6a46909d9ec42f8ca094b445cb21b15f9723a5e88e31560638f"
+    }
+  ]
+}

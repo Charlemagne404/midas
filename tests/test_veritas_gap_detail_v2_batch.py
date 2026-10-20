@@ -60,7 +60,7 @@ def test_resource_snapshot_reads_psi_and_detects_active_jobs(tmp_path):
     assert batch.resource_gate(snapshot)["reasons"] == ["arena_worker_active"]
 
 
-def test_resource_snapshot_checks_arena_jobs_across_both_repositories(tmp_path):
+def test_resource_snapshot_checks_arena_jobs_across_both_repositories(tmp_path, ready_snapshot):
     primary, veritas, output = tmp_path / "primary", tmp_path / "veritas", tmp_path / "output"
     (primary / "jobs").mkdir(parents=True)
     (veritas / "jobs/job-running").mkdir(parents=True)
@@ -74,7 +74,10 @@ def test_resource_snapshot_checks_arena_jobs_across_both_repositories(tmp_path):
         other_arena_roots=(veritas,),
     )
     assert snapshot["active_arena_job_ids"] == ["veritas:job-running"]
-    assert batch.resource_gate(snapshot)["reasons"] == ["arena_worker_active"]
+    # This assertion tests cross-repository admission, independent of actual
+    # host PSI. Pressure parsing and rejection have dedicated fixture tests.
+    gate_snapshot = {**ready_snapshot, "active_arena_job_ids": snapshot["active_arena_job_ids"]}
+    assert batch.resource_gate(gate_snapshot)["reasons"] == ["arena_worker_active"]
 
 
 def test_global_admission_lock_path_matches_arena_worker_path():

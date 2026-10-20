@@ -1,0 +1,9 @@
+Running as unit: midas-validation-compat-20261020.service; invocation ID: 1638927cdb50403ead5cf66be1879272
+...........................................................              [100%]
+59 passed in 17.39s
+Finished with result: success
+Main processes terminated with: code=exited/status=0
+Service runtime: 19.687s
+CPU time consumed: 3.462s
+Memory peak: 256.0K
+Memory swap peak: 0B

@@ -1,0 +1,58 @@
+{
+  "status_started_ns": 1792365707324703478,
+  "process_start_records": [
+    {
+      "connection": null,
+      "kind": "gap",
+      "monotonic_ns": 842720357064613,
+      "ordinal": 1827244,
+      "payload": {
+        "clock_health": {
+          "checked_ns": 1792365707334599337,
+          "estimated_error_us": 0,
+          "kernel_state": 0,
+          "limitation": "Kernel-reported clock health; not independently measured venue clock skew.",
+          "maximum_error_us": 439500,
+          "status": "kernel_synchronized"
+        },
+        "config": {
+          "budget_bytes": 25769803776,
+          "comparison_seconds": 15,
+          "comparison_timeout_seconds": 5,
+          "discovery_limit": 50,
+          "markets": 8,
+          "near_expiry_tag_id": 2,
+          "queue_size": 32,
+          "refresh_seconds": 600,
+          "reserve_bytes": 21474836480,
+          "resync_seconds": 300,
+          "retention_days": 90,
+          "root": "/home/charlie/midas-reality/data/recordings/reality",
+          "segment_bytes": 8388608,
+          "segment_seconds": 300,
+          "selection_mode": "stratified-v1",
+          "selection_seed": 20261014,
+          "stale_seconds": 60
+        },
+        "implementation_sha256": "768868ad81265168305e1b7ed1e17d884a9b68ab03b96da63ed91a80680381a9",
+        "reason": "process_start",
+        "reconstruction_version": 4,
+        "recovered": [
+          {
+            "discarded_partial_bytes": 0,
+            "segment": "00000000000001827099-3eb1551160d8484a80dde5fa521a671e.seg"
+          }
+        ],
+        "stale_ns": 60000000000
+      },
+      "received_ns": 1792365707341896594,
+      "schema_version": 1,
+      "subscription": null
+    }
+  ],
+  "start_checkout_reflog": "2b83818 HEAD@{2026-10-16 10:41:29 +0200}: commit: fix(reality): keep archive budget accounting incremental\n",
+  "proc_stat": "863193 (python) S 1539 863193 863193 0 -1 4194304 4258426 38 8555 0 135184 9026 0 0 30 10 2 0 84087075 703553536 149235 18446744073709551615 4325376 7352253 140722879577120 0 0 0 0 16781312 16898 0 0 0 17 2 0 0 0 0 0 10653128 12216448 286412800 140722879584472 140722879584598 140722879584598 140722879586251 0\n",
+  "service": "TimeoutStopUSec=45s\nMainPID=863193\nNRestarts=1\nExecMainStartTimestamp=Mon 2026-10-19 00:50:57 CEST\nMemoryCurrent=735768576\nMemoryPeak=738721792\nCPUQuotaPerSecUSec=250ms\nMemoryHigh=738197504\nMemoryMax=805306368\nMemorySwapMax=0\nTasksMax=32\n",
+  "historical_2b83818_package_sha256": "768868ad81265168305e1b7ed1e17d884a9b68ab03b96da63ed91a80680381a9",
+  "matches_durable_process_start": true
+}

@@ -1,0 +1,30 @@
+{
+  "started_at": "2026-10-20T13:41:27.547940+00:00",
+  "completed_at": "2026-10-20T13:41:27.548385+00:00",
+  "source": "/tmp/midas-validation-fixture-01hp7kk2/source",
+  "segment_count": 1,
+  "last_ordinal": 2,
+  "archive_bytes": 374,
+  "kinds": {
+    "gap": 2
+  },
+  "empty_segments": 0,
+  "catalog_sha256": "8d078fe50c3549e2e5a1c9dac89f0f24cbd4cec7943444ebd68fa5493773b71f",
+  "identities_sha256": "66f0e0d9235c649fd7964f6ac2e98fe6f1421c76f3f189f619f3e18d4c3f6fc9",
+  "last_segment": {
+    "bytes": 374,
+    "count": 2,
+    "file": "00000000000000000001-e5ecd311d9f2402ca7d20c56835ae65e.seg",
+    "first": 1,
+    "kinds": {
+      "gap": 2
+    },
+    "last": 2,
+    "schema_version": 1,
+    "sha256": "43225987baaec6a46909d9ec42f8ca094b445cb21b15f9723a5e88e31560638f"
+  },
+  "unmatched_finalized": [],
+  "excluded_open": [],
+  "checkpoint_present": false,
+  "scope": "metadata only; content checksums NOT yet verified"
+}
