@@ -30,6 +30,24 @@
   },
   "captured_at_local": "2026-10-20T13:43:23.952214+02:00",
   "captured_at_utc": "2026-10-20T11:43:23.952214+00:00",
+  "deployment_template_sync_followup": {
+    "active_installed_unit_was_correct": true,
+    "all_service_copies_identical": true,
+    "all_timer_copies_identical": true,
+    "captured_at_local": "2026-10-20T13:51:18.925232+02:00",
+    "note": "Only the primary repository template was changed to match the already-installed release; active runtime was not modified.",
+    "previous_primary_service_template": "pointed at gap-detail-v2-admission-20261020/runtime-overlay and StartLimitBurst=3",
+    "source_files": {
+      "installed_service": "a3ae4c93a5d9cba0611779ff83bf7da98e609b3bb2da351965dd622c558ac782",
+      "installed_timer": "3a4f6220895bbe36756484a9047cf00ebfaae44290f968aba9cb26da5183bbdc",
+      "primary_repository_service": "a3ae4c93a5d9cba0611779ff83bf7da98e609b3bb2da351965dd622c558ac782",
+      "primary_repository_timer": "3a4f6220895bbe36756484a9047cf00ebfaae44290f968aba9cb26da5183bbdc",
+      "veritas_repository_service": "a3ae4c93a5d9cba0611779ff83bf7da98e609b3bb2da351965dd622c558ac782",
+      "veritas_repository_timer": "3a4f6220895bbe36756484a9047cf00ebfaae44290f968aba9cb26da5183bbdc"
+    },
+    "systemd_analyze_user_verify_exit_status": 0,
+    "systemd_reload_or_service_change_performed": false
+  },
   "historical_shadow_canary": {
     "campaign_sha256": "ce5a288527425271fcfb5b8d7bb93cca1cf47e02a6ba91e693e018ddf96afeb8",
     "campaign_state": "FAILED",
@@ -230,6 +248,57 @@
       "upstream": "8717666aa1988fb28c999998014ca1c4b5717113"
     }
   },
+  "resource_admission_followup": {
+    "all_samples_below_threshold": true,
+    "decision": "Do not admit another full-store replay. Recorder cgroup margin stayed 0.3\u20130.9 MiB below the gate despite 9.05\u20139.08 GB host MemAvailable and zero memory PSI.",
+    "high_event_counter_stable": true,
+    "max_oom_and_oom_kill_events": 0,
+    "memory_psi_some_and_full_avg10": 0.0,
+    "samples": [
+      {
+        "at_local": "2026-10-20T13:48:49.202568+02:00",
+        "cpu_psi_avg10": 4.23,
+        "high_events": 10109,
+        "io_psi_full_avg10": 0.5,
+        "io_psi_some_avg10": 0.58,
+        "margin_bytes": 3698688,
+        "mem_available": 9075511296,
+        "memory_current": 734498816
+      },
+      {
+        "at_local": "2026-10-20T13:48:59.203053+02:00",
+        "cpu_psi_avg10": 2.12,
+        "high_events": 10109,
+        "io_psi_full_avg10": 0.69,
+        "io_psi_some_avg10": 0.72,
+        "margin_bytes": 3256320,
+        "mem_available": 9055498240,
+        "memory_current": 734941184
+      },
+      {
+        "at_local": "2026-10-20T13:49:09.203706+02:00",
+        "cpu_psi_avg10": 2.52,
+        "high_events": 10109,
+        "io_psi_full_avg10": 0.6,
+        "io_psi_some_avg10": 0.61,
+        "margin_bytes": 3444736,
+        "mem_available": 9072496640,
+        "memory_current": 734752768
+      },
+      {
+        "at_local": "2026-10-20T13:49:19.204192+02:00",
+        "cpu_psi_avg10": 2.88,
+        "high_events": 10109,
+        "io_psi_full_avg10": 0.65,
+        "io_psi_some_avg10": 0.75,
+        "margin_bytes": 3166208,
+        "mem_available": 9074036736,
+        "memory_current": 735031296
+      }
+    ],
+    "sampling_window_seconds": 30,
+    "threshold_bytes": 4194304
+  },
   "resource_snapshot": {
     "api_cgroup": {
       "memory.current": "756572160",
@@ -258,6 +327,71 @@
       "memory.swap.max": "0"
     },
     "reality_memory_high_margin_bytes": 1789952
+  },
+  "runtime_identity_followup": {
+    "captured_at_local": "2026-10-20T13:47:10+02:00",
+    "main_api": {
+      "identity_basis": "main first-parent HEAD at service start; the paper-journal streaming fix 9cc92d0 and stopped-director projection are ancestors; later main commits in this window only update reports/evidence.",
+      "loaded_source_revision": "e4e6253bd6e1ecf71e704b91423a00b7fe8527e6",
+      "pid": 2737736,
+      "restart_count": 0,
+      "started_at_local": "2026-10-20T08:54:16+02:00",
+      "working_directory": "/home/charlie/midas"
+    },
+    "reality_interface_api": {
+      "identity_basis": "project/reality first-parent HEAD at service start; current checkout advanced later and this service has not restarted.",
+      "loaded_source_revision": "abf8c199c017c8666da2c4fef5a359a6083d336a",
+      "pid": 2688994,
+      "restart_count": 0,
+      "started_at_local": "2026-10-20T08:24:36+02:00",
+      "working_directory": "/home/charlie/midas-reality"
+    },
+    "reality_recorder": {
+      "current_checkout_revision": "c83320000a085bf30490b4b76b425527fe8574f7",
+      "identity_basis": "The current project/reality first-parent tip at recorder start was 2b83818; the OOM evidence independently fingerprints 2b83818. PID 863193 has not restarted since. The exact live module code cannot be introspected from Python memory, but later commits postdate process start.",
+      "loaded_source_revision": "2b838182b2cda465bf41ea1b99af9b7fb7bfc029",
+      "not_loaded_commits": {
+        "b0610c1": "separately pushed candidate; not installed or loaded",
+        "b8220e3": "committed 2026-10-20 00:12:18 CEST, after this PID started",
+        "c833200": "committed 2026-10-20 12:37:36 CEST, after this PID started"
+      },
+      "pid": 863193,
+      "started_at_local": "2026-10-19T00:50:56+02:00",
+      "working_directory": "/home/charlie/midas-reality"
+    },
+    "veritas_v2_release": {
+      "analysis_code_sha256": "29cf366aa905f70963e1223d8c54872c08526a604e209f0941542bd879dd9708",
+      "installed_and_source_script_hashes_match": {
+        "packages/midas/veritas/gap_detail_control.py": "1ca6293e8171dd18dc06376247869515ecc76700dace89c93c4f33a32d1f5029",
+        "scripts/veritas_gap_detail_analysis.py": "c99af3561a83aef189dc077bc909d9f187f68e1a06fb365d21461135f927709c",
+        "scripts/veritas_gap_detail_v2_batch.py": "901d9df62ab691d32a6b185e579af4f0a83a664a57723a986498a5f93eaa2043"
+      },
+      "last_run": {
+        "batch_processed_segment_count": 10,
+        "control_sha256": "e3546455ef3d784ddb3f5d6560e2d1a6f0522f212b61d727daaf630277bd93be",
+        "cpu_seconds": 5.338,
+        "exit_status": 0,
+        "finished_at_local": "2026-10-20T13:47:10+02:00",
+        "pending_segment_count": 0,
+        "processed_segment_count": 16206,
+        "started_at_local": "2026-10-20T13:47:04+02:00",
+        "status": "CURRENT",
+        "summary_sha256": "04db7b982c87f860e10f8d24654a3825ce2c9273cf2dc7e37fdb484ce26662d5"
+      },
+      "release_source": "/home/charlie/midas-veritas/deploy/runtime/veritas-gap-detail-v2-20261020",
+      "resource_limits": {
+        "cpu_quota_percent": 100,
+        "io_scheduling": "idle",
+        "max_segments": 128,
+        "max_source_mib": 32,
+        "memory_high_bytes": 201326592,
+        "memory_max_bytes": 268435456,
+        "memory_swap_max_bytes": 0,
+        "nice": 19
+      },
+      "timer_next_local": "2026-10-20T13:52:09+02:00",
+      "working_directory": "/home/charlie/.local/share/midas-veritas/gap-detail-v2-20261020/runtime"
+    }
   },
   "shadow_worker_pause_authorization": "Yes, pause both; both workers were already inactive/disabled with PID 0 and recoverable pending status, so no additional stop signal or campaign write was needed.",
   "veritas_v2_latest_run": {
