@@ -1,0 +1,14 @@
+{
+  "logical_bytes_per_day_at_observed_mix": 958317505.4208498,
+  "configured_budget_bytes": 25769803776,
+  "configured_retention_days": 90,
+  "last_storage_bytes": 4512410845,
+  "remaining_budget_bytes": 21257392931,
+  "remaining_days_at_1x_2x_4x": {
+    "1": 22.18199376590195,
+    "2": 11.090996882950975,
+    "4": 5.5454984414754875
+  },
+  "ninety_day_storage_at_1x_bytes": 86248575487.87648,
+  "scope": "one-hour linear storage model, not validated long-term growth or source expansion capacity"
+}

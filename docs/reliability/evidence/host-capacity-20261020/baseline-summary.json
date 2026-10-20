@@ -3,6 +3,16 @@
   "last": 1792509169.1134496,
   "sample_count": 13,
   "host": {
+    "procs_running": {
+      "min": 1,
+      "mean": 2,
+      "max": 5
+    },
+    "procs_blocked": {
+      "min": 0,
+      "mean": 0.6153846153846154,
+      "max": 1
+    },
     "MemAvailable_bytes": {
       "min": 8481828864,
       "mean": 8610749518.76923,
@@ -57,6 +67,16 @@
       "min": 8.7,
       "mean": 12.941538461538462,
       "max": 15.0
+    },
+    "ctxt_per_second": {
+      "min": 31973.77958052831,
+      "mean": 37593.829757555555,
+      "max": 39758.25827489529
+    },
+    "processes_per_second": {
+      "min": 24.91553680448134,
+      "mean": 28.07042940615385,
+      "max": 36.01668629679337
     },
     "disk_loop0_read_iops": {
       "min": 0.0,

@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "capacity_builder_version": "receipt-aware-capacity-v2",
+  "capacity_builder_sha256": "38c5a0c784904f7d46bf145624573c1805235b2917877e69cf204271dc193334",
+  "measured_ns": 1792522010385883333,
+  "recording_root": "/home/charlie/midas-reality/data/recordings/reality",
+  "raw_root_bytes": 4514264860,
+  "budget_bytes": 25769803776,
+  "filesystem_free_bytes": 179695968256,
+  "free_disk_reserve_bytes": 21474836480,
+  "available_headroom_bytes": 21255538916,
+  "sample": {
+    "segments": 120,
+    "first_received_ns": 1792518358364644062,
+    "last_received_ns": 1792522006049230018,
+    "seconds": 3647.684585956,
+    "compressed_and_catalog_bytes": 40146619,
+    "raw_frame_payload_bytes": 32760303,
+    "raw_frames": 18175,
+    "clock_regressions": 0,
+    "record_receipt_regressions": 172,
+    "clock_assessment_basis": "sequential WebSocket dequeue frames; deferred HTTP timestamps remain separate",
+    "source_sha256": "ed15a0ac862911b1fdda3859427b5d74c6d25c1e3bcb97fd15284c19ad76e7fe"
+  },
+  "compressed_bytes_per_second": 11006.055500129876,
+  "estimated_bytes_per_day": 950923195.2112213,
+  "estimated_storage_seconds_remaining": 1931258.5617753041,
+  "retention_seconds_remaining": 7219074.325062832,
+  "estimated_action_deadline_ns": 1794453268947658752,
+  "collector_state": "RECORDING_UNSEQUENCED",
+  "collector_status_age_seconds": 1.932900767,
+  "alerts": [],
+  "limitations": [
+    "Recent finalized-segment rate includes gaps and metadata; future rates vary.",
+    "Active segment excluded from rate, included in root usage.",
+    "Raw originals never pruned. Retention horizon stops collection.",
+    "Local archive copies consume additional disk; off-host offloading is separate."
+  ]
+}

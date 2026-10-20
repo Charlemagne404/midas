@@ -1,0 +1,5 @@
+{
+  "admitted": false,
+  "reason": "Resource admission rejected: recorder below 4 MiB MemoryHigh headroom",
+  "time": 1792521942.0001934
+}

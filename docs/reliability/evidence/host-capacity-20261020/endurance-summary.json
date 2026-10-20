@@ -1,0 +1,109 @@
+{
+  "first": 1792518144.2131975,
+  "last": 1792521804.2135286,
+  "seconds": 3660.0003311634064,
+  "samples": 62,
+  "http": {
+    "api": {
+      "success": 62,
+      "errors": 0,
+      "seconds": {
+        "min": 0.0010853209532797337,
+        "mean": 0.0031362629003612503,
+        "p95": 0.01685416534310207,
+        "max": 0.03909260197542608
+      }
+    },
+    "interface_api": {
+      "success": 62,
+      "errors": 0,
+      "seconds": {
+        "min": 0.0009552239207550883,
+        "mean": 0.004331683197374185,
+        "p95": 0.022705705161206423,
+        "max": 0.0843228189041838
+      }
+    },
+    "state": {
+      "success": 62,
+      "errors": 0,
+      "seconds": {
+        "min": 0.0065347530180588365,
+        "mean": 0.012236415988750636,
+        "p95": 0.043425389390904456,
+        "max": 0.09384213504381478
+      }
+    },
+    "analytics": {
+      "success": 62,
+      "errors": 0,
+      "seconds": {
+        "min": 0.08429059700574726,
+        "mean": 0.11960116350054441,
+        "p95": 0.2564276439603418,
+        "max": 0.335050533991307
+      }
+    }
+  },
+  "frozen_hashes_all_unchanged": true,
+  "recorder_states": {
+    "RECORDING_UNSEQUENCED": 56,
+    "DEGRADED_BOOKS": 1,
+    "DEGRADED_SOURCE_TIMING": 3,
+    "AWAITING_DATA": 2
+  },
+  "fresh_books": {
+    "16": 59,
+    "12": 1,
+    "0": 2
+  },
+  "useful_work": {
+    "api": {
+      "revision_delta": 2046,
+      "journal_event_delta": 2046,
+      "all_ready": true
+    },
+    "interface_api": {
+      "revision_delta": 1956,
+      "journal_event_delta": 1956,
+      "all_ready": true
+    },
+    "recorder_ordinal_delta": 22112,
+    "recorder_frames_delta": 18273,
+    "recorder_storage_bytes_delta": 40595398,
+    "veritas_segments_delta": 119
+  },
+  "telemetry": {
+    "processing_latency_ms": {
+      "min": 651.476,
+      "mean": 707.5533387096774,
+      "p95": 798.64425,
+      "max": 808.293
+    },
+    "queue_depth": {
+      "min": 0,
+      "mean": 0,
+      "p95": 0.0,
+      "max": 0
+    },
+    "pending_simulations": {
+      "min": 0,
+      "mean": 0,
+      "p95": 0.0,
+      "max": 0
+    },
+    "broker_processing_delay_ms": {
+      "min": 0,
+      "mean": 0,
+      "p95": 0.0,
+      "max": 0
+    },
+    "scanner_markets_per_second": {
+      "min": 7.423046822731872,
+      "mean": 8.512154978430953,
+      "p95": 9.096561916576102,
+      "max": 9.20986195224227
+    }
+  },
+  "veritas_pending_max": 0
+}

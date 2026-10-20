@@ -1,0 +1,1856 @@
+{
+  "first": 1792518154.3647892,
+  "last": 1792521797.5802698,
+  "sample_count": 242,
+  "host": {
+    "procs_running": {
+      "min": 1,
+      "mean": 1.8677685950413223,
+      "max": 8
+    },
+    "procs_blocked": {
+      "min": 0,
+      "mean": 0.0743801652892562,
+      "max": 2
+    },
+    "MemAvailable_bytes": {
+      "min": 9100894208,
+      "mean": 9316324851.305784,
+      "max": 9358245888
+    },
+    "SwapFree_bytes": {
+      "min": 1101717504,
+      "mean": 1103945524.892562,
+      "max": 1107542016
+    },
+    "Cached_bytes": {
+      "min": 7053189120,
+      "mean": 7436749713.983471,
+      "max": 7657857024
+    },
+    "AnonPages_bytes": {
+      "min": 5643317248,
+      "mean": 5665222435.966942,
+      "max": 5821984768
+    },
+    "Slab_bytes": {
+      "min": 1415979008,
+      "mean": 1417192016.3966942,
+      "max": 1417789440
+    },
+    "cpu_some_avg10": {
+      "min": 0.97,
+      "mean": 2.12698347107438,
+      "max": 9.09
+    },
+    "cpu_full_avg10": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "memory_some_avg10": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "memory_full_avg10": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "io_some_avg10": {
+      "min": 0.2,
+      "mean": 0.9264876033057852,
+      "max": 2.69
+    },
+    "io_full_avg10": {
+      "min": 0.2,
+      "mean": 0.7940909090909091,
+      "max": 2.49
+    },
+    "ctxt_per_second": {
+      "min": 17536.119508130083,
+      "mean": 18231.468209243223,
+      "max": 22871.887766265147
+    },
+    "processes_per_second": {
+      "min": 23.94886048675243,
+      "mean": 26.719251982837925,
+      "max": 40.621786077929265
+    },
+    "disk_loop0_read_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop0_write_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop0_read_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop0_write_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop0_util_percent": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop1_read_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop1_write_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop1_read_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop1_write_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop1_util_percent": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop2_read_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop2_write_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop2_read_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop2_write_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop2_util_percent": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop3_read_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop3_write_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop3_read_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop3_write_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop3_util_percent": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop4_read_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop4_write_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop4_read_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop4_write_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop4_util_percent": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop5_read_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop5_write_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop5_read_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop5_write_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop5_util_percent": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop6_read_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop6_write_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop6_read_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop6_write_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop6_util_percent": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop7_read_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop7_write_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop7_read_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop7_write_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop7_util_percent": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_nvme0n1_read_iops": {
+      "min": 0.0,
+      "mean": 29.525328031884523,
+      "max": 1018.4876389502152
+    },
+    "disk_nvme0n1_write_iops": {
+      "min": 18.05825394717424,
+      "mean": 52.96995887246077,
+      "max": 185.74342921398429
+    },
+    "disk_nvme0n1_read_bytes_per_second": {
+      "min": 0.0,
+      "mean": 251203.68452491998,
+      "max": 7969495.852300988
+    },
+    "disk_nvme0n1_write_bytes_per_second": {
+      "min": 429760.5212002151,
+      "mean": 820725.9203415578,
+      "max": 2951100.0702887266
+    },
+    "disk_nvme0n1_util_percent": {
+      "min": 2.328422278815102,
+      "mean": 4.767020584103412,
+      "max": 20.108975242539607
+    },
+    "disk_nvme0n1_read_await_ms": {
+      "min": 0.0,
+      "mean": 2.145037661074998,
+      "max": 8.0
+    },
+    "disk_nvme0n1_write_await_ms": {
+      "min": 0.8377483443708609,
+      "mean": 2.2392757341612244,
+      "max": 4.7253086419753085
+    },
+    "disk_nvme0n1p1_read_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_nvme0n1p1_write_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_nvme0n1p1_read_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_nvme0n1p1_write_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_nvme0n1p1_util_percent": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_nvme0n1p2_read_iops": {
+      "min": 0.0,
+      "mean": 29.525328031884523,
+      "max": 1018.4876389502152
+    },
+    "disk_nvme0n1p2_write_iops": {
+      "min": 18.05825394717424,
+      "mean": 52.96995887246077,
+      "max": 185.74342921398429
+    },
+    "disk_nvme0n1p2_read_bytes_per_second": {
+      "min": 0.0,
+      "mean": 251203.68452491998,
+      "max": 7969495.852300988
+    },
+    "disk_nvme0n1p2_write_bytes_per_second": {
+      "min": 429760.5212002151,
+      "mean": 820725.9203415578,
+      "max": 2951100.0702887266
+    },
+    "disk_nvme0n1p2_util_percent": {
+      "min": 2.335037114834463,
+      "mean": 4.845302195973056,
+      "max": 20.74399551335665
+    },
+    "disk_nvme0n1p2_read_await_ms": {
+      "min": 0.0,
+      "mean": 2.1517045477253665,
+      "max": 8.0
+    },
+    "disk_nvme0n1p2_write_await_ms": {
+      "min": 0.8377483443708609,
+      "mean": 2.239300175196925,
+      "max": 4.726851851851852
+    },
+    "disk_sda_read_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_sda_write_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_sda_read_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_sda_write_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_sda_util_percent": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_sda1_read_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_sda1_write_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_sda1_read_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_sda1_write_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_sda1_util_percent": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_sda2_read_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_sda2_write_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_sda2_read_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_sda2_write_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_sda2_util_percent": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_sda3_read_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_sda3_write_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_sda3_read_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_sda3_write_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_sda3_util_percent": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_sda4_read_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_sda4_write_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_sda4_read_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_sda4_write_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_sda4_util_percent": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_sdb_read_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_sdb_write_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_sdb_read_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_sdb_write_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_sdb_util_percent": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop13_read_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop13_write_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop13_read_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop13_write_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop13_util_percent": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop9_read_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop9_write_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop9_read_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop9_write_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop9_util_percent": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop11_read_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop11_write_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop11_read_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop11_write_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop11_util_percent": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop12_read_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop12_write_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop12_read_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop12_write_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop12_util_percent": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop8_read_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop8_write_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop8_read_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop8_write_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop8_util_percent": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop14_read_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop14_write_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop14_read_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop14_write_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop14_util_percent": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop10_read_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop10_write_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop10_read_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop10_write_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop10_util_percent": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop15_read_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop15_write_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop15_read_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop15_write_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop15_util_percent": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop18_read_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop18_write_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop18_read_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop18_write_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop18_util_percent": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop16_read_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop16_write_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop16_read_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop16_write_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop16_util_percent": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop17_read_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop17_write_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop17_read_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop17_write_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop17_util_percent": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop19_read_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop19_write_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop19_read_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop19_write_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop19_util_percent": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop20_read_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop20_write_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop20_read_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop20_write_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop20_util_percent": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop21_read_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop21_write_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop21_read_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop21_write_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop21_util_percent": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop22_read_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop22_write_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop22_read_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop22_write_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop22_util_percent": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop23_read_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop23_write_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop23_read_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop23_write_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop23_util_percent": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop26_read_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop26_write_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop26_read_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop26_write_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop26_util_percent": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop24_read_iops": {
+      "min": 0.0,
+      "mean": 0.006861571044550964,
+      "max": 0.926041722542678
+    },
+    "disk_loop24_write_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop24_read_bytes_per_second": {
+      "min": 0.0,
+      "mean": 238.89203571655264,
+      "max": 26483.7349313234
+    },
+    "disk_loop24_write_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop24_util_percent": {
+      "min": 0.0,
+      "mean": 0.00021956827881723155,
+      "max": 0.04630140008232673
+    },
+    "disk_loop25_read_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop25_write_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop25_read_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop25_write_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop25_util_percent": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop27_read_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop27_write_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop27_read_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop27_write_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop27_util_percent": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop31_read_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop31_write_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop31_read_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop31_write_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop31_util_percent": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop28_read_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop28_write_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop28_read_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop28_write_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop28_util_percent": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop29_read_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop29_write_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop29_read_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop29_write_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop29_util_percent": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop30_read_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop30_write_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop30_read_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop30_write_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop30_util_percent": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop32_read_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop32_write_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop32_read_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop32_write_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop32_util_percent": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop33_read_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop33_write_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop33_read_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop33_write_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop33_util_percent": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop34_read_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop34_write_iops": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop34_read_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop34_write_bytes_per_second": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "disk_loop34_util_percent": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "pswpin_per_second": {
+      "min": 0.0,
+      "mean": 0.10155745469895067,
+      "max": 2.8444160029023995
+    },
+    "pswpout_per_second": {
+      "min": 0.0,
+      "mean": 0.48693085015315196,
+      "max": 31.49180809950217
+    },
+    "pgmajfault_per_second": {
+      "min": 0.0,
+      "mean": 0.8943082908862686,
+      "max": 113.98908585895656
+    },
+    "pgscan_direct_per_second": {
+      "min": 0.0,
+      "mean": 1.3187308163180507,
+      "max": 240.02579786763417
+    },
+    "pgscan_kswapd_per_second": {
+      "min": 0.0,
+      "mean": 92.51517551507908,
+      "max": 6730.077346689554
+    },
+    "cpu_busy_percent": {
+      "min": 12.051282051282051,
+      "mean": 14.01118450642356,
+      "max": 21.99442896935933
+    },
+    "cpu_iowait_percent": {
+      "min": 0.724799286351472,
+      "mean": 1.1621838652461955,
+      "max": 3.409850679741475
+    },
+    "cpu0_busy_percent": {
+      "min": 10.273515677118079,
+      "mean": 14.00330376061657,
+      "max": 37.44993324432577
+    },
+    "cpu1_busy_percent": {
+      "min": 10.501672240802675,
+      "mean": 14.426390113556575,
+      "max": 43.30446369087275
+    },
+    "cpu2_busy_percent": {
+      "min": 10.0472016183412,
+      "mean": 13.810268200604332,
+      "max": 32.506702412868634
+    },
+    "cpu3_busy_percent": {
+      "min": 9.632107023411372,
+      "mean": 13.935999017325111,
+      "max": 39.920159680638726
+    },
+    "cpu4_busy_percent": {
+      "min": 9.632107023411372,
+      "mean": 13.90494568574557,
+      "max": 43.75
+    },
+    "cpu5_busy_percent": {
+      "min": 9.32260228034876,
+      "mean": 13.975669214281382,
+      "max": 44.156706507304115
+    },
+    "disk_loop24_read_await_ms": {
+      "min": 0.0,
+      "mean": 0.4365079365079365,
+      "max": 1.1666666666666667
+    }
+  },
+  "cgroups": {
+    "/system.slice/rustdesk.service": {
+      "cpu_seconds": 738.0224129999996,
+      "interval_seconds": 3643.215481038904,
+      "throttled_seconds": 0.0,
+      "observations": {
+        "memory.current": {
+          "min": 387420160,
+          "mean": 388170557.3553719,
+          "max": 390504448
+        },
+        "memory.swap.current": {
+          "min": 4575232,
+          "mean": 4575232,
+          "max": 4575232
+        },
+        "anon": {
+          "min": 163938304,
+          "mean": 164071220.89256197,
+          "max": 165933056
+        },
+        "file": {
+          "min": 197124096,
+          "mean": 197124096,
+          "max": 197124096
+        },
+        "kernel": {
+          "min": 26017792,
+          "mean": 26103723.371900827,
+          "max": 26492928
+        }
+      }
+    },
+    "/system.slice/status.service": {
+      "cpu_seconds": 70.76583300000001,
+      "interval_seconds": 3643.215481038904,
+      "throttled_seconds": 0.0,
+      "observations": {
+        "memory.current": {
+          "min": 205479936,
+          "mean": 206972403.30578512,
+          "max": 367566848
+        },
+        "memory.swap.current": {
+          "min": 446980096,
+          "mean": 447017535.4710744,
+          "max": 447029248
+        },
+        "anon": {
+          "min": 58789888,
+          "mean": 59839699.57024793,
+          "max": 217112576
+        },
+        "file": {
+          "min": 138268672,
+          "mean": 138651021.7520661,
+          "max": 138903552
+        },
+        "kernel": {
+          "min": 8372224,
+          "mean": 8413979.504132232,
+          "max": 11223040
+        }
+      }
+    },
+    "/system.slice/system-systemd\\x2djournald.slice/systemd-journald@netdata.service": {
+      "cpu_seconds": 0.05070999999999999,
+      "interval_seconds": 3643.215481038904,
+      "throttled_seconds": 0.0,
+      "observations": {
+        "memory.current": {
+          "min": 20393984,
+          "mean": 20582281.520661157,
+          "max": 21078016
+        },
+        "memory.swap.current": {
+          "min": 876544,
+          "mean": 876544,
+          "max": 876544
+        },
+        "anon": {
+          "min": 409600,
+          "mean": 409600,
+          "max": 409600
+        },
+        "file": {
+          "min": 19349504,
+          "mean": 19532876.165289257,
+          "max": 19767296
+        },
+        "kernel": {
+          "min": 618496,
+          "mean": 621254.8760330578,
+          "max": 622592
+        }
+      }
+    },
+    "/user.slice/user-1000.slice/user@1000.service/app.slice/midas-reality.service": {
+      "cpu_seconds": 29.940714,
+      "interval_seconds": 3643.215481038904,
+      "throttled_seconds": 6.049019,
+      "observations": {
+        "memory.current": {
+          "min": 723705856,
+          "mean": 735108104.4628099,
+          "max": 738078720
+        },
+        "memory.swap.current": {
+          "min": 684032,
+          "mean": 684032,
+          "max": 684032
+        },
+        "anon": {
+          "min": 639905792,
+          "mean": 646095829.6859504,
+          "max": 654065664
+        },
+        "file": {
+          "min": 62042112,
+          "mean": 69086859.63636364,
+          "max": 75718656
+        },
+        "kernel": {
+          "min": 19562496,
+          "mean": 19782986.049586777,
+          "max": 20025344
+        },
+        "pid_863193_read_bytes_per_second": {
+          "min": 0.0,
+          "mean": 97.81012237321022,
+          "max": 13005.90518613041
+        },
+        "pid_863193_write_bytes_per_second": {
+          "min": 31971.026561817507,
+          "mean": 65818.81453745018,
+          "max": 132513.60600065597
+        }
+      }
+    },
+    "/system.slice/netdata.service": {
+      "cpu_seconds": 213.7065999999999,
+      "interval_seconds": 3643.215481038904,
+      "throttled_seconds": 0.0,
+      "observations": {
+        "memory.current": {
+          "min": 369078272,
+          "mean": 376989560.59504133,
+          "max": 386060288
+        },
+        "memory.swap.current": {
+          "min": 42708992,
+          "mean": 42712427.90082645,
+          "max": 42717184
+        },
+        "anon": {
+          "min": 254164992,
+          "mean": 255930824.99173555,
+          "max": 263688192
+        },
+        "file": {
+          "min": 86220800,
+          "mean": 94698910.67768595,
+          "max": 96321536
+        },
+        "kernel": {
+          "min": 25575424,
+          "mean": 25682715.50413223,
+          "max": 26030080
+        }
+      }
+    },
+    "/user.slice/user-1000.slice/user@1000.service/session.slice/org.gnome.Shell@x11.service": {
+      "cpu_seconds": 264.33763699999986,
+      "interval_seconds": 3643.215481038904,
+      "throttled_seconds": 0.0,
+      "observations": {
+        "memory.current": {
+          "min": 186810368,
+          "mean": 190748655.07438016,
+          "max": 195366912
+        },
+        "memory.swap.current": {
+          "min": 298770432,
+          "mean": 303432932.4958678,
+          "max": 306188288
+        },
+        "anon": {
+          "min": 143003648,
+          "mean": 145656823.53719008,
+          "max": 150261760
+        },
+        "file": {
+          "min": 33091584,
+          "mean": 33174519.537190083,
+          "max": 33193984
+        },
+        "kernel": {
+          "min": 9125888,
+          "mean": 9132658.247933885,
+          "max": 9138176
+        }
+      }
+    },
+    "/user.slice/user-1000.slice/user@1000.service/app.slice/midas-web.service": {
+      "cpu_seconds": 1.7118829999999994,
+      "interval_seconds": 3643.215481038904,
+      "throttled_seconds": 0.0,
+      "observations": {
+        "memory.current": {
+          "min": 49451008,
+          "mean": 49491511.00826446,
+          "max": 50237440
+        },
+        "memory.swap.current": {
+          "min": 90472448,
+          "mean": 90472448,
+          "max": 90472448
+        },
+        "anon": {
+          "min": 38854656,
+          "mean": 38854656,
+          "max": 38854656
+        },
+        "file": {
+          "min": 3293184,
+          "mean": 3293184,
+          "max": 3293184
+        },
+        "kernel": {
+          "min": 4665344,
+          "mean": 4667070.413223141,
+          "max": 4673536
+        },
+        "pid_2513652_read_bytes_per_second": {
+          "min": 0.0,
+          "mean": 0.0,
+          "max": 0.0
+        },
+        "pid_2513652_write_bytes_per_second": {
+          "min": 0.0,
+          "mean": 0.0,
+          "max": 0.0
+        },
+        "pid_2513670_read_bytes_per_second": {
+          "min": 0.0,
+          "mean": 0.0,
+          "max": 0.0
+        },
+        "pid_2513670_write_bytes_per_second": {
+          "min": 0.0,
+          "mean": 0.0,
+          "max": 0.0
+        }
+      }
+    },
+    "/user.slice/user-1000.slice/user@1000.service/app.slice/midas-reality-web.service": {
+      "cpu_seconds": 1.9822690000000005,
+      "interval_seconds": 3643.215481038904,
+      "throttled_seconds": 0.0,
+      "observations": {
+        "memory.current": {
+          "min": 47378432,
+          "mean": 47428667.23966942,
+          "max": 47902720
+        },
+        "memory.swap.current": {
+          "min": 44056576,
+          "mean": 44056576,
+          "max": 44056576
+        },
+        "anon": {
+          "min": 43704320,
+          "mean": 43704320,
+          "max": 43704320
+        },
+        "file": {
+          "min": 204800,
+          "mean": 204800,
+          "max": 204800
+        },
+        "kernel": {
+          "min": 2768896,
+          "mean": 2773161.256198347,
+          "max": 2777088
+        },
+        "pid_2890819_read_bytes_per_second": {
+          "min": 0.0,
+          "mean": 0.0,
+          "max": 0.0
+        },
+        "pid_2890819_write_bytes_per_second": {
+          "min": 0.0,
+          "mean": 0.0,
+          "max": 0.0
+        },
+        "pid_2890871_read_bytes_per_second": {
+          "min": 0.0,
+          "mean": 0.0,
+          "max": 0.0
+        },
+        "pid_2890871_write_bytes_per_second": {
+          "min": 0.0,
+          "mean": 0.0,
+          "max": 0.0
+        }
+      }
+    },
+    "/user.slice/user-1000.slice/user@1000.service/app.slice/midas-api.service": {
+      "cpu_seconds": 316.50738300000006,
+      "interval_seconds": 3643.215481038904,
+      "throttled_seconds": 0.117968,
+      "observations": {
+        "memory.current": {
+          "min": 1478250496,
+          "mean": 1546308464.1322315,
+          "max": 1609625600
+        },
+        "memory.swap.current": {
+          "min": 0,
+          "mean": 0,
+          "max": 0
+        },
+        "anon": {
+          "min": 127680512,
+          "mean": 131745250.3801653,
+          "max": 134610944
+        },
+        "file": {
+          "min": 1344815104,
+          "mean": 1413026519.801653,
+          "max": 1474318336
+        },
+        "kernel": {
+          "min": 946176,
+          "mean": 1427371.3719008265,
+          "max": 1912832
+        },
+        "pid_3717987_read_bytes_per_second": {
+          "min": 0.0,
+          "mean": 2.2486999761968374,
+          "max": 270.9719719950618
+        },
+        "pid_3717987_write_bytes_per_second": {
+          "min": 97004.18677221498,
+          "mean": 159700.52268752077,
+          "max": 249014.7419172969
+        }
+      }
+    },
+    "/user.slice/user-1000.slice/user@1000.service/app.slice/midas-reality-api.service": {
+      "cpu_seconds": 211.88083099999997,
+      "interval_seconds": 3643.215481038904,
+      "throttled_seconds": 178.07689799999991,
+      "observations": {
+        "memory.current": {
+          "min": 431665152,
+          "mean": 441153079.0082645,
+          "max": 451653632
+        },
+        "memory.swap.current": {
+          "min": 0,
+          "mean": 0,
+          "max": 0
+        },
+        "anon": {
+          "min": 97681408,
+          "mean": 98742153.52066116,
+          "max": 99262464
+        },
+        "file": {
+          "min": 332615680,
+          "mean": 341136155.5041322,
+          "max": 351526912
+        },
+        "kernel": {
+          "min": 815104,
+          "mean": 1249720.0661157025,
+          "max": 1708032
+        },
+        "pid_3725032_read_bytes_per_second": {
+          "min": 0.0,
+          "mean": 8.994450101882615,
+          "max": 1083.7665248323271
+        },
+        "pid_3725032_write_bytes_per_second": {
+          "min": 97549.14669501556,
+          "mean": 152373.9344052602,
+          "max": 249575.09089819403
+        }
+      }
+    },
+    "/user.slice/user-1000.slice/user@1000.service/app.slice/midas-arena-job-8c0b2f8ef4a14e5d8558041c.service": {
+      "cpu_seconds": 0,
+      "interval_seconds": 0,
+      "throttled_seconds": 0,
+      "observations": {
+        "memory.current": {
+          "min": 141414400,
+          "mean": 141414400,
+          "max": 141414400
+        },
+        "memory.swap.current": {
+          "min": 0,
+          "mean": 0,
+          "max": 0
+        },
+        "anon": {
+          "min": 138805248,
+          "mean": 138805248,
+          "max": 138805248
+        },
+        "file": {
+          "min": 73728,
+          "mean": 73728,
+          "max": 73728
+        },
+        "kernel": {
+          "min": 2457600,
+          "mean": 2457600,
+          "max": 2457600
+        }
+      }
+    },
+    "/user.slice/user-1000.slice/user@1000.service/app.slice/midas-veritas-gap-detail-v2.service": {
+      "cpu_seconds": 0,
+      "interval_seconds": 0,
+      "throttled_seconds": 0,
+      "observations": {
+        "memory.current": {
+          "min": 70955008,
+          "mean": 146440192,
+          "max": 201228288
+        },
+        "memory.swap.current": {
+          "min": 0,
+          "mean": 0,
+          "max": 0
+        },
+        "anon": {
+          "min": 69754880,
+          "mean": 131719850.66666667,
+          "max": 152195072
+        },
+        "file": {
+          "min": 0,
+          "mean": 13337941.333333334,
+          "max": 47489024
+        },
+        "kernel": {
+          "min": 724992,
+          "mean": 973482.6666666666,
+          "max": 1064960
+        }
+      }
+    },
+    "/user.slice/user-1000.slice/user@1000.service/app.slice/midas-veritas-observatory.service": {
+      "cpu_seconds": 0,
+      "interval_seconds": 0,
+      "throttled_seconds": 0,
+      "observations": {
+        "memory.current": {
+          "min": 34623488,
+          "mean": 34623488,
+          "max": 34623488
+        },
+        "memory.swap.current": {
+          "min": 0,
+          "mean": 0,
+          "max": 0
+        },
+        "anon": {
+          "min": 31707136,
+          "mean": 31707136,
+          "max": 31707136
+        },
+        "file": {
+          "min": 2170880,
+          "mean": 2170880,
+          "max": 2170880
+        },
+        "kernel": {
+          "min": 274432,
+          "mean": 274432,
+          "max": 274432
+        }
+      }
+    },
+    "/user.slice/user-1000.slice/user@1000.service/app.slice/midas-veritas-research-director.service": {
+      "cpu_seconds": 0,
+      "interval_seconds": 0,
+      "throttled_seconds": 0,
+      "observations": {
+        "memory.current": {
+          "min": 15171584,
+          "mean": 15171584,
+          "max": 15171584
+        },
+        "memory.swap.current": {
+          "min": 0,
+          "mean": 0,
+          "max": 0
+        },
+        "anon": {
+          "min": 14589952,
+          "mean": 14589952,
+          "max": 14589952
+        },
+        "file": {
+          "min": 139264,
+          "mean": 139264,
+          "max": 139264
+        },
+        "kernel": {
+          "min": 196608,
+          "mean": 196608,
+          "max": 196608
+        }
+      }
+    },
+    "/user.slice/user-1000.slice/user@1000.service/app.slice/midas-reality-capacity.service": {
+      "cpu_seconds": 0,
+      "interval_seconds": 0,
+      "throttled_seconds": 0,
+      "observations": {
+        "memory.current": {
+          "min": 53772288,
+          "mean": 61839360,
+          "max": 69906432
+        },
+        "memory.swap.current": {
+          "min": 0,
+          "mean": 0,
+          "max": 0
+        },
+        "anon": {
+          "min": 52973568,
+          "mean": 61259776,
+          "max": 69545984
+        },
+        "file": {
+          "min": 0,
+          "mean": 212992,
+          "max": 425984
+        },
+        "kernel": {
+          "min": 229376,
+          "mean": 249856,
+          "max": 270336
+        }
+      }
+    },
+    "/user.slice/user-1000.slice/user@1000.service/app.slice/midas-veritas-source-analysis.service": {
+      "cpu_seconds": 0,
+      "interval_seconds": 0,
+      "throttled_seconds": 0,
+      "observations": {
+        "memory.current": {
+          "min": 131194880,
+          "mean": 131194880,
+          "max": 131194880
+        },
+        "memory.swap.current": {
+          "min": 0,
+          "mean": 0,
+          "max": 0
+        },
+        "anon": {
+          "min": 129769472,
+          "mean": 129769472,
+          "max": 129769472
+        },
+        "file": {
+          "min": 331776,
+          "mean": 331776,
+          "max": 331776
+        },
+        "kernel": {
+          "min": 995328,
+          "mean": 995328,
+          "max": 995328
+        }
+      }
+    }
+  }
+}

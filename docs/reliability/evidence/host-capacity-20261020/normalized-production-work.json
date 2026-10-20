@@ -1,0 +1,58 @@
+{
+  "pre_codec": {
+    "first": 1792515307.9602625,
+    "last": 1792517635.8052628,
+    "services": {
+      "main": {
+        "commands": 1302,
+        "kinds": {
+          "observe": 1302
+        },
+        "first_revision": 407592,
+        "last_revision": 408893,
+        "commands_per_second": 0.5593155901061482,
+        "cpu_seconds_per_command_including_api_reads": 0.1534404416282642,
+        "kernel_write_bytes_per_command": 2756836.7657708935
+      },
+      "interface": {
+        "commands": 1242,
+        "kinds": {
+          "observe": 1242
+        },
+        "first_revision": 72902,
+        "last_revision": 74143,
+        "commands_per_second": 0.5335406781196897,
+        "cpu_seconds_per_command_including_api_reads": 0.10856421819645737,
+        "kernel_write_bytes_per_command": 2736264.199534533
+      }
+    }
+  },
+  "final": {
+    "first": 1792518154.3647892,
+    "last": 1792521797.5802698,
+    "services": {
+      "main": {
+        "commands": 2034,
+        "kinds": {
+          "observe": 2034
+        },
+        "first_revision": 409111,
+        "last_revision": 411144,
+        "commands_per_second": 0.5582980229552575,
+        "cpu_seconds_per_command_including_api_reads": 0.15560834955752215,
+        "kernel_write_bytes_per_command": 286048.87734004983
+      },
+      "interface": {
+        "commands": 1944,
+        "kinds": {
+          "observe": 1944
+        },
+        "first_revision": 74409,
+        "last_revision": 76352,
+        "commands_per_second": 0.5335945706121045,
+        "cpu_seconds_per_command_including_api_reads": 0.10899219701646089,
+        "kernel_write_bytes_per_command": 285561.2534259238
+      }
+    }
+  }
+}
