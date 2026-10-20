@@ -3,12 +3,12 @@
 Run with candidate packages on PYTHONPATH. `inventory` reads only sidecars/stat;
 it DOES NOT certify segment bytes. `run` requires sustained production headroom,
 then places each worker in its own sandbox/cgroup. No production service actions.
-The writable view uses symlinks to immutable finalized sources, never open tails.
+Workers read immutable finalized source files through Landlock and write only to
+independent staging state.
 """
 from __future__ import annotations
 
 import argparse
-import fcntl
 import gc
 import hashlib
 import json
@@ -24,14 +24,31 @@ from collections import Counter
 from datetime import UTC, datetime
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
 from midas.reality import recovery
 from midas.reality.reconstruction import _canonical_chunks
-from midas.reality.resources import require_safe
+from midas.reality.resources import snapshot
 from midas.reality.storage import Store, _validate_manifest_metadata, canonical, manifest, records
+from reality_readonly_sandbox import apply_readonly_source_policy, verify_source_write_denied
+from reality_staging_admission import (
+    PROTECTED_DISK_RESERVE_BYTES,
+    STAGING_EXTRA_BYTES,
+    validate_staging_admission,
+)
+
+STAGING_OUTPUT_ROOT = Path("/mnt/continental-cloud/data/midas-reality-staging")
+STAGING_VOLUME_RESERVE_BYTES = 400 * 1024**3
+STAGING_CPU_QUOTA_PERCENT = 15
+STAGING_CPU_WEIGHT = 10
 
 
 def write(path, value):
     path.write_text(json.dumps(value, indent=2) + "\n")
+
+
+def allowed_staging_path(path):
+    return path.is_relative_to(Path("/tmp")) or path.is_relative_to(STAGING_OUTPUT_ROOT)
 
 
 def inventory(source):
@@ -82,16 +99,26 @@ def inventory(source):
     return catalog, identities, summary
 
 
-def admission():
+def admission(baseline_events=None):
     unit = subprocess.check_output(["systemctl", "--user", "show", "midas-reality.service",
                                     "-p", "MainPID", "-p", "ControlGroup"], text=True)
     values = dict(line.split("=", 1) for line in unit.splitlines())
     if int(values["MainPID"]) <= 0:
         raise ValueError("Protected recorder is unavailable")
-    sample = require_safe(values["ControlGroup"])
-    if sample["memory_high_margin_bytes"] < 64 * 1024**2:
-        raise ValueError("Heavy staging requires 64 MiB recorder MemoryHigh margin")
-    return dict(pid=values["MainPID"], **sample)
+    control_group = values["ControlGroup"]
+    group = Path("/sys/fs/cgroup") / control_group.lstrip("/")
+    sample = snapshot(control_group)
+    max_text = (group / "memory.max").read_text().strip()
+    memory_max = int(max_text) if max_text != "max" else None
+    sample["memory_max_bytes"] = memory_max
+    sample["memory_max_margin_bytes"] = (
+        memory_max - sample["memory_current_bytes"] if memory_max is not None else None
+    )
+    sample["protected_cpu_stat"] = (group / "cpu.stat").read_text()
+    io_stat = group / "io.stat"
+    sample["protected_io_stat"] = io_stat.read_text() if io_stat.exists() else None
+    validate_staging_admission(sample, baseline_events)
+    return dict(pid=values["MainPID"], control_group=control_group, **sample)
 
 
 def cgroup_metrics():
@@ -160,51 +187,21 @@ def endurance(root, engine, catalog, seconds):
           scope="captured raw payload replay; synchronous persistence; no network/reconnection test"))
 
 
-def worker(root, phase, enforce_readonly=False):
+def worker(root, phase):
     """Only called inside the staging unit; artifacts are under disposable root."""
     resource.setrlimit(resource.RLIMIT_FSIZE, (64 * 1024**2, 64 * 1024**2))
     catalog = json.loads((root.parent / "catalog.json").read_text())
-    if phase == "snapshot":
-        source = Path(json.loads((root.parent / "boundary.json").read_text())["source"])
-        snapshot = root.parent / "snapshot"
-        snapshot.mkdir()
-        copied = cloned = 0
-        for info in catalog["segments"]:
-            destination = snapshot / info["file"]
-            with (source / info["file"]).open("rb") as original, destination.open("xb") as out:
-                try:
-                    fcntl.ioctl(out.fileno(), 0x40049409, original.fileno())  # FICLONE
-                    cloned += 1
-                except OSError as error:
-                    if error.errno not in (18, 22, 25, 95):
-                        raise
-                    shutil.copyfileobj(original, out, length=256 * 1024)
-                    copied += 1
-                out.flush()
-                os.fsync(out.fileno())
-            with destination.open("rb") as check:
-                if hashlib.file_digest(check, "sha256").hexdigest() != info["sha256"]:
-                    raise ValueError("Copied snapshot checksum mismatch")
-            destination.chmod(0o400)
-        from midas.reality.storage import sync_dir
-        sync_dir(snapshot)
-        write(root.parent / "snapshot.json", dict(segments=len(catalog["segments"]),
-              reflinked=cloned, independently_copied=copied, bytes=sum(s["bytes"] for s in catalog["segments"]),
-              source_integrity="every copied segment checksum verified", cgroup=cgroup_metrics()))
+    boundary = json.loads((root.parent / "boundary.json").read_text())
+    sandbox = apply_readonly_source_policy(Path(boundary["source"]), root.parent)
+    source_file = root / catalog["segments"][0]["file"]
+    verify_source_write_denied(source_file)
+    write(root.parent / f"{phase}-landlock.json", sandbox)
+    if phase == "readonly_probe":
+        write(root.parent / "readonly_probe.json", dict(
+            denied_source_file=str(source_file), source_sha256=catalog["segments"][0]["sha256"],
+            policy=sandbox,
+        ))
         return
-    if enforce_readonly:
-        # O_WRONLY without O_TRUNC performs no write. Refuse a silently degraded
-        # user-systemd mount sandbox before reconstructing any historical data.
-        try:
-            descriptor = os.open(root / catalog["segments"][0]["file"], os.O_WRONLY)
-        except PermissionError:
-            pass
-        except OSError as error:
-            if error.errno != 30:  # EROFS
-                raise
-        else:
-            os.close(descriptor)
-            raise ValueError("Read-only source sandbox is not enforced on this host")
     checkpoint = root / recovery.CHECKPOINT_NAME
     if checkpoint.is_symlink():
         raise ValueError("Checkpoint must be independent writable staging state")
@@ -269,39 +266,57 @@ def worker(root, phase, enforce_readonly=False):
 
 
 def run(source, output, with_endurance=False):
-    # Mandatory gate is evaluated before snapshot creation or expensive I/O.
+    # Mandatory gate is evaluated before staging setup or expensive I/O.
     initial = admission()
     for _ in range(12):
         time.sleep(5)
-        if admission()["pid"] != initial["pid"]:
+        if admission(initial["memory_events"])["pid"] != initial["pid"]:
             raise ValueError("Protected recorder identity changed")
     catalog, identities, summary = inventory(source)
-    if shutil.disk_usage(output.parent).free < 21 * 1024**3 + summary["archive_bytes"]:
-        raise ValueError("Need 20 GiB reserve, snapshot bytes and 1 GiB staging allowance")
+    reserve = (
+        STAGING_VOLUME_RESERVE_BYTES
+        if output.is_relative_to(STAGING_OUTPUT_ROOT)
+        else PROTECTED_DISK_RESERVE_BYTES
+    )
+    if shutil.disk_usage(output.parent).free < reserve + STAGING_EXTRA_BYTES:
+        raise ValueError("Need the staging-volume reserve and 1 GiB staging allowance")
     output.mkdir(mode=0o700, exist_ok=False)
     write(output / "catalog.json", catalog)
     write(output / "identities.json", identities)
     write(output / "boundary.json", summary)
     root = output / "view"
     root.mkdir()
-    # Independent inodes only. Prefer reflinks; this ext4 host requires copying.
-    # Workers never link to production, even if user-systemd mount isolation degrades.
+    # Reuse finalized source bytes without copying. Worker Landlock rules allow
+    # reads across the filesystem and mutations only below this run-owned root.
     for info in catalog["segments"]:
-        (root / info["file"]).symlink_to(output / "snapshot" / info["file"])
-        # Sidecars are tiny independent copies; publication boundary is pinned above.
+        (root / info["file"]).symlink_to(source / info["file"])
         write((root / info["file"]).with_suffix(".json"), info)
     write(output / "admission.json", initial)
-    phases = ("snapshot", "cold", "fast", "restart", "corrupt", "stale", "interrupt",
+    write(output / "staging-policy.json", dict(
+        memory_high_bytes=640 * 1024**2,
+        memory_max_bytes=768 * 1024**2,
+        memory_swap_max_bytes=0,
+        cpu_quota_percent=STAGING_CPU_QUOTA_PERCENT,
+        cpu_weight=STAGING_CPU_WEIGHT,
+        nice=19,
+        io_scheduling_class="idle",
+        runtime_max_seconds=4200,
+        output_max_bytes=256 * 1024**2,
+        source_policy="Landlock read-only across /; writes allowed only below this output root",
+    ))
+    phases = ("readonly_probe", "cold", "fast", "restart", "corrupt", "stale", "interrupt",
               "after_interrupt", "interrupt_save", "after_interrupt_save")
     if with_endurance:
         phases += ("endurance",)
     expected = None
     for phase in phases:
-        admission()
+        admission(initial["memory_events"])
         name = "midas-validation-" + uuid.uuid4().hex[:12]
         command = ["systemd-run", "--user", "--wait", "--pipe", "--unit=" + name,
                    "-p", "MemoryHigh=640M", "-p", "MemoryMax=768M", "-p", "MemorySwapMax=0",
-                   "-p", "CPUQuota=25%", "-p", "Nice=19", "-p", "IOSchedulingClass=idle",
+                   "-p", f"CPUQuota={STAGING_CPU_QUOTA_PERCENT}%",
+                   "-p", f"CPUWeight={STAGING_CPU_WEIGHT}", "-p", "Nice=19",
+                   "-p", "IOSchedulingClass=idle",
                    "-p", "TasksMax=16", "-p", "RuntimeMaxSec=4200", "-p", "TimeoutStopSec=5",
                    "-p", "ProtectSystem=strict", "-p", "ProtectHome=read-only",
                    "-p", "ReadWritePaths=" + str(output), "-p", "PrivateNetwork=yes",
@@ -310,13 +325,13 @@ def run(source, output, with_endurance=False):
                    "--setenv=PYTHONDONTWRITEBYTECODE=1",
                    "--setenv=PYTHONPATH=" + os.environ["PYTHONPATH"],
                    sys.executable, str(Path(__file__).resolve()), "worker",
-                   "--source", str(root), "--phase", phase, "--enforce-readonly"]
+                   "--source", str(root), "--phase", phase]
         with (output / f"{phase}.log").open("w") as log:
             child = subprocess.Popen(command, stdout=log, stderr=subprocess.STDOUT)
             try:
                 with (output / f"{phase}-monitor.jsonl").open("w") as monitor:
                     while child.poll() is None:
-                        sample = admission()
+                        sample = admission(initial["memory_events"])
                         if sample["pid"] != initial["pid"]:
                             raise ValueError("Protected recorder changed")
                         owned = subprocess.check_output(["systemctl", "--user", "show", name,
@@ -334,10 +349,8 @@ def run(source, output, with_endurance=False):
                         monitor.write(json.dumps(dict(at=datetime.now(UTC).isoformat(),
                                       protected=sample, worker=owned, cgroup=details)) + "\n")
                         monitor.flush()
-                        used = sum(p.stat().st_size for p in output.rglob("*")
-                                   if p.is_file() and not p.is_symlink())
-                        if used > summary["archive_bytes"] + 256 * 1024**2:
-                            raise ValueError("Staging exceeds snapshot plus 256 MiB abort threshold")
+                        if shutil.disk_usage(output).free < reserve:
+                            raise ValueError("Staging filesystem fell below its reserved free space")
                         time.sleep(5)
                 child.wait()
             except BaseException:
@@ -355,7 +368,7 @@ def run(source, output, with_endurance=False):
             continue
         if child.returncode:
             raise ValueError(f"Worker failed: {phase}; inspect retained log")
-        if phase in ("snapshot", "endurance"):
+        if phase in ("readonly_probe", "endurance"):
             continue
         result = json.loads((output / f"{phase}.json").read_text())
         identity = [result[k] for k in ("state_sha256", "internal_sha256", "ordinal", "gaps")]
@@ -371,6 +384,10 @@ def run(source, output, with_endurance=False):
             raise ValueError("Checkpoint did not verify all source bytes")
         if phase in ("corrupt", "stale", "after_interrupt") and result["recovery"]["mode"] != "full_replay":
             raise ValueError("Expected verified full replay fallback")
+    staged_bytes = sum(p.stat().st_size for p in output.rglob("*")
+                       if p.is_file() and not p.is_symlink())
+    if staged_bytes > 256 * 1024**2:
+        raise ValueError("Independent staging exceeds the 256 MiB bound")
     # Retained checkpoint must be the one surviving interrupted publication.
     final_catalog, final_identities, _ = inventory(source)
     if (final_catalog["segments"][:len(catalog["segments"])] != catalog["segments"]
@@ -388,20 +405,19 @@ def main():
     parser.add_argument("--output", type=Path)
     parser.add_argument("--phase")
     parser.add_argument("--with-endurance", action="store_true")
-    parser.add_argument("--enforce-readonly", action="store_true")
     args = parser.parse_args()
     source = args.source.resolve()
     if args.command == "inventory":
         _, _, summary = inventory(source)
         write(args.output, summary)
     elif args.command == "worker":
-        if not source.is_relative_to(Path("/tmp")) or source.name != "view":
-            raise ValueError("Worker view must be a disposable /tmp path")
-        worker(source, args.phase, args.enforce_readonly)
+        if not allowed_staging_path(source) or source.name != "view":
+            raise ValueError("Worker view must be under an approved disposable staging root")
+        worker(source, args.phase)
     else:
         output = args.output.resolve()
-        if not output.is_relative_to(Path("/tmp")) or output.is_relative_to(source) or source.is_relative_to(output):
-            raise ValueError("Use a new, separate /tmp output root")
+        if not allowed_staging_path(output) or output.is_relative_to(source) or source.is_relative_to(output):
+            raise ValueError("Use a new output root under an approved staging location")
         run(source, output, args.with_endurance)
 
 

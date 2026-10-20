@@ -245,3 +245,35 @@ def test_large_historical_tree_keeps_exact_budget_without_watching_every_old_fil
         assert index.fallbacks == 0
     finally:
         index.close()
+
+
+def test_large_tree_atomic_publish_mode_avoids_repolling_new_artifacts(tmp_path, monkeypatch):
+    root = tmp_path / "arena"
+    root.mkdir()
+    for number in range(40):
+        (root / f"historical-{number}").write_bytes(b"old evidence")
+    monkeypatch.setattr(usage, "MAX_INITIAL_FILE_WATCHES", 16)
+    index = UsageIndex(root, artifact_usage, watch_in_place=False)
+    try:
+        if index.fd < 0:
+            pytest.skip(index.last_error)
+        assert index.file_watch_mode == "DIRECTORY_EVENTS"
+        total, file_count = index.usage()
+
+        for number in range(20):
+            path = root / "new-run" / f"result-{number}.json"
+            payload = b"complete artifact" * (number + 1)
+            atomic_bytes(path, payload)
+            total += len(payload)
+            file_count += 1
+            assert index.usage() == (total, file_count)
+            assert index.poll_files == set()
+
+        replacement = b"replacement artifact"
+        atomic_bytes(root / "new-run" / "result-0.json", replacement)
+        total += len(replacement) - len(b"complete artifact")
+        assert index.usage() == (total, file_count)
+        assert index.fallbacks == 0
+        assert index.reconciliations == 1
+    finally:
+        index.close()

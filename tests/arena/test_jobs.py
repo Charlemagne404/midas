@@ -107,7 +107,8 @@ def test_job_artifact_budget_still_rejects_excessive_job_growth(tmp_path, monkey
         last_error = None
         watches = {}
 
-        def __init__(self, root, fallback):
+        def __init__(self, root, fallback, *, watch_in_place=True):
+            assert watch_in_place is False
             self.baseline = fallback(root)[0]
             self.calls = 0
 
@@ -243,7 +244,8 @@ def test_queued_worker_does_not_publish_artifact_accounting_before_lease(tmp_pat
         watches = {}
         poll_files = ()
 
-        def __init__(self, _root, fallback):
+        def __init__(self, _root, fallback, *, watch_in_place=True):
+            assert watch_in_place is False
             self.fallback = fallback
             assert lease_owned
 

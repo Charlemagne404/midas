@@ -55,10 +55,13 @@ def test_failed_admission_does_not_create_snapshot(tmp_path, monkeypatch):
 def test_recovery_matrix_and_real_interruption_preserve_source(tmp_path):
     source = fixture(tmp_path)
     before = {p.name: p.read_bytes() for p in source.iterdir()}
-    catalog, _, _ = validation.inventory(source)
-    view = tmp_path / "view"
+    catalog, _, boundary = validation.inventory(source)
+    staging = tmp_path / "staging"
+    staging.mkdir()
+    view = staging / "view"
     view.mkdir()
-    validation.write(tmp_path / "catalog.json", catalog)
+    validation.write(staging / "catalog.json", catalog)
+    validation.write(staging / "boundary.json", boundary)
     for info in catalog["segments"]:
         (view / info["file"]).symlink_to(source / info["file"])
     expected = None
@@ -74,10 +77,10 @@ def test_recovery_matrix_and_real_interruption_preserve_source(tmp_path):
             assert process.returncode == -9, process.stderr
             continue
         assert process.returncode == 0, process.stderr
-        result = json.loads((tmp_path / f"{phase}.json").read_text())
+        result = json.loads((staging / f"{phase}.json").read_text())
         if expected is None:
             expected = result["internal_sha256"]
-            (tmp_path / "valid.checkpoint").write_bytes((view / recovery.CHECKPOINT_NAME).read_bytes())
+            (staging / "valid.checkpoint").write_bytes((view / recovery.CHECKPOINT_NAME).read_bytes())
         assert result["internal_sha256"] == expected
         assert result["ordinal"] == result["gaps"] == 2
         if phase in ("fast", "restart", "after_interrupt_save"):

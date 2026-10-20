@@ -521,7 +521,11 @@ def _run(root: Path, identity: str) -> None:
             queue_wait_seconds = time.monotonic() - queue_started
             began = time.monotonic()
             index_began = time.perf_counter()
-            usage_index = UsageIndex(root, artifact_usage)
+            # Arena artifact writers publish by fsync + atomic rename. The
+            # progress callback runs after each publish, so directory events
+            # observe complete files without polling every new path on every
+            # callback when the historical tree exceeds inotify watch limits.
+            usage_index = UsageIndex(root, artifact_usage, watch_in_place=False)
             overhead["artifact_index_init_seconds"] = time.perf_counter() - index_began
             job_artifact_baseline_bytes = usage_index.usage()[0]
             record.update(

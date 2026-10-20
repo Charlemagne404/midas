@@ -51,9 +51,17 @@ class UsageIndex:
     queue overflow or topology ambiguity discards the cache and reconciles.
     """
 
-    def __init__(self, root: Path, fallback: Callable[[Path], tuple[int, int]]):
+    def __init__(
+        self,
+        root: Path,
+        fallback: Callable[[Path], tuple[int, int]],
+        *,
+        watch_in_place: bool = True,
+    ):
+        """`watch_in_place=False` requires atomic publishers at observation points."""
         self.root = root.absolute()
         self.fallback = fallback
+        self.watch_in_place = watch_in_place
         self.fd = -1
         self.lib: Any = None
         self.watches: dict[int, Path] = {}
@@ -138,11 +146,11 @@ class UsageIndex:
             return
         inode = (info.st_dev, info.st_ino)
         if watch_file and self.file_watch_mode == "DIRECTORY_EVENTS":
-            # The historical tree already selected directory-only mode. New
-            # paths are tracked by the parent directory and polled individually
-            # so in-place writes remain visible without repeatedly asking the
-            # exhausted per-user watch table for another inode watch.
-            self.poll_files.add(path)
+            # Directory watches discover new paths but cannot report content
+            # writes. Generic callers poll those paths; Arena can disable this
+            # only because its publishers use atomic replacement.
+            if self.watch_in_place:
+                self.poll_files.add(path)
         elif watch_file and inode not in self.watched_inodes:
             try:
                 descriptor = os.open(path, os.O_PATH | os.O_CLOEXEC)
