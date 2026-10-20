@@ -1,0 +1,29 @@
+[Unit]
+Description=MIDAS Veritas v2 bounded finalized Reality gap-detail replay
+After=local-fs.target
+StartLimitIntervalSec=120
+StartLimitBurst=4
+
+[Service]
+Type=oneshot
+WorkingDirectory=%h/midas-veritas/deploy/runtime/veritas-gap-detail-v2-20261020
+ExecStart=/home/charlie/midas/.venv/bin/python -S scripts/veritas_gap_detail_v2_batch.py --root %h/midas-veritas/data/veritas-gap-detail-v2 --arena-root %h/midas/data/arena --other-arena-root %h/midas-veritas/data/arena --other-arena-root %h/midas/data/reliability-endurance/arena --max-segments 128 --max-source-mib 32
+Environment=PYTHONPATH=%h/midas-veritas/deploy/runtime/veritas-gap-detail-v2-20261020/packages:/home/charlie/midas/.venv/lib/python3.12/site-packages
+Environment=PYTHONDONTWRITEBYTECODE=1
+Environment=OMP_NUM_THREADS=1
+Environment=OPENBLAS_NUM_THREADS=1
+Environment=MKL_NUM_THREADS=1
+MemoryHigh=192M
+MemoryMax=256M
+MemorySwapMax=0
+CPUQuota=100%
+Nice=19
+IOSchedulingClass=idle
+UMask=0077
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=%h/midas-veritas/data/veritas-gap-detail-v2 %h/midas/data/arena/.global-admission.lock
+RestrictAddressFamilies=AF_UNIX
+PrivateTmp=true
+TimeoutStartSec=10min
