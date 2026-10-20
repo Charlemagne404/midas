@@ -441,3 +441,34 @@ def test_paused_record_reader_releases_compression_and_json_scratch(tmp_path):
     finally:
         iterator.close()
         tracemalloc.stop()
+
+
+def test_staging_monitor_failure_terminates_only_disposable_builder(tmp_path):
+    source, output = tmp_path / "source", tmp_path / "output"
+    archive(source)
+    before = {p.name: p.read_bytes() for p in source.iterdir() if p.is_file()}
+    code = """
+import subprocess, sys, time
+from scripts import reality_recovery_snapshot as tool
+calls=0
+def admission():
+ global calls
+ calls+=1
+ if calls>1: raise subprocess.CalledProcessError(1, "fixture-systemctl")
+ return {"recorder_pid":123}
+tool.admission=admission
+tool.replay=lambda *args: time.sleep(15)
+sys.argv=["builder","--snapshot",sys.argv[1],"--output",sys.argv[2]]
+tool.main()
+"""
+    child = subprocess.run(
+        [sys.executable, "-c", code, str(source), str(output)],
+        capture_output=True,
+        text=True,
+        timeout=10,
+        check=False,
+    )
+    assert child.returncode == -signal.SIGTERM
+    assert "Staging resource guard abort" in child.stderr
+    assert before == {p.name: p.read_bytes() for p in source.iterdir() if p.is_file()}
+    assert not output.exists()

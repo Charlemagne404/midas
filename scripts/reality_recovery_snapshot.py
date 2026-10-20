@@ -72,7 +72,7 @@ def main() -> None:
                 current = admission()
                 if current["recorder_pid"] != admitted["recorder_pid"]:
                     raise RuntimeError("Protected recorder identity changed during staging")
-            except (OSError, ValueError, RuntimeError) as error:
+            except Exception as error:
                 print(f"Staging resource guard abort: {error}", file=sys.stderr, flush=True)
                 # Only this disposable staging process is signaled. Source and
                 # protected recorder processes are never signaled by this tool.
