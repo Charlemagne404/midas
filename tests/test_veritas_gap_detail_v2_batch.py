@@ -14,6 +14,8 @@ def ready_snapshot():
         "available_memory_bytes": 8 * 1024**3,
         "disk_free_bytes": 20 * 1024**3,
         "cpu_psi": {"some": 0.0},
+        "available_cpu_count": 6,
+        "host_load_avg1": 1.0,
         "memory_psi": {"some": 0.0, "full": 0.0},
         "io_psi": {"some": 0.0},
     }
@@ -24,12 +26,14 @@ def isolated_admission_lock(tmp_path, monkeypatch):
     monkeypatch.setattr(batch, "global_lock_path", lambda: tmp_path / "admission.lock")
 
 
-def test_resource_gate_blocks_worker_pressure_and_missing_metrics(ready_snapshot):
+def test_resource_gate_distinguishes_quota_psi_from_actual_cpu_capacity(ready_snapshot):
     assert batch.resource_gate(ready_snapshot) == {"ready": True, "reasons": []}
     active = {**ready_snapshot, "active_arena_job_ids": ["job-running"]}
     assert batch.resource_gate(active)["reasons"] == ["arena_worker_active"]
     cpu = {**ready_snapshot, "cpu_psi": {"some": 36.34}}
-    assert batch.resource_gate(cpu)["reasons"] == ["host_cpu_pressure"]
+    assert batch.resource_gate(cpu)["ready"]
+    saturated = {**ready_snapshot, "host_load_avg1": 6.0}
+    assert batch.resource_gate(saturated)["reasons"] == ["host_cpu_capacity"]
     missing = {**ready_snapshot, "io_psi": {}}
     assert batch.resource_gate(missing)["reasons"] == ["resource_pressure_unavailable"]
 

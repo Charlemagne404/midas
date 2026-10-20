@@ -14,6 +14,8 @@ def ready_snapshot():
         "available_memory_bytes": 8 * 1024**3,
         "disk_free_bytes": 20 * 1024**3,
         "cpu_psi": {"some": 0.0},
+        "available_cpu_count": 6,
+        "host_load_avg1": 1.0,
         "memory_psi": {"some": 0.0, "full": 0.0},
         "io_psi": {"some": 0.0},
     }
@@ -74,17 +76,27 @@ def test_default_catalog_includes_interface_jobs(tmp_path, monkeypatch):
 def test_launched_worker_is_rejected_before_systemd_when_pressure_is_unsafe(tmp_path, monkeypatch):
     root = tmp_path / "arena"
     monkeypatch.setattr(admission, "global_lock_path", lambda: tmp_path / "admission.lock")
-    unsafe = {**ready_snapshot(), "cpu_psi": {"some": 36.34}}
+    unsafe = {**ready_snapshot(), "host_load_avg1": 6.0}
     monkeypatch.setattr(admission, "resource_snapshot", lambda _root: unsafe)
     calls = []
     monkeypatch.setattr(
         "midas.arena.jobs.subprocess.run",
         lambda *args, **kwargs: calls.append(args),
     )
-    with pytest.raises(ResourceAdmissionDenied, match="host_cpu_pressure"):
+    with pytest.raises(ResourceAdmissionDenied, match="host_cpu_capacity"):
         create(root, JobSpec(kind="dataset", dataset=DatasetSpec(episodes=30)))
     assert not calls
     assert not list(root.glob("jobs/*/job.json"))
+
+
+def test_host_cpu_psi_from_quota_wait_does_not_block_with_measured_load_headroom():
+    snapshot = {
+        **ready_snapshot(),
+        "cpu_psi": {"some": 36.34},
+        "host_load_avg1": 1.25,
+    }
+
+    assert admission.resource_gate(snapshot)["ready"]
 
 
 def test_worker_budget_preserves_production_reserve():

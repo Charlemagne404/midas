@@ -41,6 +41,8 @@ def prepared(tmp_path, monkeypatch):
             "available_memory_bytes": 8 * 1024**3,
             "disk_free_bytes": 20 * 1024**3,
             "cpu_psi": {"some": 0.0},
+            "available_cpu_count": 6,
+            "host_load_avg1": 0.0,
             "memory_psi": {"some": 0.0, "full": 0.0},
             "io_psi": {"some": 0.0},
         },
@@ -124,6 +126,8 @@ def test_admission_expiry_and_resource_deferral(prepared, monkeypatch):
             "available_memory_bytes": 8 * 1024**3,
             "disk_free_bytes": 2 * 1024**3,
             "cpu_psi": {"some": 0.0},
+            "available_cpu_count": 6,
+            "host_load_avg1": 0.0,
             "memory_psi": {"some": 0.0, "full": 0.0},
             "io_psi": {"some": 0.0},
         },
@@ -165,12 +169,16 @@ def test_resource_gate_uses_pressure_and_reserve_not_swap_occupancy():
         "available_memory_bytes": 8 * 1024**3,
         "disk_free_bytes": 8 * 1024**3,
         "cpu_psi": {"some": 0.0},
+        "available_cpu_count": 6,
+        "host_load_avg1": 0.0,
         "memory_psi": {"some": 0.0, "full": 0.0},
         "io_psi": {"some": 0.0},
     }
     assert scheduling.resource_gate(ready) == {"ready": True, "reasons": []}
-    pressured = {**ready, "cpu_psi": {"some": 80.0}}
-    assert scheduling.resource_gate(pressured)["reasons"] == ["host_cpu_pressure"]
+    quota_wait = {**ready, "cpu_psi": {"some": 80.0}, "host_load_avg1": 1.25}
+    assert scheduling.resource_gate(quota_wait)["ready"]
+    saturated = {**ready, "host_load_avg1": 6.0}
+    assert scheduling.resource_gate(saturated)["reasons"] == ["host_cpu_capacity"]
 
 
 def test_expired_crash_intent_without_child_does_not_admit(prepared):

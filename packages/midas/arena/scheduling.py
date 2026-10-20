@@ -10,7 +10,7 @@ from typing import Any, Literal
 
 from pydantic import Field, model_validator
 
-from midas.arena.admission import ResourceAdmissionDenied
+from midas.arena.admission import ResourceAdmissionDenied, cpu_capacity_snapshot
 from midas.arena.artifacts import artifact_path, atomic_json
 from midas.arena.datasets import research_hash
 from midas.arena.jobs import JobSpec, inspect
@@ -20,7 +20,7 @@ from midas.core.models import Model
 MINIMUM_AVAILABLE_MEMORY_BYTES = 2 * 1024**3
 MINIMUM_DISK_RESERVE_BYTES = 2 * 1024**3
 NEXT_JOB_ARTIFACT_BUDGET_BYTES = 1024**3
-MAX_CPU_PSI_SOME_AVG10_PERCENT = 20.0
+MAX_CPU_LOAD_AVG1_PER_CPU = 1.0
 MAX_MEMORY_PSI_SOME_AVG10_PERCENT = 10.0
 MAX_MEMORY_PSI_FULL_AVG10_PERCENT = 1.0
 MAX_IO_PSI_SOME_AVG10_PERCENT = 20.0
@@ -129,6 +129,7 @@ def resource_snapshot(root: Path) -> dict[str, Any]:
         "available_memory_bytes": available,
         "disk_free_bytes": disk_free,
         "cpu_psi": pressure_avg10("cpu"),
+        **cpu_capacity_snapshot(),
         "memory_psi": pressure_avg10("memory"),
         "io_psi": pressure_avg10("io"),
     }
@@ -144,8 +145,12 @@ def resource_gate(snapshot: dict[str, Any]) -> dict[str, Any]:
         MINIMUM_DISK_RESERVE_BYTES + NEXT_JOB_ARTIFACT_BUDGET_BYTES
     ):
         reasons.append("disk_reserve_for_next_job")
-    if snapshot.get("cpu_psi", {}).get("some", 0) > MAX_CPU_PSI_SOME_AVG10_PERCENT:
-        reasons.append("host_cpu_pressure")
+    available_cpu_count = snapshot.get("available_cpu_count")
+    host_load_avg1 = snapshot.get("host_load_avg1")
+    if available_cpu_count is None or host_load_avg1 is None or int(available_cpu_count) < 1:
+        reasons.append("resource_pressure_unavailable")
+    elif float(host_load_avg1) / int(available_cpu_count) >= MAX_CPU_LOAD_AVG1_PER_CPU:
+        reasons.append("host_cpu_capacity")
     memory_psi = snapshot.get("memory_psi", {})
     if (
         memory_psi.get("some", 0) > MAX_MEMORY_PSI_SOME_AVG10_PERCENT

@@ -15,7 +15,7 @@ from typing import Any
 MINIMUM_AVAILABLE_MEMORY_BYTES = 2 * 1024**3
 MINIMUM_DISK_RESERVE_BYTES = 2 * 1024**3
 NEXT_JOB_ARTIFACT_BUDGET_BYTES = 1024**3
-MAX_CPU_PSI_SOME_AVG10_PERCENT = 20.0
+MAX_CPU_LOAD_AVG1_PER_CPU = 1.0
 MAX_MEMORY_PSI_SOME_AVG10_PERCENT = 10.0
 MAX_MEMORY_PSI_FULL_AVG10_PERCENT = 1.0
 MAX_IO_PSI_SOME_AVG10_PERCENT = 20.0
@@ -133,6 +133,16 @@ def _available_memory_bytes(path: Path) -> int:
     raise ValueError("MemAvailable is missing")
 
 
+def cpu_capacity_snapshot() -> dict[str, float | int]:
+    """Return runnable load relative to CPUs available to this process."""
+    cpu_count = (
+        len(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else (os.cpu_count() or 1)
+    )
+    if cpu_count < 1:
+        raise ValueError("No available CPUs are visible to resource admission")
+    return {"available_cpu_count": cpu_count, "host_load_avg1": os.getloadavg()[0]}
+
+
 def resource_snapshot(
     root: Path,
     *,
@@ -146,6 +156,7 @@ def resource_snapshot(
         "available_memory_bytes": _available_memory_bytes(meminfo_path),
         "disk_free_bytes": shutil.disk_usage(root).free,
         "cpu_psi": _pressure_avg10("cpu", pressure_root),
+        **cpu_capacity_snapshot(),
         "memory_psi": _pressure_avg10("memory", pressure_root),
         "io_psi": _pressure_avg10("io", pressure_root),
     }
@@ -165,19 +176,23 @@ def resource_gate(snapshot: dict[str, Any], *, requested_memory_bytes: int = 0) 
         MINIMUM_DISK_RESERVE_BYTES + NEXT_JOB_ARTIFACT_BUDGET_BYTES
     ):
         reasons.append("disk_reserve_for_next_job")
-    cpu_psi = snapshot.get("cpu_psi", {})
+    available_cpu_count = snapshot.get("available_cpu_count")
+    host_load_avg1 = snapshot.get("host_load_avg1")
     memory_psi = snapshot.get("memory_psi", {})
     io_psi = snapshot.get("io_psi", {})
     if (
-        "some" not in cpu_psi
+        available_cpu_count is None
+        or host_load_avg1 is None
+        or int(available_cpu_count) < 1
+        or "some" not in snapshot.get("cpu_psi", {})
         or "some" not in memory_psi
         or "full" not in memory_psi
         or "some" not in io_psi
     ):
         reasons.append("resource_pressure_unavailable")
     else:
-        if cpu_psi["some"] > MAX_CPU_PSI_SOME_AVG10_PERCENT:
-            reasons.append("host_cpu_pressure")
+        if float(host_load_avg1) / int(available_cpu_count) >= MAX_CPU_LOAD_AVG1_PER_CPU:
+            reasons.append("host_cpu_capacity")
         if (
             memory_psi["some"] > MAX_MEMORY_PSI_SOME_AVG10_PERCENT
             or memory_psi["full"] > MAX_MEMORY_PSI_FULL_AVG10_PERCENT
