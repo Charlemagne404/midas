@@ -1,8 +1,8 @@
 [Unit]
-Description=Advance bounded Veritas v2 gap-detail replay every minute with resource admission
+Description=Advance bounded Veritas v2 gap-detail replay every five minutes with resource admission
 
 [Timer]
-OnCalendar=*-*-* *:*:00 UTC
+OnCalendar=*-*-* *:0/5:00 UTC
 Persistent=false
 RandomizedDelaySec=20
 AccuracySec=5
