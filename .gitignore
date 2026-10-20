@@ -61,3 +61,5 @@ data/datasets/public-series-*.manifest.json
 
 # Isolated reliability endurance artifacts; compact evidence remains tracked.
 data/reliability-endurance/arena/
+# Raw host time series and disposable fixtures; compact receipts live in docs.
+data/host-capacity-*/

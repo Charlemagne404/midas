@@ -6,9 +6,9 @@ StartLimitBurst=4
 
 [Service]
 Type=oneshot
-WorkingDirectory=%h/.local/share/midas-veritas/gap-detail-v2-20261020/runtime
+WorkingDirectory=%h/.local/share/midas-veritas/gap-detail-v2-capacity-20261020/runtime
 ExecStart=/home/charlie/midas/.venv/bin/python -S scripts/veritas_gap_detail_v2_batch.py --root %h/midas-veritas/data/veritas-gap-detail-v2 --arena-root %h/midas/data/arena --other-arena-root %h/midas-veritas/data/arena --other-arena-root %h/midas/data/reliability-endurance/arena --max-segments 128 --max-source-mib 32
-Environment=PYTHONPATH=%h/.local/share/midas-veritas/gap-detail-v2-20261020/runtime/packages:/home/charlie/midas/.venv/lib/python3.12/site-packages
+Environment=PYTHONPATH=%h/.local/share/midas-veritas/gap-detail-v2-capacity-20261020/runtime/packages:/home/charlie/midas/.venv/lib/python3.12/site-packages
 Environment=PYTHONDONTWRITEBYTECODE=1
 Environment=OMP_NUM_THREADS=1
 Environment=OPENBLAS_NUM_THREADS=1
