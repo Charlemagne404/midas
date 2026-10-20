@@ -1,0 +1,11 @@
+{
+  "duration_seconds": 614.125,
+  "error": "RuntimeError: Host resource gate became unsafe: ['host_cpu_pressure']",
+  "evidence_root": "/home/charlie/midas/data/reliability-endurance/evidence/20261020T025042Z",
+  "finished_at": "2026-10-20T03:00:56.674641+00:00",
+  "run_id": "20261020T025042Z",
+  "schedule_id": "schedule-f0037618c7794ea4ab0ebdcc",
+  "started_at": "2026-10-20T02:50:42.732995+00:00",
+  "status": "FAIL",
+  "test_root": "/home/charlie/midas/data/reliability-endurance/arena"
+}
