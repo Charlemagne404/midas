@@ -7,10 +7,16 @@ from .reconstruction import Engine
 from .storage import _read_manifest_for_replay
 
 
-def replay(root: Path, manifest: dict[str, Any], through: int | None = None) -> tuple[Engine, int]:
-    engine = Engine()
+def replay(
+    root: Path,
+    manifest: dict[str, Any],
+    through: int | None = None,
+    *,
+    _engine: Engine | None = None,
+) -> tuple[Engine, int]:
+    engine = _engine if _engine is not None else Engine()
     checkpoints = 0
-    for record in _read_manifest_for_replay(root, manifest):
+    for record in _read_manifest_for_replay(root, manifest, previous=engine.last_ordinal):
         if through is not None and record["ordinal"] > through:
             # Consume the immutable tail so each segment's checksum and manifest
             # metadata are still verified after a prefix-only state reconstruction.

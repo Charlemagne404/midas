@@ -16,12 +16,15 @@ import httpx
 from websockets.asyncio.client import connect
 from websockets.exceptions import WebSocketException
 
+from . import recovery
 from .config import Config
 from .discovery import GAMMA, WS, select
 from .observation import discover, independent_book
 from .quality import clock_health, compare
-from .replay import replay
+from .resources import MIN_HEADROOM_BYTES
+from .resources import snapshot as resource_snapshot
 from .storage import Store, atomic_json, manifest
+from .transport import bounded_get
 
 
 class StorageFailure(RuntimeError):
@@ -48,6 +51,8 @@ def collection_health(
         return "stopped"
     if state == "STARTING":
         return "recovering"
+    if state == "AWAITING_DATA":
+        return "resynchronizing"
     if state in {"CONNECTING", "DEGRADED", "RECONNECTING"}:
         return "reconnecting"
     if last_observation_ns is None:
@@ -72,6 +77,46 @@ def prune_cohort_tracking(
                 del tracker[asset]
 
 
+def frame_metadata(payload: str | bytes) -> tuple[list[dict[str, Any]], list[dict[str, str]], bool]:
+    """Bound decoded-frame lifetime to this call, before any transport await.
+
+    Engine consumes the durable raw payload independently; metadata/constraints
+    share one parse. No decoded depth arrays escape into the collector loop.
+    """
+    normalized: list[dict[str, Any]] = []
+    constraints: list[dict[str, str]] = []
+    try:
+        parsed = json.loads(payload)
+    except (ValueError, TypeError, UnicodeDecodeError):
+        return normalized, constraints, False
+    events = parsed if isinstance(parsed, list) else [parsed]
+    normalized = [
+        dict(
+            event_type=e.get("event_type", "unknown"),
+            asset_id=e.get("asset_id"),
+            market=e.get("market"),
+            exchange_timestamp=e.get("timestamp"),
+        )
+        for e in events
+        if isinstance(e, dict)
+    ]
+    try:
+        from .reconstruction import number
+
+        for event in events:
+            if (
+                isinstance(event, dict)
+                and event.get("event_type") == "book"
+                and "tick_size" in event
+            ):
+                tick = number(event["tick_size"], price=True)
+                if tick > 0:
+                    constraints.append(dict(asset_id=event["asset_id"], tick_size=str(tick)))
+    except (ValueError, TypeError, KeyError, DecimalException):
+        return normalized, constraints, True
+    return normalized, constraints, False
+
+
 async def run(config: Config, duration: float | None = None) -> None:
     root = Path(config.root)
     store = Store(
@@ -83,9 +128,10 @@ async def run(config: Config, duration: float | None = None) -> None:
         verify_existing=False,
         defer_open=True,
     )
+    startup_began = time.monotonic()
     try:
         source_manifest = manifest(root)
-        engine, _ = replay(root, source_manifest)
+        engine, recovery_status = recovery.recover(root, source_manifest)
         if engine.last_ordinal != store.ordinal:
             raise ValueError("Verified replay ordinal differs from the durable segment index")
     except BaseException:
@@ -103,6 +149,7 @@ async def run(config: Config, duration: float | None = None) -> None:
             raise OSError(
                 "Retention horizon reached; export/archive this root and configure a new root"
             )
+    del source_manifest
     store.activate()
 
     append_samples: deque[dict[str, int]] = deque(maxlen=1024)
@@ -122,10 +169,15 @@ async def run(config: Config, duration: float | None = None) -> None:
             record = store.append(kind, payload, **metadata)
         except OSError as error:
             raise StorageFailure(str(error)) from error
+        status.setdefault("first_new_durable_record_ns", time.time_ns())
+        status.setdefault(
+            "seconds_until_first_new_durable_record", time.monotonic() - startup_began
+        )
         persisted_ns = time.monotonic_ns()
         engine.consume(record)
         processed_ns = time.monotonic_ns()
         if kind == "frame":
+            status.setdefault("first_frame_received_ns", record["received_ns"])
             append_samples.append(
                 dict(
                     ordinal=record["ordinal"],
@@ -151,6 +203,29 @@ async def run(config: Config, duration: float | None = None) -> None:
             status["backpressure_active"] = False
         return record
 
+    def save_recovery() -> None:
+        # Reserve the full bounded temporary file, including while the previous
+        # checkpoint still exists. Raw append durability has priority.
+        import shutil
+
+        if (
+            store.used + recovery.MAX_CHECKPOINT_BYTES > store.budget
+            or shutil.disk_usage(root).free < store.reserve + recovery.MAX_CHECKPOINT_BYTES
+        ):
+            status["recovery_checkpoint_error"] = "insufficient_checkpoint_disk_budget"
+            return
+        began = time.monotonic()
+        path = root / recovery.CHECKPOINT_NAME
+        old_size = path.stat().st_size if path.exists() else 0
+        try:
+            size = recovery.save(root, engine, manifest(root))
+            store.used += size - old_size
+            status.pop("recovery_checkpoint_error", None)
+            status["recovery_checkpoint_ordinal"] = engine.last_ordinal
+        except (OSError, ValueError) as error:
+            status["recovery_checkpoint_error"] = f"{type(error).__name__}: {error}"
+        status["process_recovery_checkpoint_seconds"] = time.monotonic() - began
+
     def report() -> None:
         state = engine.state(max_depth=50)
         now = time.time_ns()
@@ -160,6 +235,13 @@ async def run(config: Config, duration: float | None = None) -> None:
             for b in books.values()
         )
         timing_uncertain = sum(bool(b.get("timing_uncertainty")) for b in books.values())
+        try:
+            resources = resource_snapshot()
+            margin = resources["memory_high_margin_bytes"]
+            status["resource_constrained"] = margin is not None and margin < MIN_HEADROOM_BYTES
+            status["resources"] = resources
+        except (OSError, ValueError, StopIteration):
+            status["resource_metrics_available"] = False
         atomic_json(
             root / "status.json",
             dict(
@@ -222,9 +304,15 @@ async def run(config: Config, duration: float | None = None) -> None:
         loop.add_signal_handler(sig, stop.set)
     loop.add_signal_handler(signal.SIGUSR1, rotate.set)
     started = time.monotonic()
-    last_report = last_checkpoint = started
+    last_report = last_checkpoint = last_recovery_checkpoint = started
     status: dict[str, Any] = dict(
         state="STARTING",
+        recovery=recovery_status,
+        startup_seconds=time.monotonic() - startup_began,
+        event_counter_scope="durable_reconstructed_history",
+        transport_queue_unit="websocket_frames_high_water_mark",
+        transport_max_message_bytes=1024**2,
+        transport_backpressure="pause_transport_reads; reconnect gaps remain unsequenced",
         started_ns=time.time_ns(),
         frames=store.counts["frame"],
         process_frames=0,
@@ -238,6 +326,8 @@ async def run(config: Config, duration: float | None = None) -> None:
     atomic_json(root / "config.json", config.dump())
     backoff = 1
     try:
+        # Bootstrap the accelerator once from the fully verified pre-start boundary.
+        save_recovery()
         append(
             "gap",
             dict(
@@ -285,8 +375,10 @@ async def run(config: Config, duration: float | None = None) -> None:
                         )
                         status["selection_audit"] = selection_audit
                     else:
-                        response = await client.get(
+                        response = await bounded_get(
+                            client,
                             GAMMA + "/markets",
+                            append=append,
                             params=dict(
                                 active="true",
                                 closed="false",
@@ -321,6 +413,7 @@ async def run(config: Config, duration: float | None = None) -> None:
                             connection=connection,
                             subscription=subscription,
                         )
+                        del response, raw_markets
                     if not cohort:
                         raise ValueError("No supported active markets discovered")
                     tokens = [token for market in cohort for token in market["tokens"]]
@@ -348,6 +441,10 @@ async def run(config: Config, duration: float | None = None) -> None:
                         subscription_record = append(
                             "subscription", frame, connection=connection, subscription=subscription
                         )
+                        status["subscription_restored_ns"] = time.time_ns()
+                        status.setdefault(
+                            "seconds_until_subscription", time.monotonic() - startup_began
+                        )
                         connected = last_ping = last_frame = time.monotonic()
                         pending_snapshots = set(tokens)
                         status["state"] = "AWAITING_DATA"
@@ -371,6 +468,12 @@ async def run(config: Config, duration: float | None = None) -> None:
                                 store.rotate()
                                 rotate.clear()
                                 last_checkpoint = now
+                                if (
+                                    now - last_recovery_checkpoint
+                                    >= recovery.CHECKPOINT_INTERVAL_SECONDS
+                                ):
+                                    save_recovery()
+                                    last_recovery_checkpoint = time.monotonic()
                             if comparison_task is not None and comparison_task.done():
                                 result = comparison_task.result()
                                 comparison_task = None
@@ -428,6 +531,7 @@ async def run(config: Config, duration: float | None = None) -> None:
                                         asset,
                                         engine.tokens[asset],
                                         config.comparison_timeout_seconds,
+                                        append=append,
                                     )
                                 )
                                 last_comparison = now
@@ -505,22 +609,7 @@ async def run(config: Config, duration: float | None = None) -> None:
                             except TimeoutError:
                                 continue
                             received, monotonic = time.time_ns(), time.monotonic_ns()
-                            normalized = []
-                            try:
-                                parsed = json.loads(payload)
-                                parsed = parsed if isinstance(parsed, list) else [parsed]
-                                normalized = [
-                                    dict(
-                                        event_type=e.get("event_type", "unknown"),
-                                        asset_id=e.get("asset_id"),
-                                        market=e.get("market"),
-                                        exchange_timestamp=e.get("timestamp"),
-                                    )
-                                    for e in parsed
-                                    if isinstance(e, dict)
-                                ]
-                            except (ValueError, TypeError, UnicodeDecodeError):
-                                pass
+                            normalized, constraints, invalid_constraints = frame_metadata(payload)
                             if isinstance(payload, bytes):
                                 import base64
 
@@ -540,35 +629,19 @@ async def run(config: Config, duration: float | None = None) -> None:
                                 receive_semantics="application_websocket_dequeue_not_hardware_network_arrival",
                             )
                             original_frame_ordinal = store.ordinal
-                            if encoding == "utf8" and payload != "PONG":
-                                try:
-                                    events = json.loads(payload)
-                                    for event in events if isinstance(events, list) else [events]:
-                                        if (
-                                            isinstance(event, dict)
-                                            and event.get("event_type") == "book"
-                                            and "tick_size" in event
-                                        ):
-                                            from .reconstruction import number
-
-                                            tick = number(event["tick_size"], price=True)
-                                            if tick > 0:
-                                                append(
-                                                    "snapshot_constraints",
-                                                    dict(
-                                                        asset_id=event["asset_id"],
-                                                        tick_size=str(tick),
-                                                        raw_ordinal=original_frame_ordinal,
-                                                    ),
-                                                    connection=connection,
-                                                    subscription=subscription,
-                                                )
-                                except (ValueError, TypeError, KeyError, DecimalException):
-                                    append(
-                                        "gap",
-                                        dict(reason="malformed_constraints"),
-                                        connection=connection,
-                                    )
+                            for constraint in constraints:
+                                append(
+                                    "snapshot_constraints",
+                                    dict(constraint, raw_ordinal=original_frame_ordinal),
+                                    connection=connection,
+                                    subscription=subscription,
+                                )
+                            if invalid_constraints:
+                                append(
+                                    "gap",
+                                    dict(reason="malformed_constraints"),
+                                    connection=connection,
+                                )
                             for asset in tuple(pending_snapshots):
                                 book = engine.books.get(asset)
                                 if (
@@ -634,8 +707,16 @@ async def run(config: Config, duration: float | None = None) -> None:
         try:
             append("checkpoint", dict(state_sha256=engine.digest()))
             append("gap", dict(reason="process_stop"))
+        except BaseException:
+            status["state"] = "FAILED"
+            raise
         finally:
-            store.close()
+            try:
+                if not store.write_failed and status["state"] != "FAILED":
+                    store.rotate(reopen=False)
+                    save_recovery()
+            finally:
+                store.close()
             atomic_json(
                 root / "status.json",
                 dict(

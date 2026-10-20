@@ -23,6 +23,7 @@ from typing import Any
 
 from midas.reality.config import Config
 from midas.reality.replay import replay
+from midas.reality.resources import require_safe
 from midas.reality.storage import atomic_json, canonical, manifest, read_manifest
 
 WORKSPACE = Path(__file__).resolve().parents[1]
@@ -248,6 +249,7 @@ def verify(output: Path) -> dict[str, Any]:
             "tests/test_reality_operations.py",
             "tests/test_reality_panel.py",
             "tests/test_reality_deployment.py",
+            "tests/test_reality_recovery.py",
             "-q",
         ],
         [
@@ -330,6 +332,7 @@ def preflight(
     deployed_source_identity = production_source_hash()
     if deployed_source_identity != source_hash():
         raise ValueError("Production Reality package source differs from the verified candidate")
+    resources = require_safe(production_service.get("ControlGroup", ""))
     root = Path(canary.root)
     status = json.loads((root / "status.json").read_text())
     if status["state"] != "STOPPED" or status["failures"] or status["frames"] < 20:
@@ -447,6 +450,7 @@ def preflight(
         free_disk_bytes=free,
         protected_disk_reserve_bytes=disk_reserve,
         production_before=current,
+        resources=resources,
         cached_snapshot_repair=dict(
             requested=repair_cached_snapshots,
             confirmed=repair_confirmed,
@@ -494,6 +498,7 @@ def apply(
         raise ValueError("Production service unit or drop-ins changed after preflight")
     if before.get("Restart") != "on-failure":
         raise ValueError("Production restart policy is not the expected bounded policy")
+    require_safe(before.get("ControlGroup", ""))
     previous = Config.load(config_path)
     backup = Path(candidate.root).parent / f"config-before-deployment-{time.time_ns()}.json"
     atomic_json(backup, previous.dump())

@@ -220,17 +220,21 @@ def test_apply_timeout_keeps_one_shot_guard_and_never_restarts_back(tmp_path, mo
     )
     with (
         patch("scripts.reality_deployment.production_source_hash", return_value=source_hash()),
-        patch("scripts.reality_deployment.service", side_effect=[
-            dict(service_state, MainPID="123", Restart="on-failure"),
-            service_state,
-            service_state,
-            service_state,
-        ]),
+        patch(
+            "scripts.reality_deployment.service",
+            side_effect=[
+                dict(service_state, MainPID="123", Restart="on-failure"),
+                service_state,
+                service_state,
+                service_state,
+            ],
+        ),
+        patch("scripts.reality_deployment.require_safe", return_value={}),
         patch("scripts.reality_deployment._install_restart_guard", return_value=tmp_path / "guard"),
         patch("scripts.reality_deployment._remove_restart_guard") as remove_guard,
         patch("scripts.reality_deployment.atomic_json") as write,
         patch("scripts.reality_deployment.subprocess.run") as restart,
-            patch("scripts.reality_deployment.time.monotonic", side_effect=[0, 0, 2401]),
+        patch("scripts.reality_deployment.time.monotonic", side_effect=[0, 0, 2401]),
         patch("scripts.reality_deployment.time.sleep"),
     ):
         with pytest.raises(ValueError, match="no retry or rollback"):
@@ -243,3 +247,31 @@ def test_apply_timeout_keeps_one_shot_guard_and_never_restarts_back(tmp_path, mo
     config_writes = [call for call in write.call_args_list if call.args[0] == config_path]
     assert len(config_writes) == 1
     assert config_writes[0].args[1] == config.dump()
+
+
+def test_apply_resource_rejection_precedes_config_or_service_mutation(tmp_path, monkeypatch):
+    initial = _service_state(tmp_path, monkeypatch)
+    initial.update(MainPID="123", ActiveState="active", ControlGroup="/fixture")
+    config = Config()
+    gate = dict(
+        passed=True,
+        source_sha256=source_hash(),
+        deployment_tool_sha256=deployment_tool_hash(),
+        systemd_unit_sha256=service_unit_hash(),
+        production_source_sha256=source_hash(),
+        candidate=config.dump(),
+        checked_ns=time.time_ns(),
+        production_before=initial,
+        production_unit_config=_validate_service_configuration(initial),
+    )
+    with (
+        patch("scripts.reality_deployment.production_source_hash", return_value=source_hash()),
+        patch("scripts.reality_deployment.service", return_value=initial),
+        patch("scripts.reality_deployment.require_safe", side_effect=ValueError("resource gate")),
+        patch("scripts.reality_deployment.atomic_json") as write,
+        patch("scripts.reality_deployment.subprocess.run") as mutate,
+    ):
+        with pytest.raises(ValueError, match="resource gate"):
+            apply(config, gate, tmp_path / "missing-config.json", tmp_path / "result.json")
+    write.assert_not_called()
+    mutate.assert_not_called()

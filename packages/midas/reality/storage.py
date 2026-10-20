@@ -79,13 +79,13 @@ def _record_stream(
         record = json.loads(raw)
         if record["schema_version"] != 1:
             raise ValueError("Unsupported record schema")
+        # Release decoding scratch before the consumer reconstructs this record.
+        del raw, compressed, dec
         yield record, f.tell()
 
 
 class _HashingReader:
-    def __init__(
-        self, source: BinaryIO, digest: Any, copy_to: Any = None
-    ) -> None:
+    def __init__(self, source: BinaryIO, digest: Any, copy_to: Any = None) -> None:
         self.source = source
         self.digest = digest
         self.copy_to = copy_to
@@ -150,10 +150,7 @@ def _validate_manifest_metadata(path: Path, info: Any) -> dict[str, Any]:
         info.get("count"),
         info.get("kinds"),
     )
-    if any(
-        type(value) is not int or value < 0
-        for value in (first_value, last_value, count_value)
-    ):
+    if any(type(value) is not int or value < 0 for value in (first_value, last_value, count_value)):
         raise ValueError(f"Invalid segment manifest counters: {path}")
     first, last, count = (
         cast(int, first_value),
@@ -167,9 +164,18 @@ def _validate_manifest_metadata(path: Path, info: Any) -> dict[str, Any]:
         raise ValueError(f"Invalid segment manifest kinds: {path}")
     if sum(kinds.values()) != count or (count == 0 and (first != 0 or last != 0)):
         raise ValueError(f"Inconsistent segment manifest counters: {path}")
-    if count > 0 and (first < 1 or last < first):
+    if count > 0 and (first < 1 or last - first + 1 != count):
         raise ValueError(f"Invalid segment ordinal range: {path}")
     return cast(dict[str, Any], info)
+
+
+def _tail_path(path: Path) -> Path:
+    target = path.with_suffix(".tail")
+    return (
+        target
+        if not target.exists()
+        else path.with_name(path.stem + "-" + uuid.uuid4().hex + ".tail")
+    )
 
 
 class Store:
@@ -207,7 +213,7 @@ class Store:
                     prefix = path.read_bytes()
                     if not MAGIC.startswith(prefix):
                         raise ValueError(f"Corrupt partial segment header: {path}")
-                    os.replace(path, path.with_suffix(".tail"))
+                    os.replace(path, _tail_path(path))
                     sync_dir(self.root)
                     self.recovered.append(
                         dict(
@@ -224,10 +230,13 @@ class Store:
                 if tail:
                     with path.open("rb") as f:
                         f.seek(end)
-                        with path.with_suffix(".tail").open("wb") as out:
-                            out.write(f.read())
+                        with _tail_path(path).open("wb") as out:
+                            shutil.copyfileobj(f, out, length=64 * 1024)
                             out.flush()
                             os.fsync(out.fileno())
+                    # Make quarantine bytes AND their directory entry durable
+                    # before truncating the original tail.
+                    sync_dir(self.root)
                     with path.open("r+b") as f:
                         f.truncate(end)
                         f.flush()
@@ -249,7 +258,11 @@ class Store:
                 else:
                     info = describe(path)
                     atomic_json(manifest_path, info)
-                self.ordinal = max(self.ordinal, info["last"])
+                _validate_manifest_metadata(path, info)
+                if info["count"]:
+                    if info["first"] != self.ordinal + 1:
+                        raise ValueError(f"Non-contiguous segment index: {path}")
+                    self.ordinal = info["last"]
                 self.counts.update(info["kinds"])
             self.used = sum(p.stat().st_size for p in self.root.iterdir() if p.is_file())
             if not defer_open:
@@ -304,15 +317,18 @@ class Store:
         if len(raw) > MAX_RECORD:
             raise ValueError("Record exceeds maximum size")
         compressed = zlib.compress(raw, 3)
-        frame = (
-            struct.pack(">I32s", len(compressed), hashlib.sha256(compressed).digest()) + compressed
-        )
-        if self.used + len(frame) + 8192 > self.budget or shutil.disk_usage(
-            self.root
-        ).free < self.reserve + len(frame):
+        header = struct.pack(">I32s", len(compressed), hashlib.sha256(compressed).digest())
+        frame_size = len(header) + len(compressed)
+        if (
+            self.used + frame_size + 8192 > self.budget
+            or shutil.disk_usage(self.root).free < self.reserve + frame_size
+        ):
             raise OSError("Reality storage budget or free-space reserve reached")
         try:
-            self.file.write(frame)
+            # Avoid a second full compressed-payload allocation. Recovery already
+            # treats an interrupted header/payload pair as an incomplete tail.
+            self.file.write(header)
+            self.file.write(compressed)
             self.file.flush()
             os.fsync(self.file.fileno())
         except OSError:
@@ -323,15 +339,26 @@ class Store:
         self.ordinal += 1
         self.count += 1
         self.counts[kind] += 1
-        self.used += len(frame)
+        self.used += frame_size
         if (
             self.file.tell() >= self.segment_bytes
             or time.monotonic() - self.opened >= self.segment_seconds
         ):
-            self.rotate()
+            try:
+                self.rotate()
+            except OSError:
+                self.write_failed = True
+                raise
         return record
 
     def rotate(self, *, reopen: bool = True) -> None:
+        try:
+            self._rotate(reopen=reopen)
+        except OSError:
+            self.write_failed = True
+            raise
+
+    def _rotate(self, *, reopen: bool = True) -> None:
         if self.file is None:
             return
         self.file.flush()
@@ -411,7 +438,9 @@ def read_manifest(root: Path, value: dict[str, Any]) -> Iterator[dict[str, Any]]
                 yield record
 
 
-def _read_manifest_for_replay(root: Path, value: dict[str, Any]) -> Iterator[dict[str, Any]]:
+def _read_manifest_for_replay(
+    root: Path, value: dict[str, Any], *, previous: int = 0
+) -> Iterator[dict[str, Any]]:
     """Verify and stream records into private replay state with bounded memory.
 
     The final segment digest is checked after records have been yielded. Replay
@@ -421,7 +450,6 @@ def _read_manifest_for_replay(root: Path, value: dict[str, Any]) -> Iterator[dic
     """
     if value["schema_version"] != 1 or value["format"] != "midas-reality-framed-zlib-v1":
         raise ValueError("Unsupported manifest")
-    previous = 0
     for info in value["segments"]:
         if Path(info["file"]).name != info["file"]:
             raise ValueError("Unsafe segment path")
