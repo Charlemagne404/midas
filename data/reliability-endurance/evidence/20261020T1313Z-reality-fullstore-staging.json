@@ -1,0 +1,190 @@
+{
+  "candidate": {
+    "daemon_reloaded": false,
+    "deployment_helper_sha256": "18f26aca1ad093189e0c35db7bf102157d08fa78e130dbe050a7c101337b0df0",
+    "installed_unit_sha256": "b07ac87d4c1108ee3ca98291972c3963033bab40dad565b957fb100657c727f4",
+    "package_sha256": "0469889b4613a5fb875f34d2c6e14f9b74ba7f3188f51a3a9350078597bd8ad5",
+    "production_deployed": false,
+    "production_unit_installed": false,
+    "recorder_restarted": false,
+    "source_unit_sha256": "0afb3154bd51f5e016768f583ea792e27b882f0e5ddc6651be3bcbb890a8dd94"
+  },
+  "cpu_quota_runtime_inference": {
+    "classification": "inference; production startup also performs metadata checks and reconnects feeds",
+    "guard_readiness_window_minutes": [
+      40,
+      60
+    ],
+    "linear_wall_minutes_from_measured_CPU_seconds_at_25_percent": 28.56,
+    "post_readiness_fresh_book_stability_minutes": 5,
+    "production_CPUQuota": "25%"
+  },
+  "fullstore_replay": {
+    "cpu_seconds": 428.431466,
+    "ended_at": "2026-10-20T13:11:01+02:00",
+    "final_state_digest_retained": false,
+    "full_replay_rerun_after_harness_fix": false,
+    "harness_corrected_to": "Engine.last_ordinal",
+    "harness_error": "AttributeError: Engine object has no attribute ordinal",
+    "host_available_memory_min_bytes": 8855433216,
+    "host_cpu_psi_some_avg10_max_percent": 3.85,
+    "host_io_psi_some_avg10_max_percent": 1.21,
+    "host_memory_psi_full_avg10_max_percent": 0.0,
+    "host_memory_psi_some_avg10_max_percent": 0.0,
+    "host_swap_in_delta_pages": 280,
+    "host_swap_out_delta_pages": 0,
+    "interpretation": "Replay returned only after consuming the staged manifest, validating segment hashes and checking every online checkpoint. The orchestration command is not a clean CLI pass because final receipt serialization failed; the final state digest was not retained.",
+    "memory_high_crossed_by_bytes": 499712,
+    "memory_high_events_last_sample": 5405,
+    "memory_max_events": 0,
+    "memory_max_headroom_at_peak_bytes": 66609152,
+    "memory_peak_bytes": 738697216,
+    "memory_peak_mib": 704.48,
+    "monitor_samples": 44,
+    "online_checkpoint_validation_completed": true,
+    "oom_events": 0,
+    "oom_kill_events": 0,
+    "protected_recorder_memory_current_end_bytes": 727523328,
+    "protected_recorder_memory_current_start_bytes": 720056320,
+    "protected_recorder_memory_high_events_start_and_end": 10097,
+    "protected_recorder_oom_events": 0,
+    "replay_function_returned": true,
+    "segment_checksum_validation_completed": true,
+    "started_at": "2026-10-20T13:03:49+02:00",
+    "stop_gate_triggered": false,
+    "swap_peak_bytes": 0,
+    "transient_limits": {
+      "CPUQuota": "infinity",
+      "CPUWeight": 20,
+      "IOSchedulingClass": "idle",
+      "MemoryHigh_bytes": 738197504,
+      "MemoryMax_bytes": 805306368,
+      "MemorySwapMax_bytes": 0,
+      "Nice": 19,
+      "Restart": "no",
+      "TasksMax": 32
+    },
+    "unit": "midas-reality-fullstore-replay-20261020-r3.service",
+    "unit_exit_result": "exit-code after replay return while the temporary receipt harness read nonexistent Engine.ordinal",
+    "wall_seconds": 432,
+    "worker_memory_psi_full_avg10_max_percent": 0.0,
+    "worker_memory_psi_some_avg10_max_percent": 0.0
+  },
+  "isolated_snapshot": {
+    "canonical_segment_metadata_sha256": "ac31063d2fb216871c83c9c2cb344deaf4cdc9349f4b76b990c2fa9421fedc2e",
+    "captured_at": "2026-10-20T12:57:19.699+02:00",
+    "first_ordinal": 1,
+    "last_ordinal": 2414595,
+    "method": "hard links to finalized immutable .seg/.json inputs; active .open and status files excluded",
+    "online_checkpoint_records_from_catalogs": 16099,
+    "segment_bytes": 4294762665,
+    "segments": 16110,
+    "snapshot_bytes_allocated": 0,
+    "source_inode_link_counts_increased": true,
+    "source_root": "/home/charlie/midas-reality/data/recordings/reality",
+    "source_segment_and_catalog_bytes_modified": false,
+    "stage_root": "/tmp/midas-reality-fullstore-candidate-c833200/replay"
+  },
+  "preflight_canary_preparation": {
+    "checkpoint_count": 8,
+    "hardlinked_segments": 8,
+    "isolated_canary_replay_after_unit_transition_pending": true,
+    "isolated_root": "/tmp/midas-reality-deploy-guard-20261020/data/recordings/canary-preflight",
+    "segment_bytes": 1542921,
+    "source_canary_bytes_modified": false,
+    "source_failures": 0,
+    "source_frames": 260,
+    "source_inode_link_counts_increased": true,
+    "source_root": "/home/charlie/midas-reality/data/recordings/reliability-canary-0469889b-20261020",
+    "source_status": "STOPPED",
+    "source_status_sha256": "7f02b06084a7fc109f078474bd6333f8f0960f0375d04bd5e058c37c1cdccc4c"
+  },
+  "production_state_after_replay": {
+    "48H-001": "PARTIAL and unchanged",
+    "main_api": {
+      "active": true,
+      "journal_events": 396763,
+      "laboratory": "READY",
+      "live_execution": false,
+      "memory_current_bytes": 740745216,
+      "paper_recovery": "CHECKPOINT_VERIFIED",
+      "pid": 2737736,
+      "restarts": 0,
+      "status": "READY"
+    },
+    "reality_api": {
+      "active": true,
+      "journal_events": 62470,
+      "laboratory": "READY",
+      "live_execution": false,
+      "paper_recovery": "CHECKPOINT_VERIFIED",
+      "pid": 2688994,
+      "restarts": 0,
+      "status": "READY"
+    },
+    "reality_recorder": {
+      "active": true,
+      "candidate_loaded": false,
+      "frames": 450275,
+      "fresh_books": 16,
+      "memory_current_bytes": 728866816,
+      "memory_events": {
+        "high": 10097,
+        "max": 0,
+        "oom": 0,
+        "oom_kill": 0
+      },
+      "memory_high_bytes": 738197504,
+      "memory_max_bytes": 805306368,
+      "memory_swap_current_bytes": 684032,
+      "ordinal": 2417988,
+      "pid": 863193,
+      "restarts": 1,
+      "state": "RECORDING_UNSEQUENCED"
+    },
+    "shadow_workers": {
+      "mission2": "inactive disabled STOPPED_WITH_RECOVERABLE_PENDING",
+      "successor": "inactive disabled STOPPED_WITH_RECOVERABLE_PENDING"
+    }
+  },
+  "protection": {
+    "frontier_started": false,
+    "global_oom": false,
+    "new_48h_campaign_started": false,
+    "production_recorder_config_changed": false,
+    "production_recorder_stopped": false,
+    "production_source_inode_link_counts_increased": true,
+    "production_source_or_campaign_bytes_modified": false
+  },
+  "recorded_at": "2026-10-20T13:13:42+02:00",
+  "repositories": {
+    "main": {
+      "branch": "main",
+      "commit": "db0c11f",
+      "origin_matches": true
+    },
+    "reality": {
+      "branch": "project/reality",
+      "commit": "c833200",
+      "origin_matches": true
+    },
+    "veritas": {
+      "branch": "project/veritas",
+      "commit": "8717666",
+      "origin_matches": true
+    }
+  },
+  "schema_version": 1,
+  "veritas": {
+    "control_sha256": "68037ec5b35928ab3dad8925357e1da1c36aa85f3dfb72fd93fe6d936305a353",
+    "last_batch_finish": "2026-10-20T13:12:31+02:00",
+    "last_batch_start": "2026-10-20T13:12:23+02:00",
+    "next_tick": "2026-10-20T13:17:12+02:00",
+    "pending_segments": 0,
+    "processed_segments": 16137,
+    "result": "CURRENT",
+    "summary_sha256": "fdbb357b256bfc0694631af6067946f9ce8b9e9f4799824dd0cd777d532745d0",
+    "v1_timer_active": false,
+    "v2_timer_active": true
+  }
+}
