@@ -101,6 +101,11 @@ def archive_build(root: Path, segments: int) -> None:
 
 
 def startup(root: Path, fast: bool) -> dict[str, Any]:
+    root = root.resolve()
+    if not root.is_relative_to(Path("/tmp")) or not any(
+        part.startswith("midas-reality-synthetic-") for part in root.parts
+    ):
+        raise ValueError("Benchmark writes require an owned disposable synthetic /tmp root")
     usage = resource.getrusage(resource.RUSAGE_SELF)
     before_io = Path("/proc/self/io").read_text()
     start = time.monotonic()
