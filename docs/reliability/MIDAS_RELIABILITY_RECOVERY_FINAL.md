@@ -4,7 +4,7 @@
 
 **Scope:** Reliability and efficiency only. Project Frontier, Project Atlas, and a new 48-hour campaign remain unstarted.
 
-**Current verdicts (2026-10-20 10:19 CEST):** Reliability foundation **PARTIALLY RECOVERED**; Frontier development **CONDITIONALLY READY** for separately authorized work that does not depend on deploying the protected Reality recorder change; another unattended campaign **NOT READY**.
+**Current verdicts (2026-10-20 10:35 CEST):** Reliability foundation **PARTIALLY RECOVERED**; Frontier development **CONDITIONALLY READY** for separately authorized work that does not depend on deploying the protected Reality recorder change; another unattended campaign **NOT READY**.
 
 This journal separates source fixes, isolated tests, deployment, and production verification. It is updated as each recovery phase completes.
 
@@ -458,3 +458,25 @@ The bounded top-50 status projection still left a full-depth allocation in `Engi
 **Current verdicts:** Reliability foundation **PARTIALLY RECOVERED** because the prepared Reality code is not loaded by the protected recorder. Frontier development is **CONDITIONALLY READY** only for separately authorized work that does not depend on deploying this recorder change. Another unattended 48-hour campaign is **NOT READY**.
 
 **Approval needed:** one controlled stop/start of Reality recorder PID 863193 to load exactly `project/reality` commit `29f77ad131ad0b8415b2a67a2b516e52878f5792` (runtime fingerprint `0469889b4613a5fb875f34d2c6e14f9b74ba7f3188f51a3a9350078597bd8ad5`). The preflight must be refreshed immediately before the action because it binds the current production process identity. Expected capture interruption remains about 30–45 minutes based on the observed 1,850-second full-store replay; peak memory for a full replay of the current store under this exact candidate remains uncertain. The deployment helper first installs `Restart=no`, allows one start, waits up to 2,700 seconds for fresh replay state and then requires a five-minute stable window. On failure it performs no retry or rollback and leaves `Restart=no`; a retry or rollback restart requires separate approval. No production memory limit is increased.
+
+### 2026-10-20 10:28–10:35 CEST — Full-store staging safety stop and runtime recheck
+
+- A fixed snapshot contained 15,815 finalized segments (4,220,860,418 bytes), with manifest SHA-256 `1db9aa5743ae61d2adc8c05f466096c9bfbc975fe217014d17e803ff7e7648ca`. The active `.open` segment was excluded. Source state was unchanged while the snapshot was assembled; the live ordinal later advanced from 2,370,606 to 2,372,065.
+- A low-priority, 5 MiB/s staging copy was interrupted when host CPU PSI `some avg10` crossed its 20% safety gate (observed peak 35.17%). It left only 6,249,306 bytes across three files in the separate ignored staging root. The copy is incomplete and was **not** replayed; it is not a valid staging result. No production recording files were changed. The decision and readings are preserved in [the staging gate evidence](../../data/reliability-endurance/evidence/20261020T083410Z-reality-fullstore-stage-gate.json).
+- The current recorder is managed by the user-level unit `midas-reality.service` (the earlier system-level lookup of `midas-reality-recorder.service` was the wrong unit name; it did not affect the running process). PID 863193 remains active with one historical restart and pre-candidate code. During a 25-second passive sample, cgroup memory ranged from 726,994,944 to 727,752,704 bytes against `MemoryHigh=738,197,504` and `MemoryMax=805,306,368`; its 10,069 `high` events did not increase and max/OOM/OOM-kill events remained zero. The remaining margin before MemoryHigh was only about 10 MiB. This, plus the CPU PSI response to a partial copy, makes a full-store replay unjustified on the live source even though host memory PSI was zero.
+- A six-second host sample showed 8,911,524 KiB available memory, 3,952,537,600 of 4,294,963,200 swap bytes occupied, zero memory PSI, and no sustained swap-in or swap-out after the initial average sample. CPU idle was 87–92%. Swap occupancy is high, but these samples do not show current paging pressure. Do not infer that full-store replay is safe from host-wide available memory: recorder-local `MemoryHigh` headroom remains tight.
+- The latest integrated checks still pass: main API READY with `CHECKPOINT_VERIFIED` at 391,597 journal events and live execution disabled; Reality recording with 16/16 books fresh and no health reasons (one cumulative collector failure counter); Veritas v2 reached 15,822 processed segments with zero pending at 10:32; Arena scheduler completed with no schedules. The daily Reality research check returned `WAITING_FOR_COVERAGE` at 5.77 recorded days, and started no dataset or training. The approved mission2 and successor shadow workers are inactive with no worker processes. No 48H campaign timer is active.
+- Do not retry full-store staging under unchanged constraints. Preserve the partial staging directory as an explicitly incomplete artifact; it is outside the production recording root. A future full-store measurement needs an isolated copy or a host window with materially greater recorder-local headroom and CPU PSI that remains below the gate.
+
+### Current acceptance status — 2026-10-20 10:35 CEST
+
+| Area | Current status | Remaining requirement |
+|---|---|---|
+| API | Production-verified READY; journal checkpoint verified; live execution disabled | Continue normal monitoring |
+| Veritas | v2 completes bounded scheduled runs; v1 identities preserved and its timer inactive | Continue bounded v2 scheduling |
+| Reality | `29f77ad` tested, pushed, canary and preflight passed; live recorder still runs pre-candidate code | Explicit approval for one controlled recorder stop/start, then guarded production verification |
+| Host resources | CPU and memory PSI currently below gates; no sustained paging observed; recorder has about 10 MiB to MemoryHigh | Do not run full-store replay or endurance load while this margin remains |
+| Endurance | Prior 63m45s isolated lifecycle test passed with 32 automatic transitions; broad suite was interrupted for CPU safety | Do not count the interrupted suite as full integration success |
+| Git/deployment | `main` was clean and synchronized at `b0ec097` before this journal update; Reality `29f77ad` and Veritas `8717666` are synchronized | Commit and push this evidence update; no force-push |
+
+**Current verdicts:** Reliability foundation **PARTIALLY RECOVERED** because the prepared Reality code is not loaded by the protected recorder. Frontier development is **CONDITIONALLY READY** only for separately authorized work that does not depend on deploying this recorder change. Another unattended 48-hour campaign is **NOT READY**.
