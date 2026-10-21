@@ -24,6 +24,8 @@ from scripts.reality_deployment import (
     storage_capacity,
     validate_recovery_prefix,
     verification_environment,
+    verification_tool,
+    verify,
 )
 
 
@@ -69,6 +71,40 @@ def test_verification_environment_prioritizes_disposable_worktree(tmp_path, monk
     paths = verification_environment()["PYTHONPATH"].split(":")
     assert paths[:2] == [str(tmp_path), str(tmp_path / "packages")]
     assert paths[2:] == ["/production", "/production/packages"]
+
+
+def test_verification_tool_uses_interpreter_sibling_before_path(tmp_path, monkeypatch):
+    interpreter = tmp_path / "venv/bin/python"
+    interpreter.parent.mkdir(parents=True)
+    interpreter.write_text("#!/bin/sh\nexit 0\n")
+    ruff = interpreter.with_name("ruff")
+    ruff.write_text("#!/bin/sh\nexit 0\n")
+    ruff.chmod(0o755)
+    monkeypatch.setattr("scripts.reality_deployment.sys.executable", str(interpreter))
+    monkeypatch.setattr("scripts.reality_deployment.shutil.which", lambda _name: None)
+    assert verification_tool("ruff") == str(ruff)
+
+    with pytest.raises(ValueError, match="unavailable"):
+        verification_tool("mypy")
+    mypy_found = "/opt/verified-env/bin/mypy"
+    monkeypatch.setattr("scripts.reality_deployment.shutil.which", lambda _name: mypy_found)
+    assert verification_tool("mypy") == mypy_found
+    with pytest.raises(ValueError, match="single executable name"):
+        verification_tool("../mypy")
+
+
+def test_verify_creates_receipt_directory_and_binds_tool_identity(tmp_path):
+    from types import SimpleNamespace
+
+    output = tmp_path / "new/reliability/checks.json"
+    with patch(
+        "scripts.reality_deployment.subprocess.run",
+        return_value=SimpleNamespace(returncode=0, stdout="ok", stderr=""),
+    ) as run:
+        receipt = verify(output)
+    assert receipt["passed"] is True
+    assert len(run.call_args_list) == 4
+    assert json.loads(output.read_text())["deployment_tool_sha256"] == deployment_tool_hash()
 
 
 def test_storage_capacity_enforces_raw_and_archive_reserves_separately(tmp_path, monkeypatch):

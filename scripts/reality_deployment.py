@@ -140,6 +140,18 @@ def verification_environment() -> dict[str, str]:
     return environment
 
 
+def verification_tool(name: str) -> str:
+    if Path(name).name != name:
+        raise ValueError("Verification tool name must be a single executable name")
+    sibling = Path(sys.executable).parent / name
+    if sibling.is_file() and os.access(sibling, os.X_OK):
+        return str(sibling)
+    fallback = shutil.which(name)
+    if fallback is None:
+        raise ValueError(f"Required verification tool is unavailable: {name}")
+    return fallback
+
+
 def _unit_configuration_identity(unit: dict[str, str]) -> dict[str, Any]:
     fragment = Path(unit.get("FragmentPath", ""))
     if not fragment.is_absolute() or fragment.is_symlink() or not fragment.is_file():
@@ -700,6 +712,9 @@ def validate_recovery_prefix(
 
 
 def verify(output: Path) -> dict[str, Any]:
+    if output.is_symlink():
+        raise ValueError("Verification receipt path cannot be a symlink")
+    output.parent.mkdir(parents=True, exist_ok=True)
     began = time.time_ns()
     identity = source_hash()
     tool_identity = deployment_tool_hash()
@@ -728,7 +743,7 @@ def verify(output: Path) -> dict[str, Any]:
             "-q",
         ],
         [
-            str(WORKSPACE / ".venv/bin/ruff"),
+            verification_tool("ruff"),
             "check",
             "packages/midas/reality",
             "scripts/reality_deployment.py",
@@ -736,7 +751,7 @@ def verify(output: Path) -> dict[str, Any]:
             "tests/test_reality_deployment.py",
         ],
         [
-            str(WORKSPACE / ".venv/bin/mypy"),
+            verification_tool("mypy"),
             "packages/midas/reality",
             "scripts/reality_deployment.py",
         ],
