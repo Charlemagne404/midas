@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import argparse
 import fcntl
+import hashlib
 import json
 import logging
 import math
@@ -20,7 +21,7 @@ from typing import Any
 
 from .config import Config
 from .replay import replay
-from .storage import atomic_json, canonical, describe, file_hash, manifest, records, sync_dir
+from .storage import atomic_json, canonical, describe, file_hash, manifest, records
 
 CAPACITY_WARNING_SECONDS = 30 * 86400
 CAPACITY_CRITICAL_SECONDS = 14 * 86400
@@ -480,8 +481,9 @@ def archive(
 ) -> dict[str, Any]:
     """Incrementally copy finalized segments; publish only after full validation.
 
-    Interrupted copies may be resumed. Every existing segment is verified, never
-    overwritten. Original bytes and catalogs remain owned by the collector.
+    Interrupted copies may be resumed. The source and completed destination are
+    each fully replay-verified; copied files are checked against the source
+    manifest while streaming. Original bytes and catalogs remain collector-owned.
     """
     root, destination = root.resolve(), destination.resolve()
     if destination == root or destination.is_relative_to(root) or root.is_relative_to(destination):
@@ -533,6 +535,10 @@ def archive(
                 raise ValueError("Unidentified nonempty archive destination")
             atomic_json(identity, dict(schema_version=1, recording_root=str(root)))
         value = manifest(root)
+        # Validate all source bytes and durable checkpoints once, with admission
+        # checks between segments. The copy loop hashes each copied source stream,
+        # so it does not need to re-read the source or the temporary destination.
+        replay(root, value, before_segment=before_segment)
         used = sum(p.stat().st_size for p in destination.iterdir() if p.is_file())
         for info in value["segments"]:
             if before_segment is not None:
@@ -540,11 +546,9 @@ def archive(
             if Path(info["file"]).name != info["file"]:
                 raise ValueError("Unsafe segment path")
             source, target = root / info["file"], destination / info["file"]
-            if describe(source) != info:
-                raise ValueError(f"Source segment integrity mismatch: {source}")
             if target.exists():
-                if describe(target) != info:
-                    raise ValueError(f"Archived segment integrity mismatch: {target}")
+                # The complete destination replay below verifies existing and
+                # newly copied segments together before manifest publication.
                 continue
             partial = target.with_suffix(".copying")
             # Only an interrupted temporary copy in this exclusive archive is disposable.
@@ -556,14 +560,18 @@ def archive(
                 raise OSError("Archive budget reached; originals preserved")
             if shutil.disk_usage(destination).free < reserve + info["bytes"] + margin:
                 raise OSError("Archive free-disk reserve reached; originals preserved")
+            digest = hashlib.sha256()
+            copied_bytes = 0
             with source.open("rb") as incoming, partial.open("xb") as outgoing:
-                shutil.copyfileobj(incoming, outgoing, length=1024 * 1024)
+                while chunk := incoming.read(1024 * 1024):
+                    outgoing.write(chunk)
+                    digest.update(chunk)
+                    copied_bytes += len(chunk)
                 outgoing.flush()
                 os.fsync(outgoing.fileno())
-            if describe(partial) != dict(info, file=partial.name):
-                raise ValueError("Copied archive segment failed validation")
+            if copied_bytes != info["bytes"] or digest.hexdigest() != info["sha256"]:
+                raise ValueError("Source segment changed or copied bytes failed validation")
             os.replace(partial, target)
-            sync_dir(destination)
             used += info["bytes"]
         published = dict(
             value,
@@ -580,6 +588,10 @@ def archive(
             raise OSError("Archive publication exceeds budget; originals preserved")
         if shutil.disk_usage(destination).free < reserve + len(canonical(published)):
             raise OSError("Archive publication reaches disk reserve; originals preserved")
+        # The atomic manifest publication syncs this directory after all
+        # segment files have been fsynced and replay-verified. Deferring this
+        # directory sync avoids one HDD journal commit for every segment; an
+        # interruption before publication remains resumable from source data.
         atomic_json(destination / "manifest.json", published)
         return published
 

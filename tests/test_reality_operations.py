@@ -6,6 +6,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import midas.reality.operations as operations
+import midas.reality.storage as storage
 import pytest
 from midas.reality.config import Config
 from midas.reality.operations import (
@@ -167,7 +168,7 @@ def test_archive_admission_wait_gets_fresh_per_window_deadline(tmp_path, monkeyp
         operation_timeout_seconds=1_000,
     )
 
-    assert len(deadlines) == 1 + 2 * len(value["segments"])
+    assert len(deadlines) == 1 + 3 * len(value["segments"])
     assert all(deadlines[index + 1] > deadlines[index] for index in range(len(deadlines) - 1))
 
 
@@ -384,6 +385,35 @@ def test_archive_incremental_integrity_and_originals(tmp_path):
     with pytest.raises(ValueError):
         archive(root, target, budget=1_000_000, reserve=1)
     assert json.loads((target / "manifest.json").read_text())["segments"] == value["segments"]
+
+
+def test_archive_replay_verifies_source_and_destination_without_per_segment_sync(tmp_path):
+    root, target = tmp_path / "raw", tmp_path / "archive"
+    sample(root)
+    replay_roots = []
+    sync_roots = []
+    actual_replay = operations.replay
+    actual_sync = storage.sync_dir
+
+    def track_replay(path, value, *args, **kwargs):
+        replay_roots.append(path.resolve())
+        return actual_replay(path, value, *args, **kwargs)
+
+    def track_sync(path):
+        sync_roots.append(path.resolve())
+        actual_sync(path)
+
+    with (
+        patch.object(operations, "replay", side_effect=track_replay),
+        patch.object(operations, "describe", side_effect=AssertionError("redundant segment scan")),
+        patch.object(storage, "sync_dir", side_effect=track_sync),
+    ):
+        archive(root, target, budget=1_000_000, reserve=1)
+
+    assert replay_roots == [root.resolve(), target.resolve()]
+    # The source identity and final manifest each sync the directory. Individual
+    # segment renames do not issue a journal commit; final replay validates them.
+    assert sync_roots == [target.resolve(), target.resolve()]
 
 
 def test_archive_resume_counts_destination_once_for_many_missing_segments(tmp_path):
