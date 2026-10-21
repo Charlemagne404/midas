@@ -40,8 +40,11 @@ def source_identity() -> str:
     ).hexdigest()
 
 
-def build_markets() -> tuple[list[dict[str, Any]], dict[str, dict[str, Any]]]:
-    fixture = json.loads(FIXTURE_PATH.read_text())
+def build_markets(
+    fixture: dict[str, Any] | None = None,
+) -> tuple[list[dict[str, Any]], dict[str, dict[str, Any]]]:
+    if fixture is None:
+        fixture = json.loads(FIXTURE_PATH.read_text())
     markets = json.loads(fixture["discovery"]["payload"])
     now = datetime.now(UTC)
     token_market: dict[str, dict[str, Any]] = {}
@@ -88,6 +91,20 @@ def build_markets() -> tuple[list[dict[str, Any]], dict[str, dict[str, Any]]]:
     return markets, token_market
 
 
+def select_book_template(fixture: dict[str, Any]) -> dict[str, Any]:
+    """Select one captured book event from the provider's event-array payload."""
+    for frame in fixture.get("frames", []):
+        decoded = json.loads(frame["payload"])
+        events = decoded if isinstance(decoded, list) else [decoded]
+        for event in events:
+            if not isinstance(event, dict) or event.get("event_type") != "book":
+                continue
+            bids, asks = event.get("bids"), event.get("asks")
+            if isinstance(bids, list) and bids and isinstance(asks, list) and asks:
+                return {"bids": copy.deepcopy(bids), "asks": copy.deepcopy(asks)}
+    raise ValueError("Captured fixture contains no book event with both sides populated")
+
+
 def resource_snapshot() -> dict[str, Any]:
     cgroup = None
     for line in Path("/proc/self/cgroup").read_text().splitlines():
@@ -109,17 +126,44 @@ def resource_snapshot() -> dict[str, Any]:
     values: dict[str, Any] = {}
     if cgroup is not None:
         for name in files:
-            path = cgroup / name
-            if path.is_file():
-                values[name] = path.read_text().strip()
+            file_path = cgroup / name
+            if file_path.is_file():
+                values[name] = file_path.read_text().strip()
     values["cgroup"] = str(cgroup) if cgroup is not None else None
     return values
+
+
+def full_book_coverage_seconds(status: dict[str, Any]) -> float | None:
+    """Measure post-recovery start-to-first-update coverage for every token."""
+    started_ns = status.get("started_ns")
+    coverage = status.get("observation_coverage")
+    if (
+        type(started_ns) is not int
+        or started_ns < 0
+        or not isinstance(coverage, dict)
+        or not coverage
+    ):
+        return None
+    expected_books = status.get("expected_books")
+    if type(expected_books) is not int or expected_books <= 0 or len(coverage) != expected_books:
+        return None
+    first_received_ns: list[int] = []
+    for item in coverage.values():
+        if not isinstance(item, dict):
+            return None
+        value = item.get("first_received_ns")
+        if not isinstance(value, int) or isinstance(value, bool) or value < started_ns:
+            return None
+        first_received_ns.append(value)
+    return (max(first_received_ns) - started_ns) / 1e9
 
 
 async def execute(
     config: Config, duration: float, frame_interval_seconds: float
 ) -> tuple[list[str], list[dict[str, Any]]]:
-    markets, token_market = build_markets()
+    fixture = json.loads(FIXTURE_PATH.read_text())
+    markets, token_market = build_markets(fixture)
+    template = select_book_template(fixture)
     selected, _ = select_panel(
         markets, config.markets, now_ns=time.time_ns(), seed=config.selection_seed
     )
@@ -128,8 +172,6 @@ async def execute(
 
     def book(token: str) -> dict[str, Any]:
         item = token_market[token]
-        fixture = json.loads(FIXTURE_PATH.read_text())
-        template = json.loads(fixture["frames"][0]["payload"])
         source_timestamp_ms = time.time_ns() // 1_000_000
         return dict(
             market=item["condition"],
@@ -214,6 +256,11 @@ async def execute(
                     await socket.send("PONG")
         except ConnectionClosed:
             return
+        except Exception as exc:
+            unexpected_routes.append(
+                f"loopback WebSocket fixture error: {type(exc).__name__}: {exc}"
+            )
+            return
 
     samples: list[dict[str, Any]] = []
     done = asyncio.Event()
@@ -235,7 +282,10 @@ async def execute(
         return original_client(*args, **kwargs)
 
     async with serve(websocket_handler, "127.0.0.1", 0) as server:
-        port = server.sockets[0].getsockname()[1]
+        listener = next(iter(server.sockets), None)
+        if listener is None:
+            raise RuntimeError("Loopback WebSocket fixture server has no listener")
+        port = listener.getsockname()[1]
         with (
             mock.patch.object(httpx, "AsyncClient", local_http_client),
             mock.patch.object(discovery, "GAMMA", LOOPBACK_HTTP),
@@ -354,6 +404,9 @@ def main() -> None:
         or set(gap_reasons) - {"process_start", "process_stop"}
     ):
         raise ValueError("Candidate fixture canary did not meet the bounded readiness checks")
+    coverage_seconds = full_book_coverage_seconds(status)
+    if coverage_seconds is None:
+        raise ValueError("Candidate fixture canary lacks complete first-book coverage timing")
 
     def event_map(name: str) -> Counter[str]:
         lines = next((sample.get(name, "") for sample in reversed(samples) if sample.get(name)), "")
@@ -421,6 +474,16 @@ def main() -> None:
         "state_sha256": engine.digest(),
         "manifest_sha256": manifest_digest,
         "recovery_status": status.get("recovery_status"),
+        "empty_source_startup_seconds": status.get("startup_seconds"),
+        "first_new_durable_record_seconds": status.get("seconds_until_first_new_durable_record"),
+        "first_frame_after_recovery_seconds": (
+            (status["first_frame_received_ns"] - status["started_ns"]) / 1e9
+            if type(status.get("first_frame_received_ns")) is int
+            and type(status.get("started_ns")) is int
+            and status["first_frame_received_ns"] >= status["started_ns"]
+            else None
+        ),
+        "full_book_coverage_seconds": coverage_seconds,
         "persistence_window_complete": status.get("persistence_latency_window_complete"),
         "transport_queue_depth": status.get("transport_queue_depth"),
         "cgroup_samples": len(samples),
@@ -457,6 +520,10 @@ def main() -> None:
                     "state_sha256",
                     "manifest_sha256",
                     "cgroup_peak_bytes",
+                    "empty_source_startup_seconds",
+                    "first_new_durable_record_seconds",
+                    "first_frame_after_recovery_seconds",
+                    "full_book_coverage_seconds",
                 )
             },
             indent=2,

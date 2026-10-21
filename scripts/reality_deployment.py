@@ -46,8 +46,8 @@ RUNTIME_DROPIN_TARGET = (
 )
 RUNTIME_SITE_PACKAGES = PRODUCTION_WORKSPACE / ".venv/lib/python3.12/site-packages"
 EXPECTED_EFFECTIVE_LIMITS = {
-    "MemoryHigh": str(896 * 1024**2),
-    "MemoryMax": str(1024 * 1024**2),
+    "MemoryHigh": str(1152 * 1024**2),
+    "MemoryMax": str(1280 * 1024**2),
     "MemorySwapMax": "0",
     "CPUQuotaPerSecUSec": "250ms",
     "TasksMax": "32",
@@ -65,6 +65,17 @@ def source_hash(workspace: Path = WORKSPACE) -> str:
 
 def deployment_tool_hash() -> str:
     return hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
+
+
+def recovery_monitor_paths(root: Path) -> list[Path]:
+    """Return every safe cold-replay monitor receipt, independent of attempt number."""
+    candidates = sorted(root.glob("cold-attempt-*-monitor.jsonl"))
+    if any(path.is_symlink() or not path.is_file() for path in candidates):
+        raise ValueError("Cold replay monitor receipt is unsafe")
+    paths = candidates
+    if not paths:
+        raise ValueError("Full-scale recovery evidence has no cold replay monitor receipt")
+    return paths
 
 
 def service_unit_hash() -> str:
@@ -232,9 +243,7 @@ def _validate_candidate_runtime_configuration(
     if identity["working_directory"] != str(PRODUCTION_WORKSPACE):
         raise ValueError("Reality service working directory differs from the verified target")
     environment = dict(
-        value.split("=", 1)
-        for value in unit.get("Environment", "").split()
-        if "=" in value
+        value.split("=", 1) for value in unit.get("Environment", "").split() if "=" in value
     )
     expected_pythonpath = f"{release['package_path']}:{release['site_packages']}"
     if (
@@ -246,7 +255,9 @@ def _validate_candidate_runtime_configuration(
     if identity["environment_files"] or identity["user"]:
         raise ValueError("Reality service has an unverified environment file or user override")
     if identity["effective_limits"] != EXPECTED_EFFECTIVE_LIMITS:
-        raise ValueError("Effective Reality service resource limits differ from the verified contract")
+        raise ValueError(
+            "Effective Reality service resource limits differ from the verified contract"
+        )
     if identity["restart"] not in restart_policies:
         raise ValueError("Reality service restart policy differs from the transition phase")
     dropins = {item["path"]: item["sha256"] for item in identity["drop_ins"]}
@@ -461,15 +472,20 @@ def recovery_resource_evidence(root: Path) -> dict[str, Any]:
     root = root.resolve(strict=True)
     names = (
         "result.json",
+        "boundary.json",
         "catalog.json",
         "identities.json",
+        "admission.json",
         "valid.checkpoint",
+        "readonly_probe.json",
+        "readonly_probe-landlock.json",
         "cold.json",
         "fast.json",
         "corrupt.json",
         "after_interrupt.json",
         "after_interrupt_save.json",
-        "cold-attempt-3-monitor.jsonl",
+        "interrupt-termination.json",
+        "interrupt_save-termination.json",
     )
     documents: dict[str, bytes] = {}
     for name in names:
@@ -477,9 +493,13 @@ def recovery_resource_evidence(root: Path) -> dict[str, Any]:
         if path.is_symlink() or not path.is_file():
             raise ValueError(f"Full-scale recovery evidence is missing or unsafe: {name}")
         documents[name] = path.read_bytes()
+    for path in recovery_monitor_paths(root):
+        documents[path.name] = path.read_bytes()
     result = json.loads(documents["result.json"])
     catalog = json.loads(documents["catalog.json"])
     identities = json.loads(documents["identities.json"])
+    recorded_boundary = json.loads(documents["boundary.json"])
+    admission = json.loads(documents["admission.json"])
     required_phases = {
         "cold",
         "fast",
@@ -495,6 +515,18 @@ def recovery_resource_evidence(root: Path) -> dict[str, Any]:
     ):
         raise ValueError("Full-scale recovery matrix is incomplete")
     boundary = result.get("boundary", {})
+    expected_source_hash = source_hash(WORKSPACE)
+    expected_recovery_hash = recovery.implementation_identity()
+    if (
+        result.get("implementation_source_sha256") != expected_source_hash
+        or result.get("recovery_implementation_sha256") != expected_recovery_hash
+        or boundary.get("implementation_packages") != str(WORKSPACE / "packages")
+        or boundary.get("implementation_source_sha256") != expected_source_hash
+        or boundary.get("recovery_implementation_sha256") != expected_recovery_hash
+    ):
+        raise ValueError("Full-scale recovery evidence uses a different Reality implementation")
+    if recorded_boundary != boundary or not isinstance(admission.get("memory_events"), dict):
+        raise ValueError("Full-scale recovery boundary or admission receipt is inconsistent")
     segment_count = int(boundary.get("segment_count", 0))
     if (
         segment_count <= 0
@@ -515,6 +547,37 @@ def recovery_resource_evidence(root: Path) -> dict[str, Any]:
         "after_interrupt_save.json",
     )
     phases = {name.removesuffix(".json"): json.loads(documents[name]) for name in phase_names}
+    if any(
+        phase.get("implementation_source_sha256") != expected_source_hash
+        or phase.get("recovery_implementation_sha256") != expected_recovery_hash
+        for phase in phases.values()
+    ):
+        raise ValueError("Recovery phase receipts use a different Reality implementation")
+    probe = json.loads(documents["readonly_probe.json"])
+    probe_policy = json.loads(documents["readonly_probe-landlock.json"])
+    if (
+        probe.get("source_write_denied") is not True
+        or probe.get("implementation_source_sha256") != expected_source_hash
+        or probe.get("recovery_implementation_sha256") != expected_recovery_hash
+        or probe.get("policy") != probe_policy
+        or probe_policy.get("source_root") != boundary.get("source")
+        or probe_policy.get("staging_root") != str(root)
+        or probe_policy.get("source_reads") != "allowed"
+        or probe_policy.get("filesystem_mutation") != "denied except below staging_root"
+    ):
+        raise ValueError("Full-scale source read-only probe is incomplete or unbound")
+    for phase in ("interrupt", "interrupt_save"):
+        termination = json.loads(documents[f"{phase}-termination.json"])
+        systemd = termination.get("systemd", "")
+        if (
+            termination.get("boundary_catalog_sha256") != boundary.get("catalog_sha256")
+            or termination.get("boundary_identities_sha256") != boundary.get("identities_sha256")
+            or termination.get("implementation_source_sha256") != expected_source_hash
+            or termination.get("recovery_implementation_sha256") != expected_recovery_hash
+            or "ExecMainCode=2\n" not in systemd
+            or "ExecMainStatus=9\n" not in systemd
+        ):
+            raise ValueError(f"Expected isolated interruption receipt is incomplete: {phase}")
     baseline = phases["cold"]
     state_sha = baseline.get("state_sha256")
     internal_sha = baseline.get("internal_sha256")
@@ -566,11 +629,21 @@ def recovery_resource_evidence(root: Path) -> dict[str, Any]:
         raise ValueError("Prepared recovery capsule does not match the validated source boundary")
     monitor_rows = [
         json.loads(line)
-        for line in documents["cold-attempt-3-monitor.jsonl"].splitlines()
+        for name, contents in documents.items()
+        if name.startswith("cold-attempt-") and name.endswith("-monitor.jsonl")
+        for line in contents.splitlines()
         if line.strip()
     ]
     if not monitor_rows:
         raise ValueError("Recovery cgroup monitor evidence is empty")
+    protected_pid = str(admission.get("pid", ""))
+    observed_pids = {
+        str(row["protected"].get("pid"))
+        for row in monitor_rows
+        if isinstance(row.get("protected"), dict) and row["protected"].get("pid") is not None
+    }
+    if not protected_pid.isdigit() or observed_pids != {protected_pid}:
+        raise ValueError("Protected Reality process identity changed during cold recovery")
     peak = 0
     monitor_events: Counter[str] = Counter()
     cgroup_samples = 0
@@ -740,6 +813,7 @@ def verify(output: Path) -> dict[str, Any]:
             "tests/test_reality_panel.py",
             "tests/test_reality_deployment.py",
             "tests/test_reality_recovery.py",
+            "tests/test_reality_fixture_canary.py",
             "-q",
         ],
         [
@@ -747,13 +821,16 @@ def verify(output: Path) -> dict[str, Any]:
             "check",
             "packages/midas/reality",
             "scripts/reality_deployment.py",
+            "scripts/reality_fixture_canary.py",
             "tests/test_reality_panel.py",
             "tests/test_reality_deployment.py",
+            "tests/test_reality_fixture_canary.py",
         ],
         [
             verification_tool("mypy"),
             "packages/midas/reality",
             "scripts/reality_deployment.py",
+            "scripts/reality_fixture_canary.py",
         ],
     ]
     results = []

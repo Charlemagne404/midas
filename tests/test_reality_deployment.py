@@ -19,6 +19,7 @@ from scripts.reality_deployment import (
     apply,
     deployment_tool_hash,
     preflight,
+    recovery_monitor_paths,
     service_unit_hash,
     source_hash,
     storage_capacity,
@@ -40,8 +41,8 @@ def _service_state(tmp_path, monkeypatch):
     return dict(
         FragmentPath=str(fragment),
         DropInPaths=str(drop_in),
-        MemoryHigh=str(896 * 1024**2),
-        MemoryMax=str(1024 * 1024**2),
+        MemoryHigh=str(1152 * 1024**2),
+        MemoryMax=str(1280 * 1024**2),
         MemorySwapMax="0",
         CPUQuotaPerSecUSec="250ms",
         TasksMax="32",
@@ -63,6 +64,17 @@ def test_unverified_or_changed_implementation_rejected_first():
     for receipt in ({}, dict(passed=False), dict(passed=True, source_sha256="wrong")):
         with pytest.raises(ValueError, match="Checks missing"):
             preflight(current, canary, receipt, 1024, current.reserve_bytes)
+
+
+def test_recovery_monitor_paths_accept_any_attempt_and_reject_symlinks(tmp_path):
+    attempt = tmp_path / "cold-attempt-1-monitor.jsonl"
+    attempt.write_text('{"event":"sample"}\n')
+    assert recovery_monitor_paths(tmp_path) == [attempt]
+
+    unsafe = tmp_path / "cold-attempt-2-monitor.jsonl"
+    unsafe.symlink_to(attempt)
+    with pytest.raises(ValueError, match="monitor receipt is unsafe"):
+        recovery_monitor_paths(tmp_path)
 
 
 def test_verification_environment_prioritizes_disposable_worktree(tmp_path, monkeypatch):
@@ -182,16 +194,14 @@ def test_preflight_requires_source_unit_and_effective_limits(tmp_path, monkeypat
     unit["MemoryMax"] = str(512 * 1024**2)
     with pytest.raises(ValueError, match="resource limits"):
         _validate_service_configuration(unit)
-    unit["MemoryMax"] = str(1024 * 1024**2)
+    unit["MemoryMax"] = str(1280 * 1024**2)
     fragment = tmp_path / "home/.config/systemd/user/midas-reality.service"
     fragment.write_text("[Service]\nMemoryMax=512M\n")
     with pytest.raises(ValueError, match="differs from verified source"):
         _validate_service_configuration(unit)
 
 
-def test_preflight_allows_isolated_candidate_when_production_source_is_older(
-    tmp_path, monkeypatch
-):
+def test_preflight_allows_isolated_candidate_when_production_source_is_older(tmp_path, monkeypatch):
     current = Config()
     canary = replace(current, root=current.root + "-canary")
     receipt = dict(
