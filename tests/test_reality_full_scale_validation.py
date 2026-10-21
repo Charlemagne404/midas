@@ -274,8 +274,39 @@ def test_source_quality_audit_preserves_gap_reason_and_bounded_asset_sample():
     )
 
     assert observed["reason"] == "book_resynchronization"
+    assert observed["assets_field"] == "assets"
     assert observed["assets_count"] == len(assets)
     assert observed["assets_sample"] == assets[:8]
+
+
+def test_source_quality_audit_reads_affected_assets_from_recorder_payload():
+    affected = [f"token-{number}" for number in range(12)]
+    observed = validation.source_quality_observation(
+        Engine(),
+        dict(
+            kind="gap",
+            ordinal=43,
+            payload=dict(
+                reason="book_resynchronization",
+                affected_assets=affected,
+                assets=["obsolete-field"],
+            ),
+        ),
+    )
+
+    assert observed["assets_field"] == "affected_assets"
+    assert observed["assets_count"] == len(affected)
+    assert observed["assets_sample"] == affected[:8]
+
+
+def test_source_quality_audit_keeps_absent_affected_assets_unknown():
+    observed = validation.source_quality_observation(
+        Engine(),
+        dict(kind="gap", ordinal=44, payload={"reason": "connection_failure"}),
+    )
+
+    assert observed["assets_field"] is None
+    assert "assets_count" not in observed
 
 
 def test_failed_admission_does_not_create_snapshot(tmp_path, monkeypatch):

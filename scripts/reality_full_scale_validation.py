@@ -688,11 +688,19 @@ def source_quality_observation(engine, record):
     if not isinstance(payload, dict):
         return None
     if kind == "gap":
-        assets = payload.get("assets")
+        if "affected_assets" in payload:
+            assets_field = "affected_assets"
+        elif "assets" in payload:
+            # Retain compatibility with older fixtures and historical payloads.
+            assets_field = "assets"
+        else:
+            assets_field = None
+        assets = payload.get(assets_field) if assets_field is not None else None
         observed = dict(
             kind="gap",
             ordinal=record.get("ordinal"),
             reason=payload.get("reason", "unknown"),
+            assets_field=assets_field,
         )
         for key in ("source", "issue", "error", "reconstruction_version", "stale_ns"):
             if key in payload:
