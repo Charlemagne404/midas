@@ -1,0 +1,468 @@
+"""Run the candidate collector against captured fixtures over loopback only.
+
+This is a deployment canary for the real collector and persistence code. HTTP
+responses use an in-process MockTransport, and WebSocket frames come from the
+checked-in observed fixture. It never contacts a market provider.
+"""
+
+from __future__ import annotations
+
+import argparse
+import asyncio
+import copy
+import hashlib
+import json
+import math
+import time
+from collections import Counter
+from datetime import UTC, datetime, timedelta
+from pathlib import Path
+from typing import Any
+from unittest import mock
+
+import httpx
+from midas.reality import collector, discovery, observation
+from midas.reality.config import Config
+from midas.reality.panel import select_panel
+from midas.reality.replay import replay
+from midas.reality.storage import atomic_json, canonical, manifest, read_manifest
+from websockets.asyncio.server import serve
+from websockets.exceptions import ConnectionClosed
+
+FIXTURE_PATH = Path(__file__).resolve().parents[1] / "tests/fixtures/reality/observed.json"
+LOOPBACK_HTTP = "http://127.0.0.1:1"
+
+
+def source_identity() -> str:
+    package = Path(__file__).resolve().parents[1] / "packages/midas/reality"
+    return hashlib.sha256(
+        b"".join(path.name.encode() + path.read_bytes() for path in sorted(package.glob("*.py")))
+    ).hexdigest()
+
+
+def build_markets() -> tuple[list[dict[str, Any]], dict[str, dict[str, Any]]]:
+    fixture = json.loads(FIXTURE_PATH.read_text())
+    markets = json.loads(fixture["discovery"]["payload"])
+    now = datetime.now(UTC)
+    token_market: dict[str, dict[str, Any]] = {}
+    for index, original in enumerate(markets):
+        market = copy.deepcopy(original)
+        condition = hashlib.sha256(f"fixture-condition-{index}".encode()).hexdigest()
+        tokens = [str(10**70 + index * 2 + 1), str(10**70 + index * 2 + 2)]
+        category = f"fixture-category-{index:02d}"
+        end = now + timedelta(days=2 if index == 5 else 30)
+        market.update(
+            id=f"fixture-{index:02d}",
+            question=f"Local fixture market {index:02d}",
+            conditionId=f"0x{condition}",
+            clobTokenIds=tokens,
+            outcomes=["Yes", "No"],
+            active=True,
+            closed=False,
+            enableOrderBook=True,
+            acceptingOrders=True,
+            negRisk=False,
+            negRiskMarketID=None,
+            negRiskOther=False,
+            feesEnabled=True,
+            feeSchedule={"takerOnly": True, "rate": "0", "exponent": "1"},
+            orderPriceMinTickSize="0.01",
+            orderMinSize="1",
+            volume24hr=str(1_000_000 - index),
+            liquidityNum=str(
+                20_000 if index == 0 else 5_000 if index == 1 else 100 if index == 2 else 2_000
+            ),
+            oneDayPriceChange=str((index + 1) / 1000),
+            endDate=end.isoformat().replace("+00:00", "Z"),
+            endDateIso=end.isoformat().replace("+00:00", "Z"),
+            tags=[{"id": f"tag-{index:02d}", "label": category}],
+            events=[{"id": f"event-{index:02d}"}],
+        )
+        for token, outcome in zip(tokens, market["outcomes"], strict=True):
+            token_market[token] = {
+                "condition": market["conditionId"],
+                "outcome": outcome,
+                "index": index,
+            }
+        markets[index] = market
+    return markets, token_market
+
+
+def resource_snapshot() -> dict[str, Any]:
+    cgroup = None
+    for line in Path("/proc/self/cgroup").read_text().splitlines():
+        hierarchy, _, path = line.partition("::")
+        if not hierarchy and path:
+            cgroup = Path("/sys/fs/cgroup") / path.lstrip("/")
+            break
+    files = (
+        "memory.current",
+        "memory.peak",
+        "memory.high",
+        "memory.max",
+        "memory.swap.current",
+        "memory.swap.peak",
+        "memory.events",
+        "memory.pressure",
+        "cpu.stat",
+    )
+    values: dict[str, Any] = {}
+    if cgroup is not None:
+        for name in files:
+            path = cgroup / name
+            if path.is_file():
+                values[name] = path.read_text().strip()
+    values["cgroup"] = str(cgroup) if cgroup is not None else None
+    return values
+
+
+async def execute(
+    config: Config, duration: float, frame_interval_seconds: float
+) -> tuple[list[str], list[dict[str, Any]]]:
+    markets, token_market = build_markets()
+    selected, _ = select_panel(
+        markets, config.markets, now_ns=time.time_ns(), seed=config.selection_seed
+    )
+    if len(selected) != config.markets:
+        raise ValueError("Local fixtures did not fill the configured candidate market panel")
+
+    def book(token: str) -> dict[str, Any]:
+        item = token_market[token]
+        fixture = json.loads(FIXTURE_PATH.read_text())
+        template = json.loads(fixture["frames"][0]["payload"])
+        source_timestamp_ms = time.time_ns() // 1_000_000
+        return dict(
+            market=item["condition"],
+            asset_id=token,
+            timestamp=str(source_timestamp_ms),
+            hash=hashlib.sha256(f"{token}:{source_timestamp_ms}".encode()).hexdigest()[:40],
+            bids=template["bids"],
+            asks=template["asks"],
+            tick_size="0.01",
+            event_type="book",
+            last_trade_price="0.5",
+        )
+
+    by_condition = {market["conditionId"]: market for market in markets}
+    unexpected_routes: list[str] = []
+    gamma_calls = 0
+
+    def response(request: httpx.Request) -> httpx.Response:
+        nonlocal gamma_calls
+        if request.url.scheme != "http" or request.url.host != "127.0.0.1":
+            unexpected_routes.append(str(request.url))
+            return httpx.Response(451, text="Only loopback fixture routes are allowed")
+        path = request.url.path
+        if path == "/markets":
+            gamma_calls += 1
+            return httpx.Response(200, json=markets)
+        if path.startswith("/markets/"):
+            condition = "0x" + path.rsplit("/", 1)[-1].removeprefix("0x")
+            market = by_condition.get(condition)
+            if market is None:
+                return httpx.Response(404, json={"error": "unknown fixture market"})
+            return httpx.Response(
+                200,
+                json={
+                    "version": "v1",
+                    "condition_id": condition,
+                    "tokens": [
+                        {"token_id": token, "outcome": outcome}
+                        for token, outcome in zip(
+                            market["clobTokenIds"], market["outcomes"], strict=True
+                        )
+                    ],
+                    "closed": False,
+                    "accepting_orders": True,
+                    "neg_risk": False,
+                    "tags": [tag["label"] for tag in market["tags"]],
+                    "minimum_order_size": "1",
+                    "minimum_tick_size": "0.01",
+                    "seconds_delay": 0,
+                    "end_date_iso": market["endDateIso"],
+                },
+            )
+        if path == "/fee-rate":
+            return httpx.Response(200, json={"base_fee": 0})
+        if path == "/book":
+            token = request.url.params.get("token_id")
+            if token not in token_market:
+                return httpx.Response(404, json={"error": "unknown fixture token"})
+            return httpx.Response(200, json=book(token))
+        unexpected_routes.append(str(request.url))
+        return httpx.Response(404, json={"error": "unexpected fixture route"})
+
+    async def websocket_handler(socket: Any) -> None:
+        try:
+            subscription = json.loads(await socket.recv())
+            tokens = subscription.get("assets_ids", [])
+            if not isinstance(tokens, list) or not set(tokens).issubset(token_market):
+                unexpected_routes.append("invalid websocket subscription")
+                return
+            next_emit = 0.0
+            while True:
+                now = time.monotonic()
+                if now >= next_emit:
+                    for token in tokens:
+                        await socket.send(json.dumps(book(token), separators=(",", ":")))
+                    next_emit = now + frame_interval_seconds
+                try:
+                    message = await asyncio.wait_for(socket.recv(), timeout=0.25)
+                except TimeoutError:
+                    continue
+                if message == "PING":
+                    await socket.send("PONG")
+        except ConnectionClosed:
+            return
+
+    samples: list[dict[str, Any]] = []
+    done = asyncio.Event()
+
+    async def monitor() -> None:
+        while not done.is_set():
+            sample = resource_snapshot()
+            sample["sampled_monotonic_ns"] = time.monotonic_ns()
+            samples.append(sample)
+            await asyncio.sleep(1)
+        sample = resource_snapshot()
+        sample["sampled_monotonic_ns"] = time.monotonic_ns()
+        samples.append(sample)
+
+    original_client = httpx.AsyncClient
+
+    def local_http_client(*args: Any, **kwargs: Any) -> httpx.AsyncClient:
+        kwargs["transport"] = httpx.MockTransport(response)
+        return original_client(*args, **kwargs)
+
+    async with serve(websocket_handler, "127.0.0.1", 0) as server:
+        port = server.sockets[0].getsockname()[1]
+        with (
+            mock.patch.object(httpx, "AsyncClient", local_http_client),
+            mock.patch.object(discovery, "GAMMA", LOOPBACK_HTTP),
+            mock.patch.object(discovery, "CLOB", LOOPBACK_HTTP),
+            mock.patch.object(observation, "GAMMA", LOOPBACK_HTTP),
+            mock.patch.object(observation, "CLOB", LOOPBACK_HTTP),
+            mock.patch.object(collector, "WS", f"ws://127.0.0.1:{port}"),
+        ):
+            monitor_task = asyncio.create_task(monitor())
+            try:
+                await collector.run(config, duration=duration)
+            finally:
+                done.set()
+                await monitor_task
+    if unexpected_routes:
+        raise ValueError(f"Unexpected non-loopback or unsupported route: {unexpected_routes[0]}")
+    if gamma_calls <= 0:
+        raise ValueError("Candidate collector did not exercise fixture discovery")
+    return unexpected_routes, samples
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--candidate-config", required=True, type=Path)
+    parser.add_argument("--root", required=True, type=Path)
+    parser.add_argument("--duration-seconds", type=float, default=95)
+    parser.add_argument("--frame-interval-seconds", type=float, default=5.0)
+    parser.add_argument("--markets", type=int)
+    parser.add_argument("--canary-config-output", type=Path, required=True)
+    parser.add_argument("--receipt-output", type=Path, required=True)
+    args = parser.parse_args()
+    if args.markets is not None and (args.markets < 1 or args.markets > 10):
+        raise ValueError("Fixture market count must be between one and ten")
+    if not math.isfinite(args.duration_seconds) or args.duration_seconds < 75:
+        raise ValueError("Fixture canary must run for at least 75 finite seconds")
+    if not math.isfinite(args.frame_interval_seconds) or args.frame_interval_seconds < 0.1:
+        raise ValueError("Frame interval must be finite and at least 100 ms")
+    workspace = Path(__file__).resolve().parents[1]
+    root = args.root.absolute()
+    if (
+        args.root.is_symlink()
+        or root.resolve() != root
+        or not root.is_relative_to(workspace / "data/recordings")
+    ):
+        raise ValueError(
+            "Fixture canary data root must be a regular path under candidate recordings"
+        )
+    if any(
+        path.is_symlink()
+        for path in (args.candidate_config, args.canary_config_output, args.receipt_output)
+    ):
+        raise ValueError("Fixture canary input/output paths must not be symlinks")
+    for output in (args.canary_config_output, args.receipt_output):
+        if (
+            output.parent.resolve() != output.parent.absolute()
+            or not output.parent.resolve().is_relative_to(workspace)
+        ):
+            raise ValueError(
+                "Fixture canary outputs must use regular paths inside the candidate worktree"
+            )
+    if args.canary_config_output.absolute() == args.receipt_output.absolute():
+        raise ValueError("Fixture canary config and receipt outputs must be different files")
+    if args.canary_config_output.exists() or args.receipt_output.exists():
+        raise ValueError("Fixture canary config and receipt outputs must be new files")
+    if root.exists() and any(root.iterdir()):
+        raise ValueError("Fixture canary root must be empty")
+    root.mkdir(parents=True, exist_ok=True)
+    candidate = Config.load(args.candidate_config)
+    market_count = args.markets if args.markets is not None else candidate.markets
+    if market_count > candidate.discovery_limit:
+        raise ValueError("Fixture market count exceeds the configured discovery bound")
+    canary = Config(
+        **{
+            **candidate.dump(),
+            "markets": market_count,
+            "root": str(root.resolve()),
+            "budget_bytes": 512 * 1024**2,
+            "reserve_bytes": 1024**2,
+        }
+    )
+    atomic_json(args.canary_config_output, canary.dump())
+    before_source = source_identity()
+    started_ns = time.time_ns()
+    _, samples = asyncio.run(execute(canary, args.duration_seconds, args.frame_interval_seconds))
+    value = manifest(root)
+    engine, checkpoints = replay(root, value)
+    records = list(read_manifest(root, value))
+    status = json.loads((root / "status.json").read_text())
+    process_start = next(
+        record
+        for record in records
+        if record["kind"] == "gap" and record["payload"].get("reason") == "process_start"
+    )
+    gap_reasons = Counter(
+        record["payload"].get("reason", "unknown") for record in records if record["kind"] == "gap"
+    )
+    comparison_counts = Counter(
+        record["payload"].get("assessment", "unknown")
+        for record in records
+        if record["kind"] == "book_comparison"
+    )
+    if before_source != source_identity():
+        raise ValueError("Candidate source changed during the fixture canary")
+    if (
+        status.get("state") != "STOPPED"
+        or status.get("failures") != 0
+        or status.get("markets") != canary.markets
+        or status.get("fresh_books") != canary.markets * 2
+        or status.get("sequence_verified") is not False
+        or process_start["payload"].get("implementation_sha256") != before_source
+        or checkpoints < 3
+        or status.get("frames", 0) < 20
+        or comparison_counts["stable_local_lineage_match_unsequenced"] < 2
+        or comparison_counts["stable_local_lineage_divergence"]
+        or comparison_counts["invalid_public_comparison"]
+        or set(gap_reasons) - {"process_start", "process_stop"}
+    ):
+        raise ValueError("Candidate fixture canary did not meet the bounded readiness checks")
+
+    def event_map(name: str) -> Counter[str]:
+        lines = next((sample.get(name, "") for sample in reversed(samples) if sample.get(name)), "")
+        return Counter(dict(line.split() for line in lines.splitlines()))
+
+    event_counts = event_map("memory.events")
+    if any(event_counts.get(name, 0) for name in ("max", "oom", "oom_kill", "oom_group_kill")):
+        raise ValueError("Fixture canary cgroup recorded a hard memory event")
+    cpu_samples = [
+        sample
+        for sample in samples
+        if sample.get("sampled_monotonic_ns") and sample.get("cpu.stat")
+    ]
+    cpu_seconds = None
+    sampled_duration = None
+    if len(cpu_samples) >= 2:
+
+        def cpu_usage_usec(sample: dict[str, Any]) -> int:
+            values = dict(line.split() for line in sample["cpu.stat"].splitlines())
+            return int(values["usage_usec"])
+
+        cpu_seconds = (cpu_usage_usec(cpu_samples[-1]) - cpu_usage_usec(cpu_samples[0])) / 1_000_000
+        sampled_duration = (
+            cpu_samples[-1]["sampled_monotonic_ns"] - cpu_samples[0]["sampled_monotonic_ns"]
+        ) / 1e9
+    root_bytes = sum(path.stat().st_size for path in root.iterdir() if path.is_file())
+    observed_duration = sampled_duration or args.duration_seconds
+    observed_frames_per_second = status["frames"] / observed_duration
+    durable_bytes_per_second = root_bytes / observed_duration
+    manifest_digest = hashlib.sha256(canonical(value)).hexdigest()
+    receipt = {
+        "schema_version": 1,
+        "status": "PASSED",
+        "started_ns": started_ns,
+        "completed_ns": time.time_ns(),
+        "candidate_source_sha256": before_source,
+        "fixture_sha256": hashlib.sha256(FIXTURE_PATH.read_bytes()).hexdigest(),
+        "network_mode": "loopback WebSocket plus in-process httpx MockTransport",
+        "external_market_requests": 0,
+        "root": str(root.resolve()),
+        "config": canary.dump(),
+        "canary_config": str(args.canary_config_output.resolve()),
+        "duration_seconds": args.duration_seconds,
+        "frame_interval_seconds": args.frame_interval_seconds,
+        "configured_markets": canary.markets,
+        "simulated_target_frames_per_second": canary.markets * 2 / args.frame_interval_seconds,
+        "observed_frames_per_second": observed_frames_per_second,
+        "durable_root_bytes": root_bytes,
+        "durable_root_bytes_per_second": durable_bytes_per_second,
+        "estimated_durable_gib_per_day": durable_bytes_per_second * 86400 / 1024**3,
+        "collector_cpu_seconds": cpu_seconds,
+        "collector_sampled_duration_seconds": sampled_duration,
+        "collector_cpu_seconds_per_frame": (
+            cpu_seconds / status["frames"] if cpu_seconds is not None and status["frames"] else None
+        ),
+        "segment_count": len(value["segments"]),
+        "record_count": value["total_records"],
+        "frame_count": status["frames"],
+        "market_count": status["markets"],
+        "fresh_books": status["fresh_books"],
+        "sequence_verified": status["sequence_verified"],
+        "checkpoint_count": checkpoints,
+        "gap_reasons": dict(gap_reasons),
+        "comparison_counts": dict(comparison_counts),
+        "state_sha256": engine.digest(),
+        "manifest_sha256": manifest_digest,
+        "recovery_status": status.get("recovery_status"),
+        "persistence_window_complete": status.get("persistence_latency_window_complete"),
+        "transport_queue_depth": status.get("transport_queue_depth"),
+        "cgroup_samples": len(samples),
+        "cgroup_peak_bytes": max(
+            (int(sample.get("memory.peak", "0")) for sample in samples), default=0
+        ),
+        "cgroup_memory_events": dict(event_counts),
+        "cgroup_cpu_stat": next(
+            (sample["cpu.stat"] for sample in reversed(samples) if sample.get("cpu.stat")), None
+        ),
+        "collector_status": status,
+    }
+    atomic_json(args.receipt_output, receipt)
+    print(
+        json.dumps(
+            {
+                key: receipt[key]
+                for key in (
+                    "status",
+                    "duration_seconds",
+                    "frame_interval_seconds",
+                    "segment_count",
+                    "record_count",
+                    "frame_count",
+                    "observed_frames_per_second",
+                    "durable_root_bytes",
+                    "durable_root_bytes_per_second",
+                    "estimated_durable_gib_per_day",
+                    "collector_cpu_seconds",
+                    "market_count",
+                    "fresh_books",
+                    "checkpoint_count",
+                    "comparison_counts",
+                    "state_sha256",
+                    "manifest_sha256",
+                    "cgroup_peak_bytes",
+                )
+            },
+            indent=2,
+        )
+    )
+
+
+if __name__ == "__main__":
+    main()

@@ -21,10 +21,18 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
+from midas.reality import recovery
 from midas.reality.config import Config
 from midas.reality.replay import replay
-from midas.reality.resources import require_safe
-from midas.reality.storage import atomic_json, canonical, manifest, read_manifest
+from midas.reality.resources import require_restart_safe
+from midas.reality.storage import (
+    atomic_json,
+    canonical,
+    file_hash,
+    manifest,
+    read_manifest,
+    sync_dir,
+)
 
 WORKSPACE = Path(__file__).resolve().parents[1]
 PRODUCTION_WORKSPACE = Path.home() / "midas-reality"
@@ -33,8 +41,8 @@ PRODUCTION_CONFIG = PRODUCTION_WORKSPACE / "deploy/reality.json"
 SERVICE_UNIT_SOURCE = WORKSPACE / "deploy/systemd/user/midas-reality.service"
 SERVICE_UNIT_TARGET = Path.home() / ".config/systemd/user/midas-reality.service"
 EXPECTED_EFFECTIVE_LIMITS = {
-    "MemoryHigh": str(704 * 1024**2),
-    "MemoryMax": str(768 * 1024**2),
+    "MemoryHigh": str(896 * 1024**2),
+    "MemoryMax": str(1024 * 1024**2),
     "MemorySwapMax": "0",
     "CPUQuotaPerSecUSec": "250ms",
     "TasksMax": "32",
@@ -98,9 +106,7 @@ def _unit_configuration_identity(unit: dict[str, str]) -> dict[str, Any]:
         ),
         "environment_files": unit.get("EnvironmentFiles", ""),
         "user": unit.get("User", ""),
-        "effective_limits": {
-            name: unit.get(name) for name in EXPECTED_EFFECTIVE_LIMITS
-        },
+        "effective_limits": {name: unit.get(name) for name in EXPECTED_EFFECTIVE_LIMITS},
         "restart": unit.get("Restart"),
     }
 
@@ -120,7 +126,9 @@ def _validate_service_configuration(unit: dict[str, str]) -> dict[str, Any]:
         f"record --config {PRODUCTION_CONFIG} ;"
     )
     if expected_start not in identity["exec_start"]:
-        raise ValueError("Reality service executable or module arguments differ from the verified target")
+        raise ValueError(
+            "Reality service executable or module arguments differ from the verified target"
+        )
     if identity["working_directory"] != str(PRODUCTION_WORKSPACE):
         raise ValueError("Reality service working directory differs from the verified target")
     expected_environment_hash = hashlib.sha256(b"PYTHONUNBUFFERED=1").hexdigest()
@@ -129,7 +137,9 @@ def _validate_service_configuration(unit: dict[str, str]) -> dict[str, Any]:
     if identity["environment_files"] or identity["user"]:
         raise ValueError("Reality service has an unverified environment file or user override")
     if identity["effective_limits"] != EXPECTED_EFFECTIVE_LIMITS:
-        raise ValueError("Effective Reality service resource limits differ from the verified contract")
+        raise ValueError(
+            "Effective Reality service resource limits differ from the verified contract"
+        )
     if identity["restart"] != "on-failure":
         raise ValueError("Reality service restart policy is not the expected bounded policy")
     return identity
@@ -224,6 +234,342 @@ def _memory_events(unit: dict[str, str]) -> dict[str, int]:
         return {}
 
 
+def _load_runtime_status(root: str) -> dict[str, Any]:
+    value = json.loads((Path(root) / "status.json").read_text())
+    if not isinstance(value, dict):
+        raise ValueError("Production Reality status is not an object")
+    return value
+
+
+def _install_recovery_checkpoint(evidence: dict[str, Any], recording_root: Path) -> Path:
+    if recording_root.is_symlink() or not recording_root.is_dir():
+        raise ValueError("Protected Reality recording root is missing or unsafe")
+    source = Path(evidence["checkpoint_path"])
+    target = recording_root / recovery.CHECKPOINT_NAME
+    temporary = target.with_suffix(target.suffix + ".mission-tmp")
+    if source.is_symlink() or not source.is_file():
+        raise ValueError("Prepared recovery checkpoint is missing or unsafe")
+    if target.exists() or target.is_symlink() or temporary.exists() or temporary.is_symlink():
+        raise ValueError("Refusing to replace an existing Reality recovery checkpoint")
+    try:
+        with source.open("rb") as src, temporary.open("xb") as dst:
+            shutil.copyfileobj(src, dst, length=1024 * 1024)
+            dst.flush()
+            os.fsync(dst.fileno())
+        if file_hash(temporary) != evidence["checkpoint_sha256"]:
+            raise ValueError("Staged recovery checkpoint hash changed during installation")
+        os.replace(temporary, target)
+        sync_dir(recording_root)
+    except BaseException:
+        temporary.unlink(missing_ok=True)
+        raise
+    return target
+
+
+def storage_capacity(
+    raw_root: Path,
+    archive_root: Path,
+    archive_mountpoint: Path,
+    *,
+    raw_budget_bytes: int,
+    raw_reserve_bytes: int,
+    archive_budget_bytes: int,
+    archive_reserve_bytes: int,
+) -> dict[str, int | str]:
+    """Check raw and archive commitments against their actual separate filesystems."""
+    if raw_root.is_symlink():
+        raise ValueError("Reality raw recording root must not be a symlink")
+    if archive_root.is_symlink() or archive_mountpoint.is_symlink():
+        raise ValueError("Reality archive destination must not be a symlink")
+    raw_root = raw_root.resolve(strict=True)
+    archive_root = archive_root.resolve(strict=True)
+    archive_mountpoint = archive_mountpoint.resolve(strict=True)
+    if not raw_root.is_dir():
+        raise ValueError("Reality raw recording root is missing or unsafe")
+    if not os.path.ismount(archive_mountpoint) or not archive_root.is_relative_to(
+        archive_mountpoint
+    ):
+        raise ValueError("Reality archive path is not on the declared mounted archive volume")
+    if not archive_root.is_dir():
+        raise ValueError("Reality archive destination is missing or unsafe")
+    raw_used = sum(path.stat().st_size for path in raw_root.iterdir() if path.is_file())
+    raw_free = shutil.disk_usage(raw_root).free
+    archive_free = shutil.disk_usage(archive_mountpoint).free
+    raw_remaining = max(0, raw_budget_bytes - raw_used)
+    if raw_free < raw_remaining + raw_reserve_bytes:
+        raise ValueError("Raw Reality storage commitment breaches its filesystem reserve")
+    if archive_free < archive_budget_bytes + archive_reserve_bytes:
+        raise ValueError("Reality archive commitment breaches its filesystem reserve")
+    return dict(
+        raw_root=str(raw_root),
+        raw_used_bytes=raw_used,
+        raw_free_bytes=raw_free,
+        raw_budget_bytes=raw_budget_bytes,
+        raw_remaining_budget_bytes=raw_remaining,
+        raw_reserve_bytes=raw_reserve_bytes,
+        archive_root=str(archive_root),
+        archive_mountpoint=str(archive_mountpoint),
+        archive_free_bytes=archive_free,
+        archive_budget_bytes=archive_budget_bytes,
+        archive_reserve_bytes=archive_reserve_bytes,
+    )
+
+
+def recovery_resource_evidence(root: Path) -> dict[str, Any]:
+    """Validate the complete archive-recovery matrix and measured cgroup peak."""
+    root = root.resolve(strict=True)
+    names = (
+        "result.json",
+        "catalog.json",
+        "identities.json",
+        "valid.checkpoint",
+        "cold.json",
+        "fast.json",
+        "corrupt.json",
+        "after_interrupt.json",
+        "after_interrupt_save.json",
+        "cold-attempt-3-monitor.jsonl",
+    )
+    documents: dict[str, bytes] = {}
+    for name in names:
+        path = root / name
+        if path.is_symlink() or not path.is_file():
+            raise ValueError(f"Full-scale recovery evidence is missing or unsafe: {name}")
+        documents[name] = path.read_bytes()
+    result = json.loads(documents["result.json"])
+    catalog = json.loads(documents["catalog.json"])
+    identities = json.loads(documents["identities.json"])
+    required_phases = {
+        "cold",
+        "fast",
+        "corrupt",
+        "after_interrupt",
+        "after_interrupt_save",
+        "interrupt",
+        "interrupt_save",
+        "readonly_probe",
+    }
+    if result.get("recovery_matrix") != "PASSED" or not required_phases.issubset(
+        set(result.get("completed_phases", []))
+    ):
+        raise ValueError("Full-scale recovery matrix is incomplete")
+    boundary = result.get("boundary", {})
+    segment_count = int(boundary.get("segment_count", 0))
+    if (
+        segment_count <= 0
+        or int(boundary.get("archive_bytes", 0)) <= 0
+        or boundary.get("unmatched_finalized")
+        or not boundary.get("catalog_sha256")
+        or not boundary.get("identities_sha256")
+        or hashlib.sha256(canonical(catalog)).hexdigest() != boundary["catalog_sha256"]
+        or hashlib.sha256(canonical(identities)).hexdigest() != boundary["identities_sha256"]
+        or len(catalog.get("segments", [])) != segment_count
+    ):
+        raise ValueError("Full-scale recovery boundary is incomplete")
+    phase_names = (
+        "cold.json",
+        "fast.json",
+        "corrupt.json",
+        "after_interrupt.json",
+        "after_interrupt_save.json",
+    )
+    phases = {name.removesuffix(".json"): json.loads(documents[name]) for name in phase_names}
+    baseline = phases["cold"]
+    state_sha = baseline.get("state_sha256")
+    internal_sha = baseline.get("internal_sha256")
+    if not state_sha or not internal_sha:
+        raise ValueError("Full-scale replay digest evidence is missing")
+    if any(
+        phase.get("state_sha256") != state_sha or phase.get("internal_sha256") != internal_sha
+        for phase in phases.values()
+    ):
+        raise ValueError("Recovery matrix phases do not reconstruct matching states")
+    cold_recovery = baseline.get("recovery", {})
+    fast_recovery = phases["fast"].get("recovery", {})
+    corrupt_recovery = phases["corrupt"].get("recovery", {})
+    interrupted_recovery = phases["after_interrupt"].get("recovery", {})
+    checkpoint_recovery = phases["after_interrupt_save"].get("recovery", {})
+    if (
+        cold_recovery.get("segments_reconstructed") != segment_count
+        or fast_recovery.get("source_integrity") != "verified"
+        or fast_recovery.get("prefix_segments_hashed") != segment_count
+        or not corrupt_recovery.get("fallback_reason")
+        or corrupt_recovery.get("segments_reconstructed") != segment_count
+        or interrupted_recovery.get("segments_reconstructed") != segment_count
+        or checkpoint_recovery.get("source_integrity") != "verified"
+    ):
+        raise ValueError(
+            "Cold, checkpoint, corrupt, or interruption recovery evidence is incomplete"
+        )
+    checkpoint_path = root / "valid.checkpoint"
+    checkpoint_digest = hashlib.sha256(documents["valid.checkpoint"]).hexdigest()
+    if checkpoint_digest != cold_recovery.get(
+        "checkpoint_sha256"
+    ) or checkpoint_path.stat().st_size != cold_recovery.get("checkpoint_bytes"):
+        raise ValueError(
+            "Prepared recovery capsule differs from the verified full-scale checkpoint"
+        )
+    with checkpoint_path.open("rb") as stream:
+        magic, expected = recovery.HEADER.unpack(stream.read(recovery.HEADER.size))
+        if magic != recovery.MAGIC or hashlib.file_digest(stream, "sha256").digest() != expected:
+            raise ValueError("Prepared recovery capsule checksum is invalid")
+        stream.seek(recovery.HEADER.size)
+        saved = json.load(stream)
+    if (
+        saved.get("schema_version") != 1
+        or saved.get("implementation") != recovery.implementation_identity()
+        or saved.get("catalog") != catalog
+        or saved.get("state_sha256") != state_sha
+        or saved.get("engine", {}).get("last_ordinal") != boundary.get("last_ordinal")
+    ):
+        raise ValueError("Prepared recovery capsule does not match the validated source boundary")
+    monitor_rows = [
+        json.loads(line)
+        for line in documents["cold-attempt-3-monitor.jsonl"].splitlines()
+        if line.strip()
+    ]
+    if not monitor_rows:
+        raise ValueError("Recovery cgroup monitor evidence is empty")
+    peak = 0
+    monitor_events: Counter[str] = Counter()
+    cgroup_samples = 0
+    for row in monitor_rows:
+        event = str(row.get("event", "sample"))
+        monitor_events[event] += 1
+        if event not in {
+            "sample",
+            "pressure_clear_sample",
+            "worker_frozen_for_host_pressure",
+            "worker_resumed_after_host_pressure",
+        }:
+            raise ValueError(f"Unknown recovery monitor event: {event}")
+        cgroup = row.get("cgroup", {})
+        if not cgroup:
+            continue
+        cgroup_samples += 1
+        peak = max(peak, int(cgroup.get("memory.peak", "0").strip() or 0))
+        events = dict(line.split() for line in cgroup.get("memory.events", "").splitlines())
+        if any(int(events.get(key, 0)) for key in ("max", "oom", "oom_kill", "oom_group_kill")):
+            raise ValueError("Recovery worker recorded a memory max or OOM event")
+        pressure = dict(
+            line.split(maxsplit=1) for line in cgroup.get("memory.pressure", "").splitlines()
+        )
+        if not {"some", "full"}.issubset(pressure):
+            raise ValueError("Recovery worker memory PSI evidence is missing")
+        if any(
+            float(dict(item.split("=") for item in pressure[kind].split())["avg10"]) > 0.01
+            for kind in ("some", "full")
+        ):
+            raise ValueError("Recovery worker recorded sustained memory pressure")
+    if peak <= 0 or cgroup_samples == 0:
+        raise ValueError("Recovery worker peak memory evidence is missing")
+    evidence_hash = hashlib.sha256(
+        canonical({name: hashlib.sha256(data).hexdigest() for name, data in documents.items()})
+    ).hexdigest()
+    return dict(
+        root=str(root),
+        source_root=str(boundary.get("source", "")),
+        evidence_sha256=evidence_hash,
+        segment_count=segment_count,
+        last_ordinal=int(boundary["last_ordinal"]),
+        archive_bytes=int(boundary["archive_bytes"]),
+        catalog_sha256=boundary["catalog_sha256"],
+        identities_sha256=boundary["identities_sha256"],
+        state_sha256=state_sha,
+        internal_sha256=internal_sha,
+        measured_startup_peak_bytes=peak,
+        cold_wall_seconds=baseline["wall_seconds"],
+        cold_cpu_seconds=baseline["cpu_seconds"],
+        checkpoint_wall_seconds=fast_recovery["seconds"],
+        checkpoint_bytes=cold_recovery.get("checkpoint_bytes"),
+        checkpoint_path=str(checkpoint_path),
+        checkpoint_sha256=checkpoint_digest,
+        monitor_samples=cgroup_samples,
+        monitor_events=dict(monitor_events),
+    )
+
+
+def validate_recovery_prefix(
+    source_root: Path, current_catalog: dict[str, Any], evidence: dict[str, Any]
+) -> dict[str, Any]:
+    """Prove the measured recovery boundary is the unchanged prefix of production."""
+    if source_root.is_symlink() or source_root.absolute() != source_root.resolve(strict=True):
+        raise ValueError("Recovery prefix source root is a symlink or noncanonical path")
+    source_root = source_root.resolve(strict=True)
+    evidence_source = Path(str(evidence.get("source_root", "")))
+    if not evidence_source.is_absolute() or evidence_source.resolve(strict=True) != source_root:
+        raise ValueError("Full-scale recovery evidence came from a different recording root")
+    count = evidence.get("segment_count")
+    segments = current_catalog.get("segments")
+    if (
+        type(count) is not int
+        or count <= 0
+        or not isinstance(segments, list)
+        or len(segments) < count
+    ):
+        raise ValueError(
+            "Full-scale recovery evidence exceeds the current finalized source boundary"
+        )
+    prefix_segments = segments[:count]
+    prefix = {
+        "schema_version": current_catalog["schema_version"],
+        "format": current_catalog["format"],
+        "ordering": current_catalog["ordering"],
+        "segments": prefix_segments,
+    }
+    prefix_sha256 = hashlib.sha256(canonical(prefix)).hexdigest()
+    if prefix_sha256 != evidence.get("catalog_sha256"):
+        raise ValueError("Full-scale recovery evidence does not match the production source prefix")
+    if sum(info["bytes"] for info in prefix_segments) != evidence.get("archive_bytes"):
+        raise ValueError("Full-scale recovery source-prefix byte count changed")
+    last_ordinal = max(
+        (int(info["last"]) for info in prefix_segments if int(info["count"]) > 0),
+        default=0,
+    )
+    if last_ordinal != evidence.get("last_ordinal"):
+        raise ValueError("Full-scale recovery source-prefix ordinal changed")
+
+    identities = []
+    for info in prefix_segments:
+        name = info.get("file")
+        if not isinstance(name, str) or Path(name).name != name or not name.endswith(".seg"):
+            raise ValueError("Unsafe finalized segment identity in recovery prefix")
+        segment = source_root / name
+        sidecar = segment.with_suffix(".json")
+        if (
+            segment.is_symlink()
+            or sidecar.is_symlink()
+            or not segment.is_file()
+            or not sidecar.is_file()
+        ):
+            raise ValueError("Recovery prefix source file or sidecar is missing or unsafe")
+        sidecar_bytes = sidecar.read_bytes()
+        if json.loads(sidecar_bytes) != info:
+            raise ValueError("Recovery prefix sidecar differs from the verified catalog")
+        stat = segment.stat()
+        identities.append(
+            dict(
+                file=name,
+                device=stat.st_dev,
+                inode=stat.st_ino,
+                size=stat.st_size,
+                mtime_ns=stat.st_mtime_ns,
+                sidecar_sha256=hashlib.sha256(sidecar_bytes).hexdigest(),
+            )
+        )
+    identities_sha256 = hashlib.sha256(canonical(identities)).hexdigest()
+    if identities_sha256 != evidence.get("identities_sha256"):
+        raise ValueError("Verified recovery prefix files changed since full-scale measurement")
+    return dict(
+        segment_count=count,
+        last_ordinal=last_ordinal,
+        archive_bytes=int(evidence["archive_bytes"]),
+        catalog_sha256=prefix_sha256,
+        identities_sha256=identities_sha256,
+        appended_finalized_segments=len(segments) - count,
+    )
+
+
 def verify(output: Path) -> dict[str, Any]:
     began = time.time_ns()
     identity = source_hash()
@@ -311,6 +657,10 @@ def preflight(
     archive_budget: int,
     disk_reserve: int,
     *,
+    recovery_evidence_root: Path | None = None,
+    archive_root: Path = Path("/mnt/continental-cloud/data/midas-reality-staging/archive-mission3"),
+    archive_mountpoint: Path = Path("/mnt/continental-cloud"),
+    archive_reserve: int = 400 * 1024**3,
     repair_cached_snapshots: bool = False,
 ) -> dict[str, Any]:
     if (
@@ -332,7 +682,21 @@ def preflight(
     deployed_source_identity = production_source_hash()
     if deployed_source_identity != source_hash():
         raise ValueError("Production Reality package source differs from the verified candidate")
-    resources = require_safe(production_service.get("ControlGroup", ""))
+    if recovery_evidence_root is None:
+        raise ValueError("Full-scale recovery evidence is required for restart preflight")
+    recovery_evidence = recovery_resource_evidence(recovery_evidence_root)
+    production_catalog = manifest(Path(candidate.root))
+    production_catalog_sha256 = hashlib.sha256(canonical(production_catalog)).hexdigest()
+    recovery_prefix = validate_recovery_prefix(
+        Path(candidate.root), production_catalog, recovery_evidence
+    )
+    resources = require_restart_safe(
+        production_service.get("ControlGroup", ""),
+        measured_startup_peak_bytes=recovery_evidence["measured_startup_peak_bytes"],
+        target_memory_high_bytes=int(EXPECTED_EFFECTIVE_LIMITS["MemoryHigh"]),
+        target_memory_max_bytes=int(EXPECTED_EFFECTIVE_LIMITS["MemoryMax"]),
+        current_memory_max_bytes=int(production_service["MemoryMax"]),
+    )
     root = Path(canary.root)
     status = json.loads((root / "status.json").read_text())
     if status["state"] != "STOPPED" or status["failures"] or status["frames"] < 20:
@@ -386,11 +750,17 @@ def preflight(
     # Worst-case allocated local raw and archive growth must fit while protecting other services.
     if archive_budget <= 0 or disk_reserve < candidate.reserve_bytes:
         raise ValueError("Unsafe archive budget or global disk reserve")
-    free = shutil.disk_usage(Path(candidate.root)).free
-    used = sum(p.stat().st_size for p in Path(candidate.root).iterdir() if p.is_file())
-    additional = max(0, candidate.budget_bytes - used) + archive_budget
-    if free < disk_reserve + additional:
-        raise ValueError("Configured storage commitments consume protected host headroom")
+    capacity = storage_capacity(
+        Path(candidate.root),
+        archive_root,
+        archive_mountpoint,
+        raw_budget_bytes=candidate.budget_bytes,
+        raw_reserve_bytes=disk_reserve,
+        archive_budget_bytes=archive_budget,
+        archive_reserve_bytes=archive_reserve,
+    )
+    used = int(capacity["raw_used_bytes"])
+    free = int(capacity["raw_free_bytes"])
     elapsed = (end - start) / 1e9
     sample_bytes = sum(s["bytes"] for s in value["segments"])
     rate = sample_bytes / elapsed
@@ -449,7 +819,12 @@ def preflight(
         allocated_raw_and_archive_bytes=candidate.budget_bytes + archive_budget,
         free_disk_bytes=free,
         protected_disk_reserve_bytes=disk_reserve,
+        storage_capacity=capacity,
         production_before=current,
+        production_runtime_config=production_status["config"],
+        production_catalog_sha256=production_catalog_sha256,
+        recovery_prefix=recovery_prefix,
+        recovery_evidence=recovery_evidence,
         resources=resources,
         cached_snapshot_repair=dict(
             requested=repair_cached_snapshots,
@@ -472,7 +847,7 @@ def apply(
     config_path: Path,
     output: Path,
     *,
-    health_timeout_seconds: int = 2700,
+    health_timeout_seconds: int = 3600,
     stability_seconds: int = 300,
 ) -> dict[str, Any]:
     if not 2400 <= health_timeout_seconds <= 3600:
@@ -488,6 +863,8 @@ def apply(
         or gate.get("production_source_sha256") != source_hash()
         or gate["candidate"] != candidate.dump()
         or not isinstance(gate.get("production_unit_config"), dict)
+        or not isinstance(gate.get("recovery_prefix"), dict)
+        or not isinstance(gate.get("recovery_evidence"), dict)
         or time.time_ns() - gate["checked_ns"] > 60 * 10**9
     ):
         raise ValueError("Deployment gate changed or expired; rerun preflight")
@@ -498,8 +875,57 @@ def apply(
         raise ValueError("Production service unit or drop-ins changed after preflight")
     if before.get("Restart") != "on-failure":
         raise ValueError("Production restart policy is not the expected bounded policy")
-    require_safe(before.get("ControlGroup", ""))
-    previous = Config.load(config_path)
+    recovery_evidence = recovery_resource_evidence(Path(gate["recovery_evidence"]["root"]))
+    if recovery_evidence != gate["recovery_evidence"]:
+        raise ValueError("Full-scale recovery evidence changed after preflight")
+    current_prefix = validate_recovery_prefix(
+        Path(candidate.root), manifest(Path(candidate.root)), recovery_evidence
+    )
+    if any(
+        current_prefix.get(key) != gate["recovery_prefix"].get(key)
+        for key in (
+            "segment_count",
+            "last_ordinal",
+            "archive_bytes",
+            "catalog_sha256",
+            "identities_sha256",
+        )
+    ):
+        raise ValueError("Verified recovery prefix changed after preflight")
+    require_restart_safe(
+        before.get("ControlGroup", ""),
+        measured_startup_peak_bytes=recovery_evidence["measured_startup_peak_bytes"],
+        target_memory_high_bytes=int(EXPECTED_EFFECTIVE_LIMITS["MemoryHigh"]),
+        target_memory_max_bytes=int(EXPECTED_EFFECTIVE_LIMITS["MemoryMax"]),
+        current_memory_max_bytes=int(before["MemoryMax"]),
+    )
+    planned_capacity = gate.get("storage_capacity", {})
+    current_capacity = storage_capacity(
+        Path(candidate.root),
+        Path(planned_capacity["archive_root"]),
+        Path(planned_capacity["archive_mountpoint"]),
+        raw_budget_bytes=candidate.budget_bytes,
+        raw_reserve_bytes=int(gate["protected_disk_reserve_bytes"]),
+        archive_budget_bytes=int(planned_capacity["archive_budget_bytes"]),
+        archive_reserve_bytes=int(planned_capacity["archive_reserve_bytes"]),
+    )
+    if any(
+        current_capacity[key] != planned_capacity[key]
+        for key in (
+            "raw_root",
+            "archive_root",
+            "archive_mountpoint",
+            "raw_budget_bytes",
+            "raw_reserve_bytes",
+            "archive_budget_bytes",
+            "archive_reserve_bytes",
+        )
+    ):
+        raise ValueError("Storage capacity contract changed after preflight")
+    runtime_status = _load_runtime_status(candidate.root)
+    if runtime_status.get("config") != gate.get("production_runtime_config"):
+        raise ValueError("Loaded production config changed after preflight")
+    previous = Config(**gate["production_runtime_config"])
     backup = Path(candidate.root).parent / f"config-before-deployment-{time.time_ns()}.json"
     atomic_json(backup, previous.dump())
     result = dict(
@@ -522,16 +948,27 @@ def apply(
     result["automatic_restarts_disabled"] = True
     atomic_json(output, result)
     try:
-        subprocess.run(["systemctl", "--user", "restart", "midas-reality.service"], check=True)
+        subprocess.run(["systemctl", "--user", "stop", "midas-reality.service"], check=True)
+        stopped = service()
+        if stopped.get("ActiveState") != "inactive" or stopped.get("MainPID") not in {None, "0"}:
+            raise RuntimeError("Reality did not stop cleanly before the single candidate start")
+        result["stop_completed_ns"] = time.time_ns()
+        checkpoint_target = _install_recovery_checkpoint(recovery_evidence, Path(candidate.root))
+        result["installed_recovery_checkpoint"] = str(checkpoint_target)
+        result["installed_recovery_checkpoint_sha256"] = recovery_evidence["checkpoint_sha256"]
+        atomic_json(output, result)
+        subprocess.run(["systemctl", "--user", "start", "midas-reality.service"], check=True)
     except Exception as exc:
         result.update(
             deployed=False,
             operator_action_required=True,
-            reason=f"One start command failed: {exc}",
+            reason=f"One-shot stop, checkpoint installation or start failed: {exc}",
             no_automatic_retry_or_rollback=True,
         )
         atomic_json(output, result)
-        raise ValueError("One-shot recorder start failed; automatic retry and rollback are disabled") from exc
+        raise ValueError(
+            "One-shot recorder transition failed; no retry or rollback was attempted"
+        ) from exc
 
     deadline = time.monotonic() + health_timeout_seconds
     baseline_events = _memory_events(before)
@@ -583,7 +1020,9 @@ def apply(
             if status_age_ns > 30 * 10**9:
                 failure_reason = "Recorder status became stale during the stability window"
                 break
-            if status.get("ordinal", 0) < last_status.get("ordinal", 0) or status.get("frames", 0) < last_status.get("frames", 0):
+            if status.get("ordinal", 0) < last_status.get("ordinal", 0) or status.get(
+                "frames", 0
+            ) < last_status.get("frames", 0):
                 failure_reason = "Recorder counters regressed during the stability window"
                 break
             last_status = status
@@ -593,7 +1032,9 @@ def apply(
                     or status.get("ordinal", 0) <= first_ready_status.get("ordinal", 0)
                     or status.get("frames", 0) <= first_ready_status.get("frames", 0)
                 ):
-                    failure_reason = "Recorder did not advance observations during the stability window"
+                    failure_reason = (
+                        "Recorder did not advance observations during the stability window"
+                    )
                     break
                 try:
                     _remove_restart_guard(restart_guard, before["Restart"])
@@ -655,28 +1096,44 @@ def main() -> None:
         default=WORKSPACE / "data/recordings/gate-a-canary-r2-config.json",
     )
     parser.add_argument(
-        "--receipt", type=Path, default=WORKSPACE / "docs/REALITY_GATE_A_CHECKS.json"
+        "--receipt", type=Path, default=WORKSPACE / "docs/reliability/REALITY_FRONTIER_CHECKS.json"
     )
     parser.add_argument(
-        "--gate", type=Path, default=WORKSPACE / "docs/REALITY_GATE_A_PREFLIGHT.json"
+        "--gate", type=Path, default=WORKSPACE / "docs/reliability/REALITY_FRONTIER_PREFLIGHT.json"
     )
     parser.add_argument(
-        "--output", type=Path, default=WORKSPACE / "docs/REALITY_GATE_A_DEPLOYMENT.json"
+        "--output",
+        type=Path,
+        default=WORKSPACE / "docs/reliability/REALITY_FRONTIER_DEPLOYMENT.json",
     )
-    parser.add_argument("--archive-budget", type=int, default=24 * 1024**3)
-    parser.add_argument("--health-timeout-seconds", type=int, default=2700)
+    parser.add_argument("--archive-budget", type=int, default=112 * 1024**3)
+    parser.add_argument("--archive-reserve", type=int, default=400 * 1024**3)
+    parser.add_argument(
+        "--archive-root",
+        type=Path,
+        default=Path("/mnt/continental-cloud/data/midas-reality-staging/archive-mission3"),
+    )
+    parser.add_argument("--archive-mountpoint", type=Path, default=Path("/mnt/continental-cloud"))
+    parser.add_argument("--health-timeout-seconds", type=int, default=3600)
+    parser.add_argument("--recovery-evidence", type=Path)
     parser.add_argument("--stability-seconds", type=int, default=300)
     parser.add_argument("--repair-cached-snapshots", action="store_true")
     args = parser.parse_args()
     if args.command == "verify":
         verify(args.receipt)
     elif args.command == "preflight":
+        if args.recovery_evidence is None:
+            parser.error("preflight requires --recovery-evidence from a complete full-scale run")
         gate = preflight(
             Config.load(args.candidate),
             Config.load(args.canary_config),
             json.loads(args.receipt.read_text()),
             args.archive_budget,
             20 * 1024**3,
+            recovery_evidence_root=args.recovery_evidence,
+            archive_root=args.archive_root,
+            archive_mountpoint=args.archive_mountpoint,
+            archive_reserve=args.archive_reserve,
             repair_cached_snapshots=args.repair_cached_snapshots,
         )
         atomic_json(args.gate, gate)
@@ -685,7 +1142,7 @@ def main() -> None:
         result = apply(
             Config.load(args.candidate),
             json.loads(args.gate.read_text()),
-            WORKSPACE / "deploy/reality.json",
+            PRODUCTION_CONFIG,
             args.output,
             health_timeout_seconds=args.health_timeout_seconds,
             stability_seconds=args.stability_seconds,

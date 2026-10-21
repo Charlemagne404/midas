@@ -373,6 +373,188 @@ def test_resource_gate_preserves_four_mib_boundary(monkeypatch, margin, accepted
             resources.require_safe("fixture")
 
 
+def test_restart_gate_uses_measured_target_peak_not_old_soft_high_margin(monkeypatch):
+    from midas.reality import resources
+
+    value = dict(
+        memory_current_bytes=936 * 1024**2,
+        memory_high_margin_bytes=3 * 1024**2,
+        memory_events={"max": 0, "oom": 0, "oom_kill": 0, "oom_group_kill": 0},
+        host_mem_available_bytes=6 * 1024**3,
+        host_pressure={
+            "cpu": {"some": {"avg10": "1"}},
+            "memory": {"some": {"avg10": "0"}},
+            "io": {"full": {"avg10": "0"}},
+        },
+    )
+    monkeypatch.setattr(resources, "snapshot", lambda group: value)
+    admitted = resources.require_restart_safe(
+        "fixture",
+        measured_startup_peak_bytes=671_612_928,
+        target_memory_high_bytes=896 * 1024**2,
+        target_memory_max_bytes=1024 * 1024**2,
+        current_memory_max_bytes=1024 * 1024**2,
+    )
+    assert admitted["admission_kind"] == "controlled_stop_then_start"
+    assert admitted["target_memory_high_margin_bytes"] >= 128 * 1024**2
+
+
+def test_restart_gate_rejects_unmeasured_target_headroom(monkeypatch):
+    from midas.reality import resources
+
+    value = dict(
+        memory_current_bytes=900 * 1024**2,
+        memory_high_margin_bytes=20 * 1024**2,
+        memory_events={"max": 0, "oom": 0, "oom_kill": 0, "oom_group_kill": 0},
+        host_mem_available_bytes=6 * 1024**3,
+        host_pressure={
+            "cpu": {"some": {"avg10": "1"}},
+            "memory": {"some": {"avg10": "0"}},
+            "io": {"full": {"avg10": "0"}},
+        },
+    )
+    monkeypatch.setattr(resources, "snapshot", lambda group: value)
+    with pytest.raises(ValueError, match="target MemoryHigh headroom"):
+        resources.require_restart_safe(
+            "fixture",
+            measured_startup_peak_bytes=850 * 1024**2,
+            target_memory_high_bytes=896 * 1024**2,
+            target_memory_max_bytes=1024 * 1024**2,
+            current_memory_max_bytes=1024 * 1024**2,
+        )
+
+
+def test_independent_source_provenance_preserves_clock_and_sequence_contracts(tmp_path):
+    from midas.reality.provenance import SourceProvenance
+
+    sources = (
+        SourceProvenance(
+            source_id="venue-a:websocket",
+            market_id="asset:BTC-USD",
+            market_structure="venue-a:central-limit-order-book",
+            timestamp_value=1_792_556_000_000,
+            timestamp_unit="milliseconds",
+            timestamp_semantics="event_time",
+            clock_domain="venue-a-clock",
+            timestamp_uncertainty_ns=5_000_000,
+        ),
+        SourceProvenance(
+            source_id="venue-b:rest-snapshot",
+            market_id="pool:BTC-USD",
+            market_structure="venue-b:automated-market-maker",
+            timestamp_value="2026-10-21T04:10:00Z",
+            timestamp_unit="opaque",
+            timestamp_semantics="snapshot_time",
+            clock_domain="venue-b-publisher",
+            sequence_value="snapshot-184",
+            sequence_semantics="opaque",
+            sequence_scope="BTC-USD snapshot stream",
+        ),
+    )
+    persisted = []
+    configured_budgets = (1024**2, 2 * 1024**2)
+    for index, source in enumerate(sources):
+        root = tmp_path / f"source-{index}"
+        store = Store(root, budget=configured_budgets[index], reserve=1)
+        assert store.budget == configured_budgets[index]
+        store.append("source_observation", {"price": "0.5"}, **source.record_metadata())
+        store.close()
+        catalog = storage.manifest(root)
+        recovered = [
+            record
+            for info in catalog["segments"]
+            for record, _ in storage.records(root / info["file"])
+        ]
+        assert len(recovered) == 1
+        persisted.append(recovered[0]["source_provenance"])
+
+    assert persisted[0]["source_id"] == "venue-a:websocket"
+    assert persisted[0]["market_structure"] == "venue-a:central-limit-order-book"
+    assert persisted[0]["timestamp_semantics"] == "event_time"
+    assert persisted[0]["sequence_value"] is None
+    assert persisted[0]["sequence_semantics"] == "not_provided"
+    assert persisted[0]["sequence_scope"] is None
+    assert persisted[1]["source_id"] == "venue-b:rest-snapshot"
+    assert persisted[1]["market_structure"] == "venue-b:automated-market-maker"
+    assert persisted[1]["timestamp_semantics"] == "snapshot_time"
+    assert persisted[1]["sequence_value"] == "snapshot-184"
+    assert persisted[1]["sequence_scope"] == "BTC-USD snapshot stream"
+
+
+def test_source_provenance_rejects_claimed_sequence_without_a_value():
+    from midas.reality.provenance import SourceProvenance
+
+    with pytest.raises(ValueError, match="Missing provider sequence"):
+        SourceProvenance(
+            source_id="venue-c:feed",
+            sequence_semantics="global_monotonic",
+            sequence_scope="global",
+        )
+
+
+@pytest.mark.parametrize(
+    ("values", "message"),
+    [
+        (
+            dict(
+                timestamp_value=True,
+                timestamp_unit="seconds",
+                timestamp_semantics="event_time",
+            ),
+            "Provider timestamp must be an integer",
+        ),
+        (
+            dict(
+                timestamp_value=1.5,
+                timestamp_unit="seconds",
+                timestamp_semantics="event_time",
+            ),
+            "Provider timestamp must be an integer",
+        ),
+        (
+            dict(
+                timestamp_value=1,
+                timestamp_unit="seconds",
+                timestamp_semantics="event_time",
+                timestamp_uncertainty_ns=True,
+            ),
+            "Timestamp uncertainty must be a nonnegative integer",
+        ),
+        (
+            dict(
+                sequence_value=True,
+                sequence_semantics="global_monotonic",
+                sequence_scope="global",
+            ),
+            "Provider sequence must be an integer",
+        ),
+        (
+            dict(
+                sequence_value=1,
+                sequence_semantics="global_monotonic",
+                sequence_scope=["global"],
+            ),
+            "Provider sequence needs an explicit scope",
+        ),
+    ],
+)
+def test_source_provenance_rejects_malformed_provider_contracts(values, message):
+    from midas.reality.provenance import SourceProvenance
+
+    with pytest.raises(ValueError, match=message):
+        SourceProvenance(source_id="venue-d:feed", **values)
+
+
+def test_source_provenance_requires_market_identity_and_structure_together():
+    from midas.reality.provenance import SourceProvenance
+
+    with pytest.raises(ValueError, match="Market identity and structure"):
+        SourceProvenance(
+            source_id="venue-e:feed",
+            market_id="BTC-USD",
+        )
+
+
 def test_real_kill_before_checkpoint_replace_preserves_prior_checkpoint(tmp_path):
     engine, catalog = archive(tmp_path)
     recovery.save(tmp_path, engine, catalog)

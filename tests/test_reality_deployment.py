@@ -1,9 +1,11 @@
 """Deployment guards must fail before mutating the recorder or its observations."""
 
+import hashlib
 import json
 import time
 from dataclasses import replace
-from unittest.mock import patch
+from pathlib import Path
+from unittest.mock import call, patch
 
 import pytest
 from midas.reality.config import Config
@@ -19,6 +21,8 @@ from scripts.reality_deployment import (
     preflight,
     service_unit_hash,
     source_hash,
+    storage_capacity,
+    validate_recovery_prefix,
     verification_environment,
 )
 
@@ -34,8 +38,8 @@ def _service_state(tmp_path, monkeypatch):
     return dict(
         FragmentPath=str(fragment),
         DropInPaths=str(drop_in),
-        MemoryHigh=str(704 * 1024**2),
-        MemoryMax=str(768 * 1024**2),
+        MemoryHigh=str(896 * 1024**2),
+        MemoryMax=str(1024 * 1024**2),
         MemorySwapMax="0",
         CPUQuotaPerSecUSec="250ms",
         TasksMax="32",
@@ -65,6 +69,46 @@ def test_verification_environment_prioritizes_disposable_worktree(tmp_path, monk
     paths = verification_environment()["PYTHONPATH"].split(":")
     assert paths[:2] == [str(tmp_path), str(tmp_path / "packages")]
     assert paths[2:] == ["/production", "/production/packages"]
+
+
+def test_storage_capacity_enforces_raw_and_archive_reserves_separately(tmp_path, monkeypatch):
+    raw = tmp_path / "raw"
+    mount = tmp_path / "archive-volume"
+    archive = mount / "reality"
+    raw.mkdir()
+    archive.mkdir(parents=True)
+    (raw / "0001.seg").write_bytes(b"x" * 100)
+    monkeypatch.setattr("scripts.reality_deployment.os.path.ismount", lambda path: True)
+    monkeypatch.setattr(
+        "scripts.reality_deployment.shutil.disk_usage",
+        lambda path: type("Usage", (), {"free": 2000 if Path(path) == raw else 500})(),
+    )
+    value = storage_capacity(
+        raw,
+        archive,
+        mount,
+        raw_budget_bytes=1000,
+        raw_reserve_bytes=900,
+        archive_budget_bytes=200,
+        archive_reserve_bytes=300,
+    )
+    assert value["raw_remaining_budget_bytes"] == 900
+    assert value["archive_free_bytes"] == 500
+
+    monkeypatch.setattr(
+        "scripts.reality_deployment.shutil.disk_usage",
+        lambda path: type("Usage", (), {"free": 2000 if Path(path) == raw else 499})(),
+    )
+    with pytest.raises(ValueError, match="archive commitment"):
+        storage_capacity(
+            raw,
+            archive,
+            mount,
+            raw_budget_bytes=1000,
+            raw_reserve_bytes=900,
+            archive_budget_bytes=200,
+            archive_reserve_bytes=300,
+        )
 
 
 def test_unisolated_and_unexercised_settings_rejected():
@@ -102,7 +146,7 @@ def test_preflight_requires_source_unit_and_effective_limits(tmp_path, monkeypat
     unit["MemoryMax"] = str(512 * 1024**2)
     with pytest.raises(ValueError, match="resource limits"):
         _validate_service_configuration(unit)
-    unit["MemoryMax"] = str(768 * 1024**2)
+    unit["MemoryMax"] = str(1024 * 1024**2)
     fragment = tmp_path / "home/.config/systemd/user/midas-reality.service"
     fragment.write_text("[Service]\nMemoryMax=512M\n")
     with pytest.raises(ValueError, match="differs from verified source"):
@@ -126,6 +170,110 @@ def test_preflight_rejects_production_package_source_drift(tmp_path, monkeypatch
     ):
         with pytest.raises(ValueError, match="package source differs"):
             preflight(current, canary, receipt, 1024, current.reserve_bytes)
+
+
+def test_preflight_rejects_recovery_receipt_for_stale_source_boundary(tmp_path):
+    current = Config()
+    canary = replace(current, root=current.root + "-canary")
+    catalog = dict(
+        schema_version=1,
+        format="midas-reality-framed-zlib-v1",
+        ordering="durable ordinal then frame array index",
+        segments=[],
+    )
+    receipt = dict(
+        passed=True,
+        source_sha256=source_hash(),
+        deployment_tool_sha256=deployment_tool_hash(),
+        systemd_unit_sha256=service_unit_hash(),
+        completed_ns=time.time_ns(),
+    )
+    with (
+        patch("scripts.reality_deployment.service", return_value={"ActiveState": "active"}),
+        patch("scripts.reality_deployment._validate_service_configuration", return_value={}),
+        patch("scripts.reality_deployment.production_source_hash", return_value=source_hash()),
+        patch(
+            "scripts.reality_deployment.recovery_resource_evidence",
+            return_value={"source_root": current.root, "catalog_sha256": "stale-boundary"},
+        ),
+        patch("scripts.reality_deployment.manifest", return_value=catalog),
+        patch(
+            "scripts.reality_deployment.validate_recovery_prefix",
+            side_effect=ValueError("Full-scale recovery source prefix differs"),
+        ),
+    ):
+        with pytest.raises(ValueError, match="source prefix differs"):
+            preflight(
+                current,
+                canary,
+                receipt,
+                1024,
+                current.reserve_bytes,
+                recovery_evidence_root=tmp_path,
+            )
+
+
+def test_recovery_evidence_must_match_an_unchanged_source_prefix(tmp_path):
+    from midas.reality.storage import canonical
+
+    first = dict(
+        schema_version=1,
+        file="00000000000000000001-fixture.seg",
+        sha256=hashlib.sha256(b"data").hexdigest(),
+        bytes=4,
+        first=1,
+        last=1,
+        count=1,
+        kinds={"frame": 1},
+    )
+
+    def add_segment(info, payload):
+        path = tmp_path / info["file"]
+        path.write_bytes(payload)
+        path.with_suffix(".json").write_text(json.dumps(info, separators=(",", ":")))
+        return path
+
+    first_path = add_segment(first, b"data")
+    stat = first_path.stat()
+    sidecar_bytes = first_path.with_suffix(".json").read_bytes()
+    identities = [
+        dict(
+            file=first["file"],
+            device=stat.st_dev,
+            inode=stat.st_ino,
+            size=stat.st_size,
+            mtime_ns=stat.st_mtime_ns,
+            sidecar_sha256=hashlib.sha256(sidecar_bytes).hexdigest(),
+        )
+    ]
+    catalog = dict(
+        schema_version=1,
+        format="midas-reality-framed-zlib-v1",
+        ordering="durable ordinal then frame array index",
+        segments=[first],
+    )
+    evidence = dict(
+        source_root=str(tmp_path),
+        segment_count=1,
+        last_ordinal=1,
+        archive_bytes=4,
+        catalog_sha256=hashlib.sha256(canonical(catalog)).hexdigest(),
+        identities_sha256=hashlib.sha256(canonical(identities)).hexdigest(),
+    )
+    assert validate_recovery_prefix(tmp_path, catalog, evidence)["appended_finalized_segments"] == 0
+
+    second = dict(first, file="00000000000000000002-fixture.seg", first=2, last=2)
+    add_segment(second, b"next")
+    extended_catalog = dict(catalog, segments=[first, second])
+    assert (
+        validate_recovery_prefix(tmp_path, extended_catalog, evidence)[
+            "appended_finalized_segments"
+        ]
+        == 1
+    )
+    first_path.write_bytes(b"edit")
+    with pytest.raises(ValueError, match="files changed"):
+        validate_recovery_prefix(tmp_path, extended_catalog, evidence)
 
 
 def test_apply_expired_gate_never_writes_or_restarts(tmp_path):
@@ -163,6 +311,13 @@ def test_apply_changed_process_never_writes_or_restarts(tmp_path):
         checked_ns=time.time_ns(),
         production_before=dict(MainPID="123"),
         production_unit_config={},
+        recovery_prefix={},
+        recovery_evidence=dict(
+            root=str(tmp_path),
+            evidence_sha256="fixture",
+            measured_startup_peak_bytes=1024,
+            checkpoint_sha256="fixture-checkpoint",
+        ),
     )
     with (
         patch("scripts.reality_deployment.production_source_hash", return_value=source_hash()),
@@ -210,6 +365,24 @@ def test_apply_timeout_keeps_one_shot_guard_and_never_restarts_back(tmp_path, mo
         checked_ns=time.time_ns(),
         production_before=initial_service_state,
         production_unit_config=_validate_service_configuration(initial_service_state),
+        production_runtime_config=config.dump(),
+        recovery_prefix={},
+        recovery_evidence=dict(
+            root=str(tmp_path),
+            evidence_sha256="fixture",
+            measured_startup_peak_bytes=1024,
+            checkpoint_sha256="fixture-checkpoint",
+        ),
+        protected_disk_reserve_bytes=config.reserve_bytes,
+        storage_capacity=dict(
+            raw_root=str(config.root),
+            archive_root=str(tmp_path),
+            archive_mountpoint=str(tmp_path),
+            raw_budget_bytes=config.budget_bytes,
+            raw_reserve_bytes=config.reserve_bytes,
+            archive_budget_bytes=1024,
+            archive_reserve_bytes=1024,
+        ),
     )
     service_state = dict(
         initial_service_state,
@@ -224,12 +397,30 @@ def test_apply_timeout_keeps_one_shot_guard_and_never_restarts_back(tmp_path, mo
             "scripts.reality_deployment.service",
             side_effect=[
                 dict(service_state, MainPID="123", Restart="on-failure"),
+                dict(service_state, MainPID="0", ActiveState="inactive"),
                 service_state,
                 service_state,
                 service_state,
             ],
         ),
-        patch("scripts.reality_deployment.require_safe", return_value={}),
+        patch(
+            "scripts.reality_deployment.recovery_resource_evidence",
+            return_value=gate["recovery_evidence"],
+        ),
+        patch("scripts.reality_deployment.validate_recovery_prefix", return_value={}),
+        patch("scripts.reality_deployment.require_restart_safe", return_value={}),
+        patch(
+            "scripts.reality_deployment.storage_capacity",
+            return_value=gate["storage_capacity"],
+        ),
+        patch(
+            "scripts.reality_deployment._install_recovery_checkpoint",
+            return_value=tmp_path / "installed-checkpoint",
+        ),
+        patch(
+            "scripts.reality_deployment._load_runtime_status",
+            return_value={"config": config.dump()},
+        ),
         patch("scripts.reality_deployment._install_restart_guard", return_value=tmp_path / "guard"),
         patch("scripts.reality_deployment._remove_restart_guard") as remove_guard,
         patch("scripts.reality_deployment.atomic_json") as write,
@@ -240,9 +431,10 @@ def test_apply_timeout_keeps_one_shot_guard_and_never_restarts_back(tmp_path, mo
         with pytest.raises(ValueError, match="no retry or rollback"):
             apply(config, gate, config_path, output, health_timeout_seconds=2400)
 
-    restart.assert_called_once_with(
-        ["systemctl", "--user", "restart", "midas-reality.service"], check=True
-    )
+    assert restart.call_args_list == [
+        call(["systemctl", "--user", "stop", "midas-reality.service"], check=True),
+        call(["systemctl", "--user", "start", "midas-reality.service"], check=True),
+    ]
     remove_guard.assert_not_called()
     config_writes = [call for call in write.call_args_list if call.args[0] == config_path]
     assert len(config_writes) == 1
@@ -263,11 +455,37 @@ def test_apply_resource_rejection_precedes_config_or_service_mutation(tmp_path, 
         checked_ns=time.time_ns(),
         production_before=initial,
         production_unit_config=_validate_service_configuration(initial),
+        production_runtime_config=config.dump(),
+        recovery_prefix={},
+        recovery_evidence=dict(
+            root=str(tmp_path),
+            evidence_sha256="fixture",
+            measured_startup_peak_bytes=1024,
+            checkpoint_sha256="fixture-checkpoint",
+        ),
+        protected_disk_reserve_bytes=config.reserve_bytes,
+        storage_capacity=dict(
+            raw_root=str(config.root),
+            archive_root=str(tmp_path),
+            archive_mountpoint=str(tmp_path),
+            raw_budget_bytes=config.budget_bytes,
+            raw_reserve_bytes=config.reserve_bytes,
+            archive_budget_bytes=1024,
+            archive_reserve_bytes=1024,
+        ),
     )
     with (
         patch("scripts.reality_deployment.production_source_hash", return_value=source_hash()),
         patch("scripts.reality_deployment.service", return_value=initial),
-        patch("scripts.reality_deployment.require_safe", side_effect=ValueError("resource gate")),
+        patch(
+            "scripts.reality_deployment.recovery_resource_evidence",
+            return_value=gate["recovery_evidence"],
+        ),
+        patch("scripts.reality_deployment.validate_recovery_prefix", return_value={}),
+        patch(
+            "scripts.reality_deployment.require_restart_safe",
+            side_effect=ValueError("resource gate"),
+        ),
         patch("scripts.reality_deployment.atomic_json") as write,
         patch("scripts.reality_deployment.subprocess.run") as mutate,
     ):
