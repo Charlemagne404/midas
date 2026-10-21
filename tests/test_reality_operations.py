@@ -43,6 +43,9 @@ def test_capacity_real_bytes_rates_and_horizon(tmp_path):
     value = sample(tmp_path)
     cfg = config(tmp_path)
     result = capacity(cfg, now_ns=121_000_000_000)
+    assert result["capacity_builder_version"] == (
+        "receipt-aware-capacity-v5-sustained-growth-windows"
+    )
     expected_bytes = sum(
         s["bytes"] + (tmp_path / s["file"]).with_suffix(".json").stat().st_size
         for s in value["segments"]

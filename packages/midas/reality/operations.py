@@ -653,7 +653,7 @@ def capacity(
         alerts.append("COLLECTOR_STATUS_STALE")
     return dict(
         schema_version=1,
-        capacity_builder_version="receipt-aware-capacity-v4-split-archive-volume",
+        capacity_builder_version="receipt-aware-capacity-v5-sustained-growth-windows",
         capacity_builder_sha256=file_hash(Path(__file__)),
         measured_ns=now,
         recording_root=str(root),
