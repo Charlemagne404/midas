@@ -1,0 +1,71 @@
+{
+  "schema": "midas-reality-current-suffix-canary-summary/v1",
+  "completed_at": "2026-10-21T23:06:23+02:00",
+  "status": "PASSED",
+  "verification_mode": "verified_r10_checkpoint_plus_current_suffix",
+  "candidate_source_sha256": "f0b1ce9877fbbe31a10d9d9f63c9e33df4c9b0bcee65979c53eb2b53402143c0",
+  "full_boundary": {
+    "finalized_segments": 20110,
+    "bytes": 5441309576,
+    "catalog_sha256": "29642bbe003857da26e9da4b18471c8b7eb6d528f79418bccc4ecf9c4250e0d2",
+    "identities_sha256": "dcc215f672a6768e646c6cba4b91a2434c519b3be370dc12f84cdb2af97fff14"
+  },
+  "verified_prefix": {
+    "segments": 19546,
+    "bytes": 5288840839,
+    "checkpoint_sha256": "f07465de8989531331762529ac004130d6fe83dc11b49ddd8554e17cca831dc8",
+    "previous_full_matrix": "R10"
+  },
+  "current_suffix": {
+    "segments_reconstructed": 564,
+    "bytes_reconstructed": 152468737,
+    "tail_checkpoints_verified": 564,
+    "source_integrity": "verified",
+    "recovery_seconds": 199.91246005194262
+  },
+  "collector_canary": {
+    "fixture_network_mode": "loopback WebSocket plus in-process HTTP MockTransport",
+    "duration_seconds": 75,
+    "markets": 10,
+    "live_sample_expected_books": 20,
+    "live_sample_fresh_books": 20,
+    "live_sample_failures": 0,
+    "live_sample_persistence_window_seconds": 60,
+    "live_sample_recent_p95_persist_seconds": 0.005020409,
+    "live_sample_recent_max_persist_seconds": 0.086494928,
+    "queue_high_water_depth": 19,
+    "queue_bound": 32,
+    "queue_saturated": false,
+    "frames_written": 721,
+    "gaps_written": 2,
+    "sequence_verified": false,
+    "unexpected_external_routes": []
+  },
+  "startup_and_resources": {
+    "collector_startup_seconds": 205.81345164589584,
+    "first_new_durable_record_seconds": 224.10216122097336,
+    "systemd_service_runtime_seconds": 349.979,
+    "systemd_cpu_seconds": 44.805,
+    "cgroup_peak_bytes": 671612928,
+    "memory_high_bytes": 671088640,
+    "memory_max_bytes": 805306368,
+    "swap_peak_bytes": 0,
+    "memory_high_events": 10050,
+    "memory_max_events": 0,
+    "oom_events": 0,
+    "oom_kill_events": 0,
+    "host_io_full_psi_avg60_peak_percent": 1.49
+  },
+  "source_unchanged": {
+    "link_metadata_sha256_before_after": "5dbf3dcc5b443d8b19eecc977e1b33bdb5b6100b20cfeb49165f56f722174579"
+  },
+  "raw_receipt": {
+    "path": "data/recordings/frontier-current-suffix-r14-20261021T2232CET/staging/current-suffix-canary.json",
+    "sha256": "edac25b0784ff2417c2d9f89b92db4a1e7b625a620a175c39c055029d804a6d5"
+  },
+  "limitations": [
+    "This is candidate evidence, not a production deployment.",
+    "Recovery used the verified R10 checkpoint plus a fully verified and reconstructed current suffix; a new full cold replay at the current boundary was not run.",
+    "PrivateNetwork was requested but was not enforced by the host kernel/available privileges; the fixtures used loopback and in-process HTTP mocks, and the receipt records no unexpected external routes."
+  ]
+}
