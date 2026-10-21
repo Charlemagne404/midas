@@ -1,6 +1,7 @@
 """Storage operations fixtures are artificial, never market evidence."""
 
 import json
+import os
 import time
 from pathlib import Path
 from types import SimpleNamespace
@@ -355,6 +356,63 @@ def test_archive_capacity_checks_mount_budget_and_reserve(tmp_path, monkeypatch)
     assert "ARCHIVE_MOUNT_UNAVAILABLE" in missing["alerts"]
 
 
+def test_archive_capacity_uses_verified_catalog_sizes_without_statting_segments(
+    tmp_path, monkeypatch
+):
+    raw = tmp_path / "raw"
+    target = tmp_path / "hdd" / "archive"
+    target.mkdir(parents=True)
+    mountpoint = target.parent
+    source = sample(raw)
+    archived = archive(raw, target, budget=1_000_000, reserve=1)
+    expected_segment_bytes = sum(info["bytes"] for info in source["segments"])
+    expected_other_bytes = sum(
+        path.stat().st_size for path in target.iterdir() if path.suffix != ".seg"
+    )
+
+    class StatProxy:
+        def __init__(self, value, device):
+            self.value = value
+            self.st_dev = device
+
+        def __getattr__(self, name):
+            return getattr(self.value, name)
+
+    original_stat = Path.stat
+
+    def guarded_stat(path, *args, **kwargs):
+        if path.parent == target and path.suffix == ".seg":
+            raise AssertionError("capacity check statted a finalized archive segment")
+        value = original_stat(path, *args, **kwargs)
+        if path == raw:
+            return StatProxy(value, 1)
+        if path in {mountpoint, target}:
+            return StatProxy(value, 2)
+        return value
+
+    monkeypatch.setattr(Path, "stat", guarded_stat)
+    monkeypatch.setattr(Path, "is_mount", lambda path: path == mountpoint)
+
+    class Disk:
+        total = used = 0
+        free = 2_000_000
+
+    monkeypatch.setattr("midas.reality.operations.shutil.disk_usage", lambda _path: Disk())
+    result = archive_capacity(
+        raw,
+        target,
+        mountpoint,
+        budget=1_000_000,
+        reserve=1,
+        bytes_per_second=2,
+        segment_bytes=8,
+    )
+
+    assert archived["archival_provenance"]["verification_mode"] == "full_replay"
+    assert result["destination_state"] == "MANIFEST_PRESENT"
+    assert result["raw_archive_bytes"] == expected_segment_bytes + expected_other_bytes
+
+
 def test_capacity_warns_thirty_days_ahead_and_marks_fourteen_day_critical(tmp_path):
     sample(tmp_path)
     used = sum(p.stat().st_size for p in tmp_path.iterdir() if p.is_file())
@@ -452,9 +510,14 @@ def test_archive_incremental_integrity_and_originals(tmp_path):
     for name, digest in original_hashes.items():
         assert file_hash(root / name) == file_hash(target / name) == digest
     (target / value["segments"][0]["file"]).write_bytes(b"corrupt")
+    before_full_check = json.loads((target / "manifest.json").read_text())
+    incremental = archive(root, target, budget=1_000_000, reserve=1)
+    assert incremental["archival_provenance"]["verification_mode"] == "incremental_suffix"
+    current_manifest = json.loads((target / "manifest.json").read_text())
+    assert current_manifest["segments"] == before_full_check["segments"]
     with pytest.raises(ValueError):
-        archive(root, target, budget=1_000_000, reserve=1)
-    assert json.loads((target / "manifest.json").read_text())["segments"] == value["segments"]
+        archive(root, target, budget=1_000_000, reserve=1, full_verify=True)
+    assert json.loads((target / "manifest.json").read_text()) == current_manifest
 
 
 def test_archive_daily_append_verifies_only_new_suffix_and_retains_full_receipt(tmp_path):
@@ -463,7 +526,17 @@ def test_archive_daily_append_verifies_only_new_suffix_and_retains_full_receipt(
     first = archive(root, target, budget=1_000_000, reserve=1)
     original_full_verification = first["archival_provenance"]["full_verified_ns"]
     extended_source = sample(root)
-    with patch.object(operations, "replay", side_effect=AssertionError("full replay repeated")):
+    original_stat = Path.stat
+
+    def no_old_archive_segment_stat(path, *args, **kwargs):
+        if path.parent == target and path.suffix == ".seg":
+            raise AssertionError("daily append statted the verified archive prefix")
+        return original_stat(path, *args, **kwargs)
+
+    with (
+        patch.object(operations, "replay", side_effect=AssertionError("full replay repeated")),
+        patch.object(Path, "stat", no_old_archive_segment_stat),
+    ):
         extended = archive(root, target, budget=1_000_000, reserve=1)
 
     provenance = extended["archival_provenance"]
@@ -474,7 +547,10 @@ def test_archive_daily_append_verifies_only_new_suffix_and_retains_full_receipt(
     assert provenance["full_verified_ns"] == original_full_verification
     assert provenance["incremental_verified_segments"] == len(new_segments)
     assert provenance["incremental_verified_bytes"] == sum(info["bytes"] for info in new_segments)
-    assert len(provenance["file_identities"]) == len(extended_source["segments"])
+    assert (
+        provenance["full_verified_manifest_sha256"]
+        == first["archival_provenance"]["full_verified_manifest_sha256"]
+    )
 
     replay_roots = []
     actual_replay = operations.replay
@@ -507,7 +583,6 @@ def test_archive_migrates_legacy_full_manifest_to_incremental_identity_receipt(t
         "incremental_verified_segments",
         "incremental_verified_bytes",
         "verification_mode",
-        "file_identities",
     ):
         legacy["archival_provenance"].pop(field, None)
     atomic_json(target / "manifest.json", legacy)
@@ -526,10 +601,13 @@ def test_archive_migrates_legacy_full_manifest_to_incremental_identity_receipt(t
     assert extended["segments"] == source["segments"]
     assert provenance["full_verified_ns"] == full["archival_provenance"]["verified_ns"]
     assert provenance["verification_mode"] == "incremental_suffix"
-    assert len(provenance["file_identities"]) == len(source["segments"])
+    assert (
+        provenance["full_verified_manifest_sha256"]
+        == full["archival_provenance"]["source_manifest_sha256"]
+    )
 
 
-def test_archive_requires_full_verification_for_expired_legacy_receipt(tmp_path):
+def test_archive_retains_full_receipt_after_incremental_manifest_ages(tmp_path):
     root, target = tmp_path / "raw", tmp_path / "archive"
     sample(root)
     archive(root, target, budget=1_000_000, reserve=1)
@@ -540,14 +618,15 @@ def test_archive_requires_full_verification_for_expired_legacy_receipt(tmp_path)
         "incremental_verified_segments",
         "incremental_verified_bytes",
         "verification_mode",
-        "file_identities",
     ):
         legacy["archival_provenance"].pop(field, None)
     legacy["archival_provenance"]["verified_ns"] = time.time_ns() - 2 * 24 * 60 * 60 * 1_000_000_000
     atomic_json(target / "manifest.json", legacy)
 
-    with pytest.raises(ValueError, match="too old"):
-        archive(root, target, budget=1_000_000, reserve=1)
+    extended = archive(root, target, budget=1_000_000, reserve=1)
+    provenance = extended["archival_provenance"]
+    assert provenance["verification_mode"] == "incremental_suffix"
+    assert provenance["full_verified_ns"] == legacy["archival_provenance"]["verified_ns"]
 
 
 def test_archive_replay_verifies_source_and_destination_without_per_segment_sync(tmp_path):
@@ -626,19 +705,19 @@ def test_archive_resume_counts_destination_once_for_many_missing_segments(tmp_pa
     for info in missing:
         (target / info["file"]).unlink()
 
-    original_iterdir = Path.iterdir
-    destination_iterdir_calls = 0
+    original_scandir = os.scandir
+    destination_scandir_calls = 0
 
-    def counted_iterdir(path):
-        nonlocal destination_iterdir_calls
-        if path == target:
-            destination_iterdir_calls += 1
-        yield from original_iterdir(path)
+    def counted_scandir(path):
+        nonlocal destination_scandir_calls
+        if Path(path) == target:
+            destination_scandir_calls += 1
+        return original_scandir(path)
 
-    with patch.object(Path, "iterdir", counted_iterdir):
+    with patch.object(operations.os, "scandir", counted_scandir):
         result = archive(root, target, budget=1_000_000, reserve=1)
 
-    assert destination_iterdir_calls == 1
+    assert destination_scandir_calls == 1
     assert result["segments"] == value["segments"]
     for name, digest in original_hashes.items():
         assert file_hash(root / name) == file_hash(target / name) == digest

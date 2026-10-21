@@ -15,7 +15,6 @@ import logging
 import math
 import os
 import shutil
-import stat
 import time
 from collections.abc import Callable
 from pathlib import Path
@@ -43,9 +42,10 @@ ARCHIVE_IO_SAMPLE_SECONDS = 5.0
 ARCHIVE_IO_STABLE_SECONDS = 60.0
 ARCHIVE_REQUIRED_PROTECTED_SERVICES = {"midas-reality.service"}
 ARCHIVE_HOST_IO_FULL_AVG10_MAX = 2.0
-ARCHIVE_LEGACY_RECEIPT_MAX_AGE_SECONDS = 24 * 60 * 60
 ARCHIVE_HOST_IO_FULL_AVG60_MAX = 2.0
 ARCHIVE_SYNC_BATCH_BYTES = 32 * 1024**2
+ARCHIVE_ADVISORY_LOG_INTERVAL_SECONDS = 60.0
+_ARCHIVE_LAST_HOST_ADVISORY_NOTICE = 0.0
 
 
 def _host_io_full_pressure() -> tuple[float, float]:
@@ -141,6 +141,7 @@ def _active_midas_service_io_pressure() -> dict[str, tuple[float, float]]:
 
 def wait_for_archive_io_window(deadline: float, *, stable_seconds: float = 0) -> None:
     """Wait for active MIDAS service pressure to clear; report host PSI as advisory."""
+    global _ARCHIVE_LAST_HOST_ADVISORY_NOTICE
     required_samples = max(1, math.ceil(stable_seconds / ARCHIVE_IO_SAMPLE_SECONDS))
     stable_samples = 0
     last_notice = 0.0
@@ -159,18 +160,21 @@ def wait_for_archive_io_window(deadline: float, *, stable_seconds: float = 0) ->
             host_pressure[0] >= ARCHIVE_HOST_IO_FULL_AVG10_MAX
             or host_pressure[1] >= ARCHIVE_HOST_IO_FULL_AVG60_MAX
         )
+        now = time.monotonic()
         if not pressured:
             stable_samples += 1
             if stable_samples >= required_samples:
-                if host_advisory:
+                if host_advisory and now - _ARCHIVE_LAST_HOST_ADVISORY_NOTICE >= (
+                    ARCHIVE_ADVISORY_LOG_INTERVAL_SECONDS
+                ):
                     logging.warning(
                         "Archive admitted with host-wide I/O PSI above advisory threshold: %s",
                         host_pressure,
                     )
+                    _ARCHIVE_LAST_HOST_ADVISORY_NOTICE = now
                 return
         else:
             stable_samples = 0
-        now = time.monotonic()
         if now >= deadline:
             raise TimeoutError(
                 "Archive I/O admission window did not clear before its configured deadline"
@@ -220,6 +224,48 @@ def _last_started_budget(
     return _last_started_setting(root, configured_budget, status, "budget_bytes")
 
 
+def _archive_directory_usage(
+    destination: Path, segments: list[dict[str, Any]] | None
+) -> tuple[int, bool]:
+    """Count a verified archive from catalog sizes without statting every HDD segment."""
+    if not destination.is_dir():
+        return 0, True
+    entries = {entry.name: entry for entry in os.scandir(destination)}
+    segment_map = (
+        {info["file"]: info for info in segments if isinstance(info, dict)}
+        if segments is not None
+        else {}
+    )
+    inventory_valid = segments is not None and len(segment_map) == len(segments)
+    used = 0
+    if segments is not None:
+        for name, info in segment_map.items():
+            entry = entries.get(name)
+            size = info.get("bytes")
+            if (
+                entry is None
+                or entry.is_symlink()
+                or not entry.is_file(follow_symlinks=False)
+                or type(size) is not int
+                or size < 0
+            ):
+                inventory_valid = False
+                continue
+            used += size
+    for name, entry in entries.items():
+        if name in segment_map:
+            continue
+        if name.endswith(".seg") and segments is not None:
+            inventory_valid = False
+        if entry.is_symlink():
+            inventory_valid = False
+        elif entry.is_file(follow_symlinks=False):
+            used += entry.stat(follow_symlinks=False).st_size
+        elif segments is not None:
+            inventory_valid = False
+    return used, inventory_valid
+
+
 def archive_capacity(
     root: Path,
     destination: Path,
@@ -241,11 +287,6 @@ def archive_capacity(
         destination.exists() and destination.stat().st_dev == mountpoint.stat().st_dev
         if mountpoint.exists()
         else False
-    )
-    used = (
-        sum(p.stat().st_size for p in destination.iterdir() if p.is_file())
-        if destination.is_dir()
-        else 0
     )
     manifest_path = destination / "manifest.json"
     manifest_exists = manifest_path.exists() or manifest_path.is_symlink()
@@ -271,6 +312,14 @@ def archive_capacity(
                 )
         except (OSError, ValueError, TypeError):
             manifest_provenance_valid = False
+    catalog = manifest_value.get("segments")
+    used, archive_inventory_valid = _archive_directory_usage(
+        destination,
+        catalog if manifest_provenance_valid and isinstance(catalog, list) else None,
+    )
+    if manifest_provenance_valid and not archive_inventory_valid:
+        manifest_provenance_valid = False
+        alerts.append("ARCHIVE_SEGMENT_INVENTORY_INVALID")
     if not manifest_exists:
         state = "NOT_YET_VERIFIED"
     elif manifest_provenance_valid:
@@ -289,14 +338,28 @@ def archive_capacity(
         archive_manifest_provenance_valid=manifest_provenance_valid,
         archive_verification_mode=verification_mode,
         archive_full_verified_ns=provenance.get("full_verified_ns", provenance.get("verified_ns")),
+        archive_full_verified_manifest_sha256=provenance.get(
+            "full_verified_manifest_sha256",
+            provenance.get("source_manifest_sha256")
+            if verification_mode == "legacy_full_replay_receipt"
+            else None,
+        ),
+        archive_full_verified_segment_count=provenance.get(
+            "full_verified_segment_count",
+            len(catalog)
+            if verification_mode == "legacy_full_replay_receipt" and isinstance(catalog, list)
+            else None,
+        ),
+        archive_full_verified_bytes=provenance.get(
+            "full_verified_bytes",
+            sum(info.get("bytes", 0) for info in catalog if isinstance(info, dict))
+            if verification_mode == "legacy_full_replay_receipt" and isinstance(catalog, list)
+            else None,
+        ),
         archive_incremental_verified_ns=provenance.get("incremental_verified_ns"),
         archive_incremental_verified_segments=provenance.get("incremental_verified_segments"),
         archive_source_manifest_sha256=provenance.get("source_manifest_sha256"),
-        archive_segment_count=(
-            len(manifest_value["segments"])
-            if isinstance(manifest_value.get("segments"), list)
-            else None
-        ),
+        archive_segment_count=len(catalog) if isinstance(catalog, list) else None,
     )
     if not mounted:
         alerts.append("ARCHIVE_MOUNT_UNAVAILABLE")
@@ -573,29 +636,6 @@ def file_hash_list(segments: list[dict[str, Any]]) -> str:
     return hashlib.sha256(canonical(segments)).hexdigest()
 
 
-def _path_file_identity(path: Path) -> list[int] | None:
-    try:
-        metadata = path.lstat()
-    except FileNotFoundError:
-        return None
-    if not stat.S_ISREG(metadata.st_mode):
-        raise ValueError(f"Archive segment is not a regular file: {path}")
-    return [
-        metadata.st_dev,
-        metadata.st_ino,
-        metadata.st_size,
-        metadata.st_mtime_ns,
-        metadata.st_ctime_ns,
-    ]
-
-
-def _segment_file_identity(root: Path, info: dict[str, Any]) -> list[int] | None:
-    name = info.get("file")
-    if not isinstance(name, str) or Path(name).name != name:
-        raise ValueError("Unsafe archive segment name")
-    return _path_file_identity(root / name)
-
-
 def _inspect_segment(
     path: Path,
     expected: dict[str, Any],
@@ -677,7 +717,7 @@ def _archive_incremental_suffix(
     reserve: int,
     before_segment: Callable[[], None] | None,
 ) -> dict[str, Any]:
-    """Extend a previously full-verified archive by validating only changed files."""
+    """Extend a full-verified archive without random-reading its old segment files."""
     previous_segments = previous.get("segments")
     previous_provenance = previous.get("archival_provenance")
     current_segments = value.get("segments")
@@ -694,6 +734,7 @@ def _archive_incremental_suffix(
         raise ValueError("Existing archive does not certify preserved originals")
     if previous_provenance.get("active_segment_included") is not False:
         raise ValueError("Existing archive includes an unsupported active segment")
+    _validate_catalog_ordinals(previous_segments)
     _validate_catalog_ordinals(current_segments)
     previous_by_name = {info["file"]: info for info in previous_segments}
     current_by_name = {info["file"]: info for info in current_segments}
@@ -706,33 +747,31 @@ def _archive_incremental_suffix(
     if any(current_by_name[name] != info for name, info in previous_by_name.items()):
         raise ValueError("Current source catalog changed a previously archived segment")
 
-    prior_identities = previous_provenance.get("file_identities")
-    if prior_identities is not None and (
-        not isinstance(prior_identities, list) or len(prior_identities) != len(previous_segments)
-    ):
-        raise ValueError("Existing archive file-identity receipt is malformed")
-    if prior_identities is None:
-        legacy_verified_ns = previous_provenance.get(
-            "full_verified_ns", previous_provenance.get("verified_ns")
-        )
-        receipt_age_ns = (
-            time.time_ns() - legacy_verified_ns if type(legacy_verified_ns) is int else -1
-        )
-        if (
-            receipt_age_ns < 0
-            or receipt_age_ns > ARCHIVE_LEGACY_RECEIPT_MAX_AGE_SECONDS * 1_000_000_000
-        ):
-            raise ValueError("Legacy archive receipt is too old; run an explicit full verification")
-
     source_names = {info["file"] for info in current_segments}
-    for path in destination.glob("*.seg"):
-        if path.name not in source_names:
-            raise ValueError(f"Archive contains an untracked segment: {path.name}")
-    for path in destination.glob("*.copying"):
-        if path.with_suffix(".seg").name not in source_names:
-            raise ValueError(f"Archive contains an untracked partial segment: {path.name}")
+    destination_entries = {entry.name: entry for entry in os.scandir(destination)}
+    destination_segment_names = {name for name in destination_entries if name.endswith(".seg")}
+    for name in destination_segment_names:
+        entry = destination_entries[name]
+        if name not in source_names:
+            raise ValueError(f"Archive contains an untracked segment: {name}")
+        if entry.is_symlink() or not entry.is_file(follow_symlinks=False):
+            raise ValueError(f"Archive segment is not a regular file: {name}")
+    for name, entry in destination_entries.items():
+        if name.endswith(".copying"):
+            if Path(name).with_suffix(".seg").name not in source_names:
+                raise ValueError(f"Archive contains an untracked partial segment: {name}")
+            if entry.is_symlink() or not entry.is_file(follow_symlinks=False):
+                raise ValueError(f"Unsafe interrupted archive segment: {name}")
 
-    used = sum(path.stat().st_size for path in destination.iterdir() if path.is_file())
+    # Segment sizes come from the full-verified catalog. Stat only the handful of
+    # non-segment files so daily runs avoid random inode reads across the archive HDD.
+    used = sum(current_by_name[name]["bytes"] for name in destination_segment_names)
+    for name, entry in destination_entries.items():
+        if name in destination_segment_names:
+            continue
+        if entry.is_symlink() or not entry.is_file(follow_symlinks=False):
+            raise ValueError(f"Unexpected non-file in archive directory: {name}")
+        used += entry.stat(follow_symlinks=False).st_size
     pending: list[tuple[Path, Path]] = []
     pending_bytes = 0
     verified_segments = 0
@@ -746,9 +785,11 @@ def _archive_incremental_suffix(
             before_segment()
         sync_filesystem(destination)
         for partial_path, target_path in pending:
-            if target_path.exists() or target_path.is_symlink():
+            if target_path.name in destination_segment_names:
                 raise FileExistsError(f"Archive target appeared during publication: {target_path}")
             os.replace(partial_path, target_path)
+            destination_entries.pop(partial_path.name, None)
+            destination_segment_names.add(target_path.name)
         pending.clear()
         pending_bytes = 0
 
@@ -757,11 +798,13 @@ def _archive_incremental_suffix(
         source = root / info["file"]
         target = destination / info["file"]
         partial = target.with_suffix(".copying")
-        if partial.is_symlink() or (partial.exists() and not partial.is_file()):
-            raise ValueError(f"Unsafe interrupted archive segment: {partial}")
-        if partial.exists():
-            used -= partial.stat().st_size
+        partial_entry = destination_entries.get(partial.name)
+        if partial_entry is not None:
+            if partial_entry.is_symlink() or not partial_entry.is_file(follow_symlinks=False):
+                raise ValueError(f"Unsafe interrupted archive segment: {partial}")
+            used -= partial_entry.stat(follow_symlinks=False).st_size
             partial.unlink()
+            destination_entries.pop(partial.name, None)
         margin = len(canonical(value)) + 8192
         if used + info["bytes"] + margin > budget:
             raise OSError("Archive budget reached; originals preserved")
@@ -775,6 +818,7 @@ def _archive_incremental_suffix(
                 copy_to=outgoing,
             )
             outgoing.flush()
+            os.fsync(outgoing.fileno())
         pending.append((partial, target))
         pending_bytes += info["bytes"]
         used += info["bytes"]
@@ -785,44 +829,20 @@ def _archive_incremental_suffix(
         if before_segment is not None and index % 128 == 0:
             before_segment()
         partial = (destination / info["file"]).with_suffix(".copying")
-        if partial.is_symlink() or (partial.exists() and not partial.is_file()):
-            raise ValueError(f"Unsafe interrupted archive segment: {partial}")
-        if partial.exists() and (destination / info["file"]).exists():
-            used -= partial.stat().st_size
+        partial_entry = destination_entries.get(partial.name)
+        if partial_entry is not None and info["file"] in destination_segment_names:
+            if partial_entry.is_symlink() or not partial_entry.is_file(follow_symlinks=False):
+                raise ValueError(f"Unsafe interrupted archive segment: {partial}")
+            used -= partial_entry.stat(follow_symlinks=False).st_size
             partial.unlink()
+            destination_entries.pop(partial.name, None)
         prior_ordinal = (
             int(info["first"]) - 1
             if info["count"]
             else _last_catalog_ordinal(previous_segments[:index])
         )
-        old_identity = prior_identities[index] if prior_identities is not None else None
-        if old_identity is not None and (
-            not isinstance(old_identity, list)
-            or len(old_identity) != 2
-            or not all(isinstance(part, list) and len(part) == 5 for part in old_identity)
-        ):
-            raise ValueError("Existing archive segment identity is malformed")
-        source_identity = _segment_file_identity(root, info)
-        destination_identity = _segment_file_identity(destination, info)
-        if source_identity is None:
-            raise ValueError(f"Previously archived source segment disappeared: {info['file']}")
-        if source_identity[2] != info["bytes"]:
-            raise ValueError(f"Previously archived source segment size changed: {info['file']}")
-        if source_identity != (old_identity[0] if old_identity else None):
-            if old_identity is not None:
-                _inspect_segment(root / info["file"], info, previous_ordinal=prior_ordinal)
-                verified_segments += 1
-                verified_bytes += info["bytes"]
-        if destination_identity is None:
+        if info["file"] not in destination_segment_names:
             copy_missing(info, prior_ordinal)
-        elif destination_identity[2] != info["bytes"]:
-            raise ValueError(
-                f"Previously archived destination segment size changed: {info['file']}"
-            )
-        elif destination_identity != (old_identity[1] if old_identity else None):
-            _inspect_segment(destination / info["file"], info, previous_ordinal=prior_ordinal)
-            verified_segments += 1
-            verified_bytes += info["bytes"]
 
     previous_ordinal = _last_catalog_ordinal(previous_segments)
     new_segments = [info for info in current_segments if info["file"] not in previous_by_name]
@@ -833,14 +853,19 @@ def _archive_incremental_suffix(
             raise ValueError("New archive segment does not continue the verified ordinal prefix")
         target = destination / info["file"]
         partial = target.with_suffix(".copying")
-        if target.is_symlink() or (target.exists() and not target.is_file()):
-            raise ValueError(f"Unsafe new archive segment: {target}")
-        if target.exists():
-            if partial.is_symlink() or (partial.exists() and not partial.is_file()):
-                raise ValueError(f"Unsafe interrupted archive segment: {partial}")
-            if partial.exists():
-                used -= partial.stat().st_size
+        if info["file"] in destination_segment_names:
+            target_entry = destination_entries.get(target.name)
+            if target_entry is not None and (
+                target_entry.is_symlink() or not target_entry.is_file(follow_symlinks=False)
+            ):
+                raise ValueError(f"Unsafe new archive segment: {target}")
+            partial_entry = destination_entries.get(partial.name)
+            if partial_entry is not None:
+                if partial_entry.is_symlink() or not partial_entry.is_file(follow_symlinks=False):
+                    raise ValueError(f"Unsafe interrupted archive segment: {partial}")
+                used -= partial_entry.stat(follow_symlinks=False).st_size
                 partial.unlink()
+                destination_entries.pop(partial.name, None)
             _inspect_segment(root / info["file"], info, previous_ordinal=previous_ordinal)
             _inspect_segment(target, info, previous_ordinal=previous_ordinal)
             verified_segments += 2
@@ -853,28 +878,30 @@ def _archive_incremental_suffix(
             flush_pending()
     flush_pending()
 
-    source_file_identities: list[list[int]] = []
-    destination_file_identities: list[list[int]] = []
-    for info in current_segments:
-        source_identity = _segment_file_identity(root, info)
-        destination_identity = _segment_file_identity(destination, info)
-        if source_identity is None or destination_identity is None:
-            raise OSError(f"Archive segment disappeared during verification: {info['file']}")
-        source_file_identities.append(source_identity)
-        destination_file_identities.append(destination_identity)
-
     verified_ns = time.time_ns()
     full_verified_ns = previous_provenance.get(
         "full_verified_ns", previous_provenance.get("verified_ns")
     )
     if type(full_verified_ns) is not int or full_verified_ns <= 0:
         raise ValueError("Existing archive lacks a full-verification timestamp")
+    full_verified_manifest_sha256 = previous_provenance.get(
+        "full_verified_manifest_sha256", previous_provenance.get("source_manifest_sha256")
+    )
+    if not isinstance(full_verified_manifest_sha256, str):
+        raise ValueError("Existing archive lacks a full-verification source identity")
     published = dict(
         value,
         archival_provenance=dict(
             recording_root=str(root),
             verified_ns=verified_ns,
             full_verified_ns=full_verified_ns,
+            full_verified_manifest_sha256=full_verified_manifest_sha256,
+            full_verified_segment_count=previous_provenance.get(
+                "full_verified_segment_count", len(previous_segments)
+            ),
+            full_verified_bytes=previous_provenance.get(
+                "full_verified_bytes", sum(info["bytes"] for info in previous_segments)
+            ),
             incremental_verified_ns=verified_ns,
             incremental_verified_segments=verified_segments,
             incremental_verified_bytes=verified_bytes,
@@ -882,12 +909,6 @@ def _archive_incremental_suffix(
             source_manifest_sha256=file_hash_list(current_segments),
             originals_deleted=False,
             active_segment_included=False,
-            file_identities=[
-                [source, archived]
-                for source, archived in zip(
-                    source_file_identities, destination_file_identities, strict=True
-                )
-            ],
         ),
     )
     prior_manifest_bytes = (destination / "manifest.json").stat().st_size
@@ -914,13 +935,13 @@ def archive(
     operation_timeout_seconds: float = 0,
     full_verify: bool = False,
 ) -> dict[str, Any]:
-    """Copy finalized segments and verify each append against its prior receipt.
+    """Copy finalized segments and verify appended bytes against prior provenance.
 
     The first publication fully replay-verifies source and destination. Later
-    daily runs validate the immutable prior prefix with file-identity receipts
-    and verify appended or changed segments. ``full_verify`` replays both entire
-    trees again. Interrupted copies resume from finalized files; original bytes
-    and catalogs remain collector-owned.
+    daily runs validate prior catalog identity, repair missing archived segments,
+    and verify appended bytes without random-reading the full HDD prefix.
+    ``full_verify`` replays both entire trees again. Interrupted copies resume
+    from finalized files; original bytes and catalogs remain collector-owned.
     """
     root, destination = root.resolve(), destination.resolve()
     if destination == root or destination.is_relative_to(root) or root.is_relative_to(destination):
@@ -1057,27 +1078,25 @@ def archive(
         flush_pending()
         replay(destination, value, before_segment=before_segment)
         verified_ns = time.time_ns()
-        file_identities = []
-        for info in value["segments"]:
-            source_identity = _segment_file_identity(root, info)
-            destination_identity = _segment_file_identity(destination, info)
-            if source_identity is None or destination_identity is None:
-                raise OSError(f"Archive segment disappeared after replay: {info['file']}")
-            file_identities.append([source_identity, destination_identity])
+        source_manifest_sha256 = file_hash_list(value["segments"])
+        segment_count = len(value["segments"])
+        segment_bytes = sum(info["bytes"] for info in value["segments"])
         published = dict(
             value,
             archival_provenance=dict(
                 recording_root=str(root),
                 verified_ns=verified_ns,
                 full_verified_ns=verified_ns,
+                full_verified_manifest_sha256=source_manifest_sha256,
+                full_verified_segment_count=segment_count,
+                full_verified_bytes=segment_bytes,
                 incremental_verified_ns=verified_ns,
-                incremental_verified_segments=len(value["segments"]),
-                incremental_verified_bytes=sum(info["bytes"] for info in value["segments"]),
+                incremental_verified_segments=segment_count,
+                incremental_verified_bytes=segment_bytes,
                 verification_mode="full_replay",
-                source_manifest_sha256=file_hash_list(value["segments"]),
+                source_manifest_sha256=source_manifest_sha256,
                 originals_deleted=False,
                 active_segment_included=False,
-                file_identities=file_identities,
             ),
         )
         if used + len(canonical(published)) > budget:
