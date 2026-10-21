@@ -14,6 +14,16 @@ def ready_snapshot():
         "available_memory_bytes": 8 * 1024**3,
         "disk_free_bytes": 24 * 1024**3,
         "cpu_psi": {"some": 0.0},
+        "available_cpu_count": 6,
+        "host_load_avg1": 0.5,
+        "critical_service_cpu_pressure": {
+            service: {
+                "available": True,
+                "active_state": "active",
+                "pressure": {"some": {"avg10": 0.0, "avg60": 0.0}},
+            }
+            for service in batch.CRITICAL_CPU_SERVICES
+        },
         "memory_psi": {"some": 0.0, "full": 0.0},
         "io_psi": {"some": 0.0},
     }
@@ -28,10 +38,42 @@ def test_resource_gate_blocks_worker_pressure_and_missing_metrics(ready_snapshot
     assert batch.resource_gate(ready_snapshot) == {"ready": True, "reasons": []}
     active = {**ready_snapshot, "active_arena_job_ids": ["job-running"]}
     assert batch.resource_gate(active)["reasons"] == ["arena_worker_active"]
-    cpu = {**ready_snapshot, "cpu_psi": {"some": 36.34}}
-    assert batch.resource_gate(cpu)["reasons"] == ["host_cpu_pressure"]
+    quota_distorted = {**ready_snapshot, "cpu_psi": {"some": 36.34}}
+    assert batch.resource_gate(quota_distorted)["ready"]
+    saturated = {**ready_snapshot, "host_load_avg1": 6.0}
+    assert batch.resource_gate(saturated)["reasons"] == ["host_cpu_capacity"]
+    unmeasured = {**ready_snapshot, "host_load_avg1": float("nan")}
+    assert batch.resource_gate(unmeasured)["reasons"] == ["host_cpu_capacity_unavailable"]
     missing = {**ready_snapshot, "io_psi": {}}
     assert batch.resource_gate(missing)["reasons"] == ["resource_pressure_unavailable"]
+
+
+def test_resource_gate_blocks_critical_service_cpu_pressure_and_missing_telemetry(ready_snapshot):
+    pressure = {
+        **ready_snapshot["critical_service_cpu_pressure"]["midas-reality.service"],
+        "pressure": {"some": {"avg10": 10.0, "avg60": 1.0}},
+    }
+    services = {
+        **ready_snapshot["critical_service_cpu_pressure"],
+        "midas-reality.service": pressure,
+    }
+    snapshot = {**ready_snapshot, "critical_service_cpu_pressure": services}
+    assert batch.resource_gate(snapshot)["reasons"] == [
+        "critical_service_cpu_pressure:midas-reality.service"
+    ]
+
+    unavailable = {
+        **ready_snapshot["critical_service_cpu_pressure"],
+        "midas-reality.service": {
+            "available": False,
+            "active_state": "deactivating",
+            "pressure": {},
+        },
+    }
+    snapshot = {**ready_snapshot, "critical_service_cpu_pressure": unavailable}
+    assert batch.resource_gate(snapshot)["reasons"] == [
+        "critical_service_cpu_telemetry_unavailable:midas-reality.service"
+    ]
 
 
 def test_batch_reserves_its_own_memory_above_host_headroom(ready_snapshot):
@@ -48,7 +90,7 @@ def test_disk_gate_preserves_shared_nvme_reserve_and_one_artifact_budget(ready_s
     assert batch.resource_gate(ready_snapshot)["ready"]
 
 
-def test_resource_snapshot_reads_psi_and_detects_active_jobs(tmp_path):
+def test_resource_snapshot_reads_psi_and_detects_active_jobs(tmp_path, ready_snapshot):
     arena, output, pressure = tmp_path / "arena", tmp_path / "output", tmp_path / "pressure"
     (arena / "jobs/job-active").mkdir(parents=True)
     output.mkdir()
@@ -68,10 +110,42 @@ def test_resource_snapshot_reads_psi_and_detects_active_jobs(tmp_path):
         output,
         pressure_root=pressure,
         meminfo_path=meminfo,
+        critical_service_cpu_pressure=ready_snapshot["critical_service_cpu_pressure"],
+        available_cpu_count=6,
+        host_load_avg1=0.5,
     )
     assert snapshot["active_arena_job_ids"] == ["arena:job-active"]
     assert snapshot["cpu_psi"] == {"some": 0.0}
     assert batch.resource_gate(snapshot)["reasons"] == ["arena_worker_active"]
+
+
+def test_critical_service_cpu_snapshot_reads_cgroup_pressure(tmp_path, monkeypatch):
+    cgroup_root = tmp_path / "cgroup"
+    service = cgroup_root / "user.slice/midas-reality.service"
+    service.mkdir(parents=True)
+    (service / "cpu.pressure").write_text(
+        "some avg10=0.25 avg60=1.50 avg300=0.50 total=100\n"
+        "full avg10=0.00 avg60=0.00 avg300=0.00 total=0\n"
+    )
+    monkeypatch.setattr(
+        batch,
+        "_systemd_unit_properties",
+        lambda _unit: {
+            "ActiveState": "active",
+            "ControlGroup": "/user.slice/midas-reality.service",
+        },
+    )
+
+    observed = batch._critical_service_cpu_pressure(cgroup_root=cgroup_root)
+
+    assert observed["midas-reality.service"] == {
+        "available": True,
+        "active_state": "active",
+        "pressure": {
+            "some": {"avg10": 0.25, "avg60": 1.5},
+            "full": {"avg10": 0.0, "avg60": 0.0},
+        },
+    }
 
 
 def test_resource_snapshot_checks_arena_jobs_across_both_repositories(tmp_path, ready_snapshot):
@@ -86,6 +160,9 @@ def test_resource_snapshot_checks_arena_jobs_across_both_repositories(tmp_path, 
         primary,
         output,
         other_arena_roots=(veritas,),
+        critical_service_cpu_pressure=ready_snapshot["critical_service_cpu_pressure"],
+        available_cpu_count=6,
+        host_load_avg1=0.5,
     )
     assert snapshot["active_arena_job_ids"] == ["veritas:job-running"]
     # This assertion tests cross-repository admission, independent of actual

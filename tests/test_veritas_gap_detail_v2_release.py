@@ -1,17 +1,21 @@
 from __future__ import annotations
 
+import hashlib
+import json
 import os
 import subprocess
 import sys
 import textwrap
 from pathlib import Path
 
-
 RELEASE_ROOT = (
+    Path(__file__).resolve().parents[1] / "deploy" / "runtime" / "veritas-gap-detail-v2-20261020"
+)
+FRONTIER_ADMISSION_RELEASE = (
     Path(__file__).resolve().parents[1]
     / "deploy"
     / "runtime"
-    / "veritas-gap-detail-v2-20261020"
+    / "veritas-gap-detail-v2-frontier-cpu-pressure-20261021"
 )
 
 
@@ -126,9 +130,7 @@ def test_v2_release_preserves_v1_lineage_and_blocks_deterministic_retries(
         """
     )
     env = os.environ.copy()
-    env["PYTHONPATH"] = os.pathsep.join(
-        [str(RELEASE_ROOT / "packages"), env.get("PYTHONPATH", "")]
-    )
+    env["PYTHONPATH"] = os.pathsep.join([str(RELEASE_ROOT / "packages"), env.get("PYTHONPATH", "")])
     env["V2_TEST_ROOT"] = str(tmp_path)
     result = subprocess.run(
         [sys.executable, "-c", program],
@@ -139,3 +141,27 @@ def test_v2_release_preserves_v1_lineage_and_blocks_deterministic_retries(
         check=False,
     )
     assert result.returncode == 0, result.stdout + result.stderr
+
+
+def test_frontier_admission_overlay_pins_analyzer_and_systemd_runtime():
+    repo = Path(__file__).resolve().parents[1]
+    runtime = FRONTIER_ADMISSION_RELEASE / "runtime"
+    manifest = json.loads((runtime / "runtime-manifest.json").read_text())
+    script = runtime / manifest["runtime_script"]
+    assert hashlib.sha256(script.read_bytes()).hexdigest() == manifest["runtime_script_sha256"]
+
+    base_packages = repo / "deploy/runtime/veritas-gap-detail-v2-20261021/packages"
+    package_files = {
+        path.relative_to(base_packages).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest()
+        for path in sorted(base_packages.rglob("*"))
+        if path.is_file()
+    }
+    assert len(package_files) == manifest["base_package_file_count"]
+    assert package_files == manifest["base_package_files"]
+    package_index = json.dumps(package_files, sort_keys=True, separators=(",", ":")).encode()
+    assert hashlib.sha256(package_index).hexdigest() == manifest["base_package_index_sha256"]
+
+    unit = (repo / "deploy/systemd/user/midas-veritas-gap-detail-v2.service").read_text()
+    assert "gap-detail-v2-frontier-cpu-pressure-20261021/runtime" in unit
+    assert "gap-detail-v2-20261021/runtime/packages" in unit
+    assert "--root %h/midas-veritas/data/veritas-gap-detail-v2" in unit

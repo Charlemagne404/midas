@@ -5,9 +5,11 @@ from __future__ import annotations
 import argparse
 import fcntl
 import json
+import math
 import os
 import shutil
 import stat
+import subprocess
 from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
@@ -23,7 +25,14 @@ MAX_ARTIFACT_BYTES = 4 * 1024**3
 NEXT_JOB_ARTIFACT_BUDGET_BYTES = MAX_ARTIFACT_BYTES
 ARTIFACT_WARNING_PERCENT = 75
 ARTIFACT_PAUSE_PERCENT = 90
-MAX_CPU_PSI_SOME_AVG10_PERCENT = 20.0
+HOST_CPU_LOAD_AVG1_PER_CPU_MAX = 1.0
+CRITICAL_CPU_SOME_AVG10_MAX = 10.0
+CRITICAL_CPU_SOME_AVG60_MAX = 5.0
+CRITICAL_CPU_SERVICES = (
+    "midas-reality.service",
+    "midas-api.service",
+    "midas-reality-api.service",
+)
 MAX_MEMORY_PSI_SOME_AVG10_PERCENT = 10.0
 MAX_MEMORY_PSI_FULL_AVG10_PERCENT = 1.0
 MAX_IO_PSI_SOME_AVG10_PERCENT = 20.0
@@ -78,6 +87,55 @@ def _pressure_avg10(kind: str, root: Path = Path("/proc/pressure")) -> dict[str,
     return values
 
 
+def _pressure_windows(path: Path) -> dict[str, dict[str, float]]:
+    values: dict[str, dict[str, float]] = {}
+    for line in path.read_text().splitlines():
+        label, _, rest = line.partition(" ")
+        fields = dict(item.split("=", 1) for item in rest.split() if "=" in item)
+        if "avg10" in fields and "avg60" in fields:
+            values[label] = {key: float(fields[key]) for key in ("avg10", "avg60")}
+    return values
+
+
+def _systemd_unit_properties(service: str) -> dict[str, str]:
+    result = subprocess.run(
+        ["systemctl", "--user", "show", service, "-p", "ActiveState", "-p", "ControlGroup"],
+        capture_output=True,
+        text=True,
+        timeout=5,
+        check=False,
+    )
+    if result.returncode != 0:
+        return {}
+    return dict(line.split("=", 1) for line in result.stdout.splitlines() if "=" in line)
+
+
+def _critical_service_cpu_pressure(
+    *, cgroup_root: Path = Path("/sys/fs/cgroup")
+) -> dict[str, dict[str, Any]]:
+    observed: dict[str, dict[str, Any]] = {}
+    for service in CRITICAL_CPU_SERVICES:
+        try:
+            properties = _systemd_unit_properties(service)
+            active_state = properties.get("ActiveState", "unknown")
+            control_group = properties.get("ControlGroup", "")
+            pressure_path = cgroup_root / control_group.lstrip("/") / "cpu.pressure"
+            pressure = (
+                _pressure_windows(pressure_path)
+                if active_state == "active" and control_group and pressure_path.is_file()
+                else {}
+            )
+        except (OSError, subprocess.SubprocessError, ValueError):
+            active_state = "unknown"
+            pressure = {}
+        observed[service] = {
+            "available": "some" in pressure,
+            "active_state": active_state,
+            "pressure": pressure,
+        }
+    return observed
+
+
 def _available_memory_bytes(path: Path = Path("/proc/meminfo")) -> int:
     for line in path.read_text().splitlines():
         if line.startswith("MemAvailable:"):
@@ -129,6 +187,10 @@ def resource_snapshot(
     other_arena_roots: tuple[Path, ...] = (),
     pressure_root: Path = Path("/proc/pressure"),
     meminfo_path: Path = Path("/proc/meminfo"),
+    cgroup_root: Path = Path("/sys/fs/cgroup"),
+    critical_service_cpu_pressure: dict[str, dict[str, Any]] | None = None,
+    available_cpu_count: int | None = None,
+    host_load_avg1: float | None = None,
 ) -> dict[str, Any]:
     if output_root.is_symlink() or not output_root.is_dir():
         raise ValueError("Gap-detail output root is missing or unsafe")
@@ -137,6 +199,17 @@ def resource_snapshot(
         "available_memory_bytes": _available_memory_bytes(meminfo_path),
         "disk_free_bytes": shutil.disk_usage(output_root).free,
         "cpu_psi": _pressure_avg10("cpu", pressure_root),
+        "available_cpu_count": available_cpu_count
+        if available_cpu_count is not None
+        else len(os.sched_getaffinity(0))
+        if hasattr(os, "sched_getaffinity")
+        else (os.cpu_count() or 1),
+        "host_load_avg1": host_load_avg1 if host_load_avg1 is not None else os.getloadavg()[0],
+        "critical_service_cpu_pressure": (
+            critical_service_cpu_pressure
+            if critical_service_cpu_pressure is not None
+            else _critical_service_cpu_pressure(cgroup_root=cgroup_root)
+        ),
         "memory_psi": _pressure_avg10("memory", pressure_root),
         "io_psi": _pressure_avg10("io", pressure_root),
     }
@@ -158,19 +231,11 @@ def resource_gate(
         MINIMUM_DISK_RESERVE_BYTES + next_artifact_budget_bytes
     ):
         reasons.append("disk_reserve_for_next_job")
-    cpu_psi = snapshot.get("cpu_psi", {})
     memory_psi = snapshot.get("memory_psi", {})
     io_psi = snapshot.get("io_psi", {})
-    if (
-        "some" not in cpu_psi
-        or "some" not in memory_psi
-        or "full" not in memory_psi
-        or "some" not in io_psi
-    ):
+    if "some" not in memory_psi or "full" not in memory_psi or "some" not in io_psi:
         reasons.append("resource_pressure_unavailable")
     else:
-        if cpu_psi["some"] > MAX_CPU_PSI_SOME_AVG10_PERCENT:
-            reasons.append("host_cpu_pressure")
         if (
             memory_psi["some"] > MAX_MEMORY_PSI_SOME_AVG10_PERCENT
             or memory_psi["full"] > MAX_MEMORY_PSI_FULL_AVG10_PERCENT
@@ -178,6 +243,39 @@ def resource_gate(
             reasons.append("host_memory_pressure")
         if io_psi["some"] > MAX_IO_PSI_SOME_AVG10_PERCENT:
             reasons.append("host_io_pressure")
+    cpu_count = snapshot.get("available_cpu_count", 0)
+    load_avg1 = snapshot.get("host_load_avg1")
+    if (
+        not isinstance(cpu_count, int)
+        or cpu_count < 1
+        or not isinstance(load_avg1, (int, float))
+        or not math.isfinite(load_avg1)
+        or load_avg1 < 0
+    ):
+        reasons.append("host_cpu_capacity_unavailable")
+    elif load_avg1 / cpu_count >= HOST_CPU_LOAD_AVG1_PER_CPU_MAX:
+        reasons.append("host_cpu_capacity")
+    service_pressure = snapshot.get("critical_service_cpu_pressure", {})
+    for service in CRITICAL_CPU_SERVICES:
+        metrics = service_pressure.get(service) if isinstance(service_pressure, dict) else None
+        if not isinstance(metrics, dict) or not metrics.get("available", False):
+            reasons.append(f"critical_service_cpu_telemetry_unavailable:{service}")
+            continue
+        pressure = metrics.get("pressure", {})
+        some = pressure.get("some", {}) if isinstance(pressure, dict) else {}
+        if not isinstance(some, dict):
+            reasons.append(f"critical_service_cpu_telemetry_unavailable:{service}")
+            continue
+        try:
+            avg10 = float(some["avg10"])
+            avg60 = float(some["avg60"])
+        except (KeyError, TypeError, ValueError):
+            reasons.append(f"critical_service_cpu_telemetry_unavailable:{service}")
+            continue
+        if not math.isfinite(avg10) or not math.isfinite(avg60) or avg10 < 0 or avg60 < 0:
+            reasons.append(f"critical_service_cpu_telemetry_unavailable:{service}")
+        elif avg10 >= CRITICAL_CPU_SOME_AVG10_MAX or avg60 >= CRITICAL_CPU_SOME_AVG60_MAX:
+            reasons.append(f"critical_service_cpu_pressure:{service}")
     return {"ready": not reasons, "reasons": reasons}
 
 
