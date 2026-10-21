@@ -120,8 +120,8 @@ def allowed_staging_path(path):
     return path.is_relative_to(Path("/tmp")) or path.is_relative_to(STAGING_OUTPUT_ROOT)
 
 
-def inventory(source):
-    """Pin exactly the sidecars listed at entry; fail on any broken boundary."""
+def _inventory_once(source):
+    """Capture one sidecar prefix while the recorder may rotate its open tail."""
     started = datetime.now(UTC).isoformat()
     sidecars = sorted(p for p in source.glob("*.json") if p.name[0].isdigit())
     segments, identities, kinds = [], [], Counter()
@@ -165,6 +165,31 @@ def inventory(source):
     # A rename can precede sidecar publication. Do not silently omit an interior file.
     if any(int(n.split("-", 1)[0]) <= previous for n in unmatched):
         raise ValueError("Finalized segment without sidecar inside pinned prefix")
+    excluded_open = []
+    rotated_open = []
+    for path in sorted(source.glob("*.open")):
+        try:
+            observed_bytes = path.stat().st_size
+        except FileNotFoundError:
+            # The recorder can atomically rename this open file to .seg while
+            # inventory is finishing. Reconcile that transition with the
+            # finalized-file scan above instead of failing on a harmless tail
+            # rotation. An unexplained disappearance still fails closed.
+            finalized = path.with_suffix(".seg")
+            if finalized.is_symlink() or not finalized.is_file():
+                raise ValueError(
+                    f"Open segment disappeared without finalized successor: {path.name}"
+                ) from None
+            rotated_open.append(
+                dict(
+                    file=path.name,
+                    finalized_file=finalized.name,
+                    finalized_bytes=finalized.stat().st_size,
+                )
+            )
+            continue
+        excluded_open.append(dict(file=path.name, observed_bytes=observed_bytes))
+
     summary = dict(
         started_at=started,
         completed_at=datetime.now(UTC).isoformat(),
@@ -181,14 +206,45 @@ def inventory(source):
         identities_sha256=hashlib.sha256(canonical(identities)).hexdigest(),
         last_segment=segments[-1],
         unmatched_finalized=unmatched,
-        excluded_open=[
-            dict(file=p.name, observed_bytes=p.stat().st_size)
-            for p in sorted(source.glob("*.open"))
-        ],
+        excluded_open=excluded_open,
+        open_tail_rotations_during_inventory=rotated_open,
         checkpoint_present=(source / recovery.CHECKPOINT_NAME).exists(),
         scope="metadata only; content checksums NOT yet verified",
     )
     return catalog, identities, summary
+
+
+def inventory(source, max_attempts=3, retry_delay_seconds=0.5):
+    """Return a settled finalized boundary or fail on a persistent publication race."""
+    if max_attempts < 1:
+        raise ValueError("Inventory requires at least one capture attempt")
+
+    retry_events = []
+    for attempt in range(1, max_attempts + 1):
+        catalog, identities, summary = _inventory_once(source)
+        unmatched = summary["unmatched_finalized"]
+        rotations = summary["open_tail_rotations_during_inventory"]
+        if unmatched or rotations:
+            retry_events.append(
+                dict(
+                    attempt=attempt,
+                    unmatched_finalized=unmatched,
+                    open_tail_rotations=rotations,
+                )
+            )
+            if attempt < max_attempts:
+                time.sleep(retry_delay_seconds)
+                continue
+            raise ValueError(
+                f"Source inventory did not settle after {max_attempts} snapshots: "
+                f"unmatched finalized segments={unmatched}; open-tail rotations={rotations}"
+            )
+
+        summary["capture_attempts"] = attempt
+        summary["capture_retry_events"] = retry_events
+        return catalog, identities, summary
+
+    raise AssertionError("unreachable inventory retry state")
 
 
 def admission(baseline_events=None):

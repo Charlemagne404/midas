@@ -98,6 +98,52 @@ def test_inventory_pins_finalized_only_without_claiming_hash_verification(tmp_pa
     assert open_tail.read_bytes() == original_tail
 
 
+def test_inventory_reconciles_open_tail_renamed_during_snapshot(tmp_path, monkeypatch):
+    source = fixture(tmp_path)
+    store = Store(source, reserve=1)
+    store.append("gap", {"reason": "synthetic_three"})
+    store.close()
+    finalized = sorted(source.glob("*.seg"))[-1]
+    sidecar = finalized.with_suffix(".json")
+    open_tail = finalized.with_suffix(".open")
+    pending_sidecar = tmp_path / sidecar.name
+    finalized.rename(open_tail)
+    sidecar.rename(pending_sidecar)
+    original_stat = Path.stat
+    rotated = False
+
+    def rotate_before_open_stat(path, *args, **kwargs):
+        nonlocal rotated
+        if path == open_tail and not rotated:
+            open_tail.rename(finalized)
+            pending_sidecar.rename(sidecar)
+            rotated = True
+        return original_stat(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "stat", rotate_before_open_stat)
+    catalog, identities, summary = validation.inventory(source)
+
+    assert rotated
+    assert len(catalog["segments"]) == len(identities) == 2
+    assert summary["last_ordinal"] == 3
+    assert summary["excluded_open"] == []
+    assert summary["unmatched_finalized"] == []
+    assert summary["capture_attempts"] == 2
+    assert summary["capture_retry_events"] == [
+        dict(
+            attempt=1,
+            unmatched_finalized=[],
+            open_tail_rotations=[
+                dict(
+                    file=open_tail.name,
+                    finalized_file=finalized.name,
+                    finalized_bytes=finalized.stat().st_size,
+                )
+            ],
+        )
+    ]
+
+
 def test_candidate_source_hash_is_required_and_exact(tmp_path):
     packages = tmp_path / "packages"
     reality = packages / "midas" / "reality"
