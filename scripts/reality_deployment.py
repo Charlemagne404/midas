@@ -658,7 +658,7 @@ def main() -> None:
     parser.add_argument(
         "--output", type=Path, default=WORKSPACE / "docs/REALITY_GATE_A_DEPLOYMENT.json"
     )
-    parser.add_argument("--archive-budget", type=int, default=24 * 1024**3)
+    parser.add_argument("--archive-budget", type=int, default=112 * 1024**3)
     parser.add_argument("--health-timeout-seconds", type=int, default=2700)
     parser.add_argument("--stability-seconds", type=int, default=300)
     parser.add_argument("--repair-cached-snapshots", action="store_true")

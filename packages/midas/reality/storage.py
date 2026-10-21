@@ -13,7 +13,7 @@ import time
 import uuid
 import zlib
 from collections import Counter
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from pathlib import Path
 from typing import Any, BinaryIO, cast
 
@@ -83,9 +83,7 @@ def _record_stream(
 
 
 class _HashingReader:
-    def __init__(
-        self, source: BinaryIO, digest: Any, copy_to: Any = None
-    ) -> None:
+    def __init__(self, source: BinaryIO, digest: Any, copy_to: Any = None) -> None:
         self.source = source
         self.digest = digest
         self.copy_to = copy_to
@@ -150,10 +148,7 @@ def _validate_manifest_metadata(path: Path, info: Any) -> dict[str, Any]:
         info.get("count"),
         info.get("kinds"),
     )
-    if any(
-        type(value) is not int or value < 0
-        for value in (first_value, last_value, count_value)
-    ):
+    if any(type(value) is not int or value < 0 for value in (first_value, last_value, count_value)):
         raise ValueError(f"Invalid segment manifest counters: {path}")
     first, last, count = (
         cast(int, first_value),
@@ -411,7 +406,12 @@ def read_manifest(root: Path, value: dict[str, Any]) -> Iterator[dict[str, Any]]
                 yield record
 
 
-def _read_manifest_for_replay(root: Path, value: dict[str, Any]) -> Iterator[dict[str, Any]]:
+def _read_manifest_for_replay(
+    root: Path,
+    value: dict[str, Any],
+    *,
+    before_segment: Callable[[], None] | None = None,
+) -> Iterator[dict[str, Any]]:
     """Verify and stream records into private replay state with bounded memory.
 
     The final segment digest is checked after records have been yielded. Replay
@@ -425,6 +425,8 @@ def _read_manifest_for_replay(root: Path, value: dict[str, Any]) -> Iterator[dic
     for info in value["segments"]:
         if Path(info["file"]).name != info["file"]:
             raise ValueError("Unsafe segment path")
+        if before_segment is not None:
+            before_segment()
         path = root / info["file"]
         first = last = count = 0
         kinds: dict[str, int] = {}

@@ -1,12 +1,20 @@
 """Storage operations fixtures are artificial, never market evidence."""
 
 import json
+import time
 from pathlib import Path
 from unittest.mock import patch
 
+import midas.reality.operations as operations
 import pytest
 from midas.reality.config import Config
-from midas.reality.operations import archive, archive_capacity, capacity
+from midas.reality.operations import (
+    archive,
+    archive_capacity,
+    capacity,
+    wait_for_archive_io_window,
+)
+from midas.reality.replay import replay
 from midas.reality.storage import Store, atomic_json, file_hash, manifest
 
 
@@ -45,6 +53,126 @@ def test_capacity_real_bytes_rates_and_horizon(tmp_path):
     assert result["estimated_action_deadline_ns"] > 121_000_000_000
 
 
+def _archive_cgroup_tree(tmp_path, monkeypatch, services):
+    archive_cgroup = (
+        tmp_path
+        / "user.slice"
+        / "user-1000.slice"
+        / "user@1000.service"
+        / "app.slice"
+        / "midas-reality-archive.service"
+    )
+    archive_cgroup.mkdir(parents=True)
+    for name, (populated, pressure) in services.items():
+        cgroup = archive_cgroup.parent / name
+        cgroup.mkdir()
+        (cgroup / "cgroup.events").write_text(f"populated {int(populated)}\nfrozen 0\n")
+        if pressure is not None:
+            (cgroup / "io.pressure").write_text(
+                f"some avg10={pressure[0]} avg60={pressure[1]} avg300=0 total=0\n"
+                f"full avg10={pressure[0]} avg60={pressure[1]} avg300=0 total=0\n"
+            )
+    monkeypatch.setattr(
+        "midas.reality.operations._current_cgroup_directory", lambda: archive_cgroup
+    )
+    return archive_cgroup
+
+
+def test_archive_io_admission_waits_for_a_stable_quiet_window(monkeypatch):
+    values = iter(
+        (
+            {"midas-reality.service": (4.1, 3.0)},
+            {"midas-reality.service": (1.9, 1.9)},
+            {"midas-reality.service": (1.8, 1.7)},
+        )
+    )
+    sleeps = []
+    monkeypatch.setattr(
+        "midas.reality.operations._active_midas_service_io_pressure", lambda: next(values)
+    )
+    monkeypatch.setattr("midas.reality.operations._host_io_full_pressure", lambda: (5.0, 5.0))
+    monkeypatch.setattr("midas.reality.operations.time.sleep", sleeps.append)
+    wait_for_archive_io_window(time.monotonic() + 30, stable_seconds=10)
+    assert sleeps == [5.0, 5.0]
+
+
+def test_archive_io_admission_fails_closed_at_deadline(monkeypatch):
+    monkeypatch.setattr(
+        "midas.reality.operations._active_midas_service_io_pressure",
+        lambda: {"midas-reality.service": (3.0, 3.0)},
+    )
+    monkeypatch.setattr("midas.reality.operations._host_io_full_pressure", lambda: (0.0, 0.0))
+    with pytest.raises(TimeoutError, match="did not clear"):
+        wait_for_archive_io_window(time.monotonic() - 1)
+
+
+def test_archive_admission_tracks_active_midas_service_cgroups(tmp_path, monkeypatch):
+    _archive_cgroup_tree(
+        tmp_path,
+        monkeypatch,
+        {
+            "midas-reality.service": (True, (0.2, 0.1)),
+            "midas-api.service": (True, (0.4, 0.3)),
+            "midas-web.service": (False, (0.0, 0.0)),
+        },
+    )
+    assert operations._active_midas_service_io_pressure() == {
+        "midas-reality.service": (0.2, 0.1),
+        "midas-api.service": (0.4, 0.3),
+    }
+
+
+def test_archive_admission_requires_live_recorder_telemetry(tmp_path, monkeypatch):
+    archive_cgroup = _archive_cgroup_tree(
+        tmp_path,
+        monkeypatch,
+        {"midas-reality.service": (False, (0.0, 0.0))},
+    )
+    with pytest.raises(RuntimeError, match="not populated"):
+        operations._active_midas_service_io_pressure()
+    (archive_cgroup.parent / "midas-reality.service" / "cgroup.events").write_text(
+        "populated 1\nfrozen 0\n"
+    )
+    (archive_cgroup.parent / "midas-reality.service" / "io.pressure").unlink()
+    with pytest.raises(FileNotFoundError):
+        operations._active_midas_service_io_pressure()
+
+
+def test_archive_admission_wait_gets_fresh_per_window_deadline(tmp_path, monkeypatch):
+    root, target = tmp_path / "raw", tmp_path / "archive"
+    value = sample(root)
+    clock = [100.0]
+    deadlines = []
+
+    def monotonic():
+        clock[0] += 1.0
+        return clock[0]
+
+    monkeypatch.setattr("midas.reality.operations.time.monotonic", monotonic)
+    monkeypatch.setattr(
+        "midas.reality.operations.wait_for_archive_io_window",
+        lambda deadline, **kwargs: deadlines.append(deadline),
+    )
+    archive(
+        root,
+        target,
+        budget=1_000_000,
+        reserve=1,
+        resource_admission_timeout_seconds=100,
+        operation_timeout_seconds=1_000,
+    )
+
+    assert len(deadlines) == 1 + 2 * len(value["segments"])
+    assert all(deadlines[index + 1] > deadlines[index] for index in range(len(deadlines) - 1))
+
+
+def test_replay_checks_resource_window_before_each_segment(tmp_path):
+    value = sample(tmp_path)
+    windows = []
+    replay(tmp_path, value, before_segment=lambda: windows.append(True))
+    assert windows == [True] * len(value["segments"])
+
+
 def test_capacity_reports_last_started_budget_until_recorder_confirms_restart(tmp_path):
     sample(tmp_path)
     old_budget = 2 * 1024**2
@@ -80,6 +208,46 @@ def test_capacity_reports_last_started_budget_until_recorder_confirms_restart(tm
     assert active["budget_bytes"] == new_budget
     assert active["budget_change_pending_restart"] is False
     assert "BUDGET_CHANGE_PENDING_RESTART" not in active["alerts"]
+
+
+def test_capacity_reports_last_started_retention_until_recorder_confirms_restart(tmp_path):
+    sample(tmp_path)
+    atomic_json(tmp_path / "config.json", {"retention_days": 90})
+    atomic_json(
+        tmp_path / "status.json",
+        dict(
+            updated_ns=121_000_000_000,
+            state="RECORDING_UNSEQUENCED",
+            config={"retention_days": 90},
+        ),
+    )
+
+    pending = capacity(config(tmp_path, retention_days=105), now_ns=121_000_000_000)
+    assert pending["retention_days"] == 90
+    assert pending["effective_retention_days"] == 90
+    assert pending["configured_retention_days"] == 105
+    assert pending["retention_change_pending_restart"] is True
+    assert pending["retention_seconds_remaining"] == 90 * 86400 - 120
+    assert pending["retention_source"] == "collector_status+startup_config"
+    assert "RETENTION_CHANGE_PENDING_RESTART" in pending["alerts"]
+    assert pending["estimated_action_deadline_ns"] == 121_000_000_000 + int(
+        (90 * 86400 - 120) * 1e9
+    )
+
+    atomic_json(tmp_path / "config.json", {"retention_days": 105})
+    atomic_json(
+        tmp_path / "status.json",
+        dict(
+            updated_ns=121_000_000_000,
+            state="RECORDING_UNSEQUENCED",
+            config={"retention_days": 105},
+        ),
+    )
+    active = capacity(config(tmp_path, retention_days=105), now_ns=121_000_000_000)
+    assert active["retention_days"] == 105
+    assert active["retention_change_pending_restart"] is False
+    assert active["retention_seconds_remaining"] == 105 * 86400 - 120
+    assert "RETENTION_CHANGE_PENDING_RESTART" not in active["alerts"]
 
 
 def test_archive_capacity_checks_mount_budget_and_reserve(tmp_path, monkeypatch):

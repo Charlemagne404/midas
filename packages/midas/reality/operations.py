@@ -10,9 +10,11 @@ import argparse
 import fcntl
 import json
 import logging
+import math
 import os
 import shutil
 import time
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
@@ -23,16 +25,138 @@ from .storage import atomic_json, canonical, describe, file_hash, manifest, reco
 CAPACITY_WARNING_SECONDS = 30 * 86400
 CAPACITY_CRITICAL_SECONDS = 14 * 86400
 CAPACITY_ACTION_SECONDS = 7 * 86400
+ARCHIVE_IO_FULL_AVG10_MAX = 2.0
+ARCHIVE_IO_FULL_AVG60_MAX = 2.0
+ARCHIVE_IO_SAMPLE_SECONDS = 5.0
+ARCHIVE_IO_STABLE_SECONDS = 60.0
+ARCHIVE_REQUIRED_PROTECTED_SERVICES = {"midas-reality.service"}
 
 
-def _last_started_budget(
-    root: Path, configured_budget: int, status: dict[str, Any]
+def _host_io_full_pressure() -> tuple[float, float]:
+    values = {}
+    for line in Path("/proc/pressure/io").read_text().splitlines():
+        label, _, fields_text = line.partition(" ")
+        fields = dict(part.split("=", 1) for part in fields_text.split() if "=" in part)
+        if label in {"some", "full"}:
+            values[label] = fields
+    if not {"some", "full"}.issubset(values):
+        raise RuntimeError("Host I/O pressure telemetry is unavailable")
+    avg10 = float(values["full"]["avg10"])
+    avg60 = float(values["full"]["avg60"])
+    if not math.isfinite(avg10) or not math.isfinite(avg60):
+        raise RuntimeError("Host I/O pressure telemetry is invalid")
+    return avg10, avg60
+
+
+def _current_cgroup_directory() -> Path:
+    for line in Path("/proc/self/cgroup").read_text().splitlines():
+        hierarchy, controllers, relative_path = line.split(":", 2)
+        if hierarchy == "0" and not controllers:
+            directory = Path("/sys/fs/cgroup") / relative_path.lstrip("/")
+            if not directory.is_dir():
+                raise RuntimeError("Current cgroup telemetry is unavailable")
+            return directory
+    raise RuntimeError("Unified cgroup telemetry is unavailable")
+
+
+def _read_cgroup_io_full_pressure(path: Path) -> tuple[float, float]:
+    values = {}
+    for line in path.read_text().splitlines():
+        label, _, fields_text = line.partition(" ")
+        fields = dict(part.split("=", 1) for part in fields_text.split() if "=" in part)
+        if label in {"some", "full"}:
+            values[label] = fields
+    if not {"some", "full"}.issubset(values):
+        raise RuntimeError(f"I/O pressure telemetry is unavailable: {path}")
+    avg10 = float(values["full"]["avg10"])
+    avg60 = float(values["full"]["avg60"])
+    if not math.isfinite(avg10) or not math.isfinite(avg60):
+        raise RuntimeError(f"I/O pressure telemetry is invalid: {path}")
+    return avg10, avg60
+
+
+def _active_midas_service_io_pressure() -> dict[str, tuple[float, float]]:
+    """Return I/O pressure for active MIDAS services beside the archive unit."""
+    archive_cgroup = _current_cgroup_directory()
+    if archive_cgroup.name != "midas-reality-archive.service":
+        raise RuntimeError("Archive must run in its dedicated systemd service cgroup")
+    service_parent = archive_cgroup.parent
+    protected: dict[str, tuple[float, float]] = {}
+    discovered: set[str] = set()
+    for service_cgroup in service_parent.glob("midas-*.service"):
+        if not service_cgroup.is_dir() or service_cgroup.name == archive_cgroup.name:
+            continue
+        name = service_cgroup.name
+        discovered.add(name)
+        events = dict(
+            line.split(maxsplit=1)
+            for line in (service_cgroup / "cgroup.events").read_text().splitlines()
+            if " " in line
+        )
+        if events.get("populated") != "1":
+            continue
+        protected[name] = _read_cgroup_io_full_pressure(service_cgroup / "io.pressure")
+    missing = ARCHIVE_REQUIRED_PROTECTED_SERVICES - discovered
+    if missing:
+        raise RuntimeError(
+            "Required protected service cgroup is unavailable: " + ", ".join(sorted(missing))
+        )
+    if any(name not in protected for name in ARCHIVE_REQUIRED_PROTECTED_SERVICES):
+        raise RuntimeError("Protected Reality recorder cgroup is not populated")
+    return protected
+
+
+def wait_for_archive_io_window(deadline: float, *, stable_seconds: float = 0) -> None:
+    """Wait for active MIDAS service cgroups to clear the I/O pressure gate.
+
+    Host-wide PSI is retained as an advisory signal. Admission follows the
+    protected service cgroups because unrelated host services can dominate the
+    global value while the recorder and MIDAS APIs remain healthy.
+    """
+    required_samples = max(1, math.ceil(stable_seconds / ARCHIVE_IO_SAMPLE_SECONDS))
+    stable_samples = 0
+    last_notice = 0.0
+    while True:
+        service_pressure = _active_midas_service_io_pressure()
+        pressured = {
+            name: values
+            for name, values in service_pressure.items()
+            if values[0] >= ARCHIVE_IO_FULL_AVG10_MAX or values[1] >= ARCHIVE_IO_FULL_AVG60_MAX
+        }
+        try:
+            host_pressure: tuple[float, float] | None = _host_io_full_pressure()
+        except (OSError, RuntimeError, ValueError, KeyError):
+            host_pressure = None
+        if not pressured:
+            stable_samples += 1
+            if stable_samples >= required_samples:
+                return
+        else:
+            stable_samples = 0
+        now = time.monotonic()
+        if now >= deadline:
+            raise TimeoutError(
+                "Archive I/O admission window did not clear before its configured deadline"
+            )
+        if now - last_notice >= 60:
+            logging.warning(
+                "Archive waiting for MIDAS service I/O headroom: pressured=%s; "
+                "host full PSI advisory=%s",
+                pressured,
+                host_pressure,
+            )
+            last_notice = now
+        time.sleep(ARCHIVE_IO_SAMPLE_SECONDS)
+
+
+def _last_started_setting(
+    root: Path, configured_value: int, status: dict[str, Any], key: str
 ) -> tuple[int, str]:
-    """Use the last-started writer configuration until runtime status confirms a change."""
+    """Use the last-started collector setting until status confirms a change."""
     observed: list[tuple[str, int]] = []
     status_config = status.get("config")
     if isinstance(status_config, dict):
-        value = status_config.get("budget_bytes")
+        value = status_config.get(key)
         if isinstance(value, int) and not isinstance(value, bool) and value > 0:
             observed.append(("collector_status", value))
     startup_path = root / "config.json"
@@ -42,15 +166,21 @@ def _last_started_budget(
         except (OSError, json.JSONDecodeError):
             startup_config = {}
         if isinstance(startup_config, dict):
-            value = startup_config.get("budget_bytes")
+            value = startup_config.get(key)
             if isinstance(value, int) and not isinstance(value, bool) and value > 0:
                 observed.append(("startup_config", value))
     if not observed:
-        return configured_budget, "configured_fallback"
+        return configured_value, "configured_fallback"
     # If status and its startup receipt disagree, use the lower known limit until reconciled.
     effective = min(value for _, value in observed)
     source = "+".join(name for name, value in observed if value == effective)
     return effective, source
+
+
+def _last_started_budget(
+    root: Path, configured_budget: int, status: dict[str, Any]
+) -> tuple[int, str]:
+    return _last_started_setting(root, configured_budget, status, "budget_bytes")
 
 
 def archive_capacity(
@@ -197,16 +327,24 @@ def capacity(
     free = shutil.disk_usage(root).free
     runtime_budget, budget_source = _last_started_budget(root, config.budget_bytes, status)
     budget_pending = runtime_budget != config.budget_bytes
+    runtime_retention_days, retention_source = _last_started_setting(
+        root, config.retention_days, status, "retention_days"
+    )
+    retention_pending = runtime_retention_days != config.retention_days
     headroom = min(runtime_budget - used, free - config.reserve_bytes)
     storage_seconds = max(0, headroom) / rate if rate else None
     retention_seconds = (
-        max(0, config.retention_days * 86400 - (now - oldest) / 1e9) if oldest is not None else None
+        max(0, runtime_retention_days * 86400 - (now - oldest) / 1e9)
+        if oldest is not None
+        else None
     )
     horizons = [x for x in (storage_seconds, retention_seconds) if x is not None]
     deadline = min(horizons) if horizons else None
     alerts = []
     if budget_pending:
         alerts.append("BUDGET_CHANGE_PENDING_RESTART")
+    if retention_pending:
+        alerts.append("RETENTION_CHANGE_PENDING_RESTART")
     if headroom <= 0:
         alerts.append("CAPACITY_EXHAUSTED")
     elif runtime_budget - used < max(config.segment_bytes * 2, runtime_budget * 0.1):
@@ -229,9 +367,11 @@ def capacity(
         value is not None
         for value in (archive_path, archive_budget, archive_reserve, archive_mountpoint)
     ):
-        if any(
-            value is None
-            for value in (archive_path, archive_budget, archive_reserve, archive_mountpoint)
+        if (
+            archive_path is None
+            or archive_budget is None
+            or archive_reserve is None
+            or archive_mountpoint is None
         ):
             raise ValueError("Archive monitoring requires path, budget, reserve, and mountpoint")
         archive_report = archive_capacity(
@@ -259,6 +399,11 @@ def capacity(
         configured_budget_bytes=config.budget_bytes,
         budget_source=budget_source,
         budget_change_pending_restart=budget_pending,
+        retention_days=runtime_retention_days,
+        effective_retention_days=runtime_retention_days,
+        configured_retention_days=config.retention_days,
+        retention_source=retention_source,
+        retention_change_pending_restart=retention_pending,
         filesystem_free_bytes=free,
         free_disk_reserve_bytes=config.reserve_bytes,
         available_headroom_bytes=max(0, headroom),
@@ -300,7 +445,15 @@ def file_hash_list(segments: list[dict[str, Any]]) -> str:
     return hashlib.sha256(canonical(segments)).hexdigest()
 
 
-def archive(root: Path, destination: Path, *, budget: int, reserve: int) -> dict[str, Any]:
+def archive(
+    root: Path,
+    destination: Path,
+    *,
+    budget: int,
+    reserve: int,
+    resource_admission_timeout_seconds: float = 0,
+    operation_timeout_seconds: float = 0,
+) -> dict[str, Any]:
     """Incrementally copy finalized segments; publish only after full validation.
 
     Interrupted copies may be resumed. Every existing segment is verified, never
@@ -311,6 +464,36 @@ def archive(root: Path, destination: Path, *, budget: int, reserve: int) -> dict
         raise ValueError("Archive must be separate from raw recorder root")
     if budget <= 0 or reserve <= 0:
         raise ValueError("Archive budget and reserve must be positive")
+    if (
+        not math.isfinite(resource_admission_timeout_seconds)
+        or resource_admission_timeout_seconds < 0
+    ):
+        raise ValueError("Archive resource-admission timeout must be finite and nonnegative")
+    if not math.isfinite(operation_timeout_seconds) or operation_timeout_seconds < 0:
+        raise ValueError("Archive operation timeout must be finite and nonnegative")
+    operation_deadline = (
+        time.monotonic() + operation_timeout_seconds if operation_timeout_seconds else None
+    )
+    before_segment: Callable[[], None] | None = None
+    if resource_admission_timeout_seconds:
+        initial_deadline = time.monotonic() + resource_admission_timeout_seconds
+        if operation_deadline is not None:
+            initial_deadline = min(initial_deadline, operation_deadline)
+        wait_for_archive_io_window(initial_deadline, stable_seconds=ARCHIVE_IO_STABLE_SECONDS)
+
+    if resource_admission_timeout_seconds or operation_deadline is not None:
+
+        def check_segment_admission() -> None:
+            now = time.monotonic()
+            if operation_deadline is not None and now >= operation_deadline:
+                raise TimeoutError("Archive exceeded its configured operation runtime")
+            if resource_admission_timeout_seconds:
+                deadline = now + resource_admission_timeout_seconds
+                if operation_deadline is not None:
+                    deadline = min(deadline, operation_deadline)
+                wait_for_archive_io_window(deadline)
+
+        before_segment = check_segment_admission
     destination.mkdir(parents=True, exist_ok=True, mode=0o700)
     with (destination / "archive.lock").open("a") as lock:
         try:
@@ -328,6 +511,8 @@ def archive(root: Path, destination: Path, *, budget: int, reserve: int) -> dict
         value = manifest(root)
         used = sum(p.stat().st_size for p in destination.iterdir() if p.is_file())
         for info in value["segments"]:
+            if before_segment is not None:
+                before_segment()
             if Path(info["file"]).name != info["file"]:
                 raise ValueError("Unsafe segment path")
             source, target = root / info["file"], destination / info["file"]
@@ -366,7 +551,7 @@ def archive(root: Path, destination: Path, *, budget: int, reserve: int) -> dict
                 active_segment_included=False,
             ),
         )
-        replay(destination, value)  # Verify global ordering and online checkpoints too.
+        replay(destination, value, before_segment=before_segment)
         if used + len(canonical(published)) > budget:
             raise OSError("Archive publication exceeds budget; originals preserved")
         if shutil.disk_usage(destination).free < reserve + len(canonical(published)):
@@ -386,6 +571,18 @@ def main() -> None:
     parser.add_argument("--archive-budget-bytes", type=int)
     parser.add_argument("--archive-reserve-bytes", type=int)
     parser.add_argument("--archive-mountpoint", type=Path)
+    parser.add_argument(
+        "--resource-admission-timeout-seconds",
+        type=float,
+        default=0,
+        help="Maximum wait for each initial or per-segment MIDAS service I/O window.",
+    )
+    parser.add_argument(
+        "--operation-timeout-seconds",
+        type=float,
+        default=6 * 60 * 60,
+        help="Bound the complete archive operation; use a separate per-window admission timeout.",
+    )
     args = parser.parse_args()
     config = Config.load(args.config)
     if args.command == "capacity":
@@ -406,7 +603,12 @@ def main() -> None:
         if args.budget_bytes is None or args.reserve_bytes is None:
             parser.error("archive requires explicit --budget-bytes and --reserve-bytes")
         result = archive(
-            Path(config.root), args.output, budget=args.budget_bytes, reserve=args.reserve_bytes
+            Path(config.root),
+            args.output,
+            budget=args.budget_bytes,
+            reserve=args.reserve_bytes,
+            resource_admission_timeout_seconds=args.resource_admission_timeout_seconds,
+            operation_timeout_seconds=args.operation_timeout_seconds,
         )
         print(
             json.dumps(
