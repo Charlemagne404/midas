@@ -1,6 +1,6 @@
 # MIDAS Frontier Readiness — Live Engineering Journal
 
-**Mission state:** IN PROGRESS — the capacity monitor now separates sustained growth from a short burst; the candidate’s stale-error fix and typing correction are pushed and its full verification passes. The protected Reality recorder remains running and untouched. A fresh loopback canary and deployment preflight remain before the exact protected-transition approval request.
+**Mission state:** FINALIZATION COMPLETE — the protected Reality recorder remains running and untouched; R14 current-suffix verification passed. The production candidate remains undeployed, and the Frontier readiness gates below remain evidence-based.
 
 **Journal started:** 2026-10-21 00:01 CEST. This file is the live blocker ledger and will be updated as measurements, fixes, and deployment preparation complete.
 
@@ -1062,3 +1062,62 @@ The prepared allocation includes the existing 20 GiB raw reserve and shared-serv
 - The operator decision now is whether to retain or later authorize a controlled reconciliation of the 6.18 GB preserved Continental staging tree, and whether to resume the Frontier-readiness work after reviewing the missing current-suffix and production-source-health evidence. The archive timer remains disabled until the archive integrity policy is satisfied. A future protected restart requires its own explicit approval; none was performed here.
 
 **Final outcome:** The host is left stable with protected Reality and routine APIs running, all validation workers stopped, the unverified archive writer and its timer inactive, and all historical/staging evidence preserved. The evidence supports meaningful readiness progress, but does not support declaring the infrastructure ready for Frontier production expansion. This is the final handoff requested; the broader readiness mission is not continued after this report.
+
+## Controlled finalization closeout — 2026-10-21 23:10 CEST
+
+This section supersedes the earlier finalization notes where they say the R14 current-suffix canary had not run. It records the last bounded worker and final production snapshot. No broader investigation, endurance test, expansion profile, production deployment, cleanup, or protected service restart was started during this closeout.
+
+### In-flight worker and final integrity result
+
+- At entry, the already-running midas-current-suffix-canary-r14-20261021.service was active in its bounded user cgroup. It was allowed to finish. It exited successfully after 349.979 seconds; no validation process remains active. The transient unit is now inactive/dead and left no persistent policy change.
+- R14 passed in verified_r10_checkpoint_plus_current_suffix mode. It verified the 19,546-segment / 5,288,840,839-byte R10 prefix and reconstructed/checkpoint-verified all 564 newer segments / 152,468,737 bytes, for a pinned boundary of 20,110 finalized segments / 5,441,309,576 bytes. The suffix recovery result was source_integrity=verified, 564 tail checkpoints verified, and 199.912 seconds. R10 cold reconstruction and recovery interruption/corrupt-checkpoint cases remain the prior full-matrix evidence; R14 did not repeat a full cold replay at the newer boundary.
+- The 10-market loopback fixture ran for 75 seconds. Its active sample was 20/20 fresh books for a complete 60-second persistence window, zero failures, queue high-water 19/32 without saturation, 721 new fixture frames, and two explicit fixture gaps. Recent p95 persistence was 5.02 ms and recent maximum was 86.49 ms. Sequence remained unverified, as expected for this upstream feed. No unexpected external routes were recorded. The host did not enforce the requested PrivateNetwork namespace; fixtures used a loopback WebSocket and in-process HTTP mocks, so the result is not evidence of enforced network isolation.
+- Candidate collector startup measured 205.813 seconds; first new durable fixture record was at 224.102 seconds. Systemd reported 44.805 CPU seconds, a 671,612,928-byte peak (640.5 MiB) against 640 MiB MemoryHigh and 768 MiB MemoryMax, zero swap, zero max/OOM/OOM-kill events, and 10,050 soft-high events. Host I/O full PSI avg60 peaked at 1.49%. The peak barely crossed the soft boundary but remained below the hard limit.
+- The raw source link metadata fingerprint was unchanged across R14. Its full receipt SHA-256 is edac25b0784ff2417c2d9f89b92db4a1e7b625a620a175c39c055029d804a6d5. A concise, committed evidence summary is in REALITY_FRONTIER_CURRENT_SUFFIX_R14_20261021.json in the candidate worktree; the full receipt remains in its ignored staging directory on NVMe.
+- The R14 boundary is pinned evidence, not a continuously current boundary. The protected recorder kept collecting after the snapshot, so later appends are outside that receipt until covered by a subsequent inventory.
+
+### Continental Cloud staging and NVMe accounting
+
+- /mnt/continental-cloud is /dev/sda4, a separate 604 GiB ext4 filesystem. Final df showed 5.8 GiB used and 592 GiB available. Its data/midas-reality-staging tree accounts for about 6.18 GB decimal (5.8 GiB); it is not consuming NVMe capacity.
+- The largest Cloud staging directory is archive-mission3: about 5.3 GB of segment files. Its source.json identifies the live Reality recording root as the source. The manifest publishes 18,695 segments / 4,927,915,858 bytes through ordinal 2,717,019, while the directory contains 19,833 finalized .seg files / 5,369,550,131 bytes; the 1,138 finalized-but-unpublished segments remain unadopted. The earlier inventory also recorded 58 .copying files. The manifest/provenance is therefore still invalid for automatic archive use.
+- The remaining Cloud entries are small collector handoff, recovery-validation, and boundary-verification receipts/scripts. They are owned by charlie:charlie; the recovery-validation roots have restricted directory modes. The archive timer is disabled, its service is inactive, and the final process/file-descriptor scan found no active writer under the staging tree. Its prior journal records pressure waits and a stopped archive attempt. No Cloud file was changed or deleted in this closeout, and no Cloud writer was started. The unrelated Continental services and scheduled Cloud policies were left alone.
+- NVMe /dev/nvme0n1p2 was 468 GiB total, 280 GiB used, and 164 GiB available (64%). Relevant project usage measured by directory accounting: MIDAS 14 GiB, Reality 15 GiB, Veritas 1.2 GiB, and the candidate worktree 619 MiB. Reality’s active raw tree was about 5.45 GB decimal; the preserved local archive was about 4.0 GiB. The candidate recordings tree was about 545 MiB, including the R13 and R14 roots at roughly 182 MiB each and the earlier R10 evidence root. These remain intact; no cleanup was performed.
+
+### Production and service state at closeout
+
+- Protected midas-reality.service remained active as PID 863193, restart count 1, started 2026-10-19 00:50:57 CEST. Latest status at 23:09 CEST was RECORDING_UNSEQUENCED, 16/16 expected books fresh, 8 markets, ordinal 3,046,023, 11,649 gap markers, 27 failures, zero timing-uncertain books, and sequence_verified=false. The current status still contains the Gamma API HTTP 404 in error. Comparison counters were 158 stable-lineage divergences, 391 concurrent-update-ambiguous comparisons, 65 stale-local-state comparisons, and 15,336 stable unsequenced matches. These are evidence categories and do not prove upstream event loss or completeness.
+- Production Reality remained on its older package and loaded 24 GiB / 90-day configuration. Current reported raw usage was 5,453,802,168 bytes; the active cap leaves 20,316,001,608 bytes. At the latest sustained 1,116,611,552 bytes/day forecast, this is about 18.19 days of application-budget runway. The prepared candidate configuration is 112 GiB / 120 days and remains inactive; changing the configuration file does not reload PID 863193.
+- Reality’s cgroup was at 1,206,530,048 bytes against MemoryHigh=1,207,959,552 and MemoryMax=1,342,177,280 (about 1.43 MB below the soft boundary and 135.65 MB below the hard limit). Current cgroup memory PSI was zero; accumulated high events were 127,572, while max, oom, and oom_kill were zero. Cgroup swap charge was 671,744 bytes. This is not an observed OOM, but the soft-boundary margin is small.
+- Main API PID 992948 and the local web service PID 2513652 remained active with zero restarts. /api/health returned HTTP 200 and READY on both ports 8000 and 8010; both reported live_execution=false. Routine Arena, Reality capacity, and Veritas schedules were left in their normal enabled state. The Reality archive timer remains disabled pending manifest/provenance reconciliation.
+- No Reality stop, signal, restart, configuration reload, or production symlink change occurred. No raw observations, frozen campaigns, manifests, or research provenance were deleted or rewritten.
+
+### Final readiness gates
+
+| Area | Closeout verdict | Evidence and limitation |
+|---|---|---|
+| Storage sustainability | **CONDITIONALLY READY** | A measured 112 GiB / 120-day configuration is prepared and physical NVMe capacity is ample, but production still enforces the 24 GiB cap with about 18.19 days at the latest forecast. Activation requires a protected restart. |
+| Reality data quality | **DEGRADED** | Freshness is 16/16 at the latest sample, but production retains stale Gamma 404 reporting, 11,649 gap markers, 158 scoped stable-lineage divergences, and no upstream sequence guarantee. |
+| Reality recovery | **VERIFIED WITH BOUNDED SCOPE** | R10 full matrix plus R14 verifies the full pinned 20,110-segment boundary using a verified checkpoint and reconstructed suffix. No new cold replay at the R14 boundary was run, and live appends after the pin are outside its receipt. |
+| Reality production deployment | **REQUIRES MORE WORK** | R14 is candidate-only. No post-R14 production transition preflight was completed; the protected recorder remains on the old package/config. Any restart still requires explicit approval. |
+| Host efficiency | **CONDITIONALLY READY** | Prior 61-minute production averages remain CPU ~14% and I/O-full PSI ~0.79%; R14 completed under resource limits without OOM. Production Reality is very near MemoryHigh, so its memory margin needs attention before expansion. |
+| Research scheduling | **SUFFICIENT FOR BOUNDED WORK** | Existing one-worker lifecycle and cleanup evidence stands; normal scheduling policies are active. |
+| Heavy research | **CONDITIONALLY SUFFICIENT** | One training-inclusive worker passed 64 minutes. Two-heavy-worker sustainable capacity remains unproven. |
+| Frontier engineering readiness | **NOT READY** | Recovery confidence improved, but live storage budget, degraded production health reporting, deployment verification, and multi-source capacity remain unresolved. No Frontier integrations were started. |
+| Frontier production expansion | **NOT READY** | Production collector candidate is undeployed; source-quality and storage controls are not active at the prepared limits; multi-source workload capacity is not measured. |
+| New 48-hour campaign | **NOT READY / NOT RUN** | No new campaign was launched. |
+| Historical integrity | **PRESERVED** | Protected observations and archived research remain intact. Cloud archive output remains incomplete and is preserved without automatic publication. |
+
+### Exact next decisions
+
+1. No decision is needed to keep the present host stable: the protected recorder and routine services are running, R14 is finished, and the archive writer/timer are inactive.
+2. Before a future Reality transition, engineering must refresh and review the deployment preflight against the pinned R14 evidence and latest live state. After that, the required user decision is explicit approval or rejection of one guarded stop/start of Reality to load candidate source identity f0b1ce9877fbbe31a10d9d9f63c9e33df4c9b0bcee65979c53eb2b53402143c0 and the prepared 112 GiB / 120-day configuration. Candidate evidence measured about 224 seconds to first durable record; production downtime is uncertain and gaps during restart cannot be reconstructed from an unsequenced source. The rollback remains a separately guarded restoration of the recorded old package/config.
+3. Keep the 6.18 GB decimal Cloud staging tree preserved. Before any cleanup or archive-timer re-enable, decide the retention policy after reconciling the 1,138 unpublished finalized segments and provenance; no such change is needed for this handoff.
+4. Frontier development and any production source expansion remain deferred under this closeout. No integration, live collector, trade, new campaign, or protected service interruption was initiated.
+
+### Closeout commits
+
+- MIDAS inventory-race fix and regression case: 08a5669 (fix(reliability): retry recorder tail inventory races). The focused inventory tests had previously passed 3/3; Ruff and git diff --check passed.
+- Candidate staging/canary helpers and R14 evidence summary: 4278b5b (test(reality): record current suffix canary evidence). The helper files had previously passed py_compile and Ruff; the R14 canary and receipt integrity check passed.
+- The final report is committed separately. Existing unrelated modified/untracked work in the MIDAS and candidate worktrees was preserved and excluded from the commits.
+
+**Closeout outcome:** R14 resolved the missing pinned-suffix evidence, and the recorder remained uninterrupted. The production storage limit, production data-quality status, near-MemoryHigh margin, undeployed candidate, incomplete Cloud archive, and unmeasured multi-source/heavy-research envelope keep MIDAS short of full Frontier readiness. The host is left with no validation worker or unauthorized Cloud writer active; no protected service restart or data cleanup occurred.
