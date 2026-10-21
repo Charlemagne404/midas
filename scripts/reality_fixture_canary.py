@@ -266,6 +266,11 @@ def manifest_record_count(value: dict[str, Any]) -> int:
     return total
 
 
+def frame_wait_timeout_seconds(next_emit: float, now: float) -> float:
+    """Wait for the next fixture send deadline without fixed-poll quantization."""
+    return max(0.001, next_emit - now)
+
+
 async def execute(
     config: Config, duration: float, frame_interval_seconds: float
 ) -> tuple[list[str], list[dict[str, Any]]]:
@@ -357,7 +362,8 @@ async def execute(
                         await socket.send(json.dumps(book(token), separators=(",", ":")))
                     next_emit = now + frame_interval_seconds
                 try:
-                    message = await asyncio.wait_for(socket.recv(), timeout=0.25)
+                    timeout = frame_wait_timeout_seconds(next_emit, time.monotonic())
+                    message = await asyncio.wait_for(socket.recv(), timeout=timeout)
                 except TimeoutError:
                     continue
                 if message == "PING":

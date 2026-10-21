@@ -9,6 +9,7 @@ from scripts.reality_fixture_canary import (
     FIXTURE_PATH,
     build_markets,
     cgroup_directory,
+    frame_wait_timeout_seconds,
     fresh_book_count_at_boundary,
     full_book_coverage_seconds,
     manifest_record_count,
@@ -121,6 +122,14 @@ def test_manifest_record_count_rejects_invalid_indexes():
         manifest_record_count({})
     with pytest.raises(ValueError, match="invalid segment"):
         manifest_record_count({"segments": [{"count": True}]})
+
+
+def test_fixture_wait_uses_exact_remaining_frame_interval():
+    deadline = 10.0 + 1.5625
+
+    assert frame_wait_timeout_seconds(deadline, 10.0) == 1.5625
+    assert frame_wait_timeout_seconds(deadline, 11.5) == 0.0625
+    assert frame_wait_timeout_seconds(deadline, deadline) == 0.001
 
 
 def test_cgroup_directory_resolves_unified_hierarchy():
