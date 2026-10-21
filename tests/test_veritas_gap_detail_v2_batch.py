@@ -12,7 +12,7 @@ def ready_snapshot():
     return {
         "active_arena_job_ids": [],
         "available_memory_bytes": 8 * 1024**3,
-        "disk_free_bytes": 20 * 1024**3,
+        "disk_free_bytes": 24 * 1024**3,
         "cpu_psi": {"some": 0.0},
         "memory_psi": {"some": 0.0, "full": 0.0},
         "io_psi": {"some": 0.0},
@@ -38,6 +38,13 @@ def test_batch_reserves_its_own_memory_above_host_headroom(ready_snapshot):
     ready_snapshot["available_memory_bytes"] = batch.MINIMUM_AVAILABLE_MEMORY_BYTES
     assert batch.resource_gate(ready_snapshot)["reasons"] == ["host_memory_headroom"]
     ready_snapshot["available_memory_bytes"] += batch.BATCH_MEMORY_BUDGET_BYTES
+    assert batch.resource_gate(ready_snapshot)["ready"]
+
+
+def test_disk_gate_preserves_shared_nvme_reserve_and_one_artifact_budget(ready_snapshot):
+    ready_snapshot["disk_free_bytes"] = 24 * 1024**3 - 1
+    assert batch.resource_gate(ready_snapshot)["reasons"] == ["disk_reserve_for_next_job"]
+    ready_snapshot["disk_free_bytes"] = 24 * 1024**3
     assert batch.resource_gate(ready_snapshot)["ready"]
 
 
@@ -99,7 +106,18 @@ def test_waiting_for_resources_does_not_touch_v2_control(
     root.mkdir()
     unsafe = {**ready_snapshot, "memory_psi": {"some": 12.0, "full": 0.0}}
     result = batch.run_batch(root, tmp_path / "arena", snapshot=unsafe)
-    assert result == {"status": "WAITING_RESOURCES", "resource_reasons": ["host_memory_pressure"]}
+    assert result == {
+        "status": "WAITING_RESOURCES",
+        "resource_reasons": ["host_memory_pressure"],
+        "artifact_budget": {
+            "used_bytes": 0,
+            "maximum_bytes": batch.MAX_ARTIFACT_BYTES,
+            "remaining_bytes": batch.MAX_ARTIFACT_BYTES,
+            "used_percent": 0.0,
+            "warning": False,
+            "pause": False,
+        },
+    }
     assert not list(root.iterdir())
 
 
@@ -136,6 +154,80 @@ def test_success_reports_persisted_batch_count_and_honors_limits(
     assert calls == [{"max_segments": 128, "max_source_bytes": 32 * 1024**2}]
     with pytest.raises(ValueError, match="batch limits"):
         batch.run_batch(root, tmp_path / "arena", max_segments=129, snapshot=ready_snapshot)
+
+
+def test_artifact_limit_is_applied_only_during_processing_and_reported(
+    tmp_path, ready_snapshot, monkeypatch, isolated_admission_lock
+):
+    root = tmp_path / "v2"
+    root.mkdir()
+    control = {
+        "status": "CURRENT",
+        "processed_segment_count": 1,
+        "pending_segment_count": 0,
+        "summary_sha256": "a" * 64,
+        "control_sha256": "b" * 64,
+        "history": [
+            {
+                "event": "batch_succeeded",
+                "batch_processed_segment_count": 1,
+                "summary_sha256": "a" * 64,
+            }
+        ],
+    }
+    monkeypatch.setattr(batch.analysis, "_artifact_bytes", lambda _root, _version: 1024)
+    monkeypatch.setattr(batch, "read_control", lambda _root: control)
+    original_limit = batch.analysis.MAX_EVENTS_BYTES
+    observed_limits = []
+
+    def run(_root, **_kwargs):
+        observed_limits.append(batch.analysis.MAX_EVENTS_BYTES)
+        return control
+
+    monkeypatch.setattr(batch, "run_v2_batch", run)
+    configured_limit = 512 * 1024**2
+    result = batch.run_batch(
+        root,
+        tmp_path / "arena",
+        max_artifact_bytes=configured_limit,
+        snapshot=ready_snapshot,
+    )
+    assert observed_limits == [configured_limit]
+    assert batch.analysis.MAX_EVENTS_BYTES == original_limit
+    assert result["artifact_budget"] == {
+        "used_bytes": 1024,
+        "maximum_bytes": configured_limit,
+        "remaining_bytes": configured_limit - 1024,
+        "used_percent": 0.0,
+        "warning": False,
+        "pause": False,
+    }
+
+
+def test_artifact_capacity_pause_does_not_mutate_analysis_state(
+    tmp_path, ready_snapshot, monkeypatch, isolated_admission_lock
+):
+    root = tmp_path / "v2"
+    root.mkdir()
+    configured_limit = 512 * 1024**2
+    used_bytes = configured_limit * 91 // 100
+    original_limit = batch.analysis.MAX_EVENTS_BYTES
+    monkeypatch.setattr(batch.analysis, "_artifact_bytes", lambda _root, _version: used_bytes)
+    monkeypatch.setattr(
+        batch,
+        "run_v2_batch",
+        lambda *_args, **_kwargs: pytest.fail("analysis must pause before reaching the cap"),
+    )
+    result = batch.run_batch(
+        root,
+        tmp_path / "arena",
+        max_artifact_bytes=configured_limit,
+        snapshot=ready_snapshot,
+    )
+    assert result["status"] == "WAITING_ARTIFACT_CAPACITY"
+    assert result["artifact_budget"]["warning"]
+    assert result["artifact_budget"]["pause"]
+    assert batch.analysis.MAX_EVENTS_BYTES == original_limit
 
 
 def test_batch_defers_when_an_arena_worker_owns_the_host_lease(

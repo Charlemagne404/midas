@@ -13,12 +13,16 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, cast
 
+from midas.veritas import gap_detail_analysis as analysis
 from midas.veritas.gap_detail_control import read_control, run_v2_batch
 
 MINIMUM_AVAILABLE_MEMORY_BYTES = 2 * 1024**3
 BATCH_MEMORY_BUDGET_BYTES = 256 * 1024**2  # Matches the bounded service MemoryMax.
-MINIMUM_DISK_RESERVE_BYTES = 2 * 1024**3
-NEXT_JOB_ARTIFACT_BUDGET_BYTES = 1024**3
+MINIMUM_DISK_RESERVE_BYTES = 20 * 1024**3
+MAX_ARTIFACT_BYTES = 4 * 1024**3
+NEXT_JOB_ARTIFACT_BUDGET_BYTES = MAX_ARTIFACT_BYTES
+ARTIFACT_WARNING_PERCENT = 75
+ARTIFACT_PAUSE_PERCENT = 90
 MAX_CPU_PSI_SOME_AVG10_PERCENT = 20.0
 MAX_MEMORY_PSI_SOME_AVG10_PERCENT = 10.0
 MAX_MEMORY_PSI_FULL_AVG10_PERCENT = 1.0
@@ -138,7 +142,11 @@ def resource_snapshot(
     }
 
 
-def resource_gate(snapshot: dict[str, Any]) -> dict[str, Any]:
+def resource_gate(
+    snapshot: dict[str, Any],
+    *,
+    next_artifact_budget_bytes: int = NEXT_JOB_ARTIFACT_BUDGET_BYTES,
+) -> dict[str, Any]:
     reasons: list[str] = []
     if snapshot.get("active_arena_job_ids"):
         reasons.append("arena_worker_active")
@@ -147,7 +155,7 @@ def resource_gate(snapshot: dict[str, Any]) -> dict[str, Any]:
     ):
         reasons.append("host_memory_headroom")
     if snapshot.get("disk_free_bytes", 0) < (
-        MINIMUM_DISK_RESERVE_BYTES + NEXT_JOB_ARTIFACT_BUDGET_BYTES
+        MINIMUM_DISK_RESERVE_BYTES + next_artifact_budget_bytes
     ):
         reasons.append("disk_reserve_for_next_job")
     cpu_psi = snapshot.get("cpu_psi", {})
@@ -173,6 +181,20 @@ def resource_gate(snapshot: dict[str, Any]) -> dict[str, Any]:
     return {"ready": not reasons, "reasons": reasons}
 
 
+def _artifact_budget(used_bytes: int, maximum_bytes: int) -> dict[str, Any]:
+    if used_bytes < 0 or maximum_bytes < 1:
+        raise ValueError("artifact storage measurements must be nonnegative and bounded")
+    percent = 100.0 * used_bytes / maximum_bytes
+    return {
+        "used_bytes": used_bytes,
+        "maximum_bytes": maximum_bytes,
+        "remaining_bytes": max(0, maximum_bytes - used_bytes),
+        "used_percent": round(percent, 2),
+        "warning": percent >= ARTIFACT_WARNING_PERCENT,
+        "pause": percent >= ARTIFACT_PAUSE_PERCENT,
+    }
+
+
 def _last_successful_batch(control: dict[str, Any] | None) -> dict[str, Any]:
     if control is None:
         return {}
@@ -188,13 +210,29 @@ def run_batch(
     *,
     max_segments: int = 128,
     max_source_mib: int = 32,
+    max_artifact_bytes: int = MAX_ARTIFACT_BYTES,
     other_arena_roots: tuple[Path, ...] = (),
     snapshot: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     if not 1 <= max_segments <= 128 or not 1 <= max_source_mib <= 32:
         raise ValueError("batch limits must be within 1..128 segments and 1..32 MiB")
+    if not 256 * 1024**2 <= max_artifact_bytes <= 8 * 1024**3:
+        raise ValueError("artifact limit must be within 256 MiB and 8 GiB")
     try:
         with admission_lease():
+            artifact_before = _artifact_budget(
+                analysis._artifact_bytes(root, "v2"), max_artifact_bytes
+            )
+            if artifact_before["used_bytes"] > max_artifact_bytes:
+                return {
+                    "status": "BLOCKED_ARTIFACT_BUDGET",
+                    "artifact_budget": artifact_before,
+                }
+            if artifact_before["pause"]:
+                return {
+                    "status": "WAITING_ARTIFACT_CAPACITY",
+                    "artifact_budget": artifact_before,
+                }
             measured = (
                 snapshot
                 if snapshot is not None
@@ -204,19 +242,31 @@ def run_batch(
                     other_arena_roots=other_arena_roots,
                 )
             )
-            gate = resource_gate(measured)
+            gate = resource_gate(measured, next_artifact_budget_bytes=max_artifact_bytes)
             if not gate["ready"]:
-                return {"status": "WAITING_RESOURCES", "resource_reasons": gate["reasons"]}
-            result = run_v2_batch(
-                root,
-                max_segments=max_segments,
-                max_source_bytes=max_source_mib * 1024**2,
-            )
+                return {
+                    "status": "WAITING_RESOURCES",
+                    "resource_reasons": gate["reasons"],
+                    "artifact_budget": artifact_before,
+                }
+            previous_artifact_limit = analysis.MAX_EVENTS_BYTES
+            analysis.MAX_EVENTS_BYTES = max_artifact_bytes
+            try:
+                result = run_v2_batch(
+                    root,
+                    max_segments=max_segments,
+                    max_source_bytes=max_source_mib * 1024**2,
+                )
+            finally:
+                analysis.MAX_EVENTS_BYTES = previous_artifact_limit
             control = read_control(root)
             last_success = _last_successful_batch(control)
             batch_processed = 0
             if last_success.get("summary_sha256") == result.get("summary_sha256"):
                 batch_processed = int(last_success.get("batch_processed_segment_count", 0))
+            artifact_after = _artifact_budget(
+                analysis._artifact_bytes(root, "v2"), max_artifact_bytes
+            )
             return {
                 "status": result["status"],
                 "batch_processed_segment_count": batch_processed,
@@ -226,6 +276,7 @@ def run_batch(
                 "control_sha256": result.get("control_sha256"),
                 "last_error_type": result.get("last_error_type"),
                 "last_error": result.get("last_error"),
+                "artifact_budget": artifact_after,
             }
     except AdmissionLeaseBusy:
         return {
@@ -252,15 +303,19 @@ def main() -> None:
     )
     parser.add_argument("--max-segments", type=int, default=128)
     parser.add_argument("--max-source-mib", type=int, default=32)
+    parser.add_argument("--max-artifact-bytes", type=int, default=MAX_ARTIFACT_BYTES)
     args = parser.parse_args()
     if not 1 <= args.max_segments <= 128 or not 1 <= args.max_source_mib <= 32:
         parser.error("batch limits must be within 1..128 segments and 1..32 MiB")
+    if not 256 * 1024**2 <= args.max_artifact_bytes <= 8 * 1024**3:
+        parser.error("artifact limit must be within 256 MiB and 8 GiB")
     try:
         result = run_batch(
             args.root,
             args.arena_root,
             max_segments=args.max_segments,
             max_source_mib=args.max_source_mib,
+            max_artifact_bytes=args.max_artifact_bytes,
             other_arena_roots=tuple(args.other_arena_root),
         )
     except AdmissionLeaseBusy:
