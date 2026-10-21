@@ -1,5 +1,6 @@
 """Storage operations fixtures are artificial, never market evidence."""
 
+import io
 import json
 import os
 import time
@@ -198,21 +199,24 @@ def test_archive_io_admission_fails_closed_at_deadline(monkeypatch):
         wait_for_archive_io_window(time.monotonic() - 1)
 
 
-def test_archive_io_admission_treats_host_pressure_as_advisory(monkeypatch):
+def test_archive_io_admission_waits_for_host_pressure_to_clear(monkeypatch):
     sleeps = []
     monkeypatch.setattr(
         "midas.reality.operations._active_midas_service_io_pressure",
         lambda: {"midas-reality.service": (0.0, 0.0)},
     )
-    monkeypatch.setattr("midas.reality.operations._host_io_full_pressure", lambda: (3.0, 2.5))
+    host_values = iter(((3.0, 2.5), (1.0, 1.0)))
+    monkeypatch.setattr(
+        "midas.reality.operations._host_io_full_pressure", lambda: next(host_values)
+    )
     monkeypatch.setattr("midas.reality.operations.time.sleep", sleeps.append)
 
     wait_for_archive_io_window(time.monotonic() + 30)
 
-    assert sleeps == []
+    assert sleeps == [5.0]
 
 
-def test_archive_io_admission_continues_when_advisory_host_telemetry_is_unavailable(monkeypatch):
+def test_archive_io_admission_fails_closed_when_host_telemetry_is_unavailable(monkeypatch):
     monkeypatch.setattr(
         "midas.reality.operations._active_midas_service_io_pressure",
         lambda: {"midas-reality.service": (0.0, 0.0)},
@@ -221,7 +225,26 @@ def test_archive_io_admission_continues_when_advisory_host_telemetry_is_unavaila
         "midas.reality.operations._host_io_full_pressure",
         lambda: (_ for _ in ()).throw(RuntimeError("host PSI unavailable")),
     )
-    wait_for_archive_io_window(time.monotonic() + 30)
+    with pytest.raises(RuntimeError, match="fails closed"):
+        wait_for_archive_io_window(time.monotonic() + 30)
+
+
+def test_archive_rate_limited_writer_bounds_writes_and_checks_admission(monkeypatch):
+    times = iter((0.0, 0.0, 0.25))
+    sleeps = []
+    checks = []
+    monkeypatch.setattr("midas.reality.operations.time.monotonic", lambda: next(times))
+    monkeypatch.setattr("midas.reality.operations.time.sleep", sleeps.append)
+    output = operations._RateLimitedWriter(
+        io.BytesIO(),
+        bytes_per_second=1,
+        before_write=lambda: checks.append("checked"),
+    )
+
+    assert output.write(b"ab") == 2
+    assert output.write(b"c") == 1
+    assert sleeps == [1.75]
+    assert checks == ["checked", "checked"]
 
 
 def test_archive_admission_tracks_active_midas_service_cgroups(tmp_path, monkeypatch):
@@ -280,7 +303,9 @@ def test_archive_admission_wait_gets_fresh_per_window_deadline(tmp_path, monkeyp
         operation_timeout_seconds=1_000,
     )
 
-    assert len(deadlines) == 2 + 3 * len(value["segments"])
+    assert len(deadlines) >= 2 + 3 * len(value["segments"])
+    assert deadlines[0] == 202.0
+    assert all(left < right for left, right in zip(deadlines, deadlines[1:], strict=False))
     assert all(deadlines[index + 1] > deadlines[index] for index in range(len(deadlines) - 1))
 
 

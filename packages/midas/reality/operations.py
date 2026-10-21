@@ -44,9 +44,8 @@ ARCHIVE_IO_STABLE_SECONDS = 60.0
 ARCHIVE_REQUIRED_PROTECTED_SERVICES = {"midas-reality.service"}
 ARCHIVE_HOST_IO_FULL_AVG10_MAX = 2.0
 ARCHIVE_HOST_IO_FULL_AVG60_MAX = 2.0
+ARCHIVE_WRITE_BYTES_PER_SECOND = 512 * 1024
 ARCHIVE_SYNC_BATCH_BYTES = 32 * 1024**2
-ARCHIVE_ADVISORY_LOG_INTERVAL_SECONDS = 60.0
-_ARCHIVE_LAST_HOST_ADVISORY_NOTICE = 0.0
 
 
 def _host_io_full_pressure() -> tuple[float, float]:
@@ -141,8 +140,7 @@ def _active_midas_service_io_pressure() -> dict[str, tuple[float, float]]:
 
 
 def wait_for_archive_io_window(deadline: float, *, stable_seconds: float = 0) -> None:
-    """Wait for active MIDAS service pressure to clear; report host PSI as advisory."""
-    global _ARCHIVE_LAST_HOST_ADVISORY_NOTICE
+    """Wait for both protected-service and host-wide I/O pressure to clear."""
     required_samples = max(1, math.ceil(stable_seconds / ARCHIVE_IO_SAMPLE_SECONDS))
     stable_samples = 0
     last_notice = 0.0
@@ -154,25 +152,20 @@ def wait_for_archive_io_window(deadline: float, *, stable_seconds: float = 0) ->
             if values[0] >= ARCHIVE_IO_FULL_AVG10_MAX or values[1] >= ARCHIVE_IO_FULL_AVG60_MAX
         }
         try:
-            host_pressure: tuple[float, float] | None = _host_io_full_pressure()
-        except (OSError, RuntimeError, ValueError):
-            host_pressure = None
-        host_advisory = host_pressure is not None and (
+            host_pressure = _host_io_full_pressure()
+        except (OSError, RuntimeError, ValueError) as exc:
+            raise RuntimeError(
+                "Host I/O pressure telemetry is unavailable; archive admission fails closed"
+            ) from exc
+        if (
             host_pressure[0] >= ARCHIVE_HOST_IO_FULL_AVG10_MAX
             or host_pressure[1] >= ARCHIVE_HOST_IO_FULL_AVG60_MAX
-        )
+        ):
+            pressured["host"] = host_pressure
         now = time.monotonic()
         if not pressured:
             stable_samples += 1
             if stable_samples >= required_samples:
-                if host_advisory and now - _ARCHIVE_LAST_HOST_ADVISORY_NOTICE >= (
-                    ARCHIVE_ADVISORY_LOG_INTERVAL_SECONDS
-                ):
-                    logging.warning(
-                        "Archive admitted with host-wide I/O PSI above advisory threshold: %s",
-                        host_pressure,
-                    )
-                    _ARCHIVE_LAST_HOST_ADVISORY_NOTICE = now
                 return
         else:
             stable_samples = 0
@@ -183,7 +176,7 @@ def wait_for_archive_io_window(deadline: float, *, stable_seconds: float = 0) ->
         if now - last_notice >= 60:
             logging.warning(
                 "Archive waiting for MIDAS service I/O headroom: "
-                "pressured=%s; host full PSI is advisory=%s",
+                "pressured=%s; host full PSI=%s",
                 pressured,
                 host_pressure,
             )
@@ -767,6 +760,42 @@ def _inspect_segment(
     return actual
 
 
+class _RateLimitedWriter:
+    """Bound archive writes and recheck I/O admission at each write chunk."""
+
+    def __init__(
+        self,
+        destination: Any,
+        *,
+        bytes_per_second: int,
+        before_write: Callable[[], None] | None,
+    ) -> None:
+        if bytes_per_second <= 0:
+            raise ValueError("Archive write rate must be positive")
+        self.destination = destination
+        self.bytes_per_second = bytes_per_second
+        self.before_write = before_write
+        self.next_write_at = time.monotonic()
+
+    def write(self, data: bytes) -> int:
+        if not data:
+            return self.destination.write(data)
+        now = time.monotonic()
+        slot = max(now, self.next_write_at)
+        if slot > now:
+            time.sleep(slot - now)
+        if self.before_write is not None:
+            self.before_write()
+        written = self.destination.write(data)
+        if written != len(data):
+            raise OSError("Short write while copying Reality archive segment")
+        self.next_write_at = slot + written / self.bytes_per_second
+        return written
+
+    def flush(self) -> None:
+        self.destination.flush()
+
+
 def _validate_catalog_ordinals(segments: list[dict[str, Any]]) -> None:
     previous = 0
     seen_names: set[str] = set()
@@ -902,14 +931,18 @@ def _archive_incremental_suffix(
         if shutil.disk_usage(destination).free < reserve + info["bytes"] + margin:
             raise OSError("Archive free-disk reserve reached; originals preserved")
         with partial.open("xb") as outgoing:
+            rate_limited = _RateLimitedWriter(
+                outgoing,
+                bytes_per_second=ARCHIVE_WRITE_BYTES_PER_SECOND,
+                before_write=before_segment,
+            )
             _inspect_segment(
                 source,
                 info,
                 previous_ordinal=previous_ordinal,
-                copy_to=outgoing,
+                copy_to=rate_limited,
             )
             outgoing.flush()
-            os.fsync(outgoing.fileno())
         pending.append((partial, target))
         pending_bytes += info["bytes"]
         used += info["bytes"]
@@ -1154,8 +1187,13 @@ def archive(
             digest = hashlib.sha256()
             copied_bytes = 0
             with source.open("rb") as incoming, partial.open("xb") as outgoing:
+                rate_limited = _RateLimitedWriter(
+                    outgoing,
+                    bytes_per_second=ARCHIVE_WRITE_BYTES_PER_SECOND,
+                    before_write=before_segment,
+                )
                 while chunk := incoming.read(1024 * 1024):
-                    outgoing.write(chunk)
+                    rate_limited.write(chunk)
                     digest.update(chunk)
                     copied_bytes += len(chunk)
                 outgoing.flush()
