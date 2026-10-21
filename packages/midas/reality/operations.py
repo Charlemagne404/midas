@@ -32,6 +32,8 @@ ARCHIVE_IO_FULL_AVG60_MAX = 2.0
 ARCHIVE_IO_SAMPLE_SECONDS = 5.0
 ARCHIVE_IO_STABLE_SECONDS = 60.0
 ARCHIVE_REQUIRED_PROTECTED_SERVICES = {"midas-reality.service"}
+ARCHIVE_HOST_IO_FULL_AVG10_MAX = 2.0
+ARCHIVE_HOST_IO_FULL_AVG60_MAX = 2.0
 ARCHIVE_SYNC_BATCH_BYTES = 32 * 1024**2
 
 
@@ -127,12 +129,7 @@ def _active_midas_service_io_pressure() -> dict[str, tuple[float, float]]:
 
 
 def wait_for_archive_io_window(deadline: float, *, stable_seconds: float = 0) -> None:
-    """Wait for active MIDAS service cgroups to clear the I/O pressure gate.
-
-    Host-wide PSI is retained as an advisory signal. Admission follows the
-    protected service cgroups because unrelated host services can dominate the
-    global value while the recorder and MIDAS APIs remain healthy.
-    """
+    """Wait for protected service and host-wide I/O pressure to clear."""
     required_samples = max(1, math.ceil(stable_seconds / ARCHIVE_IO_SAMPLE_SECONDS))
     stable_samples = 0
     last_notice = 0.0
@@ -143,11 +140,12 @@ def wait_for_archive_io_window(deadline: float, *, stable_seconds: float = 0) ->
             for name, values in service_pressure.items()
             if values[0] >= ARCHIVE_IO_FULL_AVG10_MAX or values[1] >= ARCHIVE_IO_FULL_AVG60_MAX
         }
-        try:
-            host_pressure: tuple[float, float] | None = _host_io_full_pressure()
-        except (OSError, RuntimeError, ValueError, KeyError):
-            host_pressure = None
-        if not pressured:
+        host_pressure = _host_io_full_pressure()
+        host_pressured = (
+            host_pressure[0] >= ARCHIVE_HOST_IO_FULL_AVG10_MAX
+            or host_pressure[1] >= ARCHIVE_HOST_IO_FULL_AVG60_MAX
+        )
+        if not pressured and not host_pressured:
             stable_samples += 1
             if stable_samples >= required_samples:
                 return
@@ -160,8 +158,8 @@ def wait_for_archive_io_window(deadline: float, *, stable_seconds: float = 0) ->
             )
         if now - last_notice >= 60:
             logging.warning(
-                "Archive waiting for MIDAS service I/O headroom: pressured=%s; "
-                "host full PSI advisory=%s",
+                "Archive waiting for host and MIDAS service I/O headroom: "
+                "pressured=%s; host full PSI=%s",
                 pressured,
                 host_pressure,
             )

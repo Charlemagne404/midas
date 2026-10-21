@@ -94,10 +94,13 @@ def test_archive_io_admission_waits_for_a_stable_quiet_window(monkeypatch):
         )
     )
     sleeps = []
+    host_values = iter(((5.0, 5.0), (1.9, 1.9), (1.8, 1.7)))
     monkeypatch.setattr(
         "midas.reality.operations._active_midas_service_io_pressure", lambda: next(values)
     )
-    monkeypatch.setattr("midas.reality.operations._host_io_full_pressure", lambda: (5.0, 5.0))
+    monkeypatch.setattr(
+        "midas.reality.operations._host_io_full_pressure", lambda: next(host_values)
+    )
     monkeypatch.setattr("midas.reality.operations.time.sleep", sleeps.append)
     wait_for_archive_io_window(time.monotonic() + 30, stable_seconds=10)
     assert sleeps == [5.0, 5.0]
@@ -111,6 +114,36 @@ def test_archive_io_admission_fails_closed_at_deadline(monkeypatch):
     monkeypatch.setattr("midas.reality.operations._host_io_full_pressure", lambda: (0.0, 0.0))
     with pytest.raises(TimeoutError, match="did not clear"):
         wait_for_archive_io_window(time.monotonic() - 1)
+
+
+def test_archive_io_admission_waits_for_host_pressure_even_when_services_are_clear(monkeypatch):
+    host_values = iter(((3.0, 2.5), (1.9, 1.9)))
+    sleeps = []
+    monkeypatch.setattr(
+        "midas.reality.operations._active_midas_service_io_pressure",
+        lambda: {"midas-reality.service": (0.0, 0.0)},
+    )
+    monkeypatch.setattr(
+        "midas.reality.operations._host_io_full_pressure", lambda: next(host_values)
+    )
+    monkeypatch.setattr("midas.reality.operations.time.sleep", sleeps.append)
+
+    wait_for_archive_io_window(time.monotonic() + 30)
+
+    assert sleeps == [5.0]
+
+
+def test_archive_io_admission_fails_closed_when_host_telemetry_is_unavailable(monkeypatch):
+    monkeypatch.setattr(
+        "midas.reality.operations._active_midas_service_io_pressure",
+        lambda: {"midas-reality.service": (0.0, 0.0)},
+    )
+    monkeypatch.setattr(
+        "midas.reality.operations._host_io_full_pressure",
+        lambda: (_ for _ in ()).throw(RuntimeError("host PSI unavailable")),
+    )
+    with pytest.raises(RuntimeError, match="host PSI unavailable"):
+        wait_for_archive_io_window(time.monotonic() + 30)
 
 
 def test_archive_admission_tracks_active_midas_service_cgroups(tmp_path, monkeypatch):
