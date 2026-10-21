@@ -49,6 +49,13 @@ def classify_collector_health(status: dict[str, Any], now_ns: int) -> tuple[str,
 
     if status.get("backpressure_active"):
         reasons.append("backpressured")
+    if status.get("transport_queue_saturated") is True:
+        reasons.append("transport_queue_saturated")
+    if (
+        "transport_queue_observation_available" in status
+        and status.get("transport_queue_observation_available") is not True
+    ):
+        reasons.append("transport_queue_unavailable")
     return ("degraded" if reasons else "recording"), reasons
 
 

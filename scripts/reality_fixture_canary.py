@@ -31,6 +31,7 @@ from websockets.exceptions import ConnectionClosed
 
 FIXTURE_PATH = Path(__file__).resolve().parents[1] / "tests/fixtures/reality/observed.json"
 LOOPBACK_HTTP = "http://127.0.0.1:1"
+CGROUP_ROOT = Path("/sys/fs/cgroup")
 
 
 def source_identity() -> str:
@@ -72,8 +73,11 @@ def build_markets(
             orderPriceMinTickSize="0.01",
             orderMinSize="1",
             volume24hr=str(1_000_000 - index),
+            # This is a synthetic expansion universe, not captured liquidity
+            # evidence. Repeat each liquidity stratum so the unchanged panel
+            # selector can fill its bounded ten-market configuration.
             liquidityNum=str(
-                20_000 if index == 0 else 5_000 if index == 1 else 100 if index == 2 else 2_000
+                20_000 if index % 8 == 0 else 100 if index == 2 else 5_000 if index == 1 else 2_000
             ),
             oneDayPriceChange=str((index + 1) / 1000),
             endDate=end.isoformat().replace("+00:00", "Z"),
@@ -106,12 +110,7 @@ def select_book_template(fixture: dict[str, Any]) -> dict[str, Any]:
 
 
 def resource_snapshot() -> dict[str, Any]:
-    cgroup = None
-    for line in Path("/proc/self/cgroup").read_text().splitlines():
-        hierarchy, _, path = line.partition("::")
-        if not hierarchy and path:
-            cgroup = Path("/sys/fs/cgroup") / path.lstrip("/")
-            break
+    cgroup = cgroup_directory(Path("/proc/self/cgroup").read_text())
     files = (
         "memory.current",
         "memory.peak",
@@ -121,6 +120,8 @@ def resource_snapshot() -> dict[str, Any]:
         "memory.swap.peak",
         "memory.events",
         "memory.pressure",
+        "cpu.pressure",
+        "io.pressure",
         "cpu.stat",
     )
     values: dict[str, Any] = {}
@@ -129,8 +130,79 @@ def resource_snapshot() -> dict[str, Any]:
             file_path = cgroup / name
             if file_path.is_file():
                 values[name] = file_path.read_text().strip()
+    for name in ("cpu", "memory", "io"):
+        pressure_path = Path("/proc/pressure") / name
+        if pressure_path.is_file():
+            values[f"host_{name}.pressure"] = pressure_path.read_text().strip()
     values["cgroup"] = str(cgroup) if cgroup is not None else None
     return values
+
+
+def cgroup_directory(contents: str, root: Path = CGROUP_ROOT) -> Path | None:
+    """Resolve the unified cgroup-v2 path from ``/proc/self/cgroup``."""
+    for line in contents.splitlines():
+        hierarchy, separator, path = line.partition("::")
+        if hierarchy != "0" or not separator or not path.startswith("/"):
+            continue
+        relative = Path(path.lstrip("/"))
+        if ".." in relative.parts:
+            raise ValueError("Invalid cgroup-v2 path")
+        return root / relative
+    return None
+
+
+def parse_event_counts(contents: str) -> Counter[str]:
+    """Parse cgroup event counters as integers so zero remains false."""
+    values: dict[str, int] = {}
+    for line in contents.splitlines():
+        fields = line.split()
+        if len(fields) != 2:
+            raise ValueError("Invalid cgroup event counter")
+        name, raw_count = fields
+        try:
+            count = int(raw_count)
+        except ValueError as error:
+            raise ValueError("Invalid cgroup event counter") from error
+        if count < 0:
+            raise ValueError("Invalid cgroup event counter")
+        values[name] = count
+    return Counter(values)
+
+
+def parse_pressure(contents: str) -> dict[str, dict[str, float]]:
+    """Parse Linux pressure-stall averages as percentages."""
+    result: dict[str, dict[str, float]] = {}
+    for line in contents.splitlines():
+        fields = line.split()
+        if not fields or fields[0] not in {"some", "full"}:
+            raise ValueError("Invalid pressure sample")
+        values: dict[str, float] = {}
+        for field in fields[1:]:
+            name, separator, raw_value = field.partition("=")
+            if not separator or name not in {"avg10", "avg60", "avg300", "total"}:
+                raise ValueError("Invalid pressure sample")
+            try:
+                values[name] = float(raw_value)
+            except ValueError as error:
+                raise ValueError("Invalid pressure sample") from error
+        result[fields[0]] = values
+    return result
+
+
+def pressure_peaks(samples: list[dict[str, Any]], name: str) -> dict[str, float | None]:
+    parsed = [parse_pressure(sample[name]) for sample in samples if sample.get(name)]
+    return {
+        f"{kind}_{interval}_max_percent": max(
+            (
+                pressure[kind][interval]
+                for pressure in parsed
+                if kind in pressure and interval in pressure[kind]
+            ),
+            default=None,
+        )
+        for kind in ("some", "full")
+        for interval in ("avg10", "avg60")
+    }
 
 
 def full_book_coverage_seconds(status: dict[str, Any]) -> float | None:
@@ -156,6 +228,42 @@ def full_book_coverage_seconds(status: dict[str, Any]) -> float | None:
             return None
         first_received_ns.append(value)
     return (max(first_received_ns) - started_ns) / 1e9
+
+
+def fresh_book_count_at_boundary(
+    state: dict[str, Any], boundary_ns: int, stale_seconds: float
+) -> tuple[int, int]:
+    """Count consistent books at the final live record, before shutdown invalidates them."""
+    books = state.get("books")
+    if not isinstance(books, dict) or type(boundary_ns) is not int or stale_seconds <= 0:
+        raise ValueError("Canary lacks a valid pre-shutdown book state")
+    fresh = 0
+    for book in books.values():
+        if not isinstance(book, dict) or book.get("internally_consistent") is not True:
+            continue
+        received_ns = book.get("received_ns")
+        if (
+            type(received_ns) is int
+            and 0 <= boundary_ns - received_ns < stale_seconds * 1_000_000_000
+        ):
+            fresh += 1
+    return fresh, len(books)
+
+
+def manifest_record_count(value: dict[str, Any]) -> int:
+    """Count durable records from the segment index used by this manifest schema."""
+    segments = value.get("segments")
+    if not isinstance(segments, list):
+        raise ValueError("Canary manifest lacks a segment index")
+    total = 0
+    for segment in segments:
+        if not isinstance(segment, dict):
+            raise ValueError("Canary manifest contains an invalid segment record count")
+        count = segment.get("count")
+        if type(count) is not int or count < 0:
+            raise ValueError("Canary manifest contains an invalid segment record count")
+        total += count
+    return total
 
 
 async def execute(
@@ -379,6 +487,22 @@ def main() -> None:
         for record in records
         if record["kind"] == "gap" and record["payload"].get("reason") == "process_start"
     )
+    process_stop = next(
+        (
+            record
+            for record in reversed(records)
+            if record["kind"] == "gap" and record["payload"].get("reason") == "process_stop"
+        ),
+        None,
+    )
+    if process_stop is None:
+        raise ValueError("Fixture canary lacks its durable process-stop boundary")
+    pre_stop_engine, _ = replay(root, value, through=process_stop["ordinal"] - 1)
+    pre_stop_fresh_books, pre_stop_expected_books = fresh_book_count_at_boundary(
+        pre_stop_engine.state(),
+        process_stop["received_ns"],
+        canary.stale_seconds,
+    )
     gap_reasons = Counter(
         record["payload"].get("reason", "unknown") for record in records if record["kind"] == "gap"
     )
@@ -393,8 +517,12 @@ def main() -> None:
         status.get("state") != "STOPPED"
         or status.get("failures") != 0
         or status.get("markets") != canary.markets
-        or status.get("fresh_books") != canary.markets * 2
+        or pre_stop_fresh_books != canary.markets * 2
+        or pre_stop_expected_books != canary.markets * 2
         or status.get("sequence_verified") is not False
+        or type(status.get("transport_queue_high_water_depth")) is not int
+        or type(status.get("transport_queue_sample_count")) is not int
+        or status.get("transport_queue_sample_count", 0) < 1
         or process_start["payload"].get("implementation_sha256") != before_source
         or checkpoints < 3
         or status.get("frames", 0) < 20
@@ -410,16 +538,28 @@ def main() -> None:
 
     def event_map(name: str) -> Counter[str]:
         lines = next((sample.get(name, "") for sample in reversed(samples) if sample.get(name)), "")
-        return Counter(dict(line.split() for line in lines.splitlines()))
+        return parse_event_counts(lines)
 
     event_counts = event_map("memory.events")
-    if any(event_counts.get(name, 0) for name in ("max", "oom", "oom_kill", "oom_group_kill")):
-        raise ValueError("Fixture canary cgroup recorded a hard memory event")
     cpu_samples = [
         sample
         for sample in samples
         if sample.get("sampled_monotonic_ns") and sample.get("cpu.stat")
     ]
+    cgroup_paths = {sample.get("cgroup") for sample in samples if sample.get("cgroup")}
+    if (
+        len(cgroup_paths) != 1
+        or not event_counts
+        or len(cpu_samples) < 2
+        or max((int(sample.get("memory.peak", "0")) for sample in samples), default=0) <= 0
+        or any(
+            not any(sample.get(name) for sample in samples)
+            for name in ("cpu.pressure", "io.pressure", "host_cpu.pressure", "host_io.pressure")
+        )
+    ):
+        raise ValueError("Fixture canary lacks complete cgroup memory and CPU accounting")
+    if any(event_counts.get(name, 0) for name in ("max", "oom", "oom_kill", "oom_group_kill")):
+        raise ValueError("Fixture canary cgroup recorded a hard memory event")
     cpu_seconds = None
     sampled_duration = None
     if len(cpu_samples) >= 2:
@@ -463,10 +603,16 @@ def main() -> None:
             cpu_seconds / status["frames"] if cpu_seconds is not None and status["frames"] else None
         ),
         "segment_count": len(value["segments"]),
-        "record_count": value["total_records"],
+        "record_count": manifest_record_count(value),
         "frame_count": status["frames"],
         "market_count": status["markets"],
-        "fresh_books": status["fresh_books"],
+        "fresh_books": pre_stop_fresh_books,
+        "expected_books": pre_stop_expected_books,
+        "fresh_book_sample_boundary": "immediately_before_durable_process_stop",
+        "stopped_status_fresh_books": status["fresh_books"],
+        "pre_stop_fresh_books": pre_stop_fresh_books,
+        "pre_stop_expected_books": pre_stop_expected_books,
+        "pre_stop_health_sample_ns": process_stop["received_ns"],
         "sequence_verified": status["sequence_verified"],
         "checkpoint_count": checkpoints,
         "gap_reasons": dict(gap_reasons),
@@ -486,6 +632,13 @@ def main() -> None:
         "full_book_coverage_seconds": coverage_seconds,
         "persistence_window_complete": status.get("persistence_latency_window_complete"),
         "transport_queue_depth": status.get("transport_queue_depth"),
+        "transport_queue_high_water_depth": status.get("transport_queue_high_water_depth"),
+        "transport_queue_sample_count": status.get("transport_queue_sample_count"),
+        "transport_queue_observation_available": status.get(
+            "transport_queue_observation_available"
+        ),
+        "transport_queue_bound": status.get("transport_queue_bound"),
+        "transport_queue_saturated_at_status": status.get("transport_queue_saturated"),
         "cgroup_samples": len(samples),
         "cgroup_peak_bytes": max(
             (int(sample.get("memory.peak", "0")) for sample in samples), default=0
@@ -494,6 +647,10 @@ def main() -> None:
         "cgroup_cpu_stat": next(
             (sample["cpu.stat"] for sample in reversed(samples) if sample.get("cpu.stat")), None
         ),
+        "cgroup_cpu_pressure_peak_percent": pressure_peaks(samples, "cpu.pressure"),
+        "cgroup_io_pressure_peak_percent": pressure_peaks(samples, "io.pressure"),
+        "host_cpu_pressure_peak_percent": pressure_peaks(samples, "host_cpu.pressure"),
+        "host_io_pressure_peak_percent": pressure_peaks(samples, "host_io.pressure"),
         "collector_status": status,
     }
     atomic_json(args.receipt_output, receipt)
@@ -515,6 +672,7 @@ def main() -> None:
                     "collector_cpu_seconds",
                     "market_count",
                     "fresh_books",
+                    "expected_books",
                     "checkpoint_count",
                     "comparison_counts",
                     "state_sha256",

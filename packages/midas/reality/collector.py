@@ -46,6 +46,7 @@ def collection_health(
     now_ns: int,
     stale_ns: int,
     backpressured: bool = False,
+    transport_backpressured: bool = False,
 ) -> str:
     if state == "FAILED":
         return "failed"
@@ -61,9 +62,46 @@ def collection_health(
         return "active_no_events"
     if now_ns - last_observation_ns >= stale_ns or fresh_books != expected_books:
         return "stale"
+    if transport_backpressured:
+        return "transport_backpressured"
     if backpressured:
         return "backpressured"
     return "active_receiving"
+
+
+def transport_queue_depth(websocket: Any) -> int | None:
+    """Return buffered WebSocket frames when the installed library exposes them."""
+    try:
+        depth = len(websocket.recv_messages.frames)
+    except (AttributeError, TypeError):
+        return None
+    return depth if isinstance(depth, int) and depth >= 0 else None
+
+
+def sample_transport_queue(status: dict[str, Any], websocket: Any, bound: int) -> None:
+    """Publish a current queue sample without treating unknown telemetry as empty."""
+    depth = transport_queue_depth(websocket)
+    status.update(
+        transport_queue_observation_available=depth is not None,
+        transport_queue_depth=depth,
+        transport_queue_saturated=depth is not None and depth >= bound,
+        transport_queue_sampled_ns=time.time_ns(),
+    )
+    if depth is not None:
+        status["transport_queue_sample_count"] = status.get("transport_queue_sample_count", 0) + 1
+        status["transport_queue_high_water_depth"] = max(
+            status.get("transport_queue_high_water_depth", 0), depth
+        )
+
+
+def clear_transport_queue_sample(status: dict[str, Any]) -> None:
+    """Mark queue depth unknown when no live WebSocket connection can be sampled."""
+    status.update(
+        transport_queue_observation_available=False,
+        transport_queue_depth=None,
+        transport_queue_saturated=False,
+        transport_queue_sampled_ns=time.time_ns(),
+    )
 
 
 def append_latency_summary(
@@ -197,6 +235,7 @@ async def run(config: Config, duration: float | None = None) -> None:
     comparison_task: asyncio.Task[dict[str, Any]] | None = None
     last_comparison = 0.0
     comparison_index = 0
+    active_websocket: Any | None = None
 
     def append(kind: str, payload: Any, **metadata: Any) -> dict[str, Any]:
         if time.time_ns() - oldest_ns > config.retention_days * 86400 * 1e9:
@@ -280,6 +319,8 @@ async def run(config: Config, duration: float | None = None) -> None:
         state = engine.state(max_depth=50)
         now = time.time_ns()
         latency_now_ns = time.monotonic_ns()
+        if active_websocket is not None:
+            sample_transport_queue(status, active_websocket, config.queue_size)
         latency = append_latency_summary(append_latency_samples, latency_now_ns, process_started_ns)
         while (
             slow_append_timestamps
@@ -343,6 +384,7 @@ async def run(config: Config, duration: float | None = None) -> None:
                     now,
                     int(config.stale_seconds * 1e9),
                     status["backpressure_active"],
+                    status.get("transport_queue_saturated") is True,
                 ),
                 counts=state["counts"],
                 gaps=engine.gaps,
@@ -390,7 +432,13 @@ async def run(config: Config, duration: float | None = None) -> None:
         recovery=recovery_status,
         startup_seconds=time.monotonic() - startup_began,
         event_counter_scope="durable_reconstructed_history",
-        transport_queue_unit="websocket_frames_high_water_mark",
+        transport_queue_unit="websocket_frames",
+        transport_queue_bound=config.queue_size,
+        transport_queue_observation_available=False,
+        transport_queue_depth=None,
+        transport_queue_high_water_depth=0,
+        transport_queue_sample_count=0,
+        transport_queue_saturated=False,
         transport_max_message_bytes=1024**2,
         transport_backpressure="pause_transport_reads; reconnect gaps remain unsequenced",
         started_ns=time.time_ns(),
@@ -509,6 +557,8 @@ async def run(config: Config, duration: float | None = None) -> None:
                         close_timeout=5,
                         ping_interval=None,
                     ) as ws:
+                        active_websocket = ws
+                        sample_transport_queue(status, ws, config.queue_size)
                         frame = json.dumps(
                             dict(
                                 type="market",
@@ -532,6 +582,7 @@ async def run(config: Config, duration: float | None = None) -> None:
                         status["state"] = "AWAITING_DATA"
                         while not stop.is_set():
                             now = time.monotonic()
+                            sample_transport_queue(status, ws, config.queue_size)
                             if now - last_report >= STATUS_REPORT_INTERVAL_SECONDS:
                                 report()
                                 last_report = now
@@ -687,7 +738,9 @@ async def run(config: Config, duration: float | None = None) -> None:
                             try:
                                 payload = await asyncio.wait_for(ws.recv(), timeout=1)
                             except TimeoutError:
+                                sample_transport_queue(status, ws, config.queue_size)
                                 continue
+                            sample_transport_queue(status, ws, config.queue_size)
                             last_transport_message = time.monotonic()
                             received, monotonic = time.time_ns(), time.monotonic_ns()
                             normalized, constraints, invalid_constraints = frame_metadata(payload)
@@ -745,6 +798,9 @@ async def run(config: Config, duration: float | None = None) -> None:
                                 )
                                 if not pending_snapshots:
                                     backoff = 1
+                            sample_transport_queue(status, ws, config.queue_size)
+                    active_websocket = None
+                    clear_transport_queue_sample(status)
                     if comparison_task is not None:
                         comparison_task.cancel()
                         await asyncio.gather(comparison_task, return_exceptions=True)
@@ -756,6 +812,8 @@ async def run(config: Config, duration: float | None = None) -> None:
                     OSError,
                     TimeoutError,
                 ) as error:
+                    active_websocket = None
+                    clear_transport_queue_sample(status)
                     if comparison_task is not None:
                         comparison_task.cancel()
                         await asyncio.gather(comparison_task, return_exceptions=True)
@@ -798,27 +856,5 @@ async def run(config: Config, duration: float | None = None) -> None:
                     save_recovery()
             finally:
                 store.close()
-            atomic_json(
-                root / "status.json",
-                dict(
-                    status,
-                    state="FAILED" if status["state"] == "FAILED" else "STOPPED",
-                    updated_ns=time.time_ns(),
-                    ordinal=store.ordinal,
-                    storage_bytes=store.used,
-                    process_frames=status["process_frames"],
-                    frames=store.counts["frame"],
-                    lifetime_frames=store.counts["frame"],
-                    lifetime_gap_records=store.counts["gap"],
-                    lifetime_records=sum(store.counts.values()),
-                    lifetime_record_counts=dict(store.counts),
-                    collection_health=collection_health(
-                        "FAILED" if status["state"] == "FAILED" else "STOPPED",
-                        status["last_observation_ns"],
-                        0,
-                        status["markets"] * 2,
-                        time.time_ns(),
-                        int(config.stale_seconds * 1e9),
-                    ),
-                ),
-            )
+            status["state"] = "FAILED" if status["state"] == "FAILED" else "STOPPED"
+            report()

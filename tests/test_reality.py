@@ -378,6 +378,48 @@ def test_collection_health_reports_state(
     )
 
 
+def test_transport_queue_pressure_is_distinct_from_append_backpressure():
+    assert (
+        collection_health(
+            "RECORDING_UNSEQUENCED",
+            95,
+            6,
+            6,
+            100,
+            10,
+            transport_backpressured=True,
+        )
+        == "transport_backpressured"
+    )
+
+
+def test_transport_queue_depth_is_explicit_when_unavailable():
+    from midas.reality.collector import sample_transport_queue, transport_queue_depth
+
+    class WebSocket:
+        class ReceiveMessages:
+            frames = [1, 2, 3]
+
+        recv_messages = ReceiveMessages()
+
+    status = {}
+    sample_transport_queue(status, WebSocket(), bound=3)
+    assert transport_queue_depth(WebSocket()) == 3
+    assert status["transport_queue_observation_available"] is True
+    assert status["transport_queue_depth"] == 3
+    assert status["transport_queue_high_water_depth"] == 3
+    assert status["transport_queue_sample_count"] == 1
+    assert status["transport_queue_saturated"] is True
+    assert isinstance(status["transport_queue_sampled_ns"], int)
+
+    unavailable = {}
+    sample_transport_queue(unavailable, object(), bound=3)
+    assert transport_queue_depth(object()) is None
+    assert unavailable["transport_queue_observation_available"] is False
+    assert unavailable["transport_queue_depth"] is None
+    assert unavailable["transport_queue_saturated"] is False
+
+
 def test_crash_tail_recovery_preserves_complete_records(tmp_path):
     store = Store(tmp_path, reserve=1)
     store.append("test", {"raw": "original"})
@@ -450,8 +492,14 @@ async def test_network_interruption_reconnect_and_safe_stop(tmp_path, monkeypatc
             assert row["payload"]["raw_ordinal"] == latest_frame
     engine, checkpoints = replay(tmp_path, manifest(tmp_path))
     assert engine.counts["book"] >= 12 and checkpoints >= 1
-    assert json.loads((tmp_path / "status.json").read_text())["state"] == "STOPPED"
     status = json.loads((tmp_path / "status.json").read_text())
+    assert status["state"] == "STOPPED"
+    assert status["expected_books"] == status["markets"] * 2
+    assert status["fresh_books"] <= status["expected_books"]
+    assert status["sequence_verified"] is False
+    assert status["transport_queue_observation_available"] is False
+    assert status["transport_queue_depth"] is None
+    assert status["transport_queue_sample_count"] > 0
     assert status["failures"] == 1
     assert "error" not in status
     assert status["frames"] == 2
@@ -588,6 +636,11 @@ async def test_bounded_transport_burst_is_preserved_under_slow_writes(tmp_path, 
     assert len(frames) == total
     assert all(r["payload"] == FIXTURE["frames"][0]["payload"] for r in frames)
     assert settings[0]["max_queue"] == 10 and settings[0]["max_size"] == 1024**2
+    status = json.loads((tmp_path / "status.json").read_text())
+    assert status["transport_queue_observation_available"] is False
+    assert status["transport_queue_depth"] is None
+    assert status["transport_queue_sample_count"] > 0
+    assert status["transport_queue_high_water_depth"] >= settings[0]["max_queue"]
     engine, checkpoints = replay(tmp_path, manifest(tmp_path))
     assert engine.counts["book"] == total * 6 and checkpoints >= 1
 

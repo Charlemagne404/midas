@@ -153,6 +153,38 @@ def test_backpressure_is_reported_as_degraded(dashboard):
     assert result["health_reasons"] == ["backpressured"]
 
 
+def test_saturated_transport_queue_is_reported_as_degraded(dashboard):
+    c, root, _ = dashboard
+    path = root / "data/recordings/reality/status.json"
+    data = json.loads(path.read_text())
+    data.update(
+        transport_queue_observation_available=True,
+        transport_queue_depth=10,
+        transport_queue_bound=10,
+        transport_queue_saturated=True,
+    )
+    path.write_text(json.dumps(data))
+
+    result = c.get("/api/reality/overview").json()
+
+    assert result["health"] == "degraded"
+    assert result["health_reasons"] == ["transport_queue_saturated"]
+    assert result["collector"]["transport_queue_depth"] == 10
+
+
+def test_unavailable_transport_queue_is_not_reported_as_empty(dashboard):
+    c, root, _ = dashboard
+    path = root / "data/recordings/reality/status.json"
+    data = json.loads(path.read_text())
+    data.update(transport_queue_observation_available=False, transport_queue_depth=None)
+    path.write_text(json.dumps(data))
+
+    result = c.get("/api/reality/overview").json()
+
+    assert result["health"] == "degraded"
+    assert result["health_reasons"] == ["transport_queue_unavailable"]
+
+
 def test_index_bounds_and_exact_decision_evidence(dashboard):
     c, _, uid = dashboard
     r = c.get("/api/reality/decisions?limit=1").json()["rows"][0]
