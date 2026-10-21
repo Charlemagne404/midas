@@ -52,9 +52,10 @@ def test_capacity_real_bytes_rates_and_horizon(tmp_path):
     assert result["retention_seconds_remaining"] == 30 * 86400 - 120
     assert result["configured_retention_seconds_remaining"] == 30 * 86400 - 120
     assert result["configured_capacity_runway_seconds"] == 30 * 86400 - 120
-    assert result["effective_capacity_runway_days"] == result[
-        "effective_capacity_runway_seconds"
-    ] / 86400
+    assert (
+        result["effective_capacity_runway_days"]
+        == result["effective_capacity_runway_seconds"] / 86400
+    )
     assert result["collector_status_age_seconds"] == 0
     assert result["estimated_action_deadline_ns"] > 121_000_000_000
 
@@ -168,7 +169,7 @@ def test_archive_admission_wait_gets_fresh_per_window_deadline(tmp_path, monkeyp
         operation_timeout_seconds=1_000,
     )
 
-    assert len(deadlines) == 1 + 3 * len(value["segments"])
+    assert len(deadlines) == 2 + 3 * len(value["segments"])
     assert all(deadlines[index + 1] > deadlines[index] for index in range(len(deadlines) - 1))
 
 
@@ -414,6 +415,38 @@ def test_archive_replay_verifies_source_and_destination_without_per_segment_sync
     # The source identity and final manifest each sync the directory. Individual
     # segment renames do not issue a journal commit; final replay validates them.
     assert sync_roots == [target.resolve(), target.resolve()]
+
+
+def test_archive_flushes_copied_segments_in_bounded_filesystem_batches(tmp_path):
+    root, target = tmp_path / "raw", tmp_path / "archive"
+    value = sample(root)
+    flushes = []
+
+    with patch.object(operations, "sync_filesystem", side_effect=flushes.append):
+        archive(root, target, budget=1_000_000, reserve=1)
+
+    assert flushes == [target.resolve()]
+    assert not list(target.glob("*.copying"))
+    assert json.loads((target / "manifest.json").read_text())["segments"] == value["segments"]
+
+
+def test_archive_resume_after_filesystem_flush_failure_keeps_source_and_retries(tmp_path):
+    root, target = tmp_path / "raw", tmp_path / "archive"
+    value = sample(root)
+    with patch.object(operations, "sync_filesystem", side_effect=OSError("flush interrupted")):
+        with pytest.raises(OSError, match="flush interrupted"):
+            archive(root, target, budget=1_000_000, reserve=1)
+
+    assert not (target / "manifest.json").exists()
+    assert not any((target / segment["file"]).exists() for segment in value["segments"])
+    assert list(target.glob("*.copying"))
+
+    with patch.object(operations, "sync_filesystem") as flush:
+        result = archive(root, target, budget=1_000_000, reserve=1)
+
+    assert flush.call_count == 1
+    assert result["segments"] == value["segments"]
+    assert not list(target.glob("*.copying"))
 
 
 def test_archive_resume_counts_destination_once_for_many_missing_segments(tmp_path):

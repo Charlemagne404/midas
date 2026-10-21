@@ -7,6 +7,7 @@ Forecasts describe observed compressed growth, not guaranteed future capacity.
 from __future__ import annotations
 
 import argparse
+import ctypes
 import fcntl
 import hashlib
 import json
@@ -31,6 +32,7 @@ ARCHIVE_IO_FULL_AVG60_MAX = 2.0
 ARCHIVE_IO_SAMPLE_SECONDS = 5.0
 ARCHIVE_IO_STABLE_SECONDS = 60.0
 ARCHIVE_REQUIRED_PROTECTED_SERVICES = {"midas-reality.service"}
+ARCHIVE_SYNC_BATCH_BYTES = 32 * 1024**2
 
 
 def _host_io_full_pressure() -> tuple[float, float]:
@@ -74,6 +76,23 @@ def _read_cgroup_io_full_pressure(path: Path) -> tuple[float, float]:
     if not math.isfinite(avg10) or not math.isfinite(avg60):
         raise RuntimeError(f"I/O pressure telemetry is invalid: {path}")
     return avg10, avg60
+
+
+def sync_filesystem(path: Path) -> None:
+    """Durably flush one destination filesystem without syncing unrelated mounts."""
+    descriptor = os.open(path, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0))
+    try:
+        libc = ctypes.CDLL(None, use_errno=True)
+        syncfs = getattr(libc, "syncfs", None)
+        if syncfs is None:
+            raise OSError("syncfs is unavailable on this platform")
+        syncfs.argtypes = [ctypes.c_int]
+        syncfs.restype = ctypes.c_int
+        if syncfs(descriptor) != 0:
+            error = ctypes.get_errno()
+            raise OSError(error, os.strerror(error), str(path))
+    finally:
+        os.close(descriptor)
 
 
 def _active_midas_service_io_pressure() -> dict[str, tuple[float, float]]:
@@ -540,17 +559,38 @@ def archive(
         # so it does not need to re-read the source or the temporary destination.
         replay(root, value, before_segment=before_segment)
         used = sum(p.stat().st_size for p in destination.iterdir() if p.is_file())
+        pending: list[tuple[Path, Path]] = []
+        pending_bytes = 0
+
+        def flush_pending() -> None:
+            nonlocal pending_bytes
+            if not pending:
+                return
+            if before_segment is not None:
+                before_segment()
+            # Each temporary file was fully copied and checksummed before joining
+            # this batch. syncfs makes the batch durable before any .seg name is
+            # exposed; the final manifest directory sync commits all renames.
+            sync_filesystem(destination)
+            for partial_path, target_path in pending:
+                os.replace(partial_path, target_path)
+            pending.clear()
+            pending_bytes = 0
+
         for info in value["segments"]:
             if before_segment is not None:
                 before_segment()
             if Path(info["file"]).name != info["file"]:
                 raise ValueError("Unsafe segment path")
             source, target = root / info["file"], destination / info["file"]
+            partial = target.with_suffix(".copying")
             if target.exists():
+                if partial.exists():
+                    used -= partial.stat().st_size
+                    partial.unlink()
                 # The complete destination replay below verifies existing and
                 # newly copied segments together before manifest publication.
                 continue
-            partial = target.with_suffix(".copying")
             # Only an interrupted temporary copy in this exclusive archive is disposable.
             if partial.exists():
                 used -= partial.stat().st_size
@@ -568,11 +608,14 @@ def archive(
                     digest.update(chunk)
                     copied_bytes += len(chunk)
                 outgoing.flush()
-                os.fsync(outgoing.fileno())
             if copied_bytes != info["bytes"] or digest.hexdigest() != info["sha256"]:
                 raise ValueError("Source segment changed or copied bytes failed validation")
-            os.replace(partial, target)
+            pending.append((partial, target))
+            pending_bytes += copied_bytes
             used += info["bytes"]
+            if pending_bytes >= ARCHIVE_SYNC_BATCH_BYTES:
+                flush_pending()
+        flush_pending()
         published = dict(
             value,
             archival_provenance=dict(
@@ -589,9 +632,9 @@ def archive(
         if shutil.disk_usage(destination).free < reserve + len(canonical(published)):
             raise OSError("Archive publication reaches disk reserve; originals preserved")
         # The atomic manifest publication syncs this directory after all
-        # segment files have been fsynced and replay-verified. Deferring this
-        # directory sync avoids one HDD journal commit for every segment; an
-        # interruption before publication remains resumable from source data.
+        # bounded batches have been flushed and the complete destination replay
+        # has passed. An interruption before publication remains resumable from
+        # the untouched raw originals.
         atomic_json(destination / "manifest.json", published)
         return published
 
