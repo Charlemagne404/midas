@@ -818,10 +818,13 @@ async def run(config: Config, duration: float | None = None) -> None:
                         comparison_task.cancel()
                         await asyncio.gather(comparison_task, return_exceptions=True)
                         comparison_task = None
+                    diagnostic = f"{type(error).__name__}: {error}"
                     status.update(
                         state="DEGRADED",
                         failures=status["failures"] + 1,
-                        error=f"{type(error).__name__}: {error}",
+                        error=diagnostic,
+                        last_error=diagnostic,
+                        last_error_ns=time.time_ns(),
                     )
                     append(
                         "gap",
@@ -836,7 +839,13 @@ async def run(config: Config, duration: float | None = None) -> None:
                         pass
                     backoff = min(60, backoff * 2)
     except BaseException as error:
-        status.update(state="FAILED", error=f"{type(error).__name__}: {error}")
+        diagnostic = f"{type(error).__name__}: {error}"
+        status.update(
+            state="FAILED",
+            error=diagnostic,
+            last_error=diagnostic,
+            last_error_ns=time.time_ns(),
+        )
         report()
         raise
     finally:

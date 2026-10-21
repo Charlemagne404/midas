@@ -502,6 +502,8 @@ async def test_network_interruption_reconnect_and_safe_stop(tmp_path, monkeypatc
     assert status["transport_queue_sample_count"] > 0
     assert status["failures"] == 1
     assert "error" not in status
+    assert status["last_error"]
+    assert status["last_error_ns"] > 0
     assert status["frames"] == 2
     assert status["process_frames"] == 2
     assert status["lifetime_frames"] == 2
