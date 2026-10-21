@@ -40,6 +40,7 @@ CAPACITY_GROWTH_WINDOWS_SECONDS = (6 * 3600, 24 * 3600)
 ARCHIVE_IO_FULL_AVG10_MAX = 2.0
 ARCHIVE_IO_FULL_AVG60_MAX = 2.0
 ARCHIVE_IO_SAMPLE_SECONDS = 5.0
+ARCHIVE_IO_PRESSURE_POLL_SECONDS = 1.0
 ARCHIVE_IO_STABLE_SECONDS = 60.0
 ARCHIVE_REQUIRED_PROTECTED_SERVICES = {"midas-reality.service"}
 ARCHIVE_HOST_IO_FULL_AVG10_MAX = 2.0
@@ -775,7 +776,9 @@ class _RateLimitedWriter:
         self.destination = destination
         self.bytes_per_second = bytes_per_second
         self.before_write = before_write
-        self.next_write_at = time.monotonic()
+        now = time.monotonic()
+        self.next_write_at = now
+        self.next_admission_check_at = now
 
     def write(self, data: bytes) -> int:
         if not data:
@@ -784,8 +787,9 @@ class _RateLimitedWriter:
         slot = max(now, self.next_write_at)
         if slot > now:
             time.sleep(slot - now)
-        if self.before_write is not None:
+        if self.before_write is not None and slot >= self.next_admission_check_at:
             self.before_write()
+            self.next_admission_check_at = slot + ARCHIVE_IO_PRESSURE_POLL_SECONDS
         written = self.destination.write(data)
         if written != len(data):
             raise OSError("Short write while copying Reality archive segment")
