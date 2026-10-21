@@ -49,6 +49,11 @@ def test_capacity_real_bytes_rates_and_horizon(tmp_path):
     assert result["compressed_bytes_per_second"] == expected_bytes / 120
     assert result["raw_root_bytes"] == sum(p.stat().st_size for p in tmp_path.iterdir())
     assert result["retention_seconds_remaining"] == 30 * 86400 - 120
+    assert result["configured_retention_seconds_remaining"] == 30 * 86400 - 120
+    assert result["configured_capacity_runway_seconds"] == 30 * 86400 - 120
+    assert result["effective_capacity_runway_days"] == result[
+        "effective_capacity_runway_seconds"
+    ] / 86400
     assert result["collector_status_age_seconds"] == 0
     assert result["estimated_action_deadline_ns"] > 121_000_000_000
 
@@ -192,6 +197,8 @@ def test_capacity_reports_last_started_budget_until_recorder_confirms_restart(tm
     assert pending["effective_budget_bytes"] == old_budget
     assert pending["configured_budget_bytes"] == new_budget
     assert pending["budget_change_pending_restart"] is True
+    assert pending["configured_available_headroom_bytes"] > pending["available_headroom_bytes"]
+    assert pending["configured_capacity_runway_days"] >= pending["effective_capacity_runway_days"]
     assert pending["budget_source"] == "collector_status+startup_config"
     assert "BUDGET_CHANGE_PENDING_RESTART" in pending["alerts"]
 
@@ -228,6 +235,8 @@ def test_capacity_reports_last_started_retention_until_recorder_confirms_restart
     assert pending["configured_retention_days"] == 105
     assert pending["retention_change_pending_restart"] is True
     assert pending["retention_seconds_remaining"] == 90 * 86400 - 120
+    assert pending["configured_retention_seconds_remaining"] == 105 * 86400 - 120
+    assert pending["configured_capacity_runway_seconds"] == 105 * 86400 - 120
     assert pending["retention_source"] == "collector_status+startup_config"
     assert "RETENTION_CHANGE_PENDING_RESTART" in pending["alerts"]
     assert pending["estimated_action_deadline_ns"] == 121_000_000_000 + int(
@@ -247,6 +256,7 @@ def test_capacity_reports_last_started_retention_until_recorder_confirms_restart
     assert active["retention_days"] == 105
     assert active["retention_change_pending_restart"] is False
     assert active["retention_seconds_remaining"] == 105 * 86400 - 120
+    assert active["configured_capacity_runway_seconds"] == 105 * 86400 - 120
     assert "RETENTION_CHANGE_PENDING_RESTART" not in active["alerts"]
 
 

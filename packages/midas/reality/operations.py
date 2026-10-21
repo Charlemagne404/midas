@@ -333,13 +333,28 @@ def capacity(
     retention_pending = runtime_retention_days != config.retention_days
     headroom = min(runtime_budget - used, free - config.reserve_bytes)
     storage_seconds = max(0, headroom) / rate if rate else None
+    configured_headroom = min(
+        config.budget_bytes - used,
+        free - config.reserve_bytes,
+    )
+    configured_storage_seconds = max(0, configured_headroom) / rate if rate else None
+    data_age_seconds = (now - oldest) / 1e9 if oldest is not None else None
     retention_seconds = (
-        max(0, runtime_retention_days * 86400 - (now - oldest) / 1e9)
-        if oldest is not None
+        max(0, runtime_retention_days * 86400 - data_age_seconds)
+        if data_age_seconds is not None
+        else None
+    )
+    configured_retention_seconds = (
+        max(0, config.retention_days * 86400 - data_age_seconds)
+        if data_age_seconds is not None
         else None
     )
     horizons = [x for x in (storage_seconds, retention_seconds) if x is not None]
     deadline = min(horizons) if horizons else None
+    configured_horizons = [
+        x for x in (configured_storage_seconds, configured_retention_seconds) if x is not None
+    ]
+    configured_deadline = min(configured_horizons) if configured_horizons else None
     alerts = []
     if budget_pending:
         alerts.append("BUDGET_CHANGE_PENDING_RESTART")
@@ -407,6 +422,7 @@ def capacity(
         filesystem_free_bytes=free,
         free_disk_reserve_bytes=config.reserve_bytes,
         available_headroom_bytes=max(0, headroom),
+        configured_available_headroom_bytes=max(0, configured_headroom),
         sample=dict(
             segments=len(sample),
             first_received_ns=first,
@@ -424,6 +440,14 @@ def capacity(
         estimated_bytes_per_day=rate * 86400 if rate else None,
         estimated_storage_seconds_remaining=storage_seconds,
         retention_seconds_remaining=retention_seconds,
+        configured_estimated_storage_seconds_remaining=configured_storage_seconds,
+        configured_retention_seconds_remaining=configured_retention_seconds,
+        effective_capacity_runway_seconds=deadline,
+        effective_capacity_runway_days=deadline / 86400 if deadline is not None else None,
+        configured_capacity_runway_seconds=configured_deadline,
+        configured_capacity_runway_days=(
+            configured_deadline / 86400 if configured_deadline is not None else None
+        ),
         estimated_action_deadline_ns=int(now + deadline * 1e9) if deadline is not None else None,
         collector_state=status.get("state", "UNKNOWN"),
         collector_status_age_seconds=age,
