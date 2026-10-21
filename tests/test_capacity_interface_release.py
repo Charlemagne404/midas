@@ -2,6 +2,7 @@ import json
 import os
 import subprocess
 import sys
+from pathlib import Path
 
 from scripts.prepare_capacity_interface_release import prepare
 
@@ -9,6 +10,8 @@ from scripts.prepare_capacity_interface_release import prepare
 def test_interface_launcher_uses_shared_admission_and_pinned_worker(tmp_path):
     release = tmp_path / "release"
     prepare(release)
+    repository_route = Path(__file__).resolve().parents[1] / "apps/api/reality.py"
+    assert (release / "apps/api/reality.py").read_bytes() == repository_route.read_bytes()
     site_packages = next(p for p in sys.path if p.endswith("site-packages"))
     env = {
         **os.environ,
@@ -26,6 +29,7 @@ root = Path(sys.argv[1])
 admission.global_lock_path = lambda: root / "test-global.lock"
 snapshot = {"active_job_ids": [], "available_memory_bytes": 3 * 1024**3,
             "disk_free_bytes": 20 * 1024**3, "cpu_psi": {"some": 0},
+            "available_cpu_count": 6, "host_load_avg1": 1.0,
             "memory_psi": {"some": 0, "full": 0}, "io_psi": {"some": 0}}
 admission.resource_snapshot = lambda _: snapshot
 spec = jobs.JobSpec(kind="dataset", dataset=DatasetSpec(episodes=30))

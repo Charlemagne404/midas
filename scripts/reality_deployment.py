@@ -107,6 +107,85 @@ def verify(output: Path) -> dict[str, Any]:
     return receipt
 
 
+def storage_commitment(
+    raw_root: Path,
+    *,
+    raw_budget: int,
+    archive_budget: int,
+    raw_reserve: int,
+    archive_destination: Path | None = None,
+    archive_reserve: int | None = None,
+) -> dict[str, int | bool | str]:
+    """Check raw and archive budgets against the filesystems that hold them.
+
+    With no archive destination, retain the legacy conservative assumption that
+    the full archive budget shares the raw filesystem. An explicit destination
+    is accounted on its own mount, including any already-written archive bytes.
+    """
+    raw_root = raw_root.resolve()
+    archive_reserve = raw_reserve if archive_reserve is None else archive_reserve
+    raw_used = sum(p.stat().st_size for p in raw_root.iterdir() if p.is_file())
+    raw_remaining = max(0, raw_budget - raw_used)
+    raw_free = shutil.disk_usage(raw_root).free
+
+    if archive_destination is None:
+        archive_used = 0
+        archive_remaining = archive_budget
+        required_raw = raw_remaining + archive_remaining + max(raw_reserve, archive_reserve)
+        if raw_free < required_raw:
+            raise ValueError("Configured storage commitments consume protected host headroom")
+        return dict(
+            separate_filesystems=False,
+            raw_used_bytes=raw_used,
+            raw_remaining_bytes=raw_remaining,
+            raw_free_bytes=raw_free,
+            raw_reserve_bytes=raw_reserve,
+            archive_used_bytes=archive_used,
+            archive_remaining_bytes=archive_remaining,
+            archive_free_bytes=raw_free,
+            archive_reserve_bytes=archive_reserve,
+        )
+
+    archive_root = archive_destination.resolve()
+    if archive_root == raw_root or archive_root.is_relative_to(raw_root) or raw_root.is_relative_to(archive_root):
+        raise ValueError("Archive destination must be separate from the raw recording root")
+    archive_mount = archive_root
+    while not archive_mount.exists() and archive_mount != archive_mount.parent:
+        archive_mount = archive_mount.parent
+    if not archive_mount.is_dir():
+        raise ValueError("Archive destination has no existing directory or mount")
+    archive_dev = archive_mount.stat().st_dev
+    raw_dev = raw_root.stat().st_dev
+    archive_used = (
+        sum(p.stat().st_size for p in archive_root.iterdir() if p.is_file())
+        if archive_root.is_dir()
+        else 0
+    )
+    archive_remaining = max(0, archive_budget - archive_used)
+    archive_free = shutil.disk_usage(archive_mount).free
+
+    if archive_dev == raw_dev:
+        required = raw_remaining + archive_remaining + max(raw_reserve, archive_reserve)
+        if raw_free < required:
+            raise ValueError("Configured storage commitments consume protected host headroom")
+    else:
+        if raw_free < raw_remaining + raw_reserve:
+            raise ValueError("Raw storage commitment consumes protected host headroom")
+        if archive_free < archive_remaining + archive_reserve:
+            raise ValueError("Archive storage commitment consumes its protected filesystem reserve")
+    return dict(
+        separate_filesystems=archive_dev != raw_dev,
+        raw_used_bytes=raw_used,
+        raw_remaining_bytes=raw_remaining,
+        raw_free_bytes=raw_free,
+        raw_reserve_bytes=raw_reserve,
+        archive_used_bytes=archive_used,
+        archive_remaining_bytes=archive_remaining,
+        archive_free_bytes=archive_free,
+        archive_reserve_bytes=archive_reserve,
+    )
+
+
 def preflight(
     candidate: Config,
     canary: Config,
@@ -114,6 +193,8 @@ def preflight(
     archive_budget: int,
     disk_reserve: int,
     *,
+    archive_destination: Path | None = None,
+    archive_reserve: int | None = None,
     repair_cached_snapshots: bool = False,
 ) -> dict[str, Any]:
     if not receipt.get("passed") or receipt.get("source_sha256") != source_hash():
@@ -175,14 +256,18 @@ def preflight(
     )
     if status["markets"] != candidate.markets or fresh != candidate.markets * 2:
         raise ValueError("Canary failed complete fresh outcome coverage")
-    # Worst-case allocated local raw and archive growth must fit while protecting other services.
     if archive_budget <= 0 or disk_reserve < candidate.reserve_bytes:
         raise ValueError("Unsafe archive budget or global disk reserve")
-    free = shutil.disk_usage(Path(candidate.root)).free
-    used = sum(p.stat().st_size for p in Path(candidate.root).iterdir() if p.is_file())
-    additional = max(0, candidate.budget_bytes - used) + archive_budget
-    if free < disk_reserve + additional:
-        raise ValueError("Configured storage commitments consume protected host headroom")
+    commitments = storage_commitment(
+        Path(candidate.root),
+        raw_budget=candidate.budget_bytes,
+        archive_budget=archive_budget,
+        raw_reserve=disk_reserve,
+        archive_destination=archive_destination,
+        archive_reserve=archive_reserve,
+    )
+    free = int(commitments["raw_free_bytes"])
+    used = int(commitments["raw_used_bytes"])
     elapsed = (end - start) / 1e9
     sample_bytes = sum(s["bytes"] for s in value["segments"])
     rate = sample_bytes / elapsed
@@ -235,6 +320,7 @@ def preflight(
         canary_bytes_per_second=rate,
         conservative_pilot_runway_days=runway / 86400,
         allocated_raw_and_archive_bytes=candidate.budget_bytes + archive_budget,
+        storage_commitments=commitments,
         free_disk_bytes=free,
         protected_disk_reserve_bytes=disk_reserve,
         production_before=current,
@@ -335,7 +421,13 @@ def main() -> None:
     parser.add_argument(
         "--output", type=Path, default=WORKSPACE / "docs/REALITY_GATE_A_DEPLOYMENT.json"
     )
-    parser.add_argument("--archive-budget", type=int, default=24 * 1024**3)
+    parser.add_argument("--archive-budget", type=int, default=112 * 1024**3)
+    parser.add_argument(
+        "--archive-destination",
+        type=Path,
+        default=Path("/mnt/continental-cloud/data/midas-reality-staging/archive-mission3"),
+    )
+    parser.add_argument("--archive-reserve", type=int, default=400 * 1024**3)
     parser.add_argument("--repair-cached-snapshots", action="store_true")
     args = parser.parse_args()
     if args.command == "verify":
@@ -347,6 +439,8 @@ def main() -> None:
             json.loads(args.receipt.read_text()),
             args.archive_budget,
             20 * 1024**3,
+            archive_destination=args.archive_destination,
+            archive_reserve=args.archive_reserve,
             repair_cached_snapshots=args.repair_cached_snapshots,
         )
         atomic_json(args.gate, gate)
