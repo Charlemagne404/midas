@@ -62,6 +62,83 @@ def test_capacity_real_bytes_rates_and_horizon(tmp_path):
     assert result["estimated_action_deadline_ns"] > 121_000_000_000
 
 
+def test_capacity_forecast_separates_sustained_windows_from_short_sample_burst(tmp_path):
+    now = time.time_ns()
+    store = Store(tmp_path, reserve=1)
+    store.append("frame", "PONG", received_ns=now - 120 * 10**9)
+    store.rotate()
+    store.append("frame", "PONG", received_ns=now)
+    store.rotate()
+    store.close()
+    atomic_json(tmp_path / "status.json", dict(updated_ns=now, state="RECORDING_UNSEQUENCED"))
+    value = manifest(tmp_path)
+    ages_hours = [
+        25 if index == 0 else 12 if index == 1 else 5 for index in range(len(value["segments"]))
+    ]
+    for info, age_hours in zip(value["segments"], ages_hours, strict=True):
+        segment = tmp_path / info["file"]
+        catalog = segment.with_suffix(".json")
+        stamp = now - age_hours * 3600 * 10**9
+        os.utime(segment, ns=(stamp, stamp))
+        os.utime(catalog, ns=(stamp, stamp))
+
+    floor = 100
+    result = capacity(
+        config(tmp_path, budget_bytes=10_000, reserve_bytes=1, retention_days=100),
+        now_ns=now,
+        forecast_floor_bytes_per_day=floor,
+    )
+    six_hour = result["growth_windows"]["trailing_six_hours"]
+    twenty_four_hour = result["growth_windows"]["trailing_twenty_four_hours"]
+    window_bytes = [
+        info["bytes"] + (tmp_path / info["file"]).with_suffix(".json").stat().st_size
+        for info in value["segments"]
+    ]
+    six_hour_bytes = sum(
+        size for size, age in zip(window_bytes, ages_hours, strict=True) if age <= 6
+    )
+    twenty_four_hour_bytes = sum(
+        size for size, age in zip(window_bytes, ages_hours, strict=True) if age <= 24
+    )
+    assert six_hour["bytes"] == six_hour_bytes
+    assert six_hour["coverage_seconds"] == 6 * 3600
+    assert six_hour["bytes_per_day"] == six_hour_bytes * 4
+    assert twenty_four_hour["bytes"] == twenty_four_hour_bytes
+    assert twenty_four_hour["coverage_seconds"] == 24 * 3600
+    assert twenty_four_hour["bytes_per_day"] == twenty_four_hour_bytes
+    assert result["forecast_bytes_per_day"] == max(
+        six_hour_bytes * 4, twenty_four_hour_bytes, floor
+    )
+    assert result["forecast_basis"] == (
+        "maximum_of_trailing_six_hour_twenty_four_hour_and_configured_floor"
+    )
+    assert result["short_window_capacity_runway_days"] < result["configured_capacity_runway_days"]
+    assert "SHORT_WINDOW_CAPACITY_WARNING_WITHIN_THIRTY_DAYS" in result["alerts"]
+    assert "SHORT_WINDOW_CAPACITY_CRITICAL_WITHIN_FOURTEEN_DAYS" in result["alerts"]
+    assert "SHORT_WINDOW_CAPACITY_ACTION_WITHIN_SEVEN_DAYS" in result["alerts"]
+
+
+def test_capacity_growth_clock_mismatch_falls_back_to_short_sample(tmp_path):
+    value = sample(tmp_path)
+    now = time.time_ns()
+    for info in value["segments"]:
+        segment = tmp_path / info["file"]
+        stamp = now + 120 * 10**9
+        os.utime(segment, ns=(stamp, stamp))
+        os.utime(segment.with_suffix(".json"), ns=(stamp, stamp))
+
+    result = capacity(
+        config(tmp_path, reserve_bytes=1),
+        now_ns=now,
+    )
+    assert result["growth_windows"]["trailing_six_hours"]["timestamp_state"] == (
+        "future_timestamp_detected"
+    )
+    assert result["growth_windows"]["trailing_six_hours"]["bytes_per_day"] is None
+    assert result["forecast_bytes_per_day"] == result["estimated_bytes_per_day"]
+    assert result["forecast_basis"] == "recent_sample_fallback_no_valid_growth_windows"
+
+
 def _archive_cgroup_tree(tmp_path, monkeypatch, services):
     archive_cgroup = (
         tmp_path

@@ -36,6 +36,7 @@ from .storage import (
 CAPACITY_WARNING_SECONDS = 30 * 86400
 CAPACITY_CRITICAL_SECONDS = 14 * 86400
 CAPACITY_ACTION_SECONDS = 7 * 86400
+CAPACITY_GROWTH_WINDOWS_SECONDS = (6 * 3600, 24 * 3600)
 ARCHIVE_IO_FULL_AVG10_MAX = 2.0
 ARCHIVE_IO_FULL_AVG60_MAX = 2.0
 ARCHIVE_IO_SAMPLE_SECONDS = 5.0
@@ -418,6 +419,66 @@ def archive_capacity(
     )
 
 
+def _trailing_segment_growth(
+    root: Path, segments: list[dict[str, Any]], now_ns: int
+) -> dict[str, dict[str, Any]]:
+    """Estimate calendar-time growth from finalized files in rolling windows.
+
+    Use filesystem timestamps only to select the window; never read old segment
+    contents for the capacity trend. A short finalized-segment sample remains a
+    separate burst signal. If the source clock is inconsistent, callers can fall
+    back to that conservative sample.
+    """
+    oldest_mtime_ns: int | None = None
+    timestamp_mismatch = False
+    bytes_by_window = {seconds: 0 for seconds in CAPACITY_GROWTH_WINDOWS_SECONDS}
+    segments_by_window = {seconds: 0 for seconds in CAPACITY_GROWTH_WINDOWS_SECONDS}
+
+    for info in segments:
+        name = str(info.get("file", ""))
+        if Path(name).name != name:
+            raise ValueError("Unsafe segment path in capacity growth window")
+        segment = root / name
+        catalog = segment.with_suffix(".json")
+        if segment.is_symlink() or catalog.is_symlink():
+            raise ValueError("Capacity growth window contains a symlink")
+        segment_stat = segment.stat()
+        catalog_stat = catalog.stat()
+        if segment_stat.st_size != int(info["bytes"]):
+            raise ValueError(f"Capacity growth size differs from catalog: {segment}")
+        finalized_ns = max(segment_stat.st_mtime_ns, catalog_stat.st_mtime_ns)
+        oldest_mtime_ns = (
+            finalized_ns if oldest_mtime_ns is None else min(oldest_mtime_ns, finalized_ns)
+        )
+        if finalized_ns > now_ns + 60 * 10**9:
+            timestamp_mismatch = True
+        amount = segment_stat.st_size + catalog_stat.st_size
+        for window_seconds in CAPACITY_GROWTH_WINDOWS_SECONDS:
+            if finalized_ns >= now_ns - window_seconds * 10**9:
+                bytes_by_window[window_seconds] += amount
+                segments_by_window[window_seconds] += 1
+
+    root_age_seconds = (
+        max(0.0, (now_ns - oldest_mtime_ns) / 1e9) if oldest_mtime_ns is not None else 0.0
+    )
+    result: dict[str, dict[str, Any]] = {}
+    for window_seconds in CAPACITY_GROWTH_WINDOWS_SECONDS:
+        coverage_seconds = min(float(window_seconds), root_age_seconds)
+        valid = not timestamp_mismatch and coverage_seconds >= 60
+        rate = bytes_by_window[window_seconds] / coverage_seconds if valid else None
+        label = "trailing_six_hours" if window_seconds == 6 * 3600 else "trailing_twenty_four_hours"
+        result[label] = dict(
+            window_seconds=window_seconds,
+            coverage_seconds=coverage_seconds,
+            finalized_segments=segments_by_window[window_seconds],
+            bytes=bytes_by_window[window_seconds],
+            bytes_per_second=rate,
+            bytes_per_day=rate * 86400 if rate is not None else None,
+            timestamp_state="future_timestamp_detected" if timestamp_mismatch else "valid",
+        )
+    return result
+
+
 def capacity(
     config: Config,
     *,
@@ -474,11 +535,28 @@ def capacity(
     # Partial/very short or clock-regressing samples cannot support an exhaustion date.
     rate = sampled_bytes / seconds if seconds >= 60 and not clock_regressions else None
     forecast_floor = forecast_floor_bytes_per_day / 86400
-    forecast_rate = max(rate or 0, forecast_floor) or None
     status_path = root / "status.json"
     status = json.loads(status_path.read_text()) if status_path.exists() else {}
     # Collection continues during sampling; measure status and capacity at the end.
     now = time.time_ns() if now_ns is None else now_ns
+    growth_windows = _trailing_segment_growth(root, source["segments"], now)
+    sustained_rates = [
+        float(value["bytes_per_second"])
+        for value in growth_windows.values()
+        if value["bytes_per_second"] is not None
+    ]
+    if sustained_rates:
+        forecast_rate = max(*sustained_rates, forecast_floor) or None
+        forecast_basis = "maximum_of_trailing_six_hour_twenty_four_hour_and_configured_floor"
+    else:
+        # Keep a conservative fallback when filesystem timestamps cannot support
+        # rolling windows (for example, a copied store with a mismatched clock).
+        forecast_rate = max(rate or 0, forecast_floor) or None
+        forecast_basis = (
+            "maximum_of_recent_sample_and_configured_floor"
+            if forecast_floor_bytes_per_day
+            else "recent_sample_fallback_no_valid_growth_windows"
+        )
     used = sum(p.stat().st_size for p in root.iterdir() if p.is_file())
     free = shutil.disk_usage(root).free
     runtime_budget, budget_source = _last_started_budget(root, config.budget_bytes, status)
@@ -514,6 +592,11 @@ def capacity(
         x for x in (configured_storage_seconds, configured_retention_seconds) if x is not None
     ]
     configured_deadline = min(configured_horizons) if configured_horizons else None
+    burst_storage_seconds = max(0, headroom) / rate if rate else None
+    burst_horizons = [
+        value for value in (burst_storage_seconds, retention_seconds) if value is not None
+    ]
+    burst_deadline = min(burst_horizons) if burst_horizons else None
     alerts = []
     if budget_pending:
         alerts.append("BUDGET_CHANGE_PENDING_RESTART")
@@ -534,6 +617,13 @@ def capacity(
             alerts.append("CAPACITY_ACTION_WITHIN_SEVEN_DAYS")
     if retention_seconds == 0:
         alerts.append("RETENTION_HORIZON_REACHED")
+    if burst_deadline is not None:
+        if burst_deadline <= CAPACITY_WARNING_SECONDS:
+            alerts.append("SHORT_WINDOW_CAPACITY_WARNING_WITHIN_THIRTY_DAYS")
+        if burst_deadline <= CAPACITY_CRITICAL_SECONDS:
+            alerts.append("SHORT_WINDOW_CAPACITY_CRITICAL_WITHIN_FOURTEEN_DAYS")
+        if burst_deadline <= CAPACITY_ACTION_SECONDS:
+            alerts.append("SHORT_WINDOW_CAPACITY_ACTION_WITHIN_SEVEN_DAYS")
     if rate is None:
         alerts.append("RATE_INSUFFICIENT_EVIDENCE")
     archive_report = None
@@ -595,15 +685,12 @@ def capacity(
             clock_assessment_basis="sequential WebSocket dequeue frames; deferred HTTP timestamps remain separate",
             source_sha256=file_hash_list(sample),
         ),
+        growth_windows=growth_windows,
         compressed_bytes_per_second=rate,
         estimated_bytes_per_day=rate * 86400 if rate else None,
         forecast_floor_bytes_per_day=forecast_floor_bytes_per_day,
         forecast_bytes_per_day=forecast_rate * 86400 if forecast_rate else None,
-        forecast_basis=(
-            "maximum_of_recent_sample_and_configured_floor"
-            if forecast_floor_bytes_per_day
-            else "recent_sample"
-        ),
+        forecast_basis=forecast_basis,
         estimated_storage_seconds_remaining=storage_seconds,
         measured_storage_seconds_remaining=measured_storage_seconds,
         retention_seconds_remaining=retention_seconds,
@@ -611,6 +698,10 @@ def capacity(
         configured_retention_seconds_remaining=configured_retention_seconds,
         effective_capacity_runway_seconds=deadline,
         effective_capacity_runway_days=deadline / 86400 if deadline is not None else None,
+        short_window_capacity_runway_seconds=burst_deadline,
+        short_window_capacity_runway_days=(
+            burst_deadline / 86400 if burst_deadline is not None else None
+        ),
         configured_capacity_runway_seconds=configured_deadline,
         configured_capacity_runway_days=(
             configured_deadline / 86400 if configured_deadline is not None else None
