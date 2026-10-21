@@ -70,10 +70,10 @@ def source_quality_report(status: dict[str, Any], now_ns: int) -> dict[str, Any]
             value if isinstance(value, int) and not isinstance(value, bool) and value >= 0 else None
         )
 
-    config = status.get("config") if isinstance(status.get("config"), dict) else {}
-    comparisons = (
-        status.get("book_comparisons") if isinstance(status.get("book_comparisons"), dict) else {}
-    )
+    raw_config = status.get("config")
+    config = raw_config if isinstance(raw_config, dict) else {}
+    raw_comparisons = status.get("book_comparisons")
+    comparisons = raw_comparisons if isinstance(raw_comparisons, dict) else {}
     expected = nonnegative_int(status.get("expected_books"))
     fresh = nonnegative_int(status.get("fresh_books"))
     markets = nonnegative_int(status.get("markets"))
@@ -92,8 +92,8 @@ def source_quality_report(status: dict[str, Any], now_ns: int) -> dict[str, Any]
         missing = None
         coverage_state = "unknown"
 
-    comparison = status.get("last_book_comparison")
-    comparison = comparison if isinstance(comparison, dict) else {}
+    raw_comparison = status.get("last_book_comparison")
+    comparison = raw_comparison if isinstance(raw_comparison, dict) else {}
     response_ns = comparison.get("response_ns")
     comparison_period = config.get("comparison_seconds", 15)
     if not isinstance(comparison_period, (int, float)) or comparison_period <= 0:
@@ -136,22 +136,109 @@ def source_quality_report(status: dict[str, Any], now_ns: int) -> dict[str, Any]
     recovery = status.get("recovery")
     if isinstance(recovery, dict):
         recovery_state = (
-            recovery.get("status")
+            recovery.get("state")
+            or recovery.get("status")
             or recovery.get("recovery_status")
+            or recovery.get("mode")
             or status.get("recovery_status")
             or "details_present_status_unknown"
         )
     else:
         recovery_state = status.get("recovery_status") or "not_reported"
+    if not isinstance(recovery_state, str):
+        recovery_state = "details_present_status_unknown"
 
     sequence_verified = status.get("sequence_verified")
-    event_counts = status.get("counts") if isinstance(status.get("counts"), dict) else {}
-    latest_assessment = comparison.get("assessment")
+    raw_event_counts = status.get("counts")
+    event_counts = raw_event_counts if isinstance(raw_event_counts, dict) else {}
+    assessment = comparison.get("assessment")
+    latest_assessment = assessment if isinstance(assessment, str) else None
     recorded_gaps = nonnegative_int(status.get("gaps"))
     timing_uncertain = nonnegative_int(status.get("timing_uncertain_books"))
     queue_bound = nonnegative_int(status.get("transport_queue_bound"))
     queue_depth = nonnegative_int(status.get("transport_queue_depth"))
+    stable_divergences = nonnegative_int(comparisons.get("stable_local_lineage_divergence"))
+    comparison_counts = {
+        name: nonnegative_int(value) for name, value in comparisons.items() if isinstance(name, str)
+    }
+    event_duplicate_count = nonnegative_int(event_counts.get("duplicate"))
+    timestamp_regression_count = nonnegative_int(event_counts.get("timestamp_regression"))
+    snapshot_divergence_count = nonnegative_int(event_counts.get("snapshot_divergence"))
+
+    current_issues: list[str] = []
+    if coverage_state in {"missing_current_books", "inconsistent_current_books"}:
+        current_issues.append("book_coverage_incomplete")
+    if comparison_state == "stale":
+        current_issues.append("secondary_comparison_stale")
+    if latest_assessment == "stable_local_lineage_divergence":
+        current_issues.append("current_lineage_divergence")
+    elif latest_assessment in {"stale_local_state", "ineligible_local_state"}:
+        current_issues.append("secondary_comparison_ineligible")
+    if persistence_state == "backpressured":
+        current_issues.append("persistence_backpressure")
+    if status.get("resource_constrained") is True:
+        current_issues.append("collector_resource_headroom_low")
+
+    observability_gaps: list[str] = []
+    if coverage_state == "unknown":
+        observability_gaps.append("book_coverage_unreported")
+    if comparison_state == "unreported":
+        observability_gaps.append("secondary_comparison_unreported")
+    elif comparison_state == "clock_uncertain":
+        observability_gaps.append("secondary_comparison_clock_uncertain")
+    if persistence_state in {
+        "partial_recent_window",
+        "recent_window_scope_unreported",
+        "recent_window_unavailable",
+    }:
+        observability_gaps.append("recent_persistence_window_incomplete")
+    if recovery_state in {"not_reported", "details_present_status_unknown"}:
+        observability_gaps.append("recovery_state_unreported")
+    if sequence_verified is None:
+        observability_gaps.append("sequence_state_unreported")
+    if queue_depth is None:
+        observability_gaps.append("transport_queue_depth_unreported")
+
+    known_limitations: list[str] = []
+    if sequence_verified is False:
+        known_limitations.append("upstream_sequence_unavailable")
+    if recorded_gaps is not None and recorded_gaps > 0:
+        known_limitations.append("recorded_gaps_exist")
+    if stable_divergences is not None and stable_divergences > 0:
+        known_limitations.append("historical_lineage_divergences_exist")
+    if latest_assessment == "concurrent_updates_ambiguous":
+        known_limitations.append("latest_comparison_overlapped_local_updates")
+    if event_duplicate_count is not None and event_duplicate_count > 0:
+        known_limitations.append("duplicate_events_observed_in_recent_window")
+    if timestamp_regression_count is not None and timestamp_regression_count > 0:
+        known_limitations.append("source_timestamp_regressions_observed")
+    if snapshot_divergence_count is not None and snapshot_divergence_count > 0:
+        known_limitations.append("snapshot_reconstruction_differences_observed")
+
+    gap_reason_counts = status.get("gap_reason_counts")
+    if isinstance(gap_reason_counts, dict):
+        gap_reason_counts = {
+            name: nonnegative_int(value)
+            for name, value in gap_reason_counts.items()
+            if isinstance(name, str)
+        }
+    else:
+        gap_reason_counts = None
+
+    quality_status = (
+        "degraded"
+        if current_issues
+        else "incomplete_observability"
+        if observability_gaps
+        else "acceptable_with_known_limitations"
+        if known_limitations
+        else "healthy"
+    )
     return {
+        "status": quality_status,
+        "current_issues": current_issues,
+        "observability_gaps": observability_gaps,
+        "known_limitations": known_limitations,
         "interpretation": (
             "The upstream feed has no documented monotonic sequence field. Current-book freshness "
             "and REST comparisons describe observed state; they cannot prove event completeness."
@@ -174,8 +261,17 @@ def source_quality_report(status: dict[str, Any], now_ns: int) -> dict[str, Any]
             "age_seconds": comparison_age,
             "stale_after_seconds": comparison_limit,
             "assessment": latest_assessment,
+            "assessment_counts": comparison_counts,
+            "assessment_count_scope": (
+                "current_collector_process; full archive totals require a durable-history audit"
+            ),
             "response_ns": response_ns,
             "raw_ordinal": nonnegative_int(comparison.get("raw_ordinal")),
+            "raw_body_reference": (
+                "independent_book_record_at_raw_ordinal"
+                if nonnegative_int(comparison.get("raw_ordinal")) is not None
+                else "unreported"
+            ),
             "before_lineage": comparison.get("before_lineage"),
             "after_lineage": comparison.get("after_lineage"),
         },
@@ -184,6 +280,7 @@ def source_quality_report(status: dict[str, Any], now_ns: int) -> dict[str, Any]
             "stable_local_divergences": nonnegative_int(
                 comparisons.get("stable_local_lineage_divergence")
             ),
+            "stable_divergence_count_scope": "current_collector_process",
             "stable_local_matches_unsequenced": nonnegative_int(
                 comparisons.get("stable_local_lineage_match_unsequenced")
             ),
@@ -194,14 +291,40 @@ def source_quality_report(status: dict[str, Any], now_ns: int) -> dict[str, Any]
         },
         "recorded_gaps": {
             "count": recorded_gaps,
-            "reason_breakdown": status.get("gap_reason_counts"),
-            "scope": "The recorder's reported durable gap count; gap reasons are unreported here.",
+            "reason_breakdown": gap_reason_counts,
+            "scope": (
+                "Durable local gap markers and reported reason counts. A marker records an observed "
+                "resynchronization or interruption; it does not establish the number of missing "
+                "upstream events."
+            ),
         },
         "event_integrity_signals": {
             "duplicate_event_hashes_recent_window": nonnegative_int(event_counts.get("duplicate")),
             "duplicate_window_capacity": 4096,
             "timestamp_regressions": nonnegative_int(event_counts.get("timestamp_regression")),
             "snapshot_divergences": nonnegative_int(event_counts.get("snapshot_divergence")),
+            "interpretations": {
+                "duplicate_event_hashes_recent_window": (
+                    "Repeated frame hashes within the bounded recent observation window. "
+                    "The raw records remain stored and are applied idempotently; they are not dropped."
+                ),
+                "timestamp_regressions": (
+                    "A source timestamp earlier than prior local state. The collector invalidates "
+                    "and resynchronizes the affected book; without upstream sequence numbers this "
+                    "does not prove a missing event."
+                ),
+                "snapshot_divergences": (
+                    "A full-depth resynchronization or refresh snapshot differed from the prior "
+                    "local depth state. Markets can change between observations, so this count "
+                    "alone does not prove local event loss."
+                ),
+                "snapshot_source_time_regressions_after_gap": (
+                    "A replacement snapshot had an earlier source timestamp after a recorded gap. "
+                    "It is retained as timing uncertainty until later observations establish a "
+                    "newer local state."
+                ),
+            },
+            "count_scope": "current_collector_process; counters reset when the collector starts",
             "snapshot_source_time_regressions_after_gap": nonnegative_int(
                 event_counts.get("snapshot_source_time_regression_after_gap")
             ),
@@ -291,14 +414,26 @@ def router(workspace: Path) -> APIRouter:
         now = time.time_ns()
         updated_ns = status.get("updated_ns")
         age = (now - updated_ns) / 1e9 if isinstance(updated_ns, int) else None
-        health, health_reasons = classify_collector_health(status, now)
+        capture_health, health_reasons = classify_collector_health(status, now)
         source_quality = source_quality_report(status, now)
-        status = project_collector_status(status, health)
+        health = capture_health
+        if capture_health == "recording" and source_quality["status"] in {
+            "degraded",
+            "incomplete_observability",
+        }:
+            health = "degraded"
+            health_reasons = (
+                source_quality["current_issues"]
+                or source_quality["observability_gaps"]
+                or ["source_quality_unavailable"]
+            )
+        status = project_collector_status(status, capture_health)
         return dict(
             now_ns=now,
             collector=status,
             collector_status_age_seconds=age,
             health=health,
+            capture_health=capture_health,
             health_reasons=health_reasons,
             source_quality=source_quality,
             forward=read_json(forward / "status.json"),
@@ -335,7 +470,7 @@ def router(workspace: Path) -> APIRouter:
             return cached[1]  # type: ignore[no-any-return]
         if not (forward / "shadow.sqlite").exists():
             raise HTTPException(404, "No prospective journal available yet")
-        result = report(forward, limit=limit)
+        result: dict[str, Any] = report(forward, limit=limit)
         cache[key] = (time.monotonic(), result)
         return result
 

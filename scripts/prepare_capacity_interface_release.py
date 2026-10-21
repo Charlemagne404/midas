@@ -8,9 +8,11 @@ import shutil
 import subprocess
 import tarfile
 from pathlib import Path
+from typing import TypedDict
 
 BASE = "c83320000a085bf30490b4b76b425527fe8574f7"
 OVERRIDES = (
+    "apps/api/reality.py",
     "apps/api/storage.py",
     "apps/api/paper.py",
     "apps/api/state_codec.py",
@@ -22,7 +24,14 @@ OVERRIDES = (
 )
 
 
-def prepare(destination: Path) -> dict:
+class ReleaseReceipt(TypedDict):
+    base: str
+    overrides: list[str]
+    patched: str
+    files: dict[str, str]
+
+
+def prepare(destination: Path) -> ReleaseReceipt:
     repository = Path(__file__).resolve().parents[1]
     destination.mkdir(parents=True, exist_ok=False)
     archive = subprocess.check_output(
@@ -94,7 +103,7 @@ def prepare(destination: Path) -> dict:
         for p in destination.rglob("*")
         if p.is_file() and not p.is_symlink()
     }
-    receipt = {
+    receipt: ReleaseReceipt = {
         "base": BASE,
         "overrides": list(OVERRIDES),
         "patched": str(jobs.relative_to(destination)),
