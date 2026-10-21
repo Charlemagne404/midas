@@ -40,6 +40,11 @@ PRODUCTION_PYTHON = PRODUCTION_WORKSPACE / ".venv/bin/python"
 PRODUCTION_CONFIG = PRODUCTION_WORKSPACE / "deploy/reality.json"
 SERVICE_UNIT_SOURCE = WORKSPACE / "deploy/systemd/user/midas-reality.service"
 SERVICE_UNIT_TARGET = Path.home() / ".config/systemd/user/midas-reality.service"
+RUNTIME_RELEASES = Path.home() / ".local/share/midas-reality/releases"
+RUNTIME_DROPIN_TARGET = (
+    Path.home() / ".config/systemd/user/midas-reality.service.d/60-candidate-runtime.conf"
+)
+RUNTIME_SITE_PACKAGES = PRODUCTION_WORKSPACE / ".venv/lib/python3.12/site-packages"
 EXPECTED_EFFECTIVE_LIMITS = {
     "MemoryHigh": str(896 * 1024**2),
     "MemoryMax": str(1024 * 1024**2),
@@ -70,6 +75,59 @@ def service_unit_hash() -> str:
 
 def production_source_hash() -> str:
     return source_hash(PRODUCTION_WORKSPACE)
+
+
+def runtime_dropin_text(identity: str) -> str:
+    return (
+        "[Service]\n"
+        f"Environment=PYTHONPATH=%h/.local/share/midas-reality/releases/{identity}/packages:"
+        "%h/midas-reality/.venv/lib/python3.12/site-packages\n"
+        "Environment=PYTHONDONTWRITEBYTECODE=1\n"
+        "ExecStart=\n"
+        "ExecStart=%h/midas-reality/.venv/bin/python -S -m midas.reality record "
+        "--config %h/midas-reality/deploy/reality.json\n"
+    )
+
+
+def runtime_release_evidence() -> dict[str, Any]:
+    """Validate the isolated, read-only code release used by the future service unit."""
+    identity = source_hash()
+    root = RUNTIME_RELEASES / identity
+    package_root = root / "packages/midas/reality"
+    receipt_path = root / "release.json"
+    dropin_path = root / "midas-reality-candidate-runtime.conf"
+    for path in (root, package_root, receipt_path, dropin_path, RUNTIME_SITE_PACKAGES):
+        if path.is_symlink() or not path.exists():
+            raise ValueError(f"Candidate runtime release input is missing or unsafe: {path}")
+    if not root.is_dir() or not package_root.is_dir() or not RUNTIME_SITE_PACKAGES.is_dir():
+        raise ValueError("Candidate runtime release or production dependencies are not directories")
+    release_identity = source_hash(root)
+    receipt = json.loads(receipt_path.read_text())
+    expected_dropin = runtime_dropin_text(identity)
+    if (
+        release_identity != identity
+        or receipt.get("candidate_source_sha256") != identity
+        or receipt.get("release_path") != str(root)
+        or receipt.get("package_path") != str(package_root)
+        or receipt.get("runtime_python") != str(PRODUCTION_PYTHON)
+        or receipt.get("runtime_site_packages") != str(RUNTIME_SITE_PACKAGES)
+        or dropin_path.read_text() != expected_dropin
+        or hashlib.sha256(expected_dropin.encode()).hexdigest() != receipt.get("drop_in_sha256")
+        or receipt.get("drop_in") != expected_dropin
+    ):
+        raise ValueError("Candidate runtime release receipt or code identity is inconsistent")
+    for path in (root, *root.rglob("*")):
+        if path.stat().st_mode & 0o222:
+            raise ValueError(f"Candidate runtime release is writable: {path}")
+    return dict(
+        source_sha256=identity,
+        release_path=str(root),
+        package_path=str(package_root),
+        dropin_path=str(dropin_path),
+        dropin_sha256=receipt["drop_in_sha256"],
+        site_packages=str(RUNTIME_SITE_PACKAGES),
+        release_receipt_sha256=hashlib.sha256(receipt_path.read_bytes()).hexdigest(),
+    )
 
 
 def verification_environment() -> dict[str, str]:
@@ -145,6 +203,46 @@ def _validate_service_configuration(unit: dict[str, str]) -> dict[str, Any]:
     return identity
 
 
+def _validate_candidate_runtime_configuration(
+    unit: dict[str, str], release: dict[str, Any], *, restart_policies: set[str]
+) -> dict[str, Any]:
+    identity = _unit_configuration_identity(unit)
+    if identity["fragment_path"] != str(SERVICE_UNIT_TARGET):
+        raise ValueError("Active Reality service fragment is not the configured user unit")
+    if identity["fragment_sha256"] != service_unit_hash():
+        raise ValueError("Installed Reality service unit differs from the verified source")
+    expected_start = (
+        f"path={PRODUCTION_PYTHON} ; argv[]={PRODUCTION_PYTHON} -S -m midas.reality "
+        f"record --config {PRODUCTION_CONFIG} ;"
+    )
+    if expected_start not in identity["exec_start"]:
+        raise ValueError("Reality service executable does not use the verified candidate runtime")
+    if identity["working_directory"] != str(PRODUCTION_WORKSPACE):
+        raise ValueError("Reality service working directory differs from the verified target")
+    environment = dict(
+        value.split("=", 1)
+        for value in unit.get("Environment", "").split()
+        if "=" in value
+    )
+    expected_pythonpath = f"{release['package_path']}:{release['site_packages']}"
+    if (
+        environment.get("PYTHONPATH") != expected_pythonpath
+        or environment.get("PYTHONDONTWRITEBYTECODE") != "1"
+        or environment.get("PYTHONUNBUFFERED") != "1"
+    ):
+        raise ValueError("Reality service environment does not pin the candidate release")
+    if identity["environment_files"] or identity["user"]:
+        raise ValueError("Reality service has an unverified environment file or user override")
+    if identity["effective_limits"] != EXPECTED_EFFECTIVE_LIMITS:
+        raise ValueError("Effective Reality service resource limits differ from the verified contract")
+    if identity["restart"] not in restart_policies:
+        raise ValueError("Reality service restart policy differs from the transition phase")
+    dropins = {item["path"]: item["sha256"] for item in identity["drop_ins"]}
+    if dropins.get(str(RUNTIME_DROPIN_TARGET)) != release["dropin_sha256"]:
+        raise ValueError("Installed candidate runtime drop-in differs from its verified release")
+    return identity
+
+
 def service() -> dict[str, str]:
     result = subprocess.run(
         [
@@ -192,7 +290,7 @@ def service() -> dict[str, str]:
         text=True,
     )
     values = dict(line.split("=", 1) for line in result.stdout.splitlines())
-    environment = values.pop("Environment", "")
+    environment = values.get("Environment", "")
     values["EnvironmentSHA256"] = hashlib.sha256(environment.encode()).hexdigest()
     return values
 
@@ -210,6 +308,37 @@ def _install_restart_guard() -> Path:
     subprocess.run(["systemctl", "--user", "daemon-reload"], check=True)
     if service().get("Restart") != "no":
         raise ValueError("systemd did not activate the one-shot Restart=no guard")
+    return path
+
+
+def _install_candidate_runtime_dropin(release: dict[str, Any]) -> Path:
+    path = RUNTIME_DROPIN_TARGET
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if path.parent.is_symlink() or not path.parent.is_dir():
+        raise ValueError("Candidate service drop-in directory is missing or unsafe")
+    if path.exists() or path.is_symlink():
+        raise ValueError(f"Candidate runtime drop-in already exists: {path}")
+    source = Path(release["dropin_path"])
+    if source.is_symlink() or not source.is_file():
+        raise ValueError("Candidate runtime drop-in source is missing or unsafe")
+    content = source.read_bytes()
+    if hashlib.sha256(content).hexdigest() != release["dropin_sha256"]:
+        raise ValueError("Candidate runtime drop-in changed after preflight")
+    descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o644)
+    try:
+        with os.fdopen(descriptor, "wb") as output:
+            output.write(content)
+            output.flush()
+            os.fsync(output.fileno())
+    except BaseException:
+        path.unlink(missing_ok=True)
+        raise
+    directory_fd = os.open(path.parent, os.O_RDONLY | os.O_DIRECTORY)
+    try:
+        os.fsync(directory_fd)
+    finally:
+        os.close(directory_fd)
+    subprocess.run(["systemctl", "--user", "daemon-reload"], check=True)
     return path
 
 
@@ -245,7 +374,7 @@ def _install_recovery_checkpoint(evidence: dict[str, Any], recording_root: Path)
     if recording_root.is_symlink() or not recording_root.is_dir():
         raise ValueError("Protected Reality recording root is missing or unsafe")
     source = Path(evidence["checkpoint_path"])
-    target = recording_root / recovery.CHECKPOINT_NAME
+    target: Path = recording_root / str(recovery.CHECKPOINT_NAME)
     temporary = target.with_suffix(target.suffix + ".mission-tmp")
     if source.is_symlink() or not source.is_file():
         raise ValueError("Prepared recovery checkpoint is missing or unsafe")
@@ -680,8 +809,9 @@ def preflight(
     production_service = service()
     production_unit_config = _validate_service_configuration(production_service)
     deployed_source_identity = production_source_hash()
-    if deployed_source_identity != source_hash():
-        raise ValueError("Production Reality package source differs from the verified candidate")
+    candidate_runtime = runtime_release_evidence()
+    if candidate_runtime["source_sha256"] != source_hash():
+        raise ValueError("Immutable candidate runtime differs from the verified candidate")
     if recovery_evidence_root is None:
         raise ValueError("Full-scale recovery evidence is required for restart preflight")
     recovery_evidence = recovery_resource_evidence(recovery_evidence_root)
@@ -802,6 +932,7 @@ def preflight(
         deployment_tool_sha256=deployment_tool_hash(),
         systemd_unit_sha256=service_unit_hash(),
         production_source_sha256=deployed_source_identity,
+        candidate_runtime=candidate_runtime,
         production_unit_config=production_unit_config,
         candidate=candidate.dump(),
         canary=canary.dump(),
@@ -847,6 +978,7 @@ def apply(
     config_path: Path,
     output: Path,
     *,
+    protected_restart_approved: bool = False,
     health_timeout_seconds: int = 3600,
     stability_seconds: int = 300,
 ) -> dict[str, Any]:
@@ -854,14 +986,16 @@ def apply(
         raise ValueError("Full-store readiness window must be 2400..3600 seconds")
     if not 300 <= stability_seconds <= 600:
         raise ValueError("Post-readiness stability window must be 300..600 seconds")
+    if not protected_restart_approved:
+        raise ValueError("Protected Reality restart requires explicit approval")
     if (
         not gate.get("passed")
         or gate["source_sha256"] != source_hash()
         or gate.get("deployment_tool_sha256") != deployment_tool_hash()
         or gate.get("systemd_unit_sha256") != service_unit_hash()
         or gate.get("production_source_sha256") != production_source_hash()
-        or gate.get("production_source_sha256") != source_hash()
         or gate["candidate"] != candidate.dump()
+        or gate.get("candidate_runtime") != runtime_release_evidence()
         or not isinstance(gate.get("production_unit_config"), dict)
         or not isinstance(gate.get("recovery_prefix"), dict)
         or not isinstance(gate.get("recovery_evidence"), dict)
@@ -938,12 +1072,6 @@ def apply(
     )
     atomic_json(output, result)  # Record intent before mutating the service.
     restart_guard = _install_restart_guard()
-    try:
-        atomic_json(config_path, candidate.dump())
-    except Exception:
-        # No process start has been attempted; it is safe to restore policy now.
-        _remove_restart_guard(restart_guard, before["Restart"])
-        raise
     result["restart_guard"] = str(restart_guard)
     result["automatic_restarts_disabled"] = True
     atomic_json(output, result)
@@ -953,9 +1081,17 @@ def apply(
         if stopped.get("ActiveState") != "inactive" or stopped.get("MainPID") not in {None, "0"}:
             raise RuntimeError("Reality did not stop cleanly before the single candidate start")
         result["stop_completed_ns"] = time.time_ns()
+        runtime_dropin = _install_candidate_runtime_dropin(gate["candidate_runtime"])
+        result["installed_candidate_runtime_dropin"] = str(runtime_dropin)
+        atomic_json(config_path, candidate.dump())
         checkpoint_target = _install_recovery_checkpoint(recovery_evidence, Path(candidate.root))
         result["installed_recovery_checkpoint"] = str(checkpoint_target)
         result["installed_recovery_checkpoint_sha256"] = recovery_evidence["checkpoint_sha256"]
+        atomic_json(output, result)
+        candidate_unit = _validate_candidate_runtime_configuration(
+            service(), gate["candidate_runtime"], restart_policies={"no"}
+        )
+        result["candidate_service_configuration"] = candidate_unit
         atomic_json(output, result)
         subprocess.run(["systemctl", "--user", "start", "midas-reality.service"], check=True)
     except Exception as exc:
@@ -1115,6 +1251,11 @@ def main() -> None:
     )
     parser.add_argument("--archive-mountpoint", type=Path, default=Path("/mnt/continental-cloud"))
     parser.add_argument("--health-timeout-seconds", type=int, default=3600)
+    parser.add_argument(
+        "--approve-protected-restart",
+        action="store_true",
+        help="explicitly authorize the protected Reality stop/start transition",
+    )
     parser.add_argument("--recovery-evidence", type=Path)
     parser.add_argument("--stability-seconds", type=int, default=300)
     parser.add_argument("--repair-cached-snapshots", action="store_true")
@@ -1139,11 +1280,14 @@ def main() -> None:
         atomic_json(args.gate, gate)
         print(json.dumps(gate, indent=2))
     else:
+        if not args.approve_protected_restart:
+            parser.error("apply requires --approve-protected-restart")
         result = apply(
             Config.load(args.candidate),
             json.loads(args.gate.read_text()),
             PRODUCTION_CONFIG,
             args.output,
+            protected_restart_approved=True,
             health_timeout_seconds=args.health_timeout_seconds,
             stability_seconds=args.stability_seconds,
         )

@@ -153,7 +153,9 @@ def test_preflight_requires_source_unit_and_effective_limits(tmp_path, monkeypat
         _validate_service_configuration(unit)
 
 
-def test_preflight_rejects_production_package_source_drift(tmp_path, monkeypatch):
+def test_preflight_allows_isolated_candidate_when_production_source_is_older(
+    tmp_path, monkeypatch
+):
     current = Config()
     canary = replace(current, root=current.root + "-canary")
     receipt = dict(
@@ -166,9 +168,13 @@ def test_preflight_rejects_production_package_source_drift(tmp_path, monkeypatch
     service_state = _service_state(tmp_path, monkeypatch)
     with (
         patch("scripts.reality_deployment.service", return_value=service_state),
-        patch("scripts.reality_deployment.production_source_hash", return_value="drifted"),
+        patch("scripts.reality_deployment.production_source_hash", return_value="older-production"),
+        patch(
+            "scripts.reality_deployment.runtime_release_evidence",
+            return_value={"source_sha256": source_hash()},
+        ),
     ):
-        with pytest.raises(ValueError, match="package source differs"):
+        with pytest.raises(ValueError, match="Full-scale recovery evidence is required"):
             preflight(current, canary, receipt, 1024, current.reserve_bytes)
 
 
@@ -191,7 +197,11 @@ def test_preflight_rejects_recovery_receipt_for_stale_source_boundary(tmp_path):
     with (
         patch("scripts.reality_deployment.service", return_value={"ActiveState": "active"}),
         patch("scripts.reality_deployment._validate_service_configuration", return_value={}),
-        patch("scripts.reality_deployment.production_source_hash", return_value=source_hash()),
+        patch("scripts.reality_deployment.production_source_hash", return_value="older-production"),
+        patch(
+            "scripts.reality_deployment.runtime_release_evidence",
+            return_value={"source_sha256": source_hash()},
+        ),
         patch(
             "scripts.reality_deployment.recovery_resource_evidence",
             return_value={"source_root": current.root, "catalog_sha256": "stale-boundary"},
@@ -284,17 +294,29 @@ def test_apply_expired_gate_never_writes_or_restarts(tmp_path):
         deployment_tool_sha256=deployment_tool_hash(),
         systemd_unit_sha256=service_unit_hash(),
         production_source_sha256=source_hash(),
+        candidate_runtime={"source_sha256": source_hash()},
         candidate=config.dump(),
         checked_ns=0,
         production_before={},
         production_unit_config={},
     )
     with (
+        patch("scripts.reality_deployment.production_source_hash", return_value=source_hash()),
+        patch(
+            "scripts.reality_deployment.runtime_release_evidence",
+            return_value=gate["candidate_runtime"],
+        ),
         patch("scripts.reality_deployment.atomic_json") as write,
         patch("scripts.reality_deployment.subprocess.run") as restart,
     ):
         with pytest.raises(ValueError, match="expired"):
-            apply(config, gate, tmp_path / "config.json", tmp_path / "result.json")
+            apply(
+                config,
+                gate,
+                tmp_path / "config.json",
+                tmp_path / "result.json",
+                protected_restart_approved=True,
+            )
     write.assert_not_called()
     restart.assert_not_called()
 
@@ -307,6 +329,7 @@ def test_apply_changed_process_never_writes_or_restarts(tmp_path):
         deployment_tool_sha256=deployment_tool_hash(),
         systemd_unit_sha256=service_unit_hash(),
         production_source_sha256=source_hash(),
+        candidate_runtime={"source_sha256": source_hash()},
         candidate=config.dump(),
         checked_ns=time.time_ns(),
         production_before=dict(MainPID="123"),
@@ -321,12 +344,22 @@ def test_apply_changed_process_never_writes_or_restarts(tmp_path):
     )
     with (
         patch("scripts.reality_deployment.production_source_hash", return_value=source_hash()),
+        patch(
+            "scripts.reality_deployment.runtime_release_evidence",
+            return_value=gate["candidate_runtime"],
+        ),
         patch("scripts.reality_deployment.service", return_value=dict(MainPID="124")),
         patch("scripts.reality_deployment.atomic_json") as write,
         patch("scripts.reality_deployment.subprocess.run") as restart,
     ):
         with pytest.raises(ValueError, match="process changed"):
-            apply(config, gate, tmp_path / "config.json", tmp_path / "result.json")
+            apply(
+                config,
+                gate,
+                tmp_path / "config.json",
+                tmp_path / "result.json",
+                protected_restart_approved=True,
+            )
     write.assert_not_called()
     restart.assert_not_called()
 
@@ -348,6 +381,17 @@ def test_apply_invalid_health_window_cannot_mutate(tmp_path):
     restart.assert_not_called()
 
 
+def test_apply_requires_explicit_protected_restart_approval(tmp_path):
+    with (
+        patch("scripts.reality_deployment.atomic_json") as write,
+        patch("scripts.reality_deployment.subprocess.run") as restart,
+    ):
+        with pytest.raises(ValueError, match="requires explicit approval"):
+            apply(Config(), {}, tmp_path / "config.json", tmp_path / "result.json")
+    write.assert_not_called()
+    restart.assert_not_called()
+
+
 def test_apply_timeout_keeps_one_shot_guard_and_never_restarts_back(tmp_path, monkeypatch):
     config = Config()
     config_path = tmp_path / "reality.json"
@@ -361,6 +405,7 @@ def test_apply_timeout_keeps_one_shot_guard_and_never_restarts_back(tmp_path, mo
         deployment_tool_sha256=deployment_tool_hash(),
         systemd_unit_sha256=service_unit_hash(),
         production_source_sha256=source_hash(),
+        candidate_runtime={"source_sha256": source_hash()},
         candidate=config.dump(),
         checked_ns=time.time_ns(),
         production_before=initial_service_state,
@@ -391,12 +436,26 @@ def test_apply_timeout_keeps_one_shot_guard_and_never_restarts_back(tmp_path, mo
         ActiveState="active",
         Restart="no",
     )
+    events = []
+
+    def record_write(path, _value):
+        events.append(("write", path))
+
+    def record_systemctl(args, *, check):
+        assert check
+        events.append(("systemctl", args[-1]))
+
     with (
         patch("scripts.reality_deployment.production_source_hash", return_value=source_hash()),
+        patch(
+            "scripts.reality_deployment.runtime_release_evidence",
+            return_value=gate["candidate_runtime"],
+        ),
         patch(
             "scripts.reality_deployment.service",
             side_effect=[
                 dict(service_state, MainPID="123", Restart="on-failure"),
+                dict(service_state, MainPID="0", ActiveState="inactive"),
                 dict(service_state, MainPID="0", ActiveState="inactive"),
                 service_state,
                 service_state,
@@ -418,18 +477,33 @@ def test_apply_timeout_keeps_one_shot_guard_and_never_restarts_back(tmp_path, mo
             return_value=tmp_path / "installed-checkpoint",
         ),
         patch(
+            "scripts.reality_deployment._install_candidate_runtime_dropin",
+            return_value=tmp_path / "runtime-dropin",
+        ),
+        patch(
+            "scripts.reality_deployment._validate_candidate_runtime_configuration",
+            return_value={},
+        ),
+        patch(
             "scripts.reality_deployment._load_runtime_status",
             return_value={"config": config.dump()},
         ),
         patch("scripts.reality_deployment._install_restart_guard", return_value=tmp_path / "guard"),
         patch("scripts.reality_deployment._remove_restart_guard") as remove_guard,
-        patch("scripts.reality_deployment.atomic_json") as write,
-        patch("scripts.reality_deployment.subprocess.run") as restart,
+        patch("scripts.reality_deployment.atomic_json", side_effect=record_write) as write,
+        patch("scripts.reality_deployment.subprocess.run", side_effect=record_systemctl) as restart,
         patch("scripts.reality_deployment.time.monotonic", side_effect=[0, 0, 2401]),
         patch("scripts.reality_deployment.time.sleep"),
     ):
         with pytest.raises(ValueError, match="no retry or rollback"):
-            apply(config, gate, config_path, output, health_timeout_seconds=2400)
+            apply(
+                config,
+                gate,
+                config_path,
+                output,
+                protected_restart_approved=True,
+                health_timeout_seconds=2400,
+            )
 
     assert restart.call_args_list == [
         call(["systemctl", "--user", "stop", "midas-reality.service"], check=True),
@@ -439,6 +513,10 @@ def test_apply_timeout_keeps_one_shot_guard_and_never_restarts_back(tmp_path, mo
     config_writes = [call for call in write.call_args_list if call.args[0] == config_path]
     assert len(config_writes) == 1
     assert config_writes[0].args[1] == config.dump()
+    stop_index = events.index(("systemctl", "midas-reality.service"))
+    config_index = events.index(("write", config_path))
+    start_index = len(events) - 1 - events[::-1].index(("systemctl", "midas-reality.service"))
+    assert stop_index < config_index < start_index
 
 
 def test_apply_resource_rejection_precedes_config_or_service_mutation(tmp_path, monkeypatch):
@@ -451,6 +529,7 @@ def test_apply_resource_rejection_precedes_config_or_service_mutation(tmp_path, 
         deployment_tool_sha256=deployment_tool_hash(),
         systemd_unit_sha256=service_unit_hash(),
         production_source_sha256=source_hash(),
+        candidate_runtime={"source_sha256": source_hash()},
         candidate=config.dump(),
         checked_ns=time.time_ns(),
         production_before=initial,
@@ -476,6 +555,10 @@ def test_apply_resource_rejection_precedes_config_or_service_mutation(tmp_path, 
     )
     with (
         patch("scripts.reality_deployment.production_source_hash", return_value=source_hash()),
+        patch(
+            "scripts.reality_deployment.runtime_release_evidence",
+            return_value=gate["candidate_runtime"],
+        ),
         patch("scripts.reality_deployment.service", return_value=initial),
         patch(
             "scripts.reality_deployment.recovery_resource_evidence",
@@ -490,6 +573,12 @@ def test_apply_resource_rejection_precedes_config_or_service_mutation(tmp_path, 
         patch("scripts.reality_deployment.subprocess.run") as mutate,
     ):
         with pytest.raises(ValueError, match="resource gate"):
-            apply(config, gate, tmp_path / "missing-config.json", tmp_path / "result.json")
+            apply(
+                config,
+                gate,
+                tmp_path / "missing-config.json",
+                tmp_path / "result.json",
+                protected_restart_approved=True,
+            )
     write.assert_not_called()
     mutate.assert_not_called()
