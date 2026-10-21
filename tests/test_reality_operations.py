@@ -460,6 +460,89 @@ def test_archive_incremental_integrity_and_originals(tmp_path):
     assert json.loads((target / "manifest.json").read_text())["segments"] == value["segments"]
 
 
+def test_archive_daily_append_verifies_only_new_suffix_and_retains_full_receipt(tmp_path):
+    root, target = tmp_path / "raw", tmp_path / "archive"
+    first_source = sample(root)
+    first = archive(root, target, budget=1_000_000, reserve=1)
+    original_full_verification = first["archival_provenance"]["full_verified_ns"]
+    extended_source = sample(root)
+    with patch.object(operations, "replay", side_effect=AssertionError("full replay repeated")):
+        extended = archive(root, target, budget=1_000_000, reserve=1)
+
+    provenance = extended["archival_provenance"]
+    assert extended["segments"] == extended_source["segments"]
+    assert provenance["verification_mode"] == "incremental_suffix"
+    assert provenance["full_verified_ns"] == original_full_verification
+    assert provenance["incremental_verified_segments"] == len(extended_source["segments"]) - len(
+        first_source["segments"]
+    )
+    assert provenance["incremental_verified_bytes"] == sum(
+        info["bytes"] for info in extended_source["segments"][len(first_source["segments"]) :]
+    )
+    assert len(provenance["file_identities"]) == len(extended_source["segments"])
+
+    replay_roots = []
+    actual_replay = operations.replay
+
+    def track_replay(path, value, *args, **kwargs):
+        replay_roots.append(path.resolve())
+        return actual_replay(path, value, *args, **kwargs)
+
+    with patch.object(operations, "replay", side_effect=track_replay):
+        forced_full = archive(root, target, budget=1_000_000, reserve=1, full_verify=True)
+    assert forced_full["archival_provenance"]["verification_mode"] == "full_replay"
+    assert forced_full["archival_provenance"]["full_verified_ns"] >= original_full_verification
+    assert replay_roots == [root.resolve(), target.resolve()]
+
+
+def test_archive_migrates_legacy_full_manifest_to_incremental_identity_receipt(tmp_path):
+    root, target = tmp_path / "raw", tmp_path / "archive"
+    sample(root)
+    full = archive(root, target, budget=1_000_000, reserve=1)
+    legacy = json.loads((target / "manifest.json").read_text())
+    for field in (
+        "full_verified_ns",
+        "incremental_verified_ns",
+        "incremental_verified_segments",
+        "incremental_verified_bytes",
+        "verification_mode",
+        "file_identities",
+    ):
+        legacy["archival_provenance"].pop(field, None)
+    atomic_json(target / "manifest.json", legacy)
+    source = sample(root)
+
+    with patch.object(operations, "replay", side_effect=AssertionError("legacy prefix replayed")):
+        extended = archive(root, target, budget=1_000_000, reserve=1)
+
+    provenance = extended["archival_provenance"]
+    assert extended["segments"] == source["segments"]
+    assert provenance["full_verified_ns"] == full["archival_provenance"]["verified_ns"]
+    assert provenance["verification_mode"] == "incremental_suffix"
+    assert len(provenance["file_identities"]) == len(source["segments"])
+
+
+def test_archive_requires_full_verification_for_expired_legacy_receipt(tmp_path):
+    root, target = tmp_path / "raw", tmp_path / "archive"
+    sample(root)
+    archive(root, target, budget=1_000_000, reserve=1)
+    legacy = json.loads((target / "manifest.json").read_text())
+    for field in (
+        "full_verified_ns",
+        "incremental_verified_ns",
+        "incremental_verified_segments",
+        "incremental_verified_bytes",
+        "verification_mode",
+        "file_identities",
+    ):
+        legacy["archival_provenance"].pop(field, None)
+    legacy["archival_provenance"]["verified_ns"] = time.time_ns() - 2 * 24 * 60 * 60 * 1_000_000_000
+    atomic_json(target / "manifest.json", legacy)
+
+    with pytest.raises(ValueError, match="too old"):
+        archive(root, target, budget=1_000_000, reserve=1)
+
+
 def test_archive_replay_verifies_source_and_destination_without_per_segment_sync(tmp_path):
     root, target = tmp_path / "raw", tmp_path / "archive"
     sample(root)

@@ -15,6 +15,7 @@ import logging
 import math
 import os
 import shutil
+import stat
 import time
 from collections.abc import Callable
 from pathlib import Path
@@ -22,7 +23,16 @@ from typing import Any
 
 from .config import Config
 from .replay import replay
-from .storage import atomic_json, canonical, describe, file_hash, manifest, records
+from .storage import (
+    _HashingReader,
+    _record_stream,
+    atomic_json,
+    canonical,
+    describe,
+    file_hash,
+    manifest,
+    records,
+)
 
 CAPACITY_WARNING_SECONDS = 30 * 86400
 CAPACITY_CRITICAL_SECONDS = 14 * 86400
@@ -33,6 +43,7 @@ ARCHIVE_IO_SAMPLE_SECONDS = 5.0
 ARCHIVE_IO_STABLE_SECONDS = 60.0
 ARCHIVE_REQUIRED_PROTECTED_SERVICES = {"midas-reality.service"}
 ARCHIVE_HOST_IO_FULL_AVG10_MAX = 2.0
+ARCHIVE_LEGACY_RECEIPT_MAX_AGE_SECONDS = 24 * 60 * 60
 ARCHIVE_HOST_IO_FULL_AVG60_MAX = 2.0
 ARCHIVE_SYNC_BATCH_BYTES = 32 * 1024**2
 
@@ -228,8 +239,57 @@ def archive_capacity(
         if destination.is_dir()
         else 0
     )
-    manifest_present = (destination / "manifest.json").is_file()
-    state = "MANIFEST_PRESENT" if manifest_present else "NOT_YET_VERIFIED"
+    manifest_path = destination / "manifest.json"
+    manifest_exists = manifest_path.exists() or manifest_path.is_symlink()
+    manifest_present = manifest_path.is_file() and not manifest_path.is_symlink()
+    manifest_value: dict[str, Any] = {}
+    provenance: dict[str, Any] = {}
+    manifest_provenance_valid: bool | None = False if manifest_exists else None
+    if manifest_present:
+        try:
+            parsed = json.loads(manifest_path.read_text())
+            if isinstance(parsed, dict):
+                manifest_value = parsed
+                candidate = parsed.get("archival_provenance")
+                if isinstance(candidate, dict):
+                    provenance = candidate
+                segments = parsed.get("segments")
+                manifest_provenance_valid = bool(
+                    isinstance(segments, list)
+                    and provenance.get("recording_root") == str(root)
+                    and provenance.get("source_manifest_sha256") == file_hash_list(segments)
+                    and provenance.get("originals_deleted") is False
+                    and provenance.get("active_segment_included") is False
+                )
+        except (OSError, ValueError, TypeError):
+            manifest_provenance_valid = False
+    if not manifest_exists:
+        state = "NOT_YET_VERIFIED"
+    elif manifest_provenance_valid:
+        state = "MANIFEST_PRESENT"
+    else:
+        state = "INVALID_MANIFEST"
+        alerts.append("ARCHIVE_MANIFEST_PROVENANCE_INVALID")
+    if manifest_path.is_symlink():
+        state = "INVALID_MANIFEST"
+        manifest_provenance_valid = False
+        alerts.append("ARCHIVE_MANIFEST_UNSAFE")
+    verification_mode = provenance.get("verification_mode")
+    if verification_mode is None and manifest_provenance_valid:
+        verification_mode = "legacy_full_replay_receipt"
+    archive_manifest_fields = dict(
+        archive_manifest_provenance_valid=manifest_provenance_valid,
+        archive_verification_mode=verification_mode,
+        archive_full_verified_ns=provenance.get("full_verified_ns", provenance.get("verified_ns")),
+        archive_incremental_verified_ns=provenance.get("incremental_verified_ns"),
+        archive_incremental_verified_segments=provenance.get("incremental_verified_segments"),
+        archive_source_manifest_sha256=provenance.get("source_manifest_sha256"),
+        archive_segment_count=(
+            len(manifest_value["segments"])
+            if isinstance(manifest_value.get("segments"), list)
+            else None
+        ),
+    )
     if not mounted:
         alerts.append("ARCHIVE_MOUNT_UNAVAILABLE")
     elif not destination_on_mount:
@@ -244,6 +304,7 @@ def archive_capacity(
             destination_on_expected_mount=destination_on_mount,
             separate_from_raw_filesystem=mounted and not same_as_raw,
             destination_state=state,
+            **archive_manifest_fields,
             raw_archive_bytes=used,
             budget_bytes=budget,
             filesystem_free_bytes=None,
@@ -275,6 +336,7 @@ def archive_capacity(
         destination_on_expected_mount=destination_on_mount,
         separate_from_raw_filesystem=True,
         destination_state=state,
+        **archive_manifest_fields,
         raw_archive_bytes=used,
         budget_bytes=budget,
         filesystem_free_bytes=free,
@@ -503,6 +565,326 @@ def file_hash_list(segments: list[dict[str, Any]]) -> str:
     return hashlib.sha256(canonical(segments)).hexdigest()
 
 
+def _path_file_identity(path: Path) -> list[int] | None:
+    try:
+        metadata = path.lstat()
+    except FileNotFoundError:
+        return None
+    if not stat.S_ISREG(metadata.st_mode):
+        raise ValueError(f"Archive segment is not a regular file: {path}")
+    return [
+        metadata.st_dev,
+        metadata.st_ino,
+        metadata.st_size,
+        metadata.st_mtime_ns,
+        metadata.st_ctime_ns,
+    ]
+
+
+def _segment_file_identity(root: Path, info: dict[str, Any]) -> list[int] | None:
+    name = info.get("file")
+    if not isinstance(name, str) or Path(name).name != name:
+        raise ValueError("Unsafe archive segment name")
+    return _path_file_identity(root / name)
+
+
+def _inspect_segment(
+    path: Path,
+    expected: dict[str, Any],
+    *,
+    previous_ordinal: int,
+    copy_to: Any | None = None,
+) -> dict[str, Any]:
+    """Validate framing, checksums, catalog metadata, and cross-segment ordinals."""
+    first = last = count = 0
+    kinds: dict[str, int] = {}
+    digest = hashlib.sha256()
+    with path.open("rb") as source:
+        reader = _HashingReader(source, digest, copy_to)
+        for record, _ in _record_stream(reader, path):
+            ordinal = record.get("ordinal")
+            if type(ordinal) is not int or ordinal != previous_ordinal + 1:
+                raise ValueError(f"Non-contiguous archive segment ordinal: {path.name}")
+            previous_ordinal = ordinal
+            first = first or ordinal
+            last = ordinal
+            count += 1
+            kind = record.get("kind")
+            if not isinstance(kind, str):
+                raise ValueError(f"Invalid archive record kind: {path.name}")
+            kinds[kind] = kinds.get(kind, 0) + 1
+    actual = dict(
+        schema_version=1,
+        file=expected["file"],
+        sha256=digest.hexdigest(),
+        bytes=path.stat().st_size,
+        first=first,
+        last=last,
+        count=count,
+        kinds=kinds,
+    )
+    if actual != expected:
+        raise ValueError(f"Archive segment integrity mismatch: {path}")
+    return actual
+
+
+def _validate_catalog_ordinals(segments: list[dict[str, Any]]) -> None:
+    previous = 0
+    for info in segments:
+        name = info.get("file") if isinstance(info, dict) else None
+        if not isinstance(name, str) or Path(name).name != name:
+            raise ValueError("Unsafe archive segment path")
+        count = info.get("count")
+        first = info.get("first")
+        last = info.get("last")
+        if type(count) is not int or type(first) is not int or type(last) is not int:
+            raise ValueError("Invalid archive segment ordinal metadata")
+        if count == 0:
+            if first != 0 or last != 0:
+                raise ValueError("Invalid empty archive segment metadata")
+            continue
+        if count < 0 or first != previous + 1 or last != first + count - 1:
+            raise ValueError("Non-contiguous archive catalog ordinals")
+        previous = last
+
+
+def _last_catalog_ordinal(segments: list[dict[str, Any]]) -> int:
+    for info in reversed(segments):
+        if info.get("count", 0):
+            return int(info["last"])
+    return 0
+
+
+def _archive_incremental_suffix(
+    root: Path,
+    destination: Path,
+    value: dict[str, Any],
+    *,
+    previous: dict[str, Any],
+    budget: int,
+    reserve: int,
+    before_segment: Callable[[], None] | None,
+) -> dict[str, Any]:
+    """Extend a previously full-verified archive by validating only changed files."""
+    previous_segments = previous.get("segments")
+    previous_provenance = previous.get("archival_provenance")
+    current_segments = value.get("segments")
+    if not isinstance(previous_segments, list) or not isinstance(previous_provenance, dict):
+        raise ValueError("Existing archive has no verified provenance")
+    if not isinstance(current_segments, list):
+        raise ValueError("Current source catalog is malformed")
+    previous_hash = file_hash_list(previous_segments)
+    if previous_provenance.get("source_manifest_sha256") != previous_hash:
+        raise ValueError("Existing archive source-manifest identity is invalid")
+    if previous_provenance.get("recording_root") != str(root):
+        raise ValueError("Existing archive belongs to a different recording root")
+    if previous_provenance.get("originals_deleted") is not False:
+        raise ValueError("Existing archive does not certify preserved originals")
+    if previous_provenance.get("active_segment_included") is not False:
+        raise ValueError("Existing archive includes an unsupported active segment")
+    if len(previous_segments) > len(current_segments):
+        raise ValueError("Current source catalog lost previously archived segments")
+    if current_segments[: len(previous_segments)] != previous_segments:
+        raise ValueError("Current source catalog differs from the verified archive prefix")
+    _validate_catalog_ordinals(current_segments)
+
+    prior_identities = previous_provenance.get("file_identities")
+    if prior_identities is not None and (
+        not isinstance(prior_identities, list) or len(prior_identities) != len(previous_segments)
+    ):
+        raise ValueError("Existing archive file-identity receipt is malformed")
+    if prior_identities is None:
+        legacy_verified_ns = previous_provenance.get(
+            "full_verified_ns", previous_provenance.get("verified_ns")
+        )
+        receipt_age_ns = (
+            time.time_ns() - legacy_verified_ns if type(legacy_verified_ns) is int else -1
+        )
+        if (
+            receipt_age_ns < 0
+            or receipt_age_ns > ARCHIVE_LEGACY_RECEIPT_MAX_AGE_SECONDS * 1_000_000_000
+        ):
+            raise ValueError("Legacy archive receipt is too old; run an explicit full verification")
+
+    source_names = {info["file"] for info in current_segments}
+    for path in destination.glob("*.seg"):
+        if path.name not in source_names:
+            raise ValueError(f"Archive contains an untracked segment: {path.name}")
+    for path in destination.glob("*.copying"):
+        if path.with_suffix(".seg").name not in source_names:
+            raise ValueError(f"Archive contains an untracked partial segment: {path.name}")
+
+    used = sum(path.stat().st_size for path in destination.iterdir() if path.is_file())
+    pending: list[tuple[Path, Path]] = []
+    pending_bytes = 0
+    verified_segments = 0
+    verified_bytes = 0
+
+    def flush_pending() -> None:
+        nonlocal pending_bytes
+        if not pending:
+            return
+        if before_segment is not None:
+            before_segment()
+        sync_filesystem(destination)
+        for partial_path, target_path in pending:
+            if target_path.exists() or target_path.is_symlink():
+                raise FileExistsError(f"Archive target appeared during publication: {target_path}")
+            os.replace(partial_path, target_path)
+        pending.clear()
+        pending_bytes = 0
+
+    def copy_missing(info: dict[str, Any], previous_ordinal: int) -> None:
+        nonlocal used, pending_bytes, verified_segments, verified_bytes
+        source = root / info["file"]
+        target = destination / info["file"]
+        partial = target.with_suffix(".copying")
+        if partial.is_symlink() or (partial.exists() and not partial.is_file()):
+            raise ValueError(f"Unsafe interrupted archive segment: {partial}")
+        if partial.exists():
+            used -= partial.stat().st_size
+            partial.unlink()
+        margin = len(canonical(value)) + 8192
+        if used + info["bytes"] + margin > budget:
+            raise OSError("Archive budget reached; originals preserved")
+        if shutil.disk_usage(destination).free < reserve + info["bytes"] + margin:
+            raise OSError("Archive free-disk reserve reached; originals preserved")
+        with partial.open("xb") as outgoing:
+            _inspect_segment(
+                source,
+                info,
+                previous_ordinal=previous_ordinal,
+                copy_to=outgoing,
+            )
+            outgoing.flush()
+        pending.append((partial, target))
+        pending_bytes += info["bytes"]
+        used += info["bytes"]
+        verified_segments += 1
+        verified_bytes += info["bytes"]
+
+    for index, info in enumerate(previous_segments):
+        if before_segment is not None and index % 128 == 0:
+            before_segment()
+        partial = (destination / info["file"]).with_suffix(".copying")
+        if partial.is_symlink() or (partial.exists() and not partial.is_file()):
+            raise ValueError(f"Unsafe interrupted archive segment: {partial}")
+        if partial.exists() and (destination / info["file"]).exists():
+            used -= partial.stat().st_size
+            partial.unlink()
+        prior_ordinal = (
+            int(info["first"]) - 1
+            if info["count"]
+            else _last_catalog_ordinal(previous_segments[:index])
+        )
+        old_identity = prior_identities[index] if prior_identities is not None else None
+        if old_identity is not None and (
+            not isinstance(old_identity, list)
+            or len(old_identity) != 2
+            or not all(isinstance(part, list) and len(part) == 5 for part in old_identity)
+        ):
+            raise ValueError("Existing archive segment identity is malformed")
+        source_identity = _segment_file_identity(root, info)
+        destination_identity = _segment_file_identity(destination, info)
+        if source_identity is None:
+            raise ValueError(f"Previously archived source segment disappeared: {info['file']}")
+        if source_identity[2] != info["bytes"]:
+            raise ValueError(f"Previously archived source segment size changed: {info['file']}")
+        if source_identity != (old_identity[0] if old_identity else None):
+            if old_identity is not None:
+                _inspect_segment(root / info["file"], info, previous_ordinal=prior_ordinal)
+                verified_segments += 1
+                verified_bytes += info["bytes"]
+        if destination_identity is None:
+            copy_missing(info, prior_ordinal)
+        elif destination_identity[2] != info["bytes"]:
+            raise ValueError(
+                f"Previously archived destination segment size changed: {info['file']}"
+            )
+        elif destination_identity != (old_identity[1] if old_identity else None):
+            _inspect_segment(destination / info["file"], info, previous_ordinal=prior_ordinal)
+            verified_segments += 1
+            verified_bytes += info["bytes"]
+
+    previous_ordinal = _last_catalog_ordinal(previous_segments)
+    for info in current_segments[len(previous_segments) :]:
+        if before_segment is not None:
+            before_segment()
+        if info["count"] and info["first"] != previous_ordinal + 1:
+            raise ValueError("New archive segment does not continue the verified ordinal prefix")
+        target = destination / info["file"]
+        partial = target.with_suffix(".copying")
+        if target.is_symlink() or (target.exists() and not target.is_file()):
+            raise ValueError(f"Unsafe new archive segment: {target}")
+        if target.exists():
+            if partial.is_symlink() or (partial.exists() and not partial.is_file()):
+                raise ValueError(f"Unsafe interrupted archive segment: {partial}")
+            if partial.exists():
+                used -= partial.stat().st_size
+                partial.unlink()
+            _inspect_segment(root / info["file"], info, previous_ordinal=previous_ordinal)
+            _inspect_segment(target, info, previous_ordinal=previous_ordinal)
+            verified_segments += 2
+            verified_bytes += 2 * info["bytes"]
+        else:
+            copy_missing(info, previous_ordinal)
+        if info["count"]:
+            previous_ordinal = info["last"]
+        if pending_bytes >= ARCHIVE_SYNC_BATCH_BYTES:
+            flush_pending()
+    flush_pending()
+
+    source_file_identities: list[list[int]] = []
+    destination_file_identities: list[list[int]] = []
+    for info in current_segments:
+        source_identity = _segment_file_identity(root, info)
+        destination_identity = _segment_file_identity(destination, info)
+        if source_identity is None or destination_identity is None:
+            raise OSError(f"Archive segment disappeared during verification: {info['file']}")
+        source_file_identities.append(source_identity)
+        destination_file_identities.append(destination_identity)
+
+    verified_ns = time.time_ns()
+    full_verified_ns = previous_provenance.get(
+        "full_verified_ns", previous_provenance.get("verified_ns")
+    )
+    if type(full_verified_ns) is not int or full_verified_ns <= 0:
+        raise ValueError("Existing archive lacks a full-verification timestamp")
+    published = dict(
+        value,
+        archival_provenance=dict(
+            recording_root=str(root),
+            verified_ns=verified_ns,
+            full_verified_ns=full_verified_ns,
+            incremental_verified_ns=verified_ns,
+            incremental_verified_segments=verified_segments,
+            incremental_verified_bytes=verified_bytes,
+            verification_mode="incremental_suffix",
+            source_manifest_sha256=file_hash_list(current_segments),
+            originals_deleted=False,
+            active_segment_included=False,
+            file_identities=[
+                [source, archived]
+                for source, archived in zip(
+                    source_file_identities, destination_file_identities, strict=True
+                )
+            ],
+        ),
+    )
+    prior_manifest_bytes = (destination / "manifest.json").stat().st_size
+    manifest_bytes = len(canonical(published))
+    manifest_tmp = destination / "manifest.json.tmp"
+    if manifest_tmp.is_symlink() or (manifest_tmp.exists() and not manifest_tmp.is_file()):
+        raise ValueError("Archive manifest temporary file is unsafe")
+    prior_tmp_bytes = manifest_tmp.stat().st_size if manifest_tmp.exists() else 0
+    if used - prior_manifest_bytes - prior_tmp_bytes + manifest_bytes > budget:
+        raise OSError("Archive publication exceeds budget; originals preserved")
+    if shutil.disk_usage(destination).free < reserve + manifest_bytes:
+        raise OSError("Archive publication reaches disk reserve; originals preserved")
+    atomic_json(destination / "manifest.json", published)
+    return published
+
+
 def archive(
     root: Path,
     destination: Path,
@@ -511,12 +893,15 @@ def archive(
     reserve: int,
     resource_admission_timeout_seconds: float = 0,
     operation_timeout_seconds: float = 0,
+    full_verify: bool = False,
 ) -> dict[str, Any]:
-    """Incrementally copy finalized segments; publish only after full validation.
+    """Copy finalized segments and verify each append against its prior receipt.
 
-    Interrupted copies may be resumed. The source and completed destination are
-    each fully replay-verified; copied files are checked against the source
-    manifest while streaming. Original bytes and catalogs remain collector-owned.
+    The first publication fully replay-verifies source and destination. Later
+    daily runs validate the immutable prior prefix with file-identity receipts
+    and verify appended or changed segments. ``full_verify`` replays both entire
+    trees again. Interrupted copies resume from finalized files; original bytes
+    and catalogs remain collector-owned.
     """
     root, destination = root.resolve(), destination.resolve()
     if destination == root or destination.is_relative_to(root) or root.is_relative_to(destination):
@@ -561,6 +946,8 @@ def archive(
             raise RuntimeError("Another archive job owns destination") from None
         identity = destination / "source.json"
         if identity.exists():
+            if identity.is_symlink() or not identity.is_file():
+                raise ValueError("Archive source identity is unsafe")
             if json.loads(identity.read_text())["recording_root"] != str(root):
                 raise ValueError("Archive destination belongs to a different recording root")
         else:
@@ -568,6 +955,25 @@ def archive(
                 raise ValueError("Unidentified nonempty archive destination")
             atomic_json(identity, dict(schema_version=1, recording_root=str(root)))
         value = manifest(root)
+        _validate_catalog_ordinals(value["segments"])
+        manifest_path = destination / "manifest.json"
+        if manifest_path.is_symlink():
+            raise ValueError("Archive manifest is unsafe")
+        if manifest_path.exists() and not full_verify:
+            if not manifest_path.is_file():
+                raise ValueError("Archive manifest is not a regular file")
+            previous = json.loads(manifest_path.read_text())
+            if not isinstance(previous, dict):
+                raise ValueError("Existing archive manifest is malformed")
+            return _archive_incremental_suffix(
+                root,
+                destination,
+                value,
+                previous=previous,
+                budget=budget,
+                reserve=reserve,
+                before_segment=before_segment,
+            )
         # Validate all source bytes and durable checkpoints once, with admission
         # checks between segments. The copy loop hashes each copied source stream,
         # so it does not need to re-read the source or the temporary destination.
@@ -630,17 +1036,31 @@ def archive(
             if pending_bytes >= ARCHIVE_SYNC_BATCH_BYTES:
                 flush_pending()
         flush_pending()
+        replay(destination, value, before_segment=before_segment)
+        verified_ns = time.time_ns()
+        file_identities = []
+        for info in value["segments"]:
+            source_identity = _segment_file_identity(root, info)
+            destination_identity = _segment_file_identity(destination, info)
+            if source_identity is None or destination_identity is None:
+                raise OSError(f"Archive segment disappeared after replay: {info['file']}")
+            file_identities.append([source_identity, destination_identity])
         published = dict(
             value,
             archival_provenance=dict(
                 recording_root=str(root),
-                verified_ns=time.time_ns(),
+                verified_ns=verified_ns,
+                full_verified_ns=verified_ns,
+                incremental_verified_ns=verified_ns,
+                incremental_verified_segments=len(value["segments"]),
+                incremental_verified_bytes=sum(info["bytes"] for info in value["segments"]),
+                verification_mode="full_replay",
                 source_manifest_sha256=file_hash_list(value["segments"]),
                 originals_deleted=False,
                 active_segment_included=False,
+                file_identities=file_identities,
             ),
         )
-        replay(destination, value, before_segment=before_segment)
         if used + len(canonical(published)) > budget:
             raise OSError("Archive publication exceeds budget; originals preserved")
         if shutil.disk_usage(destination).free < reserve + len(canonical(published)):
@@ -660,6 +1080,11 @@ def main() -> None:
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--budget-bytes", type=int)
     parser.add_argument("--reserve-bytes", type=int)
+    parser.add_argument(
+        "--full-verify",
+        action="store_true",
+        help="Replay the complete existing source and archive instead of validating only the suffix",
+    )
     parser.add_argument("--archive-path", type=Path)
     parser.add_argument("--archive-budget-bytes", type=int)
     parser.add_argument("--archive-reserve-bytes", type=int)
@@ -709,6 +1134,7 @@ def main() -> None:
             reserve=args.reserve_bytes,
             resource_admission_timeout_seconds=args.resource_admission_timeout_seconds,
             operation_timeout_seconds=args.operation_timeout_seconds,
+            full_verify=args.full_verify,
         )
         print(
             json.dumps(
