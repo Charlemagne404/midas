@@ -1,18 +1,72 @@
 {
-  "schema_version": 1,
-  "raw_budget_bytes": 25769803776,
-  "archive_budget_bytes": 25769803776,
+  "schema_version": 2,
+  "raw_budget_bytes": 120259084288,
+  "archive_budget_bytes": 120259084288,
   "free_disk_reserve_bytes": 21474836480,
-  "retention_stop_days": 90,
-  "archive_destination": "/home/charlie/midas-reality/data/recordings/reality-archive-mission2",
-  "archive_frequency": "daily at 04:00 UTC, maximum five-minute jitter",
+  "retention_stop_days": 120,
+  "archive_destination": "/mnt/continental-cloud/data/midas-reality-staging/archive-mission3",
+  "archive_frequency": "daily at 04:00 UTC, maximum five-minute jitter, only after destination mount and resource admission",
   "raw_pruning": "prohibited",
   "derivative_pruning": "Only deploy/reality-research.json scheduled completed example caches and unpublished builder scratch are disposable. Keep immutable manifests/code/source references and visible pruning receipts. Raw roots, accepted Gate B/C/D artifacts and protected Prometheus evidence are excluded.",
   "capacity_action_threshold_days": 7,
-  "offloading": "Use verified archive CLI with an explicitly chosen mounted/off-host destination before the alert deadline. Never delete originals automatically. Off-host destination is not configured on this host.",
+  "offloading": "Verified local archive on the allocated /dev/sda4 staging filesystem; this is a second copy, not off-host redundancy. Never delete originals automatically.",
   "rollover": "A new raw root requires an intentional collector stop, finalized verified archive, retained old-root manifest, and reviewed disk commitments. Keep the original root recoverable; new root identity/ordinals must remain distinct. No automatic rollover is configured.",
   "on_exhaustion": "Fail closed, publish FAILED status if disk permits, retain complete checksummed observations, require operator capacity action. Do not drop frames or erase observations to maintain an apparently healthy state.",
-  "headroom_basis": "Preflight budgets the full remaining raw allocation plus the full archive allocation while preserving 20 GiB. This is a bounded approximately 48 GiB local commitment, not all free disk.",
+  "headroom_basis": "Separate commitments: raw budget up to 112 GiB on NVMe with a 20 GiB free reserve; verified archive budget up to 112 GiB on /dev/sda4 with a 400 GiB reserve. At the 2026-10-21 12:20 CEST capacity receipt, raw use was 4,995,518,844 B and NVMe free space was 175,444,942,848 B. The two demo API databases occupied about 8.98 GB at 12:22; a paired 2 h 20 min sample confirmed approximately 670 MB/day and 640 MB/day growth. The conservative 30-day high-water allowance remains 31.4 GB (above the newer 29.6 GB estimate). Filling the staged raw budget plus that database high-water allowance, the 20 GiB reserve, and a 4 GiB Veritas budget leaves about 3.0 GB further NVMe headroom. Recovery/archive temporary space is on the separate HDD. No historical files were removed.",
   "research_priority": "Collector: 512 MiB maximum, 25% of one CPU. Capacity: 128 MiB, 10% CPU. Archive: 256 MiB, 10% CPU, idle I/O and lower scheduling priority. Both operations workers are independent of collector and frontend.",
-  "limits": ["Local replication is not off-host redundancy.", "Growth forecasts vary; the five-minute capacity monitor must remain enabled.", "A retention stop or budget stop is intentional; finite local disks cannot preserve unlimited original observations.", "Full archival verification and collector cold-start replay scale with archive size; bounded archival jobs may fail at their timeout and must be inspected."]
+  "limits": [
+    "At the 12:20 CEST capacity receipt, the staged 112 GiB budget leaves 115,263,565,444 B. Byte-budget-only runway is about 118.5 days at the conservative 973,161,695 B/day floor, but the 120-day age stop has 112.9 days remaining because the oldest record is already about 7.1 days old; the monitor's configured effective runway is 112.9 days. The latest short sample was lower (about 749 MB/day), but the conservative floor governs. The earlier 11:50 sample was 1.021 GB/day (about 112.9 byte-budget days), and the prior measured high of 1.25 GB/day gives about 92.2 byte-budget days. The currently loaded 24 GiB / 90-day contract remains about 21.35 days at the conservative floor until an explicitly approved restart.",
+    "For a 90-day initial expansion envelope, cap measured total raw growth at 1.2x the conservative floor (about 1.168 GB/day) until longer production measurements support revision. That uses about 105.1 GB of the remaining 115.3 GB raw budget. After the conservative 31.4 GB database high-water allowance, 4 GiB Veritas budget, and 20 GiB NVMe reserve, about 13.2 GB additional headroom remains. At full use of the 112 GiB raw budget, the same shared-service commitments leave about 3.0 GB above the reserve; do not allocate another raw budget without reducing shared growth or adding storage. A 2x sustained raw workload is not supported for 90 days.",
+    "Local replication is not off-host redundancy.",
+    "The protected recorder still enforces its loaded 24 GiB budget and 90-day retention. The 112 GiB / 120-day candidate configuration is prepared but pending the approved transition.",
+    "No raw pruning, automatic rollover, or new collectors are configured. Sustained operation beyond the effective budget or retention horizon requires an intentional reviewed root rollover.",
+    "Capacity monitoring samples every 30 minutes, warns at 30 days, marks critical at 14 days, and requires capacity action by 7 days without pruning raw data."
+  ],
+  "archive_filesystem_reserve_bytes": 429496729600,
+  "capacity_monitor_interval_seconds": 1800,
+  "capacity_warning_days": 30,
+  "capacity_critical_days": 14,
+  "forecast_floor_bytes_per_day": 973161695,
+  "forecast_floor_basis": "Historical conservative raw growth measurement; keep until at least 90 days of current production measurements support revision.",
+  "shared_service_storage": {
+    "filesystem": "/dev/nvme0n1p2",
+    "measured_at": "2026-10-21T12:22:01+02:00",
+    "retention_days": 30,
+    "hard_byte_quota": false,
+    "projection_basis": "Read-only SQLite file-size samples from 10:02 to 12:22 CEST plus indexed min/max record timestamps. The current short-sample projection is about 29.6 GB additional through each database 30-day high-water mark; retain the prior 31.4 GB allowance as the conservative planning value and remeasure over the 90-day horizon.",
+    "services": [
+      {
+        "service": "MIDAS API demo database",
+        "path": "/home/charlie/midas/data/midas.db",
+        "bytes": 6216335360,
+        "measured_growth_bytes_per_day": 669955290,
+        "wal_bytes": 4466112,
+        "oldest_record_age_days": 9.7195
+      },
+      {
+        "service": "Reality interface API demo database",
+        "path": "/home/charlie/midas-reality/data/research/reality/interface/preview.db",
+        "bytes": 2760806400,
+        "measured_growth_bytes_per_day": 640257196,
+        "wal_bytes": 4305432,
+        "oldest_record_age_days": 6.5425
+      }
+    ],
+    "projected_additional_bytes_at_30_day_high_water": 31414173489,
+    "90_day_raw_growth_scenario": {
+      "raw_growth_multiplier": 1.2,
+      "raw_growth_bytes": 105101463060,
+      "projected_free_bytes_after_database_growth": 38929306299,
+      "filesystem_reserve_bytes": 21474836480,
+      "veritas_raw_budget_bytes": 4294967296,
+      "additional_headroom_after_reserve_and_veritas_bytes": 13159502523
+    },
+    "full_staged_raw_budget_scenario": {
+      "additional_raw_budget_bytes": 115263565444,
+      "projected_free_bytes_after_database_growth": 28767203915,
+      "filesystem_reserve_bytes": 21474836480,
+      "veritas_raw_budget_bytes": 4294967296,
+      "additional_headroom_after_reserve_and_veritas_bytes": 2997400139
+    }
+  }
 }

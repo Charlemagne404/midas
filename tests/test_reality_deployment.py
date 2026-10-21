@@ -4,7 +4,9 @@ import hashlib
 import json
 import time
 from dataclasses import replace
+from datetime import UTC, datetime
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import call, patch
 
 import pytest
@@ -23,6 +25,7 @@ from scripts.reality_deployment import (
     service_unit_hash,
     source_hash,
     storage_capacity,
+    storage_sustainability,
     validate_recovery_prefix,
     verification_environment,
     verification_tool,
@@ -66,10 +69,26 @@ def test_unverified_or_changed_implementation_rejected_first():
             preflight(current, canary, receipt, 1024, current.reserve_bytes)
 
 
-def test_recovery_monitor_paths_accept_any_attempt_and_reject_symlinks(tmp_path):
+def test_recovery_monitor_paths_require_every_phase_and_reject_symlinks(tmp_path):
+    first = tmp_path / "cold-monitor.jsonl"
+    first.write_text('{"event":"sample"}\n')
     attempt = tmp_path / "cold-attempt-1-monitor.jsonl"
     attempt.write_text('{"event":"sample"}\n')
-    assert recovery_monitor_paths(tmp_path) == [attempt]
+    phases = (
+        "readonly_probe",
+        "fast",
+        "corrupt",
+        "interrupt_save",
+        "after_interrupt_save",
+        "interrupt",
+        "after_interrupt",
+    )
+    others = []
+    for phase in phases:
+        path = tmp_path / f"{phase}-monitor.jsonl"
+        path.write_text('{"event":"sample"}\n')
+        others.append(path)
+    assert recovery_monitor_paths(tmp_path) == sorted([first, attempt, *others])
 
     unsafe = tmp_path / "cold-attempt-2-monitor.jsonl"
     unsafe.symlink_to(attempt)
@@ -156,6 +175,85 @@ def test_storage_capacity_enforces_raw_and_archive_reserves_separately(tmp_path,
             raw_reserve_bytes=900,
             archive_budget_bytes=200,
             archive_reserve_bytes=300,
+        )
+
+    monkeypatch.setattr(
+        "scripts.reality_deployment.shutil.disk_usage",
+        lambda path: type("Usage", (), {"free": 2000 if Path(path) == raw else 500})(),
+    )
+    with pytest.raises(ValueError, match="Raw Reality storage commitment"):
+        storage_capacity(
+            raw,
+            archive,
+            mount,
+            raw_budget_bytes=1000,
+            raw_reserve_bytes=900,
+            archive_budget_bytes=200,
+            archive_reserve_bytes=300,
+            additional_raw_reserve_bytes=201,
+        )
+
+
+def test_storage_sustainability_requires_fresh_capacity_and_shared_nvme_evidence(
+    tmp_path, monkeypatch
+):
+    raw = tmp_path / "data/recordings/reality"
+    raw.mkdir(parents=True)
+    database = tmp_path / "api.db"
+    database.write_bytes(b"x" * 15)
+    now = datetime.now(UTC)
+    capacity = dict(
+        measured_ns=time.time_ns(),
+        recording_root=str(raw.resolve()),
+        configured_budget_bytes=1200,
+        configured_retention_days=120,
+        configured_capacity_runway_days=100,
+        configured_retention_seconds_remaining=100 * 86400,
+        forecast_floor_bytes_per_day=10,
+    )
+    (raw.parent / "capacity.json").write_text(json.dumps(capacity))
+    policy = dict(
+        raw_budget_bytes=1200,
+        retention_stop_days=120,
+        free_disk_reserve_bytes=100,
+        archive_budget_bytes=300,
+        archive_filesystem_reserve_bytes=400,
+        forecast_floor_bytes_per_day=10,
+        shared_service_storage=dict(
+            measured_at=now.isoformat(),
+            projected_additional_bytes_at_30_day_high_water=700,
+            services=[dict(path=str(database), bytes=10)],
+            full_staged_raw_budget_scenario=dict(veritas_raw_budget_bytes=200),
+        ),
+    )
+    policy_path = tmp_path / "reality-storage-policy.json"
+    policy_path.write_text(json.dumps(policy))
+    monkeypatch.setattr("scripts.reality_deployment.STORAGE_POLICY_PATH", policy_path)
+
+    result = storage_sustainability(
+        SimpleNamespace(
+            root=str(raw),
+            budget_bytes=1200,
+            reserve_bytes=100,
+            retention_days=120,
+        )
+    )
+
+    assert result["configured_capacity_runway_days"] == 100
+    assert result["shared_database_growth_since_plan_bytes"] == 5
+    assert result["remaining_database_high_water_commitment_bytes"] == 695
+    assert result["additional_raw_reserve_bytes"] == 895
+
+    capacity["configured_capacity_runway_days"] = 89.99
+    (raw.parent / "capacity.json").write_text(json.dumps(capacity))
+    with pytest.raises(ValueError, match="90-day candidate runway"):
+        storage_sustainability(
+            SimpleNamespace(
+                root=str(raw),
+                budget_bytes=1200,
+                reserve_bytes=100,
+                retention_days=120,
+            )
         )
 
 

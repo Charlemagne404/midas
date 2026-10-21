@@ -13,11 +13,13 @@ import hashlib
 import json
 import math
 import os
+import re
 import shutil
 import subprocess
 import sys
 import time
 from collections import Counter
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -45,6 +47,10 @@ RUNTIME_DROPIN_TARGET = (
     Path.home() / ".config/systemd/user/midas-reality.service.d/60-candidate-runtime.conf"
 )
 RUNTIME_SITE_PACKAGES = PRODUCTION_WORKSPACE / ".venv/lib/python3.12/site-packages"
+STORAGE_POLICY_PATH = WORKSPACE / "deploy/reality-storage-policy.json"
+MINIMUM_CANDIDATE_RUNWAY_DAYS = 90
+CAPACITY_RECEIPT_MAX_AGE_SECONDS = 3600
+SHARED_STORAGE_PLAN_MAX_AGE_SECONDS = 24 * 3600
 EXPECTED_EFFECTIVE_LIMITS = {
     "MemoryHigh": str(1152 * 1024**2),
     "MemoryMax": str(1280 * 1024**2),
@@ -68,14 +74,38 @@ def deployment_tool_hash() -> str:
 
 
 def recovery_monitor_paths(root: Path) -> list[Path]:
-    """Return every safe cold-replay monitor receipt, independent of attempt number."""
-    candidates = sorted(root.glob("cold-attempt-*-monitor.jsonl"))
+    """Return every safe matrix-phase resource monitor, including retried phases."""
+    phases = (
+        "readonly_probe",
+        "cold",
+        "fast",
+        "corrupt",
+        "interrupt_save",
+        "after_interrupt_save",
+        "interrupt",
+        "after_interrupt",
+    )
+    candidates = []
+    for phase in phases:
+        candidates.extend(sorted(root.glob(f"{phase}-attempt-*-monitor.jsonl")))
+        direct = root / f"{phase}-monitor.jsonl"
+        if direct.exists() or direct.is_symlink():
+            candidates.append(direct)
     if any(path.is_symlink() or not path.is_file() for path in candidates):
-        raise ValueError("Cold replay monitor receipt is unsafe")
-    paths = candidates
-    if not paths:
-        raise ValueError("Full-scale recovery evidence has no cold replay monitor receipt")
-    return paths
+        raise ValueError("Full-scale recovery monitor receipt is unsafe")
+    if any(
+        not re.fullmatch(
+            rf"{re.escape(path.name.split('-attempt-', 1)[0])}-attempt-\d+-monitor\.jsonl",
+            path.name,
+        )
+        and path.name not in {f"{phase}-monitor.jsonl" for phase in phases}
+        for path in candidates
+    ):
+        raise ValueError("Full-scale recovery monitor receipt has an invalid phase name")
+    for phase in phases:
+        if not any(path.name == f"{phase}-monitor.jsonl" or path.name.startswith(f"{phase}-attempt-") for path in candidates):
+            raise ValueError(f"Full-scale recovery evidence lacks a {phase} monitor receipt")
+    return sorted(candidates)
 
 
 def service_unit_hash() -> str:
@@ -427,6 +457,7 @@ def storage_capacity(
     raw_reserve_bytes: int,
     archive_budget_bytes: int,
     archive_reserve_bytes: int,
+    additional_raw_reserve_bytes: int = 0,
 ) -> dict[str, int | str]:
     """Check raw and archive commitments against their actual separate filesystems."""
     if raw_root.is_symlink():
@@ -448,7 +479,9 @@ def storage_capacity(
     raw_free = shutil.disk_usage(raw_root).free
     archive_free = shutil.disk_usage(archive_mountpoint).free
     raw_remaining = max(0, raw_budget_bytes - raw_used)
-    if raw_free < raw_remaining + raw_reserve_bytes:
+    if additional_raw_reserve_bytes < 0:
+        raise ValueError("Additional shared-service storage commitment cannot be negative")
+    if raw_free < raw_remaining + raw_reserve_bytes + additional_raw_reserve_bytes:
         raise ValueError("Raw Reality storage commitment breaches its filesystem reserve")
     if archive_free < archive_budget_bytes + archive_reserve_bytes:
         raise ValueError("Reality archive commitment breaches its filesystem reserve")
@@ -459,11 +492,126 @@ def storage_capacity(
         raw_budget_bytes=raw_budget_bytes,
         raw_remaining_budget_bytes=raw_remaining,
         raw_reserve_bytes=raw_reserve_bytes,
+        additional_raw_reserve_bytes=additional_raw_reserve_bytes,
         archive_root=str(archive_root),
         archive_mountpoint=str(archive_mountpoint),
         archive_free_bytes=archive_free,
         archive_budget_bytes=archive_budget_bytes,
         archive_reserve_bytes=archive_reserve_bytes,
+    )
+
+
+def storage_sustainability(candidate: Config) -> dict[str, Any]:
+    """Require a fresh 90-day capacity forecast and account for shared NVMe users."""
+    policy_path = STORAGE_POLICY_PATH
+    if policy_path.is_symlink() or not policy_path.is_file():
+        raise ValueError("Frontier storage policy is missing or unsafe")
+    policy_bytes = policy_path.read_bytes()
+    policy = json.loads(policy_bytes)
+    if (
+        int(policy.get("raw_budget_bytes", -1)) != candidate.budget_bytes
+        or int(policy.get("retention_stop_days", -1)) != candidate.retention_days
+        or int(policy.get("free_disk_reserve_bytes", -1)) > candidate.reserve_bytes
+    ):
+        raise ValueError("Candidate storage settings differ from the reviewed storage policy")
+
+    root = Path(candidate.root)
+    if root.is_symlink() or not root.is_dir():
+        raise ValueError("Reality recording root is missing or unsafe")
+    root = root.resolve(strict=True)
+    receipt_path = root.parent / "capacity.json"
+    if receipt_path.is_symlink() or not receipt_path.is_file():
+        raise ValueError("Fresh Reality capacity receipt is missing or unsafe")
+    receipt_bytes = receipt_path.read_bytes()
+    receipt = json.loads(receipt_bytes)
+    now_ns = time.time_ns()
+    measured_ns = int(receipt.get("measured_ns", 0))
+    age_seconds = (now_ns - measured_ns) / 1e9
+    configured_runway = float(receipt.get("configured_capacity_runway_days", 0))
+    configured_retention_seconds = float(receipt.get("configured_retention_seconds_remaining", 0))
+    forecast_floor = int(policy.get("forecast_floor_bytes_per_day", 0))
+    receipt_floor = int(receipt.get("forecast_floor_bytes_per_day", 0))
+    if (
+        age_seconds < 0
+        or age_seconds > CAPACITY_RECEIPT_MAX_AGE_SECONDS
+        or receipt.get("recording_root") != str(root.resolve(strict=True))
+        or int(receipt.get("configured_budget_bytes", -1)) != candidate.budget_bytes
+        or int(receipt.get("configured_retention_days", -1)) != candidate.retention_days
+        or forecast_floor <= 0
+        or receipt_floor < forecast_floor
+        or not math.isfinite(configured_runway)
+        or configured_runway < MINIMUM_CANDIDATE_RUNWAY_DAYS
+        or not math.isfinite(configured_retention_seconds)
+        or configured_retention_seconds < MINIMUM_CANDIDATE_RUNWAY_DAYS * 86400
+    ):
+        raise ValueError("Fresh capacity evidence does not support a 90-day candidate runway")
+
+    shared = policy.get("shared_service_storage")
+    if not isinstance(shared, dict):
+        raise ValueError("Shared-service storage commitments are missing from the policy")
+    try:
+        measured_at = datetime.fromisoformat(str(shared["measured_at"]))
+        if measured_at.tzinfo is None:
+            measured_at = measured_at.replace(tzinfo=UTC)
+        plan_age = (datetime.now(UTC) - measured_at.astimezone(UTC)).total_seconds()
+        planned_growth = int(shared["projected_additional_bytes_at_30_day_high_water"])
+        services = shared["services"]
+        veritas_budget = int(
+            shared["full_staged_raw_budget_scenario"]["veritas_raw_budget_bytes"]
+        )
+        archive_budget = int(policy["archive_budget_bytes"])
+        archive_reserve = int(policy["archive_filesystem_reserve_bytes"])
+    except (KeyError, TypeError, ValueError, OverflowError) as error:
+        raise ValueError("Shared-service storage policy is incomplete") from error
+    if (
+        plan_age < 0
+        or plan_age > SHARED_STORAGE_PLAN_MAX_AGE_SECONDS
+        or not isinstance(services, list)
+        or not services
+        or planned_growth < 0
+        or veritas_budget < 0
+        or archive_budget <= 0
+        or archive_reserve <= 0
+    ):
+        raise ValueError("Shared-service storage plan is stale or invalid")
+
+    raw_device = root.stat().st_dev
+    measured_database_bytes = current_database_bytes = 0
+    for service_plan in services:
+        try:
+            database = Path(service_plan["path"])
+            if database.is_symlink() or not database.is_file():
+                raise ValueError("Shared-service database is missing or unsafe")
+            stat = database.stat()
+            if stat.st_dev != raw_device:
+                raise ValueError("Shared-service database is no longer on the shared NVMe")
+            measured_database_bytes += int(service_plan["bytes"])
+            current_database_bytes += stat.st_size
+        except (KeyError, TypeError, ValueError, OSError) as error:
+            raise ValueError("Shared-service database accounting is invalid") from error
+    measured_growth_since_plan = max(0, current_database_bytes - measured_database_bytes)
+    remaining_shared_growth = max(0, planned_growth - measured_growth_since_plan)
+    additional_commitment = remaining_shared_growth + veritas_budget
+    policy_digest = hashlib.sha256(policy_bytes).hexdigest()
+    receipt_digest = hashlib.sha256(receipt_bytes).hexdigest()
+    return dict(
+        measured_ns=measured_ns,
+        capacity_receipt_age_seconds=age_seconds,
+        capacity_receipt_sha256=receipt_digest,
+        configured_capacity_runway_days=configured_runway,
+        configured_retention_seconds_remaining=configured_retention_seconds,
+        forecast_floor_bytes_per_day=receipt_floor,
+        archive_budget_bytes=archive_budget,
+        archive_reserve_bytes=archive_reserve,
+        storage_policy_sha256=policy_digest,
+        shared_storage_plan_age_seconds=plan_age,
+        shared_database_bytes_at_measurement=measured_database_bytes,
+        shared_database_bytes_now=current_database_bytes,
+        shared_database_growth_since_plan_bytes=measured_growth_since_plan,
+        remaining_database_high_water_commitment_bytes=remaining_shared_growth,
+        veritas_raw_budget_bytes=veritas_budget,
+        additional_raw_reserve_bytes=additional_commitment,
+        minimum_runway_days=MINIMUM_CANDIDATE_RUNWAY_DAYS,
     )
 
 
@@ -515,13 +663,15 @@ def recovery_resource_evidence(root: Path) -> dict[str, Any]:
     ):
         raise ValueError("Full-scale recovery matrix is incomplete")
     boundary = result.get("boundary", {})
-    expected_source_hash = source_hash(WORKSPACE)
+    matrix_source_hash = result.get("implementation_source_sha256")
     expected_recovery_hash = recovery.implementation_identity()
     if (
-        result.get("implementation_source_sha256") != expected_source_hash
+        not isinstance(matrix_source_hash, str)
+        or len(matrix_source_hash) != 64
+        or any(character not in "0123456789abcdef" for character in matrix_source_hash)
+        or boundary.get("implementation_source_sha256") != matrix_source_hash
         or result.get("recovery_implementation_sha256") != expected_recovery_hash
         or boundary.get("implementation_packages") != str(WORKSPACE / "packages")
-        or boundary.get("implementation_source_sha256") != expected_source_hash
         or boundary.get("recovery_implementation_sha256") != expected_recovery_hash
     ):
         raise ValueError("Full-scale recovery evidence uses a different Reality implementation")
@@ -548,7 +698,7 @@ def recovery_resource_evidence(root: Path) -> dict[str, Any]:
     )
     phases = {name.removesuffix(".json"): json.loads(documents[name]) for name in phase_names}
     if any(
-        phase.get("implementation_source_sha256") != expected_source_hash
+        phase.get("implementation_source_sha256") != matrix_source_hash
         or phase.get("recovery_implementation_sha256") != expected_recovery_hash
         for phase in phases.values()
     ):
@@ -557,7 +707,7 @@ def recovery_resource_evidence(root: Path) -> dict[str, Any]:
     probe_policy = json.loads(documents["readonly_probe-landlock.json"])
     if (
         probe.get("source_write_denied") is not True
-        or probe.get("implementation_source_sha256") != expected_source_hash
+        or probe.get("implementation_source_sha256") != matrix_source_hash
         or probe.get("recovery_implementation_sha256") != expected_recovery_hash
         or probe.get("policy") != probe_policy
         or probe_policy.get("source_root") != boundary.get("source")
@@ -572,7 +722,7 @@ def recovery_resource_evidence(root: Path) -> dict[str, Any]:
         if (
             termination.get("boundary_catalog_sha256") != boundary.get("catalog_sha256")
             or termination.get("boundary_identities_sha256") != boundary.get("identities_sha256")
-            or termination.get("implementation_source_sha256") != expected_source_hash
+            or termination.get("implementation_source_sha256") != matrix_source_hash
             or termination.get("recovery_implementation_sha256") != expected_recovery_hash
             or "ExecMainCode=2\n" not in systemd
             or "ExecMainStatus=9\n" not in systemd
@@ -630,7 +780,7 @@ def recovery_resource_evidence(root: Path) -> dict[str, Any]:
     monitor_rows = [
         json.loads(line)
         for name, contents in documents.items()
-        if name.startswith("cold-attempt-") and name.endswith("-monitor.jsonl")
+        if name.endswith("-monitor.jsonl")
         for line in contents.splitlines()
         if line.strip()
     ]
@@ -645,38 +795,61 @@ def recovery_resource_evidence(root: Path) -> dict[str, Any]:
     if not protected_pid.isdigit() or observed_pids != {protected_pid}:
         raise ValueError("Protected Reality process identity changed during cold recovery")
     peak = 0
+    phase_peaks: dict[str, int] = {}
     monitor_events: Counter[str] = Counter()
     cgroup_samples = 0
-    for row in monitor_rows:
-        event = str(row.get("event", "sample"))
-        monitor_events[event] += 1
-        if event not in {
-            "sample",
-            "pressure_clear_sample",
-            "worker_frozen_for_host_pressure",
-            "worker_resumed_after_host_pressure",
-        }:
-            raise ValueError(f"Unknown recovery monitor event: {event}")
-        cgroup = row.get("cgroup", {})
-        if not cgroup:
+    for name, contents in documents.items():
+        if not name.endswith("-monitor.jsonl"):
             continue
-        cgroup_samples += 1
-        peak = max(peak, int(cgroup.get("memory.peak", "0").strip() or 0))
-        events = dict(line.split() for line in cgroup.get("memory.events", "").splitlines())
-        if any(int(events.get(key, 0)) for key in ("max", "oom", "oom_kill", "oom_group_kill")):
-            raise ValueError("Recovery worker recorded a memory max or OOM event")
-        pressure = dict(
-            line.split(maxsplit=1) for line in cgroup.get("memory.pressure", "").splitlines()
-        )
-        if not {"some", "full"}.issubset(pressure):
-            raise ValueError("Recovery worker memory PSI evidence is missing")
-        if any(
-            float(dict(item.split("=") for item in pressure[kind].split())["avg10"]) > 0.01
-            for kind in ("some", "full")
-        ):
-            raise ValueError("Recovery worker recorded sustained memory pressure")
+        phase = name.removesuffix("-monitor.jsonl").split("-attempt-", 1)[0]
+        for line in contents.splitlines():
+            if not line.strip():
+                continue
+            row = json.loads(line)
+            phase_peaks.setdefault(phase, 0)
+            event = str(row.get("event", "sample"))
+            monitor_events[event] += 1
+            if event not in {
+                "sample",
+                "pressure_clear_sample",
+                "worker_frozen_for_host_pressure",
+                "worker_resumed_after_host_pressure",
+            }:
+                raise ValueError(f"Unknown recovery monitor event: {event}")
+            cgroup = row.get("cgroup", {})
+            if not cgroup:
+                continue
+            cgroup_samples += 1
+            cgroup_peak = int(cgroup.get("memory.peak", "0").strip() or 0)
+            peak = max(peak, cgroup_peak)
+            phase_peaks[phase] = max(phase_peaks[phase], cgroup_peak)
+            events = dict(line.split() for line in cgroup.get("memory.events", "").splitlines())
+            if any(int(events.get(key, 0)) for key in ("max", "oom", "oom_kill", "oom_group_kill")):
+                raise ValueError("Recovery worker recorded a memory max or OOM event")
+            pressure = dict(
+                line.split(maxsplit=1) for line in cgroup.get("memory.pressure", "").splitlines()
+            )
+            if not {"some", "full"}.issubset(pressure):
+                raise ValueError("Recovery worker memory PSI evidence is missing")
+            if any(
+                float(dict(item.split("=") for item in pressure[kind].split())["avg10"]) > 0.01
+                for kind in ("some", "full")
+            ):
+                raise ValueError("Recovery worker recorded sustained memory pressure")
     if peak <= 0 or cgroup_samples == 0:
         raise ValueError("Recovery worker peak memory evidence is missing")
+    expected_monitored_phases = {
+        "readonly_probe",
+        "cold",
+        "fast",
+        "corrupt",
+        "interrupt_save",
+        "after_interrupt_save",
+        "interrupt",
+        "after_interrupt",
+    }
+    if not expected_monitored_phases.issubset(phase_peaks):
+        raise ValueError("Recovery resource evidence lacks a measured matrix phase")
     evidence_hash = hashlib.sha256(
         canonical({name: hashlib.sha256(data).hexdigest() for name, data in documents.items()})
     ).hexdigest()
@@ -700,6 +873,11 @@ def recovery_resource_evidence(root: Path) -> dict[str, Any]:
         checkpoint_sha256=checkpoint_digest,
         monitor_samples=cgroup_samples,
         monitor_events=dict(monitor_events),
+        phase_memory_peak_bytes=phase_peaks,
+        recovery_matrix_peak_bytes=peak,
+        matrix_package_source_sha256=matrix_source_hash,
+        current_candidate_package_source_sha256=source_hash(WORKSPACE),
+        recovery_implementation_sha256=expected_recovery_hash,
     )
 
 
@@ -972,6 +1150,7 @@ def preflight(
     # Worst-case allocated local raw and archive growth must fit while protecting other services.
     if archive_budget <= 0 or disk_reserve < candidate.reserve_bytes:
         raise ValueError("Unsafe archive budget or global disk reserve")
+    sustainability = storage_sustainability(candidate)
     capacity = storage_capacity(
         Path(candidate.root),
         archive_root,
@@ -980,6 +1159,7 @@ def preflight(
         raw_reserve_bytes=disk_reserve,
         archive_budget_bytes=archive_budget,
         archive_reserve_bytes=archive_reserve,
+        additional_raw_reserve_bytes=sustainability["additional_raw_reserve_bytes"],
     )
     used = int(capacity["raw_used_bytes"])
     free = int(capacity["raw_free_bytes"])
@@ -989,6 +1169,12 @@ def preflight(
     runway = max(0, candidate.budget_bytes - used) / rate
     if runway < 14 * 86400:
         raise ValueError("Pilot growth offers less than fourteen days storage runway")
+    if (
+        archive_budget != sustainability["archive_budget_bytes"]
+        or archive_reserve != sustainability["archive_reserve_bytes"]
+        or disk_reserve < candidate.reserve_bytes
+    ):
+        raise ValueError("Preflight storage commitments differ from the reviewed storage policy")
     production_status = json.loads((Path(candidate.root) / "status.json").read_text())
     current = production_service
     fresh_production = (
@@ -1043,6 +1229,7 @@ def preflight(
         free_disk_bytes=free,
         protected_disk_reserve_bytes=disk_reserve,
         storage_capacity=capacity,
+        storage_sustainability=sustainability,
         production_before=current,
         production_runtime_config=production_status["config"],
         production_catalog_sha256=production_catalog_sha256,
