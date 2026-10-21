@@ -140,7 +140,7 @@ def _active_midas_service_io_pressure() -> dict[str, tuple[float, float]]:
 
 
 def wait_for_archive_io_window(deadline: float, *, stable_seconds: float = 0) -> None:
-    """Wait for protected service and host-wide I/O pressure to clear."""
+    """Wait for active MIDAS service pressure to clear; report host PSI as advisory."""
     required_samples = max(1, math.ceil(stable_seconds / ARCHIVE_IO_SAMPLE_SECONDS))
     stable_samples = 0
     last_notice = 0.0
@@ -151,14 +151,22 @@ def wait_for_archive_io_window(deadline: float, *, stable_seconds: float = 0) ->
             for name, values in service_pressure.items()
             if values[0] >= ARCHIVE_IO_FULL_AVG10_MAX or values[1] >= ARCHIVE_IO_FULL_AVG60_MAX
         }
-        host_pressure = _host_io_full_pressure()
-        host_pressured = (
+        try:
+            host_pressure: tuple[float, float] | None = _host_io_full_pressure()
+        except (OSError, RuntimeError, ValueError):
+            host_pressure = None
+        host_advisory = host_pressure is not None and (
             host_pressure[0] >= ARCHIVE_HOST_IO_FULL_AVG10_MAX
             or host_pressure[1] >= ARCHIVE_HOST_IO_FULL_AVG60_MAX
         )
-        if not pressured and not host_pressured:
+        if not pressured:
             stable_samples += 1
             if stable_samples >= required_samples:
+                if host_advisory:
+                    logging.warning(
+                        "Archive admitted with host-wide I/O PSI above advisory threshold: %s",
+                        host_pressure,
+                    )
                 return
         else:
             stable_samples = 0
@@ -169,8 +177,8 @@ def wait_for_archive_io_window(deadline: float, *, stable_seconds: float = 0) ->
             )
         if now - last_notice >= 60:
             logging.warning(
-                "Archive waiting for host and MIDAS service I/O headroom: "
-                "pressured=%s; host full PSI=%s",
+                "Archive waiting for MIDAS service I/O headroom: "
+                "pressured=%s; host full PSI is advisory=%s",
                 pressured,
                 host_pressure,
             )
@@ -630,10 +638,14 @@ def _inspect_segment(
 
 def _validate_catalog_ordinals(segments: list[dict[str, Any]]) -> None:
     previous = 0
+    seen_names: set[str] = set()
     for info in segments:
         name = info.get("file") if isinstance(info, dict) else None
         if not isinstance(name, str) or Path(name).name != name:
             raise ValueError("Unsafe archive segment path")
+        if name in seen_names:
+            raise ValueError("Duplicate archive segment path")
+        seen_names.add(name)
         count = info.get("count")
         first = info.get("first")
         last = info.get("last")
@@ -682,11 +694,17 @@ def _archive_incremental_suffix(
         raise ValueError("Existing archive does not certify preserved originals")
     if previous_provenance.get("active_segment_included") is not False:
         raise ValueError("Existing archive includes an unsupported active segment")
-    if len(previous_segments) > len(current_segments):
-        raise ValueError("Current source catalog lost previously archived segments")
-    if current_segments[: len(previous_segments)] != previous_segments:
-        raise ValueError("Current source catalog differs from the verified archive prefix")
     _validate_catalog_ordinals(current_segments)
+    previous_by_name = {info["file"]: info for info in previous_segments}
+    current_by_name = {info["file"]: info for info in current_segments}
+    if len(previous_by_name) != len(previous_segments):
+        raise ValueError("Existing archive catalog contains duplicate segment paths")
+    if len(current_by_name) != len(current_segments):
+        raise ValueError("Current source catalog contains duplicate segment paths")
+    if not previous_by_name.keys() <= current_by_name.keys():
+        raise ValueError("Current source catalog lost previously archived segments")
+    if any(current_by_name[name] != info for name, info in previous_by_name.items()):
+        raise ValueError("Current source catalog changed a previously archived segment")
 
     prior_identities = previous_provenance.get("file_identities")
     if prior_identities is not None and (
@@ -807,7 +825,8 @@ def _archive_incremental_suffix(
             verified_bytes += info["bytes"]
 
     previous_ordinal = _last_catalog_ordinal(previous_segments)
-    for info in current_segments[len(previous_segments) :]:
+    new_segments = [info for info in current_segments if info["file"] not in previous_by_name]
+    for info in new_segments:
         if before_segment is not None:
             before_segment()
         if info["count"] and info["first"] != previous_ordinal + 1:

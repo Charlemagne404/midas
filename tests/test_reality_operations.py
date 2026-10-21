@@ -3,6 +3,7 @@
 import json
 import time
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import patch
 
 import midas.reality.operations as operations
@@ -116,24 +117,21 @@ def test_archive_io_admission_fails_closed_at_deadline(monkeypatch):
         wait_for_archive_io_window(time.monotonic() - 1)
 
 
-def test_archive_io_admission_waits_for_host_pressure_even_when_services_are_clear(monkeypatch):
-    host_values = iter(((3.0, 2.5), (1.9, 1.9)))
+def test_archive_io_admission_treats_host_pressure_as_advisory(monkeypatch):
     sleeps = []
     monkeypatch.setattr(
         "midas.reality.operations._active_midas_service_io_pressure",
         lambda: {"midas-reality.service": (0.0, 0.0)},
     )
-    monkeypatch.setattr(
-        "midas.reality.operations._host_io_full_pressure", lambda: next(host_values)
-    )
+    monkeypatch.setattr("midas.reality.operations._host_io_full_pressure", lambda: (3.0, 2.5))
     monkeypatch.setattr("midas.reality.operations.time.sleep", sleeps.append)
 
     wait_for_archive_io_window(time.monotonic() + 30)
 
-    assert sleeps == [5.0]
+    assert sleeps == []
 
 
-def test_archive_io_admission_fails_closed_when_host_telemetry_is_unavailable(monkeypatch):
+def test_archive_io_admission_continues_when_advisory_host_telemetry_is_unavailable(monkeypatch):
     monkeypatch.setattr(
         "midas.reality.operations._active_midas_service_io_pressure",
         lambda: {"midas-reality.service": (0.0, 0.0)},
@@ -142,8 +140,7 @@ def test_archive_io_admission_fails_closed_when_host_telemetry_is_unavailable(mo
         "midas.reality.operations._host_io_full_pressure",
         lambda: (_ for _ in ()).throw(RuntimeError("host PSI unavailable")),
     )
-    with pytest.raises(RuntimeError, match="host PSI unavailable"):
-        wait_for_archive_io_window(time.monotonic() + 30)
+    wait_for_archive_io_window(time.monotonic() + 30)
 
 
 def test_archive_admission_tracks_active_midas_service_cgroups(tmp_path, monkeypatch):
@@ -470,15 +467,13 @@ def test_archive_daily_append_verifies_only_new_suffix_and_retains_full_receipt(
         extended = archive(root, target, budget=1_000_000, reserve=1)
 
     provenance = extended["archival_provenance"]
+    prior_files = {info["file"] for info in first_source["segments"]}
+    new_segments = [info for info in extended_source["segments"] if info["file"] not in prior_files]
     assert extended["segments"] == extended_source["segments"]
     assert provenance["verification_mode"] == "incremental_suffix"
     assert provenance["full_verified_ns"] == original_full_verification
-    assert provenance["incremental_verified_segments"] == len(extended_source["segments"]) - len(
-        first_source["segments"]
-    )
-    assert provenance["incremental_verified_bytes"] == sum(
-        info["bytes"] for info in extended_source["segments"][len(first_source["segments"]) :]
-    )
+    assert provenance["incremental_verified_segments"] == len(new_segments)
+    assert provenance["incremental_verified_bytes"] == sum(info["bytes"] for info in new_segments)
     assert len(provenance["file_identities"]) == len(extended_source["segments"])
 
     replay_roots = []
@@ -497,7 +492,13 @@ def test_archive_daily_append_verifies_only_new_suffix_and_retains_full_receipt(
 
 def test_archive_migrates_legacy_full_manifest_to_incremental_identity_receipt(tmp_path):
     root, target = tmp_path / "raw", tmp_path / "archive"
-    sample(root)
+    old_ids = iter(("1" * 32, "2" * 32, "f" * 32))
+    with patch.object(
+        storage.uuid,
+        "uuid4",
+        side_effect=lambda: SimpleNamespace(hex=next(old_ids)),
+    ):
+        sample(root)
     full = archive(root, target, budget=1_000_000, reserve=1)
     legacy = json.loads((target / "manifest.json").read_text())
     for field in (
@@ -510,7 +511,13 @@ def test_archive_migrates_legacy_full_manifest_to_incremental_identity_receipt(t
     ):
         legacy["archival_provenance"].pop(field, None)
     atomic_json(target / "manifest.json", legacy)
-    source = sample(root)
+    with patch.object(storage.uuid, "uuid4", return_value=SimpleNamespace(hex="0" * 32)):
+        source = sample(root)
+    newly_inserted = next(
+        info for info in source["segments"] if info["count"] and info["first"] == 3
+    )
+    prior_empty = next(info for info in full["segments"] if info["count"] == 0)
+    assert newly_inserted["file"] < prior_empty["file"]
 
     with patch.object(operations, "replay", side_effect=AssertionError("legacy prefix replayed")):
         extended = archive(root, target, budget=1_000_000, reserve=1)
