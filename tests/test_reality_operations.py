@@ -381,6 +381,45 @@ def test_capacity_warns_thirty_days_ahead_and_marks_fourteen_day_critical(tmp_pa
     assert "CAPACITY_CRITICAL_WITHIN_FOURTEEN_DAYS" in critical["alerts"]
 
 
+def test_capacity_forecast_floor_keeps_warning_when_recent_sample_falls(tmp_path):
+    sample(tmp_path)
+    used = sum(p.stat().st_size for p in tmp_path.iterdir() if p.is_file())
+    sample_bytes = sum(
+        segment["bytes"] + (tmp_path / segment["file"]).with_suffix(".json").stat().st_size
+        for segment in manifest(tmp_path)["segments"][-120:]
+    )
+    measured_rate = sample_bytes / 120
+    budget = used + int(measured_rate * 40 * 86400)
+
+    result = capacity(
+        config(tmp_path, budget_bytes=budget, reserve_bytes=1),
+        now_ns=121_000_000_000,
+        forecast_floor_bytes_per_day=int(measured_rate * 86400 * 2),
+    )
+
+    assert result["estimated_bytes_per_day"] == pytest.approx(measured_rate * 86400)
+    assert result["forecast_bytes_per_day"] == pytest.approx(measured_rate * 86400 * 2)
+    assert result["measured_storage_seconds_remaining"] == pytest.approx(40 * 86400)
+    assert result["estimated_storage_seconds_remaining"] == pytest.approx(20 * 86400)
+    assert "CAPACITY_WARNING_WITHIN_THIRTY_DAYS" in result["alerts"]
+
+
+def test_capacity_floor_forecasts_when_recent_sample_is_too_short(tmp_path):
+    store = Store(tmp_path, reserve=1)
+    store.append("frame", "PONG", received_ns=1)
+    store.close()
+
+    result = capacity(
+        config(tmp_path, budget_bytes=2_000_000_000, retention_days=30),
+        forecast_floor_bytes_per_day=500_000_000,
+    )
+
+    assert result["estimated_bytes_per_day"] is None
+    assert result["forecast_bytes_per_day"] == pytest.approx(500_000_000)
+    assert result["estimated_storage_seconds_remaining"] is not None
+    assert "RATE_INSUFFICIENT_EVIDENCE" in result["alerts"]
+
+
 def test_capacity_alerts_unknown_clock_and_corruption(tmp_path):
     sample(tmp_path)
     result = capacity(

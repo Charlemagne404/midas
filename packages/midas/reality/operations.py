@@ -290,6 +290,7 @@ def capacity(
     *,
     window_segments: int = 120,
     now_ns: int | None = None,
+    forecast_floor_bytes_per_day: int = 0,
     archive_path: Path | None = None,
     archive_budget: int | None = None,
     archive_reserve: int | None = None,
@@ -297,6 +298,8 @@ def capacity(
 ) -> dict[str, Any]:
     if not 2 <= window_segments <= 2000:
         raise ValueError("Sample must contain 2..2000 finalized segments")
+    if forecast_floor_bytes_per_day < 0:
+        raise ValueError("Forecast floor must be nonnegative")
     root = Path(config.root)
     source = manifest(root)
     sample = source["segments"][-window_segments:]
@@ -337,6 +340,8 @@ def capacity(
     seconds = (last - first) / 1e9 if first is not None and last is not None else 0
     # Partial/very short or clock-regressing samples cannot support an exhaustion date.
     rate = sampled_bytes / seconds if seconds >= 60 and not clock_regressions else None
+    forecast_floor = forecast_floor_bytes_per_day / 86400
+    forecast_rate = max(rate or 0, forecast_floor) or None
     status_path = root / "status.json"
     status = json.loads(status_path.read_text()) if status_path.exists() else {}
     # Collection continues during sampling; measure status and capacity at the end.
@@ -350,12 +355,15 @@ def capacity(
     )
     retention_pending = runtime_retention_days != config.retention_days
     headroom = min(runtime_budget - used, free - config.reserve_bytes)
-    storage_seconds = max(0, headroom) / rate if rate else None
+    storage_seconds = max(0, headroom) / forecast_rate if forecast_rate else None
+    measured_storage_seconds = max(0, headroom) / rate if rate else None
     configured_headroom = min(
         config.budget_bytes - used,
         free - config.reserve_bytes,
     )
-    configured_storage_seconds = max(0, configured_headroom) / rate if rate else None
+    configured_storage_seconds = (
+        max(0, configured_headroom) / forecast_rate if forecast_rate else None
+    )
     data_age_seconds = (now - oldest) / 1e9 if oldest is not None else None
     retention_seconds = (
         max(0, runtime_retention_days * 86400 - data_age_seconds)
@@ -413,7 +421,7 @@ def capacity(
             archive_mountpoint,
             budget=archive_budget,
             reserve=archive_reserve,
-            bytes_per_second=rate,
+            bytes_per_second=forecast_rate,
             segment_bytes=config.segment_bytes,
         )
         alerts.extend(archive_report["alerts"])
@@ -456,7 +464,15 @@ def capacity(
         ),
         compressed_bytes_per_second=rate,
         estimated_bytes_per_day=rate * 86400 if rate else None,
+        forecast_floor_bytes_per_day=forecast_floor_bytes_per_day,
+        forecast_bytes_per_day=forecast_rate * 86400 if forecast_rate else None,
+        forecast_basis=(
+            "maximum_of_recent_sample_and_configured_floor"
+            if forecast_floor_bytes_per_day
+            else "recent_sample"
+        ),
         estimated_storage_seconds_remaining=storage_seconds,
+        measured_storage_seconds_remaining=measured_storage_seconds,
         retention_seconds_remaining=retention_seconds,
         configured_estimated_storage_seconds_remaining=configured_storage_seconds,
         configured_retention_seconds_remaining=configured_retention_seconds,
@@ -649,6 +665,11 @@ def main() -> None:
     parser.add_argument("--archive-reserve-bytes", type=int)
     parser.add_argument("--archive-mountpoint", type=Path)
     parser.add_argument(
+        "--storage-policy",
+        type=Path,
+        help="Optional storage policy JSON containing forecast_floor_bytes_per_day.",
+    )
+    parser.add_argument(
         "--resource-admission-timeout-seconds",
         type=float,
         default=0,
@@ -663,8 +684,10 @@ def main() -> None:
     args = parser.parse_args()
     config = Config.load(args.config)
     if args.command == "capacity":
+        policy = json.loads(args.storage_policy.read_text()) if args.storage_policy else {}
         result = capacity(
             config,
+            forecast_floor_bytes_per_day=int(policy.get("forecast_floor_bytes_per_day", 0)),
             archive_path=args.archive_path,
             archive_budget=args.archive_budget_bytes,
             archive_reserve=args.archive_reserve_bytes,

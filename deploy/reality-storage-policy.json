@@ -26,5 +26,6 @@
   "archive_filesystem_reserve_bytes": 429496729600,
   "capacity_monitor_interval_seconds": 1800,
   "capacity_warning_days": 30,
-  "capacity_critical_days": 14
+  "capacity_critical_days": 14,
+  "forecast_floor_bytes_per_day": 973161695
 }
