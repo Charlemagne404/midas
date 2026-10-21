@@ -709,6 +709,20 @@ def source_quality_observation(engine, record):
         if isinstance(assets, list):
             observed["assets_sample"] = assets[:8]
             observed["assets_count"] = len(assets)
+        elif isinstance(assets, dict):
+            observed["assets_sample"] = list(assets)[:8]
+            observed["assets_count"] = len(assets)
+            observed["assets_issue_sample"] = [
+                dict(
+                    asset_id=str(asset)[:256],
+                    issue=issue[:500]
+                    if isinstance(issue, str)
+                    else issue
+                    if issue is None or type(issue) in (int, float, bool)
+                    else type(issue).__name__,
+                )
+                for asset, issue in list(assets.items())[:8]
+            ]
         return observed
     if kind != "book_comparison":
         return None

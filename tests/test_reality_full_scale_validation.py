@@ -299,6 +299,25 @@ def test_source_quality_audit_reads_affected_assets_from_recorder_payload():
     assert observed["assets_sample"] == affected[:8]
 
 
+def test_source_quality_audit_summarizes_recorder_asset_to_issue_mapping():
+    affected = {f"token-{number}": "top_divergence" for number in range(12)}
+    observed = validation.source_quality_observation(
+        Engine(),
+        dict(
+            kind="gap",
+            ordinal=43,
+            payload=dict(reason="book_resynchronization", affected_assets=affected),
+        ),
+    )
+
+    assert observed["assets_field"] == "affected_assets"
+    assert observed["assets_count"] == len(affected)
+    assert observed["assets_sample"] == list(affected)[:8]
+    assert observed["assets_issue_sample"] == [
+        dict(asset_id=asset, issue="top_divergence") for asset in list(affected)[:8]
+    ]
+
+
 def test_source_quality_audit_keeps_absent_affected_assets_unknown():
     observed = validation.source_quality_observation(
         Engine(),
