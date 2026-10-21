@@ -1,10 +1,12 @@
 """Read-only inventory and guarded, sequential recovery validation of Reality.
 
-Run with candidate packages on PYTHONPATH. `inventory` reads only sidecars/stat;
-it DOES NOT certify segment bytes. `run` requires sustained production headroom,
-then places each worker in its own sandbox/cgroup. No production service actions.
-Workers read immutable finalized source files through Landlock and write only to
-independent staging state.
+Set `MIDAS_REALITY_VALIDATION_PACKAGES` to the candidate's `packages` directory
+and `MIDAS_REALITY_VALIDATION_SOURCE_SHA256` to its full Reality source hash for
+`run`, `resume`, and `worker`. Receipts bind both identities. `inventory` reads
+only sidecars/stat; it DOES NOT certify segment bytes. `run` requires sustained
+production headroom, then places each worker in its own sandbox/cgroup. No
+production service actions. Workers read immutable finalized source files
+through Landlock and write only to independent staging state.
 """
 
 from __future__ import annotations
@@ -26,12 +28,44 @@ from collections import Counter
 from datetime import UTC, datetime
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+SCRIPT_DIRECTORY = Path(__file__).resolve().parent
+REALITY_PACKAGES_DIRECTORY = Path(
+    os.environ.get("MIDAS_REALITY_VALIDATION_PACKAGES", SCRIPT_DIRECTORY.parent / "packages")
+).resolve()
 
-from midas.reality import recovery
-from midas.reality.reconstruction import _canonical_chunks
-from midas.reality.resources import snapshot
-from midas.reality.storage import (
+
+def reality_source_sha256(packages_directory: Path) -> str:
+    """Hash the Reality Python source tree using the deployment identity rule."""
+    module_files = sorted((packages_directory / "midas/reality").glob("*.py"))
+    if not module_files:
+        raise ValueError(f"Reality package source is missing: {packages_directory}")
+    return hashlib.sha256(
+        b"".join(path.name.encode() + path.read_bytes() for path in module_files)
+    ).hexdigest()
+
+
+def require_reality_source_sha256(packages_directory: Path, expected: str) -> str:
+    actual = reality_source_sha256(packages_directory)
+    if actual != expected:
+        raise ValueError("Reality package source tree does not match the expected hash")
+    return actual
+
+
+IMPLEMENTATION_SOURCE_SHA256 = reality_source_sha256(REALITY_PACKAGES_DIRECTORY)
+EXPECTED_IMPLEMENTATION_SOURCE_SHA256 = os.environ.get("MIDAS_REALITY_VALIDATION_SOURCE_SHA256")
+if (
+    EXPECTED_IMPLEMENTATION_SOURCE_SHA256 is not None
+    and IMPLEMENTATION_SOURCE_SHA256 != EXPECTED_IMPLEMENTATION_SOURCE_SHA256
+):
+    raise RuntimeError("Reality validation package tree differs from the expected source hash")
+
+sys.path.insert(0, str(SCRIPT_DIRECTORY))
+sys.path.insert(0, str(REALITY_PACKAGES_DIRECTORY))
+
+from midas.reality import recovery  # noqa: E402
+from midas.reality.reconstruction import _canonical_chunks  # noqa: E402
+from midas.reality.resources import snapshot  # noqa: E402
+from midas.reality.storage import (  # noqa: E402
     Store,
     _validate_manifest_metadata,
     canonical,
@@ -39,9 +73,12 @@ from midas.reality.storage import (
     records,
     sync_dir,
 )
-from midas.reality.storage import atomic_json as atomic_storage_json
-from reality_readonly_sandbox import apply_readonly_source_policy, verify_source_write_denied
-from reality_staging_admission import (
+from midas.reality.storage import atomic_json as atomic_storage_json  # noqa: E402
+from reality_readonly_sandbox import (  # noqa: E402
+    apply_readonly_source_policy,
+    verify_source_write_denied,
+)
+from reality_staging_admission import (  # noqa: E402
     CRITICAL_CPU_SOME_AVG10_MAX,
     CRITICAL_CPU_SOME_AVG60_MAX,
     HOST_CPU_LOAD_AVG1_PER_CPU_MAX,
@@ -50,7 +87,21 @@ from reality_staging_admission import (
     validate_staging_admission,
 )
 
+RECOVERY_IMPLEMENTATION_SHA256 = recovery.implementation_identity()
+if Path(recovery.__file__).resolve().parents[2] != REALITY_PACKAGES_DIRECTORY:
+    raise RuntimeError("Imported Reality recovery module differs from the selected package tree")
+
 STAGING_OUTPUT_ROOT = Path("/mnt/continental-cloud/data/midas-reality-staging")
+RECOVERY_PHASES = (
+    "readonly_probe",
+    "cold",
+    "fast",
+    "corrupt",
+    "interrupt_save",
+    "after_interrupt_save",
+    "interrupt",
+    "after_interrupt",
+)
 STAGING_VOLUME_RESERVE_BYTES = 400 * 1024**3
 STAGING_CPU_QUOTA_PERCENT = 15
 STAGING_CPU_WEIGHT = 10
@@ -118,6 +169,9 @@ def inventory(source):
         started_at=started,
         completed_at=datetime.now(UTC).isoformat(),
         source=str(source),
+        implementation_packages=str(REALITY_PACKAGES_DIRECTORY),
+        implementation_source_sha256=IMPLEMENTATION_SOURCE_SHA256,
+        recovery_implementation_sha256=RECOVERY_IMPLEMENTATION_SHA256,
         segment_count=len(segments),
         last_ordinal=previous,
         archive_bytes=sum(i["bytes"] for i in segments),
@@ -310,6 +364,12 @@ def validate_staged_output(source, output):
     initial = documents["admission.json"]
     if boundary.get("source") != str(source):
         raise ValueError("Staged source identity changed")
+    if (
+        boundary.get("implementation_packages") != str(REALITY_PACKAGES_DIRECTORY)
+        or boundary.get("implementation_source_sha256") != IMPLEMENTATION_SOURCE_SHA256
+        or boundary.get("recovery_implementation_sha256") != RECOVERY_IMPLEMENTATION_SHA256
+    ):
+        raise ValueError("Staged Reality implementation identity changed")
     if hashlib.sha256(canonical(catalog)).hexdigest() != boundary.get("catalog_sha256"):
         raise ValueError("Staged catalog receipt hash mismatch")
     if hashlib.sha256(canonical(identities)).hexdigest() != boundary.get("identities_sha256"):
@@ -382,6 +442,11 @@ def validate_readonly_probe(output, catalog, boundary):
         or policy.get("filesystem_mutation") != "denied except below staging_root"
     ):
         raise ValueError("Read-only probe policy receipt does not match the staged roots")
+    if (
+        probe.get("implementation_source_sha256") != boundary["implementation_source_sha256"]
+        or probe.get("recovery_implementation_sha256") != boundary["recovery_implementation_sha256"]
+    ):
+        raise ValueError("Read-only probe implementation identity does not match the boundary")
     if json.loads(policy_path.read_text()) != policy:
         raise ValueError("Standalone Landlock receipt differs from the probe receipt")
     if probe.get("source_write_denied") is not True:
@@ -418,6 +483,12 @@ def validate_phase_result(output, phase, catalog, boundary, expected=None):
     result = json.loads(path.read_text())
     if result.get("phase") != phase:
         raise ValueError(f"Phase receipt identity mismatch: {phase}")
+    if (
+        result.get("implementation_source_sha256") != boundary["implementation_source_sha256"]
+        or result.get("recovery_implementation_sha256")
+        != boundary["recovery_implementation_sha256"]
+    ):
+        raise ValueError(f"Phase receipt implementation identity mismatch: {phase}")
     if (
         result.get("boundary_catalog_sha256") != boundary["catalog_sha256"]
         or result.get("boundary_identities_sha256") != boundary["identities_sha256"]
@@ -546,6 +617,10 @@ def completed_phases(output, phases, catalog, boundary):
             if (
                 termination.get("boundary_catalog_sha256") != boundary["catalog_sha256"]
                 or termination.get("boundary_identities_sha256") != boundary["identities_sha256"]
+                or termination.get("implementation_source_sha256")
+                != boundary["implementation_source_sha256"]
+                or termination.get("recovery_implementation_sha256")
+                != boundary["recovery_implementation_sha256"]
                 or "ExecMainCode=2" not in systemd
                 or "ExecMainStatus=9" not in systemd
             ):
@@ -562,6 +637,10 @@ def completed_phases(output, phases, catalog, boundary):
                     endurance.get("seconds", 0) < 3600
                     or endurance.get("boundary_catalog_sha256") != boundary["catalog_sha256"]
                     or endurance.get("boundary_identities_sha256") != boundary["identities_sha256"]
+                    or endurance.get("implementation_source_sha256")
+                    != boundary["implementation_source_sha256"]
+                    or endurance.get("recovery_implementation_sha256")
+                    != boundary["recovery_implementation_sha256"]
                 ):
                     raise ValueError("Existing endurance receipt is incomplete")
                 completed.add(phase)
@@ -636,17 +715,31 @@ def source_quality_observation(engine, record):
     asset = payload.get("asset_id")
     local = depth_state(engine.books.get(asset)) if isinstance(asset, str) else None
     local_depth = {side: local[side] for side in ("bids", "asks")} if local is not None else None
-    local_hash = (
+    replay_local_hash = (
         hashlib.sha256(canonical(local_depth)).hexdigest() if local_depth is not None else None
     )
-    lineage_agrees = local is not None and local["last"] == payload.get("after_lineage")
+    response_lineage_matches = local is not None and local.get("last") == payload.get(
+        "after_lineage"
+    )
+    response_local_hash = payload.get("local_depth_sha256")
+    if not isinstance(response_local_hash, str) or len(response_local_hash) != 64:
+        response_local_hash = replay_local_hash if response_lineage_matches else None
+    lineage = payload.get("after_lineage")
+    lineage_stable = (
+        isinstance(lineage, list)
+        and len(lineage) == 2
+        and all(type(value) is int for value in lineage)
+        and payload.get("before_lineage") == lineage
+    )
     external_hash = payload.get("independent_depth_sha256")
-    if not lineage_agrees:
-        classification = "LOCAL_LINEAGE_MISMATCH_AT_COMPARISON_RECORD"
-    elif local_hash == external_hash:
-        classification = "AUDIT_HASH_MATCHES_BUT_RECORDED_DIVERGENCE"
-    elif local_hash is None or external_hash is None:
+    if not lineage_stable:
+        classification = "UNEXPECTED_NON_STABLE_LINEAGE_FOR_DIVERGENCE"
+    elif not isinstance(response_local_hash, str) or not isinstance(external_hash, str):
         classification = "COMPARISON_HASH_UNAVAILABLE"
+    elif len(response_local_hash) != 64 or len(external_hash) != 64:
+        classification = "COMPARISON_HASH_UNAVAILABLE"
+    elif response_local_hash == external_hash:
+        classification = "RECORDED_DIVERGENCE_NOT_REPRODUCED_AT_RESPONSE"
     else:
         classification = "CONFIRMED_DEPTH_HASH_MISMATCH_DIRECTION_UNKNOWN"
     received_ns = local.get("received_ns") if local is not None else None
@@ -659,19 +752,27 @@ def source_quality_observation(engine, record):
         condition=payload.get("condition"),
         before_lineage=payload.get("before_lineage"),
         after_lineage=payload.get("after_lineage"),
-        local_lineage=local.get("last") if local is not None else None,
-        local_lineage_agrees_with_after=lineage_agrees,
-        local_depth_sha256=local_hash,
+        replay_lineage_at_durable_record=local.get("last") if local is not None else None,
+        replay_state_advanced_after_response=local is not None and not response_lineage_matches,
+        local_depth_sha256=response_local_hash,
+        replay_depth_sha256_at_durable_record=replay_local_hash,
         independent_depth_sha256=external_hash,
-        local_hash_matches_independent=local_hash == external_hash,
-        local_level_counts=(
+        local_hash_matches_independent=(
+            response_local_hash is not None
+            and external_hash is not None
+            and response_local_hash == external_hash
+        ),
+        local_level_counts=payload.get("local_level_counts"),
+        replay_local_level_counts_at_durable_record=(
             {side: len(local[side]) for side in ("bids", "asks")} if local is not None else None
         ),
-        local_received_ns=received_ns,
+        replay_local_received_ns_at_durable_record=received_ns,
         response_ns=response_ns,
         local_age_at_response_ns=(
             response_ns - received_ns
-            if isinstance(response_ns, int) and isinstance(received_ns, int)
+            if response_lineage_matches
+            and isinstance(response_ns, int)
+            and isinstance(received_ns, int)
             else None
         ),
         request_ns=payload.get("request_ns"),
@@ -679,8 +780,9 @@ def source_quality_observation(engine, record):
         source_timestamp_ms=payload.get("source_timestamp_ms"),
         source_native_hash=payload.get("source_native_hash"),
         limitation=(
-            "The historical REST depth body was not persisted. Hash mismatch confirms unequal "
-            "views at stable local lineage but cannot identify which view was incomplete."
+            "The REST body is persisted in a separate independent_book record linked by raw_ordinal; "
+            "the recorded depth hashes must be joined to that body for independent verification. "
+            "A stable cross-interface mismatch cannot identify which view was incomplete."
         ),
     )
     return observed
@@ -760,6 +862,9 @@ def validate_progress_document(path, phase, boundary, catalog):
         or document.get("phase") != phase
         or document.get("boundary_catalog_sha256") != boundary["catalog_sha256"]
         or document.get("boundary_identities_sha256") != boundary["identities_sha256"]
+        or document.get("implementation_source_sha256") != boundary["implementation_source_sha256"]
+        or document.get("recovery_implementation_sha256")
+        != boundary["recovery_implementation_sha256"]
         or type(index) is not int
         or not 0 < index <= len(catalog["segments"])
     ):
@@ -801,6 +906,8 @@ def write_progress_summary(output, phase, document):
             state_sha256=document["state_sha256"],
             boundary_catalog_sha256=document["boundary_catalog_sha256"],
             boundary_identities_sha256=document["boundary_identities_sha256"],
+            implementation_source_sha256=document["implementation_source_sha256"],
+            recovery_implementation_sha256=document["recovery_implementation_sha256"],
         ),
     )
 
@@ -920,6 +1027,8 @@ def resumable_reconstruction(root, catalog, boundary, phase, quality_audit, audi
             phase=phase,
             boundary_catalog_sha256=boundary["catalog_sha256"],
             boundary_identities_sha256=boundary["identities_sha256"],
+            implementation_source_sha256=boundary["implementation_source_sha256"],
+            recovery_implementation_sha256=boundary["recovery_implementation_sha256"],
             next_segment_index=end_index,
             ordinal=engine.last_ordinal,
             gaps=engine.gaps,
@@ -1045,6 +1154,8 @@ def endurance(root, engine, catalog, seconds):
     write(
         root.parent / "endurance.json",
         dict(
+            implementation_source_sha256=IMPLEMENTATION_SOURCE_SHA256,
+            recovery_implementation_sha256=RECOVERY_IMPLEMENTATION_SHA256,
             seconds=time.monotonic() - started,
             frames=frames,
             max_append_seconds=maximum_latency,
@@ -1064,6 +1175,11 @@ def worker(root, phase):
     resource.setrlimit(resource.RLIMIT_FSIZE, (64 * 1024**2, 64 * 1024**2))
     catalog = json.loads((root.parent / "catalog.json").read_text())
     boundary = json.loads((root.parent / "boundary.json").read_text())
+    if (
+        boundary.get("implementation_source_sha256") != IMPLEMENTATION_SOURCE_SHA256
+        or boundary.get("recovery_implementation_sha256") != RECOVERY_IMPLEMENTATION_SHA256
+    ):
+        raise ValueError("Worker Reality implementation differs from the pinned boundary")
     sandbox = apply_readonly_source_policy(Path(boundary["source"]), root.parent)
     source_file = root / catalog["segments"][0]["file"]
     verify_source_write_denied(source_file)
@@ -1075,6 +1191,8 @@ def worker(root, phase):
                 denied_source_file=str(source_file),
                 catalog_segment_sha256=catalog["segments"][0]["sha256"],
                 source_write_denied=True,
+                implementation_source_sha256=IMPLEMENTATION_SOURCE_SHA256,
+                recovery_implementation_sha256=RECOVERY_IMPLEMENTATION_SHA256,
                 policy=sandbox,
             ),
         )
@@ -1183,6 +1301,8 @@ def worker(root, phase):
         )
     result = dict(
         phase=phase,
+        implementation_source_sha256=IMPLEMENTATION_SOURCE_SHA256,
+        recovery_implementation_sha256=RECOVERY_IMPLEMENTATION_SHA256,
         recovery=status,
         recovery_seconds=recovered_seconds,
         save_seconds=time.monotonic() - save_started,
@@ -1217,7 +1337,7 @@ def worker(root, phase):
 
 def run(source, output, with_endurance=False, resume=False):
     ensure_no_active_validation_units()
-    phases = ("readonly_probe", "cold", "fast", "corrupt", "interrupt_save", "after_interrupt_save")
+    phases = RECOVERY_PHASES
     if with_endurance:
         phases += ("endurance",)
     reserve = (
@@ -1241,6 +1361,9 @@ def run(source, output, with_endurance=False, resume=False):
         root = output / "view"
         policy = dict(
             resumed_at=datetime.now(UTC).isoformat(),
+            implementation_packages=str(REALITY_PACKAGES_DIRECTORY),
+            implementation_source_sha256=IMPLEMENTATION_SOURCE_SHA256,
+            recovery_implementation_sha256=RECOVERY_IMPLEMENTATION_SHA256,
             boundary_catalog_sha256=summary["catalog_sha256"],
             boundary_identities_sha256=summary["identities_sha256"],
             runtime_max_seconds=7200,
@@ -1284,6 +1407,9 @@ def run(source, output, with_endurance=False, resume=False):
         write(
             output / "staging-policy.json",
             dict(
+                implementation_packages=str(REALITY_PACKAGES_DIRECTORY),
+                implementation_source_sha256=IMPLEMENTATION_SOURCE_SHA256,
+                recovery_implementation_sha256=RECOVERY_IMPLEMENTATION_SHA256,
                 memory_high_bytes=640 * 1024**2,
                 memory_max_bytes=768 * 1024**2,
                 memory_swap_max_bytes=0,
@@ -1380,6 +1506,8 @@ def run(source, output, with_endurance=False, resume=False):
             "RestrictAddressFamilies=AF_UNIX",
             "--setenv=PYTHONDONTWRITEBYTECODE=1",
             "--setenv=PYTHONPATH=" + os.environ["PYTHONPATH"],
+            "--setenv=MIDAS_REALITY_VALIDATION_PACKAGES=" + str(REALITY_PACKAGES_DIRECTORY),
+            "--setenv=MIDAS_REALITY_VALIDATION_SOURCE_SHA256=" + IMPLEMENTATION_SOURCE_SHA256,
             sys.executable,
             str(Path(__file__).resolve()),
             "worker",
@@ -1542,6 +1670,8 @@ def run(source, output, with_endurance=False, resume=False):
                     systemd=status,
                     boundary_catalog_sha256=summary["catalog_sha256"],
                     boundary_identities_sha256=summary["identities_sha256"],
+                    implementation_source_sha256=summary["implementation_source_sha256"],
+                    recovery_implementation_sha256=summary["recovery_implementation_sha256"],
                 ),
             )
             if "ExecMainCode=2\n" not in status or "ExecMainStatus=9\n" not in status:
@@ -1592,12 +1722,16 @@ def run(source, output, with_endurance=False, resume=False):
         output / "result.json",
         dict(
             recovery_matrix="PASSED",
+            implementation_packages=str(REALITY_PACKAGES_DIRECTORY),
+            implementation_source_sha256=IMPLEMENTATION_SOURCE_SHA256,
+            recovery_implementation_sha256=RECOVERY_IMPLEMENTATION_SHA256,
             boundary=summary,
             collector_readiness="UNTESTED",
             endurance="PASSED" if with_endurance else "UNTESTED",
             deployment="NOT PERFORMED",
             resumed=resume,
             executed_phases=executed,
+            completed_phases=sorted(completed_now),
             source_quality_audit=source_quality,
         ),
     )
@@ -1611,6 +1745,16 @@ def main():
     parser.add_argument("--phase")
     parser.add_argument("--with-endurance", action="store_true")
     args = parser.parse_args()
+    if args.command in {"run", "resume", "worker"}:
+        expected_source = os.environ.get("MIDAS_REALITY_VALIDATION_SOURCE_SHA256")
+        if expected_source is None:
+            parser.error(
+                "set MIDAS_REALITY_VALIDATION_SOURCE_SHA256 to the exact candidate source hash"
+            )
+        try:
+            require_reality_source_sha256(REALITY_PACKAGES_DIRECTORY, expected_source)
+        except ValueError:
+            parser.error("selected Reality package tree does not match the expected source hash")
     source = args.source.resolve()
     if args.command == "inventory":
         _, _, summary = inventory(source)

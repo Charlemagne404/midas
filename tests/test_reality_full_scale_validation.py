@@ -1,5 +1,6 @@
 """Disposable fixture verification of the deferred full-store procedure."""
 
+import importlib
 import json
 import os
 import subprocess
@@ -12,7 +13,12 @@ from midas.reality import recovery
 from midas.reality.reconstruction import Engine
 from midas.reality.storage import Store
 
-from scripts import reality_full_scale_validation as validation
+REALITY_PACKAGES = Path(recovery.__file__).resolve().parents[2]
+os.environ["MIDAS_REALITY_VALIDATION_PACKAGES"] = str(REALITY_PACKAGES)
+
+validation = importlib.import_module("scripts.reality_full_scale_validation")
+
+os.environ["MIDAS_REALITY_VALIDATION_SOURCE_SHA256"] = validation.IMPLEMENTATION_SOURCE_SHA256
 
 
 def fixture(tmp_path):
@@ -22,6 +28,20 @@ def fixture(tmp_path):
     store.append("gap", {"reason": "synthetic_two"})
     store.close()
     return source
+
+
+def test_full_scale_matrix_includes_replay_and_checkpoint_interruption():
+    phases = validation.RECOVERY_PHASES
+
+    assert phases[:6] == (
+        "readonly_probe",
+        "cold",
+        "fast",
+        "corrupt",
+        "interrupt_save",
+        "after_interrupt_save",
+    )
+    assert phases[6:] == ("interrupt", "after_interrupt")
 
 
 def staged_fixture(tmp_path):
@@ -53,6 +73,8 @@ def staged_fixture(tmp_path):
             denied_source_file=str(expected_file),
             catalog_segment_sha256=catalog["segments"][0]["sha256"],
             source_write_denied=True,
+            implementation_source_sha256=boundary["implementation_source_sha256"],
+            recovery_implementation_sha256=boundary["recovery_implementation_sha256"],
             policy=policy,
         ),
     )
@@ -68,9 +90,24 @@ def test_inventory_pins_finalized_only_without_claiming_hash_verification(tmp_pa
     assert len(catalog["segments"]) == len(identities) == 1
     assert summary["last_ordinal"] == 2
     assert summary["kinds"]["gap"] == 2
+    assert summary["implementation_packages"] == str(REALITY_PACKAGES)
+    assert summary["implementation_source_sha256"] == validation.IMPLEMENTATION_SOURCE_SHA256
+    assert summary["recovery_implementation_sha256"] == validation.RECOVERY_IMPLEMENTATION_SHA256
     assert summary["excluded_open"][0]["observed_bytes"] == 6
     assert "NOT yet verified" in summary["scope"]
     assert open_tail.read_bytes() == original_tail
+
+
+def test_candidate_source_hash_is_required_and_exact(tmp_path):
+    packages = tmp_path / "packages"
+    reality = packages / "midas" / "reality"
+    reality.mkdir(parents=True)
+    (reality / "recovery.py").write_text("IDENTITY = 'candidate'\n")
+    expected = validation.reality_source_sha256(packages)
+
+    assert validation.require_reality_source_sha256(packages, expected) == expected
+    with pytest.raises(ValueError, match="does not match"):
+        validation.require_reality_source_sha256(packages, "0" * 64)
 
 
 def test_cold_replay_resumes_from_a_verified_segment_checkpoint(tmp_path, monkeypatch):
@@ -150,6 +187,7 @@ def test_source_quality_audit_confirms_historical_hash_mismatch_without_assignin
             raw_ordinal=11,
             before_lineage=[10, 2],
             after_lineage=[10, 2],
+            local_depth_sha256="e" * 64,
             independent_depth_sha256="f" * 64,
             request_ns=100,
             response_ns=200,
@@ -162,10 +200,66 @@ def test_source_quality_audit_confirms_historical_hash_mismatch_without_assignin
     observed = validation.source_quality_observation(engine, record)
 
     assert observed["classification"] == "CONFIRMED_DEPTH_HASH_MISMATCH_DIRECTION_UNKNOWN"
-    assert observed["local_lineage_agrees_with_after"] is True
+    assert observed["replay_state_advanced_after_response"] is False
+    assert observed["local_depth_sha256"] == "e" * 64
+    assert observed["replay_depth_sha256_at_durable_record"] != "e" * 64
     assert observed["local_hash_matches_independent"] is False
     assert observed["local_age_at_response_ns"] == 50
     assert "cannot identify which view was incomplete" in observed["limitation"]
+
+
+def test_source_quality_audit_does_not_use_later_durable_state_as_response_state():
+    engine = Engine()
+    engine.books["asset-1"] = dict(
+        last=[13, 0],
+        snapshot=[10, 0],
+        received_ns=300,
+        issue=None,
+        bids={Decimal("0.5"): Decimal("2")},
+        asks={Decimal("0.6"): Decimal("3")},
+    )
+    record = dict(
+        kind="book_comparison",
+        ordinal=20,
+        payload=dict(
+            assessment="stable_local_lineage_divergence",
+            asset_id="asset-1",
+            condition="condition-1",
+            raw_ordinal=19,
+            before_lineage=[10, 0],
+            after_lineage=[10, 0],
+            local_depth_sha256="a" * 64,
+            independent_depth_sha256="a" * 64,
+            response_ns=200,
+        ),
+    )
+
+    observed = validation.source_quality_observation(engine, record)
+
+    assert observed["classification"] == "RECORDED_DIVERGENCE_NOT_REPRODUCED_AT_RESPONSE"
+    assert observed["replay_state_advanced_after_response"] is True
+    assert observed["local_depth_sha256"] == "a" * 64
+    assert observed["local_age_at_response_ns"] is None
+
+
+def test_source_quality_audit_does_not_treat_two_missing_hashes_as_a_match():
+    observed = validation.source_quality_observation(
+        Engine(),
+        dict(
+            kind="book_comparison",
+            ordinal=20,
+            payload=dict(
+                assessment="stable_local_lineage_divergence",
+                asset_id="asset-1",
+                before_lineage=[17, 0],
+                after_lineage=[17, 0],
+                independent_depth_sha256=None,
+            ),
+        ),
+    )
+
+    assert observed["classification"] == "COMPARISON_HASH_UNAVAILABLE"
+    assert observed["local_hash_matches_independent"] is False
 
 
 def test_source_quality_audit_preserves_gap_reason_and_bounded_asset_sample():
@@ -270,6 +364,8 @@ def test_resume_requires_contiguous_receipts_bound_to_pinned_boundary(tmp_path):
             phase="cold",
             boundary_catalog_sha256=boundary["catalog_sha256"],
             boundary_identities_sha256=boundary["identities_sha256"],
+            implementation_source_sha256=boundary["implementation_source_sha256"],
+            recovery_implementation_sha256=boundary["recovery_implementation_sha256"],
             state_sha256=identity[0],
             internal_sha256=identity[1],
             ordinal=identity[2],
@@ -295,6 +391,8 @@ def test_resume_requires_contiguous_receipts_bound_to_pinned_boundary(tmp_path):
             phase="restart",
             boundary_catalog_sha256=boundary["catalog_sha256"],
             boundary_identities_sha256=boundary["identities_sha256"],
+            implementation_source_sha256=boundary["implementation_source_sha256"],
+            recovery_implementation_sha256=boundary["recovery_implementation_sha256"],
             state_sha256=identity[0],
             internal_sha256=identity[1],
             ordinal=identity[2],
@@ -324,6 +422,10 @@ def test_recovery_matrix_and_real_interruption_preserve_source(tmp_path):
     environment = dict(os.environ)
     candidate_packages = str(Path(recovery.__file__).resolve().parents[2])
     environment["PYTHONPATH"] = candidate_packages + os.pathsep + environment.get("PYTHONPATH", "")
+    environment["MIDAS_REALITY_VALIDATION_PACKAGES"] = candidate_packages
+    environment["MIDAS_REALITY_VALIDATION_SOURCE_SHA256"] = validation.reality_source_sha256(
+        Path(candidate_packages)
+    )
     for phase in (
         "cold",
         "fast",
