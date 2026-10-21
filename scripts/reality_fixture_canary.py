@@ -21,7 +21,9 @@ from typing import Any
 from unittest import mock
 
 import httpx
-from midas.reality import collector, discovery, observation
+import midas.reality.collector as collector
+import midas.reality.discovery as discovery
+import midas.reality.observation as observation
 from midas.reality.config import Config
 from midas.reality.panel import select_panel
 from midas.reality.replay import replay
