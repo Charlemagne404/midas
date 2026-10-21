@@ -1193,3 +1193,8 @@ This section supersedes earlier closeout measurements and status statements wher
 - No active R15 or other MIDAS validation process remains. The Reality recorder and both APIs are active; archive timer/service remain inactive. No persistent validation policy, production symlink, or protected service configuration was changed during finalization.
 
 **Final outcome:** the closeout is complete, but MIDAS is not Frontier-ready. The protected recorder was left collecting, validation state was checkpointed and preserved, Cloud staging was left intact, and the final readiness verdict remains evidence-based rather than upgraded by the partial R15 run.
+
+### Post-commit production heartbeat — 2026-10-21 23:31 CEST
+
+- A post-push API read briefly returned 15/16 fresh books and `capture_health=degraded`. Both API endpoints returned to `recording` with 16/16 fresh books on the 23:31:21 CEST recheck; overall Reality health remained `degraded` for the three missing persistence/recovery/queue observations. The raw collector status at 23:31:29 was `RECORDING_UNSEQUENCED`, ordinal 3,069,751, 11,670 gap markers, and 5,475,223,097 bytes; its raw `error` field still contained the Gamma 404 without an event timestamp. PID `863193` and restart count 1 were unchanged. This short freshness transition is retained as evidence of transient book-health variation, not a sustained outage or a proof of completeness.
+- At that recheck, the recorder cgroup used 1,205,514,240 bytes, about 2.33 MiB below `MemoryHigh`; its hard-limit margin was about 130 MiB. `memory.events.max/oom/oom_kill` remained zero. No validation process was active.
