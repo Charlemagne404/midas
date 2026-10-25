@@ -2,6 +2,7 @@
 
 import fcntl
 import json
+import os
 import shutil
 import time
 import uuid
@@ -24,6 +25,74 @@ MAX_CPU_LOAD_AVG1_PER_CPU = 1.0
 MAX_MEMORY_PSI_SOME_AVG10_PERCENT = 10.0
 MAX_MEMORY_PSI_FULL_AVG10_PERCENT = 1.0
 MAX_IO_PSI_SOME_AVG10_PERCENT = 20.0
+
+
+def _decision_details(details: dict[str, Any]) -> dict[str, Any]:
+    bounded: dict[str, Any] = {}
+    for key, value in details.items():
+        if isinstance(value, str):
+            bounded[key] = value[:1_000]
+        elif value is None or isinstance(value, (bool, int, float)):
+            bounded[key] = value
+        elif isinstance(value, list):
+            bounded[key] = [str(item)[:300] for item in value[:20]]
+        else:
+            bounded[key] = str(value)[:1_000]
+    return bounded
+
+
+def _record_decision(
+    directory: Path,
+    record: dict[str, Any],
+    *,
+    state: str,
+    timestamp: float,
+    details: dict[str, Any],
+) -> int:
+    """Write one immutable per-schedule decision before publishing its manifest."""
+    decisions = directory / "decisions"
+    decisions.mkdir(mode=0o700, exist_ok=True)
+    if decisions.is_symlink() or not decisions.is_dir():
+        raise ValueError("Schedule decision directory is missing or unsafe")
+    sequence = int(record.get("decision_sequence") or 0) + 1
+    event = {
+        "schema_version": 1,
+        "schedule_id": record["schedule_id"],
+        "decision_sequence": sequence,
+        "decided_at": timestamp,
+        "state": state,
+        "current_step": record.get("current_step"),
+        "current_job_id": record.get("current_job_id"),
+        "source_hash": record.get("source_hash"),
+        "details": _decision_details(details),
+    }
+    while True:
+        path = decisions / f"decision-{sequence:012d}.json"
+        payload = json.dumps(event, sort_keys=True, separators=(",", ":")).encode()
+        try:
+            descriptor = os.open(
+                path,
+                os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0),
+                0o600,
+            )
+        except FileExistsError:
+            sequence += 1
+            event["decision_sequence"] = sequence
+            continue
+        try:
+            with os.fdopen(descriptor, "wb") as stream:
+                stream.write(payload)
+                stream.flush()
+                os.fsync(stream.fileno())
+        except BaseException:
+            path.unlink(missing_ok=True)
+            raise
+        directory_fd = os.open(decisions, os.O_DIRECTORY)
+        try:
+            os.fsync(directory_fd)
+        finally:
+            os.close(directory_fd)
+        return sequence
 
 
 class ScheduledStep(Model):
@@ -58,6 +127,7 @@ def create(root: Path, spec: ScheduleSpec, now: float | None = None) -> dict[str
         "source_hash": research_hash(),
         "configuration": spec.model_dump(mode="json"),
         "admission_expires_at": timestamp + spec.admission_window_seconds,
+        "decision_sequence": 0,
         "steps": [
             {
                 "name": s.name,
@@ -186,6 +256,14 @@ def tick(root: Path, identity: str, now: float | None = None) -> dict[str, Any]:
         record["updated_at"] = timestamp
 
         def save(state: str, **details: Any) -> dict[str, Any]:
+            sequence = _record_decision(
+                directory,
+                record,
+                state=state,
+                timestamp=timestamp,
+                details=details,
+            )
+            record["decision_sequence"] = sequence
             record.update(state=state, **details)
             atomic_json(path, record)
             return record
@@ -284,5 +362,17 @@ def control(
             record["state"] = "CANCELLED"
         # Admitted children are bounded independently; cancel them explicitly.
         record["updated_at"] = time.time()
+        decision_state = {
+            "resume": "PENDING",
+            "pause": "PAUSED",
+            "cancel": "CANCELLED",
+        }[action]
+        record["decision_sequence"] = _record_decision(
+            directory,
+            record,
+            state=decision_state,
+            timestamp=record["updated_at"],
+            details={"control_action": action},
+        )
         atomic_json(path, record)
         return record

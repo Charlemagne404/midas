@@ -1,6 +1,6 @@
 # MIDAS current state
 
-**Updated:** 2026-10-17 (local operational state). This is the current engineering and operations reference. Mission reports, checkpoints, ledgers, and experiment artifacts remain historical records and should be read with their own version and capture time.
+**Base snapshot:** 2026-10-17 (local operational state). The dated 2026-10-26 addendum below is the latest checked runtime snapshot and supersedes earlier live-service statements where they differ. Mission reports, checkpoints, ledgers, and experiment artifacts remain historical records and should be read with their own version and capture time.
 
 ## Project status
 
@@ -113,3 +113,16 @@ PYTHONPATH=packages .venv/bin/python -m pytest -q tests/test_veritas_*.py
 ## Deferred work and operating limits
 
 The frozen worker's lag and recorder memory growth need a separately versioned operational decision. Preserve the current campaigns, records, and source segments while making that decision. Do not change the frozen campaign configuration or journal. Atlas/Frontier, new market discovery, strategy expansion, training, exploratory experiments, and economic optimization are outside the current maintenance scope.
+
+## Current runtime addendum — 2026-10-26
+
+This section records a fresh check; it does not rewrite the 2026-10-17 snapshot above. The complete evidence, limitations and implementation branch are in [the comprehensive engineering mission report](reliability/MIDAS_COMPREHENSIVE_ENGINEERING_MISSION_20261025.md) and [the mission ledger](reliability/MIDAS_COMPREHENSIVE_ENGINEERING_MISSION_LEDGER_20261025.md).
+
+- The isolated mission checkout is `/home/charlie/midas-engineering-mission-20261025`, branch `codex/midas-comprehensive-engineering-mission-20261025`, based on `55601b9a090945cb498806e4878b6ddc33562043`. The authoritative `/home/charlie/midas` checkout still has 41 pre-existing dirty paths; they were preserved. Mission code and the Research Readiness dashboard are not deployed.
+- Reality still runs from `/home/charlie/midas-reality`, PID `3007040`, using the 24 GiB / 90-day configuration. The 112 GiB / 120-day policy remains a staged candidate. At the 2026-10-25 23:30:01 UTC [read-only assessment](reliability/evidence/MIDAS_MISSION_20261026_DEPLOYMENT_PREFLIGHT_BLOCKED_V2.json), its cgroup had 1,662,976 bytes below `MemoryHigh`, below the 4 MiB admission floor; hard-limit/OOM counters remained zero. Host pressure was low, but host headroom does not satisfy the service-specific guard. Do not raise limits or restart as a substitute for diagnosis.
+- Reality's captured public state was `RECORDING_UNSEQUENCED` with 16/16 fresh books and one open segment outside the finalized catalog. Status and manifest were read separately, so the boundary is not atomic. Gap markers are local observations and do not count lost exchange events. The old `ConnectionClosedOK` remains an untimestamped historical value, not a current incident.
+- The archive-mission3 staging tree has 19,833 finalized segments, 58 `.copying` files and 1,138 finalized files absent from its manifest. Its source/provenance identities do not establish a safe writer transition. Archive writer/timer remain disabled; no staging files were changed.
+- Veritas still runs from `/home/charlie/midas-veritas` on its older v4 implementation. The latest inventory found 518 snapshot files while the v4 published summary covers 423 through a scan from 2026-10-23; its 2,097,481-byte summary exceeds the old reader limit. The observer retry at 00:31:02 CET failed again, and the API overview returned HTTP 503. The v6 work is integrated only in the isolated mission branch and has not been used to rewrite the active store.
+- At 00:31:26 CET the active API was in demo mode with `live_execution=false`, paper recovery `CHECKPOINT_VERIFIED` at 662,697 events, and Laboratory `READY`. The Arena scheduler's 00:30:04 CET invocation exited successfully. The user systemd manager reported 91 failed historical one-shot units; none were cleared.
+- Latest-boundary recovery remains incomplete: the historical R15 result stopped at 2,304 of 20,148 segments. No cold replay of the current Reality boundary was attempted. No long-duration validation or new campaign was started.
+- Keep the Veritas v6 rollout and dashboard deployment pending a deliberate local integration/deployment decision. Keep Reality's protected service transition pending a clean exact-boundary recovery, archive provenance and resource preflight plus explicit operator approval.

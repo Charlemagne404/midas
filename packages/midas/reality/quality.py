@@ -80,7 +80,10 @@ def compare(
         before_lineage=before["last"] if before else None,
         after_lineage=after["last"] if after else None,
         sequence_verified=False,
-        limitation="HTTP round trip is not submission/one-way latency; agreement cannot prove no missed events.",
+        limitation=(
+            "HTTP round trip is not one-way latency; a cross-interface depth mismatch at stable local lineage "
+            "does not identify which view is incomplete without an upstream sequence or atomic cross-interface snapshot."
+        ),
     )
     if not before or not after or before["issue"] or after["issue"]:
         result["assessment"] = "ineligible_local_state"
@@ -88,10 +91,26 @@ def compare(
         result["assessment"] = "stale_local_state"
     elif before["last"] != after["last"] or before["snapshot"] != after["snapshot"]:
         result["assessment"] = "concurrent_updates_ambiguous"
-    elif before["bids"] != external["bids"] or before["asks"] != external["asks"]:
-        result["assessment"] = "stable_local_lineage_divergence"
     else:
-        result["assessment"] = "stable_local_lineage_match_unsequenced"
+        local = {side: before[side] for side in ("bids", "asks")}
+        differences = {
+            side: sum(
+                before[side].get(price) != external[side].get(price)
+                for price in before[side].keys() | external[side].keys()
+            )
+            for side in ("bids", "asks")
+        }
+        result["local_depth_sha256"] = hashlib.sha256(canonical(local)).hexdigest()
+        result["local_level_counts"] = {side: len(before[side]) for side in ("bids", "asks")}
+        result["independent_level_counts"] = {
+            side: len(external[side]) for side in ("bids", "asks")
+        }
+        result["depth_difference_counts"] = differences
+        result["assessment"] = (
+            "stable_local_lineage_divergence"
+            if any(differences.values())
+            else "stable_local_lineage_match_unsequenced"
+        )
     return result
 
 

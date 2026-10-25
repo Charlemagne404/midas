@@ -1,0 +1,142 @@
+{
+  "active_config": {
+    "budget_bytes": 25769803776,
+    "path": "/home/charlie/midas-reality/deploy/reality.json",
+    "retention_days": 90,
+    "sha256": "9d1aeeb5a496ad6971dc461ce87f327266ff25240391897f7bb6091a8307119a"
+  },
+  "apply_allowed": false,
+  "assessment": "reality-deployment-preflight",
+  "base_commit": "55601b9a090945cb498806e4878b6ddc33562043",
+  "blockers": [
+    "Current recorder MemoryHigh margin is below the 4 MiB resource admission threshold.",
+    "No complete recovery receipt exists for the current finalized recording boundary.",
+    "An open segment is excluded from the finalized recovery catalog and source continuity remains unsequenced.",
+    "The saved fixture canary is unseeded and was generated with a different Reality source hash.",
+    "Archive staging contains unmanifested finalized files and .copying files; provenance is unresolved.",
+    "Protected recorder restart requires explicit operator approval."
+  ],
+  "branch": "codex/midas-comprehensive-engineering-mission-20261025",
+  "candidate_config": {
+    "budget_bytes": 120259084288,
+    "path": "deploy/reality-candidate.json",
+    "retention_days": 120,
+    "sha256": "908816c3dc568a8aa9d22a8d5bd0267d2f421cec6ca37a84901c5a6eae1f85e0"
+  },
+  "candidate_source_sha256": "6cdfd3c09facaedfa86213fd794c33709bd36e37beb161f156d4cb06a2810d24",
+  "captured_at_utc": "2026-10-25T23:25:17.798211+00:00",
+  "captured_ns": 1792970717798211431,
+  "collector_status": {
+    "error": "ConnectionClosedOK: received 1001 (going away) server shutting down; then sent 1001 (going away) server shutting down",
+    "expected_books": 16,
+    "failures": 10,
+    "frames": 3991808,
+    "fresh_books": 0,
+    "markets": 8,
+    "ordinal": 5062232,
+    "sequence_verified": false,
+    "state": "AWAITING_DATA",
+    "updated_ns": 1792970710022565138
+  },
+  "collector_status_age_seconds": 7.775646293,
+  "collector_status_error_interpretation": "Legacy raw status retains an untimestamped ConnectionClosedOK value; the current API reports no current error. Treat it as historical until a fresh error is timestamped.",
+  "decisions": {
+    "active_config_changed": false,
+    "archive_files_changed": false,
+    "deployment_applied": false,
+    "preflight_gate_written": false,
+    "raw_recordings_changed": false,
+    "service_stopped_or_restarted": false
+  },
+  "deployment_guard_sha256": "fb571421ff64b5d66b953f86fe1899b050c102ebf20b5f6a85bbb3fddefc8fc7",
+  "evidence": {
+    "fixture_canary": {
+      "canary_process_peak_rss_bytes": 40509440,
+      "candidate_source_sha256": "2d5f26aabdcd15921402d99141de675371c4a71b47c3ee01e1973c057c66b4ff",
+      "duration_seconds": 95.0,
+      "path": "docs/reliability/evidence/MIDAS_MISSION_20261026_FIXTURE_CANARY_V3.json",
+      "schema_version": 3,
+      "seed_manifest_sha256": null,
+      "sha256": "e1856f3e7061b7cd03ea3bb0b949fb9e2b047013df771f8c16b8ae5efd0f6cd6",
+      "status": "PASSED"
+    },
+    "latest_boundary_recovery_receipt": null,
+    "seeded_canary_matching_current_boundary": false
+  },
+  "finalized_boundary": {
+    "archive_bytes": 8921184970,
+    "last_ordinal": 5062258,
+    "limitation": "Finalized manifest does not include the currently open segment or prove upstream event continuity.",
+    "live_status_ordinal": 5062232,
+    "manifest_sha256": "2cb8e409545bef2d470406250a22822c74d2fc321959119e205ef0254a62de4f",
+    "open_segment_count": 1,
+    "open_segment_sample": [
+      {
+        "bytes": 2691,
+        "name": "00000000000005062259-bbe128983d6c4b65b1ec74aafd7d7e8b.open"
+      }
+    ],
+    "segment_count": 31416
+  },
+  "passed": false,
+  "protected_service": {
+    "ActiveState": "active",
+    "ControlGroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/midas-reality.service",
+    "MainPID": "3007040",
+    "MemoryHigh": "1207959552",
+    "MemoryMax": "1342177280",
+    "NRestarts": "2",
+    "main_pid": 3007040,
+    "memory_current_bytes": 1206980608,
+    "memory_events": {
+      "high": 14346,
+      "low": 0,
+      "max": 0,
+      "oom": 0,
+      "oom_group_kill": 0,
+      "oom_kill": 0,
+      "sock_throttled": 0
+    },
+    "memory_high_bytes": 1207959552,
+    "memory_high_margin_bytes": 978944,
+    "memory_max_bytes": 1342177280,
+    "restart_count": 2
+  },
+  "resource_admission": {
+    "concurrent_validation_admitted": false,
+    "host_cpu_some_avg10_percent": 2.33,
+    "host_io_full_avg10_percent": 0.9,
+    "host_mem_available_bytes": 8072216576,
+    "host_memory_some_avg10_percent": 0.0,
+    "minimum_memory_high_margin_bytes": 4194304,
+    "reason": "Recorder MemoryHigh margin is 978944 bytes, below the required 4194304-byte guard."
+  },
+  "schema_version": 1,
+  "source_quality": {
+    "current_issues": [],
+    "expected_books": 16,
+    "fresh_books": 0,
+    "known_limitations": [
+      "upstream sequence unavailable",
+      "recent persistence window incomplete",
+      "recovery state unreported",
+      "transport queue depth unreported"
+    ],
+    "sequence_state": "unsequenced",
+    "state": "incomplete_observability"
+  },
+  "status": "BLOCKED",
+  "storage": {
+    "archive_copying_files": 58,
+    "archive_filesystem_free_bytes": 635209543680,
+    "archive_finalized_segments": 19833,
+    "archive_manifest_entries": 18695,
+    "archive_manifest_sha256": "cc7e3375710fa024f971885f8b04840ec06f2c0cd385b716af73ce99275f7c8d",
+    "archive_provenance": "unresolved",
+    "archive_source_sha256": "ae1bcd67331173194efe876f2f7d82e41cd515ebcf256d71a673328c91f26526",
+    "archive_tree": "/mnt/continental-cloud/data/midas-reality-staging/archive-mission3",
+    "archive_writer_active": false,
+    "recording_filesystem_free_bytes": 163398152192
+  },
+  "worktree": "/home/charlie/midas-engineering-mission-20261025"
+}

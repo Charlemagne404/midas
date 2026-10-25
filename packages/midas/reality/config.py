@@ -2,14 +2,16 @@
 
 import json
 import math
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
 
 
 @dataclass(frozen=True)
 class Config:
-    root: str = "/home/charlie/midas-reality/data/recordings/reality"
+    root: str = field(
+        default_factory=lambda: str(Path(__file__).resolve().parents[3] / "data/recordings/reality")
+    )
     markets: int = 3
     discovery_limit: int = 50
     refresh_seconds: float = 600
@@ -68,8 +70,13 @@ class Config:
             raise ValueError("Storage limits must be positive")
         root = Path(self.root).resolve()
         workspace = Path(__file__).resolve().parents[3]
-        if not root.is_relative_to(workspace / "data" / "recordings"):
-            raise ValueError("Reality storage must be inside this worktree data/recordings")
+        deployment_workspace = Path.home() / "midas-reality"
+        allowed_recording_roots = {
+            workspace / "data" / "recordings",
+            deployment_workspace / "data" / "recordings",
+        }
+        if not any(root.is_relative_to(base) for base in allowed_recording_roots):
+            raise ValueError("Reality storage must use an approved recording root")
 
     @classmethod
     def load(cls, path: Path) -> "Config":

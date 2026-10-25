@@ -654,7 +654,7 @@ def router(workspace: Path) -> APIRouter:
                     "--user",
                     "show",
                     unit,
-                    "--property=ActiveState,SubState,MainPID,NRestarts,MemoryCurrent,CPUUsageNSec",
+                    "--property=ActiveState,SubState,MainPID,NRestarts,MemoryCurrent,MemoryHigh,MemoryMax,MemoryPeak,TasksCurrent,TasksMax,CPUUsageNSec,ControlGroup",
                 ],
                 capture_output=True,
                 text=True,
@@ -670,8 +670,26 @@ def router(workspace: Path) -> APIRouter:
                     ),
                 )
             )
+        collector = next(
+            (item for item in services if item["unit"] == "midas-reality.service"), None
+        )
+        collector_properties = collector["properties"] if collector else {}
+        control_group = collector_properties.get("ControlGroup")
+        if isinstance(control_group, str) and control_group.startswith("/"):
+            try:
+                from midas.reality.resources import snapshot as resource_snapshot
+
+                recorder_resources = {"status": "measured", **resource_snapshot(control_group)}
+            except (OSError, ValueError, KeyError, StopIteration) as error:
+                recorder_resources = {
+                    "status": "unavailable",
+                    "reason": type(error).__name__,
+                }
+        else:
+            recorder_resources = {"status": "not_reported"}
         value = dict(
             services=services,
+            recorder_resources=recorder_resources,
             configuration=read_json(artifact_paths()["configuration"]),
             storage_policy=read_json(workspace / "deploy/reality-storage-policy.json"),
             controls=["check-capacity", "check-integrity", "pause-schedule", "resume-schedule"],

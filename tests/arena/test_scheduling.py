@@ -63,6 +63,17 @@ def test_due_time_admission_and_completion(prepared):
     path.write_text(json.dumps(job))
     assert tick(root, identity, now=1012)["state"] == "COMPLETED"
     assert len(list(root.glob("jobs/*/job.json"))) == 1
+    decisions = sorted((root / "schedules" / identity / "decisions").glob("*.json"))
+    assert [json.loads(path.read_text())["state"] for path in decisions] == [
+        "WAITING_TIME",
+        "ADMITTING",
+        "RUNNING",
+        "RUNNING",
+        "COMPLETED",
+    ]
+    assert [json.loads(path.read_text())["decision_sequence"] for path in decisions] == list(
+        range(1, 6)
+    )
 
 
 def test_crash_between_admission_and_plan_publication_reuses_job(prepared):

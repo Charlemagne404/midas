@@ -1,0 +1,178 @@
+{
+  "active_config": {
+    "budget_bytes": 25769803776,
+    "path": "/home/charlie/midas-reality/deploy/reality.json",
+    "retention_days": 90,
+    "sha256": "9d1aeeb5a496ad6971dc461ce87f327266ff25240391897f7bb6091a8307119a"
+  },
+  "assessment": "read-only-reality-deployment-blocker-assessment",
+  "base_commit": "55601b9a090945cb498806e4878b6ddc33562043",
+  "blockers": [
+    "Recorder MemoryHigh margin is 1662976 bytes, below the 4194304-byte resource admission threshold.",
+    "No seeded candidate canary receipt matches the current candidate source and finalized production boundary.",
+    "No latest-boundary recovery receipt is present in mission evidence.",
+    "No checksum- and ownership/provenance-verified archive receipt is present.",
+    "Archive staging inventory has .copying or manifest inconsistencies; ownership/provenance is unresolved.",
+    "1 open recording segment(s) are outside the finalized recovery catalog.",
+    "The public feed has no verified global sequence; source continuity remains unsequenced.",
+    "Protected recorder transition requires explicit operator approval."
+  ],
+  "branch": "codex/midas-comprehensive-engineering-mission-20261025",
+  "candidate_config": {
+    "budget_bytes": 120259084288,
+    "path": "deploy/reality-candidate.json",
+    "retention_days": 120,
+    "sha256": "908816c3dc568a8aa9d22a8d5bd0267d2f421cec6ca37a84901c5a6eae1f85e0"
+  },
+  "candidate_source_sha256": "6cdfd3c09facaedfa86213fd794c33709bd36e37beb161f156d4cb06a2810d24",
+  "captured_at_utc": "2026-10-25T23:30:01.032254+00:00",
+  "captured_ns": 1792971001032253974,
+  "collector_status": {
+    "age_seconds_at_capture": 9.786,
+    "backpressure_active": false,
+    "error": "ConnectionClosedOK: received 1001 (going away) server shutting down; then sent 1001 (going away) server shutting down",
+    "expected_books": 16,
+    "failures": 10,
+    "frames": 3992519,
+    "fresh_books": 16,
+    "markets": 8,
+    "ordinal": 5063282,
+    "sequence_verified": false,
+    "state": "RECORDING_UNSEQUENCED",
+    "updated_ns": 1792970991246352647
+  },
+  "decisions": {
+    "active_config_changed": false,
+    "archive_files_changed": false,
+    "deployment_applied": false,
+    "preflight_gate_written": false,
+    "raw_recordings_changed": false,
+    "service_stopped_or_restarted": false
+  },
+  "deployment_guard_sha256": "490a4ec9b6c55b6b0a0bfe5375eb5c0d5fb6ecd7cb930000fd66f7b9e3c0b973",
+  "evidence": {
+    "archive_receipt_candidates": [],
+    "canary_matches_current_source": false,
+    "canary_path": "docs/reliability/evidence/MIDAS_MISSION_20261026_FIXTURE_CANARY_V3.json",
+    "canary_seed_manifest_sha256": null,
+    "canary_source_sha256": "2d5f26aabdcd15921402d99141de675371c4a71b47c3ee01e1973c057c66b4ff",
+    "recovery_receipt_candidates": [],
+    "verification_receipt": {
+      "guard_matches": false,
+      "passed": true,
+      "path": "docs/REALITY_GATE_A_CHECKS.json",
+      "sha256": "067cdc95e61f167e9207c0775f8f3a53a54d6170f86df8fae835b67c35ad33bd",
+      "source_matches": false
+    }
+  },
+  "finalized_boundary": {
+    "archive_bytes": 8923447888,
+    "last_ordinal": 5063282,
+    "limitation": "Manifest and status were read separately; open segments are excluded and upstream event continuity is not established.",
+    "manifest_sha256": "e5a75cc4cb62c948be891000b12612161ab3f0e31408103ccc84cdb847d12276",
+    "open_segment_count": 1,
+    "open_segment_sample": [
+      "00000000000005063283-956049696bc44d188d71f6c7925c5db8.open"
+    ],
+    "segment_count": 31425
+  },
+  "passed": false,
+  "protected_service": {
+    "ActiveState": "active",
+    "ControlGroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/midas-reality.service",
+    "MainPID": "3007040",
+    "MemoryHigh": "1207959552",
+    "MemoryMax": "1342177280",
+    "NRestarts": "2",
+    "main_pid": 3007040,
+    "memory_current_bytes": 1206296576,
+    "memory_events": {
+      "high": 14353,
+      "low": 0,
+      "max": 0,
+      "oom": 0,
+      "oom_group_kill": 0,
+      "oom_kill": 0,
+      "sock_throttled": 0
+    },
+    "memory_high_bytes": 1207959552,
+    "memory_high_margin_bytes": 1662976,
+    "memory_max_bytes": 1342177280
+  },
+  "resource_admission": {
+    "concurrent_validation_admitted": false,
+    "cpu_psi": {
+      "full": {
+        "avg10": 0.0,
+        "avg300": 0.0,
+        "avg60": 0.0
+      },
+      "some": {
+        "avg10": 1.08,
+        "avg300": 2.09,
+        "avg60": 1.82
+      }
+    },
+    "host_memory": {
+      "MemAvailable": "7548252 kB",
+      "MemTotal": "16274968 kB"
+    },
+    "io_psi": {
+      "full": {
+        "avg10": 0.41,
+        "avg300": 1.0,
+        "avg60": 0.82
+      },
+      "some": {
+        "avg10": 0.42,
+        "avg300": 1.09,
+        "avg60": 0.89
+      }
+    },
+    "memory_psi": {
+      "full": {
+        "avg10": 0.0,
+        "avg300": 0.0,
+        "avg60": 0.0
+      },
+      "some": {
+        "avg10": 0.0,
+        "avg300": 0.0,
+        "avg60": 0.0
+      }
+    },
+    "minimum_memory_high_margin_bytes": 4194304
+  },
+  "schema_version": 1,
+  "status": "BLOCKED",
+  "storage": {
+    "archive_filesystem_free_bytes": 635209543680,
+    "archive_inventory": {
+      "archive_root": "/mnt/continental-cloud/data/midas-reality-staging/archive-mission3",
+      "copying_file_count": 58,
+      "duplicate_manifest_entries": 0,
+      "manifest_entry_count": 18695,
+      "manifest_sha256": "cc7e3375710fa024f971885f8b04840ec06f2c0cd385b716af73ce99275f7c8d",
+      "missing_segment_count": 0,
+      "segment_count": 19833,
+      "source_json_sha256": "ae1bcd67331173194efe876f2f7d82e41cd515ebcf256d71a673328c91f26526",
+      "unmanifested_segment_count": 1138
+    },
+    "archive_provenance": "unresolved",
+    "archive_tree": "/mnt/continental-cloud/data/midas-reality-staging/archive-mission3",
+    "candidate_commitment_error": null,
+    "candidate_commitments": {
+      "archive_free_bytes": 635209543680,
+      "archive_remaining_bytes": 114865656358,
+      "archive_reserve_bytes": 429496729600,
+      "archive_used_bytes": 5393427930,
+      "raw_free_bytes": 163390550016,
+      "raw_remaining_bytes": 111323034975,
+      "raw_reserve_bytes": 21474836480,
+      "raw_used_bytes": 8936049313,
+      "separate_filesystems": true
+    },
+    "recording_filesystem_free_bytes": 163390566400
+  },
+  "worktree": "/home/charlie/midas-engineering-mission-20261025"
+}

@@ -5,6 +5,40 @@ on release commit `f968095feb9c591de38fe12d7493224425f62f3a`. Reality collection
 and its frozen prospective worker continue from the separate
 `/home/charlie/midas-reality` worktree.
 
+## Current operational status — 2026-10-26
+
+The procedures below preserve the earlier Mission 2 operating context. The
+fresh runtime check for 2026-10-26 supersedes their live-health assumptions:
+
+- Active runtime remains `/home/charlie/midas-veritas`, branch `project/veritas`,
+  commit `3b102928594323e7886859d348f7b2151663debb`. It is clean and is not the
+  v6 implementation branch.
+- The public observatory one-shot failed again at 00:31:02 CET, exiting 1 after
+  11 seconds while reading `research-summary.json`: the file is 2,097,481
+  bytes, which exceeds the old 2 MiB reader bound by 329 bytes. The API overview
+  returns HTTP 503 for the same stale/oversized summary path. The observer
+  timer remains enabled; its next run was scheduled for 01:00:54 CET at the
+  latest check.
+- The latest immutable-store inventory counted 518 snapshot files; the v4
+  published summary covers 423 through
+  `scan-20261023T233202Z-dc4f690bd80f.json.gz`. The 95-file difference is a
+  coverage gap, not evidence that those snapshots were analyzed or invalid.
+  `latest-summary.json` is 2,249,365 bytes and exceeds the old 512 KiB API
+  bound.
+- V6 source integrity checks, Decimal reference economics, rebuildable SQLite
+  scan/analysis catalogs and bounded publication are integrated in the
+  isolated branch `codex/midas-comprehensive-engineering-mission-20261025`.
+  They are tested but not deployed. The eight-snapshot v6 replay is a bounded
+  differential check, not a full replay of the current 518-snapshot store.
+- Do not overwrite v4 summaries/events or migrate the active timer in place.
+  Preserve existing files, build v6 catalogs from immutable evidence, verify
+  catalog identities and summary digests, then roll out API and timer changes
+  only after the result returns HTTP 200 from the active runtime.
+
+See [the 2026-10-26 engineering report](reliability/MIDAS_COMPREHENSIVE_ENGINEERING_MISSION_20261025.md)
+for current counts, exact file hashes, tests and rollout blockers. The active
+runtime was not restarted during that review.
+
 ## Read the Reality baseline without taking writer ownership
 
 The bounded forensic command opens the campaign journal with SQLite read-only

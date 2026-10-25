@@ -217,7 +217,15 @@ async def test_network_interruption_reconnect_and_safe_stop(tmp_path, monkeypatc
             assert row["payload"]["raw_ordinal"] == latest_frame
     engine, checkpoints = replay(tmp_path, manifest(tmp_path))
     assert engine.counts["book"] >= 12 and checkpoints >= 1
-    assert json.loads((tmp_path / "status.json").read_text())["state"] == "STOPPED"
+    final_status = json.loads((tmp_path / "status.json").read_text())
+    assert final_status["state"] == "STOPPED"
+    assert len(final_status["implementation_sha256"]) == 64
+    process_start = next(
+        row for row in rows if row["kind"] == "gap" and row["payload"]["reason"] == "process_start"
+    )
+    assert (
+        process_start["payload"]["implementation_sha256"] == final_status["implementation_sha256"]
+    )
     resumed = Store(tmp_path, reserve=1)
     resumed.close()
 

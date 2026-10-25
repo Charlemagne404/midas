@@ -1,0 +1,286 @@
+{
+  "artifact_version": 1,
+  "assessment_date": "2026-10-25",
+  "implementation": {
+    "branch": "codex/real-market-research-overhaul",
+    "base_commit": "3b102928594323e7886859d348f7b2151663debb",
+    "analysis_version": "veritas-finalized-snapshot-analysis-v6",
+    "deployment_status": "isolated_worktree_not_deployed",
+    "protected_reality_touched": false,
+    "new_campaign_started": false
+  },
+  "archived_active_veritas_evidence": {
+    "snapshot_count": 513,
+    "snapshot_store_bytes_approx": 522190848,
+    "v4_event_count": 513,
+    "published_summary_scan_count": 423,
+    "published_summary_bytes": 2097481,
+    "old_reader_limit_bytes": 2097152,
+    "scans_missing_from_published_summary": 90,
+    "selected_market_observations": 20514,
+    "distinct_markets": 3902,
+    "revisits_after_first_visit": 16612,
+    "markets_visited_at_least_five_times": 1650,
+    "maximum_visits_to_one_market": 72,
+    "median_scan_interval_minutes": 30.000819,
+    "selection_roles": {
+      "rotating_stratified": 20173,
+      "stable_random_control": 341,
+      "reference_random": 0
+    },
+    "v4_source_replay": {
+      "quality_valid_pairs": 18312,
+      "strict_fresh_pairs": 3855,
+      "strict_fresh_share_of_valid": 0.2105,
+      "positive_top_gross_pairs": 0,
+      "valid_edge_per_share": {
+        "min": -0.998,
+        "p10": -0.25,
+        "p25": -0.062,
+        "median": -0.021,
+        "p75": -0.01,
+        "p90": -0.003,
+        "max": -0.001,
+        "valid_edges_within_one_cent_of_zero": 6175,
+        "valid_edge_count": 18312
+      },
+      "freshness_diagnostics": {
+        "quality_valid_pairs_over_five_second_reported_age": 14456,
+        "quality_valid_pairs_over_250ms_reported_cross_outcome_skew": 1,
+        "exchange_side_timing_known": false
+      }
+    },
+    "interpretation": "Selected intermittent snapshots are repeated and dependent. These counts do not estimate venue-wide prevalence, quote persistence between scans, fills, or profitable execution."
+  },
+  "bounded_fresh_public_observation": {
+    "scan_id": "scan-20261025T212904Z-0755d0e55286",
+    "captured_at_utc": "2026-10-25T21:29:04.628868+00:00",
+    "isolated_temporary_output_root": "/tmp/midas-veritas-public-smoke-20261025-JdCAo4",
+    "target_markets": 30,
+    "stable_controls": 4,
+    "reference_random_markets": 4,
+    "selected_role_counts": {
+      "rotating_stratified": 22,
+      "stable_random_control": 4,
+      "reference_random": 4
+    },
+    "discovery": {
+      "gamma_calls": 6,
+      "gamma_returned_records": 300,
+      "duplicate_records": 2,
+      "unique_market_ids": 298,
+      "eligible_pair_markets": 107,
+      "exclusion_reasons": {
+        "augmented_negative_risk_semantics_unverified": 182,
+        "unsupported_outcome_relationship": 9
+      }
+    },
+    "retrieval": {
+      "http_attempts": 7,
+      "clob_batches": 1,
+      "requested_assets": 60,
+      "returned_assets": 60,
+      "integrity_status": "complete",
+      "missing_assets": 0,
+      "duplicate_assets": 0,
+      "unexpected_assets": 0,
+      "malformed_assets": 0,
+      "retry_attempts": 0
+    },
+    "local_timing": {
+      "gamma_request_duration_min_ms": 74.625353,
+      "gamma_request_duration_max_ms": 261.105943,
+      "clob_request_duration_ms": 75.949684,
+      "final_response_to_snapshot_persisted_ms": 151.587769,
+      "exchange_side_clock_offset": "unknown",
+      "atomic_exchange_snapshot": false
+    },
+    "snapshot_file_bytes": 570198,
+    "source_code_sha256": "c434f0ab0269cd47f128c971d59660763ede7da3a0800e33f1097597566ae0fd",
+    "orders_submitted": false,
+    "authenticated_requests": false,
+    "interpretation": "One bounded public observation validates current acquisition, integrity, independent replay, local timing, and persistence reporting. It does not estimate opportunity prevalence or execution outcomes.",
+    "v6_independent_economic_reference": {
+      "reference_audited_pairs": 30,
+      "reference_valid_pairs": 23,
+      "primary_reference_disagreements": {},
+      "agreement_on_all_measured_pairs": true
+    },
+    "independent_v6_reaudit": {
+      "status": "MEASURED",
+      "matched_scans": 1,
+      "selected_pairs": 30,
+      "quality_valid_pairs": 23,
+      "strict_fresh_pairs": 9,
+      "positive_top_gross_pairs": 0,
+      "edge_buckets_per_share": {
+        "below_-0.05": 4,
+        "-0.05_to_-0.01": 7,
+        "-0.01_to_0": 12
+      },
+      "invalid_reasons": {
+        "no_empty_ask_side": 7
+      },
+      "reported_age_over_five_seconds_by_leg": {
+        "yes": 14,
+        "no": 14
+      },
+      "reported_cross_outcome_skew_over_250ms_pairs": 0
+    }
+  },
+  "single_snapshot_microbenchmark": {
+    "source_scan_id": "scan-20261022T190153Z-e8f434348254",
+    "copied_snapshot_bytes": 567662,
+    "measurement_method": "Separate temporary roots; method wall and CPU time around analysis, or around catalog reconciliation plus analysis plus summary. Peak RSS includes interpreter and imports. One run per path.",
+    "results": [
+      {
+        "path": "active_v4_analysis_only",
+        "wall_seconds": 0.105752,
+        "cpu_seconds": 0.087427,
+        "peak_rss_kib": 47164,
+        "event_bytes": 18225,
+        "summary_bytes": 26944,
+        "output_root_bytes": 638821
+      },
+      {
+        "path": "v6_analysis_only",
+        "wall_seconds": 0.202002,
+        "cpu_seconds": 0.133713,
+        "peak_rss_kib": 48980,
+        "event_bytes": 131662,
+        "analysis_catalog_bytes": 86016,
+        "summary_bytes": 30412,
+        "output_root_bytes": 815752
+      },
+      {
+        "path": "v6_snapshot_catalog_analysis_and_summary",
+        "wall_seconds": 0.31357,
+        "cpu_seconds": 0.195392,
+        "peak_rss_kib": 49932,
+        "event_bytes": 131662,
+        "snapshot_catalog_bytes": 126976,
+        "analysis_catalog_bytes": 86016,
+        "summary_bytes": 30412,
+        "independent_reaudit_status": "MEASURED",
+        "economic_disagreements": {},
+        "output_root_bytes": 1008264
+      }
+    ],
+    "interpretation": "The v6 path is slower and writes more derived state in this one-snapshot run while adding source lineage checks, a separate exact-arithmetic economic reference, exact-once event application, and SQLite indexes. A one-run microbenchmark does not establish sustained throughput or full-store cost."
+  },
+  "verification": {
+    "compatible_veritas_and_arena_api_scheduler_tests": {
+      "passed": 288,
+      "failed": 0,
+      "duration_seconds": 37.79,
+      "exclusions": [
+        {
+          "test_file": "tests/test_veritas_gap_detail_v2_batch.py",
+          "reason": "Imports midas.veritas.gap_detail_control, absent from the active project/veritas checkout."
+        },
+        {
+          "test_file": "tests/test_veritas_gap_detail_v2_release.py",
+          "reason": "Pinned release manifest expects 73 package files; 61 are present in this checkout."
+        }
+      ]
+    },
+    "full_tests_arena_attempt": {
+      "status": "incomplete_stopped",
+      "observed_progress_percent": 19,
+      "elapsed_over_minutes": 5,
+      "reason": "Sustained CPU work in the broad suite; stopped without a result."
+    },
+    "ruff_check": "passed_on_23_changed_python_files",
+    "ruff_format_check": "passed_on_23_changed_python_files",
+    "git_diff_check": "passed"
+  },
+  "changed_source_sha256": {
+    "packages/midas/veritas/observatory.py": "58c83a64b078447f36c2b311c343d0f3ed102b93aae6f4c54cf7f8bfc3b29117",
+    "packages/midas/veritas/continuous_analysis.py": "0eec453875fd2359ec95cdcf44b52f103c481f14704f07a7e00c0a30ed546306",
+    "packages/midas/veritas/analysis_catalog.py": "f912b3c3079d80b1d5b0a1b13ae82d28876bff4f143d1aef5757936c3f055b1e",
+    "packages/midas/veritas/scan_catalog.py": "40793887c3d68223121c6e2aeab7bf978a3b133463644d3a1937fec65d16972e",
+    "packages/midas/veritas/independent_economics.py": "873af6a0a6ac15872cca5ec0a63ecb8e9e01b7c8ed24c04614b2c439f7e3931b",
+    "packages/midas/veritas/opportunity_audit_v2.py": "5305ac7e9649301f113d0cc12c5889f244469cab879b6a55e86d2bf8a7ff4345",
+    "packages/midas/arena/scheduling.py": "3e839a72f113bd499d07d6288050e1fd5e79a2ee86fbf7e5fe3c0163502414f9",
+    "scripts/dispatch_schedules.py": "6122d886cf2f2860f7cb79b22603784652c3cf8d92dc5b28d5021204b9dc3856",
+    "apps/api/veritas.py": "c5ec8369bfdc9381753b5bd622fccf43139fccc3981048c7a162f90e9dcc6de6",
+    "apps/api/arena.py": "d51542b6f8d28bfc6882bb1c71714ce54d7d9b4d9cc2d519e56ec2210317d0f7",
+    "packages/midas/veritas/research_director.py": "f49becd751278ce00bb3d1772c3e4854f8075316e002d9bd7141139e1360dca7"
+  },
+  "audit_methodology_correction": {
+    "first_v5_audit_status": "superseded_before_deployment",
+    "finding": "The v5 source replay verified source lineage but reused the scanner pair auditor; it was not an independent economic calculation.",
+    "v6_reference_version": "veritas-independent-economic-reference-v1",
+    "v6_reference_scope": [
+      "pair identity",
+      "tick validation",
+      "crossed-book rejection",
+      "top ask",
+      "depth walk",
+      "minimum constraints",
+      "independent fee reference"
+    ],
+    "v6_policy": "V6 requires the primary audit and independent reference to accept the pair and requires exact arithmetic agreement. Disagreements and reference vetoes are retained."
+  },
+  "eight_snapshot_v6_replay": {
+    "scan_ids": [
+      "scan-20261015T055928Z-c9777c1cc300",
+      "scan-20261016T163057Z-96c79e6c489c",
+      "scan-20261018T050152Z-e4f5823f5f67",
+      "scan-20261019T173039Z-3a79ec6fb9d0",
+      "scan-20261021T063008Z-1b612c98540c",
+      "scan-20261022T193038Z-2a0a53b81837",
+      "scan-20261024T080036Z-b3125734728f",
+      "scan-20261025T210108Z-fb8d059e438f"
+    ],
+    "selected_observations": 320,
+    "capture_time_catalog_counts": {
+      "quality_valid": 259,
+      "strict_fresh": 63
+    },
+    "v4_source_replay_comparison": {
+      "quality_valid": 286,
+      "strict_fresh": 68,
+      "positive_top_gross": 0,
+      "agreement_with_v6": true
+    },
+    "batch_progress": {
+      "snapshot_catalog_indexed_per_pass": [
+        4,
+        4
+      ],
+      "analysis_processed_and_pending": [
+        [
+          3,
+          5
+        ],
+        [
+          3,
+          2
+        ],
+        [
+          2,
+          0
+        ]
+      ]
+    },
+    "resource_measurement": {
+      "wall_seconds": 1.8534,
+      "cpu_seconds": 1.5102,
+      "peak_rss_kib": 79484,
+      "isolated_output_bytes": 7236638
+    },
+    "limitations": "Eight correlated snapshots demonstrate bounded indexing and replay recovery only; they are not a prevalence or endurance study.",
+    "independent_v6_source_and_economic_replay": {
+      "status": "MEASURED",
+      "matched_indexed_scans": 8,
+      "quality_valid": 286,
+      "strict_fresh": 68,
+      "positive_top_gross": 0,
+      "quarantined_snapshots": 0,
+      "reference_audited_pairs": 320,
+      "reference_economic_valid_pairs": 286,
+      "primary_reference_disagreements": {}
+    }
+  }
+}

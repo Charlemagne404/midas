@@ -1,0 +1,126 @@
+# MIDAS Comprehensive Engineering Mission
+
+**Assessment date:** 2026-10-26 (CEST)
+**Implementation branch:** `codex/midas-comprehensive-engineering-mission-20261025`
+**Base commit:** `55601b9a090945cb498806e4878b6ddc33562043`
+**Runtime changes:** none; protected services and production data were not modified.
+
+## Executive result
+
+The mission branch integrates the Veritas v6 research overhaul, strengthens Reality collection, recovery and read-only telemetry, improves durable scheduling, and adds an evidence-backed Research Readiness page. Focused and broad tests pass after one host-wide Arena admission-lock collision was isolated and its tests passed on rerun. The dashboard also passes browser verification.
+
+The implementation is integrated in this dedicated checkout and is **not deployed**. Current production Veritas is still the older v4 path and its public observatory is failing on an oversized summary. Reality is still running the older 24 GiB / 90-day configuration with little `MemoryHigh` headroom. Latest-boundary cold recovery is incomplete, and the archive staging tree has unmanifested and `.copying` files. These are real blockers, not dashboard status choices.
+
+No Frontier or Atlas work, long-duration campaign, real order, wallet action, historical evidence rewrite, production restart, or archive cleanup was performed.
+
+## Final classification
+
+| Component | Status | Evidence and limit |
+|---|---|---|
+| Veritas v6 acquisition, independent economics, catalogs and summary publication | **IMPLEMENTED, DEPLOYMENT PENDING** | Differential, corruption, interruption, restart, scheduler and API tests pass in this branch. Active service remains on v4 and currently fails to publish its public summary. |
+| Reality collector, recovery and observability changes | **PARTIALLY VERIFIED** | Unit/integration tests and a bounded loopback fixture canary pass for earlier candidate hashes. Production continues on the older checkout; latest-boundary full cold recovery and seeded startup for the final candidate hash remain unverified. |
+| Research Readiness page | **COMPLETE AND VERIFIED** | Lint, typecheck, 31 unit tests, build and one Playwright browser test pass. It uses real API responses and explicitly identifies demo mode. This page is not deployed. |
+| Arena / API integration boundaries | **PARTIALLY VERIFIED** | Durable fair scheduling, stale-director visibility and service evidence are tested. Current production still has three stale directors and one expired-admission alert. |
+| Latest-boundary recovery | **PARTIALLY VERIFIED** | Historical R10 passed; R14 covered an earlier prefix and suffix; R15 stopped at 2,304/20,148. No fresh full production boundary replay was attempted. |
+| Archive provenance and storage transition | **BLOCKED** | Current staging contains 1,138 finalized files absent from its manifest and 58 `.copying` files. Ownership alone does not establish provenance. No files were changed. |
+| Economic evidence sufficiency | **NOT MEASURED** | Eight captured snapshots have zero positive top-book gross pairs in the v6 comparison; that selected, correlated sample cannot establish current opportunity prevalence, fees where unsupported, fills or profitability. |
+| Protected Reality deployment | **BLOCKED** | Explicit user approval is required before stopping/restarting the recorder. Current near-`MemoryHigh` state, incomplete latest-boundary recovery and archive uncertainty also prevent a defensible pass gate. |
+
+## Initial state and evidence checked
+
+### Checkouts and service ownership
+
+The authoritative checkout `/home/charlie/midas` was on `main`, commit `55601b9`, with 41 pre-existing dirty paths. Those changes were preserved. The Reality and Veritas runtime worktrees were clean at `4f5cb568` and `3b102928`. The reliability worktree had 26 dirty paths and the Veritas research-overhaul worktree had 25; neither was reset, staged, or edited by this mission. This branch is a separate worktree based on the authoritative checkout.
+
+The active Reality service still runs from `/home/charlie/midas-reality` as PID `3007040`, using `/home/charlie/midas-reality/deploy/reality.json`. That configuration is 24 GiB, 90 days, eight markets. The proposed mission candidate is 112 GiB, 120 days. The service cgroup is configured with `MemoryHigh=1,207,959,552` and `MemoryMax=1,342,177,280` bytes. At the last pre-canary admission sample, usage was approximately 1.20 GB, leaving about 6.7 MiB below `MemoryHigh`; cumulative `high` events were 14,344, while `max`, `oom`, and kill counters remained zero. Host `MemAvailable` was about 7.9 GB and pressure checks passed. A later exact-boundary assessment found less than 1 MiB below `MemoryHigh`, below the local 4 MiB admission floor. The narrow soft-limit margin is a production constraint, not evidence that increasing the limit is appropriate.
+
+`midas-api.service` was healthy in demo mode with `live_execution=false`; Laboratory recovery was ready. The deployed API release did not report its source commit. The active dashboard service points to `/home/charlie/midas/apps/web`, so this branch's page is not served. At inspection, the Arena projection reported no active or queued work, three stale directors, no unverified directors and one open expired-admission alert. The user systemd manager had 91 failed historical one-shot units across service groups; these were not cleared or restarted.
+
+The active Veritas observer service failed with `ValueError: Unsafe or oversized analysis artifact: research-summary.json`. The initial store inspection found 516 snapshots; the final read-only count was 518 files under `snapshots/`, while the published v4 summary still reports 423 processed snapshots and last processed `scan-20261023T233202Z-dc4f690bd80f.json.gz`. `research-summary.json` remained 2,097,481 bytes (329 bytes over the old 2 MiB reader limit), and `latest-summary.json` remained 2,249,365 bytes (over the API's 512 KiB limit). The summary SHA-256 was `aca960615863ab4a8df3ab673b78e70dcbef56583146275e023e907def7f18c5`; the latest-summary SHA-256 was `919acbfac8abe5011aac05ed98fc47e76167605f522d543ebecd5c5f557863b0`.
+
+### Reality archive and recovery boundary
+
+The archive-mission3 staging directory currently contained 19,833 finalized `.seg` files (5,369,550,131 bytes) and 58 `.copying` files (16,471,242 bytes). Its manifest had 18,695 entries, leaving 1,138 finalized segments without manifest entries. The manifest's last published ordinal was 2,717,019 while segment names extended to 3,005,374. Manifest SHA-256: `cc7e3375710fa024f971885f8b04840ec06f2c0cd385b716af73ce99275f7c8d`; `source.json` SHA-256: `ae1bcd67331173194efe876f2f7d82e41cd515ebcf256d71a673328c91f26526`. The tree was owned by uid/gid 1000, which does not resolve its provenance. The archive timer and writer were inactive. No ambiguous file was removed, rewritten or republished.
+
+The archive filesystem had about 635 GB free. A recent capacity sample (older than the dashboard freshness window) estimated roughly 16 days to the active byte budget and about 78 days to the configured retention boundary; its short sample rate is not a durable growth forecast. The candidate 112 GiB / 120-day policy and 400 GiB archive reserve remain staged, not active.
+
+Historical recovery receipts remain distinct: R10 passed a full earlier matrix at 19,546 segments / 5,288,840,839 bytes; R14 validated an earlier prefix plus appended suffix at 20,110 / 5,441,309,576; R15 checkpointed an earlier boundary of 20,148 segments and stopped at 2,304. None verifies today's archive boundary. This mission did not cold-replay the production store.
+
+## Implemented changes
+
+### Veritas v6 research path
+
+- Added `packages/midas/veritas/independent_economics.py`, a Decimal reference calculation separate from the scanner's decisive calculation. It checks binary condition and complementary outcomes, protocol, crossed/inconsistent books, price and tick constraints, asks and available depth, quantity constraints, notional assumptions, fee schedules and rounding, complete-position gross/net outcomes, and freshness/source-quality evidence. Unsupported fee or minimum-notional units remain unsupported. Mathematical opportunity and executable profitability are separate claims.
+- The audit stores primary/reference decisions and disagreement reasons. Economic agreement is reported separately from source-lineage agreement. A mismatch remains an artifact; it is not reconciled by mutating history.
+- Added versioned `scan_catalog.py` and `analysis_catalog.py` SQLite indexes over immutable snapshots and analysis events. Catalog recovery uses checksums, identities, schema migration and bounded rebuild paths; exact-once event application is durable and restartable. Tests cover corruption and interrupted publication/rebuild.
+- Summary output is bounded at 512 KiB, limits detail arrays with explicit truncation counts, and points to the complete event and catalog rows. A prior summary is streamed byte-for-byte to a versioned preserved file before atomic replacement. It is never silently truncated to fit a reader.
+- Added a reference-random cohort distinct from adaptive selection, per-asset CLOB response integrity, bounded targeted retries, and durable fair schedule decisions. Unique markets, repeated observations, quality-valid states, economic eligibility, censored/missing cases and independent candidate states remain distinct. Correlated revisits are not treated as independent trials.
+- The eight-snapshot comparison recorded in `docs/REAL_MARKET_RESEARCH_OVERHAUL_001_BENCHMARK.json` covers 320 selected observations: 286 quality-valid, 68 strict-fresh, zero positive top-book gross pairs, and zero primary/reference disagreements on measured fields. It is a bounded regression/replay, not an updated full-store result or market prevalence estimate.
+
+### Reality reliability and resource visibility
+
+- Collector changes explicitly retain unsequenced, incomplete, stale and degraded source states. Local gap markers are not described as counts of exchange events lost because the public feed has no documented global monotonic sequence.
+- Added bounded transport/queue state, source and receiver timing distinctions, persistence window and lag fields, current-versus-last error projection, implementation identity, read-only resource snapshots, and capped recovery/checkpoint helpers. Queue saturation and dropped/rejected work are explicit. Status cannot imply continuity when a source boundary is uncertain.
+- Added deterministic recovery checkpoint identity over source files, manifest boundary and state; resume and reconciliation reject changed inputs. Recovery checkpoint, corruption, interruption and deterministic-replay fixtures are covered by tests.
+- Improved book-state update cost by retaining a top-level cache. The regression proves non-best-level deltas do not trigger a full-book scan; no production wall-time improvement is claimed without a live comparable benchmark.
+- Hardened `scripts/reality_deployment.py` so verification/preflight is bound to the procedure hash and exact active rollback config path, contents and digest. Apply refuses if process PID, guard, source or rollback config has changed. Its only restart operation remains the guarded explicit `apply` action. It was not invoked.
+- A bounded 95-second loopback fixture canary exercised discovery, websocket ingestion, persistence, stop/replay, checkpoints and local comparison. Its output is synthetic test evidence, not a production capacity estimate; the detailed receipt is in `docs/reliability/evidence/`.
+
+### Mission Control and dashboard
+
+- Added the native **Research Readiness** route with system/service health, deployed versus integrated/staged identity, evidence funnel, independent economic audit, source/recovery integrity, resource freshness, storage runway assumptions, and six evidence gates. Missing evidence cannot pass a gate; old and current errors are distinct. Demo mode is prominent, and drilldowns retain artifact identities and limitations.
+- The dashboard loads the existing APIs; it does not manufacture a positive funnel or use static success data. The fixture-backed Playwright capture is `docs/reliability/evidence/MIDAS_MISSION_20261026_RESEARCH_READINESS.png` and is labeled as browser verification, not a production screen capture.
+- `/api/health` now reports API/build identity where available. API service projections expose collector resource and source uncertainty fields when served by the integrated branch.
+- Arena dispatch stores durable admission decisions, rotates eligible work fairly, and keeps stale director/expired-window conditions visible to the API rather than hiding them as a green scheduler state.
+
+## Verification performed
+
+| Area | Result | Boundary |
+|---|---|---|
+| Broad relevant backend suite | 300 passed; two tests first collided with the active host-wide `.global-admission.lock`; both passed on isolated rerun (302 unique pass results). | No active production research workload was admitted by these tests. The lock collision is retained as evidence. |
+| Reality focused suite | 95 passed across collector, dashboard, operations, deployment, fixture-canary and recovery tests. The final recovery/deployment/canary subset passed 75 tests in 6.98 seconds after adding archive inventory mutation and symlink guards. | One Starlette/httpx deprecation warning; no assertion was removed. The initial final-subset invocation resolved the main checkout's editable package; the rerun put this worktree's `packages/` first and passed. |
+| Veritas independent economics/catalog and publication | Covered in the broad suite, including adversarial differential cases, corrupt/rebuildable catalogs, oversized summary preservation and partial-publication recovery. | No full 516-snapshot v6 replay on the production host. |
+| Frontend | `pnpm lint`, `pnpm typecheck`, 31 unit tests, and `pnpm build` passed. | Build retains existing large chunks: about 503 KiB index and 544 KiB chart chunk; new readiness chunk is about 26 KiB (8 KiB gzip). |
+| Browser | Research Readiness Playwright test passed, 1/1. | Browser fixtures show the complete loading/error/evidence paths; not a production deployment. |
+| Python style | Ruff check and `ruff format --check` both passed across all 48 changed Python files after the final edits. | The final source/evidence manifest records file identities. |
+| Reality fixture canary | 95 seconds, captured input and loopback only, no external market requests, full fresh pre-stop fixture books, checkpointed replay. | The first schema-2 run wrote a passed receipt, then its summary printer exited nonzero on a stale key; the printer was fixed. A schema-3 clean rerun is recorded separately, but later recovery changes altered the candidate source hash. It is not a deployment gate for the final source. Cgroup values are aggregate to their explicitly named execution scope. |
+| Checkpointed recovery / guarded preflight | Recovery, canary-copy, preflight-evidence and non-mutation tests pass; the latest read-only deployment assessment is **BLOCKED**. | No production-boundary recovery receipt, seeded canary or verified archive receipt exists for the captured latest root. Current admission is below its 4 MiB floor, so no full archive run was launched. |
+
+The broad backend run initially returned two failures because another scheduled Arena dispatcher held the shared host-wide admission lock. No code or test was changed to hide them. Each test passed on rerun once the lock was free. This is a cross-component scheduling contention finding and remains in the ledger.
+
+## Performance and evidence interpretation
+
+The existing one-snapshot Veritas microbenchmark showed active v4 analysis at 0.106 s / 47,164 KiB peak RSS, v6 analysis at 0.202 s / 48,980 KiB, and v6 catalog plus analysis at 0.314 s / 49,932 KiB. The eight-snapshot indexed replay took 1.853 s wall and 1.510 s CPU with 79,484 KiB peak RSS in its isolated run. V6 performs more verification and writes more derived state; these measurements do not show a speed improvement or prove full-store capacity.
+
+The schema-3 fixture canary reports 305 fixture frames, four segments, 714,294 durable bytes, 0.564 process CPU-seconds, and about 40.5 MB peak RSS for its Python canary process. It started from an empty root, so the 0.603 GiB/day extrapolation and 0.276-second full fixture-book coverage are synthetic only. The recorded cgroup peak is a lifetime aggregate and is not attributed to the collector. Later source changes make this receipt's source hash stale for the final candidate; do not use it to approve a production recording budget.
+
+No current result establishes venue-wide opportunity prevalence, fill probability, queue position, order acknowledgement, realized P&L or profitability. The v6 eight-snapshot sample has zero positive gross candidates, but its limited correlated frame cannot support a claim that no opportunity exists elsewhere or at other times.
+
+## Exact deployment boundary and next actions
+
+The protected recorder remained active on the older checkout and old config. The isolated collector candidate passed its bounded fixture canary, but this does not replace production archive recovery, archive provenance, or full-boundary startup memory evidence. Its source is staged and not deployed. The systemd timer and recorder were not stopped, restarted, signaled, or reconfigured.
+
+Before asking for or exercising deployment authorization:
+
+1. Preserve current live PID/config and obtain an exact-boundary recorder checkpoint without modifying its raw store.
+2. Reconcile the archive tree's 1,138 unmanifested finalized segments and 58 partial copies using verified owner/provenance; do not delete or publish until proven.
+3. Run resumable full-boundary recovery and isolated startup measurements against a checksummed copy, with bounded resource admission. Keep the gate incomplete if it cannot finish safely.
+4. Produce a fresh preflight bound to the candidate source, canary receipt, active config path/hash, current PID, storage commitments, resource limits, recovery boundary and rollback input.
+5. Review the documented interruption and unrecoverable source uncertainty with the operator. Public source continuity cannot be reconstructed from unsequenced feed markers.
+6. Only after a clean technical preflight, request explicit approval before running the guarded `apply`; that action stops and restarts the protected recorder.
+
+Veritas deployment likewise requires a reviewed timer/API rollout to the active `/home/charlie/midas-veritas` environment. Preserve v4 summaries and event files; initialize v6 catalogs and outputs alongside them. First verify the active store through the migration/rebuild path and return the API to HTTP 200 before changing timer ownership.
+
+### Latest blocked Reality deployment assessment
+
+The newest read-only assessment was captured at `2026-10-25T23:30:01.032254Z` and is preserved as [MIDAS_MISSION_20261026_DEPLOYMENT_PREFLIGHT_BLOCKED_V2.json](evidence/MIDAS_MISSION_20261026_DEPLOYMENT_PREFLIGHT_BLOCKED_V2.json), SHA-256 `25ea857aeefc39ff6bf0254535ef20768a7228e26702d2aa2e72aa80eb6c825a`. It is an inventory, not a preflight gate. It binds candidate source SHA-256 `6cdfd3c09facaedfa86213fd794c33709bd36e37beb161f156d4cb06a2810d24` and deployment guard SHA-256 `490a4ec9b6c55b6b0a0bfe5375eb5c0d5fb6ecd7cb930000fd66f7b9e3c0b973`. The active service remained PID `3007040` on the old 24 GiB / 90-day configuration. At capture, the live status reported `RECORDING_UNSEQUENCED` and 16/16 fresh books, but its status timestamp was 9.786 seconds older than the capture and its raw error field still held an untimestamped prior `ConnectionClosedOK` shutdown message. The older error is not classified as current.
+
+The finalized catalog at that separate read contained 31,425 segments / 8,923,447,888 bytes through ordinal 5,063,282, manifest SHA-256 `e5a75cc4cb62c948be891000b12612161ab3f0e31408103ccc84cdb847d12276`, and one open segment. Status and manifest are not atomic, and the open segment is excluded. The collector cgroup had 1,206,296,576 bytes current against `MemoryHigh=1,207,959,552`, leaving 1,662,976 bytes; cumulative `high` events were 14,353 and `max`/OOM/kill counters were zero. Host memory pressure was low, but the service-specific margin remained below the 4 MiB concurrency floor. The tool therefore admitted no seeded canary or recovery run.
+
+The same capture found 19,833 archive `.seg` files against 18,695 manifest entries, 1,138 unmanifested segments and 58 `.copying` files. The sampled raw and archive filesystems had enough free space for the proposed 112 GiB raw/archive budgets and their 20 GiB / 400 GiB reserves, but this is a point-in-time capacity check, not a growth forecast or provenance proof. The old schema-3 canary source hash does not match the current source and has no seed manifest; no latest-boundary recovery or verified archive receipt is present. The existing `docs/REALITY_GATE_A_CHECKS.json` says `passed=true`, but its source and deployment-guard hashes both mismatch the final candidate, so it is not accepted as current verification. The preflight is not passable. No gate was written and `apply` was not called.
+
+At the 00:31:26 CET read-only service check, the API returned HTTP 200 `READY` in demo mode with `live_execution=false`, paper journal `CHECKPOINT_VERIFIED` at 662,697 events, and Laboratory `READY`. The observer timer retried at 00:31:02 CET; its service failed after 11 seconds with exit status 1. Journal evidence traces the failure to the active `/home/charlie/midas-veritas` checkout reading the oversized `research-summary.json` in `continuous_analysis.py`; `/api/veritas/overview` remained HTTP 503. The timer stayed enabled for its next 01:00:54 CET trigger. The Arena scheduler's 00:30:04 CET invocation exited successfully. The user systemd manager still reported 91 failed historical units (including 37 Arena jobs, 17 validation, two capacity, five Veritas and 29 Reality units); none were cleared or restarted. These are service snapshots, not evidence that the mission branch is deployed.
+
+## Changed branch and artifact references
+
+All mission implementation changes are confined to this worktree and branch. The root checkout's 41 pre-existing dirty paths, the Reality/Veritas runtime worktrees, and both older engineering worktrees remain untouched. See the companion [mission ledger](MIDAS_COMPREHENSIVE_ENGINEERING_MISSION_LEDGER_20261025.md) and [source/evidence manifest](MIDAS_COMPREHENSIVE_ENGINEERING_MISSION_SOURCE_MANIFEST_20261026.json) for exact files and hashes. No branch was pushed or merged.

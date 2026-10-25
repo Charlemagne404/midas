@@ -4,6 +4,7 @@ import asyncio
 import hashlib
 import json
 import logging
+import math
 import signal
 import time
 import uuid
@@ -16,16 +17,175 @@ import httpx
 from websockets.asyncio.client import connect
 from websockets.exceptions import WebSocketException
 
+from . import recovery
 from .config import Config
 from .discovery import GAMMA, WS, select
 from .observation import discover, independent_book
 from .quality import clock_health, compare
-from .replay import replay
+from .resources import MIN_HEADROOM_BYTES
+from .resources import snapshot as resource_snapshot
 from .storage import Store, atomic_json, manifest
+from .transport import bounded_get
 
 
 class StorageFailure(RuntimeError):
     """Persistence failure is terminal; never continue an unrecorded stream."""
+
+
+APPEND_BACKPRESSURE_SECONDS = 1.0
+APPEND_LATENCY_WINDOW_NS = 60 * 1_000_000_000
+# The Reality API marks status older than 30 seconds stale; failures report immediately.
+STATUS_REPORT_INTERVAL_SECONDS = 10.0
+
+
+def collection_health(
+    state: str,
+    last_observation_ns: int | None,
+    fresh_books: int,
+    expected_books: int,
+    now_ns: int,
+    stale_ns: int,
+    backpressured: bool = False,
+    transport_backpressured: bool = False,
+) -> str:
+    if state == "FAILED":
+        return "failed"
+    if state == "STOPPED":
+        return "stopped"
+    if state == "STARTING":
+        return "recovering"
+    if state == "AWAITING_DATA":
+        return "resynchronizing"
+    if state in {"CONNECTING", "DEGRADED", "RECONNECTING"}:
+        return "reconnecting"
+    if last_observation_ns is None:
+        return "active_no_events"
+    if now_ns - last_observation_ns >= stale_ns or fresh_books != expected_books:
+        return "stale"
+    if transport_backpressured:
+        return "transport_backpressured"
+    if backpressured:
+        return "backpressured"
+    return "active_receiving"
+
+
+def transport_queue_depth(websocket: Any) -> int | None:
+    """Return buffered WebSocket frames when the installed library exposes them."""
+    try:
+        depth = len(websocket.recv_messages.frames)
+    except (AttributeError, TypeError):
+        return None
+    return depth if isinstance(depth, int) and depth >= 0 else None
+
+
+def sample_transport_queue(status: dict[str, Any], websocket: Any, bound: int) -> None:
+    """Publish a current queue sample without treating unknown telemetry as empty."""
+    depth = transport_queue_depth(websocket)
+    status.update(
+        transport_queue_observation_available=depth is not None,
+        transport_queue_depth=depth,
+        transport_queue_saturated=depth is not None and depth >= bound,
+        transport_queue_sampled_ns=time.time_ns(),
+    )
+    if depth is not None:
+        status["transport_queue_sample_count"] = status.get("transport_queue_sample_count", 0) + 1
+        status["transport_queue_high_water_depth"] = max(
+            status.get("transport_queue_high_water_depth", 0), depth
+        )
+
+
+def clear_transport_queue_sample(status: dict[str, Any]) -> None:
+    """Mark queue depth unknown when no live WebSocket connection can be sampled."""
+    status.update(
+        transport_queue_observation_available=False,
+        transport_queue_depth=None,
+        transport_queue_saturated=False,
+        transport_queue_sampled_ns=time.time_ns(),
+    )
+
+
+def append_latency_summary(
+    samples: deque[tuple[int, int, int]], now_ns: int, process_started_ns: int
+) -> dict[str, Any]:
+    """Summarize durable-write and full append latency over the last minute."""
+    start_ns = max(process_started_ns, now_ns - APPEND_LATENCY_WINDOW_NS)
+    recent = [sample for sample in samples if start_ns <= sample[0] <= now_ns]
+    window_seconds = max(0.0, (now_ns - start_ns) / 1e9)
+    window_complete = process_started_ns <= now_ns - APPEND_LATENCY_WINDOW_NS
+    if len(samples) == samples.maxlen and samples and samples[0][0] > start_ns:
+        window_complete = False
+
+    def seconds(values: list[int], quantile: float | None = None) -> float | None:
+        if not values:
+            return None
+        ordered = sorted(values)
+        index = -1 if quantile is None else max(0, math.ceil(quantile * len(ordered)) - 1)
+        return ordered[index] / 1e9
+
+    durable = [sample[1] for sample in recent]
+    appended = [sample[2] for sample in recent]
+    return {
+        "window_seconds": window_seconds,
+        "window_complete": window_complete,
+        "sample_count": len(recent),
+        "max_durable_write_seconds": seconds(durable),
+        "p95_durable_write_seconds": seconds(durable, 0.95),
+        "max_append_seconds": seconds(appended),
+        "p95_append_seconds": seconds(appended, 0.95),
+    }
+
+
+def prune_cohort_tracking(
+    book_updates: Counter[str],
+    coverage_started: dict[str, int],
+    coverage_last: dict[str, int],
+    active_assets: set[str],
+) -> None:
+    """Keep per-asset coverage counters bounded to the current market cohort."""
+    for tracker in (book_updates, coverage_started, coverage_last):
+        for asset in tuple(tracker):
+            if asset not in active_assets:
+                del tracker[asset]
+
+
+def frame_metadata(payload: str | bytes) -> tuple[list[dict[str, Any]], list[dict[str, str]], bool]:
+    """Bound decoded-frame lifetime to this call, before any transport await.
+
+    Engine consumes the durable raw payload independently; metadata/constraints
+    share one parse. No decoded depth arrays escape into the collector loop.
+    """
+    normalized: list[dict[str, Any]] = []
+    constraints: list[dict[str, str]] = []
+    try:
+        parsed = json.loads(payload)
+    except (ValueError, TypeError, UnicodeDecodeError):
+        return normalized, constraints, False
+    events = parsed if isinstance(parsed, list) else [parsed]
+    normalized = [
+        dict(
+            event_type=e.get("event_type", "unknown"),
+            asset_id=e.get("asset_id"),
+            market=e.get("market"),
+            exchange_timestamp=e.get("timestamp"),
+        )
+        for e in events
+        if isinstance(e, dict)
+    ]
+    try:
+        from .reconstruction import number
+
+        for event in events:
+            if (
+                isinstance(event, dict)
+                and event.get("event_type") == "book"
+                and "tick_size" in event
+            ):
+                tick = number(event["tick_size"], price=True)
+                if tick > 0:
+                    constraints.append(dict(asset_id=event["asset_id"], tick_size=str(tick)))
+    except (ValueError, TypeError, KeyError, DecimalException):
+        return normalized, constraints, True
+    return normalized, constraints, False
 
 
 async def run(config: Config, duration: float | None = None) -> None:
@@ -36,14 +196,23 @@ async def run(config: Config, duration: float | None = None) -> None:
         reserve=config.reserve_bytes,
         segment_bytes=config.segment_bytes,
         segment_seconds=config.segment_seconds,
+        verify_existing=False,
+        defer_open=True,
     )
+    startup_began = time.monotonic()
+    process_started_ns = time.monotonic_ns()
+    last_transport_message = startup_began
+    last_market_event = startup_began
     try:
-        engine, _ = replay(root, manifest(root))
+        source_manifest = manifest(root)
+        engine, recovery_status = recovery.recover(root, source_manifest)
+        if engine.last_ordinal != store.ordinal:
+            raise ValueError("Verified replay ordinal differs from the durable segment index")
     except BaseException:
         store.close()
         raise
     oldest_ns = time.time_ns()
-    oldest = next((s for s in manifest(root)["segments"] if s["count"]), None)
+    oldest = next((s for s in source_manifest["segments"] if s["count"]), None)
     if oldest:
         from .storage import records
 
@@ -54,14 +223,19 @@ async def run(config: Config, duration: float | None = None) -> None:
             raise OSError(
                 "Retention horizon reached; export/archive this root and configure a new root"
             )
+    del source_manifest
+    store.activate()
 
     append_samples: deque[dict[str, int]] = deque(maxlen=1024)
+    append_latency_samples: deque[tuple[int, int, int]] = deque(maxlen=4096)
+    slow_append_timestamps: deque[int] = deque()
     book_updates: Counter[str] = Counter()
     coverage_started: dict[str, int] = {}
     coverage_last: dict[str, int] = {}
     comparison_task: asyncio.Task[dict[str, Any]] | None = None
     last_comparison = 0.0
     comparison_index = 0
+    active_websocket: Any | None = None
 
     def append(kind: str, payload: Any, **metadata: Any) -> dict[str, Any]:
         if time.time_ns() - oldest_ns > config.retention_days * 86400 * 1e9:
@@ -72,10 +246,18 @@ async def run(config: Config, duration: float | None = None) -> None:
             record = store.append(kind, payload, **metadata)
         except OSError as error:
             raise StorageFailure(str(error)) from error
+        status.setdefault("first_new_durable_record_ns", time.time_ns())
+        status.setdefault(
+            "seconds_until_first_new_durable_record", time.monotonic() - startup_began
+        )
         persisted_ns = time.monotonic_ns()
         engine.consume(record)
         processed_ns = time.monotonic_ns()
+        append_latency_samples.append(
+            (processed_ns, persisted_ns - began_ns, processed_ns - began_ns)
+        )
         if kind == "frame":
+            status.setdefault("first_frame_received_ns", record["received_ns"])
             append_samples.append(
                 dict(
                     ordinal=record["ordinal"],
@@ -90,20 +272,90 @@ async def run(config: Config, duration: float | None = None) -> None:
                     book_updates[asset] += 1
                     coverage_started.setdefault(asset, record["received_ns"])
                     coverage_last[asset] = record["received_ns"]
-        status["max_append_seconds"] = max(
-            status.get("max_append_seconds", 0), time.monotonic() - began
+        append_seconds = time.monotonic() - began
+        status["process_max_append_seconds"] = max(
+            status.get("process_max_append_seconds", 0), append_seconds
         )
+        durable_seconds = (persisted_ns - began_ns) / 1e9
+        status["process_max_persist_seconds"] = max(
+            status.get("process_max_persist_seconds", 0), durable_seconds
+        )
+        if append_seconds >= APPEND_BACKPRESSURE_SECONDS:
+            status["process_backpressure_events"] += 1
+        while (
+            slow_append_timestamps
+            and slow_append_timestamps[0] < processed_ns - APPEND_LATENCY_WINDOW_NS
+        ):
+            slow_append_timestamps.popleft()
+        if append_seconds >= APPEND_BACKPRESSURE_SECONDS:
+            slow_append_timestamps.append(processed_ns)
+        status["backpressure_active"] = bool(slow_append_timestamps)
         return record
 
+    def save_recovery() -> None:
+        # Reserve the full bounded temporary file, including while the previous
+        # checkpoint still exists. Raw append durability has priority.
+        import shutil
+
+        if (
+            store.used + recovery.MAX_CHECKPOINT_BYTES > store.budget
+            or shutil.disk_usage(root).free < store.reserve + recovery.MAX_CHECKPOINT_BYTES
+        ):
+            status["recovery_checkpoint_error"] = "insufficient_checkpoint_disk_budget"
+            return
+        began = time.monotonic()
+        path = root / recovery.CHECKPOINT_NAME
+        old_size = path.stat().st_size if path.exists() else 0
+        try:
+            size = recovery.save(root, engine, manifest(root))
+            store.used += size - old_size
+            status.pop("recovery_checkpoint_error", None)
+            status["recovery_checkpoint_ordinal"] = engine.last_ordinal
+        except (OSError, ValueError) as error:
+            status["recovery_checkpoint_error"] = f"{type(error).__name__}: {error}"
+        status["process_recovery_checkpoint_seconds"] = time.monotonic() - began
+
     def report() -> None:
-        state = engine.state()
+        state = engine.state(max_depth=50)
         now = time.time_ns()
+        latency_now_ns = time.monotonic_ns()
+        if active_websocket is not None:
+            sample_transport_queue(status, active_websocket, config.queue_size)
+        latency = append_latency_summary(append_latency_samples, latency_now_ns, process_started_ns)
+        while (
+            slow_append_timestamps
+            and slow_append_timestamps[0] < latency_now_ns - APPEND_LATENCY_WINDOW_NS
+        ):
+            slow_append_timestamps.popleft()
+        status["persistence_latency_window_seconds"] = APPEND_LATENCY_WINDOW_NS / 1e9
+        status["persistence_latency_window_covered_seconds"] = latency["window_seconds"]
+        status["persistence_latency_window_complete"] = latency["window_complete"]
+        status["recent_append_sample_count"] = latency["sample_count"]
+        status["recent_max_append_seconds"] = latency["max_append_seconds"]
+        status["recent_p95_append_seconds"] = latency["p95_append_seconds"]
+        status["recent_max_persist_seconds"] = latency["max_durable_write_seconds"]
+        status["recent_p95_persist_seconds"] = latency["p95_durable_write_seconds"]
+        status["backpressure_window_seconds"] = APPEND_LATENCY_WINDOW_NS / 1e9
+        status["backpressure_active"] = bool(slow_append_timestamps)
         books = state["books"]
         fresh = sum(
             b["internally_consistent"] and now - b["received_ns"] < config.stale_seconds * 1e9
             for b in books.values()
         )
+        stale_book_ids = [
+            asset
+            for asset, book in books.items()
+            if not book["internally_consistent"]
+            or now - book["received_ns"] >= config.stale_seconds * 1e9
+        ]
         timing_uncertain = sum(bool(b.get("timing_uncertainty")) for b in books.values())
+        try:
+            resources = resource_snapshot()
+            margin = resources["memory_high_margin_bytes"]
+            status["resource_constrained"] = margin is not None and margin < MIN_HEADROOM_BYTES
+            status["resources"] = resources
+        except (OSError, ValueError, StopIteration):
+            status["resource_metrics_available"] = False
         atomic_json(
             root / "status.json",
             dict(
@@ -119,22 +371,36 @@ async def run(config: Config, duration: float | None = None) -> None:
                 updated_ns=now,
                 ordinal=store.ordinal,
                 storage_bytes=store.used,
+                process_frames=status["process_frames"],
+                lifetime_frames=store.counts["frame"],
+                lifetime_gap_records=store.counts["gap"],
+                lifetime_records=sum(store.counts.values()),
+                lifetime_record_counts=dict(store.counts),
+                collection_health=collection_health(
+                    status["state"],
+                    status["last_observation_ns"],
+                    fresh,
+                    status["markets"] * 2,
+                    now,
+                    int(config.stale_seconds * 1e9),
+                    status["backpressure_active"],
+                    status.get("transport_queue_saturated") is True,
+                ),
                 counts=state["counts"],
                 gaps=engine.gaps,
                 fresh_books=fresh,
                 expected_books=status["markets"] * 2,
+                stale_book_count=len(stale_book_ids),
+                stale_book_asset_ids=stale_book_ids,
+                book_freshness_basis=(
+                    "age since last per-token market update; a quiet book is not proof of loss or completeness"
+                ),
+                transport_message_age_seconds=max(0, time.monotonic() - last_transport_message),
+                market_event_age_seconds=max(0, time.monotonic() - last_market_event),
                 state_sha256=engine.digest(),
                 sequence_verified=False,
                 clock_health=clock_health(),
-                books={
-                    asset: dict(
-                        book,
-                        bids=book["bids"][:50],
-                        asks=book["asks"][:50],
-                        depth_truncated=len(book["bids"]) > 50 or len(book["asks"]) > 50,
-                    )
-                    for asset, book in books.items()
-                },
+                books=books,
                 observation_coverage={
                     asset: dict(
                         book_update_frames=book_updates[asset],
@@ -160,11 +426,31 @@ async def run(config: Config, duration: float | None = None) -> None:
         loop.add_signal_handler(sig, stop.set)
     loop.add_signal_handler(signal.SIGUSR1, rotate.set)
     started = time.monotonic()
-    last_report = last_checkpoint = started
+    last_report = last_checkpoint = last_recovery_checkpoint = started
     status: dict[str, Any] = dict(
         state="STARTING",
+        recovery=recovery_status,
+        startup_seconds=time.monotonic() - startup_began,
+        implementation_sha256=hashlib.sha256(
+            b"".join(
+                p.name.encode() + p.read_bytes() for p in sorted(Path(__file__).parent.glob("*.py"))
+            )
+        ).hexdigest(),
+        event_counter_scope="durable_reconstructed_history",
+        transport_queue_unit="websocket_frames",
+        transport_queue_bound=config.queue_size,
+        transport_queue_observation_available=False,
+        transport_queue_depth=None,
+        transport_queue_high_water_depth=0,
+        transport_queue_sample_count=0,
+        transport_queue_saturated=False,
+        transport_max_message_bytes=1024**2,
+        transport_backpressure="pause_transport_reads; reconnect gaps remain unsequenced",
         started_ns=time.time_ns(),
-        frames=0,
+        frames=store.counts["frame"],
+        process_frames=0,
+        process_backpressure_events=0,
+        backpressure_active=False,
         failures=0,
         markets=0,
         last_observation_ns=None,
@@ -173,21 +459,18 @@ async def run(config: Config, duration: float | None = None) -> None:
     atomic_json(root / "config.json", config.dump())
     backoff = 1
     try:
+        # Bootstrap the accelerator once from the fully verified pre-start boundary.
+        save_recovery()
         append(
             "gap",
             dict(
                 reason="process_start",
-                reconstruction_version=4,
+                reconstruction_version=5,
                 clock_health=clock_health(),
                 recovered=store.recovered,
                 stale_ns=int(config.stale_seconds * 1e9),
                 config=config.dump(),
-                implementation_sha256=hashlib.sha256(
-                    b"".join(
-                        p.name.encode() + p.read_bytes()
-                        for p in sorted(Path(__file__).parent.glob("*.py"))
-                    )
-                ).hexdigest(),
+                implementation_sha256=status["implementation_sha256"],
             ),
         )
         async with httpx.AsyncClient(timeout=20, follow_redirects=False) as client:
@@ -220,8 +503,10 @@ async def run(config: Config, duration: float | None = None) -> None:
                         )
                         status["selection_audit"] = selection_audit
                     else:
-                        response = await client.get(
+                        response = await bounded_get(
+                            client,
                             GAMMA + "/markets",
+                            append=append,
                             params=dict(
                                 active="true",
                                 closed="false",
@@ -256,9 +541,13 @@ async def run(config: Config, duration: float | None = None) -> None:
                             connection=connection,
                             subscription=subscription,
                         )
+                        del response, raw_markets
                     if not cohort:
                         raise ValueError("No supported active markets discovered")
                     tokens = [token for market in cohort for token in market["tokens"]]
+                    prune_cohort_tracking(
+                        book_updates, coverage_started, coverage_last, set(tokens)
+                    )
                     status.update(markets=len(cohort), cohort=cohort, state="CONNECTING")
                     async with connect(
                         WS,
@@ -268,6 +557,8 @@ async def run(config: Config, duration: float | None = None) -> None:
                         close_timeout=5,
                         ping_interval=None,
                     ) as ws:
+                        active_websocket = ws
+                        sample_transport_queue(status, ws, config.queue_size)
                         frame = json.dumps(
                             dict(
                                 type="market",
@@ -280,12 +571,19 @@ async def run(config: Config, duration: float | None = None) -> None:
                         subscription_record = append(
                             "subscription", frame, connection=connection, subscription=subscription
                         )
-                        connected = last_ping = last_frame = time.monotonic()
+                        status["subscription_restored_ns"] = time.time_ns()
+                        status.setdefault(
+                            "seconds_until_subscription", time.monotonic() - startup_began
+                        )
+                        connected = last_ping = last_market_event = last_transport_message = (
+                            time.monotonic()
+                        )
                         pending_snapshots = set(tokens)
                         status["state"] = "AWAITING_DATA"
                         while not stop.is_set():
                             now = time.monotonic()
-                            if now - last_report >= 2:
+                            sample_transport_queue(status, ws, config.queue_size)
+                            if now - last_report >= STATUS_REPORT_INTERVAL_SECONDS:
                                 report()
                                 last_report = now
                             if now - last_checkpoint >= 30 or rotate.is_set():
@@ -303,6 +601,12 @@ async def run(config: Config, duration: float | None = None) -> None:
                                 store.rotate()
                                 rotate.clear()
                                 last_checkpoint = now
+                                if (
+                                    now - last_recovery_checkpoint
+                                    >= recovery.CHECKPOINT_INTERVAL_SECONDS
+                                ):
+                                    save_recovery()
+                                    last_recovery_checkpoint = time.monotonic()
                             if comparison_task is not None and comparison_task.done():
                                 result = comparison_task.result()
                                 comparison_task = None
@@ -360,6 +664,7 @@ async def run(config: Config, duration: float | None = None) -> None:
                                         asset,
                                         engine.tokens[asset],
                                         config.comparison_timeout_seconds,
+                                        append=append,
                                     )
                                 )
                                 last_comparison = now
@@ -428,31 +733,17 @@ async def run(config: Config, duration: float | None = None) -> None:
                                 raise TimeoutError(
                                     "Initial snapshots incomplete; reconnect for fresh books"
                                 )
-                            if now - last_frame > config.stale_seconds:
-                                raise TimeoutError(
-                                    "Market observations stale; reconnect for fresh snapshots"
-                                )
+                            if now - last_transport_message > config.stale_seconds:
+                                raise TimeoutError("Market WebSocket heartbeat or event stale")
                             try:
                                 payload = await asyncio.wait_for(ws.recv(), timeout=1)
                             except TimeoutError:
+                                sample_transport_queue(status, ws, config.queue_size)
                                 continue
+                            sample_transport_queue(status, ws, config.queue_size)
+                            last_transport_message = time.monotonic()
                             received, monotonic = time.time_ns(), time.monotonic_ns()
-                            normalized = []
-                            try:
-                                parsed = json.loads(payload)
-                                parsed = parsed if isinstance(parsed, list) else [parsed]
-                                normalized = [
-                                    dict(
-                                        event_type=e.get("event_type", "unknown"),
-                                        asset_id=e.get("asset_id"),
-                                        market=e.get("market"),
-                                        exchange_timestamp=e.get("timestamp"),
-                                    )
-                                    for e in parsed
-                                    if isinstance(e, dict)
-                                ]
-                            except (ValueError, TypeError, UnicodeDecodeError):
-                                pass
+                            normalized, constraints, invalid_constraints = frame_metadata(payload)
                             if isinstance(payload, bytes):
                                 import base64
 
@@ -472,35 +763,19 @@ async def run(config: Config, duration: float | None = None) -> None:
                                 receive_semantics="application_websocket_dequeue_not_hardware_network_arrival",
                             )
                             original_frame_ordinal = store.ordinal
-                            if encoding == "utf8" and payload != "PONG":
-                                try:
-                                    events = json.loads(payload)
-                                    for event in events if isinstance(events, list) else [events]:
-                                        if (
-                                            isinstance(event, dict)
-                                            and event.get("event_type") == "book"
-                                            and "tick_size" in event
-                                        ):
-                                            from .reconstruction import number
-
-                                            tick = number(event["tick_size"], price=True)
-                                            if tick > 0:
-                                                append(
-                                                    "snapshot_constraints",
-                                                    dict(
-                                                        asset_id=event["asset_id"],
-                                                        tick_size=str(tick),
-                                                        raw_ordinal=original_frame_ordinal,
-                                                    ),
-                                                    connection=connection,
-                                                    subscription=subscription,
-                                                )
-                                except (ValueError, TypeError, KeyError, DecimalException):
-                                    append(
-                                        "gap",
-                                        dict(reason="malformed_constraints"),
-                                        connection=connection,
-                                    )
+                            for constraint in constraints:
+                                append(
+                                    "snapshot_constraints",
+                                    dict(constraint, raw_ordinal=original_frame_ordinal),
+                                    connection=connection,
+                                    subscription=subscription,
+                                )
+                            if invalid_constraints:
+                                append(
+                                    "gap",
+                                    dict(reason="malformed_constraints"),
+                                    connection=connection,
+                                )
                             for asset in tuple(pending_snapshots):
                                 book = engine.books.get(asset)
                                 if (
@@ -510,14 +785,22 @@ async def run(config: Config, duration: float | None = None) -> None:
                                 ):
                                     pending_snapshots.remove(asset)
                             if payload != "PONG":
-                                last_frame = time.monotonic()
+                                last_market_event = time.monotonic()
+                                # Keep current health separate from the historical gap
+                                # journal: a successful frame clears the prior
+                                # connection diagnostic while preserving failures.
+                                status.pop("error", None)
                                 status.update(
                                     frames=status["frames"] + 1,
+                                    process_frames=status["process_frames"] + 1,
                                     last_observation_ns=received,
                                     state="RECORDING_UNSEQUENCED",
                                 )
                                 if not pending_snapshots:
                                     backoff = 1
+                            sample_transport_queue(status, ws, config.queue_size)
+                    active_websocket = None
+                    clear_transport_queue_sample(status)
                     if comparison_task is not None:
                         comparison_task.cancel()
                         await asyncio.gather(comparison_task, return_exceptions=True)
@@ -529,14 +812,19 @@ async def run(config: Config, duration: float | None = None) -> None:
                     OSError,
                     TimeoutError,
                 ) as error:
+                    active_websocket = None
+                    clear_transport_queue_sample(status)
                     if comparison_task is not None:
                         comparison_task.cancel()
                         await asyncio.gather(comparison_task, return_exceptions=True)
                         comparison_task = None
+                    diagnostic = f"{type(error).__name__}: {error}"
                     status.update(
                         state="DEGRADED",
                         failures=status["failures"] + 1,
-                        error=f"{type(error).__name__}: {error}",
+                        error=diagnostic,
+                        last_error=diagnostic,
+                        last_error_ns=time.time_ns(),
                     )
                     append(
                         "gap",
@@ -551,7 +839,13 @@ async def run(config: Config, duration: float | None = None) -> None:
                         pass
                     backoff = min(60, backoff * 2)
     except BaseException as error:
-        status.update(state="FAILED", error=f"{type(error).__name__}: {error}")
+        diagnostic = f"{type(error).__name__}: {error}"
+        status.update(
+            state="FAILED",
+            error=diagnostic,
+            last_error=diagnostic,
+            last_error_ns=time.time_ns(),
+        )
         report()
         raise
     finally:
@@ -561,15 +855,15 @@ async def run(config: Config, duration: float | None = None) -> None:
         try:
             append("checkpoint", dict(state_sha256=engine.digest()))
             append("gap", dict(reason="process_stop"))
+        except BaseException:
+            status["state"] = "FAILED"
+            raise
         finally:
-            store.close()
-            atomic_json(
-                root / "status.json",
-                dict(
-                    status,
-                    state="FAILED" if status["state"] == "FAILED" else "STOPPED",
-                    updated_ns=time.time_ns(),
-                    ordinal=store.ordinal,
-                    storage_bytes=store.used,
-                ),
-            )
+            try:
+                if not store.write_failed and status["state"] != "FAILED":
+                    store.rotate(reopen=False)
+                    save_recovery()
+            finally:
+                store.close()
+            status["state"] = "FAILED" if status["state"] == "FAILED" else "STOPPED"
+            report()

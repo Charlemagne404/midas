@@ -125,6 +125,7 @@ def test_recovered_capture_projects_last_error_as_historical(dashboard):
     data = json.loads(path.read_text())
     data["failures"] = 1
     data["error"] = "ConnectionClosedOK: received 1001 (going away) server shutting down"
+    data["implementation_sha256"] = "a" * 64
     path.write_text(json.dumps(data))
 
     result = c.get("/api/reality/overview").json()
@@ -134,6 +135,7 @@ def test_recovered_capture_projects_last_error_as_historical(dashboard):
     assert result["collector"]["failures"] == 1
     assert result["collector"]["error"] is None
     assert "ConnectionClosedOK" in result["collector"]["last_error"]
+    assert result["collector"]["implementation_sha256"] == "a" * 64
     assert "ConnectionClosedOK" in json.loads(path.read_text())["error"]
 
 
@@ -458,3 +460,67 @@ def test_operations_no_arbitrary_command_or_cross_origin(dashboard, monkeypatch)
     assert json.loads((root / "data/research/reality/interface/operations.jsonl").read_text())[
         "accepted"
     ]
+
+
+def test_operations_exposes_bounded_read_only_resource_properties(dashboard, monkeypatch):
+    c, _, _ = dashboard
+    run = Mock(
+        return_value=Mock(
+            returncode=0,
+            stdout=(
+                "ActiveState=active\nMemoryCurrent=1048576\nMemoryHigh=2097152\n"
+                "MemoryPeak=1572864\nTasksCurrent=4\nTasksMax=64\n"
+            ),
+        )
+    )
+    monkeypatch.setattr("apps.api.reality.subprocess.run", run)
+
+    response = c.get("/api/reality/operations")
+
+    assert response.status_code == 200
+    reality = next(
+        row for row in response.json()["services"] if row["unit"] == "midas-reality.service"
+    )
+    assert reality["properties"] == {
+        "ActiveState": "active",
+        "MemoryCurrent": "1048576",
+        "MemoryHigh": "2097152",
+        "MemoryPeak": "1572864",
+        "TasksCurrent": "4",
+        "TasksMax": "64",
+    }
+    assert "MemoryHigh,MemoryMax,MemoryPeak,TasksCurrent,TasksMax" in run.call_args.args[0][-1]
+
+
+def test_operations_reads_bounded_recorder_cgroup_and_host_pressure(dashboard, monkeypatch):
+    c, _, _ = dashboard
+    run = Mock(
+        return_value=Mock(
+            returncode=0,
+            stdout=(
+                "ActiveState=active\nControlGroup=/user.slice/midas-reality.service\n"
+                "CPUUsageNSec=5000000000\n"
+            ),
+        )
+    )
+    snapshot = Mock(
+        return_value={
+            "memory_current_bytes": 1_048_576,
+            "memory_high_bytes": 2_097_152,
+            "host_mem_available_bytes": 8 * 1024**3,
+            "host_pressure": {
+                "cpu": {"some": {"avg10": "2.00"}},
+                "memory": {"some": {"avg10": "0.10"}},
+                "io": {"full": {"avg10": "0.00"}},
+            },
+        }
+    )
+    monkeypatch.setattr("apps.api.reality.subprocess.run", run)
+    monkeypatch.setattr("midas.reality.resources.snapshot", snapshot)
+
+    response = c.get("/api/reality/operations")
+
+    assert response.status_code == 200
+    assert response.json()["recorder_resources"]["status"] == "measured"
+    assert response.json()["recorder_resources"]["host_pressure"]["cpu"]["some"]["avg10"] == "2.00"
+    snapshot.assert_called_once_with("/user.slice/midas-reality.service")

@@ -53,6 +53,10 @@ def normalized(raw: dict[str, Any] | None = None) -> dict[str, Any]:
     result, reason = normalize_market(raw or market())
     assert reason is None
     assert result is not None
+    # Economic fixtures declare the unit as verified; normalization itself
+    # correctly leaves Gamma orderMinSize unverified.
+    result["minimum_order_notional_unit_status"] = "verified_usdc"
+    result["minimum_order_notional_source"] = "test.fixture"
     return result
 
 
@@ -107,10 +111,14 @@ def pair_books(
 
 
 def test_v1_uses_same_condition_yes_no_and_ignores_extra_v2_ids():
-    result = normalized()
+    result, reason = normalize_market(market())
+    assert reason is None
+    assert result is not None
     assert result["protocol"] == "v1"
     assert result["outcomes"] == {"yes": "11", "no": "12"}
     assert result["pair_semantics"] == "same_condition_yes_no_ctf"
+    assert result["minimum_order_notional_source"] == "Gamma.orderMinSize"
+    assert result["minimum_order_notional_unit_status"] == "unverified"
 
 
 @pytest.mark.parametrize(
@@ -152,6 +160,21 @@ def test_best_ask_is_lowest_ask_and_depth_walk_sorts_levels_independently():
     assert q20["full_depth_gross_edge_usdc"] == "1.90"
     assert q20["minimum_order_notional_satisfied"] is True
     assert q20["positive_fragmentation_safe_sensitivity"] is True
+
+
+def test_unverified_gamma_minimum_units_do_not_become_usdc_constraints():
+    pair = normalized()
+    pair["minimum_order_notional_unit_status"] = "unverified"
+    report = audit_pair_snapshot(pair, pair_books(), captured_ns=CAPTURED_NS, quantities=("20",))
+
+    result = report["quantity_results"][0]
+    assert report["valid"] is True
+    assert result["positive_full_depth_gross"] is True
+    assert result["minimum_order_notional_usdc_by_leg"] == {"yes": None, "no": None}
+    assert result["minimum_order_notional_satisfied"] is None
+    assert result["minimum_order_shares_satisfied"] is True
+    assert result["minimum_order_constraints_satisfied"] is None
+    assert result["shared_fee_model_evaluated"] is False
 
 
 @pytest.mark.parametrize(

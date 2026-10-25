@@ -125,10 +125,30 @@ def test_archive_budget_failure_resumes_without_publishing(tmp_path):
         archive(root, target, budget=1, reserve=1)
     assert not (target / "manifest.json").exists()
     name = value["segments"][0]["file"]
-    (target / Path(name).with_suffix(".copying")).write_bytes(b"interrupted")
+    partial = target / Path(name).with_suffix(".copying")
+    partial.write_bytes(b"interrupted")
+    with pytest.raises(ValueError, match="provenance review"):
+        archive(root, target, budget=1_000_000, reserve=1)
+    assert partial.read_bytes() == b"interrupted"
+    # The fixture explicitly disposes its own synthetic interrupted copy.
+    partial.unlink()
     result = archive(root, target, budget=1_000_000, reserve=1)
     assert len(result["segments"]) == len(value["segments"])
     assert not list(target.glob("*.copying"))
+
+
+def test_archive_rejects_conflicting_manifest_without_overwrite(tmp_path):
+    root, target = tmp_path / "raw", tmp_path / "archive"
+    sample(root)
+    archive(root, target, budget=1_000_000, reserve=1)
+    manifest_path = target / "manifest.json"
+    saved = json.loads(manifest_path.read_text())
+    saved["archival_provenance"]["source_manifest_sha256"] = "0" * 64
+    manifest_path.write_text(json.dumps(saved))
+    before = manifest_path.read_bytes()
+    with pytest.raises(ValueError, match="conflicts with source provenance"):
+        archive(root, target, budget=1_000_000, reserve=1)
+    assert manifest_path.read_bytes() == before
 
 
 def test_archive_separation_and_identity(tmp_path):

@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any, Literal, cast
 
 from fastapi import APIRouter, HTTPException, Query
+from midas.veritas.continuous_analysis import event_path_for_scan
 from pydantic import BaseModel, ConfigDict
 
 MAX_RESEARCH_ACTIVITY_RECORD_BYTES = 256 * 1024
@@ -43,15 +44,15 @@ def create_veritas_qualification_job(arena_root: Path, repository: Path) -> dict
     if not isinstance(scan_id, str) or not re.fullmatch(r"scan-\d{8}T\d{6}Z-[0-9a-f]{12}", scan_id):
         raise ValueError("Latest Veritas scan identity is invalid")
     analysis_events_root = data_root / "analysis-events"
-    version_root = analysis_events_root / "v4"
-    source_event = version_root / f"{scan_id}.json"
+    source_event, _analysis_version = event_path_for_scan(data_root, scan_id)
     if (
         analysis_events_root.is_symlink()
-        or version_root.is_symlink()
+        or source_event is None
+        or source_event.parent.is_symlink()
         or source_event.is_symlink()
         or not source_event.is_file()
     ):
-        raise ValueError("Latest Veritas scan has not reached finalized v4 analysis")
+        raise ValueError("Latest Veritas scan has not reached a supported finalized analysis")
     if source_event.stat().st_size > MAX_VERITAS_ANALYSIS_EVENT_BYTES:
         raise ValueError("Latest Veritas analysis event exceeds the job admission bound")
     from midas.arena.jobs import JobSpec, create
@@ -558,9 +559,9 @@ def _project_director_record(
     owner_jobs = jobs if jobs is not None else _recent_owner_jobs(root)
     if supervisors is None:
         owner = _director_owner(row, owner_jobs)
-        active_owners = [
-            owner
-        ] if owner is not None and owner.get("state") in {"RUNNING", "QUEUED"} else []
+        active_owners = (
+            [owner] if owner is not None and owner.get("state") in {"RUNNING", "QUEUED"} else []
+        )
         supervisors = _director_supervisors(active_owners)
     return {**row, **_director_runtime_state(root, row, owner_jobs, supervisors)}
 
@@ -925,9 +926,7 @@ def router(root: Path, *, veritas_repository: Path | None = None) -> APIRouter:
         supervisors: dict[str, dict[str, str]] = {}
         if kind == "directors":
             owner_jobs = (
-                director_owner_jobs
-                if director_owner_jobs is not None
-                else _recent_owner_jobs(root)
+                director_owner_jobs if director_owner_jobs is not None else _recent_owner_jobs(root)
             )
             supervisors = _director_supervisors(owner_jobs)
         for manifest in sorted(

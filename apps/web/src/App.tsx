@@ -18,6 +18,7 @@ import {
   Clock3,
   Database,
   FlaskConical,
+  Gauge,
   LayoutDashboard,
   PanelLeftClose,
   Play,
@@ -40,6 +41,9 @@ import { PaperPage, PaperSummary, ExperimentPanel } from './Paper';
 import { chartBase } from './chart-theme';
 const LazyChart = lazy(() => import('./Chart').then((module) => ({ default: module.Chart })));
 const LazyVeritas = lazy(() => import('./Veritas').then((module) => ({ default: module.Veritas })));
+const LazyResearchReadiness = lazy(() =>
+  import('./ResearchReadiness').then((module) => ({ default: module.ResearchReadiness })),
+);
 function Chart(props: ComponentProps<typeof LazyChart>) {
   return (
     <Suspense fallback={<div className="chart empty">Loading chart…</div>}>
@@ -61,6 +65,7 @@ import type {
 
 const pages = [
   ['Mission Control', LayoutDashboard],
+  ['Research Readiness', Gauge],
   ['Reality', Radio],
   ['Veritas', BarChart3],
   ['Scanner', Search],
@@ -187,8 +192,12 @@ export function App() {
               ? 'Reality lab'
               : page === 'Veritas'
                 ? 'Veritas research'
-                : 'Foundation lab'}{' '}
-            {page !== 'Veritas' && <Badge tone="gold">{page === 'Reality' ? 'M2' : 'M1'}</Badge>}
+                : page === 'Research Readiness'
+                  ? 'Readiness evidence'
+                  : 'Foundation lab'}{' '}
+            {page !== 'Veritas' && page !== 'Research Readiness' && (
+              <Badge tone="gold">{page === 'Reality' ? 'M2' : 'M1'}</Badge>
+            )}
           </div>
         </div>
         <nav aria-label="Main navigation">
@@ -231,13 +240,17 @@ export function App() {
           </div>
           <div className="topbar-right">
             <Badge tone={page !== 'Veritas' && state?.mode === 'live' ? 'cyan' : 'gold'}>
-              {page === 'Reality'
-                ? 'REALITY · PUBLIC OBSERVATIONS'
-                : page === 'Veritas'
-                  ? 'VERITAS · ECONOMIC EVIDENCE'
-                  : state?.mode === 'live'
-                    ? 'LIVE OBSERVATION'
-                    : 'DEMO · SYNTHETIC'}
+              {page === 'Research Readiness'
+                ? state?.mode === 'demo'
+                  ? 'READINESS · DEMO MODE'
+                  : 'READINESS · SERVICE EVIDENCE'
+                : page === 'Reality'
+                  ? 'REALITY · PUBLIC OBSERVATIONS'
+                  : page === 'Veritas'
+                    ? 'VERITAS · ECONOMIC EVIDENCE'
+                    : state?.mode === 'live'
+                      ? 'LIVE OBSERVATION'
+                      : 'DEMO · SYNTHETIC'}
             </Badge>
             <span className="topbar-boundary">
               <ShieldCheck size={13} />
@@ -246,7 +259,7 @@ export function App() {
           </div>
         </header>
         <main>
-          {page !== 'Reality' && page !== 'Veritas' && (
+          {page !== 'Reality' && page !== 'Veritas' && page !== 'Research Readiness' && (
             <div className="page-heading">
               <div>
                 <div className="eyebrow">
@@ -285,26 +298,33 @@ export function App() {
               </div>
             </div>
           )}
-          {page !== 'Reality' && page !== 'Veritas' && disconnected && (
-            <div className="alert danger">
-              <TriangleAlert size={17} />
-              <div>
-                Backend connection unavailable. Displayed observations may be outdated.
-                <span>{stateQuery.error.message}</span>
-              </div>
-              <button onClick={() => void stateQuery.refetch()}>Retry connection</button>
-            </div>
-          )}
-          {page !== 'Reality' && page !== 'Veritas' && state?.mode === 'demo' && (
-            <div className="demo-strip">
-              <FlaskConical size={14} />
-              <strong>SYNTHETIC DATA</strong>
-              <span>Bundled fixtures · virtual USD · hypothetical market observations</span>
-              <span className="strip-end">No deposited funds</span>
-            </div>
-          )}
           {page !== 'Reality' &&
             page !== 'Veritas' &&
+            page !== 'Research Readiness' &&
+            disconnected && (
+              <div className="alert danger">
+                <TriangleAlert size={17} />
+                <div>
+                  Backend connection unavailable. Displayed observations may be outdated.
+                  <span>{stateQuery.error.message}</span>
+                </div>
+                <button onClick={() => void stateQuery.refetch()}>Retry connection</button>
+              </div>
+            )}
+          {page !== 'Reality' &&
+            page !== 'Veritas' &&
+            page !== 'Research Readiness' &&
+            state?.mode === 'demo' && (
+              <div className="demo-strip">
+                <FlaskConical size={14} />
+                <strong>SYNTHETIC DATA</strong>
+                <span>Bundled fixtures · virtual USD · hypothetical market observations</span>
+                <span className="strip-end">No deposited funds</span>
+              </div>
+            )}
+          {page !== 'Reality' &&
+            page !== 'Veritas' &&
+            page !== 'Research Readiness' &&
             state?.status === 'DEGRADED' &&
             !disconnected && (
               <div className="alert danger">
@@ -313,13 +333,16 @@ export function App() {
                 observations.
               </div>
             )}
-          {page !== 'Reality' && page !== 'Veritas' && state?.safety.emergency_stop && (
-            <div className="alert danger" role="alert">
-              <ShieldX size={17} />
-              Emergency stop active. New virtual proposals and scenario runs are blocked.
-              <button onClick={() => setPage('Settings')}>View controls</button>
-            </div>
-          )}
+          {page !== 'Reality' &&
+            page !== 'Veritas' &&
+            page !== 'Research Readiness' &&
+            state?.safety.emergency_stop && (
+              <div className="alert danger" role="alert">
+                <ShieldX size={17} />
+                Emergency stop active. New virtual proposals and scenario runs are blocked.
+                <button onClick={() => setPage('Settings')}>View controls</button>
+              </div>
+            )}
           {page === 'Mission Control' && (
             <Mission
               state={state}
@@ -328,6 +351,11 @@ export function App() {
               onInspect={setSelected}
               navigate={setPage}
             />
+          )}
+          {page === 'Research Readiness' && (
+            <Suspense fallback={<div className="empty">Loading verified research evidence…</div>}>
+              <LazyResearchReadiness />
+            </Suspense>
           )}
           {page === 'Scanner' && (
             <Scanner

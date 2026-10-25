@@ -18,6 +18,9 @@ def test_offline_api_workflow_contract_and_persistence(tmp_path, monkeypatch):
     )
     app = create_app(settings)
     with TestClient(app) as client:
+        health = client.get("/api/health").json()
+        assert health["api_version"] == "0.2.0"
+        assert "build_commit" in health
         state = client.get("/api/state").json()
         assert state["mode"] == "demo" and not state["safety"]["live_execution"]
         assert "decisions" not in state["paper_broker"]
