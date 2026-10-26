@@ -1,9 +1,13 @@
 # Veritas operations — research procedures
 
-Veritas work runs in `/home/charlie/midas-veritas` on `project/veritas`, based
-on release commit `f968095feb9c591de38fe12d7493224425f62f3a`. Reality collection
-and its frozen prospective worker continue from the separate
-`/home/charlie/midas-reality` worktree.
+As of 2026-10-26, the clean Veritas development worktree is
+`/home/charlie/midas-veritas` on `project/veritas` at
+`3b102928594323e7886859d348f7b2151663debb`. The scheduled V6 observer runs
+from the immutable release recorded in the dated V6 handoff below. The
+integrated MIDAS readiness work is isolated on
+`codex/veritas-v6-integration-20261026`; it has not been merged to `main`.
+Reality collection and its frozen prospective worker continue from the
+separate `/home/charlie/midas-reality` worktree.
 
 ## Read the Reality baseline without taking writer ownership
 
@@ -313,6 +317,65 @@ calculation is planning-only and does not submit an Arena job.
 - Keep experiments bounded and checkpointed. Use no paid services or external
   compute. Preserve raw, model, Laboratory, Arena, Prometheus, and campaign
   artifacts.
-- Save new evidence in this worktree and commit coherent checkpoints on
-  `project/veritas`; do not merge into `main` without a separate integration
-  request.
+- Keep source-specific research on `project/veritas`; place platform
+  integration on a dedicated branch with its own verification record. Do not
+  merge either branch into `main` without a separate integration request.
+
+## 2026-10-26 — V6 runtime and readiness handoff
+
+The V6 implementation is integrated on the dedicated branch
+`codex/veritas-v6-integration-20261026` at runtime source commit
+`4f4179c72eeb6deab59c4fc5959315cf62284c85`. The production observer is pinned
+separately to
+`/home/charlie/.local/share/midas-veritas/releases/e988cbb0af86fe89e07da9af8036598b65068deb`.
+`midas-veritas-observatory.timer` is active; the one-shot service being
+inactive between runs is expected. Do not launch a manual observer in parallel
+with its timer.
+
+At `2026-10-26T03:31:11Z`, the published V6 analysis summary contained 526
+snapshots: 20 processed and 506 pending (`CATCHING_UP`). Its continuous-analysis
+artifact ID is `continuous-analysis`, SHA-256
+`d5cd5de76a7d3e379a5acf53899cd009cf1d66cac056a23995393f75e29982be`. The
+independent Decimal reference v3 had 800 repeated pair observations across
+349 unique markets; 714 were primary-quality-valid, 167 independently
+verified, and zero were positive-gross or net-eligible. The 547 source-quality
+and 547 validity disagreement counts are category flags and can overlap; do
+not report their sum as unique pairs. The latest scan had 298 unique market IDs
+from 300 candidate records, 32 rotating selections, and zero stable-control
+markets. Repeated observations are not independent trials.
+
+Use the read-only API to inspect the current projection and its artifact
+identity:
+
+```bash
+curl -fsS http://127.0.0.1:8000/api/veritas/overview | jq \
+  '.opportunity_observatory | {analysis_version, analysis_catchup_status, updated_at_utc, processed_snapshot_count, pending_snapshot_count, summary_artifact, discovery, observation_funnel, independent_economic_audit}'
+curl -fsS http://127.0.0.1:8000/api/readiness/resources | jq \
+  '{captured_at_utc, host_memory, host_pressure, services, observer_last_run, staged_reality_candidate}'
+```
+
+The API and web dashboard are deployed from immutable releases `cf452ec` and
+`4f4179c`; the Mission Control API reports demo mode and `live_execution=false`.
+The dashboard labels the economic total as overlapping flags and keeps live,
+historical, staged, and unmeasured evidence distinct. Current research
+readiness remains blocked by source-quality/validity disagreements, incomplete
+Reality collector observability, missing full cold-recovery evidence, API
+`MemoryHigh` pressure, and three stale Arena director projections. Storage
+runway is warning-level and staged Reality capacity is not active.
+
+The latest bounded finalized-source analysis processed through ordinal
+5,140,697 and reported zero pending segments for that captured prefix. That
+projection is not full cold-recovery proof: the copied latest-boundary
+checkpoint still covers only 2,816 of 31,742 segments. The collector continues
+to report unsequenced continuity and missing persistence-window, recovery,
+and queue telemetry. Never infer exact exchange-event loss from local gap
+markers.
+
+The active Reality recorder remains on its prior release and its 24 GiB / 90
+day configuration. The staged 112 GiB / 120 day values still require a
+guarded transition. Archive staging remains invalid for manifest and
+provenance, with 1,138 finalized names outside the manifest and 58 `.copying`
+files in the last verified inventory. Do not delete, adopt, or republish those
+files, and do not re-enable the archive writer until ownership and integrity
+are established. This document does not authorize a Reality restart or archive
+mutation.
