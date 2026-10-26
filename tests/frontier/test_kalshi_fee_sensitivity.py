@@ -83,6 +83,22 @@ def test_taker_fee_sensitivity_rounds_trade_fee_and_position_debit_separately():
     assert result.scenarios[1].balance_rounding_adjustment == Decimal("0.001049")
 
 
+def test_non_direct_rounding_matches_kalshi_documented_fill_example():
+    result = estimate_kalshi_taker_fee_sensitivity(
+        fee_metadata(),
+        event_observation_id="c" * 64,
+        series_observation_id="d" * 64,
+        price_usd=Decimal("0.055"),
+        quantity_contracts=Decimal("1"),
+    )
+
+    assert result.scenarios[1].model_fee_before_rounding == Decimal("0.00363825")
+    assert result.scenarios[1].trade_fee_rounded_to_microdollar == Decimal("0.003639")
+    assert result.scenarios[1].balance_rounding_adjustment == Decimal("0.001361")
+    assert result.scenarios[1].total_modeled_fee == Decimal("0.005")
+    assert result.scenarios[1].total_modeled_debit == Decimal("0.06")
+
+
 @pytest.mark.parametrize(
     "fee_type",
     (

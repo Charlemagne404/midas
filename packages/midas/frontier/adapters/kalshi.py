@@ -117,7 +117,7 @@ class KalshiAdapter(BaseReadOnlyAdapter):
                 None,
             ),
             Capability.FEE_SCHEDULE: (
-                "Public fee documentation is market-specific; no validated market-specific fee resolver is implemented",
+                "One-fill taker sensitivity exists, but no account-specific fee schedule is promoted into candidate economics; maker applicability, multi-fill rebates, and account precision remain unresolved",
                 "https://help.kalshi.com/en/articles/13823805-fees",
             ),
         },
