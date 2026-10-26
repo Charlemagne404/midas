@@ -118,8 +118,9 @@ scanned effective edges; this remains a bounded recent-window traversal rather
 than a large-universe graph index.
 When a bounded probe receives a decoded 2xx response that fails normalization,
 the raw body and typed source-failure diagnostic are stored and the API returns
-the observation ID. Invalid JSON is rejected before a raw observation is formed
-and is surfaced as degraded health without persisted response bytes.
+the observation ID. Complete within-cap invalid JSON and non-2xx bodies are also
+stored; invalid UTF-8 uses lossless base64 with the original-byte hash. Oversized
+or partial response bodies are rejected without persistence.
 The current economic verifier handles two bounded families: all-long complete
 binary coverage across two venues after verified payoff equivalence, and all-long
 coverage of three to sixteen exhaustive one-hot outcomes within one verified

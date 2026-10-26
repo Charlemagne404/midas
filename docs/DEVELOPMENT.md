@@ -137,8 +137,9 @@ If a bounded probe receives valid JSON but the adapter rejects its shape, the
 API stores the raw response with a `SourceFailureRecord` and returns the
 observation ID in the error details. The hash-verified observation endpoint can
 read it, and a later successful probe restores healthy source state. Invalid JSON
-is rejected before the adapter builds a raw observation, so its response body is
-not persisted by this path.
+is retained when the complete body is within the configured response cap; invalid
+UTF-8 is base64-encoded while the raw hash remains over the original bytes.
+Oversized or partial response bodies are not stored.
 
 For focused Frontier verification, use isolated test databases and run:
 

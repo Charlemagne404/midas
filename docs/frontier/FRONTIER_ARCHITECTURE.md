@@ -117,8 +117,11 @@ probe batch fails, the API stores the raw response with a versioned
 `SourceFailureRecord` and returns its observation ID in the error details. The
 normal market/book readers ignore that diagnostic record, while the normal
 hash-verified observation route can retrieve it. Invalid JSON fails inside the
-transport before the adapter builds a raw observation, so its body is not yet
-stored. A later successful probe clears the adapter's degraded health state.
+transport before normalization, but complete bounded invalid-JSON and non-2xx
+response bodies are retained as source-failure observations. Invalid UTF-8 is
+stored losslessly as base64 with the hash computed over original bytes. Oversized
+or partial bodies are rejected without persistence. A later successful probe
+clears the adapter's degraded health state.
 
 Replay reads only stored inputs, sorts records by canonical IDs, pins the source
 observation IDs and relationship IDs, hashes normalized input, persists scenario
