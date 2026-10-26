@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
+import json
 from datetime import timedelta
 
 import httpx
@@ -23,6 +24,7 @@ from midas.frontier.models import (
     Venue,
 )
 from midas.frontier.registry import AdapterRegistry
+from midas.frontier.relationships import propose_relationships
 from midas.frontier.storage import FrontierStore
 
 from apps.api.frontier import router
@@ -189,6 +191,68 @@ def test_kraken_instrument_metadata_is_visible_as_a_market(tmp_path):
         assert response.json()["returned"] == 1
         assert response.json()["items"][0]["market_kind"] == "spot_pair"
         assert response.json()["items"][0]["source_observation_record_id"] == observation_id
+        assert requests == []
+    finally:
+        client.close()
+        asyncio.run(registry.aclose())
+        asyncio.run(http_client.aclose())
+
+
+def test_graph_neighborhood_is_centered_bounded_and_review_aware(tmp_path):
+    client, registry, http_client, requests, store = _client(tmp_path)
+    markets = (
+        market(Venue.POLYMARKET, "graph-a"),
+        market(Venue.KALSHI, "graph-b"),
+        market(Venue.KRAKEN, "graph-c"),
+    )
+    for index, item in enumerate(markets):
+        body = json.dumps({"recorded_fixture": item.canonical_id})
+        raw = RawObservation(
+            venue=item.venue,
+            observation_kind="market_listing",
+            request_url=f"https://public.example.test/{item.venue.value}/{index}",
+            http_status=200,
+            request_started_at_utc=T0 + timedelta(seconds=index),
+            received_at_utc=T0 + timedelta(seconds=index, milliseconds=5),
+            raw_body=body,
+            raw_sha256=hashlib.sha256(body.encode()).hexdigest(),
+            adapter_version="graph-fixture-v1",
+        )
+        store.append_observation(raw, item)
+    relationships = propose_relationships(markets, max_pairs=20)
+    for relationship in relationships:
+        store.append_relationship(relationship)
+    try:
+        centered = client.get(
+            "/api/frontier/graph",
+            params={"center_market_id": markets[0].canonical_id, "depth": 1, "limit": 1},
+        )
+        assert centered.status_code == 200
+        assert centered.json()["returned_edges"] == 1
+        assert centered.json()["truncated_by_edge_limit"] is True
+        assert any(
+            node["market"]["canonical_id"] == markets[0].canonical_id
+            for node in centered.json()["nodes"]
+        )
+
+        two_hops = client.get(
+            "/api/frontier/graph",
+            params={"center_market_id": markets[0].canonical_id, "depth": 2, "limit": 10},
+        )
+        assert two_hops.status_code == 200
+        assert two_hops.json()["returned_edges"] == 3
+        assert two_hops.json()["returned_nodes"] == 3
+        assert (
+            client.get("/api/frontier/graph", params={"center_market_id": "missing"}).status_code
+            == 404
+        )
+        assert (
+            client.get(
+                "/api/frontier/graph",
+                params={"center_market_id": markets[0].canonical_id, "q": "election"},
+            ).status_code
+            == 422
+        )
         assert requests == []
     finally:
         client.close()

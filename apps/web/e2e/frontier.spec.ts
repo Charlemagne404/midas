@@ -128,6 +128,20 @@ test('relationship network remains bounded, selectable, and scroll-contained on 
     },
     '/api/frontier/books': { items: [], returned: 0, limit: 100, offset: 0 },
     '/api/frontier/relationships': { items: [relationship], returned: 1, limit: 200 },
+    '/api/frontier/graph': {
+      nodes: [],
+      edges: [relationship],
+      center_market_id: null,
+      search: null,
+      depth: 1,
+      edge_limit: 100,
+      returned_nodes: 0,
+      returned_edges: 1,
+      truncated_by_edge_limit: false,
+      relationship_scan_limit: 500,
+      relationship_scan_may_be_incomplete: false,
+      source_market_window_limit: 200,
+    },
     '/api/frontier/opportunities': { items: [], returned: 0, limit: 100, offset: 0 },
     '/api/frontier/runs': { items: [], returned: 0, limit: 30, offset: 0 },
     '/api/frontier/readiness': { gates: [] },
@@ -156,6 +170,7 @@ test('relationship network remains bounded, selectable, and scroll-contained on 
   await page.getByRole('button', { name: 'Frontier', exact: true }).click();
   await page.getByRole('button', { name: 'Relationship graph', exact: true }).click();
 
+  await page.getByLabel('Relationship graph center market').selectOption('polymarket:election-1');
   await expect(page.getByRole('group', { name: /Relationship network showing 1/ })).toBeVisible();
   const edge = page.getByRole('button', { name: /text candidate hypothesis/i });
   await edge.click();

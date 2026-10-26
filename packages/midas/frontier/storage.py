@@ -9,6 +9,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from pydantic import ValidationError
+
 from midas.frontier.models import FrontierMarket, FrontierModel, MarketBatch, RawObservation
 from midas.frontier.relationships import (
     Relationship,
@@ -342,6 +344,8 @@ class FrontierStore:
                     raise FrontierStoreError(
                         "Relationship identity collision with different content"
                     )
+                if self.relationship(relationship.relationship_id) != relationship:
+                    raise FrontierStoreError("Stored relationship differs from its append identity")
                 return relationship.relationship_id
             count = int(connection.execute("SELECT COUNT(*) FROM relationships").fetchone()[0])
             if count >= self.max_relationships:
@@ -516,6 +520,25 @@ class FrontierStore:
             raise FrontierStoreError("Stored relationship hash does not match its payload")
         return Relationship.model_validate(json.loads(payload))
 
+    @staticmethod
+    def _validated_relationship_row(row: sqlite3.Row) -> Relationship:
+        payload = str(row["relationship_json"])
+        if hashlib.sha256(payload.encode("utf-8")).hexdigest() != row["row_sha256"]:
+            raise FrontierStoreError("Stored relationship hash does not match its payload")
+        try:
+            relationship = Relationship.model_validate(json.loads(payload))
+        except (json.JSONDecodeError, ValidationError) as error:
+            raise FrontierStoreError("Stored relationship payload is invalid") from error
+        if (
+            relationship.relationship_id != row["relationship_id"]
+            or relationship.left_market_id != row["left_market_id"]
+            or relationship.right_market_id != row["right_market_id"]
+            or relationship.state.value != row["state"]
+            or relationship.supersedes != row["supersedes_relationship_id"]
+        ):
+            raise FrontierStoreError("Stored relationship index does not match its payload")
+        return relationship
+
     def market_observation_id(self, canonical_market_id: str) -> str | None:
         if not canonical_market_id or len(canonical_market_id) > 256:
             raise ValueError("Invalid canonical market identity")
@@ -599,17 +622,12 @@ class FrontierStore:
         where = " WHERE " + " AND ".join(clauses) if clauses else ""
         with self._read_connect() as connection:
             rows = connection.execute(
-                "SELECT observation_id,venue,observation_kind,received_at_utc,raw_sha256,normalized_json "
+                "SELECT observation_id,venue,observation_kind,received_at_utc,raw_sha256,"
+                "raw_json,normalized_json,row_sha256 "
                 f"FROM observations{where} ORDER BY received_at_utc DESC, observation_id LIMIT ? OFFSET ?",
                 (*params, limit, offset),
-            ).fetchall()
-        return tuple(
-            {
-                **dict(row),
-                "normalized": json.loads(row["normalized_json"]),
-            }
-            for row in rows
-        )
+            )
+            return tuple(self._validated_observation_row(row, include_raw=False) for row in rows)
 
     def append_replay(self, result: ReplayResult, *, max_runs: int = 5000) -> str:
         self.initialize()
@@ -620,10 +638,11 @@ class FrontierStore:
             raise FrontierStoreError("Replay result exceeds the 512 KiB record bound")
         with self._connect() as connection:
             existing = connection.execute(
-                "SELECT result_sha256 FROM research_runs WHERE run_id=?", (result.run_id,)
+                "SELECT run_id,created_at_utc,result_sha256,result_json FROM research_runs WHERE run_id=?",
+                (result.run_id,),
             ).fetchone()
             if existing is not None:
-                if existing["result_sha256"] != result.result_sha256:
+                if self._validated_replay_row(existing) != result:
                     raise FrontierStoreError("Replay identity collision with different output")
                 return result.run_id
             count = int(connection.execute("SELECT COUNT(*) FROM research_runs").fetchone()[0])
@@ -656,6 +675,10 @@ class FrontierStore:
             ).fetchone()
         if row is None:
             return None
+        return self._validated_observation_row(row, include_raw=True)
+
+    @staticmethod
+    def _validated_observation_row(row: sqlite3.Row, *, include_raw: bool) -> dict[str, Any]:
         raw_json = str(row["raw_json"])
         normalized_json = str(row["normalized_json"])
         row_payload = raw_json + "\n" + normalized_json
@@ -664,6 +687,12 @@ class FrontierStore:
         raw = RawObservation.model_validate(json.loads(raw_json))
         if raw.raw_sha256 != row["raw_sha256"]:
             raise FrontierStoreError("Stored observation body hash does not match its index")
+        if (
+            raw.venue.value != row["venue"]
+            or raw.observation_kind != row["observation_kind"]
+            or raw.received_at_utc.astimezone(UTC).isoformat() != row["received_at_utc"]
+        ):
+            raise FrontierStoreError("Stored observation index does not match its evidence")
         expected_id = hashlib.sha256(
             "|".join(
                 (
@@ -678,11 +707,51 @@ class FrontierStore:
         ).hexdigest()
         if expected_id != row["observation_id"]:
             raise FrontierStoreError("Stored observation identity does not match its evidence")
-        return {
-            **dict(row),
-            "raw": json.loads(raw_json),
-            "normalized": json.loads(normalized_json),
+        try:
+            normalized = json.loads(normalized_json)
+        except json.JSONDecodeError as error:
+            raise FrontierStoreError("Stored normalized observation payload is invalid") from error
+        result: dict[str, Any] = {
+            "observation_id": row["observation_id"],
+            "venue": row["venue"],
+            "observation_kind": row["observation_kind"],
+            "received_at_utc": row["received_at_utc"],
+            "raw_sha256": row["raw_sha256"],
+            "row_sha256": row["row_sha256"],
+            "normalized": normalized,
         }
+        if include_raw:
+            result["raw"] = json.loads(raw_json)
+        return result
+
+    @staticmethod
+    def _validated_replay_row(row: sqlite3.Row) -> ReplayResult:
+        try:
+            result = ReplayResult.model_validate(json.loads(str(row["result_json"])))
+        except (json.JSONDecodeError, ValidationError) as error:
+            raise FrontierStoreError("Stored replay payload is invalid") from error
+        if (
+            result.run_id != row["run_id"]
+            or result.result_sha256 != row["result_sha256"]
+            or result.manifest.as_of_utc.astimezone(UTC).isoformat() != row["created_at_utc"]
+        ):
+            raise FrontierStoreError("Stored replay indexes do not match its payload")
+        output = {
+            "run_id": result.run_id,
+            "manifest": result.manifest.model_dump(mode="json"),
+            "proposed_relationships": [
+                item.model_dump(mode="json") for item in result.proposed_relationships
+            ],
+            "applied_relationships": [
+                item.model_dump(mode="json") for item in result.applied_relationships
+            ],
+            "candidates": [item.model_dump(mode="json") for item in result.candidates],
+            "classification_counts": result.classification_counts,
+        }
+        canonical = json.dumps(output, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+        if hashlib.sha256(canonical.encode("utf-8")).hexdigest() != result.result_sha256:
+            raise FrontierStoreError("Stored replay result hash does not match its payload")
+        return result
 
     def replays(self, *, limit: int = 100, offset: int = 0) -> tuple[dict[str, Any], ...]:
         if not 1 <= limit <= 200 or not 0 <= offset <= 1_000_000:
@@ -695,7 +764,10 @@ class FrontierStore:
                 "ORDER BY created_at_utc DESC,run_id LIMIT ? OFFSET ?",
                 (limit, offset),
             ).fetchall()
-        return tuple({**dict(row), "result": json.loads(row["result_json"])} for row in rows)
+        return tuple(
+            {**dict(row), "result": self._validated_replay_row(row).model_dump(mode="json")}
+            for row in rows
+        )
 
     def replay(self, run_id: str) -> dict[str, Any] | None:
         if not self.path.exists():
@@ -705,7 +777,11 @@ class FrontierStore:
                 "SELECT run_id,created_at_utc,result_sha256,result_json FROM research_runs WHERE run_id=?",
                 (run_id,),
             ).fetchone()
-        return {**dict(row), "result": json.loads(row["result_json"])} if row else None
+        return (
+            {**dict(row), "result": self._validated_replay_row(row).model_dump(mode="json")}
+            if row
+            else None
+        )
 
     def relationships(
         self, *, state: str | None = None, limit: int = 500, effective_only: bool = False
@@ -734,7 +810,8 @@ class FrontierStore:
                 params = (state, limit) if state is not None else (limit,)
                 rows = connection.execute(
                     f"{review_join} SELECT r.relationship_id,r.left_market_id,r.right_market_id,"
-                    "r.state,r.created_at_utc,r.relationship_json "
+                    "r.state,r.created_at_utc,r.relationship_json,r.row_sha256,"
+                    "r.supersedes_relationship_id "
                     "FROM relationships AS r LEFT JOIN latest_reviews AS lr "
                     "ON lr.relationship_id=COALESCE(r.supersedes_relationship_id,r.relationship_id) "
                     "AND lr.revision_rank=1 WHERE ("
@@ -744,19 +821,52 @@ class FrontierStore:
                 ).fetchall()
             elif state is None:
                 rows = connection.execute(
-                    "SELECT relationship_id,left_market_id,right_market_id,state,created_at_utc,relationship_json "
+                    "SELECT relationship_id,left_market_id,right_market_id,state,created_at_utc,"
+                    "relationship_json,row_sha256,supersedes_relationship_id "
                     "FROM relationships ORDER BY created_at_utc DESC, relationship_id LIMIT ?",
                     (limit,),
                 ).fetchall()
             else:
                 rows = connection.execute(
-                    "SELECT relationship_id,left_market_id,right_market_id,state,created_at_utc,relationship_json "
+                    "SELECT relationship_id,left_market_id,right_market_id,state,created_at_utc,"
+                    "relationship_json,row_sha256,supersedes_relationship_id "
                     "FROM relationships WHERE state=? ORDER BY created_at_utc DESC, relationship_id LIMIT ?",
                     (state, limit),
                 ).fetchall()
-        return tuple(
-            {**dict(row), "relationship": json.loads(row["relationship_json"])} for row in rows
-        )
+        result = []
+        for row in rows:
+            relationship = self._validated_relationship_row(row)
+            result.append({**dict(row), "relationship": relationship.model_dump(mode="json")})
+        if effective_only and result:
+            review_targets = tuple(
+                dict.fromkeys(
+                    item["relationship"].get("supersedes") or item["relationship_id"]
+                    for item in result
+                )
+            )
+            reviews: dict[str, RelationshipReview] = {}
+            for offset in range(0, len(review_targets), 500):
+                reviews.update(
+                    self.latest_relationship_reviews(review_targets[offset : offset + 500])
+                )
+            for item in result:
+                relationship = Relationship.model_validate(item["relationship"])
+                target_id = relationship.supersedes or relationship.relationship_id
+                latest = reviews.get(target_id)
+                if latest is None:
+                    if relationship.supersedes is not None:
+                        raise FrontierStoreError(
+                            "Effective relationship revision has no verified review record"
+                        )
+                    continue
+                if (
+                    latest.adjudicated_relationship_id != relationship.relationship_id
+                    or latest.decision.value != relationship.state.value
+                ):
+                    raise FrontierStoreError(
+                        "Effective relationship revision does not match its latest review"
+                    )
+        return tuple(result)
 
     def summary(self) -> dict[str, Any]:
         if not self.path.exists():

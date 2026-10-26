@@ -259,6 +259,153 @@ def router(store: FrontierStore, registry: Any) -> APIRouter:
             "limit": limit,
         }
 
+    @api.get("/graph")
+    async def relationship_graph(
+        center_market_id: str | None = Query(default=None, max_length=256),
+        q: str | None = Query(default=None, max_length=120),
+        depth: int = Query(default=1, ge=1, le=3),
+        limit: int = Query(default=50, ge=1, le=200),
+    ) -> dict[str, Any]:
+        if center_market_id and q:
+            raise HTTPException(
+                status_code=422, detail="Choose a center market or text search, not both"
+            )
+        if q is not None and not q.strip():
+            raise HTTPException(status_code=422, detail="Graph search text cannot be blank")
+
+        market_by_id: dict[str, FrontierMarket] = {}
+        market_observation_by_id: dict[str, str] = {}
+        try:
+            for observation in _market_observation_rows(store, 200):
+                normalized = observation["normalized"]
+                records = (
+                    normalized.get("markets", [])
+                    if isinstance(normalized, dict) and isinstance(normalized.get("markets"), list)
+                    else [normalized]
+                )
+                for record in records:
+                    if not isinstance(record, dict) or "canonical_id" not in record:
+                        continue
+                    market = FrontierMarket.model_validate(record)
+                    market_by_id.setdefault(market.canonical_id, market)
+                    market_observation_by_id.setdefault(
+                        market.canonical_id, observation["observation_id"]
+                    )
+                    if len(market_by_id) >= 200:
+                        break
+                if len(market_by_id) >= 200:
+                    break
+        except (FrontierStoreError, ValueError) as error:
+            raise HTTPException(status_code=409, detail=str(error)) from error
+
+        if center_market_id is not None and center_market_id not in market_by_id:
+            raise HTTPException(
+                status_code=404,
+                detail="Center market is not in the bounded recorded market window",
+            )
+        if center_market_id is not None:
+            seeds = {center_market_id}
+        elif q is not None:
+            needle = q.strip().casefold()
+            seeds = {
+                market_id
+                for market_id, market in market_by_id.items()
+                if needle in " ".join((market_id, market.title, market.native_market_id)).casefold()
+            }
+        else:
+            seeds = set()
+
+        scan_limit = 500
+        try:
+            relationship_rows = store.relationships(limit=scan_limit, effective_only=True)
+        except FrontierStoreError as error:
+            raise HTTPException(status_code=409, detail=str(error)) from error
+
+        selected: dict[str, dict[str, Any]] = {}
+        truncated_by_edge_limit = False
+        if seeds:
+            frontier = set(seeds)
+            visited = set(seeds)
+            for _ in range(depth):
+                next_frontier: set[str] = set()
+                for item in relationship_rows:
+                    relationship = Relationship.model_validate(item["relationship"])
+                    endpoints = {relationship.left_market_id, relationship.right_market_id}
+                    if not endpoints.intersection(frontier):
+                        continue
+                    if relationship.relationship_id not in selected:
+                        if len(selected) >= limit:
+                            truncated_by_edge_limit = True
+                            break
+                        selected[relationship.relationship_id] = item
+                    next_frontier.update(endpoints - visited)
+                if truncated_by_edge_limit or not next_frontier:
+                    break
+                visited.update(next_frontier)
+                frontier = next_frontier
+        elif q is None:
+            selected = {item["relationship_id"]: item for item in relationship_rows[:limit]}
+            truncated_by_edge_limit = len(relationship_rows) > limit
+
+        edge_values = list(selected.values())
+        review_targets = tuple(
+            dict.fromkeys(
+                item["relationship"].get("supersedes") or item["relationship_id"]
+                for item in edge_values
+            )
+        )
+        try:
+            latest_reviews = (
+                store.latest_relationship_reviews(review_targets) if review_targets else {}
+            )
+        except FrontierStoreError as error:
+            raise HTTPException(status_code=409, detail=str(error)) from error
+
+        node_ids = set(seeds)
+        for item in edge_values:
+            node_ids.add(item["relationship"]["left_market_id"])
+            node_ids.add(item["relationship"]["right_market_id"])
+        nodes = []
+        for market_id in sorted(node_ids):
+            market_record = market_by_id.get(market_id)
+            nodes.append(
+                {
+                    "market_id": market_id,
+                    "market": market_record.model_dump(mode="json") if market_record else None,
+                    "source_observation_record_id": market_observation_by_id.get(market_id),
+                    "market_record_available": market_record is not None,
+                }
+            )
+        edges = []
+        for item in edge_values:
+            relationship = item["relationship"]
+            target_id = relationship.get("supersedes") or item["relationship_id"]
+            edges.append(
+                {
+                    **relationship,
+                    "review_target_relationship_id": target_id,
+                    "latest_review": (
+                        latest_reviews[target_id].model_dump(mode="json")
+                        if target_id in latest_reviews
+                        else None
+                    ),
+                }
+            )
+        return {
+            "nodes": nodes,
+            "edges": edges,
+            "center_market_id": center_market_id,
+            "search": q,
+            "depth": depth,
+            "edge_limit": limit,
+            "returned_nodes": len(nodes),
+            "returned_edges": len(edges),
+            "truncated_by_edge_limit": truncated_by_edge_limit,
+            "relationship_scan_limit": scan_limit,
+            "relationship_scan_may_be_incomplete": len(relationship_rows) == scan_limit,
+            "source_market_window_limit": 200,
+        }
+
     @api.post("/relationships/propose")
     async def propose(
         max_pairs: int = Query(default=500, ge=1, le=5000),

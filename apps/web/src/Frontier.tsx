@@ -139,6 +139,26 @@ type Relationship = {
     details: string[];
   }[];
 };
+type GraphNode = {
+  market_id: string;
+  market: Omit<Market, 'source_observation_record_id'> | null;
+  source_observation_record_id: string | null;
+  market_record_available: boolean;
+};
+type GraphResponse = {
+  nodes: GraphNode[];
+  edges: Relationship[];
+  center_market_id: string | null;
+  search: string | null;
+  depth: number;
+  edge_limit: number;
+  returned_nodes: number;
+  returned_edges: number;
+  truncated_by_edge_limit: boolean;
+  relationship_scan_limit: number;
+  relationship_scan_may_be_incomplete: boolean;
+  source_market_window_limit: number;
+};
 type GraphPoint = { id: string; title: string; venue: string; x: number; y: number };
 type Candidate = {
   candidate_id: string;
@@ -641,6 +661,8 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
   const [selectedMarketId, setSelectedMarketId] = useState<string | null>(null);
   const [selectedRelationshipId, setSelectedRelationshipId] = useState<string | null>(null);
   const [relationshipState, setRelationshipState] = useState('all');
+  const [graphCenterMarketId, setGraphCenterMarketId] = useState('');
+  const [graphDepth, setGraphDepth] = useState(1);
   const [slippage, setSlippage] = useState('25');
   const [delay, setDelay] = useState('500');
   const [fillPercent, setFillPercent] = useState('80');
@@ -666,9 +688,13 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
     queryFn: () => api<ListResponse<Book>>('/frontier/books?limit=100'),
     ...options,
   });
-  const relationships = useQuery({
-    queryKey: ['frontier', 'relationships'],
-    queryFn: () => api<ListResponse<Relationship>>('/frontier/relationships?limit=200'),
+  const graph = useQuery({
+    queryKey: ['frontier', 'graph', graphCenterMarketId, graphDepth],
+    queryFn: () => {
+      const params = new URLSearchParams({ depth: String(graphDepth), limit: '100' });
+      if (graphCenterMarketId) params.set('center_market_id', graphCenterMarketId);
+      return api<GraphResponse>(`/frontier/graph?${params.toString()}`);
+    },
     ...options,
   });
   const candidates = useQuery({
@@ -729,6 +755,19 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
     () => new Map((markets.data?.items ?? []).map((market) => [market.canonical_id, market])),
     [markets.data],
   );
+  const graphMarketById = useMemo(() => {
+    const result = new Map(marketById);
+    for (const node of graph.data?.nodes ?? []) {
+      if (node.market) {
+        result.set(node.market_id, {
+          ...node.market,
+          source_observation_record_id:
+            node.source_observation_record_id ?? node.market.provenance.observation_id,
+        });
+      }
+    }
+    return result;
+  }, [marketById, graph.data]);
   const selectedMarket = (markets.data?.items ?? []).find(
     (market) => market.canonical_id === selectedMarketId,
   );
@@ -747,10 +786,10 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
         .includes(needle)
     );
   });
-  const filteredRelationships = (relationships.data?.items ?? [])
+  const filteredRelationships = (graph.data?.edges ?? [])
     .filter((relationship) => {
-      const left = marketById.get(relationship.left_market_id);
-      const right = marketById.get(relationship.right_market_id);
+      const left = graphMarketById.get(relationship.left_market_id);
+      const right = graphMarketById.get(relationship.right_market_id);
       const needle = search.trim().toLocaleLowerCase();
       const matchesText =
         !needle ||
@@ -1086,23 +1125,60 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
               <option value="ambiguous">Ambiguous</option>
             </select>
           </div>
+          <div className="fr-filter-row fr-graph-controls">
+            <label>
+              <span>Explore from a recorded market</span>
+              <select
+                aria-label="Relationship graph center market"
+                value={graphCenterMarketId}
+                onChange={(event) => setGraphCenterMarketId(event.target.value)}
+              >
+                <option value="">Latest recorded relationship window</option>
+                {(markets.data?.items ?? []).map((market) => (
+                  <option key={market.canonical_id} value={market.canonical_id}>
+                    {venueLabel(market.venue)} · {market.title}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              <span>Neighborhood depth</span>
+              <select
+                aria-label="Relationship graph depth"
+                value={graphDepth}
+                onChange={(event) => setGraphDepth(Number(event.target.value))}
+              >
+                <option value={1}>1 hop</option>
+                <option value={2}>2 hops</option>
+                <option value={3}>3 hops</option>
+              </select>
+            </label>
+          </div>
           {propose.isError && <InlineError message={propose.error.message} />}
-          {relationships.isLoading ? (
+          {graph.isLoading ? (
             <div className="fr-loading">Loading stored relationship evidence…</div>
-          ) : relationships.isError ? (
-            <EmptyState title="Relationship query failed" detail={relationships.error.message} />
+          ) : graph.isError ? (
+            <EmptyState title="Relationship query failed" detail={graph.error.message} />
           ) : filteredRelationships.length ? (
             <>
               <RelationshipGraph
                 relationships={filteredRelationships.slice(0, 18)}
-                marketById={marketById}
+                marketById={graphMarketById}
                 selectedId={selectedRelationshipId}
                 onSelect={setSelectedRelationshipId}
               />
+              {(graph.data?.truncated_by_edge_limit ||
+                graph.data?.relationship_scan_may_be_incomplete) && (
+                <div className="fr-footnote">
+                  This view is capped at {graph.data.edge_limit} edges and scans at most{' '}
+                  {graph.data.relationship_scan_limit} recent effective relationships. Narrow the
+                  view to a center market to inspect its bounded neighborhood.
+                </div>
+              )}
               <div className="fr-graph-list">
                 {filteredRelationships.map((relationship) => {
-                  const left = marketById.get(relationship.left_market_id);
-                  const right = marketById.get(relationship.right_market_id);
+                  const left = graphMarketById.get(relationship.left_market_id);
+                  const right = graphMarketById.get(relationship.right_market_id);
                   return (
                     <article className="fr-edge" key={relationship.relationship_id}>
                       <div className="fr-node">

@@ -54,6 +54,20 @@ it('renders recorded-evidence empty states and never probes a source automatical
     '/api/frontier/markets?limit=100': { items: [], returned: 0, limit: 100, offset: 0 },
     '/api/frontier/books?limit=100': { items: [], returned: 0, limit: 100, offset: 0 },
     '/api/frontier/relationships?limit=200': { items: [], returned: 0, limit: 200, offset: 0 },
+    '/api/frontier/graph?depth=1&limit=100': {
+      nodes: [],
+      edges: [],
+      center_market_id: null,
+      search: null,
+      depth: 1,
+      edge_limit: 100,
+      returned_nodes: 0,
+      returned_edges: 0,
+      truncated_by_edge_limit: false,
+      relationship_scan_limit: 500,
+      relationship_scan_may_be_incomplete: false,
+      source_market_window_limit: 200,
+    },
     '/api/frontier/opportunities?limit=100': { items: [], returned: 0, limit: 100, offset: 0 },
     '/api/frontier/runs?limit=30': { items: [], returned: 0, limit: 30, offset: 0 },
     '/api/frontier/readiness': { gates: [] },
@@ -186,12 +200,31 @@ it('renders a bounded accessible relationship graph and opens selected evidence'
       limit: 200,
       offset: 0,
     },
+    '/api/frontier/graph?depth=1&limit=100': {
+      nodes: [],
+      edges: [relation],
+      center_market_id: null,
+      search: null,
+      depth: 1,
+      edge_limit: 100,
+      returned_nodes: 0,
+      returned_edges: 1,
+      truncated_by_edge_limit: false,
+      relationship_scan_limit: 500,
+      relationship_scan_may_be_incomplete: false,
+      source_market_window_limit: 200,
+    },
     '/api/frontier/opportunities?limit=100': { items: [], returned: 0, limit: 100, offset: 0 },
     '/api/frontier/runs?limit=30': { items: [], returned: 0, limit: 30, offset: 0 },
     '/api/frontier/readiness': { gates: [] },
   };
   const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
-    const body = responses[String(input)];
+    const path = String(input);
+    const body =
+      responses[path] ??
+      (path.startsWith('/api/frontier/graph?')
+        ? responses['/api/frontier/graph?depth=1&limit=100']
+        : undefined);
     if (body === undefined) throw new Error(`Unexpected frontend request: ${String(input)}`);
     return { ok: true, json: async () => body } as Response;
   });
@@ -207,7 +240,15 @@ it('renders a bounded accessible relationship graph and opens selected evidence'
   expect(
     await screen.findByRole('group', { name: /Relationship network showing 1/ }),
   ).toBeInTheDocument();
-  const edge = screen.getByRole('button', { name: /text candidate hypothesis/i });
+  fireEvent.change(screen.getByLabelText('Relationship graph center market'), {
+    target: { value: 'polymarket:event-1' },
+  });
+  await vi.waitFor(() =>
+    expect(
+      fetchMock.mock.calls.some(([input]) => String(input).includes('center_market_id=')),
+    ).toBe(true),
+  );
+  const edge = await screen.findByRole('button', { name: /text candidate hypothesis/i });
   fireEvent.click(edge);
   expect(edge).toHaveAttribute('aria-pressed', 'true');
   expect(
@@ -304,6 +345,20 @@ it('records a self-attributed relationship review with both stored market source
       items: [relationship],
       returned: 1,
       limit: 200,
+    },
+    '/api/frontier/graph?depth=1&limit=100': {
+      nodes: [],
+      edges: [relationship],
+      center_market_id: null,
+      search: null,
+      depth: 1,
+      edge_limit: 100,
+      returned_nodes: 0,
+      returned_edges: 1,
+      truncated_by_edge_limit: false,
+      relationship_scan_limit: 500,
+      relationship_scan_may_be_incomplete: false,
+      source_market_window_limit: 200,
     },
     '/api/frontier/opportunities?limit=100': { items: [], returned: 0, limit: 100, offset: 0 },
     '/api/frontier/runs?limit=30': { items: [], returned: 0, limit: 30, offset: 0 },

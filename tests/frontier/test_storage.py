@@ -6,8 +6,10 @@ from datetime import timedelta
 from pathlib import Path
 
 import pytest
+from midas.frontier.economics import ExecutionScenario
 from midas.frontier.models import RawObservation, Venue
 from midas.frontier.relationships import propose_relationships
+from midas.frontier.replay import deterministic_replay
 from midas.frontier.storage import FrontierStore, FrontierStoreError
 
 from tests.frontier.builders import T0, market
@@ -111,4 +113,38 @@ def test_evidence_read_detects_offline_payload_tampering(tmp_path: Path):
             (observation_id,),
         )
     with pytest.raises(FrontierStoreError, match="row hash"):
+        store.observations(limit=10)
+    with pytest.raises(FrontierStoreError, match="row hash"):
         store.observation(observation_id)
+
+
+def test_relationship_list_detects_offline_payload_tampering(tmp_path: Path):
+    store = FrontierStore(tmp_path, max_bytes=2 * 1024 * 1024)
+    left, right = market(Venue.POLYMARKET, "left"), market(Venue.KALSHI, "right")
+    relationship = propose_relationships((left, right), max_pairs=10)[0]
+    store.append_relationship(relationship)
+    with sqlite3.connect(store.path) as connection:
+        connection.execute("DROP TRIGGER relationships_no_update")
+        connection.execute(
+            "UPDATE relationships SET relationship_json='{}' WHERE relationship_id=?",
+            (relationship.relationship_id,),
+        )
+    with pytest.raises(FrontierStoreError, match="relationship hash"):
+        store.relationships(limit=10)
+
+
+def test_replay_list_detects_offline_payload_tampering(tmp_path: Path):
+    store = FrontierStore(tmp_path, max_bytes=2 * 1024 * 1024)
+    result = deterministic_replay(
+        (market(Venue.POLYMARKET, "replay"),),
+        (),
+        scenario=ExecutionScenario(name="storage-integrity"),
+    )
+    store.append_replay(result)
+    with sqlite3.connect(store.path) as connection:
+        connection.execute("DROP TRIGGER research_runs_no_update")
+        connection.execute(
+            "UPDATE research_runs SET result_json='{}' WHERE run_id=?", (result.run_id,)
+        )
+    with pytest.raises(FrontierStoreError, match="replay payload"):
+        store.replays(limit=10)

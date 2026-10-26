@@ -643,6 +643,21 @@
   color: #a8b2c0;
   font-size: 9px;
 }
+.fr-graph-controls {
+  align-items: end;
+}
+.fr-graph-controls label {
+  display: grid;
+  flex: 1;
+  min-width: 180px;
+  gap: 5px;
+  color: #8794a4;
+  font-size: 8px;
+}
+.fr-graph-controls label select {
+  width: 100%;
+  min-height: 33px;
+}
 .fr-table-wrap {
   width: 100%;
   overflow: auto;
