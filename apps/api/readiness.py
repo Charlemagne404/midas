@@ -90,6 +90,12 @@ def _service_cgroup(name: str, root: Path, now: float) -> dict[str, Any]:
     memory_high = _limit_file(group / "memory.high")
     memory_max = _limit_file(group / "memory.max")
     memory_events = _counter_file(group / "memory.events")
+    memory_stat = _counter_file(group / "memory.stat")
+    memory_composition = {
+        key: memory_stat[key]
+        for key in ("anon", "file", "shmem", "active_file", "inactive_file")
+        if key in memory_stat and memory_stat[key] >= 0
+    }
     cpu_stat = _counter_file(group / "cpu.stat")
     cpu_quota_raw = _bounded_text(group / "cpu.max", 128)
     quota_usec: int | None = None
@@ -150,6 +156,7 @@ def _service_cgroup(name: str, root: Path, now: float) -> dict[str, Any]:
         "memory_current_bytes": memory_current,
         "memory_high_bytes": memory_high,
         "memory_max_bytes": memory_max,
+        "memory_composition_bytes": memory_composition or None,
         "memory_events_since_cgroup_start": {
             key: memory_events.get(key, 0) for key in ("high", "max", "oom", "oom_kill")
         },
@@ -361,7 +368,7 @@ def resource_snapshot(
     }
     return {
         "captured_at_utc": datetime.now(UTC).isoformat(),
-        "sampling": "bounded procfs, cgroup-v2 and statvfs reads; counters are cumulative unless marked sample_delta",
+        "sampling": "bounded procfs, cgroup-v2 and statvfs reads; counters are cumulative unless marked sample_delta; memory composition fields can overlap and do not replace charged memory.current",
         "host_memory": _host_memory(proc_root),
         "host_pressure": {
             name: _pressure_file(proc_root / "pressure" / name) for name in ("cpu", "memory", "io")
