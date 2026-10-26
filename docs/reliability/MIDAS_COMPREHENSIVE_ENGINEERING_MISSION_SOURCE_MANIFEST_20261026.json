@@ -191,13 +191,15 @@
       "sha256": "7625c0aa702594d2f6e022f9c7e5ad462c905046681c2ad8ea0d697a526f17a3"
     },
     {
-      "bytes": 3675,
+      "bytes": 4124,
       "captured_at_utc": "2026-10-26T02:05:12.838322Z",
       "label": "Reality protected-recorder admission and filesystem point sample",
       "path": "docs/reliability/evidence/MIDAS_REALITY_ADMISSION_RECHECK_20261026T0204Z.json",
-      "sha256": "8a961927ffd44ea7767afcf5a0eaacf84ad910262e1485696ba18fad7e171f8a",
+      "sha256": "527ca3ac3d08811863f8458b5418d6ba165450d34990289c589379a6d0cd8ea1",
       "status": "POINT_SAMPLE_PASS_SUSTAINED_WINDOW_NOT_RUN",
-      "staging_started": false
+      "staging_started": false,
+      "raw_current_commitment_deficit_bytes": 7396366111,
+      "historical_growth_120_day_deficit_bytes": 12902561721
     }
   ],
   "file_count": 92,
@@ -308,9 +310,9 @@
       "sha256": "d0c4b6ee3eda7f881743769a6c64d82a10fa87421c21bb6389008d66f9f5b2e4"
     },
     {
-      "bytes": 22747,
+      "bytes": 22930,
       "path": "docs/MIDAS_CURRENT_STATE.md",
-      "sha256": "17b5b8f6db9fa2be77abdc91a3c3b9766bff08deaec70ea6231f41a829565cd4"
+      "sha256": "01b22f517d00f08c114ba225cc9efbcae48c27be7f6f711bb864b13353280199"
     },
     {
       "bytes": 21590,
@@ -333,14 +335,14 @@
       "sha256": "1584f98b93910f8946f55cf09fb69f6517fc7bb6a8478d88eebfbeb073858984"
     },
     {
-      "bytes": 41475,
+      "bytes": 41857,
       "path": "docs/reliability/MIDAS_COMPREHENSIVE_ENGINEERING_MISSION_20261025.md",
-      "sha256": "b2c19edcd88a547c52ea3812a7536c4b8573a6e64285fa8a0b23af41ff1d2fb6"
+      "sha256": "f6c46e470f2887cbb00ebf6d8d62c7638cbe4d1f44e276298a73bd1644aec7a3"
     },
     {
-      "bytes": 26494,
+      "bytes": 26704,
       "path": "docs/reliability/MIDAS_COMPREHENSIVE_ENGINEERING_MISSION_LEDGER_20261025.md",
-      "sha256": "5bf4e4a6784857da2bd7db8262326428b9931fe898bcf6d906d6386e2f2aa22b"
+      "sha256": "f5b1135a59116f4065fc8f731b4ea8c812180e1bd91109db148f1ead3a71c265"
     },
     {
       "bytes": 11423,
@@ -418,9 +420,9 @@
       "sha256": "f1844aae14208b839c1b906ca904099777366c40c7e1590d0df1a2f433613c3b"
     },
     {
-      "bytes": 3675,
+      "bytes": 4124,
       "path": "docs/reliability/evidence/MIDAS_REALITY_ADMISSION_RECHECK_20261026T0204Z.json",
-      "sha256": "8a961927ffd44ea7767afcf5a0eaacf84ad910262e1485696ba18fad7e171f8a"
+      "sha256": "527ca3ac3d08811863f8458b5418d6ba165450d34990289c589379a6d0cd8ea1"
     },
     {
       "bytes": 2079,
@@ -663,7 +665,7 @@
       "sha256": "0e303eb666d679cfe283ded0b513d66cde9065f754996bdd64da4d8b8be70812"
     }
   ],
-  "generated_at_utc": "2026-10-26T02:06:11.316213Z",
+  "generated_at_utc": "2026-10-26T02:07:19.783112Z",
   "runtime_observations": {
     "aborted_copy_boundary_pinned": false,
     "aborted_copy_source_total_segments": 31468,
@@ -767,7 +769,10 @@
     "latest_reality_raw_fs_free_bytes": 161060818944,
     "latest_reality_staging_fs_free_bytes": 635101380608,
     "latest_reality_admission_artifact": "docs/reliability/evidence/MIDAS_REALITY_ADMISSION_RECHECK_20261026T0204Z.json",
-    "latest_reality_admission_artifact_sha256": "8a961927ffd44ea7767afcf5a0eaacf84ad910262e1485696ba18fad7e171f8a"
+    "latest_reality_admission_artifact_sha256": "8a961927ffd44ea7767afcf5a0eaacf84ad910262e1485696ba18fad7e171f8a",
+    "latest_reality_raw_current_commitment_deficit_bytes": 7396366111,
+    "latest_reality_historical_growth_120_day_deficit_bytes": 12902561721,
+    "capacity_scenario_requirements_carried_forward_from_utc": "2026-10-26T01:33:58.241237Z"
   },
   "schema_version": 2,
   "scope": "files lists changed code, tests, documentation and checked-in evidence files relative to the base commit, including current uncommitted mission edits; bulk offline replay copies and derived event files are separately bound by evidence_artifacts and embedded manifests; generated build/test output, unrelated runtime worktrees, replay locks and this manifest are excluded."

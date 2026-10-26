@@ -9,7 +9,7 @@
 
 The mission branch integrates the Veritas v6 research overhaul, strengthens Reality collection, recovery and read-only telemetry, improves durable scheduling, and adds an evidence-backed Research Readiness page. After the initial 519-snapshot replay, a bounded follow-up pinned and independently reverified the active store's full 522-snapshot boundary as of 2026-10-26 02:56 CET. Focused and broad backend tests pass after one host-wide Arena admission-lock collision was isolated and its tests passed on rerun. The final frontend run passed lint, typecheck, all 32 unit tests, formatting, and build; the selected non-training browser batch passed 7/7.
 
-The implementation is integrated in this dedicated checkout and is **not deployed**. Current production Veritas is still the older v4 path and its public observatory is failing on an oversized summary. Reality is still running the older 24 GiB / 90-day configuration; the latest captured cgroup sample was 1,122,304,000 bytes against a 1,207,959,552-byte `MemoryHigh`, while cumulative `high` events remain 14,379. The staged storage commitments exceed sampled NVMe free space by 6.51 GB, and the full 120-day historical-growth scenario exceeds it by 12.01 GB. Latest-boundary cold recovery is incomplete, and archive provenance remains unresolved. These are real blockers, not dashboard status choices.
+The implementation is integrated in this dedicated checkout and is **not deployed**. Current production Veritas is still the older v4 path and its public observatory is failing on an oversized summary. Reality is still running the older 24 GiB / 90-day configuration; the latest point sample was 1,131,302,912 bytes against a 1,207,959,552-byte `MemoryHigh` (76,656,640 bytes below), while cumulative `high` events remain 14,379. At the 03:05 free-space sample, the unchanged staged commitment assumptions leave a 7.40 GB deficit; the 120-day historical-growth scenario leaves a 12.90 GB deficit. The growth rate was not re-estimated in that point sample. Latest-boundary cold recovery is incomplete, and archive provenance remains unresolved. These are real blockers, not dashboard status choices.
 
 No Frontier or Atlas work, long-duration campaign, real order, wallet action, historical evidence rewrite, production restart, or archive cleanup was performed.
 
@@ -226,11 +226,15 @@ bytes below) and `MemoryMax=1,342,177,280` (210,874,368 bytes below). Cumulative
 available memory was 8,000,172,032 bytes; I/O-full PSI was 0.86% over 60 seconds.
 The staging admission function passed this point sample, but no sustained
 60-second admission window was run. Raw and staging filesystems had
-161,060,818,944 and 635,101,380,608 bytes free. No Reality staging or recovery
+161,060,818,944 and 635,101,380,608 bytes free. Carrying forward the 02:33
+capacity scenario requirements unchanged, current commitments are short
+7,396,366,111 bytes and the 120-day historical-growth scenario is short
+12,902,561,721 bytes. This updates the free-space arithmetic only; the
+historical growth rate was not re-estimated. No Reality staging or recovery
 worker was started. The complete recovery command sequences eight phases with
 a 7,200-second per-worker cap, so the latest-boundary gate remains incomplete
 rather than treating this sample as recovery evidence.
 
 Capture:
 [`MIDAS_REALITY_ADMISSION_RECHECK_20261026T0204Z.json`](evidence/MIDAS_REALITY_ADMISSION_RECHECK_20261026T0204Z.json),
-SHA-256 `8a961927ffd44ea7767afcf5a0eaacf84ad910262e1485696ba18fad7e171f8a`.
+SHA-256 `527ca3ac3d08811863f8458b5418d6ba165450d34990289c589379a6d0cd8ea1`.

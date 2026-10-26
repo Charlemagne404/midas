@@ -349,9 +349,12 @@ campaign. No such project or campaign is authorized by this ledger.
 - Host available memory was 8,000,172,032 bytes and I/O-full PSI was 0.86% over
   60 seconds. The staging admission function passed one point sample only; no
   sustained 60-second window or worker was started. Raw/staging filesystem free
-  space was 161,060,818,944 / 635,101,380,608 bytes.
+  space was 161,060,818,944 / 635,101,380,608 bytes. Carrying forward the
+02:33 requirement assumptions, current commitments are short 7,396,366,111
+bytes and the 120-day historical-growth case is short 12,902,561,721 bytes;
+the growth rate was not re-estimated.
 - The eight-phase recovery command remains a long, resumable matrix with up to
   7,200 seconds per worker. The latest-boundary cold recovery gate remains
   incomplete; a point admission pass is not recovery evidence.
 - Capture: `evidence/MIDAS_REALITY_ADMISSION_RECHECK_20261026T0204Z.json`,
-  SHA-256 `8a961927ffd44ea7767afcf5a0eaacf84ad910262e1485696ba18fad7e171f8a`.
+  SHA-256 `527ca3ac3d08811863f8458b5418d6ba165450d34990289c589379a6d0cd8ea1`.

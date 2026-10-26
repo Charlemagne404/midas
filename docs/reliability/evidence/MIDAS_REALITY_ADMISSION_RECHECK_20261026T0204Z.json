@@ -133,6 +133,14 @@
       "path": "/mnt/continental-cloud/data/midas-reality-staging",
       "available_bytes": 635101380608,
       "total_bytes": 648000176128
+    },
+    "capacity_scenarios": {
+      "assumptions_carried_forward_from_utc": "2026-10-26T01:33:58.241237Z",
+      "raw_current_commitment_required_bytes": 168457185055,
+      "raw_current_commitment_deficit_at_this_free_space_bytes": 7396366111,
+      "historical_growth_120_day_required_bytes": 173963380665,
+      "historical_growth_120_day_deficit_at_this_free_space_bytes": 12902561721,
+      "growth_rate_reestimated_in_this_sample": false
     }
   },
   "admission": {

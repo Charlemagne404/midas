@@ -187,7 +187,10 @@ cgroup held 1,131,302,912 bytes, 76,656,640 bytes below `MemoryHigh` and
 zero. Host memory available was 8,000,172,032 bytes; I/O-full PSI was 0.86% over
 60 seconds. One admission point sample passed, but no sustained 60-second
 window or staging worker was started. Raw and staging filesystems had
-161,060,818,944 / 635,101,380,608 bytes free. This does not verify the current
-archive boundary or cold recovery. Evidence:
+161,060,818,944 / 635,101,380,608 bytes free. Carrying forward the prior
+capacity requirements, current-commitment and 120-day deficits are
+7,396,366,111 and 12,902,561,721 bytes; the historical growth rate was
+not re-estimated. This does not verify the current archive boundary or cold
+recovery. Evidence:
 [`MIDAS_REALITY_ADMISSION_RECHECK_20261026T0204Z.json`](reliability/evidence/MIDAS_REALITY_ADMISSION_RECHECK_20261026T0204Z.json),
-SHA-256 `8a961927ffd44ea7767afcf5a0eaacf84ad910262e1485696ba18fad7e171f8a`.
+SHA-256 `527ca3ac3d08811863f8458b5418d6ba165450d34990289c589379a6d0cd8ea1`.
