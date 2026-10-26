@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "captured_at_utc": "2026-10-26T02:02:35.043608Z",
+  "runtime_worktree": "/home/charlie/midas-veritas",
+  "runtime_branch": "project/veritas",
+  "runtime_commit": "3b102928594323e7886859d348f7b2151663debb",
+  "observer_service": {
+    "Result": "exit-code",
+    "ExecMainStartTimestamp": "Mon 2026-10-26 03:01:24 CET",
+    "ExecMainExitTimestamp": "Mon 2026-10-26 03:01:35 CET",
+    "ExecMainStatus": "1",
+    "ActiveState": "failed",
+    "SubState": "failed"
+  },
+  "observer_status": "FAILED",
+  "observer_failure": "ValueError: Unsafe or oversized analysis artifact: research-summary.json",
+  "observer_exit_timestamp": "Mon 2026-10-26 03:01:35 CET",
+  "snapshot_count": 523,
+  "latest_snapshot": {
+    "path": "/home/charlie/midas-veritas/data/veritas-observatory/snapshots/scan-20261026T020133Z-f1469881bdbc.json.gz",
+    "name": "scan-20261026T020133Z-f1469881bdbc.json.gz",
+    "bytes": 641953,
+    "sha256": "7625c0aa702594d2f6e022f9c7e5ad462c905046681c2ad8ea0d697a526f17a3",
+    "modified_at_local": "2026-10-26T03:01:34.356384+01:00"
+  },
+  "legacy_v4_summary": {
+    "path": "/home/charlie/midas-veritas/data/veritas-observatory/research-summary.json",
+    "bytes": 2097481,
+    "sha256": "aca960615863ab4a8df3ab673b78e70dcbef56583146275e023e907def7f18c5",
+    "processed_snapshot_count": 423,
+    "reader_limit_bytes": 2097152,
+    "bytes_over_reader_limit": 329
+  },
+  "legacy_api_summary": {
+    "path": "/home/charlie/midas-veritas/data/veritas-observatory/latest-summary.json",
+    "bytes": 2249365,
+    "sha256": "919acbfac8abe5011aac05ed98fc47e76167605f522d543ebecd5c5f557863b0",
+    "reader_limit_bytes": 524288
+  },
+  "api_veritas_overview": {
+    "http_status": 503,
+    "body": "{\"detail\":\"Veritas public observatory summary exceeds the interface bound\"}"
+  },
+  "v6_replay_boundary": {
+    "snapshot_count": 522,
+    "last_snapshot": "scan-20261026T013105Z-74db14ad03a0.json.gz",
+    "newer_snapshots_outside_boundary": 1
+  },
+  "production_service_changed": false,
+  "network_access": "loopback read-only API request only"
+}

@@ -2,7 +2,7 @@
 
 **Base snapshot:** 2026-10-17 (local operational state). The dated 2026-10-26 addendum below is the latest checked runtime snapshot and supersedes earlier live-service statements where they differ. Mission reports, checkpoints, ledgers, and experiment artifacts remain historical records and should be read with their own version and capture time.
 
-**Latest recheck:** At 2026-10-26 02:33:58 CET, the API returned HTTP 200 `READY` in demo mode with `live_execution=false`, Laboratory `READY`, and paper recovery `CHECKPOINT_VERIFIED` at 666,807 events. Reality remained active on PID `3007040` with cgroup use 1,122,304,000 bytes against `MemoryHigh=1,207,959,552` (85,655,552 bytes below); cumulative `high` events were 14,379 and `max`/OOM/kill counters were zero. The active Veritas v4 observer failed at 02:31:07 CET on its 2,097,481-byte summary, and `/api/veritas/overview` returned HTTP 503. The staged 112 GiB / 120-day storage commitments exceed current NVMe free space by 6.51 GB. This is a time-specific read-only sample; no production service was changed.
+**Latest full-system recheck:** At 2026-10-26 02:33:58 CET, the API returned HTTP 200 `READY` in demo mode with `live_execution=false`, Laboratory `READY`, and paper recovery `CHECKPOINT_VERIFIED` at 666,807 events. Reality remained active on PID `3007040` with cgroup use 1,122,304,000 bytes against `MemoryHigh=1,207,959,552` (85,655,552 bytes below); cumulative `high` events were 14,379 and `max`/OOM/kill counters were zero. The active Veritas v4 observer failed at 02:31:07 CET on its 2,097,481-byte summary, and `/api/veritas/overview` returned HTTP 503. The staged 112 GiB / 120-day storage commitments exceed current NVMe free space by 6.51 GB. This is a time-specific read-only sample; no production service was changed.
 
 ## Project status
 
@@ -141,3 +141,38 @@ The complete read-only capture is [MIDAS_MISSION_20261026_LIVE_STATE_RECHECK.jso
 - Latest-boundary recovery remains incomplete. R15 stopped at 2,304/20,148 segments; the later copy was interrupted at 697/31,468 with no pinned source boundary or complete snapshot receipt. Do not use or resume that copy as a snapshot.
 
 Keep Reality deployment, Veritas v6 rollout, archive writing, storage policy changes and dashboard publication pending their separate readiness steps. The protected Reality transition still requires explicit approval after a fresh exact-boundary preflight.
+
+### Isolated Veritas v6 replay — 2026-10-26 02:56 CET
+
+After the 02:33:58 runtime check, an isolated, bounded offline replay pinned
+the 522 finalized snapshots present at that time. It processed the boundary
+through `scan-20261026T013105Z-74db14ad03a0.json.gz` (324,615,273 source
+bytes), indexed 522 snapshots and independently analyzed 522 events, with zero
+quarantines and zero catalog integrity issues. A separate `--resume` pass
+reverified the copied inputs, SQLite catalogs, event files and bounded summary.
+Its source, receipt, verifier, economic and resource identities are in
+[`MIDAS_VERITAS_V6_REPLAY_522_20261026.json`](reliability/evidence/MIDAS_VERITAS_V6_REPLAY_522_20261026.json).
+
+The independent reference audited 20,873 of 20,874 selected pair observations
+across 3,932 unique markets. It found 3,937 reference snapshot-valid pairs,
+14,750 validity disagreements, 14,750 source-quality disagreements, and zero
+positive gross, economically supported or net-eligible pairs. These are
+correlated selected observations, not independent trials. Active Veritas
+remains on v4 and its public API remains HTTP 503 at the last runtime check;
+the replay did not change the active service or store. The receipt's process
+RSS value conflicts with its scope cgroup peak and is not used for capacity
+claims.
+
+### Latest Veritas service check — 2026-10-26 03:02 CET
+
+The scheduled v4 observer started at 03:01:24 CET, wrote a new finalized
+snapshot, then failed at 03:01:35 CET on the oversized legacy summary. The
+active store now has 523 snapshots; the newest is
+`scan-20261026T020133Z-f1469881bdbc.json.gz` (641,953 bytes; SHA-256
+`7625c0aa702594d2f6e022f9c7e5ad462c905046681c2ad8ea0d697a526f17a3`). The v4
+summary remains 2,097,481 bytes, the API returns HTTP 503, and the v6 replay
+boundary remains the previously verified 522 files, leaving this one new file
+outside it. Capture:
+[`MIDAS_VERITAS_20261026_POST_TIMER_RECHECK.json`](reliability/evidence/MIDAS_VERITAS_20261026_POST_TIMER_RECHECK.json),
+SHA-256 `342ff41ca6a32a41340c0fec3ae798a21e1258c353df28efa2564540d2c54913`.
+The read-only capture made no additional service or store changes; the scheduled observer wrote the snapshot before the capture.

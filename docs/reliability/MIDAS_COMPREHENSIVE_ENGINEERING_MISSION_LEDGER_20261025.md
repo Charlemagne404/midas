@@ -259,8 +259,8 @@ mission report. Staged storage capacity does not pass at this sample.
 | Latest Reality inventory | `docs/reliability/evidence/MIDAS_MISSION_20261026_DEPLOYMENT_PREFLIGHT_BLOCKED_V3.json` |
 
 The machine-readable [source/evidence manifest](MIDAS_COMPREHENSIVE_ENGINEERING_MISSION_SOURCE_MANIFEST_20261026.json)
-binds 89 changed code, test, documentation and checked-in evidence files plus
-13 replay/live artifact references. The full engineering report is
+binds 91 changed code, test, documentation and checked-in evidence files plus
+22 replay/live artifact references. The full engineering report is
 [MIDAS_COMPREHENSIVE_ENGINEERING_MISSION_20261025.md](MIDAS_COMPREHENSIVE_ENGINEERING_MISSION_20261025.md).
 
 ## Outstanding blockers and required follow-up
@@ -291,3 +291,51 @@ binds 89 changed code, test, documentation and checked-in evidence files plus
 
 The mission stops before Frontier, Atlas and the next long-duration validation
 campaign. No such project or campaign is authorized by this ledger.
+
+### Follow-up Veritas v6 replay — 2026-10-26 02:56 CET
+
+- The isolated replay advanced the earlier 519-snapshot pin to the 522 finalized
+  snapshots then present in `/home/charlie/midas-veritas/data/veritas-observatory`.
+  It copied 324,615,273 bytes through
+  `scan-20261026T013105Z-74db14ad03a0.json.gz` and made no network requests.
+- Snapshot catalog v4 indexed 522/522 with zero quarantines and integrity
+  issues. Analysis catalog v6 processed 522/522 with zero quarantines. The
+  522-event set, all derived output identities and the 100,031-byte summary
+  passed the post-run `--resume` verifier.
+- The Decimal reference audited 20,873/20,874 selected pairs across 3,932
+  unique markets: 3,937 reference snapshot-valid, 14,750 validity disagreements,
+  14,750 source-quality disagreements, zero positive gross candidates and zero
+  economically supported or net-eligible pairs. These remain selected,
+  correlated observations; minimum-order units and execution outcomes are not
+  supported.
+- Evidence: `evidence/MIDAS_VERITAS_V6_REPLAY_522_20261026.json`. Source
+  manifest SHA-256 `c0e93d7fa5e49a7a4bb9f62d120baec4aaf7de6e0e2b0198c4a2b425edb78fa7`;
+  replay receipt file SHA-256
+  `1ddfe7a27bb7a85b499aaa71f41ac551924649d9c994cee5c870db0b619dc7e6`;
+  verifier file SHA-256
+  `5d5cb78d9940882d4e3c1b06456c522db84679ccbb242b49e7395664fe94feca`.
+- The scope cgroup peak was 537,374,720 bytes, with 887 `high` events and zero
+  `max`, OOM or kill events. The receipt also reports a 1,089,118,208-byte
+  process peak RSS that does not reconcile with cgroup accounting; do not use
+  that value for capacity claims. Active runtime remains v4 and is not migrated.
+- **Status remains:** IMPLEMENTED, DEPLOYMENT PENDING. This closes the 519-to-522
+  replay coverage gap as of this capture only; the live observer can append new
+  snapshots, and a v6 runtime migration still requires a separate rollout.
+
+### Latest scheduled Veritas observation — 2026-10-26 03:02 CET
+
+- The ordinary v4 observer run began at 03:01:24 CET, wrote snapshot 523, then
+  failed at 03:01:35 CET with `ValueError: Unsafe or oversized analysis
+  artifact: research-summary.json`. `/api/veritas/overview` returned HTTP 503.
+- Latest snapshot:
+  `scan-20261026T020133Z-f1469881bdbc.json.gz`, 641,953 bytes, SHA-256
+  `7625c0aa702594d2f6e022f9c7e5ad462c905046681c2ad8ea0d697a526f17a3`.
+  The legacy summary remains 2,097,481 bytes and reports 423 processed.
+- This snapshot was written after the 522-file v6 pin and is outside that
+  replay. The next ordinary timer is not a reason to repeat a full replay; keep
+  the evidence boundary explicit and migrate v6 only through a separately
+  reviewed deployment.
+- Read-only capture:
+  `evidence/MIDAS_VERITAS_20261026_POST_TIMER_RECHECK.json`, SHA-256
+  `342ff41ca6a32a41340c0fec3ae798a21e1258c353df28efa2564540d2c54913`.
+  No service or production data was changed by the capture.

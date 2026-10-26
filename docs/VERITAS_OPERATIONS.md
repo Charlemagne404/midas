@@ -18,7 +18,8 @@ fresh runtime check for 2026-10-26 supersedes their live-health assumptions:
   bytes, 329 bytes above the old 2 MiB reader bound. The API overview returns
   HTTP 503. `latest-summary.json` is 2,249,365 bytes and exceeds the old 512
   KiB API bound. The timer remains active; its next scheduled run was
-  03:01:07 CET.
+  03:01:07 CET. A later isolated v6 replay completed at 02:54:52 CET and
+  output verification completed at 02:56:31 CET.
 - The latest read-only inventory at 02:33:58 CET counted 522 snapshots. The
   02:31:05 CET scan wrote
   `scan-20261026T013105Z-74db14ad03a0.json.gz` (641,503 bytes; SHA-256
@@ -26,15 +27,29 @@ fresh runtime check for 2026-10-26 supersedes their live-health assumptions:
   failed while rebuilding analysis. The v4 published summary still covers 423
   through `scan-20261023T233202Z-dc4f690bd80f.json.gz`, leaving 99 newer
   snapshots outside that published summary. This gap is not evidence those
-  snapshots were analyzed or invalid. Three snapshots also lie beyond the
-  isolated v6 replay's 519-snapshot boundary.
+  snapshots were analyzed or invalid. A bounded v6 follow-up replay completed
+  at 02:56 CET against all 522 files then present, through
+  `scan-20261026T013105Z-74db14ad03a0.json.gz`; it reverified 522 snapshot rows,
+  522 analysis records and 522 events with zero quarantines or catalog integrity
+  issues. Later observer writes are outside that time-bound capture.
+- The next regular v4 run started at 03:01:24 CET, wrote
+  `scan-20261026T020133Z-f1469881bdbc.json.gz` (641,953 bytes; SHA-256
+  `7625c0aa702594d2f6e022f9c7e5ad462c905046681c2ad8ea0d697a526f17a3`), then
+  failed at 03:01:35 CET on the same 2,097,481-byte legacy summary. The active
+  store has 523 snapshots; this newest file is outside the time-bound 522-file
+  v6 replay. The API still returns HTTP 503. See
+  `docs/reliability/evidence/MIDAS_VERITAS_20261026_POST_TIMER_RECHECK.json`.
 - V6 source integrity checks, Decimal reference economics, rebuildable SQLite
   scan/analysis catalogs and bounded publication are integrated in the
   isolated branch `codex/midas-comprehensive-engineering-mission-20261025`.
-  An isolated replay processed and reverified the complete pinned 519-snapshot
-  set through `scan-20261026T000113Z-72ddb4303c0b.json.gz`; the active store's
-  520th through 522nd snapshots are not included. The replay found zero positive gross
-  observations and zero economically supported pairs. V6 remains undeployed.
+  The initial 519-snapshot replay was followed by a 522-snapshot boundary run.
+  The latter found zero positive gross observations and zero economically
+  supported or net-eligible pairs across its selected sample. Its receipt and
+  verifier hashes, catalog identities, economic counts and resource caveat are
+  recorded in
+  `docs/reliability/evidence/MIDAS_VERITAS_V6_REPLAY_522_20261026.json`. V6
+  remains undeployed; the active timer, API and v4 runtime store were not
+  migrated.
 - Do not overwrite v4 summaries/events or migrate the active timer in place.
   Preserve existing files, build v6 catalogs from immutable evidence, verify
   catalog identities and summary digests, then roll out API and timer changes

@@ -1,0 +1,103 @@
+{
+  "captured_at_utc": "2026-10-26T01:56:31.225477Z",
+  "candidate_code": {
+    "analysis_version": "veritas-finalized-snapshot-analysis-v6",
+    "independent_reference_version": "veritas-independent-economic-reference-v3",
+    "replay_driver_sha256": "8c7bfdf49893a86b6f58005c7c200aa970a4cbc4f6ac4a0dacf734a5e90180cd",
+    "source_manifest_sha256": "b328519c5da1bca72d0cf0fe416ab922d8efcdf035fdbbd87cd2be72525c5b74"
+  },
+  "catalogs": {
+    "analysis_catalog": {
+      "processed": 522,
+      "quarantined": 0,
+      "sha256": "ff6ae1834b16b564d83523a1f567040cd513140174cf4210f04c3b3ee2e5e749",
+      "version": 6
+    },
+    "analysis_event_count": 522,
+    "analysis_event_manifest_sha256": "c06c31d8a3d54b7e0a4acc5b932d6488350af4e548d50e1ac0929f7604434168",
+    "snapshot_catalog": {
+      "indexed": 522,
+      "integrity_issues": 0,
+      "quarantined": 0,
+      "sha256": "28fbbb72d64832af0b056ce5a9edc4c9966786a4bb9d6a9bf3434685dc5571e9",
+      "version": 4
+    }
+  },
+  "economics": {
+    "disagreements": {
+      "source_quality": 14750,
+      "validity": 14750
+    },
+    "economically_supported_pairs": 0,
+    "net_eligible_pairs": 0,
+    "positive_gross_pair_observations": 0,
+    "primary_quality_valid_pairs": 18687,
+    "reference_audited_pairs": 20873,
+    "selected_market_observations": 20874,
+    "snapshot_valid_pairs": 3937,
+    "unique_markets": 3932,
+    "unsupported_pairs": 20873
+  },
+  "execution": {
+    "elapsed_seconds": 696.064453,
+    "network_requests": 0,
+    "output_root": "data/veritas-v6-offline-replay-522-20261026",
+    "process_cpu_seconds": 127.115495,
+    "source_read_only": true,
+    "source_root": "/home/charlie/midas-veritas/data/veritas-observatory",
+    "status": "COMPLETE"
+  },
+  "limitations": [
+    "The 522 snapshots are a pinned finite boundary, not venue-wide coverage or independent trials; repeated market observations are correlated.",
+    "Public order-book evidence does not establish fills, queue position, order acknowledgments, realized P&L, or profitability.",
+    "The runtime Veritas service remains on v4; this output is isolated and undeployed.",
+    "The receipt process_peak_rss_bytes value is 1089118208, which is unreconciled with the replay scope cgroup memory.peak of 537374720; exclude that RSS field from capacity conclusions pending diagnosis."
+  ],
+  "published_summary": {
+    "analysis_summary_sha256": "bb1e6a79abab348db19e126e1b227e4d30220474c20e69b7a37a4d7201887d36",
+    "bytes": 100031,
+    "pending_snapshots": 0,
+    "sha256": "311d06ddec14727ddc462abdd24773d37829a91a3cfafbf02d8bdbdf18aeb281",
+    "status": "CURRENT"
+  },
+  "replay": {
+    "receipt_canonical_sha256": "2723164e93c96d1b2bc7a2b07d96c2c85d021be463c820581523f871f7844e99",
+    "receipt_file": "data/veritas-v6-offline-replay-522-20261026/veritas-v6-offline-replay-receipt.json",
+    "receipt_file_sha256": "1ddfe7a27bb7a85b499aaa71f41ac551924649d9c994cee5c870db0b619dc7e6",
+    "source_bytes": 324615273,
+    "source_count": 522,
+    "source_first_snapshot": "scan-20261015T055928Z-c9777c1cc300.json.gz",
+    "source_last_snapshot": "scan-20261026T013105Z-74db14ad03a0.json.gz",
+    "source_last_snapshot_sha256": "3cd0da2f7460da912c34465c7bfff671ec537e3f87561d0d7ba0c8050fdb69f0",
+    "source_manifest_file": "data/veritas-v6-offline-replay-522-20261026/veritas-v6-source-snapshot-manifest.json",
+    "source_manifest_file_sha256": "1a4414e1b6fefed3dbcff4eeab5f794e3ad6faadc0605e7c5090ab530eca5d9c",
+    "source_manifest_sha256": "c0e93d7fa5e49a7a4bb9f62d120baec4aaf7de6e0e2b0198c4a2b425edb78fa7"
+  },
+  "resource_measurements": {
+    "cgroup_memory_current_at_completion_bytes": 506351616,
+    "cgroup_memory_events": {
+      "high": 887,
+      "max": 0,
+      "oom": 0,
+      "oom_kill": 0
+    },
+    "cgroup_memory_peak_bytes": 537374720,
+    "configured_memory_high_bytes": 536870912,
+    "configured_memory_max_bytes": 805306368,
+    "configured_swap_max_bytes": 0,
+    "cpu_quota_percent": 25,
+    "io_weight": 10,
+    "ionice_class": "idle",
+    "process_peak_rss_bytes_reported": 1089118208,
+    "process_peak_rss_disposition": "UNRECONCILED_EXCLUDE_FROM_CAPACITY_CLAIMS"
+  },
+  "verification": {
+    "catalogs_and_analysis_events_reverified": true,
+    "network_requests": 0,
+    "package_source_files_match": true,
+    "path": "data/veritas-v6-offline-replay-522-20261026/veritas-v6-offline-replay-postrun-verification.json",
+    "sha256": "5d5cb78d9940882d4e3c1b06456c522db84679ccbb242b49e7395664fe94feca",
+    "status": "COMPLETED_OUTPUTS_REVERIFIED",
+    "verification_sha256": "21f25287bd682aefa52f8cf5f21bcaeefed7da48d757e9d4e724f6e0efd9db67"
+  }
+}
