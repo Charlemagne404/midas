@@ -3,8 +3,8 @@
 **Current stage:** isolated engine/API/UI, immutable relationship review, bounded
 graph neighborhoods, hash-verified public book/trade capture, exact fixture-
 verified multi-outcome coverage, and a separate candidate arithmetic audit;
-plus captured-response failure diagnostics and degraded-source recovery. Remaining
-acceptance work is substantial.
+plus captured-response failure diagnostics and degraded-source recovery.
+Remaining acceptance work is substantial.
 **Branch:** `codex/frontier-20261026`
 **Worktree:** `/home/charlie/midas-frontier`
 **Baseline:** `11d32a0693b25c290fd273f23e40cf7b5950d95d` (`codex/veritas-v6-integration-20261026`)
@@ -48,6 +48,8 @@ acceptance work is substantial.
 | `480a322` | Updated engineering report, Frontier architecture, MIDAS architecture/development docs and README for the independent candidate audit. |
 | `53c38d7` | Persisted raw responses and typed diagnostics when a decoded probe response fails normalization; included observation IDs in API errors and tested degradation, source isolation, and recovery. |
 | `64dc167` | Documented the independent arithmetic audit, source-failure evidence path, latest focused verification, and the current host's test interpreter path. |
+| `e8019d8` | Preserved complete bounded invalid-JSON, non-2xx, and invalid-UTF8 response bytes with verified hashes; added API evidence IDs and tests. |
+| `59bf640` | Updated the engineering report, architecture, and development documentation for complete bounded transport-failure evidence and latest measurements. |
 
 ## Public source investigation
 
@@ -113,7 +115,7 @@ Capture records and source-specific limitations are in
 
 ## Verification checkpoint
 
-- Backend focused regression: **53 passed** in 9.13 seconds pytest time; one upstream Starlette/httpx TestClient deprecation warning. `/usr/bin/time -v` measured 9.92 seconds wall, 4.00 seconds user CPU, 146,524 KiB peak RSS, and zero socket messages.
+- Backend focused regression: **53 passed** in 9.45 seconds pytest time; one upstream Starlette/httpx TestClient deprecation warning. `/usr/bin/time -v` measured 10.25 seconds wall, 3.97 seconds user CPU, 145,740 KiB peak RSS, and zero socket messages.
 - Ruff check and format check: passed for the Frontier package and test files.
 - Mypy: passed for 16 Frontier/API source files. A broader `mypy packages/midas/frontier apps/api` attempt reported 37 errors in eight unchanged Veritas/Arena/API files; none was in Frontier source.
 - Frontend tests: **35 passed across 7 files**; typecheck, lint and Prettier check passed.
@@ -131,7 +133,7 @@ Reproduction commands and environment boundaries are in
 | --- | --- | --- |
 | Verified isolated baseline and worktree | COMPLETE AND VERIFIED | Separate branch from `11d32a0`; unrelated dirty trees preserved. |
 | Adapter protocol, capability inventory, bounded GET transport | COMPLETE AND VERIFIED | Contract tests; all capabilities explicitly declared; no startup request. |
-| Polymarket, Kalshi and Kraken Spot implementations | PARTIALLY VERIFIED | Fixture tests and one bounded live listing/book/trade-to-store round trip per venue pass; mock tests verify 2xx schema-failure evidence, source isolation, and health recovery. Fees and live degraded-source behavior remain unverified; invalid JSON bodies are not persisted. |
+| Polymarket, Kalshi and Kraken Spot implementations | PARTIALLY VERIFIED | Fixture tests and one bounded live listing/book/trade-to-store round trip per venue pass; mock tests verify invalid JSON/UTF-8, HTTP 503, 2xx schema-failure evidence, source isolation, and health recovery. Fees and live degraded-source behavior remain unverified; oversized/partial bodies are not persisted. |
 | Canonical normalization and native evidence | PARTIALLY VERIFIED | Distinct event, conditional event and spot forms; some semantics intentionally unverified. |
 | Relationship matching, immutable review, and strict payoff verifier | PARTIALLY VERIFIED | Self-attributed review API/UI with stored source refs, append-only revisions, compare-and-set, latest-state replay and migration tests; no authenticated reviewer/assertion or genuine equivalent pair. |
 | Economic candidate verifier and independent audit | PARTIALLY VERIFIED | Exact two-venue binary all-long coverage and same-market 3–16-state exhaustive one-hot coverage. A separate Decimal implementation recomputes supported candidate arithmetic from hash-pinned normalized inputs; controlled fixtures only, no genuine eligible event, independently authenticated market truth, or practical execution proof. |
@@ -156,10 +158,10 @@ the same normalized evidence and cannot authenticate source truth. Review labels
 and external assertion IDs are self-attributed and not authenticated or fetched.
 The highest-value next steps are:
 
-1. Extend transport-level malformed-response evidence handling; the current
-   API persists decoded 2xx normalization failures, while invalid JSON bodies are
-   not retained. Validate supported fee metadata, and broaden trade pagination
-   and live degraded-source coverage.
+1. Expand retry-after, timeout, and oversized/truncated-response tests. Complete
+   bounded error bodies are now preserved with raw-byte hashes. Validate
+   supported fee metadata, and broaden trade pagination and live degraded-source
+   coverage.
 2. Add indexed/paginated graph adjacency and extend the UI with a bounded text-search drill-down.
 3. Establish validated fee inputs before promoting any candidate to a decisive
    net classification.
@@ -187,5 +189,8 @@ and the independent arithmetic audit is
 `53c38d7bf01a356b54c82e359ea64ab2661836f9`. Documentation checkpoint
 `480a3224090f913d832578b581eab428b8b83cc3` documents the arithmetic audit.
 Checkpoint `64dc16737e2e35edb02b2556600c8596e85f4a3f` records source-failure
-evidence behavior and current test commands. This ledger amendment records the
-latest documentation and verification state.
+evidence behavior and current test commands. Transport failure evidence is
+`e8019d81a70c50446371d29d6e65ebaefba6e8e4`. Documentation checkpoint
+`59bf64029e56ca6bad35298a8567c6a8d6c2982e` records byte-preserving failure
+capture behavior and latest measurements. This ledger amendment records the
+current engineering checkpoint.
