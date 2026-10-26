@@ -26,6 +26,39 @@ structlog.configure(
 def create_app(settings: Settings | None = None) -> FastAPI:
     config = settings or Settings()
     service = Service(config)
+    from midas.frontier.adapters import KalshiAdapter, KrakenSpotAdapter, PolymarketAdapter
+    from midas.frontier.adapters.kraken import KrakenSpotConfig
+    from midas.frontier.models import AdapterConfig
+    from midas.frontier.registry import AdapterRegistry
+    from midas.frontier.storage import FrontierStore
+
+    frontier_registry = AdapterRegistry(
+        (
+            PolymarketAdapter(
+                AdapterConfig(
+                    enabled=config.frontier_polymarket_public_probe_enabled,
+                    live_public_probe_enabled=config.frontier_polymarket_public_probe_enabled,
+                )
+            ),
+            KalshiAdapter(
+                AdapterConfig(
+                    enabled=config.frontier_kalshi_public_probe_enabled,
+                    live_public_probe_enabled=config.frontier_kalshi_public_probe_enabled,
+                )
+            ),
+            KrakenSpotAdapter(
+                KrakenSpotConfig(
+                    enabled=config.frontier_kraken_public_probe_enabled,
+                    live_public_probe_enabled=config.frontier_kraken_public_probe_enabled,
+                    pairs=tuple(config.frontier_kraken_pairs.split(",")),
+                )
+            ),
+        )
+    )
+    frontier_store = FrontierStore(
+        config.frontier_root,
+        max_bytes=config.frontier_store_max_bytes,
+    )
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
@@ -96,6 +129,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 if laboratory is not None:
                     await asyncio.to_thread(laboratory.close)
                 await service.stop()
+            await frontier_registry.aclose()
 
     app = FastAPI(
         title="Midas Research API",
@@ -104,6 +138,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         description="Read-only public market data and internal virtual simulation. No trading credentials or live orders.",
     )
     app.state.service = service
+    app.state.frontier_store = frontier_store
+    app.state.frontier_registry = frontier_registry
     app.state.startup_status = "RECOVERING"
     app.state.startup_error = None
     from apps.api.laboratory import router
@@ -114,6 +150,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
 
     app.include_router(router(lambda: app.state.laboratory))
+    from apps.api.frontier import router as frontier_router
+
+    app.include_router(frontier_router(frontier_store, frontier_registry))
     from apps.api.arena import router as arena_router
 
     veritas_workspace = (config.veritas_workspace or Path(__file__).resolve().parents[2]).resolve()

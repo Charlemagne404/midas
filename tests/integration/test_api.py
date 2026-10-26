@@ -24,6 +24,13 @@ def test_offline_api_workflow_contract_and_persistence(tmp_path, monkeypatch):
         assert health["application_version"] == app.version
         assert health["api_release_identity"]
         assert health["checked_at_utc"].endswith("+00:00")
+        frontier = client.get("/api/frontier/overview")
+        assert frontier.status_code == 200
+        assert frontier.json()["research_only"] is True
+        assert frontier.json()["live_execution"] is False
+        assert frontier.json()["state"] == "EMPTY"
+        assert client.get("/api/frontier/sources").json()["network_called"] is False
+        assert client.post("/api/frontier/probe/polymarket", json={"limit": 1}).status_code == 409
         resources = client.get("/api/readiness/resources")
         assert resources.status_code == 200
         assert resources.json()["sampling"].startswith("bounded procfs")

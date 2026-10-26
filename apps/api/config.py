@@ -29,3 +29,11 @@ class Settings(BaseSettings):
     recording_root: Path | None = None
     retention_days: int = Field(default=30, ge=1)
     cors_origins: list[str] = ["http://localhost:5173", "http://127.0.0.1:5173"]
+    frontier_root: Path = Path("data/frontier-store")
+    frontier_store_max_bytes: int = Field(
+        default=64 * 1024 * 1024, ge=1024 * 1024, le=512 * 1024 * 1024
+    )
+    frontier_polymarket_public_probe_enabled: bool = False
+    frontier_kalshi_public_probe_enabled: bool = False
+    frontier_kraken_public_probe_enabled: bool = False
+    frontier_kraken_pairs: str = "XBTUSD"
