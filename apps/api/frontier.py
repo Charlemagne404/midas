@@ -736,6 +736,29 @@ def router(store: FrontierStore, registry: Any) -> APIRouter:
         manifests = registry.capability_manifests()
         all_caps_declared = all(len(item.declarations) > 0 for item in manifests)
         run_count = summary["runs"]
+        audit_counts = {
+            "verified": 0,
+            "disagreement": 0,
+            "incomplete": 0,
+            "not_evaluated": 0,
+        }
+        recent_runs = store.replays(limit=3)
+        for run in recent_runs:
+            result = run.get("result")
+            candidates = result.get("candidates", []) if isinstance(result, dict) else []
+            for candidate in candidates:
+                audit = candidate.get("independent_audit") if isinstance(candidate, dict) else None
+                disposition = audit.get("disposition") if isinstance(audit, dict) else None
+                if disposition in audit_counts:
+                    audit_counts[disposition] += 1
+        audit_count = sum(audit_counts.values())
+        audit_state = (
+            "DISAGREEMENT"
+            if audit_counts["disagreement"]
+            else "EVIDENCE_RECORDED"
+            if audit_count
+            else "NOT_ESTABLISHED"
+        )
         return {
             "research_only": True,
             "live_execution": False,
@@ -759,8 +782,16 @@ def router(store: FrontierStore, registry: Any) -> APIRouter:
                 },
                 {
                     "name": "independent_economic_verification",
-                    "state": "NOT_ESTABLISHED",
-                    "detail": "Runtime run counts do not establish economic eligibility; each candidate retains its own classification.",
+                    "state": audit_state,
+                    "detail": (
+                        f"Latest {len(recent_runs)} hash-validated replay run(s) contain "
+                        f"{audit_counts['verified']} independently verified, "
+                        f"{audit_counts['disagreement']} disagreement, "
+                        f"{audit_counts['incomplete']} incomplete, and "
+                        f"{audit_counts['not_evaluated']} not-evaluated candidate audit(s). "
+                        "This checks bounded payoff and cost arithmetic; it does not establish "
+                        "source truth, executable fills, or profitability."
+                    ),
                 },
                 {
                     "name": "source_quality",

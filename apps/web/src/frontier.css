@@ -1324,6 +1324,52 @@
   font-size: 10px;
   font-weight: 520;
 }
+.fr-candidate-audit {
+  display: grid;
+  gap: 8px;
+  padding: 11px 14px;
+  border-bottom: 1px solid #242e38;
+  background: #111922;
+}
+.fr-candidate-audit-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.fr-candidate-audit h4 {
+  margin: 0;
+  color: #b7c4d4;
+  font-size: 9px;
+  font-weight: 550;
+}
+.fr-candidate-audit p {
+  margin: 0;
+  color: #8795a6;
+  font-size: 8px;
+  line-height: 1.5;
+}
+.fr-candidate-audit-values {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(125px, 1fr));
+  gap: 8px;
+}
+.fr-candidate-audit-values span {
+  display: grid;
+  gap: 4px;
+  color: #7c899a;
+  font-size: 8px;
+}
+.fr-candidate-audit-values strong {
+  color: #bdc8d5;
+  font-size: 9px;
+  font-weight: 520;
+}
+.fr-candidate-audit > small {
+  color: #718094;
+  font-size: 8px;
+  overflow-wrap: anywhere;
+}
 .fr-candidate-states {
   display: grid;
   gap: 8px;

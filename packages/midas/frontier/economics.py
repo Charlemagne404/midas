@@ -19,6 +19,7 @@ from midas.frontier.models import (
     FeeStatus,
     FrontierMarket,
     FrontierModel,
+    IndependentEconomicAudit,
     Lifecycle,
     MarketInstrument,
     MarketKind,
@@ -92,6 +93,7 @@ class OpportunityCandidate(FrontierModel):
     venues: tuple[str, ...]
     relationship_id: str | None = None
     legs: tuple[PositionLeg, ...] = ()
+    independent_audit: IndependentEconomicAudit | None = None
     outcome_payout_by_state: dict[str, Decimal] = Field(default_factory=dict)
     gross_cost: Decimal | None = None
     modeled_fees: Decimal | None = None
@@ -168,6 +170,17 @@ def generate_binary_coverage_candidates(
                 OpportunityClassification.INVALID_RELATIONSHIP,
                 as_of,
                 "Relationship has an explicit rejection state.",
+            ),
+        )
+    if left.lifecycle != Lifecycle.OPEN or right.lifecycle != Lifecycle.OPEN:
+        return (
+            _empty_candidate(
+                left,
+                right,
+                relationship,
+                OpportunityClassification.INCOMPLETE_EVIDENCE,
+                as_of,
+                "Both equivalent markets must be recorded as open for quote evaluation.",
             ),
         )
     if (
@@ -871,10 +884,23 @@ def _evaluate_pair(
             family=family,
         )
     max_quantity = min(l_ask.quantity, r_ask.quantity)
-    fill_fraction = scenario.fill_fraction
-    common_quantity = min(
-        max_quantity * fill_fraction, requested_quantity or max_quantity * fill_fraction
-    )
+    available_quantity = max_quantity * scenario.fill_fraction
+    if requested_quantity is not None and (
+        not requested_quantity.is_finite()
+        or requested_quantity <= 0
+        or requested_quantity > available_quantity
+    ):
+        return _empty_candidate(
+            left,
+            right,
+            relationship,
+            OpportunityClassification.INCOMPLETE_EVIDENCE,
+            as_of,
+            "Requested quantity must be positive and cannot exceed modeled common top-ask depth.",
+            candidate_id=identity,
+            family=family,
+        )
+    common_quantity = requested_quantity or available_quantity
     if common_quantity <= 0:
         return _empty_candidate(
             left,

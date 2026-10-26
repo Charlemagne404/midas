@@ -508,7 +508,7 @@ def test_replay_api_generates_and_persists_multi_outcome_candidate(tmp_path):
         replay = client.post("/api/frontier/replay", json={})
         assert replay.status_code == 200, replay.text
         result = replay.json()
-        assert result["manifest"]["replay_version"] == "frontier-deterministic-replay-2"
+        assert result["manifest"]["replay_version"] == "frontier-deterministic-replay-3"
         assert len(result["candidates"]) == 1
         candidate = result["candidates"][0]
         assert candidate["family"] == "within_market_multi_outcome_coverage"
@@ -516,6 +516,19 @@ def test_replay_api_generates_and_persists_multi_outcome_candidate(tmp_path):
         assert candidate["classification"] == "VERIFIED MATHEMATICAL INCONSISTENCY"
         assert Decimal(candidate["worst_case_gross_pnl"]) == Decimal(1)
         assert candidate["practical_eligibility"] is False
+        assert candidate["independent_audit"]["disposition"] == "verified"
+        assert Decimal(candidate["independent_audit"]["recomputed_gross_cost"]) == Decimal(9)
+
+        readiness = client.get("/api/frontier/readiness")
+        assert readiness.status_code == 200
+        audit_gate = next(
+            gate
+            for gate in readiness.json()["gates"]
+            if gate["name"] == "independent_economic_verification"
+        )
+        assert audit_gate["state"] == "EVIDENCE_RECORDED"
+        assert "1 independently verified" in audit_gate["detail"]
+        assert "does not establish" in audit_gate["detail"]
 
         listed = client.get("/api/frontier/opportunities")
         assert listed.status_code == 200

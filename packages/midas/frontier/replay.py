@@ -16,6 +16,7 @@ from midas.frontier.economics import (
     generate_binary_coverage_candidates,
     generate_multi_outcome_coverage_candidate,
 )
+from midas.frontier.independent_audit import independently_audit_candidate
 from midas.frontier.models import BookSnapshot, FrontierMarket, FrontierModel, MarketKind
 from midas.frontier.relationships import (
     MATCHER_VERSION,
@@ -24,7 +25,7 @@ from midas.frontier.relationships import (
     propose_relationships,
 )
 
-REPLAY_VERSION = "frontier-deterministic-replay-2"
+REPLAY_VERSION = "frontier-deterministic-replay-3"
 
 
 class ReplayManifest(FrontierModel):
@@ -143,7 +144,19 @@ def deterministic_replay(
                     as_of_utc=pinned_as_of,
                 )
             )
-    candidate_tuple = tuple(sorted(candidates, key=lambda item: item.candidate_id))
+    relationship_index = {item.relationship_id: item for item in ordered_relationships}
+    candidate_tuple = tuple(
+        independently_audit_candidate(
+            item,
+            markets=market_index,
+            books_by_market=book_index,
+            relationships=relationship_index,
+            state_mappings=states,
+            instrument_mappings=instruments,
+            scenario=scenario,
+        )
+        for item in sorted(candidates, key=lambda item: item.candidate_id)
+    )
     classification_counts: dict[str, int] = {}
     for item in candidate_tuple:
         classification_counts[item.classification.value] = (

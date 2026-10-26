@@ -184,6 +184,19 @@ test('relationship network remains bounded, selectable, and scroll-contained on 
           received_skew_ms: 10,
           exchange_skew_ms: 5,
           timing_verified: true,
+          independent_audit: {
+            disposition: 'verified',
+            input_sha256: 'd'.repeat(64),
+            checked_market_count: 1,
+            checked_leg_count: 3,
+            recomputed_gross_cost: '9',
+            recomputed_modeled_fees: '0',
+            recomputed_modeled_net_cost: '9',
+            recomputed_worst_case_gross_pnl: '1',
+            recomputed_worst_case_net_pnl: '1',
+            checks: ['controlled fixture arithmetic checks'],
+            message: 'Independent arithmetic agrees for every terminal state.',
+          },
           reasons: ['E2E fixture covers every terminal state.'],
           assumptions: ['Fixture only; not a market finding.'],
           evidence_sha256: 'c'.repeat(64),
@@ -220,6 +233,10 @@ test('relationship network remains bounded, selectable, and scroll-contained on 
   await page.getByRole('button', { name: 'Frontier', exact: true }).click();
   await page.getByRole('button', { name: 'Candidates', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Terminal-state payoff analysis' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Independent arithmetic audit' })).toBeVisible();
+  await expect(
+    page.getByText('Independent arithmetic agrees for every terminal state.'),
+  ).toBeVisible();
   await expect(page.getByText('Modeled payout')).toBeVisible();
   await page.setViewportSize({ width: 390, height: 844 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);

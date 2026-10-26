@@ -211,6 +211,19 @@ type Candidate = {
   received_skew_ms: number | null;
   exchange_skew_ms: number | null;
   timing_verified: boolean;
+  independent_audit?: {
+    disposition: string;
+    input_sha256: string;
+    checked_market_count: number;
+    checked_leg_count: number;
+    recomputed_gross_cost: string | null;
+    recomputed_modeled_fees: string | null;
+    recomputed_modeled_net_cost: string | null;
+    recomputed_worst_case_gross_pnl: string | null;
+    recomputed_worst_case_net_pnl: string | null;
+    checks: string[];
+    message: string;
+  } | null;
   assumptions: string[];
   reasons: string[];
   evidence_sha256: string;
@@ -275,9 +288,11 @@ const venueLabel = (value: string) =>
 function StateBadge({ state }: { state: string }) {
   const tone = ['HEALTHY', 'PASS', 'VERIFIED'].includes(state.toUpperCase())
     ? 'good'
-    : ['DEGRADED', 'HYPOTHESIS', 'CONDITIONAL'].includes(state.toUpperCase())
+    : ['DEGRADED', 'HYPOTHESIS', 'CONDITIONAL', 'INCOMPLETE', 'NOT_EVALUATED'].includes(
+          state.toUpperCase(),
+        )
       ? 'watch'
-      : ['FAILED', 'BLOCKED', 'REJECTED'].includes(state.toUpperCase())
+      : ['FAILED', 'BLOCKED', 'REJECTED', 'DISAGREEMENT'].includes(state.toUpperCase())
         ? 'bad'
         : 'quiet';
   return <span className={`fr-state ${tone}`}>{label(state)}</span>;
@@ -1937,6 +1952,43 @@ function CandidateCard({ candidate }: { candidate: Candidate }) {
           <strong>{candidate.practical_eligibility ? 'Established' : 'Not established'}</strong>
         </span>
       </div>
+      <section className="fr-candidate-audit" aria-label="Independent arithmetic audit">
+        <div className="fr-candidate-audit-head">
+          <h4>Independent arithmetic audit</h4>
+          <StateBadge state={candidate.independent_audit?.disposition ?? 'not_evaluated'} />
+        </div>
+        <p>
+          {candidate.independent_audit?.message ??
+            'No independent arithmetic audit is recorded for this candidate.'}
+        </p>
+        {candidate.independent_audit && (
+          <>
+            <div className="fr-candidate-audit-values">
+              <span>
+                Recomputed basket cost
+                <strong>{money(candidate.independent_audit.recomputed_gross_cost)}</strong>
+              </span>
+              <span>
+                Recomputed fees
+                <strong>{money(candidate.independent_audit.recomputed_modeled_fees)}</strong>
+              </span>
+              <span>
+                Recomputed net cost
+                <strong>{money(candidate.independent_audit.recomputed_modeled_net_cost)}</strong>
+              </span>
+              <span>
+                Recomputed worst net result
+                <strong>{money(candidate.independent_audit.recomputed_worst_case_net_pnl)}</strong>
+              </span>
+            </div>
+            <small>
+              Checked {candidate.independent_audit.checked_leg_count} legs across{' '}
+              {candidate.independent_audit.checked_market_count} markets · input SHA-256{' '}
+              <code>{shortHash(candidate.independent_audit.input_sha256)}</code>
+            </small>
+          </>
+        )}
+      </section>
       {candidate.legs.length > 0 && (
         <div className="fr-table-wrap">
           <table className="fr-table">

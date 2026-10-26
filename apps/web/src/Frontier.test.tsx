@@ -160,6 +160,19 @@ it('renders recorded-evidence empty states and never probes a source automatical
         received_skew_ms: 12,
         exchange_skew_ms: 5,
         timing_verified: true,
+        independent_audit: {
+          disposition: 'verified',
+          input_sha256: 'd'.repeat(64),
+          checked_market_count: 1,
+          checked_leg_count: 3,
+          recomputed_gross_cost: '9',
+          recomputed_modeled_fees: '0',
+          recomputed_modeled_net_cost: '9',
+          recomputed_worst_case_gross_pnl: '1',
+          recomputed_worst_case_net_pnl: '1',
+          checks: ['fixture audit checks'],
+          message: 'Independent arithmetic agrees for every terminal state.',
+        },
         reasons: ['The fixture covers every verified terminal state.'],
         assumptions: ['Hypothetical only.'],
         evidence_sha256: 'c'.repeat(64),
@@ -173,6 +186,11 @@ it('renders recorded-evidence empty states and never probes a source automatical
   expect(
     await screen.findByRole('heading', { name: 'Terminal-state payoff analysis' }),
   ).toBeInTheDocument();
+  expect(screen.getByRole('heading', { name: 'Independent arithmetic audit' })).toBeInTheDocument();
+  expect(
+    screen.getByText('Independent arithmetic agrees for every terminal state.'),
+  ).toBeInTheDocument();
+  expect(screen.getByText('Recomputed basket cost')).toBeInTheDocument();
   expect(screen.getByText('Gross basket cost')).toBeInTheDocument();
   expect(screen.getAllByText('red')).toHaveLength(2);
 });

@@ -17,6 +17,7 @@ Positive = Annotated[Decimal, Field(gt=0, max_digits=36, decimal_places=18, allo
 FeeRate = Annotated[
     Decimal, Field(ge=0, le=1, max_digits=18, decimal_places=12, allow_inf_nan=False)
 ]
+SignedDecimal = Annotated[Decimal, Field(allow_inf_nan=False)]
 
 
 class FrontierModel(BaseModel):
@@ -61,6 +62,13 @@ class FeeStatus(StrEnum):
     UNKNOWN = "unknown"
     UNSUPPORTED = "unsupported"
     ESTIMATE = "estimate"
+
+
+class EconomicAuditDisposition(StrEnum):
+    VERIFIED = "verified"
+    DISAGREEMENT = "disagreement"
+    INCOMPLETE = "incomplete"
+    NOT_EVALUATED = "not_evaluated"
 
 
 class SourceState(StrEnum):
@@ -231,6 +239,27 @@ class FeeSchedule(FrontierModel):
         if self.status == FeeStatus.VERIFIED and not (self.source_url and self.evidence_sha256):
             raise ValueError("Verified fee schedule requires source and evidence hash")
         return self
+
+
+class IndependentEconomicAudit(FrontierModel):
+    """Recomputed candidate economics from normalized contracts and source books."""
+
+    schema_version: int = 1
+    model_version: str = "frontier-independent-economic-audit-1"
+    disposition: EconomicAuditDisposition
+    input_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    checked_market_count: int = Field(ge=0, le=2)
+    checked_leg_count: int = Field(ge=0, le=16)
+    recomputed_gross_cost: SignedDecimal | None = None
+    recomputed_modeled_fees: SignedDecimal | None = None
+    recomputed_modeled_net_cost: SignedDecimal | None = None
+    recomputed_payout_by_state: dict[str, SignedDecimal] = Field(default_factory=dict)
+    recomputed_gross_pnl_by_state: dict[str, SignedDecimal] = Field(default_factory=dict)
+    recomputed_net_pnl_by_state: dict[str, SignedDecimal] = Field(default_factory=dict)
+    recomputed_worst_case_gross_pnl: SignedDecimal | None = None
+    recomputed_worst_case_net_pnl: SignedDecimal | None = None
+    checks: tuple[str, ...] = Field(default=(), max_length=20)
+    message: str = Field(max_length=2000)
 
 
 class Provenance(FrontierModel):

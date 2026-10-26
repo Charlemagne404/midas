@@ -368,6 +368,12 @@ def verify_same_payoff(
                 checks.append(f"Mapped instrument {left_id} has a different payout vector")
 
     a, b = sorted((left.canonical_id, right.canonical_id))
+    if left.canonical_id == a:
+        canonical_state_mapping = state_mapping
+        canonical_instrument_mapping = instrument_mapping
+    else:
+        canonical_state_mapping = {value: key for key, value in state_mapping.items()}
+        canonical_instrument_mapping = {value: key for key, value in instrument_mapping.items()}
     assertion_evidence = tuple(sorted(set(evidence_observation_ids)))
     assertion_time = asserted_at_utc or max(
         left.provenance.response_received_at_utc,
@@ -377,7 +383,8 @@ def verify_same_payoff(
         raise ValueError("Assertion time must include a timezone")
     assertion_time = assertion_time.astimezone(UTC)
     verifier_version = (
-        f"frontier-equivalence-verifier-1|{external_assertion_id}|{assertion_time.isoformat()}"
+        f"frontier-equivalence-verifier-2|{external_assertion_id}|{assertion_time.isoformat()}|"
+        f"{json_compact(canonical_state_mapping)}|{json_compact(canonical_instrument_mapping)}"
     )
     _, relationship_id = _identity(
         a,
@@ -405,8 +412,8 @@ def verify_same_payoff(
                 source_fields=("payoff", "resolution", "outcome_mapping"),
                 observation_ids=assertion_evidence,
                 details=(
-                    "state_mapping=" + json_compact(state_mapping),
-                    "instrument_mapping=" + json_compact(instrument_mapping),
+                    "state_mapping=" + json_compact(canonical_state_mapping),
+                    "instrument_mapping=" + json_compact(canonical_instrument_mapping),
                 ),
                 external_assertion_id=external_assertion_id,
                 created_at_utc=assertion_time,

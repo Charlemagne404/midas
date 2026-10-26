@@ -9,6 +9,7 @@ from midas.frontier.economics import (
     generate_binary_coverage_candidates,
     generate_multi_outcome_coverage_candidate,
 )
+from midas.frontier.independent_audit import independently_audit_candidate
 from midas.frontier.models import (
     BookLevel,
     BookSnapshot,
@@ -284,6 +285,43 @@ def test_exact_binary_outcome_construction_and_fee_classification():
     assert expired_fee_positive.worst_case_net_pnl is None
 
 
+def test_binary_coverage_requires_open_markets_and_exact_supported_quantity():
+    left, right, relationship, instrument_mapping = _verified_pair()
+    left_books, right_books = _books(left, right)
+    common = {
+        "relationship": relationship,
+        "left_books": left_books,
+        "right_books": right_books,
+        "state_mapping": {"yes": "yes", "no": "no"},
+        "instrument_mapping": instrument_mapping,
+        "as_of_utc": T0 + timedelta(milliseconds=100),
+    }
+    closed = generate_binary_coverage_candidates(
+        left.model_copy(update={"lifecycle": Lifecycle.CLOSED}), right, **common
+    )
+    assert len(closed) == 1
+    assert closed[0].classification == OpportunityClassification.INCOMPLETE_EVIDENCE
+    assert not closed[0].legs
+
+    too_large = generate_binary_coverage_candidates(left, right, quantity=Decimal(11), **common)
+    assert all(
+        item.classification == OpportunityClassification.INCOMPLETE_EVIDENCE for item in too_large
+    )
+    assert all(not item.legs for item in too_large)
+
+    exceeds_fill = generate_binary_coverage_candidates(
+        left,
+        right,
+        quantity=Decimal(6),
+        scenario=ExecutionScenario(fill_fraction=Decimal("0.5")),
+        **common,
+    )
+    assert all(
+        item.classification == OpportunityClassification.INCOMPLETE_EVIDENCE
+        for item in exceeds_fill
+    )
+
+
 def test_stale_books_are_not_practically_eligible():
     left, right, relationship, instrument_mapping = _verified_pair()
     left_books, right_books = _books(left, right)
@@ -360,8 +398,12 @@ def test_verified_multi_outcome_coverage_is_exact_and_stays_hypothetical():
         as_of_utc=T0 + timedelta(milliseconds=100),
         code_version="multi-outcome-fixture-v1",
     )
-    assert replay.manifest.replay_version == "frontier-deterministic-replay-2"
-    assert replay.candidates == (candidate,)
+    assert replay.manifest.replay_version == "frontier-deterministic-replay-3"
+    replay_candidate = replay.candidates[0]
+    assert replay_candidate.model_copy(update={"independent_audit": None}) == candidate
+    assert replay_candidate.independent_audit is not None
+    assert replay_candidate.independent_audit.disposition.value == "verified"
+    assert replay_candidate.independent_audit.recomputed_gross_cost == Decimal(9)
 
 
 def test_multi_outcome_decimal_math_preserves_full_bounded_input_precision():
@@ -540,10 +582,16 @@ def test_deterministic_replay_is_invariant_to_input_order():
     left, right, relationship, instrument_mapping = _verified_pair()
     left_books, right_books = _books(left, right)
     all_books = tuple(left_books.values()) + tuple(right_books.values())
+    canonical_instrument_mapping = (
+        instrument_mapping
+        if left.canonical_id == relationship.left_market_id
+        else {value: key for key, value in instrument_mapping.items()}
+    )
+    canonical_state_mapping = {"yes": "yes", "no": "no"}
     kwargs = {
         "verified_relationships": (relationship,),
-        "state_mappings": {relationship.relationship_id: {"yes": "yes", "no": "no"}},
-        "instrument_mappings": {relationship.relationship_id: instrument_mapping},
+        "state_mappings": {relationship.relationship_id: canonical_state_mapping},
+        "instrument_mappings": {relationship.relationship_id: canonical_instrument_mapping},
         "as_of_utc": T0 + timedelta(milliseconds=100),
         "code_version": "fixture-commit-1",
     }
@@ -552,6 +600,100 @@ def test_deterministic_replay_is_invariant_to_input_order():
     assert first.run_id == second.run_id
     assert first.result_sha256 == second.result_sha256
     assert first.candidates == second.candidates
+    evidence_mapped = deterministic_replay(
+        (right, left),
+        tuple(reversed(all_books)),
+        verified_relationships=(relationship,),
+        as_of_utc=T0 + timedelta(milliseconds=100),
+        code_version="fixture-commit-1",
+    )
+    assert evidence_mapped.candidates == first.candidates
+    assert all(
+        item.independent_audit is not None
+        and item.independent_audit.disposition.value == "verified"
+        for item in first.candidates
+    )
+
+    candidate = first.candidates[0].model_copy(
+        update={
+            "gross_cost": first.candidates[0].gross_cost + Decimal(1),
+            "independent_audit": None,
+        }
+    )
+    independently_checked = independently_audit_candidate(
+        candidate,
+        markets={left.canonical_id: left, right.canonical_id: right},
+        books_by_market={
+            left.canonical_id: left_books,
+            right.canonical_id: right_books,
+        },
+        relationships={relationship.relationship_id: relationship},
+        state_mappings={
+            relationship.relationship_id: kwargs["state_mappings"][relationship.relationship_id]
+        },
+        instrument_mappings={relationship.relationship_id: canonical_instrument_mapping},
+        scenario=ExecutionScenario(),
+    )
+    assert independently_checked.independent_audit is not None
+    assert independently_checked.independent_audit.disposition.value == "disagreement"
+    assert independently_checked.classification == OpportunityClassification.INCOMPLETE_EVIDENCE
+    assert any("gross basket cost differs" in reason for reason in independently_checked.reasons)
+
+
+def test_canonical_relationship_evidence_replays_different_native_state_labels():
+    left = market(Venue.POLYMARKET, "canonical-left")
+    right_base = market(Venue.KALSHI, "canonical-right")
+    native_to_common = {"yes": "affirmative", "no": "negative"}
+    right_instruments = tuple(
+        MarketInstrument.model_validate(
+            instrument.model_dump(mode="python")
+            | {
+                "outcome_id": native_to_common[instrument.outcome_id],
+                "payouts": tuple(
+                    StatePayout(state_id=native_to_common[payout.state_id], amount=payout.amount)
+                    for payout in instrument.payouts
+                ),
+            }
+        )
+        for instrument in right_base.instruments
+    )
+    right = FrontierMarket.model_validate(
+        right_base.model_dump(mode="python")
+        | {
+            "instruments": right_instruments,
+            "payoff": right_base.payoff.model_copy(
+                update={"state_ids": ("affirmative", "negative")}
+            ),
+        }
+    )
+    state_mapping = {"yes": "affirmative", "no": "negative"}
+    instrument_mapping = {
+        left.instruments[index].native_instrument_id: right.instruments[index].native_instrument_id
+        for index in range(2)
+    }
+    relationship = verify_same_payoff(
+        left,
+        right,
+        state_mapping=state_mapping,
+        instrument_mapping=instrument_mapping,
+        external_assertion_id="fixture-canonical-state-mapping",
+        evidence_observation_ids=("left-observation", "right-observation"),
+        asserted_at_utc=T0,
+    )
+    left_books, right_books = _books(left, right)
+    replay = deterministic_replay(
+        (right, left),
+        tuple(right_books.values()) + tuple(left_books.values()),
+        verified_relationships=(relationship,),
+        as_of_utc=T0 + timedelta(milliseconds=100),
+        code_version="canonical-map-fixture-v1",
+    )
+    assert len(replay.candidates) == 2
+    assert all(
+        candidate.independent_audit is not None
+        and candidate.independent_audit.disposition.value == "verified"
+        for candidate in replay.candidates
+    )
 
 
 def test_relationship_hypothesis_never_generates_payoff_legs():
