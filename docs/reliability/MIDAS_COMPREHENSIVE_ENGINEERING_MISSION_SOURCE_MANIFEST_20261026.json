@@ -217,9 +217,18 @@
       "path": "docs/reliability/evidence/MIDAS_REALITY_RECOVERY_PARTIAL_20261026T0222Z.json",
       "sha256": "0f8d134e3f5e8f581debb454818dd0d03ef144746a4c9b6138e0d01a2f502e86",
       "status": "INCOMPLETE_CHECKPOINT_VALIDATED"
+    },
+    {
+      "bytes": 2589,
+      "label": "Post-timer read-only Veritas recheck after snapshot 524",
+      "latest_snapshot_sha256": "d674264d4dd99be09003a5398d3f9983d4dc6666eb180fa384cb71409136e909",
+      "path": "docs/reliability/evidence/MIDAS_VERITAS_20261026_POST_TIMER_RECHECK_0330.json",
+      "sha256": "379c03e04ae3303674485b4d114c9a4f38bd3d601d009085869844c6a3226001",
+      "snapshot_count": 524,
+      "status": "FAILED_LEGACY_SUMMARY_READER"
     }
   ],
-  "file_count": 94,
+  "file_count": 95,
   "files": [
     {
       "bytes": 61683,
@@ -327,9 +336,9 @@
       "sha256": "d0c4b6ee3eda7f881743769a6c64d82a10fa87421c21bb6389008d66f9f5b2e4"
     },
     {
-      "bytes": 24577,
+      "bytes": 25477,
       "path": "docs/MIDAS_CURRENT_STATE.md",
-      "sha256": "5729d3ff9aefc3fe38ae43fb9dc42bb37d218a0339ae847b0e0cf21ad14f0b7f"
+      "sha256": "09935bf1492a66aed312f60508bc965a640a3907378ede19021eeb94a2d4b35e"
     },
     {
       "bytes": 21590,
@@ -342,9 +351,9 @@
       "sha256": "ee379554fdb10538340a884d0a109f1b7c777dcf69c014a05fa2f80e6f1a3357"
     },
     {
-      "bytes": 19898,
+      "bytes": 20484,
       "path": "docs/VERITAS_OPERATIONS.md",
-      "sha256": "4a3aea2da13a977962fa84717d8804763bdfd4a1d8c9fd5645d15b6993e93f93"
+      "sha256": "3b5ea19d29b6c6214946356fd8c467ccac3f4508820680e623846851c19a787a"
     },
     {
       "bytes": 82970,
@@ -352,14 +361,14 @@
       "sha256": "1584f98b93910f8946f55cf09fb69f6517fc7bb6a8478d88eebfbeb073858984"
     },
     {
-      "bytes": 44518,
+      "bytes": 45623,
       "path": "docs/reliability/MIDAS_COMPREHENSIVE_ENGINEERING_MISSION_20261025.md",
-      "sha256": "16f4f1769f2e6723b1a9c12b991260866e009fa234158a016cd6005160ea4c84"
+      "sha256": "512241439f7a8f3f11cab0581a6e870192229595d9d22035359f9f4907a07e96"
     },
     {
-      "bytes": 28537,
+      "bytes": 29480,
       "path": "docs/reliability/MIDAS_COMPREHENSIVE_ENGINEERING_MISSION_LEDGER_20261025.md",
-      "sha256": "df32cdadc35c1a9cd637f11d225810cf18e314bf62f64738991297efbe8896ef"
+      "sha256": "ff942e46927e19ca666debdbac1846477b1c36921383045a450cc29f2bd50306"
     },
     {
       "bytes": 11423,
@@ -450,6 +459,11 @@
       "bytes": 2079,
       "path": "docs/reliability/evidence/MIDAS_VERITAS_20261026_POST_TIMER_RECHECK.json",
       "sha256": "342ff41ca6a32a41340c0fec3ae798a21e1258c353df28efa2564540d2c54913"
+    },
+    {
+      "bytes": 2589,
+      "path": "docs/reliability/evidence/MIDAS_VERITAS_20261026_POST_TIMER_RECHECK_0330.json",
+      "sha256": "379c03e04ae3303674485b4d114c9a4f38bd3d601d009085869844c6a3226001"
     },
     {
       "bytes": 4618,
@@ -692,7 +706,7 @@
       "sha256": "0e303eb666d679cfe283ded0b513d66cde9065f754996bdd64da4d8b8be70812"
     }
   ],
-  "generated_at_utc": "2026-10-26T02:28:02Z",
+  "generated_at_utc": "2026-10-26T02:32:52Z",
   "runtime_observations": {
     "aborted_copy_boundary_pinned": false,
     "aborted_copy_source_total_segments": 31468,
@@ -700,14 +714,14 @@
     "active_veritas_api_overview_http_status": 503,
     "active_veritas_branch": "project/veritas",
     "active_veritas_commit": "3b102928594323e7886859d348f7b2151663debb",
-    "active_veritas_latest_snapshot": "scan-20261026T013105Z-74db14ad03a0.json.gz",
-    "active_veritas_latest_snapshot_sha256": "3cd0da2f7460da912c34465c7bfff671ec537e3f87561d0d7ba0c8050fdb69f0",
+    "active_veritas_latest_snapshot": "scan-20261026T023023Z-2fb5b10a5fef.json.gz",
+    "active_veritas_latest_snapshot_sha256": "d674264d4dd99be09003a5398d3f9983d4dc6666eb180fa384cb71409136e909",
     "active_veritas_latest_summary_bytes": 2249365,
-    "active_veritas_observer_exit": "2026-10-26 02:31:07 CET",
+    "active_veritas_observer_exit": "Mon 2026-10-26 03:30:25 CET",
     "active_veritas_observer_exit_status": 1,
-    "active_veritas_observer_start": "2026-10-26 02:30:56 CET",
+    "active_veritas_observer_start": "Mon 2026-10-26 03:30:14 CET",
     "active_veritas_observer_state": "failed",
-    "active_veritas_snapshot_count": 522,
+    "active_veritas_snapshot_count": 524,
     "active_veritas_snapshot_count_outside_initial_519_replay": 3,
     "active_veritas_summary_bytes": 2097481,
     "active_veritas_summary_bytes_over_limit": 329,
@@ -730,14 +744,22 @@
     "historical_r15_verified_segments": 2304,
     "laboratory_state": "READY",
     "latest_active_veritas_api_overview_http_status": 503,
-    "latest_active_veritas_observer_exit": "2026-10-26 03:01:35 CET",
+    "latest_active_veritas_branch": "project/veritas",
+    "latest_active_veritas_commit": "3b102928594323e7886859d348f7b2151663debb",
+    "latest_active_veritas_git_status": "## project/veritas...origin/project/veritas\n",
+    "latest_active_veritas_latest_summary_sha256": "919acbfac8abe5011aac05ed98fc47e76167605f522d543ebecd5c5f557863b0",
+    "latest_active_veritas_next_timer": "Mon 2026-10-26 04:00:50 CET",
+    "latest_active_veritas_observer_exit": "Mon 2026-10-26 03:30:25 CET",
     "latest_active_veritas_observer_failure": "ValueError: Unsafe or oversized analysis artifact: research-summary.json",
     "latest_active_veritas_observer_state": "failed",
-    "latest_active_veritas_snapshot": "scan-20261026T020133Z-f1469881bdbc.json.gz",
-    "latest_active_veritas_snapshot_count": 523,
-    "latest_active_veritas_snapshot_count_outside_v6_boundary": 1,
-    "latest_active_veritas_snapshot_observed_at_utc": "2026-10-26T02:02:35.043608Z",
-    "latest_active_veritas_snapshot_sha256": "7625c0aa702594d2f6e022f9c7e5ad462c905046681c2ad8ea0d697a526f17a3",
+    "latest_active_veritas_recheck_artifact": "docs/reliability/evidence/MIDAS_VERITAS_20261026_POST_TIMER_RECHECK_0330.json",
+    "latest_active_veritas_recheck_sha256": "379c03e04ae3303674485b4d114c9a4f38bd3d601d009085869844c6a3226001",
+    "latest_active_veritas_research_summary_sha256": "aca960615863ab4a8df3ab673b78e70dcbef56583146275e023e907def7f18c5",
+    "latest_active_veritas_snapshot": "scan-20261026T023023Z-2fb5b10a5fef.json.gz",
+    "latest_active_veritas_snapshot_count": 524,
+    "latest_active_veritas_snapshot_count_outside_v6_boundary": 2,
+    "latest_active_veritas_snapshot_observed_at_utc": "2026-10-26T02:30:23Z",
+    "latest_active_veritas_snapshot_sha256": "d674264d4dd99be09003a5398d3f9983d4dc6666eb180fa384cb71409136e909",
     "latest_active_veritas_v6_boundary_count": 522,
     "latest_boundary_recovery": "INCOMPLETE",
     "latest_isolated_veritas_v6_replay": {

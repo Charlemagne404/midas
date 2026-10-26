@@ -220,3 +220,18 @@ only after fresh admission passes and the pinned source prefix validates.
 Evidence:
 [`MIDAS_REALITY_RECOVERY_PARTIAL_20261026T0222Z.json`](reliability/evidence/MIDAS_REALITY_RECOVERY_PARTIAL_20261026T0222Z.json),
 SHA-256 `0f8d134e3f5e8f581debb454818dd0d03ef144746a4c9b6138e0d01a2f502e86`.
+
+### Latest Veritas timer result — 2026-10-26, 03:30 CET
+
+The normal v4 observer started at 03:30:14 CET, wrote snapshot 524, then
+failed at 03:30:25 CET on the oversized `research-summary.json` reader check.
+The latest file is
+`scan-20261026T023023Z-2fb5b10a5fef.json.gz` (689,137 bytes; SHA-256
+`d674264d4dd99be09003a5398d3f9983d4dc6666eb180fa384cb71409136e909`). The
+legacy summary remains 2,097,481 bytes, and a loopback GET to
+`/api/veritas/overview` returned HTTP 503 with
+`Veritas public observatory summary exceeds the interface bound`. The v6
+replay still pins 522 snapshots, leaving two newer snapshots outside it. The
+timer remains active; its next run is 04:00:50 CET. Evidence:
+[`MIDAS_VERITAS_20261026_POST_TIMER_RECHECK_0330.json`](reliability/evidence/MIDAS_VERITAS_20261026_POST_TIMER_RECHECK_0330.json),
+SHA-256 `379c03e04ae3303674485b4d114c9a4f38bd3d601d009085869844c6a3226001`.

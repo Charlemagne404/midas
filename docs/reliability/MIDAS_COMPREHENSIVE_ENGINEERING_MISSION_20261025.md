@@ -17,7 +17,7 @@ No Frontier or Atlas work, long-duration campaign, real order, wallet action, hi
 
 | Component | Status | Evidence and limit |
 |---|---|---|
-| Veritas v6 acquisition, independent economics, catalogs and summary publication | **IMPLEMENTED, DEPLOYMENT PENDING** | Differential, corruption, interruption, restart, scheduler and API tests pass. The initial 519-snapshot replay was extended by a bounded run that pinned and reverified all 522 snapshots present at 02:56 CET: 522 snapshot rows, analysis records and events, zero quarantines, zero catalog integrity issues. Active service remains on v4 and fails to publish its public summary. |
+| Veritas v6 acquisition, independent economics, catalogs and summary publication | **IMPLEMENTED, DEPLOYMENT PENDING** | Differential, corruption, interruption, restart, scheduler and API tests pass. The initial 519-snapshot replay was extended by a bounded run that pinned and reverified all 522 snapshots present at 02:56 CET: 522 snapshot rows, analysis records and events, zero quarantines, zero catalog integrity issues. Active v4 remains failed on its oversized summary; the live store now has 524 snapshots, two beyond the verified v6 pin. |
 | Reality collector, recovery and observability changes | **PARTIALLY VERIFIED** | Unit/integration tests and a 95-second loopback fixture canary pass for the final candidate hash, seeded from one deterministic fixture segment. Production continues on the older checkout; exact latest-boundary startup and full cold recovery remain unverified. |
 | Research Readiness page | **COMPLETE AND VERIFIED** | Lint, typecheck, 32 unit tests, format check, build and the 7-test selected browser batch pass. It uses real API responses and explicitly identifies demo mode. This page is not deployed. |
 | Arena / API integration boundaries | **PARTIALLY VERIFIED** | Durable fair scheduling and stale-director visibility are tested. The current API reports no active jobs, directors or schedules, no invalid artifacts, and one retained expired-admission alert. |
@@ -164,7 +164,7 @@ This recheck does not supersede the production deployment blockers or grant appr
 ## Changed branch and artifact references
 
 
-All mission implementation changes are confined to this worktree and branch. The root checkout's pre-existing dirty work, the Reality/Veritas runtime worktrees, and both older engineering worktrees remain untouched. The companion [source/evidence manifest](MIDAS_COMPREHENSIVE_ENGINEERING_MISSION_SOURCE_MANIFEST_20261026.json) binds 94 changed code, test, documentation and checked-in evidence files plus 25 replay/live artifact references. Bulk replay inputs and event files are bound by their embedded manifests. See the [mission ledger](MIDAS_COMPREHENSIVE_ENGINEERING_MISSION_LEDGER_20261025.md) for worktree inventory and test record. No branch was pushed or merged.
+All mission implementation changes are confined to this worktree and branch. The root checkout's pre-existing dirty work, the Reality/Veritas runtime worktrees, and both older engineering worktrees remain untouched. The companion [source/evidence manifest](MIDAS_COMPREHENSIVE_ENGINEERING_MISSION_SOURCE_MANIFEST_20261026.json) binds 95 changed code, test, documentation and checked-in evidence files plus 26 replay/live artifact references. Bulk replay inputs and event files are bound by their embedded manifests. See the [mission ledger](MIDAS_COMPREHENSIVE_ENGINEERING_MISSION_LEDGER_20261025.md) for worktree inventory and test record. No branch was pushed or merged.
 
 ### Follow-up Veritas boundary replay — 2026-10-26 02:56 CET
 
@@ -275,3 +275,19 @@ resume only after repeated fresh resource admission passes and the pinned
 source prefix identity still validates. The exact receipt and file hashes are in
 [`MIDAS_REALITY_RECOVERY_PARTIAL_20261026T0222Z.json`](evidence/MIDAS_REALITY_RECOVERY_PARTIAL_20261026T0222Z.json),
 SHA-256 `0f8d134e3f5e8f581debb454818dd0d03ef144746a4c9b6138e0d01a2f502e86`.
+
+### Latest scheduled legacy Veritas update — 2026-10-26 03:30 CET
+
+The normal v4 timer started at 03:30:14 CET, wrote snapshot 524, then failed
+at 03:30:25 CET on `ValueError: Unsafe or oversized analysis artifact:
+research-summary.json`. The active store now contains 524 snapshots; the new
+file, `scan-20261026T023023Z-2fb5b10a5fef.json.gz`, is 689,137 bytes with
+SHA-256 `d674264d4dd99be09003a5398d3f9983d4dc6666eb180fa384cb71409136e909`.
+The 522-snapshot v6 boundary therefore has two later snapshots outside its
+pin. The legacy summary remains 2,097,481 bytes (329 bytes above its 2 MiB
+reader bound), and the read-only `/api/veritas/overview` request returned HTTP
+503 with `Veritas public observatory summary exceeds the interface bound`.
+The next timer is scheduled for 04:00:50 CET. The v6 replay and production
+service remain unchanged. Capture:
+[`MIDAS_VERITAS_20261026_POST_TIMER_RECHECK_0330.json`](evidence/MIDAS_VERITAS_20261026_POST_TIMER_RECHECK_0330.json),
+SHA-256 `379c03e04ae3303674485b4d114c9a4f38bd3d601d009085869844c6a3226001`.

@@ -1,0 +1,60 @@
+{
+  "api_veritas_overview": {
+    "body": "{\"detail\":\"Veritas public observatory summary exceeds the interface bound\"}",
+    "http_status": 503,
+    "url": "http://127.0.0.1:8000/api/veritas/overview"
+  },
+  "captured_at_utc": "2026-10-26T02:31:09.216580+00:00",
+  "latest_snapshot": {
+    "bytes": 689137,
+    "modified_at_local": "2026-10-26T03:30:24.449917+01:00",
+    "name": "scan-20261026T023023Z-2fb5b10a5fef.json.gz",
+    "path": "/home/charlie/midas-veritas/data/veritas-observatory/snapshots/scan-20261026T023023Z-2fb5b10a5fef.json.gz",
+    "sha256": "d674264d4dd99be09003a5398d3f9983d4dc6666eb180fa384cb71409136e909"
+  },
+  "legacy_api_summary": {
+    "bytes": 2249365,
+    "bytes_over_reader_limit": 1725077,
+    "path": "/home/charlie/midas-veritas/data/veritas-observatory/latest-summary.json",
+    "reader_limit_bytes": 524288,
+    "sha256": "919acbfac8abe5011aac05ed98fc47e76167605f522d543ebecd5c5f557863b0"
+  },
+  "legacy_v4_summary": {
+    "bytes": 2097481,
+    "bytes_over_reader_limit": 329,
+    "path": "/home/charlie/midas-veritas/data/veritas-observatory/research-summary.json",
+    "processed_snapshot_count": 423,
+    "reader_limit_bytes": 2097152,
+    "sha256": "aca960615863ab4a8df3ab673b78e70dcbef56583146275e023e907def7f18c5"
+  },
+  "network_access": "loopback read-only API request only; the systemd timer performed its normal scheduled observation before capture",
+  "observer_exit_timestamp": "Mon 2026-10-26 03:30:25 CET",
+  "observer_failure": "ValueError: Unsafe or oversized analysis artifact: research-summary.json",
+  "observer_service": {
+    "ActiveState": "failed",
+    "ExecMainCode": "1",
+    "ExecMainExitTimestamp": "Mon 2026-10-26 03:30:25 CET",
+    "ExecMainStartTimestamp": "Mon 2026-10-26 03:30:14 CET",
+    "ExecMainStatus": "1",
+    "Result": "exit-code"
+  },
+  "observer_status": "FAILED",
+  "production_service_changed": false,
+  "runtime_branch": "project/veritas",
+  "runtime_commit": "3b102928594323e7886859d348f7b2151663debb",
+  "runtime_git_status": "## project/veritas...origin/project/veritas\n",
+  "runtime_worktree": "/home/charlie/midas-veritas",
+  "schema_version": 1,
+  "snapshot_count": 524,
+  "timer": {
+    "ActiveState": "active",
+    "LastTriggerUSec": "Mon 2026-10-26 03:30:14 CET",
+    "NextElapseUSecRealtime": "Mon 2026-10-26 04:00:50 CET"
+  },
+  "v6_replay_boundary": {
+    "last_snapshot": "scan-20261026T013105Z-74db14ad03a0.json.gz",
+    "newer_snapshots_outside_boundary": 2,
+    "snapshot_count": 522,
+    "source_manifest_sha256": "c0e93d7fa5e49a7a4bb9f62d120baec4aaf7de6e0e2b0198c4a2b425edb78fa7"
+  }
+}

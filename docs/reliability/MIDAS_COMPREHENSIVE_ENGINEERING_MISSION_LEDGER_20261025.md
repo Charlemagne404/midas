@@ -259,8 +259,8 @@ mission report. Staged storage capacity does not pass at this sample.
 | Latest Reality inventory | `docs/reliability/evidence/MIDAS_MISSION_20261026_DEPLOYMENT_PREFLIGHT_BLOCKED_V3.json` |
 
 The machine-readable [source/evidence manifest](MIDAS_COMPREHENSIVE_ENGINEERING_MISSION_SOURCE_MANIFEST_20261026.json)
-binds 94 changed code, test, documentation and checked-in evidence files plus
-25 replay/live artifact references. The full engineering report is
+binds 95 changed code, test, documentation and checked-in evidence files plus
+26 replay/live artifact references. The full engineering report is
 [MIDAS_COMPREHENSIVE_ENGINEERING_MISSION_20261025.md](MIDAS_COMPREHENSIVE_ENGINEERING_MISSION_20261025.md).
 
 ## Outstanding blockers and required follow-up
@@ -387,3 +387,21 @@ the growth rate was not re-estimated.
   incomplete; a point admission pass is not recovery evidence.
 - Capture: `evidence/MIDAS_REALITY_ADMISSION_RECHECK_20261026T0204Z.json`,
   SHA-256 `527ca3ac3d08811863f8458b5418d6ba165450d34990289c589379a6d0cd8ea1`.
+
+### Latest scheduled legacy Veritas update — 2026-10-26 03:30 CET
+
+- The ordinary v4 timer ran at 03:30:14 CET, wrote the 524th snapshot, and
+  failed at 03:30:25 CET with
+  `ValueError: Unsafe or oversized analysis artifact: research-summary.json`.
+- The newest file is
+  `scan-20261026T023023Z-2fb5b10a5fef.json.gz`, 689,137 bytes, SHA-256
+  `d674264d4dd99be09003a5398d3f9983d4dc6666eb180fa384cb71409136e909`.
+  Two active snapshots now fall outside the pinned 522-snapshot v6 replay.
+  `/api/veritas/overview` remains HTTP 503; `research-summary.json` remains
+  2,097,481 bytes, 329 bytes above the v4 reader bound. The next timer is
+  04:00:50 CET.
+- Read-only capture:
+  `evidence/MIDAS_VERITAS_20261026_POST_TIMER_RECHECK_0330.json`, SHA-256
+  `379c03e04ae3303674485b4d114c9a4f38bd3d601d009085869844c6a3226001`.
+  The normal scheduled observer wrote the one new snapshot; this mission did
+  not change service, timer, or store state.

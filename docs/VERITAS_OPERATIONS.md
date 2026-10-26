@@ -20,7 +20,7 @@ fresh runtime check for 2026-10-26 supersedes their live-health assumptions:
   KiB API bound. The timer remains active; its next scheduled run was
   03:01:07 CET. A later isolated v6 replay completed at 02:54:52 CET and
   output verification completed at 02:56:31 CET.
-- The latest read-only inventory at 02:33:58 CET counted 522 snapshots. The
+- The 02:33:58 CET read-only inventory counted 522 snapshots. The
   02:31:05 CET scan wrote
   `scan-20261026T013105Z-74db14ad03a0.json.gz` (641,503 bytes; SHA-256
   `3cd0da2f7460da912c34465c7bfff671ec537e3f87561d0d7ba0c8050fdb69f0`), then
@@ -39,6 +39,15 @@ fresh runtime check for 2026-10-26 supersedes their live-health assumptions:
   store has 523 snapshots; this newest file is outside the time-bound 522-file
   v6 replay. The API still returns HTTP 503. See
   `docs/reliability/evidence/MIDAS_VERITAS_20261026_POST_TIMER_RECHECK.json`.
+- The 03:30:14 CET v4 run wrote snapshot 524, then failed at 03:30:25 CET on
+  `ValueError: Unsafe or oversized analysis artifact: research-summary.json`.
+  The new snapshot is `scan-20261026T023023Z-2fb5b10a5fef.json.gz` (689,137
+  bytes; SHA-256
+  `d674264d4dd99be09003a5398d3f9983d4dc6666eb180fa384cb71409136e909`). The
+  legacy summary remains 2,097,481 bytes; `/api/veritas/overview` returned
+  HTTP 503. Two snapshots now fall outside the 522-file v6 pin. The active
+  timer is scheduled for 04:00:50 CET. See
+  `docs/reliability/evidence/MIDAS_VERITAS_20261026_POST_TIMER_RECHECK_0330.json`.
 - V6 source integrity checks, Decimal reference economics, rebuildable SQLite
   scan/analysis catalogs and bounded publication are integrated in the
   isolated branch `codex/midas-comprehensive-engineering-mission-20261025`.
@@ -55,8 +64,8 @@ fresh runtime check for 2026-10-26 supersedes their live-health assumptions:
   catalog identities and summary digests, then roll out API and timer changes
   only after the result returns HTTP 200 from the active runtime.
 
-The latest observer retry failed at 02:31:07 CET on the oversized v4 summary;
-`/api/veritas/overview` returned HTTP 503 at the 02:33:58 CET recheck. No active
+The latest observer retry failed at 03:30:25 CET on the oversized v4 summary;
+`/api/veritas/overview` returned HTTP 503 at the 03:30 CET recheck. No active
 runtime was restarted or migrated. See [the 2026-10-26 engineering report](reliability/MIDAS_COMPREHENSIVE_ENGINEERING_MISSION_20261025.md)
 for replay results, exact file hashes, tests and rollout blockers.
 
