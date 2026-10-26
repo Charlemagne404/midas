@@ -12,8 +12,11 @@ from typing import Annotated, Any
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 D = Decimal
-Nonnegative = Annotated[Decimal, Field(ge=0, allow_inf_nan=False)]
-Positive = Annotated[Decimal, Field(gt=0, allow_inf_nan=False)]
+Nonnegative = Annotated[Decimal, Field(ge=0, max_digits=36, decimal_places=18, allow_inf_nan=False)]
+Positive = Annotated[Decimal, Field(gt=0, max_digits=36, decimal_places=18, allow_inf_nan=False)]
+FeeRate = Annotated[
+    Decimal, Field(ge=0, le=1, max_digits=18, decimal_places=12, allow_inf_nan=False)
+]
 
 
 class FrontierModel(BaseModel):
@@ -214,7 +217,7 @@ class FeeSchedule(FrontierModel):
     version: str | None = None
     applies_to: str | None = None
     fixed_fee: Nonnegative | None = None
-    rate: Nonnegative | None = None
+    rate: FeeRate | None = None
     formula: str | None = None
     fee_currency: str | None = None
     source_url: str | None = None

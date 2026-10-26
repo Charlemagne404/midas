@@ -149,7 +149,50 @@ test('relationship network remains bounded, selectable, and scroll-contained on 
       relationship_scan_may_be_incomplete: false,
       source_market_window_limit: 200,
     },
-    '/api/frontier/opportunities': { items: [], returned: 0, limit: 100, offset: 0 },
+    '/api/frontier/opportunities': {
+      items: [
+        {
+          candidate_id: 'multi-outcome-e2e-fixture',
+          family: 'within_market_multi_outcome_coverage',
+          classification: 'VERIFIED MATHEMATICAL INCONSISTENCY',
+          hypothetical: true,
+          practical_eligibility: false,
+          venues: ['kalshi'],
+          legs: [
+            {
+              venue: 'kalshi',
+              native_market_id: 'KX-THREEWAY',
+              instrument_id: 'KX-THREEWAY:RED',
+              outcome_id: 'red',
+              quantity: '10',
+              quoted_ask: '0.20',
+              modeled_buy_price: '0.20',
+              modeled_fee: '0',
+              displayed_depth: '10',
+              book_observation_id: 'fixture-red-book',
+            },
+          ],
+          gross_cost: '9',
+          modeled_fees: '0',
+          modeled_net_cost: '9',
+          outcome_payout_by_state: { red: '10', green: '10', blue: '10' },
+          gross_pnl_by_state: { red: '1', green: '1', blue: '1' },
+          net_pnl_by_state: { red: '1', green: '1', blue: '1' },
+          worst_case_gross_pnl: '1',
+          worst_case_net_pnl: '1',
+          capital_by_venue: { kalshi: '9' },
+          received_skew_ms: 10,
+          exchange_skew_ms: 5,
+          timing_verified: true,
+          reasons: ['E2E fixture covers every terminal state.'],
+          assumptions: ['Fixture only; not a market finding.'],
+          evidence_sha256: 'c'.repeat(64),
+        },
+      ],
+      returned: 1,
+      limit: 100,
+      offset: 0,
+    },
     '/api/frontier/runs': { items: [], returned: 0, limit: 30, offset: 0 },
     '/api/frontier/readiness': { gates: [] },
   };
@@ -175,6 +218,12 @@ test('relationship network remains bounded, selectable, and scroll-contained on 
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto('/');
   await page.getByRole('button', { name: 'Frontier', exact: true }).click();
+  await page.getByRole('button', { name: 'Candidates', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Terminal-state payoff analysis' })).toBeVisible();
+  await expect(page.getByText('Modeled payout')).toBeVisible();
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+  await page.setViewportSize({ width: 1440, height: 1000 });
   await page.getByRole('button', { name: 'Relationship graph', exact: true }).click();
 
   await page.getByLabel('Relationship graph center market').selectOption('polymarket:election-1');

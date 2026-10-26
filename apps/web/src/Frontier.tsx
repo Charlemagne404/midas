@@ -199,6 +199,12 @@ type Candidate = {
     displayed_depth: string;
     book_observation_id: string;
   }[];
+  gross_cost: string | null;
+  modeled_fees: string | null;
+  modeled_net_cost: string | null;
+  outcome_payout_by_state: Record<string, string>;
+  gross_pnl_by_state: Record<string, string>;
+  net_pnl_by_state: Record<string, string>;
   worst_case_gross_pnl: string | null;
   worst_case_net_pnl: string | null;
   capital_by_venue: Record<string, string>;
@@ -1909,7 +1915,19 @@ function CandidateCard({ candidate }: { candidate: Candidate }) {
       </div>
       <div className="fr-candidate-summary">
         <span>
-          Worst modeled net result<strong>{money(candidate.worst_case_net_pnl)}</strong>
+          Gross basket cost<strong>{money(candidate.gross_cost)}</strong>
+        </span>
+        <span>
+          Modeled fees<strong>{money(candidate.modeled_fees)}</strong>
+        </span>
+        <span>
+          Modeled net cost<strong>{money(candidate.modeled_net_cost)}</strong>
+        </span>
+        <span>
+          Worst gross result<strong>{money(candidate.worst_case_gross_pnl)}</strong>
+        </span>
+        <span>
+          Worst net result<strong>{money(candidate.worst_case_net_pnl)}</strong>
         </span>
         <span>
           Timing verified<strong>{candidate.timing_verified ? 'Yes' : 'No'}</strong>
@@ -1951,6 +1969,33 @@ function CandidateCard({ candidate }: { candidate: Candidate }) {
             </tbody>
           </table>
         </div>
+      )}
+      {Object.keys(candidate.gross_pnl_by_state).length > 0 && (
+        <section className="fr-candidate-states" aria-label="Terminal-state payoff analysis">
+          <h4>Terminal-state payoff analysis</h4>
+          <div className="fr-table-wrap">
+            <table className="fr-table">
+              <thead>
+                <tr>
+                  <th>Terminal state</th>
+                  <th>Modeled payout</th>
+                  <th>Gross result</th>
+                  <th>Net result</th>
+                </tr>
+              </thead>
+              <tbody>
+                {Object.entries(candidate.gross_pnl_by_state).map(([state, gross]) => (
+                  <tr key={`${candidate.candidate_id}-${state}`}>
+                    <td>{label(state)}</td>
+                    <td>{money(candidate.outcome_payout_by_state[state])}</td>
+                    <td>{money(gross)}</td>
+                    <td>{money(candidate.net_pnl_by_state[state])}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
       )}
       <details>
         <summary>Verification reasons and assumptions</summary>

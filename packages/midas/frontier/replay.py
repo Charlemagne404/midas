@@ -14,8 +14,9 @@ from midas.frontier.economics import (
     ExecutionScenario,
     OpportunityCandidate,
     generate_binary_coverage_candidates,
+    generate_multi_outcome_coverage_candidate,
 )
-from midas.frontier.models import BookSnapshot, FrontierMarket, FrontierModel
+from midas.frontier.models import BookSnapshot, FrontierMarket, FrontierModel, MarketKind
 from midas.frontier.relationships import (
     MATCHER_VERSION,
     Relationship,
@@ -23,7 +24,7 @@ from midas.frontier.relationships import (
     propose_relationships,
 )
 
-REPLAY_VERSION = "frontier-deterministic-replay-1"
+REPLAY_VERSION = "frontier-deterministic-replay-2"
 
 
 class ReplayManifest(FrontierModel):
@@ -128,6 +129,20 @@ def deterministic_replay(
                 as_of_utc=pinned_as_of,
             )
         )
+    for market in ordered_markets:
+        if (
+            market.market_kind == MarketKind.MULTI_OUTCOME_EVENT
+            and market.payoff.verified
+            and market.payoff.exhaustive
+        ):
+            candidates.append(
+                generate_multi_outcome_coverage_candidate(
+                    market,
+                    book_index.get(market.canonical_id, {}),
+                    scenario=scenario,
+                    as_of_utc=pinned_as_of,
+                )
+            )
     candidate_tuple = tuple(sorted(candidates, key=lambda item: item.candidate_id))
     classification_counts: dict[str, int] = {}
     for item in candidate_tuple:

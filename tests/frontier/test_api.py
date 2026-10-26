@@ -4,6 +4,7 @@ import asyncio
 import hashlib
 import json
 from datetime import timedelta
+from decimal import Decimal
 from pathlib import Path
 
 import httpx
@@ -23,6 +24,7 @@ from midas.frontier.models import (
     PayoffSpec,
     QuantityUnit,
     RawObservation,
+    StatePayout,
     TradeBatch,
     TradeObservation,
     Venue,
@@ -32,7 +34,7 @@ from midas.frontier.relationships import propose_relationships
 from midas.frontier.storage import FrontierStore
 
 from apps.api.frontier import router
-from tests.frontier.builders import T0, market
+from tests.frontier.builders import T0, book, market
 
 
 def _client(tmp_path):
@@ -395,3 +397,131 @@ async def test_bounded_probe_persists_and_reads_trade_batch(tmp_path):
     finally:
         await registry.aclose()
         await source_client.aclose()
+
+
+def test_replay_api_generates_and_persists_multi_outcome_candidate(tmp_path):
+    client, registry, http_client, requests, store = _client(tmp_path)
+    base = market(Venue.KALSHI, "multi-api-fixture", title="Three-way API fixture")
+    states = ("red", "green", "blue")
+    instruments = tuple(
+        MarketInstrument(
+            native_instrument_id=f"KX-API:{state.upper()}",
+            label=state.title(),
+            outcome_id=state,
+            quantity_unit=QuantityUnit.CONTRACT,
+            price_currency="USD",
+            payouts=tuple(
+                StatePayout(state_id=state_id, amount="1" if state_id == state else "0")
+                for state_id in states
+            ),
+        )
+        for state in states
+    )
+    market_data = base.model_dump(mode="python")
+    market_data.update(
+        market_kind=MarketKind.MULTI_OUTCOME_EVENT,
+        instruments=instruments,
+        payoff=PayoffSpec(
+            state_ids=states,
+            payout_currency="USD",
+            settlement_asset="USD",
+            exhaustive=True,
+            verified=True,
+            verification_basis="controlled exact outcome fixture",
+        ),
+    )
+    event = FrontierMarket.model_validate(market_data)
+
+    def raw_capture(kind: str, body: str, index: int) -> tuple[RawObservation, str]:
+        started = T0 + timedelta(seconds=index)
+        received = started + timedelta(milliseconds=10)
+        url = f"https://fixture.example/{kind}/{index}"
+        capture = RawObservation(
+            venue=Venue.KALSHI,
+            observation_kind=kind,
+            request_url=url,
+            http_status=200,
+            request_started_at_utc=started,
+            received_at_utc=received,
+            raw_body=body,
+            raw_sha256=hashlib.sha256(body.encode()).hexdigest(),
+            adapter_version="frontier-api-multi-outcome-fixture-v1",
+        )
+        identity = hashlib.sha256(
+            "|".join(
+                (
+                    capture.venue.value,
+                    capture.observation_kind,
+                    capture.request_url,
+                    capture.raw_sha256,
+                    capture.request_started_at_utc.isoformat(),
+                    capture.received_at_utc.isoformat(),
+                )
+            ).encode()
+        ).hexdigest()
+        return capture, identity
+
+    market_raw, market_observation_id = raw_capture("market_listing", '{"market":"multi"}', 0)
+    event = event.model_copy(
+        update={
+            "provenance": event.provenance.model_copy(
+                update={
+                    "source_url": market_raw.request_url,
+                    "adapter_version": market_raw.adapter_version,
+                    "request_started_at_utc": market_raw.request_started_at_utc,
+                    "response_received_at_utc": market_raw.received_at_utc,
+                    "processed_at_utc": market_raw.received_at_utc,
+                    "raw_sha256": market_raw.raw_sha256,
+                    "observation_id": market_observation_id,
+                }
+            )
+        }
+    )
+    store.append_observation(market_raw, MarketBatch(venue=Venue.KALSHI, markets=(event,)))
+    prices = ("0.20", "0.30", "0.40")
+    for index, (instrument, price) in enumerate(zip(instruments, prices, strict=True), start=1):
+        raw, observation_id = raw_capture(
+            "book_snapshot",
+            json.dumps({"instrument": instrument.native_instrument_id, "price": price}),
+            index,
+        )
+        snapshot = book(event, instrument.native_instrument_id, price)
+        snapshot = snapshot.model_copy(
+            update={
+                "received_at_utc": raw.received_at_utc,
+                "provenance": snapshot.provenance.model_copy(
+                    update={
+                        "source_url": raw.request_url,
+                        "adapter_version": raw.adapter_version,
+                        "request_started_at_utc": raw.request_started_at_utc,
+                        "response_received_at_utc": raw.received_at_utc,
+                        "processed_at_utc": raw.received_at_utc,
+                        "raw_sha256": raw.raw_sha256,
+                        "observation_id": observation_id,
+                    }
+                ),
+            }
+        )
+        store.append_observation(raw, snapshot)
+
+    try:
+        replay = client.post("/api/frontier/replay", json={})
+        assert replay.status_code == 200, replay.text
+        result = replay.json()
+        assert result["manifest"]["replay_version"] == "frontier-deterministic-replay-2"
+        assert len(result["candidates"]) == 1
+        candidate = result["candidates"][0]
+        assert candidate["family"] == "within_market_multi_outcome_coverage"
+        assert candidate["relationship_id"] is None
+        assert candidate["classification"] == "VERIFIED MATHEMATICAL INCONSISTENCY"
+        assert Decimal(candidate["worst_case_gross_pnl"]) == Decimal(1)
+        assert candidate["practical_eligibility"] is False
+
+        listed = client.get("/api/frontier/opportunities")
+        assert listed.status_code == 200
+        assert listed.json()["items"][0]["candidate_id"] == candidate["candidate_id"]
+        assert requests == []
+    finally:
+        client.close()
+        asyncio.run(registry.aclose())
+        asyncio.run(http_client.aclose())

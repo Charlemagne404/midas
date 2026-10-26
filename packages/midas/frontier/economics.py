@@ -1,12 +1,16 @@
-"""Exact Decimal evaluation of bounded, all-long binary outcome constructions."""
+"""Exact Decimal evaluation of bounded, all-long event outcome constructions."""
 
 from __future__ import annotations
 
 import hashlib
 import json
+import math
+from collections.abc import Callable
 from datetime import UTC, datetime
-from decimal import ROUND_HALF_UP, Decimal
+from decimal import ROUND_HALF_UP, Decimal, localcontext
 from enum import StrEnum
+from fractions import Fraction
+from functools import wraps
 
 from pydantic import Field
 
@@ -15,17 +19,20 @@ from midas.frontier.models import (
     FeeStatus,
     FrontierMarket,
     FrontierModel,
+    Lifecycle,
     MarketInstrument,
     MarketKind,
+    QuantityUnit,
 )
 from midas.frontier.relationships import Relationship, VerificationState
 
 D = Decimal
-ECONOMIC_MODEL_VERSION = "frontier-binary-coverage-verifier-2"
+ECONOMIC_MODEL_VERSION = "frontier-economic-verifiers-3"
 
 
 class OpportunityFamily(StrEnum):
     CROSS_VENUE_COMPLETE_COVERAGE = "cross_venue_complete_coverage"
+    WITHIN_MARKET_MULTI_OUTCOME_COVERAGE = "within_market_multi_outcome_coverage"
     PRICE_DISCREPANCY = "price_discrepancy"
 
 
@@ -43,10 +50,16 @@ class ExecutionScenario(FrontierModel):
     """Explicit virtual assumptions; values do not describe actual execution."""
 
     name: str = "quoted"
-    slippage_bps: Decimal = Field(default=D(0), ge=0, le=5000, allow_inf_nan=False)
-    quote_decay_bps_per_second: Decimal = Field(default=D(0), ge=0, le=10000, allow_inf_nan=False)
+    slippage_bps: Decimal = Field(
+        default=D(0), ge=0, le=5000, max_digits=18, decimal_places=12, allow_inf_nan=False
+    )
+    quote_decay_bps_per_second: Decimal = Field(
+        default=D(0), ge=0, le=10000, max_digits=18, decimal_places=12, allow_inf_nan=False
+    )
     execution_delay_ms: int = Field(default=0, ge=0, le=3_600_000)
-    fill_fraction: Decimal = Field(default=D(1), gt=0, le=1, allow_inf_nan=False)
+    fill_fraction: Decimal = Field(
+        default=D(1), gt=0, le=1, max_digits=18, decimal_places=12, allow_inf_nan=False
+    )
     max_received_skew_ms: int = Field(default=1000, ge=0, le=60_000)
     max_exchange_skew_ms: int = Field(default=1000, ge=0, le=60_000)
     max_book_age_ms: int = Field(default=15_000, ge=1, le=3_600_000)
@@ -77,7 +90,7 @@ class OpportunityCandidate(FrontierModel):
     practical_eligibility: bool = False
     market_ids: tuple[str, ...]
     venues: tuple[str, ...]
-    relationship_id: str
+    relationship_id: str | None = None
     legs: tuple[PositionLeg, ...] = ()
     outcome_payout_by_state: dict[str, Decimal] = Field(default_factory=dict)
     gross_cost: Decimal | None = None
@@ -102,6 +115,17 @@ class _LegBuildError(ValueError):
     pass
 
 
+def _high_precision_decimal_context[**P, R](function: Callable[P, R]) -> Callable[P, R]:
+    @wraps(function)
+    def evaluate(*args: P.args, **kwargs: P.kwargs) -> R:
+        with localcontext() as context:
+            context.prec = 128
+            return function(*args, **kwargs)
+
+    return evaluate
+
+
+@_high_precision_decimal_context
 def generate_binary_coverage_candidates(
     left: FrontierMarket,
     right: FrontierMarket,
@@ -265,6 +289,467 @@ def generate_binary_coverage_candidates(
         )
         output.append(candidate)
     return tuple(output)
+
+
+@_high_precision_decimal_context
+def generate_multi_outcome_coverage_candidate(
+    market: FrontierMarket,
+    books: dict[str, BookSnapshot],
+    *,
+    scenario: ExecutionScenario | None = None,
+    as_of_utc: datetime | None = None,
+    quantity: Decimal | None = None,
+) -> OpportunityCandidate:
+    """Evaluate a verified, one-hot, single-market exhaustive outcome set.
+
+    The bounded implementation buys the same quantity of every outcome at the
+    recorded best ask. It does not infer completeness from labels or event
+    metadata, and it does not imply that these independently observed books can
+    be filled together. An explicit requested quantity is exact and is rejected
+    when any displayed top level or the modeled fill fraction cannot support it.
+    """
+    scenario = scenario or ExecutionScenario()
+    as_of = as_of_utc or datetime.now(UTC)
+    if as_of.tzinfo is None or as_of.utcoffset() is None:
+        raise ValueError("Evaluation timestamp must be timezone-aware")
+    as_of = as_of.astimezone(UTC)
+    family = OpportunityFamily.WITHIN_MARKET_MULTI_OUTCOME_COVERAGE
+    candidate_id = _multi_candidate_id(market, books, scenario, quantity)
+
+    def empty(classification: OpportunityClassification, reason: str) -> OpportunityCandidate:
+        return OpportunityCandidate(
+            candidate_id=candidate_id,
+            family=family,
+            classification=classification,
+            practical_eligibility=False,
+            market_ids=(market.canonical_id,),
+            venues=(market.venue.value,),
+            relationship_id=None,
+            observed_at_utc=as_of,
+            assumptions=("No execution or realized P&L is represented.",),
+            reasons=(reason,),
+            evidence_sha256=_multi_candidate_hash(market, books, (), scenario),
+        )
+
+    states = market.payoff.state_ids
+    if market.market_kind != MarketKind.MULTI_OUTCOME_EVENT:
+        return empty(
+            OpportunityClassification.UNSUPPORTED_ECONOMICS,
+            "Only multi-outcome event markets are supported by this evaluator.",
+        )
+    if market.lifecycle != Lifecycle.OPEN:
+        return empty(
+            OpportunityClassification.INCOMPLETE_EVIDENCE,
+            "The market is not recorded as open.",
+        )
+    if (
+        not market.payoff.verified
+        or not market.payoff.exhaustive
+        or not market.resolution.verified
+        or market.settlement_asset != market.payoff.settlement_asset
+    ):
+        return empty(
+            OpportunityClassification.INCOMPLETE_EVIDENCE,
+            "Exhaustive payoff, resolution, and market settlement evidence are not all verified.",
+        )
+    if not 3 <= len(states) <= 16 or len(market.instruments) != len(states):
+        return empty(
+            OpportunityClassification.UNSUPPORTED_ECONOMICS,
+            "The bounded evaluator supports three to sixteen outcomes with one instrument per state.",
+        )
+    instruments = tuple(sorted(market.instruments, key=lambda item: item.native_instrument_id))
+    state_set = set(states)
+    if len(state_set) != len(states) or {item.outcome_id for item in instruments} != state_set:
+        return empty(
+            OpportunityClassification.UNSUPPORTED_ECONOMICS,
+            "Outcome identifiers must form a one-to-one mapping to the verified state set.",
+        )
+    if len({item.quantity_unit for item in instruments}) != 1:
+        return empty(
+            OpportunityClassification.UNSUPPORTED_ECONOMICS,
+            "Every outcome must use the same trading quantity unit.",
+        )
+
+    for instrument in instruments:
+        if (
+            instrument.quantity_unit == QuantityUnit.UNKNOWN
+            or instrument.price_currency != market.payoff.payout_currency
+            or len(instrument.payouts) != len(states)
+            or {item.state_id for item in instrument.payouts} != state_set
+        ):
+            return empty(
+                OpportunityClassification.UNSUPPORTED_ECONOMICS,
+                "Every outcome needs a known unit, matching quote currency, and a complete payout vector.",
+            )
+        payouts = {item.state_id: item.amount for item in instrument.payouts}
+        for state in states:
+            expected = D(1) if state == instrument.outcome_id else D(0)
+            if payouts[state] != expected:
+                return empty(
+                    OpportunityClassification.UNSUPPORTED_ECONOMICS,
+                    "Only unit-payout one-hot contracts are supported; overlapping or partial payoffs are rejected.",
+                )
+
+    top_asks = []
+    for instrument in instruments:
+        book = books.get(instrument.native_instrument_id)
+        if book is None:
+            return empty(
+                OpportunityClassification.INCOMPLETE_EVIDENCE,
+                "A public order-book snapshot is missing for at least one outcome.",
+            )
+        if (
+            book.venue != market.venue
+            or book.native_market_id != market.native_market_id
+            or book.native_instrument_id != instrument.native_instrument_id
+            or book.quantity_unit != instrument.quantity_unit
+            or book.crossed
+            or not book.asks
+        ):
+            return empty(
+                OpportunityClassification.INCOMPLETE_EVIDENCE,
+                "An outcome book is empty, crossed, or does not match the market instrument.",
+            )
+        ask = min(book.asks, key=lambda level: level.price)
+        if ask.price > 1:
+            return empty(
+                OpportunityClassification.UNSUPPORTED_ECONOMICS,
+                "An observed ask exceeds the supported unit settlement payout.",
+            )
+        top_asks.append((instrument, book, ask))
+
+    max_depth = min(item[2].quantity for item in top_asks)
+    target_quantity = max_depth * scenario.fill_fraction
+    available_after_fill = target_quantity
+    if quantity is not None:
+        if not quantity.is_finite() or quantity <= 0:
+            return empty(
+                OpportunityClassification.INCOMPLETE_EVIDENCE,
+                "Requested quantity must be finite and positive.",
+            )
+        if quantity > available_after_fill:
+            return empty(
+                OpportunityClassification.INCOMPLETE_EVIDENCE,
+                "Requested quantity exceeds the modeled common top-ask depth.",
+            )
+        target_quantity = quantity
+    try:
+        common_quantity = _aligned_multi_outcome_quantity(
+            target_quantity,
+            tuple(item[0].quantity_step for item in top_asks),
+            exact_requested=(quantity),
+        )
+    except ValueError as error:
+        return empty(OpportunityClassification.INCOMPLETE_EVIDENCE, str(error))
+    if common_quantity <= 0:
+        return empty(
+            OpportunityClassification.INCOMPLETE_EVIDENCE,
+            "No positive quantity is available at every outcome's displayed best ask.",
+        )
+    for instrument, _, ask in top_asks:
+        if (
+            instrument.minimum_quantity is not None
+            and common_quantity < instrument.minimum_quantity
+        ):
+            return empty(
+                OpportunityClassification.INCOMPLETE_EVIDENCE,
+                f"Common quantity is below the minimum for outcome {instrument.outcome_id}.",
+            )
+        if (
+            instrument.minimum_notional is not None
+            and common_quantity * ask.price < instrument.minimum_notional
+        ):
+            return empty(
+                OpportunityClassification.INCOMPLETE_EVIDENCE,
+                f"Common notional is below the minimum for outcome {instrument.outcome_id}.",
+            )
+
+    received_times = [book.received_at_utc for _, book, _ in top_asks]
+    received_skew = max(_epoch_ms(item) for item in received_times) - min(
+        _epoch_ms(item) for item in received_times
+    )
+    exchange_times = [book.exchange_timestamp_utc for _, book, _ in top_asks]
+    level_times = [ask.exchange_timestamp_utc for _, _, ask in top_asks]
+    timing_reasons: list[str] = []
+    ages = [_age_ms(as_of, value) for value in received_times]
+    if any(value > scenario.max_book_age_ms for value in ages):
+        timing_reasons.append("At least one outcome book exceeds the configured freshness window.")
+    if any(
+        book.freshness_limit_ms is not None and age > book.freshness_limit_ms
+        for (_, book, _), age in zip(top_asks, ages, strict=True)
+    ):
+        timing_reasons.append("At least one outcome book exceeds its source freshness limit.")
+    if any(value > as_of for value in received_times):
+        timing_reasons.append(
+            "At least one outcome book was received after the replay analysis time."
+        )
+    if received_skew > scenario.max_received_skew_ms:
+        timing_reasons.append("Outcome-book receipt times exceed the configured comparison skew.")
+    if any(value is None for value in exchange_times) or any(
+        value is None for value in level_times
+    ):
+        exchange_skew = None
+        timing_reasons.append(
+            "Comparable exchange and best-ask timestamps are missing for an outcome."
+        )
+    else:
+        concrete_exchange_times = [value for value in exchange_times if value is not None]
+        concrete_level_times = [value for value in level_times if value is not None]
+        if any(value > as_of for value in concrete_exchange_times + concrete_level_times):
+            timing_reasons.append(
+                "At least one outcome quote timestamp is after the replay analysis time."
+            )
+        exchange_skew = max(_epoch_ms(value) for value in concrete_exchange_times) - min(
+            _epoch_ms(value) for value in concrete_exchange_times
+        )
+        level_skew = max(_epoch_ms(value) for value in concrete_level_times) - min(
+            _epoch_ms(value) for value in concrete_level_times
+        )
+        if (
+            exchange_skew > scenario.max_exchange_skew_ms
+            or level_skew > scenario.max_exchange_skew_ms
+        ):
+            timing_reasons.append(
+                "Outcome-book exchange timestamps exceed the configured comparison skew."
+            )
+    timestamp_semantics = {book.exchange_timestamp_semantics for _, book, _ in top_asks}
+    if len(timestamp_semantics) != 1 or "unknown" in timestamp_semantics:
+        timing_reasons.append("Outcome books report different exchange timestamp semantics.")
+    if any(book.quality_flags for _, book, _ in top_asks):
+        timing_reasons.append("At least one outcome book is marked with a source-quality issue.")
+
+    delay_seconds = D(scenario.execution_delay_ms) / D(1000)
+    added_bps = scenario.slippage_bps + scenario.quote_decay_bps_per_second * delay_seconds
+    effective_asks = [ask.price * (D(1) + added_bps / D(10000)) for _, _, ask in top_asks]
+    if any(price > 1 for price in effective_asks):
+        return empty(
+            OpportunityClassification.UNSUPPORTED_ECONOMICS,
+            "Modeled slippage or quote decay exceeds the maximum unit settlement payout.",
+        )
+
+    fees = [
+        _calculate_fee(market, instrument, common_quantity, price, as_of)
+        for (instrument, _, _), price in zip(top_asks, effective_asks, strict=True)
+    ]
+    fees_known = all(value is not None for value in fees)
+    total_fees = sum((value for value in fees if value is not None), D(0)) if fees_known else None
+    gross_cost = common_quantity * sum((ask.price for _, _, ask in top_asks), D(0))
+    modeled_cost = common_quantity * sum(effective_asks, D(0))
+    if total_fees is not None:
+        modeled_cost += total_fees
+    payouts = {
+        state: sum(
+            (
+                common_quantity
+                * next(payout.amount for payout in instrument.payouts if payout.state_id == state)
+                for instrument, _, _ in top_asks
+            ),
+            D(0),
+        )
+        for state in states
+    }
+    gross_by_state = {state: payout - gross_cost for state, payout in payouts.items()}
+    net_by_state = (
+        {state: payout - modeled_cost for state, payout in payouts.items()} if fees_known else {}
+    )
+    worst_gross = min(gross_by_state.values()) if gross_by_state else None
+    worst_net = min(net_by_state.values()) if net_by_state else None
+    reasons = list(timing_reasons)
+    assumptions = [
+        "Every verified state is covered by exactly one unit-payout outcome contract.",
+        "All legs are hypothetical long positions in one venue at recorded best asks; no order was submitted.",
+        "Only displayed best-ask depth is modeled; deeper liquidity and simultaneous fills are not established.",
+        "No cross-venue equivalence, shared collateral, or transfer assumption is used.",
+        "Practical execution eligibility is not established from public market-data snapshots.",
+    ]
+    if not fees_known:
+        assumptions.append(
+            "The venue fee schedule is incomplete or expired; unknown fees are not treated as zero."
+        )
+    if scenario.slippage_bps or scenario.quote_decay_bps_per_second or scenario.execution_delay_ms:
+        assumptions.append("Slippage and quote-decay values are user-supplied virtual assumptions.")
+    if scenario.fill_fraction < 1:
+        assumptions.append("Displayed depth is scaled by a modeled partial-fill fraction.")
+    if worst_gross is None or worst_gross <= 0:
+        classification = (
+            OpportunityClassification.NEGATIVE_AFTER_MODELED_COSTS
+            if fees_known
+            else OpportunityClassification.INCOMPLETE_EVIDENCE
+        )
+        reasons.append(
+            "The exhaustive outcome set does not have a positive gross payoff over quoted cost."
+        )
+    elif not fees_known:
+        classification = OpportunityClassification.CONDITIONAL_ECONOMIC_OPPORTUNITY
+        reasons.append(
+            "Gross outcome coverage is positive, but the applicable fee schedule is incomplete."
+        )
+    elif worst_net is None or worst_net <= 0:
+        classification = OpportunityClassification.NEGATIVE_AFTER_MODELED_COSTS
+        reasons.append("The verified venue fee model eliminates the gross outcome discrepancy.")
+    else:
+        classification = OpportunityClassification.VERIFIED_MATHEMATICAL_INCONSISTENCY
+        reasons.append(
+            "The verified exhaustive outcome prices imply a positive modeled payoff in every state."
+        )
+
+    legs = tuple(
+        PositionLeg(
+            venue=market.venue.value,
+            market_id=market.canonical_id,
+            native_market_id=market.native_market_id,
+            instrument_id=instrument.native_instrument_id,
+            outcome_id=instrument.outcome_id or "unknown",
+            quantity=common_quantity,
+            quoted_ask=ask.price,
+            modeled_buy_price=effective,
+            quote_currency=instrument.price_currency,
+            displayed_depth=ask.quantity,
+            modeled_fee=fee,
+            book_observation_id=book.provenance.observation_id,
+            market_observation_id=market.provenance.observation_id,
+        )
+        for (instrument, book, ask), effective, fee in zip(
+            top_asks, effective_asks, fees, strict=True
+        )
+    )
+    evidence_sha256 = _multi_candidate_hash(market, books, legs, scenario)
+    return OpportunityCandidate(
+        candidate_id=candidate_id,
+        family=family,
+        classification=classification,
+        practical_eligibility=False,
+        market_ids=(market.canonical_id,),
+        venues=(market.venue.value,),
+        relationship_id=None,
+        legs=legs,
+        outcome_payout_by_state=payouts,
+        gross_cost=gross_cost,
+        modeled_fees=total_fees,
+        modeled_net_cost=modeled_cost if fees_known else None,
+        gross_pnl_by_state=gross_by_state,
+        net_pnl_by_state=net_by_state,
+        worst_case_gross_pnl=worst_gross,
+        worst_case_net_pnl=worst_net,
+        capital_by_venue={
+            market.venue.value: modeled_cost
+            if fees_known
+            else common_quantity * sum(effective_asks, D(0))
+        },
+        received_skew_ms=received_skew,
+        exchange_skew_ms=exchange_skew,
+        timing_verified=not timing_reasons,
+        observed_at_utc=as_of,
+        assumptions=tuple(assumptions),
+        reasons=tuple(reasons),
+        evidence_sha256=evidence_sha256,
+    )
+
+
+def _aligned_multi_outcome_quantity(
+    upper_bound: Decimal,
+    steps: tuple[Decimal | None, ...],
+    *,
+    exact_requested: Decimal | None,
+) -> Decimal:
+    values = (upper_bound, *(item for item in (exact_requested,) if item is not None), *steps)
+    for value in values:
+        if value is None:
+            continue
+        exponent = value.as_tuple().exponent
+        if (
+            not value.is_finite()
+            or not isinstance(exponent, int)
+            or exponent < -18
+            or value.adjusted() > 18
+            or value.adjusted() < -18
+        ):
+            raise ValueError(
+                "Outcome quantity magnitude or precision exceeds the exact arithmetic bound."
+            )
+    fractions = [Fraction(step) for step in steps if step is not None]
+    if not fractions:
+        return upper_bound
+    common_denominator = math.lcm(*(item.denominator for item in fractions))
+    numerators = [item.numerator * (common_denominator // item.denominator) for item in fractions]
+    common_step = Fraction(math.lcm(*numerators), common_denominator)
+    if len(str(common_step.numerator)) > 36 or len(str(common_step.denominator)) > 24:
+        raise ValueError("Common outcome quantity step exceeds the exact arithmetic bound.")
+    if exact_requested is not None:
+        if Fraction(exact_requested) % common_step != 0:
+            raise ValueError("Requested quantity violates at least one outcome quantity step.")
+        return exact_requested
+    units = Fraction(upper_bound) // common_step
+    return _fraction_to_decimal(units * common_step)
+
+
+def _fraction_to_decimal(value: Fraction) -> Decimal:
+    denominator = value.denominator
+    twos = fives = 0
+    while denominator % 2 == 0:
+        denominator //= 2
+        twos += 1
+    while denominator % 5 == 0:
+        denominator //= 5
+        fives += 1
+    if denominator != 1:
+        raise ValueError("Outcome quantity step does not have an exact decimal representation.")
+    scale = max(twos, fives)
+    if scale > 18:
+        raise ValueError("Outcome quantity precision exceeds the exact arithmetic bound.")
+    coefficient = value.numerator * (2 ** (scale - twos)) * (5 ** (scale - fives))
+    if len(str(abs(coefficient))) > 36:
+        raise ValueError("Outcome quantity magnitude exceeds the exact arithmetic bound.")
+    digits = tuple(int(character) for character in str(abs(coefficient)))
+    return Decimal((1 if coefficient < 0 else 0, digits, -scale))
+
+
+def _multi_candidate_id(
+    market: FrontierMarket,
+    books: dict[str, BookSnapshot],
+    scenario: ExecutionScenario,
+    quantity: Decimal | None,
+) -> str:
+    return hashlib.sha256(
+        json.dumps(
+            {
+                "model": ECONOMIC_MODEL_VERSION,
+                "family": OpportunityFamily.WITHIN_MARKET_MULTI_OUTCOME_COVERAGE.value,
+                "market_id": market.canonical_id,
+                "book_observation_ids": sorted(
+                    item.provenance.observation_id for item in books.values()
+                ),
+                "scenario": scenario.model_dump(mode="json"),
+                "quantity": str(quantity) if quantity is not None else None,
+            },
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode()
+    ).hexdigest()
+
+
+def _multi_candidate_hash(
+    market: FrontierMarket,
+    books: dict[str, BookSnapshot],
+    legs: tuple[PositionLeg, ...],
+    scenario: ExecutionScenario,
+) -> str:
+    return hashlib.sha256(
+        json.dumps(
+            {
+                "model": ECONOMIC_MODEL_VERSION,
+                "market": market.model_dump(mode="json"),
+                "books": [
+                    item.model_dump(mode="json")
+                    for item in sorted(books.values(), key=lambda book: book.native_instrument_id)
+                ],
+                "legs": [item.model_dump(mode="json") for item in legs],
+                "scenario": scenario.model_dump(mode="json"),
+            },
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode()
+    ).hexdigest()
 
 
 def _complement(market: FrontierMarket, instrument: MarketInstrument) -> MarketInstrument | None:
@@ -442,8 +927,8 @@ def _evaluate_pair(
             candidate_id=identity,
             family=family,
         )
-    left_fee = _calculate_fee(left, left_instrument, common_quantity, l_effective)
-    right_fee = _calculate_fee(right, right_instrument, common_quantity, r_effective)
+    left_fee = _calculate_fee(left, left_instrument, common_quantity, l_effective, as_of)
+    right_fee = _calculate_fee(right, right_instrument, common_quantity, r_effective, as_of)
     fees_known = left_fee is not None and right_fee is not None
     modeled_fee_sum = (
         left_fee + right_fee if left_fee is not None and right_fee is not None else None
@@ -590,10 +1075,21 @@ def _evaluate_pair(
 
 
 def _calculate_fee(
-    market: FrontierMarket, instrument: MarketInstrument, quantity: Decimal, price: Decimal
+    market: FrontierMarket,
+    instrument: MarketInstrument,
+    quantity: Decimal,
+    price: Decimal,
+    as_of_utc: datetime,
 ) -> Decimal | None:
     schedule = market.fees
-    if schedule.status != FeeStatus.VERIFIED or schedule.rate is None:
+    if (
+        schedule.status != FeeStatus.VERIFIED
+        or schedule.applies_to != "taker"
+        or schedule.rate is None
+        or schedule.fixed_fee not in (None, D(0))
+        or (schedule.effective_at_utc is not None and schedule.effective_at_utc > as_of_utc)
+        or (schedule.expires_at_utc is not None and schedule.expires_at_utc <= as_of_utc)
+    ):
         return None
     if schedule.fee_currency != instrument.price_currency:
         return None

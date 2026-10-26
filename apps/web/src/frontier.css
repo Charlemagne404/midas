@@ -1308,7 +1308,7 @@
 }
 .fr-candidate-summary {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
   gap: 9px;
   padding: 12px 14px;
   border-bottom: 1px solid #242e38;
@@ -1323,6 +1323,18 @@
   color: #bdc8d5;
   font-size: 10px;
   font-weight: 520;
+}
+.fr-candidate-states {
+  display: grid;
+  gap: 8px;
+  padding: 11px 14px;
+  border-bottom: 1px solid #242e38;
+}
+.fr-candidate-states h4 {
+  margin: 0;
+  color: #aeb9c8;
+  font-size: 9px;
+  font-weight: 550;
 }
 .fr-candidate details {
   padding: 11px 14px;

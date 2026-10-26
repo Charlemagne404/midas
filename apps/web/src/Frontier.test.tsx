@@ -124,6 +124,57 @@ it('renders recorded-evidence empty states and never probes a source automatical
   });
   expect(await screen.findByText('condition:trade-fixture')).toBeInTheDocument();
   expect(screen.getByText('0.51 USD')).toBeInTheDocument();
+
+  queryClient.setQueryData(['frontier', 'opportunities'], {
+    items: [
+      {
+        candidate_id: 'multi-outcome-fixture-candidate',
+        family: 'within_market_multi_outcome_coverage',
+        classification: 'VERIFIED MATHEMATICAL INCONSISTENCY',
+        hypothetical: true,
+        practical_eligibility: false,
+        venues: ['kalshi'],
+        legs: [
+          {
+            venue: 'kalshi',
+            native_market_id: 'KX-THREEWAY',
+            instrument_id: 'KX-THREEWAY:RED',
+            outcome_id: 'red',
+            quantity: '10',
+            quoted_ask: '0.20',
+            modeled_buy_price: '0.20',
+            modeled_fee: '0',
+            displayed_depth: '10',
+            book_observation_id: 'kalshi-red-book',
+          },
+        ],
+        gross_cost: '9',
+        modeled_fees: '0',
+        modeled_net_cost: '9',
+        outcome_payout_by_state: { red: '10', green: '10', blue: '10' },
+        gross_pnl_by_state: { red: '1', green: '1', blue: '1' },
+        net_pnl_by_state: { red: '1', green: '1', blue: '1' },
+        worst_case_gross_pnl: '1',
+        worst_case_net_pnl: '1',
+        capital_by_venue: { kalshi: '9' },
+        received_skew_ms: 12,
+        exchange_skew_ms: 5,
+        timing_verified: true,
+        reasons: ['The fixture covers every verified terminal state.'],
+        assumptions: ['Hypothetical only.'],
+        evidence_sha256: 'c'.repeat(64),
+      },
+    ],
+    returned: 1,
+    limit: 100,
+    offset: 0,
+  });
+  fireEvent.click(screen.getByRole('button', { name: 'Candidates' }));
+  expect(
+    await screen.findByRole('heading', { name: 'Terminal-state payoff analysis' }),
+  ).toBeInTheDocument();
+  expect(screen.getByText('Gross basket cost')).toBeInTheDocument();
+  expect(screen.getAllByText('red')).toHaveLength(2);
 });
 
 it('renders a bounded accessible relationship graph and opens selected evidence', async () => {
