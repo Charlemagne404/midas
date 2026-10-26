@@ -694,3 +694,14 @@ by the API's greater-than-95% charge. The receipt is
 `/home/charlie/midas-engineering-mission-20261026/evidence/readiness-resource-sample-2026-10-26T0623Z.json`
 (SHA-256 `dfda3ec6d3e48b4d837229f17f87e2c6e53b1a16acf8109948663333abe32a9b`).
 Full test identities and the persisted-summary boundary are in [engineering mission Section 18](reliability/MIDAS_ENGINEERING_MISSION_2026-10-26.md).
+
+
+## V6 checkpoint reconciliation and current boundary — 2026-10-26 06:38 UTC
+
+The bounded observer completed successfully at 06:30:54Z. Its V6 summary is `CATCHING_UP` at 80/532 snapshots, with 452 pending. Reference v3 covers 3,200 repeated observations across 1,342 markets, with 585 independently snapshot-valid and zero positive-gross, supported, or net-eligible. The newest scan is `scan-20261026T063043Z-496db0ece99f`: 40 selected from a bounded eligible population of 94 in a 299-market response union, with 8 reference-random, 31 rotating, and 1 stable random control; 7 frozen controls were unavailable. It has 33 quality-valid and 7 strict-fresh pairs, with no positive top-gross pairs. There is no v3 analysis event for this scan yet. Do not combine it with the processed-prefix totals. Summary and scan hashes are in engineering mission Section 19.
+
+The 06:35:10Z resource receipt shows the API at 1,609,183,232 / 1,610,612,736 bytes `MemoryHigh` (1.36 MiB headroom), with 8 high events over 565.771 seconds and no OOM. Heavy research and full replay admission remain blocked. The Reality collector status at 06:36:18Z is `RECORDING_UNSEQUENCED`, 16/16 fresh, ordinal 5,189,775; the source-analysis receipt remains through ordinal 5,183,587. The intervening 6,188 record ordinals and current tail do not have cold-recovery proof. The recorder remains on its 24 GiB / 90-day configuration. The invalid archive and its extra files remain untouched.
+
+An existing isolated output at `/home/charlie/midas-engineering-mission-20261025/data/veritas-v6-offline-replay-v3-20261026` contains a 519-snapshot complete receipt and a canonical self-consistent post-run verification. The old verifier reports `copy_checkpoint_reconciliation=null`; the artifact was not rewritten. On `codex/veritas-v6-integration-20261026`, commit `6702a9a610a280181547dcd71fd5a6d599a45132` fixes completed-resume attestation with bounded append-only reconciliation history and backward-compatible legacy-record migration. Twenty-one tests across the replay and continuous-analysis files pass under a 256/384 MiB memory scope and 10% CPU. This code has not been deployed and must not be used to rewrite the preserved output. Exact hashes and status details are in engineering mission Section 19.
+
+Arena lifecycle reconciliation at 06:38Z found 37 failed job-unit records, each matched to a durable terminal `job.json`; no active Arena worker, missing record, or nonterminal mismatch was found. The scheduler completed successfully. Failure history remains intact.

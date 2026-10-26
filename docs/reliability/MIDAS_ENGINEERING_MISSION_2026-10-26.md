@@ -2,16 +2,19 @@
 
 ## Executive readout
 
-The latest persisted Veritas V6 analysis was updated at
-`2026-10-26T06:01:54.492061Z` and remains `CATCHING_UP`: 70/531 snapshots
-processed, 461 pending. Independent Decimal reference v3 audited 2,800 repeated
-observations across 1,173 unique markets: 2,333 primary-quality-valid, 497
-independently snapshot-valid, and zero positive-gross, economically supported,
-or net-eligible observations. The separate latest scan sampled 40 markets
-(8 reference-random, 32 rotating-stratified), had 34 quality-valid pairs, and
-no stable controls. Repeated observations are not independent trials. Summary,
-semantic snapshot, compressed file, and catalog identities are recorded in
-Section 16.
+The latest persisted Veritas V6 summary was updated at
+`2026-10-26T06:30:54.661818Z` and remains `CATCHING_UP`: 80/532 snapshots
+processed, 452 pending. Independent Decimal reference v3 covers 3,200 repeated
+observations across 1,342 unique markets, with 585 independently snapshot-valid
+and zero positive-gross, economically supported, or net-eligible observations.
+The latest scan at `06:30:43Z` selected 40 from a bounded eligible population
+of 94 in six successful queries covering 299 unique response-union markets:
+8 reference-random, 31 rotating-stratified, and 1 stable random control. It had
+33 quality-valid pairs, 7 strict-fresh pairs, and zero positive top-gross
+pairs; 7 frozen control IDs were unavailable. The scan is cataloged but has no
+V3 analysis event yet, so it is not included in the cumulative independent
+counts. Repeated observations are not independent trials. Summary and scan
+identities are recorded in Section 19.
 
 The Research Readiness view is deployed through the existing local Mission
 Control Vite service. At `06:04:27Z`, API release `a152999` reported `READY`,
@@ -20,12 +23,14 @@ recovery was `CHECKPOINT_VERIFIED` at 675,629 events. Browser verification at
 1440 px and 390 px completed without page errors or horizontal overflow; a
 delayed-source browser check confirmed pending evidence does not pass gates.
 
-At `06:11:53Z`, the protected Reality recorder remained on its older 24 GiB /
+At `06:36:18Z`, the protected Reality recorder was still on its older 24 GiB /
 90-day configuration, with 16/16 current books fresh and state
-`RECORDING_UNSEQUENCED`. Its current ordinal was 5,183,903, `current_error` was
-null, and the untimestamped generic `ConnectionClosedOK` diagnostic remained in
-the status. Sequence verification remains false. Local gap markers do not
-count lost exchange events.
+`RECORDING_UNSEQUENCED`. Its current ordinal was 5,189,775, 6,188 records beyond
+the latest finalized-source analysis boundary at ordinal 5,183,587. `current_error`
+was null; the generic `ConnectionClosedOK` field had no error timestamp and is
+not classified as an active incident. Sequence verification remains false.
+The status held 18,720 local gap markers; these are not a count of lost
+exchange events.
 
 The scheduled bounded finalized-source analysis completed at `06:10:53Z` with
 status `current`: 32,213/32,213 finalized catalog segments processed, zero
@@ -37,13 +42,17 @@ The 06:03 metadata-only inventory found 32,200 finalized raw segments totaling
 9,157,885,739 bytes; the archive remains invalid with 1,138 out-of-manifest
 files and 58 `.copying` files.
 
-The scheduled capacity receipt at `06:11:08Z` projects 16.87 effective days
-under the loaded budget; the staged 112 GiB / 120-day plan projects 108.08 days
-and remains pending restart. At `06:22:56Z`, the API had 4.02 MiB below
-`MemoryHigh`, so research admission remains blocked. API `a152999`, web
-`767f330`, and Reality PID 3007040 were active; the bounded observer,
-source-analysis, gap-detail, capacity, and research-director one-shots were
-inactive. No protected service or archive writer was changed.
+The 06:11 capacity receipt projected 16.87 effective days under the loaded
+24 GiB / 90-day budget; the staged 112 GiB / 120-day plan projects 108.08 days
+and remains pending restart. Current collector status reports 9,186,445,262
+bytes against the 25,769,803,776-byte raw budget, leaving 16,583,358,514 bytes;
+a new growth forecast was not captured. At `06:35:10Z`, API charge was
+1,609,183,232 / 1,610,612,736 bytes (1.36 MiB headroom); its high-event counter
+rose by 8 during the 565.771-second sample. There were no `max`, OOM, or
+OOM-kill events. API admission remains blocked. API `a152999`, web `767f330`,
+and Reality PID 3007040 were active; all observed one-shot services had
+completed and were inactive. No protected service or archive writer was
+changed.
 
 The 04:55:04Z metadata-only exact-boundary preflight counted 32,065 finalized
 raw segment names through ordinal 5,160,978, while source and gap indexes
@@ -53,24 +62,23 @@ segments outside its manifest and 58 `.copying` files. The clean candidate
 rejects unmanifested files, but no archive or production mutation was made.
 The protected recorder remained on PID 3007040; the preflight is blocked.
 
-The original Reliability worktree remains dirty and preserved. A clean local
-candidate at `d298957afe14d6cbbc47038fbb101a96a63fadca` integrates its bounded
-collector telemetry with archive fail-closed handling. Its focused Reality,
-dashboard, and operations suite passes 66 tests, and its isolated zero-duration
-first-write/recovery receipt matches the candidate source identity. It remains
-undeployed.
+The original Reliability worktree remains dirty and preserved. The later clean
+candidate `a1f2fe9` integrates bounded collector telemetry, archive fail-closed
+handling, and checkpoint-prefix recovery. Its relevant suite passed 109 tests;
+final recovery/source-identity follow-ups passed 42 focused tests plus isolated
+startup. A 100-second exact-source canary recorded 322 frames and four verified
+checkpoints but only 8/16 fresh outcomes at its final checkpoint. The candidate
+remains undeployed and does not pass deployment preflight.
 
-Readiness is **not established**. At 06:22:56Z, API cgroup charge was
-1,606,393,856 of 1,610,612,736 bytes at `MemoryHigh` (4.02 MiB headroom),
-while host available memory was 8.55 GB. The API recorded no new high or OOM
-event during its sample; Reality used 935,804,928 of 1,207,959,552 bytes with
-no new high or OOM event. Host I/O full PSI was 0.99% avg10 while API and
-Reality cgroup I/O full PSI were both 0% avg10; this point sample does not
-attribute host pressure to either service. Resource admission remains blocked
-by API headroom. Arena had zero active or queued jobs in the 05:59Z
-readiness receipt; three stale director manifests projected to two
-cancellations and one failure without being rewritten. No later Arena snapshot
-was captured in this addendum.
+Readiness is **not established**. The 06:35:10Z endpoint sample recorded API
+charge of 1,609,183,232 / 1,610,612,736 bytes (1.36 MiB headroom) and 8 new
+`MemoryHigh` events over 565.771 seconds, with no `max` or OOM event. Reality
+was at 935,739,392 / 1,207,959,552 bytes, with no new high or OOM event; host
+available memory was 8.64 GB and host I/O full PSI was 0.82% avg10. The API
+resource gate remains **BLOCKED**. The 06:38 Arena reconciliation found no
+active Arena job units; all 37 failed Arena unit entries mapped to durable
+terminal job records, with no missing records or `RUNNING`/`QUEUED` mismatch.
+The scheduler completed successfully. Failure history was preserved.
 
 No Frontier, Atlas, replacement long-duration campaign, real-money operation,
 wallet action, or exchange order was started.
@@ -588,16 +596,17 @@ directories remain available for rollback.
 
 | Component | Classification | Current verdict |
 | --- | --- | --- |
-| Veritas V6 code, independent Decimal reference, catalog migration and bounded publication | **COMPLETE AND VERIFIED** | At the 06:01Z persisted update: 70/531 snapshots processed, 461 pending; latest compressed snapshot and semantic digest reconcile, both live SQLite catalogs pass read-only integrity checks; catch-up remains incomplete |
-| Economic evidence | **PARTIALLY VERIFIED** | V6 v3 covers 2,800 repeated observations across 1,173 markets, with 497 independently snapshot-valid and zero positive-gross/support/net-eligible; execution outcomes remain unmeasured |
+| Veritas V6 code, independent Decimal reference, catalog migration and bounded publication | **COMPLETE AND VERIFIED** | Current persisted summary is 80/532 snapshots processed with 452 pending; the latest 06:30 scan is cataloged but not in the processed V3 analysis prefix; current SQLite integrity checks remain those captured at 06:08Z |
+| Completed-resume checkpoint attestation | **IMPLEMENTED, DEPLOYMENT PENDING** | Commit `6702a9a` records bounded checkpoint reconciliation history, including clean matches and repairs; 21 replay/analysis tests pass in a constrained scope; the preserved 519-snapshot output was not rewritten |
+| Economic evidence | **PARTIALLY VERIFIED** | V6 v3 covers 3,200 repeated observations across 1,342 markets, with 585 independently snapshot-valid and zero positive-gross/support/net-eligible; latest scan is not independently audited yet and execution outcomes remain unmeasured |
 | Readiness resource API and dashboard | **COMPLETE AND VERIFIED** | Memory composition and explicit loading state deployed at API `a152999` / web `767f330`; live delayed-response browser receipt and screenshot in Section 15 |
 | Veritas missing-evidence rendering and deterministic browser fixtures | **COMPLETE AND VERIFIED** | Null renders as `Not measured`, distinct from measured zero; targeted browser test passed, and active immutable web release `767f330` retains the fix with HTTP 200 smoke verification |
 | Reality candidate hardening | **IMPLEMENTED, DEPLOYMENT PENDING** | Latest clean candidate `a1f2fe9` includes the 4278 telemetry base, archive fail-closed checks, and checkpoint-prefix recovery fix. The full relevant suite passed 109 tests; final recovery and source-identity follow-ups passed 42 focused tests plus isolated startup. The exact-source 100-second feed canary completed with 322 frames and four verified checkpoints but only 8/16 fresh outcomes at its last checkpoint, so it does not pass deployment preflight |
 | Reality candidate bounded telemetry | **IMPLEMENTED, DEPLOYMENT PENDING** | Candidate exposes bounded persistence, transport-queue, backpressure, checkpoint, and resource fields; production API still lacks these observations |
-| Production Reality telemetry/integrity | **PARTIALLY VERIFIED** | At 06:11Z, 16/16 books were fresh at ordinal 5,183,903, but status remains unsequenced/degraded; current error is null, generic error is untimestamped, and persistence-window, queue-depth, and recovery-state telemetry are missing |
-| Cold recovery/reproducibility | **PARTIALLY VERIFIED** | Incremental source analysis reached 32,213/32,213 segments with zero pending at 06:10:53Z, through ordinal 5,183,587; live ordinal was 5,183,903 at 06:11:53Z. The later tail/current boundary is not fully replay-verified |
-| Storage/archive provenance | **BLOCKED** | The 06:11Z projection gives 16.87 effective days on the active 24 GiB / 90-day contract; staged 112 GiB / 120-day capacity estimates 108.08 days. The 06:03 inventory confirms 1,138 out-of-manifest files and 58 `.copying` files; provenance remains invalid |
-| Cross-component research admission | **PARTIALLY VERIFIED** | API resource sample at 06:22:56Z shows only 4.02 MiB `MemoryHigh` headroom; Arena had 0 active/queued jobs and 3 stale owner-linked directors (2 cancelled, 1 failed) in the 05:59Z receipt |
+| Production Reality telemetry/integrity | **PARTIALLY VERIFIED** | At 06:36Z, 16/16 books were fresh at ordinal 5,189,775, but state remains unsequenced; `current_error` is null, the generic close error has no timestamp, and production persistence-window, queue-depth, and recovery-state telemetry are still missing |
+| Cold recovery/reproducibility | **PARTIALLY VERIFIED** | Source analysis covered 32,213/32,213 segments through ordinal 5,183,587 at 06:10:53Z; live ordinal was 5,189,775 at 06:36:18Z, 6,188 records ahead. The preserved 519-snapshot isolated replay is complete for its own boundary but the latest 532-snapshot store is not cold-recovery verified |
+| Storage/archive provenance | **BLOCKED** | Current raw status reports 9,186,445,262 / 25,769,803,776 bytes; the last forecast (06:11Z) projected 16.87 effective days. The 112 GiB / 120-day plan remains pending, and the 06:03 inventory's 1,138 extra files / 58 `.copying` files still have invalid provenance |
+| Cross-component research admission | **PARTIALLY VERIFIED** | The 06:35:10Z sample shows 1.36 MiB API `MemoryHigh` headroom and 8 high events over 565.771 seconds; Arena had no active job units, and all 37 failed Arena unit entries mapped to durable terminal records |
 | Trading, Frontier, Atlas, 48-hour campaign | **DEFERRED BY SCOPE** | Not started |
 
 Recommended next actions:
@@ -609,9 +618,9 @@ Recommended next actions:
    preserving design and corruption/interruption regression tests. Do not
    infer a leak from the page-cache charge or skip rolling-hash validation.
 3. Let the scheduled bounded V6 observer continue its existing cadence; do
-   not manually accelerate it. Review the 461-snapshot backlog and the latest
-   scan's 8 reference-random / 32 rotating / 0 stable-control split on the next
-   scheduled result.
+   not manually accelerate it. Review the 452-snapshot backlog and the latest
+   scan's 8 reference-random / 31 rotating / 1 stable-control split. The seven
+   missing frozen controls and unprocessed newest scan remain explicit limits.
 4. Keep Arena director lifecycle state derived from the matching owner job;
    preserve the three persisted manifests, and investigate any future
    `UNVERIFIED` projection before considering a mutation. The expired
@@ -637,7 +646,6 @@ Recommended next actions:
    complete boundary is reconciled.
 8. Keep browser verification fixture-based for Arena and Reality, retain the
    explicit no-job assertion in Arena, and keep the large-chunk advisory
-   visible in the deployed UI build record.
 
 This report does not authorize a Reality service restart, archive mutation,
 or a new research campaign.
@@ -1317,3 +1325,113 @@ snapshots. Finalized-source analysis remains current at its 06:10:53Z boundary;
 the scheduled one-shots were inactive at capture. The resource receipt is
 `/home/charlie/midas-engineering-mission-20261026/evidence/readiness-resource-sample-2026-10-26T0623Z.json`,
 SHA-256 `dfda3ec6d3e48b4d837229f17f87e2c6e53b1a16acf8109948663333abe32a9b`.
+
+## 19. Current V6, Reality boundary, resource admission, and recovery fix — 2026-10-26 06:38 UTC
+
+### V6 processed prefix and latest scan
+
+The scheduled observer completed successfully from `06:30:33Z` to
+`06:30:54Z` on release `e988cbb0af86fe89e07da9af8036598b65068deb`. Its persisted
+summary is `CATCHING_UP` at 80/532 snapshots, with 452 pending, last processed
+input `snapshots/scan-20261016T193136Z-b607415423d5.json.gz`, and update time
+`2026-10-26T06:30:54.661818Z`. The summary's internal digest recomputed to
+`fece02562be1b79fbcbaef096fdd4c217420a8122653f3de4e737e352d2ef380`; the file
+SHA-256 is `1b3b389950a4a8d942768754413c6e9ea25262ece20b5d9cf126c57d9e56dc65`.
+Reference v3 covers 3,200 repeated observations across 1,342 unique markets;
+585 are independently snapshot-valid. It reports zero positive-gross,
+economically supported, or net-eligible observations, with all 3,200 currently
+unsupported. Source-quality and validity disagreement counters are each 2,119
+and may overlap. These are repeated observations, not independent trials.
+
+The newest public snapshot, `scan-20261026T063043Z-496db0ece99f`, was captured
+at `06:30:43.094079Z`. Six successful bounded queries returned 299 unique
+markets; 94 were eligible for this scan. Selection was 8 reference-random, 31
+rotating-stratified, and 1 stable random control. Seven frozen control IDs were
+missing. The scan has 33 quality-valid and 7 strict-fresh pairs, zero positive
+top-gross pairs, and complete initial CLOB integrity for all 80 requested
+assets. Its compressed file SHA-256 is
+`cf281247beed04af568dc810b6ce8b46e3439950ff4d491e50e06a90876560dc`; its
+semantic evidence SHA-256 is
+`496db0e99fde791c03636a1730177be71fbc02a52d024d741876965409e3c0`.
+The catalog row matches both identities. There is no v3 analysis event for
+this scan yet; the 80-snapshot aggregate and this current scan are kept
+separate. The bounded receipt is
+`/home/charlie/midas-engineering-mission-20261026/evidence/veritas-v6-current-analysis-snapshot-2026-10-26T0638Z.json`
+(SHA-256 `3cfb0d667f4cbfad9a732484d9fd36fcbf2efeb3fd39e2e170264231e7f0b50e`).
+
+### Reality boundary, storage, and resource admission
+
+The latest atomic collector status read at `2026-10-26T06:36:18.362668Z`
+reports PID 3007040, `RECORDING_UNSEQUENCED`, ordinal 5,189,775, 16/16 fresh
+books, `sequence_verified=false`, `backpressure_active=false`, and
+`current_error=null`. Its generic `ConnectionClosedOK` field has no error
+timestamp, so it is retained without being classified as current. It has
+18,720 local gap markers, which are not lost exchange events. The active
+configuration remains 24 GiB / 90 days. Current status reports 9,186,445,262
+bytes stored against a 25,769,803,776-byte budget; filesystem available space
+was 159,603,740,672 bytes. The source analyzer last processed 32,213/32,213
+catalog segments through ordinal 5,183,587 at `06:10:53Z`; the live ordinal is
+6,188 records beyond that boundary. This is a record ordinal difference, not
+an exchange-event-loss count. The archive inventory is still the 06:03Z
+metadata-only receipt; its invalid manifest, 1,138 out-of-manifest names, and
+58 `.copying` files remain unresolved and untouched. The collector receipt is
+`/home/charlie/midas-engineering-mission-20261026/evidence/reality-collector-boundary-readonly-2026-10-26T0635Z.json`
+(SHA-256 `1de3eca8d8828c2d1cb85bf6123ec3475bec8c82e082efcfadf689d7c4e9ee22`);
+the status payload SHA-256 is
+`924ae7d15366fa613f33350556e6de812a24d819cf31f4b73435f307c2247365`.
+
+The latest bounded resource sample at `06:35:10.879407Z` shows API charge
+1,609,183,232 / 1,610,612,736 bytes, leaving 1,429,504 bytes (1.36 MiB).
+The API `memory.events.high` delta was 8 over 565.771 seconds; `max`, `oom`,
+and `oom_kill` remained zero. Reality was at 935,739,392 / 1,207,959,552
+bytes, with 272,220,160 bytes below `MemoryHigh` and no new high or OOM event.
+Host available memory was 8,640,356,352 bytes and host I/O full PSI was 0.82%
+avg10. Research admission remains **BLOCKED**. Resource receipt:
+`/home/charlie/midas-engineering-mission-20261026/evidence/readiness-resource-sample-2026-10-26T0634Z.json`
+(SHA-256 `0818ac7643398740171493966f99c36d0d4256ca77fce03c2e9582f9077f4904`;
+response SHA-256 `99b637c65f66ccc6e7770544f07bca47410335567d47ccbf81de1d2ab3f38863`).
+The latest capacity forecast remains the 06:11Z projection; a fresh rate
+measurement is not yet available. The staged 112 GiB / 120-day configuration
+still projects 108.08 effective days and remains pending restart.
+
+### Arena lifecycle reconciliation
+
+At `06:38:02Z`, 37 failed Arena job unit records were reconciled to their
+durable `job.json` files. All 37 records were terminal: 21 cancelled, 6 failed,
+and 10 interrupted across the main, reliability-endurance, and Veritas roots.
+There were zero active Arena job units, missing job records, or failed units
+whose durable job remained `RUNNING` or `QUEUED`. The scheduler had completed
+successfully at `06:37:04Z`. Failed-unit history was not cleared. Receipt:
+`/home/charlie/midas-engineering-mission-20261026/evidence/arena-job-lifecycle-reconciliation-2026-10-26T0636Z.json`
+(SHA-256 `f936dfb9fdd13ddd68f06932e6cd63e5d9be0b7f49e030185a6fa1e72cd4d96d`).
+
+### Preserved replay output and checkpoint attestation correction
+
+A preserved isolated V6 output under
+`/home/charlie/midas-engineering-mission-20261025/data/veritas-v6-offline-replay-v3-20261026`
+contains a complete 519-snapshot replay of its own input boundary (322,760,995
+source bytes, zero network requests, 519 indexed snapshots, 519 analyzed,
+zero quarantines). Its replay receipt and separate post-run verifier have
+matching canonical receipt digests (`12d199873bb2a9a71a4a1d430d69765a4ef428bbb200587de9b0a5167ea307da`); the verifier's own canonical digest also checks. The receipt file SHA-256 is
+`5bcbf01437f1ada0b5b73e648e8c8bd9ac42ae5db216836c337f4bfe2a056ca0` and the
+post-run verification file SHA-256 is
+`22d800358b707f3d8037dbd63607ccd9e193137c46ce4eb901eb764e38d5b272`.
+The earlier verifier records `copy_checkpoint_reconciliation=null`, so this
+artifact does not establish checkpoint reconciliation and was not rewritten.
+Three earlier systemd invocations for this replay exited 2, 1, and 2 between
+`00:39:48Z` and `00:42:13Z`; their journal records lack diagnostic text. The
+stored complete receipt describes a later output interval, `00:43:52Z` to
+`00:54:05Z`, and does not change those unit outcomes. This replay is not the
+latest 532-snapshot store or its latest-boundary cold-recovery proof.
+
+The defect was fixed on `codex/veritas-v6-integration-20261026`, commit
+`6702a9a610a280181547dcd71fd5a6d599a45132`. Completed resumes now record a
+verified or reconstructed checkpoint event, preserve an append-only history
+bounded at 128 entries, migrate the prior repair-only state format, expose that
+history in post-run verification, and fail closed when the history is invalid
+or at its limit. The pre-existing 519-snapshot output and production stores
+were not changed. Focused replay and continuous-analysis suites passed 21
+tests in 5.30 seconds under a 256 MiB `MemoryHigh`, 384 MiB `MemoryMax`, and
+10% CPU scope; Ruff lint, format, and `git diff --check` passed. This code is
+implemented and verified on the integration branch; it has not been deployed
+or used to rewrite existing replay evidence.
