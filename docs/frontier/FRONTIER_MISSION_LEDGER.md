@@ -36,7 +36,7 @@
 | `5a2d61f` | Append-only relationship review/revision records, strict review API/UI, latest-state replay, additive SQLite schema migration, and revocation tests. |
 | `084d860` | Bounded 1–3 hop graph query and center/depth UI, live listing-plus-book capture for all three sources, and tamper detection on observation, relationship, review-lineage and replay reads. |
 | `3fe24dd` | Bounded API trade capture/read-back, hash-preserving dashboard table, one-trade Polymarket route contract, and live listing/book/trade captures for all three venues. |
-| Documentation checkpoint | This report, architecture/development documentation, and preserved bounded API book capture. |
+| `99269f3` | Engineering report, Frontier architecture, Mission Control and development documentation, root README/configuration, and updated trade-capture evidence references. |
 
 ## Public source investigation
 
@@ -163,6 +163,7 @@ indexed graph adjacency and multi-outcome verification.
 
 ## Latest checkpoint identity
 
-The implementation commits above are fixed. The documentation checkpoint is
-committed with this report and the architecture, development and root project
-documentation; its commit identity is recorded in the final ledger amendment.
+The implementation commits above are fixed. Documentation checkpoint
+`99269f324cce8f9152b7ca3ebf2053587749132c` records this report, the Frontier
+architecture, and the development/root project documentation. This ledger
+amendment follows that documentation commit.
