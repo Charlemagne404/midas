@@ -69,11 +69,10 @@ def _books(left, right):
     )
 
 
-def _multi_outcome_market(
-    *, steps: tuple[str | None, str | None, str | None] = ("0.1", "0.1", "0.1")
-):
+def _multi_outcome_market(*, state_count: int = 3, steps: tuple[str | None, ...] | None = None):
     base = market(Venue.KALSHI, "multi-outcome-fixture", title="Three-way fixture event")
-    states = ("red", "green", "blue")
+    states = ("red", "green", "blue", *(f"state-{index}" for index in range(3, state_count)))
+    step_values = steps if steps is not None else ("0.1",) * state_count
     instruments = tuple(
         MarketInstrument(
             native_instrument_id=f"KX-MULTI:{state.upper()}",
@@ -81,7 +80,7 @@ def _multi_outcome_market(
             outcome_id=state,
             quantity_unit=QuantityUnit.CONTRACT,
             price_currency="USD",
-            quantity_step=Decimal(steps[index]) if steps[index] is not None else None,
+            quantity_step=Decimal(step_values[index]) if step_values[index] is not None else None,
             minimum_quantity=Decimal("0.1"),
             payouts=tuple(
                 StatePayout(state_id=state_id, amount=Decimal(1 if state_id == state else 0))
@@ -107,10 +106,11 @@ def _multi_outcome_market(
     return FrontierMarket.model_validate(values)
 
 
-def _multi_outcome_books(market_value, asks=("0.20", "0.30", "0.40")):
+def _multi_outcome_books(market_value, asks=None):
+    ask_values = asks if asks is not None else ("0.20", "0.30", "0.40")
     return {
         instrument.native_instrument_id: book(market_value, instrument.native_instrument_id, ask)
-        for instrument, ask in zip(market_value.instruments, asks, strict=True)
+        for instrument, ask in zip(market_value.instruments, ask_values, strict=True)
     }
 
 
@@ -390,6 +390,25 @@ def test_multi_outcome_decimal_math_preserves_full_bounded_input_precision():
         as_of_utc=T0 + timedelta(milliseconds=100),
     )
     assert candidate.worst_case_gross_pnl == Decimal("0.123456789012345678123456789012345678")
+
+
+def test_multi_outcome_evaluator_accepts_sixteen_states_and_rejects_seventeen():
+    maximum = _multi_outcome_market(state_count=16)
+    maximum_books = _multi_outcome_books(maximum, asks=("0.05",) * 16)
+    candidate = generate_multi_outcome_coverage_candidate(
+        maximum, maximum_books, as_of_utc=T0 + timedelta(milliseconds=100)
+    )
+    assert candidate.classification == OpportunityClassification.VERIFIED_MATHEMATICAL_INCONSISTENCY
+    assert len(candidate.legs) == 16
+    assert set(candidate.outcome_payout_by_state) == set(maximum.payoff.state_ids)
+    assert len(set(candidate.outcome_payout_by_state.values())) == 1
+
+    oversized = _multi_outcome_market(state_count=17)
+    rejected = generate_multi_outcome_coverage_candidate(
+        oversized, {}, as_of_utc=T0 + timedelta(milliseconds=100)
+    )
+    assert rejected.classification == OpportunityClassification.UNSUPPORTED_ECONOMICS
+    assert any("three to sixteen outcomes" in reason for reason in rejected.reasons)
 
 
 def test_multi_outcome_requires_one_hot_complete_states_and_all_books():
