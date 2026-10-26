@@ -219,10 +219,17 @@ research while API cgroup headroom remains below the admission threshold.
 The postflight cross-component snapshot reported no active or queued Arena
 jobs, six terminal Laboratory campaigns, and three stale Arena directors whose
 persisted state still said `RUNNING` while owning jobs were cancelled/failed.
-The gate remains blocked; their manifests were not rewritten. The scheduled
-bounded Reality source-analysis service completed its 59-segment batch at
-ordinal 5,140,697 with zero pending segments for that captured prefix. This is
-not the separate 31,742-segment cold-recovery matrix.
+The gate remains blocked; their manifests were not rewritten. A fresh
+read-only production API check at 04:32:50Z again found zero active/queued
+Arena jobs, zero active/unverified directors, and three persisted `RUNNING`
+manifests with terminal owner jobs: two `CANCELLED`, one `FAILED` after the
+1 GiB artifact budget was exceeded. Each owner linkage matched the manifest's
+configuration and source hash; manifest and job-record hashes are preserved
+in Section 6. The deployed API already projects these terminal states without
+rewriting those persisted records, so no cleanup mutation was justified. The
+scheduled bounded Reality source-analysis service completed its 59-segment
+batch at ordinal 5,140,697 with zero pending segments for that captured
+prefix. This is not the separate 31,742-segment cold-recovery matrix.
 
 ## 5. Verification and retained failures
 
@@ -306,6 +313,10 @@ Mission evidence files are under
   build, and bounded targeted Veritas browser result. SHA-256 values are
   `930d2ea1877b6535afef7b06fb66eb77db2b580cef465c1ffd99a0d069f6eaa2` and
   `1514ee18decf58811d62d07cea4ed56540b754ff5086a219409133d31a0a471f`.
+- `arena-director-owner-projection-2026-10-26T0433Z.json` — fresh production
+  read-only research-activity projection, verified owner configuration/source
+  linkage, and hashes for the three unchanged persisted manifests and job
+  records; SHA-256 `c145a7ea5680108b15fddbea2fa1ab6a84b480874068a3fff0734d81bcb1be07`.
 - `data/veritas-v6-offline-replay-522-20261026/` in the preserved
   `midas-engineering-mission-20261025` worktree — isolated 522-snapshot replay
   receipt SHA-256
@@ -332,7 +343,7 @@ directories remain available for rollback.
 | Production Reality telemetry/integrity | **PARTIALLY VERIFIED** | Feed is unsequenced and degraded; persistence, queue, and recovery telemetry are missing |
 | Cold recovery/reproducibility | **PARTIALLY VERIFIED** | Historical prefixes and bounded checks exist; latest boundary is not fully verified |
 | Storage/archive provenance | **BLOCKED** | Active warning runway; staged capacity inactive; archive manifest and provenance invalid |
-| Cross-component research admission | **PARTIALLY VERIFIED** | Dashboard blocks near API `MemoryHigh`; Arena has three stale directors; startup verification is CPU/I/O intensive |
+| Cross-component research admission | **PARTIALLY VERIFIED** | Dashboard blocks near API `MemoryHigh`; three persisted Arena manifests are read-only projected as 2 cancelled / 1 failed from owner jobs, with 0 active and 0 unverified; startup verification is CPU/I/O intensive |
 | Trading, Frontier, Atlas, 48-hour campaign | **DEFERRED BY SCOPE** | Not started |
 
 Recommended next actions:
@@ -346,8 +357,9 @@ Recommended next actions:
 3. Let the scheduled bounded V6 observer continue its existing cadence; do
    not manually accelerate it. Review the 506-snapshot backlog and zero
    stable-control coverage on the next scheduled result.
-4. Reconcile the three stale Arena director projections from owner-job and
-   artifact evidence without rewriting frozen manifests.
+4. Keep Arena director lifecycle state derived from the matching owner job;
+   preserve the three persisted manifests, and investigate any future
+   `UNVERIFIED` projection before considering a mutation.
 5. Keep the Reality recorder on its current service. The archive-provenance
    fix is committed on `codex/reality-archive-provenance-20261026`; the
    isolated startup receipt is complete, and the exact-boundary preflight is
@@ -474,4 +486,5 @@ in evidence. The replacement E2E does not submit Arena jobs. This UI/test
 follow-up has not been deployed. After the bounded Playwright scope ended, no
 Playwright or fixture worker remained; the protected Reality unit remained
 active at MainPID 3007040 with its original 2026-10-22 16:40:02 CEST start
-time.
+time. The web reliability changes are committed locally as
+`90c625d4e168c64fe3c8d1f93e0c1393734fd009`; they remain deployment-pending.
