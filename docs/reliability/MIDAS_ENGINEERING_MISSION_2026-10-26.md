@@ -542,6 +542,15 @@ Mission evidence files are under
   segment and ordinal, archive manifest/file inventory, capacity, cgroup, and
   deployment blockers. It is metadata-only and not the official gate; SHA-256
   `1c7298bec73744334e3f37be3527433a7837e4900d6fb8441ca55204055a0934`.
+- `reality-candidate-live-feed-canary-2026-10-26T0524Z.json` — 100-second
+  public read-only canary at the exact candidate identity, including durable
+  frames, public request/response status, replay/checkpoint integrity, book
+  freshness, comparison results, and cgroup measurements; SHA-256
+  `b6a7d5798edee24562259f439f43b8adcc574b039f45d13bd4ff093bd9fa79e2`.
+- `reality-candidate-live-feed-canary-2026-10-26.json` — retained initial
+  harness attempt that failed before market discovery because a synchronous
+  HTTP event hook was awaited; SHA-256
+  `87abf89c9282d637ddd661c1d9e020b2c0c4e2d5ec21f63b373d5bcc874bdaed`.
 - `data/veritas-v6-offline-replay-522-20261026/` in the preserved
   `midas-engineering-mission-20261025` worktree — isolated 522-snapshot replay
   receipt SHA-256
@@ -566,7 +575,7 @@ directories remain available for rollback.
 | Economic evidence | **PARTIALLY VERIFIED** | Latest reference covers 1,600 repeated pairs across 741 markets; 310 independently snapshot-valid, zero economic support/net eligibility, and execution outcomes remain unmeasured |
 | Readiness resource API and dashboard | **COMPLETE AND VERIFIED** | Deployed at API `cf452ec` / web `90c625d`; browser receipt and screenshot available |
 | Veritas missing-evidence rendering and deterministic browser fixtures | **COMPLETE AND VERIFIED** | Null renders as `Not measured`, distinct from measured zero; targeted browser test passed, and immutable web release `90c625d` serves the fix with HTTP 200 smoke verification |
-| Reality candidate hardening | **IMPLEMENTED, DEPLOYMENT PENDING** | Latest clean candidate `a1f2fe9` includes the 4278 telemetry base, archive fail-closed checks, and checkpoint-prefix recovery fix. The full relevant suite passed 109 tests; final recovery and source-identity follow-ups passed 42 focused tests plus the isolated startup smoke. A feed canary, complete latest-boundary recovery, storage clearance, and protected-restart authorization remain |
+| Reality candidate hardening | **IMPLEMENTED, DEPLOYMENT PENDING** | Latest clean candidate `a1f2fe9` includes the 4278 telemetry base, archive fail-closed checks, and checkpoint-prefix recovery fix. The full relevant suite passed 109 tests; final recovery and source-identity follow-ups passed 42 focused tests plus isolated startup. The exact-source 100-second feed canary completed with 322 frames and four verified checkpoints but only 8/16 fresh outcomes at its last checkpoint, so it does not pass deployment preflight |
 | Reality candidate bounded telemetry | **IMPLEMENTED, DEPLOYMENT PENDING** | Candidate exposes bounded persistence, transport-queue, backpressure, checkpoint, and resource fields; production API still lacks these observations |
 | Production Reality telemetry/integrity | **PARTIALLY VERIFIED** | At 05:20Z, 16/16 books were fresh and the collector was receiving at ordinal 5,169,781, but API health remained degraded/unsequenced with persistence-window, queue-depth, and recovery-state telemetry missing |
 | Cold recovery/reproducibility | **PARTIALLY VERIFIED** | The 05:20 metadata boundary has 32,117 finalized segment names and live ordinal 5,169,781; historical source/gap indexes cover older boundaries only. Checkpoint recovery now handles newly inserted empty finalized segments, but the current boundary is not fully replay-verified |
@@ -593,14 +602,16 @@ Recommended next actions:
    remain an evidence record, not be re-dispatched.
 5. Keep the Reality recorder on its current service. The archive-provenance
    and unmanifested-segment fixes are integrated on
-   `codex/reality-archive-provenance-20261026` at `a1f2fe9`; the bounded
-   first-write, checkpoint-prefix recovery, and candidate regression checks
-   pass. The exact-boundary preflight
-   remains blocked. Before any transition, reconcile NVMe headroom and archive
-   provenance, install and verify an immutable candidate release, complete a
-   bounded feed canary and recovery at the current raw boundary, and prepare
-   rollback plus the expected recording-interruption statement. Then request
-   separate approval for the protected stop/restart.
+   `codex/reality-archive-provenance-20261026` at `a1f2fe9`; checkpoint-prefix
+   recovery and bounded startup are verified. Its exact-source 100-second
+   canary produced frames and independent matches but only 8/16 fresh outcome
+   books at the final checkpoint. Diagnose that sampling/freshness result
+   without weakening the stale threshold. The exact-boundary preflight remains
+   blocked. Before any transition, reconcile NVMe headroom and archive
+   provenance, install and verify an immutable candidate release, complete
+   current-boundary recovery, and prepare rollback plus the expected
+   recording-interruption statement. Then request separate approval for the
+   protected stop/restart.
 6. Resolve archive ownership and provenance for the 1,138 out-of-manifest
    names and 58 `.copying` files before adoption; do not delete them or enable
    archive writers until ownership and integrity are established.
@@ -853,6 +864,45 @@ public-feed canary was run, no archive contents were adopted or rewritten, and
 the protected recorder was not signaled or restarted. Storage runway and
 archive provenance remain blockers. The deployment classification remains
 **IMPLEMENTED, DEPLOYMENT PENDING**.
+
+## 13. Bounded public feed canary — 2026-10-26 05:24 UTC
+
+The exact candidate was exercised against public unauthenticated read-only
+Gamma/CLOB GETs and the public market WebSocket for 100 seconds, using the
+staged eight-market stratified canary settings and a unique temporary root.
+The run stopped cleanly with zero collector failures, a durable first write
+after 0.030 seconds, 322 frames, four periodic checkpoints, and four replay-
+verified checkpoints. All 37 HTTP responses were 200. Six independent book
+comparisons matched the local unsequenced state; one comparison reported stale
+local state, and none reported an invalid or divergent comparison. The
+checkpoint recovery and full replay produced the same state digest. Sequence
+verification remained false.
+
+The canary did not pass its full coverage condition: only 8 of the 16
+outcome books met the 60-second freshness threshold immediately before the
+last periodic checkpoint. This is retained as a measured sampling/freshness
+limitation, not corrected by lowering the threshold. The canary therefore
+does not make the candidate deployment-ready. Its cgroup peak was 35,618,816
+bytes under 512 MiB `MemoryHigh`, 640 MiB `MemoryMax`, 25% CPU, and 64 tasks;
+no memory-high, max, or OOM events occurred in the canary cgroup.
+
+The successful receipt is
+`/home/charlie/midas-engineering-mission-20261026/evidence/reality-candidate-live-feed-canary-2026-10-26T0524Z.json`
+(SHA-256
+`b6a7d5798edee24562259f439f43b8adcc574b039f45d13bd4ff093bd9fa79e2`). A
+first attempt failed before market selection because my synchronous HTTP
+instrumentation hook was awaited; that harness failure is preserved at
+`reality-candidate-live-feed-canary-2026-10-26.json` (SHA-256
+`87abf89c9282d637ddd661c1d9e020b2c0c4e2d5ec21f63b373d5bcc874bdaed`). The
+successful run's temporary root was removed after manifest, replay,
+checkpoint, and artifact-hash checks. Production Reality remained active on
+PID 3007040. No order, wallet, credential, or authenticated exchange action
+was used.
+
+The official deployment gate remains unrun. Full current-boundary recovery,
+complete fresh outcome coverage for the candidate canary, an immutable
+runtime release, archive provenance, sustained API headroom, and explicit
+protected-restart authorization are still required.
 
 ## 12. Fresh candidate-boundary preflight — 2026-10-26 05:21 UTC
 

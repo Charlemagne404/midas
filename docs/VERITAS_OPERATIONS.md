@@ -585,3 +585,26 @@ active contract at its observed rate; the staged 112 GiB / 120-day candidate
 projects 108.12 days. API `MemoryHigh` headroom is now 1,060,864 bytes, so
 heavy research admission remains blocked. The candidate is undeployed, and
 this metadata preflight does not change that deployment decision.
+
+## Candidate bounded public feed canary (2026-10-26 05:24 UTC)
+
+The exact candidate then ran a 100-second unauthenticated public feed canary
+with isolated temporary storage and bounded resources. It stopped cleanly,
+persisted 322 frames, verified four periodic checkpoints, and received 37/37
+HTTP 200 responses. Six book comparisons matched local unsequenced state; one
+reported stale local state; there were no invalid/divergent comparisons or
+collector failures. Full replay matched checkpoint recovery. The canary's
+resource cgroup peaked at 35,618,816 bytes with no memory or OOM events.
+
+Only 8/16 outcome books were fresh at the final checkpoint, so the full
+coverage condition failed. Keep this as a blocker and preserve the existing
+60-second freshness threshold. The receipt is
+`/home/charlie/midas-engineering-mission-20261026/evidence/reality-candidate-live-feed-canary-2026-10-26T0524Z.json`
+(SHA-256
+`b6a7d5798edee24562259f439f43b8adcc574b039f45d13bd4ff093bd9fa79e2`). The
+first harness attempt failed before discovery because its synchronous HTTP
+event hook was awaited; the failure receipt is retained separately. The
+temporary canary root was removed after verification. This canary is not a
+current-boundary recovery proof and does not establish execution or
+profitability. The protected recorder remains on PID 3007040 and the official
+deployment gate remains blocked.
