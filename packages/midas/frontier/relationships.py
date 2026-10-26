@@ -10,7 +10,7 @@ from datetime import UTC, datetime
 from decimal import Decimal
 from enum import StrEnum
 
-from pydantic import Field, model_validator
+from pydantic import Field, field_validator, model_validator
 
 from midas.frontier.models import FrontierMarket, FrontierModel, MarketKind, Venue
 
@@ -60,6 +60,53 @@ class VerificationState(StrEnum):
     REJECTED = "rejected"
     AMBIGUOUS = "ambiguous"
     SUPERSEDED = "superseded"
+
+
+class ReviewDecision(StrEnum):
+    VERIFIED = "verified"
+    REJECTED = "rejected"
+    AMBIGUOUS = "ambiguous"
+
+
+class RelationshipReview(FrontierModel):
+    """Immutable, self-attributed review of a stored relationship hypothesis."""
+
+    schema_version: int = 1
+    review_id: str
+    relationship_id: str
+    adjudicated_relationship_id: str
+    decision: ReviewDecision
+    reviewer_label: str = Field(min_length=1, max_length=80)
+    reason: str = Field(min_length=5, max_length=1000)
+    evidence_observation_ids: tuple[str, ...] = Field(min_length=1, max_length=10)
+    external_assertion_id: str | None = Field(default=None, max_length=120)
+    supersedes_review_id: str | None = None
+    created_at_utc: datetime
+
+    @field_validator("created_at_utc")
+    @classmethod
+    def normalize_review_time(cls, value: datetime) -> datetime:
+        if value.tzinfo is None or value.utcoffset() is None:
+            raise ValueError("Relationship review time must include a timezone")
+        return value.astimezone(UTC)
+
+    @model_validator(mode="after")
+    def valid_review_evidence(self) -> RelationshipReview:
+        if len(set(self.evidence_observation_ids)) != len(self.evidence_observation_ids):
+            raise ValueError("Relationship review evidence IDs must be unique")
+        for observation_id in self.evidence_observation_ids:
+            if len(observation_id) != 64 or any(
+                character not in "0123456789abcdef" for character in observation_id
+            ):
+                raise ValueError("Relationship review evidence must use lowercase SHA-256 IDs")
+        if self.decision == ReviewDecision.VERIFIED and not self.external_assertion_id:
+            raise ValueError("A verified relationship review requires an external assertion ID")
+        for digest in (self.review_id, self.adjudicated_relationship_id):
+            if len(digest) != 64 or any(
+                character not in "0123456789abcdef" for character in digest
+            ):
+                raise ValueError("Review identities must be lowercase SHA-256 digests")
+        return self
 
 
 class RelationshipEvidence(FrontierModel):

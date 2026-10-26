@@ -31,7 +31,7 @@ test('relationship network remains bounded, selectable, and scroll-contained on 
 }) => {
   const marketRecord = (venue: 'polymarket' | 'kalshi', nativeId: string, title: string) => ({
     canonical_id: `${venue}:${nativeId}`,
-    source_observation_record_id: `${venue}-observation`,
+    source_observation_record_id: venue === 'polymarket' ? 'a'.repeat(64) : 'b'.repeat(64),
     native_market_id: nativeId,
     venue,
     title,
@@ -84,6 +84,9 @@ test('relationship network remains bounded, selectable, and scroll-contained on 
     state: 'hypothesis',
     confidence: '0.75',
     reason,
+    supersedes: null,
+    review_target_relationship_id: 'fixture-edge-1',
+    latest_review: null,
     evidence: [
       {
         method: 'e2e-test-fixture',
@@ -101,6 +104,7 @@ test('relationship network remains bounded, selectable, and scroll-contained on 
       summary: {
         observations: 2,
         relationships: 1,
+        relationship_reviews: 0,
         runs: 0,
         markets_by_venue: { polymarket: 1, kalshi: 1 },
         instruments_by_venue: {},
@@ -128,7 +132,16 @@ test('relationship network remains bounded, selectable, and scroll-contained on 
     '/api/frontier/runs': { items: [], returned: 0, limit: 30, offset: 0 },
     '/api/frontier/readiness': { gates: [] },
   };
+  let submittedReview: Record<string, unknown> | undefined;
   await page.route('**/api/frontier/**', async (route) => {
+    if (route.request().method() === 'POST' && route.request().url().endsWith('/review')) {
+      submittedReview = route.request().postDataJSON() as Record<string, unknown>;
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ review: {}, relationship: {} }),
+      });
+    }
     const path = new URL(route.request().url()).pathname;
     const fixture = fixtures[path];
     if (fixture === undefined) return route.continue();
@@ -153,8 +166,24 @@ test('relationship network remains bounded, selectable, and scroll-contained on 
     fullPage: true,
   });
 
+  await page.getByRole('button', { name: 'Review hypothesis' }).click();
+  await page.getByLabel('Reviewer label').fill('e2e-reviewer');
+  await page.getByLabel('Review reason').fill('This fixture remains ambiguous pending rules.');
+  await page.getByRole('button', { name: 'Record immutable review' }).click();
+  await expect
+    .poll(() => submittedReview)
+    .toMatchObject({
+      decision: 'ambiguous',
+      reviewer_label: 'e2e-reviewer',
+      evidence_observation_ids: ['a'.repeat(64), 'b'.repeat(64)],
+      expected_latest_review_id: null,
+    });
+
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(page.getByRole('group', { name: /Relationship network showing 1/ })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
   await expect(page.locator('.fr-network-scroll')).toHaveCSS('overflow-x', 'auto');
+  await page.getByRole('button', { name: 'Review hypothesis' }).click();
+  await expect(page.locator('.fr-review-form')).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
 });

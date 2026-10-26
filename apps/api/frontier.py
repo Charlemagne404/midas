@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
+from datetime import UTC, datetime
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
@@ -18,16 +19,57 @@ from midas.frontier.models import (
     MarketBatch,
     Venue,
 )
-from midas.frontier.relationships import Relationship, propose_relationships
+from midas.frontier.relationships import (
+    Relationship,
+    RelationshipEvidence,
+    RelationshipReview,
+    ReviewDecision,
+    VerificationState,
+    propose_relationships,
+    verify_same_payoff,
+)
 from midas.frontier.replay import deterministic_replay
 from midas.frontier.storage import FrontierStore, FrontierStoreError
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class ProbeRequest(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
     limit: int = Field(default=5, ge=1, le=20)
     include_one_book: bool = False
+
+
+class RelationshipReviewRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+    decision: ReviewDecision
+    reviewer_label: str = Field(min_length=1, max_length=80)
+    reason: str = Field(min_length=5, max_length=1000)
+    evidence_observation_ids: tuple[str, ...] = Field(min_length=1, max_length=10)
+    external_assertion_id: str | None = Field(default=None, max_length=120)
+    state_mapping: dict[str, str] = Field(default_factory=dict)
+    instrument_mapping: dict[str, str] = Field(default_factory=dict)
+    expected_latest_review_id: str | None = None
+
+    @model_validator(mode="after")
+    def bounded_mappings_and_evidence(self) -> RelationshipReviewRequest:
+        if not self.reviewer_label.strip() or not self.reason.strip():
+            raise ValueError("Reviewer label and reason cannot be blank")
+        for mapping in (self.state_mapping, self.instrument_mapping):
+            if len(mapping) > 20 or any(
+                not key or len(key) > 120 or not target or len(target) > 120
+                for key, target in mapping.items()
+            ):
+                raise ValueError("Relationship mappings are limited to 20 bounded identifiers")
+        if len(set(self.evidence_observation_ids)) != len(self.evidence_observation_ids):
+            raise ValueError("Relationship review evidence IDs must be unique")
+        if self.expected_latest_review_id is not None and (
+            len(self.expected_latest_review_id) != 64
+            or any(
+                character not in "0123456789abcdef" for character in self.expected_latest_review_id
+            )
+        ):
+            raise ValueError("Expected review identity must be a lowercase SHA-256 digest")
+        return self
 
 
 def router(store: FrontierStore, registry: Any) -> APIRouter:
@@ -187,9 +229,32 @@ def router(store: FrontierStore, registry: Any) -> APIRouter:
         state: str | None = Query(default=None, max_length=32),
         limit: int = Query(default=100, ge=1, le=500),
     ) -> dict[str, Any]:
-        items = store.relationships(state=state, limit=limit)
+        items = store.relationships(state=state, limit=limit, effective_only=True)
+        review_targets = tuple(
+            dict.fromkeys(
+                item["relationship"].get("supersedes") or item["relationship_id"] for item in items
+            )
+        )
+        latest_reviews = store.latest_relationship_reviews(review_targets) if review_targets else {}
         return {
-            "items": [item["relationship"] for item in items],
+            "items": [
+                {
+                    **item["relationship"],
+                    "review_target_relationship_id": (
+                        item["relationship"].get("supersedes") or item["relationship_id"]
+                    ),
+                    "latest_review": (
+                        latest_reviews[target].model_dump(mode="json")
+                        if (
+                            target := item["relationship"].get("supersedes")
+                            or item["relationship_id"]
+                        )
+                        in latest_reviews
+                        else None
+                    ),
+                }
+                for item in items
+            ],
             "returned": len(items),
             "limit": limit,
         }
@@ -213,6 +278,197 @@ def router(store: FrontierStore, registry: Any) -> APIRouter:
             "matcher_version": "frontier-relationship-matcher-2",
             "note": "Every result is a hypothesis until independently verified.",
             "items": [item.model_dump(mode="json") for item in proposals[:100]],
+        }
+
+    @api.post("/relationships/{relationship_id}/review")
+    async def review_relationship(
+        relationship_id: str,
+        request: RelationshipReviewRequest,
+        market_limit: int = Query(default=200, ge=1, le=200),
+    ) -> dict[str, Any]:
+        try:
+            original = store.relationship(relationship_id)
+            if original is None:
+                raise HTTPException(status_code=404, detail="Relationship was not found")
+            if original.state != VerificationState.HYPOTHESIS or original.supersedes:
+                raise HTTPException(
+                    status_code=409,
+                    detail="Only an original relationship hypothesis can be reviewed",
+                )
+            latest = store.latest_relationship_review(relationship_id)
+            actual_latest_id = latest.review_id if latest else None
+            if request.expected_latest_review_id != actual_latest_id:
+                raise HTTPException(
+                    status_code=409,
+                    detail="Relationship review changed; reload before recording another",
+                )
+
+            markets_by_id = {
+                item.canonical_id: item for item in await _load_markets(store, market_limit)
+            }
+            left = markets_by_id.get(original.left_market_id)
+            right = markets_by_id.get(original.right_market_id)
+            if left is None or right is None:
+                raise HTTPException(
+                    status_code=409,
+                    detail="Source market records are outside the bounded review window",
+                )
+            required_evidence = {
+                store.market_observation_id(left.canonical_id),
+                store.market_observation_id(right.canonical_id),
+            }
+            required_evidence.discard(None)
+            submitted_evidence = set(request.evidence_observation_ids)
+            if not required_evidence or not required_evidence.issubset(submitted_evidence):
+                raise HTTPException(
+                    status_code=422,
+                    detail="Review must cite stored observations containing both source markets",
+                )
+            for observation_id in request.evidence_observation_ids:
+                evidence_record = store.observation(observation_id)
+                if evidence_record is None:
+                    raise HTTPException(
+                        status_code=422,
+                        detail=f"Review evidence observation {observation_id} was not found",
+                    )
+                normalized = evidence_record["normalized"]
+                normalized_markets = (
+                    normalized.get("markets", [])
+                    if isinstance(normalized, dict) and isinstance(normalized.get("markets"), list)
+                    else [normalized]
+                    if isinstance(normalized, dict) and "canonical_id" in normalized
+                    else []
+                )
+                contained = {
+                    item.get("canonical_id")
+                    for item in normalized_markets
+                    if isinstance(item, dict)
+                }
+                if observation_id in required_evidence and not {
+                    market_id
+                    for market_id, source_id in (
+                        (left.canonical_id, store.market_observation_id(left.canonical_id)),
+                        (right.canonical_id, store.market_observation_id(right.canonical_id)),
+                    )
+                    if source_id == observation_id
+                }.issubset(contained):
+                    raise HTTPException(
+                        status_code=409,
+                        detail="Stored market index does not match its hash-verified normalized payload",
+                    )
+
+            created_at = datetime.now(UTC)
+            if request.decision == ReviewDecision.VERIFIED:
+                if not request.external_assertion_id or not request.external_assertion_id.strip():
+                    raise HTTPException(
+                        status_code=422,
+                        detail="Verified reviews require an external assertion identity",
+                    )
+                if not request.state_mapping or not request.instrument_mapping:
+                    raise HTTPException(
+                        status_code=422,
+                        detail="Verified reviews require complete state and instrument mappings",
+                    )
+                adjudicated = verify_same_payoff(
+                    left,
+                    right,
+                    state_mapping=request.state_mapping,
+                    instrument_mapping=request.instrument_mapping,
+                    external_assertion_id=request.external_assertion_id,
+                    evidence_observation_ids=request.evidence_observation_ids,
+                    asserted_at_utc=created_at,
+                )
+                if adjudicated.state != VerificationState.VERIFIED:
+                    raise HTTPException(
+                        status_code=422,
+                        detail={
+                            "message": "Independent payoff verifier rejected the review",
+                            "reason": adjudicated.reason,
+                        },
+                    )
+                adjudicated = adjudicated.model_copy(
+                    update={
+                        "supersedes": original.relationship_id,
+                        "reason": f"{adjudicated.reason}. Reviewer label: {request.reviewer_label}. {request.reason}",
+                    }
+                )
+            else:
+                decision_state = (
+                    VerificationState.REJECTED
+                    if request.decision == ReviewDecision.REJECTED
+                    else VerificationState.AMBIGUOUS
+                )
+                evidence = RelationshipEvidence(
+                    method="self-attributed-relationship-review-v1",
+                    observation_ids=request.evidence_observation_ids,
+                    source_fields=("review_decision", "review_reason"),
+                    details=(
+                        f"reviewer_label={request.reviewer_label}",
+                        f"decision={request.decision.value}",
+                    ),
+                    external_assertion_id=request.external_assertion_id,
+                    created_at_utc=created_at,
+                )
+                adjudicated_id = hashlib.sha256(
+                    "|".join(
+                        (
+                            "frontier-relationship-review-result-v1",
+                            original.relationship_id,
+                            request.decision.value,
+                            created_at.isoformat(),
+                            request.reviewer_label,
+                            request.reason,
+                            *sorted(request.evidence_observation_ids),
+                        )
+                    ).encode()
+                ).hexdigest()
+                adjudicated = original.model_copy(
+                    update={
+                        "relationship_id": adjudicated_id,
+                        "state": decision_state,
+                        "reason": f"Review decision {request.decision.value} by self-attributed label {request.reviewer_label}: {request.reason}",
+                        "evidence": (*original.evidence, evidence),
+                        "supersedes": original.relationship_id,
+                    }
+                )
+
+            review_id = hashlib.sha256(
+                "|".join(
+                    (
+                        "frontier-relationship-review-record-v1",
+                        original.relationship_id,
+                        request.decision.value,
+                        created_at.isoformat(),
+                        request.reviewer_label,
+                        request.reason,
+                        *(request.evidence_observation_ids),
+                        request.external_assertion_id or "",
+                    )
+                ).encode()
+            ).hexdigest()
+            review_record = RelationshipReview(
+                review_id=review_id,
+                relationship_id=original.relationship_id,
+                adjudicated_relationship_id=adjudicated.relationship_id,
+                decision=request.decision,
+                reviewer_label=request.reviewer_label,
+                reason=request.reason,
+                evidence_observation_ids=request.evidence_observation_ids,
+                external_assertion_id=request.external_assertion_id,
+                supersedes_review_id=actual_latest_id,
+                created_at_utc=created_at,
+            )
+            store.append_relationship_review(review_record, adjudicated)
+        except ValueError as error:
+            raise HTTPException(status_code=422, detail=str(error)) from error
+        except FrontierStoreError as error:
+            raise HTTPException(status_code=409, detail=str(error)) from error
+        return {
+            "review": review_record.model_dump(mode="json"),
+            "relationship": adjudicated.model_dump(mode="json"),
+            "reviewer_identity_authenticated": False,
+            "external_assertion_authenticated": False,
+            "note": "Review evidence and self-attributed label are immutable. Reviewer and external assertion IDs are references only; neither identity nor assertion is independently authenticated or fetched.",
         }
 
     @api.get("/opportunities")
@@ -266,7 +522,9 @@ def router(store: FrontierStore, registry: Any) -> APIRouter:
             if isinstance(item.get("normalized"), dict)
             and "native_instrument_id" in item["normalized"]
         )
-        relation_rows = store.relationships(state="verified", limit=relationship_limit)
+        relation_rows = store.relationships(
+            state="verified", limit=relationship_limit, effective_only=True
+        )
         verified = tuple(
             Relationship.model_validate(item["relationship"]) for item in relation_rows
         )

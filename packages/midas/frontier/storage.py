@@ -10,10 +10,16 @@ from pathlib import Path
 from typing import Any
 
 from midas.frontier.models import FrontierMarket, FrontierModel, MarketBatch, RawObservation
-from midas.frontier.relationships import Relationship
+from midas.frontier.relationships import (
+    Relationship,
+    RelationshipReview,
+    RelationshipType,
+    ReviewDecision,
+    VerificationState,
+)
 from midas.frontier.replay import ReplayResult
 
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 4
 MAX_ROW_BYTES = 512 * 1024
 
 
@@ -94,10 +100,22 @@ class FrontierStore:
                     state TEXT NOT NULL,
                     created_at_utc TEXT NOT NULL,
                     relationship_json TEXT NOT NULL,
-                    row_sha256 TEXT NOT NULL
+                    row_sha256 TEXT NOT NULL,
+                    supersedes_relationship_id TEXT
                 );
                 CREATE INDEX IF NOT EXISTS relationships_pair
                     ON relationships(left_market_id, right_market_id, created_at_utc DESC);
+                CREATE TABLE IF NOT EXISTS relationship_reviews (
+                    review_id TEXT PRIMARY KEY,
+                    relationship_id TEXT NOT NULL,
+                    decision TEXT NOT NULL,
+                    created_at_utc TEXT NOT NULL,
+                    review_json TEXT NOT NULL,
+                    row_sha256 TEXT NOT NULL,
+                    adjudicated_relationship_id TEXT NOT NULL
+                );
+                CREATE INDEX IF NOT EXISTS relationship_reviews_target
+                    ON relationship_reviews(relationship_id, created_at_utc DESC, review_id);
                 CREATE TABLE IF NOT EXISTS research_runs (
                     run_id TEXT PRIMARY KEY,
                     created_at_utc TEXT NOT NULL,
@@ -122,6 +140,10 @@ class FrontierStore:
                     BEFORE UPDATE ON relationships BEGIN SELECT RAISE(ABORT, 'Frontier relationships are append-only'); END;
                 CREATE TRIGGER IF NOT EXISTS relationships_no_delete
                     BEFORE DELETE ON relationships BEGIN SELECT RAISE(ABORT, 'Frontier relationships are append-only'); END;
+                CREATE TRIGGER IF NOT EXISTS relationship_reviews_no_update
+                    BEFORE UPDATE ON relationship_reviews BEGIN SELECT RAISE(ABORT, 'Frontier relationship reviews are append-only'); END;
+                CREATE TRIGGER IF NOT EXISTS relationship_reviews_no_delete
+                    BEFORE DELETE ON relationship_reviews BEGIN SELECT RAISE(ABORT, 'Frontier relationship reviews are append-only'); END;
                 CREATE TRIGGER IF NOT EXISTS research_runs_no_update
                     BEFORE UPDATE ON research_runs BEGIN SELECT RAISE(ABORT, 'Frontier runs are append-only'); END;
                 CREATE TRIGGER IF NOT EXISTS research_runs_no_delete
@@ -134,6 +156,27 @@ class FrontierStore:
             if current is None:
                 connection.execute(
                     "INSERT INTO frontier_meta(key,value) VALUES('schema_version',?)",
+                    (str(SCHEMA_VERSION),),
+                )
+                connection.commit()
+            elif current[0] in {"2", "3"}:
+                relationship_columns = {
+                    row["name"] for row in connection.execute("PRAGMA table_info(relationships)")
+                }
+                if "supersedes_relationship_id" not in relationship_columns:
+                    connection.execute(
+                        "ALTER TABLE relationships ADD COLUMN supersedes_relationship_id TEXT"
+                    )
+                review_columns = {
+                    row["name"]
+                    for row in connection.execute("PRAGMA table_info(relationship_reviews)")
+                }
+                if "adjudicated_relationship_id" not in review_columns:
+                    connection.execute(
+                        "ALTER TABLE relationship_reviews ADD COLUMN adjudicated_relationship_id TEXT"
+                    )
+                connection.execute(
+                    "UPDATE frontier_meta SET value=? WHERE key='schema_version'",
                     (str(SCHEMA_VERSION),),
                 )
                 connection.commit()
@@ -305,7 +348,7 @@ class FrontierStore:
                 raise FrontierStoreError("Frontier relationship count budget is exhausted")
             self._budgeted_insert(
                 connection,
-                "INSERT INTO relationships VALUES(?,?,?,?,?,?,?)",
+                "INSERT INTO relationships VALUES(?,?,?,?,?,?,?,?)",
                 (
                     relationship.relationship_id,
                     relationship.left_market_id,
@@ -314,9 +357,225 @@ class FrontierStore:
                     created,
                     relationship_json,
                     row_hash,
+                    relationship.supersedes,
                 ),
             )
         return relationship.relationship_id
+
+    def append_relationship_review(
+        self,
+        review: RelationshipReview,
+        adjudicated: Relationship,
+    ) -> str:
+        """Append a review and its derived relationship state in one transaction."""
+        self.initialize()
+        if (
+            adjudicated.supersedes != review.relationship_id
+            or adjudicated.relationship_id != review.adjudicated_relationship_id
+            or adjudicated.left_market_id == adjudicated.right_market_id
+            or adjudicated.state.value != review.decision.value
+        ):
+            raise FrontierStoreError("Adjudicated relationship does not match its review")
+        review_json = self._canonical(review)
+        relationship_json = self._canonical(adjudicated)
+        if (
+            max(len(review_json.encode("utf-8")), len(relationship_json.encode("utf-8")))
+            > MAX_ROW_BYTES
+        ):
+            raise FrontierStoreError("Relationship review exceeds the 512 KiB record bound")
+        review_hash = hashlib.sha256(review_json.encode("utf-8")).hexdigest()
+        relationship_hash = hashlib.sha256(relationship_json.encode("utf-8")).hexdigest()
+        created = review.created_at_utc.astimezone(UTC).isoformat()
+        with self._connect() as connection:
+            connection.execute("BEGIN IMMEDIATE")
+            try:
+                parent = connection.execute(
+                    "SELECT relationship_json,row_sha256 FROM relationships WHERE relationship_id=?",
+                    (review.relationship_id,),
+                ).fetchone()
+                if parent is None:
+                    raise FrontierStoreError("Relationship review target was not found")
+                if (
+                    hashlib.sha256(str(parent["relationship_json"]).encode("utf-8")).hexdigest()
+                    != parent["row_sha256"]
+                ):
+                    raise FrontierStoreError("Relationship review target evidence hash is invalid")
+                parent_value = Relationship.model_validate(json.loads(parent["relationship_json"]))
+                if parent_value.state != VerificationState.HYPOTHESIS or parent_value.supersedes:
+                    raise FrontierStoreError(
+                        "Only an original relationship hypothesis can be reviewed"
+                    )
+                expected_type = (
+                    RelationshipType.SAME_PAYOFF
+                    if review.decision == ReviewDecision.VERIFIED
+                    else parent_value.relationship_type
+                )
+                linked_evidence = {
+                    observation_id
+                    for evidence in adjudicated.evidence
+                    for observation_id in evidence.observation_ids
+                }
+                if (
+                    (adjudicated.left_market_id, adjudicated.right_market_id)
+                    != (parent_value.left_market_id, parent_value.right_market_id)
+                    or adjudicated.relationship_type != expected_type
+                    or not set(review.evidence_observation_ids).issubset(linked_evidence)
+                ):
+                    raise FrontierStoreError(
+                        "Adjudicated relationship does not preserve the reviewed pair and evidence"
+                    )
+                previous = connection.execute(
+                    "SELECT review_id FROM relationship_reviews WHERE relationship_id=? "
+                    "ORDER BY created_at_utc DESC,review_id DESC LIMIT 1",
+                    (review.relationship_id,),
+                ).fetchone()
+                expected_previous = str(previous["review_id"]) if previous else None
+                if review.supersedes_review_id != expected_previous:
+                    raise FrontierStoreError(
+                        "Relationship review changed; reload before recording another"
+                    )
+                existing_review = connection.execute(
+                    "SELECT row_sha256 FROM relationship_reviews WHERE review_id=?",
+                    (review.review_id,),
+                ).fetchone()
+                if existing_review is not None:
+                    if existing_review["row_sha256"] != review_hash:
+                        raise FrontierStoreError("Relationship review identity collision")
+                    connection.rollback()
+                    return review.review_id
+                if (
+                    connection.execute(
+                        "SELECT 1 FROM relationships WHERE relationship_id=?",
+                        (adjudicated.relationship_id,),
+                    ).fetchone()
+                    is not None
+                ):
+                    raise FrontierStoreError("Adjudicated relationship identity already exists")
+                review_count = int(
+                    connection.execute("SELECT COUNT(*) FROM relationship_reviews").fetchone()[0]
+                )
+                relationship_count = int(
+                    connection.execute("SELECT COUNT(*) FROM relationships").fetchone()[0]
+                )
+                if (
+                    review_count >= self.max_relationships
+                    or relationship_count >= self.max_relationships
+                ):
+                    raise FrontierStoreError("Frontier relationship count budget is exhausted")
+                connection.execute(
+                    "INSERT INTO relationships VALUES(?,?,?,?,?,?,?,?)",
+                    (
+                        adjudicated.relationship_id,
+                        adjudicated.left_market_id,
+                        adjudicated.right_market_id,
+                        adjudicated.state.value,
+                        created,
+                        relationship_json,
+                        relationship_hash,
+                        adjudicated.supersedes,
+                    ),
+                )
+                connection.execute(
+                    "INSERT INTO relationship_reviews VALUES(?,?,?,?,?,?,?)",
+                    (
+                        review.review_id,
+                        review.relationship_id,
+                        review.decision.value,
+                        created,
+                        review_json,
+                        review_hash,
+                        review.adjudicated_relationship_id,
+                    ),
+                )
+                page_count = int(connection.execute("PRAGMA page_count").fetchone()[0])
+                page_size = int(connection.execute("PRAGMA page_size").fetchone()[0])
+                if page_count * page_size > self.max_bytes:
+                    raise FrontierStoreError("Frontier database byte budget would be exceeded")
+                connection.commit()
+            except Exception:
+                connection.rollback()
+                raise
+        return review.review_id
+
+    def relationship(self, relationship_id: str) -> Relationship | None:
+        if len(relationship_id) != 64 or any(
+            character not in "0123456789abcdef" for character in relationship_id
+        ):
+            raise ValueError("Relationship identity must be a lowercase SHA-256 digest")
+        if not self.path.exists():
+            return None
+        with self._read_connect() as connection:
+            row = connection.execute(
+                "SELECT relationship_json,row_sha256 FROM relationships WHERE relationship_id=?",
+                (relationship_id,),
+            ).fetchone()
+        if row is None:
+            return None
+        payload = str(row["relationship_json"])
+        if hashlib.sha256(payload.encode("utf-8")).hexdigest() != row["row_sha256"]:
+            raise FrontierStoreError("Stored relationship hash does not match its payload")
+        return Relationship.model_validate(json.loads(payload))
+
+    def market_observation_id(self, canonical_market_id: str) -> str | None:
+        if not canonical_market_id or len(canonical_market_id) > 256:
+            raise ValueError("Invalid canonical market identity")
+        if not self.path.exists():
+            return None
+        with self._read_connect() as connection:
+            row = connection.execute(
+                "SELECT mr.observation_id FROM market_records AS mr "
+                "JOIN observations AS o ON o.observation_id=mr.observation_id "
+                "WHERE mr.canonical_market_id=? "
+                "ORDER BY o.received_at_utc DESC,mr.observation_id LIMIT 1",
+                (canonical_market_id,),
+            ).fetchone()
+        return str(row["observation_id"]) if row else None
+
+    def latest_relationship_review(self, relationship_id: str) -> RelationshipReview | None:
+        return self.latest_relationship_reviews((relationship_id,)).get(relationship_id)
+
+    def latest_relationship_reviews(
+        self, relationship_ids: tuple[str, ...] | list[str]
+    ) -> dict[str, RelationshipReview]:
+        if not 1 <= len(relationship_ids) <= 500:
+            raise ValueError("Relationship review query must contain 1..500 identities")
+        if len(set(relationship_ids)) != len(relationship_ids):
+            raise ValueError("Relationship review query identities must be unique")
+        for relationship_id in relationship_ids:
+            if len(relationship_id) != 64 or any(
+                character not in "0123456789abcdef" for character in relationship_id
+            ):
+                raise ValueError("Relationship identity must be a lowercase SHA-256 digest")
+        if not self.path.exists():
+            return {}
+        placeholders = ",".join("?" for _ in relationship_ids)
+        with self._read_connect() as connection:
+            rows = connection.execute(
+                "WITH ranked_reviews AS ("
+                "SELECT relationship_id,decision,review_json,row_sha256,"
+                "adjudicated_relationship_id,ROW_NUMBER() OVER ("
+                "PARTITION BY relationship_id ORDER BY created_at_utc DESC,review_id DESC"
+                ") AS revision_rank FROM relationship_reviews WHERE relationship_id IN ("
+                f"{placeholders})) SELECT relationship_id,decision,review_json,row_sha256,"
+                "adjudicated_relationship_id FROM ranked_reviews WHERE revision_rank=1",
+                tuple(relationship_ids),
+            ).fetchall()
+        result: dict[str, RelationshipReview] = {}
+        for row in rows:
+            payload = str(row["review_json"])
+            if hashlib.sha256(payload.encode("utf-8")).hexdigest() != row["row_sha256"]:
+                raise FrontierStoreError(
+                    "Stored relationship review hash does not match its payload"
+                )
+            review = RelationshipReview.model_validate(json.loads(payload))
+            if (
+                review.relationship_id != row["relationship_id"]
+                or review.decision.value != row["decision"]
+                or review.adjudicated_relationship_id != row["adjudicated_relationship_id"]
+            ):
+                raise FrontierStoreError("Relationship review index does not match its payload")
+            result[review.relationship_id] = review
+        return result
 
     def observations(
         self,
@@ -449,14 +708,41 @@ class FrontierStore:
         return {**dict(row), "result": json.loads(row["result_json"])} if row else None
 
     def relationships(
-        self, *, state: str | None = None, limit: int = 500
+        self, *, state: str | None = None, limit: int = 500, effective_only: bool = False
     ) -> tuple[dict[str, Any], ...]:
         if not 1 <= limit <= 2000:
             raise ValueError("Relationship query limit must be between 1 and 2000")
         if not self.path.exists():
             return ()
         with self._read_connect() as connection:
-            if state is None:
+            if effective_only:
+                review_join = """
+                    WITH latest_reviews AS (
+                        SELECT relationship_id,adjudicated_relationship_id,
+                            ROW_NUMBER() OVER (
+                                PARTITION BY relationship_id
+                                ORDER BY created_at_utc DESC,review_id DESC
+                            ) AS revision_rank
+                        FROM relationship_reviews
+                    )
+                """
+                effective_filter = (
+                    "(r.supersedes_relationship_id IS NULL AND lr.relationship_id IS NULL) "
+                    "OR lr.adjudicated_relationship_id=r.relationship_id"
+                )
+                state_filter = " AND r.state=?" if state is not None else ""
+                params = (state, limit) if state is not None else (limit,)
+                rows = connection.execute(
+                    f"{review_join} SELECT r.relationship_id,r.left_market_id,r.right_market_id,"
+                    "r.state,r.created_at_utc,r.relationship_json "
+                    "FROM relationships AS r LEFT JOIN latest_reviews AS lr "
+                    "ON lr.relationship_id=COALESCE(r.supersedes_relationship_id,r.relationship_id) "
+                    "AND lr.revision_rank=1 WHERE ("
+                    f"{effective_filter}){state_filter} "
+                    "ORDER BY r.created_at_utc DESC,r.relationship_id LIMIT ?",
+                    params,
+                ).fetchall()
+            elif state is None:
                 rows = connection.execute(
                     "SELECT relationship_id,left_market_id,right_market_id,state,created_at_utc,relationship_json "
                     "FROM relationships ORDER BY created_at_utc DESC, relationship_id LIMIT ?",
@@ -478,6 +764,8 @@ class FrontierStore:
                 "schema_version": SCHEMA_VERSION,
                 "observations": 0,
                 "relationships": 0,
+                "relationship_records": 0,
+                "relationship_reviews": 0,
                 "runs": 0,
                 "markets_by_venue": {},
                 "instruments_by_venue": {},
@@ -502,16 +790,29 @@ class FrontierStore:
             observations = int(
                 connection.execute("SELECT COUNT(*) FROM observations").fetchone()[0]
             )
-            relationships = int(
+            relationship_records = int(
                 connection.execute("SELECT COUNT(*) FROM relationships").fetchone()[0]
+            )
+            relationship_reviews = int(
+                connection.execute("SELECT COUNT(*) FROM relationship_reviews").fetchone()[0]
             )
             runs = int(connection.execute("SELECT COUNT(*) FROM research_runs").fetchone()[0])
             obs_groups = connection.execute(
                 "SELECT venue,COUNT(*) AS n FROM observations GROUP BY venue"
             ).fetchall()
             rel_groups = connection.execute(
-                "SELECT state,COUNT(*) AS n FROM relationships GROUP BY state"
+                "WITH latest_reviews AS ("
+                "SELECT relationship_id,adjudicated_relationship_id,ROW_NUMBER() OVER ("
+                "PARTITION BY relationship_id ORDER BY created_at_utc DESC,review_id DESC"
+                ") AS revision_rank FROM relationship_reviews) "
+                "SELECT r.state,COUNT(*) AS n FROM relationships AS r "
+                "LEFT JOIN latest_reviews AS lr ON lr.relationship_id="
+                "COALESCE(r.supersedes_relationship_id,r.relationship_id) "
+                "AND lr.revision_rank=1 WHERE "
+                "((r.supersedes_relationship_id IS NULL AND lr.relationship_id IS NULL) "
+                "OR lr.adjudicated_relationship_id=r.relationship_id) GROUP BY r.state"
             ).fetchall()
+            relationships = sum(int(row["n"]) for row in rel_groups)
             market_groups = connection.execute(
                 "SELECT venue,COUNT(DISTINCT canonical_market_id) AS n "
                 "FROM market_records GROUP BY venue"
@@ -524,6 +825,8 @@ class FrontierStore:
             "schema_version": SCHEMA_VERSION,
             "observations": observations,
             "relationships": relationships,
+            "relationship_records": relationship_records,
+            "relationship_reviews": relationship_reviews,
             "runs": runs,
             "observations_by_venue": {row["venue"]: row["n"] for row in obs_groups},
             "relationships_by_state": {row["state"]: row["n"] for row in rel_groups},

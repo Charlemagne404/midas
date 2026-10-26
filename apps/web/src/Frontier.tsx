@@ -44,6 +44,7 @@ type Overview = {
   summary: {
     observations: number;
     relationships: number;
+    relationship_reviews: number;
     runs: number;
     markets_by_venue: Record<string, number>;
     instruments_by_venue: Record<string, number>;
@@ -81,6 +82,7 @@ type Market = {
     closes_at_utc: string | null;
     settles_at_utc: string | null;
     evidence_sha256: string | null;
+    resolution_fingerprint: string | null;
     verified: boolean;
   };
   fees: {
@@ -120,6 +122,16 @@ type Relationship = {
   state: string;
   confidence: string;
   reason: string;
+  supersedes?: string | null;
+  review_target_relationship_id: string;
+  latest_review: {
+    review_id: string;
+    decision: string;
+    reviewer_label: string;
+    reason: string;
+    evidence_observation_ids: string[];
+    created_at_utc: string;
+  } | null;
   evidence: {
     method: string;
     observation_ids: string[];
@@ -425,6 +437,204 @@ function RelationshipGraph({
   );
 }
 
+function RelationshipReviewForm({
+  relationship,
+  reviewTargetId,
+  left,
+  right,
+}: {
+  relationship: Relationship;
+  reviewTargetId: string;
+  left?: Market;
+  right?: Market;
+}) {
+  const [open, setOpen] = useState(false);
+  const [decision, setDecision] = useState<'rejected' | 'ambiguous' | 'verified'>('ambiguous');
+  const [reviewer, setReviewer] = useState('');
+  const [reason, setReason] = useState('');
+  const [assertion, setAssertion] = useState('');
+  const [stateMapping, setStateMapping] = useState('');
+  const [instrumentMapping, setInstrumentMapping] = useState('');
+  const queryClient = useQueryClient();
+  const evidenceIds = [
+    ...new Set(
+      [left?.source_observation_record_id, right?.source_observation_record_id].filter(
+        (id): id is string => Boolean(id),
+      ),
+    ),
+  ];
+  const evidenceReady = Boolean(
+    left?.source_observation_record_id && right?.source_observation_record_id,
+  );
+  const review = useMutation({
+    mutationFn: async () => {
+      const parseMapping = (value: string, title: string) => {
+        if (!value.trim()) return {};
+        const parsed: unknown = JSON.parse(value);
+        if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed))
+          throw new Error(`${title} must be a JSON object of string identifiers`);
+        return parsed as Record<string, string>;
+      };
+      return api(`/frontier/relationships/${reviewTargetId}/review`, {
+        method: 'POST',
+        body: JSON.stringify({
+          decision,
+          reviewer_label: reviewer,
+          reason,
+          evidence_observation_ids: evidenceIds,
+          external_assertion_id: decision === 'verified' ? assertion : undefined,
+          state_mapping: decision === 'verified' ? parseMapping(stateMapping, 'State mapping') : {},
+          instrument_mapping:
+            decision === 'verified' ? parseMapping(instrumentMapping, 'Instrument mapping') : {},
+          expected_latest_review_id: relationship.latest_review?.review_id ?? null,
+        }),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['frontier'] });
+      setOpen(false);
+    },
+  });
+
+  return (
+    <div className="fr-review-wrap">
+      {relationship.latest_review && (
+        <div className="fr-review-history">
+          <StateBadge state={relationship.latest_review.decision} />
+          <span>
+            Reviewed by self-attributed label “{relationship.latest_review.reviewer_label}” ·{' '}
+            {time(relationship.latest_review.created_at_utc)}
+          </span>
+          <p>{relationship.latest_review.reason}</p>
+        </div>
+      )}
+      <button
+        className="fr-inspect-button"
+        type="button"
+        onClick={() => setOpen((value) => !value)}
+      >
+        {open ? 'Close review' : relationship.latest_review ? 'Append review' : 'Review hypothesis'}
+      </button>
+      {open && (
+        <form
+          className="fr-review-form"
+          onSubmit={(event) => {
+            event.preventDefault();
+            review.mutate();
+          }}
+        >
+          <div className="fr-review-compared">
+            {[left, right].map((market, index) => (
+              <section key={market?.canonical_id ?? index}>
+                <strong>{index === 0 ? 'Left market' : 'Right market'}</strong>
+                <span>
+                  {market?.title ?? 'Market details are outside the loaded evidence window'}
+                </span>
+                <small>
+                  {market?.venue ?? 'unknown'} · {market?.market_kind ?? 'unknown'} ·{' '}
+                  {market?.payoff.verified && market.payoff.exhaustive
+                    ? `verified states: ${market.payoff.state_ids.join(', ')}`
+                    : 'payoff not verified/exhaustive'}
+                </small>
+                <small>
+                  Payout/settlement: {market?.payoff.payout_currency ?? 'unknown'} /{' '}
+                  {market?.settlement_asset ?? 'unknown'}
+                </small>
+                <small>
+                  Resolution: {market?.resolution.authority ?? 'authority unknown'} ·{' '}
+                  {market?.resolution.resolution_fingerprint ?? 'fingerprint unknown'}
+                </small>
+                <small>
+                  Closes {time(market?.resolution.closes_at_utc)} · settles{' '}
+                  {time(market?.resolution.settles_at_utc)}
+                </small>
+              </section>
+            ))}
+          </div>
+          <p>
+            This creates an immutable, self-attributed review. A reviewer label is not
+            authenticated. Both source market records are attached as evidence. Any external
+            assertion ID is a reference only; MIDAS does not fetch or authenticate that assertion.
+          </p>
+          <label>
+            Decision
+            <select
+              value={decision}
+              onChange={(event) => setDecision(event.target.value as typeof decision)}
+            >
+              <option value="ambiguous">Ambiguous</option>
+              <option value="rejected">Reject relationship</option>
+              <option value="verified">Verify same payoff</option>
+            </select>
+          </label>
+          <label>
+            Reviewer label
+            <input
+              value={reviewer}
+              onChange={(event) => setReviewer(event.target.value)}
+              maxLength={80}
+              required
+            />
+          </label>
+          <label>
+            Review reason
+            <textarea
+              value={reason}
+              onChange={(event) => setReason(event.target.value)}
+              minLength={5}
+              maxLength={1000}
+              required
+            />
+          </label>
+          {decision === 'verified' && (
+            <>
+              <label>
+                Independent assertion ID
+                <input
+                  value={assertion}
+                  onChange={(event) => setAssertion(event.target.value)}
+                  maxLength={120}
+                  required
+                />
+              </label>
+              <label>
+                Complete state mapping (JSON)
+                <textarea
+                  value={stateMapping}
+                  onChange={(event) => setStateMapping(event.target.value)}
+                  placeholder={'{"left-state":"right-state"}'}
+                  required
+                />
+              </label>
+              <label>
+                Complete instrument mapping (JSON)
+                <textarea
+                  value={instrumentMapping}
+                  onChange={(event) => setInstrumentMapping(event.target.value)}
+                  placeholder={'{"left-instrument":"right-instrument"}'}
+                  required
+                />
+              </label>
+              <p className="fr-review-verifier-note">
+                Mapping keys are from the left node to the right node. The independent verifier
+                checks exhaustive outcomes, payout vectors, currency, resolution fingerprints,
+                authorities, and settlement timing against stored market fields. It does not verify
+                the source truth of those fields or the assertion ID.
+              </p>
+            </>
+          )}
+          <small>Source evidence: {evidenceIds.map(shortHash).join(' · ') || 'unavailable'}</small>
+          {review.isError && <InlineError message={review.error.message} />}
+          {review.isSuccess && <StateBadge state="recorded" />}
+          <button className="fr-action" type="submit" disabled={review.isPending || !evidenceReady}>
+            {review.isPending ? 'Recording…' : 'Record immutable review'}
+          </button>
+        </form>
+      )}
+    </div>
+  );
+}
+
 export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }) {
   const [section, setSection] = useState<Section>('overview');
   const [search, setSearch] = useState('');
@@ -644,7 +854,7 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
             <Metric
               title="Verified relationships"
               value={count(verifiedRelationships)}
-              note={`${count(summary?.relationships)} total edges · hypotheses remain separate`}
+              note={`${count(summary?.relationships)} effective edges · ${count(summary?.relationship_reviews)} review decisions`}
               icon={GitBranch}
             />
             <Metric
@@ -935,6 +1145,15 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
                           ))}
                         </details>
                       </div>
+                      {relationship.review_target_relationship_id &&
+                        (relationship.state === 'hypothesis' || relationship.latest_review) && (
+                          <RelationshipReviewForm
+                            relationship={relationship}
+                            reviewTargetId={relationship.review_target_relationship_id}
+                            left={left}
+                            right={right}
+                          />
+                        )}
                     </article>
                   );
                 })}

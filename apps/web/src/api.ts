@@ -5,7 +5,8 @@ export async function api<T>(path: string, options?: RequestInit): Promise<T> {
   });
   if (!response.ok) {
     const body = await response.json().catch(() => ({ detail: response.statusText }));
-    throw new Error(String(body.detail ?? 'Request failed'));
+    const detail = body.detail ?? 'Request failed';
+    throw new Error(typeof detail === 'string' ? detail : JSON.stringify(detail));
   }
   return response.json() as Promise<T>;
 }
