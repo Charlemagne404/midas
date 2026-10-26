@@ -17,7 +17,7 @@ from midas.arena.admission import ResourceAdmissionDenied
 from midas.arena.artifacts import atomic_json
 from midas.arena.datasets import research_hash
 from midas.arena.scheduling import resources_ready
-from midas.veritas.continuous_analysis import VERSION as SNAPSHOT_ANALYSIS_VERSION
+from midas.veritas.continuous_analysis import event_path_for_scan
 from midas.veritas.economic_experiment import compare_qualification_rules
 
 DIRECTOR_ID = "director-veritas-opportunity-v1"
@@ -83,16 +83,22 @@ def _evidence(repository: Path, now: float) -> tuple[dict[str, Any] | None, str,
     if age > MAX_EVIDENCE_AGE_SECONDS:
         return None, "WAITING_FOR_FRESH_EVIDENCE", "Latest finalized scan is older than two hours"
 
-    event_root = data_root / "analysis-events" / "v4"
-    event_path = event_root / f"{scan_id}.json"
-    if data_root.joinpath("analysis-events").is_symlink() or event_root.is_symlink():
+    event_path, selected_analysis_version = event_path_for_scan(data_root, scan_id)
+    if data_root.joinpath("analysis-events").is_symlink() or (
+        event_path is not None and event_path.parent.is_symlink()
+    ):
         return None, "BLOCKED_INVALID_EVIDENCE", "Finalized event directory is a symlink"
-    if event_path.is_symlink() or not event_path.is_file():
-        return None, "WAITING_FOR_FINALIZATION", "Latest scan has not reached finalized v4 analysis"
+    if event_path is None or event_path.is_symlink() or not event_path.is_file():
+        return (
+            None,
+            "WAITING_FOR_FINALIZATION",
+            "Latest scan has not reached a supported finalized analysis version",
+        )
     try:
         event = _read_json(event_path, MAX_EVENT_BYTES)
-        if event.get("scan_id") != scan_id or event.get("analysis_version") != (
-            SNAPSHOT_ANALYSIS_VERSION
+        if (
+            event.get("scan_id") != scan_id
+            or event.get("analysis_version") != selected_analysis_version
         ):
             raise ValueError("Latest finalized event identity or version does not match")
         # Reuse the economic verifier's event digest and snapshot-lineage checks.
@@ -118,7 +124,7 @@ def _evidence(repository: Path, now: float) -> tuple[dict[str, Any] | None, str,
             "captured_ns": event["captured_ns"],
         },
         "READY",
-        "Newest v2 scan and its v4 analysis event agree and pass digest validation",
+        "Newest v2 scan and its current versioned analysis event agree and pass digest validation",
     )
 
 

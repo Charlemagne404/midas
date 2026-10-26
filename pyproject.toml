@@ -30,7 +30,7 @@ exclude = ["apps/web/**"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-pythonpath = ["."]
+pythonpath = [".", "packages"]
 asyncio_mode = "auto"
 
 [tool.ruff]

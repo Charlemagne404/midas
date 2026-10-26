@@ -16,7 +16,7 @@ SCAN_ID = "scan-20261015T100000Z-6f98ffeaecab"
 def _source(tmp_path, *, age_seconds: int = 30, valid_digest: bool = True):
     repository = tmp_path / "repository"
     data_root = repository / "data" / "veritas-observatory"
-    event_path = data_root / "analysis-events" / "v4" / f"{SCAN_ID}.json"
+    event_path = data_root / "analysis-events" / VERSION.rsplit("-", 1)[-1] / f"{SCAN_ID}.json"
     captured = datetime(2026, 10, 15, 10, 0, tzinfo=UTC).timestamp()
     event = {
         "analysis_version": VERSION,
@@ -233,7 +233,12 @@ def test_invalid_source_summary_is_reported_without_blocking_public_qualificatio
 def test_director_waits_for_finalization(tmp_path):
     repository, now = _source(tmp_path)
     arena_root = tmp_path / "arena"
-    event = repository / "data/veritas-observatory/analysis-events/v4" / f"{SCAN_ID}.json"
+    event = (
+        repository
+        / "data/veritas-observatory/analysis-events"
+        / VERSION.rsplit("-", 1)[-1]
+        / f"{SCAN_ID}.json"
+    )
     event.unlink()
     waiting = research_director.tick(repository, arena_root, now=now, launch_jobs=False)
     assert waiting["state"] == "WAITING_FOR_FINALIZATION"
