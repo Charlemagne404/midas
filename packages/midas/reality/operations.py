@@ -142,6 +142,53 @@ def file_hash_list(segments: list[dict[str, Any]]) -> str:
     return hashlib.sha256(canonical(segments)).hexdigest()
 
 
+def _validate_archive_state(
+    root: Path, destination: Path, source_manifest: dict[str, Any], entries: list[Path]
+) -> None:
+    """Fail closed on ambiguous publication state; never delete archive evidence."""
+    copying = [path for path in entries if path.name.endswith(".copying")]
+    if copying:
+        raise ValueError(
+            "Unresolved .copying archive files require explicit provenance review; "
+            f"preserved {copying[0].name}"
+        )
+    manifest_path = destination / "manifest.json"
+    if manifest_path.is_symlink():
+        raise ValueError("Archive manifest must not be a symlink")
+    if (destination / "manifest.json.tmp").exists():
+        raise ValueError("Interrupted archive manifest publication requires review")
+
+    source_names = {item["file"] for item in source_manifest["segments"]}
+    for path in entries:
+        if path.is_symlink():
+            raise ValueError(f"Archive contains a symlink requiring review: {path.name}")
+        if path.suffix == ".seg" and path.name not in source_names:
+            raise ValueError(f"Unpublished archive segment is absent from source: {path.name}")
+
+    if not manifest_path.exists():
+        return
+    try:
+        published = json.loads(manifest_path.read_text())
+        old_segments = published["segments"]
+        provenance = published["archival_provenance"]
+        valid_header = (
+            published["schema_version"] == source_manifest["schema_version"]
+            and published["format"] == source_manifest["format"]
+        )
+        same_root = provenance["recording_root"] == str(root)
+        old_hash = provenance["source_manifest_sha256"]
+        is_prefix = (
+            isinstance(old_segments, list)
+            and len(old_segments) <= len(source_manifest["segments"])
+            and old_segments == source_manifest["segments"][: len(old_segments)]
+        )
+        hash_matches = isinstance(old_segments, list) and old_hash == file_hash_list(old_segments)
+    except (OSError, ValueError, TypeError, KeyError, json.JSONDecodeError):
+        raise ValueError("Existing archive manifest is unreadable or incomplete; preserved") from None
+    if not (valid_header and same_root and is_prefix and hash_matches):
+        raise ValueError("Existing archive manifest conflicts with source provenance; preserved")
+
+
 def archive(root: Path, destination: Path, *, budget: int, reserve: int) -> dict[str, Any]:
     """Incrementally copy finalized segments; publish only after full validation.
 
@@ -168,7 +215,9 @@ def archive(root: Path, destination: Path, *, budget: int, reserve: int) -> dict
                 raise ValueError("Unidentified nonempty archive destination")
             atomic_json(identity, dict(schema_version=1, recording_root=str(root)))
         value = manifest(root)
-        used = sum(p.stat().st_size for p in destination.iterdir() if p.is_file())
+        entries = list(destination.iterdir())
+        _validate_archive_state(root, destination, value, entries)
+        used = sum(p.stat().st_size for p in entries if p.is_file())
         for info in value["segments"]:
             if Path(info["file"]).name != info["file"]:
                 raise ValueError("Unsafe segment path")
@@ -176,14 +225,12 @@ def archive(root: Path, destination: Path, *, budget: int, reserve: int) -> dict
             if describe(source) != info:
                 raise ValueError(f"Source segment integrity mismatch: {source}")
             if target.exists():
+                if target.is_symlink():
+                    raise ValueError(f"Archived segment must not be a symlink: {target}")
                 if describe(target) != info:
                     raise ValueError(f"Archived segment integrity mismatch: {target}")
                 continue
             partial = target.with_suffix(".copying")
-            # Only an interrupted temporary copy in this exclusive archive is disposable.
-            if partial.exists():
-                used -= partial.stat().st_size
-                partial.unlink()
             margin = len(canonical(value)) + 8192
             if used + info["bytes"] + margin > budget:
                 raise OSError("Archive budget reached; originals preserved")
