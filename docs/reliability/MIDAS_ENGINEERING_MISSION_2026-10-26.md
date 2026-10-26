@@ -3,11 +3,11 @@
 ## Executive readout
 
 Veritas V6 is integrated into a dedicated MIDAS branch and its observer is
-running from the pinned V6 release. The independent Decimal reference is
-measurable on the live persisted cohort. It found no economically supported or
-net-eligible observations; 800 repeated pair observations were audited, not
-800 independent trials. The current summary is still catching up, and the
-latest scan has no stable-control markets.
+running from the pinned V6 release. At the latest scheduled update, the
+independent Decimal reference audited 1,600 repeated pairs across 741 unique
+markets and found zero economically supported or net-eligible observations;
+they are not 1,600 independent trials. The snapshot catalog is still catching
+up, and the latest scan included no stable-control markets.
 
 The Research Readiness view is implemented and deployed through the existing
 local Mission Control Vite service. It reads live API projections, labels demo
@@ -117,10 +117,32 @@ seconds, used about 127 CPU seconds, and peaked at about 537 MiB under its 768
 MiB cap; it was not repeated. Its receipt and verification hashes are recorded
 in the mission evidence tree referenced below.
 
-The current live outcome is a measured zero-candidate result with material
-disagreement flags and substantial catch-up pending. It is not evidence of
-profitability, executable fills, queue position, acknowledgements, or realized
-P&L. Public-book analysis cannot establish those facts.
+The next scheduled update at `2026-10-26T04:32:24Z` published a 95,169-byte
+summary at the same path with SHA-256
+`49bc1c678f237b4d7656481218b5101585e0c57fdc6cc80020ca371002ef0bb1`. A
+read-only API artifact fetch returned HTTP 200 with the same artifact hash.
+The current post-observer receipt in Section 6 also verifies the matching
+source-analysis and gap-detail artifact identities.
+
+The scheduled V6 update at `2026-10-26T04:32:24Z` has processed 40 of 528
+snapshots, leaving 488 pending. The versioned Decimal reference audited 1,600
+repeated pair observations across 741 unique markets: 1,405 passed the primary
+quality filter, 310 passed the independent snapshot-validity check, and zero
+were economically supported or net-eligible. All 1,600 were unsupported for
+economic eligibility under the recorded assumptions. Source-quality and
+validity disagreement categories each contain 1,095 flags; they can overlap
+and are not unique-pair totals. The latest scan selected 8 reference-random
+markets and 32 rotating-stratified markets, with zero stable-control markets.
+The full snapshot identity, role counts, artifact hashes, and funnel are in the
+04:38 UTC receipt in Section 6. These repeated observations do not establish
+independent trial counts, profitability, executable fills, queue position,
+acknowledgements, or realized P&L.
+
+The source indexes have no pending catalog work in this capture: finalized
+source analysis is 31,977/31,977 segments and gap detail is 32,029/32,031 with
+zero pending segments. This describes indexed finalized evidence; it is not a
+full cold-recovery proof or reconciliation of the live recorder's current raw
+boundary.
 
 ## 3. Reality collector, storage, and recovery
 
@@ -134,6 +156,15 @@ no local gap count is described as an exact number of lost exchange events.
 The current API still reports missing persistence-window, recovery-state, and
 transport-queue-depth telemetry.
 
+At 04:35:56Z the recorder API reported `degraded` and
+`incomplete_observability`, with all 16 expected books fresh but
+`recent_persistence_window_incomplete`, `recovery_state_unreported`, and
+`transport_queue_depth_unreported`. It reported 18,594 durable local gap
+markers, explicitly not a lost-event count, 213 current-process stable-lineage
+divergences, and 1852 source-time regressions after gaps. The current error was
+null; the last `ConnectionClosedOK` error remains historical and has no
+source timestamp. Raw fields and interpretations are preserved in Section 6.
+
 The staged candidate in
 `/home/charlie/midas-reality-reliability` is branch
 `fix/reality-foundation-20261020` at `4278b5b5e66823e41a5d949b7b7c2e007c5b4ed0`
@@ -142,9 +173,17 @@ Its isolated Reality, dashboard, and operations suite passed 63 tests after
 pinning both candidate and package paths in `PYTHONPATH`. A first test command
 that pinned only `packages` imported the primary checkout and produced four
 environment-mismatch failures; the corrected candidate invocation passed.
-The candidate was not copied into production. Its source tree remains dirty,
-and a candidate first-durable-write receipt and exact-boundary deployment
-preflight were not completed.
+The committed candidate code contains bounded 60-second persistence/append
+latency samples with coverage and completeness, process maximums and
+backpressure counters, WebSocket queue depth/high-water samples that remain
+unknown when the installed transport does not expose them, recovery
+checkpoint ordinal/duration/error, and resource-headroom status. These fields
+are exposed through its read-only Reality API and dashboard. The candidate was
+not copied into production, and its source tree remains dirty. The isolated
+first-write and blocked exact-boundary preflight receipts in Section 8 cover a
+separate clean archive-provenance-only worktree; they do not establish the
+full candidate's source-feed canary, startup recovery, or current-boundary
+replay.
 
 The latest capacity projection uses active 24 GiB / 90-day settings and
 measured growth near 1.01 GB/day. It reported 16.5 days of effective runway
@@ -333,7 +372,16 @@ Mission evidence files are under
   records; SHA-256 `c145a7ea5680108b15fddbea2fa1ab6a84b480874068a3fff0734d81bcb1be07`.
 - `resource-api-post-browser-2026-10-26T0433Z.json` — live API health and
   bounded cgroup/host/observer sample at 04:33:53Z; SHA-256
-  `2cbd677c29887b8801181e5b020f12eaf04aacbe86537987fdbd020160ee0450`.
+  `f59e50f0a919ea16c94c6601963b00ece37b07d3449e03e9975b75c7fbcf283b`.
+- `reality-live-observability-2026-10-26T0435Z.json` — live Reality overview
+  and operations projection, preserving unsequenced-source and unavailable
+  current telemetry states at collector ordinal 5,155,334; SHA-256
+  `3ce86d583777ff3ba339a5f424358d936dfef27351c5b0178e594571e9991d02`.
+- `veritas-live-v6-postobserver-2026-10-26T0438Z.json` — post-observer V6
+  funnel and Decimal reference counts, latest discovery cohort, direct API
+  artifact checks, source/gap index boundaries, and verified summary-file
+  identity; SHA-256
+  `470ce82775558e7c3b3982076a51e0e13b115b07ac4650567db24d4aa777c86b`.
 - `data/veritas-v6-offline-replay-522-20261026/` in the preserved
   `midas-engineering-mission-20261025` worktree — isolated 522-snapshot replay
   receipt SHA-256
@@ -352,12 +400,13 @@ directories remain available for rollback.
 
 | Component | Classification | Current verdict |
 | --- | --- | --- |
-| Veritas V6 code, independent Decimal reference, catalog migration and bounded publication | **COMPLETE AND VERIFIED** | Integrated and scheduled; live catch-up remains 20/526 snapshots and independent/source-quality disagreement flags remain |
-| Economic evidence | **PARTIALLY VERIFIED** | Reference measured 800 repeated pairs; zero support/net eligibility and execution outcomes remain unmeasured |
+| Veritas V6 code, independent Decimal reference, catalog migration and bounded publication | **COMPLETE AND VERIFIED** | Integrated and scheduled; latest update has 40/528 snapshots processed, 488 pending, and 1,095 source-quality plus 1,095 validity flags (categories may overlap) |
+| Economic evidence | **PARTIALLY VERIFIED** | Latest reference covers 1,600 repeated pairs across 741 markets; 310 independently snapshot-valid, zero economic support/net eligibility, and execution outcomes remain unmeasured |
 | Readiness resource API and dashboard | **COMPLETE AND VERIFIED** | Deployed at API `cf452ec` / web `4f4179c`; browser receipt and screenshot available |
 | Veritas missing-evidence rendering and deterministic browser fixtures | **IMPLEMENTED, DEPLOYMENT PENDING** | Current branch renders unavailable counts as `Not measured`; frontend/browser checks pass, but this follow-up is not in the deployed web release |
 | Reality candidate hardening | **IMPLEMENTED, DEPLOYMENT PENDING** | The archive-provenance fix is committed and its focused suite passes; a synthetic isolated first-write receipt and a fresh blocked deployment preflight exist. A feed canary, complete latest-boundary recovery, storage clearance, and protected-restart authorization remain |
-| Production Reality telemetry/integrity | **PARTIALLY VERIFIED** | Feed is unsequenced and degraded; persistence, queue, and recovery telemetry are missing |
+| Reality candidate bounded telemetry | **IMPLEMENTED, DEPLOYMENT PENDING** | Candidate commit `4278b5b` exposes bounded persistence, transport-queue, backpressure, checkpoint, and resource fields; 63 candidate tests passed. These fields are not present in the protected production API |
+| Production Reality telemetry/integrity | **PARTIALLY VERIFIED** | At 04:35:56Z the API still reports an unsequenced degraded feed and missing persistence-window, queue-depth, and recovery-state telemetry |
 | Cold recovery/reproducibility | **PARTIALLY VERIFIED** | Historical prefixes and bounded checks exist; latest boundary is not fully verified |
 | Storage/archive provenance | **BLOCKED** | Active warning runway; staged capacity inactive; archive manifest and provenance invalid |
 | Cross-component research admission | **PARTIALLY VERIFIED** | Dashboard blocks near API `MemoryHigh`; three persisted Arena manifests are read-only projected as 2 cancelled / 1 failed from owner jobs, with 0 active and 0 unverified; startup verification is CPU/I/O intensive |
@@ -372,8 +421,9 @@ Recommended next actions:
    preserving design and corruption/interruption regression tests. Do not
    infer a leak from the page-cache charge or skip rolling-hash validation.
 3. Let the scheduled bounded V6 observer continue its existing cadence; do
-   not manually accelerate it. Review the 506-snapshot backlog and zero
-   stable-control coverage on the next scheduled result.
+   not manually accelerate it. Review the 488-snapshot backlog and the
+   latest scan's 8 reference-random / 32 rotating / 0 stable-control split on
+   the next scheduled result.
 4. Keep Arena director lifecycle state derived from the matching owner job;
    preserve the three persisted manifests, and investigate any future
    `UNVERIFIED` projection before considering a mutation.

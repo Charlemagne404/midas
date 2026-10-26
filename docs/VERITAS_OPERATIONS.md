@@ -332,7 +332,7 @@ separately to
 inactive between runs is expected. Do not launch a manual observer in parallel
 with its timer.
 
-At `2026-10-26T03:31:11Z`, the published V6 analysis summary contained 526
+The first V6 runtime checkpoint at `2026-10-26T03:31:11Z` contained 526
 snapshots: 20 processed and 506 pending (`CATCHING_UP`). Its continuous-analysis
 artifact ID is `continuous-analysis`, SHA-256
 `d5cd5de76a7d3e379a5acf53899cd009cf1d66cac056a23995393f75e29982be`. The
@@ -342,7 +342,25 @@ verified, and zero were positive-gross or net-eligible. The 547 source-quality
 and 547 validity disagreement counts are category flags and can overlap; do
 not report their sum as unique pairs. The latest scan had 298 unique market IDs
 from 300 candidate records, 32 rotating selections, and zero stable-control
-markets. Repeated observations are not independent trials.
+markets at that checkpoint. Repeated observations are not independent trials.
+
+The next scheduled update at `2026-10-26T04:32:24Z` processed 40 of 528
+snapshots, leaving 488 pending. The independently versioned Decimal reference
+audited 1,600 repeated pairs across 741 unique markets: 1,405 passed the
+primary quality filter, 310 passed independent snapshot-validity checks, and
+zero were economically supported or net-eligible. Source-quality and
+validity disagreement flags are 1,095 each; they overlap and must not be
+summed as unique affected pairs. The latest scan selected 8 reference-random
+and 32 rotating-stratified markets, with zero stable controls. Its summary is
+95,169 bytes with SHA-256
+`49bc1c678f237b4d7656481218b5101585e0c57fdc6cc80020ca371002ef0bb1`; the API
+artifact returned HTTP 200 with the same hash at 04:38Z.
+
+The read-only finalized-source endpoint returned current analysis over
+31,977/31,977 catalog segments (zero pending; last processed ordinal
+5,148,456). Gap detail returned 32,029/32,031 segments (zero pending; last
+processed ordinal 5,155,611). These are indexed finalized-source projections,
+not the latest-boundary cold-recovery matrix.
 
 Use the read-only API to inspect the current projection and its artifact
 identity:
@@ -360,16 +378,31 @@ The dashboard labels the economic total as overlapping flags and keeps live,
 historical, staged, and unmeasured evidence distinct. Current research
 readiness remains blocked by source-quality/validity disagreements, incomplete
 Reality collector observability, missing full cold-recovery evidence, API
-`MemoryHigh` pressure, and three stale Arena director projections. Storage
-runway is warning-level and staged Reality capacity is not active.
+`MemoryHigh` pressure, and the stale persisted state of three Arena director
+manifests. The read-only production projection joins each to its owner job,
+showing two cancellations and one artifact-budget failure, with zero active or
+unverified directors; the manifests remain unchanged. Storage runway is
+warning-level and staged Reality capacity is not active. The separate web fix
+in local commit `90c625d4e168c64fe3c8d1f93e0c1393734fd009` handles missing
+Veritas measurements safely but has not been deployed.
 
-The latest bounded finalized-source analysis processed through ordinal
-5,140,697 and reported zero pending segments for that captured prefix. That
-projection is not full cold-recovery proof: the copied latest-boundary
-checkpoint still covers only 2,816 of 31,742 segments. The collector continues
-to report unsequenced continuity and missing persistence-window, recovery,
-and queue telemetry. Never infer exact exchange-event loss from local gap
-markers.
+The 03:43Z bounded finalized-source analysis processed through ordinal
+5,140,697 and reported zero pending segments for that captured prefix. The
+later source/gap indexes above also report no pending catalog work; neither
+projection is full cold-recovery proof. The copied latest-boundary checkpoint
+still covers only 2,816 of 31,742 segments. At 04:35:56Z the protected
+collector API remained degraded and unsequenced with all 16 current books
+fresh, but persistence-window, recovery, and queue-depth telemetry were
+unavailable. It reported 18,594 durable local gap markers, which are not an
+exact lost-exchange-event count. Its current error was null; the last
+`ConnectionClosedOK` error was historical and had no source timestamp.
+
+The staged reliability candidate at `4278b5b` contains bounded persistence
+latency, transport queue, backpressure, checkpoint, and resource telemetry and
+passed 63 isolated candidate tests. It remains a dirty, undeployed worktree;
+its isolated first-write receipt covers a separate archive-provenance-only
+worktree and does not prove a feed canary or current-boundary recovery. Never
+infer exact exchange-event loss from local gap markers.
 
 The active Reality recorder remains on its prior release and its 24 GiB / 90
 day configuration. The staged 112 GiB / 120 day values still require a
