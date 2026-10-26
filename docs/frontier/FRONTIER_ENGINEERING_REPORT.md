@@ -357,7 +357,7 @@ arithmetic agreement does not establish profitability or execution.
 
 Verification on this branch:
 
-- Backend focused suite: **53 passed** in 9.45 seconds. Command: `PYTHONPATH=packages:apps/api /home/charlie/midas/.venv/bin/python -m pytest -q tests/frontier tests/integration/test_adapters.py tests/integration/test_api.py::test_offline_api_workflow_contract_and_persistence`.
+- Backend focused suite: **54 passed** in 9.86 seconds. Command: `PYTHONPATH=packages:apps/api /home/charlie/midas/.venv/bin/python -m pytest -q tests/frontier tests/integration/test_adapters.py tests/integration/test_api.py::test_offline_api_workflow_contract_and_persistence`.
 - Python static checks: Ruff check and format check passed for the Frontier package/tests; mypy passed for 16 Frontier/API source files. A broader `mypy packages/midas/frontier apps/api` attempt reported 37 errors in eight unchanged Veritas/Arena/API files; no Frontier source error was reported.
 - Frontend unit suite: **35 passed across 7 files**.
 - Frontend typecheck, ESLint, and Prettier check passed.
@@ -372,8 +372,8 @@ responses are distinct from the preserved genuine public capture files.
 
 ## 13. Performance and resource measurements
 
-The latest focused backend run (53 tests) completed in 10.25 seconds wall time,
-used 3.97 seconds user CPU, and peaked at 145,740 KiB RSS (about 142 MiB). The
+The latest focused backend run (54 tests) completed in 10.65 seconds wall time,
+used 3.97 seconds user CPU, and peaked at 145,628 KiB RSS (about 142 MiB). The
 test process recorded zero socket messages. This is one bounded test
 measurement, not a production service capacity estimate. The two focused
 Frontier browser cases ran serially with one worker and completed in 6.4
@@ -437,11 +437,11 @@ gaps are deferred work, not hidden passed checks:
 
 - Live API-to-store validation covered one listing, one book, and at most ten
   trades per venue for one selected market. Fee endpoints, trade pagination,
-  live retries/degradation, repeated schema variation, and book freshness across
-  a time series remain unverified. A deterministic API test covers complete
-  invalid-JSON, invalid-UTF8, HTTP 503 and 2xx schema-failure evidence, source
-  isolation, health degradation, and recovery. Oversized partial bodies are
-  rejected and not persisted.
+  live retries/degradation, timeouts, repeated schema variation, and book
+  freshness across a time series remain unverified. Deterministic API tests cover
+  complete invalid-JSON, invalid-UTF8, HTTP 503 and 2xx schema-failure evidence,
+  bounded retry attempts, source isolation, health degradation, and recovery.
+  Oversized partial bodies are rejected and not persisted.
 - No verified genuine cross-venue event relationship exists in the sample.
 - Relationship reviews are self-attributed only. Reviewer identities and
   external assertion IDs are not authenticated or retrieved, so the workflow
@@ -481,9 +481,9 @@ Reality recorder.
 
 Priority order:
 
-1. Validate supported fee metadata and adversarial source-degradation paths;
-   trades now have bounded adapter-to-store captures but pagination and failure
-   handling need broader tests.
+1. Validate supported fee metadata and broaden live source-degradation coverage;
+   add trade pagination tests, timeout tests, and oversized/truncated response
+   checks. Mock probes already cover bounded retries and failure evidence.
 2. Replace the bounded recent-edge scan with indexed graph adjacency and add
    searchable, paginated graph drill-down.
 3. Resolve current official fee inputs and create versioned venue-specific fee
@@ -543,6 +543,8 @@ Code commits on this branch:
 - `e8019d81a70c50446371d29d6e65ebaefba6e8e4` — retained complete bounded
   transport failure bodies, including invalid UTF-8 as base64 with original-byte
   hash verification; tested invalid JSON, encoding, and HTTP 503 diagnostics.
+- `294cc6dd8be39eed6a03ebc1fcc4ae5c42bab548` — tested retry caps and confirmed
+  the final bounded 503 response remains available as hash-verifiable evidence.
 
 Principal changed paths:
 
@@ -570,7 +572,7 @@ cross-venue economics.
 | --- | --- | --- |
 | Isolated baseline/worktree and preserved unrelated changes | COMPLETE AND VERIFIED | Branch starts at verified V6 commit; original dirty worktrees untouched. |
 | Adapter protocol, capability registry, bounded GET transport | COMPLETE AND VERIFIED | Contract tests, all capability declarations, host/size/rate/redirect bounds. |
-| Polymarket, Kalshi and Kraken Spot adapters | PARTIALLY VERIFIED | Fixture/contract tests and one live listing/book/trade-to-store round trip per venue pass; mock API tests verify complete invalid JSON, invalid UTF-8, HTTP 503, and schema-failure evidence plus source recovery; fees and live degraded-source behavior remain unverified. |
+| Polymarket, Kalshi and Kraken Spot adapters | PARTIALLY VERIFIED | Fixture/contract tests and one live listing/book/trade-to-store round trip per venue pass; mock tests verify invalid JSON/UTF-8, HTTP 503, schema-failure evidence, capped retries, source isolation, and recovery; fees and live degraded-source behavior remain unverified. |
 | Canonical market/instrument normalization | PARTIALLY VERIFIED | Three distinct instrument classes represented; live lineage and several economic semantics remain unverified. |
 | Relationship hypotheses, review revisions, bounded neighborhoods, and explicit same-payoff verifier | PARTIALLY VERIFIED | Self-attributed review API/UI, append-only revisions, latest-state replay, tamper checks, and 1–3 hop graph; no genuine equivalent pair, authentication, or indexed large-graph traversal. |
 | Opportunity candidate and independent economic checks | PARTIALLY VERIFIED | Two-venue all-long binary and same-market 3–16 state one-hot exhaustive coverage, with a separate pinned-input arithmetic audit; controlled fixtures only, with source semantics, fees, broader costs and operational feasibility incomplete. |
