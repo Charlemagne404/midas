@@ -15,7 +15,8 @@ as mutable Frontier storage.
 | Public venue adapters | `adapters/polymarket.py`, `kalshi.py`, `kraken.py` | Source-specific normalization and native metadata preservation. |
 | Registry | `registry.py` | Explicit capability inventory; default instances do not probe. |
 | Relationship intelligence | `relationships.py` | Deterministic indexed hypotheses, strict payoff checks, and immutable review contracts. |
-| Economic verifier | `economics.py` | Decimal cross-venue binary and same-market exhaustive multi-outcome all-long checks with fee, depth, freshness, timing, and scenario bounds. |
+| Candidate calculators | `economics.py` | Decimal cross-venue binary and same-market exhaustive multi-outcome all-long checks with fee, depth, freshness, timing, and scenario bounds. |
+| Independent arithmetic audit | `independent_audit.py` | Separately recomputes supported candidate identities, payoff vectors, pinned quotes/depth, fees, costs, terminal P&L, and classification from replay inputs. |
 | Durable evidence | `storage.py` | Append-only, size- and row-bounded SQLite observations, markets, relationship reviews/revisions, and runs. |
 | Replay | `replay.py` | Stable input ordering, manifest and implementation digest, deterministic result identity. |
 | HTTP API | `apps/api/frontier.py` | Bounded local queries and graph neighborhoods, relationship proposals/reviews, deterministic replay, and config-gated public capture. |
@@ -88,6 +89,15 @@ public snapshots do not prove fills, queue priority, venue access, simultaneous
 execution, capital transfer, or settlement. Opportunity classifications describe
 the mathematical and modeled evidence only.
 
+Replay then runs a separate arithmetic implementation that does not call the
+candidate calculator's arithmetic helpers. It records `verified`, `disagreement`,
+`incomplete`, or `not_evaluated`, the recomputed figures and a versioned SHA-256
+over the candidate, normalized market/book inputs, relationships/mappings, and
+scenario. Missing evidence or disagreement cannot retain a decisive candidate
+classification. This independence is limited to calculation logic: the audit
+shares the same normalized evidence and does not authenticate exchange truth,
+resolution assertions, fee authority, source timing, or execution.
+
 ## Persistence and deterministic replay
 
 The API uses a separate `MIDAS_FRONTIER_ROOT`. Raw source observations, normalized
@@ -106,8 +116,10 @@ Replay reads only stored inputs, sorts records by canonical IDs, pins the source
 observation IDs and relationship IDs, hashes normalized input, persists scenario
 assumptions, and records a SHA-256 over the backend Frontier source set. Re-running
 the same recorded inputs, implementation, and assumptions yields the same result
-identity. Replay time defaults to the latest selected source receipt time; empty
-input uses a fixed epoch. No network adapter is called from replay.
+identity. Replay version 3 includes the independent per-candidate arithmetic
+audit and its pinned-input hash. Replay time defaults to the latest selected
+source receipt time; empty input uses a fixed epoch. No network adapter is called
+from replay.
 
 ## API and UI behavior
 
@@ -126,7 +138,10 @@ captured evidence age, renders an interactive three-column SVG network for at
 most 18 effective edges and a searchable evidence list capped at 30, supports
 self-attributed reject/ambiguous/strict-verification reviews, exposes native
 rules/fees/books, and keeps offline, unsupported, empty, and degraded states
-visible.
+visible. Candidate details show the separate audit disposition, recomputed cost,
+fees, worst-state net result, and shortened evidence hash. Readiness summarizes
+audit dispositions over at most the most recent three hash-validated replay runs;
+it does not represent source truth or profitability.
 
 ## Known scope limits
 

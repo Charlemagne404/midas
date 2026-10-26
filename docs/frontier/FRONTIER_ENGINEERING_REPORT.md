@@ -31,6 +31,16 @@ The observations do **not** establish a verified cross-venue event equivalence.
 No economically eligible opportunity was established. Controlled mathematical
 fixtures test the verifier; they are not market findings.
 
+Replay now runs a separately implemented Decimal audit over each generated
+candidate. It independently reconstructs positions, payoff states, pinned ask
+prices and depth, applicable fees, basket cost, and terminal P&L from the
+normalized markets and books. A versioned SHA-256 pins its candidate, input
+evidence, relationship mappings, and scenario. The audit found and helped fix a
+canonical relationship-mapping order defect that had allowed a replay regression
+to pass with an empty candidate list. This is independent arithmetic over shared
+normalized evidence; it does not independently validate exchange truth, source
+timing, external resolution documents, or real execution.
+
 The implementation deliberately stops short of full acceptance. It now has a
 self-attributed review workflow, but reviewer and external assertion IDs are
 references only; MIDAS does not authenticate the reviewer, fetch the assertion,
@@ -75,11 +85,13 @@ The primary layers are:
    capability-checked, HTTPS GET-only, source-specific parsing and validation.
 3. `relationships.py` and `economics.py`: conservative proposals, explicit
    payoff comparison, and bounded outcome-state arithmetic.
-4. `storage.py` and `replay.py`: isolated bounded evidence persistence and
-   deterministic replay over pinned local inputs.
-5. `apps/api/frontier.py`: bounded local reads, explicit proposal/replay writes,
+4. `independent_audit.py`: a separately coded candidate arithmetic audit over
+   pinned normalized contracts, books, relationships, and scenarios.
+5. `storage.py` and `replay.py`: isolated bounded evidence persistence and
+   deterministic replay over pinned local inputs, including audit results.
+6. `apps/api/frontier.py`: bounded local reads, explicit proposal/replay writes,
    bounded graph-neighborhood queries, and separately configured public captures.
-6. `apps/web/src/Frontier.tsx`: native Mission Control research workspace.
+7. `apps/web/src/Frontier.tsx`: native Mission Control research workspace.
 
 The three adapters are registered at API construction, but that action is
 local-only. Network access is gated separately for each source. There is no
@@ -194,12 +206,15 @@ only previously stored verified relationships are applied to payoff arithmetic.
 No public source capture supplied a verified relationship or a verified
 exhaustive multi-outcome event, so the live sample produced no eligible
 opportunity evaluation. Implication bounds, exhaustive multi-leg optimization,
-and spot/derivative hedge models remain deferred.
+and spot/derivative hedge models remain deferred. Each generated candidate is
+passed to the separate independent arithmetic audit described below. A regression
+also verifies that non-identity outcome mappings and reversed input ordering
+still produce actual candidates rather than a vacuous empty result.
 
 ## 8. Independent economic verification
 
-For supported candidates, the Decimal verifier evaluates terminal payout by
-state; per-venue gross capital, fee amounts, modeled net cost, and worst-state
+For supported candidates, the primary Decimal candidate calculator evaluates
+terminal payout by state; per-venue gross capital, fee amounts, modeled net cost, and worst-state
 gross/net result; quantity step/minimum and displayed top-ask depth; quote
 currency and settlement compatibility; receipt and exchange timestamp skew;
 book age; and scenario slippage, delay-based quote decay, and fill fraction.
@@ -220,10 +235,31 @@ fees are applied only when their source, currency, supported formula (or explici
 zero rate), and effective/expiry window are applicable to the replay time.
 Unknown or expired schedules do not become zero.
 
-This is an independent bounded calculator, not an execution simulator. It does
-not model FX, account-specific fees, queue priority, custody, cross-venue funding
-or transfers, venue access, partial multi-leg recovery, or settlement failure
-probabilities. Scenario outcomes are virtual assumptions. Every candidate has
+`independent_audit.py` does not call candidate-generator arithmetic helpers. It
+rechecks the candidate's market/instrument identity, verified relationship or
+exhaustive-state mapping, pinned best ask and displayed depth, modeled purchase
+price, fee applicability and amount, gross and net basket costs, every terminal
+payoff/P&L state, worst-state results, and the generator's reported classification.
+The audit records a disposition (`verified`, `disagreement`, `incomplete`, or
+`not_evaluated`), checked market/leg counts, recomputed values, and a versioned
+input SHA-256. Missing decisive evidence yields `INCOMPLETE`; calculation
+disagreement preserves recomputed figures and downgrades the candidate to
+`INCOMPLETE_EVIDENCE`. Replay version 3 includes this audit in its deterministic
+result. Readiness aggregates dispositions only across the latest three
+hash-valid runs, and the UI shows the audit state, recomputed cost/fees/net result,
+and shortened input hash.
+
+This is an independent implementation of bounded arithmetic over shared,
+normalized and persisted inputs. It is not an independent feed, market-data
+oracle, reviewer, resolution-document verifier, fee authority, clock, or execution
+venue. A `verified` audit means the candidate arithmetic agrees with its pinned
+inputs under the supported model; it is not evidence of independently true
+market semantics or of a realizable opportunity.
+
+The primary candidate calculator is a bounded model, not an execution simulator.
+It does not model FX, account-specific fees, queue priority, custody, cross-venue
+funding or transfers, venue access, partial multi-leg recovery, or settlement
+failure probabilities. Scenario outcomes are virtual assumptions. Every candidate has
 `hypothetical=true` and `practical_eligibility=false`; a public quote comparison
 is never called executable profit.
 
@@ -248,7 +284,8 @@ SHA-256, normalized record, adapter and source-schema version, and observation
 identity. Replay consumes only stored data, fixes source observation IDs,
 relationships, assumptions and time, sorts inputs deterministically, and pins a
 hash of normalized inputs and the Frontier backend source set. No adapter is
-called from replay. The store has no compaction/retention worker; once the cap is
+called from replay. Replay version 3 includes each candidate's independent audit
+disposition and its input hash. The store has no compaction/retention worker; once the cap is
 reached, writes fail closed and require an explicitly reviewed storage policy.
 
 The committed public captures are
@@ -295,19 +332,22 @@ navigation, and review submission at desktop/mobile widths. The API graph query
 is bounded to 200 source markets, 500 scanned relationships, and 1–3 hops; the
 visual network caps at 18 edges. Reviewer authentication, external assertion
 retrieval, indexed large-graph traversal, and experiment result drill-downs
-remain incomplete.
+remain incomplete. Candidate detail shows the independent audit disposition,
+recomputed economics, and pinned-input hash. Readiness summarizes audit
+dispositions from the most recent three hash-valid runs and explicitly says that
+arithmetic agreement does not establish profitability or execution.
 
 ## 12. Testing and reproducibility
 
 Verification on this branch:
 
-- Backend focused suite: **49 passed** in 8.43 seconds. Command: `pytest -q tests/frontier tests/integration/test_adapters.py tests/integration/test_api.py::test_offline_api_workflow_contract_and_persistence`.
-- Python static checks: Ruff check and format check passed for the Frontier package/tests; mypy passed for 15 Frontier/API source files. A broader `mypy packages/midas/frontier apps/api` attempt reported 37 errors in eight unchanged Veritas/Arena/API files; no Frontier source error was reported.
+- Backend focused suite: **52 passed** in 8.62 seconds. Command: `PYTHONPATH=packages:apps/api .venv/bin/python -m pytest -q tests/frontier tests/integration/test_adapters.py tests/integration/test_api.py::test_offline_api_workflow_contract_and_persistence`.
+- Python static checks: Ruff check and format check passed for the Frontier package/tests; mypy passed for 16 Frontier/API source files. A broader `mypy packages/midas/frontier apps/api` attempt reported 37 errors in eight unchanged Veritas/Arena/API files; no Frontier source error was reported.
 - Frontend unit suite: **35 passed across 7 files**.
 - Frontend typecheck, ESLint, and Prettier check passed.
 - Trade capture/read API regression tests: **2 passed**; they validate Polymarket's condition-ID query, bounded GET count, absent authorization, raw evidence persistence/read-back, plus the stored-batch query.
-- Production frontend build passed. Frontier is lazy-loaded as a 46.21 kB JavaScript chunk and 23.88 kB CSS. Vite emitted the existing large-chunk warning for 503.86 kB main and 544.41 kB Chart chunks.
-- Frontier browser cases: **2 passed** in 6.2 seconds, including empty state, fixture-only center-market graph navigation, and review submission at desktop/mobile sizes. The full 10-case browser suite was attempted earlier; 8 passed and 2 existing Laboratory cases were denied at the host-wide Arena admission lock (`resource_admission_lock_busy`). Neither case started an experiment, and the shared lock was not bypassed. The isolated API tests use a temporary root and never enable source probes.
+- Production frontend build passed. Frontier is lazy-loaded as a 47.53 kB JavaScript chunk and 24.58 kB CSS. Vite emitted the existing large-chunk warning for 503.86 kB main and 544.41 kB Chart chunks.
+- Frontier browser cases: **2 passed** in 6.4 seconds, including empty state, fixture-only center-market graph navigation and review submission, and independent audit details at desktop/mobile sizes. The full 10-case browser suite was attempted earlier; 8 passed and 2 existing Laboratory cases were denied at the host-wide Arena admission lock (`resource_admission_lock_busy`). Neither case started an experiment, and the shared lock was not bypassed. The isolated API tests use a temporary root and never enable source probes.
 - Legacy regression evidence: focused integration adapter contracts and the existing offline API workflow/persistence acceptance test passed. The complete repository Python suite was not run.
 
 Backend tests emitted one upstream Starlette/httpx TestClient deprecation
@@ -316,11 +356,11 @@ responses are distinct from the preserved genuine public capture files.
 
 ## 13. Performance and resource measurements
 
-The latest focused backend run (49 tests) completed in 9.21 seconds wall time,
-used 3.73 seconds user CPU, and peaked at 144,340 KiB RSS (about 141 MiB). The
+The latest focused backend run (52 tests) completed in 9.41 seconds wall time,
+used 3.83 seconds user CPU, and peaked at 142,908 KiB RSS (about 140 MiB). The
 test process recorded zero socket messages. This is one bounded test
 measurement, not a production service capacity estimate. The two focused
-Frontier browser cases ran serially with one worker and completed in 6.2
+Frontier browser cases ran serially with one worker and completed in 6.4
 seconds. No service or persistent Frontier worker was started. The host and
 protected service cgroups were not treated as spare Frontier capacity based on
 this process-local test measurement.
@@ -393,6 +433,10 @@ gaps are deferred work, not hidden passed checks:
 - The only multi-outcome family is a same-market all-long construction over
   verified one-hot exhaustive states; only controlled fixtures have exercised it.
   Logical implication bounds and general multi-leg search are not implemented.
+- The independent economic audit rechecks supported arithmetic from the same
+  pinned normalized evidence. It cannot authenticate source semantics, reviewer
+  identity, external assertions, fee authority, timestamps, or exchange truth;
+  it is not a second independent market-data source.
 - No account-independent fee resolution, FX, cross-venue capital transfer,
   settlement risk, or partial-leg exposure model exists.
 - No continuous source worker, incremental book stream, gap reconstruction, or
@@ -462,13 +506,21 @@ Code commits on this branch:
 - `3fe24dd` — added bounded public trade capture/read-back, the native Mission
   Control trade table, adapter route regression tests, and preserved three-
   venue listing/book/trade evidence.
-- `5e87d18` — added exact, bounded same-market multi-outcome coverage with
+- `5e87d1893d3f20972b32adfe19081a38a6286344` — added exact, bounded same-market
+  multi-outcome coverage with
   Decimal precision and quantity constraints, fee-expiry validation,
   deterministic replay, API/UI candidate details, and fixture-only tests.
+- `d8d70a4dcb96da3f6eb4d5ca784af1b0500fd743` — added multi-outcome bounds and
+  non-vacuous replay regression
+  coverage for non-identity state mappings and reversed input order.
+- `ae7c3084838a2942fab06017cacfb6657462fa53` — independently recalculated
+  bounded replay candidate economics,
+  persisted audit dispositions and input hashes, surfaced audit values in the
+  UI/readiness view, and fixed the canonical relationship-mapping order defect.
 
 Principal changed paths:
 
-- `packages/midas/frontier/{models.py,registry.py,relationships.py,economics.py,storage.py,replay.py}`
+- `packages/midas/frontier/{models.py,registry.py,relationships.py,economics.py,independent_audit.py,storage.py,replay.py}`
 - `packages/midas/frontier/adapters/{base.py,normalization.py,transport.py,polymarket.py,kalshi.py,kraken.py}`
 - `apps/api/{config.py,main.py,frontier.py}`
 - `apps/web/src/{App.tsx,Frontier.tsx,Frontier.test.tsx,frontier.css}` and
@@ -495,7 +547,7 @@ cross-venue economics.
 | Polymarket, Kalshi and Kraken Spot adapters | PARTIALLY VERIFIED | Fixture/contract tests and one live listing/book/trade-to-store round trip per venue pass; fees and degraded-source paths remain unverified. |
 | Canonical market/instrument normalization | PARTIALLY VERIFIED | Three distinct instrument classes represented; live lineage and several economic semantics remain unverified. |
 | Relationship hypotheses, review revisions, bounded neighborhoods, and explicit same-payoff verifier | PARTIALLY VERIFIED | Self-attributed review API/UI, append-only revisions, latest-state replay, tamper checks, and 1–3 hop graph; no genuine equivalent pair, authentication, or indexed large-graph traversal. |
-| Opportunity candidate and independent economic checks | PARTIALLY VERIFIED | Two-venue all-long binary and same-market 3–16 state one-hot exhaustive coverage; controlled fixtures only; fees, costs and operational feasibility incomplete. |
+| Opportunity candidate and independent economic checks | PARTIALLY VERIFIED | Two-venue all-long binary and same-market 3–16 state one-hot exhaustive coverage, with a separate pinned-input arithmetic audit; controlled fixtures only, with source semantics, fees, broader costs and operational feasibility incomplete. |
 | Append-only evidence store and deterministic replay | COMPLETE AND VERIFIED | Bounds, hash validation, immutability, replay tests; not integrated as an Arena campaign. |
 | Live market/book/trade observations through adapters and API | PARTIALLY VERIFIED | One bounded listing, book, and trade response per venue is hash-pinned; samples are not synchronized and do not establish a continuous source feed. Kalshi's trade array was valid but empty. |
 | Source workers and broad historical data | DEFERRED | No persistent worker or long-duration collection. |
@@ -507,8 +559,10 @@ cross-venue economics.
 To continue safely, use this worktree and branch. Next validate supported fee
 metadata and degraded-source behavior with focused tests; search for public
 multi-outcome metadata that meets the strict payoff and resolution evidence
-requirements; add indexed graph adjacency; then connect short, resource-admitted
-deterministic jobs to Laboratory/Arena. Expand economics only where source
-evidence supports it. Re-run the focused suites before each checkpoint. Do not
-enable probes by default, deploy, modify Reality, or start a long-running
-campaign as part of routine continuation.
+requirements without loosening attestation; add indexed graph adjacency; then
+connect short, resource-admitted deterministic jobs to Laboratory/Arena. Add
+adversarial mutations and differential audit fixtures only where they test a
+distinct failure mode. Expand economics only where source evidence supports it.
+Re-run the focused suites before each checkpoint. Do not enable probes by default,
+deploy, modify Reality, or start a long-running campaign as part of routine
+continuation.

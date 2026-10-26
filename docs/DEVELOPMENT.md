@@ -126,6 +126,13 @@ verified; it does not evaluate captured listings without verified payoff and
 resolution evidence. Both paths are hypothetical research only and always leave
 practical execution eligibility false.
 
+Replay version 3 attaches a separately coded arithmetic audit to each candidate.
+It re-derives the supported payoff, pinned quote/depth, applicable fee, modeled
+cost, and terminal result from stored inputs. An audit disposition of `verified`
+means these calculations agree over those pinned inputs; it does not validate
+external market truth, reviewer assertions, source synchronization, or execution.
+The audit's input SHA-256 is shown in candidate details.
+
 For focused Frontier verification, use isolated test databases and run:
 
 ```bash

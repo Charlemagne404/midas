@@ -125,6 +125,14 @@ structures and general multi-leg searches remain unsupported. It does not produc
 execution instructions, and public quotes never establish practical execution
 eligibility.
 
+Replay applies a separately coded arithmetic audit to generated candidates. It
+recomputes candidate identities, payoff states, pinned book prices and depth,
+supported fees, basket costs, terminal P&L, and classification from the same
+normalized replay inputs, and records a versioned input hash. This checks
+calculation agreement; it does not independently authenticate market semantics,
+source timing, fee authority, or execution. A verified audit is not a profitability
+or fill claim.
+
 ```mermaid
 flowchart LR
   P[Polymarket public REST] --> A[Read-only adapters]
@@ -139,8 +147,9 @@ flowchart LR
   UI --> H[Strict review verifier and immutable revision]
   H --> D
   D --> X[Deterministic replay]
-  X --> E[Decimal economic candidate checks]
-  E --> API
+  X --> E[Decimal candidate calculators]
+  E --> IA[Independent arithmetic audit]
+  IA --> API
   X --> API[Frontier research API]
   D --> API
   API --> UI[Mission Control Frontier workspace]
