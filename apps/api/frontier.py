@@ -15,8 +15,10 @@ from midas.frontier.adapters.kraken import KrakenSpotAdapter
 from midas.frontier.economics import ExecutionScenario
 from midas.frontier.models import (
     BookSnapshot,
+    Capability,
     FrontierMarket,
     MarketBatch,
+    TradeBatch,
     Venue,
 )
 from midas.frontier.relationships import (
@@ -37,6 +39,8 @@ class ProbeRequest(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
     limit: int = Field(default=5, ge=1, le=20)
     include_one_book: bool = False
+    include_recent_trades: bool = False
+    trade_limit: int = Field(default=10, ge=1, le=10)
 
 
 class RelationshipReviewRequest(BaseModel):
@@ -213,6 +217,43 @@ def router(store: FrontierStore, registry: Any) -> APIRouter:
                     }
                 )
         return {"items": items, "limit": limit, "offset": offset, "returned": len(items)}
+
+    @api.get("/trades")
+    async def trades(
+        venue: Venue | None = None,
+        limit: int = Query(default=50, ge=1, le=100),
+        offset: int = Query(default=0, ge=0, le=100_000),
+    ) -> dict[str, Any]:
+        try:
+            observations = store.observations(
+                venue=venue.value if venue else None,
+                kind="public_trades",
+                limit=min(200, limit),
+                offset=offset,
+            )
+            items: list[dict[str, Any]] = []
+            for observation in observations:
+                normalized = observation["normalized"]
+                if not isinstance(normalized, dict) or "trades" not in normalized:
+                    continue
+                batch = TradeBatch.model_validate(normalized)
+                items.extend(
+                    {
+                        **trade.model_dump(mode="json"),
+                        "source_observation_record_id": observation["observation_id"],
+                        "source_raw_sha256": observation["raw_sha256"],
+                    }
+                    for trade in batch.trades
+                )
+        except (FrontierStoreError, ValueError) as error:
+            raise HTTPException(status_code=409, detail=str(error)) from error
+        return {
+            "items": items,
+            "observation_count": len(observations),
+            "trade_count": len(items),
+            "limit": limit,
+            "offset": offset,
+        }
 
     @api.get("/observations/{observation_id}")
     async def observation_evidence(observation_id: str) -> dict[str, Any]:
@@ -803,14 +844,62 @@ def router(store: FrontierStore, registry: Any) -> APIRouter:
                             )
                         store.append_observation(book_captures[0], book)
                         books_stored = 1
+                trade_state = "not_requested"
+                trade_count = 0
+                trade_observation_id = None
+                trade_error = None
+                trade_supported = adapter.capabilities.supports(Capability.PUBLIC_TRADES)
+                if request.include_recent_trades:
+                    if not trade_supported:
+                        trade_state = "unsupported"
+                    elif not market_values:
+                        trade_state = "no_market"
+                    else:
+                        trade_state = "captured"
+                        market = market_values[0]
+                        native_trade_market_id = market.native_market_id
+                        if venue == Venue.POLYMARKET:
+                            condition_id = market.native_fields.get("conditionId")
+                            if isinstance(condition_id, str) and 1 <= len(condition_id) <= 256:
+                                native_trade_market_id = condition_id
+                        try:
+                            trade_values = await adapter.fetch_trades(
+                                native_trade_market_id, limit=request.trade_limit
+                            )
+                            trade_captures = adapter.take_captures()
+                            if len(trade_captures) != 1:
+                                raise AdapterError(
+                                    "MISSING_TRADE_CAPTURE",
+                                    "Adapter did not return exactly one raw trade response",
+                                )
+                            if any(
+                                item.provenance.raw_sha256 != trade_captures[0].raw_sha256
+                                for item in trade_values
+                            ):
+                                raise AdapterError(
+                                    "TRADE_CAPTURE_LINEAGE_MISMATCH",
+                                    "Normalized trades do not match the captured raw response",
+                                )
+                            trade_batch = TradeBatch(venue=venue, trades=trade_values)
+                            trade_observation_id = store.append_observation(
+                                trade_captures[0], trade_batch
+                            )
+                            trade_count = len(trade_values)
+                        except AdapterError as error:
+                            adapter.take_captures()
+                            adapter.report_failure(error.code, str(error))
+                            trade_state = "failed"
+                            trade_error = {"code": error.code, "message": str(error)}
                 request_delta = adapter.transport.request_count - requests_before
                 maximum_discovery_requests = (
                     min(request.limit, len(adapter.kraken_config.pairs))
                     if isinstance(adapter, KrakenSpotAdapter)
                     else 1
                 )
-                maximum_http_calls = maximum_discovery_requests + int(
-                    request.include_one_book and bool(market_values)
+                maximum_http_calls = (
+                    maximum_discovery_requests
+                    + int(request.include_one_book and bool(market_values))
+                    + int(request.include_recent_trades and trade_supported and bool(market_values))
                 )
                 maximum_bounded_requests = maximum_http_calls * (config.retries + 1)
                 return {
@@ -818,6 +907,10 @@ def router(store: FrontierStore, registry: Any) -> APIRouter:
                     "source_state": (await adapter.health()).state.value,
                     "market_count": len(market_values),
                     "book_snapshots_stored": books_stored,
+                    "trade_capture_state": trade_state,
+                    "trade_observations_stored": trade_count,
+                    "trade_observation_record_id": trade_observation_id,
+                    "trade_error": trade_error,
                     "observation_ids": stored_ids,
                     "requested_limit": request.limit,
                     "request_count": adapter.transport.request_count,

@@ -4,8 +4,10 @@ import asyncio
 import hashlib
 import json
 from datetime import timedelta
+from pathlib import Path
 
 import httpx
+import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from midas.frontier.adapters import KalshiAdapter, KrakenSpotAdapter, PolymarketAdapter
@@ -21,6 +23,8 @@ from midas.frontier.models import (
     PayoffSpec,
     QuantityUnit,
     RawObservation,
+    TradeBatch,
+    TradeObservation,
     Venue,
 )
 from midas.frontier.registry import AdapterRegistry
@@ -258,3 +262,136 @@ def test_graph_neighborhood_is_centered_bounded_and_review_aware(tmp_path):
         client.close()
         asyncio.run(registry.aclose())
         asyncio.run(http_client.aclose())
+
+
+def test_trade_read_returns_hash_verified_normalized_batch(tmp_path):
+    client, registry, http_client, requests, store = _client(tmp_path)
+    source_market = market(Venue.KALSHI, "trade-fixture")
+    raw_body = '{"trades":[{"trade_id":"fixture-trade"}]}'
+    raw = RawObservation(
+        venue=Venue.KALSHI,
+        observation_kind="public_trades",
+        request_url="https://external-api.kalshi.com/trade-api/v2/markets/trades",
+        http_status=200,
+        request_started_at_utc=T0,
+        received_at_utc=T0 + timedelta(milliseconds=9),
+        raw_body=raw_body,
+        raw_sha256=hashlib.sha256(raw_body.encode()).hexdigest(),
+        adapter_version="frontier-kalshi-test-v1",
+    )
+    trade = TradeObservation(
+        venue=Venue.KALSHI,
+        native_market_id=source_market.native_market_id,
+        native_trade_id="fixture-trade",
+        price="0.51",
+        quantity="4",
+        quote_currency="USD",
+        aggressor_side="yes",
+        exchange_timestamp_utc=T0,
+        received_at_utc=T0 + timedelta(milliseconds=9),
+        provenance=source_market.provenance.model_copy(update={"raw_sha256": raw.raw_sha256}),
+    )
+    observation_id = store.append_observation(raw, TradeBatch(venue=Venue.KALSHI, trades=(trade,)))
+    try:
+        response = client.get("/api/frontier/trades", params={"venue": "kalshi"})
+        assert response.status_code == 200
+        result = response.json()
+        assert result["observation_count"] == 1
+        assert result["trade_count"] == 1
+        assert result["items"][0]["native_trade_id"] == "fixture-trade"
+        assert result["items"][0]["source_observation_record_id"] == observation_id
+        assert result["items"][0]["source_raw_sha256"] == raw.raw_sha256
+        assert requests == []
+    finally:
+        client.close()
+        asyncio.run(registry.aclose())
+        asyncio.run(http_client.aclose())
+
+
+@pytest.mark.asyncio
+async def test_bounded_probe_persists_and_reads_trade_batch(tmp_path):
+    gamma_rows = json.loads(
+        (Path(__file__).resolve().parents[1] / "fixtures" / "gamma_live.json").read_text()
+    )
+    market_row = gamma_rows[0]
+    condition_id = market_row["conditionId"]
+    trade_body = json.dumps(
+        [
+            {
+                "price": "0.51",
+                "size": "3",
+                "timestamp": 1793000000,
+                "transactionHash": "0xfrontier-fixture",
+                "asset": json.loads(market_row["clobTokenIds"])[0],
+                "conditionId": condition_id,
+                "side": "BUY",
+            }
+        ]
+    )
+    requests: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        if request.url.host == "gamma-api.polymarket.com" and request.url.path.endswith("/markets"):
+            return httpx.Response(200, json=[market_row], request=request)
+        if request.url.host == "data-api.polymarket.com" and request.url.path.endswith("/trades"):
+            return httpx.Response(200, text=trade_body, request=request)
+        return httpx.Response(404, json={"error": "unexpected fixture request"}, request=request)
+
+    config = AdapterConfig(
+        enabled=True,
+        live_public_probe_enabled=True,
+        timeout_seconds=2,
+        requests_per_second=5,
+        max_response_bytes=65536,
+        max_markets_per_call=1,
+        retries=0,
+    )
+    source_client = httpx.AsyncClient(transport=httpx.MockTransport(handler))
+    public_transport = PublicReadTransport(
+        {"gamma-api.polymarket.com", "data-api.polymarket.com"},
+        config,
+        client=source_client,
+    )
+    registry = AdapterRegistry(
+        (
+            PolymarketAdapter(config, transport=public_transport),
+            KalshiAdapter(),
+            KrakenSpotAdapter(),
+        )
+    )
+    store = FrontierStore(tmp_path / "frontier", max_bytes=8 * 1024 * 1024)
+    store.initialize()
+    app = FastAPI()
+    app.include_router(router(store, registry))
+    try:
+        async with httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=app), base_url="http://frontier.local"
+        ) as client:
+            probed = await client.post(
+                "/api/frontier/probe/polymarket",
+                json={"limit": 1, "include_recent_trades": True, "trade_limit": 1},
+            )
+            assert probed.status_code == 200, probed.text
+            payload = probed.json()
+            assert payload["trade_capture_state"] == "captured"
+            assert payload["trade_observations_stored"] == 1
+            assert payload["request_count_delta"] == 2
+            assert payload["network_calls_bounded_by"] == 2
+            assert requests[1].method == "GET"
+            assert requests[1].url.params["market"] == condition_id
+            assert "authorization" not in requests[1].headers
+
+            trades = await client.get("/api/frontier/trades", params={"venue": "polymarket"})
+            assert trades.status_code == 200
+            result = trades.json()
+            assert result["trade_count"] == 1
+            assert result["items"][0]["native_market_id"] == condition_id
+            assert result["items"][0]["price"] == "0.51"
+            assert (
+                result["items"][0]["source_observation_record_id"]
+                == payload["trade_observation_record_id"]
+            )
+    finally:
+        await registry.aclose()
+        await source_client.aclose()

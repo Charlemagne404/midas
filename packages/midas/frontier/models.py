@@ -392,6 +392,20 @@ class TradeObservation(FrontierModel):
         return value.astimezone(UTC) if value is not None else None
 
 
+class TradeBatch(FrontierModel):
+    """One source response and its bounded normalized public trades."""
+
+    schema_version: int = 1
+    venue: Venue
+    trades: tuple[TradeObservation, ...]
+
+    @model_validator(mode="after")
+    def trade_venues_match_batch(self) -> TradeBatch:
+        if any(trade.venue != self.venue for trade in self.trades):
+            raise ValueError("Trade batch entries must belong to the declared venue")
+        return self
+
+
 class HistoricalCandle(FrontierModel):
     open_time_utc: datetime
     open: Nonnegative

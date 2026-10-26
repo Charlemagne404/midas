@@ -53,6 +53,13 @@ it('renders recorded-evidence empty states and never probes a source automatical
     '/api/frontier/sources': { items: [source] },
     '/api/frontier/markets?limit=100': { items: [], returned: 0, limit: 100, offset: 0 },
     '/api/frontier/books?limit=100': { items: [], returned: 0, limit: 100, offset: 0 },
+    '/api/frontier/trades?limit=100': {
+      items: [],
+      observation_count: 0,
+      trade_count: 0,
+      limit: 100,
+      offset: 0,
+    },
     '/api/frontier/relationships?limit=200': { items: [], returned: 0, limit: 200, offset: 0 },
     '/api/frontier/graph?depth=1&limit=100': {
       nodes: [],
@@ -94,6 +101,29 @@ it('renders recorded-evidence empty states and never probes a source automatical
   fireEvent.click(screen.getByRole('button', { name: 'Markets' }));
   expect(await screen.findByText('No market observations recorded')).toBeInTheDocument();
   expect(fetchMock.mock.calls.some(([input]) => String(input).includes('/probe/'))).toBe(false);
+  queryClient.setQueryData(['frontier', 'trades'], {
+    items: [
+      {
+        venue: 'polymarket',
+        native_market_id: 'condition:trade-fixture',
+        native_trade_id: 'trade-fixture',
+        price: '0.51',
+        quantity: '3',
+        quote_currency: 'USD',
+        aggressor_side: 'BUY',
+        exchange_timestamp_utc: null,
+        received_at_utc: '2026-10-26T21:25:20.750899Z',
+        source_observation_record_id: 'a'.repeat(64),
+        source_raw_sha256: 'b'.repeat(64),
+      },
+    ],
+    observation_count: 1,
+    trade_count: 1,
+    limit: 100,
+    offset: 0,
+  });
+  expect(await screen.findByText('condition:trade-fixture')).toBeInTheDocument();
+  expect(screen.getByText('0.51 USD')).toBeInTheDocument();
 });
 
 it('renders a bounded accessible relationship graph and opens selected evidence', async () => {
@@ -194,6 +224,13 @@ it('renders a bounded accessible relationship graph and opens selected evidence'
       offset: 0,
     },
     '/api/frontier/books?limit=100': { items: [], returned: 0, limit: 100, offset: 0 },
+    '/api/frontier/trades?limit=100': {
+      items: [],
+      observation_count: 0,
+      trade_count: 0,
+      limit: 100,
+      offset: 0,
+    },
     '/api/frontier/relationships?limit=200': {
       items: [relation],
       returned: 1,
@@ -341,6 +378,13 @@ it('records a self-attributed relationship review with both stored market source
     '/api/frontier/sources': { items: [] },
     '/api/frontier/markets?limit=100': { items: markets, returned: 2, limit: 100, offset: 0 },
     '/api/frontier/books?limit=100': { items: [], returned: 0, limit: 100, offset: 0 },
+    '/api/frontier/trades?limit=100': {
+      items: [],
+      observation_count: 0,
+      trade_count: 0,
+      limit: 100,
+      offset: 0,
+    },
     '/api/frontier/relationships?limit=200': {
       items: [relationship],
       returned: 1,

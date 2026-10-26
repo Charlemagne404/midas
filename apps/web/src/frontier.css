@@ -241,6 +241,29 @@
   flex: 0 0 auto;
   color: #8292a5;
 }
+.fr-trades-panel {
+  min-width: 0;
+  margin-bottom: 15px;
+  overflow: hidden;
+  border: 1px solid var(--fr-line);
+  border-radius: 5px;
+  background: var(--fr-bg);
+}
+.fr-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 13px;
+  min-height: 61px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #252e38;
+}
+.fr-panel-head h3 {
+  margin-top: 5px;
+  color: #d6dce6;
+  font-size: 13px;
+  font-weight: 560;
+}
 .fr-kicker {
   font-size: 8px;
   letter-spacing: 1px;
@@ -1521,6 +1544,11 @@
   }
   .fr-header-side small {
     text-align: left;
+  }
+  .fr-panel-head {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 6px;
   }
   .fr-metrics {
     grid-template-columns: repeat(2, minmax(0, 1fr));

@@ -127,6 +127,13 @@ test('relationship network remains bounded, selectable, and scroll-contained on 
       offset: 0,
     },
     '/api/frontier/books': { items: [], returned: 0, limit: 100, offset: 0 },
+    '/api/frontier/trades': {
+      items: [],
+      observation_count: 0,
+      trade_count: 0,
+      limit: 100,
+      offset: 0,
+    },
     '/api/frontier/relationships': { items: [relationship], returned: 1, limit: 200 },
     '/api/frontier/graph': {
       nodes: [],

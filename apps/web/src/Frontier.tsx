@@ -114,6 +114,26 @@ type Book = {
   quality_flags: string[];
   provenance: { observation_id: string; raw_sha256: string };
 };
+type Trade = {
+  venue: Venue;
+  native_market_id: string;
+  native_trade_id: string | null;
+  price: string;
+  quantity: string;
+  quote_currency: string | null;
+  aggressor_side: string | null;
+  exchange_timestamp_utc: string | null;
+  received_at_utc: string;
+  source_observation_record_id: string;
+  source_raw_sha256: string;
+};
+type TradeResponse = {
+  items: Trade[];
+  observation_count: number;
+  trade_count: number;
+  limit: number;
+  offset: number;
+};
 type Relationship = {
   relationship_id: string;
   left_market_id: string;
@@ -688,6 +708,11 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
     queryFn: () => api<ListResponse<Book>>('/frontier/books?limit=100'),
     ...options,
   });
+  const trades = useQuery({
+    queryKey: ['frontier', 'trades'],
+    queryFn: () => api<TradeResponse>('/frontier/trades?limit=100'),
+    ...options,
+  });
   const graph = useQuery({
     queryKey: ['frontier', 'graph', graphCenterMarketId, graphDepth],
     queryFn: () => {
@@ -746,6 +771,8 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
         body: JSON.stringify({
           limit: venue === 'kraken' ? 1 : 10,
           include_one_book: includeOneBook,
+          include_recent_trades: true,
+          trade_limit: 10,
         }),
       }),
     onSuccess: refresh,
@@ -1084,6 +1111,77 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
               booksLoading={books.isLoading}
             />
           )}
+          <section className="fr-trades-panel">
+            <div className="fr-panel-head">
+              <div>
+                <span className="fr-kicker">RECORDED PUBLIC OBSERVATIONS</span>
+                <h3>Recent trades</h3>
+              </div>
+              <span className="fr-count">
+                {count(trades.data?.trade_count ?? 0)} trades ·{' '}
+                {count(trades.data?.observation_count ?? 0)} captures
+              </span>
+            </div>
+            {trades.isLoading ? (
+              <div className="fr-loading">Loading recorded public trades…</div>
+            ) : trades.isError ? (
+              <EmptyState title="Trade query failed" detail={trades.error.message} />
+            ) : trades.data?.items.length ? (
+              <div className="fr-table-wrap">
+                <table className="fr-table">
+                  <thead>
+                    <tr>
+                      <th>Venue / market</th>
+                      <th>Price</th>
+                      <th>Quantity</th>
+                      <th>Side</th>
+                      <th>Exchange time</th>
+                      <th>Received</th>
+                      <th>Evidence</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {trades.data.items.map((trade, index) => (
+                      <tr
+                        key={`${trade.source_observation_record_id}-${trade.native_trade_id ?? index}`}
+                      >
+                        <td>
+                          <VenuePill venue={trade.venue} />
+                          <code>{trade.native_market_id}</code>
+                        </td>
+                        <td>
+                          {money(trade.price)} {trade.quote_currency ?? ''}
+                        </td>
+                        <td>{money(trade.quantity)}</td>
+                        <td>{label(trade.aggressor_side ?? 'unknown')}</td>
+                        <td>
+                          {trade.exchange_timestamp_utc
+                            ? time(trade.exchange_timestamp_utc)
+                            : 'Not supplied'}
+                        </td>
+                        <td>{time(trade.received_at_utc)}</td>
+                        <td>
+                          <code title={trade.source_raw_sha256}>
+                            {shortHash(trade.source_observation_record_id)} ·{' '}
+                            {shortHash(trade.source_raw_sha256)}
+                          </code>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <EmptyState
+                title="No public trades recorded"
+                detail="A source may return a valid empty trade response. Frontier does not infer zero volume when no trade endpoint was captured."
+              />
+            )}
+            <div className="fr-footnote">
+              Trade prints are source observations, not evidence of available depth or executable
+              prices.
+            </div>
+          </section>
           <div className="fr-footnote">
             Showing a bounded window of up to 100 markets. Native market IDs and source timestamps
             remain attached to every normalized record.
@@ -1740,13 +1838,15 @@ function SourcesView({
                   {probe.isPending && probe.variables?.venue === source.venue
                     ? 'Probing…'
                     : source.public_probe_enabled
-                      ? 'Capture one bounded sample'
+                      ? 'Capture markets, one book & trades'
                       : 'Public probe disabled'}
                 </button>
                 <small>
                   {source.health.last_success_at_utc
                     ? `Last source response ${time(source.health.last_success_at_utc)}`
-                    : 'No request is made automatically.'}
+                    : 'No request is made automatically.'}{' '}
+                  Enabled capture requests at most one listing page, one book, and ten recent
+                  trades.
                 </small>
               </div>
             </article>
