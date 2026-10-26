@@ -18,6 +18,7 @@ import {
   Clock3,
   Database,
   FlaskConical,
+  Globe2,
   LayoutDashboard,
   PanelLeftClose,
   Play,
@@ -40,6 +41,9 @@ import { PaperPage, PaperSummary, ExperimentPanel } from './Paper';
 import { chartBase } from './chart-theme';
 const LazyChart = lazy(() => import('./Chart').then((module) => ({ default: module.Chart })));
 const LazyVeritas = lazy(() => import('./Veritas').then((module) => ({ default: module.Veritas })));
+const LazyFrontier = lazy(() =>
+  import('./Frontier').then((module) => ({ default: module.Frontier })),
+);
 const LazyReadiness = lazy(() =>
   import('./Readiness').then((module) => ({ default: module.Readiness })),
 );
@@ -67,6 +71,7 @@ const pages = [
   ['Research Readiness', ShieldCheck],
   ['Reality', Radio],
   ['Veritas', BarChart3],
+  ['Frontier', Globe2],
   ['Scanner', Search],
   ['Paper Trading', Database],
   ['Simulation Lab', FlaskConical],
@@ -193,10 +198,18 @@ export function App() {
                 ? 'Veritas research'
                 : page === 'Research Readiness'
                   ? 'Readiness evidence'
-                  : 'Foundation lab'}{' '}
+                  : page === 'Frontier'
+                    ? 'Multi-market research'
+                    : 'Foundation lab'}{' '}
             {page !== 'Veritas' && (
               <Badge tone="gold">
-                {page === 'Reality' ? 'M2' : page === 'Research Readiness' ? 'LIVE' : 'M1'}
+                {page === 'Reality'
+                  ? 'M2'
+                  : page === 'Research Readiness'
+                    ? 'LIVE'
+                    : page === 'Frontier'
+                      ? 'R&D'
+                      : 'M1'}
               </Badge>
             )}
           </div>
@@ -245,11 +258,13 @@ export function App() {
                 ? 'REALITY · PUBLIC OBSERVATIONS'
                 : page === 'Veritas'
                   ? 'VERITAS · ECONOMIC EVIDENCE'
-                  : page === 'Research Readiness'
-                    ? 'READINESS · EVIDENCE CLASSIFICATION'
-                    : state?.mode === 'live'
-                      ? 'LIVE OBSERVATION'
-                      : 'DEMO · SYNTHETIC'}
+                  : page === 'Frontier'
+                    ? 'FRONTIER · READ-ONLY RESEARCH'
+                    : page === 'Research Readiness'
+                      ? 'READINESS · EVIDENCE CLASSIFICATION'
+                      : state?.mode === 'live'
+                        ? 'LIVE OBSERVATION'
+                        : 'DEMO · SYNTHETIC'}
             </Badge>
             <span className="topbar-boundary">
               <ShieldCheck size={13} />
@@ -258,48 +273,53 @@ export function App() {
           </div>
         </header>
         <main>
-          {page !== 'Reality' && page !== 'Veritas' && page !== 'Research Readiness' && (
-            <div className="page-heading">
-              <div>
-                <div className="eyebrow">
-                  POLYMARKET RESEARCH / {page === 'Laboratory' ? 'MILESTONE 003' : 'MILESTONE 002'}
-                </div>
-                <h1>{page}</h1>
-                <p>
-                  {
-                    (
-                      {
-                        'Mission Control':
-                          'Market intelligence. Verified mathematics. Measurable uncertainty.',
-                        Scanner:
-                          'Inspect complete binary positions and every assumption behind their edge.',
-                        'Simulation Lab':
-                          'Reproduce the trade. Stress the execution. Reconcile every balance.',
-                        Laboratory:
-                          'Adversarial experiments. Inspectable evidence. Reproducible decisions.',
-                        Analytics: 'Recorded observations and independent virtual experiments.',
-                        Arena: 'Train policies. Compare outcomes. Inspect the evidence.',
-                        Incidents:
-                          'An auditable record of warnings, errors, and scenario outcomes.',
-                        Telemetry: 'Measured health of the data and research pipeline.',
-                        Settings: 'Operating boundaries and conservative risk controls.',
-                      } as Record<string, string>
-                    )[page]
-                  }
-                </p>
-              </div>
-              <div className="heading-status">
-                <span
-                  className={`status-dot ${disconnected || state?.status === 'DEGRADED' ? 'red' : ''}`}
-                />
-                {disconnected ? 'API DISCONNECTED' : (state?.status ?? 'CONNECTING')}
-                <span className="heading-time">{date(state?.timestamp_ms)} LOCAL</span>
-              </div>
-            </div>
-          )}
           {page !== 'Reality' &&
             page !== 'Veritas' &&
             page !== 'Research Readiness' &&
+            page !== 'Frontier' && (
+              <div className="page-heading">
+                <div>
+                  <div className="eyebrow">
+                    POLYMARKET RESEARCH /{' '}
+                    {page === 'Laboratory' ? 'MILESTONE 003' : 'MILESTONE 002'}
+                  </div>
+                  <h1>{page}</h1>
+                  <p>
+                    {
+                      (
+                        {
+                          'Mission Control':
+                            'Market intelligence. Verified mathematics. Measurable uncertainty.',
+                          Scanner:
+                            'Inspect complete binary positions and every assumption behind their edge.',
+                          'Simulation Lab':
+                            'Reproduce the trade. Stress the execution. Reconcile every balance.',
+                          Laboratory:
+                            'Adversarial experiments. Inspectable evidence. Reproducible decisions.',
+                          Analytics: 'Recorded observations and independent virtual experiments.',
+                          Arena: 'Train policies. Compare outcomes. Inspect the evidence.',
+                          Incidents:
+                            'An auditable record of warnings, errors, and scenario outcomes.',
+                          Telemetry: 'Measured health of the data and research pipeline.',
+                          Settings: 'Operating boundaries and conservative risk controls.',
+                        } as Record<string, string>
+                      )[page]
+                    }
+                  </p>
+                </div>
+                <div className="heading-status">
+                  <span
+                    className={`status-dot ${disconnected || state?.status === 'DEGRADED' ? 'red' : ''}`}
+                  />
+                  {disconnected ? 'API DISCONNECTED' : (state?.status ?? 'CONNECTING')}
+                  <span className="heading-time">{date(state?.timestamp_ms)} LOCAL</span>
+                </div>
+              </div>
+            )}
+          {page !== 'Reality' &&
+            page !== 'Veritas' &&
+            page !== 'Research Readiness' &&
+            page !== 'Frontier' &&
             disconnected && (
               <div className="alert danger">
                 <TriangleAlert size={17} />
@@ -324,6 +344,7 @@ export function App() {
           {page !== 'Reality' &&
             page !== 'Veritas' &&
             page !== 'Research Readiness' &&
+            page !== 'Frontier' &&
             state?.mode === 'demo' && (
               <div className="demo-strip">
                 <FlaskConical size={14} />
@@ -335,6 +356,7 @@ export function App() {
           {page !== 'Reality' &&
             page !== 'Veritas' &&
             page !== 'Research Readiness' &&
+            page !== 'Frontier' &&
             state?.status === 'DEGRADED' &&
             !disconnected && (
               <div className="alert danger">
@@ -346,6 +368,7 @@ export function App() {
           {page !== 'Reality' &&
             page !== 'Veritas' &&
             page !== 'Research Readiness' &&
+            page !== 'Frontier' &&
             state?.safety.emergency_stop && (
               <div className="alert danger" role="alert">
                 <ShieldX size={17} />
@@ -388,6 +411,11 @@ export function App() {
           {page === 'Veritas' && (
             <Suspense fallback={<div className="empty">Loading Veritas evidence…</div>}>
               <LazyVeritas />
+            </Suspense>
+          )}
+          {page === 'Frontier' && (
+            <Suspense fallback={<div className="empty">Loading Frontier research workspace…</div>}>
+              <LazyFrontier onNavigate={setPage} />
             </Suspense>
           )}
           {page === 'Incidents' && <Incidents />}

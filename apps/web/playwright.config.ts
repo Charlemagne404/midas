@@ -12,6 +12,7 @@ const python =
     ? join(repository, '.venv/bin/python')
     : '/home/charlie/midas/.venv/bin/python');
 const database = join(mkdtempSync(join(tmpdir(), 'midas-browser-')), 'paper.db');
+const frontierRoot = join(dirname(database), 'frontier');
 export default defineConfig({
   testDir: './e2e',
   workers: 1,
@@ -30,6 +31,7 @@ export default defineConfig({
         MIDAS_MODE: 'demo',
         MIDAS_DATABASE_URL: `sqlite+aiosqlite:///${database}`,
         MIDAS_ARENA_ROOT: join(dirname(database), 'arena'),
+        MIDAS_FRONTIER_ROOT: frontierRoot,
         MIDAS_VERITAS_WORKSPACE: process.env.MIDAS_VERITAS_WORKSPACE ?? repository,
         PYTHONPATH: join(repository, 'packages'),
       },
