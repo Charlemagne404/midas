@@ -178,9 +178,36 @@ type KalshiFeeMetadataCaptureResult = {
     economics_state: 'unresolved';
     limitations: string[];
   };
-  observation_ids: string[];
+  observation_ids: [string, string];
   raw_sha256: { event: string; series: string };
   fee_cost_modeled: false;
+  note: string;
+};
+type KalshiFeeSensitivityResponse = {
+  market_id: string;
+  estimate: {
+    model_version: string;
+    series_ticker: string;
+    effective_fee_type: string;
+    effective_fee_multiplier: string;
+    price_usd: string;
+    quantity_contracts: string;
+    position_cost_usd: string;
+    input_received_at_utc: [string, string];
+    scenarios: {
+      account_precision_class: string;
+      balance_quantum: string;
+      model_fee_before_rounding: string;
+      trade_fee_rounded_to_microdollar: string;
+      balance_rounding_adjustment: string;
+      total_modeled_fee: string;
+      total_modeled_debit: string;
+    }[];
+    calculation_sha256: string;
+    assumptions: string[];
+  };
+  hypothetical_only: true;
+  candidate_net_economics_modified: false;
   note: string;
 };
 type Relationship = {
@@ -945,6 +972,25 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
       }),
     onSuccess: refresh,
   });
+  const estimateKalshiTakerFee = useMutation({
+    mutationFn: (input: {
+      marketId: string;
+      eventObservationId: string;
+      seriesObservationId: string;
+      priceUsd: string;
+      quantityContracts: string;
+    }) =>
+      api<KalshiFeeSensitivityResponse>('/frontier/economics/kalshi-fee-sensitivity', {
+        method: 'POST',
+        body: JSON.stringify({
+          market_id: input.marketId,
+          event_observation_id: input.eventObservationId,
+          series_observation_id: input.seriesObservationId,
+          price_usd: input.priceUsd,
+          quantity_contracts: input.quantityContracts,
+        }),
+      }),
+  });
 
   const marketById = useMemo(
     () => new Map((markets.data?.items ?? []).map((market) => [market.canonical_id, market])),
@@ -1279,6 +1325,7 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
               booksLoading={books.isLoading}
               feeMetadataProbe={captureKalshiFeeMetadata}
               feeMetadataProbeEnabled={kalshiFeeMetadataProbeEnabled}
+              feeSensitivity={estimateKalshiTakerFee}
             />
           )}
           <section className="fr-trades-panel">
@@ -1898,6 +1945,7 @@ function MarketDetails({
   booksLoading,
   feeMetadataProbe,
   feeMetadataProbeEnabled,
+  feeSensitivity,
 }: {
   market: Market;
   books: Book[];
@@ -1909,7 +1957,25 @@ function MarketDetails({
     unknown
   >;
   feeMetadataProbeEnabled: boolean;
+  feeSensitivity: UseMutationResult<
+    KalshiFeeSensitivityResponse,
+    Error,
+    {
+      marketId: string;
+      eventObservationId: string;
+      seriesObservationId: string;
+      priceUsd: string;
+      quantityContracts: string;
+    },
+    unknown
+  >;
 }) {
+  const [feePrice, setFeePrice] = useState('0.50');
+  const [feeQuantity, setFeeQuantity] = useState('1');
+  const capturedFeeMetadata =
+    feeMetadataProbe.isSuccess && feeMetadataProbe.variables?.marketId === market.canonical_id
+      ? feeMetadataProbe.data
+      : null;
   return (
     <section className="fr-market-detail" aria-label="Market and book details">
       <div className="fr-market-detail-head">
@@ -1995,8 +2061,9 @@ function MarketDetails({
                   {feeMetadataProbe.data.metadata.effective_fee_multiplier}
                 </strong>
                 <small>
-                  Series {feeMetadataProbe.data.metadata.series_ticker} · fee cost not modeled ·{' '}
-                  {feeMetadataProbe.data.observation_ids.length} immutable evidence records
+                  Series {feeMetadataProbe.data.metadata.series_ticker} · not added to candidate
+                  economics · {feeMetadataProbe.data.observation_ids.length} immutable evidence
+                  records
                 </small>
                 <small>{feeMetadataProbe.data.note}</small>
                 <small>
@@ -2014,6 +2081,82 @@ function MarketDetails({
                     <EvidenceDisclosure observationId={observationId} />
                   </div>
                 ))}
+                <div className="fr-fee-sensitivity-form">
+                  <small className="fr-fee-sensitivity-guidance">
+                    One-fill scenario inputs. Price and quantity are manually supplied and are not
+                    read from the stored order book.
+                  </small>
+                  <label>
+                    Scenario price per contract (USD)
+                    <input
+                      aria-label="Scenario price per contract (USD)"
+                      type="number"
+                      min="0.000001"
+                      max="0.999999"
+                      step="any"
+                      value={feePrice}
+                      onChange={(event) => setFeePrice(event.target.value)}
+                    />
+                  </label>
+                  <label>
+                    Scenario quantity (contracts)
+                    <input
+                      aria-label="Scenario quantity (contracts)"
+                      type="number"
+                      min="0.000001"
+                      max="1000000"
+                      step="any"
+                      value={feeQuantity}
+                      onChange={(event) => setFeeQuantity(event.target.value)}
+                    />
+                  </label>
+                  <button
+                    className="fr-inspect-button"
+                    disabled={
+                      !capturedFeeMetadata || feeSensitivity.isPending || !feePrice || !feeQuantity
+                    }
+                    onClick={() => {
+                      if (!capturedFeeMetadata) return;
+                      feeSensitivity.mutate({
+                        marketId: market.canonical_id,
+                        eventObservationId: capturedFeeMetadata.observation_ids[0],
+                        seriesObservationId: capturedFeeMetadata.observation_ids[1],
+                        priceUsd: feePrice,
+                        quantityContracts: feeQuantity,
+                      });
+                    }}
+                  >
+                    {feeSensitivity.isPending ? 'Calculating…' : 'Calculate fee scenarios'}
+                  </button>
+                </div>
+                {feeSensitivity.isError && <InlineError message={feeSensitivity.error.message} />}
+                {feeSensitivity.isSuccess &&
+                  feeSensitivity.variables?.marketId === market.canonical_id && (
+                    <div className="fr-fee-sensitivity-result" role="status">
+                      <strong>
+                        Single-fill taker sensitivity ·{' '}
+                        {feeSensitivity.data.estimate.quantity_contracts} contracts at $
+                        {feeSensitivity.data.estimate.price_usd}
+                      </strong>
+                      <small>
+                        Fee metadata received: event{' '}
+                        {time(feeSensitivity.data.estimate.input_received_at_utc[0])} · series{' '}
+                        {time(feeSensitivity.data.estimate.input_received_at_utc[1])}
+                      </small>
+                      {feeSensitivity.data.estimate.scenarios.map((scenario) => (
+                        <small key={scenario.account_precision_class}>
+                          {scenario.account_precision_class.replace('_', ' ')} · balance quantum $
+                          {scenario.balance_quantum} · modeled fee ${scenario.total_modeled_fee}{' '}
+                          (trade fee ${scenario.trade_fee_rounded_to_microdollar} + balance
+                          adjustment ${scenario.balance_rounding_adjustment})
+                        </small>
+                      ))}
+                      <small>{feeSensitivity.data.note}</small>
+                      <small>
+                        Calculation {shortHash(feeSensitivity.data.estimate.calculation_sha256)}
+                      </small>
+                    </div>
+                  )}
               </div>
             )}
         </div>

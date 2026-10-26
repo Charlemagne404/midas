@@ -7,10 +7,11 @@ import json
 import math
 from collections.abc import Callable
 from datetime import UTC, datetime
-from decimal import ROUND_HALF_UP, Decimal, localcontext
+from decimal import ROUND_CEILING, ROUND_HALF_UP, Decimal, localcontext
 from enum import StrEnum
 from fractions import Fraction
 from functools import wraps
+from typing import Literal
 
 from pydantic import Field
 
@@ -20,6 +21,9 @@ from midas.frontier.models import (
     FrontierMarket,
     FrontierModel,
     IndependentEconomicAudit,
+    KalshiFeeMetadata,
+    KalshiFeeRoundingScenario,
+    KalshiTakerFeeSensitivity,
     Lifecycle,
     MarketInstrument,
     MarketKind,
@@ -29,6 +33,7 @@ from midas.frontier.relationships import Relationship, VerificationState
 
 D = Decimal
 ECONOMIC_MODEL_VERSION = "frontier-economic-verifiers-3"
+_KALSHI_TAKER_FEE_TYPES = frozenset({"quadratic", "quadratic_with_combo_maker_fees"})
 
 
 class OpportunityFamily(StrEnum):
@@ -125,6 +130,99 @@ def _high_precision_decimal_context[**P, R](function: Callable[P, R]) -> Callabl
             return function(*args, **kwargs)
 
     return evaluate
+
+
+@_high_precision_decimal_context
+def estimate_kalshi_taker_fee_sensitivity(
+    metadata: KalshiFeeMetadata,
+    *,
+    event_observation_id: str,
+    series_observation_id: str,
+    price_usd: Decimal,
+    quantity_contracts: Decimal,
+) -> KalshiTakerFeeSensitivity:
+    """Calculate one hypothetical taker fill under both documented balance precisions.
+
+    The returned values are sensitivities from a dated public fee schedule, not an
+    account fee quote. They exclude multi-fill order accumulation and any FCM fee.
+    """
+    if metadata.effective_fee_type not in _KALSHI_TAKER_FEE_TYPES:
+        raise ValueError("Only documented quadratic Kalshi event taker fees are supported")
+    if not D(0) < price_usd < D(1):
+        raise ValueError("Kalshi event contract price must be strictly between zero and one")
+    if not D(0) < quantity_contracts <= D(1_000_000):
+        raise ValueError("Contract quantity must be within the 1..1000000 research bound")
+    if len(event_observation_id) != 64 or len(series_observation_id) != 64:
+        raise ValueError("Fee evidence identities must be SHA-256 observation IDs")
+
+    position_cost = price_usd * quantity_contracts
+    model_fee = (
+        metadata.effective_fee_multiplier
+        * D("0.07")
+        * quantity_contracts
+        * price_usd
+        * (D(1) - price_usd)
+    )
+    microdollar = D("0.000001")
+    trade_fee = model_fee.quantize(microdollar, rounding=ROUND_CEILING)
+    scenarios: list[KalshiFeeRoundingScenario] = []
+    account_precisions: tuple[
+        tuple[Literal["direct_member", "non_direct_member"], Decimal], ...
+    ] = (
+        ("direct_member", D("0.0001")),
+        ("non_direct_member", D("0.01")),
+    )
+    for account_class, balance_quantum in account_precisions:
+        total_debit = ((position_cost + trade_fee) / balance_quantum).to_integral_value(
+            rounding=ROUND_CEILING
+        ) * balance_quantum
+        total_fee = total_debit - position_cost
+        rounding_adjustment = total_fee - trade_fee
+        scenarios.append(
+            KalshiFeeRoundingScenario(
+                account_precision_class=account_class,
+                balance_quantum=balance_quantum,
+                model_fee_before_rounding=model_fee,
+                trade_fee_rounded_to_microdollar=trade_fee,
+                balance_rounding_adjustment=rounding_adjustment,
+                total_modeled_fee=total_fee,
+                total_modeled_debit=total_debit,
+            )
+        )
+    input_doc = {
+        "model_version": "kalshi-event-taker-fee-sensitivity-2026-07-07-v1",
+        "metadata": metadata.model_dump(mode="json"),
+        "event_observation_id": event_observation_id,
+        "series_observation_id": series_observation_id,
+        "price_usd": str(price_usd),
+        "quantity_contracts": str(quantity_contracts),
+    }
+    calculation_sha256 = hashlib.sha256(
+        json.dumps(input_doc, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+    return KalshiTakerFeeSensitivity(
+        native_market_id=metadata.native_market_id,
+        native_event_id=metadata.native_event_id,
+        series_ticker=metadata.series_ticker,
+        effective_fee_type=metadata.effective_fee_type,
+        effective_fee_multiplier=metadata.effective_fee_multiplier,
+        input_observation_ids=(event_observation_id, series_observation_id),
+        input_raw_sha256=(metadata.event_raw_sha256, metadata.series_raw_sha256),
+        input_received_at_utc=(metadata.event_received_at_utc, metadata.series_received_at_utc),
+        price_usd=price_usd,
+        quantity_contracts=quantity_contracts,
+        position_cost_usd=position_cost,
+        scenarios=tuple(scenarios),
+        calculation_sha256=calculation_sha256,
+        assumptions=(
+            "One hypothetical taker fill at the supplied price and quantity; no order was submitted.",
+            "Uses the July 7, 2026 public taker formula and captured event/series fee type and multiplier.",
+            "Shows direct and non-direct balance-precision cases because account classification is unknown.",
+            "Excludes multi-fill order rounding accumulation, FCM fees, rebates, and later schedule changes.",
+            "An ask-side immediate buy is treated as taker for this sensitivity only.",
+            "Price and size are manual scenario inputs; no matching public book is bound to this calculation.",
+        ),
+    )
 
 
 @_high_precision_decimal_context

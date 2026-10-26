@@ -5,6 +5,8 @@ These files contain genuine public HTTP responses captured by MIDAS Frontier on
 and per-response byte cap. No orders, accounts, credentials, wallet calls, or
 mutating methods were used. Raw response bodies are retained so normalization
 can be replayed; each capture contains a SHA-256 over its pre-hash manifest.
+The fee-sensitivity artifact below is a deterministic offline calculation from
+the captured public metadata, not an additional HTTP capture.
 
 | Capture | Evidence |
 | --- | --- |
@@ -16,6 +18,7 @@ can be replayed; each capture contains a SHA-256 over its pre-hash manifest.
 | `2026-10-26-polymarket-v2-trade-page.json` | One direct, unauthenticated Data API v2 first page for a condition already present in the saved public listing; one GET, ten normalized trades, and hash-verified temporary-store read-back. |
 | `2026-10-26-polymarket-v2-api-continuation.json` | One continuation page for that condition through the isolated Frontier API route; one unauthenticated GET, ten normalized trades, and hash-verified temporary-store read-back. Its ten transaction IDs do not overlap the first page. |
 | `2026-10-27-kalshi-public-fee-metadata.json` | One public Kalshi listing and the matching event plus series fee metadata; three GETs, one market, child markets excluded from the event response, and hash-verified temporary-store read-back. |
+| `2026-10-27-kalshi-fee-sensitivity.json` | Offline Decimal calculation using that captured event/series metadata and manually supplied one-fill inputs ($0.50, one contract); no quote or execution evidence. |
 | `2026-10-27-kalshi-public-trade-page.json` | One public Kalshi listing and one ticker-filtered cursor-page request through the isolated API; two GETs, zero returned trades, empty continuation cursor, and raw/row hash-verified temporary-store read-back. |
 
 The earliest direct source-probe files contain five HTTP 200 responses:
@@ -107,6 +110,19 @@ serialized artifact SHA-256 is
 `4a2e1ac8e2953314e89f26fa825142b551ce0a24512a14e3494df03b936ea53e`. This is
 one market's native fee metadata, not an applied account fee or a venue-wide
 survey. Frontier continues to represent its `FeeSchedule` as unknown.
+
+The derived sensitivity artifact replays those exact metadata fields locally;
+it made no further source request. Its scenario uses a manually supplied $0.50
+price for one contract, not the captured book or a live trade. Under the pinned
+one-fill model, the fee is $0.0175 at the documented direct-member precision and
+$0.02 at non-direct-member precision. These are account-precision scenarios,
+not a fee quote for the sampled market, and they do not update Frontier
+candidate economics. The artifact SHA-256 is
+`cdc66e6722fe25369317107ca4d94b4749b3f47f938dca0b3924507f5b5922c4`; its
+deterministic calculation SHA-256 is
+`0218bc4415eafbd8d154173fd66b98c8be92ef7255d0cd75b9a61e8b5a385ce0`.
+The calculation uses the [July 7, 2026 Kalshi event fee schedule](https://kalshi.com/docs/kalshi-fee-schedule.pdf)
+and the [documented fee-rounding rules](https://docs.kalshi.com/getting_started/fee_rounding).
 
 The bounded continuation probe ran at
 `2026-10-26T23:02:48.888920Z`–`23:02:49.046817Z`. It supplied the opaque

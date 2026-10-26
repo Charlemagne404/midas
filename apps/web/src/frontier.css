@@ -884,6 +884,53 @@
   color: #d9e0e9;
   font-size: 9px;
 }
+.fr-fee-sensitivity-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(120px, 1fr)) auto;
+  align-items: end;
+  gap: 9px;
+  padding: 9px 0 2px;
+  border-top: 1px solid #28323c;
+}
+.fr-fee-sensitivity-form label {
+  display: grid;
+  gap: 5px;
+  color: #aeb9c7;
+  font-size: 8px;
+}
+.fr-fee-sensitivity-guidance {
+  grid-column: 1 / -1;
+  color: #8d9bab;
+  font-size: 8px;
+  line-height: 1.45;
+}
+.fr-fee-sensitivity-form input {
+  min-width: 0;
+  padding: 7px 8px;
+  border: 1px solid #303b48;
+  border-radius: 3px;
+  background: #0d1116;
+  color: #e7edf4;
+  font: inherit;
+}
+.fr-fee-sensitivity-result {
+  display: grid;
+  gap: 5px;
+  padding: 9px;
+  border: 1px solid #3f4b3a;
+  border-radius: 3px;
+  background: #141913;
+}
+.fr-fee-sensitivity-result strong {
+  color: #dce8cf;
+  font-size: 9px;
+}
+.fr-fee-sensitivity-result small {
+  color: #9ba891;
+  font-size: 8px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
 .fr-resolution-text {
   padding: 11px 14px;
   border-bottom: 1px solid #252f3a;
@@ -1761,6 +1808,9 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .fr-fee-metadata-panel {
+    grid-template-columns: 1fr;
+  }
+  .fr-fee-sensitivity-form {
     grid-template-columns: 1fr;
   }
   .fr-market-detail-head,

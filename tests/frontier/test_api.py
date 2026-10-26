@@ -193,6 +193,37 @@ def test_kalshi_fee_metadata_probe_persists_event_and_series_evidence(tmp_path):
         }
         assert {item["raw_sha256"] for item in persisted} == set(result["raw_sha256"].values())
         assert source_market.fees.status.value == "unknown"
+
+        sensitivity = client.post(
+            "/api/frontier/economics/kalshi-fee-sensitivity",
+            json={
+                "market_id": source_market.canonical_id,
+                "event_observation_id": result["observation_ids"][0],
+                "series_observation_id": result["observation_ids"][1],
+                "price_usd": "0.5",
+                "quantity_contracts": "1",
+            },
+        )
+        assert sensitivity.status_code == 200, sensitivity.text
+        sensitivity_result = sensitivity.json()
+        assert sensitivity_result["hypothetical_only"] is True
+        assert sensitivity_result["candidate_net_economics_modified"] is False
+        assert sensitivity_result["estimate"]["effective_fee_multiplier"] == "3"
+        assert [
+            row["total_modeled_fee"] for row in sensitivity_result["estimate"]["scenarios"]
+        ] == ["0.0525", "0.06"]
+        assert len(sensitivity_result["estimate"]["calculation_sha256"]) == 64
+        wrong_pair = client.post(
+            "/api/frontier/economics/kalshi-fee-sensitivity",
+            json={
+                "market_id": source_market.canonical_id,
+                "event_observation_id": result["observation_ids"][1],
+                "series_observation_id": result["observation_ids"][0],
+                "price_usd": "0.5",
+                "quantity_contracts": "1",
+            },
+        )
+        assert wrong_pair.status_code == 409
     finally:
         client.close()
         asyncio.run(registry.aclose())

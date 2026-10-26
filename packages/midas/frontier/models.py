@@ -269,9 +269,10 @@ class KalshiFeeMetadata(FrontierModel):
     fee_rounding_documentation_url: str = "https://docs.kalshi.com/getting_started/fee_rounding"
     economics_state: Literal["unresolved"] = "unresolved"
     limitations: tuple[str, ...] = (
-        "Native type and multiplier metadata do not by themselves calculate fees.",
-        "Maker/taker applicability and any scheduled fee changes require the current published schedule.",
-        "Account balance precision and per-order rounding/rebates are unknown without account-specific data.",
+        "Only the bounded quadratic taker-fee sensitivity is implemented; unsupported fee types fail closed.",
+        "Maker fees and schedule changes outside the dated public formula are not modeled.",
+        "Account balance precision is not identified; both documented one-fill precision cases are shown.",
+        "Multi-fill order rounding accumulation, rebates, and FCM-specific charges remain unresolved.",
     )
 
     @field_validator("event_received_at_utc", "series_received_at_utc")
@@ -280,6 +281,65 @@ class KalshiFeeMetadata(FrontierModel):
         if value.tzinfo is None or value.utcoffset() is None:
             raise ValueError("Fee metadata times must include a timezone")
         return value.astimezone(UTC)
+
+
+class KalshiFeeRoundingScenario(FrontierModel):
+    account_precision_class: Literal["direct_member", "non_direct_member"]
+    balance_quantum: Positive
+    model_fee_before_rounding: Nonnegative
+    trade_fee_rounded_to_microdollar: Nonnegative
+    balance_rounding_adjustment: Nonnegative
+    total_modeled_fee: Nonnegative
+    total_modeled_debit: Nonnegative
+
+
+class KalshiTakerFeeSensitivity(FrontierModel):
+    """One-fill public-schedule sensitivity; not a user-account fee quotation."""
+
+    schema_version: Literal[1] = 1
+    model_version: str = "kalshi-event-taker-fee-sensitivity-2026-07-07-v1"
+    native_market_id: str = Field(min_length=1, max_length=256)
+    native_event_id: str = Field(min_length=1, max_length=256)
+    series_ticker: str = Field(min_length=1, max_length=256)
+    effective_fee_type: str = Field(min_length=1, max_length=80)
+    effective_fee_multiplier: Nonnegative
+    input_observation_ids: tuple[str, str]
+    input_raw_sha256: tuple[str, str]
+    input_received_at_utc: tuple[datetime, datetime]
+    price_usd: Decimal = Field(gt=0, lt=1, max_digits=18, decimal_places=12, allow_inf_nan=False)
+    quantity_contracts: Decimal = Field(
+        gt=0, le=1_000_000, max_digits=24, decimal_places=12, allow_inf_nan=False
+    )
+    position_cost_usd: Nonnegative
+    scenarios: tuple[KalshiFeeRoundingScenario, ...]
+    formula_source_url: str = "https://kalshi.com/docs/kalshi-fee-schedule.pdf"
+    rounding_source_url: str = "https://docs.kalshi.com/getting_started/fee_rounding"
+    calculation_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    assumptions: tuple[str, ...]
+
+    @field_validator("input_received_at_utc")
+    @classmethod
+    def sensitivity_times_are_utc(
+        cls, value: tuple[datetime, datetime]
+    ) -> tuple[datetime, datetime]:
+        normalized = []
+        for item in value:
+            if item.tzinfo is None or item.utcoffset() is None:
+                raise ValueError("Fee sensitivity timestamps must include a timezone")
+            normalized.append(item.astimezone(UTC))
+        return normalized[0], normalized[1]
+
+    @field_validator("input_observation_ids", "input_raw_sha256")
+    @classmethod
+    def sensitivity_hashes_are_sha256(cls, value: tuple[str, str]) -> tuple[str, str]:
+        if any(
+            len(item) != 64 or any(character not in "0123456789abcdef" for character in item)
+            for item in value
+        ):
+            raise ValueError(
+                "Fee sensitivity evidence identities must be lowercase SHA-256 digests"
+            )
+        return value
 
 
 class IndependentEconomicAudit(FrontierModel):

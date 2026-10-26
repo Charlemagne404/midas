@@ -8,14 +8,16 @@ import hashlib
 import json
 import re
 from datetime import UTC, datetime
+from decimal import Decimal
 from functools import lru_cache
 from pathlib import Path
 from typing import Any, Literal
+from urllib.parse import urlsplit
 
 from fastapi import APIRouter, HTTPException, Query
 from midas.frontier.adapters.base import AdapterError, ExchangeAdapter, FailedResponseEvidence
 from midas.frontier.adapters.kraken import KrakenSpotAdapter
-from midas.frontier.economics import ExecutionScenario
+from midas.frontier.economics import ExecutionScenario, estimate_kalshi_taker_fee_sensitivity
 from midas.frontier.models import (
     BookSnapshot,
     Capability,
@@ -78,6 +80,23 @@ class KalshiTradePageProbeRequest(BaseModel):
 class FeeMetadataProbeRequest(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
     market_id: str = Field(min_length=1, max_length=256)
+
+
+class KalshiFeeSensitivityRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+    market_id: str = Field(min_length=1, max_length=256)
+    event_observation_id: str = Field(pattern=r"^[0-9a-f]{64}$")
+    series_observation_id: str = Field(pattern=r"^[0-9a-f]{64}$")
+    price_usd: Decimal = Field(gt=0, lt=1, max_digits=18, decimal_places=12, allow_inf_nan=False)
+    quantity_contracts: Decimal = Field(
+        gt=0, le=1_000_000, max_digits=24, decimal_places=12, allow_inf_nan=False
+    )
+
+    @model_validator(mode="after")
+    def distinct_fee_evidence(self) -> KalshiFeeSensitivityRequest:
+        if self.event_observation_id == self.series_observation_id:
+            raise ValueError("Event and series evidence must use distinct observations")
+        return self
 
 
 class RelationshipReviewRequest(BaseModel):
@@ -882,9 +901,10 @@ def router(store: FrontierStore, registry: Any) -> APIRouter:
                     "network_calls_bounded_by": 2 * (config.retries + 1),
                     "fee_cost_modeled": False,
                     "note": (
-                        "One explicit read-only event plus series metadata probe. These public "
-                        "parameters are preserved as evidence; account-specific fee and rounding "
-                        "costs remain unknown and are not used as zero."
+                        "One explicit read-only event plus series metadata probe. This capture "
+                        "calculates no fee; a separate local workbench request can evaluate a "
+                        "one-fill sensitivity from the saved evidence. Account-specific costs "
+                        "remain unresolved and do not become zero in candidate economics."
                     ),
                 }
             except AdapterError as error:
@@ -915,6 +935,89 @@ def router(store: FrontierStore, registry: Any) -> APIRouter:
                         "diagnostic_persistence_error": diagnostic_error,
                     },
                 ) from error
+
+    @api.post("/economics/kalshi-fee-sensitivity")
+    async def kalshi_fee_sensitivity(
+        request: KalshiFeeSensitivityRequest,
+    ) -> dict[str, Any]:
+        try:
+            event_record = store.observation(request.event_observation_id)
+            series_record = store.observation(request.series_observation_id)
+        except (ValueError, FrontierStoreError) as error:
+            raise HTTPException(status_code=409, detail=str(error)) from error
+        if event_record is None or series_record is None:
+            raise HTTPException(status_code=404, detail="Stored Kalshi fee evidence was not found")
+        try:
+            event_raw = RawObservation.model_validate(event_record.get("raw"))
+            series_raw = RawObservation.model_validate(series_record.get("raw"))
+            event_metadata = KalshiFeeMetadata.model_validate(event_record.get("normalized"))
+            series_metadata = KalshiFeeMetadata.model_validate(series_record.get("normalized"))
+        except ValueError as error:
+            raise HTTPException(
+                status_code=409, detail="Stored fee evidence is not valid Kalshi metadata"
+            ) from error
+        event_url = urlsplit(event_raw.request_url)
+        series_url = urlsplit(series_raw.request_url)
+        if (
+            event_raw.venue != Venue.KALSHI
+            or series_raw.venue != Venue.KALSHI
+            or event_raw.observation_kind != "event_fee_metadata"
+            or series_raw.observation_kind != "series_fee_metadata"
+            or event_url.scheme != "https"
+            or event_url.netloc != "external-api.kalshi.com"
+            or event_url.hostname != "external-api.kalshi.com"
+            or not event_url.path.endswith(f"/events/{event_metadata.native_event_id}")
+            or series_url.scheme != "https"
+            or series_url.netloc != "external-api.kalshi.com"
+            or series_url.hostname != "external-api.kalshi.com"
+            or not series_url.path.endswith(f"/series/{event_metadata.series_ticker}")
+            or event_metadata != series_metadata
+            or event_raw.raw_sha256 != event_metadata.event_raw_sha256
+            or series_raw.raw_sha256 != event_metadata.series_raw_sha256
+            or event_raw.received_at_utc != event_metadata.event_received_at_utc
+            or series_raw.received_at_utc != event_metadata.series_received_at_utc
+        ):
+            raise HTTPException(
+                status_code=409,
+                detail="Fee inputs do not form a hash-matched event and series evidence pair",
+            )
+        try:
+            known_markets = await _load_markets(store, 200)
+        except (FrontierStoreError, ValueError) as error:
+            raise HTTPException(status_code=409, detail=str(error)) from error
+        market = next(
+            (
+                item
+                for item in known_markets
+                if item.canonical_id == request.market_id and item.venue == Venue.KALSHI
+            ),
+            None,
+        )
+        if market is None or market.native_market_id != event_metadata.native_market_id:
+            raise HTTPException(
+                status_code=409,
+                detail="Fee evidence does not belong to the requested recorded Kalshi market",
+            )
+        try:
+            estimate = estimate_kalshi_taker_fee_sensitivity(
+                event_metadata,
+                event_observation_id=request.event_observation_id,
+                series_observation_id=request.series_observation_id,
+                price_usd=request.price_usd,
+                quantity_contracts=request.quantity_contracts,
+            )
+        except ValueError as error:
+            raise HTTPException(status_code=422, detail=str(error)) from error
+        return {
+            "market_id": market.canonical_id,
+            "estimate": estimate.model_dump(mode="json"),
+            "hypothetical_only": True,
+            "candidate_net_economics_modified": False,
+            "note": (
+                "Local deterministic one-fill taker-fee sensitivity using persisted public "
+                "evidence; not an account quotation and not used by candidate net economics."
+            ),
+        }
 
     @api.get("/observations/{observation_id}")
     async def observation_evidence(observation_id: str) -> dict[str, Any]:

@@ -397,7 +397,7 @@ it('captures one explicit Polymarket trade page and follows its bound cursor', a
   expect(requests[2]).toEqual({ market_id: 'KX-FRONTIER-1', limit: 50 });
 });
 
-it('captures and labels Kalshi public fee metadata without implying a fee estimate', async () => {
+it('captures Kalshi fee metadata and exposes a separate hypothetical fee sensitivity', async () => {
   const market = {
     canonical_id: 'kalshi:KX-FEE-1',
     source_observation_record_id: 'market-observation',
@@ -467,6 +467,7 @@ it('captures and labels Kalshi public fee metadata without implying a fee estima
     },
   };
   const requestBodies: Record<string, unknown>[] = [];
+  const sensitivityBodies: Record<string, unknown>[] = [];
   const responses: Record<string, unknown> = {
     '/api/frontier/overview': {
       state: 'AVAILABLE',
@@ -545,6 +546,50 @@ it('captures and labels Kalshi public fee metadata without implying a fee estima
         }),
       } as Response;
     }
+    if (path === '/api/frontier/economics/kalshi-fee-sensitivity' && init?.method === 'POST') {
+      sensitivityBodies.push(JSON.parse(String(init.body)) as Record<string, unknown>);
+      return {
+        ok: true,
+        json: async () => ({
+          market_id: market.canonical_id,
+          hypothetical_only: true,
+          candidate_net_economics_modified: false,
+          note: 'Local one-fill sensitivity only.',
+          estimate: {
+            model_version: 'kalshi-event-taker-fee-sensitivity-2026-07-07-v1',
+            series_ticker: 'KX-FEE-SERIES',
+            effective_fee_type: 'quadratic',
+            effective_fee_multiplier: '1',
+            price_usd: '0.50',
+            quantity_contracts: '1',
+            position_cost_usd: '0.50',
+            input_received_at_utc: ['2026-10-26T23:16:17.916305Z', '2026-10-26T23:16:18.408650Z'],
+            scenarios: [
+              {
+                account_precision_class: 'direct_member',
+                balance_quantum: '0.0001',
+                model_fee_before_rounding: '0.0175',
+                trade_fee_rounded_to_microdollar: '0.0175',
+                balance_rounding_adjustment: '0',
+                total_modeled_fee: '0.0175',
+                total_modeled_debit: '0.5175',
+              },
+              {
+                account_precision_class: 'non_direct_member',
+                balance_quantum: '0.01',
+                model_fee_before_rounding: '0.0175',
+                trade_fee_rounded_to_microdollar: '0.0175',
+                balance_rounding_adjustment: '0.0025',
+                total_modeled_fee: '0.02',
+                total_modeled_debit: '0.52',
+              },
+            ],
+            calculation_sha256: 'f'.repeat(64),
+            assumptions: ['one-fill fixture'],
+          },
+        }),
+      } as Response;
+    }
     const body = responses[path];
     if (body === undefined) throw new Error(`Unexpected frontend request: ${path}`);
     void init;
@@ -564,11 +609,24 @@ it('captures and labels Kalshi public fee metadata without implying a fee estima
   expect(await screen.findByText('Capture fee metadata')).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Capture fee metadata' }));
   expect(await screen.findByText(/quadratic · multiplier 1/)).toBeInTheDocument();
-  expect(screen.getByText(/fee cost not modeled/)).toBeInTheDocument();
+  expect(screen.getByText(/not added to candidate economics/)).toBeInTheDocument();
   expect(screen.getByText('Account rounding remains unknown.')).toBeInTheDocument();
   expect(screen.getByText(/Event fee evidence event-observ/)).toBeInTheDocument();
   expect(screen.getByText(/Series fee evidence series-obse/)).toBeInTheDocument();
   expect(requestBodies).toEqual([{ market_id: market.canonical_id }]);
+  fireEvent.click(screen.getByRole('button', { name: 'Calculate fee scenarios' }));
+  expect(await screen.findByText(/Single-fill taker sensitivity/)).toBeInTheDocument();
+  expect(screen.getByText(/Fee metadata received: event/)).toBeInTheDocument();
+  expect(screen.getByText(/modeled fee \$0.02/)).toBeInTheDocument();
+  expect(sensitivityBodies).toEqual([
+    {
+      market_id: market.canonical_id,
+      event_observation_id: 'event-observation',
+      series_observation_id: 'series-observation',
+      price_usd: '0.50',
+      quantity_contracts: '1',
+    },
+  ]);
 });
 
 it('renders a bounded accessible relationship graph and opens selected evidence', async () => {
