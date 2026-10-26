@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import base64
+import binascii
 import hashlib
 import json
 from datetime import UTC, datetime
@@ -486,12 +488,19 @@ class RawObservation(FrontierModel):
     request_started_at_utc: datetime
     received_at_utc: datetime
     raw_body: str
+    raw_body_encoding: Literal["utf8", "base64"] = "utf8"
     raw_sha256: str
     adapter_version: str
 
     @model_validator(mode="after")
     def valid_hash_and_size(self) -> RawObservation:
-        raw = self.raw_body.encode("utf-8")
+        if self.raw_body_encoding == "utf8":
+            raw = self.raw_body.encode("utf-8")
+        else:
+            try:
+                raw = base64.b64decode(self.raw_body, validate=True)
+            except (binascii.Error, ValueError) as error:
+                raise ValueError("Raw observation base64 body is invalid") from error
         if len(raw) > 262144:
             raise ValueError("Raw observation exceeds the 256 KiB record bound")
         digest = hashlib.sha256(raw).hexdigest()

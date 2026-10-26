@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import base64
 import hashlib
 import json
 from datetime import timedelta
@@ -406,6 +407,8 @@ async def test_probe_records_schema_failure_and_recovers_source_health(tmp_path)
     )
     responses = (
         httpx.Response(200, text="not-json"),
+        httpx.Response(200, content=b"\xff\x00"),
+        httpx.Response(503, json={"error": "maintenance"}),
         httpx.Response(200, json={"unexpected": []}),
         httpx.Response(200, json=[gamma_rows[0]]),
     )
@@ -450,7 +453,32 @@ async def test_probe_records_schema_failure_and_recovers_source_health(tmp_path)
             invalid_json = await client.post("/api/frontier/probe/polymarket", json={"limit": 1})
             assert invalid_json.status_code == 502
             assert invalid_json.json()["detail"]["code"] == "INVALID_JSON"
-            assert invalid_json.json()["detail"]["diagnostic_observation_ids"] == []
+            json_error_id = invalid_json.json()["detail"]["diagnostic_observation_ids"][0]
+            json_error = await client.get(f"/api/frontier/observations/{json_error_id}")
+            assert json_error.status_code == 200
+            assert json_error.json()["raw"]["raw_body"] == "not-json"
+            assert json_error.json()["normalized"]["failure_stage"] == "transport_response"
+
+            invalid_encoding = await client.post(
+                "/api/frontier/probe/polymarket", json={"limit": 1}
+            )
+            assert invalid_encoding.status_code == 502
+            assert invalid_encoding.json()["detail"]["code"] == "INVALID_ENCODING"
+            encoding_error_id = invalid_encoding.json()["detail"]["diagnostic_observation_ids"][0]
+            encoding_error = await client.get(f"/api/frontier/observations/{encoding_error_id}")
+            encoded_body = encoding_error.json()["raw"]["raw_body"]
+            decoded_body = base64.b64decode(encoded_body, validate=True)
+            assert decoded_body == b"\xff\x00"
+            assert hashlib.sha256(decoded_body).hexdigest() == encoding_error.json()["raw_sha256"]
+            assert encoding_error.json()["raw"]["raw_body_encoding"] == "base64"
+
+            server_failure = await client.post("/api/frontier/probe/polymarket", json={"limit": 1})
+            assert server_failure.status_code == 502
+            assert server_failure.json()["detail"]["code"] == "SOURCE_TEMPORARY_FAILURE"
+            server_error_id = server_failure.json()["detail"]["diagnostic_observation_ids"][0]
+            server_error = await client.get(f"/api/frontier/observations/{server_error_id}")
+            assert server_error.json()["raw"]["http_status"] == 503
+            assert server_error.json()["raw"]["raw_body"] == '{"error":"maintenance"}'
 
             malformed_schema = await client.post(
                 "/api/frontier/probe/polymarket", json={"limit": 1}
@@ -483,11 +511,12 @@ async def test_probe_records_schema_failure_and_recovers_source_health(tmp_path)
             assert health["polymarket"]["state"] == "healthy"
             assert health["polymarket"]["last_error_code"] is None
             assert len(store.observations(venue="polymarket", kind="market_listing")) == 2
+            assert len(store.observations(venue="polymarket", kind="source_failure")) == 3
             recorded_markets = await client.get(
                 "/api/frontier/markets", params={"venue": "polymarket"}
             )
             assert recorded_markets.json()["returned"] == 1
-            assert len(requests) == 3
+            assert len(requests) == 5
             assert all(item.method == "GET" for item in requests)
             assert all("authorization" not in item.headers for item in requests)
     finally:

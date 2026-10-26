@@ -14,7 +14,7 @@ from urllib.parse import urlsplit
 
 import httpx
 
-from midas.frontier.adapters.base import AdapterError
+from midas.frontier.adapters.base import AdapterError, FailedResponseEvidence
 from midas.frontier.models import AdapterConfig
 
 D = Decimal
@@ -150,18 +150,53 @@ class PublicReadTransport:
                             "SOURCE_TEMPORARY_FAILURE",
                             f"Public source returned HTTP {response.status_code}",
                             retryable=True,
+                            response_evidence=FailedResponseEvidence(
+                                url=request_url,
+                                status_code=response.status_code,
+                                raw_body=bytes(body),
+                                request_started_at_utc=started,
+                                response_received_at_utc=received,
+                            ),
                         )
                     if not 200 <= response.status_code < 300:
                         raise AdapterError(
                             "SOURCE_HTTP_ERROR",
                             f"Public source returned HTTP {response.status_code}",
+                            response_evidence=FailedResponseEvidence(
+                                url=request_url,
+                                status_code=response.status_code,
+                                raw_body=bytes(body),
+                                request_started_at_utc=started,
+                                response_received_at_utc=received,
+                            ),
                         )
                     try:
                         raw = body.decode("utf-8")
-                        payload = json.loads(raw, parse_float=D)
-                    except (UnicodeDecodeError, json.JSONDecodeError) as error:
+                    except UnicodeDecodeError as error:
                         raise AdapterError(
-                            "INVALID_JSON", "Public source returned invalid JSON"
+                            "INVALID_ENCODING",
+                            "Public source returned a response that is not valid UTF-8",
+                            response_evidence=FailedResponseEvidence(
+                                url=request_url,
+                                status_code=response.status_code,
+                                raw_body=bytes(body),
+                                request_started_at_utc=started,
+                                response_received_at_utc=received,
+                            ),
+                        ) from error
+                    try:
+                        payload = json.loads(raw, parse_float=D)
+                    except json.JSONDecodeError as error:
+                        raise AdapterError(
+                            "INVALID_JSON",
+                            "Public source returned invalid JSON",
+                            response_evidence=FailedResponseEvidence(
+                                url=request_url,
+                                status_code=response.status_code,
+                                raw_body=bytes(body),
+                                request_started_at_utc=started,
+                                response_received_at_utc=received,
+                            ),
                         ) from error
                     return HTTPObservation(
                         url=request_url,

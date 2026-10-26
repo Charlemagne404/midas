@@ -3,14 +3,15 @@
 from __future__ import annotations
 
 import asyncio
+import base64
 import hashlib
 from datetime import UTC, datetime
 from functools import lru_cache
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from fastapi import APIRouter, HTTPException, Query
-from midas.frontier.adapters.base import AdapterError, ExchangeAdapter
+from midas.frontier.adapters.base import AdapterError, ExchangeAdapter, FailedResponseEvidence
 from midas.frontier.adapters.kraken import KrakenSpotAdapter
 from midas.frontier.economics import ExecutionScenario
 from midas.frontier.models import (
@@ -18,6 +19,7 @@ from midas.frontier.models import (
     Capability,
     FrontierMarket,
     MarketBatch,
+    RawObservation,
     SourceFailureRecord,
     TradeBatch,
     Venue,
@@ -82,15 +84,45 @@ def router(store: FrontierStore, registry: Any) -> APIRouter:
     source_locks = {venue: asyncio.Lock() for venue in Venue}
 
     def preserve_failed_captures(
-        adapter: ExchangeAdapter, code: str, message: str
+        adapter: ExchangeAdapter,
+        code: str,
+        message: str,
+        response_evidence: FailedResponseEvidence | None = None,
     ) -> tuple[tuple[str, ...], str | None]:
-        """Keep bounded 2xx responses when normalization or a probe batch fails."""
+        """Keep complete bounded response evidence when normalization or transport fails."""
         captures = adapter.take_captures()
+        diagnostic_inputs: list[tuple[RawObservation, str]] = [
+            (capture, "probe_batch") for capture in captures
+        ]
+        if response_evidence is not None and len(response_evidence.raw_body) <= 262144:
+            try:
+                body = response_evidence.raw_body.decode("utf-8")
+                body_encoding: Literal["utf8", "base64"] = "utf8"
+            except UnicodeDecodeError:
+                body = base64.b64encode(response_evidence.raw_body).decode("ascii")
+                body_encoding = "base64"
+            diagnostic_inputs.append(
+                (
+                    RawObservation(
+                        venue=adapter.venue,
+                        observation_kind="source_failure",
+                        request_url=response_evidence.url,
+                        http_status=response_evidence.status_code,
+                        request_started_at_utc=response_evidence.request_started_at_utc,
+                        received_at_utc=response_evidence.response_received_at_utc,
+                        raw_body=body,
+                        raw_body_encoding=body_encoding,
+                        raw_sha256=hashlib.sha256(response_evidence.raw_body).hexdigest(),
+                        adapter_version=adapter.capabilities.adapter_version,
+                    ),
+                    "transport_response",
+                )
+            )
         observation_ids: list[str] = []
         persistence_error: str | None = None
-        for capture in captures:
+        for capture, stage in diagnostic_inputs:
             diagnostic = SourceFailureRecord(
-                failure_stage="probe_batch",
+                failure_stage=stage,
                 error_code=code[:80],
                 message=message[:240] or "Adapter probe failed",
             )
@@ -939,7 +971,7 @@ def router(store: FrontierStore, registry: Any) -> APIRouter:
                             trade_count = len(trade_values)
                         except AdapterError as error:
                             diagnostic_ids, diagnostic_error = preserve_failed_captures(
-                                adapter, error.code, str(error)
+                                adapter, error.code, str(error), error.response_evidence
                             )
                             adapter.report_failure(error.code, str(error))
                             trade_state = "failed"
@@ -979,7 +1011,7 @@ def router(store: FrontierStore, registry: Any) -> APIRouter:
                 }
             except AdapterError as error:
                 diagnostic_ids, diagnostic_error = preserve_failed_captures(
-                    adapter, error.code, str(error)
+                    adapter, error.code, str(error), error.response_evidence
                 )
                 adapter.report_failure(error.code, str(error))
                 raise HTTPException(

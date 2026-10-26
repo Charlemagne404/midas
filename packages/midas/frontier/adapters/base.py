@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
@@ -24,13 +25,32 @@ if TYPE_CHECKING:
     from midas.frontier.adapters.transport import PublicReadTransport
 
 
+@dataclass(frozen=True, slots=True)
+class FailedResponseEvidence:
+    """Complete, bounded HTTP response bytes retained with a transport failure."""
+
+    url: str
+    status_code: int
+    raw_body: bytes
+    request_started_at_utc: datetime
+    response_received_at_utc: datetime
+
+
 class AdapterError(RuntimeError):
     """A classified public-source or normalization failure."""
 
-    def __init__(self, code: str, message: str, *, retryable: bool = False) -> None:
+    def __init__(
+        self,
+        code: str,
+        message: str,
+        *,
+        retryable: bool = False,
+        response_evidence: FailedResponseEvidence | None = None,
+    ) -> None:
         super().__init__(message)
         self.code = code
         self.retryable = retryable
+        self.response_evidence = response_evidence
 
 
 class UnsupportedCapability(AdapterError):
