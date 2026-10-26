@@ -140,8 +140,9 @@ it('shows measured zero-candidate evidence without turning it into a profitabili
       services: {
         'midas-api': {
           status: 'MEASURED',
-          memory_current_bytes: 100_000_000,
-          memory_max_bytes: 1_000_000_000,
+          memory_current_bytes: 950_000_000,
+          memory_high_bytes: 1_000_000_000,
+          memory_max_bytes: 1_100_000_000,
         },
         'midas-reality': {
           status: 'MEASURED',
@@ -209,6 +210,9 @@ it('shows measured zero-candidate evidence without turning it into a profitabili
     ),
   ).toBeInTheDocument();
   expect(screen.getByText(/Reality is at or above 95% of MemoryHigh/)).toBeInTheDocument();
+  expect(
+    screen.getByText(/Mission Control API is at or above 95% of MemoryHigh/),
+  ).toBeInTheDocument();
   expect(screen.getByText(/Active short-window runway is 12.5 days/)).toBeInTheDocument();
   expect(screen.getByText(/112\.0 GiB \/ 120 days · pending restart/)).toBeInTheDocument();
   expect(screen.getByText(/108\.2 days · not active/)).toBeInTheDocument();

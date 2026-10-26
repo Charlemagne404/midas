@@ -324,6 +324,17 @@ export function Readiness() {
     realityMemoryHigh > 0 &&
     // Hold 5% below the recorder's MemoryHigh boundary as minimum admission headroom.
     realityMemoryCurrent / realityMemoryHigh >= 0.95;
+  const apiMemoryCurrent = asNumber(apiRuntime.memory_current_bytes);
+  const apiMemoryHigh = asNumber(apiRuntime.memory_high_bytes);
+  const apiMemoryHeadroom =
+    apiMemoryCurrent !== null && apiMemoryHigh !== null
+      ? Math.max(0, apiMemoryHigh - apiMemoryCurrent)
+      : null;
+  const apiNearMemoryHigh =
+    apiMemoryCurrent !== null &&
+    apiMemoryHigh !== null &&
+    apiMemoryHigh > 0 &&
+    apiMemoryCurrent / apiMemoryHigh >= 0.95;
   const currentCollectorError = asString(collector.error);
   const lastCollectorError = asString(collector.last_error);
   const lastCollectorErrorAt = asNumber(collector.last_error_ns);
@@ -344,13 +355,17 @@ export function Readiness() {
       ? 'BLOCKED'
       : queryOld(resources.dataUpdatedAt)
         ? 'STALE'
-        : realityNearMemoryHigh
+        : realityNearMemoryHigh || apiNearMemoryHigh
           ? 'BLOCKED'
           : resources.data && realityRuntime.status === 'MEASURED'
             ? 'CONDITIONAL'
             : 'NOT MEASURED';
-  const resourceGateDetail = realityNearMemoryHigh
-    ? 'Reality is at or above 95% of MemoryHigh. Defer additional heavy research until fresh admission evidence shows safe headroom.'
+  const memoryPressureReasons = [
+    realityNearMemoryHigh ? 'Reality is at or above 95% of MemoryHigh.' : null,
+    apiNearMemoryHigh ? 'Mission Control API is at or above 95% of MemoryHigh.' : null,
+  ].filter((reason): reason is string => reason !== null);
+  const resourceGateDetail = memoryPressureReasons.length
+    ? `${memoryPressureReasons.join(' ')} Defer additional heavy research until fresh admission evidence shows safe headroom.`
     : 'Cgroup and host pressure are sampled read-only. CPU and event deltas need two samples; Arena owner-job state supplies the bounded research admission view.';
   const gateStates: GateStatus[] = [
     veritasStatus,
@@ -920,6 +935,17 @@ export function Readiness() {
                 </section>
                 <section>
                   <h3>Mission Control API cgroup</h3>
+                  <div>
+                    <span>Current / MemoryHigh</span>
+                    <strong>
+                      {bytes(apiRuntime.memory_current_bytes)} /{' '}
+                      {bytes(apiRuntime.memory_high_bytes)}
+                    </strong>
+                  </div>
+                  <div>
+                    <span>Headroom below MemoryHigh</span>
+                    <strong>{bytes(apiMemoryHeadroom)}</strong>
+                  </div>
                   <div>
                     <span>Current / MemoryMax</span>
                     <strong>
