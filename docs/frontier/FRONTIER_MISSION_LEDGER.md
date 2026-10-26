@@ -3,7 +3,8 @@
 **Current stage:** isolated engine/API/UI, immutable relationship review, bounded
 graph neighborhoods, hash-verified public book/trade capture, exact fixture-
 verified multi-outcome coverage, and a separate candidate arithmetic audit;
-remaining acceptance work is substantial.
+plus captured-response failure diagnostics and degraded-source recovery. Remaining
+acceptance work is substantial.
 **Branch:** `codex/frontier-20261026`
 **Worktree:** `/home/charlie/midas-frontier`
 **Baseline:** `11d32a0693b25c290fd273f23e40cf7b5950d95d` (`codex/veritas-v6-integration-20261026`)
@@ -44,6 +45,9 @@ remaining acceptance work is substantial.
 | `7243f84` | Updated engineering report, Frontier architecture, MIDAS architecture/development docs and README for the new bounded family and its fixture-only status. |
 | `d8d70a4` | Added multi-outcome bounds and non-vacuous replay regression coverage for non-identity outcome mappings and reversed input order. |
 | `ae7c308` | Added independent replay arithmetic audit, candidate audit hashes and dispositions, UI/readiness details, and fixed canonical relationship-mapping order exposed by the regression. |
+| `480a322` | Updated engineering report, Frontier architecture, MIDAS architecture/development docs and README for the independent candidate audit. |
+| `53c38d7` | Persisted raw responses and typed diagnostics when a decoded probe response fails normalization; included observation IDs in API errors and tested degradation, source isolation, and recovery. |
+| `64dc167` | Documented the independent arithmetic audit, source-failure evidence path, latest focused verification, and the current host's test interpreter path. |
 
 ## Public source investigation
 
@@ -109,7 +113,7 @@ Capture records and source-specific limitations are in
 
 ## Verification checkpoint
 
-- Backend focused regression: **52 passed** in 8.62 seconds pytest time; one upstream Starlette/httpx TestClient deprecation warning. `/usr/bin/time -v` measured 9.41 seconds wall, 3.83 seconds user CPU, 142,908 KiB peak RSS, and zero socket messages.
+- Backend focused regression: **53 passed** in 9.13 seconds pytest time; one upstream Starlette/httpx TestClient deprecation warning. `/usr/bin/time -v` measured 9.92 seconds wall, 4.00 seconds user CPU, 146,524 KiB peak RSS, and zero socket messages.
 - Ruff check and format check: passed for the Frontier package and test files.
 - Mypy: passed for 16 Frontier/API source files. A broader `mypy packages/midas/frontier apps/api` attempt reported 37 errors in eight unchanged Veritas/Arena/API files; none was in Frontier source.
 - Frontend tests: **35 passed across 7 files**; typecheck, lint and Prettier check passed.
@@ -127,7 +131,7 @@ Reproduction commands and environment boundaries are in
 | --- | --- | --- |
 | Verified isolated baseline and worktree | COMPLETE AND VERIFIED | Separate branch from `11d32a0`; unrelated dirty trees preserved. |
 | Adapter protocol, capability inventory, bounded GET transport | COMPLETE AND VERIFIED | Contract tests; all capabilities explicitly declared; no startup request. |
-| Polymarket, Kalshi and Kraken Spot implementations | PARTIALLY VERIFIED | Fixture tests and one bounded live listing/book/trade-to-store round trip per venue pass; fees and degraded-source paths remain unverified. |
+| Polymarket, Kalshi and Kraken Spot implementations | PARTIALLY VERIFIED | Fixture tests and one bounded live listing/book/trade-to-store round trip per venue pass; mock tests verify 2xx schema-failure evidence, source isolation, and health recovery. Fees and live degraded-source behavior remain unverified; invalid JSON bodies are not persisted. |
 | Canonical normalization and native evidence | PARTIALLY VERIFIED | Distinct event, conditional event and spot forms; some semantics intentionally unverified. |
 | Relationship matching, immutable review, and strict payoff verifier | PARTIALLY VERIFIED | Self-attributed review API/UI with stored source refs, append-only revisions, compare-and-set, latest-state replay and migration tests; no authenticated reviewer/assertion or genuine equivalent pair. |
 | Economic candidate verifier and independent audit | PARTIALLY VERIFIED | Exact two-venue binary all-long coverage and same-market 3–16-state exhaustive one-hot coverage. A separate Decimal implementation recomputes supported candidate arithmetic from hash-pinned normalized inputs; controlled fixtures only, no genuine eligible event, independently authenticated market truth, or practical execution proof. |
@@ -152,9 +156,10 @@ the same normalized evidence and cannot authenticate source truth. Review labels
 and external assertion IDs are self-attributed and not authenticated or fetched.
 The highest-value next steps are:
 
-1. Extend source-failure, malformed-response, and fee-metadata checks; the new
-   trades route is bounded but its multi-page behavior and degraded path need
-   broader tests.
+1. Extend transport-level malformed-response evidence handling; the current
+   API persists decoded 2xx normalization failures, while invalid JSON bodies are
+   not retained. Validate supported fee metadata, and broaden trade pagination
+   and live degraded-source coverage.
 2. Add indexed/paginated graph adjacency and extend the UI with a bounded text-search drill-down.
 3. Establish validated fee inputs before promoting any candidate to a decisive
    net classification.
@@ -178,8 +183,9 @@ graph adjacency and short resource-admitted Arena/Laboratory replay integration.
 The multi-outcome implementation is `5e87d1893d3f20972b32adfe19081a38a6286344`;
 its non-vacuous replay regression is `d8d70a4dcb96da3f6eb4d5ca784af1b0500fd743`;
 and the independent arithmetic audit is
-`ae7c3084838a2942fab06017cacfb6657462fa53`. Documentation checkpoint
-`480a3224090f913d832578b581eab428b8b83cc3` updates the engineering report,
-Frontier architecture, MIDAS architecture/development docs, and README for the
-audit's scope and latest verification. This ledger amendment records that
-checkpoint and the current verification evidence.
+`ae7c3084838a2942fab06017cacfb6657462fa53`. The source-failure diagnostic fix is
+`53c38d7bf01a356b54c82e359ea64ab2661836f9`. Documentation checkpoint
+`480a3224090f913d832578b581eab428b8b83cc3` documents the arithmetic audit.
+Checkpoint `64dc16737e2e35edb02b2556600c8596e85f4a3f` records source-failure
+evidence behavior and current test commands. This ledger amendment records the
+latest documentation and verification state.
