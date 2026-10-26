@@ -95,6 +95,7 @@ type Market = {
     source_url: string | null;
     note: string;
   };
+  native_fields: Record<string, unknown>;
   instruments: { native_instrument_id: string; label: string; outcome_id: string | null }[];
   quality_flags: string[];
   provenance: { response_received_at_utc: string; raw_sha256: string; observation_id: string };
@@ -118,6 +119,9 @@ type Trade = {
   venue: Venue;
   native_market_id: string;
   native_trade_id: string | null;
+  native_instrument_id: string | null;
+  outcome_label: string | null;
+  outcome_index: number | null;
   price: string;
   quantity: string;
   quote_currency: string | null;
@@ -129,10 +133,35 @@ type Trade = {
 };
 type TradeResponse = {
   items: Trade[];
+  pages: TradePage[];
   observation_count: number;
   trade_count: number;
   limit: number;
   offset: number;
+};
+type TradePage = {
+  venue: Venue;
+  condition_id: string;
+  page_limit: number;
+  has_more: boolean;
+  next_cursor: string | null;
+  observation_id: string;
+  received_at_utc: string;
+};
+type TradePageCaptureResult = {
+  venue: Venue;
+  condition_id: string;
+  trade_count: number;
+  observation_id: string;
+  raw_sha256: string;
+  page_limit: number;
+  has_more: boolean;
+  next_cursor: string | null;
+  source_state: string;
+  request_count_delta: number;
+  network_calls_bounded_by: number;
+  hypothetical_only: true;
+  note: string;
 };
 type Relationship = {
   relationship_id: string;
@@ -709,6 +738,11 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
   const [graphPageCursors, setGraphPageCursors] = useState<(string | null)[]>([null]);
   const [graphPageIndex, setGraphPageIndex] = useState(0);
   const [graphQuerySession, setGraphQuerySession] = useState(0);
+  const [tradeConditionId, setTradeConditionId] = useState('');
+  const [tradePageCursor, setTradePageCursor] = useState<{
+    conditionId: string;
+    cursor: string | null;
+  } | null>(null);
   const [slippage, setSlippage] = useState('25');
   const [delay, setDelay] = useState('500');
   const [fillPercent, setFillPercent] = useState('80');
@@ -783,6 +817,26 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
     ...options,
   });
 
+  const recordedTradePage = (trades.data?.pages ?? []).find(
+    (page) => page.condition_id === tradeConditionId,
+  );
+  const activeTradeCursor =
+    tradePageCursor?.conditionId === tradeConditionId
+      ? tradePageCursor.cursor
+      : (recordedTradePage?.next_cursor ?? null);
+  const tradeMarketOptions = (markets.data?.items ?? []).filter(
+    (market) =>
+      market.venue === 'polymarket' && typeof market.native_fields?.conditionId === 'string',
+  );
+  const polymarketTradeProbeEnabled = (sources.data?.items ?? []).some(
+    (source) =>
+      source.venue === 'polymarket' &&
+      source.public_probe_enabled &&
+      source.capabilities.some(
+        (capability) => capability.capability === 'paginated_public_trades' && capability.supported,
+      ),
+  );
+
   const refresh = () => queryClient.invalidateQueries({ queryKey: ['frontier'] });
   const propose = useMutation({
     mutationFn: () =>
@@ -821,6 +875,21 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
         }),
       }),
     onSuccess: refresh,
+  });
+  const captureTradePage = useMutation({
+    mutationFn: ({ conditionId, cursor }: { conditionId: string; cursor: string | null }) =>
+      api<TradePageCaptureResult>('/frontier/probe/polymarket/trades', {
+        method: 'POST',
+        body: JSON.stringify({
+          condition_id: conditionId,
+          limit: 50,
+          ...(cursor ? { cursor } : {}),
+        }),
+      }),
+    onSuccess: (result) => {
+      setTradePageCursor({ conditionId: result.condition_id, cursor: result.next_cursor });
+      refresh();
+    },
   });
 
   const marketById = useMemo(
@@ -1167,6 +1236,68 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
                 {count(trades.data?.observation_count ?? 0)} captures
               </span>
             </div>
+            <div className="fr-trade-capture">
+              <label>
+                Recorded Polymarket condition
+                <select
+                  aria-label="Polymarket trade condition"
+                  value={tradeConditionId}
+                  onChange={(event) => {
+                    setTradeConditionId(event.target.value);
+                    setTradePageCursor(null);
+                    captureTradePage.reset();
+                  }}
+                >
+                  <option value="">Choose a recorded market</option>
+                  {tradeMarketOptions.map((market) => {
+                    const conditionId = market.native_fields.conditionId as string;
+                    return (
+                      <option key={conditionId} value={conditionId}>
+                        {market.title} · {shortHash(conditionId)}
+                      </option>
+                    );
+                  })}
+                </select>
+              </label>
+              <button
+                className="fr-action"
+                onClick={() =>
+                  captureTradePage.mutate({
+                    conditionId: tradeConditionId,
+                    cursor: activeTradeCursor,
+                  })
+                }
+                disabled={
+                  !tradeConditionId || !polymarketTradeProbeEnabled || captureTradePage.isPending
+                }
+              >
+                {captureTradePage.isPending
+                  ? 'Capturing one page…'
+                  : activeTradeCursor
+                    ? 'Capture next page'
+                    : 'Capture first page'}
+              </button>
+              {captureTradePage.isError && <InlineError message={captureTradePage.error.message} />}
+              {captureTradePage.data && (
+                <div className="fr-trade-capture-status" role="status">
+                  Saved {count(captureTradePage.data.trade_count)} trades ·{' '}
+                  {captureTradePage.data.has_more
+                    ? 'another source page is available'
+                    : 'source reports no next page'}{' '}
+                  · evidence {shortHash(captureTradePage.data.observation_id)} · raw{' '}
+                  {shortHash(captureTradePage.data.raw_sha256)} ·{' '}
+                  {captureTradePage.data.request_count_delta} network{' '}
+                  {captureTradePage.data.request_count_delta === 1 ? 'request' : 'requests'}{' '}
+                  (maximum {captureTradePage.data.network_calls_bounded_by})
+                </div>
+              )}
+              <p>
+                {polymarketTradeProbeEnabled
+                  ? 'Each click records one public Data API v2 page for a market already in the saved listing. Pages use the source’s taker-only, 0.01-share minimum-size filter and its fixed three-year condition history window.'
+                  : 'Public trade capture is disabled by the Polymarket source configuration.'}{' '}
+                Trade prints are not available depth. Nothing is fetched automatically.
+              </p>
+            </div>
             {trades.isLoading ? (
               <div className="fr-loading">Loading recorded public trades…</div>
             ) : trades.isError ? (
@@ -1177,6 +1308,7 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
                   <thead>
                     <tr>
                       <th>Venue / market</th>
+                      <th>Outcome instrument</th>
                       <th>Price</th>
                       <th>Quantity</th>
                       <th>Side</th>
@@ -1188,11 +1320,20 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
                   <tbody>
                     {trades.data.items.map((trade, index) => (
                       <tr
-                        key={`${trade.source_observation_record_id}-${trade.native_trade_id ?? index}`}
+                        key={`${trade.source_observation_record_id}-${trade.native_trade_id ?? 'no-id'}-${trade.native_instrument_id ?? 'no-instrument'}-${index}`}
                       >
                         <td>
                           <VenuePill venue={trade.venue} />
                           <code>{trade.native_market_id}</code>
+                        </td>
+                        <td>
+                          {trade.outcome_label ?? 'Outcome not supplied'}
+                          <code>
+                            {trade.native_instrument_id ?? 'Instrument ID not supplied'}
+                            {trade.outcome_index !== null
+                              ? ` · outcome ${trade.outcome_index}`
+                              : ''}
+                          </code>
                         </td>
                         <td>
                           {money(trade.price)} {trade.quote_currency ?? ''}

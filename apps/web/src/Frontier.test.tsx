@@ -55,6 +55,7 @@ it('renders recorded-evidence empty states and never probes a source automatical
     '/api/frontier/books?limit=100': { items: [], returned: 0, limit: 100, offset: 0 },
     '/api/frontier/trades?limit=100': {
       items: [],
+      pages: [],
       observation_count: 0,
       trade_count: 0,
       limit: 100,
@@ -109,6 +110,9 @@ it('renders recorded-evidence empty states and never probes a source automatical
         venue: 'polymarket',
         native_market_id: 'condition:trade-fixture',
         native_trade_id: 'trade-fixture',
+        native_instrument_id: null,
+        outcome_label: null,
+        outcome_index: null,
         price: '0.51',
         quantity: '3',
         quote_currency: 'USD',
@@ -119,6 +123,7 @@ it('renders recorded-evidence empty states and never probes a source automatical
         source_raw_sha256: 'b'.repeat(64),
       },
     ],
+    pages: [],
     observation_count: 1,
     trade_count: 1,
     limit: 100,
@@ -197,6 +202,150 @@ it('renders recorded-evidence empty states and never probes a source automatical
   expect(screen.getAllByText('red')).toHaveLength(2);
 });
 
+it('captures one explicit Polymarket trade page and follows its bound cursor', async () => {
+  const conditionId = `0x${'a'.repeat(64)}`;
+  const requests: Record<string, unknown>[] = [];
+  const market = {
+    canonical_id: 'polymarket:trade-condition',
+    native_market_id: conditionId,
+    native_fields: { conditionId },
+    venue: 'polymarket',
+    title: 'Recorded condition for page capture',
+    market_kind: 'binary_event',
+    lifecycle: 'open',
+    instruments: [],
+    quality_flags: [],
+    provenance: { response_received_at_utc: '2026-10-26T20:00:00Z' },
+  };
+  const responses: Record<string, unknown> = {
+    '/api/frontier/overview': {
+      state: 'AVAILABLE',
+      research_only: true,
+      live_execution: false,
+      summary: {
+        observations: 1,
+        relationships: 0,
+        relationship_reviews: 0,
+        runs: 0,
+        markets_by_venue: { polymarket: 1 },
+        instruments_by_venue: {},
+        relationships_by_state: {},
+        database_bytes: 1024,
+        max_bytes: 67_108_864,
+      },
+      sources: [],
+      latest_evidence_at_utc: '2026-10-26T20:00:00Z',
+      limitations: [],
+    },
+    '/api/frontier/sources': {
+      items: [
+        {
+          venue: 'polymarket',
+          adapter_version: 'frontier-polymarket-2',
+          public_probe_enabled: true,
+          capabilities: [
+            {
+              capability: 'paginated_public_trades',
+              supported: true,
+              state: 'implemented',
+              reason: 'explicit test fixture',
+            },
+          ],
+          health: {
+            state: 'not_probed',
+            last_success_at_utc: null,
+            last_error_code: null,
+            last_error: null,
+            notes: [],
+          },
+        },
+      ],
+    },
+    '/api/frontier/markets?limit=100': { items: [market], returned: 1, limit: 100, offset: 0 },
+    '/api/frontier/books?limit=100': { items: [], returned: 0, limit: 100, offset: 0 },
+    '/api/frontier/trades?limit=100': {
+      items: [],
+      pages: [],
+      observation_count: 0,
+      trade_count: 0,
+      limit: 100,
+      offset: 0,
+    },
+    '/api/frontier/relationships?limit=200': { items: [], returned: 0, limit: 200, offset: 0 },
+    '/api/frontier/graph?depth=1&limit=100': {
+      nodes: [],
+      edges: [],
+      center_market_id: null,
+      search: null,
+      depth: 1,
+      edge_limit: 100,
+      returned_nodes: 0,
+      returned_edges: 0,
+      truncated_by_edge_limit: false,
+      relationship_scan_limit: 500,
+      relationships_scanned: 0,
+      relationship_scan_may_be_incomplete: false,
+      next_cursor: null,
+      source_market_window_limit: 200,
+    },
+    '/api/frontier/opportunities?limit=100': { items: [], returned: 0, limit: 100, offset: 0 },
+    '/api/frontier/runs?limit=30': { items: [], returned: 0, limit: 30, offset: 0 },
+    '/api/frontier/readiness': { gates: [] },
+  };
+  const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    const path = String(input);
+    if (path === '/api/frontier/probe/polymarket/trades' && init?.method === 'POST') {
+      const body = JSON.parse(String(init.body)) as Record<string, unknown>;
+      requests.push(body);
+      const hasMore = requests.length === 1;
+      const result = {
+        venue: 'polymarket',
+        condition_id: conditionId,
+        trade_count: 2,
+        observation_id: `page-${requests.length}`,
+        raw_sha256: 'b'.repeat(64),
+        page_limit: 50,
+        has_more: hasMore,
+        next_cursor: hasMore ? 'frontier-next-page' : null,
+        source_state: 'available',
+        request_count_delta: 1,
+        network_calls_bounded_by: 1,
+        hypothetical_only: true,
+        note: 'One public source page captured.',
+      };
+      return { ok: true, json: async () => result } as Response;
+    }
+    const body = responses[path];
+    if (body === undefined) throw new Error(`Unexpected frontend request: ${path}`);
+    void init;
+    return { ok: true, json: async () => body } as Response;
+  });
+  vi.stubGlobal('fetch', fetchMock);
+  render(
+    <QueryClientProvider
+      client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+    >
+      <Frontier />
+    </QueryClientProvider>,
+  );
+
+  expect(await screen.findByText('No replay runs yet')).toBeInTheDocument();
+  expect(fetchMock.mock.calls.every(([, init]) => init?.method !== 'POST')).toBe(true);
+  fireEvent.click(screen.getByRole('button', { name: 'Markets' }));
+  const conditionPicker = await screen.findByRole('combobox', {
+    name: 'Polymarket trade condition',
+  });
+  fireEvent.change(conditionPicker, { target: { value: conditionId } });
+  fireEvent.click(screen.getByRole('button', { name: 'Capture first page' }));
+  expect(await screen.findByText(/Saved 2 trades/)).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Capture next page' }));
+  await screen.findByText(/source reports no next page/);
+  expect(requests).toEqual([
+    { condition_id: conditionId, limit: 50 },
+    { condition_id: conditionId, limit: 50, cursor: 'frontier-next-page' },
+  ]);
+});
+
 it('renders a bounded accessible relationship graph and opens selected evidence', async () => {
   const marketRecord = (venue: 'polymarket' | 'kalshi', nativeId: string, title: string) => ({
     canonical_id: `${venue}:${nativeId}`,
@@ -236,6 +385,7 @@ it('renders a bounded accessible relationship graph and opens selected evidence'
       source_url: null,
       note: 'unknown',
     },
+    native_fields: venue === 'polymarket' ? { conditionId: `0x${'a'.repeat(64)}` } : {},
     instruments: [],
     quality_flags: [],
     provenance: {
@@ -297,6 +447,7 @@ it('renders a bounded accessible relationship graph and opens selected evidence'
     '/api/frontier/books?limit=100': { items: [], returned: 0, limit: 100, offset: 0 },
     '/api/frontier/trades?limit=100': {
       items: [],
+      pages: [],
       observation_count: 0,
       trade_count: 0,
       limit: 100,
@@ -472,6 +623,7 @@ it('records a self-attributed relationship review with both stored market source
     '/api/frontier/books?limit=100': { items: [], returned: 0, limit: 100, offset: 0 },
     '/api/frontier/trades?limit=100': {
       items: [],
+      pages: [],
       observation_count: 0,
       trade_count: 0,
       limit: 100,

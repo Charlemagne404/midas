@@ -67,6 +67,7 @@ test('relationship network remains bounded, selectable, and scroll-contained on 
       source_url: null,
       note: 'unknown',
     },
+    native_fields: venue === 'polymarket' ? { conditionId: `0x${'a'.repeat(64)}` } : {},
     instruments: [],
     quality_flags: ['E2E_FIXTURE_ONLY'],
     provenance: {
@@ -116,7 +117,30 @@ test('relationship network remains bounded, selectable, and scroll-contained on 
       latest_evidence_at_utc: '2026-10-26T20:00:00Z',
       limitations: ['E2E-only fixture.'],
     },
-    '/api/frontier/sources': { items: [] },
+    '/api/frontier/sources': {
+      items: [
+        {
+          venue: 'polymarket',
+          adapter_version: 'frontier-polymarket-2',
+          public_probe_enabled: true,
+          capabilities: [
+            {
+              capability: 'paginated_public_trades',
+              supported: true,
+              state: 'implemented',
+              reason: 'bounded E2E fixture',
+            },
+          ],
+          health: {
+            state: 'not_probed',
+            last_success_at_utc: null,
+            last_error_code: null,
+            last_error: null,
+            notes: [],
+          },
+        },
+      ],
+    },
     '/api/frontier/markets': {
       items: [
         marketRecord('polymarket', 'election-1', 'Who wins the mayoral election?'),
@@ -129,6 +153,7 @@ test('relationship network remains bounded, selectable, and scroll-contained on 
     '/api/frontier/books': { items: [], returned: 0, limit: 100, offset: 0 },
     '/api/frontier/trades': {
       items: [],
+      pages: [],
       observation_count: 0,
       trade_count: 0,
       limit: 100,
@@ -212,7 +237,34 @@ test('relationship network remains bounded, selectable, and scroll-contained on 
     '/api/frontier/readiness': { gates: [] },
   };
   let submittedReview: Record<string, unknown> | undefined;
+  const tradePageRequests: Record<string, unknown>[] = [];
   await page.route('**/api/frontier/**', async (route) => {
+    if (
+      route.request().method() === 'POST' &&
+      route.request().url().endsWith('/probe/polymarket/trades')
+    ) {
+      tradePageRequests.push(route.request().postDataJSON() as Record<string, unknown>);
+      const hasMore = tradePageRequests.length === 1;
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          venue: 'polymarket',
+          condition_id: `0x${'a'.repeat(64)}`,
+          trade_count: 1,
+          observation_id: `e2e-trade-page-${tradePageRequests.length}`,
+          raw_sha256: 'd'.repeat(64),
+          page_limit: 50,
+          has_more: hasMore,
+          next_cursor: hasMore ? 'e2e-frontier-next' : null,
+          source_state: 'available',
+          request_count_delta: 1,
+          network_calls_bounded_by: 1,
+          hypothetical_only: true,
+          note: 'One explicit fixture page.',
+        }),
+      });
+    }
     if (route.request().method() === 'POST' && route.request().url().endsWith('/review')) {
       submittedReview = route.request().postDataJSON() as Record<string, unknown>;
       return route.fulfill({
@@ -294,4 +346,20 @@ test('relationship network remains bounded, selectable, and scroll-contained on 
   await page.getByRole('button', { name: 'Review hypothesis' }).click();
   await expect(page.locator('.fr-review-form')).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.getByRole('button', { name: 'Markets', exact: true }).click();
+  await page.getByLabel('Polymarket trade condition').selectOption(`0x${'a'.repeat(64)}`);
+  await page.getByRole('button', { name: 'Capture first page' }).click();
+  await expect(page.getByRole('button', { name: 'Capture next page' })).toBeVisible();
+  await page.getByRole('button', { name: 'Capture next page' }).click();
+  await expect(page.getByText(/source reports no next page/)).toBeVisible();
+  expect(tradePageRequests).toEqual([
+    { condition_id: `0x${'a'.repeat(64)}`, limit: 50 },
+    {
+      condition_id: `0x${'a'.repeat(64)}`,
+      limit: 50,
+      cursor: 'e2e-frontier-next',
+    },
+  ]);
 });

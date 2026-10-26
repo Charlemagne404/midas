@@ -347,6 +347,47 @@
   border-color: #58462c;
   background: #282116;
 }
+.fr-trade-capture {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) auto;
+  align-items: end;
+  gap: 10px;
+  padding: 13px 15px;
+  border-bottom: 1px solid #242d37;
+}
+.fr-trade-capture label {
+  display: grid;
+  gap: 5px;
+  color: #aeb8c5;
+  font-size: 8px;
+}
+.fr-trade-capture select {
+  width: 100%;
+  min-width: 0;
+  min-height: 32px;
+  border: 1px solid #303a46;
+  border-radius: 4px;
+  padding: 7px 8px;
+  background: #11161d;
+  color: #c4ceda;
+  font-size: 9px;
+}
+.fr-trade-capture > p,
+.fr-trade-capture-status,
+.fr-trade-capture > .fr-inline-error {
+  grid-column: 1 / -1;
+}
+.fr-trade-capture > p {
+  margin: 0;
+  color: #778394;
+  font-size: 8px;
+  line-height: 1.6;
+}
+.fr-trade-capture-status {
+  color: #93b8a4;
+  font-size: 8px;
+  line-height: 1.5;
+}
 .fr-footnote {
   padding: 11px 16px;
   border-top: 1px solid #222a34;
@@ -1675,6 +1716,12 @@
   }
   .fr-review-form {
     grid-template-columns: 1fr;
+  }
+  .fr-trade-capture {
+    grid-template-columns: 1fr;
+  }
+  .fr-trade-capture > .fr-action {
+    width: 100%;
   }
   .fr-review-compared {
     grid-template-columns: 1fr;
