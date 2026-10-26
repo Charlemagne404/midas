@@ -70,6 +70,13 @@ prior decisions remain stored. Replay uses only the latest decision, so a later
 reject or ambiguous review removes an old verified revision from candidate
 inputs without deleting history.
 
+Centered graph reads use separate left- and right-endpoint indexes, so a market
+neighborhood is selected by its incident edges instead of scanning the global
+recent-relationship window. The API still bounds each traversal to 200 recorded
+markets, three hops, and 500 candidate relationship rows; it returns the number
+scanned and indicates when the scan window may be incomplete. The uncentered
+overview remains a bounded recent-edge query.
+
 The economic verifier supports two narrow families. Cross-venue binary coverage
 requires a previously verified same-payoff relationship. Same-market
 multi-outcome coverage requires three to sixteen verified exhaustive states,
@@ -102,9 +109,10 @@ resolution assertions, fee authority, source timing, or execution.
 
 The API uses a separate `MIDAS_FRONTIER_ROOT`. Raw source observations, normalized
 records, relationship decisions/reviews, and replay results are append-only.
-SQLite schema v4 migrates older v2/v3 stores additively and enforces update/delete
-triggers on evidence tables. Review records link to their derived relationship
-revision, and effective queries resolve the latest decision. Query methods use
+SQLite schema v5 migrates older v2/v3/v4 stores additively and enforces
+update/delete triggers on evidence tables. The v5 migration adds endpoint
+indexes without rewriting stored relationship rows. Review records link to their
+derived relationship revision, and effective queries resolve the latest decision. Query methods use
 SQLite read-only mode; they do not initialize or mutate the store. Listing reads
 recheck raw body and normalized row hashes, relationship/review hashes and
 revision linkage, and replay result digests. Write routes
@@ -162,7 +170,9 @@ venue-wide universe scans, FX conversion, derivatives, capital transfer model,
 multi-leg solver, automatic semantic certification, authenticated reviewer or
 assertion verification, indexed large-universe graph neighborhood search, or
 production deployment. `/graph` limits source markets to 200, scans at most 500
-effective relationships, and returns at most 200 edges over 1–3 hops. The current
-replay/candidate set is small and bounded. See the [engineering report](FRONTIER_ENGINEERING_REPORT.md) and
+relationship rows through endpoint indexes for centered neighborhoods, and
+returns at most 200 edges over 1–3 hops. The uncentered view reads a bounded
+recent-edge window. The current replay/candidate set is small and bounded. See
+the [engineering report](FRONTIER_ENGINEERING_REPORT.md) and
 [mission ledger](FRONTIER_MISSION_LEDGER.md) for acceptance status and continuation
 steps.

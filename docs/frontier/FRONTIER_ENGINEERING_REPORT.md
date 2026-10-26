@@ -54,7 +54,7 @@ The implementation deliberately stops short of full acceptance. It now has a
 self-attributed review workflow, but reviewer and external assertion IDs are
 references only; MIDAS does not authenticate the reviewer, fetch the assertion,
 or verify the source truth of stored market fields. There is no continuous
-collector, complete venue universe, scalable graph neighborhood query,
+collector, complete venue universe, paginated dense-graph service,
 logical-implication or general multi-leg solver, FX model, full
 cost/capital-transfer model, or integrated Arena/Laboratory experiment scheduler.
 Public book snapshots never set
@@ -184,12 +184,15 @@ earlier verified state without deleting evidence. Reviewer labels and external
 assertion IDs are self-attributed and are not authenticated or retrieved; the
 review is not a claim that an external document was independently assessed.
 Stored relationships and reviews are append-only. `GET /api/frontier/graph`
-traverses one to three hops from a recorded center and returns at most 200 edges
-after scanning at most 500 effective relationships and loading at most 200
-source markets. Without a center it returns a bounded recent edge window. The
-UI exposes center and depth controls, renders at most 18 edges, and retains an
-evidence list capped at 30. This is not an indexed large-universe graph service;
-clustering, layout control, and dense-graph scalability remain incomplete.
+traverses one to three hops from a recorded center using left/right endpoint
+indexes. It returns at most 200 edges, considers at most 500 relationship rows
+per request, and loads at most 200 source markets. The response reports the
+number of relationship rows scanned and whether a capped scan may be incomplete.
+Without a center it returns a bounded recent edge window. The UI exposes center
+and depth controls, renders at most 18 edges, and retains an evidence list capped
+at 30. Indexed adjacency avoids a global scan for centered neighborhoods, but
+pagination, clustering, layout control, and dense-graph scalability remain
+incomplete.
 
 ## 7. Opportunity discovery algorithms
 
@@ -276,9 +279,10 @@ is never called executable profit.
 ## 9. Storage, replay, and provenance
 
 Frontier stores data under its own configurable root, default
-`data/frontier-store`. SQLite schema v4 defaults to a 64 MiB cap, 50,000
+`data/frontier-store`. SQLite schema v5 defaults to a 64 MiB cap, 50,000
 observations, 100,000 relationship records, and 512 KiB per record. An additive
-migration upgrades v2/v3 stores with relationship revision and review indexes.
+migration upgrades v2/v3/v4 stores with relationship revision, review, and
+left/right endpoint indexes without rewriting existing relationship payloads.
 Append-only triggers reject row updates/deletes on observations, indexes,
 relationships, review records, and runs. Relationship review and its derived
 state revision are inserted in one bounded transaction. Effective queries and
@@ -345,10 +349,11 @@ probe automatically; a capture is explicit and unavailable unless the specific
 source flags are enabled. Responsive browser verification covered the empty
 workspace at 1440px/390px and fixture-only graph selection, center-market
 navigation, and review submission at desktop/mobile widths. The API graph query
-is bounded to 200 source markets, 500 scanned relationships, and 1–3 hops; the
-visual network caps at 18 edges. Reviewer authentication, external assertion
-retrieval, indexed large-graph traversal, and experiment result drill-downs
-remain incomplete. Candidate detail shows the independent audit disposition,
+is bounded to 200 source markets, 500 scanned relationship rows, and 1–3 hops;
+centered traversal uses left/right endpoint indexes, and the visual network caps
+at 18 edges. Reviewer authentication, external assertion retrieval,
+large-graph pagination/clustering, and experiment result drill-downs remain
+incomplete. Candidate detail shows the independent audit disposition,
 recomputed economics, and pinned-input hash. Readiness summarizes audit
 dispositions from the most recent three hash-valid runs and explicitly says that
 arithmetic agreement does not establish profitability or execution.
@@ -358,11 +363,12 @@ arithmetic agreement does not establish profitability or execution.
 Verification on this branch:
 
 - Backend focused suite: **54 passed** in 9.86 seconds. Command: `PYTHONPATH=packages:apps/api /home/charlie/midas/.venv/bin/python -m pytest -q tests/frontier tests/integration/test_adapters.py tests/integration/test_api.py::test_offline_api_workflow_contract_and_persistence`.
+- After the schema-v5 graph adjacency change, that focused command passed **56 tests** in 10.65 seconds. `/usr/bin/time -v` measured 11.43 seconds wall, 3.97 seconds user CPU, 145,560 KiB peak RSS, and zero socket messages; one upstream Starlette/httpx deprecation warning remained.
 - Python static checks: Ruff check and format check passed for the Frontier package/tests; mypy passed for 16 Frontier/API source files. A broader `mypy packages/midas/frontier apps/api` attempt reported 37 errors in eight unchanged Veritas/Arena/API files; no Frontier source error was reported.
 - Frontend unit suite: **35 passed across 7 files**.
 - Frontend typecheck, ESLint, and Prettier check passed.
 - Trade capture/read API regression tests: **2 passed**; they validate Polymarket's condition-ID query, bounded GET count, absent authorization, raw evidence persistence/read-back, plus the stored-batch query.
-- Production frontend build passed. Frontier is lazy-loaded as a 47.53 kB JavaScript chunk and 24.58 kB CSS. Vite emitted the existing large-chunk warning for 503.86 kB main and 544.41 kB Chart chunks.
+- Production frontend build passed. Frontier is lazy-loaded as a 47.72 kB JavaScript chunk and 24.58 kB CSS. Vite emitted the existing large-chunk warning for 503.86 kB main and 544.41 kB Chart chunks.
 - Frontier browser cases: **2 passed** in 6.4 seconds, including empty state, fixture-only center-market graph navigation and review submission, and independent audit details at desktop/mobile sizes. The full 10-case browser suite was attempted earlier; 8 passed and 2 existing Laboratory cases were denied at the host-wide Arena admission lock (`resource_admission_lock_busy`). Neither case started an experiment, and the shared lock was not bypassed. The isolated API tests use a temporary root and never enable source probes.
 - Legacy regression evidence: focused integration adapter contracts and the existing offline API workflow/persistence acceptance test passed. The complete repository Python suite was not run.
 
@@ -372,10 +378,12 @@ responses are distinct from the preserved genuine public capture files.
 
 ## 13. Performance and resource measurements
 
-The latest focused backend run (54 tests) completed in 10.65 seconds wall time,
-used 3.97 seconds user CPU, and peaked at 145,628 KiB RSS (about 142 MiB). The
-test process recorded zero socket messages. This is one bounded test
-measurement, not a production service capacity estimate. The two focused
+The previous focused backend run (54 tests) completed in 10.65 seconds wall time,
+used 3.97 seconds user CPU, and peaked at 145,628 KiB RSS (about 142 MiB). After
+the schema-v5 graph adjacency change, 56 tests completed in 11.43 seconds wall
+time, used 3.97 seconds user CPU, and peaked at 145,560 KiB RSS; the process
+recorded zero socket messages. These are bounded test measurements, not a
+production service capacity estimate. The two focused
 Frontier browser cases ran serially with one worker and completed in 6.4
 seconds. No service or persistent Frontier worker was started. The host and
 protected service cgroups were not treated as spare Frontier capacity based on
@@ -446,9 +454,10 @@ gaps are deferred work, not hidden passed checks:
 - Relationship reviews are self-attributed only. Reviewer identities and
   external assertion IDs are not authenticated or retrieved, so the workflow
   cannot establish independent source truth beyond the persisted market fields.
-- The graph neighborhood is bounded and still scans at most 500 recent effective
-  relationships. Indexed large-universe traversal, relationship revision
-  history drill-down, and authenticated review are not implemented.
+- Centered graph neighborhoods now use left/right endpoint indexes, bounded to
+  500 relationship rows and a 200-market recorded window; uncentered queries use
+  the recent-edge index. Large-universe pagination/clustering, relationship
+  revision-history drill-down, and authenticated review remain unimplemented.
 - The only multi-outcome family is a same-market all-long construction over
   verified one-hot exhaustive states; only controlled fixtures have exercised it.
   Logical implication bounds and general multi-leg search are not implemented.
@@ -484,8 +493,8 @@ Priority order:
 1. Validate supported fee metadata and broaden live source-degradation coverage;
    add trade pagination tests, timeout tests, and oversized/truncated response
    checks. Mock probes already cover bounded retries and failure evidence.
-2. Replace the bounded recent-edge scan with indexed graph adjacency and add
-   searchable, paginated graph drill-down.
+2. Add searchable, paginated graph drill-down on top of the bounded indexed
+   adjacency query, with measured dense-neighborhood behavior.
 3. Resolve current official fee inputs and create versioned venue-specific fee
    tests without turning unknown fees into estimates.
 4. Seek real public multi-outcome metadata that meets the strict payoff and
@@ -545,6 +554,12 @@ Code commits on this branch:
   hash verification; tested invalid JSON, encoding, and HTTP 503 diagnostics.
 - `294cc6dd8be39eed6a03ebc1fcc4ae5c42bab548` — tested retry caps and confirmed
   the final bounded 503 response remains available as hash-verifiable evidence.
+- `d389c24291cb63c63803c77dfdafff751806d5ef` — added schema-v5 left/right
+  endpoint indexes, bounded relationship-neighborhood queries, additive v4
+  migration, scan accounting, and API/query-plan regression tests.
+- `872466e8eaa499ef4af8186c27757323153704e8` — surfaced the bounded graph
+  scan count and incomplete-neighborhood state in Mission Control with a UI
+  regression assertion.
 
 Principal changed paths:
 
@@ -574,9 +589,9 @@ cross-venue economics.
 | Adapter protocol, capability registry, bounded GET transport | COMPLETE AND VERIFIED | Contract tests, all capability declarations, host/size/rate/redirect bounds. |
 | Polymarket, Kalshi and Kraken Spot adapters | PARTIALLY VERIFIED | Fixture/contract tests and one live listing/book/trade-to-store round trip per venue pass; mock tests verify invalid JSON/UTF-8, HTTP 503, schema-failure evidence, capped retries, source isolation, and recovery; fees and live degraded-source behavior remain unverified. |
 | Canonical market/instrument normalization | PARTIALLY VERIFIED | Three distinct instrument classes represented; live lineage and several economic semantics remain unverified. |
-| Relationship hypotheses, review revisions, bounded neighborhoods, and explicit same-payoff verifier | PARTIALLY VERIFIED | Self-attributed review API/UI, append-only revisions, latest-state replay, tamper checks, and 1–3 hop graph; no genuine equivalent pair, authentication, or indexed large-graph traversal. |
+| Relationship hypotheses, review revisions, indexed neighborhoods, and explicit same-payoff verifier | PARTIALLY VERIFIED | Self-attributed review API/UI, append-only revisions, latest-state replay, tamper/migration checks, and left/right endpoint-indexed 1–3 hop scans capped at 500 relationship rows; no genuine equivalent pair, authentication, or paginated dense-graph traversal. |
 | Opportunity candidate and independent economic checks | PARTIALLY VERIFIED | Two-venue all-long binary and same-market 3–16 state one-hot exhaustive coverage, with a separate pinned-input arithmetic audit; controlled fixtures only, with source semantics, fees, broader costs and operational feasibility incomplete. |
-| Append-only evidence store and deterministic replay | COMPLETE AND VERIFIED | Bounds, hash validation, immutability, replay tests; not integrated as an Arena campaign. |
+| Append-only evidence store and deterministic replay | COMPLETE AND VERIFIED | Schema v5, v2/v3/v4 additive migration, bounds, hash validation, immutability, replay tests; not integrated as an Arena campaign. |
 | Live market/book/trade observations through adapters and API | PARTIALLY VERIFIED | One bounded listing, book, and trade response per venue is hash-pinned; samples are not synchronized and do not establish a continuous source feed. Kalshi's trade array was valid but empty. |
 | Source workers and broad historical data | DEFERRED | No persistent worker or long-duration collection. |
 | Laboratory/Arena research orchestration | DEFERRED | Workspace navigation and deterministic Frontier replay only. |
@@ -587,8 +602,9 @@ cross-venue economics.
 To continue safely, use this worktree and branch. Next validate supported fee
 metadata and degraded-source behavior with focused tests; search for public
 multi-outcome metadata that meets the strict payoff and resolution evidence
-requirements without loosening attestation; add indexed graph adjacency; then
-connect short, resource-admitted deterministic jobs to Laboratory/Arena. Add
+requirements without loosening attestation; add searchable, paginated graph
+drill-down over the indexed neighborhood; then connect short, resource-admitted
+deterministic jobs to Laboratory/Arena. Add
 adversarial mutations and differential audit fixtures only where they test a
 distinct failure mode. Expand economics only where source evidence supports it.
 Re-run the focused suites before each checkpoint. Do not enable probes by default,

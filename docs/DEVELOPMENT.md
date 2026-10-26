@@ -112,12 +112,16 @@ Relationship decisions use `POST /api/frontier/relationships/{id}/review`. The
 review form records source market observation IDs and appends a linked revision;
 it cannot bypass the same-payoff verifier. Reviewer labels and external assertion
 IDs are self-attributed references, not authenticated identities or fetched
-documents. The Frontier SQLite schema upgrades v2/v3 stores additively to v4.
+documents. The Frontier SQLite schema upgrades v2/v3/v4 stores additively to
+v5; the v5 migration adds separate indexes for each relationship endpoint while
+preserving existing relationship records.
 The relationship graph route accepts an optional `center_market_id`, a `depth`
 from 1 to 3, and an edge `limit` up to 200. It loads at most 200 recorded
-markets and scans at most 500 effective relationships per request; the response
-marks capped scan windows explicitly. List reads recheck stored observation,
-relationship, review-lineage, and replay hashes before research use.
+markets. Centered traversal uses indexed left/right adjacency and scans at most
+500 relationship rows per request; the response includes the row count and marks
+when the scan may be incomplete. The uncentered view remains a bounded recent-edge
+query. List reads recheck stored observation, relationship, review-lineage, and
+replay hashes before research use.
 
 Deterministic replay currently evaluates verified cross-venue binary coverage
 and an all-long, same-market construction for three to sixteen verified
