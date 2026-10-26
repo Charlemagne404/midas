@@ -1,5 +1,11 @@
 # Veritas research backlog
 
+**Historical record:** The Mission 2 queue below was captured on 2026-10-16.
+Its collection counts, runtime health and priorities are not current. For the
+2026-10-26 v4 runtime failure, pinned v6 replay results and deployment status,
+see [Veritas operations](VERITAS_OPERATIONS.md) and the
+[comprehensive engineering report](reliability/MIDAS_COMPREHENSIVE_ENGINEERING_MISSION_20261025.md).
+
 ## Active Mission 2 queue — 2026-10-16T21:50Z
 
 Mission 2 resumed after the 21:25 engineering handoff. The new

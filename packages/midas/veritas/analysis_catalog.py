@@ -412,7 +412,7 @@ def apply_event(root: Path, event: dict[str, Any], *, snapshot_sha256: str) -> d
                 snapshot_sha256,
                 str(event.get("snapshot_evidence_sha256") or ""),
                 event_sha256,
-                f"analysis-events/{str(event.get('analysis_version') or 'unknown').rsplit('-', 1)[-1]}/{scan_id}.json",
+                f"analysis-events/{event_directory}/{scan_id}.json",
                 time.time_ns(),
                 str(event.get("independent_reference_version"))
                 if event.get("independent_reference_version")

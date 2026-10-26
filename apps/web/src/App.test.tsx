@@ -299,6 +299,9 @@ describe('application integrity', () => {
     expect(screen.getByText('Validity')).toBeInTheDocument();
     expect(screen.getByText('Price / edge')).toBeInTheDocument();
     expect(screen.getByText('Fees')).toBeInTheDocument();
+    expect(
+      screen.getByText(/market-level restricted flag is metadata.*geoblock.*not measured/i),
+    ).toBeInTheDocument();
     expect(screen.getByText(/Bounded markets in latest discovery:/)).toBeInTheDocument();
     expect(screen.getByText('12')).toBeInTheDocument();
     expect(screen.getByText(/ @ [a-f0-9]{40}$/)).toBeInTheDocument();

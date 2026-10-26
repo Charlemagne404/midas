@@ -7,6 +7,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+import pytest
 from midas.veritas.continuous_analysis import update_finalized_analysis
 
 
@@ -259,7 +260,7 @@ def test_finalized_analysis_is_incremental_idempotent_and_lineage_preserving(tmp
     )
     assert again["processed_snapshot_count"] == 1
     assert again["cumulative"]["quality_valid_pairs"] == 1
-    assert len(list((tmp_path / "analysis-events" / "v6-independent-v2").glob("*.json"))) == 1
+    assert len(list((tmp_path / "analysis-events" / "v6-independent-v3").glob("*.json"))) == 1
 
     _write_snapshot(tmp_path, "scan-002", valid=False, minutes_after=30, state_version="changed")
     updated = update_finalized_analysis(tmp_path)
@@ -366,7 +367,7 @@ def test_corrupt_snapshot_is_quarantined_without_blocking_later_valid_snapshots(
     assert second["processed_snapshot_count"] == 1
     assert second["quarantined_snapshot_count"] == 1
     assert second["quarantined_this_run"] == 0
-    assert len(list((tmp_path / "analysis-events" / "v6-independent-v2").glob("*.json"))) == 1
+    assert len(list((tmp_path / "analysis-events" / "v6-independent-v3").glob("*.json"))) == 1
 
 
 def test_analysis_catalog_compacts_only_the_published_detail_projection():
@@ -511,6 +512,9 @@ def test_analysis_republishes_summary_from_committed_catalog_state(tmp_path):
 
 
 def test_snapshot_and_analysis_catalogs_join_for_independent_reaudit(tmp_path):
+    import sqlite3
+
+    from midas.veritas.analysis_catalog import ANALYSIS_CATALOG_NAME
     from midas.veritas.scan_catalog import reconcile
     from midas.veritas.scan_catalog import summary as catalog_summary
 
@@ -527,11 +531,16 @@ def test_snapshot_and_analysis_catalogs_join_for_independent_reaudit(tmp_path):
     event_path = (
         tmp_path
         / "analysis-events"
-        / "v6-independent-v2"
+        / "v6-independent-v3"
         / f"{Path(analysis['last_processed_snapshot_file']).name.removesuffix('.json.gz')}.json"
     )
     event = json.loads(event_path.read_text())
     economics = event["market_rows"][0]["independent_economic_reference"]
+    with sqlite3.connect(tmp_path / ANALYSIS_CATALOG_NAME) as connection:
+        catalog_event_path = connection.execute(
+            "SELECT event_file FROM analysis_events WHERE scan_id=?",
+            (Path(analysis["last_processed_snapshot_file"]).name.removesuffix(".json.gz"),),
+        ).fetchone()[0]
 
     assert independent["status"] == "MEASURED"
     assert independent["processed_scan_count"] == 1
@@ -541,10 +550,95 @@ def test_snapshot_and_analysis_catalogs_join_for_independent_reaudit(tmp_path):
     assert independent["quality_valid_pairs"] == 1
     assert independent["independent_economic_audit"]["agreement_on_all_measured_pairs"] is True
     assert independent["independent_economic_audit"]["reference_version"] == (
-        "veritas-independent-economic-reference-v2"
+        "veritas-independent-economic-reference-v3"
     )
-    assert economics["reference_version"] == "veritas-independent-economic-reference-v2"
+    assert economics["reference_version"] == "veritas-independent-economic-reference-v3"
     assert "levels_used" not in economics["quantity_results"][0]
+    assert catalog_event_path == f"analysis-events/v6-independent-v3/{event_path.name}"
+
+
+def test_offline_v6_replay_rebuilds_lineage_and_verifies_completed_resume(tmp_path, monkeypatch):
+    from scripts import veritas_v6_offline_replay as replay
+
+    source = tmp_path / "source"
+    source.mkdir()
+    _write_snapshot(source, "scan-v6-offline-replay", valid=True)
+    output = tmp_path / "output"
+
+    def admit():
+        return {"pid": 123, "fixture": True}
+
+    receipt = replay.run_replay(
+        source,
+        output,
+        batch_size=1,
+        initial_admission={"pid": 123, "fixture": True},
+        admit=admit,
+    )
+
+    assert receipt["status"] == "COMPLETE"
+    assert receipt["source_snapshot_count"] == 1
+    assert receipt["catalogs"]["snapshot_catalog_indexed"] == 1
+    assert receipt["catalogs"]["analysis_processed"] == 1
+    assert receipt["analysis_event_manifest"]["event_count"] == 1
+    assert receipt["published_summary"]["bytes"] <= 512 * 1024
+    state_path = output / replay.STATE_NAME
+    state = replay._read_state(output)
+    state["completed_files"] = {}
+    state["in_progress_file"] = receipt["source_last_snapshot"]
+    replay.atomic_json(state_path, state)
+    candidate_identity = replay._candidate_code_identity()
+
+    def changed_driver_identity():
+        return {
+            **candidate_identity,
+            "replay_script_sha256": "older-driver-hash",
+            "source_manifest_sha256": "older-driver-manifest",
+        }
+
+    monkeypatch.setattr(replay, "_candidate_code_identity", changed_driver_identity)
+    assert (
+        replay.run_replay(
+            source,
+            output,
+            resume=True,
+            initial_admission={"pid": 123, "fixture": True},
+            admit=admit,
+        )
+        == receipt
+    )
+    reconciled = replay._read_state(output)
+    source_manifest = json.loads((output / replay.INPUT_MANIFEST_NAME).read_bytes())
+    assert reconciled["in_progress_file"] is None
+    assert reconciled["completed_files"] == {
+        item["name"]: item["sha256"] for item in source_manifest["files"]
+    }
+    verification = replay._postrun_verification_document(
+        receipt, changed_driver_identity(), reconciled
+    )
+    assert verification["package_source_files_match"] is True
+    unsigned_verification = {
+        key: value for key, value in verification.items() if key != "verification_sha256"
+    }
+    assert verification["verification_sha256"] == replay.sha256_bytes(
+        replay.canonical(unsigned_verification)
+    )
+
+    event_file = (
+        output
+        / "analysis-events"
+        / "v6-independent-v3"
+        / f"{receipt['source_last_snapshot'].removesuffix('.json.gz')}.json"
+    )
+    event_file.write_bytes(event_file.read_bytes() + b"tampered")
+    with pytest.raises(replay.ReplayError, match="Analysis event"):
+        replay.run_replay(
+            source,
+            output,
+            resume=True,
+            initial_admission={"pid": 123, "fixture": True},
+            admit=admit,
+        )
 
 
 def test_analysis_summary_publishes_bounded_details_with_exact_unique_counts(tmp_path):

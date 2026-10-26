@@ -122,6 +122,22 @@ def test_v1_uses_same_condition_yes_no_and_ignores_extra_v2_ids():
 
 
 @pytest.mark.parametrize(
+    ("raw_flag", "expected"),
+    [(True, True), (False, False), (None, None)],
+)
+def test_market_restriction_flag_preserves_upstream_tristate(raw_flag, expected):
+    raw = market()
+    if raw_flag is not None:
+        raw["restricted"] = raw_flag
+
+    result, reason = normalize_market(raw)
+
+    assert reason is None
+    assert result is not None
+    assert result["restricted"] is expected
+
+
+@pytest.mark.parametrize(
     ("changes", "reason"),
     [
         ({"version": "v2"}, "unsupported_protocol"),

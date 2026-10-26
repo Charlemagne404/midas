@@ -358,6 +358,7 @@ def _compact_economic_reference(reference: dict[str, Any] | None) -> dict[str, A
         "minimum_order_shares_satisfied",
         "minimum_order_constraints_satisfied",
         "fee_status",
+        "execution_scope_status",
         "independent_fee_reference_by_leg",
         "complete_position_fee_reference",
         "complete_position_net_sensitivities_usdc",
@@ -373,6 +374,7 @@ def _compact_economic_reference(reference: dict[str, Any] | None) -> dict[str, A
             "economically_eligible",
             "reason",
             "economic_status",
+            "execution_scope",
             "source_quality",
             "fee_support",
             "constraint_support",
@@ -816,6 +818,12 @@ def _event_from_snapshot(
                     economic_reference.get("fee_support", {}).get("status")
                     if economic_reference is not None
                     and isinstance(economic_reference.get("fee_support"), dict)
+                    else None
+                ),
+                "execution_scope_status": (
+                    economic_reference.get("execution_scope", {}).get("market_restriction_status")
+                    if economic_reference is not None
+                    and isinstance(economic_reference.get("execution_scope"), dict)
                     else None
                 ),
                 "independent_reference_version": (
@@ -1329,6 +1337,7 @@ def update_finalized_analysis(
                 "Legacy freshness comparison reapplies the prior 5-second reported-age and 250-ms cross-outcome-skew gates to the same saved books; it does not verify batch atomicity or venue sequence.",
                 "Per-market detail in this summary is bounded; complete derived per-scan market rows remain in versioned event files and the SQLite analysis catalog.",
                 "A gross candidate requires independent source replay and fee review; no fill or profitability is inferred.",
+                "Gamma's market-level restricted flag is preserved separately from source quality; user-specific geoblock and order acceptance are not measured by this public-data observer.",
                 "Reference-cohort summaries are conditional on their bounded query frames; repeated markets and scans are dependent, so no pooled independent-sample confidence interval is reported.",
             ],
             "orders_submitted": False,

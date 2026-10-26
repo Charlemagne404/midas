@@ -18,7 +18,7 @@ from decimal import (
 )
 from typing import Any
 
-REFERENCE_VERSION = "veritas-independent-economic-reference-v2"
+REFERENCE_VERSION = "veritas-independent-economic-reference-v3"
 MAX_SOURCE_AGE_MS = 5_000
 MAX_SOURCE_SKEW_MS = 250
 MAX_BATCH_DURATION_MS = 5_000
@@ -160,6 +160,24 @@ def _audit_complementary_pair_economics(
         "economic_supported": False,
         "economically_eligible": False,
         "reason": None,
+        "execution_scope": {
+            "market_restricted_flag": (
+                market.get("restricted") if type(market.get("restricted")) is bool else None
+            ),
+            "market_restriction_status": (
+                "flagged"
+                if market.get("restricted") is True
+                else "not_flagged"
+                if market.get("restricted") is False
+                else "unmeasured"
+            ),
+            "user_geoblock_status": "not_measured",
+            "execution_status": "not_established",
+            "note": (
+                "A market-level restriction flag is retained as scope evidence. "
+                "It does not establish whether this observer's jurisdiction can place orders."
+            ),
+        },
         "source_quality": {"status": "unmeasured", "reason": "source_timing_unmeasured"},
         "fee_support": {"status": "unmeasured"},
         "top_pair_gross_edge_per_share": None,
@@ -180,9 +198,8 @@ def _audit_complementary_pair_economics(
             or market.get("closed") is True
             or market.get("accepting_orders") is False
             or market.get("orderbook_enabled") is False
-            or market.get("restricted") is True
         ):
-            raise ValueError("market_lifecycle_or_restriction_ineligible")
+            raise ValueError("market_lifecycle_ineligible")
         lifecycle_supported = (
             all(
                 market.get(name) is not None
@@ -387,6 +404,7 @@ def _audit_complementary_pair_economics(
                         else notional_satisfied and shares_satisfied
                     ),
                     "fee_status": fee_status,
+                    "execution_scope_status": base["execution_scope"]["market_restriction_status"],
                     "independent_fee_reference_by_leg": fee_by_leg,
                     "complete_position_fee_reference": complete_position_fees,
                     "complete_position_net_sensitivities_usdc": net_sensitivities,
@@ -521,7 +539,9 @@ def compare_pair_economics(primary: dict[str, Any], reference: dict[str, Any]) -
     if primary_valid != reference_valid:
         disagreements.append("validity")
     source_quality = reference.get("source_quality")
-    if isinstance(source_quality, dict) and source_quality.get("status") != "pass":
+    # An unmeasured source-quality result is not a disagreement. The reference
+    # can stop on an identity/lifecycle failure before reading source timestamps.
+    if isinstance(source_quality, dict) and source_quality.get("status") == "fail":
         primary_quality = primary.get("quality")
         primary_age = (
             primary_quality.get("reported_update_age_ms_by_leg")

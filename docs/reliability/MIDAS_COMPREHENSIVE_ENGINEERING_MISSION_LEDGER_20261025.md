@@ -3,7 +3,8 @@
 **Updated:** 2026-10-26 CEST
 **Mission checkout:** `/home/charlie/midas-engineering-mission-20261025`
 **Branch:** `codex/midas-comprehensive-engineering-mission-20261025`
-**Base / current HEAD before mission commit:** `55601b9a090945cb498806e4878b6ddc33562043`
+**Base commit:** `55601b9a090945cb498806e4878b6ddc33562043`
+**Mission HEAD before this closeout update:** `3afb95b7bf04d8ae5153b04b08500f8446235bbe`
 
 The implementation is isolated in this branch. The main checkout and older
 worktrees were inspected and left unchanged. No runtime service was stopped,
@@ -49,14 +50,31 @@ Research Readiness route is therefore integrated only in this mission branch.
   restartable rebuilds, corruption detection, and interrupted-publication
   recovery. Summary publication streams and preserves complete evidence while
   bounding API payloads and reporting truncation explicitly.
-- The bounded eight-snapshot comparison covers 320 selected observations,
-  286 quality-valid, 68 strict-fresh, zero positive top-book gross pairs and
-  zero primary/reference disagreements on measured fields. It does not measure
-  venue-wide opportunity prevalence, fees where unsupported, actual fills or
-  profitability.
+- The eight-snapshot comparison in the benchmark file remains a historical
+  differential result. The later bounded offline v3 replay covers the complete
+  519-snapshot manifest through `scan-20261026T000113Z-72ddb4303c0b.json.gz`.
+  It selected 20,754 market-pair observations across 3,918 unique markets;
+  the independent reference audited 20,753, with 3,908 snapshot-valid pairs,
+  14,665 validity disagreements, 14,665 source-quality disagreements, zero
+  positive gross observations, zero economically supported pairs and zero
+  net-eligible pairs. Repeated visits remain correlated observations, not
+  independent trials.
+- Fee support was measured for 3,908 audited pairs and unmeasured for 16,845.
+  The market-level `restricted` flag was true on all 20,753 reference-audited
+  observations and is retained as scope metadata; user geoblock and order
+  acceptance remain unmeasured. All economic outcomes remain unsupported
+  because the `orderMinSize` notional unit is unverified.
+- The active v4 store has since advanced to 521 snapshots. Its 01:31:05 CET
+  scan wrote `scan-20261026T003105Z-1ff325207f36.json.gz`; its 02:00:53 CET
+  scan wrote `scan-20261026T010053Z-ed1b5cd8b6a2.json.gz`. Both runs failed
+  during analysis publication. The full v6 replay verifies its pinned
+  519-file boundary, not the current live boundary. The receipt and post-run
+  verification are preserved under
+  `data/veritas-v6-offline-replay-v3-20261026/`.
 - **Status:** IMPLEMENTED, DEPLOYMENT PENDING. Active Veritas remains on v4.
-  Its 00:31:02 CET scheduled run failed after 11 seconds on the legacy
-  `research-summary.json` size limit; `/api/veritas/overview` returned HTTP 503.
+  The 02:00:55 CET scheduled run failed during finalized-analysis publication
+  on the legacy `research-summary.json` size limit; `/api/veritas/overview`
+  returned HTTP 503 at 02:03 CET.
 
 ### Reality collection, observability and recovery
 
@@ -163,14 +181,14 @@ Research Readiness route is therefore integrated only in this mission branch.
 | Broad backend regression | 300 passed; two global-lock collisions passed on rerun (302 unique pass results). | No production research workload launched by this mission. |
 | Reality focused tests | 95 passed; final recovery/deployment/canary subset 75 passed in 7.80 s with `PYTHONPATH` unset. | Pytest now prepends local `packages/`; child process tests explicitly inherit the same mission source path. |
 | Python static checks | Ruff check and `ruff format --check` passed for all 48 changed Python files. | No claim about runtime deployment. |
-| Veritas differential/catalog/recovery tests | Covered in broad suite, including adversarial economics, mismatch retention, corruption, restart and interrupted publication. | No full 516-snapshot replay. |
-| Frontend | `npm run lint`, `npm run typecheck`, `npm test` (31 passed) and `npm run build` passed after the final UI audit. | Vite 7.3.7 emits 502.74 KiB index, 544.41 KiB chart and 29.18 KiB readiness chunks; existing large-chunk warning remains. |
-| Browser | `npm run test:e2e -- e2e/research-readiness.spec.ts` passed 1/1. | Uses deterministic fixture/API data; not a production deployment. |
+| Veritas differential/catalog/recovery tests | The final focused economics, opportunity-audit, continuous-analysis, scan-catalog and offline-replay suite passed 70 tests. | The complete replay covers the pinned 519-file boundary; the active store is now at 521. |
+| Frontend | `pnpm run lint`, `pnpm run typecheck`, `pnpm test` (31 passed) and `pnpm run build` passed after the final UI audit. | Vite 7.3.7 emits 502.74 KiB index, 544.41 KiB chart and 29.30 KiB readiness chunks; existing large-chunk warning remains. |
+| Browser | `pnpm exec playwright test e2e/research-readiness.spec.ts` passed 1/1. The broader 8-test E2E run passed 5 and failed 3. | Arena evaluation did not appear in the API projection within 30 seconds; Reality returned an empty monitored-market fixture; Veritas did not expose the test's expected level-1 heading. The dashboard test passed; the broader browser suite remains partially verified. |
 | Recovery fixture | Interrupted checkpoint/resume and deterministic state reconciliation pass. | Fixture only; latest production boundary is unverified. |
 | Reality canary | Final-source 95-second schema-4 loopback canary passed; 307 frames, 765,835 durable bytes, 5 segments / checkpoints, 41,689,088 B Python peak RSS, 0.583 CPU s. | One deterministic fixture seed; no external market requests. Does not establish production-boundary startup, recovery or capacity. |
 | Reality latest-boundary snapshot | Copy stopped safely at 697/31,468 segments after I/O pressure exceeded admission bounds. | Partial path has an `INCOMPLETE` marker; no whole-snapshot identity, complete checksum receipt or recovery result exists. |
 | Runtime API | HTTP 200 `READY`, demo, `live_execution=false`, Laboratory `READY` at approximately 01:01 CET; paper journal 663,699 events. | Time-specific read-only service observation; release is outside mission branch. |
-| Runtime Veritas | Scheduled observer failed at 01:01:15 CET on oversized legacy `research-summary.json`; overview HTTP 503. | No service restart or output migration performed; active code remains in `/home/charlie/midas-veritas`. |
+| Runtime Veritas | The 02:00:55 CET observer run failed on oversized legacy `research-summary.json`; the active tree contains 521 snapshots while the v4 summary covers 423, and overview returned HTTP 503 at 02:03 CET. | The 519-snapshot v6 offline replay is complete for its earlier pinned boundary. No service restart or output migration was performed; active code remains in `/home/charlie/midas-veritas`. |
 
 The first final-subset pytest invocation loaded an editable package from the
 main checkout and failed test collection. The branch now configures pytest to
@@ -194,6 +212,13 @@ passing run.
 | Finalized boundary at latest inventory | V3 manifest SHA-256 `0270af73720b637c892cbbaf6240e40a411a46009a4345587501f7bf72328b9c` (31,468 segments; inventory only) |
 | Archive manifest / source identity | `cc7e3375710fa024f971885f8b04840ec06f2c0cd385b716af73ce99275f7c8d` / `ae1bcd67331173194efe876f2f7d82e41cd515ebcf256d71a673328c91f26526` |
 | Veritas bounded benchmark | `docs/REAL_MARKET_RESEARCH_OVERHAUL_001_BENCHMARK.json` |
+| Veritas v3 replay receipt | `data/veritas-v6-offline-replay-v3-20261026/veritas-v6-offline-replay-receipt.json`; SHA-256 `5bcbf01437f1ada0b5b73e648e8c8bd9ac42ae5db216836c337f4bfe2a056ca0` |
+| Veritas v3 post-run verification | `data/veritas-v6-offline-replay-v3-20261026/veritas-v6-offline-replay-postrun-verification.json`; SHA-256 `22d800358b707f3d8037dbd63607ccd9e193137c46ce4eb901eb764e38d5b272`; status `COMPLETED_OUTPUTS_REVERIFIED` |
+| Veritas v3 source manifest | File SHA-256 `4690d53dbc4310dc8e96a145e7be2ae1d8371c210cf7c9dce80210c3e70d07e5`; embedded manifest SHA-256 `e9e38e533c181e0e99ddbe9788d26e91df633a3f542131c191c72184cce74458`; 519 source snapshots |
+| Veritas v3 analysis events | 519 events; manifest SHA-256 `0935d6858159c8634d326c9f41e5140c7953c015f755b3b2e23e982b68a06a4e` |
+| Veritas v3 published summary | File SHA-256 `81c1bbcf94d92c9bb3bb8c7acef61f321727bfa7108c5a98a813fec944023a31`; summary digest `0ad0dc41cf4f156073a4f191f4f9d6441972522fc4b544a96e5b49d07df7bb51`; 101,332 bytes |
+| Newer active snapshot outside v3 replay | `/home/charlie/midas-veritas/data/veritas-observatory/snapshots/scan-20261026T003105Z-1ff325207f36.json.gz`; 631,294 bytes; SHA-256 `843ed98524418f6d1d799b326ebfd0649d86240bd79605a0c82103743bd1ba56` |
+| Latest active snapshot outside v3 replay | `/home/charlie/midas-veritas/data/veritas-observatory/snapshots/scan-20261026T010053Z-ed1b5cd8b6a2.json.gz`; 581,481 bytes; SHA-256 `478422c77c48e84b840d5a19e67d64f1a84365e68accb1069b3742bb3ecf9281` |
 | Research Readiness browser evidence | `docs/reliability/evidence/MIDAS_MISSION_20261026_RESEARCH_READINESS.png` |
 | Latest Reality inventory | `docs/reliability/evidence/MIDAS_MISSION_20261026_DEPLOYMENT_PREFLIGHT_BLOCKED_V3.json` |
 

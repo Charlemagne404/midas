@@ -150,7 +150,7 @@ def normalize_market(raw: dict[str, Any]) -> tuple[dict[str, Any] | None, str | 
             "closed": False,
             "accepting_orders": True,
             "orderbook_enabled": True,
-            "restricted": raw.get("restricted") is True,
+            "restricted": raw.get("restricted") if type(raw.get("restricted")) is bool else None,
             "augmented_negative_risk": False,
         },
         None,

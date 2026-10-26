@@ -98,6 +98,66 @@ def test_decimal_reference_finds_positive_top_edge_without_reusing_primary_resul
     assert compare_pair_economics(primary, reference) == []
 
 
+def test_restricted_flag_does_not_hide_book_math_or_masquerade_as_source_failure():
+    market, books, primary, _reference = _fixture(candidate=True)
+    market["restricted"] = True
+
+    reference = audit_complementary_pair_economics(
+        market,
+        books,
+        ("5", "10", "20"),
+        captured_ns=CAPTURED_NS,
+        batch_started_ns=CAPTURED_NS - 10_000_000,
+        request_duration_ms=10,
+    )
+
+    assert reference["snapshot_valid"] is True
+    assert reference["source_quality"]["status"] == "pass"
+    assert reference["execution_scope"]["market_restricted_flag"] is True
+    assert reference["execution_scope"]["market_restriction_status"] == "flagged"
+    assert reference["execution_scope"]["user_geoblock_status"] == "not_measured"
+    assert reference["execution_scope"]["execution_status"] == "not_established"
+    assert reference["positive_top_pair_gross"] is True
+    assert compare_pair_economics(primary, reference) == []
+
+
+def test_missing_restricted_flag_stays_unmeasured_instead_of_defaulting_clear():
+    market, books, _primary, _reference = _fixture()
+    market.pop("restricted")
+
+    reference = audit_complementary_pair_economics(
+        market,
+        books,
+        ("5",),
+        captured_ns=CAPTURED_NS,
+        batch_started_ns=CAPTURED_NS - 10_000_000,
+        request_duration_ms=10,
+    )
+
+    assert reference["snapshot_valid"] is True
+    assert reference["execution_scope"]["market_restricted_flag"] is None
+    assert reference["execution_scope"]["market_restriction_status"] == "unmeasured"
+    assert reference["execution_scope"]["execution_status"] == "not_established"
+
+
+def test_unmeasured_reference_quality_is_not_counted_as_a_quality_disagreement():
+    market, books, primary, _reference = _fixture()
+    market["active"] = False
+
+    reference = audit_complementary_pair_economics(
+        market,
+        books,
+        ("5",),
+        captured_ns=CAPTURED_NS,
+        batch_started_ns=CAPTURED_NS - 10_000_000,
+        request_duration_ms=10,
+    )
+
+    assert reference["source_quality"]["status"] == "unmeasured"
+    assert reference["reason"] == "market_lifecycle_ineligible"
+    assert compare_pair_economics(primary, reference) == ["validity"]
+
+
 def test_decimal_reference_preserves_high_precision_price_arithmetic_exactly():
     market, books, _primary, _reference = _fixture()
     market["tick_size"] = "0.00000000000000000000000000001"
