@@ -50,6 +50,8 @@ Remaining acceptance work is substantial.
 | `64dc167` | Documented the independent arithmetic audit, source-failure evidence path, latest focused verification, and the current host's test interpreter path. |
 | `e8019d8` | Preserved complete bounded invalid-JSON, non-2xx, and invalid-UTF8 response bytes with verified hashes; added API evidence IDs and tests. |
 | `59bf640` | Updated the engineering report, architecture, and development documentation for complete bounded transport-failure evidence and latest measurements. |
+| `294cc6d` | Added a deterministic test for the two-retry cap, final HTTP 503 evidence, and request accounting. |
+| `dbdd7c7` | Refreshed the engineering report for capped retry tests and the latest focused test/resource measurements. |
 
 ## Public source investigation
 
@@ -115,7 +117,7 @@ Capture records and source-specific limitations are in
 
 ## Verification checkpoint
 
-- Backend focused regression: **53 passed** in 9.45 seconds pytest time; one upstream Starlette/httpx TestClient deprecation warning. `/usr/bin/time -v` measured 10.25 seconds wall, 3.97 seconds user CPU, 145,740 KiB peak RSS, and zero socket messages.
+- Backend focused regression: **54 passed** in 9.86 seconds pytest time; one upstream Starlette/httpx TestClient deprecation warning. `/usr/bin/time -v` measured 10.65 seconds wall, 3.97 seconds user CPU, 145,628 KiB peak RSS, and zero socket messages.
 - Ruff check and format check: passed for the Frontier package and test files.
 - Mypy: passed for 16 Frontier/API source files. A broader `mypy packages/midas/frontier apps/api` attempt reported 37 errors in eight unchanged Veritas/Arena/API files; none was in Frontier source.
 - Frontend tests: **35 passed across 7 files**; typecheck, lint and Prettier check passed.
@@ -159,9 +161,9 @@ and external assertion IDs are self-attributed and not authenticated or fetched.
 The highest-value next steps are:
 
 1. Expand retry-after, timeout, and oversized/truncated-response tests. Complete
-   bounded error bodies are now preserved with raw-byte hashes. Validate
-   supported fee metadata, and broaden trade pagination and live degraded-source
-   coverage.
+   bounded retries and final error-body evidence now have fixture coverage;
+   timeout, oversized/truncated response, trade-pagination, and live
+   degraded-source coverage remain. Validate supported fee metadata.
 2. Add indexed/paginated graph adjacency and extend the UI with a bounded text-search drill-down.
 3. Establish validated fee inputs before promoting any candidate to a decisive
    net classification.
@@ -192,5 +194,7 @@ Checkpoint `64dc16737e2e35edb02b2556600c8596e85f4a3f` records source-failure
 evidence behavior and current test commands. Transport failure evidence is
 `e8019d81a70c50446371d29d6e65ebaefba6e8e4`. Documentation checkpoint
 `59bf64029e56ca6bad35298a8567c6a8d6c2982e` records byte-preserving failure
-capture behavior and latest measurements. This ledger amendment records the
-current engineering checkpoint.
+capture behavior. The retry-limit regression is
+`294cc6dd8be39eed6a03ebc1fcc4ae5c42bab548`. Documentation checkpoint
+`dbdd7c76654f6958a821be2897062212708bf884` records the 54-test verification and
+updated measurements. This ledger amendment pins the current checkpoint.
