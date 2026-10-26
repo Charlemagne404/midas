@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+from datetime import timedelta
+from decimal import Decimal
 from pathlib import Path
 
 import httpx
@@ -9,7 +11,14 @@ from midas.frontier.adapters.kalshi import KalshiAdapter
 from midas.frontier.adapters.kraken import KrakenSpotAdapter, KrakenSpotConfig
 from midas.frontier.adapters.polymarket import PolymarketAdapter
 from midas.frontier.adapters.transport import PublicReadTransport
-from midas.frontier.models import AdapterConfig, Capability, MarketKind, SourceState, Venue
+from midas.frontier.models import (
+    AdapterConfig,
+    Capability,
+    FeeStatus,
+    MarketKind,
+    SourceState,
+    Venue,
+)
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -67,6 +76,15 @@ async def test_polymarket_v1_capture_normalizes_without_claiming_verified_payout
     assert first.payoff.verified is False
     assert first.settlement_asset is None
     assert first.provenance.raw_sha256
+    assert first.fees.status == FeeStatus.VERIFIED
+    assert first.fees.rate == Decimal("0.04")
+    assert first.fees.applies_to == "taker"
+    assert first.fees.formula == "quantity * rate * price * (1 - price); exponent 1"
+    assert first.fees.source_url == "https://docs.polymarket.com/trading/fees"
+    assert first.fees.evidence_sha256
+    assert abs(
+        first.fees.expires_at_utc - first.fees.effective_at_utc - timedelta(minutes=5)
+    ) <= timedelta(milliseconds=1)
     assert requests[0].method == "GET"
     assert "authorization" not in requests[0].headers
 
@@ -91,6 +109,28 @@ async def test_polymarket_v1_capture_normalizes_without_claiming_verified_payout
     assert snapshot.venue == Venue.POLYMARKET
     assert snapshot.native_market_id == first.native_market_id
     assert snapshot.provenance.raw_sha256
+
+
+@pytest.mark.asyncio
+async def test_polymarket_unknown_fee_exponent_is_not_promoted_to_verified():
+    captured = json.loads(_captured("tests/fixtures/gamma_live.json"))
+    captured[0]["feeSchedule"]["exponent"] = 2
+    transport, _, client = _transport(
+        "gamma-api.polymarket.com",
+        {"/markets": json.dumps(captured)},
+    )
+    adapter = PolymarketAdapter(
+        AdapterConfig(
+            enabled=True, live_public_probe_enabled=True, requests_per_second=5, retries=0
+        ),
+        transport=transport,
+    )
+    try:
+        markets = await adapter.discover_markets(3)
+    finally:
+        await client.aclose()
+    assert markets[0].fees.status == FeeStatus.UNKNOWN
+    assert markets[0].fees.rate is None
 
 
 @pytest.mark.asyncio
