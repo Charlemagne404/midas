@@ -83,6 +83,58 @@ research output; use a separate local data root for intentional experiments.
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for the data flow and storage details.
 
+## Project Frontier (isolated branch)
+
+Frontier's public adapters are disabled by default and do not probe on API
+startup. Its local store is selected with `MIDAS_FRONTIER_ROOT` (default
+`data/frontier-store`), with an independent byte cap set by
+`MIDAS_FRONTIER_STORE_MAX_BYTES`. If a public sample is explicitly needed, enable
+only the intended venue with one of:
+
+```text
+MIDAS_FRONTIER_POLYMARKET_PUBLIC_PROBE_ENABLED=true
+MIDAS_FRONTIER_KALSHI_PUBLIC_PROBE_ENABLED=true
+MIDAS_FRONTIER_KRAKEN_PUBLIC_PROBE_ENABLED=true
+```
+
+Kraken Spot discovery uses the comma-separated configured pair allowlist
+`MIDAS_FRONTIER_KRAKEN_PAIRS` (default `XBTUSD`). These flags permit only bounded
+unauthenticated public GETs. They do not enable account access, order entry, or
+credential handling. A deliberate probe is initiated from Frontier's Exchanges
+view. One probe can capture one bounded listing, optionally one book, and at most
+ten recent public trades for the first discovered market. `GET
+/api/frontier/trades` returns stored, hash-verified normalized prints with their
+source-observation IDs and raw hashes. A valid empty response remains an empty
+capture. The protected Reality recording and its evidence remain on separate
+roots.
+
+Relationship decisions use `POST /api/frontier/relationships/{id}/review`. The
+review form records source market observation IDs and appends a linked revision;
+it cannot bypass the same-payoff verifier. Reviewer labels and external assertion
+IDs are self-attributed references, not authenticated identities or fetched
+documents. The Frontier SQLite schema upgrades v2/v3 stores additively to v4.
+The relationship graph route accepts an optional `center_market_id`, a `depth`
+from 1 to 3, and an edge `limit` up to 200. It loads at most 200 recorded
+markets and scans at most 500 effective relationships per request; the response
+marks capped scan windows explicitly. List reads recheck stored observation,
+relationship, review-lineage, and replay hashes before research use.
+
+For focused Frontier verification, use isolated test databases and run:
+
+```bash
+.venv/bin/uv run --frozen pytest tests/frontier tests/integration/test_adapters.py tests/integration/test_api.py::test_offline_api_workflow_contract_and_persistence -q
+.venv/bin/uv run --frozen ruff check apps/api/frontier.py apps/api/config.py apps/api/main.py packages/midas/frontier tests/frontier tests/integration/test_api.py
+.venv/bin/uv run --frozen mypy packages/midas/frontier apps/api/frontier.py
+corepack pnpm --dir apps/web test
+corepack pnpm --dir apps/web typecheck
+corepack pnpm --dir apps/web build
+```
+
+The Frontier Playwright case sets `MIDAS_FRONTIER_ROOT` under a temporary
+directory. It never enables a source probe. See the
+[Frontier mission ledger](frontier/FRONTIER_MISSION_LEDGER.md) before extending
+the scope or changing its deployment status.
+
 ## Keep worktrees and runtime data separate
 
 Read [MIDAS_CURRENT_STATE.md](MIDAS_CURRENT_STATE.md) before changing an

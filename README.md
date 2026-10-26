@@ -1,6 +1,6 @@
 # MIDAS
 
-**A read-only Polymarket research command center and deterministic virtual exchange laboratory.**
+**A read-only market research command center and deterministic virtual exchange laboratory.**
 
 Midas evaluates complementary binary positions using exact ask-depth arithmetic, independently gates virtual risk, and tests sequential execution against an auditable simulated venue. The research system remains useful when every observed real opportunity is rejected.
 
@@ -23,6 +23,16 @@ worktrees, data locations, latest receipted findings, and known operating limits
 The [Reality acceptance record](docs/REALITY_MISSION2_ACCEPTANCE.md),
 [Veritas research ledger](docs/VERITAS_RESEARCH_LEDGER.json), and historical
 checkpoints preserve the original evidence and provenance.
+
+Project Frontier is being developed on the isolated branch
+`codex/frontier-20261026`, based on the verified Veritas V6 integration. It adds
+Polymarket, Kalshi, and Kraken Spot research adapters, evidence-backed market
+normalization, conservative relationship hypotheses with append-only review
+revisions, independent hypothetical economics, and a native Frontier workspace.
+Review labels and assertion references are not authenticated; replay follows
+only the latest revision. It is not merged into `main` or deployed. Read the [Frontier mission ledger](docs/frontier/FRONTIER_MISSION_LEDGER.md)
+and [current engineering report](docs/frontier/FRONTIER_ENGINEERING_REPORT.md)
+for verified scope and remaining work.
 
 ## Install and run
 
@@ -126,6 +136,17 @@ See the [Milestone 3 engineering report](docs/MILESTONE_3_ENGINEERING_REPORT.md)
 [test evidence](docs/MILESTONE_3_TEST_REPORT.md) and
 [Laboratory architecture](docs/LABORATORY_ARCHITECTURE.md) for implemented functionality,
 actual experiments and explicit remaining scope.
+
+Frontier uses a separate bounded SQLite store, selected with
+`MIDAS_FRONTIER_ROOT` (default `data/frontier-store`). Each public source is
+disabled for live probing by default. A read-only probe requires an explicit
+per-venue `MIDAS_FRONTIER_*_PUBLIC_PROBE_ENABLED=true` setting and a deliberate
+Capture action in the Frontier Exchanges view. No startup request is made.
+The bounded capture can record one listing, one book, and up to ten public
+trades for one selected market; all remain timestamped, source-attributed
+research observations.
+Source contracts, replay behavior, limits, and known gaps are documented in the
+[Frontier architecture](docs/frontier/FRONTIER_ARCHITECTURE.md).
 
 For persistent local services, interrupted campaign recovery, and remote MacBook access, see
 [recovery and service operations](docs/RELIABILITY_OPERATIONS.md).

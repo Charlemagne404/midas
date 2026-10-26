@@ -1,0 +1,133 @@
+# MIDAS Frontier architecture
+
+Frontier adds a separate, read-only market-research path to MIDAS. Its contracts
+live under `packages/midas/frontier`; the legacy Polymarket strategy, Reality
+recorder, Veritas evidence, Arena artifacts, and Laboratory roots are not reused
+as mutable Frontier storage.
+
+## Components
+
+| Component | Location | Responsibility |
+| --- | --- | --- |
+| Canonical contracts | `models.py` | Venue, instrument kind, payoff, resolution, fee, quantity, provenance, and book models. |
+| Adapter protocol and lifecycle | `adapters/base.py` | Capability declarations, local health, response capture, and common read-only adapter contract. |
+| Bounded HTTP transport | `adapters/transport.py` | HTTPS GET only, fixed host allowlist, bounded timeout/retry/rate/response sizes, no redirects or credentials. |
+| Public venue adapters | `adapters/polymarket.py`, `kalshi.py`, `kraken.py` | Source-specific normalization and native metadata preservation. |
+| Registry | `registry.py` | Explicit capability inventory; default instances do not probe. |
+| Relationship intelligence | `relationships.py` | Deterministic indexed hypotheses, strict payoff checks, and immutable review contracts. |
+| Economic verifier | `economics.py` | Decimal complete-binary all-long construction with fee, depth, freshness, timing, and scenario checks. |
+| Durable evidence | `storage.py` | Append-only, size- and row-bounded SQLite observations, markets, relationship reviews/revisions, and runs. |
+| Replay | `replay.py` | Stable input ordering, manifest and implementation digest, deterministic result identity. |
+| HTTP API | `apps/api/frontier.py` | Bounded local queries and graph neighborhoods, relationship proposals/reviews, deterministic replay, and config-gated public capture. |
+| Mission Control workspace | `apps/web/src/Frontier.tsx` | Sources, markets/books, relationship hypotheses, candidates, workbench, replay, readiness. |
+
+## Adapter capability contract
+
+Every venue declares support or an explicit unsupported reason for every
+capability. An adapter may support public metadata, snapshots, trades, or candles
+while rejecting incremental books, verified fee schedules, or settlement
+semantics. The shared model retains native market and instrument identifiers,
+native metadata, source URL, adapter/schema versions, raw-body hash, request and
+receipt times, and source-time semantics. Source quality flags are carried forward
+instead of being replaced with guessed values.
+
+The common model is not the lowest common denominator. A binary event contract,
+a multivariate event leg, and a spot pair retain separate instrument kinds and
+payoff constraints. In particular, Kraken spot is contextual asset evidence; it
+cannot become an event-contract payoff through matching text.
+
+## Source configurations and bounds
+
+The API creates all three adapter manifests, but the source transport is disabled
+unless its specific `MIDAS_FRONTIER_*_PUBLIC_PROBE_ENABLED` setting is true. No
+startup health request is made. A user-triggered capture makes one bounded market
+page, plus at most one selected book snapshot. Kraken currently uses a configured pair allowlist,
+not venue-wide enumeration. The transport caps each response at 256 KiB, retries
+at most twice, has a 15-second maximum timeout, limits each adapter to 5 requests
+per second, rejects redirects, and rejects hosts outside its venue allowlist.
+The API serializes probes per venue and the store defaults to 64 MiB, 50,000 raw
+observations, 100,000 relationship records, and 512 KiB per stored record.
+
+## Relationship and economics boundaries
+
+The matcher indexes exact venue-local event IDs and title terms. Cross-venue title
+matches remain hypotheses and preserve evidence terms and source observation IDs.
+They are never promoted automatically. The review API requires stored,
+hash-verified source records for both markets. A verified decision must pass
+`verify_same_payoff`, which requires verified/exhaustive state sets, a bijection
+over outcomes and instruments, matching payout vectors, settlement currency/asset,
+resolution fingerprint/authority, close and settlement times. The reviewer label
+and external assertion ID are self-attributed references: the system does not
+authenticate the identity or fetch/verify the assertion. The verifier evaluates
+stored fields; it does not prove those fields are true beyond their source
+provenance.
+
+Every review appends an immutable review record and a relationship revision in
+one transaction. A compare-and-set against the latest review prevents stale
+updates. API listings show only effective revisions, while the original and all
+prior decisions remain stored. Replay uses only the latest decision, so a later
+reject or ambiguous review removes an old verified revision from candidate
+inputs without deleting history.
+
+The economic verifier currently supports complete binary payoffs only. It checks
+both long-leg constructions against verified states, top-ask depth, quantity
+minimums and steps, quote currencies, exact Decimal fee formulas when verified,
+scenario slippage/decay, local receipt skew, exchange-time skew, and book age.
+Unknown fees leave net P&L unknown and are explicitly excluded, rather than
+zeroed, in the per-venue capital assumptions. A modeled price above the binary
+payout is unsupported. Candidates always retain `practical_eligibility=false`: public
+snapshots do not prove fills, queue priority, venue access, simultaneous execution,
+capital transfer, or settlement. Opportunity classifications describe the
+mathematical and modeled evidence only.
+
+## Persistence and deterministic replay
+
+The API uses a separate `MIDAS_FRONTIER_ROOT`. Raw source observations, normalized
+records, relationship decisions/reviews, and replay results are append-only.
+SQLite schema v4 migrates older v2/v3 stores additively and enforces update/delete
+triggers on evidence tables. Review records link to their derived relationship
+revision, and effective queries resolve the latest decision. Query methods use
+SQLite read-only mode; they do not initialize or mutate the store. Listing reads
+recheck raw body and normalized row hashes, relationship/review hashes and
+revision linkage, and replay result digests. Write routes
+enforce row and database byte budgets before committing. Repeated captures remain
+distinct because their request and receipt timestamps form part of the evidence
+identity.
+
+Replay reads only stored inputs, sorts records by canonical IDs, pins the source
+observation IDs and relationship IDs, hashes normalized input, persists scenario
+assumptions, and records a SHA-256 over the backend Frontier source set. Re-running
+the same recorded inputs, implementation, and assumptions yields the same result
+identity. Replay time defaults to the latest selected source receipt time; empty
+input uses a fixed epoch. No network adapter is called from replay.
+
+## API and UI behavior
+
+`GET /api/frontier/overview`, `/sources`, `/markets`, `/books`, `/trades`,
+`/observations/{id}`, `/relationships`, `/graph`, `/opportunities`, `/runs`, and `/readiness`
+are local evidence reads. `POST /relationships/propose` writes deterministic
+hypotheses; `POST /relationships/{id}/review` records an immutable explicit
+decision; `POST /replay` writes a deterministic replay result; `POST /probe/{venue}`
+is rejected unless that source is enabled. An explicit bounded probe may capture
+one discovered listing page, one book, and up to ten public trades for the first
+market. `GET /trades` returns hash-verified normalized trades with their source
+observation and raw-body hash. The UI displays recorded trades as public prints,
+not as available depth or executable prices. The Frontier page does not inherit the
+single-venue synthetic/demo banner. It shows source health separately from
+captured evidence age, renders an interactive three-column SVG network for at
+most 18 effective edges and a searchable evidence list capped at 30, supports
+self-attributed reject/ambiguous/strict-verification reviews, exposes native
+rules/fees/books, and keeps offline, unsupported, empty, and degraded states
+visible.
+
+## Known scope limits
+
+There are no persistent source workers, incremental order-book streams, full
+venue-wide universe scans, FX conversion, derivatives, capital transfer model,
+multi-leg solver, automatic semantic certification, authenticated reviewer or
+assertion verification, indexed large-universe graph neighborhood search, or
+production deployment. `/graph` limits source markets to 200, scans at most 500
+effective relationships, and returns at most 200 edges over 1–3 hops. The current
+replay/candidate set is small and bounded. See the [engineering report](FRONTIER_ENGINEERING_REPORT.md) and
+[mission ledger](FRONTIER_MISSION_LEDGER.md) for acceptance status and continuation
+steps.

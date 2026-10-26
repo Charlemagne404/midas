@@ -90,3 +90,58 @@ the live observation or paper-broker decision path. Preserve the distinction bet
 public observations, synthetic scenarios, modeled execution, and measured findings.
 The [Prometheus final report](PROMETHEUS_FINAL_REPORT.md) describes the current
 evaluation design and its exceptions.
+
+## Project Frontier extension
+
+Frontier is an isolated research path under `packages/midas/frontier`; it does not
+replace the legacy Polymarket contracts or change Reality's protected collector.
+Three public-only adapters normalize Polymarket event tokens, Kalshi event
+contracts, and configured Kraken spot pairs into versioned venue-aware models.
+Capabilities and unsupported behavior are declared per adapter. A bounded HTTPS
+GET transport enforces host allowlists, rate, retry, timeout, and response-byte
+limits; all adapters are disabled for network access unless explicitly configured.
+
+The Frontier API writes source responses and normalized batches into its own
+append-only SQLite store. Read routes use read-only SQLite connections. Recorded
+market and book observations feed a deterministic replay with a hash of the exact
+Frontier backend source set, normalized inputs, relationship decisions, and virtual
+scenario assumptions. The matcher proposes hypotheses only. Append-only,
+self-attributed review revisions record rejected, ambiguous, or strict-verifier
+decisions; the verifier requires verified resolution and exhaustive payout
+evidence. Reviewer and external assertion references are not authenticated.
+Replay uses only the latest decision and preserves the full review history.
+List reads validate raw observation hashes, normalized row hashes, relationship
+payload/index hashes, latest review-to-revision links, and replay output digests
+before graph or replay processing. `GET /api/frontier/graph` offers one-to-three
+hop neighborhoods from a recorded market, capped at 200 source markets and 500
+scanned effective edges; this remains a bounded recent-window traversal rather
+than a large-universe graph index.
+The current economic verifier handles one bounded family: all-long complete binary
+coverage across two venues. It does not produce execution instructions, and public
+quotes never establish practical execution eligibility.
+
+```mermaid
+flowchart LR
+  P[Polymarket public REST] --> A[Read-only adapters]
+  K[Kalshi public REST] --> A
+  S[Kraken Spot public REST] --> A
+  A --> N[Versioned normalized markets and books]
+  A --> R[Raw response evidence]
+  N --> G[Hypothesis relationship matcher]
+  R --> D[Bounded append-only Frontier SQLite]
+  N --> D
+  G --> D
+  UI --> H[Strict review verifier and immutable revision]
+  H --> D
+  D --> X[Deterministic replay]
+  X --> E[Decimal economic candidate checks]
+  E --> API
+  X --> API[Frontier research API]
+  D --> API
+  API --> UI[Mission Control Frontier workspace]
+```
+
+Source capture is an explicit bounded request, not a background collector. Current
+live probe fixtures and their limitations are documented in
+`data/frontier/live-probes/README.md`. The [Frontier engineering report](frontier/FRONTIER_ENGINEERING_REPORT.md)
+states the verified integration scope, test evidence, and deferred work.
