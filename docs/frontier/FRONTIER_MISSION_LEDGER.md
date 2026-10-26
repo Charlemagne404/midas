@@ -1,9 +1,10 @@
 # Project Frontier Mission Ledger
 
-**Current stage:** isolated engine/API/UI, immutable relationship review, bounded
-graph neighborhoods, hash-verified public book/trade capture, exact fixture-
-verified multi-outcome coverage, and a separate candidate arithmetic audit;
-plus captured-response failure diagnostics and degraded-source recovery.
+**Current stage:** isolated engine/API/UI, immutable relationship review, schema-v5
+indexed bounded graph neighborhoods with UI scan-quality status, hash-verified
+public book/trade capture, exact fixture-verified multi-outcome coverage, and a
+separate candidate arithmetic audit; plus captured-response failure diagnostics
+and degraded-source recovery.
 Remaining acceptance work is substantial.
 **Branch:** `codex/frontier-20261026`
 **Worktree:** `/home/charlie/midas-frontier`
@@ -52,6 +53,9 @@ Remaining acceptance work is substantial.
 | `59bf640` | Updated the engineering report, architecture, and development documentation for complete bounded transport-failure evidence and latest measurements. |
 | `294cc6d` | Added a deterministic test for the two-retry cap, final HTTP 503 evidence, and request accounting. |
 | `dbdd7c7` | Refreshed the engineering report for capped retry tests and the latest focused test/resource measurements. |
+| `d389c24` | Added schema-v5 left/right relationship endpoint indexes, bounded adjacency queries, scan accounting, a v4 additive migration, and query-plan/API/storage regression tests. |
+| `872466e` | Surfaced relationship scan counts and incomplete-neighborhood status in Mission Control; added UI regression coverage and refreshed the isolated Frontier browser fixture. |
+| `cbd6ded` | Updated Frontier architecture, development guidance, and engineering report for indexed adjacency, schema v5, latest tests, and remaining graph-scale limits. |
 
 ## Public source investigation
 
@@ -117,11 +121,11 @@ Capture records and source-specific limitations are in
 
 ## Verification checkpoint
 
-- Backend focused regression: **54 passed** in 9.86 seconds pytest time; one upstream Starlette/httpx TestClient deprecation warning. `/usr/bin/time -v` measured 10.65 seconds wall, 3.97 seconds user CPU, 145,628 KiB peak RSS, and zero socket messages.
+- Backend focused regression after indexed adjacency: **56 passed** in 10.65 seconds pytest time; one upstream Starlette/httpx TestClient deprecation warning. `/usr/bin/time -v` measured 11.43 seconds wall, 3.97 seconds user CPU, 145,560 KiB peak RSS, and zero socket messages.
 - Ruff check and format check: passed for the Frontier package and test files.
 - Mypy: passed for 16 Frontier/API source files. A broader `mypy packages/midas/frontier apps/api` attempt reported 37 errors in eight unchanged Veritas/Arena/API files; none was in Frontier source.
-- Frontend tests: **35 passed across 7 files**; typecheck, lint and Prettier check passed.
-- Frontend production build: passed. Existing main and Chart chunks trigger Vite’s >500 kB warning. Frontier’s lazy chunks are 47.53 kB JS and 24.58 kB CSS.
+- Frontend tests: **35 passed across 7 files** after adding incomplete-scan messaging coverage; typecheck, lint and Prettier check passed.
+- Frontend production build: passed. Existing main and Chart chunks trigger Vite’s >500 kB warning. Frontier’s lazy chunks are 47.72 kB JS and 24.58 kB CSS.
 - Frontier browser cases: **2 passed** in 6.4 seconds, including center-market graph navigation, fixture-only review submission, multi-outcome candidate state, and audit details at desktop/mobile sizes using one worker and isolated roots; source probes remained disabled. In the broader 10-case E2E run, 8 passed and 2 existing Laboratory cases were denied at the shared Arena resource-admission lock (`resource_admission_lock_busy`); no experiments started and the lock was not bypassed.
 - The complete Python repository suite was not run. No continuous worker, campaign, or service was started.
 
@@ -137,12 +141,12 @@ Reproduction commands and environment boundaries are in
 | Adapter protocol, capability inventory, bounded GET transport | COMPLETE AND VERIFIED | Contract tests; all capabilities explicitly declared; no startup request. |
 | Polymarket, Kalshi and Kraken Spot implementations | PARTIALLY VERIFIED | Fixture tests and one bounded live listing/book/trade-to-store round trip per venue pass; mock tests verify invalid JSON/UTF-8, HTTP 503, 2xx schema-failure evidence, source isolation, and health recovery. Fees and live degraded-source behavior remain unverified; oversized/partial bodies are not persisted. |
 | Canonical normalization and native evidence | PARTIALLY VERIFIED | Distinct event, conditional event and spot forms; some semantics intentionally unverified. |
-| Relationship matching, immutable review, and strict payoff verifier | PARTIALLY VERIFIED | Self-attributed review API/UI with stored source refs, append-only revisions, compare-and-set, latest-state replay and migration tests; no authenticated reviewer/assertion or genuine equivalent pair. |
+| Relationship matching, immutable review, indexed neighborhoods, and strict payoff verifier | PARTIALLY VERIFIED | Self-attributed review API/UI with stored source refs, append-only revisions, compare-and-set, latest-state replay, query-plan/migration tests, and 1–3 hop left/right indexed scans capped at 500 relationship rows; no authenticated reviewer/assertion, genuine equivalent pair, or paginated dense-graph traversal. |
 | Economic candidate verifier and independent audit | PARTIALLY VERIFIED | Exact two-venue binary all-long coverage and same-market 3–16-state exhaustive one-hot coverage. A separate Decimal implementation recomputes supported candidate arithmetic from hash-pinned normalized inputs; controlled fixtures only, no genuine eligible event, independently authenticated market truth, or practical execution proof. |
-| Bounded store and deterministic replay | COMPLETE AND VERIFIED | Schema v4, v2/v3 additive migration, append-only review/revision history, content integrity checks, persisted replay-v3 audit results, and tests that later review revokes earlier verified replay input. |
-| Frontier API and source configuration | COMPLETE AND VERIFIED | Local reads including hash-verified `/trades`, 1–3 hop graph route, explicit bounded writes, probes disabled by default, list-read integrity checks. |
+| Bounded store and deterministic replay | COMPLETE AND VERIFIED | Schema v5, additive v2/v3/v4 migration with preserved relationship payloads, append-only review/revision history, content integrity checks, persisted replay-v3 audit results, and tests that later review revokes earlier verified replay input. |
+| Frontier API and source configuration | COMPLETE AND VERIFIED | Local reads including hash-verified `/trades`, 1–3 hop indexed graph route with explicit scan accounting, bounded writes, probes disabled by default, and list-read integrity checks. |
 | Live adapter-to-API listing, book, and trade persistence | PARTIALLY VERIFIED | Three genuine listings, books, and trade responses preserved with raw/normalized data and verified hashes; Kalshi book/trade arrays were empty, and sources are sequential. |
-| Mission Control Frontier workspace | IMPLEMENTED, LIVE VALIDATION PENDING | Native view, recorded trade table, candidate audit details, and responsive E2E tested against isolated API; not deployed. |
+| Mission Control Frontier workspace | IMPLEMENTED, LIVE VALIDATION PENDING | Native view, recorded trade table, candidate audit details, bounded-graph incomplete-scan disclosure, and responsive E2E tested against isolated API; not deployed. |
 | Laboratory/Arena research orchestration | DEFERRED | Navigation links only; no Frontier experiment job type/scheduler. |
 | Persistent source collection, streaming and broad historical replay | DEFERRED | No background worker or long-duration campaign. |
 | Cross-venue FX, comprehensive capital and settlement costs | DEFERRED | Unknown costs remain unknown and block decisive net economics. |
@@ -164,7 +168,8 @@ The highest-value next steps are:
    bounded retries and final error-body evidence now have fixture coverage;
    timeout, oversized/truncated response, trade-pagination, and live
    degraded-source coverage remain. Validate supported fee metadata.
-2. Add indexed/paginated graph adjacency and extend the UI with a bounded text-search drill-down.
+2. Add searchable, paginated graph drill-down over the indexed adjacency and
+   measure dense-neighborhood behavior within the store caps.
 3. Establish validated fee inputs before promoting any candidate to a decisive
    net classification.
 4. Seek genuine public multi-outcome metadata that satisfies the strict verified
@@ -179,8 +184,9 @@ The highest-value next steps are:
 Do not connect Frontier to Reality’s recorder, enable probes as a default,
 deploy, or alter protected evidence as part of ordinary continuation. The next
 safe work is supported fee metadata and degraded-source tests, finding eligible
-multi-outcome public terms without relaxing evidence requirements, then indexed
-graph adjacency and short resource-admitted Arena/Laboratory replay integration.
+multi-outcome public terms without relaxing evidence requirements, then
+searchable graph pagination and short resource-admitted Arena/Laboratory replay
+integration.
 
 ## Latest checkpoint identity
 
