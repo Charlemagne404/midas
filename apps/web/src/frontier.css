@@ -681,6 +681,17 @@
   width: 100%;
   min-height: 33px;
 }
+.fr-graph-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 12px;
+}
+.fr-graph-pagination > span {
+  color: #9ca8b6;
+  font-size: 9px;
+}
 .fr-table-wrap {
   width: 100%;
   overflow: auto;

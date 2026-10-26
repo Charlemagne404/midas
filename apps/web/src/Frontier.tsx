@@ -178,6 +178,7 @@ type GraphResponse = {
   relationship_scan_limit: number;
   relationships_scanned: number;
   relationship_scan_may_be_incomplete: boolean;
+  next_cursor: string | null;
   source_market_window_limit: number;
 };
 type GraphPoint = { id: string; title: string; venue: string; x: number; y: number };
@@ -705,11 +706,19 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
   const [relationshipState, setRelationshipState] = useState('all');
   const [graphCenterMarketId, setGraphCenterMarketId] = useState('');
   const [graphDepth, setGraphDepth] = useState(1);
+  const [graphPageCursors, setGraphPageCursors] = useState<(string | null)[]>([null]);
+  const [graphPageIndex, setGraphPageIndex] = useState(0);
+  const [graphQuerySession, setGraphQuerySession] = useState(0);
   const [slippage, setSlippage] = useState('25');
   const [delay, setDelay] = useState('500');
   const [fillPercent, setFillPercent] = useState('80');
   const queryClient = useQueryClient();
   const options = { staleTime: 10_000, retry: 1 };
+  const resetGraphPagination = () => {
+    setGraphPageCursors([null]);
+    setGraphPageIndex(0);
+    setGraphQuerySession((current) => current + 1);
+  };
   const overview = useQuery({
     queryKey: ['frontier', 'overview'],
     queryFn: () => api<Overview>('/frontier/overview'),
@@ -735,11 +744,25 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
     queryFn: () => api<TradeResponse>('/frontier/trades?limit=100'),
     ...options,
   });
+  const graphCursor = graphPageCursors[graphPageIndex] ?? null;
+  const graphPageSize = graphCenterMarketId && graphDepth === 1 ? 30 : 100;
   const graph = useQuery({
-    queryKey: ['frontier', 'graph', graphCenterMarketId, graphDepth],
+    queryKey: [
+      'frontier',
+      'graph',
+      graphCenterMarketId,
+      graphDepth,
+      graphPageSize,
+      graphCursor,
+      graphQuerySession,
+    ],
     queryFn: () => {
-      const params = new URLSearchParams({ depth: String(graphDepth), limit: '100' });
+      const params = new URLSearchParams({
+        depth: String(graphDepth),
+        limit: String(graphPageSize),
+      });
       if (graphCenterMarketId) params.set('center_market_id', graphCenterMarketId);
+      if (graphCursor) params.set('cursor', graphCursor);
       return api<GraphResponse>(`/frontier/graph?${params.toString()}`);
     },
     ...options,
@@ -1251,7 +1274,11 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
               <select
                 aria-label="Relationship graph center market"
                 value={graphCenterMarketId}
-                onChange={(event) => setGraphCenterMarketId(event.target.value)}
+                onChange={(event) => {
+                  setGraphCenterMarketId(event.target.value);
+                  resetGraphPagination();
+                  setSelectedRelationshipId(null);
+                }}
               >
                 <option value="">Latest recorded relationship window</option>
                 {(markets.data?.items ?? []).map((market) => (
@@ -1266,7 +1293,10 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
               <select
                 aria-label="Relationship graph depth"
                 value={graphDepth}
-                onChange={(event) => setGraphDepth(Number(event.target.value))}
+                onChange={(event) => {
+                  setGraphDepth(Number(event.target.value));
+                  resetGraphPagination();
+                }}
               >
                 <option value={1}>1 hop</option>
                 <option value={2}>2 hops</option>
@@ -1278,7 +1308,14 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
           {graph.isLoading ? (
             <div className="fr-loading">Loading stored relationship evidence…</div>
           ) : graph.isError ? (
-            <EmptyState title="Relationship query failed" detail={graph.error.message} />
+            <>
+              <EmptyState title="Relationship query failed" detail={graph.error.message} />
+              {graphCursor && (
+                <button className="fr-action" onClick={resetGraphPagination}>
+                  Restart neighborhood query
+                </button>
+              )}
+            </>
           ) : filteredRelationships.length ? (
             <>
               <RelationshipGraph
@@ -1287,15 +1324,6 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
                 selectedId={selectedRelationshipId}
                 onSelect={setSelectedRelationshipId}
               />
-              {(graph.data?.truncated_by_edge_limit ||
-                graph.data?.relationship_scan_may_be_incomplete) && (
-                <div className="fr-footnote">
-                  {graph.data.relationship_scan_may_be_incomplete
-                    ? `This query considered ${graph.data.relationships_scanned} relationship rows, reaching its ${graph.data.relationship_scan_limit}-row scan bound; additional neighbors may be omitted.`
-                    : `This view is capped at ${graph.data.edge_limit} edges after considering ${graph.data.relationships_scanned} relationship rows.`}{' '}
-                  Choose a center market to inspect a smaller neighborhood.
-                </div>
-              )}
               <div className="fr-graph-list">
                 {filteredRelationships.map((relationship) => {
                   const left = graphMarketById.get(relationship.left_market_id);
@@ -1358,14 +1386,63 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
             </>
           ) : (
             <EmptyState
-              title="No relationship edges in this view"
-              detail="Text and native metadata matching create hypotheses only. A verified edge requires exhaustive payout and resolution evidence plus independent mapping."
+              title={
+                graph.data?.next_cursor
+                  ? 'No matching edges on this page'
+                  : 'No relationship edges in this view'
+              }
+              detail={
+                graph.data?.next_cursor
+                  ? 'Continue to the next page or adjust the search and validation-state filters.'
+                  : 'Text and native metadata matching create hypotheses only. A verified edge requires exhaustive payout and resolution evidence plus independent mapping.'
+              }
             />
           )}
+          {(graph.data?.next_cursor ||
+            graph.data?.truncated_by_edge_limit ||
+            graph.data?.relationship_scan_may_be_incomplete) && (
+            <div className="fr-footnote">
+              {graph.data.relationship_scan_may_be_incomplete
+                ? graph.data.next_cursor && graphCenterMarketId && graphDepth === 1
+                  ? `This page reached its ${graph.data.relationship_scan_limit}-row scan bound. Continue with the next page; graph changes invalidate the cursor.`
+                  : `This query considered ${graph.data.relationships_scanned} relationship rows, reaching its ${graph.data.relationship_scan_limit}-row scan bound; additional neighbors may be omitted.`
+                : graph.data.next_cursor && graphCenterMarketId && graphDepth === 1
+                  ? `This page returned ${graph.data.returned_edges} edges. More neighbors are available through keyset pages; graph changes make the cursor stale.`
+                  : `This view is capped at ${graph.data.edge_limit} edges after considering ${graph.data.relationships_scanned} relationship rows.`}{' '}
+              {!graphCenterMarketId && 'Choose a center market to inspect a smaller neighborhood.'}
+            </div>
+          )}
+          {graph.data && graphCenterMarketId && graphDepth === 1 && (
+            <div className="fr-graph-pagination" role="group" aria-label="Relationship pages">
+              <button
+                className="fr-action"
+                disabled={graphPageIndex === 0 || graph.isFetching}
+                onClick={() => setGraphPageIndex((current) => Math.max(0, current - 1))}
+              >
+                Previous page
+              </button>
+              <span>Neighborhood page {graphPageIndex + 1}</span>
+              <button
+                className="fr-action"
+                disabled={!graph.data.next_cursor || graph.isFetching}
+                onClick={() => {
+                  const nextCursor = graph.data?.next_cursor;
+                  if (!nextCursor) return;
+                  setGraphPageCursors((current) => [
+                    ...current.slice(0, graphPageIndex + 1),
+                    nextCursor,
+                  ]);
+                  setGraphPageIndex(graphPageIndex + 1);
+                }}
+              >
+                {graph.isFetching ? 'Loading…' : 'Load more neighbors'}
+              </button>
+            </div>
+          )}
           <div className="fr-footnote">
-            The evidence list is capped at 30 edges; the network shows the first 18. Similar titles
-            never certify payoff equivalence. Relationship identity is versioned and tied to pinned
-            observation IDs.
+            The evidence list shows up to 30 edges per page; the network shows the first 18. Similar
+            titles never certify payoff equivalence. Relationship identity is versioned and tied to
+            pinned observation IDs.
           </div>
         </section>
       )}

@@ -74,6 +74,7 @@ it('renders recorded-evidence empty states and never probes a source automatical
       relationship_scan_limit: 500,
       relationships_scanned: 0,
       relationship_scan_may_be_incomplete: false,
+      next_cursor: null,
       source_market_window_limit: 200,
     },
     '/api/frontier/opportunities?limit=100': { items: [], returned: 0, limit: 100, offset: 0 },
@@ -320,6 +321,7 @@ it('renders a bounded accessible relationship graph and opens selected evidence'
       relationship_scan_limit: 500,
       relationships_scanned: 500,
       relationship_scan_may_be_incomplete: true,
+      next_cursor: null,
       source_market_window_limit: 200,
     },
     '/api/frontier/opportunities?limit=100': { items: [], returned: 0, limit: 100, offset: 0 },
@@ -328,11 +330,19 @@ it('renders a bounded accessible relationship graph and opens selected evidence'
   };
   const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
     const path = String(input);
-    const body =
-      responses[path] ??
-      (path.startsWith('/api/frontier/graph?')
-        ? responses['/api/frontier/graph?depth=1&limit=100']
-        : undefined);
+    const graphBase = responses['/api/frontier/graph?depth=1&limit=100'] as {
+      edges: unknown[];
+      [key: string]: unknown;
+    };
+    const graphParams = new URL(path, 'http://localhost').searchParams;
+    const body = path.startsWith('/api/frontier/graph?')
+      ? {
+          ...graphBase,
+          center_market_id: graphParams.get('center_market_id'),
+          next_cursor: graphParams.get('cursor') ? null : 'cursor-page-2',
+          truncated_by_edge_limit: !graphParams.get('cursor'),
+        }
+      : responses[path];
     if (body === undefined) throw new Error(`Unexpected frontend request: ${String(input)}`);
     return { ok: true, json: async () => body } as Response;
   });
@@ -361,6 +371,12 @@ it('renders a bounded accessible relationship graph and opens selected evidence'
       fetchMock.mock.calls.some(([input]) => String(input).includes('center_market_id=')),
     ).toBe(true),
   );
+  fireEvent.click(await screen.findByRole('button', { name: 'Load more neighbors' }));
+  expect(await screen.findByText('Neighborhood page 2')).toBeInTheDocument();
+  expect(
+    fetchMock.mock.calls.some(([input]) => String(input).includes('cursor=cursor-page-2')),
+  ).toBe(true);
+  fireEvent.click(screen.getByRole('button', { name: 'Previous page' }));
   const edge = await screen.findByRole('button', { name: /text candidate hypothesis/i });
   fireEvent.click(edge);
   expect(edge).toHaveAttribute('aria-pressed', 'true');
@@ -479,6 +495,7 @@ it('records a self-attributed relationship review with both stored market source
       relationship_scan_limit: 500,
       relationships_scanned: 1,
       relationship_scan_may_be_incomplete: false,
+      next_cursor: null,
       source_market_window_limit: 200,
     },
     '/api/frontier/opportunities?limit=100': { items: [], returned: 0, limit: 100, offset: 0 },

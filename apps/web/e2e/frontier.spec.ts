@@ -148,6 +148,7 @@ test('relationship network remains bounded, selectable, and scroll-contained on 
       relationship_scan_limit: 500,
       relationships_scanned: 1,
       relationship_scan_may_be_incomplete: false,
+      next_cursor: null,
       source_market_window_limit: 200,
     },
     '/api/frontier/opportunities': {
@@ -220,8 +221,23 @@ test('relationship network remains bounded, selectable, and scroll-contained on 
         body: JSON.stringify({ review: {}, relationship: {} }),
       });
     }
-    const path = new URL(route.request().url()).pathname;
-    const fixture = fixtures[path];
+    const requestUrl = new URL(route.request().url());
+    const path = requestUrl.pathname;
+    const fixture =
+      path === '/api/frontier/graph'
+        ? {
+            ...(fixtures[path] as Record<string, unknown>),
+            center_market_id: requestUrl.searchParams.get('center_market_id'),
+            next_cursor:
+              requestUrl.searchParams.get('center_market_id') &&
+              !requestUrl.searchParams.get('cursor')
+                ? 'frontier-page-2'
+                : null,
+            truncated_by_edge_limit:
+              !!requestUrl.searchParams.get('center_market_id') &&
+              !requestUrl.searchParams.get('cursor'),
+          }
+        : fixtures[path];
     if (fixture === undefined) return route.continue();
     await route.fulfill({
       status: 200,
@@ -246,6 +262,9 @@ test('relationship network remains bounded, selectable, and scroll-contained on 
 
   await page.getByLabel('Relationship graph center market').selectOption('polymarket:election-1');
   await expect(page.getByRole('group', { name: /Relationship network showing 1/ })).toBeVisible();
+  await page.getByRole('button', { name: 'Load more neighbors' }).click();
+  await expect(page.getByText('Neighborhood page 2')).toBeVisible();
+  await page.getByRole('button', { name: 'Previous page' }).click();
   const edge = page.getByRole('button', { name: /text candidate hypothesis/i });
   await edge.click();
   await expect(edge).toHaveAttribute('aria-pressed', 'true');
