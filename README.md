@@ -33,6 +33,9 @@ coverage and fixture-tested exhaustive multi-outcome coverage, and a native
 Frontier workspace. Replay candidates also carry a separate arithmetic audit
 over pinned normalized inputs; this checks calculations, not external market
 truth, synchronized quotes, fills, or profitability.
+Polymarket's explicit v2 trade-page path preserves outcome-token identity and
+supports bounded cursor continuation; one first page and one API-route
+continuation have been captured, while no full history walk was attempted.
 Review labels and assertion references are not authenticated; replay follows
 only the latest revision. It is not merged into `main` or deployed. Read the [Frontier mission ledger](docs/frontier/FRONTIER_MISSION_LEDGER.md)
 and [current engineering report](docs/frontier/FRONTIER_ENGINEERING_REPORT.md)

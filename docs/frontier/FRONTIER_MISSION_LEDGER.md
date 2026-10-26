@@ -7,7 +7,13 @@ separate candidate arithmetic audit; plus captured-response failure diagnostics
 and degraded-source recovery. The supported Polymarket fee shape now has
 nonzero-fixture and live zero-fee evidence coverage; timeout and truncated-stream
 failure tests pass. Centered one-hop graph neighborhoods now support append-only
-revision-bound keyset pagination with stale-cursor rejection.
+revision-bound keyset pagination with stale-cursor rejection. Polymarket v2
+cursor trade pages now preserve token/outcome identifiers, have a bounded
+operator-triggered API/UI continuation flow, and one live first page has been
+hash-verified through an isolated temporary store. One live continuation page
+also passed through the isolated API route, adding ten disjoint trades with
+hash-verified temporary-store read-back. A further page was available but not
+requested.
 Remaining acceptance work is substantial.
 **Branch:** `codex/frontier-20261026`
 **Worktree:** `/home/charlie/midas-frontier`
@@ -62,6 +68,8 @@ Remaining acceptance work is substantial.
 | `aa2a001` | Added supported Polymarket fee-shape assertions and fail-closed exponent coverage; added bounded timeout retry and truncated-stream transport tests. |
 | `89eff8b` | Added bounded relationship keyset pages, graph revision checks over market metadata observations, relationships and reviews, plus stale-cursor and 501-edge regressions. |
 | `711a563` | Added Mission Control centered-neighborhood page controls, cursor restart state, and desktop/mobile UI coverage. |
+| `67f79cd` | Added Polymarket v2 cursor pages, schema-v2 outcome-token preservation, condition/page-size-bound local cursors, bounded persistence/read-back, and adversarial page/cursor tests. |
+| `7c6cc21` | Added capability/config-gated Mission Control first/next trade-page controls, outcome-token display, and unit plus desktop/mobile continuation coverage. |
 
 ## Public source investigation
 
@@ -75,6 +83,7 @@ Official API documentation reviewed:
 - [Kraken Get Order Book](https://docs.kraken.com/api-reference/market-data/get-order-book)
 - [Kraken Get OHLC Data](https://docs.kraken.com/api-reference/market-data/get-ohlc-data)
 - [Polymarket market-data overview](https://docs.polymarket.com/market-data/overview)
+- [Polymarket Data API v2 OpenAPI](https://data-api.polymarket.com/v2/docs)
 - [Polymarket fees](https://docs.polymarket.com/trading/fees)
 
 Genuine, unauthenticated GET response bodies are preserved under
@@ -122,6 +131,40 @@ and envelope hash
 recomputed; largest body 68,758 bytes. These prints and sequential books do not
 show synchronized quotes, executable fills, or fees. No fee endpoint was called.
 
+At `2026-10-26T22:56:38.585296Z`–`22:56:38.728359Z`, the Frontier Polymarket
+adapter made one unauthenticated `GET /v2/trades` against a condition already
+present in recorded public metadata. It used a 10-row page, 65,536-byte response
+cap, zero retries, and exactly one network request. HTTP 200 returned ten
+normalized rows for one Yes outcome token with `has_more=true`. A temporary
+8 MiB Frontier store read-back verified the raw and normalized observation
+before the store was discarded. The raw SHA-256 is
+`8923bbf6cff2262344ba7b14c923866bace1e46139bd790cedaa758195e6a174`, the
+store row SHA-256 is
+`65b172aff5ddbfba0c5e43d2952567028ec11a8ce210d44ea11b40732958bbda`, and the
+pre-hash manifest SHA-256 is
+`d970fce4cb0f4e48995b066ac1114d1c8c519be72eeaca54158cae65db664198`; the
+serialized artifact SHA-256 is
+`e5f400db64aeb000a688889eee4649a8e82ec061638dbe997e5b735dc423dc71`. This is
+one public trade-print page, not depth or a cross-venue opportunity. Fixture
+API tests also cover two-page persistence and read-back.
+
+At `2026-10-26T23:02:48.888920Z`–`23:02:49.046817Z`, the isolated local API
+accepted the first page's opaque cursor bound to the same condition and page
+size, then made exactly one unauthenticated v2 GET with retries disabled and a
+65,536-byte cap. It returned HTTP 200 and ten more trades on the same Yes token;
+all ten transaction IDs were distinct from page one. The page and normalized
+v2 batch were read back from a temporary 8 MiB store. Raw SHA-256:
+`a2790da7bb4ea1faafe118562818b9de95b400b6f21d55b2bf3cb0697245fa32`; store-row
+SHA-256:
+`5197ee99f491e2970d3656ae394a5279a9a135335a7a60f45a377db4d1715e5a`; cursor
+SHA-256:
+`ccf6e9eaf39ba97a889068435cc8cb1283d99b40c1de81f81df9b56a5b320d98`; manifest
+SHA-256:
+`0d94b9c33555550cb2f72e895d6103bec1bf528561c7b9de246c27f0f81bb5ac`; artifact
+SHA-256:
+`d95c09da91bdf840a7b8fee693a32b14b5d47d8677307773c20ac8c26e7dc405`. The
+source returned another continuation cursor, but no third page was requested.
+
 Capture records and source-specific limitations are in
 [`data/frontier/live-probes/README.md`](../../data/frontier/live-probes/README.md).
 
@@ -130,6 +173,11 @@ Capture records and source-specific limitations are in
 - Backend focused regression after indexed adjacency: **56 passed** in 10.65 seconds pytest time; one upstream Starlette/httpx TestClient deprecation warning. `/usr/bin/time -v` measured 11.43 seconds wall, 3.97 seconds user CPU, 145,560 KiB peak RSS, and zero socket messages.
 - Latest focused backend regression: **59 passed** in 11.11 seconds pytest time; one upstream Starlette/httpx TestClient deprecation warning. `/usr/bin/time -v` measured 11.89 seconds wall, 4.03 seconds user CPU, 145,936 KiB peak RSS, and zero socket messages. Added timeout retry and truncated-stream no-partial-evidence tests. Ruff and format checks passed for both changed test files.
 - Current focused backend regression: **63 passed** in 15.59 seconds pytest time; one upstream Starlette/httpx TestClient deprecation warning. `/usr/bin/time -v` measured 16.38 seconds wall, 4.75 seconds user CPU, 148,684 KiB peak RSS, and zero socket messages. The 501-edge fixture test took 3.76 seconds (4.35 seconds total process wall, 1.12 seconds user CPU, 65,756 KiB RSS), including candidate construction, row insertion, and a 500-row page read; this is not an isolated query-latency benchmark.
+- Latest v2 cursor/trade-schema verification: full `tests/frontier` passed **59 tests** in 14.52 seconds pytest time. `/usr/bin/time -v` measured 15.00 seconds wall, 3.25 seconds user CPU, 110,952 KiB peak RSS, zero socket messages, and no swaps; one existing Starlette/httpx deprecation warning remained. Ruff check/format passed, and mypy passed for 16 Frontier/API source files.
+- Legacy adapter/API regression after additive trade fields: **10 passed** in 2.37 seconds pytest time / 3.09 seconds wall, 2.53 seconds user CPU, 121,420 KiB peak RSS, zero socket messages.
+- Latest frontend regression: **36 passed across 7 files**; typecheck, lint and Prettier passed. The production build passed; Frontier lazy chunks are 51.60 kB JS and 25.46 kB CSS. Vite retains the existing >500 kB warning on the 503.86 kB main and 544.41 kB Chart chunks.
+- Latest Frontier browser run: **2 passed** in 6.3 seconds with one worker, including explicit first/next v2 trade-page UI flow and desktop/mobile relationship graph interactions. UI source requests are fixture-backed; this was not a browser-to-live-source test.
+- A direct Polymarket Data API v2 first-page capture and one continuation page through the local API each returned 10 rows/HTTP 200 in exactly one request, without retries, and verified raw plus normalized temporary-store read-back. The 20 native trade IDs are disjoint. The second page still advertised a next cursor; no third page was requested.
 - Ruff check and format check: passed for the Frontier package and test files.
 - Mypy: passed for 16 Frontier/API source files. A broader `mypy packages/midas/frontier apps/api` attempt reported 37 errors in eight unchanged Veritas/Arena/API files; none was in Frontier source.
 - Frontend tests: **35 passed across 7 files** after adding incomplete-scan messaging coverage; typecheck, lint and Prettier check passed.
@@ -147,14 +195,14 @@ Reproduction commands and environment boundaries are in
 | --- | --- | --- |
 | Verified isolated baseline and worktree | COMPLETE AND VERIFIED | Separate branch from `11d32a0`; unrelated dirty trees preserved. |
 | Adapter protocol, capability inventory, bounded GET transport | COMPLETE AND VERIFIED | Contract tests; all capabilities explicitly declared; no startup request. |
-| Polymarket, Kalshi and Kraken Spot implementations | PARTIALLY VERIFIED | Fixture tests and one bounded live listing/book/trade-to-store round trip per venue pass; Polymarket fee parser accepts the supported taker exponent-1 schedule, rejects exponent 2, and one genuine Gamma listing recorded a five-minute verified zero-fee observation. Kalshi series fee resolution and Kraken account fee tier remain unknown; live degraded-source behavior remains unverified. Mock tests cover invalid JSON/UTF-8, HTTP 503, timeout, truncated stream, 2xx schema failure, source isolation, and health recovery. Oversized/partial bodies do not enter complete-response evidence. |
-| Canonical normalization and native evidence | PARTIALLY VERIFIED | Distinct event, conditional event and spot forms; some semantics intentionally unverified. |
+| Polymarket, Kalshi and Kraken Spot implementations | PARTIALLY VERIFIED | Fixture tests and one bounded live listing/book/trade-to-store round trip per venue pass. One direct Polymarket v2 first page and one API-route continuation returned ten rows each and were hash-verified through isolated stores, with distinct trade IDs. Polymarket fee parsing accepts only the supported taker exponent-1 schedule; one genuine Gamma listing recorded a five-minute verified zero-fee sample. Kalshi series and Kraken account fee applicability remain unknown; live degraded-source behavior remains unverified. |
+| Canonical normalization and native evidence | PARTIALLY VERIFIED | Distinct event, conditional event and spot forms; v2 Polymarket trades preserve token and outcome identity, while earlier v1 batches still load with those new fields unknown. Other settlement/payoff semantics remain intentionally unverified. |
 | Relationship matching, immutable review, indexed neighborhoods, and strict payoff verifier | PARTIALLY VERIFIED | Self-attributed review API/UI with stored source refs, append-only revisions, compare-and-set, latest-state replay, query-plan/migration tests, and 1–3 hop left/right indexed scans capped at 500 rows. Centered one-hop keyset pages bind listing/instrument-metadata observation, relationship, and review counts; changed inputs reject stale cursors. A 501-edge fixture verifies the scan cap. No authenticated reviewer/assertion, genuine equivalent pair, or multi-hop pagination. |
 | Economic candidate verifier and independent audit | PARTIALLY VERIFIED | Exact two-venue binary all-long coverage and same-market 3–16-state exhaustive one-hot coverage. A separate Decimal implementation recomputes supported candidate arithmetic from hash-pinned normalized inputs; controlled fixtures only, no genuine eligible event, independently authenticated market truth, or practical execution proof. |
 | Bounded store and deterministic replay | COMPLETE AND VERIFIED | Schema v5, additive v2/v3/v4 migration with preserved relationship payloads, append-only review/revision history, content integrity checks, persisted replay-v3 audit results, and tests that later review revokes earlier verified replay input. |
-| Frontier API and source configuration | COMPLETE AND VERIFIED | Local reads including hash-verified `/trades`, 1–3 hop indexed graph route with explicit scan accounting and revision-bound centered one-hop cursors, bounded writes, probes disabled by default, and list-read integrity checks. |
-| Live adapter-to-API listing, book, and trade persistence | PARTIALLY VERIFIED | Three genuine listings, books, and trade responses preserved with raw/normalized data and verified hashes; Kalshi book/trade arrays were empty, and sources are sequential. |
-| Mission Control Frontier workspace | IMPLEMENTED, LIVE VALIDATION PENDING | Native view, recorded trade table, candidate audit details, bounded-graph scan disclosure, 30-edge centered one-hop pagination, and responsive E2E tested against isolated API; not deployed. |
+| Frontier API and source configuration | COMPLETE AND VERIFIED | Local reads include hash-verified v1/v2 trades and page metadata. A v2 POST is capability/config/recorded-market gated, bounded to one cursor page and retries, and rejects condition/page-size cursor mismatch. Two-page API persistence/read-back and no-egress mismatch rejection pass fixtures; one live continuation page also passed through the API route. |
+| Live adapter-to-API listing, book, and trade persistence | PARTIALLY VERIFIED | Three genuine listings, books, and legacy trade responses are hash-preserved; one direct v2 first page and one API-route continuation page were hash-read from isolated temporary stores with distinct trade IDs. The samples are sequential and no third page or time-series collection was attempted. Kalshi book/trade arrays were empty. |
+| Mission Control Frontier workspace | IMPLEMENTED, LIVE VALIDATION PENDING | Native view now gates manual first/next Data API v2 pages on the source flag and capability, shows raw/normalized evidence hashes, and retains token/outcome identity. Unit and desktop/mobile E2E cover fixture pages; the workspace is not deployed. |
 | Laboratory/Arena research orchestration | DEFERRED | Navigation links only; no Frontier experiment job type/scheduler. |
 | Persistent source collection, streaming and broad historical replay | DEFERRED | No background worker or long-duration campaign. |
 | Cross-venue FX, comprehensive capital and settlement costs | DEFERRED | Unknown costs remain unknown and block decisive net economics. |
@@ -172,8 +220,11 @@ the same normalized evidence and cannot authenticate source truth. Review labels
 and external assertion IDs are self-attributed and not authenticated or fetched.
 The highest-value next steps are:
 
-1. Extend API-boundary tests for live degraded-source recovery and trade
-   pagination. Mock tests cover bounded timeout retries, oversized-response
+1. Expand API-boundary degraded-source and recovery validation if a distinct
+   useful failure condition can be established safely. The direct adapter first
+   page and one live API-route continuation are captured; do not request more
+   pages merely to increase counts. Live degraded-source recovery remains
+   unverified. Mock tests cover bounded timeout retries, oversized-response
    rejection, truncated-stream evidence rejection, and retry-after/HTTP failure
    capture; no live source is intentionally degraded.
 2. Extend revision-bound pagination to multi-hop traversal only if a bounded
@@ -194,8 +245,8 @@ The highest-value next steps are:
 Do not connect Frontier to Reality’s recorder, enable probes as a default,
 deploy, or alter protected evidence as part of ordinary continuation. The next
 safe work is genuine public multi-outcome term investigation, Kalshi series fee
-resolution, stronger API-boundary degraded-source tests, bounded trade
-pagination, and short resource-admitted Arena/Laboratory replay integration.
+resolution, stronger API-boundary degraded-source tests, and short
+resource-admitted Arena/Laboratory replay integration.
 
 ## Latest checkpoint identity
 
@@ -212,4 +263,10 @@ evidence behavior and current test commands. Transport failure evidence is
 capture behavior. The retry-limit regression is
 `294cc6dd8be39eed6a03ebc1fcc4ae5c42bab548`. Documentation checkpoint
 `dbdd7c76654f6958a821be2897062212708bf884` records the 54-test verification and
-updated measurements. The revision-bound relationship paging backend is `89eff8b5b3594ca45c4f90be016a2066d5a5c688`; the Mission Control page controls and browser coverage are `711a563f3b99665e2f635d4c66e286bee93f4d38`. This ledger amendment pins the current checkpoint.
+updated measurements. The revision-bound relationship paging backend is
+`89eff8b5b3594ca45c4f90be016a2066d5a5c688`; the Mission Control page controls
+and browser coverage are `711a563f3b99665e2f635d4c66e286bee93f4d38`. Polymarket
+v2 page support is `67f79cde6b37ac51c226c4338196a1b2482e37aa`; the Mission
+Control continuation is `7c6cc21764d124f61211b79299335d78e8260c69`. The
+evidence/report commit and its final ledger checkpoint will be recorded in the
+next ledger revision.

@@ -116,6 +116,15 @@ before graph or replay processing. `GET /api/frontier/graph` offers one-to-three
 hop neighborhoods from a recorded market, capped at 200 source markets and 500
 scanned effective edges; this remains a bounded recent-window traversal rather
 than a large-universe graph index.
+
+Polymarket additionally exposes an explicit, one-page-at-a-time v2 public trade
+capture route. Schema-v2 trade records retain condition, token, outcome, and
+transaction identities; an opaque source cursor is wrapped with the requested
+condition and page size before the API accepts a continuation. The page repeats
+the source filters, and no walk starts automatically. One direct first page and
+one continuation through the local API route have bounded, hash-pinned public
+evidence; this does not establish full history, depth, synchronized pricing,
+or execution. Kalshi and Kraken do not advertise this page capability.
 When a bounded probe receives a decoded 2xx response that fails normalization,
 the raw body and typed source-failure diagnostic are stored and the API returns
 the observation ID. Complete within-cap invalid JSON and non-2xx bodies are also

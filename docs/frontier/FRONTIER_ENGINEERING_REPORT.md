@@ -1,6 +1,6 @@
 # Project Frontier Engineering Report
 
-**Report date:** 2026-10-26
+**Report date:** 2026-10-27
 
 **Branch:** `codex/frontier-20261026`
 
@@ -18,8 +18,15 @@ SQLite evidence store, relationship hypotheses and append-only review revisions,
 an explicit payoff-equivalence check, two narrow Decimal opportunity evaluators,
 deterministic replay, local API routes, and a native Mission Control workspace.
 
-The three adapters are implemented and fixture/contract tested. Bounded live
-round trips through each adapter and the Frontier probe API persisted one
+The three adapters are implemented and fixture/contract tested. Polymarket also
+has an explicitly triggered, cursor-paginated Data API v2 trade-page path that
+preserves outcome token identity through normalized storage. One genuine v2
+first page was captured directly, then one continuation page was captured
+through the isolated Frontier API route using its opaque source cursor. Each
+made one public GET, returned ten trades, and was hash-verified through a
+temporary store. Their trade IDs did not overlap. No third page was requested.
+Bounded live round trips through each adapter and
+the Frontier probe API persisted one
 listing per venue, then one listing plus at most one book per venue, and most
 recently one listing, one book, and up to ten public trades per venue, to
 separate temporary SQLite stores. The raw responses and normalized read-backs
@@ -112,7 +119,7 @@ submission route.
 
 | Venue | Implemented public research | Preserved distinctions and limits | Live evidence |
 | --- | --- | --- | --- |
-| Polymarket | Gamma market discovery; CLOB books; public trades; native token/condition/event IDs; existing strict market normalization and supported fee-shape handling | Event outcomes are not marked payoff-verified; settlement asset and resolution meaning are not independently attested; no incremental stream or candle normalization; fee schedules expire after five minutes and unsupported exponents remain unknown | Bounded live API capture persisted one listing, one book, and ten trades with hash-verified raw/read-back evidence. A separate one-market listing captured a market-specific `zero_fees` schedule at 20:41:18.972060Z, with `feesEnabled=true`, exponent 1, taker-only, rate 0; normalized status was verified only through 20:46:18.972Z. The older Gamma fixture exercises rate 0.04. |
+| Polymarket | Gamma market discovery; CLOB books; legacy public trades; cursor-paginated Data API v2 trade pages; native token/condition/event IDs; strict market normalization and supported fee-shape handling | Event outcomes are not marked payoff-verified; settlement asset and resolution meaning are not independently attested; no incremental book stream or candle normalization; fee schedules expire after five minutes and unsupported exponents remain unknown; v2 condition history is fixed to three years and page capture uses taker-only trades with a 0.01-share floor | Earlier live API evidence persisted one listing, one book, and ten trades through the older trade path. A direct v2 first page and one continuation through the local API route each returned ten rows and were hash-verified via isolated stores; no third page was requested. A separate one-market listing captured a market-specific `zero_fees` schedule at 20:41:18.972060Z, with `feesEnabled=true`, exponent 1, taker-only, rate 0; normalized status was verified only through 20:46:18.972Z. |
 | Kalshi | Public market discovery, market metadata, binary YES/NO instruments, public book snapshots and trades; retains native rules, status, timestamps and market fields | MVE metadata is classified as conditional; asks derived from complementary YES/NO bids where applicable. Fee applicability is unknown in adapter v1. No stream or historical-candle normalization. | Bounded live API capture persisted one listing, an empty book, and a valid empty trade response. The book had no unified exchange snapshot timestamp. |
 | Kraken Spot | Configured-pair AssetPairs metadata; public depth, trades and OHLC; pair tick/lot/minimum fields retained | Spot is a base/quote instrument, not an event payoff. Fee tier, account eligibility, custody, and event hedge semantics are unknown. Pair discovery is an explicit allowlist. | Bounded live API capture persisted XBT/USD metadata, depth with 10 asks/10 bids and per-level timestamps, and ten trades. No prediction-contract equivalence was found. |
 
@@ -137,6 +144,23 @@ after five minutes. Tests verify both a nonzero fixture schedule and rejection
 of an exponent-2 schedule. The October 26 live capture was a single zero-fee
 market, not a venue-wide fee survey. Gamma market details expose market-specific
 fee fields ([Market Details](https://docs.polymarket.com/market-data/market-details)).
+
+The public [Polymarket Data API v2](https://data-api.polymarket.com/v2/docs)
+trade feed uses an opaque cursor-only keyset envelope. A condition query is
+limited to a fixed three-year window; its cursor carries the seek anchor and
+page size, so Frontier resends the same condition and trade filters on every
+page. The implementation makes one explicit GET per requested page, capped at
+100 rows, and preserves each row's token ID, outcome label/index, transaction
+hash, share quantity, price, and block timestamp. Source wallet/profile fields
+are retained only in the bounded raw response, not normalized into Frontier's
+trade record. The wrapper cursor binds the source cursor to the condition and
+page size; it is not a wallet or account token. Two-page cursor behavior,
+filter stability, raw/normalized persistence, malformed-cursor rejection, and
+market mismatch handling pass fixtures. One direct ten-row first page and one
+ten-row continuation through the local API route were also captured live and
+hash-verified. The second page advertised another cursor; no third page or full
+history walk was requested. Earlier ten-trade samples used the legacy public
+trades path.
 
 Kalshi's public series metadata exposes `fee_type` and `fee_multiplier`, but the
 adapter does not yet resolve those fields through the effective market/series
@@ -322,7 +346,7 @@ SHA-256, normalized record (or a bounded `SourceFailureRecord` when a decoded
 response fails normalization), adapter and source-schema version, and observation
 identity. Probe error responses return the diagnostic observation ID, and the
 failure remains available through the hash-verified observation read. Invalid
-Complete bounded invalid-JSON and non-2xx responses are stored as source-failure
+JSON and non-2xx responses are stored as source-failure
 observations; invalid UTF-8 bodies use base64 while retaining the original-byte
 hash. Oversized or partial response bodies are not stored. Replay consumes only
 stored data, fixes source observation IDs,
@@ -332,11 +356,24 @@ called from replay. Replay version 3 includes each candidate's independent audit
 disposition and its input hash. The store has no compaction/retention worker; once the cap is
 reached, writes fail closed and require an explicitly reviewed storage policy.
 
+Polymarket v2 trade pages are each stored as one raw observation plus one
+`TradeBatch` schema-v2 record. The record retains the source cursor and next
+cursor, condition ID, page limit, and exact `has_more` state; every normalized
+trade carries its token ID, outcome label/index, transaction hash, price, share
+quantity, and block time. Existing schema-v1 trade batches remain readable and
+their new optional instrument fields resolve as unknown. The local continuation
+cursor wraps the source cursor with its condition/page-size binding, so the API
+can reject a cursor replayed against a different recorded condition or page
+size. Read-back returns page metadata together with the trade rows, allowing the
+UI to continue from saved evidence without an automatic source crawl.
+
 The committed public captures are
 `data/frontier/live-probes/2026-10-26-public-source-probe.json`,
 `...-r2.json`, `...-frontier-api-live-validation.json`, and
-`...-frontier-api-books.json`, and `...-frontier-api-trades.json`. They contain raw response bodies and no
-credentials or mutating requests. The API book run used zero retries, an
+`...-frontier-api-books.json`, `...-frontier-api-trades.json`,
+`...-polymarket-v2-trade-page.json`, and
+`...-polymarket-v2-api-continuation.json`. They contain raw public response bodies
+and no credentials or mutating requests. The API book run used zero retries, an
 8-second timeout, a 65,536-byte response cap, at most two HTTP requests per
 venue, and an 8 MiB temporary store. Its envelope SHA-256 is
 `101094b56c3dc620f8f66b423c92b5796db0a57852a5f7807aab50b2af956d60`; all six
@@ -351,6 +388,22 @@ empty array. All nine raw-body hashes and envelope hash
 recomputed, and API read-back counts matched. The largest body was 68,758
 bytes. No fee endpoint was called.
 
+The v2 trade page was requested directly through the Polymarket adapter at
+`2026-10-26T22:56:38.585296Z`–`2026-10-26T22:56:38.728359Z`, for a condition
+already in the saved listing. One public GET (limit 10, zero retries,
+65,536-byte cap) returned HTTP 200 and ten rows, all for the same Yes outcome
+token, with a continuation cursor. Its raw hash is
+`8923bbf6cff2262344ba7b14c923866bace1e46139bd790cedaa758195e6a174`; the
+temporary-store row hash is
+`65b172aff5ddbfba0c5e43d2952567028ec11a8ce210d44ea11b40732958bbda`; and the
+manifest hash is
+`d970fce4cb0f4e48995b066ac1114d1c8c519be72eeaca54158cae65db664198`; the
+serialized artifact hash is
+`e5f400db64aeb000a688889eee4649a8e82ec061638dbe997e5b735dc423dc71`. A bounded
+continuation page through the local API route is also preserved below. The two
+pages do not establish venue-wide trade coverage, order-book depth, or
+cross-venue equivalence.
+
 ## 10. Laboratory and Arena integration
 
 No new long-running campaign or background worker was launched. The Frontier
@@ -363,8 +416,8 @@ Frontier’s own API and test fixtures only.
 ## 11. Dashboard implementation
 
 Frontier is integrated into the existing React Mission Control navigation and
-visual style. It has overview, exchanges, markets/books/trades, relationship evidence,
-candidate, virtual economic workbench, replay and readiness sections. It reads
+visual style. It has overview, exchanges, markets/books/trades, relationship
+evidence, candidate, virtual economic workbench, replay and readiness sections. It reads
 real local Frontier API responses; the empty-state screenshot used isolated
 temporary storage and shows zero captured evidence. The workspace has distinct
 offline, empty, unsupported, disabled-probe, stale/error, and degraded states.
@@ -372,7 +425,12 @@ Source health is separated from observation age. The source controls do not
 probe automatically; a capture is explicit and unavailable unless the specific
 source flags are enabled. Responsive browser verification covered the empty
 workspace at 1440px/390px and fixture-only graph selection, center-market
-keyset page navigation, and review submission at desktop/mobile widths. The API
+keyset page navigation, review submission, and a first/next Polymarket trade-page
+flow at desktop/mobile widths. Trade capture is disabled in the interface unless
+the source advertises the capability and its explicit probe flag is enabled. The
+condition selector uses only markets in saved listing evidence; each click
+requests one page and the UI shows its observation/raw hashes and request bound.
+The API
 graph query is bounded to 200 source markets, 500 scanned relationship rows per
 request, and 1–3 hops; centered one-hop traversal uses left/right endpoint
 indexes and revision-bound cursors, and the visual network caps at 18 edges.
@@ -398,6 +456,11 @@ Verification on this branch:
 - Production frontend build passed. Frontier is lazy-loaded as a 49.11 kB JavaScript chunk and 24.74 kB CSS. Vite emitted the existing large-chunk warning for 503.86 kB main and 544.41 kB Chart chunks.
 - Frontier browser cases: **2 passed** in 6.5 seconds, including empty state, fixture-only keyset page navigation, center-market graph review, and independent audit details at desktop/mobile sizes. The full 10-case browser suite was attempted earlier; 8 passed and 2 existing Laboratory cases were denied at the host-wide Arena admission lock (`resource_admission_lock_busy`). Neither case started an experiment, and the shared lock was not bypassed. The isolated API tests use a temporary root and never enable source probes.
 - Legacy regression evidence: focused integration adapter contracts and the existing offline API workflow/persistence acceptance test passed. The complete repository Python suite was not run.
+- Latest `tests/frontier` run after paginated trade and outcome-instrument changes: **59 passed** in 14.52 seconds pytest time; `/usr/bin/time -v` measured 15.00 seconds wall, 3.25 seconds user CPU, 110,952 KiB peak RSS, zero socket messages, and no swaps. One upstream Starlette/httpx TestClient deprecation warning remains.
+- Legacy adapter and offline API regression after additive `TradeObservation` fields: **10 passed** in 2.37 seconds pytest time / 3.09 seconds wall, 2.53 seconds user CPU, 121,420 KiB peak RSS, zero socket messages.
+- Latest frontend suite: **36 passed across 7 files**; TypeScript typecheck, ESLint, and Prettier checks passed. Frontier's built chunks are 51.60 kB JavaScript and 25.46 kB CSS; the pre-existing main/Chart chunks remain above Vite's 500 kB warning threshold.
+- Latest Frontier Playwright run: **2 passed** in 6.3 seconds with one worker. It includes explicit first/next trade-page UI continuation against fixtures; it does not imply a live browser/API source run.
+- Live v2 source checks: one unauthenticated direct first-page GET and one continuation GET invoked through `POST /api/frontier/probe/polymarket/trades`; each made one request without retries, returned HTTP 200 and ten trades, and had raw plus normalized temporary-store read-back hashes pinned. Their 20 native trade IDs are distinct. No third page was requested.
 
 Backend tests emitted one upstream Starlette/httpx TestClient deprecation
 warning. No tests modified legacy expectations to make them pass. Fixture network
@@ -422,6 +485,14 @@ Frontier browser cases ran serially with one worker and completed in 6.5
 seconds. No service or persistent Frontier worker was started. The host and
 protected service cgroups were not treated as spare Frontier capacity based on
 this process-local test measurement.
+
+The latest full `tests/frontier` run with v2 trade pages and preserved
+outcome-token fields passed 59 tests in 15.00 seconds wall time, used 3.25
+seconds user CPU, and peaked at 110,952 KiB RSS with zero socket messages and no
+swaps. The legacy adapter/offline-API regression passed 10 tests in 3.09 seconds
+wall time at 121,420 KiB peak RSS. Frontier browser cases ran serially with one
+worker and completed in 6.3 seconds. These are isolated verification jobs, not a
+production capacity guarantee.
 
 ## 14. Actual scientific findings
 
@@ -451,6 +522,31 @@ was 68,758 bytes. The envelope hash is
 `ca72a2aa2095ae02660f0ea23c0a6e94019929bd7d1e174b0446673637e04570`; all nine
 raw-body hashes were independently recomputed. Trade prints do not establish
 available depth, matched timestamps, or executable fills.
+
+At `2026-10-26T22:56:38.585296Z`–`22:56:38.728359Z`, a separate direct adapter
+probe requested exactly one Polymarket Data API v2 page for a condition in the
+saved listing. The 10-row request used a 65,536-byte response bound and zero
+retries; it returned HTTP 200, ten rows, and a continuation cursor. All ten rows
+mapped to the same Yes token. The raw body and normalized batch were read back
+from an isolated temporary store and hash-verified.
+
+At `2026-10-26T23:02:48.888920Z`–`23:02:49.046817Z`, the isolated local
+Frontier API accepted that condition/page-bound cursor and made exactly one
+unauthenticated continuation GET with retries disabled. HTTP 200 returned ten
+more trades for the same Yes token and another continuation cursor. None of the
+ten native trade IDs overlapped the first page. The raw body and normalized
+batch were read back from the temporary 8 MiB store. Its raw SHA-256 is
+`a2790da7bb4ea1faafe118562818b9de95b400b6f21d55b2bf3cb0697245fa32`, stored
+row SHA-256 is
+`5197ee99f491e2970d3656ae394a5279a9a135335a7a60f45a377db4d1715e5a`, source
+cursor SHA-256 is
+`ccf6e9eaf39ba97a889068435cc8cb1283d99b40c1de81f81df9b56a5b320d98`, and
+serialized artifact SHA-256 is
+`d95c09da91bdf840a7b8fee693a32b14b5d47d8677307773c20ac8c26e7dc405`.
+Both live pages contain public trade prints for one outcome token. This bounded
+two-page observation verifies the local API continuation path, not a complete
+history walk, order-book depth, cross-venue equivalence, synchronization, or
+execution.
 
 The earlier one-market Gamma capture at `2026-10-26T20:41:18.972060Z` included
 `feesEnabled=true`, `feeType=zero_fees`, and a market fee schedule with exponent
@@ -489,7 +585,9 @@ No active code/test blocker is known in the implemented subset. Major acceptance
 gaps are deferred work, not hidden passed checks:
 
 - Live API-to-store validation covered one listing, one book, and at most ten
-  trades per venue for one selected market. Fee endpoints, trade pagination,
+  legacy trades per venue. One direct v2 first page and one API-route
+  continuation page were hash-verified; no third page, full history walk, or
+  live browser-to-source session was run. Fee endpoints,
   live retries/degradation, timeouts, repeated schema variation, and book
   freshness across a time series remain unverified. Deterministic API tests cover
   complete invalid-JSON, invalid-UTF8, HTTP 503 and 2xx schema-failure evidence,
@@ -537,9 +635,10 @@ Reality recorder.
 
 Priority order:
 
-1. Broaden API-boundary degraded-source coverage and add trade-pagination tests;
-   timeout retries, oversized responses, and truncated streams now have bounded
-   failure-path tests.
+1. Broaden v2 source validation only for a concrete unanswered behavior. One
+   direct first page and one API-route continuation now have live, hash-pinned
+   evidence; do not continue fetching pages just to grow the sample. Broaden
+   degraded-source evidence only through a short bounded probe.
 2. Extend revision-bound pagination to multi-hop graph traversal only if a
    bounded cursor can preserve breadth-first ordering; add full-universe search
    and clustering only after representative data and measurements exist.
@@ -609,6 +708,25 @@ Code commits on this branch:
 - `872466e8eaa499ef4af8186c27757323153704e8` — surfaced the bounded graph
   scan count and incomplete-neighborhood state in Mission Control with a UI
   regression assertion.
+- `cbd6dedb582c516f78003813b7308a677be72fb2` — documented indexed graph
+  traversal, source limits, and updated architecture/development guidance.
+- `49ee6a6c3cb172f0631db7c30ca5aebfa5b3119e` — checkpointed indexed graph
+  measurements and remaining scale limits in the mission ledger.
+- `aa2a001c8ebbb4d7c8e5681c698611d28163238f` — tested supported Polymarket
+  fee shapes, bounded retry behavior, and truncated-stream evidence rejection.
+- `5a38586988ffb517e3c9f29b6076c6a265e034e6` — documented narrow fee evidence
+  and bounded response-failure coverage.
+- `89eff8b09dcd82161162b2ff6174f1e840a710d5` — implemented bounded,
+  revision-bound graph keyset pages and stale-cursor tests.
+- `711a5639ba165d966ac8149625bba7adef7ae569` — added Mission Control graph
+  continuation controls and desktop/mobile coverage.
+- `58fe77ba8d6030798e8a70629ca863f988c8fabb` — updated graph architecture,
+  development notes, and the engineering report.
+- `67f79cde6b37ac51c226c4338196a1b2482e37aa` — added Polymarket v2 cursor
+  pages, outcome-token-preserving schema v2, bounded API persistence, and
+  adversarial cursor/page tests.
+- `7c6cc21764d124f61211b79299335d78e8260c69` — added source-config-gated
+  Mission Control page controls, outcome identity display, and UI/browser tests.
 
 Principal changed paths:
 
@@ -636,21 +754,21 @@ cross-venue economics.
 | --- | --- | --- |
 | Isolated baseline/worktree and preserved unrelated changes | COMPLETE AND VERIFIED | Branch starts at verified V6 commit; original dirty worktrees untouched. |
 | Adapter protocol, capability registry, bounded GET transport | COMPLETE AND VERIFIED | Contract tests, all capability declarations, host/size/rate/redirect bounds. |
-| Polymarket, Kalshi and Kraken Spot adapters | PARTIALLY VERIFIED | Fixture/contract tests and one live listing/book/trade-to-store round trip per venue pass; Polymarket supports only the strict taker exponent-1 fee schedule and one live Gamma sample had verified zero fees for five minutes. Kalshi series and Kraken account fee applicability remain unknown. Mock tests cover invalid JSON/UTF-8, HTTP 503, timeout, truncated streams, schema-failure evidence, capped retries, source isolation, and recovery; live degraded-source behavior remains unverified. |
-| Canonical market/instrument normalization | PARTIALLY VERIFIED | Three distinct instrument classes represented; live lineage and several economic semantics remain unverified. |
+| Polymarket, Kalshi and Kraken Spot adapters | PARTIALLY VERIFIED | Fixture/contract tests and one live listing/book/legacy-trade API round trip per venue pass. A direct Polymarket v2 first page and one continuation page through the local API route each returned ten rows and were hash-verified via temporary storage; no third page was requested. Polymarket fee evidence is narrow; Kalshi series and Kraken account fee applicability remain unknown. Mock tests cover invalid JSON/UTF-8, HTTP 503, timeout, truncated streams, schema-failure evidence, capped retries, source isolation, and recovery; live degraded-source behavior remains unverified. |
+| Canonical market/instrument normalization | PARTIALLY VERIFIED | Three distinct instrument classes are represented; v2 Polymarket trades retain native outcome-token identity. Live lineage and several payoff/settlement semantics remain unverified. |
 | Relationship hypotheses, review revisions, indexed neighborhoods, and explicit same-payoff verifier | PARTIALLY VERIFIED | Self-attributed review API/UI, append-only revisions, latest-state replay, tamper/migration checks, left/right endpoint-indexed 1–3 hop scans capped at 500 rows, revision-bound centered one-hop keyset pages, stale-cursor rejection, and a 501-edge scan-bound test; no genuine equivalent pair, reviewer authentication, or multi-hop pagination. |
 | Opportunity candidate and independent economic checks | PARTIALLY VERIFIED | Two-venue all-long binary and same-market 3–16 state one-hot exhaustive coverage, with a separate pinned-input arithmetic audit; controlled fixtures only, with source semantics, fees, broader costs and operational feasibility incomplete. |
 | Append-only evidence store and deterministic replay | COMPLETE AND VERIFIED | Schema v5, v2/v3/v4 additive migration, bounds, hash validation, immutability, replay tests; not integrated as an Arena campaign. |
-| Live market/book/trade observations through adapters and API | PARTIALLY VERIFIED | One bounded listing, book, and trade response per venue is hash-pinned; samples are not synchronized and do not establish a continuous source feed. Kalshi's trade array was valid but empty. |
+| Live market/book/trade observations through adapters and API | PARTIALLY VERIFIED | One bounded listing, book, and legacy trade response per venue is hash-pinned; a v2 Polymarket first page and API-route continuation page were hash-pinned via isolated-store read-back, with distinct trade IDs. Samples are not synchronized and do not establish continuous feed coverage or a third page. Kalshi's legacy trade array was valid but empty. |
 | Source workers and broad historical data | DEFERRED | No persistent worker or long-duration collection. |
 | Laboratory/Arena research orchestration | DEFERRED | Workspace navigation and deterministic Frontier replay only. |
-| Native Mission Control workspace | PARTIALLY VERIFIED | Local API, bounded graph/review UI with centered one-hop pages, unit tests, desktop/mobile E2E; production deployment not done. |
+| Native Mission Control workspace | PARTIALLY VERIFIED | Local API, bounded graph/review UI, and source/capability-gated explicit Polymarket first/next trade-page controls; unit and desktop/mobile E2E use fixtures. Production deployment and live browser-to-source validation are not done. |
 | Production readiness/deployment | DEFERRED | Separate review and authorization required; production eligibility is false. |
 | Positive economic result | NOT ESTABLISHED | No genuine cross-venue equivalent or economically eligible result in captured evidence. |
 
 To continue safely, use this worktree and branch. Next broaden API-boundary
-degraded-source behavior and trade pagination; resolve Kalshi series fee
-applicability without guessing; search for public multi-outcome metadata that
+degraded-source behavior; resolve Kalshi series fee applicability without
+guessing; search for public multi-outcome metadata that
 meets the strict payoff and resolution evidence requirements without loosening
 attestation; extend bounded graph paging to multi-hop only if traversal order can
 remain reproducible; then connect short, resource-admitted deterministic jobs

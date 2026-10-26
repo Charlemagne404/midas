@@ -13,6 +13,13 @@ can be replayed; each capture contains a SHA-256 over its pre-hash manifest.
 | `2026-10-26-frontier-api-live-validation.json` | One live listing request through each Frontier adapter and `/api/frontier/probe/{venue}`, persisted to a temporary SQLite store and read back through the evidence API. All three returned HTTP 200 and one normalized market. |
 | `2026-10-26-frontier-api-books.json` | One listing plus at most one book through each Frontier adapter/API route; all three returned HTTP 200 and persisted their normalized snapshots to a temporary store. |
 | `2026-10-26-frontier-api-trades.json` | One listing, at most one book, and up to ten public trades through the Frontier API for each venue; all three returned HTTP 200 and were read back from a temporary store. |
+| `2026-10-26-polymarket-v2-trade-page.json` | One direct, unauthenticated Data API v2 first page for a condition already present in the saved public listing; one GET, ten normalized trades, and hash-verified temporary-store read-back. |
+| `2026-10-26-polymarket-v2-api-continuation.json` | One continuation page for that condition through the isolated Frontier API route; one unauthenticated GET, ten normalized trades, and hash-verified temporary-store read-back. Its ten transaction IDs do not overlap the first page. |
+
+The earliest direct source-probe files contain five HTTP 200 responses:
+Kalshi market listing and later book, Kraken pair metadata and depth, and a
+Polymarket Gamma event listing. Later API round trips and the two v2 pages are
+enumerated separately below.
 
 The Kalshi market returned as `market_type=binary` also carried
 `mve_collection_ticker` and multiple `mve_selected_legs`. Frontier therefore
@@ -63,3 +70,45 @@ within the configured bound. Requests were sequential across venues and
 timestamp semantics differ; these records do not imply synchronized quotes or
 fills. No fee endpoint was called. Trade captures and books are public
 observations, not profitability evidence.
+
+The Data API v2 first-page probe ran at
+`2026-10-26T22:56:38.585296Z`–`22:56:38.728359Z`. It used the previously
+recorded condition `0xd5d9fc47718bd553592d126b1fa5e87183d27f3936975b0c04cc0f2dec1f1bb4`,
+a 10-row page limit, a 65,536-byte response cap, and zero retries. Exactly one
+GET returned HTTP 200 with ten normalized trades and `has_more=true`; all ten
+rows referred to one Yes outcome token. The adapter persisted one raw and
+normalized observation in an isolated temporary 8 MiB Frontier store and its
+hash-verified read-back was preserved. The response raw-body SHA-256 is
+`8923bbf6cff2262344ba7b14c923866bace1e46139bd790cedaa758195e6a174`; the
+temporary-store row SHA-256 is
+`65b172aff5ddbfba0c5e43d2952567028ec11a8ce210d44ea11b40732958bbda`; and the
+pre-hash manifest SHA-256 is
+`d970fce4cb0f4e48995b066ac1114d1c8c519be72eeaca54158cae65db664198`; the
+serialized artifact SHA-256 is
+`e5f400db64aeb000a688889eee4649a8e82ec061638dbe997e5b735dc423dc71`. The
+manifest digest covers all fields except `envelope_sha256`, encoded as UTF-8
+JSON with sorted keys and compact separators. The first page is a single-source
+trade-print observation, not an order-book snapshot, cross-venue comparison, or
+execution result. One live continuation page through the API is recorded below.
+
+The bounded continuation probe ran at
+`2026-10-26T23:02:48.888920Z`–`23:02:49.046817Z`. It supplied the opaque
+cursor from the preceding captured page to the local
+`POST /api/frontier/probe/polymarket/trades` route. The route bound the cursor to
+the same condition and page size and made exactly one HTTPS GET, with zero
+retries and a 65,536-byte response cap. HTTP 200 returned ten more trades for
+the same Yes outcome token and another continuation cursor. Their ten native
+transaction IDs were disjoint from page one. The raw-body hash is
+`a2790da7bb4ea1faafe118562818b9de95b400b6f21d55b2bf3cb0697245fa32`, temporary
+store row hash is
+`5197ee99f491e2970d3656ae394a5279a9a135335a7a60f45a377db4d1715e5a`, cursor
+hash is
+`ccf6e9eaf39ba97a889068435cc8cb1283d99b40c1de81f81df9b56a5b320d98`, envelope
+manifest hash is
+`0d94b9c33555550cb2f72e895d6103bec1bf528561c7b9de246c27f0f81bb5ac`, and
+serialized artifact hash is
+`d95c09da91bdf840a7b8fee693a32b14b5d47d8677307773c20ac8c26e7dc405`. A further
+page was available, but the probe stopped after this one continuation request.
+The two pages demonstrate bounded cursor continuation and persistence; they do
+not constitute full history, market depth, synchronized quotes, or execution
+evidence.

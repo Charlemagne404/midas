@@ -105,7 +105,17 @@ view. One probe can capture one bounded listing, optionally one book, and at mos
 ten recent public trades for the first discovered market. `GET
 /api/frontier/trades` returns stored, hash-verified normalized prints with their
 source-observation IDs and raw hashes. A valid empty response remains an empty
-capture. The protected Reality recording and its evidence remain on separate
+capture. Polymarket also has an explicit `POST
+/api/frontier/probe/polymarket/trades` route that reads one v2 cursor page (up to
+100 rows) for a condition already present in the saved listing. The UI exposes a
+first-page and continuation action only when the Polymarket source and the
+paginated-trade capability are enabled. It reuses the same condition, page size,
+taker-only, and 0.01-share filters per page; condition queries expose a fixed
+three-year history window. No page walk or data fetch starts automatically.
+Normalized v2 rows retain token ID and outcome identity, while wallet profile
+fields remain only in the bounded raw source response. Trade prints are not
+order-book depth. Kalshi and Kraken do not currently claim the v2 page
+capability. The protected Reality recording and its evidence remain on separate
 roots.
 
 Relationship decisions use `POST /api/frontier/relationships/{id}/review`. The

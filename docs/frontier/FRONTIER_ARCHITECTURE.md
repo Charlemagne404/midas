@@ -166,9 +166,20 @@ hypotheses; `POST /relationships/{id}/review` records an immutable explicit
 decision; `POST /replay` writes a deterministic replay result; `POST /probe/{venue}`
 is rejected unless that source is enabled. An explicit bounded probe may capture
 one discovered listing page, one book, and up to ten public trades for the first
-market. `GET /trades` returns hash-verified normalized trades with their source
-observation and raw-body hash. The UI displays recorded trades as public prints,
-not as available depth or executable prices. Probe errors include diagnostic
+market. A separate explicit `POST /probe/polymarket/trades` captures exactly one
+Data API v2 keyset page (at most 100 rows) for a condition already in the bounded
+recorded listing window. Its local cursor binds that condition and page size;
+each request repeats the same taker-only and 0.01-share filter, and no cursor
+walk runs automatically. The [Polymarket Data API v2 docs](https://data-api.polymarket.com/v2/docs)
+define condition-filtered history as a fixed three-year window, so this is not
+full history. `GET /trades` returns
+hash-verified normalized trades with their source observation and raw-body hash;
+the v2 trade record preserves the native token ID and outcome fields alongside
+the condition and transaction hash. Wallet profile fields from source rows are
+not copied into normalized trades, while complete bounded raw responses remain
+available as auditable source evidence. Kalshi and Kraken explicitly do not
+advertise this cursor-page operation. The UI displays recorded trades as public
+prints, not as available depth or executable prices. Probe errors include diagnostic
 observation IDs when a captured response can be preserved. The Frontier page does not inherit the
 single-venue synthetic/demo banner. It shows source health separately from
 captured evidence age, renders an interactive three-column SVG network for at
