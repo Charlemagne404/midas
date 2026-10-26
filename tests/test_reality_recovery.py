@@ -106,6 +106,55 @@ def test_checkpoint_tail_replay_and_repeated_restart(tmp_path):
     assert status["segments_reconstructed"] == 0
 
 
+def test_new_empty_segment_before_checkpoint_prefix_keeps_accelerator(tmp_path, monkeypatch):
+    expected, catalog = archive(tmp_path)
+    legacy_identity = next(iter(recovery.COMPATIBLE_IMPLEMENTATIONS))
+    with monkeypatch.context() as scoped:
+        scoped.setattr(recovery, "implementation_identity", lambda: legacy_identity)
+        recovery.save(tmp_path, expected, catalog)
+
+    empty = tmp_path / "00000000000000000001-00000000000000000000000000000000.seg"
+    empty.write_bytes(storage.MAGIC)
+    storage.atomic_json(empty.with_suffix(".json"), storage.describe(empty))
+    current = manifest(tmp_path)
+    assert current["segments"][0]["file"] == empty.name
+    assert current["segments"][0]["count"] == 0
+
+    prefix_files = {segment["file"] for segment in catalog["segments"]}
+    hashed = []
+    original_hash = recovery.file_hash
+
+    def track_hash(path):
+        hashed.append(path.name)
+        return original_hash(path)
+
+    original_stream = storage._record_stream
+
+    def reject_checkpoint_decode(source, path, *args, **kwargs):
+        if path.name in prefix_files:
+            pytest.fail("checkpoint prefix must be hashed without decoding")
+        return original_stream(source, path, *args, **kwargs)
+
+    monkeypatch.setattr(recovery, "file_hash", track_hash)
+    monkeypatch.setattr(storage, "_record_stream", reject_checkpoint_decode)
+    actual, status = recovery.recover(tmp_path, current)
+
+    assert actual.__dict__ == expected.__dict__
+    assert status["mode"] == "checkpoint_and_verified_tail"
+    assert status["fallback_reason"] is None
+    assert status["prefix_segments_hashed"] == len(catalog["segments"])
+    assert hashed == [segment["file"] for segment in catalog["segments"]]
+    assert status["segments_reconstructed"] == 1
+    assert status["reconstructed_bytes"] == current["segments"][0]["bytes"]
+
+
+def test_checkpoint_match_rejects_new_nonempty_segment_before_prefix():
+    saved = [{"file": "saved.seg", "count": 1}]
+    current = [{"file": "new-before.seg", "count": 1}, saved[0]]
+    with pytest.raises(ValueError, match="inserted records before the checkpoint prefix"):
+        recovery._match_checkpoint_prefix(current, saved)
+
+
 @pytest.mark.parametrize(
     "fault", ["truncated", "checksum", "implementation", "prefix", "oversized"]
 )

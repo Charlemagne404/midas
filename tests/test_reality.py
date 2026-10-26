@@ -51,6 +51,55 @@ def ready():
     return e
 
 
+async def test_short_startup_persists_and_recovers_without_public_network(tmp_path, monkeypatch):
+    import httpx
+    from midas.reality import collector
+    from midas.reality.config import Config
+    from websockets.asyncio.server import serve
+
+    subscriptions = []
+    requests = []
+
+    async def handler(ws):
+        subscriptions.append(await ws.recv())
+        await ws.wait_closed()
+
+    discovery = FIXTURE["discovery"]
+
+    def respond(request):
+        requests.append(str(request.url))
+        return httpx.Response(200, text=discovery["payload"])
+
+    client = httpx.AsyncClient(transport=httpx.MockTransport(respond))
+    monkeypatch.setattr(collector.httpx, "AsyncClient", lambda **kwargs: client)
+
+    class TestConfig(Config):
+        def __post_init__(self):
+            pass
+
+    async with serve(handler, "127.0.0.1", 0) as server:
+        monkeypatch.setattr(collector, "WS", f"ws://127.0.0.1:{server.sockets[0].getsockname()[1]}")
+        await collector.run(
+            TestConfig(root=str(tmp_path), reserve_bytes=1, comparison_seconds=0), duration=0.1
+        )
+
+    value = manifest(tmp_path)
+    rows = list(read_manifest(tmp_path, value))
+    status = json.loads((tmp_path / "status.json").read_text())
+    reasons = [row["payload"].get("reason") for row in rows if row["kind"] == "gap"]
+    assert requests and all(url.startswith("https://gamma-api.polymarket.com/") for url in requests)
+    assert len(subscriptions) == 1
+    assert reasons[0] == "process_start" and reasons[-1] == "process_stop"
+    assert status["state"] == "STOPPED"
+    assert status["seconds_until_first_new_durable_record"] < 10
+    assert status["recovery"]["source_integrity"] == "verified"
+    assert status["recovery"]["sequence_verified"] is False
+    assert all(row["ordinal"] == index for index, row in enumerate(rows, start=1))
+    assert value["segments"]
+    replayed, _ = replay(tmp_path, value)
+    assert replayed.last_ordinal == rows[-1]["ordinal"]
+
+
 def event_record(raw, ordinal=100, received_ns=None):
     return dict(
         kind="frame",

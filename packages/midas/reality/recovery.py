@@ -2,9 +2,10 @@
 
 A checkpoint is produced only from fully verified replay or the writer's consumed,
 fsynced records at a finalized boundary. Loading checks its checksum, implementation
-identity, exact catalog prefix, every prefix segment's SHA256, and engine digest.
-Only the uncovered tail needs decompression/reconstruction. A corrupt or stale
-checkpoint falls back to full verified replay; source corruption is always fatal.
+identity, ordered catalog prefix (allowing only inserted empty finalized segments),
+every saved prefix segment's SHA256, and engine digest. Only the uncovered tail
+needs decompression/reconstruction. A corrupt or stale checkpoint falls back to
+full verified replay; source corruption is always fatal.
 This protects against accidental corruption, not a malicious writer able to
 replace the archive, checkpoint and their checksums together.
 """
@@ -29,6 +30,13 @@ MAGIC = b"MIDASCP1"
 HEADER = struct.Struct(">8s32s")
 MAX_CHECKPOINT_BYTES = 32 * 1024**2
 CHECKPOINT_INTERVAL_SECONDS = 300
+# Checkpoints written by the candidate immediately before empty-prefix
+# compatibility was added. Reconstruction, replay, and storage code are
+# unchanged; the only difference is how extra empty finalized segments are
+# classified around the checkpointed prefix.
+COMPATIBLE_IMPLEMENTATIONS = frozenset(
+    {"2f09ba251a65b2cac00f9e94d5c00f2e7600a5f528fb28c39d46735306ba5860"}
+)
 
 
 def implementation_identity() -> str:
@@ -103,6 +111,35 @@ def _restore(state: dict[str, Any]) -> Engine:
     return engine
 
 
+def _match_checkpoint_prefix(
+    current: list[dict[str, Any]], saved: list[dict[str, Any]]
+) -> list[int]:
+    """Locate the checkpoint catalog in order, allowing only new empty entries before it."""
+    if not saved or not current:
+        raise ValueError("Recovery checkpoint has no finalized prefix")
+    indexes: list[int] = []
+    cursor = 0
+    for segment in saved:
+        if not isinstance(segment, dict):
+            raise ValueError("Invalid recovery checkpoint catalog entry")
+        match = next(
+            (index for index in range(cursor, len(current)) if current[index] == segment),
+            None,
+        )
+        if match is None:
+            raise ValueError("Recovery checkpoint segment is absent from the current catalog")
+        for inserted in current[cursor:match]:
+            if (
+                not isinstance(inserted, dict)
+                or type(inserted.get("count")) is not int
+                or inserted["count"] != 0
+            ):
+                raise ValueError("Recovery catalog inserted records before the checkpoint prefix")
+        indexes.append(match)
+        cursor = match + 1
+    return indexes
+
+
 def save(root: Path, engine: Engine, catalog: dict[str, Any]) -> int:
     segments = catalog["segments"]
     last = max((s["last"] for s in segments), default=0)
@@ -154,6 +191,8 @@ def recover(root: Path, catalog: dict[str, Any]) -> tuple[Engine, dict[str, Any]
     reason: str | None = "checkpoint_absent"
     mode, covered, hashed_bytes = "full_replay", 0, 0
     engine = None
+    prefix_indexes: list[int] = []
+    reconstructed_segments = catalog["segments"]
     if checkpoint.exists():
         try:
             if checkpoint.stat().st_size > MAX_CHECKPOINT_BYTES:
@@ -164,11 +203,14 @@ def recover(root: Path, catalog: dict[str, Any]) -> tuple[Engine, dict[str, Any]
                     raise ValueError("Recovery checkpoint checksum mismatch")
                 source.seek(HEADER.size)
                 saved = json.load(source)
-            if saved["schema_version"] != 1 or saved["implementation"] != implementation_identity():
+            saved_implementation = saved["implementation"]
+            if saved["schema_version"] != 1 or (
+                saved_implementation != implementation_identity()
+                and saved_implementation not in COMPATIBLE_IMPLEMENTATIONS
+            ):
                 raise ValueError("Recovery implementation changed")
             prefix = saved["catalog"]["segments"]
-            if not prefix or catalog["segments"][: len(prefix)] != prefix:
-                raise ValueError("Recovery catalog no longer matches archive prefix")
+            prefix_indexes = _match_checkpoint_prefix(catalog["segments"], prefix)
             engine = _restore(saved["engine"])
             last = max(s["last"] for s in prefix)
             if engine.last_ordinal != last or engine.digest() != saved["state_sha256"]:
@@ -182,7 +224,8 @@ def recover(root: Path, catalog: dict[str, Any]) -> tuple[Engine, dict[str, Any]
         # source checksum failure by treating it as a disposable checkpoint error.
         previous = 0
         counts: Counter[str] = Counter()
-        for info in catalog["segments"][:covered]:
+        for index in prefix_indexes:
+            info = catalog["segments"][index]
             if info["count"]:
                 if info["first"] != previous + 1 or info["last"] - previous != info["count"]:
                     raise ValueError("Recovery prefix ordinal discontinuity")
@@ -193,7 +236,14 @@ def recover(root: Path, catalog: dict[str, Any]) -> tuple[Engine, dict[str, Any]
             hashed_bytes += info["bytes"]
         if sum(counts.values()) != engine.last_ordinal:
             raise ValueError("Recovery prefix count mismatch")
-        tail = dict(catalog, segments=catalog["segments"][covered:])
+        prefix_index_set = set(prefix_indexes)
+        tail_segments = [
+            segment
+            for index, segment in enumerate(catalog["segments"])
+            if index not in prefix_index_set
+        ]
+        reconstructed_segments = tail_segments
+        tail = dict(catalog, segments=tail_segments)
         engine, checkpoints = replay(root, tail, _engine=engine)
         mode, reason = "checkpoint_and_verified_tail", None
     else:
@@ -204,8 +254,8 @@ def recover(root: Path, catalog: dict[str, Any]) -> tuple[Engine, dict[str, Any]
         fallback_reason=reason,
         prefix_segments_hashed=covered,
         prefix_bytes_hashed=hashed_bytes,
-        segments_reconstructed=len(catalog["segments"]) - covered,
-        reconstructed_bytes=sum(s["bytes"] for s in catalog["segments"][covered:]),
+        segments_reconstructed=len(reconstructed_segments),
+        reconstructed_bytes=sum(s["bytes"] for s in reconstructed_segments),
         tail_checkpoints_verified=checkpoints,
         seconds=time.monotonic() - started,
         source_integrity="verified",
