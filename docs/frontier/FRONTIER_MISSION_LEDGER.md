@@ -83,12 +83,15 @@ derived example is hash-pinned. Remaining acceptance work is substantial.
 | `e661e06` | Preserved direct first-page and API-route continuation captures, verified their hashes, and refreshed architecture, development, README, and engineering-report handoffs. |
 | `a6bcf60` | Added Kalshi cursor-paginated public trade pages, a ticker/page-size-bound API cursor, raw/normalized persistence, a source-neutral Polymarket/Kalshi trade panel, contract/API/UI tests, and one live hash-verified empty-page capture. |
 | `225dc8d` | Added a saved-evidence-bound Kalshi one-fill fee sensitivity API and UI, Decimal calculation tests, an offline derived artifact, and API/UI regressions. Candidate economics remains unchanged. |
+| `127176b` | Added a regression against Kalshi's documented one-fill rounding example and clarified why the adapter still does not advertise a candidate fee schedule. |
 
 ## Latest checkpoint verification (2026-10-27)
 
-- Focused Python regression: **85 passed**, 17.74 seconds pytest time; 18.56
-  seconds wall, 5.04 seconds user CPU, 148,460 KiB peak RSS, zero swaps and
-  zero socket messages. One upstream Starlette/httpx deprecation warning.
+- Focused Python regression: **86 passed**, 18.05 seconds pytest time; 18.90
+  seconds wall, 5.16 seconds user CPU, 151,728 KiB peak RSS, zero swaps and
+  zero socket messages. The adapter and fee-sensitivity subset then passed 25
+  tests in 1.40 seconds after a capability diagnostic assertion. One upstream
+  Starlette/httpx deprecation warning.
 - Frontend suite: **37 passed across 7 files**; typecheck, ESLint, Prettier and
   production build passed. Existing main and Chart bundles continue to emit the
   Vite size warning.
