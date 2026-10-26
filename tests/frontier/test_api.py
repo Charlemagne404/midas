@@ -399,6 +399,102 @@ async def test_bounded_probe_persists_and_reads_trade_batch(tmp_path):
         await source_client.aclose()
 
 
+@pytest.mark.asyncio
+async def test_probe_records_schema_failure_and_recovers_source_health(tmp_path):
+    gamma_rows = json.loads(
+        (Path(__file__).resolve().parents[1] / "fixtures" / "gamma_live.json").read_text()
+    )
+    responses = (
+        httpx.Response(200, text="not-json"),
+        httpx.Response(200, json={"unexpected": []}),
+        httpx.Response(200, json=[gamma_rows[0]]),
+    )
+    requests: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        index = len(requests) - 1
+        response = responses[index]
+        return httpx.Response(
+            response.status_code,
+            content=response.content,
+            headers=response.headers,
+            request=request,
+        )
+
+    config = AdapterConfig(
+        enabled=True,
+        live_public_probe_enabled=True,
+        timeout_seconds=2,
+        requests_per_second=5,
+        max_response_bytes=65536,
+        max_markets_per_call=1,
+        retries=0,
+    )
+    source_client = httpx.AsyncClient(transport=httpx.MockTransport(handler))
+    transport = PublicReadTransport({"gamma-api.polymarket.com"}, config, client=source_client)
+    registry = AdapterRegistry(
+        (
+            PolymarketAdapter(config, transport=transport),
+            KalshiAdapter(),
+            KrakenSpotAdapter(),
+        )
+    )
+    store = FrontierStore(tmp_path / "frontier", max_bytes=8 * 1024 * 1024)
+    app = FastAPI()
+    app.include_router(router(store, registry))
+    try:
+        async with httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=app), base_url="http://frontier.local"
+        ) as client:
+            invalid_json = await client.post("/api/frontier/probe/polymarket", json={"limit": 1})
+            assert invalid_json.status_code == 502
+            assert invalid_json.json()["detail"]["code"] == "INVALID_JSON"
+            assert invalid_json.json()["detail"]["diagnostic_observation_ids"] == []
+
+            malformed_schema = await client.post(
+                "/api/frontier/probe/polymarket", json={"limit": 1}
+            )
+            assert malformed_schema.status_code == 502
+            error_detail = malformed_schema.json()["detail"]
+            assert error_detail["code"] == "INVALID_SCHEMA"
+            assert len(error_detail["diagnostic_observation_ids"]) == 1
+            evidence_id = error_detail["diagnostic_observation_ids"][0]
+            evidence = await client.get(f"/api/frontier/observations/{evidence_id}")
+            assert evidence.status_code == 200
+            assert evidence.json()["raw"]["raw_body"] == '{"unexpected":[]}'
+            assert evidence.json()["normalized"]["record_kind"] == "source_failure"
+            assert evidence.json()["normalized"]["failure_stage"] == "probe_batch"
+            assert evidence.json()["normalized"]["error_code"] == "INVALID_SCHEMA"
+
+            degraded = await client.get("/api/frontier/sources")
+            health = {item["venue"]: item["health"] for item in degraded.json()["items"]}
+            assert health["polymarket"]["state"] == "degraded"
+            assert health["polymarket"]["last_error_code"] == "INVALID_SCHEMA"
+            assert health["kalshi"]["state"] == "not_probed"
+            assert health["kraken"]["state"] == "not_probed"
+
+            recovered = await client.post("/api/frontier/probe/polymarket", json={"limit": 1})
+            assert recovered.status_code == 200, recovered.text
+            assert recovered.json()["source_state"] == "healthy"
+            assert len(recovered.json()["observation_ids"]) == 1
+            healthy = await client.get("/api/frontier/sources")
+            health = {item["venue"]: item["health"] for item in healthy.json()["items"]}
+            assert health["polymarket"]["state"] == "healthy"
+            assert health["polymarket"]["last_error_code"] is None
+            assert len(store.observations(venue="polymarket", kind="market_listing")) == 2
+            recorded_markets = await client.get(
+                "/api/frontier/markets", params={"venue": "polymarket"}
+            )
+            assert recorded_markets.json()["returned"] == 1
+            assert len(requests) == 3
+            assert all(item.method == "GET" for item in requests)
+            assert all("authorization" not in item.headers for item in requests)
+    finally:
+        await registry.aclose()
+        await source_client.aclose()
+
+
 def test_replay_api_generates_and_persists_multi_outcome_candidate(tmp_path):
     client, registry, http_client, requests, store = _client(tmp_path)
     base = market(Venue.KALSHI, "multi-api-fixture", title="Three-way API fixture")

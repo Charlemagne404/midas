@@ -7,7 +7,7 @@ import json
 from datetime import UTC, datetime
 from decimal import Decimal
 from enum import StrEnum
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
@@ -498,6 +498,16 @@ class RawObservation(FrontierModel):
         if digest != self.raw_sha256:
             raise ValueError("Raw observation hash mismatch")
         return self
+
+
+class SourceFailureRecord(FrontierModel):
+    """Bounded normalization failure attached to a captured successful response."""
+
+    schema_version: int = 1
+    record_kind: Literal["source_failure"] = "source_failure"
+    failure_stage: str = Field(min_length=1, max_length=64)
+    error_code: str = Field(min_length=1, max_length=80)
+    message: str = Field(min_length=1, max_length=240)
 
 
 def stable_market_id(venue: Venue, native_market_id: str) -> str:

@@ -18,6 +18,7 @@ from midas.frontier.models import (
     Capability,
     FrontierMarket,
     MarketBatch,
+    SourceFailureRecord,
     TradeBatch,
     Venue,
 )
@@ -79,6 +80,26 @@ class RelationshipReviewRequest(BaseModel):
 def router(store: FrontierStore, registry: Any) -> APIRouter:
     api = APIRouter(prefix="/api/frontier", tags=["frontier"])
     source_locks = {venue: asyncio.Lock() for venue in Venue}
+
+    def preserve_failed_captures(
+        adapter: ExchangeAdapter, code: str, message: str
+    ) -> tuple[tuple[str, ...], str | None]:
+        """Keep bounded 2xx responses when normalization or a probe batch fails."""
+        captures = adapter.take_captures()
+        observation_ids: list[str] = []
+        persistence_error: str | None = None
+        for capture in captures:
+            diagnostic = SourceFailureRecord(
+                failure_stage="probe_batch",
+                error_code=code[:80],
+                message=message[:240] or "Adapter probe failed",
+            )
+            try:
+                observation_ids.append(store.append_observation(capture, diagnostic))
+            except FrontierStoreError as error:
+                persistence_error = str(error)[:240]
+                break
+        return tuple(observation_ids), persistence_error
 
     @api.get("/overview")
     async def overview() -> dict[str, Any]:
@@ -917,10 +938,17 @@ def router(store: FrontierStore, registry: Any) -> APIRouter:
                             )
                             trade_count = len(trade_values)
                         except AdapterError as error:
-                            adapter.take_captures()
+                            diagnostic_ids, diagnostic_error = preserve_failed_captures(
+                                adapter, error.code, str(error)
+                            )
                             adapter.report_failure(error.code, str(error))
                             trade_state = "failed"
-                            trade_error = {"code": error.code, "message": str(error)}
+                            trade_error = {
+                                "code": error.code,
+                                "message": str(error),
+                                "diagnostic_observation_ids": diagnostic_ids,
+                                "diagnostic_persistence_error": diagnostic_error,
+                            }
                 request_delta = adapter.transport.request_count - requests_before
                 maximum_discovery_requests = (
                     min(request.limit, len(adapter.kraken_config.pairs))
@@ -950,14 +978,32 @@ def router(store: FrontierStore, registry: Any) -> APIRouter:
                     "hypothetical_only": True,
                 }
             except AdapterError as error:
+                diagnostic_ids, diagnostic_error = preserve_failed_captures(
+                    adapter, error.code, str(error)
+                )
                 adapter.report_failure(error.code, str(error))
                 raise HTTPException(
-                    status_code=502, detail={"code": error.code, "message": str(error)}
+                    status_code=502,
+                    detail={
+                        "code": error.code,
+                        "message": str(error),
+                        "diagnostic_observation_ids": diagnostic_ids,
+                        "diagnostic_persistence_error": diagnostic_error,
+                    },
                 ) from error
             except (ValueError, FrontierStoreError) as error:
+                diagnostic_ids, diagnostic_error = preserve_failed_captures(
+                    adapter, "FRONTIER_PROBE_FAILED", str(error)
+                )
                 adapter.report_failure("FRONTIER_PROBE_FAILED", str(error))
                 raise HTTPException(
-                    status_code=502, detail={"code": "FRONTIER_PROBE_FAILED", "message": str(error)}
+                    status_code=502,
+                    detail={
+                        "code": "FRONTIER_PROBE_FAILED",
+                        "message": str(error),
+                        "diagnostic_observation_ids": diagnostic_ids,
+                        "diagnostic_persistence_error": diagnostic_error,
+                    },
                 ) from error
 
     return api
