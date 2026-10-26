@@ -1,0 +1,148 @@
+{
+  "schema_version": 1,
+  "captured_at_utc": "2026-10-26T02:05:12.838322Z",
+  "collector": {
+    "pid": 3007040,
+    "control_group": "/user.slice/user-1000.slice/user@1000.service/app.slice/midas-reality.service",
+    "memory_current_bytes": 1131302912,
+    "memory_high_bytes": 1207959552,
+    "memory_high_margin_bytes": 76656640,
+    "memory_max_bytes": 1342177280,
+    "memory_max_margin_bytes": 210874368,
+    "memory_events": {
+      "low": 0,
+      "high": 14379,
+      "max": 0,
+      "oom": 0,
+      "oom_kill": 0,
+      "oom_group_kill": 0,
+      "sock_throttled": 0
+    },
+    "active_config_path": "/home/charlie/midas-reality/deploy/reality.json",
+    "active_config_sha256": "9d1aeeb5a496ad6971dc461ce87f327266ff25240391897f7bb6091a8307119a",
+    "process_rss_kib": 728888
+  },
+  "host": {
+    "mem_available_bytes": 8000172032,
+    "load_avg1": 1.08837890625,
+    "available_cpu_count": 6,
+    "pressure": {
+      "cpu": {
+        "some": {
+          "avg10": "2.79",
+          "avg60": "2.60",
+          "avg300": "5.66",
+          "total": "345682409556"
+        },
+        "full": {
+          "avg10": "0.00",
+          "avg60": "0.00",
+          "avg300": "0.00",
+          "total": "0"
+        }
+      },
+      "memory": {
+        "some": {
+          "avg10": "0.00",
+          "avg60": "0.00",
+          "avg300": "0.00",
+          "total": "21967668597"
+        },
+        "full": {
+          "avg10": "0.00",
+          "avg60": "0.00",
+          "avg300": "0.00",
+          "total": "14806122714"
+        }
+      },
+      "io": {
+        "some": {
+          "avg10": "0.74",
+          "avg60": "0.98",
+          "avg300": "1.01",
+          "total": "24058122886"
+        },
+        "full": {
+          "avg10": "0.68",
+          "avg60": "0.86",
+          "avg300": "0.87",
+          "total": "19535106255"
+        }
+      }
+    },
+    "critical_service_cpu_pressure": {
+      "midas-reality.service": {
+        "available": true,
+        "active_state": "active",
+        "pressure": {
+          "some": {
+            "avg10": 0.74,
+            "avg60": 0.24,
+            "avg300": 0.21
+          },
+          "full": {
+            "avg10": 0.74,
+            "avg60": 0.24,
+            "avg300": 0.21
+          }
+        }
+      },
+      "midas-api.service": {
+        "available": true,
+        "active_state": "active",
+        "pressure": {
+          "some": {
+            "avg10": 0.0,
+            "avg60": 0.0,
+            "avg300": 0.0
+          },
+          "full": {
+            "avg10": 0.0,
+            "avg60": 0.0,
+            "avg300": 0.0
+          }
+        }
+      },
+      "midas-reality-api.service": {
+        "available": true,
+        "active_state": "active",
+        "pressure": {
+          "some": {
+            "avg10": 3.04,
+            "avg60": 3.02,
+            "avg300": 2.7
+          },
+          "full": {
+            "avg10": 3.04,
+            "avg60": 3.02,
+            "avg300": 2.7
+          }
+        }
+      }
+    },
+    "swap": "SwapTotal:       4194300 kB",
+    "swap_free": "SwapFree:         197916 kB"
+  },
+  "storage": {
+    "raw_filesystem": {
+      "path": "/home/charlie/midas-reality/data/recordings/reality",
+      "available_bytes": 161060818944,
+      "total_bytes": 501864161280
+    },
+    "staging_filesystem": {
+      "path": "/mnt/continental-cloud/data/midas-reality-staging",
+      "available_bytes": 635101380608,
+      "total_bytes": 648000176128
+    }
+  },
+  "admission": {
+    "point_sample": "PASS",
+    "sustained_60_second_window": "NOT_RUN",
+    "staging_started": false
+  },
+  "scope": {
+    "source_read_only": true,
+    "service_changed": false,
+    "no_worker_started": true
+  }
+}

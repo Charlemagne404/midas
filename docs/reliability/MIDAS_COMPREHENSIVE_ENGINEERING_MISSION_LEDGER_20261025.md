@@ -259,8 +259,8 @@ mission report. Staged storage capacity does not pass at this sample.
 | Latest Reality inventory | `docs/reliability/evidence/MIDAS_MISSION_20261026_DEPLOYMENT_PREFLIGHT_BLOCKED_V3.json` |
 
 The machine-readable [source/evidence manifest](MIDAS_COMPREHENSIVE_ENGINEERING_MISSION_SOURCE_MANIFEST_20261026.json)
-binds 91 changed code, test, documentation and checked-in evidence files plus
-22 replay/live artifact references. The full engineering report is
+binds 92 changed code, test, documentation and checked-in evidence files plus
+23 replay/live artifact references. The full engineering report is
 [MIDAS_COMPREHENSIVE_ENGINEERING_MISSION_20261025.md](MIDAS_COMPREHENSIVE_ENGINEERING_MISSION_20261025.md).
 
 ## Outstanding blockers and required follow-up
@@ -339,3 +339,19 @@ campaign. No such project or campaign is authorized by this ledger.
   `evidence/MIDAS_VERITAS_20261026_POST_TIMER_RECHECK.json`, SHA-256
   `342ff41ca6a32a41340c0fec3ae798a21e1258c353df28efa2564540d2c54913`.
   No service or production data was changed by the capture.
+
+### Latest Reality admission sample — 2026-10-26 03:05 CET
+
+- The protected PID `3007040` remained on the old config hash
+  `9d1aeeb5a496ad6971dc461ce87f327266ff25240391897f7bb6091a8307119a`.
+  Cgroup current was 1,131,302,912 bytes, 76,656,640 below `MemoryHigh` and
+  210,874,368 below `MemoryMax`; `high=14,379`, `max`/OOM/kill=0.
+- Host available memory was 8,000,172,032 bytes and I/O-full PSI was 0.86% over
+  60 seconds. The staging admission function passed one point sample only; no
+  sustained 60-second window or worker was started. Raw/staging filesystem free
+  space was 161,060,818,944 / 635,101,380,608 bytes.
+- The eight-phase recovery command remains a long, resumable matrix with up to
+  7,200 seconds per worker. The latest-boundary cold recovery gate remains
+  incomplete; a point admission pass is not recovery evidence.
+- Capture: `evidence/MIDAS_REALITY_ADMISSION_RECHECK_20261026T0204Z.json`,
+  SHA-256 `8a961927ffd44ea7767afcf5a0eaacf84ad910262e1485696ba18fad7e171f8a`.

@@ -176,3 +176,18 @@ outside it. Capture:
 [`MIDAS_VERITAS_20261026_POST_TIMER_RECHECK.json`](reliability/evidence/MIDAS_VERITAS_20261026_POST_TIMER_RECHECK.json),
 SHA-256 `342ff41ca6a32a41340c0fec3ae798a21e1258c353df28efa2564540d2c54913`.
 The read-only capture made no additional service or store changes; the scheduled observer wrote the snapshot before the capture.
+
+### Reality admission sample — 2026-10-26 03:05 CET
+
+Read-only admission sample: protected PID `3007040` remains on the old
+24 GiB / 90-day config (SHA-256
+`9d1aeeb5a496ad6971dc461ce87f327266ff25240391897f7bb6091a8307119a`). The
+cgroup held 1,131,302,912 bytes, 76,656,640 bytes below `MemoryHigh` and
+210,874,368 below `MemoryMax`; `high=14,379` and max/OOM/kill counters were
+zero. Host memory available was 8,000,172,032 bytes; I/O-full PSI was 0.86% over
+60 seconds. One admission point sample passed, but no sustained 60-second
+window or staging worker was started. Raw and staging filesystems had
+161,060,818,944 / 635,101,380,608 bytes free. This does not verify the current
+archive boundary or cold recovery. Evidence:
+[`MIDAS_REALITY_ADMISSION_RECHECK_20261026T0204Z.json`](reliability/evidence/MIDAS_REALITY_ADMISSION_RECHECK_20261026T0204Z.json),
+SHA-256 `8a961927ffd44ea7767afcf5a0eaacf84ad910262e1485696ba18fad7e171f8a`.

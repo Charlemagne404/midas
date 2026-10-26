@@ -189,9 +189,18 @@
       "label": "Latest active immutable Veritas snapshot after 522-file replay boundary",
       "path": "/home/charlie/midas-veritas/data/veritas-observatory/snapshots/scan-20261026T020133Z-f1469881bdbc.json.gz",
       "sha256": "7625c0aa702594d2f6e022f9c7e5ad462c905046681c2ad8ea0d697a526f17a3"
+    },
+    {
+      "bytes": 3675,
+      "captured_at_utc": "2026-10-26T02:05:12.838322Z",
+      "label": "Reality protected-recorder admission and filesystem point sample",
+      "path": "docs/reliability/evidence/MIDAS_REALITY_ADMISSION_RECHECK_20261026T0204Z.json",
+      "sha256": "8a961927ffd44ea7767afcf5a0eaacf84ad910262e1485696ba18fad7e171f8a",
+      "status": "POINT_SAMPLE_PASS_SUSTAINED_WINDOW_NOT_RUN",
+      "staging_started": false
     }
   ],
-  "file_count": 91,
+  "file_count": 92,
   "files": [
     {
       "bytes": 61683,
@@ -299,9 +308,9 @@
       "sha256": "d0c4b6ee3eda7f881743769a6c64d82a10fa87421c21bb6389008d66f9f5b2e4"
     },
     {
-      "bytes": 21810,
+      "bytes": 22747,
       "path": "docs/MIDAS_CURRENT_STATE.md",
-      "sha256": "23457754cf983d57fe46bc0ff3b42b19b86d0252256cf5b3b85679011a83692d"
+      "sha256": "17b5b8f6db9fa2be77abdc91a3c3b9766bff08deaec70ea6231f41a829565cd4"
     },
     {
       "bytes": 21590,
@@ -324,14 +333,14 @@
       "sha256": "1584f98b93910f8946f55cf09fb69f6517fc7bb6a8478d88eebfbeb073858984"
     },
     {
-      "bytes": 40189,
+      "bytes": 41475,
       "path": "docs/reliability/MIDAS_COMPREHENSIVE_ENGINEERING_MISSION_20261025.md",
-      "sha256": "401703af799fb23ed4248fc4a6c0508b9f6f79f23d72c09f3fc585e2c2b5ab09"
+      "sha256": "b2c19edcd88a547c52ea3812a7536c4b8573a6e64285fa8a0b23af41ff1d2fb6"
     },
     {
-      "bytes": 25496,
+      "bytes": 26494,
       "path": "docs/reliability/MIDAS_COMPREHENSIVE_ENGINEERING_MISSION_LEDGER_20261025.md",
-      "sha256": "33c5385f37c223f81b250a7ba27ee3429919df50baf39954acda8308904f4d57"
+      "sha256": "5bf4e4a6784857da2bd7db8262326428b9931fe898bcf6d906d6386e2f2aa22b"
     },
     {
       "bytes": 11423,
@@ -407,6 +416,11 @@
       "bytes": 407029,
       "path": "docs/reliability/evidence/MIDAS_MISSION_20261026_RESEARCH_READINESS.png",
       "sha256": "f1844aae14208b839c1b906ca904099777366c40c7e1590d0df1a2f433613c3b"
+    },
+    {
+      "bytes": 3675,
+      "path": "docs/reliability/evidence/MIDAS_REALITY_ADMISSION_RECHECK_20261026T0204Z.json",
+      "sha256": "8a961927ffd44ea7767afcf5a0eaacf84ad910262e1485696ba18fad7e171f8a"
     },
     {
       "bytes": 2079,
@@ -649,7 +663,7 @@
       "sha256": "0e303eb666d679cfe283ded0b513d66cde9065f754996bdd64da4d8b8be70812"
     }
   ],
-  "generated_at_utc": "2026-10-26T02:03:33.157224Z",
+  "generated_at_utc": "2026-10-26T02:06:11.316213Z",
   "runtime_observations": {
     "aborted_copy_boundary_pinned": false,
     "aborted_copy_source_total_segments": 31468,
@@ -740,7 +754,20 @@
     "post_timer_recheck_artifact": "docs/reliability/evidence/MIDAS_VERITAS_20261026_POST_TIMER_RECHECK.json",
     "post_timer_recheck_sha256": "342ff41ca6a32a41340c0fec3ae798a21e1258c353df28efa2564540d2c54913",
     "active_veritas_snapshot_count_outside_initial_519_replay": 3,
-    "latest_active_veritas_snapshot_observed_at_utc": "2026-10-26T02:02:35.043608Z"
+    "latest_active_veritas_snapshot_observed_at_utc": "2026-10-26T02:02:35.043608Z",
+    "latest_reality_admission_sample_utc": "2026-10-26T02:05:12.838322Z",
+    "latest_reality_admission_point_sample": "PASS",
+    "latest_reality_sustained_60s_admission": "NOT_RUN",
+    "latest_reality_staging_started": false,
+    "latest_reality_memory_current_bytes": 1131302912,
+    "latest_reality_memory_high_margin_bytes": 76656640,
+    "latest_reality_memory_max_margin_bytes": 210874368,
+    "latest_reality_host_mem_available_bytes": 8000172032,
+    "latest_reality_host_io_full_avg60_percent": 0.86,
+    "latest_reality_raw_fs_free_bytes": 161060818944,
+    "latest_reality_staging_fs_free_bytes": 635101380608,
+    "latest_reality_admission_artifact": "docs/reliability/evidence/MIDAS_REALITY_ADMISSION_RECHECK_20261026T0204Z.json",
+    "latest_reality_admission_artifact_sha256": "8a961927ffd44ea7767afcf5a0eaacf84ad910262e1485696ba18fad7e171f8a"
   },
   "schema_version": 2,
   "scope": "files lists changed code, tests, documentation and checked-in evidence files relative to the base commit, including current uncommitted mission edits; bulk offline replay copies and derived event files are separately bound by evidence_artifacts and embedded manifests; generated build/test output, unrelated runtime worktrees, replay locks and this manifest are excluded."

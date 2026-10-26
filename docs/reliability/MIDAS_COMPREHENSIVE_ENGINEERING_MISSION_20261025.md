@@ -3,7 +3,7 @@
 **Assessment date:** 2026-10-26 (CEST)
 **Implementation branch:** `codex/midas-comprehensive-engineering-mission-20261025`
 **Base commit:** `55601b9a090945cb498806e4878b6ddc33562043`
-**Runtime changes:** none; protected services and production data were not modified.
+**Runtime changes:** none by this mission; no protected service or production store was changed by our work. The ordinary Veritas timer continued its snapshot write at 03:01 CET.
 
 ## Executive result
 
@@ -164,7 +164,7 @@ This recheck does not supersede the production deployment blockers or grant appr
 ## Changed branch and artifact references
 
 
-All mission implementation changes are confined to this worktree and branch. The root checkout's pre-existing dirty work, the Reality/Veritas runtime worktrees, and both older engineering worktrees remain untouched. The companion [source/evidence manifest](MIDAS_COMPREHENSIVE_ENGINEERING_MISSION_SOURCE_MANIFEST_20261026.json) binds 91 changed code, test, documentation and checked-in evidence files plus 22 replay/live artifact references. Bulk replay inputs and event files are bound by their embedded manifests. See the [mission ledger](MIDAS_COMPREHENSIVE_ENGINEERING_MISSION_LEDGER_20261025.md) for worktree inventory and test record. No branch was pushed or merged.
+All mission implementation changes are confined to this worktree and branch. The root checkout's pre-existing dirty work, the Reality/Veritas runtime worktrees, and both older engineering worktrees remain untouched. The companion [source/evidence manifest](MIDAS_COMPREHENSIVE_ENGINEERING_MISSION_SOURCE_MANIFEST_20261026.json) binds 92 changed code, test, documentation and checked-in evidence files plus 23 replay/live artifact references. Bulk replay inputs and event files are bound by their embedded manifests. See the [mission ledger](MIDAS_COMPREHENSIVE_ENGINEERING_MISSION_LEDGER_20261025.md) for worktree inventory and test record. No branch was pushed or merged.
 
 ### Follow-up Veritas boundary replay — 2026-10-26 02:56 CET
 
@@ -214,3 +214,23 @@ result remains valid for its captured boundary. The machine-readable follow-up
 is [`MIDAS_VERITAS_20261026_POST_TIMER_RECHECK.json`](evidence/MIDAS_VERITAS_20261026_POST_TIMER_RECHECK.json),
 SHA-256 `342ff41ca6a32a41340c0fec3ae798a21e1258c353df28efa2564540d2c54913`.
 The read-only capture changed no runtime or store; the normal scheduled observer wrote the single snapshot before the capture.
+
+### Reality admission recheck — 2026-10-26 03:05 CET
+
+A read-only point sample still found the protected recorder on PID `3007040`
+and the old config SHA-256
+`9d1aeeb5a496ad6971dc461ce87f327266ff25240391897f7bb6091a8307119a`. Its
+cgroup used 1,131,302,912 bytes against `MemoryHigh=1,207,959,552` (76,656,640
+bytes below) and `MemoryMax=1,342,177,280` (210,874,368 bytes below). Cumulative
+`high` events remained 14,379; `max`, OOM and kill counters remained zero. Host
+available memory was 8,000,172,032 bytes; I/O-full PSI was 0.86% over 60 seconds.
+The staging admission function passed this point sample, but no sustained
+60-second admission window was run. Raw and staging filesystems had
+161,060,818,944 and 635,101,380,608 bytes free. No Reality staging or recovery
+worker was started. The complete recovery command sequences eight phases with
+a 7,200-second per-worker cap, so the latest-boundary gate remains incomplete
+rather than treating this sample as recovery evidence.
+
+Capture:
+[`MIDAS_REALITY_ADMISSION_RECHECK_20261026T0204Z.json`](evidence/MIDAS_REALITY_ADMISSION_RECHECK_20261026T0204Z.json),
+SHA-256 `8a961927ffd44ea7767afcf5a0eaacf84ad910262e1485696ba18fad7e171f8a`.
