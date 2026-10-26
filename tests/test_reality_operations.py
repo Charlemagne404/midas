@@ -118,6 +118,23 @@ def test_archive_resume_counts_destination_once_for_many_missing_segments(tmp_pa
         assert file_hash(root / name) == file_hash(target / name) == digest
 
 
+def test_archive_incremental_publication_survives_empty_segment_reordering(tmp_path):
+    root, target = tmp_path / "raw", tmp_path / "archive"
+    sample(root)
+    before = archive(root, target, budget=1_000_000, reserve=1)
+    writer = Store(root, reserve=1)
+    writer.append("frame", "PONG", received_ns=241_000_000_000)
+    writer.rotate()
+    writer.close()
+    updated = manifest(root)
+    assert len(updated["segments"]) > len(before["segments"])
+
+    result = archive(root, target, budget=1_000_000, reserve=1)
+
+    assert result["segments"] == updated["segments"]
+    assert json.loads((target / "manifest.json").read_text())["segments"] == updated["segments"]
+
+
 def test_archive_budget_failure_resumes_without_publishing(tmp_path):
     root, target = tmp_path / "raw", tmp_path / "archive"
     value = sample(root)
@@ -149,6 +166,46 @@ def test_archive_rejects_conflicting_manifest_without_overwrite(tmp_path):
     with pytest.raises(ValueError, match="conflicts with source provenance"):
         archive(root, target, budget=1_000_000, reserve=1)
     assert manifest_path.read_bytes() == before
+
+
+def test_archive_rejects_source_segment_without_published_manifest(tmp_path):
+    root, target = tmp_path / "raw", tmp_path / "archive"
+    value = sample(root)
+    target.mkdir()
+    atomic_json(target / "source.json", dict(schema_version=1, recording_root=str(root.resolve())))
+    info = value["segments"][0]
+    archived = target / info["file"]
+    archived.write_bytes((root / info["file"]).read_bytes())
+    before = file_hash(archived)
+
+    with pytest.raises(ValueError, match="no published manifest"):
+        archive(root, target, budget=1_000_000, reserve=1)
+
+    assert file_hash(archived) == before
+    assert not (target / "manifest.json").exists()
+
+
+def test_archive_rejects_unpublished_source_segment_without_adopting_it(tmp_path):
+    root, target = tmp_path / "raw", tmp_path / "archive"
+    sample(root)
+    published = archive(root, target, budget=1_000_000, reserve=1)
+    writer = Store(root, reserve=1)
+    writer.append("frame", "PONG", received_ns=241_000_000_000)
+    writer.rotate()
+    writer.close()
+    updated = manifest(root)
+    assert len(updated["segments"]) > len(published["segments"])
+    extra = updated["segments"][-1]
+    orphan = target / extra["file"]
+    orphan.write_bytes((root / extra["file"]).read_bytes())
+    before_segment = file_hash(orphan)
+    before_manifest = (target / "manifest.json").read_bytes()
+
+    with pytest.raises(ValueError, match="absent from the published manifest"):
+        archive(root, target, budget=1_000_000, reserve=1)
+
+    assert file_hash(orphan) == before_segment
+    assert (target / "manifest.json").read_bytes() == before_manifest
 
 
 def test_archive_separation_and_identity(tmp_path):

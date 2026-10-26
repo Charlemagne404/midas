@@ -165,7 +165,13 @@ def _validate_archive_state(
         if path.suffix == ".seg" and path.name not in source_names:
             raise ValueError(f"Unpublished archive segment is absent from source: {path.name}")
 
+    archive_segments = [path for path in entries if path.suffix == ".seg"]
     if not manifest_path.exists():
+        if archive_segments:
+            raise ValueError(
+                "Finalized archive segments have no published manifest; "
+                f"preserved {archive_segments[0].name} for provenance review"
+            )
         return
     try:
         published = json.loads(manifest_path.read_text())
@@ -177,23 +183,36 @@ def _validate_archive_state(
         )
         same_root = provenance["recording_root"] == str(root)
         old_hash = provenance["source_manifest_sha256"]
-        is_prefix = (
-            isinstance(old_segments, list)
-            and len(old_segments) <= len(source_manifest["segments"])
-            and old_segments == source_manifest["segments"][: len(old_segments)]
-        )
+        source_segments = source_manifest["segments"]
+        is_subsequence = False
+        if isinstance(old_segments, list) and len(old_segments) <= len(source_segments):
+            matched = 0
+            for item in source_segments:
+                if matched < len(old_segments) and item == old_segments[matched]:
+                    matched += 1
+            is_subsequence = matched == len(old_segments)
         hash_matches = isinstance(old_segments, list) and old_hash == file_hash_list(old_segments)
     except (OSError, ValueError, TypeError, KeyError, json.JSONDecodeError):
-        raise ValueError("Existing archive manifest is unreadable or incomplete; preserved") from None
-    if not (valid_header and same_root and is_prefix and hash_matches):
+        raise ValueError(
+            "Existing archive manifest is unreadable or incomplete; preserved"
+        ) from None
+    if not (valid_header and same_root and is_subsequence and hash_matches):
         raise ValueError("Existing archive manifest conflicts with source provenance; preserved")
+    published_names = {item["file"] for item in old_segments}
+    unpublished = [path for path in archive_segments if path.name not in published_names]
+    if unpublished:
+        raise ValueError(
+            "Finalized archive segment is absent from the published manifest; "
+            f"preserved {unpublished[0].name} for provenance review"
+        )
 
 
 def archive(root: Path, destination: Path, *, budget: int, reserve: int) -> dict[str, Any]:
     """Incrementally copy finalized segments; publish only after full validation.
 
-    Interrupted copies may be resumed. Every existing segment is verified, never
-    overwritten. Original bytes and catalogs remain owned by the collector.
+    Resume only from a provenance-valid published manifest. Ambiguous partial or
+    unmanifested files are preserved for review, never adopted or overwritten.
+    Original bytes and catalogs remain owned by the collector.
     """
     root, destination = root.resolve(), destination.resolve()
     if destination == root or destination.is_relative_to(root) or root.is_relative_to(destination):
