@@ -87,7 +87,17 @@ async def test_short_startup_persists_and_recovers_without_public_network(tmp_pa
     rows = list(read_manifest(tmp_path, value))
     status = json.loads((tmp_path / "status.json").read_text())
     reasons = [row["payload"].get("reason") for row in rows if row["kind"] == "gap"]
+    start_record = next(
+        row
+        for row in rows
+        if row["kind"] == "gap" and row["payload"].get("reason") == "process_start"
+    )
+    package = Path(collector.__file__).parent
+    source_identity = hashlib.sha256(
+        b"".join(path.name.encode() + path.read_bytes() for path in sorted(package.glob("*.py")))
+    ).hexdigest()
     assert requests and all(url.startswith("https://gamma-api.polymarket.com/") for url in requests)
+    assert start_record["payload"]["implementation_sha256"] == source_identity
     assert len(subscriptions) == 1
     assert reasons[0] == "process_start" and reasons[-1] == "process_stop"
     assert status["state"] == "STOPPED"
