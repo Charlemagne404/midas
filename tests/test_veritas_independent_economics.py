@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
+from decimal import ROUND_DOWN, ROUND_HALF_UP, Decimal
 
 from midas.veritas.independent_economics import (
     audit_complementary_pair_economics,
@@ -235,6 +236,63 @@ def test_decimal_reference_recomputes_fee_curve_after_independent_depth_walk():
     assert reference["valid"] is True
     assert reference["quantity_results"][0]["independent_fee_reference_by_leg"] is not None
     assert compare_pair_economics(primary, reference) == []
+
+
+def test_independent_fee_upper_covers_unequal_fragmentation_across_price_levels():
+    market, books, _primary, _reference = _fixture(candidate=True)
+    market["fee_regime"] = {
+        "enabled": True,
+        "status": "verified_taker_curve",
+        "rate": "0.1",
+        "exponent": "1",
+        "settlement_rounding_status": "verified",
+    }
+    books["11"]["asks"] = [
+        {"price": "0.40", "size": "4"},
+        {"price": "0.41", "size": "7"},
+        {"price": "0.45", "size": "9"},
+    ]
+    books["12"]["asks"] = [
+        {"price": "0.50", "size": "3"},
+        {"price": "0.51", "size": "8"},
+        {"price": "0.52", "size": "9"},
+    ]
+    reference = audit_complementary_pair_economics(
+        market,
+        books,
+        ("20",),
+        captured_ns=CAPTURED_NS,
+        batch_started_ns=CAPTURED_NS - 10_000_000,
+        request_duration_ms=10,
+    )
+    row = reference["quantity_results"][0]
+    quantum = Decimal("0.00001")
+    rate = Decimal("0.1")
+
+    assert reference["snapshot_valid"] is True
+    for side, asset in (("yes", "11"), ("no", "12")):
+        realized_floor = Decimal(0)
+        realized_half_up = Decimal(0)
+        for level in books[asset]["asks"]:
+            price = Decimal(level["price"])
+            size = Decimal(level["size"])
+            fragments = (
+                size * Decimal("0.01"),
+                size * Decimal("0.09"),
+                size * Decimal("0.35"),
+                size * Decimal("0.55"),
+            )
+            assert sum(fragments, Decimal(0)) == size
+            for fragment in fragments:
+                raw_fee = fragment * rate * price * (1 - price)
+                realized_floor += raw_fee.quantize(quantum, rounding=ROUND_DOWN)
+                realized_half_up += raw_fee.quantize(quantum, rounding=ROUND_HALF_UP)
+
+        bound = Decimal(
+            row["independent_fee_reference_by_leg"][side]["fragmentation_safe_fee_collateral_upper"]
+        )
+        assert realized_floor <= bound
+        assert realized_half_up <= bound
 
 
 def test_independent_reference_vetoes_a_crossed_book_the_primary_path_accepts():

@@ -648,3 +648,49 @@ The live Mission Control API and web service now run immutable releases `a152999
 The live V6 projection at the 05:59Z receipt is `CATCHING_UP` at 60/530 snapshots, with 470 pending. Its Decimal reference contains 2,400 repeated observations across 1,032 unique markets: 2,047 quality-valid, 428 independently verified, zero positive-gross and zero net-eligible. The source-quality and validity flag counts are separate overlapping categories. None of these repeated observations are independent trials. Finalized-source analysis is current at 32,153/32,153 indexed segments, but no full latest-boundary cold-recovery receipt is reported. The collector remains unsequenced and its local gap markers are not an exchange event-loss count.
 
 The live dashboard run classifies the API resource gate as blocked: API cgroup charge is near its `MemoryHigh` boundary. The API release startup verified its 675k-event paper journal in 4m32s and read approximately 7.47 GB; no OOM occurred, but point samples showed elevated host I/O pressure during verification. Avoid overlapping the next API restart with a heavy research job. Existing rollback releases are `cf452ec` (API) and `90c625d` (web). Full receipt and browser screenshot are recorded in the engineering report's Section 15.
+
+
+## V6 persisted state and catalog verification — 2026-10-26 06:08 UTC
+
+The latest successful bounded observer run completed at `2026-10-26T06:01:54.492061Z`. V6 remains `CATCHING_UP` at 70/531 snapshots, with 461 pending. Independent reference v3 audited 2,800 repeated observations across 1,173 unique markets: 2,333 primary-quality-valid, 497 independently snapshot-valid, 1,836 source-quality disagreement flags, 1,836 validity disagreement flags, and zero positive-gross, economically supported, or net-eligible observations. The disagreement categories overlap; repeated pairs are not independent trials.
+
+The latest public scan (`scan-20261026T060143Z-c4756dc31eb7`) selected 40 markets from a bounded eligible population of 165: 8 reference-random and 32 rotating-stratified, with no stable controls available. It recorded 34 quality-valid pairs and zero positive-gross candidates. Its compressed snapshot SHA-256 matches the catalog's compressed-file identity; the recomputed semantic evidence digest matches the scan ID and snapshot metadata. The distinction matters: the semantic digest is not the compressed file hash.
+
+Both current SQLite catalogs passed read-only `PRAGMA integrity_check` at `06:08:17Z` in 0.297 seconds (`snapshot-catalog-v4.sqlite3`, 6,094,848 bytes) and 0.194 seconds (`analysis-catalog-v6-independent-v3.sqlite3`, 3,248,128 bytes). Their files were unchanged during the checks. This verifies page integrity at capture time; it does not establish a full source replay or economic profitability. Full receipt identities and limitations are in [engineering mission Section 16](reliability/MIDAS_ENGINEERING_MISSION_2026-10-26.md).
+
+
+## Finalized-source catch-up refresh — 2026-10-26 06:12 UTC
+
+The scheduled finalized-source analyzer completed successfully at
+`2026-10-26T06:10:53Z` under its existing 128-segment / 32 MiB per-run limits.
+It processed 60 segments (15,808,351 bytes) in the batch. The digest-checked
+summary now reports 32,213/32,213 finalized catalog segments, zero pending,
+and last processed ordinal 5,183,587. At the separate 06:11:53Z collector
+status read, the live ordinal had advanced to 5,183,903. This closes the
+incremental catalog backlog at the analysis boundary but leaves the newer
+collector tail and full cold-recovery proof unresolved. Receipt identity and
+limitations are documented in [engineering mission Section 17](reliability/MIDAS_ENGINEERING_MISSION_2026-10-26.md).
+
+
+## V3 fee-bound verification and resource refresh — 2026-10-26 06:23 UTC
+
+The independent V3 fee calculation was checked against [Polymarket's published fee formula and precision](https://help.polymarket.com/en/articles/13364478-trading-fees).
+For per-match raw fee `f` and `q = 0.00001`, floor rounding is at most `f`;
+half-up rounding is zero below `q/2` and at most `f + q/2 <= 2f` otherwise.
+The resulting `ceil(2 × raw fee)` bound remains conservative across unknown
+fill counts when summed by price level. It is a hypothetical cost bound on
+displayed depth, not evidence of fills or realized economics. A new unequal
+fragmentation fixture checks both floor and half-up modes across three prices
+per outcome leg. The independent economics, fee-envelope, and V2 scanner suites
+passed 63 tests. The V3 reference/catalog remain in place; no runtime or
+historical data changed.
+
+The current API resource receipt at `2026-10-26T06:22:56.752894Z` shows
+1,606,393,856 / 1,610,612,736 bytes charged below `MemoryHigh`, leaving 4.02
+MiB. Reality had 272,154,624 bytes below its `MemoryHigh`. No new high or OOM
+event was measured for either service. Host I/O full PSI was 0.99% avg10 while
+both service cgroups reported zero at avg10. The resource gate remains blocked
+by the API's greater-than-95% charge. The receipt is
+`/home/charlie/midas-engineering-mission-20261026/evidence/readiness-resource-sample-2026-10-26T0623Z.json`
+(SHA-256 `dfda3ec6d3e48b4d837229f17f87e2c6e53b1a16acf8109948663333abe32a9b`).
+Full test identities and the persisted-summary boundary are in [engineering mission Section 18](reliability/MIDAS_ENGINEERING_MISSION_2026-10-26.md).

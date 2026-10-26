@@ -1,33 +1,49 @@
-# MIDAS engineering mission closeout — 2026-10-26
+# MIDAS engineering mission execution report — 2026-10-26
 
 ## Executive readout
 
-At the latest captured live receipt, `2026-10-26T05:59:19Z`, Veritas V6 was
-catching up at 60/530 snapshots (470 pending). Its independently versioned
-Decimal reference covered 2,400 repeated observations across 1,032 unique
-markets: 2,047 quality-valid, 428 independently verified, and zero
-positive-gross or net-eligible. These are correlated observations, not 2,400
-independent trials. The snapshot catalog is still catching up; the earlier
-04:32 update had no stable-control markets. See Section 15 for receipt identity
-and exact evidence.
+The latest persisted Veritas V6 analysis was updated at
+`2026-10-26T06:01:54.492061Z` and remains `CATCHING_UP`: 70/531 snapshots
+processed, 461 pending. Independent Decimal reference v3 audited 2,800 repeated
+observations across 1,173 unique markets: 2,333 primary-quality-valid, 497
+independently snapshot-valid, and zero positive-gross, economically supported,
+or net-eligible observations. The separate latest scan sampled 40 markets
+(8 reference-random, 32 rotating-stratified), had 34 quality-valid pairs, and
+no stable controls. Repeated observations are not independent trials. Summary,
+semantic snapshot, compressed file, and catalog identities are recorded in
+Section 16.
 
-The Research Readiness view is implemented and deployed through the existing
-local Mission Control Vite service. At the 05:59Z receipt, API release
-`a152999` reported `READY`, `mode=demo`, and `live_execution=false`; Laboratory
-was `READY` and paper recovery was `CHECKPOINT_VERIFIED` at 675,455 events.
-The view reads live API projections, labels demo mode prominently, separates
-staged and deployed versions, classifies missing and loading evidence
-conservatively, and shows storage and cgroup measurements. Browser verification
-at 1440 px and 390 px completed without page errors or horizontal overflow;
-a delayed-source browser check confirmed pending evidence does not pass gates.
+The Research Readiness view is deployed through the existing local Mission
+Control Vite service. At `06:04:27Z`, API release `a152999` reported `READY`,
+`mode=demo`, and `live_execution=false`; Laboratory was `READY` and paper
+recovery was `CHECKPOINT_VERIFIED` at 675,629 events. Browser verification at
+1440 px and 390 px completed without page errors or horizontal overflow; a
+delayed-source browser check confirmed pending evidence does not pass gates.
 
-Reality production remains on its older collector and active 24 GiB / 90-day
-configuration. At the 04:47Z read, the collector was receiving with 16/16
-books fresh but remained degraded and unsequenced; its 18,607 local gap
-markers are not a count of lost exchange events. Persistence-window,
-recovery-state, and transport-queue telemetry were unavailable. Latest-boundary
-cold recovery remains incomplete. Archive staging still has invalid
-manifest/provenance state.
+At `06:11:53Z`, the protected Reality recorder remained on its older 24 GiB /
+90-day configuration, with 16/16 current books fresh and state
+`RECORDING_UNSEQUENCED`. Its current ordinal was 5,183,903, `current_error` was
+null, and the untimestamped generic `ConnectionClosedOK` diagnostic remained in
+the status. Sequence verification remains false. Local gap markers do not
+count lost exchange events.
+
+The scheduled bounded finalized-source analysis completed at `06:10:53Z` with
+status `current`: 32,213/32,213 finalized catalog segments processed, zero
+pending, and last processed ordinal 5,183,587. By the 06:11:53Z collector
+receipt, the live ordinal had advanced another 316 records. This incremental
+summary is current for its completed catalog, but the later collector state
+and active tail are not fully reconciled and it does not prove cold recovery.
+The 06:03 metadata-only inventory found 32,200 finalized raw segments totaling
+9,157,885,739 bytes; the archive remains invalid with 1,138 out-of-manifest
+files and 58 `.copying` files.
+
+The scheduled capacity receipt at `06:11:08Z` projects 16.87 effective days
+under the loaded budget; the staged 112 GiB / 120-day plan projects 108.08 days
+and remains pending restart. At `06:22:56Z`, the API had 4.02 MiB below
+`MemoryHigh`, so research admission remains blocked. API `a152999`, web
+`767f330`, and Reality PID 3007040 were active; the bounded observer,
+source-analysis, gap-detail, capacity, and research-director one-shots were
+inactive. No protected service or archive writer was changed.
 
 The 04:55:04Z metadata-only exact-boundary preflight counted 32,065 finalized
 raw segment names through ordinal 5,160,978, while source and gap indexes
@@ -44,19 +60,17 @@ dashboard, and operations suite passes 66 tests, and its isolated zero-duration
 first-write/recovery receipt matches the candidate source identity. It remains
 undeployed.
 
-Readiness is **not established**. At 04:47:40Z, API cgroup use was
-1,593,131,008 bytes against `MemoryHigh=1,610,612,736`, leaving about 16.7 MiB;
-host available memory was about 8.10 GB. After the web release, the 05:06:26Z
-point sample showed 8.72 MiB of API `MemoryHigh` headroom and 7.95 GB available
-on the host; heavy-research admission remains blocked. The current measured
-storage projection is about 16.7 days at the effective growth rate and 20.2
-days on the short-window estimate. Independent correctness, collector,
-recovery, resource, and storage gates remain blocked or conditional; economic
-evidence sufficiency remains conditional with zero eligible candidates. Arena
-has no active or queued jobs; three persisted `RUNNING` director manifests
-project to two cancellations and one failure without rewriting them. Its only
-open alert is an expired one-minute operational demonstration schedule with
-no child job.
+Readiness is **not established**. At 06:22:56Z, API cgroup charge was
+1,606,393,856 of 1,610,612,736 bytes at `MemoryHigh` (4.02 MiB headroom),
+while host available memory was 8.55 GB. The API recorded no new high or OOM
+event during its sample; Reality used 935,804,928 of 1,207,959,552 bytes with
+no new high or OOM event. Host I/O full PSI was 0.99% avg10 while API and
+Reality cgroup I/O full PSI were both 0% avg10; this point sample does not
+attribute host pressure to either service. Resource admission remains blocked
+by API headroom. Arena had zero active or queued jobs in the 05:59Z
+readiness receipt; three stale director manifests projected to two
+cancellations and one failure without being rewritten. No later Arena snapshot
+was captured in this addendum.
 
 No Frontier, Atlas, replacement long-duration campaign, real-money operation,
 wallet action, or exchange order was started.
@@ -574,16 +588,16 @@ directories remain available for rollback.
 
 | Component | Classification | Current verdict |
 | --- | --- | --- |
-| Veritas V6 code, independent Decimal reference, catalog migration and bounded publication | **COMPLETE AND VERIFIED** | Integrated and scheduled; at 05:59Z the live projection had 60/530 snapshots processed and 470 pending; the persistent catch-up remains operationally incomplete |
-| Economic evidence | **PARTIALLY VERIFIED** | At 05:59Z the reference covered 2,400 repeated observations across 1,032 markets, with 428 independently verified and zero positive-gross/net-eligible; execution outcomes remain unmeasured |
+| Veritas V6 code, independent Decimal reference, catalog migration and bounded publication | **COMPLETE AND VERIFIED** | At the 06:01Z persisted update: 70/531 snapshots processed, 461 pending; latest compressed snapshot and semantic digest reconcile, both live SQLite catalogs pass read-only integrity checks; catch-up remains incomplete |
+| Economic evidence | **PARTIALLY VERIFIED** | V6 v3 covers 2,800 repeated observations across 1,173 markets, with 497 independently snapshot-valid and zero positive-gross/support/net-eligible; execution outcomes remain unmeasured |
 | Readiness resource API and dashboard | **COMPLETE AND VERIFIED** | Memory composition and explicit loading state deployed at API `a152999` / web `767f330`; live delayed-response browser receipt and screenshot in Section 15 |
 | Veritas missing-evidence rendering and deterministic browser fixtures | **COMPLETE AND VERIFIED** | Null renders as `Not measured`, distinct from measured zero; targeted browser test passed, and active immutable web release `767f330` retains the fix with HTTP 200 smoke verification |
 | Reality candidate hardening | **IMPLEMENTED, DEPLOYMENT PENDING** | Latest clean candidate `a1f2fe9` includes the 4278 telemetry base, archive fail-closed checks, and checkpoint-prefix recovery fix. The full relevant suite passed 109 tests; final recovery and source-identity follow-ups passed 42 focused tests plus isolated startup. The exact-source 100-second feed canary completed with 322 frames and four verified checkpoints but only 8/16 fresh outcomes at its last checkpoint, so it does not pass deployment preflight |
 | Reality candidate bounded telemetry | **IMPLEMENTED, DEPLOYMENT PENDING** | Candidate exposes bounded persistence, transport-queue, backpressure, checkpoint, and resource fields; production API still lacks these observations |
-| Production Reality telemetry/integrity | **PARTIALLY VERIFIED** | At 05:20Z, 16/16 books were fresh and the collector was receiving at ordinal 5,169,781, but API health remained degraded/unsequenced with persistence-window, queue-depth, and recovery-state telemetry missing |
-| Cold recovery/reproducibility | **PARTIALLY VERIFIED** | The 05:20 metadata boundary has 32,117 finalized segment names and live ordinal 5,169,781; historical source/gap indexes cover older boundaries only. Checkpoint recovery now handles newly inserted empty finalized segments, but the current boundary is not fully replay-verified |
-| Storage/archive provenance | **BLOCKED** | The active 24 GiB / 90-day contract has about 18.4 storage-only days at the current estimated rate; staged 112 GiB / 120-day capacity estimates 108.12 days. Archive metadata remains invalid with 1,138 unmanifested finalized files and 58 `.copying` files |
-| Cross-component research admission | **PARTIALLY VERIFIED** | Dashboard blocks at API `MemoryHigh` headroom of about 1.52 MiB at 05:28Z; Arena has 0 active/queued jobs, 3 stale owner-linked directors (2 cancelled, 1 failed), and an expired no-child demonstration schedule alert |
+| Production Reality telemetry/integrity | **PARTIALLY VERIFIED** | At 06:11Z, 16/16 books were fresh at ordinal 5,183,903, but status remains unsequenced/degraded; current error is null, generic error is untimestamped, and persistence-window, queue-depth, and recovery-state telemetry are missing |
+| Cold recovery/reproducibility | **PARTIALLY VERIFIED** | Incremental source analysis reached 32,213/32,213 segments with zero pending at 06:10:53Z, through ordinal 5,183,587; live ordinal was 5,183,903 at 06:11:53Z. The later tail/current boundary is not fully replay-verified |
+| Storage/archive provenance | **BLOCKED** | The 06:11Z projection gives 16.87 effective days on the active 24 GiB / 90-day contract; staged 112 GiB / 120-day capacity estimates 108.08 days. The 06:03 inventory confirms 1,138 out-of-manifest files and 58 `.copying` files; provenance remains invalid |
+| Cross-component research admission | **PARTIALLY VERIFIED** | API resource sample at 06:22:56Z shows only 4.02 MiB `MemoryHigh` headroom; Arena had 0 active/queued jobs and 3 stale owner-linked directors (2 cancelled, 1 failed) in the 05:59Z receipt |
 | Trading, Frontier, Atlas, 48-hour campaign | **DEFERRED BY SCOPE** | Not started |
 
 Recommended next actions:
@@ -595,9 +609,9 @@ Recommended next actions:
    preserving design and corruption/interruption regression tests. Do not
    infer a leak from the page-cache charge or skip rolling-hash validation.
 3. Let the scheduled bounded V6 observer continue its existing cadence; do
-   not manually accelerate it. Review the 488-snapshot backlog and the
-   latest scan's 8 reference-random / 32 rotating / 0 stable-control split on
-   the next scheduled result.
+   not manually accelerate it. Review the 461-snapshot backlog and the latest
+   scan's 8 reference-random / 32 rotating / 0 stable-control split on the next
+   scheduled result.
 4. Keep Arena director lifecycle state derived from the matching owner job;
    preserve the three persisted manifests, and investigate any future
    `UNVERIFIED` projection before considering a mutation. The expired
@@ -625,7 +639,7 @@ Recommended next actions:
    explicit no-job assertion in Arena, and keep the large-chunk advisory
    visible in the deployed UI build record.
 
-This closeout does not authorize a Reality service restart, archive mutation,
+This report does not authorize a Reality service restart, archive mutation,
 or a new research campaign.
 
 ## 8. Final Reality candidate follow-up — 2026-10-26 03:54 UTC
@@ -1082,3 +1096,224 @@ At the post-deployment resource sample, the API was at 1.593 GB of 1.611 GB `Mem
 The final deployment receipt is `/home/charlie/midas-engineering-mission-20261026/evidence/research-readiness-deployment-postdeploy-2026-10-26T0559Z.json`, SHA-256 `e869197202816ebb85ac854eedea8878e1aeae4fa62e80f7ffc1f76a282cee96`. The live screenshot is `/home/charlie/midas-engineering-mission-20261026/evidence/research-readiness-live-loading-v6-2026-10-26.png`, SHA-256 `9d954c130db748f27456f9a35667cc50962ef78305cdfdea4a4a672b912a7010`.
 
 **Research Readiness dashboard: COMPLETE AND VERIFIED.** This deployment does not establish economic profitability or close the Reality production-transition, archive-provenance, resource, or full-recovery gates.
+
+
+## 16. Latest V6 catalog and Reality boundary recheck — 2026-10-26 06:08 UTC
+
+### Veritas V6 persisted analysis and catalog identity
+
+The latest successful scheduled observer run completed at
+`2026-10-26T06:01:54.492061Z` (`exit_status=0`, 21 seconds). Its persisted V6
+summary is `CATCHING_UP`: 70 of 531 snapshots processed, 461 pending, ten
+processed in that run, and zero quarantined. The independent Decimal v3
+reference covers 2,800 repeated observations across 1,173 unique markets:
+2,333 primary-quality-valid, 497 independently snapshot-valid, and zero
+positive-gross, economically supported, or net-eligible. There are 1,836
+source-quality and 1,836 validity disagreement flags; these overlap and are not
+unique-pair counts. The sample remains correlated and does not establish
+profitability or fills.
+
+The latest public scan, captured at `06:01:43.097302Z`, selected 40 markets
+from a bounded eligible population of 165: eight reference-random and 32
+rotating-stratified, with zero stable controls available. Thirty-four of 40
+pairs passed the scan's quality filter; none had positive top gross. Reported
+book update ages exceeded five seconds for 30 pairs on each leg. This latest
+scan is separate from the cumulative 2,800-observation analysis.
+
+The persisted analysis file
+`/home/charlie/midas-veritas/data/veritas-observatory/research-summary.json`
+has file SHA-256
+`1bf76f0113cb5e8d4a288e8fb47a2469e13f55288938775a0950dba8260e5076`; its
+internal `analysis_summary_sha256` is
+`47f4f35bcfd368b1565c894393a0147c65ab514e361d78f3cc51c5fd61fecd40` and
+verified. `latest-summary.json` has file SHA-256
+`3d097634d8b92303c0208a0da524c4de85822287a26027a33e13d03b161a3bea`. The
+compressed snapshot
+`snapshots/scan-20261026T060143Z-c4756dc31eb7.json.gz` SHA-256
+`a80bbdf5348857aa74afc312de1e2cabb05109d8722449b1d8b96556b00ff9ab`
+matched the snapshot-catalog v4 row. Its separately recomputed semantic
+evidence digest
+`c4756dc31eb70234185da4420cf338fd6b3ed7f245f7451ff2d66d995477f19a` matched
+the snapshot and scan ID. The v4 snapshot catalog reported 77 indexed scans,
+ten indexed in the last run, zero integrity issues and zero quarantines. The
+latest scan is marked indexed. The last `integrity_check_this_run` field in
+the summary refers to an older scan; a separate read-only live check was run
+for both current database files at `06:08:17.926739Z`:
+
+- `snapshot-catalog-v4.sqlite3`: `PRAGMA integrity_check` returned `ok` in
+  0.297 s; 6,094,848 bytes; SHA-256
+  `d86baec9a8daaa2baa6073a86bc8ac392b6a510d7aa9089c7a58e6a6707ad39b`.
+- `analysis-catalog-v6-independent-v3.sqlite3`: `PRAGMA integrity_check`
+  returned `ok` in 0.194 s; 3,248,128 bytes; SHA-256
+  `962a470013c00a279c04b52f210cadf383e3fb841d53a4224ee4567cb9bd0284`.
+
+Both files retained their inode, size, and modification time during their
+read-only checks. These are current SQLite page-integrity checks, not a full
+cold replay of all research inputs.
+
+### Reality production boundary, storage, and archive
+
+The read-only collector receipt at `06:04:27.562610Z` confirmed production
+PID 3007040, unchanged source identity
+`26b9bc331a1a47b020116668dec720764e4253b8200c69cce75271ee3c2db182`, and
+configuration SHA-256
+`9d1aeeb5a496ad6971dc461ce87f327266ff25240391897f7bb6091a8307119a`. Its
+active config remains 24 GiB / 90 days. Status was `RECORDING_UNSEQUENCED` at
+ordinal 5,182,440 with 16/16 current books fresh, 18,686 durable local gap
+markers, `sequence_verified=false`, and `current_error=null`. The generic
+`error` field still contains `ConnectionClosedOK` without a timestamp; the
+receipt preserves it without asserting it is current. API health remains
+degraded because source-quality observability is incomplete. Local gap markers
+are not a count of lost exchange events.
+
+The bounded metadata-only inventory at `06:03:15.522408Z` found 32,200
+finalized raw segment names totaling 9,157,885,739 bytes. The archive root
+contained 19,833 finalized segment files totaling 5,369,550,131 bytes, while
+its manifest declared 18,695 unique entries. The 1,138 extra finalized names
+all also exist in the current raw name set. There were zero manifest-listed
+files missing, zero archived size mismatches against manifest rows, and zero
+archive/raw size mismatches for shared names. Fifty-eight `.copying` files
+remain and occupy 16,471,242 bytes. The manifest file SHA-256 is
+`cc7e3375710fa024f971885f8b04840ec06f2c0cd385b716af73ce99275f7c8d`.
+
+This inventory opened no segment contents and calculated no segment hashes.
+Matching names and sizes do not establish the copy history, ownership, or
+content integrity of the extra files. The production capacity artifact still
+classifies the archive `INVALID_MANIFEST` and provenance invalid; its last full
+verification covered 18,521 manifest entries (4,864,388,360 bytes), not the
+out-of-manifest names. The archive writer remains disabled. No archive file,
+manifest, timer, or service was changed.
+
+The production capacity file was measured at `05:41:03.487078Z`, SHA-256
+`b1e1ea3550b88c13e3d043646c1ed0b8e18083c5fa9a651271edec878417b176`. It
+reported 16,611,153,455 bytes under the active raw budget and a 16.7868-day
+effective runway at the then-current 989,537,839 bytes/day forecast. At the
+06:04 status read, `storage_bytes` was 9,171,237,641 against the same
+25,769,803,776-byte budget, leaving 16,598,566,135 bytes. Applying the latest
+available forecast gives about 16.78 days. The 112 GiB / 120-day staged
+configuration projects 108.0998 days and remains pending restart, below the
+retention target. At 06:04 the NVMe filesystem had 159,423,848,448 bytes
+available; the separate archive filesystem had 634,806,595,584 bytes
+available.
+
+### Current resource gate and bounded evidence artifacts
+
+At `06:04:27Z`, API cgroup charge was 1,595,629,568 of 1,610,612,736 bytes
+`MemoryHigh` (14.29 MiB headroom); the sample delta showed no new high event
+or OOM during 173.768 seconds. Reality was at 926,224,384 of 1,207,959,552
+bytes `MemoryHigh`, also with no new high or OOM event. Host available memory
+was 8,637,968,384 bytes. Host I/O full PSI was 0.75% avg10. These are point
+samples; the API remains above the 95% admission boundary and the resource
+gate remains **BLOCKED**. No large replay, archive copy, service restart, or
+long-duration job was started.
+
+Evidence artifacts and hashes:
+
+- `/home/charlie/midas-engineering-mission-20261026/evidence/veritas-v6-live-state-2026-10-26T0607Z.json` — SHA-256 `96a255eae4a28646dc658273bbe593b191cdc86413996c75cb30ce11e5ae5ec0`; summary digest, semantic snapshot digest, compressed file hash, and catalog identity all verified.
+- `/home/charlie/midas-engineering-mission-20261026/evidence/veritas-catalog-integrity-2026-10-26T0608Z.json` — SHA-256 `8c9b74ce3ef409a7b5d85241230b1faeacc683e04fc68026947b6b17f1f29cfe`.
+- `/home/charlie/midas-engineering-mission-20261026/evidence/reality-archive-metadata-audit-2026-10-26T0602Z.json` — SHA-256 `e8a15bb487d8d12aecf0bab8e822bf9bb65f661452f14d73165a432b2b721352`; its audit ran in 4.698 s in a temporary 128/192 MiB systemd scope with 10% CPU, four-task cap, and source roots mounted read-only.
+- `/home/charlie/midas-engineering-mission-20261026/evidence/reality-live-boundary-readonly-2026-10-26T0604Z.json` — SHA-256 `a625ea0fa39950f8a9387a6d1cf2e0d53afa5c6043575b7f2771e12b76838e67`.
+- `/home/charlie/midas-reality/data/recordings/capacity.json` — SHA-256 `b1e1ea3550b88c13e3d043646c1ed0b8e18083c5fa9a651271edec878417b176` (measurement timestamp above).
+The corresponding bounded receipt-builder scripts are preserved in the same evidence directory: `reality_archive_metadata_audit.py` SHA-256 `50cf6271310153f7f250c61ab7304ac379f1be34cd917c7fc58928bef8c324f6`; `reality_live_boundary_receipt.py` `d7fd2e82c1b279cac66f6b554488f13991444fb72454449cb33ba9af4a7faec2`; `veritas_v6_live_state_receipt.py` `a11b7a60c535f26d6d4c645a48678bb64860701530ac2f42a9f30f2eaef55b28`; and `veritas_catalog_integrity.py` `643edb5f7919852b466f2c335b321a13d3879493ad9656fb6e3f0e20dc0d54b6`.
+
+The latest-boundary cold-recovery gate remains **PARTIALLY VERIFIED**. The raw file inventory and live ordinal are separate point measurements; neither proves full replay reconciliation. No new copied snapshot or cold replay was started because the API resource admission gate remains blocked. The protected recorder and invalid archive remain untouched.
+
+
+## 17. Scheduled source-analysis and capacity refresh — 2026-10-26 06:12 UTC
+
+The scheduled `midas-veritas-source-analysis.service` completed successfully
+from `06:10:44Z` to `06:10:53Z`, with exit status 0 and no restart. It ran
+with `--max-segments 128 --max-source-mib 32` and processed 60 segments /
+15,808,351 source bytes in that batch. Its persisted
+`source-research-summary.json` reports status `current`, 32,213 of 32,213
+catalog segments processed, zero pending segments/bytes, and last processed
+ordinal 5,183,587. The summary's internal digest
+`7d6b13772a03e4b8d5ef93a7196ee8b721e00d51b579759bb0334de475800d22` recomputed
+successfully. The exact file SHA-256 is
+`104ee4d3572e2735d2ca4158eaf6deef1f32ae13a3bb8a25d9802cc42a6f8aed`.
+
+At `06:11:53Z`, the collector status file had advanced to ordinal 5,183,903,
+316 records beyond the source-analysis prefix. The summary is current for the
+catalog it processed, while this newer collector ordinal and any active
+`.open` tail remain outside that receipt. The result closes the earlier
+incremental catalog backlog at the job's captured boundary; it does not prove
+cold replay of the latest store or establish a globally sequenced feed. The
+local sequence and gap limitations remain unchanged.
+
+The scheduled capacity service completed successfully from `06:11:04Z` to
+`06:11:10Z`. Its refreshed `capacity.json` was measured at
+`06:11:08.802144Z`, SHA-256
+`3395c1d93e28c864477a95d32d9013a8bd3cc8ddffe5755c4dce0b25c91cd6de`. It
+reports 9,174,568,983 bytes in the raw root, 16,595,234,793 bytes active
+budget headroom, a forecast of 983,494,567 bytes/day, and 16.8737 effective
+capacity days under the active 24 GiB / 90-day contract. The staged 112 GiB /
+120-day plan remains pending restart and projects 108.0789 effective days.
+Archive state remains `INVALID_MANIFEST` with invalid provenance. No capacity
+settings or storage files were changed by this scheduled measurement.
+
+A bounded resource endpoint sample at `06:12:21.733308Z` reports API memory
+charge 1,600,368,640 / 1,610,612,736 bytes, leaving 10,244,096 bytes (9.77
+MiB) below `MemoryHigh`; no new API high event, max event, or OOM occurred over
+the 474.193-second interval. Reality was at 929,992,704 / 1,207,959,552 bytes
+with no new high or OOM event. Host available memory was 8,378,593,280 bytes.
+Host I/O full PSI was 3.43% avg10 while the API and Reality cgroup I/O full
+PSI readings were both zero at avg10. This sample does not attribute host I/O
+pressure to either service. The API remains above the 95-percent admission
+hold, so no full recovery replay or heavy research work was admitted.
+
+Receipts:
+
+- `/home/charlie/midas-engineering-mission-20261026/evidence/veritas-finalized-source-receipt-2026-10-26T0611Z.json` — SHA-256 `4d330107b9240aafb718ca99c72dbbb943bc1c4305f930d82166dcad3c102869`.
+- `/home/charlie/midas-engineering-mission-20261026/evidence/readiness-resource-sample-2026-10-26T0612Z.json` — SHA-256 `81d1ba9b1fc6b9471e4ce473ebcede90c29a426b522b52e179cb882ecf336408`.
+- `/home/charlie/midas-reality/data/recordings/capacity.json` — SHA-256 above; capacity receipt timestamp is `06:11:08.802144Z`.
+
+These scheduled jobs update bounded indexes and capacity projections only. Reality's protected service, its configuration, raw segments, archive tree, and archive timer remain unchanged.
+
+## 18. Economic fee-bound audit and fresh resource gate — 2026-10-26 06:23 UTC
+
+### Independent fee-bound audit
+
+The V3 independent Decimal reference's `fragmentation_safe_fee_collateral_upper`
+was audited against Polymarket's published fee formula, match-time application,
+and five-decimal precision. The [Polymarket fee documentation](https://help.polymarket.com/en/articles/13364478-trading-fees)
+does not specify the rounding direction. For a raw per-match fee `f` and
+rounding quantum `q = 0.00001`, floor rounding is at most `f`. Under half-up
+rounding, a fee below `q/2` rounds to zero; otherwise the rounded fee is at
+most `f + q/2`, which is at most `2f`. Summing this bound across matches at a
+price and then across displayed price levels is independent of the number of
+matches. The existing per-price `ceil(2 × raw fee)` calculation is therefore
+conservative for both floor and half-up rounding assumptions. The bound is a
+hypothetical fee sensitivity on displayed depth; it does not establish fills,
+order arrival, or realized economics. Fee-bearing live observations still lack
+a verified settlement-rounding status and remain unsupported for economic
+eligibility.
+
+A new regression fixture exercises both outcome legs across three price levels,
+with each level split into unequal 1%, 9%, 35%, and 55% match fragments. It
+checks that the independent bound covers floor and half-up rounding for every
+fragment. No V4 reference or data migration was needed; deployed V3 evidence
+and catalogs remain unchanged.
+
+Focused tests passed: 63 tests across
+`test_veritas_independent_economics.py`, `test_veritas_economics.py`, and
+`test_veritas_opportunity_audit_v2.py`. Ruff lint, format, and `git diff --check`
+passed. No runtime service, research summary, SQLite catalog, or historical
+result was modified by this audit.
+
+### Current resource receipt
+
+The bounded read-only resource endpoint returned its latest sample at
+`2026-10-26T06:22:56.752894Z`. API cgroup charge was 1,606,393,856 of
+1,610,612,736 bytes, leaving 4,218,880 bytes (4.02 MiB); no high or OOM event
+occurred in the sample interval. Reality was 935,804,928 of 1,207,959,552
+bytes, with 272,154,624 bytes of headroom and no new high or OOM event. Host
+available memory was 8,548,458,496 bytes. Host I/O full PSI was 0.99% avg10;
+API and Reality cgroup I/O full PSI were both zero at avg10. The resource gate
+remains **BLOCKED** because API charge is above the 95-percent admission
+threshold.
+
+The latest persisted V6 summary is still the 06:01:54Z run at 70/531
+snapshots. Finalized-source analysis remains current at its 06:10:53Z boundary;
+the scheduled one-shots were inactive at capture. The resource receipt is
+`/home/charlie/midas-engineering-mission-20261026/evidence/readiness-resource-sample-2026-10-26T0623Z.json`,
+SHA-256 `dfda3ec6d3e48b4d837229f17f87e2c6e53b1a16acf8109948663333abe32a9b`.
