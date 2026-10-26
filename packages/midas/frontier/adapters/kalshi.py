@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from decimal import Decimal
 from typing import Any
 from urllib.parse import quote
@@ -22,6 +23,7 @@ from midas.frontier.models import (
     Capability,
     FeeSchedule,
     FrontierMarket,
+    KalshiFeeMetadata,
     MarketInstrument,
     MarketKind,
     PayoffSpec,
@@ -34,11 +36,14 @@ from midas.frontier.models import (
 )
 
 D = Decimal
-ADAPTER_VERSION = "frontier-kalshi-1"
+ADAPTER_VERSION = "frontier-kalshi-2"
+_TICKER_PATTERN = re.compile(r"[A-Za-z0-9_-]{1,256}\Z")
 BASE = "https://external-api.kalshi.com/trade-api/v2"
 MARKET_DATA_DOC = "https://docs.kalshi.com/getting_started/quick_start_market_data"
 MARKETS_DOC = "https://docs.kalshi.com/api-reference/market/get-markets"
 ORDERBOOK_DOC = "https://docs.kalshi.com/api-reference/market/get-market-orderbook"
+EVENT_DOC = "https://docs.kalshi.com/api-reference/events/get-event"
+SERIES_DOC = "https://docs.kalshi.com/api-reference/market/get-series"
 
 
 class KalshiAdapter(BaseReadOnlyAdapter):
@@ -91,6 +96,10 @@ class KalshiAdapter(BaseReadOnlyAdapter):
             Capability.HEALTH_DIAGNOSTICS: (
                 "Local request/configuration state; no network request is made by health()",
                 None,
+            ),
+            Capability.FEE_METADATA: (
+                "Public event overrides and series fee type/multiplier are normalized and captured; exact account fees remain unresolved",
+                EVENT_DOC,
             ),
         },
         {
@@ -150,6 +159,7 @@ class KalshiAdapter(BaseReadOnlyAdapter):
             if native_type == "binary"
             else MarketKind.UNKNOWN
         )
+
         notional = parse_decimal(raw.get("notional_value_dollars"))
         payout_value = notional if notional is not None and notional > 0 else D(1)
         states = (
@@ -225,7 +235,10 @@ class KalshiAdapter(BaseReadOnlyAdapter):
                 verified=False,
             ),
             fees=FeeSchedule(
-                note="Unknown: market-specific fee rules are not resolved by adapter v1"
+                note=(
+                    "Unknown: native event/series fee parameters are available separately, but "
+                    "maker/taker applicability and account-specific fee rounding are not modeled."
+                )
             ),
             settlement_asset="USD" if states else None,
             native_fields=native_json(raw),
@@ -250,6 +263,66 @@ class KalshiAdapter(BaseReadOnlyAdapter):
                 exchange_timestamp=exchange_ts,
                 exchange_timestamp_semantics="updated_time is metadata update time",
             ),
+        )
+
+    async def fetch_fee_metadata(self, market: FrontierMarket) -> KalshiFeeMetadata:
+        """Capture public event/series fee parameters without asserting account-level fees."""
+        self._require(Capability.FEE_METADATA)
+        if market.venue != self.venue:
+            raise AdapterError("VENUE_MISMATCH", "Market does not belong to Kalshi")
+        event_ticker = market.native_event_id
+        if not isinstance(event_ticker, str) or not _TICKER_PATTERN.fullmatch(event_ticker):
+            raise AdapterError("FEE_EVENT_MISSING", "Recorded market lacks a usable event ticker")
+
+        # Omitting child markets keeps this metadata-only response small and bounded.
+        event_response = await self.transport.get_json(
+            f"{BASE}/events/{quote(event_ticker, safe='')}", {"exclude_markets": "true"}
+        )
+        event_capture = self._capture_response(event_response, "event_fee_metadata")
+        payload = event_response.payload
+        event = payload.get("event") if isinstance(payload, dict) else None
+        if not isinstance(event, dict) or event.get("event_ticker") != event_ticker:
+            raise AdapterError("INVALID_FEE_EVENT", "Kalshi event fee response identity is invalid")
+        series_ticker = event.get("series_ticker")
+        if not isinstance(series_ticker, str) or not _TICKER_PATTERN.fullmatch(series_ticker):
+            raise AdapterError(
+                "INVALID_FEE_EVENT", "Kalshi event response lacks a valid series ticker"
+            )
+
+        event_fee_type = _optional_bounded_text(event, "fee_type_override", max_length=80)
+        event_multiplier = _optional_multiplier(event, "fee_multiplier_override")
+        series_response = await self.transport.get_json(
+            f"{BASE}/series/{quote(series_ticker, safe='')}"
+        )
+        series_capture = self._capture_response(series_response, "series_fee_metadata")
+        series_payload = series_response.payload
+        series = series_payload.get("series") if isinstance(series_payload, dict) else None
+        if not isinstance(series, dict) or series.get("ticker") != series_ticker:
+            raise AdapterError(
+                "INVALID_FEE_SERIES", "Kalshi series fee response identity is invalid"
+            )
+        series_fee_type = _required_bounded_text(series, "fee_type", max_length=80)
+        series_multiplier = _required_multiplier(series, "fee_multiplier")
+
+        return KalshiFeeMetadata(
+            adapter_version=ADAPTER_VERSION,
+            native_market_id=market.native_market_id,
+            native_event_id=event_ticker,
+            series_ticker=series_ticker,
+            event_fee_type_override=event_fee_type,
+            event_fee_multiplier_override=event_multiplier,
+            series_fee_type=series_fee_type,
+            series_fee_multiplier=series_multiplier,
+            effective_fee_type=event_fee_type or series_fee_type,
+            effective_fee_multiplier=(
+                event_multiplier if event_multiplier is not None else series_multiplier
+            ),
+            event_fee_type_override_field_present="fee_type_override" in event,
+            event_fee_multiplier_override_field_present="fee_multiplier_override" in event,
+            event_raw_sha256=event_capture.raw_sha256,
+            series_raw_sha256=series_capture.raw_sha256,
+            event_received_at_utc=event_capture.received_at_utc,
+            series_received_at_utc=series_capture.received_at_utc,
         )
 
     async def fetch_book(
@@ -385,3 +458,29 @@ class KalshiAdapter(BaseReadOnlyAdapter):
                 )
             )
         return tuple(result)
+
+
+def _required_bounded_text(raw: dict[str, Any], key: str, *, max_length: int) -> str:
+    value = raw.get(key)
+    if not isinstance(value, str) or not value.strip() or len(value) > max_length:
+        raise AdapterError("INVALID_FEE_METADATA", f"Kalshi {key} is missing or malformed")
+    return value
+
+
+def _optional_bounded_text(raw: dict[str, Any], key: str, *, max_length: int) -> str | None:
+    if key not in raw or raw[key] is None:
+        return None
+    return _required_bounded_text(raw, key, max_length=max_length)
+
+
+def _required_multiplier(raw: dict[str, Any], key: str) -> Decimal:
+    value = parse_decimal(raw.get(key))
+    if value is None or value < 0:
+        raise AdapterError("INVALID_FEE_METADATA", f"Kalshi {key} is missing or malformed")
+    return value
+
+
+def _optional_multiplier(raw: dict[str, Any], key: str) -> Decimal | None:
+    if key not in raw or raw[key] is None:
+        return None
+    return _required_multiplier(raw, key)

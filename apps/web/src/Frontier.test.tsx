@@ -346,6 +346,180 @@ it('captures one explicit Polymarket trade page and follows its bound cursor', a
   ]);
 });
 
+it('captures and labels Kalshi public fee metadata without implying a fee estimate', async () => {
+  const market = {
+    canonical_id: 'kalshi:KX-FEE-1',
+    source_observation_record_id: 'market-observation',
+    native_market_id: 'KX-FEE-1',
+    venue: 'kalshi',
+    title: 'Recorded Kalshi fee fixture',
+    market_kind: 'binary_event',
+    lifecycle: 'open',
+    description: '',
+    base_asset: null,
+    quote_asset: null,
+    settlement_asset: 'USD',
+    payoff: {
+      state_ids: ['yes', 'no'],
+      payout_currency: 'USD',
+      exhaustive: false,
+      verified: false,
+      verification_basis: 'fixture is not payoff verified',
+    },
+    resolution: {
+      primary_rule: null,
+      secondary_rule: null,
+      authority: null,
+      closes_at_utc: null,
+      settles_at_utc: null,
+      evidence_sha256: null,
+      resolution_fingerprint: null,
+      verified: false,
+    },
+    fees: {
+      status: 'unknown',
+      version: null,
+      applies_to: null,
+      rate: null,
+      formula: null,
+      fee_currency: null,
+      source_url: null,
+      note: 'Account fee remains unknown',
+    },
+    native_fields: {},
+    instruments: [],
+    quality_flags: ['FEE_SCHEDULE_UNKNOWN'],
+    provenance: {
+      response_received_at_utc: '2026-10-26T20:00:00Z',
+      raw_sha256: 'a'.repeat(64),
+      observation_id: 'market-observation',
+    },
+  };
+  const source = {
+    venue: 'kalshi',
+    adapter_version: 'frontier-kalshi-2',
+    public_probe_enabled: true,
+    capabilities: [
+      {
+        capability: 'fee_metadata',
+        supported: true,
+        state: 'implemented',
+        reason: 'Native fee metadata, not account fee costs',
+      },
+    ],
+    health: {
+      state: 'not_probed',
+      last_success_at_utc: null,
+      last_error_code: null,
+      last_error: null,
+      notes: [],
+    },
+  };
+  const requestBodies: Record<string, unknown>[] = [];
+  const responses: Record<string, unknown> = {
+    '/api/frontier/overview': {
+      state: 'AVAILABLE',
+      research_only: true,
+      live_execution: false,
+      summary: {
+        observations: 1,
+        relationships: 0,
+        relationship_reviews: 0,
+        runs: 0,
+        markets_by_venue: { kalshi: 1 },
+        instruments_by_venue: {},
+        relationships_by_state: {},
+        database_bytes: 2048,
+        max_bytes: 67_108_864,
+      },
+      sources: [source],
+      latest_evidence_at_utc: '2026-10-26T20:00:00Z',
+      limitations: [],
+    },
+    '/api/frontier/sources': { items: [source] },
+    '/api/frontier/markets?limit=100': { items: [market], returned: 1, limit: 100, offset: 0 },
+    '/api/frontier/books?limit=100': { items: [], returned: 0, limit: 100, offset: 0 },
+    '/api/frontier/trades?limit=100': {
+      items: [],
+      pages: [],
+      observation_count: 0,
+      trade_count: 0,
+      limit: 100,
+      offset: 0,
+    },
+    '/api/frontier/relationships?limit=200': { items: [], returned: 0, limit: 200 },
+    '/api/frontier/graph?depth=1&limit=100': {
+      nodes: [],
+      edges: [],
+      center_market_id: null,
+      search: null,
+      depth: 1,
+      edge_limit: 100,
+      returned_nodes: 0,
+      returned_edges: 0,
+      truncated_by_edge_limit: false,
+      relationship_scan_limit: 500,
+      relationships_scanned: 0,
+      relationship_scan_may_be_incomplete: false,
+      next_cursor: null,
+      source_market_window_limit: 200,
+    },
+    '/api/frontier/opportunities?limit=100': { items: [], returned: 0, limit: 100, offset: 0 },
+    '/api/frontier/runs?limit=30': { items: [], returned: 0, limit: 30, offset: 0 },
+    '/api/frontier/readiness': { gates: [] },
+  };
+  const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    const path = String(input);
+    if (path === '/api/frontier/probe/kalshi/fee-metadata' && init?.method === 'POST') {
+      requestBodies.push(JSON.parse(String(init.body)) as Record<string, unknown>);
+      return {
+        ok: true,
+        json: async () => ({
+          market_id: market.canonical_id,
+          metadata: {
+            series_ticker: 'KX-FEE-SERIES',
+            event_fee_type_override: null,
+            event_fee_multiplier_override: null,
+            series_fee_type: 'quadratic',
+            series_fee_multiplier: '1',
+            effective_fee_type: 'quadratic',
+            effective_fee_multiplier: '1',
+            economics_state: 'unresolved',
+            limitations: ['Account rounding remains unknown.'],
+          },
+          observation_ids: ['event-observation', 'series-observation'],
+          raw_sha256: { event: 'b'.repeat(64), series: 'c'.repeat(64) },
+          fee_cost_modeled: false,
+          note: 'Fee parameters saved; no account fee estimate was made.',
+        }),
+      } as Response;
+    }
+    const body = responses[path];
+    if (body === undefined) throw new Error(`Unexpected frontend request: ${path}`);
+    void init;
+    return { ok: true, json: async () => body } as Response;
+  });
+  vi.stubGlobal('fetch', fetchMock);
+  render(
+    <QueryClientProvider
+      client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+    >
+      <Frontier />
+    </QueryClientProvider>,
+  );
+
+  fireEvent.click(await screen.findByRole('button', { name: 'Markets' }));
+  fireEvent.click(await screen.findByRole('button', { name: 'Inspect' }));
+  expect(await screen.findByText('Capture fee metadata')).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Capture fee metadata' }));
+  expect(await screen.findByText(/quadratic · multiplier 1/)).toBeInTheDocument();
+  expect(screen.getByText(/fee cost not modeled/)).toBeInTheDocument();
+  expect(screen.getByText('Account rounding remains unknown.')).toBeInTheDocument();
+  expect(screen.getByText(/Event fee evidence event-observ/)).toBeInTheDocument();
+  expect(screen.getByText(/Series fee evidence series-obse/)).toBeInTheDocument();
+  expect(requestBodies).toEqual([{ market_id: market.canonical_id }]);
+});
+
 it('renders a bounded accessible relationship graph and opens selected evidence', async () => {
   const marketRecord = (venue: 'polymarket' | 'kalshi', nativeId: string, title: string) => ({
     canonical_id: `${venue}:${nativeId}`,

@@ -15,6 +15,7 @@ can be replayed; each capture contains a SHA-256 over its pre-hash manifest.
 | `2026-10-26-frontier-api-trades.json` | One listing, at most one book, and up to ten public trades through the Frontier API for each venue; all three returned HTTP 200 and were read back from a temporary store. |
 | `2026-10-26-polymarket-v2-trade-page.json` | One direct, unauthenticated Data API v2 first page for a condition already present in the saved public listing; one GET, ten normalized trades, and hash-verified temporary-store read-back. |
 | `2026-10-26-polymarket-v2-api-continuation.json` | One continuation page for that condition through the isolated Frontier API route; one unauthenticated GET, ten normalized trades, and hash-verified temporary-store read-back. Its ten transaction IDs do not overlap the first page. |
+| `2026-10-27-kalshi-public-fee-metadata.json` | One public Kalshi listing and the matching event plus series fee metadata; three GETs, one market, child markets excluded from the event response, and hash-verified temporary-store read-back. |
 
 The earliest direct source-probe files contain five HTTP 200 responses:
 Kalshi market listing and later book, Kraken pair metadata and depth, and a
@@ -90,6 +91,21 @@ manifest digest covers all fields except `envelope_sha256`, encoded as UTF-8
 JSON with sorted keys and compact separators. The first page is a single-source
 trade-print observation, not an order-book snapshot, cross-venue comparison, or
 execution result. One live continuation page through the API is recorded below.
+
+The Kalshi fee-metadata validation ran at `2026-10-26T23:16:17.916305Z` to
+`23:16:18.408650Z` UTC (October 27 in Stockholm). It used one listed market,
+zero retries, an eight-second timeout, 65,536-byte response caps, no book or
+trade calls, and a temporary 8 MiB store. Three unauthenticated GETs returned
+HTTP 200: one market listing, one event request with child markets excluded, and
+one series request. The event had no fee overrides; the series reported
+`quadratic_with_combo_maker_fees` and multiplier 1. Raw body hashes and all three
+temporary-store row hashes passed read-back verification. The capture manifest
+SHA-256 is
+`945610033e34816f057f054a58fa3672e7f9300d04791b0f76e7b48411fdd607`; the
+serialized artifact SHA-256 is
+`4a2e1ac8e2953314e89f26fa825142b551ce0a24512a14e3494df03b936ea53e`. This is
+one market's native fee metadata, not an applied account fee or a venue-wide
+survey. Frontier continues to represent its `FeeSchedule` as unknown.
 
 The bounded continuation probe ran at
 `2026-10-26T23:02:48.888920Z`–`23:02:49.046817Z`. It supplied the opaque

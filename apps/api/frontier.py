@@ -20,6 +20,7 @@ from midas.frontier.models import (
     BookSnapshot,
     Capability,
     FrontierMarket,
+    KalshiFeeMetadata,
     MarketBatch,
     RawObservation,
     SourceFailureRecord,
@@ -59,6 +60,11 @@ class TradePageProbeRequest(BaseModel):
         if self.cursor is not None and not self.cursor.strip():
             raise ValueError("Trade page cursor cannot be blank")
         return self
+
+
+class FeeMetadataProbeRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+    market_id: str = Field(min_length=1, max_length=256)
 
 
 class RelationshipReviewRequest(BaseModel):
@@ -222,9 +228,10 @@ def router(store: FrontierStore, registry: Any) -> APIRouter:
         code: str,
         message: str,
         response_evidence: FailedResponseEvidence | None = None,
+        already_drained: tuple[RawObservation, ...] = (),
     ) -> tuple[tuple[str, ...], str | None]:
         """Keep complete bounded response evidence when normalization or transport fails."""
-        captures = adapter.take_captures()
+        captures = (*already_drained, *adapter.take_captures())
         diagnostic_inputs: list[tuple[RawObservation, str]] = [
             (capture, "probe_batch") for capture in captures
         ]
@@ -593,6 +600,109 @@ def router(store: FrontierStore, registry: Any) -> APIRouter:
                     status_code=502,
                     detail={
                         "code": "FRONTIER_TRADE_PAGE_FAILED",
+                        "message": str(error),
+                        "diagnostic_observation_ids": diagnostic_ids,
+                        "diagnostic_persistence_error": diagnostic_error,
+                    },
+                ) from error
+
+    @api.post("/probe/kalshi/fee-metadata")
+    async def probe_kalshi_fee_metadata(request: FeeMetadataProbeRequest) -> dict[str, Any]:
+        venue = Venue.KALSHI
+        adapter: ExchangeAdapter = registry.get(venue)
+        if not adapter.capabilities.supports(Capability.FEE_METADATA):
+            raise HTTPException(status_code=409, detail="Kalshi fee metadata is unsupported")
+        fetch_metadata = getattr(adapter, "fetch_fee_metadata", None)
+        if not callable(fetch_metadata):
+            raise HTTPException(
+                status_code=409, detail="Advertised Kalshi fee metadata operation is unavailable"
+            )
+        config = getattr(adapter, "config", None)
+        if config is None or not config.enabled or not config.live_public_probe_enabled:
+            raise HTTPException(
+                status_code=409,
+                detail="Bounded public probing is disabled in source configuration",
+            )
+        try:
+            known_markets = await _load_markets(store, 200)
+        except (FrontierStoreError, ValueError) as error:
+            raise HTTPException(status_code=409, detail=str(error)) from error
+        market = next(
+            (
+                item
+                for item in known_markets
+                if item.venue == venue and item.canonical_id == request.market_id
+            ),
+            None,
+        )
+        if market is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Fee metadata can only be fetched for a Kalshi market in the recorded listing window",
+            )
+
+        async with source_locks[venue]:
+            adapter.take_captures()
+            requests_before = adapter.transport.request_count
+            captures: tuple[RawObservation, ...] = ()
+            try:
+                metadata = await fetch_metadata(market)
+                captures = adapter.take_captures()
+                if (
+                    len(captures) != 2
+                    or not isinstance(metadata, KalshiFeeMetadata)
+                    or metadata.native_market_id != market.native_market_id
+                    or metadata.native_event_id != market.native_event_id
+                    or {item.raw_sha256 for item in captures}
+                    != {metadata.event_raw_sha256, metadata.series_raw_sha256}
+                ):
+                    raise AdapterError(
+                        "FEE_CAPTURE_LINEAGE_MISMATCH",
+                        "Native fee metadata does not match its event and series captures",
+                    )
+                observation_ids = tuple(
+                    store.append_observation(capture, metadata) for capture in captures
+                )
+                return {
+                    "market_id": market.canonical_id,
+                    "metadata": metadata.model_dump(mode="json"),
+                    "observation_ids": observation_ids,
+                    "raw_sha256": {
+                        "event": metadata.event_raw_sha256,
+                        "series": metadata.series_raw_sha256,
+                    },
+                    "request_count_delta": adapter.transport.request_count - requests_before,
+                    "network_calls_bounded_by": 2 * (config.retries + 1),
+                    "fee_cost_modeled": False,
+                    "note": (
+                        "One explicit read-only event plus series metadata probe. These public "
+                        "parameters are preserved as evidence; account-specific fee and rounding "
+                        "costs remain unknown and are not used as zero."
+                    ),
+                }
+            except AdapterError as error:
+                diagnostic_ids, diagnostic_error = preserve_failed_captures(
+                    adapter, error.code, str(error), error.response_evidence, captures
+                )
+                adapter.report_failure(error.code, str(error))
+                raise HTTPException(
+                    status_code=502,
+                    detail={
+                        "code": error.code,
+                        "message": str(error),
+                        "diagnostic_observation_ids": diagnostic_ids,
+                        "diagnostic_persistence_error": diagnostic_error,
+                    },
+                ) from error
+            except (ValueError, FrontierStoreError) as error:
+                diagnostic_ids, diagnostic_error = preserve_failed_captures(
+                    adapter, "KALSHI_FEE_METADATA_FAILED", str(error), already_drained=captures
+                )
+                adapter.report_failure("KALSHI_FEE_METADATA_FAILED", str(error))
+                raise HTTPException(
+                    status_code=502,
+                    detail={
+                        "code": "KALSHI_FEE_METADATA_FAILED",
                         "message": str(error),
                         "diagnostic_observation_ids": diagnostic_ids,
                         "diagnostic_persistence_error": diagnostic_error,

@@ -103,6 +103,102 @@ def test_disabled_public_probe_fails_closed_without_egress(tmp_path):
         asyncio.run(http_client.aclose())
 
 
+def test_kalshi_fee_metadata_probe_persists_event_and_series_evidence(tmp_path):
+    requests: list[httpx.Request] = []
+    source_market = market(Venue.KALSHI, "KX-FEE-API").model_copy(
+        update={"fees": FeeSchedule(note="Kalshi account fees unresolved")}
+    )
+    event_body = json.dumps(
+        {
+            "event": {
+                "event_ticker": source_market.native_event_id,
+                "series_ticker": "KX-FEE-API-SERIES",
+                "fee_type_override": "quadratic",
+                "fee_multiplier_override": 3,
+            }
+        }
+    )
+    series_body = json.dumps(
+        {
+            "series": {
+                "ticker": "KX-FEE-API-SERIES",
+                "fee_type": "quadratic",
+                "fee_multiplier": 1,
+            }
+        }
+    )
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        if request.url.path.endswith(f"/events/{source_market.native_event_id}"):
+            return httpx.Response(200, text=event_body, request=request)
+        if request.url.path.endswith("/series/KX-FEE-API-SERIES"):
+            return httpx.Response(200, text=series_body, request=request)
+        return httpx.Response(404, text="{}", request=request)
+
+    http_client = httpx.AsyncClient(transport=httpx.MockTransport(handler))
+    config = AdapterConfig(
+        enabled=True, live_public_probe_enabled=True, requests_per_second=5, retries=0
+    )
+    transport = PublicReadTransport({"external-api.kalshi.com"}, config, client=http_client)
+    registry = AdapterRegistry((KalshiAdapter(config, transport=transport),))
+    store = FrontierStore(tmp_path / "frontier")
+    listing_body = '{"test_fixture":"recorded market metadata"}'
+    listing = RawObservation(
+        venue=Venue.KALSHI,
+        observation_kind="market_listing",
+        request_url="https://external-api.kalshi.com/trade-api/v2/markets?limit=1",
+        http_status=200,
+        request_started_at_utc=T0,
+        received_at_utc=T0 + timedelta(milliseconds=12),
+        raw_body=listing_body,
+        raw_sha256=hashlib.sha256(listing_body.encode()).hexdigest(),
+        adapter_version="frontier-kalshi-test-v1",
+    )
+    store.append_observation(listing, source_market)
+    app = FastAPI()
+    app.include_router(router(store, registry))
+    client = TestClient(app)
+    try:
+        unknown = client.post(
+            "/api/frontier/probe/kalshi/fee-metadata", json={"market_id": "not-recorded"}
+        )
+        assert unknown.status_code == 404
+        assert requests == []
+
+        response = client.post(
+            "/api/frontier/probe/kalshi/fee-metadata",
+            json={"market_id": source_market.canonical_id},
+        )
+        assert response.status_code == 200, response.text
+        result = response.json()
+        assert result["metadata"]["effective_fee_type"] == "quadratic"
+        assert result["metadata"]["series_fee_multiplier"] == "1"
+        assert result["metadata"]["effective_fee_multiplier"] == "3"
+        assert result["metadata"]["economics_state"] == "unresolved"
+        assert result["fee_cost_modeled"] is False
+        assert result["request_count_delta"] == 2
+        assert result["network_calls_bounded_by"] == 2
+        assert len(result["observation_ids"]) == 2
+        assert [request.method for request in requests] == ["GET", "GET"]
+        assert all("authorization" not in request.headers for request in requests)
+
+        persisted = [store.observation(item) for item in result["observation_ids"]]
+        assert all(item is not None for item in persisted)
+        assert {item["normalized"]["event_raw_sha256"] for item in persisted} == {
+            result["raw_sha256"]["event"]
+        }
+        assert {item["normalized"]["series_raw_sha256"] for item in persisted} == {
+            result["raw_sha256"]["series"]
+        }
+        assert {item["raw_sha256"] for item in persisted} == set(result["raw_sha256"].values())
+        assert source_market.fees.status.value == "unknown"
+    finally:
+        client.close()
+        asyncio.run(registry.aclose())
+        asyncio.run(http_client.aclose())
+
+
 def test_relationship_proposals_and_replay_are_durable_empty_research_runs(tmp_path):
     client, registry, http_client, requests, _ = _client(tmp_path)
     try:

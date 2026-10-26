@@ -15,6 +15,7 @@ from midas.frontier.adapters.transport import PublicReadTransport
 from midas.frontier.models import (
     AdapterConfig,
     Capability,
+    FeeSchedule,
     FeeStatus,
     MarketKind,
     SourceState,
@@ -227,6 +228,176 @@ def test_source_configs_and_capability_manifests_fail_closed():
     assert PolymarketAdapter.capabilities.supports(Capability.PAGINATED_PUBLIC_TRADES)
     assert not KalshiAdapter.capabilities.supports(Capability.PAGINATED_PUBLIC_TRADES)
     assert not KrakenSpotAdapter.capabilities.supports(Capability.PAGINATED_PUBLIC_TRADES)
+
+
+@pytest.mark.asyncio
+async def test_kalshi_fee_metadata_applies_public_event_overrides_but_stays_non_economic():
+    from tests.frontier.builders import market as market_fixture
+
+    source_market = market_fixture(Venue.KALSHI, "KX-FRONTIER-FEE").model_copy(
+        update={"fees": FeeSchedule(note="Kalshi account fees unresolved")}
+    )
+    event_body = json.dumps(
+        {
+            "event": {
+                "event_ticker": source_market.native_event_id,
+                "series_ticker": "KX-FRONTIER-SERIES",
+                "fee_type_override": "quadratic",
+                "fee_multiplier_override": 2,
+            }
+        }
+    )
+    series_body = json.dumps(
+        {
+            "series": {
+                "ticker": "KX-FRONTIER-SERIES",
+                "fee_type": "quadratic",
+                "fee_multiplier": 1,
+            }
+        }
+    )
+    transport, requests, client = _transport(
+        "external-api.kalshi.com",
+        {
+            f"/events/{source_market.native_event_id}": event_body,
+            "/series/KX-FRONTIER-SERIES": series_body,
+        },
+    )
+    adapter = KalshiAdapter(
+        AdapterConfig(
+            enabled=True, live_public_probe_enabled=True, requests_per_second=5, retries=0
+        ),
+        transport=transport,
+    )
+    try:
+        evidence = await adapter.fetch_fee_metadata(source_market)
+        captures = adapter.take_captures()
+    finally:
+        await client.aclose()
+    assert evidence.series_fee_type == "quadratic"
+    assert evidence.series_fee_multiplier == Decimal(1)
+    assert evidence.event_fee_multiplier_override == Decimal(2)
+    assert evidence.effective_fee_multiplier == Decimal(2)
+    assert evidence.event_raw_sha256 == captures[0].raw_sha256
+    assert evidence.series_raw_sha256 == captures[1].raw_sha256
+    assert evidence.economics_state == "unresolved"
+    assert len(evidence.limitations) == 3
+    assert source_market.fees.status == FeeStatus.UNKNOWN
+    assert [request.method for request in requests] == ["GET", "GET"]
+    assert requests[0].url.params["exclude_markets"] == "true"
+    assert all("authorization" not in request.headers for request in requests)
+
+
+@pytest.mark.asyncio
+async def test_kalshi_fee_metadata_inherits_series_and_rejects_bad_source_identity():
+    from tests.frontier.builders import market as market_fixture
+
+    source_market = market_fixture(Venue.KALSHI, "KX-FRONTIER-FEE-INHERIT").model_copy(
+        update={"fees": FeeSchedule(note="Kalshi account fees unresolved")}
+    )
+    event_body = json.dumps(
+        {
+            "event": {
+                "event_ticker": source_market.native_event_id,
+                "series_ticker": "KX-FRONTIER-SERIES",
+                "fee_type_override": None,
+                "fee_multiplier_override": None,
+            }
+        }
+    )
+    series_body = json.dumps(
+        {
+            "series": {
+                "ticker": "KX-FRONTIER-SERIES",
+                "fee_type": "quadratic",
+                "fee_multiplier": 0,
+            }
+        }
+    )
+    transport, _, client = _transport(
+        "external-api.kalshi.com",
+        {
+            f"/events/{source_market.native_event_id}": event_body,
+            "/series/KX-FRONTIER-SERIES": series_body,
+        },
+    )
+    adapter = KalshiAdapter(
+        AdapterConfig(
+            enabled=True, live_public_probe_enabled=True, requests_per_second=5, retries=0
+        ),
+        transport=transport,
+    )
+    try:
+        evidence = await adapter.fetch_fee_metadata(source_market)
+    finally:
+        await client.aclose()
+    assert evidence.event_fee_type_override is None
+    assert evidence.event_fee_multiplier_override is None
+    assert evidence.effective_fee_type == "quadratic"
+    assert evidence.effective_fee_multiplier == Decimal(0)
+    assert evidence.event_fee_type_override_field_present is True
+    assert evidence.event_fee_multiplier_override_field_present is True
+
+    wrong_identity_transport, _, wrong_client = _transport(
+        "external-api.kalshi.com",
+        {
+            f"/events/{source_market.native_event_id}": event_body,
+            "/series/KX-FRONTIER-SERIES": json.dumps(
+                {
+                    "series": {
+                        "ticker": "KX-OTHER-SERIES",
+                        "fee_type": "quadratic",
+                        "fee_multiplier": 1,
+                    }
+                }
+            ),
+        },
+    )
+    wrong_identity_adapter = KalshiAdapter(
+        AdapterConfig(
+            enabled=True, live_public_probe_enabled=True, requests_per_second=5, retries=0
+        ),
+        transport=wrong_identity_transport,
+    )
+    try:
+        with pytest.raises(AdapterError, match="series fee response identity"):
+            await wrong_identity_adapter.fetch_fee_metadata(source_market)
+        assert len(wrong_identity_adapter.take_captures()) == 2
+    finally:
+        await wrong_client.aclose()
+
+
+@pytest.mark.asyncio
+async def test_kalshi_fee_metadata_rejects_untrusted_series_path_before_second_request():
+    from tests.frontier.builders import market as market_fixture
+
+    source_market = market_fixture(Venue.KALSHI, "KX-FRONTIER-FEE-PATH")
+    event_body = json.dumps(
+        {
+            "event": {
+                "event_ticker": source_market.native_event_id,
+                "series_ticker": "../events/attacker",
+                "fee_type_override": None,
+                "fee_multiplier_override": None,
+            }
+        }
+    )
+    transport, requests, client = _transport(
+        "external-api.kalshi.com", {f"/events/{source_market.native_event_id}": event_body}
+    )
+    adapter = KalshiAdapter(
+        AdapterConfig(
+            enabled=True, live_public_probe_enabled=True, requests_per_second=5, retries=0
+        ),
+        transport=transport,
+    )
+    try:
+        with pytest.raises(AdapterError, match="valid series ticker"):
+            await adapter.fetch_fee_metadata(source_market)
+        assert len(requests) == 1
+        assert len(adapter.take_captures()) == 1
+    finally:
+        await client.aclose()
 
 
 @pytest.mark.asyncio

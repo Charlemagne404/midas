@@ -163,6 +163,24 @@ type TradePageCaptureResult = {
   hypothetical_only: true;
   note: string;
 };
+type KalshiFeeMetadataCaptureResult = {
+  market_id: string;
+  metadata: {
+    series_ticker: string;
+    event_fee_type_override: string | null;
+    event_fee_multiplier_override: string | null;
+    series_fee_type: string;
+    series_fee_multiplier: string;
+    effective_fee_type: string;
+    effective_fee_multiplier: string;
+    economics_state: 'unresolved';
+    limitations: string[];
+  };
+  observation_ids: string[];
+  raw_sha256: { event: string; series: string };
+  fee_cost_modeled: false;
+  note: string;
+};
 type Relationship = {
   relationship_id: string;
   left_market_id: string;
@@ -836,6 +854,14 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
         (capability) => capability.capability === 'paginated_public_trades' && capability.supported,
       ),
   );
+  const kalshiFeeMetadataProbeEnabled = (sources.data?.items ?? []).some(
+    (source) =>
+      source.venue === 'kalshi' &&
+      source.public_probe_enabled &&
+      source.capabilities.some(
+        (capability) => capability.capability === 'fee_metadata' && capability.supported,
+      ),
+  );
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: ['frontier'] });
   const propose = useMutation({
@@ -890,6 +916,14 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
       setTradePageCursor({ conditionId: result.condition_id, cursor: result.next_cursor });
       refresh();
     },
+  });
+  const captureKalshiFeeMetadata = useMutation({
+    mutationFn: ({ marketId }: { marketId: string }) =>
+      api<KalshiFeeMetadataCaptureResult>('/frontier/probe/kalshi/fee-metadata', {
+        method: 'POST',
+        body: JSON.stringify({ market_id: marketId }),
+      }),
+    onSuccess: refresh,
   });
 
   const marketById = useMemo(
@@ -1223,6 +1257,8 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
               market={selectedMarket}
               books={selectedBooks}
               booksLoading={books.isLoading}
+              feeMetadataProbe={captureKalshiFeeMetadata}
+              feeMetadataProbeEnabled={kalshiFeeMetadataProbeEnabled}
             />
           )}
           <section className="fr-trades-panel">
@@ -1825,10 +1861,19 @@ function MarketDetails({
   market,
   books,
   booksLoading,
+  feeMetadataProbe,
+  feeMetadataProbeEnabled,
 }: {
   market: Market;
   books: Book[];
   booksLoading: boolean;
+  feeMetadataProbe: UseMutationResult<
+    KalshiFeeMetadataCaptureResult,
+    Error,
+    { marketId: string },
+    unknown
+  >;
+  feeMetadataProbeEnabled: boolean;
 }) {
   return (
     <section className="fr-market-detail" aria-label="Market and book details">
@@ -1885,6 +1930,59 @@ function MarketDetails({
           </strong>
         </div>
       </div>
+      {market.venue === 'kalshi' && (
+        <div className="fr-fee-metadata-panel">
+          <div>
+            <strong>Public fee parameters</strong>
+            <small>
+              Fetches the recorded event’s overrides and series parameters. This evidence does not
+              produce an account fee estimate.
+            </small>
+          </div>
+          <button
+            className="fr-inspect-button"
+            disabled={!feeMetadataProbeEnabled || feeMetadataProbe.isPending}
+            onClick={() => feeMetadataProbe.mutate({ marketId: market.canonical_id })}
+          >
+            {feeMetadataProbe.isPending &&
+            feeMetadataProbe.variables?.marketId === market.canonical_id
+              ? 'Capturing…'
+              : feeMetadataProbeEnabled
+                ? 'Capture fee metadata'
+                : 'Public probe disabled'}
+          </button>
+          {feeMetadataProbe.isError && <InlineError message={feeMetadataProbe.error.message} />}
+          {feeMetadataProbe.isSuccess &&
+            feeMetadataProbe.variables?.marketId === market.canonical_id && (
+              <div className="fr-fee-metadata-result" role="status">
+                <strong>
+                  {feeMetadataProbe.data.metadata.effective_fee_type} · multiplier{' '}
+                  {feeMetadataProbe.data.metadata.effective_fee_multiplier}
+                </strong>
+                <small>
+                  Series {feeMetadataProbe.data.metadata.series_ticker} · fee cost not modeled ·{' '}
+                  {feeMetadataProbe.data.observation_ids.length} immutable evidence records
+                </small>
+                <small>{feeMetadataProbe.data.note}</small>
+                <small>
+                  Event {feeMetadataProbe.data.raw_sha256.event} · series{' '}
+                  {feeMetadataProbe.data.raw_sha256.series}
+                </small>
+                {feeMetadataProbe.data.metadata.limitations.map((limitation) => (
+                  <small key={limitation}>{limitation}</small>
+                ))}
+                {feeMetadataProbe.data.observation_ids.map((observationId, index) => (
+                  <div key={observationId}>
+                    <small>
+                      {index === 0 ? 'Event' : 'Series'} fee evidence {shortHash(observationId)}
+                    </small>
+                    <EvidenceDisclosure observationId={observationId} />
+                  </div>
+                ))}
+              </div>
+            )}
+        </div>
+      )}
       {market.resolution.primary_rule && (
         <div className="fr-resolution-text">
           <strong>Primary resolution text</strong>

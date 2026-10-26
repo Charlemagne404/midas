@@ -91,6 +91,7 @@ class Capability(StrEnum):
     PUBLIC_TRADES = "public_trades"
     PAGINATED_PUBLIC_TRADES = "paginated_public_trades"
     HISTORICAL_CANDLES = "historical_candles"
+    FEE_METADATA = "fee_metadata"
     FEE_SCHEDULE = "fee_schedule"
     TICK_CONSTRAINTS = "tick_constraints"
     QUANTITY_CONSTRAINTS = "quantity_constraints"
@@ -242,6 +243,43 @@ class FeeSchedule(FrontierModel):
         if self.status == FeeStatus.VERIFIED and not (self.source_url and self.evidence_sha256):
             raise ValueError("Verified fee schedule requires source and evidence hash")
         return self
+
+
+class KalshiFeeMetadata(FrontierModel):
+    """Public native Kalshi fee parameters; deliberately not an account fee quote."""
+
+    schema_version: Literal[1] = 1
+    adapter_version: str
+    native_market_id: str = Field(min_length=1, max_length=256)
+    native_event_id: str = Field(min_length=1, max_length=256)
+    series_ticker: str = Field(min_length=1, max_length=256)
+    event_fee_type_override: str | None = Field(default=None, max_length=80)
+    event_fee_multiplier_override: Nonnegative | None = None
+    series_fee_type: str = Field(min_length=1, max_length=80)
+    series_fee_multiplier: Nonnegative
+    effective_fee_type: str = Field(min_length=1, max_length=80)
+    effective_fee_multiplier: Nonnegative
+    event_fee_type_override_field_present: bool
+    event_fee_multiplier_override_field_present: bool
+    event_raw_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    series_raw_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    event_received_at_utc: datetime
+    series_received_at_utc: datetime
+    schedule_source_url: str = "https://kalshi.com/fee-schedule"
+    fee_rounding_documentation_url: str = "https://docs.kalshi.com/getting_started/fee_rounding"
+    economics_state: Literal["unresolved"] = "unresolved"
+    limitations: tuple[str, ...] = (
+        "Native type and multiplier metadata do not by themselves calculate fees.",
+        "Maker/taker applicability and any scheduled fee changes require the current published schedule.",
+        "Account balance precision and per-order rounding/rebates are unknown without account-specific data.",
+    )
+
+    @field_validator("event_received_at_utc", "series_received_at_utc")
+    @classmethod
+    def fee_metadata_times_are_utc(cls, value: datetime) -> datetime:
+        if value.tzinfo is None or value.utcoffset() is None:
+            raise ValueError("Fee metadata times must include a timezone")
+        return value.astimezone(UTC)
 
 
 class IndependentEconomicAudit(FrontierModel):

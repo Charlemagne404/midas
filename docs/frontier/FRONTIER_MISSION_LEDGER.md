@@ -13,7 +13,10 @@ operator-triggered API/UI continuation flow, and one live first page has been
 hash-verified through an isolated temporary store. One live continuation page
 also passed through the isolated API route, adding ten disjoint trades with
 hash-verified temporary-store read-back. A further page was available but not
-requested.
+requested. Kalshi now has a bounded event/series fee-metadata capability and
+dashboard capture. One fresh public market plus its event/series parameters
+returned HTTP 200 and passed temporary-store raw and row hash verification; the
+canonical fee cost remains unknown and unused by economics.
 Remaining acceptance work is substantial.
 **Branch:** `codex/frontier-20261026`
 **Worktree:** `/home/charlie/midas-frontier`
@@ -71,6 +74,7 @@ Remaining acceptance work is substantial.
 | `67f79cd` | Added Polymarket v2 cursor pages, schema-v2 outcome-token preservation, condition/page-size-bound local cursors, bounded persistence/read-back, and adversarial page/cursor tests. |
 | `7c6cc21` | Added capability/config-gated Mission Control first/next trade-page controls, outcome-token display, and unit plus desktop/mobile continuation coverage. |
 | `e661e06` | Preserved direct first-page and API-route continuation captures, verified their hashes, and refreshed architecture, development, README, and engineering-report handoffs. |
+| Pending checkpoint | Added Kalshi public fee metadata schema/resolver, bounded API capture, native dashboard inspection, identity/path validation, fixture and UI coverage, and one live hash-verified capture. |
 
 ## Public source investigation
 
@@ -79,7 +83,10 @@ Official API documentation reviewed:
 - [Kalshi public market-data quick start](https://docs.kalshi.com/getting_started/quick_start_market_data)
 - [Kalshi Get Markets](https://docs.kalshi.com/api-reference/market/get-markets)
 - [Kalshi Get Market Orderbook](https://docs.kalshi.com/api-reference/market/get-market-orderbook)
+- [Kalshi Get Event](https://docs.kalshi.com/api-reference/events/get-event)
+- [Kalshi Get Series](https://docs.kalshi.com/api-reference/market/get-series)
 - [Kalshi fee information](https://help.kalshi.com/en/articles/13823805-fees)
+- [Kalshi fee rounding](https://docs.kalshi.com/getting_started/fee_rounding)
 - [Kraken Get Tradable Asset Pairs](https://docs.kraken.com/api-reference/market-data/get-tradable-asset-pairs)
 - [Kraken Get Order Book](https://docs.kraken.com/api-reference/market-data/get-order-book)
 - [Kraken Get OHLC Data](https://docs.kraken.com/api-reference/market-data/get-ohlc-data)
@@ -166,6 +173,22 @@ SHA-256:
 `d95c09da91bdf840a7b8fee693a32b14b5d47d8677307773c20ac8c26e7dc405`. The
 source returned another continuation cursor, but no third page was requested.
 
+At `2026-10-26T23:16:17.916305Z`–`23:16:18.408650Z` UTC (October 27 local
+time), the isolated API made one fresh Kalshi listing GET and, for the saved
+market, one event plus one series fee-metadata GET. It used zero retries,
+65,536-byte response caps, an 8-second timeout, no book/trade requests, and a
+temporary 8 MiB store. Each response returned HTTP 200; raw body and stored row
+hashes passed read-back verification. The event had no fee override fields; the
+series reported `quadratic_with_combo_maker_fees`, multiplier 1. Artifact:
+`data/frontier/live-probes/2026-10-27-kalshi-public-fee-metadata.json`. Capture
+manifest SHA-256:
+`945610033e34816f057f054a58fa3672e7f9300d04791b0f76e7b48411fdd607`; serialized
+artifact SHA-256:
+`4a2e1ac8e2953314e89f26fa825142b551ce0a24512a14e3494df03b936ea53e`. The fee
+metadata remains inspection evidence. Market fee costs remain unknown because
+maker/taker applicability, fee changes, and account-specific rounding/rebates
+are unresolved; no fee was calculated or treated as zero.
+
 Capture records and source-specific limitations are in
 [`data/frontier/live-probes/README.md`](../../data/frontier/live-probes/README.md).
 
@@ -178,6 +201,10 @@ Capture records and source-specific limitations are in
 - Legacy adapter/API regression after additive trade fields: **10 passed** in 2.37 seconds pytest time / 3.09 seconds wall, 2.53 seconds user CPU, 121,420 KiB peak RSS, zero socket messages.
 - Latest frontend regression: **36 passed across 7 files**; typecheck, lint and Prettier passed. The production build passed; Frontier lazy chunks are 51.60 kB JS and 25.46 kB CSS. Vite retains the existing >500 kB warning on the 503.86 kB main and 544.41 kB Chart chunks.
 - Latest Frontier browser run: **2 passed** in 6.3 seconds with one worker, including explicit first/next v2 trade-page UI flow and desktop/mobile relationship graph interactions. UI source requests are fixture-backed; this was not a browser-to-live-source test.
+- Current `tests/frontier` after Kalshi fee metadata integration: **63 passed** in 17.08 seconds pytest time; `/usr/bin/time -v` measured 17.63 seconds wall, 3.69 seconds user CPU, 110,004 KiB peak RSS, zero socket messages and zero swaps. One upstream Starlette/httpx TestClient deprecation warning remains.
+- Current frontend suite: **37 passed across 7 files**; typecheck, ESLint and Prettier passed. Production build passed; Frontier chunks are 53.37 kB JS and 26.03 kB CSS. Existing 503.86 kB main and 544.41 kB Chart chunks still trigger Vite's size warning.
+- Current Frontier browser run: **2 passed** in 6.4 seconds with one worker. These fixture-backed cases validate existing bounded interactions; the new fee action is covered by the frontend unit suite, not a live-browser probe.
+- Ruff check/format, mypy for 16 Frontier/API files, and `git diff --check` passed.
 - A direct Polymarket Data API v2 first-page capture and one continuation page through the local API each returned 10 rows/HTTP 200 in exactly one request, without retries, and verified raw plus normalized temporary-store read-back. The 20 native trade IDs are disjoint. The second page still advertised a next cursor; no third page was requested.
 - Ruff check and format check: passed for the Frontier package and test files.
 - Mypy: passed for 16 Frontier/API source files. A broader `mypy packages/midas/frontier apps/api` attempt reported 37 errors in eight unchanged Veritas/Arena/API files; none was in Frontier source.
@@ -231,9 +258,10 @@ The highest-value next steps are:
 2. Extend revision-bound pagination to multi-hop traversal only if a bounded
    cursor can preserve breadth-first semantics; full-universe search and
    clustering need representative data and a resource measurement first.
-3. Resolve Kalshi market/series fee applicability against its effective
-   schedule. Keep Kraken account fee tier unknown without authenticated account
-   data, and keep fee expiry enforced before any decisive net classification.
+3. Reconcile Kalshi's captured event/series parameters with the effective
+   published maker/taker schedule and account rounding model. Keep Kraken
+   account fee tier unknown without authenticated account data, and keep fee
+   expiry enforced before any decisive net classification.
 4. Seek genuine public multi-outcome metadata that satisfies the strict verified
    payoff and resolution requirements; do not relax the evaluator to fit current
    captures.
@@ -245,8 +273,9 @@ The highest-value next steps are:
 
 Do not connect Frontier to Reality’s recorder, enable probes as a default,
 deploy, or alter protected evidence as part of ordinary continuation. The next
-safe work is genuine public multi-outcome term investigation, Kalshi series fee
-resolution, stronger API-boundary degraded-source tests, and short
+safe work is genuine public multi-outcome term investigation, reconciling
+Kalshi's native fee metadata to a supported fee calculation, stronger
+API-boundary degraded-source tests, and short
 resource-admitted Arena/Laboratory replay integration.
 
 ## Latest checkpoint identity

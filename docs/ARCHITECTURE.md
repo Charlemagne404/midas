@@ -125,6 +125,12 @@ the source filters, and no walk starts automatically. One direct first page and
 one continuation through the local API route have bounded, hash-pinned public
 evidence; this does not establish full history, depth, synchronized pricing,
 or execution. Kalshi and Kraken do not advertise this page capability.
+Kalshi exposes a separate fee-metadata capture for one already-recorded market.
+It makes one public event request with child markets excluded and one public
+series request, then stores both raw responses against the native event override
+and series fee parameters. This is inspection evidence only: Frontier leaves the
+market fee schedule unknown until maker/taker rules, fee changes, and account
+rounding are modeled.
 When a bounded probe receives a decoded 2xx response that fails normalization,
 the raw body and typed source-failure diagnostic are stored and the API returns
 the observation ID. Complete within-cap invalid JSON and non-2xx bodies are also

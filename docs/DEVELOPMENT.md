@@ -118,6 +118,15 @@ order-book depth. Kalshi and Kraken do not currently claim the v2 page
 capability. The protected Reality recording and its evidence remain on separate
 roots.
 
+For a recorded Kalshi market, the Exchange Explorer can explicitly capture
+public fee metadata with `POST /api/frontier/probe/kalshi/fee-metadata` and its
+canonical `market_id`. The route requires the source's public-probe setting and
+the market must be in the bounded saved listing window. It makes one event GET
+with `exclude_markets=true` and one series GET, then stores both raw responses
+with the normalized event overrides and series fee type/multiplier. This is
+native-source evidence, not a fee estimate: market `FeeSchedule` remains
+unknown, and the economics engine does not treat these parameters as zero.
+
 Relationship decisions use `POST /api/frontier/relationships/{id}/review`. The
 review form records source market observation IDs and appends a linked revision;
 it cannot bypass the same-payoff verifier. Reviewer labels and external assertion

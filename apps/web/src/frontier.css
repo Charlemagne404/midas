@@ -853,6 +853,37 @@
   font-size: 8px;
   line-height: 1.45;
 }
+.fr-fee-metadata-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 10px 14px;
+  margin: 12px;
+  padding: 12px;
+  border: 1px solid #303b48;
+  border-radius: 4px;
+  background: #11161c;
+}
+.fr-fee-metadata-panel > div:first-child,
+.fr-fee-metadata-result {
+  display: grid;
+  gap: 5px;
+}
+.fr-fee-metadata-panel small {
+  color: #8996a6;
+  font-size: 8px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.fr-fee-metadata-result {
+  grid-column: 1 / -1;
+  padding-top: 9px;
+  border-top: 1px solid #28323c;
+}
+.fr-fee-metadata-result strong {
+  color: #d9e0e9;
+  font-size: 9px;
+}
 .fr-resolution-text {
   padding: 11px 14px;
   border-bottom: 1px solid #252f3a;
@@ -1728,6 +1759,9 @@
   }
   .fr-market-facts {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .fr-fee-metadata-panel {
+    grid-template-columns: 1fr;
   }
   .fr-market-detail-head,
   .fr-instrument-head {

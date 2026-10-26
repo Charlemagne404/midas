@@ -120,7 +120,7 @@ submission route.
 | Venue | Implemented public research | Preserved distinctions and limits | Live evidence |
 | --- | --- | --- | --- |
 | Polymarket | Gamma market discovery; CLOB books; legacy public trades; cursor-paginated Data API v2 trade pages; native token/condition/event IDs; strict market normalization and supported fee-shape handling | Event outcomes are not marked payoff-verified; settlement asset and resolution meaning are not independently attested; no incremental book stream or candle normalization; fee schedules expire after five minutes and unsupported exponents remain unknown; v2 condition history is fixed to three years and page capture uses taker-only trades with a 0.01-share floor | Earlier live API evidence persisted one listing, one book, and ten trades through the older trade path. A direct v2 first page and one continuation through the local API route each returned ten rows and were hash-verified via isolated stores; no third page was requested. A separate one-market listing captured a market-specific `zero_fees` schedule at 20:41:18.972060Z, with `feesEnabled=true`, exponent 1, taker-only, rate 0; normalized status was verified only through 20:46:18.972Z. |
-| Kalshi | Public market discovery, market metadata, binary YES/NO instruments, public book snapshots and trades; retains native rules, status, timestamps and market fields | MVE metadata is classified as conditional; asks derived from complementary YES/NO bids where applicable. Fee applicability is unknown in adapter v1. No stream or historical-candle normalization. | Bounded live API capture persisted one listing, an empty book, and a valid empty trade response. The book had no unified exchange snapshot timestamp. |
+| Kalshi | Public market discovery, market metadata, binary YES/NO instruments, public book snapshots/trades, and explicit event/series fee metadata; retains native rules, status, timestamps and market fields | MVE metadata is classified as conditional; asks derived from complementary YES/NO bids where applicable. Fee metadata is not converted to account fee costs; exact schedule, maker/taker path, scheduled changes, and account rounding remain unresolved. No stream or historical-candle normalization. | Earlier bounded API capture persisted one listing, an empty book, and a valid empty trade response. A later one-market public listing plus event and series fee-metadata captures returned HTTP 200, used three GETs total, and passed raw/row hash-verified temporary-store read-back. |
 | Kraken Spot | Configured-pair AssetPairs metadata; public depth, trades and OHLC; pair tick/lot/minimum fields retained | Spot is a base/quote instrument, not an event payoff. Fee tier, account eligibility, custody, and event hedge semantics are unknown. Pair discovery is an explicit allowlist. | Bounded live API capture persisted XBT/USD metadata, depth with 10 asks/10 bids and per-level timestamps, and ten trades. No prediction-contract equivalence was found. |
 
 Each adapter declares every shared capability as supported or unsupported with a
@@ -129,6 +129,27 @@ binary order book returns YES/NO bids, with complementary prices used to infer
 the other side; Frontier retains that source-specific rule rather than treating
 the returned arrays as generic asks ([Kalshi public market-data guide](https://docs.kalshi.com/getting_started/quick_start_market_data),
 [Kalshi order-book specification](https://docs.kalshi.com/api-reference/market/get-market-orderbook)).
+The public [Get Event](https://docs.kalshi.com/api-reference/events/get-event)
+and [Get Series](https://docs.kalshi.com/api-reference/market/get-series)
+endpoints now have a separate metadata-only adapter operation. The event request
+sets `exclude_markets=true` so the response stays bounded; the adapter retains
+event-level override field presence and values, the series `fee_type` and
+`fee_multiplier`, request/receipt times, and hashes of both raw responses. An
+isolated live route run at `2026-10-26T23:16:17.916305Z`–
+`2026-10-26T23:16:18.408650Z` listed one MVE market, then captured its event and
+series metadata with exactly three unauthenticated GETs total, zero retries, a
+65,536-byte response cap, no book/trade requests, and an 8 MiB temporary store.
+The event contained no override fields; the series supplied
+`quadratic_with_combo_maker_fees` with multiplier 1. All three raw hashes and
+temporary-store row hashes were verified. Artifact:
+[`2026-10-27-kalshi-public-fee-metadata.json`](../../data/frontier/live-probes/2026-10-27-kalshi-public-fee-metadata.json),
+SHA-256 `4a2e1ac8e2953314e89f26fa825142b551ce0a24512a14e3494df03b936ea53e`.
+This is one public metadata sample, not a fee schedule survey or account fee
+quote. Kalshi's help page says fees vary for some markets, while its published
+rounding model depends on member balance precision and per-order accumulation;
+therefore the canonical `FeeSchedule` remains unknown and no fee is calculated
+from these parameters ([Kalshi Fees](https://help.kalshi.com/en/articles/13823805-fees),
+[Fee Rounding](https://docs.kalshi.com/getting_started/fee_rounding)).
 Kraken’s public spot pair metadata and depth endpoints support the spot adapter,
 but do not make spot a prediction-contract payoff ([Kraken AssetPairs](https://docs.kraken.com/api-reference/market-data/get-tradable-asset-pairs),
 [Kraken order book](https://docs.kraken.com/api-reference/market-data/get-order-book)).
@@ -162,11 +183,11 @@ hash-verified. The second page advertised another cursor; no third page or full
 history walk was requested. Earlier ten-trade samples used the legacy public
 trades path.
 
-Kalshi's public series metadata exposes `fee_type` and `fee_multiplier`, but the
-adapter does not yet resolve those fields through the effective market/series
-fee schedule; its fee remains unknown ([Get Series](https://docs.kalshi.com/api-reference/market/get-series),
-[published fee schedule](https://kalshi.com/fee-schedule)). Kraken's public
-pair data does not establish the account's current fee tier. Its trade-volume
+Kalshi's event/series fee metadata is captured and linked to raw responses, but
+the exact fee schedule, fee-change timing, maker/taker applicability, and
+account-specific rounding/rebates are not reconciled into an executable cost;
+its fee therefore remains unknown. Kraken's public pair data does not establish
+the account's current fee tier. Its trade-volume
 endpoint is authenticated, which Frontier does not call ([Kraken Get Trade
 Volume](https://docs.kraken.com/api-reference/account-data/get-trade-volume)).
 No fee is guessed for either source.
@@ -460,6 +481,10 @@ Verification on this branch:
 - Legacy adapter and offline API regression after additive `TradeObservation` fields: **10 passed** in 2.37 seconds pytest time / 3.09 seconds wall, 2.53 seconds user CPU, 121,420 KiB peak RSS, zero socket messages.
 - Latest frontend suite: **36 passed across 7 files**; TypeScript typecheck, ESLint, and Prettier checks passed. Frontier's built chunks are 51.60 kB JavaScript and 25.46 kB CSS; the pre-existing main/Chart chunks remain above Vite's 500 kB warning threshold.
 - Latest Frontier Playwright run: **2 passed** in 6.3 seconds with one worker. It includes explicit first/next trade-page UI continuation against fixtures; it does not imply a live browser/API source run.
+- Current regression after Kalshi fee metadata/UI integration: `tests/frontier` **63 passed** in 17.08 seconds pytest time; `/usr/bin/time -v` measured 17.63 seconds wall, 3.69 seconds user CPU, 110,004 KiB peak RSS, and zero socket messages/swaps. The existing Starlette/httpx TestClient deprecation warning remains.
+- Current frontend suite: **37 passed across 7 files**. Typecheck, ESLint, and Prettier checks passed. Production build passed; Frontier chunks are 53.37 kB JavaScript and 26.03 kB CSS. The existing 503.86 kB main and 544.41 kB Chart chunks still trigger Vite's large-chunk warning.
+- Current Frontier Playwright run: **2 passed** in 6.4 seconds with one worker. These cases validate existing bounded graph interactions and isolated page behavior; the fee metadata action is covered by the frontend fixture test, not a live-browser probe.
+- The Kalshi fee metadata route passed an isolated live API-to-temporary-store read-back for one market and series. It made one listing, one event, and one series GET, all HTTP 200; the three raw-body and stored-row hashes verified. This is endpoint/normalization evidence only, not a fee-cost calculation.
 - Live v2 source checks: one unauthenticated direct first-page GET and one continuation GET invoked through `POST /api/frontier/probe/polymarket/trades`; each made one request without retries, returned HTTP 200 and ten trades, and had raw plus normalized temporary-store read-back hashes pinned. Their 20 native trade IDs are distinct. No third page was requested.
 
 Backend tests emitted one upstream Starlette/httpx TestClient deprecation
@@ -569,8 +594,8 @@ evaluated as designed; they are not scientific or economic findings.
 
 ## 15. Economic limitations
 
-Kalshi fee schedules are not resolved to a verified market-specific formula in
-adapter v1; Kraken account-tier fees are not known from the public spot capture;
+Kalshi fee parameters are now recorded, while exact market/account fee costs
+remain unresolved; Kraken account-tier fees are not known from the public spot capture;
 and Polymarket fee semantics remain constrained to the strict exponent-1
 normalizer and five-minute market metadata expiry. Cross-venue FX, collateral denomination,
 transfer/withdrawal cost, account funding allocation, capital duration,
@@ -642,9 +667,10 @@ Priority order:
 2. Extend revision-bound pagination to multi-hop graph traversal only if a
    bounded cursor can preserve breadth-first ordering; add full-universe search
    and clustering only after representative data and measurements exist.
-3. Resolve Kalshi series-specific fees against the effective schedule. Keep
-   Kraken account fee tier unknown without authenticated data; no candidate may
-   use unknown or expired fees as zero.
+3. Reconcile Kalshi's captured event/series parameters with the effective
+   published maker/taker schedule and account rounding model. Keep Kraken
+   account fee tier unknown without authenticated data; no candidate may use
+   unknown or expired fees as zero.
 4. Seek real public multi-outcome metadata that meets the strict payoff and
    resolution requirements; broaden accepted payoff families only with
    independently checked evidence.
@@ -758,15 +784,15 @@ cross-venue economics.
 | --- | --- | --- |
 | Isolated baseline/worktree and preserved unrelated changes | COMPLETE AND VERIFIED | Branch starts at verified V6 commit; original dirty worktrees untouched. |
 | Adapter protocol, capability registry, bounded GET transport | COMPLETE AND VERIFIED | Contract tests, all capability declarations, host/size/rate/redirect bounds. |
-| Polymarket, Kalshi and Kraken Spot adapters | PARTIALLY VERIFIED | Fixture/contract tests and one live listing/book/legacy-trade API round trip per venue pass. A direct Polymarket v2 first page and one continuation page through the local API route each returned ten rows and were hash-verified via temporary storage; no third page was requested. Polymarket fee evidence is narrow; Kalshi series and Kraken account fee applicability remain unknown. Mock tests cover invalid JSON/UTF-8, HTTP 503, timeout, truncated streams, schema-failure evidence, capped retries, source isolation, and recovery; live degraded-source behavior remains unverified. |
+| Polymarket, Kalshi and Kraken Spot adapters | PARTIALLY VERIFIED | Fixture/contract tests and one live listing/book/legacy-trade API round trip per venue pass. A direct Polymarket v2 first page and one continuation each returned ten rows and were hash-verified via temporary storage. Kalshi event overrides and series fee parameters are now captured in one live event/series sequence; exact account fees remain unknown. Kraken account fee applicability remains unknown. Mock tests cover malformed responses, timeout, truncation, retries and source recovery; live degraded-source behavior remains unverified. |
 | Canonical market/instrument normalization | PARTIALLY VERIFIED | Three distinct instrument classes are represented; v2 Polymarket trades retain native outcome-token identity. Live lineage and several payoff/settlement semantics remain unverified. |
 | Relationship hypotheses, review revisions, indexed neighborhoods, and explicit same-payoff verifier | PARTIALLY VERIFIED | Self-attributed review API/UI, append-only revisions, latest-state replay, tamper/migration checks, left/right endpoint-indexed 1–3 hop scans capped at 500 rows, revision-bound centered one-hop keyset pages, stale-cursor rejection, and a 501-edge scan-bound test; no genuine equivalent pair, reviewer authentication, or multi-hop pagination. |
 | Opportunity candidate and independent economic checks | PARTIALLY VERIFIED | Two-venue all-long binary and same-market 3–16 state one-hot exhaustive coverage, with a separate pinned-input arithmetic audit; controlled fixtures only, with source semantics, fees, broader costs and operational feasibility incomplete. |
 | Append-only evidence store and deterministic replay | COMPLETE AND VERIFIED | Schema v5, v2/v3/v4 additive migration, bounds, hash validation, immutability, replay tests; not integrated as an Arena campaign. |
-| Live market/book/trade observations through adapters and API | PARTIALLY VERIFIED | One bounded listing, book, and legacy trade response per venue is hash-pinned; a v2 Polymarket first page and API-route continuation page were hash-pinned via isolated-store read-back, with distinct trade IDs. Samples are not synchronized and do not establish continuous feed coverage or a third page. Kalshi's legacy trade array was valid but empty. |
+| Live market/book/trade and fee metadata through adapters/API | PARTIALLY VERIFIED | One bounded listing, book, and legacy trade response per venue is hash-pinned; a Polymarket v2 first page and continuation have distinct IDs; one Kalshi event/series fee-metadata read-back is hash-pinned. Samples are not synchronized, establish no venue-wide fee schedule, and do not establish continuous feed coverage or execution. Kalshi's legacy trade array was valid but empty. |
 | Source workers and broad historical data | DEFERRED | No persistent worker or long-duration collection. |
 | Laboratory/Arena research orchestration | DEFERRED | Workspace navigation and deterministic Frontier replay only. |
-| Native Mission Control workspace | PARTIALLY VERIFIED | Local API, bounded graph/review UI, and source/capability-gated explicit Polymarket first/next trade-page controls; unit and desktop/mobile E2E use fixtures. Production deployment and live browser-to-source validation are not done. |
+| Native Mission Control workspace | PARTIALLY VERIFIED | Local API, bounded graph/review UI, Polymarket trade-page controls, and a Kalshi fee-metadata inspection action; unit tests cover the new action. Browser tests use isolated research state and do not exercise live sources. Production deployment and live browser-to-source validation are not done. |
 | Production readiness/deployment | DEFERRED | Separate review and authorization required; production eligibility is false. |
 | Positive economic result | NOT ESTABLISHED | No genuine cross-venue equivalent or economically eligible result in captured evidence. |
 

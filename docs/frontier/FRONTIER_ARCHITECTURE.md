@@ -32,6 +32,13 @@ native metadata, source URL, adapter/schema versions, raw-body hash, request and
 receipt times, and source-time semantics. Source quality flags are carried forward
 instead of being replaced with guessed values.
 
+Kalshi separately advertises `fee_metadata`: a deliberate one-event plus one-series
+read captures the event override fields and series fee type/multiplier. The event
+request excludes child markets to keep this metadata call bounded. This capability
+does not imply a verified fee schedule: the native parameters are stored with both
+raw response hashes while `FeeSchedule` remains unknown until the current maker/taker
+rules, fee-change applicability, and account-specific balance rounding are modeled.
+
 The common model is not the lowest common denominator. A binary event contract,
 a multivariate event leg, and a spot pair retain separate instrument kinds and
 payoff constraints. In particular, Kraken spot is contextual asset evidence; it
@@ -109,9 +116,11 @@ exponent 1; explicit disabled fees map to zero, while other shapes remain
 unknown. The normalized fee fields are hashed and expire five minutes after
 receipt. One October 26 public market listing verified a zero-rate schedule;
 that observation is not generalized to other markets. Kalshi fee applicability
-requires a market/series schedule resolver not yet implemented. Kraken's public
-pair feed does not expose an account's applied tier; Frontier does not call the
-authenticated account-volume API. Unknown venue costs remain unknown.
+has an explicit public metadata resolver, but fee calculation remains unsupported:
+series and event parameters are preserved as evidence without converting them to
+account fees. Kraken's public pair feed does not expose an account's applied tier;
+Frontier does not call the authenticated account-volume API. Unknown venue costs
+remain unknown.
 
 Replay then runs a separate arithmetic implementation that does not call the
 candidate calculator's arithmetic helpers. It records `verified`, `disagreement`,
