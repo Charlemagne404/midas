@@ -39,6 +39,15 @@ does not imply a verified fee schedule: the native parameters are stored with bo
 raw response hashes while `FeeSchedule` remains unknown until the current maker/taker
 rules, fee-change applicability, and account-specific balance rounding are modeled.
 
+Kalshi also advertises cursor-paginated public trades. Frontier exposes one
+operator-triggered ticker-filtered page at a time, caps it at 100 rows even though
+the venue documents a larger limit, binds the local cursor to the recorded ticker
+and page size, and stops when the source returns an empty cursor. Native
+`yes_price_dollars` is represented as a YES-price reference; raw
+`no_price_dollars` and taker fields remain in the auditable response. The adapter
+does not infer a normalized BUY/SELL aggressor direction from
+`taker_outcome_side`.
+
 The common model is not the lowest common denominator. A binary event contract,
 a multivariate event leg, and a spot pair retain separate instrument kinds and
 payoff constraints. In particular, Kraken spot is contextual asset evidence; it
@@ -186,8 +195,10 @@ hash-verified normalized trades with their source observation and raw-body hash;
 the v2 trade record preserves the native token ID and outcome fields alongside
 the condition and transaction hash. Wallet profile fields from source rows are
 not copied into normalized trades, while complete bounded raw responses remain
-available as auditable source evidence. Kalshi and Kraken explicitly do not
-advertise this cursor-page operation. The UI displays recorded trades as public
+available as auditable source evidence. Kalshi uses a separate
+`POST /probe/kalshi/trades` operation bound to a recorded ticker; block trades
+remain included under the source default. Kraken does not advertise cursor-page
+trades. The UI displays recorded trades as public
 prints, not as available depth or executable prices. Probe errors include diagnostic
 observation IDs when a captured response can be preserved. The Frontier page does not inherit the
 single-venue synthetic/demo banner. It shows source health separately from

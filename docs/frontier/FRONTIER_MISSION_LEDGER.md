@@ -17,6 +17,9 @@ requested. Kalshi now has a bounded event/series fee-metadata capability and
 dashboard capture. One fresh public market plus its event/series parameters
 returned HTTP 200 and passed temporary-store raw and row hash verification; the
 canonical fee cost remains unknown and unused by economics.
+Kalshi also now has a one-page ticker-filtered public trade operation with a
+cursor bound to the saved ticker and page size. Its live API page was HTTP 200,
+empty, and terminal; trade-row normalization remains fixture-verified only.
 Remaining acceptance work is substantial.
 **Branch:** `codex/frontier-20261026`
 **Worktree:** `/home/charlie/midas-frontier`
@@ -74,7 +77,7 @@ Remaining acceptance work is substantial.
 | `67f79cd` | Added Polymarket v2 cursor pages, schema-v2 outcome-token preservation, condition/page-size-bound local cursors, bounded persistence/read-back, and adversarial page/cursor tests. |
 | `7c6cc21` | Added capability/config-gated Mission Control first/next trade-page controls, outcome-token display, and unit plus desktop/mobile continuation coverage. |
 | `e661e06` | Preserved direct first-page and API-route continuation captures, verified their hashes, and refreshed architecture, development, README, and engineering-report handoffs. |
-| Pending checkpoint | Added Kalshi public fee metadata schema/resolver, bounded API capture, native dashboard inspection, identity/path validation, fixture and UI coverage, and one live hash-verified capture. |
+| `a6bcf60` | Added Kalshi cursor-paginated public trade pages, a ticker/page-size-bound API cursor, raw/normalized persistence, a source-neutral Polymarket/Kalshi trade panel, contract/API/UI tests, and one live hash-verified empty-page capture. |
 
 ## Public source investigation
 
@@ -83,6 +86,7 @@ Official API documentation reviewed:
 - [Kalshi public market-data quick start](https://docs.kalshi.com/getting_started/quick_start_market_data)
 - [Kalshi Get Markets](https://docs.kalshi.com/api-reference/market/get-markets)
 - [Kalshi Get Market Orderbook](https://docs.kalshi.com/api-reference/market/get-market-orderbook)
+- [Kalshi Get Trades](https://docs.kalshi.com/api-reference/market/get-trades)
 - [Kalshi Get Event](https://docs.kalshi.com/api-reference/events/get-event)
 - [Kalshi Get Series](https://docs.kalshi.com/api-reference/market/get-series)
 - [Kalshi fee information](https://help.kalshi.com/en/articles/13823805-fees)
@@ -202,8 +206,12 @@ Capture records and source-specific limitations are in
 - Latest frontend regression: **36 passed across 7 files**; typecheck, lint and Prettier passed. The production build passed; Frontier lazy chunks are 51.60 kB JS and 25.46 kB CSS. Vite retains the existing >500 kB warning on the 503.86 kB main and 544.41 kB Chart chunks.
 - Latest Frontier browser run: **2 passed** in 6.3 seconds with one worker, including explicit first/next v2 trade-page UI flow and desktop/mobile relationship graph interactions. UI source requests are fixture-backed; this was not a browser-to-live-source test.
 - Current `tests/frontier` after Kalshi fee metadata integration: **63 passed** in 17.08 seconds pytest time; `/usr/bin/time -v` measured 17.63 seconds wall, 3.69 seconds user CPU, 110,004 KiB peak RSS, zero socket messages and zero swaps. One upstream Starlette/httpx TestClient deprecation warning remains.
-- Current frontend suite: **37 passed across 7 files**; typecheck, ESLint and Prettier passed. Production build passed; Frontier chunks are 53.37 kB JS and 26.03 kB CSS. Existing 503.86 kB main and 544.41 kB Chart chunks still trigger Vite's size warning.
-- Current Frontier browser run: **2 passed** in 6.4 seconds with one worker. These fixture-backed cases validate existing bounded interactions; the new fee action is covered by the frontend unit suite, not a live-browser probe.
+- Latest bounded regression command: **77 passed** across `tests/frontier`, adapter contract integration, and the offline API persistence workflow in 17.75 seconds pytest time. `/usr/bin/time -v` measured 18.57 seconds wall, 4.99 seconds user CPU, 150,520 KiB peak RSS, zero socket messages, and zero swaps. One upstream Starlette/httpx deprecation warning remains.
+- Current frontend suite: **37 passed across 7 files**; typecheck, ESLint and Prettier passed. Production build passed; Frontier chunks are 54.10 kB JS and 26.06 kB CSS. Existing 503.86 kB main and 544.41 kB Chart chunks still trigger Vite's size warning.
+- Current Frontier browser file: **2 passed** with one worker after updating the source-neutral trade-market selector. The Polymarket and Kalshi page paths are fixture-backed; no live browser-to-source request was made.
+- The first full 10-case Playwright attempt had one outdated Frontier selector and two Laboratory timeouts. After fixing the selector, a full single-worker browser run passed **10/10** in 23.4 seconds. It used isolated temporary API/storage roots and left no source probes enabled.
+- Python Ruff check/format, mypy for 16 Frontier/API source files, and `git diff --check` passed after the Kalshi trade-page change.
+- The live Kalshi trade-page capture used two unauthenticated GETs (one saved-market listing and one trade page), zero retries, 65,536-byte caps, and a temporary 8 MiB store. Both responses were HTTP 200 and raw/row hashes verified. The conditional market's page had zero trades and no cursor; this does not validate live row mapping or establish market availability.
 - Ruff check/format, mypy for 16 Frontier/API files, and `git diff --check` passed.
 - A direct Polymarket Data API v2 first-page capture and one continuation page through the local API each returned 10 rows/HTTP 200 in exactly one request, without retries, and verified raw plus normalized temporary-store read-back. The 20 native trade IDs are disjoint. The second page still advertised a next cursor; no third page was requested.
 - Ruff check and format check: passed for the Frontier package and test files.
@@ -211,7 +219,7 @@ Capture records and source-specific limitations are in
 - Frontend tests: **35 passed across 7 files** after adding incomplete-scan messaging coverage; typecheck, lint and Prettier check passed.
 - Frontend production build: passed. Existing main and Chart chunks trigger Vite’s >500 kB warning. Frontier’s lazy chunks are 49.11 kB JS and 24.74 kB CSS.
 - Frontier browser cases: **2 passed** in 6.5 seconds, including centered graph pagination, fixture-only review submission, multi-outcome candidate state, and audit details at desktop/mobile sizes using one worker and isolated roots; source probes remained disabled. In the broader 10-case E2E run, 8 passed and 2 existing Laboratory cases were denied at the shared Arena resource-admission lock (`resource_admission_lock_busy`); no experiments started and the lock was not bypassed.
-- The complete Python repository suite was not run. No continuous worker, campaign, or service was started.
+- The complete Python repository suite was not run. After an initial browser run exposed a stale Frontier selector and two Laboratory timeouts, the selector was fixed and the full single-worker 10-case suite passed. No persistent service or long-running campaign was started.
 
 Reproduction commands and environment boundaries are in
 [`docs/DEVELOPMENT.md`](../DEVELOPMENT.md) and
@@ -223,14 +231,14 @@ Reproduction commands and environment boundaries are in
 | --- | --- | --- |
 | Verified isolated baseline and worktree | COMPLETE AND VERIFIED | Separate branch from `11d32a0`; unrelated dirty trees preserved. |
 | Adapter protocol, capability inventory, bounded GET transport | COMPLETE AND VERIFIED | Contract tests; all capabilities explicitly declared; no startup request. |
-| Polymarket, Kalshi and Kraken Spot implementations | PARTIALLY VERIFIED | Fixture tests and one bounded live listing/book/trade-to-store round trip per venue pass. One direct Polymarket v2 first page and one API-route continuation returned ten rows each and were hash-verified through isolated stores, with distinct trade IDs. Polymarket fee parsing accepts only the supported taker exponent-1 schedule; one genuine Gamma listing recorded a five-minute verified zero-fee sample. Kalshi series and Kraken account fee applicability remain unknown; live degraded-source behavior remains unverified. |
+| Polymarket, Kalshi and Kraken Spot implementations | PARTIALLY VERIFIED | Fixture tests and bounded live listing/book/trade-to-store evidence exist. Polymarket v2 first and continuation pages returned ten rows each. Kalshi cursor pages are implemented and row mapping is fixture-tested; a live page returned zero trades and no cursor, so live row normalization remains pending. Kalshi account fees and Kraken account fee applicability remain unknown; live degraded-source behavior remains unverified. |
 | Canonical normalization and native evidence | PARTIALLY VERIFIED | Distinct event, conditional event and spot forms; v2 Polymarket trades preserve token and outcome identity, while earlier v1 batches still load with those new fields unknown. Other settlement/payoff semantics remain intentionally unverified. |
 | Relationship matching, immutable review, indexed neighborhoods, and strict payoff verifier | PARTIALLY VERIFIED | Self-attributed review API/UI with stored source refs, append-only revisions, compare-and-set, latest-state replay, query-plan/migration tests, and 1–3 hop left/right indexed scans capped at 500 rows. Centered one-hop keyset pages bind listing/instrument-metadata observation, relationship, and review counts; changed inputs reject stale cursors. A 501-edge fixture verifies the scan cap. No authenticated reviewer/assertion, genuine equivalent pair, or multi-hop pagination. |
 | Economic candidate verifier and independent audit | PARTIALLY VERIFIED | Exact two-venue binary all-long coverage and same-market 3–16-state exhaustive one-hot coverage. A separate Decimal implementation recomputes supported candidate arithmetic from hash-pinned normalized inputs; controlled fixtures only, no genuine eligible event, independently authenticated market truth, or practical execution proof. |
 | Bounded store and deterministic replay | COMPLETE AND VERIFIED | Schema v5, additive v2/v3/v4 migration with preserved relationship payloads, append-only review/revision history, content integrity checks, persisted replay-v3 audit results, and tests that later review revokes earlier verified replay input. |
-| Frontier API and source configuration | COMPLETE AND VERIFIED | Local reads include hash-verified v1/v2 trades and page metadata. A v2 POST is capability/config/recorded-market gated, bounded to one cursor page and retries, and rejects condition/page-size cursor mismatch. Two-page API persistence/read-back and no-egress mismatch rejection pass fixtures; one live continuation page also passed through the API route. |
-| Live adapter-to-API listing, book, and trade persistence | PARTIALLY VERIFIED | Three genuine listings, books, and legacy trade responses are hash-preserved; one direct v2 first page and one API-route continuation page were hash-read from isolated temporary stores with distinct trade IDs. The samples are sequential and no third page or time-series collection was attempted. Kalshi book/trade arrays were empty. |
-| Mission Control Frontier workspace | IMPLEMENTED, LIVE VALIDATION PENDING | Native view now gates manual first/next Data API v2 pages on the source flag and capability, shows raw/normalized evidence hashes, and retains token/outcome identity. Unit and desktop/mobile E2E cover fixture pages; the workspace is not deployed. |
+| Frontier API and source configuration | COMPLETE AND VERIFIED | Local reads include hash-verified legacy and cursor-page batches. Polymarket and Kalshi page routes are capability/config/recorded-market gated, bounded to one page and retries, and bind cursors to market and size. Polymarket two-page and Kalshi empty-terminal-page persistence/read-back are tested. Kalshi live trade-row mapping remains fixture-only. |
+| Live adapter-to-API listing, book, and trade persistence | PARTIALLY VERIFIED | Three genuine venue captures, Polymarket v2 first/continuation pages with distinct IDs, and one Kalshi empty cursor page have hash-pinned temporary-store evidence. Samples are sequential and do not establish synchronization, depth, complete histories, or execution. |
+| Mission Control Frontier workspace | IMPLEMENTED, LIVE VALIDATION PENDING | Native view selects Polymarket or Kalshi for a manual trade-page request, displays evidence hashes and request bounds, and uses fixture-backed unit/E2E coverage. The workspace is not deployed and no live browser source request was made. |
 | Laboratory/Arena research orchestration | DEFERRED | Navigation links only; no Frontier experiment job type/scheduler. |
 | Persistent source collection, streaming and broad historical replay | DEFERRED | No background worker or long-duration campaign. |
 | Cross-venue FX, comprehensive capital and settlement costs | DEFERRED | Unknown costs remain unknown and block decisive net economics. |
@@ -249,9 +257,10 @@ and external assertion IDs are self-attributed and not authenticated or fetched.
 The highest-value next steps are:
 
 1. Expand API-boundary degraded-source and recovery validation if a distinct
-   useful failure condition can be established safely. The direct adapter first
-   page and one live API-route continuation are captured; do not request more
-   pages merely to increase counts. Live degraded-source recovery remains
+   useful failure condition can be established safely. Polymarket first and
+   continuation pages and one Kalshi empty terminal page are captured; do not
+   request more pages merely to increase counts. A live Kalshi trade row is not
+   yet available in captured evidence. Live degraded-source recovery remains
    unverified. Mock tests cover bounded timeout retries, oversized-response
    rejection, truncated-stream evidence rejection, and retry-after/HTTP failure
    capture; no live source is intentionally degraded.

@@ -114,9 +114,16 @@ taker-only, and 0.01-share filters per page; condition queries expose a fixed
 three-year history window. No page walk or data fetch starts automatically.
 Normalized v2 rows retain token ID and outcome identity, while wallet profile
 fields remain only in the bounded raw source response. Trade prints are not
-order-book depth. Kalshi and Kraken do not currently claim the v2 page
-capability. The protected Reality recording and its evidence remain on separate
-roots.
+order-book depth. Kalshi exposes a separate explicit
+`POST /api/frontier/probe/kalshi/trades` route with `market_id` (the recorded
+native ticker), `limit` (at most 100), and an optional returned cursor. Each
+cursor is bound to its ticker and page size; one request captures one page and
+Kalshi's block trades remain included by default. The normalization treats
+`yes_price_dollars` as a YES-price reference and does not infer a BUY/SELL side
+from `taker_outcome_side`. The UI lets a researcher select either Polymarket or
+Kalshi and then choose a market already present in saved listing evidence. Kraken
+does not currently claim cursor-paginated public trades. The protected Reality
+recording and its evidence remain on separate roots.
 
 For a recorded Kalshi market, the Exchange Explorer can explicitly capture
 public fee metadata with `POST /api/frontier/probe/kalshi/fee-metadata` and its
@@ -126,6 +133,9 @@ with `exclude_markets=true` and one series GET, then stores both raw responses
 with the normalized event overrides and series fee type/multiplier. This is
 native-source evidence, not a fee estimate: market `FeeSchedule` remains
 unknown, and the economics engine does not treat these parameters as zero.
+The Kalshi trade-page route follows the same saved-market and source-configuration
+gates, persists one raw and normalized page per click, and returns no next cursor
+when Kalshi's response cursor is empty. It does not start a history crawl.
 
 Relationship decisions use `POST /api/frontier/relationships/{id}/review`. The
 review form records source market observation IDs and appends a linked revision;

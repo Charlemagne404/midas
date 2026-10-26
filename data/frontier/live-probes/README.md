@@ -16,6 +16,7 @@ can be replayed; each capture contains a SHA-256 over its pre-hash manifest.
 | `2026-10-26-polymarket-v2-trade-page.json` | One direct, unauthenticated Data API v2 first page for a condition already present in the saved public listing; one GET, ten normalized trades, and hash-verified temporary-store read-back. |
 | `2026-10-26-polymarket-v2-api-continuation.json` | One continuation page for that condition through the isolated Frontier API route; one unauthenticated GET, ten normalized trades, and hash-verified temporary-store read-back. Its ten transaction IDs do not overlap the first page. |
 | `2026-10-27-kalshi-public-fee-metadata.json` | One public Kalshi listing and the matching event plus series fee metadata; three GETs, one market, child markets excluded from the event response, and hash-verified temporary-store read-back. |
+| `2026-10-27-kalshi-public-trade-page.json` | One public Kalshi listing and one ticker-filtered cursor-page request through the isolated API; two GETs, zero returned trades, empty continuation cursor, and raw/row hash-verified temporary-store read-back. |
 
 The earliest direct source-probe files contain five HTTP 200 responses:
 Kalshi market listing and later book, Kraken pair metadata and depth, and a
@@ -128,3 +129,26 @@ page was available, but the probe stopped after this one continuation request.
 The two pages demonstrate bounded cursor continuation and persistence; they do
 not constitute full history, market depth, synchronized quotes, or execution
 evidence.
+
+The bounded Kalshi trade-page capture ran at
+`2026-10-26T23:29:53.349697Z`–`23:29:54.049333Z` UTC (October 27 in
+Stockholm). The isolated API made one listing GET and one ticker-filtered trade
+GET, with zero retries, eight-second timeouts, 65,536-byte response caps, and a
+temporary 8 MiB store. Both responses were HTTP 200. The saved ticker
+`KXMVECROSSCATEGORY-S2026AI6WGLUADXUYU2PZ-PGLXFSG4I` normalized as a
+`conditional_event`; the trade page was empty and had no continuation cursor.
+The raw hashes are
+`ccd9144ebab67664ef0b724925d97fe597f906b9b26e30be421cf43d269f4d4c` (listing)
+and `ce91679332b1b83d2574366e4cc72f6d41bf656ccc2fa9cf574ee4f9ac6809e7`
+(trade page). Temporary-store row hashes are
+`72e105ad6b96f6d0968fb68822016bb7384fdc5f65956219343e219cf07e389b` and
+`cc12462c22bd77a76bb674c8ace8b9b081726e032a4ff981c7ee17980e19c51a`.
+The manifest SHA-256 is
+`94cb4aeed436c5ac6b7d1175f99532fea57caa2b8d998600bf332451e0bcd06b` and the
+serialized artifact SHA-256 is
+`7439cdb2ab02d766d174257953d3bf967cbd933df5683c4c799938fedf122b04`. This
+validates public endpoint access, stored empty-page handling, and cursor
+termination for one conditional market. It does not exercise live trade-row
+normalization; fixture tests cover rows, ticker mismatch, and nonadvancing
+cursors. The sample says nothing about trade availability, market depth, or
+economic relationships across Kalshi markets.
