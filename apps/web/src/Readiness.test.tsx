@@ -18,6 +18,25 @@ function renderReadiness() {
   );
 }
 
+it('announces evidence loading without treating missing responses as measured', async () => {
+  const pending = new Promise<Response>(() => {});
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(() => pending),
+  );
+  renderReadiness();
+
+  expect(await screen.findByRole('status')).toHaveTextContent(/Loading evidence from 7 sources/);
+  expect(
+    screen.getByText('0 of 6 gates currently pass. Missing evidence never counts as a pass.'),
+  ).toBeInTheDocument();
+  const gate = screen
+    .getByRole('heading', { name: 'Independent research correctness' })
+    .closest('.rr-gate');
+  expect(gate).toHaveTextContent('NOT MEASURED');
+  expect(gate).not.toHaveTextContent('PASS');
+});
+
 it('shows measured zero-candidate evidence without turning it into a profitability claim', async () => {
   const now = Date.now();
   const replies: Record<string, unknown> = {

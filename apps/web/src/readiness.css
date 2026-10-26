@@ -313,6 +313,18 @@
   font-size: 12px;
   font-variant-numeric: tabular-nums;
 }
+.rr-loading-state {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  color: #c8ced7;
+  border: 1px solid #3b414c;
+  border-radius: 6px;
+  background: #151a20;
+  font-size: 11px;
+  line-height: 1.5;
+}
 .rr-sampling-note,
 .rr-note {
   margin-top: 12px;

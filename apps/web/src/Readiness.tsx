@@ -188,6 +188,9 @@ export function Readiness() {
     queryFn: () => api<JsonRecord>('/readiness/resources'),
     ...options,
   });
+  const loadingEvidenceCount = [health, state, reality, veritas, arena, lab, resources].filter(
+    (query) => query.isLoading,
+  ).length;
 
   const serviceHealth = asString(health.data?.status);
   const apiStatus: GateStatus = health.isError
@@ -401,7 +404,7 @@ export function Readiness() {
   const currentMode = asString(state.data?.mode);
 
   return (
-    <div className="readiness-page">
+    <div className="readiness-page" aria-busy={loadingEvidenceCount > 0}>
       <section className="rr-hero">
         <div>
           <div className="rr-eyebrow">ENGINEERING EVIDENCE / READINESS</div>
@@ -428,6 +431,13 @@ export function Readiness() {
           </button>
         </div>
       </section>
+
+      {loadingEvidenceCount > 0 && (
+        <div className="rr-loading-state" role="status" aria-live="polite">
+          Loading evidence from {loadingEvidenceCount} source{loadingEvidenceCount === 1 ? '' : 's'}
+          ; missing values remain unmeasured until each response arrives.
+        </div>
+      )}
 
       {(health.isError ||
         reality.isError ||
