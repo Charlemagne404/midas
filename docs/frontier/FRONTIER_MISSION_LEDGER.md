@@ -56,6 +56,7 @@ Remaining acceptance work is substantial.
 | `d389c24` | Added schema-v5 left/right relationship endpoint indexes, bounded adjacency queries, scan accounting, a v4 additive migration, and query-plan/API/storage regression tests. |
 | `872466e` | Surfaced relationship scan counts and incomplete-neighborhood status in Mission Control; added UI regression coverage and refreshed the isolated Frontier browser fixture. |
 | `cbd6ded` | Updated Frontier architecture, development guidance, and engineering report for indexed adjacency, schema v5, latest tests, and remaining graph-scale limits. |
+| `aa2a001` | Added supported Polymarket fee-shape assertions and fail-closed exponent coverage; added bounded timeout retry and truncated-stream transport tests. |
 
 ## Public source investigation
 
@@ -122,6 +123,7 @@ Capture records and source-specific limitations are in
 ## Verification checkpoint
 
 - Backend focused regression after indexed adjacency: **56 passed** in 10.65 seconds pytest time; one upstream Starlette/httpx TestClient deprecation warning. `/usr/bin/time -v` measured 11.43 seconds wall, 3.97 seconds user CPU, 145,560 KiB peak RSS, and zero socket messages.
+- Latest focused backend regression: **59 passed** in 11.11 seconds pytest time; one upstream Starlette/httpx TestClient deprecation warning. `/usr/bin/time -v` measured 11.89 seconds wall, 4.03 seconds user CPU, 145,936 KiB peak RSS, and zero socket messages. Added timeout retry and truncated-stream no-partial-evidence tests. Ruff and format checks passed for both changed test files.
 - Ruff check and format check: passed for the Frontier package and test files.
 - Mypy: passed for 16 Frontier/API source files. A broader `mypy packages/midas/frontier apps/api` attempt reported 37 errors in eight unchanged Veritas/Arena/API files; none was in Frontier source.
 - Frontend tests: **35 passed across 7 files** after adding incomplete-scan messaging coverage; typecheck, lint and Prettier check passed.
@@ -139,7 +141,7 @@ Reproduction commands and environment boundaries are in
 | --- | --- | --- |
 | Verified isolated baseline and worktree | COMPLETE AND VERIFIED | Separate branch from `11d32a0`; unrelated dirty trees preserved. |
 | Adapter protocol, capability inventory, bounded GET transport | COMPLETE AND VERIFIED | Contract tests; all capabilities explicitly declared; no startup request. |
-| Polymarket, Kalshi and Kraken Spot implementations | PARTIALLY VERIFIED | Fixture tests and one bounded live listing/book/trade-to-store round trip per venue pass; mock tests verify invalid JSON/UTF-8, HTTP 503, 2xx schema-failure evidence, source isolation, and health recovery. Fees and live degraded-source behavior remain unverified; oversized/partial bodies are not persisted. |
+| Polymarket, Kalshi and Kraken Spot implementations | PARTIALLY VERIFIED | Fixture tests and one bounded live listing/book/trade-to-store round trip per venue pass; Polymarket fee parser accepts the supported taker exponent-1 schedule, rejects exponent 2, and one genuine Gamma listing recorded a five-minute verified zero-fee observation. Kalshi series fee resolution and Kraken account fee tier remain unknown; live degraded-source behavior remains unverified. Mock tests cover invalid JSON/UTF-8, HTTP 503, timeout, truncated stream, 2xx schema failure, source isolation, and health recovery. Oversized/partial bodies do not enter complete-response evidence. |
 | Canonical normalization and native evidence | PARTIALLY VERIFIED | Distinct event, conditional event and spot forms; some semantics intentionally unverified. |
 | Relationship matching, immutable review, indexed neighborhoods, and strict payoff verifier | PARTIALLY VERIFIED | Self-attributed review API/UI with stored source refs, append-only revisions, compare-and-set, latest-state replay, query-plan/migration tests, and 1–3 hop left/right indexed scans capped at 500 relationship rows; no authenticated reviewer/assertion, genuine equivalent pair, or paginated dense-graph traversal. |
 | Economic candidate verifier and independent audit | PARTIALLY VERIFIED | Exact two-venue binary all-long coverage and same-market 3–16-state exhaustive one-hot coverage. A separate Decimal implementation recomputes supported candidate arithmetic from hash-pinned normalized inputs; controlled fixtures only, no genuine eligible event, independently authenticated market truth, or practical execution proof. |
@@ -164,14 +166,16 @@ the same normalized evidence and cannot authenticate source truth. Review labels
 and external assertion IDs are self-attributed and not authenticated or fetched.
 The highest-value next steps are:
 
-1. Expand retry-after, timeout, and oversized/truncated-response tests. Complete
-   bounded retries and final error-body evidence now have fixture coverage;
-   timeout, oversized/truncated response, trade-pagination, and live
-   degraded-source coverage remain. Validate supported fee metadata.
+1. Extend adapter contract tests to timeout over real public requests and
+   validate oversized/truncated-source degradation at the API boundary. Mock
+   tests now cover bounded timeout retries and truncated-stream evidence
+   rejection; oversized-response rejection and retry-after/HTTP failure capture
+   are covered, but live degraded-source recovery and trade pagination remain.
 2. Add searchable, paginated graph drill-down over the indexed adjacency and
    measure dense-neighborhood behavior within the store caps.
-3. Establish validated fee inputs before promoting any candidate to a decisive
-   net classification.
+3. Resolve Kalshi market/series fee applicability against its effective
+   schedule. Keep Kraken account fee tier unknown without authenticated account
+   data, and keep fee expiry enforced before any decisive net classification.
 4. Seek genuine public multi-outcome metadata that satisfies the strict verified
    payoff and resolution requirements; do not relax the evaluator to fit current
    captures.
@@ -183,10 +187,9 @@ The highest-value next steps are:
 
 Do not connect Frontier to Reality’s recorder, enable probes as a default,
 deploy, or alter protected evidence as part of ordinary continuation. The next
-safe work is supported fee metadata and degraded-source tests, finding eligible
-multi-outcome public terms without relaxing evidence requirements, then
-searchable graph pagination and short resource-admitted Arena/Laboratory replay
-integration.
+safe work is searchable graph pagination, stronger API-boundary degraded-source
+tests, finding eligible multi-outcome public terms without relaxing evidence
+requirements, and short resource-admitted Arena/Laboratory replay integration.
 
 ## Latest checkpoint identity
 

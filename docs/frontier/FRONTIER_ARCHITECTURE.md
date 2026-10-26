@@ -96,6 +96,16 @@ public snapshots do not prove fills, queue priority, venue access, simultaneous
 execution, capital transfer, or settlement. Opportunity classifications describe
 the mathematical and modeled evidence only.
 
+Fee evidence is source-specific and time-bounded. Polymarket schedules are
+accepted only for an explicit enabled schedule with rate, taker-only scope, and
+exponent 1; explicit disabled fees map to zero, while other shapes remain
+unknown. The normalized fee fields are hashed and expire five minutes after
+receipt. One October 26 public market listing verified a zero-rate schedule;
+that observation is not generalized to other markets. Kalshi fee applicability
+requires a market/series schedule resolver not yet implemented. Kraken's public
+pair feed does not expose an account's applied tier; Frontier does not call the
+authenticated account-volume API. Unknown venue costs remain unknown.
+
 Replay then runs a separate arithmetic implementation that does not call the
 candidate calculator's arithmetic helpers. It records `verified`, `disagreement`,
 `incomplete`, or `not_evaluated`, the recomputed figures and a versioned SHA-256

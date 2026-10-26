@@ -112,7 +112,7 @@ submission route.
 
 | Venue | Implemented public research | Preserved distinctions and limits | Live evidence |
 | --- | --- | --- | --- |
-| Polymarket | Gamma market discovery; CLOB books; public trades; native token/condition/event IDs; existing strict market normalization and verified fee-shape handling | Event outcomes are not marked payoff-verified; settlement asset and resolution meaning are not independently attested; no incremental stream or candle normalization | Bounded live API capture persisted one listing, one book, and ten trades with hash-verified raw/read-back evidence. The selected book had 8 asks and 10 bids. Contract tests also pass. |
+| Polymarket | Gamma market discovery; CLOB books; public trades; native token/condition/event IDs; existing strict market normalization and supported fee-shape handling | Event outcomes are not marked payoff-verified; settlement asset and resolution meaning are not independently attested; no incremental stream or candle normalization; fee schedules expire after five minutes and unsupported exponents remain unknown | Bounded live API capture persisted one listing, one book, and ten trades with hash-verified raw/read-back evidence. A separate one-market listing captured a market-specific `zero_fees` schedule at 20:41:18.972060Z, with `feesEnabled=true`, exponent 1, taker-only, rate 0; normalized status was verified only through 20:46:18.972Z. The older Gamma fixture exercises rate 0.04. |
 | Kalshi | Public market discovery, market metadata, binary YES/NO instruments, public book snapshots and trades; retains native rules, status, timestamps and market fields | MVE metadata is classified as conditional; asks derived from complementary YES/NO bids where applicable. Fee applicability is unknown in adapter v1. No stream or historical-candle normalization. | Bounded live API capture persisted one listing, an empty book, and a valid empty trade response. The book had no unified exchange snapshot timestamp. |
 | Kraken Spot | Configured-pair AssetPairs metadata; public depth, trades and OHLC; pair tick/lot/minimum fields retained | Spot is a base/quote instrument, not an event payoff. Fee tier, account eligibility, custody, and event hedge semantics are unknown. Pair discovery is an explicit allowlist. | Bounded live API capture persisted XBT/USD metadata, depth with 10 asks/10 bids and per-level timestamps, and ten trades. No prediction-contract equivalence was found. |
 
@@ -128,10 +128,24 @@ but do not make spot a prediction-contract payoff ([Kraken AssetPairs](https://d
 Polymarket’s data model links events, markets, and outcome token identifiers;
 the wrapper preserves that structure while keeping payoff attestation separate
 ([Polymarket market-data overview](https://docs.polymarket.com/market-data/overview)).
-The adapter also links its supported fee metadata to the
-[Polymarket fee documentation](https://docs.polymarket.com/trading/fees), and
-Kalshi fee applicability remains unresolved against its
-[published fee information](https://help.kalshi.com/en/articles/13823805-fees).
+The adapter accepts only Gamma schedules with `feesEnabled=true`, an explicit
+rate, `takerOnly=true`, and exponent 1; an explicit `feesEnabled=false` is
+represented as zero, while unsupported or incomplete shapes stay unknown. The
+captured Gamma `feeSchedule` is hashed into the normalized record, sourced to
+Polymarket's [fee formula](https://docs.polymarket.com/trading/fees), and expires
+after five minutes. Tests verify both a nonzero fixture schedule and rejection
+of an exponent-2 schedule. The October 26 live capture was a single zero-fee
+market, not a venue-wide fee survey. Gamma market details expose market-specific
+fee fields ([Market Details](https://docs.polymarket.com/market-data/market-details)).
+
+Kalshi's public series metadata exposes `fee_type` and `fee_multiplier`, but the
+adapter does not yet resolve those fields through the effective market/series
+fee schedule; its fee remains unknown ([Get Series](https://docs.kalshi.com/api-reference/market/get-series),
+[published fee schedule](https://kalshi.com/fee-schedule)). Kraken's public
+pair data does not establish the account's current fee tier. Its trade-volume
+endpoint is authenticated, which Frontier does not call ([Kraken Get Trade
+Volume](https://docs.kraken.com/api-reference/account-data/get-trade-volume)).
+No fee is guessed for either source.
 
 The transport allows only HTTPS GET to an adapter’s host list, rejects redirects,
 uses bounded timeouts/retries/rate, and caps response bytes. The default per
@@ -364,6 +378,7 @@ Verification on this branch:
 
 - Backend focused suite: **54 passed** in 9.86 seconds. Command: `PYTHONPATH=packages:apps/api /home/charlie/midas/.venv/bin/python -m pytest -q tests/frontier tests/integration/test_adapters.py tests/integration/test_api.py::test_offline_api_workflow_contract_and_persistence`.
 - After the schema-v5 graph adjacency change, that focused command passed **56 tests** in 10.65 seconds. `/usr/bin/time -v` measured 11.43 seconds wall, 3.97 seconds user CPU, 145,560 KiB peak RSS, and zero socket messages; one upstream Starlette/httpx deprecation warning remained.
+- After adding Polymarket fee-shape assertions and timeout/truncated-stream failure cases, the same focused command passed **59 tests** in 11.11 seconds pytest time / 11.89 seconds wall, 4.03 seconds user CPU, 145,936 KiB peak RSS, and zero socket messages. This confirms bounded timeout retries and ensures incomplete stream bodies do not enter the complete-response evidence path.
 - Python static checks: Ruff check and format check passed for the Frontier package/tests; mypy passed for 16 Frontier/API source files. A broader `mypy packages/midas/frontier apps/api` attempt reported 37 errors in eight unchanged Veritas/Arena/API files; no Frontier source error was reported.
 - Frontend unit suite: **35 passed across 7 files**.
 - Frontend typecheck, ESLint, and Prettier check passed.
@@ -382,7 +397,9 @@ The previous focused backend run (54 tests) completed in 10.65 seconds wall time
 used 3.97 seconds user CPU, and peaked at 145,628 KiB RSS (about 142 MiB). After
 the schema-v5 graph adjacency change, 56 tests completed in 11.43 seconds wall
 time, used 3.97 seconds user CPU, and peaked at 145,560 KiB RSS; the process
-recorded zero socket messages. These are bounded test measurements, not a
+recorded zero socket messages. The latest 59-test focused run completed in 11.89
+seconds wall time, used 4.03 seconds user CPU, and peaked at 145,936 KiB RSS,
+also with zero socket messages. These are bounded test measurements, not a
 production service capacity estimate. The two focused
 Frontier browser cases ran serially with one worker and completed in 6.4
 seconds. No service or persistent Frontier worker was started. The host and
@@ -418,6 +435,17 @@ was 68,758 bytes. The envelope hash is
 raw-body hashes were independently recomputed. Trade prints do not establish
 available depth, matched timestamps, or executable fills.
 
+The earlier one-market Gamma capture at `2026-10-26T20:41:18.972060Z` included
+`feesEnabled=true`, `feeType=zero_fees`, and a market fee schedule with exponent
+1, taker-only, and rate 0. The raw body hash is
+`657c587bd9faeef246ffb6b27f9a2a9a00f8eb90123629b1c10fdffd434130a6`; the
+normalized fee record hashes the exact fee fields and expires five minutes after
+receipt. This validates the parser against one genuine market observation only.
+It does not establish general Polymarket fees, fee stability outside that
+window, other fee exponents, or any Kalshi/Kraken fee applicability. The
+fixture-driven nonzero rate `0.04` covers the supported taker formula, and a
+mutated exponent-2 record is rejected as unknown.
+
 Thus the captures verify endpoint accessibility and preserve heterogeneous
 source evidence, but do not establish a verified cross-venue relationship,
 simultaneous quote, meaningful depth, or opportunity. No captured event carries
@@ -430,8 +458,8 @@ evaluated as designed; they are not scientific or economic findings.
 
 Kalshi fee schedules are not resolved to a verified market-specific formula in
 adapter v1; Kraken account-tier fees are not known from the public spot capture;
-and Polymarket fee semantics remain constrained to the existing strict
-normalizer’s verified schema. Cross-venue FX, collateral denomination,
+and Polymarket fee semantics remain constrained to the strict exponent-1
+normalizer and five-minute market metadata expiry. Cross-venue FX, collateral denomination,
 transfer/withdrawal cost, account funding allocation, capital duration,
 jurisdiction, custody, and settlement access are unmodeled. Public depth is a
 time-stamped displayed snapshot, not a fill guarantee. In this evidence set,
