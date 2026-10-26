@@ -1,5 +1,5 @@
 import { afterEach, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Frontier } from './Frontier';
 
@@ -217,6 +217,14 @@ it('captures one explicit Polymarket trade page and follows its bound cursor', a
     quality_flags: [],
     provenance: { response_received_at_utc: '2026-10-26T20:00:00Z' },
   };
+  const kalshiMarket = {
+    ...market,
+    canonical_id: 'kalshi:KX-FRONTIER-1',
+    native_market_id: 'KX-FRONTIER-1',
+    native_fields: {},
+    venue: 'kalshi',
+    title: 'Recorded Kalshi ticker for page capture',
+  };
   const responses: Record<string, unknown> = {
     '/api/frontier/overview': {
       state: 'AVAILABLE',
@@ -259,9 +267,34 @@ it('captures one explicit Polymarket trade page and follows its bound cursor', a
             notes: [],
           },
         },
+        {
+          venue: 'kalshi',
+          adapter_version: 'frontier-kalshi-3',
+          public_probe_enabled: true,
+          capabilities: [
+            {
+              capability: 'paginated_public_trades',
+              supported: true,
+              state: 'implemented',
+              reason: 'one bounded public page',
+            },
+          ],
+          health: {
+            state: 'not_probed',
+            last_success_at_utc: null,
+            last_error_code: null,
+            last_error: null,
+            notes: [],
+          },
+        },
       ],
     },
-    '/api/frontier/markets?limit=100': { items: [market], returned: 1, limit: 100, offset: 0 },
+    '/api/frontier/markets?limit=100': {
+      items: [market, kalshiMarket],
+      returned: 2,
+      limit: 100,
+      offset: 0,
+    },
     '/api/frontier/books?limit=100': { items: [], returned: 0, limit: 100, offset: 0 },
     '/api/frontier/trades?limit=100': {
       items: [],
@@ -294,13 +327,21 @@ it('captures one explicit Polymarket trade page and follows its bound cursor', a
   };
   const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const path = String(input);
-    if (path === '/api/frontier/probe/polymarket/trades' && init?.method === 'POST') {
+    if (
+      (path === '/api/frontier/probe/polymarket/trades' ||
+        path === '/api/frontier/probe/kalshi/trades') &&
+      init?.method === 'POST'
+    ) {
       const body = JSON.parse(String(init.body)) as Record<string, unknown>;
       requests.push(body);
-      const hasMore = requests.length === 1;
+      const isPolymarket = path.includes('polymarket');
+      const hasMore =
+        isPolymarket && requests.filter((item) => 'condition_id' in item).length === 1;
       const result = {
-        venue: 'polymarket',
-        condition_id: conditionId,
+        venue: isPolymarket ? 'polymarket' : 'kalshi',
+        ...(isPolymarket
+          ? { condition_id: conditionId, market_id: conditionId }
+          : { market_id: 'KX-FRONTIER-1' }),
         trade_count: 2,
         observation_id: `page-${requests.length}`,
         raw_sha256: 'b'.repeat(64),
@@ -332,10 +373,10 @@ it('captures one explicit Polymarket trade page and follows its bound cursor', a
   expect(await screen.findByText('No replay runs yet')).toBeInTheDocument();
   expect(fetchMock.mock.calls.every(([, init]) => init?.method !== 'POST')).toBe(true);
   fireEvent.click(screen.getByRole('button', { name: 'Markets' }));
-  const conditionPicker = await screen.findByRole('combobox', {
-    name: 'Polymarket trade condition',
+  const tradeMarketPicker = await screen.findByRole('combobox', {
+    name: 'Recorded trade market',
   });
-  fireEvent.change(conditionPicker, { target: { value: conditionId } });
+  fireEvent.change(tradeMarketPicker, { target: { value: conditionId } });
   fireEvent.click(screen.getByRole('button', { name: 'Capture first page' }));
   expect(await screen.findByText(/Saved 2 trades/)).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Capture next page' }));
@@ -344,6 +385,16 @@ it('captures one explicit Polymarket trade page and follows its bound cursor', a
     { condition_id: conditionId, limit: 50 },
     { condition_id: conditionId, limit: 50, cursor: 'frontier-next-page' },
   ]);
+  fireEvent.change(screen.getByRole('combobox', { name: 'Trade research source' }), {
+    target: { value: 'kalshi' },
+  });
+  fireEvent.change(screen.getByRole('combobox', { name: 'Recorded trade market' }), {
+    target: { value: 'KX-FRONTIER-1' },
+  });
+  fireEvent.click(screen.getByRole('button', { name: 'Capture first page' }));
+  await screen.findByText(/Saved 2 trades/);
+  await waitFor(() => expect(requests).toHaveLength(3));
+  expect(requests[2]).toEqual({ market_id: 'KX-FRONTIER-1', limit: 50 });
 });
 
 it('captures and labels Kalshi public fee metadata without implying a fee estimate', async () => {

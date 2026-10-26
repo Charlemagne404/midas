@@ -349,7 +349,7 @@ test('relationship network remains bounded, selectable, and scroll-contained on 
 
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.getByRole('button', { name: 'Markets', exact: true }).click();
-  await page.getByLabel('Polymarket trade condition').selectOption(`0x${'a'.repeat(64)}`);
+  await page.getByLabel('Recorded trade market').selectOption(`0x${'a'.repeat(64)}`);
   await page.getByRole('button', { name: 'Capture first page' }).click();
   await expect(page.getByRole('button', { name: 'Capture next page' })).toBeVisible();
   await page.getByRole('button', { name: 'Capture next page' }).click();

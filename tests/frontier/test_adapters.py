@@ -19,6 +19,7 @@ from midas.frontier.models import (
     FeeStatus,
     MarketKind,
     SourceState,
+    TradeBatch,
     Venue,
 )
 
@@ -226,7 +227,7 @@ def test_source_configs_and_capability_manifests_fail_closed():
     assert len(KalshiAdapter.capabilities.declarations) == len(Capability)
     assert len(KrakenSpotAdapter.capabilities.declarations) == len(Capability)
     assert PolymarketAdapter.capabilities.supports(Capability.PAGINATED_PUBLIC_TRADES)
-    assert not KalshiAdapter.capabilities.supports(Capability.PAGINATED_PUBLIC_TRADES)
+    assert KalshiAdapter.capabilities.supports(Capability.PAGINATED_PUBLIC_TRADES)
     assert not KrakenSpotAdapter.capabilities.supports(Capability.PAGINATED_PUBLIC_TRADES)
 
 
@@ -531,3 +532,100 @@ async def test_polymarket_v2_trade_page_rejects_inconsistent_cursors_after_captu
         await client.aclose()
     assert len(captures) == 1
     assert json.loads(captures[0].raw_body) == {"data": [], "pagination": pagination}
+
+
+@pytest.mark.asyncio
+async def test_kalshi_trade_page_normalizes_one_cursor_page_without_inventing_aggressor_side():
+    ticker = "KXFRONTIER-EVENT-YES"
+    body = json.dumps(
+        {
+            "trades": [
+                {
+                    "trade_id": "kalshi-trade-1",
+                    "ticker": ticker,
+                    "count_fp": "3.50",
+                    "yes_price_dollars": "0.5700",
+                    "no_price_dollars": "0.4200",
+                    "taker_outcome_side": "yes",
+                    "taker_book_side": "bid",
+                    "created_time": "2026-10-27T12:34:56Z",
+                    "is_block_trade": False,
+                    "taker_side": "yes",
+                }
+            ],
+            "cursor": "opaque:kalshi-next",
+        }
+    )
+    transport, requests, client = _transport("external-api.kalshi.com", {"/markets/trades": body})
+    adapter = KalshiAdapter(
+        AdapterConfig(
+            enabled=True, live_public_probe_enabled=True, requests_per_second=5, retries=0
+        ),
+        transport=transport,
+    )
+    try:
+        batch = await adapter.fetch_trade_page(ticker, limit=1)
+        captures = adapter.take_captures()
+    finally:
+        await client.aclose()
+    assert isinstance(batch, TradeBatch)
+    assert batch.schema_version == 2
+    assert batch.venue == Venue.KALSHI
+    assert batch.requested_market_id == ticker
+    assert batch.page_limit == 1
+    assert batch.source_cursor is None
+    assert batch.source_next_cursor == "opaque:kalshi-next"
+    assert batch.has_more is True
+    trade = batch.trades[0]
+    assert trade.native_market_id == ticker
+    assert trade.native_instrument_id == f"{ticker}:YES"
+    assert trade.outcome_label == "YES price reference"
+    assert trade.price == Decimal("0.5700")
+    assert trade.quantity == Decimal("3.50")
+    assert trade.aggressor_side is None
+    assert trade.exchange_timestamp_utc.isoformat() == "2026-10-27T12:34:56+00:00"
+    assert len(captures) == 1 and captures[0].raw_body == body
+    assert len(requests) == 1
+    assert requests[0].url.path == "/trade-api/v2/markets/trades"
+    assert dict(requests[0].url.params) == {"ticker": ticker, "limit": "1"}
+    assert "authorization" not in requests[0].headers
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("row_ticker", "response_cursor"),
+    [("KXOTHER", "next-page"), ("KXFRONTIER", "next-page")],
+)
+async def test_kalshi_trade_page_rejects_other_ticker_and_nonadvancing_cursor_after_capture(
+    row_ticker, response_cursor
+):
+    ticker = "KXFRONTIER"
+    body = json.dumps(
+        {
+            "trades": [
+                {
+                    "trade_id": "kalshi-trade-1",
+                    "ticker": row_ticker,
+                    "count_fp": "1",
+                    "yes_price_dollars": "0.5",
+                    "created_time": "2026-10-27T12:34:56Z",
+                }
+            ],
+            "cursor": response_cursor,
+        }
+    )
+    transport, _, client = _transport("external-api.kalshi.com", {"/markets/trades": body})
+    adapter = KalshiAdapter(
+        AdapterConfig(
+            enabled=True, live_public_probe_enabled=True, requests_per_second=5, retries=0
+        ),
+        transport=transport,
+    )
+    try:
+        with pytest.raises(AdapterError):
+            await adapter.fetch_trade_page(ticker, limit=1, cursor="next-page")
+        captures = adapter.take_captures()
+    finally:
+        await client.aclose()
+    assert len(captures) == 1
+    assert captures[0].raw_body == body

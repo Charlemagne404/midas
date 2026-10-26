@@ -574,7 +574,7 @@ async def test_polymarket_v2_trade_cursor_pages_are_bound_and_persisted(tmp_path
 
             unsupported_source = await client.post(
                 "/api/frontier/probe/kalshi/trades",
-                json={"condition_id": condition_id, "limit": 1},
+                json={"market_id": "KX-UNRECORDED", "limit": 1},
             )
             assert unsupported_source.status_code == 409
             assert len(requests) == 1
@@ -654,6 +654,162 @@ async def test_polymarket_v2_trade_cursor_pages_are_bound_and_persisted(tmp_path
             assert normalized_batch.trades[0].outcome_label == "Yes"
             assert normalized_batch.trades[0].outcome_index == 0
             assert "proxy_wallet" not in normalized_batch.trades[0].model_dump()
+    finally:
+        await registry.aclose()
+        await source_client.aclose()
+
+
+@pytest.mark.asyncio
+async def test_kalshi_public_trade_pages_are_ticker_bound_and_replayable(tmp_path):
+    ticker = "KXFRONTIER-TRADE-API"
+    market_row = {
+        "ticker": ticker,
+        "event_ticker": "KXFRONTIER-TRADE",
+        "market_type": "binary",
+        "title": "Frontier trade pagination fixture market",
+        "yes_sub_title": "Yes",
+        "no_sub_title": "No",
+        "rules_primary": "Public fixture: resolve from the stated source.",
+        "rules_secondary": "",
+        "status": "active",
+        "close_time": "2026-10-28T00:00:00Z",
+        "notional_value_dollars": "1.00",
+    }
+
+    def trade_row(trade_id: str, *, timestamp: str) -> dict[str, str | bool]:
+        return {
+            "trade_id": trade_id,
+            "ticker": ticker,
+            "count_fp": "2.25",
+            "yes_price_dollars": "0.5700",
+            "no_price_dollars": "0.4200",
+            "taker_outcome_side": "yes",
+            "taker_book_side": "bid",
+            "created_time": timestamp,
+            "is_block_trade": False,
+        }
+
+    page1 = {
+        "trades": [trade_row("kalshi-page-1", timestamp="2026-10-27T12:34:56Z")],
+        "cursor": "opaque:kalshi-page-2",
+    }
+    page2 = {
+        "trades": [trade_row("kalshi-page-2", timestamp="2026-10-27T12:34:57Z")],
+        "cursor": "",
+    }
+    requests: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        if request.url.path == "/trade-api/v2/markets":
+            return httpx.Response(
+                200, json={"markets": [market_row], "cursor": ""}, request=request
+            )
+        if request.url.path == "/trade-api/v2/markets/trades":
+            if request.url.params.get("cursor") == "opaque:kalshi-page-2":
+                return httpx.Response(200, json=page2, request=request)
+            return httpx.Response(200, json=page1, request=request)
+        return httpx.Response(404, json={"error": "unexpected fixture request"}, request=request)
+
+    config = AdapterConfig(
+        enabled=True,
+        live_public_probe_enabled=True,
+        timeout_seconds=2,
+        requests_per_second=5,
+        max_response_bytes=65536,
+        max_markets_per_call=1,
+        retries=0,
+    )
+    source_client = httpx.AsyncClient(transport=httpx.MockTransport(handler))
+    public_transport = PublicReadTransport(
+        {"external-api.kalshi.com"}, config, client=source_client
+    )
+    registry = AdapterRegistry((KalshiAdapter(config, transport=public_transport),))
+    store = FrontierStore(tmp_path / "frontier", max_bytes=8 * 1024 * 1024)
+    app = FastAPI()
+    app.include_router(router(store, registry))
+    try:
+        async with httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=app), base_url="http://frontier.local"
+        ) as client:
+            listing = await client.post("/api/frontier/probe/kalshi", json={"limit": 1})
+            assert listing.status_code == 200, listing.text
+
+            unrecorded = await client.post(
+                "/api/frontier/probe/kalshi/trades",
+                json={"market_id": "KXNOTRECORDED", "limit": 1},
+            )
+            assert unrecorded.status_code == 404
+            assert len(requests) == 1
+
+            first = await client.post(
+                "/api/frontier/probe/kalshi/trades",
+                json={"market_id": ticker, "limit": 1},
+            )
+            assert first.status_code == 200, first.text
+            first_payload = first.json()
+            assert first_payload["venue"] == "kalshi"
+            assert first_payload["market_id"] == ticker
+            assert first_payload["trade_count"] == 1
+            assert first_payload["has_more"] is True
+            assert first_payload["next_cursor"]
+            assert first_payload["request_count_delta"] == 1
+
+            wrong_page_size = await client.post(
+                "/api/frontier/probe/kalshi/trades",
+                json={
+                    "market_id": ticker,
+                    "limit": 2,
+                    "cursor": first_payload["next_cursor"],
+                },
+            )
+            assert wrong_page_size.status_code == 422
+            assert len(requests) == 2
+
+            second = await client.post(
+                "/api/frontier/probe/kalshi/trades",
+                json={
+                    "market_id": ticker,
+                    "limit": 1,
+                    "cursor": first_payload["next_cursor"],
+                },
+            )
+            assert second.status_code == 200, second.text
+            assert second.json()["trade_count"] == 1
+            assert second.json()["has_more"] is False
+            assert second.json()["next_cursor"] is None
+
+            trade_requests = [item for item in requests if item.url.path.endswith("/trades")]
+            assert len(trade_requests) == 2
+            assert all(item.method == "GET" for item in trade_requests)
+            assert all(item.url.params["ticker"] == ticker for item in trade_requests)
+            assert all(item.url.params["limit"] == "1" for item in trade_requests)
+            assert trade_requests[1].url.params["cursor"] == "opaque:kalshi-page-2"
+            assert all("authorization" not in item.headers for item in trade_requests)
+
+            read_back = await client.get("/api/frontier/trades?venue=kalshi&limit=100")
+            assert read_back.status_code == 200
+            result = read_back.json()
+            assert result["trade_count"] == 2
+            assert result["observation_count"] == 2
+            assert len(result["pages"]) == 2
+            assert all(item["market_id"] == ticker for item in result["pages"])
+            assert (
+                next(item for item in result["pages"] if item["has_more"])["next_cursor"]
+                == first_payload["next_cursor"]
+            )
+            assert {item["native_trade_id"] for item in result["items"]} == {
+                "kalshi-page-1",
+                "kalshi-page-2",
+            }
+            assert all(item["aggressor_side"] is None for item in result["items"])
+            stored_page = store.observation(first_payload["observation_id"])
+            assert stored_page is not None
+            assert json.loads(stored_page["raw"]["raw_body"]) == page1
+            normalized = TradeBatch.model_validate(stored_page["normalized"])
+            assert normalized.schema_version == 2
+            assert normalized.source_next_cursor == "opaque:kalshi-page-2"
+            assert normalized.trades[0].native_instrument_id == f"{ticker}:YES"
     finally:
         await registry.aclose()
         await source_client.aclose()

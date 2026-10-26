@@ -449,7 +449,7 @@ class TradeObservation(FrontierModel):
     venue: Venue
     native_market_id: str
     native_trade_id: str | None = Field(default=None, max_length=256)
-    native_instrument_id: str | None = Field(default=None, max_length=128)
+    native_instrument_id: str | None = Field(default=None, max_length=256)
     outcome_label: str | None = Field(default=None, max_length=160)
     outcome_index: int | None = Field(default=None, ge=0, le=2_147_483_647)
     price: Nonnegative

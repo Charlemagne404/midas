@@ -349,7 +349,7 @@
 }
 .fr-trade-capture {
   display: grid;
-  grid-template-columns: minmax(220px, 1fr) auto;
+  grid-template-columns: minmax(130px, 0.55fr) minmax(220px, 1.45fr) auto;
   align-items: end;
   gap: 10px;
   padding: 13px 15px;

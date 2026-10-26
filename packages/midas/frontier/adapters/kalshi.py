@@ -30,13 +30,14 @@ from midas.frontier.models import (
     QuantityUnit,
     ResolutionSpec,
     StatePayout,
+    TradeBatch,
     TradeObservation,
     Venue,
     stable_market_id,
 )
 
 D = Decimal
-ADAPTER_VERSION = "frontier-kalshi-2"
+ADAPTER_VERSION = "frontier-kalshi-3"
 _TICKER_PATTERN = re.compile(r"[A-Za-z0-9_-]{1,256}\Z")
 BASE = "https://external-api.kalshi.com/trade-api/v2"
 MARKET_DATA_DOC = "https://docs.kalshi.com/getting_started/quick_start_market_data"
@@ -77,6 +78,10 @@ class KalshiAdapter(BaseReadOnlyAdapter):
                 "Public market trades endpoint",
                 "https://docs.kalshi.com/api-reference/market/get-trades",
             ),
+            Capability.PAGINATED_PUBLIC_TRADES: (
+                "One explicit ticker-filtered public trade page with an opaque source cursor",
+                "https://docs.kalshi.com/api-reference/market/get-trades",
+            ),
             Capability.TICK_CONSTRAINTS: (
                 "Native piecewise price ranges and price-level structure are retained; a single tick may not apply",
                 MARKETS_DOC,
@@ -106,10 +111,6 @@ class KalshiAdapter(BaseReadOnlyAdapter):
             Capability.BOOK_UPDATES: (
                 "WebSocket updates are not implemented; this adapter only captures REST snapshots",
                 None,
-            ),
-            Capability.PAGINATED_PUBLIC_TRADES: (
-                "Cursor-based Kalshi trade pagination is not normalized by adapter v1",
-                "https://docs.kalshi.com/api-reference/market/get-trades",
             ),
             Capability.HISTORICAL_CANDLES: (
                 "Historical candles are not normalized by adapter v1",
@@ -458,6 +459,117 @@ class KalshiAdapter(BaseReadOnlyAdapter):
                 )
             )
         return tuple(result)
+
+    async def fetch_trade_page(
+        self, native_market_id: str, *, limit: int = 50, cursor: str | None = None
+    ) -> TradeBatch:
+        """Fetch one public Kalshi trade page for a ticker already recorded by Frontier."""
+        self._require(Capability.PAGINATED_PUBLIC_TRADES)
+        if (
+            not isinstance(native_market_id, str)
+            or not _TICKER_PATTERN.fullmatch(native_market_id)
+            or len(native_market_id) > 251
+        ):
+            raise AdapterError("INVALID_MARKET", "Kalshi market ticker is malformed")
+        # Keep this UI/API operation substantially below Kalshi's documented 1,000 row ceiling.
+        if not 1 <= limit <= 100:
+            raise AdapterError("INVALID_LIMIT", "Kalshi trade page size must be between 1 and 100")
+        if cursor is not None and (
+            not cursor.strip()
+            or len(cursor) > 2048
+            or any(ord(character) < 0x20 or ord(character) == 0x7F for character in cursor)
+        ):
+            raise AdapterError("INVALID_CURSOR", "Kalshi source cursor is blank or oversized")
+
+        params: dict[str, str | int] = {"ticker": native_market_id, "limit": limit}
+        if cursor is not None:
+            params["cursor"] = cursor
+        response = await self.transport.get_json(f"{BASE}/markets/trades", params)
+        self._capture_response(response, "public_trades")
+        payload = response.payload
+        if not isinstance(payload, dict):
+            raise AdapterError("INVALID_SCHEMA", "Kalshi trade response must be an object")
+        rows = payload.get("trades")
+        next_cursor = payload.get("cursor")
+        if not isinstance(rows, list) or not isinstance(next_cursor, str):
+            raise AdapterError(
+                "INVALID_SCHEMA", "Kalshi trade response must contain trades and a cursor"
+            )
+        if len(rows) > limit:
+            raise AdapterError(
+                "INVALID_PAGINATION", "Kalshi exceeded the requested trade page size"
+            )
+        if next_cursor and (
+            not next_cursor.strip()
+            or len(next_cursor) > 2048
+            or any(ord(character) < 0x20 or ord(character) == 0x7F for character in next_cursor)
+            or next_cursor == cursor
+        ):
+            raise AdapterError("INVALID_PAGINATION", "Kalshi returned an invalid next cursor")
+
+        trades = []
+        for index, raw in enumerate(rows):
+            if not isinstance(raw, dict):
+                raise AdapterError("INVALID_TRADE", "Kalshi trade entry must be an object")
+            ticker = raw.get("ticker")
+            trade_id = raw.get("trade_id")
+            yes_price = parse_decimal(raw.get("yes_price_dollars"))
+            quantity = parse_decimal(raw.get("count_fp"))
+            timestamp = parse_time(raw.get("created_time"))
+            if ticker != native_market_id:
+                raise AdapterError(
+                    "TRADE_MARKET_MISMATCH", "Kalshi returned a trade for another market ticker"
+                )
+            if (
+                not isinstance(trade_id, str)
+                or not trade_id.strip()
+                or len(trade_id) > 256
+                or yes_price is None
+                or not D(0) <= yes_price <= D(1)
+                or quantity is None
+                or quantity <= 0
+                or timestamp is None
+            ):
+                raise AdapterError("INVALID_TRADE", "Kalshi trade fields failed validation")
+            trades.append(
+                TradeObservation(
+                    schema_version=2,
+                    venue=self.venue,
+                    native_market_id=native_market_id,
+                    native_trade_id=trade_id,
+                    native_instrument_id=f"{native_market_id}:YES",
+                    outcome_label="YES price reference",
+                    outcome_index=0,
+                    price=yes_price,
+                    quantity=quantity,
+                    quote_currency="USD",
+                    # Kalshi's taker_outcome_side identifies the outcome side; it is not
+                    # documented as a normalized BUY/SELL aggressor direction.
+                    aggressor_side=None,
+                    exchange_timestamp_utc=timestamp,
+                    received_at_utc=response.response_received_at_utc,
+                    provenance=provenance(
+                        self.venue,
+                        ADAPTER_VERSION,
+                        response,
+                        "public_trade",
+                        f"{native_market_id}:{trade_id}:{index}",
+                        source_schema_version="Kalshi public /markets/trades",
+                        exchange_timestamp=timestamp,
+                        exchange_timestamp_semantics="Kalshi created_time",
+                    ),
+                )
+            )
+        return TradeBatch(
+            schema_version=2,
+            venue=self.venue,
+            trades=tuple(trades),
+            requested_market_id=native_market_id,
+            page_limit=limit,
+            source_cursor=cursor,
+            source_next_cursor=next_cursor or None,
+            has_more=bool(next_cursor),
+        )
 
 
 def _required_bounded_text(raw: dict[str, Any], key: str, *, max_length: int) -> str:

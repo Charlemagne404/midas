@@ -62,6 +62,19 @@ class TradePageProbeRequest(BaseModel):
         return self
 
 
+class KalshiTradePageProbeRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+    market_id: str = Field(pattern=r"^[A-Za-z0-9_-]{1,251}$")
+    limit: int = Field(default=50, ge=1, le=100)
+    cursor: str | None = Field(default=None, max_length=4096)
+
+    @model_validator(mode="after")
+    def cursor_is_nonblank(self) -> KalshiTradePageProbeRequest:
+        if self.cursor is not None and not self.cursor.strip():
+            raise ValueError("Trade page cursor cannot be blank")
+        return self
+
+
 class FeeMetadataProbeRequest(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
     market_id: str = Field(min_length=1, max_length=256)
@@ -216,6 +229,45 @@ def _decode_trade_cursor(cursor: str) -> dict[str, Any]:
         )
     ):
         raise ValueError("Trade page cursor has an unsupported shape or version")
+    return value
+
+
+def _encode_kalshi_trade_cursor(market_id: str, limit: int, source_cursor: str) -> str:
+    value = {
+        "v": 1,
+        "market_id": market_id,
+        "limit": limit,
+        "source_cursor": source_cursor,
+    }
+    raw = json.dumps(value, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return base64.urlsafe_b64encode(raw).decode("ascii").rstrip("=")
+
+
+def _decode_kalshi_trade_cursor(cursor: str) -> dict[str, Any]:
+    if not cursor or len(cursor) > 4096:
+        raise ValueError("Kalshi trade cursor is empty or exceeds its bound")
+    padded = cursor + "=" * (-len(cursor) % 4)
+    try:
+        decoded = base64.b64decode(padded, altchars=b"-_", validate=True)
+        value = json.loads(decoded)
+    except (ValueError, UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise ValueError("Kalshi trade cursor is not valid base64 JSON") from error
+    source_cursor = value.get("source_cursor") if isinstance(value, dict) else None
+    if (
+        not isinstance(value, dict)
+        or set(value) != {"v", "market_id", "limit", "source_cursor"}
+        or type(value.get("v")) is not int
+        or value["v"] != 1
+        or not isinstance(value.get("market_id"), str)
+        or not re.fullmatch(r"[A-Za-z0-9_-]{1,251}", value["market_id"])
+        or type(value.get("limit")) is not int
+        or not 1 <= value["limit"] <= 100
+        or not isinstance(source_cursor, str)
+        or not 1 <= len(source_cursor) <= 2048
+        or not source_cursor.strip()
+        or any(ord(character) < 0x20 or ord(character) == 0x7F for character in source_cursor)
+    ):
+        raise ValueError("Kalshi trade cursor has an unsupported shape or version")
     return value
 
 
@@ -441,14 +493,23 @@ def router(store: FrontierStore, registry: Any) -> APIRouter:
                     pages.append(
                         {
                             "venue": batch.venue.value,
+                            "market_id": batch.requested_market_id,
                             "condition_id": batch.requested_market_id,
                             "page_limit": batch.page_limit,
                             "has_more": batch.has_more,
                             "next_cursor": (
-                                _encode_trade_cursor(
-                                    batch.requested_market_id,
-                                    batch.page_limit,
-                                    batch.source_next_cursor,
+                                (
+                                    _encode_trade_cursor(
+                                        batch.requested_market_id,
+                                        batch.page_limit,
+                                        batch.source_next_cursor,
+                                    )
+                                    if batch.venue == Venue.POLYMARKET
+                                    else _encode_kalshi_trade_cursor(
+                                        batch.requested_market_id,
+                                        batch.page_limit,
+                                        batch.source_next_cursor,
+                                    )
                                 )
                                 if batch.has_more and batch.source_next_cursor is not None
                                 else None
@@ -476,8 +537,11 @@ def router(store: FrontierStore, registry: Any) -> APIRouter:
             "offset": offset,
         }
 
-    @api.post("/probe/{venue}/trades")
-    async def probe_trade_page(venue: Venue, request: TradePageProbeRequest) -> dict[str, Any]:
+    @api.post("/probe/polymarket/trades")
+    async def probe_polymarket_trade_page(
+        request: TradePageProbeRequest,
+    ) -> dict[str, Any]:
+        venue = Venue.POLYMARKET
         adapter: ExchangeAdapter = registry.get(venue)
         if not adapter.capabilities.supports(Capability.PAGINATED_PUBLIC_TRADES):
             raise HTTPException(
@@ -561,6 +625,7 @@ def router(store: FrontierStore, registry: Any) -> APIRouter:
                 )
                 return {
                     "venue": venue.value,
+                    "market_id": request.condition_id,
                     "condition_id": request.condition_id,
                     "trade_count": len(batch.trades),
                     "observation_id": observation_id,
@@ -600,6 +665,148 @@ def router(store: FrontierStore, registry: Any) -> APIRouter:
                     status_code=502,
                     detail={
                         "code": "FRONTIER_TRADE_PAGE_FAILED",
+                        "message": str(error),
+                        "diagnostic_observation_ids": diagnostic_ids,
+                        "diagnostic_persistence_error": diagnostic_error,
+                    },
+                ) from error
+
+    @api.post("/probe/kalshi/trades")
+    async def probe_kalshi_trade_page(
+        request: KalshiTradePageProbeRequest,
+    ) -> dict[str, Any]:
+        venue = Venue.KALSHI
+        adapter: ExchangeAdapter = registry.get(venue)
+        if not adapter.capabilities.supports(Capability.PAGINATED_PUBLIC_TRADES):
+            raise HTTPException(
+                status_code=409, detail="Kalshi paginated public trades are unsupported"
+            )
+        fetch_page = getattr(adapter, "fetch_trade_page", None)
+        if not callable(fetch_page):
+            raise HTTPException(
+                status_code=409, detail="Kalshi trade page operation is unavailable"
+            )
+        config = getattr(adapter, "config", None)
+        if config is None or not config.enabled or not config.live_public_probe_enabled:
+            raise HTTPException(
+                status_code=409,
+                detail="Bounded public probing is disabled in source configuration",
+            )
+        try:
+            known_markets = await _load_markets(store, 200)
+        except (FrontierStoreError, ValueError) as error:
+            raise HTTPException(status_code=409, detail=str(error)) from error
+        market = next(
+            (
+                item
+                for item in known_markets
+                if item.venue == venue and item.native_market_id == request.market_id
+            ),
+            None,
+        )
+        if market is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Trade ticker must match a market in the bounded recorded listing window",
+            )
+
+        source_cursor = None
+        if request.cursor is not None:
+            try:
+                decoded_cursor = _decode_kalshi_trade_cursor(request.cursor)
+            except ValueError as error:
+                raise HTTPException(status_code=422, detail=str(error)) from error
+            if (
+                decoded_cursor["market_id"] != request.market_id
+                or decoded_cursor["limit"] != request.limit
+            ):
+                raise HTTPException(
+                    status_code=422,
+                    detail="Trade page cursor does not match this Kalshi ticker and page size",
+                )
+            source_cursor = decoded_cursor["source_cursor"]
+
+        async with source_locks[venue]:
+            adapter.take_captures()
+            requests_before = adapter.transport.request_count
+            captures: tuple[RawObservation, ...] = ()
+            try:
+                batch = await fetch_page(
+                    request.market_id, limit=request.limit, cursor=source_cursor
+                )
+                captures = adapter.take_captures()
+                if len(captures) != 1:
+                    raise AdapterError(
+                        "MISSING_TRADE_CAPTURE",
+                        "Adapter must capture exactly one Kalshi trade page",
+                    )
+                capture = captures[0]
+                if (
+                    batch.schema_version != 2
+                    or batch.venue != venue
+                    or batch.requested_market_id != request.market_id
+                    or batch.page_limit != request.limit
+                    or batch.source_cursor != source_cursor
+                    or any(
+                        item.provenance.raw_sha256 != capture.raw_sha256 for item in batch.trades
+                    )
+                ):
+                    raise AdapterError(
+                        "TRADE_CAPTURE_LINEAGE_MISMATCH",
+                        "Normalized Kalshi trade page does not match its request and raw response",
+                    )
+                observation_id = store.append_observation(capture, batch)
+                next_cursor = (
+                    _encode_kalshi_trade_cursor(
+                        request.market_id, request.limit, batch.source_next_cursor
+                    )
+                    if batch.has_more and batch.source_next_cursor is not None
+                    else None
+                )
+                return {
+                    "venue": venue.value,
+                    "market_id": request.market_id,
+                    "trade_count": len(batch.trades),
+                    "observation_id": observation_id,
+                    "raw_sha256": capture.raw_sha256,
+                    "page_limit": batch.page_limit,
+                    "has_more": batch.has_more,
+                    "next_cursor": next_cursor,
+                    "source_state": (await adapter.health()).state.value,
+                    "request_count_delta": adapter.transport.request_count - requests_before,
+                    "network_calls_bounded_by": config.retries + 1,
+                    "hypothetical_only": True,
+                    "note": (
+                        "One explicit read-only Kalshi ticker-filtered public trade page. The source "
+                        "includes block trades by default; no trade-history crawl is started."
+                    ),
+                }
+            except AdapterError as error:
+                diagnostic_ids, diagnostic_error = preserve_failed_captures(
+                    adapter, error.code, str(error), error.response_evidence, captures
+                )
+                adapter.report_failure(error.code, str(error))
+                raise HTTPException(
+                    status_code=502,
+                    detail={
+                        "code": error.code,
+                        "message": str(error),
+                        "diagnostic_observation_ids": diagnostic_ids,
+                        "diagnostic_persistence_error": diagnostic_error,
+                    },
+                ) from error
+            except (ValueError, FrontierStoreError) as error:
+                diagnostic_ids, diagnostic_error = preserve_failed_captures(
+                    adapter,
+                    "KALSHI_TRADE_PAGE_FAILED",
+                    str(error),
+                    already_drained=captures,
+                )
+                adapter.report_failure("KALSHI_TRADE_PAGE_FAILED", str(error))
+                raise HTTPException(
+                    status_code=502,
+                    detail={
+                        "code": "KALSHI_TRADE_PAGE_FAILED",
                         "message": str(error),
                         "diagnostic_observation_ids": diagnostic_ids,
                         "diagnostic_persistence_error": diagnostic_error,
