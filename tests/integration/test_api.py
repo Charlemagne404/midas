@@ -20,6 +20,18 @@ def test_offline_api_workflow_contract_and_persistence(tmp_path, monkeypatch):
     with TestClient(app) as client:
         state = client.get("/api/state").json()
         assert state["mode"] == "demo" and not state["safety"]["live_execution"]
+        health = client.get("/api/health").json()
+        assert health["application_version"] == app.version
+        assert health["api_release_identity"]
+        assert health["checked_at_utc"].endswith("+00:00")
+        resources = client.get("/api/readiness/resources")
+        assert resources.status_code == 200
+        assert resources.json()["sampling"].startswith("bounded procfs")
+        assert set(resources.json()["services"]) == {
+            "midas-api",
+            "midas-reality",
+            "midas-veritas-observatory",
+        }
         assert "decisions" not in state["paper_broker"]
         paper_summary = client.get("/api/paper/summary")
         assert paper_summary.status_code == 200

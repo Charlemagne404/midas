@@ -1,5 +1,7 @@
+import os
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -105,16 +107,17 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.startup_status = "RECOVERING"
     app.state.startup_error = None
     from apps.api.laboratory import router
+    from apps.api.readiness import (
+        resource_snapshot,
+        staged_repository_snapshot,
+        systemd_unit_snapshot,
+    )
 
     app.include_router(router(lambda: app.state.laboratory))
     from apps.api.arena import router as arena_router
 
-    veritas_workspace = (
-        config.veritas_workspace or Path(__file__).resolve().parents[2]
-    ).resolve()
-    app.include_router(
-        arena_router(config.arena_root, veritas_repository=veritas_workspace)
-    )
+    veritas_workspace = (config.veritas_workspace or Path(__file__).resolve().parents[2]).resolve()
+    app.include_router(arena_router(config.arena_root, veritas_repository=veritas_workspace))
     from apps.api.reality import router as reality_router
 
     app.include_router(reality_router(config.reality_workspace.resolve()))
@@ -183,6 +186,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         )
         result = {
             "status": status,
+            "application_version": app.version,
+            "api_release_identity": Path(__file__).resolve().parents[2].name,
+            "integrated_source_revision": os.environ.get("MIDAS_SOURCE_REVISION"),
+            "checked_at_utc": datetime.now(UTC).isoformat(),
             "startup_status": startup,
             "startup_error": app.state.startup_error,
             "mode": config.mode,
@@ -204,6 +211,21 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
             return JSONResponse(status_code=503, content=result)  # type: ignore[return-value]
         return result
+
+    @app.get("/api/readiness/resources")
+    def readiness_resources() -> dict[str, Any]:
+        reality_service = systemd_unit_snapshot("midas-reality.service")
+        working_directory = reality_service.pop("working_directory", None)
+        if isinstance(working_directory, str):
+            reality_service["source_root_label"] = Path(working_directory).name
+        return {
+            **resource_snapshot(config.reality_workspace.resolve()),
+            "observer_last_run": systemd_unit_snapshot("midas-veritas-observatory.service"),
+            "reality_service": reality_service,
+            "staged_reality_candidate": staged_repository_snapshot(
+                os.environ.get("MIDAS_STAGED_REALITY_PATH")
+            ),
+        }
 
     @app.get("/api/state")
     async def state() -> dict[str, Any]:
