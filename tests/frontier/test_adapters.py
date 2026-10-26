@@ -7,6 +7,7 @@ from pathlib import Path
 
 import httpx
 import pytest
+from midas.frontier.adapters.base import AdapterError
 from midas.frontier.adapters.kalshi import KalshiAdapter
 from midas.frontier.adapters.kraken import KrakenSpotAdapter, KrakenSpotConfig
 from midas.frontier.adapters.polymarket import PolymarketAdapter
@@ -223,3 +224,139 @@ def test_source_configs_and_capability_manifests_fail_closed():
     assert len(PolymarketAdapter.capabilities.declarations) == len(Capability)
     assert len(KalshiAdapter.capabilities.declarations) == len(Capability)
     assert len(KrakenSpotAdapter.capabilities.declarations) == len(Capability)
+    assert PolymarketAdapter.capabilities.supports(Capability.PAGINATED_PUBLIC_TRADES)
+    assert not KalshiAdapter.capabilities.supports(Capability.PAGINATED_PUBLIC_TRADES)
+    assert not KrakenSpotAdapter.capabilities.supports(Capability.PAGINATED_PUBLIC_TRADES)
+
+
+@pytest.mark.asyncio
+async def test_polymarket_v2_trade_page_normalizes_opaque_keyset_response():
+    condition_id = "0x" + "a" * 64
+    token_id = "123456789012345678901234567890"
+    body = json.dumps(
+        {
+            "data": [
+                {
+                    "side": "SELL",
+                    "token_id": token_id,
+                    "condition_id": condition_id,
+                    "outcome": "No",
+                    "outcome_index": 1,
+                    "size": 2.5,
+                    "price": 0.43,
+                    "timestamp": 1793000000,
+                    "transaction_hash": "0xfixture-trade",
+                }
+            ],
+            "pagination": {
+                "limit": 1,
+                "offset": 0,
+                "has_more": True,
+                "next_cursor": "opaque:next-page",
+            },
+        }
+    )
+    transport, requests, client = _transport("data-api.polymarket.com", {"/v2/trades": body})
+    adapter = PolymarketAdapter(
+        AdapterConfig(
+            enabled=True, live_public_probe_enabled=True, requests_per_second=5, retries=0
+        ),
+        transport=transport,
+    )
+    try:
+        batch = await adapter.fetch_trade_page(condition_id, limit=1)
+        captures = adapter.take_captures()
+    finally:
+        await client.aclose()
+    assert batch.schema_version == 2
+    assert batch.requested_market_id == condition_id
+    assert batch.source_cursor is None
+    assert batch.source_next_cursor == "opaque:next-page"
+    assert batch.has_more is True
+    assert batch.trades[0].native_market_id == condition_id
+    assert batch.trades[0].native_trade_id == "0xfixture-trade"
+    assert batch.trades[0].schema_version == 2
+    assert batch.trades[0].native_instrument_id == token_id
+    assert batch.trades[0].outcome_label == "No"
+    assert batch.trades[0].outcome_index == 1
+    assert batch.trades[0].price == Decimal("0.43")
+    assert batch.trades[0].quantity == Decimal("2.5")
+    assert len(captures) == 1
+    assert captures[0].raw_body == body
+    assert len(requests) == 1
+    assert requests[0].url.path == "/v2/trades"
+    assert requests[0].url.params["condition"] == condition_id
+    assert requests[0].url.params["filter_type"] == "TOKENS"
+    assert requests[0].url.params["taker_only"] == "true"
+    assert "authorization" not in requests[0].headers
+
+
+@pytest.mark.asyncio
+async def test_polymarket_v2_trade_page_rejects_other_market_rows_after_capture():
+    requested_condition = "0x" + "a" * 64
+    other_condition = "0x" + "b" * 64
+    body = json.dumps(
+        {
+            "data": [
+                {
+                    "side": "BUY",
+                    "token_id": "token",
+                    "condition_id": other_condition,
+                    "size": 1,
+                    "price": 0.5,
+                    "timestamp": 1793000000,
+                    "transaction_hash": "0xother-market",
+                }
+            ],
+            "pagination": {"limit": 1, "has_more": False, "next_cursor": None},
+        }
+    )
+    transport, _, client = _transport("data-api.polymarket.com", {"/v2/trades": body})
+    adapter = PolymarketAdapter(
+        AdapterConfig(
+            enabled=True, live_public_probe_enabled=True, requests_per_second=5, retries=0
+        ),
+        transport=transport,
+    )
+    try:
+        with pytest.raises(AdapterError, match="another condition"):
+            await adapter.fetch_trade_page(requested_condition, limit=1)
+        captures = adapter.take_captures()
+    finally:
+        await client.aclose()
+    assert len(captures) == 1
+    assert captures[0].raw_body == body
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("source_cursor", "pagination"),
+    [
+        (None, {"limit": 1, "has_more": True, "next_cursor": None}),
+        (
+            "cursor-that-does-not-advance",
+            {"limit": 1, "has_more": True, "next_cursor": "cursor-that-does-not-advance"},
+        ),
+        (None, {"limit": 1, "has_more": False, "next_cursor": 17}),
+    ],
+)
+async def test_polymarket_v2_trade_page_rejects_inconsistent_cursors_after_capture(
+    source_cursor, pagination
+):
+    condition_id = "0x" + "a" * 64
+    body = json.dumps({"data": [], "pagination": pagination})
+    transport, _, client = _transport("data-api.polymarket.com", {"/v2/trades": body})
+    adapter = PolymarketAdapter(
+        AdapterConfig(
+            enabled=True, live_public_probe_enabled=True, requests_per_second=5, retries=0
+        ),
+        transport=transport,
+    )
+    try:
+        with pytest.raises(AdapterError, match="pagination|cursor"):
+            await adapter.fetch_trade_page(condition_id, limit=1, cursor=source_cursor)
+        captures = adapter.take_captures()
+    finally:
+        await client.aclose()
+    assert len(captures) == 1
+    assert json.loads(captures[0].raw_body) == {"data": [], "pagination": pagination}

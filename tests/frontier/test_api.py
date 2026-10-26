@@ -386,6 +386,184 @@ def test_trade_read_returns_hash_verified_normalized_batch(tmp_path):
 
 
 @pytest.mark.asyncio
+async def test_polymarket_v2_trade_cursor_pages_are_bound_and_persisted(tmp_path):
+    market_row = json.loads(
+        (Path(__file__).resolve().parents[1] / "fixtures" / "gamma_live.json").read_text()
+    )[0]
+    condition_id = market_row["conditionId"]
+    token_id = json.loads(market_row["clobTokenIds"])[0]
+
+    def trade_row(transaction_hash: str, *, timestamp: int) -> dict[str, object]:
+        return {
+            "proxy_wallet": "0x0000000000000000000000000000000000000001",
+            "side": "BUY",
+            "token_id": token_id,
+            "condition_id": condition_id,
+            "size": 1.25,
+            "price": 0.51,
+            "timestamp": timestamp,
+            "title": str(market_row["question"]),
+            "slug": "fixture-market",
+            "icon": "",
+            "event_slug": "fixture-event",
+            "outcome": "Yes",
+            "outcome_index": 0,
+            "name": "",
+            "pseudonym": "fixture",
+            "bio": "",
+            "profile_image": "",
+            "profile_image_optimized": "",
+            "transaction_hash": transaction_hash,
+        }
+
+    page_responses = [
+        {
+            "data": [trade_row("0xfrontier-page-1", timestamp=1793000000)],
+            "pagination": {
+                "limit": 1,
+                "offset": 0,
+                "has_more": True,
+                "next_cursor": "opaque:page-2",
+            },
+        },
+        {
+            "data": [trade_row("0xfrontier-page-2", timestamp=1793000001)],
+            "pagination": {"limit": 1, "offset": 1, "has_more": False, "next_cursor": None},
+        },
+    ]
+    requests: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        if request.url.host == "gamma-api.polymarket.com" and request.url.path == "/markets":
+            return httpx.Response(200, json=[market_row], request=request)
+        if request.url.host == "data-api.polymarket.com" and request.url.path == "/v2/trades":
+            if request.url.params.get("cursor") == "opaque:page-2":
+                return httpx.Response(200, json=page_responses[1], request=request)
+            return httpx.Response(200, json=page_responses[0], request=request)
+        return httpx.Response(404, json={"error": "unexpected fixture request"}, request=request)
+
+    config = AdapterConfig(
+        enabled=True,
+        live_public_probe_enabled=True,
+        timeout_seconds=2,
+        requests_per_second=5,
+        max_response_bytes=65536,
+        max_markets_per_call=1,
+        retries=0,
+    )
+    source_client = httpx.AsyncClient(transport=httpx.MockTransport(handler))
+    public_transport = PublicReadTransport(
+        {"gamma-api.polymarket.com", "data-api.polymarket.com"},
+        config,
+        client=source_client,
+    )
+    registry = AdapterRegistry(
+        (
+            PolymarketAdapter(config, transport=public_transport),
+            KalshiAdapter(),
+            KrakenSpotAdapter(),
+        )
+    )
+    store = FrontierStore(tmp_path / "frontier", max_bytes=8 * 1024 * 1024)
+    store.initialize()
+    app = FastAPI()
+    app.include_router(router(store, registry))
+    try:
+        async with httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=app), base_url="http://frontier.local"
+        ) as client:
+            listing = await client.post("/api/frontier/probe/polymarket", json={"limit": 1})
+            assert listing.status_code == 200, listing.text
+
+            unsupported_source = await client.post(
+                "/api/frontier/probe/kalshi/trades",
+                json={"condition_id": condition_id, "limit": 1},
+            )
+            assert unsupported_source.status_code == 409
+            assert len(requests) == 1
+
+            unrecorded_condition = await client.post(
+                "/api/frontier/probe/polymarket/trades",
+                json={"condition_id": "0x" + "b" * 64, "limit": 1},
+            )
+            assert unrecorded_condition.status_code == 404
+            assert len(requests) == 1
+
+            first = await client.post(
+                "/api/frontier/probe/polymarket/trades",
+                json={"condition_id": condition_id, "limit": 1},
+            )
+            assert first.status_code == 200, first.text
+            first_payload = first.json()
+            assert first_payload["trade_count"] == 1
+            assert first_payload["has_more"] is True
+            assert first_payload["next_cursor"]
+            assert first_payload["request_count_delta"] == 1
+
+            wrong_page_size = await client.post(
+                "/api/frontier/probe/polymarket/trades",
+                json={
+                    "condition_id": condition_id,
+                    "limit": 2,
+                    "cursor": first_payload["next_cursor"],
+                },
+            )
+            assert wrong_page_size.status_code == 422
+            assert len(requests) == 2
+
+            second = await client.post(
+                "/api/frontier/probe/polymarket/trades",
+                json={
+                    "condition_id": condition_id,
+                    "limit": 1,
+                    "cursor": first_payload["next_cursor"],
+                },
+            )
+            assert second.status_code == 200, second.text
+            assert second.json()["trade_count"] == 1
+            assert second.json()["has_more"] is False
+            assert second.json()["next_cursor"] is None
+
+            page_requests = [item for item in requests if item.url.path == "/v2/trades"]
+            assert len(page_requests) == 2
+            for request in page_requests:
+                assert request.method == "GET"
+                assert request.url.params["condition"] == condition_id
+                assert request.url.params["limit"] == "1"
+                assert request.url.params["taker_only"] == "true"
+                assert request.url.params["filter_type"] == "TOKENS"
+                assert request.url.params["filter_amount"] == "0.01"
+                assert "authorization" not in request.headers
+            assert page_requests[1].url.params["cursor"] == "opaque:page-2"
+
+            read_back = await client.get("/api/frontier/trades?venue=polymarket&limit=100")
+            assert read_back.status_code == 200
+            result = read_back.json()
+            assert result["trade_count"] == 2
+            assert result["observation_count"] == 2
+            assert len(result["pages"]) == 2
+            assert result["pages"][0]["has_more"] is False
+            assert result["pages"][1]["has_more"] is True
+            assert result["pages"][1]["next_cursor"] == first_payload["next_cursor"]
+            stored_page = store.observation(first_payload["observation_id"])
+            assert stored_page is not None
+            assert json.loads(stored_page["raw"]["raw_body"]) == page_responses[0]
+            normalized_batch = TradeBatch.model_validate(stored_page["normalized"])
+            assert normalized_batch.schema_version == 2
+            assert normalized_batch.source_cursor is None
+            assert normalized_batch.source_next_cursor == "opaque:page-2"
+            assert normalized_batch.trades[0].native_market_id == condition_id
+            assert normalized_batch.trades[0].native_instrument_id == token_id
+            assert normalized_batch.trades[0].outcome_label == "Yes"
+            assert normalized_batch.trades[0].outcome_index == 0
+            assert "proxy_wallet" not in normalized_batch.trades[0].model_dump()
+    finally:
+        await registry.aclose()
+        await source_client.aclose()
+
+
+@pytest.mark.asyncio
 async def test_bounded_probe_persists_and_reads_trade_batch(tmp_path):
     gamma_rows = json.loads(
         (Path(__file__).resolve().parents[1] / "fixtures" / "gamma_live.json").read_text()

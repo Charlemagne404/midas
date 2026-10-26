@@ -98,6 +98,10 @@ class KalshiAdapter(BaseReadOnlyAdapter):
                 "WebSocket updates are not implemented; this adapter only captures REST snapshots",
                 None,
             ),
+            Capability.PAGINATED_PUBLIC_TRADES: (
+                "Cursor-based Kalshi trade pagination is not normalized by adapter v1",
+                "https://docs.kalshi.com/api-reference/market/get-trades",
+            ),
             Capability.HISTORICAL_CANDLES: (
                 "Historical candles are not normalized by adapter v1",
                 None,

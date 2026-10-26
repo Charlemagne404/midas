@@ -119,6 +119,10 @@ class KrakenSpotAdapter(BaseReadOnlyAdapter):
                 "No incremental WebSocket reconstruction is implemented",
                 None,
             ),
+            Capability.PAGINATED_PUBLIC_TRADES: (
+                "Kraken public trades expose a last marker but cursor pagination is not integrated into Frontier v1",
+                "https://docs.kraken.com/api/docs/rest-api/get-recent-trades",
+            ),
             Capability.FEE_SCHEDULE: (
                 "Fee fields are retained when supplied, but account tier and current applicable fee are not resolved",
                 "https://docs.kraken.com/api-reference/market-data/get-tradable-asset-pairs",

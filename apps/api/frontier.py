@@ -6,6 +6,7 @@ import asyncio
 import base64
 import hashlib
 import json
+import re
 from datetime import UTC, datetime
 from functools import lru_cache
 from pathlib import Path
@@ -45,6 +46,19 @@ class ProbeRequest(BaseModel):
     include_one_book: bool = False
     include_recent_trades: bool = False
     trade_limit: int = Field(default=10, ge=1, le=10)
+
+
+class TradePageProbeRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+    condition_id: str = Field(pattern=r"^0x[0-9a-fA-F]{64}$")
+    limit: int = Field(default=50, ge=1, le=100)
+    cursor: str | None = Field(default=None, max_length=4096)
+
+    @model_validator(mode="after")
+    def cursor_is_nonblank(self) -> TradePageProbeRequest:
+        if self.cursor is not None and not self.cursor.strip():
+            raise ValueError("Trade page cursor cannot be blank")
+        return self
 
 
 class RelationshipReviewRequest(BaseModel):
@@ -157,6 +171,46 @@ def _decode_graph_cursor(cursor: str) -> dict[str, Any]:
         "graph_revision": tuple(revision),
         "after": (created_at, relationship_id),
     }
+
+
+def _encode_trade_cursor(condition_id: str, limit: int, source_cursor: str) -> str:
+    value = {
+        "v": 1,
+        "condition_id": condition_id,
+        "limit": limit,
+        "source_cursor": source_cursor,
+    }
+    raw = json.dumps(value, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return base64.urlsafe_b64encode(raw).decode("ascii").rstrip("=")
+
+
+def _decode_trade_cursor(cursor: str) -> dict[str, Any]:
+    if not cursor or len(cursor) > 4096:
+        raise ValueError("Trade page cursor is empty or exceeds its bound")
+    padded = cursor + "=" * (-len(cursor) % 4)
+    try:
+        decoded = base64.b64decode(padded, altchars=b"-_", validate=True)
+        value = json.loads(decoded)
+    except (ValueError, UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise ValueError("Trade page cursor is not valid base64 JSON") from error
+    if (
+        not isinstance(value, dict)
+        or set(value) != {"v", "condition_id", "limit", "source_cursor"}
+        or type(value.get("v")) is not int
+        or value["v"] != 1
+        or not isinstance(value.get("condition_id"), str)
+        or not re.fullmatch(r"0x[0-9a-fA-F]{64}", value["condition_id"])
+        or type(value.get("limit")) is not int
+        or not 1 <= value["limit"] <= 100
+        or not isinstance(value.get("source_cursor"), str)
+        or not 1 <= len(value["source_cursor"]) <= 2048
+        or not value["source_cursor"].strip()
+        or any(
+            ord(character) < 0x21 or ord(character) > 0x7E for character in value["source_cursor"]
+        )
+    ):
+        raise ValueError("Trade page cursor has an unsupported shape or version")
+    return value
 
 
 def router(store: FrontierStore, registry: Any) -> APIRouter:
@@ -365,11 +419,37 @@ def router(store: FrontierStore, registry: Any) -> APIRouter:
                 offset=offset,
             )
             items: list[dict[str, Any]] = []
+            pages: list[dict[str, Any]] = []
             for observation in observations:
                 normalized = observation["normalized"]
                 if not isinstance(normalized, dict) or "trades" not in normalized:
                     continue
                 batch = TradeBatch.model_validate(normalized)
+                if (
+                    batch.schema_version == 2
+                    and batch.requested_market_id is not None
+                    and batch.page_limit is not None
+                    and batch.has_more is not None
+                ):
+                    pages.append(
+                        {
+                            "venue": batch.venue.value,
+                            "condition_id": batch.requested_market_id,
+                            "page_limit": batch.page_limit,
+                            "has_more": batch.has_more,
+                            "next_cursor": (
+                                _encode_trade_cursor(
+                                    batch.requested_market_id,
+                                    batch.page_limit,
+                                    batch.source_next_cursor,
+                                )
+                                if batch.has_more and batch.source_next_cursor is not None
+                                else None
+                            ),
+                            "observation_id": observation["observation_id"],
+                            "received_at_utc": observation["received_at_utc"],
+                        }
+                    )
                 items.extend(
                     {
                         **trade.model_dump(mode="json"),
@@ -384,9 +464,140 @@ def router(store: FrontierStore, registry: Any) -> APIRouter:
             "items": items,
             "observation_count": len(observations),
             "trade_count": len(items),
+            "pages": pages,
             "limit": limit,
             "offset": offset,
         }
+
+    @api.post("/probe/{venue}/trades")
+    async def probe_trade_page(venue: Venue, request: TradePageProbeRequest) -> dict[str, Any]:
+        adapter: ExchangeAdapter = registry.get(venue)
+        if not adapter.capabilities.supports(Capability.PAGINATED_PUBLIC_TRADES):
+            raise HTTPException(
+                status_code=409,
+                detail="This source does not expose normalized cursor-paginated public trades",
+            )
+        fetch_page = getattr(adapter, "fetch_trade_page", None)
+        if not callable(fetch_page):
+            raise HTTPException(
+                status_code=409, detail="The advertised paginated-trade operation is unavailable"
+            )
+        config = getattr(adapter, "config", None)
+        if config is None or not config.enabled or not config.live_public_probe_enabled:
+            raise HTTPException(
+                status_code=409,
+                detail="Bounded public probing is disabled in source configuration",
+            )
+        try:
+            known_markets = await _load_markets(store, 200)
+        except (FrontierStoreError, ValueError) as error:
+            raise HTTPException(status_code=409, detail=str(error)) from error
+        if not any(
+            item.venue == venue and item.native_fields.get("conditionId") == request.condition_id
+            for item in known_markets
+        ):
+            raise HTTPException(
+                status_code=404,
+                detail="Trade condition must match a market in the bounded recorded listing window",
+            )
+
+        source_cursor = None
+        if request.cursor is not None:
+            try:
+                decoded_cursor = _decode_trade_cursor(request.cursor)
+            except ValueError as error:
+                raise HTTPException(status_code=422, detail=str(error)) from error
+            if (
+                decoded_cursor["condition_id"] != request.condition_id
+                or decoded_cursor["limit"] != request.limit
+            ):
+                raise HTTPException(
+                    status_code=422,
+                    detail="Trade page cursor does not match this condition and page size",
+                )
+            source_cursor = decoded_cursor["source_cursor"]
+
+        async with source_locks[venue]:
+            adapter.take_captures()
+            requests_before = adapter.transport.request_count
+            try:
+                batch = await fetch_page(
+                    request.condition_id, limit=request.limit, cursor=source_cursor
+                )
+                captures = adapter.take_captures()
+                if len(captures) != 1:
+                    raise AdapterError(
+                        "MISSING_TRADE_CAPTURE", "Adapter must capture exactly one trade page"
+                    )
+                capture = captures[0]
+                if (
+                    batch.schema_version != 2
+                    or batch.venue != venue
+                    or batch.requested_market_id != request.condition_id
+                    or batch.page_limit != request.limit
+                    or batch.source_cursor != source_cursor
+                    or any(
+                        item.provenance.raw_sha256 != capture.raw_sha256 for item in batch.trades
+                    )
+                ):
+                    raise AdapterError(
+                        "TRADE_CAPTURE_LINEAGE_MISMATCH",
+                        "Normalized trade page does not match its request and raw response",
+                    )
+                observation_id = store.append_observation(capture, batch)
+                next_cursor = (
+                    _encode_trade_cursor(
+                        request.condition_id, request.limit, batch.source_next_cursor
+                    )
+                    if batch.has_more and batch.source_next_cursor is not None
+                    else None
+                )
+                return {
+                    "venue": venue.value,
+                    "condition_id": request.condition_id,
+                    "trade_count": len(batch.trades),
+                    "observation_id": observation_id,
+                    "raw_sha256": capture.raw_sha256,
+                    "page_limit": batch.page_limit,
+                    "has_more": batch.has_more,
+                    "next_cursor": next_cursor,
+                    "source_state": (await adapter.health()).state.value,
+                    "request_count_delta": adapter.transport.request_count - requests_before,
+                    "network_calls_bounded_by": config.retries + 1,
+                    "hypothetical_only": True,
+                    "note": (
+                        "One explicit read-only keyset page; each continuation repeats the same "
+                        "condition, taker-only, and 0.01-share minimum-size filters. No history crawl is started."
+                    ),
+                }
+            except AdapterError as error:
+                diagnostic_ids, diagnostic_error = preserve_failed_captures(
+                    adapter, error.code, str(error), error.response_evidence
+                )
+                adapter.report_failure(error.code, str(error))
+                raise HTTPException(
+                    status_code=502,
+                    detail={
+                        "code": error.code,
+                        "message": str(error),
+                        "diagnostic_observation_ids": diagnostic_ids,
+                        "diagnostic_persistence_error": diagnostic_error,
+                    },
+                ) from error
+            except (ValueError, FrontierStoreError) as error:
+                diagnostic_ids, diagnostic_error = preserve_failed_captures(
+                    adapter, "FRONTIER_TRADE_PAGE_FAILED", str(error)
+                )
+                adapter.report_failure("FRONTIER_TRADE_PAGE_FAILED", str(error))
+                raise HTTPException(
+                    status_code=502,
+                    detail={
+                        "code": "FRONTIER_TRADE_PAGE_FAILED",
+                        "message": str(error),
+                        "diagnostic_observation_ids": diagnostic_ids,
+                        "diagnostic_persistence_error": diagnostic_error,
+                    },
+                ) from error
 
     @api.get("/observations/{observation_id}")
     async def observation_evidence(observation_id: str) -> dict[str, Any]:

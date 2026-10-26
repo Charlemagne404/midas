@@ -89,6 +89,7 @@ class Capability(StrEnum):
     BOOK_SNAPSHOT = "book_snapshot"
     BOOK_UPDATES = "book_updates"
     PUBLIC_TRADES = "public_trades"
+    PAGINATED_PUBLIC_TRADES = "paginated_public_trades"
     HISTORICAL_CANDLES = "historical_candles"
     FEE_SCHEDULE = "fee_schedule"
     TICK_CONSTRAINTS = "tick_constraints"
@@ -409,7 +410,10 @@ class TradeObservation(FrontierModel):
     schema_version: int = 1
     venue: Venue
     native_market_id: str
-    native_trade_id: str | None = None
+    native_trade_id: str | None = Field(default=None, max_length=256)
+    native_instrument_id: str | None = Field(default=None, max_length=128)
+    outcome_label: str | None = Field(default=None, max_length=160)
+    outcome_index: int | None = Field(default=None, ge=0, le=2_147_483_647)
     price: Nonnegative
     quantity: Positive
     quote_currency: str | None = None
@@ -425,6 +429,14 @@ class TradeObservation(FrontierModel):
             raise ValueError("Trade timestamps must include a timezone")
         return value.astimezone(UTC) if value is not None else None
 
+    @model_validator(mode="after")
+    def trade_schema_is_supported(self) -> TradeObservation:
+        if self.schema_version not in {1, 2}:
+            raise ValueError("Unsupported trade-observation schema version")
+        if self.schema_version == 2 and self.native_instrument_id is None:
+            raise ValueError("Trade-observation schema v2 requires a native instrument identity")
+        return self
+
 
 class TradeBatch(FrontierModel):
     """One source response and its bounded normalized public trades."""
@@ -432,11 +444,37 @@ class TradeBatch(FrontierModel):
     schema_version: int = 1
     venue: Venue
     trades: tuple[TradeObservation, ...]
+    requested_market_id: str | None = Field(default=None, max_length=256)
+    page_limit: int | None = Field(default=None, ge=1, le=1000)
+    source_cursor: str | None = Field(default=None, max_length=2048)
+    source_next_cursor: str | None = Field(default=None, max_length=2048)
+    has_more: bool | None = None
 
     @model_validator(mode="after")
     def trade_venues_match_batch(self) -> TradeBatch:
+        if self.schema_version not in {1, 2}:
+            raise ValueError("Unsupported trade-batch schema version")
         if any(trade.venue != self.venue for trade in self.trades):
             raise ValueError("Trade batch entries must belong to the declared venue")
+        if self.schema_version == 2 and any(trade.schema_version != 2 for trade in self.trades):
+            raise ValueError("Paginated trade-batch entries must use trade-observation schema v2")
+        if self.requested_market_id is not None and any(
+            trade.native_market_id != self.requested_market_id for trade in self.trades
+        ):
+            raise ValueError("Trade batch entries must match the requested market")
+        if self.has_more is not None:
+            if self.has_more != (self.source_next_cursor is not None):
+                raise ValueError("Trade pagination flag must match its source continuation cursor")
+            if self.page_limit is None:
+                raise ValueError("Paginated trade batches require their source page limit")
+        if self.schema_version == 2 and (
+            self.requested_market_id is None or self.page_limit is None or self.has_more is None
+        ):
+            raise ValueError("Trade-batch schema v2 requires complete page metadata")
+        if self.source_cursor is not None and not self.source_cursor.strip():
+            raise ValueError("Source trade cursor cannot be blank")
+        if self.source_next_cursor is not None and not self.source_next_cursor.strip():
+            raise ValueError("Next source trade cursor cannot be blank")
         return self
 
 

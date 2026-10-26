@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from datetime import UTC, datetime
 from decimal import Decimal
 from typing import Any
@@ -35,6 +36,7 @@ from midas.frontier.models import (
     QuantityUnit,
     ResolutionSpec,
     StatePayout,
+    TradeBatch,
     TradeObservation,
     Venue,
     stable_market_id,
@@ -42,7 +44,7 @@ from midas.frontier.models import (
 from midas.market_data.polymarket import normalize_market
 
 D = Decimal
-ADAPTER_VERSION = "frontier-polymarket-1"
+ADAPTER_VERSION = "frontier-polymarket-2"
 GAMMA = "https://gamma-api.polymarket.com"
 CLOB = "https://clob.polymarket.com"
 DATA = "https://data-api.polymarket.com"
@@ -80,6 +82,10 @@ class PolymarketAdapter(BaseReadOnlyAdapter):
             Capability.PUBLIC_TRADES: (
                 "Public Data API trades",
                 "https://institute.polymarket.com/data",
+            ),
+            Capability.PAGINATED_PUBLIC_TRADES: (
+                "Public condition-filtered Data API v2 trades with opaque keyset cursors; each page is one bounded GET",
+                "https://data-api.polymarket.com/v2/docs",
             ),
             Capability.FEE_SCHEDULE: (
                 "Market fee metadata is accepted only through the existing strict exponent-one validator",
@@ -402,6 +408,144 @@ class PolymarketAdapter(BaseReadOnlyAdapter):
                 )
             )
         return tuple(result)
+
+    async def fetch_trade_page(
+        self, condition_id: str, *, limit: int = 50, cursor: str | None = None
+    ) -> TradeBatch:
+        """Fetch one public v2 keyset page for a recorded Polymarket condition."""
+        self._require(Capability.PAGINATED_PUBLIC_TRADES)
+        if not re.fullmatch(r"0x[0-9a-fA-F]{64}", condition_id):
+            raise AdapterError("INVALID_MARKET", "Condition ID must be a 32-byte 0x hex value")
+        if not 1 <= limit <= 100:
+            raise AdapterError("INVALID_LIMIT", "Trade page size must be between 1 and 100")
+        if cursor is not None and (
+            not cursor.strip()
+            or len(cursor) > 2048
+            or any(ord(character) < 0x21 or ord(character) > 0x7E for character in cursor)
+        ):
+            raise AdapterError("INVALID_CURSOR", "Source trade cursor is blank or oversized")
+
+        params: dict[str, str | int] = {
+            "condition": condition_id,
+            "limit": limit,
+            "taker_only": "true",
+            "filter_type": "TOKENS",
+            "filter_amount": "0.01",
+        }
+        if cursor is not None:
+            params["cursor"] = cursor
+        response = await self.transport.get_json(f"{DATA}/v2/trades", params)
+        self._capture_response(response, "public_trades")
+        payload = response.payload
+        if not isinstance(payload, dict):
+            raise AdapterError("INVALID_SCHEMA", "Data API v2 trade response must be an object")
+        rows = payload.get("data")
+        pagination = payload.get("pagination")
+        if not isinstance(rows, list) or not isinstance(pagination, dict):
+            raise AdapterError(
+                "INVALID_SCHEMA", "Data API v2 trade response must contain data and pagination"
+            )
+        if len(rows) > limit:
+            raise AdapterError("INVALID_PAGINATION", "Data API v2 exceeded the requested page size")
+        page_limit = pagination.get("limit")
+        has_more = pagination.get("has_more")
+        next_cursor = pagination.get("next_cursor")
+        if (
+            type(page_limit) is not int
+            or page_limit != limit
+            or not isinstance(has_more, bool)
+            or (next_cursor is not None and not isinstance(next_cursor, str))
+            or has_more != (next_cursor is not None)
+        ):
+            raise AdapterError("INVALID_PAGINATION", "Data API v2 returned inconsistent pagination")
+        if next_cursor is not None and (
+            not next_cursor.strip()
+            or len(next_cursor) > 2048
+            or any(ord(character) < 0x21 or ord(character) > 0x7E for character in next_cursor)
+            or next_cursor == cursor
+        ):
+            raise AdapterError("INVALID_PAGINATION", "Data API v2 returned an invalid next cursor")
+
+        trades: list[TradeObservation] = []
+        for index, raw in enumerate(rows):
+            if not isinstance(raw, dict):
+                raise AdapterError("INVALID_TRADE", "Data API v2 trade entry must be an object")
+            row_condition = raw.get("condition_id")
+            token_id = raw.get("token_id")
+            side = raw.get("side")
+            outcome_label = raw.get("outcome")
+            outcome_index = raw.get("outcome_index")
+            price = parse_decimal(raw.get("price"))
+            quantity = parse_decimal(raw.get("size"))
+            timestamp = parse_time(raw.get("timestamp"))
+            if row_condition != condition_id:
+                raise AdapterError(
+                    "TRADE_MARKET_MISMATCH", "Data API v2 returned a trade for another condition"
+                )
+            if (
+                not isinstance(token_id, str)
+                or not token_id
+                or len(token_id) > 128
+                or not isinstance(side, str)
+                or side not in {"BUY", "SELL"}
+                or not isinstance(outcome_label, str)
+                or len(outcome_label) > 160
+                or type(outcome_index) is not int
+                or not 0 <= outcome_index <= 2_147_483_647
+                or price is None
+                or not D(0) <= price <= D(1)
+                or quantity is None
+                or quantity <= 0
+                or timestamp is None
+            ):
+                raise AdapterError("INVALID_TRADE", "Data API v2 trade fields failed validation")
+            transaction_hash = raw.get("transaction_hash")
+            if transaction_hash is not None and (
+                not isinstance(transaction_hash, str) or len(transaction_hash) > 128
+            ):
+                raise AdapterError(
+                    "INVALID_TRADE", "Data API v2 transaction hash is malformed or oversized"
+                )
+            native_trade_id = (
+                transaction_hash if isinstance(transaction_hash, str) and transaction_hash else None
+            )
+            trades.append(
+                TradeObservation(
+                    schema_version=2,
+                    venue=self.venue,
+                    native_market_id=condition_id,
+                    native_trade_id=native_trade_id,
+                    native_instrument_id=token_id,
+                    outcome_label=outcome_label or None,
+                    outcome_index=outcome_index,
+                    price=price,
+                    quantity=quantity,
+                    quote_currency="USDC",
+                    aggressor_side=side,
+                    exchange_timestamp_utc=timestamp,
+                    received_at_utc=response.response_received_at_utc,
+                    provenance=provenance(
+                        self.venue,
+                        ADAPTER_VERSION,
+                        response,
+                        "public_trade",
+                        f"{condition_id}:{token_id}:{native_trade_id or 'no-hash'}:{index}",
+                        source_schema_version="Data API v2 /trades",
+                        exchange_timestamp=timestamp,
+                        exchange_timestamp_semantics="Polymarket Data API block timestamp in epoch seconds",
+                    ),
+                )
+            )
+        return TradeBatch(
+            schema_version=2,
+            venue=self.venue,
+            trades=tuple(trades),
+            requested_market_id=condition_id,
+            page_limit=limit,
+            source_cursor=cursor,
+            source_next_cursor=next_cursor,
+            has_more=has_more,
+        )
 
 
 def json_stable(*values: Any) -> str:
