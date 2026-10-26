@@ -512,3 +512,46 @@ At `2026-10-26T05:06:26Z`, a bounded direct resource sample showed API
 available memory of 7.95 GB. The API `high` event counter remained 10,977 with
 zero OOM events. This point sample keeps heavy-research admission blocked; see
 the hashed resource receipt in the mission report.
+
+## Reality checkpoint recovery follow-up (2026-10-26 05:17 UTC)
+
+The clean candidate at
+`/home/charlie/midas-reality-archive-provenance`, branch
+`codex/reality-archive-provenance-20261026`, now includes the checkpoint
+prefix recovery fix in commit
+`c2e73eb92173ab8dc06da460e37ee15931edf154` and the isolated startup identity
+test in `a1f2fe99624ca0184835dff452a319fc2d7dcf30`. The recovery loader accepts
+new catalog entries before or between saved checkpoint entries only when
+those entries contain zero records; they are verified in tail replay. Prefix
+source hashes and state digest checks remain mandatory, and an inserted
+nonempty entry rejects the checkpoint. The only compatible prior identity is
+the independently recomputed pre-fix candidate identity
+`2f09ba251a65b2cac00f9e94d5c00f2e7600a5f528fb28c39d46735306ba5860`.
+
+The full bounded Reality, recovery, dashboard, and operations regression
+passed 109 tests. After the recovery documentation wording change, all 42
+recovery tests passed; after adding the source-identity assertion, the
+isolated startup identity test passed. Ruff and formatting passed. One
+20%-CPU-quota run made the existing 50 ms heartbeat fixture exceed its
+timeout; the final full run kept
+the memory and task bounds but removed that artificial CPU throttle. No test
+threshold changed. Detailed results and limitations are in
+`/home/charlie/midas-engineering-mission-20261026/docs/reliability/MIDAS_ENGINEERING_MISSION_2026-10-26.md`.
+
+The final fixture receipt is
+`/home/charlie/midas-engineering-mission-20261026/evidence/reality-checkpoint-prefix-fix-first-write-2026-10-26.json`
+(SHA-256
+`982691cd267b0758997601ce2410d59005859d834371654a3ff882ac4f746075`). It
+records a first durable write in 0.023 seconds, five finalized records, no
+public network requests, a loopback subscription, and matching checkpoint
+recovery/replay state. It is not a feed canary or current-archive recovery
+proof; source sequencing remains unverified.
+
+The 05:16:57Z read-only runtime sample reports the protected recorder still
+active on PID 3007040 with its original start time. Production health remains
+degraded/unsequenced and its persistence, recovery, and transport queue
+telemetry remain unavailable. The API `MemoryHigh` headroom was 3,571,712
+bytes; heavy research admission remains blocked. The candidate remains
+undeployed. Do not restart the protected recorder or alter the ambiguous
+archive based on these tests; the full current-boundary recovery, feed canary,
+storage/archive clearance, and separate restart authorization remain open.

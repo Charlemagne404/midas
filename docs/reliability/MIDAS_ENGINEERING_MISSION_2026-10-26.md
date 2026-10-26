@@ -528,6 +528,15 @@ Mission evidence files are under
   archive manifest state, cgroup deltas, and explicit blockers; it did not
   read source contents or invoke the official deployment gate. SHA-256
   `f2cb8fa8a5947f96c94b69c8e722fe35a8a9260e3ccee730f02eee94de27ca43`.
+- `reality-checkpoint-prefix-fix-first-write-2026-10-26.json` — final candidate
+  source identity, fixture-only first durable write, finalized five-record
+  segment, checkpoint recovery, source/state/segment hashes, and explicit
+  scope limitations; SHA-256
+  `982691cd267b0758997601ce2410d59005859d834371654a3ff882ac4f746075`.
+- `live-status-after-recovery-fix-2026-10-26T0517Z.json` — fresh Reality/API
+  health, cgroup/host resource sample, and protected service identity at
+  05:16:57Z; SHA-256
+  `e68400a65e1395b6152a6ed6c2fc50450c7dbee3f9cdbd4bb4b9fac6263e589d`.
 - `data/veritas-v6-offline-replay-522-20261026/` in the preserved
   `midas-engineering-mission-20261025` worktree — isolated 522-snapshot replay
   receipt SHA-256
@@ -552,10 +561,10 @@ directories remain available for rollback.
 | Economic evidence | **PARTIALLY VERIFIED** | Latest reference covers 1,600 repeated pairs across 741 markets; 310 independently snapshot-valid, zero economic support/net eligibility, and execution outcomes remain unmeasured |
 | Readiness resource API and dashboard | **COMPLETE AND VERIFIED** | Deployed at API `cf452ec` / web `90c625d`; browser receipt and screenshot available |
 | Veritas missing-evidence rendering and deterministic browser fixtures | **COMPLETE AND VERIFIED** | Null renders as `Not measured`, distinct from measured zero; targeted browser test passed, and immutable web release `90c625d` serves the fix with HTTP 200 smoke verification |
-| Reality candidate hardening | **IMPLEMENTED, DEPLOYMENT PENDING** | Clean candidate `d298957` integrates the 4278 telemetry base and archive fail-closed fixes; 66 Reality/dashboard/operations tests pass. First-write and checkpoint replay are verified. A feed canary, complete latest-boundary recovery, storage clearance, and protected-restart authorization remain |
+| Reality candidate hardening | **IMPLEMENTED, DEPLOYMENT PENDING** | Latest clean candidate `a1f2fe9` includes the 4278 telemetry base, archive fail-closed checks, and checkpoint-prefix recovery fix. The full relevant suite passed 109 tests; final recovery and source-identity follow-ups passed 42 focused tests plus the isolated startup smoke. A feed canary, complete latest-boundary recovery, storage clearance, and protected-restart authorization remain |
 | Reality candidate bounded telemetry | **IMPLEMENTED, DEPLOYMENT PENDING** | Candidate exposes bounded persistence, transport-queue, backpressure, checkpoint, and resource fields; production API still lacks these observations |
-| Production Reality telemetry/integrity | **PARTIALLY VERIFIED** | At the 04:47Z API read, all 16 books were fresh and the collector was receiving, but health remained degraded/unsequenced with persistence-window, queue-depth, and recovery-state telemetry missing |
-| Cold recovery/reproducibility | **PARTIALLY VERIFIED** | Source analysis covered 32,035/32,035 of its captured index and gap detail 32,048/32,050 replayable segments; live ordinal 5,159,119 is ahead. The latest boundary is not fully verified |
+| Production Reality telemetry/integrity | **PARTIALLY VERIFIED** | At 05:16Z, 16/16 books were fresh and the collector was receiving at ordinal 5,168,257, but API health remained degraded/unsequenced with persistence-window, queue-depth, and recovery-state telemetry missing |
+| Cold recovery/reproducibility | **PARTIALLY VERIFIED** | Source analysis covered 32,035/32,035 of its captured index and gap detail 32,048/32,050 replayable segments; the live ordinal is ahead. Checkpoint recovery now handles newly inserted empty finalized segments, but the latest boundary is not fully verified |
 | Storage/archive provenance | **BLOCKED** | Effective capacity runway is 16.7 days, staged capacity is inactive, and archive manifest/provenance remain invalid; the new guard preserves and blocks ambiguous files |
 | Cross-component research admission | **PARTIALLY VERIFIED** | Dashboard blocks at low API `MemoryHigh` headroom; Arena has 0 active/queued jobs, 3 stale owner-linked directors (2 cancelled, 1 failed), and an expired no-child demonstration schedule alert |
 | Trading, Frontier, Atlas, 48-hour campaign | **DEFERRED BY SCOPE** | Not started |
@@ -579,8 +588,9 @@ Recommended next actions:
    remain an evidence record, not be re-dispatched.
 5. Keep the Reality recorder on its current service. The archive-provenance
    and unmanifested-segment fixes are integrated on
-   `codex/reality-archive-provenance-20261026` at `d298957`; the bounded
-   first-write and 66-test candidate checks pass. The exact-boundary preflight
+   `codex/reality-archive-provenance-20261026` at `a1f2fe9`; the bounded
+   first-write, checkpoint-prefix recovery, and candidate regression checks
+   pass. The exact-boundary preflight
    remains blocked. Before any transition, reconcile NVMe headroom and archive
    provenance, install and verify an immutable candidate release, complete a
    bounded feed canary and recovery at the current raw boundary, and prepare
@@ -763,3 +773,78 @@ feed canary, telemetry completeness, resource headroom, storage runway,
 archive provenance, Reality candidate runtime release installation, and
 separate protected-restart authorization remain unresolved. The complete
 bounded receipt and hash are listed in Section 6.
+
+## 11. Reality checkpoint recovery follow-up — 2026-10-26 05:17 UTC
+
+Review of the clean candidate exposed a restart-performance defect in
+`packages/midas/reality/recovery.py`. A new empty finalized segment can sort
+before an older checkpoint prefix. The loader required the saved segment list
+to equal the catalog's first N entries, so it discarded a still-valid
+checkpoint and replayed the entire archive. The collector's recovered-tail
+byte metric also sliced by prefix count and could report a checkpoint segment
+as reconstructed instead of the inserted empty segment.
+
+The candidate now locates the saved catalog as an ordered subsequence and
+accepts unmatched entries before or between it only when their catalog count
+is exactly zero. Those unmatched entries remain in tail replay. Every saved
+prefix segment is still SHA-256 checked against immutable source bytes; the
+state digest, ordinal continuity, and record-kind counts are still checked.
+Any inserted nonempty entry rejects the checkpoint. Tail reconstruction
+metrics now sum the actual unmatched segments. The pre-fix implementation
+identity `2f09ba251a65b2cac00f9e94d5c00f2e7600a5f528fb28c39d46735306ba5860`
+was recomputed from commit `d298957` and matched exactly before being added as
+the only compatible prior checkpoint identity.
+
+The fix is committed in
+`/home/charlie/midas-reality-archive-provenance` on
+`codex/reality-archive-provenance-20261026`: implementation commit
+`c2e73eb92173ab8dc06da460e37ee15931edf154`, followed by isolated startup
+source-identity test commit `a1f2fe99624ca0184835dff452a319fc2d7dcf30`.
+The candidate module source identity is
+`53731b128faa335940acccad878294a72740cfeb49e3454c2b364fce5587f254`.
+`recovery.py` SHA-256 is
+`c321bf73de483ee0006ea4a5cc5744b9a03b6060dc13bdcd1516d30205b96fca`;
+`tests/test_reality_recovery.py` is
+`aa5a4e2eca4fb36cad02c4303be3a1a3037773b3a76d0dcb7d68c23fc051b941`;
+`tests/test_reality.py` is
+`5bcf7742c92dca692e3934cbbcadfe9cef1cc99e6cf0a6a01d13d607a82022ac`.
+
+The full Reality/recovery/dashboard/operations regression passed 109 tests in
+23.99 seconds with one existing Starlette/httpx deprecation warning. After a
+documentation-only change to the recovery module, its 42 recovery tests
+passed; after adding the source-identity assertion, the focused startup test
+passed. Ruff check, format check, and `git diff --check` passed. All test runs
+used a bounded 512 MiB `MemoryHigh`, 640 MiB `MemoryMax`, and 64-task scope.
+The successful full run had no artificial CPU quota. A superseded run under a
+20% CPU quota caused the existing 50 ms heartbeat fixture to cross its stale
+timeout; the same fixture passed without that quota, and no test thresholds
+were changed.
+
+The final isolated receipt
+`/home/charlie/midas-engineering-mission-20261026/evidence/reality-checkpoint-prefix-fix-first-write-2026-10-26.json`
+has SHA-256
+`982691cd267b0758997601ce2410d59005859d834371654a3ff882ac4f746075`. It
+records the exact candidate source identity, first durable write at 0.023
+seconds, five contiguous finalized records, one mocked Gamma request, one
+loopback subscription, zero public network requests, zero received frames,
+clean stop, checkpoint-and-tail recovery, and equal recovered/replayed state
+digests. Sequence verification remains false. The uniquely named temporary
+recording root was removed only after its hashes and replay had been checked.
+
+At 05:16:57Z, the protected Reality service was active on the unchanged PID
+3007040, started 2026-10-22 16:40:02 CEST. The live Reality API remained
+degraded and unsequenced at ordinal 5,168,257 with 16/16 books fresh, current
+error null, and persistence-window, recovery-state, and queue-depth telemetry
+still unavailable. The recorder's point-in-time `MemoryHigh` headroom was
+109,006,848 bytes, with 14,452 high events and zero OOM events. The API had
+3,571,712 bytes of `MemoryHigh` headroom, with 10,977 high events and zero OOM
+events; heavy research admission remains blocked. The hashed read-only sample
+is `live-status-after-recovery-fix-2026-10-26T0517Z.json` with SHA-256
+`e68400a65e1395b6152a6ed6c2fc50450c7dbee3f9cdbd4bb4b9fac6263e589d`.
+
+This fix improves resumable recovery mechanics but does not complete a cold
+recovery of the live archive boundary. The candidate is still undeployed; no
+public-feed canary was run, no archive contents were adopted or rewritten, and
+the protected recorder was not signaled or restarted. Storage runway and
+archive provenance remain blockers. The deployment classification remains
+**IMPLEMENTED, DEPLOYMENT PENDING**.
