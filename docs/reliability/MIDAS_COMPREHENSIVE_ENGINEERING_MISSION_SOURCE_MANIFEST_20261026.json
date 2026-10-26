@@ -226,9 +226,16 @@
       "sha256": "379c03e04ae3303674485b4d114c9a4f38bd3d601d009085869844c6a3226001",
       "snapshot_count": 524,
       "status": "FAILED_LEGACY_SUMMARY_READER"
+    },
+    {
+      "bytes": 3498,
+      "label": "Post-stop Reality point resource recheck; recovery still not admitted",
+      "path": "docs/reliability/evidence/MIDAS_REALITY_POST_RECOVERY_RECHECK_20261026T0233Z.json",
+      "sha256": "c1983b66eab630d8781c3f1217b6b63d2e04731c1ecb0c96b0c883221f5aca1b",
+      "status": "RECOVERY_NOT_ADMITTED_BY_CURRENT_HEADROOM_SAMPLE"
     }
   ],
-  "file_count": 95,
+  "file_count": 96,
   "files": [
     {
       "bytes": 61683,
@@ -336,9 +343,9 @@
       "sha256": "d0c4b6ee3eda7f881743769a6c64d82a10fa87421c21bb6389008d66f9f5b2e4"
     },
     {
-      "bytes": 25477,
+      "bytes": 26219,
       "path": "docs/MIDAS_CURRENT_STATE.md",
-      "sha256": "09935bf1492a66aed312f60508bc965a640a3907378ede19021eeb94a2d4b35e"
+      "sha256": "d6fbc7ff84082f4e64a7cfb4bd4da4f96db80bd8a9b8e559d135778b480fa232"
     },
     {
       "bytes": 21590,
@@ -361,14 +368,14 @@
       "sha256": "1584f98b93910f8946f55cf09fb69f6517fc7bb6a8478d88eebfbeb073858984"
     },
     {
-      "bytes": 45623,
+      "bytes": 46374,
       "path": "docs/reliability/MIDAS_COMPREHENSIVE_ENGINEERING_MISSION_20261025.md",
-      "sha256": "512241439f7a8f3f11cab0581a6e870192229595d9d22035359f9f4907a07e96"
+      "sha256": "4a68bf5590f88558d659394f19c81b87814ff6703bbc87ed066e6f13cb758d28"
     },
     {
-      "bytes": 29480,
+      "bytes": 30189,
       "path": "docs/reliability/MIDAS_COMPREHENSIVE_ENGINEERING_MISSION_LEDGER_20261025.md",
-      "sha256": "ff942e46927e19ca666debdbac1846477b1c36921383045a450cc29f2bd50306"
+      "sha256": "dbc3508fe682cbc5d9b6c4389b2c7fec0f087ff543f3ec0c05430b1f594367f2"
     },
     {
       "bytes": 11423,
@@ -449,6 +456,11 @@
       "bytes": 4124,
       "path": "docs/reliability/evidence/MIDAS_REALITY_ADMISSION_RECHECK_20261026T0204Z.json",
       "sha256": "527ca3ac3d08811863f8458b5418d6ba165450d34990289c589379a6d0cd8ea1"
+    },
+    {
+      "bytes": 3498,
+      "path": "docs/reliability/evidence/MIDAS_REALITY_POST_RECOVERY_RECHECK_20261026T0233Z.json",
+      "sha256": "c1983b66eab630d8781c3f1217b6b63d2e04731c1ecb0c96b0c883221f5aca1b"
     },
     {
       "bytes": 10581,
@@ -706,7 +718,7 @@
       "sha256": "0e303eb666d679cfe283ded0b513d66cde9065f754996bdd64da4d8b8be70812"
     }
   ],
-  "generated_at_utc": "2026-10-26T02:32:52Z",
+  "generated_at_utc": "2026-10-26T02:34:02Z",
   "runtime_observations": {
     "aborted_copy_boundary_pinned": false,
     "aborted_copy_source_total_segments": 31468,
@@ -784,6 +796,32 @@
     "latest_reality_memory_current_bytes": 1131302912,
     "latest_reality_memory_high_margin_bytes": 76656640,
     "latest_reality_memory_max_margin_bytes": 210874368,
+    "latest_reality_post_recovery_resource_sample": {
+      "active_validation_units": [],
+      "captured_at_utc": "2026-10-26T02:33:31.301264+00:00",
+      "checkpoint_sha256": "32adfc125a19c2733b03989b3df6d58b4f4b11f591a299e90c8682271d2421f3",
+      "memory_current_bytes": 1160380416,
+      "memory_events": {
+        "high": 14379,
+        "low": 0,
+        "max": 0,
+        "oom": 0,
+        "oom_group_kill": 0,
+        "oom_kill": 0,
+        "sock_throttled": 0
+      },
+      "memory_high_bytes": 1207959552,
+      "memory_high_margin_bytes": 47579136,
+      "memory_max_bytes": 1342177280,
+      "memory_max_margin_bytes": 181796864,
+      "receipt_path": "docs/reliability/evidence/MIDAS_REALITY_POST_RECOVERY_RECHECK_20261026T0233Z.json",
+      "receipt_sha256": "c1983b66eab630d8781c3f1217b6b63d2e04731c1ecb0c96b0c883221f5aca1b",
+      "recorder_config_sha256": "9d1aeeb5a496ad6971dc461ce87f327266ff25240391897f7bb6091a8307119a",
+      "recorder_pid": 3007040,
+      "resume_admitted": false,
+      "service_active_state": "active",
+      "status": "RECOVERY_NOT_ADMITTED_BY_CURRENT_HEADROOM_SAMPLE"
+    },
     "latest_reality_raw_current_commitment_deficit_bytes": 7396366111,
     "latest_reality_raw_fs_free_bytes": 161060818944,
     "latest_reality_recovery_attempt": {

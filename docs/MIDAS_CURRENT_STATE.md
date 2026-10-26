@@ -235,3 +235,15 @@ replay still pins 522 snapshots, leaving two newer snapshots outside it. The
 timer remains active; its next run is 04:00:50 CET. Evidence:
 [`MIDAS_VERITAS_20261026_POST_TIMER_RECHECK_0330.json`](reliability/evidence/MIDAS_VERITAS_20261026_POST_TIMER_RECHECK_0330.json),
 SHA-256 `379c03e04ae3303674485b4d114c9a4f38bd3d601d009085869844c6a3226001`.
+
+### Latest Reality post-stop resource sample — 2026-10-26, 03:33 CET
+
+At 02:33:31 UTC, the protected Reality service remained active on PID
+`3007040` and the old configuration. `MemoryCurrent` was 1,160,380,416 bytes,
+leaving 47,579,136 bytes below `MemoryHigh` and 181,796,864 below
+`MemoryMax`. The cumulative `high` counter remained 14,379; max/OOM/kill
+counters remained zero. No validation worker was active. This is a point sample,
+not sustained admission evidence, and the partial checkpoint remains parked.
+Capture:
+[`MIDAS_REALITY_POST_RECOVERY_RECHECK_20261026T0233Z.json`](reliability/evidence/MIDAS_REALITY_POST_RECOVERY_RECHECK_20261026T0233Z.json),
+SHA-256 `c1983b66eab630d8781c3f1217b6b63d2e04731c1ecb0c96b0c883221f5aca1b`.

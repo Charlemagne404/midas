@@ -1,0 +1,105 @@
+{
+  "captured_at_utc": "2026-10-26T02:33:31.301264+00:00",
+  "host": {
+    "load_avg": [
+      1.03857421875,
+      1.31103515625,
+      1.23681640625
+    ],
+    "mem_available_bytes": 8043843584,
+    "pressure": {
+      "cpu": {
+        "full": {
+          "avg10": 0.0,
+          "avg300": 0.0,
+          "avg60": 0.0,
+          "total": 0.0
+        },
+        "some": {
+          "avg10": 1.35,
+          "avg300": 5.43,
+          "avg60": 2.18,
+          "total": 345899690453.0
+        }
+      },
+      "io": {
+        "full": {
+          "avg10": 0.42,
+          "avg300": 0.81,
+          "avg60": 0.86,
+          "total": 19557139506.0
+        },
+        "some": {
+          "avg10": 0.42,
+          "avg300": 0.95,
+          "avg60": 0.96,
+          "total": 24083456722.0
+        }
+      },
+      "memory": {
+        "full": {
+          "avg10": 0.0,
+          "avg300": 0.0,
+          "avg60": 0.01,
+          "total": 14806534650.0
+        },
+        "some": {
+          "avg10": 0.0,
+          "avg300": 0.0,
+          "avg60": 0.01,
+          "total": 21968140179.0
+        }
+      }
+    }
+  },
+  "notes": [
+    "The protected recorder memory.events.high counter is cumulative; it remains unchanged from the previously recorded 14,379.",
+    "A margin below the mission 64 MiB buffer blocks resumption for this run even though the current sample remains below MemoryMax and has no OOM events.",
+    "Source identity and checkpoint validity were previously verified in the partial recovery receipt; this point sample does not revalidate them."
+  ],
+  "protected_recorder": {
+    "active_state": "active",
+    "config_path": "/home/charlie/midas-reality/deploy/reality.json",
+    "config_sha256": "9d1aeeb5a496ad6971dc461ce87f327266ff25240391897f7bb6091a8307119a",
+    "control_group": "/user.slice/user-1000.slice/user@1000.service/app.slice/midas-reality.service",
+    "memory_current_bytes": 1160380416,
+    "memory_events": {
+      "high": 14379,
+      "low": 0,
+      "max": 0,
+      "oom": 0,
+      "oom_group_kill": 0,
+      "oom_kill": 0,
+      "sock_throttled": 0
+    },
+    "memory_high_bytes": 1207959552,
+    "memory_high_margin_bytes": 47579136,
+    "memory_max_bytes": 1342177280,
+    "memory_max_margin_bytes": 181796864,
+    "pid": 3007040,
+    "unit": "midas-reality.service"
+  },
+  "recovery": {
+    "checkpoint_segments": 2816,
+    "checkpoint_sha256": "32adfc125a19c2733b03989b3df6d58b4f4b11f591a299e90c8682271d2421f3",
+    "checkpoint_source_prefix_revalidated_at_this_sample": false,
+    "checkpoint_state_sha256": "b27bb39c58ea53c4b6c0cf24aad73c834750fd7b5552a471227ecfac4aa787ab",
+    "decision": "Do not resume from a single point sample; require repeated fresh resource admission and revalidate the pinned source prefix.",
+    "mission_memoryhigh_buffer_bytes": 67108864,
+    "pinned_boundary_catalog_sha256": "2c4f1ca2e3c1c91c580f3239b995b820b0e1c334b781ee4f0a12badbc83cb086",
+    "pinned_boundary_segments": 31742,
+    "resume_admitted_by_this_point_sample": false,
+    "staging_root": "/mnt/continental-cloud/data/midas-reality-staging/midas-mission-recovery-20261026T0210Z"
+  },
+  "schema_version": 1,
+  "scope": "Read-only post-stop resource recheck; no worker launched and no production service changed.",
+  "status": "RECOVERY_NOT_ADMITTED_BY_CURRENT_HEADROOM_SAMPLE",
+  "validation_workers": {
+    "active_validation_units": [],
+    "prior_unit_status": {
+      "ActiveState": "inactive",
+      "Result": "success",
+      "SubState": "dead"
+    }
+  }
+}

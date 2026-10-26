@@ -259,8 +259,8 @@ mission report. Staged storage capacity does not pass at this sample.
 | Latest Reality inventory | `docs/reliability/evidence/MIDAS_MISSION_20261026_DEPLOYMENT_PREFLIGHT_BLOCKED_V3.json` |
 
 The machine-readable [source/evidence manifest](MIDAS_COMPREHENSIVE_ENGINEERING_MISSION_SOURCE_MANIFEST_20261026.json)
-binds 95 changed code, test, documentation and checked-in evidence files plus
-26 replay/live artifact references. The full engineering report is
+binds 96 changed code, test, documentation and checked-in evidence files plus
+27 replay/live artifact references. The full engineering report is
 [MIDAS_COMPREHENSIVE_ENGINEERING_MISSION_20261025.md](MIDAS_COMPREHENSIVE_ENGINEERING_MISSION_20261025.md).
 
 ## Outstanding blockers and required follow-up
@@ -405,3 +405,16 @@ the growth rate was not re-estimated.
   `379c03e04ae3303674485b4d114c9a4f38bd3d601d009085869844c6a3226001`.
   The normal scheduled observer wrote the one new snapshot; this mission did
   not change service, timer, or store state.
+
+### Latest post-stop Reality resource sample — 2026-10-26 02:33 UTC
+
+- At 02:33:31 UTC, the protected Reality recorder remained active on PID
+  `3007040` and its old config. `MemoryCurrent` was 1,160,380,416 bytes,
+  47,579,136 below `MemoryHigh` and 181,796,864 below `MemoryMax`.
+- `memory.events.high` remained 14,379; max/OOM/kill counters remained zero.
+  No validation unit was active. This is one point sample, not a fresh
+  sustained admission window. The partial checkpoint remains parked because
+  the margin is below the 64 MiB buffer.
+- Capture:
+  `evidence/MIDAS_REALITY_POST_RECOVERY_RECHECK_20261026T0233Z.json`, SHA-256
+  `c1983b66eab630d8781c3f1217b6b63d2e04731c1ecb0c96b0c883221f5aca1b`.

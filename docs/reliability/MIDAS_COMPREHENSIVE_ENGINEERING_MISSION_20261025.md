@@ -24,7 +24,7 @@ No Frontier or Atlas work, long-duration campaign, real order, wallet action, hi
 | Latest-boundary recovery | **PARTIALLY VERIFIED** | Historical R10 passed; R14 covered an earlier prefix and suffix; R15 stopped at 2,304/20,148. A new pinned 31,742-segment boundary passed the read-only probe; its cold checkpoint and progress reconcile for 2,816 segments / 690,001,782 prefix bytes through ordinal 365,102. Work was stopped when live recorder `MemoryHigh` margin fell below the 64 MiB buffer used for this staging run. Full-boundary recovery and the remaining matrix phases are incomplete. |
 | Archive provenance and storage transition | **BLOCKED** | Current staging contains 1,138 finalized files absent from its manifest and 58 `.copying` files. Ownership alone does not establish provenance. The staged raw/DB/Veritas/reserve commitments exceed current NVMe free space. No archive files were changed. |
 | Economic evidence sufficiency | **NOT MEASURED** | Across the 522-snapshot pinned replay, the reference audited 20,873 of 20,874 selected pair observations across 3,932 unique markets, found zero positive top-book gross observations and zero economically supported or net-eligible pairs. Repeated selected observations do not establish venue-wide opportunity prevalence; minimum-order units and execution remain unsupported. |
-| Protected Reality deployment | **BLOCKED** | Explicit user approval is required before stopping/restarting the recorder. At the 02:26:43 UTC recheck, PID `3007040` remained on the old config; `MemoryCurrent` was 1,151,361,024 bytes, 56,598,528 below `MemoryHigh`, with 190,816,256 bytes below `MemoryMax` and unchanged high/max/OOM counters. Storage, complete recovery and archive provenance remain open blockers. |
+| Protected Reality deployment | **BLOCKED** | Explicit user approval is required before stopping/restarting the recorder. At the 02:33:31 UTC point sample, PID `3007040` remained on the old config; `MemoryCurrent` was 1,160,380,416 bytes, 47,579,136 below `MemoryHigh`, with 181,796,864 bytes below `MemoryMax` and unchanged high/max/OOM counters. Storage, complete recovery and archive provenance remain open blockers. |
 
 ## Initial state and evidence checked
 
@@ -164,7 +164,7 @@ This recheck does not supersede the production deployment blockers or grant appr
 ## Changed branch and artifact references
 
 
-All mission implementation changes are confined to this worktree and branch. The root checkout's pre-existing dirty work, the Reality/Veritas runtime worktrees, and both older engineering worktrees remain untouched. The companion [source/evidence manifest](MIDAS_COMPREHENSIVE_ENGINEERING_MISSION_SOURCE_MANIFEST_20261026.json) binds 95 changed code, test, documentation and checked-in evidence files plus 26 replay/live artifact references. Bulk replay inputs and event files are bound by their embedded manifests. See the [mission ledger](MIDAS_COMPREHENSIVE_ENGINEERING_MISSION_LEDGER_20261025.md) for worktree inventory and test record. No branch was pushed or merged.
+All mission implementation changes are confined to this worktree and branch. The root checkout's pre-existing dirty work, the Reality/Veritas runtime worktrees, and both older engineering worktrees remain untouched. The companion [source/evidence manifest](MIDAS_COMPREHENSIVE_ENGINEERING_MISSION_SOURCE_MANIFEST_20261026.json) binds 96 changed code, test, documentation and checked-in evidence files plus 27 replay/live artifact references. Bulk replay inputs and event files are bound by their embedded manifests. See the [mission ledger](MIDAS_COMPREHENSIVE_ENGINEERING_MISSION_LEDGER_20261025.md) for worktree inventory and test record. No branch was pushed or merged.
 
 ### Follow-up Veritas boundary replay — 2026-10-26 02:56 CET
 
@@ -291,3 +291,15 @@ The next timer is scheduled for 04:00:50 CET. The v6 replay and production
 service remain unchanged. Capture:
 [`MIDAS_VERITAS_20261026_POST_TIMER_RECHECK_0330.json`](evidence/MIDAS_VERITAS_20261026_POST_TIMER_RECHECK_0330.json),
 SHA-256 `379c03e04ae3303674485b4d114c9a4f38bd3d601d009085869844c6a3226001`.
+
+### Latest post-stop Reality resource sample — 2026-10-26 02:33 UTC
+
+A read-only point sample at 02:33:31 UTC found the same protected PID
+`3007040` and old config. `MemoryCurrent` was 1,160,380,416 bytes, leaving
+47,579,136 bytes below `MemoryHigh` and 181,796,864 below `MemoryMax`.
+`memory.events.high` remained 14,379; max/OOM/kill remained zero. No validation
+unit was active. Since this is a point sample and the `MemoryHigh` buffer is
+still below 64 MiB, the partial checkpoint remains parked; do not resume on
+this sample. Capture:
+[`MIDAS_REALITY_POST_RECOVERY_RECHECK_20261026T0233Z.json`](evidence/MIDAS_REALITY_POST_RECOVERY_RECHECK_20261026T0233Z.json),
+SHA-256 `c1983b66eab630d8781c3f1217b6b63d2e04731c1ecb0c96b0c883221f5aca1b`.
