@@ -9,7 +9,19 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from midas.frontier.adapters import KalshiAdapter, KrakenSpotAdapter, PolymarketAdapter
 from midas.frontier.adapters.transport import PublicReadTransport
-from midas.frontier.models import AdapterConfig, RawObservation, Venue
+from midas.frontier.models import (
+    AdapterConfig,
+    FeeSchedule,
+    FrontierMarket,
+    Lifecycle,
+    MarketBatch,
+    MarketInstrument,
+    MarketKind,
+    PayoffSpec,
+    QuantityUnit,
+    RawObservation,
+    Venue,
+)
 from midas.frontier.registry import AdapterRegistry
 from midas.frontier.storage import FrontierStore
 
@@ -127,6 +139,56 @@ def test_raw_observation_route_returns_hash_verified_public_capture(tmp_path):
         assert response.json()["raw"]["raw_body"] == body
         assert response.json()["raw_sha256"] == raw.raw_sha256
         assert response.json()["normalized"]["canonical_id"] == "kalshi:fixture-market"
+        assert requests == []
+    finally:
+        client.close()
+        asyncio.run(registry.aclose())
+        asyncio.run(http_client.aclose())
+
+
+def test_kraken_instrument_metadata_is_visible_as_a_market(tmp_path):
+    client, registry, http_client, requests, store = _client(tmp_path)
+    seed = market(Venue.KRAKEN, "XBTUSD")
+    spot = FrontierMarket(
+        venue=Venue.KRAKEN,
+        canonical_id="kraken:XBTUSD",
+        native_market_id="XBTUSD",
+        title="XBT / USD",
+        market_kind=MarketKind.SPOT_PAIR,
+        lifecycle=Lifecycle.OPEN,
+        instruments=(
+            MarketInstrument(
+                native_instrument_id="XXBTZUSD",
+                label="XBT/USD",
+                quantity_unit=QuantityUnit.BASE_ASSET,
+                price_currency="USD",
+            ),
+        ),
+        payoff=PayoffSpec(),
+        fees=FeeSchedule(note="Unknown account fee tier"),
+        base_asset="XBT",
+        quote_asset="USD",
+        provenance=seed.provenance,
+    )
+    raw_body = '{"result":{"XXBTZUSD":{"wsname":"XBT/USD"}}}'
+    raw = RawObservation(
+        venue=Venue.KRAKEN,
+        observation_kind="instrument_metadata",
+        request_url="https://api.kraken.com/0/public/AssetPairs?pair=XBTUSD",
+        http_status=200,
+        request_started_at_utc=T0,
+        received_at_utc=T0 + timedelta(milliseconds=12),
+        raw_body=raw_body,
+        raw_sha256=hashlib.sha256(raw_body.encode()).hexdigest(),
+        adapter_version="frontier-kraken-spot-test-v1",
+    )
+    observation_id = store.append_observation(raw, MarketBatch(venue=Venue.KRAKEN, markets=(spot,)))
+    try:
+        response = client.get("/api/frontier/markets", params={"venue": "kraken"})
+        assert response.status_code == 200
+        assert response.json()["returned"] == 1
+        assert response.json()["items"][0]["market_kind"] == "spot_pair"
+        assert response.json()["items"][0]["source_observation_record_id"] == observation_id
         assert requests == []
     finally:
         client.close()

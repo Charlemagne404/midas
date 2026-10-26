@@ -99,12 +99,7 @@ def router(store: FrontierStore, registry: Any) -> APIRouter:
         limit: int = Query(default=50, ge=1, le=100),
         offset: int = Query(default=0, ge=0, le=100_000),
     ) -> dict[str, Any]:
-        stored = store.observations(
-            venue=venue.value if venue else None,
-            kind="market_listing",
-            limit=200,
-            offset=0,
-        )
+        stored = _market_observation_rows(store, 200, venue=venue)
         indexed: dict[str, tuple[FrontierMarket, str]] = {}
         for observation in stored:
             normalized = observation["normalized"]
@@ -440,7 +435,7 @@ def router(store: FrontierStore, registry: Any) -> APIRouter:
 
 
 async def _load_markets(store: FrontierStore, limit: int) -> tuple[FrontierMarket, ...]:
-    rows = store.observations(kind="market_listing", limit=min(200, limit))
+    rows = _market_observation_rows(store, min(200, limit))
     markets: dict[str, FrontierMarket] = {}
     for row in rows:
         normalized = row.get("normalized")
@@ -458,6 +453,23 @@ async def _load_markets(store: FrontierStore, limit: int) -> tuple[FrontierMarke
         if len(markets) >= limit:
             break
     return tuple(sorted(markets.values(), key=lambda item: item.canonical_id))
+
+
+def _market_observation_rows(
+    store: FrontierStore, limit: int, *, venue: Venue | None = None
+) -> list[dict[str, Any]]:
+    """Market discovery can arrive as instrument metadata for pair-based venues."""
+    rows: list[dict[str, Any]] = []
+    for kind in ("market_listing", "instrument_metadata"):
+        rows.extend(
+            store.observations(
+                venue=venue.value if venue else None,
+                kind=kind,
+                limit=limit,
+                offset=0,
+            )
+        )
+    return rows
 
 
 @lru_cache(maxsize=1)
