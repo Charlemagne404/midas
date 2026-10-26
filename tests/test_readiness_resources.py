@@ -11,6 +11,9 @@ def _write_cgroup(directory: Path, *, usage: int, high_events: int, throttle_eve
     (directory / "memory.events").write_text(
         f"low 0\nhigh {high_events}\nmax 0\noom 0\noom_kill 0\n"
     )
+    (directory / "memory.stat").write_text(
+        "anon 4096\nfile 8192\nshmem 1024\nactive_file 2048\ninactive_file 6144\n"
+    )
     (directory / "cpu.stat").write_text(
         f"usage_usec {usage}\nnr_throttled {throttle_events}\nthrottled_usec {throttle_events * 100}\n"
     )
@@ -39,6 +42,13 @@ def test_resource_snapshot_reports_bounded_cgroup_deltas_and_missing_services(tm
         tmp_path / "reality", cgroup_root=cgroups, proc_root=proc, now=10.0
     )
     assert first["services"]["midas-api"]["status"] == "MEASURED"
+    assert first["services"]["midas-api"]["memory_composition_bytes"] == {
+        "anon": 4096,
+        "file": 8192,
+        "shmem": 1024,
+        "active_file": 2048,
+        "inactive_file": 6144,
+    }
     assert first["services"]["midas-reality"]["status"] == "NOT_MEASURED"
     assert first["host_memory"] == {"total_bytes": 1_024_000, "available_bytes": 409_600}
     assert first["host_pressure"]["cpu"]["some"]["avg10"] == 1.25
@@ -53,6 +63,36 @@ def test_resource_snapshot_reports_bounded_cgroup_deltas_and_missing_services(tm
     assert delta["cpu_quota_utilization_percent"] == 60.0
     assert delta["memory_high_events_delta"] == 1
     assert delta["cpu_throttle_events_delta"] == 1
+
+
+def test_memory_composition_is_optional_bounded_and_does_not_change_charge(tmp_path):
+    cgroups = tmp_path / "cgroups"
+    api_group = cgroups / "midas-api.service"
+    _write_cgroup(api_group, usage=1_000_000, high_events=4, throttle_events=2)
+    (api_group / "memory.stat").write_text("anon 20\nfile 80\nshmem 10\n")
+    proc = tmp_path / "proc"
+    (proc / "pressure").mkdir(parents=True)
+    (proc / "meminfo").write_text("MemTotal: 1000 kB\nMemAvailable: 400 kB\n")
+    for name in ("cpu", "memory", "io"):
+        (proc / "pressure" / name).write_text("some avg10=0 avg60=0 avg300=0 total=0\n")
+    recordings = tmp_path / "reality" / "data" / "recordings"
+    recordings.mkdir(parents=True)
+
+    with readiness._sample_lock:
+        readiness._previous_samples.clear()
+    result = readiness.resource_snapshot(
+        tmp_path / "reality", cgroup_root=cgroups, proc_root=proc, now=10.0
+    )["services"]["midas-api"]
+
+    assert result["memory_current_bytes"] == 90
+    assert result["memory_composition_bytes"] == {"anon": 20, "file": 80, "shmem": 10}
+
+    (api_group / "memory.stat").write_text("x" * (readiness.MAX_PROC_BYTES + 1))
+    oversized = readiness.resource_snapshot(
+        tmp_path / "reality", cgroup_root=cgroups, proc_root=proc, now=20.0
+    )["services"]["midas-api"]
+    assert oversized["memory_current_bytes"] == 90
+    assert oversized["memory_composition_bytes"] is None
 
 
 def test_systemd_snapshot_exposes_only_bounded_status_and_last_run_metrics(monkeypatch):
