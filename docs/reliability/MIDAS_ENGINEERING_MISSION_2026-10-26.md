@@ -47,14 +47,17 @@ undeployed.
 
 Readiness is **not established**. At 04:47:40Z, API cgroup use was
 1,593,131,008 bytes against `MemoryHigh=1,610,612,736`, leaving about 16.7 MiB;
-host available memory was about 8.10 GB. The current measured storage projection
-is about 16.7 days at the effective growth rate and 20.2 days on the
-short-window estimate. Independent correctness, collector, recovery, resource,
-and storage gates remain blocked or conditional; economic evidence sufficiency
-remains conditional with zero eligible candidates. Arena has no active or
-queued jobs; three persisted `RUNNING` director manifests project to two
-cancellations and one failure without rewriting them. Its only open alert is
-an expired one-minute operational demonstration schedule with no child job.
+host available memory was about 8.10 GB. After the web release, the 05:06:26Z
+point sample showed 8.72 MiB of API `MemoryHigh` headroom and 7.95 GB available
+on the host; heavy-research admission remains blocked. The current measured
+storage projection is about 16.7 days at the effective growth rate and 20.2
+days on the short-window estimate. Independent correctness, collector,
+recovery, resource, and storage gates remain blocked or conditional; economic
+evidence sufficiency remains conditional with zero eligible candidates. Arena
+has no active or queued jobs; three persisted `RUNNING` director manifests
+project to two cancellations and one failure without rewriting them. Its only
+open alert is an expired one-minute operational demonstration schedule with
+no child job.
 
 No Frontier, Atlas, replacement long-duration campaign, real-money operation,
 wallet action, or exchange order was started.
@@ -383,6 +386,15 @@ artifact budget was exceeded. One open alert refers to an already `EXPIRED`
 after pause, no child admitted”; the schedule has no job ID. No manifest or
 schedule was changed.
 
+At `2026-10-26T05:06:26Z`, a bounded direct cgroup/procfs snapshot taken after
+the web update measured API memory at 1,601,470,464 of 1,610,612,736 bytes
+`MemoryHigh`, leaving 9,142,272 bytes (8.72 MiB). Its cumulative `high` event
+counter remained 10,977 and OOM counters remained zero. Reality memory was
+1,092,866,048 of 1,207,959,552 bytes `MemoryHigh`, leaving 109.8 MiB; host
+available memory was 7,947,862,016 bytes. This is a point sample, not sustained
+capacity evidence; heavy research admission remains blocked. The receipt is
+listed in Section 6.
+
 ## 5. Verification and retained failures
 
 | Area | Verification result |
@@ -481,6 +493,10 @@ Mission evidence files are under
   all 1,844 source blobs and eight built assets after deployment, plus API and
   web identities; SHA-256
   `2d5e2fbb9db87d5049416e8e17b201720870a5bacc88c1121c8f2808c4e15216`.
+- `midas-post-web-deployment-resource-2026-10-26T0506Z.json` — direct
+  post-deploy cgroup/procfs and unit-state snapshot; it classifies the sample
+  as point-in-time, not sustained capacity. SHA-256
+  `23951cf13245bfc826afd247708cc3399a44adeb769be8417e8ad22b0b81fdb6`.
 - `resource-api-post-browser-2026-10-26T0433Z.json` — live API health and
   bounded cgroup/host/observer sample at 04:33:53Z; SHA-256
   `f59e50f0a919ea16c94c6601963b00ece37b07d3449e03e9975b75c7fbcf283b`.

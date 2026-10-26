@@ -506,3 +506,9 @@ requests returned HTTP 200, including the `Not measured` label. The old
 release manifest, post-deployment smoke receipt, and after-build integrity
 receipt are listed in the mission report. The latter reverified all 1,844
 tracked source blobs and eight generated assets.
+
+At `2026-10-26T05:06:26Z`, a bounded direct resource sample showed API
+`MemoryHigh` headroom of 8.72 MiB, Reality headroom of 109.8 MiB, and host
+available memory of 7.95 GB. The API `high` event counter remained 10,977 with
+zero OOM events. This point sample keeps heavy-research admission blocked; see
+the hashed resource receipt in the mission report.
