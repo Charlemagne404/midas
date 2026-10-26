@@ -1081,7 +1081,7 @@ export function Readiness() {
                 ? 'Current Decimal reference is present with no recorded calculation disagreements.'
                 : 'Independent reference is missing, stale, or reports disagreements.'
             }
-            evidence={`Reference ${asString(economics.reference_version) ?? 'not measured'} · ${count(disagreementCount)} disagreements`}
+            evidence={`Reference ${asString(economics.reference_version) ?? 'not measured'} · ${count(disagreementCount)} disagreement flags`}
           />
           <GateCard
             title="Collector integrity and observability"

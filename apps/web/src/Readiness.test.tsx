@@ -200,6 +200,9 @@ it('shows measured zero-candidate evidence without turning it into a profitabili
     screen.getByRole('heading', { name: 'Recovery and reproducibility' }).closest('.rr-gate'),
   ).toHaveTextContent('BLOCKED');
   expect(
+    screen.getByRole('heading', { name: 'Independent research correctness' }).closest('.rr-gate'),
+  ).toHaveTextContent('0 disagreement flags');
+  expect(
     screen.getByRole('heading', { name: 'Resource and scheduling stability' }).closest('.rr-gate'),
   ).toHaveTextContent('BLOCKED');
   expect(screen.getByText(/None reported by the current status projection/)).toBeInTheDocument();
