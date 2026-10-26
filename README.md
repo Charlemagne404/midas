@@ -28,7 +28,9 @@ Project Frontier is being developed on the isolated branch
 `codex/frontier-20261026`, based on the verified Veritas V6 integration. It adds
 Polymarket, Kalshi, and Kraken Spot research adapters, evidence-backed market
 normalization, conservative relationship hypotheses with append-only review
-revisions, independent hypothetical economics, and a native Frontier workspace.
+revisions, independent hypothetical economics for verified cross-venue binary
+coverage and fixture-tested exhaustive multi-outcome coverage, and a native
+Frontier workspace.
 Review labels and assertion references are not authenticated; replay follows
 only the latest revision. It is not merged into `main` or deployed. Read the [Frontier mission ledger](docs/frontier/FRONTIER_MISSION_LEDGER.md)
 and [current engineering report](docs/frontier/FRONTIER_ENGINEERING_REPORT.md)

@@ -15,7 +15,7 @@ as mutable Frontier storage.
 | Public venue adapters | `adapters/polymarket.py`, `kalshi.py`, `kraken.py` | Source-specific normalization and native metadata preservation. |
 | Registry | `registry.py` | Explicit capability inventory; default instances do not probe. |
 | Relationship intelligence | `relationships.py` | Deterministic indexed hypotheses, strict payoff checks, and immutable review contracts. |
-| Economic verifier | `economics.py` | Decimal complete-binary all-long construction with fee, depth, freshness, timing, and scenario checks. |
+| Economic verifier | `economics.py` | Decimal cross-venue binary and same-market exhaustive multi-outcome all-long checks with fee, depth, freshness, timing, and scenario bounds. |
 | Durable evidence | `storage.py` | Append-only, size- and row-bounded SQLite observations, markets, relationship reviews/revisions, and runs. |
 | Replay | `replay.py` | Stable input ordering, manifest and implementation digest, deterministic result identity. |
 | HTTP API | `apps/api/frontier.py` | Bounded local queries and graph neighborhoods, relationship proposals/reviews, deterministic replay, and config-gated public capture. |
@@ -69,16 +69,24 @@ prior decisions remain stored. Replay uses only the latest decision, so a later
 reject or ambiguous review removes an old verified revision from candidate
 inputs without deleting history.
 
-The economic verifier currently supports complete binary payoffs only. It checks
-both long-leg constructions against verified states, top-ask depth, quantity
-minimums and steps, quote currencies, exact Decimal fee formulas when verified,
-scenario slippage/decay, local receipt skew, exchange-time skew, and book age.
-Unknown fees leave net P&L unknown and are explicitly excluded, rather than
-zeroed, in the per-venue capital assumptions. A modeled price above the binary
-payout is unsupported. Candidates always retain `practical_eligibility=false`: public
-snapshots do not prove fills, queue priority, venue access, simultaneous execution,
-capital transfer, or settlement. Opportunity classifications describe the
-mathematical and modeled evidence only.
+The economic verifier supports two narrow families. Cross-venue binary coverage
+requires a previously verified same-payoff relationship. Same-market
+multi-outcome coverage requires three to sixteen verified exhaustive states,
+verified resolution and settlement, and exactly one unit-payout one-hot
+instrument per state; it buys all states long in one venue and one quantity
+unit. Both check top-ask depth, quantity minimums and steps, quote currency,
+applicable exact Decimal fee formulas, scenario slippage/decay, local receipt
+skew, exchange-time skew, and book age. The exact arithmetic uses bounded inputs
+(36 digits, 18 decimal places) and a 128-digit local Decimal context. Explicit
+quantities are rejected if the common displayed depth or modeled fill fraction
+cannot support them. Unknown or expired fees leave net P&L unknown and are
+excluded, rather than zeroed. Other payoffs, implication constraints, and
+general multi-leg constructions are unsupported. The multi-outcome family has
+fixture verification only; current public observations do not satisfy its
+attestation requirements. Candidates always retain `practical_eligibility=false`:
+public snapshots do not prove fills, queue priority, venue access, simultaneous
+execution, capital transfer, or settlement. Opportunity classifications describe
+the mathematical and modeled evidence only.
 
 ## Persistence and deterministic replay
 

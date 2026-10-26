@@ -15,7 +15,7 @@ Frontier adds an isolated, research-only market-data foundation for Polymarket,
 Kalshi, and Kraken spot. It has versioned venue-aware contracts, a bounded
 public-GET adapter protocol, capability declarations, normalizers, an append-only
 SQLite evidence store, relationship hypotheses and append-only review revisions,
-an explicit payoff-equivalence check, one narrow Decimal opportunity evaluator,
+an explicit payoff-equivalence check, two narrow Decimal opportunity evaluators,
 deterministic replay, local API routes, and a native Mission Control workspace.
 
 The three adapters are implemented and fixture/contract tested. Bounded live
@@ -36,8 +36,9 @@ self-attributed review workflow, but reviewer and external assertion IDs are
 references only; MIDAS does not authenticate the reviewer, fetch the assertion,
 or verify the source truth of stored market fields. There is no continuous
 collector, complete venue universe, scalable graph neighborhood query,
-multi-outcome solver, FX model, full cost/capital-transfer model, or integrated
-Arena/Laboratory experiment scheduler. Public book snapshots never set
+logical-implication or general multi-leg solver, FX model, full
+cost/capital-transfer model, or integrated Arena/Laboratory experiment scheduler.
+Public book snapshots never set
 `practical_eligibility` to true. No Frontier source is enabled for network access
 by default, and the worktree has not been merged or deployed.
 
@@ -170,18 +171,30 @@ clustering, layout control, and dense-graph scalability remain incomplete.
 
 ## 7. Opportunity discovery algorithms
 
-The first candidate family is complete all-long binary coverage across two
-venues, requiring a previously verified same-payoff relationship. It checks both
-directions through binary outcome/instrument mappings and enumerates the
-verified states. It does not use title similarity as a trade relation and does
-not search unbounded cycles or arbitrary multi-leg portfolios.
+Two bounded candidate families are implemented. Cross-venue complete all-long
+binary coverage still requires a previously verified same-payoff relationship.
+It checks both directions through binary outcome/instrument mappings and
+enumerates the verified states. Within-market multi-outcome coverage buys one
+contract for each of three to sixteen states in one open event market. It
+requires a verified, exhaustive payoff, verified resolution, matching settlement
+asset, and a strict one-to-one mapping between states and unit-payout one-hot
+instruments. All legs use one venue and quantity unit. The evaluator fails closed
+on incomplete or overlapping state vectors, missing books, unsupported fees,
+invalid size steps, insufficient depth, or incompatible timing evidence.
+
+The within-market construction has controlled fixtures and deterministic replay
+coverage; no captured public listing had verified payoff and resolution evidence,
+so it has not run against a genuine eligible event. It does not use title
+similarity as a trade relation and does not search unbounded cycles,
+partial-payoff combinations, logical implications, or arbitrary multi-leg
+portfolios.
 
 Replay also returns the bounded set of deterministic relationship proposals, but
 only previously stored verified relationships are applied to payoff arithmetic.
-No public source capture supplied a verified relationship, so the live sample
-produced no eligible opportunity evaluation. Multi-outcome constraints,
-implication bounds, exhaustive multi-leg optimization, and spot/derivative hedge
-models are deferred.
+No public source capture supplied a verified relationship or a verified
+exhaustive multi-outcome event, so the live sample produced no eligible
+opportunity evaluation. Implication bounds, exhaustive multi-leg optimization,
+and spot/derivative hedge models remain deferred.
 
 ## 8. Independent economic verification
 
@@ -195,6 +208,17 @@ the missing amount is called out and never treated as zero. Unknown fees prevent
 a decisive net calculation. A missing/stale book, unsupported
 payoff, incomplete equivalence, or currency mismatch fails closed into a
 non-positive or incomplete classification.
+
+The multi-outcome evaluator proves only the exhaustive sum of accepted one-hot
+state payoffs and only for a same-market, all-long construction. It uses an exact
+common quantity step and treats an explicit requested quantity as exact; it
+rejects a request exceeding the common modeled top-level depth or its fill
+fraction. Canonical monetary and quantity Decimals are bounded to 36 digits and
+18 decimal places; fee rates are bounded to 12 decimal places and at most one.
+Economic evaluation raises local Decimal precision to 128 digits. Verified taker
+fees are applied only when their source, currency, supported formula (or explicit
+zero rate), and effective/expiry window are applicable to the replay time.
+Unknown or expired schedules do not become zero.
 
 This is an independent bounded calculator, not an execution simulator. It does
 not model FX, account-specific fees, queue priority, custody, cross-venue funding
@@ -277,12 +301,12 @@ remain incomplete.
 
 Verification on this branch:
 
-- Backend focused suite: **44 passed** in 8.36 seconds. Command: `pytest -q tests/frontier tests/integration/test_adapters.py tests/integration/test_api.py::test_offline_api_workflow_contract_and_persistence`.
-- Python static checks: Ruff check and format check passed across the 17 relevant Frontier/API/test files; mypy passed for 15 Frontier/API source files.
+- Backend focused suite: **49 passed** in 8.43 seconds. Command: `pytest -q tests/frontier tests/integration/test_adapters.py tests/integration/test_api.py::test_offline_api_workflow_contract_and_persistence`.
+- Python static checks: Ruff check and format check passed for the Frontier package/tests; mypy passed for 15 Frontier/API source files. A broader `mypy packages/midas/frontier apps/api` attempt reported 37 errors in eight unchanged Veritas/Arena/API files; no Frontier source error was reported.
 - Frontend unit suite: **35 passed across 7 files**.
 - Frontend typecheck, ESLint, and Prettier check passed.
 - Trade capture/read API regression tests: **2 passed**; they validate Polymarket's condition-ID query, bounded GET count, absent authorization, raw evidence persistence/read-back, plus the stored-batch query.
-- Production frontend build passed. Frontier is lazy-loaded as a 45.04 kB JavaScript chunk and 23.69 kB CSS. Vite emitted the existing large-chunk warning for 503.86 kB main and 544.41 kB Chart chunks.
+- Production frontend build passed. Frontier is lazy-loaded as a 46.21 kB JavaScript chunk and 23.88 kB CSS. Vite emitted the existing large-chunk warning for 503.86 kB main and 544.41 kB Chart chunks.
 - Frontier browser cases: **2 passed** in 6.2 seconds, including empty state, fixture-only center-market graph navigation, and review submission at desktop/mobile sizes. The full 10-case browser suite was attempted earlier; 8 passed and 2 existing Laboratory cases were denied at the host-wide Arena admission lock (`resource_admission_lock_busy`). Neither case started an experiment, and the shared lock was not bypassed. The isolated API tests use a temporary root and never enable source probes.
 - Legacy regression evidence: focused integration adapter contracts and the existing offline API workflow/persistence acceptance test passed. The complete repository Python suite was not run.
 
@@ -292,8 +316,8 @@ responses are distinct from the preserved genuine public capture files.
 
 ## 13. Performance and resource measurements
 
-The latest focused backend run (44 tests) completed in 8.87 seconds wall time,
-used 3.62 seconds user CPU, and peaked at 141,224 KiB RSS (about 138 MiB). The
+The latest focused backend run (49 tests) completed in 9.21 seconds wall time,
+used 3.73 seconds user CPU, and peaked at 144,340 KiB RSS (about 141 MiB). The
 test process recorded zero socket messages. This is one bounded test
 measurement, not a production service capacity estimate. The two focused
 Frontier browser cases ran serially with one worker and completed in 6.2
@@ -332,10 +356,11 @@ available depth, matched timestamps, or executable fills.
 
 Thus the captures verify endpoint accessibility and preserve heterogeneous
 source evidence, but do not establish a verified cross-venue relationship,
-simultaneous quote, meaningful depth, or opportunity. The public fixture count
-is not venue-wide coverage. Controlled positive arithmetic fixtures only show
-that a bounded mathematical construction is evaluated as designed; they are not
-scientific or economic findings.
+simultaneous quote, meaningful depth, or opportunity. No captured event carries
+the payoff/resolution evidence needed to enter the multi-outcome evaluator. The
+public fixture count is not venue-wide coverage. Controlled positive binary and
+multi-outcome arithmetic fixtures only show that bounded constructions are
+evaluated as designed; they are not scientific or economic findings.
 
 ## 15. Economic limitations
 
@@ -365,7 +390,9 @@ gaps are deferred work, not hidden passed checks:
 - The graph neighborhood is bounded and still scans at most 500 recent effective
   relationships. Indexed large-universe traversal, relationship revision
   history drill-down, and authenticated review are not implemented.
-- No multi-outcome or logical implication opportunity solver exists.
+- The only multi-outcome family is a same-market all-long construction over
+  verified one-hot exhaustive states; only controlled fixtures have exercised it.
+  Logical implication bounds and general multi-leg search are not implemented.
 - No account-independent fee resolution, FX, cross-venue capital transfer,
   settlement risk, or partial-leg exposure model exists.
 - No continuous source worker, incremental book stream, gap reconstruction, or
@@ -398,8 +425,9 @@ Priority order:
    searchable, paginated graph drill-down.
 3. Resolve current official fee inputs and create versioned venue-specific fee
    tests without turning unknown fees into estimates.
-4. Add multi-outcome exact payoff constraints and independent differential
-   checks before expanding candidate families.
+4. Seek real public multi-outcome metadata that meets the strict payoff and
+   resolution requirements; broaden accepted payoff families only with
+   independently checked evidence.
 5. Add deterministic multi-source replay datasets and paired resource-aware
    Laboratory/Arena jobs with explicit caps and no unattended campaigns.
 6. Only after representative evidence, consider authenticated reviewer identity
@@ -434,6 +462,9 @@ Code commits on this branch:
 - `3fe24dd` — added bounded public trade capture/read-back, the native Mission
   Control trade table, adapter route regression tests, and preserved three-
   venue listing/book/trade evidence.
+- `5e87d18` — added exact, bounded same-market multi-outcome coverage with
+  Decimal precision and quantity constraints, fee-expiry validation,
+  deterministic replay, API/UI candidate details, and fixture-only tests.
 
 Principal changed paths:
 
@@ -464,7 +495,7 @@ cross-venue economics.
 | Polymarket, Kalshi and Kraken Spot adapters | PARTIALLY VERIFIED | Fixture/contract tests and one live listing/book/trade-to-store round trip per venue pass; fees and degraded-source paths remain unverified. |
 | Canonical market/instrument normalization | PARTIALLY VERIFIED | Three distinct instrument classes represented; live lineage and several economic semantics remain unverified. |
 | Relationship hypotheses, review revisions, bounded neighborhoods, and explicit same-payoff verifier | PARTIALLY VERIFIED | Self-attributed review API/UI, append-only revisions, latest-state replay, tamper checks, and 1–3 hop graph; no genuine equivalent pair, authentication, or indexed large-graph traversal. |
-| Opportunity candidate and independent economic checks | PARTIALLY VERIFIED | One two-venue all-long binary family; synthetic tests only; costs and operational feasibility incomplete. |
+| Opportunity candidate and independent economic checks | PARTIALLY VERIFIED | Two-venue all-long binary and same-market 3–16 state one-hot exhaustive coverage; controlled fixtures only; fees, costs and operational feasibility incomplete. |
 | Append-only evidence store and deterministic replay | COMPLETE AND VERIFIED | Bounds, hash validation, immutability, replay tests; not integrated as an Arena campaign. |
 | Live market/book/trade observations through adapters and API | PARTIALLY VERIFIED | One bounded listing, book, and trade response per venue is hash-pinned; samples are not synchronized and do not establish a continuous source feed. Kalshi's trade array was valid but empty. |
 | Source workers and broad historical data | DEFERRED | No persistent worker or long-duration collection. |
@@ -474,9 +505,10 @@ cross-venue economics.
 | Positive economic result | NOT ESTABLISHED | No genuine cross-venue equivalent or economically eligible result in captured evidence. |
 
 To continue safely, use this worktree and branch. Next validate supported fee
-metadata and degraded-source behavior with tightly capped probes; add indexed
-graph adjacency and multi-outcome verification; then connect short,
-resource-admitted deterministic jobs to Laboratory/Arena. Expand economics only
-where source evidence supports it. Re-run the focused suites before each
-checkpoint. Do not enable probes by default, deploy, modify Reality, or start a
-long-running campaign as part of routine continuation.
+metadata and degraded-source behavior with focused tests; search for public
+multi-outcome metadata that meets the strict payoff and resolution evidence
+requirements; add indexed graph adjacency; then connect short, resource-admitted
+deterministic jobs to Laboratory/Arena. Expand economics only where source
+evidence supports it. Re-run the focused suites before each checkpoint. Do not
+enable probes by default, deploy, modify Reality, or start a long-running
+campaign as part of routine continuation.

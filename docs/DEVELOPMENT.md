@@ -119,6 +119,13 @@ markets and scans at most 500 effective relationships per request; the response
 marks capped scan windows explicitly. List reads recheck stored observation,
 relationship, review-lineage, and replay hashes before research use.
 
+Deterministic replay currently evaluates verified cross-venue binary coverage
+and an all-long, same-market construction for three to sixteen verified
+exhaustive one-hot outcomes. The multi-outcome path is controlled-fixture
+verified; it does not evaluate captured listings without verified payoff and
+resolution evidence. Both paths are hypothetical research only and always leave
+practical execution eligibility false.
+
 For focused Frontier verification, use isolated test databases and run:
 
 ```bash

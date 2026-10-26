@@ -116,9 +116,14 @@ before graph or replay processing. `GET /api/frontier/graph` offers one-to-three
 hop neighborhoods from a recorded market, capped at 200 source markets and 500
 scanned effective edges; this remains a bounded recent-window traversal rather
 than a large-universe graph index.
-The current economic verifier handles one bounded family: all-long complete binary
-coverage across two venues. It does not produce execution instructions, and public
-quotes never establish practical execution eligibility.
+The current economic verifier handles two bounded families: all-long complete
+binary coverage across two venues after verified payoff equivalence, and all-long
+coverage of three to sixteen exhaustive one-hot outcomes within one verified
+market. The latter is tested with controlled fixtures only; captured public
+markets have not met its payoff and resolution evidence requirements. Other payoff
+structures and general multi-leg searches remain unsupported. It does not produce
+execution instructions, and public quotes never establish practical execution
+eligibility.
 
 ```mermaid
 flowchart LR
