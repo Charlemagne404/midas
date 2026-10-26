@@ -262,6 +262,9 @@ Mission evidence files are under
 - `system-postflight-2026-10-26T0343Z.json` — whitelisted live API, V6,
   Reality, Arena/Laboratory, resource, and unit snapshot; SHA-256
   `2e0e99ce1248bda6fc223f22f4817e8f539f730e5d95cbddbdb462445aac3e91`.
+- `api-startup-recovery-2026-10-26.json` — API startup timestamps, paper
+  journal recovery count, cgroup peak and postflight breakdown; SHA-256
+  `95b3e6dbb90c2eefc05668cc05ca631f49e097f98e2e0089135daf7687428513`.
 - `research-readiness-live-2026-10-26.json` and
   `research-readiness-live-2026-10-26.png` — final live browser receipt and
   screenshot, captured at `2026-10-26T03:43:03Z`; SHA-256 values are
