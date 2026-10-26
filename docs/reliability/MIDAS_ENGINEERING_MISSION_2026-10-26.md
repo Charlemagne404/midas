@@ -978,3 +978,70 @@ The official deployment gate remains unrun. Full current-boundary recovery,
 complete fresh outcome coverage for the candidate canary, an immutable
 runtime release, archive provenance, sustained API headroom, and explicit
 protected-restart authorization are still required.
+
+## 14. Readiness memory composition observability — 2026-10-26 05:37 UTC
+
+The live resource trace showed why a near-`MemoryHigh` reading needed more
+context. At an earlier point sample, the API process RSS was about 178 MiB while
+its cgroup charged about 1.33 GiB of file-backed pages. Several minutes later,
+without changing the API service, the cgroup file charge measured about 249
+MiB. This is an observed change, not a benchmark or proof of a leak, and it is
+not attributed to one cause. The database file was 8.9 GiB; its size alone does
+not identify which pages were resident.
+
+The readiness resource API and dashboard now expose bounded cgroup
+`memory.stat` composition for anonymous, file, shared, active-file, and
+inactive-file bytes. The dashboard explains that `file` can be reclaimable but
+still counts toward `MemoryHigh`, and that shared and active/inactive values
+are subsets. The fields are informational: they do not replace
+`memory.current`, change admission thresholds, or claim process RSS. Missing or
+oversized `memory.stat` input remains unmeasured. No memory limit or gate
+threshold was changed.
+
+The implementation is committed locally on
+`codex/veritas-v6-integration-20261026` at
+`d56cdcf42293de76649feb7df181ff783b30c4b9` (tree
+`642abec0dcb903111321cc307d3a0ad4825a3218`). `readiness.py` SHA-256 is
+`9480489cd62e1f57476f14ae584ba0da56e2fdcd3a11b088b6f838d7ea8569c5`;
+`Readiness.tsx` is
+`b5a9a6beb4cd57f9fab6e3da065bc9c3d97588dc626ee7ba00f2c782eabd604c`;
+the resource API and dashboard tests are included in the evidence receipt.
+
+At 05:37:39Z, a read-only candidate-code sample reported host available memory
+of 8,209,051,648 bytes out of 16,665,567,232. API cgroup charge was
+438,231,040 / 1,610,612,736 bytes `MemoryHigh`, with 166,850,560 anonymous and
+261,271,552 file bytes; the API process RSS was 186,621,952 bytes. Reality was
+909,312,000 / 1,207,959,552 bytes, with 782,561,280 anonymous and 82,841,600
+file bytes. Cumulative `high` events were 10,992 for API and 14,452 for
+Reality; both services reported zero `max`, OOM, and OOM-kill events. Memory
+PSI `avg10` was zero for both. These are point samples, not sustained resource
+headroom evidence.
+
+Verification for this addendum:
+
+- `tests/test_readiness_resources.py`: 4 passed under a 256 MiB `MemoryHigh`,
+  384 MiB `MemoryMax`, and 32-task scope, including missing and oversized
+  input.
+- `Readiness.test.tsx`: 3 passed under a 512 MiB `MemoryHigh`, 768 MiB
+  `MemoryMax`, and 64-task scope.
+- Playwright `e2e/readiness.spec.ts`: 1 passed, including the new composition
+  display and a 390 px viewport overflow check. Its screenshot is
+  `research-readiness-memory-composition-2026-10-26.png`, SHA-256
+  `895a23b454cf42591cea0fafe74307a40096d04581051ed93352fbd170421fc9`.
+- Ruff check/format, targeted ESLint, and Prettier passed. `tsc -b` and the
+  Vite production build passed with a bounded 512 MiB Node heap. The existing
+  greater-than-500-kB chunk advisory remains.
+- The first build attempt hit Node's default V8 heap; its bounded retry passed.
+  Chromium could not start under the first 96-task cap; the 256-task browser
+  run passed. An initial test fixture also lacked its temporary `/proc`
+  directory; the corrected test passed. These harness failures did not change
+  production state.
+
+The durable measurement and test receipt is
+`/home/charlie/midas-engineering-mission-20261026/evidence/readiness-memory-composition-2026-10-26T0537Z.json`,
+SHA-256
+`a8ceb73b06e0dc04d9c06182bf43bf1dccae646083628b7224eb80d3aff5e972`.
+The dashboard change is **IMPLEMENTED, DEPLOYMENT PENDING**: the active API
+and web services remain on immutable releases `cf452ec` and `90c625d`. No API,
+web, or Reality production service was restarted or reconfigured for this
+addendum.

@@ -616,3 +616,26 @@ No temporary canary root remained. Receipt:
 `/home/charlie/midas-engineering-mission-20261026/evidence/live-service-post-canary-2026-10-26T0528Z.json`
 (SHA-256
 `30771c1c33406515c2824192307d17ce62ad013c094893974a25db33f331b089`).
+
+## Readiness memory composition candidate — 2026-10-26
+
+The candidate readiness API adds `services.<service>.memory_composition_bytes`
+to `/api/readiness/resources`. It reads a fixed allowlist of byte counters from
+cgroup `memory.stat`: `anon`, `file`, `shmem`, `active_file`, and
+`inactive_file`. `shmem`, `active_file`, and `inactive_file` overlap the broad
+`file` counter and must not be added to it. File-backed pages may be reclaimed,
+but they remain part of `memory.current` and count against `MemoryHigh`.
+Missing or oversized input returns a not-measured composition while the
+charged-memory and admission fields remain unchanged.
+
+The dashboard presents anonymous and file-backed values beside the charged
+cgroup total, with a note that prevents double counting. This is an
+observability addition only; it neither diagnoses a leak nor changes the
+95-percent research admission hold. The live services remain on API release
+`cf452ec` and web release `90c625d`. The tested candidate is local commit
+`d56cdcf42293de76649feb7df181ff783b30c4b9` on
+`codex/veritas-v6-integration-20261026`; it is not deployed. The measured
+snapshot and verification receipt is
+`/home/charlie/midas-engineering-mission-20261026/evidence/readiness-memory-composition-2026-10-26T0537Z.json`
+(SHA-256
+`a8ceb73b06e0dc04d9c06182bf43bf1dccae646083628b7224eb80d3aff5e972`).
