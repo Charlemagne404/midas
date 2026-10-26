@@ -49,6 +49,7 @@ DEFAULT_MAX_SOURCE_BYTES = 4 * 1024**3
 COPY_CHUNK_BYTES = 1024 * 1024
 ADMISSION_CHECK_BYTES = 32 * 1024**2
 DEFAULT_COPY_RATE_BYTES_PER_SECOND = 2 * 1024**2
+MAX_COPY_CHECKPOINT_RECONCILIATIONS = 128
 COPIED_PHASES = {"CATALOGS", "SNAPSHOT_CATALOG", "ANALYSIS_CATALOG", "VERIFYING", "COMPLETE"}
 PROTECTED_DATA_ROOTS = tuple(
     (Path.home() / name / "data").resolve() for name in ("midas", "midas-reality", "midas-veritas")
@@ -161,6 +162,7 @@ def _postrun_verification_document(
         "analysis_event_file_manifest_sha256": events.get("event_file_manifest_sha256"),
         "published_summary_sha256": summary.get("sha256"),
         "copy_checkpoint_reconciliation": state.get("copy_checkpoint_reconciled"),
+        "copy_checkpoint_reconciliation_history": state.get("copy_checkpoint_reconciliations", []),
         "resource_snapshot": _process_cgroup_metrics(),
     }
     document["verification_sha256"] = sha256_bytes(canonical(document))
@@ -800,6 +802,78 @@ def _verify_completed_replay(
         raise ReplayError("Completed replay artifacts differ from the durable receipt")
 
 
+def _reconcile_completed_copy_checkpoint(
+    output_root: Path, state: dict[str, Any], source_manifest: dict[str, Any]
+) -> dict[str, Any]:
+    expected_completed = {item["name"]: item["sha256"] for item in source_manifest["files"]}
+    checkpoint_matches = (
+        state.get("completed_files") == expected_completed and state.get("in_progress_file") is None
+    )
+    history = state.get("copy_checkpoint_reconciliations", [])
+    if not isinstance(history, list) or len(history) > MAX_COPY_CHECKPOINT_RECONCILIATIONS:
+        raise ReplayError("Copy checkpoint reconciliation history is invalid or exceeds its bound")
+    if any(not isinstance(item, dict) for item in history):
+        raise ReplayError("Copy checkpoint reconciliation history contains an invalid record")
+
+    latest = state.get("copy_checkpoint_reconciled")
+    if latest is not None and not isinstance(latest, dict):
+        raise ReplayError("Latest copy checkpoint reconciliation is invalid")
+    if history and latest is not None and latest != history[-1]:
+        raise ReplayError("Latest copy checkpoint reconciliation differs from its history")
+
+    if not history and latest is not None:
+        # Migrate the legacy v1 repair record without changing its historical meaning.
+        migrated = {
+            **latest,
+            "status": "RECONSTRUCTED",
+            "checkpoint_matches_source_manifest_before_repair": False,
+            "checkpoint_matches_source_manifest_after_repair": True,
+            "repaired": True,
+        }
+        history = [migrated]
+        state["copy_checkpoint_reconciliations"] = history
+        state["copy_checkpoint_reconciled"] = migrated
+        latest = migrated
+
+    should_record = (
+        not checkpoint_matches
+        or latest is None
+        or latest.get("source_manifest_sha256") != source_manifest["manifest_sha256"]
+        or latest.get("status") != "VERIFIED"
+        or latest.get("completed_file_count") != len(expected_completed)
+        or latest.get("checkpoint_matches_source_manifest_after_repair") is not True
+        or latest.get("repaired") is not False
+    )
+    if not should_record:
+        return latest
+    if len(history) >= MAX_COPY_CHECKPOINT_RECONCILIATIONS:
+        raise ReplayError("Copy checkpoint reconciliation history reached its bound")
+
+    event = {
+        "status": "VERIFIED" if checkpoint_matches else "RECONSTRUCTED",
+        "source_manifest_sha256": source_manifest["manifest_sha256"],
+        "completed_file_count": len(expected_completed),
+        "checkpoint_matches_source_manifest_before_repair": checkpoint_matches,
+        "checkpoint_matches_source_manifest_after_repair": True,
+        "repaired": not checkpoint_matches,
+        "reconciled_ns": time.time_ns(),
+        "reason": (
+            "verified against the checksummed copied-input manifest"
+            if checkpoint_matches
+            else "reconstructed from the checksummed copied-input manifest"
+        ),
+    }
+    if not checkpoint_matches:
+        state["completed_files"] = expected_completed
+        state["in_progress_file"] = None
+    history.append(event)
+    state["copy_checkpoint_reconciliations"] = history
+    state["copy_checkpoint_reconciled"] = event
+    state["updated_ns"] = time.time_ns()
+    atomic_json(output_root / STATE_NAME, state)
+    return event
+
+
 def _ensure_output_capacity(parent: Path, inventory: dict[str, Any]) -> int:
     # Reserve the source copy, one bounded event per snapshot, and catalog headroom.
     required = (
@@ -957,21 +1031,7 @@ def run_replay(
             _verify_completed_replay(
                 output_root, source_manifest, complete_receipt, receipt_code_identity
             )
-            expected_completed = {item["name"]: item["sha256"] for item in source_manifest["files"]}
-            if (
-                state.get("completed_files") != expected_completed
-                or state.get("in_progress_file") is not None
-            ):
-                state["completed_files"] = expected_completed
-                state["in_progress_file"] = None
-                state["copy_checkpoint_reconciled"] = {
-                    "source_manifest_sha256": source_manifest["manifest_sha256"],
-                    "completed_file_count": len(expected_completed),
-                    "reconciled_ns": time.time_ns(),
-                    "reason": "reconstructed from the checksummed copied-input manifest",
-                }
-                state["updated_ns"] = time.time_ns()
-                atomic_json(state_path, state)
+            _reconcile_completed_copy_checkpoint(output_root, state, source_manifest)
             return complete_receipt
         state = _read_state(output_root)
     else:

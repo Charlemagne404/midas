@@ -122,3 +122,72 @@ def test_admission_rejection_is_durable_in_the_resume_checkpoint(tmp_path):
     checkpoint = replay._read_state(output)
     assert checkpoint["admission_rejections"][-1]["phase"] == "COPYING"
     assert "host I/O pressure" in checkpoint["admission_rejections"][-1]["reason"]
+
+
+def test_completed_resume_migrates_legacy_copy_reconciliation_without_losing_it(tmp_path):
+    output = tmp_path / "output"
+    output.mkdir()
+    state = {
+        "schema_version": 1,
+        "phase": "COMPLETE",
+        "completed_files": {"scan-001.json.gz": "expected-sha256"},
+        "in_progress_file": None,
+        "copy_checkpoint_reconciled": {
+            "source_manifest_sha256": "manifest-sha256",
+            "completed_file_count": 1,
+            "reconciled_ns": 123,
+            "reason": "reconstructed from the checksummed copied-input manifest",
+        },
+    }
+    replay.atomic_json(output / replay.STATE_NAME, state)
+    manifest = {
+        "manifest_sha256": "manifest-sha256",
+        "files": [{"name": "scan-001.json.gz", "sha256": "expected-sha256"}],
+    }
+
+    current = replay._read_state(output)
+    reconciliation = replay._reconcile_completed_copy_checkpoint(output, current, manifest)
+    persisted = replay._read_state(output)
+
+    assert reconciliation["status"] == "VERIFIED"
+    assert reconciliation["checkpoint_matches_source_manifest_before_repair"] is True
+    assert reconciliation["repaired"] is False
+    history = persisted["copy_checkpoint_reconciliations"]
+    assert [entry["status"] for entry in history] == ["RECONSTRUCTED", "VERIFIED"]
+    assert history[0]["reconciled_ns"] == 123
+    assert history[0]["reason"] == state["copy_checkpoint_reconciled"]["reason"]
+    assert persisted["copy_checkpoint_reconciled"] == history[-1]
+
+
+def test_copy_reconciliation_history_limit_preserves_mismatched_checkpoint(tmp_path):
+    output = tmp_path / "output"
+    output.mkdir()
+    event = {
+        "status": "VERIFIED",
+        "source_manifest_sha256": "manifest-sha256",
+        "completed_file_count": 1,
+        "checkpoint_matches_source_manifest_before_repair": True,
+        "checkpoint_matches_source_manifest_after_repair": True,
+        "repaired": False,
+        "reconciled_ns": 123,
+    }
+    state = {
+        "schema_version": 1,
+        "phase": "COMPLETE",
+        "completed_files": {},
+        "in_progress_file": "scan-001.json.gz",
+        "copy_checkpoint_reconciliations": [event] * replay.MAX_COPY_CHECKPOINT_RECONCILIATIONS,
+        "copy_checkpoint_reconciled": event,
+    }
+    state_path = output / replay.STATE_NAME
+    replay.atomic_json(state_path, state)
+    before = state_path.read_bytes()
+    manifest = {
+        "manifest_sha256": "manifest-sha256",
+        "files": [{"name": "scan-001.json.gz", "sha256": "expected-sha256"}],
+    }
+
+    with pytest.raises(replay.ReplayError, match="history reached its bound"):
+        replay._reconcile_completed_copy_checkpoint(output, replay._read_state(output), manifest)
+
+    assert state_path.read_bytes() == before

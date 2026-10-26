@@ -584,10 +584,35 @@ def test_offline_v6_replay_rebuilds_lineage_and_verifies_completed_resume(tmp_pa
     assert receipt["published_summary"]["bytes"] <= 512 * 1024
     state_path = output / replay.STATE_NAME
     state = replay._read_state(output)
+    candidate_identity = replay._candidate_code_identity()
+    assert "copy_checkpoint_reconciled" not in state
+    assert (
+        replay.run_replay(
+            source,
+            output,
+            resume=True,
+            initial_admission={"pid": 123, "fixture": True},
+            admit=admit,
+        )
+        == receipt
+    )
+    verified_state = replay._read_state(output)
+    verified_checkpoint = verified_state["copy_checkpoint_reconciled"]
+    assert verified_checkpoint["status"] == "VERIFIED"
+    assert verified_checkpoint["checkpoint_matches_source_manifest_before_repair"] is True
+    assert verified_checkpoint["checkpoint_matches_source_manifest_after_repair"] is True
+    assert verified_checkpoint["repaired"] is False
+    assert verified_state["copy_checkpoint_reconciliations"] == [verified_checkpoint]
+    verification = replay._postrun_verification_document(
+        receipt, candidate_identity, verified_state
+    )
+    assert verification["copy_checkpoint_reconciliation"] == verified_checkpoint
+    assert verification["copy_checkpoint_reconciliation_history"] == [verified_checkpoint]
+
+    state = verified_state
     state["completed_files"] = {}
     state["in_progress_file"] = receipt["source_last_snapshot"]
     replay.atomic_json(state_path, state)
-    candidate_identity = replay._candidate_code_identity()
 
     def changed_driver_identity():
         return {
@@ -613,16 +638,63 @@ def test_offline_v6_replay_rebuilds_lineage_and_verifies_completed_resume(tmp_pa
     assert reconciled["completed_files"] == {
         item["name"]: item["sha256"] for item in source_manifest["files"]
     }
+    repaired_checkpoint = reconciled["copy_checkpoint_reconciled"]
+    assert repaired_checkpoint["status"] == "RECONSTRUCTED"
+    assert repaired_checkpoint["checkpoint_matches_source_manifest_before_repair"] is False
+    assert repaired_checkpoint["checkpoint_matches_source_manifest_after_repair"] is True
+    assert repaired_checkpoint["repaired"] is True
+    assert [item["status"] for item in reconciled["copy_checkpoint_reconciliations"]] == [
+        "VERIFIED",
+        "RECONSTRUCTED",
+    ]
     verification = replay._postrun_verification_document(
         receipt, changed_driver_identity(), reconciled
     )
     assert verification["package_source_files_match"] is True
+    assert verification["copy_checkpoint_reconciliation"] == repaired_checkpoint
+    assert (
+        verification["copy_checkpoint_reconciliation_history"]
+        == reconciled["copy_checkpoint_reconciliations"]
+    )
     unsigned_verification = {
         key: value for key, value in verification.items() if key != "verification_sha256"
     }
     assert verification["verification_sha256"] == replay.sha256_bytes(
         replay.canonical(unsigned_verification)
     )
+
+    monkeypatch.undo()
+    assert (
+        replay.run_replay(
+            source,
+            output,
+            resume=True,
+            initial_admission={"pid": 123, "fixture": True},
+            admit=admit,
+        )
+        == receipt
+    )
+    recovered = replay._read_state(output)
+    assert [item["status"] for item in recovered["copy_checkpoint_reconciliations"]] == [
+        "VERIFIED",
+        "RECONSTRUCTED",
+        "VERIFIED",
+    ]
+    assert (
+        recovered["copy_checkpoint_reconciled"]["checkpoint_matches_source_manifest_before_repair"]
+        is True
+    )
+    assert (
+        replay.run_replay(
+            source,
+            output,
+            resume=True,
+            initial_admission={"pid": 123, "fixture": True},
+            admit=admit,
+        )
+        == receipt
+    )
+    assert len(replay._read_state(output)["copy_checkpoint_reconciliations"]) == 3
 
     event_file = (
         output
