@@ -21,7 +21,7 @@ from midas.frontier.models import (
 from midas.frontier.relationships import Relationship, VerificationState
 
 D = Decimal
-ECONOMIC_MODEL_VERSION = "frontier-binary-coverage-verifier-1"
+ECONOMIC_MODEL_VERSION = "frontier-binary-coverage-verifier-2"
 
 
 class OpportunityFamily(StrEnum):
@@ -484,6 +484,17 @@ def _evaluate_pair(
     reasons.append(
         "Practical execution eligibility is not established from public market-data snapshots."
     )
+    if not fees_known:
+        unknown_fee_venues = tuple(
+            market.venue.value
+            for market, fee in ((left, left_fee), (right, right_fee))
+            if fee is None
+        )
+        assumptions.append(
+            "Per-venue capital excludes unresolved fee amounts for "
+            + ", ".join(sorted(unknown_fee_venues))
+            + "; unknown fees are not treated as zero."
+        )
     if scenario.slippage_bps or scenario.quote_decay_bps_per_second or scenario.execution_delay_ms:
         assumptions.append("Slippage/quote-decay values are user-supplied virtual assumptions.")
     if scenario.fill_fraction < 1:

@@ -190,6 +190,10 @@ def test_exact_binary_outcome_construction_and_fee_classification():
     )
     assert conditional.classification == OpportunityClassification.CONDITIONAL_ECONOMIC_OPPORTUNITY
     assert conditional.worst_case_net_pnl is None
+    assert any(
+        "unknown fees are not treated as zero" in assumption
+        for assumption in conditional.assumptions
+    )
 
 
 def test_stale_books_are_not_practically_eligible():
