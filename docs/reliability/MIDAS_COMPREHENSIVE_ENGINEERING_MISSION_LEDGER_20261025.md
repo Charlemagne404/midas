@@ -259,8 +259,8 @@ mission report. Staged storage capacity does not pass at this sample.
 | Latest Reality inventory | `docs/reliability/evidence/MIDAS_MISSION_20261026_DEPLOYMENT_PREFLIGHT_BLOCKED_V3.json` |
 
 The machine-readable [source/evidence manifest](MIDAS_COMPREHENSIVE_ENGINEERING_MISSION_SOURCE_MANIFEST_20261026.json)
-binds 92 changed code, test, documentation and checked-in evidence files plus
-23 replay/live artifact references. The full engineering report is
+binds 94 changed code, test, documentation and checked-in evidence files plus
+25 replay/live artifact references. The full engineering report is
 [MIDAS_COMPREHENSIVE_ENGINEERING_MISSION_20261025.md](MIDAS_COMPREHENSIVE_ENGINEERING_MISSION_20261025.md).
 
 ## Outstanding blockers and required follow-up
@@ -269,11 +269,12 @@ binds 92 changed code, test, documentation and checked-in evidence files plus
    `MemoryHigh` admission, current-source seeded startup evidence, exact-boundary
    resumable recovery and deterministic second replay. Explicit operator
    approval is required before the guarded apply action can restart the service.
-2. **Latest-boundary recovery:** do not resume the preserved partial copy. Wait
-   for repeated fresh host I/O and recorder-resource samples to pass staging
-   admission; start a new copy at a pinned manifest boundary in a distinct path,
-   verify every segment and the whole manifest, then use checkpointed replay.
-   Keep the gate incomplete if admission or verification fails.
+2. **Latest-boundary recovery:** do not resume the earlier unpinned copy. A
+   separate pinned staging root now has a validated cold checkpoint at
+   2,816/31,742 segments. Preserve it; resume only after repeated fresh host
+   I/O and recorder-resource admission passes and its source-prefix identities
+   validate. Complete the whole pinned-boundary replay and remaining matrix
+   phases before changing the recovery gate.
 3. **Archive:** obtain logical owner and provenance, reconcile every segment
    and partial copy without deleting or republishing ambiguous files, verify
    checksums, and produce the receipt required by preflight. Do not enable the
@@ -291,6 +292,34 @@ binds 92 changed code, test, documentation and checked-in evidence files plus
 
 The mission stops before Frontier, Atlas and the next long-duration validation
 campaign. No such project or campaign is authorized by this ledger.
+
+### Bounded latest-boundary recovery attempt — 2026-10-26 02:23 UTC
+
+- A new staging root pinned 31,742 finalized segments / 9,007,651,890 bytes
+  through ordinal 5,102,644. The read-only probe passed; no Reality service or
+  source file was changed. The immutable catalog and file-identity digests are
+  `2c4f1ca2e3c1c91c580f3239b995b820b0e1c334b781ee4f0a12badbc83cb086` and
+  `6495920055aabbde671f080190fa82c959504df72b8134cad74007b673e825c5`.
+- Cold recovery wrote a checkpoint for 2,816 segments / 690,001,782 prefix
+  bytes through ordinal 365,102. The progress receipt, checkpoint framing,
+  pinned catalog prefix and reconstructed state hash agree. Its state digest is
+  `b27bb39c58ea53c4b6c0cf24aad73c834750fd7b5552a471227ecfac4aa787ab`.
+  This is partial recovery, not a full-boundary result; no `cold.json` receipt
+  or final matrix result exists.
+- The mission-owned validation unit was stopped after the protected recorder's
+  `MemoryHigh` margin fell below the 64 MiB buffer. Across 90 worker samples,
+  minimum `MemoryHigh` margin was 61,145,088 bytes and minimum `MemoryMax`
+  margin was 195,362,816 bytes. Recorder `high`/`max`/OOM/kill counters were
+  unchanged. The worker peaked at 671,350,784 bytes under its 768 MiB cap;
+  its own soft-limit `high` events reached 285, while max/OOM/kill stayed zero.
+  It exited via the requested TERM. A 02:26:43 UTC post-stop sample still had
+  only 56,598,528 bytes below the recorder's `MemoryHigh`, so resume is not
+  currently admitted.
+- Evidence:
+  `evidence/MIDAS_REALITY_RECOVERY_PARTIAL_20261026T0222Z.json`, SHA-256
+  `0f8d134e3f5e8f581debb454818dd0d03ef144746a4c9b6138e0d01a2f502e86`.
+  Preserve the external staging root at
+  `/mnt/continental-cloud/data/midas-reality-staging/midas-mission-recovery-20261026T0210Z`.
 
 ### Follow-up Veritas v6 replay — 2026-10-26 02:56 CET
 

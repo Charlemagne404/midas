@@ -1,0 +1,254 @@
+{
+  "admission_and_resources": {
+    "live_monitor": {
+      "ended_at_utc": "2026-10-26T02:22:08.722209+00:00",
+      "host_mem_available_bytes": {
+        "last": 7837274112,
+        "max": 7873540096,
+        "min": 7645954048
+      },
+      "io_full_avg10_max_percent": 2.65,
+      "io_full_avg60_max_percent": 0.96,
+      "memory_full_avg10_max_percent": 0.54,
+      "memory_full_avg60_max_percent": 0.09,
+      "memory_high_margin_bytes": {
+        "last": 61603840,
+        "max": 67510272,
+        "min": 61145088
+      },
+      "memory_max_margin_bytes": {
+        "last": 195821568,
+        "max": 201728000,
+        "min": 195362816
+      },
+      "memory_some_avg10_max_percent": 0.72,
+      "memory_some_avg60_max_percent": 0.13,
+      "recorder_memory_events_end": {
+        "high": 14379,
+        "low": 0,
+        "max": 0,
+        "oom": 0,
+        "oom_group_kill": 0,
+        "oom_kill": 0,
+        "sock_throttled": 0
+      },
+      "recorder_memory_events_start": {
+        "high": 14379,
+        "low": 0,
+        "max": 0,
+        "oom": 0,
+        "oom_group_kill": 0,
+        "oom_kill": 0,
+        "sock_throttled": 0
+      },
+      "sample_count": 90,
+      "started_at_utc": "2026-10-26T02:14:41.201788+00:00"
+    },
+    "prestage_sustained_window": {
+      "duration_seconds": 60,
+      "minimum_memory_high_margin_bytes": 73682944,
+      "samples": 13,
+      "status": "PASSED_BEFORE_STAGING"
+    },
+    "protected_recorder": {
+      "active_state": "active",
+      "config_path": "/home/charlie/midas-reality/deploy/reality.json",
+      "config_sha256": "9d1aeeb5a496ad6971dc461ce87f327266ff25240391897f7bb6091a8307119a",
+      "latest_observed_monitor_memory_high_margin_bytes": 61603840,
+      "memory_current_bytes": 1151361024,
+      "memory_events": {
+        "high": 14379,
+        "low": 0,
+        "max": 0,
+        "oom": 0,
+        "oom_group_kill": 0,
+        "oom_kill": 0,
+        "sock_throttled": 0
+      },
+      "memory_high_bytes": 1207959552,
+      "memory_high_margin_bytes": 56598528,
+      "memory_max_bytes": 1342177280,
+      "memory_max_events_incremented": false,
+      "memory_max_margin_bytes": 190816256,
+      "monitor_minimum_memory_high_margin_bytes": 61145088,
+      "oom_events_incremented": false,
+      "pid": 3007040
+    }
+  },
+  "boundary": {
+    "archive_bytes": 9007651890,
+    "catalog_sha256": "2c4f1ca2e3c1c91c580f3239b995b820b0e1c334b781ee4f0a12badbc83cb086",
+    "identities_sha256": "6495920055aabbde671f080190fa82c959504df72b8134cad74007b673e825c5",
+    "implementation_source_sha256": "6cdfd3c09facaedfa86213fd794c33709bd36e37beb161f156d4cb06a2810d24",
+    "last_ordinal": 5102644,
+    "recovery_implementation_sha256": "2a5dc37c999885160f327e9adecf5af2f0968efa4a2450286942c62face96bd4",
+    "segment_count": 31742,
+    "source": "/home/charlie/midas-reality/data/recordings/reality"
+  },
+  "captured_at_utc": "2026-10-26T02:26:43.841789+00:00",
+  "evidence_hashing": "SHA-256 over the exact file bytes listed in staging_artifacts; the staged catalog and identity digests use the pinned manifest identities recorded above.",
+  "mission_branch": "codex/midas-comprehensive-engineering-mission-20261025",
+  "mission_commit": "7f23ecafe7021bd11f217c0b668ad1f66da98ec5",
+  "partial_progress": {
+    "checkpoint_bytes": 1065234,
+    "checkpoint_sha256": "32adfc125a19c2733b03989b3df6d58b4f4b11f591a299e90c8682271d2421f3",
+    "checkpoint_valid_for_pinned_prefix": true,
+    "interpretation": "Gap records are local observability markers and are not an exact count of lost exchange events; the public feed has no documented global monotonic sequence.",
+    "local_gap_records": 2716,
+    "next_segment_index": 2816,
+    "ordinal": 365102,
+    "phase": "cold",
+    "progress_matches_checkpoint": true,
+    "progress_receipt_valid": true,
+    "source_quality_comparison_assessments": {
+      "concurrent_updates_ambiguous": 123,
+      "stable_local_lineage_divergence": 55,
+      "stable_local_lineage_match_unsequenced": 3895,
+      "stale_local_state": 16
+    },
+    "source_quality_gap_reasons": {
+      "book_resynchronization": 2621,
+      "connection_failure": 5,
+      "malformed_constraints": 5,
+      "process_start": 15,
+      "process_stop": 13,
+      "scheduled_refresh": 57
+    },
+    "state_sha256": "b27bb39c58ea53c4b6c0cf24aad73c834750fd7b5552a471227ecfac4aa787ab",
+    "total_segments": 31742,
+    "verified_prefix_bytes": 690001782
+  },
+  "schema_version": 1,
+  "scope": {
+    "production_changes": false,
+    "result_claim": "No full-boundary recovery claim; the pinned source boundary has a validated partial checkpoint only.",
+    "source_write_allowed": false,
+    "test": "bounded latest-boundary cold reconstruction only; no endurance phase"
+  },
+  "source_quality_note": "The incomplete replay summarizes only the first 2,816 segments. It does not reclassify historical observations or claim complete source continuity.",
+  "staging": {
+    "cold_receipt_present": false,
+    "final_result_present": false,
+    "phase_incomplete": "cold",
+    "phases_completed": [
+      "readonly_probe"
+    ],
+    "root": "/mnt/continental-cloud/data/midas-reality-staging/midas-mission-recovery-20261026T0210Z",
+    "runner_stop": "Mission-owned runner interrupted after the 64 MiB MemoryHigh-margin policy was no longer met; its handler stopped only this isolated validation unit.",
+    "unit": "midas-validation-d702c7d3b41e.service",
+    "unit_status_after_stop": {
+      "ActiveState": "inactive",
+      "CPUUsageNSec": "[not set]",
+      "ControlGroup": "",
+      "ExecMainCode": "0",
+      "ExecMainStatus": "0",
+      "MemoryPeak": "[not set]",
+      "Result": "success",
+      "SubState": "dead"
+    },
+    "worker_cgroup_metrics_after_stop_reason": "The transient systemd unit cgroup was removed after its only process exited; the final in-run metrics are preserved in worker_last_monitor.",
+    "worker_cgroup_metrics_after_stop_unavailable": true,
+    "worker_cgroup_removed_after_stop": true,
+    "worker_exit_log": "Running as unit: midas-validation-d702c7d3b41e.service\nFinished with result: success\nMain processes terminated with: code=killed/status=TERM\nService runtime: 7min 28.970s\nCPU time consumed: 1min 7.123s\nMemory peak: 640.2M\nMemory swap peak: 0B\n",
+    "worker_last_monitor": {
+      "at_utc": "2026-10-26T02:22:08.722209+00:00",
+      "cpu_pressure": "some avg10=47.33 avg60=51.02 avg300=41.81 total=243809967\nfull avg10=47.33 avg60=51.02 avg300=41.81 total=243809929\n",
+      "cpu_stat": {
+        "burst_usec": 0,
+        "core_sched.force_idle_usec": 0,
+        "nice_usec": 66694000,
+        "nr_bursts": 0,
+        "nr_periods": 4475,
+        "nr_throttled": 4453,
+        "system_usec": 1098268,
+        "throttled_usec": 374818613,
+        "usage_usec": 66909540,
+        "user_usec": 65811271
+      },
+      "cpu_usage_ns": 66909540000,
+      "io_pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=1319826\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=1319826\n",
+      "memory_current_bytes": 670142464,
+      "memory_events": {
+        "high": 285,
+        "low": 0,
+        "max": 0,
+        "oom": 0,
+        "oom_group_kill": 0,
+        "oom_kill": 0,
+        "sock_throttled": 0
+      },
+      "memory_peak_bytes": 671350784,
+      "memory_pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=7877\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=7877\n"
+    },
+    "worker_memory_high_events_at_last_sample": 285,
+    "worker_memory_max_oom_kill_events_at_last_sample": {
+      "max": 0,
+      "oom": 0,
+      "oom_group_kill": 0,
+      "oom_kill": 0
+    }
+  },
+  "staging_artifacts": [
+    {
+      "bytes": 2730,
+      "path": "/mnt/continental-cloud/data/midas-reality-staging/midas-mission-recovery-20261026T0210Z/admission.json",
+      "sha256": "385c78db2ed429b85e2e8d6cd3fc1bea21e34a025c8d6d9bd5b8c4b53842464c"
+    },
+    {
+      "bytes": 950,
+      "path": "/mnt/continental-cloud/data/midas-reality-staging/midas-mission-recovery-20261026T0210Z/staging-policy.json",
+      "sha256": "5db2ac3bad2e5796be3026382084230b047d53ee77a69150d9d5c32796fea29f"
+    },
+    {
+      "bytes": 18208157,
+      "path": "/mnt/continental-cloud/data/midas-reality-staging/midas-mission-recovery-20261026T0210Z/catalog.json",
+      "sha256": "cba90a6dd155265dd0d34e970b58ed104feac0ca991229b5c044d56a964f123d"
+    },
+    {
+      "bytes": 8623238,
+      "path": "/mnt/continental-cloud/data/midas-reality-staging/midas-mission-recovery-20261026T0210Z/identities.json",
+      "sha256": "2670078ff99524585ac9a1a0bdcd1d49548b8ba2bde8a2ff30baa92d027be8b7"
+    },
+    {
+      "bytes": 2199,
+      "path": "/mnt/continental-cloud/data/midas-reality-staging/midas-mission-recovery-20261026T0210Z/boundary.json",
+      "sha256": "b628c9ff27a1141b8e34c1c70dea215354589ac0906e1eaa4724e1614ed02d67"
+    },
+    {
+      "bytes": 1047,
+      "path": "/mnt/continental-cloud/data/midas-reality-staging/midas-mission-recovery-20261026T0210Z/readonly_probe.json",
+      "sha256": "90df8da9d7c7450dca57bd9295623879ab7be96b010a9402e77ac87c5830c569"
+    },
+    {
+      "bytes": 502,
+      "path": "/mnt/continental-cloud/data/midas-reality-staging/midas-mission-recovery-20261026T0210Z/readonly_probe-landlock.json",
+      "sha256": "d839a7a0d90f9910ceea1cf15626836e7c33ad6c70c68c46a9874169e353e11a"
+    },
+    {
+      "bytes": 83934,
+      "path": "/mnt/continental-cloud/data/midas-reality-staging/midas-mission-recovery-20261026T0210Z/cold-progress.json",
+      "sha256": "6372b1d35bd7665c87a29c8ac8ccfe0f7c88a91bbc99376f30073ce97859935c"
+    },
+    {
+      "bytes": 610,
+      "path": "/mnt/continental-cloud/data/midas-reality-staging/midas-mission-recovery-20261026T0210Z/cold-progress-summary.json",
+      "sha256": "54ea7581353e3d12d17eea936c25e5d95e0b47fb0f458435dc0ab5976e5f92fe"
+    },
+    {
+      "bytes": 437951,
+      "path": "/mnt/continental-cloud/data/midas-reality-staging/midas-mission-recovery-20261026T0210Z/cold-monitor.jsonl",
+      "sha256": "47014e982c0e1e47ddfdbdc108546d3d65527837a36a4f8b9935a7c6fcefae5f"
+    },
+    {
+      "bytes": 243,
+      "path": "/mnt/continental-cloud/data/midas-reality-staging/midas-mission-recovery-20261026T0210Z/cold.log",
+      "sha256": "df0eb2c9a159c1a9262115a38060ff7c708c4c078ff4cff64d1d0fc72ffcf89e"
+    },
+    {
+      "bytes": 1065234,
+      "path": "/mnt/continental-cloud/data/midas-reality-staging/midas-mission-recovery-20261026T0210Z/view/recovery-v1.checkpoint",
+      "sha256": "32adfc125a19c2733b03989b3df6d58b4f4b11f591a299e90c8682271d2421f3"
+    }
+  ],
+  "status": "INCOMPLETE_CHECKPOINT_VALIDATED"
+}

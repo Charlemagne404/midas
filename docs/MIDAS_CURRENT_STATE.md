@@ -194,3 +194,29 @@ not re-estimated. This does not verify the current archive boundary or cold
 recovery. Evidence:
 [`MIDAS_REALITY_ADMISSION_RECHECK_20261026T0204Z.json`](reliability/evidence/MIDAS_REALITY_ADMISSION_RECHECK_20261026T0204Z.json),
 SHA-256 `527ca3ac3d08811863f8458b5418d6ba165450d34990289c589379a6d0cd8ea1`.
+
+### Latest-boundary recovery attempt — 2026-10-26, 03:26 CET
+
+A bounded, read-only staging run pinned 31,742 finalized Reality segments
+(9,007,651,890 manifest bytes through ordinal 5,102,644). The Landlock probe
+passed. Cold replay advanced through 2,816 segments / 690,001,782 prefix bytes
+to ordinal 365,102. The saved progress receipt and 1,065,234-byte checkpoint
+were verified against each other and the pinned catalog prefix; checkpoint
+SHA-256 is `32adfc125a19c2733b03989b3df6d58b4f4b11f591a299e90c8682271d2421f3`.
+
+The worker was stopped before the recorder's `MemoryHigh` margin fell further
+below the 64 MiB buffer used for this run. Across 90 live worker samples, the
+margin ranged from 61,145,088 to 67,510,272 bytes; minimum margin below
+`MemoryMax` was 195,362,816 bytes. Host pressure remained within admission
+limits, and recorder `high`/`max`/OOM/kill counters did not increase. The
+recorder remained active on PID `3007040` with the old config; at the 02:23:30
+UTC evidence capture it had 1,147,899,904 bytes current. At the later
+02:26:43 UTC sample it had 1,151,361,024 bytes current, 56,598,528 below
+`MemoryHigh` and 190,816,256 below `MemoryMax`; its `high` counter remained
+14,379 and max/OOM/kill remained zero. This result is partial; no cold phase
+receipt or full recovery matrix exists. Keep the staged checkpoint and resume
+only after fresh admission passes and the pinned source prefix validates.
+
+Evidence:
+[`MIDAS_REALITY_RECOVERY_PARTIAL_20261026T0222Z.json`](reliability/evidence/MIDAS_REALITY_RECOVERY_PARTIAL_20261026T0222Z.json),
+SHA-256 `0f8d134e3f5e8f581debb454818dd0d03ef144746a4c9b6138e0d01a2f502e86`.

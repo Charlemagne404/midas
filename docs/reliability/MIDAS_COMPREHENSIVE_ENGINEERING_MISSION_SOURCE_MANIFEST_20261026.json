@@ -131,11 +131,11 @@
     {
       "bytes": 76050,
       "label": "Pinned immutable 522-snapshot source manifest",
+      "manifest_sha256": "c0e93d7fa5e49a7a4bb9f62d120baec4aaf7de6e0e2b0198c4a2b425edb78fa7",
       "path": "data/veritas-v6-offline-replay-522-20261026/veritas-v6-source-snapshot-manifest.json",
       "sha256": "1a4414e1b6fefed3dbcff4eeab5f794e3ad6faadc0605e7c5090ab530eca5d9c",
-      "manifest_sha256": "c0e93d7fa5e49a7a4bb9f62d120baec4aaf7de6e0e2b0198c4a2b425edb78fa7",
-      "snapshot_count": 522,
-      "snapshot_bytes": 324615273
+      "snapshot_bytes": 324615273,
+      "snapshot_count": 522
     },
     {
       "bytes": 41586688,
@@ -179,8 +179,8 @@
       "label": "Post-timer Veritas live store/API recheck",
       "path": "docs/reliability/evidence/MIDAS_VERITAS_20261026_POST_TIMER_RECHECK.json",
       "sha256": "342ff41ca6a32a41340c0fec3ae798a21e1258c353df28efa2564540d2c54913",
-      "status": "OBSERVER_FAILED_API_503",
       "snapshot_count": 523,
+      "status": "OBSERVER_FAILED_API_503",
       "v6_replay_boundary_count": 522
     },
     {
@@ -193,16 +193,33 @@
     {
       "bytes": 4124,
       "captured_at_utc": "2026-10-26T02:05:12.838322Z",
+      "historical_growth_120_day_deficit_bytes": 12902561721,
       "label": "Reality protected-recorder admission and filesystem point sample",
       "path": "docs/reliability/evidence/MIDAS_REALITY_ADMISSION_RECHECK_20261026T0204Z.json",
-      "sha256": "527ca3ac3d08811863f8458b5418d6ba165450d34990289c589379a6d0cd8ea1",
-      "status": "POINT_SAMPLE_PASS_SUSTAINED_WINDOW_NOT_RUN",
-      "staging_started": false,
       "raw_current_commitment_deficit_bytes": 7396366111,
-      "historical_growth_120_day_deficit_bytes": 12902561721
+      "sha256": "527ca3ac3d08811863f8458b5418d6ba165450d34990289c589379a6d0cd8ea1",
+      "staging_started": false,
+      "status": "POINT_SAMPLE_PASS_SUSTAINED_WINDOW_NOT_RUN"
+    },
+    {
+      "bytes": 1065234,
+      "label": "Pinned partial Reality recovery checkpoint; not full-boundary validation",
+      "path": "/mnt/continental-cloud/data/midas-reality-staging/midas-mission-recovery-20261026T0210Z/view/recovery-v1.checkpoint",
+      "sha256": "32adfc125a19c2733b03989b3df6d58b4f4b11f591a299e90c8682271d2421f3",
+      "state_sha256": "b27bb39c58ea53c4b6c0cf24aad73c834750fd7b5552a471227ecfac4aa787ab",
+      "status": "INCOMPLETE_CHECKPOINT_VALIDATED",
+      "total_segments": 31742,
+      "verified_segments": 2816
+    },
+    {
+      "bytes": 10581,
+      "label": "Bounded partial latest-boundary recovery evidence",
+      "path": "docs/reliability/evidence/MIDAS_REALITY_RECOVERY_PARTIAL_20261026T0222Z.json",
+      "sha256": "0f8d134e3f5e8f581debb454818dd0d03ef144746a4c9b6138e0d01a2f502e86",
+      "status": "INCOMPLETE_CHECKPOINT_VALIDATED"
     }
   ],
-  "file_count": 92,
+  "file_count": 94,
   "files": [
     {
       "bytes": 61683,
@@ -310,9 +327,9 @@
       "sha256": "d0c4b6ee3eda7f881743769a6c64d82a10fa87421c21bb6389008d66f9f5b2e4"
     },
     {
-      "bytes": 22930,
+      "bytes": 24577,
       "path": "docs/MIDAS_CURRENT_STATE.md",
-      "sha256": "01b22f517d00f08c114ba225cc9efbcae48c27be7f6f711bb864b13353280199"
+      "sha256": "5729d3ff9aefc3fe38ae43fb9dc42bb37d218a0339ae847b0e0cf21ad14f0b7f"
     },
     {
       "bytes": 21590,
@@ -335,14 +352,14 @@
       "sha256": "1584f98b93910f8946f55cf09fb69f6517fc7bb6a8478d88eebfbeb073858984"
     },
     {
-      "bytes": 41857,
+      "bytes": 44518,
       "path": "docs/reliability/MIDAS_COMPREHENSIVE_ENGINEERING_MISSION_20261025.md",
-      "sha256": "f6c46e470f2887cbb00ebf6d8d62c7638cbe4d1f44e276298a73bd1644aec7a3"
+      "sha256": "16f4f1769f2e6723b1a9c12b991260866e009fa234158a016cd6005160ea4c84"
     },
     {
-      "bytes": 26704,
+      "bytes": 28537,
       "path": "docs/reliability/MIDAS_COMPREHENSIVE_ENGINEERING_MISSION_LEDGER_20261025.md",
-      "sha256": "f5b1135a59116f4065fc8f731b4ea8c812180e1bd91109db148f1ead3a71c265"
+      "sha256": "df32cdadc35c1a9cd637f11d225810cf18e314bf62f64738991297efbe8896ef"
     },
     {
       "bytes": 11423,
@@ -423,6 +440,11 @@
       "bytes": 4124,
       "path": "docs/reliability/evidence/MIDAS_REALITY_ADMISSION_RECHECK_20261026T0204Z.json",
       "sha256": "527ca3ac3d08811863f8458b5418d6ba165450d34990289c589379a6d0cd8ea1"
+    },
+    {
+      "bytes": 10581,
+      "path": "docs/reliability/evidence/MIDAS_REALITY_RECOVERY_PARTIAL_20261026T0222Z.json",
+      "sha256": "0f8d134e3f5e8f581debb454818dd0d03ef144746a4c9b6138e0d01a2f502e86"
     },
     {
       "bytes": 2079,
@@ -545,6 +567,11 @@
       "sha256": "9f82b256d0eb9db2bf0fd47510ea4c55d36b1d5420c04cfbff02f32644edfbe2"
     },
     {
+      "bytes": 1117,
+      "path": "pyproject.toml",
+      "sha256": "edb35f40d87114a9a1a698e200524d8adf7d3cdfcd430c10a9988ee7461b07b4"
+    },
+    {
       "bytes": 7590,
       "path": "scripts/dispatch_schedules.py",
       "sha256": "2a73a1c78ceb1fcd0e897e072dcb96762ba418296f4ea8bd8f84cc49b0c9748e"
@@ -665,7 +692,7 @@
       "sha256": "0e303eb666d679cfe283ded0b513d66cde9065f754996bdd64da4d8b8be70812"
     }
   ],
-  "generated_at_utc": "2026-10-26T02:07:19.783112Z",
+  "generated_at_utc": "2026-10-26T02:28:02Z",
   "runtime_observations": {
     "aborted_copy_boundary_pinned": false,
     "aborted_copy_source_total_segments": 31468,
@@ -681,6 +708,7 @@
     "active_veritas_observer_start": "2026-10-26 02:30:56 CET",
     "active_veritas_observer_state": "failed",
     "active_veritas_snapshot_count": 522,
+    "active_veritas_snapshot_count_outside_initial_519_replay": 3,
     "active_veritas_summary_bytes": 2097481,
     "active_veritas_summary_bytes_over_limit": 329,
     "active_veritas_summary_processed_count": 423,
@@ -697,10 +725,96 @@
     "arena_invalid_artifacts": 0,
     "arena_open_alert_count": 1,
     "arena_open_alert_reason": "Schedule admission window expired",
+    "capacity_scenario_requirements_carried_forward_from_utc": "2026-10-26T01:33:58.241237Z",
     "historical_r15_total_segments": 20148,
     "historical_r15_verified_segments": 2304,
     "laboratory_state": "READY",
+    "latest_active_veritas_api_overview_http_status": 503,
+    "latest_active_veritas_observer_exit": "2026-10-26 03:01:35 CET",
+    "latest_active_veritas_observer_failure": "ValueError: Unsafe or oversized analysis artifact: research-summary.json",
+    "latest_active_veritas_observer_state": "failed",
+    "latest_active_veritas_snapshot": "scan-20261026T020133Z-f1469881bdbc.json.gz",
+    "latest_active_veritas_snapshot_count": 523,
+    "latest_active_veritas_snapshot_count_outside_v6_boundary": 1,
+    "latest_active_veritas_snapshot_observed_at_utc": "2026-10-26T02:02:35.043608Z",
+    "latest_active_veritas_snapshot_sha256": "7625c0aa702594d2f6e022f9c7e5ad462c905046681c2ad8ea0d697a526f17a3",
+    "latest_active_veritas_v6_boundary_count": 522,
     "latest_boundary_recovery": "INCOMPLETE",
+    "latest_isolated_veritas_v6_replay": {
+      "captured_at_utc": "2026-10-26T01:56:31.225477Z",
+      "catalog_integrity_issues": 0,
+      "catalog_quarantines": 0,
+      "deployed": false,
+      "output_verification_status": "COMPLETED_OUTPUTS_REVERIFIED",
+      "postrun_verification_sha256": "5d5cb78d9940882d4e3c1b06456c522db84679ccbb242b49e7395664fe94feca",
+      "receipt_sha256": "1ddfe7a27bb7a85b499aaa71f41ac551924649d9c994cee5c870db0b619dc7e6",
+      "service_changed": false,
+      "source_count": 522,
+      "source_manifest_sha256": "c0e93d7fa5e49a7a4bb9f62d120baec4aaf7de6e0e2b0198c4a2b425edb78fa7"
+    },
+    "latest_reality_admission_artifact": "docs/reliability/evidence/MIDAS_REALITY_ADMISSION_RECHECK_20261026T0204Z.json",
+    "latest_reality_admission_artifact_sha256": "8a961927ffd44ea7767afcf5a0eaacf84ad910262e1485696ba18fad7e171f8a",
+    "latest_reality_admission_point_sample": "PASS",
+    "latest_reality_admission_sample_utc": "2026-10-26T02:05:12.838322Z",
+    "latest_reality_historical_growth_120_day_deficit_bytes": 12902561721,
+    "latest_reality_host_io_full_avg60_percent": 0.86,
+    "latest_reality_host_mem_available_bytes": 8000172032,
+    "latest_reality_memory_current_bytes": 1131302912,
+    "latest_reality_memory_high_margin_bytes": 76656640,
+    "latest_reality_memory_max_margin_bytes": 210874368,
+    "latest_reality_raw_current_commitment_deficit_bytes": 7396366111,
+    "latest_reality_raw_fs_free_bytes": 161060818944,
+    "latest_reality_recovery_attempt": {
+      "boundary_bytes": 9007651890,
+      "boundary_catalog_sha256": "2c4f1ca2e3c1c91c580f3239b995b820b0e1c334b781ee4f0a12badbc83cb086",
+      "boundary_identities_sha256": "6495920055aabbde671f080190fa82c959504df72b8134cad74007b673e825c5",
+      "boundary_last_ordinal": 5102644,
+      "boundary_segment_count": 31742,
+      "captured_at_utc": "2026-10-26T02:26:43.841789+00:00",
+      "checkpoint_ordinal": 365102,
+      "checkpoint_prefix_bytes": 690001782,
+      "checkpoint_segments": 2816,
+      "checkpoint_sha256": "32adfc125a19c2733b03989b3df6d58b4f4b11f591a299e90c8682271d2421f3",
+      "checkpoint_state_sha256": "b27bb39c58ea53c4b6c0cf24aad73c834750fd7b5552a471227ecfac4aa787ab",
+      "checkpoint_validated": true,
+      "cold_phase_receipt_present": false,
+      "completed_phases": [
+        "readonly_probe"
+      ],
+      "full_boundary_recovery_complete": false,
+      "host_available_memory_min_bytes": 7645954048,
+      "host_io_full_psi_avg10_max_percent": 2.65,
+      "host_io_full_psi_avg60_max_percent": 0.96,
+      "incomplete_phase": "cold",
+      "monitor_ended_at_utc": "2026-10-26T02:22:08.722209+00:00",
+      "monitor_sample_count": 90,
+      "monitor_started_at_utc": "2026-10-26T02:14:41.201788+00:00",
+      "protected_memory_current_bytes": 1151361024,
+      "protected_memory_high_events_unchanged": true,
+      "protected_memory_high_margin_current_bytes": 56598528,
+      "protected_memory_high_margin_min_bytes": 61145088,
+      "protected_memory_max_margin_current_bytes": 190816256,
+      "protected_memory_max_margin_min_bytes": 195362816,
+      "protected_memory_max_oom_kill_events": 0,
+      "protected_recorder_changed": false,
+      "protected_recorder_config_sha256": "9d1aeeb5a496ad6971dc461ce87f327266ff25240391897f7bb6091a8307119a",
+      "protected_recorder_pid": 3007040,
+      "receipt_path": "docs/reliability/evidence/MIDAS_REALITY_RECOVERY_PARTIAL_20261026T0222Z.json",
+      "receipt_sha256": "0f8d134e3f5e8f581debb454818dd0d03ef144746a4c9b6138e0d01a2f502e86",
+      "recovery_matrix_final_result_present": false,
+      "resume_admitted": false,
+      "staging_root": "/mnt/continental-cloud/data/midas-reality-staging/midas-mission-recovery-20261026T0210Z",
+      "status": "INCOMPLETE_CHECKPOINT_VALIDATED",
+      "validation_unit": "midas-validation-d702c7d3b41e.service",
+      "validation_unit_active_after_stop": false,
+      "worker_cpu_ns": 66909540000,
+      "worker_memory_high_events": 285,
+      "worker_memory_max_oom_kill_events": 0,
+      "worker_memory_peak_bytes": 671350784
+    },
+    "latest_reality_staging_fs_free_bytes": 635101380608,
+    "latest_reality_staging_started": false,
+    "latest_reality_sustained_60s_admission": "NOT_RUN",
     "main_api_build_identity_reported": false,
     "main_api_health_http_status": 200,
     "main_api_live_execution": false,
@@ -710,6 +824,8 @@
     "observed_at_utc": "2026-10-26T01:33:58.241237Z",
     "paper_journal_event_count": 666807,
     "paper_journal_recovery": "CHECKPOINT_VERIFIED",
+    "post_timer_recheck_artifact": "docs/reliability/evidence/MIDAS_VERITAS_20261026_POST_TIMER_RECHECK.json",
+    "post_timer_recheck_sha256": "342ff41ca6a32a41340c0fec3ae798a21e1258c353df28efa2564540d2c54913",
     "protected_service_changed": false,
     "reality_active_config_sha256": "9d1aeeb5a496ad6971dc461ce87f327266ff25240391897f7bb6091a8307119a",
     "reality_candidate_config_sha256": "908816c3dc568a8aa9d22a8d5bd0267d2f421cec6ca37a84901c5a6eae1f85e0",
@@ -731,48 +847,7 @@
     "runtime_recheck_artifact": "docs/reliability/evidence/MIDAS_MISSION_20261026_LIVE_STATE_RECHECK.json",
     "runtime_recheck_sha256": "f89c3be4866ac10a488d50cca777fac78036a52e3a52d78e38dbb7c1a3dc86be",
     "staged_storage_120_day_floor_deficit_bytes": 12013107129,
-    "staged_storage_current_commitment_deficit_bytes": 6506911519,
-    "latest_isolated_veritas_v6_replay": {
-      "captured_at_utc": "2026-10-26T01:56:31.225477Z",
-      "output_verification_status": "COMPLETED_OUTPUTS_REVERIFIED",
-      "source_count": 522,
-      "source_manifest_sha256": "c0e93d7fa5e49a7a4bb9f62d120baec4aaf7de6e0e2b0198c4a2b425edb78fa7",
-      "receipt_sha256": "1ddfe7a27bb7a85b499aaa71f41ac551924649d9c994cee5c870db0b619dc7e6",
-      "postrun_verification_sha256": "5d5cb78d9940882d4e3c1b06456c522db84679ccbb242b49e7395664fe94feca",
-      "catalog_quarantines": 0,
-      "catalog_integrity_issues": 0,
-      "deployed": false,
-      "service_changed": false
-    },
-    "latest_active_veritas_snapshot_count": 523,
-    "latest_active_veritas_snapshot": "scan-20261026T020133Z-f1469881bdbc.json.gz",
-    "latest_active_veritas_snapshot_sha256": "7625c0aa702594d2f6e022f9c7e5ad462c905046681c2ad8ea0d697a526f17a3",
-    "latest_active_veritas_v6_boundary_count": 522,
-    "latest_active_veritas_snapshot_count_outside_v6_boundary": 1,
-    "latest_active_veritas_observer_exit": "2026-10-26 03:01:35 CET",
-    "latest_active_veritas_observer_state": "failed",
-    "latest_active_veritas_observer_failure": "ValueError: Unsafe or oversized analysis artifact: research-summary.json",
-    "latest_active_veritas_api_overview_http_status": 503,
-    "post_timer_recheck_artifact": "docs/reliability/evidence/MIDAS_VERITAS_20261026_POST_TIMER_RECHECK.json",
-    "post_timer_recheck_sha256": "342ff41ca6a32a41340c0fec3ae798a21e1258c353df28efa2564540d2c54913",
-    "active_veritas_snapshot_count_outside_initial_519_replay": 3,
-    "latest_active_veritas_snapshot_observed_at_utc": "2026-10-26T02:02:35.043608Z",
-    "latest_reality_admission_sample_utc": "2026-10-26T02:05:12.838322Z",
-    "latest_reality_admission_point_sample": "PASS",
-    "latest_reality_sustained_60s_admission": "NOT_RUN",
-    "latest_reality_staging_started": false,
-    "latest_reality_memory_current_bytes": 1131302912,
-    "latest_reality_memory_high_margin_bytes": 76656640,
-    "latest_reality_memory_max_margin_bytes": 210874368,
-    "latest_reality_host_mem_available_bytes": 8000172032,
-    "latest_reality_host_io_full_avg60_percent": 0.86,
-    "latest_reality_raw_fs_free_bytes": 161060818944,
-    "latest_reality_staging_fs_free_bytes": 635101380608,
-    "latest_reality_admission_artifact": "docs/reliability/evidence/MIDAS_REALITY_ADMISSION_RECHECK_20261026T0204Z.json",
-    "latest_reality_admission_artifact_sha256": "8a961927ffd44ea7767afcf5a0eaacf84ad910262e1485696ba18fad7e171f8a",
-    "latest_reality_raw_current_commitment_deficit_bytes": 7396366111,
-    "latest_reality_historical_growth_120_day_deficit_bytes": 12902561721,
-    "capacity_scenario_requirements_carried_forward_from_utc": "2026-10-26T01:33:58.241237Z"
+    "staged_storage_current_commitment_deficit_bytes": 6506911519
   },
   "schema_version": 2,
   "scope": "files lists changed code, tests, documentation and checked-in evidence files relative to the base commit, including current uncommitted mission edits; bulk offline replay copies and derived event files are separately bound by evidence_artifacts and embedded manifests; generated build/test output, unrelated runtime worktrees, replay locks and this manifest are excluded."

@@ -1,6 +1,6 @@
 # MIDAS Comprehensive Engineering Mission
 
-**Assessment date:** 2026-10-26 (CEST)
+**Assessment date:** 2026-10-26 (CET)
 **Implementation branch:** `codex/midas-comprehensive-engineering-mission-20261025`
 **Base commit:** `55601b9a090945cb498806e4878b6ddc33562043`
 **Runtime changes:** none by this mission; no protected service or production store was changed by our work. The ordinary Veritas timer continued its snapshot write at 03:01 CET.
@@ -21,10 +21,10 @@ No Frontier or Atlas work, long-duration campaign, real order, wallet action, hi
 | Reality collector, recovery and observability changes | **PARTIALLY VERIFIED** | Unit/integration tests and a 95-second loopback fixture canary pass for the final candidate hash, seeded from one deterministic fixture segment. Production continues on the older checkout; exact latest-boundary startup and full cold recovery remain unverified. |
 | Research Readiness page | **COMPLETE AND VERIFIED** | Lint, typecheck, 32 unit tests, format check, build and the 7-test selected browser batch pass. It uses real API responses and explicitly identifies demo mode. This page is not deployed. |
 | Arena / API integration boundaries | **PARTIALLY VERIFIED** | Durable fair scheduling and stale-director visibility are tested. The current API reports no active jobs, directors or schedules, no invalid artifacts, and one retained expired-admission alert. |
-| Latest-boundary recovery | **PARTIALLY VERIFIED** | Historical R10 passed; R14 covered an earlier prefix and suffix; R15 stopped at 2,304/20,148. A fresh copy was stopped at 697/31,468 segments after I/O pressure crossed the staging threshold; no full replay ran. |
+| Latest-boundary recovery | **PARTIALLY VERIFIED** | Historical R10 passed; R14 covered an earlier prefix and suffix; R15 stopped at 2,304/20,148. A new pinned 31,742-segment boundary passed the read-only probe; its cold checkpoint and progress reconcile for 2,816 segments / 690,001,782 prefix bytes through ordinal 365,102. Work was stopped when live recorder `MemoryHigh` margin fell below the 64 MiB buffer used for this staging run. Full-boundary recovery and the remaining matrix phases are incomplete. |
 | Archive provenance and storage transition | **BLOCKED** | Current staging contains 1,138 finalized files absent from its manifest and 58 `.copying` files. Ownership alone does not establish provenance. The staged raw/DB/Veritas/reserve commitments exceed current NVMe free space. No archive files were changed. |
 | Economic evidence sufficiency | **NOT MEASURED** | Across the 522-snapshot pinned replay, the reference audited 20,873 of 20,874 selected pair observations across 3,932 unique markets, found zero positive top-book gross observations and zero economically supported or net-eligible pairs. Repeated selected observations do not establish venue-wide opportunity prevalence; minimum-order units and execution remain unsupported. |
-| Protected Reality deployment | **BLOCKED** | Explicit user approval is required before stopping/restarting the recorder. A latest point sample was 85,655,552 bytes below `MemoryHigh`; earlier checks were under the 4 MiB admission floor. Storage, latest-boundary recovery and archive provenance remain open blockers. |
+| Protected Reality deployment | **BLOCKED** | Explicit user approval is required before stopping/restarting the recorder. At the 02:26:43 UTC recheck, PID `3007040` remained on the old config; `MemoryCurrent` was 1,151,361,024 bytes, 56,598,528 below `MemoryHigh`, with 190,816,256 bytes below `MemoryMax` and unchanged high/max/OOM counters. Storage, complete recovery and archive provenance remain open blockers. |
 
 ## Initial state and evidence checked
 
@@ -164,7 +164,7 @@ This recheck does not supersede the production deployment blockers or grant appr
 ## Changed branch and artifact references
 
 
-All mission implementation changes are confined to this worktree and branch. The root checkout's pre-existing dirty work, the Reality/Veritas runtime worktrees, and both older engineering worktrees remain untouched. The companion [source/evidence manifest](MIDAS_COMPREHENSIVE_ENGINEERING_MISSION_SOURCE_MANIFEST_20261026.json) binds 92 changed code, test, documentation and checked-in evidence files plus 23 replay/live artifact references. Bulk replay inputs and event files are bound by their embedded manifests. See the [mission ledger](MIDAS_COMPREHENSIVE_ENGINEERING_MISSION_LEDGER_20261025.md) for worktree inventory and test record. No branch was pushed or merged.
+All mission implementation changes are confined to this worktree and branch. The root checkout's pre-existing dirty work, the Reality/Veritas runtime worktrees, and both older engineering worktrees remain untouched. The companion [source/evidence manifest](MIDAS_COMPREHENSIVE_ENGINEERING_MISSION_SOURCE_MANIFEST_20261026.json) binds 94 changed code, test, documentation and checked-in evidence files plus 25 replay/live artifact references. Bulk replay inputs and event files are bound by their embedded manifests. See the [mission ledger](MIDAS_COMPREHENSIVE_ENGINEERING_MISSION_LEDGER_20261025.md) for worktree inventory and test record. No branch was pushed or merged.
 
 ### Follow-up Veritas boundary replay — 2026-10-26 02:56 CET
 
@@ -238,3 +238,40 @@ rather than treating this sample as recovery evidence.
 Capture:
 [`MIDAS_REALITY_ADMISSION_RECHECK_20261026T0204Z.json`](evidence/MIDAS_REALITY_ADMISSION_RECHECK_20261026T0204Z.json),
 SHA-256 `527ca3ac3d08811863f8458b5418d6ba165450d34990289c589379a6d0cd8ea1`.
+
+### Bounded latest-boundary recovery attempt — 2026-10-26 02:23 UTC
+
+A fresh staged inventory pinned 31,742 finalized segments / 9,007,651,890
+bytes through ordinal 5,102,644. Its catalog digest is
+`2c4f1ca2e3c1c91c580f3239b995b820b0e1c334b781ee4f0a12badbc83cb086`; its
+identity digest is
+`6495920055aabbde671f080190fa82c959504df72b8134cad74007b673e825c5`.
+The source remained read-only under Landlock. The cold replay processed 2,816
+segments through ordinal 365,102 (690,001,782 manifest bytes), with 2,716
+local gap records. Those markers describe locally observed source boundaries;
+they are not a count of lost exchange events.
+
+I stopped only the mission-owned worker after the protected recorder's
+`MemoryHigh` headroom fell below the 64 MiB buffer used for this staging run.
+Across 90 live samples, that margin ranged from 61,145,088 to 67,510,272
+bytes; the `MemoryMax` margin stayed between 195,362,816 and 201,728,000
+bytes. The protected recorder remained PID `3007040`; its `high` counter did
+not increase, and `max`/OOM/kill remained zero. The worker cgroup peaked at
+671,350,784 bytes under its 768 MiB hard cap; its own soft-limit `high` counter
+reached 285 while max/OOM/kill stayed zero. It exited on the requested stop,
+not resource exhaustion. Host memory and I/O pressure stayed within admission
+limits. The worker completed no cold phase receipt, and the recovery matrix
+remains incomplete.
+
+The saved progress receipt and 1,065,234-byte checkpoint were independently
+validated against each other and the pinned catalog prefix. The checkpoint
+SHA-256 is `32adfc125a19c2733b03989b3df6d58b4f4b11f591a299e90c8682271d2421f3`;
+its state SHA-256 is
+`b27bb39c58ea53c4b6c0cf24aad73c834750fd7b5552a471227ecfac4aa787ab`.
+This is verified partial progress only. At the post-stop 02:26:43 UTC sample,
+the recorder still had only 56,598,528 bytes below `MemoryHigh`; do not resume
+until fresh samples restore the required buffer. Keep the staging root intact;
+resume only after repeated fresh resource admission passes and the pinned
+source prefix identity still validates. The exact receipt and file hashes are in
+[`MIDAS_REALITY_RECOVERY_PARTIAL_20261026T0222Z.json`](evidence/MIDAS_REALITY_RECOVERY_PARTIAL_20261026T0222Z.json),
+SHA-256 `0f8d134e3f5e8f581debb454818dd0d03ef144746a4c9b6138e0d01a2f502e86`.
