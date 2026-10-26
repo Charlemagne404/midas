@@ -83,6 +83,50 @@ def test_queries_use_sqlite_read_only_mode_after_initialization(tmp_path: Path, 
     assert store.replay("missing") is None
 
 
+def test_relationship_neighbors_use_both_endpoints_and_bounded_indexed_scan(tmp_path: Path):
+    store = FrontierStore(tmp_path, max_bytes=2 * 1024 * 1024)
+    markets = (
+        market(Venue.POLYMARKET, "graph-a"),
+        market(Venue.KALSHI, "graph-b"),
+        market(Venue.KRAKEN, "graph-c"),
+    )
+    relationships = propose_relationships(markets, max_pairs=10)
+    for relationship in relationships:
+        store.append_relationship(relationship)
+
+    # Kraken sorts between Kalshi and Polymarket, so it exercises both stored endpoints.
+    center_id = markets[2].canonical_id
+    edges, scanned, truncated = store.relationship_neighbors((center_id,), scan_limit=10)
+    assert len(edges) == 2
+    assert scanned == 2
+    assert truncated is False
+    assert all(center_id in (item["left_market_id"], item["right_market_id"]) for item in edges)
+    assert {item["relationship"]["left_market_id"] == center_id for item in edges} == {
+        True,
+        False,
+    }
+
+    bounded_edges, bounded_scan, bounded_truncated = store.relationship_neighbors(
+        (center_id,), scan_limit=1
+    )
+    assert len(bounded_edges) == 1
+    assert bounded_scan == 1
+    assert bounded_truncated is True
+
+    with sqlite3.connect(store.path) as connection:
+        plan = tuple(
+            row[3]
+            for row in connection.execute(
+                "EXPLAIN QUERY PLAN SELECT relationship_id FROM relationships "
+                "WHERE left_market_id IN (?) UNION SELECT relationship_id "
+                "FROM relationships WHERE right_market_id IN (?)",
+                (center_id, center_id),
+            )
+        )
+    assert any("relationships_left_endpoint_recent" in item for item in plan)
+    assert any("relationships_right_endpoint_recent" in item for item in plan)
+
+
 def test_raw_hash_and_record_bound_are_validated():
     with pytest.raises(ValueError, match="hash mismatch"):
         RawObservation(

@@ -237,6 +237,8 @@ def test_graph_neighborhood_is_centered_bounded_and_review_aware(tmp_path):
         assert centered.status_code == 200
         assert centered.json()["returned_edges"] == 1
         assert centered.json()["truncated_by_edge_limit"] is True
+        assert centered.json()["relationships_scanned"] == 2
+        assert centered.json()["relationship_scan_may_be_incomplete"] is False
         assert any(
             node["market"]["canonical_id"] == markets[0].canonical_id
             for node in centered.json()["nodes"]
@@ -249,6 +251,8 @@ def test_graph_neighborhood_is_centered_bounded_and_review_aware(tmp_path):
         assert two_hops.status_code == 200
         assert two_hops.json()["returned_edges"] == 3
         assert two_hops.json()["returned_nodes"] == 3
+        assert two_hops.json()["relationships_scanned"] == 5
+        assert two_hops.json()["relationship_scan_may_be_incomplete"] is False
         assert (
             client.get("/api/frontier/graph", params={"center_market_id": "missing"}).status_code
             == 404

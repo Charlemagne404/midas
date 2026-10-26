@@ -410,17 +410,26 @@ def router(store: FrontierStore, registry: Any) -> APIRouter:
             seeds = set()
 
         scan_limit = 500
-        try:
-            relationship_rows = store.relationships(limit=scan_limit, effective_only=True)
-        except FrontierStoreError as error:
-            raise HTTPException(status_code=409, detail=str(error)) from error
-
         selected: dict[str, dict[str, Any]] = {}
         truncated_by_edge_limit = False
+        relationships_scanned = 0
+        relationship_scan_may_be_incomplete = False
         if seeds:
             frontier = set(seeds)
             visited = set(seeds)
             for _ in range(depth):
+                scan_remaining = scan_limit - relationships_scanned
+                if scan_remaining <= 0:
+                    relationship_scan_may_be_incomplete = True
+                    break
+                try:
+                    relationship_rows, scanned, truncated = store.relationship_neighbors(
+                        tuple(sorted(frontier)), scan_limit=scan_remaining
+                    )
+                except (FrontierStoreError, ValueError) as error:
+                    raise HTTPException(status_code=409, detail=str(error)) from error
+                relationships_scanned += scanned
+                relationship_scan_may_be_incomplete |= truncated
                 next_frontier: set[str] = set()
                 for item in relationship_rows:
                     relationship = Relationship.model_validate(item["relationship"])
@@ -438,6 +447,12 @@ def router(store: FrontierStore, registry: Any) -> APIRouter:
                 visited.update(next_frontier)
                 frontier = next_frontier
         elif q is None:
+            try:
+                relationship_rows = store.relationships(limit=scan_limit, effective_only=True)
+            except FrontierStoreError as error:
+                raise HTTPException(status_code=409, detail=str(error)) from error
+            relationships_scanned = len(relationship_rows)
+            relationship_scan_may_be_incomplete = len(relationship_rows) == scan_limit
             selected = {item["relationship_id"]: item for item in relationship_rows[:limit]}
             truncated_by_edge_limit = len(relationship_rows) > limit
 
@@ -496,7 +511,8 @@ def router(store: FrontierStore, registry: Any) -> APIRouter:
             "returned_edges": len(edges),
             "truncated_by_edge_limit": truncated_by_edge_limit,
             "relationship_scan_limit": scan_limit,
-            "relationship_scan_may_be_incomplete": len(relationship_rows) == scan_limit,
+            "relationships_scanned": relationships_scanned,
+            "relationship_scan_may_be_incomplete": relationship_scan_may_be_incomplete,
             "source_market_window_limit": 200,
         }
 

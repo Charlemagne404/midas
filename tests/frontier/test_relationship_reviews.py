@@ -14,6 +14,7 @@ from midas.frontier.adapters import KalshiAdapter, KrakenSpotAdapter, Polymarket
 from midas.frontier.adapters.transport import PublicReadTransport
 from midas.frontier.models import AdapterConfig, RawObservation, Venue
 from midas.frontier.registry import AdapterRegistry
+from midas.frontier.relationships import propose_relationships
 from midas.frontier.storage import FrontierStore
 
 from apps.api.frontier import router
@@ -307,7 +308,7 @@ def test_store_schema_two_migrates_additively_to_review_schema(tmp_path):
             connection.execute(
                 "SELECT value FROM frontier_meta WHERE key='schema_version'"
             ).fetchone()[0]
-            == "4"
+            == "5"
         )
         assert (
             connection.execute(
@@ -318,3 +319,47 @@ def test_store_schema_two_migrates_additively_to_review_schema(tmp_path):
         assert "supersedes_relationship_id" in {
             row[1] for row in connection.execute("PRAGMA table_info(relationships)")
         }
+        assert {
+            row[0]
+            for row in connection.execute("SELECT name FROM sqlite_master WHERE type='index'")
+        } >= {
+            "relationships_left_endpoint_recent",
+            "relationships_right_endpoint_recent",
+        }
+
+
+def test_store_schema_four_adds_endpoint_indexes_without_rewriting_records(tmp_path):
+    store = FrontierStore(tmp_path / "frontier-v4", max_bytes=2 * 1024 * 1024)
+    store.initialize()
+    relationship = propose_relationships(
+        (market(Venue.POLYMARKET, "schema-four-a"), market(Venue.KALSHI, "schema-four-b")),
+        max_pairs=10,
+    )[0]
+    store.append_relationship(relationship)
+    with sqlite3.connect(store.path) as connection:
+        before = connection.execute(
+            "SELECT relationship_json,row_sha256 FROM relationships WHERE relationship_id=?",
+            (relationship.relationship_id,),
+        ).fetchone()
+        connection.execute("DROP INDEX relationships_left_endpoint_recent")
+        connection.execute("DROP INDEX relationships_right_endpoint_recent")
+        connection.execute("UPDATE frontier_meta SET value='4' WHERE key='schema_version'")
+    store.initialize()
+    with sqlite3.connect(store.path) as connection:
+        assert (
+            connection.execute(
+                "SELECT value FROM frontier_meta WHERE key='schema_version'"
+            ).fetchone()[0]
+            == "5"
+        )
+        index_names = {
+            row[0]
+            for row in connection.execute("SELECT name FROM sqlite_master WHERE type='index'")
+        }
+        assert "relationships_left_endpoint_recent" in index_names
+        assert "relationships_right_endpoint_recent" in index_names
+        after = connection.execute(
+            "SELECT relationship_json,row_sha256 FROM relationships WHERE relationship_id=?",
+            (relationship.relationship_id,),
+        ).fetchone()
+        assert after == before

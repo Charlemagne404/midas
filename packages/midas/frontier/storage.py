@@ -21,7 +21,7 @@ from midas.frontier.relationships import (
 )
 from midas.frontier.replay import ReplayResult
 
-SCHEMA_VERSION = 4
+SCHEMA_VERSION = 5
 MAX_ROW_BYTES = 512 * 1024
 
 
@@ -107,6 +107,10 @@ class FrontierStore:
                 );
                 CREATE INDEX IF NOT EXISTS relationships_pair
                     ON relationships(left_market_id, right_market_id, created_at_utc DESC);
+                CREATE INDEX IF NOT EXISTS relationships_left_endpoint_recent
+                    ON relationships(left_market_id, created_at_utc DESC, relationship_id);
+                CREATE INDEX IF NOT EXISTS relationships_right_endpoint_recent
+                    ON relationships(right_market_id, created_at_utc DESC, relationship_id);
                 CREATE TABLE IF NOT EXISTS relationship_reviews (
                     review_id TEXT PRIMARY KEY,
                     relationship_id TEXT NOT NULL,
@@ -177,6 +181,12 @@ class FrontierStore:
                     connection.execute(
                         "ALTER TABLE relationship_reviews ADD COLUMN adjudicated_relationship_id TEXT"
                     )
+                connection.execute(
+                    "UPDATE frontier_meta SET value=? WHERE key='schema_version'",
+                    (str(SCHEMA_VERSION),),
+                )
+                connection.commit()
+            elif current[0] == "4":
                 connection.execute(
                     "UPDATE frontier_meta SET value=? WHERE key='schema_version'",
                     (str(SCHEMA_VERSION),),
@@ -867,6 +877,65 @@ class FrontierStore:
                         "Effective relationship revision does not match its latest review"
                     )
         return tuple(result)
+
+    def relationship_neighbors(
+        self, market_ids: tuple[str, ...], *, scan_limit: int = 500
+    ) -> tuple[tuple[dict[str, Any], ...], int, bool]:
+        """Return effective edges touching a bounded market set via endpoint indexes."""
+        if not 1 <= len(market_ids) <= 200 or len(set(market_ids)) != len(market_ids):
+            raise ValueError("Relationship neighborhood requires 1..200 unique market IDs")
+        if any(not item or len(item) > 256 for item in market_ids):
+            raise ValueError("Relationship neighborhood market IDs are invalid")
+        if not 1 <= scan_limit <= 500:
+            raise ValueError("Relationship adjacency scan must be between 1 and 500")
+        if not self.path.exists():
+            return (), 0, False
+
+        placeholders = ",".join("?" for _ in market_ids)
+        sql = (
+            "SELECT r.relationship_id,r.left_market_id,r.right_market_id,r.state,"
+            "r.created_at_utc,r.relationship_json,r.row_sha256,r.supersedes_relationship_id "
+            "FROM relationships AS r WHERE r.relationship_id IN ("
+            "SELECT relationship_id FROM relationships "
+            f"WHERE left_market_id IN ({placeholders}) UNION "
+            "SELECT relationship_id FROM relationships "
+            f"WHERE right_market_id IN ({placeholders})) "
+            "ORDER BY r.created_at_utc DESC,r.relationship_id LIMIT ?"
+        )
+        with self._read_connect() as connection:
+            rows = connection.execute(sql, (*market_ids, *market_ids, scan_limit + 1)).fetchall()
+        truncated = len(rows) > scan_limit
+        scanned = min(len(rows), scan_limit)
+        rows = rows[:scan_limit]
+
+        validated: list[tuple[sqlite3.Row, Relationship]] = [
+            (row, self._validated_relationship_row(row)) for row in rows
+        ]
+        review_targets = tuple(
+            dict.fromkeys(
+                relationship.supersedes or relationship.relationship_id
+                for _, relationship in validated
+            )
+        )
+        latest_reviews = self.latest_relationship_reviews(review_targets) if review_targets else {}
+        result: list[dict[str, Any]] = []
+        for row, relationship in validated:
+            target_id = relationship.supersedes or relationship.relationship_id
+            latest = latest_reviews.get(target_id)
+            if relationship.supersedes is None:
+                if latest is None:
+                    result.append(
+                        {**dict(row), "relationship": relationship.model_dump(mode="json")}
+                    )
+                continue
+            if latest is None:
+                raise FrontierStoreError("Relationship revision has no verified review record")
+            if latest.adjudicated_relationship_id != relationship.relationship_id:
+                continue
+            if latest.decision.value != relationship.state.value:
+                raise FrontierStoreError("Relationship revision does not match its latest review")
+            result.append({**dict(row), "relationship": relationship.model_dump(mode="json")})
+        return tuple(result), scanned, truncated
 
     def summary(self) -> dict[str, Any]:
         if not self.path.exists():
