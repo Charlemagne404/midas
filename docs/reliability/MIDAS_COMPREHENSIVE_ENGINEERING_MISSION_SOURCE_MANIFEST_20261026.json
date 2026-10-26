@@ -89,9 +89,9 @@
       "sha256": "5ea3b0ba91f2f000f7661373544842baa76ea4d6ccef236ad8d14b468a29716b"
     },
     {
-      "bytes": 26544,
+      "bytes": 26683,
       "path": "docs/reliability/MIDAS_COMPREHENSIVE_ENGINEERING_MISSION_20261025.md",
-      "sha256": "ff6a8adfd187a10cb2047b4e1c121a9f408f47679273e5b3ae6dd79c6b699854"
+      "sha256": "ebdf80060d30501f29efbfcc73c202a4ca713968eb2df16b30e49318c7411bcf"
     },
     {
       "bytes": 16816,
@@ -164,9 +164,9 @@
       "sha256": "c1604255e5cd98ec5f2cc0612a01f7702c41ca1e29ad67072d559e5a8c93af4b"
     },
     {
-      "bytes": 408242,
+      "bytes": 407029,
       "path": "docs/reliability/evidence/MIDAS_MISSION_20261026_RESEARCH_READINESS.png",
-      "sha256": "7c981ba7ce53b09756786cd3dc8b5a618ae88bd2327b694e126d778f8e5985b7"
+      "sha256": "f1844aae14208b839c1b906ca904099777366c40c7e1590d0df1a2f433613c3b"
     },
     {
       "bytes": 15444,
@@ -394,7 +394,7 @@
       "sha256": "594f67c3ddd4e1461d92ebb64c1d494b0aff95d658e7732b46fb56ec3cbbf68b"
     }
   ],
-  "generated_at_utc": "2026-10-26T00:01:53.784159+00:00",
+  "generated_at_utc": "2026-10-26T00:03:48.463117+00:00",
   "schema_version": 1,
   "scope": "All tracked, staged, and untracked regular files changed relative to the base commit. SHA-256 and byte counts cover current file contents. This manifest excludes itself."
 }
