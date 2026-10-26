@@ -169,8 +169,8 @@ def analyze_reported_book_timestamps(snapshots_dir: Path) -> dict[str, Any]:
     total_response_books = 0
 
     for path in paths:
-        snapshot, _ = _read_snapshot(path)
-        verified = _verify_snapshot(snapshot, path)
+        snapshot, compressed = _read_snapshot(path)
+        verified = _verify_snapshot(snapshot, path, compressed)
         source = snapshot["source_requests"]
         clob = source["clob_books"]
         requested_ns = clob.get("requested_at_ns")

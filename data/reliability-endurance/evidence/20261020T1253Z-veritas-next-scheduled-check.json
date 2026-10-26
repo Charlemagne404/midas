@@ -1,0 +1,125 @@
+{
+  "api": {
+    "main": {
+      "active": true,
+      "journal_events": 396121,
+      "laboratory": "READY",
+      "live_execution": false,
+      "memory_current_bytes": 728977408,
+      "memory_swap_current_bytes": 0,
+      "oom_events": 0,
+      "paper_recovery": "CHECKPOINT_VERIFIED",
+      "pid": 2737736,
+      "restarts": 0,
+      "startup_status": "READY",
+      "status": "READY"
+    },
+    "reality_interface": {
+      "active": true,
+      "journal_events": 61870,
+      "laboratory": "READY",
+      "live_execution": false,
+      "paper_recovery": "CHECKPOINT_VERIFIED",
+      "pid": 2688994,
+      "restarts": 0,
+      "startup_status": "READY",
+      "status": "READY"
+    }
+  },
+  "host": {
+    "available_disk_bytes": 181767667712,
+    "cpu_count": 6,
+    "cpu_psi_some_avg10_percent": 2.48,
+    "io_psi_full_avg10_percent": 0.7,
+    "io_psi_some_avg10_percent": 0.72,
+    "memory_available_bytes": 9090052096,
+    "memory_psi_full_avg10_percent": 0.0,
+    "memory_psi_some_avg10_percent": 0.0,
+    "no_safety_gate_disabled": true,
+    "swap_total_bytes": 4294963200,
+    "swap_used_bytes": 4250480640
+  },
+  "protection": {
+    "campaign_48h_001_modified": false,
+    "frontier_started": false,
+    "new_48h_campaign_started": false,
+    "recorder_stopped": false,
+    "research_campaign_modified": false
+  },
+  "reality_recorder": {
+    "active": true,
+    "candidate_deployed": false,
+    "memory_current_bytes": 716001280,
+    "memory_events": {
+      "high": 10097,
+      "max": 0,
+      "oom": 0,
+      "oom_kill": 0
+    },
+    "memory_high_bytes": 738197504,
+    "memory_max_bytes": 805306368,
+    "memory_swap_current_bytes": 684032,
+    "pid": 863193,
+    "restarts": 1
+  },
+  "reality_shadow_workers": {
+    "mission2": {
+      "active": false,
+      "campaign_sha256": "aa8acb2b46823c1a1e3ac5d01a57dde917746c2c7471098ae2a4598875e322f5",
+      "enabled": false,
+      "pid": 0,
+      "state": "STOPPED_WITH_RECOVERABLE_PENDING",
+      "status_sha256": "087a6498457b864b07adb2a47a21a8483f35548166e6c8031f17004eebd5836b"
+    },
+    "successor": {
+      "active": false,
+      "campaign_sha256": "c5eb8b98cbfd657372fc620192c5a0c0bb46f41d760800e680181fa7f3ee95a3",
+      "enabled": false,
+      "pid": 0,
+      "state": "STOPPED_WITH_RECOVERABLE_PENDING",
+      "status_sha256": "37cff1121c3b8191aec0e6d470ac36875665a9ae2880e0979bd86837e4ea399d"
+    }
+  },
+  "recorded_at": "2026-10-20T12:53:29+02:00",
+  "repositories": {
+    "main": {
+      "branch": "main",
+      "commit": "a86dbce",
+      "origin_matches": true,
+      "worktree_clean_before_this_documentation_update": true
+    },
+    "reality": {
+      "branch": "project/reality",
+      "commit": "c833200",
+      "origin_matches": true,
+      "worktree_clean": true
+    },
+    "veritas": {
+      "branch": "project/veritas",
+      "commit": "8717666",
+      "origin_matches": true,
+      "worktree_clean": true
+    }
+  },
+  "schedulers": {
+    "arena_scheduler_timer_active": true,
+    "arena_scheduler_waiting": true,
+    "new_research_campaign_timer_started": false
+  },
+  "schema_version": 1,
+  "veritas": {
+    "batch_exit_code": 0,
+    "batch_finished_at": "2026-10-20T12:52:21+02:00",
+    "batch_processed_segment_count": 10,
+    "batch_started_at": "2026-10-20T12:52:14+02:00",
+    "control_sha256": "b9d5ec9efbd4942c8f7c42d9363adbcd5451489aea318bb2277e72b3810509a2",
+    "next_scheduled_at": "2026-10-20T12:57:01+02:00",
+    "pending_segment_count": 0,
+    "processed_segment_count": 16098,
+    "status": "CURRENT",
+    "summary_sha256": "a52cadf56e8b349a43ee9b2337deff97c209c10a2578f782a2fd45036ed28434",
+    "v1_timer_active": false,
+    "v2_service_inactive_between_runs": true,
+    "v2_timer_active": true
+  }
+}

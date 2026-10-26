@@ -1,0 +1,11 @@
+Running as unit: midas-validation-light-20261020.service; invocation ID: cffdc22994ab4900ac9a167c11e38b51
+ERROR: file or directory not found: tests/test_reality_full_scale_validation.py
+
+
+no tests ran in 0.48s
+Finished with result: exit-code
+Main processes terminated with: code=exited/status=4
+Service runtime: 1.543s
+CPU time consumed: 414ms
+Memory peak: 256.0K
+Memory swap peak: 0B

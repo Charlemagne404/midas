@@ -1,0 +1,7 @@
+Running as unit: midas-validation-050f1e07071d.service; invocation ID: 0c7e914e5a56455bbab2f18ab6879883
+Finished with result: success
+Main processes terminated with: code=exited/status=0
+Service runtime: 222ms
+CPU time consumed: 68ms
+Memory peak: 8.7M
+Memory swap peak: 0B

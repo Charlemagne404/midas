@@ -20,15 +20,44 @@ from apps.api.reality import router
 def dashboard(tmp_path):
     raw = tmp_path / "data/recordings/reality"
     raw.mkdir(parents=True)
+    now_ns = time.time_ns()
     (raw / "status.json").write_text(
         json.dumps(
             dict(
                 state="RECORDING_UNSEQUENCED",
-                updated_ns=time.time_ns(),
+                updated_ns=now_ns,
+                last_observation_ns=now_ns,
+                config={"stale_seconds": 60},
+                backpressure_active=False,
                 failures=0,
                 books={},
                 selection_audit={"large": "excluded"},
                 ordinal=42,
+                markets=8,
+                expected_books=16,
+                fresh_books=16,
+                sequence_verified=False,
+                gaps=0,
+                book_comparisons={
+                    "stable_local_lineage_divergence": 0,
+                    "stable_local_lineage_match_unsequenced": 1,
+                },
+                last_book_comparison={
+                    "response_ns": now_ns,
+                    "assessment": "stable_local_lineage_match_unsequenced",
+                    "raw_ordinal": 1,
+                },
+                recent_append_sample_count=1,
+                recent_max_append_seconds=0.01,
+                recent_p95_append_seconds=0.01,
+                recent_max_persist_seconds=0.01,
+                recent_p95_persist_seconds=0.01,
+                persistence_latency_window_seconds=60,
+                persistence_latency_window_covered_seconds=60,
+                persistence_latency_window_complete=True,
+                recovery_status="CHECKPOINT_VERIFIED",
+                transport_queue_depth=0,
+                transport_queue_bound=32,
             )
         )
     )
@@ -85,7 +114,266 @@ def test_stale_status_not_reported_as_healthy(dashboard):
     data["updated_ns"] = time.time_ns() - 40_000_000_000
     path.write_text(json.dumps(data))
     r = c.get("/api/reality/overview").json()
-    assert r["health"] == "degraded" and "selection_audit" not in r["collector"]
+    assert r["health"] == "degraded"
+    assert r["health_reasons"] == ["status_stale"]
+    assert "selection_audit" not in r["collector"]
+
+
+def test_recovered_capture_projects_last_error_as_historical(dashboard):
+    c, root, _ = dashboard
+    path = root / "data/recordings/reality/status.json"
+    data = json.loads(path.read_text())
+    data["failures"] = 1
+    data["error"] = "ConnectionClosedOK: received 1001 (going away) server shutting down"
+    path.write_text(json.dumps(data))
+
+    result = c.get("/api/reality/overview").json()
+
+    assert result["health"] == "recording"
+    assert result["health_reasons"] == []
+    assert result["collector"]["failures"] == 1
+    assert result["collector"]["error"] is None
+    assert "ConnectionClosedOK" in result["collector"]["last_error"]
+    assert "ConnectionClosedOK" in json.loads(path.read_text())["error"]
+
+
+def test_fresh_book_status_exposes_unsequenced_quality_and_unverified_latency(dashboard):
+    c, root, _ = dashboard
+    path = root / "data/recordings/reality/status.json"
+    data = json.loads(path.read_text())
+    data.update(
+        expected_books=16,
+        fresh_books=16,
+        sequence_verified=False,
+        max_append_seconds=1.98,
+        book_comparisons={
+            "stable_local_lineage_divergence": 118,
+            "stable_local_lineage_match_unsequenced": 200,
+        },
+        gaps=10099,
+        counts={
+            "duplicate": 101,
+            "timestamp_regression": 47,
+            "snapshot_divergence": 29312,
+        },
+        last_book_comparison={
+            "response_ns": time.time_ns(),
+            "assessment": "stable_local_lineage_match_unsequenced",
+            "raw_ordinal": 10100,
+        },
+    )
+    for key in (
+        "recent_append_sample_count",
+        "recent_max_append_seconds",
+        "recent_p95_append_seconds",
+        "recent_max_persist_seconds",
+        "recent_p95_persist_seconds",
+        "persistence_latency_window_seconds",
+        "persistence_latency_window_covered_seconds",
+        "persistence_latency_window_complete",
+        "recovery_status",
+        "transport_queue_depth",
+    ):
+        data.pop(key, None)
+    path.write_text(json.dumps(data))
+
+    result = c.get("/api/reality/overview").json()
+
+    assert result["capture_health"] == "recording"
+    assert result["health"] == "degraded"
+    assert result["health_reasons"] == [
+        "recent_persistence_window_incomplete",
+        "recovery_state_unreported",
+        "transport_queue_depth_unreported",
+    ]
+    quality = result["source_quality"]
+    assert quality["book_coverage"] == {
+        "state": "complete_current_books",
+        "expected": 16,
+        "fresh": 16,
+        "missing": 0,
+    }
+    assert quality["sequence_state"] == "unsequenced"
+    assert quality["secondary_comparison"]["state"] == "fresh"
+    assert (
+        quality["secondary_comparison"]["assessment_count_scope"]
+        == "current_collector_process; full archive totals require a durable-history audit"
+    )
+    assert quality["secondary_comparison"]["raw_body_reference"] == (
+        "independent_book_record_at_raw_ordinal"
+    )
+    assert quality["lineage"]["stable_local_divergences"] == 118
+    assert quality["lineage"]["stable_divergence_count_scope"] == "current_collector_process"
+    assert quality["lineage"]["latest_assessment"] == "stable_local_lineage_match_unsequenced"
+    assert quality["recorded_gaps"]["count"] == 10099
+    assert quality["event_integrity_signals"]["duplicate_event_hashes_recent_window"] == 101
+    assert quality["event_integrity_signals"]["duplicate_window_capacity"] == 4096
+    assert quality["event_integrity_signals"]["timestamp_regressions"] == 47
+    assert quality["event_integrity_signals"]["count_scope"] == (
+        "current_collector_process; counters reset when the collector starts"
+    )
+    assert (
+        "raw records remain stored"
+        in quality["event_integrity_signals"]["interpretations"][
+            "duplicate_event_hashes_recent_window"
+        ]
+    )
+    assert (
+        "does not prove local event loss"
+        in quality["event_integrity_signals"]["interpretations"]["snapshot_divergences"]
+    )
+    assert quality["persistence"]["state"] == "recent_window_unavailable"
+    assert quality["persistence"]["lifetime_max_exceeded_threshold"] is True
+    assert quality["recovery_state"] == "not_reported"
+    assert quality["status"] == "incomplete_observability"
+    assert "historical_lineage_divergences_exist" in quality["known_limitations"]
+    assert "snapshot_reconstruction_differences_observed" in quality["known_limitations"]
+    assert (
+        "does not prove local event loss"
+        in quality["event_integrity_signals"]["interpretations"]["snapshot_divergences"]
+    )
+    assert "transport_queue_depth_unreported" in quality["observability_gaps"]
+
+
+def test_source_quality_handles_missing_and_malformed_legacy_metrics(dashboard):
+    c, root, _ = dashboard
+    path = root / "data/recordings/reality/status.json"
+    data = json.loads(path.read_text())
+    data.update(
+        markets=8,
+        fresh_books=20,
+        gaps="unknown",
+        counts={"duplicate": "unknown"},
+        book_comparisons={"stable_local_lineage_divergence": "unknown"},
+    )
+    path.write_text(json.dumps(data))
+
+    quality = c.get("/api/reality/overview").json()["source_quality"]
+
+    assert quality["book_coverage"]["state"] == "inconsistent_current_books"
+    assert quality["recorded_gaps"]["count"] is None
+    assert quality["lineage"]["stable_local_divergences"] is None
+    assert quality["event_integrity_signals"]["duplicate_event_hashes_recent_window"] is None
+
+
+def test_recent_persistence_window_is_reported_with_its_coverage(dashboard):
+    c, root, _ = dashboard
+    path = root / "data/recordings/reality/status.json"
+    data = json.loads(path.read_text())
+    data.update(
+        backpressure_active=False,
+        recent_append_sample_count=12,
+        recent_max_append_seconds=0.8,
+        recent_p95_append_seconds=0.2,
+        recent_max_persist_seconds=0.7,
+        recent_p95_persist_seconds=0.15,
+        persistence_latency_window_seconds=60,
+        persistence_latency_window_covered_seconds=20,
+        persistence_latency_window_complete=False,
+    )
+    path.write_text(json.dumps(data))
+
+    quality = c.get("/api/reality/overview").json()["source_quality"]["persistence"]
+
+    assert quality["state"] == "partial_recent_window"
+    assert quality["recent_sample_count"] == 12
+    assert quality["recent_max_append_seconds"] == 0.8
+    assert quality["recent_p95_append_seconds"] == 0.2
+    assert quality["recent_max_persist_seconds"] == 0.7
+    assert quality["recent_window_covered_seconds"] == 20
+    assert quality["recent_window_complete"] is False
+
+
+def test_stale_secondary_comparison_degrades_health_without_reviving_old_error(dashboard):
+    c, root, _ = dashboard
+    path = root / "data/recordings/reality/status.json"
+    data = json.loads(path.read_text())
+    data.update(
+        expected_books=16,
+        fresh_books=16,
+        sequence_verified=False,
+        error="ConnectionClosedOK: previous server shutdown",
+        last_book_comparison={
+            "response_ns": time.time_ns() - 31_000_000_000,
+            "assessment": "stable_local_lineage_match_unsequenced",
+        },
+    )
+    path.write_text(json.dumps(data))
+
+    result = c.get("/api/reality/overview").json()
+
+    assert result["capture_health"] == "recording"
+    assert result["health"] == "degraded"
+    assert result["health_reasons"] == ["secondary_comparison_stale"]
+    assert result["source_quality"]["status"] == "degraded"
+    assert result["collector"]["error"] is None
+    assert "ConnectionClosedOK" in result["collector"]["last_error"]
+
+
+def test_current_stable_lineage_divergence_degrades_source_quality(dashboard):
+    c, root, _ = dashboard
+    path = root / "data/recordings/reality/status.json"
+    data = json.loads(path.read_text())
+    data.update(
+        expected_books=16,
+        fresh_books=16,
+        sequence_verified=False,
+        book_comparisons={"stable_local_lineage_divergence": 118},
+        last_book_comparison={
+            "response_ns": time.time_ns(),
+            "assessment": "stable_local_lineage_divergence",
+        },
+    )
+    path.write_text(json.dumps(data))
+
+    result = c.get("/api/reality/overview").json()
+
+    assert result["health"] == "degraded"
+    assert result["health_reasons"] == ["current_lineage_divergence"]
+    assert result["source_quality"]["status"] == "degraded"
+
+
+def test_websocket_subscription_wait_is_reported_as_a_transition(dashboard):
+    c, root, _ = dashboard
+    path = root / "data/recordings/reality/status.json"
+    data = json.loads(path.read_text())
+    data["state"] = "AWAITING_DATA"
+    data["updated_ns"] = time.time_ns()
+    data["last_observation_ns"] = time.time_ns() - 1_000_000_000
+    path.write_text(json.dumps(data))
+
+    result = c.get("/api/reality/overview").json()
+
+    assert result["health"] == "degraded"
+    assert result["health_reasons"] == ["collector_state"]
+    assert result["collector"]["state"] == "AWAITING_DATA"
+
+
+def test_fresh_status_with_stale_observations_is_degraded(dashboard):
+    c, root, _ = dashboard
+    path = root / "data/recordings/reality/status.json"
+    data = json.loads(path.read_text())
+    data["last_observation_ns"] = time.time_ns() - 61_000_000_000
+    data["updated_ns"] = time.time_ns()
+    path.write_text(json.dumps(data))
+
+    result = c.get("/api/reality/overview").json()
+
+    assert result["health"] == "degraded"
+    assert result["health_reasons"] == ["observations_stale"]
+
+
+def test_backpressure_is_reported_as_degraded(dashboard):
+    c, root, _ = dashboard
+    path = root / "data/recordings/reality/status.json"
+    data = json.loads(path.read_text())
+    data["backpressure_active"] = True
+    path.write_text(json.dumps(data))
+
+    result = c.get("/api/reality/overview").json()
+
+    assert result["health"] == "degraded"
+    assert result["health_reasons"] == ["backpressured"]
 
 
 def test_index_bounds_and_exact_decision_evidence(dashboard):

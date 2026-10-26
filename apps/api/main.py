@@ -109,13 +109,18 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(router(lambda: app.state.laboratory))
     from apps.api.arena import router as arena_router
 
-    app.include_router(arena_router(config.arena_root))
+    veritas_workspace = (
+        config.veritas_workspace or Path(__file__).resolve().parents[2]
+    ).resolve()
+    app.include_router(
+        arena_router(config.arena_root, veritas_repository=veritas_workspace)
+    )
     from apps.api.reality import router as reality_router
 
     app.include_router(reality_router(config.reality_workspace.resolve()))
     from apps.api.veritas import router as veritas_router
 
-    app.include_router(veritas_router(Path(__file__).resolve().parents[2]))
+    app.include_router(veritas_router(veritas_workspace))
 
     @app.middleware("http")
     async def gate_failed_startup(request: Request, call_next: Any) -> Any:
@@ -228,6 +233,16 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         from midas.paper.broker import summary
 
         return {**summary(service.broker.state, now_ms()), "healthy": service.broker.healthy}
+
+    @app.get("/api/paper/summary")
+    async def paper_summary() -> dict[str, Any]:
+        from midas.market_data.polymarket import now_ms
+        from midas.paper.broker import summary
+
+        return {
+            **summary(service.broker.state, now_ms(), include_decisions=False),
+            "healthy": service.broker.healthy,
+        }
 
     class PaperControl(BaseModel):
         model_config = ConfigDict(extra="forbid")

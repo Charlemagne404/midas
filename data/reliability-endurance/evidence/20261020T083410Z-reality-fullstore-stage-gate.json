@@ -1,0 +1,87 @@
+{
+  "capture_window_local": "2026-10-20T10:33:45+02:00/2026-10-20T10:34:30+02:00",
+  "production_recorder": {
+    "unit_scope": "systemd --user",
+    "unit": "midas-reality.service",
+    "pid": 863193,
+    "active": true,
+    "n_restarts": 1,
+    "candidate_commit_loaded": false,
+    "memory_current_sample_range_bytes": [726994944, 727752704],
+    "memory_high_bytes": 738197504,
+    "memory_max_bytes": 805306368,
+    "memory_high_events_before_and_after_sample": 10069,
+    "memory_max_oom_oom_kill_events": 0
+  },
+  "source_snapshot": {
+    "source_root": "/home/charlie/midas-reality/data/recordings/reality",
+    "finalized_segments": 15815,
+    "finalized_segment_bytes": 4220860418,
+    "source_ordinal_at_snapshot": 2370606,
+    "live_ordinal_at_2026_10_20T10_34_10": 2372065,
+    "snapshot_manifest_sha256": "1db9aa5743ae61d2adc8c05f466096c9bfbc975fe217014d17e803ff7e7648ca",
+    "active_open_segment_excluded": true
+  },
+  "staging_attempt": {
+    "result": "ABORTED_BEFORE_REPLAY",
+    "reason": "Rate-limited transfer crossed the configured host CPU PSI safety gate; the copy was interrupted.",
+    "peak_cpu_some_avg10_percent_during_attempt": 35.17,
+    "configured_cpu_psi_gate_percent": 20.0,
+    "partial_stage_file_count": 3,
+    "partial_stage_bytes": 6249306,
+    "full_store_copy_complete": false,
+    "full_store_replay_run": false,
+    "production_source_modified": false
+  },
+  "host_sample": {
+    "mem_available_bytes": 9125400576,
+    "swap_total_bytes": 4294963200,
+    "swap_used_bytes": 3952537600,
+    "swap_free_bytes": 342425600,
+    "memory_psi_avg10_percent": 0.0,
+    "vmstat_swap_in_kib_per_second_after_initial_average": [4, 0, 0, 0, 0],
+    "vmstat_swap_out_kib_per_second_after_initial_average": [0, 0, 0, 0, 0],
+    "vmstat_cpu_idle_percent_samples": [87, 89, 87, 92, 90, 91]
+  },
+  "integrated_services": {
+    "main_api": {
+      "status": "READY",
+      "paper_recovery": "CHECKPOINT_VERIFIED",
+      "journal_events": 391597,
+      "revision": 391596,
+      "live_execution": false
+    },
+    "reality_api": {
+      "collector_state": "RECORDING_UNSEQUENCED",
+      "fresh_books": 16,
+      "expected_books": 16,
+      "health_reasons": [],
+      "collector_failures_counter": 1
+    },
+    "veritas_v2": {
+      "last_run": "2026-10-20T10:32:16+02:00",
+      "status": "CURRENT",
+      "processed_segments": 15822,
+      "pending_segments": 0,
+      "exit_status": 0
+    },
+    "arena_scheduler": {
+      "last_state": "COMPLETE",
+      "schedules": []
+    },
+    "reality_daily_research_scheduler": {
+      "state": "WAITING_FOR_COVERAGE",
+      "recorded_span_days": 5.774430716441446,
+      "active_forward_campaigns_modified": false,
+      "automatic_promotion": false,
+      "dataset_or_training_started": false
+    },
+    "approved_reality_shadow_workers": {
+      "mission2": "inactive",
+      "mission2_successor": "inactive",
+      "worker_processes": 0
+    },
+    "48h_campaign_timer": "no_active_48h_campaign_timer_found"
+  },
+  "interpretation": "The passive host sample showed no sustained paging or memory pressure. The live recorder nevertheless has only about 10 MiB before MemoryHigh. The full-store copy and replay remain unmeasured for the current candidate; no replay is justified by this sample."
+}

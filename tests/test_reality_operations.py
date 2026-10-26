@@ -85,6 +85,39 @@ def test_archive_incremental_integrity_and_originals(tmp_path):
     assert json.loads((target / "manifest.json").read_text())["segments"] == value["segments"]
 
 
+def test_archive_resume_counts_destination_once_for_many_missing_segments(tmp_path):
+    root, target = tmp_path / "raw", tmp_path / "archive"
+    store = Store(root, reserve=1)
+    for index in range(24):
+        store.append("frame", "PONG", received_ns=(index + 1) * 60_000_000_000)
+        store.rotate()
+    store.close()
+    value = manifest(root)
+    original_hashes = {s["file"]: file_hash(root / s["file"]) for s in value["segments"]}
+    archive(root, target, budget=1_000_000, reserve=1)
+
+    missing = value["segments"][:12]
+    for info in missing:
+        (target / info["file"]).unlink()
+
+    original_iterdir = Path.iterdir
+    destination_iterdir_calls = 0
+
+    def counted_iterdir(path):
+        nonlocal destination_iterdir_calls
+        if path == target:
+            destination_iterdir_calls += 1
+        yield from original_iterdir(path)
+
+    with patch.object(Path, "iterdir", counted_iterdir):
+        result = archive(root, target, budget=1_000_000, reserve=1)
+
+    assert destination_iterdir_calls == 1
+    assert result["segments"] == value["segments"]
+    for name, digest in original_hashes.items():
+        assert file_hash(root / name) == file_hash(target / name) == digest
+
+
 def test_archive_budget_failure_resumes_without_publishing(tmp_path):
     root, target = tmp_path / "raw", tmp_path / "archive"
     value = sample(root)

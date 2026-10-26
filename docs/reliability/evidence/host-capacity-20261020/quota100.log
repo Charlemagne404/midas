@@ -1,0 +1,8 @@
+Running as unit: midas-capacity-quota100.service; invocation ID: 20b9c9dad9a94244876e797deb096a7e
+{"cpu_seconds": 1.07208319, "wall_seconds": 1.0722612550016493, "sha256": "ed578080a26096561e283f2a1fde9f67c88806afa782d7dec31e22262f036b80", "before": {"cpu.stat": "usage_usec 26856\nuser_usec 18898\nsystem_usec 7957\nnice_usec 19000\ncore_sched.force_idle_usec 0\nnr_periods 0\nnr_throttled 0\nthrottled_usec 0\nnr_bursts 0\nburst_usec 0\n", "cpu.pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=13\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=13\n", "memory.peak": "6549504\n", "cpu.max": "100000 100000\n", "memory.max": "67108864\n"}, "after": {"cpu.stat": "usage_usec 1099764\nuser_usec 1089766\nsystem_usec 9997\nnice_usec 1090000\ncore_sched.force_idle_usec 0\nnr_periods 11\nnr_throttled 0\nthrottled_usec 0\nnr_bursts 0\nburst_usec 0\n", "cpu.pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=175\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=175\n", "memory.peak": "6549504\n", "cpu.max": "100000 100000\n", "memory.max": "67108864\n"}, "maxrss_kib": 16328}
+Finished with result: success
+Main processes terminated with: code=exited/status=0
+Service runtime: 1.105s
+CPU time consumed: 1.105s
+Memory peak: 256.0K
+Memory swap peak: 0B

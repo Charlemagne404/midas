@@ -1,0 +1,108 @@
+{
+  "samples": [
+    {
+      "bytes": 90566,
+      "count": 56,
+      "file": "00000000000000000001-78968e9995f1412fb2d66cf115626190.seg",
+      "first": 1,
+      "kinds": {
+        "discovery": 1,
+        "frame": 50,
+        "gap": 2,
+        "heartbeat": 2,
+        "subscription": 1
+      },
+      "last": 56,
+      "schema_version": 1,
+      "sha256": "cc2a3cfcc4bfc55ce0d42ad70898bdd11871b3bcc31ae7039b9224b5537b53e9"
+    },
+    {
+      "bytes": 20574,
+      "count": 31,
+      "file": "00000000000001181041-cb23aca259334ff58ed9d638ba7678d3.seg",
+      "first": 1181041,
+      "kinds": {
+        "book_comparison": 2,
+        "checkpoint": 1,
+        "frame": 22,
+        "heartbeat": 3,
+        "independent_book": 2,
+        "timing_measurement": 1
+      },
+      "last": 1181071,
+      "schema_version": 1,
+      "sha256": "612a7cff3f39a7332b2e07e1b2e052f28237a7a28801a1893057d8308fbbf245"
+    },
+    {
+      "bytes": 9365,
+      "count": 16,
+      "file": "00000000000002436218-a1a0135e235243f4bba648c54b2fb1ab.seg",
+      "first": 2436218,
+      "kinds": {
+        "book_comparison": 2,
+        "checkpoint": 1,
+        "frame": 7,
+        "heartbeat": 3,
+        "independent_book": 2,
+        "timing_measurement": 1
+      },
+      "last": 2436233,
+      "schema_version": 1,
+      "sha256": "2cb71f768fd465157269f1ce6e2bbb80009e1900031078f0d674f9e892c5a8ac"
+    }
+  ],
+  "sample_bytes": 120505,
+  "scope": "three actual finalized segments; NOT full-store verification",
+  "protected": {
+    "/home/charlie/midas/data/autonomy/48H-001/manifest.json": {
+      "before": "55538167f6b0d9516270001587abea0894801124effad635a0d830be5e0be379",
+      "now": "55538167f6b0d9516270001587abea0894801124effad635a0d830be5e0be379",
+      "unchanged": true
+    },
+    "/home/charlie/midas/data/autonomy/48H-001/STATUS.md": {
+      "before": "704c929029f7aaaf42154ae0af8e29fb4e162509c9b9af059ffb9ddcc1e22fac",
+      "now": "704c929029f7aaaf42154ae0af8e29fb4e162509c9b9af059ffb9ddcc1e22fac",
+      "unchanged": true
+    },
+    "/home/charlie/midas-reality/data/research/reality/forward/mission2/campaign.json": {
+      "before": "aa8acb2b46823c1a1e3ac5d01a57dde917746c2c7471098ae2a4598875e322f5",
+      "now": "aa8acb2b46823c1a1e3ac5d01a57dde917746c2c7471098ae2a4598875e322f5",
+      "unchanged": true
+    },
+    "/home/charlie/midas-reality/data/research/reality/forward/mission2/status.json": {
+      "before": "087a6498457b864b07adb2a47a21a8483f35548166e6c8031f17004eebd5836b",
+      "now": "087a6498457b864b07adb2a47a21a8483f35548166e6c8031f17004eebd5836b",
+      "unchanged": true
+    },
+    "/home/charlie/midas-reality/data/research/reality/forward/mission2-successor-20261016/campaign.json": {
+      "before": "c5eb8b98cbfd657372fc620192c5a0c0bb46f41d760800e680181fa7f3ee95a3",
+      "now": "c5eb8b98cbfd657372fc620192c5a0c0bb46f41d760800e680181fa7f3ee95a3",
+      "unchanged": true
+    },
+    "/home/charlie/midas-reality/data/research/reality/forward/mission2-successor-20261016/status.json": {
+      "before": "37cff1121c3b8191aec0e6d470ac36875665a9ae2880e0979bd86837e4ea399d",
+      "now": "37cff1121c3b8191aec0e6d470ac36875665a9ae2880e0979bd86837e4ea399d",
+      "unchanged": true
+    }
+  },
+  "campaigns": [
+    {
+      "path": "/home/charlie/midas-reality/data/research/reality/forward/mission2/campaign.json",
+      "identity": "verified_without_replacing_pinned_code",
+      "candidate_code_check": "Use frozen campaign code; no mid-period implementation retuning",
+      "frozen_code_verification": {
+        "returncode": 0,
+        "output": "frozen code verification passed\n"
+      }
+    },
+    {
+      "path": "/home/charlie/midas-reality/data/research/reality/forward/mission2-successor-20261016/campaign.json",
+      "identity": "verified_without_replacing_pinned_code",
+      "candidate_code_check": "Use frozen campaign code; no mid-period implementation retuning",
+      "frozen_code_verification": {
+        "returncode": 0,
+        "output": "frozen code verification passed\n"
+      }
+    }
+  ]
+}

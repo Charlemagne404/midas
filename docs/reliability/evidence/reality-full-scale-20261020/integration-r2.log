@@ -1,0 +1,38 @@
+Running as unit: midas-validation-integration-r2-20261020.service; invocation ID: cc8febe209584b5e8c6ec99b59f4a585
+Reality storage: /home/charlie/midas-reality-reliability/packages/midas/reality/storage.py
+.......F......................                                           [100%]
+=================================== FAILURES ===================================
+______ test_resource_snapshot_checks_arena_jobs_across_both_repositories _______
+
+tmp_path = PosixPath('/tmp/pytest-of-charlie/pytest-885/test_resource_snapshot_checks_0')
+
+    def test_resource_snapshot_checks_arena_jobs_across_both_repositories(tmp_path):
+        primary, veritas, output = tmp_path / "primary", tmp_path / "veritas", tmp_path / "output"
+        (primary / "jobs").mkdir(parents=True)
+        (veritas / "jobs/job-running").mkdir(parents=True)
+        output.mkdir()
+        (veritas / "jobs/job-running/job.json").write_text(
+            json.dumps({"job_id": "job-running", "state": "RUNNING"})
+        )
+        snapshot = batch.resource_snapshot(
+            primary,
+            output,
+            other_arena_roots=(veritas,),
+        )
+        assert snapshot["active_arena_job_ids"] == ["veritas:job-running"]
+>       assert batch.resource_gate(snapshot)["reasons"] == ["arena_worker_active"]
+E       AssertionError: assert ['arena_worke...cpu_pressure'] == ['arena_worker_active']
+E
+E         Left contains one more item: 'host_cpu_pressure'
+E         Use -v to get more diff
+
+tests/test_veritas_gap_detail_v2_batch.py:77: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_veritas_gap_detail_v2_batch.py::test_resource_snapshot_checks_arena_jobs_across_both_repositories
+1 failed, 29 passed in 65.80s (0:01:05)
+Finished with result: exit-code
+Main processes terminated with: code=exited/status=1
+Service runtime: 1min 19.242s
+CPU time consumed: 3.979s
+Memory peak: 256.0K
+Memory swap peak: 0B

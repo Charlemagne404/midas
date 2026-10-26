@@ -1,0 +1,30 @@
+{
+  "main": {
+    "events": 102,
+    "kinds": {
+      "observe": 102
+    },
+    "first_revision": 404449,
+    "last_revision": 404550,
+    "bounded_range": [
+      399550,
+      404550
+    ],
+    "measurement": "command timestamp inside sampled window; commit boundary uncertainty < refresh interval"
+  },
+  "interface": {
+    "events": 90,
+    "kinds": {
+      "observe": 90
+    },
+    "first_revision": 69604,
+    "last_revision": 69693,
+    "bounded_range": [
+      69000,
+      74000
+    ],
+    "measurement": "command timestamp inside sampled window; commit boundary uncertainty < refresh interval"
+  },
+  "first": 1792508987.5342681,
+  "last": 1792509169.1134496
+}

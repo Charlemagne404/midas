@@ -1,0 +1,165 @@
+{
+  "api_health": {
+    "laboratory": {
+      "recovering_campaigns": [],
+      "recovery_errors": [],
+      "root": "/home/charlie/midas/data/laboratory-final",
+      "status": "READY"
+    },
+    "live_execution": false,
+    "mode": "demo",
+    "paper_recovery": {
+      "journal_events": 398083,
+      "revision": 398082,
+      "status": "CHECKPOINT_VERIFIED"
+    },
+    "startup_status": "READY",
+    "status": "READY"
+  },
+  "api_service": {
+    "ActiveState": "active",
+    "ExecMainStartTimestamp": "Tue 2026-10-20 08:54:16 CEST",
+    "MainPID": "2737736",
+    "NRestarts": "0",
+    "WorkingDirectory": "/home/charlie/midas"
+  },
+  "arena_activity": {
+    "active_director_count": 0,
+    "active_job_count": 0,
+    "active_schedule_count": 0,
+    "invalid_artifact_count": 0,
+    "queued_director_count": 0,
+    "queued_job_count": 0,
+    "stale_director_count": 3,
+    "status": "available",
+    "unverified_director_count": 0
+  },
+  "arena_scheduler": {
+    "ActiveState": "active",
+    "LastTriggerUSec": "Tue 2026-10-20 13:53:03 CEST",
+    "NextElapseUSecRealtime": "Tue 2026-10-20 13:54:01 CEST"
+  },
+  "campaign_hashes": {
+    "48H-001_manifest": "55538167f6b0d9516270001587abea0894801124effad635a0d830be5e0be379",
+    "48H-001_status": "44f146d86567830a34db95838297faa980510e7bc6daac1f22a36fcbbe6b8954",
+    "mission2_campaign": "aa8acb2b46823c1a1e3ac5d01a57dde917746c2c7471098ae2a4598875e322f5",
+    "mission2_status": "087a6498457b864b07adb2a47a21a8483f35548166e6c8031f17004eebd5836b",
+    "successor_campaign": "c5eb8b98cbfd657372fc620192c5a0c0bb46f41d760800e680181fa7f3ee95a3",
+    "successor_status": "37cff1121c3b8191aec0e6d470ac36875665a9ae2880e0979bd86837e4ea399d"
+  },
+  "candidate_deployment_guard": {
+    "behavior": "Sets Restart=no before the single start; restores prior Restart=on-failure only after the stable health window. On failure it keeps Restart=no and performs no automatic retry or rollback.",
+    "deployed": false,
+    "isolated_tests_cover_guard": true
+  },
+  "captured_at_local": "2026-10-20T13:53:58.654501+02:00",
+  "captured_at_utc": "2026-10-20T11:53:58.654501+00:00",
+  "host_resources": {
+    "cpu_pressure": "some avg10=1.96 avg60=2.97 avg300=3.23 total=277907323080\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+    "io_pressure": "some avg10=0.54 avg60=0.76 avg300=0.77 total=16210741397\nfull avg10=0.52 avg60=0.68 avg300=0.67 total=12642090637",
+    "mem_available_bytes": 9027256320,
+    "memory_pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=10877660730\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=6260865240",
+    "swap_free_bytes": 69578752,
+    "swap_total_bytes": 4294963200
+  },
+  "reality_api_service": {
+    "ActiveState": "active",
+    "ExecMainStartTimestamp": "Tue 2026-10-20 08:24:36 CEST",
+    "MainPID": "2688994",
+    "NRestarts": "0",
+    "WorkingDirectory": "/home/charlie/midas-reality"
+  },
+  "reality_cgroup": {
+    "memory.current": "737521664",
+    "memory.events": "low 0\nhigh 10109\nmax 0\noom 0\noom_kill 0\noom_group_kill 0\nsock_throttled 216",
+    "memory.high": "738197504",
+    "memory.max": "805306368",
+    "memory.pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=712414\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=712414",
+    "memory.swap.current": "684032",
+    "memory.swap.max": "0"
+  },
+  "reality_health": {
+    "orders_submitted": 0,
+    "reasons": [],
+    "state": "recording",
+    "status_age_seconds": 1.904352496
+  },
+  "reality_high_margin_bytes": 675840,
+  "reality_recorder_service": {
+    "ActiveState": "active",
+    "ExecMainStartTimestamp": "Mon 2026-10-19 00:50:57 CEST",
+    "MainPID": "863193",
+    "MemoryHigh": "738197504",
+    "MemoryMax": "805306368",
+    "MemorySwapMax": "0",
+    "NRestarts": "1",
+    "Restart": "on-failure",
+    "RestartUSec": "10s",
+    "StartLimitBurst": "5",
+    "StartLimitIntervalUSec": "5min",
+    "WorkingDirectory": "/home/charlie/midas-reality"
+  },
+  "reality_recorder_status": {
+    "error": "ConnectionClosedOK: received 1001 (going away) server shutting down; then sent 1001 (going away) server shutting down",
+    "expected_books": 16,
+    "failures": 1,
+    "frames": 453993,
+    "fresh_books": 16,
+    "ordinal": 2424228,
+    "sequence_verified": false,
+    "state": "RECORDING_UNSEQUENCED",
+    "storage_bytes": 4323718534,
+    "timing_uncertain_books": 0
+  },
+  "repository_tips": {
+    "main": {
+      "branch": "main",
+      "dirty": false,
+      "head": "e5760e9bf7d9a5eff7467727b4a9adccda94b336"
+    },
+    "reality": {
+      "branch": "project/reality",
+      "dirty": false,
+      "head": "c83320000a085bf30490b4b76b425527fe8574f7"
+    },
+    "reality_candidate": {
+      "branch": "fix/reality-stale-error-status",
+      "dirty": false,
+      "head": "b0610c1b694e6ece52a4ac4fc12db2624540b8ed"
+    },
+    "veritas": {
+      "branch": "project/veritas",
+      "dirty": false,
+      "head": "8717666aa1988fb28c999998014ca1c4b5717113"
+    }
+  },
+  "staging_decision": {
+    "admitted": false,
+    "observed_margin_bytes": 1196032,
+    "reason": "Recorder cgroup headroom remains below the verified threshold; do not run another full-store replay.",
+    "required_margin_bytes": 4194304
+  },
+  "veritas_v2_latest_run": {
+    "batch_processed_segment_count": 10,
+    "control_sha256": "ed82ed27fc2cad716c5c00ab5da3cff9042e86a3451e991800a78b1a3bf51124",
+    "last_error": null,
+    "last_error_type": null,
+    "pending_segment_count": 0,
+    "processed_segment_count": 16216,
+    "status": "CURRENT",
+    "summary_sha256": "6632b26605070e4988e80c6ffdc203b550982ce46ae06a473817ad632d34d490"
+  },
+  "veritas_v2_service": {
+    "ActiveState": "inactive",
+    "ExecMainExitTimestamp": "Tue 2026-10-20 13:52:19 CEST",
+    "ExecMainStartTimestamp": "Tue 2026-10-20 13:52:14 CEST",
+    "ExecMainStatus": "0",
+    "Result": "success",
+    "WorkingDirectory": "/home/charlie/.local/share/midas-veritas/gap-detail-v2-20261020/runtime"
+  },
+  "veritas_v2_timer": {
+    "ActiveState": "active",
+    "LastTriggerUSec": "Tue 2026-10-20 13:52:14 CEST",
+    "NextElapseUSecRealtime": "Tue 2026-10-20 13:57:07 CEST"
+  }
+}

@@ -1,0 +1,14 @@
+Traceback (most recent call last):
+  File "/home/charlie/midas/scripts/reality_full_scale_validation.py", line 282, in <module>
+    main()
+  File "/home/charlie/midas/scripts/reality_full_scale_validation.py", line 278, in main
+    run(source, output)
+  File "/home/charlie/midas/scripts/reality_full_scale_validation.py", line 155, in run
+    initial = admission()
+              ^^^^^^^^^^^
+  File "/home/charlie/midas/scripts/reality_full_scale_validation.py", line 89, in admission
+    sample = require_safe(values["ControlGroup"])
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/charlie/midas-reality-reliability/packages/midas/reality/resources.py", line 56, in require_safe
+    raise ValueError("Resource admission rejected: " + "; ".join(reasons))
+ValueError: Resource admission rejected: recorder below 4 MiB MemoryHigh headroom

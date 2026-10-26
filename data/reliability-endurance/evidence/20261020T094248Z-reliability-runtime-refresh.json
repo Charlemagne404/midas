@@ -1,0 +1,578 @@
+{
+  "captured_at_utc": "2026-10-20T09:42:48Z",
+  "collection_completed_at_utc": "2026-10-20T10:08:02Z",
+  "repository_state_before_evidence_commit": {
+    "main": {
+      "branch": "main",
+      "head": "62aaf84078016a9c02148b7b5a404db9ac3b8d7f",
+      "origin_head": "62aaf84078016a9c02148b7b5a404db9ac3b8d7f",
+      "dirty": false
+    },
+    "reality": {
+      "branch": "project/reality",
+      "head": "29f77ad131ad0b8415b2a67a2b516e52878f5792",
+      "origin_head": "29f77ad131ad0b8415b2a67a2b516e52878f5792",
+      "dirty": false
+    },
+    "veritas": {
+      "branch": "project/veritas",
+      "head": "8717666aa1988fb28c999998014ca1c4b5717113",
+      "origin_head": "8717666aa1988fb28c999998014ca1c4b5717113",
+      "dirty": false
+    }
+  },
+  "api": {
+    "unit": "midas-api.service",
+    "pid": 2737736,
+    "started_local": "2026-10-20T08:54:17+02:00",
+    "ready_local": "2026-10-20T08:56:43+02:00",
+    "startup_seconds": 146,
+    "source_revision_at_start": "e4e6253bd6e1ecf71e704b91423a00b7fe8527e6",
+    "api_or_package_code_changed_since_start": false,
+    "working_directory": "/home/charlie/midas",
+    "active": true,
+    "restarts": 0,
+    "health": "READY",
+    "paper_recovery": {
+      "status": "CHECKPOINT_VERIFIED",
+      "journal_events": 393649,
+      "revision": 393648
+    },
+    "laboratory": {
+      "status": "READY",
+      "recovering_campaigns": [],
+      "recovery_errors": []
+    },
+    "mode": "demo",
+    "live_execution": false,
+    "paper_summary": {
+      "status": "RUNNING",
+      "healthy": true,
+      "equity": "99.840000",
+      "open_positions": 1,
+      "live_orders": 0
+    },
+    "cgroup": {
+      "memory_current_bytes": 693571584,
+      "memory_peak_bytes": 1610874880,
+      "memory_high_bytes": 1610612736,
+      "memory_max_bytes": 1879048192,
+      "memory_swap_max_bytes": 0,
+      "memory_events": {
+        "high": 2292,
+        "max": 0,
+        "oom": 0,
+        "oom_kill": 0
+      },
+      "memory_swap_current_bytes": 0
+    },
+    "five_minute_stability_sample": {
+      "started_local": "2026-10-20T11:48:17+02:00",
+      "finished_local": "2026-10-20T11:53:17+02:00",
+      "process_rss_kib_min": 338484,
+      "process_rss_kib_max": 338488,
+      "process_high_water_kib": 375808,
+      "cgroup_memory_current_start_bytes": 697634816,
+      "cgroup_memory_current_max_bytes": 700551168,
+      "cgroup_memory_current_end_bytes": 700293120,
+      "memory_high_events_changed": false,
+      "memory_max_events": 0,
+      "oom_events": 0,
+      "swap_current_bytes": 0,
+      "recorder_memory_high_events_changed": false,
+      "host_cpu_psi_some_avg10_peak_percent": 8.56,
+      "host_memory_psi_peak_percent": 0,
+      "host_io_psi_some_avg10_peak_percent": 11.98,
+      "host_mem_available_min_kib": 8634276,
+      "global_oom": false
+    }
+  },
+  "reality": {
+    "candidate_revision": "29f77ad131ad0b8415b2a67a2b516e52878f5792",
+    "recorder": {
+      "unit": "midas-reality.service",
+      "pid": 863193,
+      "started_local": "2026-10-19T00:50:57+02:00",
+      "active": true,
+      "restarts": 1,
+      "candidate_loaded": false,
+      "last_start_producer_hash": "768868ad81265168305e1b7ed1e17d884a9b68ab03b96da63ed91a80680381a9",
+      "memory_current_bytes": 670281728,
+      "memory_high_bytes": 738197504,
+      "memory_max_bytes": 805306368,
+      "memory_swap_max_bytes": 0,
+      "memory_events": {
+        "high": 10097,
+        "max": 0,
+        "oom": 0,
+        "oom_kill": 0
+      },
+      "orders_submitted": 0,
+      "candidate_restart_authorized": false
+    },
+    "interface_api": {
+      "unit": "midas-reality-api.service",
+      "pid": 2688994,
+      "started_local": "2026-10-20T08:24:35+02:00",
+      "source_revision_at_start": "abf8c199c017c8666da2c4fef5a359a6083d336a",
+      "working_directory": "/home/charlie/midas-reality",
+      "health": "READY",
+      "journal_status": "CHECKPOINT_VERIFIED",
+      "journal_events": 59578,
+      "restarts": 0,
+      "relevant_api_modules_changed_since_start": false,
+      "note": "Later changes are in recorder collector/reconstruction modules; the interface imports shadow_report/storage."
+    },
+    "live_observation": {
+      "health": "recording",
+      "health_reasons": [],
+      "collector_state": "RECORDING_UNSEQUENCED",
+      "frames": 422183,
+      "books": 16,
+      "historical_failure_count": 1,
+      "orders_submitted": 0,
+      "status_age_seconds": 1.006714519,
+      "integrity": "INTEGRITY_VERIFIED",
+      "sqlite_integrity": "ok"
+    },
+    "checkpoint_paused_shadow_workers": {
+      "approval": "user confirmed yes",
+      "additional_signal_sent": false,
+      "units": [
+        {
+          "name": "midas-reality-shadow.service",
+          "active": false,
+          "enabled": false,
+          "campaign_manifest_sha256": "aa8acb2b46823c1a1e3ac5d01a57dde917746c2c7471098ae2a4598875e322f5",
+          "state": "STOPPED_WITH_RECOVERABLE_PENDING",
+          "source_ordinal": 652065,
+          "records": 652065,
+          "actual_orders_submitted": 0
+        },
+        {
+          "name": "midas-reality-shadow-successor.service",
+          "active": false,
+          "enabled": false,
+          "campaign_manifest_sha256": "c5eb8b98cbfd657372fc620192c5a0c0bb46f41d760800e680181fa7f3ee95a3",
+          "state": "STOPPED_WITH_RECOVERABLE_PENDING",
+          "source_ordinal": 2136971,
+          "records": 1136335,
+          "actual_orders_submitted": 0
+        }
+      ],
+      "worker_processes_found": 0
+    },
+    "verified_finalized_archive": {
+      "service": "midas-reality-archive.service",
+      "candidate_revision": "29f77ad131ad0b8415b2a67a2b516e52878f5792",
+      "started_local": "2026-10-20T11:19:25+02:00",
+      "finished_local": "2026-10-20T11:34:11+02:00",
+      "exit_code": 0,
+      "operation": "Verify all finalized source segments and archive copies; replay the destination before publishing its manifest.",
+      "segments": 15916,
+      "segment_bytes": 4241039440,
+      "first_ordinal": 1,
+      "last_ordinal": 2378783,
+      "manifest_sha256": "9c24ea8a60693070ed69a0ed5baf8d28297cfc360b0dc1a6868c024b9ebe7566",
+      "segment_manifest_sha256": "969614d459597b50c80347a147e0b63fddfe960332987bdc3f9f613b0d3042e2",
+      "source_manifest_sha256": "969614d459597b50c80347a147e0b63fddfe960332987bdc3f9f613b0d3042e2",
+      "originals_deleted": false,
+      "active_segment_included": false,
+      "service_controls": {
+        "memory_max_bytes": 268435456,
+        "memory_swap_max_bytes": 0,
+        "cpu_quota": "100% of one CPU",
+        "nice": 15,
+        "io_scheduling": "idle",
+        "restart": "no",
+        "timeout": "2h"
+      },
+      "measured": {
+        "wall_seconds": 886,
+        "cpu_seconds": 868.97,
+        "memory_peak_bytes": 268435456,
+        "memory_swap_peak_bytes": 0,
+        "oom_events": 0
+      },
+      "state_digest_emitted_by_archive_operation": false
+    },
+    "previous_standalone_candidate_replay": {
+      "revision": "29f77ad131ad0b8415b2a67a2b516e52878f5792",
+      "segments": 15295,
+      "segment_bytes": 4101206768,
+      "last_ordinal": 2312790,
+      "state_sha256": "eb5fec6312d6c75e460a204f82ff5e2f50035e8e15668afcac934f262f96e49f",
+      "wall_seconds": 414.092,
+      "cpu_seconds": 410.387,
+      "process_peak_rss_kib": 45720,
+      "cgroup_peak_bytes": 403156992,
+      "memory_swap_peak_bytes": 0,
+      "result": "PASS"
+    }
+  },
+  "veritas": {
+    "worktree_head": "8717666aa1988fb28c999998014ca1c4b5717113",
+    "v2_runtime": "/home/charlie/.local/share/midas-veritas/gap-detail-v2-20261020/runtime",
+    "v2_release_commit": "cb73f9e",
+    "v2_source_tree_sha256": "7671d80b43b4286c5ff3e8cc65de52d8f82d4c8a0af8feb172ffde69384f54e5",
+    "v1_timer_active": false,
+    "gap_detail_v2_timer_active": true,
+    "scheduled_runs": [
+      {
+        "started_local": "2026-10-20T11:37:04+02:00",
+        "finished_local": "2026-10-20T11:37:11+02:00",
+        "exit_code": 0,
+        "processed_segments": 15949,
+        "batch_segments": 10,
+        "pending_segments": 0,
+        "status": "CURRENT",
+        "summary_sha256": "3f1df73386ac1a1fa32a82b9027aa20f6a3835d23447f61686e2253b5b3c85ca",
+        "control_sha256": "ceff067d4d39567f52cfa6f939bf5aa9d6037bb0994eeac94639ae5eafafd70d"
+      },
+      {
+        "started_local": "2026-10-20T11:42:04+02:00",
+        "finished_local": "2026-10-20T11:42:10+02:00",
+        "exit_code": 0,
+        "processed_segments": 15959,
+        "batch_segments": 10,
+        "pending_segments": 0,
+        "status": "CURRENT",
+        "summary_sha256": "fe4ab545c2c3f81eda2de96bab5379e58c835c00cdcaeadf79cb161ce008c9e8",
+        "control_sha256": "7492b50241f5ffd4ccd631af445dbbeae0d600b3833b1922d5e2e1b13762646f"
+      },
+      {
+        "started_local": "2026-10-20T11:47:14+02:00",
+        "finished_local": "2026-10-20T11:47:19+02:00",
+        "exit_code": 0,
+        "processed_segments": 15969,
+        "batch_segments": 10,
+        "pending_segments": 0,
+        "status": "CURRENT",
+        "summary_sha256": "a051aa3d7207774391d9e14976a806346483636bfa3ba30ee0603e9df87c9f3c",
+        "control_sha256": "10c4818fbacc776542ae1a283262266ea35c5bd27e82f4c6efeac9b829130060"
+      },
+      {
+        "started_local": "2026-10-20T11:52:21+02:00",
+        "finished_local": "2026-10-20T11:52:27+02:00",
+        "exit_code": 0,
+        "processed_segments": 15979,
+        "batch_segments": 10,
+        "pending_segments": 0,
+        "status": "CURRENT",
+        "summary_sha256": "f5b9651b082cd545025d4ae2b75f3d892610e4e5019cd8e9ff5647301e7f6ea9",
+        "control_sha256": "ecb6d380ccce7807e79abc77dbf19e9cf6090289aaa71f9c27d01ec4e4a43f06"
+      }
+    ],
+    "source_analysis_run": {
+      "started_local": "2026-10-20T11:40:27+02:00",
+      "finished_local": "2026-10-20T11:40:34+02:00",
+      "exit_code": 0,
+      "processed_segments": 15956,
+      "batch_segments": 59,
+      "pending_segments": 0,
+      "status": "current",
+      "cpu_seconds": 6.224,
+      "cpu_quota": "100% of one CPU",
+      "memory_max_bytes": 268435456,
+      "restart": "no"
+    }
+  },
+  "integration": {
+    "arena": {
+      "status": "available",
+      "active_jobs": 0,
+      "queued_jobs": 0,
+      "active_directors": 0,
+      "queued_directors": 0,
+      "active_schedules": 0,
+      "invalid_artifacts": 0,
+      "stale_directors_projected_from_terminal_owner_jobs": 3,
+      "open_historical_alert": "Schedule admission window expired"
+    },
+    "reliability_regressions": {
+      "result": "PASS",
+      "passed": 129,
+      "warnings": 1,
+      "warning": "Starlette TestClient/httpx deprecation",
+      "duration_seconds": 53.3,
+      "cpu_seconds": 32.344,
+      "memory_peak_bytes": 359464960,
+      "memory_swap_peak_bytes": 0,
+      "transient_memory_high_bytes": 805306368,
+      "transient_memory_max_bytes": 1073741824,
+      "transient_memory_swap_max_bytes": 0,
+      "transient_cpu_quota": "100% of one CPU",
+      "nice": 19,
+      "io_scheduling": "idle",
+      "detached_worktree": "/tmp/midas-reliability-regression-20261020",
+      "worktree_revision": "62aaf84078016a9c02148b7b5a404db9ac3b8d7f",
+      "source_imports_confirmed_inside_worktree": true,
+      "supersedes_earlier_nonisolated_result": true,
+      "modules": [
+        "API and paper",
+        "Arena admission, jobs, scheduling, Director lifecycle, and API",
+        "Veritas gap-detail analysis, control, v2, and dashboard",
+        "endurance harness"
+      ]
+    },
+    "reality_source_tests": {
+      "result": "PASS",
+      "passed": 50,
+      "duration_seconds": 17.39,
+      "cpu_seconds": 1.871,
+      "memory_peak_mib": 48.1,
+      "memory_swap_peak_bytes": 0,
+      "transient_memory_max_bytes": 1073741824,
+      "transient_memory_swap_max_bytes": 0,
+      "transient_cpu_quota": "25%",
+      "detached_worktree": "/tmp/midas-reality-regression-20261020",
+      "worktree_revision": "29f77ad131ad0b8415b2a67a2b516e52878f5792",
+      "source_imports_confirmed_inside_worktree": true,
+      "recorder_restart_called": false
+    },
+    "endurance": {
+      "evidence_directory": "data/reliability-endurance/evidence/20261020T044601Z",
+      "duration_seconds": 3825.68,
+      "automatic_transitions": 32,
+      "jobs_completed": 32,
+      "controlled_worker_interruptions_recovered": 1,
+      "production_manifests_changed": false,
+      "48h_001_changed": false,
+      "reality_campaign_manifests_changed": false
+    },
+    "research_campaign_48h_001": {
+      "status": "PARTIAL",
+      "elapsed_seconds": 172800,
+      "remaining_seconds": 0,
+      "active_step": null,
+      "operationally_active": false,
+      "manifest_sha256": "55538167f6b0d9516270001587abea0894801124effad635a0d830be5e0be379",
+      "status_sha256": "44f146d86567830a34db95838297faa980510e7bc6daac1f22a36fcbbe6b8954",
+      "active_timer_or_worker_found": false
+    }
+  },
+  "host": {
+    "hardware": "6 CPU threads, 16 GiB RAM, 4 GiB swap",
+    "captured_local": "2026-10-20T11:42:48+02:00",
+    "cpu_psi_some_avg10_percent": 2.32,
+    "cpu_psi_some_avg60_percent": 3.0,
+    "cpu_psi_full_avg10_percent": 0.0,
+    "memory_psi_some_avg10_percent": 0.0,
+    "memory_psi_full_avg10_percent": 0.0,
+    "io_psi_some_avg10_percent": 0.72,
+    "memory_available_kib": 8907108,
+    "swap_total_kib": 4194300,
+    "swap_free_kib": 11656,
+    "vmstat_observation": "One initial sample reported 12 pages in; remaining samples showed zero swap-in and zero swap-out.",
+    "disk_available_bytes": 181928484864,
+    "archive_run_host_gate_observation": {
+      "cpu_psi_some_peak_percent": 8.9,
+      "memory_psi_some_peak_percent": 0,
+      "io_psi_some_peak_percent": 1.61,
+      "minimum_memory_available_gib": 8.6,
+      "recorder_high_counter_increased": false,
+      "global_oom": false
+    }
+  },
+  "scope": {
+    "frontier_started": false,
+    "atlas_started": false,
+    "new_48h_campaign_started": false,
+    "real_orders_or_wallet_operations": false
+  },
+  "final_reconciliation": {
+    "observed_local_window": "2026-10-20T12:00:00+02:00/2026-10-20T12:08:02+02:00",
+    "repository_audit": {
+      "main": {
+        "branch": "main",
+        "head_before_final_commit": "62aaf84078016a9c02148b7b5a404db9ac3b8d7f",
+        "origin_head_before_final_commit": "62aaf84078016a9c02148b7b5a404db9ac3b8d7f",
+        "pending_paths": [
+          "docs/reliability/MIDAS_RELIABILITY_RECOVERY_FINAL.md",
+          "data/reliability-endurance/evidence/20261020T094248Z-reliability-runtime-refresh.json"
+        ],
+        "head_after_timer_commit": "a97b158",
+        "origin_head_before_push": "62aaf84078016a9c02148b7b5a404db9ac3b8d7f"
+      },
+      "reality": {
+        "branch": "project/reality",
+        "head": "29f77ad131ad0b8415b2a67a2b516e52878f5792",
+        "origin_head": "29f77ad131ad0b8415b2a67a2b516e52878f5792",
+        "dirty": false
+      },
+      "veritas": {
+        "branch": "project/veritas",
+        "head": "8717666aa1988fb28c999998014ca1c4b5717113",
+        "origin_head": "8717666aa1988fb28c999998014ca1c4b5717113",
+        "dirty": false
+      },
+      "commit_identity": {
+        "49275d9": {
+          "branch": "fix/veritas-gap-market-bound",
+          "ancestor_of_main": false,
+          "ancestor_of_project_veritas": false
+        },
+        "equivalent_market_bound_fixes": {
+          "main": "b0ef7dbb32712db388c8d56521a6a12434c778be",
+          "project_veritas": "9b0b1040ed47ea49440ed7309e8bbc7767140382"
+        },
+        "main_v2_release": "cb73f9ea23186fa2a1dcb0a9f82e639b7cdeb533",
+        "project_veritas_has_v2_batch_script": false
+      },
+      "dirty_scratch_worktrees_preserved": [
+        {
+          "path": "/tmp/midas-reliability-tests-20261020",
+          "dirty_paths": [
+            "apps/api/arena.py",
+            "packages/midas/arena/director.py",
+            "tests/arena/test_arena_api.py",
+            "tests/arena/test_director_lifecycle.py"
+          ],
+          "superseded_by_current_main": true,
+          "used_for_final_tests": false
+        },
+        {
+          "path": "/tmp/midas-reliability-reality-361fd6a",
+          "dirty_paths": [
+            "packages/midas/reality/config.py",
+            "tests/test_reality.py"
+          ],
+          "superseded_by_candidate_project_reality": true,
+          "used_for_final_tests": false
+        }
+      ],
+      "production_paths_are_direct_not_development_symlinks": true,
+      "timer_alignment_commit": "a97b158"
+    },
+    "veritas_runtime_and_timer": {
+      "runtime_path": "/home/charlie/.local/share/midas-veritas/gap-detail-v2-20261020/runtime",
+      "runtime_tree_sha256": "7671d80b43b4286c5ff3e8cc65de52d8f82d4c8a0af8feb172ffde69384f54e",
+      "release_commit": "cb73f9ea23186fa2a1dcb0a9f82e639b7cdeb533",
+      "gap_detail_analysis_sha256": "95ecab847d79d0bfd27e54186fc301ef964bec0b90cc835d15c4003bebf5b000",
+      "gap_detail_control_sha256": "1ca6293e8171dd18dc06376247869515ecc76700dace89c93c4f33a32d1f5029",
+      "timer_next_local": "2026-10-20T12:12:11+02:00",
+      "timer_active": true,
+      "timer_source_and_loaded_unit_sha256": "3a4f6220895bbe36756484a9047cf00ebfaae44290f968aba9cb26da5183bbdc",
+      "timer_reloaded_or_restarted": false,
+      "latest_run": {
+        "started_local": "2026-10-20T12:07:22+02:00",
+        "finished_local": "2026-10-20T12:07:27+02:00",
+        "exit_code": 0,
+        "batch_processed_segment_count": 10,
+        "processed_segment_count": 16009,
+        "pending_segment_count": 0,
+        "status": "CURRENT",
+        "summary_sha256": "553482884cf78eac93374375e5236a0a4100ab96e15757a84539c02846029b31",
+        "control_sha256": "c3a4d994af230a4aa8d0db72d321b4f4368c90d694f763c5824679d4596f5a3e"
+      },
+      "timer_alignment_commit": "a97b158",
+      "additional_runs": [
+        {
+          "started_local": "2026-10-20T12:02:10+02:00",
+          "finished_local": "2026-10-20T12:02:15+02:00",
+          "exit_code": 0,
+          "batch_processed_segment_count": 10,
+          "processed_segment_count": 15999,
+          "pending_segment_count": 0,
+          "status": "CURRENT",
+          "summary_sha256": "a3fbe1ef26ee00d672c8f887c058d86f78d4ddc8d3cce87596b5d454f8fd22ef",
+          "control_sha256": "4e4e9cf3ca900709e3cb51589df51ed9af6fa7f21360a24d910247cb10fbf04a"
+        },
+        {
+          "started_local": "2026-10-20T12:07:22+02:00",
+          "finished_local": "2026-10-20T12:07:27+02:00",
+          "exit_code": 0,
+          "batch_processed_segment_count": 10,
+          "processed_segment_count": 16009,
+          "pending_segment_count": 0,
+          "status": "CURRENT",
+          "summary_sha256": "553482884cf78eac93374375e5236a0a4100ab96e15757a84539c02846029b31",
+          "control_sha256": "c3a4d994af230a4aa8d0db72d321b4f4368c90d694f763c5824679d4596f5a3e"
+        }
+      ]
+    },
+    "api": {
+      "pid": 2737736,
+      "active": true,
+      "restarts": 0,
+      "health_observed_local": "2026-10-20T12:08:02+02:00",
+      "health": "READY",
+      "laboratory": "READY",
+      "live_execution": false,
+      "rss_kib_at_12_04": 338488,
+      "rss_high_water_kib": 375808,
+      "cgroup_memory_current_bytes": 704565248,
+      "cgroup_memory_events": {
+        "high": 2292,
+        "max": 0,
+        "oom": 0,
+        "oom_kill": 0,
+        "swap_current_bytes": 0
+      }
+    },
+    "reality": {
+      "recorder": {
+        "pid": 863193,
+        "active": true,
+        "restarts": 1,
+        "candidate_loaded": false,
+        "cgroup_memory_current_bytes_at_12_04": 681836544,
+        "memory_high_bytes": 738197504,
+        "memory_max_bytes": 805306368,
+        "memory_high_events": 10097,
+        "memory_max_events": 0,
+        "oom_events": 0,
+        "oom_kill_events": 0,
+        "orders_submitted": 0,
+        "restart_authorized": false,
+        "high_events_unchanged_since_11_42": true,
+        "cgroup_memory_current_bytes_at_12_08": 685043712,
+        "memory_high_margin_bytes_at_12_08": 53153792,
+        "memory_delta_12_04_to_12_08_bytes": 3207168,
+        "memory_high_events_unchanged_since_11_42": true
+      },
+      "overview_observed_local": "2026-10-20T12:02:00+02:00/2026-10-20T12:03:00+02:00",
+      "health": "recording",
+      "health_reasons": [],
+      "collector_state": "RECORDING_UNSEQUENCED",
+      "frames": 425439,
+      "ordinal": 2388560,
+      "book_count": 16,
+      "timing_uncertain_books": 0,
+      "integrity_state": "INTEGRITY_VERIFIED",
+      "sqlite_integrity": "ok",
+      "book_comparisons": {
+        "stable_local_lineage_match_unsequenced": 7626,
+        "stable_local_lineage_divergence": 96,
+        "stale_local_state": 32,
+        "concurrent_updates_ambiguous": 203,
+        "ineligible_local_state": 3,
+        "public_comparison_unavailable": 1
+      },
+      "interpretation": "Counters classify unsequenced independent comparisons; divergence is retained as a data-quality signal and does not establish sequence-verified feed correctness."
+    },
+    "readiness": {
+      "reliability_foundation": "PARTIALLY RECOVERED",
+      "frontier": "CONDITIONALLY READY only for work independent of protected Reality deployment and sequence-verified observations",
+      "new_48h_campaign": "NOT READY",
+      "frontier_started": false,
+      "atlas_started": false,
+      "new_48h_campaign_started": false,
+      "veritas_latest_status": "CURRENT",
+      "veritas_processed_segments": 16009
+    },
+    "host_at_12_08": {
+      "cpu_psi_some_avg10_percent": 3.27,
+      "memory_psi_some_avg10_percent": 0,
+      "io_psi_some_avg10_percent": 0.91,
+      "io_psi_full_avg10_percent": 0.73,
+      "memory_available_kib": 8849716,
+      "swap_total_kib": 4194300,
+      "swap_free_kib": 26404,
+      "global_oom": false,
+      "scope_note": "Instantaneous ps sample near 12:00 is recorded in the report and is not a sustained CPU attribution.",
+      "captured_local": "2026-10-20T12:08:02+02:00",
+      "swap_activity_in_interval": "not sampled; most recent available vmstat sample at 11:42 showed one initial 12 pages in, then zero swap-in/out"
+    }
+  }
+}

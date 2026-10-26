@@ -1,0 +1,71 @@
+{
+  "synthetic": true,
+  "records": 2,
+  "source_bytes": 374,
+  "scope": "systemd orchestration and failure-handling verification only; not archive-scale validation",
+  "phases": [
+    {
+      "phase": "after_interrupt",
+      "recovery_seconds": 0.0008696609875187278,
+      "save_seconds": 0.006969396024942398,
+      "peak_rss_kib": 19892,
+      "ordinal": 2,
+      "state_sha256": "967b8677a280ee8265c5a5c06576a28d4a11c596b397917880ab433c6643d977",
+      "internal_sha256": "c24a6877b9ccba7c3da162467cc3013955559d4fc5f5eb5cb4ae9372217faf06"
+    },
+    {
+      "phase": "after_interrupt_save",
+      "recovery_seconds": 0.0018055830150842667,
+      "save_seconds": 0.008853902923874557,
+      "peak_rss_kib": 20644,
+      "ordinal": 2,
+      "state_sha256": "967b8677a280ee8265c5a5c06576a28d4a11c596b397917880ab433c6643d977",
+      "internal_sha256": "c24a6877b9ccba7c3da162467cc3013955559d4fc5f5eb5cb4ae9372217faf06"
+    },
+    {
+      "phase": "cold",
+      "recovery_seconds": 0.0010058090556412935,
+      "save_seconds": 0.008827906916849315,
+      "peak_rss_kib": 20268,
+      "ordinal": 2,
+      "state_sha256": "967b8677a280ee8265c5a5c06576a28d4a11c596b397917880ab433c6643d977",
+      "internal_sha256": "c24a6877b9ccba7c3da162467cc3013955559d4fc5f5eb5cb4ae9372217faf06"
+    },
+    {
+      "phase": "corrupt",
+      "recovery_seconds": 0.0007726269541308284,
+      "save_seconds": 0.015852684038691223,
+      "peak_rss_kib": 20252,
+      "ordinal": 2,
+      "state_sha256": "967b8677a280ee8265c5a5c06576a28d4a11c596b397917880ab433c6643d977",
+      "internal_sha256": "c24a6877b9ccba7c3da162467cc3013955559d4fc5f5eb5cb4ae9372217faf06"
+    },
+    {
+      "phase": "fast",
+      "recovery_seconds": 0.0017275731079280376,
+      "save_seconds": 0.014047314994968474,
+      "peak_rss_kib": 20400,
+      "ordinal": 2,
+      "state_sha256": "967b8677a280ee8265c5a5c06576a28d4a11c596b397917880ab433c6643d977",
+      "internal_sha256": "c24a6877b9ccba7c3da162467cc3013955559d4fc5f5eb5cb4ae9372217faf06"
+    },
+    {
+      "phase": "restart",
+      "recovery_seconds": 0.0013460880145430565,
+      "save_seconds": 0.0072711900575086474,
+      "peak_rss_kib": 20356,
+      "ordinal": 2,
+      "state_sha256": "967b8677a280ee8265c5a5c06576a28d4a11c596b397917880ab433c6643d977",
+      "internal_sha256": "c24a6877b9ccba7c3da162467cc3013955559d4fc5f5eb5cb4ae9372217faf06"
+    },
+    {
+      "phase": "stale",
+      "recovery_seconds": 0.0012572850100696087,
+      "save_seconds": 0.013965147081762552,
+      "peak_rss_kib": 20444,
+      "ordinal": 2,
+      "state_sha256": "967b8677a280ee8265c5a5c06576a28d4a11c596b397917880ab433c6643d977",
+      "internal_sha256": "c24a6877b9ccba7c3da162467cc3013955559d4fc5f5eb5cb4ae9372217faf06"
+    }
+  ]
+}

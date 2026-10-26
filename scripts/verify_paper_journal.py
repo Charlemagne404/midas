@@ -3,6 +3,7 @@
 import argparse
 import json
 import sqlite3
+from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
 
@@ -10,6 +11,7 @@ from midas.economics.attestation import digest
 from midas.paper.broker import audit, summary
 
 from apps.api.paper import advance_journal_hash, journal_entry, replay_journal
+from apps.api.state_codec import decode_state
 
 
 def main() -> None:
@@ -36,44 +38,54 @@ def main() -> None:
             "FROM paper_events WHERE account_id=? ORDER BY revision",
             (args.account,),
         )
-        events: list[dict[str, Any]] = []
         rolling_hash = ""
-        for row in rows:
-            event = {
-                "revision": row["revision"],
-                "event_id": row["event_id"],
-                "command": json.loads(row["command"]),
-                "payload": json.loads(row["payload"]),
-                "checksum": row["checksum"],
-                "previous_checksum": row["previous_checksum"],
-            }
-            rolling_hash = advance_journal_hash(
-                rolling_hash,
-                journal_entry(
-                    args.account,
-                    event["event_id"],
-                    event["revision"],
-                    event["command"],
-                    event["payload"],
-                    event["checksum"],
-                    event["previous_checksum"],
-                ),
-            )
-            events.append(event)
-        state = replay_journal(events)
+        event_count = 0
+
+        def events() -> Iterator[dict[str, Any]]:
+            nonlocal rolling_hash, event_count
+            for row in rows:
+                event: dict[str, Any] = {
+                    "revision": row["revision"],
+                    "event_id": row["event_id"],
+                    "command": json.loads(row["command"]),
+                    "payload": json.loads(row["payload"]),
+                    "checksum": row["checksum"],
+                    "previous_checksum": row["previous_checksum"],
+                }
+                rolling_hash = advance_journal_hash(
+                    rolling_hash,
+                    journal_entry(
+                        args.account,
+                        event["event_id"],
+                        event["revision"],
+                        event["command"],
+                        event["payload"],
+                        event["checksum"],
+                        event["previous_checksum"],
+                    ),
+                )
+                event_count += 1
+                yield event
+
+        state = replay_journal(events())
+        snapshot_matches = (
+            digest(decode_state(json.loads(account["payload"]))) == account["checksum"]
+        )
         errors = audit(state)
         valid = (
-            account["revision"] == len(events) - 1
+            account["revision"] == event_count - 1
             and digest(state) == account["checksum"]
+            and snapshot_matches
             and not errors
             and (account["journal_hash"] is None or account["journal_hash"] == rolling_hash)
         )
         report = {
             "valid": valid,
             "account": args.account,
-            "events": len(events),
+            "events": event_count,
             "revision": account["revision"],
             "state_checksum_matches": digest(state) == account["checksum"],
+            "snapshot_checksum_matches": snapshot_matches,
             "journal_hash_matches": account["journal_hash"] is None
             or account["journal_hash"] == rolling_hash,
             "reconciliation_errors": errors,

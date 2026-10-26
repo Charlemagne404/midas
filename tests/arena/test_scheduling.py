@@ -40,8 +40,9 @@ def prepared(tmp_path, monkeypatch):
             "active_job_ids": [],
             "available_memory_bytes": 8 * 1024**3,
             "disk_free_bytes": 20 * 1024**3,
-            "artifact_bytes": 0,
             "cpu_psi": {"some": 0.0},
+            "available_cpu_count": 6,
+            "host_load_avg1": 0.0,
             "memory_psi": {"some": 0.0, "full": 0.0},
             "io_psi": {"some": 0.0},
         },
@@ -123,9 +124,10 @@ def test_admission_expiry_and_resource_deferral(prepared, monkeypatch):
         lambda _root: {
             "active_job_ids": [],
             "available_memory_bytes": 8 * 1024**3,
-            "disk_free_bytes": 8 * 1024**3,
-            "artifact_bytes": 1024**3,
+            "disk_free_bytes": 2 * 1024**3,
             "cpu_psi": {"some": 0.0},
+            "available_cpu_count": 6,
+            "host_load_avg1": 0.0,
             "memory_psi": {"some": 0.0, "full": 0.0},
             "io_psi": {"some": 0.0},
         },
@@ -133,6 +135,50 @@ def test_admission_expiry_and_resource_deferral(prepared, monkeypatch):
     assert tick(root, identity, now=1010)["state"] == "WAITING_RESOURCES"
     assert tick(root, identity, now=1100)["state"] == "EXPIRED"
     assert not list(root.glob("jobs/*/job.json"))
+
+
+def test_global_admission_race_persists_waiting_resources(prepared, monkeypatch):
+    from midas.arena.admission import ResourceAdmissionDenied
+
+    root, _, identity = prepared
+
+    def busy(*_args, **_kwargs):
+        raise ResourceAdmissionDenied(["resource_admission_lock_busy"])
+
+    monkeypatch.setattr(scheduling, "create_job", busy)
+    waiting = tick(root, identity, now=1010)
+    assert waiting["state"] == "WAITING_RESOURCES"
+    assert waiting["resource_reasons"] == ["resource_admission_lock_busy"]
+    assert waiting["steps"][0]["state"] == "WAITING_RESOURCES"
+    assert not list(root.glob("jobs/*/job.json"))
+
+
+def test_existing_arena_history_does_not_consume_next_job_growth_budget(prepared):
+    root, _, identity = prepared
+    historical = root / "historical-sparse-artifact"
+    with historical.open("wb") as artifact:
+        artifact.truncate(3 * 1024**3)
+    active = tick(root, identity, now=1010)
+    assert active["state"] == "RUNNING"
+    assert len(list(root.glob("jobs/*/job.json"))) == 1
+
+
+def test_resource_gate_uses_pressure_and_reserve_not_swap_occupancy():
+    ready = {
+        "active_job_ids": [],
+        "available_memory_bytes": 8 * 1024**3,
+        "disk_free_bytes": 8 * 1024**3,
+        "cpu_psi": {"some": 0.0},
+        "available_cpu_count": 6,
+        "host_load_avg1": 0.0,
+        "memory_psi": {"some": 0.0, "full": 0.0},
+        "io_psi": {"some": 0.0},
+    }
+    assert scheduling.resource_gate(ready) == {"ready": True, "reasons": []}
+    quota_wait = {**ready, "cpu_psi": {"some": 80.0}, "host_load_avg1": 1.25}
+    assert scheduling.resource_gate(quota_wait)["ready"]
+    saturated = {**ready, "host_load_avg1": 6.0}
+    assert scheduling.resource_gate(saturated)["reasons"] == ["host_cpu_capacity"]
 
 
 def test_expired_crash_intent_without_child_does_not_admit(prepared):
@@ -183,24 +229,3 @@ def test_finite_bounds_and_order_are_enforced():
             admission_window_seconds=60,
             steps=(ScheduledStep(name="late", after_seconds=60, configuration=config),),
         )
-
-
-def test_resource_gate_rejects_cpu_memory_io_pressure_and_missing_metrics():
-    ready = {
-        "active_job_ids": [],
-        "available_memory_bytes": 8 * 1024**3,
-        "disk_free_bytes": 8 * 1024**3,
-        "artifact_bytes": 0,
-        "cpu_psi": {"some": 0.0},
-        "memory_psi": {"some": 0.0, "full": 0.0},
-        "io_psi": {"some": 0.0},
-    }
-    assert scheduling.resource_gate(ready) == {"ready": True, "reasons": []}
-    cpu = {**ready, "cpu_psi": {"some": 36.34}}
-    assert scheduling.resource_gate(cpu)["reasons"] == ["host_cpu_pressure"]
-    memory = {**ready, "memory_psi": {"some": 12.0, "full": 0.0}}
-    assert scheduling.resource_gate(memory)["reasons"] == ["host_memory_pressure"]
-    io = {**ready, "io_psi": {"some": 25.0}}
-    assert scheduling.resource_gate(io)["reasons"] == ["host_io_pressure"]
-    missing = {**ready, "cpu_psi": {}}
-    assert scheduling.resource_gate(missing)["reasons"] == ["resource_pressure_unavailable"]

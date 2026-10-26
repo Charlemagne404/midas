@@ -1,0 +1,264 @@
+{
+  "schema_version": 1,
+  "recorded_at": "2026-10-20T12:37:50+02:00",
+  "repositories": {
+    "main": {
+      "branch": "main",
+      "commit": "e41c56caded8324efc79d7f98622c9e092b174a7",
+      "remote_matches_before_report_update": true
+    },
+    "reality": {
+      "branch": "project/reality",
+      "commit": "c83320000a085bf30490b4b76b425527fe8574f7",
+      "remote_matches": true,
+      "source_unit_commit": "a4f4959307ea114ac113911349b34fd856e8df88",
+      "recorder_package_commit": "29f77ad131ad0b8415b2a67a2b516e52878f5792",
+      "recorder_package_sha256": "0469889b4613a5fb875f34d2c6e14f9b74ba7f3188f51a3a9350078597bd8ad5"
+    },
+    "veritas": {
+      "branch": "project/veritas",
+      "commit": "8717666aa1988fb28c999998014ca1c4b5717113",
+      "remote_matches": true
+    }
+  },
+  "api": {
+    "service": "midas-api.service",
+    "active": true,
+    "pid": 2737736,
+    "restarts": 0,
+    "memory_current_bytes": 720850944,
+    "memory_high_bytes": 1610612736,
+    "memory_max_bytes": 1879048192,
+    "memory_swap_current_bytes": 0,
+    "health": {
+      "status": "READY",
+      "startup_status": "READY",
+      "mode": "demo",
+      "live_execution": false,
+      "paper_recovery": {
+        "status": "CHECKPOINT_VERIFIED",
+        "journal_events": 395611,
+        "revision": 395610
+      },
+      "laboratory": {
+        "status": "READY",
+        "recovering_campaigns": 0,
+        "recovery_errors": 0
+      }
+    }
+  },
+  "reality": {
+    "recorder": {
+      "service": "midas-reality.service",
+      "active": true,
+      "pid": 863193,
+      "started_at": "2026-10-19T00:50:57+02:00",
+      "restarts": 1,
+      "loaded_code_is_pre_candidate": true,
+      "memory_current_bytes": 698777600,
+      "memory_high_bytes": 738197504,
+      "memory_max_bytes": 805306368,
+      "memory_swap_current_bytes": 684032,
+      "memory_events": {
+        "low": 0,
+        "high": 10097,
+        "max": 0,
+        "oom": 0,
+        "oom_kill": 0,
+        "oom_group_kill": 0
+      },
+      "effective_cpu_quota": "250ms",
+      "effective_tasks_max": 32,
+      "restart_policy": "on-failure"
+    },
+    "runtime_api": {
+      "service": "midas-reality-api.service",
+      "active": true,
+      "pid": 2688994,
+      "restarts": 0,
+      "memory_current_bytes": 179617792,
+      "memory_max_bytes": 536870912,
+      "health_status": "READY",
+      "journal_events": 61396,
+      "live_execution": false
+    },
+    "service_unit": {
+      "candidate_source_sha256": "0afb3154bd51f5e016768f583ea792e27b882f0e5ddc6651be3bcbb890a8dd94",
+      "installed_base_sha256": "b07ac87d4c1108ee3ca98291972c3963033bab40dad565b957fb100657c727f4",
+      "installed_base_matches_source": false,
+      "effective_memory_high_bytes": 738197504,
+      "effective_memory_max_bytes": 805306368,
+      "effective_memory_swap_max_bytes": 0,
+      "effective_cpu_quota": "250ms",
+      "effective_tasks_max": 32,
+      "active_dropins": {
+        "50-MemoryHigh.conf": "c604ce482c92dcad8d4d6ceb4255b67d2fffb9b872b42d54f32936717de586cc",
+        "50-MemoryMax.conf": "9eba7ab4797ade28ea408759c379257b92216266cade1a8e270ee534823479b7",
+        "50-MemorySwapMax.conf": "1dcc20473ac2a96df02e4692208ce9a25193aa4f2cb38da42f32f60aa9b01642"
+      },
+      "executable": "/home/charlie/midas-reality/.venv/bin/python",
+      "resolved_executable": "/usr/bin/python3.12",
+      "working_directory": "/home/charlie/midas-reality",
+      "config_path": "/home/charlie/midas-reality/deploy/reality.json",
+      "unit_environment": "PYTHONUNBUFFERED=1",
+      "systemd_reload_or_restart_performed": false
+    },
+    "deployment_guard": {
+      "commit": "c83320000a085bf30490b4b76b425527fe8574f7",
+      "checks": [
+        "source package, deployment helper, and service-unit fingerprints",
+        "installed unit path and hash plus active drop-in hashes",
+        "ExecStart, working directory, environment fingerprint, restart policy, and effective resource limits",
+        "production package hash matches the verified candidate before preflight and apply",
+        "candidate worktree and package paths precede installed imports, with explicit import-origin check"
+      ],
+      "focused_tests": {
+        "path": "tests/test_reality_deployment.py",
+        "result": "passed",
+        "passed": 9,
+        "duration_seconds": 0.91,
+        "imports": "detached worktree first"
+      },
+      "ruff": "passed",
+      "mypy_script_only": {
+        "result": "passed",
+        "follow_imports": "skip",
+        "source_files": 1,
+        "cpu_seconds": 1.119,
+        "memory_peak_mib": 51.7,
+        "swap_peak_bytes": 0
+      },
+      "complete_verifier": {
+        "result": "stopped_by_resource_gate",
+        "started_at": "2026-10-20T12:28:21+02:00",
+        "stopped_at": "2026-10-20T12:28:54+02:00",
+        "stop_reason": "host CPU PSI some avg10 exceeded 20 percent",
+        "observed_psi_peak_percent": 43.96,
+        "cpu_seconds": 1.473,
+        "memory_peak_mib": 60.1,
+        "swap_peak_bytes": 0
+      },
+      "complete_package_mypy": {
+        "result": "stopped_by_resource_gate",
+        "observed_cpu_psi_peaks_percent": [56.84, 43.83, 33.06],
+        "highest_quota_attempt_percent": 20,
+        "completed": false
+      },
+      "initial_import_path_attempt": {
+        "result": "failed_collection_without_production_mutation",
+        "cause": "scripts.reality_deployment resolved from the live checkout when only candidate packages were first in PYTHONPATH",
+        "corrective_change": "prepend candidate workspace and packages, then assert module origins"
+      }
+    }
+  },
+  "veritas": {
+    "v1_timer_active": false,
+    "v2_timer_active": true,
+    "batch_12_27": {
+      "result": "WAITING_RESOURCES",
+      "reasons": ["host_cpu_pressure"]
+    },
+    "batch_12_32": {
+      "result": "CURRENT",
+      "processed_segments": 16058,
+      "pending_segments": 0,
+      "batch_processed_segments": 20,
+      "summary_sha256": "13a5351eed45df1bed396597b641a56d76f9f6b82e01d66fefb0caa1c10f0e48"
+    },
+    "batch_12_37": {
+      "result": "CURRENT",
+      "processed_segments": 16068,
+      "pending_segments": 0,
+      "batch_processed_segments": 10,
+      "summary_sha256": "5886750d5f35cbf7fb8588c6877f6fdb5ab062e6889fec6fe963e619a5ea86b6",
+      "control_sha256": "3487918618615602b10e7f217e3021e7b1f4bbf4dde3c70a58849a79347a41c6",
+      "next_tick_at": "2026-10-20T12:42:19+02:00"
+    }
+  },
+  "host": {
+    "cpu_count": 6,
+    "load_average_at_12_37_02": [0.93, 0.90, 0.91],
+    "pressure_at_12_37_50_percent": {
+      "cpu_some_avg10": 2.54,
+      "cpu_some_avg60": 6.85,
+      "cpu_full_avg10": 0.0,
+      "memory_some_avg10": 0.0,
+      "memory_full_avg10": 0.0,
+      "io_some_avg10": 0.72,
+      "io_full_avg10": 0.70
+    },
+    "available_memory_bytes": 9106436096,
+    "swap_used_bytes": 4256051200,
+    "swap_total_bytes": 4294963200,
+    "vmstat_samples": 6,
+    "vmstat_idle_percent_range_after_initial_sample": [61, 91],
+    "vmstat_subsequent_swap_in_out": "zero",
+    "persistent_cpu_pressure_root_cause": "unresolved; brief PSI gate spikes were not explained by process snapshots or average CPU load",
+    "no_safety_gate_was_disabled": true
+  },
+  "campaigns": {
+    "reality_mission2": {
+      "state": "STOPPED_WITH_RECOVERABLE_PENDING",
+      "campaign_sha256": "aa8acb2b46823c1a1e3ac5d01a57dde917746c2c7471098ae2a4598875e322f5",
+      "status_sha256": "087a6498457b864b07adb2a47a21a8483f35548166e6c8031f17004eebd5836b",
+      "source_ordinal": 652065,
+      "orders_submitted": 0
+    },
+    "reality_mission2_successor": {
+      "state": "STOPPED_WITH_RECOVERABLE_PENDING",
+      "campaign_sha256": "c5eb8b98cbfd657372fc620192c5a0c0bb46f41d760800e680181fa7f3ee95a3",
+      "status_sha256": "37cff1121c3b8191aec0e6d470ac36875665a9ae2880e0979bd86837e4ea3993",
+      "source_ordinal": 2136971,
+      "orders_submitted": 0
+    },
+    "reality_october_14_canary": {
+      "state": "FAILED",
+      "campaign_sha256": "ce5a288527425271fcfb5b8d7bb93cca1cf47e02a6ba91e693e018ddf96afeb8",
+      "status_sha256": "dab5c0a226b9319f63992cd927fdb0e563c0ff7eb2bb19065cf3bc738bea594a",
+      "source_ordinal": 847,
+      "failure": "Final source segment integrity/continuity mismatch",
+      "timer_active": false,
+      "running_process": false,
+      "modified": false
+    },
+    "48H-001": {
+      "status": "PARTIAL",
+      "active_step": null,
+      "manifest_sha256": "55538167f6b0d9516270001587abea0894801124effad635a0d830be5e0be379",
+      "status_sha256": "44f146d86567830a34db95838297faa980510e7bc6daac1f22a36fcbbe6b8954",
+      "active_timer": false,
+      "modified": false
+    },
+    "reality_integrity_timer": {
+      "active": true,
+      "last_result": "INTEGRITY_VERIFIED",
+      "journal_events": 114120,
+      "sqlite_integrity": "ok",
+      "last_run_at": "2026-10-20T05:04:19+02:00"
+    }
+  },
+  "failed_unit_inventory": {
+    "user_manager_loaded_failed_units": 55,
+    "system_manager_loaded_failed_units": 1,
+    "system_failure": "daymark-db.service; unrelated Continental service left untouched",
+    "cleared_or_restarted": false,
+    "reality_shadow_canary_is_historical_terminal_failure": true
+  },
+  "endurance": {
+    "previous_accepted_duration_seconds": 3825.68,
+    "automatic_transitions": 32,
+    "completed_jobs": 32,
+    "interrupted_worker_recovered_from_checkpoint": true,
+    "new_run_started": false,
+    "reason": "short verification workloads crossed the 20 percent host CPU PSI gate"
+  },
+  "deployment": {
+    "reality_production_deployed": false,
+    "recorder_restart_performed": false,
+    "daemon_reload_performed": false,
+    "approval_required_for_protected_restart": true,
+    "rollback_restart_requires_separate_approval": true,
+    "frontier_started": false,
+    "new_48_hour_campaign_started": false
+  }
+}

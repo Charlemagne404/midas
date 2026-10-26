@@ -2,8 +2,8 @@
 
 import json
 import math
+import os
 import time
-import uuid
 from collections import defaultdict
 from pathlib import Path
 from typing import Any, Literal
@@ -11,7 +11,13 @@ from typing import Any, Literal
 import numpy as np
 from pydantic import Field, model_validator
 
-from midas.arena.artifacts import artifact_path, atomic_json, atomic_replay, sha256
+from midas.arena.artifacts import (
+    artifact_path,
+    atomic_json,
+    atomic_replay,
+    read_replay,
+    sha256,
+)
 from midas.arena.cost_policy import CostGateSpec, CostPolicy
 from midas.arena.datasets import DatasetSpec, load, observation_lineage, research_hash
 from midas.arena.economic_regimes import EconomicRegime
@@ -76,6 +82,67 @@ class TournamentSpec(Model):
         if len({g.identity("forecast") for g in self.cost_gates}) != len(self.cost_gates):
             raise ValueError("Duplicate cost preference configuration")
         return self
+
+
+def _checkpoint_row(
+    directory: Path,
+    row_id: str,
+    expected: dict[str, Any],
+    fingerprint: str,
+) -> tuple[dict[str, Any] | None, str | None]:
+    path = directory / "replays" / f"{row_id}.json"
+    try:
+        saved = read_replay(path)
+    except FileNotFoundError:
+        return None, None
+    except (OSError, EOFError, ValueError, KeyError, TypeError) as error:
+        return None, str(error)
+    row = saved.get("row") if isinstance(saved, dict) else None
+    result = saved.get("result") if isinstance(saved, dict) else None
+    result_core = (
+        {
+            key: value
+            for key, value in result.items()
+            if key not in {"result_hash", "journal_hash", "journal", "runtime"}
+        }
+        if isinstance(result, dict)
+        else None
+    )
+    if (
+        not isinstance(saved, dict)
+        or not isinstance(row, dict)
+        or not isinstance(result, dict)
+        or not isinstance(saved.get("decisions"), list)
+        or saved.get("checkpoint_version") != 1
+        or saved.get("evaluation_fingerprint") != fingerprint
+        or any(row.get(key) != value for key, value in expected.items())
+        or row.get("evaluation_fingerprint") != fingerprint
+        or row.get("result_hash") != result.get("result_hash")
+        or row.get("scenario_hash") != result.get("scenario_hash")
+        or row.get("passed") != result.get("passed")
+        or row.get("metrics") != result.get("metrics")
+        or digest(result_core) != result.get("result_hash")
+        or digest(result.get("journal")) != result.get("journal_hash")
+        or digest(result.get("scenario")) != result.get("scenario_hash")
+    ):
+        return None, "Checkpoint identity or result validation failed"
+    return row, None
+
+
+def _quarantine_checkpoint(directory: Path, row_id: str, reason: str) -> None:
+    source = directory / "replays" / f"{row_id}.json.gz"
+    if not source.is_file():
+        return
+    rejected = directory / "rejected-checkpoints"
+    rejected.mkdir(parents=True, exist_ok=True)
+    target = rejected / f"{row_id}-{time.time_ns()}.json.gz"
+    os.replace(source, target)
+    events_path = directory / "checkpoint-recovery.json"
+    events = json.loads(events_path.read_text()) if events_path.exists() else {"events": []}
+    events["events"].append(
+        {"row_id": row_id, "rejected_path": str(target.relative_to(directory)), "reason": reason}
+    )
+    atomic_json(events_path, events)
 
 
 def summaries(rows: list[dict[str, Any]], spec: TournamentSpec) -> dict[str, Any]:
@@ -356,24 +423,98 @@ def run_tournament(root: Path, spec: TournamentSpec, progress: Any = None) -> di
             )
         )
     )
-    identity = "tournament-" + uuid.uuid4().hex[:24]
-    directory = artifact_path(root, "tournaments", identity)
-    rows = []
-    began = time.monotonic()
     execution_revision = revision()
-    total = len(held_out) * len(spec.execution_models) * len(policies)
     source_hash = research_hash()
+    evaluation_fingerprint = digest(
+        [
+            "arena-tournament-row-checkpoint-v1",
+            spec.model_dump(mode="json"),
+            manifest["rows_sha256"],
+            evaluation_lineage,
+            source_hash,
+            artifacts,
+            model_datasets,
+        ]
+    )
+    identity = "tournament-" + evaluation_fingerprint[:24]
+    directory = artifact_path(root, "tournaments", identity)
+    expected_rows: dict[str, dict[str, Any]] = {}
+    for index in held_out:
+        seed = dataset_spec.seed + index
+        family = dataset_spec.families[index % len(dataset_spec.families)]
+        for execution_name in spec.execution_models:
+            for policy in policies:
+                row_id = f"{index}-{execution_name}-{policy}"
+                work_unit_id = (
+                    "row-"
+                    + digest([evaluation_fingerprint, index, seed, execution_name, policy])[:24]
+                )
+                expected_rows[row_id] = {
+                    "id": row_id,
+                    "work_unit_id": work_unit_id,
+                    "evaluation_fingerprint": evaluation_fingerprint,
+                    "index": index,
+                    "seed": seed,
+                    "challenge_seed": seed,
+                    "family": family,
+                    "base_episode_id": f"{family}:{seed}",
+                    "execution_model": execution_name,
+                    "policy": policy,
+                }
+    total = len(expected_rows)
+    if len(expected_rows) != len(held_out) * len(spec.execution_models) * len(policies):
+        raise ValueError("Tournament work-unit identities are not unique")
     register = getattr(progress, "register", None)
     if register:
         register("tournaments", identity)
-    atomic_json(
-        directory / "preparing.json",
-        {
-            "configuration": spec.model_dump(mode="json"),
-            "source_hash": source_hash,
-            "dataset_sha256": manifest["rows_sha256"],
-        },
-    )
+    preparing_path = directory / "preparing.json"
+    preparing = {
+        "checkpoint_version": 1,
+        "configuration": spec.model_dump(mode="json"),
+        "source_hash": source_hash,
+        "dataset_sha256": manifest["rows_sha256"],
+        "evaluation_fingerprint": evaluation_fingerprint,
+        "expected_work_units": total,
+        "challenge_seeds": sorted({row["challenge_seed"] for row in expected_rows.values()}),
+    }
+    if preparing_path.exists():
+        existing_preparing = json.loads(preparing_path.read_text())
+        if existing_preparing != preparing:
+            raise ValueError("Tournament checkpoint fingerprint differs from this evaluation")
+    else:
+        atomic_json(preparing_path, preparing)
+
+    manifest_path = directory / "manifest.json"
+    rows_path = directory / "rows.json"
+    if manifest_path.exists():
+        completed = json.loads(manifest_path.read_text())
+        if (
+            completed.get("checkpoint_version") != 1
+            or completed.get("evaluation_fingerprint") != evaluation_fingerprint
+            or completed.get("configuration") != spec.model_dump(mode="json")
+            or completed.get("dataset_sha256") != manifest["rows_sha256"]
+            or not rows_path.is_file()
+            or completed.get("rows_sha256") != sha256(rows_path)
+        ):
+            raise ValueError("Completed tournament artifact failed checkpoint validation")
+        completed_rows = json.loads(rows_path.read_text())
+        completed_ids = [row.get("id") for row in completed_rows]
+        if (
+            len(completed_rows) != total
+            or len(set(completed_ids)) != total
+            or set(completed_ids) != set(expected_rows)
+            or any(
+                any(row.get(key) != value for key, value in expected_rows[row["id"]].items())
+                for row in completed_rows
+            )
+        ):
+            raise ValueError("Completed tournament work-unit coverage is incomplete or duplicated")
+        _register_completed_tournament(root, completed, referenced_models)
+        return {**completed, "checkpoint_reuse": {"completed": True, "rows_reused": total}}
+
+    rows: list[dict[str, Any]] = []
+    reused_rows = 0
+    began = time.monotonic()
     for index in held_out:
         seed = dataset_spec.seed + index
         family = dataset_spec.families[index % len(dataset_spec.families)]
@@ -399,6 +540,19 @@ def run_tournament(root: Path, spec: TournamentSpec, progress: Any = None) -> di
             if spec.economic_regime:
                 scenario = spec.economic_regime.apply(scenario)
             for policy, model in policies.items():
+                row_id = f"{index}-{execution_name}-{policy}"
+                expected = expected_rows[row_id]
+                cached, invalid_reason = _checkpoint_row(
+                    directory, row_id, expected, evaluation_fingerprint
+                )
+                if cached is not None:
+                    rows.append(cached)
+                    reused_rows += 1
+                    if progress:
+                        progress(len(rows), total)
+                    continue
+                if invalid_reason:
+                    _quarantine_checkpoint(directory, row_id, invalid_reason)
                 env = ArenaEnv(scenario=scenario, retain=True)
                 obs, _ = env.reset(seed=spec.seed)
                 rng = np.random.default_rng(seed + spec.seed)
@@ -509,8 +663,8 @@ def run_tournament(root: Path, spec: TournamentSpec, progress: Any = None) -> di
                 for left, right in zip(result["journal"], result["journal"][1:], strict=False):
                     if float(left["after"].get("net_exposure_shares", 0)) != 0:
                         exposure_ms += right["time_ms"] - left["time_ms"]
-                row_id = f"{index}-{execution_name}-{policy}"
                 row = {
+                    **expected,
                     "id": row_id,
                     "index": index,
                     "base_episode_id": f"{family}:{seed}",
@@ -569,14 +723,29 @@ def run_tournament(root: Path, spec: TournamentSpec, progress: Any = None) -> di
                 # Every replay is saved, independently of future model/source availability.
                 atomic_replay(
                     directory / "replays" / f"{row_id}.json",
-                    {"result": result, "decisions": info["decision_trace"], "row": row},
+                    {
+                        "checkpoint_version": 1,
+                        "evaluation_fingerprint": evaluation_fingerprint,
+                        "result": result,
+                        "decisions": info["decision_trace"],
+                        "row": row,
+                    },
                 )
                 if progress:
                     progress(len(rows), total)
-    atomic_json(directory / "rows.json", rows)
+    row_ids = [row.get("id") for row in rows]
+    if len(rows) != total or len(set(row_ids)) != total or set(row_ids) != set(expected_rows):
+        raise ValueError("Tournament produced duplicate or incomplete evaluation work units")
+    atomic_json(rows_path, rows)
     report = {
         "tournament_id": identity,
         "created_at": time.time(),
+        "checkpoint_version": 1,
+        "evaluation_fingerprint": evaluation_fingerprint,
+        "checkpoint_rows_reused": reused_rows,
+        "checkpoint_rows_computed": total - reused_rows,
+        "resumed_from_partial": reused_rows > 0,
+        "challenge_seeds": preparing["challenge_seeds"],
         "configuration": spec.model_dump(mode="json"),
         "dataset_sha256": manifest["rows_sha256"],
         "source_hash": source_hash,
@@ -595,7 +764,7 @@ def run_tournament(root: Path, spec: TournamentSpec, progress: Any = None) -> di
         "cost_policy_bindings": cost_bindings,
         "base_episodes": len(held_out),
         "variants": len(rows),
-        "rows_sha256": sha256(directory / "rows.json"),
+        "rows_sha256": sha256(rows_path),
         "duration_seconds": time.monotonic() - began,
         "provenance": "GENERATED",
         "economically_verified": False,
@@ -627,40 +796,50 @@ def run_tournament(root: Path, spec: TournamentSpec, progress: Any = None) -> di
             conclusion="Saved-specification replay for performance measurement; no new independent research evidence.",
         )
     atomic_json(directory / "manifest.json", report)
+    _register_completed_tournament(root, report, referenced_models)
+    return report
+
+
+def _register_completed_tournament(
+    root: Path, report: dict[str, Any], referenced_models: tuple[str, ...]
+) -> None:
+    """Idempotently publish a completed tournament after a worker restart."""
     publish_findings(root, report)
+    bindings = report.get("policy_bindings", {})
+    cost_bindings = report.get("cost_policy_bindings", {})
+    config = report["configuration"]
     for model_id in referenced_models:
         model_directory = artifact_path(root, "models", model_id)
-        model_record = json.loads((model_directory / "manifest.json").read_text())
+        manifest_path = model_directory / "manifest.json"
+        model_record = json.loads(manifest_path.read_text())
+        gate_metrics = []
+        for row in report["leaderboard"]:
+            policy = row["policy"]
+            bound_model = bindings.get(policy, {}).get("model_id")
+            cost_binding = cost_bindings.get(policy, {}).get("specification", {})
+            if (
+                policy == model_id
+                or bound_model == model_id
+                or model_id
+                in {cost_binding.get("model_id"), cost_binding.get("completion_model_id")}
+            ):
+                gate_metrics.append(row)
+        evaluation = {
+            "tournament_id": report["tournament_id"],
+            "base_episodes": report["base_episodes"],
+            "dataset_sha256": report["dataset_sha256"],
+            "adversarial": config["adversarial"],
+            "artifact_sha256": model_record["artifact_sha256"],
+            "metrics": next((v for v in report["leaderboard"] if v["policy"] == model_id), None),
+            "gate_metrics": gate_metrics,
+        }
         evaluations = model_record.setdefault("policy_evaluations", [])
-        evaluations.append(
-            {
-                "tournament_id": identity,
-                "base_episodes": len(held_out),
-                "dataset_sha256": manifest["rows_sha256"],
-                "adversarial": spec.adversarial,
-                "artifact_sha256": model_record["artifact_sha256"],
-                "metrics": next(
-                    (v for v in report["leaderboard"] if v["policy"] == model_id), None
-                ),
-                "gate_metrics": [
-                    v
-                    for v in report["leaderboard"]
-                    if v["policy"] == model_id
-                    or (v["policy"] in bindings and bindings[v["policy"]].model_id == model_id)
-                    or (
-                        v["policy"] in cost_bindings
-                        and model_id
-                        in {
-                            cost_bindings[v["policy"]]["specification"]["model_id"],
-                            cost_bindings[v["policy"]]["specification"].get("completion_model_id"),
-                        }
-                    )
-                ],
-            }
-        )
+        evaluations[:] = [
+            item for item in evaluations if item.get("tournament_id") != report["tournament_id"]
+        ]
+        evaluations.append(evaluation)
         model_record["state"] = "EVALUATED"
-        atomic_json(model_directory / "manifest.json", model_record)
-    return report
+        atomic_json(manifest_path, model_record)
 
 
 def publish_findings(root: Path, report: dict[str, Any]) -> dict[str, Any]:
@@ -687,7 +866,7 @@ def publish_findings(root: Path, report: dict[str, Any]) -> dict[str, Any]:
         "source_hash": report["source_hash"],
         "code_revision": report.get("code_revision"),
         "seed": report["configuration"]["seed"],
-        "created_at": time.time(),
+        "created_at": report["created_at"],
         "interpretation": report["conclusion"],
         "outcome": report["leaderboard"],
         "uncertainty": report["paired"],

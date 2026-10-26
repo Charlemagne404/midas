@@ -100,3 +100,45 @@ has the configured append cap. This is isolation, not automatic rotation.
 Laboratory archive disk scans tolerate files that disappear during enumeration
 (including transient SQLite WAL/SHM sidecars). Other filesystem errors remain
 visible failures; budgets still include all present regular archive files.
+
+## Account-head encoding and reversible rollback (capacity overhaul)
+
+Large paper account heads use a versioned `zlib-json-1` envelope in
+`paper_accounts.payload`. ORM consumers see the complete logical state.
+`paper_events` commands/payloads and logical checksums remain ordinary JSON and
+unchanged. Each command still commits the complete head and journal atomically
+with `synchronous=FULL`; no checkpoint or fsync is skipped. Small/plain legacy
+heads remain readable; oversized or incompressible logical heads keep plain JSON.
+Compressed decoding is bounded at 64 MiB and rejects malformed,
+truncated, concatenated or oversized encodings.
+
+Inspect heads without writing or starting an API:
+
+```sh
+.venv/bin/python scripts/paper_state_storage.py --database data/midas.db
+```
+
+Before rolling an API back to code without the decoder, explicitly stop that API,
+then use the **new** helper/source to materialize its current heads as plain JSON:
+
+```sh
+.venv/bin/python scripts/paper_state_storage.py --database data/midas.db \
+  --materialize --service midas-api.service
+```
+
+For the interface use its isolated `preview.db` and `midas-reality-api.service`.
+The helper refuses active APIs and recorder units, checks logical SHA256 before
+writing, and updates only payload representation in one FULL-sync transaction.
+Revisions, logical checksums, journal hashes and historical events remain intact.
+Do not restore an old head backup over a newer journal. Only after successful
+materialization should the reviewed old API release be selected and started.
+The capacity report records deployed identities and the tested rollback release.
+
+The explicit full financial replay CLI now streams journal rows and validates
+both the logical snapshot and every replay transition. It remains CPU-expensive
+for a large journal; do not run a production full replay merely as a health check.
+
+API synthetic recording allowances are 4 GiB per service following the capacity
+overhaul's measured disk reservation. This allocates storage; it does not prune
+records or replace the existing explicit retention procedure. Keep the protected
+Reality reserve and separate archive/research commitments when reviewing runway.

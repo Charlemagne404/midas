@@ -1,0 +1,45 @@
+Running as unit: midas-validation-integration-20261020.service; invocation ID: 795d5813d3734cec9737c0db46a62863
+Reality storage: /home/charlie/midas-reality-reliability/packages/midas/reality/storage.py
+.............................F                                           [100%]
+=================================== FAILURES ===================================
+__________ test_recovery_matrix_and_real_interruption_preserve_source __________
+
+tmp_path = PosixPath('/tmp/pytest-of-charlie/pytest-884/test_recovery_matrix_and_real_0')
+
+    def test_recovery_matrix_and_real_interruption_preserve_source(tmp_path):
+        source = fixture(tmp_path)
+        before = {p.name: p.read_bytes() for p in source.iterdir()}
+        catalog, _, _ = validation.inventory(source)
+        view = tmp_path / "view"
+        view.mkdir()
+        validation.write(tmp_path / "catalog.json", catalog)
+        for info in catalog["segments"]:
+            (view / info["file"]).symlink_to(source / info["file"])
+        expected = None
+        for phase in ("cold", "fast", "restart", "corrupt", "stale", "interrupt",
+                      "after_interrupt", "interrupt_save", "after_interrupt_save"):
+            process = subprocess.run([sys.executable, str(Path(validation.__file__).resolve()),
+                                      "worker", "--source", str(view), "--phase", phase],
+                                     capture_output=True, text=True, env=os.environ, timeout=20)
+            if phase in ("interrupt", "interrupt_save"):
+                assert process.returncode == -9, process.stderr
+                continue
+>           assert process.returncode == 0, process.stderr
+E           AssertionError: Traceback (most recent call last):
+E               File "/home/charlie/midas/scripts/reality_full_scale_validation.py", line 27, in <module>
+E                 from midas.reality import recovery
+E             ImportError: cannot import name 'recovery' from 'midas.reality' (/home/charlie/midas/packages/midas/reality/__init__.py)
+E
+E           assert 1 == 0
+E            +  where 1 = CompletedProcess(args=['/home/charlie/midas-reality/.venv/bin/python', '/home/charlie/midas/scripts/reality_full_scale...or: cannot import name \'recovery\' from \'midas.reality\' (/home/charlie/midas/packages/midas/reality/__init__.py)\n').returncode
+
+tests/test_reality_full_scale_validation.py:73: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_reality_full_scale_validation.py::test_recovery_matrix_and_real_interruption_preserve_source
+1 failed, 29 passed in 13.42s
+Finished with result: exit-code
+Main processes terminated with: code=exited/status=1
+Service runtime: 16.021s
+CPU time consumed: 3.239s
+Memory peak: 512.0K
+Memory swap peak: 0B

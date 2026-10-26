@@ -1,0 +1,12 @@
+[
+  {
+    "account_id": "benchmark",
+    "revision": 266,
+    "checksum": "9406ee57f5ba13be95f5c847e126ebb7ebe176cb1c59aaa043beabfb9a578e45",
+    "journal_hash": "93177df2e73e4db45b833783a1b6837757e8fd0945ac78e9cacd15b786e2b048",
+    "encoding": "zlib-json-1",
+    "stored_bytes": 34385,
+    "logical_bytes": 906389,
+    "materialized": true
+  }
+]

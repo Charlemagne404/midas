@@ -1,0 +1,227 @@
+{
+  "at_ns": 1792504183164440657,
+  "production_unit": "MainPID=863193\nNRestarts=1\nMemoryPeak=738721792\nMemoryHigh=738197504\nMemoryMax=805306368\nMemorySwapMax=0\nActiveState=active\n",
+  "resources": {
+    "memory_current_bytes": 706871296,
+    "memory_high_bytes": 738197504,
+    "memory_high_margin_bytes": 31326208,
+    "memory_events": {
+      "low": 0,
+      "high": 10244,
+      "max": 0,
+      "oom": 0,
+      "oom_kill": 0,
+      "oom_group_kill": 0,
+      "sock_throttled": 216
+    },
+    "host_mem_available_bytes": 8632369152,
+    "host_pressure": {
+      "cpu": {
+        "some": {
+          "avg10": "46.01",
+          "avg60": "32.50",
+          "avg300": "23.26",
+          "total": "278366746369"
+        },
+        "full": {
+          "avg10": "0.00",
+          "avg60": "0.00",
+          "avg300": "0.00",
+          "total": "0"
+        }
+      },
+      "memory": {
+        "some": {
+          "avg10": "0.00",
+          "avg60": "0.00",
+          "avg300": "0.00",
+          "total": "10944816355"
+        },
+        "full": {
+          "avg10": "0.00",
+          "avg60": "0.00",
+          "avg300": "0.00",
+          "total": "6322483795"
+        }
+      },
+      "io": {
+        "some": {
+          "avg10": "1.44",
+          "avg60": "1.64",
+          "avg300": "1.15",
+          "total": "16341141189"
+        },
+        "full": {
+          "avg10": "0.51",
+          "avg60": "0.97",
+          "avg300": "0.77",
+          "total": "12760475799"
+        }
+      }
+    }
+  },
+  "memory_stat": "anon 605655040\nfile 82784256\nkernel 18104320\nkernel_stack 16384\npagetables 1290240\nsec_pagetables 0\npercpu 128\nsock 0\nvmalloc 0\nshmem 0\nzswap 0\nzswapped 0\nfile_mapped 5267456\nfile_dirty 53248\nfile_writeback 0\nswapcached 53248\nanon_thp 0\nfile_thp 0\nshmem_thp 0\ninactive_anon 238477312\nactive_anon 367230976\ninactive_file 80343040\nactive_file 2441216\nunevictable 0\nslab_reclaimable 16722184\nslab_unreclaimable 74816\nslab 16797000\nworkingset_refault_anon 14725\nworkingset_refault_file 709231\nworkingset_activate_anon 1657\nworkingset_activate_file 151\nworkingset_restore_anon 21\nworkingset_restore_file 91\nworkingset_nodereclaim 0\npgdemote_kswapd 0\npgdemote_direct 0\npgdemote_khugepaged 0\npgdemote_proactive 0\npgpromote_success 0\npgscan 1840482\npgsteal 1815838\npswpin 14411\npswpout 15250\npgscan_kswapd 406955\npgscan_direct 1433527\npgscan_khugepaged 0\npgscan_proactive 0\npgsteal_kswapd 386225\npgsteal_direct 1429613\npgsteal_khugepaged 0\npgsteal_proactive 0\npgfault 4267436\npgmajfault 8555\npgrefill 509914\npgactivate 6274\npgdeactivate 0\npglazyfree 0\npglazyfreed 0\nswpin_zero 314\nswpout_zero 324\nzswpin 0\nzswpout 0\nzswpwb 0\nthp_fault_alloc 0\nthp_collapse_alloc 0\nthp_swpout 0\nthp_swpout_fallback 0\nnuma_pages_migrated 0\nnuma_pte_updates 0\nnuma_hint_faults 0\n",
+  "status": {
+    "state": "DEGRADED_SOURCE_TIMING",
+    "fresh_books": 16,
+    "expected_books": 16,
+    "ordinal": 2437470,
+    "frames": 459989,
+    "gaps": 9536,
+    "updated_ns": 1792504181841643871,
+    "sequence_verified": false
+  },
+  "procedure_revision": "report commit, separate from candidate f2dc9c7",
+  "validation_unit": "MemoryCurrent=139800576\nMemoryPeak=146505728\nCPUUsageNSec=3622277000\nActiveState=active\n",
+  "followup_status_at_ns": 1792504197607738231,
+  "followup_status": {
+    "state": "DEGRADED_SOURCE_TIMING",
+    "fresh_books": 16,
+    "expected_books": 16,
+    "ordinal": 2437504,
+    "frames": 460020,
+    "gaps": 9536,
+    "updated_ns": 1792504197520790796,
+    "sequence_verified": false,
+    "timing_uncertain_books": 2,
+    "error": "ConnectionClosedOK: received 1001 (going away) server shutting down; then sent 1001 (going away) server shutting down",
+    "clock_health": {
+      "checked_ns": 1792504197521893378,
+      "estimated_error_us": 0,
+      "kernel_state": 0,
+      "limitation": "Kernel-reported clock health; not independently measured venue clock skew.",
+      "maximum_error_us": 44000,
+      "status": "kernel_synchronized"
+    }
+  },
+  "followup_book_health": {
+    "103704141773947678931823410030956181918562062788486034785782641603149828893320": {
+      "age_ns": 0,
+      "issue": null,
+      "internally_consistent": true,
+      "source_time_status": null,
+      "timing_uncertain": null,
+      "continuity": "unsequenced_observed_lineage"
+    },
+    "115563279943088574368475763566308524191598627607680105838058505260056381768939": {
+      "age_ns": 40462984817,
+      "issue": null,
+      "internally_consistent": true,
+      "source_time_status": null,
+      "timing_uncertain": null,
+      "continuity": "unsequenced_observed_lineage"
+    },
+    "18033264813611099230914962592223128974736165937777868172600936151336425216026": {
+      "age_ns": 40462984817,
+      "issue": null,
+      "internally_consistent": true,
+      "source_time_status": null,
+      "timing_uncertain": null,
+      "continuity": "unsequenced_observed_lineage"
+    },
+    "25869296386911654049715489068824757745174681288397238521780118949553760488529": {
+      "age_ns": 0,
+      "issue": null,
+      "internally_consistent": true,
+      "source_time_status": null,
+      "timing_uncertain": null,
+      "continuity": "unsequenced_observed_lineage"
+    },
+    "30455770425041126193569940063234142577691408508440512817158696601142733755169": {
+      "age_ns": 40462984817,
+      "issue": null,
+      "internally_consistent": true,
+      "source_time_status": null,
+      "timing_uncertain": null,
+      "continuity": "unsequenced_observed_lineage"
+    },
+    "33907952020079956642716433663280761618877438589285754206876072990122520384138": {
+      "age_ns": 1073613753,
+      "issue": null,
+      "internally_consistent": true,
+      "source_time_status": null,
+      "timing_uncertain": null,
+      "continuity": "unsequenced_observed_lineage"
+    },
+    "39223330966352513418907732239455948906399882924787587183466504819170775983376": {
+      "age_ns": 12504326167,
+      "issue": null,
+      "internally_consistent": true,
+      "source_time_status": null,
+      "timing_uncertain": null,
+      "continuity": "unsequenced_observed_lineage"
+    },
+    "39738882799097248877103287282436919112196405564035155856022751944036738828250": {
+      "age_ns": 40462984817,
+      "issue": null,
+      "internally_consistent": true,
+      "source_time_status": null,
+      "timing_uncertain": null,
+      "continuity": "unsequenced_observed_lineage"
+    },
+    "41185408354690640097928845699000514691331205295425436367350838623810520835082": {
+      "age_ns": 11263088380,
+      "issue": null,
+      "internally_consistent": true,
+      "source_time_status": null,
+      "timing_uncertain": null,
+      "continuity": "unsequenced_observed_lineage"
+    },
+    "44253773982269647786001433323095618605413985786094225082181566233253570490080": {
+      "age_ns": 1722113292,
+      "issue": null,
+      "internally_consistent": true,
+      "source_time_status": null,
+      "timing_uncertain": null,
+      "continuity": "unsequenced_observed_lineage"
+    },
+    "50862799703982327636174441241062907649998751737045006653560124656563256528691": {
+      "age_ns": 12504326167,
+      "issue": null,
+      "internally_consistent": true,
+      "source_time_status": null,
+      "timing_uncertain": null,
+      "continuity": "unsequenced_observed_lineage"
+    },
+    "60399364686572231553105995833253546387479063962309404013436366373238322916981": {
+      "age_ns": 11263088380,
+      "issue": null,
+      "internally_consistent": true,
+      "source_time_status": null,
+      "timing_uncertain": null,
+      "continuity": "unsequenced_observed_lineage"
+    },
+    "65798294507987312276643818583202416276939957254836998308855036749104874776050": {
+      "age_ns": 33727331867,
+      "issue": null,
+      "internally_consistent": true,
+      "source_time_status": null,
+      "timing_uncertain": null,
+      "continuity": "unsequenced_observed_lineage"
+    },
+    "68589338896776180488787853833166391233665626767833023397115471539365510760902": {
+      "age_ns": 1073613753,
+      "issue": null,
+      "internally_consistent": true,
+      "source_time_status": null,
+      "timing_uncertain": null,
+      "continuity": "unsequenced_observed_lineage"
+    },
+    "74494918888439101718113207558116765686298810221372711234635598871515646553437": {
+      "age_ns": 1722113292,
+      "issue": null,
+      "internally_consistent": true,
+      "source_time_status": null,
+      "timing_uncertain": null,
+      "continuity": "unsequenced_observed_lineage"
+    },
+    "80444250591000346031053171380243612904016851519226250274769734418106954626247": {
+      "age_ns": 33727331867,
+      "issue": null,
+      "internally_consistent": true,
+      "source_time_status": null,
+      "timing_uncertain": null,
+      "continuity": "unsequenced_observed_lineage"
+    }
+  }
+}

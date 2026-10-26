@@ -3,6 +3,7 @@
 import fcntl
 import json
 import os
+import shutil
 import signal
 import subprocess
 import sys
@@ -30,6 +31,11 @@ from midas.arena.unwind import UnwindStudySpec
 from midas.arena.usage import UsageIndex
 from midas.core.models import Model
 from midas.veritas.arena_qualification import VeritasQualificationSpec
+
+MAX_QUEUE_WAIT_SECONDS = 300
+QUEUE_STATUS_PUBLISH_SECONDS = 30
+MAX_ARENA_ARTIFACT_BYTES = 8 * 1024**3
+MINIMUM_DISK_RESERVE_BYTES = 2 * 1024**3
 
 
 class JobSpec(Model):
@@ -69,6 +75,10 @@ class JobSpec(Model):
     policy_search: PolicySearchSpec | None = None
     veritas_qualification: VeritasQualificationSpec | None = None
     max_wall_seconds: int = Field(default=1800, ge=10, le=7200)
+    memory_limit_mb: int = Field(default=3072, ge=128, le=3072)
+    cpu_quota_percent: int = Field(default=100, ge=1, le=100)
+    nice: int = Field(default=10, ge=0, le=19)
+    io_scheduling_class: Literal["best-effort", "idle"] = "best-effort"
 
     @model_validator(mode="after")
     def inputs(self) -> "JobSpec":
@@ -115,7 +125,11 @@ class JobSpec(Model):
 
 
 def create(
-    root: Path, spec: JobSpec, launch: bool = True, admission_key: str | None = None
+    root: Path,
+    spec: JobSpec,
+    launch: bool = True,
+    admission_key: str | None = None,
+    retry_of: str | None = None,
 ) -> dict[str, Any]:
     if spec.kind == "plan" and admission_key is None:
         if spec.plan_id is None:
@@ -124,32 +138,74 @@ def create(
     root.mkdir(parents=True, exist_ok=True)
     with (root / "admission.lock").open("a+") as lease:
         fcntl.flock(lease, fcntl.LOCK_EX)
+        attempt_number = 1
+        if retry_of is not None:
+            parent_path = artifact_path(root, "jobs", retry_of) / "job.json"
+            if not parent_path.is_file():
+                raise ValueError(f"Retry parent does not exist: {retry_of}")
+            parent = json.loads(parent_path.read_text())
+            if parent.get("state") not in {"FAILED", "CANCELLED", "INTERRUPTED"}:
+                raise ValueError("Retry parent must have a failed, cancelled, or interrupted state")
+            attempt_number = int(parent.get("attempt_number", 1)) + 1
         if admission_key is not None:
             if not admission_key or len(admission_key) > 96:
                 raise ValueError("Admission key must contain 1-96 characters")
-            matches: list[dict[str, Any]] = []
-            for path in root.glob("jobs/*/job.json"):
-                candidate: dict[str, Any] = json.loads(path.read_text())
-                if candidate.get("admission_key") == admission_key:
-                    matches.append(candidate)
-            if len(matches) > 1:
-                raise ValueError("Duplicate durable admission keys require inspection")
-            if matches:
-                existing = matches[0]
-                if existing["configuration"] != spec.model_dump(mode="json"):
-                    raise ValueError("Admission key was already bound to another configuration")
+            existing = _find_by_admission_key(root, admission_key, spec.model_dump(mode="json"))
+            if existing:
+                if existing.get("retry_of") != retry_of:
+                    raise ValueError("Admission key was already bound to another retry parent")
                 return existing
         if launch:
             from midas.arena.admission import admission_slot
 
-            memory_mb = 512 if spec.kind == "veritas_qualification" else 4096
+            memory_mb = 512 if spec.kind == "veritas_qualification" else spec.memory_limit_mb
             with admission_slot(root, requested_memory_bytes=memory_mb * 1024**2):
-                return _create(root, spec, launch, admission_key)
-        return _create(root, spec, launch, admission_key)
+                return _create(root, spec, launch, admission_key, retry_of, attempt_number)
+        return _create(root, spec, launch, admission_key, retry_of, attempt_number)
+
+
+def _find_by_admission_key(
+    root: Path, admission_key: str, configuration: dict[str, Any] | None = None
+) -> dict[str, Any] | None:
+    matches: list[dict[str, Any]] = []
+    for path in root.glob("jobs/*/job.json"):
+        candidate = json.loads(path.read_text())
+        if candidate.get("admission_key") == admission_key:
+            matches.append(candidate)
+    if len(matches) > 1:
+        raise ValueError("Duplicate durable admission keys require inspection")
+    if not matches:
+        return None
+    existing = matches[0]
+    if configuration is not None and existing["configuration"] != configuration:
+        raise ValueError("Admission key was already bound to another configuration")
+    return existing
+
+
+def find_by_admission_key(
+    root: Path,
+    admission_key: str,
+    configuration: dict[str, Any] | None = None,
+    retry_of: str | None = None,
+) -> dict[str, Any] | None:
+    """Read a durable admission result without creating or launching a job."""
+    if not root.is_dir():
+        return None
+    with (root / "admission.lock").open("a+") as lease:
+        fcntl.flock(lease, fcntl.LOCK_EX)
+        existing = _find_by_admission_key(root, admission_key, configuration)
+        if existing and existing.get("retry_of") != retry_of:
+            raise ValueError("Admission key was already bound to another retry parent")
+        return existing
 
 
 def _create(
-    root: Path, spec: JobSpec, launch: bool, admission_key: str | None = None
+    root: Path,
+    spec: JobSpec,
+    launch: bool,
+    admission_key: str | None = None,
+    retry_of: str | None = None,
+    attempt_number: int = 1,
 ) -> dict[str, Any]:
     active = sum(
         inspect(root, p.parent.name)["state"] in {"RUNNING", "QUEUED"}
@@ -160,10 +216,13 @@ def _create(
     identity = "job-" + uuid.uuid4().hex[:24]
     directory = artifact_path(root, "jobs", identity)
     veritas_read_only = spec.kind == "veritas_qualification"
-    memory_limit_mb = 512 if veritas_read_only else 4096
-    cpu_quota_percent = 100
-    nice = 19 if veritas_read_only else 10
-    io_scheduling_class = "idle" if veritas_read_only else "best-effort"
+    memory_limit_mb = 512 if veritas_read_only else spec.memory_limit_mb
+    # Global admission permits one worker. Respect its declared <= one-core
+    # budget: a hidden 10% qualification cap stretched CPU work across ten
+    # times the wall time and generated quota PSI on an otherwise idle host.
+    cpu_quota_percent = spec.cpu_quota_percent
+    nice = max(spec.nice, 15) if veritas_read_only else spec.nice
+    io_scheduling_class = "idle" if veritas_read_only else spec.io_scheduling_class
     record = {
         "job_id": identity,
         "configuration": spec.model_dump(mode="json"),
@@ -175,6 +234,8 @@ def _create(
         "result": None,
         "unit": f"midas-arena-{identity}.service",
         "submitted_source_hash": research_hash(),
+        "retry_of": retry_of,
+        "attempt_number": attempt_number,
         "budget": {
             "cpu_cores": cpu_quota_percent / 100,
             "cpu_quota_percent": cpu_quota_percent,
@@ -183,6 +244,7 @@ def _create(
             "wall_seconds": spec.max_wall_seconds,
             "minimum_available_memory_mb": 2048 + memory_limit_mb,
             "max_artifact_mb": 1024,
+            "max_arena_artifact_mb": MAX_ARENA_ARTIFACT_BYTES // 1024**2,
         },
     }
     if admission_key is not None:
@@ -210,7 +272,10 @@ def _create(
             "--property=CPUWeight=10",
             f"--property=Nice={nice}",
             f"--property=IOSchedulingClass={io_scheduling_class}",
-            f"--property=RuntimeMaxSec={spec.max_wall_seconds}",
+            # systemd's wall clock includes time spent waiting for worker.lock;
+            # the worker applies the configured limit only after it owns that
+            # lease. Reserve the same bounded queue window in the unit limit.
+            f"--property=RuntimeMaxSec={spec.max_wall_seconds + MAX_QUEUE_WAIT_SECONDS}",
             "--property=TimeoutStopSec=30",
             f"--working-directory={repository}",
             f"--setenv=PYTHONPATH={repository / 'packages'}",
@@ -275,23 +340,36 @@ def run(root: Path, identity: str) -> None:
 def _run(root: Path, identity: str) -> None:
     directory = artifact_path(root, "jobs", identity)
     record = json.loads((directory / "job.json").read_text())
-    if record["state"] in {"COMPLETED", "CANCELLED"}:
+    if record["state"] != "QUEUED":
         return
     spec = JobSpec.model_validate(record["configuration"])
-    began = time.monotonic()
+    began: float | None = None
+    queue_started = time.monotonic()
+    queue_wait_seconds = 0.0
     stop = False
     signalled = False
-    overhead: dict[str, float | int] = {
+    overhead: dict[str, Any] = {
         "artifact_scan_seconds": 0.0,
         "progress_publish_seconds": 0.0,
         "artifact_scans": 0,
         "artifact_files": 0,
         "artifact_bytes": 0,
         "artifact_observations": 0,
+        "arena_total_bytes": 0,
+        "job_artifact_bytes": 0,
+        "job_artifact_baseline_bytes": 0,
+        "job_artifact_budget_bytes": int(record.get("budget", {}).get("max_artifact_mb", 1024))
+        * 1024**2,
+        "global_artifact_budget_bytes": int(
+            record.get("budget", {}).get("max_arena_artifact_mb", 8192)
+        )
+        * 1024**2,
         "artifact_index_reconciliations": 0,
         "artifact_index_fallbacks": 0,
+        "artifact_index_file_watch_mode": "UNINITIALIZED",
     }
     usage_index: UsageIndex | None = None
+    job_artifact_baseline_bytes: int | None = None
 
     def stopped(signum: int, frame: Any) -> None:
         nonlocal stop
@@ -307,6 +385,7 @@ def _run(root: Path, identity: str) -> None:
             raise Cancelled("Cancellation requested; completed artifacts retained")
         if stop and signalled:
             raise InterruptedError("Worker received a stop signal; completed checkpoints retained")
+        assert began is not None
         if time.monotonic() - began > spec.max_wall_seconds:
             raise TimeoutError("Wall time budget reached")
         available = next(
@@ -324,22 +403,66 @@ def _run(root: Path, identity: str) -> None:
             overhead["artifact_index_reconciliations"] = usage_index.reconciliations
             overhead["artifact_index_fallbacks"] = usage_index.fallbacks
             overhead["artifact_scans"] = usage_index.reconciliations + usage_index.fallbacks
+            file_watch_mode = getattr(usage_index, "file_watch_mode", "UNKNOWN")
+            overhead["artifact_index_file_watch_mode"] = file_watch_mode
             record["artifact_guard"] = {
                 "mode": "EVENT_INDEX" if usage_index.fd >= 0 else "FULL_SCAN_FALLBACK",
                 "last_error": usage_index.last_error,
                 "watch_count": len(usage_index.watches),
+                "file_watch_mode": file_watch_mode,
+                "polling_file_count": len(getattr(usage_index, "poll_files", ())),
             }
         else:
             overhead["artifact_scans"] += 1
-        overhead.update(artifact_files=file_count, artifact_bytes=total_bytes)
-        if total_bytes > 1024**3:
-            raise RuntimeError("Arena artifact budget exceeded 1 GiB; evidence retained")
+        job_artifact_bytes = (
+            max(0, total_bytes - job_artifact_baseline_bytes)
+            if job_artifact_baseline_bytes is not None
+            else 0
+        )
+        artifact_budget_bytes = int(record.get("budget", {}).get("max_artifact_mb", 1024)) * 1024**2
+        global_artifact_budget_bytes = (
+            int(record.get("budget", {}).get("max_arena_artifact_mb", 8192)) * 1024**2
+        )
+        overhead.update(
+            artifact_files=file_count,
+            artifact_bytes=total_bytes,
+            arena_total_bytes=total_bytes,
+            job_artifact_bytes=job_artifact_bytes,
+            job_artifact_baseline_bytes=job_artifact_baseline_bytes or 0,
+            job_artifact_budget_bytes=artifact_budget_bytes,
+            global_artifact_budget_bytes=global_artifact_budget_bytes,
+        )
+        disk_free_bytes = shutil.disk_usage(root).free
+        remaining_job_artifact_bytes = max(0, artifact_budget_bytes - job_artifact_bytes)
+        required_disk_free_bytes = MINIMUM_DISK_RESERVE_BYTES + remaining_job_artifact_bytes
+        overhead.update(
+            disk_free_bytes=disk_free_bytes,
+            minimum_disk_reserve_bytes=MINIMUM_DISK_RESERVE_BYTES,
+            remaining_job_artifact_bytes=remaining_job_artifact_bytes,
+        )
+        if disk_free_bytes < required_disk_free_bytes:
+            raise RuntimeError(
+                "Arena disk reserve would be breached by this job's remaining artifact budget"
+            )
+        if total_bytes + artifact_budget_bytes > global_artifact_budget_bytes:
+            raise RuntimeError(
+                "Arena global artifact budget headroom exhausted; historical evidence retained"
+            )
+        # The job budget is growth while this worker owns Arena's write lease, not
+        # the accumulated size of historical artifacts shared by every Arena job.
+        if job_artifact_baseline_bytes is not None and job_artifact_bytes > artifact_budget_bytes:
+            raise RuntimeError(
+                f"Arena job artifact budget exceeded {artifact_budget_bytes // 1024**2} MiB; evidence retained"
+            )
+        meaningful_progress = record.get("progress") != {"done": done, "total": total}
         record.update(
             progress={"done": done, "total": total},
             updated_at=time.time(),
             elapsed_seconds=time.monotonic() - began,
             runtime_profile=dict(overhead),
         )
+        if meaningful_progress:
+            record["last_meaningful_progress_at"] = record["updated_at"]
         write_began = time.perf_counter()
         atomic_json(directory / "job.json", record)
         overhead["progress_publish_seconds"] += time.perf_counter() - write_began
@@ -360,24 +483,58 @@ def _run(root: Path, identity: str) -> None:
             register(kind, artifact_id)
 
         def phase(self, name: str) -> None:
-            record["phase"] = name
+            if record.get("phase") != name:
+                record["phase"] = name
+                record["last_meaningful_progress_at"] = time.time()
             atomic_json(directory / "job.json", record)
 
     progress = Progress()
     # All heavy Arena jobs serialize; the Laboratory's lease is never opened.
     with (root / "worker.lock").open("a+") as lease:
         try:
+            next_queue_update = queue_started
             while True:
+                if (directory / "cancel").exists():
+                    raise Cancelled("Cancellation requested while waiting for the worker lease")
+                if stop and signalled:
+                    raise InterruptedError("Worker received a stop signal while queued")
+                now = time.monotonic()
+                queue_wait_seconds = now - queue_started
+                if queue_wait_seconds >= MAX_QUEUE_WAIT_SECONDS:
+                    raise TimeoutError(
+                        f"Worker lease wait exceeded {MAX_QUEUE_WAIT_SECONDS} seconds"
+                    )
                 try:
                     fcntl.flock(lease, fcntl.LOCK_EX | fcntl.LOCK_NB)
                     break
                 except BlockingIOError:
-                    publish(0, 1)
-                    time.sleep(1)
+                    if now >= next_queue_update:
+                        record.update(
+                            state="QUEUED",
+                            updated_at=time.time(),
+                            queue_wait_seconds=queue_wait_seconds,
+                            queue_wait_reason="Another Arena worker owns the execution lease",
+                        )
+                        atomic_json(directory / "job.json", record)
+                        next_queue_update = now + QUEUE_STATUS_PUBLISH_SECONDS
+                    time.sleep(min(1, MAX_QUEUE_WAIT_SECONDS - queue_wait_seconds))
+            queue_wait_seconds = time.monotonic() - queue_started
+            began = time.monotonic()
             index_began = time.perf_counter()
-            usage_index = UsageIndex(root, artifact_usage)
+            # Arena artifact writers publish by fsync + atomic rename. The
+            # progress callback runs after each publish, so directory events
+            # observe complete files without polling every new path on every
+            # callback when the historical tree exceeds inotify watch limits.
+            usage_index = UsageIndex(root, artifact_usage, watch_in_place=False)
             overhead["artifact_index_init_seconds"] = time.perf_counter() - index_began
-            record.update(state="RUNNING", started_at=time.time(), pid=os.getpid())
+            job_artifact_baseline_bytes = usage_index.usage()[0]
+            record.update(
+                state="RUNNING",
+                started_at=time.time(),
+                pid=os.getpid(),
+                queue_wait_seconds=queue_wait_seconds,
+                queue_wait_reason=None,
+            )
             publish(0, 1)
             if record.get("submitted_source_hash") != research_hash():
                 raise ValueError(
@@ -516,7 +673,8 @@ def _run(root: Path, identity: str) -> None:
                 runtime_profile=dict(overhead),
                 updated_at=time.time(),
                 completed_at=time.time(),
-                elapsed_seconds=time.monotonic() - began,
+                elapsed_seconds=(time.monotonic() - began) if began is not None else 0.0,
+                queue_wait_seconds=queue_wait_seconds,
             )
             try:
                 atomic_json(directory / "job.json", record)
@@ -530,30 +688,66 @@ def inspect(root: Path, identity: str) -> dict[str, Any]:
     directory = artifact_path(root, "jobs", identity)
     record: dict[str, Any] = json.loads((directory / "job.json").read_text())
     if record["state"] in {"RUNNING", "QUEUED"}:
-        status = subprocess.run(
-            [
-                "systemctl",
-                "--user",
-                "show",
-                record["unit"],
-                "--property=ActiveState",
-                "--property=SubState",
-                "--property=Result",
-                "--property=MainPID",
-                "--property=MemoryCurrent",
-                "--property=CPUUsageNSec",
-            ],
-            capture_output=True,
-            text=True,
-            timeout=5,
-        )
+        try:
+            status = subprocess.run(
+                [
+                    "systemctl",
+                    "--user",
+                    "show",
+                    record["unit"],
+                    "--property=LoadState",
+                    "--property=ActiveState",
+                    "--property=SubState",
+                    "--property=Result",
+                    "--property=MainPID",
+                    "--property=MemoryCurrent",
+                    "--property=MemoryPeak",
+                    "--property=MemorySwapCurrent",
+                    "--property=MemorySwapPeak",
+                    "--property=CPUUsageNSec",
+                    "--property=ControlGroup",
+                ],
+                capture_output=True,
+                text=True,
+                timeout=5,
+            )
+        except (OSError, subprocess.SubprocessError) as error:
+            record["supervisor"] = {"ActiveState": "unknown", "error": str(error)}
+            return record
         properties = dict(line.split("=", 1) for line in status.stdout.splitlines() if "=" in line)
         record["supervisor"] = properties
         # A heartbeat isn't proof of liveness: require an authoritative supervisor state.
-        if properties.get("ActiveState") in {"inactive", "failed"}:
-            record.update(
-                state="INTERRUPTED", error=f"Supervisor terminated: {properties.get('Result')}"
+        unit_missing = properties.get("LoadState") == "not-found" or (
+            status.returncode != 0
+            and any(
+                phrase in getattr(status, "stderr", "").lower()
+                for phrase in ("not found", "could not be found", "not loaded")
             )
+        )
+        if properties.get("ActiveState") in {"inactive", "failed"} or unit_missing:
+            # Persist supervisor reconciliation. A dead unit must not remain a
+            # durable RUNNING record and block later admission after a restart.
+            with (directory / "execution.lock").open("a+") as lease:
+                try:
+                    fcntl.flock(lease, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                except BlockingIOError:
+                    # The worker still owns its lease; its final write wins.
+                    return record
+                latest: dict[str, Any] = json.loads((directory / "job.json").read_text())
+                if latest.get("state") in {"RUNNING", "QUEUED"}:
+                    reason = (
+                        "Supervisor unit is missing"
+                        if unit_missing
+                        else f"Supervisor terminated: {properties.get('Result') or 'unknown result'}"
+                    )
+                    latest.update(
+                        state="INTERRUPTED",
+                        error=reason,
+                        interrupted_at=time.time(),
+                        supervisor_result=properties.get("Result"),
+                    )
+                    atomic_json(directory / "job.json", latest)
+                record = latest
     return record
 
 

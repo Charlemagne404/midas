@@ -20,6 +20,12 @@ def test_offline_api_workflow_contract_and_persistence(tmp_path, monkeypatch):
     with TestClient(app) as client:
         state = client.get("/api/state").json()
         assert state["mode"] == "demo" and not state["safety"]["live_execution"]
+        assert "decisions" not in state["paper_broker"]
+        paper_summary = client.get("/api/paper/summary")
+        assert paper_summary.status_code == 200
+        assert "decisions" not in paper_summary.json()
+        assert paper_summary.json()["healthy"] is True
+        assert "decisions" in client.get("/api/paper").json()
         observations = client.get("/api/opportunities").json()
         assert any(e["status"] == "VERIFIED_MATHEMATICAL" for e in observations)
         assert any(e["status"] == "NEGATIVE_EDGE" for e in observations)
@@ -78,3 +84,51 @@ def test_failed_startup_exposes_health_and_gates_dependent_endpoints(tmp_path, m
         assert health.json()["startup_status"] == "FAILED"
         assert client.get("/api/state").status_code == 503
         assert client.get("/docs").status_code == 200
+
+
+def test_veritas_overview_is_registered_against_configured_workspace(tmp_path, monkeypatch):
+    from apps.api import arena, veritas
+
+    workspace = tmp_path / "midas-veritas"
+    arena_workspace = {}
+    monkeypatch.setattr(veritas, "overview", lambda repository: {"workspace": str(repository)})
+    monkeypatch.setattr(
+        arena,
+        "create_veritas_qualification_job",
+        lambda arena_root, repository: (
+            arena_workspace.update(arena_root=str(arena_root), repository=str(repository))
+            or arena_workspace
+        ),
+    )
+    app = create_app(Settings(veritas_workspace=workspace))
+
+    assert "/api/veritas/overview" in app.openapi()["paths"]
+    # This client intentionally does not enter its lifespan; these routes do not
+    # require the paper database and the test must not touch runtime databases.
+    client = TestClient(app)
+    response = client.get("/api/veritas/overview")
+    assert response.status_code == 200
+    assert response.json() == {"workspace": str(workspace.resolve())}
+    qualification = client.post("/api/arena/jobs/veritas-qualification")
+    assert qualification.status_code == 201
+    assert arena_workspace["repository"] == str(workspace.resolve())
+    client.close()
+
+
+def test_reality_routes_use_configured_workspace_environment(tmp_path, monkeypatch):
+    import json
+    import time
+
+    workspace = tmp_path / "midas-reality"
+    status = workspace / "data/recordings/reality/status.json"
+    status.parent.mkdir(parents=True)
+    status.write_text(json.dumps({"state": "TEST_WORKSPACE", "updated_ns": time.time_ns()}))
+    monkeypatch.setenv("MIDAS_REALITY_WORKSPACE", str(workspace))
+
+    app = create_app(Settings())
+    client = TestClient(app)
+    response = client.get("/api/reality/overview")
+
+    assert response.status_code == 200
+    assert response.json()["collector"]["state"] == "TEST_WORKSPACE"
+    client.close()

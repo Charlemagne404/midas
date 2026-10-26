@@ -1,0 +1,22 @@
+{
+  "sample_start_utc": "2026-10-20T11:31:46.277012Z",
+  "sample_end_utc": "2026-10-20T11:32:46.279044Z",
+  "sample_interval_seconds": 15,
+  "samples": [
+    {"current_bytes": 735780864, "memory_high_bytes": 738197504, "margin_bytes": 2416640, "anon_bytes": 570966016, "file_bytes": 146006016, "inactive_file_bytes": 143572992, "kernel_bytes": 18239488, "events_high": 10098, "memory_pressure_some_avg10": 0.0, "memory_pressure_full_avg10": 0.0},
+    {"current_bytes": 735285248, "memory_high_bytes": 738197504, "margin_bytes": 2912256, "anon_bytes": 570966016, "file_bytes": 146022400, "inactive_file_bytes": 143589376, "kernel_bytes": 18243584, "events_high": 10098, "memory_pressure_some_avg10": 0.0, "memory_pressure_full_avg10": 0.0},
+    {"current_bytes": 735649792, "memory_high_bytes": 738197504, "margin_bytes": 2547712, "anon_bytes": 570966016, "file_bytes": 146370560, "inactive_file_bytes": 143937536, "kernel_bytes": 18259968, "events_high": 10098, "memory_pressure_some_avg10": 0.0, "memory_pressure_full_avg10": 0.0},
+    {"current_bytes": 735662080, "memory_high_bytes": 738197504, "margin_bytes": 2535424, "anon_bytes": 570966016, "file_bytes": 146382848, "inactive_file_bytes": 143949824, "kernel_bytes": 18259968, "events_high": 10098, "memory_pressure_some_avg10": 0.0, "memory_pressure_full_avg10": 0.0},
+    {"current_bytes": 735735808, "memory_high_bytes": 738197504, "margin_bytes": 2461696, "anon_bytes": 570966016, "file_bytes": 146456576, "inactive_file_bytes": 144023552, "kernel_bytes": 18259968, "events_high": 10098, "memory_pressure_some_avg10": 0.0, "memory_pressure_full_avg10": 0.0}
+  ],
+  "event_delta_from_2026-10-20T13:30:01+02:00": {"high": 1, "max": 0, "oom": 0, "oom_kill": 0},
+  "latest_recorder_at_2026-10-20T13:33:04+02:00": {"pid": 863193, "memory_current_bytes": 735760384, "memory_high_bytes": 738197504, "margin_bytes": 2437120, "events_high": 10098, "events_max": 0, "events_oom": 0, "events_oom_kill": 0},
+  "integrated_at_2026-10-20T13:33:17+02:00": {
+    "main_api": {"pid": 2737736, "health": "READY", "journal_events": 397411, "live_execution": false},
+    "veritas_v2": {"status": "CURRENT", "processed_segments": 16176, "pending_segments": 0, "last_processed_ordinal": 2420690, "summary_sha256": "6856c4e434c6d78753c1a589911f5a3a8dcb5c52af75cc528df1639f60428757"},
+    "host": {"cpu_psi_some_avg10_percent": 3.27, "memory_psi_some_avg10_percent": 0.0, "io_psi_some_avg10_percent": 0.92, "available_memory_kib": 8863556, "swap_used_bytes": 4238409728, "swap_total_bytes": 4294963200}
+  },
+  "candidate": {"branch": "fix/reality-stale-error-status", "commit": "b0610c1b694e6ece52a4ac4fc12db2624540b8ed", "package_sha256": "a1fbcbc7b10806b2b2c9cf2a75f1d101d326017b72f0dc0d98c31c17d6b689c9", "tests_passed": 77, "ruff_passed": true, "mypy_source_files": 37, "production_deployed": false},
+  "fullstore_replay_admitted": false,
+  "fullstore_replay_gate": "protected recorder margin 2.32 MiB < 4 MiB minimum"
+}

@@ -39,6 +39,7 @@ data/arena-cold/
 data/exports/
 data/backups/
 data/runtime/
+data/autonomy/
 data/models/
 data/checkpoints/
 data/cache/
@@ -60,3 +61,7 @@ data/datasets/public-series-*.manifest.json
 
 # Versioned production output is preserved locally, not staged as source.
 data/veritas-gap-detail-v2/
+# Isolated reliability endurance artifacts; compact evidence remains tracked.
+data/reliability-endurance/arena/
+# Raw host time series and disposable fixtures; compact receipts live in docs.
+data/host-capacity-*/

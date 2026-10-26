@@ -1,0 +1,2943 @@
+{
+  "apis": {
+    "main": {
+      "journal": {
+        "journal_events": 390391,
+        "revision": 390390,
+        "status": "CHECKPOINT_VERIFIED"
+      },
+      "live_execution": false,
+      "status": "READY",
+      "unit": {
+        "ActiveState": "active",
+        "MainPID": "2737736",
+        "MemoryCurrent": "1103749120",
+        "MemoryMax": "1879048192",
+        "MemorySwapMax": "0",
+        "NRestarts": "0",
+        "SubState": "running"
+      }
+    },
+    "reality": {
+      "journal": {
+        "journal_events": 56560,
+        "revision": 56559,
+        "status": "CHECKPOINT_VERIFIED"
+      },
+      "live_execution": false,
+      "status": "READY",
+      "unit": {
+        "ActiveState": "active",
+        "MainPID": "2688994",
+        "MemoryCurrent": "223969280",
+        "MemoryMax": "536870912",
+        "MemorySwapMax": "0",
+        "NRestarts": "0",
+        "SubState": "running"
+      }
+    }
+  },
+  "canary": {
+    "data_preserved": true,
+    "is_gitignored": true,
+    "manifest_segment_count": 8,
+    "previous_20261014_canary_and_receipts_untouched": true,
+    "root": "/home/charlie/midas-reality/data/recordings/reliability-canary-397ec50-20261020",
+    "source_fingerprint_matches_candidate": true,
+    "status": {
+      "backpressure_active": false,
+      "book_comparisons": {
+        "stable_local_lineage_match_unsequenced": 14,
+        "stale_local_state": 1
+      },
+      "cohort": [
+        {
+          "activity_selection_basis": null,
+          "categories": [
+            "Congress",
+            "Earn 3.25%",
+            "Elections",
+            "Global Elections",
+            "Main Election",
+            "Midterms",
+            "Parent For Derivative",
+            "Politics",
+            "Senate",
+            "US Election",
+            "United States",
+            "World Elections"
+          ],
+          "condition": "0x86bfb53af7250a40928975c551d12c185b762fa4ce0b40c6a64a50c946d72587",
+          "end_ns": 1793768340000000000,
+          "event_ids": [
+            "32224"
+          ],
+          "fee_regime": {
+            "enabled": true,
+            "public_base_fee_evidence": {
+              "108587038225191871355030577171066853142535232042155117887981453750193713427381": {
+                "base_fee": 1000,
+                "raw_ordinal": 480
+              },
+              "51939490109676186832507970701169130490548061087912630009168726706475001411420": {
+                "base_fee": 1000,
+                "raw_ordinal": 479
+              }
+            },
+            "schedule": {
+              "exponent": 1,
+              "rate": 0.04,
+              "rebateRate": 0.25,
+              "takerOnly": true
+            },
+            "status": "public_parameters_recorded_formula_requires_declared_version"
+          },
+          "id": "562794",
+          "lifecycle": {
+            "accepting_orders": true,
+            "active": true,
+            "closed": false,
+            "resolution_status": null
+          },
+          "liquidity": "3667035.0635",
+          "metadata_ordinal": 478,
+          "minimum_order_size": "5",
+          "negative_risk": true,
+          "negative_risk_group": "0x22725f09e6a3f61882a1fd2ab4d044dc609767099b539b47053d9d71b5ae6a00",
+          "one_day_price_change": "0",
+          "payoff": {
+            "combined_terminal_claim": "1",
+            "currency_conversion_assumed": false,
+            "limitation": "Before fees, redemption costs and settlement assumptions; not a fill.",
+            "pair": "same_condition_yes_no_ctf",
+            "unit": "collateral_unit"
+          },
+          "prior_observed_updates_per_second": 0.8555734285535732,
+          "protocol": "v1",
+          "public_market_constraints": {
+            "end_date_iso": "2026-11-04T00:00:00Z",
+            "minimum_order_size": 5,
+            "minimum_tick_size": 0.01,
+            "seconds_delay": 0
+          },
+          "question": "Will the Republican Party control the Senate after the 2026 Midterm elections?",
+          "resolution_source": "",
+          "selection_role": "high",
+          "tick_size": "0.01",
+          "tokens": {
+            "108587038225191871355030577171066853142535232042155117887981453750193713427381": "No",
+            "51939490109676186832507970701169130490548061087912630009168726706475001411420": "Yes"
+          },
+          "volume24hr": "21426.331536"
+        },
+        {
+          "activity_selection_basis": null,
+          "categories": [
+            "Politics",
+            "Recurring",
+            "Tweet Markets"
+          ],
+          "condition": "0x67090d637ac92b12b1932dd667454c39986274f8ea0dfdb4d7a7eaece24149a3",
+          "end_ns": 1792512000000000000,
+          "event_ids": [
+            "1162652"
+          ],
+          "fee_regime": {
+            "enabled": true,
+            "public_base_fee_evidence": {
+              "18033264813611099230914962592223128974736165937777868172600936151336425216026": {
+                "base_fee": 1000,
+                "raw_ordinal": 483
+              },
+              "39738882799097248877103287282436919112196405564035155856022751944036738828250": {
+                "base_fee": 1000,
+                "raw_ordinal": 482
+              }
+            },
+            "schedule": {
+              "exponent": 1,
+              "rate": 0.05,
+              "rebateRate": 0.25,
+              "takerOnly": true
+            },
+            "status": "public_parameters_recorded_formula_requires_declared_version"
+          },
+          "id": "5479360",
+          "lifecycle": {
+            "accepting_orders": true,
+            "active": true,
+            "closed": false,
+            "resolution_status": null
+          },
+          "liquidity": "3119.64176",
+          "metadata_ordinal": 481,
+          "minimum_order_size": "5",
+          "negative_risk": true,
+          "negative_risk_group": "0x0b3945b10e114e60035dd683aa6d65a29aca67ca3a4271ecf4390ea159744e00",
+          "one_day_price_change": "-0.002",
+          "payoff": {
+            "combined_terminal_claim": "1",
+            "currency_conversion_assumed": false,
+            "limitation": "Before fees, redemption costs and settlement assumptions; not a fill.",
+            "pair": "same_condition_yes_no_ctf",
+            "unit": "collateral_unit"
+          },
+          "prior_observed_updates_per_second": 0.03130146584405624,
+          "protocol": "v1",
+          "public_market_constraints": {
+            "end_date_iso": "2026-10-20T00:00:00Z",
+            "minimum_order_size": 5,
+            "minimum_tick_size": 0.001,
+            "seconds_delay": 0
+          },
+          "question": "Will NYC Mayor post 200+ posts from October 13 to October 20, 2026?",
+          "resolution_source": "https://x.com/NYCMayor",
+          "selection_role": "medium",
+          "tick_size": "0.001",
+          "tokens": {
+            "18033264813611099230914962592223128974736165937777868172600936151336425216026": "No",
+            "39738882799097248877103287282436919112196405564035155856022751944036738828250": "Yes"
+          },
+          "volume24hr": "0"
+        },
+        {
+          "activity_selection_basis": null,
+          "categories": [
+            "1H",
+            "Bitcoin",
+            "Crypto",
+            "Crypto Prices",
+            "Hide From New",
+            "Multi Strikes",
+            "Recurring"
+          ],
+          "condition": "0x2d29a03345ac386517138c76c267154bd7c6dab38448fda45dda30006f78096c",
+          "end_ns": 1792483200000000000,
+          "event_ids": [
+            "1222251"
+          ],
+          "fee_regime": {
+            "enabled": true,
+            "public_base_fee_evidence": {
+              "4048129186461312718810438508740999470629505379293854473936255604423308923069": {
+                "base_fee": 1000,
+                "raw_ordinal": 486
+              },
+              "61497016605880303897110001557428975152371450836877280698373213918560911890958": {
+                "base_fee": 1000,
+                "raw_ordinal": 485
+              }
+            },
+            "schedule": {
+              "exponent": 1,
+              "rate": 0.07,
+              "rebateRate": 0.2,
+              "takerOnly": true
+            },
+            "status": "public_parameters_recorded_formula_requires_declared_version"
+          },
+          "id": "5962708",
+          "lifecycle": {
+            "accepting_orders": true,
+            "active": true,
+            "closed": false,
+            "resolution_status": null
+          },
+          "liquidity": "118.37781",
+          "metadata_ordinal": 484,
+          "minimum_order_size": "5",
+          "negative_risk": false,
+          "negative_risk_group": null,
+          "one_day_price_change": "0",
+          "payoff": {
+            "combined_terminal_claim": "1",
+            "currency_conversion_assumed": false,
+            "limitation": "Before fees, redemption costs and settlement assumptions; not a fill.",
+            "pair": "same_condition_yes_no_ctf",
+            "unit": "collateral_unit"
+          },
+          "prior_observed_updates_per_second": 0.09389136347281195,
+          "protocol": "v1",
+          "public_market_constraints": {
+            "end_date_iso": "2026-10-20T00:00:00Z",
+            "minimum_order_size": 5,
+            "minimum_tick_size": 0.001,
+            "seconds_delay": 0
+          },
+          "question": "Bitcoin above 83,000 on October 20, 4AM ET?",
+          "resolution_source": "https://www.binance.com/en/trade/BTC_USDT",
+          "selection_role": "thin",
+          "tick_size": "0.001",
+          "tokens": {
+            "4048129186461312718810438508740999470629505379293854473936255604423308923069": "No",
+            "61497016605880303897110001557428975152371450836877280698373213918560911890958": "Yes"
+          },
+          "volume24hr": "14.994"
+        },
+        {
+          "activity_selection_basis": "prior_observed_book_updates_per_second",
+          "categories": [
+            "Politics",
+            "Recurring",
+            "Trump",
+            "Tweet Markets"
+          ],
+          "condition": "0x9ef29fe38b6e1b0ea65ada3c12c20805a1a6266fa0cb8f98def1a249b9a20ca2",
+          "end_ns": 1792512000000000000,
+          "event_ids": [
+            "1162655"
+          ],
+          "fee_regime": {
+            "enabled": true,
+            "public_base_fee_evidence": {
+              "87502979701834519418802790852217512437817524832637147783984638745281635416904": {
+                "base_fee": 1000,
+                "raw_ordinal": 488
+              },
+              "94280664166501045967540799972364843499927640317123337934146918133097550163799": {
+                "base_fee": 1000,
+                "raw_ordinal": 489
+              }
+            },
+            "schedule": {
+              "exponent": 1,
+              "rate": 0.05,
+              "rebateRate": 0.25,
+              "takerOnly": true
+            },
+            "status": "public_parameters_recorded_formula_requires_declared_version"
+          },
+          "id": "5479371",
+          "lifecycle": {
+            "accepting_orders": true,
+            "active": true,
+            "closed": false,
+            "resolution_status": "proposed"
+          },
+          "liquidity": "24077.26225",
+          "metadata_ordinal": 487,
+          "minimum_order_size": "5",
+          "negative_risk": true,
+          "negative_risk_group": "0x7fe97075bfa76ae05dcf0e078111eb4a0c9cae38e5921218da382c3e5aeacb00",
+          "one_day_price_change": "0.9545",
+          "payoff": {
+            "combined_terminal_claim": "1",
+            "currency_conversion_assumed": false,
+            "limitation": "Before fees, redemption costs and settlement assumptions; not a fill.",
+            "pair": "same_condition_yes_no_ctf",
+            "unit": "collateral_unit"
+          },
+          "prior_observed_updates_per_second": 0.5321249042611339,
+          "protocol": "v1",
+          "public_market_constraints": {
+            "end_date_iso": "2026-10-20T00:00:00Z",
+            "minimum_order_size": 5,
+            "minimum_tick_size": 0.001,
+            "seconds_delay": 0
+          },
+          "question": "Will Donald Trump post 200+ Truth Social posts from October 13 to October 20, 2026?",
+          "resolution_source": "https://truthsocial.com/@realDonaldTrump",
+          "selection_role": "fast",
+          "tick_size": "0.001",
+          "tokens": {
+            "87502979701834519418802790852217512437817524832637147783984638745281635416904": "Yes",
+            "94280664166501045967540799972364843499927640317123337934146918133097550163799": "No"
+          },
+          "volume24hr": "16231.018460000001"
+        },
+        {
+          "activity_selection_basis": "prior_observed_book_updates_per_second",
+          "categories": [
+            "Bitcoin",
+            "Crypto",
+            "Finance",
+            "Gov Reserve",
+            "Politics",
+            "Recurring"
+          ],
+          "condition": "0x953b1439569eef0a0e639566acd35d32ebadee8ab70dbb2f8e00bb936a277aa2",
+          "end_ns": 1798779540000000000,
+          "event_ids": [
+            "73040"
+          ],
+          "fee_regime": {
+            "enabled": true,
+            "public_base_fee_evidence": {
+              "115563279943088574368475763566308524191598627607680105838058505260056381768939": {
+                "base_fee": 1000,
+                "raw_ordinal": 491
+              },
+              "30455770425041126193569940063234142577691408508440512817158696601142733755169": {
+                "base_fee": 1000,
+                "raw_ordinal": 492
+              }
+            },
+            "schedule": {
+              "exponent": 1,
+              "rate": 0.07,
+              "rebateRate": 0.2,
+              "takerOnly": true
+            },
+            "status": "public_parameters_recorded_formula_requires_declared_version"
+          },
+          "id": "665205",
+          "lifecycle": {
+            "accepting_orders": true,
+            "active": true,
+            "closed": false,
+            "resolution_status": null
+          },
+          "liquidity": "6115.1936",
+          "metadata_ordinal": 490,
+          "minimum_order_size": "5",
+          "negative_risk": false,
+          "negative_risk_group": null,
+          "one_day_price_change": "0",
+          "payoff": {
+            "combined_terminal_claim": "1",
+            "currency_conversion_assumed": false,
+            "limitation": "Before fees, redemption costs and settlement assumptions; not a fill.",
+            "pair": "same_condition_yes_no_ctf",
+            "unit": "collateral_unit"
+          },
+          "prior_observed_updates_per_second": 0.03130146462863701,
+          "protocol": "v1",
+          "public_market_constraints": {
+            "end_date_iso": "2027-01-01T00:00:00Z",
+            "minimum_order_size": 5,
+            "minimum_tick_size": 0.01,
+            "seconds_delay": 0
+          },
+          "question": "US national Bitcoin reserve before 2027?",
+          "resolution_source": "",
+          "selection_role": "stable",
+          "tick_size": "0.01",
+          "tokens": {
+            "115563279943088574368475763566308524191598627607680105838058505260056381768939": "Yes",
+            "30455770425041126193569940063234142577691408508440512817158696601142733755169": "No"
+          },
+          "volume24hr": "0"
+        },
+        {
+          "activity_selection_basis": null,
+          "categories": [
+            "1H",
+            "Bitcoin",
+            "Crypto",
+            "Crypto Prices",
+            "Hide From New",
+            "Multi Strikes",
+            "Recurring"
+          ],
+          "condition": "0x985857f26afb2826378d9c69b7d3bf08bde1d9d67ecc0e81f36365e3a598decc",
+          "end_ns": 1792483200000000000,
+          "event_ids": [
+            "1222251"
+          ],
+          "fee_regime": {
+            "enabled": true,
+            "public_base_fee_evidence": {
+              "102009689514030108237711755954852828094373478875413889390540712931835559384917": {
+                "base_fee": 1000,
+                "raw_ordinal": 494
+              },
+              "16065538798595945852764468864115259244680956388080126766334109019369451680522": {
+                "base_fee": 1000,
+                "raw_ordinal": 495
+              }
+            },
+            "schedule": {
+              "exponent": 1,
+              "rate": 0.07,
+              "rebateRate": 0.2,
+              "takerOnly": true
+            },
+            "status": "public_parameters_recorded_formula_requires_declared_version"
+          },
+          "id": "5962705",
+          "lifecycle": {
+            "accepting_orders": true,
+            "active": true,
+            "closed": false,
+            "resolution_status": null
+          },
+          "liquidity": "118.37781",
+          "metadata_ordinal": 493,
+          "minimum_order_size": "5",
+          "negative_risk": false,
+          "negative_risk_group": null,
+          "one_day_price_change": "0",
+          "payoff": {
+            "combined_terminal_claim": "1",
+            "currency_conversion_assumed": false,
+            "limitation": "Before fees, redemption costs and settlement assumptions; not a fill.",
+            "pair": "same_condition_yes_no_ctf",
+            "unit": "collateral_unit"
+          },
+          "prior_observed_updates_per_second": 0.18780878576718876,
+          "protocol": "v1",
+          "public_market_constraints": {
+            "end_date_iso": "2026-10-20T00:00:00Z",
+            "minimum_order_size": 5,
+            "minimum_tick_size": 0.001,
+            "seconds_delay": 0
+          },
+          "question": "Bitcoin above 83,600 on October 20, 4AM ET?",
+          "resolution_source": "https://www.binance.com/en/trade/BTC_USDT",
+          "selection_role": "near_expiry",
+          "tick_size": "0.001",
+          "tokens": {
+            "102009689514030108237711755954852828094373478875413889390540712931835559384917": "Yes",
+            "16065538798595945852764468864115259244680956388080126766334109019369451680522": "No"
+          },
+          "volume24hr": "15"
+        },
+        {
+          "activity_selection_basis": null,
+          "categories": [
+            "Earn 3.25%",
+            "Elections",
+            "Global Elections",
+            "Main Election",
+            "Politics",
+            "President",
+            "US Election",
+            "United States",
+            "World Elections"
+          ],
+          "condition": "0x836b850fc838195374862551a36f1c8691d96ff01e58b0a071f0fc1a0e357fb1",
+          "end_ns": 1857272340000000000,
+          "event_ids": [
+            "31552"
+          ],
+          "fee_regime": {
+            "enabled": true,
+            "public_base_fee_evidence": {
+              "39223330966352513418907732239455948906399882924787587183466504819170775983376": {
+                "base_fee": 1000,
+                "raw_ordinal": 497
+              },
+              "50862799703982327636174441241062907649998751737045006653560124656563256528691": {
+                "base_fee": 1000,
+                "raw_ordinal": 498
+              }
+            },
+            "schedule": {
+              "exponent": 1,
+              "rate": 0.04,
+              "rebateRate": 0.25,
+              "takerOnly": true
+            },
+            "status": "public_parameters_recorded_formula_requires_declared_version"
+          },
+          "id": "561251",
+          "lifecycle": {
+            "accepting_orders": true,
+            "active": true,
+            "closed": false,
+            "resolution_status": null
+          },
+          "liquidity": "2470378.70367",
+          "metadata_ordinal": 496,
+          "minimum_order_size": "5",
+          "negative_risk": true,
+          "negative_risk_group": "0xb9aa4595bbe8ca1ecceeb16d24fb5df6d27d4e2116787ad874ff31f682bdb400",
+          "one_day_price_change": "0",
+          "payoff": {
+            "combined_terminal_claim": "1",
+            "currency_conversion_assumed": false,
+            "limitation": "Before fees, redemption costs and settlement assumptions; not a fill.",
+            "pair": "same_condition_yes_no_ctf",
+            "unit": "collateral_unit"
+          },
+          "prior_observed_updates_per_second": 0.052169106510080054,
+          "protocol": "v1",
+          "public_market_constraints": {
+            "end_date_iso": "2028-11-08T00:00:00Z",
+            "minimum_order_size": 5,
+            "minimum_tick_size": 0.001,
+            "seconds_delay": 0
+          },
+          "question": "Will LeBron James win the 2028 US Presidential Election?",
+          "resolution_source": "",
+          "selection_role": "category",
+          "tick_size": "0.001",
+          "tokens": {
+            "39223330966352513418907732239455948906399882924787587183466504819170775983376": "Yes",
+            "50862799703982327636174441241062907649998751737045006653560124656563256528691": "No"
+          },
+          "volume24hr": "168.55"
+        },
+        {
+          "activity_selection_basis": null,
+          "categories": [
+            "Elections",
+            "France",
+            "French Election",
+            "French Elections",
+            "Global Elections",
+            "Main Election",
+            "Politics",
+            "World"
+          ],
+          "condition": "0x53e78cfec087a9bc8d1336c16a2da9db577cacedb5569c36e776711b264351a6",
+          "end_ns": 1808107140000000000,
+          "event_ids": [
+            "79987"
+          ],
+          "fee_regime": {
+            "enabled": true,
+            "public_base_fee_evidence": {
+              "65798294507987312276643818583202416276939957254836998308855036749104874776050": {
+                "base_fee": 1000,
+                "raw_ordinal": 501
+              },
+              "80444250591000346031053171380243612904016851519226250274769734418106954626247": {
+                "base_fee": 1000,
+                "raw_ordinal": 500
+              }
+            },
+            "schedule": {
+              "exponent": 1,
+              "rate": 0.04,
+              "rebateRate": 0.25,
+              "takerOnly": true
+            },
+            "status": "public_parameters_recorded_formula_requires_declared_version"
+          },
+          "id": "679055",
+          "lifecycle": {
+            "accepting_orders": true,
+            "active": true,
+            "closed": false,
+            "resolution_status": null
+          },
+          "liquidity": "982685.24936",
+          "metadata_ordinal": 499,
+          "minimum_order_size": "5",
+          "negative_risk": true,
+          "negative_risk_group": "0xdb7fd06931d5f8cec574bc6423d97f0c3a77e814e9b45119084f90e5a1632200",
+          "one_day_price_change": "0",
+          "payoff": {
+            "combined_terminal_claim": "1",
+            "currency_conversion_assumed": false,
+            "limitation": "Before fees, redemption costs and settlement assumptions; not a fill.",
+            "pair": "same_condition_yes_no_ctf",
+            "unit": "collateral_unit"
+          },
+          "prior_observed_updates_per_second": 0.13563967530858867,
+          "protocol": "v1",
+          "public_market_constraints": {
+            "end_date_iso": "2027-04-19T00:00:00Z",
+            "minimum_order_size": 5,
+            "minimum_tick_size": 0.001,
+            "seconds_delay": 0
+          },
+          "question": "Will Karim Bouamrane win the 2027 French presidential election?",
+          "resolution_source": "https://www.interieur.gouv.fr/",
+          "selection_role": "random",
+          "tick_size": "0.001",
+          "tokens": {
+            "65798294507987312276643818583202416276939957254836998308855036749104874776050": "No",
+            "80444250591000346031053171380243612904016851519226250274769734418106954626247": "Yes"
+          },
+          "volume24hr": "0"
+        }
+      ],
+      "collection_health": "stopped",
+      "config": {
+        "budget_bytes": 268435456,
+        "comparison_seconds": 15,
+        "comparison_timeout_seconds": 5,
+        "discovery_limit": 50,
+        "markets": 8,
+        "near_expiry_tag_id": 2,
+        "queue_size": 32,
+        "refresh_seconds": 600,
+        "reserve_bytes": 21474836480,
+        "resync_seconds": 300,
+        "retention_days": 30,
+        "root": "/home/charlie/midas-reality/data/recordings/reliability-canary-397ec50-20261020",
+        "segment_bytes": 8388608,
+        "segment_seconds": 300,
+        "selection_mode": "stratified-v1",
+        "selection_seed": 20261014,
+        "stale_seconds": 60
+      },
+      "failures": 0,
+      "frames": 297,
+      "last_book_comparison": {
+        "after_lineage": [
+          534,
+          0
+        ],
+        "assessment": "stable_local_lineage_match_unsequenced",
+        "asset_id": "80444250591000346031053171380243612904016851519226250274769734418106954626247",
+        "before_lineage": [
+          534,
+          0
+        ],
+        "condition": "0x53e78cfec087a9bc8d1336c16a2da9db577cacedb5569c36e776711b264351a6",
+        "independent_depth_sha256": "5773142927a23421df5b4e6a2f2cf1133c2551ad614d43c6afb4bb76d6339db7",
+        "limitation": "HTTP round trip is not submission/one-way latency; agreement cannot prove no missed events.",
+        "raw_ordinal": 545,
+        "request_ns": 1792482765379132795,
+        "response_ns": 1792482765430716110,
+        "round_trip_ns": 51583315,
+        "sequence_verified": false,
+        "source_native_hash": "cbdc0ff542a05f48c9389046309189cf05e8b8d8",
+        "source_timestamp_ms": 1792482755000
+      },
+      "last_observation_ns": 1792482773509658465,
+      "lifetime_frames": 297,
+      "lifetime_gap_records": 5,
+      "lifetime_record_counts": {
+        "book_comparison": 15,
+        "checkpoint": 8,
+        "discovery": 4,
+        "discovery_page": 24,
+        "frame": 297,
+        "gap": 5,
+        "heartbeat": 18,
+        "independent_book": 15,
+        "public_fee_metadata": 64,
+        "public_market_metadata": 32,
+        "snapshot_constraints": 64,
+        "subscription": 4,
+        "timing_measurement": 7
+      },
+      "lifetime_records": 557,
+      "markets": 8,
+      "ordinal": 557,
+      "process_backpressure_events": 0,
+      "process_frames": 297,
+      "process_max_append_seconds": 0.047757769003510475,
+      "selection_audit": {
+        "candidate_responses": 300,
+        "decisions": [
+          {
+            "eligible": true,
+            "id": "562794",
+            "index": 0,
+            "reason": "high",
+            "selected": true
+          },
+          {
+            "eligible": true,
+            "id": "562831",
+            "index": 1,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "562828",
+            "index": 2,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "562802",
+            "index": 3,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "562830",
+            "index": 4,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "562803",
+            "index": 5,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "559687",
+            "index": 6,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "559689",
+            "index": 7,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "559677",
+            "index": 8,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "559685",
+            "index": 9,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "559690",
+            "index": 10,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "559670",
+            "index": 11,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "559683",
+            "index": 12,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "559681",
+            "index": 13,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "559688",
+            "index": 14,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "559680",
+            "index": 15,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "559678",
+            "index": 16,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "559671",
+            "index": 17,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "559696",
+            "index": 18,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "561251",
+            "index": 19,
+            "reason": "category",
+            "selected": true
+          },
+          {
+            "eligible": true,
+            "id": "559666",
+            "index": 20,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "559676",
+            "index": 21,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "561263",
+            "index": 22,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "561249",
+            "index": 23,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "562003",
+            "index": 24,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "561247",
+            "index": 25,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "559692",
+            "index": 26,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "561265",
+            "index": 27,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "561987",
+            "index": 28,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "561999",
+            "index": 29,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "561254",
+            "index": 30,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "562793",
+            "index": 31,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "559667",
+            "index": 32,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "561986",
+            "index": 33,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "561993",
+            "index": 34,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "559673",
+            "index": 35,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "561994",
+            "index": 36,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "561992",
+            "index": 37,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "561270",
+            "index": 38,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "562002",
+            "index": 39,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "561991",
+            "index": 40,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "561272",
+            "index": 41,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "561277",
+            "index": 42,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "561278",
+            "index": 43,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "559701",
+            "index": 44,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "559691",
+            "index": 45,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "561269",
+            "index": 46,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "561271",
+            "index": 47,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "561273",
+            "index": 48,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "562001",
+            "index": 49,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "608362",
+            "index": 50,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "618454",
+            "index": 51,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "656313",
+            "index": 52,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "665205",
+            "index": 53,
+            "reason": "stable",
+            "selected": true
+          },
+          {
+            "eligible": true,
+            "id": "665260",
+            "index": 54,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "665263",
+            "index": 55,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "665270",
+            "index": 56,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "665274",
+            "index": 57,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "665319",
+            "index": 58,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "665324",
+            "index": 59,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "665370",
+            "index": 60,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "665371",
+            "index": 61,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "665372",
+            "index": 62,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "665375",
+            "index": 63,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "665420",
+            "index": 64,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "665520",
+            "index": 65,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "665728",
+            "index": 66,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "665729",
+            "index": 67,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "666664",
+            "index": 68,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "666817",
+            "index": 69,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "666819",
+            "index": 70,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "666821",
+            "index": 71,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "666824",
+            "index": 72,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "666825",
+            "index": 73,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "666826",
+            "index": 74,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "666829",
+            "index": 75,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "666831",
+            "index": 76,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "666832",
+            "index": 77,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "667073",
+            "index": 78,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "668333",
+            "index": 79,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "670058",
+            "index": 80,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "676450",
+            "index": 81,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "676777",
+            "index": 82,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "676778",
+            "index": 83,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "676779",
+            "index": 84,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "676782",
+            "index": 85,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "676784",
+            "index": 86,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "676786",
+            "index": 87,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "676787",
+            "index": 88,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "676788",
+            "index": 89,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "676791",
+            "index": 90,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "676793",
+            "index": 91,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "676796",
+            "index": 92,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "676804",
+            "index": 93,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "676827",
+            "index": 94,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "676830",
+            "index": 95,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "676837",
+            "index": 96,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "676844",
+            "index": 97,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "676846",
+            "index": 98,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "676948",
+            "index": 99,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "593974",
+            "index": 100,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "593977",
+            "index": 101,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "651395",
+            "index": 102,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "651400",
+            "index": 103,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "664885",
+            "index": 104,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "665261",
+            "index": 105,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "665262",
+            "index": 106,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "665264",
+            "index": 107,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "665265",
+            "index": 108,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "665266",
+            "index": 109,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "665268",
+            "index": 110,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "665269",
+            "index": 111,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "665272",
+            "index": 112,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "665273",
+            "index": 113,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "665275",
+            "index": 114,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "665317",
+            "index": 115,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "665326",
+            "index": 116,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "665359",
+            "index": 117,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "665362",
+            "index": 118,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "665409",
+            "index": 119,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "665483",
+            "index": 120,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "665494",
+            "index": 121,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "665504",
+            "index": 122,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "665519",
+            "index": 123,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "665735",
+            "index": 124,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "666581",
+            "index": 125,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "666582",
+            "index": 126,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "666583",
+            "index": 127,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "667074",
+            "index": 128,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "667075",
+            "index": 129,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "668328",
+            "index": 130,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "668683",
+            "index": 131,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "668685",
+            "index": 132,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "676783",
+            "index": 133,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "676789",
+            "index": 134,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "676797",
+            "index": 135,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "676799",
+            "index": 136,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "676802",
+            "index": 137,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "676812",
+            "index": 138,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "676843",
+            "index": 139,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "676992",
+            "index": 140,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "676997",
+            "index": 141,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "677001",
+            "index": 142,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "677167",
+            "index": 143,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "677169",
+            "index": 144,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "677218",
+            "index": 145,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "677341",
+            "index": 146,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": false,
+            "id": "678747",
+            "index": 147,
+            "reason": "Ambiguous mixed protocol outcome identifiers"
+          },
+          {
+            "eligible": true,
+            "id": "679889",
+            "index": 148,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "680601",
+            "index": 149,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": false,
+            "id": "5917568",
+            "index": 150,
+            "reason": "Expected distinct Yes/No outcomes"
+          },
+          {
+            "eligible": false,
+            "id": "5917569",
+            "index": 151,
+            "reason": "Expected distinct Yes/No outcomes"
+          },
+          {
+            "eligible": false,
+            "id": "5917570",
+            "index": 152,
+            "reason": "Expected distinct Yes/No outcomes"
+          },
+          {
+            "eligible": false,
+            "id": "5917571",
+            "index": 153,
+            "reason": "Expected distinct Yes/No outcomes"
+          },
+          {
+            "eligible": false,
+            "id": "5917572",
+            "index": 154,
+            "reason": "Expected distinct Yes/No outcomes"
+          },
+          {
+            "eligible": false,
+            "id": "5917573",
+            "index": 155,
+            "reason": "Expected distinct Yes/No outcomes"
+          },
+          {
+            "eligible": false,
+            "id": "5917574",
+            "index": 156,
+            "reason": "Expected distinct Yes/No outcomes"
+          },
+          {
+            "eligible": false,
+            "id": "5917575",
+            "index": 157,
+            "reason": "Expected distinct Yes/No outcomes"
+          },
+          {
+            "eligible": false,
+            "id": "5862538",
+            "index": 158,
+            "reason": "Expected distinct Yes/No outcomes"
+          },
+          {
+            "eligible": false,
+            "id": "5862539",
+            "index": 159,
+            "reason": "Expected distinct Yes/No outcomes"
+          },
+          {
+            "eligible": false,
+            "id": "5862540",
+            "index": 160,
+            "reason": "Expected distinct Yes/No outcomes"
+          },
+          {
+            "eligible": false,
+            "id": "5862542",
+            "index": 161,
+            "reason": "Expected distinct Yes/No outcomes"
+          },
+          {
+            "eligible": false,
+            "id": "5862550",
+            "index": 162,
+            "reason": "Expected distinct Yes/No outcomes"
+          },
+          {
+            "eligible": false,
+            "id": "5862578",
+            "index": 163,
+            "reason": "Expected distinct Yes/No outcomes"
+          },
+          {
+            "eligible": false,
+            "id": "5862605",
+            "index": 164,
+            "reason": "Expected distinct Yes/No outcomes"
+          },
+          {
+            "eligible": false,
+            "id": "5913249",
+            "index": 165,
+            "reason": "Expected distinct Yes/No outcomes"
+          },
+          {
+            "eligible": false,
+            "id": "5913250",
+            "index": 166,
+            "reason": "Expected distinct Yes/No outcomes"
+          },
+          {
+            "eligible": false,
+            "id": "5913266",
+            "index": 167,
+            "reason": "Expected distinct Yes/No outcomes"
+          },
+          {
+            "eligible": false,
+            "id": "5913268",
+            "index": 168,
+            "reason": "Expected distinct Yes/No outcomes"
+          },
+          {
+            "eligible": false,
+            "id": "5913278",
+            "index": 169,
+            "reason": "Expected distinct Yes/No outcomes"
+          },
+          {
+            "eligible": false,
+            "id": "5913279",
+            "index": 170,
+            "reason": "Expected distinct Yes/No outcomes"
+          },
+          {
+            "eligible": false,
+            "id": "5913288",
+            "index": 171,
+            "reason": "Expected distinct Yes/No outcomes"
+          },
+          {
+            "eligible": false,
+            "id": "5913290",
+            "index": 172,
+            "reason": "Expected distinct Yes/No outcomes"
+          },
+          {
+            "eligible": false,
+            "id": "5917528",
+            "index": 173,
+            "reason": "Expected distinct Yes/No outcomes"
+          },
+          {
+            "eligible": false,
+            "id": "5917532",
+            "index": 174,
+            "reason": "Expected distinct Yes/No outcomes"
+          },
+          {
+            "eligible": false,
+            "id": "5917534",
+            "index": 175,
+            "reason": "Expected distinct Yes/No outcomes"
+          },
+          {
+            "eligible": false,
+            "id": "5917536",
+            "index": 176,
+            "reason": "Expected distinct Yes/No outcomes"
+          },
+          {
+            "eligible": false,
+            "id": "5917538",
+            "index": 177,
+            "reason": "Expected distinct Yes/No outcomes"
+          },
+          {
+            "eligible": false,
+            "id": "5917539",
+            "index": 178,
+            "reason": "Expected distinct Yes/No outcomes"
+          },
+          {
+            "eligible": false,
+            "id": "5917542",
+            "index": 179,
+            "reason": "Expected distinct Yes/No outcomes"
+          },
+          {
+            "eligible": false,
+            "id": "5917543",
+            "index": 180,
+            "reason": "Expected distinct Yes/No outcomes"
+          },
+          {
+            "eligible": false,
+            "id": "5918067",
+            "index": 181,
+            "reason": "Expected distinct Yes/No outcomes"
+          },
+          {
+            "eligible": false,
+            "id": "5918068",
+            "index": 182,
+            "reason": "Expected distinct Yes/No outcomes"
+          },
+          {
+            "eligible": false,
+            "id": "5918069",
+            "index": 183,
+            "reason": "Expected distinct Yes/No outcomes"
+          },
+          {
+            "eligible": false,
+            "id": "5918070",
+            "index": 184,
+            "reason": "Expected distinct Yes/No outcomes"
+          },
+          {
+            "eligible": false,
+            "id": "5918071",
+            "index": 185,
+            "reason": "Expected distinct Yes/No outcomes"
+          },
+          {
+            "eligible": false,
+            "id": "5918072",
+            "index": 186,
+            "reason": "Expected distinct Yes/No outcomes"
+          },
+          {
+            "eligible": false,
+            "id": "5918073",
+            "index": 187,
+            "reason": "Expected distinct Yes/No outcomes"
+          },
+          {
+            "eligible": false,
+            "id": "5918074",
+            "index": 188,
+            "reason": "Expected distinct Yes/No outcomes"
+          },
+          {
+            "eligible": true,
+            "id": "5962704",
+            "index": 189,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "5962705",
+            "index": 190,
+            "reason": "near_expiry",
+            "selected": true
+          },
+          {
+            "eligible": true,
+            "id": "5962706",
+            "index": 191,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "5962707",
+            "index": 192,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "5962708",
+            "index": 193,
+            "reason": "thin",
+            "selected": true
+          },
+          {
+            "eligible": true,
+            "id": "5962709",
+            "index": 194,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "5962710",
+            "index": 195,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "5962711",
+            "index": 196,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "5962712",
+            "index": 197,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "5962713",
+            "index": 198,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "5962714",
+            "index": 199,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "5479276",
+            "index": 200,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "5479281",
+            "index": 201,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "5479286",
+            "index": 202,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "5479288",
+            "index": 203,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "5479289",
+            "index": 204,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "5479294",
+            "index": 205,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "5479296",
+            "index": 206,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "5479297",
+            "index": 207,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "5479301",
+            "index": 208,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "5479304",
+            "index": 209,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "5479305",
+            "index": 210,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "5479306",
+            "index": 211,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "5479309",
+            "index": 212,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "5479312",
+            "index": 213,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "5479313",
+            "index": 214,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "5479314",
+            "index": 215,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "5479316",
+            "index": 216,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "5479320",
+            "index": 217,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "5479321",
+            "index": 218,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "5479324",
+            "index": 219,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "5479325",
+            "index": 220,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "5479329",
+            "index": 221,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "5479330",
+            "index": 222,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "5479332",
+            "index": 223,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "5479333",
+            "index": 224,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "5479334",
+            "index": 225,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "5479338",
+            "index": 226,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "5479339",
+            "index": 227,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "5479341",
+            "index": 228,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "5479342",
+            "index": 229,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "5479343",
+            "index": 230,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "5479346",
+            "index": 231,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "5479348",
+            "index": 232,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "5479350",
+            "index": 233,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "5479351",
+            "index": 234,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "5479352",
+            "index": 235,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "5479356",
+            "index": 236,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "5479357",
+            "index": 237,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "5479358",
+            "index": 238,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "5479360",
+            "index": 239,
+            "reason": "medium",
+            "selected": true
+          },
+          {
+            "eligible": true,
+            "id": "5479361",
+            "index": 240,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "5479365",
+            "index": 241,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "5479366",
+            "index": 242,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "5479368",
+            "index": 243,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "5479370",
+            "index": 244,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "5479371",
+            "index": 245,
+            "reason": "fast",
+            "selected": true
+          },
+          {
+            "eligible": true,
+            "id": "5479390",
+            "index": 246,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "5479391",
+            "index": 247,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "5479392",
+            "index": 248,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "5479393",
+            "index": 249,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "679032",
+            "index": 250,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "679033",
+            "index": 251,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "679034",
+            "index": 252,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "679035",
+            "index": 253,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "679036",
+            "index": 254,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "679037",
+            "index": 255,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "679038",
+            "index": 256,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "679039",
+            "index": 257,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "679040",
+            "index": 258,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "679041",
+            "index": 259,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "679042",
+            "index": 260,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "679043",
+            "index": 261,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "679044",
+            "index": 262,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "679045",
+            "index": 263,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "679046",
+            "index": 264,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "679047",
+            "index": 265,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "679048",
+            "index": 266,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "679049",
+            "index": 267,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "679051",
+            "index": 268,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "679052",
+            "index": 269,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "679053",
+            "index": 270,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "679054",
+            "index": 271,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "679055",
+            "index": 272,
+            "reason": "random",
+            "selected": true
+          },
+          {
+            "eligible": true,
+            "id": "679056",
+            "index": 273,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "679057",
+            "index": 274,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "679058",
+            "index": 275,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "679059",
+            "index": 276,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "679060",
+            "index": 277,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "679061",
+            "index": 278,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "679062",
+            "index": 279,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "679063",
+            "index": 280,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": false,
+            "id": "679889",
+            "index": 281,
+            "reason": "duplicate_market_response"
+          },
+          {
+            "eligible": false,
+            "id": "680601",
+            "index": 282,
+            "reason": "duplicate_market_response"
+          },
+          {
+            "eligible": true,
+            "id": "680656",
+            "index": 283,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "680662",
+            "index": 284,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "680664",
+            "index": 285,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "680951",
+            "index": 286,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "680952",
+            "index": 287,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "680953",
+            "index": 288,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "680954",
+            "index": 289,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": false,
+            "id": "681144",
+            "index": 290,
+            "reason": "Ambiguous mixed protocol outcome identifiers"
+          },
+          {
+            "eligible": true,
+            "id": "681147",
+            "index": 291,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "681313",
+            "index": 292,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "682162",
+            "index": 293,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": true,
+            "id": "682405",
+            "index": 294,
+            "reason": "not_selected",
+            "selected": false
+          },
+          {
+            "eligible": false,
+            "id": "682705",
+            "index": 295,
+            "reason": "Ambiguous mixed protocol outcome identifiers"
+          },
+          {
+            "eligible": false,
+            "id": "682706",
+            "index": 296,
+            "reason": "Ambiguous mixed protocol outcome identifiers"
+          },
+          {
+            "eligible": false,
+            "id": "682707",
+            "index": 297,
+            "reason": "Ambiguous mixed protocol outcome identifiers"
+          },
+          {
+            "eligible": false,
+            "id": "682708",
+            "index": 298,
+            "reason": "Ambiguous mixed protocol outcome identifiers"
+          },
+          {
+            "eligible": false,
+            "id": "682709",
+            "index": 299,
+            "reason": "Ambiguous mixed protocol outcome identifiers"
+          }
+        ],
+        "distinct_eligible": 252,
+        "limitations": [
+          "Bounded query universe, not entire venue or uniform global random sample.",
+          "Activity roles use prior observed rates when at least two candidates have coverage, otherwise a daily change proxy.",
+          "No opportunity/edge filter is used. Unavailable strata remain unfilled."
+        ],
+        "page_ordinals": [
+          472,
+          473,
+          474,
+          475,
+          476,
+          477
+        ],
+        "roles": [
+          "high",
+          "medium",
+          "thin",
+          "fast",
+          "stable",
+          "near_expiry",
+          "category",
+          "random"
+        ],
+        "seed": 20261014,
+        "unfilled_roles": [],
+        "update_rates_observed_before_selection": {
+          "5479360": 0.03130146584405624,
+          "5479371": 0.5321249042611339,
+          "561251": 0.052169106510080054,
+          "562794": 0.8555734285535732,
+          "5962705": 0.18780878576718876,
+          "5962708": 0.09389136347281195,
+          "665205": 0.03130146462863701,
+          "679055": 0.13563967530858867
+        },
+        "verification_rejections": [],
+        "version": "stratified-observation-v1"
+      },
+      "started_ns": 1792482547336084499,
+      "state": "STOPPED",
+      "storage_bytes": 1636386,
+      "updated_ns": 1792482774577205080
+    }
+  },
+  "deployment_verification": {
+    "canary_checkpoints": 8,
+    "canary_duration_seconds": 227.142052917,
+    "canary_frames": 297,
+    "canary_fresh_books": 16,
+    "canary_manifest_sha256": "0056d596563fd202d3748b44e74cf39a3cbeda8e989cc989e23686c092c4a69a",
+    "canary_replay_sha256": "553df91d564130d86696ce71f5118e88dcf72f96611eb93b02c792b4c9c7caca",
+    "comparison_counts": {
+      "stable_local_lineage_match_unsequenced": 14,
+      "stale_local_state": 1
+    },
+    "free_disk_bytes": 182450200576,
+    "gap_counts": {
+      "book_resynchronization": 3,
+      "process_start": 1,
+      "process_stop": 1
+    },
+    "max_resynchronizations": 6,
+    "mypy": "Success: no issues found in 37 source files",
+    "one_shot_preflight_passed": true,
+    "passed": true,
+    "pilot_runway_days_from_short_canary": 34.696331960798716,
+    "preflight_checked_ns": 1792482945602520076,
+    "preflight_limitations": [
+      "Pilot includes startup/discovery overhead, not a stable long-term rate estimate.",
+      "Bounded canary is an engineering gate, not scientific validation.",
+      "A rollback requires a separately authorized stop/start; no raw bytes are removed."
+    ],
+    "preflight_production_pid": "863193",
+    "preflight_production_restart_policy": "on-failure",
+    "protected_disk_reserve_bytes": 21474836480,
+    "receipt_completed_ns": 1792482923006045738,
+    "ruff": "All checks passed!",
+    "test_result": ".................................................... [100%]\n72 passed in 15.32s"
+  },
+  "historical_scope": {
+    "48H-001": "terminal and untouched",
+    "atlas_started": false,
+    "frontier_started": false,
+    "new_campaign_started": false
+  },
+  "purpose": "Final Reality code/tool verification, isolated canary preflight, restart-policy guard test, and live-state refresh",
+  "reality_live": {
+    "captured_sample_window": "09:39:00\u201309:43:00 CEST, 5 samples; +2,830,336 bytes cgroup current; no new max/OOM/swap events",
+    "collector": {
+      "expected_books": 16,
+      "failures": 1,
+      "frames": 410509,
+      "fresh_books": 16,
+      "gaps": 9200,
+      "markets": 8,
+      "ordinal": 2365728,
+      "sequence_verified": false,
+      "state": "RECORDING_UNSEQUENCED",
+      "timing_uncertain_books": 0,
+      "updated_ns": 1792483049174383368
+    },
+    "health": "recording",
+    "memory_events": {
+      "high": "10069",
+      "low": "0",
+      "max": "0",
+      "oom": "0",
+      "oom_group_kill": "0",
+      "oom_kill": "0",
+      "sock_throttled": "216"
+    },
+    "memory_swap_current": 684032,
+    "orders_submitted": 0,
+    "status_age_seconds": 0.749722819,
+    "unit": {
+      "ActiveState": "active",
+      "ControlGroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/midas-reality.service",
+      "MainPID": "863193",
+      "MemoryCurrent": "701669376",
+      "MemoryHigh": "738197504",
+      "MemoryMax": "805306368",
+      "MemoryPeak": "738721792",
+      "MemorySwapMax": "0",
+      "NRestarts": "1",
+      "Restart": "on-failure",
+      "SubState": "running"
+    }
+  },
+  "recorded_at_utc": "2026-10-20T07:57:29.297736+00:00",
+  "restart_guard_probe": {
+    "Restart_after_guard_removed": "on-failure",
+    "Restart_while_guarded": "no",
+    "protected_recorder_unit_modified": false,
+    "service": "midas-reality-restart-guard-probe.service"
+  },
+  "source_and_deployment_tool": {
+    "candidate_config_equals_production_config": true,
+    "deployment_tool_sha256": "ab5578de344ba6284282b17e28ed7b413a1a73e1d845bf7165ef505f7f087879",
+    "live_recorder_loaded_candidate": false,
+    "origin_project_reality": "e2905eee9327bfe47cf71cf0718a3390552911ed",
+    "reality_branch": "project/reality",
+    "reality_head": "e2905eee9327bfe47cf71cf0718a3390552911ed",
+    "runtime_package_commit_parent": "397ec50ecce39c5e2a06674ab5c41190931936dd",
+    "runtime_package_sha256": "b0696ba6ae9fc2409361a4f57ba0f89951e11671316aad1723f288cacf135198"
+  },
+  "veritas_v2": {
+    "all_period_gap_event_count": 9200,
+    "analysis_code_sha256": "29cf366aa905f70963e1223d8c54872c08526a604e209f0941542bd879dd9708",
+    "analysis_version": "veritas-finalized-reality-gap-detail-v2",
+    "campaign_sha256": "aa8acb2b46823c1a1e3ac5d01a57dde917746c2c7471098ae2a4598875e322f5",
+    "campaign_window_gap_event_count": 7119,
+    "catalog_segment_count": 15755,
+    "file_sha256": "d423ea39bf68b5dc05d929d66c71fb88e528969affe2792687757a327e4e2ee3",
+    "generated_at_utc": "2026-10-20T07:57:22+00:00",
+    "last_processed_ordinal": 2365722,
+    "pending_segment_count": 0,
+    "processed_segment_count": 15753,
+    "processed_source_bytes": 4208676791,
+    "service": {
+      "ExecMainExitTimestamp": "Tue 2026-10-20 09:57:22 CEST",
+      "ExecMainStartTimestamp": "Tue 2026-10-20 09:57:17 CEST",
+      "ExecMainStatus": "0",
+      "Result": "success"
+    },
+    "timer": {
+      "ActiveState": "active",
+      "LastTriggerUSec": "Tue 2026-10-20 09:57:17 CEST",
+      "NextElapseUSecRealtime": "Tue 2026-10-20 10:02:08 CEST",
+      "Result": "success"
+    }
+  }
+}

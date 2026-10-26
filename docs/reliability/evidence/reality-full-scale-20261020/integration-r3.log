@@ -1,0 +1,10 @@
+Running as unit: midas-validation-integration-r3-20261020.service; invocation ID: 285f0da944a4425b941205e5490cc021
+Reality storage: /home/charlie/midas-reality-reliability/packages/midas/reality/storage.py
+..............................                                           [100%]
+30 passed in 61.10s (0:01:01)
+Finished with result: success
+Main processes terminated with: code=exited/status=0
+Service runtime: 1min 14.024s
+CPU time consumed: 3.717s
+Memory peak: 139.7M
+Memory swap peak: 0B

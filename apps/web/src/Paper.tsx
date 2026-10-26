@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from './api';
-import type { PaperAccount, Stored } from './types';
+import type { PaperAccount, PaperAccountSummary, Stored } from './types';
 
 const fmt = (value: string | undefined) => (value === undefined ? '—' : Number(value).toFixed(4));
 export function PaperSummary() {
   const paper = useQuery({
     queryKey: ['paper'],
-    queryFn: () => api<PaperAccount>('/paper'),
+    queryFn: () => api<PaperAccountSummary>('/paper/summary'),
     refetchInterval: 2000,
   });
   const p = paper.data;
@@ -57,7 +57,7 @@ export function PaperPage() {
   });
   const paper = useQuery({
     queryKey: ['paper'],
-    queryFn: () => api<PaperAccount>('/paper'),
+    queryFn: () => api<PaperAccountSummary>('/paper/summary'),
     refetchInterval: 2000,
   });
   const journal = useQuery({

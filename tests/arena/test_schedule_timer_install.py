@@ -16,7 +16,7 @@ def test_installs_bounded_persistent_user_units(tmp_path, monkeypatch):
     service = (units / "midas-arena-scheduler.service").read_text()
     timer = (units / "midas-arena-scheduler.timer").read_text()
     assert (
-        "CPUQuota=25%" in service
+        "CPUQuota=100%" in service
         and "MemoryMax=512M" in service
         and "TimeoutStartSec=60" in service
     )

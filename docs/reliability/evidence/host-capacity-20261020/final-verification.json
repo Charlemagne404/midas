@@ -1,0 +1,35 @@
+{
+  "time": 1792521941.9331477,
+  "segment": "00000000000002506653-1e2fdb1affd64dd0ba5cbfa695ec1a95.seg",
+  "bytes": 117157,
+  "sha256": "0890d2348db890e436fceb9b13ea926d20bda256b848640609a4a2340e94bda5",
+  "manifest_matches": true,
+  "frozen_hashes": {
+    "/home/charlie/midas/data/autonomy/48H-001/manifest.json": "55538167f6b0d9516270001587abea0894801124effad635a0d830be5e0be379",
+    "/home/charlie/midas/data/autonomy/48H-001/STATUS.md": "704c929029f7aaaf42154ae0af8e29fb4e162509c9b9af059ffb9ddcc1e22fac",
+    "/home/charlie/midas-reality/data/research/reality/forward/mission2/campaign.json": "aa8acb2b46823c1a1e3ac5d01a57dde917746c2c7471098ae2a4598875e322f5",
+    "/home/charlie/midas-reality/data/research/reality/forward/canary-empty-segments-v2/campaign.json": "bbbb0978e63abc7f30980abb6aa25cbb21e9ce94ca1410dcfdd65714318f9782",
+    "/home/charlie/midas-reality/data/research/reality/forward/mission2-successor-20261016/campaign.json": "c5eb8b98cbfd657372fc620192c5a0c0bb46f41d760800e680181fa7f3ee95a3",
+    "/home/charlie/midas-reality/data/research/reality/forward/canary-20261014/campaign.json": "ce5a288527425271fcfb5b8d7bb93cca1cf47e02a6ba91e693e018ddf96afeb8"
+  },
+  "services": "Restart=on-failure\nMainPID=3717987\nNRestarts=0\nMemoryCurrent=1484910592\nId=midas-api.service\nActiveState=active\n\nRestart=on-failure\nMainPID=3725032\nNRestarts=0\nMemoryCurrent=443039744\nId=midas-reality-api.service\nActiveState=active\n\nRestart=on-failure\nMainPID=863193\nNRestarts=1\nMemoryCurrent=737128448\nId=midas-reality.service\nActiveState=active\n",
+  "recorder_config": {
+    "budget_bytes": 25769803776,
+    "comparison_seconds": 15,
+    "comparison_timeout_seconds": 5,
+    "discovery_limit": 50,
+    "markets": 8,
+    "near_expiry_tag_id": 2,
+    "queue_size": 32,
+    "refresh_seconds": 600,
+    "reserve_bytes": 21474836480,
+    "resync_seconds": 300,
+    "retention_days": 90,
+    "root": "/home/charlie/midas-reality/data/recordings/reality",
+    "segment_bytes": 8388608,
+    "segment_seconds": 300,
+    "selection_mode": "stratified-v1",
+    "selection_seed": 20261014,
+    "stale_seconds": 60
+  }
+}

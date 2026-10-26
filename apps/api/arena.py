@@ -17,6 +17,7 @@ MAX_RESEARCH_ACTIVITY_RECORD_BYTES = 256 * 1024
 MAX_DIRECTOR_EVENT_BYTES = 64 * 1024
 MAX_DIRECTOR_EVENT_FILES_SCANNED = 128
 MAX_DIRECTOR_HISTORY_EVENTS = 8
+MAX_DIRECTOR_OWNER_JOBS_READ = 100
 MAX_VERITAS_LATEST_SUMMARY_BYTES = 2 * 1024**2
 MAX_VERITAS_ANALYSIS_EVENT_BYTES = 2 * 1024**2
 MAX_VERITAS_QUALIFICATION_FINDING_BYTES = 2 * 1024**2
@@ -196,19 +197,25 @@ def _latest_veritas_qualification_distribution(
         median = edge.get("median_nearest_rank_per_share")
         maximum = edge.get("maximum_per_share")
         numeric_fields = (minimum, median, maximum)
+        count_fields = (
+            count,
+            positive_count,
+            quality_valid_pairs,
+            snapshot_count,
+            attempted_market_pairs,
+            unique_market_ids,
+        )
+        if any(
+            not isinstance(value, int) or isinstance(value, bool) or value < 0
+            for value in count_fields
+        ):
+            return None
+        count = cast(int, count)
+        positive_count = cast(int, positive_count)
+        quality_valid_pairs = cast(int, quality_valid_pairs)
+        snapshot_count = cast(int, snapshot_count)
         if (
-            any(
-                not isinstance(value, int) or isinstance(value, bool) or value < 0
-                for value in (
-                    count,
-                    positive_count,
-                    quality_valid_pairs,
-                    snapshot_count,
-                    attempted_market_pairs,
-                    unique_market_ids,
-                )
-            )
-            or count != quality_valid_pairs
+            count != quality_valid_pairs
             or positive_count > count
             or snapshot_count < 1
             or snapshot_count != len(source_snapshots)
@@ -226,7 +233,9 @@ def _latest_veritas_qualification_distribution(
         if len(baseline_rows) != 1 or baseline_rows[0].get("positive_states") != positive_count:
             return None
         try:
-            minimum_value, median_value, maximum_value = map(Decimal, numeric_fields)
+            minimum_value, median_value, maximum_value = map(
+                Decimal, cast(tuple[str, str, str], numeric_fields)
+            )
         except (InvalidOperation, ValueError):
             return None
         if (
@@ -346,6 +355,216 @@ def _director_event_history(
     return history, truncated, invalid
 
 
+def _director_owner(row: dict[str, Any], jobs: list[dict[str, Any]]) -> dict[str, Any] | None:
+    owner_job_id = row.get("owner_job_id")
+    if isinstance(owner_job_id, str):
+        for job in jobs:
+            if job.get("job_id") == owner_job_id:
+                return job
+    configuration = row.get("configuration")
+    source_hash = row.get("source_hash")
+    if not isinstance(configuration, dict) or not isinstance(source_hash, str):
+        return None
+    matches = [
+        job
+        for job in jobs
+        if isinstance(job.get("configuration"), dict)
+        and job["configuration"].get("kind") == "director"
+        and job["configuration"].get("director") == configuration
+        and job.get("submitted_source_hash") == source_hash
+    ]
+    return max(matches, key=lambda item: item.get("updated_at", 0)) if matches else None
+
+
+def _director_supervisors(jobs: list[dict[str, Any]]) -> dict[str, dict[str, str]]:
+    units = sorted(
+        {
+            job["unit"]
+            for job in jobs
+            if job.get("state") in {"RUNNING", "QUEUED"}
+            and isinstance(job.get("unit"), str)
+            and re.fullmatch(r"midas-arena-job-[0-9a-f]{24}\.service", job["unit"])
+        }
+    )
+    if not units:
+        return {}
+    try:
+        result = subprocess.run(
+            [
+                "systemctl",
+                "--user",
+                "show",
+                *units,
+                "-p",
+                "Id",
+                "-p",
+                "LoadState",
+                "-p",
+                "ActiveState",
+                "-p",
+                "MainPID",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=3,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return {}
+    if result.returncode:
+        return {}
+    states: dict[str, dict[str, str]] = {}
+    properties: dict[str, str] = {}
+
+    def save() -> None:
+        unit = properties.get("Id")
+        if unit in units:
+            states[unit] = dict(properties)
+        properties.clear()
+
+    for line in result.stdout.splitlines() + [""]:
+        if not line:
+            save()
+            continue
+        key, separator, value = line.partition("=")
+        if not separator:
+            continue
+        if key == "Id" and "Id" in properties:
+            save()
+        properties[key] = value
+    return states
+
+
+def _director_runtime_state(
+    root: Path,
+    row: dict[str, Any],
+    jobs: list[dict[str, Any]],
+    supervisors: dict[str, dict[str, str]],
+) -> dict[str, Any]:
+    persisted_state = row.get("state")
+    view = {
+        "state": persisted_state,
+        "persisted_state": persisted_state,
+        "owner_job_id": None,
+        "owner_job_state": None,
+        "supervisor_state": None,
+        "operational_state_reason": None,
+    }
+    if row.get("director_version") == "adaptive-latency-1" and persisted_state == "RUNNING":
+        observed = inspect_director(root, str(row.get("director_id", "")))
+        view.update(
+            state=observed.get("state", "UNVERIFIED"),
+            supervisor_state=(observed.get("coordinator_supervisor") or {}).get("ActiveState"),
+            operational_state_reason=observed.get("observation_error"),
+        )
+        return view
+    if persisted_state not in {"RUNNING", "QUEUED"}:
+        return view
+    owner = _director_owner(row, jobs)
+    if owner is None:
+        view.update(
+            state="UNVERIFIED",
+            operational_state_reason="No matching owning Arena job record is available.",
+        )
+        return view
+    owner_state = owner.get("state")
+    view.update(owner_job_id=owner.get("job_id"), owner_job_state=owner_state)
+    if owner_state in {"CANCELLED", "INTERRUPTED", "FAILED"}:
+        view.update(
+            state=owner_state,
+            operational_state_reason=owner.get("error"),
+        )
+        return view
+    if owner_state == "COMPLETED":
+        result = owner.get("result")
+        if isinstance(result, dict) and result.get("director_id") == row.get("director_id"):
+            view["state"] = "COMPLETED"
+        else:
+            view.update(
+                state="UNVERIFIED",
+                operational_state_reason="Owning job completed without this Director identity.",
+            )
+        return view
+    unit = owner.get("unit")
+    supervisor = supervisors.get(unit) if isinstance(unit, str) else None
+    if supervisor is None:
+        view.update(
+            state="UNVERIFIED",
+            operational_state_reason="Owning job supervisor status is unavailable.",
+        )
+        return view
+    view["supervisor_state"] = supervisor.get("ActiveState")
+    if supervisor.get("LoadState") == "not-found" or supervisor.get("ActiveState") in {
+        "inactive",
+        "failed",
+    }:
+        view.update(
+            state="INTERRUPTED",
+            operational_state_reason="Owning job supervisor is no longer active.",
+        )
+        return view
+    main_pid = supervisor.get("MainPID", "0")
+    if supervisor.get("ActiveState") == "active" and main_pid.isdigit() and int(main_pid) > 0:
+        view["state"] = owner_state
+        return view
+    view.update(
+        state="UNVERIFIED",
+        operational_state_reason="Owning job has no verified active process.",
+    )
+    return view
+
+
+def _recent_owner_jobs(root: Path) -> list[dict[str, Any]]:
+    files = []
+    for file in (root / "jobs").glob("*/job.json"):
+        try:
+            files.append((file.stat().st_mtime, file))
+        except OSError:
+            continue
+    files = [
+        file
+        for _, file in sorted(files, key=lambda item: item[0], reverse=True)[
+            :MAX_DIRECTOR_OWNER_JOBS_READ
+        ]
+    ]
+    jobs = []
+    for file in files:
+        try:
+            if file.stat().st_size > MAX_RESEARCH_ACTIVITY_RECORD_BYTES:
+                continue
+            row = json.loads(file.read_text())
+        except (OSError, ValueError, json.JSONDecodeError):
+            continue
+        if isinstance(row, dict):
+            jobs.append(row)
+    return jobs
+
+
+def _project_director_record(
+    root: Path,
+    row: dict[str, Any],
+    *,
+    jobs: list[dict[str, Any]] | None = None,
+    supervisors: dict[str, dict[str, str]] | None = None,
+) -> dict[str, Any]:
+    """Expose observed lifecycle state without rewriting a Director manifest."""
+    identity = row.get("director_id")
+    if row.get("director_version") == "adaptive-latency-1":
+        if isinstance(identity, str):
+            return inspect_director(root, identity)
+        return row
+    if row.get("state") not in {"RUNNING", "QUEUED"}:
+        return row
+
+    owner_jobs = jobs if jobs is not None else _recent_owner_jobs(root)
+    if supervisors is None:
+        owner = _director_owner(row, owner_jobs)
+        active_owners = (
+            [owner] if owner is not None and owner.get("state") in {"RUNNING", "QUEUED"} else []
+        )
+        supervisors = _director_supervisors(active_owners)
+    return {**row, **_director_runtime_state(root, row, owner_jobs, supervisors)}
+
+
 def research_activity(root: Path) -> dict[str, Any]:
     """Return a small read-only summary of Arena's durable research activity."""
     invalid_records = 0
@@ -380,9 +599,15 @@ def research_activity(root: Path) -> dict[str, Any]:
                 invalid_records += 1
         return values
 
-    jobs = records("jobs", "job.json", 25)
+    director_owner_jobs = records("jobs", "job.json", MAX_DIRECTOR_OWNER_JOBS_READ)
+    jobs = director_owner_jobs[:25]
     latest_veritas_qualification = _latest_veritas_qualification_distribution(root, jobs)
     directors = records("directors", "manifest.json", 10)
+    supervisors = _director_supervisors(director_owner_jobs)
+    director_views = [
+        (row, _director_runtime_state(root, row, director_owner_jobs, supervisors))
+        for row in directors
+    ]
     schedules = records("schedules", "manifest.json", 10)
     alerts = records("alerts", "manifest.json", 10)
     active_states = {"RUNNING", "QUEUED"}
@@ -395,7 +620,7 @@ def research_activity(root: Path) -> dict[str, Any]:
         invalid_records += invalid_history
     return {
         "status": "available",
-        "state_source": "persisted Arena manifests; supervisor liveness remains on Arena detail views",
+        "state_source": "persisted Arena manifests joined to owning job and supervisor state; no manifest is rewritten",
         "active_job_count": len(active_jobs),
         "queued_job_count": queued_jobs,
         "jobs": [
@@ -415,11 +640,49 @@ def research_activity(root: Path) -> dict[str, Any]:
             for row in jobs[:10]
         ],
         "latest_veritas_qualification": latest_veritas_qualification,
-        "active_director_count": sum(row.get("state") == "RUNNING" for row in directors),
+        "active_director_count": sum(view["state"] == "RUNNING" for _, view in director_views),
+        "queued_director_count": sum(view["state"] == "QUEUED" for _, view in director_views),
+        "stale_director_count": sum(
+            row.get("state") in {"RUNNING", "QUEUED"}
+            and view["state"] in {"CANCELLED", "INTERRUPTED", "FAILED"}
+            for row, view in director_views
+        ),
+        "unverified_director_count": sum(
+            view["state"] == "UNVERIFIED" for _, view in director_views
+        ),
+        "stale_directors": [
+            {
+                "director_id": row.get("director_id"),
+                "state": view["state"],
+                "persisted_state": view["persisted_state"],
+                "owner_job_id": view["owner_job_id"],
+                "owner_job_state": view["owner_job_state"],
+                "reason": view["operational_state_reason"],
+            }
+            for row, view in director_views
+            if row.get("state") in {"RUNNING", "QUEUED"}
+            and view["state"] in {"CANCELLED", "INTERRUPTED", "FAILED"}
+        ],
+        "unverified_directors": [
+            {
+                "director_id": row.get("director_id"),
+                "persisted_state": view["persisted_state"],
+                "owner_job_id": view["owner_job_id"],
+                "owner_job_state": view["owner_job_state"],
+                "reason": view["operational_state_reason"],
+            }
+            for row, view in director_views
+            if view["state"] == "UNVERIFIED"
+        ],
         "directors": [
             {
                 "director_id": row.get("director_id"),
-                "state": row.get("state"),
+                "state": view["state"],
+                "persisted_state": view["persisted_state"],
+                "owner_job_id": view["owner_job_id"],
+                "owner_job_state": view["owner_job_state"],
+                "supervisor_state": view["supervisor_state"],
+                "operational_state_reason": view["operational_state_reason"],
                 "research_question": row.get("research_question"),
                 "current_stage": row.get("current_stage"),
                 "source_scan_id": row.get("latest_scan_id") or row.get("current_scan_id"),
@@ -487,7 +750,7 @@ def research_activity(root: Path) -> dict[str, Any]:
                 "recent_events": director_histories.get(id(row), ([], False))[0],
                 "recent_events_truncated": director_histories.get(id(row), ([], False))[1],
             }
-            for row in directors[:5]
+            for row, view in director_views[:5]
         ],
         "active_schedule_count": sum(
             row.get("state") in {"PENDING", "RUNNING"} for row in schedules
@@ -533,6 +796,7 @@ def research_activity(root: Path) -> dict[str, Any]:
             "maximum_director_event_files_scanned": MAX_DIRECTOR_EVENT_FILES_SCANNED,
             "maximum_director_events_per_director": MAX_DIRECTOR_HISTORY_EVENTS,
             "maximum_director_event_bytes": MAX_DIRECTOR_EVENT_BYTES,
+            "maximum_director_owner_jobs_read": MAX_DIRECTOR_OWNER_JOBS_READ,
             "maximum_schedules_read": 10,
             "maximum_alerts_read": 10,
         },
@@ -622,7 +886,7 @@ def inspect_director(root: Path, identity: str) -> dict[str, Any]:
     return record
 
 
-def router(root: Path) -> APIRouter:
+def router(root: Path, *, veritas_repository: Path | None = None) -> APIRouter:
     api = APIRouter(prefix="/api/arena", tags=["Arena"])
 
     async def call(fn: Any, *args: Any) -> Any:
@@ -653,14 +917,28 @@ def router(root: Path) -> APIRouter:
         record["independent_policy_evaluations"] = independent
         record["validation_policy_comparisons"] = validation
 
-    def catalog(kind: str) -> list[dict[str, Any]]:
+    def catalog(
+        kind: str, *, director_owner_jobs: list[dict[str, Any]] | None = None
+    ) -> list[dict[str, Any]]:
         values = []
+        owner_jobs = []
+        supervisors: dict[str, dict[str, str]] = {}
+        if kind == "directors":
+            owner_jobs = (
+                director_owner_jobs if director_owner_jobs is not None else _recent_owner_jobs(root)
+            )
+            supervisors = _director_supervisors(owner_jobs)
         for manifest in sorted(
             (root / kind).glob("*/manifest.json"), key=lambda p: p.stat().st_mtime, reverse=True
         )[:100]:
             record = json.loads(manifest.read_text())
             if kind == "directors":
-                record = inspect_director(root, manifest.parent.name)
+                record = _project_director_record(
+                    root,
+                    record,
+                    jobs=owner_jobs,
+                    supervisors=supervisors,
+                )
             if kind == "models":
                 evaluation_counts(record)
             if kind == "plans" and record["state"] == "RUNNING" and record.get("owner_job_id"):
@@ -779,7 +1057,7 @@ def router(root: Path) -> APIRouter:
             "root": str(root),
             "recorded_sources": recorded_sources,
             "sweeps": catalog("sweeps"),
-            "directors": catalog("directors"),
+            "directors": catalog("directors", director_owner_jobs=jobs),
             "searches": catalog("searches"),
             "recoveries": catalog("recoveries"),
             "unwinds": catalog("unwinds"),
@@ -888,7 +1166,11 @@ def router(root: Path) -> APIRouter:
 
     @api.get("/directors/{identity}")
     async def director(identity: str) -> Any:
-        return await call(inspect_director, root, identity)
+        def inspect() -> dict[str, Any]:
+            record = json.loads((path("directors", identity) / "manifest.json").read_text())
+            return _project_director_record(root, record)
+
+        return await call(inspect)
 
     @api.get("/findings/{identity}")
     async def veritas_qualification_finding(identity: str) -> Any:
@@ -1144,7 +1426,11 @@ def router(root: Path) -> APIRouter:
 
     @api.post("/jobs/veritas-qualification", status_code=201)
     async def create_veritas_qualification() -> Any:
-        return await call(create_veritas_qualification_job, root, veritas_repository_root())
+        return await call(
+            create_veritas_qualification_job,
+            root,
+            veritas_repository or veritas_repository_root(),
+        )
 
     @api.get("/jobs/{identity}")
     async def job(identity: str) -> Any:

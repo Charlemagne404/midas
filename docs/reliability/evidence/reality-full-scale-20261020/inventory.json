@@ -1,0 +1,53 @@
+{
+  "started_at": "2026-10-20T13:35:46.805145+00:00",
+  "completed_at": "2026-10-20T13:35:48.344452+00:00",
+  "source": "/home/charlie/midas-reality/data/recordings/reality",
+  "segment_count": 16422,
+  "last_ordinal": 2436055,
+  "archive_bytes": 4354241444,
+  "kinds": {
+    "discovery": 9502,
+    "frame": 1911936,
+    "gap": 9523,
+    "heartbeat": 40117,
+    "subscription": 9502,
+    "checkpoint": 16411,
+    "snapshot_constraints": 126420,
+    "metadata_correction": 5,
+    "timing_measurement": 15724,
+    "book_comparison": 30361,
+    "discovery_page": 47243,
+    "independent_book": 30361,
+    "public_fee_metadata": 125966,
+    "public_market_metadata": 62984
+  },
+  "empty_segments": 2,
+  "catalog_sha256": "d239325352bb296807f440bb621cf28c8263e037358540aa32f8b1a3f006f831",
+  "identities_sha256": "1284ef262d80bcf6a24fb8515e5bf2ee91ce99669edbaa6d6572244c1eebc74c",
+  "last_segment": {
+    "bytes": 12262,
+    "count": 20,
+    "file": "00000000000002436036-27a2b3fc718442f2b5f9893b0785da37.seg",
+    "first": 2436036,
+    "kinds": {
+      "book_comparison": 2,
+      "checkpoint": 1,
+      "frame": 11,
+      "heartbeat": 3,
+      "independent_book": 2,
+      "timing_measurement": 1
+    },
+    "last": 2436055,
+    "schema_version": 1,
+    "sha256": "c1823781f2b4ae8c0efe33739e687baf8d8ef7dc268f2678f4d8f653ba06835d"
+  },
+  "unmatched_finalized": [],
+  "excluded_open": [
+    {
+      "file": "00000000000002436056-b59ad614223c4915829c0f93e3163990.open",
+      "observed_bytes": 1996
+    }
+  ],
+  "checkpoint_present": false,
+  "scope": "metadata only; content checksums NOT yet verified"
+}

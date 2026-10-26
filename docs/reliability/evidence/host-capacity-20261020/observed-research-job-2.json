@@ -1,0 +1,81 @@
+{
+  "active_artifact": {
+    "identity": "veritas-qualification-v1-24ae0291e754347b",
+    "kind": "findings"
+  },
+  "admission_key": "veritas-qualification-v1-scan-20261020T180201Z-6ebdfdc97168",
+  "artifact_guard": {
+    "last_error": null,
+    "mode": "EVENT_INDEX",
+    "watch_count": 39405
+  },
+  "budget": {
+    "cpu_cores": 1.0,
+    "cpu_quota_percent": 100,
+    "cpu_weight": 10,
+    "max_artifact_mb": 1024,
+    "memory_mb": 512,
+    "minimum_available_memory_mb": 2560,
+    "wall_seconds": 300
+  },
+  "completed_at": 1792520127.2505603,
+  "configuration": {
+    "cost": null,
+    "dataset": null,
+    "director": null,
+    "kind": "veritas_qualification",
+    "max_wall_seconds": 300,
+    "migration": null,
+    "model_id": null,
+    "observations": null,
+    "plan_id": null,
+    "policy_search": null,
+    "recovery": null,
+    "rl": null,
+    "severity": null,
+    "sweep": null,
+    "tournament": null,
+    "training": null,
+    "unwind": null,
+    "veritas_qualification": {
+      "expected_latest_scan_id": "scan-20261020T180201Z-6ebdfdc97168",
+      "max_events": 512,
+      "max_source_bytes": 67108864,
+      "quantity": "20",
+      "version": "veritas-arena-qualification-v1"
+    }
+  },
+  "created_at": 1792520121.0713258,
+  "elapsed_seconds": 4.075837809941731,
+  "error": null,
+  "exit_status": 0,
+  "job_id": "job-a41ec9c5faca48d4a43ab3ee",
+  "phase": "Validating finalized Veritas snapshot events",
+  "pid": 3780751,
+  "progress": {
+    "done": 269,
+    "total": 269
+  },
+  "result": {
+    "experiment_run_id": "VERITAS-M2-ECO-QUAL-001-V4-RUN-ab35ff612d96",
+    "experiment_sha256": "17c27937279cf3aed0ed8860433c1c2faabeabf5fe05cc55c6bf02c7eada127b",
+    "finding_id": "veritas-qualification-v1-24ae0291e754347b",
+    "status": "no_positive_gross_candidate_observed"
+  },
+  "runtime_profile": {
+    "artifact_bytes": 457961875,
+    "artifact_files": 35131,
+    "artifact_index_fallbacks": 0,
+    "artifact_index_init_seconds": 1.916201580897905,
+    "artifact_index_reconciliations": 1,
+    "artifact_observations": 271,
+    "artifact_scan_seconds": 0.0495358727639541,
+    "artifact_scans": 1,
+    "progress_publish_seconds": 1.8070913836127147
+  },
+  "started_at": 1792520125.09106,
+  "state": "COMPLETED",
+  "submitted_source_hash": "bd1adfa1c1568c56595678f870dee8e29d2ef683ca4878c87b1c738304d226da",
+  "unit": "midas-arena-job-a41ec9c5faca48d4a43ab3ee.service",
+  "updated_at": 1792520127.25056
+}

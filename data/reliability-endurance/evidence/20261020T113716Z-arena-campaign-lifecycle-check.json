@@ -1,0 +1,37 @@
+{
+  "captured_at_utc": "2026-10-20T11:37:16Z",
+  "arena_scheduler": {
+    "timer_active": true,
+    "timer_next_local": "2026-10-20T13:38:03+02:00",
+    "last_trigger_local": "2026-10-20T13:37:04+02:00",
+    "service_result": "success",
+    "service_exit_status": 0,
+    "service_main_pid_after_completion": 0,
+    "campaign_specific_timer_active": false
+  },
+  "research_activity": {
+    "status": "available",
+    "active_job_count": 0,
+    "queued_job_count": 0,
+    "active_director_count": 0,
+    "queued_director_count": 0,
+    "active_schedule_count": 0,
+    "invalid_artifact_count": 0,
+    "visible_schedule_states": ["COMPLETED", "EXPIRED"],
+    "expired_schedule_child_admitted": false
+  },
+  "campaign_48h_001": {
+    "status": "PARTIAL",
+    "active_step": null,
+    "remaining_seconds": 0,
+    "manifest_actual_end_at": "2026-10-19T00:05:25+00:00",
+    "manifest_sha256": "55538167f6b0d9516270001587abea0894801124effad635a0d830be5e0be379",
+    "status_sha256": "44f146d86567830a34db95838297faa980510e7bc6daac1f22a36fcbbe6b8954",
+    "modified": false
+  },
+  "integration": {
+    "main_api": {"pid": 2737736, "health": "READY", "journal_events": 397543, "live_execution": false},
+    "veritas_v2": {"run_start_local": "2026-10-20T13:37:10+02:00", "run_exit_local": "2026-10-20T13:37:16+02:00", "result": "success", "status": "CURRENT", "processed_segments": 16176, "pending_segments": 0, "summary_sha256": "6856c4e434c6d78753c1a589911f5a3a8dcb5c52af75cc528df1639f60428757"},
+    "reality_recorder": {"pid": 863193, "restarts": 1, "replay_or_restart_attempted": false, "memory_current_bytes": 736964608, "memory_high_bytes": 738197504, "memory_margin_bytes": 1232896, "memory_events_high": 10100, "memory_events_oom": 0}
+  }
+}

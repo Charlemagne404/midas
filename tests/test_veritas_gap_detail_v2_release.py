@@ -151,14 +151,29 @@ def test_frontier_admission_overlay_pins_analyzer_and_systemd_runtime():
     assert hashlib.sha256(script.read_bytes()).hexdigest() == manifest["runtime_script_sha256"]
 
     base_packages = repo / "deploy/runtime/veritas-gap-detail-v2-20261021/packages"
-    package_files = {
+    expected_files = manifest["base_package_files"]
+    # The historical release manifest includes interpreter-local __pycache__
+    # files. Keep its recorded inventory intact, but bind clean checkouts to
+    # reproducible package sources rather than requiring those disposable caches.
+    cache_files = {
+        path: digest
+        for path, digest in expected_files.items()
+        if "__pycache__" in Path(path).parts or Path(path).suffix == ".pyc"
+    }
+    source_files = {
+        path: digest for path, digest in expected_files.items() if path not in cache_files
+    }
+    assert len(expected_files) == manifest["base_package_file_count"]
+    assert cache_files and all(
+        "__pycache__" in Path(path).parts and Path(path).suffix == ".pyc" for path in cache_files
+    )
+    actual_source_files = {
         path.relative_to(base_packages).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest()
         for path in sorted(base_packages.rglob("*"))
-        if path.is_file()
+        if path.is_file() and "__pycache__" not in path.parts and path.suffix != ".pyc"
     }
-    assert len(package_files) == manifest["base_package_file_count"]
-    assert package_files == manifest["base_package_files"]
-    package_index = json.dumps(package_files, sort_keys=True, separators=(",", ":")).encode()
+    assert actual_source_files == source_files
+    package_index = json.dumps(expected_files, sort_keys=True, separators=(",", ":")).encode()
     assert hashlib.sha256(package_index).hexdigest() == manifest["base_package_index_sha256"]
 
     unit = (repo / "deploy/systemd/user/midas-veritas-gap-detail-v2.service").read_text()

@@ -6,9 +6,9 @@ from pathlib import Path
 
 import pytest
 from midas.economics.attestation import digest
-from midas.paper.broker import AccountConfig, ExecutionModel, audit, summary
+from midas.paper.broker import AccountConfig, ExecutionModel, audit, summary, transition
 from midas.simulation.fixtures import DEMO_EPOCH, binary_fixture
-from sqlalchemy import update
+from sqlalchemy import event, update
 
 from apps.api.paper import (
     PaperBroker,
@@ -63,6 +63,48 @@ async def test_crash_at_atomic_ledger_boundary_and_duplicate_fill(tmp_path, boun
         await recovered.start(DEMO_EPOCH + 200)
         assert summary(recovered.state)["hypothetical_fills"] == 2
         assert Decimal(summary(recovered.state)["locked"]) == Decimal("9.5")
+    await store.close()
+
+
+async def test_summary_can_skip_redundant_decision_history(tmp_path):
+    store, broker, command = await setup(tmp_path)
+    await broker.apply(command)
+
+    full = summary(broker.state)
+    lightweight = summary(broker.state, include_decisions=False)
+    compact = summary(broker.state, include_decisions=False, include_details=False)
+
+    assert "decisions" in full
+    assert "decisions" not in lightweight
+    assert {key: value for key, value in full.items() if key != "decisions"} == lightweight
+    assert not {"decisions", "positions", "incidents"} & compact.keys()
+    assert all(compact[key] == full[key] for key in compact)
+    await store.close()
+
+
+async def test_transition_detaches_retained_history_and_keeps_audit_compact(tmp_path, monkeypatch):
+    store, broker, command = await setup(tmp_path)
+    await broker.apply(command)
+    original = json.loads(json.dumps(broker.state))
+    calls = []
+
+    def measured_summary(state, now=0, **kwargs):
+        calls.append(kwargs)
+        return summary(state, now, **kwargs)
+
+    monkeypatch.setattr("midas.paper.broker.summary", measured_summary)
+    result = transition(original, {**command, "id": "second", "ts": command["ts"] + 1})
+    assert calls and all(c.get("include_decisions") is False for c in calls)
+    assert not audit(result)
+    result["decisions"][0]["risk"]["reasons"].append("mutated output")
+    assert original == broker.state
+    assert "mutated output" not in original["decisions"][0]["risk"]["reasons"]
+    # The no-op action return path also returns a detached state.
+    result = transition(
+        original, {"id": "missing", "kind": "action", "ts": command["ts"], "action_id": "missing"}
+    )
+    result["decisions"][0]["risk"]["reasons"].append("mutated no-op")
+    assert original == broker.state
     await store.close()
 
 
@@ -145,8 +187,20 @@ async def test_large_journal_startup_restores_snapshot_without_replaying_history
         return original_transition(*args, **kwargs)
 
     monkeypatch.setattr(paper_module, "transition", counted_transition)
+    journal_query_options = {}
+
+    def record_journal_query_options(
+        connection, cursor, statement, parameters, context, executemany
+    ):
+        if "FROM paper_events" in statement:
+            journal_query_options.update(context.execution_options)
+
+    event.listen(store.engine.sync_engine, "before_cursor_execute", record_journal_query_options)
     recovered = PaperBroker(store, "test", AccountConfig())
     await recovered.start(DEMO_EPOCH + 500)
+    event.remove(store.engine.sync_engine, "before_cursor_execute", record_journal_query_options)
+    assert journal_query_options.get("yield_per") == 256
+    assert journal_query_options.get("stream_results") is True
     assert transition_calls == 1  # The single durable recovery event, not 10,000 history rows.
     assert recovered.recovery_status == "CHECKPOINT_VERIFIED"
     assert recovered.journal_event_count == 10_003

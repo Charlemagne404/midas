@@ -1,0 +1,11 @@
+{
+  "time": 1792518328.0220625,
+  "file": "00000000000002484989-2295d4005dc34e0c9a6ab5026a65240d.seg",
+  "bytes": 344836,
+  "sha256": "0371e0c07ec2c06b5b19c6058e1badbc05899c28f852e60abf74091d9633c35d",
+  "first": 2484989,
+  "last": 2485062,
+  "count": 74,
+  "manifest_bytes_and_checksum_match": true,
+  "scope": "one immutable finalized segment; not a full archive audit"
+}

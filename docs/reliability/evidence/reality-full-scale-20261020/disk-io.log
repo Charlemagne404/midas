@@ -1,0 +1,12 @@
+Linux 7.0.0-38-generic (charlie-Legion-T530-28ICB) 	10/20/26 	_x86_64_	(6 CPU)
+
+Device            r/s     rkB/s   rrqm/s  %rrqm r_await rareq-sz     w/s     wkB/s   wrqm/s  %wrqm w_await wareq-sz     d/s     dkB/s   drqm/s  %drqm d_await dareq-sz     f/s f_await  aqu-sz  %util
+nvme0n1         58.41    656.66     5.06   7.97    0.15    11.24  111.95   2104.21    58.91  34.48    1.32    18.80    0.39    275.92     0.00   0.00    0.94   709.56   11.49    0.94    0.17   4.21
+
+
+Device            r/s     rkB/s   rrqm/s  %rrqm r_await rareq-sz     w/s     wkB/s   wrqm/s  %wrqm w_await wareq-sz     d/s     dkB/s   drqm/s  %drqm d_await dareq-sz     f/s f_await  aqu-sz  %util
+nvme0n1          0.00      0.00     0.00   0.00    0.00     0.00    1.00     52.00     0.00   0.00    7.00    52.00    0.00      0.00     0.00   0.00    0.00     0.00    0.00    0.00    0.01   0.70
+
+
+Device            r/s     rkB/s   rrqm/s  %rrqm r_await rareq-sz     w/s     wkB/s   wrqm/s  %wrqm w_await wareq-sz     d/s     dkB/s   drqm/s  %drqm d_await dareq-sz     f/s f_await  aqu-sz  %util
+nvme0n1         35.00    164.00     6.00  14.63    0.77     4.69    5.00    232.00    37.00  88.10    1.40    46.40    0.00      0.00     0.00   0.00    0.00     0.00    2.00    1.00    0.04   1.40

@@ -1,0 +1,12 @@
+[
+  {
+    "account_id": "paper-demo",
+    "revision": 409041,
+    "checksum": "3dfb36b3ab0e8a50940a3315b69a261665af0cf5aa9cf8c38e375c243d10b6eb",
+    "journal_hash": "7ffb2f2f9fa28a9c0dcdb5f2909eda2be4dafe5be783fbebf8aad31fdf28614b",
+    "encoding": "zlib-json-1",
+    "stored_bytes": 80485,
+    "logical_bytes": 877900,
+    "materialized": false
+  }
+]

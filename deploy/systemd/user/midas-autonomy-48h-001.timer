@@ -1,0 +1,13 @@
+[Unit]
+Description=Run MIDAS campaign health, deadline and resource checks every 30 seconds
+
+[Timer]
+OnBootSec=2min
+OnUnitInactiveSec=30s
+Persistent=true
+RandomizedDelaySec=15
+AccuracySec=5
+Unit=midas-autonomy-48h-001.service
+
+[Install]
+WantedBy=timers.target

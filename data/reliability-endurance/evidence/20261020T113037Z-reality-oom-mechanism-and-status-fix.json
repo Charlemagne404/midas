@@ -1,0 +1,88 @@
+{
+  "captured_at_utc": "2026-10-20T11:30:37Z",
+  "historical_oom": {
+    "timestamp_local": "2026-10-19T00:50:47+02:00",
+    "pid": 2288376,
+    "process": "python",
+    "constraint": "CONSTRAINT_MEMCG",
+    "global_oom": false,
+    "oom_memcg": "/user.slice/user-1000.slice/user@1000.service/app.slice/midas-reality.service",
+    "kernel_result": "Memory cgroup out of memory",
+    "memory_current_kib": 786432,
+    "memory_limit_kib": 786432,
+    "memory_failcnt": 22,
+    "cgroup_anon_bytes": 749248512,
+    "cgroup_file_bytes": 0,
+    "cgroup_kernel_bytes": 40288256,
+    "victim_total_vm_kib": 1560036,
+    "victim_anon_rss_kib": 731688,
+    "victim_file_rss_kib": 10816,
+    "swap_current_kib": 650648,
+    "swap_limit_kib": 9007199254740988,
+    "call_path": ["do_swap_page", "swapin_readahead", "mem_cgroup_swapin_charge_folio", "try_charge_memcg", "mem_cgroup_out_of_memory"],
+    "cgroup_reclaim_counters_at_oom": {
+      "pgscan_direct_pages": 55359148,
+      "pswpin_pages": 27263900,
+      "pswpout_pages": 25866271
+    },
+    "conclusion": "Recorder-local memory cgroup exhausted while faulting swapped pages back in after severe reclaim/swap churn; Python allocation phase/object remains unknown."
+  },
+  "code_comparison": {
+    "historical_loaded_source_commit": "2b838182b2cda465bf41ea1b99af9b7fb7bfc029",
+    "historical_recovery_behavior": "Store hashes each existing segment, then read_manifest hashes, describes, and re-reads segments for replay.",
+    "candidate_commit": "b0610c1b694e6ece52a4ac4fc12db2624540b8ed",
+    "candidate_branch": "fix/reality-stale-error-status",
+    "candidate_package_sha256": "a1fbcbc7b10806b2b2c9cf2a75f1d101d326017b72f0dc0d98c31c17d6b689c9",
+    "candidate_recovery_behavior": "Deferred writer activation, metadata-only setup, then one streaming content replay validates segment bytes, metadata, ordinals, and checkpoints.",
+    "status_fix": "Clear stale connection error after first successful non-heartbeat frame; preserve cumulative failures and journaled gap.",
+    "production_deployed": false,
+    "production_checkout_unchanged": true
+  },
+  "candidate_verification": {
+    "receipt_passed": true,
+    "tests_passed": 77,
+    "ruff_passed": true,
+    "mypy_passed": true,
+    "mypy_source_files": 37,
+    "receipt_path": "/tmp/midas-reality-status-clear-20261020/docs/REALITY_GATE_A_CHECKS.json"
+  },
+  "fullstore_staging": {
+    "previous_package_sha256": "0469889b4613a5fb875f34d2c6e14f9b74ba7f3188f51a3a9350078597bd8ad5",
+    "updated_package_replayed": false,
+    "reason": "At 2026-10-20T13:30:01+02:00 protected recorder memory.current was 737034240 bytes, only 1163264 bytes below MemoryHigh; below 4 MiB staging gate.",
+    "replay_code_changed_since_previous_run": false
+  },
+  "current_runtime": {
+    "captured_at_local": "2026-10-20T13:30:01+02:00",
+    "main_api": {"pid": 2737736, "active": true, "restarts": 0, "health": "READY", "journal_events": 397306, "live_execution": false},
+    "reality_api": {"pid": 2688994, "active": true, "restarts": 0},
+    "reality_recorder": {
+      "pid": 863193,
+      "active": true,
+      "restarts": 1,
+      "candidate_code_loaded": false,
+      "memory_current_bytes": 737034240,
+      "memory_high_bytes": 738197504,
+      "memory_max_bytes": 805306368,
+      "margin_to_memory_high_bytes": 1163264,
+      "memory_swap_current_bytes": 684032,
+      "memory_events": {"high": 10097, "max": 0, "oom": 0, "oom_kill": 0}
+    },
+    "veritas_v2": {"timer_active": true, "status": "CURRENT", "processed_segments": 16167, "pending_segments": 0, "summary_sha256": "a734dec93b35301de77a6498205849299115948f2b5bb60bac3ae5189fd318a3"},
+    "veritas_v1_timer_active": false,
+    "host": {
+      "cpu_psi_some_avg10_percent": 2.84,
+      "memory_psi_some_avg10_percent": 0.0,
+      "memory_psi_full_avg10_percent": 0.0,
+      "io_psi_some_avg10_percent": 0.97,
+      "available_memory_bytes": 9063297024,
+      "swap_total_bytes": 4294963200,
+      "swap_used_bytes": 4238409728
+    },
+    "campaign_48h_001": {
+      "manifest_sha256": "55538167f6b0d9516270001587abea0894801124effad635a0d830be5e0be379",
+      "status_sha256": "44f146d86567830a34db95838297faa980510e7bc6daac1f22a36fcbbe6b8954",
+      "modified": false
+    }
+  }
+}

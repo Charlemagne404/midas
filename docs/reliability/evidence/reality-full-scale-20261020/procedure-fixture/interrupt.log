@@ -1,0 +1,7 @@
+Running as unit: midas-validation-caa8cf3304ca.service; invocation ID: 99c1b28a1ded48ac9ca16752291ea1ab
+Finished with result: signal
+Main processes terminated with: code=killed/status=KILL
+Service runtime: 168ms
+CPU time consumed: 58ms
+Memory peak: 9.0M
+Memory swap peak: 0B

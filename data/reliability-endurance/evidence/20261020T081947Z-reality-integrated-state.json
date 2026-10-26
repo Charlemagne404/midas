@@ -1,0 +1,173 @@
+{
+  "captured_at_utc": "2026-10-20T08:19:47.814861+00:00",
+  "host": {
+    "disk_free_bytes_at_recordings_root": 182389940224,
+    "memory_available_bytes": 8566734848,
+    "pressure": {
+      "cpu": "some avg10=3.97 avg60=3.59 avg300=4.37 total=277317560138\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+      "io": "some avg10=1.18 avg60=0.91 avg300=1.02 total=15981337813\nfull avg10=0.83 avg60=0.73 avg300=0.88 total=12433365616",
+      "memory": "some avg10=0.00 avg60=0.00 avg300=0.00 total=10875853624\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=6259091950"
+    },
+    "swap_free_bytes": 8327168,
+    "swap_total_bytes": 4294963200
+  },
+  "main_api": {
+    "health": {
+      "laboratory": {
+        "recovering_campaigns": [],
+        "recovery_errors": [],
+        "root": "/home/charlie/midas/data/laboratory-final",
+        "status": "READY"
+      },
+      "live_execution": false,
+      "paper_recovery": {
+        "journal_events": 391122,
+        "revision": 391121,
+        "status": "CHECKPOINT_VERIFIED"
+      },
+      "startup_status": "READY",
+      "status": "READY"
+    },
+    "service": {
+      "ActiveState": "active",
+      "MainPID": "2737736",
+      "MemoryCurrent": "1027833856",
+      "MemoryHigh": "1610612736",
+      "MemoryMax": "1879048192",
+      "MemoryPeak": "1610874880",
+      "NRestarts": "0"
+    }
+  },
+  "prepared_reality_candidate": {
+    "commit": "29f77ad131ad0b8415b2a67a2b516e52878f5792",
+    "deployed": false,
+    "source_sha256": "0469889b4613a5fb875f34d2c6e14f9b74ba7f3188f51a3a9350078597bd8ad5"
+  },
+  "protected_recorder": {
+    "expected_books": 16,
+    "failures": 1,
+    "frames": 412191,
+    "fresh_books": 16,
+    "memory_events": {
+      "high": 10069,
+      "low": 0,
+      "max": 0,
+      "oom": 0,
+      "oom_group_kill": 0,
+      "oom_kill": 0,
+      "sock_throttled": 216
+    },
+    "memory_stat": {
+      "active_anon": 322641920,
+      "active_file": 5234688,
+      "anon": 531603456,
+      "file": 163758080,
+      "inactive_anon": 209014784,
+      "inactive_file": 158523392,
+      "kernel": 17362944
+    },
+    "memory_swap_current_bytes": 684032,
+    "ordinal": 2368807,
+    "process_rss_kib": 528808,
+    "runtime_code_loaded": false,
+    "service": {
+      "ActiveState": "active",
+      "ExecMainStartTimestamp": "Mon 2026-10-19 00:50:57 CEST",
+      "MainPID": "863193",
+      "MemoryCurrent": "712777728",
+      "MemoryHigh": "738197504",
+      "MemoryMax": "805306368",
+      "MemoryPeak": "738721792",
+      "NRestarts": "1",
+      "Restart": "on-failure"
+    },
+    "state": "RECORDING_UNSEQUENCED"
+  },
+  "reality_api": {
+    "collector_state": "RECORDING_UNSEQUENCED",
+    "execution_ground_truth": "unknown_counterfactual",
+    "expected_books": 16,
+    "fresh_books": 16,
+    "health": "recording",
+    "health_reasons": [],
+    "orders_submitted": 0,
+    "service": {
+      "ActiveState": "active",
+      "MainPID": "2688994",
+      "MemoryCurrent": "222449664",
+      "MemoryHigh": "infinity",
+      "MemoryMax": "536870912",
+      "MemoryPeak": "472510464",
+      "NRestarts": "0"
+    },
+    "status_age_seconds": 0.836341708
+  },
+  "revisions": {
+    "main": {
+      "branch": "main",
+      "revision": "a86804cf15621b48c632951d514d127013676f8c",
+      "status_porcelain": "?? data/reliability-endurance/evidence/20261020T080803Z-reality-digest-benchmark.json\n?? data/reliability-endurance/evidence/20261020T080955Z-reality-digest-source-verification.json\n?? data/reliability-endurance/evidence/20261020T081510Z-reality-digest-deployment-preflight.json\n?? data/reliability-endurance/evidence/20261020T081510Z-reality-digest-source-verification.json"
+    },
+    "reality": {
+      "branch": "project/reality",
+      "revision": "29f77ad131ad0b8415b2a67a2b516e52878f5792",
+      "status_porcelain": ""
+    },
+    "veritas": {
+      "branch": "project/veritas",
+      "revision": "8717666aa1988fb28c999998014ca1c4b5717113",
+      "status_porcelain": ""
+    }
+  },
+  "schema_version": 1,
+  "timers_and_workers": {
+    "arena_scheduler": {
+      "ActiveState": "active",
+      "Result": "success",
+      "SubState": "waiting"
+    },
+    "campaign_48h_001": {
+      "ActiveState": "inactive",
+      "Result": "success",
+      "SubState": "dead"
+    },
+    "reality_shadow_1": {
+      "ActiveState": "inactive",
+      "Result": "success",
+      "SubState": "dead"
+    },
+    "reality_shadow_2": {
+      "ActiveState": "inactive",
+      "Result": "success",
+      "SubState": "dead"
+    },
+    "veritas_v1": {
+      "ActiveState": "inactive",
+      "Result": "success",
+      "SubState": "dead"
+    }
+  },
+  "veritas_v2": {
+    "last_run": {
+      "batch_processed_segment_count": 10,
+      "control_sha256": "3ec8be453e702e6dcb49e7c82b6bf10e8bd1c275ec91a7bf4bd82ce685f11c9a",
+      "exit_status": 0,
+      "finished": "2026-10-20 10:17:16 CEST",
+      "pending_segment_count": 0,
+      "processed_segment_count": 15792,
+      "started": "2026-10-20 10:17:09 CEST",
+      "summary_sha256": "95f449ef61f90e87d70c2809c537970bb5bf5a132c3b1035bc105a7fbf0a60fc"
+    },
+    "last_service": {
+      "ActiveState": "inactive",
+      "ExecMainExitTimestamp": "Tue 2026-10-20 10:17:16 CEST",
+      "ExecMainStartTimestamp": "Tue 2026-10-20 10:17:09 CEST",
+      "ExecMainStatus": "0",
+      "Result": "success"
+    },
+    "timer": {
+      "ActiveState": "active",
+      "NextElapseUSecRealtime": "Tue 2026-10-20 10:22:14 CEST"
+    }
+  }
+}

@@ -168,6 +168,7 @@ def archive(root: Path, destination: Path, *, budget: int, reserve: int) -> dict
                 raise ValueError("Unidentified nonempty archive destination")
             atomic_json(identity, dict(schema_version=1, recording_root=str(root)))
         value = manifest(root)
+        used = sum(p.stat().st_size for p in destination.iterdir() if p.is_file())
         for info in value["segments"]:
             if Path(info["file"]).name != info["file"]:
                 raise ValueError("Unsafe segment path")
@@ -181,8 +182,8 @@ def archive(root: Path, destination: Path, *, budget: int, reserve: int) -> dict
             partial = target.with_suffix(".copying")
             # Only an interrupted temporary copy in this exclusive archive is disposable.
             if partial.exists():
+                used -= partial.stat().st_size
                 partial.unlink()
-            used = sum(p.stat().st_size for p in destination.iterdir() if p.is_file())
             margin = len(canonical(value)) + 8192
             if used + info["bytes"] + margin > budget:
                 raise OSError("Archive budget reached; originals preserved")
@@ -196,6 +197,7 @@ def archive(root: Path, destination: Path, *, budget: int, reserve: int) -> dict
                 raise ValueError("Copied archive segment failed validation")
             os.replace(partial, target)
             sync_dir(destination)
+            used += info["bytes"]
         published = dict(
             value,
             archival_provenance=dict(
@@ -207,7 +209,6 @@ def archive(root: Path, destination: Path, *, budget: int, reserve: int) -> dict
             ),
         )
         replay(destination, value)  # Verify global ordering and online checkpoints too.
-        used = sum(p.stat().st_size for p in destination.iterdir() if p.is_file())
         if used + len(canonical(published)) > budget:
             raise OSError("Archive publication exceeds budget; originals preserved")
         if shutil.disk_usage(destination).free < reserve + len(canonical(published)):

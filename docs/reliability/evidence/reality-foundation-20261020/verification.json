@@ -1,0 +1,184 @@
+{
+  "captured_at": "2026-10-20T13:14:37.460443+00:00",
+  "candidate_commit": "f2dc9c7ece0656aa75d1fefc7a01f511a94079c5",
+  "package_sha256": "c6f8521a107d4036f9d973a260752bd22e6c262eeb936b99a925c853a6644190",
+  "recovery_implementation_sha256": "015d77beccc51f8cfb639c115dcd81549bce8e9fe339d6fba1d8264288730211",
+  "deployment_tool_sha256": "5a05bb70c393d181fda735fbc48dc1ff154124720d7502a47833daefb90a4078",
+  "systemd_unit_sha256": "0afb3154bd51f5e016768f583ea792e27b882f0e5ddc6651be3bcbb890a8dd94",
+  "module_sha256": {
+    "packages/midas/reality/__init__.py": "ecfd9b6d54d74e4e96c9436ab28315201d5fb6bc7e23ca8da8fac265643c78ff",
+    "packages/midas/reality/__main__.py": "f6ec9b951fe657d0f24661114776604d2011a42c811284cea4162b7d88b63899",
+    "packages/midas/reality/calibrated_kernel.py": "0be07e9df57cc0b96b75861b614b80360c38bf490145b2ca7991dc9ede18cc20",
+    "packages/midas/reality/calibration.py": "5a5ccda4c518b38e5a3540aa8b4f5eed3905abfc19f36d1758239ae5df8b572d",
+    "packages/midas/reality/collector.py": "81ecce573e485830b5f92a5113c0e379f6c50f76eb7dca3d615d2c5dce501da1",
+    "packages/midas/reality/config.py": "85caee46eb05336432a80f54ca3c0d7e37751bbff8adb3fb2ba40437bb5a95ee",
+    "packages/midas/reality/discovery.py": "1e0d1078691ec97b46e0b1d81d7e5efd756bd082d5408a0487c930344e227783",
+    "packages/midas/reality/execution_research.py": "99aaf3d1f1d00a3440392f373db8b661c8420ab1bb4713fc9e4fe2340831e5c1",
+    "packages/midas/reality/foundry.py": "b0559c041e870196ef95fb17f9c0e6e39d541214e3a9b4f5c4e0c70c4e22ee62",
+    "packages/midas/reality/model_features.py": "976a0b529ef28250ba6fba3be3b0c8d1c48039975a183b36a359cd1ff88b6634",
+    "packages/midas/reality/model_fitting.py": "8f1aa262cc96430180e8d2357ec75ed5449cd940c5e956419a762f2f72302580",
+    "packages/midas/reality/model_metrics.py": "a7221014903176b4b1b7927a001081c3d88403b1ca991c565ea40253c0b8a9ba",
+    "packages/midas/reality/model_registry.py": "a1807cc5183a4612172ea8664b5df646de5c7f2940192757d018f7b0207ab3e5",
+    "packages/midas/reality/model_reproduce.py": "18cae58d8637730c03d3a580610dd2ccec7713a850366ebd560b9bd519d5dad7",
+    "packages/midas/reality/model_training.py": "1321984b75c6125b6b9cb329be5ae972b40f7df5c101714f1b1634ce12852d0c",
+    "packages/midas/reality/observation.py": "aaceca6f91cce16fe371614810ba1b841026c1767f80a94129ecc946705a6d88",
+    "packages/midas/reality/operations.py": "38c5a0c784904f7d46bf145624573c1805235b2917877e69cf204271dc193334",
+    "packages/midas/reality/panel.py": "8929aec97fed1e936d5ccc059d3743ed2a1523733a3a474881d817971f3816e2",
+    "packages/midas/reality/quality.py": "90a97c36b4ef12bc766955787d01b31ef5e334f81dcc59ec6b39b12eff6b7723",
+    "packages/midas/reality/quote_dynamics.py": "74bf01a896b800c5fe711ad6f2e6ba706c996bb6081045cdce7f1dad46a298ae",
+    "packages/midas/reality/reconstruction.py": "2a2cc73fbe0475799b3c7d5e2fd702e08b3e8f94c36012ed0ac8920c56aac860",
+    "packages/midas/reality/recovery.py": "9d51b465b9e1ff48a0e989e77ca0c4fda4e4debefe39a912364d6ee82023d84c",
+    "packages/midas/reality/replay.py": "1feed1403bd1d5659731d48bbc2629f691055893a14ab2a7fc6aee92f90d01ff",
+    "packages/midas/reality/research_access.py": "f678a68e147b376418c5d898df930d340145c603d901eb77b4a463a2c192ce11",
+    "packages/midas/reality/research_measurements.py": "35200c42beef6c169b7244d56d93b30229c1394217faf4dd072853814f05b084",
+    "packages/midas/reality/research_schedule.py": "7987cd2398d857494c0ad6aeeeb842b758baa483ea8d316102a9d3900c6a54ae",
+    "packages/midas/reality/research_schema.py": "fa31024164ae1e20b579403e79417c1eaa8fc2670d154153aae247546d8f9f33",
+    "packages/midas/reality/research_validation.py": "5eaeba6cf0326440c31b2459ffe70db3d7f58bc5346f5b9e5b2f79a79d67b97c",
+    "packages/midas/reality/resources.py": "e51f9c7761171f9c0f1bdea6c74f4c8bc97f1684f5c76ee9dbea7816f735e542",
+    "packages/midas/reality/shadow_audit.py": "d48bc5faf8f12a416f746d2279b06740cdaf19a682645ac359f056bc07de1765",
+    "packages/midas/reality/shadow_campaign.py": "fbca040df77c90182fa7b94375590f89e95289b21e31a8990da390d1241c9aed",
+    "packages/midas/reality/shadow_integrity.py": "12fdd1a41105180bc317326ed978ce63f440c8119d65425dac1d8955bb1727c2",
+    "packages/midas/reality/shadow_policy.py": "f0a3b1920c7bb5c22ce9153dabe967be24d2210b6a8801808269734d13c3e0dc",
+    "packages/midas/reality/shadow_report.py": "05a679d96b7bf2aff3fed6ff644e561efa3827e0b5e3d4d20ae59e3c575fffa4",
+    "packages/midas/reality/shadow_source.py": "6e0cb3811a8e32a81e9003a79de0ab778eccc28ff9e725f2163d58decf31b327",
+    "packages/midas/reality/shadow_store.py": "75e6c208013ee859a39d0463a12660b521d1c631af6517e1cfd5008a6c42ff00",
+    "packages/midas/reality/shadow_worker.py": "0b745947399dc33898bdba41df4f0b183ba87477f5dcddecb7ae2d26f29e3c6d",
+    "packages/midas/reality/storage.py": "e21acd22e464d95ad826bd231e027681f2ca95706fcb880199bd525dae7b9565",
+    "packages/midas/reality/transport.py": "11699c9b233fba1a59fe56090a3abd511966ff6f4239551fddbec004712eb506"
+  },
+  "tool_sha256": {
+    "scripts/reality_deployment.py": "5a05bb70c393d181fda735fbc48dc1ff154124720d7502a47833daefb90a4078",
+    "scripts/reality_recovery_snapshot.py": "a08ed59c02ce9c937bf4dba59e3f9a67323020140cc3efc5f58aa08175a6be8f",
+    "scripts/reality_foundation_benchmark.py": "8cdabb71f4b303b47b02e47a2a379d967e8c9bc87aaca877e3edb67d4525ce64",
+    "scripts/reality_foundation_observe.py": "5dc1d1e718a4a69c769a98cda46bc53938b3e43f44d19ee5d5ced7317199a5f2"
+  },
+  "production_unit": {
+    "TimeoutStopUSec": "45s",
+    "MainPID": "863193",
+    "NRestarts": "1",
+    "ControlGroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/midas-reality.service",
+    "CPUQuotaPerSecUSec": "250ms",
+    "MemoryHigh": "738197504",
+    "MemoryMax": "805306368",
+    "MemorySwapMax": "0",
+    "TasksMax": "32",
+    "LimitNOFILE": "128",
+    "ActiveState": "active",
+    "FragmentPath": "/home/charlie/.config/systemd/user/midas-reality.service",
+    "DropInPaths": "/home/charlie/.config/systemd/user.control/midas-reality.service.d/50-MemoryHigh.conf /home/charlie/.config/systemd/user.control/midas-reality.service.d/50-MemoryMax.conf /home/charlie/.config/systemd/user.control/midas-reality.service.d/50-MemorySwapMax.conf",
+    "ActiveEnterTimestamp": "Mon 2026-10-19 00:50:57 CEST"
+  },
+  "resources": {
+    "memory_current_bytes": 737046528,
+    "memory_high_bytes": 738197504,
+    "memory_high_margin_bytes": 1150976,
+    "memory_events": {
+      "low": 0,
+      "high": 10218,
+      "max": 0,
+      "oom": 0,
+      "oom_kill": 0,
+      "oom_group_kill": 0,
+      "sock_throttled": 216
+    },
+    "host_mem_available_bytes": 8777048064,
+    "host_pressure": {
+      "cpu": {
+        "some": {
+          "avg10": "2.86",
+          "avg60": "3.31",
+          "avg300": "3.62",
+          "total": "278112685123"
+        },
+        "full": {
+          "avg10": "0.00",
+          "avg60": "0.00",
+          "avg300": "0.00",
+          "total": "0"
+        }
+      },
+      "memory": {
+        "some": {
+          "avg10": "0.00",
+          "avg60": "0.00",
+          "avg300": "0.24",
+          "total": "10944538778"
+        },
+        "full": {
+          "avg10": "0.00",
+          "avg60": "0.00",
+          "avg300": "0.22",
+          "total": "6322242265"
+        }
+      },
+      "io": {
+        "some": {
+          "avg10": "0.74",
+          "avg60": "1.00",
+          "avg300": "1.52",
+          "total": "16310449050"
+        },
+        "full": {
+          "avg10": "0.58",
+          "avg60": "0.85",
+          "avg300": "1.27",
+          "total": "12734085384"
+        }
+      }
+    }
+  },
+  "resource_admitted": false,
+  "resource_rejection_reason": "Resource admission rejected: recorder below 4 MiB MemoryHigh headroom",
+  "free_disk_bytes": 181317365760,
+  "protected_sha256": {
+    "/home/charlie/midas/data/autonomy/48H-001/manifest.json": "55538167f6b0d9516270001587abea0894801124effad635a0d830be5e0be379",
+    "/home/charlie/midas/data/autonomy/48H-001/status.json": "44f146d86567830a34db95838297faa980510e7bc6daac1f22a36fcbbe6b8954",
+    "/home/charlie/midas-reality/data/research/reality/forward/mission2/campaign.json": "aa8acb2b46823c1a1e3ac5d01a57dde917746c2c7471098ae2a4598875e322f5",
+    "/home/charlie/midas-reality/data/research/reality/forward/mission2/status.json": "087a6498457b864b07adb2a47a21a8483f35548166e6c8031f17004eebd5836b",
+    "/home/charlie/midas-reality/data/research/reality/forward/mission2-successor-20261016/campaign.json": "c5eb8b98cbfd657372fc620192c5a0c0bb46f41d760800e680181fa7f3ee95a3",
+    "/home/charlie/midas-reality/data/research/reality/forward/mission2-successor-20261016/status.json": "37cff1121c3b8191aec0e6d470ac36875665a9ae2880e0979bd86837e4ea399d"
+  },
+  "tests": {
+    "compatibility_regression": "165 passed; excludes model training",
+    "exact_release_verifier": "106 passed; Ruff; Mypy 40 files",
+    "extended_mypy": "42 files passed",
+    "full_training_inclusive_suite": "incomplete: timeout then pressure stop",
+    "full_store_candidate": "not admitted",
+    "reality_endurance": "not admitted"
+  },
+  "benchmark_revision": "3b332d010a30754c9321edc8db407471f000eea8; identical runtime package to final target; later tooling-only guard changes",
+  "production_actions": "none: no protected signal, restart, checkout update, unit installation or reload",
+  "memory_scope": "process RSS and Python traced heap in benchmark; cgroup current/high/events in operations receipts",
+  "final_api_health": {
+    "status": "READY",
+    "startup_status": "READY",
+    "startup_error": null,
+    "mode": "demo",
+    "live_execution": false,
+    "paper_recovery": {
+      "status": "CHECKPOINT_VERIFIED",
+      "journal_events": 400723,
+      "revision": 400722
+    },
+    "laboratory": {
+      "status": "READY",
+      "root": "/home/charlie/midas/data/laboratory-final",
+      "recovering_campaigns": [],
+      "recovery_errors": []
+    }
+  },
+  "final_veritas_v2": {
+    "status": "current",
+    "processed_segment_count": 16374,
+    "pending_segment_count": 0,
+    "summary_sha256": "05fece95c28f02659a150f7ef0c63ac7934f9882d8c7b242c7adedf5e97b2c50"
+  },
+  "final_recorder_status": {
+    "state": "RECORDING_UNSEQUENCED",
+    "ordinal": 2434067,
+    "fresh_books": 16,
+    "expected_books": 16,
+    "sequence_verified": false,
+    "updated_ns": 1792502105148548066
+  }
+}

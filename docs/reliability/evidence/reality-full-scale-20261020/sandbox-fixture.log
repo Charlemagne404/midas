@@ -1,0 +1,6 @@
+fixture_root /tmp/midas-validation-fixture-gyp30t3v
+Traceback (most recent call last):
+  File "<stdin>", line 12, in <module>
+  File "/home/charlie/midas/scripts/reality_full_scale_validation.py", line 313, in run
+    raise ValueError(f"Worker failed: {phase}; inspect retained log")
+ValueError: Worker failed: cold; inspect retained log
