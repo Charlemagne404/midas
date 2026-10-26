@@ -631,11 +631,20 @@ charged-memory and admission fields remain unchanged.
 The dashboard presents anonymous and file-backed values beside the charged
 cgroup total, with a note that prevents double counting. This is an
 observability addition only; it neither diagnoses a leak nor changes the
-95-percent research admission hold. The live services remain on API release
-`cf452ec` and web release `90c625d`. The tested candidate is local commit
-`d56cdcf42293de76649feb7df181ff783b30c4b9` on
-`codex/veritas-v6-integration-20261026`; it is not deployed. The measured
-snapshot and verification receipt is
+95-percent research admission hold. **Historical 05:37Z status:** the tested
+candidate was local commit `d56cdcf42293de76649feb7df181ff783b30c4b9` on
+`codex/veritas-v6-integration-20261026`, before deployment. The services now
+run API release `a152999` and web release `767f330`, as documented in the
+following 05:59Z deployment section. The measured snapshot and verification receipt is
 `/home/charlie/midas-engineering-mission-20261026/evidence/readiness-memory-composition-2026-10-26T0537Z.json`
 (SHA-256
 `a8ceb73b06e0dc04d9c06182bf43bf1dccae646083628b7224eb80d3aff5e972`).
+
+
+## Research Readiness deployment — 2026-10-26 05:59 UTC
+
+The live Mission Control API and web service now run immutable releases `a152999` and `767f330`. API source revision is `a1529991a880965a8ad37a7528e2c4cabfc341d8`; web source revision is `767f33006db115d66ec22eaa8dc8c3f6a3675e30`. The API exposes bounded cgroup `memory.stat` composition at `/api/readiness/resources`; the dashboard shows anonymous/file-backed charge while retaining `memory.current` for resource gates. During first fetch, it announces pending evidence sources and keeps gates unpassed until the response arrives.
+
+The live V6 projection at the 05:59Z receipt is `CATCHING_UP` at 60/530 snapshots, with 470 pending. Its Decimal reference contains 2,400 repeated observations across 1,032 unique markets: 2,047 quality-valid, 428 independently verified, zero positive-gross and zero net-eligible. The source-quality and validity flag counts are separate overlapping categories. None of these repeated observations are independent trials. Finalized-source analysis is current at 32,153/32,153 indexed segments, but no full latest-boundary cold-recovery receipt is reported. The collector remains unsequenced and its local gap markers are not an exchange event-loss count.
+
+The live dashboard run classifies the API resource gate as blocked: API cgroup charge is near its `MemoryHigh` boundary. The API release startup verified its 675k-event paper journal in 4m32s and read approximately 7.47 GB; no OOM occurred, but point samples showed elevated host I/O pressure during verification. Avoid overlapping the next API restart with a heavy research job. Existing rollback releases are `cf452ec` (API) and `90c625d` (web). Full receipt and browser screenshot are recorded in the engineering report's Section 15.

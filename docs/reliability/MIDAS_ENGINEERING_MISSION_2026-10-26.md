@@ -2,25 +2,24 @@
 
 ## Executive readout
 
-Veritas V6 is integrated into a dedicated MIDAS branch and its observer is
-running from the pinned V6 release. Its latest scheduled update remains
-`2026-10-26T04:32:24Z`: the independent Decimal reference audited 1,600
-repeated pairs across 741 unique markets and found zero economically supported
-or net-eligible observations. These are correlated observations, not 1,600
-independent trials. The snapshot catalog is still catching up, and the latest
-scan included no stable-control markets.
+At the latest captured live receipt, `2026-10-26T05:59:19Z`, Veritas V6 was
+catching up at 60/530 snapshots (470 pending). Its independently versioned
+Decimal reference covered 2,400 repeated observations across 1,032 unique
+markets: 2,047 quality-valid, 428 independently verified, and zero
+positive-gross or net-eligible. These are correlated observations, not 2,400
+independent trials. The snapshot catalog is still catching up; the earlier
+04:32 update had no stable-control markets. See Section 15 for receipt identity
+and exact evidence.
 
 The Research Readiness view is implemented and deployed through the existing
-local Mission Control Vite service. At 04:48:57Z `/api/health` reported API
-release `cf452ec`, `READY`, `mode=demo`, and `live_execution=false`; Laboratory
-was `READY` and paper recovery was `CHECKPOINT_VERIFIED` at 673,222 events.
+local Mission Control Vite service. At the 05:59Z receipt, API release
+`a152999` reported `READY`, `mode=demo`, and `live_execution=false`; Laboratory
+was `READY` and paper recovery was `CHECKPOINT_VERIFIED` at 675,455 events.
 The view reads live API projections, labels demo mode prominently, separates
-staged and deployed versions, classifies missing evidence conservatively, and
-shows storage and cgroup measurements. Browser verification at 1440 px and
-390 px completed without page errors or horizontal overflow. The follow-up
-fix for unmeasured Veritas fields is now deployed in immutable web release
-`90c625d`; its targeted Veritas browser test passed against isolated evidence
-fixtures, and post-deploy checks served the `Not measured` state successfully.
+staged and deployed versions, classifies missing and loading evidence
+conservatively, and shows storage and cgroup measurements. Browser verification
+at 1440 px and 390 px completed without page errors or horizontal overflow;
+a delayed-source browser check confirmed pending evidence does not pass gates.
 
 Reality production remains on its older collector and active 24 GiB / 90-day
 configuration. At the 04:47Z read, the collector was receiving with 16/16
@@ -575,10 +574,10 @@ directories remain available for rollback.
 
 | Component | Classification | Current verdict |
 | --- | --- | --- |
-| Veritas V6 code, independent Decimal reference, catalog migration and bounded publication | **COMPLETE AND VERIFIED** | Integrated and scheduled; latest update has 40/528 snapshots processed, 488 pending, and 1,095 source-quality plus 1,095 validity flags (categories may overlap) |
-| Economic evidence | **PARTIALLY VERIFIED** | Latest reference covers 1,600 repeated pairs across 741 markets; 310 independently snapshot-valid, zero economic support/net eligibility, and execution outcomes remain unmeasured |
-| Readiness resource API and dashboard | **COMPLETE AND VERIFIED** | Deployed at API `cf452ec` / web `90c625d`; browser receipt and screenshot available |
-| Veritas missing-evidence rendering and deterministic browser fixtures | **COMPLETE AND VERIFIED** | Null renders as `Not measured`, distinct from measured zero; targeted browser test passed, and immutable web release `90c625d` serves the fix with HTTP 200 smoke verification |
+| Veritas V6 code, independent Decimal reference, catalog migration and bounded publication | **COMPLETE AND VERIFIED** | Integrated and scheduled; at 05:59Z the live projection had 60/530 snapshots processed and 470 pending; the persistent catch-up remains operationally incomplete |
+| Economic evidence | **PARTIALLY VERIFIED** | At 05:59Z the reference covered 2,400 repeated observations across 1,032 markets, with 428 independently verified and zero positive-gross/net-eligible; execution outcomes remain unmeasured |
+| Readiness resource API and dashboard | **COMPLETE AND VERIFIED** | Memory composition and explicit loading state deployed at API `a152999` / web `767f330`; live delayed-response browser receipt and screenshot in Section 15 |
+| Veritas missing-evidence rendering and deterministic browser fixtures | **COMPLETE AND VERIFIED** | Null renders as `Not measured`, distinct from measured zero; targeted browser test passed, and active immutable web release `767f330` retains the fix with HTTP 200 smoke verification |
 | Reality candidate hardening | **IMPLEMENTED, DEPLOYMENT PENDING** | Latest clean candidate `a1f2fe9` includes the 4278 telemetry base, archive fail-closed checks, and checkpoint-prefix recovery fix. The full relevant suite passed 109 tests; final recovery and source-identity follow-ups passed 42 focused tests plus isolated startup. The exact-source 100-second feed canary completed with 322 frames and four verified checkpoints but only 8/16 fresh outcomes at its last checkpoint, so it does not pass deployment preflight |
 | Reality candidate bounded telemetry | **IMPLEMENTED, DEPLOYMENT PENDING** | Candidate exposes bounded persistence, transport-queue, backpressure, checkpoint, and resource fields; production API still lacks these observations |
 | Production Reality telemetry/integrity | **PARTIALLY VERIFIED** | At 05:20Z, 16/16 books were fresh and the collector was receiving at ordinal 5,169,781, but API health remained degraded/unsequenced with persistence-window, queue-depth, and recovery-state telemetry missing |
@@ -1041,7 +1040,45 @@ The durable measurement and test receipt is
 `/home/charlie/midas-engineering-mission-20261026/evidence/readiness-memory-composition-2026-10-26T0537Z.json`,
 SHA-256
 `a8ceb73b06e0dc04d9c06182bf43bf1dccae646083628b7224eb80d3aff5e972`.
-The dashboard change is **IMPLEMENTED, DEPLOYMENT PENDING**: the active API
-and web services remain on immutable releases `cf452ec` and `90c625d`. No API,
-web, or Reality production service was restarted or reconfigured for this
-addendum.
+At this 05:37 UTC measurement point, the dashboard change was **IMPLEMENTED,
+DEPLOYMENT PENDING** and the API/web services remained on releases `cf452ec`
+and `90c625d`. That historical status was superseded by the controlled
+releases documented in Section 15. The protected Reality recorder was not
+restarted.
+
+
+## 15. Research Readiness memory telemetry and loading state deployed — 2026-10-26 05:59 UTC
+
+### Isolated source and immutable releases
+
+The memory-composition API was prepared on `codex/readiness-memory-composition-api-20261026`, commit `a1529991a880965a8ad37a7528e2c4cabfc341d8`, based on the exact deployed API source `cf452ec618a06897774547addd214c3906b534e2`. It changes only `apps/api/readiness.py` and its resource regression test. The web memory-composition change is `4e64a2eaea27d637bdad81df46328a81e6470221`, based on deployed web source `90c625d4e168c64fe3c8d1f93e0c1393734fd009`. A final loading-state fix is `767f33006db115d66ec22eaa8dc8c3f6a3675e30` on `codex/readiness-loading-state-20261026`, based on `4e64a2e`.
+
+Immutable releases are installed at `/home/charlie/.local/share/midas-api/releases/a152999` and `/home/charlie/.local/share/midas-api/releases/767f330`. The API release manifest SHA-256 is `977a88bb6b589c47bebdc7d87b9122582dff75f5afc214784e64f91dac0e0807`; the final web release manifest SHA-256 is `d3a46bb42ffbea09f4823c5f1bd4ed5eb7f5fdd26b6a79ef6e3d40b0beb988ba`. Packaging verified all 1,843 API and 1,844 web tracked blobs and executable modes against their release commits. The web bundle was built with a 512 MiB Node heap; existing index (502.91 kB) and Chart (544.41 kB) chunk advisories remain.
+
+The API deployment uses `zz-readiness-memory-composition.conf` and the web deployment uses the same drop-in name in their respective user service directories. Rollback releases `cf452ec` and `90c625d` remain installed. No branch was pushed or merged to a protected branch.
+
+### Runtime change and bounded verification
+
+`/api/readiness/resources` now exposes the allowlisted cgroup `memory.stat` values `anon`, `file`, `shmem`, `active_file`, and `inactive_file`; it continues using `memory.current` for charged-memory and admission decisions. The UI shows anonymous/file-backed charge, marks the entire view `aria-busy`, and announces pending source count with an accessible status message. Missing evidence remains unmeasured and gates do not pass during loading.
+
+Verification on the isolated deployed-source branches:
+
+- `tests/test_readiness_resources.py`: 4 passed under a 256 MiB `MemoryHigh`, 384 MiB `MemoryMax` scope.
+- `Readiness.test.tsx`: 4 passed under 512/768 MiB; includes loading-state and missing-evidence assertions.
+- `e2e/readiness.spec.ts`: 1 passed under a 1/1.5 GiB scope and 256-task cap.
+- Prettier, targeted ESLint, TypeScript build, and Vite production build passed. A first formatting check caught the new JSX/test formatting; Prettier corrected it before the successful check. A first Vitest launch under `TasksMax=64` could not create Node worker threads; the same test passed under the prior 256-task browser/test cap. No test assertion was weakened.
+- A live Playwright browser check delayed only `/api/veritas/overview` by 2.5 seconds. It observed “Loading evidence from 2 sources”, `NOT MEASURED` for independent correctness, and zero passing gates until the real response arrived. It then displayed the persisted V6 funnel, had no page errors, and fit a 390 px viewport without horizontal overflow.
+
+The live evidence at `2026-10-26T05:59:19Z` reports API `READY`, release `a152999`, demo mode, `live_execution=false`, Laboratory `READY`, and paper-journal `CHECKPOINT_VERIFIED` at 675,455 events. The live V6 summary is still catching up: 60/530 snapshots processed, 470 pending, 2,400 repeated pair observations across 1,032 unique markets, 2,047 quality-valid, 428 independently verified, and zero positive-gross or net-eligible observations. Source-quality and validity disagreement categories each contain 1,619 flags and may overlap. The sample is not 2,400 independent trials.
+
+Finalized-source analysis reports 32,153/32,153 indexed segments and zero pending, but it is not a latest-boundary cold-recovery proof. The full recovery gate remains blocked. The protected Reality recorder remained PID 3007040 with unchanged source and start time. No Reality restart, archive mutation, Frontier/Atlas activity, long-duration campaign, or trading action occurred.
+
+### Measured API restart cost and current readiness
+
+The API was gracefully restarted once at `05:47:14Z`; it returned `READY` at `05:51:47Z`. Startup streamed the paper journal, verified 675,203 events, and read about 7.47 GB. Its cgroup reached `MemoryHigh` with approximately 1.50 GiB of inactive file cache and about 120 MiB anonymous memory; `MemoryMax`, OOM, and OOM-kill counters remained zero. Host available memory stayed near 8.0 GiB in the sampled procfs readings. Point samples observed host I/O full PSI near 8% avg10 during the scan, falling below 1% afterward. This is a measured startup cost, not a throughput improvement. Future API releases need a maintenance window without overlapping heavy research work.
+
+At the post-deployment resource sample, the API was at 1.593 GB of 1.611 GB `MemoryHigh` (about 17 MiB headroom), with 159 MB anonymous and 1.422 GB file-backed charge; no OOM was recorded. Reality was at 921 MB of 1.208 GB `MemoryHigh`, with about 275 MB headroom and no new high/max/OOM event during the paired preflight. The dashboard therefore correctly classifies resource/scheduling stability as **BLOCKED** while API usage remains above its 95-percent admission boundary. The overall page showed zero of six gates passing: research correctness, collector integrity, recovery, and resource admission are blocked; storage is conditional; economic sufficiency remains conditional with zero eligible candidates.
+
+The final deployment receipt is `/home/charlie/midas-engineering-mission-20261026/evidence/research-readiness-deployment-postdeploy-2026-10-26T0559Z.json`, SHA-256 `e869197202816ebb85ac854eedea8878e1aeae4fa62e80f7ffc1f76a282cee96`. The live screenshot is `/home/charlie/midas-engineering-mission-20261026/evidence/research-readiness-live-loading-v6-2026-10-26.png`, SHA-256 `9d954c130db748f27456f9a35667cc50962ef78305cdfdea4a4a672b912a7010`.
+
+**Research Readiness dashboard: COMPLETE AND VERIFIED.** This deployment does not establish economic profitability or close the Reality production-transition, archive-provenance, resource, or full-recovery gates.

@@ -115,3 +115,10 @@ PYTHONPATH=packages .venv/bin/python -m pytest -q tests/test_veritas_*.py
 ## Deferred work and operating limits
 
 The frozen worker's lag and recorder memory growth need a separately versioned operational decision. Preserve the current campaigns, records, and source segments while making that decision. Do not change the frozen campaign configuration or journal. Atlas/Frontier, new market discovery, strategy expansion, training, exploratory experiments, and economic optimization are outside the current maintenance scope.
+
+
+## Research Readiness live state — 2026-10-26 05:59 UTC
+
+Mission Control API release `a152999` and web release `767f330` are active. The Readiness resource endpoint includes bounded cgroup `memory.stat` composition, and its dashboard presents measured, missing, loading, stale, and blocked states without turning missing evidence into a pass. Live browser verification covered the deployed V6 summary, delayed-request loading, demo labeling, and a 390 px viewport.
+
+Current evidence remains constrained: Veritas V6 is catching up at 60/530 snapshots; 2,400 repeated pairs across 1,032 unique markets yielded zero positive-gross and zero net-eligible candidates. The current finalized-source index covers 32,153/32,153 segments but does not prove latest-boundary cold recovery. Reality remains on its older unsequenced collector, and the protected recorder was not restarted. The dashboard reports resource admission blocked because API charge is near `MemoryHigh`. See [engineering mission Section 15](reliability/MIDAS_ENGINEERING_MISSION_2026-10-26.md) and `docs/VERITAS_OPERATIONS.md` for release hashes, receipts, and remaining blockers.
