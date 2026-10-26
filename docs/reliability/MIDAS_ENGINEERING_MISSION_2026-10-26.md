@@ -236,23 +236,42 @@ not the separate 31,742-segment cold-recovery matrix.
 | Frontend full unit suite | 32 tests passed across 6 files; final changed Readiness tests also passed 3/3 |
 | Frontend checks | TypeScript, ESLint, Prettier, and production build passed; existing Chart (544.41 kB) and main (502.91 kB) chunks still trigger Vite's 500 kB advisory |
 | Readiness browser test | Isolated Playwright Readiness test passed; deployed browser capture showed expected release IDs and live values at desktop/mobile widths, no page errors, and no 390 px horizontal overflow |
-| Broad existing browser suite | 5 of 8 passed; three existing fixture/locator failures remain listed below |
+| Veritas missing-evidence rendering | Fixed three runtime crashes when an unmeasured observatory returned null counts/maps; null now renders as “Not measured,” while measured zero remains zero |
+| Browser regression suite | Full suite 8/8 passed with one worker; after the final partial-measurement fix, targeted Veritas E2E passed 1/1 |
 
-The three broad E2E failures were retained: Arena timed out waiting for a
-generated-dataset selector in its isolated temporary API/Arena root; Reality
-could not find the expected “Yes” heading because its isolated fixture lacked
-the underlying market data; Veritas expected an `h1` locator for a heading
-rendered as `h2`. These did not launch production Arena work. They were not
-silenced or excluded. A transient browser capture during the scheduled
-capacity refresh displayed unavailable Veritas/Laboratory projections as
-`NOT MEASURED`; all corresponding API routes returned 200, and a subsequent
-complete browser refresh displayed the persisted V6 values. The transient
-receipt is preserved separately.
+The prior 5/8 broad browser run exposed three test and UI defects, which are now
+addressed rather than excluded. Arena's test asserted a generated-data
+workflow against an isolated empty store, Reality's test depended on
+machine-local archive data, and Veritas assumed opportunity counts and maps
+were non-null even when the observer had no finalized snapshot. The browser
+fixtures now model Arena and Reality state explicitly; the Veritas test checks
+that an unavailable current analysis remains visibly unmeasured while frozen
+historical evidence remains identified as historical. The full suite passed
+8/8 with one worker. The Playwright API uses a temporary SQLite and Arena
+root, and its Veritas workspace defaults to this worktree. That isolated
+workspace reports `measurement_status=NOT_MEASURED`; it has no latest
+snapshot, and `/api/veritas/artifacts/continuous-analysis` returns 404 because
+no public observatory analysis has been generated there. This is not a probe
+of the deployed production API; its persisted V6 state is covered by the
+separate live evidence in Section 6. Current finalized-source gap detail is
+unavailable in the isolated workspace; frozen campaign gap attribution
+remains historical and is not presented as current-boundary verification.
+
+During an earlier attempt to exercise the old Arena browser workflow, its
+isolated temporary store trained one synthetic unmatched-risk classifier
+(30 base episodes, 5 epochs). The follow-on diagnostics/evaluation job was
+rejected with `resource_admission_lock_busy`; no frozen evaluation,
+tournament, or research finding resulted, and the artifact is not evidence.
+The replacement Arena E2E is a fixture-only view test that explicitly asserts
+no `/api/arena/jobs` submission. This bounded test artifact remains outside
+the research evidence set.
 
 No new full-store recovery, collector restart, long-duration test, stress
-campaign, or training run was performed. No before/after optimization is
-claimed. The bounded API cgroup sampling and runtime browser capture are
-measurement evidence, not a synthetic performance benchmark.
+campaign, or trading-strategy training was performed. The isolated synthetic
+Arena classifier from the earlier E2E attempt is disclosed above and was not
+used as a research result. No before/after optimization is claimed. The
+bounded API cgroup sampling and runtime browser capture are measurement
+evidence, not a synthetic performance benchmark.
 
 ## 6. Evidence artifacts and identities
 
@@ -273,6 +292,20 @@ Mission evidence files are under
 - `research-readiness-transient-2026-10-26T034209Z.json` and `.png` — the
   incomplete projection during a scheduled refresh, retained with its
   `NOT_MEASURED` display rather than treated as final evidence.
+- `web-null-evidence-regression-2026-10-26T0426Z.json` and
+  `web-null-evidence-playwright-2026-10-26T0426Z.log` — bounded frontend and
+  browser regression receipt plus the raw 8/8 Playwright log. The receipt
+  records the changed-file hashes, cgroup bounds, current Reality process
+  identity, and the isolated synthetic Arena E2E attempt described above;
+  SHA-256 values are `c3abbf3968ec626c4dfbb6a591a77ae2fb2e7eb3f736667d9e3baf032cd4a347`
+  and `b23667a865281939972a5ee6a0742e72c11375ee28f8630b2f8654a981958ed4`,
+  respectively.
+- `web-null-measurement-followup-2026-10-26T0431Z.json` and
+  `web-veritas-targeted-2026-10-26T0431Z.log` — final partial-measurement UI
+  check, 32/32 serial Vitest suite, typecheck, lint, Prettier, production
+  build, and bounded targeted Veritas browser result. SHA-256 values are
+  `930d2ea1877b6535afef7b06fb66eb77db2b580cef465c1ffd99a0d069f6eaa2` and
+  `1514ee18decf58811d62d07cea4ed56540b754ff5086a219409133d31a0a471f`.
 - `data/veritas-v6-offline-replay-522-20261026/` in the preserved
   `midas-engineering-mission-20261025` worktree — isolated 522-snapshot replay
   receipt SHA-256
@@ -294,6 +327,7 @@ directories remain available for rollback.
 | Veritas V6 code, independent Decimal reference, catalog migration and bounded publication | **COMPLETE AND VERIFIED** | Integrated and scheduled; live catch-up remains 20/526 snapshots and independent/source-quality disagreement flags remain |
 | Economic evidence | **PARTIALLY VERIFIED** | Reference measured 800 repeated pairs; zero support/net eligibility and execution outcomes remain unmeasured |
 | Readiness resource API and dashboard | **COMPLETE AND VERIFIED** | Deployed at API `cf452ec` / web `4f4179c`; browser receipt and screenshot available |
+| Veritas missing-evidence rendering and deterministic browser fixtures | **IMPLEMENTED, DEPLOYMENT PENDING** | Current branch renders unavailable counts as `Not measured`; frontend/browser checks pass, but this follow-up is not in the deployed web release |
 | Reality candidate hardening | **IMPLEMENTED, DEPLOYMENT PENDING** | The archive-provenance fix is committed and its focused suite passes; a synthetic isolated first-write receipt and a fresh blocked deployment preflight exist. A feed canary, complete latest-boundary recovery, storage clearance, and protected-restart authorization remain |
 | Production Reality telemetry/integrity | **PARTIALLY VERIFIED** | Feed is unsequenced and degraded; persistence, queue, and recovery telemetry are missing |
 | Cold recovery/reproducibility | **PARTIALLY VERIFIED** | Historical prefixes and bounded checks exist; latest boundary is not fully verified |
@@ -328,8 +362,10 @@ Recommended next actions:
 7. Resume latest-boundary recovery only from a checksummed copy with a bounded
    checkpoint and safe resource admission. Report partial coverage until the
    complete boundary is reconciled.
-8. Repair the three isolated E2E fixture/locator failures and keep the existing
-   large-chunk warning visible; do not weaken assertions or suppress cases.
+8. Keep browser verification fixture-based for Arena and Reality, retain the
+   explicit no-job assertion in Arena, and deploy the current Veritas
+   not-measured rendering through the normal web release process. Keep the
+   existing large-chunk warning visible.
 
 This closeout does not authorize a Reality service restart, archive mutation,
 or a new research campaign.
@@ -400,3 +436,42 @@ was not invoked because its fresh verification receipt, bounded candidate feed
 canary, and complete latest-boundary recovery prerequisites are absent. No
 protected service, source recording, archive contents, or runtime
 configuration was changed during this follow-up.
+
+## 9. Browser reliability follow-up — 2026-10-26 04:31 UTC
+
+The prior 5/8 browser result is closed by fixes and deterministic test data,
+not by skipping the three failures. The Veritas page had three null-handling
+crashes on the isolated workspace's valid not-measured response: a missing
+minimum-notional count, a missing opportunity-count formatting value, and a
+missing per-leg source-quality map. The page now preserves the distinction
+between an unmeasured value and a measured zero. It also labels missing
+current analysis and finalized-source gap detail as unavailable, while
+retaining the frozen campaign attribution as historical evidence.
+The Playwright API uses temporary SQLite and Arena roots, and the Veritas
+workspace defaults to this worktree; the test does not query the deployed
+production API.
+
+Arena and Reality browser verification now use explicit synthetic response
+fixtures and state their fixture scope. The Arena test checks the model
+registry, diagnostics link, limitations, and absence of a job submission.
+Reality's test exercises its explorer and replay surfaces using fixture-only
+market and decision records, without relying on local archive data. The full
+Playwright suite passed all eight tests with one worker. After a final
+adjustment ensuring a missing candidate-event count stays “Not measured” even
+when some other opportunity fields are measured, the targeted Veritas browser
+test passed 1/1. The raw logs and reproducibility receipts are listed in
+Section 6. Vitest's complete frontend suite passed serially (32 tests across
+six files); its first parallel run had one timeout under concurrent resource
+pressure, and no timeout threshold was raised. Typecheck, lint, formatting,
+and production build also passed. The existing Vite bundle-size advisory
+remains.
+
+One earlier run of the old Arena E2E trained a single synthetic unmatched-risk
+classifier (30 base episodes, five epochs) in a temporary test store before
+the shared admission lock rejected its diagnostics/evaluation follow-up. It
+produced no frozen test, tournament, or research finding, and is not included
+in evidence. The replacement E2E does not submit Arena jobs. This UI/test
+follow-up has not been deployed. After the bounded Playwright scope ended, no
+Playwright or fixture worker remained; the protected Reality unit remained
+active at MainPID 3007040 with its original 2026-10-22 16:40:02 CEST start
+time.

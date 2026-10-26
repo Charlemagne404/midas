@@ -8,7 +8,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-it('labels measured evidence and keeps synthetic execution separate from actual fills', async () => {
+it('labels measured and missing opportunity evidence without implying actual fills', async () => {
   vi.stubGlobal(
     'fetch',
     vi.fn().mockImplementation((input: RequestInfo | URL) =>
@@ -535,7 +535,7 @@ it('labels measured evidence and keeps synthetic execution separate from actual 
                       '50': 0,
                       '100': 0,
                     },
-                    candidate_event_count: 0,
+                    candidate_event_count: null,
                     candidate_market_count: 0,
                     minimum_top_edge_per_share: null,
                     maximum_top_edge_per_share: null,
@@ -1118,7 +1118,9 @@ it('labels measured evidence and keeps synthetic execution separate from actual 
     'href',
     '/api/veritas/artifacts/gap-detail-current',
   );
-  expect(screen.getByText(/0.000 events \/ panel hour/)).toBeInTheDocument();
+  expect(screen.getByText('Recorded candidate frequency').parentElement?.textContent).toContain(
+    'Not measured',
+  );
   expect(screen.getByRole('heading', { name: 'Snapshot quality prediction' })).toBeInTheDocument();
   expect(screen.getByText(/Held-out positive gross candidates: 0/)).toBeInTheDocument();
   expect(screen.getByText('Independent opportunity audit')).toBeInTheDocument();

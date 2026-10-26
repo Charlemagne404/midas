@@ -1,6 +1,8 @@
 import { expect, test } from '@playwright/test';
 
-test('shows the bounded discovery cohort and links its finalized evidence', async ({ page }) => {
+test('shows historical evidence and marks the current observatory as unmeasured', async ({
+  page,
+}) => {
   await page.route('**/api/arena/research-activity', (route) =>
     route.fulfill({
       status: 200,
@@ -107,29 +109,33 @@ test('shows the bounded discovery cohort and links its finalized evidence', asyn
   expect(independentAudit.data.snapshot_count).toBe(84);
   expect(independentAudit.data.independent_fee_disagreement_count).toBe(0);
   await expect(page.getByRole('heading', { name: 'Market discovery and coverage' })).toBeVisible();
-  await expect(page.getByText('stratified-gamma-page-rotation-v2')).toBeVisible();
-  await expect(page.getByText(/40 target · 50 markets max/)).toBeVisible();
+  await expect(page.getByText('No finalized public snapshot has been indexed yet.')).toBeVisible();
+  await expect(page.getByLabel('Current collector limits')).toHaveCount(0);
+  await expect(page.getByText(/Inspect latest per-market selection probabilities/)).toHaveCount(0);
   await page.getByText(/Recent Director history/).click();
   await expect(page.getByText(/automatic retry is disabled for this scan/)).toBeVisible();
   await expect(page.getByText(/VERITAS-M2-ECO-QUAL-001-RUN-b3fc19f69680/)).toBeVisible();
   await expect(page.getByText(/veritas-qualification-v1-0e39c79c039a76cf/)).toBeVisible();
-  await expect(page.getByLabel('Current collector limits')).toBeVisible();
   await expect(
     page.getByRole('button', { name: 'Run bounded qualification in Arena' }),
-  ).toBeVisible();
-  await page.getByText(/Inspect latest per-market selection probabilities/).click();
-  await expect(page.getByText(/Inclusion probability/).first()).toBeVisible();
+  ).toBeDisabled();
   await expect(
     page.getByRole('heading', { name: 'Opportunity observatory and data quality' }),
   ).toBeVisible();
-  await expect(page.getByText(/0.000 events \/ panel hour/)).toBeVisible();
+  await expect(
+    page.getByText(
+      'No finalized public snapshot has been analyzed; candidate presence is not measured.',
+    ),
+  ).toBeVisible();
   const economicGateTable = page.getByRole('table', {
     name: 'Positive economic states by quantity and gate',
   });
-  await expect(economicGateTable.getByRole('row', { name: '20 0 0 0 0' })).toBeVisible();
   await expect(
-    page.getByText(/No quality-valid positive full-depth gross candidate has been recorded/),
+    economicGateTable.getByRole('row', {
+      name: /Not measured — awaiting the first finalized snapshot/,
+    }),
   ).toBeVisible();
+  await expect(page.getByText(/candidate presence is not measured/).last()).toBeVisible();
   await expect(page.getByText(/Latest read-only campaign snapshot/)).toBeVisible();
 
   const coverageDesignAudit = page.getByTestId('coverage-design-audit');
@@ -154,23 +160,14 @@ test('shows the bounded discovery cohort and links its finalized evidence', asyn
   expect(coverageAuditArtifact.data.analysis.fully_supported_scan_count).toBe(23);
   expect(coverageAuditArtifact.data.interpretation.no_venue_wide_inference).toBe(true);
 
-  const snapshotLink = page.getByRole('link', { name: /Inspect latest immutable snapshot/ });
-  await expect(snapshotLink).toHaveAttribute(
-    'href',
-    /\/api\/veritas\/observatory\/snapshots\/scan-/,
+  await expect(page.getByRole('link', { name: /Inspect latest immutable snapshot/ })).toHaveCount(
+    0,
   );
-  const snapshotUrl = await snapshotLink.getAttribute('href');
-  expect(snapshotUrl).toBeTruthy();
-  const snapshotResponse = await page.request.get(snapshotUrl!);
-  expect(snapshotResponse.ok()).toBeTruthy();
-  const snapshot = await snapshotResponse.json();
-  expect(snapshot.artifact).toBe('finalized_public_observation_snapshot');
-  expect(snapshot.data.orders_submitted).toBe(false);
 
   const analysis = await page.request.get('/api/veritas/artifacts/continuous-analysis');
-  expect(analysis.ok()).toBeTruthy();
-  expect((await analysis.json()).data.analysis_version).toBe(
-    'veritas-finalized-snapshot-analysis-v4',
+  expect(analysis.status()).toBe(404);
+  expect((await analysis.json()).detail).toBe(
+    'Veritas public observatory analysis has not been generated',
   );
 
   const censoring = await page.request.get('/api/veritas/artifacts/censoring');
@@ -197,10 +194,8 @@ test('shows the bounded discovery cohort and links its finalized evidence', asyn
     'href',
     '/api/veritas/artifacts/censor-gap-audit',
   );
-  await expect(page.getByRole('link', { name: 'Inspect verified prefix' })).toHaveAttribute(
-    'href',
-    '/api/veritas/artifacts/gap-detail-current',
-  );
+  await expect(page.getByText('Not available in the current workspace')).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Inspect verified prefix' })).toHaveCount(0);
 
   const attribution = await page.request.get('/api/veritas/artifacts/censor-gap-attribution');
   expect(attribution.ok()).toBeTruthy();
