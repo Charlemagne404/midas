@@ -537,6 +537,11 @@ Mission evidence files are under
   health, cgroup/host resource sample, and protected service identity at
   05:16:57Z; SHA-256
   `e68400a65e1395b6152a6ed6c2fc50450c7dbee3f9cdbd4bb4b9fac6263e589d`.
+- `reality-read-only-deployment-preflight-2026-10-26T0521Z.json` — refreshed
+  candidate identity, exact current segment-name/sidecar inventory, active
+  segment and ordinal, archive manifest/file inventory, capacity, cgroup, and
+  deployment blockers. It is metadata-only and not the official gate; SHA-256
+  `1c7298bec73744334e3f37be3527433a7837e4900d6fb8441ca55204055a0934`.
 - `data/veritas-v6-offline-replay-522-20261026/` in the preserved
   `midas-engineering-mission-20261025` worktree — isolated 522-snapshot replay
   receipt SHA-256
@@ -563,10 +568,10 @@ directories remain available for rollback.
 | Veritas missing-evidence rendering and deterministic browser fixtures | **COMPLETE AND VERIFIED** | Null renders as `Not measured`, distinct from measured zero; targeted browser test passed, and immutable web release `90c625d` serves the fix with HTTP 200 smoke verification |
 | Reality candidate hardening | **IMPLEMENTED, DEPLOYMENT PENDING** | Latest clean candidate `a1f2fe9` includes the 4278 telemetry base, archive fail-closed checks, and checkpoint-prefix recovery fix. The full relevant suite passed 109 tests; final recovery and source-identity follow-ups passed 42 focused tests plus the isolated startup smoke. A feed canary, complete latest-boundary recovery, storage clearance, and protected-restart authorization remain |
 | Reality candidate bounded telemetry | **IMPLEMENTED, DEPLOYMENT PENDING** | Candidate exposes bounded persistence, transport-queue, backpressure, checkpoint, and resource fields; production API still lacks these observations |
-| Production Reality telemetry/integrity | **PARTIALLY VERIFIED** | At 05:16Z, 16/16 books were fresh and the collector was receiving at ordinal 5,168,257, but API health remained degraded/unsequenced with persistence-window, queue-depth, and recovery-state telemetry missing |
-| Cold recovery/reproducibility | **PARTIALLY VERIFIED** | Source analysis covered 32,035/32,035 of its captured index and gap detail 32,048/32,050 replayable segments; the live ordinal is ahead. Checkpoint recovery now handles newly inserted empty finalized segments, but the latest boundary is not fully verified |
-| Storage/archive provenance | **BLOCKED** | Effective capacity runway is 16.7 days, staged capacity is inactive, and archive manifest/provenance remain invalid; the new guard preserves and blocks ambiguous files |
-| Cross-component research admission | **PARTIALLY VERIFIED** | Dashboard blocks at low API `MemoryHigh` headroom; Arena has 0 active/queued jobs, 3 stale owner-linked directors (2 cancelled, 1 failed), and an expired no-child demonstration schedule alert |
+| Production Reality telemetry/integrity | **PARTIALLY VERIFIED** | At 05:20Z, 16/16 books were fresh and the collector was receiving at ordinal 5,169,781, but API health remained degraded/unsequenced with persistence-window, queue-depth, and recovery-state telemetry missing |
+| Cold recovery/reproducibility | **PARTIALLY VERIFIED** | The 05:20 metadata boundary has 32,117 finalized segment names and live ordinal 5,169,781; historical source/gap indexes cover older boundaries only. Checkpoint recovery now handles newly inserted empty finalized segments, but the current boundary is not fully replay-verified |
+| Storage/archive provenance | **BLOCKED** | The active 24 GiB / 90-day contract has about 18.4 storage-only days at the current estimated rate; staged 112 GiB / 120-day capacity estimates 108.12 days. Archive metadata remains invalid with 1,138 unmanifested finalized files and 58 `.copying` files |
+| Cross-component research admission | **PARTIALLY VERIFIED** | Dashboard blocks at API `MemoryHigh` headroom of about 1.01 MiB; Arena has 0 active/queued jobs, 3 stale owner-linked directors (2 cancelled, 1 failed), and an expired no-child demonstration schedule alert |
 | Trading, Frontier, Atlas, 48-hour campaign | **DEFERRED BY SCOPE** | Not started |
 
 Recommended next actions:
@@ -848,3 +853,63 @@ public-feed canary was run, no archive contents were adopted or rewritten, and
 the protected recorder was not signaled or restarted. Storage runway and
 archive provenance remain blockers. The deployment classification remains
 **IMPLEMENTED, DEPLOYMENT PENDING**.
+
+## 12. Fresh candidate-boundary preflight — 2026-10-26 05:21 UTC
+
+The exact candidate identity was rechecked with a fresh read-only metadata
+preflight. The first attempt tried to load every raw numeric JSON sidecar to
+rebuild the full catalog under 128 MiB `MemoryHigh`, 192 MiB `MemoryMax`, 10%
+CPU, 32 tasks, and a 45-second timeout. It timed out before producing a
+receipt. It changed no files or services. The completed preflight used a
+bounded name/stat inventory for raw and archive entries, the existing live
+API capacity/integrity projection, the single published archive manifest,
+and current service/resource readings. It did not open or hash segment
+contents, rebuild the source catalog, or run the official deployment gate.
+
+The receipt is
+`/home/charlie/midas-engineering-mission-20261026/evidence/reality-read-only-deployment-preflight-2026-10-26T0521Z.json`
+(SHA-256
+`1c7298bec73744334e3f37be3527433a7837e4900d6fb8441ca55204055a0934`). It
+identifies the clean candidate at `a1f2fe99624ca0184835dff452a319fc2d7dcf30`,
+source identity
+`53731b128faa335940acccad878294a72740cfeb49e3454c2b364fce5587f254`, and
+candidate config SHA-256
+`8c1f8d445e2546d058065ada027d652886523e333930532fff5a044389df137c`. No
+immutable runtime release exists for that source identity.
+
+The protected service remains active on PID 3007040, running the production
+worktree at commit `4f5cb5689548987bf30a33f050284ea8cb2f3c28`, source SHA-256
+`26b9bc331a1a47b020116668dec720764e4253b8200c69cce75271ee3c2db182`, and
+loaded config SHA-256
+`9d1aeeb5a496ad6971dc461ce87f327266ff25240391897f7bb6091a8307119a`. The
+current API boundary is ordinal 5,169,781, with 16/16 books fresh but health
+still degraded/unsequenced. The raw directory has 32,117 finalized segment
+names totaling 9,135,248,444 bytes, 32,117 numeric sidecars, and one active
+17,998-byte `.open` segment. These are file metadata counts only; no raw
+segment content hash was recomputed.
+
+Archive inventory remains 19,833 finalized files (5,369,550,131 bytes)
+against 18,695 published manifest entries. The manifest's own list hash and
+recording-root reference match, and no published manifest entry is missing
+its file. However, 1,138 finalized files remain outside the published
+manifest, and 58 `.copying` files occupy 16,471,242 bytes. All archived
+segment names in this inventory also exist in the raw name set. The API and
+candidate validator still classify the archive as invalid; contents and
+ownership were not revalidated, adopted, removed, or republished.
+
+The refreshed capacity projection reports 16,626,607,180 bytes of active raw
+budget headroom and an estimated rate of 903,636,336 bytes/day, or about 18.4
+storage-only days by headroom divided by that rate. This estimate excludes
+retention age and shared-service changes. The candidate 112 GiB / 120-day
+configuration remains staged; its measured projection is 108.12 days, below
+the retention target. The archive filesystem has 634,806,595,584 bytes free
+but its 400 GiB reserve does not resolve the provenance failure. API
+`MemoryHigh` headroom fell to 1,060,864 bytes (about 1.01 MiB); the event
+counter was 10,979, with zero OOMs. Reality `MemoryHigh` headroom was
+106,229,760 bytes, also with zero OOMs. Heavy research remains blocked.
+
+The result is **BLOCKED**, not deployment-ready. Full current-boundary cold
+recovery, a bounded feed canary for this exact source, an immutable runtime
+release, archive provenance resolution, sustained API resource headroom, and
+separate protected-restart authorization remain outstanding. No production
+service, raw recording, or archive file was changed.

@@ -555,3 +555,33 @@ bytes; heavy research admission remains blocked. The candidate remains
 undeployed. Do not restart the protected recorder or alter the ambiguous
 archive based on these tests; the full current-boundary recovery, feed canary,
 storage/archive clearance, and separate restart authorization remain open.
+
+## Fresh Reality candidate preflight (2026-10-26 05:21 UTC)
+
+The read-only preflight was refreshed for candidate `a1f2fe99624ca0184835dff452a319fc2d7dcf30`,
+source identity
+`53731b128faa335940acccad878294a72740cfeb49e3454c2b364fce5587f254`. The
+receipt is
+`/home/charlie/midas-engineering-mission-20261026/evidence/reality-read-only-deployment-preflight-2026-10-26T0521Z.json`
+(SHA-256
+`1c7298bec73744334e3f37be3527433a7837e4900d6fb8441ca55204055a0934`). It
+remains `READ_ONLY_EXACT_BOUNDARY_PREFLIGHT_BLOCKED`; the official restart
+gate was not run because current-boundary full recovery and a candidate feed
+canary are absent.
+
+The protected process remains PID 3007040 on the old deployed worktree. The
+live API reports ordinal 5,169,781, 16/16 fresh books, and degraded,
+unsequenced collection with three required telemetry fields unavailable. The
+raw metadata inventory found 32,117 finalized segments, 32,117 sidecars, and
+one 17,998-byte active `.open` file. No raw segment bytes or hashes were read.
+
+The archive still has 19,833 finalized segment files against 18,695 manifest
+entries, including 1,138 names outside the published manifest and 58
+`.copying` files totaling 16,471,242 bytes. The manifest's own list hash and
+recording-root reference match, but the live integrity projection still
+reports invalid provenance. Nothing was adopted, removed, or republished.
+The latest capacity projection estimates about 18.4 storage-only days for the
+active contract at its observed rate; the staged 112 GiB / 120-day candidate
+projects 108.12 days. API `MemoryHigh` headroom is now 1,060,864 bytes, so
+heavy research admission remains blocked. The candidate is undeployed, and
+this metadata preflight does not change that deployment decision.
