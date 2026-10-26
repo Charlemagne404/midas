@@ -2,6 +2,7 @@
 
 import hashlib
 import json
+import os
 import signal
 import subprocess
 import sys
@@ -14,6 +15,16 @@ from midas.reality.replay import replay
 from midas.reality.storage import Store, manifest, read_manifest
 
 FIXTURE = json.loads((Path(__file__).parent / "fixtures/reality/observed.json").read_text())
+REPOSITORY = Path(__file__).resolve().parents[1]
+
+
+def child_environment():
+    env = os.environ.copy()
+    python_paths = [str(REPOSITORY / "packages"), str(REPOSITORY)]
+    if env.get("PYTHONPATH"):
+        python_paths.append(env["PYTHONPATH"])
+    env["PYTHONPATH"] = os.pathsep.join(python_paths)
+    return env
 
 
 def archive(root):
@@ -679,7 +690,9 @@ engine,_=replay(root,catalog)
 recovery.os.replace=lambda *a: os.kill(os.getpid(),signal.SIGKILL)
 recovery.save(root,engine,catalog)
 """
-    child = subprocess.run([sys.executable, "-c", code, str(tmp_path)], check=False)
+    child = subprocess.run(
+        [sys.executable, "-c", code, str(tmp_path)], env=child_environment(), check=False
+    )
     assert child.returncode == -signal.SIGKILL
     assert (tmp_path / recovery.CHECKPOINT_NAME).read_bytes() == before
     actual, status = recovery.recover(tmp_path, catalog)
@@ -796,6 +809,7 @@ tool.main()
         text=True,
         timeout=10,
         check=False,
+        env=child_environment(),
     )
     assert child.returncode == -signal.SIGTERM
     assert "Staging resource guard abort" in child.stderr

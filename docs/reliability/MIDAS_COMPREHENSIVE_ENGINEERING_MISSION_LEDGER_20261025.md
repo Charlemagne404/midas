@@ -77,14 +77,24 @@ Research Readiness route is therefore integrated only in this mission branch.
   requires a seeded candidate canary, latest-boundary recovery receipt and
   checksum/provenance-verified archive receipt. Apply rechecks the live boundary
   and archive inventory before any write or restart.
-- A 95-second loopback/captured-fixture canary passed on an earlier source hash.
-  It started from an empty root and cannot serve as seeded latest-boundary
-  evidence. The final source has no matching canary or recovery receipt.
-- The latest read-only capture at `2026-10-25T23:30:01.032254Z` found 31,425
-  finalized segments, 8,923,447,888 bytes, last ordinal 5,063,282, one open
-  segment and only 1,662,976 bytes below `MemoryHigh`. The service-specific
-  4 MiB validation admission floor failed, so no more recorder-bound validation
-  or full-store recovery was run.
+- The 95-second schema-4 loopback/captured-fixture canary now matches the final
+  candidate source SHA. It used a deterministic one-segment fixture seed, wrote
+  765,835 durable bytes in five segments, processed 307 frames, and measured
+  41,689,088 bytes process peak RSS and 0.583 process CPU-seconds. All 16
+  fixture books were fresh before stop. It is not a production-boundary canary
+  or a production capacity estimate.
+- The V3 read-only inventory at `2026-10-25T23:51:56Z` found 31,468 finalized
+  segments / 8,934,305,682 bytes through ordinal 5,068,661 and one open segment.
+  It is a manifest/file-presence check, not content rehash or replay. The
+  recorder cgroup had 5,484,544 bytes below `MemoryHigh`; service PID `3007040`
+  remained active on the old 24 GiB / 90-day config.
+- A separately admitted low-priority copy was interrupted after host I/O PSI
+  exceeded the staging bound. It stopped at 697 of 31,468 segments / 103,723,201
+  bytes. No recovery worker ran. The exact boundary was not pinned, the full
+  destination manifest was not verified, and the partial destination is marked
+  `INCOMPLETE`; it must not be resumed or treated as a snapshot. No further
+  copy was admitted while a later I/O PSI sample remained above the staging
+  threshold.
 - **Status:** PARTIALLY VERIFIED. Production remains on the older collector
   and 24 GiB / 90-day config. The staged 112 GiB / 120-day candidate is not
   deployed.
@@ -115,9 +125,18 @@ Research Readiness route is therefore integrated only in this mission branch.
 - Missing evidence cannot pass. Demo mode is prominent. Old errors are
   distinguished from current errors. Empty results and limitations have
   explanatory text and drill-down artifact identities.
-- Frontend lint, typecheck, 31 unit tests, build and one Playwright test passed.
-  A browser screenshot is retained as fixture-backed UI verification, not a
-  production capture.
+- Final UI audit tightened the correctness gate: a fresh summary timestamp,
+  nonempty independent reference sample, nonnegative disagreement counts,
+  and a reference version are required before it can pass. The view now shows
+  Veritas processed/pending coverage, reads the API's bounded-query-frame field,
+  and withholds runway when its sample duration/rate are absent. It visibly
+  separates validity, price/edge, fee and other disagreements and shows gross,
+  net-eligible and unsupported counts. Integrated
+  branch, commit and dirty state are injected consistently in the build and
+  test configurations.
+- `npm run lint`, `npm run typecheck`, `npm test` (31 passed), `npm run build`,
+  and the Research Readiness Playwright test (1/1) passed. The browser screenshot
+  is fixture-backed UI evidence, not a production capture.
 - **Status:** COMPLETE AND VERIFIED in the mission branch; deployment pending.
 
 ### Cross-component reliability
@@ -142,21 +161,24 @@ Research Readiness route is therefore integrated only in this mission branch.
 | Verification | Result | Scope / limitation |
 |---|---|---|
 | Broad backend regression | 300 passed; two global-lock collisions passed on rerun (302 unique pass results). | No production research workload launched by this mission. |
-| Reality focused tests | 95 passed; final recovery/deployment/canary subset 75 passed in 6.98 s. | Last subset uses mission worktree packages first on `PYTHONPATH`. |
+| Reality focused tests | 95 passed; final recovery/deployment/canary subset 75 passed in 7.80 s with `PYTHONPATH` unset. | Pytest now prepends local `packages/`; child process tests explicitly inherit the same mission source path. |
 | Python static checks | Ruff check and `ruff format --check` passed for all 48 changed Python files. | No claim about runtime deployment. |
 | Veritas differential/catalog/recovery tests | Covered in broad suite, including adversarial economics, mismatch retention, corruption, restart and interrupted publication. | No full 516-snapshot replay. |
-| Frontend | Lint, typecheck, 31 tests and production build passed. | Existing index/chart chunks remain large; no bundle redesign was undertaken. |
-| Browser | Research Readiness Playwright test passed 1/1. | Uses deterministic test fixture/API data. |
+| Frontend | `npm run lint`, `npm run typecheck`, `npm test` (31 passed) and `npm run build` passed after the final UI audit. | Vite 7.3.7 emits 502.74 KiB index, 544.41 KiB chart and 29.18 KiB readiness chunks; existing large-chunk warning remains. |
+| Browser | `npm run test:e2e -- e2e/research-readiness.spec.ts` passed 1/1. | Uses deterministic fixture/API data; not a production deployment. |
 | Recovery fixture | Interrupted checkpoint/resume and deterministic state reconciliation pass. | Fixture only; latest production boundary is unverified. |
-| Reality canary | 95-second loopback/captured-input canary passed for an earlier candidate hash. | Empty root, not the current hash or production-scale startup. |
-| Runtime API | HTTP 200 `READY`, demo, `live_execution=false`, Laboratory `READY`. | Service release is outside mission branch. |
-| Runtime Veritas | Observer retry exited 1 on oversized legacy summary; overview HTTP 503. | No service restart or output migration performed. |
+| Reality canary | Final-source 95-second schema-4 loopback canary passed; 307 frames, 765,835 durable bytes, 5 segments / checkpoints, 41,689,088 B Python peak RSS, 0.583 CPU s. | One deterministic fixture seed; no external market requests. Does not establish production-boundary startup, recovery or capacity. |
+| Reality latest-boundary snapshot | Copy stopped safely at 697/31,468 segments after I/O pressure exceeded admission bounds. | Partial path has an `INCOMPLETE` marker; no whole-snapshot identity, complete checksum receipt or recovery result exists. |
+| Runtime API | HTTP 200 `READY`, demo, `live_execution=false`, Laboratory `READY` at approximately 01:01 CET; paper journal 663,699 events. | Time-specific read-only service observation; release is outside mission branch. |
+| Runtime Veritas | Scheduled observer failed at 01:01:15 CET on oversized legacy `research-summary.json`; overview HTTP 503. | No service restart or output migration performed; active code remains in `/home/charlie/midas-veritas`. |
 
 The first final-subset pytest invocation loaded an editable package from the
-main checkout and failed test collection. The corrected invocation explicitly
-placed this worktree's `packages/` first on `PYTHONPATH`; all 75 tests passed.
-The independent Ruff check caught a missing `manifest` import in the added
-archive mutation test; it was fixed before the passing run.
+main checkout and failed test collection. The branch now configures pytest to
+prepend local `packages/`, and the two subprocess tests explicitly pass that
+worktree's package and repository paths to their Python children. The final
+run passed all 75 tests with `PYTHONPATH` unset. Ruff also caught a missing
+`manifest` import in the added archive mutation test; it was fixed before the
+passing run.
 
 ## Evidence identities
 
@@ -165,13 +187,15 @@ archive mutation test; it was fixed before the passing run.
 | Candidate config `deploy/reality-candidate.json` | SHA-256 `908816c3dc568a8aa9d22a8d5bd0267d2f421cec6ca37a84901c5a6eae1f85e0` |
 | Final Reality package source | SHA-256 `6cdfd3c09facaedfa86213fd794c33709bd36e37beb161f156d4cb06a2810d24` |
 | Deployment guard script | SHA-256 `490a4ec9b6c55b6b0a0bfe5375eb5c0d5fb6ecd7cb930000fd66f7b9e3c0b973` |
-| Latest read-only blocked assessment | SHA-256 `25ea857aeefc39ff6bf0254535ef20768a7228e26702d2aa2e72aa80eb6c825a` |
+| Latest read-only blocked inventory | V3 SHA-256 `41bacf1919c42d988b24e7d49c445767548167ddd1afe75f5014b7a93ae622ef`; inventory only, no guarded gate |
+| Final-source canary receipt | `docs/reliability/evidence/MIDAS_MISSION_20261026_FIXTURE_CANARY_FINAL.json`; candidate source SHA matches final Reality package |
+| Aborted copy receipt | SHA-256 `c1604255e5cd98ec5f2cc0612a01f7702c41ca1e29ad67072d559e5a8c93af4b`; partial destination must not be used as a snapshot |
 | Earlier blocked assessment | SHA-256 `e256d90a1702c9d48e1defa4173a8c0a3543b969a1057b3f310b7c721a90a8cb` |
-| Finalized boundary at latest assessment | manifest SHA-256 `e5a75cc4cb62c948be891000b12612161ab3f0e31408103ccc84cdb847d12276` |
+| Finalized boundary at latest inventory | V3 manifest SHA-256 `0270af73720b637c892cbbaf6240e40a411a46009a4345587501f7bf72328b9c` (31,468 segments; inventory only) |
 | Archive manifest / source identity | `cc7e3375710fa024f971885f8b04840ec06f2c0cd385b716af73ce99275f7c8d` / `ae1bcd67331173194efe876f2f7d82e41cd515ebcf256d71a673328c91f26526` |
 | Veritas bounded benchmark | `docs/REAL_MARKET_RESEARCH_OVERHAUL_001_BENCHMARK.json` |
 | Research Readiness browser evidence | `docs/reliability/evidence/MIDAS_MISSION_20261026_RESEARCH_READINESS.png` |
-| Latest Reality deployment assessment | `docs/reliability/evidence/MIDAS_MISSION_20261026_DEPLOYMENT_PREFLIGHT_BLOCKED_V2.json` |
+| Latest Reality inventory | `docs/reliability/evidence/MIDAS_MISSION_20261026_DEPLOYMENT_PREFLIGHT_BLOCKED_V3.json` |
 
 The machine-readable [source/evidence manifest](MIDAS_COMPREHENSIVE_ENGINEERING_MISSION_SOURCE_MANIFEST_20261026.json)
 lists the changed worktree files and their SHA-256 values. The full engineering
@@ -183,9 +207,11 @@ report is [MIDAS_COMPREHENSIVE_ENGINEERING_MISSION_20261025.md](MIDAS_COMPREHENS
    `MemoryHigh` admission, current-source seeded startup evidence, exact-boundary
    resumable recovery and deterministic second replay. Explicit operator
    approval is required before the guarded apply action can restart the service.
-2. **Latest-boundary recovery:** make a checksummed immutable copy only after a
-   fresh admission check. Use the new resumable tool and leave the gate
-   incomplete if resource bounds or time limits prevent completion.
+2. **Latest-boundary recovery:** do not resume the preserved partial copy. Wait
+   for repeated fresh host I/O and recorder-resource samples to pass staging
+   admission; start a new copy at a pinned manifest boundary in a distinct path,
+   verify every segment and the whole manifest, then use checkpointed replay.
+   Keep the gate incomplete if admission or verification fails.
 3. **Archive:** obtain logical owner and provenance, reconcile every segment
    and partial copy without deleting or republishing ambiguous files, verify
    checksums, and produce the receipt required by preflight. Do not enable the

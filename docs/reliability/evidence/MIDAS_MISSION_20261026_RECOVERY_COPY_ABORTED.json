@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "status": "ABORTED_UNVERIFIED_COPY",
+  "captured_at_utc": "2026-10-25T23:57:21.174554+00:00",
+  "copy_started_ns": 1792972506590785882,
+  "copy_interrupted_ns": 1792972583228811008,
+  "source": "/home/charlie/midas-reality/data/recordings/reality",
+  "partial_snapshot": "/mnt/continental-cloud/data/midas-reality-staging/mission-20261026-recovery-snapshot-75f7cee8b6d14d90a32efb205c4672e9",
+  "progress_marker": "/mnt/continental-cloud/data/midas-reality-staging/mission-20261026-recovery-snapshot-75f7cee8b6d14d90a32efb205c4672e9/COPY_IN_PROGRESS.json",
+  "progress_marker_sha256": "33aab1f20a12ddfeca615575afae06673dd2e74dae16f99173cb5fd86ac68d1d",
+  "completed_segment_copies": 697,
+  "verified_segment_bytes_copied": 103723201,
+  "stop_error": "KeyboardInterrupt: ",
+  "stop_reason": "Host I/O pressure rose above the bounded staging admission threshold while the low-priority copy was active; the copy was interrupted and no recovery worker was started.",
+  "post_abort_pressure_sample": {
+    "io": {
+      "some": {
+        "avg10": 3.45,
+        "avg60": 10.42,
+        "avg300": 7.4
+      },
+      "full": {
+        "avg10": 3.42,
+        "avg60": 9.28,
+        "avg300": 6.56
+      }
+    },
+    "memory": {
+      "some": {
+        "avg10": 0.0,
+        "avg60": 0.0,
+        "avg300": 0.03
+      },
+      "full": {
+        "avg10": 0.0,
+        "avg60": 0.0,
+        "avg300": 0.03
+      }
+    }
+  },
+  "protected_service": {
+    "unit": "midas-reality.service",
+    "MainPID": "3007040",
+    "NRestarts": "2",
+    "MemoryCurrent": "1097805824",
+    "MemoryHigh": "1207959552",
+    "MemoryMax": "1342177280",
+    "copy_process_running": false
+  },
+  "full_snapshot_boundary_verified": false,
+  "complete_copy_receipt_created": false,
+  "recovery_started": false,
+  "source_recordings_modified": false,
+  "ambiguous_archive_files_modified": false,
+  "partial_destination_preserved": true,
+  "disposition": "Do not use or resume this partial directory as a snapshot. Preserve it with its INCOMPLETE marker until a separately admitted procedure reviews it."
+}

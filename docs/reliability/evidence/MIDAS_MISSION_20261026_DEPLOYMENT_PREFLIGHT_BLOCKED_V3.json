@@ -1,0 +1,5071 @@
+{
+  "schema_version": 1,
+  "assessment": "read-only-reality-deployment-blocker-assessment",
+  "assessment_version": 3,
+  "status": "BLOCKED",
+  "passed": false,
+  "captured_at_utc": "2026-10-25T23:51:56.516553+00:00",
+  "capture_started_ns": 1792972313783165764,
+  "capture_completed_ns": 1792972316296656593,
+  "branch": "codex/midas-comprehensive-engineering-mission-20261025",
+  "base_commit": "f7bd4b23743d920b36cea409f7daf402a7dd7daa",
+  "candidate_source_sha256": "6cdfd3c09facaedfa86213fd794c33709bd36e37beb161f156d4cb06a2810d24",
+  "deployment_guard_sha256": "490a4ec9b6c55b6b0a0bfe5375eb5c0d5fb6ecd7cb930000fd66f7b9e3c0b973",
+  "candidate_config": {
+    "path": "deploy/reality-candidate.json",
+    "sha256": "908816c3dc568a8aa9d22a8d5bd0267d2f421cec6ca37a84901c5a6eae1f85e0",
+    "root": "/home/charlie/midas-reality/data/recordings/reality",
+    "budget_bytes": 120259084288,
+    "retention_days": 120
+  },
+  "active_config": {
+    "path": "/home/charlie/midas-reality/deploy/reality.json",
+    "sha256": "9d1aeeb5a496ad6971dc461ce87f327266ff25240391897f7bb6091a8307119a",
+    "root": "/home/charlie/midas-reality/data/recordings/reality",
+    "budget_bytes": 25769803776,
+    "retention_days": 90
+  },
+  "protected_service": {
+    "unit": "midas-reality.service",
+    "ActiveState": "active",
+    "MainPID": "3007040",
+    "NRestarts": "2",
+    "ControlGroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/midas-reality.service",
+    "MemoryCurrent": "1202475008",
+    "MemoryHigh": "1207959552",
+    "MemoryMax": "1342177280",
+    "resource_sample": {
+      "memory_current_bytes": 1202475008,
+      "memory_high_bytes": 1207959552,
+      "memory_high_margin_bytes": 5484544,
+      "memory_events": {
+        "low": 0,
+        "high": 14379,
+        "max": 0,
+        "oom": 0,
+        "oom_kill": 0,
+        "oom_group_kill": 0,
+        "sock_throttled": 0
+      },
+      "host_mem_available_bytes": 7685951488,
+      "host_pressure": {
+        "cpu": {
+          "some": {
+            "avg10": "1.97",
+            "avg60": "2.21",
+            "avg300": "2.80",
+            "total": "344993655874"
+          },
+          "full": {
+            "avg10": "0.00",
+            "avg60": "0.00",
+            "avg300": "0.00",
+            "total": "0"
+          }
+        },
+        "memory": {
+          "some": {
+            "avg10": "0.00",
+            "avg60": "0.00",
+            "avg300": "0.00",
+            "total": "21966417013"
+          },
+          "full": {
+            "avg10": "0.00",
+            "avg60": "0.00",
+            "avg300": "0.00",
+            "total": "14804934689"
+          }
+        },
+        "io": {
+          "some": {
+            "avg10": "1.18",
+            "avg60": "1.01",
+            "avg300": "1.79",
+            "total": "23907779698"
+          },
+          "full": {
+            "avg10": "1.00",
+            "avg60": "0.90",
+            "avg300": "1.61",
+            "total": "19401461354"
+          }
+        }
+      }
+    }
+  },
+  "collector_status": {
+    "path": "/home/charlie/midas-reality/data/recordings/reality/status.json",
+    "read_at_ns": 1792972313788933977,
+    "age_seconds_at_capture": 9.50246583,
+    "state": "RECORDING_UNSEQUENCED",
+    "ordinal": 5068690,
+    "frames": 3996540,
+    "markets": 8,
+    "fresh_books": 16,
+    "expected_books": 16,
+    "sequence_verified": false,
+    "error": "ConnectionClosedOK: received 1001 (going away) server shutting down; then sent 1001 (going away) server shutting down",
+    "updated_ns": 1792972306794190763,
+    "limitation": "Status and finalized manifest are separate reads while recording continues."
+  },
+  "finalized_boundary": {
+    "manifest_sha256": "0270af73720b637c892cbbaf6240e40a411a46009a4345587501f7bf72328b9c",
+    "segment_count": 31468,
+    "archive_bytes_from_sidecars": 8934305682,
+    "last_ordinal_from_sidecars": 5068661,
+    "actual_regular_segment_count": 31468,
+    "missing_segment_count": 0,
+    "unmanifested_segment_count": 0,
+    "open_segment_count": 1,
+    "open_segment_sample": [
+      "00000000000005068662-e9a16b35d0ae4ae4a1662080e715f54b.open"
+    ],
+    "numeric_manifest_sidecar_symlink_count": 0,
+    "status_ordinal_may_be_ahead_of_finalized_ordinal": true,
+    "verification_level": "catalog and file-presence inventory only; no segment contents were replayed or rehashed"
+  },
+  "storage": {
+    "raw_free_bytes": 163331297280,
+    "archive_free_bytes": 635209543680,
+    "archive_inventory": {
+      "archive_root": "/mnt/continental-cloud/data/midas-reality-staging/archive-mission3",
+      "manifest_sha256": "cc7e3375710fa024f971885f8b04840ec06f2c0cd385b716af73ce99275f7c8d",
+      "source_json_sha256": "ae1bcd67331173194efe876f2f7d82e41cd515ebcf256d71a673328c91f26526",
+      "segment_count": 19833,
+      "manifest_entry_count": 18695,
+      "duplicate_manifest_entries": 0,
+      "copying_file_count": 58,
+      "unmanifested_segment_count": 1138,
+      "missing_segment_count": 0
+    },
+    "latest_capacity_artifact_path": "/home/charlie/midas-reality/data/recordings/capacity.json",
+    "latest_capacity_measured_ns": 1792971579768103937,
+    "latest_capacity_age_seconds": 736.528552656,
+    "latest_capacity_alerts": [
+      "BUDGET_CHANGE_PENDING_RESTART",
+      "RETENTION_CHANGE_PENDING_RESTART",
+      "CAPACITY_WARNING_WITHIN_THIRTY_DAYS",
+      "SHORT_WINDOW_CAPACITY_WARNING_WITHIN_THIRTY_DAYS",
+      "ARCHIVE_SEGMENT_INVENTORY_INVALID",
+      "ARCHIVE_MANIFEST_PROVENANCE_INVALID"
+    ],
+    "capacity_artifact_is_fresh_for_30_minutes": true,
+    "candidate_policy_is_deployed": false,
+    "ownership_provenance_verified": false,
+    "segment_checksums_verified_in_this_assessment": false
+  },
+  "evidence": {
+    "candidate_canary_path": "docs/reliability/evidence/MIDAS_MISSION_20261026_FIXTURE_CANARY_FINAL.json",
+    "candidate_canary_sha256": "a4ab205d502e1629b1f232a9263166fc71185b1ea94a73cf3b97e4df38471fec",
+    "candidate_canary_matches_current_candidate": true,
+    "candidate_canary_seed_manifest_sha256": "0fc92ffa55ab768b2b9f7eee624a2baa84cfa5db1ce86afc6b76c57baf657d2e",
+    "candidate_canary_seed_segment_count": 1,
+    "candidate_canary_seed_matches_current_production_boundary": false,
+    "latest_boundary_recovery_receipt_present": false,
+    "verified_archive_receipt_present": false,
+    "preflight_gate_written": false,
+    "deployment_applied": false,
+    "protected_service_stopped_or_restarted": false,
+    "raw_recordings_modified": false,
+    "archive_files_modified": false
+  },
+  "api": {
+    "health": {
+      "http_status": 200,
+      "body": {
+        "status": "READY",
+        "startup_status": "READY",
+        "startup_error": null,
+        "mode": "demo",
+        "live_execution": false,
+        "paper_recovery": {
+          "status": "CHECKPOINT_VERIFIED",
+          "journal_events": 663387,
+          "revision": 663386
+        },
+        "laboratory": {
+          "status": "READY",
+          "root": "/home/charlie/midas/data/laboratory-final",
+          "recovering_campaigns": [],
+          "recovery_errors": []
+        }
+      }
+    },
+    "reality_overview": {
+      "http_status": 200,
+      "body": {
+        "now_ns": 1792972316287772979,
+        "collector": {
+          "backpressure_active": false,
+          "book_comparisons": {
+            "concurrent_updates_ambiguous": 581,
+            "ineligible_local_state": 17,
+            "public_comparison_unavailable": 1,
+            "stable_local_lineage_divergence": 196,
+            "stable_local_lineage_match_unsequenced": 17633,
+            "stale_local_state": 45
+          },
+          "books": {
+            "101355728346408966310180209813908697677533581003124665315104091831793989903453": {
+              "age_ns": 488268468,
+              "ask_depth_levels": 45,
+              "asks": [
+                [
+                  "0.001",
+                  "474.11"
+                ],
+                [
+                  "0.002",
+                  "285"
+                ],
+                [
+                  "0.005",
+                  "500"
+                ],
+                [
+                  "0.007",
+                  "48.56"
+                ],
+                [
+                  "0.053",
+                  "30"
+                ],
+                [
+                  "0.054",
+                  "32.75"
+                ],
+                [
+                  "0.074",
+                  "95"
+                ],
+                [
+                  "0.075",
+                  "100"
+                ],
+                [
+                  "0.082",
+                  "400"
+                ],
+                [
+                  "0.083",
+                  "249"
+                ],
+                [
+                  "0.085",
+                  "335"
+                ],
+                [
+                  "0.099",
+                  "50"
+                ],
+                [
+                  "0.457",
+                  "500"
+                ],
+                [
+                  "0.458",
+                  "184"
+                ],
+                [
+                  "0.46",
+                  "80"
+                ],
+                [
+                  "0.466",
+                  "13.1"
+                ],
+                [
+                  "0.5",
+                  "14"
+                ],
+                [
+                  "0.55",
+                  "46.65"
+                ],
+                [
+                  "0.57",
+                  "16.27"
+                ],
+                [
+                  "0.65",
+                  "20"
+                ],
+                [
+                  "0.67",
+                  "21.21"
+                ],
+                [
+                  "0.699",
+                  "23.25"
+                ],
+                [
+                  "0.7",
+                  "23.33"
+                ],
+                [
+                  "0.77",
+                  "60.86"
+                ],
+                [
+                  "0.803",
+                  "35.53"
+                ],
+                [
+                  "0.804",
+                  "35.71"
+                ],
+                [
+                  "0.819",
+                  "5.65"
+                ],
+                [
+                  "0.82",
+                  "38.88"
+                ],
+                [
+                  "0.85",
+                  "46.66"
+                ],
+                [
+                  "0.86",
+                  "49.99"
+                ],
+                [
+                  "0.9",
+                  "140"
+                ],
+                [
+                  "0.923",
+                  "90.9"
+                ],
+                [
+                  "0.93",
+                  "99.99"
+                ],
+                [
+                  "0.949",
+                  "6.81"
+                ],
+                [
+                  "0.95",
+                  "140"
+                ],
+                [
+                  "0.96",
+                  "175"
+                ],
+                [
+                  "0.989",
+                  "14.4"
+                ],
+                [
+                  "0.99",
+                  "1400"
+                ],
+                [
+                  "0.993",
+                  "1000"
+                ],
+                [
+                  "0.994",
+                  "3838.88"
+                ],
+                [
+                  "0.995",
+                  "600"
+                ],
+                [
+                  "0.996",
+                  "750"
+                ],
+                [
+                  "0.997",
+                  "1839.74"
+                ],
+                [
+                  "0.998",
+                  "2750"
+                ],
+                [
+                  "0.999",
+                  "33518.93"
+                ]
+              ],
+              "best_ask": "0.001",
+              "best_bid": null,
+              "bid_depth_levels": 0,
+              "bids": [],
+              "continuity": "unsequenced_observed_lineage",
+              "depth_truncated": false,
+              "exchange_ms": 1792972306274,
+              "hash": "cc2f1b19312f84b31857f1196ae7c7d6f9adab74",
+              "internally_consistent": true,
+              "issue": null,
+              "last": [
+                5068689,
+                0
+              ],
+              "quote_lifetimes": {
+                "count": 0,
+                "total_ns": 0
+              },
+              "quote_since_ns": 1792972259797967899,
+              "received_ns": 1792972306294505862,
+              "sequence_verified": false,
+              "snapshot": [
+                5068511,
+                15
+              ],
+              "spread": null,
+              "tick": "0.001"
+            },
+            "22106921341196818050439524942994162234430181387513131058873085228908007365669": {
+              "age_ns": 46984806431,
+              "ask_depth_levels": 29,
+              "asks": [
+                [
+                  "0.948",
+                  "58.64"
+                ],
+                [
+                  "0.949",
+                  "9.9"
+                ],
+                [
+                  "0.95",
+                  "3.95"
+                ],
+                [
+                  "0.955",
+                  "5.76"
+                ],
+                [
+                  "0.959",
+                  "5.76"
+                ],
+                [
+                  "0.96",
+                  "5.76"
+                ],
+                [
+                  "0.964",
+                  "5.64"
+                ],
+                [
+                  "0.965",
+                  "5.76"
+                ],
+                [
+                  "0.968",
+                  "7.69"
+                ],
+                [
+                  "0.969",
+                  "19.21"
+                ],
+                [
+                  "0.97",
+                  "20.38"
+                ],
+                [
+                  "0.974",
+                  "6.33"
+                ],
+                [
+                  "0.975",
+                  "11.52"
+                ],
+                [
+                  "0.979",
+                  "442.76"
+                ],
+                [
+                  "0.98",
+                  "758.63"
+                ],
+                [
+                  "0.984",
+                  "8.93"
+                ],
+                [
+                  "0.985",
+                  "11.52"
+                ],
+                [
+                  "0.988",
+                  "27.32"
+                ],
+                [
+                  "0.989",
+                  "58.03"
+                ],
+                [
+                  "0.99",
+                  "17.28"
+                ],
+                [
+                  "0.991",
+                  "17.77"
+                ],
+                [
+                  "0.992",
+                  "11.52"
+                ],
+                [
+                  "0.993",
+                  "11.52"
+                ],
+                [
+                  "0.994",
+                  "11.52"
+                ],
+                [
+                  "0.995",
+                  "23.96"
+                ],
+                [
+                  "0.996",
+                  "217.28"
+                ],
+                [
+                  "0.997",
+                  "29.24"
+                ],
+                [
+                  "0.998",
+                  "892.98"
+                ],
+                [
+                  "0.999",
+                  "56254.6"
+                ]
+              ],
+              "best_ask": "0.948",
+              "best_bid": "0.905",
+              "bid_depth_levels": 27,
+              "bids": [
+                [
+                  "0.905",
+                  "161.05"
+                ],
+                [
+                  "0.902",
+                  "6"
+                ],
+                [
+                  "0.901",
+                  "5"
+                ],
+                [
+                  "0.891",
+                  "6"
+                ],
+                [
+                  "0.85",
+                  "11"
+                ],
+                [
+                  "0.81",
+                  "17"
+                ],
+                [
+                  "0.792",
+                  "44"
+                ],
+                [
+                  "0.785",
+                  "6"
+                ],
+                [
+                  "0.73",
+                  "6"
+                ],
+                [
+                  "0.71",
+                  "75"
+                ],
+                [
+                  "0.511",
+                  "40"
+                ],
+                [
+                  "0.51",
+                  "17"
+                ],
+                [
+                  "0.411",
+                  "20"
+                ],
+                [
+                  "0.41",
+                  "133"
+                ],
+                [
+                  "0.271",
+                  "5"
+                ],
+                [
+                  "0.11",
+                  "17"
+                ],
+                [
+                  "0.033",
+                  "8"
+                ],
+                [
+                  "0.032",
+                  "8"
+                ],
+                [
+                  "0.029",
+                  "15.13"
+                ],
+                [
+                  "0.028",
+                  "71"
+                ],
+                [
+                  "0.02",
+                  "90.25"
+                ],
+                [
+                  "0.012",
+                  "10"
+                ],
+                [
+                  "0.005",
+                  "12.84"
+                ],
+                [
+                  "0.004",
+                  "200"
+                ],
+                [
+                  "0.003",
+                  "10000"
+                ],
+                [
+                  "0.002",
+                  "5.24"
+                ],
+                [
+                  "0.001",
+                  "156.1"
+                ]
+              ],
+              "continuity": "unsequenced_observed_lineage",
+              "depth_truncated": false,
+              "exchange_ms": 1792972021546,
+              "hash": "0dbbaf0d25114d124c6164a1835f4f3ac70417fb",
+              "internally_consistent": true,
+              "issue": null,
+              "last": [
+                5068511,
+                10
+              ],
+              "quote_lifetimes": {
+                "count": 28,
+                "total_ns": 33781462909
+              },
+              "quote_since_ns": 1792972259797967899,
+              "received_ns": 1792972259797967899,
+              "sequence_verified": false,
+              "snapshot": [
+                5068511,
+                10
+              ],
+              "spread": "0.043",
+              "tick": "0.001"
+            },
+            "2867209803492313176891970118649987905930881752970311413869425427415611673771": {
+              "age_ns": 46984806431,
+              "ask_depth_levels": 27,
+              "asks": [
+                [
+                  "0.095",
+                  "161.05"
+                ],
+                [
+                  "0.098",
+                  "6"
+                ],
+                [
+                  "0.099",
+                  "5"
+                ],
+                [
+                  "0.109",
+                  "6"
+                ],
+                [
+                  "0.15",
+                  "11"
+                ],
+                [
+                  "0.19",
+                  "17"
+                ],
+                [
+                  "0.208",
+                  "44"
+                ],
+                [
+                  "0.215",
+                  "6"
+                ],
+                [
+                  "0.27",
+                  "6"
+                ],
+                [
+                  "0.29",
+                  "75"
+                ],
+                [
+                  "0.489",
+                  "40"
+                ],
+                [
+                  "0.49",
+                  "17"
+                ],
+                [
+                  "0.589",
+                  "20"
+                ],
+                [
+                  "0.59",
+                  "133"
+                ],
+                [
+                  "0.729",
+                  "5"
+                ],
+                [
+                  "0.89",
+                  "17"
+                ],
+                [
+                  "0.967",
+                  "8"
+                ],
+                [
+                  "0.968",
+                  "8"
+                ],
+                [
+                  "0.971",
+                  "15.13"
+                ],
+                [
+                  "0.972",
+                  "71"
+                ],
+                [
+                  "0.98",
+                  "90.25"
+                ],
+                [
+                  "0.988",
+                  "10"
+                ],
+                [
+                  "0.995",
+                  "12.84"
+                ],
+                [
+                  "0.996",
+                  "200"
+                ],
+                [
+                  "0.997",
+                  "10000"
+                ],
+                [
+                  "0.998",
+                  "5.24"
+                ],
+                [
+                  "0.999",
+                  "156.1"
+                ]
+              ],
+              "best_ask": "0.095",
+              "best_bid": "0.052",
+              "bid_depth_levels": 29,
+              "bids": [
+                [
+                  "0.052",
+                  "58.64"
+                ],
+                [
+                  "0.051",
+                  "9.9"
+                ],
+                [
+                  "0.05",
+                  "3.95"
+                ],
+                [
+                  "0.045",
+                  "5.76"
+                ],
+                [
+                  "0.041",
+                  "5.76"
+                ],
+                [
+                  "0.04",
+                  "5.76"
+                ],
+                [
+                  "0.036",
+                  "5.64"
+                ],
+                [
+                  "0.035",
+                  "5.76"
+                ],
+                [
+                  "0.032",
+                  "7.69"
+                ],
+                [
+                  "0.031",
+                  "19.21"
+                ],
+                [
+                  "0.03",
+                  "20.38"
+                ],
+                [
+                  "0.026",
+                  "6.33"
+                ],
+                [
+                  "0.025",
+                  "11.52"
+                ],
+                [
+                  "0.021",
+                  "442.76"
+                ],
+                [
+                  "0.02",
+                  "758.63"
+                ],
+                [
+                  "0.016",
+                  "8.93"
+                ],
+                [
+                  "0.015",
+                  "11.52"
+                ],
+                [
+                  "0.012",
+                  "27.32"
+                ],
+                [
+                  "0.011",
+                  "58.03"
+                ],
+                [
+                  "0.01",
+                  "17.28"
+                ],
+                [
+                  "0.009",
+                  "17.77"
+                ],
+                [
+                  "0.008",
+                  "11.52"
+                ],
+                [
+                  "0.007",
+                  "11.52"
+                ],
+                [
+                  "0.006",
+                  "11.52"
+                ],
+                [
+                  "0.005",
+                  "23.96"
+                ],
+                [
+                  "0.004",
+                  "217.28"
+                ],
+                [
+                  "0.003",
+                  "29.24"
+                ],
+                [
+                  "0.002",
+                  "892.98"
+                ],
+                [
+                  "0.001",
+                  "56254.6"
+                ]
+              ],
+              "continuity": "unsequenced_observed_lineage",
+              "depth_truncated": false,
+              "exchange_ms": 1792972021546,
+              "hash": "f0863fc60763ca817e7bacba509859f0f4fe58b2",
+              "internally_consistent": true,
+              "issue": null,
+              "last": [
+                5068511,
+                14
+              ],
+              "quote_lifetimes": {
+                "count": 28,
+                "total_ns": 33781462909
+              },
+              "quote_since_ns": 1792972259797967899,
+              "received_ns": 1792972259797967899,
+              "sequence_verified": false,
+              "snapshot": [
+                5068511,
+                14
+              ],
+              "spread": "0.043",
+              "tick": "0.001"
+            },
+            "33156410999665902694791064431724433042010245771106314074312009703157423879038": {
+              "age_ns": 673586932,
+              "ask_depth_levels": 54,
+              "asks": [
+                [
+                  "0.09",
+                  "2805848.69"
+                ],
+                [
+                  "0.1",
+                  "745331.91"
+                ],
+                [
+                  "0.11",
+                  "111391.12"
+                ],
+                [
+                  "0.12",
+                  "17460.74"
+                ],
+                [
+                  "0.13",
+                  "346.5"
+                ],
+                [
+                  "0.14",
+                  "378.24"
+                ],
+                [
+                  "0.15",
+                  "452.47"
+                ],
+                [
+                  "0.16",
+                  "10.54"
+                ],
+                [
+                  "0.17",
+                  "806.08"
+                ],
+                [
+                  "0.18",
+                  "12.18"
+                ],
+                [
+                  "0.19",
+                  "123"
+                ],
+                [
+                  "0.2",
+                  "112.54"
+                ],
+                [
+                  "0.23",
+                  "6.49"
+                ],
+                [
+                  "0.25",
+                  "13.32"
+                ],
+                [
+                  "0.28",
+                  "277"
+                ],
+                [
+                  "0.3",
+                  "100"
+                ],
+                [
+                  "0.36",
+                  "7.81"
+                ],
+                [
+                  "0.37",
+                  "793"
+                ],
+                [
+                  "0.38",
+                  "5000"
+                ],
+                [
+                  "0.39",
+                  "2500"
+                ],
+                [
+                  "0.4",
+                  "25"
+                ],
+                [
+                  "0.42",
+                  "50"
+                ],
+                [
+                  "0.43",
+                  "3344.3"
+                ],
+                [
+                  "0.45",
+                  "5.4"
+                ],
+                [
+                  "0.46",
+                  "1481"
+                ],
+                [
+                  "0.47",
+                  "3596.7"
+                ],
+                [
+                  "0.48",
+                  "5000"
+                ],
+                [
+                  "0.5",
+                  "235"
+                ],
+                [
+                  "0.51",
+                  "4279.34"
+                ],
+                [
+                  "0.55",
+                  "10839.94"
+                ],
+                [
+                  "0.59",
+                  "6636.15"
+                ],
+                [
+                  "0.6",
+                  "9000"
+                ],
+                [
+                  "0.61",
+                  "10000"
+                ],
+                [
+                  "0.63",
+                  "10304.04"
+                ],
+                [
+                  "0.64",
+                  "5000"
+                ],
+                [
+                  "0.67",
+                  "12130.68"
+                ],
+                [
+                  "0.71",
+                  "14461.21"
+                ],
+                [
+                  "0.72",
+                  "357"
+                ],
+                [
+                  "0.73",
+                  "15666"
+                ],
+                [
+                  "0.75",
+                  "17537.5"
+                ],
+                [
+                  "0.81",
+                  "10526.31"
+                ],
+                [
+                  "0.85",
+                  "1500"
+                ],
+                [
+                  "0.86",
+                  "17857.14"
+                ],
+                [
+                  "0.89",
+                  "5.15"
+                ],
+                [
+                  "0.9",
+                  "30000"
+                ],
+                [
+                  "0.91",
+                  "227802.77"
+                ],
+                [
+                  "0.92",
+                  "5000"
+                ],
+                [
+                  "0.93",
+                  "69999.99"
+                ],
+                [
+                  "0.94",
+                  "30000"
+                ],
+                [
+                  "0.95",
+                  "152000"
+                ]
+              ],
+              "best_ask": "0.09",
+              "best_bid": "0.08",
+              "bid_depth_levels": 8,
+              "bids": [
+                [
+                  "0.08",
+                  "634.59"
+                ],
+                [
+                  "0.07",
+                  "1565451.93"
+                ],
+                [
+                  "0.06",
+                  "3236107.99"
+                ],
+                [
+                  "0.05",
+                  "1557786.18"
+                ],
+                [
+                  "0.04",
+                  "6499.69"
+                ],
+                [
+                  "0.03",
+                  "31995.69"
+                ],
+                [
+                  "0.02",
+                  "66351.69"
+                ],
+                [
+                  "0.01",
+                  "1707840.06"
+                ]
+              ],
+              "continuity": "unsequenced_observed_lineage",
+              "depth_truncated": true,
+              "exchange_ms": 1792972306091,
+              "hash": "bb4c30ecafcb09e1aea573727173f135cd26bf60",
+              "internally_consistent": true,
+              "issue": null,
+              "last": [
+                5068688,
+                0
+              ],
+              "quote_lifetimes": {
+                "count": 225,
+                "total_ns": 3384623126709
+              },
+              "quote_since_ns": 1792972259797967899,
+              "received_ns": 1792972306109187398,
+              "sequence_verified": false,
+              "snapshot": [
+                5068511,
+                9
+              ],
+              "spread": "0.01",
+              "tick": "0.01"
+            },
+            "39040993339692011893931540077322383339631602451525460031216774971808386681386": {
+              "age_ns": 3399145592,
+              "ask_depth_levels": 139,
+              "asks": [
+                [
+                  "0.013",
+                  "8023.99"
+                ],
+                [
+                  "0.014",
+                  "2717.59"
+                ],
+                [
+                  "0.015",
+                  "2648.19"
+                ],
+                [
+                  "0.017",
+                  "1614.05"
+                ],
+                [
+                  "0.018",
+                  "5755"
+                ],
+                [
+                  "0.02",
+                  "500"
+                ],
+                [
+                  "0.021",
+                  "1024.11"
+                ],
+                [
+                  "0.022",
+                  "1760.79"
+                ],
+                [
+                  "0.023",
+                  "1000"
+                ],
+                [
+                  "0.024",
+                  "629.09"
+                ],
+                [
+                  "0.025",
+                  "3293.07"
+                ],
+                [
+                  "0.028",
+                  "10162.33"
+                ],
+                [
+                  "0.029",
+                  "1000"
+                ],
+                [
+                  "0.03",
+                  "19504.99"
+                ],
+                [
+                  "0.031",
+                  "58"
+                ],
+                [
+                  "0.036",
+                  "2000"
+                ],
+                [
+                  "0.037",
+                  "3500"
+                ],
+                [
+                  "0.038",
+                  "11000"
+                ],
+                [
+                  "0.039",
+                  "49999.93"
+                ],
+                [
+                  "0.04",
+                  "76"
+                ],
+                [
+                  "0.043",
+                  "987.5"
+                ],
+                [
+                  "0.044",
+                  "10000"
+                ],
+                [
+                  "0.045",
+                  "82464.71"
+                ],
+                [
+                  "0.046",
+                  "700"
+                ],
+                [
+                  "0.05",
+                  "850.84"
+                ],
+                [
+                  "0.055",
+                  "8912.35"
+                ],
+                [
+                  "0.063",
+                  "500"
+                ],
+                [
+                  "0.065",
+                  "2000"
+                ],
+                [
+                  "0.066",
+                  "10400"
+                ],
+                [
+                  "0.068",
+                  "1020.26"
+                ],
+                [
+                  "0.07",
+                  "5"
+                ],
+                [
+                  "0.075",
+                  "2024"
+                ],
+                [
+                  "0.077",
+                  "142.85"
+                ],
+                [
+                  "0.079",
+                  "1090"
+                ],
+                [
+                  "0.08",
+                  "1432.03"
+                ],
+                [
+                  "0.084",
+                  "2038.98"
+                ],
+                [
+                  "0.085",
+                  "1050"
+                ],
+                [
+                  "0.087",
+                  "83.88"
+                ],
+                [
+                  "0.088",
+                  "250"
+                ],
+                [
+                  "0.089",
+                  "1963.85"
+                ],
+                [
+                  "0.09",
+                  "100"
+                ],
+                [
+                  "0.093",
+                  "50"
+                ],
+                [
+                  "0.094",
+                  "2718.64"
+                ],
+                [
+                  "0.095",
+                  "1319.85"
+                ],
+                [
+                  "0.102",
+                  "89"
+                ],
+                [
+                  "0.108",
+                  "25"
+                ],
+                [
+                  "0.109",
+                  "3764.98"
+                ],
+                [
+                  "0.11",
+                  "112"
+                ],
+                [
+                  "0.112",
+                  "928"
+                ],
+                [
+                  "0.118",
+                  "25"
+                ]
+              ],
+              "best_ask": "0.013",
+              "best_bid": "0.008",
+              "bid_depth_levels": 8,
+              "bids": [
+                [
+                  "0.008",
+                  "118.51"
+                ],
+                [
+                  "0.007",
+                  "2057"
+                ],
+                [
+                  "0.006",
+                  "3922.8"
+                ],
+                [
+                  "0.005",
+                  "31359.18"
+                ],
+                [
+                  "0.004",
+                  "50000"
+                ],
+                [
+                  "0.003",
+                  "13510"
+                ],
+                [
+                  "0.002",
+                  "15488"
+                ],
+                [
+                  "0.001",
+                  "91591"
+                ]
+              ],
+              "continuity": "unsequenced_observed_lineage",
+              "depth_truncated": true,
+              "exchange_ms": 1792972303366,
+              "hash": "538de2cd77314165db8a12a02ae1b6fb31c2651c",
+              "internally_consistent": true,
+              "issue": null,
+              "last": [
+                5068685,
+                0
+              ],
+              "quote_lifetimes": {
+                "count": 19,
+                "total_ns": 638066962405
+              },
+              "quote_since_ns": 1792972259797967899,
+              "received_ns": 1792972303383628738,
+              "sequence_verified": false,
+              "snapshot": [
+                5068511,
+                13
+              ],
+              "spread": "0.005",
+              "tick": "0.001"
+            },
+            "39223330966352513418907732239455948906399882924787587183466504819170775983376": {
+              "age_ns": 46984806431,
+              "ask_depth_levels": 84,
+              "asks": [
+                [
+                  "0.001",
+                  "1448121.63"
+                ],
+                [
+                  "0.002",
+                  "113571.67"
+                ],
+                [
+                  "0.003",
+                  "149266.68"
+                ],
+                [
+                  "0.004",
+                  "173566.84"
+                ],
+                [
+                  "0.005",
+                  "254728.72"
+                ],
+                [
+                  "0.006",
+                  "55111.98"
+                ],
+                [
+                  "0.007",
+                  "32527.11"
+                ],
+                [
+                  "0.008",
+                  "86871.86"
+                ],
+                [
+                  "0.009",
+                  "32307.83"
+                ],
+                [
+                  "0.01",
+                  "2737.35"
+                ],
+                [
+                  "0.011",
+                  "174"
+                ],
+                [
+                  "0.013",
+                  "1743"
+                ],
+                [
+                  "0.014",
+                  "20000"
+                ],
+                [
+                  "0.016",
+                  "100"
+                ],
+                [
+                  "0.018",
+                  "80"
+                ],
+                [
+                  "0.05",
+                  "5"
+                ],
+                [
+                  "0.062",
+                  "1100"
+                ],
+                [
+                  "0.1",
+                  "5"
+                ],
+                [
+                  "0.113",
+                  "30"
+                ],
+                [
+                  "0.114",
+                  "5"
+                ],
+                [
+                  "0.124",
+                  "45"
+                ],
+                [
+                  "0.125",
+                  "409"
+                ],
+                [
+                  "0.137",
+                  "50"
+                ],
+                [
+                  "0.138",
+                  "75"
+                ],
+                [
+                  "0.139",
+                  "75"
+                ],
+                [
+                  "0.14",
+                  "400"
+                ],
+                [
+                  "0.168",
+                  "100"
+                ],
+                [
+                  "0.169",
+                  "400"
+                ],
+                [
+                  "0.17",
+                  "75"
+                ],
+                [
+                  "0.2",
+                  "5"
+                ],
+                [
+                  "0.297",
+                  "400"
+                ],
+                [
+                  "0.298",
+                  "400"
+                ],
+                [
+                  "0.299",
+                  "400"
+                ],
+                [
+                  "0.3",
+                  "5"
+                ],
+                [
+                  "0.347",
+                  "400"
+                ],
+                [
+                  "0.348",
+                  "400"
+                ],
+                [
+                  "0.349",
+                  "30000"
+                ],
+                [
+                  "0.358",
+                  "2041"
+                ],
+                [
+                  "0.4",
+                  "1105"
+                ],
+                [
+                  "0.44",
+                  "500"
+                ],
+                [
+                  "0.45",
+                  "1418.18"
+                ],
+                [
+                  "0.488",
+                  "8"
+                ],
+                [
+                  "0.49",
+                  "2500"
+                ],
+                [
+                  "0.5",
+                  "2430"
+                ],
+                [
+                  "0.53",
+                  "3390.96"
+                ],
+                [
+                  "0.55",
+                  "2000"
+                ],
+                [
+                  "0.57",
+                  "24555.24"
+                ],
+                [
+                  "0.59",
+                  "127"
+                ],
+                [
+                  "0.599",
+                  "400"
+                ],
+                [
+                  "0.6",
+                  "3550"
+                ]
+              ],
+              "best_ask": "0.001",
+              "best_bid": null,
+              "bid_depth_levels": 0,
+              "bids": [],
+              "continuity": "unsequenced_observed_lineage",
+              "depth_truncated": true,
+              "exchange_ms": 1792972110870,
+              "hash": "c378cc17e1eeb5335f7293c98d775eccc802c77d",
+              "internally_consistent": true,
+              "issue": null,
+              "last": [
+                5068511,
+                11
+              ],
+              "quote_lifetimes": {
+                "count": 0,
+                "total_ns": 0
+              },
+              "quote_since_ns": 1792972259797967899,
+              "received_ns": 1792972259797967899,
+              "sequence_verified": false,
+              "snapshot": [
+                5068511,
+                11
+              ],
+              "spread": null,
+              "tick": "0.001"
+            },
+            "47856683996156403009428090210889176913147998278019471610295491486371570337691": {
+              "age_ns": 3399145592,
+              "ask_depth_levels": 8,
+              "asks": [
+                [
+                  "0.992",
+                  "118.51"
+                ],
+                [
+                  "0.993",
+                  "2057"
+                ],
+                [
+                  "0.994",
+                  "3922.8"
+                ],
+                [
+                  "0.995",
+                  "31359.18"
+                ],
+                [
+                  "0.996",
+                  "50000"
+                ],
+                [
+                  "0.997",
+                  "13510"
+                ],
+                [
+                  "0.998",
+                  "15488"
+                ],
+                [
+                  "0.999",
+                  "91591"
+                ]
+              ],
+              "best_ask": "0.992",
+              "best_bid": "0.987",
+              "bid_depth_levels": 139,
+              "bids": [
+                [
+                  "0.987",
+                  "8023.99"
+                ],
+                [
+                  "0.986",
+                  "2717.59"
+                ],
+                [
+                  "0.985",
+                  "2648.19"
+                ],
+                [
+                  "0.983",
+                  "1614.05"
+                ],
+                [
+                  "0.982",
+                  "5755"
+                ],
+                [
+                  "0.98",
+                  "500"
+                ],
+                [
+                  "0.979",
+                  "1024.11"
+                ],
+                [
+                  "0.978",
+                  "1760.79"
+                ],
+                [
+                  "0.977",
+                  "1000"
+                ],
+                [
+                  "0.976",
+                  "629.09"
+                ],
+                [
+                  "0.975",
+                  "3293.07"
+                ],
+                [
+                  "0.972",
+                  "10162.33"
+                ],
+                [
+                  "0.971",
+                  "1000"
+                ],
+                [
+                  "0.97",
+                  "19504.99"
+                ],
+                [
+                  "0.969",
+                  "58"
+                ],
+                [
+                  "0.964",
+                  "2000"
+                ],
+                [
+                  "0.963",
+                  "3500"
+                ],
+                [
+                  "0.962",
+                  "11000"
+                ],
+                [
+                  "0.961",
+                  "49999.93"
+                ],
+                [
+                  "0.96",
+                  "76"
+                ],
+                [
+                  "0.957",
+                  "987.5"
+                ],
+                [
+                  "0.956",
+                  "10000"
+                ],
+                [
+                  "0.955",
+                  "82464.71"
+                ],
+                [
+                  "0.954",
+                  "700"
+                ],
+                [
+                  "0.95",
+                  "850.84"
+                ],
+                [
+                  "0.945",
+                  "8912.35"
+                ],
+                [
+                  "0.937",
+                  "500"
+                ],
+                [
+                  "0.935",
+                  "2000"
+                ],
+                [
+                  "0.934",
+                  "10400"
+                ],
+                [
+                  "0.932",
+                  "1020.26"
+                ],
+                [
+                  "0.93",
+                  "5"
+                ],
+                [
+                  "0.925",
+                  "2024"
+                ],
+                [
+                  "0.923",
+                  "142.85"
+                ],
+                [
+                  "0.921",
+                  "1090"
+                ],
+                [
+                  "0.92",
+                  "1432.03"
+                ],
+                [
+                  "0.916",
+                  "2038.98"
+                ],
+                [
+                  "0.915",
+                  "1050"
+                ],
+                [
+                  "0.913",
+                  "83.88"
+                ],
+                [
+                  "0.912",
+                  "250"
+                ],
+                [
+                  "0.911",
+                  "1963.85"
+                ],
+                [
+                  "0.91",
+                  "100"
+                ],
+                [
+                  "0.907",
+                  "50"
+                ],
+                [
+                  "0.906",
+                  "2718.64"
+                ],
+                [
+                  "0.905",
+                  "1319.85"
+                ],
+                [
+                  "0.898",
+                  "89"
+                ],
+                [
+                  "0.892",
+                  "25"
+                ],
+                [
+                  "0.891",
+                  "3764.98"
+                ],
+                [
+                  "0.89",
+                  "112"
+                ],
+                [
+                  "0.888",
+                  "928"
+                ],
+                [
+                  "0.882",
+                  "25"
+                ]
+              ],
+              "continuity": "unsequenced_observed_lineage",
+              "depth_truncated": true,
+              "exchange_ms": 1792972303366,
+              "hash": "5e6ea99039c5893a6aee238612f88ebb9cdf8174",
+              "internally_consistent": true,
+              "issue": null,
+              "last": [
+                5068685,
+                0
+              ],
+              "quote_lifetimes": {
+                "count": 19,
+                "total_ns": 638066962405
+              },
+              "quote_since_ns": 1792972259797967899,
+              "received_ns": 1792972303383628738,
+              "sequence_verified": false,
+              "snapshot": [
+                5068511,
+                1
+              ],
+              "spread": "0.005",
+              "tick": "0.001"
+            },
+            "50862799703982327636174441241062907649998751737045006653560124656563256528691": {
+              "age_ns": 46984806431,
+              "ask_depth_levels": 0,
+              "asks": [],
+              "best_ask": null,
+              "best_bid": "0.999",
+              "bid_depth_levels": 84,
+              "bids": [
+                [
+                  "0.999",
+                  "1448121.63"
+                ],
+                [
+                  "0.998",
+                  "113571.67"
+                ],
+                [
+                  "0.997",
+                  "149266.68"
+                ],
+                [
+                  "0.996",
+                  "173566.84"
+                ],
+                [
+                  "0.995",
+                  "254728.72"
+                ],
+                [
+                  "0.994",
+                  "55111.98"
+                ],
+                [
+                  "0.993",
+                  "32527.11"
+                ],
+                [
+                  "0.992",
+                  "86871.86"
+                ],
+                [
+                  "0.991",
+                  "32307.83"
+                ],
+                [
+                  "0.99",
+                  "2737.35"
+                ],
+                [
+                  "0.989",
+                  "174"
+                ],
+                [
+                  "0.987",
+                  "1743"
+                ],
+                [
+                  "0.986",
+                  "20000"
+                ],
+                [
+                  "0.984",
+                  "100"
+                ],
+                [
+                  "0.982",
+                  "80"
+                ],
+                [
+                  "0.95",
+                  "5"
+                ],
+                [
+                  "0.938",
+                  "1100"
+                ],
+                [
+                  "0.9",
+                  "5"
+                ],
+                [
+                  "0.887",
+                  "30"
+                ],
+                [
+                  "0.886",
+                  "5"
+                ],
+                [
+                  "0.876",
+                  "45"
+                ],
+                [
+                  "0.875",
+                  "409"
+                ],
+                [
+                  "0.863",
+                  "50"
+                ],
+                [
+                  "0.862",
+                  "75"
+                ],
+                [
+                  "0.861",
+                  "75"
+                ],
+                [
+                  "0.86",
+                  "400"
+                ],
+                [
+                  "0.832",
+                  "100"
+                ],
+                [
+                  "0.831",
+                  "400"
+                ],
+                [
+                  "0.83",
+                  "75"
+                ],
+                [
+                  "0.8",
+                  "5"
+                ],
+                [
+                  "0.703",
+                  "400"
+                ],
+                [
+                  "0.702",
+                  "400"
+                ],
+                [
+                  "0.701",
+                  "400"
+                ],
+                [
+                  "0.7",
+                  "5"
+                ],
+                [
+                  "0.653",
+                  "400"
+                ],
+                [
+                  "0.652",
+                  "400"
+                ],
+                [
+                  "0.651",
+                  "30000"
+                ],
+                [
+                  "0.642",
+                  "2041"
+                ],
+                [
+                  "0.6",
+                  "1105"
+                ],
+                [
+                  "0.56",
+                  "500"
+                ],
+                [
+                  "0.55",
+                  "1418.18"
+                ],
+                [
+                  "0.512",
+                  "8"
+                ],
+                [
+                  "0.51",
+                  "2500"
+                ],
+                [
+                  "0.5",
+                  "2430"
+                ],
+                [
+                  "0.47",
+                  "3390.96"
+                ],
+                [
+                  "0.45",
+                  "2000"
+                ],
+                [
+                  "0.43",
+                  "24555.24"
+                ],
+                [
+                  "0.41",
+                  "127"
+                ],
+                [
+                  "0.401",
+                  "400"
+                ],
+                [
+                  "0.4",
+                  "3550"
+                ]
+              ],
+              "continuity": "unsequenced_observed_lineage",
+              "depth_truncated": true,
+              "exchange_ms": 1792972110870,
+              "hash": "2c19044b68b3a48ab98496bcbfe2485c392a0a4b",
+              "internally_consistent": true,
+              "issue": null,
+              "last": [
+                5068511,
+                6
+              ],
+              "quote_lifetimes": {
+                "count": 0,
+                "total_ns": 0
+              },
+              "quote_since_ns": 1792972259797967899,
+              "received_ns": 1792972259797967899,
+              "sequence_verified": false,
+              "snapshot": [
+                5068511,
+                6
+              ],
+              "spread": null,
+              "tick": "0.001"
+            },
+            "6523890601290053850144787776746115667824114433988690429357847635507141826754": {
+              "age_ns": 488268468,
+              "ask_depth_levels": 0,
+              "asks": [],
+              "best_ask": null,
+              "best_bid": "0.999",
+              "bid_depth_levels": 45,
+              "bids": [
+                [
+                  "0.999",
+                  "474.11"
+                ],
+                [
+                  "0.998",
+                  "285"
+                ],
+                [
+                  "0.995",
+                  "500"
+                ],
+                [
+                  "0.993",
+                  "48.56"
+                ],
+                [
+                  "0.947",
+                  "30"
+                ],
+                [
+                  "0.946",
+                  "32.75"
+                ],
+                [
+                  "0.926",
+                  "95"
+                ],
+                [
+                  "0.925",
+                  "100"
+                ],
+                [
+                  "0.918",
+                  "400"
+                ],
+                [
+                  "0.917",
+                  "249"
+                ],
+                [
+                  "0.915",
+                  "335"
+                ],
+                [
+                  "0.901",
+                  "50"
+                ],
+                [
+                  "0.543",
+                  "500"
+                ],
+                [
+                  "0.542",
+                  "184"
+                ],
+                [
+                  "0.54",
+                  "80"
+                ],
+                [
+                  "0.534",
+                  "13.1"
+                ],
+                [
+                  "0.5",
+                  "14"
+                ],
+                [
+                  "0.45",
+                  "46.65"
+                ],
+                [
+                  "0.43",
+                  "16.27"
+                ],
+                [
+                  "0.35",
+                  "20"
+                ],
+                [
+                  "0.33",
+                  "21.21"
+                ],
+                [
+                  "0.301",
+                  "23.25"
+                ],
+                [
+                  "0.3",
+                  "23.33"
+                ],
+                [
+                  "0.23",
+                  "60.86"
+                ],
+                [
+                  "0.197",
+                  "35.53"
+                ],
+                [
+                  "0.196",
+                  "35.71"
+                ],
+                [
+                  "0.181",
+                  "5.65"
+                ],
+                [
+                  "0.18",
+                  "38.88"
+                ],
+                [
+                  "0.15",
+                  "46.66"
+                ],
+                [
+                  "0.14",
+                  "49.99"
+                ],
+                [
+                  "0.1",
+                  "140"
+                ],
+                [
+                  "0.077",
+                  "90.9"
+                ],
+                [
+                  "0.07",
+                  "99.99"
+                ],
+                [
+                  "0.051",
+                  "6.81"
+                ],
+                [
+                  "0.05",
+                  "140"
+                ],
+                [
+                  "0.04",
+                  "175"
+                ],
+                [
+                  "0.011",
+                  "14.4"
+                ],
+                [
+                  "0.01",
+                  "1400"
+                ],
+                [
+                  "0.007",
+                  "1000"
+                ],
+                [
+                  "0.006",
+                  "3838.88"
+                ],
+                [
+                  "0.005",
+                  "600"
+                ],
+                [
+                  "0.004",
+                  "750"
+                ],
+                [
+                  "0.003",
+                  "1839.74"
+                ],
+                [
+                  "0.002",
+                  "2750"
+                ],
+                [
+                  "0.001",
+                  "33518.93"
+                ]
+              ],
+              "continuity": "unsequenced_observed_lineage",
+              "depth_truncated": false,
+              "exchange_ms": 1792972306274,
+              "hash": "f3d5d8d80018aa2aa3fc7582f329aaaebea72df9",
+              "internally_consistent": true,
+              "issue": null,
+              "last": [
+                5068689,
+                0
+              ],
+              "quote_lifetimes": {
+                "count": 0,
+                "total_ns": 0
+              },
+              "quote_since_ns": 1792972259797967899,
+              "received_ns": 1792972306294505862,
+              "sequence_verified": false,
+              "snapshot": [
+                5068511,
+                7
+              ],
+              "spread": null,
+              "tick": "0.001"
+            },
+            "65798294507987312276643818583202416276939957254836998308855036749104874776050": {
+              "age_ns": 0,
+              "ask_depth_levels": 0,
+              "asks": [],
+              "best_ask": null,
+              "best_bid": "0.999",
+              "bid_depth_levels": 54,
+              "bids": [
+                [
+                  "0.999",
+                  "884727.88"
+                ],
+                [
+                  "0.998",
+                  "75355.87"
+                ],
+                [
+                  "0.997",
+                  "762"
+                ],
+                [
+                  "0.996",
+                  "747"
+                ],
+                [
+                  "0.995",
+                  "747"
+                ],
+                [
+                  "0.994",
+                  "747"
+                ],
+                [
+                  "0.993",
+                  "747"
+                ],
+                [
+                  "0.992",
+                  "747"
+                ],
+                [
+                  "0.991",
+                  "747"
+                ],
+                [
+                  "0.99",
+                  "747"
+                ],
+                [
+                  "0.989",
+                  "377"
+                ],
+                [
+                  "0.987",
+                  "139.16"
+                ],
+                [
+                  "0.982",
+                  "80"
+                ],
+                [
+                  "0.981",
+                  "50"
+                ],
+                [
+                  "0.971",
+                  "34.79"
+                ],
+                [
+                  "0.97",
+                  "383.33"
+                ],
+                [
+                  "0.933",
+                  "188.23"
+                ],
+                [
+                  "0.931",
+                  "1063"
+                ],
+                [
+                  "0.93",
+                  "8.7"
+                ],
+                [
+                  "0.928",
+                  "12.8"
+                ],
+                [
+                  "0.909",
+                  "50"
+                ],
+                [
+                  "0.908",
+                  "90"
+                ],
+                [
+                  "0.904",
+                  "2144.99"
+                ],
+                [
+                  "0.85",
+                  "50"
+                ],
+                [
+                  "0.836",
+                  "700"
+                ],
+                [
+                  "0.835",
+                  "1000"
+                ],
+                [
+                  "0.816",
+                  "431.85"
+                ],
+                [
+                  "0.667",
+                  "900"
+                ],
+                [
+                  "0.666",
+                  "1000"
+                ],
+                [
+                  "0.612",
+                  "2580"
+                ],
+                [
+                  "0.611",
+                  "1000"
+                ],
+                [
+                  "0.61",
+                  "1250"
+                ],
+                [
+                  "0.57",
+                  "1672.15"
+                ],
+                [
+                  "0.53",
+                  "1798.35"
+                ],
+                [
+                  "0.49",
+                  "2139.67"
+                ],
+                [
+                  "0.451",
+                  "1000"
+                ],
+                [
+                  "0.45",
+                  "2753.47"
+                ],
+                [
+                  "0.41",
+                  "3381.57"
+                ],
+                [
+                  "0.37",
+                  "5152.03"
+                ],
+                [
+                  "0.33",
+                  "6065.34"
+                ],
+                [
+                  "0.29",
+                  "7230.6"
+                ],
+                [
+                  "0.25",
+                  "8768.75"
+                ],
+                [
+                  "0.201",
+                  "5.84"
+                ],
+                [
+                  "0.2",
+                  "10000"
+                ],
+                [
+                  "0.151",
+                  "2356"
+                ],
+                [
+                  "0.15",
+                  "16666.66"
+                ],
+                [
+                  "0.1",
+                  "25000"
+                ],
+                [
+                  "0.051",
+                  "9.06"
+                ],
+                [
+                  "0.05",
+                  "62000"
+                ],
+                [
+                  "0.005",
+                  "50.73"
+                ]
+              ],
+              "continuity": "unsequenced_observed_lineage",
+              "depth_truncated": true,
+              "exchange_ms": 1792972306761,
+              "hash": "344daa0327b6f7ce1211507b76e63617e3c031f9",
+              "internally_consistent": true,
+              "issue": null,
+              "last": [
+                5068690,
+                0
+              ],
+              "quote_lifetimes": {
+                "count": 0,
+                "total_ns": 0
+              },
+              "quote_since_ns": 1792972259797967899,
+              "received_ns": 1792972306782774330,
+              "sequence_verified": false,
+              "snapshot": [
+                5068511,
+                8
+              ],
+              "spread": null,
+              "tick": "0.001"
+            },
+            "68699590631603936159614111102521796272656890935739981452334083576745551689126": {
+              "age_ns": 6141552296,
+              "ask_depth_levels": 18,
+              "asks": [
+                [
+                  "0.958",
+                  "30"
+                ],
+                [
+                  "0.959",
+                  "245"
+                ],
+                [
+                  "0.96",
+                  "171.12"
+                ],
+                [
+                  "0.961",
+                  "54"
+                ],
+                [
+                  "0.964",
+                  "144.15"
+                ],
+                [
+                  "0.965",
+                  "226.92"
+                ],
+                [
+                  "0.966",
+                  "692.42"
+                ],
+                [
+                  "0.989",
+                  "38.1"
+                ],
+                [
+                  "0.99",
+                  "750"
+                ],
+                [
+                  "0.991",
+                  "694.44"
+                ],
+                [
+                  "0.992",
+                  "787.76"
+                ],
+                [
+                  "0.993",
+                  "982.14"
+                ],
+                [
+                  "0.994",
+                  "1360.03"
+                ],
+                [
+                  "0.995",
+                  "2885.69"
+                ],
+                [
+                  "0.996",
+                  "4134.23"
+                ],
+                [
+                  "0.997",
+                  "4380.97"
+                ],
+                [
+                  "0.998",
+                  "10460.6"
+                ],
+                [
+                  "0.999",
+                  "147389.45"
+                ]
+              ],
+              "best_ask": "0.958",
+              "best_bid": "0.893",
+              "bid_depth_levels": 14,
+              "bids": [
+                [
+                  "0.893",
+                  "67.91"
+                ],
+                [
+                  "0.892",
+                  "15"
+                ],
+                [
+                  "0.891",
+                  "270.09"
+                ],
+                [
+                  "0.89",
+                  "309.99"
+                ],
+                [
+                  "0.871",
+                  "35.38"
+                ],
+                [
+                  "0.803",
+                  "110.49"
+                ],
+                [
+                  "0.802",
+                  "50"
+                ],
+                [
+                  "0.41",
+                  "114"
+                ],
+                [
+                  "0.377",
+                  "10"
+                ],
+                [
+                  "0.005",
+                  "151.96"
+                ],
+                [
+                  "0.004",
+                  "1343.69"
+                ],
+                [
+                  "0.003",
+                  "10000"
+                ],
+                [
+                  "0.002",
+                  "7.49"
+                ],
+                [
+                  "0.001",
+                  "1124.18"
+                ]
+              ],
+              "continuity": "unsequenced_observed_lineage",
+              "depth_truncated": false,
+              "exchange_ms": 1792972300616,
+              "hash": "07a2faa345ff34ddcc7a0945400e95c64ae308dd",
+              "internally_consistent": true,
+              "issue": null,
+              "last": [
+                5068680,
+                0
+              ],
+              "quote_lifetimes": {
+                "count": 36,
+                "total_ns": 100323851706
+              },
+              "quote_since_ns": 1792972300641222034,
+              "received_ns": 1792972300641222034,
+              "sequence_verified": false,
+              "snapshot": [
+                5068511,
+                5
+              ],
+              "spread": "0.065",
+              "tick": "0.001"
+            },
+            "787170291302302153997884307668830963927797223952711045136721008061721679993": {
+              "age_ns": 6141552296,
+              "ask_depth_levels": 14,
+              "asks": [
+                [
+                  "0.107",
+                  "67.91"
+                ],
+                [
+                  "0.108",
+                  "15"
+                ],
+                [
+                  "0.109",
+                  "270.09"
+                ],
+                [
+                  "0.11",
+                  "309.99"
+                ],
+                [
+                  "0.129",
+                  "35.38"
+                ],
+                [
+                  "0.197",
+                  "110.49"
+                ],
+                [
+                  "0.198",
+                  "50"
+                ],
+                [
+                  "0.59",
+                  "114"
+                ],
+                [
+                  "0.623",
+                  "10"
+                ],
+                [
+                  "0.995",
+                  "151.96"
+                ],
+                [
+                  "0.996",
+                  "1343.69"
+                ],
+                [
+                  "0.997",
+                  "10000"
+                ],
+                [
+                  "0.998",
+                  "7.49"
+                ],
+                [
+                  "0.999",
+                  "1124.18"
+                ]
+              ],
+              "best_ask": "0.107",
+              "best_bid": "0.042",
+              "bid_depth_levels": 18,
+              "bids": [
+                [
+                  "0.042",
+                  "30"
+                ],
+                [
+                  "0.041",
+                  "245"
+                ],
+                [
+                  "0.04",
+                  "171.12"
+                ],
+                [
+                  "0.039",
+                  "54"
+                ],
+                [
+                  "0.036",
+                  "144.15"
+                ],
+                [
+                  "0.035",
+                  "226.92"
+                ],
+                [
+                  "0.034",
+                  "692.42"
+                ],
+                [
+                  "0.011",
+                  "38.1"
+                ],
+                [
+                  "0.01",
+                  "750"
+                ],
+                [
+                  "0.009",
+                  "694.44"
+                ],
+                [
+                  "0.008",
+                  "787.76"
+                ],
+                [
+                  "0.007",
+                  "982.14"
+                ],
+                [
+                  "0.006",
+                  "1360.03"
+                ],
+                [
+                  "0.005",
+                  "2885.69"
+                ],
+                [
+                  "0.004",
+                  "4134.23"
+                ],
+                [
+                  "0.003",
+                  "4380.97"
+                ],
+                [
+                  "0.002",
+                  "10460.6"
+                ],
+                [
+                  "0.001",
+                  "147389.45"
+                ]
+              ],
+              "continuity": "unsequenced_observed_lineage",
+              "depth_truncated": false,
+              "exchange_ms": 1792972300616,
+              "hash": "73098eec13e55b0813c889b07783d71da02d38df",
+              "internally_consistent": true,
+              "issue": null,
+              "last": [
+                5068680,
+                0
+              ],
+              "quote_lifetimes": {
+                "count": 36,
+                "total_ns": 100323851706
+              },
+              "quote_since_ns": 1792972300641222034,
+              "received_ns": 1792972300641222034,
+              "sequence_verified": false,
+              "snapshot": [
+                5068511,
+                2
+              ],
+              "spread": "0.065",
+              "tick": "0.001"
+            },
+            "79118149439309757267455443718734674416431762063614639186961272012854030039138": {
+              "age_ns": 5495504795,
+              "ask_depth_levels": 1,
+              "asks": [
+                [
+                  "0.999",
+                  "199.13"
+                ]
+              ],
+              "best_ask": "0.999",
+              "best_bid": "0.989",
+              "bid_depth_levels": 69,
+              "bids": [
+                [
+                  "0.989",
+                  "2201.28"
+                ],
+                [
+                  "0.988",
+                  "2216.14"
+                ],
+                [
+                  "0.987",
+                  "3117.88"
+                ],
+                [
+                  "0.985",
+                  "1588"
+                ],
+                [
+                  "0.984",
+                  "5555"
+                ],
+                [
+                  "0.983",
+                  "3405.1"
+                ],
+                [
+                  "0.982",
+                  "6111"
+                ],
+                [
+                  "0.979",
+                  "1111"
+                ],
+                [
+                  "0.976",
+                  "4851"
+                ],
+                [
+                  "0.975",
+                  "500"
+                ],
+                [
+                  "0.973",
+                  "10"
+                ],
+                [
+                  "0.972",
+                  "680"
+                ],
+                [
+                  "0.968",
+                  "10"
+                ],
+                [
+                  "0.957",
+                  "412.99"
+                ],
+                [
+                  "0.956",
+                  "39.99"
+                ],
+                [
+                  "0.952",
+                  "1000"
+                ],
+                [
+                  "0.942",
+                  "152.33"
+                ],
+                [
+                  "0.939",
+                  "45"
+                ],
+                [
+                  "0.938",
+                  "568.67"
+                ],
+                [
+                  "0.915",
+                  "50"
+                ],
+                [
+                  "0.914",
+                  "20"
+                ],
+                [
+                  "0.913",
+                  "250"
+                ],
+                [
+                  "0.912",
+                  "309.98"
+                ],
+                [
+                  "0.902",
+                  "249.14"
+                ],
+                [
+                  "0.887",
+                  "10"
+                ],
+                [
+                  "0.886",
+                  "16.14"
+                ],
+                [
+                  "0.876",
+                  "5.1"
+                ],
+                [
+                  "0.786",
+                  "100"
+                ],
+                [
+                  "0.785",
+                  "45"
+                ],
+                [
+                  "0.783",
+                  "110"
+                ],
+                [
+                  "0.766",
+                  "20"
+                ],
+                [
+                  "0.718",
+                  "400"
+                ],
+                [
+                  "0.717",
+                  "110"
+                ],
+                [
+                  "0.712",
+                  "200"
+                ],
+                [
+                  "0.621",
+                  "250"
+                ],
+                [
+                  "0.601",
+                  "195.49"
+                ],
+                [
+                  "0.6",
+                  "1100"
+                ],
+                [
+                  "0.55",
+                  "1418.18"
+                ],
+                [
+                  "0.512",
+                  "100"
+                ],
+                [
+                  "0.5",
+                  "1700"
+                ],
+                [
+                  "0.48",
+                  "1041"
+                ],
+                [
+                  "0.47",
+                  "1702"
+                ],
+                [
+                  "0.46",
+                  "1956"
+                ],
+                [
+                  "0.45",
+                  "2000"
+                ],
+                [
+                  "0.41",
+                  "487"
+                ],
+                [
+                  "0.4",
+                  "2550"
+                ],
+                [
+                  "0.35",
+                  "3085.71"
+                ],
+                [
+                  "0.3",
+                  "3800"
+                ],
+                [
+                  "0.291",
+                  "343"
+                ],
+                [
+                  "0.28",
+                  "357"
+                ]
+              ],
+              "continuity": "unsequenced_observed_lineage",
+              "depth_truncated": true,
+              "exchange_ms": 1792972301269,
+              "hash": "f84a553c8c48009bdac86e930e3d2b1b09811e32",
+              "internally_consistent": true,
+              "issue": null,
+              "last": [
+                5068683,
+                0
+              ],
+              "quote_lifetimes": {
+                "count": 3445,
+                "total_ns": 6107536628555
+              },
+              "quote_since_ns": 1792972259797967899,
+              "received_ns": 1792972301287269535,
+              "sequence_verified": false,
+              "snapshot": [
+                5068511,
+                12
+              ],
+              "spread": "0.010",
+              "tick": "0.001"
+            },
+            "80063991947654419906230688220572444933848167677441955915219569495482749653332": {
+              "age_ns": 5495504795,
+              "ask_depth_levels": 69,
+              "asks": [
+                [
+                  "0.011",
+                  "2201.28"
+                ],
+                [
+                  "0.012",
+                  "2216.14"
+                ],
+                [
+                  "0.013",
+                  "3117.88"
+                ],
+                [
+                  "0.015",
+                  "1588"
+                ],
+                [
+                  "0.016",
+                  "5555"
+                ],
+                [
+                  "0.017",
+                  "3405.1"
+                ],
+                [
+                  "0.018",
+                  "6111"
+                ],
+                [
+                  "0.021",
+                  "1111"
+                ],
+                [
+                  "0.024",
+                  "4851"
+                ],
+                [
+                  "0.025",
+                  "500"
+                ],
+                [
+                  "0.027",
+                  "10"
+                ],
+                [
+                  "0.028",
+                  "680"
+                ],
+                [
+                  "0.032",
+                  "10"
+                ],
+                [
+                  "0.043",
+                  "412.99"
+                ],
+                [
+                  "0.044",
+                  "39.99"
+                ],
+                [
+                  "0.048",
+                  "1000"
+                ],
+                [
+                  "0.058",
+                  "152.33"
+                ],
+                [
+                  "0.061",
+                  "45"
+                ],
+                [
+                  "0.062",
+                  "568.67"
+                ],
+                [
+                  "0.085",
+                  "50"
+                ],
+                [
+                  "0.086",
+                  "20"
+                ],
+                [
+                  "0.087",
+                  "250"
+                ],
+                [
+                  "0.088",
+                  "309.98"
+                ],
+                [
+                  "0.098",
+                  "249.14"
+                ],
+                [
+                  "0.113",
+                  "10"
+                ],
+                [
+                  "0.114",
+                  "16.14"
+                ],
+                [
+                  "0.124",
+                  "5.1"
+                ],
+                [
+                  "0.214",
+                  "100"
+                ],
+                [
+                  "0.215",
+                  "45"
+                ],
+                [
+                  "0.217",
+                  "110"
+                ],
+                [
+                  "0.234",
+                  "20"
+                ],
+                [
+                  "0.282",
+                  "400"
+                ],
+                [
+                  "0.283",
+                  "110"
+                ],
+                [
+                  "0.288",
+                  "200"
+                ],
+                [
+                  "0.379",
+                  "250"
+                ],
+                [
+                  "0.399",
+                  "195.49"
+                ],
+                [
+                  "0.4",
+                  "1100"
+                ],
+                [
+                  "0.45",
+                  "1418.18"
+                ],
+                [
+                  "0.488",
+                  "100"
+                ],
+                [
+                  "0.5",
+                  "1700"
+                ],
+                [
+                  "0.52",
+                  "1041"
+                ],
+                [
+                  "0.53",
+                  "1702"
+                ],
+                [
+                  "0.54",
+                  "1956"
+                ],
+                [
+                  "0.55",
+                  "2000"
+                ],
+                [
+                  "0.59",
+                  "487"
+                ],
+                [
+                  "0.6",
+                  "2550"
+                ],
+                [
+                  "0.65",
+                  "3085.71"
+                ],
+                [
+                  "0.7",
+                  "3800"
+                ],
+                [
+                  "0.709",
+                  "343"
+                ],
+                [
+                  "0.72",
+                  "357"
+                ]
+              ],
+              "best_ask": "0.011",
+              "best_bid": "0.001",
+              "bid_depth_levels": 1,
+              "bids": [
+                [
+                  "0.001",
+                  "199.13"
+                ]
+              ],
+              "continuity": "unsequenced_observed_lineage",
+              "depth_truncated": true,
+              "exchange_ms": 1792972301269,
+              "hash": "30d01b4953a302e88d5dd9183b32ca12c0dcfe98",
+              "internally_consistent": true,
+              "issue": null,
+              "last": [
+                5068683,
+                0
+              ],
+              "quote_lifetimes": {
+                "count": 3445,
+                "total_ns": 6107835271264
+              },
+              "quote_since_ns": 1792972259797967899,
+              "received_ns": 1792972301287269535,
+              "sequence_verified": false,
+              "snapshot": [
+                5068511,
+                0
+              ],
+              "spread": "0.010",
+              "tick": "0.001"
+            },
+            "80444250591000346031053171380243612904016851519226250274769734418106954626247": {
+              "age_ns": 0,
+              "ask_depth_levels": 54,
+              "asks": [
+                [
+                  "0.001",
+                  "884727.88"
+                ],
+                [
+                  "0.002",
+                  "75355.87"
+                ],
+                [
+                  "0.003",
+                  "762"
+                ],
+                [
+                  "0.004",
+                  "747"
+                ],
+                [
+                  "0.005",
+                  "747"
+                ],
+                [
+                  "0.006",
+                  "747"
+                ],
+                [
+                  "0.007",
+                  "747"
+                ],
+                [
+                  "0.008",
+                  "747"
+                ],
+                [
+                  "0.009",
+                  "747"
+                ],
+                [
+                  "0.01",
+                  "747"
+                ],
+                [
+                  "0.011",
+                  "377"
+                ],
+                [
+                  "0.013",
+                  "139.16"
+                ],
+                [
+                  "0.018",
+                  "80"
+                ],
+                [
+                  "0.019",
+                  "50"
+                ],
+                [
+                  "0.029",
+                  "34.79"
+                ],
+                [
+                  "0.03",
+                  "383.33"
+                ],
+                [
+                  "0.067",
+                  "188.23"
+                ],
+                [
+                  "0.069",
+                  "1063"
+                ],
+                [
+                  "0.07",
+                  "8.7"
+                ],
+                [
+                  "0.072",
+                  "12.8"
+                ],
+                [
+                  "0.091",
+                  "50"
+                ],
+                [
+                  "0.092",
+                  "90"
+                ],
+                [
+                  "0.096",
+                  "2144.99"
+                ],
+                [
+                  "0.15",
+                  "50"
+                ],
+                [
+                  "0.164",
+                  "700"
+                ],
+                [
+                  "0.165",
+                  "1000"
+                ],
+                [
+                  "0.184",
+                  "431.85"
+                ],
+                [
+                  "0.333",
+                  "900"
+                ],
+                [
+                  "0.334",
+                  "1000"
+                ],
+                [
+                  "0.388",
+                  "2580"
+                ],
+                [
+                  "0.389",
+                  "1000"
+                ],
+                [
+                  "0.39",
+                  "1250"
+                ],
+                [
+                  "0.43",
+                  "1672.15"
+                ],
+                [
+                  "0.47",
+                  "1798.35"
+                ],
+                [
+                  "0.51",
+                  "2139.67"
+                ],
+                [
+                  "0.549",
+                  "1000"
+                ],
+                [
+                  "0.55",
+                  "2753.47"
+                ],
+                [
+                  "0.59",
+                  "3381.57"
+                ],
+                [
+                  "0.63",
+                  "5152.03"
+                ],
+                [
+                  "0.67",
+                  "6065.34"
+                ],
+                [
+                  "0.71",
+                  "7230.6"
+                ],
+                [
+                  "0.75",
+                  "8768.75"
+                ],
+                [
+                  "0.799",
+                  "5.84"
+                ],
+                [
+                  "0.8",
+                  "10000"
+                ],
+                [
+                  "0.849",
+                  "2356"
+                ],
+                [
+                  "0.85",
+                  "16666.66"
+                ],
+                [
+                  "0.9",
+                  "25000"
+                ],
+                [
+                  "0.949",
+                  "9.06"
+                ],
+                [
+                  "0.95",
+                  "62000"
+                ],
+                [
+                  "0.995",
+                  "50.73"
+                ]
+              ],
+              "best_ask": "0.001",
+              "best_bid": null,
+              "bid_depth_levels": 0,
+              "bids": [],
+              "continuity": "unsequenced_observed_lineage",
+              "depth_truncated": true,
+              "exchange_ms": 1792972306761,
+              "hash": "27a2395d2230cb599442b62b07bf50886353d09e",
+              "internally_consistent": true,
+              "issue": null,
+              "last": [
+                5068690,
+                0
+              ],
+              "quote_lifetimes": {
+                "count": 0,
+                "total_ns": 0
+              },
+              "quote_since_ns": 1792972259797967899,
+              "received_ns": 1792972306782774330,
+              "sequence_verified": false,
+              "snapshot": [
+                5068511,
+                3
+              ],
+              "spread": null,
+              "tick": "0.001"
+            },
+            "83247781037352156539108067944461291821683755894607244160607042790356561625563": {
+              "age_ns": 673586932,
+              "ask_depth_levels": 8,
+              "asks": [
+                [
+                  "0.92",
+                  "634.59"
+                ],
+                [
+                  "0.93",
+                  "1565451.93"
+                ],
+                [
+                  "0.94",
+                  "3236107.99"
+                ],
+                [
+                  "0.95",
+                  "1557786.18"
+                ],
+                [
+                  "0.96",
+                  "6499.69"
+                ],
+                [
+                  "0.97",
+                  "31995.69"
+                ],
+                [
+                  "0.98",
+                  "66351.69"
+                ],
+                [
+                  "0.99",
+                  "1707840.06"
+                ]
+              ],
+              "best_ask": "0.92",
+              "best_bid": "0.91",
+              "bid_depth_levels": 54,
+              "bids": [
+                [
+                  "0.91",
+                  "2805848.69"
+                ],
+                [
+                  "0.9",
+                  "745331.91"
+                ],
+                [
+                  "0.89",
+                  "111391.12"
+                ],
+                [
+                  "0.88",
+                  "17460.74"
+                ],
+                [
+                  "0.87",
+                  "346.5"
+                ],
+                [
+                  "0.86",
+                  "378.24"
+                ],
+                [
+                  "0.85",
+                  "452.47"
+                ],
+                [
+                  "0.84",
+                  "10.54"
+                ],
+                [
+                  "0.83",
+                  "806.08"
+                ],
+                [
+                  "0.82",
+                  "12.18"
+                ],
+                [
+                  "0.81",
+                  "123"
+                ],
+                [
+                  "0.8",
+                  "112.54"
+                ],
+                [
+                  "0.77",
+                  "6.49"
+                ],
+                [
+                  "0.75",
+                  "13.32"
+                ],
+                [
+                  "0.72",
+                  "277"
+                ],
+                [
+                  "0.7",
+                  "100"
+                ],
+                [
+                  "0.64",
+                  "7.81"
+                ],
+                [
+                  "0.63",
+                  "793"
+                ],
+                [
+                  "0.62",
+                  "5000"
+                ],
+                [
+                  "0.61",
+                  "2500"
+                ],
+                [
+                  "0.6",
+                  "25"
+                ],
+                [
+                  "0.58",
+                  "50"
+                ],
+                [
+                  "0.57",
+                  "3344.3"
+                ],
+                [
+                  "0.55",
+                  "5.4"
+                ],
+                [
+                  "0.54",
+                  "1481"
+                ],
+                [
+                  "0.53",
+                  "3596.7"
+                ],
+                [
+                  "0.52",
+                  "5000"
+                ],
+                [
+                  "0.5",
+                  "235"
+                ],
+                [
+                  "0.49",
+                  "4279.34"
+                ],
+                [
+                  "0.45",
+                  "10839.94"
+                ],
+                [
+                  "0.41",
+                  "6636.15"
+                ],
+                [
+                  "0.4",
+                  "9000"
+                ],
+                [
+                  "0.39",
+                  "10000"
+                ],
+                [
+                  "0.37",
+                  "10304.04"
+                ],
+                [
+                  "0.36",
+                  "5000"
+                ],
+                [
+                  "0.33",
+                  "12130.68"
+                ],
+                [
+                  "0.29",
+                  "14461.21"
+                ],
+                [
+                  "0.28",
+                  "357"
+                ],
+                [
+                  "0.27",
+                  "15666"
+                ],
+                [
+                  "0.25",
+                  "17537.5"
+                ],
+                [
+                  "0.19",
+                  "10526.31"
+                ],
+                [
+                  "0.15",
+                  "1500"
+                ],
+                [
+                  "0.14",
+                  "17857.14"
+                ],
+                [
+                  "0.11",
+                  "5.15"
+                ],
+                [
+                  "0.1",
+                  "30000"
+                ],
+                [
+                  "0.09",
+                  "227802.77"
+                ],
+                [
+                  "0.08",
+                  "5000"
+                ],
+                [
+                  "0.07",
+                  "69999.99"
+                ],
+                [
+                  "0.06",
+                  "30000"
+                ],
+                [
+                  "0.05",
+                  "152000"
+                ]
+              ],
+              "continuity": "unsequenced_observed_lineage",
+              "depth_truncated": true,
+              "exchange_ms": 1792972306091,
+              "hash": "8a33c465f328d9d5b602bab3bce6127b421d6e67",
+              "internally_consistent": true,
+              "issue": null,
+              "last": [
+                5068688,
+                0
+              ],
+              "quote_lifetimes": {
+                "count": 225,
+                "total_ns": 3385303351344
+              },
+              "quote_since_ns": 1792972259797967899,
+              "received_ns": 1792972306109187398,
+              "sequence_verified": false,
+              "snapshot": [
+                5068511,
+                4
+              ],
+              "spread": "0.01",
+              "tick": "0.01"
+            }
+          },
+          "clock_health": {
+            "checked_ns": 1792972306797093234,
+            "estimated_error_us": 0,
+            "kernel_state": 0,
+            "limitation": "Kernel-reported clock health; not independently measured venue clock skew.",
+            "maximum_error_us": 598000,
+            "status": "kernel_synchronized"
+          },
+          "cohort": [
+            {
+              "activity_selection_basis": null,
+              "categories": [
+                "Earn 3.25%",
+                "Elections",
+                "Global Elections",
+                "Main Election",
+                "Midterms",
+                "Parent For Derivative",
+                "Politics",
+                "US Election",
+                "United States",
+                "World Elections"
+              ],
+              "condition": "0xd5d9fc47718bd553592d126b1fa5e87183d27f3936975b0c04cc0f2dec1f1bb4",
+              "end_ns": 1793768340000000000,
+              "event_ids": [
+                "32225"
+              ],
+              "fee_regime": {
+                "enabled": true,
+                "public_base_fee_evidence": {
+                  "33156410999665902694791064431724433042010245771106314074312009703157423879038": {
+                    "base_fee": 1000,
+                    "raw_ordinal": 5068487
+                  },
+                  "83247781037352156539108067944461291821683755894607244160607042790356561625563": {
+                    "base_fee": 1000,
+                    "raw_ordinal": 5068486
+                  }
+                },
+                "schedule": {
+                  "exponent": 1,
+                  "rate": 0,
+                  "rebateRate": 0,
+                  "takerOnly": true
+                },
+                "status": "public_parameters_recorded_formula_requires_declared_version"
+              },
+              "id": "562802",
+              "lifecycle": {
+                "accepting_orders": true,
+                "active": true,
+                "closed": false,
+                "resolution_status": null
+              },
+              "liquidity": "3709482.7125",
+              "metadata_ordinal": 5068485,
+              "minimum_order_size": "5",
+              "negative_risk": true,
+              "negative_risk_group": "0xd4ec843b5228dfe0779147cf13ca9954bc22edc63876954dc2fb95fcee42ef00",
+              "one_day_price_change": "0",
+              "payoff": {
+                "combined_terminal_claim": "1",
+                "currency_conversion_assumed": false,
+                "limitation": "Before fees, redemption costs and settlement assumptions; not a fill.",
+                "pair": "same_condition_yes_no_ctf",
+                "unit": "collateral_unit"
+              },
+              "prior_observed_updates_per_second": 1.0041719148058157,
+              "protocol": "v1",
+              "public_market_constraints": {
+                "end_date_iso": "2026-11-04T00:00:00Z",
+                "minimum_order_size": 5,
+                "minimum_tick_size": 0.01,
+                "seconds_delay": 0
+              },
+              "question": "Will the Democratic Party control the House after the 2026 Midterm elections?",
+              "resolution_source": "",
+              "selection_role": "high",
+              "tick_size": "0.01",
+              "tokens": {
+                "33156410999665902694791064431724433042010245771106314074312009703157423879038": "No",
+                "83247781037352156539108067944461291821683755894607244160607042790356561625563": "Yes"
+              },
+              "volume24hr": "715468.877418"
+            },
+            {
+              "activity_selection_basis": null,
+              "categories": [
+                "Abraham Accords",
+                "Gaza",
+                "Geopolitics",
+                "Israel",
+                "Middle East",
+                "Politics",
+                "World"
+              ],
+              "condition": "0x985b12455df199faf9ea77159bbcaa425dc5c4664fb07fd54f471ceb5d1d8e7f",
+              "end_ns": 1798779540000000000,
+              "event_ids": [
+                "73191"
+              ],
+              "fee_regime": {
+                "enabled": false,
+                "public_base_fee_evidence": {
+                  "68699590631603936159614111102521796272656890935739981452334083576745551689126": {
+                    "base_fee": 0,
+                    "raw_ordinal": 5068490
+                  },
+                  "787170291302302153997884307668830963927797223952711045136721008061721679993": {
+                    "base_fee": 0,
+                    "raw_ordinal": 5068489
+                  }
+                },
+                "schedule": null,
+                "status": "public_parameters_recorded_formula_requires_declared_version"
+              },
+              "id": "665472",
+              "lifecycle": {
+                "accepting_orders": true,
+                "active": true,
+                "closed": false,
+                "resolution_status": null
+              },
+              "liquidity": "1146.89844",
+              "metadata_ordinal": 5068488,
+              "minimum_order_size": "5",
+              "negative_risk": false,
+              "negative_risk_group": null,
+              "one_day_price_change": "0.0165",
+              "payoff": {
+                "combined_terminal_claim": "1",
+                "currency_conversion_assumed": false,
+                "limitation": "Before fees, redemption costs and settlement assumptions; not a fill.",
+                "pair": "same_condition_yes_no_ctf",
+                "unit": "collateral_unit"
+              },
+              "prior_observed_updates_per_second": 0.3661857214974447,
+              "protocol": "v1",
+              "public_market_constraints": {
+                "end_date_iso": "2027-01-01T00:00:00Z",
+                "minimum_order_size": 5,
+                "minimum_tick_size": 0.001,
+                "seconds_delay": 0
+              },
+              "question": "Will Syria join the Abraham Accords before 2027?",
+              "resolution_source": "",
+              "selection_role": "medium",
+              "tick_size": "0.001",
+              "tokens": {
+                "68699590631603936159614111102521796272656890935739981452334083576745551689126": "No",
+                "787170291302302153997884307668830963927797223952711045136721008061721679993": "Yes"
+              },
+              "volume24hr": "0"
+            },
+            {
+              "activity_selection_basis": null,
+              "categories": [
+                "Economy",
+                "Politics",
+                "Recurring",
+                "Trump"
+              ],
+              "condition": "0xe0acd0255dbd9274d22d8c1b226c9a2b60bad9098507ce8e7d72dede580cd57a",
+              "end_ns": 1803877140000000000,
+              "event_ids": [
+                "73210"
+              ],
+              "fee_regime": {
+                "enabled": true,
+                "public_base_fee_evidence": {
+                  "22106921341196818050439524942994162234430181387513131058873085228908007365669": {
+                    "base_fee": 1000,
+                    "raw_ordinal": 5068493
+                  },
+                  "2867209803492313176891970118649987905930881752970311413869425427415611673771": {
+                    "base_fee": 1000,
+                    "raw_ordinal": 5068492
+                  }
+                },
+                "schedule": {
+                  "exponent": 1,
+                  "rate": 0,
+                  "rebateRate": 0,
+                  "takerOnly": true
+                },
+                "status": "public_parameters_recorded_formula_requires_declared_version"
+              },
+              "id": "665494",
+              "lifecycle": {
+                "accepting_orders": true,
+                "active": true,
+                "closed": false,
+                "resolution_status": null
+              },
+              "liquidity": "504.54102",
+              "metadata_ordinal": 5068491,
+              "minimum_order_size": "5",
+              "negative_risk": false,
+              "negative_risk_group": null,
+              "one_day_price_change": "0.0005",
+              "payoff": {
+                "combined_terminal_claim": "1",
+                "currency_conversion_assumed": false,
+                "limitation": "Before fees, redemption costs and settlement assumptions; not a fill.",
+                "pair": "same_condition_yes_no_ctf",
+                "unit": "collateral_unit"
+              },
+              "prior_observed_updates_per_second": 0.0490397020952605,
+              "protocol": "v1",
+              "public_market_constraints": {
+                "end_date_iso": "2027-03-01T00:00:00Z",
+                "minimum_order_size": 5,
+                "minimum_tick_size": 0.001,
+                "seconds_delay": 0
+              },
+              "question": "Will Trump reduce the deficit before 2027? ",
+              "resolution_source": "https://fiscaldata.treasury.gov/datasets/monthly-treasury-statement/summary-of-receipts-outlays-and-the-deficit-surplus-of-the-u-s-government",
+              "selection_role": "thin",
+              "tick_size": "0.001",
+              "tokens": {
+                "22106921341196818050439524942994162234430181387513131058873085228908007365669": "No",
+                "2867209803492313176891970118649987905930881752970311413869425427415611673771": "Yes"
+              },
+              "volume24hr": "0"
+            },
+            {
+              "activity_selection_basis": "prior_observed_book_updates_per_second",
+              "categories": [
+                "Bulgaria",
+                "Bulgaria Election",
+                "Elections",
+                "Global Elections",
+                "Margin of Victory",
+                "Politics",
+                "World",
+                "World Elections"
+              ],
+              "condition": "0xccf8e8626aa7f6f7a54ea02c4f0850c9416ae8b9e3220c4078da9025417640ce",
+              "end_ns": 1792972740000000000,
+              "event_ids": [
+                "1071009"
+              ],
+              "fee_regime": {
+                "enabled": true,
+                "public_base_fee_evidence": {
+                  "79118149439309757267455443718734674416431762063614639186961272012854030039138": {
+                    "base_fee": 1000,
+                    "raw_ordinal": 5068496
+                  },
+                  "80063991947654419906230688220572444933848167677441955915219569495482749653332": {
+                    "base_fee": 1000,
+                    "raw_ordinal": 5068495
+                  }
+                },
+                "schedule": {
+                  "exponent": 1,
+                  "rate": 0,
+                  "rebateRate": 0,
+                  "takerOnly": true
+                },
+                "status": "public_parameters_recorded_formula_requires_declared_version"
+              },
+              "id": "4890263",
+              "lifecycle": {
+                "accepting_orders": true,
+                "active": true,
+                "closed": false,
+                "resolution_status": null
+              },
+              "liquidity": "53531.53259",
+              "metadata_ordinal": 5068494,
+              "minimum_order_size": "5",
+              "negative_risk": true,
+              "negative_risk_group": "0xb671b8c90958334236e57a1b55b205136eddf07f969b2e1ca6c013bde031f200",
+              "one_day_price_change": "-0.014",
+              "payoff": {
+                "combined_terminal_claim": "1",
+                "currency_conversion_assumed": false,
+                "limitation": "Before fees, redemption costs and settlement assumptions; not a fill.",
+                "pair": "same_condition_yes_no_ctf",
+                "unit": "collateral_unit"
+              },
+              "prior_observed_updates_per_second": 3.8083720151910008,
+              "protocol": "v1",
+              "public_market_constraints": {
+                "end_date_iso": "2026-10-25T00:00:00Z",
+                "minimum_order_size": 5,
+                "minimum_tick_size": 0.001,
+                "seconds_delay": 0
+              },
+              "question": "Will Iliana Iotova win the 2026 Bulgarian presidential first round by 30%-40%?",
+              "resolution_source": "",
+              "selection_role": "fast",
+              "tick_size": "0.001",
+              "tokens": {
+                "79118149439309757267455443718734674416431762063614639186961272012854030039138": "No",
+                "80063991947654419906230688220572444933848167677441955915219569495482749653332": "Yes"
+              },
+              "volume24hr": "43092.069123"
+            },
+            {
+              "activity_selection_basis": "prior_observed_book_updates_per_second",
+              "categories": [
+                "Earn 3.25%",
+                "Elections",
+                "Global Elections",
+                "Main Election",
+                "Politics",
+                "President",
+                "US Election",
+                "United States",
+                "World Elections"
+              ],
+              "condition": "0x836b850fc838195374862551a36f1c8691d96ff01e58b0a071f0fc1a0e357fb1",
+              "end_ns": 1857272340000000000,
+              "event_ids": [
+                "31552"
+              ],
+              "fee_regime": {
+                "enabled": true,
+                "public_base_fee_evidence": {
+                  "39223330966352513418907732239455948906399882924787587183466504819170775983376": {
+                    "base_fee": 1000,
+                    "raw_ordinal": 5068498
+                  },
+                  "50862799703982327636174441241062907649998751737045006653560124656563256528691": {
+                    "base_fee": 1000,
+                    "raw_ordinal": 5068499
+                  }
+                },
+                "schedule": {
+                  "exponent": 1,
+                  "rate": 0,
+                  "rebateRate": 0,
+                  "takerOnly": true
+                },
+                "status": "public_parameters_recorded_formula_requires_declared_version"
+              },
+              "id": "561251",
+              "lifecycle": {
+                "accepting_orders": true,
+                "active": true,
+                "closed": false,
+                "resolution_status": null
+              },
+              "liquidity": "2464487.38897",
+              "metadata_ordinal": 5068497,
+              "minimum_order_size": "5",
+              "negative_risk": true,
+              "negative_risk_group": "0xb9aa4595bbe8ca1ecceeb16d24fb5df6d27d4e2116787ad874ff31f682bdb400",
+              "one_day_price_change": "0",
+              "payoff": {
+                "combined_terminal_claim": "1",
+                "currency_conversion_assumed": false,
+                "limitation": "Before fees, redemption costs and settlement assumptions; not a fill.",
+                "pair": "same_condition_yes_no_ctf",
+                "unit": "collateral_unit"
+              },
+              "prior_observed_updates_per_second": 0.08803647945766079,
+              "protocol": "v1",
+              "public_market_constraints": {
+                "end_date_iso": "2028-11-08T00:00:00Z",
+                "minimum_order_size": 5,
+                "minimum_tick_size": 0.001,
+                "seconds_delay": 0
+              },
+              "question": "Will LeBron James win the 2028 US Presidential Election?",
+              "resolution_source": "",
+              "selection_role": "stable",
+              "tick_size": "0.001",
+              "tokens": {
+                "39223330966352513418907732239455948906399882924787587183466504819170775983376": "Yes",
+                "50862799703982327636174441241062907649998751737045006653560124656563256528691": "No"
+              },
+              "volume24hr": "0"
+            },
+            {
+              "activity_selection_basis": null,
+              "categories": [
+                "AI",
+                "AI Releases",
+                "Gemini",
+                "Gemini Pro",
+                "Tech",
+                "google"
+              ],
+              "condition": "0x6e9e567f3254d3536a5a601f646e3e07da05b8c91cb6d91ad10686741781906d",
+              "end_ns": 1792972740000000000,
+              "event_ids": [
+                "868080"
+              ],
+              "fee_regime": {
+                "enabled": true,
+                "public_base_fee_evidence": {
+                  "101355728346408966310180209813908697677533581003124665315104091831793989903453": {
+                    "base_fee": 1000,
+                    "raw_ordinal": 5068501
+                  },
+                  "6523890601290053850144787776746115667824114433988690429357847635507141826754": {
+                    "base_fee": 1000,
+                    "raw_ordinal": 5068502
+                  }
+                },
+                "schedule": {
+                  "exponent": 1,
+                  "rate": 0,
+                  "rebateRate": 0,
+                  "takerOnly": true
+                },
+                "status": "public_parameters_recorded_formula_requires_declared_version"
+              },
+              "id": "3685378",
+              "lifecycle": {
+                "accepting_orders": true,
+                "active": true,
+                "closed": false,
+                "resolution_status": null
+              },
+              "liquidity": "2795.05478",
+              "metadata_ordinal": 5068500,
+              "minimum_order_size": "5",
+              "negative_risk": true,
+              "negative_risk_group": "0x1bde09f90e30e11416075318b35115061a0cd54ab92b42675d77374cb3df9b00",
+              "one_day_price_change": "0",
+              "payoff": {
+                "combined_terminal_claim": "1",
+                "currency_conversion_assumed": false,
+                "limitation": "Before fees, redemption costs and settlement assumptions; not a fill.",
+                "pair": "same_condition_yes_no_ctf",
+                "unit": "collateral_unit"
+              },
+              "prior_observed_updates_per_second": 0.31683351098523344,
+              "protocol": "v1",
+              "public_market_constraints": {
+                "end_date_iso": "2026-10-25T00:00:00Z",
+                "minimum_order_size": 5,
+                "minimum_tick_size": 0.001,
+                "seconds_delay": 0
+              },
+              "question": "Will the next Google Gemini Pro model be released between October 19 and October 25, 2026?",
+              "resolution_source": "",
+              "selection_role": "near_expiry",
+              "tick_size": "0.001",
+              "tokens": {
+                "101355728346408966310180209813908697677533581003124665315104091831793989903453": "Yes",
+                "6523890601290053850144787776746115667824114433988690429357847635507141826754": "No"
+              },
+              "volume24hr": "30"
+            },
+            {
+              "activity_selection_basis": null,
+              "categories": [
+                "Elections",
+                "France",
+                "French Election",
+                "French Elections",
+                "Global Elections",
+                "Main Election",
+                "Politics",
+                "World",
+                "World Elections"
+              ],
+              "condition": "0x6189539ff1b08bc4052607d89921663ca0de0f0cd70b79c9993d7f9f3211ec3e",
+              "end_ns": 1808107140000000000,
+              "event_ids": [
+                "79987"
+              ],
+              "fee_regime": {
+                "enabled": true,
+                "public_base_fee_evidence": {
+                  "39040993339692011893931540077322383339631602451525460031216774971808386681386": {
+                    "base_fee": 1000,
+                    "raw_ordinal": 5068504
+                  },
+                  "47856683996156403009428090210889176913147998278019471610295491486371570337691": {
+                    "base_fee": 1000,
+                    "raw_ordinal": 5068505
+                  }
+                },
+                "schedule": {
+                  "exponent": 1,
+                  "rate": 0,
+                  "rebateRate": 0,
+                  "takerOnly": true
+                },
+                "status": "public_parameters_recorded_formula_requires_declared_version"
+              },
+              "id": "679026",
+              "lifecycle": {
+                "accepting_orders": true,
+                "active": true,
+                "closed": false,
+                "resolution_status": null
+              },
+              "liquidity": "383440.29382",
+              "metadata_ordinal": 5068503,
+              "minimum_order_size": "5",
+              "negative_risk": true,
+              "negative_risk_group": "0xdb7fd06931d5f8cec574bc6423d97f0c3a77e814e9b45119084f90e5a1632200",
+              "one_day_price_change": "0.001",
+              "payoff": {
+                "combined_terminal_claim": "1",
+                "currency_conversion_assumed": false,
+                "limitation": "Before fees, redemption costs and settlement assumptions; not a fill.",
+                "pair": "same_condition_yes_no_ctf",
+                "unit": "collateral_unit"
+              },
+              "prior_observed_updates_per_second": 0.3952508034902599,
+              "protocol": "v1",
+              "public_market_constraints": {
+                "end_date_iso": "2027-04-19T00:00:00Z",
+                "minimum_order_size": 5,
+                "minimum_tick_size": 0.001,
+                "seconds_delay": 0
+              },
+              "question": "Will Gabriel Attal win the 2027 French presidential election?",
+              "resolution_source": "https://www.interieur.gouv.fr/",
+              "selection_role": "category",
+              "tick_size": "0.001",
+              "tokens": {
+                "39040993339692011893931540077322383339631602451525460031216774971808386681386": "Yes",
+                "47856683996156403009428090210889176913147998278019471610295491486371570337691": "No"
+              },
+              "volume24hr": "24285.702954"
+            },
+            {
+              "activity_selection_basis": null,
+              "categories": [
+                "Elections",
+                "France",
+                "French Election",
+                "French Elections",
+                "Global Elections",
+                "Main Election",
+                "Politics",
+                "World",
+                "World Elections"
+              ],
+              "condition": "0x53e78cfec087a9bc8d1336c16a2da9db577cacedb5569c36e776711b264351a6",
+              "end_ns": 1808107140000000000,
+              "event_ids": [
+                "79987"
+              ],
+              "fee_regime": {
+                "enabled": true,
+                "public_base_fee_evidence": {
+                  "65798294507987312276643818583202416276939957254836998308855036749104874776050": {
+                    "base_fee": 1000,
+                    "raw_ordinal": 5068508
+                  },
+                  "80444250591000346031053171380243612904016851519226250274769734418106954626247": {
+                    "base_fee": 1000,
+                    "raw_ordinal": 5068507
+                  }
+                },
+                "schedule": {
+                  "exponent": 1,
+                  "rate": 0,
+                  "rebateRate": 0,
+                  "takerOnly": true
+                },
+                "status": "public_parameters_recorded_formula_requires_declared_version"
+              },
+              "id": "679055",
+              "lifecycle": {
+                "accepting_orders": true,
+                "active": true,
+                "closed": false,
+                "resolution_status": null
+              },
+              "liquidity": "1000339.91373",
+              "metadata_ordinal": 5068506,
+              "minimum_order_size": "5",
+              "negative_risk": true,
+              "negative_risk_group": "0xdb7fd06931d5f8cec574bc6423d97f0c3a77e814e9b45119084f90e5a1632200",
+              "one_day_price_change": "0",
+              "payoff": {
+                "combined_terminal_claim": "1",
+                "currency_conversion_assumed": false,
+                "limitation": "Before fees, redemption costs and settlement assumptions; not a fill.",
+                "pair": "same_condition_yes_no_ctf",
+                "unit": "collateral_unit"
+              },
+              "prior_observed_updates_per_second": 0.14914274431744023,
+              "protocol": "v1",
+              "public_market_constraints": {
+                "end_date_iso": "2027-04-19T00:00:00Z",
+                "minimum_order_size": 5,
+                "minimum_tick_size": 0.001,
+                "seconds_delay": 0
+              },
+              "question": "Will Karim Bouamrane win the 2027 French presidential election?",
+              "resolution_source": "https://www.interieur.gouv.fr/",
+              "selection_role": "random",
+              "tick_size": "0.001",
+              "tokens": {
+                "65798294507987312276643818583202416276939957254836998308855036749104874776050": "No",
+                "80444250591000346031053171380243612904016851519226250274769734418106954626247": "Yes"
+              },
+              "volume24hr": "0"
+            }
+          ],
+          "collection_health": "active_receiving",
+          "config": {
+            "budget_bytes": 25769803776,
+            "comparison_seconds": 15,
+            "comparison_timeout_seconds": 5,
+            "discovery_limit": 50,
+            "markets": 8,
+            "near_expiry_tag_id": 2,
+            "queue_size": 32,
+            "refresh_seconds": 600,
+            "reserve_bytes": 21474836480,
+            "resync_seconds": 300,
+            "retention_days": 90,
+            "root": "/home/charlie/midas-reality/data/recordings/reality",
+            "segment_bytes": 8388608,
+            "segment_seconds": 300,
+            "selection_mode": "stratified-v1",
+            "selection_seed": 20261014,
+            "stale_seconds": 60
+          },
+          "counts": {
+            "advertised_top_disagreement": 341364,
+            "best_bid_ask": 355673,
+            "book": 281022,
+            "crossed": 532,
+            "duplicate": 363,
+            "last_trade_price": 7827,
+            "new_market": 475006,
+            "price_change": 3125665,
+            "snapshot_divergence": 58477,
+            "snapshot_source_time_regression_after_gap": 1825,
+            "tick_size_change": 44,
+            "timestamp_regression": 156,
+            "top_divergence": 6450
+          },
+          "cross_outcome_skew_ns": {
+            "3685378": 0,
+            "4890263": 0,
+            "561251": 0,
+            "562802": 0,
+            "665472": 0,
+            "665494": 0,
+            "679026": 0,
+            "679055": 0
+          },
+          "error": null,
+          "expected_books": 16,
+          "failures": 10,
+          "frames": 3996540,
+          "fresh_books": 16,
+          "gaps": 18233,
+          "last_book_comparison": {
+            "after_lineage": [
+              5068511,
+              10
+            ],
+            "assessment": "stable_local_lineage_match_unsequenced",
+            "asset_id": "22106921341196818050439524942994162234430181387513131058873085228908007365669",
+            "before_lineage": [
+              5068511,
+              10
+            ],
+            "condition": "0xe0acd0255dbd9274d22d8c1b226c9a2b60bad9098507ce8e7d72dede580cd57a",
+            "independent_depth_sha256": "8c7dd073cd61667b580240bc68c5f333feccbb9e881a22261acf55a9ff2f090b",
+            "limitation": "HTTP round trip is not submission/one-way latency; agreement cannot prove no missed events.",
+            "raw_ordinal": 5068669,
+            "request_ns": 1792972299399192715,
+            "response_ns": 1792972299459994841,
+            "round_trip_ns": 60802126,
+            "sequence_verified": false,
+            "source_native_hash": "0dbbaf0d25114d124c6164a1835f4f3ac70417fb",
+            "source_timestamp_ms": 1792972021546
+          },
+          "last_observation_ns": 1792972306782774330,
+          "lifetime_frames": 3996540,
+          "lifetime_gap_records": 18233,
+          "lifetime_record_counts": {
+            "book_comparison": 58839,
+            "checkpoint": 31449,
+            "discovery": 18184,
+            "discovery_page": 99410,
+            "frame": 3996540,
+            "gap": 18233,
+            "heartbeat": 75638,
+            "independent_book": 58839,
+            "metadata_correction": 5,
+            "public_fee_metadata": 264876,
+            "public_market_metadata": 132440,
+            "snapshot_constraints": 265312,
+            "subscription": 18184,
+            "timing_measurement": 30741
+          },
+          "lifetime_records": 5068690,
+          "markets": 8,
+          "observation_coverage": {
+            "101355728346408966310180209813908697677533581003124665315104091831793989903453": {
+              "book_update_frames": 102,
+              "first_received_ns": 1792971627186584074,
+              "last_received_ns": 1792972306294505862
+            },
+            "22106921341196818050439524942994162234430181387513131058873085228908007365669": {
+              "book_update_frames": 1057,
+              "first_received_ns": 1792929191287133849,
+              "last_received_ns": 1792972259797967899
+            },
+            "2867209803492313176891970118649987905930881752970311413869425427415611673771": {
+              "book_update_frames": 1057,
+              "first_received_ns": 1792929191287133849,
+              "last_received_ns": 1792972259797967899
+            },
+            "33156410999665902694791064431724433042010245771106314074312009703157423879038": {
+              "book_update_frames": 145586,
+              "first_received_ns": 1792682355881664433,
+              "last_received_ns": 1792972306109187398
+            },
+            "39040993339692011893931540077322383339631602451525460031216774971808386681386": {
+              "book_update_frames": 14988,
+              "first_received_ns": 1792896468580691635,
+              "last_received_ns": 1792972303383628738
+            },
+            "39223330966352513418907732239455948906399882924787587183466504819170775983376": {
+              "book_update_frames": 12762,
+              "first_received_ns": 1792682355881664433,
+              "last_received_ns": 1792972259797967899
+            },
+            "47856683996156403009428090210889176913147998278019471610295491486371570337691": {
+              "book_update_frames": 14988,
+              "first_received_ns": 1792896468580691635,
+              "last_received_ns": 1792972303383628738
+            },
+            "50862799703982327636174441241062907649998751737045006653560124656563256528691": {
+              "book_update_frames": 12762,
+              "first_received_ns": 1792682355881664433,
+              "last_received_ns": 1792972259797967899
+            },
+            "6523890601290053850144787776746115667824114433988690429357847635507141826754": {
+              "book_update_frames": 102,
+              "first_received_ns": 1792971627186584074,
+              "last_received_ns": 1792972306294505862
+            },
+            "65798294507987312276643818583202416276939957254836998308855036749104874776050": {
+              "book_update_frames": 35,
+              "first_received_ns": 1792971815903879520,
+              "last_received_ns": 1792972306782774330
+            },
+            "68699590631603936159614111102521796272656890935739981452334083576745551689126": {
+              "book_update_frames": 69,
+              "first_received_ns": 1792972067273097954,
+              "last_received_ns": 1792972300641222034
+            },
+            "787170291302302153997884307668830963927797223952711045136721008061721679993": {
+              "book_update_frames": 69,
+              "first_received_ns": 1792972067273097954,
+              "last_received_ns": 1792972300641222034
+            },
+            "79118149439309757267455443718734674416431762063614639186961272012854030039138": {
+              "book_update_frames": 136200,
+              "first_received_ns": 1792900751500599688,
+              "last_received_ns": 1792972301287269535
+            },
+            "80063991947654419906230688220572444933848167677441955915219569495482749653332": {
+              "book_update_frames": 136199,
+              "first_received_ns": 1792900751500599688,
+              "last_received_ns": 1792972301287269535
+            },
+            "80444250591000346031053171380243612904016851519226250274769734418106954626247": {
+              "book_update_frames": 35,
+              "first_received_ns": 1792971815903879520,
+              "last_received_ns": 1792972306782774330
+            },
+            "83247781037352156539108067944461291821683755894607244160607042790356561625563": {
+              "book_update_frames": 145586,
+              "first_received_ns": 1792682355881664433,
+              "last_received_ns": 1792972306109187398
+            }
+          },
+          "ordinal": 5068690,
+          "process_backpressure_events": 1,
+          "process_frames": 1521540,
+          "process_max_append_seconds": 1.5657015428878367,
+          "sequence_verified": false,
+          "started_ns": 1792682353768298345,
+          "state": "RECORDING_UNSEQUENCED",
+          "state_sha256": "74cb4f30496d3a169db582081a2aa33668f7c765e430257d7e7f89c5bfbc58a1",
+          "storage_bytes": 8946927079,
+          "timing_uncertain_books": 0,
+          "transport_queue_bound": 32,
+          "updated_ns": 1792972306794190763,
+          "last_error": "ConnectionClosedOK: received 1001 (going away) server shutting down; then sent 1001 (going away) server shutting down"
+        },
+        "collector_status_age_seconds": 9.493582216,
+        "health": "degraded",
+        "capture_health": "recording",
+        "health_reasons": [
+          "recent_persistence_window_incomplete",
+          "recovery_state_unreported",
+          "transport_queue_depth_unreported"
+        ],
+        "source_quality": {
+          "status": "incomplete_observability",
+          "current_issues": [],
+          "observability_gaps": [
+            "recent_persistence_window_incomplete",
+            "recovery_state_unreported",
+            "transport_queue_depth_unreported"
+          ],
+          "known_limitations": [
+            "upstream_sequence_unavailable",
+            "recorded_gaps_exist",
+            "historical_lineage_divergences_exist",
+            "duplicate_events_observed_in_recent_window",
+            "source_timestamp_regressions_observed",
+            "snapshot_reconstruction_differences_observed"
+          ],
+          "interpretation": "The upstream feed has no documented monotonic sequence field. Current-book freshness and REST comparisons describe observed state; they cannot prove event completeness.",
+          "book_coverage": {
+            "state": "complete_current_books",
+            "expected": 16,
+            "fresh": 16,
+            "missing": 0
+          },
+          "sequence_state": "unsequenced",
+          "secondary_comparison": {
+            "state": "fresh",
+            "age_seconds": 16.827778138,
+            "stale_after_seconds": 30.0,
+            "assessment": "stable_local_lineage_match_unsequenced",
+            "assessment_counts": {
+              "concurrent_updates_ambiguous": 581,
+              "ineligible_local_state": 17,
+              "public_comparison_unavailable": 1,
+              "stable_local_lineage_divergence": 196,
+              "stable_local_lineage_match_unsequenced": 17633,
+              "stale_local_state": 45
+            },
+            "assessment_count_scope": "current_collector_process; full archive totals require a durable-history audit",
+            "response_ns": 1792972299459994841,
+            "raw_ordinal": 5068669,
+            "raw_body_reference": "independent_book_record_at_raw_ordinal",
+            "before_lineage": [
+              5068511,
+              10
+            ],
+            "after_lineage": [
+              5068511,
+              10
+            ]
+          },
+          "lineage": {
+            "latest_assessment": "stable_local_lineage_match_unsequenced",
+            "stable_local_divergences": 196,
+            "stable_divergence_count_scope": "current_collector_process",
+            "stable_local_matches_unsequenced": 17633,
+            "interpretation": "A REST/WebSocket mismatch at stable local lineage does not establish which view is incomplete when the upstream feed has no sequence guarantee."
+          },
+          "recorded_gaps": {
+            "count": 18233,
+            "reason_breakdown": null,
+            "scope": "Durable local gap markers and reported reason counts. A marker records an observed resynchronization or interruption; it does not establish the number of missing upstream events."
+          },
+          "event_integrity_signals": {
+            "duplicate_event_hashes_recent_window": 363,
+            "duplicate_window_capacity": 4096,
+            "timestamp_regressions": 156,
+            "snapshot_divergences": 58477,
+            "interpretations": {
+              "duplicate_event_hashes_recent_window": "Repeated frame hashes within the bounded recent observation window. The raw records remain stored and are applied idempotently; they are not dropped.",
+              "timestamp_regressions": "A source timestamp earlier than prior local state. The collector invalidates and resynchronizes the affected book; without upstream sequence numbers this does not prove a missing event.",
+              "snapshot_divergences": "A full-depth resynchronization or refresh snapshot differed from the prior local depth state. Markets can change between observations, so this count alone does not prove local event loss.",
+              "snapshot_source_time_regressions_after_gap": "A replacement snapshot had an earlier source timestamp after a recorded gap. It is retained as timing uncertainty until later observations establish a newer local state."
+            },
+            "count_scope": "current_collector_process; counters reset when the collector starts",
+            "snapshot_source_time_regressions_after_gap": 1825,
+            "scope": "Local reconstruction counters. Repeated hashes are counted within a bounded recent window; timestamp regressions are source-time checks, not provider sequence proof."
+          },
+          "timing": {
+            "uncertain_books": 0,
+            "clock_health": {
+              "checked_ns": 1792972306797093234,
+              "estimated_error_us": 0,
+              "kernel_state": 0,
+              "limitation": "Kernel-reported clock health; not independently measured venue clock skew.",
+              "maximum_error_us": 598000,
+              "status": "kernel_synchronized"
+            },
+            "cross_outcome_skew_ns": {
+              "3685378": 0,
+              "4890263": 0,
+              "561251": 0,
+              "562802": 0,
+              "665472": 0,
+              "665494": 0,
+              "679026": 0,
+              "679055": 0
+            }
+          },
+          "transport_queue": {
+            "depth": null,
+            "bound": 32,
+            "depth_state": "unreported"
+          },
+          "persistence": {
+            "state": "recent_window_unavailable",
+            "backpressure_active": false,
+            "recent_max_append_seconds": null,
+            "recent_p95_append_seconds": null,
+            "recent_max_persist_seconds": null,
+            "recent_p95_persist_seconds": null,
+            "recent_sample_count": null,
+            "recent_window_seconds": null,
+            "recent_window_covered_seconds": null,
+            "recent_window_complete": null,
+            "recent_window_available": false,
+            "lifetime_max_append_seconds": 1.5657015428878367,
+            "lifetime_max_exceeded_threshold": true,
+            "backpressure_events": 1,
+            "threshold_seconds": 1.0
+          },
+          "recovery_state": "not_reported"
+        },
+        "forward": {
+          "actual_orders_submitted": 0,
+          "budget_bytes": 4294967296,
+          "campaign_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
+          "counters": {
+            "lagged_frames_skipped": 302013,
+            "records": 652065,
+            "source_checkpoints": 4684
+          },
+          "days": [
+            "2026-10-14",
+            "2026-10-15"
+          ],
+          "decisions": 10253,
+          "events": 114120,
+          "evidence_bytes": 159435909,
+          "families": 25,
+          "followups": {
+            "censored": 40075,
+            "observed_public_measurement": 937
+          },
+          "last_decision_ns": 1792054686958876866,
+          "markets": 43,
+          "observations": 47911,
+          "pending_horizons": 0,
+          "producer_hash": "9231e11c969cc95af607d847c7d5aa32418a91c21152b214cf9f170d517c0c9f",
+          "scientific_state": "insufficient_forward_evidence",
+          "source_last_received_ns": 1792108061119258343,
+          "source_ordinal": 652065,
+          "state": "STOPPED_WITH_RECOVERABLE_PENDING",
+          "updated_ns": 1792452727915338765
+        },
+        "capacity": {
+          "alerts": [
+            "BUDGET_CHANGE_PENDING_RESTART",
+            "RETENTION_CHANGE_PENDING_RESTART",
+            "CAPACITY_WARNING_WITHIN_THIRTY_DAYS",
+            "SHORT_WINDOW_CAPACITY_WARNING_WITHIN_THIRTY_DAYS",
+            "ARCHIVE_SEGMENT_INVENTORY_INVALID",
+            "ARCHIVE_MANIFEST_PROVENANCE_INVALID"
+          ],
+          "archive_capacity": {
+            "alerts": [
+              "ARCHIVE_SEGMENT_INVENTORY_INVALID",
+              "ARCHIVE_MANIFEST_PROVENANCE_INVALID"
+            ],
+            "archive_full_verified_bytes": 4864388360,
+            "archive_full_verified_manifest_sha256": "06f07a7462b7c6676f2bd46a84b2c8bbaa82af8b2d7de08c96728991fc86847a",
+            "archive_full_verified_ns": 1792569601218053083,
+            "archive_full_verified_segment_count": 18521,
+            "archive_incremental_verified_ns": 1792572623134205789,
+            "archive_incremental_verified_segments": 6,
+            "archive_manifest_provenance_valid": false,
+            "archive_segment_count": 18695,
+            "archive_source_manifest_sha256": "8bccc93b8f62f4bcf5d2d637d80e81c12e304ee602c87e4108bc6ffa3abbccad",
+            "archive_verification_mode": "incremental_suffix",
+            "available_headroom_bytes": 114865656358,
+            "budget_bytes": 120259084288,
+            "destination": "/mnt/continental-cloud/data/midas-reality-staging/archive-mission3",
+            "destination_on_expected_mount": true,
+            "destination_state": "INVALID_MANIFEST",
+            "estimated_storage_seconds_remaining": 9772468.728016736,
+            "filesystem_free_bytes": 635209543680,
+            "filesystem_reserve_bytes": 429496729600,
+            "mounted": true,
+            "mountpoint": "/mnt/continental-cloud",
+            "raw_archive_bytes": 5393427930,
+            "separate_from_raw_filesystem": true
+          },
+          "available_headroom_bytes": 16829001915,
+          "budget_bytes": 25769803776,
+          "budget_change_pending_restart": true,
+          "budget_source": "collector_status+startup_config",
+          "capacity_builder_sha256": "229d3ad166f4b7e987462e54cf62801f87ff0d7024c83bedf61bcb01b65344a3",
+          "capacity_builder_version": "receipt-aware-capacity-v5-sustained-growth-windows",
+          "collector_state": "RECORDING_UNSEQUENCED",
+          "collector_status_age_seconds": 5.113463431,
+          "compressed_bytes_per_second": 8976.22120337199,
+          "configured_available_headroom_bytes": 111318282427,
+          "configured_budget_bytes": 120259084288,
+          "configured_capacity_runway_days": 108.35075165326653,
+          "configured_capacity_runway_seconds": 9361504.942842228,
+          "configured_estimated_storage_seconds_remaining": 9470667.459417926,
+          "configured_retention_days": 120,
+          "configured_retention_seconds_remaining": 9361504.942842228,
+          "effective_budget_bytes": 25769803776,
+          "effective_capacity_runway_days": 16.5713812174563,
+          "effective_capacity_runway_seconds": 1431767.337188224,
+          "effective_retention_days": 90,
+          "estimated_action_deadline_ns": 1794403347105292288,
+          "estimated_bytes_per_day": 775545511.97134,
+          "estimated_storage_seconds_remaining": 1431767.337188224,
+          "filesystem_free_bytes": 163378544640,
+          "forecast_basis": "maximum_of_trailing_six_hour_twenty_four_hour_and_configured_floor",
+          "forecast_bytes_per_day": 1015546121.0,
+          "forecast_floor_bytes_per_day": 973161695,
+          "free_disk_reserve_bytes": 21474836480,
+          "growth_windows": {
+            "trailing_six_hours": {
+              "bytes": 236125666,
+              "bytes_per_day": 944502664.0,
+              "bytes_per_second": 10931.743796296296,
+              "coverage_seconds": 21600.0,
+              "finalized_segments": 710,
+              "timestamp_state": "valid",
+              "window_seconds": 21600
+            },
+            "trailing_twenty_four_hours": {
+              "bytes": 1015546121,
+              "bytes_per_day": 1015546121.0,
+              "bytes_per_second": 11754.006030092592,
+              "coverage_seconds": 86400.0,
+              "finalized_segments": 2840,
+              "timestamp_state": "valid",
+              "window_seconds": 86400
+            }
+          },
+          "limitations": [
+            "Recent finalized-segment rate includes gaps and metadata; future rates vary.",
+            "Active segment excluded from rate, included in root usage.",
+            "Raw originals never pruned. Retention horizon stops collection.",
+            "Capacity metadata does not perform full archive integrity verification.",
+            "Local archive copies consume a separately accounted filesystem allocation; they are not off-host redundancy."
+          ],
+          "measured_ns": 1792971579768103937,
+          "measured_storage_seconds_remaining": 1874842.601770782,
+          "raw_root_bytes": 8940801861,
+          "recording_root": "/home/charlie/midas-reality/data/recordings/reality",
+          "retention_change_pending_restart": true,
+          "retention_days": 90,
+          "retention_seconds_remaining": 6769504.942842228,
+          "retention_source": "collector_status+startup_config",
+          "sample": {
+            "clock_assessment_basis": "sequential WebSocket dequeue frames; deferred HTTP timestamps remain separate",
+            "clock_regressions": 0,
+            "compressed_and_catalog_bytes": 32755585,
+            "first_received_ns": 1792967918151140561,
+            "last_received_ns": 1792971567301964484,
+            "raw_frame_payload_bytes": 15963006,
+            "raw_frames": 12606,
+            "record_receipt_regressions": 175,
+            "seconds": 3649.150823923,
+            "segments": 120,
+            "source_sha256": "9c8904b6f1e474daad7ecad2bb67dc25358e818013771298760bfb963101da6c"
+          },
+          "schema_version": 1,
+          "short_window_capacity_runway_days": 21.69956715012479,
+          "short_window_capacity_runway_seconds": 1874842.601770782
+        },
+        "schedule": {
+          "active_forward_campaigns_modified": false,
+          "automatic_promotion": false,
+          "checked_ns": 1792896009861330724,
+          "collector_dependency": "none; read-only finalized catalogs",
+          "config_sha256": "7f1c57da2378a45ea1c7167d42ae161c1369dde437640e2732207c9483bebaed",
+          "fit_week": "2026-W43",
+          "run_id": null,
+          "state": "ALREADY_ATTEMPTED_THIS_WEEK",
+          "week": "2026-W43"
+        },
+        "integrity": {
+          "campaign_id": "adf91d042ab8f91678834b9258bfde70022a763dfda8c91d1e94be334583aa46",
+          "checked_ns": 1792897378123374394,
+          "code_files": 20,
+          "journal": {
+            "events": 114120,
+            "sqlite_integrity": "ok",
+            "tail_sha256": "7adce9dc1b714cc6a58e7bbb1a8823ab8c7cd43e2aa5c0108a7179be46ae1ebe"
+          },
+          "models": 4,
+          "scope": "Artifact hashes, SQLite/event chain and runtime identity; full raw/public-label replay is a separate audit",
+          "state": "INTEGRITY_VERIFIED"
+        },
+        "execution_ground_truth": "unknown_counterfactual",
+        "orders_submitted": 0
+      }
+    },
+    "veritas_overview": {
+      "http_status": 503,
+      "body": "{\"detail\":\"Veritas public observatory summary exceeds the interface bound\"}"
+    }
+  },
+  "blockers": [
+    "No latest-boundary checkpointed recovery receipt is available; this assessment inventories manifests and file presence only.",
+    "The matching-source seeded candidate canary used a small deterministic fixture seed and does not match the current production boundary.",
+    "No checksum- and ownership/provenance-verified archive receipt is available.",
+    "Archive staging inventory contains unresolved manifest differences or partial-copy files; ownership/provenance remains unresolved.",
+    "The active Reality recorder still uses the older 24 GiB / 90-day config; the 112 GiB / 120-day candidate is undeployed.",
+    "Protected recorder transition requires explicit operator approval."
+  ],
+  "decisions": {
+    "preflight_gate_written": false,
+    "deployment_applied": false,
+    "active_config_changed": false,
+    "protected_service_stopped_or_restarted": false,
+    "archive_files_changed": false,
+    "raw_recordings_changed": false
+  },
+  "interpretation": "This is a fresh read-only blocker inventory, not the guarded deploy.py preflight gate. A true preflight remains unavailable until the exact-boundary recovery and verified archive receipts exist."
+}

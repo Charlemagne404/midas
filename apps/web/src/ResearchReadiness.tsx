@@ -204,6 +204,8 @@ export function ResearchReadiness() {
     query.dataUpdatedAt ? now - query.dataUpdatedAt : undefined;
   const isStale = (query: Query<JsonObject>) =>
     queryAge(query) !== undefined && queryAge(query)! > 90_000;
+  const displayedServiceState = (query: Query<JsonObject>, state: string) =>
+    query.isError && query.data ? 'STALE' : isStale(query) ? 'STALE' : state;
 
   const apiState = string(health.status) ?? (healthQuery.isError ? 'UNAVAILABLE' : 'CONNECTING');
   const realityState =
@@ -216,28 +218,78 @@ export function ResearchReadiness() {
 
   const referenceCount = number(audit.reference_pairs);
   const supportedCount = number(audit.economic_supported_pairs);
-  const disagreementMap = object(audit.disagreement_counts);
-  const disagreementCount = Object.values(disagreementMap).reduce<number>(
-    (total, value) => total + (number(value) ?? 0),
+  const rawDisagreementCounts = audit.disagreement_counts;
+  const disagreementCountsAvailable =
+    rawDisagreementCounts !== null &&
+    typeof rawDisagreementCounts === 'object' &&
+    !Array.isArray(rawDisagreementCounts);
+  const disagreementMap = object(rawDisagreementCounts);
+  const disagreementValues = Object.values(disagreementMap);
+  const disagreementCountsValid =
+    disagreementCountsAvailable &&
+    disagreementValues.every(
+      (value) => Number.isSafeInteger(value) && typeof value === 'number' && value >= 0,
+    );
+  const disagreementCount = disagreementCountsValid
+    ? disagreementValues.reduce<number>((total, value) => total + (value as number), 0)
+    : undefined;
+  const disagreementCategoryTotal = (matches: (key: string) => boolean) =>
+    disagreementCountsValid
+      ? disagreementValues.reduce<number>((total, value, index) => {
+          const key = Object.keys(disagreementMap)[index];
+          return total + (matches(key) ? (value as number) : 0);
+        }, 0)
+      : undefined;
+  const validityDisagreements = disagreementCategoryTotal((key) => /valid/i.test(key));
+  const priceEdgeDisagreements = disagreementCategoryTotal((key) => /price|edge/i.test(key));
+  const feeDisagreements = disagreementCategoryTotal((key) => /fee/i.test(key));
+  const classifiedDisagreementCount = [
+    validityDisagreements,
+    priceEdgeDisagreements,
+    feeDisagreements,
+  ].reduce<number | undefined>(
+    (total, value) => (total === undefined || value === undefined ? undefined : total + value),
     0,
   );
-  const auditAvailable = string(audit.status) === 'MEASURED' && referenceCount !== undefined;
+  const otherDisagreements =
+    disagreementCount === undefined || classifiedDisagreementCount === undefined
+      ? undefined
+      : disagreementCount - classifiedDisagreementCount;
+  const auditAvailable =
+    string(audit.status) === 'MEASURED' &&
+    referenceCount !== undefined &&
+    supportedCount !== undefined;
   const auditReported =
     ['MEASURED', 'STALE'].includes(String(audit.status)) && referenceCount !== undefined;
+  const auditHasRows =
+    referenceCount !== undefined && Number.isSafeInteger(referenceCount) && referenceCount > 0;
   const auditVersionStale =
     audit.source_version_current === false && audit.reference_version != null;
+  const summaryUpdatedAtMs =
+    typeof veritas.updated_at_utc === 'string' ? Date.parse(veritas.updated_at_utc) : NaN;
+  const auditTimestampAvailable = Number.isFinite(summaryUpdatedAtMs) && summaryUpdatedAtMs <= now;
   const auditFresh =
+    !veritasQuery.isError &&
     !isStale(veritasQuery) &&
-    (!asUtcTime(veritas.updated_at_utc) ||
-      now - Date.parse(String(veritas.updated_at_utc)) < 24 * 60 * 60 * 1000);
+    auditTimestampAvailable &&
+    now - summaryUpdatedAtMs < 24 * 60 * 60 * 1000;
   const researchCorrectness = gateStatus(
-    auditReported,
+    auditReported &&
+      auditHasRows &&
+      supportedCount !== undefined &&
+      disagreementCountsValid &&
+      string(audit.reference_version) !== undefined &&
+      audit.source_version_current !== undefined &&
+      auditTimestampAvailable,
     veritasQuery.isError && !veritasQuery.data,
-    !auditFresh || auditVersionStale,
+    auditTimestampAvailable && (!auditFresh || auditVersionStale),
     auditAvailable &&
+      auditHasRows &&
+      disagreementCountsValid &&
       audit.source_version_current === true &&
       supportedCount === referenceCount &&
-      disagreementCount === 0,
+      disagreementCount === 0 &&
+      string(audit.reference_version) !== undefined,
   );
 
   const sourceStatus = statusText(sourceQuality.status).toLowerCase();
@@ -301,6 +353,7 @@ export function ResearchReadiness() {
     capacitySampleSeconds !== undefined &&
     capacitySampleSeconds >= 60 &&
     capacityRate !== undefined;
+  const displayedRunway = storageObserved ? runway : undefined;
   const storageExhausted = capacityAlerts?.includes('CAPACITY_EXHAUSTED') === true;
   const storageGate: GateStatus = storageExhausted
     ? 'BLOCKED'
@@ -362,21 +415,26 @@ export function ResearchReadiness() {
         : 'NOT MEASURED';
 
   const eligibleObservations = number(funnel.net_economically_eligible_pair_observations);
-  const economicObserved = string(audit.status) === 'MEASURED' && supportedCount !== undefined;
+  const economicObserved =
+    string(audit.status) === 'MEASURED' && auditHasRows && supportedCount !== undefined;
   const economicSufficiency: GateStatus = !economicObserved
     ? veritasQuery.isError && !veritasQuery.data
       ? 'BLOCKED'
       : 'NOT MEASURED'
-    : isStale(veritasQuery)
-      ? 'STALE'
-      : 'CONDITIONAL';
+    : !auditTimestampAvailable
+      ? 'NOT MEASURED'
+      : !auditFresh || auditVersionStale
+        ? 'STALE'
+        : 'CONDITIONAL';
 
   const gateRows = [
     {
       title: 'Independent research correctness',
       status: researchCorrectness,
       detail: auditReported
-        ? `${fmt(referenceCount)} ${string(audit.reference_version) ?? 'unversioned'} reference pairs; ${fmt(disagreementCount)} recorded disagreements. ${auditVersionStale ? `Integrated reference ${string(audit.implementation_reference_version) ?? 'unreported'} has not audited these observations.` : 'Agreement does not prove execution.'}`
+        ? !auditHasRows
+          ? 'No independent reference pairs were audited; an empty result cannot establish calculation correctness.'
+          : `${fmt(referenceCount)} ${string(audit.reference_version) ?? 'unversioned'} reference pairs; ${fmt(disagreementCount)} recorded disagreements. ${!auditTimestampAvailable ? 'Summary timestamp is missing or invalid; freshness cannot be verified. ' : ''}${auditVersionStale ? `Integrated reference ${string(audit.implementation_reference_version) ?? 'unreported'} has not audited these observations.` : 'Agreement does not prove execution.'}`
         : 'A current independent audit result is unavailable. Missing evidence cannot pass this gate.',
     },
     {
@@ -410,13 +468,16 @@ export function ResearchReadiness() {
       title: 'Economic evidence sufficiency',
       status: economicSufficiency,
       detail: economicObserved
-        ? `${fmt(supportedCount)} supported pair observations; ${fmt(eligibleObservations)} net eligible pair observations. No validated sufficiency threshold is configured.`
+        ? `${fmt(supportedCount)} supported pair observations across ${fmt(referenceCount)} audited reference pairs; ${fmt(eligibleObservations)} net eligible pair observations. No validated sufficiency threshold is configured.`
         : 'Current independent economic evidence is unavailable; candidate counts remain unmeasured.',
     },
   ];
 
   const stages = [
-    ['Bounded frame market visits', funnel.bounded_frame_market_visits],
+    [
+      'Bounded frame market visits',
+      funnel.bounded_frame_market_visits ?? funnel.bounded_query_frame_market_visits,
+    ],
     ['Selected market observations', funnel.selected_market_observations],
     ['Observed pair records', funnel.observed_pair_observations],
     ['Quality-valid pairs', funnel.quality_valid_pair_observations],
@@ -447,6 +508,11 @@ export function ResearchReadiness() {
   const apiVersion = string(health.api_version ?? health.version ?? health.build_id);
   const apiBuildCommit = string(health.build_commit);
   const stagedCandidateIdentity = string(operations.staged_candidate_identity);
+  const integratedBranch = import.meta.env.VITE_MIDAS_INTEGRATED_BRANCH;
+  const integratedCommit = import.meta.env.VITE_MIDAS_INTEGRATED_COMMIT;
+  const integratedDirty = import.meta.env.VITE_MIDAS_INTEGRATED_DIRTY;
+  const summaryUpdatedAt = asUtcTime(veritas.updated_at_utc);
+  const visibleRunwayStale = capacityStale || isStale(realityQuery);
 
   const retryAll = () => {
     void Promise.all([
@@ -520,7 +586,7 @@ export function ResearchReadiness() {
             <tbody>
               <ServiceRow
                 name="Mission Control API"
-                state={apiState}
+                state={displayedServiceState(healthQuery, apiState)}
                 version={apiVersion}
                 verifiedAt={healthQuery.dataUpdatedAt}
                 note={`Mode ${statusText(health.mode)}; live execution ${String(health.live_execution ?? 'not reported')}.`}
@@ -528,7 +594,7 @@ export function ResearchReadiness() {
               />
               <ServiceRow
                 name="Reality"
-                state={realityState}
+                state={displayedServiceState(realityQuery, realityState)}
                 version={runtimeRealityVersion}
                 verifiedAt={realityQuery.dataUpdatedAt}
                 note={`Capture ${statusText(reality.capture_health)}; source ${statusText(sourceQuality.status)}.`}
@@ -536,7 +602,7 @@ export function ResearchReadiness() {
               />
               <ServiceRow
                 name="Veritas"
-                state={veritasState}
+                state={displayedServiceState(veritasQuery, veritasState)}
                 version={runtimeVeritasVersion}
                 verifiedAt={veritasQuery.dataUpdatedAt}
                 note={
@@ -547,7 +613,7 @@ export function ResearchReadiness() {
               />
               <ServiceRow
                 name="Laboratory"
-                state={labState}
+                state={displayedServiceState(laboratoryQuery, labState)}
                 version={string(laboratory.version)}
                 verifiedAt={laboratoryQuery.dataUpdatedAt}
                 note={`${fmt(object(laboratoryQuery.data).datasets instanceof Array ? (object(laboratoryQuery.data).datasets as unknown[]).length : undefined)} datasets listed by catalog.`}
@@ -555,7 +621,7 @@ export function ResearchReadiness() {
               />
               <ServiceRow
                 name="Arena"
-                state={arenaState}
+                state={displayedServiceState(arenaQuery, arenaState)}
                 version={string(arena.version)}
                 verifiedAt={arenaQuery.dataUpdatedAt}
                 note={arenaNote}
@@ -590,9 +656,12 @@ export function ResearchReadiness() {
             <div>
               <span>Integrated repository identity</span>
               <strong className="rr-mono">
-                {string(health.repository_commit) ?? 'Not reported by active service'}
+                {integratedBranch} @ {integratedCommit}
               </strong>
-              <small>Service health does not expose the active checkout commit.</small>
+              <small>
+                Dashboard build source; working tree {integratedDirty ? 'had changes' : 'was clean'}
+                at build time.
+              </small>
             </div>
             <div>
               <span>Reality runtime identity</span>
@@ -661,6 +730,14 @@ export function ResearchReadiness() {
               })}
               <div className="rr-funnel-meta">
                 <span>
+                  Summary updated: <strong>{summaryUpdatedAt ?? 'Not measured'}</strong>{' '}
+                  <Badge
+                    status={
+                      !auditTimestampAvailable ? 'NOT MEASURED' : auditFresh ? 'CURRENT' : 'STALE'
+                    }
+                  />
+                </span>
+                <span>
                   Audit version:{' '}
                   <strong className="rr-mono">
                     {string(funnel.reference_version) ?? 'Not measured'}
@@ -668,6 +745,10 @@ export function ResearchReadiness() {
                   {funnel.reference_version_current === true
                     ? '(current)'
                     : '(historical or stale)'}
+                </span>
+                <span>
+                  Bounded markets in latest discovery:{' '}
+                  <strong>{fmt(object(veritas.discovery).current_bounded_eligible_markets)}</strong>
                 </span>
                 <span>
                   Unique markets observed: <strong>{fmt(funnel.unique_markets_observed)}</strong>
@@ -729,12 +810,24 @@ export function ResearchReadiness() {
                 <strong>{fmt(referenceCount)}</strong>
               </div>
               <div>
+                <span>Snapshot-valid pairs</span>
+                <strong>{fmt(audit.snapshot_valid_pairs)}</strong>
+              </div>
+              <div>
                 <span>Economic support</span>
                 <strong>{fmt(supportedCount)}</strong>
               </div>
               <div>
+                <span>Positive gross observations</span>
+                <strong>{fmt(audit.positive_gross_pair_observations)}</strong>
+              </div>
+              <div>
                 <span>Net eligible observations</span>
-                <strong>{fmt(eligibleObservations)}</strong>
+                <strong>{fmt(audit.net_eligible_pairs ?? eligibleObservations)}</strong>
+              </div>
+              <div>
+                <span>Unsupported pairs</span>
+                <strong>{fmt(audit.unsupported_pairs)}</strong>
               </div>
               <div>
                 <span>Disagreements</span>
@@ -747,6 +840,24 @@ export function ResearchReadiness() {
               <p>Current independent audit counts are not available.</p>
             </div>
           )}
+          <div className="rr-economic-disagreements" aria-label="Economic disagreement breakdown">
+            <div>
+              <span>Validity</span>
+              <strong>{fmt(validityDisagreements)}</strong>
+            </div>
+            <div>
+              <span>Price / edge</span>
+              <strong>{fmt(priceEdgeDisagreements)}</strong>
+            </div>
+            <div>
+              <span>Fees</span>
+              <strong>{fmt(feeDisagreements)}</strong>
+            </div>
+            <div>
+              <span>Other</span>
+              <strong>{fmt(otherDisagreements)}</strong>
+            </div>
+          </div>
           <details className="rr-details">
             <summary>Audit status and source lineage</summary>
             <pre>
@@ -754,6 +865,8 @@ export function ResearchReadiness() {
                 {
                   status: audit.status ?? 'NOT MEASURED',
                   disagreement_counts: audit.disagreement_counts ?? null,
+                  unsupported_pairs: audit.unsupported_pairs ?? null,
+                  unsupported_assumptions: audit.limitations ?? audit.unsupported_reasons ?? null,
                   basis: audit.basis ?? null,
                   source_lineage_agreement_is_separate: true,
                 },
@@ -781,6 +894,18 @@ export function ResearchReadiness() {
             <div>
               <span>Recovery status</span>
               <strong>{statusText(realityIntegrity.status ?? realityIntegrity.readiness)}</strong>
+            </div>
+            <div>
+              <span>Persisted Veritas analysis coverage</span>
+              <strong>
+                {veritas.processed_snapshot_count === undefined
+                  ? 'Not reported'
+                  : `${fmt(veritas.processed_snapshot_count)} processed / ${fmt(veritas.pending_snapshot_count)} pending`}
+              </strong>
+              <small>
+                {statusText(veritas.analysis_catchup_status ?? veritas.measurement_status)}; summary
+                updated {summaryUpdatedAt ?? 'at an unknown time'}.
+              </small>
             </div>
             <div>
               <span>Latest durable observation</span>
@@ -823,6 +948,10 @@ export function ResearchReadiness() {
                   veritas: {
                     status: veritas.status,
                     analysis_version: veritas.analysis_version,
+                    updated_at_utc: veritas.updated_at_utc,
+                    processed_snapshot_count: veritas.processed_snapshot_count,
+                    pending_snapshot_count: veritas.pending_snapshot_count,
+                    analysis_catchup_status: veritas.analysis_catchup_status,
                     observation_funnel: veritas.observation_funnel,
                   },
                 },
@@ -841,7 +970,11 @@ export function ResearchReadiness() {
           <div className="rr-integrity-list">
             <div>
               <span>Storage runway to lowest measured limit</span>
-              <strong>{runway === undefined ? 'Not measured' : `${runway.toFixed(1)} days`}</strong>
+              <strong>
+                {displayedRunway === undefined
+                  ? 'Not measured'
+                  : `${displayedRunway.toFixed(1)} days${visibleRunwayStale ? ' · STALE' : ''}`}
+              </strong>
             </div>
             <div>
               <span>Active recorder budget / retention</span>

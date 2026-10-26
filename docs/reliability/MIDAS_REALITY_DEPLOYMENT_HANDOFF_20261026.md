@@ -16,26 +16,41 @@ mission branch. Its SHA-256 is
 requests 112 GiB / 120 days. It does not change the service memory limits.
 This candidate has not been copied into the runtime checkout.
 
-At the last admission measurement the recorder had approximately 6.7 MiB
-below `MemoryHigh`; the hard-limit and OOM counters were zero. The host had
-about 7.9 GiB available and the short PSI admission checks passed. The bounded
-canary ran in a separate terminal scope and made no external market requests.
-Its process RSS/CPU measurements describe that fixture process. Its execution
-cgroup totals aggregate the named scope; the lifetime cgroup peak is not the
-collector's production peak.
+The final-source schema-4 canary ran for 95 seconds in a separate terminal
+scope. It used one deterministic fixture segment, loopback WebSocket and
+in-process `MockTransport`; it made no external market requests. It processed
+307 frames, wrote 765,835 durable bytes across five segments, made five
+checkpoints, and measured 41,689,088 bytes process peak RSS and 0.583 process
+CPU-seconds. All 16 fixture books were fresh before stop. Its source SHA matches
+the final Reality candidate, but this small synthetic seed is not the
+production boundary. The canary's estimated 0.647 GiB/day is not a production
+capacity estimate. Its execution cgroup totals aggregate the named scope; the
+lifetime cgroup peak is not the collector's production peak.
 
 A newer read-only assessment at `2026-10-25T23:30:01.032254Z` found only
 1,662,976 bytes below `MemoryHigh` (14,353 cumulative `high` events; zero
-`max`/OOM/kill events). This is below the 4 MiB concurrency admission floor.
-It captured finalized manifest SHA-256
-`e5a75cc4cb62c948be891000b12612161ab3f0e31408103ccc84cdb847d12276`, with
-31,425 segments / 8,923,447,888 bytes through ordinal 5,063,282 and one open
-segment. The status reported `RECORDING_UNSEQUENCED`, 16/16 fresh books, and
-was 9.786 seconds older than the assessment capture. The status and catalog
-reads are not an atomic boundary. The assessment is
+`max`/OOM/kill events). It captured 31,425 finalized segments / 8,923,447,888
+bytes through ordinal 5,063,282 and one open segment. The status was 9.786
+seconds older than the assessment capture; status and catalog reads were not
+atomic. This historical assessment is
 [`MIDAS_MISSION_20261026_DEPLOYMENT_PREFLIGHT_BLOCKED_V2.json`](evidence/MIDAS_MISSION_20261026_DEPLOYMENT_PREFLIGHT_BLOCKED_V2.json),
 SHA-256 `25ea857aeefc39ff6bf0254535ef20768a7228e26702d2aa2e72aa80eb6c825a`.
-The earlier `..._BLOCKED.json` assessment is preserved as a historical sample.
+
+The later V3 read-only inventory at `2026-10-25T23:51:56Z` found 31,468
+finalized segments / 8,934,305,682 bytes through ordinal 5,068,661, manifest
+SHA-256 `0270af73720b637c892cbbaf6240e40a411a46009a4345587501f7bf72328b9c`, and
+one open segment. It inventories manifest/file presence only; it does not
+rehash segment contents or replay them. At that sample PID `3007040` had
+5,484,544 bytes below `MemoryHigh`. V3 is an inventory rather than a guarded
+preflight: no gate was written. See
+[`MIDAS_MISSION_20261026_DEPLOYMENT_PREFLIGHT_BLOCKED_V3.json`](evidence/MIDAS_MISSION_20261026_DEPLOYMENT_PREFLIGHT_BLOCKED_V3.json),
+SHA-256 `41bacf1919c42d988b24e7d49c445767548167ddd1afe75f5014b7a93ae622ef`.
+
+A fresh read at `2026-10-25T23:59:44Z` found the same protected PID active,
+1,098,846,208 bytes current against `MemoryHigh=1,207,959,552`, and
+`memory.events` counters `max=0`, `oom=0`, `oom_kill=0`. Host I/O PSI full was
+0.72% avg10 / 1.48% avg60 / 4.28% avg300. A single sample does not satisfy the
+60-second continuous admission window required before another staging phase.
 
 ## Storage and archival state
 
@@ -60,27 +75,35 @@ The earlier `..._BLOCKED.json` assessment is preserved as a historical sample.
 
 **Status: BLOCKED; no deployment approval has been requested or inferred.**
 
-The candidate's changed-code suites pass in the mission worktree, but no current
-verification receipt or seeded canary matches its final source identity
-(`6cdfd3c09facaedfa86213fd794c33709bd36e37beb161f156d4cb06a2810d24`). The
-latest full archive boundary has not been cold-recovered; historical R15
-stopped at 2,304/20,148 segments; the staging tree has unresolved provenance
-and manifest gaps; and there is no production-sized isolated startup peak to
-compare with the recorder limits. The service has only 1.66 MiB below
-`MemoryHigh`. An empty-root fixture cannot substitute for seeded boundary
-startup and recovery evidence.
+The final-source fixture canary passes for candidate identity
+`6cdfd3c09facaedfa86213fd794c33709bd36e37beb161f156d4cb06a2810d24`, but its
+one-segment deterministic fixture does not establish production-boundary
+startup or recovery. The latest full archive boundary has not been
+cold-recovered; historical R15 stopped at 2,304/20,148 segments; the archive
+staging tree has unresolved provenance and manifest gaps; and there is no
+production-sized isolated startup peak to compare with recorder limits.
 
-The saved schema-3 canary was made before the final recovery changes and its
-candidate source hash differs from the current candidate. It was also an
-empty-root canary, with no `seed_manifest_sha256`; it cannot satisfy the new
-guarded preflight's seeded-boundary requirement.
+The matching-source canary is deliberately limited to a one-segment fixture
+seed. It cannot satisfy the guarded preflight's production-boundary recovery
+requirement.
 
-Before a new preflight can pass, first obtain safe resource admission, then
-create a checksummed, immutable copy of the exact latest finalized boundary;
-verify it with resumable checkpoints; record the candidate source hash, input
-manifest digest, state digest, completion boundary, process peak RSS and cgroup
-peak; then replay the same copy again and compare deterministic state. Bound
-memory, CPU and I/O admission before each resume. Leave the gate incomplete if
+The first latest-boundary copy attempt was stopped when host I/O pressure
+exceeded the staging admission threshold. It copied 697 of 31,468 segments /
+103,723,201 bytes before interruption, but its source boundary was not pinned
+and the complete destination manifest was not checked. The partial directory
+`/mnt/continental-cloud/data/midas-reality-staging/mission-20261026-recovery-snapshot-75f7cee8b6d14d90a32efb205c4672e9`
+has an `INCOMPLETE` marker and must not be used or resumed as a snapshot. The
+stop receipt is
+[`MIDAS_MISSION_20261026_RECOVERY_COPY_ABORTED.json`](evidence/MIDAS_MISSION_20261026_RECOVERY_COPY_ABORTED.json),
+SHA-256 `c1604255e5cd98ec5f2cc0612a01f7702c41ca1e29ad67072d559e5a8c93af4b`.
+
+Before a new preflight can pass, require a 60-second continuous admission
+window, pin the exact latest finalized manifest boundary, and create a new
+checksummed immutable copy in a distinct path. Verify every segment and the
+whole manifest, then use resumable recovery checkpoints; record candidate
+source hash, input manifest digest, state digest, completion boundary, process
+peak RSS and cgroup peak; replay the same copy again and compare deterministic
+state. Bound memory, CPU and I/O before each phase. Leave the gate incomplete if
 any step cannot finish safely. Separately reconcile archive ownership and
 provenance without deleting or publishing ambiguous files, and verify every
 listed source and destination checksum.
@@ -116,6 +139,8 @@ From the mission checkout, with no conflicting heavy job active:
    restart recovers observations absent during the outage.
 
 The mission did not run `apply`, stop or restart the service, edit the active
-config, touch the recording root, or change archive policy. See the
+config, or change archive policy. It created the explicitly incomplete staging
+directory above; the recording source and ambiguous archive tree were not
+modified. See the
 [comprehensive mission report](MIDAS_COMPREHENSIVE_ENGINEERING_MISSION_20261025.md)
 for the complete runtime inventory and test evidence.

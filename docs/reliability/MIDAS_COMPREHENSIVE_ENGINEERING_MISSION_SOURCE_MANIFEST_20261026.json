@@ -1,7 +1,7 @@
 {
   "base_commit": "55601b9a090945cb498806e4878b6ddc33562043",
   "branch": "codex/midas-comprehensive-engineering-mission-20261025",
-  "file_count": 69,
+  "file_count": 78,
   "files": [
     {
       "bytes": 61683,
@@ -24,14 +24,19 @@
       "sha256": "902a56e2389f251a6cf642396091bf9187ec29ac6ee6b535613158232dc250da"
     },
     {
+      "bytes": 654,
+      "path": "apps/web/build-identity.mjs",
+      "sha256": "31eb5f25cfedd015540068916c5ba942bc4a4e58db974cde9221ef54ad623bd3"
+    },
+    {
       "bytes": 5221,
       "path": "apps/web/e2e/research-readiness.spec.ts",
       "sha256": "0d5158fe3a12e25e41d162cc36ecb5efe92d9768a1b37303024ca759cccf0910"
     },
     {
-      "bytes": 10920,
+      "bytes": 14140,
       "path": "apps/web/src/App.test.tsx",
-      "sha256": "3e6488564886a5bf322d090dad4a88a881ff6a6043a6600cbea713f85eb82582"
+      "sha256": "3b4b4a009c6012ac41dfdbd8a8ab4284c48d033c70c4b45941d2d72c1907f314"
     },
     {
       "bytes": 60848,
@@ -39,14 +44,29 @@
       "sha256": "37dd6103baa577c44aab869267564978a3f4b4f0843c7d3f61fb5c571f4ab00a"
     },
     {
-      "bytes": 44126,
+      "bytes": 50541,
       "path": "apps/web/src/ResearchReadiness.tsx",
-      "sha256": "4374c7b323476651a48f392f8bb9b2869d73b853ab55d66b55a743890c2ed649"
+      "sha256": "8d5d1c2542b86aba769fad324bc12f1b6cfa06d666ba3dbff80f9121efec4221"
     },
     {
-      "bytes": 10320,
+      "bytes": 214,
+      "path": "apps/web/src/midas-build.d.ts",
+      "sha256": "ca0f986788cdea06c2a9598a17e818accd19415113525199d3fe3be87ef6d9e4"
+    },
+    {
+      "bytes": 10804,
       "path": "apps/web/src/research-readiness.css",
-      "sha256": "4b75743cf054ef1e7397c4f565de7433638d877bd4cc4997d4268346742ccb93"
+      "sha256": "885641fce25c9d80be9b202a3a894f4a0a82d75d79ee62c201e2b4dc666325ad"
+    },
+    {
+      "bytes": 659,
+      "path": "apps/web/vite.config.ts",
+      "sha256": "e527f8bdd71fc3998e442efeed540fa2d09d7f66313ce2bf2135e63ad6d02b0c"
+    },
+    {
+      "bytes": 621,
+      "path": "apps/web/vitest.config.ts",
+      "sha256": "d0c4b6ee3eda7f881743769a6c64d82a10fa87421c21bb6389008d66f9f5b2e4"
     },
     {
       "bytes": 15937,
@@ -69,19 +89,19 @@
       "sha256": "5ea3b0ba91f2f000f7661373544842baa76ea4d6ccef236ad8d14b468a29716b"
     },
     {
-      "bytes": 22712,
+      "bytes": 26544,
       "path": "docs/reliability/MIDAS_COMPREHENSIVE_ENGINEERING_MISSION_20261025.md",
-      "sha256": "654a8484ec1a422c03feaa57f5d62286778c05c0543b354a73699b10ef237cbe"
+      "sha256": "ff6a8adfd187a10cb2047b4e1c121a9f408f47679273e5b3ae6dd79c6b699854"
     },
     {
-      "bytes": 14024,
+      "bytes": 16816,
       "path": "docs/reliability/MIDAS_COMPREHENSIVE_ENGINEERING_MISSION_LEDGER_20261025.md",
-      "sha256": "cdf5d8000899f7487f355a63be3feaba626e313a708607552e30969c4be031d1"
+      "sha256": "669416c801be2aeb10366b7a440f20dade33e4e53c8919b1b17d2ac54faea204"
     },
     {
-      "bytes": 7379,
+      "bytes": 9080,
       "path": "docs/reliability/MIDAS_REALITY_DEPLOYMENT_HANDOFF_20261026.md",
-      "sha256": "ecc56a74770f08772d5592b6cf242e060e191dff2a392789b30c7a0feff08445"
+      "sha256": "06c8b504410388463eaa88790c0642771b733ae36cb4107720c12c8391587571"
     },
     {
       "bytes": 5716,
@@ -94,6 +114,11 @@
       "sha256": "25ea857aeefc39ff6bf0254535ef20768a7228e26702d2aa2e72aa80eb6c825a"
     },
     {
+      "bytes": 147138,
+      "path": "docs/reliability/evidence/MIDAS_MISSION_20261026_DEPLOYMENT_PREFLIGHT_BLOCKED_V3.json",
+      "sha256": "41bacf1919c42d988b24e7d49c445767548167ddd1afe75f5014b7a93ae622ef"
+    },
+    {
       "bytes": 79190,
       "path": "docs/reliability/evidence/MIDAS_MISSION_20261026_FIXTURE_CANARY.json",
       "sha256": "b90994e9b6792075f809c278add923c80aa9c6d0f04268fa88ac872db094b0f8"
@@ -102,6 +127,16 @@
       "bytes": 471,
       "path": "docs/reliability/evidence/MIDAS_MISSION_20261026_FIXTURE_CANARY_CONFIG.json",
       "sha256": "734328175b4cbee978cd3d5d14d1e46f845730f17f439b87d18142f60d0ba43a"
+    },
+    {
+      "bytes": 80197,
+      "path": "docs/reliability/evidence/MIDAS_MISSION_20261026_FIXTURE_CANARY_FINAL.json",
+      "sha256": "a4ab205d502e1629b1f232a9263166fc71185b1ea94a73cf3b97e4df38471fec"
+    },
+    {
+      "bytes": 506,
+      "path": "docs/reliability/evidence/MIDAS_MISSION_20261026_FIXTURE_CANARY_FINAL_CONFIG.json",
+      "sha256": "65e712c7a0c565749e1e0612bf3809590ef94cbdc6054ad7f2ac6be4026062a3"
     },
     {
       "bytes": 79827,
@@ -124,9 +159,14 @@
       "sha256": "341a56010e9150dcb6d905c07e804056dda925822b9b693f881b11b5d27f5d80"
     },
     {
-      "bytes": 395371,
+      "bytes": 2095,
+      "path": "docs/reliability/evidence/MIDAS_MISSION_20261026_RECOVERY_COPY_ABORTED.json",
+      "sha256": "c1604255e5cd98ec5f2cc0612a01f7702c41ca1e29ad67072d559e5a8c93af4b"
+    },
+    {
+      "bytes": 408242,
       "path": "docs/reliability/evidence/MIDAS_MISSION_20261026_RESEARCH_READINESS.png",
-      "sha256": "ae75f0b5b6abf7dc9f31605d0ba43f2df0f954825fb781e31bcaae25a7b85fd9"
+      "sha256": "7c981ba7ce53b09756786cd3dc8b5a618ae88bd2327b694e126d778f8e5985b7"
     },
     {
       "bytes": 15444,
@@ -239,6 +279,11 @@
       "sha256": "9f82b256d0eb9db2bf0fd47510ea4c55d36b1d5420c04cfbff02f32644edfbe2"
     },
     {
+      "bytes": 1117,
+      "path": "pyproject.toml",
+      "sha256": "edb35f40d87114a9a1a698e200524d8adf7d3cdfcd430c10a9988ee7461b07b4"
+    },
+    {
       "bytes": 7590,
       "path": "scripts/dispatch_schedules.py",
       "sha256": "2a73a1c78ceb1fcd0e897e072dcb96762ba418296f4ea8bd8f84cc49b0c9748e"
@@ -304,9 +349,9 @@
       "sha256": "d57e7566b617dac5a31973642d9195df809d193f57436be5c6cfc463b6bdbd25"
     },
     {
-      "bytes": 29807,
+      "bytes": 30206,
       "path": "tests/test_reality_recovery.py",
-      "sha256": "65738bd83af1a4be60cba707e9231c5856e6bba27491b14b746015ce8afbe91a"
+      "sha256": "6b8718c3aea002c5252421bd731fede4f55e8f6e5fd6d572d11a7f9ce4b471af"
     },
     {
       "bytes": 3884,
@@ -349,7 +394,7 @@
       "sha256": "594f67c3ddd4e1461d92ebb64c1d494b0aff95d658e7732b46fb56ec3cbbf68b"
     }
   ],
-  "generated_at_utc": "2026-10-25T23:34:56.225708+00:00",
+  "generated_at_utc": "2026-10-26T00:01:53.784159+00:00",
   "schema_version": 1,
   "scope": "All tracked, staged, and untracked regular files changed relative to the base commit. SHA-256 and byte counts cover current file contents. This manifest excludes itself."
 }

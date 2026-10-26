@@ -1,10 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { App, money } from './App';
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
+  vi.unstubAllEnvs();
 });
 describe('application integrity', () => {
   it('does not manufacture absent financial metrics', () => {
@@ -144,6 +145,43 @@ describe('application integrity', () => {
 
   it('shows measured storage runway and distinguishes active from staged limits', async () => {
     const measuredNs = Date.now() * 1_000_000;
+    const economicAudit: Record<string, unknown> = {
+      status: 'MEASURED',
+      reference_pairs: 1,
+      economic_supported_pairs: 1,
+      snapshot_valid_pairs: 1,
+      positive_gross_pair_observations: 0,
+      net_eligible_pairs: 0,
+      unsupported_pairs: 0,
+      disagreement_counts: {},
+      reference_version: 'independent-economics-v2',
+      source_version_current: true,
+    };
+    const veritasOverview: Record<string, unknown> = {
+      status: 'available',
+      analysis_version: 'veritas-finalized-snapshot-analysis-v6',
+      processed_snapshot_count: 518,
+      pending_snapshot_count: 95,
+      analysis_catchup_status: 'catching_up',
+      independent_economic_audit: economicAudit,
+      discovery: { current_bounded_eligible_markets: 50 },
+      observation_funnel: {
+        basis: 'fixture only',
+        independent_trials: false,
+        reference_version: 'independent-economics-v2',
+        reference_version_current: true,
+        bounded_query_frame_market_visits: 12,
+        selected_market_observations: 1,
+        observed_pair_observations: 1,
+        quality_valid_pair_observations: 1,
+        independent_snapshot_valid_pair_observations: 1,
+        independent_economic_supported_pair_observations: 1,
+        positive_gross_pair_observations: 0,
+        net_economically_eligible_pair_observations: 0,
+        unique_markets_observed: 1,
+        unique_markets_with_positive_gross: 0,
+      },
+    };
     const responses: Record<string, { status: number; body: unknown }> = {
       '/api/state': {
         status: 200,
@@ -213,35 +251,7 @@ describe('application integrity', () => {
           },
         },
       },
-      '/api/veritas/overview': {
-        status: 200,
-        body: {
-          status: 'available',
-          analysis_version: 'veritas-finalized-snapshot-analysis-v6',
-          independent_economic_audit: {
-            status: 'MEASURED',
-            reference_pairs: 1,
-            economic_supported_pairs: 0,
-            disagreement_counts: {},
-            reference_version: 'independent-economics-v2',
-            source_version_current: true,
-          },
-          observation_funnel: {
-            basis: 'fixture only',
-            independent_trials: false,
-            reference_version: 'independent-economics-v2',
-            reference_version_current: true,
-            bounded_frame_market_visits: 1,
-            selected_market_observations: 1,
-            observed_pair_observations: 1,
-            quality_valid_pair_observations: 1,
-            independent_snapshot_valid_pair_observations: 1,
-            independent_economic_supported_pair_observations: 0,
-            positive_gross_pair_observations: 0,
-            net_economically_eligible_pair_observations: 0,
-          },
-        },
-      },
+      '/api/veritas/overview': { status: 200, body: veritasOverview },
       '/api/veritas/artifacts/independent-opportunity-audit': {
         status: 200,
         body: {
@@ -285,5 +295,63 @@ describe('application integrity', () => {
       screen.getByText('ARCHIVE_SEGMENT_INVENTORY_INVALID, ARCHIVE_MANIFEST_PROVENANCE_INVALID'),
     ).toBeInTheDocument();
     expect(screen.getByText('2.0%')).toBeInTheDocument();
+    expect(screen.getByText('518 processed / 95 pending')).toBeInTheDocument();
+    expect(screen.getByText('Validity')).toBeInTheDocument();
+    expect(screen.getByText('Price / edge')).toBeInTheDocument();
+    expect(screen.getByText('Fees')).toBeInTheDocument();
+    expect(screen.getByText(/Bounded markets in latest discovery:/)).toBeInTheDocument();
+    expect(screen.getByText('12')).toBeInTheDocument();
+    expect(screen.getByText(/ @ [a-f0-9]{40}$/)).toBeInTheDocument();
+
+    const runwayHeading = screen.getByText('Storage runway to lowest measured limit');
+    const runwayRow = runwayHeading.closest('div');
+    expect(runwayRow).not.toBeNull();
+    expect(within(runwayRow!).getByText('16.1 days')).toBeInTheDocument();
+    const realityBody = responses['/api/reality/overview'].body as {
+      capacity: { sample: { seconds: number } };
+    };
+    realityBody.capacity.sample.seconds = 0;
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh evidence' }));
+    await waitFor(() => {
+      expect(within(runwayRow!).getByText('Not measured')).toBeInTheDocument();
+    });
+
+    const correctnessHeading = screen.getByRole('heading', {
+      name: 'Independent research correctness',
+    });
+    const correctnessGate = correctnessHeading.closest('article');
+    expect(correctnessGate).not.toBeNull();
+    expect(within(correctnessGate!).getByText('NOT MEASURED')).toBeInTheDocument();
+
+    veritasOverview.updated_at_utc = new Date().toISOString();
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh evidence' }));
+    await waitFor(() => {
+      expect(within(correctnessGate!).getByText('PASS')).toBeInTheDocument();
+    });
+
+    economicAudit.disagreement_counts = {
+      validity: 1,
+      top_edge: 2,
+      fee_reference: 3,
+      depth: 4,
+    };
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh evidence' }));
+    await waitFor(() => {
+      expect(within(correctnessGate!).getByText('CONDITIONAL')).toBeInTheDocument();
+    });
+    expect(screen.getByText('10')).toBeInTheDocument();
+    const disagreementBreakdown = screen.getByLabelText('Economic disagreement breakdown');
+    expect(within(disagreementBreakdown).getByText('1')).toBeInTheDocument();
+    expect(within(disagreementBreakdown).getByText('2')).toBeInTheDocument();
+    expect(within(disagreementBreakdown).getByText('3')).toBeInTheDocument();
+    expect(within(disagreementBreakdown).getByText('4')).toBeInTheDocument();
+
+    economicAudit.reference_pairs = 0;
+    economicAudit.economic_supported_pairs = 0;
+    delete economicAudit.disagreement_counts;
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh evidence' }));
+    await waitFor(() => {
+      expect(within(correctnessGate!).getByText('NOT MEASURED')).toBeInTheDocument();
+    });
   });
 });
