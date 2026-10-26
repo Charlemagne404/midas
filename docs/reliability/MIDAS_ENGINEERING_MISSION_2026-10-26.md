@@ -551,6 +551,10 @@ Mission evidence files are under
   harness attempt that failed before market discovery because a synchronous
   HTTP event hook was awaited; SHA-256
   `87abf89c9282d637ddd661c1d9e020b2c0c4e2d5ec21f63b373d5bcc874bdaed`.
+- `live-service-post-canary-2026-10-26T0528Z.json` — direct post-canary
+  systemd and cgroup point sample, including unchanged production PIDs,
+  memory headroom/events, and temporary-root cleanup; SHA-256
+  `30771c1c33406515c2824192307d17ce62ad013c094893974a25db33f331b089`.
 - `data/veritas-v6-offline-replay-522-20261026/` in the preserved
   `midas-engineering-mission-20261025` worktree — isolated 522-snapshot replay
   receipt SHA-256
@@ -580,7 +584,7 @@ directories remain available for rollback.
 | Production Reality telemetry/integrity | **PARTIALLY VERIFIED** | At 05:20Z, 16/16 books were fresh and the collector was receiving at ordinal 5,169,781, but API health remained degraded/unsequenced with persistence-window, queue-depth, and recovery-state telemetry missing |
 | Cold recovery/reproducibility | **PARTIALLY VERIFIED** | The 05:20 metadata boundary has 32,117 finalized segment names and live ordinal 5,169,781; historical source/gap indexes cover older boundaries only. Checkpoint recovery now handles newly inserted empty finalized segments, but the current boundary is not fully replay-verified |
 | Storage/archive provenance | **BLOCKED** | The active 24 GiB / 90-day contract has about 18.4 storage-only days at the current estimated rate; staged 112 GiB / 120-day capacity estimates 108.12 days. Archive metadata remains invalid with 1,138 unmanifested finalized files and 58 `.copying` files |
-| Cross-component research admission | **PARTIALLY VERIFIED** | Dashboard blocks at API `MemoryHigh` headroom of about 1.01 MiB; Arena has 0 active/queued jobs, 3 stale owner-linked directors (2 cancelled, 1 failed), and an expired no-child demonstration schedule alert |
+| Cross-component research admission | **PARTIALLY VERIFIED** | Dashboard blocks at API `MemoryHigh` headroom of about 1.52 MiB at 05:28Z; Arena has 0 active/queued jobs, 3 stale owner-linked directors (2 cancelled, 1 failed), and an expired no-child demonstration schedule alert |
 | Trading, Frontier, Atlas, 48-hour campaign | **DEFERRED BY SCOPE** | Not started |
 
 Recommended next actions:
@@ -865,44 +869,6 @@ the protected recorder was not signaled or restarted. Storage runway and
 archive provenance remain blockers. The deployment classification remains
 **IMPLEMENTED, DEPLOYMENT PENDING**.
 
-## 13. Bounded public feed canary — 2026-10-26 05:24 UTC
-
-The exact candidate was exercised against public unauthenticated read-only
-Gamma/CLOB GETs and the public market WebSocket for 100 seconds, using the
-staged eight-market stratified canary settings and a unique temporary root.
-The run stopped cleanly with zero collector failures, a durable first write
-after 0.030 seconds, 322 frames, four periodic checkpoints, and four replay-
-verified checkpoints. All 37 HTTP responses were 200. Six independent book
-comparisons matched the local unsequenced state; one comparison reported stale
-local state, and none reported an invalid or divergent comparison. The
-checkpoint recovery and full replay produced the same state digest. Sequence
-verification remained false.
-
-The canary did not pass its full coverage condition: only 8 of the 16
-outcome books met the 60-second freshness threshold immediately before the
-last periodic checkpoint. This is retained as a measured sampling/freshness
-limitation, not corrected by lowering the threshold. The canary therefore
-does not make the candidate deployment-ready. Its cgroup peak was 35,618,816
-bytes under 512 MiB `MemoryHigh`, 640 MiB `MemoryMax`, 25% CPU, and 64 tasks;
-no memory-high, max, or OOM events occurred in the canary cgroup.
-
-The successful receipt is
-`/home/charlie/midas-engineering-mission-20261026/evidence/reality-candidate-live-feed-canary-2026-10-26T0524Z.json`
-(SHA-256
-`b6a7d5798edee24562259f439f43b8adcc574b039f45d13bd4ff093bd9fa79e2`). A
-first attempt failed before market selection because my synchronous HTTP
-instrumentation hook was awaited; that harness failure is preserved at
-`reality-candidate-live-feed-canary-2026-10-26.json` (SHA-256
-`87abf89c9282d637ddd661c1d9e020b2c0c4e2d5ec21f63b373d5bcc874bdaed`). The
-successful run's temporary root was removed after manifest, replay,
-checkpoint, and artifact-hash checks. Production Reality remained active on
-PID 3007040. No order, wallet, credential, or authenticated exchange action
-was used.
-
-The official deployment gate remains unrun. Full current-boundary recovery,
-complete fresh outcome coverage for the candidate canary, an immutable
-runtime release, archive provenance, sustained API headroom, and explicit
-protected-restart authorization are still required.
 
 ## 12. Fresh candidate-boundary preflight — 2026-10-26 05:21 UTC
 
@@ -963,3 +929,52 @@ recovery, a bounded feed canary for this exact source, an immutable runtime
 release, archive provenance resolution, sustained API resource headroom, and
 separate protected-restart authorization remain outstanding. No production
 service, raw recording, or archive file was changed.
+
+## 13. Bounded public feed canary — 2026-10-26 05:24 UTC
+
+The exact candidate was exercised against public unauthenticated read-only
+Gamma/CLOB GETs and the public market WebSocket for 100 seconds, using the
+staged eight-market stratified canary settings and a unique temporary root.
+The run stopped cleanly with zero collector failures, a durable first write
+after 0.030 seconds, 322 frames, four periodic checkpoints, and four replay-
+verified checkpoints. All 37 HTTP responses were 200. Six independent book
+comparisons matched the local unsequenced state; one comparison reported stale
+local state, and none reported an invalid or divergent comparison. The
+checkpoint recovery and full replay produced the same state digest. Sequence
+verification remained false.
+
+The canary did not pass its full coverage condition: only 8 of the 16
+outcome books met the 60-second freshness threshold immediately before the
+last periodic checkpoint. This is retained as a measured sampling/freshness
+limitation, not corrected by lowering the threshold. The canary therefore
+does not make the candidate deployment-ready. Its cgroup peak was 35,618,816
+bytes under 512 MiB `MemoryHigh`, 640 MiB `MemoryMax`, 25% CPU, and 64 tasks;
+no memory-high, max, or OOM events occurred in the canary cgroup.
+
+The successful receipt is
+`/home/charlie/midas-engineering-mission-20261026/evidence/reality-candidate-live-feed-canary-2026-10-26T0524Z.json`
+(SHA-256
+`b6a7d5798edee24562259f439f43b8adcc574b039f45d13bd4ff093bd9fa79e2`). A
+first attempt failed before market selection because my synchronous HTTP
+instrumentation hook was awaited; that harness failure is preserved at
+`reality-candidate-live-feed-canary-2026-10-26.json` (SHA-256
+`87abf89c9282d637ddd661c1d9e020b2c0c4e2d5ec21f63b373d5bcc874bdaed`). The
+successful run's temporary root was removed after manifest, replay,
+checkpoint, and artifact-hash checks. Production Reality remained active on
+PID 3007040. No order, wallet, credential, or authenticated exchange action
+was used.
+
+At 05:28:11Z, a direct post-canary systemd/cgroup read confirmed Reality
+PID 3007040, API PID 844849, and web PID 1012462 were unchanged and active.
+API `MemoryHigh` headroom was 1,593,344 bytes (1.52 MiB), with 10,988 high
+events and zero OOM events. Reality headroom was 102,039,552 bytes, with
+14,452 high events and zero OOM events. No temporary canary root remained.
+The receipt is
+`/home/charlie/midas-engineering-mission-20261026/evidence/live-service-post-canary-2026-10-26T0528Z.json`
+(SHA-256
+`30771c1c33406515c2824192307d17ce62ad013c094893974a25db33f331b089`).
+
+The official deployment gate remains unrun. Full current-boundary recovery,
+complete fresh outcome coverage for the candidate canary, an immutable
+runtime release, archive provenance, sustained API headroom, and explicit
+protected-restart authorization are still required.

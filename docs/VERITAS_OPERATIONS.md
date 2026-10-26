@@ -608,3 +608,11 @@ temporary canary root was removed after verification. This canary is not a
 current-boundary recovery proof and does not establish execution or
 profitability. The protected recorder remains on PID 3007040 and the official
 deployment gate remains blocked.
+
+A 05:28:11Z direct cgroup read confirmed the Reality, API, and web PIDs were
+unchanged. API `MemoryHigh` headroom was 1,593,344 bytes (1.52 MiB), with zero
+OOM events; Reality headroom was 102,039,552 bytes, also with zero OOM events.
+No temporary canary root remained. Receipt:
+`/home/charlie/midas-engineering-mission-20261026/evidence/live-service-post-canary-2026-10-26T0528Z.json`
+(SHA-256
+`30771c1c33406515c2824192307d17ce62ad013c094893974a25db33f331b089`).
