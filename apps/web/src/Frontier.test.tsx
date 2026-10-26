@@ -72,6 +72,7 @@ it('renders recorded-evidence empty states and never probes a source automatical
       returned_edges: 0,
       truncated_by_edge_limit: false,
       relationship_scan_limit: 500,
+      relationships_scanned: 0,
       relationship_scan_may_be_incomplete: false,
       source_market_window_limit: 200,
     },
@@ -317,7 +318,8 @@ it('renders a bounded accessible relationship graph and opens selected evidence'
       returned_edges: 1,
       truncated_by_edge_limit: false,
       relationship_scan_limit: 500,
-      relationship_scan_may_be_incomplete: false,
+      relationships_scanned: 500,
+      relationship_scan_may_be_incomplete: true,
       source_market_window_limit: 200,
     },
     '/api/frontier/opportunities?limit=100': { items: [], returned: 0, limit: 100, offset: 0 },
@@ -345,6 +347,11 @@ it('renders a bounded accessible relationship graph and opens selected evidence'
   fireEvent.click(await screen.findByRole('button', { name: 'Relationship graph' }));
   expect(
     await screen.findByRole('group', { name: /Relationship network showing 1/ }),
+  ).toBeInTheDocument();
+  expect(
+    await screen.findByText(
+      /considered 500 relationship rows.*additional neighbors may be omitted/,
+    ),
   ).toBeInTheDocument();
   fireEvent.change(screen.getByLabelText('Relationship graph center market'), {
     target: { value: 'polymarket:event-1' },
@@ -470,6 +477,7 @@ it('records a self-attributed relationship review with both stored market source
       returned_edges: 1,
       truncated_by_edge_limit: false,
       relationship_scan_limit: 500,
+      relationships_scanned: 1,
       relationship_scan_may_be_incomplete: false,
       source_market_window_limit: 200,
     },

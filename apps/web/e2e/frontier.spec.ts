@@ -146,6 +146,7 @@ test('relationship network remains bounded, selectable, and scroll-contained on 
       returned_edges: 1,
       truncated_by_edge_limit: false,
       relationship_scan_limit: 500,
+      relationships_scanned: 1,
       relationship_scan_may_be_incomplete: false,
       source_market_window_limit: 200,
     },

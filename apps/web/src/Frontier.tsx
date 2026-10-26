@@ -176,6 +176,7 @@ type GraphResponse = {
   returned_edges: number;
   truncated_by_edge_limit: boolean;
   relationship_scan_limit: number;
+  relationships_scanned: number;
   relationship_scan_may_be_incomplete: boolean;
   source_market_window_limit: number;
 };
@@ -1289,9 +1290,10 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
               {(graph.data?.truncated_by_edge_limit ||
                 graph.data?.relationship_scan_may_be_incomplete) && (
                 <div className="fr-footnote">
-                  This view is capped at {graph.data.edge_limit} edges and scans at most{' '}
-                  {graph.data.relationship_scan_limit} recent effective relationships. Narrow the
-                  view to a center market to inspect its bounded neighborhood.
+                  {graph.data.relationship_scan_may_be_incomplete
+                    ? `This query considered ${graph.data.relationships_scanned} relationship rows, reaching its ${graph.data.relationship_scan_limit}-row scan bound; additional neighbors may be omitted.`
+                    : `This view is capped at ${graph.data.edge_limit} edges after considering ${graph.data.relationships_scanned} relationship rows.`}{' '}
+                  Choose a center market to inspect a smaller neighborhood.
                 </div>
               )}
               <div className="fr-graph-list">
