@@ -312,6 +312,8 @@ export function Readiness() {
     : 'Runway depends on the active retention and recording budget. Staged values remain separate until the guarded recorder transition.';
   const realitySample = asRecord(realityRuntime.sample_delta);
   const apiSample = asRecord(apiRuntime.sample_delta);
+  const realityMemoryComposition = asRecord(realityRuntime.memory_composition_bytes);
+  const apiMemoryComposition = asRecord(apiRuntime.memory_composition_bytes);
   const realityMemoryCurrent = asNumber(realityRuntime.memory_current_bytes);
   const realityMemoryHigh = asNumber(realityRuntime.memory_high_bytes);
   const realityMemoryHeadroom =
@@ -919,6 +921,13 @@ export function Readiness() {
                     <strong>{bytes(realityMemoryHeadroom)}</strong>
                   </div>
                   <div>
+                    <span>Anonymous / file-backed charge</span>
+                    <strong>
+                      {bytes(realityMemoryComposition.anon)} /{' '}
+                      {bytes(realityMemoryComposition.file)}
+                    </strong>
+                  </div>
+                  <div>
                     <span>CPU use of quota, latest sample</span>
                     <strong>{percent(realitySample.cpu_quota_utilization_percent)}</strong>
                   </div>
@@ -945,6 +954,12 @@ export function Readiness() {
                   <div>
                     <span>Headroom below MemoryHigh</span>
                     <strong>{bytes(apiMemoryHeadroom)}</strong>
+                  </div>
+                  <div>
+                    <span>Anonymous / file-backed charge</span>
+                    <strong>
+                      {bytes(apiMemoryComposition.anon)} / {bytes(apiMemoryComposition.file)}
+                    </strong>
                   </div>
                   <div>
                     <span>Current / MemoryMax</span>
@@ -1050,6 +1065,11 @@ export function Readiness() {
                   </div>
                 </section>
               </div>
+              <p className="rr-note">
+                Memory composition comes from cgroup memory.stat. File-backed charge may be
+                reclaimable but still counts toward MemoryHigh; shared-memory and active/inactive
+                file fields are subsets and are not added to the anonymous/file values.
+              </p>
               <div className="rr-sampling-note">
                 <strong>Sampling bounds:</strong>{' '}
                 {asString(resources.data?.sampling) ?? 'read method not reported'}. CPU and event

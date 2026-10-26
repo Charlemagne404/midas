@@ -143,11 +143,13 @@ it('shows measured zero-candidate evidence without turning it into a profitabili
           memory_current_bytes: 950_000_000,
           memory_high_bytes: 1_000_000_000,
           memory_max_bytes: 1_100_000_000,
+          memory_composition_bytes: { anon: 256 * 1024 ** 2, file: 512 * 1024 ** 2 },
         },
         'midas-reality': {
           status: 'MEASURED',
           memory_current_bytes: 1_150_000_000,
           memory_high_bytes: 1_200_000_000,
+          memory_composition_bytes: { anon: 384 * 1024 ** 2, file: 640 * 1024 ** 2 },
           memory_events_since_cgroup_start: { high: 2, max: 0, oom: 0, oom_kill: 0 },
           sample_delta: { cpu_quota_utilization_percent: 25, cpu_throttled_delta_usec: 0 },
         },
@@ -223,6 +225,11 @@ it('shows measured zero-candidate evidence without turning it into a profitabili
   expect(screen.getByText(/DEMO MODE · NO LIVE ORDERS/)).toBeInTheDocument();
   expect(screen.getAllByText('e988cbb').length).toBeGreaterThan(0);
   expect(screen.getByText(/2 tracked source changes · dirty · not deployed/)).toBeInTheDocument();
+  expect(screen.getAllByText('Anonymous / file-backed charge')).toHaveLength(2);
+  expect(screen.getByText('256.0 MiB / 512.0 MiB')).toBeInTheDocument();
+  expect(
+    screen.getByText(/File-backed charge may be reclaimable but still counts toward MemoryHigh/),
+  ).toBeInTheDocument();
   expect(screen.getAllByText(/256\.0 MiB/).length).toBeGreaterThan(0);
 });
 
