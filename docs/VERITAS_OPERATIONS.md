@@ -379,3 +379,28 @@ files in the last verified inventory. Do not delete, adopt, or republish those
 files, and do not re-enable the archive writer until ownership and integrity
 are established. This document does not authorize a Reality restart or archive
 mutation.
+
+## Reality candidate follow-up (2026-10-26 03:54 UTC)
+
+The isolated archive-provenance fix is committed as
+`987481fd6ae611d062155063c19f24b5ea51bb18` on
+`codex/reality-archive-provenance-20261026`; its focused operations tests pass
+14/14. An isolated startup/first-durable-write receipt is recorded at
+`/home/charlie/midas-engineering-mission-20261026/evidence/reality-candidate-isolated-first-write-2026-10-26.json`
+(SHA-256
+`21f71e585211318116ea0f0fa2a4db4767eacb6a70308ef85e7c1e872d6edb67`). It used a
+temporary root and made no network requests; it is not a feed canary.
+
+The fresh read-only deployment preflight is
+`/home/charlie/midas-engineering-mission-20261026/evidence/reality-deployment-preflight-2026-10-26T0354Z.json`
+(SHA-256
+`53f1d11909238d91c0e73ff81fcf3351e018b4b60c219a67550a5dfc81e6c7f8`) and
+is blocked. It measured the active production recorder at ordinal 5,143,954
+with 31,946 finalized segments. The latest copied recovery boundary remains
+incomplete (2,816/31,742 checkpoint coverage); archive inventory still has
+1,138 out-of-manifest names and 58 `.copying` files. At the recorded
+30-day shared-database growth scenario, the staged 90-day storage plan is
+short by about 10.3 GB of current NVMe free space. Do not restart Reality or
+enable archive publication on this evidence. The recorder remains on its
+24 GiB / 90-day production configuration pending recovery, storage, archive,
+resource, canary, and explicit-authorization gates.

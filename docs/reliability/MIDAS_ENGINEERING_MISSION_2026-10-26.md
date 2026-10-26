@@ -294,7 +294,7 @@ directories remain available for rollback.
 | Veritas V6 code, independent Decimal reference, catalog migration and bounded publication | **COMPLETE AND VERIFIED** | Integrated and scheduled; live catch-up remains 20/526 snapshots and independent/source-quality disagreement flags remain |
 | Economic evidence | **PARTIALLY VERIFIED** | Reference measured 800 repeated pairs; zero support/net eligibility and execution outcomes remain unmeasured |
 | Readiness resource API and dashboard | **COMPLETE AND VERIFIED** | Deployed at API `cf452ec` / web `4f4179c`; browser receipt and screenshot available |
-| Reality candidate hardening | **IMPLEMENTED, DEPLOYMENT PENDING** | Candidate tests pass; candidate tree is dirty; isolated first-durable-write receipt and deployment preflight remain |
+| Reality candidate hardening | **IMPLEMENTED, DEPLOYMENT PENDING** | The archive-provenance fix is committed and its focused suite passes; a synthetic isolated first-write receipt and a fresh blocked deployment preflight exist. A feed canary, complete latest-boundary recovery, storage clearance, and protected-restart authorization remain |
 | Production Reality telemetry/integrity | **PARTIALLY VERIFIED** | Feed is unsequenced and degraded; persistence, queue, and recovery telemetry are missing |
 | Cold recovery/reproducibility | **PARTIALLY VERIFIED** | Historical prefixes and bounded checks exist; latest boundary is not fully verified |
 | Storage/archive provenance | **BLOCKED** | Active warning runway; staged capacity inactive; archive manifest and provenance invalid |
@@ -314,11 +314,14 @@ Recommended next actions:
    stable-control coverage on the next scheduled result.
 4. Reconcile the three stale Arena director projections from owner-job and
    artifact evidence without rewriting frozen manifests.
-5. Keep the Reality recorder on its current service until an explicit
-   controlled-transition approval. Before that transition, finish candidate
-   code review/commit, isolated startup and first durable write, exact-boundary
-   storage and archive preflight, rollback inputs, and a recorded interruption
-   statement.
+5. Keep the Reality recorder on its current service. The archive-provenance
+   fix is committed on `codex/reality-archive-provenance-20261026`; the
+   isolated startup receipt is complete, and the exact-boundary preflight is
+   blocked. Before any transition, reconcile NVMe headroom and archive
+   provenance, install and verify an immutable candidate release, pass a
+   bounded feed canary, complete recovery at the current raw boundary, and
+   prepare rollback plus the expected recording-interruption statement. Then
+   request separate approval for the protected stop/restart.
 6. Resolve archive ownership and provenance for the 1,138 out-of-manifest
    names and 58 `.copying` files before adoption; do not delete them or enable
    archive writers until ownership and integrity are established.
@@ -330,3 +333,70 @@ Recommended next actions:
 
 This closeout does not authorize a Reality service restart, archive mutation,
 or a new research campaign.
+
+## 8. Final Reality candidate follow-up — 2026-10-26 03:54 UTC
+
+The archive validator and regression tests were copied from the preserved,
+dirty reliability checkout into a clean worktree at
+`/home/charlie/midas-reality-archive-provenance`. Commit
+`987481fd6ae611d062155063c19f24b5ea51bb18` on
+`codex/reality-archive-provenance-20261026` contains only the archive-state
+fail-closed change and its tests. Its Reality module source identity is
+`c2a5696668828dce79b54ce202715262f4d86f06256525f84f880a76a4f5c1b3`; the
+original `/home/charlie/midas-reality-reliability` worktree remains untouched,
+including its unrelated untracked evidence. `tests/test_reality_operations.py`
+passes 14 tests in 1.73 seconds on the clean candidate worktree.
+
+The isolated startup receipt is
+`/home/charlie/midas-engineering-mission-20261026/evidence/reality-candidate-isolated-first-write-2026-10-26.json`
+(SHA-256
+`21f71e585211318116ea0f0fa2a4db4767eacb6a70308ef85e7c1e872d6edb67`). It ran the
+collector for zero feed duration against a temporary root, made no network
+requests, wrote the `process_start` gap durably, finalized three contiguous
+records, and replayed the recovery checkpoint through ordinal 3. This proves
+startup/recovery/first-write mechanics only; it is not a source-feed canary or
+production recovery proof.
+
+The read-only exact-boundary deployment-preflight record is
+`/home/charlie/midas-engineering-mission-20261026/evidence/reality-deployment-preflight-2026-10-26T0354Z.json`
+(SHA-256
+`53f1d11909238d91c0e73ff81fcf3351e018b4b60c219a67550a5dfc81e6c7f8`). It is
+explicitly blocked, not a green deployment gate. At 03:54:13 UTC the protected
+process was still PID 3007040 on production commit
+`4f5cb5689548987bf30a33f050284ea8cb2f3c28`, with the 24 GiB / 90-day
+configuration, at collector ordinal 5,143,954. The raw root had 31,946
+finalized segment names, 204 beyond the copied 31,742-segment recovery
+boundary. The old checkpoint still covers only 2,816 of 31,742 segments.
+
+Current archive inventory remains 19,833 `.seg` files versus 18,695 manifest
+entries, 1,138 names outside the manifest, and 58 preserved `.copying` files
+(16,471,242 bytes). All archived segment names were present in the raw source
+directory, but their contents were not fully hash-verified. The writer timer
+remains disabled. The archive filesystem has 634,806,595,584 bytes free, but
+provenance and inventory validation block use.
+
+The capacity receipt measured 15-minute-old input at 03:40 UTC: the live budget
+is 25,769,803,776 bytes / 90 days with 16.53 effective days and 15.17 days in
+the short window. The staged 120,259,084,288-byte / 120-day configuration
+shows 108.18 configured runway days. At preflight time NVMe free space was
+160,133,648,384 bytes. Direct file-size deltas since the 2026-10-21 storage
+policy sample showed net growth of about 674 MB/day for the MIDAS database and
+644 MB/day for the Reality preview database over 4.73 days. A transparent
+straight-line 30-day database scenario, combined with the staged policy's
+90-day raw-growth scenario, 20 GiB reserve, and 4 GiB Veritas budget, exceeds
+current NVMe free space by 10,286,571,682 bytes. This short sample is a
+scenario, not a long-term forecast; it is sufficient to keep storage clearance
+blocked until the shared-service plan is recalculated and supported.
+
+At the same sample the MIDAS API cgroup was at about 99% of `MemoryHigh`
+(1,594,994,688 / 1,610,612,736 bytes; 1,414,471,680 bytes charged as file
+cache, 165,072,896 bytes anonymous; no `max` or OOM events). Reality was at
+1,065,025,536 / 1,207,959,552 bytes `MemoryHigh`, with no `max` or OOM events.
+These measurements support holding restart admission; they do not establish a
+Python heap leak.
+
+The candidate runtime release is not installed. The official deployment gate
+was not invoked because its fresh verification receipt, bounded candidate feed
+canary, and complete latest-boundary recovery prerequisites are absent. No
+protected service, source recording, archive contents, or runtime
+configuration was changed during this follow-up.
