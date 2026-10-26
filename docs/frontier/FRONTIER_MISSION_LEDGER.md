@@ -70,6 +70,7 @@ Remaining acceptance work is substantial.
 | `711a563` | Added Mission Control centered-neighborhood page controls, cursor restart state, and desktop/mobile UI coverage. |
 | `67f79cd` | Added Polymarket v2 cursor pages, schema-v2 outcome-token preservation, condition/page-size-bound local cursors, bounded persistence/read-back, and adversarial page/cursor tests. |
 | `7c6cc21` | Added capability/config-gated Mission Control first/next trade-page controls, outcome-token display, and unit plus desktop/mobile continuation coverage. |
+| `e661e06` | Preserved direct first-page and API-route continuation captures, verified their hashes, and refreshed architecture, development, README, and engineering-report handoffs. |
 
 ## Public source investigation
 
@@ -268,5 +269,6 @@ updated measurements. The revision-bound relationship paging backend is
 and browser coverage are `711a563f3b99665e2f635d4c66e286bee93f4d38`. Polymarket
 v2 page support is `67f79cde6b37ac51c226c4338196a1b2482e37aa`; the Mission
 Control continuation is `7c6cc21764d124f61211b79299335d78e8260c69`. The
-evidence/report commit and its final ledger checkpoint will be recorded in the
-next ledger revision.
+capture and documentation checkpoint is
+`e661e06e22b2d29bd68e13dd6e6b423c698fec27`. This ledger amendment is the
+current branch checkpoint; no deployment or production change was made.

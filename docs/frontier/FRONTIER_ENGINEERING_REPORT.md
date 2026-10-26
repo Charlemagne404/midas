@@ -658,7 +658,7 @@ Priority order:
 
 ## 19. Exact files and commits changed
 
-Code commits on this branch:
+Implementation and documentation commits on this branch:
 
 - `0f8e1d6` — exchange-independent contracts, transport, Polymarket/Kalshi/
   Kraken adapters, relationships, Decimal economics, bounded storage/replay,
@@ -727,6 +727,9 @@ Code commits on this branch:
   adversarial cursor/page tests.
 - `7c6cc21764d124f61211b79299335d78e8260c69` — added source-config-gated
   Mission Control page controls, outcome identity display, and UI/browser tests.
+- `e661e06e22b2d29bd68e13dd6e6b423c698fec27` — preserved the direct first-page
+  and live API continuation captures, verified their hashes, and updated the
+  architecture, development, README, and engineering-report handoffs.
 
 Principal changed paths:
 
@@ -740,8 +743,9 @@ Principal changed paths:
 - `.env.example`, `README.md`, `docs/ARCHITECTURE.md`, `docs/DEVELOPMENT.md`,
   and `docs/frontier/*`
 
-The documentation commit identity is recorded by the final mission-ledger
-checkpoint that commits this report.
+The Polymarket v2 capture evidence and architecture/development/report update
+were committed as `e661e06e22b2d29bd68e13dd6e6b423c698fec27`. The final mission
+ledger amendment follows that checkpoint on this branch.
 
 ## 20. Final status and continuation instructions
 
