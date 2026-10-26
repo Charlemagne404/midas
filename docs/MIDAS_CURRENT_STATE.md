@@ -1,6 +1,8 @@
 # MIDAS current state
 
-**Updated:** 2026-10-17 (local operational state). This is the current engineering and operations reference. Mission reports, checkpoints, ledgers, and experiment artifacts remain historical records and should be read with their own version and capture time.
+**Snapshot date:** 2026-10-17 (historical operational baseline; the details below have not been refreshed for 2026-10-26).
+
+**Current verified status:** Use the [MIDAS engineering mission report for 2026-10-26](reliability/MIDAS_ENGINEERING_MISSION_2026-10-26.md) for the later API, dashboard, Veritas V6, Reality collector, recovery, storage, and archive measurements. Its newest exact-boundary read-only preflight is timestamped `2026-10-26T04:55:04Z`. Do not treat the service health, campaign counts, resource figures, or index boundaries below as current without rechecking their capture times.
 
 ## Project status
 

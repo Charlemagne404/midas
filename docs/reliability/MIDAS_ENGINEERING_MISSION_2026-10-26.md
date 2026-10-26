@@ -3,32 +3,58 @@
 ## Executive readout
 
 Veritas V6 is integrated into a dedicated MIDAS branch and its observer is
-running from the pinned V6 release. At the latest scheduled update, the
-independent Decimal reference audited 1,600 repeated pairs across 741 unique
-markets and found zero economically supported or net-eligible observations;
-they are not 1,600 independent trials. The snapshot catalog is still catching
-up, and the latest scan included no stable-control markets.
+running from the pinned V6 release. Its latest scheduled update remains
+`2026-10-26T04:32:24Z`: the independent Decimal reference audited 1,600
+repeated pairs across 741 unique markets and found zero economically supported
+or net-eligible observations. These are correlated observations, not 1,600
+independent trials. The snapshot catalog is still catching up, and the latest
+scan included no stable-control markets.
 
 The Research Readiness view is implemented and deployed through the existing
-local Mission Control Vite service. It reads live API projections, labels demo
-mode prominently, separates staged and deployed versions, classifies missing
-evidence conservatively, and shows current storage and cgroup measurements.
-Browser verification at 1440 px and 390 px completed without page errors or
-horizontal overflow. A follow-up fix for unmeasured Veritas fields is
-committed locally but not deployed.
+local Mission Control Vite service. At 04:48:57Z `/api/health` reported API
+release `cf452ec`, `READY`, `mode=demo`, and `live_execution=false`; Laboratory
+was `READY` and paper recovery was `CHECKPOINT_VERIFIED` at 673,222 events.
+The view reads live API projections, labels demo mode prominently, separates
+staged and deployed versions, classifies missing evidence conservatively, and
+shows storage and cgroup measurements. Browser verification at 1440 px and
+390 px completed without page errors or horizontal overflow. The follow-up
+fix for unmeasured Veritas fields is now deployed in immutable web release
+`90c625d`; its targeted Veritas browser test passed against isolated evidence
+fixtures, and post-deploy checks served the `Not measured` state successfully.
 
-Reality production remains on its older collector and 24 GiB / 90-day
-configuration. Its staged reliability candidate is dirty and undeployed. The
-recorder was not restarted or changed. Latest-boundary cold recovery remains
-incomplete. Archive staging still has an invalid manifest/provenance state.
+Reality production remains on its older collector and active 24 GiB / 90-day
+configuration. At the 04:47Z read, the collector was receiving with 16/16
+books fresh but remained degraded and unsequenced; its 18,607 local gap
+markers are not a count of lost exchange events. Persistence-window,
+recovery-state, and transport-queue telemetry were unavailable. Latest-boundary
+cold recovery remains incomplete. Archive staging still has invalid
+manifest/provenance state.
 
-Readiness is **not established**. At the 03:43Z live capture, the independent
-correctness, collector, recovery, and resource gates were blocked; storage was
-conditional after its scheduled capacity projection moved to a 15.2-day
-short-window estimate; evidence sufficiency was conditional with zero eligible
-candidates. Arena has no active or queued work; a fresh owner-job join resolves
-three persisted `RUNNING` director manifests to two cancellations and one
-failure without rewriting them.
+The 04:55:04Z metadata-only exact-boundary preflight counted 32,065 finalized
+raw segment names through ordinal 5,160,978, while source and gap indexes
+ended 30 and 15 segment names behind that boundary. It did not read segment
+contents or compute content hashes. The archive still has 1,138 finalized
+segments outside its manifest and 58 `.copying` files. The clean candidate
+rejects unmanifested files, but no archive or production mutation was made.
+The protected recorder remained on PID 3007040; the preflight is blocked.
+
+The original Reliability worktree remains dirty and preserved. A clean local
+candidate at `d298957afe14d6cbbc47038fbb101a96a63fadca` integrates its bounded
+collector telemetry with archive fail-closed handling. Its focused Reality,
+dashboard, and operations suite passes 66 tests, and its isolated zero-duration
+first-write/recovery receipt matches the candidate source identity. It remains
+undeployed.
+
+Readiness is **not established**. At 04:47:40Z, API cgroup use was
+1,593,131,008 bytes against `MemoryHigh=1,610,612,736`, leaving about 16.7 MiB;
+host available memory was about 8.10 GB. The current measured storage projection
+is about 16.7 days at the effective growth rate and 20.2 days on the
+short-window estimate. Independent correctness, collector, recovery, resource,
+and storage gates remain blocked or conditional; economic evidence sufficiency
+remains conditional with zero eligible candidates. Arena has no active or
+queued jobs; three persisted `RUNNING` director manifests project to two
+cancellations and one failure without rewriting them. Its only open alert is
+an expired one-minute operational demonstration schedule with no child job.
 
 No Frontier, Atlas, replacement long-duration campaign, real-money operation,
 wallet action, or exchange order was started.
@@ -46,12 +72,13 @@ artifacts.
 | `/home/charlie/midas-veritas` | `project/veritas`, `3b102928594323e7886859d348f7b2151663debb` | clean |
 | `/home/charlie/midas-reality-reliability` | `fix/reality-foundation-20261020`, `4278b5b5e66823e41a5d949b7b7c2e007c5b4ed0` | 26 dirty entries; preserved |
 | `/home/charlie/midas-veritas-research-overhaul` | `codex/real-market-research-overhaul`, `3b102928594323e7886859d348f7b2151663debb` | 25 dirty entries; preserved |
+| `/home/charlie/midas-reality-archive-provenance` | `codex/reality-archive-provenance-20261026`, `d298957afe14d6cbbc47038fbb101a96a63fadca` | clean; isolated collector candidate |
 | `/home/charlie/midas-engineering-mission-20261025` | `codex/midas-comprehensive-engineering-mission-20261025`, `005f6fa50eca9cf4fa332ab59bb335607a78cc84` | six untracked evidence/data entries; preserved |
 | `/home/charlie/midas-veritas-v6-integration-20261026` | `codex/veritas-v6-integration-20261026`, final runtime source `4f4179c72eeb6deab59c4fc5959315cf62284c85` | dedicated integration branch |
 
-The main checkout's dirty files, the Veritas research-overhaul worktree, the
-Reality candidate, and the existing 522-snapshot replay evidence were not
-staged, reset, deleted, or rewritten. The only protected service left
+The main checkout's dirty files, the dirty Reality reliability and Veritas
+research-overhaul worktrees, and the existing 522-snapshot replay evidence
+were not staged, reset, deleted, or rewritten. The only protected service left
 untouched was `midas-reality.service` (PID 3007040, source
 `/home/charlie/midas-reality`, production commit `4f5cb568...`). The active
 Reality process ID and start time were unchanged after this mission's API and
@@ -138,11 +165,24 @@ The full snapshot identity, role counts, artifact hashes, and funnel are in the
 independent trial counts, profitability, executable fills, queue position,
 acknowledgements, or realized P&L.
 
-The source indexes have no pending catalog work in this capture: finalized
-source analysis is 31,977/31,977 segments and gap detail is 32,029/32,031 with
-zero pending segments. This describes indexed finalized evidence; it is not a
-full cold-recovery proof or reconciliation of the live recorder's current raw
-boundary.
+The 04:55:04Z raw-root metadata inventory found 32,065 finalized `.seg`
+names through ordinal 5,160,978, one active `.open` file of 422,130 bytes,
+and 32,065 matching numeric sidecars with no name mismatch. It did not hash
+raw segment contents. Relative to this boundary, the latest source-analysis
+index is 30 segment names behind and the gap-detail catalog is 15 names
+behind; these are incremental indexes, not full recovery.
+
+The latest API read reports finalized-source analysis at 32,035/32,035
+segments, zero pending, last ordinal 5,156,975, artifact SHA-256
+`075303799f9f02a556bcf550628d3ff12d58b83a7b8fce7e0d626526538b2d47`. Gap
+detail generated at `2026-10-26T04:47:24Z` covers 32,048 replayable segments
+of a 32,050-segment catalog, has zero pending work, ends at ordinal 5,158,905,
+and has artifact SHA-256
+`a6c466494b0818a8c7c8a39100d428e41f86a867cd27848296622ad7ea7cff62`. Two
+catalog entries are empty finalized segments. The live Reality API was already
+at ordinal 5,159,119 during the same read window. These distinct incremental
+indexes do not close the active raw tail or establish a full cold-recovery
+proof.
 
 ## 3. Reality collector, storage, and recovery
 
@@ -165,35 +205,53 @@ divergences, and 1852 source-time regressions after gaps. The current error was
 null; the last `ConnectionClosedOK` error remains historical and has no
 source timestamp. Raw fields and interpretations are preserved in Section 6.
 
-The staged candidate in
-`/home/charlie/midas-reality-reliability` is branch
-`fix/reality-foundation-20261020` at `4278b5b5e66823e41a5d949b7b7c2e007c5b4ed0`
-with two tracked Reality-source changes and additional untracked evidence.
-Its isolated Reality, dashboard, and operations suite passed 63 tests after
-pinning both candidate and package paths in `PYTHONPATH`. A first test command
-that pinned only `packages` imported the primary checkout and produced four
-environment-mismatch failures; the corrected candidate invocation passed.
-The committed candidate code contains bounded 60-second persistence/append
-latency samples with coverage and completeness, process maximums and
-backpressure counters, WebSocket queue depth/high-water samples that remain
-unknown when the installed transport does not expose them, recovery
-checkpoint ordinal/duration/error, and resource-headroom status. These fields
-are exposed through its read-only Reality API and dashboard. The candidate was
-not copied into production, and its source tree remains dirty. The isolated
-first-write and blocked exact-boundary preflight receipts in Section 8 cover a
-separate clean archive-provenance-only worktree; they do not establish the
-full candidate's source-feed canary, startup recovery, or current-boundary
-replay.
+The later 04:47Z API read still reported `degraded` and
+`incomplete_observability`, while the collector was `RECORDING_UNSEQUENCED`
+and `active_receiving`. It had 16/16 fresh books, ordinal 5,159,119, 4,063,802
+frames, and 18,607 durable local gap markers. `sequence_verified` remains
+false. The current error was null; the old `ConnectionClosedOK` last error
+still had no source timestamp. Persistence samples, recovery state, and
+transport queue depth remained unreported. The incrementing local gap count
+does not quantify lost upstream events.
 
-The latest capacity projection uses active 24 GiB / 90-day settings and
-measured growth near 1.01 GB/day. It reported 16.5 days of effective runway
-and 15.2 days on the short-window estimate after the scheduled capacity timer
-updated the projection. The earlier 12.5-day short-window result was retained
-as a prior observation; the current dashboard capture uses 15.2 days. The
-staged 112 GiB / 120-day settings remain pending restart and estimate about
-108.2 days at the current configured rate, below the 120-day retention target.
-The raw recording filesystem had about 149 GiB available with a 20 GiB reserve.
-Warnings remain; the proposed budget has not been activated.
+The preserved source candidate in `/home/charlie/midas-reality-reliability`
+remains dirty at `4278b5b5e66823e41a5d949b7b7c2e007c5b4ed0`, with its two
+tracked operational edits and untracked evidence untouched. Its previously
+verified candidate suite passed 63 tests. The committed collector code
+provides bounded 60-second persistence/append latency samples with coverage
+and completeness, process maximums and backpressure counters, WebSocket queue
+depth/high-water samples that remain unknown when transport introspection is
+unavailable, recovery checkpoint ordinal/duration/error, and resource-headroom
+status. These fields are exposed by candidate read-only APIs and dashboard.
+
+A clean integration candidate is now available at
+`/home/charlie/midas-reality-archive-provenance`, branch
+`codex/reality-archive-provenance-20261026`, commit
+`d298957afe14d6cbbc47038fbb101a96a63fadca` (parent `987481fd6ae611d062155063c19f24b5ea51bb18`, which is based on `4278b5b`). It adds fail-closed
+archive validation: unmanifested finalized segments, `.copying` files, invalid
+manifests, symlinks, and interrupted manifest publication are preserved and
+block publication. A prior published manifest is matched as an ordered
+subsequence so new empty finalized segments cannot make a valid incremental
+archive look like a different source. The candidate never adopts extra
+unmanifested `.seg` files. Its final Reality, dashboard, and operations suite
+passed 66 tests; the focused archive operations suite passed 17 tests, and
+Ruff passed.
+
+An isolated zero-duration startup at this exact candidate identity wrote the
+`process_start` gap durably, finalized three contiguous records through
+ordinal 3, made zero guarded network calls, stopped with zero failures, and
+replayed its checkpoint to the same state. Source identity is
+`3e17719404b0b2fd9edd05fa8b6bbc27ae6c2e4fd5a30849f0a2121319a03e9a`. This is
+not a public-feed canary or a current-boundary recovery proof. The clean
+candidate is not deployed, and the protected recorder was not changed.
+
+The latest capacity projection, measured around 04:40:49Z and re-read at
+04:47Z, uses active 24 GiB / 90-day settings. Effective runway is 16.7 days and
+the short-window estimate is 20.2 days. The staged 112 GiB / 120-day settings
+remain pending restart and estimate 108.1 days at the configured rate, below
+the 120-day retention target. At the 04:47:40Z resource sample the raw
+recording filesystem had 159,354,204,160 bytes available. Warnings remain;
+the proposed budget has not been activated.
 
 Archive staging at
 `/mnt/continental-cloud/data/midas-reality-staging/archive-mission3` remains
@@ -201,9 +259,13 @@ Archive staging at
 GB and contained 19,833 segment files against 18,695 manifest entries; 1,138
 finalized segment names were outside the manifest (their names exist in the
 current raw root), and 58 `.copying` files occupied about 16.5 MB. The
-published subset has not had a full content-integrity pass. The archive writer
-is inactive and its timer disabled. No ambiguous file was removed, adopted, or
-re-published.
+published subset has not had a full content-integrity pass. At the 04:40Z API
+capacity projection, the archive remained `INVALID_MANIFEST`; 18,521 of the
+18,695 manifest entries had a previous full content verification, which does
+not verify the out-of-manifest names. The archive writer is inactive and its
+timer disabled. The new candidate guard is tested only on synthetic fixtures;
+it did not inspect, adopt, or rewrite the production archive. No ambiguous
+file was removed, adopted, or re-published.
 
 Historical full recovery R10 ended at 19,546 segments. R14 covered a verified
 prefix plus suffix through 20,110. R15 stopped at 2,304 of 20,148. The newer
@@ -224,10 +286,10 @@ research-admission input. Commit
 `4f4179c72eeb6deab59c4fc5959315cf62284c85` labels economic category totals as
 overlapping disagreement flags.
 
-The release packages under
+The initial 04:39 web release and API packages under
 `/home/charlie/.local/share/midas-api/releases/` were created from committed
 Git archives and checked against all 1,843 tracked blobs. API release identity
-is `cf452ec`; web source revision is `4f4179c...`. User drop-ins are
+is `cf452ec`; web source revision was `4f4179c...`. User drop-ins were
 `midas-api.service.d/95-research-readiness-cf452ec.conf` and
 `midas-web.service.d/99-research-readiness-4f4179c.conf`. Existing API demo
 mode, paper store, recording-budget environment, cgroup limits, and API port
@@ -235,6 +297,24 @@ were retained. Web remains the existing local Vite service bound to
 `127.0.0.1:5173`; a separate unrelated Vite service on port 5174 was not
 touched. Drop-in removal restores the previous immutable source release; no
 Reality unit was edited.
+
+The tested null-safe Veritas rendering was then deployed separately as web
+release `90c625d4e168c64fe3c8d1f93e0c1393734fd009` at
+`/home/charlie/.local/share/midas-api/releases/90c625d`. It was packaged from
+the committed Git archive and all 1,844 tracked blobs matched the source
+commit. The pnpm lockfile is unchanged from `4f4179c`; the release uses the
+same existing `apps/web/node_modules` symlink. A fresh bounded production
+build passed under `MemoryHigh=768M`, `MemoryMax=1G`, `CPUQuota=20%`, and
+`TasksMax=64`; the existing 502.91 kB main and 544.41 kB Chart advisories
+remain. The new deployment drop-in is
+`midas-web.service.d/99-research-readiness-90c625d.conf` (SHA-256
+`c5a3c87843c5499f9e8af916f793b57799d90ad78966ebc50a932c3c67116d84`); the
+previous `4f4179c` release and drop-in remain intact for rollback. At
+`2026-10-26T05:03:22Z` (06:03:22 CET) the web service moved from PID 864756 to
+PID 1012462. Its root and transformed
+Veritas module both returned HTTP 200, and the served module contained the
+null-safe `Not measured` label. API remained `READY` on `cf452ec`, demo mode,
+`live_execution=false`; Reality remained active on PID 3007040.
 
 The dashboard covers API, Reality, Veritas, Laboratory, Arena, version
 provenance, observation funnel, independent economic categories, data and
@@ -284,6 +364,25 @@ the separate per-run resource status remains `NOT_MEASURED`. These point
 samples keep heavy-research admission blocked; they do not identify a heap
 leak or establish sustained capacity.
 
+The later bounded resource endpoint sample at `2026-10-26T04:47:40Z` measured
+API cgroup use at 1,593,131,008 bytes against `MemoryHigh=1,610,612,736`, with
+17,481,728 bytes (16.7 MiB) headroom. It recorded 16 `high` events during its
+4.368-second sample and no OOM events. Reality cgroup use was 1,078,980,608 of
+1,207,959,552 bytes `MemoryHigh`; host available memory was 8,096,669,696
+bytes. The current readiness API therefore continues to block heavy research
+admission even though host-wide available memory is substantial.
+
+At 04:48:57Z `/api/health` reported main API `READY` on `cf452ec`, demo mode,
+`live_execution=false`, Laboratory `READY`, and paper recovery
+`CHECKPOINT_VERIFIED` at 673,222 events. A fresh read-only Arena projection
+showed zero active or queued jobs and zero active directors, three stale
+persisted director manifests, zero unverified directors, and zero invalid
+artifacts. Their owner jobs remain two `CANCELLED` and one `FAILED` after the
+artifact budget was exceeded. One open alert refers to an already `EXPIRED`
+60-second operational demonstration schedule titled “real admission expiry
+after pause, no child admitted”; the schedule has no job ID. No manifest or
+schedule was changed.
+
 ## 5. Verification and retained failures
 
 | Area | Verification result |
@@ -291,7 +390,7 @@ leak or establish sustained capacity.
 | Veritas V6 core and persistence regression | 44 focused V6 tests passed; 186 post-merge backend regression tests passed; 26 API/Arena integration tests passed in the prior integration checkpoint |
 | Current API/Veritas integration | 59 focused tests passed, including resource API, API integration, independent economics, observatory, and catalog tests; one upstream Starlette/httpx deprecation warning |
 | V6 interrupted offline replay | 4 tests passed for resume after interruption, source/copy corruption, path/symlink overlap, and admission checkpoint |
-| Reality candidate | 63 tests passed with candidate-root and package-root imports pinned |
+| Reality integrated candidate | 66 tests passed on clean commit `d298957`; archive operations passed 17/17; Ruff passed; zero-duration isolated first-write and recovery replay passed with no network calls |
 | Python quality | Ruff passed for changed API/tests; four Python files already format-clean |
 | Frontend full unit suite | 32 tests passed across 6 files; final changed Readiness tests also passed 3/3 |
 | Frontend checks | TypeScript, ESLint, Prettier, and production build passed; existing Chart (544.41 kB) and main (502.91 kB) chunks still trigger Vite's 500 kB advisory |
@@ -370,6 +469,18 @@ Mission evidence files are under
   read-only research-activity projection, verified owner configuration/source
   linkage, and hashes for the three unchanged persisted manifests and job
   records; SHA-256 `c145a7ea5680108b15fddbea2fa1ab6a84b480874068a3fff0734d81bcb1be07`.
+- `web-release-90c625d-predeploy-2026-10-26T0503Z.json` — immutable web
+  release preflight, verified source tree, bounded build, prior service/API
+  identities, and rollback inputs; SHA-256
+  `3922125700f44d9bc7f02673b759d4f304a4c7364bb0e37580722662e67e093b`.
+- `web-release-90c625d-postdeploy-2026-10-26T0503Z.json` — web/API health,
+  active web PID, HTTP 200 loopback responses, served null-safe label, and
+  unchanged Reality PID; SHA-256
+  `230a4c6bd1f53aa99de4fb3d230e7a4298e5f8f1a580456fa6167ea98fa71871`.
+- `web-release-90c625d-postdeploy-integrity-2026-10-26T0505Z.json` — rechecks
+  all 1,844 source blobs and eight built assets after deployment, plus API and
+  web identities; SHA-256
+  `2d5e2fbb9db87d5049416e8e17b201720870a5bacc88c1121c8f2808c4e15216`.
 - `resource-api-post-browser-2026-10-26T0433Z.json` — live API health and
   bounded cgroup/host/observer sample at 04:33:53Z; SHA-256
   `f59e50f0a919ea16c94c6601963b00ece37b07d3449e03e9975b75c7fbcf283b`.
@@ -382,6 +493,25 @@ Mission evidence files are under
   artifact checks, source/gap index boundaries, and verified summary-file
   identity; SHA-256
   `470ce82775558e7c3b3982076a51e0e13b115b07ac4650567db24d4aa777c86b`.
+- `reality-final-candidate-first-write-2026-10-26T0447Z.json` — final clean
+  Reality candidate `d298957` startup, zero-duration network-guarded first
+  durable write, three-record finalization, checkpoint replay, source identity,
+  and unchanged protected PID; SHA-256
+  `ab6ca1486a826a877ad42caca15912afcadb02e2f330715df58193f32a520a4f`.
+- `reality-archive-state-regression-2026-10-26T0450Z.json` and `.log` — final
+  archive-state tests (17/17) and Ruff result on `d298957`; receipt SHA-256
+  `33eb9d4e59f1158a22cf599046b4b9d2a3ca89e13dcb514054dd9bf2e07d9907`, log
+  SHA-256 `7e9a963e308436ba6964ba05776a59ac06cda8a6128d3d175325485d71cc04b0`.
+- `reality-candidate-regression-2026-10-26T0451Z.json` and `.log` — final
+  Reality, dashboard, and operations suite (66 passed, one upstream
+  deprecation warning) and Ruff result on `d298957`; receipt SHA-256
+  `f302f552a6fa438892c6c43484b2f7c970381772dc13d41dd35caaa7d625159b`, log
+  SHA-256 `bc6676df1cd295628829152b837f1fc3a89b3f48d26afa0f65192e4cefd9b9fb`.
+- `reality-read-only-deployment-preflight-2026-10-26T0455Z.json` — bounded
+  metadata-only exact-boundary preflight, candidate/config identities,
+  archive manifest state, cgroup deltas, and explicit blockers; it did not
+  read source contents or invoke the official deployment gate. SHA-256
+  `f2cb8fa8a5947f96c94b69c8e722fe35a8a9260e3ccee730f02eee94de27ca43`.
 - `data/veritas-v6-offline-replay-522-20261026/` in the preserved
   `midas-engineering-mission-20261025` worktree — isolated 522-snapshot replay
   receipt SHA-256
@@ -389,9 +519,11 @@ Mission evidence files are under
   post-run verification SHA-256
   `5d5cb78d9940882d4e3c1b06456c522db84679ccbb242b49e7395664fe94feca`.
 
-The final UI package manifest is at
-`/home/charlie/.local/share/midas-api/releases/4f4179c/RELEASE-MANIFEST.json`;
-the API manifest is at
+The active UI package manifest is at
+`/home/charlie/.local/share/midas-api/releases/90c625d/RELEASE-MANIFEST.json`,
+SHA-256 `cd3a76adc08c44451550dbb5476a8f5c4d55f5cadbf5fda5a5085507e1392590`;
+the previous `4f4179c` UI release remains available for rollback. The API
+manifest is at
 `/home/charlie/.local/share/midas-api/releases/cf452ec/RELEASE-MANIFEST.json`.
 Each records the full source commit and tree identity. Existing older release
 directories remain available for rollback.
@@ -402,14 +534,14 @@ directories remain available for rollback.
 | --- | --- | --- |
 | Veritas V6 code, independent Decimal reference, catalog migration and bounded publication | **COMPLETE AND VERIFIED** | Integrated and scheduled; latest update has 40/528 snapshots processed, 488 pending, and 1,095 source-quality plus 1,095 validity flags (categories may overlap) |
 | Economic evidence | **PARTIALLY VERIFIED** | Latest reference covers 1,600 repeated pairs across 741 markets; 310 independently snapshot-valid, zero economic support/net eligibility, and execution outcomes remain unmeasured |
-| Readiness resource API and dashboard | **COMPLETE AND VERIFIED** | Deployed at API `cf452ec` / web `4f4179c`; browser receipt and screenshot available |
-| Veritas missing-evidence rendering and deterministic browser fixtures | **IMPLEMENTED, DEPLOYMENT PENDING** | Current branch renders unavailable counts as `Not measured`; frontend/browser checks pass, but this follow-up is not in the deployed web release |
-| Reality candidate hardening | **IMPLEMENTED, DEPLOYMENT PENDING** | The archive-provenance fix is committed and its focused suite passes; a synthetic isolated first-write receipt and a fresh blocked deployment preflight exist. A feed canary, complete latest-boundary recovery, storage clearance, and protected-restart authorization remain |
-| Reality candidate bounded telemetry | **IMPLEMENTED, DEPLOYMENT PENDING** | Candidate commit `4278b5b` exposes bounded persistence, transport-queue, backpressure, checkpoint, and resource fields; 63 candidate tests passed. These fields are not present in the protected production API |
-| Production Reality telemetry/integrity | **PARTIALLY VERIFIED** | At 04:35:56Z the API still reports an unsequenced degraded feed and missing persistence-window, queue-depth, and recovery-state telemetry |
-| Cold recovery/reproducibility | **PARTIALLY VERIFIED** | Historical prefixes and bounded checks exist; latest boundary is not fully verified |
-| Storage/archive provenance | **BLOCKED** | Active warning runway; staged capacity inactive; archive manifest and provenance invalid |
-| Cross-component research admission | **PARTIALLY VERIFIED** | Dashboard blocks near API `MemoryHigh`; three persisted Arena manifests are read-only projected as 2 cancelled / 1 failed from owner jobs, with 0 active and 0 unverified; startup verification is CPU/I/O intensive |
+| Readiness resource API and dashboard | **COMPLETE AND VERIFIED** | Deployed at API `cf452ec` / web `90c625d`; browser receipt and screenshot available |
+| Veritas missing-evidence rendering and deterministic browser fixtures | **COMPLETE AND VERIFIED** | Null renders as `Not measured`, distinct from measured zero; targeted browser test passed, and immutable web release `90c625d` serves the fix with HTTP 200 smoke verification |
+| Reality candidate hardening | **IMPLEMENTED, DEPLOYMENT PENDING** | Clean candidate `d298957` integrates the 4278 telemetry base and archive fail-closed fixes; 66 Reality/dashboard/operations tests pass. First-write and checkpoint replay are verified. A feed canary, complete latest-boundary recovery, storage clearance, and protected-restart authorization remain |
+| Reality candidate bounded telemetry | **IMPLEMENTED, DEPLOYMENT PENDING** | Candidate exposes bounded persistence, transport-queue, backpressure, checkpoint, and resource fields; production API still lacks these observations |
+| Production Reality telemetry/integrity | **PARTIALLY VERIFIED** | At the 04:47Z API read, all 16 books were fresh and the collector was receiving, but health remained degraded/unsequenced with persistence-window, queue-depth, and recovery-state telemetry missing |
+| Cold recovery/reproducibility | **PARTIALLY VERIFIED** | Source analysis covered 32,035/32,035 of its captured index and gap detail 32,048/32,050 replayable segments; live ordinal 5,159,119 is ahead. The latest boundary is not fully verified |
+| Storage/archive provenance | **BLOCKED** | Effective capacity runway is 16.7 days, staged capacity is inactive, and archive manifest/provenance remain invalid; the new guard preserves and blocks ambiguous files |
+| Cross-component research admission | **PARTIALLY VERIFIED** | Dashboard blocks at low API `MemoryHigh` headroom; Arena has 0 active/queued jobs, 3 stale owner-linked directors (2 cancelled, 1 failed), and an expired no-child demonstration schedule alert |
 | Trading, Frontier, Atlas, 48-hour campaign | **DEFERRED BY SCOPE** | Not started |
 
 Recommended next actions:
@@ -426,15 +558,18 @@ Recommended next actions:
    the next scheduled result.
 4. Keep Arena director lifecycle state derived from the matching owner job;
    preserve the three persisted manifests, and investigate any future
-   `UNVERIFIED` projection before considering a mutation.
+   `UNVERIFIED` projection before considering a mutation. The expired
+   one-minute operational demonstration schedule has no child job and should
+   remain an evidence record, not be re-dispatched.
 5. Keep the Reality recorder on its current service. The archive-provenance
-   fix is committed on `codex/reality-archive-provenance-20261026`; the
-   isolated startup receipt is complete, and the exact-boundary preflight is
-   blocked. Before any transition, reconcile NVMe headroom and archive
-   provenance, install and verify an immutable candidate release, pass a
-   bounded feed canary, complete recovery at the current raw boundary, and
-   prepare rollback plus the expected recording-interruption statement. Then
-   request separate approval for the protected stop/restart.
+   and unmanifested-segment fixes are integrated on
+   `codex/reality-archive-provenance-20261026` at `d298957`; the bounded
+   first-write and 66-test candidate checks pass. The exact-boundary preflight
+   remains blocked. Before any transition, reconcile NVMe headroom and archive
+   provenance, install and verify an immutable candidate release, complete a
+   bounded feed canary and recovery at the current raw boundary, and prepare
+   rollback plus the expected recording-interruption statement. Then request
+   separate approval for the protected stop/restart.
 6. Resolve archive ownership and provenance for the 1,138 out-of-manifest
    names and 58 `.copying` files before adoption; do not delete them or enable
    archive writers until ownership and integrity are established.
@@ -442,9 +577,8 @@ Recommended next actions:
    checkpoint and safe resource admission. Report partial coverage until the
    complete boundary is reconciled.
 8. Keep browser verification fixture-based for Arena and Reality, retain the
-   explicit no-job assertion in Arena, and deploy the current Veritas
-   not-measured rendering through the normal web release process. Keep the
-   existing large-chunk warning visible.
+   explicit no-job assertion in Arena, and keep the large-chunk advisory
+   visible in the deployed UI build record.
 
 This closeout does not authorize a Reality service restart, archive mutation,
 or a new research campaign.
@@ -549,9 +683,67 @@ One earlier run of the old Arena E2E trained a single synthetic unmatched-risk
 classifier (30 base episodes, five epochs) in a temporary test store before
 the shared admission lock rejected its diagnostics/evaluation follow-up. It
 produced no frozen test, tournament, or research finding, and is not included
-in evidence. The replacement E2E does not submit Arena jobs. This UI/test
-follow-up has not been deployed. After the bounded Playwright scope ended, no
-Playwright or fixture worker remained; the protected Reality unit remained
-active at MainPID 3007040 with its original 2026-10-22 16:40:02 CEST start
-time. The web reliability changes are committed locally as
-`90c625d4e168c64fe3c8d1f93e0c1393734fd009`; they remain deployment-pending.
+in evidence. The replacement E2E does not submit Arena jobs. At this 04:31
+capture, the UI/test follow-up had not been deployed. After the bounded
+Playwright scope ended, no Playwright or fixture worker remained; the
+protected Reality unit remained active at MainPID 3007040 with its original
+2026-10-22 16:40:02 CEST start time. The web reliability changes are committed
+as `90c625d4e168c64fe3c8d1f93e0c1393734fd009`; they were later deployed at
+05:03 UTC as recorded in Section 4.
+
+## 10. Final exact-boundary read-only preflight — 2026-10-26 04:55 UTC
+
+The final preflight was deliberately limited to filesystem metadata, the
+published manifest, service state, bounded API projections, and cgroup/host
+counters. It ran under a 128 MiB `MemoryHigh`, 192 MiB `MemoryMax`, 10% CPU,
+32-task scope with a 45-second bound. It did not read raw or archived segment
+contents, calculate content hashes, call the official deployment gate, or
+change the running system.
+
+At `2026-10-26T04:55:04Z`, the protected Reality service was active on PID
+3007040 with the same production source and start time. The raw root contained
+32,065 finalized segment names (9,119,618,318 bytes), one `.open` file of
+422,130 bytes, and matching numeric sidecars. The live ordinal was 5,160,978;
+sequence verification remained false. The source-analysis artifact covered
+32,035 segments through ordinal 5,156,975; gap detail covered 32,048 replayable
+segments from a 32,050-entry catalog through ordinal 5,158,905. All three
+indexes describe different incremental boundaries, and none verifies the
+current complete store.
+
+Production still used source SHA-256
+`26b9bc331a1a47b020116668dec720764e4253b8200c69cce75271ee3c2db182` from
+commit `4f5cb5689548987bf30a33f050284ea8cb2f3c28`; its loaded config
+`/home/charlie/midas-reality/deploy/reality.json` had SHA-256
+`9d1aeeb5a496ad6971dc461ce87f327266ff25240391897f7bb6091a8307119a`. The
+clean candidate `d298957` source identity is recorded above; its candidate
+collector configuration SHA-256 is
+`8c1f8d445e2546d058065ada027d652886523e333930532fff5a044389df137c`.
+
+The archive contained 19,833 segment files totaling 5,369,550,131 bytes
+against 18,695 manifest entries. The 1,138 out-of-manifest finalized files
+matched current raw names; 58 `.copying` files occupied 16,471,242 bytes. The
+manifest's internal hash and root fields matched their own metadata, but the
+read-only API still classified provenance as `INVALID_MANIFEST`. No segment
+content hashes were recomputed. The archive remained untouched; its writer
+and timer remained disabled. The new candidate's fail-closed guard is verified
+on isolated fixtures only.
+
+At the after-sample, API cgroup use was 1,595,154,432 of 1,610,612,736 bytes
+`MemoryHigh`, leaving 15,458,304 bytes (14.74 MiB); no new `high` or OOM events
+occurred during the bounded scan. Reality cgroup use was 1,084,534,784 of
+1,207,959,552 bytes `MemoryHigh`, with no new high or OOM events. Host available
+memory was 8,098,099,200 bytes. CPU PSI's 10-second `some` value was 37.01% at
+the after-sample versus 2.87% before it; this point change is not attributed
+to the metadata scan. Heavy research admission remains blocked.
+
+The active 24 GiB / 90-day contract projected 16.70 effective runway days and
+20.20 short-window days. Staged 112 GiB / 120-day settings projected 108.14
+days, below the retention target. The clean candidate commit
+`d298957afe14d6cbbc47038fbb101a96a63fadca` passed its final 66-test Reality,
+dashboard, and operations suite and isolated zero-duration first-write check,
+but has no immutable runtime release and no public-feed canary. The preflight
+is **BLOCKED**, not deployment-ready: full current-boundary cold recovery,
+feed canary, telemetry completeness, resource headroom, storage runway,
+archive provenance, Reality candidate runtime release installation, and
+separate protected-restart authorization remain unresolved. The complete
+bounded receipt and hash are listed in Section 6.

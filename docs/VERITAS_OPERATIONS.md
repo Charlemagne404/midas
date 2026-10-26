@@ -9,6 +9,11 @@ integrated MIDAS readiness work is isolated on
 Reality collection and its frozen prospective worker continue from the
 separate `/home/charlie/midas-reality` worktree.
 
+For the latest timestamped runtime values, use the final dated handoff at the
+bottom of this document and the linked [MIDAS engineering mission report](reliability/MIDAS_ENGINEERING_MISSION_2026-10-26.md).
+The older Gate A/B procedures and pilot notes below are versioned evidence and
+protocols; their counts are not a substitute for the latest V6 projection.
+
 ## Read the Reality baseline without taking writer ownership
 
 The bounded forensic command opens the campaign journal with SQLite read-only
@@ -372,8 +377,10 @@ curl -fsS http://127.0.0.1:8000/api/readiness/resources | jq \
   '{captured_at_utc, host_memory, host_pressure, services, observer_last_run, staged_reality_candidate}'
 ```
 
-The API and web dashboard are deployed from immutable releases `cf452ec` and
-`4f4179c`; the Mission Control API reports demo mode and `live_execution=false`.
+At 04:48 UTC the API and web dashboard were deployed from immutable releases
+`cf452ec` and `4f4179c`; the Mission Control API reported demo mode and
+`live_execution=false`. At 05:03 UTC the web process moved to release
+`90c625d`, while the API release remained `cf452ec`.
 The dashboard labels the economic total as overlapping flags and keeps live,
 historical, staged, and unmeasured evidence distinct. Current research
 readiness remains blocked by source-quality/validity disagreements, incomplete
@@ -382,9 +389,10 @@ Reality collector observability, missing full cold-recovery evidence, API
 manifests. The read-only production projection joins each to its owner job,
 showing two cancellations and one artifact-budget failure, with zero active or
 unverified directors; the manifests remain unchanged. Storage runway is
-warning-level and staged Reality capacity is not active. The separate web fix
-in local commit `90c625d4e168c64fe3c8d1f93e0c1393734fd009` handles missing
-Veritas measurements safely but has not been deployed.
+warning-level and staged Reality capacity is not active. The web fix in local
+commit `90c625d4e168c64fe3c8d1f93e0c1393734fd009` handles missing Veritas
+measurements safely; it was still deployment-pending in the 04:31 browser
+receipt and was installed later under the verified 90c625d release below.
 
 The 03:43Z bounded finalized-source analysis processed through ordinal
 5,140,697 and reported zero pending segments for that captured prefix. The
@@ -437,3 +445,64 @@ short by about 10.3 GB of current NVMe free space. Do not restart Reality or
 enable archive publication on this evidence. The recorder remains on its
 24 GiB / 90-day production configuration pending recovery, storage, archive,
 resource, canary, and explicit-authorization gates.
+
+## 2026-10-26 — final V6 and Reality candidate verification (04:55 UTC)
+
+The scheduled Veritas V6 observer remains pinned to the immutable release
+`/home/charlie/.local/share/midas-veritas/releases/e988cbb0af86fe89e07da9af8036598b65068deb`;
+the integration source and Research Readiness dashboard remain on the
+unmerged branch `codex/veritas-v6-integration-20261026`. The latest observed
+observer publication is `2026-10-26T04:32:24Z`: analysis processed 40/528
+snapshots with 488 pending. Decimal reference v3 covered 1,600 repeated pair
+observations across 741 unique markets; 310 passed independent snapshot
+validity checks and zero were economically supported or net-eligible. The
+1,095 source-quality and 1,095 validity disagreement flags can overlap. The
+latest sample had 8 reference-random, 32 rotating-stratified, and 0 stable
+control markets. The 95,169-byte `continuous-analysis` summary has SHA-256
+`49bc1c678f237b4d7656481218b5101585e0c57fdc6cc80020ca371002ef0bb1`.
+Repeated observations are correlated and establish neither executable fills
+nor profitability.
+
+At the 04:47 API read, finalized-source analysis covered 32,035/32,035
+segments through ordinal 5,156,975. Gap detail covered 32,048 replayable
+segments of a 32,050-segment catalog through ordinal 5,158,905. The subsequent
+04:55 metadata-only production inventory counted 32,065 finalized raw segment
+names through ordinal 5,160,978, so these indexes lag the raw name boundary.
+No segment contents were read or hashed by that inventory; none of these
+projections proves latest-boundary cold recovery.
+
+The clean Reality candidate is now
+`/home/charlie/midas-reality-archive-provenance` at commit
+`d298957afe14d6cbbc47038fbb101a96a63fadca`, with source identity
+`3e17719404b0b2fd9edd05fa8b6bbc27ae6c2e4fd5a30849f0a2121319a03e9a`. Its
+Reality, dashboard, and operations regression suite passed 66 tests; isolated
+zero-duration first-write and checkpoint replay passed without network calls.
+The candidate is not installed as a runtime release. Production remains on
+PID 3007040 with the older collector. Its source is unsequenced; local gap
+markers do not count lost exchange events, and persistence-window,
+recovery-state, and queue-depth telemetry remain unavailable.
+
+The fresh exact-boundary preflight is
+`/home/charlie/midas-engineering-mission-20261026/evidence/reality-read-only-deployment-preflight-2026-10-26T0455Z.json`
+(SHA-256
+`f2cb8fa8a5947f96c94b69c8e722fe35a8a9260e3ccee730f02eee94de27ca43`). It is
+metadata-only and blocked. The archive has 19,833 segment files versus 18,695
+manifest entries, including 1,138 unmanifested finalized files and 58
+`.copying` files; no content hashes were recomputed and nothing was adopted,
+deleted, or republished. The active 24 GiB / 90-day contract projects 16.70
+effective runway days; staged 112 GiB / 120-day settings project 108.14 days.
+API `MemoryHigh` headroom was 14.74 MiB at the after-sample, so heavy research
+admission remains blocked. No protected restart, archive mutation, or new
+campaign is authorized by this handoff.
+
+The null-safe web release `90c625d4e168c64fe3c8d1f93e0c1393734fd009` was
+built from a verified Git archive, passed a fresh production build, and was
+installed through
+`midas-web.service.d/99-research-readiness-90c625d.conf` (SHA-256
+`c5a3c87843c5499f9e8af916f793b57799d90ad78966ebc50a932c3c67116d84`). The
+service changed from PID 864756 to PID 1012462; root and Veritas module
+requests returned HTTP 200, including the `Not measured` label. The old
+`4f4179c` release/drop-in remains available for rollback. The exact web
+release manifest, post-deployment smoke receipt, and after-build integrity
+receipt are listed in the mission report. The latter reverified all 1,844
+tracked source blobs and eight generated assets.
