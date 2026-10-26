@@ -127,6 +127,74 @@ def test_relationship_neighbors_use_both_endpoints_and_bounded_indexed_scan(tmp_
     assert any("relationships_right_endpoint_recent" in item for item in plan)
 
 
+def test_relationship_neighbor_pages_are_keyset_ordered_and_complete(tmp_path: Path):
+    store = FrontierStore(tmp_path, max_bytes=2 * 1024 * 1024)
+    markets = (
+        market(Venue.POLYMARKET, "page-a"),
+        market(Venue.KALSHI, "page-b"),
+        market(Venue.KRAKEN, "page-c"),
+    )
+    relationships = propose_relationships(markets, max_pairs=20)
+    for relationship in relationships:
+        store.append_relationship(relationship)
+
+    expected, _, _ = store.relationship_neighbors((markets[0].canonical_id,), scan_limit=10)
+    first, scanned, scan_truncated, has_more, after = store.relationship_neighbor_page(
+        markets[0].canonical_id, page_size=1, scan_limit=10
+    )
+    assert len(first) == 1 and scanned == 2
+    assert not scan_truncated and has_more and after is not None
+    second, scanned, scan_truncated, has_more, next_after = store.relationship_neighbor_page(
+        markets[0].canonical_id, page_size=1, scan_limit=10, after=after
+    )
+    assert len(second) == scanned == 1
+    assert not scan_truncated and not has_more and next_after is None
+    assert [item["relationship_id"] for item in first + second] == [
+        item["relationship_id"] for item in expected
+    ]
+    assert len(store.graph_revision()) == 3
+
+
+def test_graph_revision_tracks_rendered_market_metadata_but_not_books_or_trades(tmp_path: Path):
+    store = FrontierStore(tmp_path, max_bytes=2 * 1024 * 1024)
+    before = store.graph_revision()
+    store.append_observation(
+        _raw(Venue.POLYMARKET, '{"market":"initial"}', kind="market_listing"),
+        market(Venue.POLYMARKET, "revision-market"),
+    )
+    after_listing = store.graph_revision()
+    assert after_listing[0] == before[0] + 1
+
+    store.append_observation(
+        _raw(Venue.KALSHI, '{"book":"unrelated to graph node metadata"}', kind="public_book"),
+        market(Venue.KALSHI, "revision-book"),
+    )
+    store.append_observation(
+        _raw(Venue.KRAKEN, '{"trades":"unrelated to graph node metadata"}', kind="public_trades"),
+        market(Venue.KRAKEN, "revision-trades"),
+    )
+    assert store.graph_revision() == after_listing
+
+
+def test_dense_relationship_page_scan_has_a_hard_bound(tmp_path: Path):
+    store = FrontierStore(tmp_path, max_bytes=8 * 1024 * 1024)
+    center = market(Venue.POLYMARKET, "dense-center")
+    neighbors = tuple(market(Venue.KALSHI, f"dense-{index:04d}") for index in range(501))
+    relationships = tuple(
+        propose_relationships((center, neighbor), max_pairs=1)[0] for neighbor in neighbors
+    )
+    assert len(relationships) == 501
+    for relationship in relationships:
+        store.append_relationship(relationship)
+
+    page, scanned, scan_truncated, has_more, after = store.relationship_neighbor_page(
+        center.canonical_id, page_size=50, scan_limit=500
+    )
+    assert len(page) == 50
+    assert scanned == 500
+    assert scan_truncated and has_more and after is not None
+
+
 def test_raw_hash_and_record_bound_are_validated():
     with pytest.raises(ValueError, match="hash mismatch"):
         RawObservation(

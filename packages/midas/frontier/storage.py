@@ -5,7 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import sqlite3
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -610,6 +610,35 @@ class FrontierStore:
             result[review.relationship_id] = review
         return result
 
+    def _effective_relationship_rows(
+        self, validated: list[tuple[sqlite3.Row, Relationship]]
+    ) -> list[dict[str, Any]]:
+        review_targets = tuple(
+            dict.fromkeys(
+                relationship.supersedes or relationship.relationship_id
+                for _, relationship in validated
+            )
+        )
+        latest_reviews = self.latest_relationship_reviews(review_targets) if review_targets else {}
+        result: list[dict[str, Any]] = []
+        for row, relationship in validated:
+            target_id = relationship.supersedes or relationship.relationship_id
+            latest = latest_reviews.get(target_id)
+            if relationship.supersedes is None:
+                if latest is None:
+                    result.append(
+                        {**dict(row), "relationship": relationship.model_dump(mode="json")}
+                    )
+                continue
+            if latest is None:
+                raise FrontierStoreError("Relationship revision has no verified review record")
+            if latest.adjudicated_relationship_id != relationship.relationship_id:
+                continue
+            if latest.decision.value != relationship.state.value:
+                raise FrontierStoreError("Relationship revision does not match its latest review")
+            result.append({**dict(row), "relationship": relationship.model_dump(mode="json")})
+        return result
+
     def observations(
         self,
         *,
@@ -911,31 +940,96 @@ class FrontierStore:
         validated: list[tuple[sqlite3.Row, Relationship]] = [
             (row, self._validated_relationship_row(row)) for row in rows
         ]
-        review_targets = tuple(
-            dict.fromkeys(
-                relationship.supersedes or relationship.relationship_id
-                for _, relationship in validated
-            )
-        )
-        latest_reviews = self.latest_relationship_reviews(review_targets) if review_targets else {}
-        result: list[dict[str, Any]] = []
-        for row, relationship in validated:
-            target_id = relationship.supersedes or relationship.relationship_id
-            latest = latest_reviews.get(target_id)
-            if relationship.supersedes is None:
-                if latest is None:
-                    result.append(
-                        {**dict(row), "relationship": relationship.model_dump(mode="json")}
-                    )
-                continue
-            if latest is None:
-                raise FrontierStoreError("Relationship revision has no verified review record")
-            if latest.adjudicated_relationship_id != relationship.relationship_id:
-                continue
-            if latest.decision.value != relationship.state.value:
-                raise FrontierStoreError("Relationship revision does not match its latest review")
-            result.append({**dict(row), "relationship": relationship.model_dump(mode="json")})
+        result = self._effective_relationship_rows(validated)
         return tuple(result), scanned, truncated
+
+    def graph_revision(self) -> tuple[int, int, int]:
+        """Return append-only graph-input counts used to reject stale page cursors."""
+        if not self.path.exists():
+            return (0, 0, 0)
+        with self._read_connect() as connection:
+            row = connection.execute(
+                "SELECT (SELECT COUNT(*) FROM observations "
+                "WHERE observation_kind IN ('market_listing','instrument_metadata')) AS markets,"
+                "(SELECT COUNT(*) FROM relationships) AS relationships,"
+                "(SELECT COUNT(*) FROM relationship_reviews) AS reviews"
+            ).fetchone()
+        return (int(row["markets"]), int(row["relationships"]), int(row["reviews"]))
+
+    def relationship_neighbor_page(
+        self,
+        market_id: str,
+        *,
+        page_size: int = 50,
+        scan_limit: int = 500,
+        after: tuple[str, str] | None = None,
+    ) -> tuple[tuple[dict[str, Any], ...], int, bool, bool, tuple[str, str] | None]:
+        """Read one stable-keyset page of effective edges around one market.
+
+        The cursor orders by created_at descending and relationship ID ascending.
+        A scan cursor can advance over superseded rows without treating them as
+        visible edges. Callers pin ``graph_revision`` between pages.
+        """
+        if not market_id or len(market_id) > 256:
+            raise ValueError("Neighborhood center market ID is invalid")
+        if not 1 <= page_size <= 200:
+            raise ValueError("Relationship page size must be between 1 and 200")
+        if not 1 <= scan_limit <= 500:
+            raise ValueError("Relationship page scan must be between 1 and 500")
+        if after is not None:
+            created_at, relationship_id = after
+            if not isinstance(created_at, str) or not isinstance(relationship_id, str):
+                raise ValueError("Relationship cursor fields must be strings")
+            try:
+                parsed = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
+            except ValueError as error:
+                raise ValueError("Relationship cursor timestamp is invalid") from error
+            if parsed.tzinfo is None or parsed.utcoffset() != timedelta(0) or len(created_at) > 64:
+                raise ValueError("Relationship cursor timestamp must be UTC")
+            if len(relationship_id) != 64 or any(
+                character not in "0123456789abcdef" for character in relationship_id
+            ):
+                raise ValueError("Relationship cursor identity must be lowercase SHA-256")
+        if not self.path.exists():
+            return (), 0, False, False, None
+
+        cursor_filter = ""
+        params: tuple[Any, ...] = (market_id, market_id)
+        if after is not None:
+            cursor_filter = (
+                " AND (r.created_at_utc < ? OR (r.created_at_utc=? AND r.relationship_id>?))"
+            )
+            params += (after[0], after[0], after[1])
+        params += (scan_limit + 1,)
+        sql = (
+            "SELECT r.relationship_id,r.left_market_id,r.right_market_id,r.state,"
+            "r.created_at_utc,r.relationship_json,r.row_sha256,r.supersedes_relationship_id "
+            "FROM relationships AS r WHERE r.relationship_id IN ("
+            "SELECT relationship_id FROM relationships WHERE left_market_id=? UNION "
+            "SELECT relationship_id FROM relationships WHERE right_market_id=?)"
+            f"{cursor_filter} ORDER BY r.created_at_utc DESC,r.relationship_id LIMIT ?"
+        )
+        with self._read_connect() as connection:
+            queried = connection.execute(sql, params).fetchall()
+        source_rows_truncated = len(queried) > scan_limit
+        scanned_rows = queried[:scan_limit]
+        scanned = len(scanned_rows)
+        validated = [(row, self._validated_relationship_row(row)) for row in scanned_rows]
+        effective = self._effective_relationship_rows(validated)
+
+        page = effective[:page_size]
+        has_more = len(effective) > page_size or source_rows_truncated
+        next_after: tuple[str, str] | None = None
+        if len(effective) > page_size:
+            last_page_row = page[-1]
+            next_after = (
+                str(last_page_row["created_at_utc"]),
+                str(last_page_row["relationship_id"]),
+            )
+        elif source_rows_truncated and scanned_rows:
+            last_scanned = scanned_rows[-1]
+            next_after = (str(last_scanned["created_at_utc"]), str(last_scanned["relationship_id"]))
+        return tuple(page), scanned, source_rows_truncated, has_more, next_after
 
     def summary(self) -> dict[str, Any]:
         if not self.path.exists():

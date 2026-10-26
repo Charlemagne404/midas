@@ -239,9 +239,27 @@ def test_graph_neighborhood_is_centered_bounded_and_review_aware(tmp_path):
         assert centered.json()["truncated_by_edge_limit"] is True
         assert centered.json()["relationships_scanned"] == 2
         assert centered.json()["relationship_scan_may_be_incomplete"] is False
+        assert centered.json()["next_cursor"]
         assert any(
             node["market"]["canonical_id"] == markets[0].canonical_id
             for node in centered.json()["nodes"]
+        )
+
+        next_page = client.get(
+            "/api/frontier/graph",
+            params={
+                "center_market_id": markets[0].canonical_id,
+                "depth": 1,
+                "limit": 1,
+                "cursor": centered.json()["next_cursor"],
+            },
+        )
+        assert next_page.status_code == 200
+        assert next_page.json()["returned_edges"] == 1
+        assert next_page.json()["next_cursor"] is None
+        assert (
+            next_page.json()["edges"][0]["relationship_id"]
+            != centered.json()["edges"][0]["relationship_id"]
         )
 
         two_hops = client.get(
@@ -264,6 +282,58 @@ def test_graph_neighborhood_is_centered_bounded_and_review_aware(tmp_path):
             ).status_code
             == 422
         )
+        assert (
+            client.get(
+                "/api/frontier/graph",
+                params={"center_market_id": markets[0].canonical_id, "cursor": "invalid"},
+            ).status_code
+            == 422
+        )
+        assert requests == []
+    finally:
+        client.close()
+        asyncio.run(registry.aclose())
+        asyncio.run(http_client.aclose())
+
+
+def test_graph_page_cursor_rejects_a_changed_append_only_graph(tmp_path):
+    client, registry, http_client, requests, store = _client(tmp_path)
+    markets = (
+        market(Venue.POLYMARKET, "cursor-a"),
+        market(Venue.KALSHI, "cursor-b"),
+        market(Venue.KRAKEN, "cursor-c"),
+    )
+    for index, item in enumerate(markets):
+        body = json.dumps({"recorded_fixture": item.canonical_id})
+        raw = RawObservation(
+            venue=item.venue,
+            observation_kind="market_listing",
+            request_url=f"https://public.example.test/cursor/{index}",
+            http_status=200,
+            request_started_at_utc=T0 + timedelta(seconds=index),
+            received_at_utc=T0 + timedelta(seconds=index, milliseconds=5),
+            raw_body=body,
+            raw_sha256=hashlib.sha256(body.encode()).hexdigest(),
+            adapter_version="graph-cursor-fixture-v1",
+        )
+        store.append_observation(raw, item)
+    for relationship in propose_relationships(markets, max_pairs=20):
+        store.append_relationship(relationship)
+    params = {"center_market_id": markets[0].canonical_id, "depth": 1, "limit": 1}
+    try:
+        first = client.get("/api/frontier/graph", params=params)
+        assert first.status_code == 200
+        assert first.json()["next_cursor"]
+
+        new_market = market(Venue.KALSHI, "cursor-new")
+        new_relationship = propose_relationships((markets[0], new_market), max_pairs=5)[0]
+        store.append_relationship(new_relationship)
+        stale_page = client.get(
+            "/api/frontier/graph",
+            params={**params, "cursor": first.json()["next_cursor"]},
+        )
+        assert stale_page.status_code == 409
+        assert "Graph changed" in stale_page.json()["detail"]
         assert requests == []
     finally:
         client.close()

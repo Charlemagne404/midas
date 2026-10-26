@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import base64
 import hashlib
+import json
 from datetime import UTC, datetime
 from functools import lru_cache
 from pathlib import Path
@@ -77,6 +78,85 @@ class RelationshipReviewRequest(BaseModel):
         ):
             raise ValueError("Expected review identity must be a lowercase SHA-256 digest")
         return self
+
+
+def _encode_graph_cursor(
+    center_market_id: str,
+    edge_limit: int,
+    graph_revision: tuple[int, int, int],
+    after: tuple[str, str],
+) -> str:
+    value = {
+        "v": 1,
+        "center_market_id": center_market_id,
+        "edge_limit": edge_limit,
+        "graph_revision": list(graph_revision),
+        "after_created_at_utc": after[0],
+        "after_relationship_id": after[1],
+    }
+    raw = json.dumps(value, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return base64.urlsafe_b64encode(raw).decode("ascii").rstrip("=")
+
+
+def _decode_graph_cursor(cursor: str) -> dict[str, Any]:
+    if not cursor or len(cursor) > 2048:
+        raise ValueError("Graph cursor is empty or exceeds its bound")
+    padded = cursor + "=" * (-len(cursor) % 4)
+    try:
+        decoded = base64.b64decode(padded, altchars=b"-_", validate=True)
+        value = json.loads(decoded)
+    except (ValueError, UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise ValueError("Graph cursor is not valid base64 JSON") from error
+    expected = {
+        "v",
+        "center_market_id",
+        "edge_limit",
+        "graph_revision",
+        "after_created_at_utc",
+        "after_relationship_id",
+    }
+    if (
+        not isinstance(value, dict)
+        or set(value) != expected
+        or type(value.get("v")) is not int
+        or value["v"] != 1
+    ):
+        raise ValueError("Graph cursor has an unsupported shape or version")
+    center = value["center_market_id"]
+    limit = value["edge_limit"]
+    revision = value["graph_revision"]
+    created_at = value["after_created_at_utc"]
+    relationship_id = value["after_relationship_id"]
+    if not isinstance(center, str) or not 1 <= len(center) <= 256:
+        raise ValueError("Graph cursor center identity is invalid")
+    if type(limit) is not int or not 1 <= limit <= 200:
+        raise ValueError("Graph cursor edge limit is invalid")
+    if (
+        not isinstance(revision, list)
+        or len(revision) != 3
+        or any(type(item) is not int or item < 0 for item in revision)
+    ):
+        raise ValueError("Graph cursor revision is invalid")
+    if not isinstance(created_at, str) or len(created_at) > 64:
+        raise ValueError("Graph cursor timestamp is invalid")
+    try:
+        timestamp = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
+    except ValueError as error:
+        raise ValueError("Graph cursor timestamp is invalid") from error
+    if timestamp.tzinfo is None or timestamp.utcoffset() != UTC.utcoffset(timestamp):
+        raise ValueError("Graph cursor timestamp must be UTC")
+    if (
+        not isinstance(relationship_id, str)
+        or len(relationship_id) != 64
+        or any(character not in "0123456789abcdef" for character in relationship_id)
+    ):
+        raise ValueError("Graph cursor relationship identity is invalid")
+    return {
+        "center_market_id": center,
+        "edge_limit": limit,
+        "graph_revision": tuple(revision),
+        "after": (created_at, relationship_id),
+    }
 
 
 def router(store: FrontierStore, registry: Any) -> APIRouter:
@@ -359,6 +439,7 @@ def router(store: FrontierStore, registry: Any) -> APIRouter:
         q: str | None = Query(default=None, max_length=120),
         depth: int = Query(default=1, ge=1, le=3),
         limit: int = Query(default=50, ge=1, le=200),
+        cursor: str | None = Query(default=None, max_length=2048),
     ) -> dict[str, Any]:
         if center_market_id and q:
             raise HTTPException(
@@ -366,6 +447,24 @@ def router(store: FrontierStore, registry: Any) -> APIRouter:
             )
         if q is not None and not q.strip():
             raise HTTPException(status_code=422, detail="Graph search text cannot be blank")
+        if cursor is not None and (center_market_id is None or depth != 1):
+            raise HTTPException(
+                status_code=422,
+                detail="Graph cursors require one centered, one-hop neighborhood",
+            )
+        cursor_value = None
+        if cursor is not None:
+            try:
+                cursor_value = _decode_graph_cursor(cursor)
+            except ValueError as error:
+                raise HTTPException(status_code=422, detail=str(error)) from error
+            if (
+                cursor_value["center_market_id"] != center_market_id
+                or cursor_value["edge_limit"] != limit
+            ):
+                raise HTTPException(
+                    status_code=422, detail="Graph cursor does not match this query"
+                )
 
         market_by_id: dict[str, FrontierMarket] = {}
         market_observation_by_id: dict[str, str] = {}
@@ -414,38 +513,82 @@ def router(store: FrontierStore, registry: Any) -> APIRouter:
         truncated_by_edge_limit = False
         relationships_scanned = 0
         relationship_scan_may_be_incomplete = False
+        next_cursor = None
         if seeds:
-            frontier = set(seeds)
-            visited = set(seeds)
-            for _ in range(depth):
-                scan_remaining = scan_limit - relationships_scanned
-                if scan_remaining <= 0:
-                    relationship_scan_may_be_incomplete = True
-                    break
+            if center_market_id is not None and depth == 1:
                 try:
-                    relationship_rows, scanned, truncated = store.relationship_neighbors(
-                        tuple(sorted(frontier)), scan_limit=scan_remaining
+                    revision_before = store.graph_revision()
+                    if (
+                        cursor_value is not None
+                        and cursor_value["graph_revision"] != revision_before
+                    ):
+                        raise HTTPException(
+                            status_code=409,
+                            detail="Graph changed while paging; restart the neighborhood query",
+                        )
+                    page, scanned, scan_truncated, has_more, after = (
+                        store.relationship_neighbor_page(
+                            center_market_id,
+                            page_size=limit,
+                            scan_limit=scan_limit,
+                            after=cursor_value["after"] if cursor_value is not None else None,
+                        )
                     )
+                    revision_after = store.graph_revision()
+                    if revision_after != revision_before:
+                        raise HTTPException(
+                            status_code=409,
+                            detail="Graph changed while paging; restart the neighborhood query",
+                        )
+                except HTTPException:
+                    raise
                 except (FrontierStoreError, ValueError) as error:
                     raise HTTPException(status_code=409, detail=str(error)) from error
-                relationships_scanned += scanned
-                relationship_scan_may_be_incomplete |= truncated
-                next_frontier: set[str] = set()
-                for item in relationship_rows:
-                    relationship = Relationship.model_validate(item["relationship"])
-                    endpoints = {relationship.left_market_id, relationship.right_market_id}
-                    if not endpoints.intersection(frontier):
-                        continue
-                    if relationship.relationship_id not in selected:
-                        if len(selected) >= limit:
-                            truncated_by_edge_limit = True
-                            break
-                        selected[relationship.relationship_id] = item
-                    next_frontier.update(endpoints - visited)
-                if truncated_by_edge_limit or not next_frontier:
-                    break
-                visited.update(next_frontier)
-                frontier = next_frontier
+                relationships_scanned = scanned
+                relationship_scan_may_be_incomplete = scan_truncated
+                truncated_by_edge_limit = has_more
+                selected = {item["relationship_id"]: item for item in page}
+                if has_more:
+                    if after is None:
+                        raise HTTPException(
+                            status_code=409,
+                            detail="The graph page was incomplete but has no continuation point",
+                        )
+                    next_cursor = _encode_graph_cursor(
+                        center_market_id, limit, revision_before, after
+                    )
+            else:
+                frontier = set(seeds)
+                visited = set(seeds)
+                for _ in range(depth):
+                    scan_remaining = scan_limit - relationships_scanned
+                    if scan_remaining <= 0:
+                        relationship_scan_may_be_incomplete = True
+                        break
+                    try:
+                        relationship_rows, scanned, truncated = store.relationship_neighbors(
+                            tuple(sorted(frontier)), scan_limit=scan_remaining
+                        )
+                    except (FrontierStoreError, ValueError) as error:
+                        raise HTTPException(status_code=409, detail=str(error)) from error
+                    relationships_scanned += scanned
+                    relationship_scan_may_be_incomplete |= truncated
+                    next_frontier: set[str] = set()
+                    for item in relationship_rows:
+                        relationship = Relationship.model_validate(item["relationship"])
+                        endpoints = {relationship.left_market_id, relationship.right_market_id}
+                        if not endpoints.intersection(frontier):
+                            continue
+                        if relationship.relationship_id not in selected:
+                            if len(selected) >= limit:
+                                truncated_by_edge_limit = True
+                                break
+                            selected[relationship.relationship_id] = item
+                        next_frontier.update(endpoints - visited)
+                    if truncated_by_edge_limit or not next_frontier:
+                        break
+                    visited.update(next_frontier)
+                    frontier = next_frontier
         elif q is None:
             try:
                 relationship_rows = store.relationships(limit=scan_limit, effective_only=True)
@@ -513,6 +656,7 @@ def router(store: FrontierStore, registry: Any) -> APIRouter:
             "relationship_scan_limit": scan_limit,
             "relationships_scanned": relationships_scanned,
             "relationship_scan_may_be_incomplete": relationship_scan_may_be_incomplete,
+            "next_cursor": next_cursor,
             "source_market_window_limit": 200,
         }
 
