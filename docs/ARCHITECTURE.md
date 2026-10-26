@@ -116,6 +116,10 @@ before graph or replay processing. `GET /api/frontier/graph` offers one-to-three
 hop neighborhoods from a recorded market, capped at 200 source markets and 500
 scanned effective edges; this remains a bounded recent-window traversal rather
 than a large-universe graph index.
+When a bounded probe receives a decoded 2xx response that fails normalization,
+the raw body and typed source-failure diagnostic are stored and the API returns
+the observation ID. Invalid JSON is rejected before a raw observation is formed
+and is surfaced as degraded health without persisted response bytes.
 The current economic verifier handles two bounded families: all-long complete
 binary coverage across two venues after verified payoff equivalence, and all-long
 coverage of three to sixteen exhaustive one-hot outcomes within one verified

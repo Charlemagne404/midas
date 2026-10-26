@@ -112,6 +112,14 @@ enforce row and database byte budgets before committing. Repeated captures remai
 distinct because their request and receipt timestamps form part of the evidence
 identity.
 
+When an HTTP 2xx JSON body is captured but cannot be normalized or the bounded
+probe batch fails, the API stores the raw response with a versioned
+`SourceFailureRecord` and returns its observation ID in the error details. The
+normal market/book readers ignore that diagnostic record, while the normal
+hash-verified observation route can retrieve it. Invalid JSON fails inside the
+transport before the adapter builds a raw observation, so its body is not yet
+stored. A later successful probe clears the adapter's degraded health state.
+
 Replay reads only stored inputs, sorts records by canonical IDs, pins the source
 observation IDs and relationship IDs, hashes normalized input, persists scenario
 assumptions, and records a SHA-256 over the backend Frontier source set. Re-running
@@ -132,7 +140,8 @@ is rejected unless that source is enabled. An explicit bounded probe may capture
 one discovered listing page, one book, and up to ten public trades for the first
 market. `GET /trades` returns hash-verified normalized trades with their source
 observation and raw-body hash. The UI displays recorded trades as public prints,
-not as available depth or executable prices. The Frontier page does not inherit the
+not as available depth or executable prices. Probe errors include diagnostic
+observation IDs when a captured response can be preserved. The Frontier page does not inherit the
 single-venue synthetic/demo banner. It shows source health separately from
 captured evidence age, renders an interactive three-column SVG network for at
 most 18 effective edges and a searchable evidence list capped at 30, supports

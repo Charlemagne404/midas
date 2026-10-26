@@ -133,12 +133,25 @@ means these calculations agree over those pinned inputs; it does not validate
 external market truth, reviewer assertions, source synchronization, or execution.
 The audit's input SHA-256 is shown in candidate details.
 
+If a bounded probe receives valid JSON but the adapter rejects its shape, the
+API stores the raw response with a `SourceFailureRecord` and returns the
+observation ID in the error details. The hash-verified observation endpoint can
+read it, and a later successful probe restores healthy source state. Invalid JSON
+is rejected before the adapter builds a raw observation, so its response body is
+not persisted by this path.
+
 For focused Frontier verification, use isolated test databases and run:
 
+This linked worktree does not contain a local `.venv`. The current host's
+existing dependency environment is used below, while `PYTHONPATH` points imports
+at this Frontier checkout. Replace that interpreter path with the interpreter
+for your own locked environment when working elsewhere.
+
 ```bash
-.venv/bin/uv run --frozen pytest tests/frontier tests/integration/test_adapters.py tests/integration/test_api.py::test_offline_api_workflow_contract_and_persistence -q
-.venv/bin/uv run --frozen ruff check apps/api/frontier.py apps/api/config.py apps/api/main.py packages/midas/frontier tests/frontier tests/integration/test_api.py
-.venv/bin/uv run --frozen mypy packages/midas/frontier apps/api/frontier.py
+PYTHONPATH=packages:apps/api /home/charlie/midas/.venv/bin/python -m pytest tests/frontier tests/integration/test_adapters.py tests/integration/test_api.py::test_offline_api_workflow_contract_and_persistence -q
+/home/charlie/midas/.venv/bin/ruff check apps/api/frontier.py apps/api/config.py apps/api/main.py packages/midas/frontier tests/frontier tests/integration/test_api.py
+/home/charlie/midas/.venv/bin/ruff format --check apps/api/frontier.py packages/midas/frontier tests/frontier tests/integration/test_api.py
+PYTHONPATH=packages:apps/api /home/charlie/midas/.venv/bin/mypy packages/midas/frontier apps/api/frontier.py
 corepack pnpm --dir apps/web test
 corepack pnpm --dir apps/web typecheck
 corepack pnpm --dir apps/web build

@@ -41,6 +41,13 @@ to pass with an empty candidate list. This is independent arithmetic over shared
 normalized evidence; it does not independently validate exchange truth, source
 timing, external resolution documents, or real execution.
 
+The bounded probe API now preserves a successful HTTP response whose JSON shape
+fails adapter normalization as an append-only source-failure observation. Its
+error response returns the observation ID, and source health reports the venue
+as degraded until a later successful probe. Invalid JSON is rejected inside the
+transport before a raw observation is built; that failure is surfaced in health
+and the API response, but its body is not currently persisted.
+
 The implementation deliberately stops short of full acceptance. It now has a
 self-attributed review workflow, but reviewer and external assertion IDs are
 references only; MIDAS does not authenticate the reviewer, fetch the assertion,
@@ -88,7 +95,8 @@ The primary layers are:
 4. `independent_audit.py`: a separately coded candidate arithmetic audit over
    pinned normalized contracts, books, relationships, and scenarios.
 5. `storage.py` and `replay.py`: isolated bounded evidence persistence and
-   deterministic replay over pinned local inputs, including audit results.
+   deterministic replay over pinned local inputs, including audit results and
+   typed diagnostics for captured responses that fail normalization.
 6. `apps/api/frontier.py`: bounded local reads, explicit proposal/replay writes,
    bounded graph-neighborhood queries, and separately configured public captures.
 7. `apps/web/src/Frontier.tsx`: native Mission Control research workspace.
@@ -280,8 +288,12 @@ link; replay reads recompute the pinned output digest. Offline tamper tests cove
 observation, relationship, and replay list paths.
 
 Captures retain request URL/status/times, local receipt time, raw bytes and
-SHA-256, normalized record, adapter and source-schema version, and observation
-identity. Replay consumes only stored data, fixes source observation IDs,
+SHA-256, normalized record (or a bounded `SourceFailureRecord` when a decoded
+response fails normalization), adapter and source-schema version, and observation
+identity. Probe error responses return the diagnostic observation ID, and the
+failure remains available through the hash-verified observation read. Invalid
+JSON rejected within transport is not yet persisted as a raw response. Replay
+consumes only stored data, fixes source observation IDs,
 relationships, assumptions and time, sorts inputs deterministically, and pins a
 hash of normalized inputs and the Frontier backend source set. No adapter is
 called from replay. Replay version 3 includes each candidate's independent audit
@@ -341,7 +353,7 @@ arithmetic agreement does not establish profitability or execution.
 
 Verification on this branch:
 
-- Backend focused suite: **52 passed** in 8.62 seconds. Command: `PYTHONPATH=packages:apps/api .venv/bin/python -m pytest -q tests/frontier tests/integration/test_adapters.py tests/integration/test_api.py::test_offline_api_workflow_contract_and_persistence`.
+- Backend focused suite: **53 passed** in 9.13 seconds. Command: `PYTHONPATH=packages:apps/api /home/charlie/midas/.venv/bin/python -m pytest -q tests/frontier tests/integration/test_adapters.py tests/integration/test_api.py::test_offline_api_workflow_contract_and_persistence`.
 - Python static checks: Ruff check and format check passed for the Frontier package/tests; mypy passed for 16 Frontier/API source files. A broader `mypy packages/midas/frontier apps/api` attempt reported 37 errors in eight unchanged Veritas/Arena/API files; no Frontier source error was reported.
 - Frontend unit suite: **35 passed across 7 files**.
 - Frontend typecheck, ESLint, and Prettier check passed.
@@ -356,8 +368,8 @@ responses are distinct from the preserved genuine public capture files.
 
 ## 13. Performance and resource measurements
 
-The latest focused backend run (52 tests) completed in 9.41 seconds wall time,
-used 3.83 seconds user CPU, and peaked at 142,908 KiB RSS (about 140 MiB). The
+The latest focused backend run (53 tests) completed in 9.92 seconds wall time,
+used 4.00 seconds user CPU, and peaked at 146,524 KiB RSS (about 143 MiB). The
 test process recorded zero socket messages. This is one bounded test
 measurement, not a production service capacity estimate. The two focused
 Frontier browser cases ran serially with one worker and completed in 6.4
@@ -421,8 +433,10 @@ gaps are deferred work, not hidden passed checks:
 
 - Live API-to-store validation covered one listing, one book, and at most ten
   trades per venue for one selected market. Fee endpoints, trade pagination,
-  retry/degradation cases, repeated schema variation, and book freshness across
-  a time series remain unverified.
+  live retries/degradation, repeated schema variation, and book freshness across
+  a time series remain unverified. A deterministic API test covers invalid-JSON
+  health degradation, stored 2xx schema-failure diagnostics, venue isolation,
+  and recovery; invalid JSON response bodies are still not persisted.
 - No verified genuine cross-venue event relationship exists in the sample.
 - Relationship reviews are self-attributed only. Reviewer identities and
   external assertion IDs are not authenticated or retrieved, so the workflow
@@ -517,6 +531,10 @@ Code commits on this branch:
   bounded replay candidate economics,
   persisted audit dispositions and input hashes, surfaced audit values in the
   UI/readiness view, and fixed the canonical relationship-mapping order defect.
+- `53c38d7bf01a356b54c82e359ea64ab2661836f9` — preserved bounded raw evidence
+  and typed diagnostics for captured probe responses that fail normalization;
+  exposed diagnostic observation IDs and tested source degradation/isolation and
+  recovery.
 
 Principal changed paths:
 
@@ -544,7 +562,7 @@ cross-venue economics.
 | --- | --- | --- |
 | Isolated baseline/worktree and preserved unrelated changes | COMPLETE AND VERIFIED | Branch starts at verified V6 commit; original dirty worktrees untouched. |
 | Adapter protocol, capability registry, bounded GET transport | COMPLETE AND VERIFIED | Contract tests, all capability declarations, host/size/rate/redirect bounds. |
-| Polymarket, Kalshi and Kraken Spot adapters | PARTIALLY VERIFIED | Fixture/contract tests and one live listing/book/trade-to-store round trip per venue pass; fees and degraded-source paths remain unverified. |
+| Polymarket, Kalshi and Kraken Spot adapters | PARTIALLY VERIFIED | Fixture/contract tests and one live listing/book/trade-to-store round trip per venue pass; a mock API test verifies 2xx schema-failure diagnostics and source recovery; fees and live degraded-source behavior remain unverified. |
 | Canonical market/instrument normalization | PARTIALLY VERIFIED | Three distinct instrument classes represented; live lineage and several economic semantics remain unverified. |
 | Relationship hypotheses, review revisions, bounded neighborhoods, and explicit same-payoff verifier | PARTIALLY VERIFIED | Self-attributed review API/UI, append-only revisions, latest-state replay, tamper checks, and 1–3 hop graph; no genuine equivalent pair, authentication, or indexed large-graph traversal. |
 | Opportunity candidate and independent economic checks | PARTIALLY VERIFIED | Two-venue all-long binary and same-market 3–16 state one-hot exhaustive coverage, with a separate pinned-input arithmetic audit; controlled fixtures only, with source semantics, fees, broader costs and operational feasibility incomplete. |
