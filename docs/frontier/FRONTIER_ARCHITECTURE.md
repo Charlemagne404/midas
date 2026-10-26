@@ -73,9 +73,16 @@ inputs without deleting history.
 Centered graph reads use separate left- and right-endpoint indexes, so a market
 neighborhood is selected by its incident edges instead of scanning the global
 recent-relationship window. The API still bounds each traversal to 200 recorded
-markets, three hops, and 500 candidate relationship rows; it returns the number
-scanned and indicates when the scan window may be incomplete. The uncentered
-overview remains a bounded recent-edge query.
+markets, three hops, and 500 candidate relationship rows per request; it returns
+the number scanned and indicates when the scan window may be incomplete. A
+centered one-hop neighborhood supports keyset continuation ordered by
+relationship time and identity. The cursor carries append-only market-observation,
+relationship, and review counts; its market count covers recorded
+`market_listing` and `instrument_metadata` observations used to render graph
+nodes. The API returns 409 if those graph inputs change between pages. Mission
+Control displays 30 edges per page, with a continuation control. Multi-hop
+traversals and the uncentered overview remain single bounded reads; dense or
+broad queries can still be incomplete.
 
 The economic verifier supports two narrow families. Cross-venue binary coverage
 requires a previously verified same-payoff relationship. Same-market
@@ -178,11 +185,13 @@ it does not represent source truth or profitability.
 There are no persistent source workers, incremental order-book streams, full
 venue-wide universe scans, FX conversion, derivatives, capital transfer model,
 multi-leg solver, automatic semantic certification, authenticated reviewer or
-assertion verification, indexed large-universe graph neighborhood search, or
-production deployment. `/graph` limits source markets to 200, scans at most 500
-relationship rows through endpoint indexes for centered neighborhoods, and
-returns at most 200 edges over 1–3 hops. The uncentered view reads a bounded
-recent-edge window. The current replay/candidate set is small and bounded. See
+assertion verification, full-universe graph search, multi-hop graph pagination,
+or production deployment. `/graph` limits source markets to 200, scans at most
+500 relationship rows through endpoint indexes for centered neighborhoods, and
+returns at most 200 edges over 1–3 hops. Centered one-hop queries can continue
+by cursor while the append-only graph revision stays fixed; the uncentered view
+remains a bounded recent-edge window. The current replay/candidate set is small
+and bounded. See
 the [engineering report](FRONTIER_ENGINEERING_REPORT.md) and
 [mission ledger](FRONTIER_MISSION_LEDGER.md) for acceptance status and continuation
 steps.
