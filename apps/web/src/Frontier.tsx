@@ -127,6 +127,7 @@ type Relationship = {
     details: string[];
   }[];
 };
+type GraphPoint = { id: string; title: string; venue: string; x: number; y: number };
 type Candidate = {
   candidate_id: string;
   family: string;
@@ -257,10 +258,178 @@ function Metric({
   );
 }
 
+function RelationshipGraph({
+  relationships,
+  marketById,
+  selectedId,
+  onSelect,
+}: {
+  relationships: Relationship[];
+  marketById: Map<string, Market>;
+  selectedId: string | null;
+  onSelect: (relationshipId: string) => void;
+}) {
+  const graph = useMemo(() => {
+    const venueOrder = ['polymarket', 'kalshi', 'kraken', 'unknown'];
+    const ids = new Set(
+      relationships.flatMap((edge) => [edge.left_market_id, edge.right_market_id]),
+    );
+    const groups = new Map<string, string[]>();
+    for (const id of ids) {
+      const venue = marketById.get(id)?.venue ?? 'unknown';
+      const group = groups.get(venue) ?? [];
+      group.push(id);
+      groups.set(venue, group);
+    }
+    const centers: Record<string, number> = {
+      polymarket: 170,
+      kalshi: 500,
+      kraken: 830,
+      unknown: 500,
+    };
+    const nodes = new Map<string, GraphPoint>();
+    let maxRows = 0;
+    for (const venue of venueOrder) {
+      const group = (groups.get(venue) ?? []).sort();
+      maxRows = Math.max(maxRows, group.length);
+      group.forEach((id, index) => {
+        const market = marketById.get(id);
+        nodes.set(id, {
+          id,
+          title: market?.title ?? id,
+          venue,
+          x: centers[venue],
+          y: 78 + index * 66,
+        });
+      });
+    }
+    return { nodes, height: Math.max(250, 126 + maxRows * 66) };
+  }, [relationships, marketById]);
+
+  if (!relationships.length) return null;
+  const color = (state: string) =>
+    ({
+      verified: '#83c69a',
+      rejected: '#d4888f',
+      hypothesis: '#d5b46d',
+      ambiguous: '#8ea8c0',
+      superseded: '#87909c',
+    })[state] ?? '#a2acb8';
+  const venueName = (venue: string) =>
+    ({
+      polymarket: 'POLYMARKET',
+      kalshi: 'KALSHI',
+      kraken: 'KRAKEN SPOT',
+      unknown: 'NOT IN LOADED WINDOW',
+    })[venue] ?? venue.toUpperCase();
+
+  return (
+    <div className="fr-network-shell">
+      <div className="fr-network-head">
+        <div>
+          <strong>Bounded relationship network</strong>
+          <span>{relationships.length} edges · select an edge to inspect its evidence below</span>
+        </div>
+        <span className="fr-network-legend">
+          <i /> hypothesis <i className="verified" /> verified <i className="rejected" /> rejected
+        </span>
+      </div>
+      <div className="fr-network-scroll">
+        <svg
+          className="fr-network-svg"
+          viewBox={`0 0 1000 ${graph.height}`}
+          height={graph.height}
+          role="group"
+          aria-label={`Relationship network showing ${relationships.length} bounded market relationships`}
+        >
+          {[
+            ['polymarket', 170],
+            ['kalshi', 500],
+            ['kraken', 830],
+          ].map(([venue, x]) => (
+            <text
+              key={String(venue)}
+              className="fr-network-column"
+              x={Number(x)}
+              y="24"
+              textAnchor="middle"
+            >
+              {venueName(String(venue))}
+            </text>
+          ))}
+          {relationships.map((edge) => {
+            const left = graph.nodes.get(edge.left_market_id);
+            const right = graph.nodes.get(edge.right_market_id);
+            if (!left || !right) return null;
+            const picked = edge.relationship_id === selectedId;
+            const edgeColor = color(edge.state);
+            const labelX = left.x === right.x ? left.x + 50 : (left.x + right.x) / 2;
+            const labelY = (left.y + right.y) / 2 - 8;
+            const relationshipName = label(edge.relationship_type);
+            const action = () => onSelect(edge.relationship_id);
+            return (
+              <g
+                key={edge.relationship_id}
+                className={`fr-network-edge${picked ? ' selected' : ''}`}
+                role="button"
+                tabIndex={0}
+                aria-pressed={picked}
+                aria-label={`${relationshipName} ${edge.state}: ${left.title} and ${right.title}`}
+                onClick={action}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    action();
+                  }
+                }}
+              >
+                <title>{`${edge.reason} · ${edge.state} · score ${edge.confidence}`}</title>
+                <line
+                  className="fr-network-hit"
+                  x1={left.x}
+                  y1={left.y}
+                  x2={right.x}
+                  y2={right.y}
+                />
+                <line
+                  className="fr-network-visible"
+                  x1={left.x}
+                  y1={left.y}
+                  x2={right.x}
+                  y2={right.y}
+                  stroke={edgeColor}
+                  strokeDasharray={edge.state === 'hypothesis' ? '5 5' : undefined}
+                />
+                <text x={labelX} y={labelY} textAnchor="middle">
+                  {relationshipName.slice(0, 26)}
+                </text>
+              </g>
+            );
+          })}
+          {[...graph.nodes.values()].map((node) => (
+            <g key={node.id} className={`fr-network-node ${node.venue}`}>
+              <title>{`${venueName(node.venue)} · ${node.title} · ${node.id}`}</title>
+              <rect x={node.x - 104} y={node.y - 20} width="208" height="40" rx="5" />
+              <circle cx={node.x - 88} cy={node.y} r="4" />
+              <text className="fr-network-venue" x={node.x - 77} y={node.y - 3}>
+                {venueName(node.venue)}
+              </text>
+              <text className="fr-network-title" x={node.x - 77} y={node.y + 10}>
+                {node.title.slice(0, 24)}
+              </text>
+            </g>
+          ))}
+        </svg>
+      </div>
+    </div>
+  );
+}
+
 export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }) {
   const [section, setSection] = useState<Section>('overview');
   const [search, setSearch] = useState('');
   const [selectedMarketId, setSelectedMarketId] = useState<string | null>(null);
+  const [selectedRelationshipId, setSelectedRelationshipId] = useState<string | null>(null);
   const [relationshipState, setRelationshipState] = useState('all');
   const [slippage, setSlippage] = useState('25');
   const [delay, setDelay] = useState('500');
@@ -713,48 +882,64 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
           ) : relationships.isError ? (
             <EmptyState title="Relationship query failed" detail={relationships.error.message} />
           ) : filteredRelationships.length ? (
-            <div className="fr-graph-list">
-              {filteredRelationships.map((relationship) => {
-                const left = marketById.get(relationship.left_market_id);
-                const right = marketById.get(relationship.right_market_id);
-                return (
-                  <article className="fr-edge" key={relationship.relationship_id}>
-                    <div className="fr-node">
-                      <VenuePill venue={left?.venue ?? 'polymarket'} />
-                      <strong>{left?.title ?? relationship.left_market_id}</strong>
-                      <code>{left?.native_market_id ?? 'market not in loaded window'}</code>
-                    </div>
-                    <div
-                      className="fr-edge-link"
-                      aria-label={`${label(relationship.relationship_type)} relationship`}
-                    >
-                      <span>{label(relationship.relationship_type)}</span>
-                      <i />
-                    </div>
-                    <div className="fr-node">
-                      <VenuePill venue={right?.venue ?? 'kalshi'} />
-                      <strong>{right?.title ?? relationship.right_market_id}</strong>
-                      <code>{right?.native_market_id ?? 'market not in loaded window'}</code>
-                    </div>
-                    <div className="fr-edge-meta">
-                      <StateBadge state={relationship.state} />
-                      <span>score {Number(relationship.confidence).toFixed(2)}</span>
-                      <details>
-                        <summary>Evidence</summary>
-                        <p>{relationship.reason}</p>
-                        {relationship.evidence.map((evidence, index) => (
-                          <small key={`${relationship.relationship_id}-${index}`}>
-                            {evidence.method} · fields:{' '}
-                            {evidence.source_fields.join(', ') || 'none'} · observations:{' '}
-                            {evidence.observation_ids.map(shortHash).join(', ') || 'none'}
-                          </small>
-                        ))}
-                      </details>
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
+            <>
+              <RelationshipGraph
+                relationships={filteredRelationships.slice(0, 18)}
+                marketById={marketById}
+                selectedId={selectedRelationshipId}
+                onSelect={setSelectedRelationshipId}
+              />
+              <div className="fr-graph-list">
+                {filteredRelationships.map((relationship) => {
+                  const left = marketById.get(relationship.left_market_id);
+                  const right = marketById.get(relationship.right_market_id);
+                  return (
+                    <article className="fr-edge" key={relationship.relationship_id}>
+                      <div className="fr-node">
+                        <VenuePill venue={left?.venue ?? 'polymarket'} />
+                        <strong>{left?.title ?? relationship.left_market_id}</strong>
+                        <code>{left?.native_market_id ?? 'market not in loaded window'}</code>
+                      </div>
+                      <div
+                        className="fr-edge-link"
+                        aria-label={`${label(relationship.relationship_type)} relationship`}
+                      >
+                        <span>{label(relationship.relationship_type)}</span>
+                        <i />
+                      </div>
+                      <div className="fr-node">
+                        <VenuePill venue={right?.venue ?? 'kalshi'} />
+                        <strong>{right?.title ?? relationship.right_market_id}</strong>
+                        <code>{right?.native_market_id ?? 'market not in loaded window'}</code>
+                      </div>
+                      <div className="fr-edge-meta">
+                        <StateBadge state={relationship.state} />
+                        <span>score {Number(relationship.confidence).toFixed(2)}</span>
+                        <details
+                          open={relationship.relationship_id === selectedRelationshipId}
+                          onToggle={(event) => {
+                            if (event.currentTarget.open)
+                              setSelectedRelationshipId(relationship.relationship_id);
+                            else if (selectedRelationshipId === relationship.relationship_id)
+                              setSelectedRelationshipId(null);
+                          }}
+                        >
+                          <summary>Evidence</summary>
+                          <p>{relationship.reason}</p>
+                          {relationship.evidence.map((evidence, index) => (
+                            <small key={`${relationship.relationship_id}-${index}`}>
+                              {evidence.method} · fields:{' '}
+                              {evidence.source_fields.join(', ') || 'none'} · observations:{' '}
+                              {evidence.observation_ids.map(shortHash).join(', ') || 'none'}
+                            </small>
+                          ))}
+                        </details>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            </>
           ) : (
             <EmptyState
               title="No relationship edges in this view"
@@ -762,8 +947,9 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
             />
           )}
           <div className="fr-footnote">
-            The view is capped at 30 edges. Similar titles never certify payoff equivalence.
-            Relationship identity is versioned and tied to pinned observation IDs.
+            The evidence list is capped at 30 edges; the network shows the first 18. Similar titles
+            never certify payoff equivalence. Relationship identity is versioned and tied to pinned
+            observation IDs.
           </div>
         </section>
       )}

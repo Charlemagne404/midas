@@ -922,6 +922,131 @@
   gap: 9px;
   padding: 12px;
 }
+.fr-network-shell {
+  margin: 12px;
+  overflow: hidden;
+  border: 1px solid #29343f;
+  border-radius: 5px;
+  background: radial-gradient(ellipse at center, #141b22 0, #0d1217 75%);
+}
+.fr-network-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 11px 14px;
+  border-bottom: 1px solid #26303a;
+}
+.fr-network-head > div {
+  display: grid;
+  gap: 4px;
+}
+.fr-network-head strong {
+  color: #c1cad6;
+  font-size: 10px;
+  font-weight: 550;
+}
+.fr-network-head span {
+  color: #7e8a9b;
+  font-size: 8px;
+}
+.fr-network-legend {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+.fr-network-legend i {
+  width: 8px;
+  height: 2px;
+  background: #d5b46d;
+}
+.fr-network-legend i.verified {
+  background: #83c69a;
+}
+.fr-network-legend i.rejected {
+  background: #d4888f;
+}
+.fr-network-scroll {
+  max-height: 620px;
+  overflow: auto;
+  scrollbar-width: thin;
+}
+.fr-network-svg {
+  display: block;
+  width: 100%;
+  min-width: 780px;
+}
+.fr-network-column {
+  fill: #697789;
+  font:
+    8px ui-monospace,
+    monospace;
+  letter-spacing: 1px;
+}
+.fr-network-edge {
+  cursor: pointer;
+  outline: none;
+}
+.fr-network-edge .fr-network-hit {
+  stroke: transparent;
+  stroke-width: 14;
+  opacity: 1;
+}
+.fr-network-edge .fr-network-visible {
+  stroke-width: 1.5;
+  opacity: 0.65;
+  transition:
+    opacity 120ms ease,
+    stroke-width 120ms ease;
+}
+.fr-network-edge text {
+  fill: #a6b1bf;
+  font-size: 7px;
+  letter-spacing: 0.25px;
+  paint-order: stroke;
+  stroke: #0d1217;
+  stroke-width: 4px;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+.fr-network-edge:hover .fr-network-visible,
+.fr-network-edge.selected .fr-network-visible,
+.fr-network-edge:focus-visible .fr-network-visible {
+  stroke-width: 3;
+  opacity: 1;
+}
+.fr-network-edge:focus-visible .fr-network-visible {
+  filter: drop-shadow(0 0 3px currentColor);
+}
+.fr-network-node rect {
+  fill: #151c23;
+  stroke: #35414d;
+  stroke-width: 1;
+}
+.fr-network-node circle {
+  fill: #8e9aa9;
+}
+.fr-network-node.polymarket circle {
+  fill: #b98cae;
+}
+.fr-network-node.kalshi circle {
+  fill: #8cb9aa;
+}
+.fr-network-node.kraken circle {
+  fill: #d5ad63;
+}
+.fr-network-venue {
+  fill: #758295;
+  font:
+    6px ui-monospace,
+    monospace;
+  letter-spacing: 0.45px;
+}
+.fr-network-title {
+  fill: #c3ccd8;
+  font-size: 8px;
+}
 .fr-edge {
   display: grid;
   grid-template-columns: minmax(150px, 1fr) minmax(115px, 0.45fr) minmax(150px, 1fr) minmax(
@@ -1297,6 +1422,13 @@
   }
   .fr-filter-row select {
     min-height: 33px;
+  }
+  .fr-network-shell {
+    margin: 8px;
+  }
+  .fr-network-head {
+    align-items: flex-start;
+    flex-direction: column;
   }
   .fr-edge {
     grid-template-columns: 1fr;
