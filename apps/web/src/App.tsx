@@ -245,7 +245,7 @@ export function App() {
                   ? 'READINESS · DEMO MODE'
                   : 'READINESS · SERVICE EVIDENCE'
                 : page === 'Reality'
-                  ? 'REALITY · PUBLIC OBSERVATIONS'
+                  ? 'REALITY · RESEARCH EVIDENCE'
                   : page === 'Veritas'
                     ? 'VERITAS · ECONOMIC EVIDENCE'
                     : state?.mode === 'live'

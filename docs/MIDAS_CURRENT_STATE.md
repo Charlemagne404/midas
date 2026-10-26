@@ -2,7 +2,7 @@
 
 **Base snapshot:** 2026-10-17 (local operational state). The dated 2026-10-26 addendum below is the latest checked runtime snapshot and supersedes earlier live-service statements where they differ. Mission reports, checkpoints, ledgers, and experiment artifacts remain historical records and should be read with their own version and capture time.
 
-**Latest recheck:** At 2026-10-26 02:03 CET, the API returned HTTP 200 `READY` in demo mode with `live_execution=false`, Laboratory `READY`, and the paper journal checkpoint verified at 665,769 events. Reality remained active on PID `3007040` with `MemoryCurrent=1,132,355,584` bytes against `MemoryHigh=1,207,959,552` (75,603,968 bytes below); cumulative `high` events were 14,379 and `max`/OOM/kill counters were zero. This single sample does not prove sustained headroom or complete recovery readiness. Veritas remained on v4: its 02:00:55 CET observer run failed on the oversized summary, and `/api/veritas/overview` returned HTTP 503. No production service was changed.
+**Latest recheck:** At 2026-10-26 02:33:58 CET, the API returned HTTP 200 `READY` in demo mode with `live_execution=false`, Laboratory `READY`, and paper recovery `CHECKPOINT_VERIFIED` at 666,807 events. Reality remained active on PID `3007040` with cgroup use 1,122,304,000 bytes against `MemoryHigh=1,207,959,552` (85,655,552 bytes below); cumulative `high` events were 14,379 and `max`/OOM/kill counters were zero. The active Veritas v4 observer failed at 02:31:07 CET on its 2,097,481-byte summary, and `/api/veritas/overview` returned HTTP 503. The staged 112 GiB / 120-day storage commitments exceed current NVMe free space by 6.51 GB. This is a time-specific read-only sample; no production service was changed.
 
 ## Project status
 
@@ -116,7 +116,7 @@ PYTHONPATH=packages .venv/bin/python -m pytest -q tests/test_veritas_*.py
 
 The frozen worker's lag and recorder memory growth need a separately versioned operational decision. Preserve the current campaigns, records, and source segments while making that decision. Do not change the frozen campaign configuration or journal. Atlas/Frontier, new market discovery, strategy expansion, training, exploratory experiments, and economic optimization are outside the current maintenance scope.
 
-## Current runtime addendum — 2026-10-26
+## Earlier runtime snapshot — 2026-10-26, 02:03 CET
 
 This section records a fresh check; it does not rewrite the 2026-10-17 snapshot above. The complete evidence, limitations and implementation branch are in [the comprehensive engineering mission report](reliability/MIDAS_COMPREHENSIVE_ENGINEERING_MISSION_20261025.md) and [the mission ledger](reliability/MIDAS_COMPREHENSIVE_ENGINEERING_MISSION_LEDGER_20261025.md).
 
@@ -128,3 +128,16 @@ This section records a fresh check; it does not rewrite the 2026-10-17 snapshot 
 - At 00:31:26 CET the active API was in demo mode with `live_execution=false`, paper recovery `CHECKPOINT_VERIFIED` at 662,697 events, and Laboratory `READY`. The Arena scheduler's 00:30:04 CET invocation exited successfully. The user systemd manager reported 91 failed historical one-shot units; none were cleared.
 - Latest-boundary recovery remains incomplete: the historical R15 result stopped at 2,304 of 20,148 segments. No cold replay of the current Reality boundary was attempted. No long-duration validation or new campaign was started.
 - Keep the Veritas v6 rollout and dashboard deployment pending a deliberate local integration/deployment decision. Keep Reality's protected service transition pending a clean exact-boundary recovery, archive provenance and resource preflight plus explicit operator approval.
+
+## Latest runtime addendum — 2026-10-26, 02:33:58 CET
+
+The complete read-only capture is [MIDAS_MISSION_20261026_LIVE_STATE_RECHECK.json](reliability/evidence/MIDAS_MISSION_20261026_LIVE_STATE_RECHECK.json), SHA-256 `f89c3be4866ac10a488d50cca777fac78036a52e3a52d78e38dbb7c1a3dc86be`. It supersedes the 02:03 CET live-status bullets above while preserving that earlier snapshot as history.
+
+- Main API: HTTP 200 `READY`, demo mode, `live_execution=false`, Laboratory `READY`; paper recovery is `CHECKPOINT_VERIFIED` at 666,807 events. The deployed release is `/home/charlie/.local/share/midas-api/releases/24c7504`; its health response does not expose build identity. The Research Readiness page remains undeployed.
+- Reality: service PID `3007040` remains on `/home/charlie/midas-reality` and the old 24 GiB / 90-day config. It is `RECORDING_UNSEQUENCED`; 8 markets and 16/16 fresh books are reported, but API health is degraded by missing recent persistence metrics, recovery state and transport queue depth. Its current response has no collector error. The cgroup sample is 1,122,304,000 / 1,207,959,552 bytes (`MemoryCurrent` / `MemoryHigh`); the historical `high` counter is 14,379 and `max`/OOM/kill are zero. The current raw inventory is 31,669 finalized files / 8,985,876,498 bytes plus one open file, based on names and sizes only.
+- Veritas: 522 snapshots are present; the v4 summary still covers 423. The latest scan at 02:31:05 CET was `scan-20261026T013105Z-74db14ad03a0.json.gz`; the observer failed at 02:31:07 and the overview API is HTTP 503. The 519-snapshot v6 replay leaves the latest three snapshots outside its pinned boundary. No active runtime migration occurred.
+- Arena: zero active jobs, directors or schedules; zero invalid artifacts; one retained expired-admission alert. No new research job was admitted.
+- Storage and archive: NVMe free space is 161,950,273,536 bytes. The staged raw, database, Veritas and reserve commitments require 168,457,185,055 bytes (6,506,911,519 bytes above current free space). The 120-day historical-growth case is short by 12,013,107,129 bytes. The archive tree still has 1,138 unmanifested finalized files and 58 `.copying` files; no contents or provenance were established and no files were changed.
+- Latest-boundary recovery remains incomplete. R15 stopped at 2,304/20,148 segments; the later copy was interrupted at 697/31,468 with no pinned source boundary or complete snapshot receipt. Do not use or resume that copy as a snapshot.
+
+Keep Reality deployment, Veritas v6 rollout, archive writing, storage policy changes and dashboard publication pending their separate readiness steps. The protected Reality transition still requires explicit approval after a fresh exact-boundary preflight.

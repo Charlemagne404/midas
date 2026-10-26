@@ -4,7 +4,7 @@
 **Mission checkout:** `/home/charlie/midas-engineering-mission-20261025`
 **Branch:** `codex/midas-comprehensive-engineering-mission-20261025`
 **Base commit:** `55601b9a090945cb498806e4878b6ddc33562043`
-**Mission HEAD before this closeout update:** `3afb95b7bf04d8ae5153b04b08500f8446235bbe`
+**Mission HEAD before this closeout update:** `1effd8d Complete MIDAS mission evidence and Veritas replay`
 
 The implementation is isolated in this branch. The main checkout and older
 worktrees were inspected and left unchanged. No runtime service was stopped,
@@ -64,17 +64,16 @@ Research Readiness route is therefore integrated only in this mission branch.
   observations and is retained as scope metadata; user geoblock and order
   acceptance remain unmeasured. All economic outcomes remain unsupported
   because the `orderMinSize` notional unit is unverified.
-- The active v4 store has since advanced to 521 snapshots. Its 01:31:05 CET
-  scan wrote `scan-20261026T003105Z-1ff325207f36.json.gz`; its 02:00:53 CET
-  scan wrote `scan-20261026T010053Z-ed1b5cd8b6a2.json.gz`. Both runs failed
-  during analysis publication. The full v6 replay verifies its pinned
-  519-file boundary, not the current live boundary. The receipt and post-run
+- The active v4 store has since advanced to 522 snapshots. Its 02:31:05 CET
+  scan wrote `scan-20261026T013105Z-74db14ad03a0.json.gz`; the run failed at
+  02:31:07 CET during analysis publication. The full v6 replay verifies its
+  pinned 519-file boundary, not the current live boundary. The receipt and post-run
   verification are preserved under
   `data/veritas-v6-offline-replay-v3-20261026/`.
 - **Status:** IMPLEMENTED, DEPLOYMENT PENDING. Active Veritas remains on v4.
-  The 02:00:55 CET scheduled run failed during finalized-analysis publication
-  on the legacy `research-summary.json` size limit; `/api/veritas/overview`
-  returned HTTP 503 at 02:03 CET.
+  The 02:30:56–02:31:07 CET scheduled run failed during finalized-analysis
+  publication on the legacy `research-summary.json` size limit;
+  `/api/veritas/overview` returned HTTP 503 at 02:33:58 CET.
 
 ### Reality collection, observability and recovery
 
@@ -152,9 +151,11 @@ Research Readiness route is therefore integrated only in this mission branch.
   net-eligible and unsupported counts. Integrated
   branch, commit and dirty state are injected consistently in the build and
   test configurations.
-- `npm run lint`, `npm run typecheck`, `npm test` (31 passed), `npm run build`,
-  and the Research Readiness Playwright test (1/1) passed. The browser screenshot
-  is fixture-backed UI evidence, not a production capture.
+- `pnpm run lint`, `pnpm run typecheck`, `pnpm test` (32 passed),
+  `pnpm run format:check`, and `pnpm run build` passed. Six selected Playwright
+  specs passed 7/7; Arena E2E was excluded because it starts model training and
+  policy search. The browser screenshot is fixture-backed UI evidence, not a
+  production capture.
 - **Status:** COMPLETE AND VERIFIED in the mission branch; deployment pending.
 
 ### Cross-component reliability
@@ -181,14 +182,14 @@ Research Readiness route is therefore integrated only in this mission branch.
 | Broad backend regression | 300 passed; two global-lock collisions passed on rerun (302 unique pass results). | No production research workload launched by this mission. |
 | Reality focused tests | 95 passed; final recovery/deployment/canary subset 75 passed in 7.80 s with `PYTHONPATH` unset. | Pytest now prepends local `packages/`; child process tests explicitly inherit the same mission source path. |
 | Python static checks | Ruff check and `ruff format --check` passed for all 48 changed Python files. | No claim about runtime deployment. |
-| Veritas differential/catalog/recovery tests | The final focused economics, opportunity-audit, continuous-analysis, scan-catalog and offline-replay suite passed 70 tests. | The complete replay covers the pinned 519-file boundary; the active store is now at 521. |
-| Frontend | `pnpm run lint`, `pnpm run typecheck`, `pnpm test` (31 passed) and `pnpm run build` passed after the final UI audit. | Vite 7.3.7 emits 502.74 KiB index, 544.41 KiB chart and 29.30 KiB readiness chunks; existing large-chunk warning remains. |
-| Browser | `pnpm exec playwright test e2e/research-readiness.spec.ts` passed 1/1. The broader 8-test E2E run passed 5 and failed 3. | Arena evaluation did not appear in the API projection within 30 seconds; Reality returned an empty monitored-market fixture; Veritas did not expose the test's expected level-1 heading. The dashboard test passed; the broader browser suite remains partially verified. |
+| Veritas differential/catalog/recovery tests | The final focused economics, opportunity-audit, continuous-analysis, scan-catalog and offline-replay suite passed 70 tests. | The complete replay covers the pinned 519-file boundary; the active store is now at 522. |
+| Frontend | `pnpm run lint`, `pnpm run typecheck`, `pnpm test` (32 passed), `pnpm run format:check`, and `pnpm run build` passed after the final UI fixes. | Vite 7.3.7 emits 503.01 KiB index and 544.41 KiB chart chunks; the large-chunk warning remains. |
+| Browser | Six selected specs passed all 7 tests in a single-worker batch: Laboratory (2), Paper (1), Reality (1), Research Readiness (1), Smoke (1), and Veritas (1). | Arena E2E was not run because it starts model training and policy search, which are excluded from this mission. |
 | Recovery fixture | Interrupted checkpoint/resume and deterministic state reconciliation pass. | Fixture only; latest production boundary is unverified. |
 | Reality canary | Final-source 95-second schema-4 loopback canary passed; 307 frames, 765,835 durable bytes, 5 segments / checkpoints, 41,689,088 B Python peak RSS, 0.583 CPU s. | One deterministic fixture seed; no external market requests. Does not establish production-boundary startup, recovery or capacity. |
 | Reality latest-boundary snapshot | Copy stopped safely at 697/31,468 segments after I/O pressure exceeded admission bounds. | Partial path has an `INCOMPLETE` marker; no whole-snapshot identity, complete checksum receipt or recovery result exists. |
-| Runtime API | HTTP 200 `READY`, demo, `live_execution=false`, Laboratory `READY` at approximately 01:01 CET; paper journal 663,699 events. | Time-specific read-only service observation; release is outside mission branch. |
-| Runtime Veritas | The 02:00:55 CET observer run failed on oversized legacy `research-summary.json`; the active tree contains 521 snapshots while the v4 summary covers 423, and overview returned HTTP 503 at 02:03 CET. | The 519-snapshot v6 offline replay is complete for its earlier pinned boundary. No service restart or output migration was performed; active code remains in `/home/charlie/midas-veritas`. |
+| Runtime API | HTTP 200 `READY`, demo, `live_execution=false`, Laboratory `READY`, paper recovery `CHECKPOINT_VERIFIED` at 666,807 events at 02:33:58 CET. | Time-specific read-only service observation; release is outside mission branch and health does not expose build identity. |
+| Runtime Veritas | The 02:30:56–02:31:07 CET observer run failed on oversized legacy `research-summary.json`; the active tree contains 522 snapshots while the v4 summary covers 423, and overview returned HTTP 503 at 02:33:58 CET. | The 519-snapshot v6 offline replay is complete for its earlier pinned boundary. No service restart or output migration was performed; active code remains in `/home/charlie/midas-veritas`. |
 
 The first final-subset pytest invocation loaded an editable package from the
 main checkout and failed test collection. The branch now configures pytest to
@@ -197,6 +198,39 @@ worktree's package and repository paths to their Python children. The final
 run passed all 75 tests with `PYTHONPATH` unset. Ruff also caught a missing
 `manifest` import in the added archive mutation test; it was fixed before the
 passing run.
+
+### Final read-only runtime recheck — 2026-10-26 01:33:58 UTC
+
+The captured record is
+[`MIDAS_MISSION_20261026_LIVE_STATE_RECHECK.json`](evidence/MIDAS_MISSION_20261026_LIVE_STATE_RECHECK.json),
+SHA-256 `f89c3be4866ac10a488d50cca777fac78036a52e3a52d78e38dbb7c1a3dc86be`.
+No process was signaled and no runtime, research store, or archive file was
+modified.
+
+- Main API: HTTP 200 `READY`, demo mode, `live_execution=false`, Laboratory
+  `READY`, paper checkpoint verified at 666,807 events. The active release is
+  `24c7504`; health does not report a build identity.
+- Reality: protected PID `3007040`, old 24 GiB / 90-day config, 1,122,304,000 B
+  cgroup current against 1,207,959,552 B `MemoryHigh`; cumulative `high=14,379`
+  and `max`/OOM/kill counters are zero. Public observation is unsequenced; 16/16
+  books are current, while persistence-window, recovery and queue telemetry are
+  unavailable. Metadata-only inventory: 31,669 finalized files / 8,985,876,498
+  B and one open file.
+- Veritas: active v4 store has 522 snapshots, while its v4 summary covers 423.
+  The latest observer run failed at 02:31:07 CET on the 2,097,481-byte summary;
+  the API remains HTTP 503. Three snapshots are outside the pinned v6 replay.
+- Storage: sampled NVMe free space 161,950,273,536 B; staged current commitment
+  scenario deficit 6,506,911,519 B, 120-day historical-growth scenario deficit
+  12,013,107,129 B. Archive inventory is 19,833 segments / 5,369,550,131 B,
+  18,695 manifest entries, 1,138 unmanifested segments and 58 `.copying` files.
+  Segment contents remain unchecked and provenance is unresolved.
+- Arena research activity: zero active jobs/directors/schedules and zero
+  invalid artifacts; one expired-admission alert remains open.
+- Recovery: R15 remains incomplete at 2,304/20,148; the preserved copy attempt
+  stopped at 697/31,468 without a pinned boundary or full snapshot receipt.
+
+The full details and calculation assumptions are in the linked capture and
+mission report. Staged storage capacity does not pass at this sample.
 
 ## Evidence identities
 
@@ -219,12 +253,15 @@ passing run.
 | Veritas v3 published summary | File SHA-256 `81c1bbcf94d92c9bb3bb8c7acef61f321727bfa7108c5a98a813fec944023a31`; summary digest `0ad0dc41cf4f156073a4f191f4f9d6441972522fc4b544a96e5b49d07df7bb51`; 101,332 bytes |
 | Newer active snapshot outside v3 replay | `/home/charlie/midas-veritas/data/veritas-observatory/snapshots/scan-20261026T003105Z-1ff325207f36.json.gz`; 631,294 bytes; SHA-256 `843ed98524418f6d1d799b326ebfd0649d86240bd79605a0c82103743bd1ba56` |
 | Latest active snapshot outside v3 replay | `/home/charlie/midas-veritas/data/veritas-observatory/snapshots/scan-20261026T010053Z-ed1b5cd8b6a2.json.gz`; 581,481 bytes; SHA-256 `478422c77c48e84b840d5a19e67d64f1a84365e68accb1069b3742bb3ecf9281` |
+| Newest active snapshot outside v3 replay | `/home/charlie/midas-veritas/data/veritas-observatory/snapshots/scan-20261026T013105Z-74db14ad03a0.json.gz`; 641,503 bytes; SHA-256 `3cd0da2f7460da912c34465c7bfff671ec537e3f87561d0d7ba0c8050fdb69f0` |
+| Live runtime recheck | `docs/reliability/evidence/MIDAS_MISSION_20261026_LIVE_STATE_RECHECK.json`; SHA-256 `f89c3be4866ac10a488d50cca777fac78036a52e3a52d78e38dbb7c1a3dc86be` |
 | Research Readiness browser evidence | `docs/reliability/evidence/MIDAS_MISSION_20261026_RESEARCH_READINESS.png` |
 | Latest Reality inventory | `docs/reliability/evidence/MIDAS_MISSION_20261026_DEPLOYMENT_PREFLIGHT_BLOCKED_V3.json` |
 
 The machine-readable [source/evidence manifest](MIDAS_COMPREHENSIVE_ENGINEERING_MISSION_SOURCE_MANIFEST_20261026.json)
-lists the changed worktree files and their SHA-256 values. The full engineering
-report is [MIDAS_COMPREHENSIVE_ENGINEERING_MISSION_20261025.md](MIDAS_COMPREHENSIVE_ENGINEERING_MISSION_20261025.md).
+binds 89 changed code, test, documentation and checked-in evidence files plus
+13 replay/live artifact references. The full engineering report is
+[MIDAS_COMPREHENSIVE_ENGINEERING_MISSION_20261025.md](MIDAS_COMPREHENSIVE_ENGINEERING_MISSION_20261025.md).
 
 ## Outstanding blockers and required follow-up
 

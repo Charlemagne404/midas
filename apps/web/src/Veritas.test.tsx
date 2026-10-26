@@ -1049,7 +1049,10 @@ it('labels measured evidence and keeps synthetic execution separate from actual 
   expect(
     screen.getByRole('link', { name: /Inspect hash-verified A1 coverage artifact/ }),
   ).toHaveAttribute('href', '/api/veritas/artifacts/market-universe-coverage');
-  expect(screen.getByText(/They do not provide a venue-wide denominator/)).toBeInTheDocument();
+  expect(screen.getByText('HISTORICAL · HASH VERIFIED')).toBeInTheDocument();
+  expect(
+    screen.getByText(/This report replays its hash-verified saved snapshots/),
+  ).toBeInTheDocument();
   expect(screen.getByText(/7 HTTP attempts used in latest scan/)).toBeInTheDocument();
   expect(await screen.findByText(/validating finalized observations/)).toBeInTheDocument();
   expect(await screen.findByText(/Does the independent challenge repeat/)).toBeInTheDocument();
@@ -1121,7 +1124,7 @@ it('labels measured evidence and keeps synthetic execution separate from actual 
   expect(screen.getByText(/0.000 events \/ panel hour/)).toBeInTheDocument();
   expect(screen.getByRole('heading', { name: 'Snapshot quality prediction' })).toBeInTheDocument();
   expect(screen.getByText(/Held-out positive gross candidates: 0/)).toBeInTheDocument();
-  expect(screen.getByText('Independent opportunity audit')).toBeInTheDocument();
+  expect(screen.getByText('Historical independent opportunity audit')).toBeInTheDocument();
   expect(screen.getByText('2,874 / 2,874')).toBeInTheDocument();
   expect(screen.getByRole('link', { name: 'Inspect replay' })).toHaveAttribute(
     'href',

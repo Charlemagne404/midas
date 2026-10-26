@@ -1,0 +1,363 @@
+{
+  "archive": {
+    "copying_files": 58,
+    "finalized_segment_file_bytes": 5369550131,
+    "finalized_segments": 19833,
+    "manifest_bytes": 7406466,
+    "manifest_entries": 18695,
+    "manifest_sha256": "cc7e3375710fa024f971885f8b04840ec06f2c0cd385b716af73ce99275f7c8d",
+    "missing_manifest_files": 0,
+    "path": "/mnt/continental-cloud/data/midas-reality-staging/archive-mission3",
+    "source_sha256": "ae1bcd67331173194efe876f2f7d82e41cd515ebcf256d71a673328c91f26526",
+    "unmanifested_finalized": 1138,
+    "verification_boundary": "directory membership, manifest filenames and file sizes only; no segment contents or segment checksums verified; provenance/ownership unresolved; writer remains disabled"
+  },
+  "arena_research_activity": {
+    "body": {
+      "active_director_count": 0,
+      "active_job_count": 0,
+      "active_schedule_count": 0,
+      "invalid_artifact_count": 0,
+      "open_alert_count": 1,
+      "open_alert_reasons": [
+        "Schedule admission window expired"
+      ]
+    },
+    "http_status": 200
+  },
+  "captured_at_utc": "2026-10-26T01:33:58.241237Z",
+  "collection_started_at_utc": "2026-10-26T01:33:57.845120Z",
+  "evidence_limitations": [
+    "Reality public feed has no documented global monotonic sequence; local gap and lineage markers do not count lost exchange events.",
+    "Reality persistence recent-window statistics and recovery state are unavailable in the active API response.",
+    "Directory inventories and file-size sums do not authenticate segment content.",
+    "Veritas v6 result stops at its pinned 519-snapshot boundary; active v4 has 522 snapshots.",
+    "Public books cannot establish fills, queue position, order acknowledgements, or realized P&L.",
+    "All service and capacity observations are time-specific."
+  ],
+  "latest_boundary_recovery": {
+    "copy_receipt": "docs/reliability/evidence/MIDAS_MISSION_20261026_RECOVERY_COPY_ABORTED.json",
+    "copy_receipt_sha256": "c1604255e5cd98ec5f2cc0612a01f7702c41ca1e29ad67072d559e5a8c93af4b",
+    "historical_R15": "2,304/20,148 segments",
+    "latest_production_boundary_cold_recovery": "not verified",
+    "receipt_progress": {
+      "complete_copy_receipt_created": false,
+      "completed_segment_copies": 697,
+      "full_snapshot_boundary_verified": false,
+      "partial_destination_preserved": true,
+      "recovery_started": false,
+      "verified_segment_bytes_copied": 103723201
+    },
+    "receipt_status": "ABORTED_UNVERIFIED_COPY",
+    "status": "INCOMPLETE"
+  },
+  "main_api": {
+    "health": {
+      "laboratory": {
+        "recovering_campaigns": [],
+        "recovery_errors": [],
+        "root": "/home/charlie/midas/data/laboratory-final",
+        "status": "READY"
+      },
+      "live_execution": false,
+      "mode": "demo",
+      "paper_recovery": {
+        "journal_events": 666807,
+        "revision": 666806,
+        "status": "CHECKPOINT_VERIFIED"
+      },
+      "startup_error": null,
+      "startup_status": "READY",
+      "status": "READY"
+    },
+    "health_http_status": 200,
+    "service": {
+      "properties": {
+        "ActiveState": "active",
+        "ExecStart": "{ path=/home/charlie/midas/.venv/bin/uvicorn ; argv[]=/home/charlie/midas/.venv/bin/uvicorn --app-dir /home/charlie/.local/share/midas-api/releases/24c7504 apps.api.main:app --host 127.0.0.1 --port 8000 --timeout-graceful-shutdown 60 ; ignore_errors=no ; start_time=[n/a] ; stop_time=[n/a] ; pid=0 ; code=(null) ; status=0/0 }",
+        "MainPID": "992948",
+        "MemoryCurrent": "392253440",
+        "MemoryHigh": "1610612736",
+        "MemoryMax": "1879048192",
+        "SubState": "running"
+      },
+      "returncode": 0,
+      "stderr": null
+    },
+    "veritas_overview_error": {
+      "detail": "Veritas public observatory summary exceeds the interface bound"
+    },
+    "veritas_overview_http_status": 503
+  },
+  "reality": {
+    "active_config": {
+      "budget_bytes": 25769803776,
+      "path": "/home/charlie/midas-reality/deploy/reality.json",
+      "recording_root": "/home/charlie/midas-reality/data/recordings/reality",
+      "retention_days": 90,
+      "sha256": "9d1aeeb5a496ad6971dc461ce87f327266ff25240391897f7bb6091a8307119a"
+    },
+    "api": {
+      "book_coverage": {
+        "expected": 16,
+        "fresh": 16,
+        "missing": 0,
+        "state": "complete_current_books"
+      },
+      "capture_health": "recording",
+      "collector": {
+        "backpressure_active": false,
+        "error": null,
+        "frames": 4013464,
+        "last_observation_ns": 1792978429624732618,
+        "markets": 8,
+        "ordinal": 5092537,
+        "sequence_verified": false,
+        "state": "RECORDING_UNSEQUENCED"
+      },
+      "health": "degraded",
+      "health_reasons": [
+        "recent_persistence_window_incomplete",
+        "recovery_state_unreported",
+        "transport_queue_depth_unreported"
+      ],
+      "http_status": 200,
+      "observability_gaps": [
+        "recent_persistence_window_incomplete",
+        "recovery_state_unreported",
+        "transport_queue_depth_unreported"
+      ],
+      "operations_http_status": 200,
+      "operations_service_rows": [
+        {
+          "available": true,
+          "properties": {
+            "ActiveState": "active",
+            "CPUUsageNSec": "2914900899000",
+            "MainPID": "3007040",
+            "MemoryCurrent": "1122304000",
+            "NRestarts": "2",
+            "SubState": "running"
+          },
+          "unit": "midas-reality.service"
+        },
+        {
+          "available": true,
+          "properties": {
+            "ActiveState": "active",
+            "SubState": "waiting"
+          },
+          "unit": "midas-reality-capacity.timer"
+        },
+        {
+          "available": true,
+          "properties": {
+            "ActiveState": "inactive",
+            "SubState": "dead"
+          },
+          "unit": "midas-reality-archive.timer"
+        }
+      ],
+      "persistence": {
+        "backpressure_active": false,
+        "backpressure_events": 1,
+        "lifetime_max_append_seconds": 1.5657015428878367,
+        "lifetime_max_exceeded_threshold": true,
+        "recent_max_append_seconds": null,
+        "recent_max_persist_seconds": null,
+        "recent_p95_append_seconds": null,
+        "recent_p95_persist_seconds": null,
+        "recent_sample_count": null,
+        "recent_window_available": false,
+        "recent_window_complete": null,
+        "recent_window_covered_seconds": null,
+        "recent_window_seconds": null,
+        "state": "recent_window_unavailable",
+        "threshold_seconds": 1.0
+      },
+      "source_interpretation": "The upstream feed has no documented monotonic sequence field. Current-book freshness and REST comparisons describe observed state; they cannot prove event completeness."
+    },
+    "cgroup": {
+      "cpu_stat": {
+        "burst_usec": 0,
+        "core_sched.force_idle_usec": 0,
+        "nice_usec": 2635046000,
+        "nr_bursts": 0,
+        "nr_periods": 935440,
+        "nr_throttled": 39598,
+        "system_usec": 198974540,
+        "throttled_usec": 2279255103,
+        "usage_usec": 2914901543,
+        "user_usec": 2715927003
+      },
+      "memory_current": "1122304000",
+      "memory_events": {
+        "high": 14379,
+        "low": 0,
+        "max": 0,
+        "oom": 0,
+        "oom_group_kill": 0,
+        "oom_kill": 0,
+        "sock_throttled": 0
+      },
+      "memory_high": "1207959552",
+      "memory_max": "1342177280"
+    },
+    "raw_store_inventory": {
+      "finalized_bytes": 8985876498,
+      "finalized_segments": 31669,
+      "method": "single-directory metadata and file-size inventory; no segment contents or hashes read",
+      "open_segments": 1,
+      "status_file": {
+        "bytes": 69575,
+        "mtime_local": "2026-10-26T02:33:52.654937+01:00"
+      }
+    },
+    "service": {
+      "properties": {
+        "ActiveState": "active",
+        "CPUQuotaPerSecUSec": "250ms",
+        "MainPID": "3007040",
+        "MemoryCurrent": "1122304000",
+        "MemoryHigh": "1207959552",
+        "MemoryMax": "1342177280",
+        "NRestarts": "2",
+        "SubState": "running"
+      },
+      "returncode": 0,
+      "stderr": null
+    },
+    "staged_candidate_config": {
+      "budget_bytes": 120259084288,
+      "deployed": false,
+      "path": "deploy/reality-candidate.json",
+      "recording_root": "/home/charlie/midas-reality/data/recordings/reality",
+      "retention_days": 120,
+      "sha256": "908816c3dc568a8aa9d22a8d5bd0267d2f421cec6ca37a84901c5a6eae1f85e0"
+    },
+    "timers": {
+      "archive": {
+        "properties": {
+          "ActiveState": "inactive",
+          "NextElapseUSecRealtime": "",
+          "SubState": "dead"
+        },
+        "returncode": 0,
+        "stderr": null
+      },
+      "capacity": {
+        "properties": {
+          "ActiveState": "active",
+          "NextElapseUSecRealtime": "",
+          "SubState": "waiting"
+        },
+        "returncode": 0,
+        "stderr": null
+      }
+    }
+  },
+  "repository": {
+    "branch": "codex/midas-comprehensive-engineering-mission-20261025",
+    "head": "1effd8dfe4ae19f8da40c57321c310ee2019258f",
+    "path": "/home/charlie/midas-engineering-mission-20261025",
+    "working_tree_status": "mission implementation and documentation changes are uncommitted; ignored/bulk replay evidence is preserved"
+  },
+  "schema_version": 1,
+  "scope": "Read-only live/runtime inventory. No service was signaled, restarted, or reconfigured. No research store, campaign, segment, or ambiguous archive file was modified.",
+  "storage": {
+    "archive_residual_after_112_gib_and_400_gib_reserve_bytes": 85345566720,
+    "current_commitment_scenario": {
+      "current_free_bytes": 161950273536,
+      "deficit_bytes": 6506911519,
+      "formula": "candidate raw headroom after current raw use + database 30-day high-water allowance + Veritas 4 GiB allowance + free-space reserve",
+      "raw_budget_headroom_days_at_historical_floor": 114.34195197130113,
+      "required_bytes": 168457185055
+    },
+    "filesystems": [
+      {
+        "free_bytes": 161950273536,
+        "path": "/",
+        "total_bytes": 501864161280,
+        "used_bytes": 314345361408
+      },
+      {
+        "free_bytes": 635101380608,
+        "path": "/mnt/continental-cloud",
+        "total_bytes": 648000176128,
+        "used_bytes": 6287011840
+      }
+    ],
+    "full_120_day_floor_scenario": {
+      "current_free_bytes": 161950273536,
+      "deficit_bytes": 12013107129,
+      "future_raw_growth_bytes": 116779403400,
+      "required_bytes": 173963380665
+    },
+    "interpretation": "Point-in-time capacity math based on staged assumptions, not a production preflight or permission to change storage policy.",
+    "staged_policy": {
+      "archive_budget_bytes": 120259084288,
+      "archive_free_reserve_bytes": 429496729600,
+      "database_30_day_high_water_allowance_bytes": 31414173489,
+      "historical_growth_floor_bytes_per_day": 973161695,
+      "nvme_free_reserve_bytes": 21474836480,
+      "path": "/home/charlie/midas-reality/deploy/reality-storage-policy.json",
+      "raw_budget_bytes": 120259084288,
+      "retention_days": 120,
+      "sha256": "3bf5a40d29adcf3532dc1e4ac40831b35fc9745f01d7baca7c6f79c8e8a9ee6e",
+      "veritas_allowance_bytes": 4294967296
+    }
+  },
+  "veritas": {
+    "active_v4_summary_coverage_end": "scan-20261023T233202Z-dc4f690bd80f.json.gz; 423 snapshots",
+    "implementation": "active v4 legacy runtime; isolated mission branch contains v6",
+    "latest_snapshot": {
+      "bytes": 641503,
+      "name": "scan-20261026T013105Z-74db14ad03a0.json.gz",
+      "sha256": "3cd0da2f7460da912c34465c7bfff671ec537e3f87561d0d7ba0c8050fdb69f0"
+    },
+    "latest_summary": {
+      "bytes": 2249365,
+      "path": "/home/charlie/midas-veritas/data/veritas-observatory/latest-summary.json"
+    },
+    "overview_http_status": 503,
+    "research_summary": {
+      "bytes": 2097481,
+      "path": "/home/charlie/midas-veritas/data/veritas-observatory/research-summary.json",
+      "sha256": "aca960615863ab4a8df3ab673b78e70dcbef56583146275e023e907def7f18c5"
+    },
+    "service": {
+      "properties": {
+        "ActiveState": "failed",
+        "ExecMainExitTimestamp": "Mon 2026-10-26 02:31:07 CET",
+        "ExecMainStartTimestamp": "Mon 2026-10-26 02:30:56 CET",
+        "ExecMainStatus": "1",
+        "MainPID": "0",
+        "Result": "exit-code",
+        "SubState": "failed"
+      },
+      "returncode": 0,
+      "stderr": null
+    },
+    "snapshot_count": 522,
+    "source_workspace": "/home/charlie/midas-veritas",
+    "summary_reader_failure": {
+      "api_latest_summary_bytes": 2249365,
+      "api_reader_limit_bytes": 524288,
+      "bytes_over_reader_limit": 329,
+      "latest_snapshot_count_outside_v6_replay": 3,
+      "message": "Unsafe or oversized analysis artifact: research-summary.json",
+      "reader_limit_bytes": 2097152,
+      "summary_bytes": 2097481
+    },
+    "timer": {
+      "properties": {
+        "ActiveState": "active",
+        "NextElapseUSecRealtime": "Mon 2026-10-26 03:01:07 CET",
+        "SubState": "waiting"
+      },
+      "returncode": 0,
+      "stderr": null
+    },
+    "v6_replay_boundary": "519 immutable snapshots ending scan-20261026T000113Z-72ddb4303c0b.json.gz; latest active snapshots are outside this replay"
+  }
+}

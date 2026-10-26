@@ -144,3 +144,41 @@ directory above; the recording source and ambiguous archive tree were not
 modified. See the
 [comprehensive mission report](MIDAS_COMPREHENSIVE_ENGINEERING_MISSION_20261025.md)
 for the complete runtime inventory and test evidence.
+
+## Latest read-only recheck — 2026-10-26 02:33:58 CET
+
+The live sample is bound in
+[`MIDAS_MISSION_20261026_LIVE_STATE_RECHECK.json`](evidence/MIDAS_MISSION_20261026_LIVE_STATE_RECHECK.json),
+SHA-256 `f89c3be4866ac10a488d50cca777fac78036a52e3a52d78e38dbb7c1a3dc86be`.
+No service was signaled or changed.
+
+- The protected recorder remained PID `3007040`, `ActiveState=active`, with
+  `NRestarts=2` from `/home/charlie/midas-reality`. It remained on the old
+  24 GiB / 90-day config, SHA-256
+  `9d1aeeb5a496ad6971dc461ce87f327266ff25240391897f7bb6091a8307119a`.
+- Its cgroup sample was 1,122,304,000 bytes against
+  `MemoryHigh=1,207,959,552` and `MemoryMax=1,342,177,280`; cumulative
+  `memory.events.high=14,379`, with `max`, OOM and kill counters at zero. The
+  API reports 16/16 fresh books but keeps source state
+  `RECORDING_UNSEQUENCED`, `sequence_verified=false`, and health degraded
+  because its recent persistence window, recovery state and transport queue
+  depth are unavailable. The current API collector error is null.
+- Metadata-only raw inventory found 31,669 finalized files / 8,985,876,498
+  bytes and one open file. No segment contents or checksums were read.
+- NVMe free space was 161,950,273,536 bytes. With the current raw bytes, the
+  staged 112 GiB raw budget, 31.414 GB database high-water allowance, 4 GiB
+  Veritas allowance and 20 GiB free reserve require 168,457,185,055 bytes, a
+  6,506,911,519-byte deficit. At the historical growth floor, a 120-day raw
+  horizon plus those commitments requires 173,963,380,665 bytes, a
+  12,013,107,129-byte deficit; the raw budget alone covers about 114.34 days.
+  These are declared planning assumptions, not a guarded preflight. The archive
+  filesystem had 635,101,380,608 bytes free, but provenance remains unresolved.
+- The archive tree still held 19,833 finalized segments, 58 `.copying` files,
+  18,695 manifest rows, 1,138 unmanifested segments and no manifest entries
+  missing from the directory. Only directory names, file sizes and the
+  manifest were checked; segment contents were not hashed. No files changed.
+
+Storage sufficiency is now an additional explicit deployment blocker. Recheck
+all usage, database growth and reserve assumptions before any deployment
+preflight. Do not use the staged candidate or enable archive writing to work
+around the deficit.

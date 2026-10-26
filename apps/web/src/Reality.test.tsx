@@ -65,6 +65,69 @@ it('shows empty prospective candidates without treating them as profit', async (
   expect(screen.getByRole('checkbox')).toBeChecked();
 });
 
+it('reads the persisted selected cohort when the markets field is a count', async () => {
+  const nowNs = Date.now() * 1_000_000;
+  const yesAsset = 'yes-asset-fixture';
+  const noAsset = 'no-asset-fixture';
+  const market = {
+    id: 'fixture-market',
+    condition: 'fixture-condition',
+    question: 'Fixture binary market',
+    metadata_ordinal: 7,
+    protocol: 'v1',
+    selection_role: 'reference',
+    negative_risk: false,
+    tokens: { [yesAsset]: 'Yes', [noAsset]: 'No' },
+  };
+  const book = (bid: string, ask: string) => ({
+    received_ns: nowNs,
+    last: [10, 0],
+    issue: null,
+    best_bid: bid,
+    best_ask: ask,
+    spread: (Number(ask) - Number(bid)).toFixed(2),
+    asks: [[ask, '100']],
+    depth_truncated: false,
+  });
+  vi.stubGlobal(
+    'fetch',
+    vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        now_ns: nowNs,
+        health: 'recording',
+        collector: {
+          state: 'RECORDING_UNSEQUENCED',
+          markets: 1,
+          cohort: [market],
+          books: { [yesAsset]: book('0.49', '0.51'), [noAsset]: book('0.48', '0.50') },
+          observation_coverage: {
+            [yesAsset]: {
+              first_received_ns: nowNs - 1_000_000_000,
+              last_received_ns: nowNs,
+              book_update_frames: 2,
+            },
+            [noAsset]: {
+              first_received_ns: nowNs - 1_000_000_000,
+              last_received_ns: nowNs,
+              book_update_frames: 2,
+            },
+          },
+        },
+        forward: {},
+        capacity: {},
+      }),
+    }),
+  );
+
+  mount();
+  await screen.findByText('The observation panel');
+  expect(screen.getByText('Fixture binary market')).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: /Fixture binary market/ }));
+  expect(await screen.findByRole('heading', { name: 'Yes' })).toBeInTheDocument();
+  expect(screen.getByRole('heading', { name: 'No' })).toBeInTheDocument();
+});
+
 it('counts only confirmed sampled updates and refuses a gap-spanning update rate', () => {
   const samples = [
     { ns: 1e12, legs: { yes: { last: [10, 0] } } },

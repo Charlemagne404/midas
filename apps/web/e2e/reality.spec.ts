@@ -1,9 +1,147 @@
 import { test, expect } from '@playwright/test';
 
-test('native Reality exposes genuine evidence and frozen replay without synthetic labeling', async ({
+test('native Reality exposes source inspection with explicit synthetic fixture labeling', async ({
   page,
 }) => {
-  // Keep this browser pass isolated from source payloads and service controls.
+  // Deterministic UI data is explicitly marked synthetic and stays outside research evidence.
+  const nowNs = Date.now() * 1_000_000;
+  const yesAsset = 'yes-asset-browser-fixture';
+  const noAsset = 'no-asset-browser-fixture';
+  const condition = '0x' + '1'.repeat(64);
+  const segment = '00000000000000000001-00000000000000000000000000000000.seg';
+  const decisionId = 'a'.repeat(64);
+  const book = (bid: string, ask: string) => ({
+    received_ns: nowNs,
+    last: [2, 0],
+    issue: null,
+    best_bid: bid,
+    best_ask: ask,
+    spread: (Number(ask) - Number(bid)).toFixed(2),
+    asks: [[ask, '100']],
+    depth_truncated: false,
+  });
+  await page.route('**/api/reality/overview', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        now_ns: nowNs,
+        collector_status_age_seconds: 0,
+        health: 'recording',
+        collector: {
+          evidence_classification: 'SYNTHETIC_TEST_FIXTURE',
+          state: 'RECORDING_UNSEQUENCED',
+          markets: 1,
+          expected_books: 2,
+          fresh_books: 2,
+          ordinal: 2,
+          frames: 1,
+          started_ns: nowNs - 10_000_000_000,
+          sequence_verified: false,
+          cohort: [
+            {
+              id: 'browser-fixture-market',
+              condition,
+              question: 'Browser fixture market',
+              metadata_ordinal: 1,
+              protocol: 'v1',
+              selection_role: 'reference',
+              negative_risk: false,
+              tokens: { [yesAsset]: 'Yes', [noAsset]: 'No' },
+            },
+          ],
+          books: { [yesAsset]: book('0.49', '0.51'), [noAsset]: book('0.48', '0.50') },
+          observation_coverage: {
+            [yesAsset]: {
+              first_received_ns: nowNs - 1_000_000_000,
+              last_received_ns: nowNs,
+              book_update_frames: 2,
+            },
+            [noAsset]: {
+              first_received_ns: nowNs - 1_000_000_000,
+              last_received_ns: nowNs,
+              book_update_frames: 2,
+            },
+          },
+        },
+        forward: {},
+        capacity: {},
+      }),
+    });
+  });
+  await page.route('**/api/reality/history**', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        rows: [
+          {
+            event_seq: 2,
+            ns: nowNs,
+            legs: {
+              yes: {
+                best_ask: '0.51',
+                spread: '0.02',
+                total_ask_quantity: 100,
+                snapshot: [1, 0],
+                last: [2, 0],
+              },
+              no: {
+                best_ask: '0.50',
+                spread: '0.02',
+                total_ask_quantity: 100,
+                snapshot: [1, 0],
+                last: [2, 0],
+              },
+            },
+          },
+        ],
+        truncated: false,
+      }),
+    }),
+  );
+  await page.route(/\/api\/reality\/decisions(?:\/|\?|$)/, async (route) => {
+    const pathname = new URL(route.request().url()).pathname;
+    if (pathname.endsWith('/decisions')) {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          rows: [
+            {
+              id: decisionId,
+              decision_ns: nowNs,
+              decision_ordinal: 2,
+              market_title: 'Browser fixture market',
+              condition,
+              baseline: {
+                opportunity: false,
+                acquisition: { yes: { value: '0.51' }, no: { value: '0.50' } },
+              },
+              policies: [{ action: 'abstain' }],
+            },
+          ],
+          has_more: false,
+        }),
+      });
+      return;
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        commit_ns: nowNs,
+        decision: {
+          market_title: 'Browser fixture market',
+          decision_ns: nowNs,
+          source_record_ref: { ordinal: 1, segment, offset: 8 },
+          policies: [{ policy: 'no_trade', action: 'abstain', reason: 'fixture_only' }],
+        },
+        outcomes: [{ horizon_ms: 1000, labels: { status: 'censored', reason: 'fixture_only' } }],
+      }),
+    });
+  });
+  // Keep source-record inspection and service controls inside this browser fixture.
   await page.route('**/api/reality/records/**', async (route) => {
     await route.fulfill({
       status: 200,
@@ -80,8 +218,11 @@ test('native Reality exposes genuine evidence and frozen replay without syntheti
   await expect(
     page.getByRole('heading', { name: 'The observation panel', exact: true }),
   ).toBeVisible();
-  await expect(page.getByText('DEMO · SYNTHETIC', { exact: true })).toHaveCount(0);
-  await expect(page.getByText('REALITY · PUBLIC OBSERVATIONS', { exact: true })).toBeVisible();
+  await expect(page.getByText('SYNTHETIC TEST FIXTURE · NOT MARKET EVIDENCE')).toBeVisible();
+  await expect(
+    page.getByText(/Synthetic test fixture · UI-only data\./, { exact: false }),
+  ).toBeVisible();
+  await expect(page.getByText('REALITY · RESEARCH EVIDENCE', { exact: true })).toBeVisible();
   await expect(page.getByText('No scientific champion', { exact: true })).toBeVisible();
   const nav = page.getByRole('navigation', { name: 'Reality research areas' });
   const boxes = await nav

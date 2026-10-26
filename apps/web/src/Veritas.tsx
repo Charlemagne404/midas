@@ -296,7 +296,7 @@ type CoveragePilotV2 = {
   implementation_pin_status: string;
   measurement_diagnostics: {
     strict_reported_fresh_pairs: number;
-    reported_update_age_above_5s_by_leg: Record<string, number>;
+    reported_update_age_above_5s_by_leg: Record<string, number> | null;
     reported_update_timestamp_skew_above_250ms_pairs: number;
     reported_update_timestamp_skew_bands: Record<string, number>;
     batch_atomicity_verified_pairs: number;
@@ -442,15 +442,15 @@ type Observatory = {
     latest_snapshot_invalid_reasons: Record<string, number>;
   };
   opportunity: {
-    quality_valid_pairs: number;
-    invalid_pairs: number;
-    positive_top_gross_pairs: number;
-    positive_full_depth_gross_by_quantity: Record<string, number>;
-    positive_minimum_notional_by_quantity: Record<string, number>;
-    positive_single_match_by_quantity: Record<string, number>;
-    positive_fragmentation_safe_by_quantity: Record<string, number>;
-    candidate_event_count: number;
-    candidate_market_count: number;
+    quality_valid_pairs: number | null;
+    invalid_pairs: number | null;
+    positive_top_gross_pairs: number | null;
+    positive_full_depth_gross_by_quantity: Record<string, number> | null;
+    positive_minimum_notional_by_quantity: Record<string, number> | null;
+    positive_single_match_by_quantity: Record<string, number> | null;
+    positive_fragmentation_safe_by_quantity: Record<string, number> | null;
+    candidate_event_count: number | null;
+    candidate_market_count: number | null;
     minimum_top_edge_per_share: string | null;
     maximum_top_edge_per_share: string | null;
   };
@@ -468,7 +468,7 @@ type Observatory = {
     invalid_reasons: Record<string, number>;
     latest_invalid_reasons: Record<string, number>;
     reported_update_age_bands_by_leg: Record<string, Record<string, number>>;
-    reported_update_age_above_5s_by_leg: Record<string, number>;
+    reported_update_age_above_5s_by_leg: Record<string, number> | null;
     reported_update_timestamp_skew_bands: Record<string, number>;
     reported_update_timestamp_skew_above_250ms_pairs: number;
     sampled_activity_bands: Record<string, number>;
@@ -815,7 +815,8 @@ type ArenaActivityJob = {
   state: string;
 };
 
-const fmt = (value: number) => value.toLocaleString('en-US');
+const fmt = (value: number | null | undefined) =>
+  typeof value === 'number' && Number.isFinite(value) ? value.toLocaleString('en-US') : '—';
 const usdc = (value: string) => `${Number(value) >= 0 ? '+' : ''}${Number(value).toFixed(2)} USDC`;
 const rate = (value: number, denominator: number) =>
   denominator ? `${((100 * value) / denominator).toFixed(1)}%` : '—';
@@ -939,6 +940,7 @@ export function Veritas() {
   );
   const observatoryOpportunity = observatory.opportunity;
   const observatoryQuality = observatory.data_quality;
+  const reportedUpdateAgeAbove5sByLeg = observatoryQuality.reported_update_age_above_5s_by_leg;
   const followupCensoring = data.followup_censoring ?? null;
   const labelFeasibility = data.label_feasibility ?? null;
   const gapCensorAudit = data.gap_censor_audit ?? null;
@@ -961,13 +963,25 @@ export function Veritas() {
         .map(([kind, count]) => `${kind.replaceAll('_', ' ')} ${fmt(count)}`)
         .join(' · ')
     : '';
-  const positiveFullDepthAt20 =
-    observatoryOpportunity.positive_minimum_notional_by_quantity['20'] ?? 0;
-  const economicGateQuantities = Object.keys(
-    observatoryOpportunity.positive_full_depth_gross_by_quantity,
-  ).sort((left, right) => Number(left) - Number(right));
+  const positiveFullDepthGrossByQuantity =
+    observatoryOpportunity.positive_full_depth_gross_by_quantity ?? {};
+  const positiveMinimumNotionalByQuantity =
+    observatoryOpportunity.positive_minimum_notional_by_quantity ?? {};
+  const positiveSingleMatchByQuantity =
+    observatoryOpportunity.positive_single_match_by_quantity ?? {};
+  const positiveFragmentationSafeByQuantity =
+    observatoryOpportunity.positive_fragmentation_safe_by_quantity ?? {};
+  const economicGateQuantities = Object.keys(positiveFullDepthGrossByQuantity).sort(
+    (left, right) => Number(left) - Number(right),
+  );
+  const positiveFullDepthAt20 = positiveMinimumNotionalByQuantity['20'];
+  const opportunityMeasurementsPresent =
+    observatoryOpportunity.quality_valid_pairs !== null ||
+    observatoryOpportunity.positive_top_gross_pairs !== null ||
+    observatoryOpportunity.candidate_event_count !== null ||
+    economicGateQuantities.length > 0;
   const candidateEventsPerPanelHour =
-    observatory.coverage_window_hours > 0
+    observatoryOpportunity.candidate_event_count !== null && observatory.coverage_window_hours > 0
       ? observatoryOpportunity.candidate_event_count / observatory.coverage_window_hours
       : null;
   const latestCategories = Object.entries(observatoryDiscovery.latest_by_category).sort(
@@ -1216,7 +1230,11 @@ export function Veritas() {
             <div className="ve-design-audit" data-testid="coverage-design-audit">
               <div className="ve-design-audit-heading">
                 <div>
-                  <span className="ve-subhead">Independent inclusion-support audit</span>
+                  <span className="ve-subhead">
+                    {coverageDesignAudit.source_is_current
+                      ? 'Current inclusion-support audit'
+                      : 'Historical inclusion-support audit'}
+                  </span>
                   <strong>
                     {coverageDesignAudit.source_is_current
                       ? `Current through ${fmt(coverageDesignAudit.study_scan_count)} scans`
@@ -1453,7 +1471,7 @@ export function Veritas() {
 
       <div className="ve-grid ve-grid-wide">
         <Panel
-          eyebrow="CONTINUOUS PUBLIC DISCOVERY"
+          eyebrow={`BOUNDED PUBLIC DISCOVERY · ${observatory.processed_snapshot_count === 0 ? 'NOT STARTED' : 'SNAPSHOTS INDEXED'}`}
           title="Market discovery and coverage"
           note="Six bounded public market frames use seeded half-hour page offsets across liquidity and ID strata, then feed a rotating stratified panel and a frozen random control. The frame is conditional on those query responses; snapshots are not continuous quotes."
         >
@@ -1509,6 +1527,14 @@ export function Veritas() {
           </div>
           {universeCoverage?.status === 'available' && (
             <div className="ve-universe-audit" aria-label="Saved market-universe coverage audit">
+              <div className="ve-observatory-meta">
+                <span>
+                  Evidence status <b>HISTORICAL · HASH VERIFIED</b>
+                </span>
+                <span>
+                  Report captured <b>{time(universeCoverage.captured_at_utc)}</b>
+                </span>
+              </div>
               <div className="ve-observatory-stats">
                 <div>
                   <span>Hash-verified saved snapshots</span>
@@ -1533,7 +1559,7 @@ export function Veritas() {
                   </small>
                 </div>
                 <div>
-                  <span>Current v4 quality replay</span>
+                  <span>V4 quality replay of saved snapshots</span>
                   <strong>
                     {fmt(universeCoverage.total_quality_valid_market_pairs_current_replay)} /{' '}
                     {fmt(universeCoverage.total_attempted_market_pairs)} pairs
@@ -1603,8 +1629,9 @@ export function Veritas() {
                 </p>
               )}
               <p className="ve-observatory-note">
-                These are intermittent snapshots from bounded query unions. They do not provide a
-                venue-wide denominator, continuous quotes, order arrival, fills, or profitability.
+                This report replays its hash-verified saved snapshots; it is not the current
+                observer scan. These intermittent bounded query unions do not provide a venue-wide
+                denominator, continuous quotes, order arrival, fills, or profitability.
               </p>
               <a
                 className="ve-latest-snapshot"
@@ -1748,10 +1775,16 @@ export function Veritas() {
         </Panel>
 
         <Panel
-          eyebrow="OBSERVED · REPLAYABLE"
+          eyebrow={opportunityMeasurementsPresent ? 'OBSERVED · REPLAYABLE' : 'NOT MEASURED'}
           title="Opportunity observatory and data quality"
           note="Each indexed row points to an immutable source snapshot. Repeated snapshots are dependent; no fill, persistence or profitability is inferred."
         >
+          {!opportunityMeasurementsPresent && (
+            <p className="ve-empty-state" role="status">
+              No finalized opportunity summary is available. Missing counts are unmeasured, not
+              zero.
+            </p>
+          )}
           <div className="ve-observatory-stats compact">
             <div>
               <span>Quality-valid paired books</span>
@@ -1760,14 +1793,28 @@ export function Veritas() {
             <div>
               <span>Positive top gross pairs</span>
               <strong
-                className={observatoryOpportunity.positive_top_gross_pairs ? 'candidate' : 'none'}
+                className={
+                  observatoryOpportunity.positive_top_gross_pairs === null
+                    ? 'unmeasured'
+                    : observatoryOpportunity.positive_top_gross_pairs > 0
+                      ? 'candidate'
+                      : 'none'
+                }
               >
                 {fmt(observatoryOpportunity.positive_top_gross_pairs)}
               </strong>
             </div>
             <div>
               <span>Full depth + minimum at 20 shares</span>
-              <strong className={positiveFullDepthAt20 ? 'candidate' : 'none'}>
+              <strong
+                className={
+                  positiveFullDepthAt20 === undefined
+                    ? 'unmeasured'
+                    : positiveFullDepthAt20 > 0
+                      ? 'candidate'
+                      : 'none'
+                }
+              >
                 {fmt(positiveFullDepthAt20)}
               </strong>
             </div>
@@ -1784,14 +1831,16 @@ export function Veritas() {
               Recorded candidate frequency
               <b>
                 {candidateEventsPerPanelHour === null
-                  ? 'Not enough elapsed panel time'
+                  ? observatoryOpportunity.candidate_event_count === null
+                    ? 'Not measured'
+                    : 'Not enough elapsed panel time'
                   : `${candidateEventsPerPanelHour.toFixed(3)} events / panel hour`}
               </b>
             </span>
             <span>
-              {fmt(observatoryOpportunity.candidate_event_count)} candidate events across a{' '}
-              {observatory.coverage_window_hours.toFixed(1)} h panel window. Snapshots are
-              intermittent, not continuous observations.
+              {observatoryOpportunity.candidate_event_count === null
+                ? 'Candidate event count is not measured for this panel.'
+                : `${fmt(observatoryOpportunity.candidate_event_count)} candidate events across a ${observatory.coverage_window_hours.toFixed(1)} h panel window. Snapshots are intermittent, not continuous observations.`}
             </span>
           </div>
           <div className="ve-economic-gates">
@@ -1813,34 +1862,30 @@ export function Veritas() {
                 <span role="columnheader">Single-match fees</span>
                 <span role="columnheader">Fragmentation-safe fees</span>
               </div>
-              {economicGateQuantities.map((quantity) => (
-                <div className="ve-economic-gates-row" role="row" key={quantity}>
-                  <strong role="cell">{quantity}</strong>
-                  <span role="cell">
-                    {fmt(
-                      observatoryOpportunity.positive_full_depth_gross_by_quantity[quantity] ?? 0,
-                    )}
-                  </span>
-                  <span role="cell">
-                    {fmt(
-                      observatoryOpportunity.positive_minimum_notional_by_quantity[quantity] ?? 0,
-                    )}
-                  </span>
-                  <span role="cell">
-                    {fmt(observatoryOpportunity.positive_single_match_by_quantity[quantity] ?? 0)}
-                  </span>
-                  <span role="cell">
-                    {fmt(
-                      observatoryOpportunity.positive_fragmentation_safe_by_quantity[quantity] ?? 0,
-                    )}
-                  </span>
+              {economicGateQuantities.length === 0 ? (
+                <div className="ve-economic-gates-row" role="row">
+                  <strong role="cell">—</strong>
+                  <span role="cell">Not measured</span>
+                  <span role="cell">—</span>
+                  <span role="cell">—</span>
+                  <span role="cell">—</span>
                 </div>
-              ))}
+              ) : (
+                economicGateQuantities.map((quantity) => (
+                  <div className="ve-economic-gates-row" role="row" key={quantity}>
+                    <strong role="cell">{quantity}</strong>
+                    <span role="cell">{fmt(positiveFullDepthGrossByQuantity[quantity])}</span>
+                    <span role="cell">{fmt(positiveMinimumNotionalByQuantity[quantity])}</span>
+                    <span role="cell">{fmt(positiveSingleMatchByQuantity[quantity])}</span>
+                    <span role="cell">{fmt(positiveFragmentationSafeByQuantity[quantity])}</span>
+                  </div>
+                ))
+              )}
             </div>
             <p>
-              The per-leg minimum and fee columns show where a positive gross state fails later
-              checks. Repeated states are correlated observations, not independent opportunities or
-              fills.
+              {opportunityMeasurementsPresent
+                ? 'The per-leg minimum and fee columns show where a positive gross state fails later checks. Repeated states are correlated observations, not independent opportunities or fills.'
+                : 'Missing gate counts are unmeasured, not zero. Repeated states are correlated observations, not independent opportunities or fills.'}
             </p>
           </div>
           {latestVeritasQualification && (
@@ -1897,8 +1942,8 @@ export function Veritas() {
             <div>
               <span>Reported timestamp age &gt; 5 s</span>
               <b>
-                YES {fmt(observatoryQuality.reported_update_age_above_5s_by_leg.yes ?? 0)} · NO{' '}
-                {fmt(observatoryQuality.reported_update_age_above_5s_by_leg.no ?? 0)}
+                YES {fmt(reportedUpdateAgeAbove5sByLeg?.yes)} · NO{' '}
+                {fmt(reportedUpdateAgeAbove5sByLeg?.no)}
               </b>
             </div>
             <div>
@@ -1908,23 +1953,27 @@ export function Veritas() {
             <div>
               <span>Latest invalid reasons</span>
               <b>
-                {invalidReasons.length
-                  ? invalidReasons
-                      .map(([reason, count]) => `${reason.replaceAll('_', ' ')} ${fmt(count)}`)
-                      .join(' · ')
-                  : 'None recorded'}
+                {observatory.processed_snapshot_count === 0
+                  ? 'Not measured'
+                  : invalidReasons.length
+                    ? invalidReasons
+                        .map(([reason, count]) => `${reason.replaceAll('_', ' ')} ${fmt(count)}`)
+                        .join(' · ')
+                    : 'None recorded'}
               </b>
             </div>
             <div>
               <span>Between-visit sampled state changes</span>
               <b>
-                {observatory.market_coverage.sampled_state_change_fraction === null
-                  ? 'Not enough repeated fingerprints'
-                  : `${(100 * observatory.market_coverage.sampled_state_change_fraction).toFixed(
-                      1,
-                    )}% · ${fmt(
-                      observatory.market_coverage.sampled_state_changes,
-                    )} / ${fmt(observatory.market_coverage.sampled_state_comparisons)}`}
+                {observatory.processed_snapshot_count === 0
+                  ? 'Not measured'
+                  : observatory.market_coverage.sampled_state_change_fraction === null
+                    ? 'Not enough repeated fingerprints'
+                    : `${(100 * observatory.market_coverage.sampled_state_change_fraction).toFixed(
+                        1,
+                      )}% · ${fmt(
+                        observatory.market_coverage.sampled_state_changes,
+                      )} / ${fmt(observatory.market_coverage.sampled_state_comparisons)}`}
               </b>
             </div>
           </div>
@@ -2044,8 +2093,9 @@ export function Veritas() {
             </div>
           ) : (
             <p className="ve-observatory-empty">
-              No quality-valid positive full-depth gross candidate has been recorded. The detector
-              remains active.
+              {observatory.processed_snapshot_count === 0
+                ? 'No finalized public snapshot is indexed, so opportunity counts have not been measured.'
+                : 'No quality-valid positive full-depth gross candidate has been recorded in the indexed snapshots.'}
             </p>
           )}
           {data.independent_opportunity_audit && (
@@ -2053,7 +2103,7 @@ export function Veritas() {
               <section>
                 <div className="ve-gap-evidence-heading">
                   <div>
-                    <span className="ve-subhead">Independent opportunity audit</span>
+                    <span className="ve-subhead">Historical independent opportunity audit</span>
                     <small>
                       {fmt(data.independent_opportunity_audit.snapshot_count)} scans ·{' '}
                       {fmt(data.independent_opportunity_audit.selected_market_observation_count)}{' '}

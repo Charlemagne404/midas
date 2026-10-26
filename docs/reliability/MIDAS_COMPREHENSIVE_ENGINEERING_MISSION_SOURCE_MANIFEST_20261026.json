@@ -1,534 +1,633 @@
 {
-  "schema_version": 2,
-  "generated_at_utc": "2026-10-26T01:08:03Z",
   "base_commit": "55601b9a090945cb498806e4878b6ddc33562043",
   "branch": "codex/midas-comprehensive-engineering-mission-20261025",
-  "file_count": 81,
-  "scope": "files lists changed code, tests, documentation and checked-in evidence files relative to the base commit; bulk offline replay copies and derived event files are separately bound by evidence_artifacts and their manifests; generated build/test output and temporary locks are excluded; this manifest excludes itself.",
-  "files": [
-    {
-      "path": "apps/api/arena.py",
-      "bytes": 61683,
-      "sha256": "afea95cea7f6c69dfaa6a8644aad7bdf57e963b7366bb6629eb70742e79c5e67"
-    },
-    {
-      "path": "apps/api/main.py",
-      "bytes": 21977,
-      "sha256": "d39ba4a66827382e4ab0c405091f5ace02f1c7f3c8f2f1b9ba524198e39f8492"
-    },
-    {
-      "path": "apps/api/reality.py",
-      "bytes": 32798,
-      "sha256": "9ba6e272b971468a070c1ec3bb879f0fb148fade4f59a5ef518edf791bc36b94"
-    },
-    {
-      "path": "apps/api/veritas.py",
-      "bytes": 201769,
-      "sha256": "902a56e2389f251a6cf642396091bf9187ec29ac6ee6b535613158232dc250da"
-    },
-    {
-      "path": "apps/web/build-identity.mjs",
-      "bytes": 654,
-      "sha256": "31eb5f25cfedd015540068916c5ba942bc4a4e58db974cde9221ef54ad623bd3"
-    },
-    {
-      "path": "apps/web/e2e/research-readiness.spec.ts",
-      "bytes": 5221,
-      "sha256": "0d5158fe3a12e25e41d162cc36ecb5efe92d9768a1b37303024ca759cccf0910"
-    },
-    {
-      "path": "apps/web/src/App.test.tsx",
-      "bytes": 14272,
-      "sha256": "fc49914ede838a29659af5eed0d95b1381b5039ce402433adedfd1c1b4cfd480"
-    },
-    {
-      "path": "apps/web/src/App.tsx",
-      "bytes": 60848,
-      "sha256": "37dd6103baa577c44aab869267564978a3f4b4f0843c7d3f61fb5c571f4ab00a"
-    },
-    {
-      "path": "apps/web/src/ResearchReadiness.tsx",
-      "bytes": 50670,
-      "sha256": "998f2fd7a60d2ae243b6f7b727d9b3e45805a3f10b47530bbe21b5369461f78f"
-    },
-    {
-      "path": "apps/web/src/midas-build.d.ts",
-      "bytes": 214,
-      "sha256": "ca0f986788cdea06c2a9598a17e818accd19415113525199d3fe3be87ef6d9e4"
-    },
-    {
-      "path": "apps/web/src/research-readiness.css",
-      "bytes": 10804,
-      "sha256": "885641fce25c9d80be9b202a3a894f4a0a82d75d79ee62c201e2b4dc666325ad"
-    },
-    {
-      "path": "apps/web/vite.config.ts",
-      "bytes": 659,
-      "sha256": "e527f8bdd71fc3998e442efeed540fa2d09d7f66313ce2bf2135e63ad6d02b0c"
-    },
-    {
-      "path": "apps/web/vitest.config.ts",
-      "bytes": 621,
-      "sha256": "d0c4b6ee3eda7f881743769a6c64d82a10fa87421c21bb6389008d66f9f5b2e4"
-    },
-    {
-      "path": "docs/MIDAS_CURRENT_STATE.md",
-      "bytes": 16765,
-      "sha256": "12664aa67618c32f2fc8269ab1aab3560cf253d4eb883cc8f689760be07c62fa"
-    },
-    {
-      "path": "docs/REAL_MARKET_RESEARCH_OVERHAUL_001.md",
-      "bytes": 21590,
-      "sha256": "f5725cae12fbfd6aedef76dec651f91b9d5534f82cc921a3a12fd709ce67651f"
-    },
-    {
-      "path": "docs/REAL_MARKET_RESEARCH_OVERHAUL_001_BENCHMARK.json",
-      "bytes": 10962,
-      "sha256": "ee379554fdb10538340a884d0a109f1b7c777dcf69c014a05fa2f80e6f1a3357"
-    },
-    {
-      "path": "docs/VERITAS_OPERATIONS.md",
-      "bytes": 18755,
-      "sha256": "9baf7118f4edae1225d3a8f971d1592380b86d1d0a248d0990eb39bd77457034"
-    },
-    {
-      "path": "docs/VERITAS_RESEARCH_BACKLOG.md",
-      "bytes": 82970,
-      "sha256": "1584f98b93910f8946f55cf09fb69f6517fc7bb6a8478d88eebfbeb073858984"
-    },
-    {
-      "path": "docs/reliability/MIDAS_COMPREHENSIVE_ENGINEERING_MISSION_20261025.md",
-      "bytes": 33017,
-      "sha256": "d2c740e1866c312e8685e757353b2fd7ed51185e5062a22412d0dde472799d62"
-    },
-    {
-      "path": "docs/reliability/MIDAS_COMPREHENSIVE_ENGINEERING_MISSION_LEDGER_20261025.md",
-      "bytes": 20036,
-      "sha256": "95919c984fa2147c7985648996622e5088252f4f7e335d0917efa7f5e02ba3f1"
-    },
-    {
-      "path": "docs/reliability/MIDAS_REALITY_DEPLOYMENT_HANDOFF_20261026.md",
-      "bytes": 9080,
-      "sha256": "06c8b504410388463eaa88790c0642771b733ae36cb4107720c12c8391587571"
-    },
-    {
-      "path": "docs/reliability/evidence/MIDAS_MISSION_20261026_DEPLOYMENT_PREFLIGHT_BLOCKED.json",
-      "bytes": 5716,
-      "sha256": "e256d90a1702c9d48e1defa4173a8c0a3543b969a1057b3f310b7c721a90a8cb"
-    },
-    {
-      "path": "docs/reliability/evidence/MIDAS_MISSION_20261026_DEPLOYMENT_PREFLIGHT_BLOCKED_V2.json",
-      "bytes": 6339,
-      "sha256": "25ea857aeefc39ff6bf0254535ef20768a7228e26702d2aa2e72aa80eb6c825a"
-    },
-    {
-      "path": "docs/reliability/evidence/MIDAS_MISSION_20261026_DEPLOYMENT_PREFLIGHT_BLOCKED_V3.json",
-      "bytes": 147138,
-      "sha256": "41bacf1919c42d988b24e7d49c445767548167ddd1afe75f5014b7a93ae622ef"
-    },
-    {
-      "path": "docs/reliability/evidence/MIDAS_MISSION_20261026_FIXTURE_CANARY.json",
-      "bytes": 79190,
-      "sha256": "b90994e9b6792075f809c278add923c80aa9c6d0f04268fa88ac872db094b0f8"
-    },
-    {
-      "path": "docs/reliability/evidence/MIDAS_MISSION_20261026_FIXTURE_CANARY_CONFIG.json",
-      "bytes": 471,
-      "sha256": "734328175b4cbee978cd3d5d14d1e46f845730f17f439b87d18142f60d0ba43a"
-    },
-    {
-      "path": "docs/reliability/evidence/MIDAS_MISSION_20261026_FIXTURE_CANARY_FINAL.json",
-      "bytes": 80197,
-      "sha256": "a4ab205d502e1629b1f232a9263166fc71185b1ea94a73cf3b97e4df38471fec"
-    },
-    {
-      "path": "docs/reliability/evidence/MIDAS_MISSION_20261026_FIXTURE_CANARY_FINAL_CONFIG.json",
-      "bytes": 506,
-      "sha256": "65e712c7a0c565749e1e0612bf3809590ef94cbdc6054ad7f2ac6be4026062a3"
-    },
-    {
-      "path": "docs/reliability/evidence/MIDAS_MISSION_20261026_FIXTURE_CANARY_V2.json",
-      "bytes": 79827,
-      "sha256": "bb55b7c72de527351ffc35a33c49f223891a6147d390e9c6a2c6ccb3db77e56c"
-    },
-    {
-      "path": "docs/reliability/evidence/MIDAS_MISSION_20261026_FIXTURE_CANARY_V2_CONFIG.json",
-      "bytes": 474,
-      "sha256": "4548f89313696328239cae8547f582dad27cf0bcd3cc0f0f9eaa6ad436539b4e"
-    },
-    {
-      "path": "docs/reliability/evidence/MIDAS_MISSION_20261026_FIXTURE_CANARY_V3.json",
-      "bytes": 79916,
-      "sha256": "e1856f3e7061b7cd03ea3bb0b949fb9e2b047013df771f8c16b8ae5efd0f6cd6"
-    },
-    {
-      "path": "docs/reliability/evidence/MIDAS_MISSION_20261026_FIXTURE_CANARY_V3_CONFIG.json",
-      "bytes": 474,
-      "sha256": "341a56010e9150dcb6d905c07e804056dda925822b9b693f881b11b5d27f5d80"
-    },
-    {
-      "path": "docs/reliability/evidence/MIDAS_MISSION_20261026_RECOVERY_COPY_ABORTED.json",
-      "bytes": 2095,
-      "sha256": "c1604255e5cd98ec5f2cc0612a01f7702c41ca1e29ad67072d559e5a8c93af4b"
-    },
-    {
-      "path": "docs/reliability/evidence/MIDAS_MISSION_20261026_RESEARCH_READINESS.png",
-      "bytes": 407029,
-      "sha256": "f1844aae14208b839c1b906ca904099777366c40c7e1590d0df1a2f433613c3b"
-    },
-    {
-      "path": "packages/midas/arena/scheduling.py",
-      "bytes": 15444,
-      "sha256": "aaf3f1b5345f79290109ab41355e0177f17541155cc63caecfadccdbd3d37007"
-    },
-    {
-      "path": "packages/midas/reality/collector.py",
-      "bytes": 41000,
-      "sha256": "bfb9f3dd273fa73481748e27caee1e24f5a20445bd22cc31b2efe6aace8168cf"
-    },
-    {
-      "path": "packages/midas/reality/config.py",
-      "bytes": 3524,
-      "sha256": "c75abd84994507a1333cf7c6581455128ec2e2d7b2bc122246c28502cd75041b"
-    },
-    {
-      "path": "packages/midas/reality/observation.py",
-      "bytes": 6374,
-      "sha256": "47705114a664ddbd52045c90ce35757450b8466d7188e975cb5774c560934500"
-    },
-    {
-      "path": "packages/midas/reality/operations.py",
-      "bytes": 14181,
-      "sha256": "9b5c712e37ce59cbd6da9fafe6b0c3bc7b40a57ac5d0ecf44660c9b7fb40612a"
-    },
-    {
-      "path": "packages/midas/reality/provenance.py",
-      "bytes": 6926,
-      "sha256": "6effac8ed90832ea49230f19a72ab9016e6566a32b0e398b1119debb3cfd0581"
-    },
-    {
-      "path": "packages/midas/reality/quality.py",
-      "bytes": 6004,
-      "sha256": "1e4b81c8d6d1a45c586316a219134dc915325c7f80d91e994afe586dba05f5a4"
-    },
-    {
-      "path": "packages/midas/reality/reconstruction.py",
-      "bytes": 23493,
-      "sha256": "f4cf66914888caf7eea8963a71a84b46d6e06a7dd27cf0674a4d46e61fb0d6dd"
-    },
-    {
-      "path": "packages/midas/reality/recovery.py",
-      "bytes": 12990,
-      "sha256": "749d0188ea14dbc4794ecfee62f22c44d8de0c10d02da77bb930aebe5ffdc97f"
-    },
-    {
-      "path": "packages/midas/reality/replay.py",
-      "bytes": 1088,
-      "sha256": "1feed1403bd1d5659731d48bbc2629f691055893a14ab2a7fc6aee92f90d01ff"
-    },
-    {
-      "path": "packages/midas/reality/resources.py",
-      "bytes": 5842,
-      "sha256": "424a54b99b866ea1079c1c9bb0d52e7c75e96a7342fd064037e2fb6d79b99c53"
-    },
-    {
-      "path": "packages/midas/reality/storage.py",
-      "bytes": 18215,
-      "sha256": "909da55dc2f55c608ef10537c3d19e2a12ccf72df746a42b6732b77bc833c7ae"
-    },
-    {
-      "path": "packages/midas/reality/transport.py",
-      "bytes": 3219,
-      "sha256": "11699c9b233fba1a59fe56090a3abd511966ff6f4239551fddbec004712eb506"
-    },
-    {
-      "path": "packages/midas/veritas/analysis_catalog.py",
-      "bytes": 33482,
-      "sha256": "2225c673ddcb35a6ae3eac858981c64a3c287748f6a46dd42f5d0c67068fc5c9"
-    },
-    {
-      "path": "packages/midas/veritas/arena_qualification.py",
-      "bytes": 7568,
-      "sha256": "939358a641869a1a6b6015225d2833d1eab23e92648c348f4637d7e84276d1af"
-    },
-    {
-      "path": "packages/midas/veritas/continuous_analysis.py",
-      "bytes": 70719,
-      "sha256": "0a8bee1ccff18f216e1f87ac66e5cb7794fa88fb5a8fa609d7971fecc2c5f3c4"
-    },
-    {
-      "path": "packages/midas/veritas/discovery_successor.py",
-      "bytes": 38700,
-      "sha256": "5975f3a7b87ea9fb8b10b2ceadb3680cad2071167725c82931533216167454d3"
-    },
-    {
-      "path": "packages/midas/veritas/independent_economics.py",
-      "bytes": 28112,
-      "sha256": "23159bb96ff105dd9bd01e1c483f38937c2dda19af4b9c7e88bcd6bd903772a8"
-    },
-    {
-      "path": "packages/midas/veritas/observatory.py",
-      "bytes": 98360,
-      "sha256": "0be511fc8fa69a6d9e259f3c17c0cdc23a36c1755483ac1fa7f56daf10f536be"
-    },
-    {
-      "path": "packages/midas/veritas/opportunity_audit_v2.py",
-      "bytes": 23811,
-      "sha256": "45e60808536af1a02d5f0a03068e92df07db25d7545aadd005fe7f6230af31de"
-    },
-    {
-      "path": "packages/midas/veritas/research_director.py",
-      "bytes": 46516,
-      "sha256": "b53a7d136b9337128dece8218c331f9e34038f50f3d85818edc9daff2a733632"
-    },
-    {
-      "path": "packages/midas/veritas/scan_catalog.py",
-      "bytes": 58920,
-      "sha256": "9f82b256d0eb9db2bf0fd47510ea4c55d36b1d5420c04cfbff02f32644edfbe2"
-    },
-    {
-      "path": "pyproject.toml",
-      "bytes": 1117,
-      "sha256": "edb35f40d87114a9a1a698e200524d8adf7d3cdfcd430c10a9988ee7461b07b4"
-    },
-    {
-      "path": "scripts/dispatch_schedules.py",
-      "bytes": 7590,
-      "sha256": "2a73a1c78ceb1fcd0e897e072dcb96762ba418296f4ea8bd8f84cc49b0c9748e"
-    },
-    {
-      "path": "scripts/reality_deployment.py",
-      "bytes": 30424,
-      "sha256": "490a4ec9b6c55b6b0a0bfe5375eb5c0d5fb6ecd7cb930000fd66f7b9e3c0b973"
-    },
-    {
-      "path": "scripts/reality_fixture_canary.py",
-      "bytes": 36300,
-      "sha256": "c983b670334be9642eafa48f87cf4b1b57b6defecde9c2dddc2d43448c0bed19"
-    },
-    {
-      "path": "scripts/reality_recovery_snapshot.py",
-      "bytes": 6751,
-      "sha256": "b8e77923a79d1372654a0200e7cb1a00c614c574175c1954265c6300dc7f9140"
-    },
-    {
-      "path": "scripts/veritas_observatory.py",
-      "bytes": 1922,
-      "sha256": "130b4de8b14773b9d6a016712e2c389a9b641437f4d6762475d12c120b778e60"
-    },
-    {
-      "path": "scripts/veritas_v6_offline_replay.py",
-      "bytes": 57725,
-      "sha256": "8c7bfdf49893a86b6f58005c7c200aa970a4cbc4f6ac4a0dacf734a5e90180cd"
-    },
-    {
-      "path": "tests/arena/test_dispatch_schedules.py",
-      "bytes": 1679,
-      "sha256": "2489e1aec55551862606aa575a7b96c55fde89b16651d76f9345a9002f7cfe78"
-    },
-    {
-      "path": "tests/arena/test_scheduling.py",
-      "bytes": 9379,
-      "sha256": "7ca2904c3d25f78db83a6784dc19ac041ce4e8fee8a1976bb9d2d40940b44df8"
-    },
-    {
-      "path": "tests/integration/test_api.py",
-      "bytes": 6075,
-      "sha256": "8b6ce44e62cf1ebf9dc87cd3109b43a03297d8463a8ea030123952b665bd38f1"
-    },
-    {
-      "path": "tests/test_reality.py",
-      "bytes": 17306,
-      "sha256": "5a59d957c7104d2b718cab5928dfdc017055ce7bb4feabbcc856fb3338863392"
-    },
-    {
-      "path": "tests/test_reality_dashboard.py",
-      "bytes": 20159,
-      "sha256": "006cafff22d1d80416ba0d75a30316197e6e04c9334cc7da1066f2c739226c36"
-    },
-    {
-      "path": "tests/test_reality_deployment.py",
-      "bytes": 12299,
-      "sha256": "654f0e632597dcfacd9e015e42a45b795143b9684b3ddc4e2392b4bc1b52e8d9"
-    },
-    {
-      "path": "tests/test_reality_fixture_canary.py",
-      "bytes": 7566,
-      "sha256": "1d7a8430f6bc45fd6a5d1f6862068dd37d6d959ca21a16b774faf38bd5f330ee"
-    },
-    {
-      "path": "tests/test_reality_operations.py",
-      "bytes": 10436,
-      "sha256": "d57e7566b617dac5a31973642d9195df809d193f57436be5c6cfc463b6bdbd25"
-    },
-    {
-      "path": "tests/test_reality_recovery.py",
-      "bytes": 30206,
-      "sha256": "6b8718c3aea002c5252421bd731fede4f55e8f6e5fd6d572d11a7f9ce4b471af"
-    },
-    {
-      "path": "tests/test_veritas_arena_qualification.py",
-      "bytes": 3884,
-      "sha256": "b909cd7d010fc132a001f56d5dfe6deb4999b846ce49ab0b91e2d714011ba99f"
-    },
-    {
-      "path": "tests/test_veritas_continuous_analysis.py",
-      "bytes": 26849,
-      "sha256": "6fe4ad5af3b47a15dafdca7f8936b8a254661db2fe89f14fa89c3a68f7033541"
-    },
-    {
-      "path": "tests/test_veritas_dashboard_api.py",
-      "bytes": 92400,
-      "sha256": "c7dac0252c753650b80c17b4dbf12f5e6ead839581f5a144db89b1bda061feac"
-    },
-    {
-      "path": "tests/test_veritas_independent_economics.py",
-      "bytes": 15220,
-      "sha256": "edd1326b2d2ce3d43f16922cac371d17c9ff7a87d6097641e853dc1bc2666a58"
-    },
-    {
-      "path": "tests/test_veritas_observatory.py",
-      "bytes": 21517,
-      "sha256": "8edd3f34989bc349e4531e39710fa4529bc6c975ca2494a480f6f245ce1d905b"
-    },
-    {
-      "path": "tests/test_veritas_opportunity_audit_v2.py",
-      "bytes": 13728,
-      "sha256": "c2af65c2713ce8d53bdd46fd78047994a442529d5fad02cab22cc66c428fbeef"
-    },
-    {
-      "path": "tests/test_veritas_research_director.py",
-      "bytes": 17065,
-      "sha256": "8f6e0824007ce7f7c7201ce54083d474ab8042e5e92c77543e3180305a15a3cc"
-    },
-    {
-      "path": "tests/test_veritas_scan_catalog.py",
-      "bytes": 9689,
-      "sha256": "594f67c3ddd4e1461d92ebb64c1d494b0aff95d658e7732b46fb56ec3cbbf68b"
-    },
-    {
-      "path": "tests/test_veritas_v6_offline_replay.py",
-      "bytes": 4865,
-      "sha256": "0e303eb666d679cfe283ded0b513d66cde9065f754996bdd64da4d8b8be70812"
-    }
-  ],
   "evidence_artifacts": [
     {
+      "bytes": 499470,
       "label": "Completed v3 replay receipt",
       "path": "data/veritas-v6-offline-replay-v3-20261026/veritas-v6-offline-replay-receipt.json",
-      "bytes": 499470,
       "sha256": "5bcbf01437f1ada0b5b73e648e8c8bd9ac42ae5db216836c337f4bfe2a056ca0",
-      "status": "COMPLETE",
       "snapshots": 519,
-      "source_manifest_sha256": "e9e38e533c181e0e99ddbe9788d26e91df633a3f542131c191c72184cce74458"
+      "source_manifest_sha256": "e9e38e533c181e0e99ddbe9788d26e91df633a3f542131c191c72184cce74458",
+      "status": "COMPLETE"
     },
     {
-      "label": "Independent post-run replay verification",
-      "path": "data/veritas-v6-offline-replay-v3-20261026/veritas-v6-offline-replay-postrun-verification.json",
       "bytes": 2113,
-      "sha256": "22d800358b707f3d8037dbd63607ccd9e193137c46ce4eb901eb764e38d5b272",
-      "status": "COMPLETED_OUTPUTS_REVERIFIED",
-      "source_files_match": true,
+      "label": "Independent post-run replay verification",
       "network_requests": 0,
+      "path": "data/veritas-v6-offline-replay-v3-20261026/veritas-v6-offline-replay-postrun-verification.json",
+      "sha256": "22d800358b707f3d8037dbd63607ccd9e193137c46ce4eb901eb764e38d5b272",
+      "source_files_match": true,
+      "status": "COMPLETED_OUTPUTS_REVERIFIED",
       "verification_sha256": "88ef809471af2ad321f42cbc7b2506f1b6be133d366695f5634d3dc13722eb5d"
     },
     {
-      "label": "Pinned immutable snapshot manifest",
-      "path": "data/veritas-v6-offline-replay-v3-20261026/veritas-v6-source-snapshot-manifest.json",
       "bytes": 75651,
-      "sha256": "4690d53dbc4310dc8e96a145e7be2ae1d8371c210cf7c9dce80210c3e70d07e5",
-      "snapshot_count": 519,
-      "snapshot_bytes": 322760995,
+      "inventory_sha256": "cbb3615f6f003539a810d7b20ca807ace7d1daf2419488d3daa723343cb5d992",
+      "label": "Pinned immutable snapshot manifest",
       "manifest_sha256": "e9e38e533c181e0e99ddbe9788d26e91df633a3f542131c191c72184cce74458",
-      "inventory_sha256": "cbb3615f6f003539a810d7b20ca807ace7d1daf2419488d3daa723343cb5d992"
+      "path": "data/veritas-v6-offline-replay-v3-20261026/veritas-v6-source-snapshot-manifest.json",
+      "sha256": "4690d53dbc4310dc8e96a145e7be2ae1d8371c210cf7c9dce80210c3e70d07e5",
+      "snapshot_bytes": 322760995,
+      "snapshot_count": 519
     },
     {
+      "bytes": 41336832,
+      "catalog_identity": "4e52bbfa3cbd7d966291bbb980ae34f3b6d209b6fe93e7b5f6620331725d35f4",
+      "indexed": 519,
       "label": "Snapshot catalog v4",
       "path": "data/veritas-v6-offline-replay-v3-20261026/snapshot-catalog-v4.sqlite3",
-      "bytes": 41336832,
-      "sha256": "4e52bbfa3cbd7d966291bbb980ae34f3b6d209b6fe93e7b5f6620331725d35f4",
-      "indexed": 519,
       "quarantined": 0,
-      "catalog_identity": "4e52bbfa3cbd7d966291bbb980ae34f3b6d209b6fe93e7b5f6620331725d35f4"
+      "sha256": "4e52bbfa3cbd7d966291bbb980ae34f3b6d209b6fe93e7b5f6620331725d35f4"
     },
     {
+      "bytes": 12083200,
+      "catalog_identity": "1a285e3b2e280de820fa3019fd6039d55916e53bb07a19cc599a96d7a023907b",
       "label": "Analysis catalog v6 independent v3",
       "path": "data/veritas-v6-offline-replay-v3-20261026/analysis-catalog-v6-independent-v3.sqlite3",
-      "bytes": 12083200,
-      "sha256": "1a285e3b2e280de820fa3019fd6039d55916e53bb07a19cc599a96d7a023907b",
       "processed": 519,
       "quarantined": 0,
-      "catalog_identity": "1a285e3b2e280de820fa3019fd6039d55916e53bb07a19cc599a96d7a023907b"
+      "sha256": "1a285e3b2e280de820fa3019fd6039d55916e53bb07a19cc599a96d7a023907b"
     },
     {
-      "label": "Derived v6 analysis event set",
-      "path": "data/veritas-v6-offline-replay-v3-20261026/analysis-events/v6-independent-v3",
       "event_count": 519,
-      "manifest_sha256": "0935d6858159c8634d326c9f41e5140c7953c015f755b3b2e23e982b68a06a4e"
+      "label": "Derived v6 analysis event set",
+      "manifest_sha256": "0935d6858159c8634d326c9f41e5140c7953c015f755b3b2e23e982b68a06a4e",
+      "path": "data/veritas-v6-offline-replay-v3-20261026/analysis-events/v6-independent-v3"
     },
     {
+      "analysis_summary_sha256": "0ad0dc41cf4f156073a4f191f4f9d6441972522fc4b544a96e5b49d07df7bb51",
+      "analysis_version": "veritas-finalized-snapshot-analysis-v6",
+      "bytes": 101332,
+      "independent_reference_version": "veritas-independent-economic-reference-v3",
       "label": "Published bounded v6 summary",
       "path": "data/veritas-v6-offline-replay-v3-20261026/research-summary.json",
-      "bytes": 101332,
-      "sha256": "81c1bbcf94d92c9bb3bb8c7acef61f321727bfa7108c5a98a813fec944023a31",
-      "status": "CURRENT",
-      "processed_snapshots": 519,
       "pending_snapshots": 0,
-      "analysis_version": "veritas-finalized-snapshot-analysis-v6",
-      "independent_reference_version": "veritas-independent-economic-reference-v3",
-      "analysis_summary_sha256": "0ad0dc41cf4f156073a4f191f4f9d6441972522fc4b544a96e5b49d07df7bb51"
+      "processed_snapshots": 519,
+      "sha256": "81c1bbcf94d92c9bb3bb8c7acef61f321727bfa7108c5a98a813fec944023a31",
+      "status": "CURRENT"
     },
     {
+      "bytes": 631294,
+      "capture_id": "scan-20261026T003105Z-1ff325207f36.json.gz",
       "label": "First active snapshot beyond pinned v3 replay",
       "path": "/home/charlie/midas-veritas/data/veritas-observatory/snapshots/scan-20261026T003105Z-1ff325207f36.json.gz",
-      "bytes": 631294,
-      "sha256": "843ed98524418f6d1d799b326ebfd0649d86240bd79605a0c82103743bd1ba56",
-      "capture_id": "scan-20261026T003105Z-1ff325207f36.json.gz"
+      "sha256": "843ed98524418f6d1d799b326ebfd0649d86240bd79605a0c82103743bd1ba56"
     },
     {
+      "bytes": 581481,
+      "capture_id": "scan-20261026T010053Z-ed1b5cd8b6a2.json.gz",
       "label": "Latest active snapshot beyond pinned v3 replay",
       "path": "/home/charlie/midas-veritas/data/veritas-observatory/snapshots/scan-20261026T010053Z-ed1b5cd8b6a2.json.gz",
-      "bytes": 581481,
-      "sha256": "478422c77c48e84b840d5a19e67d64f1a84365e68accb1069b3742bb3ecf9281",
-      "capture_id": "scan-20261026T010053Z-ed1b5cd8b6a2.json.gz"
+      "sha256": "478422c77c48e84b840d5a19e67d64f1a84365e68accb1069b3742bb3ecf9281"
     },
     {
+      "bytes": 2097481,
+      "expected_summary_sha256": "aca960615863ab4a8df3ab673b78e70dcbef56583146275e023e907def7f18c5",
       "label": "Active v4 analysis summary",
       "path": "/home/charlie/midas-veritas/data/veritas-observatory/research-summary.json",
-      "bytes": 2097481,
-      "sha256": "aca960615863ab4a8df3ab673b78e70dcbef56583146275e023e907def7f18c5",
       "processed_snapshots": 423,
-      "expected_summary_sha256": "aca960615863ab4a8df3ab673b78e70dcbef56583146275e023e907def7f18c5"
+      "sha256": "aca960615863ab4a8df3ab673b78e70dcbef56583146275e023e907def7f18c5"
     },
     {
+      "bytes": 2249365,
+      "expected_summary_sha256": "919acbfac8abe5011aac05ed98fc47e76167605f522d543ebecd5c5f557863b0",
       "label": "Active v4 API summary",
       "path": "/home/charlie/midas-veritas/data/veritas-observatory/latest-summary.json",
-      "bytes": 2249365,
-      "sha256": "919acbfac8abe5011aac05ed98fc47e76167605f522d543ebecd5c5f557863b0",
-      "expected_summary_sha256": "919acbfac8abe5011aac05ed98fc47e76167605f522d543ebecd5c5f557863b0"
+      "sha256": "919acbfac8abe5011aac05ed98fc47e76167605f522d543ebecd5c5f557863b0"
+    },
+    {
+      "bytes": 641503,
+      "capture_id": "scan-20261026T013105Z-74db14ad03a0.json.gz",
+      "label": "Newest active snapshot beyond pinned v3 replay",
+      "path": "/home/charlie/midas-veritas/data/veritas-observatory/snapshots/scan-20261026T013105Z-74db14ad03a0.json.gz",
+      "sha256": "3cd0da2f7460da912c34465c7bfff671ec537e3f87561d0d7ba0c8050fdb69f0"
+    },
+    {
+      "bytes": 13282,
+      "captured_at_utc": "2026-10-26T01:33:58.241237Z",
+      "label": "Latest read-only live runtime and capacity recheck",
+      "path": "docs/reliability/evidence/MIDAS_MISSION_20261026_LIVE_STATE_RECHECK.json",
+      "sha256": "f89c3be4866ac10a488d50cca777fac78036a52e3a52d78e38dbb7c1a3dc86be"
     }
   ],
+  "file_count": 89,
+  "files": [
+    {
+      "bytes": 61683,
+      "path": "apps/api/arena.py",
+      "sha256": "afea95cea7f6c69dfaa6a8644aad7bdf57e963b7366bb6629eb70742e79c5e67"
+    },
+    {
+      "bytes": 21977,
+      "path": "apps/api/main.py",
+      "sha256": "d39ba4a66827382e4ab0c405091f5ace02f1c7f3c8f2f1b9ba524198e39f8492"
+    },
+    {
+      "bytes": 32798,
+      "path": "apps/api/reality.py",
+      "sha256": "9ba6e272b971468a070c1ec3bb879f0fb148fade4f59a5ef518edf791bc36b94"
+    },
+    {
+      "bytes": 201769,
+      "path": "apps/api/veritas.py",
+      "sha256": "902a56e2389f251a6cf642396091bf9187ec29ac6ee6b535613158232dc250da"
+    },
+    {
+      "bytes": 654,
+      "path": "apps/web/build-identity.mjs",
+      "sha256": "31eb5f25cfedd015540068916c5ba942bc4a4e58db974cde9221ef54ad623bd3"
+    },
+    {
+      "bytes": 10720,
+      "path": "apps/web/e2e/reality.spec.ts",
+      "sha256": "322451625883ce30ba9182f9d33ecdb9f28a474367329a09e33f1dbc66ad0dcb"
+    },
+    {
+      "bytes": 5221,
+      "path": "apps/web/e2e/research-readiness.spec.ts",
+      "sha256": "0d5158fe3a12e25e41d162cc36ecb5efe92d9768a1b37303024ca759cccf0910"
+    },
+    {
+      "bytes": 12443,
+      "path": "apps/web/e2e/veritas.spec.ts",
+      "sha256": "4ae0dc12f1e977e440431bd55f4535c597b7b5e58a34b0f2a9d1a054a0cce9bb"
+    },
+    {
+      "bytes": 1557,
+      "path": "apps/web/playwright.config.ts",
+      "sha256": "8a91bfbf9336799410f486fa1d2ecc7ad100b9c01f58ee6632731e24e4e100bb"
+    },
+    {
+      "bytes": 1599,
+      "path": "apps/web/playwright.reality.config.ts",
+      "sha256": "95fc827382ef6e27010383fefc3699b92d404a67f9bdbfe1d1bc0ddad5b1110a"
+    },
+    {
+      "bytes": 14272,
+      "path": "apps/web/src/App.test.tsx",
+      "sha256": "fc49914ede838a29659af5eed0d95b1381b5039ce402433adedfd1c1b4cfd480"
+    },
+    {
+      "bytes": 60846,
+      "path": "apps/web/src/App.tsx",
+      "sha256": "d68933370f84029bb168de43ccefbfd250e11def0a369837e7ecd6fc0a4dffe9"
+    },
+    {
+      "bytes": 5439,
+      "path": "apps/web/src/Reality.test.tsx",
+      "sha256": "2a9fb16305ea4e61f53b9d02bf6d952e48289f318eccf98e2d329c89ba7dacf1"
+    },
+    {
+      "bytes": 69041,
+      "path": "apps/web/src/Reality.tsx",
+      "sha256": "f8b350e07d2a3a0b9cdb45e6cf75a98567519e3801178f57bfeb2a63bc66aed9"
+    },
+    {
+      "bytes": 50670,
+      "path": "apps/web/src/ResearchReadiness.tsx",
+      "sha256": "7014dc1f32f7aa1c0f13803b6f0d0c83e2c3b9a1bd14bd1bf2a0f9fba7ef95ab"
+    },
+    {
+      "bytes": 56239,
+      "path": "apps/web/src/Veritas.test.tsx",
+      "sha256": "40dbf97ca41eb9a2131f9be5e22069d5adc9b0afb5b97c2adb5632e432ca8dcf"
+    },
+    {
+      "bytes": 132644,
+      "path": "apps/web/src/Veritas.tsx",
+      "sha256": "4ef55b270496e8d45719c07d96395c973895ef49835bbc712e06ef7bc11916f6"
+    },
+    {
+      "bytes": 214,
+      "path": "apps/web/src/midas-build.d.ts",
+      "sha256": "ca0f986788cdea06c2a9598a17e818accd19415113525199d3fe3be87ef6d9e4"
+    },
+    {
+      "bytes": 10804,
+      "path": "apps/web/src/research-readiness.css",
+      "sha256": "885641fce25c9d80be9b202a3a894f4a0a82d75d79ee62c201e2b4dc666325ad"
+    },
+    {
+      "bytes": 659,
+      "path": "apps/web/vite.config.ts",
+      "sha256": "e527f8bdd71fc3998e442efeed540fa2d09d7f66313ce2bf2135e63ad6d02b0c"
+    },
+    {
+      "bytes": 621,
+      "path": "apps/web/vitest.config.ts",
+      "sha256": "d0c4b6ee3eda7f881743769a6c64d82a10fa87421c21bb6389008d66f9f5b2e4"
+    },
+    {
+      "bytes": 19579,
+      "path": "docs/MIDAS_CURRENT_STATE.md",
+      "sha256": "e6a37f4224184df7109c8d2649bb29032a576dcf1fc803a5acc11b16fc7a6e0d"
+    },
+    {
+      "bytes": 21590,
+      "path": "docs/REAL_MARKET_RESEARCH_OVERHAUL_001.md",
+      "sha256": "f5725cae12fbfd6aedef76dec651f91b9d5534f82cc921a3a12fd709ce67651f"
+    },
+    {
+      "bytes": 10962,
+      "path": "docs/REAL_MARKET_RESEARCH_OVERHAUL_001_BENCHMARK.json",
+      "sha256": "ee379554fdb10538340a884d0a109f1b7c777dcf69c014a05fa2f80e6f1a3357"
+    },
+    {
+      "bytes": 18891,
+      "path": "docs/VERITAS_OPERATIONS.md",
+      "sha256": "2993fc3046aa70bf8c60bf1f8e0955852f1412b77b71e6271ab584d974dc07d0"
+    },
+    {
+      "bytes": 82970,
+      "path": "docs/VERITAS_RESEARCH_BACKLOG.md",
+      "sha256": "1584f98b93910f8946f55cf09fb69f6517fc7bb6a8478d88eebfbeb073858984"
+    },
+    {
+      "bytes": 37089,
+      "path": "docs/reliability/MIDAS_COMPREHENSIVE_ENGINEERING_MISSION_20261025.md",
+      "sha256": "971b4403b230e22af1ff00a05672df73b3463b5bab512707b79c33d050377dc6"
+    },
+    {
+      "bytes": 22588,
+      "path": "docs/reliability/MIDAS_COMPREHENSIVE_ENGINEERING_MISSION_LEDGER_20261025.md",
+      "sha256": "0ff38f192a7df7e38c6707e713cf0de67cd48f7fc83bdaf88a7c692ee56db542"
+    },
+    {
+      "bytes": 11423,
+      "path": "docs/reliability/MIDAS_REALITY_DEPLOYMENT_HANDOFF_20261026.md",
+      "sha256": "5371ed5bb9c40cd84d09a728c7b81051560d37cd4262794455facc75056bd122"
+    },
+    {
+      "bytes": 5716,
+      "path": "docs/reliability/evidence/MIDAS_MISSION_20261026_DEPLOYMENT_PREFLIGHT_BLOCKED.json",
+      "sha256": "e256d90a1702c9d48e1defa4173a8c0a3543b969a1057b3f310b7c721a90a8cb"
+    },
+    {
+      "bytes": 6339,
+      "path": "docs/reliability/evidence/MIDAS_MISSION_20261026_DEPLOYMENT_PREFLIGHT_BLOCKED_V2.json",
+      "sha256": "25ea857aeefc39ff6bf0254535ef20768a7228e26702d2aa2e72aa80eb6c825a"
+    },
+    {
+      "bytes": 147138,
+      "path": "docs/reliability/evidence/MIDAS_MISSION_20261026_DEPLOYMENT_PREFLIGHT_BLOCKED_V3.json",
+      "sha256": "41bacf1919c42d988b24e7d49c445767548167ddd1afe75f5014b7a93ae622ef"
+    },
+    {
+      "bytes": 79190,
+      "path": "docs/reliability/evidence/MIDAS_MISSION_20261026_FIXTURE_CANARY.json",
+      "sha256": "b90994e9b6792075f809c278add923c80aa9c6d0f04268fa88ac872db094b0f8"
+    },
+    {
+      "bytes": 471,
+      "path": "docs/reliability/evidence/MIDAS_MISSION_20261026_FIXTURE_CANARY_CONFIG.json",
+      "sha256": "734328175b4cbee978cd3d5d14d1e46f845730f17f439b87d18142f60d0ba43a"
+    },
+    {
+      "bytes": 80197,
+      "path": "docs/reliability/evidence/MIDAS_MISSION_20261026_FIXTURE_CANARY_FINAL.json",
+      "sha256": "a4ab205d502e1629b1f232a9263166fc71185b1ea94a73cf3b97e4df38471fec"
+    },
+    {
+      "bytes": 506,
+      "path": "docs/reliability/evidence/MIDAS_MISSION_20261026_FIXTURE_CANARY_FINAL_CONFIG.json",
+      "sha256": "65e712c7a0c565749e1e0612bf3809590ef94cbdc6054ad7f2ac6be4026062a3"
+    },
+    {
+      "bytes": 79827,
+      "path": "docs/reliability/evidence/MIDAS_MISSION_20261026_FIXTURE_CANARY_V2.json",
+      "sha256": "bb55b7c72de527351ffc35a33c49f223891a6147d390e9c6a2c6ccb3db77e56c"
+    },
+    {
+      "bytes": 474,
+      "path": "docs/reliability/evidence/MIDAS_MISSION_20261026_FIXTURE_CANARY_V2_CONFIG.json",
+      "sha256": "4548f89313696328239cae8547f582dad27cf0bcd3cc0f0f9eaa6ad436539b4e"
+    },
+    {
+      "bytes": 79916,
+      "path": "docs/reliability/evidence/MIDAS_MISSION_20261026_FIXTURE_CANARY_V3.json",
+      "sha256": "e1856f3e7061b7cd03ea3bb0b949fb9e2b047013df771f8c16b8ae5efd0f6cd6"
+    },
+    {
+      "bytes": 474,
+      "path": "docs/reliability/evidence/MIDAS_MISSION_20261026_FIXTURE_CANARY_V3_CONFIG.json",
+      "sha256": "341a56010e9150dcb6d905c07e804056dda925822b9b693f881b11b5d27f5d80"
+    },
+    {
+      "bytes": 13282,
+      "path": "docs/reliability/evidence/MIDAS_MISSION_20261026_LIVE_STATE_RECHECK.json",
+      "sha256": "f89c3be4866ac10a488d50cca777fac78036a52e3a52d78e38dbb7c1a3dc86be"
+    },
+    {
+      "bytes": 2095,
+      "path": "docs/reliability/evidence/MIDAS_MISSION_20261026_RECOVERY_COPY_ABORTED.json",
+      "sha256": "c1604255e5cd98ec5f2cc0612a01f7702c41ca1e29ad67072d559e5a8c93af4b"
+    },
+    {
+      "bytes": 407029,
+      "path": "docs/reliability/evidence/MIDAS_MISSION_20261026_RESEARCH_READINESS.png",
+      "sha256": "f1844aae14208b839c1b906ca904099777366c40c7e1590d0df1a2f433613c3b"
+    },
+    {
+      "bytes": 15444,
+      "path": "packages/midas/arena/scheduling.py",
+      "sha256": "aaf3f1b5345f79290109ab41355e0177f17541155cc63caecfadccdbd3d37007"
+    },
+    {
+      "bytes": 41000,
+      "path": "packages/midas/reality/collector.py",
+      "sha256": "bfb9f3dd273fa73481748e27caee1e24f5a20445bd22cc31b2efe6aace8168cf"
+    },
+    {
+      "bytes": 3524,
+      "path": "packages/midas/reality/config.py",
+      "sha256": "c75abd84994507a1333cf7c6581455128ec2e2d7b2bc122246c28502cd75041b"
+    },
+    {
+      "bytes": 6374,
+      "path": "packages/midas/reality/observation.py",
+      "sha256": "47705114a664ddbd52045c90ce35757450b8466d7188e975cb5774c560934500"
+    },
+    {
+      "bytes": 14181,
+      "path": "packages/midas/reality/operations.py",
+      "sha256": "9b5c712e37ce59cbd6da9fafe6b0c3bc7b40a57ac5d0ecf44660c9b7fb40612a"
+    },
+    {
+      "bytes": 6926,
+      "path": "packages/midas/reality/provenance.py",
+      "sha256": "6effac8ed90832ea49230f19a72ab9016e6566a32b0e398b1119debb3cfd0581"
+    },
+    {
+      "bytes": 6004,
+      "path": "packages/midas/reality/quality.py",
+      "sha256": "1e4b81c8d6d1a45c586316a219134dc915325c7f80d91e994afe586dba05f5a4"
+    },
+    {
+      "bytes": 23493,
+      "path": "packages/midas/reality/reconstruction.py",
+      "sha256": "f4cf66914888caf7eea8963a71a84b46d6e06a7dd27cf0674a4d46e61fb0d6dd"
+    },
+    {
+      "bytes": 12990,
+      "path": "packages/midas/reality/recovery.py",
+      "sha256": "749d0188ea14dbc4794ecfee62f22c44d8de0c10d02da77bb930aebe5ffdc97f"
+    },
+    {
+      "bytes": 1088,
+      "path": "packages/midas/reality/replay.py",
+      "sha256": "1feed1403bd1d5659731d48bbc2629f691055893a14ab2a7fc6aee92f90d01ff"
+    },
+    {
+      "bytes": 5842,
+      "path": "packages/midas/reality/resources.py",
+      "sha256": "424a54b99b866ea1079c1c9bb0d52e7c75e96a7342fd064037e2fb6d79b99c53"
+    },
+    {
+      "bytes": 18215,
+      "path": "packages/midas/reality/storage.py",
+      "sha256": "909da55dc2f55c608ef10537c3d19e2a12ccf72df746a42b6732b77bc833c7ae"
+    },
+    {
+      "bytes": 3219,
+      "path": "packages/midas/reality/transport.py",
+      "sha256": "11699c9b233fba1a59fe56090a3abd511966ff6f4239551fddbec004712eb506"
+    },
+    {
+      "bytes": 33482,
+      "path": "packages/midas/veritas/analysis_catalog.py",
+      "sha256": "2225c673ddcb35a6ae3eac858981c64a3c287748f6a46dd42f5d0c67068fc5c9"
+    },
+    {
+      "bytes": 7568,
+      "path": "packages/midas/veritas/arena_qualification.py",
+      "sha256": "939358a641869a1a6b6015225d2833d1eab23e92648c348f4637d7e84276d1af"
+    },
+    {
+      "bytes": 70719,
+      "path": "packages/midas/veritas/continuous_analysis.py",
+      "sha256": "0a8bee1ccff18f216e1f87ac66e5cb7794fa88fb5a8fa609d7971fecc2c5f3c4"
+    },
+    {
+      "bytes": 38700,
+      "path": "packages/midas/veritas/discovery_successor.py",
+      "sha256": "5975f3a7b87ea9fb8b10b2ceadb3680cad2071167725c82931533216167454d3"
+    },
+    {
+      "bytes": 28112,
+      "path": "packages/midas/veritas/independent_economics.py",
+      "sha256": "23159bb96ff105dd9bd01e1c483f38937c2dda19af4b9c7e88bcd6bd903772a8"
+    },
+    {
+      "bytes": 98360,
+      "path": "packages/midas/veritas/observatory.py",
+      "sha256": "0be511fc8fa69a6d9e259f3c17c0cdc23a36c1755483ac1fa7f56daf10f536be"
+    },
+    {
+      "bytes": 23811,
+      "path": "packages/midas/veritas/opportunity_audit_v2.py",
+      "sha256": "45e60808536af1a02d5f0a03068e92df07db25d7545aadd005fe7f6230af31de"
+    },
+    {
+      "bytes": 46516,
+      "path": "packages/midas/veritas/research_director.py",
+      "sha256": "b53a7d136b9337128dece8218c331f9e34038f50f3d85818edc9daff2a733632"
+    },
+    {
+      "bytes": 58920,
+      "path": "packages/midas/veritas/scan_catalog.py",
+      "sha256": "9f82b256d0eb9db2bf0fd47510ea4c55d36b1d5420c04cfbff02f32644edfbe2"
+    },
+    {
+      "bytes": 7590,
+      "path": "scripts/dispatch_schedules.py",
+      "sha256": "2a73a1c78ceb1fcd0e897e072dcb96762ba418296f4ea8bd8f84cc49b0c9748e"
+    },
+    {
+      "bytes": 30424,
+      "path": "scripts/reality_deployment.py",
+      "sha256": "490a4ec9b6c55b6b0a0bfe5375eb5c0d5fb6ecd7cb930000fd66f7b9e3c0b973"
+    },
+    {
+      "bytes": 36300,
+      "path": "scripts/reality_fixture_canary.py",
+      "sha256": "c983b670334be9642eafa48f87cf4b1b57b6defecde9c2dddc2d43448c0bed19"
+    },
+    {
+      "bytes": 6751,
+      "path": "scripts/reality_recovery_snapshot.py",
+      "sha256": "b8e77923a79d1372654a0200e7cb1a00c614c574175c1954265c6300dc7f9140"
+    },
+    {
+      "bytes": 1922,
+      "path": "scripts/veritas_observatory.py",
+      "sha256": "130b4de8b14773b9d6a016712e2c389a9b641437f4d6762475d12c120b778e60"
+    },
+    {
+      "bytes": 57725,
+      "path": "scripts/veritas_v6_offline_replay.py",
+      "sha256": "8c7bfdf49893a86b6f58005c7c200aa970a4cbc4f6ac4a0dacf734a5e90180cd"
+    },
+    {
+      "bytes": 1679,
+      "path": "tests/arena/test_dispatch_schedules.py",
+      "sha256": "2489e1aec55551862606aa575a7b96c55fde89b16651d76f9345a9002f7cfe78"
+    },
+    {
+      "bytes": 9379,
+      "path": "tests/arena/test_scheduling.py",
+      "sha256": "7ca2904c3d25f78db83a6784dc19ac041ce4e8fee8a1976bb9d2d40940b44df8"
+    },
+    {
+      "bytes": 6075,
+      "path": "tests/integration/test_api.py",
+      "sha256": "8b6ce44e62cf1ebf9dc87cd3109b43a03297d8463a8ea030123952b665bd38f1"
+    },
+    {
+      "bytes": 17306,
+      "path": "tests/test_reality.py",
+      "sha256": "5a59d957c7104d2b718cab5928dfdc017055ce7bb4feabbcc856fb3338863392"
+    },
+    {
+      "bytes": 20159,
+      "path": "tests/test_reality_dashboard.py",
+      "sha256": "006cafff22d1d80416ba0d75a30316197e6e04c9334cc7da1066f2c739226c36"
+    },
+    {
+      "bytes": 12299,
+      "path": "tests/test_reality_deployment.py",
+      "sha256": "654f0e632597dcfacd9e015e42a45b795143b9684b3ddc4e2392b4bc1b52e8d9"
+    },
+    {
+      "bytes": 7566,
+      "path": "tests/test_reality_fixture_canary.py",
+      "sha256": "1d7a8430f6bc45fd6a5d1f6862068dd37d6d959ca21a16b774faf38bd5f330ee"
+    },
+    {
+      "bytes": 10436,
+      "path": "tests/test_reality_operations.py",
+      "sha256": "d57e7566b617dac5a31973642d9195df809d193f57436be5c6cfc463b6bdbd25"
+    },
+    {
+      "bytes": 30206,
+      "path": "tests/test_reality_recovery.py",
+      "sha256": "6b8718c3aea002c5252421bd731fede4f55e8f6e5fd6d572d11a7f9ce4b471af"
+    },
+    {
+      "bytes": 3884,
+      "path": "tests/test_veritas_arena_qualification.py",
+      "sha256": "b909cd7d010fc132a001f56d5dfe6deb4999b846ce49ab0b91e2d714011ba99f"
+    },
+    {
+      "bytes": 26849,
+      "path": "tests/test_veritas_continuous_analysis.py",
+      "sha256": "6fe4ad5af3b47a15dafdca7f8936b8a254661db2fe89f14fa89c3a68f7033541"
+    },
+    {
+      "bytes": 92400,
+      "path": "tests/test_veritas_dashboard_api.py",
+      "sha256": "c7dac0252c753650b80c17b4dbf12f5e6ead839581f5a144db89b1bda061feac"
+    },
+    {
+      "bytes": 15220,
+      "path": "tests/test_veritas_independent_economics.py",
+      "sha256": "edd1326b2d2ce3d43f16922cac371d17c9ff7a87d6097641e853dc1bc2666a58"
+    },
+    {
+      "bytes": 21517,
+      "path": "tests/test_veritas_observatory.py",
+      "sha256": "8edd3f34989bc349e4531e39710fa4529bc6c975ca2494a480f6f245ce1d905b"
+    },
+    {
+      "bytes": 13728,
+      "path": "tests/test_veritas_opportunity_audit_v2.py",
+      "sha256": "c2af65c2713ce8d53bdd46fd78047994a442529d5fad02cab22cc66c428fbeef"
+    },
+    {
+      "bytes": 17065,
+      "path": "tests/test_veritas_research_director.py",
+      "sha256": "8f6e0824007ce7f7c7201ce54083d474ab8042e5e92c77543e3180305a15a3cc"
+    },
+    {
+      "bytes": 9689,
+      "path": "tests/test_veritas_scan_catalog.py",
+      "sha256": "594f67c3ddd4e1461d92ebb64c1d494b0aff95d658e7732b46fb56ec3cbbf68b"
+    },
+    {
+      "bytes": 4865,
+      "path": "tests/test_veritas_v6_offline_replay.py",
+      "sha256": "0e303eb666d679cfe283ded0b513d66cde9065f754996bdd64da4d8b8be70812"
+    }
+  ],
+  "generated_at_utc": "2026-10-26T01:38:24.420912Z",
   "runtime_observations": {
-    "observed_at_utc": "2026-10-26T01:03:01Z",
-    "active_veritas_worktree": "/home/charlie/midas-veritas",
+    "aborted_copy_boundary_pinned": false,
+    "aborted_copy_source_total_segments": 31468,
+    "aborted_copy_verified_segments": 697,
+    "active_veritas_api_overview_http_status": 503,
     "active_veritas_branch": "project/veritas",
     "active_veritas_commit": "3b102928594323e7886859d348f7b2151663debb",
-    "active_veritas_snapshot_count": 521,
-    "active_veritas_summary_processed_count": 423,
-    "active_veritas_latest_snapshot": "scan-20261026T010053Z-ed1b5cd8b6a2.json.gz",
-    "active_veritas_observer_state": "failed",
+    "active_veritas_latest_snapshot": "scan-20261026T013105Z-74db14ad03a0.json.gz",
+    "active_veritas_latest_snapshot_sha256": "3cd0da2f7460da912c34465c7bfff671ec537e3f87561d0d7ba0c8050fdb69f0",
+    "active_veritas_latest_summary_bytes": 2249365,
+    "active_veritas_observer_exit": "2026-10-26 02:31:07 CET",
     "active_veritas_observer_exit_status": 1,
-    "active_veritas_api_overview_http_status": 503,
-    "main_api_health_http_status": 200,
-    "main_api_mode": "demo",
-    "main_api_live_execution": false,
-    "paper_journal_recovery": "CHECKPOINT_VERIFIED",
-    "paper_journal_event_count": 665769,
+    "active_veritas_observer_start": "2026-10-26 02:30:56 CET",
+    "active_veritas_observer_state": "failed",
+    "active_veritas_snapshot_count": 522,
+    "active_veritas_snapshot_count_outside_v6_replay": 3,
+    "active_veritas_summary_bytes": 2097481,
+    "active_veritas_summary_bytes_over_limit": 329,
+    "active_veritas_summary_processed_count": 423,
+    "active_veritas_summary_reader_limit_bytes": 2097152,
+    "active_veritas_worktree": "/home/charlie/midas-veritas",
+    "archive_copying_files": 58,
+    "archive_files_changed": false,
+    "archive_manifest_entries": 18695,
+    "archive_segments": 19833,
+    "archive_unmanifested_segments": 1138,
+    "arena_active_directors": 0,
+    "arena_active_jobs": 0,
+    "arena_active_schedules": 0,
+    "arena_invalid_artifacts": 0,
+    "arena_open_alert_count": 1,
+    "arena_open_alert_reason": "Schedule admission window expired",
+    "historical_r15_total_segments": 20148,
+    "historical_r15_verified_segments": 2304,
     "laboratory_state": "READY",
-    "reality_recorder_pid": 3007040,
-    "reality_memory_current_bytes": 1132355584,
+    "latest_boundary_recovery": "INCOMPLETE",
+    "main_api_build_identity_reported": false,
+    "main_api_health_http_status": 200,
+    "main_api_live_execution": false,
+    "main_api_mode": "demo",
+    "main_api_release": "/home/charlie/.local/share/midas-api/releases/24c7504",
+    "nvme_free_bytes": 161950273536,
+    "observed_at_utc": "2026-10-26T01:33:58.241237Z",
+    "paper_journal_event_count": 666807,
+    "paper_journal_recovery": "CHECKPOINT_VERIFIED",
+    "protected_service_changed": false,
+    "reality_active_config_sha256": "9d1aeeb5a496ad6971dc461ce87f327266ff25240391897f7bb6091a8307119a",
+    "reality_candidate_config_sha256": "908816c3dc568a8aa9d22a8d5bd0267d2f421cec6ca37a84901c5a6eae1f85e0",
+    "reality_expected_books": 16,
+    "reality_fresh_books": 16,
+    "reality_memory_current_bytes": 1122304000,
     "reality_memory_high_bytes": 1207959552,
     "reality_memory_high_events": 14379,
-    "reality_memory_max_oom_kill_events": 0
-  }
+    "reality_memory_max_bytes": 1342177280,
+    "reality_memory_max_oom_kill_events": 0,
+    "reality_observability_gaps": [
+      "recent_persistence_window_incomplete",
+      "recovery_state_unreported",
+      "transport_queue_depth_unreported"
+    ],
+    "reality_recorder_pid": 3007040,
+    "reality_recorder_state": "RECORDING_UNSEQUENCED",
+    "reality_sequence_verified": false,
+    "runtime_recheck_artifact": "docs/reliability/evidence/MIDAS_MISSION_20261026_LIVE_STATE_RECHECK.json",
+    "runtime_recheck_sha256": "f89c3be4866ac10a488d50cca777fac78036a52e3a52d78e38dbb7c1a3dc86be",
+    "staged_storage_120_day_floor_deficit_bytes": 12013107129,
+    "staged_storage_current_commitment_deficit_bytes": 6506911519
+  },
+  "schema_version": 2,
+  "scope": "files lists changed code, tests, documentation and checked-in evidence files relative to the base commit, including current uncommitted mission edits; bulk offline replay copies and derived event files are separately bound by evidence_artifacts and embedded manifests; generated build/test output, unrelated runtime worktrees, replay locks and this manifest are excluded."
 }

@@ -163,6 +163,7 @@ export function Reality() {
   const f = obj(data.forward);
   const markets = arr(c.cohort).map(obj);
   const selected = markets.find((m) => m.condition === condition) ?? markets[0];
+  const syntheticFixture = c.evidence_classification === 'SYNTHETIC_TEST_FIXTURE';
   return (
     <div className="reality">
       <div className="r-masthead">
@@ -204,11 +205,18 @@ export function Reality() {
       <div className="r-boundary">
         <ShieldCheck size={16} />
         <span>
-          <b>Public observations</b> · Unsequenced receipt-order data. Displayed quotes do not
-          establish hypothetical fills, queue position or actual profitability.
+          <b>{syntheticFixture ? 'Synthetic test fixture' : 'Public observations'}</b> ·{' '}
+          {syntheticFixture
+            ? 'UI-only data. This fixture is not a market observation or research result.'
+            : 'Unsequenced receipt-order data. Displayed quotes do not establish hypothetical fills, queue position or actual profitability.'}
         </span>
         <span className="r-boundary-end">NO ORDER EXECUTION</span>
       </div>
+      {syntheticFixture && (
+        <div className="r-warning" role="note">
+          SYNTHETIC TEST FIXTURE · NOT MARKET EVIDENCE
+        </div>
+      )}
       {query.isPending && <Empty>Connecting to the Reality evidence service…</Empty>}
       {query.isError && (
         <div className="r-error" role="alert">

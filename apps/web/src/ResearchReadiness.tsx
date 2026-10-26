@@ -877,8 +877,8 @@ export function ResearchReadiness() {
           </details>
           <p className="rr-panel-foot">
             Order-book evidence cannot establish queue position, acknowledgment, fills, settlement,
-            or realized P&amp;L. Gamma&apos;s market-level restricted flag is metadata; user-specific
-            geoblock and order acceptance are not measured.
+            or realized P&amp;L. Gamma&apos;s market-level restricted flag is metadata;
+            user-specific geoblock and order acceptance are not measured.
           </p>
         </Panel>
 

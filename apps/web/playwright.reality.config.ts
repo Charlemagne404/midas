@@ -35,7 +35,7 @@ export default defineConfig({
         MIDAS_MODE: 'demo',
         MIDAS_DATABASE_URL: `sqlite+aiosqlite:///${join(isolatedData, 'paper.db')}`,
         MIDAS_ARENA_ROOT: join(isolatedData, 'arena'),
-        MIDAS_REALITY_WORKSPACE: process.env.MIDAS_REALITY_WORKSPACE ?? repository,
+        MIDAS_REALITY_WORKSPACE: repository,
       },
     },
     {
