@@ -54,5 +54,42 @@ async def test_transport_rejects_host_redirect_and_oversized_response():
         with pytest.raises(AdapterError) as error:
             await transport.get_json("https://example.com/large")
         assert error.value.code == "RESPONSE_TOO_LARGE"
+        assert error.value.response_evidence is None
+    finally:
+        await client.aclose()
+
+
+@pytest.mark.asyncio
+async def test_transport_retries_are_capped_and_final_failure_keeps_response_evidence():
+    calls = 0
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal calls
+        calls += 1
+        return httpx.Response(
+            503,
+            json={"error": "temporary"},
+            headers={"Retry-After": "0"},
+            request=request,
+        )
+
+    client = httpx.AsyncClient(transport=httpx.MockTransport(handler))
+    transport = PublicReadTransport(
+        {"example.com"},
+        AdapterConfig(
+            enabled=True, live_public_probe_enabled=True, requests_per_second=5, retries=2
+        ),
+        client=client,
+    )
+    try:
+        with pytest.raises(AdapterError) as error:
+            await transport.get_json("https://example.com/markets", max_retries=20)
+        assert error.value.code == "SOURCE_TEMPORARY_FAILURE"
+        assert error.value.retryable is True
+        assert calls == 3
+        assert transport.request_count == 3
+        assert error.value.response_evidence is not None
+        assert error.value.response_evidence.raw_body == b'{"error":"temporary"}'
+        assert error.value.response_evidence.status_code == 503
     finally:
         await client.aclose()
