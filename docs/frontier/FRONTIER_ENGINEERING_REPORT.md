@@ -29,6 +29,11 @@ Kalshi now has a separate ticker-filtered, cursor-paginated public trade-page
 operation, bounded to one saved market and at most 100 rows. A genuine API round
 trip captured an empty Kalshi page with an empty continuation cursor; fixture
 tests cover trade-row normalization and cursor errors.
+Saved Kalshi event and series metadata can also drive a bounded, local fee
+sensitivity for one hypothetical taker fill. It supports two documented
+quadratic fee types, shows direct and non-direct balance-precision cases, and
+does not modify candidate economics. The input price and quantity are manual
+scenario assumptions, not observed quotes or account-specific costs.
 Bounded live round trips through each adapter and
 the Frontier probe API persisted one
 listing per venue, then one listing plus at most one book per venue, and most
@@ -517,6 +522,12 @@ Verification on this branch:
 - Frontier Playwright file: **2 passed** with one worker, including graph interaction and the Polymarket/Kalshi trade-page controls. The first full 10-case run had one outdated Frontier selector and two Laboratory timeouts; after updating the selector and rerunning, the full suite passed **10/10** in 23.4 seconds with one worker. The browser suite used isolated temporary API/storage roots. No live source probing was enabled.
 - Python Ruff check/format, mypy for the 16 Frontier/API source files, and `git diff --check` passed after the Kalshi trade-page change.
 - The live Kalshi trade-page capture used two unauthenticated GETs (one saved-market listing and one trade page), zero retries, 65,536-byte response caps, and a temporary 8 MiB store. Both HTTP 200 bodies and both temporary-store row hashes verified. The conditional market's page held zero trades and no cursor; the capture does not validate a live row mapping or establish market availability.
+- Latest focused Python regression after the Kalshi fee-sensitivity work: **85 passed** across `tests/frontier`, adapter contract integration, and the offline API persistence workflow. Pytest took 17.74 seconds; `/usr/bin/time -v` measured 18.56 seconds wall, 5.04 seconds user CPU, 148,460 KiB peak RSS, zero swaps, and zero socket messages. One upstream Starlette/httpx deprecation warning remains. The full repository Python suite was not run.
+- Fee-sensitivity tests cover formula precision, microdollar rounding, both balance quanta, unsupported fee types, input bounds, saved-evidence validation and mismatched event/series rejection. The preserved derived artifact replays offline from hash-verified October 27 event/series metadata: manual `$0.50`, quantity 1, `$0.0175` direct-member and `$0.02` non-direct-member modeled fee. No HTTP call supplied that scenario price or size.
+- Artifact integrity: derived result SHA-256 `cdc66e6722fe25369317107ca4d94b4749b3f47f938dca0b3924507f5b5922c4`; source metadata capture SHA-256 `4a2e1ac8e2953314e89f26fa825142b551ce0a24512a14e3494df03b936ea53e`; calculation digest `0218bc4415eafbd8d154173fd66b98c8be92ef7255d0cd75b9a61e8b5a385ce0`.
+- Python Ruff check/format and mypy passed for the Frontier/API source set checked at this checkpoint. `git diff --check` passed before the documentation checkpoint.
+- Frontend after the sensitivity work: **37 passed across 7 files**; TypeScript typecheck, ESLint and Prettier passed. Production build passed; Frontier JS is 56.47 kB and CSS is 26.85 kB. Existing main (503.86 kB) and Chart (544.41 kB) chunks retain the Vite large-chunk warning.
+- Targeted Frontier Playwright: **2 passed** in 6.3 seconds, one worker, using isolated temporary API/storage roots and no live probe. A subsequent full 10-case run had two Laboratory failures: Arena admission returned `host_memory_pressure`, then an experiment-report wait timed out after the denied launch. No experiment started and no resource gate was bypassed; full E2E verification remains incomplete.
 
 Backend tests emitted one upstream Starlette/httpx TestClient deprecation
 warning. No tests modified legacy expectations to make them pass. Fixture network
@@ -648,6 +659,12 @@ jurisdiction, custody, and settlement access are unmodeled. Public depth is a
 time-stamped displayed snapshot, not a fill guarantee. In this evidence set,
 cost-adjusted discrepancies and executable opportunities are therefore
 unestablished.
+The saved Kalshi fee-metadata pair supports only a standalone one-fill
+sensitivity under the July 7, 2026 public quadratic taker formula and displayed
+balance-precision cases. It is not an account fee quote, does not model
+multi-fill accumulation, rebates, FCM charges, or later schedule changes, and
+does not enter the candidate's canonical `FeeSchedule`; unknown cost treatment
+in candidate economics is preserved.
 
 ## 16. Unresolved defects and blockers
 
@@ -712,10 +729,10 @@ Priority order:
 2. Extend revision-bound pagination to multi-hop graph traversal only if a
    bounded cursor can preserve breadth-first ordering; add full-universe search
    and clustering only after representative data and measurements exist.
-3. Reconcile Kalshi's captured event/series parameters with the effective
-   published maker/taker schedule and account rounding model. Keep Kraken
-   account fee tier unknown without authenticated data; no candidate may use
-   unknown or expired fees as zero.
+3. Extend Kalshi fee evidence only when public metadata establishes the market's
+   applicable formula and precision model beyond the current bounded taker
+   sensitivity. Keep Kraken account fee tier unknown without authenticated
+   data; no candidate may use unknown or expired fees as zero.
 4. Seek real public multi-outcome metadata that meets the strict payoff and
    resolution requirements; broaden accepted payoff families only with
    independently checked evidence.
@@ -805,6 +822,10 @@ Implementation and documentation commits on this branch:
   public trade capture, the ticker/page-size-bound API route, source-neutral
   trade-page controls, contract/API/UI tests, and one hash-verified empty live
   page capture.
+- `225dc8db78b7ac9e60218c7be325ae77f15d8603` — added the local evidence-bound
+  Kalshi one-fill taker-fee sensitivity, rounding scenarios, manual-input UI,
+  tests, and an offline derived artifact; canonical candidate economics is
+  unchanged.
 
 Principal changed paths:
 
@@ -839,6 +860,7 @@ cross-venue economics.
 | Canonical market/instrument normalization | PARTIALLY VERIFIED | Three distinct instrument classes are represented; v2 Polymarket trades retain native outcome-token identity. Live lineage and several payoff/settlement semantics remain unverified. |
 | Relationship hypotheses, review revisions, indexed neighborhoods, and explicit same-payoff verifier | PARTIALLY VERIFIED | Self-attributed review API/UI, append-only revisions, latest-state replay, tamper/migration checks, left/right endpoint-indexed 1–3 hop scans capped at 500 rows, revision-bound centered one-hop keyset pages, stale-cursor rejection, and a 501-edge scan-bound test; no genuine equivalent pair, reviewer authentication, or multi-hop pagination. |
 | Opportunity candidate and independent economic checks | PARTIALLY VERIFIED | Two-venue all-long binary and same-market 3–16 state one-hot exhaustive coverage, with a separate pinned-input arithmetic audit; controlled fixtures only, with source semantics, fees, broader costs and operational feasibility incomplete. |
+| Kalshi taker-fee sensitivity | PARTIALLY VERIFIED | Saved, hash-matched public event/series fee evidence supports a local one-fill calculation for two documented quadratic fee types, with Decimal and rounding tests. Manual inputs are not live quotes; account-specific, multi-fill and full candidate fee integration remain unresolved. |
 | Append-only evidence store and deterministic replay | COMPLETE AND VERIFIED | Schema v5, v2/v3/v4 additive migration, bounds, hash validation, immutability, replay tests; not integrated as an Arena campaign. |
 | Live market/book/trade and fee metadata through adapters/API | PARTIALLY VERIFIED | One bounded listing, book, and legacy trade response per venue is hash-pinned; Polymarket v2 pages have distinct IDs; a Kalshi event/series fee-metadata read-back and a new cursor-page response are hash-pinned. The cursor page was empty and terminal, so its live row mapping is not established. Samples are not synchronized and do not prove venue-wide coverage, fees, or execution. |
 | Source workers and broad historical data | DEFERRED | No persistent worker or long-duration collection. |
@@ -848,8 +870,9 @@ cross-venue economics.
 | Positive economic result | NOT ESTABLISHED | No genuine cross-venue equivalent or economically eligible result in captured evidence. |
 
 To continue safely, use this worktree and branch. Next broaden API-boundary
-degraded-source behavior; resolve Kalshi series fee applicability without
-guessing; search for public multi-outcome metadata that
+degraded-source behavior; determine whether public Kalshi market metadata is
+sufficient to extend fee sensitivity into a defensible candidate fee schedule;
+search for public multi-outcome metadata that
 meets the strict payoff and resolution evidence requirements without loosening
 attestation; extend bounded graph paging to multi-hop only if traversal order can
 remain reproducible; then connect short, resource-admitted deterministic jobs

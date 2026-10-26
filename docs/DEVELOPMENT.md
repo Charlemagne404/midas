@@ -130,9 +130,20 @@ public fee metadata with `POST /api/frontier/probe/kalshi/fee-metadata` and its
 canonical `market_id`. The route requires the source's public-probe setting and
 the market must be in the bounded saved listing window. It makes one event GET
 with `exclude_markets=true` and one series GET, then stores both raw responses
-with the normalized event overrides and series fee type/multiplier. This is
-native-source evidence, not a fee estimate: market `FeeSchedule` remains
-unknown, and the economics engine does not treat these parameters as zero.
+with the normalized event overrides and series fee type/multiplier. This
+evidence-only capture does not set the market's `FeeSchedule` or change candidate
+economics. A separate local
+`POST /api/frontier/economics/kalshi-fee-sensitivity` accepts the recorded
+`market_id`, paired event and series `observation_id`s, and manual
+`price_usd`/`quantity_contracts`. It makes no source request; it checks the
+stored source kind, host, market identity, timestamps, normalized metadata and
+raw hashes before computing a one-fill taker sensitivity. Supported quadratic
+fee types use the dated July 7, 2026 public formula, with direct and non-direct
+balance-precision scenarios. The response is hashed and hypothetical, not an
+account quotation, not a quote from a saved public book, and not applied to
+candidate net economics. Unsupported fee types, malformed inputs and mismatched
+evidence fail closed. Multi-fill rounding accumulation, rebates, FCM charges and
+later fee schedule changes remain outside this model.
 The Kalshi trade-page route follows the same saved-market and source-configuration
 gates, persists one raw and normalized page per click, and returns no next cursor
 when Kalshi's response cursor is empty. It does not start a history crawl.

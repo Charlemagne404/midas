@@ -15,11 +15,11 @@ as mutable Frontier storage.
 | Public venue adapters | `adapters/polymarket.py`, `kalshi.py`, `kraken.py` | Source-specific normalization and native metadata preservation. |
 | Registry | `registry.py` | Explicit capability inventory; default instances do not probe. |
 | Relationship intelligence | `relationships.py` | Deterministic indexed hypotheses, strict payoff checks, and immutable review contracts. |
-| Candidate calculators | `economics.py` | Decimal cross-venue binary and same-market exhaustive multi-outcome all-long checks with fee, depth, freshness, timing, and scenario bounds. |
+| Candidate calculators | `economics.py` | Decimal cross-venue binary and same-market exhaustive multi-outcome all-long checks with fee, depth, freshness, timing, and scenario bounds; separate Kalshi one-fill fee sensitivity. |
 | Independent arithmetic audit | `independent_audit.py` | Separately recomputes supported candidate identities, payoff vectors, pinned quotes/depth, fees, costs, terminal P&L, and classification from replay inputs. |
 | Durable evidence | `storage.py` | Append-only, size- and row-bounded SQLite observations, markets, relationship reviews/revisions, and runs. |
 | Replay | `replay.py` | Stable input ordering, manifest and implementation digest, deterministic result identity. |
-| HTTP API | `apps/api/frontier.py` | Bounded local queries and graph neighborhoods, relationship proposals/reviews, deterministic replay, and config-gated public capture. |
+| HTTP API | `apps/api/frontier.py` | Bounded local queries and graph neighborhoods, relationship proposals/reviews, deterministic replay, config-gated public capture, and evidence-bound Kalshi fee sensitivity. |
 | Mission Control workspace | `apps/web/src/Frontier.tsx` | Sources, markets/books, relationship hypotheses, candidates, workbench, replay, readiness. |
 
 ## Adapter capability contract
@@ -35,9 +35,27 @@ instead of being replaced with guessed values.
 Kalshi separately advertises `fee_metadata`: a deliberate one-event plus one-series
 read captures the event override fields and series fee type/multiplier. The event
 request excludes child markets to keep this metadata call bounded. This capability
-does not imply a verified fee schedule: the native parameters are stored with both
-raw response hashes while `FeeSchedule` remains unknown until the current maker/taker
-rules, fee-change applicability, and account-specific balance rounding are modeled.
+does not populate `FeeSchedule`; native parameters remain stored with both raw
+response hashes while candidate net economics remains unresolved.
+
+The local `POST /api/frontier/economics/kalshi-fee-sensitivity` workbench calculation
+uses only saved event/series evidence and manual price/quantity scenario inputs. It
+supports the documented quadratic taker formula for `quadratic` and the captured
+`quadratic_with_combo_maker_fees` type, and fails closed for other fee types. It
+calculates a one-fill model fee rounded to a microdollar, then displays total debit
+and fee under both documented balance quanta: `$0.0001` for a direct member and
+`$0.01` for a non-direct member. Metadata IDs, raw hashes, received times, model
+version, assumptions and a calculation digest accompany the result. This is a
+standalone sensitivity, not an account quote and not an input to candidate net
+economics; it omits multi-fill accumulation, rebates, FCM charges and later schedule
+changes. The manually entered price is not represented as a public quote.
+
+An offline derivation from the saved October 27 metadata capture produced a `$0.0175`
+direct-member and `$0.02` non-direct-member fee scenario for one contract at a
+manually supplied `$0.50`. Its input and output hashes are preserved in
+`data/frontier/live-probes/2026-10-27-kalshi-fee-sensitivity.json`; it is not live
+price evidence. The formula uses Kalshi's [July 7, 2026 event fee schedule](https://kalshi.com/docs/kalshi-fee-schedule.pdf)
+and [fee rounding documentation](https://docs.kalshi.com/getting_started/fee_rounding).
 
 Kalshi also advertises cursor-paginated public trades. Frontier exposes one
 operator-triggered ticker-filtered page at a time, caps it at 100 rows even though
@@ -125,11 +143,11 @@ exponent 1; explicit disabled fees map to zero, while other shapes remain
 unknown. The normalized fee fields are hashed and expire five minutes after
 receipt. One October 26 public market listing verified a zero-rate schedule;
 that observation is not generalized to other markets. Kalshi fee applicability
-has an explicit public metadata resolver, but fee calculation remains unsupported:
-series and event parameters are preserved as evidence without converting them to
-account fees. Kraken's public pair feed does not expose an account's applied tier;
-Frontier does not call the authenticated account-volume API. Unknown venue costs
-remain unknown.
+has an explicit public metadata resolver. A separate, evidence-bound one-fill
+quadratic taker sensitivity exists for two documented fee types, but it does not
+convert to an account fee or feed candidate economics. Kraken's public pair feed
+does not expose an account's applied tier; Frontier does not call the authenticated
+account-volume API. Unknown venue costs remain unknown.
 
 Replay then runs a separate arithmetic implementation that does not call the
 candidate calculator's arithmetic helpers. It records `verified`, `disagreement`,

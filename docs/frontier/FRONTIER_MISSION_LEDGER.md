@@ -20,7 +20,11 @@ canonical fee cost remains unknown and unused by economics.
 Kalshi also now has a one-page ticker-filtered public trade operation with a
 cursor bound to the saved ticker and page size. Its live API page was HTTP 200,
 empty, and terminal; trade-row normalization remains fixture-verified only.
-Remaining acceptance work is substantial.
+The saved Kalshi event/series fee evidence can now drive a local, one-fill
+quadratic taker-fee sensitivity for two documented fee types and two balance
+precision cases. Manual price/size inputs are not quotes; the calculator does
+not change the unknown canonical fee schedule or candidate economics. An offline
+derived example is hash-pinned. Remaining acceptance work is substantial.
 **Branch:** `codex/frontier-20261026`
 **Worktree:** `/home/charlie/midas-frontier`
 **Baseline:** `11d32a0693b25c290fd273f23e40cf7b5950d95d` (`codex/veritas-v6-integration-20261026`)
@@ -78,6 +82,25 @@ Remaining acceptance work is substantial.
 | `7c6cc21` | Added capability/config-gated Mission Control first/next trade-page controls, outcome-token display, and unit plus desktop/mobile continuation coverage. |
 | `e661e06` | Preserved direct first-page and API-route continuation captures, verified their hashes, and refreshed architecture, development, README, and engineering-report handoffs. |
 | `a6bcf60` | Added Kalshi cursor-paginated public trade pages, a ticker/page-size-bound API cursor, raw/normalized persistence, a source-neutral Polymarket/Kalshi trade panel, contract/API/UI tests, and one live hash-verified empty-page capture. |
+| `225dc8d` | Added a saved-evidence-bound Kalshi one-fill fee sensitivity API and UI, Decimal calculation tests, an offline derived artifact, and API/UI regressions. Candidate economics remains unchanged. |
+
+## Latest checkpoint verification (2026-10-27)
+
+- Focused Python regression: **85 passed**, 17.74 seconds pytest time; 18.56
+  seconds wall, 5.04 seconds user CPU, 148,460 KiB peak RSS, zero swaps and
+  zero socket messages. One upstream Starlette/httpx deprecation warning.
+- Frontend suite: **37 passed across 7 files**; typecheck, ESLint, Prettier and
+  production build passed. Existing main and Chart bundles continue to emit the
+  Vite size warning.
+- Targeted Frontier browser cases: **2 passed**, 6.3 seconds, one worker, with
+  isolated temporary API/store roots. The separate full-suite attempt had
+  Laboratory failures under `host_memory_pressure`; no experiment launched.
+- Candidate net economics remains unchanged. Derived Kalshi fee-sensitivity
+  scenario inputs were manual, and no live book or quote was used.
+- Next safe work: continue source-quality and fee-applicability review, then
+  improve a distinct bounded scientific gap without running Laboratory jobs
+  while host admission is under memory pressure. Keep deployment and Reality
+  integration out of scope.
 
 ## Public source investigation
 
