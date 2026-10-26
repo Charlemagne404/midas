@@ -14,19 +14,21 @@ local Mission Control Vite service. It reads live API projections, labels demo
 mode prominently, separates staged and deployed versions, classifies missing
 evidence conservatively, and shows current storage and cgroup measurements.
 Browser verification at 1440 px and 390 px completed without page errors or
-horizontal overflow.
+horizontal overflow. A follow-up fix for unmeasured Veritas fields is
+committed locally but not deployed.
 
 Reality production remains on its older collector and 24 GiB / 90-day
 configuration. Its staged reliability candidate is dirty and undeployed. The
 recorder was not restarted or changed. Latest-boundary cold recovery remains
 incomplete. Archive staging still has an invalid manifest/provenance state.
 
-Readiness is **not established**. At the final live capture, the independent
+Readiness is **not established**. At the 03:43Z live capture, the independent
 correctness, collector, recovery, and resource gates were blocked; storage was
 conditional after its scheduled capacity projection moved to a 15.2-day
 short-window estimate; evidence sufficiency was conditional with zero eligible
-candidates. Arena had no active or queued work but still reported three stale
-director projections.
+candidates. Arena has no active or queued work; a fresh owner-job join resolves
+three persisted `RUNNING` director manifests to two cancellations and one
+failure without rewriting them.
 
 No Frontier, Atlas, replacement long-duration campaign, real-money operation,
 wallet action, or exchange order was started.
@@ -231,6 +233,18 @@ scheduled bounded Reality source-analysis service completed its 59-segment
 batch at ordinal 5,140,697 with zero pending segments for that captured
 prefix. This is not the separate 31,742-segment cold-recovery matrix.
 
+A live health/resource sample at 04:33:53Z reported API `READY` on release
+`cf452ec`, `CHECKPOINT_VERIFIED` for the paper journal at 672,718 events, and
+host available memory of 8,190,214,144 bytes. API cgroup current was
+1,608,658,944 bytes against `MemoryHigh=1,610,612,736`, leaving 1,953,792 bytes
+(1.86 MiB); the earlier 04:33:30 point was only 1,024,000 bytes below the
+same threshold. Reality cgroup current was 1,070,161,920 of 1,207,959,552
+bytes `MemoryHigh`. The latest bounded Veritas observer run exited successfully
+at 04:32:24Z under its 256 MiB limit, but its memory peak was unavailable and
+the separate per-run resource status remains `NOT_MEASURED`. These point
+samples keep heavy-research admission blocked; they do not identify a heap
+leak or establish sustained capacity.
+
 ## 5. Verification and retained failures
 
 | Area | Verification result |
@@ -317,6 +331,9 @@ Mission evidence files are under
   read-only research-activity projection, verified owner configuration/source
   linkage, and hashes for the three unchanged persisted manifests and job
   records; SHA-256 `c145a7ea5680108b15fddbea2fa1ab6a84b480874068a3fff0734d81bcb1be07`.
+- `resource-api-post-browser-2026-10-26T0433Z.json` — live API health and
+  bounded cgroup/host/observer sample at 04:33:53Z; SHA-256
+  `2cbd677c29887b8801181e5b020f12eaf04aacbe86537987fdbd020160ee0450`.
 - `data/veritas-v6-offline-replay-522-20261026/` in the preserved
   `midas-engineering-mission-20261025` worktree — isolated 522-snapshot replay
   receipt SHA-256
