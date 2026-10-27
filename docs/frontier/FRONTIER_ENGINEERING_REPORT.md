@@ -4167,3 +4167,14 @@ PSI avg10 was 0.00% (`some`/`full`), 9.9 GiB was available, and 455 MiB swap
 was free. The earlier repository-wide 50-test interruption is now partially
 revalidated across all integrations plus the bounded Arena admission module;
 unrelated repository collection/runtime limits remain open.
+
+### Post-test resource recheck — 2026-10-27 21:48 UTC
+
+At `2026-10-27T21:48:09Z`, external Veritas batch PID **3762324** remained in
+uninterruptible `D` state at `mem_cgroup_handle_over_high`, running
+`scripts/veritas_gap_detail_v2_batch.py` against its existing Veritas and
+Arena roots. Memory PSI avg10 had risen to **47.93% some / 41.46% full**.
+The process was left untouched. No Frontier tests or builds were started
+after it appeared; the passing bounded test results above remain valid. The
+shared admission lock should be checked again before further resource-consuming
+verification.

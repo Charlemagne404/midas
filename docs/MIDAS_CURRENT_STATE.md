@@ -957,3 +957,11 @@ regressions then passed **8/8** in 2.04 seconds wall, peak RSS 178,692 KiB,
 zero swaps. The post-run lock was free and PSI avg10 was 0.00% some / 0.00%
 full. These are bounded legacy integration/admission results, not a clean
 repository-wide suite; unrelated collection/runtime gaps remain documented.
+
+## Frontier resource gate — 2026-10-27 21:48 UTC
+
+At `2026-10-27T21:48:09Z`, external Veritas batch PID **3762324** was still
+blocked in `D` state at `mem_cgroup_handle_over_high`; memory PSI avg10 was
+47.93% `some` / 41.46% `full`. It was left untouched. No Frontier tests or
+builds were started after it appeared. Wait for pressure to settle and verify
+the shared Arena admission lock before further resource-consuming checks.

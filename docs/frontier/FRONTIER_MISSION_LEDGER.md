@@ -1,5 +1,12 @@
 # Project Frontier Mission Ledger
 
+**Current resource gate (`2026-10-27T21:48:09Z`):** External Veritas batch PID
+**3762324** remains in `D` state at `mem_cgroup_handle_over_high`; PSI avg10 is
+**47.93% some / 41.46% full**. It is using the existing Veritas and Arena
+roots and was left untouched. No Frontier tests or builds ran after this
+process appeared. Recheck pressure and the shared Arena admission lock before
+starting additional resource-consuming verification.
+
 **Legacy integration and admission-gate regressions (`2026-10-27T21:46:43Z`):**
 All `tests/integration` pass **55/55**, with one PostgreSQL test skipped after
 explicitly unsetting `MIDAS_TEST_POSTGRES_URL`; the run used
