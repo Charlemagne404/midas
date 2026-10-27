@@ -1736,6 +1736,33 @@ def test_readiness_reports_pinned_candidate_timing_audit_counts(tmp_path):
         asyncio.run(http_client.aclose())
 
 
+def test_readiness_does_not_establish_economics_without_candidate_audits(tmp_path, monkeypatch):
+    client, registry, http_client, _, store = _client(tmp_path)
+    run = {
+        "result": {
+            "manifest": {"market_observation_ids": [], "book_observation_ids": []},
+            "proposed_relationships": [],
+            "applied_relationships": [],
+            "candidates": [{"independent_audit": None}],
+        }
+    }
+    monkeypatch.setattr(store, "replays", lambda **_: (run,))
+    try:
+        response = client.get("/api/frontier/readiness")
+        assert response.status_code == 200
+        gates = {item["name"]: item for item in response.json()["gates"]}
+        assert gates["independent_economic_verification"]["state"] == "NOT_ESTABLISHED"
+        assert (
+            "1 not-evaluated or missing candidate audit result"
+            in gates["independent_economic_verification"]["detail"]
+        )
+        assert "not recorded for 1." in gates["source_quality"]["detail"]
+    finally:
+        client.close()
+        asyncio.run(registry.aclose())
+        asyncio.run(http_client.aclose())
+
+
 def test_readiness_recognizes_only_completed_hash_verified_arena_evidence(tmp_path):
     from midas.arena.artifacts import atomic_json
     from midas.arena.frontier_replay import (
