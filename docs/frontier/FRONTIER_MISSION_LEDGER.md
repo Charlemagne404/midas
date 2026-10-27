@@ -1,6 +1,16 @@
 # Project Frontier Mission Ledger
 
-**Latest checkpoint (2026-10-27 17:38 UTC):** UI commit
+**Latest checkpoint (2026-10-27 17:40 UTC):** Test commit
+`95372c8feb1129609e3e2ed4f20179432ed4e446` covers the reversed-endpoint case
+for a non-identity three-state implication mapping. It verifies canonical
+mapping inversion, correct source-NO/target-YES legs, mapped terminal payouts,
+independent audit, and deterministic replay. The focused implication/API/
+audit selection passed **15 tests**; Ruff check and formatting passed. No live
+source request or held-data read was made. At 17:40:29 UTC, PSI `avg10` was
+0.00% (`some`) / 0.00% (`full`), with `avg300` 20.00% / 17.80%; the full
+Frontier Python suite and production build remain unrun.
+
+**Previous checkpoint (2026-10-27 17:38 UTC):** UI commit
 `ce14e87f4d494d8a0fe5a041d4fb65fd1feab8fb` adds a native Mission Control
 review form for directed YES implications, including direction selection and
 left-to-right joint-state mapping. The form only enables this claim when the

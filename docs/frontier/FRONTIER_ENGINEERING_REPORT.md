@@ -1533,6 +1533,10 @@ Priority order:
 
 Implementation and documentation commits on this branch:
 
+- `95372c8feb1129609e3e2ed4f20179432ed4e446` — added fixture coverage for a
+  non-identity joint-state mapping with the implication source on the
+  canonical right endpoint; checked candidate legs, payout states, independent
+  audit, and replay output.
 - `ce14e87f4d494d8a0fe5a041d4fb65fd1feab8fb` — added native Mission Control
   relationship-claim and directed YES implication review controls, capability
   gating, frontend unit coverage, and a fixture-backed browser flow.
@@ -2789,3 +2793,19 @@ At `2026-10-27T17:38:29Z`, memory PSI `avg10` was 0.00% (`some`) / 0.00%
 `MemAvailable` was 9,790,148 KiB and swap free was 486,136 KiB of 4 GiB. A
 production build and full Frontier Python suite remain unrun. Frontier remains
 isolated, undeployed, and incomplete.
+
+### Reversed endpoint and non-identity implication mapping — 2026-10-27 17:40 UTC
+
+Test commit `95372c8feb1129609e3e2ed4f20179432ed4e446` adds a three-state
+fixture where the source market sorts after the target and the joint-state map
+is non-identity. Candidate generation preserves the directed source-NO and
+target-YES legs, maps each target state to the correct source payout, and
+matches the independently recomputed audit and deterministic replay result.
+The focused implication, relationship API, replay, and audit selection passed
+**15 tests** in 1.71 seconds. Ruff check and format check passed; `git
+diff --check` passed. No live data or source endpoint was accessed.
+
+At `2026-10-27T17:40:29Z`, memory PSI `avg10` was 0.00% (`some`) / 0.00%
+(`full`), `avg60` 1.33% / 1.13%, and `avg300` 20.00% / 17.80%.
+`MemAvailable` was 9,866,316 KiB and swap free was 486,152 KiB of 4 GiB.
+Broader Frontier Python verification and the production build remain unrun.
