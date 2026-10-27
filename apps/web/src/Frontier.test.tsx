@@ -727,6 +727,10 @@ it('captures Kalshi fee metadata and exposes a separate hypothetical fee sensiti
         ok: true,
         json: async () => ({
           audit: {
+            schema_version: 2,
+            audit_algorithm_version: 'kalshi-mve-settlement-audit-2',
+            lifecycle: 'settled',
+            settlement_is_provisional: false,
             state: 'SOURCE REPORTED PRODUCT MATCH',
             component_values: [
               {
@@ -919,6 +923,9 @@ it('captures Kalshi fee metadata and exposes a separate hypothetical fee sensiti
     await screen.findByText(
       /Source-reported settlement arithmetic · SOURCE REPORTED PRODUCT MATCH/,
     ),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByText(/Audit kalshi-mve-settlement-audit-2 · parent lifecycle settled/),
   ).toBeInTheDocument();
   expect(screen.getByRole('link', { name: 'combo settlement rule' })).toHaveAttribute(
     'href',

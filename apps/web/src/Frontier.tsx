@@ -115,6 +115,10 @@ type Market = {
 };
 type KalshiMveSettlementAuditResponse = {
   audit: {
+    schema_version: number;
+    audit_algorithm_version: string;
+    lifecycle: string;
+    settlement_is_provisional: boolean | null;
     state: string;
     component_values: {
       native_market_id: string;
@@ -2850,6 +2854,13 @@ function MarketDetails({
                 <strong>
                   Source-reported settlement arithmetic · {settlementAudit.data.audit.state}
                 </strong>
+                <small>
+                  Audit {settlementAudit.data.audit.audit_algorithm_version} · parent lifecycle{' '}
+                  {settlementAudit.data.audit.lifecycle} · provisional flag{' '}
+                  {settlementAudit.data.audit.settlement_is_provisional === null
+                    ? 'unknown'
+                    : String(settlementAudit.data.audit.settlement_is_provisional)}
+                </small>
                 <small>
                   Recomputed component product: $
                   {settlementAudit.data.audit.component_product_dollars ?? 'incomplete'} · parent{' '}

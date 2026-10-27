@@ -106,6 +106,8 @@ def test_kalshi_mve_reported_settlement_audit_recomputes_yes_no_component_produc
     audit = audit_kalshi_mve_reported_settlement(combo)
 
     assert audit.state == SettlementAuditState.SOURCE_REPORTED_PRODUCT_MATCH
+    assert audit.audit_algorithm_version == "kalshi-mve-settlement-audit-2"
+    assert audit.schema_version == 2
     assert audit.component_product_dollars == Decimal("0.350000000000")
     assert audit.reported_settlement_value_dollars == Decimal("0.3500")
     assert audit.component_values[1].selected_position_value_dollars == Decimal("0.7000")
@@ -146,6 +148,12 @@ def test_kalshi_mve_reported_settlement_audit_fails_closed_for_missing_nonfinal_
         components=(one_leg,), reported_value=Decimal("0.7000"), provisional=True
     )
     assert audit_kalshi_mve_reported_settlement(provisional).state == (
+        SettlementAuditState.SOURCE_VALUES_NOT_FINAL
+    )
+    provisional_unknown = _kalshi_mve_for_settlement_audit(
+        components=(one_leg,), reported_value=Decimal("0.7000"), provisional=None
+    )
+    assert audit_kalshi_mve_reported_settlement(provisional_unknown).state == (
         SettlementAuditState.SOURCE_VALUES_NOT_FINAL
     )
     mismatch = _kalshi_mve_for_settlement_audit(

@@ -1359,6 +1359,8 @@ def test_kalshi_mve_optional_settlement_value_persists_through_api(tmp_path):
         assert audit_result["network_calls"] == 0
         assert audit_result["candidate_generation"] is False
         assert audit_result["audit"]["state"] == "SOURCE REPORTED PRODUCT MATCH"
+        assert audit_result["audit"]["schema_version"] == 2
+        assert audit_result["audit"]["audit_algorithm_version"] == "kalshi-mve-settlement-audit-2"
         assert Decimal(audit_result["audit"]["component_product_dollars"]) == Decimal("0.3750")
         assert len(audit_result["audit"]["component_values"]) == len(
             source_row["mve_selected_legs"]

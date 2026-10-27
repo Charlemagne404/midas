@@ -571,7 +571,8 @@ class KalshiMveComponentSettlementValue(FrontierModel):
 
 
 class KalshiMveSettlementAudit(FrontierModel):
-    schema_version: int = 1
+    schema_version: int = 2
+    audit_algorithm_version: str = Field(min_length=1, max_length=80)
     market_id: str
     native_market_id: str
     source_observation_id: str

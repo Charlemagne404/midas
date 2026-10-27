@@ -41,6 +41,7 @@ from midas.frontier.relationships import Relationship, VerificationState
 
 D = Decimal
 ECONOMIC_MODEL_VERSION = "frontier-economic-verifiers-4"
+KALSHI_MVE_SETTLEMENT_AUDIT_VERSION = "kalshi-mve-settlement-audit-2"
 _KALSHI_TAKER_FEE_TYPES = frozenset({"quadratic", "quadratic_with_combo_maker_fees"})
 _KALSHI_COMBO_SETTLEMENT_SOURCES = (
     "https://help.kalshi.com/en/articles/13823820-combos",
@@ -64,6 +65,7 @@ def audit_kalshi_mve_reported_settlement(market: FrontierMarket) -> KalshiMveSet
         or any(component.venue != Venue.KALSHI for component in market.selected_components)
     ):
         return KalshiMveSettlementAudit(
+            audit_algorithm_version=KALSHI_MVE_SETTLEMENT_AUDIT_VERSION,
             market_id=market.canonical_id,
             native_market_id=market.native_market_id,
             source_observation_id=source_observation_id,
@@ -115,7 +117,7 @@ def audit_kalshi_mve_reported_settlement(market: FrontierMarket) -> KalshiMveSet
         and market.reported_settlement_value_dollars is not None
         and component_product is not None
     ):
-        if market.lifecycle != Lifecycle.SETTLED or market.settlement_is_provisional is True:
+        if market.lifecycle != Lifecycle.SETTLED or market.settlement_is_provisional is not False:
             state = SettlementAuditState.SOURCE_VALUES_NOT_FINAL
         elif component_product == market.reported_settlement_value_dollars:
             state = SettlementAuditState.SOURCE_REPORTED_PRODUCT_MATCH
@@ -123,6 +125,7 @@ def audit_kalshi_mve_reported_settlement(market: FrontierMarket) -> KalshiMveSet
             state = SettlementAuditState.SOURCE_REPORTED_PRODUCT_MISMATCH
 
     return KalshiMveSettlementAudit(
+        audit_algorithm_version=KALSHI_MVE_SETTLEMENT_AUDIT_VERSION,
         market_id=market.canonical_id,
         native_market_id=market.native_market_id,
         source_observation_id=source_observation_id,
