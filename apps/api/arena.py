@@ -431,7 +431,7 @@ def _director_supervisors(jobs: list[dict[str, Any]]) -> dict[str, dict[str, str
 
     def save() -> None:
         unit = properties.get("Id")
-        if unit in units:
+        if unit is not None and unit in units:
             states[unit] = dict(properties)
         properties.clear()
 
@@ -528,20 +528,20 @@ def _director_runtime_state(
 
 
 def _recent_owner_jobs(root: Path) -> list[dict[str, Any]]:
-    files = []
+    files: list[tuple[float, Path]] = []
     for file in (root / "jobs").glob("*/job.json"):
         try:
             files.append((file.stat().st_mtime, file))
         except OSError:
             continue
-    files = [
+    recent_files = [
         file
         for _, file in sorted(files, key=lambda item: item[0], reverse=True)[
             :MAX_DIRECTOR_OWNER_JOBS_READ
         ]
     ]
     jobs = []
-    for file in files:
+    for file in recent_files:
         try:
             if file.stat().st_size > MAX_RESEARCH_ACTIVITY_RECORD_BYTES:
                 continue
