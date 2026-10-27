@@ -88,6 +88,16 @@ def _bounded_string(value: object, limit: int) -> str | None:
     return value[:limit] if isinstance(value, str) else None
 
 
+def _bounded_measurement(value: object, maximum: int) -> int | float | None:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return None
+    if isinstance(value, float) and not math.isfinite(value):
+        return None
+    if value < 0 or value > maximum:
+        return None
+    return value
+
+
 def read_veritas_qualification_finding(root: Path, identity: str) -> dict[str, Any]:
     """Read one bounded, digest-verified immutable Veritas qualification finding."""
     if not re.fullmatch(r"veritas-qualification-v1-[0-9a-f]{16}", identity):
@@ -1480,26 +1490,18 @@ def router(root: Path, *, veritas_repository: Path | None = None) -> APIRouter:
                         "worker_process_peak_rss_bytes": MAX_WORKER_PROCESS_RSS_BYTES,
                     }
                     for key, maximum in metric_limits.items():
-                        value = runtime_value.get(key)
-                        if (
-                            type(value) in (int, float)
-                            and (not isinstance(value, float) or math.isfinite(value))
-                            and value >= 0
-                            and value <= maximum
-                        ):
+                        value = _bounded_measurement(runtime_value.get(key), maximum)
+                        if value is not None:
                             runtime_profile[key] = value
-                elapsed = row.get("elapsed_seconds")
+                elapsed = _bounded_measurement(
+                    row.get("elapsed_seconds"), MAX_ARENA_JOB_ELAPSED_SECONDS
+                )
                 projected = {
                     "job_id": row.get("job_id"),
                     "state": row.get("state"),
                     "created_at": row.get("created_at"),
                     "updated_at": row.get("updated_at"),
-                    "elapsed_seconds": elapsed
-                    if type(elapsed) in (int, float)
-                    and (not isinstance(elapsed, float) or math.isfinite(elapsed))
-                    and elapsed >= 0
-                    and elapsed <= MAX_ARENA_JOB_ELAPSED_SECONDS
-                    else None,
+                    "elapsed_seconds": elapsed,
                     "progress": row.get("progress"),
                     "phase": row.get("phase"),
                     "error": _bounded_string(row.get("error"), 300),
