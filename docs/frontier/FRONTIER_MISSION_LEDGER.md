@@ -1,5 +1,62 @@
 # Project Frontier Mission Ledger
 
+## Explicit finite collection API — 2026-10-28 01:38 CET
+
+Code commit **`cf67b2b`** adds an explicit `POST
+/api/frontier/collect/{venue}` route and an Exchanges-view capture action for
+`BoundedSourceCollector`. The route shares the per-source lock used by probes,
+rechecks the source's enabled/public-probe flags and policy hold, validates
+market-discovery/book capabilities and the source market limit, and returns
+the durable run result. The request is synchronous and starts no Arena job,
+worker, timer, or background collector. API hard caps are five markets, two
+books, depth ten, 4 MiB of evidence, and 60 seconds; the UI sends three markets,
+one book, depth five, and 30 seconds. Default source settings remain disabled.
+
+The UI displays the result state, market/book/failure counts, adapter request
+count and bound, run ID, and adapter-local health limitation. The route starts
+new runs only; collection-run history and HTTP resume controls remain open.
+The collector's module-level resume path remains independently tested.
+
+### Verification and resource boundary
+
+- New collection API fixture integration: **2 passed** in 1.10 seconds. It
+  covers bounded success/persistence plus limit, disabled-source, and held-
+  source rejection before any fake adapter call or journal creation.
+- `apps/web/src/Frontier.test.tsx`: **8/8** in 4.19 seconds, including the
+  explicit payload and rendering of the saved run summary and health boundary.
+- TypeScript, strict scoped mypy for `apps/api/frontier.py` and
+  `collection.py`, Ruff check/format, Prettier, and `git diff --check` passed.
+- Combined Frontier/Arena regression: **354 passed, 2 failed** in 81.75
+  seconds. Peak RSS was **366,436 KiB**, with zero swaps. Both failures are
+  existing Arena supervisor tests rejected by the shared
+  `resource_admission_lock_busy` gate. At the post-run inspection, existing
+  Veritas batch PID **3913373** held `/home/charlie/midas/data/arena/.global-admission.lock`
+  while in `D` state; it was left untouched. Host memory PSI avg10 then
+  measured **35.60% some / 29.55% full**, with **9.9 GiB available** and
+  **3.7 GiB swap in use**. Do not repeat admission-dependent tests until that
+  lock releases and pressure is remeasured.
+- Production build and browser tests were not rerun for this code commit after
+  pressure rose. Earlier build/browser results belong to earlier revisions.
+
+No real adapter, external API, collector against a live source, Arena worker,
+Reality action, production service, or historical store was accessed. Tests
+used the fixture adapter only. The endpoint has not been deployed; live
+collection remains unverified.
+
+| Component | Status | Evidence and remaining work |
+| --- | --- | --- |
+| Explicit bounded collector API and UI | IMPLEMENTED, LIVE VALIDATION PENDING | Fixture API and component tests pass; live source capture, populated browser response, HTTP resume/history, production build, and deployment are pending. |
+| Disabled/held/capability request gates | COMPLETE AND VERIFIED | API fixtures prove rejection before collector request or journal creation; no source config was enabled. |
+| Broader Frontier/Arena regression | PARTIALLY VERIFIED | 354 passed; two existing supervisor tests failed because a foreign process held Arena's shared admission lock. Rerun only after safe admission is confirmed. |
+| Production deployment | DEFERRED | Frontier remains isolated and undeployed. |
+
+**Next safe work:** after resource admission recovers, rerun the two blocked
+supervisor tests and build/browser verification for `cf67b2b`. Continue offline
+collection-history/recovery integration or other fixture-backed acceptance
+work. Do not contact a source merely to populate the catalog or start a
+background collector. Frontier remains **PARTIALLY VERIFIED**, research-only,
+isolated, and undeployed.
+
 ## Verified recorded-health catalog and replay provenance — 2026-10-28 00:31 CET
 
 Code commits `31f62db`, `1779e89`, `9a3eced`, and `8f9b9b8` add a bounded

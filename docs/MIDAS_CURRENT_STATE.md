@@ -1098,3 +1098,34 @@ economic result was established. Frontier remains isolated, research-only,
 undeployed, and **PARTIALLY VERIFIED**. See the [mission ledger](frontier/FRONTIER_MISSION_LEDGER.md)
 and [engineering report](frontier/FRONTIER_ENGINEERING_REPORT.md) for the
 remaining offline gaps and source/deployment boundaries.
+
+## Frontier finite source-capture API — 2026-10-27 23:38 UTC
+
+Code commit `cf67b2b` exposes `BoundedSourceCollector` as an explicit
+`POST /api/frontier/collect/{venue}` operation and an Exchanges-view button.
+It shares the source lock with existing probes, rechecks the configured public
+probe flag, source-use hold, capabilities, and source request limits, and caps
+one run at five markets, two books, depth ten, 4 MiB of evidence, and 60
+seconds. Mission Control sends a smaller 3-market/1-book/depth-5, 30-second
+request. The call uses the API request lifecycle and starts no Arena job,
+worker, timer, or background service. The endpoint supports starting a run;
+the module's resume capability does not yet have an HTTP route or UI.
+
+The two finite-collection API tests pass **2/2** in 1.10 seconds with fixture
+adapters. `Frontier.test.tsx` passes **8/8** in 4.19 seconds, including the
+explicit request body, saved run summary, and adapter-local health caveat.
+TypeScript, strict scoped mypy, Ruff, Prettier, and `git diff --check` pass.
+The combined Frontier/Arena regression produced **354 passed and two host
+admission failures** in 81.75 seconds, at **366,436 KiB peak RSS** and zero
+swaps. The two failures are existing Arena job-supervisor tests that could not
+acquire the shared admission lock; process **3913373**, the existing Veritas
+gap-detail batch, held that lock. It remains untouched. The production build
+and browser suite were deferred after memory PSI rose to 35.60% `some` / 29.55%
+`full`; 9.9 GiB was available and 3.7 GiB of swap was in use.
+
+No real adapter, external API, collector against a live source, Arena worker,
+Reality action, production service, or historical store was accessed. Source
+configuration remains disabled by default and existing source-use holds remain
+in force. The endpoint/UI integration is fixture-verified; live collection and
+the populated browser flow remain pending. Frontier is isolated,
+research-only, **PARTIALLY VERIFIED**, and undeployed.

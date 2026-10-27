@@ -426,13 +426,18 @@ adapter-local checkpoint health, not continuous venue availability or account
 eligibility. The catalog makes no source request and leaves a missing journal
 uncreated.
 
-`midas.frontier.collection.BoundedSourceCollector` is a separate finite
-one-source lifecycle with fixture-tested restart checkpoints and an append-only
-hash-chained SQLite journal. It is not exposed through the API, Arena, or a
-service. A caller must explicitly instantiate it with an adapter and store;
-its start path rechecks configured probe flags and source policy holds. Use only
-temporary or approved Frontier roots, and see the [operations guide](frontier/FRONTIER_OPERATIONS.md)
-for its bounds and limitations. No live collection was started.
+`midas.frontier.collection.BoundedSourceCollector` has an explicit finite
+`POST /api/frontier/collect/{venue}` entry point in the Exchanges view. The API
+rechecks the enabled public-probe flag, source-use hold, declared capabilities,
+and per-source request limit before creating a run. Each request is capped at
+five markets, two books, depth ten, 4 MiB of evidence, and 60 seconds; the UI
+submits a smaller 3-market/1-book/depth-5, 30-second request. It runs in the
+request lifecycle, shares the source lock with existing probes, and starts no
+Arena job, background worker, timer, or continuous collector. Collection is
+still disabled by default and Kalshi/Kraken/Coinbase policy holds remain
+enforced. Tests use a fixture adapter; no live collection was started. See the
+[operations guide](frontier/FRONTIER_OPERATIONS.md) for the module's larger
+standalone bounds and the API's smaller request limits.
 
 Exercise the pinned timeline worker and API integration without launching a
 worker process:

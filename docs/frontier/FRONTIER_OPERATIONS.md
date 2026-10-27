@@ -233,27 +233,33 @@ of two same-time checkpoints disables the other until the first is deselected.
 ## Finite source collection module
 
 `midas.frontier.collection.BoundedSourceCollector` implements one finite,
-sequential source run with append-only checkpoints. It is currently a Python
-module, not an API route, Arena job, systemd unit, timer, or background service.
-Registering it in code does not start collection. Its tests inject fixture
-adapters and make no source calls.
+sequential source run with append-only checkpoints. Frontier exposes one
+operator-triggered `POST /api/frontier/collect/{venue}` request from the
+Exchanges view. It calls the collector directly in the API request lifecycle,
+shares the per-source lock with other probe routes, and starts no Arena job,
+systemd unit, timer, or background service. Nothing is collected on page load.
+The endpoint can make public GET requests only after the source's enabled and
+live-probe flags are set and its source-use hold is absent. Tests inject fixture
+adapters and make no exchange requests.
 
-Before `start`, configure exactly one adapter and a temporary or approved
-Frontier store. `start` verifies adapter enablement, the source public-probe
-flag, policy hold, declared discovery/book capabilities, and request limits.
-Each run allows at most 20 markets, 10 book tasks, depth 20, 16 MiB of captured
-evidence, and five minutes wall time. The per-source loop is sequential and
-records failures independently. A restart resumes from the last append-only
-checkpoint and revalidates its sequence/hash chain and pinned adapter version
-and config; it does not silently relaunch a terminal run.
+`start` verifies adapter enablement, the source public-probe flag, policy hold,
+declared discovery/book capabilities, and request limits. Its standalone
+module bounds are 20 markets, 10 book tasks, depth 20, 16 MiB of captured
+evidence, and five minutes wall time. The API applies smaller hard caps of five
+markets, two books, depth ten, 4 MiB, and 60 seconds. Mission Control submits
+three markets, one book, depth five, and 30 seconds. The per-source loop is
+sequential and records failures independently. A restart through the module
+resumes from the last append-only checkpoint and revalidates its sequence/hash
+chain and pinned adapter version/config; it does not silently relaunch a
+terminal run. The HTTP route currently starts a new run only; it does not
+expose resume or collection-run history.
 
 The collector journal (`frontier-collection.sqlite3`) is separate from the
 Frontier observation database but stored under the selected Frontier root. It
 is capped at 64 MiB, 1,000 runs, 100 checkpoints per run, and 20,000 total
 checkpoints. Keep its store away from Reality, Veritas, frozen campaigns, and
-other historical evidence. This checkpoint includes fixture-only collection
-tests; neither this module nor a source request was enabled or launched in a
-service.
+other historical evidence. The current endpoint and UI path are fixture
+verified only; no live collection was started and no service was changed.
 
 ## Inspecting failed captures
 

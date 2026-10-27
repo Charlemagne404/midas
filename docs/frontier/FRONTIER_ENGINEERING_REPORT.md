@@ -2,20 +2,20 @@
 
 **Report date:** 2026-10-28
 
-**Latest code checkpoint:** `8e79bf1f3bc583aa2329096729c6dd9c624c603d` follows
-`ea073c4cdb4a00b70fc609e8806f80a40542cd4c` to make the adapter-local meaning of
-recorded health explicit in Mission Control. The earlier commit validates
-recorded source-health events against the bounded collector journal, pins
-checkpoint digests in timeline snapshot schema 2, preserves schema-1 snapshot
-reads, and adds the receipt-age control. The combined Frontier/Arena Python
-selection passes 350/350; the Web suite passes 40/40; an isolated browser check
-passes 1/1; and legacy integration/Arena
-admission regressions pass 63 with one PostgreSQL-dependent skip. TypeScript,
-ESLint, Ruff, Prettier, scoped strict mypy, and the production frontend build
-pass. The known 544.41 kB Chart chunk advisory remains. No exchange request or
-Arena worker was launched. Genuine live source permission/evidence and
-production deployment remain unresolved; Frontier is isolated, incomplete, and
-undeployed.
+**Latest code checkpoint:** `cf67b2b` exposes finite source collection through
+an explicit, configuration-gated API request and Exchanges-view action. The
+route shares per-source probe locks, uses the hash-chained checkpointed
+collector, and applies smaller bounds than the standalone collector. Fixture
+API and UI tests, TypeScript, strict scoped mypy, Ruff, and Prettier pass. The
+combined Frontier/Arena selection produced 354 passes and two existing Arena
+supervisor failures because a running external Veritas batch held the shared
+resource-admission lock. Production build and browser tests were deferred under
+the resulting host pressure. Earlier documented checkpoints include the
+recorded-health catalog, hash-bound timeline source state, and production build
+results for earlier revisions. No exchange request or Arena worker was
+launched. Live collection, collection-run history/resume routes, source
+permissions, cross-venue evidence, and deployment remain unresolved; Frontier
+is isolated, incomplete, and undeployed.
 
 **Branch:** `codex/frontier-20261026`
 
@@ -4595,3 +4595,69 @@ checkpoint commit.
 Frontier remains **PARTIALLY VERIFIED**, isolated, research-only, and
 undeployed. Continue the remaining offline acceptance work. Do not open Arena
 network egress or register an unattended collector to populate this catalog.
+
+### Explicit finite source collection API — 2026-10-27 23:38 UTC
+
+Code commit **`cf67b2b`** exposes `BoundedSourceCollector` as
+`POST /api/frontier/collect/{venue}` and an explicit Exchanges-view action.
+The route checks the configured source enablement and public-probe flag, rejects
+held sources, verifies market-discovery and requested book capabilities, and
+applies the source's market limit before collection starts. It shares the
+per-venue lock with the existing probes. The request calls the collector in the
+API request lifecycle and starts no Arena job, worker, timer, or background
+loop.
+
+The API caps each request at five markets, two books, depth ten, 4 MiB of
+captured evidence, and 60 seconds wall time. The UI sends a fixed smaller
+request: three markets, one book, depth five, and 30 seconds. Adapter request
+count and a conservative request upper bound are returned with the checkpointed
+run result. Mission Control displays the run state and identifier, counts,
+failures, and the limitation that this source-health event is adapter-local.
+Source adapters remain disabled by default; Kalshi, Kraken, and Coinbase holds
+remain effective. The route supports starting a run only; HTTP run-history and
+resume routes are still needed for complete operator recovery after a paused
+run or page reload.
+
+#### Verification
+
+- `tests/frontier/test_collection_api.py`: **2/2** in 1.10 seconds using the
+  fixture adapter. Coverage includes successful persisted market/book capture,
+  request bounds, and disabled/held rejection before fake requests or journal
+  creation.
+- `apps/web/src/Frontier.test.tsx`: **8/8** in 4.19 seconds. The test verifies
+  no automatic POST, the fixed finite request body, persisted result summary,
+  and adapter-local health caveat.
+- TypeScript, strict scoped mypy for `frontier.py` and `collection.py`, Ruff
+  check/format, Prettier, and `git diff --check` pass.
+- Combined Frontier/Arena Python command: **354 passed, 2 failed** in 81.75
+  seconds, **366,436 KiB peak RSS**, zero swaps. Both failures are existing
+  supervisor tests (`test_supervised_job_runner_imports_the_submitted_checkout`
+  and `test_veritas_qualification_supervisor_has_read_only_resource_bounds`)
+  rejected by the shared `resource_admission_lock_busy` check. The observed
+  lock holder was existing Veritas batch PID **3913373** in `D` state using
+  existing Veritas/Arena roots; it was not interrupted. Post-run memory PSI
+  avg10 measured **35.60% some / 29.55% full**, with **9.9 GiB available** and
+  **3.7 GiB swap in use**. Do not retry admission-dependent tests until the
+  shared lock releases and current pressure is measured again.
+- Production build and browser tests were deferred for this revision. The
+  previous build and browser results are dated and do not validate `cf67b2b`.
+
+No genuine source call, live collector run, Arena worker, Reality action,
+production service change, or historical evidence access occurred. All
+integrations here are fixture verified; live collection remains pending.
+
+| Component | Status | Evidence and remaining work |
+| --- | --- | --- |
+| Finite collection route and UI | IMPLEMENTED, LIVE VALIDATION PENDING | Source gates, request caps, stored result summary, and no-background behavior pass fixtures. Live capture and populated browser verification remain pending. |
+| Collection module checkpoint and resume | PARTIALLY VERIFIED | Module restart recovery remains fixture tested; HTTP history and resume routes are not implemented. |
+| Disabled/held source guards | COMPLETE AND VERIFIED | API tests reject before collector call or journal creation. |
+| Combined Frontier/Arena regressions | PARTIALLY VERIFIED | 354 pass; two shared-lock failures are external resource-admission failures. |
+| Browser and production build for latest code | IMPLEMENTED, TESTING PENDING | Deferred under measured host pressure; earlier revision evidence is not transferred. |
+| Production deployment | DEFERRED | Branch remains isolated, unmerged, and undeployed. |
+
+Frontier remains research-only and **PARTIALLY VERIFIED**. Next safe work is to
+wait for the existing Arena lock and memory pressure to recover, then rerun the
+two blocked tests and latest-revision build/browser checks. Continue with
+offline collection history/recovery integration or fixture-backed acceptance;
+do not start unattended collection or contact a venue merely to populate test
+data.
