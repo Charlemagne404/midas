@@ -66,6 +66,33 @@ independent audit require the exact quote identity to match the verified payoff
 settlement unit, and require a fee identity before including a fee amount. The
 virtual-funding UI keeps separate balances by venue and canonical denomination.
 
+## Virtual settlement-duration sensitivity
+
+Candidate cards can submit a user-entered annual carry rate (basis points) for
+each venue to `POST /api/frontier/opportunities/capital-carry`. The request must
+name the candidate's saved run and exact result hash. The API loads that run and
+the market observations pinned on its candidate legs, verifies store integrity
+and source/market/venue identity, then requires verified, hash-identified future
+settlement metadata and a single exact settlement denomination. It uses no
+network request, account, balance, wallet, or saved-source permission expansion.
+Held Kalshi/Kraken candidates remain unavailable through the existing
+quarantine.
+
+The calculation uses simple interest at the supplied rate, actual duration in
+seconds divided by a 365-day year, and no compounding or currency rounding. It
+starts at the saved candidate observation time and holds all capital for a
+venue until the latest settlement among that venue's candidate markets. This
+conservative duration may overstate individual-leg holding time. It is not an
+exchange fee or a financing offer. Unknown fees can remain excluded from the
+candidate's capital amount. The response retains exact decimal values, both
+run/candidate hashes, per-market observation IDs, validated normalized-store-row
+and raw-body hashes, resolution evidence references, and the independent
+arithmetic disposition. The result is
+computed on demand and is not written to the Frontier database. It cannot change
+candidate classification or practical eligibility; it does not establish
+settlement truth, financing availability, legal access, transferability,
+collateral eligibility, or executable returns.
+
 ## Saved Kalshi fee evidence
 
 The event/series fee-metadata probe is a source capture, not an immediate fee

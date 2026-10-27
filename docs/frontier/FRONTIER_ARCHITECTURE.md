@@ -17,11 +17,43 @@ as mutable Frontier storage.
 | Relationship intelligence | `relationships.py` | Deterministic indexed title and parent-event/outcome hypotheses, source-selected component references, strict payoff checks, and immutable review contracts. |
 | Candidate calculators | `economics.py` | Decimal cross-venue binary and same-market exhaustive multi-outcome all-long checks with fee, depth, freshness, timing, and scenario bounds; provenance-bound conditional Kalshi one-fill estimate; exact bounded one-sided fill sensitivity; separate instrument-bound Kalshi one-fill and one-order fee sensitivities. |
 | Independent arithmetic audit | `independent_audit.py` | Separately recomputes supported candidate identities, payoff vectors, pinned quotes/depth, fees, costs, terminal P&L, fill-pattern sensitivity, and classification from replay inputs. |
+| Virtual capital-duration sensitivity | `capital.py` | Recomputes unrounded simple-interest carry from explicit per-venue user assumptions, candidate capital, and hash-checked future settlement metadata pinned to each leg; an independent arithmetic pass cannot change candidate classification. |
 | Durable evidence | `storage.py` | Append-only, size- and row-bounded SQLite observations, markets, relationship reviews/revisions, runs, and paired comparisons. |
 | Replay | `replay.py` | Stable input ordering, scenario/mapping/proposal-limit-aware replay identities, exact store-record provenance for API-loaded models, deterministic results, and paired assumption comparisons. |
 | Arena paired replay | `packages/midas/arena/frontier_replay.py`, `arena/jobs.py` | Immutable content-addressed input snapshots, a bounded offline paired-replay worker, and hash-verified result artifacts under Arena's existing admission gate. |
-| HTTP API | `apps/api/frontier.py` | Bounded local queries and graph neighborhoods, relationship proposals/reviews, deterministic and paired replay, config-gated market/event-group/MVE/component capture, raw/hash/identity-checked saved Kalshi fee evidence for later replay, and hash-bound fee sensitivities. |
-| Mission Control workspace | `apps/web/src/Frontier.tsx` | Sources, markets/books/event context, one-page Kalshi MVE discovery and explicit selected-component rule capture, relationship hypotheses, candidates, economic workbench, local comparisons, bounded Arena replay history/results, and readiness. |
+| HTTP API | `apps/api/frontier.py` | Bounded local queries and graph neighborhoods, relationship proposals/reviews, deterministic and paired replay, config-gated market/event-group/MVE/component capture, raw/hash/identity-checked saved Kalshi fee evidence for later replay, fee sensitivities, and exact-run-bound virtual capital carry. |
+| Mission Control workspace | `apps/web/src/Frontier.tsx` | Sources, markets/books/event context, one-page Kalshi MVE discovery and explicit selected-component rule capture, relationship hypotheses, candidates, venue-separated balances and settlement-duration sensitivity, local comparisons, bounded Arena replay history/results, and readiness. |
+
+## Virtual capital-duration sensitivity
+
+`POST /api/frontier/opportunities/capital-carry` accepts a saved run ID and
+result hash, one candidate ID, and a decimal-string annual carry rate in basis
+points for every venue represented by the candidate. It reloads that exact
+append-only replay and each candidate leg's pinned market observation; it does
+not query a latest-market window or call a source adapter. A missing/held market,
+mixed settlement denomination, incomplete capital mapping, unverified or
+hash-missing resolution, settlement at/before the candidate observation time,
+or invalid input is rejected.
+
+For each venue it applies simple interest to the candidate's recorded venue
+capital from the candidate observation time through the latest settlement among
+that venue's candidate markets. The basis is actual seconds divided by 365 days,
+without compounding or currency rounding. That full-venue-through-latest rule
+is conservative when legs have different release times. It is a user-assumption
+sensitivity, not a sourced financing rate, fee schedule, capital-access claim,
+or execution model. Unknown fees can remain excluded from candidate capital;
+the result labels that and keeps the original candidate classification and
+practical-eligibility state unchanged.
+
+The response pins candidate/replay hashes, observation IDs and validated
+normalized-store-row hashes, raw observation hashes,
+resolution evidence hashes/fingerprints, per-venue rate/capital/time inputs,
+and exact decimal outputs. A separate arithmetic pass checks source-record
+identity and recomputes duration, carry, and adjusted gross/net result. This
+arithmetic check does not authenticate source truth or settlement, and the
+transient result is reproducible from the same saved run and rate inputs rather
+than persisted as a new artifact. Held-source quarantine is applied before the
+market inputs are loaded.
 
 ## Adapter capability contract
 

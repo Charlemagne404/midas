@@ -1,6 +1,33 @@
 # Project Frontier Mission Ledger
 
-**Latest checkpoint (2026-10-27 17:58 UTC):** Code commit `047298b` adds
+**Latest checkpoint (2026-10-27 18:15 UTC):** Code commit `e9da21a` adds a
+saved-run-bound virtual capital-duration sensitivity. Candidates expose their
+run ID/hash; the on-demand API validates held-source state and each leg's pinned
+market/store-row/raw hashes, then requires source-marked verified future
+settlement metadata and exact common denomination. User-entered annual bps rates
+feed an unrounded, venue-separated actual-seconds/365 simple-interest scenario
+with independent arithmetic and no candidate classification change. Result is
+transient, uses no source request, and creates no database record. The full
+Frontier Python suite passed **208 tests** (334,996 KiB peak RSS, zero swaps or
+socket activity) and the full web suite passed **40 tests** before the final
+store-row-hash output adjustment. After that narrow change, the focused Python
+model/API selection passed **8 tests** and the Frontier component suite passed
+**8 tests**. TypeScript, targeted ESLint/Prettier, strict mypy on the two changed
+Python modules, Ruff check/format, and `git diff --check` passed. The production
+build passed before the final display adjustment; it reports the existing
+index/chart chunk-size warning. At 18:15 UTC, PSI `avg10` was 39.17% (`some`) /
+34.05% (`full`), with 482,448 KiB swap free. Browser E2E and a final
+post-provenance full suite/build are deferred under that pressure sample. No
+live/held source, protected service, or production deployment was used. Frontier
+remains isolated, incomplete, and undeployed.
+
+Next safe actions: after current PSI settles, rerun the full Frontier and web
+suites plus production build against the final row-hash response; add one
+fixture-intercepted browser E2E for user-entered rates and the saved-run route;
+then continue the remaining economic gaps from the report. Keep source terms,
+Reality, production services, and existing research evidence unchanged.
+
+**Previous checkpoint (2026-10-27 17:58 UTC):** Code commit `047298b` adds
 deterministic pagination for uncentered relationship text search. Its keyset
 cursor binds the normalized query, depth, page size, and append-only graph
 revision; the UI now searches recorded market titles/IDs, loads more matches,

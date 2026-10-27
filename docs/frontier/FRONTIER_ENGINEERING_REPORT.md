@@ -2894,3 +2894,62 @@ At `2026-10-27T17:44:28Z`, memory PSI `avg10` was 45.36% (`some`) / 40.48%
 (`full`), `avg60` 37.67% / 33.08%, and `avg300` 23.98% / 21.20%.
 `MemAvailable` was 9,631,192 KiB and swap free was 486,248 KiB of 4 GiB. The
 production frontend build remains deferred.
+
+### Virtual capital-duration sensitivity — 2026-10-27 18:15 UTC
+
+Code commit `e9da21abcacb397d0962eb8507e46f52f4daa8d5` adds a read-only,
+on-demand capital carry sensitivity for saved opportunity candidates.
+`GET /api/frontier/opportunities` now returns the
+candidate's saved run ID and result hash; the new
+`POST /api/frontier/opportunities/capital-carry` requires those exact values,
+the candidate ID, and a decimal-string annual carry rate in basis points for
+every venue. It reloads the append-only run, applies existing held-source
+quarantine, and reads each position leg's exact pinned market observation. It
+makes no venue request and writes no new database artifact.
+
+The calculator requires exact common settlement denomination, source-marked
+verified future settlement timing, resolution rule/authority and evidence
+references, candidate/leg/market identity agreement, bounded rates, and
+validated normalized-store-row and raw-body hashes. It computes simple interest
+per venue as `capital × rate_bps / 10,000 × elapsed_seconds / 31,536,000`,
+starting at the saved candidate observation time and conservatively holding
+that venue's total capital through its latest candidate-market settlement.
+There is no compounding, currency rounding, shared collateral, funding source,
+or transfer assumption. Exact inputs/results receive deterministic SHA-256
+identities. A separate calculation checks pinned market identity, source and
+store-row hashes, release times, durations, carry, and adjusted gross/net P&L.
+The sensitivity is hypothetical, may retain unknown-fee exclusions, and cannot
+change the original candidate classification or eligibility. It does not
+authenticate the settlement claim or establish executable profitability.
+
+The full Frontier Python suite passed **208 tests** in 40.60 seconds (334,996
+KiB peak RSS, zero swaps and socket messages), and the full web unit suite passed
+**40 tests** before the final store-row-hash display was added. After that
+additive provenance change, the focused capital model/API selection passed
+**8 tests**, and the Frontier component suite passed **8 tests**. Strict mypy
+for `capital.py` and the Frontier API, Ruff check/format, TypeScript typecheck,
+targeted ESLint, and Prettier checks passed. The production frontend build also
+passed before that final display adjustment; Vite reported its existing
+greater-than-500-kB index/chart chunk warning. The latest resource sample at
+`2026-10-27T18:15:31Z` showed memory PSI `avg10` 39.17% (`some`) / 34.05%
+(`full`), `MemAvailable` 9,479,384 KiB and 482,448 KiB swap free; the build was
+not repeated under that pressure. Browser E2E, a post-provenance full
+suite/build, live settlement evidence, and deployment remain outstanding. No
+live or held source, protected service, or production deployment was accessed.
+Frontier remains incomplete, isolated, and undeployed.
+
+#### Completion-matrix addendum
+
+| Component | Current status | Boundary |
+| --- | --- | --- |
+| Virtual capital-duration sensitivity | PARTIALLY VERIFIED | Fixture-backed model, store-pinned API, independent arithmetic, Mission Control input/results, deterministic hashes, and targeted tests pass. No live financing terms or genuine verified live settlement inputs were tested; transfers, FX, collateral, jurisdiction, unknown fees, execution risk, and custody remain outside the calculation. |
+| Mission Control capital workbench | PARTIALLY VERIFIED | Adds user-entered annual bps by venue, exact source-row/raw/resolution references, adjusted gross/net output, and limitations. Full component/API tests pass; browser E2E for this path and the post-row-hash production build remain pending. |
+| Project Frontier overall | PARTIALLY VERIFIED | The mission remains isolated, unmerged, undeployed, and incomplete; source permission gates, live cross-venue semantic/economic verification, and production readiness are unresolved. |
+
+Files changed for this checkpoint: `packages/midas/frontier/capital.py`,
+`apps/api/frontier.py`, `apps/web/src/Frontier.tsx`,
+`apps/web/src/Frontier.test.tsx`, `apps/web/src/frontier.css`,
+`tests/frontier/test_capital_carry.py`, and `tests/frontier/test_api.py` under
+code commit `e9da21abcacb397d0962eb8507e46f52f4daa8d5`; this report,
+`FRONTIER_ARCHITECTURE.md`, `FRONTIER_OPERATIONS.md`, and the mission ledger
+record the documentation update.
