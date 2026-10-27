@@ -2129,6 +2129,7 @@ def test_trade_read_returns_hash_verified_normalized_batch(tmp_path):
         price="0.51",
         quantity="4",
         quote_currency="USD",
+        quote_currency_identity=SettlementAssetIdentity(kind=SettlementAssetKind.FIAT, code="USD"),
         aggressor_side="yes",
         exchange_timestamp_utc=T0,
         received_at_utc=T0 + timedelta(milliseconds=9),
@@ -2142,6 +2143,13 @@ def test_trade_read_returns_hash_verified_normalized_batch(tmp_path):
         assert result["observation_count"] == 1
         assert result["trade_count"] == 1
         assert result["items"][0]["native_trade_id"] == "fixture-trade"
+        assert result["items"][0]["quote_currency_identity"] == {
+            "schema_version": 1,
+            "kind": "fiat",
+            "code": "USD",
+            "network_id": None,
+            "asset_reference": None,
+        }
         assert result["items"][0]["source_observation_record_id"] == observation_id
         assert result["items"][0]["source_raw_sha256"] == raw.raw_sha256
         assert requests == []
