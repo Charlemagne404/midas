@@ -13,7 +13,7 @@ from fractions import Fraction
 from functools import wraps
 from typing import Literal
 
-from pydantic import Field
+from pydantic import Field, model_validator
 
 from midas.frontier.models import (
     BookSnapshot,
@@ -32,7 +32,7 @@ from midas.frontier.models import (
 from midas.frontier.relationships import Relationship, VerificationState
 
 D = Decimal
-ECONOMIC_MODEL_VERSION = "frontier-economic-verifiers-3"
+ECONOMIC_MODEL_VERSION = "frontier-economic-verifiers-4"
 _KALSHI_TAKER_FEE_TYPES = frozenset({"quadratic", "quadratic_with_combo_maker_fees"})
 
 
@@ -87,6 +87,44 @@ class PositionLeg(FrontierModel):
     market_observation_id: str
 
 
+class OneSidedFillOutcome(FrontierModel):
+    terminal_state_id: str
+    filled_leg_ids: tuple[str, ...] = Field(min_length=0, max_length=16)
+    unfilled_leg_ids: tuple[str, ...] = Field(min_length=0, max_length=16)
+    pnl_before_fees: Decimal = Field(allow_inf_nan=False)
+    pnl_after_fees: Decimal | None = Field(default=None, allow_inf_nan=False)
+
+
+class OneSidedFillSensitivity(FrontierModel):
+    model_version: str = "frontier-full-or-none-fill-patterns-1"
+    leg_count: int = Field(ge=1, le=16)
+    pattern_space_size: int = Field(ge=2, le=65_536)
+    fees_complete: bool
+    worst_before_fees: OneSidedFillOutcome
+    worst_after_fees: OneSidedFillOutcome | None = None
+    assumptions: tuple[str, ...]
+
+    @model_validator(mode="after")
+    def sensitivity_counts_and_fee_state_match(self) -> OneSidedFillSensitivity:
+        if self.pattern_space_size != 1 << self.leg_count:
+            raise ValueError("Fill-pattern space must cover every full-or-none leg pattern")
+        for outcome in (self.worst_before_fees, self.worst_after_fees):
+            if outcome is None:
+                continue
+            if len(outcome.filled_leg_ids) + len(outcome.unfilled_leg_ids) != self.leg_count:
+                raise ValueError("Fill-pattern leg identities do not match the declared leg count")
+            if len(set(outcome.filled_leg_ids + outcome.unfilled_leg_ids)) != self.leg_count:
+                raise ValueError("Fill-pattern leg identities must be unique")
+            if set(outcome.filled_leg_ids) & set(outcome.unfilled_leg_ids):
+                raise ValueError("A fill-pattern leg cannot be both filled and unfilled")
+        if self.fees_complete != (self.worst_after_fees is not None):
+            raise ValueError("After-fee fill sensitivity must match fee completeness")
+        if self.fees_complete and self.worst_after_fees is not None:
+            if self.worst_after_fees.pnl_after_fees is None:
+                raise ValueError("A complete-fee fill pattern must include its net P&L")
+        return self
+
+
 class OpportunityCandidate(FrontierModel):
     schema_version: int = 1
     candidate_id: str
@@ -98,6 +136,7 @@ class OpportunityCandidate(FrontierModel):
     venues: tuple[str, ...]
     relationship_id: str | None = None
     legs: tuple[PositionLeg, ...] = ()
+    one_sided_fill_sensitivity: OneSidedFillSensitivity | None = None
     independent_audit: IndependentEconomicAudit | None = None
     outcome_payout_by_state: dict[str, Decimal] = Field(default_factory=dict)
     gross_cost: Decimal | None = None
@@ -120,6 +159,100 @@ class OpportunityCandidate(FrontierModel):
 
 class _LegBuildError(ValueError):
     pass
+
+
+def _fill_pattern_leg_id(leg: PositionLeg) -> str:
+    return f"{leg.venue}:{leg.native_market_id}:{leg.instrument_id}"
+
+
+def _full_or_none_fill_sensitivity(
+    legs: tuple[PositionLeg, ...],
+    payout_by_leg: dict[str, dict[str, Decimal]],
+) -> OneSidedFillSensitivity:
+    """Find the exact worst full/no-fill outcome without enumerating all subsets."""
+    if not 1 <= len(legs) <= 16:
+        raise ValueError("Fill-pattern sensitivity supports one to sixteen candidate legs")
+    ordered_legs = tuple(sorted(legs, key=_fill_pattern_leg_id))
+    leg_ids = tuple(_fill_pattern_leg_id(leg) for leg in ordered_legs)
+    if len(set(leg_ids)) != len(leg_ids) or set(leg_ids) != set(payout_by_leg):
+        raise ValueError("Fill-pattern payoff vectors must uniquely match candidate legs")
+    states = tuple(sorted(set.intersection(*(set(payout_by_leg[key]) for key in leg_ids))))
+    if not states or any(set(payout_by_leg[key]) != set(states) for key in leg_ids):
+        raise ValueError("Fill-pattern payoff vectors must share at least one terminal state")
+    fees_complete = all(leg.modeled_fee is not None for leg in ordered_legs)
+    before_ranked: tuple[Decimal, int, tuple[str, ...], str, Decimal] | None = None
+    after_ranked: tuple[Decimal, int, tuple[str, ...], str, Decimal] | None = None
+    for state in states:
+        before_contributions = tuple(
+            payout_by_leg[leg_id][state] - leg.quantity * leg.modeled_buy_price
+            for leg_id, leg in zip(leg_ids, ordered_legs, strict=True)
+        )
+        before_filled = tuple(
+            leg_id
+            for leg_id, contribution in zip(leg_ids, before_contributions, strict=True)
+            if contribution < 0
+        )
+        before_value = sum((value for value in before_contributions if value < 0), D(0))
+        before_key = (before_value, len(before_filled), before_filled, state, before_value)
+        if before_ranked is None or before_key < before_ranked:
+            before_ranked = before_key
+        if fees_complete:
+            after_contributions = tuple(
+                contribution - (leg.modeled_fee or D(0))
+                for contribution, leg in zip(before_contributions, ordered_legs, strict=True)
+            )
+            after_filled = tuple(
+                leg_id
+                for leg_id, contribution in zip(leg_ids, after_contributions, strict=True)
+                if contribution < 0
+            )
+            after_value = sum((value for value in after_contributions if value < 0), D(0))
+            before_same_pattern = sum(
+                (
+                    before_contributions[index]
+                    for index, leg_id in enumerate(leg_ids)
+                    if leg_id in set(after_filled)
+                ),
+                D(0),
+            )
+            after_key = (
+                after_value,
+                len(after_filled),
+                after_filled,
+                state,
+                before_same_pattern,
+            )
+            if after_ranked is None or after_key < after_ranked:
+                after_ranked = after_key
+    if before_ranked is None:
+        raise ValueError("No terminal state was evaluated")
+
+    def make_outcome(
+        value: tuple[Decimal, int, tuple[str, ...], str, Decimal], *, after_fees: bool
+    ) -> OneSidedFillOutcome:
+        pnl, _, filled, state, before_pnl = value
+        return OneSidedFillOutcome(
+            terminal_state_id=state,
+            filled_leg_ids=filled,
+            unfilled_leg_ids=tuple(item for item in leg_ids if item not in set(filled)),
+            pnl_before_fees=before_pnl,
+            pnl_after_fees=pnl if after_fees else None,
+        )
+
+    return OneSidedFillSensitivity(
+        leg_count=len(ordered_legs),
+        pattern_space_size=1 << len(ordered_legs),
+        fees_complete=fees_complete,
+        worst_before_fees=make_outcome(before_ranked, after_fees=False),
+        worst_after_fees=(
+            make_outcome(after_ranked, after_fees=True) if after_ranked is not None else None
+        ),
+        assumptions=(
+            "Each leg is modeled as a full fill or no fill at its scenario purchase price; the exact worst case across all 2^n patterns is solved without assigning probabilities.",
+            "No post-fill hedge, unwind, incremental partial quantity, or price recovery is modeled.",
+            "The result is a terminal exposure sensitivity, not an order-fill prediction or execution claim.",
+        ),
+    )
 
 
 def _high_precision_decimal_context[**P, R](function: Callable[P, R]) -> Callable[P, R]:
@@ -724,6 +857,22 @@ def generate_multi_outcome_coverage_candidate(
             top_asks, effective_asks, fees, strict=True
         )
     )
+    instrument_by_id = {item.native_instrument_id: item for item, _, _ in top_asks}
+    one_sided_fill = _full_or_none_fill_sensitivity(
+        legs,
+        {
+            _fill_pattern_leg_id(leg): {
+                state: leg.quantity
+                * next(
+                    payout.amount
+                    for payout in instrument_by_id[leg.instrument_id].payouts
+                    if payout.state_id == state
+                )
+                for state in states
+            }
+            for leg in legs
+        },
+    )
     evidence_sha256 = _multi_candidate_hash(market, books, legs, scenario)
     return OpportunityCandidate(
         candidate_id=candidate_id,
@@ -734,6 +883,7 @@ def generate_multi_outcome_coverage_candidate(
         venues=(market.venue.value,),
         relationship_id=None,
         legs=legs,
+        one_sided_fill_sensitivity=one_sided_fill,
         outcome_payout_by_state=payouts,
         gross_cost=gross_cost,
         modeled_fees=total_fees,
@@ -1167,6 +1317,18 @@ def _evaluate_pair(
         book_observation_id=right_book.provenance.observation_id,
         market_observation_id=right.provenance.observation_id,
     )
+    one_sided_fill = _full_or_none_fill_sensitivity(
+        (leg_left, leg_right),
+        {
+            _fill_pattern_leg_id(leg_left): {
+                state: common_quantity * left_pay[state] for state in left.payoff.state_ids
+            },
+            _fill_pattern_leg_id(leg_right): {
+                state: common_quantity * right_pay[state_mapping[state]]
+                for state in left.payoff.state_ids
+            },
+        },
+    )
     return OpportunityCandidate(
         candidate_id=identity,
         family=family,
@@ -1176,6 +1338,7 @@ def _evaluate_pair(
         venues=tuple(sorted((left.venue.value, right.venue.value))),
         relationship_id=relationship.relationship_id,
         legs=(leg_left, leg_right),
+        one_sided_fill_sensitivity=one_sided_fill,
         outcome_payout_by_state=payout,
         gross_cost=gross_cost,
         modeled_fees=fees_total,

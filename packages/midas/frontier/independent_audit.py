@@ -15,9 +15,12 @@ from typing import Any
 
 from midas.frontier.economics import (
     ExecutionScenario,
+    OneSidedFillOutcome,
+    OneSidedFillSensitivity,
     OpportunityCandidate,
     OpportunityClassification,
     OpportunityFamily,
+    PositionLeg,
 )
 from midas.frontier.models import (
     BookSnapshot,
@@ -38,7 +41,7 @@ from midas.frontier.relationships import (
 )
 
 D = Decimal
-_AUDIT_VERSION = "frontier-independent-economic-audit-1"
+_AUDIT_VERSION = "frontier-independent-economic-audit-2"
 _FEE_QUANTUM = D("0.00001")
 
 
@@ -135,6 +138,7 @@ def independently_audit_candidate(
             "applicable venue fee schedule and fee amount",
             "basket cost and payoff recomputation for every terminal state",
             "candidate P&L fields and classification",
+            "all full-or-none fill patterns and resulting single-leg exposures",
         ),
         message=message,
     )
@@ -275,8 +279,8 @@ def _recompute(
         raise _MissingAuditEvidence("A candidate leg could not be joined to its contract and book.")
 
     payouts: dict[str, Decimal] = {}
+    payout_by_leg: dict[str, dict[str, Decimal]] = {}
     if candidate.family == OpportunityFamily.WITHIN_MARKET_MULTI_OUTCOME_COVERAGE:
-        market = next(iter(selected_markets.values()))
         for state_id in state_ids:
             payouts[state_id] = sum(
                 (
@@ -286,6 +290,11 @@ def _recompute(
                 ),
                 D(0),
             )
+        for leg in candidate.legs:
+            instrument = instrument_by_leg[(leg.market_id, leg.instrument_id)]
+            payout_by_leg[_fill_leg_identity(leg)] = {
+                state_id: leg.quantity * _payout(instrument, state_id) for state_id in state_ids
+            }
     else:
         relation = relationships[candidate.relationship_id or ""]
         left = selected_markets[relation.left_market_id]
@@ -297,11 +306,17 @@ def _recompute(
         right_leg = next(leg for leg in candidate.legs if leg.market_id == right.canonical_id)
         left_instrument = instrument_by_leg[(left_leg.market_id, left_leg.instrument_id)]
         right_instrument = instrument_by_leg[(right_leg.market_id, right_leg.instrument_id)]
+        payout_by_leg = {
+            _fill_leg_identity(left_leg): {},
+            _fill_leg_identity(right_leg): {},
+        }
         for state_id in state_ids:
             mapped = state_map[state_id]
-            payouts[state_id] = left_leg.quantity * _payout(
-                left_instrument, state_id
-            ) + right_leg.quantity * _payout(right_instrument, mapped)
+            left_payout = left_leg.quantity * _payout(left_instrument, state_id)
+            right_payout = right_leg.quantity * _payout(right_instrument, mapped)
+            payout_by_leg[_fill_leg_identity(left_leg)][state_id] = left_payout
+            payout_by_leg[_fill_leg_identity(right_leg)][state_id] = right_payout
+            payouts[state_id] = left_payout + right_payout
 
     gross_cost = sum((leg.quantity * leg.quoted_ask for leg in candidate.legs), D(0))
     modeled_principal = sum((leg.quantity * leg.modeled_buy_price for leg in candidate.legs), D(0))
@@ -327,12 +342,18 @@ def _recompute(
             leg.quantity * leg.modeled_buy_price
             + (fee_by_leg[(leg.market_id, leg.instrument_id)] or D(0))
         )
+    expected_fill_sensitivity = _independent_fill_pattern_sensitivity(candidate.legs, payout_by_leg)
 
     comparisons = (
         (candidate.outcome_payout_by_state, payouts, "state payout vector differs"),
         (candidate.gross_pnl_by_state, gross_pnl, "gross P&L by state differs"),
         (candidate.net_pnl_by_state, net_pnl, "net P&L by state differs"),
         (candidate.capital_by_venue, capital_by_venue, "capital by venue differs"),
+        (
+            candidate.one_sided_fill_sensitivity,
+            expected_fill_sensitivity,
+            "one-sided fill sensitivity differs",
+        ),
     )
     for observed_map, recomputed_map, label in comparisons:
         if observed_map != recomputed_map:
@@ -363,6 +384,106 @@ def _recompute(
         "worst_case_gross_pnl": worst_gross,
         "worst_case_net_pnl": worst_net,
     }
+
+
+def _fill_leg_identity(leg: PositionLeg) -> str:
+    return f"{leg.venue}:{leg.native_market_id}:{leg.instrument_id}"
+
+
+def _independent_fill_pattern_sensitivity(
+    legs: tuple[PositionLeg, ...], payout_by_leg: dict[str, dict[str, Decimal]]
+) -> OneSidedFillSensitivity:
+    """Recompute the exact full/no-fill worst-case bound independently."""
+    if not 1 <= len(legs) <= 16:
+        raise _MissingAuditEvidence("One-sided fill audit requires one to sixteen legs.")
+    ordered = tuple(sorted(legs, key=_fill_leg_identity))
+    keys = tuple(_fill_leg_identity(leg) for leg in ordered)
+    if len(set(keys)) != len(keys) or set(keys) != set(payout_by_leg):
+        raise _MissingAuditEvidence("Fill-stress payoff identities do not match candidate legs.")
+    state_ids = tuple(sorted(payout_by_leg[keys[0]]))
+    if not state_ids or any(tuple(sorted(payout_by_leg[key])) != state_ids for key in keys):
+        raise _MissingAuditEvidence("Fill-stress legs do not cover the same terminal states.")
+
+    fees_complete = all(leg.modeled_fee is not None for leg in ordered)
+    before_best: tuple[Decimal, int, tuple[str, ...], str, Decimal] | None = None
+    after_best: tuple[Decimal, int, tuple[str, ...], str, Decimal] | None = None
+    for state_id in state_ids:
+        pre_fee_values = tuple(
+            payout_by_leg[key][state_id] - leg.quantity * leg.modeled_buy_price
+            for key, leg in zip(keys, ordered, strict=True)
+        )
+        pre_fee_filled = tuple(
+            key for key, value in zip(keys, pre_fee_values, strict=True) if value < 0
+        )
+        pre_fee_total = sum((value for value in pre_fee_values if value < 0), D(0))
+        pre_fee_entry = (
+            pre_fee_total,
+            len(pre_fee_filled),
+            pre_fee_filled,
+            state_id,
+            pre_fee_total,
+        )
+        if before_best is None or pre_fee_entry < before_best:
+            before_best = pre_fee_entry
+        if fees_complete:
+            post_fee_values = tuple(
+                value - (leg.modeled_fee if leg.modeled_fee is not None else D(0))
+                for value, leg in zip(pre_fee_values, ordered, strict=True)
+            )
+            post_fee_filled = tuple(
+                key for key, value in zip(keys, post_fee_values, strict=True) if value < 0
+            )
+            post_fee_total = sum((value for value in post_fee_values if value < 0), D(0))
+            pre_fee_same_pattern = sum(
+                (
+                    pre_fee_values[index]
+                    for index, key in enumerate(keys)
+                    if key in set(post_fee_filled)
+                ),
+                D(0),
+            )
+            post_fee_entry = (
+                post_fee_total,
+                len(post_fee_filled),
+                post_fee_filled,
+                state_id,
+                pre_fee_same_pattern,
+            )
+            if after_best is None or post_fee_entry < after_best:
+                after_best = post_fee_entry
+    if before_best is None:
+        raise _MissingAuditEvidence("No terminal states were evaluated by the independent audit.")
+
+    def make_outcome(
+        selected: tuple[Decimal, int, tuple[str, ...], str, Decimal],
+        *,
+        is_after_fee: bool,
+    ) -> OneSidedFillOutcome:
+        pnl, _, filled, state_id, before_pnl = selected
+        missing = tuple(key for key in keys if key not in set(filled))
+        after_pnl: Decimal | None = pnl if is_after_fee else None
+        return OneSidedFillOutcome(
+            terminal_state_id=state_id,
+            filled_leg_ids=filled,
+            unfilled_leg_ids=missing,
+            pnl_before_fees=before_pnl,
+            pnl_after_fees=after_pnl,
+        )
+
+    return OneSidedFillSensitivity(
+        leg_count=len(ordered),
+        pattern_space_size=1 << len(ordered),
+        fees_complete=fees_complete,
+        worst_before_fees=make_outcome(before_best, is_after_fee=False),
+        worst_after_fees=(
+            make_outcome(after_best, is_after_fee=True) if after_best is not None else None
+        ),
+        assumptions=(
+            "Each leg is modeled as a full fill or no fill at its scenario purchase price; the exact worst case across all 2^n patterns is solved without assigning probabilities.",
+            "No post-fill hedge, unwind, incremental partial quantity, or price recovery is modeled.",
+            "The result is a terminal exposure sensitivity, not an order-fill prediction or execution claim.",
+        ),
+    )
 
 
 def _verify_multi_outcome_market(

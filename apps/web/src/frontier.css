@@ -1545,6 +1545,56 @@
   font-size: 8px;
   overflow-wrap: anywhere;
 }
+.fr-candidate-fill-stress {
+  display: grid;
+  gap: 8px;
+  padding: 11px 14px;
+  border-bottom: 1px solid #242e38;
+  background: #141a20;
+}
+.fr-candidate-fill-stress h4 {
+  margin: 4px 0 0;
+  color: #b7c4d4;
+  font-size: 9px;
+  font-weight: 550;
+}
+.fr-candidate-fill-stress > p,
+.fr-candidate-fill-stress > small {
+  margin: 0;
+  color: #8391a2;
+  font-size: 8px;
+  line-height: 1.5;
+}
+.fr-fill-stress-values,
+.fr-fill-stress-patterns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 9px;
+}
+.fr-fill-stress-values > span,
+.fr-fill-stress-patterns p {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  color: #7c899a;
+  font-size: 8px;
+}
+.fr-fill-stress-values strong {
+  color: #bdc8d5;
+  font-size: 10px;
+  font-weight: 520;
+}
+.fr-fill-stress-values small,
+.fr-fill-stress-patterns span {
+  color: #718094;
+  font-size: 8px;
+  overflow-wrap: anywhere;
+}
+.fr-fill-stress-patterns strong {
+  color: #aeb9c8;
+  font-size: 8px;
+  font-weight: 550;
+}
 .fr-candidate-states {
   display: grid;
   gap: 8px;

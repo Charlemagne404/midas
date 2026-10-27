@@ -25,7 +25,7 @@ from midas.frontier.relationships import (
     propose_relationships,
 )
 
-REPLAY_VERSION = "frontier-deterministic-replay-4"
+REPLAY_VERSION = "frontier-deterministic-replay-5"
 PAIRED_COMPARISON_VERSION = "frontier-paired-replay-1"
 
 

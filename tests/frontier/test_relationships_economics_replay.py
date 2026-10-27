@@ -213,6 +213,13 @@ def test_exact_binary_outcome_construction_and_fee_classification():
     assert any("not established" in item for item in positive.reasons)
     assert set(positive.capital_by_venue) == {"polymarket", "kalshi"}
     assert positive.hypothetical is True
+    assert positive.one_sided_fill_sensitivity is not None
+    assert positive.one_sided_fill_sensitivity.pattern_space_size == 4
+    assert positive.one_sided_fill_sensitivity.fees_complete is True
+    assert positive.one_sided_fill_sensitivity.worst_before_fees.pnl_before_fees < 0
+    assert positive.one_sided_fill_sensitivity.worst_after_fees is not None
+    assert positive.one_sided_fill_sensitivity.worst_after_fees.pnl_after_fees < 0
+    assert len(positive.one_sided_fill_sensitivity.worst_after_fees.filled_leg_ids) == 1
 
     no_fee_evidence = right.model_copy(
         update={"fees": right.fees.model_copy(update={"status": "unknown", "rate": None})}
@@ -243,6 +250,9 @@ def test_exact_binary_outcome_construction_and_fee_classification():
     )
     assert conditional.classification == OpportunityClassification.CONDITIONAL_ECONOMIC_OPPORTUNITY
     assert conditional.worst_case_net_pnl is None
+    assert conditional.one_sided_fill_sensitivity is not None
+    assert conditional.one_sided_fill_sensitivity.fees_complete is False
+    assert conditional.one_sided_fill_sensitivity.worst_after_fees is None
     assert any(
         "unknown fees are not treated as zero" in assumption
         for assumption in conditional.assumptions
@@ -388,6 +398,40 @@ def test_verified_multi_outcome_coverage_is_exact_and_stays_hypothetical():
     assert candidate.gross_cost == Decimal(9)
     assert candidate.worst_case_gross_pnl == Decimal(1)
     assert candidate.worst_case_net_pnl == Decimal(1)
+    assert candidate.one_sided_fill_sensitivity is not None
+    assert candidate.one_sided_fill_sensitivity.worst_after_fees is not None
+    assert candidate.one_sided_fill_sensitivity.pattern_space_size == 8
+    assert candidate.one_sided_fill_sensitivity.worst_before_fees.pnl_before_fees == Decimal(-7)
+    assert len(candidate.one_sided_fill_sensitivity.worst_before_fees.filled_leg_ids) == 2
+    enumerated_before: list[Decimal] = []
+    enumerated_after: list[Decimal] = []
+    for pattern in range(candidate.one_sided_fill_sensitivity.pattern_space_size):
+        for state_id in event.payoff.state_ids:
+            before = Decimal(0)
+            after = Decimal(0)
+            for leg_index, leg in enumerate(candidate.legs):
+                if pattern & (1 << leg_index) == 0:
+                    continue
+                instrument = next(
+                    item
+                    for item in event.instruments
+                    if item.native_instrument_id == leg.instrument_id
+                )
+                payout = next(
+                    item.amount for item in instrument.payouts if item.state_id == state_id
+                )
+                before += leg.quantity * (payout - leg.modeled_buy_price)
+                after += leg.quantity * (payout - leg.modeled_buy_price) - (
+                    leg.modeled_fee if leg.modeled_fee is not None else Decimal(0)
+                )
+            enumerated_before.append(before)
+            enumerated_after.append(after)
+    assert min(enumerated_before) == (
+        candidate.one_sided_fill_sensitivity.worst_before_fees.pnl_before_fees
+    )
+    assert min(enumerated_after) == (
+        candidate.one_sided_fill_sensitivity.worst_after_fees.pnl_after_fees
+    )
     assert candidate.timing_verified is True
     assert candidate.practical_eligibility is False
     assert candidate.hypothetical is True
@@ -398,12 +442,23 @@ def test_verified_multi_outcome_coverage_is_exact_and_stays_hypothetical():
         as_of_utc=T0 + timedelta(milliseconds=100),
         code_version="multi-outcome-fixture-v1",
     )
-    assert replay.manifest.replay_version == "frontier-deterministic-replay-4"
+    assert replay.manifest.replay_version == "frontier-deterministic-replay-5"
     replay_candidate = replay.candidates[0]
     assert replay_candidate.model_copy(update={"independent_audit": None}) == candidate
     assert replay_candidate.independent_audit is not None
     assert replay_candidate.independent_audit.disposition.value == "verified"
     assert replay_candidate.independent_audit.recomputed_gross_cost == Decimal(9)
+
+
+def test_sixteen_outcome_fill_stress_keeps_the_pattern_space_bounded():
+    event = _multi_outcome_market(state_count=16)
+    books = _multi_outcome_books(event, asks=("0.01",) * 16)
+    candidate = generate_multi_outcome_coverage_candidate(event, books)
+
+    assert candidate.one_sided_fill_sensitivity is not None
+    assert candidate.one_sided_fill_sensitivity.leg_count == 16
+    assert candidate.one_sided_fill_sensitivity.pattern_space_size == 65_536
+    assert candidate.one_sided_fill_sensitivity.worst_before_fees.pnl_before_fees < 0
 
 
 def test_multi_outcome_decimal_math_preserves_full_bounded_input_precision():
@@ -660,6 +715,35 @@ def test_deterministic_replay_is_invariant_to_input_order():
     assert independently_checked.independent_audit.disposition.value == "disagreement"
     assert independently_checked.classification == OpportunityClassification.INCOMPLETE_EVIDENCE
     assert any("gross basket cost differs" in reason for reason in independently_checked.reasons)
+
+    original = first.candidates[0]
+    assert original.one_sided_fill_sensitivity is not None
+    corrupted_outcome = original.one_sided_fill_sensitivity.worst_before_fees.model_copy(
+        update={
+            "pnl_before_fees": original.one_sided_fill_sensitivity.worst_before_fees.pnl_before_fees
+            + Decimal(1)
+        }
+    )
+    corrupted_sensitivity = original.one_sided_fill_sensitivity.model_copy(
+        update={"worst_before_fees": corrupted_outcome}
+    )
+    corrupted_candidate = original.model_copy(
+        update={"one_sided_fill_sensitivity": corrupted_sensitivity, "independent_audit": None}
+    )
+    stress_audited = independently_audit_candidate(
+        corrupted_candidate,
+        markets={left.canonical_id: left, right.canonical_id: right},
+        books_by_market={left.canonical_id: left_books, right.canonical_id: right_books},
+        relationships={relationship.relationship_id: relationship},
+        state_mappings={
+            relationship.relationship_id: kwargs["state_mappings"][relationship.relationship_id]
+        },
+        instrument_mappings={relationship.relationship_id: canonical_instrument_mapping},
+        scenario=ExecutionScenario(),
+    )
+    assert stress_audited.independent_audit is not None
+    assert stress_audited.independent_audit.disposition.value == "disagreement"
+    assert any("one-sided fill sensitivity differs" in reason for reason in stress_audited.reasons)
 
 
 def test_canonical_relationship_evidence_replays_different_native_state_labels():

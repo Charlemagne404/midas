@@ -155,6 +155,30 @@ it('renders recorded-evidence empty states and never probes a source automatical
             displayed_depth: '10',
             book_observation_id: 'kalshi-red-book',
           },
+          {
+            venue: 'kalshi',
+            native_market_id: 'KX-THREEWAY',
+            instrument_id: 'KX-THREEWAY:GREEN',
+            outcome_id: 'green',
+            quantity: '10',
+            quoted_ask: '0.30',
+            modeled_buy_price: '0.30',
+            modeled_fee: '0',
+            displayed_depth: '10',
+            book_observation_id: 'kalshi-green-book',
+          },
+          {
+            venue: 'kalshi',
+            native_market_id: 'KX-THREEWAY',
+            instrument_id: 'KX-THREEWAY:BLUE',
+            outcome_id: 'blue',
+            quantity: '10',
+            quoted_ask: '0.40',
+            modeled_buy_price: '0.40',
+            modeled_fee: '0',
+            displayed_depth: '10',
+            book_observation_id: 'kalshi-blue-book',
+          },
         ],
         gross_cost: '9',
         modeled_fees: '0',
@@ -165,6 +189,33 @@ it('renders recorded-evidence empty states and never probes a source automatical
         worst_case_gross_pnl: '1',
         worst_case_net_pnl: '1',
         capital_by_venue: { kalshi: '9' },
+        one_sided_fill_sensitivity: {
+          model_version: 'frontier-full-or-none-fill-patterns-1',
+          leg_count: 3,
+          pattern_space_size: 8,
+          fees_complete: true,
+          worst_before_fees: {
+            terminal_state_id: 'red',
+            filled_leg_ids: [
+              'kalshi:KX-THREEWAY:KX-THREEWAY:GREEN',
+              'kalshi:KX-THREEWAY:KX-THREEWAY:BLUE',
+            ],
+            unfilled_leg_ids: ['kalshi:KX-THREEWAY:KX-THREEWAY:RED'],
+            pnl_before_fees: '-7',
+            pnl_after_fees: null,
+          },
+          worst_after_fees: {
+            terminal_state_id: 'red',
+            filled_leg_ids: [
+              'kalshi:KX-THREEWAY:KX-THREEWAY:GREEN',
+              'kalshi:KX-THREEWAY:KX-THREEWAY:BLUE',
+            ],
+            unfilled_leg_ids: ['kalshi:KX-THREEWAY:KX-THREEWAY:RED'],
+            pnl_before_fees: '-7',
+            pnl_after_fees: '-7',
+          },
+          assumptions: ['Pattern comparison only; not an execution forecast.'],
+        },
         received_skew_ms: 12,
         exchange_skew_ms: 5,
         timing_verified: true,
@@ -195,6 +246,12 @@ it('renders recorded-evidence empty states and never probes a source automatical
     await screen.findByRole('heading', { name: 'Terminal-state payoff analysis' }),
   ).toBeInTheDocument();
   expect(screen.getByRole('heading', { name: 'Independent arithmetic audit' })).toBeInTheDocument();
+  expect(screen.getByRole('heading', { name: 'One-sided fill stress' })).toBeInTheDocument();
+  expect(screen.getByText(/Exact worst case over 8 full-or-none leg patterns/)).toBeInTheDocument();
+  const fillStress = screen.getByRole('region', { name: 'One-sided fill stress' });
+  expect(fillStress.textContent).toContain(
+    'Filled: Kalshi · green (KX-THREEWAY), Kalshi · blue (KX-THREEWAY)',
+  );
   expect(
     screen.getByText('Independent arithmetic agrees for every terminal state.'),
   ).toBeInTheDocument();

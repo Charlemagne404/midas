@@ -287,6 +287,27 @@ type Candidate = {
   worst_case_gross_pnl: string | null;
   worst_case_net_pnl: string | null;
   capital_by_venue: Record<string, string>;
+  one_sided_fill_sensitivity?: {
+    model_version: string;
+    leg_count: number;
+    pattern_space_size: number;
+    fees_complete: boolean;
+    worst_before_fees: {
+      terminal_state_id: string;
+      filled_leg_ids: string[];
+      unfilled_leg_ids: string[];
+      pnl_before_fees: string;
+      pnl_after_fees: string | null;
+    };
+    worst_after_fees: {
+      terminal_state_id: string;
+      filled_leg_ids: string[];
+      unfilled_leg_ids: string[];
+      pnl_before_fees: string;
+      pnl_after_fees: string | null;
+    } | null;
+    assumptions: string[];
+  } | null;
   received_skew_ms: number | null;
   exchange_skew_ms: number | null;
   timing_verified: boolean;
@@ -2552,6 +2573,16 @@ function InlineError({ message }: { message: string }) {
 }
 
 function CandidateCard({ candidate }: { candidate: Candidate }) {
+  const describeFillLeg = (identity: string) => {
+    const leg = candidate.legs.find(
+      (item) => `${item.venue}:${item.native_market_id}:${item.instrument_id}` === identity,
+    );
+    return leg
+      ? `${venueLabel(leg.venue)} · ${label(leg.outcome_id)} (${leg.native_market_id})`
+      : identity;
+  };
+  const fillPatternList = (identities: string[]) =>
+    identities.length > 0 ? identities.map(describeFillLeg).join(', ') : 'None';
   return (
     <article className="fr-candidate">
       <div className="fr-candidate-head">
@@ -2654,6 +2685,81 @@ function CandidateCard({ candidate }: { candidate: Candidate }) {
             </tbody>
           </table>
         </div>
+      )}
+      {candidate.one_sided_fill_sensitivity && (
+        <section className="fr-candidate-fill-stress" aria-label="One-sided fill stress">
+          <div>
+            <span className="fr-kicker">Execution uncertainty</span>
+            <h4>One-sided fill stress</h4>
+          </div>
+          <p>
+            Exact worst case over{' '}
+            {candidate.one_sided_fill_sensitivity.pattern_space_size.toLocaleString()} full-or-none
+            leg patterns. No pattern probability, follow-on hedge, or exit recovery is modeled.
+          </p>
+          <div className="fr-fill-stress-values">
+            <span>
+              Worst modeled P&amp;L before venue fees
+              <strong>
+                {money(candidate.one_sided_fill_sensitivity.worst_before_fees.pnl_before_fees)}
+              </strong>
+              <small>
+                State:{' '}
+                {label(candidate.one_sided_fill_sensitivity.worst_before_fees.terminal_state_id)}
+              </small>
+            </span>
+            <span>
+              Worst modeled P&amp;L after venue fees
+              <strong>
+                {candidate.one_sided_fill_sensitivity.worst_after_fees
+                  ? money(candidate.one_sided_fill_sensitivity.worst_after_fees.pnl_after_fees)
+                  : 'Unknown'}
+              </strong>
+              <small>
+                {candidate.one_sided_fill_sensitivity.worst_after_fees
+                  ? `State: ${label(candidate.one_sided_fill_sensitivity.worst_after_fees.terminal_state_id)}`
+                  : 'At least one leg has an unresolved fee.'}
+              </small>
+            </span>
+          </div>
+          <div className="fr-fill-stress-patterns">
+            <p>
+              <strong>Before-fee pattern</strong>
+              <span>
+                Filled:{' '}
+                {fillPatternList(
+                  candidate.one_sided_fill_sensitivity.worst_before_fees.filled_leg_ids,
+                )}
+              </span>
+              <span>
+                Unfilled:{' '}
+                {fillPatternList(
+                  candidate.one_sided_fill_sensitivity.worst_before_fees.unfilled_leg_ids,
+                )}
+              </span>
+            </p>
+            {candidate.one_sided_fill_sensitivity.worst_after_fees && (
+              <p>
+                <strong>After-fee pattern</strong>
+                <span>
+                  Filled:{' '}
+                  {fillPatternList(
+                    candidate.one_sided_fill_sensitivity.worst_after_fees.filled_leg_ids,
+                  )}
+                </span>
+                <span>
+                  Unfilled:{' '}
+                  {fillPatternList(
+                    candidate.one_sided_fill_sensitivity.worst_after_fees.unfilled_leg_ids,
+                  )}
+                </span>
+              </p>
+            )}
+          </div>
+          {candidate.one_sided_fill_sensitivity.assumptions.map((assumption) => (
+            <small key={assumption}>{assumption}</small>
+          ))}
+        </section>
       )}
       {Object.keys(candidate.gross_pnl_by_state).length > 0 && (
         <section className="fr-candidate-states" aria-label="Terminal-state payoff analysis">
