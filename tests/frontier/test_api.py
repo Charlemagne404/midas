@@ -370,6 +370,13 @@ def test_kalshi_multivariate_probe_is_filter_bound_bounded_and_persisted(tmp_pat
             ).status_code
             == 422
         )
+        assert (
+            client.post(
+                "/api/frontier/probe/kalshi/multivariate-events",
+                json={"event_ticker": "KXCOMBO-26-MVE,KXOTHER"},
+            ).status_code
+            == 422
+        )
         assert requests == []
 
         response = client.post(
@@ -403,6 +410,21 @@ def test_kalshi_multivariate_probe_is_filter_bound_bounded_and_persisted(tmp_pat
             normalized["markets"][0]["selected_components"][0]["native_market_id"] == "KXEVENT-26-A"
         )
         assert normalized["markets"][0]["payoff"]["verified"] is False
+
+        event_response = client.post(
+            "/api/frontier/probe/kalshi/multivariate-events",
+            json={"event_ticker": "KXCOMBO-26-MVE"},
+        )
+        assert event_response.status_code == 200, event_response.text
+        event_result = event_response.json()
+        assert event_result["filter_type"] == "tickers"
+        assert event_result["filter_value"] == "KXCOMBO-26-MVE"
+        assert event_result["event_count"] == 1
+        assert len(requests) == 2
+        assert requests[1].method == "GET"
+        assert requests[1].url.params["tickers"] == "KXCOMBO-26-MVE"
+        assert requests[1].url.params["limit"] == "1"
+        assert requests[1].url.params["with_nested_markets"] == "true"
     finally:
         client.close()
         asyncio.run(registry.aclose())
@@ -467,6 +489,92 @@ def test_kalshi_multivariate_live_capture_stores_event_when_source_omits_nested_
         assert group["member_list_state"] == "omitted"
         assert group["member_native_market_ids"] == []
         assert evidence["normalized"]["markets"] == []
+    finally:
+        client.close()
+        asyncio.run(registry.aclose())
+        asyncio.run(http_client.aclose())
+
+
+def test_kalshi_multivariate_ticker_filter_replays_preserved_public_capture(tmp_path):
+    artifact = json.loads(
+        (
+            Path(__file__).resolve().parents[2]
+            / "data/frontier/live-probes/2026-10-27-kalshi-mve-ticker-filter-r1.json"
+        ).read_text(encoding="utf-8")
+    )
+    raw_body = artifact["raw_observation"]["raw_body"]
+    event_ticker = artifact["source_filter"]["event_ticker"]
+    assert hashlib.sha256(raw_body.encode("utf-8")).hexdigest() == artifact["raw_sha256"]
+    requests: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        return httpx.Response(200, content=raw_body.encode("utf-8"), request=request)
+
+    config = AdapterConfig(
+        enabled=True,
+        live_public_probe_enabled=True,
+        requests_per_second=5,
+        retries=0,
+    )
+    http_client = httpx.AsyncClient(transport=httpx.MockTransport(handler))
+    kalshi_transport = PublicReadTransport({"external-api.kalshi.com"}, config, client=http_client)
+    disabled = AdapterConfig(enabled=False)
+    registry = AdapterRegistry(
+        (
+            PolymarketAdapter(disabled),
+            KalshiAdapter(config, transport=kalshi_transport),
+            KrakenSpotAdapter(disabled),
+        )
+    )
+    store = FrontierStore(tmp_path / "frontier-kalshi-mve-ticker-replay")
+    app = FastAPI()
+    app.include_router(router(store, registry))
+    client = TestClient(app)
+    try:
+        response = client.post(
+            "/api/frontier/probe/kalshi/multivariate-events",
+            json={"event_ticker": event_ticker},
+        )
+        assert response.status_code == 200, response.text
+        result = response.json()
+        assert result["filter_type"] == "tickers"
+        assert result["filter_value"] == event_ticker
+        assert result["event_count"] == 1
+        assert result["market_count"] == 0
+        assert result["has_more_source_pages"] is False
+        assert result["complete_for_request"] is True
+        assert result["raw_sha256"] == artifact["raw_sha256"]
+        assert len(requests) == 1
+        assert requests[0].method == "GET"
+        assert requests[0].url.params["tickers"] == event_ticker
+        assert requests[0].url.params["limit"] == "1"
+        assert requests[0].url.params["with_nested_markets"] == "true"
+        assert "authorization" not in requests[0].headers
+
+        evidence_response = client.get(f"/api/frontier/observations/{result['observation_id']}")
+        assert evidence_response.status_code == 200
+        evidence = evidence_response.json()
+        assert evidence["raw"]["raw_sha256"] == artifact["raw_sha256"]
+        assert len(evidence["row_sha256"]) == 64
+
+        def canonical(value):
+            return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+
+        evidence_payload = canonical(evidence["raw"]) + "\n" + canonical(evidence["normalized"])
+        assert (
+            hashlib.sha256(evidence_payload.encode("utf-8")).hexdigest() == evidence["row_sha256"]
+        )
+        assert evidence["normalized"]["market_groups"][0]["member_list_state"] == "omitted"
+        assert evidence["normalized"]["markets"] == []
+
+        captured_raw = RawObservation.model_validate(artifact["raw_observation"])
+        captured_normalized = MarketBatch.model_validate(artifact["normalized_observation"])
+        snapshot_store = FrontierStore(tmp_path / "frontier-kalshi-mve-ticker-snapshot")
+        snapshot_id = snapshot_store.append_observation(captured_raw, captured_normalized)
+        snapshot_readback = snapshot_store.observation(snapshot_id)
+        assert snapshot_readback is not None
+        assert snapshot_readback["row_sha256"] == artifact["offline_snapshot_row_sha256"]
     finally:
         client.close()
         asyncio.run(registry.aclose())

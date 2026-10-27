@@ -190,7 +190,7 @@ type EventMarketsCaptureResult = {
 };
 type KalshiMultivariateCaptureResult = {
   venue: 'kalshi';
-  filter_type: 'series_ticker' | 'collection_ticker';
+  filter_type: 'series_ticker' | 'collection_ticker' | 'tickers';
   filter_value: string;
   event_count: number;
   market_count: number;
@@ -3095,7 +3095,8 @@ function BookSide({ title, levels }: { title: string; levels: Book['asks'] }) {
 
 type ProbeVariables = { venue: Venue; includeOneBook: boolean };
 type ProbeMutation = UseMutationResult<unknown, Error, ProbeVariables, unknown>;
-type KalshiMultivariateFilter = { series_ticker: string } | { collection_ticker: string };
+type KalshiMultivariateFilter =
+  { series_ticker: string } | { collection_ticker: string } | { event_ticker: string };
 type KalshiMultivariateProbe = UseMutationResult<
   KalshiMultivariateCaptureResult,
   Error,
@@ -3119,7 +3120,7 @@ function SourcesView({
   error?: string;
 }) {
   const [multivariateFilterType, setMultivariateFilterType] = useState<
-    'series_ticker' | 'collection_ticker'
+    'series_ticker' | 'collection_ticker' | 'event_ticker'
   >('series_ticker');
   const [multivariateFilterValue, setMultivariateFilterValue] = useState('');
   return (
@@ -3217,18 +3218,22 @@ function SourcesView({
                       value={multivariateFilterType}
                       onChange={(event) =>
                         setMultivariateFilterType(
-                          event.target.value as 'series_ticker' | 'collection_ticker',
+                          event.target.value as
+                            'series_ticker' | 'collection_ticker' | 'event_ticker',
                         )
                       }
                     >
                       <option value="series_ticker">Series ticker</option>
                       <option value="collection_ticker">Collection ticker</option>
+                      <option value="event_ticker">One event ticker</option>
                     </select>
                   </label>
                   <label>
                     {multivariateFilterType === 'series_ticker'
                       ? 'Kalshi series ticker'
-                      : 'Kalshi collection ticker'}
+                      : multivariateFilterType === 'collection_ticker'
+                        ? 'Kalshi collection ticker'
+                        : 'Kalshi event ticker'}
                     <input
                       aria-label="Kalshi multivariate filter ticker"
                       maxLength={256}
@@ -3237,7 +3242,9 @@ function SourcesView({
                       placeholder={
                         multivariateFilterType === 'series_ticker'
                           ? 'Series ticker'
-                          : 'Collection ticker'
+                          : multivariateFilterType === 'collection_ticker'
+                            ? 'Collection ticker'
+                            : 'Event ticker'
                       }
                     />
                   </label>
@@ -3256,7 +3263,9 @@ function SourcesView({
                       multivariateProbe.mutate(
                         multivariateFilterType === 'series_ticker'
                           ? { series_ticker: multivariateFilterValue.trim() }
-                          : { collection_ticker: multivariateFilterValue.trim() },
+                          : multivariateFilterType === 'collection_ticker'
+                            ? { collection_ticker: multivariateFilterValue.trim() }
+                            : { event_ticker: multivariateFilterValue.trim() },
                       )
                     }
                   >

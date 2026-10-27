@@ -1523,7 +1523,7 @@ it('submits a bounded Arena replay and displays its integrity-verified compariso
 it('captures one explicit bounded Kalshi multivariate event page', async () => {
   const source = {
     venue: 'kalshi',
-    adapter_version: 'frontier-kalshi-8',
+    adapter_version: 'frontier-kalshi-9',
     public_probe_enabled: true,
     capabilities: [
       {
@@ -1598,13 +1598,13 @@ it('captures one explicit bounded Kalshi multivariate event page', async () => {
   const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const path = String(input);
     if (path === '/api/frontier/probe/kalshi/multivariate-events' && init?.method === 'POST') {
-      expect(JSON.parse(String(init.body))).toEqual({ collection_ticker: 'MVE-COLLECTION' });
+      expect(JSON.parse(String(init.body))).toEqual({ event_ticker: 'KX-MVE-EVENT' });
       return {
         ok: true,
         json: async () => ({
           venue: 'kalshi',
-          filter_type: 'collection_ticker',
-          filter_value: 'MVE-COLLECTION',
+          filter_type: 'tickers',
+          filter_value: 'KX-MVE-EVENT',
           event_count: 1,
           market_count: 1,
           events: [
@@ -1612,7 +1612,7 @@ it('captures one explicit bounded Kalshi multivariate event page', async () => {
               native_event_id: 'KX-MVE-EVENT',
               title: 'One selected event',
               series_ticker: 'KX-SERIES',
-              collection_ticker: 'MVE-COLLECTION',
+              collection_ticker: null,
               market_count: 1,
               member_list_state: 'included',
             },
@@ -1645,10 +1645,10 @@ it('captures one explicit bounded Kalshi multivariate event page', async () => {
   fireEvent.click(screen.getByRole('button', { name: 'Exchanges' }));
   expect(await screen.findByText('Multivariate event discovery')).toBeInTheDocument();
   fireEvent.change(screen.getByLabelText('Kalshi multivariate filter type'), {
-    target: { value: 'collection_ticker' },
+    target: { value: 'event_ticker' },
   });
   fireEvent.change(screen.getByLabelText('Kalshi multivariate filter ticker'), {
-    target: { value: 'MVE-COLLECTION' },
+    target: { value: 'KX-MVE-EVENT' },
   });
   fireEvent.click(screen.getByRole('button', { name: 'Capture one event page' }));
   expect(await screen.findByText(/Saved 1 event\(s\) and 1 nested market/)).toBeInTheDocument();

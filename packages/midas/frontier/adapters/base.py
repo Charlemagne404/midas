@@ -78,6 +78,7 @@ class ExchangeAdapter(Protocol):
         *,
         series_ticker: str | None = None,
         collection_ticker: str | None = None,
+        event_ticker: str | None = None,
     ) -> MarketBatch: ...
 
     async def fetch_book(
@@ -182,9 +183,10 @@ class BaseReadOnlyAdapter:
         *,
         series_ticker: str | None = None,
         collection_ticker: str | None = None,
+        event_ticker: str | None = None,
     ) -> MarketBatch:
         """Fail closed unless a venue implements bounded multivariate-event discovery."""
-        del series_ticker, collection_ticker
+        del series_ticker, collection_ticker, event_ticker
         self._require(Capability.MULTIVARIATE_EVENT_DISCOVERY)
         raise UnsupportedCapability(
             Capability.MULTIVARIATE_EVENT_DISCOVERY,

@@ -365,6 +365,82 @@ async def test_kalshi_live_multivariate_capture_records_omitted_nested_market_li
 
 
 @pytest.mark.asyncio
+async def test_kalshi_multivariate_discovery_accepts_one_event_ticker_filter():
+    body = {
+        "events": [
+            {
+                "event_ticker": "KX-MVE-EVENT",
+                "series_ticker": "KX-SERIES",
+                "title": "One event",
+                "markets": [],
+            }
+        ],
+        "cursor": "",
+    }
+    transport, requests, client = _transport(
+        "external-api.kalshi.com", {"/events/multivariate": json.dumps(body)}
+    )
+    adapter = KalshiAdapter(
+        AdapterConfig(
+            enabled=True,
+            live_public_probe_enabled=True,
+            requests_per_second=5,
+            retries=0,
+        ),
+        transport=transport,
+    )
+    try:
+        batch = await adapter.discover_multivariate_events(event_ticker="KX-MVE-EVENT")
+        captures = adapter.take_captures()
+    finally:
+        await client.aclose()
+
+    assert len(requests) == len(captures) == 1
+    assert requests[0].url.params["tickers"] == "KX-MVE-EVENT"
+    assert requests[0].url.params["limit"] == "1"
+    assert requests[0].url.params["with_nested_markets"] == "true"
+    assert batch.market_groups[0].native_group_id == "KX-MVE-EVENT"
+    assert batch.market_groups[0].member_list_state == "empty"
+    assert batch.markets == ()
+
+
+@pytest.mark.asyncio
+async def test_kalshi_multivariate_event_ticker_rejects_mismatched_response():
+    body = {
+        "events": [
+            {
+                "event_ticker": "KX-OTHER-EVENT",
+                "series_ticker": "KX-SERIES",
+                "title": "A different event",
+                "markets": [],
+            }
+        ],
+        "cursor": "",
+    }
+    transport, requests, client = _transport(
+        "external-api.kalshi.com", {"/events/multivariate": json.dumps(body)}
+    )
+    adapter = KalshiAdapter(
+        AdapterConfig(
+            enabled=True,
+            live_public_probe_enabled=True,
+            requests_per_second=5,
+            retries=0,
+        ),
+        transport=transport,
+    )
+    try:
+        with pytest.raises(AdapterError) as exc_info:
+            await adapter.discover_multivariate_events(event_ticker="KX-MVE-EVENT")
+    finally:
+        await client.aclose()
+
+    assert exc_info.value.code == "FILTER_MISMATCH"
+    assert len(requests) == 1
+    assert requests[0].url.params["tickers"] == "KX-MVE-EVENT"
+
+
+@pytest.mark.asyncio
 async def test_kalshi_multivariate_event_rejects_explicit_null_market_list():
     body = {
         "events": [

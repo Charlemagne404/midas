@@ -40,7 +40,7 @@ from midas.frontier.models import (
 )
 
 D = Decimal
-ADAPTER_VERSION = "frontier-kalshi-8"
+ADAPTER_VERSION = "frontier-kalshi-9"
 _TICKER_PATTERN = re.compile(r"[A-Za-z0-9_-]{1,256}\Z")
 BASE = "https://external-api.kalshi.com/trade-api/v2"
 MARKET_DATA_DOC = "https://docs.kalshi.com/getting_started/quick_start_market_data"
@@ -67,7 +67,7 @@ class KalshiAdapter(BaseReadOnlyAdapter):
                 EVENT_DOC,
             ),
             Capability.MULTIVARIATE_EVENT_DISCOVERY: (
-                "One public multivariate-event page filtered by series or collection ticker; nested-market omission is explicit",
+                "One public multivariate-event page filtered by series, collection, or one event ticker; nested-market omission is explicit",
                 MULTIVARIATE_EVENTS_DOC,
             ),
             Capability.INSTRUMENT_DISCOVERY: (
@@ -221,16 +221,24 @@ class KalshiAdapter(BaseReadOnlyAdapter):
         *,
         series_ticker: str | None = None,
         collection_ticker: str | None = None,
+        event_ticker: str | None = None,
     ) -> MarketBatch:
         """Capture one filtered MVE page; never follows the source continuation cursor."""
         self._require(Capability.MULTIVARIATE_EVENT_DISCOVERY)
-        filters = (series_ticker, collection_ticker)
+        filters = (series_ticker, collection_ticker, event_ticker)
         if sum(value is not None for value in filters) != 1:
             raise AdapterError(
-                "INVALID_FILTER", "Specify exactly one Kalshi series or collection ticker"
+                "INVALID_FILTER",
+                "Specify exactly one Kalshi series, collection, or event ticker",
             )
-        filter_name = "series_ticker" if series_ticker is not None else "collection_ticker"
-        filter_value = series_ticker if series_ticker is not None else collection_ticker
+        filter_name = (
+            "series_ticker"
+            if series_ticker is not None
+            else "collection_ticker"
+            if collection_ticker is not None
+            else "tickers"
+        )
+        filter_value = series_ticker or collection_ticker or event_ticker
         assert filter_value is not None
         if not isinstance(filter_value, str) or not _TICKER_PATTERN.fullmatch(filter_value):
             raise AdapterError("INVALID_FILTER", "Kalshi MVE filter ticker is malformed")
@@ -284,6 +292,11 @@ class KalshiAdapter(BaseReadOnlyAdapter):
             raise AdapterError(
                 "FILTER_MISMATCH",
                 "Kalshi returned a multivariate event outside the requested series",
+            )
+        if event_ticker is not None and event_id != event_ticker:
+            raise AdapterError(
+                "FILTER_MISMATCH",
+                "Kalshi returned a multivariate event outside the requested event ticker",
             )
 
         member_list_state: Literal["included", "empty", "omitted"]

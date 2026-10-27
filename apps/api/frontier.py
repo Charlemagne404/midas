@@ -109,14 +109,23 @@ class EventMarketsProbeRequest(BaseModel):
 
 class KalshiMultivariateEventsProbeRequest(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
-    series_ticker: str | None = Field(default=None, min_length=1, max_length=256)
-    collection_ticker: str | None = Field(default=None, min_length=1, max_length=256)
+    series_ticker: str | None = Field(
+        default=None, min_length=1, max_length=256, pattern=r"^[A-Za-z0-9_-]+$"
+    )
+    collection_ticker: str | None = Field(
+        default=None, min_length=1, max_length=256, pattern=r"^[A-Za-z0-9_-]+$"
+    )
+    event_ticker: str | None = Field(
+        default=None, min_length=1, max_length=256, pattern=r"^[A-Za-z0-9_-]+$"
+    )
 
     @model_validator(mode="after")
     def exactly_one_filter(self) -> KalshiMultivariateEventsProbeRequest:
-        filters = (self.series_ticker, self.collection_ticker)
+        filters = (self.series_ticker, self.collection_ticker, self.event_ticker)
         if sum(value is not None for value in filters) != 1:
-            raise ValueError("Specify exactly one series_ticker or collection_ticker")
+            raise ValueError(
+                "Specify exactly one series_ticker, collection_ticker, or event_ticker"
+            )
         if any(value is not None and not value.strip() for value in filters):
             raise ValueError("Kalshi multivariate filter ticker cannot be blank")
         return self
@@ -1404,6 +1413,7 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
                 batch = await discover(
                     series_ticker=request.series_ticker,
                     collection_ticker=request.collection_ticker,
+                    event_ticker=request.event_ticker,
                 )
                 captures = adapter.take_captures()
                 if (
@@ -1425,9 +1435,15 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
                 source_url = urlsplit(captures[0].request_url)
                 source_query = parse_qs(source_url.query, keep_blank_values=True)
                 filter_name = (
-                    "series_ticker" if request.series_ticker is not None else "collection_ticker"
+                    "series_ticker"
+                    if request.series_ticker is not None
+                    else "collection_ticker"
+                    if request.collection_ticker is not None
+                    else "tickers"
                 )
-                filter_value = request.series_ticker or request.collection_ticker
+                filter_value = (
+                    request.series_ticker or request.collection_ticker or request.event_ticker
+                )
                 if (
                     source_url.path != "/trade-api/v2/events/multivariate"
                     or source_query.get(filter_name) != [filter_value]
