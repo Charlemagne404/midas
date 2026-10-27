@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
+import sqlite3
 from datetime import timedelta
 
 from fastapi import FastAPI
@@ -281,3 +282,146 @@ def test_recorded_source_health_join_respects_venue_hold(tmp_path):
         assert response.status_code == 409
         assert "recorded polymarket source health is on hold" in response.text
     asyncio.run(registry.aclose())
+
+
+def test_collection_health_catalog_is_read_only_and_omits_held_venues(tmp_path):
+    store = FrontierStore(tmp_path / "frontier")
+    journal = CollectionJournal(store.root)
+    polymarket_run = CollectionRunSpec(
+        run_id="025e2f63-ae58-45ad-b443-68121241852e",
+        venue=Venue.POLYMARKET,
+        adapter_version="fixture-poly-v1",
+        capability_manifest_sha256="f" * 64,
+        adapter_config=AdapterConfig(enabled=False, live_public_probe_enabled=False),
+        market_limit=1,
+        book_limit=0,
+        book_depth=1,
+        max_evidence_bytes=1024 * 1024,
+        max_wall_seconds=30,
+        created_at_utc=T0,
+    )
+    held_run = polymarket_run.model_copy(
+        update={
+            "run_id": "03f78461-ac8b-45ea-92cc-550c8f11fa4d",
+            "venue": Venue.KALSHI,
+            "adapter_version": "fixture-kalshi-v1",
+        }
+    )
+    for run in (polymarket_run, held_run):
+        journal.create_run(run)
+        health = SourceHealth(
+            venue=run.venue,
+            state=SourceState.HEALTHY,
+            checked_at_utc=T0 + timedelta(seconds=10 if run.venue == Venue.POLYMARKET else 20),
+            last_success_at_utc=T0,
+        )
+        journal.append_checkpoint(
+            CollectionCheckpoint(
+                run_id=run.run_id,
+                sequence=0,
+                updated_at_utc=T0 + timedelta(seconds=30),
+                state="completed",
+                source_health=health,
+            )
+        )
+
+    disabled = AdapterConfig(enabled=False, live_public_probe_enabled=False)
+    held = disabled.model_copy(update={"probe_policy_block_reason": "fixture venue hold"})
+    registry = AdapterRegistry(
+        (PolymarketAdapter(disabled), KalshiAdapter(held), KrakenSpotAdapter(disabled))
+    )
+    app = FastAPI()
+    app.include_router(router(store, registry, arena_root=tmp_path / "arena"))
+    try:
+        with TestClient(app) as client:
+            response = client.get("/api/frontier/collection-health-events?limit=20")
+        assert response.status_code == 200, response.text
+        payload = response.json()
+        assert payload["network_called"] is False
+        assert payload["research_only"] is True
+        assert payload["source_health_scope"] == "adapter_local_checkpoint"
+        assert payload["returned"] == 1
+        item = payload["items"][0]
+        assert item["event"]["venue"] == "polymarket"
+        assert item["event"]["state"] == "available"
+        assert item["event"]["basis"] == "recorded"
+        assert item["event"]["evidence_observation_id"]
+        assert item["adapter_version"] == "fixture-poly-v1"
+        assert item["checkpoint_sequence"] == 0
+        assert item["source_health_state"] == "healthy"
+    finally:
+        asyncio.run(registry.aclose())
+
+
+def test_collection_health_catalog_empty_journal_stays_missing_and_chain_corruption_fails_closed(
+    tmp_path,
+):
+    from midas.frontier.collection import _canonical_json
+
+    store = FrontierStore(tmp_path / "frontier")
+    journal = CollectionJournal(store.root)
+    disabled = AdapterConfig(enabled=False, live_public_probe_enabled=False)
+    registry = AdapterRegistry(
+        (PolymarketAdapter(disabled), KalshiAdapter(disabled), KrakenSpotAdapter(disabled))
+    )
+    app = FastAPI()
+    app.include_router(router(store, registry, arena_root=tmp_path / "arena"))
+    try:
+        with TestClient(app) as client:
+            empty = client.get("/api/frontier/collection-health-events")
+        assert empty.status_code == 200, empty.text
+        assert empty.json()["items"] == []
+        assert not journal.path.exists()
+
+        run_spec = CollectionRunSpec(
+            run_id="9a1b109c-f943-4d2f-9705-e4695f48938d",
+            venue=Venue.POLYMARKET,
+            adapter_version="fixture-adapter-v1",
+            capability_manifest_sha256="f" * 64,
+            adapter_config=disabled,
+            market_limit=1,
+            book_limit=0,
+            book_depth=1,
+            max_evidence_bytes=1024 * 1024,
+            max_wall_seconds=30,
+            created_at_utc=T0,
+        )
+        journal.create_run(run_spec)
+        journal.append_checkpoint(
+            CollectionCheckpoint(
+                run_id=run_spec.run_id,
+                sequence=0,
+                updated_at_utc=T0 + timedelta(seconds=1),
+                state="completed",
+                source_health=SourceHealth(
+                    venue=Venue.POLYMARKET,
+                    state=SourceState.HEALTHY,
+                    checked_at_utc=T0,
+                ),
+            )
+        )
+        corrupted = CollectionCheckpoint(
+            run_id=run_spec.run_id,
+            sequence=1,
+            updated_at_utc=T0 + timedelta(seconds=3),
+            state="partial",
+            source_health=SourceHealth(
+                venue=Venue.POLYMARKET,
+                state=SourceState.DEGRADED,
+                checked_at_utc=T0 + timedelta(seconds=2),
+                last_success_at_utc=T0,
+            ),
+        )
+        encoded = _canonical_json(corrupted.model_dump(mode="json"))
+        digest = hashlib.sha256(encoded).hexdigest()
+        with sqlite3.connect(journal.path) as connection:
+            connection.execute(
+                "INSERT INTO collection_checkpoints VALUES(?,?,?,?,?)",
+                (run_spec.run_id, 1, "0" * 64, encoded.decode(), digest),
+            )
+        with TestClient(app) as client:
+            failed = client.get("/api/frontier/collection-health-events")
+        assert failed.status_code == 409
+        assert "chain integrity" in failed.text
+    finally:
+        asyncio.run(registry.aclose())

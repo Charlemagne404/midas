@@ -39,6 +39,7 @@ MAX_COLLECTION_DIAGNOSTICS = MAX_COLLECTION_MARKET_OBSERVATIONS + MAX_COLLECTION
 MAX_COLLECTION_RUNS = 1000
 MAX_COLLECTION_CHECKPOINTS = 100
 MAX_COLLECTION_CHECKPOINTS_TOTAL = 20_000
+MAX_COLLECTION_HEALTH_EVENTS = 20
 MAX_COLLECTION_JOURNAL_BYTES = 64 * 1024 * 1024
 MAX_COLLECTION_CHECKPOINT_BYTES = 8 * 1024 * 1024
 MAX_COLLECTION_EVIDENCE_BYTES = 16 * 1024 * 1024
@@ -580,6 +581,120 @@ class CollectionJournal:
             raise FrontierStoreError("Collection journal could not be read safely") from error
         finally:
             connection.close()
+
+    def latest_source_health_checkpoints(
+        self,
+        limit: int = MAX_COLLECTION_HEALTH_EVENTS,
+        *,
+        excluded_venues: tuple[Venue, ...] = (),
+    ) -> tuple[tuple[CollectionRunSpec, CollectionCheckpoint, str], ...]:
+        """List recent, chain-verified health observations without creating the journal."""
+        if not 1 <= limit <= MAX_COLLECTION_HEALTH_EVENTS:
+            raise ValueError(
+                f"Collection health listing limit must be within 1..{MAX_COLLECTION_HEALTH_EVENTS}"
+            )
+        excluded = set(excluded_venues)
+        if self.path.is_symlink():
+            raise FrontierStoreError("Collection journal path cannot be a symlink")
+        if not self.path.exists():
+            return ()
+        if self.path.stat().st_size > self.max_bytes:
+            raise FrontierStoreError("Frontier collection journal exceeds its byte budget")
+
+        candidates: list[tuple[datetime, str]] = []
+        connection = sqlite3.connect(self.path.as_uri() + "?mode=ro", uri=True, timeout=0.5)
+        connection.row_factory = sqlite3.Row
+        try:
+            connection.execute("PRAGMA busy_timeout=500")
+            connection.execute("PRAGMA query_only=ON")
+            meta = connection.execute(
+                "SELECT value FROM collection_meta WHERE key='schema_version'"
+            ).fetchone()
+            if meta is None or str(meta["value"]) != str(COLLECTION_JOURNAL_SCHEMA):
+                raise FrontierStoreError("Unsupported Frontier collection journal schema")
+
+            # The journal is capped at 20,000 checkpoints and 64 MiB. Stream newest
+            # checkpoints first so each run contributes only its latest non-null health
+            # observation; parsing remains bounded even when progress checkpoints omit it.
+            rows = connection.execute(
+                "SELECT run_id,sequence,checkpoint_json,row_sha256 "
+                "FROM collection_checkpoints ORDER BY run_id,sequence DESC"
+            )
+            latest_health_runs: set[str] = set()
+            spec_cache: dict[str, CollectionRunSpec] = {}
+            for row in rows:
+                run_id = str(row["run_id"])
+                if not _valid_run_id(run_id):
+                    raise FrontierStoreError("Stored collection run identity is invalid")
+                if run_id in latest_health_runs:
+                    continue
+                encoded = str(row["checkpoint_json"]).encode("utf-8")
+                if len(encoded) > MAX_COLLECTION_CHECKPOINT_BYTES:
+                    raise FrontierStoreError("Stored collection checkpoint exceeds its byte bound")
+                try:
+                    checkpoint = CollectionCheckpoint.model_validate(json.loads(encoded))
+                except (json.JSONDecodeError, ValueError) as error:
+                    raise FrontierStoreError("Stored collection checkpoint is invalid") from error
+                if checkpoint.run_id != run_id or checkpoint.sequence != int(row["sequence"]):
+                    raise FrontierStoreError("Collection checkpoint identity is inconsistent")
+                health = checkpoint.source_health
+                if health is None:
+                    continue
+                latest_health_runs.add(run_id)
+                if health.checked_at_utc is None or health.state not in {
+                    SourceState.HEALTHY,
+                    SourceState.DEGRADED,
+                    SourceState.UNAVAILABLE,
+                }:
+                    continue
+
+                spec = spec_cache.get(run_id)
+                if spec is None:
+                    run = connection.execute(
+                        "SELECT run_id,spec_sha256,spec_json FROM collection_runs WHERE run_id=?",
+                        (run_id,),
+                    ).fetchone()
+                    if run is None:
+                        raise FrontierStoreError("Collection checkpoint has no run specification")
+                    spec_bytes = str(run["spec_json"]).encode("utf-8")
+                    if len(spec_bytes) > MAX_ROW_BYTES:
+                        raise FrontierStoreError(
+                            "Stored collection run spec exceeds its record bound"
+                        )
+                    if hashlib.sha256(spec_bytes).hexdigest() != run["spec_sha256"]:
+                        raise FrontierStoreError(
+                            "Stored collection run hash does not match its payload"
+                        )
+                    try:
+                        spec = CollectionRunSpec.model_validate(json.loads(spec_bytes))
+                    except (json.JSONDecodeError, ValueError) as error:
+                        raise FrontierStoreError("Stored collection run spec is invalid") from error
+                    if spec.run_id != run_id or str(run["run_id"]) != run_id:
+                        raise FrontierStoreError(
+                            "Stored collection run identity does not match its record"
+                        )
+                    spec_cache[run_id] = spec
+                if health.venue != spec.venue:
+                    raise FrontierStoreError(
+                        "Collector source-health venue differs from its run specification"
+                    )
+                if spec.venue in excluded:
+                    continue
+                digest = str(row["row_sha256"])
+                candidates.append((health.checked_at_utc, digest))
+        except sqlite3.Error as error:
+            raise FrontierStoreError("Collection journal could not be read safely") from error
+        finally:
+            connection.close()
+
+        candidates.sort(key=lambda item: (item[0], item[1]), reverse=True)
+        selected_digests = tuple(digest for _, digest in candidates[:limit])
+        if not selected_digests:
+            return ()
+        verified = self.verified_source_health_checkpoints(selected_digests)
+        if set(verified) != set(selected_digests):
+            raise FrontierStoreError("Latest source-health checkpoint failed chain verification")
+        return tuple(verified[digest] for digest in selected_digests)
 
 
 class BoundedSourceCollector:

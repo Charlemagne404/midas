@@ -1347,6 +1347,72 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
             "network_called": False,
         }
 
+    @api.get("/collection-health-events")
+    async def collection_health_events(
+        limit: int = Query(default=20, ge=1, le=20),
+    ) -> dict[str, Any]:
+        """Expose only recent, locally recorded, chain-verified adapter health events."""
+        journal = CollectionJournal(store.root)
+        try:
+            checkpoints = journal.latest_source_health_checkpoints(
+                limit,
+                excluded_venues=tuple(Venue(venue) for venue in held_venues),
+            )
+            events: list[TimelineSourceStatusEvent] = []
+            metadata: list[dict[str, Any]] = []
+            state_map: dict[SourceState, Literal["available", "degraded", "unavailable"]] = {
+                SourceState.HEALTHY: "available",
+                SourceState.DEGRADED: "degraded",
+                SourceState.UNAVAILABLE: "unavailable",
+            }
+            for spec, checkpoint, digest in checkpoints:
+                health = checkpoint.source_health
+                if health is None or health.checked_at_utc is None:
+                    raise FrontierStoreError(
+                        "Verified source-health checkpoint has no timestamped health"
+                    )
+                state = state_map.get(health.state)
+                if state is None:
+                    raise FrontierStoreError(
+                        "Verified source-health checkpoint has an unsupported state"
+                    )
+                event = TimelineSourceStatusEvent(
+                    venue=spec.venue,
+                    observed_at_utc=health.checked_at_utc,
+                    state=state,
+                    basis="recorded",
+                    evidence_observation_id=digest,
+                    reason=_recorded_source_status_reason(health),
+                )
+                events.append(event)
+                metadata.append(
+                    {
+                        "run_id": spec.run_id,
+                        "adapter_version": spec.adapter_version,
+                        "checkpoint_sequence": checkpoint.sequence,
+                        "checkpoint_updated_at_utc": checkpoint.updated_at_utc,
+                        "last_success_at_utc": health.last_success_at_utc,
+                        "source_health_state": health.state.value,
+                    }
+                )
+            verified_events = _join_recorded_source_status_events(
+                tuple(events), journal=journal, held_venues=held_venues
+            )
+        except (FrontierStoreError, OSError, ValueError) as error:
+            raise HTTPException(status_code=409, detail=str(error)) from error
+        items = [
+            {"event": event.model_dump(mode="json"), **details}
+            for event, details in zip(verified_events, metadata, strict=True)
+        ]
+        return {
+            "items": items,
+            "returned": len(items),
+            "limit": limit,
+            "network_called": False,
+            "research_only": True,
+            "source_health_scope": "adapter_local_checkpoint",
+        }
+
     @api.get("/analytics/coverage")
     async def coverage_analytics() -> dict[str, Any]:
         """Summarize recent eligible evidence without probing any source."""

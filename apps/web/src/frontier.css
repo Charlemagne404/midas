@@ -2265,6 +2265,72 @@
   font-size: 8px;
   line-height: 1.45;
 }
+.fr-recorded-health-picker {
+  min-width: 0;
+  margin: 0 15px 13px;
+  padding: 10px;
+  border: 1px solid #293440;
+  border-radius: 5px;
+  background: #0d1319;
+}
+.fr-recorded-health-picker legend {
+  padding: 0 5px;
+  color: #c2d0df;
+  font-size: 9px;
+  font-weight: 700;
+}
+.fr-recorded-health-picker > p {
+  margin: 2px 0 9px;
+  color: #8996a7;
+  font-size: 8px;
+  line-height: 1.5;
+}
+.fr-recorded-health-list {
+  display: grid;
+  max-height: 250px;
+  gap: 6px;
+  overflow: auto;
+}
+.fr-recorded-health-row {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr);
+  align-items: start;
+  gap: 9px;
+  padding: 8px;
+  border: 1px solid #26323d;
+  border-radius: 4px;
+  background: #11171e;
+  cursor: pointer;
+}
+.fr-recorded-health-row input {
+  width: 14px;
+  height: 14px;
+  margin: 2px 0 0;
+  accent-color: #83c3ee;
+}
+.fr-recorded-health-row input:focus-visible {
+  outline: 2px solid #81c7f1;
+  outline-offset: 2px;
+}
+.fr-recorded-health-copy {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+.fr-recorded-health-copy strong {
+  color: #cbd7e4;
+  font-size: 9px;
+}
+.fr-recorded-health-copy small {
+  color: #8996a7;
+  font-size: 8px;
+  line-height: 1.4;
+}
+.fr-recorded-health-copy code {
+  color: #8c9bad;
+  font-size: 8px;
+  overflow-wrap: anywhere;
+}
 .fr-timeline-frame-list {
   display: grid;
   gap: 7px;

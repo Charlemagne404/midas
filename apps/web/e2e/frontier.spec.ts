@@ -81,6 +81,8 @@ test('Arena replay history loads without submitting or launching work', async ({
   await expect(page.getByText(/host-wide Arena resource gate/)).toBeVisible();
   await expect(page.getByRole('button', { name: 'Run paired replay in Arena' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Timeline replay' })).toBeVisible();
+  await expect(page.getByRole('group', { name: 'Recorded adapter health' })).toBeVisible();
+  await expect(page.getByText('No verified health checkpoints')).toBeVisible();
   await expect(page.getByText('No event-time replay jobs')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Replay saved timeline' })).toBeDisabled();
   expect(replaySubmissions).toBe(0);

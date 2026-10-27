@@ -4,12 +4,18 @@ import asyncio
 import hashlib
 import json
 import sqlite3
+from datetime import timedelta
 from decimal import Decimal
 from pathlib import Path
 
 import pytest
 from midas.frontier.adapters.base import AdapterError, build_capabilities
-from midas.frontier.collection import BoundedSourceCollector, CollectionJournal
+from midas.frontier.collection import (
+    BoundedSourceCollector,
+    CollectionCheckpoint,
+    CollectionJournal,
+    CollectionRunSpec,
+)
 from midas.frontier.models import (
     AdapterConfig,
     BookLevel,
@@ -331,6 +337,126 @@ def test_unknown_source_health_checkpoint_lookup_is_read_only(tmp_path):
     journal = CollectionJournal(tmp_path / "uncreated-frontier-root")
     assert journal.verified_source_health_checkpoint("a" * 64) is None
     assert not journal.path.exists()
+
+
+def test_latest_source_health_checkpoints_are_bounded_read_only_and_use_latest_health(tmp_path):
+    journal = CollectionJournal(tmp_path / "frontier")
+    assert journal.latest_source_health_checkpoints() == ()
+    assert not journal.path.exists()
+
+    run_spec = CollectionRunSpec(
+        run_id="f79d58bb-e799-4718-93f1-a94bb7492f21",
+        venue=Venue.POLYMARKET,
+        adapter_version="fixture-adapter-v1",
+        capability_manifest_sha256="f" * 64,
+        adapter_config=AdapterConfig(enabled=False, live_public_probe_enabled=False),
+        market_limit=1,
+        book_limit=0,
+        book_depth=1,
+        max_evidence_bytes=1024 * 1024,
+        max_wall_seconds=30,
+        created_at_utc=T0,
+    )
+    journal.create_run(run_spec)
+    first_digest = journal.append_checkpoint(
+        CollectionCheckpoint(
+            run_id=run_spec.run_id,
+            sequence=0,
+            updated_at_utc=T0 + timedelta(seconds=1),
+            state="completed",
+            source_health=SourceHealth(
+                venue=Venue.POLYMARKET,
+                state=SourceState.HEALTHY,
+                checked_at_utc=T0,
+                last_success_at_utc=T0,
+            ),
+        )
+    )
+    journal.append_checkpoint(
+        CollectionCheckpoint(
+            run_id=run_spec.run_id,
+            sequence=1,
+            updated_at_utc=T0 + timedelta(seconds=2),
+            state="completed",
+        )
+    )
+    latest_digest = journal.append_checkpoint(
+        CollectionCheckpoint(
+            run_id=run_spec.run_id,
+            sequence=2,
+            updated_at_utc=T0 + timedelta(seconds=4),
+            state="partial",
+            source_health=SourceHealth(
+                venue=Venue.POLYMARKET,
+                state=SourceState.DEGRADED,
+                checked_at_utc=T0 + timedelta(seconds=3),
+                last_success_at_utc=T0,
+            ),
+        )
+    )
+
+    selected = journal.latest_source_health_checkpoints()
+    assert len(selected) == 1
+    assert selected[0][1].sequence == 2
+    assert selected[0][2] == latest_digest
+    assert selected[0][2] != first_digest
+    assert journal.latest_source_health_checkpoints(excluded_venues=(Venue.POLYMARKET,)) == ()
+    with pytest.raises(ValueError, match="listing limit"):
+        journal.latest_source_health_checkpoints(limit=21)
+
+
+def test_latest_source_health_checkpoint_listing_rejects_a_broken_chain(tmp_path):
+    from midas.frontier.collection import _canonical_json
+
+    journal = CollectionJournal(tmp_path / "frontier")
+    run_spec = CollectionRunSpec(
+        run_id="b43698ca-8919-413e-952a-5ec4821be120",
+        venue=Venue.POLYMARKET,
+        adapter_version="fixture-adapter-v1",
+        capability_manifest_sha256="f" * 64,
+        adapter_config=AdapterConfig(enabled=False, live_public_probe_enabled=False),
+        market_limit=1,
+        book_limit=0,
+        book_depth=1,
+        max_evidence_bytes=1024 * 1024,
+        max_wall_seconds=30,
+        created_at_utc=T0,
+    )
+    journal.create_run(run_spec)
+    journal.append_checkpoint(
+        CollectionCheckpoint(
+            run_id=run_spec.run_id,
+            sequence=0,
+            updated_at_utc=T0 + timedelta(seconds=1),
+            state="completed",
+            source_health=SourceHealth(
+                venue=Venue.POLYMARKET,
+                state=SourceState.HEALTHY,
+                checked_at_utc=T0,
+            ),
+        )
+    )
+    corrupted = CollectionCheckpoint(
+        run_id=run_spec.run_id,
+        sequence=1,
+        updated_at_utc=T0 + timedelta(seconds=3),
+        state="partial",
+        source_health=SourceHealth(
+            venue=Venue.POLYMARKET,
+            state=SourceState.DEGRADED,
+            checked_at_utc=T0 + timedelta(seconds=2),
+            last_success_at_utc=T0,
+        ),
+    )
+    encoded = _canonical_json(corrupted.model_dump(mode="json"))
+    digest = hashlib.sha256(encoded).hexdigest()
+    with sqlite3.connect(journal.path) as connection:
+        connection.execute(
+            "INSERT INTO collection_checkpoints VALUES(?,?,?,?,?)",
+            (run_spec.run_id, 1, "0" * 64, encoded.decode(), digest),
+        )
+    with pytest.raises(FrontierStoreError, match="chain integrity"):
+        journal.latest_source_health_checkpoints()
 
 
 def test_latest_pinned_market_metadata_wins_without_discarding_capture_rows(tmp_path):

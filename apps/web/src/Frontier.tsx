@@ -807,6 +807,31 @@ type FrontierTimelineResult = {
   authenticated_requests: false;
   integrity_verified: true;
 };
+type RecordedSourceStatusEvent = {
+  venue: Venue;
+  observed_at_utc: string;
+  state: 'available' | 'degraded' | 'unavailable';
+  basis: 'recorded';
+  evidence_observation_id: string;
+  reason: string;
+};
+type RecordedSourceHealthCheckpoint = {
+  event: RecordedSourceStatusEvent;
+  run_id: string;
+  adapter_version: string;
+  checkpoint_sequence: number;
+  checkpoint_updated_at_utc: string;
+  last_success_at_utc: string | null;
+  source_health_state: string;
+};
+type RecordedSourceHealthCatalog = {
+  items: RecordedSourceHealthCheckpoint[];
+  returned: number;
+  limit: number;
+  network_called: false;
+  research_only: true;
+  source_health_scope: 'adapter_local_checkpoint';
+};
 type Readiness = { gates: { name: string; state: string; detail: string }[] };
 type ListResponse<T> = { items: T[]; returned: number; limit: number; offset: number };
 type ObservationEvidence = {
@@ -1588,6 +1613,7 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
   const [selectedArenaReplayId, setSelectedArenaReplayId] = useState<string | null>(null);
   const [selectedTimelineJobId, setSelectedTimelineJobId] = useState<string | null>(null);
   const [timelineMaxBookAgeMs, setTimelineMaxBookAgeMs] = useState('15000');
+  const [selectedSourceHealthDigests, setSelectedSourceHealthDigests] = useState<string[]>([]);
   const queryClient = useQueryClient();
   const options = { staleTime: 10_000, retry: 1 };
   const resetGraphPagination = () => {
@@ -1703,6 +1729,12 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
         ? 2000
         : false,
   });
+  const recordedSourceHealth = useQuery({
+    queryKey: ['frontier', 'collection-health-events'],
+    queryFn: () => api<RecordedSourceHealthCatalog>('/frontier/collection-health-events?limit=20'),
+    enabled: section === 'replay',
+    ...options,
+  });
   const listedTimelineJobs = timelineJobs.data?.items ?? [];
   const selectedTimelineJob =
     listedTimelineJobs.find((job) => job.job_id === selectedTimelineJobId) ??
@@ -1722,6 +1754,10 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
     Number.isInteger(parsedTimelineMaxBookAgeMs) &&
     parsedTimelineMaxBookAgeMs >= 1 &&
     parsedTimelineMaxBookAgeMs <= 3_600_000;
+  const recordedSourceHealthItems = recordedSourceHealth.data?.items ?? [];
+  const selectedSourceHealthEvents = recordedSourceHealthItems
+    .filter((item) => selectedSourceHealthDigests.includes(item.event.evidence_observation_id))
+    .map((item) => item.event);
 
   const tradeMarketKey = `${tradeVenue}:${tradeMarketId}`;
   const recordedTradePage = (trades.data?.pages ?? []).find(
@@ -1903,7 +1939,12 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
         timeline_frame_policy: string;
       }>('/frontier/arena-timeline-replay', {
         method: 'POST',
-        body: JSON.stringify({ max_book_age_ms: parsedTimelineMaxBookAgeMs }),
+        body: JSON.stringify({
+          max_book_age_ms: parsedTimelineMaxBookAgeMs,
+          ...(selectedSourceHealthEvents.length > 0
+            ? { source_status_events: selectedSourceHealthEvents }
+            : {}),
+        }),
       }),
     onSuccess: (job) => {
       const summary: FrontierTimelineJob = {
@@ -3668,6 +3709,61 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
                 3,600,000; the value is pinned into the replay snapshot.
               </small>
             </div>
+            <fieldset className="fr-recorded-health-picker">
+              <legend>Recorded adapter health</legend>
+              <p>
+                Select verified local collector checkpoints to replay as source-state events. These
+                records describe adapter-local health at one checkpoint; they do not show continuous
+                venue availability or account eligibility. This list reads the local journal only
+                and never starts a collector or contacts a venue.
+              </p>
+              {recordedSourceHealth.isLoading ? (
+                <div className="fr-loading">Reading verified local health checkpoints…</div>
+              ) : recordedSourceHealth.isError ? (
+                <InlineError message={recordedSourceHealth.error.message} />
+              ) : recordedSourceHealthItems.length === 0 ? (
+                <EmptyState
+                  title="No verified health checkpoints"
+                  detail="A bounded collector run must already have recorded adapter health. No source probe is started from this screen."
+                />
+              ) : (
+                <div className="fr-recorded-health-list">
+                  {recordedSourceHealthItems.map((item) => {
+                    const digest = item.event.evidence_observation_id;
+                    const checked = selectedSourceHealthDigests.includes(digest);
+                    return (
+                      <label className="fr-recorded-health-row" key={digest}>
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={(change) =>
+                            setSelectedSourceHealthDigests((current) =>
+                              change.target.checked
+                                ? current.includes(digest)
+                                  ? current
+                                  : [...current, digest]
+                                : current.filter((selected) => selected !== digest),
+                            )
+                          }
+                          aria-label={`Include recorded ${item.event.venue} ${item.event.state} health from ${time(item.event.observed_at_utc)}`}
+                        />
+                        <span className="fr-recorded-health-copy">
+                          <strong>
+                            {item.event.venue} · {item.event.state}
+                          </strong>
+                          <small>
+                            Checked {time(item.event.observed_at_utc)} · adapter{' '}
+                            {item.adapter_version} · journal sequence {item.checkpoint_sequence}
+                          </small>
+                          <small>Last success {time(item.last_success_at_utc)}</small>
+                          <code>{digest}</code>
+                        </span>
+                      </label>
+                    );
+                  })}
+                </div>
+              )}
+            </fieldset>
             <div className="fr-callout">
               <ShieldCheck size={16} />
               <span>

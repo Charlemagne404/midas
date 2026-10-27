@@ -2138,6 +2138,7 @@ it('submits a bounded Arena replay and displays its integrity-verified compariso
   const snapshotId = 'a'.repeat(64);
   const snapshotSha256 = 'b'.repeat(64);
   const resultSha256 = 'c'.repeat(64);
+  const healthCheckpointSha256 = '9'.repeat(64);
   const comparison = {
     comparison_id: 'd'.repeat(64),
     evidence_input_sha256: 'e'.repeat(64),
@@ -2240,6 +2241,31 @@ it('submits a bounded Arena replay and displays its integrity-verified compariso
     '/api/frontier/runs?limit=30': empty,
     '/api/frontier/comparisons?limit=30': empty,
     '/api/frontier/readiness': { gates: [] },
+    '/api/frontier/collection-health-events?limit=20': {
+      items: [
+        {
+          event: {
+            venue: 'polymarket',
+            observed_at_utc: '2026-10-27T00:00:00Z',
+            state: 'available',
+            basis: 'recorded',
+            evidence_observation_id: healthCheckpointSha256,
+            reason: 'Verified collector checkpoint reported healthy source health.',
+          },
+          run_id: '0'.repeat(36),
+          adapter_version: 'fixture-adapter-v1',
+          checkpoint_sequence: 2,
+          checkpoint_updated_at_utc: '2026-10-27T00:00:01Z',
+          last_success_at_utc: '2026-10-27T00:00:00Z',
+          source_health_state: 'healthy',
+        },
+      ],
+      returned: 1,
+      limit: 20,
+      network_called: false,
+      research_only: true,
+      source_health_scope: 'adapter_local_checkpoint',
+    },
   };
   const jobSummary = {
     job_id: jobId,
@@ -2261,6 +2287,16 @@ it('submits a bounded Arena replay and displays its integrity-verified compariso
   };
   let submission: Record<string, unknown> | undefined;
   let timelineSubmission: Record<string, unknown> | undefined;
+  const submittedSourceEvents = () =>
+    Array.isArray(timelineSubmission?.source_status_events)
+      ? (timelineSubmission.source_status_events as {
+          venue: string;
+          state: string;
+          basis: string;
+          reason: string;
+          evidence_observation_id: string;
+        }[])
+      : [];
   const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const path = String(input);
     if (path === '/api/arena/frontier-timelines?limit=20') {
@@ -2330,7 +2366,9 @@ it('submits a bounded Arena replay and displays its integrity-verified compariso
                 market_observation_ids: ['market-fixture'],
                 book_observation_ids: ['book-fixture'],
                 relationship_ids: [],
-                source_status_sha256s: [],
+                source_status_sha256s: submittedSourceEvents().map(
+                  (event) => event.evidence_observation_id,
+                ),
                 evaluation_times_utc: ['2026-10-27T00:00:00Z'],
                 max_book_age_ms: Number(timelineSubmission?.max_book_age_ms ?? 15_000),
               },
@@ -2344,7 +2382,12 @@ it('submits a bounded Arena replay and displays its integrity-verified compariso
                   stale_book_count: 0,
                   not_yet_observed_count: 0,
                   excluded_source_book_count: 0,
-                  source_states: [],
+                  source_states: submittedSourceEvents().map((event) => ({
+                    venue: event.venue,
+                    state: event.state,
+                    basis: event.basis,
+                    reason: event.reason,
+                  })),
                   candidate_count: 0,
                   classification_counts: {},
                   candidates: [],
@@ -2444,6 +2487,18 @@ it('submits a bounded Arena replay and displays its integrity-verified compariso
   ]);
 
   expect(await screen.findByText('No event-time replay jobs')).toBeInTheDocument();
+  const recordedHealthCheckbox = await screen.findByRole('checkbox', {
+    name: /Include recorded polymarket available health/,
+  });
+  expect(recordedHealthCheckbox).not.toBeChecked();
+  expect(
+    fetchMock.mock.calls.some(
+      ([input, init]) =>
+        String(input) === '/api/frontier/arena-timeline-replay' && init?.method === 'POST',
+    ),
+  ).toBe(false);
+  expect(fetchMock.mock.calls.some(([input]) => String(input).includes('/probe/'))).toBe(false);
+  fireEvent.click(recordedHealthCheckbox);
   const freshnessInput = screen.getByLabelText('Maximum book age (milliseconds)');
   const timelineReplayButton = screen.getByRole('button', { name: 'Replay saved timeline' });
   fireEvent.change(freshnessInput, { target: { value: '0' } });
@@ -2459,8 +2514,20 @@ it('submits a bounded Arena replay and displays its integrity-verified compariso
   expect(
     screen.getByText('1 fresh · 0 stale · 0 not yet observed · 0 source-excluded'),
   ).toBeInTheDocument();
-  expect(screen.getByText(/No explicit source-state event was pinned/)).toBeInTheDocument();
-  expect(timelineSubmission).toEqual({ max_book_age_ms: 5000 });
+  expect(screen.getByText('polymarket: available')).toBeInTheDocument();
+  expect(timelineSubmission).toEqual({
+    max_book_age_ms: 5000,
+    source_status_events: [
+      {
+        venue: 'polymarket',
+        observed_at_utc: '2026-10-27T00:00:00Z',
+        state: 'available',
+        basis: 'recorded',
+        evidence_observation_id: healthCheckpointSha256,
+        reason: 'Verified collector checkpoint reported healthy source health.',
+      },
+    ],
+  });
 });
 
 it('captures one explicit bounded Kalshi multivariate event page', async () => {
