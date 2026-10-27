@@ -8,7 +8,19 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from midas.arena.frontier_timeline import FrontierTimelineSnapshot
 from midas.frontier.adapters import KalshiAdapter, KrakenSpotAdapter, PolymarketAdapter
-from midas.frontier.models import AdapterConfig, MarketBatch, RawObservation, Venue
+from midas.frontier.collection import (
+    CollectionCheckpoint,
+    CollectionJournal,
+    CollectionRunSpec,
+)
+from midas.frontier.models import (
+    AdapterConfig,
+    MarketBatch,
+    RawObservation,
+    SourceHealth,
+    SourceState,
+    Venue,
+)
 from midas.frontier.registry import AdapterRegistry
 from midas.frontier.storage import FrontierStore
 
@@ -66,6 +78,37 @@ def test_timeline_route_stages_only_pinned_local_inputs_without_source_requests(
     )
     book_observation_id = store.append_observation(book_raw, source_book)
 
+    journal = CollectionJournal(store.root)
+    run_spec = CollectionRunSpec(
+        run_id="b75fc286-a7ce-4819-ad3d-c1460c31e154",
+        venue=Venue.POLYMARKET,
+        adapter_version="fixture-adapter-v1",
+        capability_manifest_sha256="f" * 64,
+        adapter_config=AdapterConfig(enabled=True, live_public_probe_enabled=True),
+        market_limit=1,
+        book_limit=0,
+        book_depth=1,
+        max_evidence_bytes=1024 * 1024,
+        max_wall_seconds=30,
+        created_at_utc=T0,
+    )
+    journal.create_run(run_spec)
+    source_health = SourceHealth(
+        venue=Venue.POLYMARKET,
+        state=SourceState.HEALTHY,
+        checked_at_utc=T0,
+        last_success_at_utc=T0,
+    )
+    checkpoint_sha256 = journal.append_checkpoint(
+        CollectionCheckpoint(
+            run_id=run_spec.run_id,
+            sequence=0,
+            updated_at_utc=T0 + timedelta(seconds=1),
+            state="completed",
+            source_health=source_health,
+        )
+    )
+
     disabled = AdapterConfig(enabled=False, live_public_probe_enabled=False)
     registry = AdapterRegistry(
         (PolymarketAdapter(disabled), KalshiAdapter(disabled), KrakenSpotAdapter(disabled))
@@ -90,6 +133,16 @@ def test_timeline_route_stages_only_pinned_local_inputs_without_source_requests(
                 ],
                 "max_book_age_ms": 10_000,
                 "scenario": {"name": "API timeline fixture"},
+                "source_status_events": [
+                    {
+                        "venue": "polymarket",
+                        "observed_at_utc": T0.isoformat(),
+                        "state": "available",
+                        "basis": "recorded",
+                        "evidence_observation_id": checkpoint_sha256,
+                        "reason": "Verified collector checkpoint reported healthy source health.",
+                    }
+                ],
             },
         )
         assert response.status_code == 201, response.text
@@ -100,6 +153,9 @@ def test_timeline_route_stages_only_pinned_local_inputs_without_source_requests(
         pinned = FrontierTimelineSnapshot.model_validate_json(pinned_path.read_bytes())
         assert pinned.markets[0].provenance.observation_id == market_observation_id
         assert pinned.books[0].provenance.observation_id == book_observation_id
+        assert pinned.source_status_events[0].evidence_observation_id == checkpoint_sha256
+        assert pinned.source_status_events[0].basis == "recorded"
+        assert pinned.validated_source_status_checkpoint_sha256s == (checkpoint_sha256,)
         assert captured["root"] == arena_root
         spec = captured["spec"]
         assert spec.kind == "frontier_timeline"
@@ -128,7 +184,25 @@ def test_timeline_route_stages_only_pinned_local_inputs_without_source_requests(
             },
         )
         assert recorded_state.status_code == 422
-        assert "not available from the pinned store" in recorded_state.text
+        assert "does not identify a verified collector checkpoint" in recorded_state.text
+
+        mismatched_state = client.post(
+            "/api/frontier/arena-timeline-replay",
+            json={
+                "source_status_events": [
+                    {
+                        "venue": "polymarket",
+                        "observed_at_utc": T0.isoformat(),
+                        "state": "unavailable",
+                        "basis": "recorded",
+                        "evidence_observation_id": checkpoint_sha256,
+                        "reason": "Verified collector checkpoint reported healthy source health.",
+                    }
+                ]
+            },
+        )
+        assert mismatched_state.status_code == 422
+        assert "do not match the verified collector checkpoint" in mismatched_state.text
 
         reordered_times = client.post(
             "/api/frontier/arena-timeline-replay",
@@ -145,3 +219,65 @@ def test_timeline_route_stages_only_pinned_local_inputs_without_source_requests(
     finally:
         client.close()
         asyncio.run(registry.aclose())
+
+
+def test_recorded_source_health_join_respects_venue_hold(tmp_path):
+    store = FrontierStore(tmp_path / "frontier")
+    journal = CollectionJournal(store.root)
+    run_spec = CollectionRunSpec(
+        run_id="d981329b-6615-4bc4-b351-dff46164eff3",
+        venue=Venue.POLYMARKET,
+        adapter_version="fixture-adapter-v1",
+        capability_manifest_sha256="e" * 64,
+        adapter_config=AdapterConfig(enabled=True, live_public_probe_enabled=True),
+        market_limit=1,
+        book_limit=0,
+        book_depth=1,
+        max_evidence_bytes=1024 * 1024,
+        max_wall_seconds=30,
+        created_at_utc=T0,
+    )
+    journal.create_run(run_spec)
+    checkpoint_sha256 = journal.append_checkpoint(
+        CollectionCheckpoint(
+            run_id=run_spec.run_id,
+            sequence=0,
+            updated_at_utc=T0 + timedelta(seconds=1),
+            state="completed",
+            source_health=SourceHealth(
+                venue=Venue.POLYMARKET,
+                state=SourceState.HEALTHY,
+                checked_at_utc=T0,
+            ),
+        )
+    )
+    held = AdapterConfig(
+        enabled=False,
+        live_public_probe_enabled=False,
+        probe_policy_block_reason="fixture source-use hold",
+    )
+    disabled = AdapterConfig(enabled=False, live_public_probe_enabled=False)
+    registry = AdapterRegistry(
+        (PolymarketAdapter(held), KalshiAdapter(disabled), KrakenSpotAdapter(disabled))
+    )
+    app = FastAPI()
+    app.include_router(router(store, registry, arena_root=tmp_path / "arena"))
+    with TestClient(app) as client:
+        response = client.post(
+            "/api/frontier/arena-timeline-replay",
+            json={
+                "source_status_events": [
+                    {
+                        "venue": "polymarket",
+                        "observed_at_utc": T0.isoformat(),
+                        "state": "available",
+                        "basis": "recorded",
+                        "evidence_observation_id": checkpoint_sha256,
+                        "reason": "Verified collector checkpoint reported healthy source health.",
+                    }
+                ]
+            },
+        )
+        assert response.status_code == 409
+        assert "recorded polymarket source health is on hold" in response.text
+    asyncio.run(registry.aclose())

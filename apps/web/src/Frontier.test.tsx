@@ -2332,7 +2332,7 @@ it('submits a bounded Arena replay and displays its integrity-verified compariso
                 relationship_ids: [],
                 source_status_sha256s: [],
                 evaluation_times_utc: ['2026-10-27T00:00:00Z'],
-                max_book_age_ms: 15_000,
+                max_book_age_ms: Number(timelineSubmission?.max_book_age_ms ?? 15_000),
               },
               frames: [
                 {
@@ -2444,13 +2444,20 @@ it('submits a bounded Arena replay and displays its integrity-verified compariso
   ]);
 
   expect(await screen.findByText('No event-time replay jobs')).toBeInTheDocument();
-  fireEvent.click(screen.getByRole('button', { name: 'Replay saved timeline' }));
+  const freshnessInput = screen.getByLabelText('Maximum book age (milliseconds)');
+  const timelineReplayButton = screen.getByRole('button', { name: 'Replay saved timeline' });
+  fireEvent.change(freshnessInput, { target: { value: '0' } });
+  expect(timelineReplayButton).toBeDisabled();
+  fireEvent.change(freshnessInput, { target: { value: '5000' } });
+  expect(timelineReplayButton).toBeEnabled();
+  fireEvent.click(timelineReplayButton);
   expect(await screen.findByText(/1 event-time frames are pinned/)).toBeInTheDocument();
+  expect(screen.getByText('Freshness limit 5,000 ms')).toBeInTheDocument();
   expect(
     screen.getByText('1 fresh · 0 stale · 0 not yet observed · 0 source-excluded'),
   ).toBeInTheDocument();
   expect(screen.getByText(/No explicit source-state event was pinned/)).toBeInTheDocument();
-  expect(timelineSubmission).toEqual({ max_book_age_ms: 15_000 });
+  expect(timelineSubmission).toEqual({ max_book_age_ms: 5000 });
 });
 
 it('captures one explicit bounded Kalshi multivariate event page', async () => {

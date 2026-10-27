@@ -41,7 +41,7 @@ class FrontierTimelineJobSpec(Model):
 
 
 class FrontierTimelineSnapshot(FrontierModel):
-    schema_version: Literal[1] = 1
+    schema_version: Literal[1, 2] = 2
     snapshot_id: str = Field(pattern=r"^[0-9a-f]{64}$")
     code_version: str = Field(min_length=1, max_length=240)
     markets: tuple[FrontierMarket, ...] = Field(min_length=1, max_length=MAX_TIMELINE_MARKETS)
@@ -49,6 +49,9 @@ class FrontierTimelineSnapshot(FrontierModel):
     verified_relationships: tuple[Relationship, ...] = Field(max_length=MAX_TIMELINE_RELATIONSHIPS)
     source_status_events: tuple[TimelineSourceStatusEvent, ...] = Field(
         max_length=MAX_TIMELINE_SOURCE_EVENTS
+    )
+    validated_source_status_checkpoint_sha256s: tuple[str, ...] = Field(
+        default=(), max_length=MAX_TIMELINE_SOURCE_EVENTS
     )
     evaluation_times_utc: tuple[datetime, ...] | None = Field(
         default=None, max_length=MAX_TIMELINE_FRAMES
@@ -94,11 +97,33 @@ class FrontierTimelineSnapshot(FrontierModel):
             for relationship in self.verified_relationships
         ):
             raise ValueError("Timeline snapshot relationships must be verified")
-        if any(event.basis == "recorded" for event in self.source_status_events):
-            raise ValueError(
-                "Recorded source-state evidence must be loaded through a validated store join"
+        recorded_evidence = tuple(
+            sorted(
+                event.evidence_observation_id
+                for event in self.source_status_events
+                if event.basis == "recorded" and event.evidence_observation_id is not None
             )
-        payload = self.model_dump(mode="json", exclude={"snapshot_id"})
+        )
+        if self.schema_version == 1:
+            has_join_identities = (
+                "validated_source_status_checkpoint_sha256s" in self.model_fields_set
+            )
+            if recorded_evidence or has_join_identities:
+                raise ValueError("Timeline snapshot schema 1 cannot contain recorded source status")
+        else:
+            if "validated_source_status_checkpoint_sha256s" not in self.model_fields_set:
+                raise ValueError(
+                    "Timeline snapshot schema 2 must pin source-health join identities"
+                )
+            attested_evidence = self.validated_source_status_checkpoint_sha256s
+            if (
+                tuple(sorted(set(attested_evidence))) != attested_evidence
+                or recorded_evidence != attested_evidence
+            ):
+                raise ValueError(
+                    "Recorded source-state events must match the pinned validated checkpoint joins"
+                )
+        payload = self.model_dump(mode="json", exclude={"snapshot_id"}, exclude_unset=True)
         if _sha256_json(payload) != self.snapshot_id:
             raise ValueError("Frontier timeline snapshot identity does not match its inputs")
         return self
@@ -144,18 +169,22 @@ def make_snapshot(
     books: tuple[BookSnapshot, ...],
     verified_relationships: tuple[Relationship, ...],
     source_status_events: tuple[TimelineSourceStatusEvent, ...],
+    validated_source_status_checkpoint_sha256s: tuple[str, ...] = (),
     evaluation_times_utc: tuple[datetime, ...] | None,
     max_book_age_ms: int,
     scenario: ExecutionScenario,
     relationship_limit: int,
 ) -> FrontierTimelineSnapshot:
     data = {
-        "schema_version": 1,
+        "schema_version": 2,
         "code_version": code_version,
         "markets": [item.model_dump(mode="json") for item in markets],
         "books": [item.model_dump(mode="json") for item in books],
         "verified_relationships": [item.model_dump(mode="json") for item in verified_relationships],
         "source_status_events": [item.model_dump(mode="json") for item in source_status_events],
+        "validated_source_status_checkpoint_sha256s": list(
+            validated_source_status_checkpoint_sha256s
+        ),
         "evaluation_times_utc": (
             [
                 TypeAdapter(datetime).dump_python(item.astimezone(UTC), mode="json")

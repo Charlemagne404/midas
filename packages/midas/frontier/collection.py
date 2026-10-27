@@ -260,6 +260,8 @@ class CollectionJournal:
                 );
                 CREATE INDEX IF NOT EXISTS collection_checkpoint_latest
                     ON collection_checkpoints(run_id,sequence DESC);
+                CREATE INDEX IF NOT EXISTS collection_checkpoint_hash
+                    ON collection_checkpoints(row_sha256);
                 CREATE TRIGGER IF NOT EXISTS collection_runs_no_update
                     BEFORE UPDATE ON collection_runs BEGIN SELECT RAISE(ABORT, 'Collection runs are append-only'); END;
                 CREATE TRIGGER IF NOT EXISTS collection_runs_no_delete
@@ -449,6 +451,135 @@ class CollectionJournal:
         if not checkpoints:
             raise FrontierStoreError("Collection run has no durable checkpoint")
         return checkpoints[-1]
+
+    def verified_source_health_checkpoint(
+        self, evidence_sha256: str
+    ) -> tuple[CollectionRunSpec, CollectionCheckpoint, str] | None:
+        """Resolve a source-health checkpoint by digest without creating or mutating a journal."""
+        return self.verified_source_health_checkpoints((evidence_sha256,)).get(evidence_sha256)
+
+    def verified_source_health_checkpoints(
+        self, evidence_sha256s: tuple[str, ...]
+    ) -> dict[str, tuple[CollectionRunSpec, CollectionCheckpoint, str]]:
+        """Resolve up to 100 health checkpoints with one journal digest scan."""
+        unique_digests = tuple(dict.fromkeys(evidence_sha256s))
+        if len(unique_digests) > MAX_COLLECTION_CHECKPOINTS:
+            raise ValueError("Collection checkpoint lookup exceeds its 100-digest bound")
+        if any(
+            len(item) != 64 or any(character not in "0123456789abcdef" for character in item)
+            for item in unique_digests
+        ):
+            raise ValueError("Collection checkpoint identity must be a lowercase SHA-256 digest")
+        if not unique_digests:
+            return {}
+        if self.path.is_symlink():
+            raise FrontierStoreError("Collection journal path cannot be a symlink")
+        if not self.path.exists():
+            return {}
+        if self.path.stat().st_size > self.max_bytes:
+            raise FrontierStoreError("Frontier collection journal exceeds its byte budget")
+
+        connection = sqlite3.connect(self.path.as_uri() + "?mode=ro", uri=True, timeout=0.5)
+        connection.row_factory = sqlite3.Row
+        try:
+            connection.execute("PRAGMA busy_timeout=500")
+            connection.execute("PRAGMA query_only=ON")
+            meta = connection.execute(
+                "SELECT value FROM collection_meta WHERE key='schema_version'"
+            ).fetchone()
+            if meta is None or str(meta["value"]) != str(COLLECTION_JOURNAL_SCHEMA):
+                raise FrontierStoreError("Unsupported Frontier collection journal schema")
+            placeholders = ",".join("?" for _ in unique_digests)
+            matches = connection.execute(
+                "SELECT run_id,sequence,row_sha256 FROM collection_checkpoints "
+                f"WHERE row_sha256 IN ({placeholders}) LIMIT ?",
+                (*unique_digests, len(unique_digests) + 1),
+            ).fetchall()
+            if len(matches) > len(unique_digests):
+                raise FrontierStoreError("Collection checkpoint digest is not unique")
+            matched_digests = tuple(str(row["row_sha256"]) for row in matches)
+            if len(set(matched_digests)) != len(matched_digests):
+                raise FrontierStoreError("Collection checkpoint digest is not unique")
+            targets_by_run: dict[str, set[str]] = {}
+            for target in matches:
+                run_id = str(target["run_id"])
+                digest = str(target["row_sha256"])
+                if not _valid_run_id(run_id):
+                    raise FrontierStoreError("Stored collection run identity is invalid")
+                if digest in targets_by_run.setdefault(run_id, set()):
+                    raise FrontierStoreError("Collection checkpoint digest is not unique")
+                targets_by_run[run_id].add(digest)
+
+            verified: dict[str, tuple[CollectionRunSpec, CollectionCheckpoint, str]] = {}
+            for run_id, run_targets in sorted(targets_by_run.items()):
+                run = connection.execute(
+                    "SELECT run_id,spec_sha256,spec_json FROM collection_runs WHERE run_id=?",
+                    (run_id,),
+                ).fetchone()
+                if run is None:
+                    raise FrontierStoreError("Collection checkpoint has no run specification")
+                spec_bytes = str(run["spec_json"]).encode("utf-8")
+                if len(spec_bytes) > MAX_ROW_BYTES:
+                    raise FrontierStoreError("Stored collection run spec exceeds its record bound")
+                if hashlib.sha256(spec_bytes).hexdigest() != run["spec_sha256"]:
+                    raise FrontierStoreError(
+                        "Stored collection run hash does not match its payload"
+                    )
+                try:
+                    spec = CollectionRunSpec.model_validate(json.loads(spec_bytes))
+                except (json.JSONDecodeError, ValueError) as error:
+                    raise FrontierStoreError("Stored collection run spec is invalid") from error
+                if spec.run_id != run_id or str(run["run_id"]) != run_id:
+                    raise FrontierStoreError(
+                        "Stored collection run identity does not match its record"
+                    )
+
+                rows = connection.execute(
+                    "SELECT run_id,sequence,previous_sha256,checkpoint_json,row_sha256 "
+                    "FROM collection_checkpoints WHERE run_id=? ORDER BY sequence LIMIT ?",
+                    (run_id, MAX_COLLECTION_CHECKPOINTS + 1),
+                ).fetchall()
+                if len(rows) > MAX_COLLECTION_CHECKPOINTS:
+                    raise FrontierStoreError("Collection checkpoint scan exceeds its row bound")
+                previous_sha256: str | None = None
+                found_targets: set[str] = set()
+                for expected_sequence, row in enumerate(rows):
+                    encoded = str(row["checkpoint_json"]).encode("utf-8")
+                    if len(encoded) > MAX_COLLECTION_CHECKPOINT_BYTES:
+                        raise FrontierStoreError(
+                            "Stored collection checkpoint exceeds its byte bound"
+                        )
+                    digest = hashlib.sha256(encoded).hexdigest()
+                    if (
+                        digest != row["row_sha256"]
+                        or row["sequence"] != expected_sequence
+                        or row["previous_sha256"] != previous_sha256
+                        or row["run_id"] != run_id
+                    ):
+                        raise FrontierStoreError(
+                            "Collection checkpoint chain integrity check failed"
+                        )
+                    try:
+                        checkpoint = CollectionCheckpoint.model_validate(json.loads(encoded))
+                    except (json.JSONDecodeError, ValueError) as error:
+                        raise FrontierStoreError(
+                            "Stored collection checkpoint is invalid"
+                        ) from error
+                    if checkpoint.run_id != run_id or checkpoint.sequence != expected_sequence:
+                        raise FrontierStoreError("Collection checkpoint identity is inconsistent")
+                    if digest in run_targets:
+                        verified[digest] = spec, checkpoint, digest
+                        found_targets.add(digest)
+                    previous_sha256 = digest
+                if found_targets != run_targets:
+                    raise FrontierStoreError(
+                        "Collection checkpoint digest is not in its verified run"
+                    )
+            return verified
+        except sqlite3.Error as error:
+            raise FrontierStoreError("Collection journal could not be read safely") from error
+        finally:
+            connection.close()
 
 
 class BoundedSourceCollector:

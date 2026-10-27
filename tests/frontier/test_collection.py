@@ -309,12 +309,28 @@ def test_collection_journal_detects_checkpoint_tampering_and_enforces_append_onl
             (result.run_id,),
         )
     with sqlite3.connect(journal.path) as connection:
+        first_digest = str(
+            connection.execute(
+                "SELECT row_sha256 FROM collection_checkpoints "
+                "WHERE run_id=? ORDER BY sequence LIMIT 1",
+                (result.run_id,),
+            ).fetchone()[0]
+        )
+    with sqlite3.connect(journal.path) as connection:
         connection.execute(
             "INSERT INTO collection_checkpoints VALUES(?,?,?,?,?)",
             (result.run_id, len(checkpoints), "0" * 64, "{}", "0" * 64),
         )
     with pytest.raises(FrontierStoreError, match="chain integrity"):
         journal.checkpoints(result.run_id)
+    with pytest.raises(FrontierStoreError, match="chain integrity"):
+        journal.verified_source_health_checkpoint(first_digest)
+
+
+def test_unknown_source_health_checkpoint_lookup_is_read_only(tmp_path):
+    journal = CollectionJournal(tmp_path / "uncreated-frontier-root")
+    assert journal.verified_source_health_checkpoint("a" * 64) is None
+    assert not journal.path.exists()
 
 
 def test_latest_pinned_market_metadata_wins_without_discarding_capture_rows(tmp_path):

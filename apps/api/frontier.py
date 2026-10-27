@@ -42,6 +42,7 @@ from midas.frontier.analytics import (
     summarize_frontier_coverage,
 )
 from midas.frontier.capital import CapitalCarryRequest, evaluate_capital_carry
+from midas.frontier.collection import CollectionJournal
 from midas.frontier.economics import (
     ExecutionScenario,
     OpportunityCandidate,
@@ -59,6 +60,8 @@ from midas.frontier.models import (
     MarketBatch,
     RawObservation,
     SourceFailureRecord,
+    SourceHealth,
+    SourceState,
     TradeBatch,
     Venue,
 )
@@ -239,18 +242,109 @@ class TimelineReplayRequest(BaseModel):
             raise ValueError("Timeline evaluation times must be unique and ordered")
         return normalized
 
-    @model_validator(mode="after")
-    def recorded_source_status_requires_capture_support(self) -> TimelineReplayRequest:
-        if any(event.basis == "recorded" for event in self.source_status_events):
-            raise ValueError(
-                "Recorded source-state events are not available from the pinned store; "
-                "use explicitly labelled fixture or scenario events"
-            )
-        return self
-
 
 MAX_FRONTIER_READINESS_JOB_SCAN = 100
 MAX_FRONTIER_READINESS_MANIFEST_BYTES = 64 * 1024
+
+
+def _recorded_source_status_reason(health: SourceHealth) -> str:
+    return f"Verified collector checkpoint reported {health.state.value} source health."
+
+
+def _join_recorded_source_status_events(
+    events: tuple[TimelineSourceStatusEvent, ...],
+    *,
+    journal: CollectionJournal,
+    held_venues: tuple[str, ...],
+) -> tuple[TimelineSourceStatusEvent, ...]:
+    state_map = {
+        SourceState.HEALTHY: "available",
+        SourceState.DEGRADED: "degraded",
+        SourceState.UNAVAILABLE: "unavailable",
+    }
+    recorded_events = tuple(event for event in events if event.basis == "recorded")
+    for event in recorded_events:
+        if event.venue.value in held_venues:
+            raise HTTPException(
+                status_code=409,
+                detail=f"Research use of recorded {event.venue.value} source health is on hold",
+            )
+        if event.evidence_observation_id is None:
+            raise HTTPException(
+                status_code=422, detail="Recorded source status requires a checkpoint digest"
+            )
+    evidence_ids = tuple(
+        event.evidence_observation_id
+        for event in recorded_events
+        if event.evidence_observation_id is not None
+    )
+    if len(set(evidence_ids)) != len(evidence_ids):
+        raise HTTPException(
+            status_code=422, detail="Recorded source status repeats a checkpoint digest"
+        )
+    try:
+        verified_checkpoints = journal.verified_source_health_checkpoints(evidence_ids)
+    except (FrontierStoreError, OSError, ValueError) as error:
+        raise HTTPException(status_code=409, detail=str(error)) from error
+
+    joined: list[TimelineSourceStatusEvent] = []
+    for event in events:
+        if event.basis != "recorded":
+            joined.append(event)
+            continue
+        evidence_id = event.evidence_observation_id
+        if evidence_id is None:
+            raise HTTPException(
+                status_code=422, detail="Recorded source status requires a checkpoint digest"
+            )
+        result = verified_checkpoints.get(evidence_id)
+        if result is None:
+            raise HTTPException(
+                status_code=422,
+                detail="Recorded source status digest does not identify a verified collector checkpoint",
+            )
+        spec, checkpoint, checkpoint_sha256 = result
+        health = checkpoint.source_health
+        if health is None or health.checked_at_utc is None:
+            raise HTTPException(
+                status_code=422,
+                detail="Collector checkpoint has no timestamped source-health observation",
+            )
+        if health.venue != spec.venue or event.venue != spec.venue:
+            raise HTTPException(
+                status_code=422, detail="Recorded source status venue differs from its checkpoint"
+            )
+        expected_state = state_map.get(health.state)
+        if expected_state is None:
+            raise HTTPException(
+                status_code=422,
+                detail=f"Collector health state {health.state.value} cannot be interpreted as source availability",
+            )
+        if (
+            event.observed_at_utc != health.checked_at_utc
+            or event.state != expected_state
+            or event.reason != _recorded_source_status_reason(health)
+            or event.evidence_observation_id != checkpoint_sha256
+        ):
+            raise HTTPException(
+                status_code=422,
+                detail="Recorded source status fields do not match the verified collector checkpoint",
+            )
+        if health.checked_at_utc > checkpoint.updated_at_utc:
+            raise HTTPException(
+                status_code=409,
+                detail="Collector source-health timestamp is later than its checkpoint",
+            )
+        if (
+            health.last_success_at_utc is not None
+            and health.last_success_at_utc > health.checked_at_utc
+        ) or (health.state == SourceState.HEALTHY and health.last_success_at_utc is None):
+            raise HTTPException(
+                status_code=409,
+                detail="Collector source-health timing is inconsistent with its state",
+            )
+        joined.append(event)
+    return tuple(joined)
 
 
 def _arena_replay_readiness(root: Path | None) -> tuple[str, str]:
@@ -3461,6 +3555,11 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
                 status_code=503, detail="Arena timeline replay integration is not configured"
             )
         try:
+            source_status_events = _join_recorded_source_status_events(
+                request.source_status_events,
+                journal=CollectionJournal(store.root),
+                held_venues=held_venues,
+            )
             market_values = await _load_markets(store, 100, excluded_venues=held_venues)
             market_keys = {(item.venue, item.native_market_id) for item in market_values}
             instrument_keys = {
@@ -3495,7 +3594,14 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
                 markets=market_values,
                 books=book_values,
                 verified_relationships=verified,
-                source_status_events=request.source_status_events,
+                source_status_events=source_status_events,
+                validated_source_status_checkpoint_sha256s=tuple(
+                    sorted(
+                        event.evidence_observation_id
+                        for event in source_status_events
+                        if event.basis == "recorded" and event.evidence_observation_id is not None
+                    )
+                ),
                 evaluation_times_utc=request.evaluation_times_utc,
                 max_book_age_ms=request.max_book_age_ms,
                 scenario=request.scenario,

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 from datetime import timedelta
 
 import pytest
@@ -9,6 +10,7 @@ from fastapi.testclient import TestClient
 from midas.arena.artifacts import atomic_json
 from midas.arena.frontier_timeline import (
     FrontierTimelineJobSpec,
+    FrontierTimelineSnapshot,
     execute_frontier_timeline_job,
     load_snapshot,
     make_snapshot,
@@ -19,7 +21,7 @@ from midas.arena.frontier_timeline import (
 from midas.arena.jobs import JobSpec
 from midas.frontier.economics import ExecutionScenario
 from midas.frontier.models import Venue
-from midas.frontier.timeline import deterministic_timeline_replay
+from midas.frontier.timeline import TimelineSourceStatusEvent, deterministic_timeline_replay
 
 from apps.api.arena import router
 from apps.api.frontier import _arena_timeline_readiness
@@ -66,6 +68,68 @@ def test_timeline_snapshot_is_content_addressed_and_tamper_evident(tmp_path):
     path.write_bytes(path.read_bytes() + b" ")
     with pytest.raises(ValueError, match="file hash does not match"):
         load_snapshot(tmp_path, spec)
+
+    legacy_payload = snapshot.model_dump(
+        mode="json",
+        exclude={"snapshot_id", "validated_source_status_checkpoint_sha256s"},
+    )
+    legacy_payload["schema_version"] = 1
+    legacy_id = hashlib.sha256(
+        json.dumps(
+            legacy_payload,
+            sort_keys=True,
+            allow_nan=False,
+            separators=(",", ":"),
+            ensure_ascii=False,
+        ).encode()
+    ).hexdigest()
+    legacy_snapshot = FrontierTimelineSnapshot.model_validate(
+        {"snapshot_id": legacy_id, **legacy_payload}
+    )
+    assert legacy_snapshot.schema_version == 1
+
+
+def test_recorded_source_status_snapshot_requires_pinned_join_attestation():
+    event = TimelineSourceStatusEvent(
+        venue=Venue.POLYMARKET,
+        observed_at_utc=T0,
+        state="available",
+        basis="recorded",
+        evidence_observation_id="a" * 64,
+        reason="Verified collector checkpoint reported healthy source health.",
+    )
+    arguments = {
+        "code_version": "frontier-timeline-recorded-health-v1",
+        "markets": (market(Venue.POLYMARKET, "recorded-health"),),
+        "books": (),
+        "verified_relationships": (),
+        "source_status_events": (event,),
+        "evaluation_times_utc": (T0,),
+        "max_book_age_ms": 10_000,
+        "scenario": ExecutionScenario(name="recorded source status"),
+        "relationship_limit": 100,
+    }
+    with pytest.raises(ValueError, match="validated checkpoint joins"):
+        make_snapshot(**arguments)
+
+    snapshot = make_snapshot(
+        **arguments,
+        validated_source_status_checkpoint_sha256s=("a" * 64,),
+    )
+    assert snapshot.source_status_events == (event,)
+    assert snapshot.validated_source_status_checkpoint_sha256s == ("a" * 64,)
+    replay = deterministic_timeline_replay(
+        snapshot.markets,
+        snapshot.books,
+        source_status_events=snapshot.source_status_events,
+        evaluation_times_utc=snapshot.evaluation_times_utc,
+        max_book_age_ms=snapshot.max_book_age_ms,
+        scenario=snapshot.scenario,
+        code_version=snapshot.code_version,
+        relationship_limit=snapshot.relationship_limit,
+    )
+    assert replay.frames[0].source_states[0].basis == "recorded"
+    assert replay.frames[0].source_states[0].evidence_observation_id == "a" * 64
 
 
 def test_timeline_job_budget_is_small_offline_and_network_restricted_by_kind():

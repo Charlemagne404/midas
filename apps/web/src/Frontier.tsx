@@ -1587,6 +1587,7 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
   const [fillPercent, setFillPercent] = useState('80');
   const [selectedArenaReplayId, setSelectedArenaReplayId] = useState<string | null>(null);
   const [selectedTimelineJobId, setSelectedTimelineJobId] = useState<string | null>(null);
+  const [timelineMaxBookAgeMs, setTimelineMaxBookAgeMs] = useState('15000');
   const queryClient = useQueryClient();
   const options = { staleTime: 10_000, retry: 1 };
   const resetGraphPagination = () => {
@@ -1716,6 +1717,11 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
     enabled: section === 'replay' && selectedTimelineJob?.state === 'COMPLETED',
     retry: false,
   });
+  const parsedTimelineMaxBookAgeMs = Number(timelineMaxBookAgeMs);
+  const timelineFreshnessValid =
+    Number.isInteger(parsedTimelineMaxBookAgeMs) &&
+    parsedTimelineMaxBookAgeMs >= 1 &&
+    parsedTimelineMaxBookAgeMs <= 3_600_000;
 
   const tradeMarketKey = `${tradeVenue}:${tradeMarketId}`;
   const recordedTradePage = (trades.data?.pages ?? []).find(
@@ -1897,7 +1903,7 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
         timeline_frame_policy: string;
       }>('/frontier/arena-timeline-replay', {
         method: 'POST',
-        body: JSON.stringify({ max_book_age_ms: 15_000 }),
+        body: JSON.stringify({ max_book_age_ms: parsedTimelineMaxBookAgeMs }),
       }),
     onSuccess: (job) => {
       const summary: FrontierTimelineJob = {
@@ -3621,11 +3627,15 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
               <button
                 className="fr-action"
                 onClick={() => timelineReplay.mutate()}
-                disabled={timelineReplay.isPending || !markets.data?.items.length}
+                disabled={
+                  timelineReplay.isPending || !markets.data?.items.length || !timelineFreshnessValid
+                }
                 title={
-                  markets.data?.items.length
-                    ? 'Stage saved local observations as a bounded Arena job'
-                    : 'Recorded markets are required before replay'
+                  !markets.data?.items.length
+                    ? 'Recorded markets are required before replay'
+                    : !timelineFreshnessValid
+                      ? 'Book freshness must be an integer from 1 to 3600000 milliseconds'
+                      : 'Stage saved local observations as a bounded Arena job'
                 }
               >
                 <Play size={14} />
@@ -3637,6 +3647,27 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
               pinned locally; no exchange requests or collector start. Each completed result reports
               fresh, stale, not-yet-observed, and source-excluded books per frame.
             </p>
+            <div className="fr-timeline-controls">
+              <label htmlFor="frontier-timeline-max-book-age">
+                Maximum book age (milliseconds)
+              </label>
+              <input
+                id="frontier-timeline-max-book-age"
+                type="number"
+                min="1"
+                max="3600000"
+                step="1"
+                inputMode="numeric"
+                value={timelineMaxBookAgeMs}
+                aria-invalid={!timelineFreshnessValid}
+                aria-describedby="frontier-timeline-freshness-help"
+                onChange={(event) => setTimelineMaxBookAgeMs(event.target.value)}
+              />
+              <small id="frontier-timeline-freshness-help">
+                Books older than this receipt-time bound are excluded. Use an integer from 1 to
+                3,600,000; the value is pinned into the replay snapshot.
+              </small>
+            </div>
             <div className="fr-callout">
               <ShieldCheck size={16} />
               <span>

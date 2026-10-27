@@ -2225,6 +2225,46 @@
   color: #8996a7;
   font-size: 9px;
 }
+.fr-timeline-controls {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.35fr) minmax(120px, 0.2fr) minmax(220px, 1fr);
+  align-items: center;
+  gap: 8px 12px;
+  margin: 0 15px 13px;
+  padding: 10px;
+  border: 1px solid #293440;
+  border-radius: 5px;
+  background: #0d1319;
+}
+.fr-timeline-controls label {
+  color: #b5c0cd;
+  font-size: 9px;
+}
+.fr-timeline-controls input {
+  width: 100%;
+  min-width: 0;
+  min-height: 31px;
+  border: 1px solid #303b48;
+  border-radius: 3px;
+  padding: 6px 8px;
+  background: #0b1015;
+  color: #d9e0e9;
+  font:
+    9px ui-monospace,
+    monospace;
+}
+.fr-timeline-controls input:focus-visible {
+  outline: 2px solid #81c7f1;
+  outline-offset: 2px;
+}
+.fr-timeline-controls input[aria-invalid='true'] {
+  border-color: #c16d68;
+}
+.fr-timeline-controls small {
+  color: #7f8c9c;
+  font-size: 8px;
+  line-height: 1.45;
+}
 .fr-timeline-frame-list {
   display: grid;
   gap: 7px;
@@ -2419,7 +2459,8 @@
     min-height: 33px;
   }
   .fr-timeline-frame > summary,
-  .fr-timeline-candidate {
+  .fr-timeline-candidate,
+  .fr-timeline-controls {
     grid-template-columns: 1fr;
   }
   .fr-network-shell {
