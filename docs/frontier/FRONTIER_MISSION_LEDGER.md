@@ -2127,7 +2127,15 @@ and [fee-rounding guide](https://docs.kalshi.com/getting_started/fee_rounding).
 
 At `2026-10-27T19:28:52Z`, memory PSI `avg10` was 46.02% (`some`) / 39.98%
 (`full`), `avg60` 35.04% / 31.47%, and `avg300` 22.52% / 20.34%. Available
-memory was 9.3 GiB and swap free was 468 MiB of 4 GiB. Only documentation was
-changed, so no tests were run; `git diff --check` is the planned verification.
-Source permission, specific market fee applicability, genuine cross-venue
-economics, broader regression, and production deployment remain unresolved.
+memory was 9.3 GiB and swap free was 468 MiB of 4 GiB. After `avg10` eased, the
+focused existing regression
+`test_supported_quadratic_maker_variants_keep_taker_formula` passed **2/2**
+in 0.30 seconds at **54,520 KiB peak RSS**, with zero swaps. The test exercises
+synthetic metadata for `quadratic` and `quadratic_with_combo_maker_fees` at
+multiplier 1; it does not establish that the schedule applies to any live
+market. At `2026-10-27T19:31:50Z`, memory PSI `avg10` was 0.05% (`some`) /
+0.04% (`full`), `avg60` 15.01% / 13.35%, and `avg300` 24.38% / 21.90%; available
+memory was 9.4 GiB and swap free was 468 MiB. `git diff --check` passed for the
+documentation. Source permission, specific market fee applicability, genuine
+cross-venue economics, broader regression, and production deployment remain
+unresolved.

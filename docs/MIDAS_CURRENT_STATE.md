@@ -531,8 +531,11 @@ Multiplier, so the `KXMVE` row means maker 2 / taker 1. This resolves the
 column-order reading only. It does not establish that the row applies to the
 different `KXMVECROSSCATEGORY` series in preserved evidence or settle account
 precision, maker fees, or mixed-order economics. No source request or held-data
-read occurred and no code or tests changed. Frontier remains isolated and
-PARTIALLY VERIFIED; Kalshi/Kraken source permission, live cross-venue
-economics, broader regression, and production deployment remain unresolved.
+read occurred and no code or test files changed. The existing two-case
+synthetic fee-type regression passed **2/2** in 0.30 seconds at **54,520 KiB
+peak RSS** with zero swaps; this verifies local taker arithmetic only. Frontier
+remains isolated and PARTIALLY VERIFIED; Kalshi/Kraken source permission, live
+cross-venue economics, broader regression, and production deployment remain
+unresolved.
 See the [Frontier ledger](frontier/FRONTIER_MISSION_LEDGER.md) and
 [engineering report](frontier/FRONTIER_ENGINEERING_REPORT.md).

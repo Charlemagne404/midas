@@ -3482,7 +3482,14 @@ and no API request, held-capture read, or production action occurred.
 
 At `2026-10-27T19:28:52Z`, memory PSI `avg10` was 46.02% (`some`) / 39.98%
 (`full`), `avg60` 35.04% / 31.47%, and `avg300` 22.52% / 20.34%; available
-memory was 9.3 GiB and swap free was 468 MiB of 4 GiB. This documentation-only
-checkpoint did not run tests. Frontier remains PARTIALLY VERIFIED; permission,
-live cross-venue economics, broad repository regression, and deployment remain
-open.
+memory was 9.3 GiB and swap free was 468 MiB of 4 GiB. After `avg10` eased, the
+focused existing regression
+`test_supported_quadratic_maker_variants_keep_taker_formula` passed **2/2**
+in 0.30 seconds at **54,520 KiB peak RSS**, with zero swaps. It uses synthetic
+metadata and verifies only the local taker sensitivity for the two fee types;
+it does not establish live applicability. At `2026-10-27T19:31:50Z`, memory PSI
+`avg10` was 0.05% (`some`) / 0.04% (`full`), `avg60` 15.01% / 13.35%, and
+`avg300` 24.38% / 21.90%; available memory was 9.4 GiB and swap free was 468
+MiB of 4 GiB. `git diff --check` passed. Frontier remains PARTIALLY VERIFIED;
+permission, live cross-venue economics, broad repository regression, and
+deployment remain open.
