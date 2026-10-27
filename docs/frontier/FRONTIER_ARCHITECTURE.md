@@ -155,6 +155,22 @@ or establish a component payoff from it. Current value-specific verification
 uses documentation-shaped fixtures; the saved live child capture omitted the
 field.
 
+Adapter v12 adds a source-reported arithmetic audit for a saved Kalshi MVE.
+`POST /api/frontier/economics/kalshi-mve-settlement-audit` reads only the latest
+bounded local Kalshi market rows and makes no source request or candidate. It
+multiplies each selected leg's reported value (YES value for YES; one minus
+YES value for NO) and compares the product to the parent's recorded
+`settlement_value_dollars` only when all values exist and the parent lifecycle
+is settled and `is_provisional` is false or absent. Missing, non-final, and
+unsupported structures receive explicit non-match states. The calculation is
+bounded to 64 components and preserves Decimal values; it does not reuse or
+change candidate payoff verification. Method references are Kalshi's [combo
+settlement guidance](https://help.kalshi.com/en/articles/13823820-combos),
+[NO scalar settlement rule](https://help.kalshi.com/en/articles/17515177-protected-nfl-player-markets),
+and [MVE API field schema](https://docs.kalshi.com/api-reference/events/get-multivariate-events).
+The positive example is fixture-only: the live saved child capture lacks the
+required values, so no source-backed arithmetic result has been recorded.
+
 One preserved public capture demonstrates the boundary. The Polymarket and
 Kalshi event titles and party-outcome wording generated a deterministic
 Democratic-market text hypothesis after adapter normalization. Their market

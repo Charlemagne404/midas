@@ -117,23 +117,30 @@ in `data/frontier/live-probes/2026-10-27-kalshi-mve-component-market-r1.json`.
 This child-level source observation does not verify combo payout or economics,
 and the Frontier branch remains undeployed.
 
-The current isolated branch is adapter v11. It retains the optional Kalshi
-`yes_settlement_value_dollars` selected-component field as an exact Decimal and
-shows it in the component inspector. This source field is not treated as combo
-payout; omitted values remain unknown. The existing live child capture omitted
-it, so validation of the field itself is fixture-only against the documented
-schema. No deployment or new public capture was made for this change.
+The current isolated branch is adapter v12. It retains Kalshi's optional
+`yes_settlement_value_dollars` component field and adds a local-only arithmetic
+audit comparing the recorded selected-component product with the parent MVE's
+recorded settlement value. The audit requires complete component values and a
+settled, non-provisional parent; otherwise it reports incomplete, non-final, or
+unsupported evidence. It returns source observation and raw-body hashes and
+does not make a source request or generate a candidate. Kalshi's public
+[combo guidance](https://help.kalshi.com/en/articles/13823820-combos),
+[NO scalar rule](https://help.kalshi.com/en/articles/17515177-protected-nfl-player-markets),
+and [MVE API schema](https://docs.kalshi.com/api-reference/events/get-multivariate-events)
+are included in the inspector. Only documentation-shaped fixtures currently
+contain the required parent and component values; no live settlement finding
+is available. Code commit: `8a3e25c`.
 
-The focused adapter/API regression passed 9 tests at 75,004 KiB peak RSS with
-zero swaps; the focused Mission Control test passed. Frontend typecheck, targeted
-ESLint/Prettier, Frontier Python Ruff/format, and strict mypy passed. Playwright
-enumerated the three Frontier browser cases, including the new omitted-member
-capture flow, but browser execution and a new production build remain deferred:
-at 11:51 UTC memory PSI was 32.86% some / 26.88% full over 10 seconds, swap use
-was 3.4 GiB, and a separate bounded Veritas batch was active. Available RAM was
-9.4 GiB. Frontier did not start or change that job, any service, or protected
-Reality state. The exact live artifact and source limitations are in the
-Frontier engineering report and mission ledger.
+Verification for this checkpoint: the full Python Frontier/Arena suite passed
+148 tests before only the output's official-source-link field was added; the
+latest focused Python selection passed 17 tests with that field. The 40-test
+frontend suite, all four Frontier browser cases, production frontend build,
+typecheck, lint, format, Ruff, and strict mypy passed. At 13:01 UTC, memory PSI
+`avg10` was 38.72% (`some`) / 32.96% (`full`), available RAM was 9.93 GB, and
+3.46 GiB of swap was in use. No additional full Python run was started under
+that pressure. No deployment, new public capture, protected-service change, or
+Reality action was made. See the Frontier report and mission ledger for the
+test boundary and remaining acceptance work.
 
 ## Architecture and source layout
 

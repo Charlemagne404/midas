@@ -191,6 +191,25 @@ contain the field; the value parser and UI are fixture-verified only. Refer to
 Kalshi's [Get Multivariate Events](https://docs.kalshi.com/api-reference/events/get-multivariate-events)
 schema for the source definition.
 
+Adapter v12 adds a saved-evidence-only Kalshi MVE settlement arithmetic audit
+at `POST /api/frontier/economics/kalshi-mve-settlement-audit`. It reads the
+bounded local Kalshi observation window and makes zero public requests. If all
+selected component YES settlement values, the parent settlement value, and a
+final settled state are present, the endpoint recomputes the product (mapping a
+selected NO value to one minus the reported YES value) and returns either
+`SOURCE REPORTED PRODUCT MATCH` or `SOURCE REPORTED PRODUCT MISMATCH`.
+Missing inputs remain `INCOMPLETE EVIDENCE`; a provisional or unsettled parent
+is `SOURCE VALUES NOT FINAL`; unsupported market structure is returned as
+`UNSUPPORTED SETTLEMENT STRUCTURE`. A result checks captured values against
+Kalshi's stated combo method; it does not authenticate source truth, verify component rules,
+infer outcome correctness, or evaluate prices/returns. Method references are
+Kalshi's [combo guidance](https://help.kalshi.com/en/articles/13823820-combos),
+[NO scalar settlement guidance](https://help.kalshi.com/en/articles/17515177-protected-nfl-player-markets),
+and [MVE API schema](https://docs.kalshi.com/api-reference/events/get-multivariate-events).
+The response includes the saved observation ID and raw-body hash. Current
+value coverage is documentation-shaped fixtures only; the preserved live child
+response lacks those values.
+
 For Kalshi multivariate event markets, adapter v4 normalizes up to 64 native
 selected component references (event ticker, market ticker, selected YES/NO
 side) and Mission Control displays them from the saved market observation. This

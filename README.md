@@ -96,6 +96,17 @@ multivariate event's payout. Missing values remain unknown, and the live child
 capture above did not include this field; the new value path is verified with
 documentation-shaped fixtures only. See Kalshi's [Get Multivariate Events
 schema](https://docs.kalshi.com/api-reference/events/get-multivariate-events).
+Adapter v12 adds a local audit over recorded Kalshi multivariate-event
+settlement values. It recomputes the selected component-value product and
+compares it with the parent market's recorded settlement value only when all
+component values are present and the parent is settled and non-provisional.
+Mission Control links directly to Kalshi's [combo settlement guidance](https://help.kalshi.com/en/articles/13823820-combos),
+[NO scalar rule](https://help.kalshi.com/en/articles/17515177-protected-nfl-player-markets),
+and [MVE field schema](https://docs.kalshi.com/api-reference/events/get-multivariate-events).
+This reports source-stated arithmetic consistency, not verified market rules,
+outcomes, synchronized prices, or returns. Only documentation-shaped fixtures
+currently contain the required parent and component settlement values; no live
+settlement audit has been observed.
 Review labels and assertion references are not authenticated; replay follows
 only the latest revision. It is not merged into `main` or deployed. Read the [Frontier mission ledger](docs/frontier/FRONTIER_MISSION_LEDGER.md)
 and [current engineering report](docs/frontier/FRONTIER_ENGINEERING_REPORT.md)
