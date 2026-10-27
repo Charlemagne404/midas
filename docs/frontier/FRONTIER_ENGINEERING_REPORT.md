@@ -4250,6 +4250,11 @@ Verification for this checkpoint:
   36.10 kB CSS. The existing 544.41 kB Chart chunk remains above Vite's 500 kB
   advisory threshold.
 
+The Web suite, dedicated browser E2E, and Vite build ran after `4c9a8d8` and
+before the backend-only signature follow-up `66e89a5`. The final full Frontier
+Python suite and strict mypy check for the changed analytics module ran after
+`66e89a5`; that follow-up changed no frontend files.
+
 No live exchange request, protected service, held capture, or production store
 was accessed. The changed view's dedicated browser case and all Web unit tests
 passed; the full 12-case repository browser suite was not rerun after this

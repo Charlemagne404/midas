@@ -2736,6 +2736,11 @@ response and no source-probe request. The implementation uses only local
 evidence and fixtures; no exchange API, protected recorder, held capture, or
 production service was accessed.
 
+The Web suite, dedicated E2E, and Vite build preceded the backend-only
+signature follow-up `66e89a5`. The final full Frontier suite and strict mypy
+check of the changed analytics module were rerun after that follow-up; no
+frontend source changed in `66e89a5`.
+
 Frontier remains **PARTIALLY VERIFIED** and undeployed. This checkpoint does
 not validate current public market coverage, terms/permission for blocked
 Kalshi or Kraken research, live cross-venue equivalence, synchronized
