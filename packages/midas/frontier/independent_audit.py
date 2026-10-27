@@ -669,10 +669,11 @@ def _require_verified_event(market: FrontierMarket) -> None:
         or not market.resolution.evidence_sha256
         or not market.payoff.state_ids
         or market.lifecycle != Lifecycle.OPEN
+        or market.payoff.payout_currency != market.payoff.settlement_asset
         or market.settlement_asset != market.payoff.settlement_asset
     ):
         raise _MissingAuditEvidence(
-            "Event payoff, resolution, or settlement evidence is incomplete."
+            "Event payoff, resolution, payout denomination, or settlement evidence is incomplete."
         )
 
 

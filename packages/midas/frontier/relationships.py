@@ -516,6 +516,12 @@ def verify_same_payoff(
     for name, market in (("left", left), ("right", right)):
         if not market.payoff.verified or not market.payoff.exhaustive:
             checks.append(f"{name} payoff is not verified and exhaustive")
+        if market.payoff.payout_currency != market.payoff.settlement_asset:
+            checks.append(
+                f"{name} payout currency differs from its settlement asset; no valuation bridge is modeled"
+            )
+        if market.settlement_asset != market.payoff.settlement_asset:
+            checks.append(f"{name} market settlement asset differs from its verified payoff")
         if not market.resolution.verified or not market.resolution.resolution_fingerprint:
             checks.append(f"{name} resolution is not verified or fingerprinted")
         if market.resolution.evidence_sha256 is None:

@@ -711,6 +711,21 @@ def generate_binary_coverage_candidates(
                 "Settlement currency or asset differs; no conversion model is enabled.",
             ),
         )
+    if any(
+        market.payoff.payout_currency != market.payoff.settlement_asset
+        or market.settlement_asset != market.payoff.settlement_asset
+        for market in (left, right)
+    ):
+        return (
+            _empty_candidate(
+                left,
+                right,
+                relationship,
+                OpportunityClassification.INCOMPLETE_EVIDENCE,
+                as_of,
+                "Payout denomination differs from the settlement asset; no valuation bridge is modeled.",
+            ),
+        )
     if set(state_mapping) != set(left.payoff.state_ids) or set(state_mapping.values()) != set(
         right.payoff.state_ids
     ):
@@ -834,6 +849,11 @@ def generate_multi_outcome_coverage_candidate(
         return empty(
             OpportunityClassification.INCOMPLETE_EVIDENCE,
             "The market is not recorded as open.",
+        )
+    if market.payoff.payout_currency != market.payoff.settlement_asset:
+        return empty(
+            OpportunityClassification.INCOMPLETE_EVIDENCE,
+            "Payout denomination differs from the settlement asset; no valuation bridge is modeled.",
         )
     if (
         not market.payoff.verified

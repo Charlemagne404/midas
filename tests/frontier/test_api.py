@@ -2320,6 +2320,38 @@ async def test_polymarket_v2_trade_cursor_pages_are_bound_and_persisted(tmp_path
             assert normalized_batch.trades[0].outcome_label == "Yes"
             assert normalized_batch.trades[0].outcome_index == 0
             assert "proxy_wallet" not in normalized_batch.trades[0].model_dump()
+
+            adapter = registry.get(Venue.POLYMARKET)
+            fetch_trade_page = adapter.fetch_trade_page
+
+            async def mismatched_trade_page(*args, **kwargs):
+                batch = await fetch_trade_page(*args, **kwargs)
+                return batch.model_copy(update={"requested_market_id": "0x" + "f" * 64})
+
+            adapter.fetch_trade_page = mismatched_trade_page
+            mismatch = await client.post(
+                "/api/frontier/probe/polymarket/trades",
+                json={"condition_id": condition_id, "limit": 1},
+            )
+            assert mismatch.status_code == 502
+            detail = mismatch.json()["detail"]
+            assert detail["code"] == "TRADE_CAPTURE_LINEAGE_MISMATCH"
+            assert len(detail["diagnostic_observation_ids"]) == 1
+            diagnostic = await client.get(
+                f"/api/frontier/observations/{detail['diagnostic_observation_ids'][0]}"
+            )
+            assert diagnostic.status_code == 200
+            diagnostic_payload = diagnostic.json()
+            raw_body = diagnostic_payload["raw"]["raw_body"].encode()
+            assert json.loads(raw_body) == page_responses[0]
+            assert hashlib.sha256(raw_body).hexdigest() == diagnostic_payload["raw_sha256"]
+            assert diagnostic_payload["normalized"]["error_code"] == detail["code"]
+
+            read_back_after_failure = await client.get(
+                "/api/frontier/trades?venue=polymarket&limit=100"
+            )
+            assert read_back_after_failure.json()["trade_count"] == 2
+            assert read_back_after_failure.json()["observation_count"] == 3
     finally:
         await registry.aclose()
         await source_client.aclose()
@@ -2565,6 +2597,156 @@ async def test_bounded_probe_persists_and_reads_trade_batch(tmp_path):
                 result["items"][0]["source_observation_record_id"]
                 == payload["trade_observation_record_id"]
             )
+    finally:
+        await registry.aclose()
+        await source_client.aclose()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("failure_stage", ["market", "book", "trade"])
+async def test_probe_preserves_drained_capture_on_lineage_mismatch(tmp_path, failure_stage):
+    market_row = json.loads(
+        (Path(__file__).resolve().parents[1] / "fixtures" / "gamma_live.json").read_text()
+    )[0]
+    book_row = json.loads(
+        (Path(__file__).resolve().parents[2] / "tests" / "fixtures" / "book_live.json").read_text()
+    )
+    condition_id = market_row["conditionId"]
+    token_id = json.loads(market_row["clobTokenIds"])[0]
+    book_row["market"] = condition_id
+    book_row["asset_id"] = token_id
+    trade_body = [
+        {
+            "price": "0.51",
+            "size": "3",
+            "timestamp": 1793000000,
+            "transactionHash": "0xfrontier-lineage-failure",
+            "asset": token_id,
+            "conditionId": condition_id,
+            "side": "BUY",
+        }
+    ]
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.host == "gamma-api.polymarket.com" and request.url.path == "/markets":
+            return httpx.Response(200, json=[market_row], request=request)
+        if request.url.host == "clob.polymarket.com" and request.url.path == "/book":
+            return httpx.Response(200, json=book_row, request=request)
+        if request.url.host == "data-api.polymarket.com" and request.url.path == "/trades":
+            return httpx.Response(200, json=trade_body, request=request)
+        return httpx.Response(404, json={"error": "unexpected fixture request"}, request=request)
+
+    config = AdapterConfig(
+        enabled=True,
+        live_public_probe_enabled=True,
+        timeout_seconds=2,
+        requests_per_second=5,
+        max_response_bytes=65536,
+        max_markets_per_call=1,
+        retries=0,
+    )
+    source_client = httpx.AsyncClient(transport=httpx.MockTransport(handler))
+    public_transport = PublicReadTransport(
+        {"gamma-api.polymarket.com", "clob.polymarket.com", "data-api.polymarket.com"},
+        config,
+        client=source_client,
+    )
+    adapter = PolymarketAdapter(config, transport=public_transport)
+    registry = AdapterRegistry((adapter, KalshiAdapter(), KrakenSpotAdapter()))
+    store = FrontierStore(tmp_path / "frontier", max_bytes=8 * 1024 * 1024)
+    store.initialize()
+    app = FastAPI()
+    app.include_router(router(store, registry))
+
+    if failure_stage == "market":
+        discover_markets = adapter.discover_markets
+
+        async def mismatched_markets(limit=20):
+            markets = await discover_markets(limit)
+            return tuple(
+                item.model_copy(
+                    update={
+                        "provenance": item.provenance.model_copy(update={"raw_sha256": "0" * 64})
+                    }
+                )
+                for item in markets
+            )
+
+        adapter.discover_markets = mismatched_markets
+    elif failure_stage == "book":
+        fetch_book = adapter.fetch_book
+
+        async def mismatched_book(market, instrument_id, depth=20):
+            snapshot = await fetch_book(market, instrument_id, depth)
+            return snapshot.model_copy(
+                update={
+                    "provenance": snapshot.provenance.model_copy(update={"raw_sha256": "0" * 64})
+                }
+            )
+
+        adapter.fetch_book = mismatched_book
+    else:
+        fetch_trades = adapter.fetch_trades
+
+        async def mismatched_trades(native_market_id, limit=100):
+            trades = await fetch_trades(native_market_id, limit)
+            return tuple(
+                item.model_copy(
+                    update={
+                        "provenance": item.provenance.model_copy(update={"raw_sha256": "0" * 64})
+                    }
+                )
+                for item in trades
+            )
+
+        adapter.fetch_trades = mismatched_trades
+
+    try:
+        async with httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=app), base_url="http://frontier.local"
+        ) as client:
+            response = await client.post(
+                "/api/frontier/probe/polymarket",
+                json={
+                    "limit": 1,
+                    "include_one_book": failure_stage == "book",
+                    "include_recent_trades": failure_stage == "trade",
+                    "trade_limit": 1,
+                },
+            )
+            if failure_stage == "trade":
+                assert response.status_code == 200, response.text
+                detail = response.json()["trade_error"]
+                assert detail["code"] == "TRADE_CAPTURE_LINEAGE_MISMATCH"
+            else:
+                assert response.status_code == 502, response.text
+                detail = response.json()["detail"]
+                assert detail["code"] == "CAPTURE_LINEAGE_MISMATCH"
+            assert len(detail["diagnostic_observation_ids"]) == 1
+            diagnostic = await client.get(
+                f"/api/frontier/observations/{detail['diagnostic_observation_ids'][0]}"
+            )
+            assert diagnostic.status_code == 200
+            payload = diagnostic.json()
+            raw_body = payload["raw"]["raw_body"].encode()
+            assert hashlib.sha256(raw_body).hexdigest() == payload["raw_sha256"]
+            assert payload["normalized"]["record_kind"] == "source_failure"
+            assert payload["normalized"]["error_code"] == detail["code"]
+            if failure_stage == "market":
+                expected_body = json.dumps([market_row], separators=(",", ":")).encode()
+            elif failure_stage == "book":
+                expected_body = json.dumps(book_row, separators=(",", ":")).encode()
+            else:
+                expected_body = json.dumps(trade_body, separators=(",", ":")).encode()
+            assert raw_body == expected_body
+
+            # A successfully stored listing must not be duplicated as a failed capture
+            # when a later book or trade lineage check fails.
+            observations = store.observations(venue=Venue.POLYMARKET)
+            assert len(observations) == (1 if failure_stage == "market" else 2)
+            if failure_stage != "market":
+                listing_rows = store.observations(venue=Venue.POLYMARKET, kind="market_listing")
+                assert len(listing_rows) == 1
     finally:
         await registry.aclose()
         await source_client.aclose()

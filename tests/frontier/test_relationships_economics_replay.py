@@ -340,6 +340,109 @@ def test_payoff_verification_rejects_authority_and_settlement_mismatch():
     assert "fingerprints differ" in result.reason
 
 
+def test_payout_currency_must_match_settlement_asset_without_valuation_bridge():
+    left_base = market(Venue.POLYMARKET, "payout-usd-settles-usdc-left")
+    left = left_base.model_copy(
+        update={
+            "payoff": left_base.payoff.model_copy(update={"settlement_asset": "USDC"}),
+            "settlement_asset": "USDC",
+        }
+    )
+    right_base = market(Venue.KALSHI, "payout-usd-settles-usdc-right")
+    right = right_base.model_copy(
+        update={
+            "payoff": right_base.payoff.model_copy(update={"settlement_asset": "USDC"}),
+            "settlement_asset": "USDC",
+        }
+    )
+    state_mapping = {"yes": "yes", "no": "no"}
+    instrument_mapping = {
+        left.instruments[0].native_instrument_id: right.instruments[0].native_instrument_id,
+        left.instruments[1].native_instrument_id: right.instruments[1].native_instrument_id,
+    }
+    rejected = verify_same_payoff(
+        left,
+        right,
+        state_mapping=state_mapping,
+        instrument_mapping=instrument_mapping,
+        external_assertion_id="unmodeled-usd-usdc-bridge",
+        evidence_observation_ids=("left", "right"),
+        asserted_at_utc=T0,
+    )
+    assert rejected.state == VerificationState.REJECTED
+    assert "no valuation bridge is modeled" in rejected.reason
+
+    # A forged verified edge must not bypass the candidate calculator's own guard.
+    forged = rejected.model_copy(update={"state": VerificationState.VERIFIED})
+    left_books, right_books = _books(left, right)
+    generated = generate_binary_coverage_candidates(
+        left,
+        right,
+        forged,
+        left_books,
+        right_books,
+        state_mapping=state_mapping,
+        instrument_mapping=instrument_mapping,
+        as_of_utc=T0 + timedelta(milliseconds=100),
+    )
+    assert len(generated) == 1
+    assert generated[0].classification == OpportunityClassification.INCOMPLETE_EVIDENCE
+    assert "no valuation bridge is modeled" in generated[0].reasons[0]
+
+    original_left, original_right, original_relationship, original_mapping = _verified_pair()
+    original_left_books, original_right_books = _books(original_left, original_right)
+    valid_candidate = generate_binary_coverage_candidates(
+        original_left,
+        original_right,
+        original_relationship,
+        original_left_books,
+        original_right_books,
+        state_mapping=state_mapping,
+        instrument_mapping=original_mapping,
+        as_of_utc=T0 + timedelta(milliseconds=100),
+    )[0]
+    replay_left = original_left.model_copy(
+        update={
+            "payoff": original_left.payoff.model_copy(update={"settlement_asset": "USDC"}),
+            "settlement_asset": "USDC",
+        }
+    )
+    audit = independently_audit_candidate(
+        valid_candidate.model_copy(update={"independent_audit": None}),
+        markets={
+            replay_left.canonical_id: replay_left,
+            original_right.canonical_id: original_right,
+        },
+        books_by_market={
+            replay_left.canonical_id: original_left_books,
+            original_right.canonical_id: original_right_books,
+        },
+        relationships={original_relationship.relationship_id: original_relationship},
+        state_mappings={original_relationship.relationship_id: state_mapping},
+        instrument_mappings={original_relationship.relationship_id: original_mapping},
+        scenario=ExecutionScenario(),
+    )
+    assert audit.independent_audit is not None
+    assert audit.independent_audit.disposition.value == "incomplete"
+    assert audit.classification == OpportunityClassification.INCOMPLETE_EVIDENCE
+    assert "payout denomination" in audit.independent_audit.message.lower()
+
+    multi = _multi_outcome_market()
+    unbridged_multi = multi.model_copy(
+        update={
+            "payoff": multi.payoff.model_copy(update={"settlement_asset": "USDC"}),
+            "settlement_asset": "USDC",
+        }
+    )
+    multi_candidate = generate_multi_outcome_coverage_candidate(
+        unbridged_multi,
+        _multi_outcome_books(unbridged_multi),
+        as_of_utc=T0 + timedelta(milliseconds=100),
+    )
+    assert multi_candidate.classification == OpportunityClassification.INCOMPLETE_EVIDENCE
+    assert "no valuation bridge is modeled" in multi_candidate.reasons[0]
+
+
 def test_spot_market_cannot_be_verified_as_prediction_contract():
     template = market(Venue.KRAKEN, "XBTUSD")
     data = template.model_dump()

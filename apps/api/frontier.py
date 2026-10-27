@@ -921,6 +921,7 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
         async with source_locks[venue]:
             adapter.take_captures()
             requests_before = adapter.transport.request_count
+            captures: tuple[RawObservation, ...] = ()
             try:
                 batch = await fetch_page(
                     request.condition_id, limit=request.limit, cursor=source_cursor
@@ -946,6 +947,8 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
                         "Normalized trade page does not match its request and raw response",
                     )
                 observation_id = store.append_observation(capture, batch)
+                raw_sha256 = capture.raw_sha256
+                captures = ()
                 next_cursor = (
                     _encode_trade_cursor(
                         request.condition_id, request.limit, batch.source_next_cursor
@@ -959,7 +962,7 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
                     "condition_id": request.condition_id,
                     "trade_count": len(batch.trades),
                     "observation_id": observation_id,
-                    "raw_sha256": capture.raw_sha256,
+                    "raw_sha256": raw_sha256,
                     "page_limit": batch.page_limit,
                     "has_more": batch.has_more,
                     "next_cursor": next_cursor,
@@ -974,7 +977,11 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
                 }
             except AdapterError as error:
                 diagnostic_ids, diagnostic_error = preserve_failed_captures(
-                    adapter, error.code, str(error), error.response_evidence
+                    adapter,
+                    error.code,
+                    str(error),
+                    error.response_evidence,
+                    already_drained=captures,
                 )
                 adapter.report_failure(error.code, str(error))
                 raise HTTPException(
@@ -988,7 +995,10 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
                 ) from error
             except (ValueError, FrontierStoreError) as error:
                 diagnostic_ids, diagnostic_error = preserve_failed_captures(
-                    adapter, "FRONTIER_TRADE_PAGE_FAILED", str(error)
+                    adapter,
+                    "FRONTIER_TRADE_PAGE_FAILED",
+                    str(error),
+                    already_drained=captures,
                 )
                 adapter.report_failure("FRONTIER_TRADE_PAGE_FAILED", str(error))
                 raise HTTPException(
@@ -2600,11 +2610,13 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
                 status_code=422, detail="Requested discovery limit exceeds source configuration"
             )
         async with source_locks[venue]:
+            unpersisted_captures: list[RawObservation] = []
             try:
                 adapter.take_captures()
                 requests_before = adapter.transport.request_count
                 market_values = await adapter.discover_markets(request.limit)
                 captures = adapter.take_captures()
+                unpersisted_captures.extend(captures)
                 if not captures:
                     raise AdapterError(
                         "MISSING_CAPTURE", "Adapter returned no raw response evidence"
@@ -2623,6 +2635,9 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
                         )
                     batch = MarketBatch(venue=venue, markets=matching)
                     stored_ids.append(store.append_observation(capture, batch))
+                    unpersisted_captures = [
+                        pending for pending in unpersisted_captures if pending is not capture
+                    ]
                 books_stored = 0
                 if request.include_one_book and market_values:
                     market = market_values[0]
@@ -2636,6 +2651,7 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
                             market, instrument.native_instrument_id, depth=10
                         )
                         book_captures = adapter.take_captures()
+                        unpersisted_captures.extend(book_captures)
                         if (
                             len(book_captures) != 1
                             or book_captures[0].raw_sha256 != book.provenance.raw_sha256
@@ -2645,6 +2661,11 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
                                 "Raw book response cannot be linked to normalized book",
                             )
                         store.append_observation(book_captures[0], book)
+                        unpersisted_captures = [
+                            pending
+                            for pending in unpersisted_captures
+                            if all(pending is not saved for saved in book_captures)
+                        ]
                         books_stored = 1
                 trade_state = "not_requested"
                 trade_count = 0
@@ -2669,6 +2690,7 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
                                 native_trade_market_id, limit=request.trade_limit
                             )
                             trade_captures = adapter.take_captures()
+                            unpersisted_captures.extend(trade_captures)
                             if len(trade_captures) != 1:
                                 raise AdapterError(
                                     "MISSING_TRADE_CAPTURE",
@@ -2686,11 +2708,21 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
                             trade_observation_id = store.append_observation(
                                 trade_captures[0], trade_batch
                             )
+                            unpersisted_captures = [
+                                pending
+                                for pending in unpersisted_captures
+                                if all(pending is not saved for saved in trade_captures)
+                            ]
                             trade_count = len(trade_values)
                         except AdapterError as error:
                             diagnostic_ids, diagnostic_error = preserve_failed_captures(
-                                adapter, error.code, str(error), error.response_evidence
+                                adapter,
+                                error.code,
+                                str(error),
+                                error.response_evidence,
+                                already_drained=tuple(unpersisted_captures),
                             )
+                            unpersisted_captures.clear()
                             adapter.report_failure(error.code, str(error))
                             trade_state = "failed"
                             trade_error = {
@@ -2729,7 +2761,11 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
                 }
             except AdapterError as error:
                 diagnostic_ids, diagnostic_error = preserve_failed_captures(
-                    adapter, error.code, str(error), error.response_evidence
+                    adapter,
+                    error.code,
+                    str(error),
+                    error.response_evidence,
+                    already_drained=tuple(unpersisted_captures),
                 )
                 adapter.report_failure(error.code, str(error))
                 raise HTTPException(
@@ -2743,7 +2779,10 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
                 ) from error
             except (ValueError, FrontierStoreError) as error:
                 diagnostic_ids, diagnostic_error = preserve_failed_captures(
-                    adapter, "FRONTIER_PROBE_FAILED", str(error)
+                    adapter,
+                    "FRONTIER_PROBE_FAILED",
+                    str(error),
+                    already_drained=tuple(unpersisted_captures),
                 )
                 adapter.report_failure("FRONTIER_PROBE_FAILED", str(error))
                 raise HTTPException(
