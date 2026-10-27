@@ -21,6 +21,7 @@ MAX_DIRECTOR_OWNER_JOBS_READ = 100
 MAX_VERITAS_LATEST_SUMMARY_BYTES = 2 * 1024**2
 MAX_VERITAS_ANALYSIS_EVENT_BYTES = 2 * 1024**2
 MAX_VERITAS_QUALIFICATION_FINDING_BYTES = 2 * 1024**2
+MAX_FRONTIER_REPLAY_JOB_SCAN = 500
 
 
 def veritas_repository_root() -> Path:
@@ -1432,6 +1433,66 @@ def router(root: Path, *, veritas_repository: Path | None = None) -> APIRouter:
             veritas_repository or veritas_repository_root(),
         )
 
+    @api.get("/frontier-replays")
+    async def frontier_replay_jobs(limit: int = Query(default=20, ge=1, le=50)) -> Any:
+        def read() -> dict[str, Any]:
+            jobs_root = root / "jobs"
+            if root.is_symlink() or jobs_root.is_symlink():
+                raise ValueError("Arena Frontier replay job catalog is unsafe")
+            items: list[tuple[float, dict[str, Any]]] = []
+            scanned = 0
+            for directory in jobs_root.iterdir() if jobs_root.is_dir() else ():
+                if scanned >= MAX_FRONTIER_REPLAY_JOB_SCAN:
+                    break
+                scanned += 1
+                manifest = directory / "job.json"
+                if (
+                    directory.is_symlink()
+                    or manifest.is_symlink()
+                    or not manifest.is_file()
+                    or manifest.stat().st_size > MAX_RESEARCH_ACTIVITY_RECORD_BYTES
+                ):
+                    continue
+                try:
+                    row = json.loads(manifest.read_text())
+                except (OSError, json.JSONDecodeError):
+                    continue
+                if not isinstance(row, dict):
+                    continue
+                configuration = row.get("configuration")
+                if not isinstance(configuration, dict) or configuration.get("kind") != (
+                    "frontier_replay"
+                ):
+                    continue
+                replay_spec = configuration.get("frontier_replay")
+                replay_spec = replay_spec if isinstance(replay_spec, dict) else {}
+                result_value = row.get("result")
+                result = result_value if isinstance(result_value, dict) else None
+                projected = {
+                    "job_id": row.get("job_id"),
+                    "state": row.get("state"),
+                    "created_at": row.get("created_at"),
+                    "updated_at": row.get("updated_at"),
+                    "progress": row.get("progress"),
+                    "phase": row.get("phase"),
+                    "error": _bounded_string(row.get("error"), 300),
+                    "snapshot_id": replay_spec.get("snapshot_id"),
+                    "snapshot_sha256": replay_spec.get("snapshot_sha256"),
+                    "result": result,
+                }
+                items.append((manifest.stat().st_mtime, projected))
+            items.sort(key=lambda item: item[0], reverse=True)
+            return {
+                "items": [item for _, item in items[:limit]],
+                "limit": limit,
+                "scanned": scanned,
+                "scan_bound": MAX_FRONTIER_REPLAY_JOB_SCAN,
+                "scan_may_be_incomplete": scanned >= MAX_FRONTIER_REPLAY_JOB_SCAN,
+                "research_only": True,
+            }
+
+        return await call(read)
+
     @api.get("/jobs/{identity}")
     async def job(identity: str) -> Any:
         def inspect() -> Any:
@@ -1440,6 +1501,46 @@ def router(root: Path, *, veritas_repository: Path | None = None) -> APIRouter:
             return inspect(root, identity)
 
         return await call(inspect)
+
+    @api.get("/jobs/{identity}/frontier-replay")
+    async def frontier_replay_result(identity: str) -> Any:
+        def read() -> Any:
+            from midas.arena.frontier_replay import read_frontier_replay_artifact
+            from midas.arena.jobs import inspect
+
+            record = inspect(root, identity)
+            configuration = record.get("configuration")
+            result_ref = record.get("result")
+            if (
+                not isinstance(configuration, dict)
+                or configuration.get("kind") != "frontier_replay"
+                or record.get("state") != "COMPLETED"
+                or record.get("exit_status") != 0
+                or not isinstance(result_ref, dict)
+                or result_ref.get("artifact") != "frontier-replay-result.json"
+            ):
+                raise ValueError("Completed Frontier replay result is unavailable")
+            replay_spec = configuration.get("frontier_replay")
+            if not isinstance(replay_spec, dict):
+                raise ValueError("Arena job has no pinned Frontier replay configuration")
+            artifact = read_frontier_replay_artifact(root, identity)
+            if (
+                artifact.snapshot_id != replay_spec.get("snapshot_id")
+                or artifact.snapshot_sha256 != replay_spec.get("snapshot_sha256")
+                or artifact.result_sha256 != result_ref.get("frontier_replay_sha256")
+                or artifact.comparison.comparison_id != result_ref.get("comparison_id")
+                or artifact.snapshot_id != result_ref.get("snapshot_id")
+            ):
+                raise ValueError("Frontier replay result does not match its durable job record")
+            return {
+                "artifact": artifact.model_dump(mode="json"),
+                "research_only": True,
+                "orders_submitted": False,
+                "authenticated_requests": False,
+                "integrity_verified": True,
+            }
+
+        return await call(read)
 
     @api.post("/jobs/{identity}/cancel")
     async def cancel_job(identity: str) -> Any:

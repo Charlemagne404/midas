@@ -15,6 +15,7 @@ from typing import Any, Literal
 from urllib.parse import urlsplit
 
 from fastapi import APIRouter, HTTPException, Query
+from midas.arena.frontier_replay import FrontierReplayJobSpec, make_snapshot, store_snapshot
 from midas.frontier.adapters.base import AdapterError, ExchangeAdapter, FailedResponseEvidence
 from midas.frontier.adapters.kraken import KrakenSpotAdapter
 from midas.frontier.economics import ExecutionScenario, estimate_kalshi_taker_fee_sensitivity
@@ -301,7 +302,7 @@ def _decode_kalshi_trade_cursor(cursor: str) -> dict[str, Any]:
     return value
 
 
-def router(store: FrontierStore, registry: Any) -> APIRouter:
+def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = None) -> APIRouter:
     api = APIRouter(prefix="/api/frontier", tags=["frontier"])
     source_locks = {venue: asyncio.Lock() for venue in Venue}
 
@@ -1602,6 +1603,69 @@ def router(store: FrontierStore, registry: Any) -> APIRouter:
             "note": "Both scenarios use the same bounded, saved market, book, and relationship evidence.",
         }
 
+    @api.post("/arena-replay", status_code=201)
+    async def create_arena_replay(scenarios: PairedReplayRequest) -> dict[str, Any]:
+        if arena_root is None:
+            raise HTTPException(
+                status_code=503, detail="Arena replay integration is not configured"
+            )
+        try:
+            market_values = await _load_markets(store, 100)
+            book_rows = store.observations(kind="book_snapshot", limit=200)
+            books = tuple(
+                BookSnapshot.model_validate(item["normalized"])
+                for item in book_rows
+                if isinstance(item.get("normalized"), dict)
+                and "native_instrument_id" in item["normalized"]
+            )
+            relation_rows = store.relationships(state="verified", limit=500, effective_only=True)
+            verified = tuple(
+                Relationship.model_validate(item["relationship"]) for item in relation_rows
+            )
+            observed_times = [
+                market.provenance.response_received_at_utc for market in market_values
+            ]
+            observed_times.extend(book.received_at_utc for book in books)
+            snapshot = make_snapshot(
+                code_version=_code_version(),
+                as_of_utc=max(observed_times, default=datetime(1970, 1, 1, tzinfo=UTC)),
+                relationship_limit=500,
+                scenarios=scenarios.scenarios,
+                markets=market_values,
+                books=books,
+                verified_relationships=verified,
+            )
+            snapshot_sha256 = store_snapshot(arena_root, snapshot)
+            from midas.arena.jobs import JobSpec, create
+
+            spec = JobSpec(
+                kind="frontier_replay",
+                frontier_replay=FrontierReplayJobSpec(
+                    snapshot_id=snapshot.snapshot_id,
+                    snapshot_sha256=snapshot_sha256,
+                ),
+                max_wall_seconds=300,
+                memory_limit_mb=512,
+                cpu_quota_percent=50,
+                nice=15,
+                io_scheduling_class="idle",
+            )
+            job = await asyncio.to_thread(
+                create,
+                arena_root,
+                spec,
+                admission_key=f"frontier-replay-paired-v1-{snapshot.snapshot_id}",
+            )
+        except (FrontierStoreError, OSError, ValueError) as error:
+            raise HTTPException(status_code=409, detail=str(error)) from error
+        return {
+            **job,
+            "frontier_snapshot_id": snapshot.snapshot_id,
+            "frontier_snapshot_sha256": snapshot_sha256,
+            "network_calls": 0,
+            "research_only": True,
+        }
+
     @api.post("/replay")
     async def replay(
         scenario: ExecutionScenario,
@@ -1709,6 +1773,18 @@ def router(store: FrontierStore, registry: Any) -> APIRouter:
                     "name": "deterministic_replay",
                     "state": "EVIDENCE_RECORDED" if run_count else "NOT_RUN",
                     "detail": f"{run_count} pinned replay outputs stored; determinism is separately tested against exact inputs.",
+                },
+                {
+                    "name": "arena_replay_worker",
+                    "state": "LIVE_VALIDATION_PENDING"
+                    if arena_root is not None
+                    else "NOT_CONFIGURED",
+                    "detail": (
+                        "The bounded offline job is registered, but supervisor execution has not "
+                        "been validated through an admitted worker."
+                        if arena_root is not None
+                        else "No Arena root is configured for Frontier paired replay jobs."
+                    ),
                 },
                 {
                     "name": "resource_sustainability",

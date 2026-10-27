@@ -396,6 +396,41 @@ type ReplayComparisonRecord = {
   result_sha256: string;
   result: ReplayComparison;
 };
+type FrontierArenaReplayJob = {
+  job_id: string;
+  state: string;
+  created_at: number | null;
+  updated_at: number | null;
+  progress: { done?: number; total?: number } | null;
+  phase: string | null;
+  error: string | null;
+  snapshot_id: string | null;
+  snapshot_sha256: string | null;
+  result: {
+    comparison_id?: string;
+    frontier_replay_sha256?: string;
+  } | null;
+};
+type FrontierArenaReplayJobs = {
+  items: FrontierArenaReplayJob[];
+  limit: number;
+  scanned: number;
+  scan_bound: number;
+  scan_may_be_incomplete: boolean;
+  research_only: true;
+};
+type FrontierArenaReplayResult = {
+  artifact: {
+    comparison: ReplayComparison;
+    snapshot_id: string;
+    snapshot_sha256: string;
+    result_sha256: string;
+  };
+  research_only: true;
+  orders_submitted: false;
+  authenticated_requests: false;
+  integrity_verified: true;
+};
 type Readiness = { gates: { name: string; state: string; detail: string }[] };
 type ListResponse<T> = { items: T[]; returned: number; limit: number; offset: number };
 type ObservationEvidence = {
@@ -437,9 +472,14 @@ const venueLabel = (value: string) =>
 function StateBadge({ state }: { state: string }) {
   const tone = ['HEALTHY', 'PASS', 'VERIFIED'].includes(state.toUpperCase())
     ? 'good'
-    : ['DEGRADED', 'HYPOTHESIS', 'CONDITIONAL', 'INCOMPLETE', 'NOT_EVALUATED'].includes(
-          state.toUpperCase(),
-        )
+    : [
+          'DEGRADED',
+          'HYPOTHESIS',
+          'CONDITIONAL',
+          'INCOMPLETE',
+          'NOT_EVALUATED',
+          'LIVE_VALIDATION_PENDING',
+        ].includes(state.toUpperCase())
       ? 'watch'
       : ['FAILED', 'BLOCKED', 'REJECTED', 'DISAGREEMENT'].includes(state.toUpperCase())
         ? 'bad'
@@ -865,6 +905,7 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
   const [slippage, setSlippage] = useState('25');
   const [delay, setDelay] = useState('500');
   const [fillPercent, setFillPercent] = useState('80');
+  const [selectedArenaReplayId, setSelectedArenaReplayId] = useState<string | null>(null);
   const queryClient = useQueryClient();
   const options = { staleTime: 10_000, retry: 1 };
   const resetGraphPagination = () => {
@@ -939,6 +980,29 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
     queryKey: ['frontier', 'readiness'],
     queryFn: () => api<Readiness>('/frontier/readiness'),
     ...options,
+  });
+  const arenaReplayJobs = useQuery({
+    queryKey: ['frontier', 'arena-replay-jobs'],
+    queryFn: () => api<FrontierArenaReplayJobs>('/arena/frontier-replays?limit=20'),
+    enabled: section === 'replay',
+    refetchInterval: (query) =>
+      query.state.data?.items.some((job) => ['QUEUED', 'RUNNING'].includes(job.state))
+        ? 2000
+        : false,
+  });
+  const listedArenaReplayJobs = arenaReplayJobs.data?.items ?? [];
+  const selectedArenaReplayJob =
+    listedArenaReplayJobs.find((job) => job.job_id === selectedArenaReplayId) ??
+    listedArenaReplayJobs[0] ??
+    null;
+  const arenaReplayResult = useQuery({
+    queryKey: ['frontier', 'arena-replay-result', selectedArenaReplayJob?.job_id],
+    queryFn: () =>
+      api<FrontierArenaReplayResult>(
+        `/arena/jobs/${encodeURIComponent(selectedArenaReplayJob!.job_id)}/frontier-replay`,
+      ),
+    enabled: section === 'replay' && selectedArenaReplayJob?.state === 'COMPLETED',
+    retry: false,
   });
 
   const tradeMarketKey = `${tradeVenue}:${tradeMarketId}`;
@@ -1019,6 +1083,65 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
         },
       ),
     onSuccess: refresh,
+  });
+  const arenaReplay = useMutation({
+    mutationFn: () =>
+      api<{
+        job_id: string;
+        state: string;
+        created_at: number;
+        updated_at: number;
+        progress: FrontierArenaReplayJob['progress'];
+        phase?: string | null;
+        error?: string | null;
+        result: FrontierArenaReplayJob['result'];
+        frontier_snapshot_id: string;
+        frontier_snapshot_sha256: string;
+      }>('/frontier/arena-replay', {
+        method: 'POST',
+        body: JSON.stringify({
+          scenarios: [
+            { name: 'quoted baseline' },
+            {
+              name: 'current assumptions',
+              slippage_bps: slippage,
+              execution_delay_ms: Number(delay),
+              fill_fraction: (Number(fillPercent) / 100).toFixed(4),
+              quote_decay_bps_per_second: '15',
+            },
+          ],
+        }),
+      }),
+    onSuccess: (job) => {
+      const summary: FrontierArenaReplayJob = {
+        job_id: job.job_id,
+        state: job.state,
+        created_at: job.created_at,
+        updated_at: job.updated_at,
+        progress: job.progress,
+        phase: job.phase ?? null,
+        error: job.error ?? null,
+        snapshot_id: job.frontier_snapshot_id,
+        snapshot_sha256: job.frontier_snapshot_sha256,
+        result: job.result,
+      };
+      setSelectedArenaReplayId(job.job_id);
+      queryClient.setQueryData<FrontierArenaReplayJobs>(
+        ['frontier', 'arena-replay-jobs'],
+        (current) => ({
+          items: [
+            summary,
+            ...(current?.items ?? []).filter((item) => item.job_id !== job.job_id),
+          ].slice(0, 20),
+          limit: current?.limit ?? 20,
+          scanned: current?.scanned ?? 0,
+          scan_bound: current?.scan_bound ?? 500,
+          scan_may_be_incomplete: current?.scan_may_be_incomplete ?? false,
+          research_only: true,
+        }),
+      );
+      void queryClient.invalidateQueries({ queryKey: ['frontier', 'arena-replay-jobs'] });
+    },
   });
   const probe = useMutation({
     mutationFn: ({ venue, includeOneBook }: { venue: Venue; includeOneBook: boolean }) =>
@@ -2035,6 +2158,136 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
                 title="No paired comparisons yet"
                 detail="Compare two assumptions over the same saved markets, books and verified relationships. Each arm is also stored as a reproducible replay."
               />
+            )}
+          </section>
+          <section className="fr-card fr-arena-replay-card">
+            <div className="fr-card-head">
+              <div>
+                <span className="fr-kicker">LABORATORY / ARENA INTEGRATION</span>
+                <h2>Bounded paired replay</h2>
+              </div>
+              <button
+                className="fr-action"
+                onClick={() => arenaReplay.mutate()}
+                disabled={arenaReplay.isPending}
+              >
+                <Play size={14} />
+                {arenaReplay.isPending ? 'Submitting…' : 'Run paired replay in Arena'}
+              </button>
+            </div>
+            <p className="fr-arena-replay-intro">
+              Arena stages a content-hashed snapshot of saved Frontier markets, books, and verified
+              relationships, then runs both assumptions against that same input set.
+            </p>
+            <div className="fr-callout">
+              <ShieldCheck size={16} />
+              <span>
+                Each worker is limited to 5 minutes, 512 MiB, half a CPU, and idle I/O. External IP
+                networking is blocked; submission still requires the host-wide Arena resource gate.
+              </span>
+            </div>
+            {arenaReplay.isError && <InlineError message={arenaReplay.error.message} />}
+            {arenaReplayJobs.isLoading ? (
+              <div className="fr-loading">Loading Arena replay history…</div>
+            ) : arenaReplayJobs.isError ? (
+              <EmptyState
+                title="Arena replay history unavailable"
+                detail={arenaReplayJobs.error.message}
+              />
+            ) : listedArenaReplayJobs.length === 0 ? (
+              <EmptyState
+                title="No Arena replay jobs"
+                detail="Submitting a replay is explicit. It snapshots only local recorded evidence and does not probe an exchange or start a collector."
+              />
+            ) : (
+              <div className="fr-arena-job-list" aria-label="Frontier Arena replay jobs">
+                {listedArenaReplayJobs.map((job) => (
+                  <button
+                    key={job.job_id}
+                    className={`fr-arena-job-row${job.job_id === selectedArenaReplayJob?.job_id ? ' selected' : ''}`}
+                    aria-pressed={job.job_id === selectedArenaReplayJob?.job_id}
+                    onClick={() => setSelectedArenaReplayId(job.job_id)}
+                  >
+                    <span>
+                      <code>{shortHash(job.job_id)}</code>
+                      <small>
+                        {job.created_at == null
+                          ? 'Time not recorded'
+                          : new Date(job.created_at * 1000).toLocaleString()}
+                      </small>
+                    </span>
+                    <StateBadge state={job.state} />
+                  </button>
+                ))}
+              </div>
+            )}
+            {arenaReplayJobs.data?.scan_may_be_incomplete && (
+              <p className="fr-arena-replay-note">
+                Job history is limited to a bounded scan of {arenaReplayJobs.data.scan_bound} Arena
+                records; older entries may be omitted.
+              </p>
+            )}
+            {selectedArenaReplayJob && (
+              <article className="fr-arena-job-detail" aria-label="Selected Arena replay">
+                <div className="fr-arena-job-detail-head">
+                  <div>
+                    <span className="fr-kicker">SELECTED ARENA JOB</span>
+                    <code>{selectedArenaReplayJob.job_id}</code>
+                  </div>
+                  <StateBadge state={selectedArenaReplayJob.state} />
+                </div>
+                {['QUEUED', 'RUNNING'].includes(selectedArenaReplayJob.state) && (
+                  <p>
+                    {selectedArenaReplayJob.phase
+                      ? label(selectedArenaReplayJob.phase)
+                      : 'Waiting for the Arena worker lease'}
+                    {selectedArenaReplayJob.progress &&
+                      ` · ${selectedArenaReplayJob.progress.done ?? 0} / ${selectedArenaReplayJob.progress.total ?? 0} steps`}
+                  </p>
+                )}
+                {selectedArenaReplayJob.error && (
+                  <div className="fr-alert" role="status">
+                    <AlertTriangle size={16} />
+                    <div>
+                      <strong>Arena replay did not complete</strong>
+                      <span>{selectedArenaReplayJob.error}</span>
+                    </div>
+                  </div>
+                )}
+                <dl className="fr-arena-job-hashes">
+                  <div>
+                    <dt>Input snapshot ID</dt>
+                    <dd>{selectedArenaReplayJob.snapshot_id ?? 'Not recorded'}</dd>
+                  </div>
+                  <div>
+                    <dt>Input snapshot SHA-256</dt>
+                    <dd>{selectedArenaReplayJob.snapshot_sha256 ?? 'Not recorded'}</dd>
+                  </div>
+                  {selectedArenaReplayJob.result?.frontier_replay_sha256 && (
+                    <div>
+                      <dt>Result SHA-256</dt>
+                      <dd>{selectedArenaReplayJob.result.frontier_replay_sha256}</dd>
+                    </div>
+                  )}
+                </dl>
+                {selectedArenaReplayJob.state === 'COMPLETED' && arenaReplayResult.isLoading && (
+                  <div className="fr-loading">Reading and verifying the completed artifact…</div>
+                )}
+                {arenaReplayResult.isError && (
+                  <InlineError message={arenaReplayResult.error.message} />
+                )}
+                {arenaReplayResult.data?.integrity_verified && (
+                  <>
+                    <p className="fr-arena-replay-note">
+                      Hash checks passed. This result describes deterministic hypothetical replay;
+                      it does not establish fills, venue access, or profitability.
+                    </p>
+                    <ReplayComparisonSummary
+                      comparison={arenaReplayResult.data.artifact.comparison}
+                    />
+                  </>
+                )}
+              </article>
             )}
           </section>
           <section className="fr-card">

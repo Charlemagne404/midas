@@ -19,6 +19,7 @@ from midas.arena.costs import CostSpec
 from midas.arena.datasets import DatasetSpec, research_hash
 from midas.arena.director import DirectorSpec
 from midas.arena.evolution import SweepSpec
+from midas.arena.frontier_replay import FrontierReplayJobSpec
 from midas.arena.migrations import MigrationSpec
 from midas.arena.observations import ObservationSpec
 from midas.arena.policy_search import PolicySearchSpec
@@ -57,6 +58,7 @@ class JobSpec(Model):
         "migration",
         "plan",
         "veritas_qualification",
+        "frontier_replay",
     ]
     dataset: DatasetSpec | None = None
     training: TrainingSpec | None = None
@@ -74,6 +76,7 @@ class JobSpec(Model):
     director: DirectorSpec | None = None
     policy_search: PolicySearchSpec | None = None
     veritas_qualification: VeritasQualificationSpec | None = None
+    frontier_replay: FrontierReplayJobSpec | None = None
     max_wall_seconds: int = Field(default=1800, ge=10, le=7200)
     memory_limit_mb: int = Field(default=3072, ge=128, le=3072)
     cpu_quota_percent: int = Field(default=100, ge=1, le=100)
@@ -93,6 +96,7 @@ class JobSpec(Model):
             "migration": "migration",
             "plan": "plan_id",
             "veritas_qualification": "veritas_qualification",
+            "frontier_replay": "frontier_replay",
             "evaluation": "model_id",
             "diagnostics": "model_id",
             "rl": "rl",
@@ -118,9 +122,20 @@ class JobSpec(Model):
             "director",
             "policy_search",
             "veritas_qualification",
+            "frontier_replay",
         ):
             if (getattr(self, field) is not None) != (field == required):
                 raise ValueError(f"{self.kind} job requires only {required}")
+        if self.kind == "frontier_replay" and (
+            self.max_wall_seconds > 300
+            or self.memory_limit_mb > 512
+            or self.cpu_quota_percent > 50
+            or self.nice < 15
+            or self.io_scheduling_class != "idle"
+        ):
+            raise ValueError(
+                "Frontier replay jobs are limited to 300 seconds, 512 MiB, half a CPU, nice 15, and idle I/O"
+            )
         return self
 
 
@@ -216,6 +231,7 @@ def _create(
     identity = "job-" + uuid.uuid4().hex[:24]
     directory = artifact_path(root, "jobs", identity)
     veritas_read_only = spec.kind == "veritas_qualification"
+    network_restricted = spec.kind in {"veritas_qualification", "frontier_replay"}
     memory_limit_mb = 512 if veritas_read_only else spec.memory_limit_mb
     # Global admission permits one worker. Respect its declared <= one-core
     # budget: a hidden 10% qualification cap stretched CPU work across ten
@@ -279,7 +295,7 @@ def _create(
             "--property=TimeoutStopSec=30",
             f"--working-directory={repository}",
             f"--setenv=PYTHONPATH={repository / 'packages'}",
-            *(["--property=RestrictAddressFamilies=AF_UNIX"] if veritas_read_only else []),
+            *(["--property=RestrictAddressFamilies=AF_UNIX"] if network_restricted else []),
             "--setenv=OMP_NUM_THREADS=1",
             "--setenv=OPENBLAS_NUM_THREADS=1",
             "--setenv=MKL_NUM_THREADS=1",
@@ -577,6 +593,19 @@ def _run(root: Path, identity: str) -> None:
                     "experiment_run_id": result["result"]["experiment_run_id"],
                     "status": result["result"]["status"],
                     "experiment_sha256": result["experiment_sha256"],
+                }
+            elif spec.kind == "frontier_replay":
+                from midas.arena.frontier_replay import execute_frontier_replay_job
+
+                assert spec.frontier_replay is not None
+                artifact = execute_frontier_replay_job(
+                    root, identity, spec.frontier_replay, progress
+                )
+                record["result"] = {
+                    "frontier_replay_sha256": artifact.result_sha256,
+                    "comparison_id": artifact.comparison.comparison_id,
+                    "snapshot_id": artifact.snapshot_id,
+                    "artifact": "frontier-replay-result.json",
                 }
             elif spec.kind == "supervised":
                 from midas.arena.supervised import train

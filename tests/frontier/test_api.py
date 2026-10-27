@@ -38,7 +38,7 @@ from apps.api.frontier import router
 from tests.frontier.builders import T0, book, market
 
 
-def _client(tmp_path):
+def _client(tmp_path, *, arena_root=None):
     requests: list[httpx.Request] = []
 
     def handler(request: httpx.Request) -> httpx.Response:
@@ -57,7 +57,7 @@ def _client(tmp_path):
     )
     store = FrontierStore(tmp_path / "frontier")
     app = FastAPI()
-    app.include_router(router(store, registry))
+    app.include_router(router(store, registry, arena_root=arena_root))
     return TestClient(app), registry, client, requests, store
 
 
@@ -304,6 +304,82 @@ def test_paired_replay_rejects_duplicate_scenario_names_at_api_boundary(tmp_path
         assert requests == []
     finally:
         client.close()
+        asyncio.run(registry.aclose())
+        asyncio.run(http_client.aclose())
+
+
+def test_arena_replay_stages_a_pinned_snapshot_before_admitted_job_creation(tmp_path, monkeypatch):
+    import midas.arena.jobs as jobs
+    from midas.arena.frontier_replay import FrontierReplaySnapshot
+
+    arena_root = tmp_path / "arena"
+    client, registry, http_client, requests, store = _client(tmp_path, arena_root=arena_root)
+    captured = {}
+
+    def create(root, spec, *, admission_key):
+        captured["root"] = root
+        captured["spec"] = spec
+        captured["admission_key"] = admission_key
+        return {
+            "job_id": "job-0123456789abcdef01234567",
+            "state": "QUEUED",
+            "configuration": spec.model_dump(mode="json"),
+        }
+
+    monkeypatch.setattr(jobs, "create", create)
+    try:
+        response = client.post(
+            "/api/frontier/arena-replay",
+            json={"scenarios": [{"name": "quoted baseline"}, {"name": "stress"}]},
+        )
+        assert response.status_code == 201, response.text
+        payload = response.json()
+        snapshot_path = (
+            arena_root / "frontier-replay-snapshots" / f"{payload['frontier_snapshot_id']}.json"
+        )
+        pinned = FrontierReplaySnapshot.model_validate_json(snapshot_path.read_bytes())
+        assert captured["root"] == arena_root
+        assert captured["spec"].kind == "frontier_replay"
+        assert captured["spec"].frontier_replay.snapshot_id == pinned.snapshot_id
+        assert (
+            captured["spec"].frontier_replay.snapshot_sha256 == payload["frontier_snapshot_sha256"]
+        )
+        assert captured["admission_key"].endswith(pinned.snapshot_id)
+        assert payload["network_calls"] == 0
+        assert payload["research_only"] is True
+        assert requests == []
+        assert store.summary()["observations"] == 0
+    finally:
+        client.close()
+        asyncio.run(registry.aclose())
+        asyncio.run(http_client.aclose())
+
+
+def test_readiness_separates_arena_configuration_from_worker_runtime_validation(tmp_path):
+    unconfigured, registry, http_client, _, _ = _client(tmp_path / "unconfigured")
+    try:
+        readiness = unconfigured.get("/api/frontier/readiness")
+        gate = next(
+            item for item in readiness.json()["gates"] if item["name"] == "arena_replay_worker"
+        )
+        assert gate["state"] == "NOT_CONFIGURED"
+    finally:
+        unconfigured.close()
+        asyncio.run(registry.aclose())
+        asyncio.run(http_client.aclose())
+
+    configured, registry, http_client, _, _ = _client(
+        tmp_path / "configured", arena_root=tmp_path / "configured-arena"
+    )
+    try:
+        readiness = configured.get("/api/frontier/readiness")
+        gate = next(
+            item for item in readiness.json()["gates"] if item["name"] == "arena_replay_worker"
+        )
+        assert gate["state"] == "LIVE_VALIDATION_PENDING"
+        assert "not been validated through an admitted worker" in gate["detail"]
+    finally:
+        configured.close()
         asyncio.run(registry.aclose())
         asyncio.run(http_client.aclose())
 

@@ -1179,3 +1179,194 @@ it('records a self-attributed relationship review with both stored market source
     expected_latest_review_id: null,
   });
 });
+
+it('submits a bounded Arena replay and displays its integrity-verified comparison', async () => {
+  const jobId = 'job-0123456789abcdef01234567';
+  const snapshotId = 'a'.repeat(64);
+  const snapshotSha256 = 'b'.repeat(64);
+  const resultSha256 = 'c'.repeat(64);
+  const comparison = {
+    comparison_id: 'd'.repeat(64),
+    evidence_input_sha256: 'e'.repeat(64),
+    as_of_utc: '2026-10-27T00:00:00Z',
+    result_sha256: resultSha256,
+    arms: [
+      {
+        scenario: { name: 'quoted baseline' },
+        run_id: 'f'.repeat(64),
+        result_sha256: '1'.repeat(64),
+        candidate_count: 0,
+        classification_counts: {},
+        audit_disposition_counts: {},
+        positive_gross_count: 0,
+        positive_net_count: 0,
+        unknown_net_count: 0,
+      },
+      {
+        scenario: { name: 'current assumptions' },
+        run_id: '2'.repeat(64),
+        result_sha256: '3'.repeat(64),
+        candidate_count: 0,
+        classification_counts: {},
+        audit_disposition_counts: {},
+        positive_gross_count: 0,
+        positive_net_count: 0,
+        unknown_net_count: 0,
+      },
+    ],
+    delta: {
+      baseline_scenario: 'quoted baseline',
+      compared_scenario: 'current assumptions',
+      matched_candidate_count: 0,
+      unchanged_classification_count: 0,
+      changed_classification_count: 0,
+      baseline_only_candidate_count: 0,
+      compared_only_candidate_count: 0,
+      classification_count_delta: {},
+      positive_gross_count_delta: 0,
+      positive_net_count_delta: 0,
+      unknown_net_count_delta: 0,
+    },
+  };
+  const empty = { items: [], returned: 0, limit: 100, offset: 0 };
+  const responses: Record<string, unknown> = {
+    '/api/frontier/overview': {
+      state: 'EMPTY',
+      research_only: true,
+      live_execution: false,
+      summary: {
+        observations: 0,
+        relationships: 0,
+        relationship_reviews: 0,
+        runs: 0,
+        comparisons: 0,
+        markets_by_venue: {},
+        instruments_by_venue: {},
+        relationships_by_state: {},
+        database_bytes: 0,
+        max_bytes: 1_000_000,
+      },
+      sources: [],
+      latest_evidence_at_utc: null,
+      limitations: [],
+    },
+    '/api/frontier/sources': { items: [] },
+    '/api/frontier/markets?limit=100': empty,
+    '/api/frontier/books?limit=100': empty,
+    '/api/frontier/trades?limit=100': { ...empty, pages: [] },
+    '/api/frontier/relationships?limit=200': empty,
+    '/api/frontier/graph?depth=1&limit=100': {
+      nodes: [],
+      edges: [],
+      center_market_id: null,
+      search: null,
+      depth: 1,
+      edge_limit: 100,
+      returned_nodes: 0,
+      returned_edges: 0,
+      truncated_by_edge_limit: false,
+      relationship_scan_limit: 500,
+      relationships_scanned: 0,
+      relationship_scan_may_be_incomplete: false,
+      next_cursor: null,
+      source_market_window_limit: 200,
+    },
+    '/api/frontier/opportunities?limit=100': empty,
+    '/api/frontier/runs?limit=30': empty,
+    '/api/frontier/comparisons?limit=30': empty,
+    '/api/frontier/readiness': { gates: [] },
+  };
+  const jobSummary = {
+    job_id: jobId,
+    state: 'COMPLETED',
+    created_at: 1_793_049_600,
+    updated_at: 1_793_049_601,
+    progress: { done: 3, total: 3 },
+    phase: 'publishing-hash-verified-result',
+    error: null,
+    snapshot_id: snapshotId,
+    snapshot_sha256: snapshotSha256,
+    result: { comparison_id: comparison.comparison_id, frontier_replay_sha256: resultSha256 },
+  };
+  let submission: Record<string, unknown> | undefined;
+  const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    const path = String(input);
+    if (path === '/api/arena/frontier-replays?limit=20') {
+      return {
+        ok: true,
+        json: async () => ({
+          items: submission ? [jobSummary] : [],
+          limit: 20,
+          scanned: submission ? 1 : 0,
+          scan_bound: 500,
+          scan_may_be_incomplete: false,
+          research_only: true,
+        }),
+      } as Response;
+    }
+    if (path === '/api/frontier/arena-replay' && init?.method === 'POST') {
+      submission = JSON.parse(String(init.body)) as Record<string, unknown>;
+      return {
+        ok: true,
+        json: async () => ({
+          job_id: jobId,
+          state: 'COMPLETED',
+          created_at: jobSummary.created_at,
+          updated_at: jobSummary.updated_at,
+          progress: jobSummary.progress,
+          phase: jobSummary.phase,
+          error: null,
+          result: jobSummary.result,
+          frontier_snapshot_id: snapshotId,
+          frontier_snapshot_sha256: snapshotSha256,
+        }),
+      } as Response;
+    }
+    if (path === `/api/arena/jobs/${jobId}/frontier-replay`) {
+      return {
+        ok: true,
+        json: async () => ({
+          artifact: {
+            comparison,
+            snapshot_id: snapshotId,
+            snapshot_sha256: snapshotSha256,
+            result_sha256: resultSha256,
+          },
+          research_only: true,
+          orders_submitted: false,
+          authenticated_requests: false,
+          integrity_verified: true,
+        }),
+      } as Response;
+    }
+    const body = responses[path];
+    if (body === undefined) throw new Error(`Unexpected frontend request: ${path}`);
+    return { ok: true, json: async () => body } as Response;
+  });
+  vi.stubGlobal('fetch', fetchMock);
+  render(
+    <QueryClientProvider
+      client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+    >
+      <Frontier />
+    </QueryClientProvider>,
+  );
+
+  fireEvent.click(await screen.findByRole('button', { name: 'Replay & readiness' }));
+  expect(await screen.findByText('No Arena replay jobs')).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Run paired replay in Arena' }));
+
+  expect(await screen.findByText(/Hash checks passed/)).toBeInTheDocument();
+  expect(screen.getByText('0 matched constructions')).toBeInTheDocument();
+  expect(screen.getByText(snapshotSha256)).toBeInTheDocument();
+  expect(submission?.scenarios).toEqual([
+    { name: 'quoted baseline' },
+    {
+      name: 'current assumptions',
+      slippage_bps: '25',
+      execution_delay_ms: 500,
+      fill_fraction: '0.8000',
+      quote_decay_bps_per_second: '15',
+    },
+  ]);
+});

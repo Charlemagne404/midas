@@ -152,7 +152,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(router(lambda: app.state.laboratory))
     from apps.api.frontier import router as frontier_router
 
-    app.include_router(frontier_router(frontier_store, frontier_registry))
+    app.include_router(
+        frontier_router(frontier_store, frontier_registry, arena_root=config.arena_root)
+    )
     from apps.api.arena import router as arena_router
 
     veritas_workspace = (config.veritas_workspace or Path(__file__).resolve().parents[2]).resolve()

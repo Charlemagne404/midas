@@ -34,6 +34,24 @@ test('Frontier workspace uses isolated research state and remains responsive', a
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
 });
 
+test('Arena replay history loads without submitting or launching work', async ({ page }) => {
+  let replaySubmissions = 0;
+  page.on('request', (request) => {
+    if (request.method() === 'POST' && request.url().includes('/api/frontier/arena-replay')) {
+      replaySubmissions += 1;
+    }
+  });
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Frontier', exact: true }).click();
+  await page.getByRole('button', { name: 'Replay & readiness', exact: true }).click();
+
+  await expect(page.getByRole('heading', { name: 'Bounded paired replay' })).toBeVisible();
+  await expect(page.getByText('No Arena replay jobs')).toBeVisible();
+  await expect(page.getByText(/host-wide Arena resource gate/)).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Run paired replay in Arena' })).toBeVisible();
+  expect(replaySubmissions).toBe(0);
+});
+
 test('relationship network remains bounded, selectable, and scroll-contained on mobile', async ({
   page,
 }) => {
