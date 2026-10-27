@@ -256,3 +256,9 @@ swap used. No source, service, production configuration, or Reality evidence was
 changed. This development checkpoint does not update or measure the operational
 Reality/Veritas state above. See the [Frontier mission ledger](frontier/FRONTIER_MISSION_LEDGER.md)
 and [engineering report](frontier/FRONTIER_ENGINEERING_REPORT.md).
+
+Review follow-up commit `cca4038` disables virtual-funding comparison if any
+leg is missing a quote currency. Its regression case is committed but was not
+run because memory PSI remained high at 13:18 UTC; the earlier component and
+browser results predate this fix. The focused component test and typecheck
+remain pending a safer host sample.

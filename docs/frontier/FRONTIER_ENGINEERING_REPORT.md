@@ -1774,6 +1774,19 @@ does not have a verified production build; the earlier v12 build is not evidence
 for this UI revision. No source request, service, production configuration, or
 historical artifact was changed.
 
+### Quote-currency completeness correction (2026-10-27 13:18 UTC)
+
+Code commit `cca4038` fixes a UI review finding: the funding comparison now
+requires every candidate leg at a venue to declare the same quote currency. A
+partially missing currency disables the comparison. A regression case was
+added to `apps/web/src/Frontier.test.tsx`, but it has not been run. Only
+`git diff --check` passed after this follow-up. At `2026-10-27T13:18:58Z`,
+memory PSI `avg10` was 37.39% (`some`) / 32.69% (`full`), available RAM was
+about 9.2 GiB, and only 553 MiB of swap remained free. The prior 8-test
+component and focused browser results predate this correction; they do not
+verify it. Run the focused component test and typecheck after host pressure
+eases. No source, service, or production action was taken.
+
 ### Kalshi MVE reported settlement arithmetic (2026-10-27 13:01 UTC)
 
 Code commit `8a3e25c` bumps the Kalshi adapter to v12 and adds a local,
@@ -1847,7 +1860,7 @@ cross-venue economics.
 | Live market/book/trade and fee metadata through adapters/API | PARTIALLY VERIFIED | Earlier listing/book/trade, event-group, fee-metadata, and trade-page captures are hash-pinned. Kalshi MVE captures include filtered pages whose nested markets were omitted and one detail response with explicit top-level `markets: []`. The new one-request child detail capture matches a selected leg's saved ticker/event identities and has raw/store hashes; its rules expose fair-price fallbacks, but it has no book/price and proves neither child nor combo payoff. No cross-venue timing, combo economics, venue-wide coverage, or execution is established. |
 | Source workers and broad historical data | DEFERRED | No persistent worker or long-duration collection. |
 | Laboratory/Arena research orchestration | PARTIALLY VERIFIED | Arena job kind, content-addressed snapshots, bounded offline execution, API submission/history/result verification, process CPU/RSS capture, and explicit workspace controls are implemented and tested; two fixture jobs passed the host-wide gate and completed under systemd. Laboratory campaign management and resource-sustainability evidence remain incomplete. |
-| Native Mission Control workspace | PARTIALLY VERIFIED | Local API, bounded graph/review UI, Polymarket/Kalshi trade-page and event-group controls, explicit filtered one-page Kalshi MVE capture by series, collection, or one event ticker with returned member-list state, parent-event context, instrument-bound fee sensitivity, selected-leg component-rule and recorded-settlement arithmetic inspection, paired replay, candidate fill stress, venue-separated local virtual balances, and Arena job history/result display. The latest Frontier component suite passes 8 tests; typecheck, ESLint, Prettier, and the focused depth-two/capital-fragmentation/mobile browser case pass. A production build after the capital UI change was stopped under rising memory PSI and remains unverified; the workspace is not deployed. |
+| Native Mission Control workspace | PARTIALLY VERIFIED | Local API, bounded graph/review UI, Polymarket/Kalshi trade-page and event-group controls, explicit filtered one-page Kalshi MVE capture by series, collection, or one event ticker with returned member-list state, parent-event context, instrument-bound fee sensitivity, selected-leg component-rule and recorded-settlement arithmetic inspection, paired replay, candidate fill stress, venue-separated local virtual balances, and Arena job history/result display. The original capital UI checkpoint's Frontier component suite passes 8 tests; typecheck, ESLint, Prettier, and the focused depth-two/capital-fragmentation/mobile browser case pass. A follow-up requires complete per-venue quote-currency metadata, but its regression test and typecheck have not been run. A production build after the capital UI change was stopped under rising memory PSI and remains unverified; the workspace is not deployed. |
 | Production readiness/deployment | DEFERRED | Separate review and authorization required; production eligibility is false. |
 | Positive economic result | NOT ESTABLISHED | No genuine cross-venue equivalent or economically eligible result in captured evidence. |
 

@@ -93,6 +93,11 @@ Frontier component tests and one focused browser test pass, along with frontend
 typecheck, ESLint, and Prettier. A production build after this UI change was
 stopped under rising memory PSI and remains unverified. Comprehensive capital
 transfer, collateral, FX, and settlement-duration modeling remains incomplete.
+Follow-up review commit `cca4038` closes a partial-currency metadata gap by
+requiring every leg in a venue to declare the same quote currency. Its
+regression test is added but unrun under high host memory pressure; the prior
+8-test/browser results predate this correction. Re-run the focused test and
+typecheck when resource admission allows.
 Remaining acceptance work is substantial.
 **Branch:** `codex/frontier-20261026`
 **Worktree:** `/home/charlie/midas-frontier`
@@ -785,7 +790,7 @@ same-input runs do not change the resource sustainability gate.
 | Paired scenario comparison | PARTIALLY VERIFIED | Direct local comparison and API/UI/browser tests pass. Two actual systemd-supervised fixture replays completed over the same pinned inputs and their result hashes verify. The latest run measured worker process CPU/RSS and exposes it in Mission Control. No genuine equivalent live market pair exists. |
 | Frontier API and source configuration | COMPLETE AND VERIFIED | Local reads include hash-verified legacy and cursor-page batches. Polymarket and Kalshi page routes are capability/config/recorded-market gated, bounded to one page and retries, and bind cursors to market and size. Kalshi MVE discovery validates exactly one series/collection/event-ticker filter and does not follow its cursor. Component-detail fetches are bound pre-request to saved selected-leg metadata and post-response to saved market/event identity. API tests verify persistence, mismatch diagnostics, and pre-network rejection of an unreferenced ticker. |
 | Live adapter, API and store evidence | PARTIALLY VERIFIED | Three venue listing/book/trade captures, Polymarket v2 first/continuation pages with distinct IDs, a Kalshi empty cursor page, event-group responses and MVE endpoint responses have hash-pinned evidence. A single selected-child market-detail response is also hash/store verified and has matching saved-parent ticker/event IDs; it contains close lifecycle and native fair-price rule text but no price/book. Kalshi trade-row mapping remains fixture-only. Samples are asynchronous and establish no synchronized prices, complete history, child payout, combo payout, or execution. |
-| Mission Control Frontier workspace | PARTIALLY VERIFIED | Native view includes Polymarket/Kalshi trade-page, event-group and one-page MVE controls; MVE can filter by series, collection or event ticker; saved selected-leg rules, recorded settlement arithmetic, official source links and provenance hashes can be inspected. Graph/review, depth-paged traversal, paired replay, one-sided fill stress, instrument-bound Kalshi order-fee sensitivity, Arena history/results, and venue-separated virtual balance comparison are integrated. The latest Frontier component suite passes 8 tests; typecheck, ESLint, Prettier and the focused depth-two/capital-fragmentation/mobile browser case pass. The production build after the capital UI change was stopped under rising memory PSI and remains pending. It is not deployed. |
+| Mission Control Frontier workspace | PARTIALLY VERIFIED | Native view includes Polymarket/Kalshi trade-page, event-group and one-page MVE controls; MVE can filter by series, collection or event ticker; saved selected-leg rules, recorded settlement arithmetic, official source links and provenance hashes can be inspected. Graph/review, depth-paged traversal, paired replay, one-sided fill stress, instrument-bound Kalshi order-fee sensitivity, Arena history/results, and venue-separated virtual balance comparison are integrated. The original capital UI checkpoint's Frontier component suite passes 8 tests; typecheck, ESLint, Prettier and the focused depth-two/capital-fragmentation/mobile browser case pass. A follow-up currency-completeness fix adds a regression case that is not yet run or typechecked. The production build after the capital UI change was stopped under rising memory PSI and remains pending. It is not deployed. |
 | Laboratory/Arena research orchestration | PARTIALLY VERIFIED | Bounded Frontier Arena job type, snapshot, offline executor, API, worker CPU/RSS capture, and workspace history/result view are implemented and tested; two fixture jobs passed the host gate and completed under systemd. Resource sustainability and Laboratory campaign management remain incomplete. |
 | Persistent source collection, streaming and broad historical replay | DEFERRED | No background worker or long-duration campaign. |
 | Cross-venue FX, comprehensive capital and settlement costs | DEFERRED | Unknown costs remain unknown and block decisive net economics. |
@@ -833,6 +838,9 @@ The highest-value next steps are:
    The worker now captures and displays process CPU/RSS, but do not make a
    capacity claim from two tiny same-input runs. Add Laboratory campaign
    management only if a concrete need remains.
+7. Run the focused UI test and typecheck for commit `cca4038` when host memory
+   pressure has eased. Its regression case ensures a missing currency on any
+   leg disables that venue's virtual balance comparison.
 
 Do not connect Frontier to Reality’s recorder, enable probes as a default,
 deploy, or alter protected evidence as part of ordinary continuation. The next
@@ -908,3 +916,6 @@ development, current-state, architecture, report, and ledger documentation
 checkpoint is `e3d974d`. The feature remains browser-local and research-only.
 Its focused UI/browser verification passed; a production build after the UI
 change remains unverified because it was stopped under rising memory PSI.
+Commit `cca4038` tightens the per-venue currency guard and adds an unrun
+regression test for incomplete currency metadata. Its focused test and
+typecheck remain the next safe verification action after memory pressure eases.
