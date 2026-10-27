@@ -3529,3 +3529,5 @@ The `19:44:20 UTC` memory sample was 46.09% `some` / 41.22% `full` at `avg10`,
 with 9.3 GiB available memory and 468 MiB swap free. The broad
 Frontier suite and production build remain deferred. No source request, held
 data read, protected service action, or deployment occurred.
+Code commit `47f399d` implements the typed range model and enforcement;
+`52abaad` adds the adversarial parser cases and updates the checkpoint evidence.

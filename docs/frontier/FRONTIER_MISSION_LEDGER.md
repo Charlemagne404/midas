@@ -2169,3 +2169,5 @@ and `git diff --check` passed. At `2026-10-27T19:44:20Z`, host memory PSI
 and 468 MiB swap free. No broad suite or production build was run. Live range semantics, source
 permission, cross-venue economics, and deployment remain unresolved; Frontier
 remains isolated and PARTIALLY VERIFIED.
+Code commit `47f399d` implements the typed range model and checks; test/documentation
+commit `52abaad` adds the malformed-input matrix and records the expanded run.

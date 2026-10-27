@@ -564,3 +564,5 @@ extreme exponent. At `2026-10-27T19:44:20Z`, memory PSI `avg10` was 46.09% `some
 production build were deferred. Frontier remains isolated, research-only,
 PARTIALLY VERIFIED, and undeployed; live source permission, price-range
 semantics, multi-venue economic validation, and deployment remain open.
+The implementation is in commit `47f399d`; commit `52abaad` adds adversarial
+parser fixtures and the expanded verification checkpoint.
