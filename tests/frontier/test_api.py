@@ -213,6 +213,74 @@ def test_kalshi_fee_metadata_probe_persists_event_and_series_evidence(tmp_path):
             row["total_modeled_fee"] for row in sensitivity_result["estimate"]["scenarios"]
         ] == ["0.0525", "0.06"]
         assert len(sensitivity_result["estimate"]["calculation_sha256"]) == 64
+        order_sensitivity = client.post(
+            "/api/frontier/economics/kalshi-fee-order-sensitivity",
+            json={
+                "market_id": source_market.canonical_id,
+                "event_observation_id": result["observation_ids"][0],
+                "series_observation_id": result["observation_ids"][1],
+                "fills": [
+                    {
+                        "native_instrument_id": source_market.instruments[0].native_instrument_id,
+                        "side": "buy",
+                        "price_usd": "0.06",
+                        "quantity_contracts": "1",
+                    },
+                    {
+                        "native_instrument_id": source_market.instruments[0].native_instrument_id,
+                        "side": "buy",
+                        "price_usd": "0.06",
+                        "quantity_contracts": "1",
+                    },
+                ],
+            },
+        )
+        assert order_sensitivity.status_code == 200, order_sensitivity.text
+        order_result = order_sensitivity.json()
+        assert order_result["hypothetical_only"] is True
+        assert order_result["candidate_net_economics_modified"] is False
+        assert len(order_result["estimate"]["scenarios"][1]["fills"]) == 2
+        assert order_result["estimate"]["scenarios"][1]["total_net_fee_usd"] == "0.030000"
+        mixed_order = client.post(
+            "/api/frontier/economics/kalshi-fee-order-sensitivity",
+            json={
+                "market_id": source_market.canonical_id,
+                "event_observation_id": result["observation_ids"][0],
+                "series_observation_id": result["observation_ids"][1],
+                "fills": [
+                    {
+                        "native_instrument_id": source_market.instruments[0].native_instrument_id,
+                        "side": "buy",
+                        "price_usd": "0.06",
+                        "quantity_contracts": "1",
+                    },
+                    {
+                        "native_instrument_id": source_market.instruments[0].native_instrument_id,
+                        "side": "sell",
+                        "price_usd": "0.06",
+                        "quantity_contracts": "1",
+                    },
+                ],
+            },
+        )
+        assert mixed_order.status_code == 422
+        unrecorded_instrument = client.post(
+            "/api/frontier/economics/kalshi-fee-order-sensitivity",
+            json={
+                "market_id": source_market.canonical_id,
+                "event_observation_id": result["observation_ids"][0],
+                "series_observation_id": result["observation_ids"][1],
+                "fills": [
+                    {
+                        "native_instrument_id": "KX-FEE-API:UNRECORDED",
+                        "side": "buy",
+                        "price_usd": "0.06",
+                        "quantity_contracts": "1",
+                    }
+                ],
+            },
+        )
+        assert unrecorded_instrument.status_code == 409
         wrong_pair = client.post(
             "/api/frontier/economics/kalshi-fee-sensitivity",
             json={

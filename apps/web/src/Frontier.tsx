@@ -184,25 +184,44 @@ type KalshiFeeMetadataCaptureResult = {
   fee_cost_modeled: false;
   note: string;
 };
-type KalshiFeeSensitivityResponse = {
+type KalshiFeeScenarioFill = {
+  instrumentId: string;
+  side: 'buy' | 'sell';
+  price: string;
+  quantity: string;
+};
+type KalshiFeeOrderSensitivityResponse = {
   market_id: string;
   estimate: {
     model_version: string;
     series_ticker: string;
     effective_fee_type: string;
     effective_fee_multiplier: string;
-    price_usd: string;
-    quantity_contracts: string;
-    position_cost_usd: string;
     input_received_at_utc: [string, string];
+    order_fills: {
+      native_instrument_id: string;
+      side: 'buy' | 'sell';
+      price_usd: string;
+      quantity_contracts: string;
+    }[];
     scenarios: {
       account_precision_class: string;
       balance_quantum: string;
-      model_fee_before_rounding: string;
-      trade_fee_rounded_to_microdollar: string;
-      balance_rounding_adjustment: string;
-      total_modeled_fee: string;
-      total_modeled_debit: string;
+      fills: {
+        fill_index: number;
+        native_instrument_id: string;
+        side: 'buy' | 'sell';
+        trade_fee_rounded_to_microdollar: string;
+        rounding_fee_usd: string;
+        rebate_usd: string;
+        accumulated_rounding_after_rebate_usd: string;
+        net_fee_usd: string;
+      }[];
+      total_trade_fee_usd: string;
+      total_rounding_fee_usd: string;
+      total_rebate_usd: string;
+      total_net_fee_usd: string;
+      total_balance_change_usd: string;
     }[];
     calculation_sha256: string;
     assumptions: string[];
@@ -1209,17 +1228,25 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
       marketId: string;
       eventObservationId: string;
       seriesObservationId: string;
-      priceUsd: string;
-      quantityContracts: string;
+      fills: {
+        instrumentId: string;
+        side: 'buy' | 'sell';
+        priceUsd: string;
+        quantityContracts: string;
+      }[];
     }) =>
-      api<KalshiFeeSensitivityResponse>('/frontier/economics/kalshi-fee-sensitivity', {
+      api<KalshiFeeOrderSensitivityResponse>('/frontier/economics/kalshi-fee-order-sensitivity', {
         method: 'POST',
         body: JSON.stringify({
           market_id: input.marketId,
           event_observation_id: input.eventObservationId,
           series_observation_id: input.seriesObservationId,
-          price_usd: input.priceUsd,
-          quantity_contracts: input.quantityContracts,
+          fills: input.fills.map((fill) => ({
+            native_instrument_id: fill.instrumentId,
+            side: fill.side,
+            price_usd: fill.priceUsd,
+            quantity_contracts: fill.quantityContracts,
+          })),
         }),
       }),
   });
@@ -1559,6 +1586,7 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
           )}
           {selectedMarket && (
             <MarketDetails
+              key={selectedMarket.canonical_id}
               market={selectedMarket}
               books={selectedBooks}
               booksLoading={books.isLoading}
@@ -2428,20 +2456,30 @@ function MarketDetails({
   >;
   feeMetadataProbeEnabled: boolean;
   feeSensitivity: UseMutationResult<
-    KalshiFeeSensitivityResponse,
+    KalshiFeeOrderSensitivityResponse,
     Error,
     {
       marketId: string;
       eventObservationId: string;
       seriesObservationId: string;
-      priceUsd: string;
-      quantityContracts: string;
+      fills: {
+        instrumentId: string;
+        side: 'buy' | 'sell';
+        priceUsd: string;
+        quantityContracts: string;
+      }[];
     },
     unknown
   >;
 }) {
-  const [feePrice, setFeePrice] = useState('0.50');
-  const [feeQuantity, setFeeQuantity] = useState('1');
+  const [feeFills, setFeeFills] = useState<KalshiFeeScenarioFill[]>([
+    {
+      instrumentId: market.instruments[0]?.native_instrument_id ?? '',
+      side: 'buy',
+      price: '0.50',
+      quantity: '1',
+    },
+  ]);
   const capturedFeeMetadata =
     feeMetadataProbe.isSuccess && feeMetadataProbe.variables?.marketId === market.canonical_id
       ? feeMetadataProbe.data
@@ -2553,60 +2591,169 @@ function MarketDetails({
                 ))}
                 <div className="fr-fee-sensitivity-form">
                   <small className="fr-fee-sensitivity-guidance">
-                    One-fill scenario inputs. Price and quantity are manually supplied and are not
-                    read from the stored order book.
+                    One-order taker scenario. Fill inputs are manual, share one buy or sell side,
+                    and are not read from the stored order book.
                   </small>
-                  <label>
-                    Scenario price per contract (USD)
-                    <input
-                      aria-label="Scenario price per contract (USD)"
-                      type="number"
-                      min="0.000001"
-                      max="0.999999"
-                      step="any"
-                      value={feePrice}
-                      onChange={(event) => setFeePrice(event.target.value)}
-                    />
-                  </label>
-                  <label>
-                    Scenario quantity (contracts)
-                    <input
-                      aria-label="Scenario quantity (contracts)"
-                      type="number"
-                      min="0.000001"
-                      max="1000000"
-                      step="any"
-                      value={feeQuantity}
-                      onChange={(event) => setFeeQuantity(event.target.value)}
-                    />
-                  </label>
-                  <button
-                    className="fr-inspect-button"
-                    disabled={
-                      !capturedFeeMetadata || feeSensitivity.isPending || !feePrice || !feeQuantity
-                    }
-                    onClick={() => {
-                      if (!capturedFeeMetadata) return;
-                      feeSensitivity.mutate({
-                        marketId: market.canonical_id,
-                        eventObservationId: capturedFeeMetadata.observation_ids[0],
-                        seriesObservationId: capturedFeeMetadata.observation_ids[1],
-                        priceUsd: feePrice,
-                        quantityContracts: feeQuantity,
-                      });
-                    }}
-                  >
-                    {feeSensitivity.isPending ? 'Calculating…' : 'Calculate fee scenarios'}
-                  </button>
+                  {feeFills.map((fill, index) => (
+                    <div className="fr-fee-order-fill" key={index}>
+                      <strong>Fill {index + 1}</strong>
+                      <label>
+                        Contract outcome
+                        <select
+                          aria-label={`Fill ${index + 1} contract outcome`}
+                          value={fill.instrumentId}
+                          onChange={(event) =>
+                            setFeeFills((current) =>
+                              current.map((item, itemIndex) =>
+                                itemIndex === index
+                                  ? { ...item, instrumentId: event.target.value }
+                                  : item,
+                              ),
+                            )
+                          }
+                        >
+                          {market.instruments.map((instrument) => (
+                            <option
+                              key={instrument.native_instrument_id}
+                              value={instrument.native_instrument_id}
+                            >
+                              {instrument.label} · {instrument.native_instrument_id}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <label>
+                        Side
+                        <select
+                          aria-label={`Fill ${index + 1} side`}
+                          value={fill.side}
+                          onChange={(event) =>
+                            setFeeFills((current) =>
+                              current.map((item, itemIndex) =>
+                                itemIndex === index
+                                  ? { ...item, side: event.target.value as 'buy' | 'sell' }
+                                  : item,
+                              ),
+                            )
+                          }
+                        >
+                          <option value="buy">Buy</option>
+                          <option value="sell">Sell</option>
+                        </select>
+                      </label>
+                      <label>
+                        Price per contract (USD)
+                        <input
+                          aria-label={`Fill ${index + 1} price per contract (USD)`}
+                          type="number"
+                          min="0.000001"
+                          max="0.999999"
+                          step="any"
+                          value={fill.price}
+                          onChange={(event) =>
+                            setFeeFills((current) =>
+                              current.map((item, itemIndex) =>
+                                itemIndex === index ? { ...item, price: event.target.value } : item,
+                              ),
+                            )
+                          }
+                        />
+                      </label>
+                      <label>
+                        Quantity (contracts)
+                        <input
+                          aria-label={`Fill ${index + 1} quantity (contracts)`}
+                          type="number"
+                          min="0.000001"
+                          max="1000000"
+                          step="any"
+                          value={fill.quantity}
+                          onChange={(event) =>
+                            setFeeFills((current) =>
+                              current.map((item, itemIndex) =>
+                                itemIndex === index
+                                  ? { ...item, quantity: event.target.value }
+                                  : item,
+                              ),
+                            )
+                          }
+                        />
+                      </label>
+                      {feeFills.length > 1 && (
+                        <button
+                          className="fr-inspect-button"
+                          aria-label={`Remove fill ${index + 1}`}
+                          onClick={() =>
+                            setFeeFills((current) =>
+                              current.filter((_, itemIndex) => itemIndex !== index),
+                            )
+                          }
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  <div className="fr-fee-order-actions">
+                    <button
+                      className="fr-inspect-button"
+                      disabled={feeFills.length >= 32}
+                      onClick={() =>
+                        setFeeFills((current) => [
+                          ...current,
+                          {
+                            instrumentId: feeFills[0].instrumentId,
+                            side: feeFills[0].side,
+                            price: '0.50',
+                            quantity: '1',
+                          },
+                        ])
+                      }
+                    >
+                      Add fill
+                    </button>
+                    <button
+                      className="fr-inspect-button"
+                      disabled={
+                        !capturedFeeMetadata ||
+                        feeSensitivity.isPending ||
+                        !market.instruments.some(
+                          (instrument) =>
+                            instrument.native_instrument_id === feeFills[0].instrumentId,
+                        ) ||
+                        feeFills.some((item) => item.instrumentId !== feeFills[0].instrumentId) ||
+                        feeFills.some((item) => !item.price || !item.quantity) ||
+                        feeFills.some((item) => item.side !== feeFills[0].side)
+                      }
+                      onClick={() => {
+                        if (!capturedFeeMetadata) return;
+                        feeSensitivity.mutate({
+                          marketId: market.canonical_id,
+                          eventObservationId: capturedFeeMetadata.observation_ids[0],
+                          seriesObservationId: capturedFeeMetadata.observation_ids[1],
+                          fills: feeFills.map((item) => ({
+                            instrumentId: item.instrumentId,
+                            side: item.side,
+                            priceUsd: item.price,
+                            quantityContracts: item.quantity,
+                          })),
+                        });
+                      }}
+                    >
+                      {feeSensitivity.isPending ? 'Calculating…' : 'Calculate order fee'}
+                    </button>
+                  </div>
                 </div>
                 {feeSensitivity.isError && <InlineError message={feeSensitivity.error.message} />}
                 {feeSensitivity.isSuccess &&
                   feeSensitivity.variables?.marketId === market.canonical_id && (
                     <div className="fr-fee-sensitivity-result" role="status">
                       <strong>
-                        Single-fill taker sensitivity ·{' '}
-                        {feeSensitivity.data.estimate.quantity_contracts} contracts at $
-                        {feeSensitivity.data.estimate.price_usd}
+                        One-order taker sensitivity ·{' '}
+                        {feeSensitivity.data.estimate.order_fills.length} manual fill
+                        {feeSensitivity.data.estimate.order_fills.length === 1 ? '' : 's'} ·{' '}
+                        {feeSensitivity.data.estimate.effective_fee_type} ×{' '}
+                        {feeSensitivity.data.estimate.effective_fee_multiplier}
                       </strong>
                       <small>
                         Fee metadata received: event{' '}
@@ -2614,12 +2761,30 @@ function MarketDetails({
                         {time(feeSensitivity.data.estimate.input_received_at_utc[1])}
                       </small>
                       {feeSensitivity.data.estimate.scenarios.map((scenario) => (
-                        <small key={scenario.account_precision_class}>
-                          {scenario.account_precision_class.replace('_', ' ')} · balance quantum $
-                          {scenario.balance_quantum} · modeled fee ${scenario.total_modeled_fee}{' '}
-                          (trade fee ${scenario.trade_fee_rounded_to_microdollar} + balance
-                          adjustment ${scenario.balance_rounding_adjustment})
-                        </small>
+                        <div
+                          className="fr-fee-order-scenario"
+                          key={scenario.account_precision_class}
+                        >
+                          <small>
+                            {scenario.account_precision_class.replace('_', ' ')} · balance quantum $
+                            {scenario.balance_quantum} · total fee ${scenario.total_net_fee_usd}{' '}
+                            (trade ${scenario.total_trade_fee_usd} + rounding $
+                            {scenario.total_rounding_fee_usd} − rebates ${scenario.total_rebate_usd}
+                            ) · balance change ${scenario.total_balance_change_usd}
+                          </small>
+                          {scenario.fills.map((item) => (
+                            <small key={item.fill_index}>
+                              Fill {item.fill_index + 1}{' '}
+                              {market.instruments.find(
+                                (instrument) =>
+                                  instrument.native_instrument_id === item.native_instrument_id,
+                              )?.label ?? item.native_instrument_id}{' '}
+                              {item.side} · trade ${item.trade_fee_rounded_to_microdollar} ·
+                              rounding ${item.rounding_fee_usd} · rebate ${item.rebate_usd} · carry
+                              ${item.accumulated_rounding_after_rebate_usd}
+                            </small>
+                          ))}
+                        </div>
                       ))}
                       <small>{feeSensitivity.data.note}</small>
                       <small>

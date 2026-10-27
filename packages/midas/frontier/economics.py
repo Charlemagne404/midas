@@ -7,7 +7,7 @@ import json
 import math
 from collections.abc import Callable
 from datetime import UTC, datetime
-from decimal import ROUND_CEILING, ROUND_HALF_UP, Decimal, localcontext
+from decimal import ROUND_CEILING, ROUND_FLOOR, ROUND_HALF_UP, Decimal, localcontext
 from enum import StrEnum
 from fractions import Fraction
 from functools import wraps
@@ -22,6 +22,10 @@ from midas.frontier.models import (
     FrontierModel,
     IndependentEconomicAudit,
     KalshiFeeMetadata,
+    KalshiFeeOrderFillInput,
+    KalshiFeeOrderFillResult,
+    KalshiFeeOrderPrecisionScenario,
+    KalshiFeeOrderSensitivity,
     KalshiFeeRoundingScenario,
     KalshiTakerFeeSensitivity,
     Lifecycle,
@@ -354,6 +358,152 @@ def estimate_kalshi_taker_fee_sensitivity(
             "Excludes multi-fill order rounding accumulation, FCM fees, rebates, and later schedule changes.",
             "An ask-side immediate buy is treated as taker for this sensitivity only.",
             "Price and size are manual scenario inputs; no matching public book is bound to this calculation.",
+        ),
+    )
+
+
+@_high_precision_decimal_context
+def estimate_kalshi_taker_order_fee_sensitivity(
+    metadata: KalshiFeeMetadata,
+    *,
+    event_observation_id: str,
+    series_observation_id: str,
+    order_fills: tuple[KalshiFeeOrderFillInput, ...],
+) -> KalshiFeeOrderSensitivity:
+    """Apply documented per-fill rounding and order-level rebates to one hypothetical order."""
+    if metadata.effective_fee_type not in _KALSHI_TAKER_FEE_TYPES:
+        raise ValueError("Only documented quadratic Kalshi event taker fees are supported")
+    if not order_fills or len(order_fills) > 32:
+        raise ValueError("A hypothetical order must contain 1 to 32 fills")
+    if len(event_observation_id) != 64 or len(series_observation_id) != 64:
+        raise ValueError("Fee evidence identities must be SHA-256 observation IDs")
+    if event_observation_id == series_observation_id:
+        raise ValueError("Event and series fee evidence must be distinct observations")
+    if len({fill.side for fill in order_fills}) != 1:
+        raise ValueError("All fills in one order must have the same buy or sell side")
+    if len({fill.native_instrument_id for fill in order_fills}) != 1:
+        raise ValueError("All fills in one order must use the same native instrument")
+    total_quantity = D(0)
+    for fill in order_fills:
+        if (
+            not fill.price_usd.is_finite()
+            or not D(0) < fill.price_usd < D(1)
+            or not fill.quantity_contracts.is_finite()
+            or not D(0) < fill.quantity_contracts <= D(1_000_000)
+        ):
+            raise ValueError("Each order fill must have a bounded price and positive quantity")
+        total_quantity += fill.quantity_contracts
+    if total_quantity > D(1_000_000):
+        raise ValueError("Total hypothetical order quantity exceeds the 1000000 contract bound")
+
+    precision_classes: tuple[tuple[Literal["direct_member", "non_direct_member"], Decimal], ...] = (
+        ("direct_member", D("0.0001")),
+        ("non_direct_member", D("0.01")),
+    )
+    scenarios: list[KalshiFeeOrderPrecisionScenario] = []
+    for account_class, quantum in precision_classes:
+        accumulator = D(0)
+        fill_results: list[KalshiFeeOrderFillResult] = []
+        total_signed_revenue = D(0)
+        total_trade_fee = D(0)
+        total_rounding_fee = D(0)
+        total_rebate = D(0)
+        total_net_fee = D(0)
+        total_balance_change = D(0)
+        for index, fill in enumerate(order_fills):
+            notional = fill.price_usd * fill.quantity_contracts
+            signed_revenue = -notional if fill.side == "buy" else notional
+            model_fee = (
+                metadata.effective_fee_multiplier
+                * D("0.07")
+                * fill.quantity_contracts
+                * fill.price_usd
+                * (D(1) - fill.price_usd)
+            )
+            trade_fee = model_fee.quantize(D("0.000001"), rounding=ROUND_CEILING)
+            aligned_change = ((signed_revenue - trade_fee) / quantum).to_integral_value(
+                rounding=ROUND_FLOOR
+            ) * quantum
+            rounding_fee = signed_revenue - trade_fee - aligned_change
+            accumulated_before_rebate = accumulator + rounding_fee
+            available_rebate_units = (accumulated_before_rebate / quantum).to_integral_value(
+                rounding=ROUND_FLOOR
+            )
+            fill_fee_units = ((trade_fee + rounding_fee) / quantum).to_integral_value(
+                rounding=ROUND_FLOOR
+            )
+            rebate = min(available_rebate_units, fill_fee_units) * quantum
+            accumulator = accumulated_before_rebate - rebate
+            net_fee = trade_fee + rounding_fee - rebate
+            balance_change_after_rebate = aligned_change + rebate
+            fill_results.append(
+                KalshiFeeOrderFillResult(
+                    fill_index=index,
+                    native_instrument_id=fill.native_instrument_id,
+                    side=fill.side,
+                    price_usd=fill.price_usd,
+                    quantity_contracts=fill.quantity_contracts,
+                    signed_revenue_usd=signed_revenue,
+                    model_fee_before_rounding=model_fee,
+                    trade_fee_rounded_to_microdollar=trade_fee,
+                    aligned_balance_change_before_rebate_usd=aligned_change,
+                    rounding_fee_usd=rounding_fee,
+                    accumulated_rounding_before_rebate_usd=accumulated_before_rebate,
+                    rebate_usd=rebate,
+                    accumulated_rounding_after_rebate_usd=accumulator,
+                    net_fee_usd=net_fee,
+                    balance_change_after_rebate_usd=balance_change_after_rebate,
+                )
+            )
+            total_signed_revenue += signed_revenue
+            total_trade_fee += trade_fee
+            total_rounding_fee += rounding_fee
+            total_rebate += rebate
+            total_net_fee += net_fee
+            total_balance_change += balance_change_after_rebate
+        scenarios.append(
+            KalshiFeeOrderPrecisionScenario(
+                account_precision_class=account_class,
+                balance_quantum=quantum,
+                fills=tuple(fill_results),
+                total_signed_revenue_usd=total_signed_revenue,
+                total_trade_fee_usd=total_trade_fee,
+                total_rounding_fee_usd=total_rounding_fee,
+                total_rebate_usd=total_rebate,
+                total_net_fee_usd=total_net_fee,
+                total_balance_change_usd=total_balance_change,
+            )
+        )
+
+    input_doc = {
+        "model_version": "kalshi-event-taker-order-fee-sensitivity-2026-07-07-v1",
+        "metadata": metadata.model_dump(mode="json"),
+        "event_observation_id": event_observation_id,
+        "series_observation_id": series_observation_id,
+        "order_fills": [fill.model_dump(mode="json") for fill in order_fills],
+    }
+    calculation_sha256 = hashlib.sha256(
+        json.dumps(input_doc, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+    return KalshiFeeOrderSensitivity(
+        native_market_id=metadata.native_market_id,
+        native_event_id=metadata.native_event_id,
+        series_ticker=metadata.series_ticker,
+        effective_fee_type=metadata.effective_fee_type,
+        effective_fee_multiplier=metadata.effective_fee_multiplier,
+        input_observation_ids=(event_observation_id, series_observation_id),
+        input_raw_sha256=(metadata.event_raw_sha256, metadata.series_raw_sha256),
+        input_received_at_utc=(metadata.event_received_at_utc, metadata.series_received_at_utc),
+        order_fills=order_fills,
+        scenarios=(scenarios[0], scenarios[1]),
+        calculation_sha256=calculation_sha256,
+        assumptions=(
+            "One hypothetical order with the supplied fills; no order was submitted and fills are not book-derived.",
+            "All fills share one instrument and one buy/sell side; only documented quadratic taker fees are modeled.",
+            "Uses the July 7, 2026 public taker formula, captured event/series parameters, and both documented balance precisions.",
+            "Applies the documented microdollar trade-fee rounding, per-fill balance alignment, order-level rounding accumulator, and nonnegative-fee rebate cap.",
+            "Excludes maker fills, FCM charges, account-specific fee adjustments, later schedule changes, and execution uncertainty.",
+            "Manual scenario inputs are not matched against a public order book or trade record.",
         ),
     )
 

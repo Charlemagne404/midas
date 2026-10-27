@@ -931,11 +931,21 @@
 }
 .fr-fee-sensitivity-form {
   display: grid;
-  grid-template-columns: repeat(2, minmax(120px, 1fr)) auto;
-  align-items: end;
+  grid-template-columns: 1fr;
   gap: 9px;
   padding: 9px 0 2px;
   border-top: 1px solid #28323c;
+}
+.fr-fee-order-fill {
+  display: grid;
+  grid-template-columns: 45px repeat(4, minmax(105px, 1fr)) auto;
+  align-items: end;
+  gap: 8px;
+}
+.fr-fee-order-fill > strong {
+  padding-bottom: 8px;
+  color: #c8d2df;
+  font-size: 8px;
 }
 .fr-fee-sensitivity-form label {
   display: grid;
@@ -949,7 +959,8 @@
   font-size: 8px;
   line-height: 1.45;
 }
-.fr-fee-sensitivity-form input {
+.fr-fee-sensitivity-form input,
+.fr-fee-sensitivity-form select {
   min-width: 0;
   padding: 7px 8px;
   border: 1px solid #303b48;
@@ -957,6 +968,17 @@
   background: #0d1116;
   color: #e7edf4;
   font: inherit;
+}
+.fr-fee-order-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+.fr-fee-order-scenario {
+  display: grid;
+  gap: 3px;
+  padding-left: 8px;
+  border-left: 1px solid #42503c;
 }
 .fr-fee-sensitivity-result {
   display: grid;
@@ -1999,6 +2021,15 @@
   }
   .fr-fee-sensitivity-form {
     grid-template-columns: 1fr;
+  }
+  .fr-fee-order-fill {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+    padding: 8px 0;
+    border-top: 1px solid #28323c;
+  }
+  .fr-fee-order-fill > strong {
+    padding-bottom: 0;
   }
   .fr-market-detail-head,
   .fr-instrument-head {

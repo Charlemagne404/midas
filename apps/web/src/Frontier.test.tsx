@@ -497,7 +497,10 @@ it('captures Kalshi fee metadata and exposes a separate hypothetical fee sensiti
       note: 'Account fee remains unknown',
     },
     native_fields: {},
-    instruments: [],
+    instruments: [
+      { native_instrument_id: 'KX-FEE-1:YES', label: 'Yes', outcome_id: 'yes' },
+      { native_instrument_id: 'KX-FEE-1:NO', label: 'No', outcome_id: 'no' },
+    ],
     quality_flags: ['FEE_SCHEDULE_UNKNOWN'],
     provenance: {
       response_received_at_utc: '2026-10-26T20:00:00Z',
@@ -606,7 +609,10 @@ it('captures Kalshi fee metadata and exposes a separate hypothetical fee sensiti
         }),
       } as Response;
     }
-    if (path === '/api/frontier/economics/kalshi-fee-sensitivity' && init?.method === 'POST') {
+    if (
+      path === '/api/frontier/economics/kalshi-fee-order-sensitivity' &&
+      init?.method === 'POST'
+    ) {
       sensitivityBodies.push(JSON.parse(String(init.body)) as Record<string, unknown>);
       return {
         ok: true,
@@ -614,34 +620,89 @@ it('captures Kalshi fee metadata and exposes a separate hypothetical fee sensiti
           market_id: market.canonical_id,
           hypothetical_only: true,
           candidate_net_economics_modified: false,
-          note: 'Local one-fill sensitivity only.',
+          note: 'Local one-order sensitivity only.',
           estimate: {
-            model_version: 'kalshi-event-taker-fee-sensitivity-2026-07-07-v1',
+            model_version: 'kalshi-event-taker-order-fee-sensitivity-2026-07-07-v1',
             series_ticker: 'KX-FEE-SERIES',
             effective_fee_type: 'quadratic',
             effective_fee_multiplier: '1',
-            price_usd: '0.50',
-            quantity_contracts: '1',
-            position_cost_usd: '0.50',
+            order_fills: [
+              {
+                native_instrument_id: 'KX-FEE-1:YES',
+                side: 'buy',
+                price_usd: '0.50',
+                quantity_contracts: '1',
+              },
+              {
+                native_instrument_id: 'KX-FEE-1:YES',
+                side: 'buy',
+                price_usd: '0.50',
+                quantity_contracts: '1',
+              },
+            ],
             input_received_at_utc: ['2026-10-26T23:16:17.916305Z', '2026-10-26T23:16:18.408650Z'],
             scenarios: [
               {
                 account_precision_class: 'direct_member',
                 balance_quantum: '0.0001',
-                model_fee_before_rounding: '0.0175',
-                trade_fee_rounded_to_microdollar: '0.0175',
-                balance_rounding_adjustment: '0',
-                total_modeled_fee: '0.0175',
-                total_modeled_debit: '0.5175',
+                fills: [
+                  {
+                    fill_index: 0,
+                    native_instrument_id: 'KX-FEE-1:YES',
+                    side: 'buy',
+                    trade_fee_rounded_to_microdollar: '0.0175',
+                    rounding_fee_usd: '0',
+                    rebate_usd: '0',
+                    accumulated_rounding_after_rebate_usd: '0',
+                    net_fee_usd: '0.0175',
+                  },
+                  {
+                    fill_index: 1,
+                    native_instrument_id: 'KX-FEE-1:YES',
+                    side: 'buy',
+                    trade_fee_rounded_to_microdollar: '0.0175',
+                    rounding_fee_usd: '0',
+                    rebate_usd: '0',
+                    accumulated_rounding_after_rebate_usd: '0',
+                    net_fee_usd: '0.0175',
+                  },
+                ],
+                total_trade_fee_usd: '0.035',
+                total_rounding_fee_usd: '0',
+                total_rebate_usd: '0',
+                total_net_fee_usd: '0.035',
+                total_balance_change_usd: '-1.035',
               },
               {
                 account_precision_class: 'non_direct_member',
                 balance_quantum: '0.01',
-                model_fee_before_rounding: '0.0175',
-                trade_fee_rounded_to_microdollar: '0.0175',
-                balance_rounding_adjustment: '0.0025',
-                total_modeled_fee: '0.02',
-                total_modeled_debit: '0.52',
+                fills: [
+                  {
+                    fill_index: 0,
+                    native_instrument_id: 'KX-FEE-1:YES',
+                    side: 'buy',
+                    trade_fee_rounded_to_microdollar: '0.0175',
+                    rounding_fee_usd: '0.0025',
+                    rebate_usd: '0',
+                    accumulated_rounding_after_rebate_usd: '0.0025',
+                    net_fee_usd: '0.02',
+                  },
+                  {
+                    fill_index: 1,
+                    native_instrument_id: 'KX-FEE-1:YES',
+                    side: 'buy',
+                    trade_fee_rounded_to_microdollar: '0.0175',
+                    rounding_fee_usd: '0.0025',
+                    rebate_usd: '0',
+                    accumulated_rounding_after_rebate_usd: '0.005',
+                    net_fee_usd: '0.02',
+                  },
+                ],
+                total_trade_fee_usd: '0.035',
+                total_rounding_fee_usd: '0.005',
+                total_rebate_usd: '0',
+                total_net_fee_usd: '0.04',
+                total_balance_change_usd: '-1.04',
               },
             ],
             calculation_sha256: 'f'.repeat(64),
@@ -674,17 +735,33 @@ it('captures Kalshi fee metadata and exposes a separate hypothetical fee sensiti
   expect(screen.getByText(/Event fee evidence event-observ/)).toBeInTheDocument();
   expect(screen.getByText(/Series fee evidence series-obse/)).toBeInTheDocument();
   expect(requestBodies).toEqual([{ market_id: market.canonical_id }]);
-  fireEvent.click(screen.getByRole('button', { name: 'Calculate fee scenarios' }));
-  expect(await screen.findByText(/Single-fill taker sensitivity/)).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Add fill' }));
+  expect(screen.getByLabelText('Fill 2 price per contract (USD)')).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Calculate order fee' }));
+  expect(
+    await screen.findByText(/One-order taker sensitivity · 2 manual fills/),
+  ).toBeInTheDocument();
   expect(screen.getByText(/Fee metadata received: event/)).toBeInTheDocument();
-  expect(screen.getByText(/modeled fee \$0.02/)).toBeInTheDocument();
+  expect(screen.getByText(/total fee \$0.04/)).toBeInTheDocument();
   expect(sensitivityBodies).toEqual([
     {
       market_id: market.canonical_id,
       event_observation_id: 'event-observation',
       series_observation_id: 'series-observation',
-      price_usd: '0.50',
-      quantity_contracts: '1',
+      fills: [
+        {
+          native_instrument_id: 'KX-FEE-1:YES',
+          side: 'buy',
+          price_usd: '0.50',
+          quantity_contracts: '1',
+        },
+        {
+          native_instrument_id: 'KX-FEE-1:YES',
+          side: 'buy',
+          price_usd: '0.50',
+          quantity_contracts: '1',
+        },
+      ],
     },
   ]);
 });

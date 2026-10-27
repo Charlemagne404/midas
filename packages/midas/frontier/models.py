@@ -15,6 +15,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 
 D = Decimal
 Nonnegative = Annotated[Decimal, Field(ge=0, max_digits=36, decimal_places=18, allow_inf_nan=False)]
+ExactNonnegative = Annotated[Decimal, Field(ge=0, allow_inf_nan=False)]
 Positive = Annotated[Decimal, Field(gt=0, max_digits=36, decimal_places=18, allow_inf_nan=False)]
 FeeRate = Annotated[
     Decimal, Field(ge=0, le=1, max_digits=18, decimal_places=12, allow_inf_nan=False)
@@ -269,10 +270,10 @@ class KalshiFeeMetadata(FrontierModel):
     fee_rounding_documentation_url: str = "https://docs.kalshi.com/getting_started/fee_rounding"
     economics_state: Literal["unresolved"] = "unresolved"
     limitations: tuple[str, ...] = (
-        "Only the bounded quadratic taker-fee sensitivity is implemented; unsupported fee types fail closed.",
+        "A bounded manual one-order quadratic taker-fee sensitivity is implemented; unsupported fee types fail closed and candidate costs remain unresolved.",
         "Maker fees and schedule changes outside the dated public formula are not modeled.",
-        "Account balance precision is not identified; both documented one-fill precision cases are shown.",
-        "Multi-fill order rounding accumulation, rebates, and FCM-specific charges remain unresolved.",
+        "Account balance precision is not identified; both documented balance precision cases are shown.",
+        "Maker/taker mixed orders, account-specific adjustments, and FCM-specific charges remain unresolved.",
     )
 
     @field_validator("event_received_at_utc", "series_received_at_utc")
@@ -286,11 +287,11 @@ class KalshiFeeMetadata(FrontierModel):
 class KalshiFeeRoundingScenario(FrontierModel):
     account_precision_class: Literal["direct_member", "non_direct_member"]
     balance_quantum: Positive
-    model_fee_before_rounding: Nonnegative
-    trade_fee_rounded_to_microdollar: Nonnegative
-    balance_rounding_adjustment: Nonnegative
-    total_modeled_fee: Nonnegative
-    total_modeled_debit: Nonnegative
+    model_fee_before_rounding: ExactNonnegative
+    trade_fee_rounded_to_microdollar: ExactNonnegative
+    balance_rounding_adjustment: ExactNonnegative
+    total_modeled_fee: ExactNonnegative
+    total_modeled_debit: ExactNonnegative
 
 
 class KalshiTakerFeeSensitivity(FrontierModel):
@@ -310,7 +311,7 @@ class KalshiTakerFeeSensitivity(FrontierModel):
     quantity_contracts: Decimal = Field(
         gt=0, le=1_000_000, max_digits=24, decimal_places=12, allow_inf_nan=False
     )
-    position_cost_usd: Nonnegative
+    position_cost_usd: ExactNonnegative
     scenarios: tuple[KalshiFeeRoundingScenario, ...]
     formula_source_url: str = "https://kalshi.com/docs/kalshi-fee-schedule.pdf"
     rounding_source_url: str = "https://docs.kalshi.com/getting_started/fee_rounding"
@@ -332,6 +333,92 @@ class KalshiTakerFeeSensitivity(FrontierModel):
     @field_validator("input_observation_ids", "input_raw_sha256")
     @classmethod
     def sensitivity_hashes_are_sha256(cls, value: tuple[str, str]) -> tuple[str, str]:
+        if any(
+            len(item) != 64 or any(character not in "0123456789abcdef" for character in item)
+            for item in value
+        ):
+            raise ValueError(
+                "Fee sensitivity evidence identities must be lowercase SHA-256 digests"
+            )
+        return value
+
+
+class KalshiFeeOrderFillInput(FrontierModel):
+    """One manually supplied fill in a single hypothetical Kalshi order."""
+
+    native_instrument_id: str = Field(min_length=1, max_length=256)
+    side: Literal["buy", "sell"]
+    price_usd: Decimal = Field(gt=0, lt=1, max_digits=18, decimal_places=12, allow_inf_nan=False)
+    quantity_contracts: Decimal = Field(
+        gt=0, le=1_000_000, max_digits=24, decimal_places=12, allow_inf_nan=False
+    )
+
+
+class KalshiFeeOrderFillResult(FrontierModel):
+    fill_index: int = Field(ge=0, le=31)
+    native_instrument_id: str = Field(min_length=1, max_length=256)
+    side: Literal["buy", "sell"]
+    price_usd: Positive
+    quantity_contracts: Positive
+    signed_revenue_usd: SignedDecimal
+    model_fee_before_rounding: ExactNonnegative
+    trade_fee_rounded_to_microdollar: ExactNonnegative
+    aligned_balance_change_before_rebate_usd: SignedDecimal
+    rounding_fee_usd: ExactNonnegative
+    accumulated_rounding_before_rebate_usd: ExactNonnegative
+    rebate_usd: ExactNonnegative
+    accumulated_rounding_after_rebate_usd: ExactNonnegative
+    net_fee_usd: ExactNonnegative
+    balance_change_after_rebate_usd: SignedDecimal
+
+
+class KalshiFeeOrderPrecisionScenario(FrontierModel):
+    account_precision_class: Literal["direct_member", "non_direct_member"]
+    balance_quantum: Positive
+    fills: tuple[KalshiFeeOrderFillResult, ...] = Field(min_length=1, max_length=32)
+    total_signed_revenue_usd: SignedDecimal
+    total_trade_fee_usd: ExactNonnegative
+    total_rounding_fee_usd: ExactNonnegative
+    total_rebate_usd: ExactNonnegative
+    total_net_fee_usd: ExactNonnegative
+    total_balance_change_usd: SignedDecimal
+
+
+class KalshiFeeOrderSensitivity(FrontierModel):
+    """One-order, multi-fill taker sensitivity; not an account fee quotation."""
+
+    schema_version: Literal[1] = 1
+    model_version: str = "kalshi-event-taker-order-fee-sensitivity-2026-07-07-v1"
+    native_market_id: str = Field(min_length=1, max_length=256)
+    native_event_id: str = Field(min_length=1, max_length=256)
+    series_ticker: str = Field(min_length=1, max_length=256)
+    effective_fee_type: str = Field(min_length=1, max_length=80)
+    effective_fee_multiplier: Nonnegative
+    input_observation_ids: tuple[str, str]
+    input_raw_sha256: tuple[str, str]
+    input_received_at_utc: tuple[datetime, datetime]
+    order_fills: tuple[KalshiFeeOrderFillInput, ...] = Field(min_length=1, max_length=32)
+    scenarios: tuple[KalshiFeeOrderPrecisionScenario, KalshiFeeOrderPrecisionScenario]
+    formula_source_url: str = "https://kalshi.com/docs/kalshi-fee-schedule.pdf"
+    rounding_source_url: str = "https://docs.kalshi.com/getting_started/fee_rounding"
+    calculation_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    assumptions: tuple[str, ...]
+
+    @field_validator("input_received_at_utc")
+    @classmethod
+    def order_sensitivity_times_are_utc(
+        cls, value: tuple[datetime, datetime]
+    ) -> tuple[datetime, datetime]:
+        normalized = []
+        for item in value:
+            if item.tzinfo is None or item.utcoffset() is None:
+                raise ValueError("Fee sensitivity timestamps must include a timezone")
+            normalized.append(item.astimezone(UTC))
+        return normalized[0], normalized[1]
+
+    @field_validator("input_observation_ids", "input_raw_sha256")
+    @classmethod
+    def order_sensitivity_hashes_are_sha256(cls, value: tuple[str, str]) -> tuple[str, str]:
         if any(
             len(item) != 64 or any(character not in "0123456789abcdef" for character in item)
             for item in value

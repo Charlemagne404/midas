@@ -292,7 +292,8 @@ async def test_kalshi_fee_metadata_applies_public_event_overrides_but_stays_non_
     assert evidence.economics_state == "unresolved"
     assert len(evidence.limitations) == 4
     assert any("unsupported fee types fail closed" in item for item in evidence.limitations)
-    assert any("Multi-fill order rounding accumulation" in item for item in evidence.limitations)
+    assert any("manual one-order" in item for item in evidence.limitations)
+    assert any("Maker/taker mixed orders" in item for item in evidence.limitations)
     assert source_market.fees.status == FeeStatus.UNKNOWN
     assert [request.method for request in requests] == ["GET", "GET"]
     assert requests[0].url.params["exclude_markets"] == "true"
