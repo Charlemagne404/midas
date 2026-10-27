@@ -1,5 +1,17 @@
 # Project Frontier Mission Ledger
 
+**Latest Laboratory compatibility check (2026-10-27 20:09 UTC):** The existing
+`test_laboratory_api_contract_and_reproduction` passed **1 test** (two module
+tests deselected) in 2.50 seconds (3.15 seconds wall), at **124,540 KiB peak
+RSS**, zero swaps. It runs/reproduces four virtual demo cases. The process used
+`MIDAS_MODE=demo` and fresh `/tmp` Frontier/Arena roots; database, Laboratory,
+and recording data used the test's `tmp_path`. The only warning is the existing
+Starlette/httpx deprecation. At `2026-10-27T20:09:29Z`, host PSI avg10 was
+0.12% (`some`) / 0.11% (`full`), avg60 12.97% / 11.97%, avg300 15.92% / 14.55%;
+9.6 GiB was available and 468 MiB swap free. No exchange source, production
+Arena job, Reality service, or historical store was accessed. This is one
+bounded Laboratory smoke, not the Laboratory suite or repository regression.
+
 **Latest legacy regressions (2026-10-27 20:06 UTC):** Existing Polymarket
 adapter tests `tests/integration/test_adapters.py` pass **9/9** in 0.71 seconds
 (1.21 seconds wall), at **88,872 KiB peak RSS**, zero swaps. They use recorded

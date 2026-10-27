@@ -3667,3 +3667,17 @@ free. These regressions add confidence in existing Polymarket ingestion and
 recording isolation, but do not constitute the repository-wide legacy suite.
 No protected recorder, historical store, public source, or production
 deployment was accessed.
+
+### Frontier Laboratory compatibility smoke — 2026-10-27 20:09 UTC
+
+The existing Laboratory API contract/reproduction test passed **1 test** (two
+module tests deselected) in 2.50 seconds (3.15 seconds wall), at **124,540 KiB
+peak RSS**, zero swaps. It creates and reproduces four virtual demo cases. The
+run set `MIDAS_MODE=demo` and directed Frontier/Arena roots to fresh `/tmp`
+paths; database, Laboratory, and recording artifacts used `tmp_path`. The
+existing Starlette/httpx TestClient deprecation is the only warning. At
+`2026-10-27T20:09:29Z`, host PSI avg10 was 0.12% (`some`) / 0.11% (`full`),
+avg60 12.97% / 11.97%, avg300 15.92% / 14.55%; 9.6 GiB was available and
+468 MiB swap free. No exchange source, production Arena job, protected service,
+or historical store was accessed. This is one bounded compatibility case,
+not the full Laboratory or repository regression suite.

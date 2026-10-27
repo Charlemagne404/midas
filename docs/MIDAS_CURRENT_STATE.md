@@ -665,3 +665,17 @@ temporary database maps to an isolated recording root. At
 / 2.36%, avg300 12.54% / 11.33%; 9.6 GiB was available and 468 MiB swap free.
 No protected recorder, historical store, public source, or deployment was
 accessed. The repository-wide suite remains unrun.
+
+## Frontier Laboratory compatibility smoke — 2026-10-27 20:09 UTC
+
+The existing Laboratory API contract/reproduction test passed **1 test** (two
+other module tests deselected) in 2.50 seconds (3.15 seconds wall) at **124,540
+KiB peak RSS**, with zero swaps. It creates and reproduces a four-run virtual
+demo campaign under `tmp_path`. `MIDAS_MODE=demo` was explicit; Frontier and
+Arena roots were redirected to fresh `/tmp` paths. No live source client,
+production job, protected service, or historical store was used. The existing
+Starlette/httpx TestClient deprecation remains. At `2026-10-27T20:09:29Z`, PSI
+avg10 was 0.12% (`some`) / 0.11% (`full`), avg60 12.97% / 11.97%, avg300
+15.92% / 14.55%; 9.6 GiB was available and swap free was 468 MiB. This is a
+bounded Laboratory compatibility check, not a full Laboratory or repository
+regression.
