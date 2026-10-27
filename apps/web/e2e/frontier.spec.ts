@@ -52,6 +52,134 @@ test('Arena replay history loads without submitting or launching work', async ({
   expect(replaySubmissions).toBe(0);
 });
 
+test('inspects fixture-only Kalshi settlement arithmetic without probing an exchange', async ({
+  page,
+}) => {
+  let sourceProbeRequests = 0;
+  page.on('request', (request) => {
+    if (request.url().includes('/api/frontier/probe/')) sourceProbeRequests += 1;
+  });
+  await page.route('**/api/frontier/markets?limit=100', (route) =>
+    route.fulfill({
+      json: {
+        items: [
+          {
+            canonical_id: 'kalshi:KX-E2E-MVE',
+            source_observation_record_id: 'c'.repeat(64),
+            native_market_id: 'KX-E2E-MVE',
+            native_event_id: 'KX-E2E-EVENT',
+            native_event_title: 'Fixture combo settlement',
+            outcome_label: null,
+            venue: 'kalshi',
+            title: 'Fixture combo settlement',
+            market_kind: 'conditional_event',
+            lifecycle: 'settled',
+            description: '',
+            base_asset: null,
+            quote_asset: null,
+            settlement_asset: 'USD',
+            reported_settlement_value_dollars: '0.3750',
+            settlement_is_provisional: false,
+            payoff: {
+              state_ids: ['yes', 'no'],
+              payout_currency: 'USD',
+              exhaustive: false,
+              verified: false,
+              verification_basis: 'Fixture only; outcome is not independently verified.',
+            },
+            resolution: {
+              primary_rule: null,
+              secondary_rule: null,
+              authority: null,
+              closes_at_utc: null,
+              settles_at_utc: null,
+              evidence_sha256: null,
+              resolution_fingerprint: null,
+              verified: false,
+            },
+            fees: {
+              status: 'unknown',
+              version: null,
+              applies_to: null,
+              rate: null,
+              formula: null,
+              fee_currency: null,
+              source_url: null,
+              note: 'Unknown',
+            },
+            native_fields: {},
+            instruments: [],
+            selected_components: [
+              {
+                venue: 'kalshi',
+                native_event_id: 'KX-E2E-COMPONENT',
+                native_market_id: 'KX-E2E-COMPONENT',
+                selected_side: 'yes',
+                yes_settlement_value_dollars: '0.3750',
+              },
+            ],
+            quality_flags: ['E2E_FIXTURE_ONLY'],
+            provenance: {
+              response_received_at_utc: '2026-10-27T12:00:00Z',
+              raw_sha256: 'd'.repeat(64),
+              observation_id: 'e2e-settlement-observation',
+            },
+          },
+        ],
+        returned: 1,
+        limit: 100,
+        offset: 0,
+      },
+    }),
+  );
+  await page.route('**/api/frontier/economics/kalshi-mve-settlement-audit', async (route) => {
+    expect(route.request().method()).toBe('POST');
+    expect(route.request().postDataJSON()).toEqual({ market_id: 'kalshi:KX-E2E-MVE' });
+    await route.fulfill({
+      json: {
+        audit: {
+          state: 'SOURCE REPORTED PRODUCT MATCH',
+          component_values: [
+            {
+              native_market_id: 'KX-E2E-COMPONENT',
+              selected_side: 'yes',
+              reported_yes_value_dollars: '0.3750',
+              selected_position_value_dollars: '0.3750',
+            },
+          ],
+          component_product_dollars: '0.3750',
+          reported_settlement_value_dollars: '0.3750',
+          missing_component_market_ids: [],
+          source_observation_id: 'e2e-settlement-observation',
+          source_raw_sha256: 'd'.repeat(64),
+          lifecycle: 'settled',
+          settlement_is_provisional: false,
+          assumptions: ['A matching result checks source-reported settlement arithmetic only.'],
+          rule_source_urls: [
+            'https://help.kalshi.com/en/articles/13823820-combos',
+            'https://help.kalshi.com/en/articles/17515177-protected-nfl-player-markets',
+            'https://docs.kalshi.com/api-reference/events/get-multivariate-events',
+          ],
+        },
+        network_calls: 0,
+        candidate_generation: false,
+        note: 'Fixture only; does not independently verify rules, outcomes, prices, or returns.',
+      },
+    });
+  });
+
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Frontier', exact: true }).click();
+  await page.getByRole('button', { name: 'Markets', exact: true }).click();
+  await page.getByRole('button', { name: 'Inspect', exact: true }).click();
+  await page.getByRole('button', { name: 'Audit recorded settlement arithmetic' }).click();
+
+  await expect(page.getByText(/SOURCE REPORTED PRODUCT MATCH/)).toBeVisible();
+  await expect(page.getByText(/Recomputed component product: \$0\.3750/)).toBeVisible();
+  await expect(page.getByText(/does not independently verify rules/)).toBeVisible();
+  expect(sourceProbeRequests).toBe(0);
+});
+
 test('relationship network remains bounded, selectable, and scroll-contained on mobile', async ({
   page,
 }) => {
@@ -179,7 +307,7 @@ test('relationship network remains bounded, selectable, and scroll-contained on 
         },
         {
           venue: 'kalshi',
-          adapter_version: 'frontier-kalshi-11',
+          adapter_version: 'frontier-kalshi-12',
           public_probe_enabled: true,
           capabilities: [
             {
@@ -317,7 +445,7 @@ test('relationship network remains bounded, selectable, and scroll-contained on 
               'https://external-api.kalshi.com/trade-api/v2/events/multivariate?tickers=KX-E2E-MVE-EVENT&limit=1&with_nested_markets=true',
             http_status: 200,
             raw_body: '{"events":[{"title":"MVE event with omitted members"}]}',
-            adapter_version: 'frontier-kalshi-11',
+            adapter_version: 'frontier-kalshi-12',
           },
         }),
       });

@@ -269,8 +269,8 @@ it('captures one explicit Polymarket trade page and follows its bound cursor', a
     native_fields: { conditionId },
     venue: 'polymarket',
     title: 'Recorded condition for page capture',
-    market_kind: 'binary_event',
-    lifecycle: 'open',
+    market_kind: 'conditional_event',
+    lifecycle: 'settled',
     instruments: [],
     quality_flags: [],
     provenance: { response_received_at_utc: '2026-10-26T20:00:00Z' },
@@ -472,6 +472,8 @@ it('captures Kalshi fee metadata and exposes a separate hypothetical fee sensiti
     base_asset: null,
     quote_asset: null,
     settlement_asset: 'USD',
+    reported_settlement_value_dollars: '0.3750',
+    settlement_is_provisional: false,
     payoff: {
       state_ids: ['yes', 'no'],
       payout_currency: 'USD',
@@ -522,7 +524,7 @@ it('captures Kalshi fee metadata and exposes a separate hypothetical fee sensiti
   };
   const source = {
     venue: 'kalshi',
-    adapter_version: 'frontier-kalshi-11',
+    adapter_version: 'frontier-kalshi-12',
     public_probe_enabled: true,
     capabilities: [
       {
@@ -556,6 +558,7 @@ it('captures Kalshi fee metadata and exposes a separate hypothetical fee sensiti
   const eventGroupBodies: Record<string, unknown>[] = [];
   const componentMarketBodies: Record<string, unknown>[] = [];
   const sensitivityBodies: Record<string, unknown>[] = [];
+  const settlementAuditBodies: Record<string, unknown>[] = [];
   const responses: Record<string, unknown> = {
     '/api/frontier/overview': {
       state: 'AVAILABLE',
@@ -655,6 +658,40 @@ it('captures Kalshi fee metadata and exposes a separate hypothetical fee sensiti
           combo_payoff_verified: false,
           hypothetical_only: true,
           note: 'Component metadata only; combo payoff is not verified.',
+        }),
+      } as Response;
+    }
+    if (path === '/api/frontier/economics/kalshi-mve-settlement-audit' && init?.method === 'POST') {
+      settlementAuditBodies.push(JSON.parse(String(init.body)) as Record<string, unknown>);
+      return {
+        ok: true,
+        json: async () => ({
+          audit: {
+            state: 'SOURCE REPORTED PRODUCT MATCH',
+            component_values: [
+              {
+                native_market_id: 'KX-COMPONENT-MARKET',
+                selected_side: 'yes',
+                reported_yes_value_dollars: '0.3750',
+                selected_position_value_dollars: '0.3750',
+              },
+            ],
+            component_product_dollars: '0.3750',
+            reported_settlement_value_dollars: '0.3750',
+            missing_component_market_ids: [],
+            source_observation_id: 'settled-mve-observation',
+            source_raw_sha256: 'a'.repeat(64),
+            assumptions: ['A matching result checks source-reported settlement arithmetic only.'],
+            rule_source_urls: [
+              'https://help.kalshi.com/en/articles/13823820-combos',
+              'https://help.kalshi.com/en/articles/17515177-protected-nfl-player-markets',
+              'https://docs.kalshi.com/api-reference/events/get-multivariate-events',
+            ],
+          },
+          source_observation_id: 'settled-mve-observation',
+          network_calls: 0,
+          candidate_generation: false,
+          note: 'Arithmetic only; rules and outcomes are not independently verified.',
         }),
       } as Response;
     }
@@ -817,6 +854,20 @@ it('captures Kalshi fee metadata and exposes a separate hypothetical fee sensiti
   expect(
     screen.getByText(/do not verify component rules, combo payout, or resolution equivalence/),
   ).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Audit recorded settlement arithmetic' }));
+  expect(
+    await screen.findByText(
+      /Source-reported settlement arithmetic · SOURCE REPORTED PRODUCT MATCH/,
+    ),
+  ).toBeInTheDocument();
+  expect(screen.getByRole('link', { name: 'combo settlement rule' })).toHaveAttribute(
+    'href',
+    'https://help.kalshi.com/en/articles/13823820-combos',
+  );
+  expect(
+    screen.getByText(/Recomputed component product: \$0\.3750 · parent reported/),
+  ).toBeInTheDocument();
+  expect(settlementAuditBodies).toEqual([{ market_id: market.canonical_id }]);
   fireEvent.click(screen.getByRole('button', { name: 'Capture component rules' }));
   expect(
     await screen.findByText('Primary rule: The player records two or more assists.'),

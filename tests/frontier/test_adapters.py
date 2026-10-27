@@ -735,6 +735,7 @@ async def test_kalshi_live_capture_preserves_multivariate_legs_and_empty_public_
         "nonstring_side",
         "invalid_settlement_value",
         "negative_settlement_value",
+        "settlement_value_above_one",
         "excessive_precision",
         "duplicate_leg",
         "over_bound",
@@ -757,10 +758,10 @@ async def test_kalshi_mve_selected_components_reject_malformed_metadata(mutation
         raw_market["mve_selected_legs"][0]["yes_settlement_value_dollars"] = "not-a-decimal"
     elif mutation == "negative_settlement_value":
         raw_market["mve_selected_legs"][0]["yes_settlement_value_dollars"] = "-0.01"
+    elif mutation == "settlement_value_above_one":
+        raw_market["mve_selected_legs"][0]["yes_settlement_value_dollars"] = "1.0001"
     elif mutation == "excessive_precision":
-        raw_market["mve_selected_legs"][0]["yes_settlement_value_dollars"] = (
-            "0." + "0" * 18 + "1"
-        )
+        raw_market["mve_selected_legs"][0]["yes_settlement_value_dollars"] = "0." + "0" * 18 + "1"
     elif mutation == "duplicate_leg":
         raw_market["mve_selected_legs"].append(raw_market["mve_selected_legs"][0].copy())
     else:
@@ -784,6 +785,43 @@ async def test_kalshi_mve_selected_components_reject_malformed_metadata(mutation
     try:
         with pytest.raises(AdapterError, match="Kalshi MVE"):
             await adapter.discover_markets(1)
+    finally:
+        await client.aclose()
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "expected_code"),
+    [
+        ("settlement_value_dollars", "1.0001", "INVALID_SETTLEMENT_VALUE"),
+        ("settlement_value_dollars", "not-a-number", "INVALID_SETTLEMENT_VALUE"),
+        ("is_provisional", "false", "INVALID_SETTLEMENT_STATE"),
+    ],
+)
+@pytest.mark.asyncio
+async def test_kalshi_reported_settlement_fields_reject_invalid_values(
+    field: str, value: str, expected_code: str
+):
+    capture = json.loads(
+        _captured("data/frontier/live-probes/2026-10-26-public-source-probe-r2.json")
+    )
+    market_body = next(
+        item["raw_body_utf8"] for item in capture["records"] if item["source"] == "kalshi_markets"
+    )
+    raw_market = json.loads(market_body)["markets"][0]
+    raw_market[field] = value
+    transport, _, client = _transport(
+        "external-api.kalshi.com", {"/markets": json.dumps({"markets": [raw_market]})}
+    )
+    adapter = KalshiAdapter(
+        AdapterConfig(
+            enabled=True, live_public_probe_enabled=True, requests_per_second=5, retries=0
+        ),
+        transport=transport,
+    )
+    try:
+        with pytest.raises(AdapterError) as exc_info:
+            await adapter.discover_markets(1)
+        assert exc_info.value.code == expected_code
     finally:
         await client.aclose()
 

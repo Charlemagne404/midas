@@ -6,6 +6,7 @@ from decimal import Decimal
 from midas.frontier.economics import (
     ExecutionScenario,
     OpportunityClassification,
+    audit_kalshi_mve_reported_settlement,
     generate_binary_coverage_candidates,
     generate_multi_outcome_coverage_candidate,
 )
@@ -21,6 +22,7 @@ from midas.frontier.models import (
     PayoffSpec,
     QuantityUnit,
     SelectedMarketComponent,
+    SettlementAuditState,
     StatePayout,
     Venue,
 )
@@ -54,6 +56,127 @@ def _verified_pair():
         asserted_at_utc=T0,
     )
     return left, right, relationship, instrument_mapping
+
+
+def _kalshi_mve_for_settlement_audit(
+    *,
+    components: tuple[SelectedMarketComponent, ...],
+    reported_value: Decimal | None,
+    lifecycle: Lifecycle = Lifecycle.SETTLED,
+    provisional: bool | None = False,
+) -> FrontierMarket:
+    base = market(Venue.KALSHI, "settled-combo")
+    return base.model_copy(
+        update={
+            "market_kind": MarketKind.CONDITIONAL_EVENT,
+            "lifecycle": lifecycle,
+            "selected_components": components,
+            "reported_settlement_value_dollars": reported_value,
+            "settlement_is_provisional": provisional,
+            "payoff": PayoffSpec(verified=False),
+        }
+    )
+
+
+def test_kalshi_mve_reported_settlement_audit_recomputes_yes_no_component_product():
+    combo = _kalshi_mve_for_settlement_audit(
+        components=(
+            SelectedMarketComponent(
+                venue=Venue.KALSHI,
+                native_market_id="KX-LEG-YES",
+                selected_side="yes",
+                yes_settlement_value_dollars=Decimal("0.5000"),
+            ),
+            SelectedMarketComponent(
+                venue=Venue.KALSHI,
+                native_market_id="KX-LEG-NO",
+                selected_side="no",
+                yes_settlement_value_dollars=Decimal("0.3000"),
+            ),
+            SelectedMarketComponent(
+                venue=Venue.KALSHI,
+                native_market_id="KX-LEG-FULL",
+                selected_side="yes",
+                yes_settlement_value_dollars=Decimal("1.0000"),
+            ),
+        ),
+        reported_value=Decimal("0.3500"),
+    )
+
+    audit = audit_kalshi_mve_reported_settlement(combo)
+
+    assert audit.state == SettlementAuditState.SOURCE_REPORTED_PRODUCT_MATCH
+    assert audit.component_product_dollars == Decimal("0.350000000000")
+    assert audit.reported_settlement_value_dollars == Decimal("0.3500")
+    assert audit.component_values[1].selected_position_value_dollars == Decimal("0.7000")
+    assert audit.source_observation_id == combo.provenance.observation_id
+    assert "does not verify rules" in audit.assumptions[-1]
+    assert audit.rule_source_urls[0].endswith("/13823820-combos")
+
+
+def test_kalshi_mve_reported_settlement_audit_fails_closed_for_missing_nonfinal_and_mismatch():
+    one_leg = SelectedMarketComponent(
+        venue=Venue.KALSHI,
+        native_market_id="KX-LEG",
+        selected_side="yes",
+        yes_settlement_value_dollars=Decimal("0.7000"),
+    )
+    missing = _kalshi_mve_for_settlement_audit(
+        components=(one_leg,), reported_value=Decimal("0.7000"), provisional=False
+    ).model_copy(
+        update={
+            "selected_components": (
+                one_leg.model_copy(update={"yes_settlement_value_dollars": None}),
+            )
+        }
+    )
+    assert audit_kalshi_mve_reported_settlement(missing).state == (
+        SettlementAuditState.INCOMPLETE_EVIDENCE
+    )
+    not_final = _kalshi_mve_for_settlement_audit(
+        components=(one_leg,),
+        reported_value=Decimal("0.7000"),
+        lifecycle=Lifecycle.CLOSED,
+        provisional=False,
+    )
+    assert audit_kalshi_mve_reported_settlement(not_final).state == (
+        SettlementAuditState.SOURCE_VALUES_NOT_FINAL
+    )
+    provisional = _kalshi_mve_for_settlement_audit(
+        components=(one_leg,), reported_value=Decimal("0.7000"), provisional=True
+    )
+    assert audit_kalshi_mve_reported_settlement(provisional).state == (
+        SettlementAuditState.SOURCE_VALUES_NOT_FINAL
+    )
+    mismatch = _kalshi_mve_for_settlement_audit(
+        components=(one_leg,), reported_value=Decimal("0.6999"), provisional=False
+    )
+    assert audit_kalshi_mve_reported_settlement(mismatch).state == (
+        SettlementAuditState.SOURCE_REPORTED_PRODUCT_MISMATCH
+    )
+
+
+def test_kalshi_mve_reported_settlement_audit_preserves_high_precision_products():
+    leg_value = Decimal("0.999999999999999999")
+    combo = _kalshi_mve_for_settlement_audit(
+        components=tuple(
+            SelectedMarketComponent(
+                venue=Venue.KALSHI,
+                native_market_id=f"KX-LEG-{index}",
+                selected_side="yes",
+                yes_settlement_value_dollars=leg_value,
+            )
+            for index in range(64)
+        ),
+        reported_value=None,
+        provisional=False,
+    )
+
+    audit = audit_kalshi_mve_reported_settlement(combo)
+
+    assert audit.state == SettlementAuditState.INCOMPLETE_EVIDENCE
+    assert audit.component_product_dollars is not None
+    assert len(audit.component_product_dollars.as_tuple().digits) > 1000
 
 
 def _books(left, right):

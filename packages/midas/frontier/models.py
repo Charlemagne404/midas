@@ -11,11 +11,14 @@ from decimal import Decimal
 from enum import StrEnum
 from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, StrictBool, field_validator, model_validator
 
 D = Decimal
 Nonnegative = Annotated[Decimal, Field(ge=0, max_digits=36, decimal_places=18, allow_inf_nan=False)]
 ExactNonnegative = Annotated[Decimal, Field(ge=0, allow_inf_nan=False)]
+SettlementScalar = Annotated[
+    Decimal, Field(ge=0, le=1, max_digits=36, decimal_places=18, allow_inf_nan=False)
+]
 Positive = Annotated[Decimal, Field(gt=0, max_digits=36, decimal_places=18, allow_inf_nan=False)]
 FeeRate = Annotated[
     Decimal, Field(ge=0, le=1, max_digits=18, decimal_places=12, allow_inf_nan=False)
@@ -72,6 +75,14 @@ class EconomicAuditDisposition(StrEnum):
     DISAGREEMENT = "disagreement"
     INCOMPLETE = "incomplete"
     NOT_EVALUATED = "not_evaluated"
+
+
+class SettlementAuditState(StrEnum):
+    INCOMPLETE_EVIDENCE = "INCOMPLETE EVIDENCE"
+    SOURCE_VALUES_NOT_FINAL = "SOURCE VALUES NOT FINAL"
+    SOURCE_REPORTED_PRODUCT_MATCH = "SOURCE REPORTED PRODUCT MATCH"
+    SOURCE_REPORTED_PRODUCT_MISMATCH = "SOURCE REPORTED PRODUCT MISMATCH"
+    UNSUPPORTED_SETTLEMENT_STRUCTURE = "UNSUPPORTED SETTLEMENT STRUCTURE"
 
 
 class SourceState(StrEnum):
@@ -195,7 +206,7 @@ class SelectedMarketComponent(FrontierModel):
     native_event_id: str | None = Field(default=None, max_length=256)
     native_market_id: str = Field(min_length=1, max_length=256)
     selected_side: Literal["yes", "no"]
-    yes_settlement_value_dollars: Nonnegative | None = None
+    yes_settlement_value_dollars: SettlementScalar | None = None
 
 
 class PayoffSpec(FrontierModel):
@@ -510,6 +521,8 @@ class FrontierMarket(FrontierModel):
     base_asset: str | None = None
     quote_asset: str | None = None
     settlement_asset: str | None = None
+    reported_settlement_value_dollars: SettlementScalar | None = None
+    settlement_is_provisional: StrictBool | None = None
     native_fields: dict[str, Any] = Field(default_factory=dict)
     quality_flags: tuple[str, ...] = ()
     provenance: Provenance
@@ -548,6 +561,32 @@ class FrontierMarket(FrontierModel):
         if len(raw.encode("utf-8")) > 262144:
             raise ValueError("Native metadata exceeds the 256 KiB record bound")
         return value
+
+
+class KalshiMveComponentSettlementValue(FrontierModel):
+    native_market_id: str = Field(min_length=1, max_length=256)
+    selected_side: Literal["yes", "no"]
+    reported_yes_value_dollars: SettlementScalar | None = None
+    selected_position_value_dollars: SettlementScalar | None = None
+
+
+class KalshiMveSettlementAudit(FrontierModel):
+    schema_version: int = 1
+    market_id: str
+    native_market_id: str
+    source_observation_id: str
+    source_raw_sha256: str
+    lifecycle: Lifecycle
+    settlement_is_provisional: bool | None = None
+    state: SettlementAuditState
+    component_values: tuple[KalshiMveComponentSettlementValue, ...] = Field(
+        default=(), max_length=64
+    )
+    component_product_dollars: ExactNonnegative | None = None
+    reported_settlement_value_dollars: SettlementScalar | None = None
+    missing_component_market_ids: tuple[str, ...] = Field(default=(), max_length=64)
+    assumptions: tuple[str, ...]
+    rule_source_urls: tuple[str, ...] = Field(min_length=2, max_length=3)
 
 
 class MarketGroup(FrontierModel):

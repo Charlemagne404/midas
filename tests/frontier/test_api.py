@@ -1293,9 +1293,14 @@ def test_kalshi_mve_optional_settlement_value_persists_through_api(tmp_path):
     )
     fixture_payload = json.loads(market_body)
     source_row = fixture_payload["markets"][0]
-    # The preserved live response omitted this optional field. This fixture-only
-    # variant exercises its documented schema shape through API/store read-back.
+    # The preserved live response omitted these fields. This fixture-only variant
+    # exercises their documented schema shape through API/store read-back.
+    for component in source_row["mve_selected_legs"]:
+        component["yes_settlement_value_dollars"] = "1.0000"
     source_row["mve_selected_legs"][0]["yes_settlement_value_dollars"] = "0.3750"
+    source_row["settlement_value_dollars"] = "0.3750"
+    source_row["status"] = "settled"
+    source_row["is_provisional"] = False
     market_body = json.dumps(fixture_payload)
     requests: list[httpx.Request] = []
 
@@ -1340,8 +1345,24 @@ def test_kalshi_mve_optional_settlement_value_persists_through_api(tmp_path):
             "selected_side": source_row["mve_selected_legs"][0]["side"],
             "yes_settlement_value_dollars": "0.3750",
         }
+        assert saved_market["reported_settlement_value_dollars"] == "0.3750"
+        assert saved_market["settlement_is_provisional"] is False
         assert saved_market["payoff"]["verified"] is False
         assert "MVE_PAYOFF_NOT_MODELED" in saved_market["quality_flags"]
+
+        settlement_audit = client.post(
+            "/api/frontier/economics/kalshi-mve-settlement-audit",
+            json={"market_id": saved_market["canonical_id"]},
+        )
+        assert settlement_audit.status_code == 200, settlement_audit.text
+        audit_result = settlement_audit.json()
+        assert audit_result["network_calls"] == 0
+        assert audit_result["candidate_generation"] is False
+        assert audit_result["audit"]["state"] == "SOURCE REPORTED PRODUCT MATCH"
+        assert Decimal(audit_result["audit"]["component_product_dollars"]) == Decimal("0.3750")
+        assert len(audit_result["audit"]["component_values"]) == len(
+            source_row["mve_selected_legs"]
+        )
 
         observation = client.get(
             f"/api/frontier/observations/{result['observation_ids'][0]}"

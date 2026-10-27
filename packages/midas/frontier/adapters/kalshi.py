@@ -42,7 +42,7 @@ from midas.frontier.models import (
 )
 
 D = Decimal
-ADAPTER_VERSION = "frontier-kalshi-11"
+ADAPTER_VERSION = "frontier-kalshi-12"
 _TICKER_PATTERN = re.compile(r"[A-Za-z0-9_-]{1,256}\Z")
 BASE = "https://external-api.kalshi.com/trade-api/v2"
 MARKET_DATA_DOC = "https://docs.kalshi.com/getting_started/quick_start_market_data"
@@ -460,6 +460,22 @@ class KalshiAdapter(BaseReadOnlyAdapter):
         native_type = str(raw.get("market_type") or "unknown").lower()
         is_mve = bool(raw.get("mve_collection_ticker") or raw.get("mve_selected_legs"))
         selected_components = self._selected_components(raw, ticker)
+        raw_settlement_value = raw.get("settlement_value_dollars")
+        reported_settlement_value = parse_decimal(raw_settlement_value)
+        if raw_settlement_value is not None and (
+            reported_settlement_value is None
+            or reported_settlement_value < 0
+            or reported_settlement_value > 1
+        ):
+            raise AdapterError(
+                "INVALID_SETTLEMENT_VALUE",
+                "Kalshi reported settlement value must be a finite scalar from 0 to 1",
+            )
+        raw_provisional = raw.get("is_provisional")
+        if raw_provisional is not None and type(raw_provisional) is not bool:
+            raise AdapterError(
+                "INVALID_SETTLEMENT_STATE", "Kalshi provisional settlement flag must be boolean"
+            )
         kind = (
             MarketKind.CONDITIONAL_EVENT
             if is_mve
@@ -551,6 +567,8 @@ class KalshiAdapter(BaseReadOnlyAdapter):
                 )
             ),
             settlement_asset="USD" if states else None,
+            reported_settlement_value_dollars=reported_settlement_value,
+            settlement_is_provisional=raw_provisional,
             native_fields=native_json(raw),
             quality_flags=tuple(
                 flag
@@ -635,7 +653,7 @@ class KalshiAdapter(BaseReadOnlyAdapter):
             except ValidationError as error:
                 raise AdapterError(
                     "INVALID_MVE_COMPONENT",
-                    "Kalshi MVE leg settlement value exceeds the supported decimal precision",
+                    "Kalshi MVE leg settlement value exceeds the supported scalar range or precision",
                 ) from error
             seen.add(market_ticker)
             components.append(component)

@@ -26,6 +26,7 @@ from midas.frontier.adapters.base import AdapterError, ExchangeAdapter, FailedRe
 from midas.frontier.adapters.kraken import KrakenSpotAdapter
 from midas.frontier.economics import (
     ExecutionScenario,
+    audit_kalshi_mve_reported_settlement,
     estimate_kalshi_taker_fee_sensitivity,
     estimate_kalshi_taker_order_fee_sensitivity,
 )
@@ -111,6 +112,11 @@ class KalshiMveComponentProbeRequest(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
     parent_market_id: str = Field(min_length=1, max_length=256)
     component_market_id: str = Field(min_length=1, max_length=256, pattern=r"^[A-Za-z0-9_-]+$")
+
+
+class KalshiMveSettlementAuditRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+    market_id: str = Field(min_length=1, max_length=256)
 
 
 class KalshiMultivariateEventsProbeRequest(BaseModel):
@@ -1654,6 +1660,49 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
                     },
                 ) from error
 
+    @api.post("/economics/kalshi-mve-settlement-audit")
+    async def kalshi_mve_settlement_audit(
+        request: KalshiMveSettlementAuditRequest,
+    ) -> dict[str, Any]:
+        """Audit recorded Kalshi MVE settlement arithmetic without a source request."""
+        try:
+            records = await _load_market_records(store, 200, venue=Venue.KALSHI)
+        except (FrontierStoreError, ValueError) as error:
+            raise HTTPException(status_code=409, detail=str(error)) from error
+        match = next(
+            (
+                (market, observation_id)
+                for market, observation_id in records
+                if market.canonical_id == request.market_id and market.venue == Venue.KALSHI
+            ),
+            None,
+        )
+        if match is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Market must exist in the bounded recorded Kalshi observation window",
+            )
+        market, observation_id = match
+        market = market.model_copy(
+            update={
+                "provenance": market.provenance.model_copy(
+                    update={"observation_id": observation_id}
+                )
+            }
+        )
+        audit = audit_kalshi_mve_reported_settlement(market)
+        return {
+            "audit": audit.model_dump(mode="json"),
+            "source_observation_id": observation_id,
+            "network_calls": 0,
+            "candidate_generation": False,
+            "note": (
+                "This local arithmetic audit compares captured Kalshi component settlement "
+                "values with the captured parent value. It does not independently verify rules, "
+                "outcomes, prices, or economic returns."
+            ),
+        }
+
     @api.post("/economics/kalshi-fee-sensitivity")
     async def kalshi_fee_sensitivity(
         request: KalshiFeeSensitivityRequest,
@@ -2711,9 +2760,9 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
 
 
 async def _load_market_records(
-    store: FrontierStore, limit: int
+    store: FrontierStore, limit: int, *, venue: Venue | None = None
 ) -> tuple[tuple[FrontierMarket, str], ...]:
-    rows = _market_observation_rows(store, min(200, limit))
+    rows = _market_observation_rows(store, min(200, limit), venue=venue)
     markets: dict[str, tuple[FrontierMarket, str]] = {}
     for row in rows:
         normalized = row.get("normalized")

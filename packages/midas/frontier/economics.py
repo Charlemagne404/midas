@@ -27,17 +27,116 @@ from midas.frontier.models import (
     KalshiFeeOrderPrecisionScenario,
     KalshiFeeOrderSensitivity,
     KalshiFeeRoundingScenario,
+    KalshiMveComponentSettlementValue,
+    KalshiMveSettlementAudit,
     KalshiTakerFeeSensitivity,
     Lifecycle,
     MarketInstrument,
     MarketKind,
     QuantityUnit,
+    SettlementAuditState,
+    Venue,
 )
 from midas.frontier.relationships import Relationship, VerificationState
 
 D = Decimal
 ECONOMIC_MODEL_VERSION = "frontier-economic-verifiers-4"
 _KALSHI_TAKER_FEE_TYPES = frozenset({"quadratic", "quadratic_with_combo_maker_fees"})
+_KALSHI_COMBO_SETTLEMENT_SOURCES = (
+    "https://help.kalshi.com/en/articles/13823820-combos",
+    "https://help.kalshi.com/en/articles/17515177-protected-nfl-player-markets",
+    "https://docs.kalshi.com/api-reference/events/get-multivariate-events",
+)
+
+
+def audit_kalshi_mve_reported_settlement(market: FrontierMarket) -> KalshiMveSettlementAudit:
+    """Recompute a recorded Kalshi combo settlement product from source values."""
+    assumptions = (
+        "Kalshi's public combo guidance describes payout as the product of component position values.",
+        "For a NO position, the component value is computed as one dollar minus the reported YES value.",
+        "A matching result checks source-reported settlement arithmetic only; it does not verify rules, outcomes, prices, or returns.",
+    )
+    source_observation_id = market.provenance.observation_id
+    if (
+        market.venue != Venue.KALSHI
+        or market.market_kind != MarketKind.CONDITIONAL_EVENT
+        or not market.selected_components
+        or any(component.venue != Venue.KALSHI for component in market.selected_components)
+    ):
+        return KalshiMveSettlementAudit(
+            market_id=market.canonical_id,
+            native_market_id=market.native_market_id,
+            source_observation_id=source_observation_id,
+            source_raw_sha256=market.provenance.raw_sha256,
+            lifecycle=market.lifecycle,
+            settlement_is_provisional=market.settlement_is_provisional,
+            state=SettlementAuditState.UNSUPPORTED_SETTLEMENT_STRUCTURE,
+            reported_settlement_value_dollars=market.reported_settlement_value_dollars,
+            assumptions=assumptions,
+            rule_source_urls=_KALSHI_COMBO_SETTLEMENT_SOURCES,
+        )
+
+    values: list[KalshiMveComponentSettlementValue] = []
+    missing: list[str] = []
+    for component in market.selected_components:
+        yes_value = component.yes_settlement_value_dollars
+        selected_value = (
+            None
+            if yes_value is None
+            else yes_value
+            if component.selected_side == "yes"
+            else D(1) - yes_value
+        )
+        values.append(
+            KalshiMveComponentSettlementValue(
+                native_market_id=component.native_market_id,
+                selected_side=component.selected_side,
+                reported_yes_value_dollars=yes_value,
+                selected_position_value_dollars=selected_value,
+            )
+        )
+        if selected_value is None:
+            missing.append(component.native_market_id)
+
+    component_product: Decimal | None = None
+    if not missing:
+        # Up to 64 36-digit input values need up to 2304 digits to multiply
+        # without context rounding.
+        with localcontext() as context:
+            context.prec = max(36, len(values) * 36 + 8)
+            component_product = D(1)
+            for value in values:
+                assert value.selected_position_value_dollars is not None
+                component_product *= value.selected_position_value_dollars
+
+    state = SettlementAuditState.INCOMPLETE_EVIDENCE
+    if (
+        not missing
+        and market.reported_settlement_value_dollars is not None
+        and component_product is not None
+    ):
+        if market.lifecycle != Lifecycle.SETTLED or market.settlement_is_provisional is True:
+            state = SettlementAuditState.SOURCE_VALUES_NOT_FINAL
+        elif component_product == market.reported_settlement_value_dollars:
+            state = SettlementAuditState.SOURCE_REPORTED_PRODUCT_MATCH
+        else:
+            state = SettlementAuditState.SOURCE_REPORTED_PRODUCT_MISMATCH
+
+    return KalshiMveSettlementAudit(
+        market_id=market.canonical_id,
+        native_market_id=market.native_market_id,
+        source_observation_id=source_observation_id,
+        source_raw_sha256=market.provenance.raw_sha256,
+        lifecycle=market.lifecycle,
+        settlement_is_provisional=market.settlement_is_provisional,
+        state=state,
+        component_values=tuple(values),
+        component_product_dollars=component_product,
+        reported_settlement_value_dollars=market.reported_settlement_value_dollars,
+        missing_component_market_ids=tuple(missing),
+        assumptions=assumptions,
+        rule_source_urls=_KALSHI_COMBO_SETTLEMENT_SOURCES,
+    )
 
 
 class OpportunityFamily(StrEnum):

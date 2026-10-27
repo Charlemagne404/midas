@@ -72,6 +72,8 @@ type Market = {
   base_asset: string | null;
   quote_asset: string | null;
   settlement_asset: string | null;
+  reported_settlement_value_dollars?: string | null;
+  settlement_is_provisional?: boolean | null;
   payoff: {
     state_ids: string[];
     payout_currency: string | null;
@@ -110,6 +112,27 @@ type Market = {
   }[];
   quality_flags: string[];
   provenance: { response_received_at_utc: string; raw_sha256: string; observation_id: string };
+};
+type KalshiMveSettlementAuditResponse = {
+  audit: {
+    state: string;
+    component_values: {
+      native_market_id: string;
+      selected_side: 'yes' | 'no';
+      reported_yes_value_dollars: string | null;
+      selected_position_value_dollars: string | null;
+    }[];
+    component_product_dollars: string | null;
+    reported_settlement_value_dollars: string | null;
+    missing_component_market_ids: string[];
+    source_observation_id: string;
+    source_raw_sha256: string;
+    assumptions: string[];
+    rule_source_urls: string[];
+  };
+  network_calls: number;
+  candidate_generation: boolean;
+  note: string;
 };
 type Book = {
   source_observation_record_id: string;
@@ -1339,6 +1362,13 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
       }),
     onSuccess: refresh,
   });
+  const auditKalshiMveSettlement = useMutation({
+    mutationFn: ({ marketId }: { marketId: string }) =>
+      api<KalshiMveSettlementAuditResponse>('/frontier/economics/kalshi-mve-settlement-audit', {
+        method: 'POST',
+        body: JSON.stringify({ market_id: marketId }),
+      }),
+  });
   const estimateKalshiTakerFee = useMutation({
     mutationFn: (input: {
       marketId: string;
@@ -1711,6 +1741,7 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
               eventMarketsProbeEnabled={eventMarketGroupsProbeEnabledFor(selectedMarket.venue)}
               mveComponentProbe={captureKalshiMveComponentMarket}
               mveComponentProbeEnabled={kalshiMarketMetadataProbeEnabled}
+              settlementAudit={auditKalshiMveSettlement}
               feeMetadataProbe={captureKalshiFeeMetadata}
               feeMetadataProbeEnabled={kalshiFeeMetadataProbeEnabled}
               feeSensitivity={estimateKalshiTakerFee}
@@ -2570,6 +2601,7 @@ function MarketDetails({
   eventMarketsProbeEnabled,
   mveComponentProbe,
   mveComponentProbeEnabled,
+  settlementAudit,
   feeMetadataProbe,
   feeMetadataProbeEnabled,
   feeSensitivity,
@@ -2591,6 +2623,12 @@ function MarketDetails({
     unknown
   >;
   mveComponentProbeEnabled: boolean;
+  settlementAudit: UseMutationResult<
+    KalshiMveSettlementAuditResponse,
+    Error,
+    { marketId: string },
+    unknown
+  >;
   feeMetadataProbe: UseMutationResult<
     KalshiFeeMetadataCaptureResult,
     Error,
@@ -2765,6 +2803,65 @@ function MarketDetails({
               </li>
             ))}
           </ul>
+          <button
+            className="fr-inspect-button"
+            disabled={settlementAudit.isPending}
+            onClick={() => settlementAudit.mutate({ marketId: market.canonical_id })}
+          >
+            {settlementAudit.isPending
+              ? 'Auditing recorded values…'
+              : 'Audit recorded settlement arithmetic'}
+          </button>
+          {settlementAudit.isError && <InlineError message={settlementAudit.error.message} />}
+          {settlementAudit.isSuccess &&
+            settlementAudit.variables?.marketId === market.canonical_id && (
+              <div className="fr-fee-sensitivity-result" role="status">
+                <strong>
+                  Source-reported settlement arithmetic · {settlementAudit.data.audit.state}
+                </strong>
+                <small>
+                  Recomputed component product: $
+                  {settlementAudit.data.audit.component_product_dollars ?? 'incomplete'} · parent{' '}
+                  reported: $
+                  {settlementAudit.data.audit.reported_settlement_value_dollars ?? 'not recorded'}
+                </small>
+                {settlementAudit.data.audit.component_values.map((component) => (
+                  <small key={component.native_market_id}>
+                    {component.native_market_id} · selected {component.selected_side.toUpperCase()}{' '}
+                    · YES value ${component.reported_yes_value_dollars ?? 'missing'} · selected{' '}
+                    value ${component.selected_position_value_dollars ?? 'missing'}
+                  </small>
+                ))}
+                {settlementAudit.data.audit.missing_component_market_ids.length > 0 && (
+                  <small>
+                    Missing: {settlementAudit.data.audit.missing_component_market_ids.join(', ')}
+                  </small>
+                )}
+                {settlementAudit.data.audit.assumptions.map((assumption) => (
+                  <small key={assumption}>{assumption}</small>
+                ))}
+                <small>
+                  Method sources:{' '}
+                  {settlementAudit.data.audit.rule_source_urls.map((source, index) => (
+                    <span key={source}>
+                      {index > 0 ? ' · ' : ''}
+                      <a href={source} target="_blank" rel="noreferrer">
+                        {index === 0
+                          ? 'combo settlement rule'
+                          : index === 1
+                            ? 'NO value rule'
+                            : 'API field schema'}
+                      </a>
+                    </span>
+                  ))}
+                </small>
+                <small>{settlementAudit.data.note}</small>
+                <small>
+                  Input record {shortHash(settlementAudit.data.audit.source_observation_id)} · raw{' '}
+                  {shortHash(settlementAudit.data.audit.source_raw_sha256)}
+                </small>
+              </div>
+            )}
           {mveComponentProbe.isError &&
             mveComponentProbe.variables?.parentMarketId === market.canonical_id && (
               <InlineError message={mveComponentProbe.error.message} />
