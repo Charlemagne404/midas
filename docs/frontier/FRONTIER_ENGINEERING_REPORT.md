@@ -1177,6 +1177,11 @@ Follow-up test commit `90bd11e` adds explicit future-at-quote, stale-at-quote,
 and stale-at-replay rejection cases for estimated fees.
 API test commit `ad1415b` verifies the saved fee status and both observation IDs
 are returned from the bounded Markets endpoint.
+Storage test commit `f35677d` extends the legacy replay fixture with a
+schema-v1 manifest that lacks the new fee-ID field. That test passed
+independently and confirms the stored JSON and result hash remain unchanged;
+the wider storage/replay comparison selection was not rerun after this test-only
+change.
 Focused verification after the implementation passed **35** economics/replay
 tests, **3** saved-evidence/API fee and quarantine tests, **19** storage and
 replay-comparison tests, **2** adapter capability/metadata tests, and **1**
@@ -1267,6 +1272,13 @@ suite or another production frontend build, memory PSI `avg10` was 0% for
 swap device was free. The targeted selections above were kept short; the full
 suite and build were deferred. This is a host admission observation, not an
 application service measurement or deployment-readiness result.
+
+At `2026-10-27T16:49:36Z`, memory PSI had risen to `avg10` 40.64% (`some`) /
+36.38% (`full`), `avg60` 42.33% / 38.23%, and `avg300` 36.64% / 33.16%.
+Available memory was 9,581,096 KiB (about 9.14 GiB); free swap was 484,348 KiB
+(about 473 MiB) of 4 GiB. The new legacy-manifest test itself passed in 0.55
+seconds; the wider storage suite and all larger jobs remain deferred. This is a
+host observation and a targeted test result, not a service capacity estimate.
 
 ## 14. Actual scientific findings
 
@@ -1486,6 +1498,8 @@ Implementation and documentation commits on this branch:
 - `ad1415b` — extended the saved event/series evidence fixture through the
   `/api/frontier/markets` response and asserted the estimate and both
   provenance IDs are surfaced.
+- `f35677d` — extended legacy replay storage coverage to a schema-v1 manifest
+  without `fee_metadata_observation_ids` and confirmed hash-preserving reads.
 - `0f8e1d6` — exchange-independent contracts, transport, Polymarket/Kalshi/
   Kraken adapters, relationships, Decimal economics, bounded storage/replay,
   tests, and public capture evidence.
@@ -1849,8 +1863,9 @@ passed 137 tests after matcher v5; the saved-source replay passed separately.
 
 ### Saved fee-evidence replay checkpoint — 2026-10-27
 
-Commits `3e85c8d`, `90bd11e`, and `ad1415b` implement the source-backed replay
-estimate and test its quote/replay freshness boundaries and Markets API output.
+Commits `3e85c8d`, `90bd11e`, `ad1415b`, and `f35677d` implement the source-backed
+replay estimate and test its freshness, Markets API output, and legacy manifest
+compatibility.
 The public event/series pair remains immutable and is used only after raw
 response, endpoint, identity, freshness, and source-hold checks. Fixture
 verification establishes deterministic arithmetic, evidence lineage, and

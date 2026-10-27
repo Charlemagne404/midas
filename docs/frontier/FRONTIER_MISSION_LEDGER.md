@@ -16,10 +16,15 @@ estimate and both fee evidence IDs in `/api/frontier/markets`. This includes
 fee-evidence future-quote, quote-age, and replay-age rejection. Strict mypy
 passed for six changed Python source modules; Ruff check/format, TypeScript
 typecheck, targeted ESLint/Prettier, and `git diff --check` passed. The full
-Frontier suite and production build were
-deferred at the 2026-10-27 16:41 UTC pressure sample (avg300 PSI 17.36% `some` /
-15.70% `full`, only about 473 MiB swap free). No source request, held-data read,
-service, production setting, or historical artifact was accessed or changed.
+Frontier suite and production build remain deferred. At the later 16:49 UTC
+sample, memory PSI `avg10` was 40.64% `some` / 36.38% `full`, and only about
+473 MiB swap remained free. No source request, held-data read, service,
+production setting, or historical artifact was accessed or changed.
+
+Storage test commit `f35677d` extends the legacy replay regression to cover a
+schema-v1 manifest without the new fee-ID field. The focused test passed in
+0.55 seconds and preserved the stored JSON/hash; the wider storage/replay
+comparison selection was not rerun after this test-only change.
 
 Current touched versions are Kalshi adapter v16, economic model v8,
 independent audit v5, and replay v8. The Frontier mission remains incomplete,
@@ -860,7 +865,7 @@ same-input runs do not change the resource sustainability gate.
 | Relationship matching, immutable review, indexed neighborhoods, and strict payoff verifier | PARTIALLY VERIFIED | Self-attributed review API/UI with stored source refs, append-only revisions, compare-and-set, latest-state replay, query-plan/migration tests, and 1–3 hop left/right indexed scans capped at 500 rows. Centered one-hop keyset and two-/three-hop breadth-first pages bind graph inputs and reject stale cursors; deterministic recomputation and 201-market frontier chunking are tested. Matcher v5 emits exact-ID MVE `source_component_reference` hypotheses only with a matching saved child ticker/event and preserves both observation IDs; the recorded parent/child pair replays offline through the current adapter and matcher. Matcher v4 year-conflict checks remain. The genuine House-control pair is text-only and strict payoff verification rejects same-payoff equivalence. Per-market payout currency must match its settlement asset, and the market-level settlement asset must match the payoff record; the USD/USDC regression passes. A focused depth-two browser test now passes; authenticated review and revision-history drill-down remain pending. |
 | Economic candidate verifier and independent audit | PARTIALLY VERIFIED | Exact two-venue binary all-long coverage and same-market 3–16-state exhaustive one-hot coverage. Economic model v8 derives the exact adverse full-or-no-fill terminal pattern for up to 16 legs; independent audit v5 rederives payoff/cost, pinned-book timing and source-quality claims, and the Kalshi one-fill estimate independently. Fixture cases verify the `$0.01` scenario, 24-hour freshness, no-look-ahead, conditional classification, and replay fee-evidence IDs. Three-leg brute-force and maximum 16-outcome replay/audit fixtures agree over a 65,536-pattern bound. Unknown fees suppress net stress; mismatches and unsupported fees fail closed. Current adapter clock-uncertainty estimates are absent, no genuine eligible event is established, and there is no independently authenticated market truth or practical execution proof. |
 | Kalshi candidate-fee estimate | PARTIALLY VERIFIED | Commit `3e85c8d` joins only complete raw/hash/path/identity-checked event/series metadata and requires metadata no later than quote time and at most 24 hours old at quote/replay. A supported one-fill formula uses conservative non-direct `$0.01` debit alignment; estimates cannot yield a verified mathematical inconsistency. Independent arithmetic and manifest fee-observation IDs pass fixture/API/replay checks. Account applicability, balance class, maker/mixed/multi-fill and FCM charges, later changes, live validation and source permission remain unresolved. |
-| Bounded store and deterministic replay | COMPLETE AND VERIFIED | Storage schema v6 with additive v2/v3/v4/v5 migrations, immutable replay/comparison records, replay-v8 source lineage, denomination identities, and separate fee metadata observation IDs through manifests/candidate legs/Arena snapshots; direct replay retains adapter IDs. Replay-v5 output includes fill sensitivity and identity includes effective mappings/proposal limit; prior replay results and observations remain unchanged. |
+| Bounded store and deterministic replay | COMPLETE AND VERIFIED | Storage schema v6 with additive v2/v3/v4/v5 migrations, immutable replay/comparison records, replay-v8 source lineage, denomination identities, and separate fee metadata observation IDs through manifests/candidate legs/Arena snapshots; direct replay retains adapter IDs. Test commit `f35677d` verifies a saved schema-v1 manifest lacking the new field remains readable and its JSON/hash is preserved. The 19-test storage/replay-comparison selection passed before that follow-up, and the changed legacy case passed separately. Replay-v5 output includes fill sensitivity and identity includes effective mappings/proposal limit; prior replay results and observations remain unchanged. |
 | Paired scenario comparison | PARTIALLY VERIFIED | Direct local comparison and API/UI/browser tests pass. Two actual systemd-supervised fixture replays completed over the same pinned inputs and their result hashes verify. The latest run measured worker process CPU/RSS and exposes it in Mission Control. No genuine equivalent live market pair exists. |
 | Frontier API and source configuration | COMPLETE AND VERIFIED | Local reads include hash-verified legacy and cursor-page batches. Polymarket and Kalshi page routes are capability/config/recorded-market gated, bounded to one page and retries, and bind cursors to market and size. Kalshi MVE discovery validates exactly one series/collection/event-ticker filter and does not follow its cursor. Component-detail fetches are bound pre-request to saved selected-leg metadata and post-response to saved market/event identity. Saved Kalshi fee metadata is joined to replay markets only after raw/hash/path/identity checks and remains excluded for held sources. Four focused API regressions verify raw market/book/trade capture retention after post-drain lineage failures, preserve a drained Polymarket v2 page, and ensure earlier successful listings are not duplicated. The Frontier readiness source-quality gate summarizes candidate timing audits from its latest three non-held replays; it does not change the review-required state or imply execution. |
 | Live adapter, API and store evidence | PARTIALLY VERIFIED | Three venue listing/book/trade captures, Polymarket v2 first/continuation pages with distinct IDs, a Kalshi empty cursor page, event-group responses and MVE endpoint responses have hash-pinned evidence. A single selected-child market-detail response is also hash/store verified and has matching saved-parent ticker/event IDs; it contains close lifecycle and native fair-price rule text but no price/book. Kalshi trade-row mapping remains fixture-only. Samples are asynchronous and establish no synchronized prices, complete history, child payout, combo payout, or execution. |
@@ -1493,3 +1498,19 @@ Architecture, development, operations, engineering report, and this ledger
 record this checkpoint. The mission continues; next work should remain isolated
 and bounded, favoring research or validation that does not depend on currently
 blocked Kalshi/Kraken source use.
+
+## Replay manifest v1 fee-field compatibility — 2026-10-27 16:49 UTC
+
+Test commit `f35677d` extends the legacy replay-storage regression with a
+schema-v1 manifest that has no `fee_metadata_observation_ids` field. The
+temporary row is read through the current manifest-v2 model with an empty
+default while its original JSON and digest remain byte-for-byte preserved. The
+focused test passed (**1 passed** in 0.55 seconds); Ruff and formatting passed.
+The broader storage/replay-comparison suite was not rerun after this test-only
+change.
+
+At `2026-10-27T16:49:36Z`, host memory PSI measured `avg10` 40.64% (`some`) /
+36.38% (`full`), `avg60` 42.33% / 38.23%, and `avg300` 36.64% / 33.16%.
+Available memory was 9,581,096 KiB, with 484,348 KiB of 4 GiB swap free. The
+full Frontier suite and production build remain deferred. No source request,
+held data read, service, production setting, or historical store was accessed.
