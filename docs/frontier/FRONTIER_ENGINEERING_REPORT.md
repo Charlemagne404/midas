@@ -2555,3 +2555,28 @@ At `2026-10-27T16:54:49Z`, memory PSI was `avg10` 0.00% (`some`) / 0.00%
 `MemAvailable` was 9,845,932 KiB, with 484,520 KiB of 4 GiB swap free. The
 full Frontier suite, production build, and browser E2E remain deferred. No
 source, held data, service, or production setting was accessed.
+
+## Official fee-formula cross-check — 2026-10-27 16:56 UTC
+
+I rechecked the implemented estimate against Kalshi's [fee schedule effective
+July 7, 2026](https://kalshi.com/docs/kalshi-fee-schedule.pdf) and [fee
+rounding documentation](https://docs.kalshi.com/getting_started/fee_rounding).
+The published formula is `M × 0.07 × contracts × P × (1-P)`, with the trade
+fee rounded upward to a microdollar. Debit alignment uses the member's target
+balance precision; the order-level guide also specifies an accumulator and
+rebates across fills.
+
+The single-fill sensitivity and candidate calculation implement those
+rounding steps for both documented precision classes. Candidate estimates
+remain conditional and use a non-direct single-fill scenario. A separate
+bounded order sensitivity models the accumulator and rebate instead of
+projecting a single fill across an order. The fee-sensitivity module passed
+**19 tests** in 0.28 seconds, including Kalshi's documented FCM fill example
+and a two-fill accumulator/rebate case. No code changed during this
+cross-check; it confirms the bounded fixture model, not an account-specific
+charge or present applicability of a fee schedule to an unobserved market.
+
+At `2026-10-27T16:56:38Z`, memory PSI was `avg10` 0.00% (`some`) / 0.00%
+(`full`), `avg60` 0.48% / 0.43%, and `avg300` 15.66% / 14.13%.
+`MemAvailable` was 9,836,380 KiB, with 484,544 KiB of 4 GiB swap free. Broad
+suite, browser E2E, and production build remain deferred.

@@ -1535,3 +1535,21 @@ At `2026-10-27T16:54:49Z`, memory PSI was `avg10` 0.00% (`some`) / 0.00%
 `MemAvailable` was 9,845,932 KiB; swap free was 484,520 KiB of 4 GiB. The full
 Frontier suite, production build, and browser E2E remain deferred. No source,
 held data, service, or production setting was accessed.
+
+## 2026-10-27 16:56 UTC — official Kalshi fee-rounding cross-check
+
+The [official fee schedule effective July 7, 2026](https://kalshi.com/docs/kalshi-fee-schedule.pdf)
+sets the quadratic trade formula; [Kalshi's fee-rounding guide](https://docs.kalshi.com/getting_started/fee_rounding)
+specifies microdollar trade-fee rounding, balance-precision alignment, and an
+order-level accumulator/rebate. The existing one-fill sensitivity/candidate
+math applies the published single-fill operations for both precision classes;
+the separate order sensitivity models the multi-fill accumulator. The targeted
+fee-sensitivity module passed **19 tests** in 0.28 seconds, including the
+documented FCM fill example and two-fill accumulator/rebate fixture. No code
+changed. This validates the bounded calculations against public documentation,
+not a specific account's charged fee or a live market's applicable schedule.
+
+At `2026-10-27T16:56:38Z`, memory PSI was `avg10` 0.00% (`some`) / 0.00%
+(`full`), `avg60` 0.48% / 0.43%, and `avg300` 15.66% / 14.13%.
+`MemAvailable` was 9,836,380 KiB; swap free was 484,544 KiB of 4 GiB. The
+broad Frontier suite, browser E2E, and production build remain deferred.
