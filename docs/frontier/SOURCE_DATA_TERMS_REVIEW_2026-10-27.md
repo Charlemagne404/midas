@@ -146,9 +146,9 @@ explicitly synthetic inline response bodies or normalized fixture records in
 the two affected modules. A source-text scan over `tests`, `packages`, and
 `apps` now finds no `data/frontier/live-probes` or `live-probes` references.
 A new static test guards Python test sources against reintroducing that path.
-`git diff --check` passes. The static test itself and the affected functional
-tests have not run yet because host memory PSI and swap use remain elevated.
-Preserved capture files were not edited by this cleanup. After resource
-admission, run the static guard and affected tests; keep any broader suite
-result separate from live-source validation. Synthetic fixtures demonstrate
-parser/API behavior only and are not source observations.
+The static test passed, the changed adapter/API selection passed 24 tests, and
+the complete Frontier Python suite passed 218 tests in 39.36 seconds at
+333,988 KiB peak RSS with zero swaps. The existing Starlette/httpx test-client
+deprecation warning remains. `git diff --check` passes. Preserved capture
+files were not edited by this cleanup. This suite validates implementation on
+synthetic inputs only; it does not establish live-source behavior or permission.

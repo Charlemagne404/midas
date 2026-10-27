@@ -432,11 +432,36 @@ capture-path references in two Frontier test modules; the 18:41 UTC full
 Frontier suite executed those cases and read the referenced preserved files.
 No test writes to those files were identified, and no mutation is known. All
 15 references are now replaced by synthetic inputs; a `rg` scan over
-`tests`, `packages`, and `apps` finds no `live-probes` path. A static source
-guard has been added, but neither it nor the changed functional tests has run
-since conversion because host PSI and swap use remain high. See the
+`tests`, `packages`, and `apps` finds no `live-probes` path. The static source
+guard passes, the converted adapter/API selection passes 24 tests, and the
+full Frontier suite passes 218 tests in 39.36 seconds at 333,988 KiB peak RSS
+with zero swaps. The existing Starlette/httpx deprecation warning remains.
+These fixtures establish code behavior only; source permission and live
+validation remain blocked. See the
 [source-data terms review](frontier/SOURCE_DATA_TERMS_REVIEW_2026-10-27.md)
 and [Frontier ledger](frontier/FRONTIER_MISSION_LEDGER.md).
+
+## Frontier source-boundary and UI regression checkpoint — 2026-10-27
+
+Commit `5e51a88` replaces the 15 direct test reads of preserved
+`data/frontier/live-probes` artifacts with synthetic local response data and
+adds a static test-source guard. The historical 18:41 full suite did read the
+then-referenced files; no test write or capture mutation is known. Since the
+cleanup, the guard passes and the full Frontier suite passes **218 tests**
+(39.36 seconds, **333,988 KiB peak RSS**, zero swaps). The 24-case changed
+adapter/API selection also passes. No held capture is used by the new fixture
+tests.
+
+The settlement-identity UI hardening now compares typed fields and uses a
+structured balance key. Frontier's component suite passes **8/8**, the full web
+suite **40/40**, and the isolated Frontier browser spec **4/4**. Typecheck,
+targeted ESLint, and Prettier pass. The post-change production build passes at
+**714,944 KiB peak RSS** with zero swaps; the existing Vite large-chunk warning
+remains. Browser tests used temporary local services/databases and no exchange
+probes. No production deployment, protected-service change, live source request,
+or historical capture modification occurred. The code/docs verification
+checkpoint is in progress on the Frontier branch; source permission, live
+cross-venue economics, deployment, and repository-wide tests remain open.
 
 ## Frontier Kalshi fee-override checkpoint — 2026-10-27
 

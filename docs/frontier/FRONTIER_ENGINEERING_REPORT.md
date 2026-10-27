@@ -34,11 +34,11 @@ the referenced files, contrary to the test-fixture boundary then documented.
 No test writes to the capture directory were identified, and no capture
 mutation is known. All 15 path references have now been replaced with synthetic
 inline inputs. A path-text scan over `tests`, `packages`, and `apps` finds no
-remaining `live-probes` reference, and a static Python-test guard was added.
-The guard and changed functional tests remain unrun due to elevated host PSI
-and swap use. The earlier full-suite pass remains evidence of code behavior on
-those held inputs, but must not be cited as fixture-only held-source validation.
-See the updated [source-data terms review](SOURCE_DATA_TERMS_REVIEW_2026-10-27.md).
+remaining `live-probes` reference. A static Python-test guard passes, the
+changed adapter/API selections pass, and the full Frontier suite passes **218
+tests** after conversion. The earlier 18:41 suite remains evidence of code
+behavior on held inputs, but must not be cited as fixture-only held-source
+validation. See the updated [source-data terms review](SOURCE_DATA_TERMS_REVIEW_2026-10-27.md).
 
 The three adapters are implemented and fixture/contract tested. Polymarket also
 has an explicitly triggered, cursor-paginated Data API v2 trade-page path that
@@ -2209,9 +2209,9 @@ cross-venue economics.
 | Live market/book/trade and fee metadata through adapters/API | PARTIALLY VERIFIED | Earlier listing/book/trade, event-group, fee-metadata, and trade-page captures are hash-pinned. Kalshi MVE captures include filtered pages whose nested markets were omitted and one detail response with explicit top-level `markets: []`. The new one-request child detail capture matches a selected leg's saved ticker/event identities and has raw/store hashes; its rules expose fair-price fallbacks, but it has no book/price and proves neither child nor combo payoff. Fee metadata now has fixture-verified candidate replay integration, but no new public observation, current schedule verification, cross-venue timing, combo economics, venue-wide coverage, or execution was established in this checkpoint. |
 | Source workers and broad historical data | DEFERRED | No persistent worker or long-duration collection. |
 | Laboratory/Arena research orchestration | PARTIALLY VERIFIED | Arena job kind, content-addressed snapshots, bounded offline execution, API submission/history/result verification, process CPU/RSS capture, and explicit workspace controls are implemented and tested; two fixture jobs passed the host-wide gate and completed under systemd. Laboratory campaign management and resource-sustainability evidence remain incomplete. |
-| Native Mission Control workspace | PARTIALLY VERIFIED | Local API, bounded graph/review UI with on-demand revision history and paginated 200-market-capped text search, Polymarket/Kalshi trade-page and event-group controls, explicit filtered one-page Kalshi MVE capture by series, collection, or one event ticker with returned member-list state, parent-event context, instrument-bound fee sensitivity, selected-leg component-rule and recorded-settlement arithmetic inspection, paired replay, candidate fill stress, virtual balances keyed by venue and exact denomination identity, and Arena job history/result display. Replay history now displays the count of pinned fee metadata observations; its fixture test passes. The candidate audit panel displays independently recomputed receipt and exchange timestamp skew plus the audit timing gate; legacy audit rows show missing values as not recorded. The Frontier component file passes all 8 tests including review/search history flows, and the full web suite passes 40 tests; web typecheck, targeted frontend ESLint, and Prettier pass. The focused depth-two/capital-fragmentation/mobile browser case passes with the exact-identity fixture contract. The production build previously passed with 676,320 KiB peak RSS and no swap; Vite reports the existing 500 kB chunk-size warning for the index/chart chunks. The workspace is not deployed. |
-| Source data use/retention permission | BLOCKED | Kalshi Developer Agreement and Data Terms restrict the relevant API/data uses; the applicable regional Kraken terms and Frontier authorization remain unverified. The main API requires permission/review references in addition to probe flags, but references are not independently validated. No new Kalshi/Kraken live captures or new research use of their stored data pending review; existing artifacts are preserved unchanged. Test-source audit found direct reads from held capture paths in two test modules; remediation is pending and the 18:41 full-suite run read those artifacts. |
-| Offline test-source separation from held captures | IMPLEMENTED, LIVE VALIDATION PENDING | All 15 discovered test references are replaced by synthetic inputs. `rg` finds no `live-probes` path in test/source directories, and a static guard test is added; it and the modified functional tests remain unrun because host pressure is elevated. Preserved captures were not changed. |
+| Native Mission Control workspace | PARTIALLY VERIFIED | Local API, bounded graph/review UI with on-demand revision history and paginated 200-market-capped text search, Polymarket/Kalshi trade-page and event-group controls, explicit filtered one-page Kalshi MVE capture by series, collection, or one event ticker with returned member-list state, parent-event context, instrument-bound fee sensitivity, selected-leg component-rule and recorded-settlement arithmetic inspection, paired replay, candidate fill stress, virtual balances keyed by venue and exact denomination identity, and Arena job history/result display. After exact identity validation/key hardening, the Frontier component file passes 8/8 and the full web suite 40/40; typecheck, targeted ESLint, and Prettier pass. The isolated Frontier browser spec passes 4/4, including the no-probe and bounded mobile graph cases. The post-change production build passes at 714,944 KiB peak RSS with no swaps; Vite retains the existing large index/chart chunk warning. The workspace is not deployed. |
+| Source data use/retention permission | BLOCKED | Kalshi Developer Agreement and Data Terms restrict the relevant API/data uses; the applicable regional Kraken terms and Frontier authorization remain unverified. The main API requires permission/review references in addition to probe flags, but references are not independently validated. No new Kalshi/Kraken live captures or new research use of their stored data pending review; existing artifacts are preserved unchanged. The 18:41 full-suite run read files later identified as held captures; no mutation is known. |
+| Offline test-source separation from held captures | COMPLETE AND VERIFIED | All 15 discovered references were replaced by synthetic inputs. A scan over `tests`, `packages`, and `apps` returns no `live-probes` references; the new static boundary test passes, the converted adapter/API selection passes 24 tests, and the complete Frontier suite passes 218 tests. The test-source guard is limited to explicit references; preserve the source-use hold independently. Existing capture files remain unchanged. |
 | Held-source application read quarantine | IMPLEMENTED, LIVE VALIDATION PENDING | Code `d38f517` filters held-venue observation lists/direct reads, source aggregates, relationships/graph edges, review and replay inputs, derived outputs, paired comparisons, and Frontier Arena replays. Code `73e008e` applies pinned-snapshot checks to Arena job summaries, details, logs, submissions, and cancellation; `e7958c1` also filters the research-activity digest; `23f9860` rejects held snapshots before inspect/reconciliation can rewrite a job manifest. Controlled fixtures verify held/missing provenance is hidden or rejected while source/snapshot/result/job-manifest artifacts remain stored. The actual preserved live store was not audited; direct database reads and exports remain outside the API filter. |
 | Production readiness/deployment | DEFERRED | Separate review and authorization required; production eligibility is false. |
 | Positive economic result | NOT ESTABLISHED | No genuine cross-venue equivalent or economically eligible result in captured evidence. |
@@ -3388,3 +3388,32 @@ independently green. No production services or live source APIs were accessed.
 | Frontier Python suite | COMPLETE AND VERIFIED | 215 Frontier tests pass; repository-wide collection and the absent baseline Reality recovery module remain separate issues. |
 | Frontier browser spec | COMPLETE AND VERIFIED | Four local-demo browser tests pass; live exchange validation is not implied. |
 | Project Frontier overall | PARTIALLY VERIFIED | Broader repository regression, live economic validation, and production readiness remain incomplete. |
+
+### Test-source boundary and current web verification — 2026-10-27 19:02 UTC
+
+Commit `5e51a88` replaces the 15 direct test reads from the held
+`data/frontier/live-probes` directory with synthetic inline adapter/API inputs,
+and adds a static test-source guard. The guard passed **1 test**; the modified
+adapter/API selection passed **24 tests in 4.17 seconds** at **94,724 KiB peak
+RSS**; and the complete Frontier Python suite passed **218 tests in 39.36
+seconds** at **333,988 KiB peak RSS**, with zero swaps in all three runs. The
+existing Starlette/httpx TestClient deprecation warning remains. A source-text
+scan across `tests`, `packages`, and `apps` found no remaining `live-probes`
+path. The earlier 18:41 suite did read held capture files via the former test
+references; no test writes or capture mutation are known. Current fixture tests
+demonstrate implementation behavior only, not live-source validation or
+permission.
+
+The UI's exact settlement-identity funding check validates the supported
+structure and ASCII asset references consistent with the backend model,
+compares identity fields directly, and uses a structured venue/identity key.
+The non-ASCII rejection case is covered. The Frontier component suite passed
+**8/8**, the full web suite **40/40**, web typecheck, targeted ESLint and
+Prettier passed, and the Frontier Playwright suite passed **4/4** using its
+temporary local API, database, Arena/Frontier roots, and no exchange probes.
+The Playwright process peaked at **191,496 KiB RSS** with no swaps. The
+post-change production build passed at **714,944 KiB peak RSS**, no swaps, in
+12.46 seconds. Vite retains the known large index/chart chunk-size warning.
+No production deployment or protected service action occurred. Source
+permission, genuine cross-venue economic verification, repository-wide
+regression, and deployment remain open.

@@ -740,7 +740,7 @@ const settlementIdentityTuple = (value: unknown): SettlementIdentityTuple | null
       !asset_reference ||
       asset_reference.trim() !== asset_reference ||
       /\s/.test(asset_reference) ||
-      /[^\x00-\x7F]/.test(asset_reference)
+      asset_reference.split('').some((character) => character.charCodeAt(0) > 0x7f)
     ) {
       return null;
     }

@@ -526,6 +526,25 @@ it('renders recorded-evidence empty states and never probes a source automatical
     }),
   ).toBeDisabled();
 
+  const invalidAssetReferences = ['asset:non-ascii-é'];
+  for (const assetReference of invalidAssetReferences) {
+    const invalidIdentity = { ...boundaryIdentity, asset_reference: assetReference } as const;
+    queryClient.setQueryData(
+      ['frontier', 'opportunities'],
+      withIdentities(invalidIdentity, invalidIdentity),
+    );
+    await waitFor(() =>
+      expect(capital).toHaveTextContent(
+        'Currency identity is missing or mixed; comparison unavailable.',
+      ),
+    );
+    expect(
+      within(capital).getByRole('textbox', {
+        name: 'Virtual balance allocated to Kalshi unknown currency',
+      }),
+    ).toBeDisabled();
+  }
+
   responses['/api/frontier/opportunities/capital-carry'] = {
     model_version: 'frontier-virtual-capital-carry-1',
     run_id: 'a'.repeat(64),

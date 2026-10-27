@@ -1,5 +1,28 @@
 # Project Frontier Mission Ledger
 
+**Latest checkpoint (2026-10-27 19:02 UTC):** Commit `5e51a88` removes all
+15 test-source reads from held `data/frontier/live-probes` captures, replaces
+them with synthetic responses/records, and adds a source-path guard. The guard
+passed **1/1**; the changed adapter/API selection passed **24 tests** (4.17s,
+94,724 KiB peak RSS, zero swaps); the full Frontier Python suite passed
+**218 tests** (39.36s, 333,988 KiB peak RSS, zero swaps). The one existing
+Starlette/httpx TestClient deprecation warning remains. A scan over `tests`,
+`packages`, and `apps` finds no `live-probes` path. The earlier 18:41 suite did
+read held capture files through the then-existing test references; no test
+writes or capture mutation are known. Current tests use synthetic inputs and
+do not validate live source behavior or permission.
+
+After the UI settlement identity hardening, the Frontier web component suite
+passed **8/8**, the full web unit suite passed **40/40**, typecheck passed,
+targeted ESLint and Prettier passed, the isolated Frontier Playwright suite
+passed **4/4** (191,496 KiB peak RSS, zero swaps), and the production build
+passed (714,944 KiB peak RSS, zero swaps). Vite retains the known large index
+and chart chunk warning. The test/browser services used temporary local
+databases and roots; no exchange probe was made. Frontier remains isolated and
+undeployed, with source permission and live cross-venue economics unresolved.
+The UI source/test hardening and this verification record are included in the
+current local checkpoint.
+
 **Latest checkpoint (2026-10-27 18:57 UTC):** A source-use boundary audit
 found 15 direct `data/frontier/live-probes` path references in
 `tests/frontier/test_adapters.py` and `tests/frontier/test_api.py`. The
