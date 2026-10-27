@@ -3111,3 +3111,28 @@ production build.
 
 No additional source file changed for this test attempt. This remains an
 environment- and baseline-limited verification result, not a code pass.
+
+### Deterministic Arena admission test input — 2026-10-27 18:30 UTC
+
+The pressure failure above exposed a non-deterministic test boundary: the
+cross-root worker-discovery test also called the live host-resource gate, even
+though its purpose is to verify job catalog traversal. Code commit `adf1b15`
+injects stable memory, disk, CPU, and PSI values for that unit test while
+retaining the genuine temporary-directory scan and the assertion that a worker
+blocks admission. Existing separate tests continue to check explicit pressure
+thresholds. The corrected focused test passed (**1 test**); Ruff check and
+format checks pass. The broader suite has not been rerun, and the Reality
+recovery import remains unresolved.
+
+At `2026-10-27T18:30:09Z`, actual host PSI was `some avg10=46.13%` and `full
+avg10=41.43%`; the broader rerun remains deferred. This deterministic fixture
+does not change production resource-gate behavior or conceal current host
+pressure.
+
+| Component | Current status | Boundary |
+| --- | --- | --- |
+| Arena cross-root admission unit test | COMPLETE AND VERIFIED | Catalog traversal is tested against a temporary two-root fixture and stable injected resource telemetry; separate tests exercise pressure thresholds. |
+| Repository-wide Python regression | PARTIALLY VERIFIED | Previous attempt passed 50 tests, then saw host-pressure-sensitive assertion and was interrupted. Rerun pending lower pressure; the legacy Reality recovery test still cannot collect on this baseline. |
+
+Files changed: `tests/arena/test_admission.py` in code commit `adf1b15`; this
+report and `FRONTIER_MISSION_LEDGER.md` record the change.

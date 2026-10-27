@@ -1,6 +1,20 @@
 # Project Frontier Mission Ledger
 
-**Latest checkpoint (2026-10-27 18:28 UTC):** The repository-wide Python suite
+**Latest checkpoint (2026-10-27 18:30 UTC):** Code commit `adf1b15` makes the
+Arena cross-root catalog test independent of actual machine headroom and PSI.
+It still tests real directory/job traversal and asserts the worker-admission
+reason; only host telemetry inputs are fixed, while separate tests cover those
+thresholds. The isolated test passed, and Ruff/format checks passed. The
+repository-wide suite has not been rerun since this repair. At
+`2026-10-27T18:30:09Z`, PSI was `some avg10=46.13%` / `full avg10=41.43%`, so
+broader testing remains deferred.
+
+Next safe actions: when host pressure eases, rerun the repository suite with
+`PYTHONPATH=tests`, excluding only the full-scale Reality test whose required
+`midas.reality.recovery` module is absent from the selected baseline. Preserve
+all other results and report any remaining host-sensitive failures directly.
+
+**Previous checkpoint (2026-10-27 18:28 UTC):** The repository-wide Python suite
 remains incomplete. Plain `pytest -q` stopped in collection with five errors:
 four sibling test imports need `tests/` on `PYTHONPATH`, and
 `tests/test_reality_full_scale_validation.py` imports
