@@ -3041,3 +3041,40 @@ production deployment was used.
 
 Files changed: `tests/frontier/test_capital_carry.py` in code commit
 `abb512f`; this report and `FRONTIER_MISSION_LEDGER.md` record the update.
+
+### Final bounded regression checkpoint — 2026-10-27 18:26 UTC
+
+The full Frontier Python suite passed **212 tests** in 40.20 seconds. One
+existing `StarletteDeprecationWarning` reports that `httpx` with
+`starlette.testclient` is deprecated; it did not fail the suite. The full web
+unit suite passed **40 tests** across seven files. The complete browser E2E
+suite passed **12 tests** in 26.5 seconds using the Playwright configuration's
+temporary database and local demo API. It covers the new fixture-only carry
+request/result and all other existing UI fixture scenarios. No venue request
+was made.
+
+The first complete Frontier E2E run exposed a test-only ambiguous locator: the
+capital panel exposes both the venue balance status and an older-candidate
+warning. Commit `80162fe` scopes the balance assertions to `.fr-capital-row`;
+the full four-test Frontier E2E file then passed. The full E2E suite passed
+after that repair.
+
+The production web build passed, including TypeScript project build. `/usr/bin/time
+-v` measured **693,052 KiB** maximum RSS, zero swaps, and zero socket messages.
+Vite retains its existing chunk warning: `index` is 504.00 kB and `Chart` is
+544.41 kB after minification. At `2026-10-27T18:26:20Z`, memory PSI was `some
+avg10=0.00%` / `full avg10=0.00%`, `MemAvailable=9,442,548 KiB`, and
+`SwapFree=482,576 KiB`.
+
+| Component | Current status | Boundary |
+| --- | --- | --- |
+| Frontier capital carry model and independent audit | COMPLETE AND VERIFIED | 212 Frontier Python tests include 32 bounded generated Decimal-vs-Fraction cases with independent venue microseconds, tampered carry rejection, unverified-settlement rejection, and naive-time rejection. This does not authenticate real settlement claims, funding availability, or executable economics. |
+| Web unit and production build | COMPLETE AND VERIFIED | 40 web tests and TypeScript/Vite production build pass. Existing large index/chart chunk warning remains. |
+| Browser E2E suite | COMPLETE AND VERIFIED | All 12 repository browser tests pass, including the four Frontier scenarios and the fixture-intercepted carry path. The carry API response is a controlled fixture. |
+| Project Frontier overall | PARTIALLY VERIFIED | Isolated and undeployed. Live relationship equivalence, source permission review, live cross-venue economic validation, deferred collection/FX/collateral/transfer modeling, and production prerequisites remain incomplete. |
+
+Code commits in this checkpoint: `a45a811` independently checks source
+settlement prerequisites and rejects invalid candidate timestamps;
+`80162fe` repairs the Frontier E2E locator. Full-suite verification also covers
+earlier carry commits `6fe0192` and `abb512f`. No protected service, held-source
+store, exchange API, or production deployment was used.

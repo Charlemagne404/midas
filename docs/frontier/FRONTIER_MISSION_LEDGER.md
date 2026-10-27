@@ -1,6 +1,23 @@
 # Project Frontier Mission Ledger
 
-**Latest checkpoint (2026-10-27 18:22 UTC):** Code commit `abb512f` extends the
+**Latest checkpoint (2026-10-27 18:26 UTC):** Code commit `80162fe` scopes the
+funding E2E balance assertion to its venue row after the full Frontier spec
+revealed two `status` elements in the panel. The isolated rerun passes, and the
+full browser suite passes **12 tests**. The full Frontier Python suite passes
+**212 tests** in 40.20s with one existing Starlette/httpx TestClient
+deprecation warning; the full web unit suite passes **40 tests**. The
+production frontend build passes with **693,052 KiB** peak RSS, zero swaps, and
+the existing Vite warning for the 504 kB index and 544 kB chart chunks. At
+`2026-10-27T18:26:20Z`, PSI was `some avg10=0.00%` / `full avg10=0.00%`, with
+`MemAvailable` 9,442,548 KiB and swap free 482,576 KiB. Frontier remains
+isolated, incomplete, and undeployed.
+
+Next safe actions: continue the remaining economics and research-infrastructure
+gaps from the report. Preserve the source permission gate; live cross-venue
+semantic/economic validation, transfer/FX/collateral/settlement risks, full
+production readiness, and separate deployment authorization remain unresolved.
+
+**Previous checkpoint (2026-10-27 18:22 UTC):** Code commit `abb512f` extends the
 32-example Decimal-vs-Fraction property test with independent random
 microsecond offsets for each venue settlement. This exercises the exact
 subsecond conversion in the audit while retaining separately varying capital,
@@ -11,9 +28,9 @@ KiB and swap free 482,520 KiB. Browser execution, post-row-hash full suites,
 and the production build remain deferred. Frontier remains isolated,
 incomplete, and undeployed.
 
-Next safe actions: continue code/documentation work that needs no heavy browser
-or build process. Recheck actual pressure before focused browser E2E and broad
-verification; keep venue permission gates and protected services untouched.
+Next safe actions: after pressure improved, the full browser, Python, and web
+verification completed in the later checkpoint. Continue remaining Frontier
+work while preserving venue permission gates and protected services.
 
 **Previous checkpoint (2026-10-27 18:21 UTC):** Code commit `6fe0192` changes the
 decisive capital-carry audit to reconstruct elapsed seconds and carry as exact
