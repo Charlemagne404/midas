@@ -281,6 +281,13 @@ counter. Commit `3f8a5cabfe209d105d0ddde948f9862cf72fb8fb` adds the metric and a
 focused adapter regression; one test passed. This does not change probe rate
 limits or make health reads call a venue.
 
+Cross-venue candidate timing now also requires equal known timestamp semantics,
+timestamps no later than the replay time, and observed timestamp skew plus
+declared source clock uncertainty within the scenario limit. Commit
+`25a9cc711976da49b80bdaacc3b51c2ac6f82bae` adds the guard; its focused test
+passed. Existing public adapters leave clock uncertainty unspecified, so live
+cross-venue timing remains unverified.
+
 At the latest resource sample (`13:28:55Z`), host memory PSI was 39.81%
 (`some`) / 34.86% (`full`) over `avg10`, with 9.1 GB available RAM and about
 553 MiB swap free. Broader test suites, the Frontier production build, and the

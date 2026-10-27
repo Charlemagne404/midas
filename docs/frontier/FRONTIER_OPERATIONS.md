@@ -32,6 +32,12 @@ exchange's timestamp semantics when evaluating a candidate.
 
 The source health `requests_in_window` value counts request starts in the
 trailing 60 seconds. Reading health is local and makes no source request.
+Cross-venue `timing_verified` is stricter than receipt-time proximity: the
+exchange timestamp semantics must agree, the samples cannot be future-dated,
+and quantified source clock uncertainty is added to observed skew. Current
+adapters do not yet provide clock-uncertainty estimates, so inspect that field
+and the timing reasons instead of treating a positive recorded-value
+calculation as a simultaneous quote.
 
 ## Inspecting failed captures
 

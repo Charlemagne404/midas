@@ -352,7 +352,13 @@ cannot support them. Unknown or expired fees leave net P&L unknown and are
 excluded, rather than zeroed. Other payoffs, implication constraints, and
 general multi-leg constructions are unsupported. The multi-outcome family has
 fixture verification only; current public observations do not satisfy its
-attestation requirements. Candidates always retain `practical_eligibility=false`:
+attestation requirements. Cross-venue `timing_verified` additionally requires
+matching known exchange timestamp semantics, no source/receipt/book timestamp
+after the replay time, and observed exchange skew plus both declared clock
+uncertainties within the configured limit. Missing clock uncertainty keeps
+timing unverified. Current adapters do not populate clock-uncertainty estimates,
+so current cross-venue observations cannot pass this timing gate. Candidates
+always retain `practical_eligibility=false`:
 public snapshots do not prove fills, queue priority, venue access, simultaneous
 execution, capital transfer, or settlement. Opportunity classifications describe
 the mathematical and modeled evidence only.
