@@ -5,6 +5,8 @@ from decimal import Decimal, localcontext
 from typing import Literal
 
 import pytest
+from hypothesis import given, settings
+from hypothesis import strategies as st
 from midas.frontier.economics import (
     estimate_kalshi_taker_fee_sensitivity,
     estimate_kalshi_taker_order_fee_sensitivity,
@@ -165,6 +167,60 @@ def test_order_fee_sensitivity_accumulates_rounding_and_caps_rebates_per_fill():
         ).calculation_sha256
     )
     assert any("order-level rounding accumulator" in item for item in result.assumptions)
+
+
+@st.composite
+def _bounded_order_fills(draw):
+    side = draw(st.sampled_from(("buy", "sell")))
+    fill_count = draw(st.integers(min_value=1, max_value=32))
+    price_quantity_pairs = draw(
+        st.lists(
+            st.tuples(
+                st.decimals(min_value=Decimal("0.001"), max_value=Decimal("0.999"), places=3),
+                st.decimals(min_value=Decimal("0.001"), max_value=Decimal("100"), places=3),
+            ),
+            min_size=fill_count,
+            max_size=fill_count,
+        )
+    )
+    return tuple(
+        order_fill(side=side, price=str(price), quantity=str(quantity))
+        for price, quantity in price_quantity_pairs
+    )
+
+
+@settings(max_examples=24, deadline=None)
+@given(
+    order_fills=_bounded_order_fills(),
+    multiplier=st.sampled_from(("0", "1", "3")),
+)
+def test_order_fee_sensitivity_preserves_balance_and_rebate_invariants(
+    order_fills: tuple[KalshiFeeOrderFillInput, ...], multiplier: str
+):
+    result = estimate_kalshi_taker_order_fee_sensitivity(
+        fee_metadata(multiplier=multiplier),
+        event_observation_id="c" * 64,
+        series_observation_id="d" * 64,
+        order_fills=order_fills,
+    )
+
+    for scenario in result.scenarios:
+        assert scenario.total_net_fee_usd == (
+            scenario.total_trade_fee_usd
+            + scenario.total_rounding_fee_usd
+            - scenario.total_rebate_usd
+        )
+        assert scenario.total_rebate_usd <= scenario.total_rounding_fee_usd
+        assert scenario.total_net_fee_usd >= 0
+        assert scenario.total_balance_change_usd == (
+            scenario.total_signed_revenue_usd - scenario.total_net_fee_usd
+        )
+        assert all(fill.net_fee_usd >= 0 for fill in scenario.fills)
+        assert all(fill.accumulated_rounding_after_rebate_usd >= 0 for fill in scenario.fills)
+        assert all(
+            fill.balance_change_after_rebate_usd == fill.signed_revenue_usd - fill.net_fee_usd
+            for fill in scenario.fills
+        )
 
 
 def test_order_fee_sensitivity_handles_sell_revenue_and_order_sequence_identity():
