@@ -2332,9 +2332,10 @@ test commit `fcf3b31` pins v7 in the replay manifest.
 UI commit `89526f3` carries the independently recomputed timing values into the
 Opportunity Explorer audit panel: receipt skew, exchange timestamp skew, and
 the independent timing gate. Older audit records with no recomputed fields show
-“Not recorded.” The complete frontend suite passed **40 tests**; TypeScript,
-targeted ESLint, and Prettier passed. The frontend production build was not
-repeated.
+“Not recorded.” Test commit `3e648dd` removes the new fields from a legacy
+candidate fixture and verifies all three labels show “Not recorded.” The full
+frontend suite passed **40 tests**; TypeScript, targeted ESLint, and Prettier
+passed. The frontend production build was not repeated.
 
 The post-commit selection passed **134 tests** across replay/economics,
 adapters, API, and Kalshi fee sensitivities in 21.88 seconds. The replay-manifest

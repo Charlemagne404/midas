@@ -1345,8 +1345,10 @@ and replay identities; test commit `fcf3b31` pins v7 in the replay manifest.
 
 Code commit `89526f3` exposes the recomputed audit timing values and gate in the
 Opportunity Explorer, with a distinct not-recorded state for older records.
-The full frontend suite passed **40 tests**; TypeScript, targeted ESLint, and
-Prettier passed. The production build was not repeated.
+Test commit `3e648dd` removes the new fields from a legacy candidate fixture and
+verifies all three labels show “Not recorded.” The full frontend suite passed
+**40 tests**; TypeScript, targeted ESLint, and Prettier passed. The production
+build was not repeated.
 
 Post-commit verification passed **134 tests** across the replay/economics,
 adapter, API, and Kalshi fee-sensitivity selections in 21.88 seconds. The
